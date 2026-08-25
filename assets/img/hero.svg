@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img">
+  <defs>
+    <linearGradient id="g90" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E7E0D2"/>
+      <stop offset="100%" stop-color="#d0cabd"/>
+    </linearGradient>
+    <linearGradient id="b90" x1="0.15" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#e0d4bd"/>
+      <stop offset="55%" stop-color="#DCCFB6"/>
+      <stop offset="100%" stop-color="#C3B394"/>
+    </linearGradient>
+    <radialGradient id="v90" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2B2118" stop-opacity="0.30"/>
+    </radialGradient>
+    <filter id="n90" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="90" result="t"/>
+      <feColorMatrix in="t" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.62"/></feComponentTransfer>
+    </filter>
+    <filter id="s90" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="18" stdDeviation="18" flood-color="#3B2E22" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#g90)"/>
+  <rect x="26" y="26" width="1548" height="948" fill="none" stroke="#dfd6c4" stroke-width="1"/>
+  <rect x="0" y="620" width="1600" height="1000" fill="#e1d9c8"/>
+  <ellipse cx="800" cy="620" rx="672" ry="70" fill="#ddd3c1" opacity="0.5"/>
+  <g transform="translate(448,620) scale(0.86) translate(-400,-640)" opacity="0.97">
+    <ellipse cx="400" cy="646" rx="150" ry="22" fill="#3B2E22" opacity="0.2"/>
+    <path d="M300,150 C300,120 336,96 400,96 C464,96 500,120 500,150 L524,600
+                     C480,620 440,628 400,628 C360,628 320,620 276,600 Z" fill="#B08D57"/>
+    <path d="M300,154 L238,404 C234,424 250,438 270,438 L296,436 L322,184 Z" fill="#8E6F42"/>
+    <path d="M500,154 L562,404 C566,424 550,438 530,438 L504,436 L478,184 Z" fill="#8E6F42"/>
+    <path d="M400,96 L400,628" stroke="#8E6F42" stroke-opacity="0.5" stroke-width="3" fill="none"/>
+    <rect x="278" y="386" width="244" height="26" fill="#8E6F42" fill-opacity="0.8"/>
+    <circle cx="400" cy="52" r="46" fill="#846a41"/>
+  </g>
+  <g transform="translate(800,620) scale(1.0) translate(-400,-640)" opacity="0.97">
+    <ellipse cx="400" cy="646" rx="150" ry="22" fill="#3B2E22" opacity="0.2"/>
+    <path d="M300,150 C300,120 336,96 400,96 C464,96 500,120 500,150 L524,600
+                     C480,620 440,628 400,628 C360,628 320,620 276,600 Z" fill="#6B2737"/>
+    <path d="M300,154 L238,404 C234,424 250,438 270,438 L296,436 L322,184 Z" fill="#54202C"/>
+    <path d="M500,154 L562,404 C566,424 550,438 530,438 L504,436 L478,184 Z" fill="#54202C"/>
+    <path d="M400,96 L400,628" stroke="#54202C" stroke-opacity="0.5" stroke-width="3" fill="none"/>
+    <rect x="278" y="386" width="244" height="26" fill="#54202C" fill-opacity="0.8"/>
+    <circle cx="400" cy="52" r="46" fill="#501d29"/>
+  </g>
+  <g transform="translate(1152,620) scale(0.9) translate(-400,-640)" opacity="0.97">
+    <ellipse cx="400" cy="646" rx="150" ry="22" fill="#3B2E22" opacity="0.2"/>
+    <path d="M300,150 C300,120 336,96 400,96 C464,96 500,120 500,150 L524,600
+                     C480,620 440,628 400,628 C360,628 320,620 276,600 Z" fill="#2B2A2E"/>
+    <path d="M300,154 L238,404 C234,424 250,438 270,438 L296,436 L322,184 Z" fill="#1C1B1F"/>
+    <path d="M500,154 L562,404 C566,424 550,438 530,438 L504,436 L478,184 Z" fill="#1C1B1F"/>
+    <path d="M400,96 L400,628" stroke="#1C1B1F" stroke-opacity="0.5" stroke-width="3" fill="none"/>
+    <rect x="278" y="386" width="244" height="26" fill="#1C1B1F" fill-opacity="0.8"/>
+    <circle cx="400" cy="52" r="46" fill="#202022"/>
+  </g>
+  <path d="M0,620 L1600,620" stroke="#C3B394" stroke-opacity="0.25" stroke-width="2" fill="none"/>
+
+  <rect width="1600" height="1000" fill="url(#v90)"/>
+  <rect width="1600" height="1000" filter="url(#n90)" opacity="0.14" style="mix-blend-mode:multiply"/>
+</svg>

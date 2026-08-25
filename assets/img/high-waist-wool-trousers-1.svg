@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img">
+  <defs>
+    <linearGradient id="g6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E9E4D9"/>
+      <stop offset="100%" stop-color="#d2cdc3"/>
+    </linearGradient>
+    <linearGradient id="b6" x1="0.15" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#403f43"/>
+      <stop offset="55%" stop-color="#2B2A2E"/>
+      <stop offset="100%" stop-color="#1C1B1F"/>
+    </linearGradient>
+    <radialGradient id="v6" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2B2118" stop-opacity="0.30"/>
+    </radialGradient>
+    <filter id="n6" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="6" result="t"/>
+      <feColorMatrix in="t" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.62"/></feComponentTransfer>
+    </filter>
+    <filter id="s6" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="18" stdDeviation="18" flood-color="#3B2E22" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g6)"/>
+  <rect x="26" y="26" width="748" height="948" fill="none" stroke="#bcb8b0" stroke-width="1"/>
+<g filter="url(#s6)">
+  <path d="M286,236 L514,236 L520,300 L400,300 L280,300 Z" fill="url(#b6)"/>
+  <path d="M282,300 L396,300 L392,880 L268,880 C258,700 264,470 282,300 Z" fill="url(#b6)"/>
+  <path d="M518,300 L404,300 L408,880 L532,880 C542,700 536,470 518,300 Z" fill="url(#b6)"/>
+  <rect x="284" y="228" width="232" height="40" rx="5" fill="#1C1B1F" fill-opacity="0.8"/>
+  <path d="M400,300 L400,470" stroke="#1C1B1F" stroke-opacity="0.4" stroke-width="3" fill="none"/>
+  <path d="M330,310 C324,520 322,700 326,872" stroke="#E9E4D9" stroke-opacity="0.22" stroke-width="3" fill="none"/>
+  <path d="M470,310 C476,520 478,700 474,872" stroke="#E9E4D9" stroke-opacity="0.22" stroke-width="3" fill="none"/>
+  <circle cx="400" cy="248" r="7" fill="#B08D57" fill-opacity="0.9"/>
+  <circle cx="400" cy="248" r="7" fill="none" stroke="#1C1B1F" stroke-opacity="0.4"/>
+  <path d="M270,862 L392,862" fill="none" stroke="#E9E4D9" stroke-width="1.6" stroke-opacity="0.45" stroke-dasharray="6 7" stroke-linecap="round"/>
+  <path d="M408,862 L530,862" fill="none" stroke="#E9E4D9" stroke-width="1.6" stroke-opacity="0.45" stroke-dasharray="6 7" stroke-linecap="round"/>
+</g>
+  <rect width="800" height="1000" fill="url(#v6)"/>
+  <rect width="800" height="1000" filter="url(#n6)" opacity="0.14" style="mix-blend-mode:multiply"/>
+</svg>

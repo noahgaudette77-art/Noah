@@ -1,0 +1,57 @@
+<!--{ "title": "The Archive — Hollis & Vane", "description": "Browse the full Hollis & Vane archive of vintage clothing: outerwear, tailoring, dresses, knitwear, denim and accessories from 1940 to 1990. Every piece one of one.", "canonical": "shop.html", "nav": "shop" }-->
+<section class="shell page-head">
+  <p class="crumbs"><a href="index.html">Home</a> &nbsp;/&nbsp; The Archive</p>
+  <h1 class="display d1">The Archive</h1>
+  <p class="lede" style="max-width:56ch">Everything currently on the rail at Marchmont Row. Each piece exists once — when it goes, the listing goes with it.</p>
+</section>
+
+<div class="shell shop">
+  <aside class="filters" id="filters" data-open="false" aria-label="Filter the archive">
+    <div class="filter">
+      <h3>Category</h3>
+      <ul id="filter-category"></ul>
+    </div>
+    <div class="filter">
+      <h3>Era</h3>
+      <ul id="filter-era"></ul>
+    </div>
+    <div class="filter">
+      <h3>Size</h3>
+      <ul id="filter-size"></ul>
+    </div>
+    <div class="filter">
+      <button class="link" type="button" id="filter-clear" hidden>Clear all filters</button>
+    </div>
+  </aside>
+
+  <div>
+    <div class="shop__bar">
+      <p class="shop__count" id="shop-count" role="status" aria-live="polite"></p>
+      <button class="nav__link filters-toggle" type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters">Filters +</button>
+      <div class="select">
+        <label class="visually-hidden" for="shop-sort">Sort by</label>
+        <select id="shop-sort">
+          <option value="featured">Featured</option>
+          <option value="low">Price, low to high</option>
+          <option value="high">Price, high to low</option>
+          <option value="era">Oldest first</option>
+          <option value="name">A – Z</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<section class="section--tight">
+  <div class="shell">
+    <div class="values">
+      <div class="value"><p class="value__n">01</p><h3>Measured flat</h3><p>Real inches on every listing. Compare against something you already own and love.</p></div>
+      <div class="value"><p class="value__n">02</p><h3>Fourteen days</h3><p>Return anything that does not fit the life you had in mind for it.</p></div>
+      <div class="value"><p class="value__n">03</p><h3>Pressed and wrapped</h3><p>Everything ships steamed, in acid-free tissue, within two working days.</p></div>
+      <div class="value"><p class="value__n">04</p><h3>Ask us anything</h3><p>We will photograph a seam, a label or a flaw on request. Just write.</p></div>
+    </div>
+  </div>
+</section>
+
+{{> signup }}

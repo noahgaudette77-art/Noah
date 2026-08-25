@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img">
+  <defs>
+    <linearGradient id="g10" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EFE6DA"/>
+      <stop offset="100%" stop-color="#d7cfc4"/>
+    </linearGradient>
+    <linearGradient id="b10" x1="0.15" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#7a3d4b"/>
+      <stop offset="55%" stop-color="#6B2737"/>
+      <stop offset="100%" stop-color="#54202C"/>
+    </linearGradient>
+    <radialGradient id="v10" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2B2118" stop-opacity="0.30"/>
+    </radialGradient>
+    <filter id="n10" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="10" result="t"/>
+      <feColorMatrix in="t" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.62"/></feComponentTransfer>
+    </filter>
+    <filter id="s10" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="18" stdDeviation="18" flood-color="#3B2E22" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g10)"/>
+  <rect x="26" y="26" width="748" height="948" fill="none" stroke="#cdbab4" stroke-width="1"/>
+<g filter="url(#s10)">
+  <path d="M206,268 L330,268 L326,600 L386,640
+           C408,650 408,700 380,702 L190,702
+           C172,702 168,684 172,664 L210,600 Z" fill="url(#b10)"/>
+  <path d="M172,664 L390,664" stroke="#54202C" stroke-opacity="0.55" stroke-width="10" fill="none"/>
+  <path d="M206,300 L330,300" stroke="#54202C" stroke-opacity="0.35" stroke-width="4" fill="none"/>
+  <path d="M454,268 L578,268 L574,600 L634,640
+           C656,650 656,700 628,702 L438,702
+           C420,702 416,684 420,664 L458,600 Z" fill="url(#b10)"/>
+  <path d="M420,664 L638,664" stroke="#54202C" stroke-opacity="0.55" stroke-width="10" fill="none"/>
+  <path d="M454,300 L578,300" stroke="#54202C" stroke-opacity="0.35" stroke-width="4" fill="none"/>
+  <path d="M212,340 L324,340" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,340 L572,340" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M212,382 L324,382" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,382 L572,382" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M212,424 L324,424" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,424 L572,424" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M212,466 L324,466" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,466 L572,466" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M212,508 L324,508" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,508 L572,508" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M212,550 L324,550" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+  <path d="M460,550 L572,550" stroke="#B08D57" stroke-opacity="0.55" stroke-width="4" fill="none"/>
+</g>
+  <rect width="800" height="1000" fill="url(#v10)"/>
+  <rect width="800" height="1000" filter="url(#n10)" opacity="0.14" style="mix-blend-mode:multiply"/>
+</svg>

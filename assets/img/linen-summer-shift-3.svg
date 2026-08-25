@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000" role="img">
+  <defs>
+    <linearGradient id="g214" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E7E0D2"/>
+      <stop offset="100%" stop-color="#d0cabd"/>
+    </linearGradient>
+    <linearGradient id="b214" x1="0.15" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#e0d4bd"/>
+      <stop offset="55%" stop-color="#DCCFB6"/>
+      <stop offset="100%" stop-color="#C3B394"/>
+    </linearGradient>
+    <radialGradient id="v214" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2B2118" stop-opacity="0.30"/>
+    </radialGradient>
+    <filter id="n214" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="214" result="t"/>
+      <feColorMatrix in="t" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.62"/></feComponentTransfer>
+    </filter>
+    <filter id="s214" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="18" stdDeviation="18" flood-color="#3B2E22" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g214)"/>
+  <rect x="26" y="26" width="748" height="948" fill="none" stroke="#dfd6c4" stroke-width="1"/>
+  <rect x="26" y="26" width="748" height="948" fill="url(#b214)"/>
+  <path d="M26,30 L774,30" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,44 L774,44" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,58 L774,58" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,72 L774,72" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,86 L774,86" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,100 L774,100" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,114 L774,114" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,128 L774,128" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,142 L774,142" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,156 L774,156" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,170 L774,170" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,184 L774,184" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,198 L774,198" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,212 L774,212" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,226 L774,226" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,240 L774,240" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,254 L774,254" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,268 L774,268" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,282 L774,282" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,296 L774,296" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,310 L774,310" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,324 L774,324" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,338 L774,338" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,352 L774,352" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,366 L774,366" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,380 L774,380" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,394 L774,394" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,408 L774,408" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,422 L774,422" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,436 L774,436" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,450 L774,450" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,464 L774,464" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,478 L774,478" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,492 L774,492" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,506 L774,506" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,520 L774,520" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,534 L774,534" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,548 L774,548" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,562 L774,562" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,576 L774,576" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,590 L774,590" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,604 L774,604" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,618 L774,618" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,632 L774,632" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,646 L774,646" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,660 L774,660" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,674 L774,674" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,688 L774,688" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,702 L774,702" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,716 L774,716" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,730 L774,730" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,744 L774,744" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,758 L774,758" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,772 L774,772" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,786 L774,786" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,800 L774,800" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,814 L774,814" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,828 L774,828" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,842 L774,842" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,856 L774,856" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,870 L774,870" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,884 L774,884" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,898 L774,898" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,912 L774,912" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,926 L774,926" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,940 L774,940" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,954 L774,954" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,968 L774,968" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,982 L774,982" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <path d="M26,996 L774,996" stroke="#C3B394" stroke-opacity="0.10" stroke-width="5"/>
+  <g filter="url(#s214)">
+    <rect x="150" y="382" width="500" height="236" rx="4" fill="#E7E0D2"/>
+    <rect x="168" y="400" width="464" height="200" fill="none" stroke="#C3B394" stroke-opacity="0.5" stroke-width="2"/>
+    <text x="400" y="474" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-size="52" letter-spacing="10" fill="#C3B394">HOLLIS</text>
+    <text x="400" y="524" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-size="26" letter-spacing="14" fill="#6B2737">&amp; VANE</text>
+    <text x="400" y="566" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-size="17" letter-spacing="6" fill="#C3B394" fill-opacity="0.75">LINEN SHIFT</text>
+  </g>
+  <path d="M150,368 L650,368" fill="none" stroke="#E7E0D2" stroke-width="1.6" stroke-opacity="0.45" stroke-dasharray="6 7" stroke-linecap="round"/>
+  <path d="M150,632 L650,632" fill="none" stroke="#E7E0D2" stroke-width="1.6" stroke-opacity="0.45" stroke-dasharray="6 7" stroke-linecap="round"/>
+
+  <rect width="800" height="1000" fill="url(#v214)"/>
+  <rect width="800" height="1000" filter="url(#n214)" opacity="0.14" style="mix-blend-mode:multiply"/>
+</svg>

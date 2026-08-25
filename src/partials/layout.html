@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+<meta name="theme-color" content="#1f1c18">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hollis &amp; Vane">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:image" content="assets/img/hero.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="./{{ canonical }}">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<!-- Fonts are self-hosted: no third-party requests, nothing render-blocking off-origin. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/cormorant-garamond-300-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/jost-300-latin.woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "Hollis & Vane",
+  "description": "A curated archive of classy vintage clothing.",
+  "priceRange": "$$$",
+  "address": { "@type": "PostalAddress", "streetAddress": "14 Marchmont Row", "addressLocality": "London", "postalCode": "WC1N 1AP", "addressCountry": "GB" },
+  "openingHours": "Tu-Sa 11:00-18:00"
+}
+</script>
+</head>
+<body class="{{ bodyClass }}">
+<a class="skip" href="#main">Skip to content</a>
+{{> header }}
+<main id="main">
+{{ content }}
+</main>
+{{> footer }}
+{{> drawer }}
+<div class="toast" id="toast" role="status" aria-live="polite" data-open="false"></div>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

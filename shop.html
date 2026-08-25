@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Archive — Hollis & Vane</title>
+<meta name="description" content="Browse the full Hollis & Vane archive of vintage clothing: outerwear, tailoring, dresses, knitwear, denim and accessories from 1940 to 1990. Every piece one of one.">
+<meta name="theme-color" content="#1f1c18">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hollis &amp; Vane">
+<meta property="og:title" content="The Archive — Hollis & Vane">
+<meta property="og:description" content="Browse the full Hollis & Vane archive of vintage clothing: outerwear, tailoring, dresses, knitwear, denim and accessories from 1940 to 1990. Every piece one of one.">
+<meta property="og:image" content="assets/img/hero.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="./shop.html">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<!-- Fonts are self-hosted: no third-party requests, nothing render-blocking off-origin. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/cormorant-garamond-300-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/jost-300-latin.woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "Hollis & Vane",
+  "description": "A curated archive of classy vintage clothing.",
+  "priceRange": "$$$",
+  "address": { "@type": "PostalAddress", "streetAddress": "14 Marchmont Row", "addressLocality": "London", "postalCode": "WC1N 1AP", "addressCountry": "GB" },
+  "openingHours": "Tu-Sa 11:00-18:00"
+}
+</script>
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<p class="announce"><span>Complimentary shipping over $300 &middot; </span><em>Every piece is one of one</em><span> &middot; New arrivals each Thursday</span></p>
+<header class="header">
+  <div class="shell header__inner">
+    <nav class="nav nav--start" id="primary-nav" data-open="false" aria-label="Primary">
+      <a class="nav__link" href="shop.html" aria-current="page">The Archive</a>
+      <a class="nav__link" href="about.html">Our Story</a>
+      <a class="nav__link" href="journal.html">Journal</a>
+      <a class="nav__link" href="contact.html">Visit</a>
+    </nav>
+    <a class="wordmark" href="index.html">Hollis &amp; Vane<small>Curated Vintage &middot; Est. 1974</small></a>
+    <div class="nav nav--end">
+      <a class="nav__link" href="shop.html?sort=name">Search</a>
+      <button class="nav__link cart-btn" type="button" data-cart-open aria-haspopup="dialog">
+        Bag <span class="cart-count" data-cart-count data-filled="false">0</span>
+      </button>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="shell page-head">
+  <p class="crumbs"><a href="index.html">Home</a> &nbsp;/&nbsp; The Archive</p>
+  <h1 class="display d1">The Archive</h1>
+  <p class="lede" style="max-width:56ch">Everything currently on the rail at Marchmont Row. Each piece exists once — when it goes, the listing goes with it.</p>
+</section>
+
+<div class="shell shop">
+  <aside class="filters" id="filters" data-open="false" aria-label="Filter the archive">
+    <div class="filter">
+      <h3>Category</h3>
+      <ul id="filter-category"></ul>
+    </div>
+    <div class="filter">
+      <h3>Era</h3>
+      <ul id="filter-era"></ul>
+    </div>
+    <div class="filter">
+      <h3>Size</h3>
+      <ul id="filter-size"></ul>
+    </div>
+    <div class="filter">
+      <button class="link" type="button" id="filter-clear" hidden>Clear all filters</button>
+    </div>
+  </aside>
+
+  <div>
+    <div class="shop__bar">
+      <p class="shop__count" id="shop-count" role="status" aria-live="polite"></p>
+      <button class="nav__link filters-toggle" type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters">Filters +</button>
+      <div class="select">
+        <label class="visually-hidden" for="shop-sort">Sort by</label>
+        <select id="shop-sort">
+          <option value="featured">Featured</option>
+          <option value="low">Price, low to high</option>
+          <option value="high">Price, high to low</option>
+          <option value="era">Oldest first</option>
+          <option value="name">A – Z</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<section class="section--tight">
+  <div class="shell">
+    <div class="values">
+      <div class="value"><p class="value__n">01</p><h3>Measured flat</h3><p>Real inches on every listing. Compare against something you already own and love.</p></div>
+      <div class="value"><p class="value__n">02</p><h3>Fourteen days</h3><p>Return anything that does not fit the life you had in mind for it.</p></div>
+      <div class="value"><p class="value__n">03</p><h3>Pressed and wrapped</h3><p>Everything ships steamed, in acid-free tissue, within two working days.</p></div>
+      <div class="value"><p class="value__n">04</p><h3>Ask us anything</h3><p>We will photograph a seam, a label or a flaw on request. Just write.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section signup">
+  <div class="shell signup__inner">
+    <div data-reveal>
+      <p class="eyebrow">Thursday, 9am</p>
+      <h2 class="display d2" style="margin-top:1rem">First look at<br><em class="italic">everything new.</em></h2>
+    </div>
+    <div data-reveal data-delay="1">
+      <p class="lede">The archive is restocked once a week and the good pieces rarely last the morning. Subscribers see them first.</p>
+      <form class="field" style="margin-top:2rem" data-demo-form="Thank you — check your inbox on Thursday." novalidate>
+        <label class="visually-hidden" for="signup-email">Email address</label>
+        <input id="signup-email" type="email" name="email" placeholder="your@email.com" required autocomplete="email">
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="form-msg" data-form-msg role="status" aria-live="polite"></p>
+      <p class="form-note">One email a week. Unsubscribe whenever you like.</p>
+    </div>
+  </div>
+</section>
+
+
+</main>
+<footer class="footer">
+  <div class="shell">
+    <div class="footer__top">
+      <div>
+        <p class="footer__mark">Hollis &amp; Vane</p>
+        <p class="footer__blurb">A small archive of well-made clothing from the last century, sold one piece at a time. Fifty years on Marchmont Row.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="shop.html">Everything</a></li>
+          <li><a href="shop.html?category=outerwear">Outerwear</a></li>
+          <li><a href="shop.html?category=tailoring">Tailoring</a></li>
+          <li><a href="shop.html?category=dresses">Dresses</a></li>
+          <li><a href="shop.html?category=accessories">Accessories</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>House</h4>
+        <ul>
+          <li><a href="about.html">Our story</a></li>
+          <li><a href="about.html#sourcing">How we source</a></li>
+          <li><a href="journal.html">Journal</a></li>
+          <li><a href="contact.html">Visit the shop</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Care</h4>
+        <ul>
+          <li><a href="contact.html#faq">Shipping &amp; returns</a></li>
+          <li><a href="contact.html#faq">Sizing &amp; measurements</a></li>
+          <li><a href="contact.html#faq">Repairs &amp; alterations</a></li>
+          <li><a href="contact.html#sell">Sell to us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>&copy; <span id="year">2026</span> Hollis &amp; Vane Ltd. All rights reserved.</span>
+      <span>14 Marchmont Row, London WC1N &middot; Tuesday to Saturday, 11&ndash;6</span>
+    </div>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim" data-open="false"></div>
+<aside class="drawer" id="cart-drawer" data-open="false" role="dialog" aria-modal="true" aria-label="Shopping bag" aria-hidden="true">
+  <div class="drawer__head">
+    <h2 class="drawer__title">Your Bag</h2>
+    <button class="drawer__close nav__link" type="button" data-cart-close aria-label="Close bag">Close</button>
+  </div>
+  <div class="drawer__body" id="cart-body"></div>
+  <div class="drawer__foot" id="cart-foot"></div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite" data-open="false"></div>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
