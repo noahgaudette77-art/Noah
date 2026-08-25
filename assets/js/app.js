@@ -18,6 +18,30 @@
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
 
+  /* Single-file mode: the whole site lives in one document and navigates by
+     hash (#/shop?category=outerwear). The multi-page build sets no data-spa
+     attribute and keeps using real URLs, so both share this one file. */
+  var SPA = document.documentElement.getAttribute("data-spa") === "true";
+
+  function params() {
+    if (!SPA) return new URLSearchParams(location.search);
+    var h = location.hash.slice(1);
+    var i = h.indexOf("?");
+    return new URLSearchParams(i > -1 ? h.slice(i + 1) : "");
+  }
+
+  function routeName() {
+    if (!SPA) return (location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "");
+    var h = location.hash.slice(1) || "/";
+    return h.split("?")[0].replace(/^\//, "") || "index";
+  }
+
+  /** Build an href for a page, in whichever mode the document is running. */
+  function href(page, qs) {
+    if (SPA) return "#/" + (page === "index" ? "" : page) + (qs ? "?" + qs : "");
+    return page + ".html" + (qs ? "?" + qs : "");
+  }
+
   function money(n) {
     return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 0 });
   }
@@ -29,8 +53,11 @@
     return null;
   }
 
+  /* The single-file build injects HV_IMAGES, mapping "<id>-<n>" to a data URI;
+     the multi-page build has no such map and falls through to the real path. */
   function img(product, n) {
-    return "assets/img/" + product.id + "-" + n + ".svg";
+    var key = product.id + "-" + n;
+    return (window.HV_IMAGES && window.HV_IMAGES[key]) || "assets/img/" + key + ".svg";
   }
 
   function escapeHtml(s) {
@@ -201,7 +228,7 @@
         '<div class="empty">' +
         '<p class="display d4">Your bag is empty.</p>' +
         "<p>Sixteen pieces are in the archive right now. Each one exists once.</p>" +
-        '<a class="btn btn--ghost" href="shop.html">Browse the archive</a>' +
+        '<a class="btn btn--ghost" href="' + href("shop") + '">Browse the archive</a>' +
         "</div>";
       foot.innerHTML = "";
       return;
@@ -213,11 +240,11 @@
         var sizeLabel = line.size ? "Size " + escapeHtml(line.size) : "One size";
         return (
           '<article class="line">' +
-          '<a class="line__media" href="product.html?id=' + p.id + '">' +
+          '<a class="line__media" href="' + href("product", "id=" + p.id) + '">' +
           '<img src="' + img(p, 1) + '" alt="' + escapeHtml(p.name) + '" loading="lazy">' +
           "</a><div>" +
           '<p class="line__house">' + escapeHtml(p.house) + "</p>" +
-          '<h3 class="line__name"><a href="product.html?id=' + p.id + '">' +
+          '<h3 class="line__name"><a href="' + href("product", "id=" + p.id) + '">' +
           escapeHtml(p.name) + "</a></h3>" +
           '<p class="line__opt">' + sizeLabel + " · " + escapeHtml(p.era) + "</p>" +
           '<div class="line__row">' +
@@ -296,7 +323,7 @@
       '<button class="card__quick" type="button" data-quick="' + p.id + '">Add to bag</button>' +
       "</div>" +
       '<p class="card__house">' + escapeHtml(p.house) + "</p>" +
-      '<h3 class="card__name"><a href="product.html?id=' + p.id + '">' + escapeHtml(p.name) + "</a></h3>" +
+      '<h3 class="card__name"><a href="' + href("product", "id=" + p.id) + '">' + escapeHtml(p.name) + "</a></h3>" +
       '<p class="card__meta"><span>' + money(p.price) + "</span>" +
       (p.was ? '<s class="card__was">' + money(p.was) + "</s>" : "") +
       '<span class="card__era">' + escapeHtml(p.era) + "</span></p>" +
@@ -330,15 +357,28 @@
   }
 
   /* --- shop ------------------------------------------------------------- */
+  var shop = null; // set once initShop has run, so the router can re-sync it
+
   function initShop() {
     var grid = $("#shop-grid");
     if (!grid) return;
+    if (shop) { shop.syncFromUrl(); return; } // already wired — just re-read the URL
 
     var state = { category: "all", era: "all", size: "all", sort: "featured" };
 
-    var params = new URLSearchParams(location.search);
+    function syncFromUrl() {
+      var q = params();
+      ["category", "era", "size", "sort"].forEach(function (k) {
+        state[k] = q.get(k) || (k === "sort" ? "featured" : "all");
+      });
+      var sel = $("#shop-sort");
+      if (sel) sel.value = state.sort;
+      render();
+    }
+
+    var q = params();
     ["category", "era", "size", "sort"].forEach(function (k) {
-      if (params.get(k)) state[k] = params.get(k);
+      if (q.get(k)) state[k] = q.get(k);
     });
 
     function matches(p) {
@@ -436,13 +476,13 @@
         clear.hidden = !dirty;
       }
 
-      var q = new URLSearchParams();
+      var out = new URLSearchParams();
       ["category", "era", "size"].forEach(function (k) {
-        if (state[k] !== "all") q.set(k, state[k]);
+        if (state[k] !== "all") out.set(k, state[k]);
       });
-      if (state.sort !== "featured") q.set("sort", state.sort);
-      var qs = q.toString();
-      history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+      if (state.sort !== "featured") out.set("sort", state.sort);
+      var qs = out.toString();
+      history.replaceState(null, "", SPA ? href("shop", qs) : qs ? "?" + qs : location.pathname);
     }
 
     var sortSel = $("#shop-sort");
@@ -474,6 +514,7 @@
     }
 
     render();
+    shop = { syncFromUrl: syncFromUrl };
   }
 
   /* --- product detail --------------------------------------------------- */
@@ -481,7 +522,7 @@
     var root = $("#pdp");
     if (!root) return;
 
-    var id = new URLSearchParams(location.search).get("id");
+    var id = params().get("id");
     var p = byId(id) || CATALOGUE[0];
     if (!p) return;
 
@@ -650,10 +691,17 @@
       });
     }
 
-    // Mark the current page in the nav.
-    var here = location.pathname.split("/").pop() || "index.html";
+    markCurrentNav();
+  }
+
+  function markCurrentNav() {
+    var here = routeName();
     $$(".nav__link").forEach(function (a) {
       var target = (a.getAttribute("href") || "").split("?")[0];
+      target = SPA
+        ? target.replace(/^#\//, "") || "index"
+        : target.replace(/\.html$/, "");
+      a.removeAttribute("aria-current");
       if (target === here) a.setAttribute("aria-current", "page");
     });
   }
@@ -712,6 +760,49 @@
     });
   }
 
+  /* --- router (single-file build only) ---------------------------------- */
+  function initRouter() {
+    if (!SPA) return;
+
+    var routes = $$("[data-route]");
+    if (!routes.length) return;
+
+    function show(firstRun) {
+      var name = routeName();
+      var matched = routes.filter(function (r) { return r.dataset.route === name; })[0];
+
+      if (!matched) {                       // unknown hash → home, without a loop
+        location.replace("#/");
+        matched = routes.filter(function (r) { return r.dataset.route === "index"; })[0];
+        name = "index";
+        if (!matched) return;
+      }
+
+      routes.forEach(function (r) { r.hidden = r !== matched; });
+      document.title = matched.dataset.title || "Hollis & Vane";
+      markCurrentNav();
+
+      // Only the active route's modules may run: every route's markup is in the
+      // document at once, so an unguarded initShop() would re-render (and
+      // rewrite the URL to #/shop) no matter which route is showing.
+      if (name === "shop") initShop();
+      if (name === "product") initProduct();
+      observeReveals(matched);
+
+      // Deep links into a section: #/journal?to=denim
+      var to = params().get("to");
+      var target = to && document.getElementById(to);
+      if (target) {
+        target.scrollIntoView({ behavior: firstRun ? "auto" : "smooth", block: "start" });
+      } else if (!firstRun) {
+        window.scrollTo(0, 0);
+      }
+    }
+
+    window.addEventListener("hashchange", function () { show(false); });
+    show(true);
+  }
+
   /* --- boot ------------------------------------------------------------- */
   function boot() {
     Cart.load();
@@ -719,8 +810,12 @@
     initMarquee();
     initDrawer();
     initFeatured();
-    initShop();
-    initProduct();
+    if (SPA) {
+      initRouter();       // shows one route, then inits shop/product for it
+    } else {
+      initShop();
+      initProduct();
+    }
     initAccordions(document);
     initForms();
     renderCart();
