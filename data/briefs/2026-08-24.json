@@ -1,6 +1,6 @@
 {
  "weekStart": "2026-08-24",
- "generatedAt": "2026-08-26T02:28:45.470Z",
+ "generatedAt": "2026-08-26T11:02:37.818Z",
  "version": 1,
  "headline": {
   "count": 49,
@@ -462,17 +462,17 @@
    ],
    "sourceCount": 1,
    "itemCount": 4,
-   "score": 0.657,
+   "score": 0.654,
    "components": {
     "credibility": 0.95,
-    "recency": 0.102,
+    "recency": 0.088,
     "corroboration": 0.63,
     "consequence": 0.85,
     "topic": 0.7,
     "specificity": 0.333,
     "kind": 0.82
    },
-   "whyRanked": "Ranked on: primary source; about 5 days old; touches Financial Instability, which propagates widely in the model.",
+   "whyRanked": "Ranked on: primary source; about 6 days old; touches Financial Instability, which propagates widely in the model.",
    "isDecision": false,
    "nodes": [
     {
@@ -1124,19 +1124,19 @@
    ]
   },
   {
+   "id": "9c56116bc2564838",
+   "title": "BrowserForge: Scaling Web Episode via Parallel Browser Sandboxes",
+   "url": "https://arxiv.org/abs/2608.24848v1",
+   "publishedAt": "2026-08-25T17:35:42.000Z",
+   "categories": [
+    "cs.CL"
+   ]
+  },
+  {
    "id": "fabe2075d9dd21ea",
    "title": "FedV-KGQA: Multi-Hop Question Answering over Vertically Partitioned Knowledge Graphs",
    "url": "https://arxiv.org/abs/2608.24846v1",
    "publishedAt": "2026-08-25T17:34:27.000Z",
-   "categories": [
-    "cs.AI"
-   ]
-  },
-  {
-   "id": "2e47b7f727c778b9",
-   "title": "LAION-BVD: A 10-Million-Hour Open Video Dataset for Multimodal Pre-training",
-   "url": "https://arxiv.org/abs/2608.24845v1",
-   "publishedAt": "2026-08-25T17:34:19.000Z",
    "categories": [
     "cs.AI"
    ]

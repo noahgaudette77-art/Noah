@@ -30,6 +30,7 @@ const HOST_GAP_MS = {
   "export.arxiv.org": 3200,     // arXiv asks for no more than one request per 3s
   "data.sec.gov": 1200,         // SEC asks for 10/s; we stay far below it
   "www.sec.gov": 1500,
+  "www.federalreserve.gov": 1200,
 };
 
 const gapFor = (host) => HOST_GAP_MS[host] ?? MIN_GAP_MS;
@@ -66,10 +67,13 @@ export async function get(url, { accept = "*/*", timeout = 25_000, retries = 2, 
           signal: controller.signal,
           redirect: "follow",
         });
-        // 403 is included deliberately: several public APIs (SEC among them)
-        // return it for throttling rather than authorisation. Retrying twice is
-        // cheap; treating a throttle as a permanent failure loses the source.
-        if (response.status === 429 || response.status === 403 || response.status >= 500) {
+        // 403 and 406 are included deliberately: several public services use
+        // them as soft rejections under load rather than as real authorisation
+        // or content-negotiation failures — the same URL and headers succeed on
+        // the next attempt. Retrying twice is cheap; treating a throttle as
+        // permanent silently loses a source.
+        if (response.status === 429 || response.status === 403
+            || response.status === 406 || response.status >= 500) {
           lastError = `HTTP ${response.status}`;
           continue;
         }

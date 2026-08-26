@@ -18,6 +18,7 @@ import { openNode, openConcept } from "../components/drawer.js";
 import { CONCEPTS, DOMAINS, concept as findConcept, conceptLinks, byDomain } from "../../content/concepts.js";
 import { LESSONS, lesson as findLesson, lessonForWeek, lessonsForConcept } from "../../content/lessons.js";
 import { node as findNode } from "../../domain/worldmodel.js";
+import { tracksForConcept } from "../../content/curriculum.js";
 import { masteryLevel, XP, domainScore } from "../../domain/learning.js";
 import { forceGraph } from "../charts/graph.js";
 import { weekStart } from "../../core/format.js";
@@ -169,6 +170,20 @@ function renderConcept(root, conceptId) {
                 h("div.rowitem__meta", lesson.era)),
               icon("chevron", 12)))),
         }) : null,
+
+        (() => {
+          const tracks = tracksForConcept(concept.id);
+          return tracks.length ? panel({
+            title: "Part of",
+            flush: true,
+            body: h("div.rows", null, ...tracks.map((entry) =>
+              h("button.rowitem", { onclick: () => go(`/curriculum/${entry.id}`) },
+                h("span.grow", null,
+                  h("div.rowitem__title", { style: { fontSize: "var(--t-body)" } }, entry.title),
+                  h("div.rowitem__meta.clamp-2", { style: { marginTop: "2px" } }, entry.why)),
+                icon("chevron", 12)))),
+          }) : null;
+        })(),
 
         panel({
           title: "Nearby concepts",

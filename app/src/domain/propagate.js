@@ -159,29 +159,6 @@ export function salience(effect) {
   return effect.magnitude * confidenceWeight * (0.55 + 0.45 * immediacy) * corroboration;
 }
 
-/** Narrative form of a single path, used in reports and drawers. */
-export function describePath(path) {
-  return path.edges.map((edge, index) => ({
-    step: index + 1,
-    from: node(edge.from),
-    to: node(edge.to),
-    sign: edge.sign,
-    lag: edge.lag,
-    confidence: edge.confidence,
-    why: edge.why,
-  }));
-}
-
-export function directionWord(direction, nodeKind) {
-  if (direction === 0) return "ambiguous";
-  const rising = direction > 0;
-  if (nodeKind === "risk") return rising ? "elevated" : "reduced";
-  if (nodeKind === "sector" || nodeKind === "industry" || nodeKind === "market") {
-    return rising ? "supported" : "pressured";
-  }
-  return rising ? "higher" : "lower";
-}
-
 export const orderName = (order) =>
   ({ 1: "First order", 2: "Second order", 3: "Third order", 4: "Fourth order" }[order] || `Order ${order}`);
 

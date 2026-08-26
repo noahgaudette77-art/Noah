@@ -96,16 +96,3 @@ export function explainPanel(conceptId, { compact = false, initialLevel = null }
     body,
   });
 }
-
-/** Inline trigger: a small button that opens the concept in the detail drawer. */
-export function explainLink(conceptId, label = null) {
-  const concept = findConcept(conceptId);
-  if (!concept) return null;
-  return h("button.btn.btn--sm.btn--ghost", {
-    type: "button", title: `Explain: ${concept.term}`,
-    onclick: (event) => {
-      event.stopPropagation();
-      import("./drawer.js").then((module) => module.openConcept(conceptId));
-    },
-  }, icon("brain", 12), label || "Explain");
-}

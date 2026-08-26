@@ -26,6 +26,7 @@ import treasury from "./sources/treasury.js";
 import sec from "./sources/sec.js";
 import arxiv from "./sources/arxiv.js";
 import worldbank from "./sources/worldbank.js";
+import fundamentals from "./sources/fundamentals.js";
 import { dedupe } from "./stages/dedupe.js";
 import { linkAll } from "./stages/entities.js";
 import { cluster } from "./stages/cluster.js";
@@ -38,6 +39,12 @@ const OUT = path.join(ROOT, "data");
 
 const ADAPTERS = [fed, ecb, boc, treasury, sec, arxiv, worldbank];
 
+/**
+ * Fundamentals change four times a year, so fetching them daily would be four
+ * megabytes per company of pointless traffic. They refresh weekly, or on demand.
+ */
+const WEEKLY_ADAPTERS = [fundamentals];
+
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(`--${name}`);
 const option = (name) => argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
@@ -45,7 +52,9 @@ const option = (name) => argv.find((a) => a.startsWith(`--${name}=`))?.split("="
 async function main() {
   const startedAt = Date.now();
   const only = option("only")?.split(",").map((s) => s.trim()).filter(Boolean);
-  const adapters = only ? ADAPTERS.filter((a) => only.includes(a.id)) : ADAPTERS;
+  const wantWeekly = flag("fundamentals") || flag("brief") || isMonday();
+  const pool = wantWeekly ? [...ADAPTERS, ...WEEKLY_ADAPTERS] : ADAPTERS;
+  const adapters = only ? [...ADAPTERS, ...WEEKLY_ADAPTERS].filter((a) => only.includes(a.id)) : pool;
 
   console.log(`intel: running ${adapters.length} source${adapters.length === 1 ? "" : "s"}`);
 
@@ -86,6 +95,7 @@ async function main() {
   const filings = ok.flatMap((run) => run.result.filings || []);
   const research = ok.flatMap((run) => run.result.research || []);
   const curve = ok.map((run) => run.result.curve).find(Boolean) || null;
+  const companies = ok.flatMap((run) => run.result.companies || []);
 
   const deduped = dedupe(stories);
   const linked = linkAll(deduped.items, { tracked: TRACKED });
@@ -101,6 +111,8 @@ async function main() {
   const priorFilings = partial ? await readExisting("filings.json") : null;
   const priorResearch = partial ? await readExisting("research.json") : null;
   const priorStories = partial ? await readExisting("stories.json") : null;
+  const priorFundamentals = await readExisting("fundamentals.json");
+  const priorManifest = partial ? await readExisting("manifest.json") : null;
   if (partial) console.log("  (partial run — carrying forward snapshots from sources that did not run)");
 
   const publicClusters = clusters.map((entry) => ({
@@ -145,6 +157,21 @@ async function main() {
     series: mergeById(series.filter((entry) => entry.id.startsWith("wb_")), priorIndicators?.series || []),
   });
 
+  // Carried forward on any run that did not fetch them, weekly cadence or not.
+  const mergedCompanies = companies.length
+    ? mergeById(companies, priorFundamentals?.companies || [], "ticker")
+    : priorFundamentals?.companies || [];
+  if (mergedCompanies.length) {
+    await write("fundamentals.json", {
+      generatedAt: companies.length ? generatedAt : priorFundamentals?.generatedAt || generatedAt,
+      refreshedAt: companies.length ? generatedAt : priorFundamentals?.refreshedAt || null,
+      note: "Figures as filed with the SEC. No valuation, no estimates, no consensus — none of those "
+          + "are available without a paid feed, so the screen ranks how a business performs and cannot "
+          + "say whether its shares are attractively priced.",
+      companies: mergedCompanies,
+    });
+  }
+
   await write("research.json", {
     generatedAt, partial,
     papers: mergeById(research, priorResearch?.papers || []).slice(0, 60),
@@ -170,20 +197,36 @@ async function main() {
     console.log(`  → wrote brief for week of ${week}`);
   }
 
+  /**
+   * A partial run must not erase the record of what the sources it skipped
+   * reported last time. The status bar reads this as current coverage, so
+   * dropping a gap would quietly turn "one source is failing" into "everything
+   * is fine" — the exact failure mode the manifest exists to prevent.
+   */
+  const ranIds = new Set(runs.map((run) => run.id));
+  const carried = (priorManifest?.sources || [])
+    .filter((entry) => !ranIds.has(entry.id))
+    .map((entry) => ({ ...entry, carriedFrom: priorManifest.generatedAt }));
+
   const manifest = {
     generatedAt,
+    partial,
     durationMs: Date.now() - startedAt,
     node: process.version,
-    sources: runs.map(({ result, ...rest }) => rest),
+    sources: [...runs.map(({ result, ...rest }) => rest), ...carried],
     totals: {
       stories: stories.length, clusters: clusters.length,
       series: series.length, filings: filings.length, research: research.length,
+      companies: mergedCompanies.length,
     },
     /** Everything the run could not obtain, named. The client shows this. */
-    gaps: runs.filter((run) => !run.ok || run.skipped || run.notes.length).map((run) => ({
-      source: run.label, sourceId: run.sourceId,
-      skipped: Boolean(run.skipped), error: run.error || null, notes: run.notes,
-    })),
+    gaps: [...runs, ...carried]
+      .filter((run) => !run.ok || run.skipped || run.notes?.length)
+      .map((run) => ({
+        source: run.label, sourceId: run.sourceId,
+        skipped: Boolean(run.skipped), error: run.error || null,
+        notes: run.notes || [], carriedFrom: run.carriedFrom || null,
+      })),
   };
   await write("manifest.json", manifest);
 
@@ -202,6 +245,7 @@ function summarise(result) {
   if (result.series?.length) parts.push(`${result.series.length} series`);
   if (result.filings?.length) parts.push(`${result.filings.length} filings`);
   if (result.research?.length) parts.push(`${result.research.length} papers`);
+  if (result.companies?.length) parts.push(`${result.companies.length} companies`);
   return parts.join(", ") || "nothing";
 }
 

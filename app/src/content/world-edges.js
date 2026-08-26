@@ -475,4 +475,3 @@ export const EDGES = [
 ];
 
 
-export const EDGE_COUNT = EDGES.length;

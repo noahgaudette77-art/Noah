@@ -11,18 +11,21 @@ import { ago } from "../core/format.js";
 export const NAV = [
   { group: "Briefing", items: [
     { route: "/", label: "Command centre", icon: "grid", key: "1" },
+    { route: "/ask", label: "Ask", icon: "brain", key: "0" },
     { route: "/daily", label: "Daily brief", icon: "pulse", key: "2" },
     { route: "/weekly", label: "Weekly brief", icon: "calendar", key: "3" },
   ]},
   { group: "Signal", items: [
     { route: "/stream", label: "Intelligence", icon: "layers", key: "4" },
     { route: "/markets", label: "Markets", icon: "chart", key: "5" },
+    { route: "/companies", label: "Companies", icon: "building" },
     { route: "/economy", label: "Economy", icon: "building" },
     { route: "/watchlist", label: "Watchlist", icon: "bookmark" },
   ]},
   { group: "Analysis", items: [
     { route: "/graph", label: "World model", icon: "graph", key: "6" },
     { route: "/simulator", label: "Simulator", icon: "flask", key: "7" },
+    { route: "/debates", label: "Contrarian", icon: "scale" },
     { route: "/radar", label: "AI radar", icon: "cpu" },
     { route: "/future", label: "Future map", icon: "horizon" },
     { route: "/forecasts", label: "Forecasts", icon: "target" },
@@ -30,6 +33,7 @@ export const NAV = [
   { group: "Knowledge", items: [
     { route: "/knowledge", label: "Concepts", icon: "brain", key: "8" },
     { route: "/history", label: "History", icon: "book" },
+    { route: "/curriculum", label: "Curriculum", icon: "layers" },
     { route: "/learn", label: "Learn", icon: "spark", key: "9" },
   ]},
   { group: "Library", items: [
@@ -163,16 +167,20 @@ function renderStatus(statusbar) {
   const manifest = statusOf("manifest");
   const generatedAt = manifest.data?.generatedAt;
   const gaps = manifest.data?.gaps?.length || 0;
+  const partial = Boolean(manifest.data?.partial);
 
   mount(statusbar,
     h("span.row-s", null,
       h("span", { class: `dot dot--${cover.ready ? "live" : "none"}` }),
       h("span", null, "DATA ", h("b", `${cover.ready}/${cover.total}`))),
     generatedAt
-      ? h("span", null, "LAST RUN ", h("b", ago(generatedAt)))
+      ? h("span", { title: partial ? "A partial run: sources it skipped kept their previous snapshots." : null },
+          "LAST RUN ", h("b", ago(generatedAt)), partial ? h("span.faint", " · partial") : null)
       : h("span.faint", "PIPELINE NOT YET RUN"),
-    gaps ? h("a", { href: "#/sources", style: { color: "var(--warn)" } },
-      `${gaps} SOURCE GAP${gaps === 1 ? "" : "S"}`) : null,
+    gaps ? h("a", {
+      href: "#/sources", style: { color: "var(--warn)" },
+      title: "A source did not answer or skipped itself. Nothing is filled in for it — the affected views show what is missing.",
+    }, `${gaps} SOURCE GAP${gaps === 1 ? "" : "S"}`) : null,
     cover.failed ? h("span", { style: { color: "var(--down)" } }, `${cover.failed} FAILED`) : null,
     h("span.push.faint", "NOT INVESTMENT ADVICE · MODEL OUTPUT IS NOT A FORECAST")
   );

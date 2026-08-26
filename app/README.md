@@ -25,10 +25,30 @@ indicators, arXiv preprints. Where data is genuinely unavailable — equity and
 commodity prices — the view is empty and names what is missing. Nothing is filled
 in with a plausible-looking number.
 
+**Screens companies on what they filed.** Revenue, margins, cash flow and
+balance sheet for 26 companies, pulled from SEC XBRL and going back over a
+decade, each attached to the model variable its economics depend on. There is no
+price, so there is no valuation — the screen says so everywhere, and the
+categories that would need one are listed as unavailable rather than
+approximated.
+
+**Argues with itself.** Ten live debates state consensus and the case against it
+at full strength, each ending with what would settle it. Alongside them, the
+model derives which consequences of the week's material are underappreciated —
+and which are already priced, because most claims presented as contrarian are
+first-order effects in costume.
+
+**Answers questions.** Ask it "what happens if oil rises", "how does AI capital
+expenditure affect copper", "who is exposed to electricity demand", "what am I
+missing". No language model is involved: the question is routed to an intent and
+the answer assembled from the model and the corpora. It cannot invent an
+answer — and it will tell you it does not know rather than bluff.
+
 **Teaches.** 57 concepts at four genuinely different depths, 14 historical
-lessons, and a quiz that generates unlimited questions from the world model with
-answers checkable against an authored mechanism. Mastery decays if you do not
-revisit it, because that is what actually happens to knowledge.
+lessons, seven ordered curriculum tracks, and a quiz that generates unlimited
+questions from the world model with answers checkable against an authored
+mechanism. Mastery decays if you do not revisit it, because that is what actually
+happens to knowledge.
 
 ## Getting real data in
 
@@ -37,8 +57,13 @@ INTEL_CONTACT="you@example.com" node pipeline/run.js --brief
 ```
 
 `INTEL_CONTACT` is only for the SEC, whose access policy requires a contact
-address in the User-Agent. Without it the SEC adapter skips itself and records why;
-every other source still runs.
+address in the User-Agent. Without it the SEC adapters skip themselves and record
+why; every other source still runs.
+
+Company fundamentals refresh weekly rather than daily — they change four times a
+year, and re-fetching four megabytes per company every morning to re-read the
+same number is not a reasonable use of someone else's servers. Force one with
+`node pipeline/run.js --fundamentals`.
 
 For automation, set `INTEL_CONTACT` as a repository variable and let
 `.github/workflows/intelligence.yml` run it — weekdays for the daily layer, Monday
@@ -46,8 +71,8 @@ for the weekly brief. It commits the JSON snapshots back to the repo.
 
 ## Keyboard
 
-`⌘K` or `/` command palette · `?` shortcuts · `1`–`9` jump to a section ·
-`Esc` close.
+`⌘K` or `/` command palette (type a question and it offers to answer it) ·
+`?` shortcuts · `0`–`9` jump to a section · `Esc` close.
 
 ## Caveats, stated plainly
 

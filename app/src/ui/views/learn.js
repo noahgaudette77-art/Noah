@@ -71,7 +71,9 @@ function renderDashboard(root) {
               "Scheduled by spaced repetition. Mastery decays without it, because that is what actually happens to knowledge.", "clock",
               () => go("/learn?start=review")) : null,
             action("Challenge me", "A free-response scenario. Write what you think follows; your answer is scored against every channel the model traces.", "brain",
-              () => go("/learn?start=challenge"))),
+              () => go("/learn?start=challenge")),
+            action("Follow a curriculum", "Ordered paths rather than a ranked list of weaknesses. Most of these ideas only make sense once another one is in place.", "layers",
+              () => go("/curriculum"))),
         }),
 
         panel({

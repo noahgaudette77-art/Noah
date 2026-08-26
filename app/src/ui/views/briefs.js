@@ -24,6 +24,8 @@ import { node as findNode } from "../../domain/worldmodel.js";
 import { ago, date as fmtDate, num, weekStart, weekLabel, plural } from "../../core/format.js";
 import { lesson as findLesson } from "../../content/lessons.js";
 import { XP } from "../../domain/learning.js";
+import { underappreciated, alreadyPriced } from "../../domain/contrarian.js";
+import { debateForWeek } from "../../content/debates.js";
 
 /* ========================= DAILY ========================= */
 
@@ -254,6 +256,24 @@ export function weeklyBrief() {
           "Where the model says the consequences of this week's developments should show up first.",
           h("div.rows", null, ...brief.watchNext.map(watchRow))) : null,
 
+        missedSection(brief),
+
+        (() => {
+          const weekDebate = debateForWeek(brief.weekStart);
+          return section("What if the consensus is wrong",
+            "This week's live disagreement, both sides at their strongest.",
+            h("button.rowitem", { onclick: () => go(`/debates/${weekDebate.id}`) },
+              h("span.grow.stack-s", null,
+                h("div.rowitem__title", { style: { fontSize: "var(--t-h4)" } }, weekDebate.topic),
+                h("div.callout.callout--fact", null,
+                  h("div.callout__label", "Consensus"),
+                  h("p", { style: { marginTop: "var(--s1)" } }, weekDebate.consensus.claim)),
+                h("div.callout.callout--warn", null,
+                  h("div.callout__label", "If it is wrong"),
+                  h("p", { style: { marginTop: "var(--s1)" } }, weekDebate.contrarian.claim))),
+              icon("chevron", 14)));
+        })(),
+
         brief.risks?.length ? section("Global risk radar",
           "Ranked by how far each risk propagates in the model. No probabilities are attached, because none would be defensible.",
           h("div.rows", null, ...brief.risks.map(riskRow))) : null,
@@ -293,6 +313,42 @@ export function weeklyBrief() {
 }
 
 const section = (title, sub, body) => h("section", null, sectionHead(title, sub), panel({ flush: true, body }));
+
+/**
+ * Derived at read time rather than baked into the brief JSON: the model may have
+ * gained edges since the brief was generated, and this analysis should reflect
+ * the model as it stands rather than as it was.
+ */
+function missedSection(brief) {
+  const seeds = [...new Set(brief.bigPicture.flatMap((item) => item.nodes.map((n) => n.id)))].slice(0, 4);
+  if (!seeds.length) return null;
+  const missed = underappreciated(seeds, { limit: 6 });
+  const priced = alreadyPriced(seeds, { limit: 5 });
+  if (!missed.length) return null;
+
+  return section("What most people are missing",
+    "Second- and third-order consequences of this week's material that are well-evidenced but slow — and therefore less watched than the direct effects.",
+    h("div", null,
+      priced.length ? h("div.panel__body", { style: { borderBottom: "1px solid var(--line)" } },
+        h("div.eyebrow", { style: { marginBottom: "var(--s2)" } }, "Already priced — first order, and therefore consensus"),
+        h("div.row-s.wrap", null, ...priced.map((effect) =>
+          h("span.chip", null, effect.node.label, " ", direction(effect.direction, effect.node.kind))))) : null,
+      h("div.rows", null, ...missed.map((effect) => h("button.rowitem", {
+        onclick: () => openNode(effect.id),
+      },
+        h("span.rowitem__rank", `${effect.order}°`),
+        h("span.grow", null,
+          h("div.row-s.wrap", null,
+            h("span.rowitem__title", { style: { fontSize: "var(--t-body)" } }, effect.node.label),
+            direction(effect.direction, effect.node.kind),
+            effect.contested && badge("contested", "warn")),
+          h("div.rowitem__body", { style: { marginTop: "2px" } }, effect.because),
+          h("div.row-s", { style: { marginTop: "var(--s2)" } },
+            confidence(effect.confidence), lag(effect.lagMonths))),
+        icon("chevron", 12)))),
+      h("div.panel__foot", null,
+        "A heuristic, not a law: markets price the obvious quickly, so what stays underwatched tends to be well-evidenced, distant and slow. Each is named so you can check it.")));
+}
 
 function bigPictureRow(item) {
   return h("div.rowitem", null,

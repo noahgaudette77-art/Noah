@@ -6,7 +6,7 @@
  * type into deserves better than a browser chrome dialog.
  */
 
-import { h, mount, icon } from "../../core/dom.js";
+import { h, icon } from "../../core/dom.js";
 
 /**
  * @param {{title, sub?, fields: Array, submitLabel?}} spec

@@ -67,13 +67,3 @@ export function disagreement(positions) {
     unresolved: !decisive,
   };
 }
-
-/** Fact / interpretation / scenario / uncertainty — the geopolitics separation. */
-export const CLAIM_KINDS = [
-  { id: "fact", label: "Fact", note: "Observable and attributable to a source.", tone: "fact" },
-  { id: "interpretation", label: "Interpretation", note: "What analysts infer from the facts.", tone: "" },
-  { id: "scenario", label: "Scenario", note: "A possible path, not a prediction.", tone: "speculation" },
-  { id: "uncertainty", label: "Unknown", note: "Explicitly not established.", tone: "warn" },
-];
-
-export const claimKind = (id) => CLAIM_KINDS.find((k) => k.id === id) || CLAIM_KINDS[1];

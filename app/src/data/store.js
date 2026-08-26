@@ -8,7 +8,6 @@
 
 import { DATASETS, dataUrl, STATUS } from "./registry.js";
 import { session } from "../core/store.js";
-import { freshness } from "../core/format.js";
 
 const cache = new Map();     // key → { status, data, error, loadedAt }
 const inflight = new Map();
@@ -67,15 +66,6 @@ export async function load(key, { force = false } = {}) {
 
 export function loadAll(keys) {
   return Promise.all(keys.map((key) => load(key)));
-}
-
-/** Freshness of a dataset against its own declared shelf life. */
-export function datasetFreshness(key) {
-  const dataset = DATASETS[key];
-  const entry = statusOf(key);
-  if (entry.status !== STATUS.READY) return { state: "unknown", label: "No data", dot: "none" };
-  const stamp = entry.data?.generatedAt || entry.data?.asOf || entry.loadedAt;
-  return freshness(stamp, dataset.maxAgeHours);
 }
 
 /** One line summarising the state of every dataset, for the status bar. */

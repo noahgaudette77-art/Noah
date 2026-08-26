@@ -16,7 +16,9 @@ export default {
     const notes = [];
 
     for (const feed of FEEDS) {
-      const response = await get(feed.url, { accept: "application/rss+xml, application/xml" });
+      const response = await get(feed.url, {
+        accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+      });
       if (!response.ok) { notes.push(`${feed.url}: ${response.error}`); continue; }
       for (const item of parseFeed(response.body, { limit: 40 })) {
         result.stories.push(story({

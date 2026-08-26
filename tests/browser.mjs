@@ -41,9 +41,11 @@ const check = (name, ok, detail = "") => {
 };
 
 const ROUTES = [
-  "/", "/daily", "/weekly", "/archive", "/stream", "/markets", "/economy",
-  "/graph", "/simulator", "/radar", "/future", "/knowledge",
-  "/knowledge/yield-curve", "/history", "/history/great-depression",
+  "/", "/ask", "/daily", "/weekly", "/archive", "/stream", "/markets", "/economy",
+  "/companies", "/companies/NVDA", "/companies/TSM",
+  "/graph", "/simulator", "/debates", "/debates/ai-capex", "/radar", "/future",
+  "/knowledge", "/knowledge/yield-curve", "/history", "/history/great-depression",
+  "/curriculum", "/curriculum/money",
   "/learn", "/learn?start=quiz", "/learn?start=challenge",
   "/research", "/watchlist", "/forecasts", "/sources", "/settings", "/nope",
 ];
@@ -81,7 +83,7 @@ console.log("\nLayout");
 for (const [name, viewport] of VIEWPORTS) {
   const page = await (await browser.newContext({ viewport })).newPage();
   let worst = 0;
-  for (const route of ["/", "/daily", "/markets", "/graph", "/weekly", "/learn"]) {
+  for (const route of ["/", "/daily", "/markets", "/graph", "/weekly", "/learn", "/companies", "/ask", "/curriculum"]) {
     await page.goto(`${BASE}#${route}`, { waitUntil: "load" });
     await page.waitForTimeout(500);
     worst = Math.max(worst, await page.evaluate(() =>
@@ -173,6 +175,54 @@ console.log("\nInteractions");
   await page.getByRole("button", { name: "Expert" }).first().click();
   await page.waitForTimeout(250);
   check("explain switches depth", (await page.locator(".prose").first().innerText()) !== beginner);
+
+  await page.goto(`${BASE}#/companies`, { waitUntil: "load" });
+  await page.waitForTimeout(800);
+  const companyRows = await page.locator("tbody tr").count();
+  check("company screen lists filers", companyRows > 15, `${companyRows} companies`);
+  check("valuation gap is stated, not approximated",
+    (await page.getByText(/There is no price here/).count()) > 0);
+  await page.locator("th", { hasText: "FCF margin" }).click();
+  await page.waitForTimeout(300);
+  check("screen columns sort", (await page.evaluate(() => location.hash)).includes("sort=fcf"));
+
+  await page.goto(`${BASE}#/companies/NVDA`, { waitUntil: "load" });
+  await page.waitForTimeout(800);
+  check("company page shows reported history", (await page.getByText(/reported years/).count()) > 0);
+  check("company page shows its research frame", (await page.getByText(/research frame/i).count()) > 0);
+
+  await page.goto(`${BASE}#/debates`, { waitUntil: "load" });
+  await page.waitForTimeout(700);
+  check("contrarian derives what is missed",
+    (await page.locator(".panel", { hasText: /what most people are missing/i }).locator(".rowitem").count()) > 0);
+  await page.goto(`${BASE}#/debates/ai-capex`, { waitUntil: "load" });
+  await page.waitForTimeout(500);
+  check("a debate states both sides and a falsifier",
+    (await page.getByText(/what would settle it/i).count()) > 0);
+
+  await page.goto(`${BASE}#/curriculum`, { waitUntil: "load" });
+  await page.waitForTimeout(600);
+  check("curriculum lists every track",
+    (await page.locator(".panel", { hasText: /where to start|continue/i }).locator(".rowitem").count()) === 7);
+  await page.goto(`${BASE}#/curriculum/money`, { waitUntil: "load" });
+  await page.waitForTimeout(500);
+  check("a track states what you should be able to do",
+    (await page.getByText(/you should be able to/i).count()) > 0);
+
+  await page.goto(`${BASE}#/ask`, { waitUntil: "load" });
+  await page.waitForTimeout(700);
+  for (const [question, expected] of [
+    ["What happens if oil rises?", /assumptions/i],
+    ["How does AI capital expenditure affect copper?", /route 1/i],
+    ["Who is exposed to electricity demand?", /exposed to/i],
+    ["What am I missing?", /already priced/i],
+    ["zzzz nonsense query", /nothing here matches/i],
+  ]) {
+    await page.locator("input[type=text]").first().fill(question);
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(600);
+    check(`ask: ${question.slice(0, 40)}`, expected.test(await page.locator(".view").innerText()));
+  }
 
   page.on("dialog", (dialog) => {
     problems.push(`a native dialog was used: ${dialog.message()}`);

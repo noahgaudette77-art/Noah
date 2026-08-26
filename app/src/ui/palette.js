@@ -16,17 +16,22 @@ let teardown = null;
 
 const COMMANDS = [
   { id: "cmd-home", label: "Command centre", hint: "Today's picture", route: "/" },
+  { id: "cmd-ask", label: "Ask a question", hint: "Answered from the model and corpus", route: "/ask" },
   { id: "cmd-daily", label: "Daily brief", hint: "Five minutes", route: "/daily" },
   { id: "cmd-weekly", label: "Weekly intelligence brief", hint: "Monday", route: "/weekly" },
   { id: "cmd-markets", label: "Markets", hint: "Yields, curve, currencies", route: "/markets" },
   { id: "cmd-economy", label: "Economy", hint: "Indicators and structure", route: "/economy" },
   { id: "cmd-stream", label: "Intelligence stream", hint: "Everything, ranked", route: "/stream" },
+  { id: "cmd-companies", label: "Companies", hint: "Fundamental screen", route: "/companies" },
   { id: "cmd-graph", label: "World model", hint: "The causal graph", route: "/graph" },
   { id: "cmd-sim", label: "Run a simulation", hint: "What-if engine", route: "/simulator" },
+  { id: "cmd-debates", label: "Contrarian", hint: "Consensus vs the case against", route: "/debates" },
   { id: "cmd-radar", label: "AI radar", hint: "Frontier research", route: "/radar" },
   { id: "cmd-future", label: "Future map", hint: "Structural trends", route: "/future" },
   { id: "cmd-knowledge", label: "Knowledge base", hint: "Concepts, four depths", route: "/knowledge" },
   { id: "cmd-history", label: "History engine", hint: "One thing you should know", route: "/history" },
+  { id: "cmd-curriculum", label: "Curriculum", hint: "Ordered learning paths", route: "/curriculum" },
+  { id: "cmd-ahead", label: "Ahead of the curve", hint: "Learn it before it matters", route: "/curriculum" },
   { id: "cmd-learn", label: "Learn", hint: "Quiz, review, progress", route: "/learn" },
   { id: "cmd-quiz", label: "Quiz me", hint: "Start a quiz now", route: "/learn?start=quiz" },
   { id: "cmd-challenge", label: "Challenge me", hint: "Free-response scenario", route: "/learn?start=challenge" },
@@ -97,7 +102,16 @@ export function openPalette(initial = "") {
       : COMMANDS.slice(0, 9);
     const found = query.length >= 2 ? search(query, { limit: 10 }) : [];
 
+    // A question typed into the palette should reach the interface built to
+    // answer it, rather than being matched as a keyword and quietly failing.
+    const looksLikeQuestion = /\?$|^(what|why|how|who|which|when|explain|teach|connect|challenge|show)\b/i.test(query);
+    const askItem = looksLikeQuestion && query.length > 6
+      ? [{ kind: "command", id: "ask-this", label: `Ask: ${query}`,
+           hint: "answered from the model and corpus", route: `/ask?q=${encodeURIComponent(query)}` }]
+      : [];
+
     items = [
+      ...askItem,
       ...commands.slice(0, 7).map((command) => ({ ...command, kind: "command" })),
       ...found,
     ];
@@ -171,6 +185,7 @@ export function openPalette(initial = "") {
 const GROUP_LABEL = {
   command: "Commands", concept: "Concepts", node: "World model",
   lesson: "History", source: "Sources", story: "Intelligence stream",
+  company: "Companies", debate: "Debates", track: "Curriculum",
 };
 
 export function closePalette() { teardown?.(); }

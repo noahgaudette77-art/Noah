@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-26T02:28:45.470Z",
+ "generatedAt": "2026-08-26T11:02:37.818Z",
  "partial": false,
  "counts": {
   "raw": 60,
@@ -462,10 +462,10 @@
   {
    "id": "cl-2a29913485db",
    "rank": 6,
-   "score": 0.657,
+   "score": 0.654,
    "components": {
     "credibility": 0.95,
-    "recency": 0.102,
+    "recency": 0.088,
     "corroboration": 0.63,
     "consequence": 0.85,
     "topic": 0.7,
@@ -473,7 +473,7 @@
     "kind": 0.82
    },
    "isDecision": false,
-   "whyRanked": "Ranked on: primary source; about 5 days old; touches Financial Instability, which propagates widely in the model.",
+   "whyRanked": "Ranked on: primary source; about 6 days old; touches Financial Instability, which propagates widely in the model.",
    "size": 4,
    "sources": [
     "fed-press"
@@ -1081,8 +1081,76 @@
    ]
   },
   {
-   "id": "cl-782da97839dd",
+   "id": "cl-fde6da1a3c80",
    "rank": 12,
+   "score": 0.596,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.986,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; published in the last day; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-26T10:15:00.000Z",
+   "lead": {
+    "id": "fde6da1a3c80282f",
+    "title": "Piero Cipollone: From vision to delivery: building Europe’s tokenised financial market",
+    "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260826~3641116314.en.html",
+    "publishedAt": "2026-08-26T10:15:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "fde6da1a3c80282f",
+     "title": "Piero Cipollone: From vision to delivery: building Europe’s tokenised financial market",
+     "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260826~3641116314.en.html",
+     "publishedAt": "2026-08-26T10:15:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-782da97839dd",
+   "rank": 13,
    "score": 0.579,
    "components": {
     "credibility": 0.95,
@@ -1165,7 +1233,7 @@
   },
   {
    "id": "cl-31dc74aef380",
-   "rank": 13,
+   "rank": 14,
    "score": 0.57,
    "components": {
     "credibility": 0.95,
@@ -1248,11 +1316,11 @@
   },
   {
    "id": "cl-b792c7f9c610",
-   "rank": 14,
-   "score": 0.496,
+   "rank": 15,
+   "score": 0.484,
    "components": {
     "credibility": 0.95,
-    "recency": 0.463,
+    "recency": 0.399,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -1316,7 +1384,7 @@
   },
   {
    "id": "cl-a88a68b1eb72",
-   "rank": 15,
+   "rank": 16,
    "score": 0.474,
    "components": {
     "credibility": 0.95,
@@ -1399,7 +1467,7 @@
   },
   {
    "id": "cl-d24fa9152d86",
-   "rank": 16,
+   "rank": 17,
    "score": 0.474,
    "components": {
     "credibility": 0.95,
@@ -1482,7 +1550,7 @@
   },
   {
    "id": "cl-ae798dea598c",
-   "rank": 17,
+   "rank": 18,
    "score": 0.474,
    "components": {
     "credibility": 0.95,
@@ -1565,7 +1633,7 @@
   },
   {
    "id": "cl-089ac7f74b49",
-   "rank": 18,
+   "rank": 19,
    "score": 0.474,
    "components": {
     "credibility": 0.95,
@@ -1648,7 +1716,7 @@
   },
   {
    "id": "cl-a1b4ca74660c",
-   "rank": 19,
+   "rank": 20,
    "score": 0.46,
    "components": {
     "credibility": 0.95,
@@ -1731,7 +1799,7 @@
   },
   {
    "id": "cl-42c3788d9fd8",
-   "rank": 20,
+   "rank": 21,
    "score": 0.443,
    "components": {
     "credibility": 0.95,
@@ -1814,7 +1882,7 @@
   },
   {
    "id": "cl-7c86a3728456",
-   "rank": 21,
+   "rank": 22,
    "score": 0.44,
    "components": {
     "credibility": 0.95,
@@ -1882,11 +1950,11 @@
   },
   {
    "id": "cl-9cddda5ca086",
-   "rank": 22,
-   "score": 0.438,
+   "rank": 23,
+   "score": 0.435,
    "components": {
     "credibility": 0.95,
-    "recency": 0.112,
+    "recency": 0.096,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.7,
@@ -1894,7 +1962,7 @@
     "kind": 0.82
    },
    "isDecision": false,
-   "whyRanked": "Ranked on: primary source; about 5 days old; limited onward transmission.",
+   "whyRanked": "Ranked on: primary source; about 6 days old; limited onward transmission.",
    "size": 1,
    "sources": [
     "fed-press"
@@ -1950,7 +2018,7 @@
   },
   {
    "id": "cl-2c20c2e77b6e",
-   "rank": 23,
+   "rank": 24,
    "score": 0.434,
    "components": {
     "credibility": 0.95,
@@ -2033,11 +2101,11 @@
   },
   {
    "id": "cl-522cd04a05fe",
-   "rank": 24,
-   "score": 0.434,
+   "rank": 25,
+   "score": 0.431,
    "components": {
     "credibility": 0.95,
-    "recency": 0.138,
+    "recency": 0.119,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -2101,11 +2169,11 @@
   },
   {
    "id": "cl-8665bca64f38",
-   "rank": 25,
+   "rank": 26,
    "score": 0.423,
    "components": {
     "credibility": 0.95,
-    "recency": 0.027,
+    "recency": 0.023,
     "corroboration": 0.51,
     "consequence": 0.064,
     "topic": 0.6,
@@ -2208,11 +2276,11 @@
   },
   {
    "id": "cl-292fa669fdca",
-   "rank": 26,
-   "score": 0.42,
+   "rank": 27,
+   "score": 0.418,
    "components": {
     "credibility": 0.95,
-    "recency": 0.059,
+    "recency": 0.051,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -2276,7 +2344,7 @@
   },
   {
    "id": "cl-fcf326561098",
-   "rank": 27,
+   "rank": 28,
    "score": 0.416,
    "components": {
     "credibility": 0.95,
@@ -2344,7 +2412,7 @@
   },
   {
    "id": "cl-9047c49de806",
-   "rank": 28,
+   "rank": 29,
    "score": 0.416,
    "components": {
     "credibility": 0.95,
@@ -2412,11 +2480,11 @@
   },
   {
    "id": "cl-b0d67eb2fb9a",
-   "rank": 29,
+   "rank": 30,
    "score": 0.412,
    "components": {
     "credibility": 0.95,
-    "recency": 0.005,
+    "recency": 0.004,
     "corroboration": 0.45,
     "consequence": 0.064,
     "topic": 0.6,
@@ -2495,7 +2563,7 @@
   },
   {
    "id": "cl-121fe9bad9b8",
-   "rank": 30,
+   "rank": 31,
    "score": 0.411,
    "components": {
     "credibility": 0.95,
@@ -2578,7 +2646,7 @@
   },
   {
    "id": "cl-0a2097d18fc9",
-   "rank": 31,
+   "rank": 32,
    "score": 0.411,
    "components": {
     "credibility": 0.95,
@@ -2661,7 +2729,7 @@
   },
   {
    "id": "cl-c062825b2efe",
-   "rank": 32,
+   "rank": 33,
    "score": 0.409,
    "components": {
     "credibility": 0.95,
@@ -2729,7 +2797,7 @@
   },
   {
    "id": "cl-2d1aa9e55519",
-   "rank": 33,
+   "rank": 34,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -2797,7 +2865,7 @@
   },
   {
    "id": "cl-08066ed4b23b",
-   "rank": 34,
+   "rank": 35,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -2865,7 +2933,7 @@
   },
   {
    "id": "cl-eb77171ecce4",
-   "rank": 35,
+   "rank": 36,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -2933,7 +3001,7 @@
   },
   {
    "id": "cl-d34547a1a1f7",
-   "rank": 36,
+   "rank": 37,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -3001,7 +3069,7 @@
   },
   {
    "id": "cl-194a3e6b5507",
-   "rank": 37,
+   "rank": 38,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -3069,7 +3137,7 @@
   },
   {
    "id": "cl-e2add04f307f",
-   "rank": 38,
+   "rank": 39,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -3137,7 +3205,7 @@
   },
   {
    "id": "cl-db4701a9b6a6",
-   "rank": 39,
+   "rank": 40,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -3205,7 +3273,7 @@
   },
   {
    "id": "cl-2d0860a6fbcb",
-   "rank": 40,
+   "rank": 41,
    "score": 0.408,
    "components": {
     "credibility": 0.95,
@@ -3255,74 +3323,6 @@
      "title": "ECB to start implementing enhanced repo facility for central banks",
      "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_2~d7d475d2f0.en.html",
      "publishedAt": "2026-07-24T08:30:00.000Z",
-     "summary": "",
-     "sourceId": "ecb-press",
-     "tier": 1,
-     "kind": "release",
-     "region": "europe",
-     "topics": [
-      "policy"
-     ],
-     "entities": [],
-     "duplicates": 0,
-     "alsoIn": [],
-     "nodes": [],
-     "tickers": []
-    }
-   ]
-  },
-  {
-   "id": "cl-354834d26f2f",
-   "rank": 41,
-   "score": 0.408,
-   "components": {
-    "credibility": 0.95,
-    "recency": 0,
-    "corroboration": 0.45,
-    "consequence": 0.12,
-    "topic": 0.6,
-    "specificity": 0,
-    "kind": 0.82
-   },
-   "isDecision": false,
-   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
-   "size": 1,
-   "sources": [
-    "ecb-press"
-   ],
-   "topics": [
-    "policy"
-   ],
-   "regions": [
-    "europe"
-   ],
-   "nodes": [],
-   "publishedAt": "2026-07-24T08:00:00.000Z",
-   "lead": {
-    "id": "354834d26f2f05f2",
-    "title": "Results of the ECB Survey of Professional Forecasters for the third quarter of 2026",
-    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724~a099353951.en.html",
-    "publishedAt": "2026-07-24T08:00:00.000Z",
-    "summary": "",
-    "sourceId": "ecb-press",
-    "tier": 1,
-    "kind": "release",
-    "region": "europe",
-    "topics": [
-     "policy"
-    ],
-    "entities": [],
-    "duplicates": 0,
-    "alsoIn": [],
-    "nodes": [],
-    "tickers": []
-   },
-   "items": [
-    {
-     "id": "354834d26f2f05f2",
-     "title": "Results of the ECB Survey of Professional Forecasters for the third quarter of 2026",
-     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724~a099353951.en.html",
-     "publishedAt": "2026-07-24T08:00:00.000Z",
      "summary": "",
      "sourceId": "ecb-press",
      "tier": 1,

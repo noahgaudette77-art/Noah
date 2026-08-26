@@ -10,6 +10,8 @@
 
 import { CONCEPTS } from "../content/concepts.js";
 import { LESSONS } from "../content/lessons.js";
+import { DEBATES } from "../content/debates.js";
+import { TRACKS } from "../content/curriculum.js";
 import { NODES } from "../domain/worldmodel.js";
 import { SOURCES } from "../content/sources.js";
 import { dataOf } from "../data/store.js";
@@ -67,6 +69,26 @@ function build() {
     });
   }
 
+  for (const entry of DEBATES) {
+    records.push({
+      kind: "debate", id: entry.id, title: entry.topic,
+      subtitle: `Debate · ${entry.domain}`,
+      route: `/debates/${entry.id}`,
+      text: `${entry.topic} ${entry.stakes} ${entry.consensus.claim} ${entry.contrarian.claim}`,
+      weight: 1,
+    });
+  }
+
+  for (const entry of TRACKS) {
+    records.push({
+      kind: "track", id: entry.id, title: entry.title,
+      subtitle: `Curriculum · ${entry.stages.length} stages`,
+      route: `/curriculum/${entry.id}`,
+      text: `${entry.title} ${entry.why} ${entry.stages.map((s) => `${s.label} ${s.goal}`).join(" ")}`,
+      weight: 0.95,
+    });
+  }
+
   for (const source of SOURCES) {
     records.push({
       kind: "source", id: source.id, title: source.name,
@@ -78,6 +100,19 @@ function build() {
   }
 
   return records;
+}
+
+/** Companies come from the pipeline, so they are merged in rather than cached. */
+function companyRecords() {
+  const data = dataOf("fundamentals");
+  if (!data?.companies) return [];
+  return data.companies.map((company) => ({
+    kind: "company", id: company.ticker, title: `${company.ticker} — ${company.name}`,
+    subtitle: company.sic ? `Company · ${company.sic}` : "Company",
+    route: `/companies/${company.ticker}`,
+    text: `${company.ticker} ${company.name} ${company.sic || ""} ${company.node || ""}`,
+    weight: 1.05,
+  }));
 }
 
 /** Story records change with every pipeline run, so they are merged in fresh. */
@@ -106,7 +141,7 @@ export function search(query, { limit = 12, kinds = null } = {}) {
     for (const synonym of SYNONYMS[term] || []) expanded.add(synonym);
   }
 
-  const pool = [...corpus, ...storyRecords()];
+  const pool = [...corpus, ...companyRecords(), ...storyRecords()];
   const results = [];
 
   for (const record of pool) {
@@ -138,5 +173,5 @@ export function search(query, { limit = 12, kinds = null } = {}) {
 
 export const KIND_ICON = {
   concept: "brain", node: "graph", lesson: "book",
-  source: "layers", story: "pulse", command: "command",
+  source: "layers", story: "pulse", command: "command", company: "building", debate: "scale", track: "layers",
 };

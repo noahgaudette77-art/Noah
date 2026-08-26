@@ -1,6 +1,7 @@
 {
- "generatedAt": "2026-08-26T02:28:45.470Z",
- "durationMs": 63138,
+ "generatedAt": "2026-08-26T11:02:37.818Z",
+ "partial": false,
+ "durationMs": 133381,
  "node": "v22.22.2",
  "sources": [
   {
@@ -8,7 +9,7 @@
    "label": "Federal Reserve",
    "sourceId": "fed-press",
    "ok": true,
-   "ms": 988,
+   "ms": 1408,
    "counts": {
     "stories": 35,
     "series": 0,
@@ -23,7 +24,7 @@
    "label": "European Central Bank",
    "sourceId": "ecb-press",
    "ok": true,
-   "ms": 2015,
+   "ms": 1653,
    "counts": {
     "stories": 15,
     "series": 1,
@@ -38,7 +39,7 @@
    "label": "Bank of Canada",
    "sourceId": "boc-valet",
    "ok": true,
-   "ms": 946,
+   "ms": 1539,
    "counts": {
     "stories": 10,
     "series": 4,
@@ -53,7 +54,7 @@
    "label": "US Treasury",
    "sourceId": "treasury-fiscal",
    "ok": true,
-   "ms": 17988,
+   "ms": 19122,
    "counts": {
     "stories": 0,
     "series": 13,
@@ -68,7 +69,7 @@
    "label": "SEC EDGAR",
    "sourceId": "sec-edgar",
    "ok": true,
-   "ms": 31772,
+   "ms": 31952,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -83,12 +84,12 @@
    "label": "arXiv",
    "sourceId": "arxiv",
    "ok": true,
-   "ms": 6581,
+   "ms": 6556,
    "counts": {
     "stories": 0,
     "series": 0,
     "filings": 0,
-    "research": 35
+    "research": 33
    },
    "skipped": false,
    "notes": []
@@ -98,7 +99,7 @@
    "label": "World Bank",
    "sourceId": "worldbank",
    "ok": true,
-   "ms": 2801,
+   "ms": 2550,
    "counts": {
     "stories": 0,
     "series": 4,
@@ -107,6 +108,23 @@
    },
    "skipped": false,
    "notes": []
+  },
+  {
+   "id": "fundamentals",
+   "label": "SEC fundamentals",
+   "sourceId": "sec-edgar",
+   "ok": true,
+   "ms": 68559,
+   "counts": {
+    "stories": 0,
+    "series": 0,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": [
+    "XOM resolves to CIK 2115436 (Exxon Mobil Corporation), which has filed no revenue under any known tag — likely a holding entity whose operating history sits under a predecessor CIK."
+   ]
   }
  ],
  "totals": {
@@ -114,7 +132,19 @@
   "clusters": 49,
   "series": 22,
   "filings": 20,
-  "research": 35
+  "research": 33,
+  "companies": 27
  },
- "gaps": []
+ "gaps": [
+  {
+   "source": "SEC fundamentals",
+   "sourceId": "sec-edgar",
+   "skipped": false,
+   "error": null,
+   "notes": [
+    "XOM resolves to CIK 2115436 (Exxon Mobil Corporation), which has filed no revenue under any known tag — likely a holding entity whose operating history sits under a predecessor CIK."
+   ],
+   "carriedFrom": null
+  }
+ ]
 }

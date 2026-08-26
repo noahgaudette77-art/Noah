@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-26T02:28:45.470Z",
+ "generatedAt": "2026-08-26T11:02:37.818Z",
  "partial": false,
  "papers": [
   {
@@ -88,6 +88,21 @@
    "summary": "Marginalized importance weighting evaluates a target policy by reweighting offline state-action samples with its discounted occupancy ratio, characterized by an adjoint Bellman equation. Existing minimax, primal-dual, and fitted fixed-point estimators can leave residual occupancy-balance violations because of function-class approximation, regularization, or incomplete optimization. These violations are difficult to diagnose and reduce because the objectives generally lack a direct supervised validation loss for hyperparameter tuning, model selection, and early stopping. We introduce isotonic Bellman calibration, a one-dimensional, model-agnostic post-processing method that reduces these viol",
    "categories": [
     "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "9c56116bc2564838",
+   "title": "BrowserForge: Scaling Web Episode via Parallel Browser Sandboxes",
+   "url": "https://arxiv.org/abs/2608.24848v1",
+   "publishedAt": "2026-08-25T17:35:42.000Z",
+   "authors": [
+    "Fei Tang"
+   ],
+   "summary": "Web agents that act from rendered pixels avoid the fragility and heavy token cost of reading a page's HTML or accessibility tree, but training them depends on large amounts of high-quality interaction trajectories, and how to produce such data at scale remains an open problem. Public datasets typically contain only a few thousand trajectories drawn from a fixed and narrow set of websites, and even recent automated synthesis pipelines stay bound to predefined site lists or tutorial sources, so the number of distinct websites the agent ever sees barely grows. We present BrowserForge, a framework that generates web interaction data at scale by driving many browser sandboxes in parallel over the",
+   "categories": [
+    "cs.CL"
    ],
    "sourceId": "arxiv",
    "tier": 1
@@ -243,6 +258,21 @@
    "tier": 1
   },
   {
+   "id": "8c001469f3dce03f",
+   "title": "Structurally-bounded Agentic Graph Exploration for Evidence-Grounded Scholarly DeepSearch",
+   "url": "https://arxiv.org/abs/2608.24809v1",
+   "publishedAt": "2026-08-25T16:51:26.000Z",
+   "authors": [
+    "Rima Hazra"
+   ],
+   "summary": "We present Crase, a bounded and inspectable alternative to deep research agents for scholarly search. Instead of an open-ended search loop, Crase queries a search engine once for seed papers, expands them along their 1.5-hop citation neighborhood, prunes citation edges whose claims lack entailment support, and ranks the remaining papers with a recency-aware random walk. This makes the candidate set, the reason each paper is kept, and the stopping condition explicit and fixed before inference. On LitSearch and one further benchmarks over a 500K-paper arXiv corpus, Crase outperforms deep research agents built on proprietary models by up to 3$\\times$ recall@50 at roughly a third of the cost.",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
    "id": "25933e1fd7ff9b65",
    "title": "Automatic Model Card Generation Using an LLM",
    "url": "https://arxiv.org/abs/2608.24807v1",
@@ -318,6 +348,21 @@
    "tier": 1
   },
   {
+   "id": "fc2011b9c31a1611",
+   "title": "Linear Probing Provides Robust and Efficient Detection of Machine-Generated Text",
+   "url": "https://arxiv.org/abs/2608.24780v1",
+   "publishedAt": "2026-08-25T16:21:24.000Z",
+   "authors": [
+    "Gerrit Quaremba"
+   ],
+   "summary": "Distinguishing machine-generated text (MGT) from human-written text (HWT) becomes increasingly important due to potential misuse. However, most supervised detectors often degrade out-of-domain (OOD) and require large, diverse training sets. In this work, we analyze the linearity and quality of MGT representations and show that simple linear probes outperform a wide range of detectors while being substantially more sample-efficient. We first show that MGT and HWT latent representations are linearly separable in low-dimensional space, and provide a plausible explanation for this separability through systematic differences in their representation quality. Motivated by these insights, we train t",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
    "id": "9eac88872fdd1f11",
    "title": "Score-Based Ideal Observer Approximation via Denoising Score Matching for Signal-Known-Exactly Detection Tasks",
    "url": "https://arxiv.org/abs/2608.24768v1",
@@ -348,14 +393,14 @@
    "tier": 1
   },
   {
-   "id": "0da2e2948113005f",
-   "title": "How to Train a Critic Stably and Efficiently",
-   "url": "https://arxiv.org/abs/2608.23566v1",
-   "publishedAt": "2026-08-24T17:59:39.000Z",
+   "id": "36e2d6213b2ae427",
+   "title": "ExpConCAD: Experience-Guided Text-to-CAD Generation from Shape Descriptions with Implicit Spatial Constraints",
+   "url": "https://arxiv.org/abs/2608.24760v1",
+   "publishedAt": "2026-08-25T15:58:33.000Z",
    "authors": [
-    "Penghui Qi"
+    "Jingyao Liu"
    ],
-   "summary": "Group-based reinforcement learning methods such as GRPO for large language models avoid training a critic by sampling multiple responses for each prompt. A reliable critic could instead estimate token-level advantages from one response, but standard critic-based training recipes are often unstable. We study this instability and develop \\textbf{Best-Practice Critic Optimization (BPCO)}, a recipe that combines DPPO, value predictions bounded to the reward range, Monte Carlo value targets, unnormalized policy advantages, and length-adaptive generalized advantage estimation. Because the critic is used only during training, BPCO can also condition it on reward-defining information, such as a refe",
+   "summary": "Text-to-CAD aims to generate executable CAD programs from natural-language descriptions. However, real-world descriptions are often underspecified and omit critical spatial constraints required for valid CAD construction, a challenge that has been largely overlooked by existing methods. In this paper, we argue that missing spatial constraints should be inferred with respect to the underlying construction structure and informed by reusable design experience. Based on this insight, we propose ExpConCAD, an experience-enhanced framework for implicit spatial constraint completion. ExpConCAD first recovers the intended construction structure and constraint scopes, then retrieves relevant constrai",
    "categories": [
     "cs.CL"
    ],
@@ -363,14 +408,14 @@
    "tier": 1
   },
   {
-   "id": "2710547711014cff",
-   "title": "SWE Refactor Bench: Can Coding Agents Complete a Long-Horizon, Whole-Repository Stack Migration?",
-   "url": "https://arxiv.org/abs/2608.23564v1",
-   "publishedAt": "2026-08-24T17:59:04.000Z",
+   "id": "082c132dc56d1495",
+   "title": "The RAT: A Unified Bayesian Model for RAG Evaluation",
+   "url": "https://arxiv.org/abs/2608.24753v1",
+   "publishedAt": "2026-08-25T15:54:30.000Z",
    "authors": [
-    "Deyao Hong"
+    "Pius von Däniken"
    ],
-   "summary": "Modern software systems accumulate technical debt over decades of development, which makes migration expensive and largely manual. As coding agents become increasingly capable at bug fixing, can they autonomously perform such migrations? Existing benchmarks cannot answer this question because they evaluate only behavioural correctness, not whether the migration actually occurred. This leads an easy hack: agents copy the original implementation to make tests pass. We call this Blindness. To address this problem, we introduce SWE Refactor Bench, a benchmark comprising 20 whole-repository migrations, covering 4 kinds of technical debt. A three-stage evaluation protocol measures both migration c",
+   "summary": "Evaluating Retrieval-Augmented Generation (RAG) systems requires assessing not only end-to-end correctness but also how individual components interact and how errors propagate through the pipeline. We introduce a Bayesian evaluation framework that jointly models retrieval success, abstention behavior, and answer correctness, factorized according to the pipeline's information flow. The model distinguishes task success. Whether the user received a correct answer (from generator success) and whether the generator behaved appropriately given the retrieval outcome. We apply the framework to 27 RAG configurations across three datasets, three retrievers, and three generators, and show that the cond",
    "categories": [
     "cs.CL"
    ],
@@ -378,14 +423,14 @@
    "tier": 1
   },
   {
-   "id": "0ec895def0efaebb",
-   "title": "Prime Agent: A Self-Improving RLM Harness",
-   "url": "https://arxiv.org/abs/2608.23552v1",
-   "publishedAt": "2026-08-24T17:54:19.000Z",
+   "id": "4ada6e633edcf866",
+   "title": "Method, Mind, and Morality: How People Make Sense of Artificial Intelligence",
+   "url": "https://arxiv.org/abs/2608.24748v1",
+   "publishedAt": "2026-08-25T15:52:55.000Z",
    "authors": [
-    "Seth Karten"
+    "Jacy Reese Anthis"
    ],
-   "summary": "Language models are sequential processors, but long-horizon agency requires external information and computation beyond model weights and active context. Prime Agent is an open-source harness for long-horizon evaluation and coding-agent workflows. A persistent IPython REPL follows the Recursive Language Model abstraction for programmatic context processing and test-time compute, while Continual Harness preserves histories, memories, skills, prompts, and subagent specifications across trajectories. Recursive subagents coordinate through direct agent-to-agent communication, and the Agents View lets humans inspect and manage daemon-backed sessions. Prime Agent standardizes execution, recovery, ",
+   "summary": "How can humans make sense of the rapid takeoff of artificial intelligence (AI)? We studied the sensemaking dynamics of AI through an open-ended, mixed-methods study with computational text analysis of millions of AI-related newspaper articles and social media posts grounded in 57 semi-structured interviews with AI professionals in 2021 and 2023--before and after the recent surge of public interest. We identify a range of sociological frames (interpretive schemas that structure collective cognition) and show how AI professionals use frames to address significant cognitive challenges, such as assigning responsibility for societal impacts. We develop a framework of three primary debates across ",
    "categories": [
     "cs.CL"
    ],
@@ -393,14 +438,14 @@
    "tier": 1
   },
   {
-   "id": "158b7b95f034ad27",
-   "title": "ConvergeFlow: Language Flow with Provable Convergence to Token Embeddings",
-   "url": "https://arxiv.org/abs/2608.23551v1",
-   "publishedAt": "2026-08-24T17:54:14.000Z",
+   "id": "ae5407001450b518",
+   "title": "SkillForge: Evolving Verifiable Skills for Reinforcement Learning Agents",
+   "url": "https://arxiv.org/abs/2608.24747v1",
+   "publishedAt": "2026-08-25T15:52:10.000Z",
    "authors": [
-    "Na Li"
+    "Shidong Yang"
    ],
-   "summary": "Recent advances in continuous diffusion and flow-based language models (LMs) have achieved performance competitive with discrete LMs. However, existing continuous frameworks still rely on decoders supervised with cross entropy (CE) because the flow trajectories are not guaranteed to terminate at valid token embeddings. Motivated by this limitation, we introduce \\textbf{ConvergeFlow}, an embedding-space flow-based LM, which constrains the data predictor to the convex hull of token embeddings and trains it solely with the mean squared error objective induced by flow matching. Under suitable regularity conditions, we prove that the resulting flow converges to valid token embeddings despite erro",
+   "summary": "Large language model (LLM) agents are trained with reinforcement learning (RL) for complex decision-making tasks. However, most RL-trained agents remain episodic and cannot accumulate reusable knowledge across episodes. Recent skill-based approaches, such as SkillRL, attempt to address this issue by extracting skills from raw trajectories, but treat the skill bank as an append-only repository without verifying whether stored skills remain effective. In this paper, we propose SkillForge, a framework for continuous skill evolution that enables skills to be verified and refined through environment interaction. By making skill usage explicit during agent interaction, RL can directly optimize bot",
    "categories": [
     "cs.CL"
    ],
@@ -408,14 +453,14 @@
    "tier": 1
   },
   {
-   "id": "5a9e1374becc0fcf",
-   "title": "When Names Cross Scripts: A Source-Grounded Benchmark for Historical Entity Reconciliation in the Mongol World",
-   "url": "https://arxiv.org/abs/2608.23507v1",
-   "publishedAt": "2026-08-24T17:10:36.000Z",
+   "id": "a4b51652a829085d",
+   "title": "Design and Empirical Characterization of a Hardware-Realized Turing Machine with Automated Card-Based Programming",
+   "url": "https://arxiv.org/abs/2608.24742v1",
+   "publishedAt": "2026-08-25T15:48:07.000Z",
    "authors": [
-    "Xiang Chen"
+    "Agrima Regmi"
    ],
-   "summary": "Historical people may appear under different languages, scripts, and transcription traditions, while distinct individuals may share highly similar or even identical names. This makes historical identity reconciliation more than a problem of string matching or transliteration. We introduce MHER, a provenance-controlled benchmark for pairwise reconciliation of person-name attestations from the Mongol world. MHER contains a balanced 396-pair Name-only core over 84 primary historical persons and a stricter 160-pair Source-grounded subset constructed from mention-by-source evidence, with entity-disjoint development and test splits. Across five generative systems, correctly Source-grounded evidenc",
+   "summary": "Physical implementations of Turing Machines remain rare, and existing electromechanical demonstrators and mechanical logic games typically require manual operator intervention, either to trigger each computational step or to reconfigure the state table, or both. This restricts prior physical models to short, operator-paced demonstrations and prevents autonomous execution of extended computations. This paper addresses that gap with a hardware Turing Machine that enables autonomous multi-step execution and reprogrammable optical input without manual intervention between programs. The system integrates an Arduino Mega for state-transition logic, dual NEMA 17 stepper motors for bidirectional tap",
    "categories": [
     "cs.CL"
    ],
@@ -423,14 +468,14 @@
    "tier": 1
   },
   {
-   "id": "d2a768cc46b3a1e2",
-   "title": "Mitigating Reasoning-Induced Misalignment via Safety-Direction Penalty",
-   "url": "https://arxiv.org/abs/2608.23497v1",
-   "publishedAt": "2026-08-24T16:57:28.000Z",
+   "id": "ba41375c6e8ab36c",
+   "title": "Meta$^n$: Recursive Self-Improvement through Emergent Depth",
+   "url": "https://arxiv.org/abs/2608.24735v1",
+   "publishedAt": "2026-08-25T15:44:25.000Z",
    "authors": [
-    "Yipeng Zhao"
+    "Zae Myung Kim"
    ],
-   "summary": "Reasoning-Induced Misalignment, where fine-tuning on reasoning data containing no harmful content, including mathematics, code, and problem-solving with chain-of-thought traces can induce harmful behaviors of LLM, posing a serious challenge to the safety of LLM reasoning. Cross-architecture, cross-scale, and cross-dataset checks show that RIM does not always emerge. Previous work attributed RIM to neuron-level entanglement, but did not identify the geometry of the representation space underlying this entanglement or propose a training-time fix. We provide both: a representation-space analysis of RIM and the Safety-Direction Penalty (SDP), which penalizes movement along a learned safety direc",
+   "summary": "Self-improving LLM agents refine answers, not the process that produces those answers. Systems that add a meta-level hold that level fixed, and those that edit themselves must leave part of their own editing machinery untouched to stay stable, capping the meta-depth they realize at roughly two. We present Meta$^n$, which keeps the meta-operation fixed and recurses on its input instead. That operation, $Ω$, is applied repeatedly to its own products, reading the traces of the solver stack below together with the code that produced them, then writing the next layer as a strategic pre-process and a library of callable helpers. Because $Ω$ never changes, it cannot destabilize the system, and beca",
    "categories": [
     "cs.CL"
    ],
@@ -438,89 +483,14 @@
    "tier": 1
   },
   {
-   "id": "b9679444ab33c490",
-   "title": "On the Threat Model of Weird Generalization and Emergent Misalignment",
-   "url": "https://arxiv.org/abs/2608.23476v1",
-   "publishedAt": "2026-08-24T16:41:52.000Z",
+   "id": "a725b586f7678359",
+   "title": "Arbitrary Polygon Oscillator: Generalizing Polygonal Synthesis to Arbitrary Shapes, Morphing, and Three-Dimensional Polyhedra",
+   "url": "https://arxiv.org/abs/2608.24726v1",
+   "publishedAt": "2026-08-25T15:38:41.000Z",
    "authors": [
-    "Miriam Wanner"
+    "Antonio Argentieri"
    ],
-   "summary": "Narrow fine-tuning on small, domain-specific datasets can produce broad and surprising changes in model behavior-a phenomenon called weird generalization (WG). Yet, it remains unclear what features of the fine-tuning data are necessary for WG to arise. Here, we address this question by investigating a range of plausibly relevant features, including dataset size, composition, language, presentation style, and novelty relative to a model's parametric knowledge. Further, since WG evaluations rely on small question sets that assess the extent of the generalization, we also analyze how sensitive this measurement is to the set of questions used. Experiments with three open-weight models on four da",
-   "categories": [
-    "cs.CL"
-   ],
-   "sourceId": "arxiv",
-   "tier": 1
-  },
-  {
-   "id": "d74a439dafb3a94a",
-   "title": "What's the Catch? Evaluating Temporal Consistency in Vision-Language Models",
-   "url": "https://arxiv.org/abs/2608.23474v1",
-   "publishedAt": "2026-08-24T16:40:49.000Z",
-   "authors": [
-    "Marek Hradil"
-   ],
-   "summary": "Vision-language models (VLMs) achieve strong performance on video and image-sequence benchmarks, yet it remains unclear whether they capture temporal structure. To study this question, we formulate temporal grounding as an anomaly detection problem, providing a simple and controlled evaluation that directly tests sensitivity to temporal consistency. We introduce TimeCatch, where temporal anomalies are created by swapping consecutive frames and frame-level anomalies by replacing a frame with Gaussian noise. Models are evaluated on anomaly detection and localization tasks across four synthetic and real-world datasets, alongside a human study. Our evaluation reveals a substantial gap between fr",
-   "categories": [
-    "cs.CL"
-   ],
-   "sourceId": "arxiv",
-   "tier": 1
-  },
-  {
-   "id": "40337a46f764f7b9",
-   "title": "How Useful are LLMs for Grammar Engineering? Cantonese ParGram Resources and Controlled Experimental Evaluation with English Baselines",
-   "url": "https://arxiv.org/abs/2608.23448v1",
-   "publishedAt": "2026-08-24T16:21:32.000Z",
-   "authors": [
-    "Chit-Fung Lam"
-   ],
-   "summary": "This paper presents new Cantonese ParGram resources and evaluates LLMs for knowledge-driven grammar engineering within a controlled experimental paradigm. Using Cantonese ParGram resources as gold standards, with corresponding English baselines, we investigate whether OpenAI's gpt-oss-120b and GPT-5.4 can generate machine-processable grammars from sentences and target formal structures under systematically varied prompting conditions. GPT-5.4 outperformed gpt-oss-120b, while grammars generated from target formal structures generally outperformed those generated from sentences. Although both models could generate locally plausible phrase-structure rules, lexical entries, and templates, they o",
-   "categories": [
-    "cs.CL"
-   ],
-   "sourceId": "arxiv",
-   "tier": 1
-  },
-  {
-   "id": "04abab52af89befa",
-   "title": "A Comprehensive Analysis of Arabic Natural Language Processing Research: Trends, Topic Evolution, and Research Gaps -- A Bibliometric and Topic-Based Study",
-   "url": "https://arxiv.org/abs/2608.23421v1",
-   "publishedAt": "2026-08-24T16:02:15.000Z",
-   "authors": [
-    "Mullosharaf K. Arabov"
-   ],
-   "summary": "Natural Language Processing (NLP) has grown rapidly over the past decade, driven by digital transformation in the Arab world, social media, and large language models (LLMs). Despite this growth, a comprehensive quantitative meta-analysis of the field remains absent. This study presents a large-scale bibliometric and topic-based analysis of 7,120 Arabic NLP papers published between 1960 and 2026, sourced from six collections. We employ BERTopic for topic modeling, regression analysis to identify citation predictors, social network analysis for co-authorship structures, and geographic mapping. Our findings show a significant publication surge after 2020, driven by transformer models and LLMs. ",
-   "categories": [
-    "cs.CL"
-   ],
-   "sourceId": "arxiv",
-   "tier": 1
-  },
-  {
-   "id": "fae29acdfc22c077",
-   "title": "Robustness of IR Models to Collection Growth",
-   "url": "https://arxiv.org/abs/2608.23419v1",
-   "publishedAt": "2026-08-24T16:00:20.000Z",
-   "authors": [
-    "Emmanouil Georgios Lionis"
-   ],
-   "summary": "Information Retrieval (IR) systems seek to identify relevant documents within a collection. In practical applications, collections are dynamic, with documents frequently added. We argue that ideally, a retriever's effectiveness should not decrease when non-relevant documents are added to a collection. This study formalises this concept and empirically evaluates it by merging two collections with negligible topic overlap. We hypothesise that the way an IR model conditions its ranking on other documents in a collection (e.g., the IDF component in BM25 or contextual documents in listwise rerankers) plays an important role in its robustness to the addition of non-relevant documents. We broadly c",
-   "categories": [
-    "cs.CL"
-   ],
-   "sourceId": "arxiv",
-   "tier": 1
-  },
-  {
-   "id": "675bfd8b360504c2",
-   "title": "STONIC: A Layered Measurement Contract for LLM Value Profiling",
-   "url": "https://arxiv.org/abs/2608.23411v1",
-   "publishedAt": "2026-08-24T15:55:35.000Z",
-   "authors": [
-    "Andrei Chetvergov"
-   ],
-   "summary": "LLM value studies often merge questionnaire ratings, pairwise choices, and values inferred from generated text into one profile. That merge assumes that the three observations describe the same stable preference. STONIC tests this assumption on 5,144 situations from four banks and 35 fixed model configurations. It compares responses rated in isolation, choices made under counterbalanced conflict, spontaneous answers, and later choices between a model's own answer and authored alternatives. 10 of 17 configurations with usable behavioral data preserve the endorsement-choice relation across banks. Every one of the 17 eligible configurations prefers its own earlier answer (median effect 0.790), ",
+   "summary": "Polygonal synthesis generates audio by traversing the perimeter of a polygon with a phasor; prior work uses a constant angular velocity, whereas the proposed system adopts constant arc-length (perimeter) velocity. Existing formulations operate on regular, parametrically defined polygons, producing smooth timbral transitions within a single family of shapes. This paper generalizes polygonal synthesis around a unified arc-length engine: vertex data of any origin feed the same DSP pipeline. First, we adapt the oscillator to accept arbitrary vertex configurations from an external buffer, opening the possibility for a broad class of closed polygons -- regular, irregular, or star-shaped -- to func",
    "categories": [
     "cs.CL"
    ],

@@ -62,6 +62,8 @@ export function commandCenter() {
         ]
       ),
 
+      askBar(),
+
       h("div.grid.g-main", null,
         h("div.stack", null,
           topSignals(clusters, unseen, seen),
@@ -77,6 +79,27 @@ export function commandCenter() {
   }
 
   return root;
+}
+
+/**
+ * A question box on the front page, because the first thing anyone wants from
+ * something like this is to ask it something — and burying that behind a nav
+ * item means most people never find out it is there.
+ */
+function askBar() {
+  const input = h("input.input", {
+    type: "text", placeholder: "Ask anything — what happens if oil rises, how AI capex reaches copper, what am I missing…",
+    style: { height: "36px" },
+    onkeydown: (event) => {
+      if (event.key === "Enter" && event.target.value.trim()) {
+        go(`/ask?q=${encodeURIComponent(event.target.value.trim())}`);
+      }
+    },
+  });
+  return h("div.row-s", { style: { marginBottom: "var(--s5)" } },
+    h("span.grow", null, input),
+    h("button.btn", { type: "button", onclick: () => go(`/ask?q=${encodeURIComponent(input.value.trim())}`) },
+      icon("brain", 12), "Ask"));
 }
 
 function greeting() {

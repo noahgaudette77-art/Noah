@@ -30,6 +30,7 @@ const { main } = buildShell(app);
 
 const ROUTES = [
   ["/", () => import("./ui/views/command-center.js").then((m) => m.commandCenter()), "Command centre"],
+  ["/ask", () => import("./ui/views/ask.js").then((m) => m.askView()), "Ask"],
   ["/daily", () => import("./ui/views/briefs.js").then((m) => m.dailyBrief()), "Daily brief"],
   ["/weekly", () => import("./ui/views/briefs.js").then((m) => m.weeklyBrief()), "Weekly brief"],
   ["/archive", () => import("./ui/views/briefs.js").then((m) => m.archiveView()), "Archive"],
@@ -38,6 +39,8 @@ const ROUTES = [
   ["/economy", () => import("./ui/views/markets.js").then((m) => m.economyView()), "Economy"],
   ["/graph", () => import("./ui/views/model.js").then((m) => m.graphView()), "World model"],
   ["/simulator", () => import("./ui/views/model.js").then((m) => m.simulatorView()), "Simulator"],
+  ["/debates", () => import("./ui/views/debates.js").then((m) => m.debatesView()), "Contrarian"],
+  ["/debates/:id", () => import("./ui/views/debates.js").then((m) => m.debatesView()), "Debate"],
   ["/radar", () => import("./ui/views/radar.js").then((m) => m.radarView()), "AI radar"],
   ["/future", () => import("./ui/views/radar.js").then((m) => m.futureView()), "Future map"],
   ["/knowledge", () => import("./ui/views/knowledge.js").then((m) => m.knowledgeView()), "Knowledge"],
@@ -45,7 +48,11 @@ const ROUTES = [
   ["/history", () => import("./ui/views/knowledge.js").then((m) => m.historyView()), "History"],
   ["/history/:id", () => import("./ui/views/knowledge.js").then((m) => m.historyView()), "Lesson"],
   ["/learn", () => import("./ui/views/learn.js").then((m) => m.learnView()), "Learn"],
+  ["/curriculum", () => import("./ui/views/curriculum.js").then((m) => m.curriculumView()), "Curriculum"],
+  ["/curriculum/:id", () => import("./ui/views/curriculum.js").then((m) => m.curriculumView()), "Track"],
   ["/research", () => import("./ui/views/library.js").then((m) => m.researchView()), "Research"],
+  ["/companies", () => import("./ui/views/companies.js").then((m) => m.companiesView()), "Companies"],
+  ["/companies/:ticker", () => import("./ui/views/companies.js").then((m) => m.companiesView()), "Company"],
   ["/watchlist", () => import("./ui/views/library.js").then((m) => m.watchlistView()), "Watchlist"],
   ["/forecasts", () => import("./ui/views/library.js").then((m) => m.forecastsView()), "Forecasts"],
   ["/sources", () => import("./ui/views/library.js").then((m) => m.sourcesView()), "Sources"],
@@ -111,7 +118,7 @@ fallback(() => {
 
 const NUMBER_ROUTES = {
   1: "/", 2: "/daily", 3: "/weekly", 4: "/stream", 5: "/markets",
-  6: "/graph", 7: "/simulator", 8: "/knowledge", 9: "/learn",
+  6: "/graph", 7: "/simulator", 8: "/knowledge", 9: "/learn", 0: "/ask",
 };
 
 document.addEventListener("keydown", (event) => {
@@ -148,7 +155,8 @@ function showShortcuts() {
         row(["6"], "World model"),
         row(["7"], "Simulator"),
         row(["8"], "Knowledge base"),
-        row(["9"], "Learn")),
+        row(["9"], "Learn"),
+        row(["0"], "Ask")),
     ]);
   });
 }
@@ -168,7 +176,7 @@ onNavigate(() => {
 
 /* --- Data ---------------------------------------------------------------- */
 
-loadAll(["manifest", "stories", "markets"]).then(() => {
+loadAll(["manifest", "stories", "markets", "fundamentals"]).then(() => {
   invalidateSearch();
   const manifest = session.at("datasets.manifest", {});
   if (manifest?.data?.gaps?.length) {

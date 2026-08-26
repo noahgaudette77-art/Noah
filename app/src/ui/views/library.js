@@ -177,7 +177,11 @@ export function watchlistView() {
                   return h("div.rowitem", null,
                     h("span.grow", null,
                       h("div.row-s.wrap", null,
-                        h("span.rowitem__title", { style: { fontSize: "var(--t-body)" } }, entry.ticker),
+                        h("button", {
+                          type: "button", class: "rowitem__title",
+                          style: { fontSize: "var(--t-body)", color: "var(--cyan)" },
+                          onclick: () => go(`/companies/${entry.ticker}`),
+                        }, entry.ticker),
                         h("span.dim", entry.name || ""),
                         target && badge(target.label, "cyan")),
                       recent.length
@@ -211,6 +215,8 @@ export function watchlistView() {
         h("div.stack", null,
           panel({
             title: "Companies the pipeline covers",
+            actions: h("button.btn.btn--sm", { type: "button", onclick: () => go("/companies") },
+              "Full screen", icon("chevron", 11)),
             sub: `${Object.keys(tracked).length}`,
             flush: true,
             body: Object.keys(tracked).length
@@ -395,7 +401,7 @@ export function sourcesView() {
 
       manifest ? panel({
         title: "Last pipeline run",
-        sub: ago(manifest.generatedAt),
+        sub: manifest.partial ? `${ago(manifest.generatedAt)} · partial` : ago(manifest.generatedAt),
         body: h("div.stack", null,
           h("div.statgrid", null,
             stat({ label: "Duration", value: `${Math.round(manifest.durationMs / 1000)}`, unit: "s" }),
@@ -413,7 +419,9 @@ export function sourcesView() {
             h("span.grow", null,
               h("div.row-s.wrap", null,
                 h("span", { style: { fontSize: "var(--t-body)" } }, entry.label),
-                badge(`${entry.ms}ms`),
+                entry.carriedFrom
+                  ? badge(`from ${ago(entry.carriedFrom)}`, "warn")
+                  : badge(`${entry.ms}ms`),
                 ...Object.entries(entry.counts || {}).filter(([, value]) => value)
                   .map(([key, value]) => badge(`${value} ${key}`, "cyan"))),
               entry.error && h("div.rowitem__meta", { style: { color: "var(--down)" } }, entry.error),
@@ -421,6 +429,7 @@ export function sourcesView() {
         ),
         foot: manifest.gaps?.length
           ? `${plural(manifest.gaps.length, "source")} reported a gap. Gaps are recorded rather than filled in — every view that depends on missing data shows an empty state naming what is absent.`
+          + (manifest.partial ? " A partial run carries forward what the sources it skipped reported last time, so a gap is never silently cleared by not looking." : "")
           : "Every source answered on the last run.",
       }) : panel({ title: "Pipeline", body: pipelineEmpty("manifest") }),
 

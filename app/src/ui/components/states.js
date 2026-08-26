@@ -53,7 +53,3 @@ export function loadingRows(count = 4) {
     ...Array.from({ length: count }, (_, i) =>
       h("div.skel", { style: { width: `${96 - i * 9}%` } })));
 }
-
-export function noneYet(title, body, action = null) {
-  return empty({ icon: "bookmark", title, body, action });
-}

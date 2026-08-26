@@ -63,6 +63,15 @@ export const DATASETS = {
     describes: "Recent SEC filings for tracked companies.",
     sources: ["sec-edgar"],
   },
+  fundamentals: {
+    path: "fundamentals.json",
+    label: "Company fundamentals",
+    maxAgeHours: 24 * 10,
+    produces: "npm run intel -- --fundamentals",
+    describes: "Revenue, margins, cash flow and balance sheet as filed with the SEC, for the companies that sit on a node in the world model.",
+    sources: ["sec-edgar"],
+    caveat: "Reported figures only. No prices, no estimates and no valuation — so this can describe how a business performs and cannot say whether its shares are cheap.",
+  },
   calendar: {
     path: "calendar.json",
     label: "Week ahead",
@@ -80,8 +89,6 @@ export const DATASETS = {
     sources: [],
   },
 };
-
-export const DATASET_KEYS = Object.keys(DATASETS);
 
 /**
  * Where the JSON lives. Resolved relative to the app document so the same build

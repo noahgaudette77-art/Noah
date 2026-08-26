@@ -125,6 +125,16 @@ reader exactly what is missing. Notable properties:
 - **Partial runs merge.** `--only=boc` carries forward what the skipped sources
   wrote last time rather than deleting it. Cluster identity is derived from the
   lead item, not a loop index, so merging is idempotent.
+- **Gaps survive partial runs too.** The manifest carries forward the *failure*
+  records of sources it skipped, marked with when they were recorded. Without
+  that, re-running one adapter would clear "one source is failing" from the
+  status bar by not looking — the exact failure mode the manifest exists to
+  prevent.
+- **Soft rejections are retried.** Several public services return 403 or 406
+  under load rather than as real authorisation or content-negotiation failures;
+  the same URL and headers succeed seconds later. Treating those as permanent
+  silently drops a source, so they are retried with backoff and only recorded as
+  a gap if they persist.
 
 Stage detail: deduplication is URL-canonical plus title Jaccard; clustering is
 agglomerative with **average link** (single link chains unrelated stories through
@@ -140,7 +150,75 @@ database, no secrets beyond an optional contact address.
 
 ---
 
-## 5. The learning system
+## 5. Companies, without a price
+
+The most useful thing EDGAR gives away is XBRL company facts: revenue, margins,
+cash flow, balance sheet and share counts exactly as filed, going back over a
+decade, for anyone who declares a contact address. That is enough for a real
+fundamental screen — 26 companies, each attached to the world-model node its
+economics actually depend on.
+
+What it is not enough for is valuation, and the interface says so on every
+surface that shows a number. Without a price there is no multiple, no yield, no
+market capitalisation. The profile score is a **percentile rank within the
+covered universe** across growth, profitability, cash generation, returns,
+balance sheet and consistency — a rank, not a rating, and silent on whether
+anything is cheap. Categories that would need a price (Undervalued, Contrarian,
+High risk / high potential) are listed as unavailable rather than approximated.
+
+Three things in the extractor are load-bearing and were only discovered by
+running it:
+
+- **Tag fallbacks.** Filers move between XBRL concepts as standards change. A
+  single-tag extractor silently truncates a company's history at the year it
+  switched, and the truncation looks like data rather than like a bug.
+- **One currency per company.** TSM files the same fact in TWD and USD with very
+  different coverage. Mixing them produced a −96% revenue growth rate that was
+  arithmetically fine and completely wrong. The dominant currency is now chosen
+  once and every monetary metric locked to it — which also means absolute
+  revenue is not comparable across filers, while every ratio is.
+- **Tickers move.** `XOM` currently resolves to a newly-registered holding
+  entity with no filing history. Rather than render a mysteriously blank row, it
+  is excluded, named, and explained.
+
+The per-company page pairs the filed figures with a **research frame** rather
+than a thesis: the model supplies what drives and what pressures that company's
+node, each with its mechanism and confidence, plus the modelled risks that
+actually reach it. The argument is left to the reader, which is the only honest
+division of labour when the platform cannot see a price.
+
+---
+
+## 6. Contrarian, curriculum, ask
+
+Three surfaces built on top of what already existed rather than beside it.
+
+**Contrarian** has two halves. Ten authored debates state consensus and the case
+against it at their strongest, and each ends with what would settle it — the only
+part of an opinion that does any work, and the part almost always missing. The
+derived half asks the model which consequences of this week's material are
+*underappreciated*, on the heuristic that markets price first-order effects
+within hours, so what survives as an edge is well-evidenced, several steps out
+and slow. It names specific nodes precisely so the heuristic can be checked. It
+also names what is **already priced**, because most claims presented as
+contrarian are first-order effects in costume.
+
+**Curriculum** answers a different question from the gap ranker. Gaps say what
+you are weakest at; tracks say what to learn *in what order*, which matters
+because most of these ideas are only comprehensible once another is in place.
+Seven tracks, 26 stages, every one of the 57 concepts covered, and each stage
+states its goal as something you should be able to *do*.
+
+**Ask** is a deterministic query interface — no language model, nothing
+generated. A question is matched to one of ten intents, entities are resolved
+against the corpora (with an alias table, because people type "the Fed" and
+"stocks"), and the answer is assembled from the engines that already exist. The
+consequence is a system that cannot hallucinate and also cannot bluff: an
+unmatched question returns an honest miss and a list of what it *can* answer.
+
+---
+
+## 7. The learning system
 
 Scores are designed to be hard to game, because a score you can farm is not
 feedback. Opening a page earns 4 XP; answering a hard question correctly earns 26;
@@ -160,7 +238,7 @@ misconceptions, and unbounded generated questions from the world model.
 
 ---
 
-## 6. Layout
+## 8. Layout
 
 ```
 app/
@@ -168,8 +246,9 @@ app/
   styles/               tokens → base → components
   src/
     core/               dom, store, router, format          (no domain knowledge)
-    domain/             worldmodel, propagate, learning,
-                        quiz, confidence                    (no DOM)
+    domain/             worldmodel, propagate, learning, quiz,
+                        company, contrarian, curriculum,
+                        ask, confidence                     (no DOM)
     content/            the authored corpus                 (data only)
     data/               registry, loader, status vocabulary
     ui/                 shell, palette, search, charts,
@@ -185,7 +264,7 @@ simulation in the browser cannot drift apart.
 
 ---
 
-## 7. Running it
+## 9. Running it
 
 ```bash
 node scripts/serve.js                  # http://localhost:4173/app/index.html
@@ -193,6 +272,7 @@ INTEL_CONTACT=you@example.com \
   node pipeline/run.js --brief         # fetch real data, write snapshots
 npm run check                          # syntax-check every module
 npm run test:browser                   # needs playwright installed separately
+node pipeline/run.js --fundamentals    # refresh company filings (weekly cadence)
 ```
 
 The application works before the pipeline has ever run. Views that need data show
@@ -200,9 +280,10 @@ what is missing and the command that produces it.
 
 ---
 
-## 8. What is deliberately not here
+## 10. What is deliberately not here
 
-- **No prices.** Explained above. The slot exists; it is empty on purpose.
+- **No prices.** Explained above. The slot exists; it is empty on purpose, and
+  every company surface repeats what its absence costs.
 - **No LLM at runtime.** Nothing in the browser calls a model. Summaries,
   explanations, questions and chains are authored or derived. An optional
   server-side analysis stage can be added to the pipeline, where a key can be held
@@ -214,10 +295,12 @@ what is missing and the command that produces it.
 
 ---
 
-## 9. What I would build next
+## 11. What I would build next
 
 1. **A keyed market-data adapter** behind the existing provider interface —
-   equities, commodities and volatility, which are the largest genuine gap.
+   equities, commodities and volatility. It is now the largest gap by some
+   distance, because it is the one thing standing between a fundamental screen
+   and a genuine opportunity screen.
 2. **A server-side AI stage in the pipeline** for summarisation and entity
    extraction, with output labelled as model-generated and every claim still
    carrying its source. The client stays model-free.
@@ -227,3 +310,7 @@ what is missing and the command that produces it.
 4. **Widening the world model.** 217 edges cover the macro-financial and AI-energy
    chains well and healthcare, defence and agriculture thinly. The format makes
    extension mechanical.
+5. **Widening company coverage** beyond the 26 that sit on a model node, and
+   adding segment-level revenue where filers disclose it.
+6. **Teaching `ask` to compose** — it routes to one intent today, where several
+   questions would be better answered by two engines in sequence.

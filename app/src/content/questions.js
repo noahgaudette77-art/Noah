@@ -284,5 +284,4 @@ export const QUESTIONS = [
     "Aggregate gains coexist with concentrated losses — Stolper–Samuelson implies the scarce factor loses in real terms. The China shock literature found adjustment costs were far larger and more persistent than the model's assumption of costless reallocation. That is the entire political economy of trade in one sentence."),
 ];
 
-export const QUESTION_BY_ID = new Map(QUESTIONS.map((question) => [question.id, question]));
 export const questionsForConcept = (conceptId) => QUESTIONS.filter((question) => question.concept === conceptId);

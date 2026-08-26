@@ -115,13 +115,6 @@ export function empty({ icon: iconName = "layers", title, body, action = null })
   );
 }
 
-export function skeleton(rows = 3) {
-  return h("div.stack-s", { "aria-busy": "true" },
-    ...Array.from({ length: rows }, (_, i) =>
-      h("div.skel", { style: { width: `${100 - i * 12}%` } }))
-  );
-}
-
 export function callout(label, body, variant = "") {
   return h(`div.callout${variant ? `.callout--${variant}` : ""}`, null,
     label && h("div.callout__label", label),
@@ -155,10 +148,6 @@ export function tabs(items, active, onSelect) {
       onclick: () => onSelect(item.id),
     }, item.label, item.count !== undefined && h("span.faint", ` ${item.count}`)))
   );
-}
-
-export function statGrid(stats) {
-  return h("div.statgrid", null, ...stats.map((entry) => stat(entry)));
 }
 
 /** Arrow + tone for a modelled direction, with the vocabulary the node deserves. */
