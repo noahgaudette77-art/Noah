@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-mode="focus" data-state="idle">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Desk Lamp — a study timer</title>
+<meta name="description" content="A study timer you read at a glance: a lamp that glows warm amber while you work and cools to blue on a break, wrapped around a single ring of remaining time.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#14110c">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/jost-200-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/jost-300-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/fonts.css">
+<link rel="stylesheet" href="lamp.css">
+</head>
+<body>
+
+<div class="pool" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<a class="skip" href="#stage">Skip to the timer</a>
+
+<div class="app">
+
+  <header class="bar">
+    <p class="brand">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity=".3" stroke-width="1.6"/>
+        <path d="M8 2a6 6 0 0 1 5.2 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="8" cy="2" r="1.9" fill="currentColor"/>
+      </svg>
+      <span>Desk Lamp</span>
+    </p>
+    <div class="bar__actions">
+      <button class="icon-btn" type="button" data-action="settings"
+              aria-controls="settings" aria-expanded="false" aria-label="Settings" title="Settings">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+             stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+          <path d="M3 6h9M15.5 6H17M3 14h3M9.5 14H17"/>
+          <circle cx="13.75" cy="6" r="1.75"/><circle cx="7.75" cy="14" r="1.75"/>
+        </svg>
+      </button>
+      <button class="icon-btn" type="button" data-action="immerse"
+              aria-pressed="false" aria-label="Focus mode" title="Focus mode (F)">
+        <svg class="is-in" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+             stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7.5 3H3v4.5M12.5 3H17v4.5M17 12.5V17h-4.5M3 12.5V17h4.5"/>
+        </svg>
+        <svg class="is-out" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+             stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 7.5h4.5V3M17 7.5h-4.5V3M17 12.5h-4.5V17M3 12.5h4.5V17"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="column">
+
+      <!-- The dial. The ring is the reading; the numerals are the confirmation. -->
+      <div class="dial">
+        <svg class="dial__ring" viewBox="0 0 240 240" aria-hidden="true" focusable="false">
+          <g class="ring__ticks">
+            <path d="M120 3v5M237 120h-5M120 237v-5M3 120h5"/>
+          </g>
+          <circle class="ring__track" cx="120" cy="120" r="104"/>
+          <circle class="ring__arc" id="arc" cx="120" cy="120" r="104"/>
+          <g class="ring__head" id="head"><circle cx="120" cy="16" r="4.6"/></g>
+        </svg>
+
+        <div class="dial__face">
+          <p class="dial__mode" id="mode">Focus</p>
+          <p class="dial__time" id="clock" role="timer" aria-atomic="true"
+             aria-label="Time remaining"></p>
+          <label class="visually-hidden" for="task">What you are working on</label>
+          <input class="dial__task" id="task" type="text" autocomplete="off"
+                 spellcheck="false" maxlength="60" placeholder="What are you working on?">
+        </div>
+      </div>
+
+      <ol class="cycle" id="cycle" aria-label="Rounds in this cycle"></ol>
+
+      <div class="controls">
+        <button class="btn btn--primary" type="button" data-action="toggle" id="toggle">Start</button>
+        <button class="btn" type="button" data-action="reset">Reset</button>
+        <button class="btn" type="button" data-action="skip" id="skip">Skip</button>
+      </div>
+
+      <p class="hints">
+        <kbd>space</kbd> start or pause &nbsp;·&nbsp; <kbd>f</kbd> focus mode
+        &nbsp;·&nbsp; <kbd>r</kbd> reset &nbsp;·&nbsp; <kbd>s</kbd> skip
+      </p>
+
+    </div>
+  </main>
+</div>
+
+<div class="scrim" data-action="close" hidden></div>
+
+<aside class="panel" id="settings" role="dialog" aria-modal="true"
+       aria-labelledby="settings-title" hidden>
+  <header class="panel__head">
+    <h2 id="settings-title">Settings</h2>
+    <button class="icon-btn" type="button" data-action="close" aria-label="Close settings">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+           stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+        <path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="panel__body">
+    <div class="panel__group">
+      <p class="panel__legend">Lengths</p>
+      <div class="field">
+        <label for="set-focus">Study block</label>
+        <span class="field__control">
+          <input id="set-focus" type="number" min="1" max="180" step="1" data-setting="focus">
+          <span class="unit">min</span>
+        </span>
+      </div>
+      <div class="field">
+        <label for="set-break">Short break</label>
+        <span class="field__control">
+          <input id="set-break" type="number" min="1" max="60" step="1" data-setting="break">
+          <span class="unit">min</span>
+        </span>
+      </div>
+      <div class="field">
+        <label for="set-long">Long break</label>
+        <span class="field__control">
+          <input id="set-long" type="number" min="1" max="90" step="1" data-setting="long">
+          <span class="unit">min</span>
+        </span>
+      </div>
+      <div class="field">
+        <label for="set-rounds">Rounds before a long break</label>
+        <span class="field__control">
+          <input id="set-rounds" type="number" min="2" max="8" step="1" data-setting="rounds">
+          <span class="unit"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="panel__group">
+      <p class="panel__legend">Behaviour</p>
+      <div class="switch">
+        <label for="set-auto">Start the next block on its own</label>
+        <input id="set-auto" type="checkbox" data-setting="auto">
+      </div>
+      <div class="switch">
+        <label for="set-chime">Chime when the light changes</label>
+        <input id="set-chime" type="checkbox" data-setting="chime">
+      </div>
+      <div class="switch">
+        <label for="set-awake">Keep the screen awake</label>
+        <input id="set-awake" type="checkbox" data-setting="awake">
+      </div>
+    </div>
+
+    <div class="panel__group">
+      <p class="panel__legend">Light</p>
+      <div class="switch">
+        <label for="set-glow">Turn the glow down</label>
+        <input id="set-glow" type="checkbox" data-setting="dim">
+      </div>
+      <button class="link" type="button" data-action="defaults">Restore defaults</button>
+    </div>
+  </div>
+</aside>
+
+<p class="visually-hidden" id="announce" role="status" aria-live="polite"></p>
+
+<script src="lamp.js"></script>
+</body>
+</html>

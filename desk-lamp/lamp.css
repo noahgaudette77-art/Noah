@@ -1,0 +1,697 @@
+/* ==========================================================================
+   Desk Lamp — a study timer that behaves like a lamp on your desk.
+
+   One number drives the whole palette: --warmth, 1 for a study block and 0
+   for a break. Every colour is mixed from it, so switching modes is a single
+   transition rather than a theme swap. A second number, --lumen, is the
+   dimmer: idle is low, running is full, paused drops back down.
+
+   Tokens → reset → room → bar → dial → controls → panel → focus → responsive.
+   ========================================================================== */
+
+/* --- Tokens ------------------------------------------------------------- */
+
+/* Registering these makes them animatable — an unregistered custom property
+   snaps from one value to the next, which would defeat the whole idea. */
+@property --warmth { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --lumen  { syntax: "<number>"; inherits: true; initial-value: 1; }
+
+:root {
+  /* The two ends of the lamp's range. Mixing in oklab passes through a
+     near-neutral white rather than through green, the way a real bulb does. */
+  --amber: oklch(0.83 0.155 68);
+  --azure: oklch(0.81 0.112 248);
+  --lamp: color-mix(in oklab, var(--amber) calc(var(--warmth) * 100%), var(--azure));
+
+  --room-warm: oklch(0.155 0.018 68);
+  --room-cool: oklch(0.155 0.022 250);
+  --room: color-mix(in oklab, var(--room-warm) calc(var(--warmth) * 100%), var(--room-cool));
+
+  --ink: color-mix(in oklab, var(--lamp) 16%, oklch(0.97 0.006 90));
+  --ink-2: color-mix(in oklab, var(--ink) 68%, transparent);
+  --ink-3: color-mix(in oklab, var(--ink) 52%, transparent);
+
+  --surface: color-mix(in oklab, var(--lamp) 7%, oklch(0.225 0.014 80));
+  --edge: color-mix(in oklab, var(--lamp) 52%, transparent);
+  --edge-soft: color-mix(in oklab, var(--lamp) 11%, transparent);
+
+  /* Derived light. The dimmer reaches the ring itself, not only the room, so
+     a paused timer reads as paused from across the desk. */
+  --arc: color-mix(in oklab, var(--lamp) calc(38% + var(--lumen) * 62%), transparent);
+  --arc-glow: color-mix(in oklab, var(--lamp) calc(var(--lumen) * 52%), transparent);
+  --filament: color-mix(in oklab, var(--lamp) 42%, white);
+  --pool-core: color-mix(in oklab, var(--lamp) calc(var(--lumen) * 26%), transparent);
+  --pool-wash: color-mix(in oklab, var(--lamp) calc(var(--lumen) * 7%), transparent);
+  --lamp-solid: color-mix(in oklab, var(--lamp) 88%, black);
+  --lamp-halo: color-mix(in oklab, var(--lamp) 34%, transparent);
+  --lamp-veil: color-mix(in oklab, var(--lamp) 30%, transparent);
+  --lamp-faint: color-mix(in oklab, var(--lamp) 18%, transparent);
+  --on-lamp: #17130c;
+
+  /* The dial is the layout. Everything else is sized against it. */
+  --dial: min(76vmin, 30rem, 58vh);
+  --glow: calc(0.5rem + var(--lumen) * 1.6rem);
+
+  --ui: "Jost", "Futura", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 0.4s;
+  --warm-dur: 1.4s;
+
+  --z-bar: 20;
+  --z-panel: 60;
+
+  --warmth: 1;
+  --lumen: 0.45;
+
+  color-scheme: dark;
+  transition: --warmth var(--warm-dur) var(--ease), --lumen 0.9s var(--ease);
+}
+
+/* The lamp cools on a break, and dims when it is off or held. */
+:root[data-mode="break"],
+:root[data-mode="long"] { --warmth: 0; }
+
+:root[data-state="running"] { --lumen: 1; }
+:root[data-state="paused"] { --lumen: 0.26; }
+
+/* The last minute of a block: the lamp leans a little brighter, so you can
+   feel the end coming without looking at the numbers. */
+:root[data-finale="true"][data-state="running"] { --lumen: 1.16; }
+
+:root[data-glow="low"] { --glow: 0.4rem; }
+
+/* Browsers without color-mix() get a flat two-tone palette. Everything else
+   in the sheet is written against the same token names, so nothing else
+   changes — only the crossfade between them is lost. */
+@supports not (color: color-mix(in oklab, red 50%, blue)) {
+  :root {
+    --lamp: #ffb75e;
+    --room: #14110c;
+    --ink: #f6efe3;
+    --ink-2: rgba(246, 239, 227, 0.68);
+    --ink-3: rgba(246, 239, 227, 0.52);
+    --surface: #201b14;
+    --edge: rgba(255, 183, 94, 0.52);
+    --edge-soft: rgba(255, 183, 94, 0.13);
+    --arc: #ffb75e;
+    --arc-glow: rgba(255, 183, 94, 0.5);
+    --filament: #ffe2ba;
+    --pool-core: rgba(255, 183, 94, 0.12);
+    --pool-wash: rgba(255, 183, 94, 0.04);
+    --lamp-solid: #e9a34f;
+    --lamp-halo: rgba(255, 183, 94, 0.34);
+    --lamp-veil: rgba(255, 183, 94, 0.3);
+    --lamp-faint: rgba(255, 183, 94, 0.18);
+    --on-lamp: #17130c;
+  }
+  :root[data-mode="break"],
+  :root[data-mode="long"] {
+    --lamp: #7fb6ff;
+    --room: #0c1016;
+    --ink: #eef2f8;
+    --ink-2: rgba(238, 242, 248, 0.68);
+    --ink-3: rgba(238, 242, 248, 0.52);
+    --surface: #161c25;
+    --edge: rgba(127, 182, 255, 0.52);
+    --edge-soft: rgba(127, 182, 255, 0.13);
+    --arc: #7fb6ff;
+    --arc-glow: rgba(127, 182, 255, 0.5);
+    --filament: #d3e6ff;
+    --pool-core: rgba(127, 182, 255, 0.12);
+    --pool-wash: rgba(127, 182, 255, 0.04);
+    --lamp-solid: #71a5e9;
+    --lamp-halo: rgba(127, 182, 255, 0.34);
+    --lamp-veil: rgba(127, 182, 255, 0.3);
+    --lamp-faint: rgba(127, 182, 255, 0.18);
+    --on-lamp: #0b1119;
+  }
+}
+
+/* --- Reset -------------------------------------------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--room);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-weight: 300;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: background var(--warm-dur) var(--ease);
+}
+
+button, input, select { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.skip {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 100;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transform: translate(-50%, -300%);
+}
+.skip:focus { transform: translate(-50%, 0); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- The room ----------------------------------------------------------- */
+
+/* The pool of light the lamp throws. Two stacked gradients: a tight one under
+   the dial and a wide wash that reaches the corners. */
+.pool {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 40% at 50% 44%, var(--pool-core) 0%, transparent 72%),
+    radial-gradient(120% 86% at 50% 30%, var(--pool-wash) 0%, transparent 78%);
+}
+
+/* A vignette pulls the corners down so the pool reads as light, not as a
+   background colour. */
+.pool::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(78% 68% at 50% 46%, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* Film grain, so the large flat areas do not band on cheap panels. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- Shell and bar ------------------------------------------------------ */
+.app {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+}
+
+.bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--z-bar);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: calc(1rem + env(safe-area-inset-top)) calc(1.25rem + env(safe-area-inset-right))
+           1rem calc(1.25rem + env(safe-area-inset-left));
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.brand svg { display: block; color: var(--lamp); }
+
+.bar__actions { display: flex; gap: 0.35rem; }
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.icon-btn:hover { color: var(--ink); background: var(--edge-soft); border-color: var(--edge); }
+.icon-btn svg { display: block; }
+
+/* The expand/collapse pair swap according to the document's focus state. */
+.icon-btn .is-out { display: none; }
+:root[data-immersive="true"] .icon-btn .is-in { display: none; }
+:root[data-immersive="true"] .icon-btn .is-out { display: block; }
+
+/* --- Stage -------------------------------------------------------------- */
+.stage {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(3.5rem, 9vh, 5rem) 1.25rem clamp(1.5rem, 5vh, 3rem);
+}
+
+.column {
+  display: grid;
+  justify-items: center;
+  gap: clamp(1.1rem, 3.2vh, 2rem);
+}
+
+/* --- The dial ----------------------------------------------------------- */
+.dial {
+  position: relative;
+  width: var(--dial);
+  height: var(--dial);
+  transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
+}
+
+.dial__ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;              /* let the arc's glow spill past the viewBox */
+}
+
+.ring__ticks {
+  fill: none;
+  stroke: var(--edge-soft);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.ring__track {
+  fill: none;
+  stroke: var(--edge-soft);
+  stroke-width: 5.5;
+}
+
+.ring__arc {
+  fill: none;
+  stroke: var(--arc);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  transform: rotate(-90deg);      /* start the sweep at twelve o'clock */
+  transform-origin: 120px 120px;
+  filter: drop-shadow(0 0 var(--glow) var(--arc-glow));
+}
+
+/* The filament: the bright point the arc is burning back from. It travels
+   clockwise like a hand, which is the part you read without thinking. */
+.ring__head {
+  transform-origin: 120px 120px;
+  /* The filament dims with the rest of the lamp rather than staying the
+     brightest thing on a paused screen. */
+  opacity: calc(0.45 + var(--lumen) * 0.55);
+}
+.ring__head circle {
+  fill: var(--filament);
+  filter: drop-shadow(0 0 calc(var(--glow) * 0.8) var(--lamp));
+}
+
+:root[data-state="idle"] .ring__head,
+:root[data-state="done"] .ring__head { opacity: 0; }
+.ring__head { transition: opacity var(--dur) var(--ease); }
+
+.dial__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: calc(var(--dial) * 0.02);
+  padding-inline: 17%;
+  text-align: center;
+}
+
+.dial__mode {
+  margin: 0;
+  padding-left: 0.34em;           /* optical centring against the tracking */
+  font-size: calc(var(--dial) * 0.033);
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.dial__time {
+  display: flex;
+  margin: 0;
+  font-size: calc(var(--dial) * 0.2);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+/* Fixed slots rather than tabular figures, so the clock cannot shuffle even
+   if the face has no tnum table. */
+.dial__time span {
+  display: inline-block;
+  width: 0.6em;
+  text-align: center;
+}
+.dial__time .colon {
+  width: 0.28em;
+  color: var(--ink-3);
+}
+
+/* Only the digits that changed move, and only a little. */
+@keyframes tick {
+  from { opacity: 0.25; transform: translateY(-0.05em); }
+  to { opacity: 1; transform: none; }
+}
+.dial__time span.is-tick { animation: tick 0.3s var(--ease); }
+
+.dial__task {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: calc(var(--dial) * 0.04);
+  font-weight: 300;
+  text-align: center;
+  text-overflow: ellipsis;
+  color: var(--ink);
+  transition: background var(--dur) var(--ease);
+}
+.dial__task::placeholder { color: var(--ink-2); }
+.dial__task:hover { background: var(--edge-soft); }
+.dial__task:focus { background: var(--edge-soft); outline-offset: 0; }
+
+/* --- Rounds ------------------------------------------------------------- */
+.cycle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cycle li {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.cycle li.is-done { background: var(--lamp); border-color: var(--lamp); }
+.cycle li.is-now {
+  border-color: var(--lamp);
+  box-shadow: 0 0 0 3px var(--lamp-faint);
+}
+
+/* --- Controls ----------------------------------------------------------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.btn {
+  padding: 0.7rem 1.35rem;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.btn:hover { color: var(--ink); background: var(--edge-soft); }
+
+.btn--primary {
+  min-width: 9.5rem;
+  padding-inline: 2rem;
+  border-color: transparent;
+  background: var(--lamp-solid);
+  color: var(--on-lamp);
+  box-shadow: 0 0 calc(var(--glow) * 1.4) var(--lamp-halo);
+}
+.btn--primary:hover {
+  background: var(--lamp);
+  color: var(--on-lamp);
+}
+
+.hints {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-align: center;
+}
+.hints kbd {
+  font: inherit;
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--edge-soft);
+  border-radius: 4px;
+  color: var(--ink-2);
+}
+
+/* --- Settings ----------------------------------------------------------- */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-panel) - 1);
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.scrim[data-open="true"] { opacity: 1; }
+
+.panel {
+  position: fixed;
+  z-index: var(--z-panel);
+  inset: 0 0 0 auto;
+  width: min(22rem, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--edge-soft);
+  box-shadow: -1px 0 60px rgba(0, 0, 0, 0.55);
+  transform: translateX(100%);
+  transition: transform var(--dur) var(--ease);
+}
+.panel[data-open="true"] { transform: translateX(0); }
+
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: calc(1.1rem + env(safe-area-inset-top)) 1rem 1.1rem 1.35rem;
+  border-bottom: 1px solid var(--edge-soft);
+}
+.panel__head h2 {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.35rem 1.35rem calc(1.35rem + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 1.1rem;
+  align-content: start;
+}
+
+.panel__group {
+  display: grid;
+  gap: 0.9rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--edge-soft);
+}
+.panel__group:last-of-type { border-bottom: 0; padding-bottom: 0; }
+.panel__legend {
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.field label { font-size: 0.9375rem; color: var(--ink-2); }
+.field input {
+  width: 4.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  text-align: right;
+  font-weight: 300;
+}
+.field .unit {
+  display: inline-block;
+  width: 2rem;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+.field__control { display: flex; align-items: center; gap: 0.5rem; }
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.switch label { font-size: 0.9375rem; color: var(--ink-2); cursor: pointer; }
+.switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 2.5rem;
+  height: 1.4rem;
+  margin: 0;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.switch input::after {
+  content: "";
+  display: block;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0.15rem;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.switch input:checked {
+  background: var(--lamp-veil);
+  border-color: var(--lamp);
+}
+.switch input:checked::after { transform: translateX(1.1rem); background: var(--lamp); }
+
+.link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.link:hover { color: var(--ink-2); }
+
+/* --- Focus mode --------------------------------------------------------- */
+/* Full screen strips the page back to the lamp. The bar and the controls stay
+   in the document — they simply fade out once you stop moving, and come back
+   the moment you do. */
+:root[data-immersive="true"] { --dial: min(86vmin, 40rem, 76vh); }
+:root[data-immersive="true"] .cycle,
+:root[data-immersive="true"] .hints { display: none; }
+:root[data-immersive="true"] .stage { padding-block: 1.5rem; }
+
+:root[data-quiet="true"] { cursor: none; }
+:root[data-quiet="true"] .bar {
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  pointer-events: none;
+}
+:root[data-quiet="true"] .controls {
+  opacity: 0;
+  transform: translateY(0.5rem);
+  pointer-events: none;
+}
+
+/* --- Responsive --------------------------------------------------------- */
+@media (max-width: 30rem) {
+  /* A phone has no chrome to leave room for — let the dial take the width. */
+  :root { --dial: min(84vmin, 30rem, 54vh); }
+  .panel {
+    inset: auto 0 0;
+    width: 100%;
+    max-height: 88dvh;
+    border-left: 0;
+    border-top: 1px solid var(--edge-soft);
+    border-radius: 18px 18px 0 0;
+    transform: translateY(100%);
+  }
+  .panel[data-open="true"] { transform: translateY(0); }
+  .brand span { display: none; }
+  .btn { padding-inline: 1.1rem; }
+  .btn--primary { min-width: 8rem; padding-inline: 1.6rem; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .hints { display: none; }
+}
+
+/* Short and wide: give the dial the height it can have and drop the extras. */
+@media (max-height: 34rem) {
+  :root { --dial: min(64vmin, 30rem, 62vh); }
+  .hints { display: none; }
+}
+
+/* --- Motion and contrast ------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --warm-dur: 0.01ms;
+    --dur: 0.01ms;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: var(--ink);
+    --ink-3: var(--ink);
+    --edge: var(--lamp);
+    --edge-soft: var(--lamp-veil);
+  }
+  .ring__track { stroke: var(--lamp-veil); }
+}
