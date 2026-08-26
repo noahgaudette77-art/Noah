@@ -72,6 +72,13 @@ Changing `--oxblood`, `--brass` or the type scale restyles the whole site.
   to close, `aria-pressed`/`aria-expanded` state on every control.
 - Honours `prefers-reduced-motion`, and prints cleanly.
 
+## Also in this repository
+
+`desk-lamp/` is an unrelated second project sharing the repo: a study timer
+built on the same rules — static, dependency-free, no third-party requests. It
+borrows this site's self-hosted Jost subset and nothing else. See
+[desk-lamp/README.md](desk-lamp/README.md).
+
 ## Notes
 
 The checkout button is deliberately inert — it raises a notice rather than
