@@ -1,0 +1,7 @@
+{
+ "generatedAt": null,
+ "refreshedAt": null,
+ "partial": false,
+ "note": "Empty because no price provider key is configured. This is the platform's only keyed source: set INTEL_EQUITY_KEY and re-run to populate it. Nothing downstream approximates a price in its absence.",
+ "prices": []
+}

@@ -39,7 +39,7 @@ function clip(observations, days) {
 
 export function marketsView() {
   const root = h("div.view-inner.view-inner--wide");
-  load("markets").then(render);
+  Promise.all([load("markets"), load("prices"), load("fundamentals")]).then(render);
 
   function render() {
     const markets = dataOf("markets");
@@ -80,6 +80,7 @@ export function marketsView() {
         ),
         h("div.stack", null,
           curvePanel(curve, range),
+          companyPricesPanel(),
           riskPanel(byId, range),
           realRatePanel(byId, range),
           fxPanel(byId, range),
@@ -93,6 +94,62 @@ export function marketsView() {
   }
 
   return root;
+}
+
+/**
+ * Per-company prices, the platform's only keyed source. Absent by default, and
+ * when absent this says what would fill it rather than leaving a gap the reader
+ * has to interpret.
+ */
+function companyPricesPanel() {
+  const quotes = dataOf("prices")?.prices || [];
+  const companies = dataOf("fundamentals")?.companies || [];
+  const nameOf = new Map(companies.map((entry) => [entry.ticker, entry.name]));
+
+  if (!quotes.length) {
+    return panel({
+      title: "Company prices",
+      sub: "the one source here that needs a key",
+      body: empty({
+        icon: "building",
+        title: "No price provider configured",
+        body: "Every other source on this page is keyless. Per-company share prices are not — no provider "
+          + "publishes them without a credential under terms that permit automated access. Set "
+          + "INTEL_EQUITY_KEY and re-run the pipeline, and prices and valuation multiples appear here and "
+          + "on the companies screen. Until then neither is approximated.",
+        action: h("button.btn.btn--sm", { type: "button", onclick: () => go("/companies") },
+          "Companies screen", icon("chevron", 11)),
+      }),
+    });
+  }
+
+  const sorted = [...quotes].sort((a, b) =>
+    (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity));
+  const asOf = quotes.map((q) => q.asOf).filter(Boolean).sort().pop();
+
+  return panel({
+    title: "Company prices",
+    sub: `${plural(quotes.length, "holding")} · delayed`,
+    actions: cite(quotes[0].sourceId),
+    flush: true,
+    body: h("div.rows", null, ...sorted.map((quote) =>
+      h("button.rowitem", { type: "button", onclick: () => go(`/companies/${quote.ticker}`) },
+        h("span.grow", null,
+          h("div.row-s", null,
+            h("span.rowitem__title.mono", { style: { fontSize: "var(--t-body)" } }, quote.ticker),
+            h("span.dim.truncate", { style: { fontSize: "var(--t-small)" } }, nameOf.get(quote.ticker) || "")),
+          quote.exchange
+            ? h("div.rowitem__meta", { style: { marginTop: "2px" } }, quote.exchange) : null),
+        h("span.mono", { style: { minWidth: "76px", textAlign: "right" } }, num(quote.price, 2)),
+        Number.isFinite(quote.changePct)
+          ? h("span.mono", { class: quote.changePct >= 0 ? "up" : "down",
+              style: { minWidth: "62px", textAlign: "right", fontSize: "var(--t-small)" } },
+              `${quote.changePct >= 0 ? "+" : ""}${num(quote.changePct, 2)}%`)
+          : h("span.faint", { style: { minWidth: "62px", textAlign: "right" } }, "—"))
+    )),
+    foot: `Delayed quotes as of ${fmtDate(asOf)}. Not a real-time feed, and not a recommendation — `
+      + "a price is one input to a question this platform does not answer for you.",
+  });
 }
 
 /**

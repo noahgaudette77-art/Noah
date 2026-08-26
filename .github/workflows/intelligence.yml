@@ -37,6 +37,14 @@ jobs:
           # Without it the SEC adapter skips itself and records why — the run
           # still succeeds on every other source.
           INTEL_CONTACT: ${{ vars.INTEL_CONTACT }}
+          # The only credential this pipeline takes. A secret, not a variable —
+          # it is a key rather than an identifier. Without it the price adapter
+          # skips itself, records why, and every other source still runs.
+          INTEL_EQUITY_KEY: ${{ secrets.INTEL_EQUITY_KEY }}
+          # Optional second provider, asked only for what the first could not
+          # answer. Safe to leave unset.
+          INTEL_EQUITY_KEY_FALLBACK: ${{ secrets.INTEL_EQUITY_KEY_FALLBACK }}
+          INTEL_EQUITY_PROVIDER: ${{ vars.INTEL_EQUITY_PROVIDER }}
         run: |
           if [ "${{ github.event.schedule }}" = "30 6 * * 1" ] || [ "${{ inputs.brief }}" = "true" ]; then
             node pipeline/run.js --brief

@@ -70,7 +70,17 @@ export const DATASETS = {
     produces: "npm run intel -- --fundamentals",
     describes: "Revenue, margins, cash flow and balance sheet as filed with the SEC, for the companies that sit on a node in the world model.",
     sources: ["sec-edgar"],
-    caveat: "Reported figures only. No prices, no estimates and no valuation — so this can describe how a business performs and cannot say whether its shares are cheap.",
+    caveat: "Reported figures only — no estimates and no consensus. Valuation appears here only when a price provider key is configured; without one the screen says it cannot tell you whether shares are cheap.",
+  },
+  prices: {
+    path: "prices.json",
+    label: "Share prices",
+    maxAgeHours: 24 * 2,
+    produces: "INTEL_EQUITY_KEY=... npm run intel",
+    describes: "Delayed end-of-day quotes for the tracked companies — the platform's only keyed source.",
+    sources: ["finnhub"],
+    caveat: "Delayed quotes, not a real-time feed. Absent until a provider key is configured, and the "
+          + "companies screen says so rather than approximating a price.",
   },
   calendar: {
     path: "calendar.json",

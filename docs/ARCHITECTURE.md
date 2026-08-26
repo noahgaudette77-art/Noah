@@ -32,12 +32,18 @@ The brief's most important instruction was: do not build a beautiful interface
 full of fabricated data and call it finished. That single constraint determined
 most of the architecture.
 
-**What it ruled out.** Per-company share prices, and therefore every valuation
-multiple. No source publishes them without credentials under terms permitting
-automated access; the one free option began serving a bot challenge mid-build,
-and working around an access control was not on the table. So the companies
-screen ranks fundamentals and says, in the interface itself, that there is no
-price here and what that costs you. It does not approximate one.
+**What it ruled out, and what finally changed.** Per-company share prices are the
+one thing no keyless source will give you: every provider requires a credential,
+and the free option that did not (Stooq) began serving a bot challenge, which is
+an access control and not something to route around. For most of this build the
+companies screen therefore ranked fundamentals and said, in the interface itself,
+that it had no price and what that cost you.
+
+There is now a keyed adapter for them — the platform's only one. It behaves like
+the SEC adapters do when their condition is unmet: with no key it skips itself,
+records why, and every other source still runs. The screen without a price is
+still the default, and it is unchanged; valuation is added when a key exists
+rather than the no-price state being a degraded version of a priced one.
 
 That gap used to be much wider — index levels, volatility and commodities were
 all missing too, until FRED turned out to redistribute them without a key. The
@@ -59,6 +65,12 @@ credential:
 | arXiv | Recent preprints in ML and adjacent fields | ✓ |
 | FRED (St. Louis Fed) | 28 curated series: equity indices, VIX, commodities, credit spreads, real yields, breakevens, and the core macro set | ✓ |
 | Federal Register | Executive orders, proclamations, presidential memoranda, and significant agency rules | ✓ |
+
+And one that does not, listed separately because it is the exception:
+
+| Source | What it gives | Access |
+|---|---|---|
+| Finnhub (or Alpha Vantage) | Delayed per-company share prices, currency and market capitalisation | Free key required |
 
 That is enough for a real yield curve, a real 2s10s spread, real currency series,
 real policy documents, real corporate disclosure, and — through FRED — real
@@ -195,7 +207,7 @@ database, no secrets beyond an optional contact address.
 
 ---
 
-## 5. Companies, without a price
+## 5. Companies, and the price that was missing
 
 The most useful thing EDGAR gives away is XBRL company facts: revenue, margins,
 cash flow, balance sheet and share counts exactly as filed, going back over a
@@ -203,13 +215,42 @@ decade, for anyone who declares a contact address. That is enough for a real
 fundamental screen — 26 companies, each attached to the world-model node its
 economics actually depend on.
 
-What it is not enough for is valuation, and the interface says so on every
-surface that shows a number. Without a price there is no multiple, no yield, no
-market capitalisation. The profile score is a **percentile rank within the
-covered universe** across growth, profitability, cash generation, returns,
-balance sheet and consistency — a rank, not a rating, and silent on whether
-anything is cheap. Categories that would need a price (Undervalued, Contrarian,
-High risk / high potential) are listed as unavailable rather than approximated.
+What it is not enough for is valuation. The profile score is a **percentile rank
+within the covered universe** across growth, profitability, cash generation,
+returns, balance sheet and consistency — a rank, not a rating, and silent on
+whether anything is cheap. With no price configured the interface says exactly
+that on every surface showing a number, and the categories that would need one
+(Undervalued, Contrarian, High risk / high potential) are listed as unavailable
+rather than approximated.
+
+**With a price key configured**, multiples appear — P/E, P/S, P/FCF, P/B, EV/FCF
+and free-cash-flow yield, plus a peer rank across them and four categories that
+were previously withheld. The caveat changes rather than disappearing: a multiple
+is a ratio, cheap against peers usually means the market has priced something the
+filings do not show, and every figure is backward-looking because there are no
+estimates and no consensus here.
+
+The valuation layer's most important behaviour is not the arithmetic. It is
+refusing to do the arithmetic when the result would be plausible and wrong:
+
+- **Currency.** A filing is in the currency the issuer reports in; a quote is in
+  the currency the shares trade in. ASML files in EUR and TSM in TWD, and both
+  trade in USD. Dividing a USD market capitalisation by TWD earnings gives a P/E
+  about thirty times too low. So a multiple is computed only when the currencies
+  match or a rate from a tier-1 source can convert them — the ECB's EUR/USD and
+  the Bank of Canada's USD/CAD, both already fetched. There is no TWD rate, so
+  TSM gets a price, a market capitalisation and **no multiples**, with the reason
+  shown where the numbers would have been.
+
+- **Depositary receipts.** An ADR represents a fixed number of ordinary shares —
+  five, for TSM — and that ratio is in no filing this pipeline reads. Multiplying
+  an ADR price by the ordinary share count from a 20-F overstates market
+  capitalisation by exactly that ratio. So for a receipt the market cap is only
+  ever taken from the provider, which knows the ratio, and never computed here.
+
+Both guards were written before any key existed and verified against a simulated
+snapshot, because the failure they prevent is silent: a wrong multiple looks
+exactly like a right one.
 
 Three things in the extractor are load-bearing and were only discovered by
 running it:
@@ -372,10 +413,10 @@ what is missing and the command that produces it.
 
 ## 11. What is deliberately not here
 
-- **No per-company prices.** Index levels, volatility, commodities and credit
-  spreads are real and live; individual equity prices are not, so there are no
-  valuation multiples. Every company surface repeats what that absence costs
-  rather than approximating around it.
+- **No estimates, no consensus, no target prices.** Multiples exist once a price
+  key is configured, and every one of them is backward-looking. What a company is
+  *expected* to earn — which is most of what a share price represents — needs a
+  paid feed, so it is absent and said to be absent.
 - **No LLM at runtime.** Nothing in the browser calls a model. Summaries,
   explanations, questions and chains are authored or derived. An optional
   server-side analysis stage can be added to the pipeline, where a key can be held
@@ -394,11 +435,9 @@ what is missing and the command that produces it.
 
 ## 12. What I would build next
 
-1. **A keyed adapter for per-company prices** behind the existing provider
-   interface. FRED closed the index, volatility, commodity and credit gaps, so
-   this is what is left: it is the one thing standing between a fundamental
-   screen and a genuine opportunity screen, because without a price there is no
-   multiple and without a multiple there is no expectation to disagree with.
+1. **A TWD rate**, which is the last thing standing between TSM and a multiple.
+   Any central-bank or IMF series would do; the valuation layer already asks for
+   one and withholds cleanly when it is missing.
 2. **A server-side AI stage in the pipeline** for summarisation and entity
    extraction, with output labelled as model-generated and every claim still
    carrying its source. The client stays model-free.

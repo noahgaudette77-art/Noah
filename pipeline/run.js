@@ -28,6 +28,7 @@ import arxiv from "./sources/arxiv.js";
 import worldbank from "./sources/worldbank.js";
 import fred from "./sources/fred.js";
 import federalregister from "./sources/federalregister.js";
+import equities from "./sources/equities.js";
 import fundamentals from "./sources/fundamentals.js";
 import { dedupe } from "./stages/dedupe.js";
 import { linkAll } from "./stages/entities.js";
@@ -39,7 +40,7 @@ import { TRACKED } from "./sources/sec.js";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data");
 
-const ADAPTERS = [fed, ecb, boc, treasury, fred, federalregister, sec, arxiv, worldbank];
+const ADAPTERS = [fed, ecb, boc, treasury, fred, federalregister, equities, sec, arxiv, worldbank];
 
 /**
  * Fundamentals change four times a year, so fetching them daily would be four
@@ -98,6 +99,7 @@ async function main() {
   const research = ok.flatMap((run) => run.result.research || []);
   const curve = ok.map((run) => run.result.curve).find(Boolean) || null;
   const companies = ok.flatMap((run) => run.result.companies || []);
+  const prices = ok.flatMap((run) => run.result.prices || []);
 
   const deduped = dedupe(stories);
   const linked = linkAll(deduped.items, { tracked: TRACKED });
@@ -114,6 +116,7 @@ async function main() {
   const priorResearch = partial ? await readExisting("research.json") : null;
   const priorStories = partial ? await readExisting("stories.json") : null;
   const priorFundamentals = await readExisting("fundamentals.json");
+  const priorPrices = await readExisting("prices.json");
   const priorManifest = partial ? await readExisting("manifest.json") : null;
   if (partial) console.log("  (partial run — carrying forward snapshots from sources that did not run)");
 
@@ -176,6 +179,30 @@ async function main() {
     });
   }
 
+  /**
+   * Prices are the platform's only keyed source, so an unset key must leave the
+   * file exactly as it was rather than emptying it: a run without the key is
+   * "did not look", not "there is nothing".
+   */
+  const mergedPrices = prices.length
+    ? mergeById(prices, priorPrices?.prices || [], "ticker")
+    : priorPrices?.prices || [];
+
+  // Always written, even when empty. An absent file is a 404 the client has to
+  // interpret; a file that says it is empty and why is a fact it can render.
+  await write("prices.json", {
+    generatedAt: prices.length ? generatedAt : priorPrices?.generatedAt || generatedAt,
+    refreshedAt: prices.length ? generatedAt : priorPrices?.refreshedAt || null,
+    partial,
+    note: mergedPrices.length
+      ? "Delayed end-of-day quotes from a keyed provider. Not a real-time feed, and not a "
+        + "recommendation — a price is one input to a question this platform does not answer for you."
+      : "Empty because no price provider key is configured. This is the platform's only keyed source: "
+        + "set INTEL_EQUITY_KEY and re-run to populate it. Nothing downstream approximates a price in "
+        + "its absence.",
+    prices: mergedPrices,
+  });
+
   await write("research.json", {
     generatedAt, partial,
     papers: mergeById(research, priorResearch?.papers || []).slice(0, 60),
@@ -221,7 +248,7 @@ async function main() {
     totals: {
       stories: stories.length, clusters: clusters.length,
       series: series.length, filings: filings.length, research: research.length,
-      companies: mergedCompanies.length,
+      companies: mergedCompanies.length, prices: mergedPrices.length,
     },
     /** Everything the run could not obtain, named. The client shows this. */
     gaps: [...runs, ...carried]

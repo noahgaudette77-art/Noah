@@ -30,10 +30,18 @@ and names what is missing. Nothing is filled in with a plausible-looking number.
 
 **Screens companies on what they filed.** Revenue, margins, cash flow and
 balance sheet for 26 companies, pulled from SEC XBRL and going back over a
-decade, each attached to the model variable its economics depend on. There is no
-per-company price, so there is no valuation — the screen says so everywhere, and
-the categories that would need one are listed as unavailable rather than
-approximated.
+decade, each attached to the model variable its economics depend on. Configure a
+price key and multiples appear alongside — P/E, P/S, P/FCF, EV/FCF, FCF yield and
+a peer rank across them. Without one the screen says it has no price and offers
+no valuation rather than approximating one.
+
+The valuation layer refuses to compute a multiple that would be plausible and
+wrong. TSM files in TWD and trades in USD, and this platform has no TWD rate from
+a primary source — so TSM gets a price, a market capitalisation, and no
+multiples, with the reason printed where the numbers would be. ASML files in EUR
+and is converted at the ECB's own published rate. Depositary receipts never get a
+market cap computed from a filed ordinary-share count, because the ADR ratio is
+in no filing here and getting it wrong is a five-fold error.
 
 **Separates fact from interpretation.** The politics surface reads US policy as
 primary documents — the executive order itself, the proclamation that sets a
@@ -71,6 +79,21 @@ INTEL_CONTACT="you@example.com" node pipeline/run.js --brief
 `INTEL_CONTACT` is only for the SEC, whose access policy requires a contact
 address in the User-Agent. Without it the SEC adapters skip themselves and record
 why; every other source still runs.
+
+Share prices are the one thing here that needs a credential:
+
+```bash
+INTEL_CONTACT="you@example.com" INTEL_EQUITY_KEY="your-finnhub-key" node pipeline/run.js
+```
+
+A free Finnhub key allows 60 requests a minute, which covers the tracked
+companies comfortably. Alpha Vantage is also implemented — set
+`INTEL_EQUITY_PROVIDER=alphavantage` — but its free tier is 25 requests a *day*,
+so it fills the screen over several days rather than in one run. Set
+`INTEL_EQUITY_KEY_FALLBACK` to the other provider's key and it is asked for
+whatever the first could not answer. The key is read from the environment,
+used only in the pipeline, and never written into a snapshot or shipped to the
+browser.
 
 Run a single adapter with `--only=fred`. Partial runs merge rather than
 overwrite: what the skipped sources wrote last time is carried forward, and so are

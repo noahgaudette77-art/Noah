@@ -13,6 +13,10 @@ import {
   fundamentalProfile, categoriesFor, ALL_CATEGORIES, UNAVAILABLE_CATEGORIES,
   researchFrame, timeline, SCORE_FACTORS,
 } from "../../domain/company.js";
+import {
+  valuationsFor, valuationRank, pricedCategoriesFor, PRICED_CATEGORIES,
+  MULTIPLE_FACTORS, VALUATION_LIMITS,
+} from "../../domain/valuation.js";
 import { node as findNode } from "../../domain/worldmodel.js";
 import { num, compact, pct, date as fmtDate, ago, plural } from "../../core/format.js";
 
@@ -38,6 +42,45 @@ const COLUMNS = [
     render: (row) => signed(row.company.derived.netCashToAssets) },
 ];
 
+/**
+ * Shown only when a price provider is configured. Kept separate from COLUMNS so
+ * that the screen without prices is exactly the screen that shipped before —
+ * the no-price state is the default, not a degraded version of this one.
+ */
+const PRICE_COLUMNS = [
+  { id: "price", label: "Price", align: "r", get: (row) => row.valuation?.price,
+    render: (row) => (row.valuation
+      ? h("span.row-s", { style: { justifyContent: "flex-end", gap: "var(--s2)" } },
+          h("span.mono", num(row.valuation.price, 2)),
+          Number.isFinite(row.valuation.changePct)
+            ? h("span.mono", { class: row.valuation.changePct >= 0 ? "up" : "down",
+                style: { fontSize: "var(--t-micro)" } },
+                `${row.valuation.changePct >= 0 ? "+" : ""}${num(row.valuation.changePct, 1)}%`)
+            : null)
+      : dash()) },
+  { id: "cap", label: "Market cap", align: "r", get: (row) => row.valuation?.marketCap?.value,
+    render: (row) => (row.valuation?.marketCap
+      ? h("span.mono", { title: row.valuation.marketCap.basis }, compact(row.valuation.marketCap.value))
+      : dash()) },
+  { id: "pe", label: "P/E", align: "r", get: (row) => row.valuation?.multiples?.priceToEarnings,
+    render: (row) => multiple(row, (m) => m.priceToEarnings) },
+  { id: "pfcf", label: "P/FCF", align: "r", get: (row) => row.valuation?.multiples?.priceToFreeCashFlow,
+    render: (row) => multiple(row, (m) => m.priceToFreeCashFlow) },
+  { id: "fcfy", label: "FCF yield", align: "r", get: (row) => row.valuation?.multiples?.freeCashFlowYield,
+    render: (row) => (Number.isFinite(row.valuation?.multiples?.freeCashFlowYield)
+      ? plain(row.valuation.multiples.freeCashFlowYield) : dash(row)) },
+];
+
+/** An em dash that says why, where there is a reason worth reading. */
+const dash = (row) => h("span.faint", {
+  title: row?.valuation?.withheld || undefined,
+}, row?.valuation?.withheld ? "withheld" : "—");
+
+const multiple = (row, pick) => {
+  const value = row.valuation?.multiples ? pick(row.valuation.multiples) : null;
+  return Number.isFinite(value) ? h("span.mono", num(value, 1)) : dash(row);
+};
+
 const signed = (value) => Number.isFinite(value)
   ? h("span.mono", { class: value > 0 ? "up" : value < 0 ? "down" : "dim" },
       `${value > 0 ? "+" : ""}${num(value * 100, 1)}%`)
@@ -54,7 +97,8 @@ export function companiesView() {
   const { segments } = parse();
   if (segments[1]) { renderCompany(root, segments[1].toUpperCase()); return root; }
 
-  Promise.all([load("fundamentals"), load("filings")]).then(() => renderScreen(root));
+  Promise.all([load("fundamentals"), load("filings"), load("prices"), load("markets")])
+    .then(() => renderScreen(root));
   return root;
 }
 
@@ -76,15 +120,31 @@ function renderScreen(root) {
     const covered = universe.filter((company) => company.hasFundamentals);
     const excluded = universe.filter((company) => !company.hasFundamentals);
 
-    let rows = covered.map((company) => ({
-      company,
-      profile: fundamentalProfile(company, universe),
-      categories: categoriesFor(company),
-    }));
+    // Empty until a price provider is configured, which is the default state.
+    const valuations = valuationsFor(
+      universe, dataOf("prices")?.prices || [], dataOf("markets")?.series || []);
+    const priced = [...valuations.values()].filter((entry) => entry.multiples);
+    const hasPrices = valuations.size > 0;
+    const columns = hasPrices ? [...COLUMNS, ...PRICE_COLUMNS] : COLUMNS;
+    const categories = hasPrices ? [...ALL_CATEGORIES, ...PRICED_CATEGORIES] : ALL_CATEGORIES;
 
+    const categoriesOf = (company, valuation, profile) => [
+      ...categoriesFor(company),
+      ...(valuation?.multiples
+        ? pricedCategoriesFor(valuationRank(valuation, priced), profile, company) : []),
+    ];
+
+    let rows = covered.map((company) => {
+      const profile = fundamentalProfile(company, universe);
+      const valuation = valuations.get(company.ticker) || null;
+      return { company, profile, valuation, categories: categoriesOf(company, valuation, profile) };
+    });
+
+    // Counts on the filter chips must reflect the whole set, not the filtered view.
+    const rowsAll = rows;
     if (filter !== "all") rows = rows.filter((row) => row.categories.some((c) => c.id === filter));
 
-    const column = COLUMNS.find((c) => c.id === sort) || COLUMNS[0];
+    const column = columns.find((c) => c.id === sort) || columns[0];
     rows.sort((a, b) => {
       const av = column.get(a), bv = column.get(b);
       if (!Number.isFinite(av)) return 1;
@@ -97,7 +157,11 @@ function renderScreen(root) {
         `${covered.length} companies, each attached to the world-model variable its economics actually depend on. Every figure is as filed with the SEC.`,
         [h("button.btn", { type: "button", onclick: () => go("/watchlist") }, icon("bookmark", 12), "Watchlist")]),
 
-      h("div.callout.callout--warn", { style: { marginBottom: "var(--s5)" } },
+      hasPrices ? h("div.callout", { style: { marginBottom: "var(--s5)" } },
+        h("div.callout__label", "What a multiple does and does not tell you"),
+        h("ul", { style: { marginTop: "var(--s2)", paddingLeft: "var(--s5)" } },
+          ...VALUATION_LIMITS.map((limit) => h("li", { style: { marginBottom: "var(--s1)" } }, limit))))
+      : h("div.callout.callout--warn", { style: { marginBottom: "var(--s5)" } },
         h("div.callout__label", "What this screen cannot tell you"),
         h("p", { style: { marginTop: "var(--s1)" } },
           h("b", "There is no price here, and therefore no valuation. "),
@@ -108,8 +172,8 @@ function renderScreen(root) {
       h("div.row-s.wrap", { style: { marginBottom: "var(--s5)" } },
         chip(`All ${covered.length}`, { pressed: filter === "all",
           onclick: () => { filter = "all"; setParam("cat", null); render(); } }),
-        ...ALL_CATEGORIES.map((category) => {
-          const count = covered.filter((company) => categoriesFor(company).some((c) => c.id === category.id)).length;
+        ...categories.map((category) => {
+          const count = rowsAll.filter((row) => row.categories.some((c) => c.id === category.id)).length;
           return count ? chip(`${category.label} ${count}`, {
             pressed: filter === category.id, title: category.note,
             onclick: () => { filter = category.id; setParam("cat", category.id); render(); },
@@ -122,7 +186,7 @@ function renderScreen(root) {
           h("thead", null, h("tr", null,
             h("th", "Company"),
             h("th", "Model variable"),
-            ...COLUMNS.map((col) => h("th", {
+            ...columns.map((col) => h("th", {
               class: col.align === "r" ? "r" : "",
               style: { cursor: "pointer", color: col.id === sort ? "var(--accent)" : null },
               onclick: () => { sort = col.id; setParam("sort", col.id); render(); },
@@ -143,7 +207,7 @@ function renderScreen(root) {
                 ? h("button", { type: "button", style: { color: "var(--cyan)", fontSize: "var(--t-tiny)" },
                     onclick: (event) => { event.stopPropagation(); openNode(target.id); } }, target.label)
                 : h("span.faint", "—")),
-              ...COLUMNS.map((col) => h("td", { class: col.align === "r" ? "r" : "" }, col.render(row))),
+              ...columns.map((col) => h("td", { class: col.align === "r" ? "r" : "" }, col.render(row))),
               h("td", { style: { width: "92px" } }, sparkline(series)));
           })))),
         foot: h("span", null,
@@ -184,7 +248,8 @@ function renderScreen(root) {
 /* ========================= COMPANY ========================= */
 
 function renderCompany(root, ticker) {
-  Promise.all([load("fundamentals"), load("filings"), load("stories")]).then(() => {
+  Promise.all([load("fundamentals"), load("filings"), load("stories"),
+               load("prices"), load("markets")]).then(() => {
     const data = dataOf("fundamentals");
     const company = data?.companies?.find((entry) => entry.ticker === ticker);
 
@@ -198,7 +263,18 @@ function renderCompany(root, ticker) {
 
     const universe = data.companies;
     const scoreProfile = fundamentalProfile(company, universe);
-    const categories = categoriesFor(company);
+
+    // Null unless a price provider is configured, which every panel below handles.
+    const valuations = valuationsFor(
+      universe, dataOf("prices")?.prices || [], dataOf("markets")?.series || []);
+    const valuation = valuations.get(company.ticker) || null;
+    const priced = [...valuations.values()].filter((entry) => entry.multiples);
+    const rank = valuation?.multiples ? valuationRank(valuation, priced) : null;
+
+    const categories = [
+      ...categoriesFor(company),
+      ...(rank ? pricedCategoriesFor(rank, scoreProfile, company) : []),
+    ];
     const frame = researchFrame(company);
     const events = timeline(company, dataOf("filings")?.filings || []);
     const watchlist = userProfile.at("watchlist", []);
@@ -237,14 +313,15 @@ function renderCompany(root, ticker) {
 
       company.hasFundamentals ? h("div.grid.g-main", null,
         h("div.stack", null,
-          fundamentalsPanel(company, money, inCurrency),
+          fundamentalsPanel(company, money, inCurrency, valuation),
+          valuation ? valuationPanel(valuation, rank) : null,
           revenuePanel(company),
           marginPanel(company),
           frame ? framePanel(frame, company) : null,
           timelinePanel(events, company),
         ),
         h("div.stack", null,
-          profilePanel(scoreProfile, categories, company),
+          profilePanel(scoreProfile, categories, company, valuation, rank),
           balancePanel(company, money, d, inCurrency),
           frame ? monitorPanel(frame) : null,
           provenancePanel(company),
@@ -259,7 +336,7 @@ function renderCompany(root, ticker) {
   });
 }
 
-function fundamentalsPanel(company, money, inCurrency) {
+function fundamentalsPanel(company, money, inCurrency, valuation) {
   const d = company.derived;
   return panel({
     title: "As reported",
@@ -275,9 +352,12 @@ function fundamentalsPanel(company, money, inCurrency) {
       stat({ label: "Return on equity", value: Number.isFinite(d.returnOnEquity) ? `${num(d.returnOnEquity * 100, 1)}%` : "—" }),
       stat({ label: inCurrency("Net cash"), value: money(d.netCash),
         note: d.netCash < 0 ? "net debt" : "net cash" })),
-    foot: h("span", null,
-      "Figures as filed. ", h("b", "No price, so no valuation"),
-      " — the question of whether this is expensive is not one this platform can answer."),
+    foot: valuation
+      ? h("span", null, "Figures as filed. Multiples are below, built on these figures and a quoted price — ",
+          h("b", "backward-looking"), ", with no estimates and no consensus behind them.")
+      : h("span", null,
+          "Figures as filed. ", h("b", "No price, so no valuation"),
+          " — the question of whether this is expensive is not one this platform can answer."),
   });
 }
 
@@ -328,7 +408,7 @@ function marginPanel(company) {
   });
 }
 
-function profilePanel(scoreProfile, categories, company) {
+function profilePanel(scoreProfile, categories, company, valuation, rank) {
   return panel({
     title: "Fundamental profile",
     sub: `rank within ${scoreProfile.peers} covered companies`,
@@ -348,7 +428,72 @@ function profilePanel(scoreProfile, categories, company) {
           h("span.chip", { title: category.note }, category.label)))) : null),
     foot: h("span", null,
       h("b", "Not available: "),
-      scoreProfile.missing.join(" ")),
+      // The valuation line is the first entry of `missing`; once a price exists
+      // it is no longer missing, and leaving it there would be a stale claim.
+      (valuation?.multiples ? scoreProfile.missing.slice(1) : scoreProfile.missing).join(" ")),
+  });
+}
+
+/**
+ * Multiples, and the peer rank built from them. The rank is deliberately the
+ * smaller half of the panel: a percentile against 27 companies is a weak signal
+ * and reads as a strong one if it is given the top of the page.
+ */
+function valuationPanel(valuation, rank) {
+  const m = valuation.multiples;
+  const money = (entry) => (entry ? compact(entry.value) : "—");
+
+  return panel({
+    title: "Valuation",
+    sub: valuation.withheld ? "withheld — see below" : `on figures to ${fmtDate(valuation.basis?.period)}`,
+    actions: h("span.row-s", null,
+      cite(valuation.sourceId),
+      h("span.faint", { style: { fontSize: "var(--t-tiny)" } }, ago(valuation.asOf))),
+    flush: true,
+    body: h("div", null,
+      h("div.statgrid", null,
+        stat({ label: `Price · ${valuation.currency}`, value: num(valuation.price, 2), large: true,
+          delta: Number.isFinite(valuation.changePct)
+            ? `${valuation.changePct > 0 ? "+" : ""}${num(valuation.changePct, 2)}%` : null }),
+        stat({ label: "Market cap", value: money(valuation.marketCap),
+          note: valuation.marketCap?.basis }),
+        valuation.enterpriseValue
+          ? stat({ label: "Enterprise value", value: money(valuation.enterpriseValue),
+              note: "market cap less net cash" }) : null),
+
+      valuation.withheld
+        ? h("div.panel__body", null,
+            h("div.callout.callout--warn", null,
+              h("div.callout__label", { style: { marginBottom: "var(--s1)" } }, "No multiples for this one"),
+              h("p", valuation.withheld)))
+        : h("div", null,
+            h("div.statgrid", null,
+              stat({ label: "P/E", value: Number.isFinite(m.priceToEarnings) ? num(m.priceToEarnings, 1) : "—" }),
+              stat({ label: "P/S", value: Number.isFinite(m.priceToSales) ? num(m.priceToSales, 1) : "—" }),
+              stat({ label: "P/FCF", value: Number.isFinite(m.priceToFreeCashFlow) ? num(m.priceToFreeCashFlow, 1) : "—" }),
+              stat({ label: "P/B", value: Number.isFinite(m.priceToBook) ? num(m.priceToBook, 1) : "—" }),
+              stat({ label: "EV/FCF", value: Number.isFinite(m.evToFreeCashFlow) ? num(m.evToFreeCashFlow, 1) : "—" }),
+              stat({ label: "FCF yield", value: Number.isFinite(m.freeCashFlowYield)
+                ? `${num(m.freeCashFlowYield * 100, 2)}%` : "—" })),
+
+            rank && Number.isFinite(rank.score) ? h("div.panel__body", null,
+              h("div.eyebrow", { style: { marginBottom: "var(--s2)" } },
+                `Against the covered set — 100 is the cheap end (${rank.covered} of ${MULTIPLE_FACTORS.length} computable)`),
+              barRows(rank.factors.filter((factor) => factor.rank !== null).map((factor) => ({
+                label: factor.label, value: factor.rank, colour: "var(--accent)",
+              })), { max: 100, format: (v) => `${v}` })) : null),
+
+      valuation.fx ? h("div.panel__body", null,
+        h("span.dim", { style: { fontSize: "var(--t-small)" } },
+          `Filed in ${valuation.fx.from}, quoted in ${valuation.fx.to}. Converted at `,
+          h("span.mono", num(valuation.fx.rate, 4)),
+          ` from ${valuation.fx.via} — a rate this pipeline already fetches from its issuing central bank, `
+          + "not a constant written into the code.")) : null),
+
+    foot: valuation.withheld
+      ? "A price without a defensible multiple is still worth showing; a multiple that is wrong is not."
+      : "Backward-looking, on figures as filed. No estimates, no consensus, no target price — a multiple "
+        + "is a ratio, and the reason behind it is the actual work.",
   });
 }
 

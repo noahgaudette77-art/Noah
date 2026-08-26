@@ -234,8 +234,32 @@ console.log("\nInteractions");
   await page.waitForTimeout(800);
   const companyRows = await page.locator("tbody tr").count();
   check("company screen lists filers", companyRows > 15, `${companyRows} companies`);
-  check("valuation gap is stated, not approximated",
-    (await page.getByText(/There is no price here/).count()) > 0);
+  /**
+   * The screen has two legitimate states and the suite has to know which it is
+   * in: without a price provider it must say so and offer no multiple, and with
+   * one it must show multiples and still carry the caveat. Asserting only one
+   * state would fail the moment a key is configured, which is not a regression.
+   */
+  const priceColumns = await page.locator("th", { hasText: /^P\/E$/ }).count();
+  if (priceColumns) {
+    check("priced screen shows multiples", (await page.locator("th", { hasText: /Market cap/i }).count()) > 0);
+    check("priced screen still carries the caveat",
+      (await page.getByText(/a ratio, not a judgement/i).count()) > 0);
+    check("priced screen offers the categories that needed a price",
+      (await page.getByText(/Cheap against peers/i).count()) > 0);
+    // TSM files in TWD and trades in USD with no rate available; a multiple here
+    // would be about thirty times too low, so it must be withheld and explained.
+    await page.goto(`${BASE}#/companies/TSM`, { waitUntil: "load" });
+    await page.waitForTimeout(900);
+    const tsm = await page.locator(".view").innerText();
+    check("a multiple that would be wrong is withheld, with the reason",
+      /withheld/i.test(tsm) && /TWD/.test(tsm) && !/P\/E/.test(tsm.split(/no multiples/i)[1] || ""));
+    await page.goto(`${BASE}#/companies`, { waitUntil: "load" });
+    await page.waitForTimeout(700);
+  } else {
+    check("valuation gap is stated, not approximated",
+      (await page.getByText(/There is no price here/).count()) > 0);
+  }
   await page.locator("th", { hasText: "FCF margin" }).click();
   await page.waitForTimeout(300);
   check("screen columns sort", (await page.evaluate(() => location.hash)).includes("sort=fcf"));
