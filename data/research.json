@@ -1,0 +1,531 @@
+{
+ "generatedAt": "2026-08-26T02:28:45.470Z",
+ "partial": false,
+ "papers": [
+  {
+   "id": "1b28dae6e7aeb9f0",
+   "title": "What FID Hides: Detecting, Ranking, and Diagnosing Deviations in Generative Evaluation",
+   "url": "https://arxiv.org/abs/2608.24881v1",
+   "publishedAt": "2026-08-25T17:58:46.000Z",
+   "authors": [
+    "Hao Chen"
+   ],
+   "summary": "Generative models are commonly ranked by Fréchet Inception Distance (FID) and Kernel Inception Distance (KID), yet FID's first-two-moment summary can miss distributional differences, and a reported scalar gap alone is not a calibrated test against sampling variation. FID's moment restriction has concrete consequences: on ImageNet, visually unrecognizable images optimized only to match the reference Inception mean and covariance obtain FID $24.7$ versus $58.6$ for held-out real images (lower is better). Moreover, FID and KID are scalar discrepancies that are unchanged when the two samples are exchanged and therefore do not encode the direction of a dispersion change: under-dispersion, as can ",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "e1609f4718454660",
+   "title": "Recursive Experiential-Working Memory Evolution for Long-Horizon Agent Harnesses",
+   "url": "https://arxiv.org/abs/2608.24876v1",
+   "publishedAt": "2026-08-25T17:56:35.000Z",
+   "authors": [
+    "Zhaochen Yu"
+   ],
+   "summary": "Recursive self-improvement (RSI) remains hard in long-horizon tasks, where growing histories obscure the task state and misalign skill invocation. We introduce Recuris, a recursive Experiential-Working Memory architecture for long-horizon agent harnesses, in which Working Memory tracks task progress and guides skill selection from Experiential Memory, grounding skill use in current needs rather than the full history. This coupling also turns execution into structured evidence that localizes failures to specific memory components. Across tasks, a fixed Meta-Agent turns that evidence into localized, validation-gated updates to Skill Memory that reshape execution and yield new evidence, forming",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "1740dead6b138fc4",
+   "title": "SPO++: Stream-Aligned Policy Optimization for Asynchronous Agentic RL",
+   "url": "https://arxiv.org/abs/2608.24870v1",
+   "publishedAt": "2026-08-25T17:52:19.000Z",
+   "authors": [
+    "Kai Ruan"
+   ],
+   "summary": "Group-relative reinforcement learning waits for sibling rollouts of the same prompt, which is costly for long and variable tool-use trajectories. Single-stream Policy Optimization (SPO) removes this dependency with a persistent prompt-level value estimate, but its recipe whitens one advantage per trajectory before optimizing a token-mean actor loss. We show that trajectory centering generally does not center the token-weighted quantity consumed by the actor, and fix the mismatch by standardizing terminal-outcome advantages under the action-token measure. We additionally organize prompt evidence by the policy event that generated it rather than learner receipt order. Across matched runs on AL",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "b441979c0715c08c",
+   "title": "Parameterized Complexity of $L_p$-Lipschitz Constants for Input Convex Neural Networks and $L_p$-Norm Maximization over Zonotopes",
+   "url": "https://arxiv.org/abs/2608.24865v1",
+   "publishedAt": "2026-08-25T17:47:37.000Z",
+   "authors": [
+    "Aritra Das"
+   ],
+   "summary": "Lipschitz constants are a standard way to quantify the sensitivity of neural networks to small input perturbations, but computing them is difficult even for shallow ReLU networks. We study this problem for two-layer input-convex neural networks (ICNNs), a restricted architecture where nonnegative output weights enforce convexity. Computing the $L_p$-Lipschitz constant for these networks is equivalent to maximizing the dual norm over a zonotope. While $L_1$- and $L_\\infty$-norm maximization on zonotopes admit fixed-parameter and polynomial-time algorithms, respectively, the parameterized complexity of the remaining $L_p$-norms was open. We prove that, for every fixed $p\\in (1,\\infty)\\cap \\mat",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "6661937b617cef00",
+   "title": "Improving Cross-Problem Vehicle Routing with Locally Augmented Preferences and Representation Disentanglement",
+   "url": "https://arxiv.org/abs/2608.24859v1",
+   "publishedAt": "2026-08-25T17:44:23.000Z",
+   "authors": [
+    "Arthur Corrêa"
+   ],
+   "summary": "Multi-task vehicle routing problem (VRP) solvers seek to handle multiple VRP variants within a single unified model, avoiding the need to train a separate model for every variant. In spite of recent progress, current approaches remain limited on two fronts. On the training side, reinforcement learning suffers from reward-scale disparities and shrinking advantage signals as policies improve, whereas preference optimization stagnates once sampled tours become near-identical and thus fundamentally limited by the quality of the policy's own generated solutions, leaving both paradigms with weak supervision as training progresses. On the architecture side, existing fully shared encoders entangle c",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "9c5bd9e47590b75b",
+   "title": "Bellman Calibration for Marginalized Importance Weighting in Offline Reinforcement Learning",
+   "url": "https://arxiv.org/abs/2608.24858v1",
+   "publishedAt": "2026-08-25T17:44:02.000Z",
+   "authors": [
+    "Lars van der Laan"
+   ],
+   "summary": "Marginalized importance weighting evaluates a target policy by reweighting offline state-action samples with its discounted occupancy ratio, characterized by an adjoint Bellman equation. Existing minimax, primal-dual, and fitted fixed-point estimators can leave residual occupancy-balance violations because of function-class approximation, regularization, or incomplete optimization. These violations are difficult to diagnose and reduce because the objectives generally lack a direct supervised validation loss for hyperparameter tuning, model selection, and early stopping. We introduce isotonic Bellman calibration, a one-dimensional, model-agnostic post-processing method that reduces these viol",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "fabe2075d9dd21ea",
+   "title": "FedV-KGQA: Multi-Hop Question Answering over Vertically Partitioned Knowledge Graphs",
+   "url": "https://arxiv.org/abs/2608.24846v1",
+   "publishedAt": "2026-08-25T17:34:27.000Z",
+   "authors": [
+    "Md Saikat Islam Khan Bappy"
+   ],
+   "summary": "Real-world data for knowledge graph question answering is often distributed across different organizations due to governance and data sovereignty constraints. While centralized systems exist, they cannot answer multi-hop questions when the required facts are split across vertically partitioned silos. In this paper, we propose FedV-KGQA, a framework for multi-hop reasoning over knowledge graphs in which organizations share entities but own disjoint sets of relations. Our approach combines local graph enrichment and knowledge graph embeddings to ensure raw triples and relation parameters never leave each silo, establishing a structural data boundary without requiring centralized graph access. ",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "2e47b7f727c778b9",
+   "title": "LAION-BVD: A 10-Million-Hour Open Video Dataset for Multimodal Pre-training",
+   "url": "https://arxiv.org/abs/2608.24845v1",
+   "publishedAt": "2026-08-25T17:34:19.000Z",
+   "authors": [
+    "Andreas Hochlehnert"
+   ],
+   "summary": "We present LAION-BVD, a large-scale open video dataset for multimodal learning, which contains 1.3B platform-specific video URLs collected from CommonCrawl. From these, we download 80M videos with a total duration of 10 million hours. The dataset is designed for multimodal pre-training across the video, audio, and image modalities. Using content-aware scene detection, we extract clips for which we synthetically generate video and audio captions. Models trained on these data achieve competitive performance on standard video-text and audio-text benchmarks, with consistent improvements as training or model scale increases. Additionally, we explore video frames as an alternative source of image-",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "373238002e248e5d",
+   "title": "Reading Is Not Using: Retrieval, Judgment, and the Design of AI Financial Research Workflows",
+   "url": "https://arxiv.org/abs/2608.24842v1",
+   "publishedAt": "2026-08-25T17:31:25.000Z",
+   "authors": [
+    "Miao Liu"
+   ],
+   "summary": "Large language models (LLMs) are increasingly deployed as AI analysts to process financial disclosures and support AI-assisted investment decisions. Yet such systems are usually evaluated by what they can retrieve, not whether retrieved information affects their judgments. We identify a retrieval-integration gap in long-context financial analysis. Holding focal-firm information fixed and varying only unrelated context from 2,000 to 128,000 tokens, we find that a risk disclosure's influence on investment judgments falls to the experimental noise floor even as direct retrieval remains accurate. The pattern replicates across model families and judgment tasks and in experiments removing real dis",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "ae138a4aa0dc3589",
+   "title": "A Dual-Dimensional LLM Framework for Automated Item Incidental Content Similarity Analysis in Large-Scale Assessments",
+   "url": "https://arxiv.org/abs/2608.24825v1",
+   "publishedAt": "2026-08-25T17:07:16.000Z",
+   "authors": [
+    "Jing Huang"
+   ],
+   "summary": "The rapid expansion of large-scale assessments and the growing adoption of automatic item generation have intensified concerns about incidental content redundancy, where construct-irrelevant elements such as wording or contextual framing become unintentionally repetitive across items. Traditional similarity metrics like BLEU or cosine similarity, often fail to capture the nuanced structural and semantic layers that drive perceived redundancy simultaneously. This study proposes a dual-dimensional framework for Automated Item Similarity Analysis (AISA) powered by Large Language Models (LLMs), operationalizing similarity through Structured Decomposition and Semantic Relatedness. Psychometric va",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "585d2a9c0f0911bb",
+   "title": "Constrained Entity Selection under Partial Knowledge for LLM-Based Knowledge Graph QA",
+   "url": "https://arxiv.org/abs/2608.24824v1",
+   "publishedAt": "2026-08-25T17:04:32.000Z",
+   "authors": [
+    "Emanuel Kitzelmann"
+   ],
+   "summary": "Large language models are increasingly used for knowledge graph question answering (KGQA), but can fail to correctly ground answers in the underlying graph. Current approaches to LLM-based KGQA either rely on full semantic parsing into executable queries such as SPARQL, which is brittle in practice due to complex schemas or incompleteness of real-world KGs, or on LLM-reasoning and answer generation over KGs, which can be more robust but lacks formal guarantees. In this work, we study a complementary setting in which \\emph{candidate} answers are generated by an LLM-based system and subsequently verified using lightweight symbolic constraints derived from the question. We introduce \\emph{Const",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "be2ebcc86759127b",
+   "title": "BioKERN: Biological Kernel Regularization for Histology-to-Transcriptomics Neighborhood Retrieval",
+   "url": "https://arxiv.org/abs/2608.24823v1",
+   "publishedAt": "2026-08-25T17:04:16.000Z",
+   "authors": [
+    "Seungik Cho"
+   ],
+   "summary": "Spatially resolved biology requires representations that preserve biological neighborhood structure rather than only exact cross-modal correspondences. Existing histology--transcriptomics objectives can emphasize instance-level matching even when non-paired spots share molecular or spatial context. We introduce BioKERN, a multimodal spatial representation-learning framework that incorporates biological structure as an explicit, learnable inductive bias. BioKERN constructs a training-time biological kernel by combining transcriptomic similarity and spatial proximity, then uses it to provide graded neighborhood supervision and regularize embedding geometry. Evaluation uses a fixed, model-indep",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "14e3f13c9517e6a4",
+   "title": "A Geometric Theory of Robust Fairness Audits",
+   "url": "https://arxiv.org/abs/2608.24818v1",
+   "publishedAt": "2026-08-25T16:58:57.000Z",
+   "authors": [
+    "Binita Maity"
+   ],
+   "summary": "Neighborhood-based fairness audits evaluate individual fairness by comparing predictions among similar individuals in feature space. Despite their widespread use, little is known about the robustness of the auditing procedure itself. Because these audits rely on nearest neighbor relationships, small perturbations in feature space can alter local neighborhoods and produce different fairness assessments even when model predictions remain unchanged. We develop a geometric framework for analyzing the robustness of neighborhood-based fairness audits under bounded perturbations. Our analysis establishes sufficient conditions for neighborhood invariance, quantifies how neighborhood replacement prop",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "0e4e8a8b9a11244c",
+   "title": "Effective Learning Rate Governs Loss Dynamics in Language Model Pretraining",
+   "url": "https://arxiv.org/abs/2608.24814v1",
+   "publishedAt": "2026-08-25T16:57:29.000Z",
+   "authors": [
+    "Zihan Liu"
+   ],
+   "summary": "We uncover ELR collapse in language model pretraining: learning rate (LR) and parameter norm govern loss dynamics primarily through their ratio, the effective learning rate (ELR). When ELR is matched across runs, their loss trajectories collapse throughout training despite substantially different LRs and parameter norms. Across optimizers, architectures, datasets, and model scales, mean collapse errors are typically a few x 10^-3, below the seed-to-seed variation measured in a representative configuration. Systematic ablations identify normalization design and the timescale of LR-norm variation as key determinants of collapse precision. Controlled interventions further show that weight decay",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "f2f6340dd465d557",
+   "title": "MDTE: Minority-Aware Diffusion over Temporal Edge Events for Imbalanced Node Classification",
+   "url": "https://arxiv.org/abs/2608.24812v1",
+   "publishedAt": "2026-08-25T16:56:22.000Z",
+   "authors": [
+    "Zhou Zelong"
+   ],
+   "summary": "Class-imbalanced node classification on temporal graphs is challenging because majority-dominated temporal propagation progressively assimilates minority representations, while conventional node and neighborhood information provides insufficient discriminative evidence for minority classes. To address these issues, we propose MDTE, a minority-aware diffusion framework that reconstructs stable and discriminative temporal edge-event representations through conditional diffusion denoising. Specifically, MDTE introduces Distribution-Aware Selective Propagation, which combines Local Outlier Factor (LOF)-based propagation filtering with cluster-aware low-frequency propagation. The module preserves",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "71cc32d1ab438347",
+   "title": "Strictly Causal Streaming Video Anomaly Detection with a Theoretically-Grounded State-Space Core",
+   "url": "https://arxiv.org/abs/2608.24810v1",
+   "publishedAt": "2026-08-25T16:52:32.000Z",
+   "authors": [
+    "Yogesh Kumar"
+   ],
+   "summary": "Recent work has applied Mamba style state space models (SSMs) to video anomaly detection, yet existing approaches still rely on buffering clips or windows internally, lack a theoretical account of how temporal memory relates to detection latency, and benchmark efficiency only through GPU throughput rather than the edge hardware these methods are intended to target. We introduce a strictly causal streaming anomaly detector whose fixed size state is updated in O(1) time and memory per incoming frame, with no lookahead and no clip buffering. Its temporal core is a diagonal linear state space recurrence with an input and state dependent decay gate, trained self supervised through causal next emb",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "25933e1fd7ff9b65",
+   "title": "Automatic Model Card Generation Using an LLM",
+   "url": "https://arxiv.org/abs/2608.24807v1",
+   "publishedAt": "2026-08-25T16:49:37.000Z",
+   "authors": [
+    "Tajkia Rahman Toma"
+   ],
+   "summary": "Model cards are structured documents that summarize key information about machine learning models to improve transparency, usability, and accountability. However, they often lack a consistent structure, and many models provide no model cards, making comparison and interpretation difficult. This paper presents two contributions. First, we propose MCTidy, an LLM-based approach that reorganizes existing model cards into a standardized template to improve clarity and comparability. Second, we introduce MCGenie, an LLM-based system that generates model cards directly from model repository data. We apply MCTidy to 48 Hugging Face model cards and evaluate information retention, section alignment, h",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "b948402bcd060612",
+   "title": "StarHarness: Evolving Harnesses with Stratified Search for Enterprise Environments",
+   "url": "https://arxiv.org/abs/2608.24804v1",
+   "publishedAt": "2026-08-25T16:48:05.000Z",
+   "authors": [
+    "Esakkivel Esakkiraja"
+   ],
+   "summary": "We present StarHarness, a framework for evolving environment-specific agent harnesses while keeping model weights fixed. The evolved harness can include prompt and task framing, tool interfaces, skills, MCP-backed providers, subagent structure, and agent-loop configuration. StarHarness constructs a compact evolution pool by stratifying tasks according to baseline failure behavior, separates proposer-visible search tasks from proposer-hidden selection tasks, and reserves held-out tasks for evaluating generalization. Across ITBench SRE, EnterpriseOps-Gym ITSM, and AutomationBench Finance, harness evolution improves full-benchmark performance by 20-35 percentage points over the default harness ",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "beef23b589a4651c",
+   "title": "LION: A Clifford Neural Paradigm for Multimodal-Attributed Graph Learning",
+   "url": "https://arxiv.org/abs/2608.24795v1",
+   "publishedAt": "2026-08-25T16:39:59.000Z",
+   "authors": [
+    "Xunkai Li"
+   ],
+   "summary": "Recently, the rapid advancement of multimodal domains has driven a data-centric paradigm shift in graph ML, transitioning from text-attributed to multimodal-attributed graphs. This advancement significantly enhances data representation and expands the scope of graph downstream tasks, such as modality-oriented tasks, thereby improving the practical utility of graph ML. Despite its promise, limitations exist in the current neural paradigms:(1) Neglect Context in Modality Alignment: Most existing methods adopt topology-constrained or modality-specific operators as tokenizers.These aligners inevitably neglect graph context and inhibit modality interaction, resulting in suboptimal alignment.(2) L",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "3907443527f1e208",
+   "title": "CAFE: Self-Improving Search Agents Need Co-Evolving Feedback",
+   "url": "https://arxiv.org/abs/2608.24794v1",
+   "publishedAt": "2026-08-25T16:39:00.000Z",
+   "authors": [
+    "Boyang Liu"
+   ],
+   "summary": "Outcome-supervised search agents learn when and how to retrieve evidence, but terminal rewards neither localize intermediate errors nor redirect an ongoing trajectory before those errors compound. Treating corrective feedback as a learned in-trajectory intervention couples the two roles: the agent must decide when to request and use feedback, while the critic must infer useful corrections from outcome-confounded rollouts whose failure patterns shift as the agent improves. We introduce CAFE (Coupled Agent--Feedback Evolution), a framework in which a shared-parameter model alternates between search-agent and critic roles. CAFE initializes feedback-conditioned recovery from trajectories built a",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "0c41eb2b8e5e3996",
+   "title": "Right Diagnoses, Decorative Reasoning:A Perturbation Audit of Medical Chain-of-Thought",
+   "url": "https://arxiv.org/abs/2608.24790v1",
+   "publishedAt": "2026-08-25T16:37:39.000Z",
+   "authors": [
+    "Mengzhu Xu"
+   ],
+   "summary": "Clinicians read chain-of-thought (CoT) rationales as evidence of medical reasoning, but whether the visible chain plays that role is rarely tested. General-domain CoT-faithfulness probes ignore clinical cost, and medical LLM evaluations treat the chain as a black box. We close this gap with a medical perturbation audit: a 30-operator battery edits both the chain and the question with clinically motivated operators (severity reversal, negation flip, demographic swap, evidence ablation), paired with a chain-update times answer-flip joint analysis that classifies each model by its failure mode. Applied to 14 LLMs on four medical QA benchmarks, three independent tests converge: the Chain-Decoupl",
+   "categories": [
+    "cs.AI"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "9eac88872fdd1f11",
+   "title": "Score-Based Ideal Observer Approximation via Denoising Score Matching for Signal-Known-Exactly Detection Tasks",
+   "url": "https://arxiv.org/abs/2608.24768v1",
+   "publishedAt": "2026-08-25T16:05:55.000Z",
+   "authors": [
+    "Weimin Zhou"
+   ],
+   "summary": "The Bayesian Ideal Observer (IO) establishes the theoretical upper bound on task performance for binary detection tasks. However, analytical computation of the IO test statistic is generally intractable. Numerical approaches based on Markov-chain Monte Carlo (MCMC) methods, including their recent deep generative model-based extensions, typically require extensive posterior sampling for each test image. Supervised learning has also been investigated to approximate the IO performance. However, such methods are typically trained for a specific detection task and signal and may require retraining when the task or signal changes. The score function, defined as the gradient of the log probability ",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "df679f3930f59338",
+   "title": "MoTE: Mixture of Task Experts for Multi-Task Video Understanding",
+   "url": "https://arxiv.org/abs/2608.24763v1",
+   "publishedAt": "2026-08-25T16:00:11.000Z",
+   "authors": [
+    "Muhammad Asad Ali"
+   ],
+   "summary": "Procedural video-language models must solve heterogeneous tasks from the same visual evidence, including action recognition, forecasting, and procedure prediction. Dense transformer decoders share the same feed-forward networks across tasks, which can entangle task behavior and make controlled capability expansion difficult. Sparse Mixture-of-Experts (MoE) decoders provide conditional computation, but token-level learned routing is not naturally aligned with task-level procedural objectives. We propose MoTE (Mixture of Task Experts), a decoder architecture that converts large language model feed-forward networks into task-specific experts while keeping the multimodal backbone shared. Each ex",
+   "categories": [
+    "cs.LG"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "0da2e2948113005f",
+   "title": "How to Train a Critic Stably and Efficiently",
+   "url": "https://arxiv.org/abs/2608.23566v1",
+   "publishedAt": "2026-08-24T17:59:39.000Z",
+   "authors": [
+    "Penghui Qi"
+   ],
+   "summary": "Group-based reinforcement learning methods such as GRPO for large language models avoid training a critic by sampling multiple responses for each prompt. A reliable critic could instead estimate token-level advantages from one response, but standard critic-based training recipes are often unstable. We study this instability and develop \\textbf{Best-Practice Critic Optimization (BPCO)}, a recipe that combines DPPO, value predictions bounded to the reward range, Monte Carlo value targets, unnormalized policy advantages, and length-adaptive generalized advantage estimation. Because the critic is used only during training, BPCO can also condition it on reward-defining information, such as a refe",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "2710547711014cff",
+   "title": "SWE Refactor Bench: Can Coding Agents Complete a Long-Horizon, Whole-Repository Stack Migration?",
+   "url": "https://arxiv.org/abs/2608.23564v1",
+   "publishedAt": "2026-08-24T17:59:04.000Z",
+   "authors": [
+    "Deyao Hong"
+   ],
+   "summary": "Modern software systems accumulate technical debt over decades of development, which makes migration expensive and largely manual. As coding agents become increasingly capable at bug fixing, can they autonomously perform such migrations? Existing benchmarks cannot answer this question because they evaluate only behavioural correctness, not whether the migration actually occurred. This leads an easy hack: agents copy the original implementation to make tests pass. We call this Blindness. To address this problem, we introduce SWE Refactor Bench, a benchmark comprising 20 whole-repository migrations, covering 4 kinds of technical debt. A three-stage evaluation protocol measures both migration c",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "0ec895def0efaebb",
+   "title": "Prime Agent: A Self-Improving RLM Harness",
+   "url": "https://arxiv.org/abs/2608.23552v1",
+   "publishedAt": "2026-08-24T17:54:19.000Z",
+   "authors": [
+    "Seth Karten"
+   ],
+   "summary": "Language models are sequential processors, but long-horizon agency requires external information and computation beyond model weights and active context. Prime Agent is an open-source harness for long-horizon evaluation and coding-agent workflows. A persistent IPython REPL follows the Recursive Language Model abstraction for programmatic context processing and test-time compute, while Continual Harness preserves histories, memories, skills, prompts, and subagent specifications across trajectories. Recursive subagents coordinate through direct agent-to-agent communication, and the Agents View lets humans inspect and manage daemon-backed sessions. Prime Agent standardizes execution, recovery, ",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "158b7b95f034ad27",
+   "title": "ConvergeFlow: Language Flow with Provable Convergence to Token Embeddings",
+   "url": "https://arxiv.org/abs/2608.23551v1",
+   "publishedAt": "2026-08-24T17:54:14.000Z",
+   "authors": [
+    "Na Li"
+   ],
+   "summary": "Recent advances in continuous diffusion and flow-based language models (LMs) have achieved performance competitive with discrete LMs. However, existing continuous frameworks still rely on decoders supervised with cross entropy (CE) because the flow trajectories are not guaranteed to terminate at valid token embeddings. Motivated by this limitation, we introduce \\textbf{ConvergeFlow}, an embedding-space flow-based LM, which constrains the data predictor to the convex hull of token embeddings and trains it solely with the mean squared error objective induced by flow matching. Under suitable regularity conditions, we prove that the resulting flow converges to valid token embeddings despite erro",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "5a9e1374becc0fcf",
+   "title": "When Names Cross Scripts: A Source-Grounded Benchmark for Historical Entity Reconciliation in the Mongol World",
+   "url": "https://arxiv.org/abs/2608.23507v1",
+   "publishedAt": "2026-08-24T17:10:36.000Z",
+   "authors": [
+    "Xiang Chen"
+   ],
+   "summary": "Historical people may appear under different languages, scripts, and transcription traditions, while distinct individuals may share highly similar or even identical names. This makes historical identity reconciliation more than a problem of string matching or transliteration. We introduce MHER, a provenance-controlled benchmark for pairwise reconciliation of person-name attestations from the Mongol world. MHER contains a balanced 396-pair Name-only core over 84 primary historical persons and a stricter 160-pair Source-grounded subset constructed from mention-by-source evidence, with entity-disjoint development and test splits. Across five generative systems, correctly Source-grounded evidenc",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "d2a768cc46b3a1e2",
+   "title": "Mitigating Reasoning-Induced Misalignment via Safety-Direction Penalty",
+   "url": "https://arxiv.org/abs/2608.23497v1",
+   "publishedAt": "2026-08-24T16:57:28.000Z",
+   "authors": [
+    "Yipeng Zhao"
+   ],
+   "summary": "Reasoning-Induced Misalignment, where fine-tuning on reasoning data containing no harmful content, including mathematics, code, and problem-solving with chain-of-thought traces can induce harmful behaviors of LLM, posing a serious challenge to the safety of LLM reasoning. Cross-architecture, cross-scale, and cross-dataset checks show that RIM does not always emerge. Previous work attributed RIM to neuron-level entanglement, but did not identify the geometry of the representation space underlying this entanglement or propose a training-time fix. We provide both: a representation-space analysis of RIM and the Safety-Direction Penalty (SDP), which penalizes movement along a learned safety direc",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "b9679444ab33c490",
+   "title": "On the Threat Model of Weird Generalization and Emergent Misalignment",
+   "url": "https://arxiv.org/abs/2608.23476v1",
+   "publishedAt": "2026-08-24T16:41:52.000Z",
+   "authors": [
+    "Miriam Wanner"
+   ],
+   "summary": "Narrow fine-tuning on small, domain-specific datasets can produce broad and surprising changes in model behavior-a phenomenon called weird generalization (WG). Yet, it remains unclear what features of the fine-tuning data are necessary for WG to arise. Here, we address this question by investigating a range of plausibly relevant features, including dataset size, composition, language, presentation style, and novelty relative to a model's parametric knowledge. Further, since WG evaluations rely on small question sets that assess the extent of the generalization, we also analyze how sensitive this measurement is to the set of questions used. Experiments with three open-weight models on four da",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "d74a439dafb3a94a",
+   "title": "What's the Catch? Evaluating Temporal Consistency in Vision-Language Models",
+   "url": "https://arxiv.org/abs/2608.23474v1",
+   "publishedAt": "2026-08-24T16:40:49.000Z",
+   "authors": [
+    "Marek Hradil"
+   ],
+   "summary": "Vision-language models (VLMs) achieve strong performance on video and image-sequence benchmarks, yet it remains unclear whether they capture temporal structure. To study this question, we formulate temporal grounding as an anomaly detection problem, providing a simple and controlled evaluation that directly tests sensitivity to temporal consistency. We introduce TimeCatch, where temporal anomalies are created by swapping consecutive frames and frame-level anomalies by replacing a frame with Gaussian noise. Models are evaluated on anomaly detection and localization tasks across four synthetic and real-world datasets, alongside a human study. Our evaluation reveals a substantial gap between fr",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "40337a46f764f7b9",
+   "title": "How Useful are LLMs for Grammar Engineering? Cantonese ParGram Resources and Controlled Experimental Evaluation with English Baselines",
+   "url": "https://arxiv.org/abs/2608.23448v1",
+   "publishedAt": "2026-08-24T16:21:32.000Z",
+   "authors": [
+    "Chit-Fung Lam"
+   ],
+   "summary": "This paper presents new Cantonese ParGram resources and evaluates LLMs for knowledge-driven grammar engineering within a controlled experimental paradigm. Using Cantonese ParGram resources as gold standards, with corresponding English baselines, we investigate whether OpenAI's gpt-oss-120b and GPT-5.4 can generate machine-processable grammars from sentences and target formal structures under systematically varied prompting conditions. GPT-5.4 outperformed gpt-oss-120b, while grammars generated from target formal structures generally outperformed those generated from sentences. Although both models could generate locally plausible phrase-structure rules, lexical entries, and templates, they o",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "04abab52af89befa",
+   "title": "A Comprehensive Analysis of Arabic Natural Language Processing Research: Trends, Topic Evolution, and Research Gaps -- A Bibliometric and Topic-Based Study",
+   "url": "https://arxiv.org/abs/2608.23421v1",
+   "publishedAt": "2026-08-24T16:02:15.000Z",
+   "authors": [
+    "Mullosharaf K. Arabov"
+   ],
+   "summary": "Natural Language Processing (NLP) has grown rapidly over the past decade, driven by digital transformation in the Arab world, social media, and large language models (LLMs). Despite this growth, a comprehensive quantitative meta-analysis of the field remains absent. This study presents a large-scale bibliometric and topic-based analysis of 7,120 Arabic NLP papers published between 1960 and 2026, sourced from six collections. We employ BERTopic for topic modeling, regression analysis to identify citation predictors, social network analysis for co-authorship structures, and geographic mapping. Our findings show a significant publication surge after 2020, driven by transformer models and LLMs. ",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "fae29acdfc22c077",
+   "title": "Robustness of IR Models to Collection Growth",
+   "url": "https://arxiv.org/abs/2608.23419v1",
+   "publishedAt": "2026-08-24T16:00:20.000Z",
+   "authors": [
+    "Emmanouil Georgios Lionis"
+   ],
+   "summary": "Information Retrieval (IR) systems seek to identify relevant documents within a collection. In practical applications, collections are dynamic, with documents frequently added. We argue that ideally, a retriever's effectiveness should not decrease when non-relevant documents are added to a collection. This study formalises this concept and empirically evaluates it by merging two collections with negligible topic overlap. We hypothesise that the way an IR model conditions its ranking on other documents in a collection (e.g., the IDF component in BM25 or contextual documents in listwise rerankers) plays an important role in its robustness to the addition of non-relevant documents. We broadly c",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  },
+  {
+   "id": "675bfd8b360504c2",
+   "title": "STONIC: A Layered Measurement Contract for LLM Value Profiling",
+   "url": "https://arxiv.org/abs/2608.23411v1",
+   "publishedAt": "2026-08-24T15:55:35.000Z",
+   "authors": [
+    "Andrei Chetvergov"
+   ],
+   "summary": "LLM value studies often merge questionnaire ratings, pairwise choices, and values inferred from generated text into one profile. That merge assumes that the three observations describe the same stable preference. STONIC tests this assumption on 5,144 situations from four banks and 35 fixed model configurations. It compares responses rated in isolation, choices made under counterbalanced conflict, spontaneous answers, and later choices between a model's own answer and authored alternatives. 10 of 17 configurations with usable behavioral data preserve the endorsement-choice relation across banks. Every one of the 17 eligible configurations prefers its own earlier answer (median effect 0.790), ",
+   "categories": [
+    "cs.CL"
+   ],
+   "sourceId": "arxiv",
+   "tier": 1
+  }
+ ]
+}

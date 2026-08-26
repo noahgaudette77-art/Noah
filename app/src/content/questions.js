@@ -1,0 +1,288 @@
+/**
+ * Authored question bank.
+ *
+ * Written against the misconceptions, not the definitions — a question you can
+ * answer by recognising a keyword tests nothing. Every wrong option is a belief
+ * someone actually holds, and every explanation says why it is wrong.
+ *
+ *   difficulty  1 recall · 2 mechanism · 3 judgement under ambiguity
+ */
+
+const q = (id, concept, difficulty, type, prompt, options, answer, why) =>
+  ({ id, concept, difficulty, type, prompt, options, answer, why });
+
+export const QUESTIONS = [
+  q("q-infl-1", "inflation", 1, "mc",
+    "Inflation falls from 8% to 3%. What has happened to prices?",
+    ["They fell by 5%", "They are still rising, just more slowly", "They returned to where they were", "They stopped changing"],
+    1,
+    "Disinflation is a fall in the rate of change, not the level. Prices that rose 8% and then 3% are now about 11% higher than two years ago. This gap between the statistic and the lived experience is why inflation data and public sentiment diverge for years after an episode."),
+
+  q("q-infl-2", "core-inflation", 2, "mc",
+    "Why do central banks watch core inflation rather than headline?",
+    ["Food and energy don't affect consumers", "Core is easier to calculate",
+     "Core forecasts future headline better than headline does", "Core is what the mandate specifies"],
+    2,
+    "Food and energy are volatile and mean-reverting, so they add noise without signal about the trend. Core is a trend estimator. Central bank mandates are almost always specified on headline — core is a means, not the target."),
+
+  q("q-yc-1", "yield-curve", 2, "mc",
+    "The yield curve inverts. What is the market most directly saying?",
+    ["A recession will begin within six months",
+     "It expects the central bank to be cutting rates in the future",
+     "Bonds are overvalued",
+     "Inflation will rise"],
+    1,
+    "Long yields are roughly an average of expected future short rates. Inversion means the expected path is downward — the market expects cuts, which usually implies expected weakness. The recession inference is a second step, and its timing has ranged from months to more than two years."),
+
+  q("q-yc-2", "yield-curve", 3, "tf",
+    "An inverted yield curve caused by quantitative easing carries the same recession signal as one caused by rate expectations.",
+    ["True", "False"], 1,
+    "QE compresses term premium directly, flattening the curve without the expectations component carrying its usual information about growth. The shape is the same; the cause, and therefore the meaning, is not."),
+
+  q("q-real-1", "real-vs-nominal", 2, "mc",
+    "A country has a 12% policy rate and 18% inflation. Its monetary policy is:",
+    ["Very tight", "Neutral", "Loose in real terms", "Impossible to assess"],
+    2,
+    "The real rate is about −6%. Borrowing costs less than the erosion of the debt's value, which is stimulative regardless of how high the nominal number looks. Judging tightness from the nominal rate is one of the most common and most expensive errors in macro."),
+
+  q("q-bond-1", "bond-yields", 1, "mc",
+    "Interest rates rise. What happens to the price of an existing bond?",
+    ["It rises", "It falls", "It is unchanged until maturity", "It depends on the issuer's credit rating"],
+    1,
+    "The bond's payments are fixed. The only way its return can match new higher-yielding bonds is for its price to fall. Credit quality affects the size of the move, not its direction."),
+
+  q("q-dur-1", "duration", 2, "mc",
+    "Which loses most if yields rise by one percentage point?",
+    ["A 2-year Treasury", "A 30-year zero-coupon bond", "A 10-year corporate bond", "A floating-rate note"],
+    1,
+    "Duration rises with maturity and falls with coupon. A 30-year zero has the highest duration of these by a wide margin — it pays nothing until maturity. A floating-rate note has near-zero duration because its coupon resets."),
+
+  q("q-dur-2", "duration", 3, "mc",
+    "A pension fund hedges its long-dated liabilities with leveraged interest rate derivatives. What is the new risk it has created?",
+    ["Credit risk on the derivative counterparty only",
+     "Liquidity risk — collateral calls can arrive faster than assets can be sold",
+     "Inflation risk", "None; the hedge removes risk"],
+    1,
+    "This is the 2022 UK LDI failure mode. Hedging converted a slow solvency risk into an immediate liquidity one: yields rose, collateral was demanded within days, and selling gilts to meet the calls pushed yields higher still. The hedge worked and nearly destroyed the funds holding it."),
+
+  q("q-spread-1", "credit-spreads", 2, "mc",
+    "High-yield credit spreads widen sharply while default rates are unchanged. The most likely explanation is:",
+    ["The data is wrong", "Markets are pricing higher expected future defaults and demanding more risk premium",
+     "Spreads and defaults are unrelated", "Government yields fell"],
+    1,
+    "Spreads are forward-looking and defaults are realised — spreads widen well before defaults rise. Widening can also reflect a rise in risk aversion or a fall in liquidity without any change in expected losses, which is why spread decomposition matters."),
+
+  q("q-bank-1", "bank-run", 2, "mc",
+    "A bank holds only high-quality government bonds and has no credit losses. Can it fail?",
+    ["No, government bonds are risk-free",
+     "Yes — if the bonds lost value as rates rose and depositors withdraw before maturity",
+     "Only if it is fraudulent", "Only if the government defaults"],
+    1,
+    "Government bonds are free of credit risk, not of interest rate risk. If rates rise, their market value falls; if depositors withdraw, the bank must sell at that lower value and realise the loss. This is the mechanism of the 2023 US regional bank failures, and it needed no bad loans at all."),
+
+  q("q-lev-1", "leverage", 3, "mc",
+    "Which of these was the primary cause of LTCM's 1998 failure?",
+    ["Its trades were fundamentally wrong",
+     "It could not survive long enough for correct trades to converge",
+     "Fraud", "A single counterparty default"],
+    1,
+    "Most of its convergence trades were eventually profitable. Leverage meant mark-to-market losses forced liquidation before convergence. Being right and being solvent are different questions, and leverage is what separates them."),
+
+  q("q-val-1", "valuation", 2, "mc",
+    "A company trades at 8× earnings while its sector trades at 20×. This tells you:",
+    ["It is cheap", "It is a value trap",
+     "The market expects its earnings to fall or its risk to be higher", "Nothing at all"],
+    2,
+    "A low multiple is information, not a discount. The market is pricing something — declining earnings, higher risk, worse capital allocation, or a terminal problem. The analytical task is identifying what, and deciding whether the market is right."),
+
+  q("q-val-2", "valuation", 3, "mc",
+    "Over what horizon does valuation have the strongest predictive power for equity returns?",
+    ["The next quarter", "One year", "Ten years or more", "It has none at any horizon"],
+    2,
+    "Valuation explains very little of one-year returns and a substantial share of ten-year returns. This makes it nearly useless for timing and essential for setting return expectations — a distinction that resolves most arguments about whether valuation 'works'."),
+
+  q("q-fcf-1", "free-cash-flow", 3, "mc",
+    "A data centre operator's valuation is highly sensitive to one accounting assumption. Which?",
+    ["Revenue recognition timing", "The useful life assumed for its compute hardware",
+     "Its tax domicile", "Inventory method"],
+    1,
+    "Useful life determines depreciation, which drives both reported earnings and implied maintenance capex. Whether an accelerator is a three-year or six-year asset moves valuation more than most of the operational debate — and reasonable analysts currently disagree about it."),
+
+  q("q-moat-1", "moat", 2, "mc",
+    "Which is the most durable competitive advantage?",
+    ["A superior product today", "Being first to market",
+     "High customer switching costs", "An excellent management team"],
+    2,
+    "Switching costs are structural — they persist regardless of who runs the company. Product leads are copied, first-mover status is frequently a disadvantage, and management changes. The test of a moat is whether it survives its creators."),
+
+  q("q-moat-2", "moat", 3, "tf",
+    "Kodak's failure in digital photography was caused by not seeing the technology coming.",
+    ["True", "False"], 1,
+    "Kodak invented the digital sensor in 1975 and understood the trajectory. It failed because its moat — film manufacturing, distribution, brand — was worth a great deal in a business that was ending, and cannibalising it was locally irrational at every decision point. Seeing the future and being unable to act on it is the more common failure."),
+
+  q("q-2nd-1", "second-order-thinking", 3, "mc",
+    "Interest rates fall sharply. Which is a plausible second-order effect that could reverse the first-order one?",
+    ["Borrowing becomes cheaper", "Stock valuations rise",
+     "Demand strengthens enough to raise inflation, forcing rates back up", "Bond prices rise"],
+    2,
+    "The first three listed effects are all first-order and all already priced. The reversal channel — easing raises demand, demand raises inflation, inflation forces tightening — is what determines whether the initial move persists. First-order effects are consensus; the disagreement lives one step further out."),
+
+  q("q-jevons-1", "jevons-paradox", 3, "mc",
+    "AI inference becomes 10× cheaper per token. What does Jevons' historical pattern suggest for total compute demand?",
+    ["It falls roughly 10×", "It stays flat",
+     "It may rise, if cheaper inference makes new applications economic", "It is unknowable"],
+    2,
+    "Efficiency lowers effective price, which raises demand — and can raise it enough that total consumption increases. Whether the rebound exceeds 100% depends on whether the cost fall opens genuinely new applications or only makes existing ones cheaper. The honest answer is that both outcomes are consistent with history and this case is not settled."),
+
+  q("q-scale-1", "scaling-laws", 3, "mc",
+    "What do scaling laws actually predict?",
+    ["Which capabilities a model will have", "Training loss as a function of compute, data and parameters",
+     "Revenue from a model", "When artificial general intelligence arrives"],
+    1,
+    "They predict loss, which is a smooth, well-behaved quantity. The mapping from loss to useful capability is empirical, discontinuous and poorly understood. Treating a loss forecast as a capability forecast is the most common over-reading of this result, in both directions."),
+
+  q("q-sc-1", "s-curve", 3, "mc",
+    "Electric motors were available in the 1890s. Why did factory productivity only surge in the 1920s?",
+    ["The motors were unreliable", "Electricity was too expensive",
+     "The gain required redesigning factory layout around distributed power",
+     "Workers resisted the technology"],
+    2,
+    "Early installations replaced the steam engine with one big motor driving the same overhead shafts — a fuel saving and nothing more. The productivity gain needed unit drive: a motor per machine, which freed layout and enabled flow-based production. That required scrapping the plant, not buying a motor."),
+
+  q("q-tariff-1", "tariffs", 2, "mc",
+    "A country imposes a 20% tariff on imported steel. Who remits the payment?",
+    ["The foreign exporter", "The importing domestic company", "The foreign government", "Consumers directly"],
+    1,
+    "The domestic importer pays its own government. Who ultimately bears the cost — the incidence — is split between exporter margin and domestic prices depending on elasticities. Empirical work on the 2018–19 US tariffs found pass-through to US prices was close to complete."),
+
+  q("q-supply-1", "supply-chain-bullwhip", 3, "mc",
+    "During a component shortage, customers order 3× their actual need to secure allocation. When supply normalises, what happens?",
+    ["Demand stays elevated", "Orders collapse as phantom demand disappears and inventories are worked down",
+     "Prices rise further", "Nothing changes"],
+    1,
+    "Shortage gaming creates order books that overstate real demand. When allocation ends, the excess orders are cancelled and the correction looks like a demand collapse. Distinguishing real from phantom demand in a backlog is the hard problem, and it is hardest exactly when the backlog is most watched."),
+
+  q("q-base-1", "base-rates", 3, "mc",
+    "You are evaluating a company forecasting 45% revenue growth for five straight years. What is the strongest first check?",
+    ["Whether management is credible", "The historical frequency of companies sustaining that growth rate for five years",
+     "The current share price", "Analyst consensus"],
+    1,
+    "The outside view: what proportion of companies in that reference class actually did it, and what the decay curve looks like. Anchor to that distribution, then adjust for specifics. Starting from the specifics — the inside view — systematically overestimates, because the specifics are vivid and the base rate is not."),
+
+  q("q-risk-1", "risk-vs-uncertainty", 2, "mc",
+    "What distinguishes risk from uncertainty in Knight's sense?",
+    ["Risk is larger", "With risk you know the probability distribution; with uncertainty you do not",
+     "Risk applies to markets, uncertainty to economies", "They are synonyms"],
+    1,
+    "Risk is quantifiable — a dice roll. Uncertainty is not, because the distribution itself is unknown or unknowable. Most financial models handle risk well and uncertainty badly, which is why they fail at regime changes rather than in normal conditions."),
+
+  q("q-vol-1", "volatility", 3, "tf",
+    "Volatility and risk are the same thing.",
+    ["True", "False"], 1,
+    "Volatility measures dispersion of returns. Risk is permanent loss of capital. A stable asset heading quietly to zero has low volatility and total risk; a violently fluctuating asset that recovers has high volatility and little permanent loss. The two diverge exactly when the distinction matters."),
+
+  q("q-div-1", "diversification", 3, "mc",
+    "A 60/40 stock-bond portfolio is implicitly a bet on what?",
+    ["Falling interest rates", "The type of shock that hits — demand shocks make bonds hedge equities, supply shocks do not",
+     "Equity outperformance", "Low inflation only"],
+    1,
+    "The stock–bond correlation is negative under demand shocks and positive under supply or inflation shocks. 60/40 works well in the first regime and fails in the second — 2022 being the clearest recent demonstration. It is not a neutral allocation; it is a regime bet."),
+
+  q("q-dollar-1", "dollar", 3, "mc",
+    "Why does a stronger US dollar create stress in emerging markets?",
+    ["Their exports become more expensive", "Their dollar-denominated debts become larger relative to local-currency income",
+     "US investors withdraw", "Commodity prices rise"],
+    1,
+    "Currency mismatch: liabilities in dollars, revenues in local currency. A dollar move mechanically changes the real debt burden without any change in the borrower's business. This is why EM crises cluster around dollar strength rather than around domestic policy errors."),
+
+  q("q-fiscal-1", "fiscal-policy", 3, "mc",
+    "What determines whether a government's debt-to-GDP ratio falls?",
+    ["The absolute debt level", "The relationship between the interest rate on the debt and nominal growth",
+     "The credit rating", "The primary deficit alone"],
+    1,
+    "When nominal growth exceeds the average interest cost, the ratio falls even with a primary deficit. This r-versus-g relationship is why identical debt levels are sustainable in one rate regime and not in another — and why the transition takes years, as the average cost of the stock adjusts only as old bonds mature."),
+
+  q("q-prod-1", "productivity", 2, "mc",
+    "Long-run economic growth is the sum of which two things?",
+    ["Consumption and investment", "Labour force growth and productivity growth",
+     "Exports and government spending", "Inflation and real growth"],
+    1,
+    "There is no third term. With ageing shrinking labour force growth across most developed economies, productivity growth is the entire remaining story — which is why the AI productivity question is a first-order macro question, not a technology-sector one."),
+
+  q("q-beveridge-1", "beveridge-curve", 3, "mc",
+    "Vacancies are very high relative to unemployment. What does the Beveridge curve suggest about cooling the labour market?",
+    ["It will cost jobs proportionally", "Vacancies may fall substantially before unemployment rises much",
+     "Nothing can be inferred", "Unemployment will fall further"],
+    1,
+    "In the steep region of the curve, demand can be reduced by cutting vacancies rather than employment. Whether that region exists as described was the central and genuinely unresolved disagreement of the 2022–23 soft-landing debate, argued between competent economists and only resolvable after the fact."),
+
+  q("q-minsky-1", "financial-instability", 3, "mc",
+    "Minsky's hypothesis holds that financial fragility is caused primarily by:",
+    ["Fraud", "External shocks", "Extended periods of stability encouraging leverage", "Central bank error"],
+    2,
+    "Stability lowers measured risk, which permits more leverage under any volatility-based framework, which raises actual fragility while reported risk falls. The system generates its own crisis endogenously — no external shock is required, though one usually provides the trigger."),
+
+  q("q-grid-1", "grid-constraints", 2, "mc",
+    "What is usually the binding constraint on connecting a new large data centre to the grid?",
+    ["Availability of generation capacity", "Interconnection queues, permitting and equipment lead times",
+     "Cost of electricity", "Fibre availability"],
+    1,
+    "Generation can be built faster than it can be connected. Interconnection studies, transmission permitting across jurisdictions, and multi-year lead times on transformers and high-voltage equipment are the actual limits — which is why large buyers now pursue co-location and existing-plant power purchase agreements rather than new build."),
+
+  q("q-energy-1", "energy-density", 3, "mc",
+    "Why do hyperscalers contract for existing nuclear output despite renewables having lower cost per megawatt-hour?",
+    ["Political optics", "They need firm, always-available power at a specific location and date — a different product",
+     "Nuclear is cheaper", "Regulatory requirement"],
+    1,
+    "Levelised cost compares energy, not availability. A data centre needs firm capacity at a given interconnection point on a given date. Buying existing nuclear output is buying availability and speed, which is why the price paid can exceed the headline cost of intermittent alternatives."),
+
+  q("q-export-1", "export-controls", 3, "mc",
+    "What makes semiconductor export controls enforceable where a general technology ban would not be?",
+    ["International treaties", "The existence of chokepoints with very few global suppliers",
+     "Patent law", "Customs inspection"],
+    1,
+    "Controls work at chokepoints — stages of production where substitution is genuinely hard, such as advanced lithography. Broad bans on widely available technology redirect trade rather than prevent it. The whole strategy depends on the supply chain's concentration, which is also its principal vulnerability."),
+
+  q("q-security-1", "security-dilemma", 3, "mc",
+    "Why is the security dilemma particularly acute in technology competition?",
+    ["Technology moves quickly", "Advanced compute and AI are dual-use, so no restriction reads as purely defensive",
+     "Companies are private", "Costs are high"],
+    1,
+    "The dilemma is severe when offensive and defensive capabilities are indistinguishable. Compute and AI capability are dual-use by construction, so every restriction is legible as preparation. The standard exit — credible commitment with verification — is unavailable because no enforceable verification regime for compute or models exists."),
+
+  q("q-japan-1", "credit-channel", 3, "mc",
+    "In a balance sheet recession, why does cutting rates to zero fail to stimulate borrowing?",
+    ["Banks refuse to lend", "Firms are minimising debt rather than maximising profit, so they repay at any rate",
+     "Rates cannot actually reach zero", "Inflation is too low"],
+    1,
+    "When asset prices collapse but the debt remains, firms shift objective from profit maximisation to debt minimisation. They repay rather than invest even at zero cost, because they know they are impaired. The constraint is willingness to borrow, not the price of borrowing — which is why monetary policy loses traction."),
+
+  q("q-container-1", "s-curve", 2, "mc",
+    "The container's most important economic effect was:",
+    ["Faster ships", "Making it economic to manufacture components on other continents",
+     "Larger ports", "Reduced theft"],
+    1,
+    "The first-order effect was cheaper loading. The second-order effect — shipping cost falling far enough to stop constraining location decisions — reorganised global manufacturing. Nobody in 1956 forecast that, which is the general lesson about second-order effects."),
+
+  q("q-reflex-1", "reflexivity", 3, "mc",
+    "Markets rally on expectations of rate cuts. Financial conditions loosen. What is the reflexive problem for the central bank?",
+    ["None", "Looser conditions reduce the need for the cuts the rally was pricing",
+     "It must cut faster", "Inflation falls automatically"],
+    1,
+    "The expectation of easing delivers some of the easing, which reduces the justification for it. The central bank is steering a vehicle whose steering responds to predictions about where it will be steered — there is no fixed point, only a path."),
+
+  q("q-mh-1", "moral-hazard", 3, "tf",
+    "Refusing to rescue a failing institution is always the correct answer to moral hazard.",
+    ["True", "False"], 1,
+    "Refusing imposes enormous costs on parties who did nothing wrong, and systemic failure has historically cost far more than the rescue. It is a genuine dilemma between certain present costs and probabilistic future ones, not a test of resolve. The tools that actually address it — capital requirements, resolution regimes — must be imposed in calm periods, when they are least popular."),
+
+  q("q-comp-1", "comparative-advantage", 3, "mc",
+    "Comparative advantage says trade raises total output. What does it NOT say?",
+    ["That specialisation is efficient", "That everyone within a country gains",
+     "That opportunity cost matters", "That trade is voluntary"],
+    1,
+    "Aggregate gains coexist with concentrated losses — Stolper–Samuelson implies the scarce factor loses in real terms. The China shock literature found adjustment costs were far larger and more persistent than the model's assumption of costless reallocation. That is the entire political economy of trade in one sentence."),
+];
+
+export const QUESTION_BY_ID = new Map(QUESTIONS.map((question) => [question.id, question]));
+export const questionsForConcept = (conceptId) => QUESTIONS.filter((question) => question.concept === conceptId);

@@ -1,0 +1,120 @@
+{
+ "generatedAt": "2026-08-26T02:28:45.470Z",
+ "durationMs": 63138,
+ "node": "v22.22.2",
+ "sources": [
+  {
+   "id": "fed",
+   "label": "Federal Reserve",
+   "sourceId": "fed-press",
+   "ok": true,
+   "ms": 988,
+   "counts": {
+    "stories": 35,
+    "series": 0,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "ecb",
+   "label": "European Central Bank",
+   "sourceId": "ecb-press",
+   "ok": true,
+   "ms": 2015,
+   "counts": {
+    "stories": 15,
+    "series": 1,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "boc",
+   "label": "Bank of Canada",
+   "sourceId": "boc-valet",
+   "ok": true,
+   "ms": 946,
+   "counts": {
+    "stories": 10,
+    "series": 4,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "treasury",
+   "label": "US Treasury",
+   "sourceId": "treasury-fiscal",
+   "ok": true,
+   "ms": 17988,
+   "counts": {
+    "stories": 0,
+    "series": 13,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "sec",
+   "label": "SEC EDGAR",
+   "sourceId": "sec-edgar",
+   "ok": true,
+   "ms": 31772,
+   "counts": {
+    "stories": 0,
+    "series": 0,
+    "filings": 20,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "arxiv",
+   "label": "arXiv",
+   "sourceId": "arxiv",
+   "ok": true,
+   "ms": 6581,
+   "counts": {
+    "stories": 0,
+    "series": 0,
+    "filings": 0,
+    "research": 35
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "worldbank",
+   "label": "World Bank",
+   "sourceId": "worldbank",
+   "ok": true,
+   "ms": 2801,
+   "counts": {
+    "stories": 0,
+    "series": 4,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  }
+ ],
+ "totals": {
+  "stories": 60,
+  "clusters": 49,
+  "series": 22,
+  "filings": 20,
+  "research": 35
+ },
+ "gaps": []
+}

@@ -1,0 +1,168 @@
+/* ============================================================================
+   TOKENS — the entire visual identity resolves from this file.
+   Dark is the default (terminal heritage); light is a first-class peer, not an
+   inversion. Every colour is defined once on :root so no value exists only
+   inside a media query.
+   ========================================================================== */
+
+:root {
+  /* --- Type ------------------------------------------------------------- */
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
+    Menlo, Consolas, monospace;
+  --font-read: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+  /* A tight, deliberate scale. Density is the point — no 48px body copy. */
+  --t-micro: 10px;
+  --t-tiny: 11px;
+  --t-small: 12px;
+  --t-body: 13px;
+  --t-base: 14px;
+  --t-lead: 16px;
+  --t-h4: 18px;
+  --t-h3: 22px;
+  --t-h2: 28px;
+  --t-h1: 36px;
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.35;
+  --lh-body: 1.55;
+  --lh-read: 1.7;
+
+  --tracking-caps: 0.09em;
+  --tracking-tight: -0.011em;
+
+  /* --- Space (4px base) -------------------------------------------------- */
+  --s0: 2px;  --s1: 4px;  --s2: 6px;  --s3: 8px;  --s4: 12px;
+  --s5: 16px; --s6: 20px; --s7: 24px; --s8: 32px; --s9: 44px; --s10: 64px;
+
+  --radius: 3px;
+  --radius-lg: 5px;
+
+  /* --- Chrome ------------------------------------------------------------ */
+  --rail-w: 212px;
+  --rail-w-collapsed: 56px;
+  --topbar-h: 46px;
+  --statusbar-h: 26px;
+
+  /* --- Palette: dark (default) ------------------------------------------ */
+  --bg-void: #07090c;         /* behind everything */
+  --bg-base: #0b0e13;         /* page */
+  --bg-panel: #101419;        /* panels */
+  --bg-raise: #151a21;        /* raised rows, inputs */
+  --bg-sink: #090c10;         /* wells, code */
+  --bg-hover: #1b212a;
+  --bg-active: #212936;
+
+  --line: #1e2530;            /* hairline */
+  --line-strong: #2c3542;
+  --line-faint: #161c24;
+
+  --ink: #e6edf5;             /* primary text */
+  --ink-2: #a8b4c4;           /* secondary */
+  --ink-3: #74808f;           /* tertiary / labels */
+  --ink-4: #4d5765;           /* disabled, watermarks */
+
+  --accent: #f0a02a;          /* signal amber — the brand */
+  --accent-ink: #14100a;
+  --accent-soft: rgba(240, 160, 42, 0.14);
+  --accent-line: rgba(240, 160, 42, 0.42);
+
+  --cyan: #45b7d1;            /* data / links */
+  --cyan-soft: rgba(69, 183, 209, 0.13);
+  --violet: #9b8cf0;          /* AI / model output */
+  --violet-soft: rgba(155, 140, 240, 0.14);
+
+  --up: #35c07f;              /* direction: positive */
+  --up-soft: rgba(53, 192, 127, 0.14);
+  --down: #e8564f;            /* direction: negative */
+  --down-soft: rgba(232, 86, 79, 0.14);
+  --warn: #e0a13a;
+  --warn-soft: rgba(224, 161, 58, 0.14);
+
+  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.02) inset,
+    0 8px 24px -14px rgba(0, 0, 0, 0.9);
+  --shadow-pop: 0 24px 64px -20px rgba(0, 0, 0, 0.86),
+    0 0 0 1px var(--line-strong);
+
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --scrim: rgba(4, 6, 9, 0.72);
+
+  color-scheme: dark;
+}
+
+/* --- Palette: light ------------------------------------------------------ */
+:root[data-theme="light"] {
+  --bg-void: #e7e5e0;
+  --bg-base: #f5f4f1;
+  --bg-panel: #ffffff;
+  --bg-raise: #faf9f7;
+  --bg-sink: #f0efeb;
+  --bg-hover: #f0eee9;
+  --bg-active: #e6e3dc;
+
+  --line: #ddd9d1;
+  --line-strong: #c3bdb2;
+  --line-faint: #eae7e0;
+
+  --ink: #16191d;
+  --ink-2: #4a5157;
+  --ink-3: #757d86;
+  --ink-4: #9aa1a9;
+
+  --accent: #a8681a;
+  --accent-ink: #fffaf2;
+  --accent-soft: rgba(168, 104, 26, 0.1);
+  --accent-line: rgba(168, 104, 26, 0.38);
+
+  --cyan: #1f6f8b;
+  --cyan-soft: rgba(31, 111, 139, 0.1);
+  --violet: #5b4cbb;
+  --violet-soft: rgba(91, 76, 187, 0.1);
+
+  --up: #17794a;
+  --up-soft: rgba(23, 121, 74, 0.11);
+  --down: #b5342c;
+  --down-soft: rgba(181, 52, 44, 0.1);
+  --warn: #8a6413;
+  --warn-soft: rgba(138, 100, 19, 0.12);
+
+  --shadow-panel: 0 1px 2px rgba(30, 25, 15, 0.05);
+  --shadow-pop: 0 24px 64px -22px rgba(30, 25, 15, 0.3),
+    0 0 0 1px var(--line-strong);
+
+  --grid-line: rgba(0, 0, 0, 0.05);
+  --scrim: rgba(60, 56, 48, 0.35);
+
+  color-scheme: light;
+}
+
+/* Respect the OS when the user has expressed no preference. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg-void: #e7e5e0; --bg-base: #f5f4f1; --bg-panel: #ffffff;
+    --bg-raise: #faf9f7; --bg-sink: #f0efeb; --bg-hover: #f0eee9;
+    --bg-active: #e6e3dc;
+    --line: #ddd9d1; --line-strong: #c3bdb2; --line-faint: #eae7e0;
+    --ink: #16191d; --ink-2: #4a5157; --ink-3: #757d86; --ink-4: #9aa1a9;
+    --accent: #a8681a; --accent-ink: #fffaf2;
+    --accent-soft: rgba(168, 104, 26, 0.1);
+    --accent-line: rgba(168, 104, 26, 0.38);
+    --cyan: #1f6f8b; --cyan-soft: rgba(31, 111, 139, 0.1);
+    --violet: #5b4cbb; --violet-soft: rgba(91, 76, 187, 0.1);
+    --up: #17794a; --up-soft: rgba(23, 121, 74, 0.11);
+    --down: #b5342c; --down-soft: rgba(181, 52, 44, 0.1);
+    --warn: #8a6413; --warn-soft: rgba(138, 100, 19, 0.12);
+    --shadow-panel: 0 1px 2px rgba(30, 25, 15, 0.05);
+    --shadow-pop: 0 24px 64px -22px rgba(30, 25, 15, 0.3), 0 0 0 1px var(--line-strong);
+    --grid-line: rgba(0, 0, 0, 0.05);
+    --scrim: rgba(60, 56, 48, 0.35);
+    color-scheme: light;
+  }
+}
+
+/* Density is a user setting, not a breakpoint. */
+:root[data-density="compact"] { --row-h: 26px; --panel-pad: var(--s4); }
+:root { --row-h: 30px; --panel-pad: var(--s5); }
+:root[data-density="comfortable"] { --row-h: 36px; --panel-pad: var(--s6); }

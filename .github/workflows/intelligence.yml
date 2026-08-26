@@ -1,0 +1,78 @@
+name: Intelligence pipeline
+
+# Weekdays for the daily layer, and Monday for the weekly brief.
+# Times are UTC. 11:00 UTC lands after the European close and before the US open.
+on:
+  schedule:
+    - cron: "0 11 * * 1-5"      # weekday refresh
+    - cron: "30 6 * * 1"        # Monday brief, early enough to read with coffee
+  workflow_dispatch:
+    inputs:
+      brief:
+        description: "Also generate this week's Monday brief"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intelligence
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run pipeline
+        env:
+          # SEC's access policy requires a contact address in the User-Agent.
+          # Set this as a repository variable (Settings → Variables → Actions).
+          # Without it the SEC adapter skips itself and records why — the run
+          # still succeeds on every other source.
+          INTEL_CONTACT: ${{ vars.INTEL_CONTACT }}
+        run: |
+          if [ "${{ github.event.schedule }}" = "30 6 * * 1" ] || [ "${{ inputs.brief }}" = "true" ]; then
+            node pipeline/run.js --brief
+          else
+            node pipeline/run.js
+          fi
+
+      - name: Commit snapshots
+        run: |
+          git config user.name "intelligence-pipeline[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "No change in the data snapshots."
+            exit 0
+          fi
+          git commit -m "data: refresh intelligence snapshots ($(date -u +%Y-%m-%d))"
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            echo "push failed, retry $attempt"
+            sleep $((2 ** attempt))
+          done
+          exit 1
+
+      - name: Report gaps
+        if: always()
+        run: |
+          if [ -f data/manifest.json ]; then
+            node -e "
+              const m = require('./data/manifest.json');
+              console.log('totals', JSON.stringify(m.totals));
+              if (m.gaps.length) {
+                console.log('::warning::' + m.gaps.length + ' source(s) reported gaps');
+                for (const gap of m.gaps) console.log(' -', gap.source, gap.error || gap.notes.join('; '));
+              } else {
+                console.log('All sources answered.');
+              }
+            "
+          fi

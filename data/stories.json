@@ -1,0 +1,3896 @@
+{
+ "generatedAt": "2026-08-26T02:28:45.470Z",
+ "partial": false,
+ "counts": {
+  "raw": 60,
+  "deduped": 54,
+  "removed": 6,
+  "clusters": 49
+ },
+ "clusters": [
+  {
+   "id": "cl-2f580c9478f3",
+   "rank": 1,
+   "score": 0.719,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 1
+   },
+   "isDecision": true,
+   "whyRanked": "Ranked on: primary source; a policy decision rather than commentary; about 4 months old; touches Bank of Canada Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "boc_rate",
+     "hits": 2
+    },
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-04-29T09:47:31.000Z",
+   "lead": {
+    "id": "2f580c9478f3c66f",
+    "title": "Bank of Canada maintains policy rate at 2¼%",
+    "url": "https://www.bankofcanada.ca/2026/04/fad-press-release-2026-04-29/",
+    "publishedAt": "2026-04-29T09:47:31.000Z",
+    "summary": "The Bank of Canada today held its target for the overnight rate at 2.25%, with the Bank Rate at 2.5% and the deposit rate at 2.20%.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 2,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "boc_rate",
+      "hits": 2
+     },
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2f580c9478f3c66f",
+     "title": "Bank of Canada maintains policy rate at 2¼%",
+     "url": "https://www.bankofcanada.ca/2026/04/fad-press-release-2026-04-29/",
+     "publishedAt": "2026-04-29T09:47:31.000Z",
+     "summary": "The Bank of Canada today held its target for the overnight rate at 2.25%, with the Bank Rate at 2.5% and the deposit rate at 2.20%.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 2,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "boc_rate",
+       "hits": 2
+      },
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-9de8351defb5",
+   "rank": 2,
+   "score": 0.702,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 1
+   },
+   "isDecision": true,
+   "whyRanked": "Ranked on: primary source; a policy decision rather than commentary; about 4 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-29T18:00:00.000Z",
+   "lead": {
+    "id": "9de8351defb523d2",
+    "title": "Federal Reserve issues FOMC statement",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm",
+    "publishedAt": "2026-07-29T18:00:00.000Z",
+    "summary": "Federal Reserve issues FOMC statement",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "9de8351defb523d2",
+     "title": "Federal Reserve issues FOMC statement",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm",
+     "publishedAt": "2026-07-29T18:00:00.000Z",
+     "summary": "Federal Reserve issues FOMC statement",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-ce1f838c6f3d",
+   "rank": 3,
+   "score": 0.694,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    },
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-27T10:00:38.000Z",
+   "lead": {
+    "id": "ce1f838c6f3dda96",
+    "title": "Bank of Canada publishes its 2027 schedule for policy interest rate announcements and other major publications",
+    "url": "https://www.bankofcanada.ca/2026/07/bank-canada-publishes-2027-schedule-policy-interest-rate-announcements-other-major-publications/",
+    "publishedAt": "2026-07-27T10:00:38.000Z",
+    "summary": "The Bank of Canada today published its 2027 schedule for policy interest rate announcements and the release of the quarterly Monetary Policy Report.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     },
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "ce1f838c6f3dda96",
+     "title": "Bank of Canada publishes its 2027 schedule for policy interest rate announcements and other major publications",
+     "url": "https://www.bankofcanada.ca/2026/07/bank-canada-publishes-2027-schedule-policy-interest-rate-announcements-other-major-publications/",
+     "publishedAt": "2026-07-27T10:00:38.000Z",
+     "summary": "The Bank of Canada today published its 2027 schedule for policy interest rate announcements and the release of the quarterly Monetary Policy Report.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      },
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-411d3017e0fb",
+   "rank": 4,
+   "score": 0.694,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 2 months old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    },
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-06-25T15:00:55.000Z",
+   "lead": {
+    "id": "411d3017e0fbd467",
+    "title": "Bank of Canada publishes report on monetary policy framework consultations",
+    "url": "https://www.bankofcanada.ca/2026/06/bank-canada-publishes-report-monetary-policy-framework-consultations/",
+    "publishedAt": "2026-06-25T15:00:55.000Z",
+    "summary": "The Bank of Canada today published a report summarizing the feedback it received from stakeholders and the Canadian public during consultations on its monetary policy framework.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     },
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "411d3017e0fbd467",
+     "title": "Bank of Canada publishes report on monetary policy framework consultations",
+     "url": "https://www.bankofcanada.ca/2026/06/bank-canada-publishes-report-monetary-policy-framework-consultations/",
+     "publishedAt": "2026-06-25T15:00:55.000Z",
+     "summary": "The Bank of Canada today published a report summarizing the feedback it received from stakeholders and the Canadian public during consultations on its monetary policy framework.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      },
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2ccc2a7e7bd8",
+   "rank": 5,
+   "score": 0.677,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 7 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-09T19:00:00.000Z",
+   "lead": {
+    "id": "2ccc2a7e7bd8704f",
+    "title": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260709a.htm",
+    "publishedAt": "2026-07-09T19:00:00.000Z",
+    "summary": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2ccc2a7e7bd8704f",
+     "title": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260709a.htm",
+     "publishedAt": "2026-07-09T19:00:00.000Z",
+     "summary": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2a29913485db",
+   "rank": 6,
+   "score": 0.657,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.102,
+    "corroboration": 0.63,
+    "consequence": 0.85,
+    "topic": 0.7,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 days old; touches Financial Instability, which propagates widely in the model.",
+   "size": 4,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "financial_instability",
+     "hits": 4
+    }
+   ],
+   "publishedAt": "2026-08-20T15:00:00.000Z",
+   "lead": {
+    "id": "2a29913485db0155",
+    "title": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260820b.htm",
+    "publishedAt": "2026-08-20T15:00:00.000Z",
+    "summary": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "financial_instability",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2a29913485db0155",
+     "title": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260820b.htm",
+     "publishedAt": "2026-08-20T15:00:00.000Z",
+     "summary": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    },
+    {
+     "id": "34e082434df6dbf2",
+     "title": "Federal Reserve Board issues enforcement action with Iuka Bancshares, Inc. and The Iuka State Bank",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730b.htm",
+     "publishedAt": "2026-07-30T15:00:00.000Z",
+     "summary": "Federal Reserve Board issues enforcement action with Iuka Bancshares, Inc. and The Iuka State Bank",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    },
+    {
+     "id": "8f75b68c81f1b76a",
+     "title": "Federal Reserve Board issues enforcement action with former chief lending officer of Heritage State Bank",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260716a.htm",
+     "publishedAt": "2026-07-16T15:00:00.000Z",
+     "summary": "Federal Reserve Board issues enforcement action with former chief lending officer of Heritage State Bank",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    },
+    {
+     "id": "bf49aac15f81e6d4",
+     "title": "Federal Reserve Board issues enforcement action with TS Banking Group, Inc. and TS Contrarian Bancshares, Inc.",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260709a.htm",
+     "publishedAt": "2026-07-09T15:00:00.000Z",
+     "summary": "Federal Reserve Board issues enforcement action with TS Banking Group, Inc. and TS Contrarian Bancshares, Inc.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2868f4b31fab",
+   "rank": 7,
+   "score": 0.639,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.51,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 2,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "monetary",
+    "commentary",
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 2
+    }
+   ],
+   "publishedAt": "2026-07-13T16:30:00.000Z",
+   "lead": {
+    "id": "2868f4b31fab99cc",
+    "title": "Waller, Monetary Policy at a Crossroads",
+    "url": "https://www.federalreserve.gov/newsevents/speech/waller20260713a.htm",
+    "publishedAt": "2026-07-13T16:30:00.000Z",
+    "summary": "Speech At the New York Association for Business Economics, New York, New York",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "monetary",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2868f4b31fab99cc",
+     "title": "Waller, Monetary Policy at a Crossroads",
+     "url": "https://www.federalreserve.gov/newsevents/speech/waller20260713a.htm",
+     "publishedAt": "2026-07-13T16:30:00.000Z",
+     "summary": "Speech At the New York Association for Business Economics, New York, New York",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "monetary",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    },
+    {
+     "id": "39d58fdcaedfcabb",
+     "title": "Waller, Two Thoughts on the Transmission of Monetary Policy",
+     "url": "https://www.federalreserve.gov/newsevents/speech/waller20260706a.htm",
+     "publishedAt": "2026-07-06T15:00:00.000Z",
+     "summary": "Speech At \"Challenges for Monetary Policy Transmission in a Changing World,\" a conference sponsored by the Bank of Italy for the research network initiated by the European System of Central Banks, Rome, Italy",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "monetary",
+      "banking",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-04111fbea853",
+   "rank": 8,
+   "score": 0.632,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "monetary",
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-16T23:00:00.000Z",
+   "lead": {
+    "id": "04111fbea8535e2b",
+    "title": "Jefferson, Navigating Economic Shocks: A Monetary Policymaker’s Perspective",
+    "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260716a.htm",
+    "publishedAt": "2026-07-16T23:00:00.000Z",
+    "summary": "Speech At the Stanford Institute for Economic Policy Research, Stanford University, Stanford, California",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "monetary",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "04111fbea8535e2b",
+     "title": "Jefferson, Navigating Economic Shocks: A Monetary Policymaker’s Perspective",
+     "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260716a.htm",
+     "publishedAt": "2026-07-16T23:00:00.000Z",
+     "summary": "Speech At the Stanford Institute for Economic Policy Research, Stanford University, Stanford, California",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "monetary",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-1d3c5a8e80ed",
+   "rank": 9,
+   "score": 0.632,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old; touches Fed Policy Rate, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "monetary",
+    "banking",
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "policy_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-05-29T13:10:00.000Z",
+   "lead": {
+    "id": "1d3c5a8e80ed3f5d",
+    "title": "Bowman, A Framework for Practical Monetary Policy Decision Making",
+    "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260529a.htm",
+    "publishedAt": "2026-05-29T13:10:00.000Z",
+    "summary": "Speech At the Reykjav&iacute;k Economic Conference 2026, Central Bank of Iceland, Reykjav&iacute;k, Iceland",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "monetary",
+     "banking",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "policy_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "1d3c5a8e80ed3f5d",
+     "title": "Bowman, A Framework for Practical Monetary Policy Decision Making",
+     "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260529a.htm",
+     "publishedAt": "2026-05-29T13:10:00.000Z",
+     "summary": "Speech At the Reykjav&iacute;k Economic Conference 2026, Central Bank of Iceland, Reykjav&iacute;k, Iceland",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "monetary",
+      "banking",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "policy_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-8d05145dba06",
+   "rank": 10,
+   "score": 0.616,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.85,
+    "topic": 0.7,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Financial Instability, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "financial_instability",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-30T15:00:00.000Z",
+   "lead": {
+    "id": "8d05145dba06f5b9",
+    "title": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of First Interstate Bank",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730a.htm",
+    "publishedAt": "2026-07-30T15:00:00.000Z",
+    "summary": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of United Community Bank",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 2,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "financial_instability",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "8d05145dba06f5b9",
+     "title": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of First Interstate Bank",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730a.htm",
+     "publishedAt": "2026-07-30T15:00:00.000Z",
+     "summary": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of United Community Bank",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 2,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-412fc58d2a2b",
+   "rank": 11,
+   "score": 0.596,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.997,
+    "topic": 0.35,
+    "specificity": 0.667,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 7 weeks old; touches Financial Instability, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "financial_instability",
+     "hits": 1
+    },
+    {
+     "nodeId": "ai_capability",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-07T11:00:00.000Z",
+   "lead": {
+    "id": "412fc58d2a2b9be0",
+    "title": "Bowman, Opening Remarks on Sound Practices for Artificial Intelligence",
+    "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260707a.htm",
+    "publishedAt": "2026-07-07T11:00:00.000Z",
+    "summary": "Speech At the Financial Stability Board Virtual Outreach Event",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "financial_instability",
+      "hits": 1
+     },
+     {
+      "nodeId": "ai_capability",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "412fc58d2a2b9be0",
+     "title": "Bowman, Opening Remarks on Sound Practices for Artificial Intelligence",
+     "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260707a.htm",
+     "publishedAt": "2026-07-07T11:00:00.000Z",
+     "summary": "Speech At the Financial Stability Board Virtual Outreach Event",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "financial_instability",
+       "hits": 1
+      },
+      {
+       "nodeId": "ai_capability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-782da97839dd",
+   "rank": 12,
+   "score": 0.579,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.997,
+    "topic": 0.35,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; touches AI Model Capability, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "ai_capability",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-14T16:40:00.000Z",
+   "lead": {
+    "id": "782da97839dd8c53",
+    "title": "Barr, Will Artificial Intelligence Broadly Raise Living Standards or Drive Income and Wealth Inequality?",
+    "url": "https://www.federalreserve.gov/newsevents/speech/barr20260714a.htm",
+    "publishedAt": "2026-07-14T16:40:00.000Z",
+    "summary": "Speech At “Next-Gen Financial Inclusion,” the third annual Financial Inclusion Conference hosted by the Federal Reserve Board",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "ai_capability",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "782da97839dd8c53",
+     "title": "Barr, Will Artificial Intelligence Broadly Raise Living Standards or Drive Income and Wealth Inequality?",
+     "url": "https://www.federalreserve.gov/newsevents/speech/barr20260714a.htm",
+     "publishedAt": "2026-07-14T16:40:00.000Z",
+     "summary": "Speech At “Next-Gen Financial Inclusion,” the third annual Financial Inclusion Conference hosted by the Federal Reserve Board",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "ai_capability",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-31dc74aef380",
+   "rank": 13,
+   "score": 0.57,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.958,
+    "topic": 0.35,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 2 months old; touches US Dollar, which propagates widely in the model.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "usd",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-06-22T13:00:00.000Z",
+   "lead": {
+    "id": "31dc74aef380193f",
+    "title": "Waller, Welcoming Remarks on the International Role of the U.S. Dollar",
+    "url": "https://www.federalreserve.gov/newsevents/speech/waller20260622a.htm",
+    "publishedAt": "2026-06-22T13:00:00.000Z",
+    "summary": "Speech At the Fifth Conference on the International Roles of the Dollar, Board of Governors of the Federal Reserve System, Washington, D.C.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "usd",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "31dc74aef380193f",
+     "title": "Waller, Welcoming Remarks on the International Role of the U.S. Dollar",
+     "url": "https://www.federalreserve.gov/newsevents/speech/waller20260622a.htm",
+     "publishedAt": "2026-06-22T13:00:00.000Z",
+     "summary": "Speech At the Fifth Conference on the International Roles of the Dollar, Board of Governors of the Federal Reserve System, Washington, D.C.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "usd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-b792c7f9c610",
+   "rank": 14,
+   "score": 0.496,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.463,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; a few days old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-24T06:00:00.000Z",
+   "lead": {
+    "id": "b792c7f9c610dacd",
+    "title": "Piero Cipollone: Interview with ilsussidiario.net",
+    "url": "https://www.ecb.europa.eu//press/inter/date/2026/html/ecb.in260824~fa5acbddea.en.html",
+    "publishedAt": "2026-08-24T06:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "b792c7f9c610dacd",
+     "title": "Piero Cipollone: Interview with ilsussidiario.net",
+     "url": "https://www.ecb.europa.eu//press/inter/date/2026/html/ecb.in260824~fa5acbddea.en.html",
+     "publishedAt": "2026-08-24T06:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-a88a68b1eb72",
+   "rank": 15,
+   "score": 0.474,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.317,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-05-27T09:00:10.000Z",
+   "lead": {
+    "id": "a88a68b1eb72a357",
+    "title": "Bank of Canada joins BIS Project Agorá to test improvements in wholesale cross-border payments",
+    "url": "https://www.bankofcanada.ca/2026/05/bank-canada-joins-bis-project-agora-test-improvements-wholesale-cross-border-payments/",
+    "publishedAt": "2026-05-27T09:00:10.000Z",
+    "summary": "The Bank of Canada announced today it is joining the Bank for International Settlements’ Project Agorá, an initiative exploring how tokenization could improve wholesale cross-border payments.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "a88a68b1eb72a357",
+     "title": "Bank of Canada joins BIS Project Agorá to test improvements in wholesale cross-border payments",
+     "url": "https://www.bankofcanada.ca/2026/05/bank-canada-joins-bis-project-agora-test-improvements-wholesale-cross-border-payments/",
+     "publishedAt": "2026-05-27T09:00:10.000Z",
+     "summary": "The Bank of Canada announced today it is joining the Bank for International Settlements’ Project Agorá, an initiative exploring how tokenization could improve wholesale cross-border payments.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-d24fa9152d86",
+   "rank": 16,
+   "score": 0.474,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.317,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-05-19T10:00:13.000Z",
+   "lead": {
+    "id": "d24fa9152d864547",
+    "title": "Bank of Canada Museum honours two Canadian educators for innovation in the classroom",
+    "url": "https://www.bankofcanada.ca/2026/05/bank-canada-museum-honours-two-canadian-educators-innovation-classroom/",
+    "publishedAt": "2026-05-19T10:00:13.000Z",
+    "summary": "Ethan McDonagh and Andrew Leong have won the Bank of Canada Museum’s 2026 Award for Excellence in Teaching Economics.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "d24fa9152d864547",
+     "title": "Bank of Canada Museum honours two Canadian educators for innovation in the classroom",
+     "url": "https://www.bankofcanada.ca/2026/05/bank-canada-museum-honours-two-canadian-educators-innovation-classroom/",
+     "publishedAt": "2026-05-19T10:00:13.000Z",
+     "summary": "Ethan McDonagh and Andrew Leong have won the Bank of Canada Museum’s 2026 Award for Excellence in Teaching Economics.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-ae798dea598c",
+   "rank": 17,
+   "score": 0.474,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.317,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 months old.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-05-07T10:00:30.000Z",
+   "lead": {
+    "id": "ae798dea598c5e5f",
+    "title": "Bank of Canada Museum marks 50th anniversary of the Montréal Olympics with an exhibition on Canada’s historic Olympic Coin Program",
+    "url": "https://www.bankofcanada.ca/2026/05/bank-canada-museum-50th-anniversary-montreal-olympics-exhibition-canadas-historic-olympic-coin-program/",
+    "publishedAt": "2026-05-07T10:00:30.000Z",
+    "summary": "Step back into the excitement and pride of Canada’s first Olympic Games as the Bank of Canada Museum opens Montréal 1976: The legacy of the Olympic coins.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "ae798dea598c5e5f",
+     "title": "Bank of Canada Museum marks 50th anniversary of the Montréal Olympics with an exhibition on Canada’s historic Olympic Coin Program",
+     "url": "https://www.bankofcanada.ca/2026/05/bank-canada-museum-50th-anniversary-montreal-olympics-exhibition-canadas-historic-olympic-coin-program/",
+     "publishedAt": "2026-05-07T10:00:30.000Z",
+     "summary": "Step back into the excitement and pride of Canada’s first Olympic Games as the Bank of Canada Museum opens Montréal 1976: The legacy of the Olympic coins.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-089ac7f74b49",
+   "rank": 18,
+   "score": 0.474,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.317,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 months old.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "boc_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-04-20T14:00:28.000Z",
+   "lead": {
+    "id": "089ac7f74b49de4e",
+    "title": "Bank of Canada announces the appointment of two Deputy Governors",
+    "url": "https://www.bankofcanada.ca/2026/04/bank-of-canada-announces-appointment-two-deputy-governors/",
+    "publishedAt": "2026-04-20T14:00:28.000Z",
+    "summary": "The Board of Directors of the Bank of Canada today announced the appointment of Marc-André Gosselin and Nicolas Vincent as Deputy Governors, effective May 25 and August 3, 2026, respectively.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "boc_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "089ac7f74b49de4e",
+     "title": "Bank of Canada announces the appointment of two Deputy Governors",
+     "url": "https://www.bankofcanada.ca/2026/04/bank-of-canada-announces-appointment-two-deputy-governors/",
+     "publishedAt": "2026-04-20T14:00:28.000Z",
+     "summary": "The Board of Directors of the Bank of Canada today announced the appointment of Marc-André Gosselin and Nicolas Vincent as Deputy Governors, effective May 25 and August 3, 2026, respectively.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "boc_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-a1b4ca74660c",
+   "rank": 19,
+   "score": 0.46,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.13,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [
+    {
+     "nodeId": "ecb_rate",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-24T13:00:00.000Z",
+   "lead": {
+    "id": "a1b4ca74660c45b4",
+    "title": "Decisions taken by the Governing Council of the ECB (in addition to decisions setting interest rates)",
+    "url": "https://www.ecb.europa.eu//press/govcdec/otherdec/2026/html/ecb.gc260724~eebbc30622.en.html",
+    "publishedAt": "2026-07-24T13:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "ecb_rate",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "a1b4ca74660c45b4",
+     "title": "Decisions taken by the Governing Council of the ECB (in addition to decisions setting interest rates)",
+     "url": "https://www.ecb.europa.eu//press/govcdec/otherdec/2026/html/ecb.gc260724~eebbc30622.en.html",
+     "publishedAt": "2026-07-24T13:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "ecb_rate",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-42c3788d9fd8",
+   "rank": 20,
+   "score": 0.443,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.064,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [
+    {
+     "nodeId": "eurusd",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-30T08:00:00.000Z",
+   "lead": {
+    "id": "42c3788d9fd87b13",
+    "title": "Digital euro app to incorporate highest accessibility standards",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260730~3b3bfbb565.en.html",
+    "publishedAt": "2026-07-30T08:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "eurusd",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "42c3788d9fd87b13",
+     "title": "Digital euro app to incorporate highest accessibility standards",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260730~3b3bfbb565.en.html",
+     "publishedAt": "2026-07-30T08:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "eurusd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-7c86a3728456",
+   "rank": 21,
+   "score": 0.44,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 1,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "monetary"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-24T10:00:00.000Z",
+   "lead": {
+    "id": "7c86a3728456aa2b",
+    "title": "ECB to extend use of climate factors in Eurosystem collateral framework to non-financial corporate credit claims",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_4~f082ce289d.en.html",
+    "publishedAt": "2026-07-24T10:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "monetary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "7c86a3728456aa2b",
+     "title": "ECB to extend use of climate factors in Eurosystem collateral framework to non-financial corporate credit claims",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_4~f082ce289d.en.html",
+     "publishedAt": "2026-07-24T10:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "monetary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-9cddda5ca086",
+   "rank": 22,
+   "score": 0.438,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.112,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 days old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-20T20:00:00.000Z",
+   "lead": {
+    "id": "9cddda5ca0866ce5",
+    "title": "Federal Reserve Board announces approval of application by National Westminster Bank Plc",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260820a.htm",
+    "publishedAt": "2026-08-20T20:00:00.000Z",
+    "summary": "Federal Reserve Board announces approval of application by National Westminster Bank Plc",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "9cddda5ca0866ce5",
+     "title": "Federal Reserve Board announces approval of application by National Westminster Bank Plc",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260820a.htm",
+     "publishedAt": "2026-08-20T20:00:00.000Z",
+     "summary": "Federal Reserve Board announces approval of application by National Westminster Bank Plc",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2c20c2e77b6e",
+   "rank": 23,
+   "score": 0.434,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.126,
+    "topic": 0.7,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [
+    {
+     "nodeId": "banks",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-31T14:00:00.000Z",
+   "lead": {
+    "id": "2c20c2e77b6e522e",
+    "title": "Federal Reserve Board requests comment on a proposal to modernize rules for mutual banking organizations",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260731a.htm",
+    "publishedAt": "2026-07-31T14:00:00.000Z",
+    "summary": "Federal Reserve Board requests comment on a proposal to modernize rules for mutual banking organizations",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "banks",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2c20c2e77b6e522e",
+     "title": "Federal Reserve Board requests comment on a proposal to modernize rules for mutual banking organizations",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260731a.htm",
+     "publishedAt": "2026-07-31T14:00:00.000Z",
+     "summary": "Federal Reserve Board requests comment on a proposal to modernize rules for mutual banking organizations",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "banks",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-522cd04a05fe",
+   "rank": 24,
+   "score": 0.434,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.138,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 days old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-21T08:00:00.000Z",
+   "lead": {
+    "id": "522cd04a05fefc53",
+    "title": "ECB Consumer Expectations Survey results – July 2026",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260821~a044fdddd9.en.html",
+    "publishedAt": "2026-08-21T08:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "522cd04a05fefc53",
+     "title": "ECB Consumer Expectations Survey results – July 2026",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260821~a044fdddd9.en.html",
+     "publishedAt": "2026-08-21T08:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-8665bca64f38",
+   "rank": 25,
+   "score": 0.423,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.027,
+    "corroboration": 0.51,
+    "consequence": 0.064,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 9 days old; limited onward transmission.",
+   "size": 2,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [
+    {
+     "nodeId": "eurusd",
+     "hits": 2
+    }
+   ],
+   "publishedAt": "2026-08-17T09:30:00.000Z",
+   "lead": {
+    "id": "8665bca64f38edb7",
+    "title": "Philip R. Lane: The rise in defence spending and the euro area economy",
+    "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260817~1f9f7149c9.en.pdf",
+    "publishedAt": "2026-08-17T09:30:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "eurusd",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "8665bca64f38edb7",
+     "title": "Philip R. Lane: The rise in defence spending and the euro area economy",
+     "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260817~1f9f7149c9.en.pdf",
+     "publishedAt": "2026-08-17T09:30:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "eurusd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    },
+    {
+     "id": "f7ec5a2d9fd1623a",
+     "title": "Philip R. Lane: Outlook for the euro area economy",
+     "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260724~d484b483b9.en.pdf",
+     "publishedAt": "2026-07-24T15:30:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "eurusd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-292fa669fdca",
+   "rank": 26,
+   "score": 0.42,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.059,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 7 days old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-19T07:10:00.000Z",
+   "lead": {
+    "id": "292fa669fdcaf411",
+    "title": "Christine Lagarde: Panel remarks about the European economy during a discussion on the global economic outlook at the World Economic Forum",
+    "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260819~98ddf24b7b.en.html",
+    "publishedAt": "2026-08-19T07:10:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "292fa669fdcaf411",
+     "title": "Christine Lagarde: Panel remarks about the European economy during a discussion on the global economic outlook at the World Economic Forum",
+     "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260819~98ddf24b7b.en.html",
+     "publishedAt": "2026-08-19T07:10:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-fcf326561098",
+   "rank": 27,
+   "score": 0.416,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-31T14:00:00.000Z",
+   "lead": {
+    "id": "fcf3265610988434",
+    "title": "Federal Reserve Board requests comment on a proposal to modernize its rule governing the extension of credit to bank \"insiders\"—bank executives, board members and major shareholders who could potentially influence a bank's lending decisions",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260731b.htm",
+    "publishedAt": "2026-07-31T14:00:00.000Z",
+    "summary": "Federal Reserve Board requests comment on a proposal to modernize its rule governing the extension of credit to bank \"insiders\"—bank executives, board members and major shareholders who could potentially influence a bank's lending decisions",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "fcf3265610988434",
+     "title": "Federal Reserve Board requests comment on a proposal to modernize its rule governing the extension of credit to bank \"insiders\"—bank executives, board members and major shareholders who could potentially influence a bank's lending decisions",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260731b.htm",
+     "publishedAt": "2026-07-31T14:00:00.000Z",
+     "summary": "Federal Reserve Board requests comment on a proposal to modernize its rule governing the extension of credit to bank \"insiders\"—bank executives, board members and major shareholders who could potentially influence a bank's lending decisions",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-9047c49de806",
+   "rank": 28,
+   "score": 0.416,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-16T18:00:00.000Z",
+   "lead": {
+    "id": "9047c49de8069857",
+    "title": "Agencies issue joint statement on handling of highly sensitive information during bank examinations",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260716a.htm",
+    "publishedAt": "2026-07-16T18:00:00.000Z",
+    "summary": "Agencies issue joint statement on handling of highly sensitive information during bank examinations",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "banking"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "9047c49de8069857",
+     "title": "Agencies issue joint statement on handling of highly sensitive information during bank examinations",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20260716a.htm",
+     "publishedAt": "2026-07-16T18:00:00.000Z",
+     "summary": "Agencies issue joint statement on handling of highly sensitive information during bank examinations",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "banking"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-b0d67eb2fb9a",
+   "rank": 29,
+   "score": 0.412,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.005,
+    "corroboration": 0.45,
+    "consequence": 0.064,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 13 days old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [
+    {
+     "nodeId": "eurusd",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-08-13T09:00:00.000Z",
+   "lead": {
+    "id": "b0d67eb2fb9abfdc",
+    "title": "Cash remains most widely accepted payment method in euro area",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260813~389729d6a9.en.html",
+    "publishedAt": "2026-08-13T09:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "eurusd",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "b0d67eb2fb9abfdc",
+     "title": "Cash remains most widely accepted payment method in euro area",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260813~389729d6a9.en.html",
+     "publishedAt": "2026-08-13T09:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "eurusd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-121fe9bad9b8",
+   "rank": 30,
+   "score": 0.411,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.064,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [
+    {
+     "nodeId": "eurusd",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-24T09:00:00.000Z",
+   "lead": {
+    "id": "121fe9bad9b8e0d8",
+    "title": "Results of the June 2026 survey on credit terms and conditions in euro-denominated securities financing and OTC derivatives markets (SESFOD)",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_3~c0b45e246f.en.html",
+    "publishedAt": "2026-07-24T09:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "eurusd",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "121fe9bad9b8e0d8",
+     "title": "Results of the June 2026 survey on credit terms and conditions in euro-denominated securities financing and OTC derivatives markets (SESFOD)",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_3~c0b45e246f.en.html",
+     "publishedAt": "2026-07-24T09:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "eurusd",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-0a2097d18fc9",
+   "rank": 31,
+   "score": 0.411,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.064,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "boc-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "canada"
+   ],
+   "nodes": [
+    {
+     "nodeId": "cybersecurity",
+     "hits": 1
+    }
+   ],
+   "publishedAt": "2026-07-31T09:30:53.000Z",
+   "lead": {
+    "id": "0a2097d18fc9c90b",
+    "title": "G7 2026 Cross-Border Coordination Exercise (CBCE)",
+    "url": "https://www.bankofcanada.ca/2026/07/g7-2026-cross-border-coordination-exercise-cbce/",
+    "publishedAt": "2026-07-31T09:30:53.000Z",
+    "summary": "The G7 Cyber Expert Group (CEG) successfully concluded its 2026 Cross-border coordination exercise (CBCE) on May 18, 2026. This exercise demonstrates the Group’s ongoing commitment to strengthening cyber resilience across the G7 financial sector.",
+    "sourceId": "boc-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "canada",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [
+     {
+      "nodeId": "cybersecurity",
+      "hits": 1
+     }
+    ],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "0a2097d18fc9c90b",
+     "title": "G7 2026 Cross-Border Coordination Exercise (CBCE)",
+     "url": "https://www.bankofcanada.ca/2026/07/g7-2026-cross-border-coordination-exercise-cbce/",
+     "publishedAt": "2026-07-31T09:30:53.000Z",
+     "summary": "The G7 Cyber Expert Group (CEG) successfully concluded its 2026 Cross-border coordination exercise (CBCE) on May 18, 2026. This exercise demonstrates the Group’s ongoing commitment to strengthening cyber resilience across the G7 financial sector.",
+     "sourceId": "boc-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "canada",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [
+      {
+       "nodeId": "cybersecurity",
+       "hits": 1
+      }
+     ],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-c062825b2efe",
+   "rank": 32,
+   "score": 0.409,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.002,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 2 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-11T08:30:00.000Z",
+   "lead": {
+    "id": "c062825b2efeea43",
+    "title": "ECB and Frankfurt Radio Symphony invite the public to Europa Open Air concert on 20 August 2026",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260811~47cd3ee040.en.html",
+    "publishedAt": "2026-08-11T08:30:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "c062825b2efeea43",
+     "title": "ECB and Frankfurt Radio Symphony invite the public to Europa Open Air concert on 20 August 2026",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260811~47cd3ee040.en.html",
+     "publishedAt": "2026-08-11T08:30:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2d1aa9e55519",
+   "rank": 33,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-14T18:00:00.000Z",
+   "lead": {
+    "id": "2d1aa9e5551941b4",
+    "title": "Minutes of the Board's discount rate meetings on June 8 and June 17, 2026",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260714a.htm",
+    "publishedAt": "2026-07-14T18:00:00.000Z",
+    "summary": "Minutes of the Board's discount rate meetings on July 20 and July 29, 2026",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 1,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2d1aa9e5551941b4",
+     "title": "Minutes of the Board's discount rate meetings on June 8 and June 17, 2026",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260714a.htm",
+     "publishedAt": "2026-07-14T18:00:00.000Z",
+     "summary": "Minutes of the Board's discount rate meetings on July 20 and July 29, 2026",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 1,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-08066ed4b23b",
+   "rank": 34,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 7 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-08T18:00:00.000Z",
+   "lead": {
+    "id": "08066ed4b23be45f",
+    "title": "Minutes of the Federal Open Market Committee, June 16-17, 2026",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260708a.htm",
+    "publishedAt": "2026-07-08T18:00:00.000Z",
+    "summary": "Minutes of the Federal Open Market Committee, July 28–29, 2026",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 1,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "08066ed4b23be45f",
+     "title": "Minutes of the Federal Open Market Committee, June 16-17, 2026",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260708a.htm",
+     "publishedAt": "2026-07-08T18:00:00.000Z",
+     "summary": "Minutes of the Federal Open Market Committee, July 28–29, 2026",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 1,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-eb77171ecce4",
+   "rank": 35,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-04T20:30:00.000Z",
+   "lead": {
+    "id": "eb77171ecce47b02",
+    "title": "Federal Reserve Board announces approval of the application by Coastal Bend Bancshares, Inc.",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804c.htm",
+    "publishedAt": "2026-08-04T20:30:00.000Z",
+    "summary": "Federal Reserve Board announces approval of the application by Coastal Bend Bancshares, Inc.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "eb77171ecce47b02",
+     "title": "Federal Reserve Board announces approval of the application by Coastal Bend Bancshares, Inc.",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804c.htm",
+     "publishedAt": "2026-08-04T20:30:00.000Z",
+     "summary": "Federal Reserve Board announces approval of the application by Coastal Bend Bancshares, Inc.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-d34547a1a1f7",
+   "rank": 36,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-04T20:30:00.000Z",
+   "lead": {
+    "id": "d34547a1a1f7c44a",
+    "title": "Federal Reserve Board announces approval of the application by FS Bancorp, Inc.",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804b.htm",
+    "publishedAt": "2026-08-04T20:30:00.000Z",
+    "summary": "Federal Reserve Board announces approval of the application by FS Bancorp, Inc.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "d34547a1a1f7c44a",
+     "title": "Federal Reserve Board announces approval of the application by FS Bancorp, Inc.",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804b.htm",
+     "publishedAt": "2026-08-04T20:30:00.000Z",
+     "summary": "Federal Reserve Board announces approval of the application by FS Bancorp, Inc.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-194a3e6b5507",
+   "rank": 37,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-04T20:30:00.000Z",
+   "lead": {
+    "id": "194a3e6b5507f164",
+    "title": "Federal Reserve Board announces approval of the application by Banco Santander, S.A. and Santander Holdings USA, Inc.",
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804a.htm",
+    "publishedAt": "2026-08-04T20:30:00.000Z",
+    "summary": "Federal Reserve Board announces approval of the application by Banco Santander, S.A. and Santander Holdings USA, Inc.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "us",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "194a3e6b5507f164",
+     "title": "Federal Reserve Board announces approval of the application by Banco Santander, S.A. and Santander Holdings USA, Inc.",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/orders20260804a.htm",
+     "publishedAt": "2026-08-04T20:30:00.000Z",
+     "summary": "Federal Reserve Board announces approval of the application by Banco Santander, S.A. and Santander Holdings USA, Inc.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "us",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-e2add04f307f",
+   "rank": 38,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-07T08:00:00.000Z",
+   "lead": {
+    "id": "e2add04f307fc7df",
+    "title": "ECB publishes consolidated banking data for end-March 2026",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260807~58eb5109ce.en.html",
+    "publishedAt": "2026-08-07T08:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "e2add04f307fc7df",
+     "title": "ECB publishes consolidated banking data for end-March 2026",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260807~58eb5109ce.en.html",
+     "publishedAt": "2026-08-07T08:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-db4701a9b6a6",
+   "rank": 39,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-29T08:00:00.000Z",
+   "lead": {
+    "id": "db4701a9b6a65a03",
+    "title": "ECB wage tracker at 2.7% in Q1 2027, indicating stable negotiated wage pressures",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260729~4ad7508d8a.en.html",
+    "publishedAt": "2026-07-29T08:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "db4701a9b6a65a03",
+     "title": "ECB wage tracker at 2.7% in Q1 2027, indicating stable negotiated wage pressures",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260729~4ad7508d8a.en.html",
+     "publishedAt": "2026-07-29T08:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-2d0860a6fbcb",
+   "rank": 40,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-24T08:30:00.000Z",
+   "lead": {
+    "id": "2d0860a6fbcb955c",
+    "title": "ECB to start implementing enhanced repo facility for central banks",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_2~d7d475d2f0.en.html",
+    "publishedAt": "2026-07-24T08:30:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "2d0860a6fbcb955c",
+     "title": "ECB to start implementing enhanced repo facility for central banks",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724_2~d7d475d2f0.en.html",
+     "publishedAt": "2026-07-24T08:30:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-354834d26f2f",
+   "rank": 41,
+   "score": 0.408,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.6,
+    "specificity": 0,
+    "kind": 0.82
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 5 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "ecb-press"
+   ],
+   "topics": [
+    "policy"
+   ],
+   "regions": [
+    "europe"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-24T08:00:00.000Z",
+   "lead": {
+    "id": "354834d26f2f05f2",
+    "title": "Results of the ECB Survey of Professional Forecasters for the third quarter of 2026",
+    "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724~a099353951.en.html",
+    "publishedAt": "2026-07-24T08:00:00.000Z",
+    "summary": "",
+    "sourceId": "ecb-press",
+    "tier": 1,
+    "kind": "release",
+    "region": "europe",
+    "topics": [
+     "policy"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "354834d26f2f05f2",
+     "title": "Results of the ECB Survey of Professional Forecasters for the third quarter of 2026",
+     "url": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.pr260724~a099353951.en.html",
+     "publishedAt": "2026-07-24T08:00:00.000Z",
+     "summary": "",
+     "sourceId": "ecb-press",
+     "tier": 1,
+     "kind": "release",
+     "region": "europe",
+     "topics": [
+      "policy"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-ae361b83db7a",
+   "rank": 42,
+   "score": 0.372,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking",
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-13T09:25:00.000Z",
+   "lead": {
+    "id": "ae361b83db7a62f3",
+    "title": "Bowman, Modernizing Financial Regulation",
+    "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260713a.htm",
+    "publishedAt": "2026-07-13T09:25:00.000Z",
+    "summary": "Speech At a Bank Policy Institute London Conference, London, United Kingdom",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "banking",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "ae361b83db7a62f3",
+     "title": "Bowman, Modernizing Financial Regulation",
+     "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260713a.htm",
+     "publishedAt": "2026-07-13T09:25:00.000Z",
+     "summary": "Speech At a Bank Policy Institute London Conference, London, United Kingdom",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "banking",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-c40d508a1519",
+   "rank": 43,
+   "score": 0.372,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 2 months old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking",
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-06-24T18:00:00.000Z",
+   "lead": {
+    "id": "c40d508a1519d528",
+    "title": "Cook, Welcome Remarks",
+    "url": "https://www.federalreserve.gov/newsevents/speech/cook20260624a.htm",
+    "publishedAt": "2026-06-24T18:00:00.000Z",
+    "summary": "Speech At the State of Small Business Symposium hosted by the Federal Reserve Bank of Cleveland (via pre-recorded video)",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "banking",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "c40d508a1519d528",
+     "title": "Cook, Welcome Remarks",
+     "url": "https://www.federalreserve.gov/newsevents/speech/cook20260624a.htm",
+     "publishedAt": "2026-06-24T18:00:00.000Z",
+     "summary": "Speech At the State of Small Business Symposium hosted by the Federal Reserve Bank of Cleveland (via pre-recorded video)",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "banking",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-b79e993357dd",
+   "rank": 44,
+   "score": 0.371,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.7,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "banking",
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-05-28T00:00:00.000Z",
+   "lead": {
+    "id": "b79e993357dd7120",
+    "title": "Jefferson, Global Economic Developments and the U.S. Economy",
+    "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260527a.htm",
+    "publishedAt": "2026-05-28T00:00:00.000Z",
+    "summary": "Speech At the 2026 Bank of Japan-Institute for Monetary and Economic Studies Conference, Tokyo, Japan",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "banking",
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "b79e993357dd7120",
+     "title": "Jefferson, Global Economic Developments and the U.S. Economy",
+     "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260527a.htm",
+     "publishedAt": "2026-05-28T00:00:00.000Z",
+     "summary": "Speech At the 2026 Bank of Japan-Institute for Monetary and Economic Studies Conference, Tokyo, Japan",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "banking",
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-fcfc9e440770",
+   "rank": 45,
+   "score": 0.344,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.35,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-08-05T20:05:00.000Z",
+   "lead": {
+    "id": "fcfc9e44077091c0",
+    "title": "Cook, Outlook for the U.S. and Alaskan Economies",
+    "url": "https://www.federalreserve.gov/newsevents/speech/cook20260805a.htm",
+    "publishedAt": "2026-08-05T20:05:00.000Z",
+    "summary": "Speech At the 2026 Economic Luncheon of the Anchorage Economic Development Corporation, Anchorage, Alaska",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "fcfc9e44077091c0",
+     "title": "Cook, Outlook for the U.S. and Alaskan Economies",
+     "url": "https://www.federalreserve.gov/newsevents/speech/cook20260805a.htm",
+     "publishedAt": "2026-08-05T20:05:00.000Z",
+     "summary": "Speech At the 2026 Economic Luncheon of the Anchorage Economic Development Corporation, Anchorage, Alaska",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-57afc41fb3ff",
+   "rank": 46,
+   "score": 0.344,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.35,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-15T17:00:00.000Z",
+   "lead": {
+    "id": "57afc41fb3ffad91",
+    "title": "Cook, Economic Outlook",
+    "url": "https://www.federalreserve.gov/newsevents/speech/cook20260715a.htm",
+    "publishedAt": "2026-07-15T17:00:00.000Z",
+    "summary": "Speech At The Exchequer Club of Washington D.C., Washington, D.C.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "57afc41fb3ffad91",
+     "title": "Cook, Economic Outlook",
+     "url": "https://www.federalreserve.gov/newsevents/speech/cook20260715a.htm",
+     "publishedAt": "2026-07-15T17:00:00.000Z",
+     "summary": "Speech At The Exchequer Club of Washington D.C., Washington, D.C.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-40cdcb66bf6b",
+   "rank": 47,
+   "score": 0.344,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.35,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-07-14T18:55:00.000Z",
+   "lead": {
+    "id": "40cdcb66bf6b2dd3",
+    "title": "Bowman, Responsible Innovation and Financial Inclusion",
+    "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260714a.htm",
+    "publishedAt": "2026-07-14T18:55:00.000Z",
+    "summary": "Speech At “Next-Gen Financial Inclusion,” the third annual Financial Inclusion Conference hosted by the Federal Reserve Board, Washington, D.C. (via pre-recorded video)",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "40cdcb66bf6b2dd3",
+     "title": "Bowman, Responsible Innovation and Financial Inclusion",
+     "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260714a.htm",
+     "publishedAt": "2026-07-14T18:55:00.000Z",
+     "summary": "Speech At “Next-Gen Financial Inclusion,” the third annual Financial Inclusion Conference hosted by the Federal Reserve Board, Washington, D.C. (via pre-recorded video)",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-0d933dcf4016",
+   "rank": 48,
+   "score": 0.344,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.35,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-06-06T16:00:00.000Z",
+   "lead": {
+    "id": "0d933dcf4016da77",
+    "title": "Barr, Deregulating in a Financial Boom: What Could Go Wrong?",
+    "url": "https://www.federalreserve.gov/newsevents/speech/barr20260606a.htm",
+    "publishedAt": "2026-06-06T16:00:00.000Z",
+    "summary": "Speech At American University, Washington, D.C.",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "0d933dcf4016da77",
+     "title": "Barr, Deregulating in a Financial Boom: What Could Go Wrong?",
+     "url": "https://www.federalreserve.gov/newsevents/speech/barr20260606a.htm",
+     "publishedAt": "2026-06-06T16:00:00.000Z",
+     "summary": "Speech At American University, Washington, D.C.",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  },
+  {
+   "id": "cl-0a09e268843e",
+   "rank": 49,
+   "score": 0.344,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.12,
+    "topic": 0.35,
+    "specificity": 0,
+    "kind": 0.5
+   },
+   "isDecision": false,
+   "whyRanked": "Ranked on: primary source; about 3 months old; limited onward transmission.",
+   "size": 1,
+   "sources": [
+    "fed-press"
+   ],
+   "topics": [
+    "commentary"
+   ],
+   "regions": [
+    "us"
+   ],
+   "nodes": [],
+   "publishedAt": "2026-06-01T00:30:00.000Z",
+   "lead": {
+    "id": "0a09e268843ecada",
+    "title": "Powell, Acceptance Remarks",
+    "url": "https://www.federalreserve.gov/newsevents/speech/powell20260531a.htm",
+    "publishedAt": "2026-06-01T00:30:00.000Z",
+    "summary": "Speech For the 2026 John F. Kennedy Profile in Courage Award, John F. Kennedy Library Foundation, Boston, Massachusetts",
+    "sourceId": "fed-press",
+    "tier": 1,
+    "kind": "speech",
+    "region": "us",
+    "topics": [
+     "commentary"
+    ],
+    "entities": [],
+    "duplicates": 0,
+    "alsoIn": [],
+    "nodes": [],
+    "tickers": []
+   },
+   "items": [
+    {
+     "id": "0a09e268843ecada",
+     "title": "Powell, Acceptance Remarks",
+     "url": "https://www.federalreserve.gov/newsevents/speech/powell20260531a.htm",
+     "publishedAt": "2026-06-01T00:30:00.000Z",
+     "summary": "Speech For the 2026 John F. Kennedy Profile in Courage Award, John F. Kennedy Library Foundation, Boston, Massachusetts",
+     "sourceId": "fed-press",
+     "tier": 1,
+     "kind": "speech",
+     "region": "us",
+     "topics": [
+      "commentary"
+     ],
+     "entities": [],
+     "duplicates": 0,
+     "alsoIn": [],
+     "nodes": [],
+     "tickers": []
+    }
+   ]
+  }
+ ]
+}

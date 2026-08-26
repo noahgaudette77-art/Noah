@@ -1,0 +1,1294 @@
+{
+ "weekStart": "2026-08-24",
+ "generatedAt": "2026-08-26T02:28:45.470Z",
+ "version": 1,
+ "headline": {
+  "count": 49,
+  "decisions": 2,
+  "sources": 3
+ },
+ "bigPicture": [
+  {
+   "rank": 1,
+   "id": "cl-2f580c9478f3",
+   "title": "Bank of Canada maintains policy rate at 2¼%",
+   "url": "https://www.bankofcanada.ca/2026/04/fad-press-release-2026-04-29/",
+   "publishedAt": "2026-04-29T09:47:31.000Z",
+   "sources": [
+    "boc-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.719,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 1
+   },
+   "whyRanked": "Ranked on: primary source; a policy decision rather than commentary; about 4 months old; touches Bank of Canada Rate, which propagates widely in the model.",
+   "isDecision": true,
+   "nodes": [
+    {
+     "id": "boc_rate",
+     "label": "Bank of Canada Rate"
+    },
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "boc_rate",
+    "label": "Bank of Canada Rate"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "household_debt",
+     "label": "Household Debt Service",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 3,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "Household Debt Service",
+       "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States."
+      }
+     ]
+    },
+    {
+     "id": "usdcad",
+     "label": "USD/CAD",
+     "order": 1,
+     "orderName": "First order",
+     "direction": -1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "USD/CAD",
+       "why": "A higher Canadian policy rate narrows the differential and supports the loonie."
+      }
+     ]
+    },
+    {
+     "id": "consumer_spending",
+     "label": "Consumer Spending",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 6,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "Household Debt Service",
+       "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States."
+      },
+      {
+       "from": "Household Debt Service",
+       "to": "Consumer Spending",
+       "why": "Debt service is a prior claim on income."
+      }
+     ]
+    },
+    {
+     "id": "retail",
+     "label": "Retail",
+     "order": 3,
+     "orderName": "Third order",
+     "direction": -1,
+     "lagMonths": 7,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "Household Debt Service",
+       "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States."
+      },
+      {
+       "from": "Household Debt Service",
+       "to": "Consumer Spending",
+       "why": "Debt service is a prior claim on income."
+      },
+      {
+       "from": "Consumer Spending",
+       "to": "Retail",
+       "why": "Retail revenue is consumption, near-directly."
+      }
+     ]
+    },
+    {
+     "id": "gdp",
+     "label": "GDP Growth",
+     "order": 3,
+     "orderName": "Third order",
+     "direction": -1,
+     "lagMonths": 6,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "Household Debt Service",
+       "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States."
+      },
+      {
+       "from": "Household Debt Service",
+       "to": "Consumer Spending",
+       "why": "Debt service is a prior claim on income."
+      },
+      {
+       "from": "Consumer Spending",
+       "to": "GDP Growth",
+       "why": "Consumption is roughly two-thirds of US output."
+      }
+     ]
+    },
+    {
+     "id": "autos",
+     "label": "Automotive",
+     "order": 3,
+     "orderName": "Third order",
+     "direction": -1,
+     "lagMonths": 9,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Bank of Canada Rate",
+       "to": "Household Debt Service",
+       "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States."
+      },
+      {
+       "from": "Household Debt Service",
+       "to": "Consumer Spending",
+       "why": "Debt service is a prior claim on income."
+      },
+      {
+       "from": "Consumer Spending",
+       "to": "Automotive",
+       "why": "Vehicles are the largest discretionary durable purchase."
+      }
+     ]
+    }
+   ],
+   "others": []
+  },
+  {
+   "rank": 2,
+   "id": "cl-9de8351defb5",
+   "title": "Federal Reserve issues FOMC statement",
+   "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm",
+   "publishedAt": "2026-07-29T18:00:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.702,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 1
+   },
+   "whyRanked": "Ranked on: primary source; a policy decision rather than commentary; about 4 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": true,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "financial_conditions",
+     "label": "Financial Conditions",
+     "order": 1,
+     "orderName": "First order",
+     "direction": -1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "Financial Conditions",
+       "why": "Higher policy rates tighten conditions across rates, credit and the dollar simultaneously."
+      }
+     ]
+    },
+    {
+     "id": "ust2y",
+     "label": "2-Year Treasury Yield",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "2-Year Treasury Yield",
+       "why": "Two-year yields are largely an average of expected policy rates, so they move with the policy path."
+      }
+     ]
+    },
+    {
+     "id": "mortgage_rate",
+     "label": "Mortgage Rates",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 1,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "Mortgage Rates",
+       "why": "Mortgages price off the long end plus a spread, so they follow policy only partially."
+      }
+     ]
+    },
+    {
+     "id": "usd",
+     "label": "US Dollar",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "US Dollar",
+       "why": "Rate differentials drive carry, and carry drives flows — as long as risk appetite holds."
+      }
+     ]
+    },
+    {
+     "id": "real_rate",
+     "label": "Real Interest Rate",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 1,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "Real Interest Rate",
+       "why": "With expectations anchored, a nominal rate rise raises the real rate roughly one-for-one."
+      }
+     ]
+    },
+    {
+     "id": "gold",
+     "label": "Gold",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 1,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Fed Policy Rate",
+       "to": "Real Interest Rate",
+       "why": "With expectations anchored, a nominal rate rise raises the real rate roughly one-for-one."
+      },
+      {
+       "from": "Real Interest Rate",
+       "to": "Gold",
+       "why": "Gold pays no coupon, so its opportunity cost is the real yield on bonds."
+      }
+     ]
+    }
+   ],
+   "others": []
+  },
+  {
+   "rank": 3,
+   "id": "cl-ce1f838c6f3d",
+   "title": "Bank of Canada publishes its 2027 schedule for policy interest rate announcements and other major publications",
+   "url": "https://www.bankofcanada.ca/2026/07/bank-canada-publishes-2027-schedule-policy-interest-rate-announcements-other-major-publications/",
+   "publishedAt": "2026-07-27T10:00:38.000Z",
+   "sources": [
+    "boc-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.694,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 0.82
+   },
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    },
+    {
+     "id": "boc_rate",
+     "label": "Bank of Canada Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": []
+  },
+  {
+   "rank": 4,
+   "id": "cl-411d3017e0fb",
+   "title": "Bank of Canada publishes report on monetary policy framework consultations",
+   "url": "https://www.bankofcanada.ca/2026/06/bank-canada-publishes-report-monetary-policy-framework-consultations/",
+   "publishedAt": "2026-06-25T15:00:55.000Z",
+   "sources": [
+    "boc-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.694,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.667,
+    "kind": 0.82
+   },
+   "whyRanked": "Ranked on: primary source; about 2 months old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    },
+    {
+     "id": "boc_rate",
+     "label": "Bank of Canada Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": []
+  },
+  {
+   "rank": 5,
+   "id": "cl-2ccc2a7e7bd8",
+   "title": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
+   "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260709a.htm",
+   "publishedAt": "2026-07-09T19:00:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.677,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "whyRanked": "Ranked on: primary source; about 7 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": []
+  },
+  {
+   "rank": 6,
+   "id": "cl-2a29913485db",
+   "title": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+   "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260820b.htm",
+   "publishedAt": "2026-08-20T15:00:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 4,
+   "score": 0.657,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.102,
+    "corroboration": 0.63,
+    "consequence": 0.85,
+    "topic": 0.7,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "whyRanked": "Ranked on: primary source; about 5 days old; touches Financial Instability, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "financial_instability",
+     "label": "Financial Instability"
+    }
+   ],
+   "projectedFrom": {
+    "id": "financial_instability",
+    "label": "Financial Instability"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "credit_spreads",
+     "label": "Credit Spreads",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Credit Spreads",
+       "why": "Stress shows up first in the price of credit."
+      }
+     ]
+    },
+    {
+     "id": "volatility",
+     "label": "Equity Volatility",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Equity Volatility",
+       "why": "Forced selling is what volatility measures."
+      }
+     ]
+    },
+    {
+     "id": "bank_lending",
+     "label": "Bank Lending Standards",
+     "order": 1,
+     "orderName": "First order",
+     "direction": -1,
+     "lagMonths": 3,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Bank Lending Standards",
+       "why": "Banks preserve capital when they fear losses, and lending is the first discretionary use of it."
+      }
+     ]
+    },
+    {
+     "id": "financial_conditions",
+     "label": "Financial Conditions",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Credit Spreads",
+       "why": "Stress shows up first in the price of credit."
+      },
+      {
+       "from": "Credit Spreads",
+       "to": "Financial Conditions",
+       "why": "Wider spreads mean higher marginal borrowing costs for the real economy."
+      }
+     ]
+    },
+    {
+     "id": "ipo_ma",
+     "label": "IPO & M&A Activity",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 3,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Credit Spreads",
+       "why": "Stress shows up first in the price of credit."
+      },
+      {
+       "from": "Credit Spreads",
+       "to": "IPO & M&A Activity",
+       "why": "Leveraged acquisition math depends directly on the cost of debt."
+      }
+     ]
+    },
+    {
+     "id": "risk_appetite",
+     "label": "Risk Appetite",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 0,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Financial Instability",
+       "to": "Equity Volatility",
+       "why": "Forced selling is what volatility measures."
+      },
+      {
+       "from": "Equity Volatility",
+       "to": "Risk Appetite",
+       "why": "Risk budgets are set in volatility units, so higher volatility forces mechanical de-risking."
+      }
+     ]
+    }
+   ],
+   "others": [
+    {
+     "title": "Federal Reserve Board issues enforcement action with Iuka Bancshares, Inc. and The Iuka State Bank",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730b.htm",
+     "sourceId": "fed-press"
+    },
+    {
+     "title": "Federal Reserve Board issues enforcement action with former chief lending officer of Heritage State Bank",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260716a.htm",
+     "sourceId": "fed-press"
+    },
+    {
+     "title": "Federal Reserve Board issues enforcement action with TS Banking Group, Inc. and TS Contrarian Bancshares, Inc.",
+     "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260709a.htm",
+     "sourceId": "fed-press"
+    }
+   ]
+  },
+  {
+   "rank": 7,
+   "id": "cl-2868f4b31fab",
+   "title": "Waller, Monetary Policy at a Crossroads",
+   "url": "https://www.federalreserve.gov/newsevents/speech/waller20260713a.htm",
+   "publishedAt": "2026-07-13T16:30:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 2,
+   "score": 0.639,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.51,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": [
+    {
+     "title": "Waller, Two Thoughts on the Transmission of Monetary Policy",
+     "url": "https://www.federalreserve.gov/newsevents/speech/waller20260706a.htm",
+     "sourceId": "fed-press"
+    }
+   ]
+  },
+  {
+   "rank": 8,
+   "id": "cl-04111fbea853",
+   "title": "Jefferson, Navigating Economic Shocks: A Monetary Policymaker’s Perspective",
+   "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260716a.htm",
+   "publishedAt": "2026-07-16T23:00:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.632,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "whyRanked": "Ranked on: primary source; about 6 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": []
+  },
+  {
+   "rank": 9,
+   "id": "cl-1d3c5a8e80ed",
+   "title": "Bowman, A Framework for Practical Monetary Policy Decision Making",
+   "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260529a.htm",
+   "publishedAt": "2026-05-29T13:10:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.632,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 1,
+    "topic": 1,
+    "specificity": 0.333,
+    "kind": 0.5
+   },
+   "whyRanked": "Ranked on: primary source; about 3 months old; touches Fed Policy Rate, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "policy_rate",
+     "label": "Fed Policy Rate"
+    }
+   ],
+   "projectedFrom": {
+    "id": "policy_rate",
+    "label": "Fed Policy Rate"
+   },
+   "sharedWith": 2,
+   "transmission": [],
+   "others": []
+  },
+  {
+   "rank": 10,
+   "id": "cl-8d05145dba06",
+   "title": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of First Interstate Bank",
+   "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730a.htm",
+   "publishedAt": "2026-07-30T15:00:00.000Z",
+   "sources": [
+    "fed-press"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.616,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.85,
+    "topic": 0.7,
+    "specificity": 0.333,
+    "kind": 0.82
+   },
+   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Financial Instability, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "financial_instability",
+     "label": "Financial Instability"
+    }
+   ],
+   "projectedFrom": {
+    "id": "financial_instability",
+    "label": "Financial Instability"
+   },
+   "sharedWith": 6,
+   "transmission": [],
+   "others": []
+  }
+ ],
+ "connectTheDots": [
+  {
+   "from": "boc_rate",
+   "to": "policy_rate",
+   "fromLabel": "Bank of Canada Rate",
+   "toLabel": "Fed Policy Rate",
+   "chain": "Bank of Canada Rate → Household Debt Service → Consumer Spending → GDP Growth → Payroll Growth → Unemployment Rate → Fed Policy Rate",
+   "hops": 6,
+   "strength": 0.0279,
+   "sign": -1,
+   "confidence": "high",
+   "steps": [
+    {
+     "from": "Bank of Canada Rate",
+     "to": "Household Debt Service",
+     "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States.",
+     "sign": 1
+    },
+    {
+     "from": "Household Debt Service",
+     "to": "Consumer Spending",
+     "why": "Debt service is a prior claim on income.",
+     "sign": -1
+    },
+    {
+     "from": "Consumer Spending",
+     "to": "GDP Growth",
+     "why": "Consumption is roughly two-thirds of US output.",
+     "sign": 1
+    },
+    {
+     "from": "GDP Growth",
+     "to": "Payroll Growth",
+     "why": "Firms hire against expected demand, with a lag and some labour hoarding.",
+     "sign": 1
+    },
+    {
+     "from": "Payroll Growth",
+     "to": "Unemployment Rate",
+     "why": "Job creation above labour force growth lowers the rate.",
+     "sign": -1
+    },
+    {
+     "from": "Unemployment Rate",
+     "to": "Fed Policy Rate",
+     "why": "The employment half of the dual mandate pulls in the opposite direction.",
+     "sign": -1
+    }
+   ]
+  }
+ ],
+ "marketNote": [
+  {
+   "id": "curve",
+   "label": "Yield curve (10y − 2y)",
+   "value": 0.47,
+   "unit": "pp",
+   "asOf": "2026-08-25",
+   "change": 0.13,
+   "changeLabel": "vs ~1 month ago",
+   "reading": "Flat. The market is pricing a policy path close to unchanged in real terms.",
+   "sourceId": "treasury-fiscal"
+  },
+  {
+   "id": "ust10y",
+   "label": "US Treasury 10y",
+   "value": 4.64,
+   "unit": "%",
+   "asOf": "2026-08-25",
+   "change": -0.06,
+   "changeLabel": "vs previous observation",
+   "reading": "The global discount rate. Where it goes, long-duration valuations follow.",
+   "sourceId": "treasury-fiscal"
+  },
+  {
+   "id": "usdcad",
+   "label": "USD/CAD",
+   "value": 1.3839,
+   "unit": "CAD per USD",
+   "asOf": "2026-08-25",
+   "change": -0.0003,
+   "changeLabel": "vs previous observation",
+   "reading": "Rate differentials and oil in one price.",
+   "sourceId": "boc-valet"
+  },
+  {
+   "id": "eurusd",
+   "label": "EUR/USD",
+   "value": 1.1662,
+   "unit": "USD per EUR",
+   "asOf": "2026-08-25",
+   "change": -0.0002,
+   "changeLabel": "vs previous observation",
+   "reading": "Largely a rate-differential and energy-terms-of-trade story.",
+   "sourceId": "ecb-data"
+  },
+  {
+   "id": "boc_policy_rate",
+   "label": "Bank of Canada target rate",
+   "value": 2.25,
+   "unit": "%",
+   "asOf": "2026-08-24",
+   "change": 0,
+   "changeLabel": "vs previous observation",
+   "reading": "The Bank of Canada's target for the overnight rate.",
+   "sourceId": "boc-valet"
+  }
+ ],
+ "watchNext": [
+  {
+   "node": "boc_rate",
+   "label": "Bank of Canada Rate",
+   "because": "Bank of Canada maintains policy rate at 2¼%",
+   "watch": [
+    {
+     "label": "Household Debt Service",
+     "direction": 1,
+     "lagMonths": 3
+    },
+    {
+     "label": "USD/CAD",
+     "direction": -1,
+     "lagMonths": 0
+    },
+    {
+     "label": "Consumer Spending",
+     "direction": -1,
+     "lagMonths": 6
+    }
+   ],
+   "proxies": [
+    "V39079"
+   ]
+  },
+  {
+   "node": "policy_rate",
+   "label": "Fed Policy Rate",
+   "because": "Bank of Canada maintains policy rate at 2¼%",
+   "watch": [
+    {
+     "label": "2-Year Treasury Yield",
+     "direction": 1,
+     "lagMonths": 0
+    },
+    {
+     "label": "Financial Conditions",
+     "direction": -1,
+     "lagMonths": 0
+    },
+    {
+     "label": "Mortgage Rates",
+     "direction": 1,
+     "lagMonths": 1
+    }
+   ],
+   "proxies": [
+    "FEDFUNDS",
+    "DFEDTARU"
+   ]
+  },
+  {
+   "node": "financial_instability",
+   "label": "Financial Instability",
+   "because": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+   "watch": [
+    {
+     "label": "Credit Spreads",
+     "direction": 1,
+     "lagMonths": 0
+    },
+    {
+     "label": "Equity Volatility",
+     "direction": 1,
+     "lagMonths": 0
+    },
+    {
+     "label": "Bank Lending Standards",
+     "direction": -1,
+     "lagMonths": 3
+    }
+   ],
+   "proxies": []
+  }
+ ],
+ "risks": [
+  {
+   "id": "geopolitical_risk",
+   "label": "Geopolitical Risk",
+   "blurb": "Aggregate conflict and coercion risk. Raises risk premia and reroutes trade before it changes output.",
+   "inFocus": false,
+   "reach": 3.13,
+   "channels": [
+    {
+     "label": "Defence Spending",
+     "direction": 1,
+     "confidence": "high"
+    },
+    {
+     "label": "Sanctions Regimes",
+     "direction": 1,
+     "confidence": "high"
+    },
+    {
+     "label": "Gold",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Equity Volatility",
+     "direction": 1,
+     "confidence": "moderate"
+    }
+   ],
+   "note": "No probability is attached. The model ranks reach, not likelihood."
+  },
+  {
+   "id": "election_risk",
+   "label": "Electoral & Policy Risk",
+   "blurb": "Scheduled uncertainty. Markets price the distribution of policy, not the winner.",
+   "inFocus": false,
+   "reach": 2.23,
+   "channels": [
+    {
+     "label": "Tariffs & Trade Barriers",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Industrial Policy",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "AI Regulation",
+     "direction": 1,
+     "confidence": "low"
+    },
+    {
+     "label": "Equity Volatility",
+     "direction": 1,
+     "confidence": "moderate"
+    }
+   ],
+   "note": "No probability is attached. The model ranks reach, not likelihood."
+  },
+  {
+   "id": "sanctions",
+   "label": "Sanctions Regimes",
+   "blurb": "Financial and technological restriction as statecraft. Effects compound slowly and are hard to reverse.",
+   "inFocus": false,
+   "reach": 2.17,
+   "channels": [
+    {
+     "label": "Trade Fragmentation",
+     "direction": 1,
+     "confidence": "high"
+    },
+    {
+     "label": "Crude Oil",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Gold",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Gasoline",
+     "direction": 1,
+     "confidence": "moderate"
+    }
+   ],
+   "note": "No probability is attached. The model ranks reach, not likelihood."
+  }
+ ],
+ "lesson": {
+  "id": "great-depression",
+  "title": "The Great Depression: When Policy Made It Worse",
+  "era": "1929–1939",
+  "hook": "The crash was not the disaster. What turned a severe recession into a decade-long collapse was a sequence of policy decisions that each looked defensible at the time.",
+  "revisit": true
+ },
+ "quiz": {
+  "seed": "brief:2026-08-24",
+  "count": 10,
+  "composition": {
+   "authored": 6,
+   "generated": 4
+  }
+ },
+ "research": [
+  {
+   "id": "1b28dae6e7aeb9f0",
+   "title": "What FID Hides: Detecting, Ranking, and Diagnosing Deviations in Generative Evaluation",
+   "url": "https://arxiv.org/abs/2608.24881v1",
+   "publishedAt": "2026-08-25T17:58:46.000Z",
+   "categories": [
+    "cs.LG"
+   ]
+  },
+  {
+   "id": "e1609f4718454660",
+   "title": "Recursive Experiential-Working Memory Evolution for Long-Horizon Agent Harnesses",
+   "url": "https://arxiv.org/abs/2608.24876v1",
+   "publishedAt": "2026-08-25T17:56:35.000Z",
+   "categories": [
+    "cs.AI"
+   ]
+  },
+  {
+   "id": "1740dead6b138fc4",
+   "title": "SPO++: Stream-Aligned Policy Optimization for Asynchronous Agentic RL",
+   "url": "https://arxiv.org/abs/2608.24870v1",
+   "publishedAt": "2026-08-25T17:52:19.000Z",
+   "categories": [
+    "cs.AI"
+   ]
+  },
+  {
+   "id": "b441979c0715c08c",
+   "title": "Parameterized Complexity of $L_p$-Lipschitz Constants for Input Convex Neural Networks and $L_p$-Norm Maximization over Zonotopes",
+   "url": "https://arxiv.org/abs/2608.24865v1",
+   "publishedAt": "2026-08-25T17:47:37.000Z",
+   "categories": [
+    "cs.LG"
+   ]
+  },
+  {
+   "id": "6661937b617cef00",
+   "title": "Improving Cross-Problem Vehicle Routing with Locally Augmented Preferences and Representation Disentanglement",
+   "url": "https://arxiv.org/abs/2608.24859v1",
+   "publishedAt": "2026-08-25T17:44:23.000Z",
+   "categories": [
+    "cs.LG"
+   ]
+  },
+  {
+   "id": "9c5bd9e47590b75b",
+   "title": "Bellman Calibration for Marginalized Importance Weighting in Offline Reinforcement Learning",
+   "url": "https://arxiv.org/abs/2608.24858v1",
+   "publishedAt": "2026-08-25T17:44:02.000Z",
+   "categories": [
+    "cs.LG"
+   ]
+  },
+  {
+   "id": "fabe2075d9dd21ea",
+   "title": "FedV-KGQA: Multi-Hop Question Answering over Vertically Partitioned Knowledge Graphs",
+   "url": "https://arxiv.org/abs/2608.24846v1",
+   "publishedAt": "2026-08-25T17:34:27.000Z",
+   "categories": [
+    "cs.AI"
+   ]
+  },
+  {
+   "id": "2e47b7f727c778b9",
+   "title": "LAION-BVD: A 10-Million-Hour Open Video Dataset for Multimodal Pre-training",
+   "url": "https://arxiv.org/abs/2608.24845v1",
+   "publishedAt": "2026-08-25T17:34:19.000Z",
+   "categories": [
+    "cs.AI"
+   ]
+  }
+ ],
+ "filings": [
+  {
+   "id": "e3f3f85ee4b68368",
+   "company": "NEXTERA ENERGY INC",
+   "ticker": "NEE",
+   "cik": "753308",
+   "form": "8-K",
+   "filedAt": "2026-08-25",
+   "url": "https://www.sec.gov/Archives/edgar/data/753308/000110465926100476/tm2623831d1_8k.htm",
+   "description": "FORM 8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "8168d8fc14b78a33",
+   "company": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD",
+   "ticker": "TSM",
+   "cik": "1046179",
+   "form": "6-K",
+   "filedAt": "2026-08-25",
+   "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000545/tsm-monthend6kx20260825.htm",
+   "description": "6-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "7be892c81d4ce883",
+   "company": "APPLIED MATERIALS INC /DE",
+   "ticker": "AMAT",
+   "cik": "6951",
+   "form": "10-Q",
+   "filedAt": "2026-08-20",
+   "url": "https://www.sec.gov/Archives/edgar/data/6951/000162828026058235/amat-20260726.htm",
+   "description": "10-Q",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "5bc81b974b5a0e83",
+   "company": "DIGITAL REALTY TRUST, INC.",
+   "ticker": "DLR",
+   "cik": "1297996",
+   "form": "8-K",
+   "filedAt": "2026-08-19",
+   "url": "https://www.sec.gov/Archives/edgar/data/1297996/000119312526357083/d145363d8k.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "319d101349c1c702",
+   "company": "ADVANCED MICRO DEVICES INC",
+   "ticker": "AMD",
+   "cik": "2488",
+   "form": "8-K",
+   "filedAt": "2026-08-19",
+   "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000163/amd-20260817.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "92456986e852bfa9",
+   "company": "ADVANCED MICRO DEVICES INC",
+   "ticker": "AMD",
+   "cik": "2488",
+   "form": "8-K",
+   "filedAt": "2026-08-17",
+   "url": "https://www.sec.gov/Archives/edgar/data/2488/000119312526354029/d142696d8k.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "8d336835617c82d3",
+   "company": "NVIDIA CORP",
+   "ticker": "NVDA",
+   "cik": "1045810",
+   "form": "8-K",
+   "filedAt": "2026-08-17",
+   "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000069/nvda-20260817.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "32a013b8c2df7a2a",
+   "company": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD",
+   "ticker": "TSM",
+   "cik": "1046179",
+   "form": "6-K",
+   "filedAt": "2026-08-14",
+   "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000541/tsm-fsx20260814x6k.htm",
+   "description": "6-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "f64b8fd9982aecfd",
+   "company": "APPLIED MATERIALS INC /DE",
+   "ticker": "AMAT",
+   "cik": "6951",
+   "form": "8-K",
+   "filedAt": "2026-08-13",
+   "url": "https://www.sec.gov/Archives/edgar/data/6951/000162828026056699/amat-20260813.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "753a2f6162de29e5",
+   "company": "NEXTERA ENERGY INC",
+   "ticker": "NEE",
+   "cik": "753308",
+   "form": "8-K",
+   "filedAt": "2026-08-11",
+   "url": "https://www.sec.gov/Archives/edgar/data/753308/000075330826000065/nee-20260810.htm",
+   "description": "8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "1e932c8628471636",
+   "company": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD",
+   "ticker": "TSM",
+   "cik": "1046179",
+   "form": "6-K",
+   "filedAt": "2026-08-11",
+   "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000536/tsm-boardx20260811.htm",
+   "description": "6-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
+  {
+   "id": "3dfb9825d43cadb3",
+   "company": "TAIWAN SEMICONDUCTOR MANUFACTURING CO LTD",
+   "ticker": "TSM",
+   "cik": "1046179",
+   "form": "6-K",
+   "filedAt": "2026-08-11",
+   "url": "https://www.sec.gov/Archives/edgar/data/1046179/000104617926000539/sonysemiconductorsolutions.htm",
+   "description": "6-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  }
+ ],
+ "coverage": {
+  "note": "Generated from the sources that answered during this run. Gaps are recorded in the run manifest rather than filled in."
+ }
+}

@@ -80,3 +80,17 @@ piece of server-side work this project does not include. The contact and
 newsletter forms validate and give feedback but do not post anywhere.
 
 Fonts are Cormorant Garamond and Jost, both SIL Open Font License 1.1.
+
+## Also in this repository
+
+`app/` holds **Meridian**, a personal intelligence platform — primary-source
+market and policy data, an authored causal model of the world, and a learning
+system built on top of both. It is entirely separate from the storefront and
+shares only the dev server.
+
+```bash
+node scripts/serve.js        # → http://localhost:4173/app/index.html
+npm run intel                # fetch real data into data/
+```
+
+See [`app/README.md`](app/README.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

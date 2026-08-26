@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Scoped so the pipeline is ESM without forcing the storefront build scripts (CommonJS) to change."
+}
