@@ -31,6 +31,7 @@ const HOST_GAP_MS = {
   "data.sec.gov": 1200,         // SEC asks for 10/s; we stay far below it
   "www.sec.gov": 1500,
   "www.federalreserve.gov": 1200,
+  "www.federalregister.gov": 1000,
 };
 
 const gapFor = (host) => HOST_GAP_MS[host] ?? MIN_GAP_MS;

@@ -27,6 +27,7 @@ import sec from "./sources/sec.js";
 import arxiv from "./sources/arxiv.js";
 import worldbank from "./sources/worldbank.js";
 import fred from "./sources/fred.js";
+import federalregister from "./sources/federalregister.js";
 import fundamentals from "./sources/fundamentals.js";
 import { dedupe } from "./stages/dedupe.js";
 import { linkAll } from "./stages/entities.js";
@@ -38,7 +39,7 @@ import { TRACKED } from "./sources/sec.js";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data");
 
-const ADAPTERS = [fed, ecb, boc, treasury, fred, sec, arxiv, worldbank];
+const ADAPTERS = [fed, ecb, boc, treasury, fred, federalregister, sec, arxiv, worldbank];
 
 /**
  * Fundamentals change four times a year, so fetching them daily would be four

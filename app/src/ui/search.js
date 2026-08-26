@@ -11,6 +11,7 @@
 import { CONCEPTS } from "../content/concepts.js";
 import { LESSONS } from "../content/lessons.js";
 import { DEBATES } from "../content/debates.js";
+import { POLICY_FRAMES } from "../content/policy-frames.js";
 import { TRACKS } from "../content/curriculum.js";
 import { NODES } from "../domain/worldmodel.js";
 import { SOURCES } from "../content/sources.js";
@@ -76,6 +77,16 @@ function build() {
       route: `/debates/${entry.id}`,
       text: `${entry.topic} ${entry.stakes} ${entry.consensus.claim} ${entry.contrarian.claim}`,
       weight: 1,
+    });
+  }
+
+  for (const entry of POLICY_FRAMES) {
+    records.push({
+      kind: "policy", id: entry.nodeId, title: entry.label,
+      subtitle: "Policy · read by register",
+      route: `/politics/${entry.nodeId}`,
+      text: `${entry.label} ${entry.instruments.join(" ")} ${entry.reading} ${entry.structural.join(" ")}`,
+      weight: 0.95,
     });
   }
 
@@ -174,4 +185,5 @@ export function search(query, { limit = 12, kinds = null } = {}) {
 export const KIND_ICON = {
   concept: "brain", node: "graph", lesson: "book",
   source: "layers", story: "pulse", command: "command", company: "building", debate: "scale", track: "layers",
+  policy: "globe",
 };

@@ -6,13 +6,13 @@ export const idFor = (...parts) =>
   createHash("sha1").update(parts.filter(Boolean).join("|")).digest("hex").slice(0, 16);
 
 export function story({ title, url, publishedAt, summary = "", sourceId, tier, kind = "release",
-                        region = "global", topics = [], entities = [] }) {
+                        region = "global", topics = [], entities = [], documentForm = null }) {
   if (!title || !url || !sourceId) throw new Error("story requires title, url, sourceId");
   return {
     id: idFor(sourceId, url, title),
     title: title.trim(), url, publishedAt: publishedAt || null,
     summary: (summary || "").trim(), sourceId, tier, kind, region,
-    topics: [...new Set(topics)], entities,
+    topics: [...new Set(topics)], entities, documentForm,
   };
 }
 

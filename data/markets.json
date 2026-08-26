@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-26T12:20:40.248Z",
+ "generatedAt": "2026-08-26T12:47:08.531Z",
  "partial": false,
  "note": "End-of-day official series from the issuing institutions. Not a real-time quote feed.",
  "curve": {
@@ -5974,10 +5974,6 @@
    "group": "Canada",
    "observations": [
     {
-     "d": "2025-02-05",
-     "v": 3
-    },
-    {
      "d": "2025-02-06",
      "v": 3
     },
@@ -7572,9 +7568,13 @@
     {
      "d": "2026-08-24",
      "v": 2.25
+    },
+    {
+     "d": "2026-08-25",
+     "v": 2.25
     }
    ],
-   "asOf": "2026-08-24",
+   "asOf": "2026-08-25",
    "latest": 2.25,
    "change": 0,
    "count": 400

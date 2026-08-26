@@ -20,6 +20,7 @@ export const NAV = [
     { route: "/markets", label: "Markets", icon: "chart", key: "5" },
     { route: "/companies", label: "Companies", icon: "building" },
     { route: "/economy", label: "Economy", icon: "building" },
+    { route: "/politics", label: "Politics", icon: "globe" },
     { route: "/watchlist", label: "Watchlist", icon: "bookmark" },
   ]},
   { group: "Analysis", items: [

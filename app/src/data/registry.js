@@ -27,7 +27,7 @@ export const DATASETS = {
     maxAgeHours: 24,
     produces: "npm run intel",
     describes: "Deduplicated, clustered and ranked developments from primary institutional feeds.",
-    sources: ["fed-press", "ecb-press", "boc-press", "sec-edgar", "arxiv"],
+    sources: ["fed-press", "ecb-press", "boc-press", "federalregister", "sec-edgar", "arxiv"],
   },
   markets: {
     path: "markets.json",

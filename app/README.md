@@ -18,11 +18,11 @@ lag and confidence. A shock propagates through it and returns first-, second- an
 third-order consequences ranked by plausibility, with the chain that produced
 each one. Where independent routes disagree about the sign, it says so.
 
-**Runs on real data, or says it has none.** Eight institutional sources answer
+**Runs on real data, or says it has none.** Nine institutional sources answer
 without any credential: the US Treasury daily yield curve, Federal Reserve and ECB
 press feeds, Bank of Canada rates and FX, SEC EDGAR filings, World Bank
-indicators, arXiv preprints, and FRED for equity indices, volatility, commodities,
-credit spreads, real yields and the core macro set. Series that arrive under
+indicators, arXiv preprints, the Federal Register, and FRED for equity indices,
+volatility, commodities, credit spreads, real yields and the core macro set. Series that arrive under
 someone else's copyright — S&P Dow Jones, Nasdaq, CBOE, ICE — carry that holder
 through to an Attribution panel, because that is the condition they come under.
 Where data is genuinely unavailable — per-company share prices — the view is empty
@@ -34,6 +34,15 @@ decade, each attached to the model variable its economics depend on. There is no
 per-company price, so there is no valuation — the screen says so everywhere, and
 the categories that would need one are listed as unavailable rather than
 approximated.
+
+**Separates fact from interpretation.** The politics surface reads US policy as
+primary documents — the executive order itself, the proclamation that sets a
+tariff rate, the rule that adds a company to the Entity List — and splits every
+claim into five labelled registers: what is on the record, what is durably true,
+what is inference, where the model says it transmits, and what is simply not
+known. An interpretation must carry the observation that would falsify it, or it
+does not go on the page. The gap is stated there too: no other government, no
+elections, no conflict reporting.
 
 **Argues with itself.** Ten live debates state consensus and the case against it
 at full strength, each ending with what would settle it. Alongside them, the

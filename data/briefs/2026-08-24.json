@@ -1,11 +1,11 @@
 {
  "weekStart": "2026-08-24",
- "generatedAt": "2026-08-26T12:20:40.248Z",
+ "generatedAt": "2026-08-26T12:47:08.531Z",
  "version": 1,
  "headline": {
-  "count": 49,
+  "count": 130,
   "decisions": 2,
-  "sources": 3
+  "sources": 4
  },
  "bigPicture": [
   {
@@ -334,47 +334,6 @@
   },
   {
    "rank": 3,
-   "id": "cl-ce1f838c6f3d",
-   "title": "Bank of Canada publishes its 2027 schedule for policy interest rate announcements and other major publications",
-   "url": "https://www.bankofcanada.ca/2026/07/bank-canada-publishes-2027-schedule-policy-interest-rate-announcements-other-major-publications/",
-   "publishedAt": "2026-07-27T10:00:38.000Z",
-   "sources": [
-    "boc-press"
-   ],
-   "sourceCount": 1,
-   "itemCount": 1,
-   "score": 0.694,
-   "components": {
-    "credibility": 0.95,
-    "recency": 0,
-    "corroboration": 0.45,
-    "consequence": 1,
-    "topic": 1,
-    "specificity": 0.667,
-    "kind": 0.82
-   },
-   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Fed Policy Rate, which propagates widely in the model.",
-   "isDecision": false,
-   "nodes": [
-    {
-     "id": "policy_rate",
-     "label": "Fed Policy Rate"
-    },
-    {
-     "id": "boc_rate",
-     "label": "Bank of Canada Rate"
-    }
-   ],
-   "projectedFrom": {
-    "id": "policy_rate",
-    "label": "Fed Policy Rate"
-   },
-   "sharedWith": 2,
-   "transmission": [],
-   "others": []
-  },
-  {
-   "rank": 4,
    "id": "cl-411d3017e0fb",
    "title": "Bank of Canada publishes report on monetary policy framework consultations",
    "url": "https://www.bankofcanada.ca/2026/06/bank-canada-publishes-report-monetary-policy-framework-consultations/",
@@ -415,7 +374,7 @@
    "others": []
   },
   {
-   "rank": 5,
+   "rank": 4,
    "id": "cl-2ccc2a7e7bd8",
    "title": "Federal Reserve announces the leadership and objectives of its task forces to advance the conduct of monetary policy",
    "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260709a.htm",
@@ -452,7 +411,333 @@
    "others": []
   },
   {
+   "rank": 5,
+   "id": "cl-c17a2acde0db",
+   "title": "Iranian Transactions and Sanctions Regulations",
+   "url": "https://www.federalregister.gov/documents/2026/08/26/2026-17426/iranian-transactions-and-sanctions-regulations",
+   "publishedAt": "2026-08-26T12:00:00.000Z",
+   "sources": [
+    "federalregister"
+   ],
+   "sourceCount": 1,
+   "itemCount": 2,
+   "score": 0.675,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.986,
+    "corroboration": 0.51,
+    "consequence": 0.466,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 0.6
+   },
+   "whyRanked": "Ranked on: primary source; published in the last day.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "sanctions",
+     "label": "Sanctions Regimes"
+    }
+   ],
+   "projectedFrom": {
+    "id": "sanctions",
+    "label": "Sanctions Regimes"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "trade_fragmentation",
+     "label": "Trade Fragmentation",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 12,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Trade Fragmentation",
+       "why": "Restriction accelerates the construction of parallel trading and payment systems."
+      }
+     ]
+    },
+    {
+     "id": "oil",
+     "label": "Crude Oil",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 3,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Crude Oil",
+       "why": "Sanctions on producers reroute barrels and raise transaction costs more often than they remove supply."
+      }
+     ]
+    },
+    {
+     "id": "gold",
+     "label": "Gold",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 12,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Gold",
+       "why": "Reserve managers holding sanctionable assets have a visible incentive to diversify."
+      }
+     ]
+    },
+    {
+     "id": "gasoline",
+     "label": "Gasoline",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": 1,
+     "lagMonths": 3,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Crude Oil",
+       "why": "Sanctions on producers reroute barrels and raise transaction costs more often than they remove supply."
+      },
+      {
+       "from": "Crude Oil",
+       "to": "Gasoline",
+       "why": "Crude is the dominant input to refined product prices, with refining margin on top."
+      }
+     ]
+    },
+    {
+     "id": "energy_sector",
+     "label": "Energy Producers",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": 1,
+     "lagMonths": 3,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Crude Oil",
+       "why": "Sanctions on producers reroute barrels and raise transaction costs more often than they remove supply."
+      },
+      {
+       "from": "Crude Oil",
+       "to": "Energy Producers",
+       "why": "Producer cash flow moves close to one-for-one with the realised price."
+      }
+     ]
+    },
+    {
+     "id": "airlines",
+     "label": "Airlines",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": -1,
+     "lagMonths": 4,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Sanctions Regimes",
+       "to": "Crude Oil",
+       "why": "Sanctions on producers reroute barrels and raise transaction costs more often than they remove supply."
+      },
+      {
+       "from": "Crude Oil",
+       "to": "Airlines",
+       "why": "Jet fuel is typically the largest or second-largest airline cost line."
+      }
+     ]
+    }
+   ],
+   "others": [
+    {
+     "title": "Publication of Iranian Transactions and Sanctions Regulations Web General Licenses",
+     "url": "https://www.federalregister.gov/documents/2026/05/07/2026-09094/publication-of-iranian-transactions-and-sanctions-regulations-web-general-licenses",
+     "sourceId": "federalregister"
+    }
+   ]
+  },
+  {
    "rank": 6,
+   "id": "cl-a1deb70275ee",
+   "title": "Promoting Advanced Artificial Intelligence Innovation and Security",
+   "url": "https://www.federalregister.gov/documents/2026/06/05/2026-11415/promoting-advanced-artificial-intelligence-innovation-and-security",
+   "publishedAt": "2026-06-05T12:00:00.000Z",
+   "sources": [
+    "federalregister"
+   ],
+   "sourceCount": 1,
+   "itemCount": 1,
+   "score": 0.669,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0,
+    "corroboration": 0.45,
+    "consequence": 0.997,
+    "topic": 0.6,
+    "specificity": 0.333,
+    "kind": 1
+   },
+   "whyRanked": "Ranked on: primary source; about 3 months old; touches AI Model Capability, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "ai_capability",
+     "label": "AI Model Capability"
+    }
+   ],
+   "projectedFrom": {
+    "id": "ai_capability",
+    "label": "AI Model Capability"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "compute_demand",
+     "label": "Compute Demand",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": 1,
+     "lagMonths": 9,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "AI Capital Expenditure",
+       "why": "Each capability step has so far justified the next round of training investment."
+      },
+      {
+       "from": "AI Capital Expenditure",
+       "to": "Compute Demand",
+       "why": "Training runs consume the capacity that capex builds."
+      }
+     ]
+    },
+    {
+     "id": "ai_capex",
+     "label": "AI Capital Expenditure",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 6,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "AI Capital Expenditure",
+       "why": "Each capability step has so far justified the next round of training investment."
+      }
+     ]
+    },
+    {
+     "id": "ai_adoption",
+     "label": "Enterprise AI Adoption",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 12,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "Enterprise AI Adoption",
+       "why": "Capability is necessary but not sufficient — deployment is gated by trust, integration and process change."
+      }
+     ]
+    },
+    {
+     "id": "cybersecurity",
+     "label": "Cybersecurity",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 12,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "Cybersecurity",
+       "why": "Cheaper offence forces higher defensive spend regardless of whether defence improves equally."
+      }
+     ]
+    },
+    {
+     "id": "accelerators",
+     "label": "AI Accelerators",
+     "order": 3,
+     "orderName": "Third order",
+     "direction": 1,
+     "lagMonths": 12,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "AI Capital Expenditure",
+       "why": "Each capability step has so far justified the next round of training investment."
+      },
+      {
+       "from": "AI Capital Expenditure",
+       "to": "Compute Demand",
+       "why": "Training runs consume the capacity that capex builds."
+      },
+      {
+       "from": "Compute Demand",
+       "to": "AI Accelerators",
+       "why": "Accelerators are the unit of compute supply."
+      }
+     ]
+    },
+    {
+     "id": "data_center_buildout",
+     "label": "Data Centre Build-Out",
+     "order": 3,
+     "orderName": "Third order",
+     "direction": 1,
+     "lagMonths": 18,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "AI Model Capability",
+       "to": "AI Capital Expenditure",
+       "why": "Each capability step has so far justified the next round of training investment."
+      },
+      {
+       "from": "AI Capital Expenditure",
+       "to": "Compute Demand",
+       "why": "Training runs consume the capacity that capex builds."
+      },
+      {
+       "from": "Compute Demand",
+       "to": "Data Centre Build-Out",
+       "why": "Chips need a building, power and cooling before they compute anything."
+      }
+     ]
+    }
+   ],
+   "others": []
+  },
+  {
+   "rank": 7,
    "id": "cl-2a29913485db",
    "title": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
    "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260820b.htm",
@@ -462,7 +747,7 @@
    ],
    "sourceCount": 1,
    "itemCount": 4,
-   "score": 0.654,
+   "score": 0.653,
    "components": {
     "credibility": 0.95,
     "recency": 0.086,
@@ -623,7 +908,182 @@
    ]
   },
   {
-   "rank": 7,
+   "rank": 8,
+   "id": "cl-fa0fb425bfbf",
+   "title": "Continuation of the National Emergency With Respect to Export Control Regulations",
+   "url": "https://www.federalregister.gov/documents/2026/08/14/2026-16748/continuation-of-the-national-emergency-with-respect-to-export-control-regulations",
+   "publishedAt": "2026-08-14T12:00:00.000Z",
+   "sources": [
+    "federalregister"
+   ],
+   "sourceCount": 1,
+   "itemCount": 7,
+   "score": 0.645,
+   "components": {
+    "credibility": 0.95,
+    "recency": 0.007,
+    "corroboration": 0.81,
+    "consequence": 0.655,
+    "topic": 0.6,
+    "specificity": 0.667,
+    "kind": 1
+   },
+   "whyRanked": "Ranked on: primary source; about 12 days old; touches Geopolitical Risk, which propagates widely in the model.",
+   "isDecision": false,
+   "nodes": [
+    {
+     "id": "geopolitical_risk",
+     "label": "Geopolitical Risk"
+    },
+    {
+     "id": "export_controls",
+     "label": "Export Controls"
+    }
+   ],
+   "projectedFrom": {
+    "id": "geopolitical_risk",
+    "label": "Geopolitical Risk"
+   },
+   "sharedWith": null,
+   "transmission": [
+    {
+     "id": "sanctions",
+     "label": "Sanctions Regimes",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 6,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Sanctions Regimes",
+       "why": "Sanctions are the standard instrument short of force."
+      }
+     ]
+    },
+    {
+     "id": "defense_spending",
+     "label": "Defence Spending",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 24,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Defence Spending",
+       "why": "Threat perception raises budgets — slowly, and then persistently."
+      }
+     ]
+    },
+    {
+     "id": "gold",
+     "label": "Gold",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Gold",
+       "why": "The safe-haven bid is real but short-lived unless real rates cooperate."
+      }
+     ]
+    },
+    {
+     "id": "volatility",
+     "label": "Equity Volatility",
+     "order": 1,
+     "orderName": "First order",
+     "direction": 1,
+     "lagMonths": 0,
+     "confidence": "moderate",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Equity Volatility",
+       "why": "Markets price geopolitical risk in bursts and fade it quickly absent economic transmission."
+      }
+     ]
+    },
+    {
+     "id": "aerospace_defense",
+     "label": "Aerospace & Defence",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": 1,
+     "lagMonths": 36,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Defence Spending",
+       "why": "Threat perception raises budgets — slowly, and then persistently."
+      },
+      {
+       "from": "Defence Spending",
+       "to": "Aerospace & Defence",
+       "why": "Contractor revenue is government procurement with a multi-year lag."
+      }
+     ]
+    },
+    {
+     "id": "trade_fragmentation",
+     "label": "Trade Fragmentation",
+     "order": 2,
+     "orderName": "Second order",
+     "direction": 1,
+     "lagMonths": 18,
+     "confidence": "high",
+     "contested": false,
+     "via": [
+      {
+       "from": "Geopolitical Risk",
+       "to": "Sanctions Regimes",
+       "why": "Sanctions are the standard instrument short of force."
+      },
+      {
+       "from": "Sanctions Regimes",
+       "to": "Trade Fragmentation",
+       "why": "Restriction accelerates the construction of parallel trading and payment systems."
+      }
+     ]
+    }
+   ],
+   "others": [
+    {
+     "title": "Continuation of the National Emergency With Respect to Lebanon",
+     "url": "https://www.federalregister.gov/documents/2026/07/31/2026-15658/continuation-of-the-national-emergency-with-respect-to-lebanon",
+     "sourceId": "federalregister"
+    },
+    {
+     "title": "Continuation of the National Emergency With Respect to Brazil",
+     "url": "https://www.federalregister.gov/documents/2026/07/29/2026-15389/continuation-of-the-national-emergency-with-respect-to-brazil",
+     "sourceId": "federalregister"
+    },
+    {
+     "title": "Continuation of the National Emergency With Respect to Mali",
+     "url": "https://www.federalregister.gov/documents/2026/07/23/2026-15024/continuation-of-the-national-emergency-with-respect-to-mali",
+     "sourceId": "federalregister"
+    },
+    {
+     "title": "Continuation of the National Emergency With Respect to Significant Transnational Criminal Organizations",
+     "url": "https://www.federalregister.gov/documents/2026/07/16/2026-14454/continuation-of-the-national-emergency-with-respect-to-significant-transnational-criminal",
+     "sourceId": "federalregister"
+    }
+   ]
+  },
+  {
+   "rank": 9,
    "id": "cl-2868f4b31fab",
    "title": "Waller, Monetary Policy at a Crossroads",
    "url": "https://www.federalreserve.gov/newsevents/speech/waller20260713a.htm",
@@ -666,7 +1126,7 @@
    ]
   },
   {
-   "rank": 8,
+   "rank": 10,
    "id": "cl-04111fbea853",
    "title": "Jefferson, Navigating Economic Shocks: A Monetary Policymaker’s Perspective",
    "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20260716a.htm",
@@ -701,129 +1161,86 @@
    "sharedWith": 2,
    "transmission": [],
    "others": []
-  },
-  {
-   "rank": 9,
-   "id": "cl-1d3c5a8e80ed",
-   "title": "Bowman, A Framework for Practical Monetary Policy Decision Making",
-   "url": "https://www.federalreserve.gov/newsevents/speech/bowman20260529a.htm",
-   "publishedAt": "2026-05-29T13:10:00.000Z",
-   "sources": [
-    "fed-press"
-   ],
-   "sourceCount": 1,
-   "itemCount": 1,
-   "score": 0.632,
-   "components": {
-    "credibility": 0.95,
-    "recency": 0,
-    "corroboration": 0.45,
-    "consequence": 1,
-    "topic": 1,
-    "specificity": 0.333,
-    "kind": 0.5
-   },
-   "whyRanked": "Ranked on: primary source; about 3 months old; touches Fed Policy Rate, which propagates widely in the model.",
-   "isDecision": false,
-   "nodes": [
-    {
-     "id": "policy_rate",
-     "label": "Fed Policy Rate"
-    }
-   ],
-   "projectedFrom": {
-    "id": "policy_rate",
-    "label": "Fed Policy Rate"
-   },
-   "sharedWith": 2,
-   "transmission": [],
-   "others": []
-  },
-  {
-   "rank": 10,
-   "id": "cl-8d05145dba06",
-   "title": "Federal Reserve Board issues enforcement actions with former employee of Regions Bank and former employee of First Interstate Bank",
-   "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20260730a.htm",
-   "publishedAt": "2026-07-30T15:00:00.000Z",
-   "sources": [
-    "fed-press"
-   ],
-   "sourceCount": 1,
-   "itemCount": 1,
-   "score": 0.616,
-   "components": {
-    "credibility": 0.95,
-    "recency": 0,
-    "corroboration": 0.45,
-    "consequence": 0.85,
-    "topic": 0.7,
-    "specificity": 0.333,
-    "kind": 0.82
-   },
-   "whyRanked": "Ranked on: primary source; about 4 weeks old; touches Financial Instability, which propagates widely in the model.",
-   "isDecision": false,
-   "nodes": [
-    {
-     "id": "financial_instability",
-     "label": "Financial Instability"
-    }
-   ],
-   "projectedFrom": {
-    "id": "financial_instability",
-    "label": "Financial Instability"
-   },
-   "sharedWith": 6,
-   "transmission": [],
-   "others": []
   }
  ],
  "connectTheDots": [
   {
-   "from": "boc_rate",
+   "from": "ai_capability",
    "to": "policy_rate",
-   "fromLabel": "Bank of Canada Rate",
+   "fromLabel": "AI Model Capability",
    "toLabel": "Fed Policy Rate",
-   "chain": "Bank of Canada Rate → Household Debt Service → Consumer Spending → GDP Growth → Payroll Growth → Unemployment Rate → Fed Policy Rate",
-   "hops": 6,
-   "strength": 0.0279,
+   "chain": "AI Model Capability → Enterprise AI Adoption → Task Automation → Unemployment Rate → Fed Policy Rate",
+   "hops": 4,
+   "strength": 0.036,
    "sign": -1,
-   "confidence": "high",
+   "confidence": "low",
    "steps": [
     {
-     "from": "Bank of Canada Rate",
-     "to": "Household Debt Service",
-     "why": "Canadian mortgages reset every few years, so policy reaches households far faster than in the United States.",
+     "from": "AI Model Capability",
+     "to": "Enterprise AI Adoption",
+     "why": "Capability is necessary but not sufficient — deployment is gated by trust, integration and process change.",
      "sign": 1
     },
     {
-     "from": "Household Debt Service",
-     "to": "Consumer Spending",
-     "why": "Debt service is a prior claim on income.",
-     "sign": -1
-    },
-    {
-     "from": "Consumer Spending",
-     "to": "GDP Growth",
-     "why": "Consumption is roughly two-thirds of US output.",
+     "from": "Enterprise AI Adoption",
+     "to": "Task Automation",
+     "why": "Substitution begins in text-heavy, verifiable tasks and spreads outward from there.",
      "sign": 1
     },
     {
-     "from": "GDP Growth",
-     "to": "Payroll Growth",
-     "why": "Firms hire against expected demand, with a lag and some labour hoarding.",
-     "sign": 1
-    },
-    {
-     "from": "Payroll Growth",
+     "from": "Task Automation",
      "to": "Unemployment Rate",
-     "why": "Job creation above labour force growth lowers the rate.",
-     "sign": -1
+     "why": "Historically automation reallocated labour rather than eliminating it — but the transition costs fell on identifiable people.",
+     "sign": 1
     },
     {
      "from": "Unemployment Rate",
      "to": "Fed Policy Rate",
      "why": "The employment half of the dual mandate pulls in the opposite direction.",
      "sign": -1
+    }
+   ]
+  },
+  {
+   "from": "ai_capability",
+   "to": "boc_rate",
+   "fromLabel": "AI Model Capability",
+   "toLabel": "Bank of Canada Rate",
+   "chain": "AI Model Capability → Enterprise AI Adoption → Task Automation → Unemployment Rate → Fed Policy Rate → Bank of Canada Rate",
+   "hops": 5,
+   "strength": 0.018,
+   "sign": -1,
+   "confidence": "low",
+   "steps": [
+    {
+     "from": "AI Model Capability",
+     "to": "Enterprise AI Adoption",
+     "why": "Capability is necessary but not sufficient — deployment is gated by trust, integration and process change.",
+     "sign": 1
+    },
+    {
+     "from": "Enterprise AI Adoption",
+     "to": "Task Automation",
+     "why": "Substitution begins in text-heavy, verifiable tasks and spreads outward from there.",
+     "sign": 1
+    },
+    {
+     "from": "Task Automation",
+     "to": "Unemployment Rate",
+     "why": "Historically automation reallocated labour rather than eliminating it — but the transition costs fell on identifiable people.",
+     "sign": 1
+    },
+    {
+     "from": "Unemployment Rate",
+     "to": "Fed Policy Rate",
+     "why": "The employment half of the dual mandate pulls in the opposite direction.",
+     "sign": -1
+    },
+    {
+     "from": "Fed Policy Rate",
+     "to": "Bank of Canada Rate",
+     "why": "The Bank of Canada sets policy independently, but a wide gap moves the currency enough to force partial convergence.",
+     "sign": 1
     }
    ]
   }
@@ -878,7 +1295,7 @@
    "label": "Bank of Canada target rate",
    "value": 2.25,
    "unit": "%",
-   "asOf": "2026-08-24",
+   "asOf": "2026-08-25",
    "change": 0,
    "changeLabel": "vs previous observation",
    "reading": "The Bank of Canada's target for the overnight rate.",
@@ -938,24 +1355,32 @@
    ]
   },
   {
-   "node": "financial_instability",
-   "label": "Financial Instability",
-   "because": "Federal Reserve Board issues enforcement action with SouthPoint Bancshares, Inc. and announces termination of enforcement action with Deutsche Bank AG, DB USA Corporation, and Deutsche Bank AG New York Branch",
+   "node": "sanctions",
+   "label": "Sanctions Regimes",
+   "because": "Iranian Transactions and Sanctions Regulations",
    "watch": [
     {
-     "label": "Credit Spreads",
+     "label": "Trade Fragmentation",
      "direction": 1,
-     "lagMonths": 0
+     "lagMonths": 12
+    }
+   ],
+   "proxies": []
+  },
+  {
+   "node": "ai_capability",
+   "label": "AI Model Capability",
+   "because": "Promoting Advanced Artificial Intelligence Innovation and Security",
+   "watch": [
+    {
+     "label": "Compute Demand",
+     "direction": 1,
+     "lagMonths": 9
     },
     {
-     "label": "Equity Volatility",
+     "label": "AI Capital Expenditure",
      "direction": 1,
-     "lagMonths": 0
-    },
-    {
-     "label": "Bank Lending Standards",
-     "direction": -1,
-     "lagMonths": 3
+     "lagMonths": 6
     }
    ],
    "proxies": []
@@ -966,7 +1391,7 @@
    "id": "geopolitical_risk",
    "label": "Geopolitical Risk",
    "blurb": "Aggregate conflict and coercion risk. Raises risk premia and reroutes trade before it changes output.",
-   "inFocus": false,
+   "inFocus": true,
    "reach": 3.13,
    "channels": [
     {
@@ -986,6 +1411,36 @@
     },
     {
      "label": "Equity Volatility",
+     "direction": 1,
+     "confidence": "moderate"
+    }
+   ],
+   "note": "No probability is attached. The model ranks reach, not likelihood."
+  },
+  {
+   "id": "sanctions",
+   "label": "Sanctions Regimes",
+   "blurb": "Financial and technological restriction as statecraft. Effects compound slowly and are hard to reverse.",
+   "inFocus": true,
+   "reach": 2.17,
+   "channels": [
+    {
+     "label": "Trade Fragmentation",
+     "direction": 1,
+     "confidence": "high"
+    },
+    {
+     "label": "Crude Oil",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Gold",
+     "direction": 1,
+     "confidence": "moderate"
+    },
+    {
+     "label": "Gasoline",
      "direction": 1,
      "confidence": "moderate"
     }
@@ -1016,36 +1471,6 @@
     },
     {
      "label": "Equity Volatility",
-     "direction": 1,
-     "confidence": "moderate"
-    }
-   ],
-   "note": "No probability is attached. The model ranks reach, not likelihood."
-  },
-  {
-   "id": "sanctions",
-   "label": "Sanctions Regimes",
-   "blurb": "Financial and technological restriction as statecraft. Effects compound slowly and are hard to reverse.",
-   "inFocus": false,
-   "reach": 2.17,
-   "channels": [
-    {
-     "label": "Trade Fragmentation",
-     "direction": 1,
-     "confidence": "high"
-    },
-    {
-     "label": "Crude Oil",
-     "direction": 1,
-     "confidence": "moderate"
-    },
-    {
-     "label": "Gold",
-     "direction": 1,
-     "confidence": "moderate"
-    },
-    {
-     "label": "Gasoline",
      "direction": 1,
      "confidence": "moderate"
     }

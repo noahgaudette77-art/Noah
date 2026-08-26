@@ -43,6 +43,7 @@ const check = (name, ok, detail = "") => {
 const ROUTES = [
   "/", "/ask", "/daily", "/weekly", "/archive", "/stream", "/markets", "/economy",
   "/companies", "/companies/NVDA", "/companies/TSM",
+  "/politics", "/politics/tariffs", "/politics/sanctions", "/politics/energy_transition",
   "/graph", "/simulator", "/debates", "/debates/ai-capex", "/radar", "/future",
   "/knowledge", "/knowledge/yield-curve", "/history", "/history/great-depression",
   "/curriculum", "/curriculum/money",
@@ -142,6 +143,29 @@ console.log("\nInteractions");
   check("the drawer still explains the transmission",
     /what moves it/i.test(nodeDrawer) && /what it moves/i.test(nodeDrawer));
   await page.keyboard.press("Escape");
+
+  await page.goto(`${BASE}#/politics`, { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  const registers = await page.locator(".panel", { hasText: /how to read this page/i }).innerText();
+  check("politics names all five registers",
+    ["fact", "structural", "interpretation", "scenario", "uncertainty"]
+      .every((label) => new RegExp(label, "i").test(registers)));
+  const docs = await page.locator(".panel", { hasText: /on the record/i }).locator(".rowitem").count();
+  check("politics leads with primary documents", docs > 0, `${docs} documents`);
+  check("the missing political coverage is stated, not hidden",
+    (await page.getByText(/what this page does not cover/i).count()) > 0);
+
+  await page.goto(`${BASE}#/politics/sanctions`, { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  const frame = await page.locator(".view").innerText();
+  check("a policy frame separates fact from interpretation",
+    /what is on the record/i.test(frame) && /how to read an instrument/i.test(frame));
+  check("the interpretation carries a falsifier", /it would be wrong if/i.test(frame));
+  check("the scenario register refuses to give a probability",
+    /not probabilities and not a forecast/i.test(frame) && !/\b\d+% (chance|likely|probability)/i.test(frame));
+  check("uncertainty is stated as questions", /what is not known/i.test(frame));
+  const federal = await page.locator(".view").getByText(/Federal Register/i).count();
+  check("every document on a frame is attributed", federal > 0, `${federal} citations`);
 
   await page.goto(`${BASE}#/economy`, { waitUntil: "load" });
   await page.waitForTimeout(900);

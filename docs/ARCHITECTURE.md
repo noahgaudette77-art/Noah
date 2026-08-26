@@ -58,6 +58,7 @@ credential:
 | World Bank | Long-run structural indicators | ✓ |
 | arXiv | Recent preprints in ML and adjacent fields | ✓ |
 | FRED (St. Louis Fed) | 28 curated series: equity indices, VIX, commodities, credit spreads, real yields, breakevens, and the core macro set | ✓ |
+| Federal Register | Executive orders, proclamations, presidential memoranda, and significant agency rules | ✓ |
 
 That is enough for a real yield curve, a real 2s10s spread, real currency series,
 real policy documents, real corporate disclosure, and — through FRED — real
@@ -170,6 +171,21 @@ agglomerative with **average link** (single link chains unrelated stories throug
 a bridge item); entity linking is an authored lexicon, deliberately not a model,
 because a wrong link silently corrupts every downstream chain.
 
+**Entity linking weights the title.** A title says what a document is about; a
+body may mention anything. A federal rule on endangered species carries the
+phrase "national security" because the statute requires the agency to weigh it,
+and a veterans-hiring rule mentions inflation because a threshold is indexed to
+it. Neither is about those things. So a match in the title links the node
+outright, and a match only in the body has to occur twice — repetition being the
+cheapest available evidence that a subject is the subject rather than an aside.
+Adding a political source made this necessary; every other source benefits.
+
+The same episode narrowed several lexicon entries that had been quietly wrong:
+`security` matched Social Security and Homeland Security, `military` matched a
+commission on military spouses, `gold` matched "gold standard" as an idiom, and
+`fiscal` matched "Fiscal Year 2026" on a fee schedule. A deterministic matcher's
+virtue is that these are findable and fixable in one place.
+
 Ranking decomposes into six components and every score is explainable in prose —
 `explainScore()` produces the sentence the interface shows.
 
@@ -247,7 +263,52 @@ unmatched question returns an honest miss and a list of what it *can* answer.
 
 ---
 
-## 7. The learning system
+## 7. Politics, in four registers
+
+The platform had no political source, and the obvious fix — a news aggregator —
+is the wrong one. An aggregator gives you someone's characterisation of a policy,
+dated to when they wrote about it. The **Federal Register** is the official daily
+journal of the US government: the executive order itself, the proclamation that
+sets a tariff rate, the rule that adds a company to the Entity List. It is the
+document the reporting is reporting on, it is public domain, and it has an open
+API.
+
+The selection rule is stated in the adapter because it is a judgement and should
+be auditable. Every presidential document (few, inherently consequential); final
+rules flagged **significant** under E.O. 12866 from agencies whose actions enter
+the model — significance being the government's own flag after OIRA review,
+rather than a relevance score invented here; and every rule from OFAC and the
+Bureau of Industry and Security, whose entire remit is what the sanctions and
+export-control nodes describe. Notices are excluded and the reason is recorded:
+OFAC files dozens of near-identically titled sanctions notices a quarter, which
+would swamp the stream while telling a reader little.
+
+The view exists because most political analysis fails in one specific way — it
+mixes four kinds of claim into one paragraph, so a reader cannot tell which parts
+are checkable. Here they never share a container:
+
+| Register | Where it comes from |
+|---|---|
+| **Fact** | A Federal Register document. Dated, attributed, linked to the original. |
+| **Structural** | Authored, and only where durable across administrations. |
+| **Interpretation** | Authored inference, labelled as inference, carrying the assumption it rests on **and the observation that would falsify it**. |
+| **Scenario** | Propagated through the world model, so the chain is inspectable edge by edge. Never a probability. |
+| **Uncertainty** | Authored open questions, plus the ones the model raises against itself where independent chains disagree about a sign. |
+
+An interpretation with no falsifier is a preference, so the falsifier is a
+required field rather than an optional one. Nothing on the page infers from a
+document what it does not say, and nothing attributes intent.
+
+The gap is stated on the page rather than in a footnote: a US policy source is
+not a politics source. No other government, no elections or polling, no conflict
+reporting, no legislation in progress. Each of those is named, with what it would
+take to add it — and polling is called out as the one that is hardest to do
+honestly, because aggregating polls badly produces confident numbers that are
+worse than none.
+
+---
+
+## 8. The learning system
 
 Scores are designed to be hard to game, because a score you can farm is not
 feedback. Opening a page earns 4 XP; answering a hard question correctly earns 26;
@@ -267,7 +328,7 @@ misconceptions, and unbounded generated questions from the world model.
 
 ---
 
-## 8. Layout
+## 9. Layout
 
 ```
 app/
@@ -293,7 +354,7 @@ simulation in the browser cannot drift apart.
 
 ---
 
-## 9. Running it
+## 10. Running it
 
 ```bash
 node scripts/serve.js                  # http://localhost:4173/app/index.html
@@ -309,7 +370,7 @@ what is missing and the command that produces it.
 
 ---
 
-## 10. What is deliberately not here
+## 11. What is deliberately not here
 
 - **No per-company prices.** Index levels, volatility, commodities and credit
   spreads are real and live; individual equity prices are not, so there are no
@@ -322,11 +383,16 @@ what is missing and the command that produces it.
 - **No accounts, no server, no database.** Progress is local storage, exportable
   as JSON. Nothing about what you read leaves the device.
 - **No probabilities on risks.** The risk radar ranks reach, not likelihood,
-  because a made-up probability is worse than none.
+  because a made-up probability is worse than none. The politics scenarios follow
+  the same rule.
+- **No politics outside the US, and no polling.** The Federal Register covers US
+  executive action and federal rulemaking. Elections, conflict reporting and
+  other governments have no adapter, and the politics page says so on the page
+  rather than implying coverage it does not have.
 
 ---
 
-## 11. What I would build next
+## 12. What I would build next
 
 1. **A keyed adapter for per-company prices** behind the existing provider
    interface. FRED closed the index, volatility, commodity and credit gaps, so
@@ -346,3 +412,7 @@ what is missing and the command that produces it.
    adding segment-level revenue where filers disclose it.
 6. **Teaching `ask` to compose** — it routes to one intent today, where several
    questions would be better answered by two engines in sequence.
+7. **More official journals.** The EU, UK and Canada publish the equivalent of the
+   Federal Register with open APIs, and Congress.gov would cover legislation
+   before it becomes a rule. Each is a tier-1 primary source and the politics
+   view is already built to hold them.

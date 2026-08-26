@@ -41,6 +41,8 @@ const ROUTES = [
   ["/simulator", () => import("./ui/views/model.js").then((m) => m.simulatorView()), "Simulator"],
   ["/debates", () => import("./ui/views/debates.js").then((m) => m.debatesView()), "Contrarian"],
   ["/debates/:id", () => import("./ui/views/debates.js").then((m) => m.debatesView()), "Debate"],
+  ["/politics", () => import("./ui/views/politics.js").then((m) => m.politicsView()), "Politics"],
+  ["/politics/:node", () => import("./ui/views/politics.js").then((m) => m.politicsView()), "Policy variable"],
   ["/radar", () => import("./ui/views/radar.js").then((m) => m.radarView()), "AI radar"],
   ["/future", () => import("./ui/views/radar.js").then((m) => m.futureView()), "Future map"],
   ["/knowledge", () => import("./ui/views/knowledge.js").then((m) => m.knowledgeView()), "Knowledge"],

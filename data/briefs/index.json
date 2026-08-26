@@ -1,18 +1,18 @@
 {
- "generatedAt": "2026-08-26T12:20:40.248Z",
+ "generatedAt": "2026-08-26T12:47:08.531Z",
  "briefs": [
   {
    "weekStart": "2026-08-24",
-   "generatedAt": "2026-08-26T12:20:40.248Z",
+   "generatedAt": "2026-08-26T12:47:08.531Z",
    "headline": {
-    "count": 49,
+    "count": 130,
     "decisions": 2,
-    "sources": 3
+    "sources": 4
    },
    "top": [
     "Bank of Canada maintains policy rate at 2¼%",
     "Federal Reserve issues FOMC statement",
-    "Bank of Canada publishes its 2027 schedule for policy interest rate announcements and other major publications"
+    "Bank of Canada publishes report on monetary policy framework consultations"
    ],
    "lesson": "The Great Depression: When Policy Made It Worse"
   }

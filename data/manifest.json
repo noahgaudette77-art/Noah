@@ -1,7 +1,7 @@
 {
- "generatedAt": "2026-08-26T12:20:40.248Z",
+ "generatedAt": "2026-08-26T12:47:08.531Z",
  "partial": false,
- "durationMs": 170126,
+ "durationMs": 161385,
  "node": "v22.22.2",
  "sources": [
   {
@@ -9,7 +9,7 @@
    "label": "Federal Reserve",
    "sourceId": "fed-press",
    "ok": true,
-   "ms": 1547,
+   "ms": 1513,
    "counts": {
     "stories": 35,
     "series": 0,
@@ -24,7 +24,7 @@
    "label": "European Central Bank",
    "sourceId": "ecb-press",
    "ok": true,
-   "ms": 1855,
+   "ms": 2086,
    "counts": {
     "stories": 15,
     "series": 1,
@@ -39,7 +39,7 @@
    "label": "Bank of Canada",
    "sourceId": "boc-valet",
    "ok": true,
-   "ms": 1031,
+   "ms": 1119,
    "counts": {
     "stories": 10,
     "series": 4,
@@ -54,7 +54,7 @@
    "label": "US Treasury",
    "sourceId": "treasury-fiscal",
    "ok": true,
-   "ms": 18949,
+   "ms": 19338,
    "counts": {
     "stories": 0,
     "series": 13,
@@ -69,10 +69,25 @@
    "label": "FRED (St. Louis Fed)",
    "sourceId": "fred",
    "ok": true,
-   "ms": 34797,
+   "ms": 22500,
    "counts": {
     "stories": 0,
     "series": 28,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "federalregister",
+   "label": "Federal Register",
+   "sourceId": "federalregister",
+   "ok": true,
+   "ms": 2559,
+   "counts": {
+    "stories": 101,
+    "series": 0,
     "filings": 0,
     "research": 0
    },
@@ -84,7 +99,7 @@
    "label": "SEC EDGAR",
    "sourceId": "sec-edgar",
    "ok": true,
-   "ms": 32723,
+   "ms": 32930,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -99,7 +114,7 @@
    "label": "arXiv",
    "sourceId": "arxiv",
    "ok": true,
-   "ms": 6671,
+   "ms": 6600,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -114,7 +129,7 @@
    "label": "World Bank",
    "sourceId": "worldbank",
    "ok": true,
-   "ms": 3008,
+   "ms": 2844,
    "counts": {
     "stories": 0,
     "series": 4,
@@ -129,7 +144,7 @@
    "label": "SEC fundamentals",
    "sourceId": "sec-edgar",
    "ok": true,
-   "ms": 69458,
+   "ms": 69752,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -143,8 +158,8 @@
   }
  ],
  "totals": {
-  "stories": 60,
-  "clusters": 49,
+  "stories": 161,
+  "clusters": 130,
   "series": 50,
   "filings": 21,
   "research": 33,
