@@ -49,7 +49,7 @@ export default {
         if (!observations.length) continue;
         result.series.push(series({
           id: `ust${tenor}`, label: `US Treasury ${tenor}`, unit: "%",
-          sourceId: "treasury-fiscal", observations,
+          sourceId: "treasury-fiscal", observations, group: "Rates",
           nodeId: tenor === "2y" ? "ust2y" : tenor === "10y" ? "ust10y" : null,
           note: "Daily par yield curve rate published by the US Treasury.",
         }));
@@ -61,7 +61,7 @@ export default {
       if (spread.length) {
         result.series.push(series({
           id: "curve_2s10s", label: "Yield curve (10y − 2y)", unit: "pp",
-          sourceId: "treasury-fiscal", nodeId: "yield_curve", observations: spread,
+          sourceId: "treasury-fiscal", nodeId: "yield_curve", observations: spread, group: "Rates",
           note: "Computed from the Treasury par curve. Negative values are an inversion.",
         }));
       }
@@ -83,7 +83,7 @@ export default {
       if (total.length) {
         result.series.push(series({
           id: "avg_debt_rate", label: "Average rate on federal debt", unit: "%",
-          sourceId: "treasury-fiscal",
+          sourceId: "treasury-fiscal", group: "Fiscal",
           observations: total.map((row) => ({ d: row.record_date, v: Number(row.avg_interest_rate_amt) })),
           note: "The weighted average coupon the US government actually pays. Adjusts slowly, as old bonds mature.",
         }));

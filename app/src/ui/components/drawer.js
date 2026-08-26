@@ -8,7 +8,9 @@ import { propagate } from "../../domain/propagate.js";
 import { conceptsForNode, concept as findConcept } from "../../content/concepts.js";
 import { lessonsForNode } from "../../content/lessons.js";
 import { go } from "../../core/router.js";
-import { ago } from "../../core/format.js";
+import { ago, date as fmtDate, num } from "../../core/format.js";
+import { dataOf, loadAll } from "../../data/store.js";
+import { sparkline } from "../charts/line.js";
 
 let current = null;
 
@@ -21,7 +23,7 @@ function close() {
   current = null;
 }
 
-function open(title, subtitle, bodyNodes, { actions = null } = {}) {
+function open(title, subtitle, bodyNodes, { actions = null, key = null } = {}) {
   close();
   const restore = document.activeElement;
   const scrim = h("div.scrim", { onclick: close });
@@ -52,7 +54,7 @@ function open(title, subtitle, bodyNodes, { actions = null } = {}) {
   document.addEventListener("keydown", onKey);
   document.body.append(scrim, drawer);
   body.focus();
-  current = { scrim, drawer, onKey, restore };
+  current = { scrim, drawer, onKey, restore, key };
 }
 
 export function openConcept(conceptId) {
@@ -64,6 +66,62 @@ export function openConcept(conceptId) {
       h("button.btn.btn--block", { type: "button", onclick: () => { close(); go(`/knowledge/${conceptId}`); } },
         "Open in knowledge base", icon("chevron", 12)))
   ]);
+}
+
+/**
+ * Live readings for a node, where the pipeline actually tracks it.
+ *
+ * The datasets are loaded lazily: only `markets` is fetched at boot, so opening a
+ * macro node would otherwise show nothing until the economy view had been visited.
+ * Rendered into a slot so the drawer can open immediately and fill in when the
+ * fetch settles — and skipped entirely if the reader has moved on by then.
+ */
+function trackingSlot(nodeId, proxies) {
+  const slot = h("div");
+
+  const render = () => {
+    const tracked = [
+      ...(dataOf("markets")?.series || []),
+      ...(dataOf("indicators")?.series || []),
+    ].filter((entry) => entry.nodeId === nodeId);
+
+    mount(slot,
+      tracked.length ? h("div", { style: { marginBottom: "var(--s5)" } }, panel({
+        title: "Currently",
+        sub: "as the pipeline last read it",
+        flush: true,
+        body: h("div.rows", null, ...tracked.map((entry) => {
+          const yoy = entry.yoy?.length ? entry.yoy : null;
+          const points = yoy || entry.observations || [];
+          const latest = yoy ? yoy.at(-1).v : entry.latest;
+          const asOf = yoy ? yoy.at(-1).d : entry.asOf;
+          return h("div.rowitem", null,
+            h("span.grow", null,
+              h("div", { style: { fontSize: "var(--t-body)" } },
+                entry.label, yoy ? h("span.dim", " · year over year") : null),
+              h("div.row-s", { style: { marginTop: "var(--s1)" } },
+                cite(entry.sourceId, { url: entry.url }),
+                h("span.faint", { style: { fontSize: "var(--t-tiny)" } }, fmtDate(asOf)))),
+            h("span", { style: { width: "86px" } }, sparkline(points.slice(-40))),
+            h("span.mono", { style: { fontSize: "var(--t-lead)", minWidth: "72px", textAlign: "right" } },
+              Number.isFinite(latest) ? num(latest, entry.unit === "index" ? 0 : 2) : "—",
+              yoy ? "%" : ""));
+        })),
+      })) : null,
+
+      proxies?.length ? h("div", { style: { marginBottom: "var(--s5)" } },
+        h("div.eyebrow", { style: { marginBottom: "var(--s2)" } },
+          tracked.length ? "Also worth following" : "Follow it with"),
+        h("div.row-s.wrap", null, ...proxies.map((code) => h("span.chip.mono", code)))) : null,
+    );
+  };
+
+  render();
+  loadAll(["markets", "indicators"]).then(() => {
+    if (current?.key === `node:${nodeId}`) render();
+  });
+
+  return slot;
 }
 
 export function openNode(nodeId) {
@@ -78,9 +136,7 @@ export function openNode(nodeId) {
   open(target.label, `${target.kind} · ${target.group}`, [
     h("p.prose", { style: { marginBottom: "var(--s5)" } }, target.blurb),
 
-    target.proxies?.length && h("div", { style: { marginBottom: "var(--s5)" } },
-      h("div.eyebrow", { style: { marginBottom: "var(--s2)" } }, "Follow it with"),
-      h("div.row-s.wrap", null, ...target.proxies.map((code) => h("span.chip.mono", code)))),
+    trackingSlot(nodeId, target.proxies),
 
     panel({
       title: `What moves it (${drivers.length})`,
@@ -145,7 +201,7 @@ export function openNode(nodeId) {
         icon("flask", 12), "Run a shock"),
       h("button.btn.grow", { type: "button", onclick: () => { close(); go(`/graph?focus=${nodeId}`); } },
         icon("graph", 12), "See in graph")),
-  ]);
+  ], { key: `node:${nodeId}` });
 }
 
 export function openStory(cluster) {

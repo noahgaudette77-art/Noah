@@ -33,7 +33,7 @@ export default {
       if (observations.length) {
         result.series.push(series({
           id: "eurusd", label: "EUR/USD", unit: "USD per EUR",
-          sourceId: "ecb-data", nodeId: "eurusd", observations,
+          sourceId: "ecb-data", nodeId: "eurusd", observations, group: "Currency",
           note: "ECB euro foreign exchange reference rate, published each business day at 16:00 CET.",
         }));
       }

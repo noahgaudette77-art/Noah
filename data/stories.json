@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-26T11:02:37.818Z",
+ "generatedAt": "2026-08-26T12:20:40.248Z",
  "partial": false,
  "counts": {
   "raw": 60,
@@ -465,7 +465,7 @@
    "score": 0.654,
    "components": {
     "credibility": 0.95,
-    "recency": 0.088,
+    "recency": 0.086,
     "corroboration": 0.63,
     "consequence": 0.85,
     "topic": 0.7,
@@ -1083,10 +1083,10 @@
   {
    "id": "cl-fde6da1a3c80",
    "rank": 12,
-   "score": 0.596,
+   "score": 0.592,
    "components": {
     "credibility": 0.95,
-    "recency": 0.986,
+    "recency": 0.964,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -1317,10 +1317,10 @@
   {
    "id": "cl-b792c7f9c610",
    "rank": 15,
-   "score": 0.484,
+   "score": 0.482,
    "components": {
     "credibility": 0.95,
-    "recency": 0.399,
+    "recency": 0.39,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -1951,10 +1951,10 @@
   {
    "id": "cl-9cddda5ca086",
    "rank": 23,
-   "score": 0.435,
+   "score": 0.434,
    "components": {
     "credibility": 0.95,
-    "recency": 0.096,
+    "recency": 0.094,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.7,
@@ -2102,10 +2102,10 @@
   {
    "id": "cl-522cd04a05fe",
    "rank": 25,
-   "score": 0.431,
+   "score": 0.43,
    "components": {
     "credibility": 0.95,
-    "recency": 0.119,
+    "recency": 0.116,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,
@@ -2280,7 +2280,7 @@
    "score": 0.418,
    "components": {
     "credibility": 0.95,
-    "recency": 0.051,
+    "recency": 0.05,
     "corroboration": 0.45,
     "consequence": 0.12,
     "topic": 0.6,

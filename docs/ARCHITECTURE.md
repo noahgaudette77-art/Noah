@@ -32,12 +32,18 @@ The brief's most important instruction was: do not build a beautiful interface
 full of fabricated data and call it finished. That single constraint determined
 most of the architecture.
 
-**What it ruled out.** Equity index levels, commodity prices, volatility. There is
-no source publishing them without credentials under terms permitting automated
-access. The one free option began serving a bot challenge mid-build; working
-around an access control was not on the table. So those views are empty, the
-empty states name what is missing and what would fill it, and the adapter slot
-exists in the data layer for whenever a key is configured.
+**What it ruled out.** Per-company share prices, and therefore every valuation
+multiple. No source publishes them without credentials under terms permitting
+automated access; the one free option began serving a bot challenge mid-build,
+and working around an access control was not on the table. So the companies
+screen ranks fundamentals and says, in the interface itself, that there is no
+price here and what that costs you. It does not approximate one.
+
+That gap used to be much wider — index levels, volatility and commodities were
+all missing too, until FRED turned out to redistribute them without a key. The
+lesson generalised: the boundary between "impossible without credentials" and
+"available all along" moved twice during this build, both times by reading terms
+of service rather than assuming them.
 
 **What it ruled in.** A surprising amount. Every one of these answers without a
 credential:
@@ -51,10 +57,21 @@ credential:
 | SEC EDGAR | Company filings for tracked issuers | ✓ (needs a contact address) |
 | World Bank | Long-run structural indicators | ✓ |
 | arXiv | Recent preprints in ML and adjacent fields | ✓ |
+| FRED (St. Louis Fed) | 28 curated series: equity indices, VIX, commodities, credit spreads, real yields, breakevens, and the core macro set | ✓ |
 
 That is enough for a real yield curve, a real 2s10s spread, real currency series,
-real policy documents and real corporate disclosure. All of it tier 1 — published
-by the institution that created the fact.
+real policy documents, real corporate disclosure, and — through FRED — real
+equity, volatility, commodity and credit series. All of it tier 1: published by
+the institution that created the fact, or redistributed by one under a licence
+that names the originator.
+
+**Attribution is a condition, not a footnote.** Much of what FRED redistributes is
+copyrighted by someone else — S&P Dow Jones Indices, Nasdaq, CBOE, ICE, the IMF,
+Freddie Mac, the Chicago Fed. The adapter carries each series' copyright holder
+and its FRED page through to the client, and the markets view renders an
+Attribution panel grouping every series by holder, with public-domain US
+government series listed separately. Using the data without that panel would
+breach the terms it arrives under.
 
 **The third category** is content that is neither live data nor fabrication:
 economics, history, and the structure of how things transmit. The Federal Reserve
@@ -113,7 +130,7 @@ The pipeline imports the same modules the browser does. One model, two consumers
 sources → dedupe → entity link → cluster → rank → JSON snapshots → static client
 ```
 
-`pipeline/run.js` orchestrates seven adapters. A source that fails is recorded in
+`pipeline/run.js` orchestrates eight daily adapters plus a weekly fundamentals pass. A source that fails is recorded in
 the manifest and the run continues; the client reads the manifest and tells the
 reader exactly what is missing. Notable properties:
 
@@ -130,6 +147,18 @@ reader exactly what is missing. Notable properties:
   that, re-running one adapter would clear "one source is failing" from the
   status bar by not looking — the exact failure mode the manifest exists to
   prevent.
+- **Empty CSV fields are rejected before coercion.** FRED marks a missing
+  observation as an empty field or `.`, and `Number("")` is `0`, which is finite.
+  Coercing first turned every market holiday into a price of zero — a spike that
+  looked like a crash. The parser rejects the raw string before it becomes a
+  number, and legitimate zeros (the Chicago Fed's financial conditions index sits
+  around zero by construction; the 10-year real yield genuinely touched 0.00% in
+  January 2020) survive.
+- **Thinning is cadence-aware.** Long daily series are thinned outside a recent
+  window to keep the payload sane. Applying that to a monthly series silently
+  redefined its derived year-over-year change, because a month-over-month
+  difference became a ten-month one. The thinner measures the median gap between
+  observations first and leaves anything slower than roughly three weeks alone.
 - **Soft rejections are retried.** Several public services return 403 or 406
   under load rather than as real authorisation or content-negotiation failures;
   the same URL and headers succeed seconds later. Treating those as permanent
@@ -282,8 +311,10 @@ what is missing and the command that produces it.
 
 ## 10. What is deliberately not here
 
-- **No prices.** Explained above. The slot exists; it is empty on purpose, and
-  every company surface repeats what its absence costs.
+- **No per-company prices.** Index levels, volatility, commodities and credit
+  spreads are real and live; individual equity prices are not, so there are no
+  valuation multiples. Every company surface repeats what that absence costs
+  rather than approximating around it.
 - **No LLM at runtime.** Nothing in the browser calls a model. Summaries,
   explanations, questions and chains are authored or derived. An optional
   server-side analysis stage can be added to the pipeline, where a key can be held
@@ -297,10 +328,11 @@ what is missing and the command that produces it.
 
 ## 11. What I would build next
 
-1. **A keyed market-data adapter** behind the existing provider interface —
-   equities, commodities and volatility. It is now the largest gap by some
-   distance, because it is the one thing standing between a fundamental screen
-   and a genuine opportunity screen.
+1. **A keyed adapter for per-company prices** behind the existing provider
+   interface. FRED closed the index, volatility, commodity and credit gaps, so
+   this is what is left: it is the one thing standing between a fundamental
+   screen and a genuine opportunity screen, because without a price there is no
+   multiple and without a multiple there is no expectation to disagree with.
 2. **A server-side AI stage in the pipeline** for summarisation and entity
    extraction, with output labelled as model-generated and every claim still
    carrying its source. The client stays model-free.

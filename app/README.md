@@ -18,18 +18,21 @@ lag and confidence. A shock propagates through it and returns first-, second- an
 third-order consequences ranked by plausibility, with the chain that produced
 each one. Where independent routes disagree about the sign, it says so.
 
-**Runs on real data, or says it has none.** Seven institutional sources answer
+**Runs on real data, or says it has none.** Eight institutional sources answer
 without any credential: the US Treasury daily yield curve, Federal Reserve and ECB
 press feeds, Bank of Canada rates and FX, SEC EDGAR filings, World Bank
-indicators, arXiv preprints. Where data is genuinely unavailable — equity and
-commodity prices — the view is empty and names what is missing. Nothing is filled
-in with a plausible-looking number.
+indicators, arXiv preprints, and FRED for equity indices, volatility, commodities,
+credit spreads, real yields and the core macro set. Series that arrive under
+someone else's copyright — S&P Dow Jones, Nasdaq, CBOE, ICE — carry that holder
+through to an Attribution panel, because that is the condition they come under.
+Where data is genuinely unavailable — per-company share prices — the view is empty
+and names what is missing. Nothing is filled in with a plausible-looking number.
 
 **Screens companies on what they filed.** Revenue, margins, cash flow and
 balance sheet for 26 companies, pulled from SEC XBRL and going back over a
 decade, each attached to the model variable its economics depend on. There is no
-price, so there is no valuation — the screen says so everywhere, and the
-categories that would need one are listed as unavailable rather than
+per-company price, so there is no valuation — the screen says so everywhere, and
+the categories that would need one are listed as unavailable rather than
 approximated.
 
 **Argues with itself.** Ten live debates state consensus and the case against it
@@ -59,6 +62,11 @@ INTEL_CONTACT="you@example.com" node pipeline/run.js --brief
 `INTEL_CONTACT` is only for the SEC, whose access policy requires a contact
 address in the User-Agent. Without it the SEC adapters skip themselves and record
 why; every other source still runs.
+
+Run a single adapter with `--only=fred`. Partial runs merge rather than
+overwrite: what the skipped sources wrote last time is carried forward, and so are
+their recorded gaps, so re-running one adapter cannot quietly clear a failure
+notice by not looking.
 
 Company fundamentals refresh weekly rather than daily — they change four times a
 year, and re-fetching four megabytes per company every morning to re-read the

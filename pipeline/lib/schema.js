@@ -16,7 +16,7 @@ export function story({ title, url, publishedAt, summary = "", sourceId, tier, k
   };
 }
 
-export function series({ id, label, unit, sourceId, observations, note = null, nodeId = null }) {
+export function series({ id, label, unit, sourceId, observations, note = null, nodeId = null, group = null }) {
   const clean = (observations || [])
     .filter((o) => o && o.d && Number.isFinite(Number(o.v)))
     .map((o) => ({ d: String(o.d).slice(0, 10), v: Number(o.v) }))
@@ -24,7 +24,7 @@ export function series({ id, label, unit, sourceId, observations, note = null, n
   const last = clean[clean.length - 1] || null;
   const previous = clean[clean.length - 2] || null;
   return {
-    id, label, unit, sourceId, note, nodeId,
+    id, label, unit, sourceId, note, nodeId, group,
     observations: clean,
     asOf: last?.d || null,
     latest: last?.v ?? null,

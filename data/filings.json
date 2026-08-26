@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-26T11:02:37.818Z",
+ "generatedAt": "2026-08-26T12:20:40.248Z",
  "partial": false,
  "tracked": {
   "NVDA": "accelerators",
@@ -31,6 +31,18 @@
   "DE": "agriculture"
  },
  "filings": [
+  {
+   "id": "9e41b0c458b16b66",
+   "company": "MICRON TECHNOLOGY INC",
+   "ticker": "MU",
+   "cik": "723125",
+   "form": "8-K",
+   "filedAt": "2026-08-26",
+   "url": "https://www.sec.gov/Archives/edgar/data/723125/000110465926101067/tm2624017d1_8k.htm",
+   "description": "FORM 8-K",
+   "sourceId": "sec-edgar",
+   "tier": 1
+  },
   {
    "id": "e3f3f85ee4b68368",
    "company": "NEXTERA ENERGY INC",

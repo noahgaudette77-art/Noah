@@ -4,10 +4,10 @@ import { parseFeed } from "../lib/xml.js";
 import { series, story, emptyResult } from "../lib/schema.js";
 
 const SERIES = {
-  FXUSDCAD: { id: "usdcad", label: "USD/CAD", unit: "CAD per USD", nodeId: "usdcad" },
-  "BD.CDN.10YR.DQ.YLD": { id: "cangov10y", label: "Canada 10-year bond yield", unit: "%" },
-  "BD.CDN.2YR.DQ.YLD": { id: "cangov2y", label: "Canada 2-year bond yield", unit: "%" },
-  V39079: { id: "boc_policy_rate", label: "Bank of Canada target rate", unit: "%", nodeId: "boc_rate" },
+  FXUSDCAD: { id: "usdcad", label: "USD/CAD", unit: "CAD per USD", nodeId: "usdcad", group: "Currency" },
+  "BD.CDN.10YR.DQ.YLD": { id: "cangov10y", label: "Canada 10-year bond yield", unit: "%", group: "Canada" },
+  "BD.CDN.2YR.DQ.YLD": { id: "cangov2y", label: "Canada 2-year bond yield", unit: "%", group: "Canada" },
+  V39079: { id: "boc_policy_rate", label: "Bank of Canada target rate", unit: "%", nodeId: "boc_rate", group: "Canada" },
 };
 
 const OBSERVATIONS = (keys, recent) =>

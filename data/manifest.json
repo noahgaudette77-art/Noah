@@ -1,7 +1,7 @@
 {
- "generatedAt": "2026-08-26T11:02:37.818Z",
+ "generatedAt": "2026-08-26T12:20:40.248Z",
  "partial": false,
- "durationMs": 133381,
+ "durationMs": 170126,
  "node": "v22.22.2",
  "sources": [
   {
@@ -9,7 +9,7 @@
    "label": "Federal Reserve",
    "sourceId": "fed-press",
    "ok": true,
-   "ms": 1408,
+   "ms": 1547,
    "counts": {
     "stories": 35,
     "series": 0,
@@ -24,7 +24,7 @@
    "label": "European Central Bank",
    "sourceId": "ecb-press",
    "ok": true,
-   "ms": 1653,
+   "ms": 1855,
    "counts": {
     "stories": 15,
     "series": 1,
@@ -39,7 +39,7 @@
    "label": "Bank of Canada",
    "sourceId": "boc-valet",
    "ok": true,
-   "ms": 1539,
+   "ms": 1031,
    "counts": {
     "stories": 10,
     "series": 4,
@@ -54,10 +54,25 @@
    "label": "US Treasury",
    "sourceId": "treasury-fiscal",
    "ok": true,
-   "ms": 19122,
+   "ms": 18949,
    "counts": {
     "stories": 0,
     "series": 13,
+    "filings": 0,
+    "research": 0
+   },
+   "skipped": false,
+   "notes": []
+  },
+  {
+   "id": "fred",
+   "label": "FRED (St. Louis Fed)",
+   "sourceId": "fred",
+   "ok": true,
+   "ms": 34797,
+   "counts": {
+    "stories": 0,
+    "series": 28,
     "filings": 0,
     "research": 0
    },
@@ -69,11 +84,11 @@
    "label": "SEC EDGAR",
    "sourceId": "sec-edgar",
    "ok": true,
-   "ms": 31952,
+   "ms": 32723,
    "counts": {
     "stories": 0,
     "series": 0,
-    "filings": 20,
+    "filings": 21,
     "research": 0
    },
    "skipped": false,
@@ -84,7 +99,7 @@
    "label": "arXiv",
    "sourceId": "arxiv",
    "ok": true,
-   "ms": 6556,
+   "ms": 6671,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -99,7 +114,7 @@
    "label": "World Bank",
    "sourceId": "worldbank",
    "ok": true,
-   "ms": 2550,
+   "ms": 3008,
    "counts": {
     "stories": 0,
     "series": 4,
@@ -114,7 +129,7 @@
    "label": "SEC fundamentals",
    "sourceId": "sec-edgar",
    "ok": true,
-   "ms": 68559,
+   "ms": 69458,
    "counts": {
     "stories": 0,
     "series": 0,
@@ -130,8 +145,8 @@
  "totals": {
   "stories": 60,
   "clusters": 49,
-  "series": 22,
-  "filings": 20,
+  "series": 50,
+  "filings": 21,
   "research": 33,
   "companies": 27
  },

@@ -2,14 +2,14 @@
   "name": "hollis-and-vane",
   "version": "1.0.0",
   "private": true,
-  "description": "Hollis & Vane — a storefront for classy vintage clothing. Static, dependency-free.",
+  "description": "Hollis & Vane \u2014 a storefront for classy vintage clothing. Static, dependency-free.",
   "scripts": {
     "build": "node scripts/build.js",
     "art": "python3 scripts/generate-art.py",
     "dev": "node scripts/build.js && node scripts/serve.js",
     "serve": "node scripts/serve.js",
-    "intel": "node pipeline/run.js",
-    "brief": "node pipeline/run.js --brief",
+    "intel": "node --no-warnings pipeline/run.js",
+    "brief": "node --no-warnings pipeline/run.js --brief",
     "check": "node --experimental-vm-modules --no-warnings scripts/check-esm.mjs $(find app/src pipeline -name '*.js' -not -path '*/node_modules/*')",
     "test:browser": "node tests/browser.mjs"
   },

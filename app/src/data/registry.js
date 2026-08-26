@@ -34,8 +34,8 @@ export const DATASETS = {
     label: "Market series",
     maxAgeHours: 20,
     produces: "npm run intel",
-    describes: "Daily closes for major indices, commodities and currencies.",
-    sources: ["boc-valet", "ecb-data"],
+    describes: "Daily closes for equity indices, volatility, commodities, credit spreads, real yields and currencies.",
+    sources: ["fred", "treasury-fiscal", "boc-valet", "ecb-data"],
     caveat: "End-of-day values. This is not a real-time quote feed and is not intended to be one.",
   },
   indicators: {
@@ -43,8 +43,8 @@ export const DATASETS = {
     label: "Macro indicators",
     maxAgeHours: 24 * 40,
     produces: "npm run intel",
-    describes: "Observations for the macro series the world model tracks.",
-    sources: ["worldbank", "boc-valet", "ecb-data", "treasury-fiscal"],
+    describes: "Inflation, labour, activity and monetary observations for the macro variables the world model tracks.",
+    sources: ["fred", "worldbank", "boc-valet", "ecb-data", "treasury-fiscal"],
   },
   research: {
     path: "research.json",

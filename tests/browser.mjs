@@ -123,6 +123,36 @@ console.log("\nInteractions");
   await page.waitForTimeout(200);
   check("drawer closes on Escape", !(await page.isVisible(".drawer")));
 
+  await page.goto(`${BASE}#/markets`, { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  const headline = await page.locator(".stat").count();
+  check("markets leads with a headline strip", headline >= 6, `${headline} readings`);
+  check("equity indices are rebased, not mixed on one axis",
+    (await page.getByText(/rebased/i).count()) > 0);
+  const attribution = await page.locator(".panel", { hasText: /attribution/i }).innerText();
+  check("redistributed series name their copyright holder",
+    /S&P Dow Jones|CBOE|ICE|Nasdaq/i.test(attribution), attribution.split("\n")[2] || "");
+
+  await page.locator("button", { hasText: /^Trace it$/ }).first().click();
+  await page.waitForTimeout(1200);
+  const nodeDrawer = await page.locator(".drawer").innerText();
+  check("node drawer carries the live reading", /currently/i.test(nodeDrawer));
+  check("the reading is attributed and dated",
+    /FRED|Treasury|World Bank|Bank of Canada/i.test(nodeDrawer) && /20\d\d/.test(nodeDrawer));
+  check("the drawer still explains the transmission",
+    /what moves it/i.test(nodeDrawer) && /what it moves/i.test(nodeDrawer));
+  await page.keyboard.press("Escape");
+
+  await page.goto(`${BASE}#/economy`, { waitUntil: "load" });
+  await page.waitForTimeout(900);
+  check("inflation is drawn against the 2% target",
+    (await page.getByText(/2% target/).count()) > 0);
+  check("year-over-year series are labelled as such",
+    (await page.getByText(/year over year/i).count()) > 0);
+  const macroRows = await page.locator(".panel", { hasText: /macro variables tracked/i })
+    .locator(".rowitem").count();
+  check("every tracked macro variable is reachable", macroRows > 6, `${macroRows} variables`);
+
   await page.goto(`${BASE}#/simulator`, { waitUntil: "load" });
   await page.waitForTimeout(600);
   const before = await page.locator(".statgrid").first().innerText();

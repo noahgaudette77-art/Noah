@@ -18,6 +18,7 @@ export function lineChart({
   showAxis = true,
   showZero = false,
   band = null,            // { from, to } shaded region on the y axis
+  reference = null,       // { value, label } horizontal marker line
   format = (v) => num(v, 2),
   onHover = null,
   ariaLabel = "Time series",
@@ -71,6 +72,20 @@ export function lineChart({
         })
       : null;
 
+    const referenceLine = reference && Number.isFinite(reference.value)
+      && reference.value > minV && reference.value < maxV
+      ? h("g", null,
+          h("line", {
+            x1: PAD.left, x2: PAD.left + innerW,
+            y1: y(reference.value).toFixed(1), y2: y(reference.value).toFixed(1),
+            stroke: "var(--accent)", "stroke-width": 1, "stroke-dasharray": "4 3", "stroke-opacity": 0.7,
+          }),
+          reference.label && h("text", {
+            x: PAD.left + 4, y: (y(reference.value) - 4).toFixed(1),
+            fill: "var(--accent)", "font-size": 9.5, "font-family": "var(--font-ui)",
+          }, reference.label))
+      : null;
+
     const bandRect = band
       ? h("rect", {
           x: PAD.left, width: innerW,
@@ -117,7 +132,7 @@ export function lineChart({
           h("stop", { offset: "100%", "stop-color": firstColour, "stop-opacity": 0 })
         )
       ),
-      ...gridlines, bandRect, zeroLine, ...paths, crosshair
+      ...gridlines, bandRect, zeroLine, referenceLine, ...paths, crosshair
     );
 
     mount(svgHost, svg);

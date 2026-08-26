@@ -26,6 +26,7 @@ import treasury from "./sources/treasury.js";
 import sec from "./sources/sec.js";
 import arxiv from "./sources/arxiv.js";
 import worldbank from "./sources/worldbank.js";
+import fred from "./sources/fred.js";
 import fundamentals from "./sources/fundamentals.js";
 import { dedupe } from "./stages/dedupe.js";
 import { linkAll } from "./stages/entities.js";
@@ -37,7 +38,7 @@ import { TRACKED } from "./sources/sec.js";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data");
 
-const ADAPTERS = [fed, ecb, boc, treasury, sec, arxiv, worldbank];
+const ADAPTERS = [fed, ecb, boc, treasury, fred, sec, arxiv, worldbank];
 
 /**
  * Fundamentals change four times a year, so fetching them daily would be four
@@ -140,8 +141,10 @@ async function main() {
     clusters: mergedClusters,
   });
 
-  const marketSeries = series.filter((entry) =>
-    ["ust", "curve", "usdcad", "eurusd", "boc", "cangov", "avg"].some((prefix) => entry.id.startsWith(prefix)));
+  // FRED tags each series as market or macro; everything else is placed by its
+  // id prefix, which is how the earlier adapters were written.
+  const isMacro = (entry) => entry.kind === "macro" || entry.id.startsWith("wb_");
+  const marketSeries = series.filter((entry) => !isMacro(entry));
 
   await write("markets.json", {
     generatedAt,
@@ -154,7 +157,7 @@ async function main() {
   await write("indicators.json", {
     generatedAt,
     partial,
-    series: mergeById(series.filter((entry) => entry.id.startsWith("wb_")), priorIndicators?.series || []),
+    series: mergeById(series.filter(isMacro), priorIndicators?.series || []),
   });
 
   // Carried forward on any run that did not fetch them, weekly cadence or not.
