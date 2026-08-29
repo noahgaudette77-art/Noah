@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FPF ARCADE — Communication, Client Behaviour &amp; Time Value of Money</title>
-<meta name="description" content="A 90s arcade study game for three FPF chapters: interpersonal communication, understanding the client, and the time value of money.">
+<title>FPF ARCADE — Communication, Clients, Economics &amp; Time Value of Money</title>
+<meta name="description" content="A 90s arcade study game for four FPF chapters: interpersonal communication, understanding the client, economics, and the time value of money.">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -307,7 +307,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 
 <div class="cabinet">
   <div class="marquee">
-    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 3 CHAPTERS LOADED ◈</div>
+    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 4 CHAPTERS LOADED ◈</div>
     <h1>FPF ARCADE</h1>
     <div class="sub">STUDY HARDER. SCORE HIGHER.</div>
   </div>
@@ -321,12 +321,13 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
         <span class="l1">FPF</span>
         <span class="l2">ARCADE</span>
       </div>
-      <div class="tagline">▓▒░ THREE CHAPTERS · ONE CABINET ░▒▓</div>
+      <div class="tagline">▓▒░ FOUR CHAPTERS · ONE CABINET ░▒▓</div>
       <div class="attract">
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--magenta)">CH.1 THE HUMAN INTERFACE</b> — communication, non-verbal, perceptions, skills</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--green)">CH.2 KNOW YOUR CLIENT</b> — beliefs, culture, decisions, elderly, grief, incapacity</p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--yellow)">CH.3 MARKET FORCES</b> — demand, supply, GDP, cycles, monetary &amp; fiscal policy</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--cyan)">M2 CH.1 TIME VALUE RAIDERS</b> — single sums, annuities, rates, applications</p>
-        <p><span style="color:var(--yellow)">▶</span> 15 stages · 18 boss problems · 470+ drills, all from your notes</p>
+        <p><span style="color:var(--yellow)">▶</span> 20 stages · 24 boss problems · 600+ drills, all from your notes</p>
         <p><span style="color:var(--yellow)">▶</span> Miss a question and the game <b style="color:var(--green)">teaches you the rule</b></p>
       </div>
       <div class="center blink px" style="font-size:14px;color:var(--green);margin:18px 0">PRESS START</div>
@@ -421,7 +422,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
       <h2 class="title">HOW TO PLAY</h2>
       <div class="cram">
         <p><b style="color:var(--cyan)">GOAL:</b> clear every stage of a chapter, each ending in a BOSS — a full case straight out of your notes (Ms. Varner's mutual fund, the Tuccis' RV, Sharon's college fund, Bill Brown's mortgage…).</p>
-        <p>Three chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
+        <p>Four chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file), <b style="color:var(--yellow)">CH.3 Market Forces</b> (economics) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
         <h3>CONTROLS</h3>
         <table>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></td><td>pick a multiple-choice answer</td></tr>
@@ -470,7 +471,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     </section>
 
   </div>
-  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, Chapter 2 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
+  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, 2 and 3 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
 </div>
 
 <!-- ============ TVM CALCULATOR ============ -->
@@ -2439,6 +2440,598 @@ const CRAM_C2 = `
 <p style="color:var(--yellow);font-size:21px">"Knowledge of the decision-making process is NOT acquired in order to manipulate and unduly influence clients' choices, but rather to BETTER UNDERSTAND THEIR NEEDS so that appropriate help and solutions can be offered in order to create the most value for clients."</p>
 `;
 
+
+/* ============================================================
+   CHAPTER 3 — ECONOMICS
+   Built from the Chapter 3 study notes: microeconomics
+   (demand, supply, equilibrium, market failure) and
+   macroeconomics (GDP, cycles, inflation, policy).
+   ============================================================ */
+
+const STAGES_C3 = [
+  {n:1, name:"THE PRICE MACHINE", sub:"The laws of demand and supply",
+   blurb:"Downward vs upward slopes · substitution &amp; income effects · scarcity and rationing"},
+  {n:2, name:"EQUILIBRIUM CITY",  sub:"Where the curves meet",
+   blurb:"Solving for P and Q · shortages &amp; excesses · movement vs shift · market failure"},
+  {n:3, name:"THE BIG PICTURE",   sub:"Measuring the economy",
+   blurb:"Circular flow · GDP vs GNP · real vs nominal · GDP = C + I + G + X &ndash; M"},
+  {n:4, name:"CYCLE RIDER",       sub:"Cycles, indicators, inflation, jobs",
+   blurb:"The 5 phases · leading/coincident/lagging · CPI · Phillips &amp; Okun · 4 unemployment types"},
+  {n:5, name:"POLICY CONTROL",    sub:"Monetary and fiscal policy",
+   blurb:"Bank rate &amp; open-market operations · spending &amp; taxes · AD/AS shifts · balance of payments"}
+];
+
+const BANK_C3 = [
+/* ============ STAGE 1 — DEMAND, SUPPLY, SCARCITY ============ */
+{t:"mc",s:1,d:1,tag:"DEMAND",q:"What are the two main economic characteristics of any society?",
+ c:["All resources are LIMITED (supply is limited), and consumers and producers seek to maximize satisfaction and profits (demand is not limited)","Demand is limited and supply is unlimited","Governments set prices and firms follow","Prices always rise over time"],a:0,
+ why:"Economics is \"a field of study that tries to show how the forces of demand and supply <b>allocate these resources for the overall betterment of society</b>.\""},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"<b>MICROECONOMICS</b> deals with…",
+ c:["The behaviour of SMALL economic units — the individual consumer, household or producer","The overall economy","Government policy only","International trade"],a:0,
+ why:"Macroeconomics deals with the behaviour of the <b>overall economy</b> — aggregate consumption and production decisions, plus the role of governments and the central bank."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"When governments find the market-determined allocation unsatisfactory, how may they modify it?",
+ c:["Taxation and spending, or price controls and subsidies","By closing markets","By setting wages only","By issuing currency"],a:0,
+ why:"Consumers make rational choices that determine <b>demand</b>; producers make rational choices that determine <b>supply</b>; their interaction determines a market price and quantity."},
+{t:"mc",s:1,d:1,tag:"DEMAND",q:"The <b>LAW OF DEMAND</b> states that, everything else being equal…",
+ c:["An INCREASE in price DECREASES the quantity demanded; a decrease in price increases it","An increase in price increases quantity demanded","Price and quantity demanded are unrelated","Quantity demanded depends only on income"],a:0,
+ why:"There is an <b>INVERSE</b> relationship between price and the amount consumers are willing to purchase — which is why the demand curve is <b>downward sloping</b>."},
+{t:"mc",s:1,d:1,tag:"SUPPLY",q:"The <b>LAW OF SUPPLY</b> states that, everything else being equal…",
+ c:["An INCREASE in price INCREASES the quantity supplied; a decrease in price decreases it","An increase in price decreases quantity supplied","Supply is fixed regardless of price","Supply depends only on technology"],a:0,
+ why:"There is a <b>DIRECT</b> relationship between price and the amount producers are willing to supply — the supply curve is <b>upward sloping</b>."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"A demand curve shows…",
+ c:["The amount of a good a CONSUMER is willing to purchase from the market at various prices","The amount producers bring to market","The equilibrium price only","Total market output"],a:0,
+ why:"A supply curve shows the amount a <b>producer is willing to provide</b> to the market at various prices."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"What are the THREE reasons the law of demand works?",
+ c:["Wealth constraints, substitute products, and the income effect","Advertising, fashion, and culture","Scarcity, rationing, and competition","Technology, resources, and disasters"],a:0,
+ why:"Cultural background, advertising and being in fashion are <b>not unimportant</b> — the main point is that consumers have limited wealth, so price becomes an important factor in making the best choice."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"A <b>WEALTH CONSTRAINT</b> is…",
+ c:["The fact that a consumer's desire for goods may be greater than their ability to afford them, forcing choices","A limit on borrowing","A government-imposed spending cap","The minimum income needed to survive"],a:0,
+ why:"It forces the typical consumer to make choices, which is why price matters."},
+{t:"mc",s:1,d:3,tag:"DEMAND",q:"The <b>SUBSTITUTION EFFECT</b> says that…",
+ c:["The GREATER the number of substitutes for a good, the MORE IMPORTANT price becomes in choosing it","Substitutes always cost less","Consumers prefer variety for its own sake","Price changes have no effect where substitutes exist"],a:0,
+ why:"If the price of coffee rises, consumers may reduce demand for coffee and buy <b>tea</b> — though cultural preference for coffee will also influence that choice."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"Two products are <b>SUBSTITUTES</b> if…",
+ c:["The quantity demanded for one INCREASES when the PRICE OF THE OTHER increases","They are produced by the same firm","They have the same price","They are consumed together"],a:0,
+ why:"Producers must be careful about raising prices — consumers may switch to substitutes and producers lose sales."},
+{t:"mc",s:1,d:3,tag:"DEMAND",q:"The <b>INCOME EFFECT</b> occurs because…",
+ c:["Consumers have limited wealth, so a price increase means a LOSS OF PURCHASING POWER","Incomes fall when prices rise","Wages are indexed to prices","Governments adjust transfers"],a:0,
+ why:"With a fixed amount of money, consumers cannot purchase the same amount as before — so if they can find substitutes they will switch, to reduce the loss of purchasing power."},
+{t:"num",s:1,d:2,tag:"DEMAND",q:"A consumer earns $1,000/week after tax and spends <b>$300 on food</b>. If food costs rise <b>10%</b>, what is the additional weekly cost, in dollars?",unit:"$",a:30,tol:0.5,
+ why:"$300 × 10% = <b>$30</b> per week — a loss of purchasing power. Their options: buy cheaper substitutes; or, if no acceptable substitutes exist, do with less, cut back on other expenditures, or borrow from savings."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"With no acceptable substitutes after a price rise, which is NOT one of the consumer's options?",
+ c:["Demand a wage increase from their employer","Do with less","Cut back on other expenditures","Possibly borrow from savings"],a:0,
+ why:"Changes in price affect the quantity demanded; consumers with fixed incomes must make appropriate choices to satisfy their consumption needs."},
+{t:"mc",s:1,d:3,tag:"SUPPLY",q:"The supply curve has TWO typical shapes. What is the second one?",
+ c:["VERTICAL — the same quantity is supplied regardless of price","Downward sloping","Horizontal","S-shaped"],a:0,
+ why:"The <b>demand</b> curve is, with only rare exceptions, always downward sloping. But supply can be fixed: if supply is fixed at any price, the supply curve is <b>vertical</b>."},
+{t:"mc",s:1,d:2,tag:"SUPPLY",q:"Which is given as an example of supply that is fixed FOR GOOD?",
+ c:["Original Rembrandt paintings","New houses","New cars","Common shares outstanding"],a:0,
+ why:"No new original Rembrandts will ever be produced. Shares outstanding, new houses and new cars are <b>temporarily</b> fixed — it takes time to bring them to market."},
+{t:"mc",s:1,d:2,tag:"SCARCITY",q:"Why is supply SCARCE?",
+ c:["It takes resources — raw materials, skill, technology — which are limited in availability","Producers restrict output deliberately","Governments impose quotas","Demand always exceeds capacity"],a:0,
+ why:"And the key consequence: <b>the scarcer a good or service is, the more valuable it becomes — scarcity creates value</b>."},
+{t:"mc",s:1,d:2,tag:"SCARCITY",q:"<b>RATIONING</b> is…",
+ c:["The allocation of a limited supply of goods or services between consumers","Government control of production","A limit on purchases per customer","Wartime distribution only"],a:0,
+ why:"The mechanism used to allocate scarce goods in a free-market system is <b>PRICE</b>. Consumers then engage in income-producing activities to enhance their ability to pay — hence <b>competition arises from scarcity</b>."},
+{t:"mc",s:1,d:2,tag:"SCARCITY",q:"In a FREE-MARKET economy, prices are determined…",
+ c:["Entirely by the forces underlying demand and supply","By producers setting margins","By government price boards","By the cost of production alone"],a:0,
+ why:"Consumers are free to spend income to maximize private satisfaction; producers are free to sell output where profits can be maximized."},
+{t:"mc",s:1,d:2,tag:"DEMAND",q:"In the demand schedule, price 1 gives quantity 10, price 3 gives 6, price 5 gives 2. What does this confirm?",
+ c:["As price goes UP, quantity demanded goes DOWN","As price goes up, quantity demanded goes up","Quantity is independent of price","The curve is vertical"],a:0,
+ why:"The supply schedule runs the other way: price 1 gives 2, price 3 gives 6, price 5 gives 10."},
+{t:"mc",s:1,d:2,tag:"SUPPLY",q:"The law of supply relates quantity supplied to price. What is assumed about other variables?",
+ c:["Their effects are assumed to be CONSTANT","They are assumed to move with price","They are ignored entirely","They are averaged out"],a:0,
+ why:"The same assumption applies to the law of demand — which is exactly why a change in any <b>other</b> variable shifts the whole curve instead of moving along it."},
+{t:"mc",s:1,d:3,tag:"DEMAND",q:"Producers considering a price increase should be careful because…",
+ c:["Consumers may switch to substitute products and producers may lose sales","Governments may intervene","Costs will rise proportionally","Supply curves become vertical"],a:0,
+ why:"The greater the number of substitutes, the more important price becomes in the consumer's choice."},
+
+/* ============ STAGE 2 — EQUILIBRIUM, SHIFTS, MARKET FAILURE ============ */
+{t:"mc",s:2,d:1,tag:"EQUILIBRIUM",q:"<b>EQUILIBRIUM</b> is…",
+ c:["The price at which the quantity supplied exactly matches the quantity demanded","The average of the highest and lowest prices","The price that maximizes producer profit","The lowest price consumers will accept"],a:0,
+ why:"Graphically it is the <b>intersection point</b> of the demand and supply curves — where a free-market system has properly allocated scarce goods."},
+{t:"mc",s:2,d:2,tag:"EQUILIBRIUM",q:"If price is TOO HIGH, what happens?",
+ c:["Producers increase the quantity supplied and consumers reduce the quantity demanded","Both supply and demand fall","Both supply and demand rise","Nothing until government intervenes"],a:0,
+ why:"If price is too low, producers decrease the quantity supplied and consumers increase the quantity demanded. Price tends to <b>equalize</b> the two."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"Oranges: Q<sub>D</sub> = 800 &ndash; 2P and Q<sub>S</sub> = 98P. What is the equilibrium PRICE, in cents?",unit:"cents",a:8,tol:0.1,
+ why:"Set Q<sub>D</sub> = Q<sub>S</sub>: 800 &ndash; 2P = 98P → 800 = 100P → <b>P = 8 cents</b>."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"Same oranges, P = 8 cents. What is the equilibrium QUANTITY?",unit:"oranges",a:784,tol:1,
+ why:"Q<sub>D</sub> = 800 &ndash; 2(8) = 784 and Q<sub>S</sub> = 98(8) = 784. Always substitute back into <b>both</b> equations to verify."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"Oranges at a government-imposed <b>6 cents</b>: Q<sub>D</sub> = 800 &ndash; 2P, Q<sub>S</sub> = 98P. What is the SHORTAGE?",unit:"oranges",a:200,tol:1,
+ why:"Q<sub>D</sub> = 788, Q<sub>S</sub> = 588 → shortage of <b>200 oranges</b>. A price set LOWER than equilibrium results in a shortage."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"Oranges at an imposed <b>10 cents</b>. What is the EXCESS SUPPLY?",unit:"oranges",a:200,tol:1,
+ why:"Q<sub>D</sub> = 780, Q<sub>S</sub> = 980 → excess of <b>200 oranges</b>. A price set HIGHER than equilibrium results in excess supply."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"New market: Q<sub>D</sub> = 500 &ndash; 5P and Q<sub>S</sub> = 20P. What is the equilibrium price?",unit:"$",a:20,tol:0.2,
+ why:"500 &ndash; 5P = 20P → 500 = 25P → <b>P = 20</b>, and Q = 20 × 20 = 400 (check: 500 &ndash; 100 = 400)."},
+{t:"num",s:2,d:3,tag:"EQUILIBRIUM",q:"Same market (Q<sub>D</sub> = 500 &ndash; 5P, Q<sub>S</sub> = 20P) with a price ceiling of <b>15</b>. What is the shortage?",unit:"units",a:125,tol:1,
+ why:"Q<sub>D</sub> = 500 &ndash; 75 = 425; Q<sub>S</sub> = 300. Shortage = <b>125 units</b>."},
+{t:"mc",s:2,d:2,tag:"EQUILIBRIUM",q:"<b>RENT CONTROL</b> is given as a real-world example of…",
+ c:["A price set BELOW equilibrium, causing a SHORTAGE of apartments","A price set above equilibrium","An efficient allocation","A public good"],a:0,
+ why:"<b>Farm support systems</b>, where governments pay a subsidy above the equilibrium price, are the opposite — they typically lead to <b>excess supply</b> of agricultural goods."},
+{t:"mc",s:2,d:2,tag:"EQUILIBRIUM",q:"A <b>SHORTAGE</b> exists when…",
+ c:["The quantity DEMANDED exceeds the quantity SUPPLIED","The quantity supplied exceeds the quantity demanded","Producers withhold output","Price equals equilibrium"],a:0,
+ why:"Excess supply (oversupply) is the reverse — quantity supplied exceeds quantity demanded."},
+{t:"mc",s:2,d:3,tag:"SHIFTS",q:"Price falls from P0 to P1 and quantity demanded rises from Q0 to Q1. What has happened?",
+ c:["A MOVEMENT ALONG the same demand curve — no shift occurs","A positive shift in demand","A negative shift in supply","A new equilibrium curve"],a:0,
+ why:"This is a very important point: <b>changes in price create a movement along the same curve</b>. Only changes in OTHER variables shift a curve."},
+{t:"mc",s:2,d:2,tag:"SHIFTS",q:"Which variable would SHIFT the demand curve rather than move along it?",
+ c:["A change in consumer income","A change in the good's own price","A change in the quantity sold","A change in the equilibrium point"],a:0,
+ why:"Demand shifters: the number of consumers, consumer preference, consumer income, and the price of substitutes."},
+{t:"mc",s:2,d:2,tag:"SHIFTS",q:"Which three variables SHIFT the supply curve?",
+ c:["Technology, the price of resources, and natural disasters or unexpected events","Income, preference and population","Price, quantity and equilibrium","Taxes, subsidies and interest rates"],a:0,
+ why:"A positive shift in supply is to the RIGHT (or downwards) — e.g. new technology raising productivity. A negative shift is to the LEFT (or upwards) — e.g. a rise in the price of resources."},
+{t:"mc",s:2,d:2,tag:"SHIFTS",q:"A <b>POSITIVE SHIFT</b> is a shift to the…",
+ c:["RIGHT","Left","Top","Bottom"],a:0,
+ why:"Positive = rightward, negative = leftward, in both demand and supply."},
+{t:"mc",s:2,d:3,tag:"SHIFTS",q:"Consumer income INCREASES. What happens to equilibrium price and quantity?",
+ c:["Both RISE — demand shifts right, and producers respond by bringing more to market","Both fall","Price rises, quantity falls","Price falls, quantity rises"],a:0,
+ why:"The higher demand causes price to rise; at the new higher price producers bring more to market. <b>Demand shifts move price and quantity the SAME direction.</b>"},
+{t:"mc",s:2,d:3,tag:"SHIFTS",q:"A DROUGHT causes a shortage of a crop. What happens to equilibrium price and quantity?",
+ c:["Price RISES and quantity FALLS — a negative shift in supply","Both fall","Both rise","Price falls, quantity rises"],a:0,
+ why:"The lower supply causes price to rise; at the new higher price consumers purchase less. <b>Supply shifts move price and quantity in OPPOSITE directions.</b>"},
+{t:"mc",s:2,d:3,tag:"SHIFTS",q:"The price of resources DECREASES, so producers increase output. What happens?",
+ c:["Price FALLS and quantity RISES — a positive shift in supply","Price rises and quantity falls","Both rise","Both fall"],a:0,
+ why:"The higher supply causes price to fall; at the new lower price consumers respond by purchasing more."},
+{t:"mc",s:2,d:3,tag:"SHIFTS",q:"Consumer income DECREASES. What happens to equilibrium?",
+ c:["Price FALLS and quantity FALLS — a negative shift in demand","Price falls, quantity rises","Price rises, quantity falls","Both rise"],a:0,
+ why:"The lower demand causes price to fall; at the new lower price producers bring less to market."},
+{t:"order",s:2,d:3,tag:"SHIFTS",q:"A positive shift in DEMAND. Put the mechanism in order:",
+ items:["Demand curve shifts to the RIGHT","PRICE rises from P0 to P1","PRODUCERS respond by bringing more to market","QUANTITY rises from Q0 to Q1"],
+ why:"Memory hook: demand shifts → price and quantity move the <b>same</b> direction; supply shifts → they move <b>opposite</b> directions."},
+{t:"mc",s:2,d:2,tag:"MKT-FAILURE",q:"\"MARKET FAILURE\" means…",
+ c:["The market no longer organizes production efficiently or allocates goods to the public","A market has closed its doors","A firm has gone bankrupt","Prices have collapsed"],a:0,
+ why:"The term is used only when the level of inefficiency is <b>particularly severe</b>. Government intervention usually results, justified as necessary for the <b>public good</b>."},
+{t:"mc",s:2,d:2,tag:"MKT-FAILURE",q:"What are the four types of market failure?",
+ c:["Asymmetric information, public goods, monopolies, externalities","Shortages, excesses, inflation, deflation","Taxes, subsidies, tariffs, quotas","Recession, depression, boom, trough"],a:0,
+ why:"In most such cases government intervention follows."},
+{t:"mc",s:2,d:2,tag:"MKT-FAILURE",q:"An investor knows of an impending negative event at a company while the buyer has no access to that information. This is…",
+ c:["ASYMMETRIC INFORMATION","A monopoly","An externality","A public good"],a:0,
+ why:"Generally the <b>seller</b> knows more — but not always: the beneficiaries of a deceased person's will may not know the local market, while a nearby buyer does."},
+{t:"mc",s:2,d:3,tag:"MKT-FAILURE",q:"<b>PUBLIC GOODS</b> are not provided by the marketplace because of which two properties?",
+ c:["Non-excludability and non-rivalry","Scarcity and rationing","Monopoly and externality","High cost and low demand"],a:0,
+ why:"Non-excludability = you can't provide it to one party without making it available to others. Non-rivalry = one party's consumption doesn't prevent others enjoying it. Examples: <b>national defence and public health</b>, funded by taxes."},
+{t:"mc",s:2,d:2,tag:"MKT-FAILURE",q:"A large manufacturer pollutes a waterway. Which market failure is that?",
+ c:["An EXTERNALITY — the market does not consider the effect of an activity on others","Asymmetric information","A monopoly","A public good"],a:0,
+ why:"Governments, or in some cases activist groups, take legal action to force the company to cease the practice and/or pay damages."},
+{t:"mc",s:2,d:2,tag:"MKT-FAILURE",q:"A buyer or seller able to exert extreme pressure over price is…",
+ c:["A MONOPOLY — an abuse of market power, combated by anti-trust legislation","An externality","A public good","Asymmetric information"],a:0,
+ why:"If protecting endangered species' habitat were left to the private market, very few protecting activities would take place — that one is a <b>public good</b> problem."},
+
+/* ============ STAGE 3 — MEASURING THE ECONOMY ============ */
+{t:"mc",s:3,d:1,tag:"CIRCULAR-FLOW",q:"<b>MACROECONOMICS</b> is the study of…",
+ c:["The performance, structure and behaviour of an economy as a whole — the inter-relationship of income, inflation, growth and exchange rates","Individual firms and consumers","Government budgets only","International trade only"],a:0,
+ why:"Macroeconomists study aggregated indicators such as <b>GDP, unemployment rates and price indices</b>."},
+{t:"mc",s:3,d:2,tag:"CIRCULAR-FLOW",q:"What are macroeconomics' two areas of concentration?",
+ c:["Short-run fluctuations in national income (the business cycle), and the determinants of long-run economic growth","Inflation and unemployment","Monetary and fiscal policy","Imports and exports"],a:0,
+ why:"Governments and large corporations use macroeconomic models to evaluate future trends and develop economic policies and financial decisions."},
+{t:"mc",s:3,d:2,tag:"CIRCULAR-FLOW",q:"In the circular flow, what does the INNER loop carry?",
+ c:["Labour from households to firms, and goods and services from firms to households","Expenditure and income","Taxes and transfers","Imports and exports"],a:0,
+ why:"The OUTER loop carries <b>expenditure</b> from households to firms and <b>income</b> from firms to households, as wages and as profit retained by owners who are also households."},
+{t:"mc",s:3,d:3,tag:"CIRCULAR-FLOW",q:"What fundamental relationship does the outer loop establish?",
+ c:["Economic activity can be measured as either total EXPENDITURE on all goods and services OR total INCOME from producing them","Expenditure always exceeds income","Income is taxed before it is spent","Firms retain most of the value created"],a:0,
+ why:"Two ways of measuring the same dollar value of economic activity."},
+{t:"mc",s:3,d:2,tag:"GDP",q:"<b>GDP</b> is the market value, in current dollars, of all goods and services produced…",
+ c:["WITHIN A COUNTRY in one year","By citizens of a country in one year","By domestic firms anywhere in one year","Net of imports in one year"],a:0,
+ why:"GDP is about <b>GEOGRAPHY (where)</b>; GNP is about <b>NATIONALITY (who)</b>. Of the two, <b>GDP is the most commonly used measure</b>."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"Income earned IN CANADA by a Hong-Kong resident temporarily working here is…",
+ c:["Counted in Canadian GDP","Counted in Canadian GNP","Counted in both","Counted in neither"],a:0,
+ why:"GDP includes the economic activity of <b>foreigners in Canada</b> and excludes foreign activity of Canadians. GNP does the reverse."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"Income earned IN THE US by a Canadian resident is…",
+ c:["Excluded from Canadian GDP but INCLUDED in Canadian GNP","Included in Canadian GDP","Excluded from both","Included in both"],a:0,
+ why:"Canadian GDP measures income generated by <b>production within Canada</b>; Canadian GNP measures income generated by <b>Canadian production at home and abroad</b>."},
+{t:"mc",s:3,d:2,tag:"GDP",q:"Income earned IN CANADA by a Japanese resident is…",
+ c:["NOT counted in Canadian GNP","Counted in Canadian GNP","Counted in neither GDP nor GNP","Counted only if remitted home"],a:0,
+ why:"GNP excludes the value of all goods and services produced by foreigners in Canada — but Canadian GDP does count it."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"Why can GDP give an inaccurate reading of economic well-being?",
+ c:["Because it measures current value, GDP can rise from increases in PRICE and/or QUANTITY","Because it excludes services","Because it is measured annually","Because it excludes government"],a:0,
+ why:"In the apple economy, if the price of apples rises it cannot be claimed households are better off — yet GDP would rise, signalling growth."},
+{t:"mc",s:3,d:2,tag:"GDP",q:"<b>REAL GDP</b>…",
+ c:["Neutralizes the role of price changes to emphasize output, using a specified BASE YEAR","Values output at current prices","Excludes government spending","Adjusts for population"],a:0,
+ why:"Real GDP = <b>BASE-YEAR price × CURRENT-YEAR quantity</b>. Nominal GDP values goods and services at <b>current</b> prices, with no adjustment for inflation."},
+{t:"num",s:3,d:3,tag:"GDP",q:"Apple economy, base year 1990 (price $0.10). In 1999 the price is $0.13 and quantity is 150. What is <b>NOMINAL</b> GDP?",unit:"$",a:19.50,tol:0.05,
+ why:"150 × $0.13 = <b>$19.50</b> — current price × current quantity."},
+{t:"num",s:3,d:3,tag:"GDP",q:"Same economy. What is <b>REAL</b> GDP for 1999, in 1990 dollars?",unit:"$",a:15.00,tol:0.05,
+ why:"150 × the 1990 price of $0.10 = <b>$15.00</b>. Base-year price × current-year quantity. (The 1990 base itself: 100 × $0.10 = $10.00.)"},
+{t:"num",s:3,d:2,tag:"GDP",q:"Same apple economy, base year price $0.10. If 1999 quantity were <b>200</b>, what would REAL GDP be?",unit:"$",a:20.00,tol:0.05,
+ why:"200 × $0.10 = <b>$20.00</b>. Real GDP moves only with quantity, which is the entire point of using a base year."},
+{t:"mc",s:3,d:1,tag:"GDP",q:"What is the GDP formula?",
+ c:["GDP = C + I + G + X &ndash; M","GDP = C + I + G + M &ndash; X","GDP = C + S + G + X","GDP = C × I × G"],a:0,
+ why:"Consumption + Investment + Government spending + Exports &ndash; Imports."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"In the GDP formula, what does <b>I</b> (investment) mean?",
+ c:["Expenditures by BUSINESSES on capital goods such as new equipment and machinery","Buying stocks and bonds","Household savings","Government infrastructure"],a:0,
+ why:"When economists talk about investment they do <b>not</b> mean buying stocks and bonds — <b>that would be called savings</b>."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"Government spending (<b>G</b>) includes military equipment, roads and highways — but EXCLUDES…",
+ c:["TRANSFERS to individuals or businesses","Provincial spending","Municipal spending","Public sector wages"],a:0,
+ why:"G is public consumption by <b>all levels</b> of government, transfers excluded."},
+{t:"mc",s:3,d:2,tag:"GDP",q:"<b>NET IMPORTS</b>, also called the MERCHANDISE TRADE BALANCE, is defined as…",
+ c:["Exports LESS imports","Imports less exports","Imports plus exports","Exports as a share of GDP"],a:0,
+ why:"X = goods and services foreigners purchase; M = goods and services we purchase from foreigners."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"CONSUMPTION depends on disposable income. So if TAXES ARE REDUCED…",
+ c:["Disposable income increases and so does private consumption","Consumption falls as saving rises","Consumption is unchanged","Investment falls"],a:0,
+ why:"The second relationship: <b>INVESTMENT depends on interest rates</b> — investment will increase if the cost of borrowing declines."},
+{t:"mc",s:3,d:3,tag:"GDP",q:"Everything else being equal, investment will INCREASE if…",
+ c:["Interest rates DECLINE, making borrowing cheaper","Interest rates rise","Taxes rise","Imports rise"],a:0,
+ why:"These two relationships are exactly what monetary and fiscal policy exploit."},
+{t:"mc",s:3,d:2,tag:"GDP",q:"GDP is also referred to as…",
+ c:["Annual economic OUTPUT","National wealth","Aggregate savings","Net worth of the nation"],a:0,
+ why:"Nominal means value in current dollars with <b>no adjustment made to account for inflation</b>."},
+
+/* ============ STAGE 4 — CYCLES, INDICATORS, INFLATION, LABOUR ============ */
+{t:"mc",s:4,d:2,tag:"CYCLES",q:"<b>BUSINESS CYCLES</b> refer to…",
+ c:["The short-term fluctuations of national income over time","Regular ten-year economic waves","Seasonal patterns in retail","Long-run growth trends"],a:0,
+ why:"The caveat: the word <i>cycle</i> suggests a regular, predictable pattern, but fluctuations in real output are <b>irregular and unpredictable</b> — which makes each business cycle unique."},
+{t:"mc",s:4,d:2,tag:"CYCLES",q:"An <b>EXPANSION</b> is an upturn lasting…",
+ c:["At least TWO consecutive quarters","One quarter","Six months minimum by statute","A full year"],a:0,
+ why:"A year has four quarters of three months each. A <b>RECESSION</b> is a downturn lasting longer than two consecutive quarters; a <b>DEPRESSION</b> is a deep recession; a <b>BOOM</b> is a very high peak."},
+{t:"order",s:4,d:3,tag:"CYCLES",q:"Put the phases of the business cycle in order, starting from expansion:",
+ items:["EXPANSION","PEAK","CONTRACTION","TROUGH","RECOVERY"],
+ why:"When the economy rises above its previous peak, <b>another expansion has begun</b>."},
+{t:"mc",s:4,d:3,tag:"CYCLES",q:"Inflation is stable, corporate profits rise, start-ups outnumber bankruptcies, markets rise, unemployment steady or falling. Which phase?",
+ c:["EXPANSION","Peak","Contraction","Trough"],a:0,
+ why:"Businesses adjust inventories and invest in new capacity to meet increased demand and avoid shortages."},
+{t:"mc",s:4,d:3,tag:"CYCLES",q:"Demand outstrips capacity, labour and product shortages push wages and prices up, interest rates rise and bond prices fall. Which phase?",
+ c:["PEAK","Expansion","Recovery","Trough"],a:0,
+ why:"That dampens business investment and reduces sales of houses and other big-ticket goods; business sales decline, unwanted inventory accumulates, profits fall and <b>stock prices generally begin to fall</b>."},
+{t:"mc",s:4,d:3,tag:"CYCLES",q:"Firms cut production, postpone investment, curtail hiring and lay off staff; failures outnumber start-ups; consumers spend less and save more. Which phase?",
+ c:["CONTRACTION","Peak","Trough","Recovery"],a:0,
+ why:"Consumers spending less <b>further cuts into sales and further fuels the contraction</b>. If it lasts at least two consecutive quarters, the economy is in <b>recession</b>."},
+{t:"mc",s:4,d:3,tag:"CYCLES",q:"Interest rates fall triggering a bond rally, inflation falls, postponed purchases resume and stock prices rally. Which phase?",
+ c:["TROUGH","Contraction","Expansion","Peak"],a:0,
+ why:"Falling demand and excess capacity curtail the ability of firms to raise prices and workers to demand higher salaries — the growth cycle reaches its lowest point."},
+{t:"mc",s:4,d:3,tag:"CYCLES",q:"GDP returns to its previous peak, buying of interest-sensitive items resumes, but firms are still too cautious to hire back significant numbers. Which phase?",
+ c:["RECOVERY","Expansion","Trough","Peak"],a:0,
+ why:"The period of widespread layoffs is over, but firms are not yet ready for significant new investment; unemployment remains high, wage pressures are restrained and inflation may decline further."},
+{t:"mc",s:4,d:2,tag:"INDICATORS",q:"<b>LEADING</b> indicators…",
+ c:["Peak and trough BEFORE the overall economy, anticipating emerging trends","Move with the economy","Change after the economy changes","Are published quarterly"],a:0,
+ why:"<b>COINCIDENT</b> indicators change at approximately the same time and direction as the whole economy; <b>LAGGING</b> indicators change after it, and are important because they <b>confirm</b> that a business cycle pattern is occurring."},
+{t:"mc",s:4,d:3,tag:"INDICATORS",q:"Which of these is a LEADING indicator?",
+ c:["Housing starts","Retail sales","Unemployment","Labour costs"],a:0,
+ why:"The six leading indicators: housing starts, manufacturers' new orders, commodity prices, average hours worked per week, stock prices, and the money supply."},
+{t:"mc",s:4,d:3,tag:"INDICATORS",q:"Which of these is a COINCIDENT indicator?",
+ c:["GDP","Stock prices","Inflation rate","Business loans"],a:0,
+ why:"The four coincident indicators: personal income, GDP, industrial production, and retail sales. When personal income rises, people have more to spend, encouraging increases in the other three."},
+{t:"mc",s:4,d:3,tag:"INDICATORS",q:"Which of these is a LAGGING indicator?",
+ c:["Unemployment","Housing starts","Money supply","Commodity prices"],a:0,
+ why:"<b>Unemployment is a key lagging indicator</b> — rates move in response to other factors. The five: unemployment, inflation rate, labour costs, private sector plant and equipment spending, and business loans and interest on such borrowing."},
+{t:"mc",s:4,d:2,tag:"INDICATORS",q:"Why does the MONEY SUPPLY lead?",
+ c:["It represents available liquidity and therefore has an impact on interest rates","It is published first","It is set by government","It measures spending directly"],a:0,
+ why:"Housing starts lead because a permit means supplies bought, workers hired, then appliances and furnishings purchased. Average hours worked leads because hours rise or fall with output, indicating changes in employment."},
+{t:"mc",s:4,d:3,tag:"MKT-LINKS",q:"What is the relationship between stock markets and business cycles?",
+ c:["Stock markets LEAD business cycles — a market downturn likely signals an economic downturn to come","Stock markets lag the cycle","They move exactly together","There is no reliable relationship"],a:0,
+ why:"The opposite is also true. <b>Bond yields</b>, by contrast, are more <b>coincidental</b> indicators."},
+{t:"mc",s:4,d:3,tag:"MKT-LINKS",q:"What happens to the SPREAD between high and low quality bonds during a RECESSION?",
+ c:["Spreads WIDEN as investors move to higher quality bonds — a flight to quality","Spreads narrow","Spreads are unchanged","Spreads invert"],a:0,
+ why:"During <b>peaks</b> the spread NARROWS, since the relative risk between categories is perceived to be minimal."},
+{t:"mc",s:4,d:1,tag:"INFLATION",q:"<b>INFLATION</b> is…",
+ c:["The general rise in price of a typical basket of goods and services of consumers","Any increase in the money supply","A rise in wages","A fall in the currency"],a:0,
+ why:"<b>DEFLATION</b> is the opposite — a general fall in the price of that basket. The <b>inflation rate</b> is the percentage change in the average level of prices over a given period."},
+{t:"num",s:4,d:2,tag:"INFLATION",q:"How many typical consumer goods and services does the <b>CPI</b> track?",unit:"items",a:600,tol:1,
+ why:"<b>600</b>, each weighted to reflect typical consumer spending, to measure changes in the purchasing power of money."},
+{t:"num",s:4,d:2,tag:"INFLATION",q:"Since what YEAR has the Bank of Canada committed to specific inflation-control targets?",unit:"year",a:1991,tol:0.5,
+ why:"Since <b>1991</b>. Over the last few years the target range has extended from <b>1% to 3%</b>, measured by the year-over-year rate of increase in the CPI."},
+{t:"mc",s:4,d:2,tag:"INFLATION",q:"The Bank of Canada's inflation target RANGE is…",
+ c:["1% to 3%","0% to 2%","2% to 4%","1% to 5%"],a:0,
+ why:"Measured by the year-over-year rate of increase in the CPI."},
+{t:"mc",s:4,d:3,tag:"INFLATION",q:"What is the composition of the NOMINAL INTEREST RATE?",
+ c:["The REAL rate of interest (bank rate) PLUS EXPECTED INFLATION","The real rate less inflation","Actual inflation plus a risk premium","The bank rate alone"],a:0,
+ why:"<b>Unexpected</b> inflation is the amount that surprises market participants — expected inflation less actual inflation — and it creates uncertainty, especially when actual turns out higher than expected."},
+{t:"mc",s:4,d:2,tag:"INFLATION",q:"Which is one of the three CAUSES of inflation?",
+ c:["Extraordinarily high growth in the economy, where demand exceeds supply","Rising interest rates","A depreciating currency","High unemployment"],a:0,
+ why:"The three causes: increases in salaries and wages; extraordinarily high growth; and a high employment rate — more people working, earning incomes that will be spent."},
+{t:"mc",s:4,d:3,tag:"INFLATION",q:"Which is one of the three COSTS of inflation?",
+ c:["The domestic currency depreciates","Unemployment falls to zero","Bond prices rise","Real GDP rises permanently"],a:0,
+ why:"The three costs: nominal interest rates rise, making borrowing more expensive; the purchasing power of consumers on fixed incomes declines; and the domestic currency depreciates. <b>Generally, inflationary economies will have depreciating currencies.</b>"},
+{t:"mc",s:4,d:3,tag:"INFLATION",q:"If inflation is HIGHER in Canada than in the US, what happens to the Canadian dollar?",
+ c:["It DEPRECIATES — Americans find Canadian goods relatively expensive, so the US dollar appreciates","It appreciates","It is unaffected","It is pegged automatically"],a:0,
+ why:"They will not purchase Canadian goods unless compensated for the increase in cost."},
+{t:"mc",s:4,d:2,tag:"INFLATION",q:"<b>STAGFLATION</b> is…",
+ c:["High inflation AND high unemployment at the same time","Zero growth with zero inflation","Falling prices with rising output","A prolonged depression"],a:0,
+ why:"It is the awkward case for the Phillips curve, which says inflation and unemployment are normally inversely related."},
+{t:"mc",s:4,d:2,tag:"LABOUR",q:"Statistics Canada defines the WORKING AGE POPULATION as…",
+ c:["People over age 15","People aged 18 to 65","People aged 16 to 64","All adults"],a:0,
+ why:"It splits into three groups: unable to work (institutionalized), not working by choice, and <b>the labour force</b>."},
+{t:"mc",s:4,d:3,tag:"LABOUR",q:"Which group are DISCOURAGED WORKERS in?",
+ c:["NOT working by choice — they are NOT in the labour force","The labour force","Unable to work","Counted as unemployed"],a:0,
+ why:"That group also includes full-time students, homemakers and retirees. The <b>labour force</b> is people working, plus people not working <b>but actively looking for work</b>."},
+{t:"mc",s:4,d:2,tag:"LABOUR",q:"The <b>PARTICIPATION RATE</b> represents…",
+ c:["The share of the working-age population that is in the labour force","The share of the labour force that is unemployed","The share of adults employed full time","The employment growth rate"],a:0,
+ why:"It shows the <b>willingness of people to enter the work force and take jobs</b>. The <b>unemployment rate</b> is the share of the labour force unemployed and actively looking."},
+{t:"mc",s:4,d:3,tag:"LABOUR",q:"The unemployment rate may RISE when…",
+ c:["Employment falls, OR the number of people looking for work rises, or both at once","Only when employment falls","Only when the population grows","Only during a recession"],a:0,
+ why:"Which is why a recovering economy can show a rising unemployment rate as discouraged workers re-enter the labour force."},
+{t:"mc",s:4,d:2,tag:"LABOUR",q:"The <b>PHILLIPS CURVE</b> says…",
+ c:["Inflation and unemployment are INVERSELY related","Inflation and unemployment rise together","Unemployment drives GDP one-for-one","Inflation has no real effects"],a:0,
+ why:"So as policy makers fight inflation by, for example, raising interest rates, the result will be <b>higher unemployment</b>."},
+{t:"num",s:4,d:3,tag:"LABOUR",q:"<b>OKUN'S LAW</b>: a 1% drop in unemployment results in what percentage increase in national income?",unit:"%",a:2.5,tol:0.05,
+ why:"<b>2.5%</b>. It asserts there is a real cost to unemployment — overall economic well-being suffers when unemployment is high."},
+{t:"mc",s:4,d:2,tag:"LABOUR",q:"Farmhands hired to pick fruit only from June to October face which type of unemployment in winter?",
+ c:["SEASONAL","Cyclical","Frictional","Structural"],a:0,
+ why:"Some industries operate only during part of the year, making it a regular occurrence."},
+{t:"mc",s:4,d:2,tag:"LABOUR",q:"Unemployment tied directly to fluctuations in the business cycle is…",
+ c:["CYCLICAL","Seasonal","Frictional","Structural"],a:0,
+ why:"It rises when the economy weakens and workers are laid off in response to lower sales, and drops when the economy strengthens again."},
+{t:"mc",s:4,d:3,tag:"LABOUR",q:"Normal labour turnover — people entering and leaving the work force, finishing school, quitting, being laid off or fired — is…",
+ c:["FRICTIONAL, and it is a normal part of a healthy economy","Structural","Cyclical","Seasonal"],a:0,
+ why:"It declines when jobs are matched more efficiently to potential workers."},
+{t:"mc",s:4,d:3,tag:"LABOUR",q:"Workers lacking the necessary skills, not living where jobs are, or declining the market wage face…",
+ c:["STRUCTURAL unemployment, which lasts LONGER than frictional","Frictional unemployment","Cyclical unemployment","Seasonal unemployment"],a:0,
+ why:"It is closely tied to changes in technology, international competition and government policy, and lasts longer because workers must <b>retrain or possibly relocate</b>."},
+{t:"mc",s:4,d:3,tag:"LABOUR",q:"Why can the unemployment rate NEVER fall to zero?",
+ c:["Frictional and structural factors will always exist — the minimum is the NATURAL unemployment rate","Statistical measurement error","Government policy prevents it","Immigration continually adds workers"],a:0,
+ why:"At that level the economy is thought to be operating close to full potential, with all resources including labour fully employed. Further employment growth then comes either from <b>increased wages that fuel inflation</b>, or fundamental changes removing impediments to job creation."},
+
+/* ============ STAGE 5 — MONETARY & FISCAL POLICY, AD/AS, BOP ============ */
+{t:"mc",s:5,d:1,tag:"MONETARY",q:"<b>MONETARY POLICY</b> is a course of action put in place by…",
+ c:["THE BANK OF CANADA, to influence the economy through changes in the money supply and available credit","The federal government","Parliament","The chartered banks"],a:0,
+ why:"<b>FISCAL POLICY</b> is a deliberate action by the <b>government</b> (federal or provincial) through changes in spending or taxation. The Bank administers monetary policy <b>independently</b>, without day-to-day intervention by government."},
+{t:"mc",s:5,d:2,tag:"MONETARY",q:"The <b>BANK RATE</b> is…",
+ c:["The rate of interest at which the CHARTERED BANKS can borrow from the Bank of Canada","The rate banks charge their best customers","The overnight market rate","The yield on treasury bills"],a:0,
+ why:"When the Bank changes it, it signals to the market its intention about future interest rates and which type of monetary policy it is following."},
+{t:"mc",s:5,d:3,tag:"MONETARY",q:"The Bank of Canada INCREASES the bank rate. What follows?",
+ c:["Borrowing becomes more expensive, saving more attractive, money supply DECREASES — a CONTRACTIONARY policy","Money supply increases — expansionary","No effect on the money supply","Bond prices rise"],a:0,
+ why:"Nominal interest rates are based on the bank rate. Fewer loans are made and more money is tied up in investments. If the bank rate goes down, the opposite occurs — <b>expansionary</b>."},
+{t:"mc",s:5,d:2,tag:"MONETARY",q:"<b>Cash management</b>, or OPEN-MARKET OPERATIONS, is…",
+ c:["A central bank controlling the money supply by buying or selling bonds, typically TREASURY BILLS","Setting reserve requirements","Lending directly to businesses","Managing the government's chequing account"],a:0,
+ why:"Like the bank rate, the purchase or sale of bonds <b>signals the Bank's intention</b> about future interest rates and its policy stance."},
+{t:"mc",s:5,d:3,tag:"MONETARY",q:"The Bank of Canada BUYS bonds in the market. What happens?",
+ c:["Bond prices are bid UP, interest rates FALL, money supply INCREASES — EXPANSIONARY","Bond prices fall and rates rise","Money supply decreases","Nothing until the bank rate changes"],a:0,
+ why:"Remember the <b>inverse relationship between bond prices and interest rates</b>. At lower rates borrowing is cheaper and saving less attractive, so more money is lent out. If the Bank SELLS bonds, the money supply <b>decreases</b> — contractionary."},
+{t:"mc",s:5,d:3,tag:"MONETARY",q:"Which pair correctly matches action to policy type?",
+ c:["Bank SELLS bonds → money supply decreases → CONTRACTIONARY","Bank sells bonds → expansionary","Bank rate up → expansionary","Bank buys bonds → contractionary"],a:0,
+ why:"Bank rate UP = contractionary; bank rate DOWN = expansionary; Bank BUYS bonds = expansionary; Bank SELLS bonds = contractionary."},
+{t:"mc",s:5,d:2,tag:"FISCAL",q:"Growth is rising too quickly and the government wants to cool the economy. The CONTRACTIONARY fiscal action is…",
+ c:["DECREASE spending or INCREASE taxes","Increase spending or decrease taxes","Raise the bank rate","Sell bonds"],a:0,
+ why:"Expansionary fiscal policy is the reverse: increase spending or decrease taxes. Interest rates and bond operations are <b>monetary</b> tools, not fiscal ones."},
+{t:"mc",s:5,d:3,tag:"FISCAL",q:"For UNEMPLOYMENT AND RECESSION, which combination is correct?",
+ c:["Fiscal: increase spending, decrease taxes. Monetary: increase money supply, decrease interest rates","Fiscal: decrease spending, increase taxes. Monetary: decrease money supply","Fiscal: increase taxes. Monetary: raise rates","Fiscal: decrease spending. Monetary: increase rates"],a:0,
+ why:"For HIGH INFLATION it reverses: fiscal decreases spending and increases taxes; monetary decreases the money supply and increases interest rates."},
+{t:"mc",s:5,d:3,tag:"FISCAL",q:"Historically, before the Great Depression, the government's approach to the economy was…",
+ c:["LAISSEZ-FAIRE — fiscal policy is a relatively new concept and practice","Heavily interventionist","Focused on monetary control","Based on trade tariffs only"],a:0,
+ why:"Following the <b>Second World War</b> it was deemed more prudent for government to take a proactive role, to better manage unemployment, inflation and even the business cycle."},
+{t:"mc",s:5,d:3,tag:"FISCAL",q:"Which is an ADVANTAGE of MONETARY policy?",
+ c:["The effect may be more immediate, it can be reversed, and it is independent of political considerations","It can be targeted to specific regions","Tax cuts are popular","Consumers easily experience the impact"],a:0,
+ why:"Those last three are advantages of <b>fiscal</b> policy. Memory hook: monetary = fast, reversible, apolitical, but blunt; fiscal = targeted, popular, visible, but sticky and political."},
+{t:"mc",s:5,d:3,tag:"FISCAL",q:"Which is a DISADVANTAGE of MONETARY policy?",
+ c:["If interest rates are already very low, lowering them further may have no impact","Tax increases are unpopular","Projects are hard to stop once started","It raises government debt levels"],a:0,
+ why:"Also: it is difficult to target a specific region, and lowering rates may not help if consumers lack the confidence to spend. The other three options are <b>fiscal</b> disadvantages."},
+{t:"mc",s:5,d:2,tag:"AD-AS",q:"<b>AGGREGATE DEMAND</b> is the relationship between…",
+ c:["All goods and services demanded by every consumer in the economy (real GDP) and the PRICE LEVEL","One good's demand and its price","Consumption and income","Money supply and interest rates"],a:0,
+ why:"It is typically <b>downward sloping</b> and normally rises as the price level falls. It differs from simple demand, which concerns an <b>individual</b> good."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"What would a VERTICAL aggregate supply curve signify?",
+ c:["An economy close to FULL CAPACITY — near its limit on goods and services it can produce","A fixed price level","Zero inflation","A recession"],a:0,
+ why:"Normally AS is <b>upward sloping</b>: higher prices result in an expansion of supply."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"An EXPANSIONARY monetary policy increases the money supply. What is the effect on the AD curve and the economy?",
+ c:["AD shifts RIGHT: prices RISE (inflation) and real GDP RISES","AD shifts left: prices and GDP fall","AS shifts right: prices fall","No shift, only a movement along AD"],a:0,
+ why:"Too much money will be \"chasing\" too few goods and services, so prices rise; real GDP also rises as <b>lower interest rates lead to higher investment demand</b>."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"The government INCREASES spending. What happens?",
+ c:["The same as expansionary monetary policy — AD shifts right, prices rise and real GDP rises","AD shifts left","AS shifts left","Prices fall and GDP rises"],a:0,
+ why:"Public consumption increases, causing prices for goods and services to rise; producers meet the increased demand and real GDP rises."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"A CONTRACTIONARY policy — monetary or fiscal — produces what net effect?",
+ c:["Prices FALL (deflation) and real GDP FALLS","Prices fall and GDP rises","Prices rise and GDP falls","No net effect"],a:0,
+ why:"A negative shift in AD moves the curve left, and equilibrium moves from C to D with both price level and real GDP falling."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"Advances in technology increase productivity. What happens to price level and real GDP?",
+ c:["A POSITIVE shift in AS: prices FALL and output RISES","A negative shift in AS: prices rise","AD shifts right","Both prices and output fall"],a:0,
+ why:"A <b>negative</b> AS shift — for example a sharp rise in world oil prices — does the reverse: prices rise and real GDP falls."},
+{t:"mc",s:5,d:3,tag:"AD-AS",q:"An economy sees real GDP fall while world oil prices rise sharply. Which shift is that?",
+ c:["A NEGATIVE shift in aggregate supply — prices rise, real GDP falls","A positive shift in AS","A positive shift in AD","A movement along AD"],a:0,
+ why:"That combination — falling output with rising prices — is why oil shocks are so damaging."},
+{t:"mc",s:5,d:2,tag:"AD-AS",q:"Which is one of the eight causes of shifts in AGGREGATE SUPPLY?",
+ c:["A change in factor productivity","A change in the money supply","A change in consumer income","A change in government transfers"],a:0,
+ why:"The eight: size of the labour force, quality of the labour force, factor productivity, producer taxes, subsidies, inflation, unit costs (mostly wages), and capital stock."},
+{t:"mc",s:5,d:2,tag:"BOP",q:"The balance of payments is made up of which THREE accounts?",
+ c:["Current, Capital, and Official Settlements","Current, Trade, and Reserve","Trade, Capital, and Fiscal","Current, Capital, and Monetary"],a:0,
+ why:"Each records something different — and the <b>sum total of all three accounts equals zero</b>."},
+{t:"mc",s:5,d:3,tag:"BOP",q:"The <b>CURRENT ACCOUNT</b> records…",
+ c:["Net trade in goods and services, net interest payments abroad, and net transfers between countries","Long-term flows for acquiring assets","Changes in official foreign reserves","Government borrowing only"],a:0,
+ why:"Net transfers include foreign aid, gifts and other payments that do <b>not</b> involve an exchange of goods or services. It is the part of the accounts listing all <b>short-term</b> flows."},
+{t:"mc",s:5,d:3,tag:"BOP",q:"In the Current Account, which of these is a DEBIT?",
+ c:["Payments of interest to foreign investors holding Canadian T-bills","Exports","Spending by foreign investors in Canada","Foreign aid received"],a:0,
+ why:"Exports are a <b>credit</b>; imports are a <b>debit</b>; spending by foreign investors in Canada is a <b>credit</b>."},
+{t:"mc",s:5,d:2,tag:"BOP",q:"Which are the four components of the Current Account?",
+ c:["Goods, Income, Services, Current Transfers","Exports, Imports, Aid, Reserves","Trade, Capital, Income, Gold","Goods, Capital, Reserves, Transfers"],a:0,
+ why:"Goods must have a <b>change in ownership</b> from a resident of the local country to one in a foreign country. Current transfers are unilateral: workers' fees, donations, aids and grants."},
+{t:"mc",s:5,d:3,tag:"BOP",q:"The <b>CAPITAL ACCOUNT</b> records…",
+ c:["Long-term flows financing the acquisition of assets — foreign investment in Canada LESS Canadian investment abroad","Short-term trade flows","Gold and US dollar reserves","Government spending abroad"],a:0,
+ why:"Assets such as stocks, bonds and real estate."},
+{t:"mc",s:5,d:3,tag:"BOP",q:"The <b>OFFICIAL SETTLEMENTS ACCOUNT</b> records the change in official foreign reserves — mainly…",
+ c:["Gold holdings and U.S. dollars","Treasury bills and bonds","Bank deposits abroad","Foreign real estate"],a:0,
+ why:"It serves to <b>finance any deficits</b> in the current or capital account, so that the sum total of all three accounts equals zero."},
+{t:"mc",s:5,d:2,tag:"BOP",q:"The <b>BALANCE OF TRADE</b> is…",
+ c:["The difference between the value of exports and the value of imports","All flows between residents and foreigners","Long-term capital flows","The change in reserves"],a:0,
+ why:"The <b>balance of payments</b> is the broader record of all transactions between a country's residents and those of all foreign countries — typically trade flows and capital flows."},
+{t:"mc",s:5,d:3,tag:"MKT-LINKS",q:"Expansionary policies — both fiscal and monetary — are inflationary. What follows?",
+ c:["Increased inflationary expectations cause nominal interest rates to RISE and bond prices to FALL","Interest rates fall and bond prices rise","Bond prices are unaffected","Only stock prices react"],a:0,
+ why:"And when nominal rates rise, investment demand falls, so corporate earnings may fall, leading to <b>lower stock prices</b>."},
+{t:"mc",s:5,d:3,tag:"MKT-LINKS",q:"Higher inflation leads to a lower real value of wealth. What is the chain?",
+ c:["Consumption demand falls → lower real GDP and higher unemployment → lower corporate earnings → lower stock prices","Consumption rises → GDP rises","Unemployment falls → wages rise","Bond prices rise → stocks rise"],a:0,
+ why:"This is the third of the six closing linkages between the economy and financial markets."},
+{t:"mc",s:5,d:3,tag:"MKT-LINKS",q:"Why is a booming stock market GOOD for the economy?",
+ c:["Firms experience a LOWER COST OF CAPITAL, so investment demand increases, leading to higher real GDP and lower unemployment","It increases tax revenue","It raises consumer savings","It strengthens the currency"],a:0,
+ why:"The cost of capital is lower when stock prices increase."},
+{t:"mc",s:5,d:3,tag:"MKT-LINKS",q:"Different sectors reach the peak of their business cycles at different times. What follows for a portfolio?",
+ c:["Diversification ACROSS SECTORS can be beneficial","Sector timing is unnecessary","All sectors should be equally weighted at all times","Only defensive sectors should be held"],a:0,
+ why:"And the stock market is generally believed to be a <b>leading indicator</b> of the economy — the fifth of the six linkages."},
+{t:"mc",s:5,d:2,tag:"FISCAL",q:"<b>DEBT</b> is defined as…",
+ c:["The accumulated annual deficits and surpluses over time","The excess of expenditures over revenues in a year","Government borrowing from the central bank","Total outstanding bonds"],a:0,
+ why:"A <b>deficit</b> is the excess of expenditures over revenues in a period; the excess of revenues over expenditures is a <b>surplus</b>."}
+];
+
+/* ---------- CHAPTER 3 BOSSES ---------- */
+const BOSSES_C3 = {
+1:{name:"THE PRICE MACHINE",art:"P UP =&gt; QD DOWN  //  P UP =&gt; QS UP",intro:"Two laws, two slopes. Get them straight before the market opens.",
+   steps:[
+    {t:"mc",d:2,tag:"DEMAND",q:"BOSS 1/5 — The price of a good rises. What does the law of demand predict?",
+     c:["Quantity demanded FALLS — the demand curve is downward sloping","Quantity demanded rises","Demand shifts left","Nothing without knowing income"],a:0,
+     why:"An INVERSE relationship between price and the amount consumers are willing to purchase."},
+    {t:"mc",d:2,tag:"SUPPLY",q:"BOSS 2/5 — The same price rise. What does the law of supply predict?",
+     c:["Quantity supplied RISES — the supply curve is upward sloping","Quantity supplied falls","Supply shifts left","Supply becomes vertical"],a:0,
+     why:"A DIRECT relationship between price and the amount producers are willing to supply."},
+    {t:"mc",d:3,tag:"DEMAND",q:"BOSS 3/5 — Coffee prices rise and consumers buy tea instead. Which of the three reasons is this?",
+     c:["The SUBSTITUTION EFFECT — the more substitutes exist, the more important price becomes","The income effect","A wealth constraint","A supply shift"],a:0,
+     why:"Cultural preference for coffee will also influence the choice — but the availability of substitutes is why price matters so much."},
+    {t:"mc",d:3,tag:"DEMAND",q:"BOSS 4/5 — Food costs rise 10% for a consumer on a fixed $1,000 weekly income. What is the mechanism?",
+     c:["The INCOME EFFECT — a loss of purchasing power, since the same amount can no longer be bought","The substitution effect alone","A negative shift in demand","A movement along the supply curve"],a:0,
+     why:"$30 more per week. If no acceptable substitutes exist: do with less, cut other expenditures, or borrow from savings."},
+    {t:"mc",d:2,tag:"SCARCITY",q:"BOSS 5/5 — FINISH IT. What mechanism rations scarce goods in a free market?",
+     c:["PRICE","Government quota","First come, first served","Producer discretion"],a:0,
+     why:"Scarcity creates value, and competition arises from scarcity as consumers work to enhance their ability to pay. Stage cleared."}
+   ]},
+2:{name:"THE ORANGE MARKET",art:"QD = 800 - 2P   //   QS = 98P",intro:"Solve the market. Then watch a government break it, twice.",
+   steps:[
+    {t:"num",d:3,tag:"EQUILIBRIUM",q:"BOSS 1/5 — Solve for the equilibrium PRICE, in cents.",unit:"cents",a:8,tol:0.1,
+     why:"800 &ndash; 2P = 98P → 800 = 100P → <b>P = 8</b>."},
+    {t:"num",d:3,tag:"EQUILIBRIUM",q:"BOSS 2/5 — Now the equilibrium QUANTITY.",unit:"oranges",a:784,tol:1,
+     why:"800 &ndash; 16 = 784, and 98 × 8 = 784. Both equations agree."},
+    {t:"num",d:3,tag:"EQUILIBRIUM",q:"BOSS 3/5 — A price ceiling of 6 cents is imposed. How many oranges SHORT is the market?",unit:"oranges",a:200,tol:1,
+     why:"Q<sub>D</sub> = 788, Q<sub>S</sub> = 588 → shortage of 200. A price set BELOW equilibrium creates a shortage — like <b>rent control</b>."},
+    {t:"num",d:3,tag:"EQUILIBRIUM",q:"BOSS 4/5 — Instead the price is propped up at 10 cents. How large is the EXCESS SUPPLY?",unit:"oranges",a:200,tol:1,
+     why:"Q<sub>D</sub> = 780, Q<sub>S</sub> = 980 → excess of 200. A price set ABOVE equilibrium creates oversupply — like <b>farm support systems</b>."},
+    {t:"mc",d:2,tag:"EQUILIBRIUM",q:"BOSS 5/5 — FINISH IT. At the true equilibrium price, what is true?",
+     c:["There is NEITHER a shortage NOR an excess","Producers maximize profit","Consumers pay the lowest possible price","Government revenue is maximized"],a:0,
+     why:"Equilibrium is where a free-market system has properly allocated scarce goods. Boss down."}
+   ]},
+3:{name:"THE OUTPUT AUDIT",art:"GDP = WHERE  //  GNP = WHO",intro:"Count the output. Count it correctly, or the whole national picture is wrong.",
+   steps:[
+    {t:"mc",d:2,tag:"GDP",q:"BOSS 1/5 — A Hong-Kong resident works temporarily in Canada. Where does her income count?",
+     c:["Canadian GDP","Canadian GNP","Both","Neither"],a:0,
+     why:"GDP is geography. It includes foreigners' activity in Canada and excludes Canadians' activity abroad."},
+    {t:"mc",d:3,tag:"GDP",q:"BOSS 2/5 — A Canadian resident earns income in the US. Where does it count?",
+     c:["Canadian GNP only","Canadian GDP only","Both","Neither"],a:0,
+     why:"GNP is nationality — Canadian production at home and abroad."},
+    {t:"num",d:3,tag:"GDP",q:"BOSS 3/5 — Apple economy: 1990 price $0.10, 1999 price $0.13, 1999 quantity 150. NOMINAL 1999 GDP?",unit:"$",a:19.50,tol:0.05,
+     why:"150 × $0.13 = $19.50 — current price, current quantity."},
+    {t:"num",d:3,tag:"GDP",q:"BOSS 4/5 — REAL 1999 GDP in 1990 dollars?",unit:"$",a:15.00,tol:0.05,
+     why:"150 × $0.10 = $15.00 — base-year price, current-year quantity. The gap between $19.50 and $15.00 is pure price."},
+    {t:"mc",d:3,tag:"GDP",q:"BOSS 5/5 — FINISH IT. In GDP = C + I + G + X &ndash; M, what does I exclude?",
+     c:["Buying stocks and bonds — that would be called SAVINGS","New machinery","Business equipment","Capital goods"],a:0,
+     why:"And G excludes <b>transfers</b> to individuals or businesses. Boss down."}
+   ]},
+4:{name:"THE CYCLE",art:"EXPANSION &gt; PEAK &gt; CONTRACTION &gt; TROUGH &gt; RECOVERY",intro:"Five phases, and a stack of indicators pointing in three different directions.",
+   steps:[
+    {t:"order",d:3,tag:"CYCLES",q:"BOSS 1/5 — Order the five phases of the business cycle:",
+     items:["EXPANSION","PEAK","CONTRACTION","TROUGH","RECOVERY"],
+     why:"When the economy rises above its previous peak, another expansion has begun."},
+    {t:"mc",d:3,tag:"CYCLES",q:"BOSS 2/5 — Interest rates rise, bond prices fall, unwanted inventory accumulates and stock prices begin to fall. Which phase?",
+     c:["PEAK","Expansion","Contraction","Recovery"],a:0,
+     why:"Demand has begun to outstrip capacity; labour and product shortages push wages and prices up, and inflation rises accordingly."},
+    {t:"mc",d:3,tag:"CYCLES",q:"BOSS 3/5 — Interest rates fall triggering a bond rally, inflation falls, and stock prices rally. Which phase?",
+     c:["TROUGH","Contraction","Peak","Expansion"],a:0,
+     why:"Consumers who postponed purchases during the contraction are spurred by lower rates and begin to spend."},
+    {t:"mc",d:3,tag:"INDICATORS",q:"BOSS 4/5 — Sort these correctly: unemployment, housing starts, GDP.",
+     c:["Unemployment LAGS, housing starts LEAD, GDP is COINCIDENT","All three lag","All three lead","Unemployment leads, GDP lags"],a:0,
+     why:"Unemployment is a key lagging indicator — rates move in response to other factors. Housing starts anticipate supplies bought and workers hired."},
+    {t:"mc",d:3,tag:"MKT-LINKS",q:"BOSS 5/5 — FINISH IT. What is the relationship between the stock market and the cycle?",
+     c:["Stock markets LEAD business cycles; bond yields are more COINCIDENTAL","Stock markets lag; bond yields lead","Both lag","Both lead equally"],a:0,
+     why:"During peaks bond spreads narrow; during recessions they widen in a <b>flight to quality</b>. Boss down."}
+   ]},
+5:{name:"THE POLICY DESK",art:"BANK RATE / BONDS  //  SPENDING / TAXES",intro:"FINAL BOSS. Unemployment on one side, inflation on the other. Choose your instruments.",
+   steps:[
+    {t:"mc",d:2,tag:"MONETARY",q:"BOSS 1/6 — Who runs monetary policy, and who runs fiscal policy?",
+     c:["The Bank of Canada runs monetary; the government runs fiscal","The government runs both","The Bank runs both","Parliament runs monetary; the Bank runs fiscal"],a:0,
+     why:"And the Bank administers monetary policy <b>independently</b>, without day-to-day intervention by the government."},
+    {t:"mc",d:3,tag:"MONETARY",q:"BOSS 2/6 — The economy is in recession. What is the correct MONETARY response?",
+     c:["Increase the money supply and decrease interest rates","Decrease the money supply and raise rates","Sell bonds","Raise the bank rate"],a:0,
+     why:"Lower the bank rate, or BUY bonds — bidding prices up and rates down — both expansionary."},
+    {t:"mc",d:3,tag:"FISCAL",q:"BOSS 3/6 — Same recession. What is the correct FISCAL response?",
+     c:["Increase government spending and decrease taxes","Decrease spending and increase taxes","Raise interest rates","Sell treasury bills"],a:0,
+     why:"For high inflation both reverse: fiscal cuts spending and raises taxes; monetary shrinks the money supply and raises rates."},
+    {t:"mc",d:3,tag:"AD-AS",q:"BOSS 4/6 — Those expansionary policies shift AD to the right. What happens?",
+     c:["The price level RISES and real GDP RISES","Prices fall and GDP rises","Prices rise and GDP falls","Both fall"],a:0,
+     why:"Too much money chasing too few goods raises prices; lower interest rates raise investment demand, so real GDP rises too."},
+    {t:"mc",d:3,tag:"MKT-LINKS",q:"BOSS 5/6 — What do those inflationary expectations do to bonds?",
+     c:["Nominal interest rates RISE and bond prices FALL","Rates fall and bond prices rise","Bond prices are unaffected","Only short-term bonds react"],a:0,
+     why:"And when nominal rates rise, investment demand falls, corporate earnings may fall, and stock prices follow them down."},
+    {t:"mc",d:3,tag:"FISCAL",q:"BOSS 6/6 — FINISH IT. Why might a government prefer fiscal policy despite its drawbacks?",
+     c:["Spending can be TARGETED to specific regions, tax cuts are popular, and consumers can see the impact","It works faster than monetary policy","It is politically independent","It is easily reversed"],a:0,
+     why:"Its drawbacks: tax increases and spending cuts are unpopular, projects are hard to stop once started, and higher spending raises debt levels. YOU WIN."}
+   ]},
+6:{name:"THE ECONOMIST'S EXAM",art:"MICRO + MACRO, ALL AT ONCE",intro:"Everything, all at once. No mercy.",
+   steps:[
+    {t:"mc",d:3,tag:"SHIFTS",q:"EXAM 1/6 — A good's own price changes. Curve shift, or movement along it?",
+     c:["MOVEMENT ALONG the curve — only OTHER variables shift a curve","A shift of the curve","Both","Neither"],a:0,
+     why:"The most tested distinction in the microeconomics section."},
+    {t:"mc",d:3,tag:"MKT-FAILURE",q:"EXAM 2/6 — National defence cannot be provided to one party without others benefiting, and one person's use doesn't stop another's. Which market failure?",
+     c:["PUBLIC GOODS — non-excludability and non-rivalry","An externality","A monopoly","Asymmetric information"],a:0,
+     why:"Jurisdictions use <b>taxes</b> to generate the funds necessary."},
+    {t:"num",d:3,tag:"LABOUR",q:"EXAM 3/6 — Okun's Law: a 1% drop in unemployment raises national income by what percentage?",unit:"%",a:2.5,tol:0.05,
+     why:"<b>2.5%</b> — there is a real cost to unemployment."},
+    {t:"mc",d:3,tag:"LABOUR",q:"EXAM 4/6 — A worker whose skills no longer match available jobs faces which unemployment, and how does it compare to frictional?",
+     c:["STRUCTURAL — and it lasts LONGER, because workers must retrain or relocate","Frictional — and it is shorter","Cyclical — and it ends with the recession","Seasonal — and it returns annually"],a:0,
+     why:"Frictional and structural factors always exist, which is why the unemployment rate can never fall to zero — the <b>natural unemployment rate</b>."},
+    {t:"mc",d:3,tag:"INFLATION",q:"EXAM 5/6 — Canada's inflation runs above the United States'. What happens to the Canadian dollar?",
+     c:["It DEPRECIATES — inflationary economies have depreciating currencies","It appreciates","It is unaffected","It becomes more stable"],a:0,
+     why:"Americans find Canadian goods relatively expensive and won't buy unless compensated for the increased cost."},
+    {t:"mc",d:3,tag:"BOP",q:"EXAM 6/6 — FINISH IT. What must the three balance of payments accounts do?",
+     c:["SUM TO ZERO — official settlements finances any current or capital account deficit","Each balance individually","Show a surplus","Match the trade balance"],a:0,
+     why:"Current (short-term flows), Capital (long-term asset flows), Official Settlements (gold and US dollar reserves). EXAM CLEARED."}
+   ]}
+};
+
+const CRAM_C3 = `
+<h3>NUMBERS TO KNOW COLD</h3>
+<table>
+<tr><td>Consumer goods/services tracked by the CPI</td><td class="f">600</td></tr>
+<tr><td>Year the Bank committed to inflation-control targets</td><td class="f">1991</td></tr>
+<tr><td>Bank of Canada inflation target range</td><td class="f">1% to 3%</td></tr>
+<tr><td>Okun's Law — 1% drop in unemployment</td><td class="f">&rarr; 2.5% rise in national income</td></tr>
+<tr><td>Quarters defining expansion / recession</td><td class="f">2 consecutive quarters</td></tr>
+<tr><td>Statistics Canada working-age population</td><td class="f">people over age 15</td></tr>
+<tr><td>Oranges example equilibrium</td><td class="f">P = 8 cents, Q = 784</td></tr>
+<tr><td>Shortage / excess in the oranges example</td><td class="f">200 oranges each</td></tr>
+<tr><td>Apple economy 1999 nominal vs real GDP</td><td class="f">$19.50 vs $15.00</td></tr>
+</table>
+
+<h3>THE FORMULAS</h3>
+<table>
+<tr><td>National output</td><td class="f">GDP = C + I + G + X &ndash; M</td></tr>
+<tr><td>Nominal interest rate</td><td class="f">REAL rate (bank rate) + EXPECTED inflation</td></tr>
+<tr><td>Equilibrium</td><td class="f">set Q<sub>D</sub> = Q<sub>S</sub>, solve for P, substitute back into both</td></tr>
+<tr><td>Shortage (price BELOW equilibrium)</td><td class="f">Q<sub>D</sub> &ndash; Q<sub>S</sub></td></tr>
+<tr><td>Excess (price ABOVE equilibrium)</td><td class="f">Q<sub>S</sub> &ndash; Q<sub>D</sub></td></tr>
+<tr><td>Real GDP</td><td class="f">BASE-year price &times; CURRENT-year quantity</td></tr>
+<tr><td>Merchandise trade balance</td><td class="f">Exports &ndash; Imports</td></tr>
+</table>
+
+<h3>THE LISTS</h3>
+<table>
+<tr><td>3 reasons the law of demand works</td><td class="f">Wealth constraints · substitute products · the income effect</td></tr>
+<tr><td>2 shapes of the supply curve</td><td class="f">Upward sloping · vertical (fixed supply)</td></tr>
+<tr><td>4 shifters of DEMAND</td><td class="f">number of consumers · consumer preference · consumer income · price of substitutes</td></tr>
+<tr><td>3 shifters of SUPPLY</td><td class="f">technology · price of resources · natural disasters and unexpected events</td></tr>
+<tr><td>4 market failures</td><td class="f">Asymmetric information · Public goods (non-excludability + non-rivalry) · Monopolies · Externalities</td></tr>
+<tr><td>5 business cycle phases</td><td class="f">Expansion · Peak · Contraction · Trough · Recovery</td></tr>
+<tr><td>6 leading indicators</td><td class="f">housing starts · manufacturers' new orders · commodity prices · average hours worked · stock prices · money supply</td></tr>
+<tr><td>4 coincident indicators</td><td class="f">personal income · GDP · industrial production · retail sales</td></tr>
+<tr><td>5 lagging indicators</td><td class="f">unemployment · inflation rate · labour costs · plant &amp; equipment spending · business loans and interest</td></tr>
+<tr><td>3 causes of inflation</td><td class="f">wage/salary increases · extraordinarily high growth · high employment rate</td></tr>
+<tr><td>3 costs of inflation</td><td class="f">nominal rates rise · fixed-income purchasing power declines · currency depreciates</td></tr>
+<tr><td>4 unemployment types</td><td class="f">Cyclical · Seasonal · Frictional · Structural</td></tr>
+<tr><td>2 monetary tools / 2 fiscal tools</td><td class="f">bank rate &amp; open-market operations / spending &amp; taxation</td></tr>
+<tr><td>8 AS shifters</td><td class="f">labour force size &amp; quality · factor productivity · producer taxes · subsidies · inflation · unit costs · capital stock</td></tr>
+<tr><td>3 balance of payments accounts</td><td class="f">Current · Capital · Official Settlements</td></tr>
+</table>
+
+<h3>HIGH-YIELD TRAPS</h3>
+<div class="trap">Price change &rarr; <b>MOVEMENT ALONG</b> the curve. Anything else &rarr; <b>SHIFT</b> of the curve.</div>
+<div class="trap">DEMAND shift &rarr; price and quantity move the <b>SAME</b> way. SUPPLY shift &rarr; they move <b>OPPOSITE</b> ways.</div>
+<div class="trap">GDP = <b>WHERE</b> (geography). GNP = <b>WHO</b> (nationality).</div>
+<div class="trap">"Investment" in the GDP formula = business capital goods, <b>NOT</b> stocks and bonds — that is savings.</div>
+<div class="trap">Government spending <b>EXCLUDES</b> transfers to individuals or businesses.</div>
+<div class="trap">DISCOURAGED WORKERS are <b>not</b> in the labour force — they are "not working by choice".</div>
+<div class="trap">Unemployment <b>LAGS</b>. Stock prices and money supply <b>LEAD</b>. Bond yields are <b>COINCIDENTAL</b>.</div>
+<div class="trap">Bond prices and interest rates are <b>inversely</b> related: Bank BUYS bonds &rarr; prices bid up &rarr; rates fall &rarr; expansionary.</div>
+<div class="trap">Structural unemployment lasts <b>longer</b> than frictional — retraining or relocation is required.</div>
+<div class="trap">The unemployment rate can <b>never</b> fall to zero &rarr; the natural unemployment rate.</div>
+<div class="trap">Monetary policy is administered <b>independently</b> of day-to-day government intervention.</div>
+<div class="trap">Peak &rarr; bond spreads <b>NARROW</b>. Recession &rarr; spreads <b>WIDEN</b> (flight to quality).</div>
+<div class="trap">The three balance of payments accounts must <b>SUM TO ZERO</b>.</div>
+<div class="trap">Rent control &rarr; shortage (price below equilibrium). Farm subsidies &rarr; excess supply (price above equilibrium).</div>
+
+<h3>THE SENTENCE TO CARRY INTO THE EXAM</h3>
+<p style="color:var(--yellow);font-size:21px">"Economics does have a direct link with financial markets, and to this extent, has a direct bearing on financial planning."<br>
+<span class="muted">&rarr; Expansionary policy is inflationary &rarr; nominal rates rise and bond prices fall &rarr; investment demand falls &rarr; earnings and stock prices follow.</span></p>
+`;
+
 /* ---------- CHAPTER REGISTRY ---------- */
 const CHAPTERS = {
   comm:{ id:"comm", code:"CH.1", name:"THE HUMAN INTERFACE",
@@ -2451,6 +3044,11 @@ const CHAPTERS = {
          blurb:"Personal &amp; socio-cultural variables · decision-making · elderly, grieving &amp; incapacitated clients",
          stages:STAGES_C2, bank:BANK_C2, bosses:BOSSES_C2, cram:CRAM_C2,
          gauntlet:7, calc:false },
+  econ:{ id:"econ", code:"CH.3", name:"MARKET FORCES",
+         sub:"Chapter 3 — Economics",
+         blurb:"Demand &amp; supply · equilibrium · GDP · business cycles · monetary &amp; fiscal policy",
+         stages:STAGES_C3, bank:BANK_C3, bosses:BOSSES_C3, cram:CRAM_C3,
+         gauntlet:6, calc:false },
   tvm:{  id:"tvm", code:"M2 CH.1", name:"TIME VALUE RAIDERS",
          sub:"Module 2, Chapter 1 — Time Value of Money",
          blurb:"Single sums · annuities · effective rates · loans, bonds &amp; retirement",
@@ -2464,7 +3062,7 @@ const CHAPTERS = {
 const $ = id => document.getElementById(id);
 const SAVE_KEY = "tvmRaiders_v2";
 
-let save = {unlocked:{tvm:1, comm:1, client:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
+let save = {unlocked:{tvm:1, comm:1, client:1, econ:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw){ save = Object.assign(save, JSON.parse(raw)); }
@@ -2472,7 +3070,7 @@ try{
     const old = localStorage.getItem("tvmRaiders_v1");   // migrate a single-chapter save
     if(old){
       const o = JSON.parse(old);
-      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1};
+      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1, econ: 1};
       save.best = {}; Object.keys(o.best||{}).forEach(k=>{ save.best["tvm:"+k] = o.best[k]; });
       save.hi = (o.hi||[]).map(h=>Object.assign({ch:"M2 CH.1"}, h));
       save.mastery = o.mastery || {};
@@ -2481,7 +3079,7 @@ try{
     }
   }
 }catch(e){}
-if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1};
+if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1, econ:1};
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------- audio ---------- */
@@ -2521,7 +3119,7 @@ function setChapter(id){
 }
 const chUnlocked = () => (save.unlocked && save.unlocked[CH.id]) || 1;
 function setUnlocked(v){
-  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1};
+  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1, econ:1};
   save.unlocked[CH.id] = v;
 }
 
@@ -2607,7 +3205,7 @@ $("btnGauntlet").addEventListener("click",()=>{
 $("btnDrill").addEventListener("click",()=>{ sfx.coin(); startRun({mode:"drill"}); });
 $("btnWipe").addEventListener("click",()=>{
   if(confirm("Erase all progress, high scores and study data?")){
-    save = {unlocked:{tvm:1,comm:1,client:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
+    save = {unlocked:{tvm:1,comm:1,client:1,econ:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
     persist(); renderHof(); toast("MEMORY CLEARED");
   }
 });
@@ -2732,7 +3330,7 @@ function renderCard(card, isBoss){
         <span class="unit">${unitLabel(card.unit)}</span>
         <button class="btn gr sm" id="numGo">FIRE ▶</button>
       </div>
-      <div class="small muted" style="margin-top:8px">Sign is ignored — enter the magnitude. Press <span class="kbd">C</span> for the TVM calculator.</div>`;
+      <div class="small muted" style="margin-top:8px">Sign is ignored — enter the magnitude.${CH.calc ? ' Press <span class="kbd">C</span> for the TVM calculator.' : ''}</div>`;
   } else if(card.t === "order"){
     const shuffled = shuffle(card.items.map((it,i)=>({it,i})));
     CARD._chips = shuffled; CARD._picked = [];
