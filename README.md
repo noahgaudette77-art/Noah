@@ -20,7 +20,7 @@ reads a `?id=` query string so a server is more convenient.
 ## FPF Arcade (`tvm-arcade.html`)
 
 A separate, self-contained page that lives in this repo: a 90s-arcade study game
-built from the FPF study notes. Six chapters share one cabinet.
+built from the FPF study notes. Seven chapters share one cabinet.
 
 Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
 
@@ -32,13 +32,17 @@ Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed sit
 | **CH.4 — The Planner's Path** | 4 + gauntlet | what a sound plan is, the six steps, goal-setting, the financial profile, analysis, recommendations, implementation and review |
 | **M2 CH.1 — Time Value Raiders** | 5 + gauntlet | single sums, annuities, effective rates, loans, mortgages, bonds, retirement |
 | **M2 CH.2 — The Paper Trail** | 5 + gauntlet | the net worth statement, registered plans and the pension adjustment, cash flow, projections, and the six financial ratios |
+| **M3 CH.1 — The Debt Engine** | 8 + gauntlet | consumer credit, GDS and TDS, the five Cs, bankruptcy, borrowing to invest, automobile financing, mortgages, home affordability, RESPs and education funding |
 
-- **830 drills and 35 bosses.** Each boss is a full case from the notes, broken
+- **1,193 drills and 43 bosses.** Each boss is a full case from the notes, broken
   into its steps: Ms. Varner's mutual fund, the Tuccis, Moore vs Petford,
   Robert Carson's two meetings, Mrs. Carpenter's grief, Mrs. Stone's Alzheimer's,
   the orange market's equilibrium, the policy desk, the goal setter, the full
   file, the pension adjuster, the Belangers' balance sheet and ratios, Sharon's
-  college fund, Bill Brown's mortgage, Walter's retirement, and six gauntlets.
+  college fund, Bill Brown's mortgage, Walter's retirement, the Lamberts' debt
+  service ratios, Ken Swerski's leverage, Jacques Tellier's lease, Ismail
+  Habibi's mortgage, the MacDonalds' house hunt, the DeJaeger children's
+  education fund, and seven gauntlets.
 - **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills.**
   Every numeric answer key is the notes' own figure.
 - **Miss a question and the game teaches the rule**, then re-queues that question
