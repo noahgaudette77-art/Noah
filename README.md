@@ -17,26 +17,33 @@ npm run dev      # build, then serve at http://localhost:4173
 Or open `index.html` directly — the site needs no server, though `product.html`
 reads a `?id=` query string so a server is more convenient.
 
-## Time Value Raiders (`tvm-arcade.html`)
+## FPF Arcade (`tvm-arcade.html`)
 
 A separate, self-contained page that lives in this repo: a 90s-arcade study game
-built from the FPF Module 2, Chapter 1 (Time Value of Money) study notes.
+built from the FPF study notes. Two chapters share one cabinet.
 
 Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
 
-- **5 stages + 6 bosses** — fundamentals, single sums, annuities, compounding and
-  effective rates, and the applications (loans, mortgages, AMRT, bonds, retirement).
-  Each boss is a full worked problem from the chapter, broken into its steps.
-- **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills**,
-  ~120 in all. Every answer key is the chapter's own figure.
-- **Miss a question and the game teaches the rule**, then re-queues that question at
-  the end of the wave, so you don't leave a stage still getting it wrong.
+| Chapter | Stages | Covers |
+|---|---|---|
+| **CH.1 — The Human Interface** | 4 + gauntlet | the communication process, non-verbal communication, perceptions, effective communication skills |
+| **M2 CH.1 — Time Value Raiders** | 5 + gauntlet | single sums, annuities, effective rates, loans, mortgages, bonds, retirement |
+
+- **292 drills and 11 bosses.** Each boss is a full case from the notes, broken
+  into its steps: Ms. Varner's mutual fund, the mixed-signal client, Lorraine's
+  blind spot, the Tuccis, Sharon's college fund, Bill Brown's mortgage, Walter's
+  retirement, and two gauntlets.
+- **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills.**
+  Every numeric answer key is the notes' own figure.
+- **Miss a question and the game teaches the rule**, then re-queues that question
+  at the end of the wave, so you don't leave a stage still getting it wrong.
 - **An onboard EL-738-style TVM calculator** (n, i, PV, PMT, FV, COMP, BGN/END,
   →EFF, →APR, AMRT) that reproduces the textbook keystroke examples exactly —
   including Bill Brown's $509.67 payment and the $43,018.13 / $87.24 / $422.43
-  amortization split.
-- **Free play, drill-weak-spots, a cram sheet and per-topic mastery tracking.**
-  Scores and progress are stored in `localStorage`, on that browser only.
+  amortization split. It appears only in the chapter that needs it.
+- **Free play, drill-weak-spots, a cram sheet and per-topic mastery tracking**,
+  all scoped per chapter. Scores and progress are stored in `localStorage`, on
+  that browser only.
 
 Like the storefront it makes **no third-party requests** — the two arcade fonts
 (Press Start 2P and VT323, both SIL Open Font License 1.1) are embedded in the file.

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TIME VALUE RAIDERS — FPF Module 2 Ch.1 Arcade</title>
-<meta name="description" content="A 90s arcade study game for Time Value of Money: single sums, annuities, effective rates, mortgages, bonds and retirement planning.">
+<title>FPF ARCADE — Communication &amp; Time Value of Money</title>
+<meta name="description" content="A 90s arcade study game for two FPF chapters: interpersonal communication, and the time value of money.">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -263,6 +263,9 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 .calcout{font-size:17px;color:var(--dim);margin-top:8px;line-height:1.25;max-height:110px;overflow:auto}
 #calcTab{position:fixed;right:10px;bottom:10px;z-index:499}
 
+.whobar{font-family:var(--pixel);font-size:9px;color:var(--magenta);letter-spacing:1px;
+  border:2px solid #4b2a8a;border-radius:5px;padding:7px 10px;margin-bottom:12px;background:rgba(255,46,136,.06)}
+
 /* cram sheet */
 .cram{font-size:19px;line-height:1.4}
 .cram h3{font-family:var(--pixel);font-size:12px;color:var(--magenta);margin:16px 0 8px}
@@ -304,9 +307,9 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 
 <div class="cabinet">
   <div class="marquee">
-    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ FPF MODULE 2 / CHAPTER 1 ◈</div>
-    <h1>TIME VALUE RAIDERS</h1>
-    <div class="sub">A DOLLAR TODAY &gt; A DOLLAR TOMORROW</div>
+    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 2 CHAPTERS LOADED ◈</div>
+    <h1>FPF ARCADE</h1>
+    <div class="sub">STUDY HARDER. SCORE HIGHER.</div>
   </div>
 
   <div class="screen" id="screen">
@@ -315,19 +318,19 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     <!-- ============ TITLE ============ -->
     <section id="scrTitle" class="scr on">
       <div class="logo">
-        <span class="l1">TIME VALUE</span>
-        <span class="l2">RAIDERS</span>
+        <span class="l1">FPF</span>
+        <span class="l2">ARCADE</span>
       </div>
-      <div class="tagline">▓▒░ MASTER THE MONEY MACHINE ░▒▓</div>
+      <div class="tagline">▓▒░ TWO CHAPTERS · ONE CABINET ░▒▓</div>
       <div class="attract">
-        <p><span style="color:var(--yellow)">▶</span> 5 STAGES · 6 BOSS PROBLEMS · 120+ DRILLS</p>
-        <p><span style="color:var(--yellow)">▶</span> Built entirely from your FPF Module 2 Ch.1 notes</p>
-        <p><span style="color:var(--yellow)">▶</span> Onboard <b style="color:var(--cyan)">EL-738 style TVM calculator</b> — press <span class="kbd">C</span></p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--magenta)">CH.1 THE HUMAN INTERFACE</b> — communication, non-verbal, perceptions, skills</p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--cyan)">M2 CH.1 TIME VALUE RAIDERS</b> — single sums, annuities, rates, applications</p>
+        <p><span style="color:var(--yellow)">▶</span> 9 stages · 11 boss problems · 280+ drills, all from your notes</p>
         <p><span style="color:var(--yellow)">▶</span> Miss a question and the game <b style="color:var(--green)">teaches you the rule</b></p>
       </div>
       <div class="center blink px" style="font-size:14px;color:var(--green);margin:18px 0">PRESS START</div>
       <div class="btnrow">
-        <button class="btn" data-go="stages">▶ START GAME</button>
+        <button class="btn" data-go="chapters">▶ START GAME</button>
         <button class="btn cy" id="btnFree">FREE PLAY</button>
         <button class="btn ye" data-go="cram">CRAM SHEET</button>
         <button class="btn gr" data-go="data">STUDY DATA</button>
@@ -338,13 +341,23 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
       <div class="footer">SOUND: <span id="sndState">ON</span> (press <span class="kbd">M</span>) &nbsp;·&nbsp; CRT: <span id="crtState">ON</span> (press <span class="kbd">V</span>)</div>
     </section>
 
+    <!-- ============ CHAPTER SELECT ============ -->
+    <section id="scrChapters" class="scr">
+      <h2 class="title">◄ SELECT YOUR CHAPTER ►</h2>
+      <div class="stages" id="chapterGrid"></div>
+      <div class="btnrow"><button class="btn gh" data-go="title">◄ BACK</button></div>
+      <div class="footer">Each chapter keeps its own stage progress, high scores and study data.</div>
+    </section>
+
     <!-- ============ STAGE SELECT ============ -->
     <section id="scrStages" class="scr">
       <h2 class="title">◄ SELECT YOUR STAGE ►</h2>
+      <div class="whobar" id="stagesWho"></div>
       <div class="stages" id="stageGrid"></div>
       <div class="btnrow">
-        <button class="btn ye" id="btnGauntlet">!! GAUNTLET — ALL 5 STAGES</button>
-        <button class="btn gh" data-go="title">◄ BACK</button>
+        <button class="btn ye" id="btnGauntlet">!! GAUNTLET</button>
+        <button class="btn cy" data-go="chapters">◄ CHANGE CHAPTER</button>
+        <button class="btn gh" data-go="title">TITLE</button>
       </div>
       <div class="footer">Clear a stage to unlock the next. Gauntlet unlocks after Stage 5.</div>
     </section>
@@ -406,7 +419,8 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     <section id="scrHelp" class="scr">
       <h2 class="title">HOW TO PLAY</h2>
       <div class="cram">
-        <p><b style="color:var(--cyan)">GOAL:</b> clear all 5 stages, each ending in a BOSS — a full multi-step problem straight out of the chapter (Sharon's college fund, Bill Brown's mortgage, Walter's retirement…).</p>
+        <p><b style="color:var(--cyan)">GOAL:</b> clear every stage of a chapter, each ending in a BOSS — a full case straight out of your notes (Ms. Varner's mutual fund, the Tuccis' RV, Sharon's college fund, Bill Brown's mortgage…).</p>
+        <p>Two chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
         <h3>CONTROLS</h3>
         <table>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></td><td>pick a multiple-choice answer</td></tr>
@@ -434,9 +448,11 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     <!-- ============ STUDY DATA ============ -->
     <section id="scrData" class="scr">
       <h2 class="title">▓ STUDY DATA — YOUR MASTERY ▓</h2>
+      <div class="whobar" id="dataWho"></div>
       <div id="dataBody"></div>
       <div class="btnrow">
         <button class="btn" id="btnDrill">&gt;&gt; DRILL WEAK SPOTS</button>
+        <button class="btn cy" data-go="chapters">OTHER CHAPTER</button>
         <button class="btn gh" data-go="title">◄ BACK</button>
       </div>
     </section>
@@ -444,12 +460,16 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     <!-- ============ CRAM SHEET ============ -->
     <section id="scrCram" class="scr">
       <h2 class="title">▓ QUICK-RECALL CRAM SHEET ▓</h2>
+      <div class="whobar" id="cramWho"></div>
       <div class="cram" id="cramBody"></div>
-      <div class="btnrow"><button class="btn gh" data-go="title">◄ BACK</button></div>
+      <div class="btnrow">
+        <button class="btn cy" data-go="chapters">◄ OTHER CHAPTER</button>
+        <button class="btn gh" data-go="title">TITLE</button>
+      </div>
     </section>
 
   </div>
-  <div class="footer">TIME VALUE RAIDERS © 199X — built from FPF Module 2, Chapter 1 study notes. Progress saves to this browser only.</div>
+  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
 </div>
 
 <!-- ============ TVM CALCULATOR ============ -->
@@ -960,14 +980,737 @@ const CRAM_HTML = `
 <span class="muted">→ Always draw the time line first. Identify the key point the solution revolves around. Then calculate.</span></p>
 `;
 
+
+/* ============================================================
+   CHAPTER 1 — INTERPERSONAL COMMUNICATION
+   Built from the Chapter 1 study notes: the communication
+   process, non-verbal communication, perceptions, and
+   effective communication skills.
+   ============================================================ */
+
+const STAGES_C1 = [
+  {n:1, name:"SIGNAL &amp; NOISE",   sub:"The communication process",
+   blurb:"Sender · encode · filter · decode · semiotics · context · proxemics"},
+  {n:2, name:"BODY LANGUAGE",       sub:"Non-verbal communication",
+   blurb:"4 forms · reading cues · culture · silences · receptive vs resistant"},
+  {n:3, name:"THE PERCEPTION TRAP", sub:"Perceptions",
+   blurb:"Frames of reference · select/organize/interpret · the 4 biases"},
+  {n:4, name:"THE CONNECTION",      sub:"Effective communication skills",
+   blurb:"Empathy · active listening · feedback · questioning · learning styles"}
+];
+
+const BANK_C1 = [
+/* ============ STAGE 1 — THE COMMUNICATION PROCESS ============ */
+{t:"num",s:1,d:1,tag:"COMM-MODEL",q:"What percentage of the workday does a typical executive spend <b>communicating</b>, mostly face to face?",unit:"%",a:75,tol:0.5,
+ why:"<b>75%</b> — and the average is probably similar in an advisory role in financial services. Something that takes up that much time, and matters that much to performance, demands attention."},
+{t:"mc",s:1,d:1,tag:"COMM-MODEL",q:"The communication model is likened to a telephone or radio. In human terms, the <b>ENCODER</b> is the…",
+ c:["Speaker (sender, source of the message)","Listener","Message","Channel"],a:0,
+ why:"Encoder = <b>speaker</b> (sender, source). Signal = <b>message</b>. Decoder = <b>listener</b> (receiver, audience)."},
+{t:"mc",s:1,d:1,tag:"COMM-MODEL",q:"The <b>DECODER</b> in human terms is the…",
+ c:["Listener (receiver, audience)","Speaker","Message","Noise"],a:0,
+ why:"Decoder = <b>listener</b>, also called the receiver or audience."},
+{t:"mc",s:1,d:2,tag:"COMM-MODEL",q:"In <b>interpersonal</b> communication, what is the channel?",
+ c:["The person","Newspapers","Television","Radio"],a:0,
+ why:"In interpersonal communication the channel is <b>the person</b>. In mass communication it is newspapers, television, radio and so on."},
+{t:"order",s:1,d:3,tag:"COMM-MODEL",q:"Put the communication model in order, from the sender onward:",
+ items:["Sender holds a message of thoughts and feelings","Sender ENCODES it into verbal and non-verbal symbols","TRANSMISSION, where noise can interfere","The message hits the receiver's FILTER","Receiver DECODES — clarity and completeness","Receiver ASSIGNS MEANING","FEEDBACK flows back and the roles reverse"],
+ why:"Message → encode → transmission (noise) → filter → decode → assign meaning → feedback. <b>Perceptions sit underneath BOTH</b> the sender and the receiver, and the whole thing happens inside a physical context, which sits inside a social context."},
+{t:"tf",s:1,d:2,tag:"COMM-MODEL",q:"In the model, perceptions sit underneath the <b>receiver only</b>.",a:false,
+ why:"Perceptions sit underneath <b>BOTH</b> the sender and the receiver — both parties have internal frames of reference shaping the message."},
+{t:"mc",s:1,d:2,tag:"COMM-MODEL",q:"Which context contains the other?",
+ c:["The SOCIAL context contains the PHYSICAL context","The physical context contains the social context","They are separate and unrelated","Neither — they only exist during feedback"],a:0,
+ why:"The physical context sits <b>inside</b> the social context — the outer box in the model."},
+{t:"mc",s:1,d:2,tag:"SENDER",q:"Thoughts are formulated by the sender's <b>perceptions / internal frames of reference</b>, which consist of…",
+ c:["Values, attitudes and beliefs","Words, diagrams and numbers","Tone, volume and pitch","Interests, needs and expectations"],a:0,
+ why:"Values, attitudes and beliefs are at the core of personality and define each individual — and they shape the receiver's thoughts too."},
+{t:"mc",s:1,d:2,tag:"SENDER",q:"A client says: <i>\"We will need about $60,000 a year to live on.\"</i> They are mainly expressing…",
+ c:["Ideas about projected needs","Feelings about security","A complaint about fees","A non-verbal cue"],a:0,
+ why:"That statement is on the <b>thought</b> level. \"We don't want to have to worry about having enough income in retirement\" would be on the <b>feeling</b> level. Most messages are a blend — pick up on both."},
+{t:"mc",s:1,d:2,tag:"SENDER",q:"A client says: <i>\"We don't want to have to worry about having enough income in retirement.\"</i> This expresses…",
+ c:["Feelings about wanting security and no money worries","A precise budget figure","A request for a product recommendation","A syntactic error"],a:0,
+ why:"This is the <b>feeling</b> level. As a good listener you must pick up on both the thought level and the feeling level."},
+{t:"mc",s:1,d:1,tag:"SENDER",q:"To communicate a message the sender must <b>encode</b> it. Which are the symbols you use with clients?",
+ c:["Words, diagrams, numbers and non-verbal behaviour","Words only","Numbers and charts only","Tone, pitch and cadence"],a:0,
+ why:"Encoding is packaging the message in symbols: <b>words, diagrams, numbers, non-verbal behaviour</b>. Human language is a series of symbols that evolved over time."},
+{t:"mc",s:1,d:2,tag:"SEMIOTICS",q:"\"A lift\" means a car ride in North America and an elevator in England. This shows that symbols vary…",
+ c:["From country to country, region to region, and era to era","Only between languages","Only between age groups","Only in writing"],a:0,
+ why:"Symbols vary by country, region and era — we don't speak English the way Canadians did 200 years ago, or even 20."},
+{t:"mc",s:1,d:2,tag:"SEMIOTICS",q:"<b>SEMANTICS</b> is…",
+ c:["What words mean — the relationship between an object and a symbol","The structure of sentences and word order","The relationship between people and words","The study of social distances"],a:0,
+ why:"Semantics = object ↔ symbol. Example: \"a safety deposit box\" means a secure place to store valuables."},
+{t:"mc",s:1,d:2,tag:"SEMIOTICS",q:"<b>SYNTACTICS</b> is…",
+ c:["The structure of sentences and word order — the relationship between words","What words mean","The relationship between people and words","Non-verbal grammar"],a:0,
+ why:"Syntactics = word ↔ word. \"Some of my investments are with a broker\" is not the same as \"My investments are with some broker.\""},
+{t:"mc",s:1,d:2,tag:"SEMIOTICS",q:"<b>PRAGMATICS</b> is…",
+ c:["The relationship between people and words","The relationship between an object and a symbol","Sentence structure and word order","The study of gestures"],a:0,
+ why:"Pragmatics = people ↔ words. \"I'll meet you later\" could mean a few hours to a co-worker and a few days to a client."},
+{t:"mc",s:1,d:3,tag:"SEMIOTICS",q:"Which area of semiotics has the <b>highest potential for misunderstanding</b>?",
+ c:["Pragmatics","Semantics","Syntactics","They are equal"],a:0,
+ why:"<b>Pragmatics.</b> You don't use the same vocabulary with a ten-year-old as with an adult, or talk to your neighbour the way you talk to a corporate president. Word meanings vary across languages, cultures and age groups."},
+{t:"mc",s:1,d:2,tag:"SEMIOTICS",q:"\"Some of my investments are with a broker\" vs \"My investments are with some broker\" is a problem of…",
+ c:["Syntactics","Semantics","Pragmatics","Proxemics"],a:0,
+ why:"Word order changes the meaning entirely — that is <b>syntactics</b>."},
+{t:"mc",s:1,d:2,tag:"FILTER",q:"Before a message can be decoded it passes through a <b>filter</b>. Which is NOT something the filter does?",
+ c:["Amplifies the parts of the message the sender stressed most","Screens out parts of a message so it isn't received in its entirety","Admits only parts into consciousness when there is too much to take in","Screens out messages the receiver does not want to hear"],a:0,
+ why:"The filter <b>screens out</b>, it does not amplify. It blocks messages that are disturbing to the receiver's self-image, and lets little through when the receiver is preoccupied or distracted."},
+{t:"mc",s:1,d:2,tag:"FILTER",q:"A client who believes he is financially savvy simply does not \"hear\" you say his portfolio is poorly diversified. This is…",
+ c:["A self-image filter screening out a threatening message","A semantic problem","Noise in the physical context","A pragmatic problem"],a:0,
+ why:"The filter screens out messages that are <b>disturbing to the receiver's self-image</b>."},
+{t:"mc",s:1,d:2,tag:"DECODE",q:"In decoding, the receiver first assesses the message for…",
+ c:["Clarity and completeness","Relevance to their goals","Emotional tone","Length"],a:0,
+ why:"Step 1 is <b>clarity and completeness</b>; step 2 is judging the <b>meaning</b> — \"what difference does this make to me?\""},
+{t:"mc",s:1,d:3,tag:"DECODE",q:"Which is NOT one of the three sources of difficulty in understanding a message?",
+ c:["The receiver's status relative to the sender","Problems originating with the SENDER, such as mumbling or talking too fast","Problems in the ENCODING process — poorly chosen symbols","Semantic, syntactic or pragmatic problems"],a:0,
+ why:"The three sources are sender problems, encoding problems, and semiotic (semantic/syntactic/pragmatic) problems."},
+{t:"mc",s:1,d:2,tag:"DECODE",q:"On the scale of how well a message is understood, a client who <b>asks for the message to be repeated</b> is at…",
+ c:["LOW understanding","MEDIUM understanding","HIGH understanding","Cannot be determined"],a:0,
+ why:"LOW = asks for it repeated, seeks clarification. MEDIUM = asks about parts. HIGH = no clarification sought, ready to judge meaning."},
+{t:"mc",s:1,d:3,tag:"DECODE",q:"A message is judged <b>highly meaningful</b> if it affects things the receiver holds dear. Which is NOT on that list?",
+ c:["The sender's professional credentials","Self-image or image of others","Values, beliefs and needs","Expectations of accomplishing important goals"],a:0,
+ why:"High meaning = it touches self-image, values, beliefs, needs, or expectations about achieving important goals. Those messages get a response."},
+{t:"mc",s:1,d:2,tag:"DECODE",q:"A receiver judges a message <b>UNSURE</b> in meaning. What do they do?",
+ c:["Wait to respond until the whole picture is seen","Ignore it completely","Respond immediately with feelings","Ask for it to be repeated"],a:0,
+ why:"UNSURE messages may be a fragment of a larger message; rather than react to a partial message the receiver <b>waits</b>. LOW meaning gets ignored or a superficial reaction."},
+{t:"mc",s:1,d:2,tag:"CONTEXT",q:"Which is NOT something noise does to a message?",
+ c:["Changes the sender's intention","Degrades message quality so it loses clarity","Distracts the receiver's attention","Interferes with the receiver's understanding"],a:0,
+ why:"Noise degrades, distracts and interferes. The best physical setting is <b>free from noises and interruptions</b>."},
+{t:"mc",s:1,d:3,tag:"CONTEXT",q:"What is the <b>hidden cost</b> of failing to control noise — for example, taking a phone call mid-conversation?",
+ c:["You inadvertently send the message that clients are not your priority","You lose the thread of your own argument","The client's filter closes permanently","It shortens the meeting"],a:0,
+ why:"It inhibits their communication and makes it harder to build a relationship."},
+{t:"mc",s:1,d:3,tag:"CONTEXT",q:"On <b>privacy</b>, the notes make a key nuance. Which is it?",
+ c:["It must APPEAR to clients that the conversation is immune from eavesdropping","Confidentiality agreements make the setting irrelevant","Only written information needs protecting","Privacy matters only for high-net-worth clients"],a:0,
+ why:"Even if you know nobody can overhear, and that anything overheard would be kept confidential, it must <b>appear</b> immune from eavesdropping. Clients welcome a setting that safeguards privacy."},
+{t:"mc",s:1,d:2,tag:"CONTEXT",q:"Why does <b>comfort</b> matter in the physical setting?",
+ c:["It frees clients to be at ease and spontaneous, so the conversation may expand to other financial matters","It shortens meetings","It signals your status","It reduces your liability"],a:0,
+ why:"An amicable setting means clients feel freer to share things they hadn't intended to discuss — leading to a wider conversation about their financial issues and goals."},
+{t:"mc",s:1,d:2,tag:"CONTEXT",q:"Why are many clients intimidated and nervous entering a financial institution?",
+ c:["You have something they want, they're unsure they'll qualify, and you're the expert","The offices are too small","They dislike paperwork","They expect long wait times"],a:0,
+ why:"You have something they want; they're unsure about your willingness to help and their ability to qualify; you're the expert, so they may feel inadequate about their own knowledge."},
+{t:"mc",s:1,d:3,tag:"CONTEXT",q:"Which three actions minimize perceived <b>status differentials</b>?",
+ c:["Come out from behind your desk, set a warm and congenial atmosphere, avoid technical jargon","Dress formally, stay behind the desk, use precise terminology","Stand while the client sits, speak slowly, use credentials","Offer coffee, take notes, quote regulations"],a:0,
+ why:"Signals that you are \"better than\" your client — making them stand, talking down, appearing aloof — create anxiety and encumber the conversation."},
+{t:"mc",s:1,d:1,tag:"PROXEMICS",q:"<b>Proxemics</b> is…",
+ c:["The study of social distances and communication","The study of gestures","The study of word meanings","The study of vocal characteristics"],a:0,
+ why:"Proxemics = social distances and communication. Four zones regulate interpersonal interactions."},
+{t:"num",s:1,d:2,tag:"PROXEMICS",q:"The <b>INTIMATE</b> distance zone extends to how many <b>inches</b>?",unit:"inches",a:18,tol:0.5,
+ why:"<b>18 inches</b> — intimacy, giving comfort and protection. It is not appropriate to intrude there, or even into the personal zone, unless clients are friends."},
+{t:"mc",s:1,d:2,tag:"PROXEMICS",q:"The <b>PERSONAL</b> distance zone — interactions with friends or acquaintances — is…",
+ c:["1.5 to 4 feet","18 inches","4 to 12 feet","12 to 25 feet"],a:0,
+ why:"Intimate: 18 in. Personal: 1.5–4 ft. Social: 4–12 ft. Public: 12–25 ft."},
+{t:"mc",s:1,d:2,tag:"PROXEMICS",q:"Which zone is used for <b>business and casual social interactions</b>?",
+ c:["Social distance, 4 to 12 feet","Personal distance, 1.5 to 4 feet","Public distance, 12 to 25 feet","Intimate distance, 18 inches"],a:0,
+ why:"Social distance, <b>4 to 12 feet</b>. Public distance (12–25 ft) is for impersonal and formal interactions."},
+{t:"num",s:1,d:2,tag:"PROXEMICS",q:"Experts in proxemics say a customer starts to feel crowded when a salesperson gets closer than how many <b>feet</b>?",unit:"feet",a:3,tol:0.2,
+ why:"Closer than <b>three feet</b>. A social distance of four or five feet is appropriate for most client-professional conversations — close enough to show interest without intruding."},
+{t:"mc",s:1,d:3,tag:"PROXEMICS",q:"When is it appropriate to <b>move closer</b> to a client?",
+ c:["When clients have suffered a personal loss and are grieving","When they are hard of hearing","When discussing fees","When they seem resistant"],a:0,
+ why:"Coming out from behind your desk and sitting in a nearby chair may convey more than words."},
+{t:"mc",s:1,d:2,tag:"PROXEMICS",q:"On cultural variation in personal space, the notes say…",
+ c:["Easterners prefer a substantial distance; Southerners are comfortable within inches","Everyone shares the North American zones","Southerners prefer the greatest distance","Distance preferences are fixed at birth"],a:0,
+ why:"As a rule Easterners prefer substantial distance compared to Western standards; Southerners tend to be comfortable with just a few inches."},
+{t:"mc",s:1,d:2,tag:"CLEAR-MSG",q:"One of the seven rules for sending clear messages is to <b>underestimate</b> the background knowledge of your clients. Why?",
+ c:["It ensures you don't leave out pieces of information they need to fully understand","It flatters them","It shortens the explanation","It protects you legally"],a:0,
+ why:"Underestimating background knowledge guarantees nothing essential is skipped — while still varying the technical level so you neither talk down to clients nor over their heads."},
+{t:"mc",s:1,d:2,tag:"CLEAR-MSG",q:"When a client's native language is not your own, the safest approach is to…",
+ c:["Use simple language — idiomatic phrases and double meanings are particularly troublesome","Speak louder","Use more technical precision to avoid ambiguity","Write everything down instead"],a:0,
+ why:"Play it safe with simple language to avoid ambiguity and confusion."},
+{t:"mc",s:1,d:3,tag:"CLEAR-MSG",q:"Why can you NOT rely on the receiver to tell you whether your message got through?",
+ c:["Because he or she does not necessarily know what you intended","Because clients are usually polite","Because feedback is always delayed","Because the filter blocks all feedback"],a:0,
+ why:"So you must <b>ask</b>: \"Am I making any sense?\" \"Have I made it more confusing?\" \"What do you think?\" \"Do you know what I mean?\""},
+{t:"mc",s:1,d:2,tag:"CLEAR-MSG",q:"What does it mean to <b>BRACKET</b> your personal concerns?",
+ c:["Set them aside until they can be dealt with later","Write them down during the meeting","Share them with the client","Schedule meetings around them"],a:0,
+ why:"Listening requires committed effort — it is more than a period when you are not talking. If you're preoccupied with personal matters, full attention cannot be given."},
+{t:"mc",s:1,d:2,tag:"CLEAR-MSG",q:"A message has two levels. They are…",
+ c:["CONTENT (the topic) and FEELING (what clients feel about it)","Verbal and written","Formal and informal","Explicit and encoded"],a:0,
+ why:"For complete communication you must be aware of and acknowledge both. Dipping into the feeling level signals you're interested in understanding their situation."},
+{t:"mc",s:1,d:2,tag:"CLEAR-MSG",q:"What has been identified as <b>one of the greatest barriers</b> to communication?",
+ c:["Failure to listen","Technical jargon","Noise","Cultural difference"],a:0,
+ why:"Failure to listen. Approach with a commitment to understanding clients, assessing what is said, and finding a helpful way to respond."},
+{t:"mc",s:1,d:3,tag:"COMM-MODEL",q:"<b>Effective communication</b> has occurred when…",
+ c:["The message intended by the sender is understood by the receiver","Both parties agree","The client buys the product","No clarification is needed"],a:0,
+ why:"Critical nuance: this says <b>nothing about whether the two agree</b>. Only if each knows what the other's message is can they have a fruitful discussion."},
+{t:"mc",s:1,d:2,tag:"COMM-MODEL",q:"In the guidelines to avoid miscommunication, \"minimize status differentials\" belongs in which column?",
+ c:["TRANSMISSION","SENDER","RECEIVER","None of them"],a:0,
+ why:"TRANSMISSION covers the conversation area being free of noise, a comfortable setting, minimizing status differentials, and respecting comfort zones."},
+{t:"mc",s:1,d:2,tag:"COMM-MODEL",q:"\"Turn off filters\" and \"listen for feelings\" belong in which column of the guidelines?",
+ c:["RECEIVER","SENDER","TRANSMISSION","Both sender and receiver"],a:0,
+ why:"RECEIVER: concentrate, bracket internal distractions, turn off filters, listen for feelings, read non-verbal language, give feedback."},
+{t:"mc",s:1,d:3,tag:"COMM-MODEL",q:"Ms. Varner was told her fund's \"net asset value might decline if the yield curve ascended.\" Alan's failure was mainly…",
+ c:["Too much technical jargon, and assuming she knew what he meant","Speaking too quietly","Meeting in a noisy area","Standing too close"],a:0,
+ why:"He also failed to fully explain the fund and to understand her goals — she needed the money for retirement in three years. The book's verdict: <b>both share the blame</b>, one for not listening and the other for not explaining carefully enough."},
+{t:"tf",s:1,d:2,tag:"COMM-MODEL",q:"In the Ms. Varner case the notes place the blame squarely on the advisor.",a:false,
+ why:"\"The reality is probably that <b>BOTH share the blame</b>.\" She misunderstood, didn't say so at the time, and may not have fully explained her needs — but he used complex language and assumed understanding."},
+
+/* ============ STAGE 2 — NON-VERBAL COMMUNICATION ============ */
+{t:"mc",s:2,d:1,tag:"NONVERBAL",q:"What are the <b>four forms</b> of non-verbal communication?",
+ c:["Posture, facial expressions, gestures, vocal characteristics","Posture, gestures, silence, distance","Eyes, hands, voice, clothing","Tone, volume, pitch, cadence"],a:0,
+ why:"Posture · facial expressions · gestures · vocal characteristics. (Tone, volume, pitch and cadence are the four <b>vocal characteristics</b>.)"},
+{t:"num",s:2,d:2,tag:"NONVERBAL",q:"Facial expressions convey over what percentage of the meaning of a message?",unit:"%",a:55,tol:0.5,
+ why:"<b>Over 55%.</b> More than any other part of the body, the face radiates feelings."},
+{t:"mc",s:2,d:2,tag:"NONVERBAL",q:"Slouched shoulders, head slightly bowed, eyes on the ground, a labouring gait indicate…",
+ c:["A client who is weighed down or unhappy","A confident client","A resistant client","A visual learner"],a:0,
+ why:"Head upright, shoulders back and a deliberate walk indicate the opposite — a confident client able to meet life head on."},
+{t:"mc",s:2,d:2,tag:"NONVERBAL",q:"What do tight facial muscles and grimaces suggest, versus relaxed muscles?",
+ c:["Negative feelings versus positive feelings","Concentration versus boredom","Honesty versus deception","Visual versus auditory processing"],a:0,
+ why:"Facial muscles express judgement, shock, disapproval, sadness, happiness, relief and stress."},
+{t:"mc",s:2,d:2,tag:"NONVERBAL",q:"With a client's eyes, what should you read?",
+ c:["Not only HOW they look, but WHERE they look","Only pupil dilation","Only how long they hold contact","Only blink rate"],a:0,
+ why:"Where clients look indicates their involvement in the interview and gives a clue about their level of understanding and receptiveness."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"The upturned and downturned thumb tells you how things stand in North America. In <b>Germany and Japan</b> those gestures signify…",
+ c:["The numbers one and five","Agreement and disagreement","Hello and goodbye","Nothing at all"],a:0,
+ why:"Gesture meaning varies from culture to culture. A pointed finger stabbing the air conveys passion in North America but may be read as rude in Middle or Far Eastern cultures."},
+{t:"mc",s:2,d:1,tag:"NONVERBAL",q:"The four <b>vocal characteristics</b> are…",
+ c:["Tone, volume, pitch, cadence","Tone, speed, accent, grammar","Volume, clarity, diction, pace","Pitch, rhythm, emphasis, silence"],a:0,
+ why:"Apart from the words uttered, these add other dimensions to the verbal message."},
+{t:"mc",s:2,d:3,tag:"NONVERBAL",q:"Why can exact interpretations of non-verbal signals NOT be given?",
+ c:["The same signals can convey different messages, there are no rules of grammar, and expressions are individualized","Because research is too recent","Because clients deliberately mislead","Because only trained psychologists can read them"],a:0,
+ why:"There is no agreed-upon theory of how feelings get translated into non-verbal behaviour, and the same expression could mean something different with another client or in other circumstances."},
+{t:"mc",s:2,d:3,tag:"NONVERBAL",q:"The golden rule of non-verbal communication is: treat non-verbal behaviour as…",
+ c:["CUES, interpreted with care and only in the presence of other information","Proof of a client's state of mind","Irrelevant unless the client mentions it","More reliable than words"],a:0,
+ why:"It is <b>tentative evidence</b> that must be confirmed by other non-verbal indicators or words — never conclusive or direct proof of an internal state."},
+{t:"tf",s:2,d:2,tag:"NONVERBAL",q:"A hand placed near the mouth while talking is reliable evidence a client is uncertain or lying.",a:false,
+ why:"Body-language dictionaries suggest that, but the gesture may have a <b>pragmatic</b> meaning — someone self-conscious about crooked or damaged teeth covering a perceived flaw."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"What are the two sources of <b>misinterpretation</b> of non-verbal behaviour?",
+ c:["Individual idiosyncrasies and intercultural differences","Noise and distance","Status and gender","Filters and feedback"],a:0,
+ why:"In Canada an up-and-down nod means yes and a side-to-side shake means no. <b>In Bulgaria it means the opposite.</b>"},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"\"Contact cultures\" — Southerners — tend to…",
+ c:["Stand closer, touch more and exchange more eye contact","Avoid all physical contact","Maintain the greatest personal distance","Use fewer gestures"],a:0,
+ why:"Westerners tend to maintain <b>less</b> eye contact than Southerners. Japanese clients typically do not appreciate public touching, and a handshake could create a dilemma for a strict Muslim who shuns physical contact with the opposite sex."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"Why wouldn't a complete list of cultural gestures solve the problem?",
+ c:["It could not cover everything, and it would gloss over variations between individuals within a culture","Lists are hard to memorize","Cultures change too fast","Clients find lists offensive"],a:0,
+ why:"The more important flaw is the <b>generalization</b> — variations differentiate individuals within cultures and even within families."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Which is one of the three suggestions for handling intercultural non-verbal differences?",
+ c:["Consult people from the same cultural group as your client","Mirror the client's gestures exactly","Ask the client to explain their gestures","Avoid meeting face to face"],a:0,
+ why:"The three: consult people from the same cultural group; avoid gestures involving body contact; read books on the subject. When in doubt, hold off until you know your client well enough."},
+{t:"mc",s:2,d:3,tag:"NONVERBAL",q:"Why do non-verbalized feelings sometimes \"LEAK\"?",
+ c:["Because the encoder has LESS CONTROL over non-verbal expressions than over words","Because clients want to be caught","Because feelings are always stronger than thoughts","Because filters only screen words"],a:0,
+ why:"Red-faced clients say in controlled tones that they are not angry; clients with wrinkled foreheads say they understand. You may get one message verbally and another non-verbally."},
+{t:"mc",s:2,d:2,tag:"NONVERBAL",q:"Why do contradictory messages matter commercially?",
+ c:["You need clients' REAL attitudes so the solutions you suggest match their TRUE needs and get approval","They shorten meetings","They indicate dishonesty you must report","They determine the client's learning style"],a:0,
+ why:"We are all capable of feeling one thing and saying another, for a number of reasons."},
+{t:"tf",s:2,d:2,tag:"SILENCE",q:"When a client falls silent, the client is not communicating.",a:false,
+ why:"It is <b>wrong</b> to say that — the complete opposite is true. Silences are an integral part of human communication."},
+{t:"mc",s:2,d:3,tag:"SILENCE",q:"Why do people rush to fill silences, and what should you do?",
+ c:["Silences are experienced with tension and embarrassment — do not rush to fill one a client creates","Silence is rude — fill it quickly","Silence means agreement — move on","Silence means confusion — repeat yourself"],a:0,
+ why:"If you can't tolerate the tension and move quickly to fill silences, you will <b>miss important aspects</b> of the message a client is communicating."},
+{t:"mc",s:2,d:2,tag:"SILENCE",q:"Which is NOT one of the things a client may be expressing through silence?",
+ c:["That they have decided to buy","Frustration, anger or preoccupation","Boredom to the point of withdrawing","Listening intently or reflecting on what they just heard"],a:0,
+ why:"Silence can also mean they simply don't understand and have nothing to say. Because it can mean opposite things, interpret it in <b>context</b> and alongside the accompanying non-verbal behaviour."},
+{t:"mc",s:2,d:2,tag:"RECEPTIVITY",q:"Nodding, smiling, leaning forward, frequent direct eye contact and a HIGH energy level describe a client who is…",
+ c:["RECEPTIVE","CAUTIOUS","RESISTANT","Excessively talkative"],a:0,
+ why:"Receptive clients are open to suggestions, provide information, actively participate, feel understood and understand what is happening."},
+{t:"mc",s:2,d:2,tag:"RECEPTIVITY",q:"Head immobile, mouth tightly closed, limited eye contact, looking downward, semi-closed rigid posture, MODERATE energy describe a client who is…",
+ c:["CAUTIOUS","Receptive","Resistant","Passive"],a:0,
+ why:"Cautious clients have moderate trust in suggestions, are marginally involved, and have limited acceptance of you."},
+{t:"mc",s:2,d:2,tag:"RECEPTIVITY",q:"Shaking or tilting the head, sneering, turning away, avoiding eye contact, closed tight posture, RESTRAINED energy describe a client who is…",
+ c:["RESISTANT","Cautious","Receptive","Auditory"],a:0,
+ why:"Resistant clients are closed to suggestions, create interpersonal distance, project a closed attitude and feel the process is irrelevant."},
+{t:"mc",s:2,d:3,tag:"RECEPTIVITY",q:"What is the likely outcome with a <b>RESISTANT</b> client?",
+ c:["They may end the relationship; if it continues they'll be less than satisfied and unlikely to follow through","They will negotiate harder but stay","They become receptive over time automatically","They will refer other clients"],a:0,
+ why:"They are defensive, want distance, are reluctant to reveal much, and are guarded and secretive. It is not always possible to determine why."},
+{t:"mc",s:2,d:3,tag:"RECEPTIVITY",q:"A <b>CAUTIOUS</b> client has probably…",
+ c:["Received a message they do not like, but has not necessarily rejected you","Already decided to leave","Misunderstood everything said","Been offended by your appearance"],a:0,
+ why:"They feel marginally involved — otherwise they'd withdraw completely. Depending on your attitude and skills they could become more receptive, more resistant, or stay as they are."},
+{t:"mc",s:2,d:2,tag:"RECEPTIVITY",q:"How should you deal with a <b>RESISTANT</b> client?",
+ c:["Ask for their input and reactions to your suggestions, and verify their interpretations throughout","Present more product features","Move closer physically","End the meeting early"],a:0,
+ why:"It is imperative to understand silences, since unexpressed feelings create obstacles. Pay attention to non-verbal cues to understand the feelings underlying the resistance."},
+{t:"mc",s:2,d:2,tag:"RECEPTIVITY",q:"How should you draw out a <b>CAUTIOUS</b> client?",
+ c:["Concentrate on their NEEDS and OBJECTIVES, and help them verbalize their reluctance and its reasons","Fill every silence","Give them written material and wait","Escalate to a senior colleague"],a:0,
+ why:"Ask appropriate questions about your input — \"What do you think about that idea?\" — then listen attentively and provide feedback."},
+{t:"mc",s:2,d:3,tag:"RECEPTIVITY",q:"What are the <b>two most revealing cues</b> about a client's openness?",
+ c:["Posture and eye contact","Gestures and tone","Facial expression and distance","Silence and energy level"],a:0,
+ why:"Leaning forward = involvement. Leaning back = an attempt to distance themselves from the conversation."},
+{t:"mc",s:2,d:3,tag:"RECEPTIVITY",q:"The \"elevator insight\" explains that when we want to distance ourselves physically but cannot, we…",
+ c:["Use our EYES to create psychological distance","Talk more loudly","Cross our arms","Change the subject"],a:0,
+ why:"It explains why adults squeezed into an elevator find the indicator lights so fascinating — and why a client may look everywhere but at you."},
+{t:"mc",s:2,d:2,tag:"SELF-SIGNALS",q:"To convey <b>OPENNESS</b> non-verbally you should…",
+ c:["Face the client squarely, keep an open position with arms and legs, minimize physical barriers","Smile and offer a handshake","Nod and lean slightly forward","Articulate ideas clearly and never interrupt"],a:0,
+ why:"Those other three describe friendliness, involvement and respect respectively."},
+{t:"mc",s:2,d:2,tag:"SELF-SIGNALS",q:"To convey <b>RESPECT</b> you should…",
+ c:["Be fully attentive, articulate ideas clearly, and not interrupt or speak for the client","Smile and get close","Nod frequently","Minimize physical barriers"],a:0,
+ why:"Respect: attentiveness, clarity, and never interrupting or speaking for the client."},
+{t:"mc",s:2,d:2,tag:"SELF-SIGNALS",q:"To convey <b>INVOLVEMENT</b> you should…",
+ c:["Keep a relaxed yet alert posture, minimize distracting gestures, maintain eye contact, lean slightly in and nod","Offer a handshake","Sit squarely with open arms","Speak more slowly"],a:0,
+ why:"The four attitudes to convey non-verbally are friendliness, respect, openness and involvement."},
+{t:"mc",s:2,d:3,tag:"SELF-SIGNALS",q:"Whatever attitude you express non-verbally, the overriding condition is that the message must be…",
+ c:["GENUINE — stemming from deep personal beliefs and attitudes","Consistent with company policy","Rehearsed","Subtle"],a:0,
+ why:"The non-verbal language used must match your actual feelings. That produces honest messages, which build a quality relationship over the long term."},
+{t:"mc",s:2,d:3,tag:"SELF-SIGNALS",q:"On <b>authenticity</b>, the notes warn that…",
+ c:["It is difficult if not impossible to hide your attitudes over the long run — inconsistencies eventually reveal themselves","Clients rarely notice insincerity","Technique can substitute for genuine interest","Authenticity only matters with long-standing clients"],a:0,
+ why:"Clients can readily distinguish those applying ready-made techniques to attain their own objectives from those who genuinely want to help them reach their goals."},
+{t:"mc",s:2,d:2,tag:"SELF-SIGNALS",q:"You yawn discreetly during a meeting. The risk is that…",
+ c:["The client readily interprets it as a sign of disinterest","The client will yawn too","It signals the meeting should end","Nothing — discreet gestures go unread"],a:0,
+ why:"Looking \"past\" a client carries the same risk — it may suggest, contrary to your intention, that it is difficult to become involved and help. A client receiving such messages may lose interest and withdraw."},
+{t:"mc",s:2,d:2,tag:"SELF-SIGNALS",q:"You notice you're drifting in a meeting. How do you get back in?",
+ c:["Change posture, make eye contact, lean forward","Take more notes","Ask the client to repeat everything","Suggest rescheduling"],a:0,
+ why:"Remain attentive to your own non-verbal behaviour — it tells you how you actually feel about a client and a meeting."},
+{t:"mc",s:2,d:3,tag:"NONVERBAL",q:"Shelley Cann said things were \"not bad\" while shrugging and looking down. What did Alan do?",
+ c:["Acknowledged the feelings but judged it inappropriate to pursue them further at that point","Ignored the mismatch entirely","Pressed her immediately for details","Assumed she was fine"],a:0,
+ why:"The words said fine, the shrug and downcast eyes said otherwise. Later, when she hunched over with her head in her hands, he read sadness and guilt; when she straightened up he read readiness to move on, and re-focused the conversation."},
+{t:"mc",s:2,d:3,tag:"NONVERBAL",q:"Shelley said she \"NEEDED\" to get to Europe. Alan asked \"Need to?\" rather than assuming a vacation. Why was that good practice?",
+ c:["It showed interest and sought understanding without prying or imposing an assumption","It tested her honesty","It slowed the meeting down deliberately","It established his expertise"],a:0,
+ why:"Most people would assume Europe means a vacation. Alan decided not to impose that assumption — and learned her grandfather had died. His attention to her non-verbal, emotional messages got the relationship off on the right foot."},
+
+/* ============ STAGE 3 — PERCEPTIONS ============ */
+{t:"tf",s:3,d:1,tag:"PERCEPTION",q:"Perception is not necessarily reality.",a:true,
+ why:"Our access to the objective world is at best <b>indirect and limited</b>. Psychologists suggest we CONSTRUCT our personal realities, since we cannot know objective reality directly."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"What makes each person's reality unique and distinct from everyone else's?",
+ c:["What we DO with information received, and how we FILL IN the perceptual holes","That nothing from outside gets through","The accuracy of our senses","Our vocabulary"],a:0,
+ why:"It is not that nothing gets through — communication would be impossible. It is what we do with what gets through, and how we fill the inevitable gaps."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"To most people autumn leaves are a visual feast; to a colour-blind person they are dull brown. Who is right about the colour?",
+ c:["Both are right, depending on the point of view of the observer","The person with normal colour vision","The colour-blind person","Neither — only instruments can settle it"],a:0,
+ why:"The example exists to show that our reality is created by the way we perceive it — which is why studying the perceptual process helps you spot sources of distortion."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"Perceptions function as packaged views overlaid like <b>templates</b> on new experiences. The notes call them…",
+ c:["LABOUR-SAVING DEVICES","Emotional shortcuts","Cognitive errors","Social filters"],a:0,
+ why:"Rather than re-orienting ourselves each time, we refer to past impressions summarized in our perceptions. It would be inefficient to work out from scratch each time what we think of ourselves, others and our experiences."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"In the \"file\" analogy, what do you do when you meet a client you do NOT know?",
+ c:["Reference files of similar clients you have known or who share common characteristics","Start with no perceptions at all","Refuse to form impressions","Ask colleagues for their files"],a:0,
+ why:"With a client you have met before, you open their file and find your past feelings and judgements, and use those to continue the relationship."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"Some say the <b>preservation of self-image</b> is…",
+ c:["The main concern of our perceptual activity","One minor factor among many","Only relevant in conflict","A purely conscious process"],a:0,
+ why:"Self-image is formed through our own appraisal and the opinions of others significant to us. If your self-image or your client's is threatened, both of you may become <b>defensive</b> and open communication suffers."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"A client says: <i>\"Shouldn't you have that information right at your fingertips?\"</i> The risk is that…",
+ c:["If you see yourself as always on top of everything, the threat to your self-image may make you less than co-operative","The client is testing your credentials","You must apologize immediately","The client is a false expert"],a:0,
+ why:"The danger is being <b>unaware</b> of the threat. Perceptions should be tentative and ready to be revised."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"When pre-formed judgements become particularly rigid and detrimental, they are called…",
+ c:["Biases and stereotypes","Templates","Filters","Frames of reference"],a:0,
+ why:"Perceptions are labour-saving devices, but rigid ones blind us. Overly-rigid perceptions that fit reality badly distort communication and interfere with relationship-building."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"Should perceptions be eradicated?",
+ c:["No — we need them; trouble comes from relying on them too heavily or not revising them","Yes, they are always distortions","Only stereotypes should be kept","Only in client meetings"],a:0,
+ why:"We need them to deal with the flood of sensory experience, by helping us <b>select, organize and interpret</b> information."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"What are the three things perceptions help us do with information?",
+ c:["Select, organize, interpret","Filter, encode, decode","Store, retrieve, revise","Judge, respond, remember"],a:0,
+ why:"And selection is driven by three things: <b>interests, needs and expectations</b>."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"An investor dozing through the evening news springs awake when market results are announced. This illustrates selection driven by…",
+ c:["INTERESTS","Needs","Expectations","Values"],a:0,
+ why:"Interests. A client in a wheelchair noticing doorway widths and counter heights illustrates <b>needs</b>."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"A planner talks down to a client whose English is awkward, even though she makes insightful comments about the products. This is selection driven by…",
+ c:["EXPECTATIONS — he screened out information that did not fit","Interests","Needs","Halo effect only"],a:0,
+ why:"Because her sentence structure was elementary, he expected her thinking process to be the same — so he screened out the evidence to the contrary."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"\"Our minds cannot tolerate ambiguity.\" What is the DANGER when we organize an incomplete message?",
+ c:["Rather than asking for clarification, we supply the missing parts and make assumptions","We forget the message entirely","We become defensive","We ask too many questions"],a:0,
+ why:"Filling gaps lets us read half-lit neon signs — but in conversation it creates problems when the parts we supply are wrong."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"A client asks if it's time to sell some stocks; the planner says \"yes\"; the client says \"ok\" and leaves. The planner sells. What went wrong?",
+ c:["The planner assumed \"ok\" meant \"sell them\" — the client meant \"ok, I'll think about it\"","The client changed his mind later","The planner used jargon","The client was resistant"],a:0,
+ why:"A textbook case of supplying the missing parts of a message instead of asking for clarification."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"In interpreting, what is of <b>critical importance</b>?",
+ c:["The meaning the RECEIVER assigns to a message — a gap from the intended meaning breaks communication down","The sender's intention","The literal dictionary meaning","The channel used"],a:0,
+ why:"Some meaning is created by the receiver; some is initiated by the sender and merely accepted. If the perceived meaning differs from the intended one, a <b>gap</b> is created."},
+{t:"mc",s:3,d:3,tag:"PERCEPTION",q:"You say \"You should talk this over with your husband,\" intending to build consensus. The client hears: \"She doesn't think I can make my own decisions.\" The lesson is…",
+ c:["Your GOOD INTENTIONS may be distorted by your client's MISPERCEPTIONS","Never involve family members","Only speak to one spouse at a time","Clients rarely misread advice"],a:0,
+ why:"Same table: a pat on the back meant as a greeting is read as patronizing and produces defensiveness; \"you'll have to decide which goals matter most\" is read as a lecture about responsibility."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"Internal <b>frames of reference</b> are…",
+ c:["Values, attitudes, beliefs and needs — mental sets that predispose us to react in stable, predictable ways","Perceptual biases","Learning styles","Communication channels"],a:0,
+ why:"They profoundly influence how we perceive the world and how we react to what we perceive."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"Clients prefer security to risk in every aspect of their lives. That is a…",
+ c:["VALUE","Attitude","Belief","Need"],a:0,
+ why:"Values are relatively abstract ideals influencing how we live, <b>without</b> being linked to a particular object or situation."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"They are \"not in favour of investing all their savings in something with uncertain returns.\" That is an…",
+ c:["ATTITUDE","Value","Belief","Need"],a:0,
+ why:"Attitudes influence how we act toward particular objects, people or situations. Because they show up in behaviour, they can be <b>observed</b> — and used to predict reactions."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"They think the stock market will sooner or later suffer a major correction. That is a…",
+ c:["BELIEF","Value","Attitude","Need"],a:0,
+ why:"Beliefs are the <b>cognitive dimension of attitudes</b> — what we think of particular things or people. They may or may not reflect reality."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"Their retirement requires withdrawing a fixed sum each month to cover expenses. That is a…",
+ c:["NEED","Value","Attitude","Belief"],a:0,
+ why:"Needs are experienced as a <b>difference between a current state and a desired state</b>, and this difference incites us to act."},
+{t:"mc",s:3,d:3,tag:"FRAMES",q:"Under what two conditions can beliefs be modified?",
+ c:["The source of new information must be CREDIBLE and the information VERIFIABLE","The client must be receptive and calm","The belief must be recent and minor","Repetition and authority"],a:0,
+ why:"We do not generally give up our beliefs easily. They may be based on a simple impression or on thorough analysis of the facts."},
+{t:"mc",s:3,d:2,tag:"FRAMES",q:"What determines how strongly a need motivates?",
+ c:["The GREATER the difference between the current and desired state, the greater the motivation","The client's income","How recently the need arose","How often it is discussed"],a:0,
+ why:"So clients are far more attentive to products and services presented in light of <b>how those will meet their needs</b>."},
+{t:"mc",s:3,d:3,tag:"FRAMES",q:"A client who hates debt shows little interest in a loan to maximize RRSP contributions. This shows that values…",
+ c:["CONDITION our understanding — information is evaluated against what is important to us","Are irrelevant to product selection","Change easily with good arguments","Are the same as needs"],a:0,
+ why:"And the reverse is true of you: it is imperative to examine <b>your own</b> internal frames of reference to anticipate their effects on how you perceive and approach clients."},
+{t:"mc",s:3,d:1,tag:"BIASES",q:"<b>Perceptual biases</b> occur when…",
+ c:["We judge someone or something BEFORE having all the necessary information","We rely on facts too heavily","We ask too many questions","We fail to take notes"],a:0,
+ why:"The four kinds: anchoring biases, Pygmalion effects, stereotypes and halo effects."},
+{t:"mc",s:3,d:2,tag:"BIASES",q:"Giving greater weight to information gathered in the <b>first few minutes</b> of a meeting than to information obtained later is…",
+ c:["An ANCHORING bias","A Pygmalion effect","A stereotype","A halo effect"],a:0,
+ why:"First impressions are useful perceptual tools; the problem arises when we <b>fail to adjust</b> them as more information arrives. Guard against it in yourself, and remember your client is at least as vulnerable — so send the right signals initially."},
+{t:"mc",s:3,d:2,tag:"BIASES",q:"A planner dreads a meeting, acts impatiently, the client responds negatively, and the planner takes that as confirmation the client is difficult. That is…",
+ c:["A PYGMALION effect (self-fulfilling prophecy)","An anchoring bias","A halo effect","A stereotype"],a:0,
+ why:"Our expectations increase the probability the event occurs. \"It is surely no coincidence that days we expect to go badly usually turn out that way.\""},
+{t:"mc",s:3,d:2,tag:"BIASES",q:"Judging others based solely on their <b>membership of particular groups</b> is…",
+ c:["A STEREOTYPE","An anchoring bias","A halo effect","A Pygmalion effect"],a:0,
+ why:"The most enduring and damaging are associated with gender, race, language, religion and socio-economic class. Like other biases they are a shortcut to avoid processing large quantities of information."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"Clients who express themselves well on many subjects lead a planner to assume they also understand financial matters. That is…",
+ c:["A HALO effect","An anchoring bias","A stereotype","A Pygmalion effect"],a:0,
+ why:"Individual traits colour the whole attitude toward a person. The consequence: the planner uses jargon expecting comprehension, <b>without verifying it</b>."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"What is the overall negative effect of perceptual biases?",
+ c:["They ISOLATE you from your clients, so you miss their individual goals and the chance to help","They slow meetings down","They make you appear unprofessional","They are only a legal risk"],a:0,
+ why:"Behind all biases are inaccurate perceptions and a failure to discern differences between individuals of the same group, or between positive and negative characteristics of the same person. Labels cannot adequately describe anyone."},
+{t:"mc",s:3,d:2,tag:"BIASES",q:"An <b>ASSUMPTION</b> is…",
+ c:["A conclusion drawn from little or no evidence","A verified fact about a client","A tentative perception","A type of feedback"],a:0,
+ why:"When we fail to question assumptions — especially long-held ones — we begin to think they are facts, when clearly they are not."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"Which is one of the five suggestions for countering perceptual biases?",
+ c:["Be committed to knowing each client as a UNIQUE INDIVIDUAL","Rely on first impressions, they are usually right","Avoid clients from unfamiliar backgrounds","Standardize your recommendations"],a:0,
+ why:"The five: be aware biases exist; know each client as an individual; check your own stereotypes; differentiate assumption from fact; get feedback to verify understanding."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"Why does the CLIENT-CENTRED approach make bias-checking more important than the old product-centred one?",
+ c:["You must accurately understand each client's situation BEFORE recommending suitable products or services","Regulators require it","Clients complain more now","Products are more complex"],a:0,
+ why:"Under the product-centred approach, making the sale was the focus, so individual understanding mattered less."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"Lorraine assumed Mr. Prawdzik was glad to retire, had little savings, and taught music. The key line in the analysis is…",
+ c:["\"Lorraine was NOT RELATING TO Mr. Prawdzik but to her PRECONCEPTIONS ABOUT HIM.\"","She lacked product knowledge","The branch was too noisy","He was a difficult client"],a:0,
+ why:"On the surface the atmosphere was friendly; beneath it her perceptions kept the conversation from developing."},
+{t:"mc",s:3,d:3,tag:"BIASES",q:"What did Lorraine never find out about Mr. Prawdzik?",
+ c:["He had just sold his house, was single with no dependants, and wanted the best way to use the proceeds for retirement","That he was about to change banks","That he taught physical education only part-time","That he had complained before"],a:0,
+ why:"He left with only a rate sheet. She lost the chance to help him delineate his goals or offer solutions."},
+{t:"mc",s:3,d:2,tag:"PERCEPTION",q:"What are the two primary BENEFITS of frames of reference?",
+ c:["They are labour-saving strategies, and they build subjective realities that are stable, predictable and secure","They eliminate bias and speed decisions","They improve memory and vocabulary","They make clients more receptive"],a:0,
+ why:"The cost of that efficiency is prejudice — anchoring, Pygmalion, stereotypes and halo effects — plus treating assumptions as facts."},
+
+/* ============ STAGE 4 — EFFECTIVE COMMUNICATION SKILLS ============ */
+{t:"mc",s:4,d:1,tag:"EMPATHY",q:"<b>Empathy</b> involves two aspects. They are…",
+ c:["Understanding clients from THEIR frames of reference, and communicating that understanding to them","Feeling what they feel, and agreeing with them","Listening quietly, and offering advice","Reading non-verbal cues, and paraphrasing"],a:0,
+ why:"When you respond empathetically you \"think <b>WITH</b>, rather than FOR or ABOUT\" your clients."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"Why does empathy matter? Which is NOT one of the three reasons given?",
+ c:["It shortens the sales cycle","Clients are more likely to do business with you if they believe you understand their concerns","It provides a low-threat environment","It minimizes defensiveness in clients"],a:0,
+ why:"It is critical that clients feel respected and understood right from the beginning — that determines the future of the relationship."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"A couple needs a mortgage for a bigger house because a baby is coming, and is visibly excited. An empathic professional acknowledges…",
+ c:["BOTH the financial need (cognitive) AND the excitement (emotional)","The financial need only — the excitement is not your business","The excitement only, to build rapport","Neither until the application is approved"],a:0,
+ why:"Empathic professionals understand clients on both the <b>cognitive (rational)</b> level and the <b>emotional</b> level, and communicate that understanding."},
+{t:"tf",s:4,d:2,tag:"EMPATHY",q:"Being empathic means you must agree with what your clients say or do.",a:false,
+ why:"Empathy does <b>not</b> mean adopting clients' feelings as your own, nor agreeing with them. Doing either would compromise your objectivity and hinder your ability to bring new perspectives and innovative solutions."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"The difference between EMPATHY and SYMPATHY is…",
+ c:["Empathy uses the CLIENT'S frame of reference; sympathy is your own emotional response from YOUR frame of reference","Empathy is spoken, sympathy is felt","Empathy is professional, sympathy is personal","There is no meaningful difference"],a:0,
+ why:"With sympathy \"you react as YOU would if YOU were placed in their situation.\""},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"Which is one of the three obstacles to empathy?",
+ c:["EVALUATIVE LISTENING — we're trained to argue our positions rather than understand others'","Excessive note-taking","Client resistance","Time zone differences"],a:0,
+ why:"The three: evaluative listening, the tendency to give advice, and fear of not reaching objectives. Empathy requires us to <b>suspend</b> our natural tendency to approve or disapprove."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"The rule for the obstacle \"tendency to give advice\" is…",
+ c:["CURB THE IMPULSE to advise before fully understanding their needs and objectives","Give advice only in writing","Advise early to save time","Defer all advice to a specialist"],a:0,
+ why:"The more uncomfortable and frustrated you are that clients can't see what's obvious to you, the more eager you may be to advise them prematurely."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"The third obstacle is the fear that unless you're discussing technical matters and products, you're not doing a good job. The rule is…",
+ c:["Make your client's objectives your PRIMARY concern","Set a products agenda for every meeting","Limit rapport-building to five minutes","Discuss products first, feelings later"],a:0,
+ why:"Planners chasing a fast sale have little interest in empathic communication; those building solid long-term relationships see it as indispensable. The technical discussion comes — but not at the expense of the relationship."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"<b>PRIMARY empathy</b>…",
+ c:["Accurately expresses the thoughts and feelings your client transmits, in your own words, without adding to them","Parrots the client's exact words","Points out motives not directly expressed","Gives advice on the situation"],a:0,
+ why:"It does not go beneath the surface to find feelings or ideas other than those directly expressed — but you express it <b>in your own words</b>, never parroting."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"<b>ADDITIVE empathy</b>…",
+ c:["Goes beyond what is expressed, pointing out implied motives or feelings, and may bridge to something said previously","Repeats the message accurately","Adds your own emotional reaction","Adds a product recommendation"],a:0,
+ why:"Use it to broaden clients' understanding of their situation and the wider implications of their decisions — and to <b>steer</b> discussions toward matters related to your expertise."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"Client: <i>\"I've been working hard but with the next lay-offs I may lose my job.\"</i> You: <i>\"That sounds discouraging and worrisome; in spite of your hard work you may be laid off anyway. That probably has some financial implications for you.\"</i> This is…",
+ c:["ADDITIVE-empathetic","Primary-empathetic","Non-empathetic","Sympathetic"],a:0,
+ why:"Stopping at \"that sounds discouraging and worrisome…\" would be <b>primary</b>. The added sentence encourages disclosure and lets you guide toward the financial implications — budget impact, liquidating investments, meeting existing obligations."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"Client: <i>\"By the end of each month I have nothing left.\"</i> You: <i>\"I know what you mean; I have the same problem.\"</i> This is…",
+ c:["NON-empathetic — you took the focus off the client and put it on yourself","Primary-empathetic","Additive-empathetic","Sympathetic and therefore acceptable"],a:0,
+ why:"You cannot know what he means — everyone's situation is unique. It makes him reluctant to share any more details."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"Which is NOT one of the five non-empathetic response types?",
+ c:["Summarizing the discussion","Premature advice-giving","Arguing or criticizing","Diverting attention toward your own issues"],a:0,
+ why:"The five: premature advice-giving, arguing, changing the subject, criticizing, and diverting attention to yourself."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"Which type of empathic response should be used MORE frequently?",
+ c:["Primary — with additive used to steer discussions toward important dimensions","Additive — primary is too shallow","Non-empathetic — it saves time","They should be used equally"],a:0,
+ why:"Additive responses can be used at any point to structure conversations and lead clients toward matters related to your expertise."},
+{t:"mc",s:4,d:2,tag:"EMPATHY",q:"Why is expressing feedback in YOUR OWN words, rather than the client's exact words, recommended?",
+ c:["It is further evidence of your DEPTH of understanding","It avoids sounding repetitive","It is faster","It protects confidentiality"],a:0,
+ why:"Among the five suggestions for empathizing: concentrate, show genuine interest, observe non-verbal behaviour, respond with carefully chosen words, and practise."},
+{t:"mc",s:4,d:1,tag:"LISTENING",q:"<b>Active listening</b> means…",
+ c:["Listening with the intent to truly understand, identifying the meaning behind clients' words AND actions","Hearing everything the client says","Taking complete notes","Not interrupting"],a:0,
+ why:"Every study in the area shows that on average <b>we are bad listeners</b>, and that effective active listening requires effort and training."},
+{t:"mc",s:4,d:2,tag:"LISTENING",q:"What is the \"thought gap\"?",
+ c:["The listener easily becomes bored, especially when the speaker talks for a long uninterrupted period","The delay between hearing and understanding","The difference between what is said and meant","The pause before a client answers"],a:0,
+ why:"Fedder's techniques exist to keep the mind stimulated and alert through it."},
+{t:"mc",s:4,d:3,tag:"LISTENING",q:"Which is one of Fedder's seven techniques for staying alert while listening?",
+ c:["Listen for and analyse MAIN IDEAS and central concepts rather than focusing on details","Repeat each sentence silently word for word","Take verbatim notes","Interrupt to check understanding every minute"],a:0,
+ why:"Also: focus on meaning not words; think ahead and speculate; test the validity of what is said; judge the manner in which conclusions are reached; attend to non-verbal behaviour; and understand it from the <b>speaker's</b> point of view, not your own."},
+{t:"mc",s:4,d:2,tag:"LISTENING",q:"The <b>feeling level</b> of a message is picked up largely through…",
+ c:["Non-verbal cues — hesitation, voice inflection, what is stressed or mumbled, expressions, posture, breathing","Direct questions about feelings","The words chosen","The length of the answer"],a:0,
+ why:"One level without the other is an incomplete message."},
+{t:"mc",s:4,d:2,tag:"LISTENING",q:"Why seek verification that you understood your client accurately?",
+ c:["It communicates respectful sensitivity, builds rapport, and minimizes misperceptions","It creates a record for compliance","It fills silences","It shortens the meeting"],a:0,
+ why:"Among the five suggestions for improving active listening: reflect, identify the main idea, pick up feeling and content, use agreeing body language, and seek verification."},
+{t:"mc",s:4,d:2,tag:"FEEDBACK",q:"<b>PARAPHRASING</b> is…",
+ c:["A restatement, in your own words, of the essence of your client's message — explicit or implicit","A summary of the whole meeting","Repeating the client's words back exactly","Asking a follow-up question"],a:0,
+ why:"To do it you must listen intently, suspend your evaluative tendency, and not judge the message using your own frames of reference."},
+{t:"mc",s:4,d:3,tag:"FEEDBACK",q:"What is the key limit of paraphrasing?",
+ c:["It adds nothing new — but it communicates understanding and opens the door to deeper discussion","It only works with receptive clients","It cannot capture feelings","It takes too long"],a:0,
+ why:"Example — Client: \"I need more income but don't want extra risk.\" Paraphrase: \"You are caught between getting a better return on the one hand and not wanting to take any chances on the other.\""},
+{t:"mc",s:4,d:2,tag:"FEEDBACK",q:"<b>SUMMARIZING</b> differs from paraphrasing because it applies to…",
+ c:["The entire discussion or large sections of it, rather than one part","Only the feeling level","Only written communication","Only the opening of a meeting"],a:0,
+ why:"It focuses on essentials, gives direction, provides <b>boundaries</b> for overly talkative clients, ties ideas together, and lets clients hear what they said and correct your misinterpretations."},
+{t:"mc",s:4,d:3,tag:"FEEDBACK",q:"Opening a meeting with a summary of the last one does which three things?",
+ c:["Underscores work already done, orients them to what remains, and shows how carefully you listened","Saves time, avoids repetition, and sets an agenda","Establishes authority, sets scope, and confirms fees","Tests memory, builds rapport, and verifies facts"],a:0,
+ why:"Practical rule: keep <b>brief written summaries of all client interviews</b> in your files so you can open accurately."},
+{t:"mc",s:4,d:2,tag:"QUESTIONING",q:"The four qualities of the information you need are…",
+ c:["Accurate, relevant, sufficient, current","Complete, written, verified, recent","Detailed, personal, factual, timely","Objective, measurable, private, current"],a:0,
+ why:"Accurate (not ambiguous), relevant (not incidental), sufficient (not too much or too little), current (not outdated)."},
+{t:"mc",s:4,d:2,tag:"QUESTIONING",q:"\"WHAT EXPERIENCE have you had with RRSPs?\" rather than \"Have you ever had an RRSP?\" is an example of…",
+ c:["An OPEN-ENDED question, which invites elaboration","A closed-ended question","A leading question","An indirect question"],a:0,
+ why:"Use open-ended questions with a client who may feel <b>threatened</b> by questions requiring a precise answer."},
+{t:"mc",s:4,d:3,tag:"QUESTIONING",q:"What are the two disadvantages of <b>closed-ended</b> questions?",
+ c:["Clients can't disclose outside your question's bounds, and they may feel you're controlling the conversation","They take too long and confuse clients","They are impolite and imprecise","They invite rambling answers"],a:0,
+ why:"They are useful for getting a lot of information quickly, but limit their use until the relationship develops and you have a sense of how clients will answer."},
+{t:"mc",s:4,d:2,tag:"QUESTIONING",q:"\"You have trouble saving, don't you?\" is a…",
+ c:["LEADING question — inappropriate in most meetings, it puts clients on the defensive","Follow-up question","Indirect question","Closed-ended question"],a:0,
+ why:"By forcing clients in a particular direction they can put clients on the defensive — especially if led into admitting something they'd rather not have disclosed."},
+{t:"mc",s:4,d:3,tag:"QUESTIONING",q:"\"I'll need to know your income in order to sketch out a rough budget for you\" is an…",
+ c:["INDIRECT question — one of the least threatening types, useful with a cautious client","Open-ended question","Leading question","Follow-up question"],a:0,
+ why:"Indirect questions seek information through <b>statements</b>, letting clients elaborate without feeling prodded or cornered."},
+{t:"mc",s:4,d:2,tag:"QUESTIONING",q:"Why are FOLLOW-UP questions necessary?",
+ c:["Clients may honestly not know what is being requested, or may purposely be evasive and vague","They fill awkward silences","They demonstrate expertise","They shorten meetings"],a:0,
+ why:"Examples: \"Do you have any other reactions to that?\" \"And how would your family feel about that?\" \"So how do you think that would change your lifestyle?\""},
+{t:"mc",s:4,d:2,tag:"QUESTIONING",q:"When should you use <b>PAUSES</b> instead of another question?",
+ c:["When clients seem reluctant to open up","When you need a precise figure","When the client is talking too much","When you disagree"],a:0,
+ why:"A planner who hesitates and nods instead of asking another question may be read as inviting the client to go on. Use a mixture of questions and pauses so the meeting is not an <b>interrogation</b>."},
+{t:"mc",s:4,d:1,tag:"LEARN-STYLES",q:"The three learning styles are…",
+ c:["Visual, auditory, kinaesthetic","Verbal, written, numeric","Analytical, intuitive, practical","Cognitive, emotional, behavioural"],a:0,
+ why:"Learning styles refer to <b>how you prefer to receive information</b>. For most of us one style is predominant — though people don't fit neatly into one box."},
+{t:"mc",s:4,d:2,tag:"LEARN-STYLES",q:"How do you best present information to a <b>KINAESTHETIC</b> learner?",
+ c:["Hands-on examples — better to let them draw the diagram themselves than to show them one","Carefully worded spoken explanations","Brochures and charts","A written summary to take home"],a:0,
+ why:"They are oriented toward action and process through tactile channels. Giving them a computer manual is not as effective as letting them jump in and experiment."},
+{t:"mc",s:4,d:2,tag:"LEARN-STYLES",q:"An <b>AUDITORY</b> learner is best served by…",
+ c:["Carefully-worded spoken explanations","Diagrams and charts","Hands-on experimentation","Written contracts"],a:0,
+ why:"They are most comfortable listening and talking, and are strong at analysing what they hear. Visual learners need <b>something to look at</b> — brochures, pamphlets, diagrams, charts."},
+{t:"mc",s:4,d:3,tag:"LEARN-STYLES",q:"How do you identify a client's learning style?",
+ c:["By observing the adjectives, adverbs and verbs they use","By asking them directly","By their education level","By their profession"],a:0,
+ why:"Visual clients use vision words (seeing, picturing, visualizing); auditory clients use sound and analysis words (hearing, thinking, analysing); kinaesthetic clients use action and feeling words (sensing, doing, being, acting)."},
+{t:"mc",s:4,d:2,tag:"LEARN-STYLES",q:"What does the research say about matching a client's learning style?",
+ c:["Those who present information consistently with client learning styles are perceived in more positive terms","It has no measurable effect","It only matters for complex products","It matters only for first meetings"],a:0,
+ why:"The practical shortcut when you don't have time to assess: <b>use all three modes</b>, so at least part of the information lands in the way that suits them best."},
+{t:"mc",s:4,d:2,tag:"DIFFICULT",q:"How should you handle a <b>BULLY</b>?",
+ c:["Stand firm without being combative — state positions with calmness and conviction","Match their aggression to establish parity","Concede quickly to end the confrontation","Refer them to a colleague"],a:0,
+ why:"They expect you to either cower or put up a fight — the two usual responses to aggressiveness. Evade both. Look <b>past</b> harsh words to the message, and concentrate on their goals."},
+{t:"mc",s:4,d:3,tag:"DIFFICULT",q:"With a false <b>EXPERT</b>, the rule is…",
+ c:["Monitor your emotional reactions, avoid one-upmanship, assert what you do know and demonstrate you can take care of them","Correct each error immediately","Defer to their expertise to keep the peace","Provide more technical detail than they can follow"],a:0,
+ why:"Because they lack true expertise, they achieve expert status at the expense of others — which evokes the vulnerabilities of even the most competent employees."},
+{t:"mc",s:4,d:3,tag:"DIFFICULT",q:"With a <b>COMPLAINER</b>, what is usually a waste of time?",
+ c:["Trying to tell them about the good things in life — they know all the counter-arguments","Listening to their complaints at all","Setting goals","Acknowledging their feelings"],a:0,
+ why:"Listen patiently and acknowledge feelings at least initially — then you MUST move toward action, helping them focus on what specifically can be done."},
+{t:"mc",s:4,d:2,tag:"DIFFICULT",q:"With a <b>PESSIMIST</b>, the best approach is…",
+ c:["Avoid arguing or trying to change their view — remain realistic and concentrate on viable solutions","Present optimistic projections","Agree with their outlook to build rapport","Limit contact to writing"],a:0,
+ why:"It can be easy to be drawn into their gloomy view of the world — this should be avoided at all costs."},
+{t:"mc",s:4,d:3,tag:"DIFFICULT",q:"With a <b>PASSIVE</b> client, what must you avoid?",
+ c:["Being lured into solving their problems for them — your role is to HELP them decide, not decide for them","Asking open-ended questions","Explaining their responsibilities","Giving them time to think"],a:0,
+ why:"They want to be led by someone who takes responsibility for their decisions, tend to procrastinate, and need to feel secure and accepted before they open up. Approach them non-threateningly with open-ended questions and emphasize that their financial affairs are their responsibility."},
+{t:"mc",s:4,d:2,tag:"DIFFICULT",q:"With an <b>EXCESSIVELY TALKATIVE</b> client, the technique is to…",
+ c:["Continually shift the focus back to relevant topics: \"What is our next step?\"","Interrupt and summarize the products","Answer in monosyllables","Schedule shorter meetings only"],a:0,
+ why:"For those who over-stay: non-verbal gestures (putting away papers, checking the time, standing), and if that fails, extend your hand toward the door while saying you have another appointment."},
+{t:"mc",s:4,d:3,tag:"DIFFICULT",q:"What is the single rule to follow with ALL difficult clients?",
+ c:["Avoid reacting in the way they EXPECT you to react","Match their communication style exactly","Document every exchange","Refer them elsewhere"],a:0,
+ why:"To develop effective business relations it is essential to <b>evade the traps</b> that would doom the relationship. The basic rule of thumb: stay calm, be courteous, be respectful."},
+{t:"mc",s:4,d:3,tag:"LEARN-STYLES",q:"Anna Tucci said \"I don't SEE how it could happen\" and \"I can't PICTURE it.\" Ken kept reciting expenses aloud. His mistake was…",
+ c:["Mismatching her learning style — she was VISUAL and needed to see it on paper","Speaking too quickly","Being insufficiently technical","Failing to involve her husband"],a:0,
+ why:"She gave clear clues. Ken was not aware of the difference and so never thought of trying a different approach."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"In the Tucci case, what did Ken miss about the RV?",
+ c:["Its MEANING to Anna — it was what allowed her to spend time with her parents","Its resale value","That the payments were current","That Joseph had chosen it"],a:0,
+ why:"No one understood that, or communicated that they had — part of the reason she had difficulty seeing the dollars and cents. Ken also sided with Joseph in the couple's conflict, and did almost no problem-solving about their bigger picture of goals, lifestyle and resources."},
+{t:"mc",s:4,d:3,tag:"EMPATHY",q:"The rebuttal to \"empathy and active listening take too much time\" is…",
+ c:["They do not necessarily require MORE time — they demand effort, concentration and the conviction that they matter","Firms should hire more staff","They can be delegated","They only apply to wealthy clients"],a:0,
+ why:"Many clients say that, along with competency, what they want is <b>an understanding of their concerns</b>. Once that is established they can move on to goals, lifestyles and solutions."}
+];
+
+/* ---------- CHAPTER 1 BOSSES ---------- */
+const BOSSES_C1 = {
+1:{name:"THE VARNER INCIDENT",art:"[ SENT ] --X--&gt; [ RECEIVED ]",intro:"A fifteen-year client walks in angry. Find every break in the chain.",
+   steps:[
+    {t:"mc",d:2,tag:"COMM-MODEL",q:"BOSS 1/5 — Ms. Varner sat down without being invited and sounded annoyed, with no cheerful smile. Before a word about the fund, what has she already sent you?",
+     c:["A non-verbal message that something is wrong","Nothing — only words carry messages","A request for privacy","A pragmatic error"],a:0,
+     why:"Posture, facial expression and vocal characteristics were all carrying the message before the content arrived."},
+    {t:"mc",d:3,tag:"SEMIOTICS",q:"BOSS 2/5 — Alan said the \"net asset value might decline if the yield curve ascended.\" Which failure is this, above all?",
+     c:["Encoding — the symbols chosen were not the most accurate or helpful for this receiver","A transmission failure caused by noise","A filter problem on her side alone","A status differential"],a:0,
+     why:"He later translated it as \"the value in the paper could go down if interest rates started to go up\" — which she understood immediately. The symbols, not the idea, were the problem."},
+    {t:"mc",d:2,tag:"CLEAR-MSG",q:"BOSS 3/5 — Which rule for sending clear messages would have prevented it?",
+     c:["Underestimate the background knowledge of your clients, and avoid technical jargon","Practice your delivery in front of a mirror","Repeat main ideas","Speak more slowly"],a:0,
+     why:"Underestimating background knowledge ensures you don't leave out pieces clients need. And he should have varied the technical level to match her perceived ability to understand."},
+    {t:"mc",d:3,tag:"COMM-MODEL",q:"BOSS 4/5 — She said \"I told you I didn't want to take any risks\" and needs the money in three years. What else did Alan fail to do?",
+     c:["Understand her goals — so he made an inappropriate suggestion","Send written confirmation","Control the noise in the branch","Respect her personal space"],a:0,
+     why:"Failing to understand goals is a listening failure, not an explaining failure — and it produced an unsuitable recommendation."},
+    {t:"mc",d:3,tag:"COMM-MODEL",q:"BOSS 5/5 — FINISH IT. Where does the book place the blame?",
+     c:["BOTH share it — one for not listening, the other for not explaining carefully enough","Entirely with Alan","Entirely with Ms. Varner","With the product, not the people"],a:0,
+     why:"\"Or one for using complex language and the other for not understanding and failing to say so.\" The result is a failure to communicate and a possibly damaged relationship. Stage cleared."}
+   ]},
+2:{name:"THE MIXED SIGNAL",art:"WORDS ==&gt; \"FINE\"  //  BODY ==&gt; ???",intro:"The words say one thing. The body says another. Read both.",
+   steps:[
+    {t:"mc",d:2,tag:"NONVERBAL",q:"BOSS 1/5 — A client says in controlled tones that she is not upset, but her face is red. What is happening?",
+     c:["Non-verbalized feelings are LEAKING, because we have less control over non-verbal expression than over words","She is lying deliberately","The room is too warm to judge","Her filter has closed"],a:0,
+     why:"You may be getting one message verbally and another non-verbally — and you need her real attitude so your solutions match her true needs."},
+    {t:"mc",d:2,tag:"RECEPTIVITY",q:"BOSS 2/5 — She now keeps her head immobile, mouth tightly closed, eyes down, posture semi-closed, energy moderate. Where is she on the scale?",
+     c:["CAUTIOUS","Receptive","Resistant","Impossible to place"],a:0,
+     why:"Moderate trust, marginal involvement, limited acceptance of you — she has probably received a message she does not like but has not rejected you."},
+    {t:"mc",d:3,tag:"RECEPTIVITY",q:"BOSS 3/5 — What is the right move with her?",
+     c:["Draw her in by concentrating on her NEEDS and OBJECTIVES, and help her verbalize her reluctance","Present the product benefits again, in more detail","Move your chair closer","Wait silently until she speaks"],a:0,
+     why:"Ask questions about your input — \"What do you think about that idea?\" — then listen attentively and give feedback. Depending on your skill she moves toward receptive or resistant."},
+    {t:"mc",d:2,tag:"SILENCE",q:"BOSS 4/5 — She falls silent for several seconds. What do you do?",
+     c:["Do not rush to fill it — and interpret it in context, alongside her non-verbal behaviour","Fill it immediately to reduce tension","Treat the silence as agreement","Ask her to say something"],a:0,
+     why:"Silence may mean frustration, boredom, incomprehension — or intent listening and reflection. Because it can mean opposite things, context and accompanying cues decide."},
+    {t:"mc",d:3,tag:"SELF-SIGNALS",q:"BOSS 5/5 — FINISH IT. She leans back and her eyes wander. What are the two most revealing cues you just read?",
+     c:["POSTURE and EYE CONTACT","Gestures and tone","Facial expression and distance","Silence and vocabulary"],a:0,
+     why:"Leaning back is an attempt to distance herself; when we can't move away physically we use our eyes to create psychological distance — the elevator insight. Boss down."}
+   ]},
+3:{name:"LORRAINE'S BLIND SPOT",art:"[ CLIENT ] vs [ PRECONCEPTION ]",intro:"Mr. Prawdzik came in for GIC rates. Name every bias that cost her the relationship.",
+   steps:[
+    {t:"mc",d:2,tag:"BIASES",q:"BOSS 1/6 — \"You have done your time and certainly deserve a rest,\" based on her experience with other teachers. Which bias?",
+     c:["A STEREOTYPE — judging him by his membership of a group","An anchoring bias","A halo effect","A Pygmalion effect"],a:0,
+     why:"He replied that he ENJOYED his work and would miss it a great deal. The category did not fit the man."},
+    {t:"mc",d:3,tag:"BIASES",q:"BOSS 2/6 — She assumed he had little saved \"because he was a teacher.\" What is the difference between that and a fact?",
+     c:["It is an ASSUMPTION — a conclusion drawn from little or no evidence","It is a fact, since teacher salaries are public","It is a belief, and therefore verifiable","It is a value"],a:0,
+     why:"When we fail to question assumptions we begin to think they are facts, when clearly they are not. Countering bias means differentiating assumption from fact."},
+    {t:"mc",d:3,tag:"BIASES",q:"BOSS 3/6 — She called him a MUSIC teacher based on his appearance and manner. He taught physical education. Which bias let one trait colour her whole picture of him?",
+     c:["A HALO effect","An anchoring bias","A Pygmalion effect","A filter"],a:0,
+     why:"Individual characteristics or traits are allowed to influence the whole attitude toward a person."},
+    {t:"mc",d:3,tag:"BIASES",q:"BOSS 4/6 — What is the key line of the analysis?",
+     c:["\"Lorraine was NOT RELATING TO Mr. Prawdzik but to her PRECONCEPTIONS ABOUT HIM.\"","She was insufficiently trained on GICs","The branch was too noisy for a real conversation","He was a resistant client from the start"],a:0,
+     why:"On the surface the atmosphere was friendly and she seemed available to help. Beneath it, her perceptions kept the conversation from developing."},
+    {t:"mc",d:2,tag:"BIASES",q:"BOSS 5/6 — What did it cost her?",
+     c:["He left with only a rate sheet — she never learned he had just sold his house and needed a retirement plan for the proceeds","A formal complaint","A referral to a competitor","Nothing measurable"],a:0,
+     why:"He was single with no dependants and looking for the best way to use the sale proceeds for retirement. She never got to delineate his goals or offer solutions."},
+    {t:"mc",d:3,tag:"BIASES",q:"BOSS 6/6 — FINISH IT. Which counter-measure would have saved this meeting?",
+     c:["Be committed to knowing each client as a UNIQUE INDIVIDUAL, and get feedback to verify your understanding","Prepare more product sheets","Keep the meeting shorter","Refer him to a specialist"],a:0,
+     why:"Under the client-centred approach you must accurately understand each client's situation BEFORE recommending anything. Simply ask: \"What do you think about that?\" Boss down."}
+   ]},
+4:{name:"THE TUCCIS",art:"$170K IN  //  $0 LEFT  //  1 RV",intro:"FINAL BOSS. Two clients, one conflict, and a representative getting it wrong four ways.",
+   steps:[
+    {t:"mc",d:3,tag:"EMPATHY",q:"BOSS 1/6 — Anna says sadly she'd hate to sell the trailer: the trips with her parents are \"about the only thing we do together now.\" Ken replies \"You will find other things to do.\" That response is…",
+     c:["NON-empathetic — premature advice that shows no understanding of what the RV means to her","Primary-empathetic","Additive-empathetic","Appropriately realistic"],a:0,
+     why:"Non-empathetic responses include premature advice-giving, arguing, changing the subject, criticizing, and diverting attention to yourself."},
+    {t:"mc",d:3,tag:"EMPATHY",q:"BOSS 2/6 — Which response would have been PRIMARY-empathetic?",
+     c:["\"It sounds like giving up the trailer would mean giving up time with your parents, and that's hard.\"","\"You will find other things to do.\"","\"I know how you feel, I had to sell my boat.\"","\"Let's look at the numbers first.\""],a:0,
+     why:"Primary empathy accurately expresses, in your own words, the thoughts and feelings the client transmitted — without adding to them or parroting."},
+    {t:"mc",d:3,tag:"LEARN-STYLES",q:"BOSS 3/6 — Anna says \"I don't SEE how it could happen. I can't PICTURE it.\" Ken responds \"LISTEN to your yearly expenses.\" What is the mismatch?",
+     c:["She is a VISUAL learner and he keeps using the AUDITORY channel","She is kinaesthetic and he is visual","She is auditory and he is visual","There is no mismatch — she is simply resistant"],a:0,
+     why:"For her, listening to a litany of expenses was not as good as looking at the situation on paper. Ken never thought of trying a different approach."},
+    {t:"mc",d:2,tag:"LEARN-STYLES",q:"BOSS 4/6 — What should Ken have done instead?",
+     c:["Put the numbers on paper — a chart or written budget she could look at","Repeat the figures more slowly","Send the figures by e-mail afterward","Ask Joseph to explain them to her"],a:0,
+     why:"Having different ways to reach a client is like having channels you can switch to when the one you're using isn't transmitting. It gives you flexibility and effectiveness."},
+    {t:"mc",d:3,tag:"DIFFICULT",q:"BOSS 5/6 — Joseph calls it \"that STUPID RV\" and asks Ken to agree. Ken says \"Personally, I agree,\" turning away from Anna. What did he do wrong?",
+     c:["He got caught in the couple's conflict and SIDED with one of them","He was too honest about the numbers","He should have ended the meeting","He used the wrong learning channel"],a:0,
+     why:"Taking a side in a conflict between two clients did not help the situation — and he physically turned away from Anna while doing it, a non-verbal message of its own."},
+    {t:"mc",d:3,tag:"EMPATHY",q:"BOSS 6/6 — FINISH IT. What was missing from the meeting overall?",
+     c:["Problem-solving — nobody looked at the bigger picture of goals, lifestyle and resources, or sought creative solutions","A signed agreement","A credit check","A privacy disclosure"],a:0,
+     why:"Along with competency, what clients say they want is an understanding of their concerns — and only once that is established can you move on to goals, lifestyles and solutions. YOU WIN."}
+   ]},
+5:{name:"THE DIFFICULT CLIENT LOUNGE",art:"BULLY / EXPERT / COMPLAINER / PESSIMIST / PASSIVE / TALKER",intro:"Everything, all at once. Six clients. No mercy.",
+   steps:[
+    {t:"mc",d:3,tag:"DIFFICULT",q:"LOUNGE 1/6 — He is abrupt, intimidating and forceful, trying to dominate the conversation. Your move?",
+     c:["State your position with calmness and conviction, sitting upright and facing him squarely","Match his volume so he knows you're serious","Agree with him to defuse it","End the meeting"],a:0,
+     why:"BULLY. He expects you to cower or fight — evade both traps. Look past the harsh words to the message, and concentrate on his goals."},
+    {t:"mc",d:3,tag:"DIFFICULT",q:"LOUNGE 2/6 — She denigrates your colleagues and highlights every inconsequential thing that makes her look knowledgeable. Your move?",
+     c:["Monitor your own reactions, avoid one-upmanship, assert what you do know and show you can take care of her","Test her knowledge with technical questions","Agree that she knows best","Bring in a senior colleague"],a:0,
+     why:"EXPERT. Because they lack true expertise they achieve expert status at the expense of others — evoking the vulnerabilities of even the most competent employees."},
+    {t:"mc",d:3,tag:"DIFFICULT",q:"LOUNGE 3/6 — He criticizes everything and never says anything positive. After listening patiently, what must you do?",
+     c:["Move toward ACTION — help him focus on what specifically can be done","Point out the good things in his situation","Keep listening until he runs out","Reschedule for another day"],a:0,
+     why:"COMPLAINER. Acknowledge feelings at least initially — but unless you set goals and take concrete steps you could listen a long time and get nowhere. Telling them about the good things in life is a waste of time; they know all the counter-arguments."},
+    {t:"mc",d:2,tag:"DIFFICULT",q:"LOUNGE 4/6 — She expects everything to go wrong and finds something to worry about in every option. Your move?",
+     c:["Avoid arguing or trying to change her view — stay realistic and concentrate on viable solutions","Present the most optimistic projection available","Agree with her worries to build rapport","Give her time alone to think"],a:0,
+     why:"PESSIMIST. It is easy to be drawn into their gloomy view of the world — avoid that at all costs."},
+    {t:"mc",d:3,tag:"DIFFICULT",q:"LOUNGE 5/6 — He procrastinates, stays silent, and keeps trying to get you to decide for him. Your move?",
+     c:["Use open-ended questions in a non-threatening way, and emphasize that his financial affairs are HIS responsibility","Make the decision so the file can progress","Present only one option to simplify it","Set a deadline and enforce it"],a:0,
+     why:"PASSIVE. They need to feel secure and accepted before they open up. Your role is to HELP them make decisions, not to make the decisions for them."},
+    {t:"mc",d:3,tag:"DIFFICULT",q:"LOUNGE 6/6 — FINISH IT. Across all six types, what is the rule of thumb?",
+     c:["Stay calm, be courteous, be respectful — and never react the way they expect you to","Mirror each client's style back at them","Keep every meeting under thirty minutes","Document everything and escalate"],a:0,
+     why:"Their behaviour is chronic — they are difficult with almost everyone. To develop effective business relations you must evade the traps that would doom the relationship. LOUNGE CLEARED."}
+   ]}
+};
+
+const CRAM_C1 = `
+<h3>NUMBERS TO KNOW COLD</h3>
+<table>
+<tr><td>Workday a typical executive spends communicating</td><td class="f">75%</td></tr>
+<tr><td>Meaning conveyed by facial expressions</td><td class="f">over 55%</td></tr>
+<tr><td>Intimate zone</td><td class="f">18 inches</td></tr>
+<tr><td>Personal zone</td><td class="f">1.5 – 4 feet</td></tr>
+<tr><td>Social zone (business)</td><td class="f">4 – 12 feet</td></tr>
+<tr><td>Public zone</td><td class="f">12 – 25 feet</td></tr>
+<tr><td>Customer starts to feel crowded</td><td class="f">closer than 3 feet</td></tr>
+<tr><td>Ideal client-professional distance</td><td class="f">4 – 5 feet</td></tr>
+</table>
+
+<h3>THE LISTS TO MEMORIZE</h3>
+<table>
+<tr><td>3 areas of semiotics</td><td class="f">Semantics (word ↔ object) · Syntactics (word ↔ word) · Pragmatics (people ↔ words — highest misunderstanding potential)</td></tr>
+<tr><td>4 forms of non-verbal communication</td><td class="f">Posture · Facial expressions · Gestures · Vocal characteristics</td></tr>
+<tr><td>4 vocal characteristics</td><td class="f">Tone · Volume · Pitch · Cadence</td></tr>
+<tr><td>3 client receptivity states</td><td class="f">Receptive · Cautious · Resistant</td></tr>
+<tr><td>4 attitudes to convey non-verbally</td><td class="f">Friendliness · Respect · Openness · Involvement</td></tr>
+<tr><td>4 internal frames of reference</td><td class="f">Values · Attitudes · Beliefs · Needs</td></tr>
+<tr><td>3 things perceptions help us do</td><td class="f">Select · Organize · Interpret</td></tr>
+<tr><td>3 drivers of selection</td><td class="f">Interests · Needs · Expectations</td></tr>
+<tr><td>4 perceptual biases</td><td class="f">Anchoring · Pygmalion (self-fulfilling prophecy) · Stereotypes · Halo</td></tr>
+<tr><td>2 aspects of empathy</td><td class="f">Understand from THEIR frame of reference · Communicate that understanding</td></tr>
+<tr><td>2 levels of empathic understanding</td><td class="f">Cognitive (rational) · Emotional</td></tr>
+<tr><td>3 obstacles to empathy</td><td class="f">Evaluative listening · Tendency to give advice · Fear of not reaching objectives</td></tr>
+<tr><td>3 empathic response types</td><td class="f">Primary · Additive · Non-empathetic</td></tr>
+<tr><td>2 types of feedback</td><td class="f">Paraphrasing (part) · Summarizing (whole)</td></tr>
+<tr><td>4 qualities of needed information</td><td class="f">Accurate · Relevant · Sufficient · Current</td></tr>
+<tr><td>5 question types + pauses</td><td class="f">Open-ended · Closed-ended · Leading · Indirect · Follow-up · Pauses</td></tr>
+<tr><td>3 learning styles</td><td class="f">Visual · Auditory · Kinaesthetic</td></tr>
+<tr><td>6 difficult client types</td><td class="f">Bullies · Experts · Complainers · Pessimists · Passive · Excessively talkative</td></tr>
+</table>
+
+<h3>DEFINITIONS MOST LIKELY TESTED VERBATIM</h3>
+<table>
+<tr><td>Effective communication</td><td class="f">when the message intended by the sender is understood by the receiver — says nothing about agreement</td></tr>
+<tr><td>Pragmatics</td><td class="f">relationship between people and words; highest potential for misunderstanding</td></tr>
+<tr><td>Bracketing</td><td class="f">setting personal concerns aside until they can be dealt with later</td></tr>
+<tr><td>Proxemics</td><td class="f">the study of social distances and communication</td></tr>
+<tr><td>Empathy vs sympathy</td><td class="f">their frame of reference vs your own frame of reference</td></tr>
+<tr><td>Needs</td><td class="f">the difference between a current state and a desired state, which incites us to act</td></tr>
+<tr><td>Beliefs</td><td class="f">the cognitive dimension of attitudes; changed only if the source is credible and the information verifiable</td></tr>
+<tr><td>Assumption</td><td class="f">a conclusion drawn from little or no evidence</td></tr>
+<tr><td>Non-verbal behaviour</td><td class="f">tentative evidence, never conclusive proof</td></tr>
+</table>
+
+<h3>GUIDELINES TO AVOID MISCOMMUNICATION</h3>
+<table>
+<tr><td>SENDER</td><td class="f">Speak clearly · vocabulary appropriate to the client · avoid jargon · break up complex ideas · be accurate, not vague · ask for feedback</td></tr>
+<tr><td>TRANSMISSION</td><td class="f">Area free of noise · comfortable setting · minimize status differentials · respect comfort zones</td></tr>
+<tr><td>RECEIVER</td><td class="f">Concentrate · bracket internal distractions · turn off filters · listen for feelings · read non-verbal language · give feedback</td></tr>
+</table>
+
+<h3>HIGH-YIELD TRAPS</h3>
+<div class="trap">Effective communication does <b>not</b> mean agreement — only that the intended message was understood.</div>
+<div class="trap">Non-verbal behaviour is <b>tentative evidence</b>, never proof. Interpret cues only alongside other information.</div>
+<div class="trap">A silent client <b>is</b> communicating. Do not rush to fill the silence.</div>
+<div class="trap">Empathy is not sympathy, not agreement, and not adopting their feelings — that would compromise your objectivity.</div>
+<div class="trap">Primary empathy is in <b>your own words</b>, never a parrot of theirs.</div>
+<div class="trap">Perceptions are labour-saving devices we <b>need</b> — the trouble is relying on them too heavily or refusing to revise them.</div>
+<div class="trap">Anchoring = first few minutes. Pygmalion = self-fulfilling. Stereotype = group membership. Halo = one trait colours everything.</div>
+<div class="trap">With difficult clients, never react the way they <b>expect</b> you to.</div>
+
+<h3>THE SENTENCE TO CARRY INTO THE EXAM</h3>
+<p style="color:var(--yellow);font-size:21px">"Effective communication has occurred when the message intended by the sender is understood by the receiver."<br>
+<span class="muted">→ Understand from their frame of reference. Communicate that you understood. Then verify it with feedback.</span></p>
+`;
+
+/* ---------- CHAPTER REGISTRY ---------- */
+const CHAPTERS = {
+  comm:{ id:"comm", code:"CH.1", name:"THE HUMAN INTERFACE",
+         sub:"Chapter 1 — Interpersonal Communication",
+         blurb:"The communication process · non-verbal · perceptions · effective skills",
+         stages:STAGES_C1, bank:BANK_C1, bosses:BOSSES_C1, cram:CRAM_C1,
+         gauntlet:5, calc:false },
+  tvm:{  id:"tvm", code:"M2 CH.1", name:"TIME VALUE RAIDERS",
+         sub:"Module 2, Chapter 1 — Time Value of Money",
+         blurb:"Single sums · annuities · effective rates · loans, bonds &amp; retirement",
+         stages:STAGES, bank:BANK, bosses:BOSSES, cram:CRAM_HTML,
+         gauntlet:6, calc:true }
+};
+
 /* ============================================================
    ENGINE
    ============================================================ */
 const $ = id => document.getElementById(id);
-const SAVE_KEY = "tvmRaiders_v1";
+const SAVE_KEY = "tvmRaiders_v2";
 
-let save = {unlocked:1, best:{}, hi:[], mastery:{}, snd:true, crt:true};
-try{ const raw = localStorage.getItem(SAVE_KEY); if(raw) save = Object.assign(save, JSON.parse(raw)); }catch(e){}
+let save = {unlocked:{tvm:1, comm:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
+try{
+  const raw = localStorage.getItem(SAVE_KEY);
+  if(raw){ save = Object.assign(save, JSON.parse(raw)); }
+  else {
+    const old = localStorage.getItem("tvmRaiders_v1");   // migrate a single-chapter save
+    if(old){
+      const o = JSON.parse(old);
+      save.unlocked = {tvm: o.unlocked || 1, comm: 1};
+      save.best = {}; Object.keys(o.best||{}).forEach(k=>{ save.best["tvm:"+k] = o.best[k]; });
+      save.hi = (o.hi||[]).map(h=>Object.assign({ch:"M2 CH.1"}, h));
+      save.mastery = o.mastery || {};
+      if(o.snd !== undefined) save.snd = o.snd;
+      if(o.crt !== undefined) save.crt = o.crt;
+    }
+  }
+}catch(e){}
+if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1};
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------- audio ---------- */
@@ -996,8 +1739,23 @@ const sfx = {
   tick:()=>beep(1500,.03,"square",.03)
 };
 
+/* ---------- active chapter ---------- */
+let CH = CHAPTERS[save.lastCh] || CHAPTERS.comm;
+function setChapter(id){
+  CH = CHAPTERS[id] || CHAPTERS.comm;
+  save.lastCh = CH.id; persist();
+  document.body.dataset.ch = CH.id;
+  $("btnCalc").style.display = CH.calc ? "" : "none";
+  toggleCalc(CH.calc && $("calcPanel").classList.contains("on"));
+}
+const chUnlocked = () => (save.unlocked && save.unlocked[CH.id]) || 1;
+function setUnlocked(v){
+  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1};
+  save.unlocked[CH.id] = v;
+}
+
 /* ---------- screens ---------- */
-const SCR = {title:"scrTitle", stages:"scrStages", game:"scrGame", results:"scrResults",
+const SCR = {title:"scrTitle", chapters:"scrChapters", stages:"scrStages", game:"scrGame", results:"scrResults",
              enter:"scrEnter", hof:"scrHof", help:"scrHelp", data:"scrData", cram:"scrCram"};
 let current = "title";
 function show(name){
@@ -1005,10 +1763,11 @@ function show(name){
   $(SCR[name]).classList.add("on");
   current = name;
   window.scrollTo({top:0,behavior:"smooth"});
+  if(name==="chapters") renderChapters();
   if(name==="stages") renderStages();
   if(name==="hof") renderHof();
   if(name==="data") renderData();
-  if(name==="cram") $("cramBody").innerHTML = CRAM_HTML;
+  if(name==="cram"){ $("cramBody").innerHTML = CH.cram; $("cramWho").textContent = CH.code + " — " + CH.name; }
   if(name==="title") renderTitle();
 }
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{sfx.click();show(b.dataset.go);}));
@@ -1031,11 +1790,27 @@ function renderTitle(){
   document.body.classList.toggle("noCrt", !save.crt);
 }
 
+function renderChapters(){
+  const g = $("chapterGrid"); g.innerHTML = "";
+  Object.values(CHAPTERS).forEach(c=>{
+    const done = Object.keys(save.best).filter(k=>k.indexOf(c.id+":")===0).length;
+    const d = document.createElement("div");
+    d.className = "stage";
+    d.innerHTML = `<div class="num">${c.code}</div>
+      <div class="nm">${c.name}</div>
+      <div class="ds">${c.sub}<br><span style="color:#7a63c4">${c.blurb}</span></div>
+      <div class="best">${c.stages.length} STAGES · ${c.bank.length} DRILLS · ${done}/${c.stages.length} CLEARED</div>`;
+    d.addEventListener("click",()=>{ sfx.coin(); setChapter(c.id); show("stages"); });
+    g.appendChild(d);
+  });
+}
+
 function renderStages(){
+  $("stagesWho").textContent = CH.code + " — " + CH.name;
   const g = $("stageGrid"); g.innerHTML = "";
-  STAGES.forEach(st=>{
-    const locked = st.n > save.unlocked;
-    const best = save.best[st.n];
+  CH.stages.forEach(st=>{
+    const locked = st.n > chUnlocked();
+    const best = save.best[CH.id + ":" + st.n];
     const d = document.createElement("div");
     d.className = "stage" + (locked?" locked":"");
     d.innerHTML = `${locked?'<div class="lock">[X]</div>':''}
@@ -1048,16 +1823,19 @@ function renderStages(){
     g.appendChild(d);
   });
   const gb = $("btnGauntlet");
-  gb.style.opacity = save.unlocked > 5 ? 1 : .45;
+  const all = CH.stages.length;
+  gb.textContent = "!! GAUNTLET — ALL " + all + " STAGES";
+  gb.style.opacity = chUnlocked() > all ? 1 : .45;
 }
 $("btnGauntlet").addEventListener("click",()=>{
-  if(save.unlocked <= 5){ sfx.wrong(); toast("CLEAR ALL 5 STAGES FIRST"); return; }
+  const all = CH.stages.length;
+  if(chUnlocked() <= all){ sfx.wrong(); toast("CLEAR ALL " + all + " STAGES FIRST"); return; }
   sfx.boss(); startRun({mode:"gauntlet"});
 });
 $("btnDrill").addEventListener("click",()=>{ sfx.coin(); startRun({mode:"drill"}); });
 $("btnWipe").addEventListener("click",()=>{
   if(confirm("Erase all progress, high scores and study data?")){
-    save = {unlocked:1,best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt};
+    save = {unlocked:{tvm:1,comm:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
     persist(); renderHof(); toast("MEMORY CLEARED");
   }
 });
@@ -1072,31 +1850,33 @@ function pick(arr, n){ return shuffle(arr).slice(0, n); }
 
 function buildQueue(cfg){
   if(cfg.mode==="stage"){
-    const pool = BANK.filter(q=>q.s===cfg.stage);
+    const pool = CH.bank.filter(q=>q.s===cfg.stage);
     const qs = pick(pool, Math.min(10, pool.length));
-    return {questions:qs, boss:BOSSES[cfg.stage]};
+    return {questions:qs, boss:CH.bosses[cfg.stage]};
   }
   if(cfg.mode==="gauntlet"){
     let qs = [];
-    for(let s=1;s<=5;s++) qs = qs.concat(pick(BANK.filter(q=>q.s===s), 3));
-    return {questions:shuffle(qs), boss:BOSSES[6]};
+    CH.stages.forEach(st=>{ qs = qs.concat(pick(CH.bank.filter(q=>q.s===st.n), 3)); });
+    return {questions:shuffle(qs), boss:CH.bosses[CH.gauntlet]};
   }
-  if(cfg.mode==="practice") return {questions:shuffle(BANK), boss:null, endless:true};
+  if(cfg.mode==="practice") return {questions:shuffle(CH.bank), boss:null, endless:true};
   if(cfg.mode==="drill"){
     const weak = weakTags();
-    let pool = BANK.filter(q=>weak.includes(q.tag));
-    if(pool.length < 8) pool = BANK.slice();
+    let pool = CH.bank.filter(q=>weak.includes(q.tag));
+    if(pool.length < 8) pool = CH.bank.slice();
     return {questions:pick(pool, Math.min(15,pool.length)), boss:null};
   }
 }
 
 function weakTags(){
-  const rows = Object.entries(save.mastery).map(([tag,m])=>({tag, acc:(m.r)/(m.r+m.w||1), seen:m.r+m.w}));
-  const seen = rows.filter(r=>r.seen>0).sort((a,b)=>a.acc-b.acc);
-  const weak = seen.filter(r=>r.acc<0.8).map(r=>r.tag);
+  const allTags = [...new Set(CH.bank.map(q=>q.tag))];
+  const rows = allTags.map(tag=>{
+    const m = save.mastery[tag];
+    return {tag, seen:m ? m.r+m.w : 0, acc:m ? m.r/(m.r+m.w) : 0};
+  });
+  const weak = rows.filter(r=>r.seen>0 && r.acc<0.8).sort((a,b)=>a.acc-b.acc).map(r=>r.tag);
   if(weak.length) return weak;
-  const allTags = [...new Set(BANK.map(q=>q.tag))];
-  const unseen = allTags.filter(t=>!save.mastery[t]);
+  const unseen = rows.filter(r=>!r.seen).map(r=>r.tag);
   return unseen.length ? unseen : allTags;
 }
 
@@ -1108,8 +1888,8 @@ function startRun(cfg){
     streak:0, mult:1, hits:0, misses:0, requeued:0, startedAt:Date.now(),
     inBoss:false, answered:false, tagLog:{}, timed:(cfg.mode==="stage"||cfg.mode==="gauntlet")
   };
-  $("hStage").textContent = cfg.mode==="stage" ? cfg.stage
-                          : cfg.mode==="gauntlet" ? "ALL" : (cfg.mode==="drill"?"DRILL":"FREE");
+  $("hStage").textContent = (CH.code + " · ") + (cfg.mode==="stage" ? cfg.stage
+                          : cfg.mode==="gauntlet" ? "ALL" : (cfg.mode==="drill"?"DRILL":"FREE"));
   $("bossBox").style.display = "none";
   show("game");
   nextCard();
@@ -1177,7 +1957,7 @@ function renderCard(card, isBoss){
   } else if(card.t === "num"){
     body = `<div class="numrow">
         <input class="numin" id="numIn" inputmode="decimal" autocomplete="off" placeholder="ANSWER">
-        <span class="unit">${card.unit === "$" ? "DOLLARS" : card.unit === "%" ? "PERCENT" : "YEARS"}</span>
+        <span class="unit">${unitLabel(card.unit)}</span>
         <button class="btn gr sm" id="numGo">FIRE ▶</button>
       </div>
       <div class="small muted" style="margin-top:8px">Sign is ignored — enter the magnitude. Press <span class="kbd">C</span> for the TVM calculator.</div>`;
@@ -1217,6 +1997,13 @@ function renderCard(card, isBoss){
   startTimer(card);
 }
 
+const UNITS = {"$":"DOLLARS","%":"PERCENT","yrs":"YEARS","inches":"INCHES","feet":"FEET"};
+const unitLabel = u => UNITS[u] || String(u||"").toUpperCase();
+function fmtAnswer(card){
+  if(card.unit === "$") return money(card.a);
+  if(card.unit === "%") return card.a.toLocaleString() + "%";
+  return card.a.toLocaleString() + " " + unitLabel(card.unit).toLowerCase();
+}
 function paintSlots(){
   const s = $("slots");
   if(!CARD._picked.length){ s.innerHTML = '<span class="muted small">Tap the steps in order…</span>'; return; }
@@ -1327,7 +2114,7 @@ function judge(ok, forcedLabel, given){
 
 function showVerdict(ok, gained, forcedLabel, given){
   const correctText = CARD.t === "num"
-      ? (CARD.unit === "$" ? money(CARD.a) : CARD.a.toLocaleString() + (CARD.unit === "%" ? "%" : " years"))
+      ? fmtAnswer(CARD)
       : CARD.t === "order" ? CARD.items.map((s,i)=>(i+1)+". "+s).join("  →  ")
       : (CARD.t === "tf" ? (CARD.a?"TRUE":"FALSE") : CARD.c[CARD.a]);
   const head = ok ? "&gt;&gt;&gt; DIRECT HIT" : (forcedLabel || "XXX MISS");
@@ -1359,12 +2146,12 @@ function finish(cleared){
   let bonus = 0;
   if(cleared && G.misses === 0 && !G.aborted){ bonus = 1000; G.score += bonus; }
   if(cleared && !G.aborted && G.cfg.mode === "stage"){
-    const s = G.cfg.stage;
-    if(!save.best[s] || G.score > save.best[s]) save.best[s] = Math.round(G.score);
-    if(save.unlocked <= s) save.unlocked = Math.min(6, s+1);
+    const key = CH.id + ":" + G.cfg.stage;
+    if(!save.best[key] || G.score > save.best[key]) save.best[key] = Math.round(G.score);
+    if(chUnlocked() <= G.cfg.stage) setUnlocked(Math.min(CH.stages.length+1, G.cfg.stage+1));
     persist();
   }
-  if(cleared && G.cfg.mode === "gauntlet"){ save.unlocked = 6; persist(); }
+  if(cleared && G.cfg.mode === "gauntlet"){ setUnlocked(CH.stages.length+1); persist(); }
 
   cleared ? sfx.win() : sfx.lose();
   $("resHead").textContent = cleared
@@ -1391,7 +2178,7 @@ function finish(cleared){
 
   const btns = $("resBtns"); btns.innerHTML = "";
   const mk = (label,cls,fn)=>{ const b=document.createElement("button"); b.className="btn "+cls; b.textContent=label; b.addEventListener("click",()=>{sfx.click();fn();}); btns.appendChild(b); };
-  if(cleared && G.cfg.mode==="stage" && G.cfg.stage < 5) mk("▶ NEXT STAGE","gr",()=>startRun({mode:"stage",stage:G.cfg.stage+1}));
+  if(cleared && G.cfg.mode==="stage" && G.cfg.stage < CH.stages.length) mk("▶ NEXT STAGE","gr",()=>startRun({mode:"stage",stage:G.cfg.stage+1}));
   mk("RETRY","cy",()=>startRun(G.cfg));
   mk("STAGE SELECT","",()=>show("stages"));
   mk("STUDY DATA","ye",()=>show("data"));
@@ -1400,7 +2187,7 @@ function finish(cleared){
   const finalScore = Math.round(G.score);
   const qualifies = finalScore > 0 && (save.hi.length < 10 || finalScore > (save.hi[save.hi.length-1]||{score:0}).score);
   if(qualifies && G.cfg.mode !== "practice"){
-    pendingScore = {score:finalScore, stage:(G.cfg.mode==="stage"?"ST"+G.cfg.stage:G.cfg.mode.toUpperCase())};
+    pendingScore = {score:finalScore, ch:CH.code, stage:(G.cfg.mode==="stage"?"ST"+G.cfg.stage:G.cfg.mode.toUpperCase())};
     $("entScore").textContent = pad(finalScore);
     show("enter");
   } else show("results");
@@ -1419,7 +2206,7 @@ document.querySelectorAll(".ichar").forEach(el=>el.addEventListener("click",()=>
 $("btnSaveScore").addEventListener("click",saveScore);
 function saveScore(){
   if(!pendingScore) { show("results"); return; }
-  save.hi.push({ini:iniChars.join(""), score:pendingScore.score, stage:pendingScore.stage, d:new Date().toISOString().slice(0,10)});
+  save.hi.push({ini:iniChars.join(""), score:pendingScore.score, ch:pendingScore.ch, stage:pendingScore.stage, d:new Date().toISOString().slice(0,10)});
   save.hi.sort((a,b)=>b.score-a.score); save.hi = save.hi.slice(0,10);
   persist(); pendingScore = null; sfx.coin(); show("results");
 }
@@ -1427,12 +2214,13 @@ function renderHof(){
   const t = $("hofTable");
   if(!save.hi.length){ t.innerHTML = `<tr><td class="muted center" style="font-family:var(--term);font-size:19px">NO SCORES YET — BE THE FIRST</td></tr>`; return; }
   t.innerHTML = save.hi.map((h,i)=>`<tr><td class="rk">${i+1}.</td><td class="ini">${h.ini}</td>
-    <td class="sc">${pad(h.score)}</td><td class="st">${h.stage} · ${h.d}</td></tr>`).join("");
+    <td class="sc">${pad(h.score)}</td><td class="st">${h.ch?h.ch+" ":""}${h.stage} · ${h.d}</td></tr>`).join("");
 }
 
 /* ---------- study data ---------- */
 function renderData(){
-  const tags = [...new Set(BANK.map(q=>q.tag))];
+  $("dataWho").textContent = CH.code + " — " + CH.name;
+  const tags = [...new Set(CH.bank.map(q=>q.tag))];
   const rows = tags.map(tag=>{
     const m = save.mastery[tag];
     const seen = m ? m.r+m.w : 0;
@@ -1626,9 +2414,10 @@ function calcKey(k){
 document.querySelectorAll(".ck").forEach(b=>b.addEventListener("click",()=>calcKey(b.dataset.k)));
 function toggleCalc(force){
   const p = $("calcPanel");
-  const on = force !== undefined ? force : !p.classList.contains("on");
+  let on = force !== undefined ? force : !p.classList.contains("on");
+  if(typeof CH !== "undefined" && CH && !CH.calc) on = false;   // TVM chapter only
   p.classList.toggle("on", on);
-  $("calcTab").style.display = on ? "none" : "block";
+  $("calcTab").style.display = (on || (typeof CH !== "undefined" && CH && !CH.calc)) ? "none" : "block";
   if(on) calcRefresh();
 }
 $("calcTab").addEventListener("click",()=>{sfx.click();toggleCalc(true);});
@@ -1670,7 +2459,7 @@ document.addEventListener("keydown", e=>{
     else if(current !== "title") show("title");
     return;
   }
-  if(e.key.toLowerCase() === "c"){ toggleCalc(); return; }
+  if(e.key.toLowerCase() === "c"){ if(CH.calc) toggleCalc(); return; }
   if(e.key.toLowerCase() === "m"){ save.snd = !save.snd; persist(); renderTitle(); toast("SOUND " + (save.snd?"ON":"OFF")); return; }
   if(e.key.toLowerCase() === "v"){ save.crt = !save.crt; persist(); renderTitle(); document.body.classList.toggle("noCrt", !save.crt); toast("CRT " + (save.crt?"ON":"OFF")); return; }
   if(current === "game" && G && !G.answered && CARD && (CARD.t === "mc" || CARD.t === "tf")){
@@ -1686,6 +2475,7 @@ $("btnFree").addEventListener("click", ()=>{ sfx.coin(); startRun({mode:"practic
    BOOT
    ============================================================ */
 document.body.classList.toggle("noCrt", !save.crt);
+setChapter(save.lastCh || "comm");
 renderTitle();
 calcRefresh();
 calcMsg("Enter a number then tap n / i / PV / PMT / FV to store it. Then COMP + the key you want.<br>Outflows negative (+/–). →EFF and →APR take the periods per year first, then the rate.");
