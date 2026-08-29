@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FPF ARCADE — Five FPF Chapters, One Cabinet</title>
-<meta name="description" content="A 90s arcade study game for five FPF chapters: interpersonal communication, understanding the client, economics, the financial planning process, and the time value of money.">
+<title>FPF ARCADE — Six FPF Chapters, One Cabinet</title>
+<meta name="description" content="A 90s arcade study game for six FPF chapters: communication, understanding the client, economics, the planning process, the time value of money, and personal financial statements.">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -307,7 +307,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 
 <div class="cabinet">
   <div class="marquee">
-    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 5 CHAPTERS LOADED ◈</div>
+    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 6 CHAPTERS LOADED ◈</div>
     <h1>FPF ARCADE</h1>
     <div class="sub">STUDY HARDER. SCORE HIGHER.</div>
   </div>
@@ -321,14 +321,15 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
         <span class="l1">FPF</span>
         <span class="l2">ARCADE</span>
       </div>
-      <div class="tagline">▓▒░ FIVE CHAPTERS · ONE CABINET ░▒▓</div>
+      <div class="tagline">▓▒░ SIX CHAPTERS · ONE CABINET ░▒▓</div>
       <div class="attract">
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--magenta)">CH.1 THE HUMAN INTERFACE</b> — communication, non-verbal, perceptions, skills</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--green)">CH.2 KNOW YOUR CLIENT</b> — beliefs, culture, decisions, elderly, grief, incapacity</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--yellow)">CH.3 MARKET FORCES</b> — demand, supply, GDP, cycles, monetary &amp; fiscal policy</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--purple)">CH.4 THE PLANNER&#39;S PATH</b> — the six steps, goals, the profile, recommendations, review</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--cyan)">M2 CH.1 TIME VALUE RAIDERS</b> — single sums, annuities, rates, applications</p>
-        <p><span style="color:var(--yellow)">▶</span> 24 stages · 29 boss problems · 680+ drills, all from your notes</p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--green)">M2 CH.2 THE PAPER TRAIL</b> — net worth, registered plans, cash flow, the six ratios</p>
+        <p><span style="color:var(--yellow)">▶</span> 29 stages · 35 boss problems · 830+ drills, all from your notes</p>
         <p><span style="color:var(--yellow)">▶</span> Miss a question and the game <b style="color:var(--green)">teaches you the rule</b></p>
       </div>
       <div class="center blink px" style="font-size:14px;color:var(--green);margin:18px 0">PRESS START</div>
@@ -423,7 +424,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
       <h2 class="title">HOW TO PLAY</h2>
       <div class="cram">
         <p><b style="color:var(--cyan)">GOAL:</b> clear every stage of a chapter, each ending in a BOSS — a full case straight out of your notes (Ms. Varner's mutual fund, the Tuccis' RV, Sharon's college fund, Bill Brown's mortgage…).</p>
-        <p>Five chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file), <b style="color:var(--yellow)">CH.3 Market Forces</b> (economics), <b style="color:var(--purple)">CH.4 The Planner&#39;s Path</b> (the planning process itself) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
+        <p>Six chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file), <b style="color:var(--yellow)">CH.3 Market Forces</b> (economics), <b style="color:var(--purple)">CH.4 The Planner&#39;s Path</b> (the planning process itself) <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math) and <b style="color:var(--green)">M2 CH.2 The Paper Trail</b> (the statements themselves). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
         <h3>CONTROLS</h3>
         <table>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></td><td>pick a multiple-choice answer</td></tr>
@@ -472,7 +473,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     </section>
 
   </div>
-  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, 2, 3 and 4 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
+  <div class="footer">FPF ARCADE © 199X — built from your Chapters 1–4 and Module 2 Chapters 1–2 study notes. Progress saves to this browser only.</div>
 </div>
 
 <!-- ============ TVM CALCULATOR ============ -->
@@ -3442,6 +3443,613 @@ const CRAM_C4 = `
 <span class="muted">&rarr; And whatever the plan says, the final decisions are made by the client.</span></p>
 `;
 
+
+/* ============================================================
+   MODULE 2, CHAPTER 2 — PERSONAL FINANCIAL STATEMENTS
+   Built from the study notes: the net worth statement, the
+   cash flow statement, the projected cash flow statement,
+   and the analysis of both.
+   ============================================================ */
+
+const STAGES_C5 = [
+  {n:1, name:"THE BALANCE SHEET", sub:"The net worth statement",
+   blurb:"Assets &ndash; liabilities = net worth · the 3 asset categories · valuation · insolvency"},
+  {n:2, name:"REGISTERED VAULT",  sub:"Pensions and registered plans",
+   blurb:"The PA formulas · DBPP vs DCPP vs DPSP · LIRA, LIF, LRIF · RESP · TFSA"},
+  {n:3, name:"CASH IN, CASH OUT", sub:"The cash flow statement",
+   blurb:"Income sources · taxable benefits · CPP &amp; EI · discretionary vs non-discretionary"},
+  {n:4, name:"THE FORECAST",      sub:"The projected cash flow statement",
+   blurb:"Pay yourself first · allocating surplus · RRSP vs mortgage · the Belanger plan"},
+  {n:5, name:"THE DIAGNOSTIC",    sub:"Analysing the statements",
+   blurb:"The 3 asset ratios · the 3 liability ratios · guidelines by life stage"}
+];
+
+const BANK_C5 = [
+/* ============ STAGE 1 — THE NET WORTH STATEMENT ============ */
+{t:"mc",s:1,d:1,tag:"NETWORTH",q:"What are the THREE personal financial statements?",
+ c:["Net worth statement, current cash flow statement, projected cash flow statement","Balance sheet, income statement, tax return","Net worth, budget, and investment policy statement","Assets, liabilities, and equity statements"],a:0,
+ why:"Together with a client's <b>tax returns</b>, these are \"the financial planner's most important working documents.\""},
+{t:"mc",s:1,d:2,tag:"NETWORTH",q:"Which statements are used as \"DIAGNOSTIC\" tools?",
+ c:["The net worth statement and the CURRENT cash flow statement","The projected cash flow statement only","All three equally","The tax return"],a:0,
+ why:"They detail the client's <b>current</b> situation. The <b>projected</b> cash flow statement is used to modify current patterns of income and expenditure."},
+{t:"mc",s:1,d:2,tag:"NETWORTH",q:"What is the MAIN PURPOSE of the projected cash flow statement?",
+ c:["To enable clients to improve cash flow so they achieve prioritized objectives and maximize long-term net worth","To calculate taxes payable","To value assets accurately","To satisfy a lender"],a:0,
+ why:"The net worth statement is then used as the <b>benchmark</b> to measure the success of the financial plan."},
+{t:"mc",s:1,d:1,tag:"NETWORTH",q:"The net worth statement — also called the <b>personal balance sheet</b> — is…",
+ c:["A SNAPSHOT of a client's financial situation at a SPECIFIC DATE","A record of income over a year","A forecast of future position","A summary of tax filings"],a:0,
+ why:"<b>ASSETS &ndash; LIABILITIES = NET WORTH (EQUITY)</b>, which may be positive or negative."},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"Over what period should a positive net worth trend ideally be assessed?",
+ c:["FIVE to TEN years","One year","Two to three years","Twenty years"],a:0,
+ why:"A primary goal of financial planning is to improve net worth over the long term, and the level is used to measure progress <b>year by year</b>."},
+{t:"mc",s:1,d:1,tag:"ASSETS",q:"What are the three categories of assets?",
+ c:["Liquid, investment, and personal","Current, fixed, and intangible","Registered, non-registered, and personal","Financial, physical, and luxury"],a:0,
+ why:"Liquid = cash and cash equivalents; investment = held more than a year and expected to appreciate; personal = used to support lifestyle."},
+{t:"mc",s:1,d:2,tag:"LIQUID",q:"Which of these is NOT a liquid asset?",
+ c:["An equity mutual fund held for retirement","A treasury bill","Canada savings bonds","The cash surrender value of a life insurance policy"],a:0,
+ why:"Liquid assets can be converted to cash with <b>minimal or no loss of value</b>: chequing and savings accounts, money market funds, CSBs, short-term deposits up to one year, the CSV, and T-bills."},
+{t:"num",s:1,d:2,tag:"LIQUID",q:"A policyholder can typically borrow up to what PERCENTAGE of a life insurance policy's cash surrender value?",unit:"%",a:90,tol:0.5,
+ why:"Up to <b>90%</b> — which is exactly why the CSV counts as a liquid asset. The CSV is the cash the insurer returns if the policy is cancelled or surrendered."},
+{t:"mc",s:1,d:2,tag:"LIQUID",q:"How large should a client's emergency fund be?",
+ c:["A liquid reserve equal to at least THREE TO SIX MONTHS' living expenses","One month of expenses","One year of expenses","10% of net worth"],a:0,
+ why:"Typically invested in an interest-bearing account such as a money market fund, <b>where the value does not fluctuate</b>."},
+{t:"mc",s:1,d:3,tag:"LIQUID",q:"Which is one of the four factors determining the SIZE of the emergency fund?",
+ c:["The client's access to credit","The client's marginal tax rate","The size of the mortgage","The client's age"],a:0,
+ why:"The four: access to credit; general financial situation; comfort level with holding a certain amount; and the predictability and level of income together with the level of expenses."},
+{t:"mc",s:1,d:2,tag:"ASSETS",q:"Investment assets generally have a holding period of…",
+ c:["MORE than one year, since they are expected to appreciate over time","Less than one year","Exactly five years","Until retirement"],a:0,
+ why:"They may be non-registered or registered, and <b>all</b> should be summarized by asset class into those two categories — the summary drives both the investment and the retirement plan."},
+{t:"mc",s:1,d:3,tag:"ASSETS",q:"How should an IN-TRUST ACCOUNT for a minor child appear on the parent's net worth statement?",
+ c:["Only as a FOOTNOTE — the assets do not belong to the parent","As a personal asset","As a registered investment asset","As a non-registered investment asset at full value"],a:0,
+ why:"The donor no longer has title; the funds become <b>the beneficiary's property</b>. Withdrawals must be used solely for the child's benefit, and at the age of majority the child takes control."},
+{t:"mc",s:1,d:2,tag:"ASSETS",q:"An in-trust account is an \"informal\" trust. What does that mean legally?",
+ c:["It is still considered a LEGAL AND VALID trust","It has no legal standing","It can be revoked by the donor","It is taxed in the parent's hands permanently"],a:0,
+ why:"It exists because a minor child cannot enter into a legally-binding financial contract, so an adult manages the funds."},
+{t:"mc",s:1,d:2,tag:"ASSETS",q:"Which of these is a PERSONAL asset?",
+ c:["A principal residence","Investment real estate","A business interest","Raw land"],a:0,
+ why:"Personal assets — residence, cottage, automobiles, household contents — are used over an extended period to support lifestyle and <b>usually do not generate income</b>."},
+{t:"mc",s:1,d:3,tag:"ASSETS",q:"How should HOUSEHOLD CONTENTS be treated?",
+ c:["They have little significance and can generally be ignored — EXCEPT when determining required insurance coverage","Recorded at replacement cost always","Recorded at market value always","Excluded entirely"],a:0,
+ why:"In this module they are recorded at <b>depreciated</b> value, to be conservative."},
+{t:"mc",s:1,d:3,tag:"VALUATION",q:"What is the governing principle for valuing assets on the net worth statement?",
+ c:["Value them CONSERVATIVELY","Value them at replacement cost","Value them at historical cost","Value them optimistically to motivate the client"],a:0,
+ why:"Assets are generally recorded at <b>current market value</b>, although personal assets such as automobiles and household contents are recorded at <b>depreciated</b> value."},
+{t:"mc",s:1,d:2,tag:"VALUATION",q:"<b>FAIR MARKET VALUE</b> is…",
+ c:["The price a willing buyer will pay in an ARM'S LENGTH transaction under normal conditions","The original price paid","Historical cost less depreciation","The cost to replace with like kind and quality"],a:0,
+ why:"The four methods: fair market value, historical cost, actual cash value (depreciated), and replacement cost."},
+{t:"mc",s:1,d:2,tag:"VALUATION",q:"<b>ACTUAL CASH VALUE</b> (depreciated value) is…",
+ c:["Historical cost MINUS a provision for depreciation such as wear and tear or obsolescence","Market value less selling costs","Replacement cost less taxes","The insured value"],a:0,
+ why:"<b>Replacement cost</b> is the cost to replace with one of \"like kind and quality\" — close to market value where there is a ready market; the difference is due to <b>depreciation and transaction costs</b>."},
+{t:"mc",s:1,d:3,tag:"VALUATION",q:"When SHOULD personal assets be valued at current market value rather than depreciated value?",
+ c:["When a client is close to retirement and plans to SELL them, such as collectibles, to generate retirement income","Never","Always, for accuracy","Only for insurance purposes"],a:0,
+ why:"Otherwise be conservative, since these assets are unlikely to be converted into cash to meet financial objectives."},
+{t:"mc",s:1,d:2,tag:"VALUATION",q:"<b>ADJUSTED COST BASE (ACB)</b> is…",
+ c:["The original purchase price PLUS any allowable expenses, such as commissions, related to the purchase","The current market value","The depreciated value","The selling price less tax"],a:0,
+ why:"<b>CAPITAL GAIN/(LOSS) = SELLING PRICE &ndash; (ACB + COSTS TO SELL)</b>."},
+{t:"num",s:1,d:2,tag:"VALUATION",q:"An equity fund has an ACB of <b>$7,000</b> and a current market value of <b>$10,000</b>. What is the unrealized capital GAIN?",unit:"$",a:3000,tol:1,
+ why:"$10,000 &ndash; $7,000 = <b>$3,000</b>. The gain is already included in the market value shown on the net worth statement."},
+{t:"num",s:1,d:3,tag:"VALUATION",q:"On a $3,000 capital gain at a <b>45%</b> marginal tax rate, what tax would be payable? (Only 50% of a gain is taxable.)",unit:"$",a:675,tol:1,
+ why:"50% × $3,000 = $1,500 taxable; $1,500 × 45% = <b>$675</b>. To be conservative this can be recorded as a SHORT-TERM liability under \"unpaid income taxes.\""},
+{t:"mc",s:1,d:3,tag:"VALUATION",q:"Where can the CONTINGENT tax liability on registered assets be recorded?",
+ c:["As a LONG-TERM liability under \"deferred income taxes\"","As a short-term liability","As a reduction of the asset","It is never recorded"],a:0,
+ why:"It is \"contingent\" because taxes are deferred until funds are withdrawn as retirement income, or until the surviving spouse's death. The conservative assumption: <b>100% taxable at a 50% MTR</b>."},
+{t:"num",s:1,d:3,tag:"VALUATION",q:"Using the module's conservative assumption, what contingent tax liability applies to <b>$100,000</b> of RRSP/RRIF assets?",unit:"$",a:50000,tol:100,
+ why:"100% taxable at a <b>50% MTR</b> → <b>$50,000</b> if the surviving spouse died immediately."},
+{t:"mc",s:1,d:2,tag:"LIABILITIES",q:"Short-term liabilities are those…",
+ c:["Paid off in ONE YEAR OR LESS","Paid off after one year","Under $10,000","Without collateral"],a:0,
+ why:"Short-term: credit card balances, personal lines of credit, accrued income taxes, unpaid property taxes. Long-term: mortgages, automobile loans, deferred income taxes, student loans, the RRSP HBP loan."},
+{t:"mc",s:1,d:3,tag:"LIABILITIES",q:"How does THIS MODULE record an outstanding mortgage balance?",
+ c:["The ENTIRE outstanding balance is recorded as a LONG-TERM liability","The current year's payments as short-term, the rest long-term","At the original principal","Net of the home's value"],a:0,
+ why:"Some planners split out the current portion, but this module records the whole balance as long-term."},
+{t:"mc",s:1,d:3,tag:"LIABILITIES",q:"Which figure goes on the net worth statement for a loan?",
+ c:["ONLY the current outstanding balance — not the initial principal, and not including future interest","The original loan principal","Principal plus all future interest","The monthly payment × remaining term"],a:0,
+ why:"Liabilities are recorded at current market value and are easier to value than assets, since they usually involve a legally-binding contract with explicitly stated terms."},
+{t:"mc",s:1,d:3,tag:"LIABILITIES",q:"Why should loans with TAX-DEDUCTIBLE interest be referenced on the statement?",
+ c:["The planner must take it into account when assessing DEBT MANAGEMENT and TAX PLANNING","To calculate the interest expense","Because they are always long-term","Because lenders require it"],a:0,
+ why:"Examples include a mortgage on investment real estate and a personal line of credit used for investment purposes. If RRSP assets funded a down payment, the <b>RRSP Home Buyers' Plan loan should be a footnote</b>."},
+{t:"mc",s:1,d:2,tag:"NETWORTH",q:"<b>INSOLVENCY</b> is the financial state in which…",
+ c:["Liabilities due and accruing exceed the value of assets AND the individual cannot meet obligations to creditors","Net worth is below average for the age group","Cash flow is negative for a year","A client misses a payment"],a:0,
+ why:"If net worth is negative, the client may <b>technically be insolvent</b>."},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"A client's net worth rose this year. Why is that NOT automatically good management?",
+ c:["The principal residence may have appreciated while credit card debt simultaneously increased","Net worth is a poor measure","Appreciation is always temporary","Only cash flow matters"],a:0,
+ why:"It is essential to assess how <b>each specific category</b> of assets and liabilities has changed over the period."},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"Which is described as generally A KEY PRIORITY BEFORE implementing other net worth strategies?",
+ c:["Reducing or eliminating high-interest credit card debt completely","Maximizing RRSP contributions","Shifting to growth assets","Consolidating small loans"],a:0,
+ why:"The six strategies also include consolidating high-interest loans, reducing non-tax-deductible loans, borrowing where interest IS deductible, increasing savings and TFSA/RRSP contributions, and obtaining better returns."},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"Borrowing to invest in non-registered equities improves net worth over time only if…",
+ c:["The AFTER-TAX RETURN on the equities is greater than the AFTER-TAX COST of the investment loan","The market rises","The loan is short-term","The interest is not deductible"],a:0,
+ why:"\"For many clients, managing liabilities effectively is <b>just as important as</b> managing investment assets.\""},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"Why does a 30-year-old dentist typically have LOW net worth despite good prospects?",
+ c:["Significant liabilities — a large business loan, a mortgage, perhaps an investment loan","Low income","Poor saving habits","No investment assets"],a:0,
+ why:"With sound planning, future net worth has <b>strong potential to appreciate</b> given a relatively high annual income. A retired 60-year-old couple typically has significant net worth from few liabilities and significant investment assets."},
+{t:"mc",s:1,d:2,tag:"NETWORTH",q:"Which action DECREASES net worth?",
+ c:["Borrowing funds to take a vacation","Repaying part of a liability","Renovating a house","Buying an asset with potential to appreciate"],a:0,
+ why:"Also decreasing: selling assets and using the proceeds for consumption, and declines in asset value such as automobile depreciation."},
+{t:"num",s:1,d:2,tag:"NETWORTH",q:"The Belangers have total assets of <b>$260,000</b> and total liabilities of <b>$115,002</b>. What is their net worth?",unit:"$",a:144998,tol:5,
+ why:"$260,000 &ndash; $115,002 = <b>$144,998</b>."},
+{t:"mc",s:1,d:3,tag:"NETWORTH",q:"Henri's first recommendation to the Belangers was to…",
+ c:["Use the cash in their chequing account to pay down their $3,000 of credit card debt immediately, at over 14% interest","Maximize RRSP contributions","Pay down the mortgage","Increase their emergency fund"],a:0,
+ why:"Alternatively, with no cash, they could use their PLC at <b>prime plus 3%</b> — a far lower rate than 14–15% card interest."},
+
+/* ============ STAGE 2 — REGISTERED PLANS AND THE PA ============ */
+{t:"mc",s:2,d:2,tag:"PA",q:"What is the <b>PENSION ADJUSTMENT (PA)</b>?",
+ c:["The deemed value of combined employer and employee pension contributions for the year, which reduces next year's RRSP room dollar for dollar","The employer's share of pension contributions","The tax deduction for pension contributions","An adjustment for inflation"],a:0,
+ why:"It is reported by the employer on the <b>T4 slip</b>. If clients participate in an RPP, they forgo RRSP contribution room."},
+{t:"mc",s:2,d:2,tag:"PA",q:"What is the annual RRSP contribution limit formula?",
+ c:["(Previous year's earned income × 18%, to a yearly maximum) &ndash; previous year's PA","(Current year's income × 18%) &ndash; current PA","18% of gross income with no adjustment","The lesser of income and the annual maximum"],a:0,
+ why:"For 2018 the cap was the lesser of <b>$26,230</b> and 18% of the previous year's earned income, less the PA."},
+{t:"mc",s:2,d:2,tag:"PA",q:"How is the PA calculated for a <b>DCPP</b>?",
+ c:["The SUM of the employee and employer contributions for the year","(9 × benefit entitlement) &ndash; $600","18% of earnings","There is no PA"],a:0,
+ why:"For a <b>DBPP</b> it is (9 × benefit entitlement) &ndash; $600 — a complex calculation designed to measure the value of benefits accrued."},
+{t:"mc",s:2,d:3,tag:"PA",q:"Which plan generates NO pension adjustment?",
+ c:["A Group RRSP","A DCPP","A DBPP","A DPSP"],a:0,
+ why:"A GRRSP is generally <b>not governed by pension legislation</b>. The employer's DPSP contributions ARE considered the employee's PA."},
+{t:"num",s:2,d:3,tag:"PA",q:"An employee earns <b>$65,000</b>. Employee and employer each contribute <b>5%</b> to a DCPP. What is the PA?",unit:"$",a:6500,tol:10,
+ why:"5% × $65,000 = $3,250 each; PA = $3,250 × 2 = <b>$6,500</b> (the sum of both contributions)."},
+{t:"num",s:2,d:3,tag:"PA",q:"Same $65,000 employee, but in a <b>2% DBPP</b>. What is the PA? (PA = 9 × benefit entitlement &ndash; $600)",unit:"$",a:11100,tol:10,
+ why:"Entitlement = 2% × $65,000 = $1,300. PA = (9 × $1,300) &ndash; $600 = <b>$11,100</b>."},
+{t:"num",s:2,d:3,tag:"PA",q:"That DCPP member earns $65,000. What is the RRSP contribution room for the current year?",unit:"$",a:5200,tol:10,
+ why:"18% × $65,000 = $11,700, less the $6,500 PA = <b>$5,200</b>."},
+{t:"num",s:2,d:3,tag:"PA",q:"And the 2% DBPP member on $65,000 — what RRSP room is left?",unit:"$",a:600,tol:5,
+ why:"$11,700 &ndash; $11,100 = <b>$600</b>. The richer the pension, the smaller the RRSP room. Members of a 2% DBPP can contribute a minimum of $600, and <b>high-income earners above $75,000 have none</b>."},
+{t:"num",s:2,d:3,tag:"PA",q:"Gina earns <b>$38,000</b> in a 2% DBPP. What is her PA?",unit:"$",a:6240,tol:10,
+ why:"(9 × ($38,000 × 2%)) &ndash; $600 = $6,840 &ndash; $600 = <b>$6,240</b> — which matched her $2,102 plus her employer's $4,138."},
+{t:"num",s:2,d:3,tag:"PA",q:"Paul earns <b>$50,000</b>; he and his employer each put <b>$2,500</b> into a DCPP. What is his RRSP room?",unit:"$",a:4000,tol:10,
+ why:"PA = $5,000. 18% × $50,000 = $9,000 &ndash; $5,000 = <b>$4,000</b>."},
+{t:"mc",s:2,d:2,tag:"PENSIONS",q:"In a <b>DBPP</b>, what is defined?",
+ c:["The BENEFITS — a specified amount paid to members who retire after a number of years of credited service","The contributions","Both benefits and contributions","Neither"],a:0,
+ why:"In a <b>DCPP</b> the <b>contributions</b> are defined; current market value is known but the future value of benefits at retirement is uncertain."},
+{t:"mc",s:2,d:3,tag:"PENSIONS",q:"Why do most planners EXCLUDE DBPP assets when determining asset allocation?",
+ c:["The member has no control over the pension assets — the pension fund manager invests them","They are too small to matter","They are not registered","They are taxed differently"],a:0,
+ why:"The plan can be valued at its <b>commuted value</b> — similar to the present value of the annuity of projected retirement income — but that is a complex actuarial calculation, so many planners record the projected income as a <b>footnote</b> instead."},
+{t:"mc",s:2,d:3,tag:"PENSIONS",q:"A <b>DCPP</b> is also known as a…",
+ c:["MONEY PURCHASE PLAN","Deferred profit sharing plan","Group RRSP","Locked-in retirement account"],a:0,
+ why:"The employee typically makes the investment decisions, assets are <b>locked in</b> until retirement, and the plan value <b>must</b> be included in asset allocation."},
+{t:"mc",s:2,d:3,tag:"PENSIONS",q:"Who can contribute to a <b>DPSP</b>?",
+ c:["ONLY employers — employees cannot contribute","Only employees","Both equally","Either, up to the RRSP limit"],a:0,
+ why:"A share of company profits is set aside for <b>selected</b> employees — more flexible for the employer, since contributions rise with profits and fall when profits decline. A minimum contribution is required when there is a profit."},
+{t:"mc",s:2,d:3,tag:"PENSIONS",q:"How does a DPSP differ from an RPP on withdrawals?",
+ c:["DPSP funds CAN be withdrawn prior to retirement, but are fully taxed in the employee's hands","DPSP funds are locked in until 71","DPSP withdrawals are tax-free","DPSP funds cannot be transferred"],a:0,
+ why:"They can also be transferred to an RRSP to stay tax-sheltered. Employees usually control the investments, and the plan value must be included in asset allocation."},
+{t:"mc",s:2,d:2,tag:"REGISTERED",q:"At what age must an RRSP be collapsed?",
+ c:["71","65","69","There is no limit"],a:0,
+ why:"Most clients transfer to an <b>RRIF</b>, where assets stay tax-sheltered but a <b>minimum annual withdrawal</b> must be made, fully taxable as income."},
+{t:"mc",s:2,d:3,tag:"REGISTERED",q:"What distinguishes a <b>LIF</b> from an RRIF?",
+ c:["A LIF also has specified MAXIMUM annual withdrawal amounts","A LIF has no minimum","A LIF is not registered","A LIF cannot hold equities"],a:0,
+ why:"An RRIF has a minimum only. A <b>LRIF</b> also sets minimum and maximum amounts but, unlike a LIF, has <b>no requirement to purchase a life annuity</b>."},
+{t:"mc",s:2,d:3,tag:"REGISTERED",q:"What is the purpose of a <b>LIRA</b> / locked-in RRSP?",
+ c:["To enable the PORTABILITY of pension assets when an employee changes jobs","To shelter education savings","To hold employer profit sharing","To defer taxes on a bonus"],a:0,
+ why:"Once the employer transfers the pension's <b>commuted value</b>, the plan holder has full control over how to invest — but <b>no withdrawals are permitted until retirement</b>, when a LIF/LRIF is set up or a life annuity purchased."},
+{t:"mc",s:2,d:3,tag:"REGISTERED",q:"With a Group RRSP, who bears responsibility for investment performance?",
+ c:["The onus is on STAFF to make investment decisions — the company is not responsible for the plan's performance","The employer","The plan administrator","The regulator"],a:0,
+ why:"The employer designs the plan — eligibility, contribution frequency, whether to match (a tax-deductible expense) — and a financial services firm administers it. Total GRRSP plus personal RRSP contributions must stay within the annual limit."},
+{t:"mc",s:2,d:2,tag:"RESP-TFSA",q:"Are RESP contributions tax-deductible?",
+ c:["No — and interest on money BORROWED to make them is not deductible either","Yes, like an RRSP","Only the first $2,000","Only for low-income families"],a:0,
+ why:"But contributions, the CESG and the earnings all grow <b>tax sheltered</b> until withdrawn for education after high school."},
+{t:"mc",s:2,d:3,tag:"RESP-TFSA",q:"Who is taxed on an EDUCATIONAL ASSISTANCE PAYMENT from an RESP?",
+ c:["The STUDENT — and since many students have little other income, they can usually withdraw it tax free","The subscriber","The beneficiary's parents","Nobody"],a:0,
+ why:"This is the central design feature of the plan."},
+{t:"num",s:2,d:2,tag:"RESP-TFSA",q:"What is the RESP LIFETIME contribution limit per beneficiary?",unit:"$",a:50000,tol:10,
+ why:"<b>$50,000</b> — and if more than one RESP has been opened for a child, the total across all of them cannot exceed it. The <b>annual</b> limit has been withdrawn."},
+{t:"mc",s:2,d:3,tag:"RESP-TFSA",q:"What are the RESP time limits?",
+ c:["No contributions after the year including the 31st anniversary; the plan must be completed by the year including the 35th","21 and 25 years","25 and 30 years","There are no time limits"],a:0,
+ why:"Transfers from another RESP are the exception to the contribution deadline."},
+{t:"mc",s:2,d:3,tag:"RESP-TFSA",q:"What is the difference between a GROUP RESP and an INDIVIDUAL RESP?",
+ c:["In a group plan the subscriber has NO control over investments; in an individual plan the subscriber does","Group plans have higher limits","Individual plans are not registered","Group plans are tax-deductible"],a:0,
+ why:"A group RESP enrolls the child in an existing \"pooled\" plan."},
+{t:"num",s:2,d:2,tag:"RESP-TFSA",q:"What is the INITIAL Canada Learning Bond amount for an eligible child?",unit:"$",a:500,tol:5,
+ why:"<b>$500</b>, plus <b>$100</b> annual instalments up to the year the child turns 15 — providing up to <b>$2,000</b> in total, deposited into an RESP."},
+{t:"num",s:2,d:3,tag:"RESP-TFSA",q:"The initial CLB plus the annual instalments provide a child with up to how much in total?",unit:"$",a:2000,tol:10,
+ why:"$500 + ($100 × 15) = <b>$2,000</b>. Eligibility generally requires net family income of $46,605 (2018) or less, for children born after December 31, 2003."},
+{t:"mc",s:2,d:2,tag:"RESP-TFSA",q:"Who can open a <b>TFSA</b>?",
+ c:["Any resident of Canada at least 18 years old with a valid SIN","Any resident of any age","Only those with earned income","Only those without an RRSP"],a:0,
+ why:"Contributions are not deductible, but there is <b>no tax payable on the income earned</b> — interest, dividends or capital gains."},
+{t:"num",s:2,d:3,tag:"RESP-TFSA",q:"What was the TFSA annual contribution limit for <b>2015</b>?",unit:"$",a:10000,tol:10,
+ why:"$5,000 for 2009–2012; $5,500 for 2013–2014; <b>$10,000 for 2015</b>; $5,500 for 2016–2018, indexed to inflation and rounded to the nearest $500."},
+{t:"mc",s:2,d:3,tag:"REGISTERED",q:"What is the BOOK VALUE of a registered plan?",
+ c:["The original purchase price of the investment assets including acquisition costs, PLUS any cash in the plan","The current market value","The commuted value","Contributions less withdrawals"],a:0,
+ why:"It applies to RRSPs, RRIFs, LIFs/LRIFs, DCPPs and DPSPs."},
+
+/* ============ STAGE 3 — THE CASH FLOW STATEMENT ============ */
+{t:"mc",s:3,d:1,tag:"CASHFLOW",q:"The cash flow statement consists of which two major sections?",
+ c:["NET INCOME RECEIVED and EXPENSES PAID","Assets and liabilities","Inflows and net worth","Revenue and profit"],a:0,
+ why:"<b>NET INCOME (gross &ndash; deductions &ndash; income taxes) &ndash; EXPENSES = CASH FLOW SURPLUS/(SHORTFALL)</b>, usually over one year."},
+{t:"mc",s:3,d:3,tag:"CASHFLOW",q:"How does THIS MODULE treat income taxes on the cash flow statement?",
+ c:["All deductions and income taxes are subtracted from GROSS income to get NET income; then all expenses are subtracted from net income","As a non-discretionary expense","As a discretionary expense","They are excluded entirely"],a:0,
+ why:"Some planners record income taxes as a non-discretionary expense instead — know which convention is in use."},
+{t:"mc",s:3,d:2,tag:"CASHFLOW",q:"What is a MAJOR GOAL of financial planning on the cash flow statement?",
+ c:["To generate a cash flow SURPLUS, which invested or used to reduce liabilities increases net worth over time","To minimize taxes","To match income to expenses exactly","To eliminate discretionary spending"],a:0,
+ why:"Managing cash flow effectively to generate a surplus is <b>the first step toward sound financial planning</b>."},
+{t:"mc",s:3,d:2,tag:"CASHFLOW",q:"Which is one of the four things a month-by-month cash flow statement highlights?",
+ c:["The PREDICTABILITY of income — fixed salary versus commissions and bonuses","The market value of assets","The client's tax bracket","The debt-to-asset ratio"],a:0,
+ why:"Also: the amount and sources of income; the nature and extent of expenses, discretionary or not; and the extent to which expenses can be reduced."},
+{t:"mc",s:3,d:2,tag:"INCOME",q:"Which statement about a client's income sources is correct?",
+ c:["Employment, business, investment, retirement and other income are ALL taxable in the year received","Only employment income is taxable","Investment income is tax-free","Retirement income is never taxable"],a:0,
+ why:"With specific exceptions the chapter names — the GIS and certain provincial supplements are <b>not</b> taxable."},
+{t:"mc",s:3,d:3,tag:"BENEFITS",q:"Is the employer's contribution to an <b>RPP</b> a taxable benefit to the employee?",
+ c:["No — and the employee gets a tax deduction for their own RPP contribution","Yes, fully","Yes, at 50%","Only above a threshold"],a:0,
+ why:"But the employer's <b>GRRSP</b> contribution IS a taxable benefit — though a deduction is allowed for both the employer's and employee's contribution, so the <b>net increase in taxable income is nil</b>."},
+{t:"mc",s:3,d:3,tag:"BENEFITS",q:"Employer-paid group LIFE insurance premiums versus group HEALTH insurance premiums:",
+ c:["LIFE premiums ARE a taxable benefit; HEALTH premiums generally are NOT","Both are taxable","Neither is taxable","Health is taxable, life is not"],a:0,
+ why:"The group life plan still provides a <b>tax-free death benefit</b> to the beneficiary."},
+{t:"mc",s:3,d:3,tag:"BENEFITS",q:"An employer provides a company vehicle the employee never uses personally. Is there a taxable benefit?",
+ c:["Yes — the STANDBY CHARGE means the fact it was MADE AVAILABLE creates a taxable benefit","No, without personal use there is none","Only the operating cost portion","Only if it is a luxury vehicle"],a:0,
+ why:"The benefit includes an operating cost component and the standby charge."},
+{t:"mc",s:3,d:3,tag:"BENEFITS",q:"An employer lends money to an employee interest-free. What is the taxable benefit?",
+ c:["The DIFFERENCE between the rate the employee pays and CRA's PRESCRIBED INTEREST RATE","The full loan amount","Nothing","The interest the employer forgoes at market rates"],a:0,
+ why:"Employer CPP contributions and EI premiums are <b>not</b> part of taxable income — and employees get a federal tax credit for <b>15%</b> of their own CPP contributions and EI premiums."},
+{t:"mc",s:3,d:3,tag:"BENEFITS",q:"An employee pays their own group DISABILITY premiums in after-tax dollars. What follows?",
+ c:["Their disability income benefits will NOT be taxable — which is the recommended arrangement","Benefits will be fully taxable","Benefits are taxed at 50%","Premiums become deductible"],a:0,
+ why:"If the employer pays and it is NOT a taxable benefit, the <b>benefits become taxable</b>. Pay tax going in or coming out — never both, never neither. Self-employed individuals should pay premiums in after-tax dollars."},
+{t:"mc",s:3,d:3,tag:"CPP-EI",q:"What is different about CPP for SELF-EMPLOYED individuals?",
+ c:["They pay BOTH the employee and employer contributions — and pay no EI, since they do not qualify for coverage","They are exempt from CPP","They pay half the normal rate","They pay EI at a reduced rate"],a:0,
+ why:"CPP is financed by <b>equal contributions</b> from employees and employers. The employer pays EI at <b>1.4 times</b> the employee's premium."},
+{t:"num",s:3,d:2,tag:"CPP-EI",q:"The CPP contribution rate is 4.95% each for employee and employer. What is the COMBINED rate, as a percentage?",unit:"%",a:9.9,tol:0.05,
+ why:"<b>9.9%</b> — up from 6.4% in 1998 and 7.8% in 2000, reaching 9.9% in 2003 and still 9.9% in 2018."},
+{t:"num",s:3,d:2,tag:"CPP-EI",q:"What is the CPP basic exemption?",unit:"$",a:3500,tol:5,
+ why:"YMPE less the $3,500 basic exemption gives <b>maximum pensionable earnings</b>: $55,900 &ndash; $3,500 = $52,400 for 2018."},
+{t:"num",s:3,d:3,tag:"CPP-EI",q:"With a 2018 YMPE of <b>$55,900</b> and a $3,500 exemption, what are maximum pensionable earnings?",unit:"$",a:52400,tol:10,
+ why:"<b>$52,400</b>. At 4.95% that gives maximum contributions of $2,593.80 each for employee and employer — and $5,187.60 for the self-employed."},
+{t:"mc",s:3,d:3,tag:"CPP-EI",q:"Since January 1, 2012, must an employer deduct CPP from a 62-year-old already receiving a CPP pension?",
+ c:["Yes — employees aged 60 to 65 must contribute even while receiving a CPP/QPP retirement pension","No, receipt of a pension ends contributions","Only if the employee elects to","Only above the YMPE"],a:0,
+ why:"Those aged <b>65 to 70</b> must also contribute <b>unless</b> they file an election with the employer to stop, effective the first day of the month following the month the form is provided."},
+{t:"mc",s:3,d:2,tag:"INCOME",q:"An UNINCORPORATED business is treated how for tax purposes?",
+ c:["It is not distinguished from its owner — earnings are COMBINED with the owner's for tax purposes","As a separate taxable entity","As a trust","As a partnership only"],a:0,
+ why:"An <b>incorporated</b> business is a separate entity, taxed separately and <b>not combined</b> with the owner's income; owners may take salary, dividends, interest or other payments."},
+{t:"num",s:3,d:3,tag:"INCOME",q:"Owner-managers often take salary up to <b>$145,722</b> (2018) to maximize RRSP room. At 18%, what RRSP contribution does that support?",unit:"$",a:26230,tol:15,
+ why:"18% × $145,722 ≈ <b>$26,230</b> — the 2018 maximum. The balance of income is then taken as dividends."},
+{t:"mc",s:3,d:2,tag:"INCOME",q:"How is net business income recorded on the cash flow statement?",
+ c:["On a BEFORE-TAX basis, with a provision then made for quarterly income tax instalments","Net of all taxes","Only when withdrawn","At the corporate rate"],a:0,
+ why:"Gross business income &ndash; business expenses = net business income (before tax); less quarterly instalments including CPP = the individual's net income."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"How are INTEREST and FOREIGN DIVIDENDS taxed?",
+ c:["FULLY taxable annually at the client's MTR — not tax advantaged in any way","At 50% inclusion","With a dividend tax credit","Tax deferred until sale"],a:0,
+ why:"<b>Canadian</b> dividends are paid from after-tax corporate earnings, so a <b>dividend tax credit</b> avoids double taxation — making them tax advantaged."},
+{t:"num",s:3,d:2,tag:"INCOME",q:"What PERCENTAGE of a net capital gain is reported as taxable income?",unit:"%",a:50,tol:0.5,
+ why:"Only <b>50%</b>. Capital losses can be offset against realized gains, carried back <b>three years</b> or carried forward <b>indefinitely</b>."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"When CAN net capital losses be deducted from OTHER income?",
+ c:["Only at the time of death — 50% of unused capital losses may be deducted from any income in the deceased's final return","Any year, up to $3,000","Only in the year realized","Never"],a:0,
+ why:"Otherwise they carry back three years or forward indefinitely to offset past or future <b>capital gains</b> only. Gains on foreign and Canadian investments are taxed the same way."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"Which expenses can be deducted from GROSS RENTAL income on investment real estate?",
+ c:["Mortgage interest, property taxes and maintenance costs — plus a capital cost allowance for the building","Only maintenance costs","Only property taxes","None; rental income is taxed gross"],a:0,
+ why:"<b>CCA</b> is the amount of the building's value CRA allows to be written off annually as depreciation. Any capital gain is realized only on sale, and only 50% is taxable."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"Which retirement income source is NOT taxable?",
+ c:["The Guaranteed Income Supplement (and certain provincial supplements)","CPP retirement benefits","Old Age Security","RRIF withdrawals"],a:0,
+ why:"All other listed retirement income — CPP, OAS, employer pensions, RRIF/LIF/LRIF withdrawals and annuity income — is taxable."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"Child support based on agreements made or amended AFTER May 1, 1997 is…",
+ c:["NOT taxable to the recipient and NOT deductible for the payer","Taxable to the recipient and deductible for the payer","Taxable to both","Deductible only"],a:0,
+ why:"The planner must always check the source of \"other income\" to determine whether it is taxable — that category also covers EI benefits, social assistance, inheritances and lottery winnings."},
+{t:"mc",s:3,d:3,tag:"INCOME",q:"Why is a large annual tax REFUND described as NOT a sound strategy?",
+ c:["It is better to owe a small amount than to lend money to CRA on an interest-free basis","Refunds are taxable","Refunds trigger audits","Refunds delay RRSP contributions"],a:0,
+ why:"The fix: file the <b>Application for Reduction in Income Tax Deductions at Source</b> so the employer withholds less — freeing monthly surplus cash flow to pay down debt or increase savings."},
+{t:"mc",s:3,d:2,tag:"INCOME",q:"What is the tax filing deadline for a self-employed individual?",
+ c:["June 15","April 30","March 31","December 31"],a:0,
+ why:"<b>April 30</b> for other taxpayers."},
+{t:"mc",s:3,d:2,tag:"EXPENSES",q:"NON-DISCRETIONARY expenses are…",
+ c:["Necessary expenses for home, family, transportation, credit payments and insurance premiums","Expenses that enhance living standards","Savings and investments","Expenses paid by credit card"],a:0,
+ why:"Discretionary expenses — entertainment, recreation, gifts, donations, vacations — are not necessary for day-to-day living but enhance living standards, and there is <b>often significant room to cut back</b>."},
+{t:"mc",s:3,d:3,tag:"EXPENSES",q:"How can a non-discretionary expense contain a discretionary component?",
+ c:["Everybody requires BASIC clothing, but \"designer\" items are the discretionary part","Only if paid annually","Only for housing","It cannot"],a:0,
+ why:"Conversely, although savings are categorized as discretionary in this module, <b>regular contributions to an investment plan can be considered a \"fixed\" expense</b>, since the discipline is necessary."},
+{t:"mc",s:3,d:3,tag:"EXPENSES",q:"How can non-discretionary CREDIT payments be reduced?",
+ c:["By restructuring debt at a lower rate or amortizing the loan over a longer period","They cannot be reduced","By skipping payments","By switching lenders only"],a:0,
+ why:"Generally there is <b>limited room</b> to reduce non-discretionary expenses."},
+{t:"mc",s:3,d:3,tag:"EXPENSES",q:"A client repairs a leaky roof versus adding an extension. How is each recorded?",
+ c:["The repair is an EXPENSE; the addition is an ASSET purchase that will likely increase the property's value","Both are expenses","Both are asset purchases","Both are ignored"],a:0,
+ why:"The key test: <b>does the purchase enhance the client's long-term net worth?</b> Asset purchases go on the net worth statement; maintenance costs go on the cash flow statement."},
+{t:"mc",s:3,d:3,tag:"EXPENSES",q:"Which is one of the THREE KEY RULES of debt management?",
+ c:["Pay off the most costly debt first","Always consolidate into a mortgage","Never borrow to invest","Pay all debts equally"],a:0,
+ why:"The three: pay off the most costly debt first; convert non-tax-deductible debt to tax-deductible debt; and increase the frequency or amounts of payments. <b>Debt management is typically a first priority.</b>"},
+{t:"mc",s:3,d:2,tag:"EXPENSES",q:"On reducing insurance premiums by raising deductibles, what is the caution?",
+ c:["Higher deductibles mean greater costs in the event of a claim — clients must be able to finance them","Coverage may lapse","Premiums rise later","Claims are denied"],a:0,
+ why:"The six cash flow strategies also include managing credit and debt, prioritizing and controlling spending, setting up specific accounts, implementing a saving programme, and increasing after-tax income."},
+{t:"mc",s:3,d:3,tag:"EXPENSES",q:"For a RETIREE, how can after-tax income be increased?",
+ c:["Restructure the portfolio and draw down assets tax-efficiently — favouring Canadian dividend income over interest, which is 100% taxable","Take on part-time work only","Delay CPP indefinitely","Increase RRSP contributions"],a:0,
+ why:"A systematic withdrawal plan on non-registered equity funds is the example given. \"Controlling spending is <b>just as important as</b> saving.\""},
+{t:"num",s:3,d:3,tag:"CASHFLOW",q:"The Belangers' 2017 net income was <b>$56,444</b> and total expenses <b>$55,704</b>. What was their cash flow SURPLUS?",unit:"$",a:740,tol:2,
+ why:"<b>$740</b>, a surplus of just 1.31% — or roughly $62 a month, which sits in their joint chequing account."},
+{t:"num",s:3,d:3,tag:"CASHFLOW",q:"Net employment income was $55,171, investment income $850 and the net tax refund $423. What is TOTAL NET INCOME?",unit:"$",a:56444,tol:2,
+ why:"<b>$56,444</b>. (The book's text has a typo giving $57,550 — Worksheet 2 and every ratio afterward use $56,444.)"},
+{t:"mc",s:3,d:3,tag:"CASHFLOW",q:"The Belangers' credit card expense line was $624. What was it made of?",
+ c:["$240 in annual card fees and $384 of interest on outstanding balances","Purchases charged to the cards","Minimum monthly payments","Late fees"],a:0,
+ why:"Actual purchases charged to the cards were <b>allocated to the relevant expense categories</b> so nothing is double-counted. They should consider cards with no or low annual fees."},
+{t:"mc",s:3,d:3,tag:"CASHFLOW",q:"Paul and Gina pay their own long-term disability premiums. What does that mean for future benefits?",
+ c:["Any disability benefits would be received TAX-FREE","Benefits would be fully taxable","Premiums become deductible","Coverage is reduced"],a:0,
+ why:"Their <b>life insurance</b> coverage, by contrast, is a taxable benefit."},
+
+/* ============ STAGE 4 — THE PROJECTED CASH FLOW STATEMENT ============ */
+{t:"mc",s:4,d:2,tag:"PROJECTED",q:"The projected cash flow statement is…",
+ c:["A PLANNING TOOL forecasting the amounts and timing of cash inflows and outflows, usually for one year","A record of the past year","A valuation of assets","A tax estimate"],a:0,
+ why:"<b>PROJECTED NET INCOME &ndash; PROJECTED EXPENSES = PROJECTED SURPLUS/(SHORTFALL)</b>, built on the current cash flow statement."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"What must clients understand for the projection to be realistic and workable?",
+ c:["The financial TRADE-OFFS required — to what extent they will forgo current consumption and lifestyle","The tax rules","Investment theory","Their credit score"],a:0,
+ why:"The purpose is to outline a realistic plan of action allocating income to specified expenses so prioritized objectives can be achieved."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"Why does the projected statement initially require CONSTANT REVISION?",
+ c:["A workable statement can only be developed after a comprehensive analysis of ALL the financial planning elements","Because income is uncertain","Because tax rules change","Because clients change their minds"],a:0,
+ why:"The <b>first draft</b> controls discretionary spending and ensures short-term liquidity; the <b>second or final draft</b> should meet non-discretionary and reasonable discretionary expenses, with the surplus going to a realistic saving and investing program."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"\"In short, a client will not be able to implement the financial plan unless…\"",
+ c:["The projected cash flow is both REALISTIC and FEASIBLE","The client has a surplus","Taxes are minimized","Debt is eliminated"],a:0,
+ why:"The planner's task is to <b>strike a balance between a client's competing financial objectives</b>."},
+{t:"mc",s:4,d:2,tag:"PROJECTED",q:"Which is one of the three uses of the projected statement for the CLIENT?",
+ c:["Ensuring liquidity — meeting current expenses WITHOUT borrowing","Calculating net worth","Filing taxes","Choosing investments"],a:0,
+ why:"The three: control spending, ensure liquidity, and implement a workable financial plan. A <b>monthly or quarterly review</b> helps clients see whether they are on track."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"How should a planner project a client's future EMPLOYMENT income?",
+ c:["Conservatively — generally assume it remains UNCHANGED IN REAL TERMS, increasing at the rate of inflation","Assume steady real growth","Assume promotions every three years","Use the industry average"],a:0,
+ why:"Employment uncertainty is widespread and self-employment income may be <b>erratic</b>. Stability depends on marketable knowledge and skills, macro-economic conditions, and industry prospects."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"What does \"PAY YOURSELF FIRST\" mean in practice?",
+ c:["Set a target from each pay-cheque and debit it AUTOMATICALLY from the chequing account","Pay all bills before saving","Save whatever is left at month end","Prioritize your own debts over shared ones"],a:0,
+ why:"Clients may begin at a smaller percentage such as <b>5%</b> and build to <b>10%</b>. The discipline is powerful over time."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"Besides an emergency fund, why should clients also set up a PLC?",
+ c:["It allows for a MORE EFFICIENT USE of a client's assets while keeping emergency funds accessible","It improves credit ratings","It replaces the emergency fund","Lenders require it"],a:0,
+ why:"Cash reserves should also be allocated to a <b>separate account</b> for periodic expenses such as an automobile purchase or a special vacation."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"When can the question of how best to allocate surplus cash flow be answered?",
+ c:["Only AFTER developing the client's RETIREMENT PLAN","Immediately, from the ratios","After the tax return is filed","At the first meeting"],a:0,
+ why:"The retirement outcome is critical for most clients since meeting retirement objectives is typically a key priority. Once decided, the <b>final draft</b> of the projected statement can be completed."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"Mortgage rate HIGH and expected RRSP return LOW. What follows?",
+ c:["Pay down the mortgage more quickly before maximizing RRSP contributions","Maximize RRSP contributions first","Split evenly","Neither; invest outside registered plans"],a:0,
+ why:"Reverse the two and RRSP contributions come first. This is the first of the six factors in the RRSP-versus-mortgage decision."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"How does the client's AGE affect the RRSP-versus-mortgage decision?",
+ c:["The OLDER the client, the more he or she should contribute to the RRSP, since time matters in accumulating retirement assets","The older the client, the more they should pay the mortgage","Age is irrelevant","Younger clients should avoid RRSPs"],a:0,
+ why:"And if a client already has significant RRSP or pension assets, <b>paying down the mortgage</b> may be preferred."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"How does the marginal tax rate affect the decision?",
+ c:["The HIGHER the client's MTR, the more beneficial it is to contribute to an RRSP","The higher the MTR, the better to pay the mortgage","MTR is irrelevant","Only the spouse's MTR matters"],a:0,
+ why:"And if the client has non-tax-deductible debt at high interest, <b>repay that first</b> — before contributing to RRSPs or paying down the mortgage."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"Why is comparing mortgage prepayment with RRSP contributions complex?",
+ c:["Mortgage payments are made in AFTER-TAX dollars while RRSP savings grow in a tax-sheltered plan in BEFORE-TAX dollars","Mortgage rates change","RRSP returns are unknown","Both are taxed identically"],a:0,
+ why:"The analysis is also affected by the <b>period of comparison</b>. The challenge is to determine which option will maximize net worth over the long term."},
+{t:"mc",s:4,d:3,tag:"ALLOCATE",q:"What is the general ordering rule for RRSPs and RESPs?",
+ c:["Maximize RRSP contributions FIRST, then contribute to RESPs — and consider contributing the RRSP tax refund to the RESP","RESPs first, since education comes sooner","Split contributions evenly","Neither until the mortgage is repaid"],a:0,
+ why:"That refund route lets clients <b>balance their competing financial objectives</b>. Clients should not forgo RRSP contributions to pay off a mortgage or fund education."},
+{t:"num",s:4,d:3,tag:"PROJECTED",q:"The Belangers' 2018 RRSP cash outflow is $6,000 for the 2017 tax year plus $4,600 for 2018. What is the total?",unit:"$",a:10600,tol:5,
+ why:"<b>$10,600</b>. The 2017-year contribution totals $12,000 for Paul, but $10,000 of it is Paul's equity fund transferred as a <b>contribution in kind</b>, so only $6,000 is actual cash."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"Paul transfers his $10,000 equity fund (ACB $7,000) into an RRSP as a contribution in kind. What happens?",
+ c:["A $3,000 capital gain is TRIGGERED — $1,500 taxable, roughly $675 of tax at his 45% MTR","Nothing is triggered until sale","The gain is sheltered by the RRSP","The ACB carries over"],a:0,
+ why:"The benefit of the RRSP <b>tax deduction</b> still provides significant tax savings. Note also that a capital <b>loss</b> could not be claimed on such a transfer."},
+{t:"num",s:4,d:3,tag:"PROJECTED",q:"Paul's total 2017-year RRSP contributions are <b>$14,400</b> at a <b>45%</b> MTR. What are the gross tax savings?",unit:"$",a:6480,tol:10,
+ why:"$14,400 × 45% = <b>$6,480</b>. Less roughly $675 of capital gains tax leaves about $5,725; Gina's $4,000 × 40% adds $1,600, for total savings of about $7,325 — the source of the <b>$7,300</b> projected refund."},
+{t:"num",s:4,d:3,tag:"PROJECTED",q:"Gina contributes <b>$4,000</b> at a <b>40%</b> MTR. What are her tax savings?",unit:"$",a:1600,tol:5,
+ why:"<b>$1,600</b>. She should use her RRSP carryforward <b>while she still has a relatively high MTR</b>, before moving to part-time work."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"Why should PAUL use all of his RRSP carryforward before Gina makes any contributions?",
+ c:["He has the HIGHER MTR — 45% versus 40% — so the deduction is worth more in his hands","He earns more","He has more room","His plan performs better"],a:0,
+ why:"A <b>spousal RRSP</b> then lets Paul contribute for Gina and take the deduction himself — income splitting that is critical to equalize retirement income and minimize taxes."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"Why does the Belangers' projected INVESTMENT income fall from $850 to $200?",
+ c:["They will use their chequing balances to pay down credit card debt and contribute non-registered assets to RRSPs","Rates are falling","They are selling investments for consumption","They switched to growth funds"],a:0,
+ why:"The projected refund rises to $7,300, so total net income still climbs from $56,444 to $63,712."},
+{t:"mc",s:4,d:3,tag:"PROJECTED",q:"Why should Paul arrange to have LESS income tax deducted at source for 2018?",
+ c:["So he does not have to wait until May 2019 to receive the refund on his 2018 contributions","To lower his marginal rate","To avoid instalments","To increase his RRSP room"],a:0,
+ why:"It matters more for Paul than for Gina, since her eligible contribution is only $600 a year."},
+{t:"mc",s:4,d:2,tag:"PROJECTED",q:"What new expense line did Henri add to the Belangers' projection?",
+ c:["$500 a year for PERIODIC EXPENSES, toward an automobile purchase in three to five years","An emergency fund contribution","A child care provision","An investment loan payment"],a:0,
+ why:"He also cut furniture and appliances from $4,800 to $500, and trimmed dining out, entertainment and vacations."},
+
+/* ============ STAGE 5 — ANALYSING THE STATEMENTS ============ */
+{t:"mc",s:5,d:2,tag:"ANALYSIS",q:"What do \"COMPLETE\" and \"RELIABLE\" mean for personal financial statements?",
+ c:["Complete = containing ALL relevant financial information; reliable = representing the situation ACCURATELY AND IN A TIMELY manner","Complete = audited; reliable = signed","Complete = including projections; reliable = conservative","Complete = both statements; reliable = recent"],a:0,
+ why:"They are essential if planners want to provide clients with <b>value-added advice</b>."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"Which statements EVALUATE the client's general financial situation, and which MEASURE AND MONITOR progress?",
+ c:["The CURRENT statements evaluate; the PROJECTED statements measure and monitor","The projected statements evaluate; the current ones monitor","Both do both","Only the net worth statement does either"],a:0,
+ why:"The net worth statement is <b>the starting point</b> for developing a plan and is also used to monitor it and measure its success."},
+{t:"mc",s:5,d:2,tag:"ANALYSIS",q:"Which is one of the four real-world uses of personal financial statements given?",
+ c:["A lender assessing whether a borrower qualifies for a mortgage","Filing a tax return","Applying for a credit card","Opening a bank account"],a:0,
+ why:"Also: determining sufficient life insurance coverage; developing an investment plan for retirement; and estate planning, to determine liabilities at death and net assets available to beneficiaries."},
+{t:"mc",s:5,d:3,tag:"RATIOS",q:"What is the critical CAVEAT about financial ratios?",
+ c:["They do not reflect a client's entire situation — recommendations should not be based SOLELY on ratios","They are only valid for younger clients","They must be recalculated monthly","They replace the statements"],a:0,
+ why:"Both quantitative and qualitative issues matter, along with non-financial factors like marketable skills and drive — and ratios must be read <b>in the context of the client's stage in the life cycle</b>."},
+{t:"mc",s:5,d:2,tag:"RATIOS",q:"What is the <b>BASIC LIQUIDITY RATIO</b>?",
+ c:["LIQUID ASSETS ÷ MONTHLY EXPENSES","Liquid assets ÷ total assets","Liquid assets ÷ net worth","Monthly expenses ÷ liquid assets"],a:0,
+ why:"It estimates the NUMBER OF MONTHS a client could keep meeting expenses from existing cash assets if income stopped. Guideline: at least <b>three months</b>."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"Liquid assets are <b>$10,500</b> and monthly expenses <b>$4,642</b>. What is the basic liquidity ratio, in MONTHS?",unit:"months",a:2.26,tol:0.05,
+ why:"<b>2.26 months</b> — just over two months, below the three-month guideline. Thereafter the Belangers would need to rely on their line of credit."},
+{t:"mc",s:5,d:2,tag:"RATIOS",q:"What is the guideline range for the <b>LIQUID ASSETS-TO-TOTAL ASSETS</b> ratio?",
+ c:["5% to 15%","1% to 5%","15% to 25%","20% to 30%"],a:0,
+ why:"It measures a client's <b>\"financial slack.\"</b> Younger clients may have a higher ratio due to debt servicing and family expenses; older clients may not need as much."},
+{t:"num",s:5,d:2,tag:"RATIOS",q:"Liquid assets $10,500, total assets $260,000. What is the liquid assets-to-total assets ratio, as a percentage?",unit:"%",a:4.04,tol:0.05,
+ why:"<b>4.04%</b> — low, but acceptable if the Belangers are comfortable, since they have a joint PLC. With child-related expenses they will need more."},
+{t:"mc",s:5,d:3,tag:"RATIOS",q:"Too MUCH liquidity indicates…",
+ c:["An INEFFICIENT use of funds — financial resources are not being used efficiently","Prudent planning","A high risk tolerance","Nothing meaningful"],a:0,
+ why:"Insufficient liquid assets cause cash flow problems; excess liquidity means the client is not maximizing returns on investment assets."},
+{t:"mc",s:5,d:2,tag:"RATIOS",q:"The <b>INVESTMENT ASSETS-TO-NET WORTH</b> ratio measures…",
+ c:["How well clients are progressing toward the goal of ACCUMULATING CAPITAL — it typically PEAKS AT RETIREMENT","Portfolio diversification","Solvency","Liquidity"],a:0,
+ why:"Younger clients often have <b>less than 20%</b>; older clients approaching retirement usually have <b>more than 50%</b>."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"Investment assets $53,500, net worth $144,998. What is the investment assets-to-net worth ratio, as a percentage?",unit:"%",a:36.90,tol:0.1,
+ why:"<b>36.90%</b> — healthy for their stage, though with the arrival of a child this ratio will likely stay level before increasing again."},
+{t:"mc",s:5,d:2,tag:"RATIOS",q:"What is the <b>DEBT-TO-ASSET</b> ratio, and what does it measure?",
+ c:["Total debts ÷ total assets — a broader measure of liquidity, measuring SOLVENCY, the ability to pay debts long-term","Annual payments ÷ gross income","Total debts ÷ net worth","Liabilities ÷ liquid assets"],a:0,
+ why:"It reflects the proportion of assets financed by debt: a 35% ratio means roughly <b>one-third</b> of assets are debt-financed."},
+{t:"mc",s:5,d:3,tag:"RATIOS",q:"What is the LIQUIDITY versus SOLVENCY distinction the debt-to-asset ratio exposes?",
+ c:["A client may have enough current income to service debt short-term (liquidity) but insufficient assets to pay debts long-term (insolvency)","They mean the same thing","Solvency is short-term, liquidity long-term","Both are measured by cash flow"],a:0,
+ why:"And clients may remain in that situation for an <b>extended period</b>. Younger clients are typically above 50%; older clients approaching retirement below 20%."},
+{t:"num",s:5,d:2,tag:"RATIOS",q:"Total liabilities $115,002, total assets $260,000. What is the debt-to-asset ratio, as a percentage?",unit:"%",a:44.23,tol:0.1,
+ why:"<b>44.23%</b> — relatively low (under 50%) for the Belangers' stage in the life cycle."},
+{t:"mc",s:5,d:3,tag:"RATIOS",q:"What is the ONLY difference between the debt-to-income ratio and the debt service ratio?",
+ c:["The denominator — GROSS income versus NET income. The numerator is the same annual debt payments","The numerator","One includes the mortgage","One is annual, one monthly"],a:0,
+ why:"The <b>debt service ratio</b> is the better indication, because it shows the percentage spent on debt <b>in after-tax dollars</b>."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"At what percentage does the debt-to-income ratio indicate income MAY BE INADEQUATE to cover debt payments?",unit:"%",a:40,tol:0.5,
+ why:"Higher than <b>40%</b> — and the debt service ratio flags inadequacy at <b>40% or higher</b> too. Typical figures: younger clients above 25% (debt-to-income) or 35% (debt service); older clients below 5% on both."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"Annual debt payments $18,024, annual GROSS income $88,000. What is the debt-to-income ratio, as a percentage?",unit:"%",a:20.48,tol:0.1,
+ why:"<b>20.48%</b> — well within the limit, though with the arrival of a child this ratio will likely increase."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"Annual debt payments $18,024, annual NET income $56,444. What is the DEBT SERVICE ratio, as a percentage?",unit:"%",a:31.93,tol:0.1,
+ why:"<b>31.93%</b>. This gives a better indication than debt-to-income, because debt payments are assessed against <b>after-tax</b> income."},
+{t:"num",s:5,d:3,tag:"RATIOS",q:"Build the Belangers' annual debt payments: mortgage $9,420 + property taxes $1,596 + heating $1,200 + credit cards $624 + auto loan $5,184.",unit:"$",a:18024,tol:5,
+ why:"<b>$18,024</b>. Note the housing components — mortgage, property taxes AND heating — the same three used in the GDS/TDS ratios. To be conservative, the minimum PLC payment could also be included."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"What are the prescribed GDS and TDS guidelines, including heating?",
+ c:["32% and 42% respectively","30% and 40%","25% and 35%","35% and 45%"],a:0,
+ why:"The glossary also notes a GDS of 30% or less of gross income is acceptable — <b>32% if heating is included</b>."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"Under investment planning, which assets must be assessed?",
+ c:["ALL investment assets, INCLUDING pension assets — both DCPP and DBPP","Only non-registered assets","Only liquid assets","Only the client's own, not the spouse's"],a:0,
+ why:"The aim is a <b>strategic asset allocation</b> producing a well-diversified, tax-efficient portfolio."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"Why does the checklist ask what NON-INCOME PRODUCING assets each spouse holds?",
+ c:["It is critical for future INCOME SPLITTING","To calculate insurance needs","To value the estate","To assess liquidity"],a:0,
+ why:"Tax planning aims to maximize RRSPs and TFSAs, tax-shelter interest-bearing investments, and use spousal RRSPs to minimize taxes during retirement."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"Under ESTATE planning, what must be determined BEFORE gifting?",
+ c:["Whether assets are SUFFICIENT FOR RETIREMENT","The beneficiaries' tax rates","The probate fees","The value of insurance"],a:0,
+ why:"Also: whether property ownership between spouses is efficient for transfer to beneficiaries, and the value of assets and liabilities — including the tax liability — available for distribution."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"Under retirement planning, what must be assessed beyond whether assets are sufficient?",
+ c:["HOW to draw down registered and non-registered assets in the most TAX-EFFICIENT manner over the entire retirement period","The client's life expectancy only","The pension fund manager's record","The inflation rate only"],a:0,
+ why:"Assets must be sufficient for the <b>entire</b> retirement period, not just its start."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"The net worth checklist asks about CONTINGENT liabilities. What else does it ask about them?",
+ c:["The TIMING of these expected liabilities","Their tax treatment","Who guaranteed them","Whether they are insured"],a:0,
+ why:"It also asks how the composition of assets and liabilities has changed year by year, and the percentage change in net worth in each of the last five years <b>in real terms</b>."},
+{t:"mc",s:5,d:3,tag:"ANALYSIS",q:"What is the financial planner's OVERALL GOAL, per the chapter's summary?",
+ c:["To enable clients to achieve their prioritized financial objectives and MAXIMIZE THEIR LONG-TERM NET WORTH","To generate the highest returns","To minimize taxes","To eliminate all debt"],a:0,
+ why:"Initially the focus is to improve cash flow to generate a surplus; once a decision is made on how to optimize that surplus, the final draft of the projected statement can be completed."}
+];
+
+/* ---------- M2 CHAPTER 2 BOSSES ---------- */
+const BOSSES_C5 = {
+1:{name:"THE SNAPSHOT",art:"ASSETS - LIABILITIES = NET WORTH",intro:"Build the balance sheet. Value everything honestly, and conservatively.",
+   steps:[
+    {t:"mc",d:2,tag:"ASSETS",q:"BOSS 1/5 — Sort these: a T-bill, a rental property, a principal residence.",
+     c:["LIQUID, INVESTMENT, PERSONAL","Liquid, personal, investment","Investment, liquid, personal","All three are investment assets"],a:0,
+     why:"Liquid assets convert to cash with minimal loss of value; investment assets are held over a year to appreciate; personal assets support lifestyle."},
+    {t:"mc",d:3,tag:"ASSETS",q:"BOSS 2/5 — The client holds an in-trust account for their 8-year-old. Where does it go?",
+     c:["A FOOTNOTE only — the assets are the child's property, not the parent's","A registered investment asset","A non-registered investment asset","A personal asset"],a:0,
+     why:"The donor no longer has title; withdrawals must be used solely for the child's benefit; at the age of majority the child takes control."},
+    {t:"num",d:2,tag:"VALUATION",q:"BOSS 3/5 — An equity fund has an ACB of $7,000 and is worth $10,000. What is the unrealized capital gain?",unit:"$",a:3000,tol:1,
+     why:"$3,000, already reflected in the market value shown. To be conservative, the estimated tax due can be shown as a short-term liability under \"unpaid income taxes.\""},
+    {t:"num",d:3,tag:"VALUATION",q:"BOSS 4/5 — At a 45% MTR, what tax would that gain attract? (Only half a gain is taxable.)",unit:"$",a:675,tol:1,
+     why:"50% × $3,000 = $1,500 taxable; × 45% = <b>$675</b>."},
+    {t:"num",d:2,tag:"NETWORTH",q:"BOSS 5/5 — FINISH IT. Assets $260,000, liabilities $115,002. Net worth?",unit:"$",a:144998,tol:5,
+     why:"$144,998. Remember: only the <b>current outstanding balance</b> of each loan appears — never the original principal, never future interest. Stage cleared."}
+   ]},
+2:{name:"THE PENSION ADJUSTER",art:"18% OF INCOME - PA = ROOM",intro:"Three employees, three plans, three very different RRSP outcomes.",
+   steps:[
+    {t:"num",d:3,tag:"PA",q:"BOSS 1/5 — Employee A earns $65,000. A DCPP takes 5% from each of employee and employer. What is the PA?",unit:"$",a:6500,tol:10,
+     why:"The DCPP PA is the SUM of both contributions: $3,250 × 2 = $6,500."},
+    {t:"num",d:3,tag:"PA",q:"BOSS 2/5 — Employee B, same $65,000, is in a 2% DBPP. What is the PA?",unit:"$",a:11100,tol:10,
+     why:"(9 × ($65,000 × 2%)) &ndash; $600 = $11,700 &ndash; $600 = $11,100."},
+    {t:"num",d:3,tag:"PA",q:"BOSS 3/5 — What RRSP room does Employee B have left?",unit:"$",a:600,tol:5,
+     why:"18% × $65,000 = $11,700, less the $11,100 PA = <b>$600</b>. The richer the pension, the smaller the room — and high earners above $75,000 in such a plan have none at all."},
+    {t:"mc",d:3,tag:"PA",q:"BOSS 4/5 — Employee C is in a GROUP RRSP. What is her PA?",
+     c:["There is NO PA — a GRRSP is generally not governed by pension legislation","The sum of employee and employer contributions","9 × entitlement &ndash; $600","18% of her salary"],a:0,
+     why:"The single most common PA trap. Her GRRSP plus personal RRSP contributions must still stay within the annual limit."},
+    {t:"mc",d:3,tag:"PENSIONS",q:"BOSS 5/5 — FINISH IT. Which plan's assets do most planners EXCLUDE from asset allocation, and why?",
+     c:["The DBPP — the member has no control; the pension fund manager invests the assets","The DCPP — it is locked in","The DPSP — the employer contributes","The RRSP — it is tax-sheltered"],a:0,
+     why:"The DBPP is often recorded as a footnote showing projected retirement income, since the commuted value is a complex actuarial calculation. Boss down."}
+   ]},
+3:{name:"THE PAY STUB",art:"GROSS - DEDUCTIONS - TAX = NET",intro:"Every line on the pay stub is a question about what is taxable and what is not.",
+   steps:[
+    {t:"mc",d:3,tag:"BENEFITS",q:"BOSS 1/5 — Employer pays into an RPP and into a Group RRSP. Which is a taxable benefit?",
+     c:["The GRRSP contribution is taxable (though a deduction makes the net effect nil); the RPP contribution is not","Both are taxable","Neither is taxable","The RPP contribution only"],a:0,
+     why:"Employees receive a tax deduction for their own RPP contribution."},
+    {t:"mc",d:3,tag:"BENEFITS",q:"BOSS 2/5 — Employer pays group LIFE and group HEALTH premiums. Which creates a taxable benefit?",
+     c:["Group LIFE premiums are taxable; group HEALTH premiums generally are not","Both","Neither","Health only"],a:0,
+     why:"The group life plan still pays a <b>tax-free death benefit</b> to the beneficiary."},
+    {t:"mc",d:3,tag:"BENEFITS",q:"BOSS 3/5 — The employee pays their own disability premiums in after-tax dollars. What about future benefits?",
+     c:["They will be received TAX-FREE — the recommended arrangement","They will be fully taxable","Half will be taxable","It depends on the disability"],a:0,
+     why:"Pay tax going in, or coming out — never both, never neither."},
+    {t:"num",d:3,tag:"CPP-EI",q:"BOSS 4/5 — 2018 YMPE is $55,900 with a $3,500 exemption. What are maximum pensionable earnings?",unit:"$",a:52400,tol:10,
+     why:"$52,400. At 4.95% each, that is $2,593.80 for the employee and the same for the employer — and $5,187.60 for a self-employed person, who pays <b>both halves and gets no EI at all</b>."},
+    {t:"num",d:3,tag:"CASHFLOW",q:"BOSS 5/5 — FINISH IT. Net income $56,444, expenses $55,704. What is the cash flow surplus?",unit:"$",a:740,tol:2,
+     why:"$740 — 1.31%, or about $62 a month. Henri's priority: pay down credit cards first, then the auto loan, then RRSPs. Boss down."}
+   ]},
+4:{name:"THE FORECAST",art:"$10,000 SURPLUS  =&gt;  RRSP? RESP? MORTGAGE?",intro:"FINAL BOSS. One surplus, four competing uses, and a couple planning a family.",
+   steps:[
+    {t:"mc",d:3,tag:"ALLOCATE",q:"BOSS 1/6 — The client has high-interest, non-deductible credit card debt. What comes first?",
+     c:["Repay the high-interest debt BEFORE contributing to RRSPs or paying down the mortgage","Maximize the RRSP","Pay down the mortgage","Fund the RESP"],a:0,
+     why:"The sixth factor in the RRSP-versus-mortgage decision, and the first of the six net worth strategies."},
+    {t:"mc",d:3,tag:"ALLOCATE",q:"BOSS 2/6 — Mortgage rate is high, expected RRSP return is low, and the client is young with a modest MTR. Now what?",
+     c:["Pay down the mortgage more quickly before maximizing RRSP contributions","Maximize the RRSP anyway","Fund the RESP first","Split the surplus evenly"],a:0,
+     why:"Reverse the rates and the RRSP wins. Age, existing retirement assets, the mortgage balance and the MTR all feed the decision."},
+    {t:"mc",d:3,tag:"ALLOCATE",q:"BOSS 3/6 — When can this question actually be answered properly?",
+     c:["Only AFTER developing the client's retirement plan","At the first meeting","Once the ratios are calculated","After the tax return is filed"],a:0,
+     why:"Meeting retirement objectives is typically a key priority, so its outcome drives everything else. Then the final draft of the projected statement can be completed."},
+    {t:"mc",d:3,tag:"PROJECTED",q:"BOSS 4/6 — Paul moves his $10,000 equity fund (ACB $7,000) into his RRSP in kind. What is triggered?",
+     c:["A $3,000 capital gain — half taxable, about $675 of tax at his 45% MTR","Nothing until he sells inside the plan","A deemed disposition with no gain","A capital loss he can claim"],a:0,
+     why:"The RRSP deduction still leaves him well ahead. Note a capital <b>loss</b> could not be claimed on such a transfer."},
+    {t:"mc",d:3,tag:"PROJECTED",q:"BOSS 5/6 — Paul's MTR is 45%, Gina's is 40%. Who uses their carryforward first, and what else is recommended?",
+     c:["Paul first — the deduction is worth more in his hands — plus a SPOUSAL RRSP so he can contribute for Gina and take the deduction","Gina first, since she has less room","Both equally","Neither until the mortgage is paid"],a:0,
+     why:"Gina will contribute little over the next few years due to proposed part-time work, so income splitting is critical to equalize retirement income and minimize taxes."},
+    {t:"num",d:3,tag:"PROJECTED",q:"BOSS 6/6 — FINISH IT. The 2018 RRSP cash outflow is $6,000 for the 2017 tax year plus $4,600 for 2018. Total?",unit:"$",a:10600,tol:5,
+     why:"$10,600 — and the projection is judged a <b>workable action plan</b>, meaning the Belangers can consider starting a family. YOU WIN."}
+   ]},
+5:{name:"THE SIX RATIOS",art:"3 ASSET  //  3 LIABILITY",intro:"Everything, all at once. Six ratios, one couple, no mercy.",
+   steps:[
+    {t:"num",d:3,tag:"RATIOS",q:"RATIOS 1/6 — Liquid assets $10,500, monthly expenses $4,642. Basic liquidity ratio in months?",unit:"months",a:2.26,tol:0.05,
+     why:"2.26 months — below the three-month guideline, so they would fall back on their line of credit."},
+    {t:"num",d:3,tag:"RATIOS",q:"RATIOS 2/6 — Liquid assets $10,500, total assets $260,000. As a percentage?",unit:"%",a:4.04,tol:0.05,
+     why:"4.04% — below the 5–15% guideline, acceptable only because they have a joint PLC."},
+    {t:"num",d:3,tag:"RATIOS",q:"RATIOS 3/6 — Investment assets $53,500, net worth $144,998. As a percentage?",unit:"%",a:36.90,tol:0.1,
+     why:"36.90%. Younger clients are typically under 20%, older clients over 50% — the ratio peaks at retirement."},
+    {t:"num",d:3,tag:"RATIOS",q:"RATIOS 4/6 — Liabilities $115,002, assets $260,000. Debt-to-asset ratio as a percentage?",unit:"%",a:44.23,tol:0.1,
+     why:"44.23% — this one measures SOLVENCY, the ability to pay debts over the long term."},
+    {t:"num",d:3,tag:"RATIOS",q:"RATIOS 5/6 — Debt payments $18,024, NET income $56,444. Debt service ratio as a percentage?",unit:"%",a:31.93,tol:0.1,
+     why:"31.93%. Against GROSS income of $88,000 the debt-to-income ratio is only 20.48% — same numerator, different denominator."},
+    {t:"mc",d:3,tag:"RATIOS",q:"RATIOS 6/6 — FINISH IT. Which ratio gives the better indication, and why?",
+     c:["The DEBT SERVICE ratio — it assesses debt payments in AFTER-TAX dollars","Debt-to-income, since gross income is objective","Debt-to-asset, since it uses the balance sheet","They are equally informative"],a:0,
+     why:"And never rely on ratios alone: qualitative issues, non-financial factors and the client's life stage all matter. RATIOS CLEARED."}
+   ]}
+};
+
+const CRAM_C5 = `
+<h3>THE FORMULAS</h3>
+<table>
+<tr><td>Net worth</td><td class="f">ASSETS &ndash; LIABILITIES = NET WORTH (EQUITY)</td></tr>
+<tr><td>Cash flow</td><td class="f">NET INCOME (gross &ndash; deductions &ndash; taxes) &ndash; EXPENSES = SURPLUS/(SHORTFALL)</td></tr>
+<tr><td>Capital gain/(loss)</td><td class="f">SELLING PRICE &ndash; (ACB + COSTS TO SELL)</td></tr>
+<tr><td>RRSP limit</td><td class="f">(previous year's earned income × 18%, to the max) &ndash; previous year's PA</td></tr>
+<tr><td>PA — DCPP</td><td class="f">employee + employer contributions for the year</td></tr>
+<tr><td>PA — DBPP</td><td class="f">(9 × benefit entitlement) &ndash; $600</td></tr>
+<tr><td>PA — RRSP / Group RRSP</td><td class="f">NONE</td></tr>
+<tr><td>Basic liquidity ratio</td><td class="f">LIQUID ASSETS ÷ MONTHLY EXPENSES</td></tr>
+<tr><td>Liquid assets-to-total assets</td><td class="f">LIQUID ASSETS ÷ TOTAL ASSETS</td></tr>
+<tr><td>Investment assets-to-net worth</td><td class="f">INVESTMENT ASSETS ÷ NET WORTH</td></tr>
+<tr><td>Debt-to-asset</td><td class="f">TOTAL DEBTS ÷ TOTAL ASSETS</td></tr>
+<tr><td>Debt-to-income</td><td class="f">ANNUAL DEBT PAYMENTS ÷ ANNUAL GROSS INCOME</td></tr>
+<tr><td>Debt service</td><td class="f">ANNUAL DEBT PAYMENTS ÷ ANNUAL NET INCOME</td></tr>
+</table>
+
+<h3>THE RATIO GUIDELINES</h3>
+<table>
+<tr><td>Basic liquidity</td><td class="f">at least 3 months (emergency fund 3–6 months)</td></tr>
+<tr><td>Liquid assets-to-total assets</td><td class="f">5%–15% · younger higher, older lower</td></tr>
+<tr><td>Investment assets-to-net worth</td><td class="f">younger &lt; 20% · older &gt; 50% · peaks at retirement</td></tr>
+<tr><td>Debt-to-asset</td><td class="f">younger &gt; 50% · older &lt; 20% · 35% = one-third debt-financed</td></tr>
+<tr><td>Debt-to-income</td><td class="f">&gt; 40% may be inadequate · younger &gt; 25% · older &lt; 5%</td></tr>
+<tr><td>Debt service</td><td class="f">&ge; 40% may be inadequate · younger &gt; 35% · older &lt; 5%</td></tr>
+<tr><td>GDS / TDS</td><td class="f">32% / 42% including heating</td></tr>
+</table>
+
+<h3>NUMBERS TO KNOW COLD</h3>
+<table>
+<tr><td>Emergency fund</td><td class="f">3 to 6 months of living expenses</td></tr>
+<tr><td>Borrowing against a policy's CSV</td><td class="f">up to 90%</td></tr>
+<tr><td>RESP lifetime limit</td><td class="f">$50,000 (annual limit withdrawn)</td></tr>
+<tr><td>RESP deadlines</td><td class="f">contributions to the 31st anniversary · completed by the 35th</td></tr>
+<tr><td>Canada Learning Bond</td><td class="f">$500 initial + $100/year to age 15 = up to $2,000</td></tr>
+<tr><td>TFSA</td><td class="f">age 18 + valid SIN · $5,000 (09–12) · $5,500 (13–14) · $10,000 (15) · $5,500 (16–18)</td></tr>
+<tr><td>RRSP</td><td class="f">18% of previous year's earned income · 2018 max $26,230 · collapse at 71</td></tr>
+<tr><td>Capital gains</td><td class="f">50% taxable · losses carry back 3 years, forward indefinitely</td></tr>
+<tr><td>CPP</td><td class="f">4.95% × 2 = 9.9% · basic exemption $3,500 · YMPE $55,900 (2018)</td></tr>
+<tr><td>EI</td><td class="f">employer pays 1.4 × the employee rate · none for the self-employed</td></tr>
+<tr><td>Tax filing</td><td class="f">April 30 · June 15 if self-employed</td></tr>
+<tr><td>Contingent tax liability assumption</td><td class="f">100% taxable at a 50% MTR</td></tr>
+<tr><td>"Pay yourself first"</td><td class="f">start at 5%, build to 10%</td></tr>
+</table>
+
+<h3>HIGH-YIELD TRAPS</h3>
+<div class="trap"><b>DBPP:</b> benefits defined · no member control · commuted value · usually a FOOTNOTE · EXCLUDED from asset allocation. <b>DCPP:</b> contributions defined · member invests · locked in · INCLUDED in asset allocation.</div>
+<div class="trap"><b>DPSP:</b> employer contributions only · CAN be withdrawn before retirement (fully taxed) · employer's contribution = the PA.</div>
+<div class="trap"><b>Group RRSP: NO PA</b> — it is not governed by pension legislation. The most common PA trap.</div>
+<div class="trap">RRIF has a MINIMUM only · LIF has minimum AND maximum · LRIF has both but NO life-annuity requirement.</div>
+<div class="trap">An in-trust account is a <b>FOOTNOTE</b> on the parent's statement — the assets belong to the child.</div>
+<div class="trap">Employer's RPP contribution = NOT taxable. Employer's GRRSP contribution = taxable (net effect nil).</div>
+<div class="trap">Group HEALTH premiums paid by the employer = NOT taxable. Group LIFE premiums = TAXABLE.</div>
+<div class="trap">Disability: taxed going in &rarr; benefits tax-free. Not taxed going in &rarr; benefits taxable.</div>
+<div class="trap">A company vehicle is a taxable benefit <b>even if never used personally</b> — the standby charge.</div>
+<div class="trap">Interest and FOREIGN dividends = fully taxable. CANADIAN dividends = tax advantaged via the dividend tax credit.</div>
+<div class="trap">The self-employed pay BOTH halves of CPP and get NO EI at all.</div>
+<div class="trap">A large tax refund is <b>not</b> a good outcome — it is an interest-free loan to CRA.</div>
+<div class="trap">Asset purchase &rarr; net worth statement. Maintenance of that asset &rarr; cash flow statement. The test: does it enhance long-term net worth?</div>
+<div class="trap">Only the CURRENT OUTSTANDING BALANCE goes on the net worth statement — never the original principal, never future interest.</div>
+<div class="trap">Rising net worth is not automatically good — check what drove it.</div>
+<div class="trap">Debt-to-income uses GROSS; debt service uses NET. Same numerator.</div>
+<div class="trap">A "contribution in kind" TRIGGERS a capital gain — and a capital LOSS cannot be claimed on the transfer.</div>
+<div class="trap">The higher-MTR spouse uses their RRSP deduction first — Paul at 45% before Gina at 40%.</div>
+
+<h3>THE SENTENCE TO CARRY INTO THE EXAM</h3>
+<p style="color:var(--yellow);font-size:21px">"Little planning can be done until the financial planner determines the client's current financial resources, cash inflows and cash outflows."<br>
+<span class="muted">&rarr; The overall goal: enable clients to achieve their prioritized objectives and maximize their long-term net worth.</span></p>
+`;
+
 /* ---------- CHAPTER REGISTRY ---------- */
 const CHAPTERS = {
   comm:{ id:"comm", code:"CH.1", name:"THE HUMAN INTERFACE",
@@ -3468,7 +4076,12 @@ const CHAPTERS = {
          sub:"Module 2, Chapter 1 — Time Value of Money",
          blurb:"Single sums · annuities · effective rates · loans, bonds &amp; retirement",
          stages:STAGES, bank:BANK, bosses:BOSSES, cram:CRAM_HTML,
-         gauntlet:6, calc:true }
+         gauntlet:6, calc:true },
+  stmts:{ id:"stmts", code:"M2 CH.2", name:"THE PAPER TRAIL",
+         sub:"Module 2, Chapter 2 — Personal Financial Statements",
+         blurb:"Net worth · registered plans &amp; the PA · cash flow · projections · the six ratios",
+         stages:STAGES_C5, bank:BANK_C5, bosses:BOSSES_C5, cram:CRAM_C5,
+         gauntlet:5, calc:false }
 };
 
 /* ============================================================
@@ -3477,7 +4090,7 @@ const CHAPTERS = {
 const $ = id => document.getElementById(id);
 const SAVE_KEY = "tvmRaiders_v2";
 
-let save = {unlocked:{tvm:1, comm:1, client:1, econ:1, plan:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
+let save = {unlocked:{tvm:1, comm:1, client:1, econ:1, plan:1, stmts:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw){ save = Object.assign(save, JSON.parse(raw)); }
@@ -3485,7 +4098,7 @@ try{
     const old = localStorage.getItem("tvmRaiders_v1");   // migrate a single-chapter save
     if(old){
       const o = JSON.parse(old);
-      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1, econ: 1, plan: 1};
+      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1, econ: 1, plan: 1, stmts: 1};
       save.best = {}; Object.keys(o.best||{}).forEach(k=>{ save.best["tvm:"+k] = o.best[k]; });
       save.hi = (o.hi||[]).map(h=>Object.assign({ch:"M2 CH.1"}, h));
       save.mastery = o.mastery || {};
@@ -3494,7 +4107,7 @@ try{
     }
   }
 }catch(e){}
-if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1, econ:1, plan:1};
+if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1, econ:1, plan:1, stmts:1};
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------- audio ---------- */
@@ -3534,7 +4147,7 @@ function setChapter(id){
 }
 const chUnlocked = () => (save.unlocked && save.unlocked[CH.id]) || 1;
 function setUnlocked(v){
-  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1, econ:1, plan:1};
+  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1, econ:1, plan:1, stmts:1};
   save.unlocked[CH.id] = v;
 }
 
@@ -3620,7 +4233,7 @@ $("btnGauntlet").addEventListener("click",()=>{
 $("btnDrill").addEventListener("click",()=>{ sfx.coin(); startRun({mode:"drill"}); });
 $("btnWipe").addEventListener("click",()=>{
   if(confirm("Erase all progress, high scores and study data?")){
-    save = {unlocked:{tvm:1,comm:1,client:1,econ:1,plan:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
+    save = {unlocked:{tvm:1,comm:1,client:1,econ:1,plan:1,stmts:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
     persist(); renderHof(); toast("MEMORY CLEARED");
   }
 });
