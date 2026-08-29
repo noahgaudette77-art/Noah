@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FPF ARCADE — Communication &amp; Time Value of Money</title>
-<meta name="description" content="A 90s arcade study game for two FPF chapters: interpersonal communication, and the time value of money.">
+<title>FPF ARCADE — Communication, Client Behaviour &amp; Time Value of Money</title>
+<meta name="description" content="A 90s arcade study game for three FPF chapters: interpersonal communication, understanding the client, and the time value of money.">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -307,7 +307,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 
 <div class="cabinet">
   <div class="marquee">
-    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 2 CHAPTERS LOADED ◈</div>
+    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 3 CHAPTERS LOADED ◈</div>
     <h1>FPF ARCADE</h1>
     <div class="sub">STUDY HARDER. SCORE HIGHER.</div>
   </div>
@@ -321,11 +321,12 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
         <span class="l1">FPF</span>
         <span class="l2">ARCADE</span>
       </div>
-      <div class="tagline">▓▒░ TWO CHAPTERS · ONE CABINET ░▒▓</div>
+      <div class="tagline">▓▒░ THREE CHAPTERS · ONE CABINET ░▒▓</div>
       <div class="attract">
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--magenta)">CH.1 THE HUMAN INTERFACE</b> — communication, non-verbal, perceptions, skills</p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--green)">CH.2 KNOW YOUR CLIENT</b> — beliefs, culture, decisions, elderly, grief, incapacity</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--cyan)">M2 CH.1 TIME VALUE RAIDERS</b> — single sums, annuities, rates, applications</p>
-        <p><span style="color:var(--yellow)">▶</span> 9 stages · 11 boss problems · 280+ drills, all from your notes</p>
+        <p><span style="color:var(--yellow)">▶</span> 15 stages · 18 boss problems · 470+ drills, all from your notes</p>
         <p><span style="color:var(--yellow)">▶</span> Miss a question and the game <b style="color:var(--green)">teaches you the rule</b></p>
       </div>
       <div class="center blink px" style="font-size:14px;color:var(--green);margin:18px 0">PRESS START</div>
@@ -359,7 +360,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
         <button class="btn cy" data-go="chapters">◄ CHANGE CHAPTER</button>
         <button class="btn gh" data-go="title">TITLE</button>
       </div>
-      <div class="footer">Clear a stage to unlock the next. Gauntlet unlocks after Stage 5.</div>
+      <div class="footer" id="stagesFoot">Clear a stage to unlock the next.</div>
     </section>
 
     <!-- ============ GAME ============ -->
@@ -420,7 +421,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
       <h2 class="title">HOW TO PLAY</h2>
       <div class="cram">
         <p><b style="color:var(--cyan)">GOAL:</b> clear every stage of a chapter, each ending in a BOSS — a full case straight out of your notes (Ms. Varner's mutual fund, the Tuccis' RV, Sharon's college fund, Bill Brown's mortgage…).</p>
-        <p>Two chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
+        <p>Three chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
         <h3>CONTROLS</h3>
         <table>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></td><td>pick a multiple-choice answer</td></tr>
@@ -469,7 +470,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     </section>
 
   </div>
-  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
+  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, Chapter 2 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
 </div>
 
 <!-- ============ TVM CALCULATOR ============ -->
@@ -1673,6 +1674,771 @@ const CRAM_C1 = `
 <span class="muted">→ Understand from their frame of reference. Communicate that you understood. Then verify it with feedback.</span></p>
 `;
 
+
+/* ============================================================
+   CHAPTER 2 — UNDERSTANDING THE CLIENT
+   Built from the Chapter 2 study notes: personal variables,
+   socio-cultural variables, the decision-making process, and
+   the elderly, grieving and incapacitated client.
+   ============================================================ */
+
+const STAGES_C2 = [
+  {n:1, name:"THE INNER CODE",    sub:"Personal variables",
+   blurb:"Beliefs &rarr; values &rarr; goals · attitudes · the five meanings of money"},
+  {n:2, name:"THE CULTURE MAP",   sub:"Socio-cultural variables",
+   blurb:"6 dimensions · 4 functions · socialization vs acculturation · reference groups"},
+  {n:3, name:"THE DECISION ENGINE", sub:"The decision-making process",
+   blurb:"Involvement &amp; risk · the 5 steps · evaluation models · dissonance · ethics"},
+  {n:4, name:"THE LONG VIEW",     sub:"The elderly client",
+   blurb:"Stereotypes · physical, cognitive, personality and social change · adapting"},
+  {n:5, name:"THE HARD SEASON",   sub:"The grieving client",
+   blurb:"Denial &rarr; despair &rarr; acceptance · the 84% study · adapting stage by stage"},
+  {n:6, name:"NO BARRIERS",       sub:"The incapacitated client",
+   blurb:"Barriers · the wheelchair code · accessibility · cognitive incapacity · mental disorders"}
+];
+
+const BANK_C2 = [
+/* ============ STAGE 1 — PERSONAL VARIABLES ============ */
+{t:"mc",s:1,d:1,tag:"BELIEFS",q:"<b>Beliefs</b> are…",
+ c:["A collection of principles and ideas we hold to be TRUE — strongly held propositions about how things are or should be","Preferences for certain states of being","Predispositions to act in a certain way","Rules imposed by a culture"],a:0,
+ why:"They lie at the <b>core of our personality, defining who we are</b>, and range from ideas about the existence of God to the best make of car — so they exert influence even over the choice of financial products."},
+{t:"mc",s:1,d:2,tag:"BELIEFS",q:"How are beliefs produced?",
+ c:["Through thought and reflection, and through the influence of a group or authority","Only through personal experience","Only through formal education","Through advertising alone"],a:0,
+ why:"Some clients believe it is their duty to fund their children's education; others believe just as strongly it is the children's responsibility — they did it without help, and so should their children."},
+{t:"mc",s:1,d:2,tag:"BELIEFS",q:"How firmly are beliefs held?",
+ c:["It varies — some cling dogmatically even against contrary evidence; others hold them tentatively, as working hypotheses","All beliefs are held rigidly","All beliefs change easily with evidence","Only religious beliefs are firmly held"],a:0,
+ why:"Tentative believers stay open to exploration and change as new experiences and ideas are encountered."},
+{t:"mc",s:1,d:2,tag:"BELIEFS",q:"A client rejects an investment management service because she believes her late husband would want her to look after the estate herself. What should you do?",
+ c:["RESPECT the belief even though you may not agree with it","Explain that the belief is irrational","Ignore it and re-present the service","Ask her family to intervene"],a:0,
+ why:"If you believe it is in a client's best interests to re-think a belief, that must be done <b>with skill and diplomacy</b>. Another client might reject the same service because it feels like giving up control over their own life."},
+{t:"mc",s:1,d:3,tag:"BELIEFS",q:"\"When it comes to helping others, the method used is not as important as…\"",
+ c:["Your basic beliefs about people and the helping process","The products your institution offers","Your technical qualifications","The time you have available"],a:0,
+ why:"Effective helpers are optimistic about human nature — they believe people are <b>basically dependable and trustworthy, possess dignity and integrity, and can deal effectively with their own lives</b>. Research shows people with these beliefs are more effective at helping."},
+{t:"mc",s:1,d:1,tag:"VALUES",q:"<b>Values</b> are…",
+ c:["Preferences for certain CONDITIONS or states of being — not yet the desire for anything specific","Principles held to be factually true","Predispositions to act","Specific goals we pursue"],a:0,
+ why:"Such as fairness, honesty, integrity and respect for others. Values <b>arise from our beliefs</b>."},
+{t:"order",s:1,d:2,tag:"VALUES",q:"Put the chain in order, from the most abstract to the most specific:",
+ items:["BELIEF — a family should share good times before the children scatter","VALUE — family vacations","GOAL — save enough to take the family to Disney World"],
+ why:"<b>Beliefs → values → goals.</b> Outcomes we prize highly and concentrate our efforts on attaining become our goals."},
+{t:"mc",s:1,d:2,tag:"VALUES",q:"Why can values differ so much between two people?",
+ c:["They are based on individual beliefs AND influenced by the social environment and reference groups","Because education levels differ","Because incomes differ","Because personality is random"],a:0,
+ why:"Beliefs and values are also <b>inherited from our families and cultures</b> — Eastern cultures uphold the duty of children to care for elderly family members more so than Western cultures, which may show up directly in a client's goals."},
+{t:"mc",s:1,d:2,tag:"VALUES",q:"A client prioritizes inner harmony, self-respect, honesty and responsibility, and favours stocks of good corporate citizens. This shows that values…",
+ c:["Drive product choice, not just general outlook","Are irrelevant to portfolio construction","Always reduce returns","Change with market conditions"],a:0,
+ why:"Such clients may avoid corporations with stakes in countries with repressive regimes."},
+{t:"tf",s:1,d:2,tag:"VALUES",q:"Beliefs, values and goals are static once formed in adulthood.",a:false,
+ why:"They <b>evolve</b> as we reflect on our experiences, and are re-formed and revised as we try them out and incorporate the feedback we receive. Like beliefs, a client's values must be respected even if they differ from your own."},
+{t:"mc",s:1,d:1,tag:"ATTITUDES",q:"An <b>attitude</b> is…",
+ c:["A strongly held idea that creates a PREDISPOSITION TO ACT in a certain manner","A principle held to be true","A preference for a state of being","A cultural rule of conduct"],a:0,
+ why:"Also described as a fairly stable emotional tendency to respond consistently to some specific object, situation, person or category of people. An attitude in combination with a setting or event <b>triggers</b> an action."},
+{t:"mc",s:1,d:2,tag:"ATTITUDES",q:"An attitude is the product of…",
+ c:["A related BELIEF and VALUE","Two competing values","A cultural norm and a personal need","Experience alone"],a:0,
+ why:"Clients who invest only in GICs <b>value</b> safety and <b>believe</b> other investments are risky — producing a negative <b>attitude</b> toward the alternatives."},
+{t:"mc",s:1,d:3,tag:"ATTITUDES",q:"Attitudes are durable and hard to influence. Attempts to change one should focus on…",
+ c:["Changing the underlying BELIEFS or VALUES","Repeating the recommendation more forcefully","Offering a discount on fees","Involving the client's family"],a:0,
+ why:"With the GIC clients you might address the <b>belief</b> by pointing out the risks of GICs and the comparative safety of alternatives such as blue chip preferred stocks or mortgage-backed funds, which could offer higher returns."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"One client pays fees without a thought; another bargains hard over them. The notes stress that…",
+ c:["It is NOT always a question of relative wealth","Wealthier clients always resist fees","Fee sensitivity tracks income precisely","Only retirees negotiate fees"],a:0,
+ why:"What money <b>represents</b> to a client explains the difference. Identify that, and you begin to understand the needs that motivate them."},
+{t:"mc",s:1,d:1,tag:"MONEY",q:"What are the five attitudes associated with money?",
+ c:["Security, love, power, freedom, personal value","Security, growth, income, liquidity, legacy","Fear, greed, pride, envy, hope","Saving, spending, investing, giving, hoarding"],a:0,
+ why:"What money represents varies from client to client — see the needs behind the attitudes and work with them, and clients get longer-lasting satisfaction from your service."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"A client who lived through the Depression vowed never to be without savings again. Money here is a symbol of…",
+ c:["SECURITY","Love","Power","Personal value"],a:0,
+ why:"When deprived of money these clients become stressed and anxious, so savings represent security."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"A client has far more than she needs yet never feels secure. What must you remember?",
+ c:["Any change or innovation represents insecurity — move slowly and reassure at every step","Show her the numbers once and she will be reassured","Recommend higher returns to ease the worry","Involve her children in every decision"],a:0,
+ why:"Even if it is rationally demonstrated that there is no shortage, <b>they will still feel insecure</b>. They look for stability first, and saving and controlling expenses are very important to them."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"\"I receive gifts, therefore I am loveable, and if I love, I give gifts.\" This is money as a symbol of…",
+ c:["LOVE","Security","Freedom","Power"],a:0,
+ why:"They may have been raised in emotionally-inhibited homes where affection had to be bought. For these clients <b>saving is not a priority, but spending is</b>."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"With a client who uses money to buy love and acceptance, your responsibility is to protect them from…",
+ c:["Greedy or dishonest people — and in certain circumstances, from themselves","Their own family","Market volatility","High-fee products only"],a:0,
+ why:"That challenge can be properly met <b>only if you have established a relationship based on trust</b>."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"Which statement about money and SOCIAL STATUS does the chapter make?",
+ c:["SOCIAL RELATIONS, not money, determine social status — though money may let clients \"buy into\" those milieus","Money is the single determinant of status","Status is fixed at birth","Lottery winners climb the social ladder easily"],a:0,
+ why:"Big lottery winners have acknowledged money alone did not make it easier. The important factors are employment, education, family background, social networks, social skills and even neighbourhood."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"\"Deference confers PRESTIGE.\" Prestige is a compound of…",
+ c:["Respect, consideration, esteem and honour","Wealth, income and title","Education and occupation","Power and influence"],a:0,
+ why:"Clients with money do not have to ask for power — it is <b>offered</b> to them, and even to individuals simply related to such people."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"On money and domination, the chapter says the desire for money is often…",
+ c:["Proportional to the FEAR OF BEING DOMINATED by others","Proportional to childhood poverty","Unrelated to personality","Strongest among the young"],a:0,
+ why:"Some accumulate fortunes to avoid domination; others use money to buy power. The threat of <b>taking someone out of a will</b> can be a powerful manipulative device."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"Which is one of the three things to remember with a client for whom money means POWER?",
+ c:["They may want to dominate the relationship with you","They avoid discussing money directly","They defer readily to expertise","They prefer written communication"],a:0,
+ why:"They are used to having people acknowledge their perceived superior social status, and money serves as an instrument of power over family and associates — <b>perhaps even after death</b>."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"A lottery winner says \"I will do what I want, and only what I want.\" Money as…",
+ c:["FREEDOM — the power to live one's life as one chooses","Power over others","Personal value","Security"],a:0,
+ why:"The independence money buys lets clients choose their lifestyle and break free from dependent relationships — like the young adult who saves for an apartment instead of living at home. Early-retirement advertising sells exactly this."},
+{t:"mc",s:1,d:3,tag:"MONEY",q:"A professor and his doctor wife live in a two-bedroom apartment, own no car, and give generously to charity — decreasing their wealth to match a no-frills lifestyle. Money as…",
+ c:["PERSONAL VALUE — the way they express what matters most to them","Security","Freedom","Love"],a:0,
+ why:"The other side of this category is \"I OWN, THEREFORE I AM\" — using money to procure a lifestyle and project an image, or equating money with personal worth so that it becomes a way of <b>keeping score</b>."},
+{t:"mc",s:1,d:2,tag:"MONEY",q:"The chapter notes one of life's greatest stresses is…",
+ c:["Not having enough money to cover monthly bills","Choosing between investments","Retiring too early","Paying taxes"],a:0,
+ why:"Particularly hard put are the thousands in Canada, especially <b>one-parent families</b>, who live below the poverty line."},
+{t:"mc",s:1,d:3,tag:"BELIEFS",q:"John Moore wants his daughter to finish university without working. The belief behind it?",
+ c:["His own parents gave him little help, which hurt his studies and kept him out of a top medical school","That education is always a parent's duty in law","That his ex-wife should not contribute","That university costs will fall"],a:0,
+ why:"He also said he would feel badly owning stocks of companies he considered less than good corporate citizens <b>even if they had high returns</b> — personal values driving product selection."},
+{t:"mc",s:1,d:3,tag:"ATTITUDES",q:"Bill Petford dressed and carried himself as a confident professional, then almost broke into tears. The lesson is…",
+ c:["Appearance is a poor guide — his wife was forcing the plan, and he gambled heavily","He was being deceptive","He was a difficult client","He needed a different product"],a:0,
+ why:"He wanted a major role in selecting investments and admired risk-takers in options and futures. Gina's conclusion: two people wanting the same thing, but \"as though they had come from different planets.\""},
+{t:"mc",s:1,d:2,tag:"BELIEFS",q:"What is the overall lesson of the John Moore / Bill Petford illustration?",
+ c:["Individual personality factors affect how clients define their needs and which products they ultimately accept","Wealthier clients need more attention","Divorced clients are harder to serve","Risk tolerance questionnaires are sufficient"],a:0,
+ why:"Different factors are important to different people when seeking and selecting financial services."},
+
+/* ============ STAGE 2 — SOCIO-CULTURAL VARIABLES ============ */
+{t:"mc",s:2,d:1,tag:"CULTURE",q:"<b>Culture</b> is…",
+ c:["The sum total of a society's collective wisdom and institutionalized rules of behaviour","The arts and traditions of a nation","A person's ethnic background","The values held by a reference group"],a:0,
+ why:"It is probably one of the most determinant elements of how people behave — yet it is often taken for granted and rarely questioned, because it is <b>second nature</b>."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"<b>SOCIALIZATION</b> is…",
+ c:["Learning your own culture's dos and don'ts naturally from parents, teachers, guardians and reference groups","Adapting to another culture","Joining formal associations","Building a professional network"],a:0,
+ why:"<b>ACCULTURATION</b> is the process of adapting to another culture — required when someone moves to an environment with a different set of rules of behaviour."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"A client moves from another country and must adapt to a new set of behavioural rules. That process is…",
+ c:["ACCULTURATION","Socialization","Emulation","Assimilation of values"],a:0,
+ why:"Socialization is learning your own culture naturally; acculturation is adapting to another one in order to fit in."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Which three dimensions of culture are the ABSTRACT ones?",
+ c:["Values, ideas, attitudes","Traditions, artifacts, symbols","Values, traditions, symbols","Ideas, artifacts, attitudes"],a:0,
+ why:"Abstract: values, ideas, attitudes. Tangible: traditions/customs, artifacts, symbols."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Which three dimensions of culture are the TANGIBLE ones?",
+ c:["Traditions/customs, artifacts, symbols","Values, ideas, attitudes","Rules, standards, patterns","Family, peers, associations"],a:0,
+ why:"Artifacts are the tangible evidence of cultural behaviour — a Western business suit, a razor, a tube of lipstick. Symbols are <b>generated by artifacts</b> and convey ideas or emotions."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Western cultures value professional accomplishment highly. What follows from that?",
+ c:["TIME becomes a scarce resource, putting emphasis on punctuality and efficiency","Leisure is valued above work","Family obligations increase","Education becomes less important"],a:0,
+ why:"We generally think it rude to make someone wait — but such behaviour may be more common in countries where time is <b>less structured</b>."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"\"Unwritten laws or rules of cultural behaviour\" defines…",
+ c:["TRADITIONS (customs)","Artifacts","Symbols","Ideas"],a:0,
+ why:"Such as inviting a potential client for lunch in Canada, or sending holiday cards to existing clients."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Thirteen is unlucky in the West; white means purity in North America but MOURNING in Asia; the beaver means industriousness in Canada. These are all…",
+ c:["SYMBOLS","Artifacts","Traditions","Ideas"],a:0,
+ why:"Symbols are generated by artifacts and convey ideas or emotions — numbers, colours, even inanimate objects. In Japan the number 4 is equated with bad luck since it contains the character for <b>death</b>."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"Which is NOT one of the four functions of culture?",
+ c:["To determine an individual's personality traits","To provide rules of conduct","To set standards of performance","To provide patterns for dealing with recurring problems"],a:0,
+ why:"The fourth is interpreting environmental cues and interpersonal signals. Culture's functions <b>reduce uncertainty and increase predictability</b> in daily life."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"A kiss on the cheek greeting in France, bowing in Japan, and what those gestures would mean in Canada — this is culture functioning to…",
+ c:["Interpret environmental cues and interpersonal signals","Set standards of performance","Provide rules of conduct","Solve recurring problems"],a:0,
+ why:"In Canada bowing is used only when greeting royalty or as a humorous show of respect to someone you know very well. Understanding how cultures create meaning helps you <b>avoid misunderstandings</b>."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"Western societies accept that family members may disagree over money, so wills and estates managed by OUTSIDERS are acceptable. This is culture functioning to…",
+ c:["Provide patterns for dealing with recurring problems","Set standards of performance","Interpret interpersonal signals","Provide rules of conduct"],a:0,
+ why:"This may <b>not</b> be the case in cultures in which the family is viewed as the ultimate authority. Asking to speak to the manager is another Western pattern for a recurring problem."},
+{t:"mc",s:2,d:2,tag:"CULTURE",q:"Your performance is evaluated by tangible results — but clients may ALSO evaluate you on…",
+ c:["Interpersonal skills, such as the level of concern you show","Your firm's market share","Years of experience alone","The speed of transactions"],a:0,
+ why:"Standards of performance result <b>both</b> from cultural norms and from individually-held values."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"A strict Muslim client resists your \"safe\" recommendation. The likely reason?",
+ c:["He will not invest in anything that GENERATES INTEREST","He distrusts your institution","He prefers equities","He misunderstood the product"],a:0,
+ why:"Not knowing this may cause bewilderment on your part. The second cultural challenge is taking more care <b>explaining</b> practices, procedures and product features that may be perceived differently."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"Among all socio-cultural variables affecting behaviour, culture is…",
+ c:["The MOST PERVASIVE — the first element to consider, though not the only variable","One of several equally weighted factors","Less important than reference groups","Only relevant for recent immigrants"],a:0,
+ why:"Once the cultural background has been assessed, look at other general variables such as <b>reference groups</b>."},
+{t:"mc",s:2,d:1,tag:"REF-GROUPS",q:"<b>Reference groups</b> act as…",
+ c:["Standards against which values, beliefs and attitudes may be compared","Formal decision-making bodies","Sources of capital","Legal authorities"],a:0,
+ why:"They play an important role in socialization, the transmission of cultural norms, and the formation of attitudes."},
+{t:"mc",s:2,d:2,tag:"REF-GROUPS",q:"A client uses a Gold card to associate with an admired group known to use one. This process is…",
+ c:["EMULATION","Acculturation","Socialization","Deference"],a:0,
+ why:"Clients seek to <b>enhance their self-image</b> by identifying themselves with reference groups."},
+{t:"mc",s:2,d:3,tag:"REF-GROUPS",q:"What is the MAIN function of reference groups?",
+ c:["To provide EXPERTISE and POWER — acting as risk-reducers when clients can't evaluate a product themselves","To provide social companionship","To enforce cultural rules","To supply financial information only"],a:0,
+ why:"Clients rely on the perceived expertise of the group and choose to follow its recommendation — so reference groups have <b>power</b> over beliefs, values, attitudes and ultimately choices."},
+{t:"mc",s:2,d:3,tag:"REF-GROUPS",q:"A client wants stripped bonds SOLELY because others at the club are buying them. Your responsibility?",
+ c:["Make sure she understands their characteristics and that they are the best option for her needs","Complete the purchase as instructed","Refuse the transaction","Recommend what the club is avoiding"],a:0,
+ why:"Otherwise she may be <b>setting the stage for later dissatisfaction</b>. It is useful to know what is behind a client's interest so you can assess whether the expectations are realistic."},
+{t:"mc",s:2,d:2,tag:"REF-GROUPS",q:"What are the four types of reference groups?",
+ c:["Family, peers, friends, associations and organizations","Family, colleagues, media, advisors","Nuclear family, extended family, clubs, employers","Peers, celebrities, salespeople, relatives"],a:0,
+ why:"Associations and organizations are the <b>most formal</b>, influencing opinion on specific issues, with influence varying by degree of involvement."},
+{t:"mc",s:2,d:3,tag:"REF-GROUPS",q:"\"As strange as it may seem…\" — what does the chapter say about DEAD family members?",
+ c:["They can influence a client's needs and choices as much as living members, especially if they left strong warnings","They cease to have influence after probate","They matter only in estate law","Their influence is limited to named beneficiaries"],a:0,
+ why:"For example: \"Don't let anyone else manage your money!\""},
+{t:"mc",s:2,d:2,tag:"REF-GROUPS",q:"Why are the LESS STRUCTURED groups — neighbours, colleagues, friends — important?",
+ c:["They have been established BY CHOICE, contrary to the family, and members share interests and values","They are larger","They are more formal","They meet more often"],a:0,
+ why:"That makes them an important source of information, opinions and influence. Peer groups and friends are particularly influential for <b>teenagers and young adults</b>."},
+{t:"mc",s:2,d:3,tag:"REF-GROUPS",q:"Clients perceive expertise in you and rely on your advice. This places you under…",
+ c:["A heavy ethical and legal obligation not to betray that trust or suggest anything not in their best interests","A duty to guarantee returns","An obligation to disclose your compensation only","No special obligation beyond suitability"],a:0,
+ why:"Reference <b>persons</b> can be relatives, mentors, opinion leaders, celebrities and salespeople — sought because they are believed to have expertise, are trusted, or are models to emulate. Perceiving expertise builds trust, which brings significant responsibility."},
+{t:"mc",s:2,d:3,tag:"CULTURE",q:"Yiming Tang, a professor in Canada since 25, stiffens at the suggestion of a will: \"It would bring bad luck.\" What is the correct read?",
+ c:["Though well integrated, he is still influenced by the culture in which he grew up","He does not understand what a will is","He is testing his advisor","He has a mental block unrelated to culture"],a:0,
+ why:"Sam's error would be to be oblivious to socio-cultural influence and try to <b>talk him out of</b> the attitude that wills are taboo."},
+{t:"mc",s:2,d:3,tag:"REF-GROUPS",q:"Janet Mitchell relays advice from her neighbour, whose husband plays squash with a stock broker. What is happening?",
+ c:["Her decisions are influenced by people she believes are trustworthy and credible — her reference group","She is testing your knowledge","She has already decided to move her money","She misunderstood the interest rate news"],a:0,
+ why:"Chris's error would be to not appreciate the influence of her reference group. In both cases, <b>understanding and sensitivity is clearly preferable to defensiveness or argument</b>."},
+
+/* ============ STAGE 3 — THE DECISION-MAKING PROCESS ============ */
+{t:"mc",s:3,d:2,tag:"INVOLVEMENT",q:"What are the three RISKS that make a decision high-involvement?",
+ c:["Financial, social, functional","Market, credit, liquidity","Personal, family, professional","Short-term, long-term, permanent"],a:0,
+ why:"FINANCIAL = a substantial commitment. SOCIAL = it reflects on personality or lifestyle, or is motivated by social compliance. FUNCTIONAL = it is technically complex. <b>One or more</b> present = high involvement; none = low."},
+{t:"mc",s:3,d:3,tag:"INVOLVEMENT",q:"One client treats a $100,000 GIC as low-involvement; another treats a $500 GIC as high-involvement. What does this prove?",
+ c:["Involvement is determined by CLIENT PERCEPTIONS, not the dollar amount","The first client is wealthier","The second client is inexperienced","GICs are inherently low risk"],a:0,
+ why:"Perception of risk depends on previous experience, beliefs/values/attitudes, the information the client already has, and external factors such as the economic outlook."},
+{t:"mc",s:3,d:2,tag:"INVOLVEMENT",q:"Why does the high/low involvement distinction matter?",
+ c:["Clients take longer over high-involvement decisions and their process is more complex, especially in information processing","It determines the fee level","It sets the regulatory category","It predicts profitability"],a:0,
+ why:"And because involvement is set by perception, you cannot assume from the amount of money involved. Financial planning is usually a high-involvement activity."},
+{t:"order",s:3,d:3,tag:"DECISION-STEPS",q:"Put the five core steps of the decision-making process in order:",
+ items:["ACTIVATION","SEARCH AND EVALUATION","INTENTION","DECISION","EVALUATION"],
+ why:"The process starts when a client becomes aware of a discrepancy between the actual and desired state. It is sequential, but clients may <b>cycle back</b> to re-evaluate, particularly if new information comes to light."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"In LOW-involvement decisions, which two steps are generally seen as less important?",
+ c:["Search and evaluation, and intention","Activation and decision","Decision and evaluation","Activation and evaluation"],a:0,
+ why:"One of two things happens: the same model applies but clients move faster, or steps are skipped. A client shows <b>little interest in the details</b> and focuses on the decision itself — a satisfactory decision is enough, rather than an optimal one."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"<b>ACTIVATION</b> is characterized by…",
+ c:["Recognition of a discrepancy between the actual and desired state, producing mental tension","Comparing two products","Forming the intention to act","Signing the application"],a:0,
+ why:"The tension must be strong enough to <b>stimulate the client to reduce it and take action</b>."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"Which of these is an INTERNAL motivator at the activation stage?",
+ c:["The desire to achieve goals","Advertisements","Personal advice","A birth, marriage, divorce or death"],a:0,
+ why:"Internal: experience and the desire to achieve goals. External: advertisements, personal advice, and changes in personal circumstances."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"How do you help a client at the ACTIVATION stage?",
+ c:["Listen carefully, help explore the dimensions and implications of their needs, and AVOID PREMATURE SOLUTIONS","Present your three best products","Ask for a commitment","Compare your fees to competitors'"],a:0,
+ why:"This is a <b>crucial stage for relationship-building</b> — clients are testing their trust in your capacity to care and your commitment to solving problems. At this point solutions have not yet been offered."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"A client relies on memory of a similar past decision. That is…",
+ c:["INTERNAL information","External information","Unsolicited information","Commercial information"],a:0,
+ why:"Good past experiences lead to a <b>limited</b> search; bad experiences put clients into complex information-seeking, similar to a first experience."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"A client's stock has more than doubled, so he increases his market investment without researching alternatives. Had it dropped…",
+ c:["He probably WOULD have sought information on different products","He would have bought more of the same","He would have moved to cash automatically","Nothing would have changed"],a:0,
+ why:"Bad experiences push clients back into complex information-seeking."},
+{t:"order",s:3,d:3,tag:"DECISION-STEPS",q:"Order these from MOST valuable to LEAST valuable information, per the chapter:",
+ items:["Internal (from the client's own memory)","External but ACTIVELY SOUGHT","External, unsolicited and commercial"],
+ why:"The value of information increases when it is <b>internal rather than external</b>, <b>actively sought rather than unsolicited</b>, and <b>personal rather than commercial</b>."},
+{t:"mc",s:3,d:2,tag:"EVAL-MODELS",q:"In the COMPENSATORY model, the best alternative is…",
+ c:["The one whose advantages outweigh its disadvantages by the widest margin","The first one meeting a must-have criterion","The cheapest","The one recommended by a reference group"],a:0,
+ why:"Clients weight each factor and, in economic terms, engage in a <b>cost-benefit analysis</b>. Positive features compensate for negative ones."},
+{t:"mc",s:3,d:3,tag:"EVAL-MODELS",q:"A client decides her planner MUST hold a recognized financial planning designation; location and fees are not considered at all. This is…",
+ c:["The NON-COMPENSATORY model","The compensatory model","A low-involvement shortcut","Cognitive dissonance"],a:0,
+ why:"Clients only consider certain attributes; if a critical factor is absent, the option is <b>not included in the set of possibilities</b>. They evaluate until they find one with the desired characteristic."},
+{t:"mc",s:3,d:3,tag:"EVAL-MODELS",q:"Institution A has better returns and a pleasant planner but confusing reports; B has a very knowledgeable but cold planner and clear reports. What does the couple do?",
+ c:["Weigh the factors and choose whichever is best ON BALANCE — there is no clear choice","Choose A because returns rank first","Choose B because clarity matters most","Postpone until one dominates on every factor"],a:0,
+ why:"That is the compensatory model in action — the institution whose positive features compensate for its negatives by the widest margin gets the business."},
+{t:"mc",s:3,d:3,tag:"EVAL-MODELS",q:"Your main concern at the search and evaluation stage is to match needs with the right products. The chapter adds that this may even require you to…",
+ c:["Acknowledge that the perfect product is NOT offered by your institution","Delay the decision","Refer the client elsewhere permanently","Discount your fees"],a:0,
+ why:"When rates are high, a client with a locked-in pension plan may do better with a straight life annuity you don't sell than with a life income fund you do. Maintain a <b>client-centred focus</b>."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"Reaching the <b>INTENTION</b> stage means clients…",
+ c:["Perceive one alternative as capable of satisfying their needs","Have signed the paperwork","Are still gathering information","Have begun to doubt the decision"],a:0,
+ why:"Intention is <b>just one step removed</b> from the actual decision and is generally a good indication of what the client is likely to do."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"Which is NOT one of the four reasons an intention may fail to become action?",
+ c:["The product is temporarily unavailable","A sudden change in circumstances","Last-minute information, such as a change in fee structure","The client's feeling of being pushed"],a:0,
+ why:"The fourth is risks that appear too great and are not overcome by weak assurances. At this stage, <b>strengthen their resolve</b> by discovering whether any doubts or questions remain."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"How do you help at the INTENTION stage?",
+ c:["Check for residual doubts, confirm their situation is fully understood, and help them commit to action","Introduce new alternatives","Repeat the full product comparison","Ask them to sleep on it indefinitely"],a:0,
+ why:"If the match is good and entirely in the client's best interests, following through is beneficial for them."},
+{t:"mc",s:3,d:1,tag:"DISSONANCE",q:"<b>Cognitive dissonance</b> is…",
+ c:["The tension clients feel AFTER a decision, from the insecurity of questioning it","Confusion during the search stage","Disagreement between spouses","The gap between actual and desired state"],a:0,
+ why:"Some clients finally agree to a personal trust arrangement, then worry about <b>losing control</b> over their money."},
+{t:"mc",s:3,d:3,tag:"DISSONANCE",q:"Cognitive dissonance is MOST prevalent when…",
+ c:["The characteristics of the alternatives vary widely, and there are a large number of alternatives","The decision was made quickly","Only one option was considered","Fees were high"],a:0,
+ why:"Clients reduce it by seeking further information and reassessing the pros and cons. It can disappear relatively quickly <b>if the choice lives up to expectations</b>."},
+{t:"mc",s:3,d:3,tag:"DISSONANCE",q:"A client has second thoughts. What is the WARNING about your response?",
+ c:["If they feel you are defending your choice and your products, they will be more reluctant to be open and honest","You should avoid the topic entirely","You should offer a refund immediately","You should bring in a colleague"],a:0,
+ why:"Clients must perceive that your main interest is <b>satisfying their needs</b>, not selling products that best suit you."},
+{t:"mc",s:3,d:2,tag:"DISSONANCE",q:"Which is part of helping a client through cognitive dissonance?",
+ c:["Stressing the possibility of REVERSING the decision in case of dissatisfaction","Insisting the decision was correct","Postponing all further contact","Restating the fee schedule"],a:0,
+ why:"Also: inquire into the nature of the hesitancy, determine whether all relevant considerations were revealed, and restate how the plan meets their needs."},
+{t:"mc",s:3,d:2,tag:"DECISION-STEPS",q:"At the post-decision EVALUATION stage, which clients are generally LESS satisfied?",
+ c:["Those with HIGH levels of expectation","Those with low levels of expectation","Those who used the compensatory model","Those who consulted a reference group"],a:0,
+ why:"Satisfaction and dissatisfaction sit <b>on a continuum</b> — clients are rarely entirely satisfied or dissatisfied with decisions."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"Which is NOT one of the three contributors to low post-decision satisfaction?",
+ c:["Excessive information provided at the search stage","Wrong beliefs formed during the decision-making process","Inadequate information or evaluation","The lack of perfect solutions"],a:0,
+ why:"When clients are dissatisfied, reassess their needs and re-match products, and identify the sources of dissatisfaction and act on them."},
+{t:"mc",s:3,d:2,tag:"FAMILY-DECIDE",q:"Decisions made EQUALLY by both spouses but carried out INDIVIDUALLY by one or the other are…",
+ c:["AUTONOMOUS","Syncratic","Male-dominant","Female-dominant"],a:0,
+ why:"Typical categories: personal care products, saving objectives, alcoholic beverages, garden tools. <b>SYNCRATIC</b> decisions are made by both together — vacations, housing, leisure."},
+{t:"mc",s:3,d:2,tag:"FAMILY-DECIDE",q:"Which product category is given as the classic MALE-DOMINANT decision?",
+ c:["Life insurance","Food and cleaning products","Vacations","Children's clothing"],a:0,
+ why:"Financial matters have traditionally been male-dominant, particularly life insurance — though the presence of a working woman in the family affects marital roles."},
+{t:"mc",s:3,d:3,tag:"FAMILY-DECIDE",q:"In families with WORKING women, one study found investment decisions were largely…",
+ c:["SYNCRATIC","Male-dominant","Female-dominant","Autonomous by the woman"],a:0,
+ why:"In families with non-working women they were male-dominant or autonomous decisions made by the man. Other studies found working-woman families more likely to see investment decisions as female-dominant, and a woman tends to be more involved <b>when there are no children</b>."},
+{t:"mc",s:3,d:3,tag:"FAMILY-DECIDE",q:"If a decision appears to be a JOINT one, what must you do?",
+ c:["Identify the needs of BOTH spouses, which could be different, and help them reach a consensus","Work with whichever spouse contacted you","Ask them to nominate one decision-maker","Present separately to each"],a:0,
+ why:"If the decision is autonomous, you work primarily with that decision-maker. Roles vary by product, change as the family evolves, and depend on social and cultural factors."},
+{t:"mc",s:3,d:3,tag:"ETHICS",q:"A 74-year-old pensioner buys equity funds because the planner promised high returns, not from understanding the risks. What does the planner owe?",
+ c:["Full disclosure of all material facts — EVEN IF it means the investment gets cancelled","A suitability form on file","A performance guarantee","Nothing further, as the client agreed"],a:0,
+ why:"Telling the whole story may disrupt a sale, but it is the right thing to do ethically and responsibly."},
+{t:"mc",s:3,d:3,tag:"ETHICS",q:"You learn a client's chief consideration is SOCIAL APPROVAL, so you describe products in terms of prestige and cite well-known users. The chapter says this…",
+ c:["Is not strong enough to be misrepresentation, but COMES CLOSE TO MANIPULATION","Is straightforward good salesmanship","Is outright fraud","Is required disclosure"],a:0,
+ why:"Knowledge of the decision-making process is acquired <b>not to manipulate</b> but to better understand needs so appropriate help can be offered and the most value created."},
+{t:"mc",s:3,d:3,tag:"ETHICS",q:"If you exploit a client's lack of sophistication to sell unsuitable products, what may follow?",
+ c:["Breach of ethical and legal tenets on abuse of trust, which may lead to civil action in a court of law","An internal warning only","A fee reversal","Loss of the client only"],a:0,
+ why:"If clients rely on your expertise and you act otherwise than in their best interests, you <b>violate the fiduciary standard of acting in good faith</b>."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"Melissa Fenwick arrives with written questions on services, analysts, fees and statements, takes careful notes, and says she is finding out about each firm. She is at…",
+ c:["SEARCH AND EVALUATION","Activation","Intention","Decision"],a:0,
+ why:"She already had a good understanding of investment management services and was looking for further information before deciding. Robert then pointed out his firm's specific advantages and offered introductions to the analysts."},
+{t:"mc",s:3,d:3,tag:"DECISION-STEPS",q:"The Rosses have just realized they'll need help managing money from Palm Springs after hearing about it from a curling buddy. They are at…",
+ c:["ACTIVATION","Search and evaluation","Intention","Evaluation"],a:0,
+ why:"They had <b>just become aware</b> of a specific need and a possible solution. Robert explained how it works and sent them away with brochures rather than pushing."},
+
+/* ============ STAGE 4 — THE ELDERLY CLIENT ============ */
+{t:"tf",s:4,d:2,tag:"ELDERLY",q:"A majority of elderly people have serious memory problems.",a:false,
+ why:"All seven of the chapter's stereotype statements are <b>FALSE</b> — including that the elderly are more depressed, more isolated, incapable of change, or happier when they reduce activity."},
+{t:"tf",s:4,d:2,tag:"ELDERLY",q:"Elderly people who reduce their activities are happier.",a:false,
+ why:"False, like all seven stereotypes. They are listed to draw your attention to the most common ideas people hold about elderly clients."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"What is the MOST BASIC RULE in servicing clients?",
+ c:["Always get to know them PERSONALLY — though it helps to know something about the elderly in general","Follow the standard process for their age band","Involve a family member","Simplify all documentation"],a:0,
+ why:"Broad generalizations about aging are useful for understanding the issues, but personal biases and stereotypes must be confronted and each client's dynamics explored."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"Raising your voice for a 70-year-old whether or not they are hearing-impaired is an example of…",
+ c:["A MISPERCEPTION guiding the relationship","Appropriate adaptation","Cultural sensitivity","Active listening"],a:0,
+ why:"Another: being surprised that a 75-year-old client <b>did not</b> forget anything, when you'd think nothing of a young person forgetting."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"At what age does a person become \"elderly\"?",
+ c:["There is NO official age — what matters more is how a client feels and acts","65","75","When they retire"],a:0,
+ why:"Some experts say aging starts when growing stops, which would place it at the <b>beginning of adulthood</b>."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"What does the chapter say about financial needs and physical change?",
+ c:["There should be no major changes AS LONG AS clients are functional and physically autonomous","Needs change at 65 regardless","Needs simplify with age","Needs become more aggressive"],a:0,
+ why:"But that does not mean they don't think about becoming unable to look after themselves — <b>they do</b>. If changes are drastic enough to incapacitate, then you can expect changes in financial requirements."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"Some elderly clients spend furiously on cosmetic services, surgery, clothing, jewellery and treatments. Why?",
+ c:["Difficulty accepting physical changes — an attempt to stave them off","Newly available disposable income","Reference group pressure","Cognitive decline"],a:0,
+ why:"\"The search for the secret of eternal youth and beauty is very much alive.\""},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"What is the OVERRIDING RULE on adapting to an elderly client?",
+ c:["Do NOT adapt unless there is reason to believe it would be WELCOME — it is best to ask","Adapt automatically past a certain age","Adapt only when the client complains","Adapt only in writing"],a:0,
+ why:"A client who receives a document in extra-large typeset <b>may be offended</b> if it is perceived as an indication of age."},
+{t:"mc",s:4,d:2,tag:"ELDER-ADAPT",q:"Which are signs a client may have SIGHT problems?",
+ c:["Taking more time than usual to read, adjusting the distance of a document, squinting","Asking for a summary","Bringing a family member","Preferring telephone contact"],a:0,
+ why:"Recognize this and offer the appropriate help — larger typeset if welcomed, and adjusted lighting in your office."},
+{t:"mc",s:4,d:2,tag:"ELDER-ADAPT",q:"When a client has trouble hearing, besides raising your voice a notch you should…",
+ c:["Create a calm atmosphere and make sure everyone does not talk at the same time","Speak only in writing","Move much closer","Shorten every meeting"],a:0,
+ why:"Hard-of-hearing clients may also have a special device attached to their phones."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"Reaction time and information-processing time increase with age. What does this NOT imply?",
+ c:["That intellectual abilities decrease","That new information may take longer to absorb","That a decision may take longer","That learning happens at a slower pace"],a:0,
+ why:"Elderly clients may take longer, but their <b>ability to perform and comprehend remains the same</b> as a younger client's, if not better."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"Learning is easier for elderly clients when new items…",
+ c:["Relate to what is already known, or are presented within a known framework","Are simplified drastically","Are repeated many times in one sitting","Are delivered in writing only"],a:0,
+ why:"As is true for everyone. In extreme cases a client may appear inflexible about a new option <b>since it threatens an established framework</b>."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"Why are elderly clients usually careful and conservative in financial choices?",
+ c:["Decisions are often made by relying on PAST HABITS","They have less money to risk","They receive poorer advice","They are more pessimistic"],a:0,
+ why:"They may also feel frustration at not performing mental tasks as efficiently as before, and clients concerned with preserving capital need extra time to think through change and possible risk."},
+{t:"mc",s:4,d:2,tag:"ELDER-ADAPT",q:"A client is stalled searching for a word. What should you do?",
+ c:["Avoid stepping in to finish the sentence — leave time to recover the thought, or offer a summary","Supply the word quickly to spare them","Change the subject","Ask them to write it down"],a:0,
+ why:"Some clients find these momentary lapses embarrassing and proof of deteriorating condition, so any intervention should be <b>subtle and offered with respect and understanding</b>."},
+{t:"mc",s:4,d:2,tag:"ELDER-ADAPT",q:"How should you pace a presentation to an elderly client?",
+ c:["Slightly slower, checking regularly whether the pace is appropriate, with short explanations and explicit links to what they know","As fast as normal to avoid condescension","Much slower with very simple words","In a single long session to avoid repetition"],a:0,
+ why:"Choose words carefully <b>without being too simplistic</b>, give more details, and make sure the client does not feel overwhelmed by information."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"Which are listed as EYESIGHT changes in the main physical changes table?",
+ c:["Difficulty with depth, difficulty with sudden change in lighting, inability to distinguish colour intensity, sensitivity to strong light","Loss of peripheral vision only","Complete colour blindness","Night blindness only"],a:0,
+ why:"Hearing changes: inability to hear <b>high frequencies</b> and <b>heightened sensitivity to external noise</b>."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"What does the evidence say about personality across a lifetime?",
+ c:["It remains fairly stable — dominant traits in a young person will still be there when they are older","It softens with age","It becomes more rigid","It changes every decade"],a:0,
+ why:"Moral, spiritual, economic, social and political values can change but tend to remain the same, as do professional interests. So you are <b>not likely</b> to see major personality changes in elderly clients."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"A major change in an elderly client's values or personality is probably the result of…",
+ c:["A NON-NORMATIVE EVENT — an accident, serious illness, physical deterioration, intense self-evaluation or a disturbed mental state","Normal aging","Retirement","A change in reference group"],a:0,
+ why:"Even without personality change, clients may show uncharacteristic despair, anger, depression or bewilderment as they face life's normal crises — the death of friends and loved ones, loss, and aging."},
+{t:"mc",s:4,d:2,tag:"ELDERLY",q:"Why do elderly clients gradually decrease social interaction?",
+ c:["By choice or lack of energy — NOT from a lack of interest","Because friends move away","Because of cognitive decline","Because of financial constraints"],a:0,
+ why:"Social relationships still fulfil a need for belonging, and in some ways <b>peer relationships are more important</b> for an elderly client than for a younger adult."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"On siblings versus friendships in later life, the chapter says…",
+ c:["Sibling relationships are more DURABLE, but friendships bring much satisfaction — especially old ones","Friendships are more durable","Siblings replace friends entirely","Both decline equally"],a:0,
+ why:"Sibling relationships may become more important <b>after the death of a spouse</b>; good sibling relationships mean a more positive evaluation of life. Friends help give life perspective and allow the sharing of joy and sorrow."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"An early retiree takes a second career or invests capital in new ventures. What is the risk?",
+ c:["It could put their lifestyle and savings in jeopardy","It will reduce their social contact","It signals cognitive decline","It voids their estate plan"],a:0,
+ why:"The motive is usually to restore the sense of personal value linked to work, or to compensate for boredom."},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"Which development is described as among the MOST POTENTIALLY SERIOUS for an elderly client's estate?",
+ c:["A SECOND MARRIAGE","Moving to a smaller home","Taking up a new hobby","Changing financial institutions"],a:0,
+ why:"Questions to address: will the new spouse use up part of the capital? Should the new spouse benefit from the estate on death? How will successoral clauses be adapted?"},
+{t:"mc",s:4,d:3,tag:"ELDERLY",q:"Because women generally live longer than men, wives must acknowledge…",
+ c:["The high probability they will manage the estate on their own — or at least know what it contains and what help they'll need","That they should not be involved in decisions","That they will need a second marriage","That estates must be simplified"],a:0,
+ why:"As clients re-evaluate their lives they may also shift values, with implications for existing beneficiaries and estate arrangements."},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"A client decides on a whim to leave a large sum to a kind acquaintance rather than to her children. Your role?",
+ c:["Act as a SOUNDING BOARD — point out the implications without making the decision for her","Refuse to process the change","Contact the children","Delay until she reconsiders"],a:0,
+ why:"Help them make a reasonable choice that reflects their <b>underlying, enduring values</b>. A client's decision must be rational rather than emotional."},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"A recently-widowed retiree starts buying stocks that carry the names of animals. What should you do?",
+ c:["Listen empathetically and reflect, to help him see his emotions are being misplaced and the risk of unsound decisions is likely","Process the trades as instructed","Freeze the account","Report him to a regulator"],a:0,
+ why:"If you listen and show enough empathy you will be trusted — which lets you be privy to their reasoning. You may decide to <b>confront</b> clients with changes you have observed, especially if the consequences could be serious."},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"Mr. Zeckhausen, 75, asks you to guess his age. What is the BEST answer?",
+ c:["An honest one that refocuses on the client: \"I find it hard to guess, but it sounds as though you feel pretty good.\"","Guess ten years younger","Side-step with a compliment on his youthful appearance","Give your genuine estimate"],a:0,
+ why:"Guessing younger or side-stepping <b>can be somewhat patronizing or manipulative</b>. The root of the game is that the client feels much younger and acts in a way that belies his chronological age."},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"You notice for the first time that Mr. Zeckhausen wears a hearing aid. Do you mention it?",
+ c:["No — it should compensate for the loss, so don't raise it unless he does, while staying alert for difficulties","Yes, to show you noticed and care","Yes, and offer written materials instead","Only if he mishears something"],a:0,
+ why:"His interests — daily financial news, volunteering as a surrogate grandfather, assistant treasurer of his church — help maintain his cognitive capacities, so presenting a new service should not be difficult."},
+{t:"mc",s:4,d:3,tag:"ELDER-ADAPT",q:"Mrs. Singer, 81, was never involved in financial decisions; her husband said she wasn't interested and wouldn't understand. What must Linda do FIRST?",
+ c:["Establish a bond of TRUST","Present the full portfolio in one meeting","Accept the husband's assessment","Bring in the children"],a:0,
+ why:"Then: question the husband's claim (is it lack of interest, or ability?), prepare topics carefully, present slowly and concretely with regular verification of understanding, expect <b>more than one meeting</b>, and send her away with notes or literature."},
+
+/* ============ STAGE 5 — THE GRIEVING CLIENT ============ */
+{t:"mc",s:5,d:1,tag:"GRIEF",q:"<b>Grieving</b> is defined as…",
+ c:["The adaptation process people undergo when faced with a significant loss","The emotional reaction to a death in the family","A clinical depression following bereavement","The legal process of settling an estate"],a:0,
+ why:"The loss need not be a death. It can also be the loss of an important relationship such as in a <b>divorce</b>, the loss of a part of the body such as an amputation, or the loss of <b>autonomy</b> resulting from aging or illness."},
+{t:"order",s:5,d:2,tag:"GRIEF",q:"Put the three phases of grieving in order:",
+ items:["DENIAL","DESPAIR","ACCEPTANCE"],
+ why:"They are interlocking and of <b>uneven duration</b>; the entire process can last from a few weeks to more than a year."},
+{t:"mc",s:5,d:2,tag:"GRIEF",q:"What characterizes the DENIAL phase?",
+ c:["A state of shock and numbness — \"this can't be true\" — where at first clients do not feel anything","Anger directed at those nearby","Bargaining with a higher power","Gradual re-engagement with life"],a:0,
+ why:"They may continue as though nothing has happened and even plan activities involving the deceased. In a divorce, the abandoned client is convinced it is only temporary and the spouse will return."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"If the grieving process proceeds normally, what happens to the numbness of denial?",
+ c:["It usually lasts only a short time, as the psyche becomes better able to cope and admits more into consciousness","It persists for at least a year","It deepens into permanent denial","It converts directly into acceptance"],a:0,
+ why:"Ongoing events such as a <b>funeral</b> or the <b>visitation of friends</b> help clients integrate the loss into reality."},
+{t:"mc",s:5,d:2,tag:"GRIEF",q:"In the DESPAIR phase, clients experience…",
+ c:["Anger and despair, disorganization, uncertainty, aimlessness and absence of motivation","Numbness and disbelief","Renewed energy and new projects","Relief that the process is over"],a:0,
+ why:"It is an \"in-between\" time in which clients struggle to re-establish purpose and orientation, from reorganizing the daily routine to establishing new goals."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"A grieving client blames the doctors, God, friends who don't help, and even YOU for being \"only concerned about professional matters.\" What is this?",
+ c:["Normal anger in the despair phase, personalized and looking for someone to blame","A sign of mental disorder","A reason to withdraw from the file","Evidence of a poor prior relationship"],a:0,
+ why:"Anger may also be directed at the <b>deceased</b> (\"Why didn't he look after his health better?\") or at <b>themselves</b> (\"If I hadn't been so angry at him, he wouldn't have had a heart attack\")."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"A client becomes aware her anger is irrational and starts feeling guilty about it. The chapter says…",
+ c:["That is NOT as healthy as accepting the feeling as part of a normal grieving process","Guilt speeds recovery","This marks the start of acceptance","This indicates clinical depression"],a:0,
+ why:"In divorce, anger can last longer since closure is harder to reach — and you may be drawn into bouts of anger and asked to <b>confirm the indecent behaviour of the \"ex\"</b>."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"During the period of instability, grieving clients are…",
+ c:["VULNERABLE and susceptible to influence — any person who lends a compassionate ear may have an impact","More cautious than usual","Best left entirely alone","Unlikely to make financial decisions"],a:0,
+ why:"You may feel it is part of your job to <b>protect the client</b>. The client may also make rash financial decisions aimed at affecting an ex-spouse."},
+{t:"mc",s:5,d:2,tag:"GRIEF",q:"Which two OPPOSITE behaviours may a grieving client show toward you?",
+ c:["RETREAT — avoiding meetings as a sad reminder; or APPROACH — meeting you to relieve loneliness","Anger or gratitude","Silence or over-explanation","Delegation or micromanagement"],a:0,
+ why:"They may miss a meeting because they do not feel like taking care of money during such an intense phase — or, with a good existing relationship, meeting you may relieve some loneliness."},
+{t:"mc",s:5,d:2,tag:"GRIEF",q:"What defines the ACCEPTANCE phase?",
+ c:["Learning to live with the loss; a new emotional balance and self-image, investing again in relations and activities once enjoyed","The complete absence of sadness","Forgetting the deceased","Returning to the previous life unchanged"],a:0,
+ why:"There can still be an occasional bout of anger or despair. Acceptance does not imply forgetting, but <b>conceding that a past relationship has ended and a new life has begun</b> — the successful outcome of grieving is acceptance of the loss and a re-birth."},
+{t:"num",s:5,d:2,tag:"GRIEF",q:"After the loss of an important emotional relationship, reaching acceptance takes AT LEAST how many <b>years</b>?",unit:"yrs",a:1,tol:0.1,
+ why:"At least a year — <b>so that all major events can be relived and their significance re-evaluated</b>. Each holiday, vacation, birthday and anniversary revives feelings and memories."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"A divorced client stays locked between anger and despair. Why does that matter financially?",
+ c:["Anger and vengeance delay recovery and distract from sound financial decisions; decisions made in despair could be detrimental","It only affects the legal settlement","It shortens the grieving process","It has no financial consequence"],a:0,
+ why:"Divorced clients reach acceptance only when a peaceful agreement is reached with the former spouse, or when what has happened has been accepted."},
+{t:"num",s:5,d:3,tag:"GRIEF",q:"In the study, what percentage of grieving Trust clients were DISSATISFIED with their professionals' ATTITUDES?",unit:"%",a:84,tol:0.5,
+ why:"<b>84%</b> — even though they were satisfied with their <b>technical competency</b>. Their dissatisfaction was about the inability to deal with the human and emotional aspects of loss and grief."},
+{t:"num",s:5,d:3,tag:"GRIEF",q:"Of those dissatisfied clients, what percentage were considering SEVERING THEIR TIES with the institution?",unit:"%",a:72,tol:0.5,
+ why:"<b>72%</b>. Technical competency alone did not hold the relationship."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"How does the chapter define your role with a grieving client?",
+ c:["Not a therapist, but a help with critical decisions and a source of understanding and support","A grief counsellor for the duration","A purely technical advisor","A liaison to the family"],a:0,
+ why:"Most of all you should be <b>comfortable with the emotional and personal aspects of loss</b>, since these will dominate your client's concerns. The other major challenge is dealing with your own feelings about death and loss."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"Your client is in the DENIAL phase. What do you do?",
+ c:["Listen patiently to expressions of disbelief and DON'T push into financial or legal matters until they're clearly ready","Set out the estate timetable immediately","Wait for them to contact you","Ask the family to take over"],a:0,
+ why:"Stay flexible, shifting between being <b>passive</b> (empathizing) and <b>active</b> (giving direction when issues are raised)."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"Your client is in the DESPAIR phase and expresses anger directed at you. What do you do?",
+ c:["Listen non-judgementally, acknowledge and accept the feelings, refrain from false hope or advice, and offer to bring some order back to their finances","Defend yourself and clarify the facts","End the meeting","Refer them to a colleague"],a:0,
+ why:"Convey support with <b>body language</b> — for example, sitting beside the client instead of behind your desk. They may have neglected bills or forms with everything going on."},
+{t:"mc",s:5,d:2,tag:"GRIEF-ADAPT",q:"In the ACCEPTANCE phase, you should…",
+ c:["Listen to and accept lingering feelings of loss, sadness and loneliness, and celebrate accomplishments as progress is made","Close the grief chapter and move on","Avoid mentioning the deceased again","Recommend major lifestyle changes"],a:0,
+ why:"Throughout all three phases, your <b>active listening skills</b> will be the most beneficial tools."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"Should you avoid mentioning the loss so as not to make the client uncomfortable?",
+ c:["No — whether it is mentioned or not, they are always aware of it; when relevant, do not steer away from mentioning the deceased or the ex-spouse","Yes, unless they raise it first","Yes, always — it risks reopening old wounds","Only mention it in writing"],a:0,
+ why:"The instinct comes from genuine concern rather than callousness, but the answer is to speak to it when relevant."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"On the balance between technical and personal matters with a grieving client…",
+ c:["Dwelling only on financial and legal issues risks seeming cold; dwelling on the grief risks becoming morose and invasive","Always lead with the technical work","Always lead with the emotional work","Delegate the emotional side to family"],a:0,
+ why:"Clients do not expect you to be a grief counsellor. The dissatisfied Trust clients in the study were probably describing the <b>cold and uncaring</b> end of that spectrum."},
+{t:"mc",s:5,d:2,tag:"GRIEF-ADAPT",q:"How much empathy should you show a grieving client?",
+ c:["Take your cue from the client — but it is always better to err on the side of being TOO empathetic rather than dispassionate","A fixed professional minimum","As much as you personally feel","None, to stay objective"],a:0,
+ why:"Some clients feel comfortable with expressions of empathy; others prefer no demonstration of emotion."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"A client inherits a large sum but does not feel like making any investment decisions. What can you recommend?",
+ c:["Short-term investments until they feel like making longer-term decisions","Leaving it in a chequing account indefinitely","A full long-term plan now, while the money is available","Deferring all contact for a year"],a:0,
+ why:"You can help maintain structure by outlining the issues that need decisions, and remind them that at some point decisions will have to be made."},
+{t:"mc",s:5,d:3,tag:"GRIEF-ADAPT",q:"What does the chapter call one valuable service you can provide a grieving client?",
+ c:["Checking any impulses to make rash decisions that might have adverse long-term implications","Taking over decision-making entirely","Suspending all account activity","Arranging professional counselling"],a:0,
+ why:"During this period the client is vulnerable and susceptible to <b>relegating financial matters to a low order of importance</b>."},
+{t:"mc",s:5,d:2,tag:"GRIEF-ADAPT",q:"In the EARLY stages, which matters might need immediate attention?",
+ c:["Location of the will, probate, estate valuation, perhaps funeral arrangements and notification of next of kin","Portfolio rebalancing","Tax-loss selling","Beneficiary changes"],a:0,
+ why:"Proceed with sensitivity to their ability and willingness to face the loss: for <b>some</b> clients dealing with details is therapeutic and takes their minds off the emotional issues; for others it is extremely difficult."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"Mrs. Carpenter sat holding a cup of tea for an hour, then went to work in the garden, and said nothing when her daughter approached — then burst into tears. This is…",
+ c:["DENIAL — a state of numbness","Despair","Acceptance","Clinical depression"],a:0,
+ why:"The numbness of denial is a natural protection that usually lasts only a short time."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"Mrs. Carpenter raged at the lawn maintenance service for showing up late. What is that?",
+ c:["DISPLACED anger, characteristic of the despair phase","A legitimate service complaint","A sign of cognitive decline","The beginning of acceptance"],a:0,
+ why:"She also told her daughter she was angry at her <b>father</b> for not taking care of his health — anger at the deceased — and blamed herself for not making him reduce his hours."},
+{t:"mc",s:5,d:3,tag:"GRIEF",q:"Which detail from Mrs. Carpenter's despair phase is the one that most directly concerns YOU?",
+ c:["She fell behind paying her bills and failed to go in for an investment renewal","She abandoned her garden","She watched soap operas she once despised","She stopped choosing thoughtful gifts"],a:0,
+ why:"Financial neglect is exactly where you can offer to help bring some order back. Note too that most of her social relations stemmed from her husband's work — she no longer received invitations <b>except from people unaware of his death</b>."},
+{t:"mc",s:5,d:2,tag:"GRIEF",q:"Mrs. Carpenter resumed gardening, took up an art exhibition invitation, considered painting lessons, and went roller-skating with her granddaughter. She is in…",
+ c:["ACCEPTANCE — still sad at times, but no longer submerged by emotion","Late despair","Renewed denial","A manic episode"],a:0,
+ why:"She was once again taking care of her finances and thinking of moving to a condo."},
+
+/* ============ STAGE 6 — THE INCAPACITATED CLIENT ============ */
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"According to the chapter, an incapacity arises when…",
+ c:["Clients encounter BARRIERS that limit their functioning","A medical diagnosis is made","A client loses a physical ability","A client cannot manage their own affairs"],a:0,
+ why:"The incapacity is defined by the <b>barrier</b>, not the condition. Incapacitated clients have lost an aptitude or skill necessary for performing normal activities — speech, hearing, vision, the ability to reason, or mobility."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"A client in a wheelchair faces five steps at a business entrance. If a usable ramp exists instead…",
+ c:["There is NO demonstrated incapacity","The incapacity is reduced but remains","The barrier is internal instead","It depends on the client's willpower"],a:0,
+ why:"That is an <b>external</b> barrier. An <b>internal</b> barrier arises when clients are restricted by cognitive factors — such as a grieving client who cannot find the energy to go to work — possibly complicated by drug and alcohol dependency."},
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"Are incapacities permanent?",
+ c:["Not necessarily permanent or pervasive — it depends on their basis and the client's willpower, and there are various degrees","Yes, by definition","Only physical ones are permanent","Only cognitive ones are permanent"],a:0,
+ why:"Partial hearing loss becomes an incapacity only if it <b>cannot be compensated for</b> by hearing aids and it prevents certain activities. The loss of one or more limbs is an example of total and permanent incapacity."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"What does the chapter call one of the MOST SERIOUS barriers facing an incapacitated client?",
+ c:["The ATTITUDE of other people","Building access","The cost of equipment","Lack of medical care"],a:0,
+ why:"A client with mild cerebral paralysis — no real cognitive implications, but less coordinated speech and shaky balance — might be treated as intellectually deficient. Worse, some show a condescending or pitying attitude, representing a <b>fear of dealing with the incapacity</b>."},
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"Why must you not PITY a client with an incapacity?",
+ c:["They are usually very astute at detecting attitudes, and negative, condescending or pitying attitudes damage the relationship","It wastes meeting time","It is legally prohibited","It encourages dependence"],a:0,
+ why:"They quickly forge an opinion of the people around them."},
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"What are the three MOST COMMON physical incapacities?",
+ c:["Sight, hearing and locomotion","Sight, speech and memory","Hearing, speech and mobility","Vision, strength and coordination"],a:0,
+ why:"These losses usually result from illnesses, accidents or premature aging."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"Clients with physical incapacities usually go through a GRIEVING process. For what?",
+ c:["The loss of a bodily function AND their role in the family and in society","Only the physical function itself","The financial cost of the change","Their former employment"],a:0,
+ why:"Gone may be the hopes, aspirations, planned projects and shared activities. <b>All family members suffer in varying degrees</b> — the younger the client and the more family members, usually the greater the loss felt."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"Which is one of the five self-examination questions the chapter asks you to confront?",
+ c:["Do I consider my client as an INCAPACITATED PERSON FIRST, or as a person living with an incapacity in his or her life?","How much extra time will this client require?","Should I charge differently?","Can I refer this client elsewhere?"],a:0,
+ why:"Others: am I nervous at the idea? What were my reactions before? What are my apprehensions — not knowing what to say, what to do, touching the person? Can I deal with crying, anger, depression?"},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"The chapter says it is always better to…",
+ c:["Admit your own personal failings in a specific area and look for ways to change, than to deny them and risk jeopardizing a relationship","Avoid the topic entirely","Rely on your institution's policy","Have a colleague handle such clients"],a:0,
+ why:"The greatest help is in <b>getting to know someone who is incapacitated</b>. Resources named include the Multiple Sclerosis Society, the Cerebral Palsy Association, War Amps, and family doctors, neurologists, psychiatrists and geriatrists."},
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"How should you deal with a client who has a physical incapacity?",
+ c:["The same as any other client — warm and friendly, an honest smile, sustained eye contact","With extra formality","With visible extra assistance","Through a family member"],a:0,
+ why:"Clients with incapacities <b>must feel that they are treated as equals</b>. When they see you are interested in the person and not the incapacity, they will feel more comfortable."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"Should you bring up a client's incapacity?",
+ c:["Do not deny it, but do not bring it up unless they signal it is welcome — and if they raise it, listen empathetically","Always address it at the first meeting","Never acknowledge it at all","Only in writing"],a:0,
+ why:"Understand without judging: <b>too much compassion is not only inappropriate, but also superficial</b>."},
+{t:"mc",s:6,d:3,tag:"WHEELCHAIR",q:"Why is rushing to open doors for a client using a cane inappropriate?",
+ c:["They do it a dozen times a day themselves — it may convey that you think they can't even open a door, and may be offensive","It slows the meeting","It creates a liability risk","It is culturally variable"],a:0,
+ why:"Within reason, exhibit the same manners as with any other client."},
+{t:"mc",s:6,d:2,tag:"WHEELCHAIR",q:"Per the Wheelchair Code, if a conversation takes up more time you should…",
+ c:["SIT DOWN to be at the same level as the person","Stand at a respectful distance","Move to a private room","Keep it brief instead"],a:0,
+ why:"Also: talk to the person in the wheelchair and not to someone close by; do not lean on the wheelchair, since <b>it is part of his or her vital space</b>."},
+{t:"mc",s:6,d:3,tag:"WHEELCHAIR",q:"Is it acceptable to say \"got to run!\" to someone in a wheelchair?",
+ c:["Yes — there is no harm; they probably use the expression themselves","No, it is insensitive","Only if you know them well","Only if they use it first"],a:0,
+ why:"And don't assume using a wheelchair is a tragedy in itself: <b>it provides a freedom of movement the person would not have without it</b>."},
+{t:"mc",s:6,d:3,tag:"WHEELCHAIR",q:"On the accessibility checklist, why does a single step from the parking lot to the elevator matter?",
+ c:["ONE SINGLE STEP for a person in a wheelchair makes the ENTIRE BUILDING inaccessible","It slows arrival","It is a building code violation","It affects only manual wheelchairs"],a:0,
+ why:"Other items: a reserved space, accessible by mini-van (indoor height limits), space next to an elevator, control buttons at the right height <b>including in the basement</b>, an accessible washroom, and doors wide enough."},
+{t:"mc",s:6,d:2,tag:"INCAPACITY",q:"Which is a common after-effect of trauma causing cognitive incapacity?",
+ c:["Limited awareness and selective attention, confusion, difficulty planning, memory disorders, difficulty communicating and judging","Loss of long-term memory only","Personality stability","Improved focus on details"],a:0,
+ why:"The severity depends on the <b>type of brain damage</b> suffered. Accidents are a common cause."},
+{t:"mc",s:6,d:2,tag:"MENTAL",q:"Alzheimer's disease is identified as…",
+ c:["A state of DEMENTIA — a break-down of brain functions affecting social behaviour and personality","A mood disorder","A form of normal aging","A substance-related disorder"],a:0,
+ why:"Sufferers lose such an important part of their intellectual abilities that they are often not capable of performing simple daily tasks."},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"Why does the chapter say early-stage Alzheimer's matters to you specifically?",
+ c:["You may deal with a client in the early phases and begin to question their ability to make financial decisions — and for legal reasons it is often important to know whether a client is mentally capable","You will need to diagnose it","You must report it","It changes their risk tolerance"],a:0,
+ why:"Identifying cognitive incapacities can prevent inappropriate decisions and alert you to potential problems — improving service quality and looking after your client's best interests."},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"A cognitive incapacity usually brings about a change in personality. What is the consequence?",
+ c:["In addition to grieving lost intellectual abilities, one must grieve the LOST PERSONALITY — the family adapts to a \"stranger,\" as will you","The client grieves alone","The change is temporary","Only the family is affected"],a:0,
+ why:"Whether the incapacitated person grieves the loss <b>depends on the type of deficit</b>."},
+{t:"mc",s:6,d:2,tag:"MENTAL-ADAPT",q:"Which is one of the four rules for adapting to a client with a cognitive incapacity?",
+ c:["Establish stability and continuity — adapt meetings to the client's routine rather than disturbing it, and explain in advance what will happen","Vary meeting times to maintain flexibility","Cover everything in a single long meeting","Communicate only through family"],a:0,
+ why:"Also: leave enough time to react and answer (slowing your own pace too); repeat directions and establish associations with events, using a chronological review and a <b>written summary</b>."},
+{t:"mc",s:6,d:3,tag:"MENTAL-ADAPT",q:"You have the client repeat the agreement in his own words. What must you keep in mind?",
+ c:["It may only ensure they have understood FOR THE MOMENT — never assume that understanding now means remembering later","That this confirms legal capacity","That repetition guarantees retention","That this replaces written records"],a:0,
+ why:"A chronological review of events helps the client remember previous decisions, and a written summary of the discussion and decisions is often important."},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"What distinguishes a MENTAL DISORDER from a cognitive incapacity?",
+ c:["A mental disorder is illness-related and primarily EMOTIONAL, and can affect intellectual capacity without affecting underlying abilities","It is always permanent","It never affects judgement","It is caused only by substance abuse"],a:0,
+ why:"A cognitive incapacity is a <b>loss</b> with ensuing long-term consequences for the personality. A mental disorder brings negative consequences at a cognitive level <b>for the duration of the illness</b>."},
+{t:"num",s:6,d:2,tag:"MENTAL",q:"What percentage of the population will suffer from a mental disorder over the course of their lives?",unit:"%",a:20,tol:0.5,
+ why:"<b>20%, regardless of class.</b> The American Psychiatric Association identifies <b>17</b> major categories, from eating disorders to personality disorders."},
+{t:"num",s:6,d:2,tag:"MENTAL",q:"What percentage of WOMEN will go through a depression?",unit:"%",a:20,tol:0.5,
+ why:"Women <b>20%</b>, men <b>10%</b>. And <b>10%</b> of the population has major problems related to substance abuse — so the chances are high you will deal with such a client at some point."},
+{t:"num",s:6,d:2,tag:"MENTAL",q:"What percentage of the population has major problems related to SUBSTANCE ABUSE?",unit:"%",a:10,tol:0.5,
+ why:"<b>10%</b>. More and more cases come to light of presidents of corporations, executive directors and top managers who lose their position through abusive consumption of drugs."},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"What separates NORMAL depression after a loss from MAJOR (clinical) depression?",
+ c:["The same symptoms but more intense, plus debilitating side effects — eating and sleeping changes, weight loss, agitation or lethargy, indecisiveness, suicide attempts","Only the cause","Only the duration","Only whether it was diagnosed"],a:0,
+ why:"Normal depression after a loss — sadness, negative thoughts, low energy, self-underestimation, poor concentration, little interest in others — is generally <b>of limited duration</b>. In the most severe cases: erroneous perceptions and hallucinations."},
+{t:"mc",s:6,d:2,tag:"MENTAL",q:"<b>PHYSICAL</b> dependence on a substance means…",
+ c:["The body cannot function normally without it, without pain or withdrawal symptoms","The person's thoughts focus on the substance","The person cannot contemplate stopping","Consumption occurs daily"],a:0,
+ why:"<b>PSYCHOLOGICAL</b> dependence is when thoughts and feelings focus on the substance so much that it becomes difficult to stop — or even to contemplate stopping."},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"Why do clients with mental disorders often NOT grieve their own loss?",
+ c:["Grieving can only occur if one is aware of a loss — they struggle with their troubles and are not necessarily aware of what has been lost","They grieve later","They lack emotional capacity","They deny it deliberately"],a:0,
+ why:"Close friends and relatives gradually become aware that <b>they</b> have lost a relationship with someone they once knew."},
+{t:"mc",s:6,d:3,tag:"MENTAL-ADAPT",q:"Which is one of the six symptoms signalling a mental disorder?",
+ c:["Behaviour that goes AGAINST the client's own best interests","Requesting a second opinion","Changing financial institutions","Asking many questions"],a:0,
+ why:"The six: unusual behaviour; unacceptable social behaviour; a wrong perception of reality; deep personal distress; behaviour against their own interests; dangerous behaviour. Whenever <b>one</b> is identified, it signals a mental disorder."},
+{t:"mc",s:6,d:3,tag:"MENTAL-ADAPT",q:"Is being depressed for two years after the death of a spouse normal?",
+ c:["No — anxiety or depression may be normal in certain circumstances, but it is not normal for it to intensify or appear too frequently","Yes, grief has no timetable","Only if there were other losses","Only for elderly clients"],a:0,
+ why:"That falls under <b>deep personal distress</b>, one of the six symptoms. And any threat or mention of suicide <b>must be taken seriously</b>."},
+{t:"mc",s:6,d:3,tag:"MENTAL-ADAPT",q:"You believe a client's decision-making is affected by a mental disorder. What is your FIRST DUTY?",
+ c:["To INFORM THE CLIENT of it, making clear your interest is motivated by sincere concern and a desire to help","To notify the family","To suspend the account","To document it and continue"],a:0,
+ why:"Suggested opening: \"I have noticed that you are not the same person you used to be… I have the feeling that these are symptoms of some personal problems, and frankly, I am worried about you.\" Simple interventions can be enough to cause clients to reflect — then you leave the <b>responsibility for taking action</b> up to them."},
+{t:"mc",s:6,d:2,tag:"MENTAL-ADAPT",q:"A client becomes verbally aggressive. The best reaction is…",
+ c:["To turn the other cheek — stay calm, avoid taking it personally, and try to understand what is happening","To match their firmness","To end the relationship","To warn them formally"],a:0,
+ why:"\"Staying calm and rational, despite the emotional character of the discussion, is truly one of your greatest challenges.\""},
+{t:"mc",s:6,d:3,tag:"MENTAL",q:"Mrs. Stone, 76, denies withdrawing large amounts of cash daily when the planner phones. Why is the denial significant?",
+ c:["It was an ADDITIONAL HINT that the situation was serious","It proved the withdrawals were fraudulent","It confirmed she was competent","It was a normal privacy response"],a:0,
+ why:"Other signs: not recognizing her children or her planner, a winter coat in mid-summer, forgetting pots on a hot stove, getting lost miles from home, waking neighbours screaming, increasingly incoherent speech."},
+{t:"mc",s:6,d:3,tag:"MENTAL-ADAPT",q:"What could the planner have done at the EARLY stages of Mrs. Stone's Alzheimer's?",
+ c:["Asked for factual information about her belongings and investments, or about a family member's relationship to her — wrong answers would have indicated cognitive difficulties","Refused further transactions","Contacted her doctor","Reported her to authorities"],a:0,
+ why:"At early stages a person has <b>periods of lucidity</b> during which the condition can be discussed. Involving a family member then would have let Mrs. Stone confirm or modify instructions for administering her assets in the event of incapacity. In the final stages it is too late — <b>she is no longer responsible for her actions</b>."},
+{t:"mc",s:6,d:3,tag:"INCAPACITY",q:"The Stone family's grieving is described as possibly…",
+ c:["Even MORE DIFFICULT than if she had died","Shorter than a bereavement","Limited to the primary caregiver","Resolved once she moved to a nursing home"],a:0,
+ why:"They must accept her physical and social loss of autonomy and her change in personality and role in the family, and devote much of their leisure time and energy to her. The disease affected not only Mrs. Stone but her family as well."}
+];
+
+/* ---------- CHAPTER 2 BOSSES ---------- */
+const BOSSES_C2 = {
+1:{name:"TWO CLIENTS, SAME GOAL",art:"[ MOORE ]  vs  [ PETFORD ]",intro:"Both want to fund a child's education. They could not be more different.",
+   steps:[
+    {t:"mc",d:2,tag:"BELIEFS",q:"BOSS 1/5 — John Moore's parents gave him little help, which hurt his grades and kept him out of a top medical school. What is that?",
+     c:["A BELIEF formed through thought and reflection on his own experience","A value","An attitude","A cultural norm"],a:0,
+     why:"Beliefs are produced through thought and reflection, or through the influence of a group or authority."},
+    {t:"mc",d:3,tag:"VALUES",q:"BOSS 2/5 — He would feel badly owning stocks of companies he considers poor corporate citizens, EVEN IF returns were high. What is driving that?",
+     c:["His VALUES — preferences for certain states of being, which shape product selection","Risk tolerance","A reference group","Cognitive dissonance"],a:0,
+     why:"Some clients prize inner harmony, self-respect, honesty and responsibility, and favour good corporate citizens as a result."},
+    {t:"mc",d:2,tag:"ATTITUDES",q:"BOSS 3/5 — Bill Petford spends most of a very good salary on trivial things and gambles heavily. What does money most look like to him?",
+     c:["A means of FREEDOM and personal expression rather than security","Security","Love","Nothing in particular"],a:0,
+     why:"He admired risk-takers who made money quickly in options and futures, and wanted a major role in selecting his investments."},
+    {t:"mc",d:3,tag:"ATTITUDES",q:"BOSS 4/5 — He looked like a confident professional, then almost broke into tears. What is the lesson?",
+     c:["First impressions from dress and posture are a poor guide to what a client actually needs","He was being manipulative","He was in the wrong institution","He needed a simpler product"],a:0,
+     why:"His wife was forcing him to set up the plan. The recent $100,000 win made it a good time to invest for the children's sake."},
+    {t:"mc",d:2,tag:"BELIEFS",q:"BOSS 5/5 — FINISH IT. What is Gina's conclusion?",
+     c:["Individual personality factors affect how clients define needs and which products they ultimately accept","Wealthier clients are easier to serve","Both clients need the same plan","Gambling clients should be declined"],a:0,
+     why:"\"These two people basically wanted the same thing, but it was as though they had come from different planets.\" Stage cleared."}
+   ]},
+2:{name:"THE INVISIBLE RULES",art:"[ CULTURE ]  &gt;  [ REFERENCE GROUP ]",intro:"Two clients, two invisible forces shaping what they will and won't accept.",
+   steps:[
+    {t:"mc",d:2,tag:"CULTURE",q:"BOSS 1/5 — Yiming Tang stiffens: a will \"would bring bad luck.\" What is the correct first read?",
+     c:["A cultural influence that persists despite full integration into North American society","A misunderstanding of what a will does","Resistance to the fee","A sign of cognitive difficulty"],a:0,
+     why:"Culture is <b>the most pervasive</b> socio-cultural variable — the first element to consider when trying to understand client behaviour."},
+    {t:"mc",d:3,tag:"CULTURE",q:"BOSS 2/5 — What would Sam's ERROR be?",
+     c:["Being oblivious to socio-cultural influence and trying to talk him out of the attitude","Preparing the will anyway","Referring him to a colleague","Asking about his background"],a:0,
+     why:"Understanding of and sensitivity to a client's frame of reference is clearly preferable to <b>defensiveness or argument</b>."},
+    {t:"mc",d:2,tag:"REF-GROUPS",q:"BOSS 3/5 — Janet Mitchell relays advice originating with her neighbour's husband's squash partner. What is this?",
+     c:["A reference group acting as a RISK-REDUCER, supplying perceived expertise","Idle gossip with no influence","A formal advisory relationship","An anchoring bias"],a:0,
+     why:"Clients rely on the perceived expertise of reference groups when they feel incapable of evaluating a product on their own."},
+    {t:"mc",d:3,tag:"REF-GROUPS",q:"BOSS 4/5 — She asks what YOU think about moving from GICs into stocks. What is your responsibility?",
+     c:["Make sure she understands the characteristics and that it is the best option for HER needs","Follow the neighbour's broker's logic","Decline to comment on outside advice","Move the money as she suggests"],a:0,
+     why:"Buying something solely because others are doing it sets the stage for <b>later dissatisfaction</b>."},
+    {t:"mc",d:2,tag:"REF-GROUPS",q:"BOSS 5/5 — FINISH IT. Because clients perceive expertise in you, you are under…",
+     c:["A heavy ethical and legal obligation not to betray that trust","A duty to match competitors' advice","An obligation to document every conversation","No additional obligation"],a:0,
+     why:"Perceiving expertise in a financial planner builds trust — which brings significant responsibility. Boss down."}
+   ]},
+3:{name:"THE TWO O'CLOCK GAP",art:"10 AM: NOTES + QUESTIONS  //  1 PM: \"IS THAT POSSIBLE?\"",intro:"Robert Carson has two meetings. Same service. Two completely different stages.",
+   steps:[
+    {t:"mc",d:2,tag:"DECISION-STEPS",q:"BOSS 1/6 — Melissa arrives with written questions on services, analysts, fees and statements, and takes careful notes. Which step?",
+     c:["SEARCH AND EVALUATION","Activation","Intention","Decision"],a:0,
+     why:"\"I am trying to decide which firm will give me the best service, so I am finding out about each of them.\""},
+    {t:"mc",d:2,tag:"DECISION-STEPS",q:"BOSS 2/6 — What is the right move with her?",
+     c:["Point out the specific advantages his firm offers, and offer introductions to the analysts","Ask her to commit today","Explore whether she really has a need","Send her away with brochures"],a:0,
+     why:"At search and evaluation you summarize needs, suggest appropriate products and explain how they meet those needs."},
+    {t:"mc",d:2,tag:"DECISION-STEPS",q:"BOSS 3/6 — The Rosses have just realized they'll need help with money matters from Palm Springs. Which step?",
+     c:["ACTIVATION","Search and evaluation","Intention","Evaluation"],a:0,
+     why:"A discrepancy between the actual and desired state has just been recognized, creating mental tension."},
+    {t:"mc",d:3,tag:"DECISION-STEPS",q:"BOSS 4/6 — What must Robert AVOID with the Rosses?",
+     c:["Premature solutions — he should listen and help them explore the dimensions of the need","Mentioning fees","Giving them literature","Explaining how the service works"],a:0,
+     why:"Activation is a crucial stage for relationship-building: clients are testing their trust in your capacity to care. He explained how it works, then let them take brochures away to think."},
+    {t:"mc",d:3,tag:"REF-GROUPS",q:"BOSS 5/6 — Where did the Rosses' idea come from, and what is it?",
+     c:["Mr. Ross's CURLING BUDDY — a reference group supplying the possible solution","An advertisement","Their children","Their lawyer"],a:0,
+     why:"Their children have moved away and aren't available to help — so the peer group filled the gap."},
+    {t:"mc",d:3,tag:"INVOLVEMENT",q:"BOSS 6/6 — FINISH IT. What determines whether either decision is high-involvement?",
+     c:["The clients' PERCEPTION of financial, social or functional risk — not the dollar amount","The size of the portfolio","The complexity of the product","The institution's policy"],a:0,
+     why:"A $100,000 GIC can be low-involvement for one client while a $500 GIC is high-involvement for another. Boss down."}
+   ]},
+4:{name:"THE AGE GUESS",art:"[ 75, SHARP ]   //   [ 81, NEVER ASKED ]",intro:"Two elderly clients. Every instinct you have about age is about to be tested.",
+   steps:[
+    {t:"mc",d:2,tag:"ELDERLY",q:"BOSS 1/5 — Mr. Zeckhausen, 75, asks you to guess his age. Best response?",
+     c:["\"I find it hard to guess, but it sounds as though you feel pretty good.\"","\"I'd say about 65.\"","\"You look remarkably young for your age.\"","\"I'd rather not guess.\""],a:0,
+     why:"Guessing younger or side-stepping with a compliment can be <b>patronizing or manipulative</b>. An honest answer that refocuses on the client is best."},
+    {t:"mc",d:2,tag:"ELDER-ADAPT",q:"BOSS 2/5 — You notice his hearing aid for the first time. Do you mention it?",
+     c:["No — not unless he raises it, though you stay alert for difficulties","Yes, and offer to speak louder","Yes, and switch to written material","Ask a colleague to join"],a:0,
+     why:"The aid should compensate for the loss. Do not adapt unless there is reason to believe adaptation would be <b>welcome</b>."},
+    {t:"mc",d:3,tag:"ELDERLY",q:"BOSS 3/5 — He follows markets daily, volunteers as a surrogate grandfather and is assistant treasurer of his church. What does this tell you?",
+     c:["His activities help maintain his cognitive capacities, so presenting a new service should not be difficult","That he has too much on his plate","That he will resist change","That his family should be involved"],a:0,
+     why:"Intellectual ability does not decrease with age — only reaction and information-processing time increase."},
+    {t:"mc",d:3,tag:"ELDER-ADAPT",q:"BOSS 4/5 — Mrs. Singer, 81, was told for decades she wasn't interested and wouldn't understand. What is your FIRST task?",
+     c:["Establish a bond of trust","Explain the portfolio in full","Verify her legal capacity","Ask her children to attend"],a:0,
+     why:"Then question the husband's claim: is it true, is it lack of interest, or is she able to understand? Do not inherit his assessment."},
+    {t:"mc",d:3,tag:"ELDER-ADAPT",q:"BOSS 5/5 — FINISH IT. How do you run the meetings with her?",
+     c:["A slow, concrete presentation with regular verification of understanding, more than one meeting, and notes to take home","One thorough meeting with full documentation","Written correspondence only","Through a family representative"],a:0,
+     why:"She may ask for time to reflect before deciding anything, and literature to take with her jogs her memory and avoids misunderstandings. Boss down."}
+   ]},
+5:{name:"MRS. CARPENTER",art:"DENIAL --&gt; DESPAIR --&gt; ACCEPTANCE",intro:"A client you have known for years has just lost her husband. Walk it with her.",
+   steps:[
+    {t:"mc",d:2,tag:"GRIEF",q:"BOSS 1/6 — She sits an hour holding a cup of tea, then goes to work in the garden, and says nothing to her daughter. Which phase?",
+     c:["DENIAL — a state of numbness","Despair","Acceptance","Clinical depression"],a:0,
+     why:"At first clients do not feel anything; this natural protection usually lasts only a short time."},
+    {t:"mc",d:3,tag:"GRIEF-ADAPT",q:"BOSS 2/6 — She comes in during this phase. What do you do?",
+     c:["Listen patiently and don't push financial or legal matters until it's clear she's ready","Set out the estate timetable while it's fresh","Ask her to bring her daughter next time","Postpone all contact"],a:0,
+     why:"Stay flexible — shift between being passive (empathizing) and active (giving direction when issues are raised)."},
+    {t:"mc",d:2,tag:"GRIEF",q:"BOSS 3/6 — Months later she rages at the lawn service, blames her husband for not minding his health, and blames herself. Which phase?",
+     c:["DESPAIR — anger, displaced and directed in several directions at once","Denial","Acceptance","A mental disorder"],a:0,
+     why:"Anger gets aimed at medical professionals, a power larger than life, the deceased, people nearby — including you — and at themselves."},
+    {t:"mc",d:3,tag:"GRIEF-ADAPT",q:"BOSS 4/6 — She has fallen behind on bills and missed an investment renewal. What do you offer?",
+     c:["To help bring some order back into her finances","A new investment strategy","A referral to a counsellor","To wait until she contacts you"],a:0,
+     why:"Listen non-judgementally, accept the feelings even if anger is aimed at you, refrain from false hope or advice, and convey support with body language — sitting beside her rather than behind your desk."},
+    {t:"mc",d:3,tag:"GRIEF-ADAPT",q:"BOSS 5/6 — She inherits a large sum but doesn't feel like deciding anything. Your recommendation?",
+     c:["Short-term investments until she feels able to make longer-term decisions","Leave it in chequing for a year","A full long-term plan now","Have her daughter decide"],a:0,
+     why:"One valuable service is <b>checking any impulses to make rash decisions</b> with adverse long-term implications."},
+    {t:"mc",d:2,tag:"GRIEF",q:"BOSS 6/6 — FINISH IT. She gardens again, takes painting lessons, roller-skates with her granddaughter, and is managing her finances. What has she reached?",
+     c:["ACCEPTANCE — a new emotional balance, though still sad at times","Full recovery with no further sadness","Late despair","A second denial"],a:0,
+     why:"Acceptance does not mean forgetting, but conceding that a past relationship has ended and a new life has begun — <b>the acceptance of the loss and a re-birth</b>. Boss down."}
+   ]},
+6:{name:"MRS. STONE",art:"WINTER COAT / MID-SUMMER",intro:"FINAL BOSS. The signs were there for months. Read them before it is too late.",
+   steps:[
+    {t:"mc",d:2,tag:"MENTAL",q:"BOSS 1/6 — She doesn't recognize her children, or the planner she met a month ago, and wore a winter coat in mid-summer. What does this suggest?",
+     c:["A cognitive incapacity — dementia affecting memory, orientation and daily function","Normal aging","A grieving reaction","A mood disorder"],a:0,
+     why:"Alzheimer's is identified as a state of dementia: a break-down of brain functions affecting social behaviour and personality."},
+    {t:"mc",d:3,tag:"MENTAL-ADAPT",q:"BOSS 2/6 — The planner phoned about large daily cash withdrawals and Mrs. Stone DENIED them. What did that denial mean?",
+     c:["An additional hint that the situation was serious","That someone else was using the account","That the records were wrong","That she valued her privacy"],a:0,
+     why:"That was the only moment the planner was conscious of a problem."},
+    {t:"mc",d:3,tag:"MENTAL-ADAPT",q:"BOSS 3/6 — What could the planner have done at that point to test her capacity?",
+     c:["Asked for factual information about her belongings and investments, or about a family member's relationship to her","Requested a medical assessment","Frozen the account","Asked her to sign a waiver"],a:0,
+     why:"Wrong answers would have indicated her cognitive difficulties."},
+    {t:"mc",d:3,tag:"MENTAL-ADAPT",q:"BOSS 4/6 — Why do the EARLY stages matter so much?",
+     c:["A person has periods of LUCIDITY when the condition can be discussed and a family member involved","Treatment is most effective then","Legal capacity is presumed then","The family is more available then"],a:0,
+     why:"Mrs. Stone could then have confirmed or modified instructions for the administration of her assets <b>in the event of her incapacity</b>."},
+    {t:"mc",d:2,tag:"MENTAL-ADAPT",q:"BOSS 5/6 — In the final stages, what is the position?",
+     c:["It is too late — she is no longer responsible for her actions and cannot manage her own financial matters","A power of attorney can still be signed","She can still confirm instructions with a witness","The planner may act on her verbal instructions"],a:0,
+     why:"Which is exactly why the early-stage conversation matters."},
+    {t:"mc",d:3,tag:"INCAPACITY",q:"BOSS 6/6 — FINISH IT. What does the family go through?",
+     c:["A grieving process for her lost autonomy, personality and family role — possibly MORE difficult than if she had died","Relief once she is in care","No grieving, since she is alive","Grief only after her death"],a:0,
+     why:"They took turns supporting her, which tired them out and created personal problems, then hired a nurse, then made the painful decision to move her into a nursing home — and went to see her every day, laden with guilt. YOU WIN."}
+   ]},
+7:{name:"THE FULL CASELOAD",art:"BELIEFS / CULTURE / DECISIONS / AGE / GRIEF / BARRIERS",intro:"Everything, all at once. Six clients. No mercy.",
+   steps:[
+    {t:"mc",d:3,tag:"ATTITUDES",q:"CASELOAD 1/6 — A client invests only in GICs, valuing safety and believing everything else is risky. To shift the attitude you must…",
+     c:["Change the underlying BELIEF or VALUE","Present better returns repeatedly","Wait for market conditions to change","Involve their spouse"],a:0,
+     why:"An attitude is the product of a related belief and value, and attitudes are durable and hard to influence directly."},
+    {t:"mc",d:3,tag:"CULTURE",q:"CASELOAD 2/6 — A client resists your safest recommendation. Which cultural fact might explain it?",
+     c:["A strict Muslim will not invest in anything that generates INTEREST","White symbolizes mourning in Asia","Thirteen is unlucky in the West","The number 4 means death in Japan"],a:0,
+     why:"The second cultural challenge is taking more care explaining features that may be perceived differently by clients from different backgrounds."},
+    {t:"mc",d:3,tag:"DISSONANCE",q:"CASELOAD 3/6 — A client who just agreed to a personal trust now worries about losing control of her money. This is…",
+     c:["COGNITIVE DISSONANCE — post-decision tension from questioning the choice","Buyer's regret requiring reversal","A sign she was pushed","An activation-stage need"],a:0,
+     why:"Inquire into the hesitancy, restate how the plan meets her needs, and <b>stress the possibility of reversing</b> the decision if she is dissatisfied — without appearing to defend your own product."},
+    {t:"mc",d:3,tag:"ELDER-ADAPT",q:"CASELOAD 4/6 — You want to send an elderly client documents in extra-large type. What first?",
+     c:["ASK — adapting uninvited may offend if it is read as an indication of age","Send them; it is a courtesy","Send both versions","Check with the family"],a:0,
+     why:"Do not adapt unless there is reason to believe it would be welcome."},
+    {t:"mc",d:3,tag:"GRIEF-ADAPT",q:"CASELOAD 5/6 — A grieving client's file is active and the loss is relevant to today's conversation. Do you mention it?",
+     c:["Yes — they are always aware of it whether it is named or not","No, it risks reopening the wound","Only if they mention it first","Only in writing"],a:0,
+     why:"And err on the side of being <b>too empathetic rather than dispassionate</b>."},
+    {t:"mc",d:3,tag:"WHEELCHAIR",q:"CASELOAD 6/6 — FINISH IT. A client who uses a wheelchair arrives for a long meeting. What do you do?",
+     c:["Sit down to be at the same level, speak to them and not a companion, and don't lean on the chair","Stand so they can see you clearly","Move to a room with more space","Offer to take notes for them"],a:0,
+     why:"The chair is part of their vital space — and it provides a freedom of movement they would not have without it. CASELOAD CLEARED."}
+   ]}
+};
+
+const CRAM_C2 = `
+<h3>NUMBERS TO KNOW COLD</h3>
+<table>
+<tr><td>Grieving Trust clients dissatisfied with professionals' ATTITUDES</td><td class="f">84%</td></tr>
+<tr><td>Of those, considering severing ties</td><td class="f">72%</td></tr>
+<tr><td>Population who will suffer a mental disorder in their lives</td><td class="f">20% (regardless of class)</td></tr>
+<tr><td>Men / women who will go through a depression</td><td class="f">10% / 20%</td></tr>
+<tr><td>Population with major substance abuse problems</td><td class="f">10%</td></tr>
+<tr><td>Major categories of mental disorders (APA)</td><td class="f">17</td></tr>
+<tr><td>Time to reach acceptance after an important loss</td><td class="f">at least 1 year</td></tr>
+<tr><td>Total duration of the grieving process</td><td class="f">a few weeks to more than a year</td></tr>
+</table>
+
+<h3>THE CHAINS AND DEFINITIONS</h3>
+<table>
+<tr><td>The chain</td><td class="f">BELIEFS &rarr; VALUES &rarr; GOALS</td></tr>
+<tr><td>Attitude</td><td class="f">the PRODUCT of a related belief and value — to change it, change the belief or value</td></tr>
+<tr><td>Belief</td><td class="f">principles/ideas held to be true, at the core of personality</td></tr>
+<tr><td>Value</td><td class="f">preference for certain CONDITIONS / states of being</td></tr>
+<tr><td>Socialization / Acculturation</td><td class="f">learning your own culture naturally / adapting to ANOTHER culture</td></tr>
+<tr><td>Emulation</td><td class="f">enhancing self-image by identifying with a reference group</td></tr>
+<tr><td>Cognitive dissonance</td><td class="f">post-decision tension from insecurity as clients question their decision</td></tr>
+<tr><td>Grieving</td><td class="f">the adaptation process when faced with a significant loss — not only death</td></tr>
+<tr><td>Incapacity</td><td class="f">arises when clients encounter BARRIERS that limit their functioning</td></tr>
+</table>
+
+<h3>THE LISTS</h3>
+<table>
+<tr><td>5 money attitudes</td><td class="f">Security · Love · Power · Freedom · Personal value</td></tr>
+<tr><td>4 sub-dimensions of money/power</td><td class="f">social power · acknowledged power · social status · domination</td></tr>
+<tr><td>6 dimensions of culture</td><td class="f">Abstract: values, ideas, attitudes · Tangible: traditions, artifacts, symbols</td></tr>
+<tr><td>4 functions of culture</td><td class="f">rules of conduct · standards of performance · interpret cues and signals · patterns for recurring problems</td></tr>
+<tr><td>2 cultural challenges</td><td class="f">be sensitive to influences · take more care explaining practices and features</td></tr>
+<tr><td>4 reference groups</td><td class="f">Family · Peers · Friends · Associations and organizations</td></tr>
+<tr><td>3 risks driving involvement</td><td class="f">Financial · Social · Functional</td></tr>
+<tr><td>5 decision steps</td><td class="f">Activation · Search &amp; Evaluation · Intention · Decision · Evaluation</td></tr>
+<tr><td>2 evaluation models</td><td class="f">Compensatory (weigh all, widest margin) · Non-compensatory (must-have attribute)</td></tr>
+<tr><td>Value of information</td><td class="f">internal &gt; external · actively sought &gt; unsolicited · personal &gt; commercial</td></tr>
+<tr><td>4 reasons intention &ne; action</td><td class="f">change in circumstances · last-minute info · risks too great · feeling pushed</td></tr>
+<tr><td>4 family decision types</td><td class="f">Autonomous · Male-dominant · Female-dominant · Syncratic</td></tr>
+<tr><td>3 grieving phases</td><td class="f">Denial · Despair · Acceptance</td></tr>
+<tr><td>2 barrier types</td><td class="f">External · Internal — plus the ATTITUDES of others as the most serious barrier</td></tr>
+<tr><td>3 most common physical incapacities</td><td class="f">Sight · Hearing · Locomotion</td></tr>
+<tr><td>6 mental-disorder symptoms</td><td class="f">unusual behaviour · unacceptable social behaviour · wrong perception of reality · deep personal distress · behaviour against own interests · dangerous behaviour</td></tr>
+</table>
+
+<h3>HIGH-YIELD TRAPS</h3>
+<div class="trap">High/low involvement is set by <b>PERCEPTION</b>, not the dollar amount — a $100,000 GIC can be low, a $500 GIC can be high.</div>
+<div class="trap">Steps skipped in low-involvement decisions: <b>Search &amp; Evaluation</b> and <b>Intention</b>.</div>
+<div class="trap">Elderly: intellectual ability does <b>NOT</b> decrease — only reaction and processing time increase.</div>
+<div class="trap">Elderly: personality does <b>NOT</b> change — a major change signals a non-normative event.</div>
+<div class="trap">There is <b>no official age</b> at which one becomes "elderly".</div>
+<div class="trap">Do NOT adapt to an elderly client unless there is reason to believe it would be <b>welcome</b> — large typeset can offend.</div>
+<div class="trap">Do not mention a hearing aid or an incapacity unless the client raises it first.</div>
+<div class="trap">Ramp present and usable = <b>no demonstrated incapacity</b>. The barrier defines the incapacity.</div>
+<div class="trap">Grieving clients: err on the side of <b>too empathetic</b> rather than dispassionate.</div>
+<div class="trap">When the loss is relevant, <b>do</b> mention it — they are always aware of it anyway.</div>
+<div class="trap">Casting products in terms of prestige is not misrepresentation, but "<b>comes close to manipulation</b>".</div>
+<div class="trap">Full disclosure is owed <b>even if the sale gets cancelled</b>.</div>
+
+<h3>THE SENTENCE TO CARRY INTO THE EXAM</h3>
+<p style="color:var(--yellow);font-size:21px">"Knowledge of the decision-making process is NOT acquired in order to manipulate and unduly influence clients' choices, but rather to BETTER UNDERSTAND THEIR NEEDS so that appropriate help and solutions can be offered in order to create the most value for clients."</p>
+`;
+
 /* ---------- CHAPTER REGISTRY ---------- */
 const CHAPTERS = {
   comm:{ id:"comm", code:"CH.1", name:"THE HUMAN INTERFACE",
@@ -1680,6 +2446,11 @@ const CHAPTERS = {
          blurb:"The communication process · non-verbal · perceptions · effective skills",
          stages:STAGES_C1, bank:BANK_C1, bosses:BOSSES_C1, cram:CRAM_C1,
          gauntlet:5, calc:false },
+  client:{ id:"client", code:"CH.2", name:"KNOW YOUR CLIENT",
+         sub:"Chapter 2 — Understanding the Client",
+         blurb:"Personal &amp; socio-cultural variables · decision-making · elderly, grieving &amp; incapacitated clients",
+         stages:STAGES_C2, bank:BANK_C2, bosses:BOSSES_C2, cram:CRAM_C2,
+         gauntlet:7, calc:false },
   tvm:{  id:"tvm", code:"M2 CH.1", name:"TIME VALUE RAIDERS",
          sub:"Module 2, Chapter 1 — Time Value of Money",
          blurb:"Single sums · annuities · effective rates · loans, bonds &amp; retirement",
@@ -1693,7 +2464,7 @@ const CHAPTERS = {
 const $ = id => document.getElementById(id);
 const SAVE_KEY = "tvmRaiders_v2";
 
-let save = {unlocked:{tvm:1, comm:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
+let save = {unlocked:{tvm:1, comm:1, client:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw){ save = Object.assign(save, JSON.parse(raw)); }
@@ -1701,7 +2472,7 @@ try{
     const old = localStorage.getItem("tvmRaiders_v1");   // migrate a single-chapter save
     if(old){
       const o = JSON.parse(old);
-      save.unlocked = {tvm: o.unlocked || 1, comm: 1};
+      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1};
       save.best = {}; Object.keys(o.best||{}).forEach(k=>{ save.best["tvm:"+k] = o.best[k]; });
       save.hi = (o.hi||[]).map(h=>Object.assign({ch:"M2 CH.1"}, h));
       save.mastery = o.mastery || {};
@@ -1710,7 +2481,7 @@ try{
     }
   }
 }catch(e){}
-if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1};
+if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1};
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------- audio ---------- */
@@ -1750,7 +2521,7 @@ function setChapter(id){
 }
 const chUnlocked = () => (save.unlocked && save.unlocked[CH.id]) || 1;
 function setUnlocked(v){
-  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1};
+  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1};
   save.unlocked[CH.id] = v;
 }
 
@@ -1807,6 +2578,7 @@ function renderChapters(){
 
 function renderStages(){
   $("stagesWho").textContent = CH.code + " — " + CH.name;
+  $("stagesFoot").textContent = "Clear a stage to unlock the next. Gauntlet unlocks after Stage " + CH.stages.length + ".";
   const g = $("stageGrid"); g.innerHTML = "";
   CH.stages.forEach(st=>{
     const locked = st.n > chUnlocked();
@@ -1835,7 +2607,7 @@ $("btnGauntlet").addEventListener("click",()=>{
 $("btnDrill").addEventListener("click",()=>{ sfx.coin(); startRun({mode:"drill"}); });
 $("btnWipe").addEventListener("click",()=>{
   if(confirm("Erase all progress, high scores and study data?")){
-    save = {unlocked:{tvm:1,comm:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
+    save = {unlocked:{tvm:1,comm:1,client:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
     persist(); renderHof(); toast("MEMORY CLEARED");
   }
 });

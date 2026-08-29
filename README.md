@@ -20,19 +20,21 @@ reads a `?id=` query string so a server is more convenient.
 ## FPF Arcade (`tvm-arcade.html`)
 
 A separate, self-contained page that lives in this repo: a 90s-arcade study game
-built from the FPF study notes. Two chapters share one cabinet.
+built from the FPF study notes. Three chapters share one cabinet.
 
 Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
 
 | Chapter | Stages | Covers |
 |---|---|---|
 | **CH.1 — The Human Interface** | 4 + gauntlet | the communication process, non-verbal communication, perceptions, effective communication skills |
+| **CH.2 — Know Your Client** | 6 + gauntlet | personal and socio-cultural variables, the decision-making process, the elderly, grieving and incapacitated client |
 | **M2 CH.1 — Time Value Raiders** | 5 + gauntlet | single sums, annuities, effective rates, loans, mortgages, bonds, retirement |
 
-- **292 drills and 11 bosses.** Each boss is a full case from the notes, broken
-  into its steps: Ms. Varner's mutual fund, the mixed-signal client, Lorraine's
-  blind spot, the Tuccis, Sharon's college fund, Bill Brown's mortgage, Walter's
-  retirement, and two gauntlets.
+- **469 drills and 18 bosses.** Each boss is a full case from the notes, broken
+  into its steps: Ms. Varner's mutual fund, the Tuccis, Moore vs Petford,
+  Robert Carson's two meetings, Mrs. Carpenter's grief, Mrs. Stone's Alzheimer's,
+  Sharon's college fund, Bill Brown's mortgage, Walter's retirement, and three
+  gauntlets.
 - **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills.**
   Every numeric answer key is the notes' own figure.
 - **Miss a question and the game teaches the rule**, then re-queues that question
