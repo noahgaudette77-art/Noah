@@ -20,7 +20,7 @@ reads a `?id=` query string so a server is more convenient.
 ## FPF Arcade (`tvm-arcade.html`)
 
 A separate, self-contained page that lives in this repo: a 90s-arcade study game
-built from the FPF study notes. Four chapters share one cabinet.
+built from the FPF study notes. Five chapters share one cabinet.
 
 Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
 
@@ -29,13 +29,15 @@ Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed sit
 | **CH.1 — The Human Interface** | 4 + gauntlet | the communication process, non-verbal communication, perceptions, effective communication skills |
 | **CH.2 — Know Your Client** | 6 + gauntlet | personal and socio-cultural variables, the decision-making process, the elderly, grieving and incapacitated client |
 | **CH.3 — Market Forces** | 5 + gauntlet | demand and supply, equilibrium, market failure, GDP, business cycles, inflation, the labour market, monetary and fiscal policy |
+| **CH.4 — The Planner's Path** | 4 + gauntlet | what a sound plan is, the six steps, goal-setting, the financial profile, analysis, recommendations, implementation and review |
 | **M2 CH.1 — Time Value Raiders** | 5 + gauntlet | single sums, annuities, effective rates, loans, mortgages, bonds, retirement |
 
-- **601 drills and 24 bosses.** Each boss is a full case from the notes, broken
+- **680 drills and 29 bosses.** Each boss is a full case from the notes, broken
   into its steps: Ms. Varner's mutual fund, the Tuccis, Moore vs Petford,
   Robert Carson's two meetings, Mrs. Carpenter's grief, Mrs. Stone's Alzheimer's,
-  the orange market's equilibrium, the policy desk, Sharon's college fund,
-  Bill Brown's mortgage, Walter's retirement, and four gauntlets.
+  the orange market's equilibrium, the policy desk, the goal setter, the full
+  file, Sharon's college fund, Bill Brown's mortgage, Walter's retirement, and
+  five gauntlets.
 - **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills.**
   Every numeric answer key is the notes' own figure.
 - **Miss a question and the game teaches the rule**, then re-queues that question

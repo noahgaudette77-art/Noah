@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FPF ARCADE — Communication, Clients, Economics &amp; Time Value of Money</title>
-<meta name="description" content="A 90s arcade study game for four FPF chapters: interpersonal communication, understanding the client, economics, and the time value of money.">
+<title>FPF ARCADE — Five FPF Chapters, One Cabinet</title>
+<meta name="description" content="A 90s arcade study game for five FPF chapters: interpersonal communication, understanding the client, economics, the financial planning process, and the time value of money.">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -307,7 +307,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
 
 <div class="cabinet">
   <div class="marquee">
-    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 4 CHAPTERS LOADED ◈</div>
+    <div class="coin">◈ INSERT COIN ◈ 1 PLAYER ◈ 5 CHAPTERS LOADED ◈</div>
     <h1>FPF ARCADE</h1>
     <div class="sub">STUDY HARDER. SCORE HIGHER.</div>
   </div>
@@ -321,13 +321,14 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
         <span class="l1">FPF</span>
         <span class="l2">ARCADE</span>
       </div>
-      <div class="tagline">▓▒░ FOUR CHAPTERS · ONE CABINET ░▒▓</div>
+      <div class="tagline">▓▒░ FIVE CHAPTERS · ONE CABINET ░▒▓</div>
       <div class="attract">
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--magenta)">CH.1 THE HUMAN INTERFACE</b> — communication, non-verbal, perceptions, skills</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--green)">CH.2 KNOW YOUR CLIENT</b> — beliefs, culture, decisions, elderly, grief, incapacity</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--yellow)">CH.3 MARKET FORCES</b> — demand, supply, GDP, cycles, monetary &amp; fiscal policy</p>
+        <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--purple)">CH.4 THE PLANNER&#39;S PATH</b> — the six steps, goals, the profile, recommendations, review</p>
         <p><span style="color:var(--yellow)">▶</span> <b style="color:var(--cyan)">M2 CH.1 TIME VALUE RAIDERS</b> — single sums, annuities, rates, applications</p>
-        <p><span style="color:var(--yellow)">▶</span> 20 stages · 24 boss problems · 600+ drills, all from your notes</p>
+        <p><span style="color:var(--yellow)">▶</span> 24 stages · 29 boss problems · 680+ drills, all from your notes</p>
         <p><span style="color:var(--yellow)">▶</span> Miss a question and the game <b style="color:var(--green)">teaches you the rule</b></p>
       </div>
       <div class="center blink px" style="font-size:14px;color:var(--green);margin:18px 0">PRESS START</div>
@@ -422,7 +423,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
       <h2 class="title">HOW TO PLAY</h2>
       <div class="cram">
         <p><b style="color:var(--cyan)">GOAL:</b> clear every stage of a chapter, each ending in a BOSS — a full case straight out of your notes (Ms. Varner's mutual fund, the Tuccis' RV, Sharon's college fund, Bill Brown's mortgage…).</p>
-        <p>Four chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file), <b style="color:var(--yellow)">CH.3 Market Forces</b> (economics) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
+        <p>Five chapters share the cabinet: <b style="color:var(--magenta)">CH.1 The Human Interface</b> (communication), <b style="color:var(--green)">CH.2 Know Your Client</b> (the client behind the file), <b style="color:var(--yellow)">CH.3 Market Forces</b> (economics), <b style="color:var(--purple)">CH.4 The Planner&#39;s Path</b> (the planning process itself) and <b style="color:var(--cyan)">M2 CH.1 Time Value Raiders</b> (the money math). Each keeps its own progress, and the TVM calculator appears only where it's useful.</p>
         <h3>CONTROLS</h3>
         <table>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></td><td>pick a multiple-choice answer</td></tr>
@@ -471,7 +472,7 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
     </section>
 
   </div>
-  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, 2 and 3 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
+  <div class="footer">FPF ARCADE © 199X — built from your Chapter 1, 2, 3 and 4 and Module 2 Chapter 1 study notes. Progress saves to this browser only.</div>
 </div>
 
 <!-- ============ TVM CALCULATOR ============ -->
@@ -3032,6 +3033,415 @@ const CRAM_C3 = `
 <span class="muted">&rarr; Expansionary policy is inflationary &rarr; nominal rates rise and bond prices fall &rarr; investment demand falls &rarr; earnings and stock prices follow.</span></p>
 `;
 
+
+/* ============================================================
+   CHAPTER 4 — THE FINANCIAL PLANNING PROCESS
+   Built from the Chapter 4 study notes: what a sound financial
+   plan is, and the six steps of designing one.
+   ============================================================ */
+
+const STAGES_C4 = [
+  {n:1, name:"THE BLUEPRINT",  sub:"What a financial plan is",
+   blurb:"The definition · the 3 questions · dynamic, custom-made, proactive · efficient vs effective"},
+  {n:2, name:"FIRST CONTACT",  sub:"Steps 1 and 2 — relationship and goals",
+   blurb:"Disclosure before billing · the 8 questions · the 6 rights · the 4 goal characteristics"},
+  {n:3, name:"THE PROFILE",    sub:"Steps 2 and 3 — data and analysis",
+   blurb:"The financial profile · the 8 items · implicit data · the 10 areas · the 6 duties"},
+  {n:4, name:"THE HANDOVER",   sub:"Steps 4, 5 and 6 — recommend, execute, review",
+   blurb:"The 8 guidelines · who decides · implementation · the 6 review roles"}
+];
+
+const BANK_C4 = [
+/* ============ STAGE 1 — WHAT A FINANCIAL PLAN IS ============ */
+{t:"mc",s:1,d:1,tag:"FP-DEF",q:"<b>FINANCIAL PLANNING</b> is defined as…",
+ c:["The ONGOING PROCESS of outlining the client's financial objectives and establishing a strategy to reach them","The selection of suitable investment products","The preparation of an annual budget","The management of a client's assets on their behalf"],a:0,
+ why:"The process entails three things: <b>assessing</b> the client's current situation, <b>anticipating</b> future needs and life goals, and <b>devising plans</b> to achieve them."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"What does the financial planning process entail?",
+ c:["Assessing the current situation, anticipating future needs and life goals, and devising plans to achieve them","Selecting products, buying them, and monitoring returns","Budgeting, saving and investing","Interviewing, analysing and reporting"],a:0,
+ why:"Life goals can include buying a home, saving for a child's education, planning for retirement — or even taking that dream trip around the world."},
+{t:"mc",s:1,d:3,tag:"FP-DEF",q:"RRSPs, education funds and insurance programs are individual savings vehicles. What does the chapter say we need FIRST?",
+ c:["To design and then follow a COMPREHENSIVE financial plan encompassing all aspects of our life","To maximize contributions to each one","To rank them by expected return","To consult a specialist for each"],a:0,
+ why:"A single RRSP is one tool; a financial plan is the blueprint deciding which tools you use and why — with a view to securing a safe financial future in an otherwise uncertain world."},
+{t:"mc",s:1,d:3,tag:"FP-DEF",q:"Financial planning provides direction and meaning to financial decisions. What is the chain of benefit?",
+ c:["The client understands how each decision affects other areas, considers short- and long-term effects, and so adapts more easily to unanticipated change","The client delegates decisions to the planner","The client's returns improve","The client pays lower fees"],a:0,
+ why:"Consequently the client feels <b>more secure</b> that, in the end, the goals will still be on track."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"What are the THREE questions a financial plan answers?",
+ c:["Where are you today? Where would you like to be in the future? How do you get there?","What do you own? What do you owe? What do you earn?","What is your risk tolerance, time horizon and tax bracket?","What went wrong? What can be fixed? What will it cost?"],a:0,
+ why:"They map onto the plan's three functions: <b>assessing your current position</b>, <b>defining your objectives and goals</b>, and <b>generating suitable strategies</b>."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"\"Where would you like to be in the future?\" corresponds to which function of a financial plan?",
+ c:["Defining your financial objectives and goals","Assessing your current position","Generating suitable strategies","Reviewing progress"],a:0,
+ why:"\"Where are you today?\" is assessing your current position; \"How do you get there?\" is generating suitable strategies."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"A SOUND financial plan offers each individual…",
+ c:["The most suitable and comprehensive strategies that take into account their unique circumstances","The highest available returns","The lowest-cost products","A standard template adapted for age"],a:0,
+ why:"A financial plan is the <b>vehicle</b> for assessing the current position, defining objectives, and generating strategies to achieve them."},
+{t:"mc",s:1,d:1,tag:"FP-CHAR",q:"What are the three characteristics of a sound financial plan?",
+ c:["DYNAMIC, CUSTOM-MADE and PROACTIVE","Comprehensive, written and reviewed","Efficient, effective and ethical","Measurable, prioritized and timed"],a:0,
+ why:"Memory hook: <b>D-C-P</b>."},
+{t:"mc",s:1,d:3,tag:"FP-CHAR",q:"A financial plan is a DYNAMIC process. It evolves with which TWO kinds of change?",
+ c:["Changes in the individual's LIFE, and changes in the ECONOMIC ENVIRONMENT","Changes in tax law and in products","Changes in income and in expenses","Changes in goals and in risk tolerance"],a:0,
+ why:"Life changes — a new addition to the family, premature retirement, prolonged illness — affect the <b>need for finances</b>. Economic changes — a drop in the mortgage rate, an increase in the interest rate — affect the <b>financial position</b>."},
+{t:"mc",s:1,d:2,tag:"FP-CHAR",q:"A new addition to the family, premature retirement or prolonged illness are examples of…",
+ c:["Changes in the individual's LIFE, which affect the need for finances","Changes in the economic environment","Reasons to abandon a plan","Contingencies a proactive plan prevents"],a:0,
+ why:"A drop in the mortgage rate or a rise in interest rates are the <b>economic environment</b> examples, and they affect the client's financial position."},
+{t:"mc",s:1,d:3,tag:"FP-CHAR",q:"Which sentence appears three separate times in the chapter?",
+ c:["While the PROCESS follows the same steps for all clients, the RESULT is a unique and distinct plan for each individual","The client makes the final decisions","Review the plan at least once a year","Goals should be specific and measurable"],a:0,
+ why:"Stated three times — which is the sign it gets tested. The process is standard; the plan is not."},
+{t:"mc",s:1,d:2,tag:"FP-CHAR",q:"The chapter contrasts a 30-year-old and a 50-year-old to illustrate which characteristic?",
+ c:["CUSTOM-MADE — each plan is exclusively designed for a particular individual","Dynamic","Proactive","Efficient"],a:0,
+ why:"The 30-year-old's primary objective may be <b>accumulation of wealth and capital appreciation</b>; the 50-year-old's may be planning for a <b>steady income stream upon retirement</b>."},
+{t:"mc",s:1,d:3,tag:"FP-CHAR",q:"A PROACTIVE plan does three things. Which is NOT one of them?",
+ c:["Guarantees the goals will be met","Takes contingencies into account","Anticipates possible changes in the economic environment","Adapts to these expected changes in a timely fashion"],a:0,
+ why:"Proactive rather than <b>reactive</b>. Clients should also be made aware of good financial planning habits such as budgeting, saving and investing."},
+{t:"mc",s:1,d:3,tag:"FP-STEPS",q:"Clients expect plans to be efficient AND effective. What is the difference?",
+ c:["EFFICIENT means cost-effective for the client; EFFECTIVE means it achieves the desired result","Efficient means fast; effective means thorough","Efficient means automated; effective means personalized","They mean the same thing"],a:0,
+ why:"A likely exam distinction — one is about cost, the other about outcome."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"In the opening scenario the client asks whether they will give up control over their assets. The planner answers…",
+ c:["\"You would still be in charge — you will still make all the decisions.\"","\"The planner assumes decision-making authority.\"","\"Control is shared equally.\"","\"It depends on the products chosen.\""],a:0,
+ why:"The chapter deliberately bookends on this: the planner <b>recommends</b>, the client <b>decides</b>."},
+{t:"mc",s:1,d:2,tag:"FP-DEF",q:"How does the planner describe the financial planning process in the opening scenario?",
+ c:["A MULTIPLE-STEP COMPREHENSIVE APPROACH that creates a plan especially designed for the client","A one-time assessment","A product selection service","An annual review cycle"],a:0,
+ why:"And: \"It is never too early to start planning.\""},
+{t:"mc",s:1,d:3,tag:"FP-STEPS",q:"What must the planner do AT THE VERY OUTSET of the plan?",
+ c:["Set a climate that is both PROFESSIONAL AND PERSONAL and that promotes dialogue with the client","Present a fee schedule","Collect all financial documents","Establish the client's risk tolerance"],a:0,
+ why:"The planner must at all times be aware of the need and importance of <b>communication and interpersonal skills</b> — which is where the earlier chapters feed into this one."},
+
+/* ============ STAGE 2 — STEP 1 AND GOALS ============ */
+{t:"order",s:2,d:3,tag:"FP-STEPS",q:"Put the SIX STEPS of the financial planning process in order:",
+ items:["Establishing and defining the client-planner relationship","Data collection or information acquisition","Data analysis, evaluation, and conclusion","Recommending strategies and alternatives","Implementation or execution","Periodic review or follow-up"],
+ why:"Relationship → data → analysis → recommendations → implementation → review."},
+{t:"mc",s:2,d:2,tag:"FP-STEPS",q:"What is STEP 3 of the financial planning process?",
+ c:["Data analysis, evaluation, and conclusion","Data collection","Recommending strategies","Implementation"],a:0,
+ why:"Step 1 relationship, Step 2 data collection, Step 3 analysis, Step 4 recommendations, Step 5 implementation, Step 6 periodic review."},
+{t:"mc",s:2,d:3,tag:"RELATIONSHIP",q:"In the spirit of FULL DISCLOSURE, what must the planner explain clearly and unambiguously?",
+ c:["How he or she will be paid, and BY WHOM","The expected rate of return","The firm's market share","The tax treatment of each product"],a:0,
+ why:"The planner should also clearly explain or document the services to be provided and define the <b>responsibilities of each party</b>."},
+{t:"mc",s:2,d:3,tag:"RELATIONSHIP",q:"What must the client and planner agree on BEFORE any remunerable activity takes place?",
+ c:["How long the professional relationship should last, and how decisions will be made","The target rate of return","The product list","The review schedule"],a:0,
+ why:"Settle the money question, the duration and the decision-making rules <b>before</b> any billable work begins."},
+{t:"mc",s:2,d:2,tag:"RELATIONSHIP",q:"Which is one of the eight most frequently-asked consumer questions at Step 1?",
+ c:["Have there ever been any disciplinary actions or decisions against the planner?","What return will I earn?","Which bank do you use?","How many clients do you have?"],a:0,
+ why:"The eight: level of experience; the firm's overall services; the planner's approach; qualifications; disciplinary actions; who will be involved; expected fees; and <b>will the plan be in writing?</b>"},
+{t:"mc",s:2,d:2,tag:"RELATIONSHIP",q:"\"Will the financial plan be in writing?\" is…",
+ c:["One of the eight most frequently-asked consumer questions at Step 1","A requirement of securities law","A Step 4 guideline only","An optional extra"],a:0,
+ why:"The planner should be able to respond to all eight with <b>convincing answers</b>."},
+{t:"mc",s:2,d:2,tag:"RIGHTS",q:"What are the six client rights and planner responsibilities?",
+ c:["Integrity, Competence, Fairness, Confidentiality, Objectivity, Diligence","Honesty, Skill, Speed, Privacy, Loyalty, Care","Disclosure, Suitability, Fairness, Diligence, Care, Loyalty","Integrity, Independence, Fairness, Privacy, Prudence, Care"],a:0,
+ why:"Memory hook: <b>I-C-F-C-O-D</b>. Increasingly, the consuming public is taking these seriously."},
+{t:"mc",s:2,d:3,tag:"RIGHTS",q:"<b>OBJECTIVITY</b> means the planner should not…",
+ c:["Make recommendations beneficial to themselves or the firm when other products might serve the client better","Charge fees above the market rate","Recommend products outside their expertise","Delegate work to staff"],a:0,
+ why:"The advice given must be objective in nature — this is the same principle that later requires introducing products the planner's own firm may not offer."},
+{t:"mc",s:2,d:3,tag:"RIGHTS",q:"<b>DILIGENCE</b> has TWO components. What are they?",
+ c:["Reasonably investigating the products or services recommended, AND closely supervising staff working on the plan","Working quickly and thoroughly","Documenting and reviewing","Researching and disclosing"],a:0,
+ why:"Easy to lose the second half. <b>COMPETENCE</b> also has a specific rider: being up-to-date with all aspects of the current financial services environment."},
+{t:"mc",s:2,d:2,tag:"RIGHTS",q:"<b>COMPETENCE</b> explicitly includes…",
+ c:["Being up-to-date with all aspects of the current financial services environment","Holding a professional designation","Ten years of experience","Membership in an association"],a:0,
+ why:"The other rights: integrity, fairness (treated fairly and professionally), confidentiality (utmost confidentiality for information flowing from client to planner), objectivity and diligence."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"Step 2 has TWO parts, in what order?",
+ c:["FIRST identify the client's financial goals, THEN assess their present financial situation","First assess the present situation, then set goals","Both simultaneously","Goals only; the present situation belongs to Step 3"],a:0,
+ why:"Goals answer \"where do we want to be in the future?\"; the present situation answers \"where are we today?\" <b>Without financial goals and objectives, there is obviously no purpose in going further.</b>"},
+{t:"mc",s:2,d:2,tag:"GOALS",q:"What are the four desirable characteristics of financial goals?",
+ c:["Specific and measurable, prioritized, with a timeline, and at an acceptable risk level","Realistic, written, agreed and reviewed","Short-term, medium-term, long-term and contingent","Quantified, funded, insured and taxed"],a:0,
+ why:"A plan is a roadmap toward some desired result in the future — these four make the destination usable."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"Making goals MEASURABLE serves two functions. What are they?",
+ c:["It clearly defines the client's objectives, and it lets you measure and monitor the plan's performance","It reassures the client and satisfies regulators","It simplifies reporting and reduces fees","It sets the risk level and the time horizon"],a:0,
+ why:"\"Comfortable after retirement\" is useless — it should be quantified with the <b>dollar amount</b> the client expects to have on retirement."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"Why must goals be PRIORITIZED?",
+ c:["Since resources are typically limited, prioritizing helps MAXIMIZE THE CLIENT'S UTILITY","Because regulators require a ranking","To reduce the number of goals","To simplify the analysis"],a:0,
+ why:"Achieving the more important objectives benefits the client more than achieving the less important ones."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"A client has $10,000 spare: pay down the mortgage or boost the RRSP? What does the chapter say?",
+ c:["The answer DEPENDS ON THE PRIORITIES of the individual — there is no universally correct answer","Always pay down debt first","Always maximize the RRSP","Split it evenly"],a:0,
+ why:"If the client values being <b>debt-free</b>, paying down the mortgage may be more beneficial; if <b>building the retirement fund</b> is the higher priority, the RRSP wins. Values drive the ranking."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"A TIMELINE serves two purposes. What are they?",
+ c:["It defines the objectives more specifically, and provides periodic milestones that allow progress to be monitored","It sets the fee schedule and the review date","It determines risk tolerance and asset allocation","It satisfies legal and ethical requirements"],a:0,
+ why:"\"Establish an education fund\" is vague; \"$40,000 in the education fund in 20 years\" is a target; \"$2,000 each year for the next 20 years\" is an ongoing activity."},
+{t:"num",s:2,d:2,tag:"GOALS",q:"A client needs <b>$40,000</b> in an education fund in <b>20 years</b>. Broken into an annual activity, how much per year?",unit:"$",a:2000,tol:1,
+ why:"$40,000 ÷ 20 = <b>$2,000 each year for the next 20 years</b>, depending on the client's saving pattern. The vague version — \"establish an education fund\" — cannot be monitored."},
+{t:"mc",s:2,d:2,tag:"GOALS",q:"Why should clients start financial planning as soon as possible?",
+ c:["By saving and investing early they will be better prepared to meet financial emergencies that may arise","Because fees rise with age","Because products change","Because tax rules are grandfathered"],a:0,
+ why:"\"It is never too early to start planning.\""},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"Why does the client's ACCEPTABLE RISK LEVEL belong in the goal-setting stage?",
+ c:["Many alternative strategies could achieve the same goal — which one suits depends on the client's tolerance for risk","Because risk determines the fee","Because regulators require it before advice","Because it fixes the time horizon"],a:0,
+ why:"A risk-averse client's portfolio may be concentrated in <b>money market or fixed income</b> instruments; a client with high tolerance may choose <b>equity funds</b> to increase the return."},
+{t:"mc",s:2,d:3,tag:"GOALS",q:"\"Investing in bonds instead of equity might decrease the risk but increase the tax burden.\" What principle does this illustrate?",
+ c:["Financial goals and objectives are INTERRELATED — consider the effect of a decision on other objectives","Bonds are unsuitable for taxable accounts","Equity is always preferable","Tax planning outranks risk management"],a:0,
+ why:"A decision is never isolated: improving one dimension can worsen another."},
+{t:"mc",s:2,d:2,tag:"GOALS",q:"A family member falls ill. What may happen to the client's goals?",
+ c:["Setting up an EMERGENCY FUND may take priority over funding education","The plan must be rewritten from scratch","Goals stay fixed until the annual review","Risk tolerance automatically drops"],a:0,
+ why:"Goals set at the outset <b>may change over time</b> — a new addition to the family may mean another education fund."},
+
+/* ============ STAGE 3 — THE PROFILE AND THE ANALYSIS ============ */
+{t:"mc",s:3,d:1,tag:"PROFILE",q:"A <b>FINANCIAL PROFILE</b> is…",
+ c:["A comprehensive and personalized financial report based on the client's current financial position","A summary of the client's investment holdings","A risk tolerance questionnaire","A statement of net worth"],a:0,
+ why:"It contains <b>both qualitative and quantitative data</b>, and provides the building blocks required to design a suitable plan."},
+{t:"mc",s:3,d:2,tag:"PROFILE",q:"What are the three methods of collecting profile data?",
+ c:["Interviews, questionnaires, and examining the client's financial records and documents","Interviews, credit checks and referrals","Questionnaires, statements and tax filings","Meetings, surveys and third-party reports"],a:0,
+ why:"Most of the data is personal and sensitive, and clients may initially be hesitant to disclose it."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"How does the planner win the client's trust so sensitive data flows?",
+ c:["Communicate professionalism and client focus, be empathetic and sensitive to special needs, and reassure that information stays strictly confidential","Offer a fee discount","Share their own financial details","Provide references"],a:0,
+ why:"Once trust is established it is easier for the client to <b>volunteer</b> the information and for the planner to <b>solicit</b> it."},
+{t:"mc",s:3,d:2,tag:"PROFILE",q:"Which is one of the eight items of information to gather?",
+ c:["Unique needs, such as adult dependants or special medical needs","Employment history","Credit score","Family tree"],a:0,
+ why:"The eight: current sources and uses of funds; assets and liabilities; tax returns; investment records; risk management needs and tolerances; insurance policies; wills; and unique needs."},
+{t:"mc",s:3,d:2,tag:"PROFILE",q:"Which of these is NOT on the list of eight items to gather?",
+ c:["The client's credit rating","Tax returns","Wills","Insurance policies"],a:0,
+ why:"Also on the list: current sources and uses of funds, assets and liabilities, investment records, risk management needs and tolerances, and unique needs."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"A client's TAX LIABILITY can be computed directly from a current tax return. That is an example of…",
+ c:["EXPLICIT data","Implicit data","Qualitative data","Unique needs"],a:0,
+ why:"<b>IMPLICIT</b> data must be determined by the planner — cash flow statements are not typically available and usually need to be <b>compiled</b>, using appropriate valuation techniques."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"Cash flow statements are not typically available. Whose responsibility is it to produce them?",
+ c:["The financial planner's — using appropriate valuation techniques to determine the accurate value of the client's cash flows","The client's accountant's","The client's own","The institution's back office"],a:0,
+ why:"This is the defining example of <b>implicit</b> data, as against explicit data readable straight off a document."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"What is described as one of the critical QUALITATIVE pieces of information to gather?",
+ c:["The client's ATTITUDE TOWARDS RISK, ascertained through a detailed questionnaire AND interviews","The client's net worth","The client's marginal tax rate","The client's insurance coverage"],a:0,
+ why:"The chain: <b>risk tolerance → asset allocation → portfolio return</b>."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"Information exchange at Step 2 is a TWO-WAY process. What flows TO the client?",
+ c:["The planner's means of compensation, the fee structure, and the costs of implementing the plan","The analysis results","The recommended products","The review schedule"],a:0,
+ why:"While the planner collects qualitative and quantitative data from the client, important information is passed along <b>to</b> the client as well."},
+{t:"mc",s:3,d:3,tag:"PROFILE",q:"Confidential client information must be used…",
+ c:["SOLELY for the purpose of structuring and implementing the financial plan","For any purpose within the firm","For marketing the firm's other services","At the planner's discretion"],a:0,
+ why:"The three aspects to consider during information acquisition: <b>implicit data</b>, the <b>two-way process</b>, and <b>confidentiality</b>."},
+{t:"mc",s:3,d:2,tag:"ANALYSIS",q:"What is the purpose of Step 3?",
+ c:["To analyse the collected data in order to identify STRENGTHS AND WEAKNESSES in the client's financial profile","To choose products","To set goals","To document the relationship"],a:0,
+ why:"The central question of Step 3: the objectives have been specified and prioritized — <b>are these goals feasible?</b>"},
+{t:"mc",s:3,d:2,tag:"ANALYSIS",q:"Which is one of the ten core areas of analysis?",
+ c:["Need and adequacy of emergency fund","Trust management","Charitable giving","Long-term care provisions"],a:0,
+ why:"The ten: emergency fund, insurance, tax, debt management, investment management, cash management, education, risk analysis, retirement, estate. The last three options are the <b>three additional</b> areas."},
+{t:"mc",s:3,d:2,tag:"ANALYSIS",q:"Trust management, charitable giving and long-term care provisions are…",
+ c:["The three ADDITIONAL areas the analysis could also include","Three of the ten core areas","Step 4 recommendations","Specialist referrals only"],a:0,
+ why:"The ten core areas run from the emergency fund through to estate planning."},
+{t:"mc",s:3,d:3,tag:"ANALYSIS",q:"What is the two-part analytical move at Step 3?",
+ c:["Assess the client's current position, then compare it with projections for the future to test the feasibility of each goal","Identify products, then price them","Rank goals, then fund them","Interview, then document"],a:0,
+ why:"And the rule: the client's financial profile should always be examined <b>in relation to the stated objectives</b>."},
+{t:"mc",s:3,d:2,tag:"DUTIES",q:"Which is the FIRST of the six duties of the planner at Step 3?",
+ c:["Assess the FEASIBILITY of the client's stated financial goals — can all these objectives be achieved?","Identify existing gaps","Modify the objectives","Comply with legal and ethical requirements"],a:0,
+ why:"The six duties: assess feasibility; identify existing gaps; identify potential problems; modify objectives or priorities if required; evaluate economic conditions; and comply legally and ethically."},
+{t:"mc",s:3,d:3,tag:"DUTIES",q:"Too much or too little insurance, a high debt burden, and lack of portfolio diversification are examples of…",
+ c:["EXISTING GAPS between the current situation and the stated objectives (Duty 2)","Potential future problems (Duty 3)","Feasibility failures (Duty 1)","Economic conditions (Duty 5)"],a:0,
+ why:"Duty 2 is about <b>existing</b> gaps, present tense. Duty 3 is about <b>potential</b> problems, future tense."},
+{t:"mc",s:3,d:3,tag:"DUTIES",q:"Lack of retirement planning and the absence of an emergency fund are examples of…",
+ c:["POTENTIAL PROBLEMS that would adversely affect the plan in the future (Duty 3)","Existing gaps (Duty 2)","Legal and ethical failures (Duty 6)","Goals requiring modification (Duty 4)"],a:0,
+ why:"The distinction between Duty 2 and Duty 3 is easy to confuse — <b>existing</b> versus <b>potential</b>."},
+{t:"mc",s:3,d:3,tag:"DUTIES",q:"Duty 4 allows the planner to…",
+ c:["MODIFY the stated objectives or the PRIORITY of those objectives, if required","Override the client's decisions","Cancel unachievable goals","Change the fee arrangement"],a:0,
+ why:"The goals set in Step 2 are not sacred — the analysis may show they need revising or re-ranking."},
+{t:"mc",s:3,d:2,tag:"DUTIES",q:"Duty 5 requires the planner to evaluate and incorporate…",
+ c:["Current and forecasted ECONOMIC CONDITIONS","The client's family circumstances","The firm's product shelf","Competitors' offerings"],a:0,
+ why:"This is where the macroeconomics of the economics chapter feeds directly into the planning process."},
+{t:"mc",s:3,d:2,tag:"ANALYSIS",q:"What must clients be alerted to at the analysis stage?",
+ c:["That INFLATION and changes in the economic environment will affect their financial plan — provide realistic expectations","That returns are guaranteed within a range","That the plan is fixed once agreed","That fees may vary"],a:0,
+ why:"And the other rule at this step: identify problem areas <b>and opportunities</b> before recommending a plan."},
+
+/* ============ STAGE 4 — RECOMMEND, IMPLEMENT, REVIEW ============ */
+{t:"mc",s:4,d:2,tag:"RECOMMEND",q:"Who makes the RECOMMENDATIONS and who makes the FINAL DECISIONS?",
+ c:["The planner recommends; THE CLIENT decides","The planner does both","The client recommends; the planner decides","It depends on the mandate"],a:0,
+ why:"\"It is CRITICAL to note that while the recommendations are made by the financial planner, the final decisions regarding the plan must be made by the client.\" This is a <b>two-way process</b>, with communications going back and forth."},
+{t:"order",s:4,d:3,tag:"RECOMMEND",q:"Put the four-stage sequence of events at Step 4 in order:",
+ items:["The strategies are DISCUSSED by planner and client","The client VOICES questions or concerns","The planner MODIFIES and revises the plan accordingly","The new strategies are DISCUSSED AFRESH"],
+ why:"Recommendation is a loop, not a presentation."},
+{t:"mc",s:4,d:3,tag:"RECOMMEND",q:"\"Start saving periodically\" is criticized in the chapter. Why?",
+ c:["It is GENERAL and open to interpretation — a precise recommendation would be to put aside a fixed dollar amount each week","It is unrealistic","It ignores tax","It is not measurable in dollars"],a:0,
+ why:"Guideline 3: the recommended strategies should be <b>specific rather than general</b>."},
+{t:"mc",s:4,d:3,tag:"RECOMMEND",q:"Providing WRITTEN recommendations serves two functions. What are they?",
+ c:["It formalizes the action plan, and serves as a reference as the plan is executed","It satisfies regulators and protects the planner","It records fees and timelines","It simplifies the annual review"],a:0,
+ why:"Guideline 4 of the eight for recommending strategies."},
+{t:"mc",s:4,d:2,tag:"RECOMMEND",q:"On communicating the plan, what should the planner do after presenting it?",
+ c:["SOLICIT FEEDBACK and verify the client's understanding of the recommendations","Ask for a signature","Move to implementation","Schedule the annual review"],a:0,
+ why:"Guideline 1: the plan should be communicated in a clear, concise and easy-to-understand manner, conveying the value of the plan <b>in a precise form, without loss of content</b>."},
+{t:"mc",s:4,d:2,tag:"RECOMMEND",q:"What disclosure standard applies when presenting recommendations?",
+ c:["FULL, TRUE AND PLAIN disclosure of all relevant information, per ethical and legal requirements","Disclosure of material risks only","Disclosure on request","Disclosure of fees only"],a:0,
+ why:"Guideline 2 of the eight."},
+{t:"mc",s:4,d:2,tag:"RECOMMEND",q:"Which other specialists may the planner choose to involve?",
+ c:["Lawyers, accountants and tax consultants","Only colleagues within the firm","Regulators","Other clients"],a:0,
+ why:"Guideline 6 — to address specific financial concerns the client may have."},
+{t:"mc",s:4,d:3,tag:"RECOMMEND",q:"On fees at Step 4, what is RECOMMENDED?",
+ c:["That the planner offer the client a FEE SCHEDULE","That fees be waived for the first year","That fees be deducted from returns","That fees be discussed only if raised"],a:0,
+ why:"Guideline 7: the planner must clearly state the fees to be charged. Guideline 8: outline the level of service by specifying the <b>frequency of reports and reviews</b> and discussing their own availability."},
+{t:"mc",s:4,d:3,tag:"RECOMMEND",q:"The financial plan should be tailored to meet the client's objectives…",
+ c:["WITHOUT compelling the client to buy any particular investment product","Using only the firm's own products","With the lowest-cost products available","Within a fixed product allocation"],a:0,
+ why:"And a plan should provide projections and recommendations that keep in mind the client's <b>goals, values and risk tolerance</b>."},
+{t:"mc",s:4,d:2,tag:"IMPLEMENT",q:"At Step 5, what are the planner's two options?",
+ c:["Help the client execute the strategies, or refer the client to other professionals","Execute on the client's behalf, or wait","Implement fully, or cancel the plan","Delegate to staff, or outsource"],a:0,
+ why:"Other professionals include lawyers, stockbrokers, tax advisers and insurance representatives. Implementation depends on the <b>client's level of involvement</b>."},
+{t:"mc",s:4,d:3,tag:"IMPLEMENT",q:"What serves as the guideline for sequencing implementation?",
+ c:["The TIME FRAMES outlined with the objectives back in Step 2","The client's cash flow","The firm's product calendar","The tax year"],a:0,
+ why:"IMMEDIATE measures: applying for insurance, paying down debt. LONGER-TERM measures: periodic investments, RRSP deposits. The goal-setting work pays off here."},
+{t:"mc",s:4,d:2,tag:"IMPLEMENT",q:"Which are given as IMMEDIATE implementation measures?",
+ c:["Applying for insurance and paying down debt","Periodic investments and RRSP deposits","Estate planning and will drafting","Portfolio rebalancing and tax filing"],a:0,
+ why:"Periodic investments and RRSP deposits are the <b>longer-term</b> measures."},
+{t:"mc",s:4,d:3,tag:"REVIEW",q:"Why is a periodic review essential?",
+ c:["An individual's circumstances change over a lifetime and economic conditions change year to year — both shift the client's priorities","Because products expire","Because regulators require it","Because fees are charged annually"],a:0,
+ why:"This is the <b>DYNAMIC</b> characteristic from Section 1 put into operation."},
+{t:"num",s:4,d:2,tag:"REVIEW",q:"How often, at minimum, should the financial plan be reviewed? Answer in <b>years</b>.",unit:"yrs",a:1,tol:0.1,
+ why:"<b>At least once a year</b> — the only hard frequency number in the chapter. It keeps the plan up to date with changes in tax laws and income tax regulations."},
+{t:"mc",s:4,d:3,tag:"REVIEW",q:"Monitoring progress on periodic deposits involves TWO checks. What are they?",
+ c:["Whether the deposits are being made regularly, AND whether making them is putting financial strain on the client","Whether returns meet the target, and whether fees are competitive","Whether the fund is suitable, and whether it is diversified","Whether the client understands, and whether records are complete"],a:0,
+ why:"Role 1 of the six review roles. Easy to remember only the first half."},
+{t:"mc",s:4,d:2,tag:"REVIEW",q:"Which is one of the six roles of the planner during reviews?",
+ c:["Adapt the recommendations to changes in the ECONOMIC ENVIRONMENT — for example recommending refinancing if interest rates have fallen","Reprice the fee schedule","Re-run the risk questionnaire annually","Rewrite the plan from scratch"],a:0,
+ why:"The six: monitor progress; adjust to changes in the client's objectives, lifestyle and temperament; adapt to the economy; update on tax legislation; introduce new products; and apprise the client of emerging opportunities."},
+{t:"mc",s:4,d:3,tag:"REVIEW",q:"A client now foresees needing accessible funds next year and prioritizes an emergency fund. Which review role covers this?",
+ c:["Adjusting the plan to changes in the client's financial objectives, lifestyle and temperament","Adapting to the economic environment","Updating on tax legislation","Introducing new investment products"],a:0,
+ why:"The planner should check whether maintaining the investment fund is <b>still a priority</b>."},
+{t:"mc",s:4,d:3,tag:"REVIEW",q:"When introducing new investment products at review, what does the chapter insist on?",
+ c:["The products may not all be offered by the planner's firm — the planner must act in the client's best interest and keep recommendations OBJECTIVE","Only the firm's approved products may be shown","New products need not be raised until requested","Products must be ranked by cost"],a:0,
+ why:"Objectivity outranks the employer's shelf — the same principle as acknowledging that the perfect product may not be offered by your own institution."},
+{t:"mc",s:4,d:2,tag:"REVIEW",q:"Which review role covers changes in TAX LEGISLATION?",
+ c:["Update the client on the changes and evaluate their impact on the financial plan","Adapt to the economic environment","Monitor progress toward goals","Apprise of emerging opportunities"],a:0,
+ why:"Reviewing at least annually is what keeps the plan current with tax laws and income tax regulations."},
+{t:"mc",s:4,d:3,tag:"REVIEW",q:"The chapter deliberately closes on which two ideas?",
+ c:["The CLIENT makes the final decisions, and the plan is DYNAMIC — it evolves with the client's life and the economic environment","Plans must be written and reviewed","Fees must be disclosed and objectives measurable","Planning should start early and continue for life"],a:0,
+ why:"The same two ideas the chapter opened with, in the scenario about giving up control."},
+{t:"mc",s:4,d:2,tag:"REVIEW",q:"Which statement matches the book's own summary?",
+ c:["The plan must be reviewed periodically and adapted to changes in the client's financial profile AND the economic environment","The plan is fixed once the client signs","Reviews are optional if goals are long-term","Reviews are the client's responsibility"],a:0,
+ why:"Also from that summary: recommendations should be <b>specific</b> and chosen after <b>all alternatives have been evaluated</b>."}
+];
+
+/* ---------- CHAPTER 4 BOSSES ---------- */
+const BOSSES_C4 = {
+1:{name:"THE BLUEPRINT",art:"WHERE ARE YOU? &gt; WHERE TO? &gt; HOW?",intro:"A client walks in wanting to plan for the future. Define what you are about to build.",
+   steps:[
+    {t:"mc",d:2,tag:"FP-DEF",q:"BOSS 1/5 — Define financial planning.",
+     c:["The ONGOING PROCESS of outlining the client's financial objectives and establishing a strategy to reach them","A one-time assessment of net worth","The selection and purchase of suitable products","The management of assets on a client's behalf"],a:0,
+     why:"Ongoing — which is why Step 6 exists at all."},
+    {t:"mc",d:2,tag:"FP-DEF",q:"BOSS 2/5 — The client asks whether they must give up control. Your answer?",
+     c:["\"You would still be in charge — you will still make all the decisions.\"","\"I would assume decision-making authority.\"","\"Control is shared.\"","\"Only for the investment portfolio.\""],a:0,
+     why:"The planner recommends; the client decides. The chapter opens AND closes on this."},
+    {t:"mc",d:2,tag:"FP-CHAR",q:"BOSS 3/5 — Name the three characteristics of a sound financial plan.",
+     c:["Dynamic, custom-made, proactive","Comprehensive, written, reviewed","Efficient, effective, ethical","Specific, measurable, timed"],a:0,
+     why:"D-C-P. Dynamic = evolves with life and the economy; custom-made = designed for this individual; proactive = anticipates and adapts rather than reacts."},
+    {t:"mc",d:3,tag:"FP-CHAR",q:"BOSS 4/5 — Two clients get the same six steps. What differs?",
+     c:["The PROCESS is the same for all clients, but the RESULT is a unique and distinct plan for each","Nothing — standardization is the point","The number of steps varies by client","Only the fee differs"],a:0,
+     why:"The chapter states this three separate times."},
+    {t:"mc",d:3,tag:"FP-STEPS",q:"BOSS 5/5 — FINISH IT. The client wants the plan EFFICIENT and EFFECTIVE. What are you promising?",
+     c:["Efficient = cost-effective for the client; effective = achieves the desired result","Efficient = fast; effective = thorough","Efficient = automated; effective = personal","Both mean value for money"],a:0,
+     why:"Two different tests: one on cost, one on outcome. Stage cleared."}
+   ]},
+2:{name:"THE FIRST MEETING",art:"[ DISCLOSE ] BEFORE [ BILL ]",intro:"Before a single billable hour, everything has to be on the table.",
+   steps:[
+    {t:"mc",d:3,tag:"RELATIONSHIP",q:"BOSS 1/5 — What must be settled BEFORE any remunerable activity takes place?",
+     c:["How you will be paid and by whom, how long the relationship should last, and how decisions will be made","The client's risk tolerance","The product selection","The review schedule"],a:0,
+     why:"Full disclosure, clearly and unambiguously, plus agreement on duration and decision-making."},
+    {t:"mc",d:2,tag:"RELATIONSHIP",q:"BOSS 2/5 — The client asks about disciplinary actions against you. What kind of question is that?",
+     c:["One of the eight most frequently-asked consumer questions at this step","An improper question","A regulatory requirement","A question for your firm, not you"],a:0,
+     why:"The planner should be able to respond to all eight with convincing answers — experience, firm services, approach, qualifications, discipline, who's involved, fees, and whether the plan will be in writing."},
+    {t:"mc",d:2,tag:"RIGHTS",q:"BOSS 3/5 — Name the six client rights and planner responsibilities.",
+     c:["Integrity, Competence, Fairness, Confidentiality, Objectivity, Diligence","Honesty, Skill, Care, Privacy, Loyalty, Prudence","Disclosure, Suitability, Diligence, Care, Fairness, Loyalty","Integrity, Independence, Privacy, Prudence, Fairness, Care"],a:0,
+     why:"I-C-F-C-O-D. Increasingly, the consuming public is taking these seriously."},
+    {t:"mc",d:3,tag:"RIGHTS",q:"BOSS 4/5 — Your firm's product would pay you more, but another product suits the client better. Which right is engaged?",
+     c:["OBJECTIVITY — do not recommend what benefits you or the firm when something else serves the client better","Competence","Fairness","Diligence"],a:0,
+     why:"The same principle reappears at Step 6, where you must introduce products your own firm may not even offer."},
+    {t:"mc",d:3,tag:"RIGHTS",q:"BOSS 5/5 — FINISH IT. What are the TWO components of DILIGENCE?",
+     c:["Reasonably investigating the products or services recommended, and closely supervising staff working on the plan","Working promptly and documenting fully","Researching and disclosing","Verifying and reviewing"],a:0,
+     why:"The supervision half is the one people forget. Boss down."}
+   ]},
+3:{name:"THE GOAL SETTER",art:"\"COMFORTABLE\"  =&gt;  $40,000 IN 20 YEARS",intro:"A client says they want to be comfortable. Turn that into something you can plan toward.",
+   steps:[
+    {t:"mc",d:3,tag:"GOALS",q:"BOSS 1/5 — Step 2 has two parts. Which comes FIRST, and why?",
+     c:["Identifying goals — without goals there is obviously no purpose in going further","Assessing the present situation, since it is factual","They happen together","Neither; Step 2 is data collection only"],a:0,
+     why:"Goals answer \"where do we want to be?\"; the present situation answers \"where are we today?\""},
+    {t:"mc",d:2,tag:"GOALS",q:"BOSS 2/5 — The client wants to be \"comfortable\" in retirement. What is wrong with that?",
+     c:["It is not specific or measurable — it should be quantified with the dollar amount expected on retirement","It is unrealistic","It is not prioritized","It lacks a risk level"],a:0,
+     why:"Measurable goals serve two functions: they define objectives explicitly, and they let you measure and monitor the plan's performance."},
+    {t:"mc",d:3,tag:"GOALS",q:"BOSS 3/5 — She also wants to fund a wedding, a cottage and her son's degree, but resources are limited. What now?",
+     c:["PRIORITIZE the goals in order of importance — since resources are limited, this maximizes the client's utility","Fund them proportionally","Defer all but the cheapest","Recommend she choose one"],a:0,
+     why:"Achieving the more important objectives benefits the client more than achieving the less important ones."},
+    {t:"num",d:2,tag:"GOALS",q:"BOSS 4/5 — She needs $40,000 for education in 20 years. As an annual saving activity, how much per year?",unit:"$",a:2000,tol:1,
+     why:"$2,000 each year for 20 years. A timeline defines the objective more specifically AND provides <b>periodic milestones</b> for monitoring progress."},
+    {t:"mc",d:3,tag:"GOALS",q:"BOSS 5/5 — FINISH IT. What is the fourth characteristic of a well-set goal?",
+     c:["An acceptable RISK LEVEL — since many strategies could reach the same goal, the right one depends on the client's tolerance","A written record","A named beneficiary","A tax treatment"],a:0,
+     why:"Risk tolerance drives asset allocation, which drives portfolio return. Boss down."}
+   ]},
+4:{name:"THE FULL FILE",art:"PROFILE =&gt; ANALYSIS =&gt; FEASIBLE?",intro:"FINAL BOSS. Build the profile, analyse it, and tell the client the truth about their goals.",
+   steps:[
+    {t:"mc",d:2,tag:"PROFILE",q:"BOSS 1/6 — What is a financial profile, and what does it contain?",
+     c:["A comprehensive, personalized report on the client's current position — containing BOTH qualitative and quantitative data","A quantitative statement of assets and liabilities","A risk questionnaire and tax return","A summary of investment holdings"],a:0,
+     why:"Collected by interviews, questionnaires, and examining the client's records and documents."},
+    {t:"mc",d:3,tag:"PROFILE",q:"BOSS 2/6 — The client is hesitant to hand over sensitive information. What do you do?",
+     c:["Communicate professionalism and client focus, be empathetic, and reassure them it stays strictly confidential","Request the documents in writing","Explain the regulatory basis","Proceed with what they will give"],a:0,
+     why:"Once trust is established it is easier for the client to <b>volunteer</b> information and for you to <b>solicit</b> it."},
+    {t:"mc",d:3,tag:"PROFILE",q:"BOSS 3/6 — There is no cash flow statement in the file. Whose job is it?",
+     c:["Yours — cash flow statements usually need to be COMPILED using appropriate valuation techniques","The client's accountant's","The client's","It can be omitted"],a:0,
+     why:"That is <b>implicit</b> data. Explicit data — like the tax liability off a tax return — can be read straight from documents."},
+    {t:"mc",d:3,tag:"ANALYSIS",q:"BOSS 4/6 — The client is under-insured and carrying heavy debt today. Which duty does that fall under?",
+     c:["Duty 2 — identifying EXISTING gaps between the current situation and the stated objectives","Duty 3 — potential future problems","Duty 1 — feasibility","Duty 4 — modifying objectives"],a:0,
+     why:"No retirement planning and no emergency fund would be Duty 3 — <b>potential</b> problems. Present tense versus future tense."},
+    {t:"mc",d:3,tag:"DUTIES",q:"BOSS 5/6 — Your analysis shows two of her goals cannot both be met. What are you permitted to do?",
+     c:["Modify the stated objectives or their priority, if required","Choose which goal to drop","Proceed and let the shortfall emerge","Refer her to another planner"],a:0,
+     why:"Duty 4. The goals set in Step 2 are not sacred — but the client still makes the final decisions."},
+    {t:"mc",d:3,tag:"RECOMMEND",q:"BOSS 6/6 — FINISH IT. You present \"start saving periodically\". What is wrong, and what happens next?",
+     c:["It is general and open to interpretation — be specific, put it in writing, and then solicit feedback to verify understanding","Nothing — it is an appropriate strategy","It should be delivered verbally first","It needs a product recommendation attached"],a:0,
+     why:"A precise version: put aside a fixed dollar amount each week. Written recommendations formalize the action plan and serve as a reference during execution. YOU WIN."}
+   ]},
+5:{name:"THE FULL CYCLE",art:"1 &gt; 2 &gt; 3 &gt; 4 &gt; 5 &gt; 6 &gt; REPEAT",intro:"Everything, all six steps, all at once. No mercy.",
+   steps:[
+    {t:"order",d:3,tag:"FP-STEPS",q:"CYCLE 1/6 — Order the six steps of the financial planning process:",
+     items:["Establishing and defining the client-planner relationship","Data collection or information acquisition","Data analysis, evaluation, and conclusion","Recommending strategies and alternatives","Implementation or execution","Periodic review or follow-up"],
+     why:"Relationship, data, analysis, recommendations, implementation, review."},
+    {t:"mc",d:3,tag:"RIGHTS",q:"CYCLE 2/6 — At which step must compensation be disclosed?",
+     c:["At Step 1 before any remunerable activity — and again as part of the two-way exchange in Step 2","Step 4 only, with the fee schedule","At the first review","Whenever the client asks"],a:0,
+     why:"Step 4 adds the recommendation that you offer a <b>fee schedule</b>."},
+    {t:"mc",d:3,tag:"PROFILE",q:"CYCLE 3/6 — What is the chain that starts with the client's attitude toward risk?",
+     c:["Risk tolerance → asset allocation → portfolio return","Risk tolerance → product selection → fees","Risk tolerance → time horizon → goals","Risk tolerance → insurance → estate plan"],a:0,
+     why:"It is a <b>qualitative</b> input, gathered through a detailed questionnaire AND interviews."},
+    {t:"mc",d:3,tag:"IMPLEMENT",q:"CYCLE 4/6 — What sequences the implementation work at Step 5?",
+     c:["The TIME FRAMES set with the objectives back in Step 2","The client's cash flow","The order of the analysis areas","The planner's availability"],a:0,
+     why:"Immediate: applying for insurance, paying down debt. Longer-term: periodic investments, RRSP deposits."},
+    {t:"mc",d:3,tag:"REVIEW",q:"CYCLE 5/6 — A better product exists but your firm does not sell it. What do you do at review?",
+     c:["Introduce it anyway — the planner must act in the client's best interest and keep recommendations objective","Mention only the firm's alternatives","Wait until the client asks","Refer the client away entirely"],a:0,
+     why:"Objectivity outranks the employer's shelf."},
+    {t:"num",d:2,tag:"REVIEW",q:"CYCLE 6/6 — FINISH IT. Minimum review frequency, in years?",unit:"yrs",a:1,tol:0.1,
+     why:"At least once a year — keeping the plan current with changes in tax laws and income tax regulations. And through it all: the planner recommends, <b>the client decides</b>. CYCLE CLEARED."}
+   ]}
+};
+
+const CRAM_C4 = `
+<h3>THE DEFINITIONS TO KNOW VERBATIM</h3>
+<table>
+<tr><td>Financial planning</td><td class="f">the ONGOING PROCESS of outlining the client's financial objectives and establishing a strategy to reach them</td></tr>
+<tr><td>A financial plan</td><td class="f">the VEHICLE for (1) assessing your current position, (2) defining your objectives and goals, (3) generating suitable strategies</td></tr>
+<tr><td>A financial profile</td><td class="f">a comprehensive and personalized financial report based on the client's current position — BOTH qualitative and quantitative data</td></tr>
+<tr><td>Efficient / Effective</td><td class="f">cost-effective for the client / achieves the desired result</td></tr>
+</table>
+
+<h3>THE NUMBERED LISTS</h3>
+<table>
+<tr><td>3 questions a plan answers</td><td class="f">Where are you today? · Where would you like to be? · How do you get there?</td></tr>
+<tr><td>3 characteristics of a sound plan</td><td class="f">DYNAMIC · CUSTOM-MADE · PROACTIVE</td></tr>
+<tr><td>6 steps in the process</td><td class="f">Relationship · Data collection · Analysis · Recommendations · Implementation · Review</td></tr>
+<tr><td>8 common consumer questions (Step 1)</td><td class="f">experience · firm's services · approach · qualifications · disciplinary actions · who's involved · fees · in writing?</td></tr>
+<tr><td>6 client rights / planner responsibilities</td><td class="f">Integrity · Competence · Fairness · Confidentiality · Objectivity · Diligence</td></tr>
+<tr><td>4 characteristics of goals</td><td class="f">Specific &amp; measurable · Prioritized · Timeline · Acceptable risk level</td></tr>
+<tr><td>8 items of information to gather</td><td class="f">sources/uses of funds · assets &amp; liabilities · tax returns · investment records · risk management needs &amp; tolerances · insurance policies · wills · unique needs</td></tr>
+<tr><td>3 aspects to consider in Step 2</td><td class="f">Implicit data · 2-way process · Confidentiality</td></tr>
+<tr><td>10 core areas of analysis</td><td class="f">emergency fund · insurance · tax · debt · investment · cash · education · risk · retirement · estate</td></tr>
+<tr><td>3 additional areas</td><td class="f">trust management · charitable giving · long-term care provisions</td></tr>
+<tr><td>6 duties of the planner (Step 3)</td><td class="f">assess feasibility · existing gaps · potential problems · modify objectives/priorities · evaluate economic conditions · legal &amp; ethical compliance</td></tr>
+<tr><td>8 guidelines for recommendations</td><td class="f">clear &amp; concise · full/true/plain disclosure · specific not general · written · evaluate alternatives · involve specialists · state fees · outline service level</td></tr>
+<tr><td>4-stage sequence in Step 4</td><td class="f">discuss → client voices concerns → planner modifies → discuss afresh</td></tr>
+<tr><td>6 roles during review (Step 6)</td><td class="f">monitor progress · adjust to client changes · adapt to the economy · update on tax legislation · introduce new products · apprise of opportunities</td></tr>
+</table>
+
+<h3>HIGH-YIELD TRAPS</h3>
+<div class="trap">The <b>PROCESS</b> is the same for everyone; the <b>PLAN</b> is unique to each individual. Stated three separate times.</div>
+<div class="trap">The planner <b>RECOMMENDS</b>; the client <b>DECIDES</b>. Bookended in the opening and closing scenarios.</div>
+<div class="trap">Compensation must be disclosed <b>BEFORE any remunerable activity takes place</b> — and again in the two-way exchange at Step 2.</div>
+<div class="trap">Step 2 has TWO parts — goals FIRST, then the present situation. Without goals "there is obviously no purpose in going further".</div>
+<div class="trap"><b>EXPLICIT</b> data is readable from documents (tax liability from a tax return). <b>IMPLICIT</b> data must be constructed — cash flow statements need compiling.</div>
+<div class="trap">Risk tolerance is <b>qualitative</b>, gathered by detailed questionnaire AND interviews. The chain: risk tolerance &rarr; asset allocation &rarr; portfolio return.</div>
+<div class="trap">Duty 2 = <b>EXISTING</b> gaps. Duty 3 = <b>POTENTIAL</b> future problems.</div>
+<div class="trap">Written recommendations serve TWO functions: formalize the action plan · serve as a reference during execution.</div>
+<div class="trap">Measurable goals serve TWO functions: define objectives explicitly · measure and monitor performance.</div>
+<div class="trap">A timeline serves TWO functions: define objectives more specifically · provide periodic milestones.</div>
+<div class="trap">Diligence has TWO components: investigate products · supervise staff.</div>
+<div class="trap">Review <b>AT LEAST ONCE A YEAR</b> — the only hard frequency in the chapter.</div>
+<div class="trap">Introduce products even if your firm does not offer them — objectivity outranks the employer's shelf.</div>
+<div class="trap">Goals are <b>INTERRELATED</b>: bonds instead of equity lowers risk but raises the tax burden.</div>
+
+<h3>THE SENTENCE TO CARRY INTO THE EXAM</h3>
+<p style="color:var(--yellow);font-size:21px">"While the process of financial planning follows the same steps for all clients, the result is a unique and distinct plan for each individual."<br>
+<span class="muted">&rarr; And whatever the plan says, the final decisions are made by the client.</span></p>
+`;
+
 /* ---------- CHAPTER REGISTRY ---------- */
 const CHAPTERS = {
   comm:{ id:"comm", code:"CH.1", name:"THE HUMAN INTERFACE",
@@ -3049,6 +3459,11 @@ const CHAPTERS = {
          blurb:"Demand &amp; supply · equilibrium · GDP · business cycles · monetary &amp; fiscal policy",
          stages:STAGES_C3, bank:BANK_C3, bosses:BOSSES_C3, cram:CRAM_C3,
          gauntlet:6, calc:false },
+  plan:{ id:"plan", code:"CH.4", name:"THE PLANNER'S PATH",
+         sub:"Chapter 4 — The Financial Planning Process",
+         blurb:"What a sound plan is · the 6 steps · goals, profile, analysis, recommendations, review",
+         stages:STAGES_C4, bank:BANK_C4, bosses:BOSSES_C4, cram:CRAM_C4,
+         gauntlet:5, calc:false },
   tvm:{  id:"tvm", code:"M2 CH.1", name:"TIME VALUE RAIDERS",
          sub:"Module 2, Chapter 1 — Time Value of Money",
          blurb:"Single sums · annuities · effective rates · loans, bonds &amp; retirement",
@@ -3062,7 +3477,7 @@ const CHAPTERS = {
 const $ = id => document.getElementById(id);
 const SAVE_KEY = "tvmRaiders_v2";
 
-let save = {unlocked:{tvm:1, comm:1, client:1, econ:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
+let save = {unlocked:{tvm:1, comm:1, client:1, econ:1, plan:1}, best:{}, hi:[], mastery:{}, snd:true, crt:true, lastCh:"comm"};
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw){ save = Object.assign(save, JSON.parse(raw)); }
@@ -3070,7 +3485,7 @@ try{
     const old = localStorage.getItem("tvmRaiders_v1");   // migrate a single-chapter save
     if(old){
       const o = JSON.parse(old);
-      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1, econ: 1};
+      save.unlocked = {tvm: o.unlocked || 1, comm: 1, client: 1, econ: 1, plan: 1};
       save.best = {}; Object.keys(o.best||{}).forEach(k=>{ save.best["tvm:"+k] = o.best[k]; });
       save.hi = (o.hi||[]).map(h=>Object.assign({ch:"M2 CH.1"}, h));
       save.mastery = o.mastery || {};
@@ -3079,7 +3494,7 @@ try{
     }
   }
 }catch(e){}
-if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1, econ:1};
+if(typeof save.unlocked === "number") save.unlocked = {tvm:save.unlocked, comm:1, client:1, econ:1, plan:1};
 function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
 
 /* ---------- audio ---------- */
@@ -3119,7 +3534,7 @@ function setChapter(id){
 }
 const chUnlocked = () => (save.unlocked && save.unlocked[CH.id]) || 1;
 function setUnlocked(v){
-  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1, econ:1};
+  if(typeof save.unlocked !== "object" || save.unlocked === null) save.unlocked = {tvm:1, comm:1, client:1, econ:1, plan:1};
   save.unlocked[CH.id] = v;
 }
 
@@ -3205,7 +3620,7 @@ $("btnGauntlet").addEventListener("click",()=>{
 $("btnDrill").addEventListener("click",()=>{ sfx.coin(); startRun({mode:"drill"}); });
 $("btnWipe").addEventListener("click",()=>{
   if(confirm("Erase all progress, high scores and study data?")){
-    save = {unlocked:{tvm:1,comm:1,client:1,econ:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
+    save = {unlocked:{tvm:1,comm:1,client:1,econ:1,plan:1},best:{},hi:[],mastery:{},snd:save.snd,crt:save.crt,lastCh:CH.id};
     persist(); renderHof(); toast("MEMORY CLEARED");
   }
 });
