@@ -17,6 +17,58 @@ npm run dev      # build, then serve at http://localhost:4173
 Or open `index.html` directly — the site needs no server, though `product.html`
 reads a `?id=` query string so a server is more convenient.
 
+## FPF Arcade (`tvm-arcade.html`)
+
+A separate, self-contained page that lives in this repo: a 90s-arcade study game
+built from the FPF study notes. Seven chapters share one cabinet.
+
+Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
+
+**On a phone it installs as an app.** Served over https, open it in Safari and
+tap Share -> Add to Home Screen: `arcade.webmanifest` and the apple-touch-icon
+give it a real icon and a full-screen launch with no browser chrome, and `sw.js`
+caches the page so it plays with no signal at all. Layout, touch targets and the
+safe-area insets are tuned for a modern iPhone; the calculator becomes a bottom
+sheet that leaves the question readable above it. Opened straight off disk the
+service worker is skipped and everything else still works.
+
+`node scripts/build-arcade-artifact.js` emits an Artifact-hosted copy (the same
+game with our `<head>` wrapper stripped).
+
+| Chapter | Stages | Covers |
+|---|---|---|
+| **CH.1 — The Human Interface** | 4 + gauntlet | the communication process, non-verbal communication, perceptions, effective communication skills |
+| **CH.2 — Know Your Client** | 6 + gauntlet | personal and socio-cultural variables, the decision-making process, the elderly, grieving and incapacitated client |
+| **CH.3 — Market Forces** | 5 + gauntlet | demand and supply, equilibrium, market failure, GDP, business cycles, inflation, the labour market, monetary and fiscal policy |
+| **CH.4 — The Planner's Path** | 4 + gauntlet | what a sound plan is, the six steps, goal-setting, the financial profile, analysis, recommendations, implementation and review |
+| **M2 CH.1 — Time Value Raiders** | 5 + gauntlet | single sums, annuities, effective rates, loans, mortgages, bonds, retirement |
+| **M2 CH.2 — The Paper Trail** | 5 + gauntlet | the net worth statement, registered plans and the pension adjustment, cash flow, projections, and the six financial ratios |
+| **M3 CH.1 — The Debt Engine** | 8 + gauntlet | consumer credit, GDS and TDS, the five Cs, bankruptcy, borrowing to invest, automobile financing, mortgages, home affordability, RESPs and education funding |
+
+- **1,193 drills and 43 bosses.** Each boss is a full case from the notes, broken
+  into its steps: Ms. Varner's mutual fund, the Tuccis, Moore vs Petford,
+  Robert Carson's two meetings, Mrs. Carpenter's grief, Mrs. Stone's Alzheimer's,
+  the orange market's equilibrium, the policy desk, the goal setter, the full
+  file, the pension adjuster, the Belangers' balance sheet and ratios, Sharon's
+  college fund, Bill Brown's mortgage, Walter's retirement, the Lamberts' debt
+  service ratios, Ken Swerski's leverage, Jacques Tellier's lease, Ismail
+  Habibi's mortgage, the MacDonalds' house hunt, the DeJaeger children's
+  education fund, and seven gauntlets.
+- **Multiple-choice, true/false, numeric-entry and put-the-steps-in-order drills.**
+  Every numeric answer key is the notes' own figure.
+- **Miss a question and the game teaches the rule**, then re-queues that question
+  at the end of the wave, so you don't leave a stage still getting it wrong.
+- **An onboard EL-738-style TVM calculator** (n, i, PV, PMT, FV, COMP, BGN/END,
+  →EFF, →APR, AMRT) that reproduces the textbook keystroke examples exactly —
+  including Bill Brown's $509.67 payment and the $43,018.13 / $87.24 / $422.43
+  amortization split. It appears only in the chapter that needs it.
+- **Free play, drill-weak-spots, a cram sheet and per-topic mastery tracking**,
+  all scoped per chapter. Scores and progress are stored in `localStorage`, on
+  that browser only.
+
+Like the storefront it makes **no third-party requests** — the two arcade fonts
+(Press Start 2P and VT323, both SIL Open Font License 1.1) are embedded in the file.
+
 ## Layout
 
 ```

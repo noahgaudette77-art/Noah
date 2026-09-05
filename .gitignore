@@ -1,3 +1,7 @@
 node_modules/
 .DS_Store
 *.log
+ch-*.png
+iphone-*.png
+artifact-*.png
+tvm-arcade.artifact.html
