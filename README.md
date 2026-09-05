@@ -24,6 +24,17 @@ built from the FPF study notes. Seven chapters share one cabinet.
 
 Open `tvm-arcade.html` directly, or visit `/tvm-arcade.html` on the deployed site.
 
+**On a phone it installs as an app.** Served over https, open it in Safari and
+tap Share -> Add to Home Screen: `arcade.webmanifest` and the apple-touch-icon
+give it a real icon and a full-screen launch with no browser chrome, and `sw.js`
+caches the page so it plays with no signal at all. Layout, touch targets and the
+safe-area insets are tuned for a modern iPhone; the calculator becomes a bottom
+sheet that leaves the question readable above it. Opened straight off disk the
+service worker is skipped and everything else still works.
+
+`node scripts/build-arcade-artifact.js` emits an Artifact-hosted copy (the same
+game with our `<head>` wrapper stripped).
+
 | Chapter | Stages | Covers |
 |---|---|---|
 | **CH.1 — The Human Interface** | 4 + gauntlet | the communication process, non-verbal communication, perceptions, effective communication skills |

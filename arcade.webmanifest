@@ -1,0 +1,17 @@
+{
+  "name": "FPF Arcade",
+  "short_name": "FPF Arcade",
+  "description": "A 90s-arcade study game built from seven chapters of FPF study notes.",
+  "start_url": "tvm-arcade.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04000d",
+  "theme_color": "#04000d",
+  "icons": [
+    { "src": "assets/arcade-icon-192.png",  "sizes": "192x192",   "type": "image/png" },
+    { "src": "assets/arcade-icon-512.png",  "sizes": "512x512",   "type": "image/png" },
+    { "src": "assets/arcade-icon-512.png",  "sizes": "512x512",   "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/arcade-icon-1024.png", "sizes": "1024x1024", "type": "image/png" }
+  ]
+}

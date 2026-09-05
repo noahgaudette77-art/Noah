@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FPF ARCADE — Six FPF Chapters, One Cabinet</title>
-<meta name="description" content="A 90s arcade study game for six FPF chapters: communication, understanding the client, economics, the planning process, the time value of money, and personal financial statements.">
+<title>FPF ARCADE — Seven FPF Chapters, One Cabinet</title>
+<meta name="description" content="A 90s arcade study game for seven FPF chapters: communication, understanding the client, economics, the planning process, the time value of money, personal financial statements, and managing debt.">
+
+<!-- Installable as an app: on iPhone, Share -> Add to Home Screen. -->
+<link rel="manifest" href="arcade.webmanifest">
+<meta name="theme-color" content="#04000d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FPF Arcade">
+<link rel="apple-touch-icon" href="assets/arcade-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/arcade-icon-192.png">
 <style>
 /* Fonts embedded so the page makes no third-party requests, like the rest of this repo.
    "Press Start 2P" (c) CodeMan38 and "VT323" (c) Peter Hull — both SIL Open Font License 1.1
@@ -32,15 +42,23 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#04000d;color:#e9e2ff}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   font-family:var(--term);
   font-size:20px;
   min-height:100vh;
-  background:
+  min-height:100dvh;
+  background-color:#04000d;   /* explicit, so no host theme shows through */
+  background-image:
     radial-gradient(ellipse at 50% -10%, #2a0060 0%, #10002b 45%, #04000d 100%);
+  background-attachment:fixed;
   display:flex;flex-direction:column;align-items:center;
-  padding:14px 10px 40px;
+  /* env() keeps the cabinet clear of the Dynamic Island and the home indicator
+     when the game is installed to an iPhone home screen and runs full-screen. */
+  padding:calc(14px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right))
+          calc(40px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
   overflow-x:hidden;
+  overscroll-behavior-y:none;   /* no pull-to-refresh reloading a run mid-wave */
 }
 /* ---------- CRT overlay ---------- */
 #crt{position:fixed;inset:0;pointer-events:none;z-index:9999}
@@ -297,6 +315,67 @@ table.hof .st{color:var(--dim);font-size:9px;text-align:right}
   .screen{padding:12px;min-height:auto}
   .qtext{font-size:21px}
   #calcPanel{right:5px;left:5px;width:auto}
+}
+
+/* ---------- touch / installed-app behaviour ----------
+   Everything below is for phones and for the game running full-screen from an
+   iPhone home screen. It changes nothing on a desktop pointer. */
+
+/* Kill the 300ms double-tap delay, the grey tap flash, and long-press
+   text selection / callout on anything you tap to play. */
+.btn,.choice,.chip,.ck,.stage,.tab,.key,button{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn,.ck,.chip,.stage,.choice .key,.calchead{
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+
+/* On a touch screen :hover latches after a tap and leaves buttons stuck
+   looking focused, so give those devices a press state instead. */
+@media (hover:none){
+  .btn:hover{filter:none}
+  .stage:hover{transform:none;border-color:#52309a;box-shadow:none}
+  .choice:hover:not(:disabled){border-color:#52309a;background:#170338;transform:none}
+  .chip:hover{border-color:#52309a}
+  .ck:hover{border-color:#52309a;background:#1c0347}
+  .btn:active{filter:brightness(1.18);transform:translateY(3px);box-shadow:0 2px 0 #720633}
+  .choice:active:not(:disabled){border-color:var(--cyan);background:#1e0a4d}
+  .chip:active{border-color:var(--cyan)}
+  .ck:active{border-color:var(--cyan);background:#280a5e}
+  .stage:active:not(.locked){border-color:var(--cyan)}
+}
+
+/* Apple's 44pt minimum touch target, and room for the home indicator. */
+@media (max-width:600px){
+  .btn{padding:14px 16px;min-height:44px}
+  .choice{padding:14px 12px;min-height:48px}
+  .chip{padding:11px 16px;min-height:44px}
+  .ck{font-size:10px;padding:11px 2px;min-height:42px}
+  .numin{padding:14px;flex:1 1 auto;width:auto;min-width:0}
+  .numrow{flex-wrap:wrap;gap:8px}
+  #calcTab{right:calc(8px + env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom))}
+
+  /* The calculator is a bottom sheet on a phone. Keep it under half the screen
+     so the question it is being used on stays readable above it. */
+  #calcPanel{
+    bottom:calc(8px + env(safe-area-inset-bottom));
+    max-height:52vh;overflow:auto;padding:8px;
+  }
+  .calchead{font-size:8px;margin-bottom:6px}
+  .calcdisp{font-size:13px;min-height:34px;padding:7px}
+  .calcmode{font-size:7px;margin:4px 0}
+  .calcgrid{gap:4px;margin-top:4px}
+  .calcout{max-height:56px;font-size:15px;margin-top:6px}
+
+  /* ...and give the run room to scroll clear of the open sheet. */
+  body:has(#calcPanel.on) .screen{padding-bottom:56vh}
+}
+
+/* Installed to the home screen there is no browser chrome to scroll away,
+   so the cabinet can sit a little tighter to the top. */
+@media (display-mode:standalone){
+  body{padding-top:calc(6px + env(safe-area-inset-top))}
 }
 </style>
 </head>
@@ -6141,6 +6220,16 @@ setChapter(save.lastCh || "comm");
 renderTitle();
 calcRefresh();
 calcMsg("Enter a number then tap n / i / PV / PMT / FV to store it. Then COMP + the key you want.<br>Outflows negative (+/–). →EFF and →APR take the periods per year first, then the rate.");
+
+/* Register the offline worker so the game keeps working with no signal once it
+   has been added to a home screen. Service workers need http(s), so opening
+   this file straight off disk simply skips it - the game is self-contained
+   either way and never needs the network to play. */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
