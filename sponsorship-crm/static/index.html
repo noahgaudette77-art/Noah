@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sponsorship Ledger</title>
+<meta name="description" content="A private record of sponsorship contacts and outreach.">
+<meta name="theme-color" content="#16202c">
+<meta name="color-scheme" content="light">
+
+<!-- Add to Home Screen -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+<link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/icons/icon-192.png" sizes="192x192">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Loaded async so a slow font CDN never blocks the app from rendering. -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"></noscript>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="wordmark" href="#/" aria-label="Sponsorship Ledger — all contacts">
+      <span class="wordmark-mark" aria-hidden="true">SL</span>
+      <span class="wordmark-text">
+        <span class="wordmark-name">Sponsorship Ledger</span>
+        <span class="wordmark-sub">Outreach record</span>
+      </span>
+    </a>
+    <nav class="topbar-actions">
+      <a class="btn btn-ghost" href="/api/export.csv" download>Export CSV</a>
+      <button class="btn btn-ghost" type="button" data-action="sign-out">Sign out</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="shell" tabindex="-1">
+  <div id="view" class="view"></div>
+</main>
+
+<div id="overlay-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/app.js" defer></script>
+</body>
+</html>

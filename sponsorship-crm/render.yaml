@@ -1,0 +1,25 @@
+# Render Blueprint. Render only reads a render.yaml in the repository ROOT,
+# so copy this file there if you want to deploy this way — otherwise follow
+# the dashboard steps in README.md, which need no file at all.
+services:
+  - type: web
+    name: sponsorship-ledger
+    runtime: python
+    plan: starter            # a persistent disk requires a paid instance type
+    rootDir: sponsorship-crm
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60
+    healthCheckPath: /login
+    disk:
+      name: ledger-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: CRM_DB_PATH
+        value: /var/data/crm.db
+      - key: CRM_SECRET_KEY
+        generateValue: true    # Render generates and stores a random value
+      - key: CRM_PASSWORD
+        sync: false            # you type this in the dashboard; never commit it
+      - key: PYTHON_VERSION
+        value: "3.12.7"
