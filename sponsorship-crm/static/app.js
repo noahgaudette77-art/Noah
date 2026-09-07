@@ -3,6 +3,8 @@
   "use strict";
 
   var STATUSES = ["Prospect", "Contacted", "In Talks", "Committed", "Declined"];
+  var COMMISSION_RATE = 0.5;
+  var FOLLOWUP_DAYS = 10;
   var SORTS = [
     { value: "recent", label: "Recent activity" },
     { value: "name", label: "Name (A–Z)" },
@@ -20,6 +22,8 @@
     q: load("q", ""),
     status: load("status", ""),
     sort: load("sort", "recent"),
+    view: load("view", "all"),      // "all" | "followup"
+    summary: null,
     historyOrder: load("historyOrder", "newest"),
     detail: null,        // { contact, interactions }
     lastFocus: null
@@ -76,6 +80,24 @@
       sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
   }
 
+  function formatMoney(value) {
+    var amount = Number(value || 0);
+    return amount.toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function commissionOf(value) {
+    return Number(value || 0) * COMMISSION_RATE;
+  }
+
+  function plural(count, word) {
+    return count + " " + word + (count === 1 ? "" : "s");
+  }
+
   function toast(message) {
     toastEl.textContent = message;
     toastEl.classList.add("is-visible");
@@ -120,6 +142,8 @@
         '</div>' +
         '<button class="btn btn-primary" type="button" data-action="new-contact">Add contact</button>' +
       '</div>' +
+      '<div id="summary-slot"></div>' +
+      '<div class="views" id="view-tabs"></div>' +
       '<div class="toolbar">' +
         '<div class="search-wrap">' +
           '<label class="visually-hidden" for="search">Search by name or organisation</label>' +
@@ -137,7 +161,7 @@
             }).join("") +
           "</select>" +
         "</div>" +
-        '<div>' +
+        '<div id="sort-field">' +
           '<label class="visually-hidden" for="sort-by">Sort contacts</label>' +
           '<select class="select" id="sort-by">' +
             SORTS.map(function (s) {
@@ -159,7 +183,13 @@
         contacts.map(function (c) {
           var count = c.interaction_count === 1 ? "1 entry" : c.interaction_count + " entries";
           return '<tr data-id="' + c.id + '">' +
-            '<td class="cell-name"><a href="#/c/' + c.id + '">' + esc(c.name) + "</a></td>" +
+            '<td class="cell-name"><a href="#/c/' + c.id + '">' + esc(c.name) + "</a>" +
+              (state.view === "followup"
+                ? '<span class="days-chip" title="' +
+                  (c.last_interaction ? "Days since the last logged interaction"
+                                      : "Never logged against — days since it was added") + '">' +
+                  esc(plural(c.days_since, "day")) + "</span>"
+                : "") + "</td>" +
             '<td class="cell-company">' + esc(c.company) + "</td>" +
             '<td class="cell-status">' + badge(c.status) + "</td>" +
             '<td class="cell-last">' + esc(formatRecency(c.last_interaction)) +
@@ -174,8 +204,47 @@
       "</tbody></table>";
   }
 
+  function summaryMarkup() {
+    var s = state.summary;
+    // Nothing has been committed yet, so a row of zeros would only be noise.
+    if (!s || !s.committed_count) return "";
+    return '<section class="summary" aria-label="Running totals">' +
+      '<div class="summary-figure">' +
+        '<span class="micro-label">Committed value</span>' +
+        '<p class="figure">' + esc(formatMoney(s.committed_value)) + "</p>" +
+      "</div>" +
+      '<div class="summary-figure">' +
+        '<span class="micro-label">Commission at ' + Math.round(s.commission_rate * 100) + '%</span>' +
+        '<p class="figure figure-accent">' + esc(formatMoney(s.commission)) + "</p>" +
+      "</div>" +
+      '<p class="summary-note">Across ' + esc(plural(s.committed_count, "committed contact")) + "</p>" +
+      "</section>";
+  }
+
+  function tabsMarkup() {
+    var pending = state.summary ? state.summary.followup_count : 0;
+    return [
+      { view: "all", label: "All contacts" },
+      { view: "followup", label: "Needs follow-up", count: pending }
+    ].map(function (tab) {
+      var active = state.view === tab.view;
+      return '<button class="view-tab' + (active ? " is-active" : "") + '" type="button" role="tab" ' +
+        'aria-selected="' + active + '" data-action="set-view" data-view="' + tab.view + '">' +
+        esc(tab.label) +
+        (tab.count ? '<span class="tab-count">' + tab.count + "</span>" : "") +
+        "</button>";
+    }).join("");
+  }
+
   function emptyMarkup() {
     var filtered = state.q || state.status;
+    if (state.view === "followup" && !filtered) {
+      return '<div class="empty"><h2>Nothing has gone quiet</h2>' +
+        "<p>Every contact still in play has been logged against in the last " +
+        FOLLOWUP_DAYS + " days.</p>" +
+        '<button class="btn btn-secondary" type="button" data-action="set-view" data-view="all">' +
+        "All contacts</button></div>";
+    }
     if (filtered) {
       return '<div class="empty"><h2>No matches</h2>' +
         "<p>Nothing here matches that search or status filter.</p>" +
@@ -186,19 +255,35 @@
       '<button class="btn btn-primary" type="button" data-action="new-contact">Add contact</button></div>';
   }
 
+  function countLine() {
+    var shown = state.contacts.length;
+    var filtered = state.q || state.status;
+    if (state.view === "followup") {
+      return "<b>" + shown + "</b> quiet for more than " + FOLLOWUP_DAYS + " days" +
+        (filtered ? " (filtered)" : "");
+    }
+    return filtered
+      ? "Showing <b>" + shown + "</b> of " + plural(state.total, "contact")
+      : "<b>" + state.total + "</b>" + (state.total === 1 ? " contact" : " contacts") + " on record";
+  }
+
   function renderListBody() {
     var body = document.getElementById("list-body");
     if (!body) return;
     body.innerHTML = state.contacts.length ? rowsMarkup(state.contacts) : emptyMarkup();
 
+    var summarySlot = document.getElementById("summary-slot");
+    if (summarySlot) summarySlot.innerHTML = summaryMarkup();
+
+    var tabs = document.getElementById("view-tabs");
+    if (tabs) tabs.innerHTML = tabsMarkup();
+
+    // The follow-up view carries its own order, so the sort control steps aside.
+    var sortField = document.getElementById("sort-field");
+    if (sortField) sortField.hidden = state.view === "followup";
+
     var count = document.getElementById("count-line");
-    if (count) {
-      var shown = state.contacts.length;
-      var filtered = state.q || state.status;
-      count.innerHTML = filtered
-        ? "Showing <b>" + shown + "</b> of " + state.total + (state.total === 1 ? " contact" : " contacts")
-        : "<b>" + state.total + "</b>" + (state.total === 1 ? " contact" : " contacts") + " on record";
-    }
+    if (count) count.innerHTML = countLine();
   }
 
   function fetchContacts() {
@@ -206,22 +291,17 @@
     if (state.q) params.set("q", state.q);
     if (state.status) params.set("status", state.status);
     params.set("sort", state.sort);
+    if (state.view !== "all") params.set("view", state.view);
     return api("/api/contacts?" + params.toString()).then(function (data) {
       state.contacts = data.contacts;
-      if (!state.q && !state.status) state.total = data.contacts.length;
+      // The summary is always computed over the whole ledger, never the filter.
+      state.summary = data.summary;
+      state.total = data.summary.total;
       renderListBody();
     }).catch(function (err) {
       var body = document.getElementById("list-body");
       if (body) body.innerHTML = '<p class="loading">' + esc(err.message) + "</p>";
     });
-  }
-
-  function fetchTotal() {
-    if (!state.q && !state.status) return Promise.resolve();
-    return api("/api/contacts").then(function (data) {
-      state.total = data.contacts.length;
-      renderListBody();
-    }).catch(function () { /* count is cosmetic */ });
   }
 
   function renderList() {
@@ -231,7 +311,7 @@
       view.innerHTML = listShell();
       wireListControls();
     }
-    fetchContacts().then(fetchTotal);
+    fetchContacts();
   }
 
   function wireListControls() {
@@ -240,13 +320,13 @@
       state.q = search.value.trim();
       save("q", state.q);
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () { fetchContacts().then(fetchTotal); }, 220);
+      searchTimer = setTimeout(fetchContacts, 220);
     });
 
     document.getElementById("status-filter").addEventListener("change", function (event) {
       state.status = event.target.value;
       save("status", state.status);
-      fetchContacts().then(fetchTotal);
+      fetchContacts();
     });
 
     document.getElementById("sort-by").addEventListener("change", function (event) {
@@ -311,6 +391,14 @@
                   return '<option value="' + esc(s) + '"' + (c.status === s ? " selected" : "") + ">" + esc(s) + "</option>";
                 }).join("") +
               "</select></div>" +
+            (c.deal_value == null ? "" :
+              '<div class="particular"><span class="micro-label">Deal value</span>' +
+                '<div class="value money-value">' + esc(formatMoney(c.deal_value)) +
+                  '<span class="commission">Commission ' +
+                    esc(formatMoney(commissionOf(c.deal_value))) + "</span></div>" +
+                (c.status === "Committed" ? "" :
+                  '<span class="form-hint">Counted once the status is Committed.</span>') +
+              "</div>") +
             particular("Added", formatDate((c.created_at || "").slice(0, 10))) +
           "</div>" +
           '<div class="panel-actions">' +
@@ -421,6 +509,14 @@
               return '<option value="' + esc(s) + '"' + (c.status === s ? " selected" : "") + ">" + esc(s) + "</option>";
             }).join("") +
           "</select></label>" +
+        '<label class="field"><span class="micro-label">Deal value</span>' +
+          '<div class="money-wrap">' +
+            '<span class="money-prefix" aria-hidden="true">$</span>' +
+            '<input class="input" name="deal_value" type="number" min="0" step="0.01" ' +
+              'inputmode="decimal" placeholder="0" value="' +
+              esc(c.deal_value == null ? "" : c.deal_value) + '">' +
+          "</div>" +
+          '<span class="form-hint" id="deal-hint"></span></label>' +
         '<div class="sheet-actions">' +
           '<button class="btn btn-secondary" type="button" data-close>Cancel</button>' +
           '<button class="btn btn-primary" type="submit">' + (editing ? "Save changes" : "Add contact") + "</button>" +
@@ -428,7 +524,23 @@
       "</form>",
       function (sheet) {
         var form = sheet.querySelector("form");
+        var dealInput = form.querySelector('[name="deal_value"]');
+        var dealHint = sheet.querySelector("#deal-hint");
         form.querySelector('[name="name"]').focus();
+
+        function refreshDealHint() {
+          var value = parseFloat(dealInput.value);
+          if (value > 0) {
+            dealHint.textContent = "Commission at " + Math.round(COMMISSION_RATE * 100) + "%: " +
+              formatMoney(commissionOf(value)) +
+              (form.status.value === "Committed" ? "" : " · counted once committed");
+          } else {
+            dealHint.textContent = "Optional. Counts toward your totals once the status is Committed.";
+          }
+        }
+        dealInput.addEventListener("input", refreshDealHint);
+        form.status.addEventListener("change", refreshDealHint);
+        refreshDealHint();
 
         form.addEventListener("submit", function (event) {
           event.preventDefault();
@@ -437,7 +549,8 @@
             company: form.company.value.trim(),
             email: form.email.value.trim(),
             phone: form.phone.value.trim(),
-            status: form.status.value
+            status: form.status.value,
+            deal_value: dealInput.value
           };
           if (!payload.name) { showError(sheet, "A name is required."); return; }
 
@@ -549,6 +662,15 @@
       var action = trigger.dataset.action;
       var id = trigger.dataset.id;
 
+      if (action === "set-view") {
+        var nextView = trigger.dataset.view;
+        if (nextView !== state.view) {
+          state.view = nextView;
+          save("view", nextView);
+          fetchContacts();
+        }
+        return;
+      }
       if (action === "new-contact") { contactSheet(null); return; }
       if (action === "edit-contact") { contactSheet(state.detail.contact); return; }
       if (action === "clear-filters") {
@@ -558,7 +680,7 @@
         var filter = document.getElementById("status-filter");
         if (search) search.value = "";
         if (filter) filter.value = "";
-        fetchContacts().then(fetchTotal);
+        fetchContacts();
         return;
       }
       if (action === "log") {
@@ -634,7 +756,10 @@
     select.disabled = true;
     api("/api/contacts/" + c.id, {
       method: "PUT",
-      body: { name: c.name, company: c.company, email: c.email, phone: c.phone, status: select.value }
+      body: {
+        name: c.name, company: c.company, email: c.email, phone: c.phone,
+        status: select.value, deal_value: c.deal_value
+      }
     }).then(function () {
       toast("Status set to " + select.value + ".");
       refreshDetail();

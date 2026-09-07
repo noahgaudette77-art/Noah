@@ -24,6 +24,7 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 MAX_TEXT = 200          # name / company / email / phone
 MAX_NOTES = 20000       # a single interaction entry
+MAX_DEAL_VALUE = 1e12   # a sanity ceiling, not a business rule
 
 LOGIN_WINDOW = 15 * 60  # seconds
 LOGIN_MAX_ATTEMPTS = 10
@@ -74,6 +75,29 @@ def _valid_date(value):
     return True
 
 
+def _deal_value(raw):
+    """Parse the optional deal value. Returns (value_or_None, error)."""
+    if raw is None:
+        return None, None
+    if isinstance(raw, str):
+        # Tolerate what a phone keyboard produces: "$4,500".
+        cleaned = raw.strip().replace("$", "").replace(",", "").replace(" ", "")
+        if not cleaned:
+            return None, None
+        raw = cleaned
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None, "Deal value must be a number."
+    if value != value or value in (float("inf"), float("-inf")):
+        return None, "Deal value must be a number."
+    if value < 0:
+        return None, "Deal value cannot be negative."
+    if value > MAX_DEAL_VALUE:
+        return None, "That deal value is implausibly large."
+    return round(value, 2), None
+
+
 def _contact_fields(payload):
     """Validate an incoming contact body. Returns (fields, error)."""
     if not isinstance(payload, dict):
@@ -84,12 +108,16 @@ def _contact_fields(payload):
     status = _clean(payload.get("status")) or "Prospect"
     if status not in db.STATUSES:
         return None, f"Status must be one of: {', '.join(db.STATUSES)}."
+    deal_value, error = _deal_value(payload.get("deal_value"))
+    if error:
+        return None, error
     return {
         "name": name,
         "company": _clean(payload.get("company")),
         "email": _clean(payload.get("email")),
         "phone": _clean(payload.get("phone")),
         "status": status,
+        "deal_value": deal_value,
     }, None
 
 
@@ -237,7 +265,8 @@ def create_app():
 
     @app.get("/api/meta")
     def meta():
-        return jsonify(statuses=db.STATUSES, today=date.today().isoformat())
+        return jsonify(statuses=db.STATUSES, today=date.today().isoformat(),
+                       commission_rate=db.COMMISSION_RATE, followup_days=db.FOLLOWUP_DAYS)
 
     # --- contacts -----------------------------------------------------------
 
@@ -250,8 +279,12 @@ def create_app():
         sort = request.args.get("sort", "recent")
         if sort not in ("recent", "name", "oldest"):
             sort = "recent"
+        view = request.args.get("view", "all")
+        if view not in ("all", "followup"):
+            view = "all"
         with db.connect() as conn:
-            return jsonify(contacts=db.list_contacts(conn, query, status, sort))
+            return jsonify(contacts=db.list_contacts(conn, query, status, sort, view),
+                           summary=db.summary(conn))
 
     @app.post("/api/contacts")
     def api_create_contact():
@@ -326,8 +359,8 @@ def create_app():
             rows = db.export_rows(conn)
         buffer = io.StringIO()
         columns = ["contact_id", "name", "company", "email", "phone", "status",
-                   "contact_created_at", "interaction_date", "interaction_notes",
-                   "interaction_logged_at"]
+                   "deal_value", "commission", "contact_created_at", "interaction_date",
+                   "interaction_notes", "interaction_logged_at"]
         writer = csv.DictWriter(buffer, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
         for row in rows:

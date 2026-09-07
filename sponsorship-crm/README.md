@@ -9,8 +9,9 @@ to be added to your phone's home screen so it opens like an app.
 
 ## What it does
 
-- **Contacts** — name, company/organisation, email, phone, and a status of
-  Prospect / Contacted / In Talks / Committed / Declined.
+- **Contacts** — name, company/organisation, email, phone, an optional deal
+  value, and a status of Prospect / Contacted / In Talks / Committed /
+  Declined.
 - **Interaction log** — dated free-text entries against a contact, newest
   first (flip to oldest-first on the contact page).
 - **Logging is two taps** — the `+` on any row in the list opens a sheet with
@@ -19,6 +20,16 @@ to be added to your phone's home screen so it opens like an app.
   of the screen, in thumb reach.
 - **List view** — sortable by recent activity, name, or longest untouched.
 - **Search and filter** — by name or organisation, and by status.
+- **Commission** — set a deal value on a contact and the app shows your 50%
+  share beside it. A panel at the top of the list keeps the running totals:
+  committed value and commission earned, across every contact marked
+  Committed. Values on contacts that are not committed are kept but not
+  counted.
+- **Needs follow-up** — a second tab on the list showing everything still in
+  play that has gone quiet for more than 10 days, most overdue first, with
+  the number of days beside each name. Committed and Declined contacts are
+  never chased. A contact with nothing logged against it counts from the day
+  it was added, so a contact added this morning is not immediately overdue.
 - **Export** — every contact and every interaction as one CSV.
 
 ## Run it locally
@@ -33,7 +44,7 @@ python3 app.py
 Open <http://localhost:5000>. In local dev the passphrase is `sponsor` unless
 you set `CRM_PASSWORD`. The database is written to `data/crm.db`.
 
-Run the test suite with `python3 test_app.py` (34 end-to-end checks against the
+Run the test suite with `python3 test_app.py` (66 end-to-end checks against the
 API, no pytest needed).
 
 ## Deploy it — Render
@@ -127,8 +138,9 @@ after the first time.
 - Everything lives in one SQLite file (`CRM_DB_PATH`). Copy that file and you
   have copied the whole ledger.
 - **Export CSV** in the header downloads every contact and interaction as one
-  file — one row per interaction, plus a row for contacts with none yet. That
-  is the simplest backup and the easiest thing to open in a spreadsheet.
+  file — one row per interaction, plus a row for contacts with none yet, with
+  the deal value and commission on each. That is the simplest backup and the
+  easiest thing to open in a spreadsheet.
 - The gate is a single passphrase, held in a signed, HTTP-only, `Secure`
   session cookie. Failed sign-ins are rate-limited to 10 per 15 minutes per
   IP. That is proportionate for a personal tool on a URL nobody is looking
@@ -152,7 +164,7 @@ after the first time.
 ```
 sponsorship-crm/
 ├── app.py                  Flask routes, auth gate, CSV export
-├── db.py                   SQLite schema and queries (contacts, interactions)
+├── db.py                   SQLite schema and queries, totals, follow-up rule
 ├── test_app.py             end-to-end API checks
 ├── static/
 │   ├── index.html          app shell + Add-to-Home-Screen meta tags
@@ -169,5 +181,5 @@ sponsorship-crm/
 
 ## Deliberately not here
 
-No multi-user accounts, no email sending, no integrations, no reminders, no
-dashboards, no native app. Two tables, six features, one passphrase.
+No multi-user accounts, no email sending, no integrations, no reminders or
+notifications, no dashboards, no native app. Two tables, one passphrase.

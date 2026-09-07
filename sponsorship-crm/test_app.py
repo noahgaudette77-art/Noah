@@ -1,7 +1,9 @@
 """End-to-end checks for the ledger API. Run with: python3 test_app.py"""
 
 import os
+import sqlite3
 import tempfile
+from datetime import date, timedelta
 
 os.environ["CRM_PASSWORD"] = "test-pass"
 os.environ["CRM_COOKIE_SECURE"] = "0"
@@ -93,12 +95,106 @@ check("interaction is edited", edited.get_json()["interaction"]["occurred_on"] =
 check("deleting an interaction works", client.delete("/api/interactions/%d" % entry_id).status_code == 200)
 check("deleting it twice 404s", client.delete("/api/interactions/%d" % entry_id).status_code == 404)
 
+# --- deal value and commission ----------------------------------------------
+priced = client.post("/api/contacts", json={
+    "name": "Cordelia Ash", "company": "Ash Holdings", "status": "Committed", "deal_value": 4500})
+check("a committed contact takes a deal value", priced.status_code == 201)
+priced_id = priced.get_json()["contact"]["id"]
+check("the deal value is stored", priced.get_json()["contact"]["deal_value"] == 4500)
+
+check("a negative deal value is rejected",
+      client.post("/api/contacts", json={"name": "X", "deal_value": -5}).status_code == 400)
+check("a non-numeric deal value is rejected",
+      client.post("/api/contacts", json={"name": "X", "deal_value": "lots"}).status_code == 400)
+check("an absurd deal value is rejected",
+      client.post("/api/contacts", json={"name": "X", "deal_value": 1e15}).status_code == 400)
+check("a blank deal value clears to null",
+      client.post("/api/contacts", json={"name": "Blank Deal", "deal_value": ""})
+      .get_json()["contact"]["deal_value"] is None)
+check("a typed dollar amount is parsed",
+      client.post("/api/contacts", json={"name": "Typed Deal", "status": "Committed",
+                                         "deal_value": "$1,250.50"})
+      .get_json()["contact"]["deal_value"] == 1250.50)
+
+totals = client.get("/api/contacts").get_json()["summary"]
+check("committed value totals only committed contacts", totals["committed_value"] == 5750.50)
+check("commission is half the committed value", totals["commission"] == 2875.25)
+check("committed contacts are counted", totals["committed_count"] == 3)
+check("the summary carries the whole-ledger total", totals["total"] == 5)
+
+# A value on a contact that is not committed must not reach the totals.
+client.put("/api/contacts/%d" % priced_id, json={
+    "name": "Cordelia Ash", "company": "Ash Holdings", "status": "In Talks", "deal_value": 4500})
+totals = client.get("/api/contacts").get_json()["summary"]
+check("an uncommitted deal value is excluded from the totals", totals["committed_value"] == 1250.50)
+check("the committed count drops with it", totals["committed_count"] == 2)
+check("the deal value survives the status change",
+      client.get("/api/contacts/%d" % priced_id).get_json()["contact"]["deal_value"] == 4500)
+
+# Filtering must not change the running totals.
+filtered_totals = client.get("/api/contacts?q=zzzz").get_json()
+check("filtering leaves the totals alone",
+      filtered_totals["contacts"] == [] and filtered_totals["summary"]["committed_value"] == 1250.50)
+
+client.delete("/api/contacts/%d" % priced_id)
+
+# --- needs follow-up ---------------------------------------------------------
+quiet = client.post("/api/contacts", json={"name": "Quiet Prospect", "status": "Prospect"}).get_json()["contact"]
+client.post("/api/contacts/%d/interactions" % quiet["id"],
+            json={"date": (date.today() - timedelta(days=40)).isoformat(), "notes": "Ages ago."})
+recent_c = client.post("/api/contacts", json={"name": "Fresh Prospect", "status": "Contacted"}).get_json()["contact"]
+client.post("/api/contacts/%d/interactions" % recent_c["id"],
+            json={"date": (date.today() - timedelta(days=2)).isoformat(), "notes": "Spoke Tuesday."})
+settled = client.post("/api/contacts", json={"name": "Signed Sponsor", "status": "Committed"}).get_json()["contact"]
+client.post("/api/contacts/%d/interactions" % settled["id"],
+            json={"date": (date.today() - timedelta(days=60)).isoformat(), "notes": "Signed."})
+declined_c = client.post("/api/contacts", json={"name": "Old Refusal", "status": "Declined"}).get_json()["contact"]
+client.post("/api/contacts/%d/interactions" % declined_c["id"],
+            json={"date": (date.today() - timedelta(days=90)).isoformat(), "notes": "Passed."})
+
+followup = client.get("/api/contacts?view=followup").get_json()
+names = [c["name"] for c in followup["contacts"]]
+check("a contact quiet for 40 days needs follow-up", "Quiet Prospect" in names)
+check("a contact touched 2 days ago does not", "Fresh Prospect" not in names)
+check("a committed contact is never chased", "Signed Sponsor" not in names)
+check("a declined contact is never chased", "Old Refusal" not in names)
+
+quiet_row = [c for c in followup["contacts"] if c["name"] == "Quiet Prospect"][0]
+check("days since last contact is reported", quiet_row["days_since"] == 40)
+check("the follow-up count matches the rows",
+      followup["summary"]["followup_count"] == len(followup["contacts"]))
+check("the follow-up threshold is reported", followup["summary"]["followup_days"] == 10)
+
+gaps = [c["days_since"] for c in followup["contacts"]]
+check("the most overdue contact sorts first", gaps == sorted(gaps, reverse=True))
+
+# A contact added today has nothing logged against it but is not yet overdue.
+brand_new = client.post("/api/contacts", json={"name": "Added Today"}).get_json()["contact"]
+fresh_names = [c["name"] for c in client.get("/api/contacts?view=followup").get_json()["contacts"]]
+check("a contact added today is not immediately overdue", "Added Today" not in fresh_names)
+
+check("logging an interaction clears the follow-up",
+      client.post("/api/contacts/%d/interactions" % quiet["id"],
+                  json={"date": date.today().isoformat(), "notes": "Chased today."}).status_code == 201
+      and "Quiet Prospect" not in
+      [c["name"] for c in client.get("/api/contacts?view=followup").get_json()["contacts"]])
+
+check("search still applies inside the follow-up view",
+      client.get("/api/contacts?view=followup&q=nothingmatchesthis").get_json()["contacts"] == [])
+check("an unknown view falls back to all contacts",
+      len(client.get("/api/contacts?view=bogus").get_json()["contacts"]) > 1)
+
+for temp in (quiet, recent_c, settled, declined_c, brand_new):
+    client.delete("/api/contacts/%d" % temp["id"])
+
 # --- export -----------------------------------------------------------------
 export = client.get("/api/export.csv")
 body = export.get_data().decode("utf-8-sig")
 check("csv exports as an attachment",
       export.status_code == 200 and "attachment" in export.headers["Content-Disposition"])
 check("csv has a header row", body.splitlines()[0].startswith("contact_id,name,company"))
+check("csv carries the deal value and commission",
+      "deal_value,commission" in body.splitlines()[0])
 check("csv includes contacts with no interactions", "Aldous Finch" in body)
 check("csv includes interaction notes", "Sent the deck." in body)
 
@@ -110,6 +206,36 @@ check("interactions are cascade-deleted", orphans == 0)
 
 check("sign out works", client.post("/api/logout").status_code == 200)
 check("api is locked again after signing out", client.get("/api/contacts").status_code == 401)
+
+# --- migration of an existing ledger -----------------------------------------
+legacy_path = os.path.join(_tmp, "legacy.db")
+legacy = sqlite3.connect(legacy_path)
+legacy.executescript("""
+    CREATE TABLE contacts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+        company TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'Prospect',
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE interactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, contact_id INTEGER NOT NULL REFERENCES contacts(id),
+        occurred_on TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
+    INSERT INTO contacts (name, status, created_at, updated_at)
+        VALUES ('Pre-existing Contact', 'Committed', '2026-01-05T10:00:00+00:00', '2026-01-05T10:00:00+00:00');
+""")
+legacy.commit()
+legacy.close()
+
+os.environ["CRM_DB_PATH"] = legacy_path
+app_module.db.init_db()
+with app_module.db.connect() as conn:
+    cols = {row["name"] for row in conn.execute("PRAGMA table_info(contacts)")}
+    check("an existing ledger gains the deal_value column", "deal_value" in cols)
+    rows = app_module.db.list_contacts(conn)
+    check("existing contacts survive the migration",
+          len(rows) == 1 and rows[0]["name"] == "Pre-existing Contact")
+    check("an un-priced legacy contact reads as no deal value", rows[0]["deal_value"] is None)
+    check("totals cope with null deal values",
+          app_module.db.summary(conn)["committed_value"] == 0)
 
 failed = [name for name, ok in checks if not ok]
 print("\n%d checks, %d failed" % (len(checks), len(failed)))
