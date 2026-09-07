@@ -12,6 +12,9 @@ STATUSES = ["Prospect", "Contacted", "In Talks", "Committed", "Declined"]
 
 # Commission is a flat share of a committed deal's value.
 COMMISSION_RATE = 0.5
+# Amounts are recorded and shown in Canadian dollars. This is a label, not a
+# conversion — nothing here converts between currencies.
+CURRENCY = "CAD"
 # A contact needs following up once it has been quiet for longer than this.
 FOLLOWUP_DAYS = 10
 # Statuses that are settled, so they never need chasing.
@@ -157,13 +160,20 @@ def commission_on(value):
 
 
 def summary(conn):
-    """Running totals for the list page. Only committed deals count."""
+    """Running totals for the list page.
+
+    Two pairs of numbers: what is banked (committed deals only) and what is
+    on the table (every contact carrying a deal value, whatever its status).
+    """
     row = conn.execute(
         """
         SELECT (SELECT COUNT(*) FROM contacts) AS total,
                (SELECT COUNT(*) FROM contacts WHERE status = 'Committed') AS committed_count,
                (SELECT COALESCE(SUM(deal_value), 0) FROM contacts WHERE status = 'Committed')
-                   AS committed_value
+                   AS committed_value,
+               (SELECT COUNT(*) FROM contacts WHERE deal_value IS NOT NULL) AS priced_count,
+               (SELECT COALESCE(SUM(deal_value), 0) FROM contacts WHERE deal_value IS NOT NULL)
+                   AS pipeline_value
         """
     ).fetchone()
     followup_count = conn.execute(
@@ -174,7 +184,11 @@ def summary(conn):
         "committed_count": row["committed_count"],
         "committed_value": round(row["committed_value"], 2),
         "commission": commission_on(row["committed_value"]),
+        "priced_count": row["priced_count"],
+        "pipeline_value": round(row["pipeline_value"], 2),
+        "potential_commission": commission_on(row["pipeline_value"]),
         "commission_rate": COMMISSION_RATE,
+        "currency": CURRENCY,
         "followup_count": followup_count,
         "followup_days": FOLLOWUP_DAYS,
     }

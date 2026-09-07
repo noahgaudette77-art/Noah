@@ -1,5 +1,6 @@
 """End-to-end checks for the ledger API. Run with: python3 test_app.py"""
 
+import io
 import os
 import sqlite3
 import tempfile
@@ -118,6 +119,7 @@ check("a typed dollar amount is parsed",
 
 totals = client.get("/api/contacts").get_json()["summary"]
 check("committed value totals only committed contacts", totals["committed_value"] == 5750.50)
+check("the currency is labelled CAD", totals["currency"] == "CAD")
 check("commission is half the committed value", totals["commission"] == 2875.25)
 check("committed contacts are counted", totals["committed_count"] == 3)
 check("the summary carries the whole-ledger total", totals["total"] == 5)
@@ -128,6 +130,25 @@ client.put("/api/contacts/%d" % priced_id, json={
 totals = client.get("/api/contacts").get_json()["summary"]
 check("an uncommitted deal value is excluded from the totals", totals["committed_value"] == 1250.50)
 check("the committed count drops with it", totals["committed_count"] == 2)
+
+# Potential commission spans every contact carrying a value, whatever its status.
+check("potential commission covers uncommitted deal values too",
+      totals["pipeline_value"] == 5750.50 and totals["potential_commission"] == 2875.25)
+check("potential commission is at least the earned commission",
+      totals["potential_commission"] >= totals["commission"])
+check("priced contacts are counted", totals["priced_count"] == 2)
+
+declined_priced = client.post("/api/contacts", json={
+    "name": "Lapsed Lead", "status": "Declined", "deal_value": 1000}).get_json()["contact"]
+totals = client.get("/api/contacts").get_json()["summary"]
+check("a declined contact with a value still counts as potential",
+      totals["pipeline_value"] == 6750.50 and totals["potential_commission"] == 3375.25)
+check("a declined contact never counts as earned", totals["committed_value"] == 1250.50)
+client.delete("/api/contacts/%d" % declined_priced["id"])
+
+check("contacts with no value are left out of the potential total",
+      client.post("/api/contacts", json={"name": "No Value Yet"}).status_code == 201
+      and client.get("/api/contacts").get_json()["summary"]["priced_count"] == 2)
 check("the deal value survives the status change",
       client.get("/api/contacts/%d" % priced_id).get_json()["contact"]["deal_value"] == 4500)
 
@@ -193,8 +214,13 @@ body = export.get_data().decode("utf-8-sig")
 check("csv exports as an attachment",
       export.status_code == 200 and "attachment" in export.headers["Content-Disposition"])
 check("csv has a header row", body.splitlines()[0].startswith("contact_id,name,company"))
-check("csv carries the deal value and commission",
-      "deal_value,commission" in body.splitlines()[0])
+check("csv names the currency in its money headers",
+      "deal_value_cad,commission_cad" in body.splitlines()[0])
+import csv as _csv
+_money_cells = [(r["deal_value_cad"], r["commission_cad"])
+                for r in _csv.DictReader(io.StringIO(body)) if r["deal_value_cad"]]
+check("csv money columns stay plain numbers for spreadsheets",
+      bool(_money_cells) and all(float(v) >= 0 and float(k) >= 0 for v, k in _money_cells))
 check("csv includes contacts with no interactions", "Aldous Finch" in body)
 check("csv includes interaction notes", "Sent the deck." in body)
 

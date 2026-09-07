@@ -266,7 +266,8 @@ def create_app():
     @app.get("/api/meta")
     def meta():
         return jsonify(statuses=db.STATUSES, today=date.today().isoformat(),
-                       commission_rate=db.COMMISSION_RATE, followup_days=db.FOLLOWUP_DAYS)
+                       commission_rate=db.COMMISSION_RATE, followup_days=db.FOLLOWUP_DAYS,
+                       currency=db.CURRENCY)
 
     # --- contacts -----------------------------------------------------------
 
@@ -359,12 +360,16 @@ def create_app():
             rows = db.export_rows(conn)
         buffer = io.StringIO()
         columns = ["contact_id", "name", "company", "email", "phone", "status",
-                   "deal_value", "commission", "contact_created_at", "interaction_date",
-                   "interaction_notes", "interaction_logged_at"]
+                   "deal_value_cad", "commission_cad", "contact_created_at",
+                   "interaction_date", "interaction_notes", "interaction_logged_at"]
         writer = csv.DictWriter(buffer, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
+        renamed = {"deal_value_cad": "deal_value", "commission_cad": "commission"}
         for row in rows:
-            writer.writerow({key: ("" if row.get(key) is None else row[key]) for key in columns})
+            writer.writerow({
+                key: ("" if row.get(renamed.get(key, key)) is None else row[renamed.get(key, key)])
+                for key in columns
+            })
         filename = f"sponsorship-ledger-{date.today().isoformat()}.csv"
         return Response(
             buffer.getvalue().encode("utf-8-sig"),

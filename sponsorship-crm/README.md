@@ -11,7 +11,8 @@ to be added to your phone's home screen so it opens like an app.
 
 - **Contacts** — name, company/organisation, email, phone, an optional deal
   value, and a status of Prospect / Contacted / In Talks / Committed /
-  Declined.
+  Declined. Amounts are shown in Canadian dollars (`$1,200 CAD`) — a label
+  and a number format, not a conversion; nothing here converts currencies.
 - **Interaction log** — dated free-text entries against a contact, newest
   first (flip to oldest-first on the contact page).
 - **Logging is two taps** — the `+` on any row in the list opens a sheet with
@@ -21,10 +22,12 @@ to be added to your phone's home screen so it opens like an app.
 - **List view** — sortable by recent activity, name, or longest untouched.
 - **Search and filter** — by name or organisation, and by status.
 - **Commission** — set a deal value on a contact and the app shows your 50%
-  share beside it. A panel at the top of the list keeps the running totals:
-  committed value and commission earned, across every contact marked
-  Committed. Values on contacts that are not committed are kept but not
-  counted.
+  share beside it, and the amount appears under their name in the list. A
+  panel at the top of the list keeps three running totals: committed value,
+  **commission earned** (contacts marked Committed only) and **potential
+  commission** (half of every deal value on record, whatever the status). A
+  value on a contact that is not committed is kept and counts toward the
+  potential figure, never the earned one.
 - **Needs follow-up** — a second tab on the list showing everything still in
   play that has gone quiet for more than 10 days, most overdue first, with
   the number of days beside each name. Committed and Declined contacts are
@@ -44,7 +47,7 @@ python3 app.py
 Open <http://localhost:5000>. In local dev the passphrase is `sponsor` unless
 you set `CRM_PASSWORD`. The database is written to `data/crm.db`.
 
-Run the test suite with `python3 test_app.py` (66 end-to-end checks against the
+Run the test suite with `python3 test_app.py` (74 end-to-end checks against the
 API, no pytest needed).
 
 ## Deploy it — Render
@@ -139,8 +142,9 @@ after the first time.
   have copied the whole ledger.
 - **Export CSV** in the header downloads every contact and interaction as one
   file — one row per interaction, plus a row for contacts with none yet, with
-  the deal value and commission on each. That is the simplest backup and the
-  easiest thing to open in a spreadsheet.
+  the deal value and commission on each (`deal_value_cad` and
+  `commission_cad`, written as plain numbers so a spreadsheet can total them).
+  That is the simplest backup and the easiest thing to open in a spreadsheet.
 - The gate is a single passphrase, held in a signed, HTTP-only, `Secure`
   session cookie. Failed sign-ins are rate-limited to 10 per 15 minutes per
   IP. That is proportionate for a personal tool on a URL nobody is looking

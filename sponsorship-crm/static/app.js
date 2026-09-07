@@ -5,6 +5,7 @@
   var STATUSES = ["Prospect", "Contacted", "In Talks", "Committed", "Declined"];
   var COMMISSION_RATE = 0.5;
   var FOLLOWUP_DAYS = 10;
+  var CURRENCY = "CAD";
   var SORTS = [
     { value: "recent", label: "Recent activity" },
     { value: "name", label: "Name (A–Z)" },
@@ -80,14 +81,32 @@
       sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
   }
 
+  // Amounts are Canadian dollars throughout. The locale is pinned so a phone
+  // set to another region formats the ledger exactly like the desktop does.
   function formatMoney(value) {
     var amount = Number(value || 0);
-    return amount.toLocaleString(undefined, {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-      maximumFractionDigits: 2
-    });
+    var digits = amount % 1 === 0 ? 0 : 2;
+    var figure;
+    try {
+      figure = new Intl.NumberFormat("en-CA", {
+        style: "currency",
+        currency: CURRENCY,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (e) {
+      figure = "$" + amount.toFixed(digits);
+    }
+    return figure + " " + CURRENCY;
+  }
+
+  // Same amount, with the currency tag set back so the number reads first.
+  function moneyHtml(value) {
+    var text = formatMoney(value);
+    var tag = " " + CURRENCY;
+    var cut = text.lastIndexOf(tag);
+    return esc(cut === -1 ? text : text.slice(0, cut)) +
+      '<span class="ccy">' + esc(CURRENCY) + "</span>";
   }
 
   function commissionOf(value) {
@@ -189,7 +208,11 @@
                   (c.last_interaction ? "Days since the last logged interaction"
                                       : "Never logged against — days since it was added") + '">' +
                   esc(plural(c.days_since, "day")) + "</span>"
-                : "") + "</td>" +
+                : "") +
+              // Only contacts carrying a figure show one.
+              (c.deal_value == null ? ""
+                : '<span class="row-deal">' + moneyHtml(c.deal_value) + "</span>") +
+              "</td>" +
             '<td class="cell-company">' + esc(c.company) + "</td>" +
             '<td class="cell-status">' + badge(c.status) + "</td>" +
             '<td class="cell-last">' + esc(formatRecency(c.last_interaction)) +
@@ -206,18 +229,26 @@
 
   function summaryMarkup() {
     var s = state.summary;
-    // Nothing has been committed yet, so a row of zeros would only be noise.
-    if (!s || !s.committed_count) return "";
+    // With nothing committed and nothing priced, a row of zeros is only noise.
+    if (!s || (!s.committed_count && !s.priced_count)) return "";
+    var rate = Math.round(s.commission_rate * 100);
     return '<section class="summary" aria-label="Running totals">' +
       '<div class="summary-figure">' +
         '<span class="micro-label">Committed value</span>' +
-        '<p class="figure">' + esc(formatMoney(s.committed_value)) + "</p>" +
+        '<p class="figure">' + moneyHtml(s.committed_value) + "</p>" +
       "</div>" +
       '<div class="summary-figure">' +
-        '<span class="micro-label">Commission at ' + Math.round(s.commission_rate * 100) + '%</span>' +
-        '<p class="figure figure-accent">' + esc(formatMoney(s.commission)) + "</p>" +
+        '<span class="micro-label">Commission earned</span>' +
+        '<p class="figure figure-accent">' + moneyHtml(s.commission) + "</p>" +
       "</div>" +
-      '<p class="summary-note">Across ' + esc(plural(s.committed_count, "committed contact")) + "</p>" +
+      '<div class="summary-figure">' +
+        '<span class="micro-label">Potential commission</span>' +
+        '<p class="figure figure-quiet">' + moneyHtml(s.potential_commission) + "</p>" +
+      "</div>" +
+      '<p class="summary-note">' +
+        esc(plural(s.committed_count, "committed contact")) + " at " + rate + "% · " +
+        esc(plural(s.priced_count, "deal value")) + " entered in total" +
+      "</p>" +
       "</section>";
   }
 
@@ -393,9 +424,9 @@
               "</select></div>" +
             (c.deal_value == null ? "" :
               '<div class="particular"><span class="micro-label">Deal value</span>' +
-                '<div class="value money-value">' + esc(formatMoney(c.deal_value)) +
+                '<div class="value money-value">' + moneyHtml(c.deal_value) +
                   '<span class="commission">Commission ' +
-                    esc(formatMoney(commissionOf(c.deal_value))) + "</span></div>" +
+                    moneyHtml(commissionOf(c.deal_value)) + "</span></div>" +
                 (c.status === "Committed" ? "" :
                   '<span class="form-hint">Counted once the status is Committed.</span>') +
               "</div>") +
@@ -509,7 +540,7 @@
               return '<option value="' + esc(s) + '"' + (c.status === s ? " selected" : "") + ">" + esc(s) + "</option>";
             }).join("") +
           "</select></label>" +
-        '<label class="field"><span class="micro-label">Deal value</span>' +
+        '<label class="field"><span class="micro-label">Deal value (' + CURRENCY + ')</span>' +
           '<div class="money-wrap">' +
             '<span class="money-prefix" aria-hidden="true">$</span>' +
             '<input class="input" name="deal_value" type="number" min="0" step="0.01" ' +
