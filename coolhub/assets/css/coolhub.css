@@ -815,6 +815,8 @@ sup { font-size: 0.55em; vertical-align: super; letter-spacing: 0; }
   .spec__grid { grid-template-columns: minmax(0, 1fr); }
   .f2, .picks { grid-template-columns: minmax(0, 1fr); }
   .swap__panel .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* four unit tabs wrap 3+1 at this width; 2x2 reads as a deliberate grid */
+  .spec__pick button { flex: 1 1 45%; }
   .foot__nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .facts { gap: 1.25rem 2rem; }
   .facts > div { min-width: 42%; }
