@@ -22,6 +22,7 @@ reads a `?id=` query string so a server is more convenient.
 ```
 index.html  shop.html  product.html          ← built output (committed)
 about.html  journal.html  contact.html
+tower-defense.html                            ← standalone game, not built from src/
 src/
   pages/      one file per page, with JSON front-matter
   partials/   layout, header, footer, cart drawer, newsletter block
@@ -80,3 +81,36 @@ piece of server-side work this project does not include. The contact and
 newsletter forms validate and give feedback but do not post anywhere.
 
 Fonts are Cormorant Garamond and Jost, both SIL Open Font License 1.1.
+
+## Brass Bastion
+
+`tower-defense.html` is a self-contained tower defense game — one file, no
+build step, no assets, no third-party requests, in keeping with the rest of the
+repo. Open it directly or visit `/tower-defense.html` on the dev server.
+
+Creeps walk a fixed road from the west gate to the keep; every tile the road
+touches is unbuildable. You start with 300 gold and 20 lives, and hold fifteen
+waves.
+
+| Tower | Cost | Range | Notes |
+| --- | --- | --- | --- |
+| Bolt Spire | 60 | 112 | Quick single-target fire |
+| Frost Lens | 90 | 106 | Chills creeps to 55% speed |
+| Cannon Bastion | 130 | 128 | Slow shells, 46px splash |
+| Arbalest | 180 | 248 | Long reach, ignores armour |
+
+Each tower has two independent upgrade tracks, five levels apiece: **damage**
+(+40% per level) and **fire rate** (−16% cooldown per level). Selling refunds
+70% of everything invested in a tower. Kills pay a bounty, clearing the field
+pays a bonus, and calling the next wave while creeps are still walking pays an
+extra premium for the risk.
+
+Six creep types — mites, grunts, runners, armoured brutes, slow-resistant
+wraiths and siege-engine bosses — scale in health with the wave number, and
+bosses take five lives if they reach the keep. Towers track the damage already
+in flight toward each creep so a row of them spreads fire instead of emptying
+itself into one that is already dead.
+
+Lives, gold, wave and kills sit in the HUD; running out of lives ends the run
+and clearing wave 15 wins it, both with a tally and a restart. Your best wave
+persists in `localStorage`.
