@@ -123,26 +123,30 @@ const GFX = {
   },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
   // A ladder of levels trades sharpness, then reflections, for frame rate:
-  //   0:   last resort: 36% resolution, one glow level (half the post passes)
-  //   0-1: metal surfaces drawn with cheaper Lambert twins (see twinOf)
-  //   1-2: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
-  //   3:   lite, FXAA back on
-  //   4-6: everything on, resolution 74% -> 100%
-  // Only very weak GPUs ever get below level 4.
-  // Every 40 frames the average frame time is compared with the screen's frame
-  // interval (measured, since browsers don't report it). Missing more than a few
-  // frames: step down, since an uneven mix of short and long frames reads as judder.
+  //   0-1: last resorts: 30% and 36% resolution, one glow level (half the post passes)
+  //   0-2: metal surfaces drawn with cheaper Lambert twins (see twinOf), and solid
+  //        HUD panels that the browser needn't blend over the 3D (body.lean)
+  //   0-3: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
+  //   4:   lite, FXAA back on
+  //   5-7: everything on, resolution 74% -> 100%
+  // Only very weak GPUs ever get below level 5.
+  // Every 40 frames (or half a second, if frames are slow) the average frame time is
+  // compared with the screen's frame interval (measured, since browsers don't report
+  // it). Missing more than a few frames: step down, several levels at once when even
+  // the fastest frames are far too slow, since an uneven mix of short and long frames
+  // reads as judder.
   // Smooth for a few windows: probe one step up, but not to a level that just
   // failed (the wait doubles each time a probe fails). A steady 30 fps with no
   // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
   // Each kind of scene remembers its level, so a light scene isn't stuck blurry
   // after a heavy one.
   Q: [
+    { d: 0.3, lite: true, aa: false, bloom: 1, cheap: true },
     { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
     { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5 },
     { d: 1, lite: false, aa: true, bloom: 5 },
   ],
-  qi: 6,
+  qi: 7,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
@@ -183,6 +187,7 @@ const GFX = {
     this.qi = i;
     this.dyn = this.Q[i].d;
     this.lite = this.Q[i].lite;
+    document.body.classList.toggle("lean", !!this.Q[i].cheap); // solid HUD panels (see style.css)
     if (this.dyn !== was || force) this.resize();
   },
   // Weakest levels: physically-based (MeshStandard) surfaces swap to plain Lambert
@@ -285,16 +290,17 @@ const GFX = {
     const m = s ? this.mem[name(s)] : undefined;
     if (m !== undefined) this.setQ(m);
   },
-  // Each scene's settled quality level is remembered on this device between visits,
+  // Each scene's settled quality level is remembered on this device between visits
+  // (the key's "2": levels saved before the 8-level ladder would mean the wrong ones),
   // so a new session starts where it should instead of stuttering while it adapts
   // (it still probes upward). The refresh rate is measured afresh each session.
   loadMem() {
-    try { const m = JSON.parse(localStorage.getItem("inr-arcade-gfx") || "{}"); if (m && m.mem) this.mem = m.mem; } catch (e) { /* no storage */ }
+    try { const m = JSON.parse(localStorage.getItem("inr-arcade-gfx2") || "{}"); if (m && m.mem) this.mem = m.mem; } catch (e) { /* no storage */ }
   },
   saveMem(cur) {
     if (this.locked) return;
     if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi;
-    try { localStorage.setItem("inr-arcade-gfx", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
+    try { localStorage.setItem("inr-arcade-gfx2", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
   },
   watch(realDt) {
     if (!this.ok || !this.pipe) return;
@@ -304,7 +310,9 @@ const GFX = {
     if (realDt < lo[2]) { lo[2] = realDt; lo.sort((a, b) => a - b); }
     this._n = (this._n || 0) + 1;
     this._sum = (this._sum || 0) + realDt;
-    if (this._n < 40) return;
+    // a window is 40 frames, or half a second when frames are slow, so a device far
+    // too weak for the current level finds its level in a second or two, not ten
+    if (this._n < 40 && !(this._sum >= 0.5 && this._n >= 6)) return;
     const avg = this._sum / this._n, third = lo[2];
     this._n = this._sum = 0;
     this._lo = [1, 1, 1];
@@ -315,16 +323,21 @@ const GFX = {
     }
     this.fpsAvg = avg;
     if (this.locked) return;
-    if (this.t < 3 || this.settle > 0) { this.settle = Math.max(0, (this.settle || 0) - 1); return; }
+    if (this.t < 1 || this.settle > 0) { this.settle = Math.max(0, (this.settle || 0) - 1); return; }
     const v = this.vsync;
     const capped = third > 0.028 && avg < 0.0365 && v < 0.025;
     if (avg > v * 1.15 && !capped) {
       this._good = 0;
-      this.backoff = this.probed ? Math.min(240, this.backoff * 2) : this.backoff || 15;
+      // a failed probe doubles the wait before the next (from 15 s: doubling a wait
+      // that was never set left it at zero, and the probes kept coming)
+      this.backoff = this.probed ? Math.min(240, (this.backoff || 15) * 2) : this.backoff || 15;
       this.probed = false;
       this.ceil = this.qi;
       this.ceilT = this.t + this.backoff;
-      if (this.qi > 0) this.setQ(this.qi - (avg > v * 2.2 ? 2 : 1)); // far off: two steps at once
+      // far off: several steps at once. The big jumps need even the window's fast
+      // frames to be slow, so one hitch can't throw away several levels.
+      const slow = third / v;
+      if (this.qi > 0) this.setQ(this.qi - (slow > 4.5 ? 4 : slow > 3 ? 3 : avg > v * 2.2 ? 2 : 1));
     } else if (avg < v * 1.04) {
       if (++this._good < 4) return;
       this._good = 0;

@@ -39,12 +39,15 @@ lists all of them again.
   under Setup → CRT glass.
 - **Smooth at your screen's refresh rate.** Before drawing anything, the game
   measures how fast your screen refreshes (60, 90, 120 Hz...), then adjusts its
-  quality as you play to hit every frame: it lowers resolution, then reflections and decorative details (dust,
-  light shafts, trails), and on very weak hardware draws metal surfaces more
-  simply; it steps back up when a scene is lighter. Each kind of scene remembers what suits it. A steady 30 fps cap (such as
-  iOS Low Power Mode) is left alone, since lowering quality can't help it. iPhones
-  run web pages at 60 fps unless Safari's "Prefer Page Rendering Updates near
-  60fps" feature flag is turned off, and apps' built-in browsers may stay at 60.
+  quality as you play to hit every frame: it lowers resolution, then reflections
+  and decorative details (dust, light shafts, trails). On very weak hardware it
+  also draws metal surfaces more simply and makes the question and answer panels
+  solid, so the browser needn't blend them over the 3D. It steps back up when a
+  scene is lighter, and each kind of scene remembers what suits it. A steady
+  30 fps cap (such as iOS Low Power Mode) is left alone, since lowering quality
+  can't help it. iPhones run web pages at 60 fps unless Safari's "Prefer Page
+  Rendering Updates near 60fps" feature flag is turned off, and apps' built-in
+  browsers may stay at 60.
 - **No hitches.** Every shader a scene needs is built while it loads, behind a
   black CRT channel-switch that appears the moment you tap, and effects come from
   reusable pools, so the first explosion or beam never stalls a frame. Replaying a
@@ -58,7 +61,7 @@ lists all of them again.
 - **Instant input.** Answers, flashcard flips and grades register the moment your
   finger touches the screen, not when it lifts.
 - **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
-  (your screen's refresh rate, up to 120) and the current quality level (1-7).
+  (your screen's refresh rate, up to 120) and the current quality level (1-8).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
   book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
   time you play a stage they brief you, with a pixel portrait and typed-out

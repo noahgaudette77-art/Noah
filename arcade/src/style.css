@@ -464,6 +464,15 @@ mark { background: var(--yellow); color: #12052e; }
   .hub-card { background-color: rgba(13, 6, 40, 0.84); }
 }
 
+/* The two weakest quality levels (body.lean, set by GFX.setQ): the question panel
+   and the button trays turn solid, without outer glows. The browser then draws them
+   without blending and skips the 3D view underneath, which on a GPU that weak is a
+   large share of every frame. */
+.lean .scr-game .qpanel, .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade, .lean .scr-hub .hub-card { will-change: transform; contain: paint; box-shadow: none; }
+.lean .scr-hub .hub-card { background-color: #0d0628; }
+.lean .scr-game .qpanel { background: linear-gradient(180deg, #261160, #0c0526); }
+.lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
+
 @media (prefers-reduced-motion: reduce) {
   .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
   .banner { animation-duration: 1.6s; }
