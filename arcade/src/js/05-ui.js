@@ -62,10 +62,23 @@ const UI = {
     this._toastT = setTimeout(() => t.classList.remove("show"), ms);
   },
   flash(kind) {
+    if (GFX.ok && GFX.hitFlash(kind)) return; // drawn by the renderer (see GFX.hitFlash)
     const f = $("#flash");
     f.className = "";
     void f.offsetWidth;
     f.className = kind;
+    // Clear it once played, so no full-screen layer stays behind the game.
+    clearTimeout(this._flashT);
+    this._flashT = setTimeout(() => { if (f.className === kind) f.className = ""; }, 700);
+  },
+  // Set text only when it changes: any write re-lays-out and repaints the HUD.
+  text(el, s) {
+    s = String(s);
+    if (el && el.textContent !== s) el.textContent = s;
+  },
+  // Fill an in-game bar (.meter.slide) by sliding it: a compositor-only change.
+  meter(el, frac) {
+    if (el) el.style.transform = `translateX(${((clamp(frac, 0, 1) - 1) * 100).toFixed(1)}%)`;
   },
   // Black the screen, then run fn once that black frame is showing, then power the
   // CRT back on. Building a scene (and, the first time, compiling its shaders)

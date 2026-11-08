@@ -12,6 +12,7 @@ const GFX = {
   lite: false, // set when the device struggles: no reflections, lighter bloom
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
+  hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -73,6 +74,7 @@ const GFX = {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
+    const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -89,6 +91,9 @@ const GFX = {
       t: this.t,
       ab: this.ab,
       flash: this.flashAmt,
+      hit: this.hit,
+      hitAmt: hitAmt,
+      cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
       bloom: this.Q[this.qi].bloom,
@@ -104,6 +109,16 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
+  // Right/wrong flashes, drawn by the final shader as a coloured vignette over the
+  // 3D view (they used to be a full-screen page layer, which the browser had to
+  // blend on every frame of the fade, plus a forced layout to restart it).
+  hitFlash(kind) {
+    const K = { good: [[0.525, 1, 0.37], 0.07, 0.42, 0.35], hit: [[1, 0.28, 0.41], 0.2, 0.68, 0.45], white: [[1, 1, 1], 1, 1, 0.5] }[kind];
+    if (!K) return false;
+    const h = this.hit;
+    h.col = K[0]; h.inner = K[1] * (REDUCED_MOTION ? 0.4 : 1); h.outer = K[2] * (REDUCED_MOTION ? 0.4 : 1); h.dur = K[3]; h.t = 0;
+    return true;
+  },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
   // A ladder of levels trades sharpness, then reflections, for frame rate:
   //   0:   last resort: 36% resolution, one glow level (half the post passes)
@@ -227,6 +242,7 @@ const GFX = {
     s.warmExtra = null;
   },
   sceneChanged(old, s) {
+    if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
     this._n = this._sum = this._good = 0;
     this._lo = [1, 1, 1];
     this.probed = false;
@@ -395,6 +411,7 @@ function makePipeline(renderer, hdr) {
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
+    uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -402,6 +419,7 @@ function makePipeline(renderer, hdr) {
     uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
+    uniform vec3 uHitCol; uniform vec3 uHit;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -442,6 +460,11 @@ function makePipeline(renderer, hdr) {
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(vec3(l), col, uSat);
       col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
+      if (uHit.x > 0.002) {
+        // right/wrong flash: a coloured vignette, strongest at the edges
+        float e = smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4142);
+        col = mix(col, uHitCol, uHit.x * mix(uHit.y, uHit.z, e));
+      }
       if (uGlass > 0.5) {
         float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
         col *= 1.0 - uScan * (1.0 - s);
@@ -491,6 +514,7 @@ function makePipeline(renderer, hdr) {
       this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
       this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
       final.uniforms.uSceneRes.value.set(w, h);
+      this.glowFresh = false;
     },
     lastCalls: 0,
     render(scene, camera, o) {
@@ -499,26 +523,34 @@ function makePipeline(renderer, hdr) {
       this.lastCalls = renderer.info.render.calls;
       if (GFX.probe) GFX.probe("scene");
       const p = o.post;
+      // the two weakest levels refresh the glow every other frame and reuse it in
+      // between (a one-frame lag in the glow doesn't show at these frame rates)
+      this.frameNo = (this.frameNo || 0) + 1;
+      const reuseGlow = o.cheap && this.glowLevels === Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)) && (this.frameNo & 1) === 1 && this.glowFresh;
       // bloom: soft-threshold bright pass straight to quarter res, then a blurred mip chain
       bright.uniforms.tDiffuse.value = sceneRT.texture;
       bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
       bright.uniforms.uKnee.value = 0.45;
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
-      pass(bright, brightRT);
-      if (GFX.probe) GFX.probe("bright");
       const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
-      let src = brightRT;
-      for (let i = 0; i < levels; i++) {
-        const m = mips[i];
-        blur.uniforms.tDiffuse.value = src.texture;
-        blur.uniforms.uDir.value.set(1 / m.w, 0);
-        pass(blur, m.b);
-        blur.uniforms.tDiffuse.value = m.b.texture;
-        blur.uniforms.uDir.value.set(0, 1 / m.h);
-        pass(blur, m.a);
-        src = m.a;
+      if (!reuseGlow) {
+        pass(bright, brightRT);
+        if (GFX.probe) GFX.probe("bright");
+        let src = brightRT;
+        for (let i = 0; i < levels; i++) {
+          const m = mips[i];
+          blur.uniforms.tDiffuse.value = src.texture;
+          blur.uniforms.uDir.value.set(1 / m.w, 0);
+          pass(blur, m.b);
+          blur.uniforms.tDiffuse.value = m.b.texture;
+          blur.uniforms.uDir.value.set(0, 1 / m.h);
+          pass(blur, m.a);
+          src = m.a;
+        }
+        if (GFX.probe) GFX.probe("bloom");
       }
-      if (GFX.probe) GFX.probe("bloom");
+      this.glowLevels = levels;
+      this.glowFresh = true;
       // god rays toward a light the scene names (e.g. the sun), when it's on screen
       let raysOn = 0;
       if (p.rays && p.rays.pos && !o.lite) {
@@ -549,7 +581,7 @@ function makePipeline(renderer, hdr) {
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
-        pass(glow, glowRT);
+        if (!reuseGlow) pass(glow, glowRT);
         if (GFX.probe) GFX.probe("glow");
         u.tGlow.value = glowRT.texture;
         u.uGlowK.value = 1;
@@ -562,6 +594,8 @@ function makePipeline(renderer, hdr) {
       u.uFlicker.value = 0.985 + 0.015 * Math.sin(o.t * 95);
       u.uAberr.value = o.ab;
       u.uFlash.value = o.flash;
+      u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
+      u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;

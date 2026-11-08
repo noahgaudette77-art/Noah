@@ -590,7 +590,7 @@ class RacerGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter goalbar" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
+      <span class="meter goalbar slide" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
       <div class="timer"><i></i></div>
       <div class="qpanel"></div>
       <div class="band"></div>
@@ -925,11 +925,11 @@ class RacerGame extends QuizGame {
   rate() { return 0.03 + 0.005 * Math.min(this.run.streak, 10); }
   hud() {
     if (!this.el) return;
-    $("[data-egg]", this.el).textContent = money(this.egg);
-    $("[data-sub]", this.el).textContent = "NEST EGG · AGE " + (START_AGE + this.year);
-    $("[data-rate]", this.el).textContent = "+" + Math.round(this.rate() * 100) + "%/YR";
+    UI.text($("[data-egg]", this.el), money(this.egg));
+    UI.text($("[data-sub]", this.el), "NEST EGG · AGE " + (START_AGE + this.year));
+    UI.text($("[data-rate]", this.el), "+" + Math.round(this.rate() * 100) + "%/YR");
     const frac = clamp(Math.log(this.egg / EGG_START) / Math.log(EGG_GOAL / EGG_START), 0, 1);
-    $("[data-goal]", this.el).style.width = (frac * 100).toFixed(1) + "%";
+    UI.meter($("[data-goal]", this.el), frac);
     this.lives(3 - this.crashes, 3, "heart", COLORS.red);
     $("[data-ins]", this.el).innerHTML = Array.from({ length: this.insurance }, () => `<span title="Insurance policy">${icon("shield", COLORS.lime)}</span>`).join("");
   }

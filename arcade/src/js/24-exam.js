@@ -381,9 +381,9 @@ class ExamGame extends QuizGame {
     const r = this.rounds[this.i];
     this.round = r;
     this.quiz.show(r, `QUESTION ${this.i + 1} OF ${this.rounds.length}`);
-    $(".qmeta .diff", this.el).textContent = this.flags[this.i] ? "FLAGGED" : "";
+    UI.text($(".qmeta .diff", this.el), this.flags[this.i] ? "FLAGGED" : "");
     this.quiz.select(this.answers[this.i]);
-    $("[data-pos]", this.el).textContent = `Q ${this.i + 1}/${this.rounds.length}`;
+    UI.text($("[data-pos]", this.el), `Q ${this.i + 1}/${this.rounds.length}`);
     const last = this.i === this.rounds.length - 1;
     const nb = $("[data-nextbtn]", this.el);
     nb.dataset.act = last ? "submit" : "nextq";
@@ -504,11 +504,11 @@ class ExamGame extends QuizGame {
       const clock = $("[data-clock]", this.el);
       if (this.limit) {
         const left = Math.max(0, this.limit - this.elapsed);
-        if (clock) clock.textContent = `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}`;
+        UI.text(clock, `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}`);
         this.timerBar(left / this.limit);
         if (left <= 0) { UI.toast("TIME! EXAM SUBMITTED"); this.submit(); }
-      } else if (clock) {
-        clock.textContent = `${Math.floor(this.elapsed / 60)}:${pad(Math.floor(this.elapsed % 60))}`;
+      } else {
+        UI.text(clock, `${Math.floor(this.elapsed / 60)}:${pad(Math.floor(this.elapsed % 60))}`);
       }
     }
     if (!this.has3D) return;

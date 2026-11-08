@@ -472,9 +472,9 @@ class BlasterGame extends QuizGame {
     this.tw.wait(1.3, () => this.nextQuestion());
   }
   hud() {
-    $("[data-score]", this.el).textContent = fmtScore(this.score);
-    $("[data-wave]", this.el).textContent = "WAVE " + this.wave + " · " + this.sel.label;
-    $("[data-combo]", this.el).textContent = "x" + this.combo;
+    UI.text($("[data-score]", this.el), fmtScore(this.score));
+    UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
+    UI.text($("[data-combo]", this.el), "x" + this.combo);
     this.lives(this.shields, 3);
   }
   onLayout() {

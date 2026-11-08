@@ -315,7 +315,7 @@ class MemoryGame extends QuizGame {
         <button class="iconbtn" data-act="reverse" aria-pressed="false" title="Swap sides: show the definition first">SWAP</button>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter" style="--c:${COLORS.lime}"><i data-prog></i></span>
+      <span class="meter slide" style="--c:${COLORS.lime}"><i data-prog></i></span>
       <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div></div>
       <div class="grade" data-grade></div>
     </section>`);
@@ -565,9 +565,9 @@ class MemoryGame extends QuizGame {
         <div class="fhint">HOW DID YOU DO?</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
-    $("[data-pos]", this.el).textContent = `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`;
-    $("[data-prog]", this.el).style.width = pct(this.done, this.total) + "%";
-    $("[data-dep]", this.el).textContent = "BANKED " + this.deposits;
+    UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
+    UI.meter($("[data-prog]", this.el), this.total ? this.done / this.total : 0);
+    UI.text($("[data-dep]", this.el), "BANKED " + this.deposits);
     this.state = "front";
   }
   flip() {

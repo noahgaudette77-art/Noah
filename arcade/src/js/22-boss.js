@@ -121,7 +121,7 @@ class BossGame extends QuizGame {
       </div>
       <div class="bossbar" style="--c:${c}">
         <div class="name"><span>${esc(this.cfg.name)}</span><span data-hp>${this.hp}/${this.maxHp}</span></div>
-        <span class="meter" style="--c:${c}"><i data-hpbar style="width:100%"></i></span>
+        <span class="meter slide" style="--c:${c}"><i data-hpbar style="transform:none"></i></span>
       </div>
       <div class="charge" title="Boss attack charge"><i data-charge></i></div>
       <div class="qpanel"></div>
@@ -457,9 +457,9 @@ class BossGame extends QuizGame {
   }
   hud() {
     if (!this.el) return;
-    $("[data-score]", this.el).textContent = fmtScore(this.score);
-    $("[data-hp]", this.el).textContent = Math.max(0, this.hp) + "/" + this.maxHp;
-    $("[data-hpbar]", this.el).style.width = (clamp(this.hp / this.maxHp, 0, 1) * 100).toFixed(1) + "%";
+    UI.text($("[data-score]", this.el), fmtScore(this.score));
+    UI.text($("[data-hp]", this.el), Math.max(0, this.hp) + "/" + this.maxHp);
+    UI.meter($("[data-hpbar]", this.el), this.hp / this.maxHp);
     this.lives(this.hearts, 3, "heart", COLORS.red);
   }
   get enraged() { return this.hp / this.maxHp < 0.35; }
@@ -716,7 +716,7 @@ class BossGame extends QuizGame {
       this.charge += dt;
       const f = this.charge / this.T;
       const bar = $("[data-charge]", this.el);
-      if (bar) bar.style.width = (clamp(f, 0, 1) * 100).toFixed(1) + "%";
+      if (bar) bar.style.transform = `scaleX(${clamp(f, 0, 1).toFixed(3)})`;
       if (f >= 1) this.timeout();
     }
     if (!this.has3D) return;

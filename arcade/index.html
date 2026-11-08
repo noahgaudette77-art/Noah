@@ -263,6 +263,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   max-height: min(62%, 520px); overflow-y: auto; background: #1c0d4a; border: 2px solid var(--c, var(--lime));
   box-shadow: 0 0 0 2px #000, 0 0 30px -6px var(--c, var(--lime)); padding: 12px 14px; display: grid; gap: 8px;
   animation: sheetin 0.22s ease-out;
+  will-change: transform; /* its own layer: sliding in and leaving don't repaint the HUD */
 }
 @keyframes sheetin { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 .sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); }
@@ -289,8 +290,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .bossbar .name { display: flex; justify-content: space-between; font: 9px/1.4 var(--font-display); color: var(--c); text-shadow: 0 0 8px var(--c); }
 .bossbar .meter { height: 12px; }
 .bossbar .meter > i { transition: width 0.35s ease; }
+/* In-game bars move by transform only, so the compositor slides them without
+   laying out or repainting the HUD (see UI.meter). */
+.meter.slide > i { width: 100%; transform: translateX(-100%); transition: transform 0.6s ease; will-change: transform; }
+.bossbar .meter.slide > i { transition-duration: 0.35s; }
+.timer > i, .charge > i { will-change: transform; }
 .charge { height: 6px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--line); }
-.charge > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--orange), var(--red)); }
+.charge > i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, var(--orange), var(--red)); }
 
 /* racer readout */
 .egg { font: clamp(12px, 3.4vw, 16px)/1.2 var(--font-display); color: var(--lime); text-shadow: 0 0 10px rgba(134, 255, 94, 0.7); }
@@ -448,7 +454,6 @@ mark { background: var(--yellow); color: #12052e; }
 .ans {
   background: linear-gradient(180deg, rgba(32, 15, 82, 0.95), rgba(10, 4, 34, 0.96));
   box-shadow: 0 3px 0 #000, 0 0 16px -7px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.11);
-  transition: box-shadow 0.15s ease, background 0.15s ease;
 }
 .ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
 .ans .k {
@@ -1247,6 +1252,7 @@ const GFX = {
   lite: false, // set when the device struggles: no reflections, lighter bloom
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
+  hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -1308,6 +1314,7 @@ const GFX = {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
+    const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -1324,6 +1331,9 @@ const GFX = {
       t: this.t,
       ab: this.ab,
       flash: this.flashAmt,
+      hit: this.hit,
+      hitAmt: hitAmt,
+      cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
       bloom: this.Q[this.qi].bloom,
@@ -1339,6 +1349,16 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
+  // Right/wrong flashes, drawn by the final shader as a coloured vignette over the
+  // 3D view (they used to be a full-screen page layer, which the browser had to
+  // blend on every frame of the fade, plus a forced layout to restart it).
+  hitFlash(kind) {
+    const K = { good: [[0.525, 1, 0.37], 0.07, 0.42, 0.35], hit: [[1, 0.28, 0.41], 0.2, 0.68, 0.45], white: [[1, 1, 1], 1, 1, 0.5] }[kind];
+    if (!K) return false;
+    const h = this.hit;
+    h.col = K[0]; h.inner = K[1] * (REDUCED_MOTION ? 0.4 : 1); h.outer = K[2] * (REDUCED_MOTION ? 0.4 : 1); h.dur = K[3]; h.t = 0;
+    return true;
+  },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
   // A ladder of levels trades sharpness, then reflections, for frame rate:
   //   0:   last resort: 36% resolution, one glow level (half the post passes)
@@ -1462,6 +1482,7 @@ const GFX = {
     s.warmExtra = null;
   },
   sceneChanged(old, s) {
+    if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
     this._n = this._sum = this._good = 0;
     this._lo = [1, 1, 1];
     this.probed = false;
@@ -1630,6 +1651,7 @@ function makePipeline(renderer, hdr) {
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
+    uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -1637,6 +1659,7 @@ function makePipeline(renderer, hdr) {
     uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
+    uniform vec3 uHitCol; uniform vec3 uHit;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -1677,6 +1700,11 @@ function makePipeline(renderer, hdr) {
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(vec3(l), col, uSat);
       col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
+      if (uHit.x > 0.002) {
+        // right/wrong flash: a coloured vignette, strongest at the edges
+        float e = smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4142);
+        col = mix(col, uHitCol, uHit.x * mix(uHit.y, uHit.z, e));
+      }
       if (uGlass > 0.5) {
         float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
         col *= 1.0 - uScan * (1.0 - s);
@@ -1726,6 +1754,7 @@ function makePipeline(renderer, hdr) {
       this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
       this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
       final.uniforms.uSceneRes.value.set(w, h);
+      this.glowFresh = false;
     },
     lastCalls: 0,
     render(scene, camera, o) {
@@ -1734,26 +1763,34 @@ function makePipeline(renderer, hdr) {
       this.lastCalls = renderer.info.render.calls;
       if (GFX.probe) GFX.probe("scene");
       const p = o.post;
+      // the two weakest levels refresh the glow every other frame and reuse it in
+      // between (a one-frame lag in the glow doesn't show at these frame rates)
+      this.frameNo = (this.frameNo || 0) + 1;
+      const reuseGlow = o.cheap && this.glowLevels === Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)) && (this.frameNo & 1) === 1 && this.glowFresh;
       // bloom: soft-threshold bright pass straight to quarter res, then a blurred mip chain
       bright.uniforms.tDiffuse.value = sceneRT.texture;
       bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
       bright.uniforms.uKnee.value = 0.45;
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
-      pass(bright, brightRT);
-      if (GFX.probe) GFX.probe("bright");
       const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
-      let src = brightRT;
-      for (let i = 0; i < levels; i++) {
-        const m = mips[i];
-        blur.uniforms.tDiffuse.value = src.texture;
-        blur.uniforms.uDir.value.set(1 / m.w, 0);
-        pass(blur, m.b);
-        blur.uniforms.tDiffuse.value = m.b.texture;
-        blur.uniforms.uDir.value.set(0, 1 / m.h);
-        pass(blur, m.a);
-        src = m.a;
+      if (!reuseGlow) {
+        pass(bright, brightRT);
+        if (GFX.probe) GFX.probe("bright");
+        let src = brightRT;
+        for (let i = 0; i < levels; i++) {
+          const m = mips[i];
+          blur.uniforms.tDiffuse.value = src.texture;
+          blur.uniforms.uDir.value.set(1 / m.w, 0);
+          pass(blur, m.b);
+          blur.uniforms.tDiffuse.value = m.b.texture;
+          blur.uniforms.uDir.value.set(0, 1 / m.h);
+          pass(blur, m.a);
+          src = m.a;
+        }
+        if (GFX.probe) GFX.probe("bloom");
       }
-      if (GFX.probe) GFX.probe("bloom");
+      this.glowLevels = levels;
+      this.glowFresh = true;
       // god rays toward a light the scene names (e.g. the sun), when it's on screen
       let raysOn = 0;
       if (p.rays && p.rays.pos && !o.lite) {
@@ -1784,7 +1821,7 @@ function makePipeline(renderer, hdr) {
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
-        pass(glow, glowRT);
+        if (!reuseGlow) pass(glow, glowRT);
         if (GFX.probe) GFX.probe("glow");
         u.tGlow.value = glowRT.texture;
         u.uGlowK.value = 1;
@@ -1797,6 +1834,8 @@ function makePipeline(renderer, hdr) {
       u.uFlicker.value = 0.985 + 0.015 * Math.sin(o.t * 95);
       u.uAberr.value = o.ab;
       u.uFlash.value = o.flash;
+      u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
+      u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
@@ -2348,10 +2387,23 @@ const UI = {
     this._toastT = setTimeout(() => t.classList.remove("show"), ms);
   },
   flash(kind) {
+    if (GFX.ok && GFX.hitFlash(kind)) return; // drawn by the renderer (see GFX.hitFlash)
     const f = $("#flash");
     f.className = "";
     void f.offsetWidth;
     f.className = kind;
+    // Clear it once played, so no full-screen layer stays behind the game.
+    clearTimeout(this._flashT);
+    this._flashT = setTimeout(() => { if (f.className === kind) f.className = ""; }, 700);
+  },
+  // Set text only when it changes: any write re-lays-out and repaints the HUD.
+  text(el, s) {
+    s = String(s);
+    if (el && el.textContent !== s) el.textContent = s;
+  },
+  // Fill an in-game bar (.meter.slide) by sliding it: a compositor-only change.
+  meter(el, frac) {
+    if (el) el.style.transform = `translateX(${((clamp(frac, 0, 1) - 1) * 100).toFixed(1)}%)`;
   },
   // Black the screen, then run fn once that black frame is showing, then power the
   // CRT back on. Building a scene (and, the first time, compiling its shaders)
@@ -5578,9 +5630,9 @@ class BlasterGame extends QuizGame {
     this.tw.wait(1.3, () => this.nextQuestion());
   }
   hud() {
-    $("[data-score]", this.el).textContent = fmtScore(this.score);
-    $("[data-wave]", this.el).textContent = "WAVE " + this.wave + " · " + this.sel.label;
-    $("[data-combo]", this.el).textContent = "x" + this.combo;
+    UI.text($("[data-score]", this.el), fmtScore(this.score));
+    UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
+    UI.text($("[data-combo]", this.el), "x" + this.combo);
     this.lives(this.shields, 3);
   }
   onLayout() {
@@ -6531,7 +6583,7 @@ class RacerGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter goalbar" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
+      <span class="meter goalbar slide" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
       <div class="timer"><i></i></div>
       <div class="qpanel"></div>
       <div class="band"></div>
@@ -6866,11 +6918,11 @@ class RacerGame extends QuizGame {
   rate() { return 0.03 + 0.005 * Math.min(this.run.streak, 10); }
   hud() {
     if (!this.el) return;
-    $("[data-egg]", this.el).textContent = money(this.egg);
-    $("[data-sub]", this.el).textContent = "NEST EGG · AGE " + (START_AGE + this.year);
-    $("[data-rate]", this.el).textContent = "+" + Math.round(this.rate() * 100) + "%/YR";
+    UI.text($("[data-egg]", this.el), money(this.egg));
+    UI.text($("[data-sub]", this.el), "NEST EGG · AGE " + (START_AGE + this.year));
+    UI.text($("[data-rate]", this.el), "+" + Math.round(this.rate() * 100) + "%/YR");
     const frac = clamp(Math.log(this.egg / EGG_START) / Math.log(EGG_GOAL / EGG_START), 0, 1);
-    $("[data-goal]", this.el).style.width = (frac * 100).toFixed(1) + "%";
+    UI.meter($("[data-goal]", this.el), frac);
     this.lives(3 - this.crashes, 3, "heart", COLORS.red);
     $("[data-ins]", this.el).innerHTML = Array.from({ length: this.insurance }, () => `<span title="Insurance policy">${icon("shield", COLORS.lime)}</span>`).join("");
   }
@@ -7336,7 +7388,7 @@ class BossGame extends QuizGame {
       </div>
       <div class="bossbar" style="--c:${c}">
         <div class="name"><span>${esc(this.cfg.name)}</span><span data-hp>${this.hp}/${this.maxHp}</span></div>
-        <span class="meter" style="--c:${c}"><i data-hpbar style="width:100%"></i></span>
+        <span class="meter slide" style="--c:${c}"><i data-hpbar style="transform:none"></i></span>
       </div>
       <div class="charge" title="Boss attack charge"><i data-charge></i></div>
       <div class="qpanel"></div>
@@ -7672,9 +7724,9 @@ class BossGame extends QuizGame {
   }
   hud() {
     if (!this.el) return;
-    $("[data-score]", this.el).textContent = fmtScore(this.score);
-    $("[data-hp]", this.el).textContent = Math.max(0, this.hp) + "/" + this.maxHp;
-    $("[data-hpbar]", this.el).style.width = (clamp(this.hp / this.maxHp, 0, 1) * 100).toFixed(1) + "%";
+    UI.text($("[data-score]", this.el), fmtScore(this.score));
+    UI.text($("[data-hp]", this.el), Math.max(0, this.hp) + "/" + this.maxHp);
+    UI.meter($("[data-hpbar]", this.el), this.hp / this.maxHp);
     this.lives(this.hearts, 3, "heart", COLORS.red);
   }
   get enraged() { return this.hp / this.maxHp < 0.35; }
@@ -7931,7 +7983,7 @@ class BossGame extends QuizGame {
       this.charge += dt;
       const f = this.charge / this.T;
       const bar = $("[data-charge]", this.el);
-      if (bar) bar.style.width = (clamp(f, 0, 1) * 100).toFixed(1) + "%";
+      if (bar) bar.style.transform = `scaleX(${clamp(f, 0, 1).toFixed(3)})`;
       if (f >= 1) this.timeout();
     }
     if (!this.has3D) return;
@@ -8343,7 +8395,7 @@ class MemoryGame extends QuizGame {
         <button class="iconbtn" data-act="reverse" aria-pressed="false" title="Swap sides: show the definition first">SWAP</button>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter" style="--c:${COLORS.lime}"><i data-prog></i></span>
+      <span class="meter slide" style="--c:${COLORS.lime}"><i data-prog></i></span>
       <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div></div>
       <div class="grade" data-grade></div>
     </section>`);
@@ -8593,9 +8645,9 @@ class MemoryGame extends QuizGame {
         <div class="fhint">HOW DID YOU DO?</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
-    $("[data-pos]", this.el).textContent = `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`;
-    $("[data-prog]", this.el).style.width = pct(this.done, this.total) + "%";
-    $("[data-dep]", this.el).textContent = "BANKED " + this.deposits;
+    UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
+    UI.meter($("[data-prog]", this.el), this.total ? this.done / this.total : 0);
+    UI.text($("[data-dep]", this.el), "BANKED " + this.deposits);
     this.state = "front";
   }
   flip() {
@@ -9240,9 +9292,9 @@ class ExamGame extends QuizGame {
     const r = this.rounds[this.i];
     this.round = r;
     this.quiz.show(r, `QUESTION ${this.i + 1} OF ${this.rounds.length}`);
-    $(".qmeta .diff", this.el).textContent = this.flags[this.i] ? "FLAGGED" : "";
+    UI.text($(".qmeta .diff", this.el), this.flags[this.i] ? "FLAGGED" : "");
     this.quiz.select(this.answers[this.i]);
-    $("[data-pos]", this.el).textContent = `Q ${this.i + 1}/${this.rounds.length}`;
+    UI.text($("[data-pos]", this.el), `Q ${this.i + 1}/${this.rounds.length}`);
     const last = this.i === this.rounds.length - 1;
     const nb = $("[data-nextbtn]", this.el);
     nb.dataset.act = last ? "submit" : "nextq";
@@ -9363,11 +9415,11 @@ class ExamGame extends QuizGame {
       const clock = $("[data-clock]", this.el);
       if (this.limit) {
         const left = Math.max(0, this.limit - this.elapsed);
-        if (clock) clock.textContent = `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}`;
+        UI.text(clock, `${Math.floor(left / 60)}:${pad(Math.floor(left % 60))}`);
         this.timerBar(left / this.limit);
         if (left <= 0) { UI.toast("TIME! EXAM SUBMITTED"); this.submit(); }
-      } else if (clock) {
-        clock.textContent = `${Math.floor(this.elapsed / 60)}:${pad(Math.floor(this.elapsed % 60))}`;
+      } else {
+        UI.text(clock, `${Math.floor(this.elapsed / 60)}:${pad(Math.floor(this.elapsed % 60))}`);
       }
     }
     if (!this.has3D) return;

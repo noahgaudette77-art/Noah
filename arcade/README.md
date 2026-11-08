@@ -51,7 +51,10 @@ lists all of them again.
   game reuses its shaders, and the arcade floor stays built while you play, so
   both are instant. Big hits slow time for a beat instead of freezing it.
   Progress saves happen between frames. Each scene's quality level is remembered
-  on the device, so a new session starts where it should.
+  on the device, so a new session starts where it should. The on-screen panels
+  stay still while the 3D moves: timers and health bars slide, text is rewritten
+  only when it changes, and buttons don't fade, so the page never has to be
+  redrawn mid-animation.
 - **Instant input.** Answers, flashcard flips and grades register the moment your
   finger touches the screen, not when it lifts.
 - **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
