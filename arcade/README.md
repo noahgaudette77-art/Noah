@@ -25,11 +25,20 @@ lists all of them again.
 
 ## The world
 
-- **A real CRT.** The 3D is drawn at a low resolution, then shown through a shader:
-  curved glass, phosphor bloom on the neon, scanlines, an RGB mask, vignette, and
-  colour fringing and flashes when something hits. A bezel rounds off the screen.
-  Turn it off under Setup → CRT filter; it also drops to a lighter mode by itself
-  on slow devices.
+- **HD neon graphics.** Every scene renders in high dynamic range, so neon can burn
+  brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
+  rays, and live reflections on wet floors and roads. Each cabinet has its own
+  world: a synthwave horizon on the title screen, a nebula tunnel of crystal
+  targets in Risk Blaster, a wet highway under a career-long sunset in Nest Egg
+  Run, a searchlit arena with a mirror floor in Boss Rush. Setup → Graphics
+  switches between HD (sharp, anti-aliased), Retro and Chunky (pixel art).
+- **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
+  colour fringing and flashes when something hits, inside a bezel. Turn it off
+  under Setup → CRT glass.
+- **Smooth on phones.** Resolution adapts to the device as you play, comes back up
+  when a scene is lighter, and each kind of scene remembers what suits it. Devices
+  that still struggle drop reflections. A steady 30 fps cap (such as iOS Low Power
+  Mode) is left alone, since lowering the resolution can't help it.
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
   book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
   time you play a stage they brief you, with a pixel portrait and typed-out
@@ -37,10 +46,11 @@ lists all of them again.
   takeaway. Replay any briefing from the stage's notes.
 - **Talking bosses.** Bosses introduce themselves, taunt your misses, groan when hit
   and get enraged below 35% HP.
-- **The arcade floor.** The lights clunk on the first time you walk in each
-  session. The walls carry the INR Arcade sign, a Hall of Fame board with your best
-  scores and rank, and a poster for every boss that fills with the stars you earn.
-  The view leans toward your finger or mouse.
+- **The arcade floor.** A room of lit cabinets with live screens, a polished tile
+  floor that reflects them, and neon on the ceiling. The lights clunk on the first
+  time you walk in each session. The walls carry the INR Arcade sign, a Hall of
+  Fame board with your best scores and rank, and a poster for every boss that fills
+  with the stars you earn. The view leans toward your finger or mouse.
 - **Nest Egg Run's sky** follows your career: dawn at 25, bright day, golden hour,
   then dusk and stars at 65.
 - **Sound and feel.** Music adds layers as your streak grows; the floor hums with a
