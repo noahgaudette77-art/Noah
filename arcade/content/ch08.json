@@ -45,7 +45,7 @@
         "'Spouse' here means a married spouse: most provinces exclude common-law (and, per the course, same-sex) partners from intestate entitlements.",
         "Course figures: Ontario $200,000; Saskatchewan $100,000; Nova Scotia $50,000 (the spouse may elect the matrimonial home instead); NWT and Nunavut $50,000; New Brunswick: the deceased's interest in marital property.",
         "Manitoba (body text): all to the spouse if all the children are also the spouse's, otherwise the greater of $50,000 or half. Some provinces (e.g., NL and PEI) give no preferential share.",
-        "Exam trap: the body text gives Alberta $40,000, BC $65,000 (plus a life interest in the home) and the Territories $50,000, while Appendix A shows newer rules (AB: greater of $150,000 or 50%; BC: $300,000 or $150,000; Yukon: $75,000).",
+        "Exam trap: the body text gives Alberta $40,000, BC $65,000 (plus a life interest in the home) and the Territories $50,000, but Appendix A differs (AB: all to the spouse, or the greater of $150,000 or 50%; BC: $300,000 or $150,000; Yukon: $75,000).",
         "In most provinces the preferential share still applies on a partial intestacy: an undisposed portion worth no more than the share goes entirely to the spouse."
       ]
     },
@@ -133,11 +133,11 @@
       "heading": "Appendix A: provincial intestacy table",
       "page": "8•17",
       "points": [
-        "Spouse only: everything to the spouse in every province. Children only: the children share equally.",
-        "Amount first to the spouse, then the rest split equally with one child or 1/3 spouse, 2/3 children: Ontario $200,000, Saskatchewan $100,000, Yukon $75,000, Nova Scotia, NWT and Nunavut $50,000.",
+        "Spouse only: everything to the spouse (in Quebec, though, a surviving parent, for example, also shares: Eric's spouse 2/3, mother 1/3). Children only: the children share equally.",
+        "Amount first to the spouse, then the rest split equally with one child or 1/3 spouse, 2/3 children: Ontario $200,000, Saskatchewan $100,000, Yukon $75,000 (body text: $50,000), Nova Scotia, NWT and Nunavut $50,000.",
         "No preferential amount: Newfoundland and Labrador and PEI (one child: equal split; two or more: 1/3 spouse, 2/3 children). New Brunswick: marital property to the spouse first, then the same splits.",
-        "Manitoba: all to the spouse or common-law partner if all the children are also theirs. Alberta: all to the spouse if the children are also the spouse's; otherwise the greater of $150,000 (or a prescribed amount) or 50%, rest to the children.",
-        "British Columbia: preferential share $300,000 if the children are also the spouse's, $150,000 if not; the rest is split equally between the spouse and the children.",
+        "Manitoba: all to the spouse or common-law partner if all the children are also theirs. Alberta (body text: $40,000): all to the spouse if the children are also the spouse's; otherwise the greater of $150,000 (or a prescribed amount) or 50%, rest to the children.",
+        "British Columbia (body text: $65,000): preferential share $300,000 if the children are also the spouse's, $150,000 if not; the rest is split equally between the spouse and the children.",
         "Quebec: one-third to the spouse and two-thirds to the child or children."
       ]
     }
@@ -666,7 +666,7 @@
       "difficulty": 2,
       "topic": "Per stirpes and per capita",
       "page": "8•10",
-      "q": "When an estate is divided per capita among the deceased's children (rather than issue), the share of a predeceased child passes to that child's own children.",
+      "q": "In a common-law province, when an estate is divided per capita among the deceased's children (rather than issue), the share of a predeceased child passes to that child's own children.",
       "options": [
         "True",
         "False"
@@ -960,17 +960,17 @@
       "id": "c08-q037",
       "type": "mcq",
       "difficulty": 2,
-      "topic": "Appendix A: provinces",
-      "page": "8•17",
-      "q": "According to the course's Appendix A, what happens in Alberta when a spouse and several children survive and all the children are also children of the surviving spouse?",
+      "topic": "Preferential share",
+      "page": "8•7",
+      "q": "According to the course, what preferential share does a surviving spouse receive in New Brunswick when the intestate also leaves children?",
       "options": [
-        "The spouse takes the entire estate",
-        "The spouse takes one-third; the children take two-thirds",
-        "The spouse takes one-half; the children share the other half",
-        "The spouse takes $150,000 and the children share the rest"
+        "The deceased's interest in marital property",
+        "$50,000, or the matrimonial home instead",
+        "The first $200,000 of the net estate",
+        "None: New Brunswick has no preferential share"
       ],
       "answer": 0,
-      "explain": "Appendix A shows that in Alberta the spouse takes everything if the children are also the spouse's children. Otherwise, the spouse receives the greater of $150,000 (or a prescribed amount) or 50% of the estate, and the children share the rest."
+      "explain": "Both the body text and Appendix A give a New Brunswick spouse the deceased's interest in marital property (as defined in the Marital Property Act) first; the rest is then split equally with one child, or one-third to the spouse and two-thirds to the children. $50,000 or the home is Nova Scotia's rule; $200,000 is Ontario's."
     },
     {
       "id": "c08-q038",
@@ -978,13 +978,13 @@
       "difficulty": 1,
       "topic": "Appendix A: provinces",
       "page": "8•18",
-      "q": "According to Appendix A, Manitoba gives the entire estate to the surviving spouse or common-law partner when all the children are also that person's children.",
+      "q": "According to the course, Manitoba gives the entire estate to the surviving spouse when all of the deceased's children are also children of that spouse.",
       "options": [
         "True",
         "False"
       ],
       "answer": 0,
-      "explain": "Manitoba's row shows 'all to spouse or common-law partner' with one child or several, provided all the children are also children of the surviving spouse or partner. Manitoba is unusual in naming common-law partners."
+      "explain": "Both the body text and Appendix A say so, whether there is one child or several: Manitoba is the exception to the usual sharing between spouse and children. (Appendix A also extends this rule to a common-law partner.)"
     },
     {
       "id": "c08-q039",
@@ -1024,7 +1024,7 @@
       "difficulty": 3,
       "topic": "Quebec: heirs",
       "page": "8•24",
-      "q": "Martin, a Quebec resident, dies intestate. He is survived by his wife and his mother; he had no children or siblings, and his father died years ago. After the family patrimony is settled, $270,000 remains. How is it divided?",
+      "q": "Martin, a Quebec resident, dies intestate. He is survived by his wife and his mother; he had no children or siblings, and his father died years ago. After family patrimony and matrimonial regime rights are settled, $270,000 remains. How is it divided?",
       "options": [
         "All $270,000 to his wife; his mother gets nothing",
         "$135,000 to his wife and $135,000 to his mother",
