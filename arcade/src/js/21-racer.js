@@ -486,9 +486,9 @@ class RacerTrail extends Trail {
 // career moves on. One PMREM generator is kept for the whole run.
 class RacerEnv {
   constructor() {
-    this.pm = new THREE.PMREMGenerator(GFX.renderer);
+    this.pm = GFX.pmrem(); // shared for the whole session (see GFX.pmrem)
     this.scene = new THREE.Scene();
-    this.sky = makeSky({ stars: 0, glow: 1.3, radius: 40 });
+    this.sky = makeSky({ stars: 0, glow: 1.3, radius: 60 });
     this.scene.add(this.sky);
     const panel = (geo, x, y, z) => {
       const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
@@ -531,7 +531,6 @@ class RacerEnv {
   }
   dispose() {
     if (this.rt) this.rt.dispose();
-    this.pm.dispose();
     disposeTree(this.scene);
   }
 }

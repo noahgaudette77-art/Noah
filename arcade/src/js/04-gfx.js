@@ -119,6 +119,31 @@ const GFX = {
     this.lite = this.Q[i].lite;
     if (this.dyn !== was || force) this.resize();
   },
+  // One environment-map generator for the whole session. Making one per scene and
+  // throwing it away recompiled its blur shaders every time a scene loaded.
+  pmrem() {
+    if (!this._pmrem) this._pmrem = new THREE.PMREMGenerator(this.renderer);
+    return this._pmrem;
+  },
+  // A closing scene's materials are parked here, still holding their GPU programs,
+  // until the next scene of the same kind has been warmed: replaying a game (or
+  // going back to one) then reuses every shader instead of compiling them again,
+  // which on a phone can freeze the screen for a second or more.
+  park(old) {
+    const held = [];
+    const free = THREE.Material.prototype.dispose;
+    THREE.Material.prototype.dispose = function () { held.push(this); };
+    try { old.dispose(); } finally { THREE.Material.prototype.dispose = free; }
+    const name = old.constructor.name, P = this._parked || (this._parked = {});
+    if (P[name]) P[name].forEach((m) => m.dispose());
+    P[name] = held;
+  },
+  unpark(s) {
+    const P = this._parked, name = s && s.constructor.name;
+    if (!P || !P[name]) return;
+    P[name].forEach((m) => m.dispose());
+    delete P[name];
+  },
   // Draw a new scene once, tiny and off-screen, with everything that starts hidden
   // (pooled effects, speed lines, and the pieces a scene lists in warmExtra) showing.
   // Every shader and GPU pipeline state it will need is built now, behind the screen
@@ -196,10 +221,10 @@ const Scenes = {
   set(s) {
     const old = this.cur;
     this.cur = s;
-    if (old && old !== s && !old.keepAlive) old.dispose(); // the hub stays built (see hubScene)
+    if (old && old !== s && !old.keepAlive) { if (GFX.ok) GFX.park(old); else old.dispose(); } // the hub stays built (see hubScene)
     if (old !== s) GFX.sceneChanged(old, s);
     if (s) s.resize(GFX.w, GFX.h);
-    if (s && old !== s) GFX.warm(s);
+    if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
     return s;
   },
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },

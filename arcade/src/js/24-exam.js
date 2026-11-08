@@ -27,16 +27,14 @@ const EXAM_WINDOWS = [-32, -24, -16, -8, 0, 8, 16, 24, 32];
 function examEnvMap({ top, horizon, bottom, glow, panels }) {
   if (!GFX.ok) return null;
   const sc = new THREE.Scene();
-  sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 40 }));
+  sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.h), new THREE.MeshBasicMaterial({ color: neon(p.color, p.k), side: THREE.DoubleSide }));
     m.position.set(p.pos[0], p.pos[1], p.pos[2]);
     m.lookAt(0, 0, 0);
     sc.add(m);
   }
-  const pm = new THREE.PMREMGenerator(GFX.renderer);
-  const rt = pm.fromScene(sc, 0.02, 0.1, 100);
-  pm.dispose();
+  const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
   disposeTree(sc);
   return rt;
 }
