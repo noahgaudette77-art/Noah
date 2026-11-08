@@ -144,7 +144,7 @@
       "points": [
         "DPSP: employees share in profits tax-deferred. Employer-only contributions from profits, capped at the lesser of 18% of pay and $13,615 (2019); PA = employer contributions. Not for owners of more than 10% of any class of shares.",
         "DPSP payouts: lump sum, equal instalments over up to 10 years, annuity, RRSP, another DPSP (5+ members, 1+ year old) or securities in specie. Reported on a T4A (plus a Relevé 2 in Quebec). After 1991, vested within 2 years.",
-        "IPP: a DB plan for one person (often the owner-manager) that maximizes deductible contributions; attractive at 40 to 71 with T4 income above $151,278 (2019). Limits grow 7.5% a year; set-up costs $1,500 to $5,000.",
+        "IPP: a DB plan for one person (often the owner-manager) that maximizes deductible contributions; suits older high earners (40 to 71 and over $151,278 on 6•33; 50+ and about $150,000 on 6•34). Limits grow 7.5% a year; set-up costs $1,500 to $5,000.",
         "IPP pros: higher contributions than an RRSP, employer top-ups, investment control, creditor protection, deductible. Cons: no spousal contributions, locked in, costly and complex.",
         "RCA: employer-funded supplementary payments outside an RPP at retirement or termination. No minimum or maximum contributions; employer contributions deductible, employee contributions usually not."
       ]
@@ -586,7 +586,7 @@
       "topic": "IPPs",
       "page": "6•33",
       "front": "Individual pension plan (IPP)",
-      "back": "A registered DB plan, usually set up by a company for one employee (often the owner-manager), to maximize deductible contributions. Attractive at ages 40 to 71 with T4 income above $151,278 (2019)."
+      "back": "A registered DB plan, usually set up by a company for one employee (often the owner-manager), to maximize deductible contributions. Suits older high earners: ages 40 to 71 with T4 income above $151,278 (2019) on 6•33; 50+ earning over about $150,000 on 6•34."
     },
     {
       "id": "c06a-f062",
@@ -1486,13 +1486,13 @@
       "page": "6•33",
       "q": "According to the course, an individual pension plan (IPP) is generally most attractive for whom?",
       "options": [
-        "An owner-manager aged 40 to 71 with T4 income above about $151,000",
+        "An older owner-manager or key executive earning over about $150,000",
         "A young employee earning less than the CPP maximum pensionable earnings",
         "A self-employed person with no corporation and no employment income",
         "An employee who wants the plan to accept contributions for a spouse"
       ],
       "answer": 0,
-      "explain": "An IPP is a DB plan, usually for one employee who is often the owner-manager, designed to maximize deductible contributions. It suits people aged about 40 to 71 with T4 income above $151,278 (2019); spousal contributions are not allowed."
+      "explain": "An IPP is a DB plan, usually for one employee who is often the owner-manager, designed to maximize deductible contributions. The course aims it at older high earners (ages 40 to 71 with T4 income above $151,278 on 6•33; 50 and older earning over about $150,000 on 6•34). Spousal contributions are not allowed."
     },
     {
       "id": "c06a-q057",
