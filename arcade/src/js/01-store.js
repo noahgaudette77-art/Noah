@@ -1,4 +1,4 @@
-// Progress, scores and settings. Saved to localStorage instantly; when the page
+// Progress, scores and settings. Saved to localStorage (batched, see save()); when the page
 // runs as a claude.ai artifact with the `db` capability, also synced to the
 // viewer's private data/users/<id>/progress document so it follows them across devices.
 const STORE_KEY = "inr-arcade-v1";
@@ -12,7 +12,7 @@ const freshState = () => ({
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false },
   updated: 0,
 });
 
@@ -73,10 +73,28 @@ const Store = {
     if (!st.gfx2) { if (st.pixel === "retro" || st.pixel === "sharp") st.pixel = "hd"; st.gfx2 = true; }
   },
   get settings() { return this.state.settings; },
+  // Writing the whole state takes a few milliseconds on a phone, and saves come
+  // right as an answer lands, when the hit effects need every frame. So saves are
+  // batched: written in the browser's next idle moment (within ~2 s), and at once
+  // when the page is hidden or closed (see flush()).
   save() {
     this.state.updated = Date.now();
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.state)); } catch (e) { /* ignore */ }
+    this._dirty = true;
+    if (!this._saveT) {
+      const run = () => { this._saveT = 0; this.flush(); };
+      this._saveT = window.requestIdleCallback ? requestIdleCallback(run, { timeout: 2000 }) : setTimeout(run, 1200);
+      this._idle = !!window.requestIdleCallback;
+    }
     this.scheduleRemote();
+  },
+  flush() {
+    if (this._saveT) {
+      if (this._idle) cancelIdleCallback(this._saveT); else clearTimeout(this._saveT);
+      this._saveT = 0;
+    }
+    if (!this._dirty) return;
+    this._dirty = false;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.state)); } catch (e) { /* ignore */ }
   },
   onChange(fn) {
     this.listeners.push(fn);

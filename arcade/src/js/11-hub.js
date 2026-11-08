@@ -721,7 +721,6 @@ class HubScene extends Scene3D {
     this.room = 1; // how much of the room is powered, eased
     this.buzzT = 3;
     this.buzzOn = true;
-    this.demoTick = 0;
     this.env = makeEnvMap({
       top: 0x0d0526, horizon: 0x2c0f5c, bottom: 0x06020f, glow: 0.7,
       panels: [
@@ -748,6 +747,11 @@ class HubScene extends Scene3D {
     s.add(this.hemi, this.key, this.screenLight, this.topLight);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
+    // The floor stays built while you play (see hubScene()); on the way back only
+    // the Hall of Fame and the posters are redrawn, and only if they changed.
+    this.keepAlive = true;
+    this.wallTex = wallTex;
+    this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
     const B = { lit: new HubBatch("lit", 0.6), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
     this.dustPts = { p: [], x: [], g: [] };
@@ -1109,16 +1113,21 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
-    // CRTs warm up when switched on; the selected demo runs every frame, the
-    // others take turns so the room stays alive without much texture upload.
-    this.demoTick++;
+    // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
+    // textures, so they run at a fixed retro rate whatever the screen's refresh
+    // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
     this.cabs.forEach((c, i) => {
       const sc = c.scr;
       sc.power = sc.target > 0 ? Math.min(1, sc.power + dt * 2.6) : 0;
       c.mat.uniforms.uPower.value = sc.power;
       c.mat.uniforms.uGain.value = 0.8 + 0.3 * c.focus;
       c.demo.t += dt;
-      if (sc.power > 0 && (i === this.sel || (this.demoTick + i) % 4 === 0)) drawDemo(c.demo, dt);
+      c.demo.wait = (c.demo.wait === undefined ? i / 40 : c.demo.wait) - dt;
+      if (sc.power > 0 && c.demo.wait <= 0) {
+        drawDemo(c.demo, dt);
+        c.demo.wait += i === this.sel ? 1 / 30 : 1 / 8;
+        if (c.demo.wait < 0) c.demo.wait = 0;
+      }
     });
     FX.sync(this.scene, this.t);
   }
@@ -1170,7 +1179,15 @@ class HubScene extends Scene3D {
     this.marqMat.uniforms.uSel.value = G.cab + this.sel;
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;
   }
+  refreshWall() {
+    const sig = hubWallSig();
+    if (!this.wallTex || sig === this.wallSig) return;
+    this.wallSig = sig;
+    this.wallTex.image = hubWallAtlas().canvas;
+    this.wallTex.needsUpdate = true;
+  }
   dispose() {
+    this.disposed = true;
     super.dispose();
     if (this.texs) this.texs.forEach((t) => t.dispose());
   }
@@ -1288,8 +1305,19 @@ function overallMastery() {
   return mpct(Store.masteryOf(ALL_QIDS.concat(ALL_FIDS)));
 }
 
+// What the wall shows: best scores, rank and boss stars.
+function hubWallSig() {
+  const sc = Store.state.scores;
+  return JSON.stringify([["blaster", "racer", "boss", "exam"].map((g) => (sc[g] && sc[g][0]) || 0), rankOf(xpTotal()), Store.state.boss]);
+}
+
+// The arcade floor is built once and kept while you play, so coming back from a
+// game is instant: no rebuild, no shader compiles, no long frame.
 function hubScene() {
-  return Scenes.cur instanceof HubScene ? Scenes.cur : Scenes.set(new HubScene());
+  if (Scenes.cur instanceof HubScene) return Scenes.cur;
+  if (!Hub.scene || Hub.scene.disposed) Hub.scene = new HubScene();
+  else Hub.scene.refreshWall();
+  return Scenes.set(Hub.scene);
 }
 
 function showHub() {

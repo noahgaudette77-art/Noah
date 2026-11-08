@@ -6,11 +6,28 @@ const UI = {
   modal: null,
   init() {
     this.root = $("#ui");
-    document.addEventListener("click", (e) => {
+    const ownerOf = (t) => (this.modal && this.modal.el.contains(t) ? this.modal : this.cur && this.cur.el.contains(t) ? this.cur : null);
+    // In-game choices (answers, the flashcard, grading) fire the moment a finger
+    // touches, not when it lifts, so answering feels instant. The click that follows
+    // the same touch is then ignored, wherever it lands.
+    const FAST = { ans: 1, flip: 1, again: 1, good: 1, easy: 1 };
+    let fast = null;
+    document.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || !e.isPrimary) return;
       const t = e.target.closest("[data-act]");
+      if (!t || t.disabled || !FAST[t.dataset.act]) return;
+      const owner = ownerOf(t);
+      if (!owner || !owner.on) return;
+      fast = { at: performance.now(), x: e.clientX, y: e.clientY };
+      owner.on(t.dataset.act, t, e);
+    });
+    document.addEventListener("click", (e) => {
       Sound.init();
+      if (fast && e.detail > 0 && performance.now() - fast.at < 900 && Math.hypot(e.clientX - fast.x, e.clientY - fast.y) < 40) { fast = null; return; }
+      fast = null;
+      const t = e.target.closest("[data-act]");
       if (!t || t.disabled) return;
-      const owner = this.modal && this.modal.el.contains(t) ? this.modal : this.cur && this.cur.el.contains(t) ? this.cur : null;
+      const owner = ownerOf(t);
       if (owner && owner.on) owner.on(t.dataset.act, t, e);
     });
     document.addEventListener("keydown", (e) => {

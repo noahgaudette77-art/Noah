@@ -13,6 +13,7 @@ const GFX = {
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   freeze: 0, // hit-stop seconds remaining
+  probe: null, // debug: called after each render pass (see the perf tools)
   init() {
     if (window.THREE) {
       try {
@@ -72,7 +73,9 @@ const GFX = {
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
     const mirrors = scene.userData.mirrors;
+    if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
       ab: this.ab,
@@ -90,62 +93,100 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
-  // Dynamic resolution (HD look). Every 40 frames, compare the average frame time
-  // with the budget. Slow: step the resolution down, then drop reflections. Smooth for
-  // a few seconds: probe one step back up, but not to a level that just failed (the
-  // wait doubles each time a probe fails). A steady 30 fps with no faster frames is a
-  // frame-rate cap (iOS low-power mode, a throttled frame), not a slow GPU, so it's
-  // left alone. Each kind of scene remembers its level, so a light scene isn't stuck
-  // blurry after a heavy one.
-  DYN: [0.55, 0.62, 0.7, 0.78, 0.87, 1],
-  dynI: 5,
+  // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
+  // A ladder of levels trades sharpness, then reflections, for frame rate:
+  //   0-2: lower resolution, no reflections or sun rays ("lite")
+  //   3-5: reflections on, resolution 75% -> 100%
+  // Every 40 frames the average frame time is compared with the screen's frame
+  // interval (measured, since browsers don't report it). Missing more than a few
+  // frames: step down, since an uneven mix of short and long frames reads as judder.
+  // Smooth for a few windows: probe one step up, but not to a level that just
+  // failed (the wait doubles each time a probe fails). A steady 30 fps with no
+  // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
+  // Each kind of scene remembers its level, so a light scene isn't stuck blurry
+  // after a heavy one.
+  Q: [{ d: 0.55, lite: true }, { d: 0.62, lite: true }, { d: 0.7, lite: true }, { d: 0.75, lite: false }, { d: 0.86, lite: false }, { d: 1, lite: false }],
+  qi: 5,
+  vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
-  lockQuality() { this.locked = true; this.dynI = this.DYN.length - 1; this.dyn = 1; this.lite = false; this.resize(); },
-  setDyn(i) {
-    i = clamp(i, 0, this.DYN.length - 1);
-    if (i === this.dynI) return;
-    this.dynI = i;
-    this.dyn = this.DYN[i];
-    if (this.look === "hd") this.resize();
+  lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
+  setQ(i, force) {
+    i = clamp(i, 0, this.Q.length - 1);
+    if (i === this.qi && !force) return;
+    const was = this.dyn;
+    this.qi = i;
+    this.dyn = this.Q[i].d;
+    this.lite = this.Q[i].lite;
+    if (this.dyn !== was || force) this.resize();
+  },
+  // Draw a new scene once, tiny and off-screen, with everything that starts hidden
+  // (pooled effects, speed lines, and the pieces a scene lists in warmExtra) showing.
+  // Every shader and GPU pipeline state it will need is built now, behind the screen
+  // transition, instead of stalling the frame where a hit first happens.
+  warm(s) {
+    if (!this.ok || !s.scene || !s.camera) return;
+    const r = this.renderer, scene = s.scene, extra = s.warmExtra || [];
+    extra.forEach((o) => scene.add(o));
+    const saved = [];
+    scene.traverse((o) => { saved.push(o, o.visible, o.frustumCulled); o.visible = true; o.frustumCulled = false; });
+    if (!this._warmRT) {
+      this._warmRT = new THREE.WebGLRenderTarget(16, 16, {
+        type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
+      });
+    }
+    try {
+      r.setRenderTarget(this._warmRT);
+      r.render(scene, s.camera);
+    } catch (e) { /* best effort */ }
+    r.setRenderTarget(null);
+    for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
+    extra.forEach((o) => scene.remove(o));
+    s.warmExtra = null;
   },
   sceneChanged(old, s) {
     this._n = this._sum = this._good = 0;
-    this._min = 1;
+    this._lo = [1, 1, 1];
     this.probed = false;
     this.settle = 1; // a new scene's first frames compile shaders and upload textures
     if (this.locked || !this.ok) return;
     const name = (o) => (o && o.constructor ? o.constructor.name : "");
-    if (old) this.mem[name(old)] = { i: this.dynI, lite: this.lite };
-    const m = s && this.mem[name(s)];
-    if (m) { this.lite = m.lite; this.setDyn(m.i); }
+    if (old) this.mem[name(old)] = this.qi;
+    const m = s ? this.mem[name(s)] : undefined;
+    if (m !== undefined) this.setQ(m);
   },
   watch(realDt) {
-    if (!this.ok || !this.pipe || this.locked) return;
+    if (!this.ok || !this.pipe) return;
+    // the screen's interval: the third-fastest frame of each window, snapped to a
+    // standard rate, and only ever lowered (a slow GPU never shows fast frames)
+    const lo = this._lo || (this._lo = [1, 1, 1]);
+    if (realDt < lo[2]) { lo[2] = realDt; lo.sort((a, b) => a - b); }
     this._n = (this._n || 0) + 1;
     this._sum = (this._sum || 0) + realDt;
-    this._min = Math.min(this._min || 1, realDt);
     if (this._n < 40) return;
-    const avg = this._sum / this._n, fastest = this._min;
+    const avg = this._sum / this._n, third = lo[2];
     this._n = this._sum = 0;
-    this._min = 1;
+    this._lo = [1, 1, 1];
+    if (third > 0.003) {
+      const hz = [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - third) < Math.abs(1 / b - third) ? r : b), 60);
+      if (1 / hz < this.vsync * 0.97) this.vsync = 1 / hz;
+    }
+    this.fpsAvg = avg;
+    if (this.locked) return;
     if (this.t < 3 || this.settle > 0) { this.settle = Math.max(0, (this.settle || 0) - 1); return; }
-    const hd = this.look === "hd";
-    const capped = fastest > 0.028 && avg < 0.0365;
-    if (avg > 0.024 && !capped) {
+    const v = this.vsync;
+    const capped = third > 0.028 && avg < 0.0365 && v < 0.025;
+    if (avg > v * 1.15 && !capped) {
       this._good = 0;
       this.backoff = this.probed ? Math.min(240, this.backoff * 2) : this.backoff || 15;
       this.probed = false;
-      this.ceil = this.dynI;
+      this.ceil = this.qi;
       this.ceilT = this.t + this.backoff;
-      if (hd && this.dynI > 0) this.setDyn(this.dynI - 1);
-      else this.lite = true;
-    } else if (avg < 0.0185) {
+      if (this.qi > 0) this.setQ(this.qi - (avg > v * 2.2 ? 2 : 1)); // far off: two steps at once
+    } else if (avg < v * 1.04) {
       if (++this._good < 4) return;
       this._good = 0;
-      const blocked = this.t < (this.ceilT || 0);
-      const top = blocked ? this.ceil - 1 : this.DYN.length - 1;
-      if (this.lite) { if (!blocked) { this.lite = false; this.probed = true; } }
-      else if (hd && this.dynI < top) { this.setDyn(this.dynI + 1); this.probed = true; }
+      const top = this.t < (this.ceilT || 0) ? this.ceil - 1 : this.Q.length - 1;
+      if (this.qi < top) { this.setQ(this.qi + 1); this.probed = true; }
     } else this._good = 0;
   },
 };
@@ -155,9 +196,10 @@ const Scenes = {
   set(s) {
     const old = this.cur;
     this.cur = s;
-    if (old && old !== s) old.dispose();
+    if (old && old !== s && !old.keepAlive) old.dispose(); // the hub stays built (see hubScene)
     if (old !== s) GFX.sceneChanged(old, s);
     if (s) s.resize(GFX.w, GFX.h);
+    if (s && old !== s) GFX.warm(s);
     return s;
   },
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
@@ -169,40 +211,52 @@ const Scenes = {
   },
 };
 
-// The render pipeline: scene → HDR target → 5-level bloom → final pass with
-// exposure, ACES filmic tone mapping, colour grading, FXAA (HD) or pixel snap
-// (retro), and optional CRT glass (curvature, scanlines, phosphor mask).
+// The render pipeline: scene → HDR target → bloom → final pass with exposure, ACES
+// filmic tone mapping, colour grading, FXAA (HD) or pixel snap (retro), and the
+// optional CRT glass (curvature, scanlines, phosphor mask, rounded tube and bezel).
+// Tuned for phones: the bright pass goes straight to quarter resolution, sun rays run
+// at an eighth, and all the glow (five bloom levels plus rays) is gathered into one
+// quarter-res texture, so the full-screen final pass reads the scene and one glow
+// sample. Colour maths runs at half precision where the GPU has it (UVs stay high).
 function makePipeline(renderer, hdr) {
   const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const rt = (depth) => new THREE.WebGLRenderTarget(2, 2, {
     minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: false,
   });
   const sceneRT = rt(true);
-  const brightRT = rt(false);
-  const raysRT = rt(false);
+  const brightRT = rt(false); // quarter res
+  const raysRT = rt(false); // eighth res
+  const glowRT = rt(false); // quarter res: every bloom level plus the rays
   const lightV = new THREE.Vector3();
   const LEVELS = 5;
+  const MIRROR = 0.4; // reflections render at this fraction of the scene size
   const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const quadScene = new THREE.Scene();
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
   quad.frustumCulled = false;
   quadScene.add(quad);
-  const VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
-  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false });
+  const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
+  const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
+  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "mediump" });
+  // Bright pass + downsample: four bilinear taps cover the 4x4 block under each
+  // quarter-res pixel; each 2x2 average is thresholded on its own, so thin neon
+  // lines keep their glow.
   const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 1 }, uKnee: { value: 0.5 }, uPx: { value: new THREE.Vector2() } }, `
-    uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee; uniform vec2 uPx; varying vec2 vUv;
-    void main(){
-      vec3 c = 0.25 * (texture2D(tDiffuse, vUv + uPx * vec2(-0.5, -0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, -0.5)).rgb
-        + texture2D(tDiffuse, vUv + uPx * vec2(-0.5, 0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, 0.5)).rgb);
+    uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee; uniform HP vec2 uPx; varying HP vec2 vUv;
+    vec3 bright(vec3 c){
       float l = max(c.r, max(c.g, c.b));
       float soft = clamp(l - uThreshold + uKnee, 0.0, 2.0 * uKnee);
       soft = soft * soft / (4.0 * uKnee + 1e-4);
-      float w = max(soft, l - uThreshold) / max(l, 1e-4);
-      gl_FragColor = vec4(min(c * w, vec3(24.0)), 1.0);
+      return c * (max(soft, l - uThreshold) / max(l, 1e-4));
+    }
+    void main(){
+      vec3 c = bright(texture2D(tDiffuse, vUv - uPx).rgb) + bright(texture2D(tDiffuse, vUv + uPx).rgb)
+        + bright(texture2D(tDiffuse, vUv + vec2(uPx.x, -uPx.y)).rgb) + bright(texture2D(tDiffuse, vUv + vec2(-uPx.x, uPx.y)).rgb);
+      gl_FragColor = vec4(min(c * 0.25, vec3(24.0)), 1.0);
     }`);
   const blur = mat({ tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } }, `
-    uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform HP vec2 uDir; varying HP vec2 vUv;
     void main(){
       vec3 c = texture2D(tDiffuse, vUv).rgb * 0.2270270;
       c += texture2D(tDiffuse, vUv + uDir * 1.3846154).rgb * 0.3162162;
@@ -213,45 +267,57 @@ function makePipeline(renderer, hdr) {
     }`);
   // God rays: smear the bright pass toward a light (the sun), only near it.
   const rays = mat({ tDiffuse: { value: null }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uRadius: { value: 0.35 }, uAspect: { value: 1 } }, `
-    uniform sampler2D tDiffuse; uniform vec2 uLight; uniform float uRadius; uniform float uAspect; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform HP vec2 uLight; uniform float uRadius; uniform float uAspect; varying HP vec2 vUv;
     void main(){
-      vec2 delta = (vUv - uLight) / 32.0 * 0.92;
-      vec2 uv = vUv; float w = 1.0; vec3 acc = vec3(0.0);
+      HP vec2 delta = (vUv - uLight) / 32.0 * 0.92;
+      HP vec2 uv = vUv; float w = 1.0; vec3 acc = vec3(0.0);
       for (int i = 0; i < 32; i++) {
         uv -= delta;
-        vec2 d = (uv - uLight) * vec2(uAspect, 1.0);
+        HP vec2 d = (uv - uLight) * vec2(uAspect, 1.0);
         acc += texture2D(tDiffuse, uv).rgb * w * smoothstep(uRadius, uRadius * 0.25, length(d));
         w *= 0.955;
       }
       gl_FragColor = vec4(acc / 32.0, 1.0);
     }`);
+  // All the glow in one quarter-res texture.
+  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 } }, `
+    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays;
+    uniform float uRays; uniform float uBloom; varying HP vec2 vUv;
+    void main(){
+      vec3 g = (texture2D(tB0, vUv).rgb + texture2D(tB1, vUv).rgb * 0.75 + texture2D(tB2, vUv).rgb * 0.55
+        + texture2D(tB3, vUv).rgb * 0.4 + texture2D(tB4, vUv).rgb * 0.3) * (uBloom * 0.2);
+      if (uRays > 0.0) g += texture2D(tRays, vUv).rgb * uRays;
+      gl_FragColor = vec4(g, 1.0);
+    }`);
   const final = mat({
-    tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null },
-    uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
-    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 }, uExposure: { value: 1 },
+    tScene: { value: null }, tGlow: { value: null },
+    uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
+    uAberr: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 },
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
-    tRays: { value: null }, uRays: { value: 0 }, uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
+    uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
+    uBezel: { value: new THREE.Vector2(16, 1) },
   }, `
-    uniform sampler2D tScene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4;
-    uniform vec2 uRes; uniform vec2 uSceneRes; uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom;
-    uniform float uExposure; uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
+    uniform sampler2D tScene; uniform sampler2D tGlow;
+    uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
+    uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker;
+    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
-    uniform sampler2D tRays; uniform float uRays; uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
-    varying vec2 vUv;
-    vec3 tex(vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
+    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
+    varying HP vec2 vUv;
+    vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
-    vec3 fxaa(vec2 uv){
-      vec2 px = 1.0 / uSceneRes;
+    vec3 fxaa(HP vec2 uv){
+      HP vec2 px = 1.0 / uSceneRes;
       vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
       vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
       float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
       float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
       float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
       if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
-      vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
-      float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
-      float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
+      HP vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+      HP float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
+      HP float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
       dir = clamp(dir * rcp, -8.0, 8.0) * px;
       vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
       vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
@@ -260,17 +326,17 @@ function makePipeline(renderer, hdr) {
     }
     vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
-      vec2 uv = vUv;
-      if (uGlass > 0.5) { vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
-      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+      HP vec2 uv = vUv;
+      if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
+      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
       vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
-      vec2 cd = uv - 0.5;
-      float a = (uAberr + 1.6 * dot(cd, cd)) / uRes.x;
-      if (a > 0.0002) { vec2 dv = normalize(cd + 1e-5) * a; col.r = tex(uv + dv).r; col.b = tex(uv - dv).b; }
-      vec3 bl = texture2D(tB0, uv).rgb * 1.0 + texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55
-        + texture2D(tB3, uv).rgb * 0.4 + texture2D(tB4, uv).rgb * 0.3;
-      col += bl * uBloom * 0.2;
-      if (uRays > 0.0) col += texture2D(tRays, uv).rgb * uRays;
+      if (uAberr > 0.05) {
+        // colour fringing, only while a hit pulse lasts (two extra samples)
+        HP vec2 cd = uv - 0.5;
+        HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
+        col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
+      }
+      col += texture2D(tGlow, uv).rgb;
       col *= uExposure * uTint;
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -279,17 +345,28 @@ function makePipeline(renderer, hdr) {
       col = mix(vec3(l), col, uSat);
       col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
       if (uGlass > 0.5) {
-        float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
+        float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
         col *= 1.0 - uScan * (1.0 - s);
-        float m = mod(gl_FragCoord.x, 3.0);
-        vec3 mask = m < 1.0 ? vec3(1.0, 0.85, 0.85) : (m < 2.0 ? vec3(0.85, 1.0, 0.85) : vec3(0.85, 0.85, 1.0));
-        col *= mix(vec3(1.0), mask, uScan * 1.4);
-        col *= 0.985 + 0.015 * sin(uTime * 95.0);
+        HP float mx = mod(gl_FragCoord.x, 3.0);
+        vec3 mask = mx < 1.0 ? vec3(1.0, 0.85, 0.85) : (mx < 2.0 ? vec3(0.85, 1.0, 0.85) : vec3(0.85, 0.85, 1.0));
+        col *= mix(vec3(1.0), mask, uScan * 1.4) * uFlicker;
       }
-      vec2 v = uv * (1.0 - uv.yx);
-      col *= mix(1.0, clamp(pow(v.x * v.y * 18.0, 0.25), 0.0, 1.0), uVignette);
-      float n = fract(sin(dot(gl_FragCoord.xy + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453);
+      HP vec2 v = uv * (1.0 - uv.yx);
+      col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
+      HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
       col += (n - 0.5) * 0.018 + uFlash;
+      if (uGlass > 0.5) {
+        // the tube (drawn here rather than as page overlays, which phones would have
+        // to blend over every frame): rounded corners, a dark rim and inner shadow,
+        // and a sliver of glare
+        HP vec2 q = abs(vUv - 0.5) * uRes - (uRes * 0.5 - uBezel.x);
+        HP float d = (length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uBezel.x) / uBezel.y; // CSS px, < 0 inside
+        col *= 1.0 - 0.75 * (1.0 - smoothstep(8.0, 36.0, -d)) - 0.15 * step(-d, 2.0);
+        HP float t = 0.5 + (0.342 * uRes.x * (vUv.x - 0.5) + 0.94 * uRes.y * (0.5 - vUv.y)) / (0.342 * uRes.x + 0.94 * uRes.y);
+        float g = t < 0.22 ? mix(0.07, 0.015, t / 0.22) : 0.015 * clamp(1.0 - (t - 0.22) / 0.18, 0.0, 1.0);
+        col += (1.0 - col) * g;
+        col = mix(vec3(0.0118, 0.0078, 0.0235), col, clamp(0.5 - d * uBezel.y, 0.0, 1.0));
+      }
       gl_FragColor = vec4(col, 1.0);
     }`);
   const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
@@ -302,8 +379,9 @@ function makePipeline(renderer, hdr) {
     resize(w, h) {
       sw = w; sh = h;
       sceneRT.setSize(w, h);
-      brightRT.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
-      raysRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
+      brightRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
+      glowRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
+      raysRT.setSize(Math.max(2, w >> 3), Math.max(2, h >> 3));
       let mw = w >> 1, mh = h >> 1;
       for (const m of mips) {
         mw = Math.max(2, mw >> 1);
@@ -312,8 +390,8 @@ function makePipeline(renderer, hdr) {
         m.a.setSize(mw, mh);
         m.b.setSize(mw, mh);
       }
-      this.mirrorSize.w = Math.max(2, Math.round(w * 0.5));
-      this.mirrorSize.h = Math.max(2, Math.round(h * 0.5));
+      this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
+      this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
       final.uniforms.uSceneRes.value.set(w, h);
     },
     lastCalls: 0,
@@ -321,18 +399,19 @@ function makePipeline(renderer, hdr) {
       renderer.setRenderTarget(sceneRT);
       renderer.render(scene, camera);
       this.lastCalls = renderer.info.render.calls;
+      if (GFX.probe) GFX.probe("scene");
       const p = o.post;
-      // bloom: soft-threshold bright pass at half res, then a blurred mip chain
+      // bloom: soft-threshold bright pass straight to quarter res, then a blurred mip chain
       bright.uniforms.tDiffuse.value = sceneRT.texture;
       bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
       bright.uniforms.uKnee.value = 0.45;
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
       pass(bright, brightRT);
+      if (GFX.probe) GFX.probe("bright");
       const levels = o.lite ? 3 : LEVELS;
       let src = brightRT;
-      for (let i = 0; i < LEVELS; i++) {
+      for (let i = 0; i < levels; i++) {
         const m = mips[i];
-        if (i >= levels) continue;
         blur.uniforms.tDiffuse.value = src.texture;
         blur.uniforms.uDir.value.set(1 / m.w, 0);
         pass(blur, m.b);
@@ -341,6 +420,7 @@ function makePipeline(renderer, hdr) {
         pass(blur, m.a);
         src = m.a;
       }
+      if (GFX.probe) GFX.probe("bloom");
       // god rays toward a light the scene names (e.g. the sun), when it's on screen
       let raysOn = 0;
       if (p.rays && p.rays.pos && !o.lite) {
@@ -352,23 +432,30 @@ function makePipeline(renderer, hdr) {
           rays.uniforms.uAspect.value = sw / sh;
           pass(rays, raysRT);
           raysOn = p.rays.strength !== undefined ? p.rays.strength : 1;
+          if (GFX.probe) GFX.probe("rays");
         }
       }
+      const g = glow.uniforms;
+      g.tB0.value = mips[0].a.texture;
+      g.tB1.value = mips[1].a.texture;
+      g.tB2.value = mips[2].a.texture;
+      g.tB3.value = levels > 3 ? mips[3].a.texture : black;
+      g.tB4.value = levels > 4 ? mips[4].a.texture : black;
+      g.tRays.value = raysRT.texture;
+      g.uRays.value = raysOn;
+      g.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
+      pass(glow, glowRT);
+      if (GFX.probe) GFX.probe("glow");
       const u = final.uniforms;
-      u.tRays.value = raysRT.texture;
-      u.uRays.value = raysOn;
-      u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       u.tScene.value = sceneRT.texture;
-      u.tB0.value = mips[0].a.texture;
-      u.tB1.value = mips[1].a.texture;
-      u.tB2.value = mips[2].a.texture;
-      u.tB3.value = levels > 3 ? mips[3].a.texture : black;
-      u.tB4.value = levels > 4 ? mips[4].a.texture : black;
-      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
-      u.uTime.value = o.t;
+      u.tGlow.value = glowRT.texture;
+      u.uSplit.value = p.split !== undefined ? p.split : 0.12;
+      const cw = renderer.domElement.width, ch = renderer.domElement.height;
+      u.uRes.value.set(cw, ch);
+      u.uNoise.value.set(Math.random() * 97, Math.random() * 97);
+      u.uFlicker.value = 0.985 + 0.015 * Math.sin(o.t * 95);
       u.uAberr.value = o.ab;
       u.uFlash.value = o.flash;
-      u.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
@@ -378,9 +465,12 @@ function makePipeline(renderer, hdr) {
       u.uGlass.value = o.glass;
       u.uSnap.value = retro ? 1 : 0;
       u.uFXAA.value = retro ? 0 : 1;
-      u.uScan.value = retro ? 0.2 : 0.07;
+      u.uScan.value = retro ? 0.2 : 0.09;
       u.uCurve.value = retro ? 0.11 : 0.06;
+      const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
+      u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);
       pass(final, null);
+      if (GFX.probe) GFX.probe("final");
     },
   };
 }
@@ -429,6 +519,17 @@ class Scene3D {
     this.camera.layers.enable(1);
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
+    // pooled shockwave rings (see shockwave()), built with the scene so a hit never
+    // creates GPU objects
+    const rg = new THREE.RingGeometry(0.55, 0.8, 40);
+    this.shockRings = Array.from({ length: 4 }, () => {
+      const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+      ring.visible = false;
+      ring.userData.tok = 0;
+      this.scene.add(ring);
+      return ring;
+    });
+    this.shockI = 0;
   }
   resize(w, h) {
     if (!this.camera) return;
@@ -461,18 +562,19 @@ class Scene3D {
   // An expanding ring of light that faces the camera.
   shockwave(pos, color, size = 5, dur = 0.55) {
     if (!this.has3D) return;
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.55, 0.8, 40),
-      new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })
-    );
+    const ring = this.shockRings[this.shockI++ % this.shockRings.length];
+    const tok = ++ring.userData.tok;
+    ring.visible = true;
     ring.position.copy(pos);
     ring.quaternion.copy(this.camera.quaternion);
-    this.scene.add(ring);
-    this.tw.add(dur, (k) => { ring.scale.setScalar(0.4 + k * size); ring.material.opacity = 1 - k; }, () => {
-      this.scene.remove(ring);
-      ring.geometry.dispose();
-      ring.material.dispose();
-    });
+    ring.material.color.set(color);
+    ring.material.opacity = 1;
+    ring.scale.setScalar(0.4);
+    this.tw.add(dur, (k) => {
+      if (ring.userData.tok !== tok) return;
+      ring.scale.setScalar(0.4 + k * size);
+      ring.material.opacity = 1 - k;
+    }, () => { if (ring.userData.tok === tok) ring.visible = false; });
   }
   placeCamera() {
     if (!this.camera) return;
@@ -697,47 +799,100 @@ function beamMesh(from, to, color, radius = 0.07) {
 }
 
 // Particle bursts for explosions, coins and confetti.
+// Particle bursts: one fixed pool of soft glowing dots, drawn in a single call.
+// Nothing is created or freed during play, so a hit never waits on new GPU work
+// (a fresh material per burst used to recompile its shader on every hit).
 class Bursts {
-  constructor(scene) { this.scene = scene; this.list = []; }
+  constructor(scene, cap = 768) {
+    this.scene = scene;
+    this.cap = cap;
+    this.head = 0;
+    this.until = 0;
+    this.fresh = false;
+    this.pos = new Float32Array(cap * 3);
+    this.vel = new Float32Array(cap * 3);
+    this.col = new Float32Array(cap * 3);
+    this.size = new Float32Array(cap);
+    this.alpha = new Float32Array(cap);
+    this.age = new Float32Array(cap);
+    this.life = new Float32Array(cap).fill(1);
+    this.grav = new Float32Array(cap);
+    this._c = new THREE.Color();
+    const g = new THREE.BufferGeometry();
+    const attr = (a, n) => new THREE.BufferAttribute(a, n).setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute("position", attr(this.pos, 3));
+    g.setAttribute("aColor", attr(this.col, 3));
+    g.setAttribute("aSize", attr(this.size, 1));
+    g.setAttribute("aAlpha", attr(this.alpha, 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { tMap: { value: glowTexture() }, uScale: { value: 300 } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aColor; attribute float aSize; attribute float aAlpha; uniform float uScale; varying vec3 vC;
+        void main(){
+          vC = aColor * aAlpha;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = aAlpha > 0.0 ? aSize * uScale / max(-mv.z, 0.05) : 0.0;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: "uniform sampler2D tMap; varying vec3 vC; void main(){ gl_FragColor = vec4(vC * texture2D(tMap, gl_PointCoord).a, 1.0); }",
+    });
+    this.pts = new THREE.Points(g, mat);
+    this.pts.frustumCulled = false;
+    this.pts.visible = false;
+    // dot size in pixels follows whichever target is being drawn (the scene or a mirror)
+    this.pts.onBeforeRender = (r) => {
+      const t = r.getRenderTarget();
+      mat.uniforms.uScale.value = (t ? t.height : r.domElement.height) * 0.5;
+      mat.uniformsNeedUpdate = true;
+    };
+    if (scene) scene.add(this.pts);
+  }
   burst(pos, color, { n = 60, speed = 10, size = 0.3, life = 1.1, gravity = -5, spread = 1 } = {}) {
     if (!this.scene) return;
-    const p = new Float32Array(n * 3), v = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      p[i * 3] = pos.x; p[i * 3 + 1] = pos.y; p[i * 3 + 2] = pos.z;
-      const th = rand(Math.PI * 2), ph = Math.acos(rand(-1, 1)), s = rand(0.25, 1) * speed;
-      v[i * 3] = Math.sin(ph) * Math.cos(th) * s * spread;
-      v[i * 3 + 1] = Math.cos(ph) * s;
-      v[i * 3 + 2] = Math.sin(ph) * Math.sin(th) * s * spread;
+    const c = this._c.set(color).multiplyScalar(2.6);
+    const P = this.pos, V = this.vel, C = this.col;
+    for (let k = 0; k < n; k++) {
+      const i = this.head, j = i * 3;
+      this.head = (i + 1) % this.cap;
+      const th = rand(Math.PI * 2), ph = Math.acos(rand(-1, 1)), sp = rand(0.25, 1) * speed;
+      P[j] = pos.x; P[j + 1] = pos.y; P[j + 2] = pos.z;
+      V[j] = Math.sin(ph) * Math.cos(th) * sp * spread;
+      V[j + 1] = Math.cos(ph) * sp;
+      V[j + 2] = Math.sin(ph) * Math.sin(th) * sp * spread;
+      C[j] = c.r; C[j + 1] = c.g; C[j + 2] = c.b;
+      this.size[i] = size * 2.4;
+      this.alpha[i] = 1;
+      this.age[i] = 0;
+      this.life[i] = life;
+      this.grav[i] = gravity;
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(color).multiplyScalar(2.6), map: glowTexture(), size: size * 2.4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
-    this.scene.add(pts);
-    this.list.push({ pts, v, n, life, age: 0, gravity });
+    this.until = Math.max(this.until, life);
+    this.fresh = true;
+    this.pts.visible = true;
   }
   update(dt) {
-    for (let i = this.list.length - 1; i >= 0; i--) {
-      const b = this.list[i];
-      b.age += dt;
-      const a = b.pts.geometry.attributes.position.array;
-      const drag = Math.pow(0.4, dt);
-      for (let j = 0; j < b.n; j++) {
-        a[j * 3] += b.v[j * 3] * dt;
-        a[j * 3 + 1] += b.v[j * 3 + 1] * dt;
-        a[j * 3 + 2] += b.v[j * 3 + 2] * dt;
-        b.v[j * 3] *= drag;
-        b.v[j * 3 + 2] *= drag;
-        b.v[j * 3 + 1] = b.v[j * 3 + 1] * drag + b.gravity * dt;
-      }
-      b.pts.geometry.attributes.position.needsUpdate = true;
-      b.pts.material.opacity = Math.max(0, 1 - b.age / b.life);
-      if (b.age >= b.life) {
-        this.scene.remove(b.pts);
-        b.pts.geometry.dispose();
-        b.pts.material.dispose();
-        this.list.splice(i, 1);
-      }
+    if (!this.pts.visible) return;
+    const P = this.pos, V = this.vel, A = this.alpha;
+    const drag = Math.pow(0.4, dt);
+    for (let i = 0; i < this.cap; i++) {
+      if (A[i] <= 0) continue;
+      const age = (this.age[i] += dt);
+      if (age >= this.life[i]) { A[i] = 0; continue; }
+      const j = i * 3;
+      P[j] += V[j] * dt;
+      P[j + 1] += V[j + 1] * dt;
+      P[j + 2] += V[j + 2] * dt;
+      V[j] *= drag;
+      V[j + 2] *= drag;
+      V[j + 1] = V[j + 1] * drag + this.grav[i] * dt;
+      A[i] = 1 - age / this.life[i];
     }
+    const at = this.pts.geometry.attributes;
+    at.position.needsUpdate = true;
+    at.aAlpha.needsUpdate = true;
+    if (this.fresh) { at.aColor.needsUpdate = true; at.aSize.needsUpdate = true; this.fresh = false; }
+    this.until -= dt;
+    if (this.until <= 0) { A.fill(0); at.aAlpha.needsUpdate = true; this.pts.visible = false; }
   }
 }
 

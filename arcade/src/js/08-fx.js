@@ -71,7 +71,10 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
         gl_FragColor = linearToOutputTexel(vec4(col, 1.0));
       }`,
   }));
-  m.renderOrder = -10;
+  // Drawn after the other solid objects and depth-tested (the dome is far behind
+  // them), so the sky's noise and stars are only computed where they show, not
+  // under the floor, mountains and city that cover half the screen.
+  m.renderOrder = 50;
   m.frustumCulled = false;
   m.userData.sky = true;
   return m;
@@ -463,6 +466,25 @@ function beamMaterial(color, intensity = 3) {
         gl_FragColor = vec4((uColor + vec3(core * 0.6)) * core * crawl * uFade, 1.0);
       }`,
   });
+}
+// A reusable beam: a unit open cylinder, aimed and sized per shot with aimBeam().
+// Pools of these replace a fresh beam per shot, whose new geometry and shader
+// stalled the frame each time.
+function makeBeam(color, intensity = 3) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 12, 1, true), beamMaterial(color, intensity));
+  m.renderOrder = 6;
+  m.visible = false;
+  return m;
+}
+function aimBeam(m, from, to, radius) {
+  const v = aimBeam._v || (aimBeam._v = { up: new THREE.Vector3(0, 1, 0), d: new THREE.Vector3() });
+  v.d.subVectors(to, from);
+  const len = Math.max(v.d.length(), 1e-4);
+  m.position.copy(from).addScaledVector(v.d, 0.5);
+  m.quaternion.setFromUnitVectors(v.up, v.d.multiplyScalar(1 / len));
+  m.scale.set(radius, len, radius);
+  m.visible = true;
+  return m;
 }
 function beamBetween(from, to, color, radius = 0.1, intensity = 3) {
   const dir = new THREE.Vector3().subVectors(to, from);

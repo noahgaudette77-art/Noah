@@ -492,6 +492,7 @@ class MemoryGame extends QuizGame {
     this.coinTex = memoryCoinTexture();
     this.coinGeo = memoryCoinGeometry();
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
+    this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying

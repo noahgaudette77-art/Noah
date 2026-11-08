@@ -624,7 +624,7 @@ class RacerGame extends QuizGame {
       this.envP = 0;
     }
     // sky, sun and horizon
-    this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds });
+    this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
     s.add(this.sky);
     this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo });
     this.sun.position.set(0, sky0.sunY, -430);
@@ -650,6 +650,13 @@ class RacerGame extends QuizGame {
     this.car = this.makeCar();
     s.add(this.car);
     this.buildGateKit();
+    // a stand-in gantry with every sign, drawn once off-screen as the scene starts
+    // (see GFX.warm), so the first real gate doesn't stall building its shaders
+    const k4 = this.gateKit[4], wg = new THREE.Group();
+    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
+    Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
+    wg.position.z = -60;
+    this.warmExtra = [wg];
     this.post = { exposure: 1.1, bloom: 1, threshold: 1, saturation: 1.14, contrast: 1.06, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 } };
     s.userData.post = this.post;
     this.camBase.set(0, 3.1, 7.4);

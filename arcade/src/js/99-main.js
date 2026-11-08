@@ -7,12 +7,27 @@ function boot() {
   GFX.init();
 
   Pointer.init();
+  // FPS counter (Setup): frames per second, the screen's refresh rate as measured,
+  // and the adaptive quality level, refreshed twice a second.
+  const fpsEl = $("#fps");
+  fpsEl.hidden = !Store.settings.fps;
+  let fpsN = 0, fpsT = performance.now();
   let last = performance.now();
   const loop = (now) => {
     const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
     last = now;
+    if (!fpsEl.hidden) {
+      fpsN++;
+      if (now - fpsT >= 500) {
+        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${Math.round(1 / GFX.vsync)} HZ · Q${GFX.qi + 1}/${GFX.Q.length}`;
+        fpsN = 0;
+        fpsT = now;
+      }
+    }
     let dt = real;
-    if (GFX.freeze > 0) { GFX.freeze -= real; dt = 0; } // hit-stop: the world pauses, the screen still glows
+    // hit-stop: a beat of slow motion on big hits. The world never fully stops, so
+    // an impact reads as weight, not as a stutter.
+    if (GFX.freeze > 0) { GFX.freeze -= real; dt = real * 0.3; }
     try {
       Pointer.update(real);
       GFX.watch(real);
@@ -28,8 +43,10 @@ function boot() {
     if (!document.hidden) return;
     const s = Scenes.cur;
     if (s && s.pause && s.state && s.state !== "over" && s.state !== "intro") s.pause();
+    Store.flush();
     Store.flushRemote();
   });
+  window.addEventListener("pagehide", () => Store.flush());
 
   const fonts = document.fonts && document.fonts.load
     ? Promise.race([

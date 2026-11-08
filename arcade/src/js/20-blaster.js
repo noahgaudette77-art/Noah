@@ -207,6 +207,13 @@ class BlasterGame extends QuizGame {
     this.flashSprite.visible = false;
     this.flashSprite.renderOrder = 8;
     s.add(this.flashSprite);
+    // one beam and muzzle flash per gun, reused for every shot
+    this.shotFX = [0, 1].map(() => {
+      const fx = { beam: makeBeam(SLOT_COLORS[0], 3.6), flash: glowSprite(0xffffff, 1, 1), tok: 0 };
+      fx.flash.visible = false;
+      s.add(fx.beam, fx.flash);
+      return fx;
+    });
     this.boomT = 0;
     this.boomSize = 6;
     this._v = new THREE.Vector3();
@@ -557,22 +564,24 @@ class BlasterGame extends QuizGame {
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
       this.ship.updateMatrixWorld();
       const col = SLOT_COLORS[i];
-      this.muzzles.forEach((m) => {
+      this.muzzles.forEach((m, gun) => {
+        const fx = this.shotFX[gun];
+        const tok = ++fx.tok;
         const from = this.ship.localToWorld(m.clone());
-        const beam = beamBetween(from, t.position.clone(), col, 0.06 + 0.07 * this.shipScale, 3.6);
-        const flash = glowSprite(neon(col, 2.6), 1.3 * this.shipScale, 1);
-        flash.position.copy(from);
-        this.scene.add(beam, flash);
+        aimBeam(fx.beam, from, t.position, 0.06 + 0.07 * this.shipScale);
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
+        fx.beam.material.uniforms.uFade.value = 1;
+        fx.flash.material.color.copy(neon(col, 2.6));
+        fx.flash.material.opacity = 1;
+        fx.flash.position.copy(from);
+        fx.flash.scale.setScalar(1.3 * this.shipScale);
+        fx.flash.visible = true;
         this.tw.add(0.3, (k) => {
-          beam.material.uniforms.uFade.value = 1 - k;
-          flash.material.opacity = 1 - k;
-          flash.scale.setScalar((1.3 + k * 0.8) * this.shipScale);
-        }, () => {
-          this.scene.remove(beam, flash);
-          beam.geometry.dispose();
-          beam.material.dispose();
-          flash.material.dispose();
-        });
+          if (fx.tok !== tok) return;
+          fx.beam.material.uniforms.uFade.value = 1 - k;
+          fx.flash.material.opacity = 1 - k;
+          fx.flash.scale.setScalar((1.3 + k * 0.8) * this.shipScale);
+        }, () => { if (fx.tok === tok) { fx.beam.visible = false; fx.flash.visible = false; } });
       });
     }
     this.tw.wait(0.22, () => this.resolve(i));

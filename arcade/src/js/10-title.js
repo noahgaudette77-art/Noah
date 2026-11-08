@@ -6,7 +6,7 @@ class TitleScene extends Scene3D {
     this.dist = 0;
     if (!this.has3D) return;
     const s = this.scene;
-    this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8 });
+    this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
     this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.9 });
     this.sun.position.set(0, 18, -360);

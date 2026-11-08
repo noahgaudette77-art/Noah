@@ -37,10 +37,22 @@ lists all of them again.
 - **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
   colour fringing and flashes when something hits, inside a bezel. Turn it off
   under Setup → CRT glass.
-- **Smooth on phones.** Resolution adapts to the device as you play, comes back up
-  when a scene is lighter, and each kind of scene remembers what suits it. Devices
-  that still struggle drop reflections. A steady 30 fps cap (such as iOS Low Power
-  Mode) is left alone, since lowering the resolution can't help it.
+- **Smooth at your screen's refresh rate.** The game measures how fast your screen
+  refreshes (60, 90, 120 Hz...) and adjusts its quality as you play to hit every
+  frame: it lowers resolution, then reflections, and steps back up when a scene is
+  lighter. Each kind of scene remembers what suits it. A steady 30 fps cap (such as
+  iOS Low Power Mode) is left alone, since lowering quality can't help it. iPhones
+  run web pages at 60 fps unless Safari's "Prefer Page Rendering Updates near
+  60fps" feature flag is turned off, and apps' built-in browsers may stay at 60.
+- **No hitches.** Every shader a scene needs is built while it loads (behind the
+  screen transition), and effects come from reusable pools, so the first explosion
+  or beam never stalls a frame. Big hits slow time for a beat instead of freezing
+  it. Progress saves happen between frames. The arcade floor stays built while you
+  play, so coming back is instant.
+- **Instant input.** Answers, flashcard flips and grades register the moment your
+  finger touches the screen, not when it lifts.
+- **FPS counter.** Setup → FPS counter shows the frame rate, your screen's refresh
+  rate and the current quality level (1-6).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
   book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
   time you play a stage they brief you, with a pixel portrait and typed-out

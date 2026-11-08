@@ -192,6 +192,31 @@ class BossGame extends QuizGame {
     this.flash.visible = false;
     this.flash.renderOrder = 8;
     s.add(this.flash);
+    // the player's plasma bolt, the boss's eye beam and the floor shockwaves: built
+    // once, reused every time (a fresh set per shot stalled the frame)
+    const bolt = { shot: glowSprite(neon(COLORS.cyan, 3), 1.4, 1), hot: glowSprite(neon(0xffffff, 3), 0.55, 1), tail: new Trail({ length: 12, width: 0.14, color: COLORS.cyan, intensity: 2.6 }), tok: 0 };
+    bolt.shot.add(bolt.hot);
+    bolt.tc0 = bolt.tail.mesh.material.uniforms.uColor.value.clone();
+    bolt.shot.visible = bolt.tail.mesh.visible = false;
+    s.add(bolt.shot, bolt.tail.mesh);
+    this.bolt = bolt;
+    const atk = { beam: makeBeam(col.getHex(), 3.6), glow: makeBeam(col.getHex(), 0.9), muzzle: glowSprite(0xffffff, 3, 1), tok: 0 };
+    atk.muzzle.renderOrder = 7;
+    atk.muzzle.visible = false;
+    s.add(atk.beam, atk.glow, atk.muzzle);
+    this.atk = atk;
+    const fr = new THREE.RingGeometry(0.85, 1, 64);
+    this.floorRings = [0, 1, 2].map(() => {
+      const ring = new THREE.Mesh(fr, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.06;
+      ring.layers.set(1);
+      ring.visible = false;
+      ring.userData.tok = 0;
+      s.add(ring);
+      return ring;
+    });
+    this.floorRingI = 0;
     this.flashT = 0;
     this.flashSize = 8;
     this.camBase.set(0, this.camY, this.camZ);
@@ -504,26 +529,21 @@ class BossGame extends QuizGame {
     };
     if (this.has3D) {
       // a plasma bolt with a ribbon tail
-      const shot = glowSprite(neon(COLORS.cyan, 3), 1.4, 1);
-      const hot = glowSprite(neon(0xffffff, 3), 0.55, 1);
-      shot.add(hot);
+      const { shot, tail, tc0 } = this.bolt;
+      const tok = ++this.bolt.tok;
       const from = new THREE.Vector3(0, this.camY - 1.2, this.camZ - 3);
       const to = this.boss.position.clone();
       shot.position.copy(from);
-      const tail = new Trail({ length: 12, width: 0.14, color: COLORS.cyan, intensity: 2.6 });
+      shot.visible = true;
       tail.reset(from);
-      this.scene.add(shot, tail.mesh);
+      tail.mesh.visible = true;
       const tc = tail.mesh.material.uniforms.uColor.value;
-      const tc0 = tc.clone();
-      this.tw.add(0.3, (k) => { shot.position.lerpVectors(from, to, k); tail.push(shot.position); }, () => {
-        this.scene.remove(shot);
-        shot.material.dispose();
-        hot.material.dispose();
+      tc.copy(tc0);
+      this.tw.add(0.3, (k) => { if (this.bolt.tok === tok) { shot.position.lerpVectors(from, to, k); tail.push(shot.position); } }, () => {
+        if (this.bolt.tok === tok) shot.visible = false;
         land();
-        this.tw.add(0.25, (k) => { tail.push(to); tc.copy(tc0).multiplyScalar(1 - k); }, () => {
-          this.scene.remove(tail.mesh);
-          tail.mesh.geometry.dispose();
-          tail.mesh.material.dispose();
+        this.tw.add(0.25, (k) => { if (this.bolt.tok === tok) { tail.push(to); tc.copy(tc0).multiplyScalar(1 - k); } }, () => {
+          if (this.bolt.tok === tok) tail.mesh.visible = false;
         });
       }, Ease.inCubic);
     } else land();
@@ -553,23 +573,27 @@ class BossGame extends QuizGame {
       const to = new THREE.Vector3(0, this.camY - 1.0, this.camZ - 1.5);
       const r = 0.25 * this.bossScale + 0.05;
       const col = this.enraged ? COLORS.red : this.cfg.color;
-      const beam = beamBetween(eye, to, col, r, 3.6);
-      const glow = beamBetween(eye, to, col, r * 2.8, 0.9);
-      const muzzle = glowSprite(neon(col, 3), 3 * this.bossScale, 1);
+      const { beam, glow, muzzle } = this.atk;
+      const tok = ++this.atk.tok;
+      aimBeam(beam, eye, to, r);
+      aimBeam(glow, eye, to, r * 2.8);
+      beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
+      glow.material.uniforms.uColor.value.copy(neon(col, 0.9));
+      beam.material.uniforms.uFade.value = 1;
+      glow.material.uniforms.uFade.value = 1;
+      muzzle.material.color.copy(neon(col, 3));
+      muzzle.material.opacity = 1;
+      muzzle.scale.setScalar(3 * this.bossScale);
       muzzle.position.copy(eye);
-      muzzle.renderOrder = 7;
-      this.scene.add(beam, glow, muzzle);
+      muzzle.visible = true;
       this.flashAt(eye, col, 1, 7 * this.bossScale + 2);
       this.tw.add(0.5, (k) => {
+        if (this.atk.tok !== tok) return;
         beam.material.uniforms.uFade.value = 1 - k;
         glow.material.uniforms.uFade.value = (1 - k) * (1 - k);
         muzzle.material.opacity = 1 - k;
         muzzle.scale.setScalar((3 + k * 2.5) * this.bossScale);
-      }, () => {
-        this.scene.remove(beam, glow, muzzle);
-        [beam, glow].forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
-        muzzle.material.dispose();
-      });
+      }, () => { if (this.atk.tok === tok) beam.visible = glow.visible = muzzle.visible = false; });
       this.tw.wait(0.12, hit);
     } else hit();
     this.charge = 0;
@@ -587,16 +611,17 @@ class BossGame extends QuizGame {
   // A shockwave rolling across the floor.
   floorRing(color, size, dur) {
     if (!this.has3D) return;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64), new THREE.MeshBasicMaterial({ color: neon(color, 2.4), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.06;
-    ring.layers.set(1);
-    this.scene.add(ring);
-    this.tw.add(dur, (k) => { ring.scale.setScalar(1 + k * size); ring.material.opacity = 1 - k; }, () => {
-      this.scene.remove(ring);
-      ring.geometry.dispose();
-      ring.material.dispose();
-    });
+    const ring = this.floorRings[this.floorRingI++ % this.floorRings.length];
+    const tok = ++ring.userData.tok;
+    ring.material.color.copy(neon(color, 2.4));
+    ring.material.opacity = 1;
+    ring.scale.setScalar(1);
+    ring.visible = true;
+    this.tw.add(dur, (k) => {
+      if (ring.userData.tok !== tok) return;
+      ring.scale.setScalar(1 + k * size);
+      ring.material.opacity = 1 - k;
+    }, () => { if (ring.userData.tok === tok) ring.visible = false; });
   }
   after() {
     if (this.unmounted) return;

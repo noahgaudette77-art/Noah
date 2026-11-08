@@ -67,6 +67,7 @@ function showSettings() {
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
+      ${row("FPS counter", "Frame rate, screen refresh rate and quality level (1-6)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
@@ -95,6 +96,7 @@ function showSettings() {
         if (k === "music") Sound.refreshMusic();
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "pixel") GFX.resize();
+        if (k === "fps") $("#fps").hidden = !v;
         Sound.sfx("blip");
       }
     },
