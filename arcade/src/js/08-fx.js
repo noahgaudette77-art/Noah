@@ -66,7 +66,9 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
             col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
           }
         }
-        gl_FragColor = vec4(col, 1.0);
+        // Encode like built-in materials do: identity in the scene, RGBE when the
+        // PMREM generator renders this sky into an environment map.
+        gl_FragColor = linearToOutputTexel(vec4(col, 1.0));
       }`,
   }));
   m.renderOrder = -10;
