@@ -72,7 +72,7 @@ const GFX = {
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
     const mirrors = scene.userData.mirrors;
-    if (mirrors && !this.lite) for (const m of mirrors) m.render(this.renderer, scene, camera, this.pipe.mirrorSize);
+    if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     this.pipe.render(scene, camera, {
       t: this.t,
       ab: this.ab,

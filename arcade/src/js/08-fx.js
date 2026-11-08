@@ -167,6 +167,18 @@ class Mirror {
     if (sky) sky.position.copy(v.cam);
     for (const r of this.receivers) r.visible = true;
     for (const o of this.hide) o.visible = true;
+    this.blanked = false;
+  }
+  // Lite mode skips reflections: clear the old one once, so floors don't keep showing
+  // a frozen picture of the scene while the world moves on.
+  blank(renderer) {
+    if (this.blanked) return;
+    this.blanked = true;
+    const c = renderer.getClearColor(this._v.cc || (this._v.cc = new THREE.Color())), a = renderer.getClearAlpha();
+    renderer.setClearColor(0x000000, 1);
+    renderer.setRenderTarget(this.rt);
+    renderer.clear();
+    renderer.setClearColor(c, a);
   }
   dispose() { this.rt.dispose(); }
 }
