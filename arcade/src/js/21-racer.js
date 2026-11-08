@@ -613,11 +613,11 @@ class RacerGame extends QuizGame {
     const sky0 = skyAt(0);
     // light: key from behind the camera, a gantry light and one that rides the nearest lamp
     this.amb = new THREE.AmbientLight(0x6a5aa8, 0.55);
-    this.key = new THREE.DirectionalLight(0xffffff, 0.9);
-    this.key.position.set(-3, 6, 6);
+    this.keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.keyLight.position.set(-3, 6, 6);
     this.gateLight = new THREE.PointLight(0xc9b8ff, 0, 16, 2);
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
-    s.add(this.amb, this.key, this.gateLight, this.lampLight);
+    s.add(this.amb, this.keyLight, this.gateLight, this.lampLight);
     if (GFX.ok) {
       this.envKit = new RacerEnv();
       this.env = this.envKit.build(sky0);
@@ -1130,7 +1130,7 @@ class RacerGame extends QuizGame {
     pu.uAmb.value.copy(sky.amb).multiplyScalar(0.55);
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
-    this.key.color.copy(sky.light);
+    this.keyLight.color.copy(sky.light);
     this.post.exposure = sky.exposure;
     this.post.bloom = sky.bloom;
     // sun rays through the skyline: strongest when the sun is low, faint at midday

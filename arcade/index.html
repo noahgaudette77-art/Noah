@@ -1319,24 +1319,63 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
-  // Dynamic resolution: watch real frame times and trade sharpness for smoothness.
-  lockQuality() { this.locked = true; this.dyn = 1; this.lite = false; this.resize(); },
+  // Dynamic resolution (HD look). Every 40 frames, compare the average frame time
+  // with the budget. Slow: step the resolution down, then drop reflections. Smooth for
+  // a few seconds: probe one step back up, but not to a level that just failed (the
+  // wait doubles each time a probe fails). A steady 30 fps with no faster frames is a
+  // frame-rate cap (iOS low-power mode, a throttled frame), not a slow GPU, so it's
+  // left alone. Each kind of scene remembers its level, so a light scene isn't stuck
+  // blurry after a heavy one.
+  DYN: [0.55, 0.62, 0.7, 0.78, 0.87, 1],
+  dynI: 5,
+  mem: {},
+  lockQuality() { this.locked = true; this.dynI = this.DYN.length - 1; this.dyn = 1; this.lite = false; this.resize(); },
+  setDyn(i) {
+    i = clamp(i, 0, this.DYN.length - 1);
+    if (i === this.dynI) return;
+    this.dynI = i;
+    this.dyn = this.DYN[i];
+    if (this.look === "hd") this.resize();
+  },
+  sceneChanged(old, s) {
+    this._n = this._sum = this._good = 0;
+    this._min = 1;
+    this.probed = false;
+    this.settle = 1; // a new scene's first frames compile shaders and upload textures
+    if (this.locked || !this.ok) return;
+    const name = (o) => (o && o.constructor ? o.constructor.name : "");
+    if (old) this.mem[name(old)] = { i: this.dynI, lite: this.lite };
+    const m = s && this.mem[name(s)];
+    if (m) { this.lite = m.lite; this.setDyn(m.i); }
+  },
   watch(realDt) {
     if (!this.ok || !this.pipe || this.locked) return;
     this._n = (this._n || 0) + 1;
     this._sum = (this._sum || 0) + realDt;
-    if (this._n < 45) return;
-    const avg = this._sum / this._n;
-    this._n = 0;
-    this._sum = 0;
-    if (this.t < 3) return; // let the first frames settle
-    if (avg > 0.024) {
-      if (this.look === "hd" && this.dyn > 0.55) { this.dyn = Math.max(0.55, this.dyn * 0.85); this.resize(); }
-      else if (!this.lite) { this.lite = true; }
-    } else if (avg < 0.0145 && this.look === "hd" && this.dyn < 1) {
-      this.dyn = Math.min(1, this.dyn * 1.07);
-      this.resize();
-    }
+    this._min = Math.min(this._min || 1, realDt);
+    if (this._n < 40) return;
+    const avg = this._sum / this._n, fastest = this._min;
+    this._n = this._sum = 0;
+    this._min = 1;
+    if (this.t < 3 || this.settle > 0) { this.settle = Math.max(0, (this.settle || 0) - 1); return; }
+    const hd = this.look === "hd";
+    const capped = fastest > 0.028 && avg < 0.0365;
+    if (avg > 0.024 && !capped) {
+      this._good = 0;
+      this.backoff = this.probed ? Math.min(240, this.backoff * 2) : this.backoff || 15;
+      this.probed = false;
+      this.ceil = this.dynI;
+      this.ceilT = this.t + this.backoff;
+      if (hd && this.dynI > 0) this.setDyn(this.dynI - 1);
+      else this.lite = true;
+    } else if (avg < 0.0185) {
+      if (++this._good < 4) return;
+      this._good = 0;
+      const blocked = this.t < (this.ceilT || 0);
+      const top = blocked ? this.ceil - 1 : this.DYN.length - 1;
+      if (this.lite) { if (!blocked) { this.lite = false; this.probed = true; } }
+      else if (hd && this.dynI < top) { this.setDyn(this.dynI + 1); this.probed = true; }
+    } else this._good = 0;
   },
 };
 
@@ -1346,6 +1385,7 @@ const Scenes = {
     const old = this.cur;
     this.cur = s;
     if (old && old !== s) old.dispose();
+    if (old !== s) GFX.sceneChanged(old, s);
     if (s) s.resize(GFX.w, GFX.h);
     return s;
   },
@@ -6109,11 +6149,11 @@ class RacerGame extends QuizGame {
     const sky0 = skyAt(0);
     // light: key from behind the camera, a gantry light and one that rides the nearest lamp
     this.amb = new THREE.AmbientLight(0x6a5aa8, 0.55);
-    this.key = new THREE.DirectionalLight(0xffffff, 0.9);
-    this.key.position.set(-3, 6, 6);
+    this.keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.keyLight.position.set(-3, 6, 6);
     this.gateLight = new THREE.PointLight(0xc9b8ff, 0, 16, 2);
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
-    s.add(this.amb, this.key, this.gateLight, this.lampLight);
+    s.add(this.amb, this.keyLight, this.gateLight, this.lampLight);
     if (GFX.ok) {
       this.envKit = new RacerEnv();
       this.env = this.envKit.build(sky0);
@@ -6626,7 +6666,7 @@ class RacerGame extends QuizGame {
     pu.uAmb.value.copy(sky.amb).multiplyScalar(0.55);
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
-    this.key.color.copy(sky.light);
+    this.keyLight.color.copy(sky.light);
     this.post.exposure = sky.exposure;
     this.post.bloom = sky.bloom;
     // sun rays through the skyline: strongest when the sun is low, faint at midday
