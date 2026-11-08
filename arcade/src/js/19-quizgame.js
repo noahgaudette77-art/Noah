@@ -81,7 +81,14 @@ class QuizGame extends Scene3D {
 
 function startGame(id, sel) {
   const G = { blaster: BlasterGame, racer: RacerGame, boss: BossGame, memory: MemoryGame, exam: ExamGame }[id];
-  const g = new G(sel);
-  Scenes.set(g);
-  g.start();
+  const go = () => {
+    Sound.ambience(false);
+    Sound.setIntensity(0);
+    Sound.sfx("crton");
+    const g = new G(sel);
+    Scenes.set(g);
+    g.start();
+  };
+  if (id === "exam") go();
+  else withBriefing(sel, go);
 }

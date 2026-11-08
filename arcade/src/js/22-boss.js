@@ -124,15 +124,45 @@ class BossGame extends QuizGame {
     this.bossScale = clamp(Math.min((bs.h * 0.86) / 7.4, (bs.w * 0.86) / 8), 0.3, 1.1);
     this.boss.scale.setScalar(this.bossScale);
   }
+  get lines() {
+    const L = bossLines(this.bossKey) || {};
+    return {
+      intro: L.intro && L.intro.length ? L.intro : [this.cfg.line],
+      hit: L.hit && L.hit.length ? L.hit : ["ARGH!", "A lucky shot!", "Impossible!"],
+      miss: L.miss && L.miss.length ? L.miss : [this.cfg.line],
+      defeat: L.defeat || "This isn't over...",
+      win: L.win || this.cfg.line,
+    };
+  }
+  // The boss talks: a speech bubble just above the 3D strip.
+  taunt(text) {
+    Dialog.say(this.el, text, { top: this.band ? this.band.top + 8 : 140, color: this.cfg.color, voice: 150, name: this.cfg.name, ms: 1900 });
+  }
   start() {
     Sound.play("boss");
     Sound.sfx("charge");
     UI.banner("WARNING", COLORS.red, "BOSS APPROACHING");
     this.layoutBand();
-    if (this.has3D) this.tw.add(1.4, (k) => { this.boss.position.y = lerp(14, this.bossY, k); }, null, Ease.outBack);
-    this.tw.wait(1.5, () => {
-      UI.banner(this.cfg.name, this.cfg.color, this.cfg.line);
-      this.tw.wait(1.4, () => this.nextQuestion());
+    if (this.has3D) {
+      this.tw.add(1.4, (k) => { this.boss.position.y = lerp(14, this.bossY, k); }, () => {
+        this.shockwave(new THREE.Vector3(0, 0.2, -10), this.cfg.color, 9, 0.8);
+        this.shake(0.4);
+        GFX.pulse(8, 0.15);
+        Haptics.buzz(80);
+        Sound.sfx("hit");
+      }, Ease.outBack);
+    }
+    this.tw.wait(1.6, () => {
+      if (this.unmounted) return;
+      Dialog.open({
+        lines: this.lines.intro,
+        name: this.cfg.name,
+        boss: true,
+        color: this.cfg.color,
+        voice: 140,
+        skipLabel: "FIGHT!",
+        onDone: () => { if (!this.unmounted) this.nextQuestion(); },
+      });
     });
   }
   hud() {
@@ -173,11 +203,21 @@ class BossGame extends QuizGame {
     const dmg = 10 + Math.round(10 * (1 - frac)) + Math.min(8, (this.run.streak - 1) * 2);
     Sound.sfx("shot");
     const land = () => {
+      const wasCalm = !this.enraged;
       this.hp -= dmg;
       this.score += dmg * 10;
       Sound.sfx("boom");
       Sound.sfx("correct");
       UI.flash("good");
+      GFX.pulse(5, 0.12);
+      GFX.hitStop(this.hp <= 0 ? 260 : 80);
+      Haptics.buzz(30);
+      Sound.setIntensity(this.enraged ? 3 : Sound.intensityFor(this.run.streak));
+      if (this.hp > 0) this.taunt(pick(this.lines.hit));
+      if (wasCalm && this.enraged && this.hp > 0) {
+        this.tw.wait(0.5, () => { UI.banner("ENRAGED", COLORS.red, "Its attacks charge faster"); Sound.sfx("charge"); });
+        if (this.has3D) this.scene.fog.color.setHex(0x2a0614);
+      }
       const p = this.bandPoint(0.25);
       UI.floater("-" + dmg + " HP", p.x, p.y, this.cfg.color);
       if (this.has3D) {
@@ -187,6 +227,7 @@ class BossGame extends QuizGame {
         const base = em.clone();
         this.tw.add(0.4, (k) => { em.setRGB(lerp(1, base.r, k), lerp(1, base.g, k), lerp(1, base.b, k)); });
         this.tw.add(0.35, (k) => { b.position.z = -10 - Math.sin(k * Math.PI) * 1.2; });
+        this.shockwave(b.position.clone(), this.cfg.color, 6);
       }
       this.hud();
       const title = this.hp <= 0 ? `FINISHING BLOW! −${dmg} HP` : `HIT! −${dmg} HP`;
@@ -211,6 +252,10 @@ class BossGame extends QuizGame {
       Sound.sfx("hit");
       UI.flash("hit");
       this.shake(0.55);
+      GFX.pulse(14, 0);
+      Haptics.buzz([60, 40, 90]);
+      Sound.setIntensity(this.enraged ? 3 : 0);
+      this.taunt(this.hearts > 0 ? pick(this.lines.miss) : this.lines.win);
       this.hud();
       const title = (slow ? "TOO SLOW! " : "WRONG! ") + (this.hearts > 0 ? "THE BOSS HITS YOU" : "YOU'RE OUT OF HEARTS");
       this.tw.wait(0.4, () => {
@@ -244,7 +289,11 @@ class BossGame extends QuizGame {
     Store.save();
     Sound.stopMusic();
     Sound.sfx("bigboom");
-    UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS"));
+    this.taunt(this.lines.defeat);
+    GFX.pulse(12, 0.45);
+    Haptics.buzz([100, 50, 200]);
+    if (this.has3D) this.shockwave(this.boss.position.clone(), 0xffffff, 14, 1.1);
+    this.tw.wait(0.9, () => UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS")));
     if (this.has3D) {
       for (let i = 0; i < 6; i++) {
         this.tw.wait(i * 0.18, () => {
@@ -257,13 +306,14 @@ class BossGame extends QuizGame {
       this.tw.add(1.2, (k) => { this.boss.scale.setScalar(s0 * (1 - k)); this.boss.rotation.y += 0.3; }, null, Ease.inCubic);
     }
     this.tw.wait(1.4, () => Sound.sfx("win"));
-    this.tw.wait(2.4, () => {
+    this.tw.wait(3.2, () => {
       if (this.unmounted) return;
       showResults({
         game: "boss", sel: this.sel, run: this.run, score: this.score, stars,
         title: "STAGE CLEAR", color: COLORS.lime, headline: fmtScore(this.score) + " PTS",
         sub: `${this.cfg.name} defeated with ${this.hearts} heart${this.hearts === 1 ? "" : "s"} left`,
         tiles: [{ k: "STARS", v: stars + "/3", c: COLORS.yellow }],
+        debrief: this.bossKey !== "all" ? this.bossKey : null,
       });
     });
   }
@@ -272,8 +322,8 @@ class BossGame extends QuizGame {
     this.el.classList.add("finale");
     Sound.stopMusic();
     Sound.sfx("gameover");
-    UI.banner("DEFEATED", COLORS.red, this.cfg.line);
-    this.tw.wait(2, () => {
+    this.tw.wait(1.2, () => UI.banner("DEFEATED", COLORS.red, "Read the notes, then come back"));
+    this.tw.wait(2.8, () => {
       if (this.unmounted) return;
       showResults({
         game: "boss", sel: this.sel, run: this.run, score: this.score,

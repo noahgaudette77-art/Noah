@@ -3,8 +3,14 @@
 const GFX = {
   renderer: null,
   ok: false,
+  post: null, // the CRT pipeline (null when the filter is off)
   w: window.innerWidth,
   h: window.innerHeight,
+  t: 0,
+  ab: 0, // colour-fringe pulse, in output pixels
+  flashAmt: 0, // white flash pulse
+  freeze: 0, // hit-stop seconds remaining
+  slow: 0,
   init() {
     if (window.THREE) {
       try {
@@ -16,24 +22,67 @@ const GFX = {
       }
     }
     if (!this.ok) document.body.classList.add("no-gl");
+    if (this.ok && Store.settings.crt) this.post = makeCRT(this.renderer);
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
-  pixelRatio() {
+  // Resolution the 3D world is drawn at: low, for the chunky polygon look.
+  scenePR() {
     const dpr = window.devicePixelRatio || 1;
     const mode = Store.settings.pixel;
     if (mode === "sharp") return Math.min(dpr, 2);
     const target = mode === "chunky" ? 380 : 680; // pixels across the longest side
     return clamp(target / Math.max(this.w, this.h), 0.12, dpr);
   },
+  // Resolution of the final CRT image (curvature and scanlines need real pixels).
+  outPR() {
+    if (!this.post) return this.scenePR();
+    return Math.min(window.devicePixelRatio || 1, this.slow ? 1 : 1.5);
+  },
   resize() {
     this.w = window.innerWidth;
     this.h = window.innerHeight;
     if (this.ok) {
-      this.renderer.setPixelRatio(this.pixelRatio());
+      this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
+      if (this.post) this.post.resize(Math.max(2, Math.round(this.w * this.scenePR())), Math.max(2, Math.round(this.h * this.scenePR())));
+      $("#gl").classList.toggle("post", !!this.post);
     }
     Scenes.resize();
+  },
+  setCRT(on) {
+    if (!this.ok) return;
+    if (on && !this.post) this.post = makeCRT(this.renderer);
+    if (!on && this.post) { this.post.dispose(); this.post = null; }
+    this.resize();
+  },
+  render(scene, camera, dt) {
+    this.t += dt;
+    this.ab *= Math.pow(0.015, dt);
+    this.flashAmt *= Math.pow(0.003, dt);
+    if (!this.post) {
+      this.renderer.setRenderTarget(null);
+      this.renderer.render(scene, camera);
+      return;
+    }
+    this.post.render(scene, camera, this.t, this.ab, this.flashAmt);
+  },
+  // Juice: colour fringing + white flash on the CRT, and a short freeze-frame.
+  pulse(ab = 6, flash = 0.1) {
+    if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
+    this.ab = Math.max(this.ab, ab);
+    this.flashAmt = Math.max(this.flashAmt, flash);
+  },
+  hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
+  // Called with the real frame time; if the device struggles, drop the CRT to a lighter mode.
+  watch(realDt) {
+    if (!this.post || this.slow) return;
+    this._acc = (this._acc || 0) * 0.97 + realDt * 0.03;
+    if (this._acc > 0.045 && this.t > 4) {
+      this.slow = 1;
+      this.post.lite = true;
+      this.resize();
+    }
   },
 };
 
@@ -47,11 +96,135 @@ const Scenes = {
     return s;
   },
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
-  frame(dt) {
+  frame(dt, realDt) {
     const s = this.cur;
     if (!s) return;
     s.update(dt);
-    if (GFX.ok && s.scene && s.camera) GFX.renderer.render(s.scene, s.camera);
+    if (GFX.ok && s.scene && s.camera) GFX.render(s.scene, s.camera, realDt);
+  },
+};
+
+// The CRT: draw the scene into a low-res target, bloom its neon, then show it
+// through curved glass with scanlines, an RGB phosphor mask and a vignette.
+function makeCRT(renderer) {
+  const lin = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
+  const rtScene = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: true }, lin));
+  const rtA = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
+  const rtB = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const quadScene = new THREE.Scene();
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+  quad.frustumCulled = false;
+  quadScene.add(quad);
+  const VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
+  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false });
+  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 0.5 } }, `
+    uniform sampler2D tDiffuse; uniform float uThreshold; varying vec2 vUv;
+    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = max(c.r, max(c.g, c.b));
+      gl_FragColor = vec4(c * smoothstep(uThreshold, 1.0, l), 1.0); }`);
+  const blur = mat({ tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } }, `
+    uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv;
+    void main(){
+      vec3 c = texture2D(tDiffuse, vUv).rgb * 0.2270270;
+      c += texture2D(tDiffuse, vUv + uDir * 1.3846154).rgb * 0.3162162;
+      c += texture2D(tDiffuse, vUv - uDir * 1.3846154).rgb * 0.3162162;
+      c += texture2D(tDiffuse, vUv + uDir * 3.2307692).rgb * 0.0702703;
+      c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
+      gl_FragColor = vec4(c, 1.0); }`);
+  const crt = mat({
+    tScene: { value: null }, tBloom: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
+    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 },
+  }, `
+    uniform sampler2D tScene; uniform sampler2D tBloom; uniform vec2 uRes; uniform vec2 uSceneRes;
+    uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom; varying vec2 vUv;
+    vec2 warp(vec2 uv){ vec2 c = uv - 0.5; c *= 1.0 + 0.11 * dot(c, c); return c + 0.5; }
+    vec3 px(vec2 uv){ return texture2D(tScene, (floor(uv * uSceneRes) + 0.5) / uSceneRes).rgb; }
+    void main(){
+      vec2 uv = warp(vUv);
+      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+      float a = (0.7 + uAberr) / uRes.x;
+      vec3 col = vec3(px(uv + vec2(a, 0.0)).r, px(uv).g, px(uv - vec2(a, 0.0)).b);
+      col += texture2D(tBloom, uv).rgb * uBloom;
+      float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
+      col *= 0.8 + 0.2 * s;
+      float m = mod(gl_FragCoord.x, 3.0);
+      vec3 mask = m < 1.0 ? vec3(1.0, 0.82, 0.82) : (m < 2.0 ? vec3(0.82, 1.0, 0.82) : vec3(0.82, 0.82, 1.0));
+      col *= mix(vec3(1.0), mask, 0.3);
+      vec2 v = uv * (1.0 - uv.yx);
+      col *= clamp(pow(v.x * v.y * 20.0, 0.2), 0.0, 1.0);
+      col *= 0.975 + 0.025 * sin(uTime * 95.0);
+      float n = fract(sin(dot(gl_FragCoord.xy + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453);
+      col += (n - 0.5) * 0.03 + uFlash;
+      gl_FragColor = vec4(col * 1.22, 1.0);
+    }`);
+  const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
+  let bw = 2, bh = 2;
+  return {
+    lite: false,
+    resize(w, h) {
+      rtScene.setSize(w, h);
+      crt.uniforms.uSceneRes.value.set(w, h);
+      bw = Math.max(2, w >> 2);
+      bh = Math.max(2, h >> 2);
+      rtA.setSize(bw, bh);
+      rtB.setSize(bw, bh);
+    },
+    render(scene, camera, t, ab, flash) {
+      renderer.setRenderTarget(rtScene);
+      renderer.render(scene, camera);
+      if (!this.lite) {
+        bright.uniforms.tDiffuse.value = rtScene.texture;
+        pass(bright, rtA);
+        blur.uniforms.tDiffuse.value = rtA.texture;
+        blur.uniforms.uDir.value.set(1 / bw, 0);
+        pass(blur, rtB);
+        blur.uniforms.tDiffuse.value = rtB.texture;
+        blur.uniforms.uDir.value.set(0, 1 / bh);
+        pass(blur, rtA);
+      }
+      const u = crt.uniforms;
+      u.tScene.value = rtScene.texture;
+      u.tBloom.value = rtA.texture;
+      u.uBloom.value = this.lite ? 0 : 1.05;
+      u.uTime.value = t;
+      u.uAberr.value = ab;
+      u.uFlash.value = flash;
+      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
+      pass(crt, null);
+    },
+    dispose() {
+      [rtScene, rtA, rtB].forEach((r) => r.dispose());
+      [bright, blur, crt].forEach((m) => m.dispose());
+      quad.geometry.dispose();
+    },
+  };
+}
+
+// Where the finger or mouse is, from -1 to 1, for camera parallax. Eases back to
+// the centre when a touch lifts.
+const Pointer = {
+  x: 0, y: 0, tx: 0, ty: 0, touch: false,
+  init() {
+    const set = (e) => {
+      this.tx = clamp((e.clientX / GFX.w) * 2 - 1, -1, 1);
+      this.ty = clamp((e.clientY / GFX.h) * 2 - 1, -1, 1);
+      this.touch = e.pointerType === "touch";
+    };
+    window.addEventListener("pointermove", set, { passive: true });
+    window.addEventListener("pointerdown", set, { passive: true });
+    window.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") { this.tx = 0; this.ty = 0; } }, { passive: true });
+  },
+  update(dt) {
+    const k = Math.min(1, dt * 3);
+    this.x += (this.tx - this.x) * k;
+    this.y += (this.ty - this.y) * k;
+  },
+};
+
+const Haptics = {
+  buzz(pattern) {
+    if (!Store.settings.sfx) return;
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* not allowed here */ }
   },
 };
 
@@ -99,6 +272,22 @@ class Scene3D {
     return { w: W * perPx, h: bh };
   }
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION ? a * 0.3 : a); }
+  // An expanding ring of light that faces the camera.
+  shockwave(pos, color, size = 5, dur = 0.55) {
+    if (!this.has3D) return;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.55, 0.8, 40),
+      new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })
+    );
+    ring.position.copy(pos);
+    ring.quaternion.copy(this.camera.quaternion);
+    this.scene.add(ring);
+    this.tw.add(dur, (k) => { ring.scale.setScalar(0.4 + k * size); ring.material.opacity = 1 - k; }, () => {
+      this.scene.remove(ring);
+      ring.geometry.dispose();
+      ring.material.dispose();
+    });
+  }
   placeCamera() {
     if (!this.camera) return;
     this.camera.position.copy(this.camBase);

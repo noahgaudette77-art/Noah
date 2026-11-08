@@ -67,6 +67,22 @@ function roadTexture() {
 }
 const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 
+// The sky across a career: dawn at 25, bright day mid-career, golden hour, dusk at 65.
+const CAREER_SKY = [
+  { p: 0, bg: 0x3b1452, fog: 0x4c1d60, sunY: 7, tint: 0xffd6ea, grid: 0xff7ad9, stars: 0.25 },
+  { p: 0.4, bg: 0x1d2f7c, fog: 0x2c47a3, sunY: 44, tint: 0xffffff, grid: 0x6ad8ff, stars: 0 },
+  { p: 0.75, bg: 0x30104e, fog: 0x45145a, sunY: 22, tint: 0xffc08f, grid: 0xff3ad4, stars: 0.35 },
+  { p: 1, bg: 0x0c0326, fog: 0x14062f, sunY: 5, tint: 0xff8f70, grid: 0xa65fff, stars: 1 },
+];
+function skyAt(p) {
+  let i = 0;
+  while (i < CAREER_SKY.length - 2 && p > CAREER_SKY[i + 1].p) i++;
+  const a = CAREER_SKY[i], b = CAREER_SKY[i + 1];
+  const k = clamp((p - a.p) / (b.p - a.p), 0, 1);
+  const mix = (x, y) => new THREE.Color(x).lerp(new THREE.Color(y), k);
+  return { bg: mix(a.bg, b.bg), fog: mix(a.fog, b.fog), tint: mix(a.tint, b.tint), grid: mix(a.grid, b.grid), sunY: lerp(a.sunY, b.sunY, k), stars: lerp(a.stars, b.stars, k) };
+}
+
 class RacerGame extends QuizGame {
   constructor(sel) {
     super(sel, "racer", { fov: 62, fog: [0x12052e, 40, 230], bg: 0x0c0326 });
@@ -115,10 +131,14 @@ class RacerGame extends QuizGame {
     road.position.set(0, 0.01, -200);
     s.add(road);
     const sun = makeSun(42, ["#ffe14f", "#ff9b3d", "#ff3ad4"]);
-    sun.position.set(0, 20, -260);
+    sun.position.set(0, 7, -260);
     s.add(sun);
+    this.sun = sun;
     s.add(makeMountains({ z: -230, height: 30, color: 0xff3ad4 }));
-    s.add(makeStars(400, 330, { lowest: 0.03 }));
+    this.stars = makeStars(400, 330, { lowest: 0.03 });
+    this.stars.material.transparent = true;
+    s.add(this.stars);
+    this.skyP = 0;
     this.props = [];
     for (let i = 0; i < 18; i++) {
       const side = i % 2 ? 1 : -1;
@@ -209,6 +229,7 @@ class RacerGame extends QuizGame {
 
   start() {
     Sound.play("game");
+    Sound.engine(true);
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -287,6 +308,9 @@ class RacerGame extends QuizGame {
       Sound.sfx("correct");
       Sound.sfx("deposit");
       UI.flash("good");
+      GFX.pulse(3, 0.08);
+      Haptics.buzz(25);
+      Sound.setIntensity(Sound.intensityFor(this.run.streak));
       this.speedKick();
       if (this.has3D) {
         this.bursts.burst(new THREE.Vector3(this.carX, 1.5, -1), COLORS.gold, { n: 50, speed: 6, size: 0.3, life: 1.2, gravity: -9 });
@@ -307,6 +331,8 @@ class RacerGame extends QuizGame {
       Sound.sfx("wrong");
       UI.flash("hit");
       this.shake(0.25);
+      GFX.pulse(6, 0);
+      Sound.setIntensity(0);
       this.spin();
     } else {
       this.crashes++;
@@ -317,6 +343,10 @@ class RacerGame extends QuizGame {
       Sound.sfx("wrong");
       UI.flash("hit");
       this.shake(0.5);
+      GFX.pulse(12, 0);
+      GFX.hitStop(120);
+      Haptics.buzz([70, 40, 110]);
+      Sound.setIntensity(0);
       this.spin();
       if (this.has3D) this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
     }
@@ -358,6 +388,7 @@ class RacerGame extends QuizGame {
   gameOver(fullCareer) {
     this.state = "over";
     Sound.stopMusic();
+    Sound.engine(false);
     const rich = this.egg >= EGG_GOAL;
     const age = START_AGE + this.year;
     if (fullCareer) {
@@ -391,6 +422,16 @@ class RacerGame extends QuizGame {
     }
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
+    Sound.rev(clamp(sp / 80, 0, 1.4));
+    // Ease the sky toward this year of the career.
+    this.skyP += (this.year / CAREER_YEARS - this.skyP) * Math.min(1, dt * 0.8);
+    const sky = skyAt(this.skyP);
+    this.scene.background.copy(sky.bg);
+    this.scene.fog.color.copy(sky.fog);
+    this.sun.position.y = sky.sunY;
+    this.sun.children[1].material.color.copy(sky.tint);
+    this.ground.userData.grid.material.color.copy(sky.grid);
+    this.stars.material.opacity = sky.stars;
     this.dist += sp * dt;
     this.roadTex.offset.y = (this.dist / 14) % 1;
     scrollGrid(this.ground, this.dist);
@@ -411,5 +452,17 @@ class RacerGame extends QuizGame {
     this.camBase.x = this.carX * follow;
     this.lookAt.x = this.carX * follow * 0.6;
     this.placeCamera();
+  }
+  pause() {
+    super.pause();
+    if (this.paused) Sound.engine(false);
+  }
+  resume() {
+    super.resume();
+    if (this.state !== "over") Sound.engine(true);
+  }
+  dispose() {
+    Sound.engine(false);
+    super.dispose();
   }
 }

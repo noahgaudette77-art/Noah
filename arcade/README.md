@@ -23,6 +23,31 @@ offline fallback.
 Every wrong answer shows the explanation and the book page, and the results screen
 lists all of them again.
 
+## The world
+
+- **A real CRT.** The 3D is drawn at a low resolution, then shown through a shader:
+  curved glass, phosphor bloom on the neon, scanlines, an RGB mask, vignette, and
+  colour fringing and flashes when something hits. A bezel rounds off the screen.
+  Turn it off under Setup → CRT filter; it also drops to a lighter mode by itself
+  on slow devices.
+- **Clients.** Every stage has a client from that chapter's opening scenario in the
+  book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
+  time you play a stage they brief you, with a pixel portrait and typed-out
+  dialogue; beat that stage's boss and they thank you with the chapter's key
+  takeaway. Replay any briefing from the stage's notes.
+- **Talking bosses.** Bosses introduce themselves, taunt your misses, groan when hit
+  and get enraged below 35% HP.
+- **The arcade floor.** The lights clunk on the first time you walk in each
+  session. The walls carry the INR Arcade sign, a Hall of Fame board with your best
+  scores and rank, and a poster for every boss that fills with the stars you earn.
+  The view leans toward your finger or mouse.
+- **Nest Egg Run's sky** follows your career: dawn at 25, bright day, golden hour,
+  then dusk and stars at 65.
+- **Sound and feel.** Music adds layers as your streak grows; the floor hums with a
+  crowd and distant cabinets; the racer has an engine. Big hits freeze the frame
+  for a beat, throw a shockwave and vibrate (on Android).
+- **Rank.** XP from everything you do moves you from Trainee to Arcade Legend.
+
 ## How mastery works
 
 Each question and flashcard sits in a Leitner box. A right answer moves it up a box,
@@ -40,6 +65,7 @@ devices.
 `content/chNN.json` holds each chapter's questions, flashcards, notes and tips
 (chapter 6 was written in two halves, `ch06a` and `ch06b`, merged at build time).
 `content/errata.json` lists inconsistencies in the course text, shown in the guide.
+`content/story.json` holds the client briefings and boss dialogue.
 
 The questions are original study material written from the course text. None of the
 book's own self-test questions are copied; their concepts are covered with new

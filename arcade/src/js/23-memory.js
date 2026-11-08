@@ -188,7 +188,7 @@ class MemoryGame extends QuizGame {
     const banked = Store.countMastered(ids);
     showResults({
       game: "memory", sel: this.sel, score: 0,
-      run: { answered: this.done, correct: this.deposits, bestStreak: 0, missed: [], start: this.run.start },
+      run: { answered: this.done, correct: this.deposits, bestStreak: 0, missed: [], start: this.run.start, xp0: this.run.xp0 },
       title: "DECK CLEARED", color: COLORS.lime, headline: this.deposits + " CARDS BANKED",
       sub: `${banked} of ${ids.length} cards in ${this.sel.label} are fully banked`,
       tiles: [{ k: "REMEMBERED", v: pct(this.total - this.missed.length, this.total) + "%", c: COLORS.lime }, { k: "STILL DUE", v: dueCount(ids) }],

@@ -93,7 +93,7 @@ function showSettings() {
         Store.save();
         $$(`[data-k=${k}]`, el).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
         if (k === "music") Sound.refreshMusic();
-        if (k === "crt") document.body.classList.toggle("crt-off", !v);
+        if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "pixel") GFX.resize();
         Sound.sfx("blip");
       }

@@ -2,6 +2,7 @@
 // flashcard and note in the book.
 function showGuide(chapterN) {
   Sound.play("calm");
+  Sound.ambience(false);
   if (chapterN) return showGuideChapter(chapterN);
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("STRATEGY GUIDE")}
@@ -71,6 +72,10 @@ function showGuideChapter(n) {
           <button class="btn small" data-act="play" data-g="boss" style="--c:${COLORS.magenta}">BOSS: ${esc(BOSSES[n].name)}</button>
         </div>
       </div>
+      ${client(n) ? `<div class="client-card" style="--c:${c.color}"><canvas aria-hidden="true"></canvas><div>
+        <div class="who">CLIENT FILE · ${esc(client(n).name.toUpperCase())}${client(n).age ? ", " + client(n).age : ""}</div>
+        <p class="selectable">${esc(client(n).lines[0] || "")}</p>
+        <div class="row"><button class="btn small" data-act="brief" style="--c:${c.color}">${icon("play")} PLAY BRIEFING</button></div></div></div>` : ""}
       ${c.objectives.length ? `<div class="gsec" style="--c:${c.color}"><h3>LEARNING OBJECTIVES</h3><ol class="objectives selectable">${c.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ol></div>` : ""}
       ${c.guide.map((g) => `<div class="gsec" style="--c:${c.color}"><h3>${esc(g.heading)}${g.page ? `<span>P. ${esc(g.page)}</span>` : ""}</h3>
         <ul class="selectable">${g.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>`).join("") || `<p class="hub-desc">Notes for this chapter are not loaded yet.</p>`}
@@ -87,6 +92,11 @@ function showGuideChapter(n) {
       if (a === "back") { Sound.sfx("back"); showGuide(); }
       if (a === "ch") { Sound.sfx("move"); showGuideChapter(+t.dataset.n); }
       if (a === "play") { Sound.sfx("select"); UI.flash("crt-on"); startGame(t.dataset.g, makeSelection(String(n))); }
+      if (a === "brief") briefing(n);
+    },
+    mounted: () => {
+      const face = $(".client-card canvas", el);
+      if (face && client(n)) drawPortrait(face, Object.assign({ age: client(n).age }, client(n).look));
     },
     key: (e) => {
       if (e.key === "Escape") showGuide();

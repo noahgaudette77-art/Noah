@@ -177,9 +177,14 @@ class BlasterGame extends QuizGame {
       Sound.sfx("boom");
       Sound.sfx("correct");
       UI.flash("good");
+      GFX.pulse(4, 0.1);
+      GFX.hitStop(70);
+      Haptics.buzz(25);
+      Sound.setIntensity(Sound.intensityFor(this.run.streak));
       const p = this.bandPoint(0.3);
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
       this.explode(this.targets[i], SLOT_COLORS[i]);
+      if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
     } else {
       this.combo = 1;
       this.shields--;
@@ -188,6 +193,9 @@ class BlasterGame extends QuizGame {
       Sound.sfx("hit");
       UI.flash("hit");
       this.shake(0.35);
+      GFX.pulse(12, 0);
+      Haptics.buzz([60, 40, 90]);
+      Sound.setIntensity(0);
       this.explode(this.targets[i], COLORS.red);
       this.highlight(this.targets[r.correct]);
     }
@@ -208,6 +216,9 @@ class BlasterGame extends QuizGame {
     Sound.sfx("hit");
     UI.flash("hit");
     this.shake(0.5);
+    GFX.pulse(12, 0);
+    Haptics.buzz([60, 40, 90]);
+    Sound.setIntensity(0);
     this.targets.forEach((t, i) => {
       if (i === r.correct) return this.highlight(t);
       const z0 = t.position.z;
@@ -220,6 +231,7 @@ class BlasterGame extends QuizGame {
     if (!t || !this.has3D) return;
     this.bursts.burst(t.position, color, { n: 70, speed: 9 * this.ts + 3, size: 0.35, life: 1 });
     this.bursts.burst(t.position, 0xffffff, { n: 20, speed: 4, size: 0.25, life: 0.5 });
+    this.shockwave(t.position.clone(), color, 4 * this.ts + 2);
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
   }
@@ -240,6 +252,9 @@ class BlasterGame extends QuizGame {
       this.shields = Math.min(3, this.shields + 1);
       if (this.has3D) this.ringMat.color.setHex(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length]);
       Sound.sfx("levelup");
+      Sound.sfx("warp");
+      this.warp = 1.4;
+      GFX.pulse(6, 0.2);
       UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
       this.hud();
       this.state = "intro";
@@ -277,7 +292,13 @@ class BlasterGame extends QuizGame {
       if (this.tLeft <= 0) this.timeout();
     }
     if (!this.has3D) return;
-    const sp = this.speed * (1 + (this.wave - 1) * 0.08);
+    // Between waves the tunnel jumps to warp speed and the lens widens.
+    if (this.warp > 0) {
+      this.warp = Math.max(0, this.warp - dt);
+      this.camera.fov = 60 + Math.sin((this.warp / 1.4) * Math.PI) * 22;
+      this.camera.updateProjectionMatrix();
+    }
+    const sp = this.speed * (1 + (this.wave - 1) * 0.08) * (1 + (this.warp > 0 ? Math.sin((this.warp / 1.4) * Math.PI) * 5 : 0));
     const p = this.streakPos;
     for (let i = 0; i < p.length / 6; i++) {
       p[i * 6 + 2] += sp * 2 * dt;

@@ -62,9 +62,16 @@ function loadErrata() {
   return fs.existsSync(f) ? JSON.parse(read(f)) : [];
 }
 
+// Client briefings and boss dialogue.
+function loadStory() {
+  const f = path.join(DIR, "content", "story.json");
+  return fs.existsSync(f) ? JSON.parse(read(f)) : { clients: {}, bosses: {} };
+}
+
 function build() {
   const chapters = loadContent();
   const errata = loadErrata();
+  const story = loadStory();
   const css = read(path.join(SRC, "style.css"));
   const body = read(path.join(SRC, "body.html")).trim();
   const jsFiles = fs.readdirSync(path.join(SRC, "js")).filter((f) => f.endsWith(".js")).sort();
@@ -74,7 +81,7 @@ function build() {
     "\n})();";
 
   // JSON is valid JS; escape "</" so no string can close the <script> element.
-  const data = "window.INR_DATA=" + JSON.stringify({ chapters, errata }).replace(/<\//g, "<\\/") + ";";
+  const data = "window.INR_DATA=" + JSON.stringify({ chapters, errata, story }).replace(/<\//g, "<\\/") + ";";
 
   const head = [
     "<title>INR Arcade</title>",

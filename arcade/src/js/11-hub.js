@@ -22,12 +22,26 @@ class HubScene extends Scene3D {
     const wall = new THREE.Mesh(new THREE.CylinderGeometry(19, 19, 16, 40, 1, true), new THREE.MeshBasicMaterial({ color: 0x0d0628, side: THREE.BackSide }));
     wall.position.y = 7;
     s.add(wall);
+    // Everything that lights up, so the room can power on piece by piece.
+    this.lights = [];
+    const lamp = (mat, prop = "color") => {
+      const orig = mat[prop].clone ? mat[prop].clone() : mat[prop];
+      const l = {
+        on: () => { if (prop === "opacity") mat.opacity = orig; else mat[prop].copy(orig); },
+        off: () => { if (prop === "opacity") mat.opacity = 0.02; else mat[prop].setHex(0x120a26); },
+      };
+      return l;
+    };
     [[2.2, 0x35efff], [6.5, 0xff3ad4], [6.8, 0xff3ad4]].forEach(([y, c]) => {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(18.8, 0.05, 4, 90), new THREE.MeshBasicMaterial({ color: c, fog: false }));
       ring.rotation.x = Math.PI / 2;
       ring.position.y = y;
       s.add(ring);
+      this.lights.push({ kind: "ring", parts: [lamp(ring.material)] });
     });
+    this.addSign();
+    this.addBoard();
+    this.addPosters();
     const ceiling = makeStars(220, 18, { lowest: 0.45, size: 1.3 });
     s.add(ceiling);
     CABINETS.forEach((cab, i) => {
@@ -37,9 +51,127 @@ class HubScene extends Scene3D {
       c.group.rotation.y = -a;
       s.add(c.group);
       this.cabs.push(c);
+      this.lights.push({ kind: "cab", parts: c.lampMats.map((m) => lamp(m, m.isSpriteMaterial ? "opacity" : "color")) });
     });
     this.spot = new THREE.PointLight(0xffffff, 1.4, 9, 1.5);
     s.add(this.spot);
+    this.flickT = 3;
+  }
+  // Pin a canvas to the curved back wall at angle a (0 = straight ahead).
+  wallPanel(canvas, w, h, a, y, { additive = false, r = 18.6 } = {}) {
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.magFilter = THREE.NearestFilter;
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: additive, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: !additive, fog: false });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    m.position.set(Math.sin(a) * r, y, -Math.cos(a) * r);
+    m.rotation.y = -a;
+    this.scene.add(m);
+    return m;
+  }
+  addSign() {
+    const c = textCanvas("INR ARCADE", { w: 1024, h: 160, size: 92, color: "#ffd9f6", glow: "#ff3ad4" });
+    this.sign = this.wallPanel(c, 11, 1.72, 0, 8.1, { additive: true });
+    this.lights.push({ kind: "sign", parts: [{ on: () => { this.sign.material.opacity = 1; }, off: () => { this.sign.material.opacity = 0.03; } }] });
+  }
+  addBoard() {
+    const c = document.createElement("canvas");
+    c.width = 512;
+    c.height = 300;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0a0420";
+    x.fillRect(0, 0, 512, 300);
+    x.strokeStyle = "#ffe14f";
+    x.lineWidth = 6;
+    x.strokeRect(6, 6, 500, 288);
+    x.textBaseline = "top";
+    x.font = '22px "Press Start 2P", monospace';
+    x.fillStyle = "#ffe14f";
+    x.textAlign = "center";
+    x.fillText("HALL OF FAME", 256, 22);
+    x.textAlign = "left";
+    x.font = '13px "Press Start 2P", monospace';
+    const rows = [
+      ["BLASTER", (Store.state.scores.blaster || [])[0], (v) => fmtScore(v), "#35efff"],
+      ["NEST EGG", (Store.state.scores.racer || [])[0], (v) => money(v), "#ffe14f"],
+      ["BOSS RUSH", (Store.state.scores.boss || [])[0], (v) => fmtScore(v), "#ff3ad4"],
+      ["EXAM", (Store.state.scores.exam || [])[0], (v) => v + "%", "#a65fff"],
+    ];
+    rows.forEach(([label, rec, fmt, col], i) => {
+      const y = 76 + i * 40;
+      x.fillStyle = col;
+      x.fillText(label, 28, y);
+      x.fillStyle = "#f4efff";
+      x.textAlign = "right";
+      x.fillText(rec ? `${rec.n} ${fmt(rec.s)}` : "---", 484, y);
+      x.textAlign = "left";
+    });
+    const r = rankOf(xpTotal());
+    x.fillStyle = "#86ff5e";
+    x.fillText(`LV${r.level} ${r.name}`, 28, 252);
+    x.textAlign = "right";
+    x.fillText(`MASTERY ${overallMastery()}%`, 484, 252);
+    this.board = this.wallPanel(c, 6.4, 3.75, -0.62, 6.9);
+  }
+  addPosters() {
+    const keys = CHAPTERS.map((c) => c.n).concat(["all"]);
+    keys.forEach((k, i) => {
+      const cfg = BOSSES[k];
+      const stars = Store.state.boss[k] || 0;
+      const c = document.createElement("canvas");
+      c.width = 96;
+      c.height = 144;
+      const x = c.getContext("2d");
+      x.fillStyle = "#0b0424";
+      x.fillRect(0, 0, 96, 144);
+      x.strokeStyle = stars ? cfg.color : "#3d2c80";
+      x.lineWidth = 4;
+      x.strokeRect(2, 2, 92, 140);
+      const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#4a3a7a");
+      x.imageSmoothingEnabled = false;
+      x.drawImage(face, 18, 14, 60, 60);
+      x.textAlign = "center";
+      x.font = '8px "Press Start 2P", monospace';
+      x.fillStyle = stars ? "#f4efff" : "#7a6aa8";
+      const words = cfg.name.split(" ");
+      const lines = words.length > 1 ? [words.slice(0, Math.ceil(words.length / 2)).join(" "), words.slice(Math.ceil(words.length / 2)).join(" ")] : [cfg.name];
+      lines.forEach((ln, j) => x.fillText(ln, 48, 92 + j * 12));
+      x.fillStyle = "#a99cdc";
+      x.fillText(k === "all" ? "FINAL" : "STAGE " + k, 48, 120);
+      for (let j = 0; j < 3; j++) {
+        x.fillStyle = j < stars ? "#ffe14f" : "#3d2c80";
+        x.fillRect(30 + j * 14, 128, 8, 8);
+      }
+      const a = -1.45 + (i / (keys.length - 1)) * 2.9;
+      this.wallPanel(c, 1.5, 2.25, a, 4.75, { r: 18.7 });
+    });
+  }
+  // The first visit of a session powers the room on, piece by piece.
+  powerOn() {
+    this.lights.forEach((l) => l.parts.forEach((p) => p.off()));
+    this.introRunning = true;
+    this.introLook = 5.2;
+    this.tw.add(2.9, (k) => { this.introLook = 5.2 * (1 - k); }, null, Ease.inOutQuad);
+    this.dolly = -8;
+    this.zooming = true;
+    const from = this.dolly;
+    this.tw.add(2.8, (k) => { this.dolly = lerp(from, this.restDolly, k); }, () => { this.zooming = false; this.introRunning = false; }, Ease.inOutQuad);
+    let t = 0.25;
+    this.lights.forEach((l) => {
+      this.tw.wait(t, () => {
+        if (!this.introRunning) return;
+        l.parts.forEach((p) => p.on());
+        Sound.sfx(l.kind === "cab" ? "clunk" : "buzz");
+      });
+      t += l.kind === "cab" ? 0.22 : 0.3;
+    });
+  }
+  skipIntro() {
+    if (!this.introRunning) return;
+    this.introRunning = false;
+    this.lights.forEach((l) => l.parts.forEach((p) => p.on()));
+    this.tw.clear();
+    this.zooming = false;
+    this.dolly = this.restDolly;
   }
   cabAngle(i) { return (i - (CABINETS.length - 1) / 2) * HUB_STEP; }
   makeCabinet(cab, i) {
@@ -96,7 +228,9 @@ class HubScene extends Scene3D {
     g.add(halo);
     const demo = { canvas, ctx: canvas.getContext("2d"), tex, t: Math.random() * 10, cab };
     drawDemo(demo, 0);
-    return { group: g, demo, halo };
+    const lampMats = [mq.material, screen.material, halo.material];
+    g.traverse((o) => { if (o.isLineSegments) lampMats.push(o.material); });
+    return { group: g, demo, halo, lampMats };
   }
   focus(i) { this.sel = i; }
   // Back the camera off until the whole cabinet fits in the strip above the card.
@@ -124,14 +258,28 @@ class HubScene extends Scene3D {
     const target = this.cabAngle(this.sel);
     this.angle += (target - this.angle) * Math.min(1, dt * 6);
     const a = this.angle;
-    this.camBase.set(Math.sin(a) * this.dolly, 2.3 + Math.sin(this.t * 0.8) * 0.04, -Math.cos(a) * this.dolly);
-    this.lookAt.set(Math.sin(a) * HUB_R, 2.25, -Math.cos(a) * HUB_R);
+    // Lean the view toward the finger / mouse a little: the room feels like a place.
+    const pa = a + Pointer.x * 0.07;
+    this.camBase.set(Math.sin(a) * this.dolly, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15, -Math.cos(a) * this.dolly);
+    this.lookAt.set(Math.sin(pa) * HUB_R, 2.25 - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
+    // Old neon flickers now and then.
+    this.flickT -= dt;
+    if (this.flickT < 0 && !this.introRunning && this.lights.length) {
+      const l = pick(this.lights.filter((x) => x.kind !== "cab"));
+      if (l) {
+        l.parts.forEach((p) => p.off());
+        this.tw.wait(0.07, () => l.parts.forEach((p) => p.on()));
+        this.tw.wait(0.16, () => l.parts.forEach((p) => p.off()));
+        this.tw.wait(0.22, () => l.parts.forEach((p) => p.on()));
+      }
+      this.flickT = rand(4, 11);
+    }
     const sa = this.cabAngle(this.sel);
     this.spot.position.set(Math.sin(sa) * (HUB_R - 3), 3, -Math.cos(sa) * (HUB_R - 3));
     this.spot.color.set(CABINETS[this.sel].color);
     this.cabs.forEach((c, i) => {
-      c.halo.material.opacity = i === this.sel ? 0.45 + Math.sin(this.t * 4) * 0.12 : 0.18;
+      if (!this.introRunning) c.halo.material.opacity = i === this.sel ? 0.45 + Math.sin(this.t * 4) * 0.12 : 0.18;
       if (i === this.sel) {
         c.demo.t += dt;
         drawDemo(c.demo, dt);
@@ -258,12 +406,23 @@ function hubScene() {
 
 function showHub() {
   Sound.play("hub");
+  Sound.setIntensity(0);
+  const fresh = !(Scenes.cur instanceof HubScene);
   const scene = hubScene();
-  scene.zoomOut();
+  if (fresh && !Hub.poweredOn && scene.has3D) {
+    Hub.poweredOn = true;
+    scene.powerOn();
+    setTimeout(() => Sound.ambience(true), 2600);
+  } else {
+    scene.zoomOut();
+    Sound.ambience(true);
+  }
   const el = UI.el(`<section class="screen scr-hub">
     <header class="topbar">
-      <div class="brand grow">INR ARCADE</div>
-      <span class="chip">MASTERY <b data-m>${overallMastery()}%</b></span>
+      ${rankChip()}
+      <span class="grow"></span>
+      <span class="chip wide-only">MASTERY <b data-m>${overallMastery()}%</b></span>
+      ${document.fullscreenEnabled ? `<button class="iconbtn" data-act="fullscreen" aria-label="Full screen">${icon("full")}</button>` : ""}
       <button class="iconbtn" data-act="stats">STATS</button>
       <button class="iconbtn" data-act="settings">SETUP</button>
       ${soundBtn()}
@@ -325,6 +484,7 @@ function showHub() {
     if (Math.abs(dx) > 50 && !card.contains(e.target)) move(dx < 0 ? 1 : -1);
   };
   el.addEventListener("pointerdown", down);
+  el.addEventListener("pointerdown", () => scene.skipIntro && scene.skipIntro());
   el.addEventListener("pointerup", up);
   const off = Store.onChange(() => { const m = $("[data-m]", el); if (m) m.textContent = overallMastery() + "%"; });
   UI.show({
@@ -336,7 +496,13 @@ function showHub() {
       if (a === "mission") { Sound.sfx("select"); runMission(mission); }
       if (a === "stats") { Sound.sfx("select"); showStats(); }
       if (a === "settings") { Sound.sfx("select"); showSettings(); }
-      if (a === "mute") { toggleMute(); t.outerHTML = soundBtn(); }
+      if (a === "mute") { toggleMute(); t.outerHTML = soundBtn(); Sound.ambience(Store.settings.sfx); }
+      if (a === "fullscreen") {
+        try {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else document.documentElement.requestFullscreen().catch(() => UI.toast("FULL SCREEN ISN'T ALLOWED HERE"));
+        } catch (e) { UI.toast("FULL SCREEN ISN'T ALLOWED HERE"); }
+      }
     },
     key: (e) => {
       if (e.key === "ArrowLeft") move(-1);

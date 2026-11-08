@@ -100,8 +100,105 @@ const Sound = {
       case "deposit": T(1568, 0.06, { vol: 0.12 }); T(2093, 0.18, { delay: 0.05, vol: 0.12 }); break;
       case "tick": T(1800, 0.02, { vol: 0.06 }); break;
       case "swoosh": this.noise(0.35, { vol: 0.3, freq: 1800, type: "bandpass", q: 0.6 }); break;
+      case "clunk": T(70, 0.22, { slide: -35, vol: 0.45, type: "sine" }); this.noise(0.06, { vol: 0.35, freq: 2500, type: "bandpass", q: 2 }); break;
+      case "buzz": T(118, 0.28, { vol: 0.07, type: "sawtooth" }); T(236, 0.2, { vol: 0.03, type: "square", delay: 0.02 }); break;
+      case "crton": T(1800, 0.25, { slide: 6000, vol: 0.05, type: "sine" }); T(60, 0.3, { slide: -20, vol: 0.3, type: "sine", delay: 0.05 }); break;
+      case "rankup": [392, 523, 659, 784, 1047, 1319].forEach((f, i) => T(f, 0.16, { delay: i * 0.09, vol: 0.17 })); T(1568, 0.6, { delay: 0.56, vol: 0.12, type: "triangle" }); break;
+      case "warp": T(200, 1.1, { slide: 2400, vol: 0.12, type: "sawtooth" }); this.noise(1.0, { vol: 0.2, freq: 1200, type: "bandpass", q: 0.5 }); break;
     }
   },
+
+  // Dialogue "voices": a short blip per letter, pitched per character.
+  voice(pitch = 440) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    this._tone(this.sfxBus, pitch * (0.92 + Math.random() * 0.16), 0.045, { type: "square", vol: 0.06 });
+  },
+
+  // Arcade-floor ambience: a low crowd murmur plus distant cabinets beeping.
+  ambience(on) {
+    if (!this.ctx) return;
+    if (on && !this._amb && Store.settings.sfx) {
+      const c = this.ctx;
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 420;
+      f.Q.value = 0.7;
+      const g = c.createGain();
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(0.05, c.currentTime, 1.2);
+      src.connect(f).connect(g).connect(this.sfxBus);
+      src.start();
+      const blip = () => {
+        if (!this._amb) return;
+        const at = c.currentTime;
+        const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+        const o = c.createOscillator();
+        const og = c.createGain();
+        o.type = Math.random() < 0.5 ? "square" : "triangle";
+        const base = pick([330, 392, 440, 523, 587, 659, 784, 880]);
+        o.frequency.setValueAtTime(base, at);
+        if (Math.random() < 0.5) o.frequency.setValueAtTime(base * 1.5, at + 0.07);
+        og.gain.setValueAtTime(0.0001, at);
+        og.gain.exponentialRampToValueAtTime(0.018, at + 0.01);
+        og.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+        o.connect(og);
+        if (pan) { pan.pan.value = rand(-0.9, 0.9); og.connect(pan).connect(this.sfxBus); } else og.connect(this.sfxBus);
+        o.start(at);
+        o.stop(at + 0.2);
+        this._amb.t = setTimeout(blip, rand(500, 2200));
+      };
+      this._amb = { src, g, t: setTimeout(blip, 600) };
+    } else if (!on && this._amb) {
+      const a = this._amb;
+      this._amb = null;
+      clearTimeout(a.t);
+      try { a.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.2); a.src.stop(this.ctx.currentTime + 0.8); } catch (e) { /* already stopped */ }
+    }
+  },
+
+  // A synth engine for the racer; rev() follows the speed.
+  engine(on) {
+    if (!this.ctx) return;
+    if (on && !this._eng && Store.settings.sfx) {
+      const c = this.ctx;
+      const f = c.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 420;
+      const g = c.createGain();
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(0.05, c.currentTime, 0.4);
+      const o1 = c.createOscillator(), o2 = c.createOscillator();
+      o1.type = "sawtooth";
+      o2.type = "square";
+      o1.frequency.value = 52;
+      o2.frequency.value = 104.6;
+      o1.connect(f);
+      o2.connect(f);
+      f.connect(g).connect(this.sfxBus);
+      o1.start();
+      o2.start();
+      this._eng = { o1, o2, g, f };
+    } else if (!on && this._eng) {
+      const e = this._eng;
+      this._eng = null;
+      try { e.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.15); e.o1.stop(this.ctx.currentTime + 0.6); e.o2.stop(this.ctx.currentTime + 0.6); } catch (err) { /* stopped */ }
+    }
+  },
+  rev(x) {
+    if (!this._eng) return;
+    const t = this.ctx.currentTime;
+    this._eng.o1.frequency.setTargetAtTime(44 + x * 46, t, 0.15);
+    this._eng.o2.frequency.setTargetAtTime(89 + x * 93, t, 0.15);
+    this._eng.f.frequency.setTargetAtTime(300 + x * 500, t, 0.2);
+  },
+
+  // Music builds with your streak: 0 calm, 1 hats, 2 lead, 3 everything.
+  intensity: 0,
+  setIntensity(n) { this.intensity = clamp(n, 0, 3); },
+  intensityFor(streak) { return streak >= 8 ? 3 : streak >= 5 ? 2 : streak >= 2 ? 1 : 0; },
 
   // --- music: a tiny step sequencer ----------------------------------------
   TRACKS: {
@@ -145,7 +242,10 @@ const Sound = {
       if (s % 4 === 0) this._tone(this.musicBus, hz(chord[0] - 12), stepDur * 3.2, { type: "triangle", vol: 0.5, at });
       if (s % 2 === 0) this._tone(this.musicBus, hz(chord[tr.arp[(s / 2) % tr.arp.length]] + 12), stepDur * 1.6, { type: "square", vol: 0.09, at });
       if (tr.lead && tr.lead[s] && bar % 2 === 1) this._tone(this.musicBus, hz(tr.lead[s]), stepDur * 1.8, { type: "square", vol: 0.07, at });
-      if (s % 4 === 2) this.noise(0.04, { vol: 0.12, freq: 7000, type: "highpass", at, bus: this.musicBus });
+      const lvl = this.intensity;
+      if (s % 4 === 2 || (lvl >= 1 && s % 2 === 1)) this.noise(0.04, { vol: lvl >= 1 ? 0.15 : 0.12, freq: 7000, type: "highpass", at, bus: this.musicBus });
+      if (lvl >= 2 && s % 4 === 0) this._tone(this.musicBus, hz(chord[(s / 4 + bar) % 4] + 24), stepDur * 3.5, { type: "square", vol: 0.06, at });
+      if (lvl >= 3 && s % 2 === 1) this._tone(this.musicBus, hz(chord[tr.arp[((s - 1) / 2) % tr.arp.length]] + 24), stepDur * 0.9, { type: "triangle", vol: 0.08, at });
       if (s % 8 === 0) this._tone(this.musicBus, 120, 0.14, { type: "sine", slide: -80, vol: 0.55, at });
       if (s % 8 === 4 && this.trackName !== "calm") this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
       this.nextTime += stepDur;

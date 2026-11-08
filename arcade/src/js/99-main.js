@@ -6,12 +6,17 @@ function boot() {
   UI.init();
   GFX.init();
 
+  Pointer.init();
   let last = performance.now();
   const loop = (now) => {
-    const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
     last = now;
+    let dt = real;
+    if (GFX.freeze > 0) { GFX.freeze -= real; dt = 0; } // hit-stop: the world pauses, the screen still glows
     try {
-      Scenes.frame(dt);
+      Pointer.update(real);
+      GFX.watch(real);
+      Scenes.frame(dt, real);
     } catch (e) {
       console.error(e);
     }

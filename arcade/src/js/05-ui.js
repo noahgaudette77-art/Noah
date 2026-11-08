@@ -221,6 +221,7 @@ class RunStats {
     this.missed = [];
     this.start = masterySnapshot(sel);
     this.t0 = Date.now();
+    this.xp0 = xpTotal();
   }
   record(round, picked) {
     const ok = picked === round.correct;

@@ -78,6 +78,7 @@ const PIXELS = {
   up: ["..X..", ".XXX.", "XXXXX"],
   down: ["XXXXX", ".XXX.", "..X.."],
   coin: [".XXX.", "XX.XX", "XX.XX", "XX.XX", ".XXX."],
+  full: ["XX.XX", "X...X", ".....", "X...X", "XX.XX"],
   book: ["XXX.XXX", "X.XXX.X", "X.XXX.X", "X.XXX.X", "XXXXXXX"],
 };
 function icon(name, color = "currentColor") {

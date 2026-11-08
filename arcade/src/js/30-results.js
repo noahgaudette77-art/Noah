@@ -61,6 +61,11 @@ function renderResults(o, rank) {
     { k: "BEST STREAK", v: run.bestStreak },
   ]).concat(o.tiles || []);
   if (rank >= 0) tiles.push({ k: "HIGH SCORE RANK", v: "#" + (rank + 1), c: COLORS.yellow });
+  const xp1 = xpTotal();
+  const xp0 = run.xp0 === undefined ? xp1 : run.xp0;
+  const r0 = rankOf(xp0), r1 = rankOf(xp1);
+  if (xp1 > xp0) tiles.push({ k: "XP EARNED", v: "+" + (xp1 - xp0), c: COLORS.yellow });
+  const cl = o.debrief ? client(o.debrief) : null;
   const changes = o.sel.chapters
     .map((n) => ({ c: CH(n), before: (run.start && run.start[n]) || 0, now: chapterMastery(CH(n)) }))
     .filter((x) => x.c.qids.length && (o.sel.chapters.length <= 2 || mpct(x.now) !== mpct(x.before)));
@@ -81,7 +86,9 @@ function renderResults(o, rank) {
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
+      ${cl && cl.debrief ? `<div class="debrief"><canvas aria-hidden="true"></canvas><div><div class="who">${esc(cl.name.toUpperCase())} · YOUR CLIENT</div><p class="selectable">${esc(cl.debrief)}</p></div></div>` : ""}
       <div class="tiles">${tiles.map((t) => `<div class="tile" style="--c:${t.c || COLORS.cyan}"><span class="k">${esc(t.k)}</span><span class="v">${esc(t.v)}</span></div>`).join("")}</div>
+      <div class="row center" style="margin-bottom:12px">${rankChip()}</div>
       ${o.extraHTML || ""}
       ${changes.length ? `<h2 class="section-h">MASTERY</h2><div class="mastery-list">${changes.map((x) => {
         return `<div class="mrow"><span>STAGE ${x.c.n} · ${esc(x.c.title)}</span><b>${mpct(x.before)}% &gt; ${mpct(x.now)}%</b>
@@ -115,6 +122,13 @@ function renderResults(o, rank) {
       if (e.key === "Enter") { e.preventDefault(); again(); }
       if (e.key === "Escape") showHub();
     },
-    mounted: () => $("[data-act=again]", el).focus({ preventScroll: true }),
+    mounted: () => {
+      $("[data-act=again]", el).focus({ preventScroll: true });
+      const face = $(".debrief canvas", el);
+      if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
+      if (r1.i > r0.i) {
+        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
+      }
+    },
   });
 }

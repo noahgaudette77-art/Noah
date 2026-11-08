@@ -37,6 +37,7 @@ class TitleScene extends Scene3D {
 
 function showTitle() {
   Sound.play("title");
+  Sound.ambience(false);
   const scene = Scenes.cur instanceof TitleScene ? Scenes.cur : Scenes.set(new TitleScene());
   const best = Math.max(Store.best("blaster"), 0);
   const all = ALL_QIDS.concat(ALL_FIDS);

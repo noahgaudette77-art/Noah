@@ -52,11 +52,21 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #crt {
   position: fixed; inset: 0; pointer-events: none; z-index: 60;
   background:
-    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.16) 2px, rgba(0, 0, 0, 0.16) 3px),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 3px),
     radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.5) 100%);
   animation: flicker 0.12s steps(2) infinite;
 }
-body.crt-off #crt { display: none; }
+body.crt-off #crt, body.crt-off #bezel { display: none; }
+#gl.post { image-rendering: auto; }
+/* The monitor: rounded tube corners, a dark inner rim and a sliver of glass glare. */
+#bezel {
+  position: fixed; inset: 0; pointer-events: none; z-index: 62; border-radius: clamp(16px, 3.4vmin, 40px);
+  box-shadow: 0 0 0 80px #030206, inset 0 0 0 2px rgba(0, 0, 0, 0.9), inset 0 0 28px 8px rgba(0, 0, 0, 0.75);
+}
+#bezel::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 22%, rgba(255, 255, 255, 0) 40%);
+}
 @keyframes flicker { 0% { opacity: 0.92; } 100% { opacity: 1; } }
 #flash { position: fixed; inset: 0; pointer-events: none; z-index: 55; opacity: 0; }
 #flash.hit { animation: hitflash 0.45s ease-out; background: radial-gradient(circle, rgba(255, 71, 105, 0.15) 30%, rgba(255, 71, 105, 0.6) 100%); }
@@ -247,7 +257,7 @@ body.crt-off #crt { display: none; }
 
 .sheet {
   position: absolute; left: var(--gut-l); right: var(--gut-r); bottom: var(--gut-b); z-index: 20;
-  max-height: min(62%, 520px); overflow-y: auto; background: var(--panel-2); border: 2px solid var(--c, var(--lime));
+  max-height: min(62%, 520px); overflow-y: auto; background: #1c0d4a; border: 2px solid var(--c, var(--lime));
   box-shadow: 0 0 0 2px #000, 0 0 30px -6px var(--c, var(--lime)); padding: 12px 14px; display: grid; gap: 8px;
   animation: sheetin 0.22s ease-out;
 }
@@ -365,6 +375,39 @@ mark { background: var(--yellow); color: #12052e; }
 .setting .sl small { display: block; color: var(--dim); font-size: 18px; }
 .howto { font-size: 21px; line-height: 1.12; display: grid; gap: 8px; }
 .howto b { color: var(--yellow); font-weight: 400; }
+
+/* ---- dialogue: client briefings and boss speech ----------------------------------- */
+.dlg-wrap { position: fixed; inset: 0; z-index: 52; display: flex; align-items: flex-end; justify-content: center; background: linear-gradient(to top, rgba(4, 1, 14, 0.85), rgba(4, 1, 14, 0.15) 55%); padding: var(--gut-t) var(--gut-r) calc(var(--gut-b) + 8px) var(--gut-l); cursor: pointer; }
+.dlg { width: min(100%, 680px); display: grid; grid-template-columns: auto 1fr; gap: 12px; background: var(--panel-2); border: 3px solid var(--c, var(--cyan)); box-shadow: 0 0 0 3px #000, 0 0 30px -6px var(--c, var(--cyan)); padding: 12px; animation: sheetin 0.25s ease-out; }
+.dlg-face { width: 84px; height: 84px; image-rendering: pixelated; border: 2px solid var(--c, var(--cyan)); background: #120733; }
+.dlg-body { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.dlg-name { font: 10px/1.4 var(--font-display); color: var(--c, var(--cyan)); text-shadow: 0 0 8px var(--c, var(--cyan)); }
+.dlg-text { font-size: clamp(21px, 5vw, 27px); line-height: 1.08; min-height: 3.3em; }
+.dlg-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 8px/1.4 var(--font-display); color: var(--dim); }
+.dlg-foot .next { color: var(--yellow); animation: blink 0.9s steps(1) infinite; }
+.dlg-foot svg { width: 8px; height: 8px; vertical-align: middle; }
+.dlg-foot button { font: 8px/1 var(--font-display); color: var(--dim); padding: 6px 8px; border: 1px solid var(--line); }
+.bubble { position: absolute; left: 50%; transform: translateX(-50%); z-index: 22; max-width: min(92%, 520px); padding: 8px 12px; background: #fff; color: #12052e; border: 3px solid var(--c, var(--magenta)); box-shadow: 0 4px 0 #000; font-size: clamp(19px, 4.6vw, 24px); line-height: 1.05; text-align: center; pointer-events: none; animation: bubblein 0.18s ease-out; }
+.bubble::after { content: ""; position: absolute; left: 50%; top: -12px; margin-left: -8px; border: 8px solid transparent; border-bottom-color: var(--c, var(--magenta)); }
+.bubble b { display: block; font: 8px/1.5 var(--font-display); color: var(--c, var(--magenta)); }
+@keyframes bubblein { from { transform: translateX(-50%) scale(0.7); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+
+/* ---- player rank ---------------------------------------------------------------- */
+.rank { display: inline-grid; gap: 4px; padding: 5px 8px; border: 2px solid var(--line); background: var(--panel); flex: none; }
+.wide-only { display: none; }
+@media (pointer: coarse) { [data-act="fullscreen"] { display: none; } }
+@media (min-width: 620px) { .wide-only { display: inline-flex; } }
+.rank .rn { font: 8px/1.2 var(--font-display); color: var(--yellow); white-space: nowrap; }
+.rank .meter { height: 4px; }
+.client-card { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; border: 2px solid var(--c, var(--cyan)); background: var(--panel); padding: 12px; margin-bottom: 12px; }
+.client-card canvas { width: 72px; height: 72px; image-rendering: pixelated; border: 2px solid var(--c, var(--cyan)); background: #120733; }
+.client-card .who { font: 9px/1.5 var(--font-display); color: var(--c, var(--cyan)); }
+.client-card p { font-size: 20px; line-height: 1.08; }
+.client-card .row { margin-top: 6px; }
+.debrief { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; border: 2px solid var(--lime); background: var(--panel); padding: 10px 12px; margin-bottom: 12px; text-align: left; }
+.debrief canvas { width: 60px; height: 60px; image-rendering: pixelated; border: 2px solid var(--lime); }
+.debrief p { font-size: 21px; line-height: 1.08; }
+.debrief .who { font: 8px/1.5 var(--font-display); color: var(--lime); }
 
 /* ---- modal ---------------------------------------------------------------------- */
 .modal { position: fixed; inset: 0; z-index: 50; background: rgba(4, 1, 14, 0.78); display: grid; place-items: center; padding: var(--gut-t) var(--gut-r) var(--gut-b) var(--gut-l); }

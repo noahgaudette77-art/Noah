@@ -1,0 +1,466 @@
+{
+  "clients": {
+    "1": {
+      "name": "Alfred Jones",
+      "age": 52,
+      "look": {
+        "skin": "fair",
+        "hair": "grey",
+        "style": "short",
+        "glasses": true,
+        "beard": false,
+        "shirt": "cyan"
+      },
+      "lines": [
+        "Hi, I'm Alfred Jones: 52, a widower, and worth about $1,000,000, not counting my house.",
+        "Trouble is, it's scattered across 11 institutions, in bonds, stocks, GICs and mutual funds.",
+        "I research constantly and only get more confused. My advisers toss me ideas, but nobody gives me a direction.",
+        "I want a comfortable retirement and a real legacy for my two kids. Can you pull it all into one plan?"
+      ],
+      "mission": "Clear Stage 1 to turn Alfred's scattered accounts into one real financial plan.",
+      "debrief": "Thanks! One planner, one plan: goals in real numbers, a full view of my assets, then loss control and loss financing."
+    },
+    "2": {
+      "name": "Alfred Jones",
+      "age": 52,
+      "look": {
+        "skin": "fair",
+        "hair": "grey",
+        "style": "short",
+        "glasses": true,
+        "beard": false,
+        "shirt": "orange"
+      },
+      "lines": [
+        "Alfred again. Time to look at what could go wrong, starting with my $400,000 house and $200,000 cottage.",
+        "Add $20,000 of art, $10,000 in coins, and $85,000 of cars, my vintage Mustang among them.",
+        "I'm a self-employed consulting engineer. If I fall ill, most of my income dries up, and so could retiring at 60.",
+        "And I've booked a month in Hawaii: golf, scuba, beach! Help me spot every risk before it strikes."
+      ],
+      "mission": "Clear Stage 2 to expose every peril and hazard stalking Alfred.",
+      "debrief": "Thanks! Personal, property, liability, travel: once my risks are measured, we can manage them, insurance included."
+    },
+    "3": {
+      "name": "Alfred Jones",
+      "age": 52,
+      "look": {
+        "skin": "fair",
+        "hair": "grey",
+        "style": "short",
+        "glasses": true,
+        "beard": false,
+        "shirt": "violet"
+      },
+      "lines": [
+        "Insurance? Bah! Term just eats your premiums, and most folks never collect a dime.",
+        "Cash value policies? Investments are what I care about, and I doubt those pay a decent return.",
+        "My bank deposits have CDIC coverage. If an insurance company goes under, what protects me?",
+        "And how do I know an agent's advice is honest and independent? Convince me this industry is safe!"
+      ],
+      "mission": "Clear Stage 3 to show skeptical Alfred the insurance industry is solid and regulated.",
+      "debrief": "Thanks! Only three Canadian life insurers failed in 100-plus years, Assuris protects me, and agents are licensed."
+    },
+    "4": {
+      "name": "Sean",
+      "age": 24,
+      "look": {
+        "skin": "fair",
+        "hair": "brown",
+        "style": "curly",
+        "glasses": false,
+        "beard": false,
+        "shirt": "lime"
+      },
+      "lines": [
+        "Hi, I'm Sean, Alfred's son: 24 and just out of university.",
+        "A guy in a bar kept the drinks coming, and I signed up for a $250,000 whole life policy. I can't afford it!",
+        "Dad's got questions too: an outdated beneficiary, a $5,000 stereo, and what all-perils really covers.",
+        "Am I stuck with this contract? Help us read the fine print!"
+      ],
+      "mission": "Clear Stage 4 to rescue Sean from a barroom policy and decode the fine print.",
+      "debrief": "Thanks! The 10-day free look lets me cancel, and Dad learned one loss can't be paid twice: insurance only indemnifies."
+    },
+    "5": {
+      "name": "Sean",
+      "age": 24,
+      "look": {
+        "skin": "fair",
+        "hair": "brown",
+        "style": "curly",
+        "glasses": false,
+        "beard": false,
+        "shirt": "yellow"
+      },
+      "lines": [
+        "Sean again. I've just started my first job, and I have to decide whether to join the group plan.",
+        "I can't pick my benefits, I lose them if I switch jobs, and I pay tax on premiums my employer pays. Why bother?",
+        "Dad came from England at 29 and wants to retire at 60. Can he count on OAS, CPP or government disability benefits?",
+        "Help us make sense of group plans and government programs!"
+      ],
+      "mission": "Clear Stage 5 to sort out Sean's group plan and his dad's government benefits.",
+      "debrief": "Thanks! Group cover needs no underwriting, and taxed disability premiums mean tax-free benefits. Dad gets about 90% OAS!"
+    },
+    "6": {
+      "name": "Jasmine",
+      "age": 48,
+      "look": {
+        "skin": "dark",
+        "hair": "black",
+        "style": "bun",
+        "glasses": true,
+        "beard": false,
+        "shirt": "magenta"
+      },
+      "lines": [
+        "Hi, I'm Jasmine. I'm 48, single, and finally able to save seriously for retirement.",
+        "The stocks in my RRSP have had some modest success lately. What techniques could build on that?",
+        "But I won't lock every dollar away. I need to reach some of it in an emergency.",
+        "What steps should my plan follow, and where will my retirement income come from?"
+      ],
+      "mission": "Clear Stage 6 to build Jasmine a retirement plan the Inflation Titan can't crush.",
+      "debrief": "Thanks! Set goals, size my income needs, find my sources, then max my RRSP early and use my carried-forward room."
+    },
+    "7": {
+      "name": "Gitano",
+      "age": 60,
+      "look": {
+        "skin": "brown",
+        "hair": "grey",
+        "style": "bald",
+        "glasses": true,
+        "beard": false,
+        "shirt": "orange"
+      },
+      "lines": [
+        "I'm Gitano, 60, and my wife is 55. My employer pension and CPP both say I can start collecting now.",
+        "My pension offers a full amount on my life alone, or a reduced joint one that pays her two-thirds after I die.",
+        "I've also got $150,000 in an RRSP, mostly Canadian equity funds, and our $300,000 home is mortgage-free.",
+        "Should I try a reverse mortgage? I know what I can do. Help me work out what I should do!"
+      ],
+      "mission": "Clear Stage 7 so Gitano and his wife never outlive their money.",
+      "debrief": "Thanks! A joint pension protects my wife, and at 71 an RRIF based on her younger age keeps my withdrawals low."
+    },
+    "8": {
+      "name": "Angelo",
+      "age": 55,
+      "look": {
+        "skin": "tan",
+        "hair": "black",
+        "style": "short",
+        "glasses": false,
+        "beard": true,
+        "shirt": "cyan"
+      },
+      "lines": [
+        "Angelo here. No will. When Maria and I married we owned next to nothing, and I never got around to one.",
+        "We own our house jointly. I also hold roughly $300,000 in GICs and RRSPs, and my own business is worth about $500,000.",
+        "Our sons are grown and married, and our daughter, 17, lives at home. Surely it all goes to Maria anyway... right?",
+        "Help me see what really happens to my family if I die without a will!"
+      ],
+      "mission": "Clear Stage 8 to save Angelo's family from Lord Intestate's rules.",
+      "debrief": "Thanks! Without a will, Maria wouldn't get it all, and the kids would take their shares right away. Time for a will!"
+    },
+    "9": {
+      "name": "Manfred",
+      "age": 79,
+      "look": {
+        "skin": "light",
+        "hair": "white",
+        "style": "short",
+        "glasses": true,
+        "beard": true,
+        "shirt": "violet"
+      },
+      "lines": [
+        "I'm Manfred, 79, and a bit forgetful lately. I picked up a do-it-yourself will kit. Would you witness it?",
+        "My son Hans insists I cut out my wife, who's in a nursing home, and make him my main beneficiary.",
+        "My brother Fritz, 71, would be executor, with my grandchildren's legacies in trust until they turn 30.",
+        "I'd give Hans power of attorney over my bank and investments. Could he touch my house or my will? Help!"
+      ],
+      "mission": "Clear Stage 9 to shield Manfred's will from the Undue Influencer.",
+      "debrief": "Thank you! A lawyer or notary, not a kit; a younger or corporate executor; and no power of attorney can change my will."
+    },
+    "10": {
+      "name": "Maureen",
+      "age": 44,
+      "look": {
+        "skin": "fair",
+        "hair": "auburn",
+        "style": "long",
+        "glasses": false,
+        "beard": false,
+        "shirt": "lime"
+      },
+      "lines": [
+        "I'm Maureen, from Ontario. I'm recently divorced, so my will needs an update.",
+        "My aunt's will was voided because she wasn't competent. How will my bank and RRSP issuers know mine is valid?",
+        "My estate is about $1,000,000, mostly real estate and securities, and I hear the fees could run to thousands.",
+        "Should I register my property jointly with my minor sons? Help me handle probate the smart way!"
+      ],
+      "mission": "Clear Stage 10 to steer Maureen through probate without a costly shortcut.",
+      "debrief": "Thanks! Probate confirms my will is my last one. And no joint title with my boys: a trust in my will protects us all."
+    },
+    "11": {
+      "name": "Maria",
+      "age": 35,
+      "look": {
+        "skin": "brown",
+        "hair": "black",
+        "style": "ponytail",
+        "glasses": false,
+        "beard": false,
+        "shirt": "yellow"
+      },
+      "lines": [
+        "I'm Maria. Manuel and I married in Quebec and have lived here 12 years. Now he's talking about divorce.",
+        "The house is in his name only. We have two cars, one in each name, and we gave our 16-year-old a $6,000 golf cart.",
+        "His plumbing business runs on $20,000 of tools and a $16,000 van, and half of that van came out of my pay.",
+        "On our honeymoon, at 18, he had me sign away any claim to our future home and assets. Am I stuck? Help!"
+      ],
+      "mission": "Clear Stage 11 to defend Maria's share of the family patrimony.",
+      "debrief": "Thank you! Family patrimony can't be waived in advance, so that contract is void: the house and cars are split equally."
+    }
+  },
+  "bosses": {
+    "1": {
+      "intro": [
+        "Step right up! I'm the PRODUCT PUSHER, and have I got a product for YOU!",
+        "Goals? Plans? Bah! Buy one of everything and hope for the best!"
+      ],
+      "hit": [
+        "Argh! You set goals BEFORE buying?!",
+        "No! A risk analysis isn't on my price list!",
+        "Curses! Loss control AND loss financing?!",
+        "One plan beats eleven sales pitches?! Nooo!"
+      ],
+      "miss": [
+        "Ha! Another product for the pile!",
+        "Confused? Perfect! Buy two!",
+        "Who needs a plan when you have a brochure?",
+        "Product proliferation is my superpower!"
+      ],
+      "defeat": "Nooo! Clients want planning now, not just products... I'm obsolete!",
+      "win": "SOLD! One more client with lots of products and no plan!"
+    },
+    "2": {
+      "intro": [
+        "I am PERIL PRIME, the cause of every loss! Fire! Theft! Collision!",
+        "And every hazard you ignore makes my odds better! Mwa-ha-ha!"
+      ],
+      "hit": [
+        "Argh! You moved the gasoline away from the flame!",
+        "Curses! You transferred me to an insurer!",
+        "Sprinklers?! You cut my severity!",
+        "No! You can tell a peril from a hazard!"
+      ],
+      "miss": [
+        "Ha! You kept that risk without even knowing it!",
+        "Uncertainty about loss? That's my whole act!",
+        "That icy road was a hazard, and you skated right in!",
+        "Low frequency, high severity, and all on you!"
+      ],
+      "defeat": "Avoided, prevented, reduced, transferred... PERIL PRIME is DOWN!",
+      "win": "Unmanaged risk, total loss! PERIL PRIME strikes again!"
+    },
+    "3": {
+      "intro": [
+        "Wooo... I am the SOLVENCY SPECTER! I haunt every insurer's balance sheet!",
+        "Will your insurer still be there when you claim? Wooo-ha-ha-ha!"
+      ],
+      "hit": [
+        "Aagh! Capital requirements! They burn!",
+        "No! Assuris is guarding the policyowners!",
+        "Curses! Federal AND provincial regulators!",
+        "Eek! A licensed agent! I can't scare those!"
+      ],
+      "miss": [
+        "Wooo! Your confidence is going insolvent!",
+        "Stock or mutual? You'll never tell them apart!",
+        "Boo! That answer has no capital behind it!",
+        "Your reserves are looking... ghostly!"
+      ],
+      "defeat": "Regulated, capitalized and protected... I'm fading... fading... gone!",
+      "win": "Your peace of mind just went insolvent! Wooo-ha-ha!"
+    },
+    "4": {
+      "intro": [
+        "I am THE FINE PRINT! Clauses, conditions, exclusions... all in tiny type!",
+        "Sign without reading me, and learn what all-perils does NOT cover!"
+      ],
+      "hit": [
+        "Argh! You used the 10-day free look!",
+        "Ambiguous wording favours the policyowner?! Nooo!",
+        "Curses! You actually read the exclusions!",
+        "Indemnity! No profiting from a loss? Rats!"
+      ],
+      "miss": [
+        "Ha! Didn't read the exclusions, did you?",
+        "That clause was on page 47, in six-point type!",
+        "Flood? Earthquake? Check the exclusions!",
+        "Sign here, initial there... Mwa-ha-ha!"
+      ],
+      "defeat": "Every clause read, every exclusion found... I'm null and void!",
+      "win": "You signed without reading! The fine print wins again!"
+    },
+    "5": {
+      "intro": [
+        "I am the GROUP GOLEM, forged from one master contract and a thousand members!",
+        "Change jobs, and your group benefits stay with ME! GRAAAH!"
+      ],
+      "hit": [
+        "Ugh! You converted your group life in time!",
+        "Argh! You know the 40-year OAS rule!",
+        "Little or no underwriting? I'm crumbling!",
+        "Curses! My master contract is cracking!"
+      ],
+      "miss": [
+        "Severe AND prolonged, or no QPP disability pension!",
+        "Pick your own benefits? Not in MY group plan!",
+        "Wrong! Back to the end of the group line!",
+        "Your certificate is no match for my master contract!"
+      ],
+      "defeat": "My master contract... terminated! The group... disbands...",
+      "win": "Absorbed into the group! Your benefits answer to ME now!"
+    },
+    "6": {
+      "intro": [
+        "I am the INFLATION TITAN! Every year I grow, and your dollars shrink!",
+        "At just 3% a year, today's $1,000 will cost $1,806 in 20 years!"
+      ],
+      "hit": [
+        "Argh! You used the real rate of return!",
+        "Constant dollars?! I can't touch those!",
+        "Indexed benefits! My one weakness!",
+        "Curses! You projected costs to retirement!"
+      ],
+      "miss": [
+        "Your purchasing power is SHRINKING!",
+        "Planning in today's dollars? How cute!",
+        "Forgot about me? I never forget you!",
+        "Your nest egg buys less every year! Ha!"
+      ],
+      "defeat": "Beaten by real rates and a solid plan... I'm deflating!",
+      "win": "Your savings are mine! Every dollar buys less and less!"
+    },
+    "7": {
+      "intro": [
+        "I am the LONGEVITY LICH! You will live a long, long time...",
+        "...but will your money? Heh heh heh. I can wait for decades!"
+      ],
+      "hit": [
+        "Argh! A life annuity! You can't outlive THAT!",
+        "No! A pension that keeps paying the spouse!",
+        "Curses! An RRIF based on the younger spouse!",
+        "Ugh! You planned for a long, long life!"
+      ],
+      "miss": [
+        "Forgot the RRSP deadline at 71? I didn't!",
+        "Straight-life annuity with a spouse? Perfect!",
+        "Your savings will expire long before you do!",
+        "Live long... and run out of money! Mwa-ha-ha!"
+      ],
+      "defeat": "Income for life?! My curse is broken... I crumble to dust!",
+      "win": "Your money ran out, but your years didn't! Mwa-ha-ha!"
+    },
+    "8": {
+      "intro": [
+        "Kneel before LORD INTESTATE! No will? Then the law picks your heirs!",
+        "Your spouse, your children, your estate... all split by MY rules!"
+      ],
+      "hit": [
+        "Argh! A valid will! My one weakness!",
+        "Curses! A named beneficiary skips my estate!",
+        "No! You chose your own liquidator!",
+        "Ugh! A trust for the minor children!"
+      ],
+      "miss": [
+        "Ha! The law picks your heirs now!",
+        "No will? In Quebec, a de facto spouse inherits NOTHING!",
+        "The kids' shares pay out at 18, ready or not!",
+        "Your estate, your wishes? Not without a will!"
+      ],
+      "defeat": "A valid will?! My reign... is... over...",
+      "win": "No will, no say! Your estate now follows MY law!"
+    },
+    "9": {
+      "intro": [
+        "Psst... I'm the UNDUE INFLUENCER. Just sign where I point, friend.",
+        "A little pressure, a do-it-yourself kit, and the estate is mine!"
+      ],
+      "hit": [
+        "Curses! You saw the lawyer without me!",
+        "No! A sound mind AND a free will?!",
+        "Power of attorney can't change a will?! Rats!",
+        "A notary?! I can't push a notary around!"
+      ],
+      "miss": [
+        "Good, good... now sign right here. Trust me!",
+        "Your free will? Now it's MY will!",
+        "Shh... no need to tell your lawyer about me.",
+        "Who needs independent advice? You have ME!"
+      ],
+      "defeat": "Foiled by a sound mind and a free will! My influence is gone!",
+      "win": "Sign here... and here... The estate is MINE! Mwa-ha-ha!"
+    },
+    "10": {
+      "intro": [
+        "PROBATRON ONLINE. Scanning will... validity UNCONFIRMED. Probate initiated!",
+        "BEEP! Assets passing through your will detected. Calculating fees..."
+      ],
+      "hit": [
+        "ERROR! Named beneficiary. Asset bypassed!",
+        "SYSTEM FAULT: notarial will. No probate needed!",
+        "WARNING: inter vivos gift. Asset already gone!",
+        "DOES NOT COMPUTE! A trust? Fee base shrinking!"
+      ],
+      "miss": [
+        "Fee meter rising! Thank you for your estate!",
+        "Holograph will detected. Probate REQUIRED. Beep!",
+        "Probated wills go public. Everyone can read it!",
+        "Joint with a minor? Control LOST! Ha-ha-beep!"
+      ],
+      "defeat": "Probate... bypassed... Estate... settled... Shutting... down...",
+      "win": "Estate processed. Fees collected. PROBATRON thanks you. BEEP!"
+    },
+    "11": {
+      "intro": [
+        "Wooo... I am the PATRIMONY PHANTOM, haunting every Quebec marriage!",
+        "House, cars, pension rights... do you know what really gets split?"
+      ],
+      "hit": [
+        "Aagh! Advance waivers are null and void!",
+        "No! It's the net value that's split, not the assets!",
+        "Curses! Family cars count, in either spouse's name!",
+        "Eek! You know your partnership of acquests!"
+      ],
+      "miss": [
+        "Wooo! Your share is fading into the mist!",
+        "The patrimony rules are mandatory, and so is your defeat!",
+        "Lost in the matrimonial regime maze? Wooo!",
+        "Boo! You forgot what the family patrimony holds!"
+      ],
+      "defeat": "Nooo! The patrimony is split fair and square... I fade away!",
+      "win": "Your claim vanishes into the mist! Wooo-ha-ha-ha!"
+    },
+    "all": {
+      "intro": [
+        "I am THE EXAMINATOR! Eleven chapters. One exam. Zero mercy.",
+        "Risk, contracts, retirement, wills, family law... prove you know it ALL!"
+      ],
+      "hit": [
+        "Impossible! You actually studied!",
+        "Argh! Correct... AGAIN!",
+        "My question bank is crumbling!",
+        "You read the follow-ups too?! Grrr!"
+      ],
+      "miss": [
+        "WRONG! Back to Stage 1 with you!",
+        "Ha! Did you even read the scenario?",
+        "Incorrect! The Examinator never forgets!",
+        "Was that a guess? I can always tell!"
+      ],
+      "defeat": "Impossible... You have PASSED! Go forth and plan, champion!",
+      "win": "Exam over! Hit the books and face me again, student!"
+    }
+  }
+}
