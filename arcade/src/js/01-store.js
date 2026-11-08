@@ -94,7 +94,9 @@ const Store = {
     }
     if (!this._dirty) return;
     this._dirty = false;
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.state)); } catch (e) { /* ignore */ }
+    this._json = JSON.stringify(this.state);
+    this._jsonAt = this.state.updated;
+    try { localStorage.setItem(STORE_KEY, this._json); } catch (e) { /* ignore */ }
   },
   onChange(fn) {
     this.listeners.push(fn);
@@ -211,7 +213,9 @@ const Store = {
     if (this._writing) { this._again = true; return; }
     this._writing = true;
     try {
-      await this.remote.ref.set({ state: JSON.stringify(this.state), updated: this.state.updated });
+      this.flush(); // serializes only if something changed since the last local save
+      const json = this._json && this._jsonAt === this.state.updated ? this._json : JSON.stringify(this.state);
+      await this.remote.ref.set({ state: json, updated: this.state.updated });
     } catch (e) {
       const code = e && e.code;
       if (code === "unavailable") this._again = true;

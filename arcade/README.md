@@ -44,15 +44,17 @@ lists all of them again.
   iOS Low Power Mode) is left alone, since lowering quality can't help it. iPhones
   run web pages at 60 fps unless Safari's "Prefer Page Rendering Updates near
   60fps" feature flag is turned off, and apps' built-in browsers may stay at 60.
-- **No hitches.** Every shader a scene needs is built while it loads (behind the
-  screen transition), and effects come from reusable pools, so the first explosion
-  or beam never stalls a frame. Big hits slow time for a beat instead of freezing
-  it. Progress saves happen between frames. The arcade floor stays built while you
-  play, so coming back is instant.
+- **No hitches.** Every shader a scene needs is built while it loads, behind a
+  black CRT channel-switch that appears the moment you tap, and effects come from
+  reusable pools, so the first explosion or beam never stalls a frame. Replaying a
+  game reuses its shaders, and the arcade floor stays built while you play, so
+  both are instant. Big hits slow time for a beat instead of freezing it.
+  Progress saves happen between frames. Each scene's quality level is remembered
+  on the device, so a new session starts where it should.
 - **Instant input.** Answers, flashcard flips and grades register the moment your
   finger touches the screen, not when it lifts.
-- **FPS counter.** Setup → FPS counter shows the frame rate, your screen's refresh
-  rate and the current quality level (1-6).
+- **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
+  (your screen's refresh rate, up to 120) and the current quality level (1-6).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
   book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
   time you play a stage they brief you, with a pixel portrait and typed-out

@@ -7,8 +7,8 @@ function boot() {
   GFX.init();
 
   Pointer.init();
-  // FPS counter (Setup): frames per second, the screen's refresh rate as measured,
-  // and the adaptive quality level, refreshed twice a second.
+  // FPS counter (Setup): frames per second, the frame rate the game is aiming for
+  // (the screen's measured refresh rate, up to 120) and the adaptive quality level.
   const fpsEl = $("#fps");
   fpsEl.hidden = !Store.settings.fps;
   let fpsN = 0, fpsT = performance.now();
@@ -19,7 +19,7 @@ function boot() {
     if (!fpsEl.hidden) {
       fpsN++;
       if (now - fpsT >= 500) {
-        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${Math.round(1 / GFX.vsync)} HZ · Q${GFX.qi + 1}/${GFX.Q.length}`;
+        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · TARGET ${Math.round(1 / GFX.vsync)} · Q${GFX.qi + 1}/${GFX.Q.length}`;
         fpsN = 0;
         fpsT = now;
       }
@@ -45,8 +45,9 @@ function boot() {
     if (s && s.pause && s.state && s.state !== "over" && s.state !== "intro") s.pause();
     Store.flush();
     Store.flushRemote();
+    GFX.saveMem(Scenes.cur);
   });
-  window.addEventListener("pagehide", () => Store.flush());
+  window.addEventListener("pagehide", () => { Store.flush(); GFX.saveMem(Scenes.cur); });
 
   const fonts = document.fonts && document.fonts.load
     ? Promise.race([

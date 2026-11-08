@@ -53,12 +53,13 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
           float m = vnoise(d * 2.2 + 11.0);
           col += mix(uNebulaColor, uHorizon, m) * pow(max(n - 0.25, 0.0) * 1.4, 2.2) * uNebula;
         }
-        if (uClouds > 0.0) {
+        // clouds and stars only exist above the horizon: skip their noise elsewhere
+        if (uClouds > 0.0 && h > 0.015 && h < 0.42) {
           float b = vnoise(vec3(d.x * 3.0 + uTime * 0.004, h * 34.0, d.z * 3.0));
           float band = smoothstep(0.58, 0.9, b) * smoothstep(0.015, 0.09, h) * (1.0 - smoothstep(0.12, 0.42, h));
           col = mix(col, uHorizon * 0.9 + uMid * 0.4, band * uClouds * 0.45);
         }
-        if (uStars > 0.0) {
+        if (uStars > 0.0 && h > 0.02) {
           vec3 p = d * 240.0; vec3 c = floor(p); float r = hash13(c);
           if (r > 0.972) {
             float s = smoothstep(0.3, 0.0, length(fract(p) - 0.5));

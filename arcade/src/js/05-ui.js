@@ -72,9 +72,11 @@ const UI = {
   // blocks for a moment on a phone: behind black it reads as the set switching
   // channels, instead of the tap seeming to do nothing.
   cover(fn) {
+    if (this.covering) return; // a second tap while the screen is already switching
+    this.covering = true;
     $("#flash").className = "cover";
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      try { fn(); } finally { this.flash("crt-on"); }
+      try { fn(); } finally { this.covering = false; this.flash("crt-on"); }
     }));
   },
   banner(text, color = COLORS.yellow, sub = "") {

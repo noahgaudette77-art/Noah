@@ -34,6 +34,7 @@ const GFX = {
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
     this.pipe = makePipeline(r, this.hdr);
+    this.loadMem();
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
@@ -179,9 +180,20 @@ const GFX = {
     this.settle = 1; // a new scene's first frames compile shaders and upload textures
     if (this.locked || !this.ok) return;
     const name = (o) => (o && o.constructor ? o.constructor.name : "");
-    if (old) this.mem[name(old)] = this.qi;
+    if (old) { this.mem[name(old)] = this.qi; this.saveMem(); }
     const m = s ? this.mem[name(s)] : undefined;
     if (m !== undefined) this.setQ(m);
+  },
+  // Each scene's settled quality level is remembered on this device between visits,
+  // so a new session starts where it should instead of stuttering while it adapts
+  // (it still probes upward). The refresh rate is measured afresh each session.
+  loadMem() {
+    try { const m = JSON.parse(localStorage.getItem("inr-arcade-gfx") || "{}"); if (m && m.mem) this.mem = m.mem; } catch (e) { /* no storage */ }
+  },
+  saveMem(cur) {
+    if (this.locked) return;
+    if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi;
+    try { localStorage.setItem("inr-arcade-gfx", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
   },
   watch(realDt) {
     if (!this.ok || !this.pipe) return;
@@ -197,7 +209,8 @@ const GFX = {
     this._lo = [1, 1, 1];
     if (third > 0.003) {
       const hz = [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - third) < Math.abs(1 / b - third) ? r : b), 60);
-      if (1 / hz < this.vsync * 0.97) this.vsync = 1 / hz;
+      // aim at the screen's rate, up to 120 fps (beyond that, sharpness wins)
+      if (1 / Math.min(hz, 120) < this.vsync * 0.97) this.vsync = 1 / Math.min(hz, 120);
     }
     this.fpsAvg = avg;
     if (this.locked) return;
@@ -369,7 +382,7 @@ function makePipeline(renderer, hdr) {
         col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
       }
       col += texture2D(tGlow, uv).rgb;
-      col *= uExposure * uTint;
+      col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(col, col * mix(uShadow, uHigh, smoothstep(0.05, 0.75, lum)) * 1.25, uSplit);

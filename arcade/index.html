@@ -694,7 +694,9 @@ const Store = {
     }
     if (!this._dirty) return;
     this._dirty = false;
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.state)); } catch (e) { /* ignore */ }
+    this._json = JSON.stringify(this.state);
+    this._jsonAt = this.state.updated;
+    try { localStorage.setItem(STORE_KEY, this._json); } catch (e) { /* ignore */ }
   },
   onChange(fn) {
     this.listeners.push(fn);
@@ -811,7 +813,9 @@ const Store = {
     if (this._writing) { this._again = true; return; }
     this._writing = true;
     try {
-      await this.remote.ref.set({ state: JSON.stringify(this.state), updated: this.state.updated });
+      this.flush(); // serializes only if something changed since the last local save
+      const json = this._json && this._jsonAt === this.state.updated ? this._json : JSON.stringify(this.state);
+      await this.remote.ref.set({ state: json, updated: this.state.updated });
     } catch (e) {
       const code = e && e.code;
       if (code === "unavailable") this._again = true;
@@ -1264,6 +1268,7 @@ const GFX = {
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
     this.pipe = makePipeline(r, this.hdr);
+    this.loadMem();
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
@@ -1409,9 +1414,20 @@ const GFX = {
     this.settle = 1; // a new scene's first frames compile shaders and upload textures
     if (this.locked || !this.ok) return;
     const name = (o) => (o && o.constructor ? o.constructor.name : "");
-    if (old) this.mem[name(old)] = this.qi;
+    if (old) { this.mem[name(old)] = this.qi; this.saveMem(); }
     const m = s ? this.mem[name(s)] : undefined;
     if (m !== undefined) this.setQ(m);
+  },
+  // Each scene's settled quality level is remembered on this device between visits,
+  // so a new session starts where it should instead of stuttering while it adapts
+  // (it still probes upward). The refresh rate is measured afresh each session.
+  loadMem() {
+    try { const m = JSON.parse(localStorage.getItem("inr-arcade-gfx") || "{}"); if (m && m.mem) this.mem = m.mem; } catch (e) { /* no storage */ }
+  },
+  saveMem(cur) {
+    if (this.locked) return;
+    if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi;
+    try { localStorage.setItem("inr-arcade-gfx", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
   },
   watch(realDt) {
     if (!this.ok || !this.pipe) return;
@@ -1427,7 +1443,8 @@ const GFX = {
     this._lo = [1, 1, 1];
     if (third > 0.003) {
       const hz = [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - third) < Math.abs(1 / b - third) ? r : b), 60);
-      if (1 / hz < this.vsync * 0.97) this.vsync = 1 / hz;
+      // aim at the screen's rate, up to 120 fps (beyond that, sharpness wins)
+      if (1 / Math.min(hz, 120) < this.vsync * 0.97) this.vsync = 1 / Math.min(hz, 120);
     }
     this.fpsAvg = avg;
     if (this.locked) return;
@@ -1599,7 +1616,7 @@ function makePipeline(renderer, hdr) {
         col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
       }
       col += texture2D(tGlow, uv).rgb;
-      col *= uExposure * uTint;
+      col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(col, col * mix(uShadow, uHigh, smoothstep(0.05, 0.75, lum)) * 1.25, uSplit);
@@ -2259,9 +2276,11 @@ const UI = {
   // blocks for a moment on a phone: behind black it reads as the set switching
   // channels, instead of the tap seeming to do nothing.
   cover(fn) {
+    if (this.covering) return; // a second tap while the screen is already switching
+    this.covering = true;
     $("#flash").className = "cover";
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      try { fn(); } finally { this.flash("crt-on"); }
+      try { fn(); } finally { this.covering = false; this.flash("crt-on"); }
     }));
   },
   banner(text, color = COLORS.yellow, sub = "") {
@@ -2766,12 +2785,13 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
           float m = vnoise(d * 2.2 + 11.0);
           col += mix(uNebulaColor, uHorizon, m) * pow(max(n - 0.25, 0.0) * 1.4, 2.2) * uNebula;
         }
-        if (uClouds > 0.0) {
+        // clouds and stars only exist above the horizon: skip their noise elsewhere
+        if (uClouds > 0.0 && h > 0.015 && h < 0.42) {
           float b = vnoise(vec3(d.x * 3.0 + uTime * 0.004, h * 34.0, d.z * 3.0));
           float band = smoothstep(0.58, 0.9, b) * smoothstep(0.015, 0.09, h) * (1.0 - smoothstep(0.12, 0.42, h));
           col = mix(col, uHorizon * 0.9 + uMid * 0.4, band * uClouds * 0.45);
         }
-        if (uStars > 0.0) {
+        if (uStars > 0.0 && h > 0.02) {
           vec3 p = d * 240.0; vec3 c = floor(p); float r = hash13(c);
           if (r > 0.972) {
             float s = smoothstep(0.3, 0.0, length(fract(p) - 0.5));
@@ -9577,7 +9597,7 @@ function showSettings() {
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
-      ${row("FPS counter", "Frame rate, screen refresh rate and quality level (1-6)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-6)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
@@ -9624,8 +9644,8 @@ function boot() {
   GFX.init();
 
   Pointer.init();
-  // FPS counter (Setup): frames per second, the screen's refresh rate as measured,
-  // and the adaptive quality level, refreshed twice a second.
+  // FPS counter (Setup): frames per second, the frame rate the game is aiming for
+  // (the screen's measured refresh rate, up to 120) and the adaptive quality level.
   const fpsEl = $("#fps");
   fpsEl.hidden = !Store.settings.fps;
   let fpsN = 0, fpsT = performance.now();
@@ -9636,7 +9656,7 @@ function boot() {
     if (!fpsEl.hidden) {
       fpsN++;
       if (now - fpsT >= 500) {
-        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${Math.round(1 / GFX.vsync)} HZ · Q${GFX.qi + 1}/${GFX.Q.length}`;
+        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · TARGET ${Math.round(1 / GFX.vsync)} · Q${GFX.qi + 1}/${GFX.Q.length}`;
         fpsN = 0;
         fpsT = now;
       }
@@ -9662,8 +9682,9 @@ function boot() {
     if (s && s.pause && s.state && s.state !== "over" && s.state !== "intro") s.pause();
     Store.flush();
     Store.flushRemote();
+    GFX.saveMem(Scenes.cur);
   });
-  window.addEventListener("pagehide", () => Store.flush());
+  window.addEventListener("pagehide", () => { Store.flush(); GFX.saveMem(Scenes.cur); });
 
   const fonts = document.fonts && document.fonts.load
     ? Promise.race([
