@@ -1,0 +1,1908 @@
+{
+  "chapter": 9,
+  "title": "Wills and Powers of Attorney",
+  "objectives": [
+    "Inform clients about the advantages of a thoughtfully drafted will as a means of carrying out their wishes regarding the transfer of property at death and the control of some property after death.",
+    "Identify the circumstances where a substitute decision-maker may be needed.",
+    "Explain to clients the implications of appointing (or not appointing) an attorney for property and/or personal care."
+  ],
+  "guide": [
+    {
+      "heading": "Introduction and domicile",
+      "page": "9•3",
+      "points": [
+        "A will takes effect only on death and can be revoked any time before. It transfers legacies (bequests) to legatees and the residue (the balance of the net estate after debts, taxes and obligations) to the heirs.",
+        "Have it drafted by a lawyer (a notary in Quebec) with the planner's input: clear wording and stated reasons cut disputes, tax erosion, probate costs and lawsuits by disappointed heirs.",
+        "Common-law (de facto in Quebec) couples especially need wills: in some provinces intestacy law gives a common-law spouse nothing.",
+        "Formal validity is governed by the place the will is made or the testator's domicile: the one jurisdiction of strongest link plus intention to remain or return (home, family, bank accounts, work, social ties, visits, written intent).",
+        "Domicile where the will was executed governs administration; domicile at death decides which intestacy laws apply; real property follows the law where it is located. Residency, citizenship, domicile and mailing address are distinct.",
+        "The US levies estate tax on US-domiciled persons (green card holders included) and transfer taxes based on citizenship: ask early and refer to a US expert."
+      ]
+    },
+    {
+      "heading": "Holograph wills",
+      "page": "9•4",
+      "points": [
+        "Entirely handwritten by the testator (no typewriter or computer) and signed; witnesses are not needed. A signed letter showing testamentary intent can qualify.",
+        "Valid in AB, MB, NB, NL, ON, QC, SK, NWT and Yukon; BC accepts them only for moveable property (cash, stocks, bonds, jewellery).",
+        "Weaknesses: no professional advice (errors, misused legalese), easier to contest, hard to locate, no witness affidavit (the court needs, e.g., a bank manager to confirm the handwriting), and too many changes.",
+        "Undated, conflicting holographs (the 11-document example) lead to costly litigation over which ones govern.",
+        "Quebec: holograph wills must be probated by the court or a notary before use (art. 772 CCQ); recommended only when necessary, e.g., in an emergency."
+      ]
+    },
+    {
+      "heading": "Formal wills (made in the presence of witnesses)",
+      "page": "9•6",
+      "points": [
+        "Recognized in every province. Entirely in writing (by the testator or a third party) and signed by the testator before at least two witnesses, who sign in the testator's presence and in each other's.",
+        "Witnesses must be of the age of majority and should not be beneficiaries or beneficiaries' spouses: the will stays valid, but a witness-beneficiary's gift fails (some provinces allow court validation if there was no undue influence).",
+        "Have the witnesses swear an Affidavit of Execution at signing so the court can accept due execution without tracking them down years later.",
+        "Quebec: the testator declares to the witnesses that the will is his or hers; testator and witnesses initial every page (prudent elsewhere); the will must be probated by the court or a notary.",
+        "Kits and will software give no advice and miss tax planning: a last resort only, to be replaced by a professional will as soon as possible."
+      ]
+    },
+    {
+      "heading": "Notarial and international wills",
+      "page": "9•7",
+      "points": [
+        "Notarial wills exist only in Quebec: signed before one notary and, depending on the circumstances, one or two witnesses. The notary keeps the original; the testator gets a notarial copy.",
+        "As notarial deeds they are not probated; the notary issues certified copies to the heirs on proof of death. They can still be contested.",
+        "Witnesses cannot be the notary's spouse, the notary's relatives up to the third degree (direct or collateral, or by marriage or civil union), minors or the notary's employees.",
+        "Search reports from the Chamber of Notaries and the Quebec Bar reveal wills registered by notaries or lawyers. Outside Quebec, notaries mainly witness documents, swear affidavits and certify copies.",
+        "International wills follow a convention's uniform form and are valid wherever it applies, regardless of domicile, place signed or asset location; recognized (at writing) only in AB, MB, NL, NB, ON, PEI and SK."
+      ]
+    },
+    {
+      "heading": "Quebec: gift mortis causa in a marriage contract",
+      "page": "9•8",
+      "points": [
+        "A gift by spouses in a marriage or civil union contract, made with regard to the contingency of death (not its immediacy); it can take the place of a will.",
+        "Conditions: only in such a contract; donees limited to the future spouses and their respective and common children (born or unborn); no transfer of ownership; effective only at death; always revocable; signed by more than one person.",
+        "It stays valid for decades (made at 25, dies at 75 with no will: the spouse inherits). Always check the marriage contract when someone dies without a will."
+      ]
+    },
+    {
+      "heading": "Limits on testamentary freedom",
+      "page": "9•9",
+      "points": [
+        "Some assets can't be willed: property in joint tenancy with right of survivorship goes to the survivor; shares may be bound by a shareholders' agreement.",
+        "Forced heirship countries fix family shares by statute, so wills there may serve no purpose. Religious or cultural traditions may matter to clients but must be applied within Canadian law.",
+        "Situs wills: separate wills for each jurisdiction, often with different executors and beneficiaries.",
+        "Family law and support creditors don't challenge the will: they assert rights against the property and may rank ahead of beneficiaries. The will disposes of what is left after creditors and taxes.",
+        "Courts have limited power to fix technical errors; some provinces have 'substantial compliance' laws for minor violations if the document's integrity is not in question."
+      ]
+    },
+    {
+      "heading": "Testamentary capacity and undue influence",
+      "page": "9•10",
+      "points": [
+        "The testator must be of sound mind and acting freely. A declaration of competence in the will itself is not always reliable, and contests (incapacity, undue influence, fraud) can eat up the estate.",
+        "Incapacity is a later court judgment made with hindsight; the professional should inquire, keep notes or evidence (e.g., medical reports) and help clients exercise their right to make a will.",
+        "Each province sets a minimum age (sometimes waived, e.g., for married minors). Quebec: a person of full age under curatorship cannot make a will (art. 710).",
+        "Confirm the testator understands the assets, the beneficiaries, potential spouse or dependant claims and the will's terms.",
+        "Red flags: duress (bodily harm or threats); undue influence (unusual control by a third party, usually a beneficiary), e.g., a caregiver-beneficiary who books, attends and talks; a major unexplained change. Note concerns and tell the lawyer."
+      ]
+    },
+    {
+      "heading": "Family law and the surviving spouse",
+      "page": "9•11",
+      "points": [
+        "A will that fails to provide adequately for a spouse or dependants can be overridden. Cutting out a spouse isn't illegal, but dependants are creditors ranking ahead of beneficiaries, so it mostly breeds litigation.",
+        "Support orders or agreements generally bind the estate unless they release it (often on payment of life insurance in lieu of support).",
+        "Some provinces let a spouse choose will benefits or an equalization payment (some via Net Family Property). A successful claim generally forfeits all will benefits; the payment is received as a creditor.",
+        "Prevent claims by leaving the spouse more than the claim, often insurance-funded and 'in lieu of' statutory rights. Marriage contracts can waive equalization, but a spouse left without adequate resources may still claim support.",
+        "Quebec compensatory allowance (married or civil union spouses only) rests on having enriched the deceased with goods, services or money, not on need; the court decides.",
+        "Quebec family patrimony (residence, furniture, family car, RRSPs and RPPs accumulated during marriage): survivor may claim half unless renounced before July 1, 1989; partition comes before any distribution and can be added to will benefits.",
+        "Next the matrimonial regime is partitioned, and the spouse may also claim support. A Quebec will can make a legacy conditional on renouncing family patrimony rights."
+      ]
+    },
+    {
+      "heading": "Rights of other dependants and public policy",
+      "page": "9•14",
+      "points": [
+        "Dependants generally include spouses, common-law spouses, children (including unborn and born outside wedlock), grandchildren, parents, grandparents and siblings who were supported.",
+        "Quebec: only the married spouse, an ex-spouse owed support, the children and the parents can claim (arts. 684 to 695 CCQ); de facto spouses and siblings cannot. Support can be settled with the liquidator, or by court order.",
+        "Common-law three tests: was the deceased providing (or obliged to provide) support; did the deceased fail to provide adequately; is the dependant in need? Some provinces add the estate's ability to pay.",
+        "Courts weigh means and needs, lifetime gifts, the testator's written reasons and the accustomed lifestyle. BC's Wills Variation Act lets the court rewrite the will; Ontario can claw back non-estate assets such as insurance.",
+        "Discriminatory, illegal or public-policy-violating conditions can be struck: the gift may pass free of the condition or fail, at the estate's expense. Terror clauses are probably ineffective."
+      ]
+    },
+    {
+      "heading": "Revocation of a will",
+      "page": "9•16",
+      "points": [
+        "Revocable any time until death unless the testator becomes mentally incompetent. Most common: a new will with a revocation clause; also deliberate destruction by the testator, or in his or her presence under written instructions.",
+        "A later will without a revocation clause doesn't cancel the earlier one: the later prevails only where they conflict, so legacies in both may be paid.",
+        "Marriage revokes a will everywhere except Quebec, unless made in contemplation of that marriage (with a fallback if it doesn't happen); ON, NS and NB let the spouse elect to keep it. Quebec: the will stays valid.",
+        "Divorce doesn't revoke the whole will, but in QC, ON, BC, SK, MB and PEI gifts to and appointments of the ex-spouse are revoked. Legal separation has no effect except in BC. Any marital change merits a will review."
+      ]
+    },
+    {
+      "heading": "Review and amendment: codicils, memoranda, alterations",
+      "page": "9•17",
+      "points": [
+        "Review after material changes (estate value, liquidity, major assets, tax law, residence, births or deaths, health, marital status, relationships, family law) and every 3 to 5 years; an outdated will can be worse than none.",
+        "A codicil revokes, modifies or adds to a will and is executed like one (Quebec: same validity and probate rules). Prefer a new will for major changes like the residue or after many codicils; in Ontario beneficiaries see both.",
+        "A memorandum of personal items is binding only if it exists before the will is signed and is incorporated by reference; otherwise use a codicil.",
+        "Alterations and interlineations aren't allowed after signing; if made before, initial them (witnesses may bear the onus of proving timing). Obliterated words: the will stays valid as read. Quebec: initial every page."
+      ]
+    },
+    {
+      "heading": "Executors (liquidators): choice, fees and acceptance",
+      "page": "9•19",
+      "points": [
+        "Choose carefully: the executor (liquidator in Quebec) may manage large assets for years, and replacing one is long and costly.",
+        "A corporate executor (trust company) suits large estates or long trusts: experience, continuity, availability, impartiality (most valuable), multi-faceted expertise and financial security.",
+        "An individual suits small, simple estates and short trusts: likely to outlive the estate, financially skilled, reliable, knows the family. With co-executors (e.g., a trust company and the beneficiary), the will should say who breaks ties.",
+        "No alternate: if the executor dies mid-administration, his or her executor takes over; if the executor predeceases or declines, the court appoints an administrator. Quebec: heirs appoint a substitute liquidator, court as last resort.",
+        "Fees follow a court schedule (about 2.5% realized + 2.5% distributed + 5% of income), the same for any executor and paid by the estate; trust companies use compensation agreements.",
+        "Quebec: co-liquidators act unanimously (trustees by majority); a non-heir liquidator is paid, an heir only if the will or heirs agree; a sole-heir liquidator can't decline. Elsewhere an executor may decline before acting."
+      ]
+    },
+    {
+      "heading": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "points": [
+        "Wills in some provinces name a guardian for minors or disabled dependants; discuss it first and check funding. Common law: court approval, usually within 90 days, and the court can overrule in the children's best interests.",
+        "Quebec: parents designate a tutor (dative tutorship) by will, protection mandate or declaration to the Public Curator; no court step unless contested; not for disabled dependants.",
+        "Name trustees and alternates for any testamentary trust; the trustee can be the executor, spouse or guardian. A trust needs at least one independent (non-beneficiary) trustee.",
+        "Minors inheriting with no trustee: common law, the court appoints a public trustee until majority and the surviving parent has no automatic right; Quebec, the surviving parent is automatically tutor."
+      ]
+    },
+    {
+      "heading": "Drafting points: failed gifts, distribution and designations",
+      "page": "9•24",
+      "points": [
+        "Ademption: a specific gift fails if the asset is gone at death, with no replacement; use general wording.",
+        "Lapse: a gift to someone who predeceases falls into the residue; a lapsed residue causes a partial intestacy. Ontario anti-lapse: gifts to a child, grandchild or sibling pass to their family unless the will says 'if he survives me'.",
+        "Per stirpes ('by roots'): a predeceased child's share goes to his or her children; per capita (common law): survivors share equally. Quebec: representation (always per stirpes) and accretion.",
+        "Order: funeral costs, probate, legal and executor's fees, debts and taxes; then legacies; residue last. Legacies abate if the estate falls short, so the will should say how.",
+        "A survivorship clause (e.g., 30 days) avoids double administration after a common accident; don't attach it to the executor's appointment.",
+        "A will can name or revoke an insurance, RRSP or RRIF beneficiary (even an invalid will counts as a declaration); the later designation wins, but file it with the insurer. No irrevocable designation by will.",
+        "Usual clause order: revocation; executors and trustees; debts and taxes; legacies; residue; executor's powers; guardianship (tutorship); schedules or memoranda."
+      ]
+    },
+    {
+      "heading": "Powers of attorney for property and Quebec mandates",
+      "page": "9•28",
+      "points": [
+        "Without a power of attorney, incapacity forces a slow court application; not even a spouse can bind the other's property. PAs and living wills operate during life and end at death; a will acts only after death.",
+        "The grantor appoints an attorney (not necessarily a lawyer) over any property. An enduring or continuing PA must say it survives incapacity, or it ends when needed most. PAs also help with absence (vacation, broken leg).",
+        "Unless restricted, the attorney can do anything the grantor could except make or change a will; insurers generally say a PA can't change beneficiary designations. In Ontario a bank PA can accidentally revoke earlier general PAs.",
+        "Several attorneys act jointly (checks, but all must agree) or severally (flexible, no checks); name a substitute to avoid a court-appointed committee. A springing PA starts on a named person's declaration of incapacity.",
+        "Quebec: a simple mandate (power of attorney) covers property, takes effect when chosen and ends on incapacity or death. A protection mandate (notarial or before two disinterested witnesses) covers property and/or the person.",
+        "A protection mandate needs incapacity plus court homologation with medical and psychosocial evaluations (art. 2166), so 'enduring' doesn't exist in Quebec. A trust company may act for property but not the person.",
+        "Quebec endings: death, resignation (a protection mandatary must first find a substitute), a paid mandatary's bankruptcy, revocation, recovered capacity. The protection mandatary accounts to the heirs at the end, not to the Public Curator."
+      ]
+    },
+    {
+      "heading": "Personal care, court appointments and the planner's role",
+      "page": "9•34",
+      "points": [
+        "A PA for personal care covers housing, food, clothing and treatment consent; usable only once the grantor is incapable; never a corporate attorney. In Quebec the protection mandate can cover the person, even with different mandataries.",
+        "A 'living will' is generally not a legal document; an Advance Care Directive is a legal document consenting to or refusing treatment in advance. Consult a doctor, be specific and avoid 'no heroic measures'.",
+        "Clear directives must be followed by medical staff, but euthanasia instructions are unlikely to be followed. Treating against express wishes is the tort of battery. Quebec's 'biological will' states wishes but names no decision-maker.",
+        "If someone becomes incapable without a PA, family, friends or trust companies apply to the court or a government official; Quebec opens a protective regime with a tutor or curator, less flexible than a mandate.",
+        "Institutions may be liable for missing PA abuse. Planners should explain options rather than act as attorney (or witness the will), and document a client's growing confusion for family or the lawyer."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: In Quebec only notarial wills skip probate; holograph wills and wills made before witnesses must be probated by the court or a notary.",
+    "EXAM TIP: Marriage revokes a will everywhere except Quebec. In Quebec the will survives, but family patrimony and matrimonial regime rules come first.",
+    "EXAM TIP: A witness who is a beneficiary does not void the will; only the gift to that witness fails.",
+    "EXAM TIP: Two wills and no revocation clause? Both can stand; the later one wins only where they conflict.",
+    "EXAM TIP: An attorney for property can do almost anything the grantor could, except make, change or revoke the will.",
+    "DID YOU KNOW? Quebec has no 'enduring' power of attorney: a protection mandate works only after incapacity and court homologation.",
+    "EXAM TIP: A personal care power of attorney can be used only after the grantor becomes incapable, and never by a trust company.",
+    "DID YOU KNOW? In Quebec, de facto spouses and siblings cannot claim support from an estate; the married spouse, ex-spouse, children and parents can.",
+    "EXAM TIP: Leave 'my Buick' and sell it, and the gift adeems: the beneficiary gets nothing. 'My car' is safer.",
+    "DID YOU KNOW? A will can change a life insurance beneficiary, but the insurer may still pay whoever is on file unless it gets a copy.",
+    "EXAM TIP: Executor dies mid-job with no alternate? His executor steps in. Executor predeceased the testator? The court appoints an administrator."
+  ],
+  "flashcards": [
+    {
+      "id": "c09-f001",
+      "topic": "Will basics",
+      "page": "9•3",
+      "front": "Testator, legacy (bequest), legatee and residue",
+      "back": "Testator: the person making the will. Legacy or bequest: a gift of cash or specific property. Legatee: the person receiving it. Residue: the balance of the net estate after debts, taxes and legacies, which goes to the residual heirs."
+    },
+    {
+      "id": "c09-f002",
+      "topic": "Will basics",
+      "page": "9•3",
+      "front": "Why common-law (de facto) couples especially need wills",
+      "back": "In some provinces, intestacy legislation does not provide for common-law spouses, so if the deceased has no will, the surviving common-law spouse may receive nothing."
+    },
+    {
+      "id": "c09-f003",
+      "topic": "Domicile",
+      "page": "9•3",
+      "front": "Domicile",
+      "back": "The jurisdiction with which a person has the strongest link and a present intention to remain (or return). A person may have several residences but only one domicile, established by facts and intentions."
+    },
+    {
+      "id": "c09-f004",
+      "topic": "Domicile",
+      "page": "9•3",
+      "front": "Factors used to establish domicile",
+      "back": "Location of the home; where the family lives; location of bank accounts and principal residence; regular employment; friends and social ties; frequency of visits to a previous domicile; written evidence of intention."
+    },
+    {
+      "id": "c09-f005",
+      "topic": "Domicile",
+      "page": "9•4",
+      "front": "Domicile at signing vs domicile at death vs location of real property",
+      "back": "Domicile where the will was executed: how the estate is administered. Domicile at death: which intestacy laws might apply. Real property: governed by the law of the place where it is located."
+    },
+    {
+      "id": "c09-f006",
+      "topic": "Holograph wills",
+      "page": "9•4",
+      "front": "Holograph will",
+      "back": "A will written entirely in the testator's own hand (no typewriter or computer) and signed by the testator, with or without witnesses. A letter declaring testamentary intent can qualify."
+    },
+    {
+      "id": "c09-f007",
+      "topic": "Holograph wills",
+      "page": "9•4",
+      "front": "Where holograph wills are valid",
+      "back": "AB, MB, NB, NL, ON, QC, SK, the NWT and Yukon. BC allows them only for moveable property (cash, stocks, bonds, jewellery)."
+    },
+    {
+      "id": "c09-f008",
+      "topic": "Holograph wills",
+      "page": "9•5",
+      "front": "Weaknesses of holograph wills",
+      "back": "Usually made without professional advice (errors, omissions, misused legalese); more easily contested; often hard to locate; no witness affidavit, so harder to prove; easy to produce too many wills or changes."
+    },
+    {
+      "id": "c09-f009",
+      "topic": "Holograph wills",
+      "page": "9•5",
+      "front": "Which Quebec wills must be probated? (art. 772 CCQ)",
+      "back": "Holograph wills and wills made in the presence of witnesses, through the court or a notary, on the demand of any interested person, before they can be used. Notarial wills, being notarial deeds, are not probated."
+    },
+    {
+      "id": "c09-f010",
+      "topic": "Formal wills",
+      "page": "9•6",
+      "front": "Formal (conventional) will requirements",
+      "back": "Entirely in writing (by the testator or a third party) and signed by the testator before at least two witnesses, who sign in the testator's presence and in each other's presence after the testator signs."
+    },
+    {
+      "id": "c09-f011",
+      "topic": "Formal wills",
+      "page": "9•6",
+      "front": "Witness who is also a beneficiary",
+      "back": "A witness should be of the age of majority and should not be a beneficiary or a beneficiary's spouse. If a witness is a beneficiary, the will stays valid but that gift fails; some provinces let the court validate it if there was no undue influence."
+    },
+    {
+      "id": "c09-f012",
+      "topic": "Formal wills",
+      "page": "9•7",
+      "front": "Affidavit of Execution",
+      "back": "Sworn by the witnesses when the will is signed. Once filed, the court can usually accept that the formalities were observed, with no need to find the witnesses at death. For an old will without one, a new will may be cheaper."
+    },
+    {
+      "id": "c09-f013",
+      "topic": "Formal wills",
+      "page": "9•7",
+      "front": "Quebec will made in the presence of witnesses: extra formalities",
+      "back": "Before signing, the testator declares to the witnesses that the will is his or hers, and the testator and each witness initial every page (only prudent practice in common-law provinces). It must be probated before use."
+    },
+    {
+      "id": "c09-f014",
+      "topic": "Formal wills",
+      "page": "9•7",
+      "front": "Do-it-yourself will kits and will software",
+      "back": "They produce documents without advice and don't handle complex situations or tax planning. Use only as a last resort when a professional will can't be obtained in time, and replace with a professional will as soon as possible."
+    },
+    {
+      "id": "c09-f015",
+      "topic": "Notarial wills",
+      "page": "9•7",
+      "front": "Notarial will (Quebec only)",
+      "back": "Signed before one notary and, depending on the circumstances, one or two witnesses. The notary keeps the original and the testator gets a notarial copy. Not probated, so certified copies go to heirs on proof of death; it can still be contested."
+    },
+    {
+      "id": "c09-f016",
+      "topic": "Notarial wills",
+      "page": "9•7",
+      "front": "How to find a will registered in Quebec",
+      "back": "Obtain search reports from the Chamber of Notaries and the Quebec Bar Association, which reveal wills registered by a notary or a lawyer. The same bodies can be searched for a protection mandate."
+    },
+    {
+      "id": "c09-f017",
+      "topic": "Notarial wills",
+      "page": "9•8",
+      "front": "Who cannot witness a Quebec notarial will",
+      "back": "The notary's spouse; the notary's relatives in the direct or collateral line up to and including the third degree, or connected by marriage or civil union; minors; and the notary's employees."
+    },
+    {
+      "id": "c09-f018",
+      "topic": "International wills",
+      "page": "9•8",
+      "front": "International will",
+      "back": "Made under a convention providing a uniform law on form; valid wherever the convention is in force, regardless of domicile, place of signing or location of assets. Recognized (at writing) in AB, MB, NL, NB, ON, PEI and SK."
+    },
+    {
+      "id": "c09-f019",
+      "topic": "Gift mortis causa (Quebec)",
+      "page": "9•8",
+      "front": "Quebec gift mortis causa: conditions",
+      "back": "Only in a marriage or civil union contract, in place of a will; donees limited to the future spouses, their respective and common children (born or unborn); no transfer of ownership; effective at death; always revocable."
+    },
+    {
+      "id": "c09-f020",
+      "topic": "Testamentary freedom",
+      "page": "9•9",
+      "front": "Forced heirship jurisdiction",
+      "back": "A country whose statutes fix how much family members inherit, and no will can vary those rules. Like Canadian intestacy rules, but mandatory, so many residents there have no will."
+    },
+    {
+      "id": "c09-f021",
+      "topic": "Testamentary freedom",
+      "page": "9•9",
+      "front": "Situs wills",
+      "back": "Separate wills for each jurisdiction where a person has assets, often with different executors and different beneficiaries. They can also improve the confidentiality of the Canadian assets."
+    },
+    {
+      "id": "c09-f022",
+      "topic": "Testamentary freedom",
+      "page": "9•9",
+      "front": "'Substantial compliance' law",
+      "back": "A law in some provinces that lets courts resolve minor technical violations in a will, as long as the integrity of the document is not in question."
+    },
+    {
+      "id": "c09-f023",
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "front": "What the professional confirms the testator understands",
+      "back": "The assets that make up the estate; the persons who are to benefit; potential claims by a spouse or dependants; and the terms and conditions of the will. Also watch for duress or undue influence."
+    },
+    {
+      "id": "c09-f024",
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "front": "Duress vs undue influence",
+      "back": "Duress: bodily harm or the threat of bodily harm. Undue influence: an unusual degree of control over the testator by a third party, usually a beneficiary under the proposed will."
+    },
+    {
+      "id": "c09-f025",
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "front": "Minimum age to make a will",
+      "back": "Set by each province; some waive it in certain cases, such as a married minor. In Quebec, a person of full age under curatorship cannot make a will (art. 710 CCQ)."
+    },
+    {
+      "id": "c09-f026",
+      "topic": "Family law and dependants' relief",
+      "page": "9•11",
+      "front": "Dependants' relief legislation",
+      "back": "Ensures adequate support for spouses and other financial dependants when someone dies, with or without a will. Dependants (spouses, common-law spouses, children, parents, siblings) can ask the court to modify the will."
+    },
+    {
+      "id": "c09-f027",
+      "topic": "Family law and dependants' relief",
+      "page": "9•11",
+      "front": "Quebec: who can claim support from an estate",
+      "back": "Only the married spouse, an ex-spouse who was owed support, the children and the parents (arts. 684 to 695 CCQ). De facto spouses and brothers and sisters are not dependants for support claims."
+    },
+    {
+      "id": "c09-f028",
+      "topic": "Surviving spouse's rights",
+      "page": "9•12",
+      "front": "Equalization claim (some common-law provinces)",
+      "back": "The surviving spouse takes either the benefits under the will or an equalization payment from the estate. If the claim succeeds, will benefits are generally forfeited and the payment is received as a creditor."
+    },
+    {
+      "id": "c09-f029",
+      "topic": "Surviving spouse's rights",
+      "page": "9•12",
+      "front": "Quebec compensatory allowance",
+      "back": "A claim by a married or civil union spouse based on having enriched the deceased through goods, services or money, not on need. The court decides whether it applies."
+    },
+    {
+      "id": "c09-f030",
+      "topic": "Surviving spouse's rights",
+      "page": "9•12",
+      "front": "Quebec family patrimony on death",
+      "back": "Principal residence, furniture, a family automobile, and RRSPs and RPPs accumulated during the marriage. The survivor may claim half (unless renounced before July 1, 1989) before any distribution; the matrimonial regime is partitioned next."
+    },
+    {
+      "id": "c09-f031",
+      "topic": "Surviving spouse's rights",
+      "page": "9•13",
+      "front": "Keeping a spouse from claiming against the estate",
+      "back": "Leave the spouse more by will (often funded by life insurance) than the claim is worth, stated to be in lieu of statutory rights. In Quebec, make the legacy conditional on renouncing family patrimony rights."
+    },
+    {
+      "id": "c09-f032",
+      "topic": "Rights of other dependants",
+      "page": "9•14",
+      "front": "Three tests for awarding support to a dependant (common law)",
+      "back": "1) Was the deceased providing, or obliged to provide, support? 2) Did the deceased fail to provide adequately, by will or otherwise? 3) Is the dependant in need of support? Some provinces also weigh the estate's ability to pay."
+    },
+    {
+      "id": "c09-f033",
+      "topic": "Rights of other dependants",
+      "page": "9•14",
+      "front": "Who counts as a child for dependants' relief",
+      "back": "Includes a child unborn at the date of death (or marriage breakdown) and children born outside of wedlock. Other dependants can include grandchildren, parents, grandparents and siblings who were supported."
+    },
+    {
+      "id": "c09-f034",
+      "topic": "Rights of other dependants",
+      "page": "9•15",
+      "front": "BC Wills Variation Act vs Ontario clawback",
+      "back": "BC: the court can, in effect, rewrite the will to meet unfulfilled obligations. Ontario: even property passing outside the will, like insurance payable to a named beneficiary, can be clawed back to assess support."
+    },
+    {
+      "id": "c09-f035",
+      "topic": "Public policy",
+      "page": "9•15",
+      "front": "Will conditions that can be struck down",
+      "back": "Conditions contrary to public policy, promoting an illegal act, or discriminatory (e.g., forfeiting a gift for marrying outside a race or joining a religious order). The gift may pass free of the condition or fail; terror clauses rarely work."
+    },
+    {
+      "id": "c09-f036",
+      "topic": "Revocation",
+      "page": "9•16",
+      "front": "Ways to revoke a will",
+      "back": "Most commonly a later will with a revocation clause ('I hereby revoke all my former wills and codicils'); or deliberate destruction by the testator, or in his or her presence and under written instructions. Not once mentally incompetent."
+    },
+    {
+      "id": "c09-f037",
+      "topic": "Revocation",
+      "page": "9•16",
+      "front": "Later will with no revocation clause",
+      "back": "Both wills may be valid. Where they conflict (e.g., the residue), the later will prevails; where they don't (e.g., separate cash legacies), both apply, so legacies under both may be payable."
+    },
+    {
+      "id": "c09-f038",
+      "topic": "Revocation",
+      "page": "9•16",
+      "front": "Effect of marriage on an existing will",
+      "back": "Revokes it in every province except Quebec, unless made in contemplation of that marriage (ON, NS and NB let the spouse elect to keep it). In Quebec the will stays valid, subject to family patrimony and matrimonial regime rules."
+    },
+    {
+      "id": "c09-f039",
+      "topic": "Revocation",
+      "page": "9•17",
+      "front": "Effect of divorce and legal separation on a will",
+      "back": "Divorce: gifts to and appointments of the ex-spouse are revoked in QC, ON, BC, SK, MB and PEI (ex-spouse treated as having predeceased). Legal separation: no effect in most provinces; BC treats it like divorce."
+    },
+    {
+      "id": "c09-f040",
+      "topic": "Review and amendment",
+      "page": "9•18",
+      "front": "Codicil",
+      "back": "A document that revokes, modifies or adds to a will without redrafting it; attached to the will and executed like one (in Quebec, same validity and probate conditions). Use a new will for major changes like the residue or after many codicils."
+    },
+    {
+      "id": "c09-f041",
+      "topic": "Review and amendment",
+      "page": "9•19",
+      "front": "Memorandum of personal items",
+      "back": "A list of items and recipients kept with the will. Legally binding only if it existed before the will was signed and is incorporated by reference; otherwise use a codicil to make the wishes binding."
+    },
+    {
+      "id": "c09-f042",
+      "topic": "Review and amendment",
+      "page": "9•19",
+      "front": "Alterations, interlineations and obliterations",
+      "back": "Alterations (changes) and interlineations (words inserted between lines) aren't allowed after signing; if made before, the testator and witnesses initial them nearby. Obliterated words: the will stays valid, and readable words form it."
+    },
+    {
+      "id": "c09-f043",
+      "topic": "Executors (liquidators)",
+      "page": "9•20",
+      "front": "Advantages of a corporate executor (trust company)",
+      "back": "Experience, continuity, attention and availability, impartiality (the most intangible but most valuable), multi-faceted expertise and financial security ('deep pockets'). Best for large estates or long-lasting trusts."
+    },
+    {
+      "id": "c09-f044",
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "front": "When an individual executor is appropriate",
+      "back": "Small estate, simple assets, short-lived trusts (e.g., an education trust for minors). The person should be likely to outlive the estate, know finance, tax and investing, be reliable and available, and know the testator's wishes."
+    },
+    {
+      "id": "c09-f045",
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "front": "No alternate executor named: what happens",
+      "back": "Executor dies mid-administration: the executor's executor is automatically appointed. Named executor predeceases the testator or won't serve: the court appoints an administrator. Quebec: the heirs appoint a substitute liquidator; court as last resort."
+    },
+    {
+      "id": "c09-f046",
+      "topic": "Executors (liquidators)",
+      "page": "9•22",
+      "front": "Quebec liquidator rules",
+      "back": "Co-liquidators act unanimously (trustees by majority). A liquidator who is not an heir is compensated; an heir-liquidator is not, unless the will or the heirs provide it. A liquidator who is the sole heir cannot decline the office."
+    },
+    {
+      "id": "c09-f047",
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "front": "Guardian named in a will (common-law provinces)",
+      "back": "The clause only states the testator's wishes: the guardian must be approved by court order, usually within the first 90 days, and the court may overrule the choice in the children's best interests."
+    },
+    {
+      "id": "c09-f048",
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "front": "Quebec tutor designated by parents (dative tutorship)",
+      "back": "Parents can designate a tutor for minor children by will, protection mandate or a declaration sent to the Public Curator; no court proceeding unless contested for serious reasons. Not available for disabled dependants."
+    },
+    {
+      "id": "c09-f049",
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "front": "Minor inherits and no trustee is named",
+      "back": "Common law: the court appoints a public trustee until majority; the surviving parent has no automatic right to manage it. Quebec: the surviving parent is automatically tutor and administers the legacy under tutorship rules."
+    },
+    {
+      "id": "c09-f050",
+      "topic": "Drafting points",
+      "page": "9•24",
+      "front": "Ademption",
+      "back": "Failure of a gift of a specific asset that the testator no longer owns at death (sold, lost, destroyed or converted). No replacement is given, even if traceable; general wording ('my car', not 'my Buick') helps."
+    },
+    {
+      "id": "c09-f051",
+      "topic": "Drafting points",
+      "page": "9•24",
+      "front": "Lapse, partial intestacy and anti-lapse",
+      "back": "A gift to someone who predeceases lapses into the residue; if the residuary heir predeceases, a partial intestacy results. Anti-lapse (e.g., Ontario): gifts to a child, grandchild or sibling go to their family unless 'if he survives me'."
+    },
+    {
+      "id": "c09-f052",
+      "topic": "Drafting points",
+      "page": "9•24",
+      "front": "Quebec: representation vs accretion",
+      "back": "Representation: a descendant inherits in place of a predeceased beneficiary of a residual legacy (or intestate heir), unless the will says otherwise. Accretion: cottage left to A and B; A dies before the testator, so B takes it all."
+    },
+    {
+      "id": "c09-f053",
+      "topic": "Drafting points",
+      "page": "9•25",
+      "front": "Per stirpes vs per capita",
+      "back": "Per stirpes ('by roots'): a predeceased beneficiary's share goes to his or her children. Per capita (common law): only surviving beneficiaries share, equally. In Quebec, devolution by representation is always per stirpes."
+    },
+    {
+      "id": "c09-f054",
+      "topic": "Drafting points",
+      "page": "9•25",
+      "front": "Order of distribution of an estate",
+      "back": "Funeral expenses, probate fees, legal and executor's fees, debts and taxes come first; then general and specific legacies; the residue is distributed last."
+    },
+    {
+      "id": "c09-f055",
+      "topic": "Drafting points",
+      "page": "9•26",
+      "front": "Abatement",
+      "back": "Reducing legacies when debts, taxes and expenses exceed expectations, proportionately or not. Example: three $10,000 legacies but only $20,000 left gives each child about $6,666. The will should say how abatement is shared."
+    },
+    {
+      "id": "c09-f056",
+      "topic": "Drafting points",
+      "page": "9•26",
+      "front": "Survivorship clause",
+      "back": "Names an alternate beneficiary if the primary one doesn't survive the testator by a set period (e.g., 30 days), so assets aren't administered twice after a common accident. Don't tie the executor's appointment to it."
+    },
+    {
+      "id": "c09-f057",
+      "topic": "Drafting points",
+      "page": "9•27",
+      "front": "Naming an insurance, RRSP or RRIF beneficiary in a will",
+      "back": "Allowed (subject to local rules); even an invalid will counts as a written declaration. The later designation prevails, but file the will or a new form with the insurer. A will cannot make an irrevocable designation."
+    },
+    {
+      "id": "c09-f058",
+      "topic": "Drafting points",
+      "page": "9•27",
+      "front": "Normal order of clauses in a will",
+      "back": "Revocation; appointment of executors and trustees; payment of debts, taxes and expenses; legacies; residue; executor's powers; guardianship (tutorship) of minors; attached schedules or memoranda."
+    },
+    {
+      "id": "c09-f059",
+      "topic": "Powers of attorney (property)",
+      "page": "9•28",
+      "front": "Incapacity without a power of attorney",
+      "back": "No one has automatic authority, not even a spouse. A family member must make a time-consuming court application, and meanwhile no one can manage the assets (e.g., trade a brokerage account)."
+    },
+    {
+      "id": "c09-f060",
+      "topic": "Powers of attorney (property)",
+      "page": "9•28",
+      "front": "Quebec simple mandate (power of attorney)",
+      "back": "Covers the administration of property only; takes effect when the grantor chooses (e.g., on signature); revocable at any time; ends on the mandator's incapacity or death. The mandatary accounts to the grantor."
+    },
+    {
+      "id": "c09-f061",
+      "topic": "Powers of attorney (property)",
+      "page": "9•29",
+      "front": "Quebec protection mandate",
+      "back": "Made by a capable mandator by notarial act or before two witnesses with no interest, naming a mandatary for property and/or the person. Executed only after incapacity and court homologation (art. 2166 CCQ). A trust company can't act for the person."
+    },
+    {
+      "id": "c09-f062",
+      "topic": "Powers of attorney (property)",
+      "page": "9•29",
+      "front": "Enduring (continuing) power of attorney",
+      "back": "A property power of attorney that expressly continues during the grantor's mental incapacity; without that wording it ceases on incapacity. The concept doesn't exist in Quebec, where a mandate needs homologation."
+    },
+    {
+      "id": "c09-f063",
+      "topic": "Powers of attorney (property)",
+      "page": "9•30",
+      "front": "What an attorney for property cannot do",
+      "back": "Make, change or revoke the grantor's will. Otherwise, unless restricted, the attorney can do almost anything the grantor could. Insurers generally hold that a PA for property may not affect beneficiary designations."
+    },
+    {
+      "id": "c09-f064",
+      "topic": "Powers of attorney (property)",
+      "page": "9•31",
+      "front": "Joint vs several attorneys",
+      "back": "Joint: all must agree, giving checks and balances, but all must be available (risk of deadlock). Several: each can act alone, which is flexible but has no checks. Corporate attorneys accept joint but prefer not several."
+    },
+    {
+      "id": "c09-f065",
+      "topic": "Powers of attorney (property)",
+      "page": "9•33",
+      "front": "Springing (contingent) power of attorney",
+      "back": "Takes effect only when an independent person named in it (e.g., the family doctor) declares the grantor incapable; third parties accept it once they receive that declaration. Most powers of attorney take effect on signing."
+    },
+    {
+      "id": "c09-f066",
+      "topic": "Powers of attorney (property)",
+      "page": "9•32",
+      "front": "Quebec: how a power of attorney or protection mandate ends",
+      "back": "Mandator's death; resignation (a protection mandatary must first find a substitute); a paid mandatary's bankruptcy; revocation by the mandator (simple mandate); the mandator regains capacity (protection ends)."
+    },
+    {
+      "id": "c09-f067",
+      "topic": "Powers of attorney (property)",
+      "page": "9•32",
+      "front": "Attorney's accountability after the grantor's incapacity",
+      "back": "Common law: the attorney becomes accountable to the court. Quebec protection mandate: the mandatary accounts to the heirs at the end, with no periodic accounting to the Public Curator. Simple mandate: to the grantor."
+    },
+    {
+      "id": "c09-f068",
+      "topic": "Personal care and living wills",
+      "page": "9•34",
+      "front": "Power of attorney for personal care",
+      "back": "Lets a substitute decide on living arrangements, food, clothing and consent to treatment. Usable only once the grantor is mentally incapable; cannot be given to a corporate attorney. In Quebec, the protection mandate covers this."
+    },
+    {
+      "id": "c09-f069",
+      "topic": "Personal care and living wills",
+      "page": "9•34",
+      "front": "Living will vs Advance Care Directive",
+      "back": "Living will: in most provinces not a legal document, just wishes about future medical care. Advance Care Directive (Advance Healthcare Directive): a legal document consenting to, or refusing, treatment in advance of need."
+    },
+    {
+      "id": "c09-f070",
+      "topic": "Personal care and living wills",
+      "page": "9•35",
+      "front": "Quebec 'biological will'",
+      "back": "A simple document in which the grantor describes his or her wishes about treatment. Unlike a protection mandate, it does not designate anyone to make decisions in his or her place."
+    },
+    {
+      "id": "c09-f071",
+      "topic": "Court-appointed decision-makers",
+      "page": "9•36",
+      "front": "Quebec protective regime",
+      "back": "If an incapable person has no protection mandate, any interested person can ask the court to open a protective regime and appoint a tutor or curator: similar authority, but less flexible and without the person's own directions."
+    },
+    {
+      "id": "c09-f072",
+      "topic": "Planner's role",
+      "page": "9•36",
+      "front": "Financial planner's role with powers of attorney",
+      "back": "Explain the advantages and risks of the options rather than act as the attorney. Watch for abuse of powers of attorney (institutions can be liable), and document a client's growing confusion for the family or lawyer."
+    },
+    {
+      "id": "c09-f073",
+      "topic": "Key numbers",
+      "page": "9•21",
+      "front": "Executor compensation rule of thumb",
+      "back": "About 2.5% of assets realized + 2.5% of assets distributed + 5% of estate income (court schedule), plus possible ongoing fees. Same whether a trust company, lawyer or relative acts; paid by the estate."
+    },
+    {
+      "id": "c09-f074",
+      "topic": "Key numbers",
+      "page": "9•17",
+      "front": "How often to review a will",
+      "back": "Whenever material changes occur, and periodically: about every 3 to 5 years."
+    },
+    {
+      "id": "c09-f075",
+      "topic": "Key numbers",
+      "page": "9•26",
+      "front": "Typical survivorship period in a will",
+      "back": "30 days, kept short because the beneficiaries are uncertain until the period ends."
+    },
+    {
+      "id": "c09-f076",
+      "topic": "Key numbers",
+      "page": "9•23",
+      "front": "Time limit for court approval of a guardian named in a will",
+      "back": "Usually within the first 90 days (common-law provinces)."
+    },
+    {
+      "id": "c09-f077",
+      "topic": "Key numbers",
+      "page": "9•6",
+      "front": "Witnesses needed for each type of will",
+      "back": "Formal will: at least two, of the age of majority. Holograph will: none. Quebec notarial will: one notary plus one or two witnesses, depending on the circumstances."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c09-q001",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Domicile",
+      "page": "9•4",
+      "q": "According to the course, which law generally governs a testator's real property, such as land and buildings?",
+      "options": [
+        "The law of the province where the executor lives",
+        "The law of the place where the will was signed",
+        "The law of the testator's domicile at the time of death",
+        "The law of the place where the real property is located"
+      ],
+      "answer": 3,
+      "explain": "Real property is governed by the laws of the place where it is located. By contrast, the domicile where the will was executed determines how the estate is administered, and the domicile at death determines which intestacy laws might apply."
+    },
+    {
+      "id": "c09-q002",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Domicile",
+      "page": "9•3",
+      "q": "Lise lived and worked in Quebec all her life; her family, friends and bank accounts are there, and she signed her will there. In retirement she wintered at a condo in Nova Scotia and died there in March. What is most likely her domicile?",
+      "options": [
+        "Quebec, because her life and connections were centred there",
+        "Both provinces, so each one's law governs half of her estate",
+        "Nova Scotia, because she was residing there when she died",
+        "Whichever province her executor chooses when applying for probate"
+      ],
+      "answer": 0,
+      "explain": "A person may have several residences but only one domicile: the place of strongest connection, established by facts (home, family, bank accounts, work, friends) and intentions. Where she happened to be living at death does not override a life centred in Quebec."
+    },
+    {
+      "id": "c09-q003",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Domicile",
+      "page": "9•4",
+      "q": "A Canadian resident who holds a US green card may have trouble avoiding US estate tax, because the US taxes persons domiciled there regardless of where they are temporarily resident at death.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The US imposes estate tax on persons domiciled there, and a green card holder would have great difficulty denying US domicile. The US also taxes transfers based on citizenship, so planners should ask about both early and refer to a US expert."
+    },
+    {
+      "id": "c09-q004",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Holograph wills",
+      "page": "9•4",
+      "q": "What makes a will a holograph will?",
+      "options": [
+        "It is handwritten by a friend of the testator and then signed before a notary",
+        "It is typed by the testator and then signed by him or her before two adult witnesses",
+        "It is entirely handwritten and signed by the testator, with or without witnesses",
+        "It is completed on a pre-printed kit form and signed by the testator alone"
+      ],
+      "answer": 2,
+      "explain": "A holograph will is written entirely in the testator's own hand, with no typewriter or computer, and signed by the testator; witnesses are not required. A typed will signed before two witnesses is a formal (witnessed) will."
+    },
+    {
+      "id": "c09-q005",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Holograph wills",
+      "page": "9•4",
+      "q": "Which statement about where holograph wills are recognized is accurate, according to the course?",
+      "options": [
+        "British Columbia accepts them only for moveable property, such as cash and stocks",
+        "They are valid in every Canadian province and territory, with no exceptions at all",
+        "Ontario does not accept them, because every Ontario will needs two adult witnesses",
+        "Quebec does not accept them, because every Quebec will must be signed before a notary"
+      ],
+      "answer": 0,
+      "explain": "Holograph wills are valid in AB, MB, NB, NL, ON, QC, SK, the NWT and Yukon, while BC allows them only for moveable property. Because the rules vary, check the rules of the home province or of the place where the assets are located."
+    },
+    {
+      "id": "c09-q006",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Holograph wills",
+      "page": "9•5",
+      "q": "In Quebec, a holograph will can be used to settle the estate as soon as the testator dies, without any probate by the court or a notary.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. In Quebec, a holograph will (like a will made in the presence of witnesses) must be probated through the court or a notary, on the demand of any interested person, before it can be used (art. 772 CCQ). Only notarial wills avoid probate."
+    },
+    {
+      "id": "c09-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Holograph wills",
+      "page": "9•5",
+      "q": "Over two years, Edgar wrote nine handwritten wills, each signed and each showing testamentary intent, but he dated none of them. Several conflict with one another. What is the most likely result after his death?",
+      "options": [
+        "All nine are void, because holograph wills must be signed before witnesses",
+        "His estate passes on intestacy, because undated wills are always ignored",
+        "The last one found in his desk automatically revokes all of the others",
+        "Costly litigation to decide which documents govern and how they fit together"
+      ],
+      "answer": 3,
+      "explain": "Each signed, handwritten document expressing testamentary intent can be a valid holograph will, even if they conflict. With no dates, no one can tell which came last, so the heirs face expensive litigation, as in the course's example of the bachelor who saved on legal fees."
+    },
+    {
+      "id": "c09-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Formal wills",
+      "page": "9•6",
+      "q": "In a common-law province, which signing procedure meets the requirements for a formal (witnessed) will?",
+      "options": [
+        "Typed will; testator signs before two witnesses, who then sign in each other's presence",
+        "Typed will; testator and two witnesses initial every page, then a notary signs it as well",
+        "Typed will; testator signs alone, then two witnesses sign a later declaration",
+        "Handwritten will; testator signs, and one adult witness signs the next day"
+      ],
+      "answer": 0,
+      "explain": "A formal will must be entirely in writing (by the testator or a third party) and signed by the testator before at least two witnesses, who sign in the testator's presence and in each other's. Initialling every page is required in Quebec but only prudent elsewhere."
+    },
+    {
+      "id": "c09-q009",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Formal wills",
+      "page": "9•6",
+      "q": "Raj's formal will leaves $20,000 to his neighbour Tom and the residue to Raj's children. Tom was one of the two witnesses who signed the will. In a common-law province, what is the general result?",
+      "options": [
+        "The whole will is void, and the estate passes on intestacy",
+        "The will stands, and Tom's gift is valid since he is an adult",
+        "The will stands, but the $20,000 gift to Tom is invalid",
+        "The will stands only if a third witness confirms the signature"
+      ],
+      "answer": 2,
+      "explain": "A will remains valid when a witness is a beneficiary, but the gift to that witness fails. In some provinces the witness-beneficiary may ask the court to validate the gift by proving the testator was not under his or her undue influence."
+    },
+    {
+      "id": "c09-q010",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Formal wills",
+      "page": "9•7",
+      "q": "Monique, in Quebec, signs a typed will in the presence of two adult witnesses. Which formality is required by law in Quebec but considered only prudent practice in the common-law provinces?",
+      "options": [
+        "A notary countersigns the will after the witnesses have signed it",
+        "The will is registered with the Public Curator within 90 days",
+        "The testator and each witness initial every page of the will",
+        "The witnesses are relatives of the testator up to the third degree"
+      ],
+      "answer": 2,
+      "explain": "In Quebec, the testator declares to the witnesses that the will is his or hers, and the testator and each witness initial every page. Common-law provinces don't require initialling but consider it prudent. A Quebec will made before witnesses still needs probate."
+    },
+    {
+      "id": "c09-q011",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Types of wills",
+      "page": "9•6",
+      "q": "Which pairing of a will type with its execution requirements is correct?",
+      "options": [
+        "Notarial will: signed before two notaries, with no witnesses ever required",
+        "Quebec will made before witnesses: typed, signed before a single witness",
+        "Holograph will: in the testator's handwriting, signed before two witnesses",
+        "Formal will: in writing by anyone, signed by the testator before two witnesses"
+      ],
+      "answer": 3,
+      "explain": "A formal will may be written by the testator or a third party but must be signed before at least two witnesses. A holograph will needs no witnesses, and a notarial will is signed before one notary plus, depending on circumstances, one or two witnesses."
+    },
+    {
+      "id": "c09-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Notarial wills",
+      "page": "9•7",
+      "q": "Which feature sets a Quebec notarial will apart from a holograph will or a will made in the presence of witnesses?",
+      "options": [
+        "As a notarial deed it is not probated; certified copies issue without proceedings",
+        "It can no longer be contested once the notary issues certified copies to the heirs",
+        "It must be handwritten by the testator and kept at home until the testator's death",
+        "It must be signed before three witnesses and then probated by the Superior Court"
+      ],
+      "answer": 0,
+      "explain": "Notarial wills are notarial deeds, so they are not subject to probate: the notary keeps the original and issues certified copies to the heirs on proof of death. Escaping probate does not mean a notarial will cannot be contested."
+    },
+    {
+      "id": "c09-q013",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Notarial wills",
+      "page": "9•8",
+      "q": "Which of these people could act as a witness to a Quebec notarial will?",
+      "options": [
+        "The notary's adult legal assistant, who works full time in the notary's own office",
+        "The notary's 17-year-old son, who happens to be visiting the office that day",
+        "The notary's adult brother, who has no connection at all to the testator",
+        "The testator's adult neighbour, who is not related to or employed by the notary"
+      ],
+      "answer": 3,
+      "explain": "A witness to a notarial will cannot be the notary's spouse, a relative of the notary in the direct or collateral line up to the third degree (a brother qualifies), a relative by marriage or civil union, a minor, or the notary's employee."
+    },
+    {
+      "id": "c09-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Chapter scenario",
+      "page": "9•37",
+      "q": "Manfred, 79 and increasingly forgetful, asks his financial planner to witness the new will he is preparing with a store-bought kit. What is the best response?",
+      "options": [
+        "Agree to witness, since a planner is a neutral adult with nothing to gain",
+        "Agree to witness, as long as a second witness signs on the same occasion",
+        "Decline, because a kit will is valid only if written entirely by hand",
+        "Decline to witness, and urge him to have a lawyer or notary prepare the will"
+      ],
+      "answer": 3,
+      "explain": "The planner should stay objective and apart from the documentation of the client's estate plan, so should not witness. Kit wills come with no advice, and given possible capacity and undue influence issues, Manfred should get advice from a lawyer (or a notary)."
+    },
+    {
+      "id": "c09-q015",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "International wills",
+      "page": "9•8",
+      "q": "Which statement about international wills is accurate, according to the course?",
+      "options": [
+        "They are valid wherever the convention is in force, whatever the testator's domicile",
+        "They are valid only where the testator was domiciled when the will was signed",
+        "Every Canadian province and territory had recognized them by the time of writing the course",
+        "Quebec recognizes them, since it already uses notarial wills for most estates"
+      ],
+      "answer": 0,
+      "explain": "An international will follows a convention's uniform law on form, so it is valid wherever the convention is in force, regardless of domicile, place of signing or location of assets. At the time of writing only AB, MB, NL, NB, ON, PEI and SK recognized it, not Quebec."
+    },
+    {
+      "id": "c09-q016",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Gift mortis causa (Quebec)",
+      "page": "9•8",
+      "q": "In Quebec, what is a gift mortis causa?",
+      "options": [
+        "A gift made during life that transfers ownership to a child immediately",
+        "A gift handed over in person by someone who expects to die from an illness within days",
+        "A gift in a marriage or civil union contract that takes effect at the donor's death",
+        "A gift set out in a handwritten codicil later attached to a notarial will"
+      ],
+      "answer": 2,
+      "explain": "In Quebec, a gift mortis causa is made by spouses in their marriage or civil union contract with regard to the contingency of death, not its immediacy. It can take the place of a will, so the contract should be checked when someone dies without a will."
+    },
+    {
+      "id": "c09-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Gift mortis causa (Quebec)",
+      "page": "9•8",
+      "q": "Which statement about a gift mortis causa in a Quebec marriage contract is accurate?",
+      "options": [
+        "It becomes irrevocable once both spouses sign the notarial marriage contract",
+        "It is always revocable, and no ownership is transferred during the donor's life",
+        "It must be confirmed in a later will, or it lapses at the donor's death",
+        "It may benefit anyone the donor chooses, including friends and charities"
+      ],
+      "answer": 1,
+      "explain": "The gift is always revocable, like any will; there is no actual transfer of ownership, and it takes effect only at the donor's death. Donees are limited to the future spouses, their respective children and their common children, born or unborn."
+    },
+    {
+      "id": "c09-q018",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Testamentary freedom",
+      "page": "9•9",
+      "q": "In a common-law province, which asset passes outside the will rather than under it?",
+      "options": [
+        "Real estate held in joint tenancy with right of survivorship",
+        "A cottage owned solely by the testator at the date of death",
+        "Personal effects such as jewellery, furniture and a vehicle",
+        "A non-registered investment account in the testator's sole name"
+      ],
+      "answer": 0,
+      "explain": "Property held as joint tenants with right of survivorship goes to the surviving joint tenant, not under the will. Other assets may be restricted by prior contracts, such as shares covered by a shareholders' agreement."
+    },
+    {
+      "id": "c09-q019",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Testamentary freedom",
+      "page": "9•9",
+      "q": "When a family law or support creditor makes a claim against an estate, the creditor is challenging the validity of the will.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Family law and support creditors are not challenging the will; they are exerting other rights against the deceased's property, and they may rank ahead of the beneficiaries. Whatever is left after creditors and tax authorities are paid passes under the will."
+    },
+    {
+      "id": "c09-q020",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "q": "While taking will instructions, which situation should most concern the professional as a sign of possible undue influence?",
+      "options": [
+        "A caregiver-beneficiary booked the meeting, attends it and answers for the testator",
+        "The testator asks to name a trust company as executor instead of a close family member",
+        "The testator brings a list of assets that her accountant prepared for the meeting",
+        "The testator wants equal shares for her children, just as in her previous will"
+      ],
+      "answer": 0,
+      "explain": "Undue influence is an unusual degree of control by a third party, usually a beneficiary. A dependent testator whose caregiver-beneficiary arranges the appointment, attends and does most of the talking is a warning sign, as is a major unexplained change from earlier wills."
+    },
+    {
+      "id": "c09-q021",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "q": "Under article 710 of the Civil Code of Quebec, who cannot make a will?",
+      "options": [
+        "A person of full age who is under curatorship",
+        "A person who made a gift mortis causa in a marriage contract",
+        "A person aged 18 to 21 who has never been married",
+        "A person of full age who has signed a protection mandate"
+      ],
+      "answer": 0,
+      "explain": "Article 710 says a person of full age under curatorship cannot make a will. Elsewhere, each province sets a minimum age, which some provinces waive in certain cases, such as for a married minor."
+    },
+    {
+      "id": "c09-q022",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Capacity and undue influence",
+      "page": "9•10",
+      "q": "According to the course, what is the will-drafting professional's role regarding a client's mental capacity?",
+      "options": [
+        "Certify the client's capacity in writing, which makes the will unchallengeable",
+        "Inquire and keep notes or other evidence so a court can later rule on validity",
+        "Refuse instructions from any client over 75 who lacks a recent medical report",
+        "Rely on a clause in the will in which the client declares that he is competent"
+      ],
+      "answer": 1,
+      "explain": "Strictly, deciding capacity is not the drafter's job: incapacity is a later court judgment made with hindsight. The professional should inquire and record notes or gather evidence (e.g., medical reports); a self-declaration of competence in the will is not always reliable."
+    },
+    {
+      "id": "c09-q023",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Family law and dependants' relief",
+      "page": "9•11",
+      "q": "Manfred plans a new will that leaves nothing to his wife, who now lives in a nursing home, and names his son Hans as primary beneficiary. What should he be told?",
+      "options": [
+        "He may disinherit her, since spouses who live apart lose all of their rights to the estate",
+        "She can claim only if the will is a holograph will rather than a formal will",
+        "The will is illegal and void, so the estate would pass under the intestacy rules",
+        "His wife will still have property and possibly support rights that must be considered"
+      ],
+      "answer": 3,
+      "explain": "A will that cuts out a spouse is not invalid or illegal, but it cannot defeat her rights: spouses and dependants have property and support rights under provincial law that rank ahead of beneficiaries, and ignoring them invites costly litigation."
+    },
+    {
+      "id": "c09-q024",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Family law and dependants' relief",
+      "page": "9•14",
+      "q": "In Quebec, which group lists only people who can claim support from a deceased person's estate?",
+      "options": [
+        "Married or de facto spouse, children, parents and grandparents",
+        "Married spouse, de facto spouse, children and brothers and sisters",
+        "Children, grandchildren, brothers and sisters, and de facto spouse",
+        "Married spouse, ex-spouse owed support, children and parents"
+      ],
+      "answer": 3,
+      "explain": "In Quebec, only the married spouse, an ex-spouse to whom the deceased owed support, the children and the parents can claim (arts. 684 to 695 CCQ). De facto spouses and brothers and sisters are not dependants for support purposes, unlike in many common-law provinces."
+    },
+    {
+      "id": "c09-q025",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Surviving spouse's rights",
+      "page": "9•12",
+      "q": "In Quebec, on what basis does a surviving spouse claim a compensatory allowance from the estate?",
+      "options": [
+        "The spouse contributed goods, services or money that enriched the deceased",
+        "The spouse lived with the deceased in a de facto union for over three years",
+        "The spouse lacks the income to keep the lifestyle the couple had enjoyed",
+        "The spouse received less under the will than half of the family patrimony"
+      ],
+      "answer": 0,
+      "explain": "A compensatory allowance is not based on need: it rests on the survivor having enriched the deceased through goods, services or money, and the court decides whether it applies. Only legally married or civil union spouses can claim it, not de facto spouses."
+    },
+    {
+      "id": "c09-q026",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Surviving spouse's rights",
+      "page": "9•12",
+      "q": "Which asset belongs to the Quebec family patrimony as described in the course?",
+      "options": [
+        "Savings held in one spouse's personal chequing account",
+        "RRSPs and RPP benefits accumulated during the marriage",
+        "Shares of a private company owned by one of the spouses",
+        "A non-registered stock portfolio held by one of the spouses"
+      ],
+      "answer": 1,
+      "explain": "The course lists the family patrimony as the principal residence, the furniture, a family automobile, and RRSPs and RPPs accumulated during the marriage. On death, the surviving spouse can claim half of it before any distribution to beneficiaries."
+    },
+    {
+      "id": "c09-q027",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Surviving spouse's rights",
+      "page": "9•13",
+      "q": "Which statement about partition of the family patrimony when a Quebec marriage ends by death is accurate?",
+      "options": [
+        "It applies only if the will is silent, since a will can cancel the spouse's share",
+        "It applies only to couples married after July 1, 1989 under separation of property",
+        "It is made before any distribution and can be added to benefits under the will",
+        "It is made after the legacies are paid, out of whatever residue remains"
+      ],
+      "answer": 2,
+      "explain": "The partition must be made before any distribution to beneficiaries, and the survivor can claim it in addition to benefits under the will (absent particular provisions) or intestacy, unless rights were renounced before July 1, 1989. Partition of the matrimonial regime follows."
+    },
+    {
+      "id": "c09-q028",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Surviving spouse's rights",
+      "page": "9•13",
+      "q": "Hector, in a common-law province, wants his second wife Mira to accept his will rather than claim against his assets under matrimonial property law, so his children can inherit the rest. Her claim would be worth about $250,000. Which plan does the course favour?",
+      "options": [
+        "Name Mira beneficiary of a $250,000 policy and leave the whole estate to the children",
+        "Leave Mira $200,000 by will, with a clause forbidding any claim under the statute",
+        "Leave Mira $300,000 by will, funded by insurance, in lieu of her statutory rights",
+        "Leave Mira nothing and add a clause disinheriting anyone who contests the will"
+      ],
+      "answer": 2,
+      "explain": "Make taking under the will more attractive than claiming: leave a legacy greater than the claim (often funded by life insurance), stated to be in lieu of statutory rights. Clauses penalizing challengers are probably ineffective, and in some provinces insurance paid by designation may not offset the claim."
+    },
+    {
+      "id": "c09-q029",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Surviving spouse's rights",
+      "page": "9•13",
+      "q": "If a spouse gave up an equalization claim in a marriage contract, that spouse can never claim support from the estate, even if left without adequate resources.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Spouses may agree in a marriage contract to forgo statutory rights such as an equalization claim, but a surviving spouse who has not been left adequate resources to live on often may still make a claim for support despite the contract."
+    },
+    {
+      "id": "c09-q030",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Rights of other dependants",
+      "page": "9•14",
+      "q": "In a common-law province, a court is deciding whether to award support from an estate to the deceased's adult daughter. Which question is one of the three usual tests?",
+      "options": [
+        "Is the daughter named as a residual beneficiary?",
+        "Was the daughter living in the deceased's home?",
+        "Did the daughter contest the will within 30 days?",
+        "Is the daughter in need of support?"
+      ],
+      "answer": 3,
+      "explain": "The three tests: was the deceased providing (or obliged to provide) support; did the deceased fail to provide adequately, by will or otherwise; and is the dependant in need of support. Some provinces also consider the estate's ability to pay."
+    },
+    {
+      "id": "c09-q031",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Rights of other dependants",
+      "page": "9•15",
+      "q": "How does British Columbia's Wills Variation Act differ from the Ontario approach described in the course?",
+      "options": [
+        "BC courts can rewrite the will; Ontario can claw back some non-estate assets",
+        "BC covers only spouses; Ontario covers only minor and disabled children",
+        "BC lets claimants seize insurance; Ontario forbids any variation of a will",
+        "BC courts can only award cash; Ontario courts can rewrite the will itself"
+      ],
+      "answer": 0,
+      "explain": "Under BC's Wills Variation Act, the court can in effect rewrite the will to meet unfulfilled obligations. In Ontario, even property passing outside the will, such as life insurance payable to a named beneficiary, can be clawed back into the estate to assess support."
+    },
+    {
+      "id": "c09-q032",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Rights of other dependants",
+      "page": "9•15",
+      "q": "When setting support for a dependant, a court may consider the testator's written reasons for leaving that dependant out of the will.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Courts consider the dependant's means and needs, gifts or provisions made during the deceased's life, the testator's written reasons for depriving a dependant, and the lifestyle the dependant was accustomed to."
+    },
+    {
+      "id": "c09-q033",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Public policy",
+      "page": "9•15",
+      "q": "Which will condition is most likely to be challenged as contrary to public policy?",
+      "options": [
+        "A nephew's gift is held in trust until he reaches the age of 25",
+        "A charity's gift must be used only to fund its scholarship program",
+        "A niece forfeits her gift if she marries a person of a certain race",
+        "A son's gift depends on his surviving the testator by 30 days"
+      ],
+      "answer": 2,
+      "explain": "A will cannot set conditions that are discriminatory, contrary to public policy or that promote an illegal act. Age-based trusts, restricted charitable gifts and survivorship conditions are ordinary planning tools."
+    },
+    {
+      "id": "c09-q034",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Revocation",
+      "page": "9•16",
+      "q": "Nadia's formal will leaves the residue to her husband and $10,000 to a hospital. Years later she writes a valid holograph will leaving $10,000 to a library; it has no revocation clause and says nothing about the residue. What is the likely result?",
+      "options": [
+        "Both wills may stand: the husband takes the residue and both legacies are paid",
+        "The new will revokes the old one, so only the library legacy is valid",
+        "The formal will governs, because a holograph will cannot alter a formal will",
+        "Both wills are void, because two wills cannot exist at the same time"
+      ],
+      "answer": 0,
+      "explain": "A later will without a revocation clause does not automatically revoke an earlier one. Where the wills conflict, the later prevails; where they don't (such as separate cash legacies), both can be valid, so both $10,000 legacies may be payable."
+    },
+    {
+      "id": "c09-q035",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Revocation",
+      "page": "9•16",
+      "q": "Sophie (Quebec) and Liam (Manitoba) each made a will while single, not in contemplation of marriage. Both later married without making new wills. What is the status of their wills?",
+      "options": [
+        "Sophie's will remains valid; Liam's was revoked by his marriage",
+        "Both wills were revoked by marriage, so both would die intestate",
+        "Both wills remain valid, subject only to family law claims",
+        "Liam's will remains valid; Sophie's was revoked by her marriage"
+      ],
+      "answer": 0,
+      "explain": "Outside Quebec, a later marriage revokes a will unless it was made in contemplation of that marriage (ON, NS and NB let the spouse elect to keep it). In Quebec, a will made before marriage stays valid, though family patrimony and matrimonial regime rules apply first."
+    },
+    {
+      "id": "c09-q036",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Revocation",
+      "page": "9•17",
+      "q": "Which statement about the effect of divorce or legal separation on a will is accurate?",
+      "options": [
+        "In Quebec, divorce revokes legacies to the ex-spouse and the ex-spouse's role as liquidator",
+        "In Quebec, divorce revokes the entire will, so a new will must be drawn up right away to avoid intestacy",
+        "In most provinces, legal separation revokes all gifts to the estranged spouse",
+        "In British Columbia, divorce affects a will, but legal separation never does"
+      ],
+      "answer": 0,
+      "explain": "Divorce doesn't generally revoke a will, but in Quebec (and ON, BC, SK, MB and PEI) gifts to and appointments of the former spouse are revoked. Legal separation has no effect in most provinces; BC is the only province that treats it like divorce."
+    },
+    {
+      "id": "c09-q037",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Revocation",
+      "page": "9•16",
+      "q": "A will can be revoked at any time before death, even after the testator has become mentally incompetent.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. A will takes effect only on death and can be revoked at any time before then, unless the testator becomes mentally incompetent, in which case it can no longer be revoked."
+    },
+    {
+      "id": "c09-q038",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Review and amendment",
+      "page": "9•17",
+      "q": "Apart from reviewing a will after major life events, how often does the course suggest a periodic review?",
+      "options": [
+        "About every 3 to 5 years",
+        "About once every year",
+        "Only when tax laws change",
+        "About every 10 to 15 years"
+      ],
+      "answer": 0,
+      "explain": "Wills should be reviewed whenever material changes occur and periodically, say every 3 to 5 years, since small changes add up. An outdated will can sometimes be worse than no will at all."
+    },
+    {
+      "id": "c09-q039",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Review and amendment",
+      "page": "9•18",
+      "q": "An Ontario client wants to shift most of her estate from her nieces, who don't know her will's contents, to charities. Why might a new will be better than a codicil?",
+      "options": [
+        "A codicil is valid only if a notary signs it within 30 days of the will",
+        "With a codicil, the nieces would see the original will and learn it was changed",
+        "A codicil cannot change the residue of an estate, since it is not executed like a will",
+        "A codicil would revoke the whole original will and cause an intestacy"
+      ],
+      "answer": 1,
+      "explain": "Codicils are executed like wills but aren't recommended for major changes such as the residue. In provinces like Ontario, beneficiaries receive copies of the old will and the codicil, so a new will avoids revealing (and hurting with) the change."
+    },
+    {
+      "id": "c09-q040",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Review and amendment",
+      "page": "9•19",
+      "q": "For a memorandum listing personal items and who should receive them to be legally binding, what is required?",
+      "options": [
+        "It must be approved by the liquidator and filed with the court before death",
+        "It must be signed by two witnesses each time an item is added or removed",
+        "It must exist before the will is signed and be incorporated by reference",
+        "It must be handwritten by the testator and dated after the will is signed"
+      ],
+      "answer": 2,
+      "explain": "A memorandum is binding only if it exists before the will is signed and is incorporated by reference. A list drawn up later isn't binding (families often honour it anyway); to make later wishes binding, the testator can use a codicil."
+    },
+    {
+      "id": "c09-q041",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Review and amendment",
+      "page": "9•19",
+      "q": "After a will was signed, some of its words were blacked out so they can no longer be read. What is the effect?",
+      "options": [
+        "The will is valid only if the testator initialled the blacked-out words",
+        "The whole will is revoked, because it was altered after being signed",
+        "The will is still valid, and the words that remain readable form the will",
+        "The court restores the original words using the lawyer's draft copy"
+      ],
+      "answer": 2,
+      "explain": "Words deleted or erased so they can't be read are obliterations: the will remains valid and whatever is still readable constitutes it. Alterations and interlineations aren't permitted after signing; changes made before signing should be initialled by the testator and witnesses."
+    },
+    {
+      "id": "c09-q042",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "q": "Manfred, 79, plans to name his brother Fritz, 71, as executor. His will creates trusts for his minor grandchildren that last until they turn 30. What is the best advice?",
+      "options": [
+        "Keep Fritz, since a poor executor can easily be replaced later at little cost",
+        "Keep Fritz, since the court fee schedule is lower when a relative does the work",
+        "Keep Fritz, since a relative always knows the family better than a trust company",
+        "Consider a younger executor or a corporate trustee, as the trusts may last decades"
+      ],
+      "answer": 3,
+      "explain": "An executor and trustee should be likely to outlive the estate and any trusts. With trusts that may run for years or decades, a younger person or a corporate trustee is more prudent. Replacing an executor later is long and expensive, and fees follow the same schedule for all."
+    },
+    {
+      "id": "c09-q043",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "q": "In a common-law province, Ruth's will names Ken as sole executor, with no alternate. Ken dies partway through administering Ruth's estate. Who takes over?",
+      "options": [
+        "The Public Trustee automatically takes over the administration",
+        "Ruth's residual heirs must agree unanimously on a new executor",
+        "The court appoints an administrator, since no alternate was named",
+        "Ken's own executor is automatically appointed to finish the job"
+      ],
+      "answer": 3,
+      "explain": "Without an alternate, if the executor dies before the estate is fully administered, the executor's executor is automatically appointed. If the named executor predeceases the testator or won't serve, the court appoints an administrator. In Quebec, the heirs appoint a substitute liquidator."
+    },
+    {
+      "id": "c09-q044",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "q": "Which statement about liquidators in Quebec is accurate?",
+      "options": [
+        "A liquidator who is also an heir is always entitled to be paid by the estate",
+        "A liquidator who is the sole heir may decline the office before starting to act",
+        "Co-liquidators must act unanimously; trustees act by majority unless otherwise provided",
+        "Co-liquidators act by majority vote, while trustees must always act unanimously on every decision"
+      ],
+      "answer": 2,
+      "explain": "In Quebec, several liquidators must agree unanimously, while trustees act by majority unless otherwise provided. A liquidator who is the sole heir cannot decline the office, and an heir-liquidator has no right to remuneration unless the will or the heirs provide for it."
+    },
+    {
+      "id": "c09-q045",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Executors (liquidators)",
+      "page": "9•21",
+      "q": "Using the course's rough guideline for executor fees, estimate the compensation on an estate that realizes $400,000 of assets, distributes $400,000 and earns $20,000 of income during administration.",
+      "options": [
+        "$21,000",
+        "$11,000",
+        "$20,000",
+        "$40,500"
+      ],
+      "answer": 0,
+      "explain": "2.5% of $400,000 realized ($10,000) + 2.5% of $400,000 distributed ($10,000) + 5% of $20,000 income ($1,000) = about $21,000, paid by the estate. The schedule is the same whether the executor is a trust company, a lawyer or a family member."
+    },
+    {
+      "id": "c09-q046",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Executors (liquidators)",
+      "page": "9•22",
+      "q": "Dana is named executor of her uncle's estate, which includes a factory facing environmental claims. In a common-law province, which statement is accurate?",
+      "options": [
+        "She must act, since being named executor is a binding contractual duty",
+        "She may decline before she starts to act, after weighing her personal risk",
+        "She may decline only with court approval, even before she starts to act",
+        "She must act, but a trust company will be added to share any liability"
+      ],
+      "answer": 1,
+      "explain": "Being named executor is an appointment, not a contractual obligation, so it may be declined before the person starts to act. She should weigh her time, ability and potential liabilities; most corporate executors refuse estates tied to such industries. In Quebec, a sole-heir liquidator cannot decline."
+    },
+    {
+      "id": "c09-q047",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "q": "How does naming a guardian for minor children in a will differ between the common-law provinces and Quebec?",
+      "options": [
+        "Common law: the executor picks the guardian; Quebec: the liquidator acts as tutor",
+        "Common law: the choice binds the court; Quebec: the Public Curator approves every tutor",
+        "Common law: no court step at all; Quebec: the tutor is homologated after a medical evaluation",
+        "Common law: court approval, usually within 90 days; Quebec: no court step unless contested"
+      ],
+      "answer": 3,
+      "explain": "In common-law provinces the will merely states wishes: the guardian must be approved by court order, usually within 90 days, and the court can overrule the choice. In Quebec, a tutor designated by will, protection mandate or declaration to the Public Curator needs no court step unless contested."
+    },
+    {
+      "id": "c09-q048",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "q": "A child inherits money under a will that names no trustee. In a common-law province, who manages the funds until the child reaches the age of majority?",
+      "options": [
+        "The executor, until the child turns 30",
+        "A public trustee appointed by the court",
+        "The child's grandparents, jointly",
+        "The surviving parent, automatically"
+      ],
+      "answer": 1,
+      "explain": "If assets go to minors with no trustee named, the court appoints a public trustee until the age of majority; the surviving parent has no automatic right and must apply to court. In Quebec, by contrast, the surviving parent is automatically tutor and administers the legacy."
+    },
+    {
+      "id": "c09-q049",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Guardians (tutors) and trustees",
+      "page": "9•23",
+      "q": "A trust needs at least one trustee who is not a beneficiary, so a beneficiary cannot act alone as trustee.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The course notes that a trust requires at least one independent trustee, someone who is not a beneficiary of the trust, so a beneficiary cannot act alone as trustee."
+    },
+    {
+      "id": "c09-q050",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drafting points",
+      "page": "9•24",
+      "q": "Clara's will leaves 'my Muskoka cottage' to her nephew. She later sells the cottage and uses the proceeds to buy a lakeside condo. At her death, what does the nephew receive under that clause?",
+      "options": [
+        "Cash equal to the cottage's sale price, from the estate",
+        "A share of the residue equal to the cottage's value",
+        "The condo, as replacement property for the cottage",
+        "Nothing, because the specific gift has adeemed"
+      ],
+      "answer": 3,
+      "explain": "A gift of a specific asset the testator no longer owns at death adeems (fails), and the beneficiary gets no replacement even if the proceeds can be traced to new property. Describing gifts in general terms ('my car' rather than 'my Buick') reduces this risk."
+    },
+    {
+      "id": "c09-q051",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drafting points",
+      "page": "9•24",
+      "q": "Under Ontario-style anti-lapse rules, a will leaves '$15,000 to my brother Paul' with no other wording. Paul dies before the testator, leaving a wife and a son. What happens to the $15,000?",
+      "options": [
+        "It lapses and falls into the residue of the testator's estate",
+        "It is paid to Paul's estate and passes under Paul's own will",
+        "It is divided equally among the testator's other siblings",
+        "It goes to Paul's family as if Paul had died intestate"
+      ],
+      "answer": 3,
+      "explain": "Anti-lapse rules apply when the beneficiary is the testator's child, grandchild, brother or sister and the will shows no contrary intention, so the gift passes to the beneficiary's spouse and children. Adding 'if he survives me' would make it lapse into the residue."
+    },
+    {
+      "id": "c09-q052",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drafting points",
+      "page": "9•25",
+      "q": "Rosa leaves her estate 'to my children in equal shares per stirpes.' Ana and Ben survive her; her third child, Carl, died earlier, leaving two children. How is the estate divided?",
+      "options": [
+        "Ana 1/2 and Ben 1/2, since only surviving children can share",
+        "Ana 1/3, Ben 1/3, and Carl's two children share his 1/3 equally",
+        "Ana, Ben and each of Carl's two children take one quarter each",
+        "Ana 1/3 and Ben 1/3, with Carl's third falling into the residue"
+      ],
+      "answer": 1,
+      "explain": "Per stirpes means 'by roots': a predeceased child's share is divided equally among his or her children, so Carl's third goes to his two children. A per capita gift (in common law) would be split only between the surviving children, Ana and Ben."
+    },
+    {
+      "id": "c09-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drafting points",
+      "page": "9•25",
+      "q": "In a Quebec succession, what does 'representation' mean?",
+      "options": [
+        "A tutor represents a minor heir until the age of majority",
+        "The liquidator represents the heirs in any claim against the estate",
+        "A co-legatee takes the share of a legatee who died before the testator",
+        "A descendant inherits in place of his or her predeceased parent"
+      ],
+      "answer": 3,
+      "explain": "Representation lets a descendant inherit in place of a predeceased parent, and where it applies the devolution is always per stirpes (by roots). Taking a co-legatee's share is accretion: e.g., a cottage left to A and B goes entirely to B if A dies first."
+    },
+    {
+      "id": "c09-q054",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drafting points",
+      "page": "9•26",
+      "q": "Victor's will leaves cash legacies of $30,000 to his niece and $10,000 to his nephew, and the residue to his sister. After debts, taxes and expenses, only $20,000 remains. If the legacies abate proportionately, how much does the niece receive?",
+      "options": [
+        "$6,667",
+        "$20,000",
+        "$10,000",
+        "$15,000"
+      ],
+      "answer": 3,
+      "explain": "Debts, taxes and expenses come first, leaving $20,000 against $40,000 of legacies, so each legacy is cut to 50%: the niece gets $15,000, the nephew $5,000 and the residuary sister nothing. Ideally, the will says how any abatement is to be shared."
+    },
+    {
+      "id": "c09-q055",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Drafting points",
+      "page": "9•26",
+      "q": "What is the main purpose of a 30-day survivorship clause in a will?",
+      "options": [
+        "To give creditors 30 days to file their claims before any assets are distributed",
+        "To give the executor 30 days to locate every beneficiary before distributing",
+        "To avoid administering the same assets twice if testator and heir die close together",
+        "To give a surviving spouse 30 days to choose between the will and a family law property claim"
+      ],
+      "answer": 2,
+      "explain": "A survivorship clause names an alternate beneficiary if the primary one doesn't survive the testator by a set period (e.g., 30 days), so assets don't pass through two estates after a common accident. The period is short because the beneficiaries are uncertain until it ends."
+    },
+    {
+      "id": "c09-q056",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drafting points",
+      "page": "9•26",
+      "q": "A do-it-yourself will says: 'If my husband Ray survives me by 30 days, I appoint him executor and leave him everything.' What problem does this wording create?",
+      "options": [
+        "Ray has no authority to act as executor for the first 30 days after the death",
+        "Ray receives only the estate's income until the 30 days have passed",
+        "Ray's gift is void, since a survivorship condition cannot apply to a spouse",
+        "The estate must be probated twice, before and after the 30-day period"
+      ],
+      "answer": 0,
+      "explain": "Making the executor's appointment conditional on surviving 30 days means the spouse is not in charge for those 30 days, which is not what was intended. The survivorship condition should govern who receives the gift, not leave the estate without an executor."
+    },
+    {
+      "id": "c09-q057",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drafting points",
+      "page": "9•27",
+      "q": "Years ago Omar named his sister beneficiary of his life insurance on the insurer's form. His new will names his partner as beneficiary of the policy instead, but he never notifies the insurer. Which statement is accurate?",
+      "options": [
+        "The will's designation is void, because the insurer did not witness the will",
+        "The proceeds go to Omar's estate, because the two designations conflict",
+        "The will's later designation prevails in law, but the insurer may still pay the sister",
+        "The insurer's form prevails, because a will can never change a beneficiary designation"
+      ],
+      "answer": 2,
+      "explain": "A will can name or revoke a beneficiary of life insurance, an RRSP or a RRIF, and the designation made later prevails in law. But insurers usually pay the beneficiary on file, so a copy of the will (better, a new designation form) should be filed, or costly litigation may follow."
+    },
+    {
+      "id": "c09-q058",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Drafting points",
+      "page": "9•27",
+      "q": "Because a will can always be revoked, a beneficiary designation made in a will cannot be irrevocable.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Wills are revocable, so an irrevocable beneficiary designation cannot be made in a will. A revocable designation can be, because even an invalid will (e.g., a formal will with only one witness) counts as a written declaration."
+    },
+    {
+      "id": "c09-q059",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Drafting points",
+      "page": "9•25",
+      "q": "Before paying any legacies, what must the executor (liquidator) pay or provide for?",
+      "options": [
+        "Funeral expenses and debts only; taxes are paid out of the residue later",
+        "Funeral expenses, probate and legal fees, executor's fees, debts and taxes",
+        "The largest specific legacies first, then the debts and the funeral costs",
+        "The residue, then debts, taxes and fees out of the remaining legacies"
+      ],
+      "answer": 1,
+      "explain": "Funeral expenses, probate fees, legal and executor's fees, debts and taxes are paid or provided for before any general or specific legacies. The residue is distributed last, after all fees, taxes, debts and legacies have been settled."
+    },
+    {
+      "id": "c09-q060",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Powers of attorney (property)",
+      "page": "9•28",
+      "q": "In Quebec, how does a (simple) mandate or power of attorney differ from a protection mandate?",
+      "options": [
+        "A simple mandate covers property and ends on incapacity; a protection mandate applies after it",
+        "A simple mandate can cover personal care; a protection mandate covers only the person's property",
+        "A simple mandate survives the mandator's death; a protection mandate ends at the mandator's death",
+        "A simple mandate must be homologated by the court; a protection mandate is effective on signing"
+      ],
+      "answer": 0,
+      "explain": "A simple mandate (power of attorney) deals only with property, takes effect when the grantor chooses and ends on incapacity or death. A protection mandate covers property and/or the person and is executed only after incapacity and court homologation, so 'enduring' doesn't exist in Quebec."
+    },
+    {
+      "id": "c09-q061",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•29",
+      "q": "For a power of attorney for property to stay in force during the grantor's mental incapacity, the document must expressly say so.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The enduring (continuing) nature must be spelled out in the document; otherwise the attorney's powers cease when the grantor becomes mentally incapable, just when they are needed most."
+    },
+    {
+      "id": "c09-q062",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Powers of attorney (property)",
+      "page": "9•29",
+      "q": "How can a protection mandate be made in Quebec?",
+      "options": [
+        "Only by notarial act, with two of the mandator's relatives as witnesses",
+        "Only in the mandator's own handwriting, with no witnesses at all",
+        "By notarial act, or before two witnesses who have no interest in it",
+        "Before one witness, who must be the mandator's family doctor"
+      ],
+      "answer": 2,
+      "explain": "A protection mandate is made by notarial act or in the presence of two witnesses with no interest in the deed, who certify that the mandator is of sound mind and capable. A witnessed mandate may be written by the mandator or by a third person."
+    },
+    {
+      "id": "c09-q063",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•30",
+      "q": "Manfred wants to give his son Hans a power of attorney over his finances, but worries Hans could use it to change his will. What should he be told?",
+      "options": [
+        "Hans could change the will once a doctor declares Manfred to be incapable",
+        "Even an unrestricted power of attorney gives Hans no authority to change the will",
+        "Hans could change the will, but only if the power of attorney is expressly made enduring",
+        "Hans could change the will unless Manfred files a copy with his bank"
+      ],
+      "answer": 1,
+      "explain": "An attorney can make almost any legal commitment the grantor could (buy and sell assets, borrow, sign contracts) but cannot make, change or revoke the grantor's will. Manfred could also limit Hans's authority to his bank and investment accounts with a restricted power of attorney."
+    },
+    {
+      "id": "c09-q064",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Powers of attorney (property)",
+      "page": "9•31",
+      "q": "Lucie wants to name her two children as attorneys for property with the strongest protection against misuse. Which arrangement fits, and what is its drawback?",
+      "options": [
+        "Joint: each may act alone, so one can step in whenever the other is away",
+        "Several: they check each other, but both must agree before either one can act",
+        "Several: they may act only after a court appoints a committee to oversee their decisions",
+        "Joint: they check each other, but both must be available and agree before acting"
+      ],
+      "answer": 3,
+      "explain": "Joint attorneys must all concur, a check and balance against misuse, but all must be available and agree, risking deadlock and delay. Several (independent) authority is more flexible but gives up those checks. Corporate attorneys accept joint appointments but prefer not several."
+    },
+    {
+      "id": "c09-q065",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•33",
+      "q": "Which two conditions must be met before a protection mandate can be executed in Quebec?",
+      "options": [
+        "The mandator is incapable, and the court has homologated the mandate",
+        "The mandator is incapable, and the Public Curator has signed the mandate",
+        "The mandatary accepts in writing, and the mandator's family consents",
+        "A doctor declares incapacity, and a notary registers the mandate"
+      ],
+      "answer": 0,
+      "explain": "Under art. 2166 CCQ, performing the mandate depends on the mandator's incapacity and on homologation by the court at the mandatary's request; a medical and a psychosocial evaluation are mandatory. That is why the common-law 'enduring' concept doesn't exist in Quebec."
+    },
+    {
+      "id": "c09-q066",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Powers of attorney (property)",
+      "page": "9•33",
+      "q": "What is a 'springing' (contingent) power of attorney?",
+      "options": [
+        "One that passes automatically to a substitute attorney if the first resigns",
+        "One that a court activates by naming a committee once the grantor has become incapable",
+        "One that takes effect on signing and ends when the grantor becomes incapable",
+        "One that takes effect only when a person named in it declares the grantor incapable"
+      ],
+      "answer": 3,
+      "explain": "Most powers of attorney take effect when signed, though normally used only on incapacity. A springing power grants authority only on a declaration of incapacity by an independent person named in it, such as the family doctor; third parties accept it once they receive that declaration."
+    },
+    {
+      "id": "c09-q067",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•31",
+      "q": "Sylvie, of Quebec, signs a document letting her brother sell her rental condo while she travels for four months, ending on her return date. What is this called in the Civil Code, and when would it lose validity?",
+      "options": [
+        "A protection mandate, which must be homologated before her brother can act",
+        "An enduring power of attorney, which continues if she becomes incapable",
+        "A simple mandate, effective on signature, that ends if she becomes incapable",
+        "A dative tutorship, which the court must approve within 90 days of signing"
+      ],
+      "answer": 2,
+      "explain": "In Quebec, a (simple) mandate, called a power of attorney in everyday language, lets a capable person be represented in absence. It is effective on signature and loses validity if the mandator loses capacity. Limiting it to one asset and a date is what common law calls a restricted power of attorney."
+    },
+    {
+      "id": "c09-q068",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•32",
+      "q": "In Quebec, a mandatary under a protection mandate may resign simply by notifying the mandator, just as under a simple mandate.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Under a protection mandate, the mandatary cannot resign without having found a substitute. Under a simple mandate (power of attorney), the mandatary need only advise the grantor of the resignation."
+    },
+    {
+      "id": "c09-q069",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Powers of attorney (property)",
+      "page": "9•32",
+      "q": "In Quebec, to whom does a mandatary acting under a homologated protection mandate account, according to the course?",
+      "options": [
+        "To the notary who drew up the mandate, through six-month reports",
+        "To the Public Curator, through annual accounts for as long as it lasts",
+        "To the mandator, who must approve each transaction in writing",
+        "To the heirs at the end of the administration, with no periodic reports"
+      ],
+      "answer": 3,
+      "explain": "The mandatary accounts to the heirs at the end of the administration and is not subject to periodic accounting to the Public Curator, so it is wise to require accounting to a third party in the mandate. Elsewhere, an attorney becomes accountable to the court once the grantor is incapable."
+    },
+    {
+      "id": "c09-q070",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Personal care and living wills",
+      "page": "9•34",
+      "q": "Which statement about a power of attorney for personal care in a common-law province is accurate?",
+      "options": [
+        "It is valid only if the Canadian Medical Association has approved its wording",
+        "It can be used only once the grantor is mentally incapable, and never by a trust company",
+        "It takes effect on signing, and a trust company may hold it jointly with a relative",
+        "It covers investments as well as housing decisions, and it ends when the grantor becomes incapable"
+      ],
+      "answer": 1,
+      "explain": "Unlike a property power of attorney, a personal care attorney cannot use the authority until the grantor is mentally incapable, since until then only the grantor decides on housing, food, clothing and treatment. A corporate attorney cannot be given (and would not accept) this role."
+    },
+    {
+      "id": "c09-q071",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Personal care and living wills",
+      "page": "9•35",
+      "q": "How does a Quebec 'biological will' differ from a protection mandate?",
+      "options": [
+        "It is a notarial deed that replaces the will and takes effect only at death",
+        "It names a mandatary for personal care and must be homologated before use",
+        "It covers only the person's property and leaves health decisions to the doctor",
+        "It just states treatment wishes and names no one to decide for the person"
+      ],
+      "answer": 3,
+      "explain": "Unlike the formal protection mandate, the biological will is a simple document describing the grantor's wishes about treatment; it does not designate anyone to decide on his or her behalf. A protection mandate can cover both the person and property, even with different mandataries."
+    },
+    {
+      "id": "c09-q072",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Personal care and living wills",
+      "page": "9•35",
+      "q": "Which advice about preparing an Advance Care Directive is consistent with the course?",
+      "options": [
+        "Use broad wording such as 'no heroic measures' so the attorney has flexibility",
+        "Include instructions for euthanasia, which medical staff must then carry out",
+        "Leave out any attorney, since the directive itself makes every decision",
+        "Consult a doctor and give very specific instructions rather than vague phrases"
+      ],
+      "answer": 3,
+      "explain": "A doctor should be consulted and instructions should be very specific; clear enough instructions must be followed by medical staff. Vague terms like 'no heroic measures' cause confusion, and instructions such as euthanasia are not likely to be followed under Canadian law."
+    },
+    {
+      "id": "c09-q073",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Court-appointed decision-makers",
+      "page": "9•36",
+      "q": "In Quebec, what can be done when a person becomes incapable without having made a protection mandate?",
+      "options": [
+        "The person's will takes effect early, and the liquidator manages the property",
+        "The spouse automatically becomes the mandatary, with full powers over both property and the person",
+        "An interested person can ask the court to open a protective regime with a tutor or curator",
+        "A notary can homologate an unsigned draft mandate found among the person's papers"
+      ],
+      "answer": 2,
+      "explain": "Any person who shows an interest can apply to court to open a protective regime, and a tutor or curator is appointed. Their authority resembles a mandatary's, but with less flexibility and power and without the person's own directions."
+    },
+    {
+      "id": "c09-q074",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Planner's role",
+      "page": "9•36",
+      "q": "According to the course, it is generally not in all parties' best interest for a financial planner to act as a client's attorney under a power of attorney.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The planner's role is to explain the advantages and risks of the different types of authority and structures, not to act as attorney. If a client seems increasingly confused, the planner should document the concerns and tell the family or lawyer."
+    }
+  ]
+}

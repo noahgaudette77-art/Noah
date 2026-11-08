@@ -1,0 +1,1279 @@
+{
+  "chapter": 2,
+  "title": "The Concept of Risk",
+  "objectives": [
+    "Define risk as it applies to risk management.",
+    "Identify the basic types of potentially financially threatening risks clients could be exposed to.",
+    "Compare the efficiency of different risk management methods."
+  ],
+  "guide": [
+    {
+      "heading": "Risk defined; pure vs speculative; subjective risk",
+      "page": "2•3",
+      "points": [
+        "Risk = 'uncertainty concerning loss'. It is the uncertainty itself, not the loss, the cause of loss (peril) or the chance of loss. A house already on fire carries no risk: the loss is certain (probability 1:1, or 100%).",
+        "Pure risk: only the possibility of loss (e.g., a family would lose $24,000 of annual income if a working spouse died prematurely; no one normally profits from a premature death).",
+        "Speculative risk: either profit or loss is possible, as with stock market investments, lottery tickets and all forms of gambling.",
+        "Private insurers insure pure risks. With few exceptions speculative risks are uninsurable and need other techniques such as hedging with futures or options. The course deals only with pure risks.",
+        "Subjective risk (course definition): the amount of pure risk an individual or insurer assumes. An uninsured $200,000 building carries twice the subjective risk of a $100,000 one; a $1,000,000 policy, twice that of a $500,000 policy on the same life.",
+        "The 'client' or 'family' (the planning unit) includes everyone directly financially affected by the plan; the course flags when parties are not family, such as business partners."
+      ]
+    },
+    {
+      "heading": "Objective risk and insurance pricing",
+      "page": "2•5",
+      "points": [
+        "Objective risk = the degree of uncertainty in a risk, defined as 'the relative variation of actual loss from expected loss'.",
+        "Expected loss is estimated in advance, usually from historical statistical data (insurers use actuaries). Actual loss is determined in retrospect from real experience.",
+        "Acme Automobile: 10,000 cars × 2% = 200 expected claims; actual claims run from 180 to 220. Objective risk = (220 − 200) ÷ 200 = 10%.",
+        "Objective risk can only be calculated if the distribution of losses is symmetric (equal probability above and below the expected value). The greater the variation, the greater the objective risk.",
+        "Pricing: the greater the uncertainty about expected loss, the higher the premium (all else equal), because uncertain claim amounts and timing force the insurer to hold larger capital reserves.",
+        "Risk management decisions rest on the likelihood of events (death, disability, a house fire): clients rarely know what will happen, but they know how likely it is."
+      ]
+    },
+    {
+      "heading": "Chance of loss, peril and hazard",
+      "page": "2•6",
+      "points": [
+        "Chance of loss = the probability that a loss will occur. Do not confuse it with objective risk: two groups can share the same chance of loss yet differ in objective risk.",
+        "Toronto vs Montreal: 10,000 cars each, 2% chance of loss (200 claims). Variation of 180–220 in Toronto vs 190–210 in Montreal gives objective risk of 10% vs 5%, so Toronto premiums should be higher.",
+        "Peril = the cause of loss: fire when a house burns down; collision when a car hits another vehicle.",
+        "Hazard = a condition that creates or increases the chance or severity of loss. It can be physical (an icy road), moral (dishonesty) or simple carelessness.",
+        "Keeping gasoline or other flammables at home is a fire hazard; fire would be the potential peril."
+      ]
+    },
+    {
+      "heading": "Moral hazard and personal risks",
+      "page": "2•7",
+      "points": [
+        "Moral hazard: being tempted to act differently simply because one is insured. Arson to collect insurance is the example; without the insurance the incentive would not exist.",
+        "It is a particular concern when issuing life and disability insurance (applicants may lie about or fail to disclose medical conditions) and in disability claims, because the insured is also the beneficiary.",
+        "Three main types of pure risk that threaten financial security: personal risks, property risks and liability risks.",
+        "Personal risks directly affect the individual and so the whole planning unit, through reduced or lost earned income, unexpected expenses and the depletion of financial assets.",
+        "Three major personal risks: premature death, life cycle change (aging) and health risk (illness or disability)."
+      ]
+    },
+    {
+      "heading": "Premature death: economic value and costs",
+      "page": "2•8",
+      "points": [
+        "Premature death = dying before life expectancy tables say you should. Dependants may be unable to meet support, education and mortgage obligations; a long terminal illness can cut living standards well before death.",
+        "To a family, a life's economic value is its earning capacity. Annual value = the person's net income less the part consumed exclusively by that person.",
+        "Single-sum value = the invested capital needed to replace that income for as long as required. Replacing $40,000 a year permanently at 5% takes $800,000 ($800,000 × 0.05 = $40,000).",
+        "To an employer, value = the employee's net contribution to the organization, e.g., the after-expense/after-tax value of a top salesperson's $2,000,000 in annual sales.",
+        "Costs of premature death: earned income ends permanently; extra expenses (funeral, last illness, estate settlement, estate taxes) may push families below the poverty line; emotional and social costs (grief, loss of a role model, counselling)."
+      ]
+    },
+    {
+      "heading": "Income needs and other needs after a death",
+      "page": "2•9",
+      "points": [
+        "Readjustment period: at least one year and often up to two. Extra financial support eases the burden while the family absorbs the emotional shock.",
+        "Dependency period: follows readjustment and is defined by the age of the youngest child; the survivor needs income to care for the children until the youngest is no longer financially dependent. Child care can be a major extra cost.",
+        "Survivor life income: after the youngest child is independent. A survivor long out of the labour force may struggle to re-enter it, so life-long income (before retirement and to supplement social programs after) may be needed.",
+        "Other needs linked to premature death: outstanding mortgage obligations, future education funding and emergency needs.",
+        "Mortgage: the main exposure is whether survivors can keep up the payments (or face eviction). Staying: exposure reflects interest rates at renewal. Selling: current market prices and the cost of alternative accommodation."
+      ]
+    },
+    {
+      "heading": "Education, emergencies and the probability of death",
+      "page": "2•10",
+      "points": [
+        "Education exposure depends on the type and length of post-secondary study: public institutions cost far less than private ones, and a medical degree more than a BA. Costs are expected to rise faster than inflation.",
+        "RESPs are among the most flexible and popular education savings vehicles, combining tax-deferred savings, income splitting, and government grants and bonds. Review them with every parent of a school-aged child.",
+        "Emergency risk exposure = any unexpected event that may require a substantial cash outlay: a major fire, death of a family member or key employee, car theft, sudden unemployment, or illness or injury of an earner.",
+        "Mortality tables show life expectancy from historical population trends. The probability of dying prematurely has declined (better medical care, health habits and living standards) but remains significant.",
+        "Probability of death at an age = deaths during the year ÷ number alive at the start of the year (e.g., about 1.00 per 1,000 for males aged 25–29; 21.6 per 1,000 at ages 70–74).",
+        "Probability of dying before age Y, having reached age X: add the yearly probabilities from X to Y − 1. Manuel, 30, dying before 34: 1.20 + 1.22 + 1.20 + 1.20 = 4.82 per 1,000 = 0.482%."
+      ]
+    },
+    {
+      "heading": "Life cycle change risk: aging",
+      "page": "2•11",
+      "points": [
+        "Three primary risks to earning capacity: premature death, loss of health (disability) and aging. Sudden or prolonged unemployment of a key earner is a further threat.",
+        "Aging underlies the planning stages (wealth accumulation, pre-retirement, retirement, estate). Experience raises the value of a work-hour, but aging cuts the hours worked, so work income slows or stops.",
+        "Retirement risk = insufficient income. It is aggravated by earlier retirement, longer life expectancy, uncertainty about social programs and rapid inflation that erodes real incomes.",
+        "Social programs: the Canada Pension Plan (Quebec Pension Plan in Quebec) is based on earned income; Old Age Security is based on age. Many clients must supplement them to maintain their lifestyle.",
+        "Risk to the estate: the final stage, when the individual runs out of money late in life, often from a lack of estate planning or the estate's tax obligations.",
+        "Three-step coping process: 1) allow for lower income and higher expenses with age; 2) add savings (RRSPs, mutual and segregated funds) before retirement; 3) buy extra life and disability insurance to fund step 2 if death or disability cuts income."
+      ]
+    },
+    {
+      "heading": "Health risk: disability",
+      "page": "2•12",
+      "points": [
+        "Disability = impairment through illness or accident. After death it is the second major loss exposure, and most clients cannot absorb its financial burden.",
+        "The risk: cash inflows decrease while cash outflows increase. Catastrophic medical costs can mean financial ruin without adequate health insurance or other income.",
+        "A 25-year-old has about a 1-in-3 chance of a long-term disability (at least six months) before 65, and about 1 in 7 will have one lasting over five years. At most ages disability is far likelier than premature death.",
+        "Review whether group disability coverage is adequate; an agent can arrange individual coverage to fill the gaps.",
+        "Indirect losses: higher household costs such as home alterations (wheelchair ramps, elevating devices) and additional personal care.",
+        "Health costs are rising and individuals pay a growing share; shorter hospital stays and home-care recovery shift costs to households; drugs and procedures not covered by provincial plans are paid by individuals."
+      ]
+    },
+    {
+      "heading": "Property risks and homeowners' exposures",
+      "page": "2•14",
+      "points": [
+        "Most common property risk: physical loss or destruction of a home, car, recreational residence or recreational vehicle. Owning assets also creates liability: if unprotected, all the owner's assets (not just the boat) can be claimed.",
+        "Direct loss: financial loss from physical damage, destruction or theft of property (fire damage to a rental condo).",
+        "Indirect (consequential) loss: loss resulting from that damage (rent lost while rebuilding). For businesses: business interruption losses and extra expenses such as renting alternate premises or equipment.",
+        "Natural disasters (floods, hurricanes, tornadoes, earthquakes, hail, ice storms, forest fires) must be specifically insured; extra coverage may be advisable in prone areas.",
+        "Main homeowner exposures: loss of the residence, of contents and of associated structures, and personal liability for injuries on the premises. Losses can be partial or total.",
+        "With an outstanding mortgage and no protection, the owner loses the home's value and must still retire the debt. Personal property (even away from home), important documents and secondary residences (cottages) are also exposed."
+      ]
+    },
+    {
+      "heading": "Additional living expenses, inflation and legal liability",
+      "page": "2•16",
+      "points": [
+        "Additional living expenses: the extra cost of living (hotel, restaurant meals, laundry) while a peril leaves the home uninhabitable, until it is fit to live in again.",
+        "Inflation: replacement costs may outrun coverage. An inflation guard identifies this exposure and automatically increases coverage as prices change.",
+        "Legal liability: people can be held liable for bodily injury or property damage they cause others, and courts may order substantial damages. Suits arise from negligent use of products or equipment, defective products and alleged malpractice.",
+        "Personal liability = negligently causing bodily injury or property damage to someone else (e.g., a passer-by hurt on an unshovelled icy sidewalk). It can also arise from business pursuits and professional services.",
+        "Directors' and officers' liability is an expanding area: a negligent 'honorary' director's personal assets can be exposed to an insolvent organization's creditors.",
+        "Two reasons to warn clients: there is no upper limit on a claim (e.g., a $6,000,000 lost-income suit by an injured surgeon), and no one can afford to lose future income and assets."
+      ]
+    },
+    {
+      "heading": "Automobile, travel and job-loss risks",
+      "page": "2•18",
+      "points": [
+        "Auto losses have grown with more cars, congested roads, higher repair costs and a more litigious society. Liability is the largest auto exposure and can be catastrophic; medical costs can also be large.",
+        "Physical damage: collision, or other-than-collision (falling objects, fire, theft, larceny, explosion, weather, vandalism, glass breakage). Exposure tracks market value, so it falls as a car ages (except collectibles and antiques).",
+        "Travel risks: more time in vehicles, crime or political danger, unusual health hazards, unfamiliar environments, and exertion aggravating a pre-existing condition.",
+        "Within Canada, reciprocal provincial and territorial health plan agreements limit the risk; abroad, provincial plans pay only Canadian-scale amounts. Travel insurance covers foreign medical costs, trip cancellation and lost luggage.",
+        "Typical travel exclusions: known pre-existing conditions, ongoing or elective treatment (dialysis, an MRI) and unusually hazardous activities (scuba diving, parasailing). Many costs are paid on a reimbursement basis.",
+        "Job loss: private insurers rarely cover it and public programs often fall short, so retain the risk with an emergency fund of three to six months' expenses."
+      ]
+    },
+    {
+      "heading": "Methods for managing risk: severity, frequency and loss control",
+      "page": "2•20",
+      "points": [
+        "Goal of risk management: minimize the cost of risk by managing it as efficiently as possible.",
+        "Severity = the dollar cost of a loss; frequency = the probability of a loss. Low-frequency/high-severity risks (e.g., an earthquake in Quebec City) are best insured; for individuals, severity arguably matters more.",
+        "Loss control has three categories: loss avoidance, loss prevention and loss reduction.",
+        "Loss avoidance: not engaging in the risky activity, so the probability of loss is nil (term deposits instead of equities). Simplest but often least practical, and it can create new risks (inflation risk).",
+        "Loss prevention reduces frequency while continuing the activity: storing flammables away from open flames; check-ups, exercise, a balanced diet and not smoking; inspections and safety rules.",
+        "Loss reduction reduces severity once a loss occurs: sprinklers, fire doors and fire walls. The peril is not eliminated."
+      ]
+    },
+    {
+      "heading": "Loss financing: retention, transfer and the summary table",
+      "page": "2•22",
+      "points": [
+        "Losses that cannot be avoided or prevented are financed through risk retention or risk transfer.",
+        "Active retention: consciously keeping all or part of a risk to save premiums (a deductible), when insurance is unavailable, or when the loss is too small to insure (a $400 car with no collision coverage).",
+        "Passive retention: retaining risk unknowingly through ignorance, indifference or carelessness (a snowmobiler misinformed about the ice). It is dangerous.",
+        "Risk transfer shifts the cost of a potential loss to a third party. Insurance reduces risk through pooling: a contract transfers the financial consequences of pure risk to the insurer for premiums.",
+        "Non-insurance transfer: contracts (a service contract making a retailer pay for repairs after the warranty) and incorporation (limited liability shifts the risk of unpaid business debts to creditors).",
+        "Retention suits high-frequency/low-severity and low-frequency/low-severity risks; retaining low-frequency/high-severity risks (premature death, a liability lawsuit) is unwise.",
+        "Summary table: low/low → retain (small inexpensive assets); low frequency/high severity → transfer (premature death); high frequency/low severity → loss control (corner-store theft); high/high → a combination (disability)."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Risk = uncertainty concerning loss. Chance of loss = probability. Peril = cause of loss. Hazard = condition raising the chance or severity of loss.",
+    "EXAM TIP: Objective risk = (actual − expected) ÷ expected. The same chance of loss can hide very different objective risk, and premiums.",
+    "EXAM TIP: Private insurers cover pure risks (loss only). Speculative risks such as stocks, lotteries and gambling are hedged, not insured.",
+    "DID YOU KNOW? A 25-year-old has about a 1-in-3 chance of a long-term disability before 65, far likelier than dying young.",
+    "EXAM TIP: Fire damage is a direct loss; the rent or profits lost while rebuilding are indirect (consequential) losses.",
+    "EXAM TIP: Prevention cuts frequency (store flammables safely); reduction cuts severity (sprinklers, fire doors); avoidance means not doing it.",
+    "EXAM TIP: Low/low: retain. Low frequency/high severity: transfer. High frequency/low severity: loss control. High/high: combine methods.",
+    "DID YOU KNOW? Many travel policies reimburse you only after you pay abroad, so clients should carry enough credit.",
+    "EXAM TIP: Active retention is deliberate (a deductible); passive retention is unknowing, through ignorance, indifference or carelessness.",
+    "DID YOU KNOW? Private insurers rarely cover job loss, so the course suggests an emergency fund of three to six months' expenses.",
+    "EXAM TIP: Moral hazard = acting differently because you're insured (arson). In disability claims the insured is also the beneficiary."
+  ],
+  "flashcards": [
+    {
+      "id": "c02-f001",
+      "topic": "Risk defined",
+      "page": "2•3",
+      "front": "Risk (risk management definition)",
+      "back": "Uncertainty concerning loss. Risk is the uncertainty itself, not the loss, the cause of loss (peril) or the chance of loss. If a loss is certain (a house already burning), there is no risk."
+    },
+    {
+      "id": "c02-f002",
+      "topic": "Pure vs speculative risk",
+      "page": "2•4",
+      "front": "Pure risk vs speculative risk",
+      "back": "Pure risk: only the possibility of loss (e.g., premature death); this is what private insurers insure. Speculative risk: profit or loss is possible (stocks, lotteries, all gambling); generally uninsurable, so it is hedged with futures or options."
+    },
+    {
+      "id": "c02-f003",
+      "topic": "Subjective risk",
+      "page": "2•4",
+      "front": "Subjective risk (course definition)",
+      "back": "The amount of pure risk an individual or insurer assumes. An uninsured $200,000 building carries twice the subjective risk of a $100,000 one; a $1,000,000 policy carries twice that of a $500,000 policy on the same life."
+    },
+    {
+      "id": "c02-f004",
+      "topic": "Objective risk",
+      "page": "2•5",
+      "front": "Objective risk",
+      "back": "The relative variation of actual loss from expected loss: (actual − expected) ÷ expected, e.g., (220 − 200) ÷ 200 = 10%. Only calculable if losses are symmetric. Expected loss comes from historical data (actuaries); actual loss is known in retrospect."
+    },
+    {
+      "id": "c02-f005",
+      "topic": "Chance of loss",
+      "page": "2•6",
+      "front": "Chance of loss",
+      "back": "The probability that a loss will occur. Two groups can share the same chance of loss yet differ in objective risk: Toronto and Montreal both 2%, but objective risk of 10% vs 5%, so Toronto premiums are higher."
+    },
+    {
+      "id": "c02-f006",
+      "topic": "Peril and hazard",
+      "page": "2•6",
+      "front": "Peril vs hazard",
+      "back": "Peril: the cause of loss (fire, collision). Hazard: a condition that creates or increases the chance or severity of loss, whether physical (an icy road), moral (dishonesty) or carelessness. Gasoline stored at home is a fire hazard; fire is the peril."
+    },
+    {
+      "id": "c02-f007",
+      "topic": "Moral hazard",
+      "page": "2•7",
+      "front": "Moral hazard",
+      "back": "The temptation to act differently simply because one is insured (e.g., arson to collect the insurance). A concern when issuing life and disability policies (non-disclosure of health conditions) and in disability claims, where the insured is also the beneficiary."
+    },
+    {
+      "id": "c02-f008",
+      "topic": "Types of pure risk",
+      "page": "2•7",
+      "front": "Three main types of pure risk",
+      "back": "Personal risks, property risks and liability risks."
+    },
+    {
+      "id": "c02-f009",
+      "topic": "Personal risks",
+      "page": "2•7",
+      "front": "Three major personal risks",
+      "back": "1) Premature death. 2) Life cycle change (aging). 3) Health (illness or disability). Personal risks threaten earned income, create unexpected expenses and can deplete financial assets."
+    },
+    {
+      "id": "c02-f010",
+      "topic": "Economic value of a life",
+      "page": "2•8",
+      "front": "Economic value of a human life: to a family vs to an employer",
+      "back": "Family: earning capacity, i.e., net income less what the person consumes alone; as a lump sum, the capital needed to replace it ($40,000 a year at 5% = $800,000). Employer: the employee's net contribution (after expenses and tax)."
+    },
+    {
+      "id": "c02-f011",
+      "topic": "Premature death",
+      "page": "2•8",
+      "front": "Three costs of premature death",
+      "back": "1) Earned income ends permanently. 2) Additional expenses: funeral, last illness, estate settlement and taxes on the estate. 3) Emotional and social costs: grief, loss of a role model, counselling and guidance for children."
+    },
+    {
+      "id": "c02-f012",
+      "topic": "Income needs after death",
+      "page": "2•9",
+      "front": "Three income-need phases after a family member dies",
+      "back": "1) Readjustment period: at least 1 year, often up to 2. 2) Dependency period: until the youngest child is no longer financially dependent. 3) Survivor life income: possibly life-long, since the survivor may struggle to re-enter the workforce."
+    },
+    {
+      "id": "c02-f013",
+      "topic": "Education fund",
+      "page": "2•10",
+      "front": "RESP 'triple combination'",
+      "back": "Tax-deferred savings, income splitting, and government grants and bonds (the federal Canadian Education Savings program). Education costs are expected to rise faster than inflation."
+    },
+    {
+      "id": "c02-f014",
+      "topic": "Emergency fund",
+      "page": "2•10",
+      "front": "Emergency risk exposure",
+      "back": "Any unexpected event that may require a substantial cash outlay, e.g., a major fire, the death of a family member or key employee, car theft, sudden unemployment, or illness or injury of an income-earner."
+    },
+    {
+      "id": "c02-f015",
+      "topic": "Probability of death",
+      "page": "2•11",
+      "front": "Calculating the probability of death",
+      "back": "Deaths during the year ÷ number alive at the start of the year. For the chance of dying between age X and age Y, add the yearly probabilities from X up to Y − 1 (ages 30 to 33 for 'before 34'). Mortality tables supply the data."
+    },
+    {
+      "id": "c02-f016",
+      "topic": "Aging risk",
+      "page": "2•12",
+      "front": "CPP/QPP vs OAS: what each is based on",
+      "back": "The Canada Pension Plan (Quebec Pension Plan in Quebec) is based on earned income; Old Age Security is based on age. Many clients must supplement both to maintain their lifestyle."
+    },
+    {
+      "id": "c02-f017",
+      "topic": "Aging risk",
+      "page": "2•12",
+      "front": "Three-step process for coping with aging risk",
+      "back": "1) Allow for reduced income and higher expenses with age. 2) Build extra savings (RRSPs, mutual and segregated funds) into the pre-retirement plan. 3) Buy added life and disability insurance so step-2 goals are met if death or disability cuts income."
+    },
+    {
+      "id": "c02-f018",
+      "topic": "Key numbers",
+      "page": "2•13",
+      "front": "Disability odds for a 25-year-old before age 65",
+      "back": "About 1 in 3 will have a long-term disability (at least six months); about 1 in 7 will have one lasting more than five years. At most ages disability is far likelier than premature death."
+    },
+    {
+      "id": "c02-f019",
+      "topic": "Property risks",
+      "page": "2•14",
+      "front": "Direct loss vs indirect (consequential) loss",
+      "back": "Direct: financial loss from physical damage, destruction or theft of property. Indirect: loss resulting from that damage, e.g., lost rental income, business interruption losses and extra expenses such as renting alternate premises."
+    },
+    {
+      "id": "c02-f020",
+      "topic": "Homeowners",
+      "page": "2•15",
+      "front": "Main loss exposures of home ownership",
+      "back": "1) Loss of the residence. 2) Loss of contents. 3) Loss of associated structures (garage, barn). 4) Personal liability for injuries to people on the premises."
+    },
+    {
+      "id": "c02-f021",
+      "topic": "Property risks",
+      "page": "2•16",
+      "front": "Inflation guard",
+      "back": "Identifying the exposure created by volatile replacement prices and automatically increasing insurance coverage as prices change, so replacement costs do not outrun the protection."
+    },
+    {
+      "id": "c02-f022",
+      "topic": "Liability risks",
+      "page": "2•16",
+      "front": "Personal liability, and why clients must be warned about it",
+      "back": "Liability for negligently causing bodily injury or property damage to others. Warn clients because there is no upper limit on what they can be sued for, and no one can afford to lose future income and assets to a claim."
+    },
+    {
+      "id": "c02-f023",
+      "topic": "Automobile risk",
+      "page": "2•18",
+      "front": "Collision vs other-than-collision losses",
+      "back": "Collision: the vehicle hits another vehicle or object. Other-than-collision: falling objects, fire, theft, larceny, explosion, weather, vandalism, glass breakage. Damage exposure falls as the car ages (except collectibles and antiques)."
+    },
+    {
+      "id": "c02-f024",
+      "topic": "Travel risks",
+      "page": "2•19",
+      "front": "Common travel insurance exclusions",
+      "back": "Pre-existing conditions known before applying; ongoing or elective treatment (e.g., dialysis, an MRI); illness or injury from unusually hazardous activities such as scuba diving or parasailing."
+    },
+    {
+      "id": "c02-f025",
+      "topic": "Travel risks",
+      "page": "2•19",
+      "front": "Travel health costs: inside vs outside Canada",
+      "back": "Inside Canada: little financial risk, thanks to reciprocal provincial and territorial health plan agreements. Abroad: provincial plans pay only Canadian-scale amounts, and travel insurance often reimburses only after you pay, so carry enough credit."
+    },
+    {
+      "id": "c02-f026",
+      "topic": "Key numbers",
+      "page": "2•20",
+      "front": "Emergency fund for involuntary job loss",
+      "back": "Three to six months of expenses. Private insurers generally will not insure job loss and public programs often fall short, so the plan retains this risk, balanced against premiums for life and disability coverage."
+    },
+    {
+      "id": "c02-f027",
+      "topic": "Frequency and severity",
+      "page": "2•20",
+      "front": "Risk severity vs risk frequency",
+      "back": "Severity: the dollar cost of a loss. Frequency: the probability that a loss occurs. For individuals severity is arguably more important, since one catastrophe could wipe out the whole wealth base."
+    },
+    {
+      "id": "c02-f028",
+      "topic": "Loss control",
+      "page": "2•21",
+      "front": "Three loss control techniques",
+      "back": "Loss avoidance: don't engage in the activity (simplest, often least practical). Loss prevention: reduce frequency (store flammables away from flames, regular check-ups). Loss reduction: reduce severity (sprinklers, fire doors, fire walls)."
+    },
+    {
+      "id": "c02-f029",
+      "topic": "Risk retention",
+      "page": "2•23",
+      "front": "Active vs passive risk retention",
+      "back": "Active: consciously and deliberately keeping all or part of a risk, to save premiums (deductibles) or when insurance is unavailable. Passive: retaining risk unknowingly, through ignorance, indifference or carelessness; it is dangerous."
+    },
+    {
+      "id": "c02-f030",
+      "topic": "Risk transfer",
+      "page": "2•23",
+      "front": "Non-insurance risk transfer",
+      "back": "Shifting a risk by contract rather than insurance: e.g., a service contract making a retailer pay for repairs after the warranty, or incorporation, which limits owners' liability and shifts the risk of unpaid business debts to creditors."
+    },
+    {
+      "id": "c02-f031",
+      "topic": "Frequency/severity table",
+      "page": "2•24",
+      "front": "Frequency/severity strategy table",
+      "back": "Low frequency/low severity: retain (small inexpensive assets). Low/high: transfer (premature death). High frequency/low severity: loss control (theft in a corner store). High/high: a combination of methods (disability)."
+    },
+    {
+      "id": "c02-f032",
+      "topic": "Methods for managing risk",
+      "page": "2•25",
+      "front": "Ways a risk can be handled (chapter summary)",
+      "back": "Risks can be avoided, reduced, prevented, retained, transferred by contract, or insured against."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c02-q001",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Risk defined",
+      "page": "2•3",
+      "q": "As the term is used in the risk management process, risk is best defined as…",
+      "options": [
+        "the probability that a loss will occur",
+        "a condition that makes a loss more likely",
+        "the cause of a loss, such as a fire",
+        "uncertainty concerning loss"
+      ],
+      "answer": 3,
+      "explain": "Risk is 'uncertainty concerning loss': the uncertainty itself, not the loss, the cause of loss (peril), the chance of loss, or a condition that increases it (hazard)."
+    },
+    {
+      "id": "c02-q002",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Risk defined",
+      "page": "2•3",
+      "q": "In the course's sense, a homeowner whose house is already burning down still faces risk with respect to that fire loss.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Once the loss is occurring its probability is 1:1 (100%). With no uncertainty left about whether a loss will occur, there is no 'risk' as the course defines it."
+    },
+    {
+      "id": "c02-q003",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pure vs speculative risk",
+      "page": "2•4",
+      "q": "Chantal buys a lottery ticket every week and also owns a cottage that could be destroyed by fire. How does the course classify these two exposures?",
+      "options": [
+        "Both are pure risks, since each can cause a loss",
+        "Lottery: speculative risk; cottage fire: pure risk",
+        "Both are speculative, since neither outcome is known",
+        "Lottery: pure risk; cottage fire: speculative risk"
+      ],
+      "answer": 1,
+      "explain": "A speculative risk offers either gain or loss, and all gambling, including lotteries, qualifies. The cottage fire can only produce a loss, so it is a pure risk, the kind private insurers cover."
+    },
+    {
+      "id": "c02-q004",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pure vs speculative risk",
+      "page": "2•4",
+      "q": "Why would an investor generally turn to hedging devices such as futures or options, rather than an insurance policy, to protect against losses on a speculative position?",
+      "options": [
+        "Insurers cover speculative risks only for corporations, not for individuals",
+        "Private insurers insure pure risks, and most speculative risks are uninsurable",
+        "Hedging is a form of loss avoidance, which the course always prefers to insurance",
+        "Speculative risks carry only a chance of loss, which insurers refuse to cover"
+      ],
+      "answer": 1,
+      "explain": "Private insurers are in the business of insuring pure risks. With few exceptions speculative risks are not insurable, so protection must come from other techniques such as hedging with futures or options."
+    },
+    {
+      "id": "c02-q005",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Subjective risk",
+      "page": "2•4",
+      "q": "Under the course's definition of subjective risk, an insurer issuing a $600,000 life policy on a person assumes twice the subjective risk of a $300,000 policy on the same person.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Subjective risk is the amount of pure risk an individual or insurer assumes. The more insurance a company sells on the same life, the more subjective risk it takes on, and $600,000 is twice $300,000."
+    },
+    {
+      "id": "c02-q006",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Objective risk",
+      "page": "2•5",
+      "q": "How is the expected loss used in measuring objective risk normally determined?",
+      "options": [
+        "Set by surveying policyholders on how risky they feel they are",
+        "Determined in retrospect by reviewing the claims actually paid",
+        "Calculated by multiplying the premium rate by the amount insured",
+        "Estimated in advance, usually from historical statistical data on losses"
+      ],
+      "answer": 3,
+      "explain": "Expected loss is estimated in advance, usually from historical statistics; insurers' actuaries do these calculations. Actual loss is the figure determined in retrospect from real experience."
+    },
+    {
+      "id": "c02-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Objective risk",
+      "page": "2•5",
+      "q": "An insurer covers 5,000 homes. On average 4% (200 homes) have a fire claim each year, but actual claims range evenly from 170 to 230. Using the course's formula, what is the objective risk?",
+      "options": [
+        "4%",
+        "15%",
+        "0.6%",
+        "30%"
+      ],
+      "answer": 1,
+      "explain": "Objective risk = (actual − expected) ÷ expected = (230 − 200) ÷ 200 = 15%. The 4% is the chance of loss, 30% uses the whole 60-claim range, and 0.6% wrongly divides by the 5,000 homes."
+    },
+    {
+      "id": "c02-q008",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Objective risk",
+      "page": "2•5",
+      "q": "According to the course, objective risk can only be calculated when the distribution of losses is symmetric around the expected value.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The course's measure requires equal weight (probability) above and below the expected loss, as in the Acme example, where losses ranged evenly from 180 to 220 around the expected 200."
+    },
+    {
+      "id": "c02-q009",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Objective risk",
+      "page": "2•5",
+      "q": "All other things being equal, why does greater objective risk lead to higher insurance premiums?",
+      "options": [
+        "Policyholders with high objective risk are more prone to moral hazard",
+        "Greater objective risk means each insured is more likely to suffer a loss",
+        "Less predictable claim amounts and timing require larger capital reserves",
+        "Highly variable losses can only be estimated by more expensive actuaries"
+      ],
+      "answer": 2,
+      "explain": "As the amount and timing of claims become more uncertain, the insurer must hold more capital in reserve to pay them, so premiums rise. Objective risk measures variation, not the probability of a loss."
+    },
+    {
+      "id": "c02-q010",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Chance of loss",
+      "page": "2•6",
+      "q": "An insurer has 8,000 cars in Laval and 8,000 in Gatineau, each with a 3% chance of loss (240 claims expected). Yearly claims range from 228 to 252 in Laval and from 216 to 264 in Gatineau. Which statement is correct?",
+      "options": [
+        "Both cities share the same 3% chance of loss, so their premiums should be identical",
+        "Gatineau has a higher chance of loss than Laval, so its premiums should be higher",
+        "Gatineau's objective risk is 10% vs 5% in Laval, so Gatineau premiums should be higher",
+        "Laval's objective risk is 10% vs 5% in Gatineau, so Laval premiums should be higher"
+      ],
+      "answer": 2,
+      "explain": "Laval: (252 − 240) ÷ 240 = 5%. Gatineau: (264 − 240) ÷ 240 = 10%. The chance of loss is the same 3% in both cities, but Gatineau's greater variation (objective risk) justifies higher premiums."
+    },
+    {
+      "id": "c02-q011",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Peril and hazard",
+      "page": "2•6",
+      "q": "A windstorm tears the roof off Hélène's garage. In the course's terminology, the windstorm is the…",
+      "options": [
+        "risk",
+        "moral hazard",
+        "hazard",
+        "peril"
+      ],
+      "answer": 3,
+      "explain": "A peril is the cause of loss, here the windstorm, just as fire is the peril when a house burns. A hazard is a condition that increases the chance or severity of loss; risk is the uncertainty concerning loss."
+    },
+    {
+      "id": "c02-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Peril and hazard",
+      "page": "2•6",
+      "q": "Which of the following is a hazard rather than a peril?",
+      "options": [
+        "Hail that dents the roof and hood of a parked car",
+        "A fire that spreads through the whole basement",
+        "Storing cans of gasoline in a basement workshop",
+        "A collision with another vehicle at an intersection"
+      ],
+      "answer": 2,
+      "explain": "A hazard is a condition that creates or increases the chance or severity of loss, and keeping gasoline at home is a fire hazard. Fire, collision and hail are perils: actual causes of loss."
+    },
+    {
+      "id": "c02-q013",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Moral hazard",
+      "page": "2•7",
+      "q": "Which situation best illustrates moral hazard as the course defines it?",
+      "options": [
+        "An owner is tempted to burn down a failing store to collect the insurance",
+        "A city's icy roads produce more collisions than a city with dry roads",
+        "A homeowner keeps forgetting to salt the icy front steps all winter",
+        "A driver's car is damaged when it collides with a deer at night"
+      ],
+      "answer": 0,
+      "explain": "Moral hazard is the temptation to act differently simply because one is insured; arson for the insurance money is the course's example. Forgetting to salt the steps is carelessness, icy roads are a physical hazard and the deer collision is a peril."
+    },
+    {
+      "id": "c02-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Moral hazard",
+      "page": "2•7",
+      "q": "Why does the course say moral hazard is a particular concern in disability insurance claims?",
+      "options": [
+        "Disabilities are caused by perils that insurers cannot identify",
+        "Disability insurers may not ask about an applicant's health",
+        "Disability benefits are always paid as one tax-free lump sum",
+        "The insured person is also the beneficiary who collects the benefits"
+      ],
+      "answer": 3,
+      "explain": "In disability insurance the insured is also the person who collects the benefits. Moral hazard also arises at application, when people lie about or fail to disclose medical conditions."
+    },
+    {
+      "id": "c02-q015",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Types of pure risk",
+      "page": "2•7",
+      "q": "What are the three main types of pure risk that the course says can cause substantial financial insecurity?",
+      "options": [
+        "Pure, speculative and subjective risks",
+        "Death, disability and unemployment risks",
+        "Personal, property and liability risks",
+        "Market, inflation and interest-rate risks"
+      ],
+      "answer": 2,
+      "explain": "The main types of pure risk are personal risks, property risks and liability risks. Death and disability fall under personal risks, and speculative risks are not pure risks at all."
+    },
+    {
+      "id": "c02-q016",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Personal risks",
+      "page": "2•7",
+      "q": "Which of the following is NOT one of the three major personal risks identified in the course?",
+      "options": [
+        "Liability for injuring another person",
+        "Health (illness or disability)",
+        "Life cycle change (aging)",
+        "Premature death before life expectancy"
+      ],
+      "answer": 0,
+      "explain": "The three major personal risks are premature death, life cycle change (aging) and health risk (illness or disability). Liability is a separate main type of pure risk, alongside personal and property risks."
+    },
+    {
+      "id": "c02-q017",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Economic value of a life",
+      "page": "2•8",
+      "q": "Nadia, the family's sole earner, nets $58,000 a year, of which $8,000 is spent only on herself. If her family needs the rest replaced permanently and long-term interest rates are expected to be 4%, what capital does the course's method suggest?",
+      "options": [
+        "$1,250,000",
+        "$1,450,000",
+        "$2,000",
+        "$1,000,000"
+      ],
+      "answer": 0,
+      "explain": "Her annual value to the family is $58,000 less the $8,000 she consumes herself, or $50,000. Capital needed = $50,000 ÷ 0.04 = $1,250,000. $1,450,000 ignores her own consumption; $1,000,000 would be the answer at 5%."
+    },
+    {
+      "id": "c02-q018",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Economic value of a life",
+      "page": "2•8",
+      "q": "Kim, a top sales rep, sells $3,000,000 of product a year. From her employer's point of view, how does the course measure her annual human life value?",
+      "options": [
+        "Her total annual salary plus all commissions and benefits paid",
+        "Her full $3,000,000 of gross annual sales revenue",
+        "The cost of recruiting and training a replacement rep",
+        "The after-expense, after-tax value of her $3,000,000 in sales"
+      ],
+      "answer": 3,
+      "explain": "To an employer, a life's economic value is the employee's net contribution to the organization: the after-expense, after-tax value of what she produces, not her gross sales or her pay."
+    },
+    {
+      "id": "c02-q019",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Income needs after death",
+      "page": "2•9",
+      "q": "According to the course, how long does the normal readjustment period after a family member's death usually last?",
+      "options": [
+        "At least one year and often up to two years",
+        "About three to six months",
+        "At least five years and often up to ten",
+        "Until the youngest child is self-supporting"
+      ],
+      "answer": 0,
+      "explain": "The readjustment period is at least one year and often up to two. The period lasting until the youngest child is no longer financially dependent is the dependency period, which follows readjustment."
+    },
+    {
+      "id": "c02-q020",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Income needs after death",
+      "page": "2•9",
+      "q": "Louise was widowed when her children were young. Her youngest has now become financially independent, but Louise has been out of the workforce for 15 years. Which income-need phase is she entering?",
+      "options": [
+        "The readjustment period, which usually lasts one to two years",
+        "The emergency period, covered by three to six months of savings",
+        "The dependency period, which runs until she reaches retirement age",
+        "Survivor life income, possibly lasting the rest of her life"
+      ],
+      "answer": 3,
+      "explain": "Once the youngest child is no longer dependent, survivor life income needs begin. A survivor long out of the labour force may struggle to re-enter it, so life-long income, including supplements to social programs in retirement, may be needed."
+    },
+    {
+      "id": "c02-q021",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Income needs after death",
+      "page": "2•9",
+      "q": "Tariq, 29, runs a one-person web design business. His wife is expecting their first child. He has only a small 'burial' life policy and says that, with no debts, he needs nothing more. Which response best reflects the course?",
+      "options": [
+        "His wife's current salary means his death would cause no lasting income need",
+        "His death would still leave readjustment, dependency and education needs",
+        "With no debts, funeral costs really are his only exposure if he dies prematurely",
+        "Government programs would fully replace his income for the family if he died"
+      ],
+      "answer": 1,
+      "explain": "Premature death creates more than debts and funeral costs: the family needs income for the readjustment period and for the dependency period until the youngest child is self-supporting, plus future education funding."
+    },
+    {
+      "id": "c02-q022",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Other needs after death",
+      "page": "2•9",
+      "q": "After his wife's death, Raymond plans to sell the family home and move into a smaller rental. According to the course, what mainly drives his mortgage-related risk exposure?",
+      "options": [
+        "Current real estate market prices and the cost of alternative accommodation",
+        "The interest rate in effect when the mortgage comes up for renewal",
+        "The size of the emergency fund the family has set aside",
+        "The length of his readjustment period after his wife's death"
+      ],
+      "answer": 0,
+      "explain": "If the survivor plans to sell, the exposure depends on current market prices and the cost of other housing. Renewal interest rates matter mainly when the survivor wants to stay in the house and keep paying the mortgage."
+    },
+    {
+      "id": "c02-q023",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Education fund",
+      "page": "2•10",
+      "q": "Which 'triple combination' does the course say makes RESPs worth reviewing with every parent of a school-aged child?",
+      "options": [
+        "Creditor protection, guaranteed returns and estate tax savings",
+        "Tax-deferred savings, income splitting, and government grants and bonds",
+        "Tax-deductible deposits, tax-free withdrawals and guaranteed rates of return",
+        "Tax-deductible deposits, income splitting and guaranteed returns"
+      ],
+      "answer": 1,
+      "explain": "RESPs combine tax-deferred savings, income splitting, and government grants and bonds, which makes them one of the most flexible and popular education savings vehicles."
+    },
+    {
+      "id": "c02-q024",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Probability of death",
+      "page": "2•11",
+      "q": "Using the course's method, Lucie (age 40) wants the probability of dying before age 43. Deaths per 1,000 are 2.10 at age 40, 2.20 at 41, 2.30 at 42 and 2.40 at 43. What is the probability?",
+      "options": [
+        "0.24% (2.40 per 1,000)",
+        "0.66% (6.60 per 1,000)",
+        "0.22% (2.20 per 1,000)",
+        "0.90% (9.00 per 1,000)"
+      ],
+      "answer": 1,
+      "explain": "Add the yearly probabilities for ages 40, 41 and 42: 2.10 + 2.20 + 2.30 = 6.60 per 1,000 = 0.66%. Age 43 is excluded, since surviving through 42 means she has reached 43; 9.00 wrongly adds it."
+    },
+    {
+      "id": "c02-q025",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Aging risk",
+      "page": "2•12",
+      "q": "In discussing retirement income, how does the course describe the basis of the Canada Pension Plan (Quebec Pension Plan in Quebec) versus Old Age Security?",
+      "options": [
+        "CPP/QPP is based on earned income; OAS is based on age",
+        "Both are based on the retiree's accumulated savings",
+        "CPP/QPP is based on age; OAS is based on earned income",
+        "CPP/QPP is based on family size; OAS on taxable income"
+      ],
+      "answer": 0,
+      "explain": "The Canada or Quebec Pension Plan pays benefits based on earned income, while Old Age Security is based on age. Many clients will still need to supplement these programs to maintain their lifestyle."
+    },
+    {
+      "id": "c02-q026",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Aging risk",
+      "page": "2•12",
+      "q": "In the course's three-step approach to the financial risks of aging, what is the role of additional life and disability insurance?",
+      "options": [
+        "To fund the added savings goals if death or disability interrupts income",
+        "To insure the client directly against the financial cost of growing old",
+        "To pay a monthly benefit automatically once the client turns 65",
+        "To replace the RRSPs and segregated funds in the client's pre-retirement plan"
+      ],
+      "answer": 0,
+      "explain": "Step 1 allows for lower income and higher costs with age; step 2 adds savings (RRSPs, mutual and segregated funds). Step 3 buys life and disability insurance whose proceeds meet the step-2 goals if death or disability cuts off income. Aging itself cannot be insured."
+    },
+    {
+      "id": "c02-q027",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Disability risk",
+      "page": "2•12",
+      "q": "How does the course describe the financial risk that a disability creates for a client?",
+      "options": [
+        "Cash inflows decrease while cash outflows increase",
+        "Cash inflows stop, but expenses fall to match them",
+        "Cash outflows drop as the disabled person spends less",
+        "Cash inflows hold steady, but medical costs rise"
+      ],
+      "answer": 0,
+      "explain": "Disability is the second major loss exposure after death: income falls while expenses (medical costs, home alterations, personal care) rise, which can lead to financial ruin without adequate coverage."
+    },
+    {
+      "id": "c02-q028",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Alfred Jones scenario",
+      "page": "2•2",
+      "q": "Alfred, 52, a self-employed consulting engineer, worries that falling ill before he can retire at 60 could derail his plans. Which personal risk is this, and why is it acute for him?",
+      "options": [
+        "Liability risk: a client could sue him over an error in his engineering work",
+        "Premature death risk: taxes could erode the estate he leaves to his children",
+        "Health risk: as a self-employed engineer he relies solely on his ability to work",
+        "Life cycle risk: his work income will naturally slow as he approaches 60"
+      ],
+      "answer": 2,
+      "explain": "Illness or disability is health risk, one of the three major personal risks. Alfred has no employer behind him and earns the bulk of his income through his own work, so an illness would hit both his income and his retirement plan."
+    },
+    {
+      "id": "c02-q029",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Key numbers",
+      "page": "2•13",
+      "q": "Per the course, roughly what is the likelihood that a 25-year-old will suffer a long-term disability (at least six months) before age 65?",
+      "options": [
+        "About one in seven",
+        "About one in three",
+        "About one in twenty",
+        "About one in ten"
+      ],
+      "answer": 1,
+      "explain": "About one in three. The one-in-seven figure is the share whose long-term disability will last more than five years. At most ages, disability is much more likely than premature death."
+    },
+    {
+      "id": "c02-q030",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Disability risk",
+      "page": "2•13",
+      "q": "The course notes that, at most ages, the likelihood of becoming disabled is much greater than the likelihood of dying prematurely.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. That is why clients should check whether their group disability coverage is adequate and, if it is not, consider individual coverage to fill the gaps."
+    },
+    {
+      "id": "c02-q031",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Property risks",
+      "page": "2•14",
+      "q": "Lightning wrecks the kitchen of Olivier's restaurant, which closes for six weeks; meanwhile he rents a food truck to keep serving customers. How does the course classify these losses?",
+      "options": [
+        "All three are direct losses, because lightning caused each of them",
+        "Kitchen damage and lost profits are direct; truck rental is indirect",
+        "Kitchen damage is direct; lost profits and truck rental are indirect",
+        "Kitchen damage is indirect; lost profits and truck rental are direct"
+      ],
+      "answer": 2,
+      "explain": "Physical damage is a direct loss. Profits lost during the downtime (business interruption) and extra expenses such as renting alternate premises or equipment are indirect, or consequential, losses."
+    },
+    {
+      "id": "c02-q032",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Property risks",
+      "page": "2•14",
+      "q": "If a boat owner is found negligent for injuring someone with her boat, only the value of the boat itself is available to satisfy the injured person's claim.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. All of the owner's assets, not just the boat, are available to meet the claim. Unprotected liability exposure from owning property can force the sale of other personal assets."
+    },
+    {
+      "id": "c02-q033",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Homeowners",
+      "page": "2•15",
+      "q": "Gilles still owes $180,000 on his mortgage and has not insured his home. If the house is destroyed, what is his exposure according to the course?",
+      "options": [
+        "Only the loss of the home's value, since the lender would absorb the debt",
+        "Loss of the home's value plus the need to repay the outstanding mortgage",
+        "Only the outstanding mortgage, since the land keeps its full value",
+        "Nothing beyond his down payment, since the lender owns the home"
+      ],
+      "answer": 1,
+      "explain": "With no debt, the risk is limited to the home's value. With an outstanding mortgage and no protection, the debt must still be retired, so he is exposed to both the loss of the asset and the related debt."
+    },
+    {
+      "id": "c02-q034",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Property risks",
+      "page": "2•16",
+      "q": "A fire in the unit above forces Annie out of her apartment for a month while repairs are made. How does the course classify the risk of her extra hotel, restaurant and laundry costs?",
+      "options": [
+        "A direct loss to her contents",
+        "Personal liability exposure",
+        "Additional living expenses",
+        "A business interruption loss"
+      ],
+      "answer": 2,
+      "explain": "Additional living expenses are the increased costs of living when a peril makes the home uninhabitable, lasting until it is fit to live in again. Damage to her furnishings would be a direct loss."
+    },
+    {
+      "id": "c02-q035",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Property risks",
+      "page": "2•16",
+      "q": "What does the course mean by an 'inflation guard'?",
+      "options": [
+        "Lowering coverage on assets as they lose market value over time",
+        "Investing premiums so that they keep pace with the rate of inflation",
+        "Limiting each claim to the original purchase price of the damaged property",
+        "Automatically raising coverage to reflect changes in replacement prices"
+      ],
+      "answer": 3,
+      "explain": "In periods of rapid inflation, replacement costs can exceed current coverage, leaving the owner to bear the difference. An inflation guard identifies that exposure and automatically increases the insurance amount as prices change."
+    },
+    {
+      "id": "c02-q036",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Liability risks",
+      "page": "2•17",
+      "q": "What two reasons does the course give for making clients aware of their liability risk?",
+      "options": [
+        "Claims are very frequent, and a standard home insurance policy always covers them in full",
+        "Claims have no upper limit, and no one can afford to lose future income and assets",
+        "Lawsuits are rare, so most clients retain the risk without realizing it",
+        "Courts award only medical costs, and these are rising faster than inflation"
+      ],
+      "answer": 1,
+      "explain": "First, there is no maximum: you can be sued for any amount (the course's example is a $6,000,000 claim). Second, no one can afford to lose future income and assets: a judgment can take a home, car, investments and income into retirement."
+    },
+    {
+      "id": "c02-q037",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Liability risks",
+      "page": "2•17",
+      "q": "Hélène treats her seat on the board of a non-profit daycare as 'honorary' and rarely attends meetings. The daycare goes bankrupt through negligence and creditors sue the board. What does the course suggest about her exposure?",
+      "options": [
+        "She is exposed only for loans she personally guaranteed for the daycare",
+        "Her personal assets may be at risk if she was negligent as a director",
+        "Unpaid, honorary directors cannot be held personally liable for such losses",
+        "Only the daycare corporation's own assets can be claimed by the creditors"
+      ],
+      "answer": 1,
+      "explain": "Directors' and officers' services are an expanding area of personal liability. If a director is found negligent in carrying out her duties, her personal assets can be exposed to the organization's creditors."
+    },
+    {
+      "id": "c02-q038",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Automobile risk",
+      "page": "2•18",
+      "q": "What does the course identify as the largest risk exposure associated with owning and operating an automobile?",
+      "options": [
+        "Theft, vandalism or fire damage to the vehicle itself",
+        "Collision damage to the owner's own vehicle in a serious accident",
+        "Medical costs for injured members of the owner's family",
+        "Liability for negligent ownership or operation of the vehicle"
+      ],
+      "answer": 3,
+      "explain": "Liability is the largest automobile exposure: claims from alleged negligent ownership or operation can be extremely large, even catastrophic, and could wipe out the planning unit's wealth. Physical damage is limited by the car's value."
+    },
+    {
+      "id": "c02-q039",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Automobile risk",
+      "page": "2•18",
+      "q": "Alfred owns an SUV and a vintage Mustang. How does the course's rule that physical-damage exposure falls as a car ages apply to his two vehicles?",
+      "options": [
+        "It fits the SUV, but collectibles like the Mustang are excluded",
+        "It fits the Mustang best, since older cars are the cheapest to replace",
+        "It fits both cars, since every vehicle loses market value as it ages",
+        "It fits neither car, since repair costs rise as any vehicle gets older"
+      ],
+      "answer": 0,
+      "explain": "Physical-damage exposure is tied to market value, so it normally decreases as a car ages. The course excludes collectibles and antique cars, whose value, and therefore the exposure, may not fall."
+    },
+    {
+      "id": "c02-q040",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Travel risks",
+      "page": "2•19",
+      "q": "Alfred is heading to Hawaii for a month of golf, scuba diving and beach time. Which expense is a typical travel insurance policy most likely to exclude?",
+      "options": [
+        "An ambulance after a fall on the golf course",
+        "Treatment for an injury suffered while scuba diving",
+        "Replacing luggage the airline loses on the way",
+        "Hospital care for a sudden attack of appendicitis"
+      ],
+      "answer": 1,
+      "explain": "Most travel policies exclude illness or injury from unusually hazardous activities such as scuba diving or parasailing, plus known pre-existing conditions and ongoing or elective treatment. Sudden medical care, ambulances and lost luggage are typically covered."
+    },
+    {
+      "id": "c02-q041",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Travel risks",
+      "page": "2•19",
+      "q": "Visiting London, Inès is hit by a car after looking left instead of right before crossing the street. Which travel risk from the course does this illustrate?",
+      "options": [
+        "Unusual health hazards such as bad water",
+        "Aggravation of a pre-existing condition",
+        "Exposure to an unfamiliar environment",
+        "A dangerous criminal or political setting"
+      ],
+      "answer": 2,
+      "explain": "Unfamiliar environments create risk; the course's example is North American tourists in England who habitually look left instead of right. Other travel risks are more time in vehicles, crime or unrest, unusual health hazards and aggravated conditions."
+    },
+    {
+      "id": "c02-q042",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Travel risks",
+      "page": "2•20",
+      "q": "Because travel insurers pay foreign hospitals directly, clients need not keep any extra credit available while travelling abroad.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Many travel insurance expenses are covered on a reimbursement basis only: the insured pays when and where costs arise and claims reimbursement on returning to Canada, so clients should carry a sufficient credit limit."
+    },
+    {
+      "id": "c02-q043",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Job loss",
+      "page": "2•20",
+      "q": "How does the course suggest a financial plan handle the risk of involuntary job loss?",
+      "options": [
+        "Rely entirely on public programs, which fully replace lost income",
+        "Retain it, with an emergency fund equal to three to six months' expenses",
+        "Transfer it with a private job-loss policy, as most insurers offer",
+        "Avoid it by refusing any job at a firm that might downsize"
+      ],
+      "answer": 1,
+      "explain": "Most private insurers won't insure job loss because it depends on many economic, social and political factors, and public programs often fall short. So the plan retains the risk, typically through a fund of three to six months' expenses."
+    },
+    {
+      "id": "c02-q044",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Frequency and severity",
+      "page": "2•20",
+      "q": "In risk management, what does the 'severity' of a risk refer to?",
+      "options": [
+        "The dollar cost of a loss",
+        "The variation of actual from expected losses",
+        "The probability that a loss occurs",
+        "The number of perils that could cause a loss"
+      ],
+      "answer": 0,
+      "explain": "Severity is the dollar cost of a loss; frequency is the probability that a loss occurs. The variation of actual from expected losses is objective risk."
+    },
+    {
+      "id": "c02-q045",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Frequency and severity",
+      "page": "2•20",
+      "q": "A Quebec City homeowner argues that insuring against earthquakes and tornadoes is a waste, since none of any consequence has struck the city in living memory. How would the course respond?",
+      "options": [
+        "It is a high-frequency, low-severity risk best met with loss control",
+        "Agreed: natural disasters are speculative risks and can't be insured",
+        "It is a low-frequency, high-severity risk and should be insured against",
+        "Agreed: low-frequency risks like these are best handled by retaining them"
+      ],
+      "answer": 2,
+      "explain": "Earthquakes and tornadoes are rare in Quebec City but could cause a total loss far beyond an uninsured owner's means. Low-frequency, high-severity risks are best insured; for individuals, severity arguably matters more than frequency."
+    },
+    {
+      "id": "c02-q046",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Loss control",
+      "page": "2•21",
+      "q": "To escape stock market risk, Rosa keeps all her savings in guaranteed term deposits. How does the course view this strategy?",
+      "options": [
+        "It is loss prevention, and it eliminates all her investment risk",
+        "It is loss reduction, since it limits the size of a market loss",
+        "It is loss avoidance, but it may leave her exposed to inflation risk",
+        "It is risk transfer, since the bank now bears her market risk"
+      ],
+      "answer": 2,
+      "explain": "Not investing in equities avoids market risk, which is loss avoidance. But avoiding one risk often creates another: fixed-value term deposits expose her to inflation risk."
+    },
+    {
+      "id": "c02-q047",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Loss control",
+      "page": "2•21",
+      "q": "The course describes loss avoidance as the simplest risk management technique, but often the least practical one.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Not every risk can be avoided: the activity may be integral to a business, its enjoyment may outweigh the safety (mountain climbing), and avoiding one risk often creates another."
+    },
+    {
+      "id": "c02-q048",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Loss control",
+      "page": "2•22",
+      "q": "Installing a sprinkler system in a factory is an example of loss prevention, because it lowers the chance that a fire will start.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Sprinklers do not stop fires from starting; they limit the damage once a fire occurs, so they are loss reduction (severity). Loss prevention cuts frequency, e.g., storing flammables away from open flames."
+    },
+    {
+      "id": "c02-q049",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Loss control",
+      "page": "2•22",
+      "q": "Marc quits smoking, exercises and books regular medical check-ups to lower his odds of dying young. In the course's terms, he is practising…",
+      "options": [
+        "loss avoidance",
+        "active risk retention",
+        "loss prevention",
+        "loss reduction"
+      ],
+      "answer": 2,
+      "explain": "Steps that reduce the probability (frequency) of premature death, such as check-ups, exercise, a balanced diet and not smoking, are loss prevention. Loss reduction would limit the severity of a loss after it happens."
+    },
+    {
+      "id": "c02-q050",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Risk retention",
+      "page": "2•23",
+      "q": "Nathalie picks a $1,000 deductible on her car insurance to lower her premium. What does this illustrate?",
+      "options": [
+        "Loss reduction",
+        "Active risk retention",
+        "Non-insurance risk transfer",
+        "Passive risk retention"
+      ],
+      "answer": 1,
+      "explain": "She is consciously aware of the risk and deliberately keeps part of it to save on premiums, which is active retention. Passive retention happens unknowingly, through ignorance, indifference or carelessness."
+    },
+    {
+      "id": "c02-q051",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Risk retention",
+      "page": "2•23",
+      "q": "Which of the following is an example of passive risk retention?",
+      "options": [
+        "A cottage owner never noticed his policy excluded the boathouse, which burned",
+        "A homeowner chooses a high deductible on purpose to cut her annual premium",
+        "A driver with a car worth $400 decides it isn't worth buying collision coverage",
+        "A firm knowingly self-funds small losses because no insurance is available"
+      ],
+      "answer": 0,
+      "explain": "Passive retention occurs when risks are retained unknowingly, through ignorance, indifference or carelessness. The other three know about the risk and deliberately keep it, which is active retention."
+    },
+    {
+      "id": "c02-q052",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Risk transfer",
+      "page": "2•23",
+      "q": "According to the course, insurance reduces risk through pooling, using a contract that transfers the financial consequences of pure risk to the insurer in return for premiums.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Because most risks cannot be fully controlled and decision-makers are risk-averse, insurance is an important risk transfer method."
+    },
+    {
+      "id": "c02-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Risk transfer",
+      "page": "2•23",
+      "q": "How does incorporating a business act as a non-insurance form of risk transfer?",
+      "options": [
+        "Owners' liability is limited, shifting the risk of unpaid business debts to creditors",
+        "The province takes on the business's property risks once it is incorporated",
+        "Creditors must buy insurance against the possibility the firm fails",
+        "Shareholders become personally responsible for injuries to employees"
+      ],
+      "answer": 0,
+      "explain": "Incorporation limits the liability of the owners (shareholders), so the risk that the business lacks the assets to pay its debts shifts to its creditors. A service contract making a retailer pay for repairs is another non-insurance transfer."
+    },
+    {
+      "id": "c02-q054",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Frequency/severity table",
+      "page": "2•24",
+      "q": "According to the course, for which kinds of risk is risk retention mainly appropriate?",
+      "options": [
+        "Any risk whose loss could wipe out the client's wealth base",
+        "High-frequency/low-severity and low-frequency/low-severity risks",
+        "Low-frequency/high-severity risks such as premature death",
+        "High-frequency/high-severity risks that call for several methods"
+      ],
+      "answer": 1,
+      "explain": "Retention suits losses that are small in cost, whether frequent or rare. Retaining low-frequency, high-severity risks such as premature death or a liability lawsuit would be unwise for most people."
+    },
+    {
+      "id": "c02-q055",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Frequency/severity table",
+      "page": "2•24",
+      "q": "In the course's frequency/severity summary table, disability is the example for which combination, and which strategy does the table pair with it?",
+      "options": [
+        "High frequency and high severity: a combination of methods",
+        "Low frequency and low severity: simply retain the risk",
+        "Low frequency and high severity: transfer the risk to insurers",
+        "High frequency and low severity: use loss control techniques"
+      ],
+      "answer": 0,
+      "explain": "The table pairs low/low with retention (small inexpensive assets), low frequency/high severity with transfer (premature death), high frequency/low severity with loss control (corner-store theft) and high/high with a combination of methods (disability)."
+    }
+  ]
+}

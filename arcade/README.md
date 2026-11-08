@@ -1,0 +1,61 @@
+# INR Arcade
+
+A retro 3D arcade for mastering the CSI course **Insurance and Retirement – Quebec**
+(2020 edition, 11 chapters in 4 sections). Every game draws from one question bank
+written from the course text, and every answer you give feeds a spaced-repetition
+model that tracks how well you know each chapter.
+
+Open `arcade/index.html` in a browser. It is one self-contained file: Three.js and
+the two pixel fonts load from public CDNs, with a vendored copy of Three.js as an
+offline fallback.
+
+## The cabinets
+
+| Cabinet | What it is | What it trains |
+|---|---|---|
+| **Risk Blaster** | Rail shooter. Answers fly down a neon tunnel as targets; shoot the right one before it reaches your shields. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
+| **Nest Egg Run** | Lane racer through a 40-year career, one gate per year from age 25 to 65. Steer into the right answer's lane to compound your savings; three crashes force early retirement. Five-answer streaks buy an insurance policy that pays out on your next crash. Retiring with $1,000,000 takes about 95% accuracy. | Sustained accuracy |
+| **Boss Rush** | One boss per chapter, plus a final boss across the whole book. Bosses only take hard questions; answer before their attack charges. Clear with all three hearts for three stars. | The hardest, most exam-like questions |
+| **Memory Bank** | Flashcards for every key term, rule and number, with self-grading (missed / got it / easy) and a swap button to see definitions first. | Definitions and numbers |
+| **Final Exam** | Mock exam of 20, 50 or 100 questions weighted by chapter size, 90 seconds a question or untimed, no feedback until you submit. Pass mark 60%. | Exam readiness |
+| **Strategy Guide** | Condensed notes, learning objectives and tips for every chapter, a search across every note and card, and a list of places where the book contradicts itself. | Reading before you play |
+
+Every wrong answer shows the explanation and the book page, and the results screen
+lists all of them again.
+
+## How mastery works
+
+Each question and flashcard sits in a Leitner box. A right answer moves it up a box,
+a wrong one sends it back to the start. Moving up needs time between answers
+(5 minutes, then 6 hours, then 2 days), so an item only counts as mastered after
+three spaced right answers. The games pick what to ask next: items you just missed
+first, then new ones, then those due for review.
+
+Progress is saved in the browser (`localStorage`). When the page runs as a claude.ai
+artifact it also syncs to the viewer's private storage, so it follows them between
+devices.
+
+## Content
+
+`content/chNN.json` holds each chapter's questions, flashcards, notes and tips
+(chapter 6 was written in two halves, `ch06a` and `ch06b`, merged at build time).
+`content/errata.json` lists inconsistencies in the course text, shown in the guide.
+
+The questions are original study material written from the course text. None of the
+book's own self-test questions are copied; their concepts are covered with new
+wording and new scenarios. Every item cites its page so you can check it against
+the book.
+
+## Editing
+
+```bash
+npm run arcade:check   # validate every content file (schema, balance, page coverage)
+npm run arcade         # rebuild arcade/index.html from src/ and content/
+```
+
+Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
+filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,
+Esc to pause, arrow keys to steer and browse.
+
+Three.js r128 is MIT licensed (`vendor/three.LICENSE`). Press Start 2P and VT323 are
+SIL Open Font License fonts served by Google Fonts.
