@@ -145,7 +145,7 @@
       "points": [
         "Wills in some provinces name a guardian for minors or disabled dependants; discuss it first and check funding. Common law: court approval, usually within 90 days, and the court can overrule in the children's best interests.",
         "Quebec: parents designate a tutor (dative tutorship) by will, protection mandate or declaration to the Public Curator; no court step unless contested; not for disabled dependants.",
-        "Name trustees and alternates for any testamentary trust; the trustee can be the executor, spouse or guardian. A trust needs at least one independent (non-beneficiary) trustee.",
+        "Name trustees and alternates for any testamentary trust; the trustee can be the executor, spouse or guardian. In Quebec, a trust needs at least one independent (non-beneficiary) trustee.",
         "Minors inheriting with no trustee: common law, the court appoints a public trustee until majority and the surviving parent has no automatic right; Quebec, the surviving parent is automatically tutor."
       ]
     },
@@ -472,7 +472,7 @@
       "topic": "Revocation",
       "page": "9•17",
       "front": "Effect of divorce and legal separation on a will",
-      "back": "Divorce: gifts to and appointments of the ex-spouse are revoked in QC, ON, BC, SK, MB and PEI (ex-spouse treated as having predeceased). Legal separation: no effect in most provinces; BC treats it like divorce."
+      "back": "Divorce: gifts to and appointments of the ex-spouse are revoked in QC and in ON, BC, SK, MB and PEI (where the ex-spouse is presumed to have predeceased). Legal separation: no effect in most provinces; BC treats it like divorce."
     },
     {
       "id": "c09-f040",
@@ -908,7 +908,7 @@
       "options": [
         "Notarial will: signed before two notaries, with no witnesses ever required",
         "Quebec will made before witnesses: typed, signed before a single witness",
-        "Holograph will: in the testator's handwriting, signed before two witnesses",
+        "Holograph will: in the testator's handwriting, and two witnesses must sign",
         "Formal will: in writing by anyone, signed by the testator before two witnesses"
       ],
       "answer": 3,
@@ -944,7 +944,7 @@
         "The testator's adult neighbour, who is not related to or employed by the notary"
       ],
       "answer": 3,
-      "explain": "A witness to a notarial will cannot be the notary's spouse, a relative of the notary in the direct or collateral line up to the third degree (a brother qualifies), a relative by marriage or civil union, a minor, or the notary's employee."
+      "explain": "A witness to a notarial will cannot be the notary's spouse, a relative of the notary in the direct or collateral line up to the third degree (a brother falls within this), a relative by marriage or civil union, a minor, or the notary's employee."
     },
     {
       "id": "c09-q014",
@@ -1504,13 +1504,13 @@
       "difficulty": 1,
       "topic": "Guardians (tutors) and trustees",
       "page": "9•23",
-      "q": "A trust needs at least one trustee who is not a beneficiary, so a beneficiary cannot act alone as trustee.",
+      "q": "In Quebec, a trust needs at least one trustee who is not a beneficiary, so a beneficiary cannot act alone as trustee.",
       "options": [
         "True",
         "False"
       ],
       "answer": 0,
-      "explain": "True. The course notes that a trust requires at least one independent trustee, someone who is not a beneficiary of the trust, so a beneficiary cannot act alone as trustee."
+      "explain": "True. Right after its Quebec rules on tutorship and trusts for minors, the course notes that a trust requires at least one independent trustee, someone who is not a beneficiary of the trust, so a beneficiary cannot act alone as trustee."
     },
     {
       "id": "c09-q050",
@@ -1646,7 +1646,7 @@
       "difficulty": 2,
       "topic": "Drafting points",
       "page": "9•27",
-      "q": "Because a will can always be revoked, a beneficiary designation made in a will cannot be irrevocable.",
+      "q": "Because a will is revocable, a beneficiary designation made in a will cannot be irrevocable.",
       "options": [
         "True",
         "False"
@@ -1692,13 +1692,13 @@
       "difficulty": 2,
       "topic": "Powers of attorney (property)",
       "page": "9•29",
-      "q": "For a power of attorney for property to stay in force during the grantor's mental incapacity, the document must expressly say so.",
+      "q": "In a common-law province, for a power of attorney for property to stay in force during the grantor's mental incapacity, the document must expressly say so.",
       "options": [
         "True",
         "False"
       ],
       "answer": 0,
-      "explain": "True. The enduring (continuing) nature must be spelled out in the document; otherwise the attorney's powers cease when the grantor becomes mentally incapable, just when they are needed most."
+      "explain": "True. The enduring (continuing) nature must be spelled out in the document; otherwise the attorney's powers cease when the grantor becomes mentally incapable, just when they are needed most. Quebec uses a protection mandate instead."
     },
     {
       "id": "c09-q062",

@@ -169,7 +169,7 @@
         "Risk transfer shifts the cost of a potential loss to a third party. Insurance reduces risk through pooling: a contract transfers the financial consequences of pure risk to the insurer for premiums.",
         "Non-insurance transfer: contracts (a service contract making a retailer pay for repairs after the warranty) and incorporation (limited liability shifts the risk of unpaid business debts to creditors).",
         "Retention suits high-frequency/low-severity and low-frequency/low-severity risks; retaining low-frequency/high-severity risks (premature death, a liability lawsuit) is unwise.",
-        "Summary table: low/low → retain (small inexpensive assets); low frequency/high severity → transfer (premature death); high frequency/low severity → loss control (corner-store theft); high/high → a combination (disability)."
+        "Summary table: low/low → retain (small inexpensive assets); low frequency/high severity → transfer (premature death); high frequency/low severity → loss control (corner-store theft); high/high → a combination of methods."
       ]
     }
   ],
@@ -402,7 +402,7 @@
       "topic": "Frequency/severity table",
       "page": "2•24",
       "front": "Frequency/severity strategy table",
-      "back": "Low frequency/low severity: retain (small inexpensive assets). Low/high: transfer (premature death). High frequency/low severity: loss control (theft in a corner store). High/high: a combination of methods (disability)."
+      "back": "Low frequency/low severity: retain (small inexpensive assets). Low/high: transfer (premature death). High frequency/low severity: loss control (theft in a corner store). High/high: a combination of methods."
     },
     {
       "id": "c02-f032",
@@ -1265,15 +1265,15 @@
       "difficulty": 3,
       "topic": "Frequency/severity table",
       "page": "2•24",
-      "q": "In the course's frequency/severity summary table, disability is the example for which combination, and which strategy does the table pair with it?",
+      "q": "Which pairing of risk profile and strategy matches the course's frequency/severity summary table?",
       "options": [
-        "High frequency and high severity: a combination of methods",
-        "Low frequency and low severity: simply retain the risk",
-        "Low frequency and high severity: transfer the risk to insurers",
-        "High frequency and low severity: use loss control techniques"
+        "High frequency, high severity: use a combination of methods",
+        "Low frequency, low severity: transfer the risk to an insurer",
+        "Low frequency, high severity: retain the risk yourself",
+        "High frequency, low severity: transfer the risk to an insurer"
       ],
       "answer": 0,
-      "explain": "The table pairs low/low with retention (small inexpensive assets), low frequency/high severity with transfer (premature death), high frequency/low severity with loss control (corner-store theft) and high/high with a combination of methods (disability)."
+      "explain": "The table pairs low frequency/low severity with retention (loss of small, inexpensive personal assets), low frequency/high severity with transfer (premature death), high frequency/low severity with loss control (theft in a corner store) and high frequency/high severity with a combination of methods."
     }
   ]
 }

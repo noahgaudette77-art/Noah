@@ -60,7 +60,7 @@
         "Lloyd's is not an insurance company but an insurance exchange: its members underwrite risks through syndicates, each with an underwriter who selects risks, and each syndicate pays its share of a loss.",
         "It began in Edward Lloyd's London coffee house (late 17th century), where merchants wrote their names under a description of a ship's risk, giving us the term underwriter.",
         "Individual members (Names) had unlimited liability, a strong incentive to underwrite carefully that lets Lloyd's take unusual risks (a pianist's hands, a dancer's legs), though these are a small part of its business.",
-        "Losses from the late 1980s (a record US$3.14 billion in 1989) came from the market cycle, rising costs, member scandals, disasters (Hurricane Hugo, Piper Alpha) and bad underwriting. In 1993 corporate members with limited liability were admitted.",
+        "Losses from the late 1980s (a record US$3.14 billion in 1989) came from the market cycle, rising costs, member scandals, disasters (Hurricane Hugo, Piper Alpha) and bad underwriting. In 1993 members voted to admit corporate members with limited liability.",
         "Pure captive: a subsidiary of a non-insurance parent that insures only the parent's risks. Association captive: owned by a trade association to insure its members (sometimes called fraternal associations)."
       ]
     },
@@ -82,7 +82,7 @@
         "Same channels: agents (life underwriters), brokers and direct marketing. Quebec was once the only province letting an agent represent more than one company; multi-insurer agents, called brokers, are now common.",
         "Single company representation (SCR): the agent must place business with the insurer that sponsors the licence. Strictness varies; small insurers without a sales force accept business from any agent, often with high commissions.",
         "Pay: commission (by product type and total volume; more volume means a higher rate on all business) plus quality standards, measured mainly by persistency.",
-        "General agencies represent several insurers and give agents admin, marketing and specialist support in place of a career agency system. Insurers pay them override commissions that usually do not reduce agents' commissions.",
+        "General agencies represent several insurers and give agents admin, marketing and specialist support in place of a career agency system. Insurers pay them override commissions that often do not reduce agents' commissions.",
         "In Quebec, brokerage agencies are called brokerage firms. They may represent one insurer but more typically several, and many are interdisciplinary (life, disability, group and P&C)."
       ]
     },
@@ -213,7 +213,7 @@
       "topic": "Lloyd's of London",
       "page": "3•6",
       "front": "Lloyd's of London",
-      "back": "An insurance exchange, not an insurance company. Members (individual Names with unlimited liability and, since 1993, corporate members with limited liability) underwrite risks through syndicates; business comes through brokers worldwide."
+      "back": "An insurance exchange, not an insurance company. Members (individual Names with unlimited liability and corporate members with limited liability, admitted after a 1993 vote) underwrite risks through syndicates; business comes through brokers worldwide."
     },
     {
       "id": "c03-f009",
@@ -241,7 +241,7 @@
       "topic": "Life distribution",
       "page": "3•10",
       "front": "General agency",
-      "back": "An independent sales operation, usually representing several insurers, that gives agents admin, marketing and specialist support. Insurers pay it override commissions, usually without reducing agents' commissions."
+      "back": "An independent sales operation, usually representing several insurers, that gives agents admin, marketing and specialist support. Insurers pay it override commissions, often without reducing agents' commissions."
     },
     {
       "id": "c03-f013",
@@ -655,7 +655,7 @@
       "q": "A general agency provides illustrations, application processing and tax specialists to the independent agents it supports. How is the general agency usually paid?",
       "options": [
         "A fixed share deducted from each agent's commissions on placed business",
-        "Override commissions from insurers, usually not cut from agents' pay",
+        "Override commissions from insurers, often not cut from agents' pay",
         "Monthly fees charged to clients for the specialist services provided",
         "Salaries paid by the insurers whose career agency system it replaces"
       ],
@@ -893,10 +893,10 @@
         "A $250 gift card for each client who buys a juvenile policy from her",
         "A $25 policy wallet handed to each client after the sale is completed",
         "A paid ski weekend for clients who place $10,000 of commission business",
-        "A fee cut of 50 cents for each dollar of commission earned on the sale"
+        "A cash refund of part of the first premium, paid from her commission"
       ],
       "answer": 1,
-      "explain": "A low-value item given after the sale is not an inducement to buy, so it is not rebating. Valuable incentives tied to a purchase are rebating, and reducing fees to offset commissions may be rebating in some jurisdictions."
+      "explain": "A low-value item given after the sale is not an inducement to buy, so it is not rebating. Returning part of the premium, or giving valuable incentives such as gift cards or trips tied to a purchase, is rebating."
     },
     {
       "id": "c03-q035",

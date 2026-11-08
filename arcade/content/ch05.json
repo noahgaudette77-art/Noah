@@ -98,7 +98,7 @@
       "page": "5•14",
       "points": [
         "Government programs cover risks beyond the individual's control that are generally uninsurable privately (premature death, old age, health, unemployment). Both levels of government run programs, sometimes similar ones.",
-        "Dominant federal programs: old age security, pensions (CPP/QPP), health care and unemployment (EI).",
+        "Dominant federal programs: old age security, pensions (the CPP; Quebec has its own QPP), health care and unemployment (EI).",
         "OAS starts at 65. Full pension: 40 years of residency (not necessarily continuous) between 18 and 65. Partial pension: at least 10 years, at 1/40 per year (25 years = 62.5%). Citizenship is not required. Indexed.",
         "Add-ons: the Guaranteed Income Supplement (low income); the Allowance (low-income senior whose spouse/partner gets OAS and GIS); the Allowance for the Survivor.",
         "Deferral up to 60 months: +0.6% a month, to a maximum of 36% at 70. Clawback: 15% of each taxable dollar above a threshold. OAS is taxable."
@@ -108,7 +108,7 @@
       "heading": "CPP and QPP retirement pensions",
       "page": "5•15",
       "points": [
-        "Mandatory participation earning employment credits (CPP everywhere except Quebec, which has the QPP), for workers 18 to 65; contributions are portable. Meant as basic support, topped up by private pensions and RRSPs.",
+        "Mandatory participation earning employment credits (CPP everywhere except Quebec, which has the QPP); contributions are portable. Meant as basic support, topped up by private pensions and RRSPs.",
         "Contributions: a % of income split equally by employer and employee; the self-employed pay both halves. You must be working or self-employed to contribute, so retirees stop contributing.",
         "Pension: 25% of average monthly pensionable earnings, being enhanced to 33 1/3% (from 2019, fully by 2025; the full enhanced benefit needs about 40 years of enhanced contributions). Indexed.",
         "Start between 60 and 70 (normal 65). CPP early: −0.6% a month (−36% at 60). QPP early: −0.5% to −0.6% a month by pension size (−30% to −36% at 60). Late: +0.7% a month (+42% at 70).",
@@ -119,7 +119,7 @@
       "heading": "CPP/QPP disability and death benefits",
       "page": "5•17",
       "points": [
-        "Benefits also go to disabled contributors and to surviving spouses and children. Lump-sum death benefit: up to $2,500 to the estate or surviving spouse/partner. All CPP/QPP benefits, including the death benefit, are taxable.",
+        "Benefits also go to disabled contributors and to surviving spouses and children. Lump-sum death benefit: up to $2,500. All CPP/QPP benefits, including the death benefit, are taxable.",
         "Disability pension: for a severe and prolonged physical or mental condition preventing regular work at any job. Starts after 4 months; paid to 65, when the retirement pension begins. Children: under 18, or 18 to 25 in full-time school.",
         "CPP eligibility: contributions in 4 of the last 6 calendar years, or 25 years including 3 of the last 6. QPP eligibility: 2 of the last 3 years, 5 of the last 10, or half the contributory period (at least 2 years).",
         "Many people disabled for other purposes will not meet the strict definition, so do not count on this benefit to meet disability needs."
@@ -333,7 +333,7 @@
       "topic": "Key numbers",
       "page": "5•17",
       "front": "CPP/QPP death benefit",
-      "back": "A lump sum of up to $2,500, paid to the estate or the surviving spouse or common-law partner, as designated. Taxable, like all CPP/QPP benefits."
+      "back": "A one-time lump sum of up to $2,500 on the death of a qualified contributor. Taxable, like all CPP/QPP benefits."
     },
     {
       "id": "c05-f026",
@@ -375,7 +375,7 @@
       "topic": "Government programs",
       "page": "5•15",
       "front": "Federal vs provincial government programs",
-      "back": "Federal: old age security, pensions (CPP/QPP), health care (initial sponsor) and unemployment (EI). Provincial: health care administration, workers' compensation, social services and agriculture."
+      "back": "Federal: old age security, pensions (the CPP; Quebec has its own QPP), health care (initial sponsor) and unemployment (EI). Provincial: health care administration, workers' compensation, social services and agriculture."
     },
     {
       "id": "c05-f032",

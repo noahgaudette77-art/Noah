@@ -87,7 +87,7 @@
       "points": [
         "Introduced by Quebec as an alternative to a life annuity; now allowed in most provinces. Before LIFs, locked-in pension money, locked-in RRSPs and LIRAs could only buy a life annuity, possibly at low rates (Abdul).",
         "Funds come from a pension plan directly or via a LIRA (provincial) or a locked-in RRSP (federal); the LIF follows the jurisdiction of the originating RPP, so rules differ.",
-        "Old federal rule: convert to a life annuity by the end of the year the holder turns 80 (never required in Manitoba or Quebec). Now federally regulated funds may stay in the LIF past 80.",
+        "Old federal rule: convert to a life annuity by the end of the year the holder turns 80 (not required in Manitoba or Quebec). Now federally regulated funds may stay in the LIF past 80.",
         "Usually available no earlier than 10 years before the plan's normal retirement age, typically 55. Law sets a minimum and a maximum, calculated each January from age, balance and a yearly base rate (spouse's age may be used).",
         "Income may start at once but must begin by the end of the year after the LIF is set up. Withdrawals are taxable; withholding usually applies only above the minimum. After a LIF-to-LIF transfer, the new LIF's maximum is zero that year.",
         "At death: a spouse can roll it over tax-deferred (possibly no longer locked in, by jurisdiction); for other beneficiaries it is taxable to the deceased on the terminal return."
@@ -101,7 +101,7 @@
         "On divorce or legal separation, RRSP, RRIF or LIF value can be divided, with the partner's share rolled tax-free into his or her own RRSP, RRIF or LIF.",
         "RRSP at death: fair market value is income of the deceased. A named beneficiary keeps it out of the estate (no probate fees where applicable). Spouse, partner or dependent infirm child: taxed to them as a refund of premiums; can roll to their RRSP/RRIF.",
         "RRIF to a spouse (designated benefit): continue the payments, set up a new RRIF, roll to his or her RRSP, or take it all into income. Any unpaid minimum for the year of death is taxed to the spouse, not rolled over.",
-        "RRIF to anyone else: FMV is added to the deceased's income, and the deceased and beneficiary are jointly liable for the tax. No beneficiary: lump sum to the estate, taxed on the terminal return. LIF/LRIF: same rules."
+        "RRIF to anyone else (not a dependent child): FMV is added to the deceased's income, and the deceased and beneficiary are jointly liable for the tax. No beneficiary: lump sum to the estate, taxed on the terminal return. LIF/LRIF: same rules."
       ]
     },
     {
@@ -949,7 +949,7 @@
         "False"
       ],
       "answer": 1,
-      "explain": "False. That was the former federal rule, which provinces such as Manitoba and Quebec never had. Now funds from a federally regulated locked-in RRSP may stay in the LIF beyond age 80, until the plan matures."
+      "explain": "False. That was the former federal rule, which provinces such as Manitoba and Quebec did not have. Now funds from a federally regulated locked-in RRSP may stay in the LIF beyond age 80, until the plan matures."
     },
     {
       "id": "c07-q025",

@@ -70,7 +70,7 @@
         "The industry has shifted from merely selling products to a financial planning approach, driven by aging demographics, changing households, the economic environment, the nature of the workforce and product proliferation.",
         "These changes move the emphasis from debt reduction and wealth accumulation to wealth preservation, heightening the need for risk management strategies.",
         "Alfred Jones (52, widower, about $1,000,000 net worth excluding his house, spread over 11 institutions) wants a comfortable retirement and a significant legacy for his two children.",
-        "First step: qualify (clarify) Alfred's goals. Second step: by dealing with one planner and one financial group he can assemble a comprehensive look at the value and mix of all his assets.",
+        "First step: the 'qualification' of Alfred's goals, i.e., clarifying and quantifying them. Second step: by dealing with one planner and one financial group he can assemble a comprehensive look at the value and mix of all his assets.",
         "His plan would combine loss control (balanced portfolio, hedging strategies, tax planning) with loss financing (possibly life and disability insurance)."
       ]
     }
@@ -432,7 +432,7 @@
       "q": "According to the course, what has deregulation of the financial services industry contributed to, and with what result?",
       "options": [
         "Higher product prices, which has reduced demand for advice",
-        "Product proliferation, which has added greatly to client confusion",
+        "Product proliferation, which has contributed to client confusion",
         "Fewer products, which has made comparison shopping simple",
         "Fewer providers, which has limited clients' choice of advisor"
       ],
@@ -463,11 +463,11 @@
       "options": [
         "Buying life and disability insurance to protect his two children",
         "Consolidating all of his assets with a single financial institution",
-        "Clarifying his financial goals, such as a comfortable retirement and a legacy",
+        "Clarifying and quantifying his goals: a comfortable retirement and a legacy",
         "Choosing investments that maximize the return on his whole $1,000,000 portfolio"
       ],
       "answer": 2,
-      "explain": "The follow-up names the first step as qualifying (clarifying) Alfred's goals: a comfortable retirement and passing assets to his children. Assembling a comprehensive view of all his assets, made easy by dealing with one planner and one financial group, is the second step."
+      "explain": "The follow-up names the first step as the 'qualification' of Alfred's goals (a comfortable retirement and passing assets to his children), that is, pinning them down and putting numbers on them. Assembling a comprehensive view of all his assets, made easy by dealing with one planner and one financial group, is the second step."
     }
   ]
 }
