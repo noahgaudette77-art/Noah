@@ -1,24 +1,28 @@
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
 class TitleScene extends Scene3D {
   constructor() {
-    super({ fov: 62, fog: [0x090320, 30, 250] });
+    super({ fov: 62, far: 900, fog: [0x2a0a44, 80, 620] });
     this.speed = 14;
     this.dist = 0;
     if (!this.has3D) return;
     const s = this.scene;
-    this.grid = makeGrid({ size: 420, step: 7, color: 0xff3ad4 });
-    s.add(this.grid);
-    this.sun = makeSun(46, ["#ffe14f", "#ff9b3d", "#ff3ad4"]);
-    this.sun.position.set(0, 24, -235);
+    this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8 });
+    s.add(this.sky);
+    this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.9 });
+    this.sun.position.set(0, 18, -360);
     s.add(this.sun);
-    s.add(makeMountains({ z: -200, color: 0xa65fff, height: 40 }));
-    const back = makeMountains({ z: -215, color: 0x35efff, height: 58, n: 30 });
-    back.position.y = -6;
-    s.add(back);
-    this.stars = makeStars(520, 320, { lowest: 0.02 });
-    s.add(this.stars);
+    s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
+    s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
+    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5 }));
+    this.mirror = new Mirror(0);
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009 });
+    s.add(this.floor);
+    s.userData.mirrors = [this.mirror];
+    this.shooting = makeShootingStar();
+    s.add(this.shooting);
+    s.userData.post = { exposure: 1.15, bloom: 1 };
     this.camBase.set(0, 3.4, 12);
-    this.lookAt.set(0, 7, -120);
+    this.lookAt.set(0, 9, -120);
   }
   boost() {
     this.tw.add(1.1, (k) => { this.speed = 14 + k * 160; }, null, Ease.inCubic);
@@ -27,11 +31,18 @@ class TitleScene extends Scene3D {
     super.update(dt);
     this.dist += this.speed * dt;
     if (!this.has3D) return;
-    scrollGrid(this.grid, this.dist);
-    this.stars.rotation.y += dt * 0.004;
-    this.sun.position.y = 24 + Math.sin(this.t * 0.4) * 0.6;
-    this.camBase.y = 3.4 + Math.sin(this.t * 0.7) * 0.15;
+    this.floor.material.uniforms.uScroll.value = -this.dist;
+    this.shooting.userData.tick(dt);
+    this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
+    this.camBase.set(Pointer.x * 1.2, 3.4 + Math.sin(this.t * 0.7) * 0.15 - Pointer.y * 0.5, 12);
+    this.lookAt.set(Pointer.x * 6, 9, -120);
     this.placeCamera();
+    followSky(this.sky, this.camera);
+    FX.sync(this.scene, this.t);
+  }
+  dispose() {
+    if (this.mirror) this.mirror.dispose();
+    super.dispose();
   }
 }
 

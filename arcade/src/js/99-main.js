@@ -44,7 +44,21 @@ function boot() {
 }
 
 // Test hook: open the page with #debug to expose internals to automated checks.
-if (/debug/.test(location.hash)) window.__arcade = { Scenes, Store, UI, CHAPTERS };
+if (/debug/.test(location.hash)) {
+  window.__arcade = {
+    Scenes, Store, UI, CHAPTERS, GFX,
+    // go("blaster", "2"), go("hub"), go("title"), go("guide") …
+    go(where, stage = "2") {
+      for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;
+      Sound.init();
+      if (where === "hub") return showHub();
+      if (where === "title") return showTitle();
+      if (where === "guide") return showGuide();
+      if (where === "exam") return startGame("exam", makeSelection("all"));
+      startGame(where, makeSelection(stage));
+    },
+  };
+}
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 else boot();

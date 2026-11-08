@@ -144,8 +144,12 @@ body.crt-off #crt, body.crt-off #bezel { display: none; }
 .logo-kicker { font: clamp(8px, 2.2vw, 12px)/1.5 var(--font-display); color: var(--cyan); text-shadow: 0 0 10px rgba(53, 239, 255, 0.8); letter-spacing: 0.14em; }
 .logo-main {
   font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
+  background-size: 250% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: glint 5.5s ease-in-out 1.2s infinite;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
   filter: drop-shadow(0 4px 0 #2a0b52) drop-shadow(0 0 18px rgba(255, 58, 212, 0.55));
   transform: skewX(-8deg);
@@ -153,9 +157,10 @@ body.crt-off #crt, body.crt-off #bezel { display: none; }
 .logo-sub { font: clamp(20px, 5vw, 30px)/1 var(--font-body); color: var(--yellow); letter-spacing: 0.08em; text-shadow: 0 2px 0 #12052e, 0 0 6px #12052e, 0 0 12px #12052e; }
 .insert-coin {
   font: clamp(13px, 3.6vw, 20px)/1.4 var(--font-display); color: var(--ink); padding: 14px 20px;
-  text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff; animation: blink 1.1s steps(1) infinite;
+  text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
+@keyframes glint { 0% { background-position: 160% 0, 0 0; } 35%, 100% { background-position: -60% 0, 0 0; } }
 .attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; }
 .attract b { color: var(--lime); font-weight: 400; }
 .title-foot { font: 8px/1.8 var(--font-display); color: var(--dim); }
@@ -437,7 +442,7 @@ mark { background: var(--yellow); color: #12052e; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #crt, .insert-coin, .initials .slot.on .ch { animation: none; }
+  #crt, .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }

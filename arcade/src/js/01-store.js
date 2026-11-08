@@ -12,7 +12,7 @@ const freshState = () => ({
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "retro", pace: "normal", explain: "smart", initials: "AAA" },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true },
   updated: 0,
 });
 
@@ -68,6 +68,9 @@ const Store = {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) this.state = mergeStates(freshState(), JSON.parse(raw));
     } catch (e) { /* private mode or blocked storage: play without saving */ }
+    // The HD renderer replaced the old pixel modes: move the old default onto it once.
+    const st = this.state.settings;
+    if (!st.gfx2) { if (st.pixel === "retro" || st.pixel === "sharp") st.pixel = "hd"; st.gfx2 = true; }
   },
   get settings() { return this.state.settings; },
   save() {

@@ -65,8 +65,8 @@ function showSettings() {
     <div class="scroll"><div class="wrap">
       ${row("Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
-      ${row("CRT filter", "Scanlines and screen glow", seg("crt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Pixels", "How chunky the 3D looks", seg("pixel", [["chunky", "CHUNKY"], ["retro", "RETRO"], ["sharp", "SHARP"]]))}
+      ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>

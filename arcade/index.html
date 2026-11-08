@@ -157,8 +157,12 @@ body.crt-off #crt, body.crt-off #bezel { display: none; }
 .logo-kicker { font: clamp(8px, 2.2vw, 12px)/1.5 var(--font-display); color: var(--cyan); text-shadow: 0 0 10px rgba(53, 239, 255, 0.8); letter-spacing: 0.14em; }
 .logo-main {
   font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
+  background-size: 250% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: glint 5.5s ease-in-out 1.2s infinite;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
   filter: drop-shadow(0 4px 0 #2a0b52) drop-shadow(0 0 18px rgba(255, 58, 212, 0.55));
   transform: skewX(-8deg);
@@ -166,9 +170,10 @@ body.crt-off #crt, body.crt-off #bezel { display: none; }
 .logo-sub { font: clamp(20px, 5vw, 30px)/1 var(--font-body); color: var(--yellow); letter-spacing: 0.08em; text-shadow: 0 2px 0 #12052e, 0 0 6px #12052e, 0 0 12px #12052e; }
 .insert-coin {
   font: clamp(13px, 3.6vw, 20px)/1.4 var(--font-display); color: var(--ink); padding: 14px 20px;
-  text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff; animation: blink 1.1s steps(1) infinite;
+  text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
+@keyframes glint { 0% { background-position: 160% 0, 0 0; } 35%, 100% { background-position: -60% 0, 0 0; } }
 .attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; }
 .attract b { color: var(--lime); font-weight: 400; }
 .title-foot { font: 8px/1.8 var(--font-display); color: var(--dim); }
@@ -450,7 +455,7 @@ mark { background: var(--yellow); color: #12052e; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #crt, .insert-coin, .initials .slot.on .ch { animation: none; }
+  #crt, .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
@@ -591,7 +596,7 @@ const freshState = () => ({
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "retro", pace: "normal", explain: "smart", initials: "AAA" },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true },
   updated: 0,
 });
 
@@ -647,6 +652,9 @@ const Store = {
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) this.state = mergeStates(freshState(), JSON.parse(raw));
     } catch (e) { /* private mode or blocked storage: play without saving */ }
+    // The HD renderer replaced the old pixel modes: move the old default onto it once.
+    const st = this.state.settings;
+    if (!st.gfx2) { if (st.pixel === "retro" || st.pixel === "sharp") st.pixel = "hd"; st.gfx2 = true; }
   },
   get settings() { return this.state.settings; },
   save() {
@@ -1191,41 +1199,56 @@ function readTime(round, mult = 1) {
 const GFX = {
   renderer: null,
   ok: false,
-  post: null, // the CRT pipeline (null when the filter is off)
+  hdr: false, // half-float targets: neon can be brighter than white and bloom like light
+  pipe: null,
   w: window.innerWidth,
   h: window.innerHeight,
   t: 0,
-  ab: 0, // colour-fringe pulse, in output pixels
+  dyn: 1, // dynamic-resolution factor (HD look only)
+  lite: false, // set when the device struggles: no reflections, lighter bloom
+  ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   freeze: 0, // hit-stop seconds remaining
-  slow: 0,
   init() {
     if (window.THREE) {
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance" });
+        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance", stencil: false });
         this.renderer.setClearColor(0x090320, 1);
         this.ok = true;
       } catch (e) {
         this.ok = false;
       }
     }
-    if (!this.ok) document.body.classList.add("no-gl");
-    if (this.ok && Store.settings.crt) this.post = makeCRT(this.renderer);
+    if (!this.ok) {
+      document.body.classList.add("no-gl");
+      this.resize();
+      return;
+    }
+    const r = this.renderer;
+    const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
+    this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
+    this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
+    this.pipe = makePipeline(r, this.hdr);
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
-  // Resolution the 3D world is drawn at: low, for the chunky polygon look.
+  // HD (default) renders sharp and anti-aliased; RETRO and CHUNKY render low-res pixels.
+  get look() {
+    const p = Store.settings.pixel;
+    return p === "retro" || p === "chunky" ? p : "hd";
+  },
   scenePR() {
     const dpr = window.devicePixelRatio || 1;
-    const mode = Store.settings.pixel;
-    if (mode === "sharp") return Math.min(dpr, 2);
-    const target = mode === "chunky" ? 380 : 680; // pixels across the longest side
-    return clamp(target / Math.max(this.w, this.h), 0.12, dpr);
+    const look = this.look;
+    if (look === "retro") return clamp(680 / Math.max(this.w, this.h), 0.12, dpr);
+    if (look === "chunky") return clamp(380 / Math.max(this.w, this.h), 0.12, dpr);
+    const base = Math.min(dpr, this.small ? 1.5 : 2, 1900 / Math.max(this.w, this.h));
+    return Math.max(0.35, base * this.dyn);
   },
-  // Resolution of the final CRT image (curvature and scanlines need real pixels).
   outPR() {
-    if (!this.post) return this.scenePR();
-    return Math.min(window.devicePixelRatio || 1, this.slow ? 1 : 1.5);
+    // HD: the final image is drawn at the scene resolution (no upscale blur from post).
+    // Retro looks: draw the glass at a finer resolution so scanlines stay crisp.
+    return this.look === "hd" ? this.scenePR() : Math.min(window.devicePixelRatio || 1, 1.5);
   },
   resize() {
     this.w = window.innerWidth;
@@ -1233,42 +1256,52 @@ const GFX = {
     if (this.ok) {
       this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
-      if (this.post) this.post.resize(Math.max(2, Math.round(this.w * this.scenePR())), Math.max(2, Math.round(this.h * this.scenePR())));
-      $("#gl").classList.toggle("post", !!this.post);
+      const pr = this.scenePR();
+      this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
+      $("#gl").classList.toggle("post", this.look === "hd");
     }
     Scenes.resize();
   },
-  setCRT(on) {
-    if (!this.ok) return;
-    if (on && !this.post) this.post = makeCRT(this.renderer);
-    if (!on && this.post) { this.post.dispose(); this.post = null; }
-    this.resize();
-  },
+  setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
-    if (!this.post) {
-      this.renderer.setRenderTarget(null);
-      this.renderer.render(scene, camera);
-      return;
-    }
-    this.post.render(scene, camera, this.t, this.ab, this.flashAmt);
+    const mirrors = scene.userData.mirrors;
+    if (mirrors && !this.lite) for (const m of mirrors) m.render(this.renderer, scene, camera, this.pipe.mirrorSize);
+    this.pipe.render(scene, camera, {
+      t: this.t,
+      ab: this.ab,
+      flash: this.flashAmt,
+      glass: Store.settings.crt ? 1 : 0,
+      look: this.look,
+      post: scene.userData.post || {},
+      lite: this.lite,
+    });
   },
-  // Juice: colour fringing + white flash on the CRT, and a short freeze-frame.
+  // Juice: colour fringing + white flash, and a short freeze-frame.
   pulse(ab = 6, flash = 0.1) {
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
-  // Called with the real frame time; if the device struggles, drop the CRT to a lighter mode.
+  // Dynamic resolution: watch real frame times and trade sharpness for smoothness.
+  lockQuality() { this.locked = true; this.dyn = 1; this.lite = false; this.resize(); },
   watch(realDt) {
-    if (!this.post || this.slow) return;
-    this._acc = (this._acc || 0) * 0.97 + realDt * 0.03;
-    if (this._acc > 0.045 && this.t > 4) {
-      this.slow = 1;
-      this.post.lite = true;
+    if (!this.ok || !this.pipe || this.locked) return;
+    this._n = (this._n || 0) + 1;
+    this._sum = (this._sum || 0) + realDt;
+    if (this._n < 45) return;
+    const avg = this._sum / this._n;
+    this._n = 0;
+    this._sum = 0;
+    if (this.t < 3) return; // let the first frames settle
+    if (avg > 0.024) {
+      if (this.look === "hd" && this.dyn > 0.55) { this.dyn = Math.max(0.55, this.dyn * 0.85); this.resize(); }
+      else if (!this.lite) { this.lite = true; }
+    } else if (avg < 0.0145 && this.look === "hd" && this.dyn < 1) {
+      this.dyn = Math.min(1, this.dyn * 1.07);
       this.resize();
     }
   },
@@ -1292,13 +1325,18 @@ const Scenes = {
   },
 };
 
-// The CRT: draw the scene into a low-res target, bloom its neon, then show it
-// through curved glass with scanlines, an RGB phosphor mask and a vignette.
-function makeCRT(renderer) {
-  const lin = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
-  const rtScene = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: true }, lin));
-  const rtA = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
-  const rtB = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
+// The render pipeline: scene → HDR target → 5-level bloom → final pass with
+// exposure, ACES filmic tone mapping, colour grading, FXAA (HD) or pixel snap
+// (retro), and optional CRT glass (curvature, scanlines, phosphor mask).
+function makePipeline(renderer, hdr) {
+  const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
+  const rt = (depth) => new THREE.WebGLRenderTarget(2, 2, {
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: false,
+  });
+  const sceneRT = rt(true);
+  const brightRT = rt(false);
+  const LEVELS = 5;
+  const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const quadScene = new THREE.Scene();
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
@@ -1306,10 +1344,17 @@ function makeCRT(renderer) {
   quadScene.add(quad);
   const VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
   const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false });
-  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 0.5 } }, `
-    uniform sampler2D tDiffuse; uniform float uThreshold; varying vec2 vUv;
-    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = max(c.r, max(c.g, c.b));
-      gl_FragColor = vec4(c * smoothstep(uThreshold, 1.0, l), 1.0); }`);
+  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 1 }, uKnee: { value: 0.5 }, uPx: { value: new THREE.Vector2() } }, `
+    uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee; uniform vec2 uPx; varying vec2 vUv;
+    void main(){
+      vec3 c = 0.25 * (texture2D(tDiffuse, vUv + uPx * vec2(-0.5, -0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, -0.5)).rgb
+        + texture2D(tDiffuse, vUv + uPx * vec2(-0.5, 0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, 0.5)).rgb);
+      float l = max(c.r, max(c.g, c.b));
+      float soft = clamp(l - uThreshold + uKnee, 0.0, 2.0 * uKnee);
+      soft = soft * soft / (4.0 * uKnee + 1e-4);
+      float w = max(soft, l - uThreshold) / max(l, 1e-4);
+      gl_FragColor = vec4(min(c * w, vec3(24.0)), 1.0);
+    }`);
   const blur = mat({ tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } }, `
     uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv;
     void main(){
@@ -1318,72 +1363,141 @@ function makeCRT(renderer) {
       c += texture2D(tDiffuse, vUv - uDir * 1.3846154).rgb * 0.3162162;
       c += texture2D(tDiffuse, vUv + uDir * 3.2307692).rgb * 0.0702703;
       c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
-      gl_FragColor = vec4(c, 1.0); }`);
-  const crt = mat({
-    tScene: { value: null }, tBloom: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
-    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 },
+      gl_FragColor = vec4(c, 1.0);
+    }`);
+  const final = mat({
+    tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null },
+    uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
+    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 }, uExposure: { value: 1 },
+    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
+    uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
   }, `
-    uniform sampler2D tScene; uniform sampler2D tBloom; uniform vec2 uRes; uniform vec2 uSceneRes;
-    uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom; varying vec2 vUv;
-    vec2 warp(vec2 uv){ vec2 c = uv - 0.5; c *= 1.0 + 0.11 * dot(c, c); return c + 0.5; }
-    vec3 px(vec2 uv){ return texture2D(tScene, (floor(uv * uSceneRes) + 0.5) / uSceneRes).rgb; }
+    uniform sampler2D tScene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4;
+    uniform vec2 uRes; uniform vec2 uSceneRes; uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom;
+    uniform float uExposure; uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
+    uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
+    varying vec2 vUv;
+    vec3 tex(vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
+    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
+    vec3 fxaa(vec2 uv){
+      vec2 px = 1.0 / uSceneRes;
+      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
+      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
+      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
+      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
+      vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+      float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
+      float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
+      dir = clamp(dir * rcp, -8.0, 8.0) * px;
+      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
+      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
+      float lB = luma(b);
+      return (lB < lMin || lB > lMax) ? a : b;
+    }
+    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
-      vec2 uv = warp(vUv);
+      vec2 uv = vUv;
+      if (uGlass > 0.5) { vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
-      float a = (0.7 + uAberr) / uRes.x;
-      vec3 col = vec3(px(uv + vec2(a, 0.0)).r, px(uv).g, px(uv - vec2(a, 0.0)).b);
-      col += texture2D(tBloom, uv).rgb * uBloom;
-      float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
-      col *= 0.8 + 0.2 * s;
-      float m = mod(gl_FragCoord.x, 3.0);
-      vec3 mask = m < 1.0 ? vec3(1.0, 0.82, 0.82) : (m < 2.0 ? vec3(0.82, 1.0, 0.82) : vec3(0.82, 0.82, 1.0));
-      col *= mix(vec3(1.0), mask, 0.3);
+      vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
+      float a = uAberr / uRes.x;
+      if (a > 0.0002) { col.r = tex(uv + vec2(a, 0.0)).r; col.b = tex(uv - vec2(a, 0.0)).b; }
+      vec3 bl = texture2D(tB0, uv).rgb * 1.0 + texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55
+        + texture2D(tB3, uv).rgb * 0.4 + texture2D(tB4, uv).rgb * 0.3;
+      col += bl * uBloom * 0.2;
+      col *= uExposure * uTint;
+      col = aces(col);
+      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = mix(vec3(l), col, uSat);
+      col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
+      if (uGlass > 0.5) {
+        float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
+        col *= 1.0 - uScan * (1.0 - s);
+        float m = mod(gl_FragCoord.x, 3.0);
+        vec3 mask = m < 1.0 ? vec3(1.0, 0.85, 0.85) : (m < 2.0 ? vec3(0.85, 1.0, 0.85) : vec3(0.85, 0.85, 1.0));
+        col *= mix(vec3(1.0), mask, uScan * 1.4);
+        col *= 0.985 + 0.015 * sin(uTime * 95.0);
+      }
       vec2 v = uv * (1.0 - uv.yx);
-      col *= clamp(pow(v.x * v.y * 20.0, 0.2), 0.0, 1.0);
-      col *= 0.975 + 0.025 * sin(uTime * 95.0);
+      col *= mix(1.0, clamp(pow(v.x * v.y * 18.0, 0.25), 0.0, 1.0), uVignette);
       float n = fract(sin(dot(gl_FragCoord.xy + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453);
-      col += (n - 0.5) * 0.03 + uFlash;
-      gl_FragColor = vec4(col * 1.22, 1.0);
+      col += (n - 0.5) * 0.018 + uFlash;
+      gl_FragColor = vec4(col, 1.0);
     }`);
   const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
-  let bw = 2, bh = 2;
+  const black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
+  black.needsUpdate = true;
+  let sw = 2, sh = 2;
   return {
-    lite: false,
+    hdr,
+    mirrorSize: { w: 2, h: 2 },
     resize(w, h) {
-      rtScene.setSize(w, h);
-      crt.uniforms.uSceneRes.value.set(w, h);
-      bw = Math.max(2, w >> 2);
-      bh = Math.max(2, h >> 2);
-      rtA.setSize(bw, bh);
-      rtB.setSize(bw, bh);
-    },
-    render(scene, camera, t, ab, flash) {
-      renderer.setRenderTarget(rtScene);
-      renderer.render(scene, camera);
-      if (!this.lite) {
-        bright.uniforms.tDiffuse.value = rtScene.texture;
-        pass(bright, rtA);
-        blur.uniforms.tDiffuse.value = rtA.texture;
-        blur.uniforms.uDir.value.set(1 / bw, 0);
-        pass(blur, rtB);
-        blur.uniforms.tDiffuse.value = rtB.texture;
-        blur.uniforms.uDir.value.set(0, 1 / bh);
-        pass(blur, rtA);
+      sw = w; sh = h;
+      sceneRT.setSize(w, h);
+      brightRT.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
+      let mw = w >> 1, mh = h >> 1;
+      for (const m of mips) {
+        mw = Math.max(2, mw >> 1);
+        mh = Math.max(2, mh >> 1);
+        m.w = mw; m.h = mh;
+        m.a.setSize(mw, mh);
+        m.b.setSize(mw, mh);
       }
-      const u = crt.uniforms;
-      u.tScene.value = rtScene.texture;
-      u.tBloom.value = rtA.texture;
-      u.uBloom.value = this.lite ? 0 : 1.05;
-      u.uTime.value = t;
-      u.uAberr.value = ab;
-      u.uFlash.value = flash;
-      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
-      pass(crt, null);
+      this.mirrorSize.w = Math.max(2, Math.round(w * 0.5));
+      this.mirrorSize.h = Math.max(2, Math.round(h * 0.5));
+      final.uniforms.uSceneRes.value.set(w, h);
     },
-    dispose() {
-      [rtScene, rtA, rtB].forEach((r) => r.dispose());
-      [bright, blur, crt].forEach((m) => m.dispose());
-      quad.geometry.dispose();
+    lastCalls: 0,
+    render(scene, camera, o) {
+      renderer.setRenderTarget(sceneRT);
+      renderer.render(scene, camera);
+      this.lastCalls = renderer.info.render.calls;
+      const p = o.post;
+      // bloom: soft-threshold bright pass at half res, then a blurred mip chain
+      bright.uniforms.tDiffuse.value = sceneRT.texture;
+      bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
+      bright.uniforms.uKnee.value = 0.45;
+      bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
+      pass(bright, brightRT);
+      const levels = o.lite ? 3 : LEVELS;
+      let src = brightRT;
+      for (let i = 0; i < LEVELS; i++) {
+        const m = mips[i];
+        if (i >= levels) continue;
+        blur.uniforms.tDiffuse.value = src.texture;
+        blur.uniforms.uDir.value.set(1 / m.w, 0);
+        pass(blur, m.b);
+        blur.uniforms.tDiffuse.value = m.b.texture;
+        blur.uniforms.uDir.value.set(0, 1 / m.h);
+        pass(blur, m.a);
+        src = m.a;
+      }
+      const u = final.uniforms;
+      u.tScene.value = sceneRT.texture;
+      u.tB0.value = mips[0].a.texture;
+      u.tB1.value = mips[1].a.texture;
+      u.tB2.value = mips[2].a.texture;
+      u.tB3.value = levels > 3 ? mips[3].a.texture : black;
+      u.tB4.value = levels > 4 ? mips[4].a.texture : black;
+      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
+      u.uTime.value = o.t;
+      u.uAberr.value = o.ab;
+      u.uFlash.value = o.flash;
+      u.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
+      u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
+      u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
+      u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
+      u.uVignette.value = p.vignette !== undefined ? p.vignette : 1;
+      if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
+      const retro = o.look !== "hd";
+      u.uGlass.value = o.glass;
+      u.uSnap.value = retro ? 1 : 0;
+      u.uFXAA.value = retro ? 0 : 1;
+      u.uScan.value = retro ? 0.2 : 0.07;
+      u.uCurve.value = retro ? 0.11 : 0.06;
+      pass(final, null);
     },
   };
 }
@@ -1429,6 +1543,7 @@ class Scene3D {
     this.scene.background = new THREE.Color(bg);
     if (fog) this.scene.fog = new THREE.Fog(fog[0], fog[1], fog[2]);
     this.camera = new THREE.PerspectiveCamera(fov, GFX.w / GFX.h, near, far);
+    this.camera.layers.enable(1);
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
   }
@@ -1493,6 +1608,8 @@ class Scene3D {
   dispose() {
     this.tw.clear();
     if (this.scene) disposeTree(this.scene);
+    if (this.env) this.env.dispose();
+    if (this.mirror) this.mirror.dispose();
   }
 }
 
@@ -1711,7 +1828,7 @@ class Bursts {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(color).multiplyScalar(2.6), map: glowTexture(), size: size * 2.4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
     this.scene.add(pts);
     this.list.push({ pts, v, n, life, age: 0, gravity });
   }
@@ -2266,28 +2383,543 @@ function rankChip() {
     <span class="meter" style="--c:${COLORS.yellow}"><i style="width:${(r.frac * 100).toFixed(1)}%"></i></span></span>`;
 }
 
+/* ---- 08-fx.js ---- */
+// The visual effects library every scene builds from. Colours passed through
+// neon() exceed 1.0, which the HDR pipeline turns into real glow.
+const neon = (hex, k = 2.4) => new THREE.Color(hex).multiplyScalar(k);
+
+// Shared GLSL: hash + value noise.
+const GLSL_NOISE = `
+float hash13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float vnoise(vec3 p){
+  vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+}`;
+// Fog the shaders apply themselves (kept in sync with scene.fog by FX.sync).
+const GLSL_FOG_PARS = "uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar;";
+const fogUniforms = () => ({ uFogColor: { value: new THREE.Color(0) }, uFogNear: { value: 1 }, uFogFar: { value: 1e5 } });
+
+const FX = {
+  // Copy scene fog and time into every custom shader in a scene. Call once a frame.
+  sync(scene, t) {
+    const fog = scene.fog;
+    scene.traverse((o) => {
+      const m = o.material;
+      if (!m || !m.uniforms) return;
+      const u = m.uniforms;
+      if (u.uTime) u.uTime.value = t;
+      if (u.uFogColor && fog) { u.uFogColor.value.copy(fog.color); u.uFogNear.value = fog.near; u.uFogFar.value = fog.far; }
+    });
+  },
+};
+
+// A sky dome that follows the camera: gradient, a hot horizon band, twinkling
+// stars, optional thin cloud bands or a nebula.
+function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 0x07021a, glow = 1, stars = 1, clouds = 0, nebula = 0, nebulaColor = 0x35efff, radius = 420 } = {}) {
+  const uniforms = {
+    uTop: { value: new THREE.Color(top) }, uMid: { value: new THREE.Color(mid) }, uHorizon: { value: new THREE.Color(horizon) },
+    uBottom: { value: new THREE.Color(bottom) }, uGlow: { value: glow }, uStars: { value: stars }, uClouds: { value: clouds },
+    uNebula: { value: nebula }, uNebulaColor: { value: new THREE.Color(nebulaColor) }, uTime: { value: 0 },
+  };
+  const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), new THREE.ShaderMaterial({
+    uniforms, side: THREE.BackSide, depthWrite: false,
+    vertexShader: "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `${GLSL_NOISE}
+      uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; uniform vec3 uBottom; uniform vec3 uNebulaColor;
+      uniform float uGlow; uniform float uStars; uniform float uClouds; uniform float uNebula; uniform float uTime; varying vec3 vDir;
+      void main(){
+        vec3 d = normalize(vDir); float h = d.y;
+        vec3 col = mix(uHorizon, uMid, smoothstep(0.0, 0.2, h));
+        col = mix(col, uTop, smoothstep(0.2, 0.75, h));
+        if (h < 0.0) col = mix(uHorizon * 0.55, uBottom, smoothstep(0.0, 0.18, -h));
+        col += uHorizon * uGlow * (0.8 * exp(-abs(h) * 26.0) + 0.25 * exp(-abs(h) * 6.0));
+        if (uNebula > 0.0) {
+          float n = vnoise(d * 3.0 + vec3(0.0, 0.0, uTime * 0.01)) * 0.55 + vnoise(d * 7.5 - vec3(uTime * 0.008)) * 0.3 + vnoise(d * 16.0) * 0.15;
+          float m = vnoise(d * 2.2 + 11.0);
+          col += mix(uNebulaColor, uHorizon, m) * pow(max(n - 0.25, 0.0) * 1.4, 2.2) * uNebula;
+        }
+        if (uClouds > 0.0) {
+          float b = vnoise(vec3(d.x * 3.0 + uTime * 0.004, h * 34.0, d.z * 3.0));
+          float band = smoothstep(0.58, 0.9, b) * smoothstep(0.015, 0.09, h) * (1.0 - smoothstep(0.12, 0.42, h));
+          col = mix(col, uHorizon * 0.9 + uMid * 0.4, band * uClouds * 0.45);
+        }
+        if (uStars > 0.0) {
+          vec3 p = d * 240.0; vec3 c = floor(p); float r = hash13(c);
+          if (r > 0.972) {
+            float s = smoothstep(0.3, 0.0, length(fract(p) - 0.5));
+            float tw = 0.5 + 0.5 * sin(uTime * (1.2 + r * 5.0) + r * 77.0);
+            col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
+          }
+        }
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  }));
+  m.renderOrder = -10;
+  m.frustumCulled = false;
+  m.userData.sky = true;
+  return m;
+}
+// Keep a sky dome centred on the camera so it reads as infinitely far.
+function followSky(sky, camera) { sky.position.copy(camera.position); }
+
+// The synthwave sun: a gradient disc with stripe gaps that scroll down.
+function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4 } = {}) {
+  const g = new THREE.Group();
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uTint: { value: new THREE.Color(1, 1, 1) } },
+    transparent: true, depthWrite: false, extensions: { derivatives: true },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `
+      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; varying vec2 vUv;
+      void main(){
+        vec2 p = vUv * 2.0 - 1.0; float r = length(p);
+        float fw = fwidth(r);
+        float a = 1.0 - smoothstep(1.0 - fw * 1.5, 1.0, r);
+        vec3 col = mix(uBottom, uTop, smoothstep(-0.85, 0.85, p.y)) * uI * uTint;
+        col *= 1.0 + 0.35 * smoothstep(0.6, 1.0, r);
+        if (uStripes > 0.5) {
+          float yy = 0.18 - p.y;
+          if (yy > 0.0) {
+            float ph = fract(yy * 7.0 + uTime * 0.25);
+            float th = clamp(0.06 + yy * 0.55, 0.06, 0.8);
+            float w = fwidth(ph) * 1.2;
+            a *= smoothstep(th - w, th + w, ph);
+          }
+        }
+        gl_FragColor = vec4(col, a);
+      }`,
+  });
+  const disc = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2, radius * 2), mat);
+  const glow = glowSprite(neon(halo, 1.6), radius * 3.6, 0.55);
+  g.add(glow, disc);
+  g.userData.disc = disc;
+  g.userData.glow = glow;
+  return g;
+}
+
+// A planar mirror at height y. Floors sample its texture for reflections.
+// Only layer-0 objects are reflected; put small details on layer 1.
+class Mirror {
+  constructor(y = 0) {
+    this.y = y;
+    this.rt = new THREE.WebGLRenderTarget(2, 2, {
+      minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat,
+      type: GFX.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, depthBuffer: true, stencilBuffer: false,
+    });
+    this.cam = new THREE.PerspectiveCamera();
+    this.cam.layers.set(0);
+    this.matrix = new THREE.Matrix4();
+    this.receivers = [];
+    this.hide = [];
+    this._v = { n: new THREE.Vector3(0, 1, 0), p: new THREE.Vector3(), cam: new THREE.Vector3(), look: new THREE.Vector3(), tgt: new THREE.Vector3(),
+      rot: new THREE.Matrix4(), plane: new THREE.Plane(), clip: new THREE.Vector4(), q: new THREE.Vector4() };
+  }
+  get texture() { return this.rt.texture; }
+  render(renderer, scene, camera, size) {
+    const v = this._v;
+    if (this.rt.width !== size.w || this.rt.height !== size.h) this.rt.setSize(size.w, size.h);
+    camera.updateMatrixWorld();
+    v.cam.setFromMatrixPosition(camera.matrixWorld);
+    if (v.cam.y <= this.y + 0.01) return;
+    v.p.set(v.cam.x, this.y, v.cam.z);
+    const vc = this.cam;
+    vc.position.copy(v.p).sub(v.cam).reflect(v.n).negate().add(v.p);
+    v.rot.extractRotation(camera.matrixWorld);
+    v.look.set(0, 0, -1).applyMatrix4(v.rot).add(v.cam);
+    v.tgt.copy(v.p).sub(v.look).reflect(v.n).negate().add(v.p);
+    vc.up.set(0, 1, 0).applyMatrix4(v.rot).reflect(v.n);
+    vc.lookAt(v.tgt);
+    vc.far = camera.far;
+    vc.updateMatrixWorld();
+    vc.projectionMatrix.copy(camera.projectionMatrix);
+    this.matrix.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1).multiply(vc.projectionMatrix).multiply(vc.matrixWorldInverse);
+    // Oblique near plane: clip everything below the mirror.
+    v.plane.setFromNormalAndCoplanarPoint(v.n, v.p).applyMatrix4(vc.matrixWorldInverse);
+    v.clip.set(v.plane.normal.x, v.plane.normal.y, v.plane.normal.z, v.plane.constant);
+    const e = vc.projectionMatrix.elements;
+    v.q.set((Math.sign(v.clip.x) + e[8]) / e[0], (Math.sign(v.clip.y) + e[9]) / e[5], -1, (1 + e[10]) / e[14]);
+    v.clip.multiplyScalar(2 / v.clip.dot(v.q));
+    e[2] = v.clip.x; e[6] = v.clip.y; e[10] = v.clip.z + 1 - 0.003; e[14] = v.clip.w;
+    for (const r of this.receivers) r.visible = false;
+    for (const o of this.hide) o.visible = false;
+    const sky = scene.children.find((c) => c.userData.sky);
+    if (sky) sky.position.copy(vc.position);
+    renderer.setRenderTarget(this.rt);
+    renderer.clear();
+    renderer.render(scene, vc);
+    if (sky) sky.position.copy(v.cam);
+    for (const r of this.receivers) r.visible = true;
+    for (const o of this.hide) o.visible = true;
+  }
+  dispose() { this.rt.dispose(); }
+}
+
+// A glossy floor with a glowing anti-aliased grid (square or polar) and an
+// optional mirror reflection with a gentle wet ripple.
+function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1 } = {}) {
+  const uniforms = Object.assign(fogUniforms(), {
+    uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
+    tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
+    uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
+    uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha },
+  });
+  const mat = new THREE.ShaderMaterial({
+    uniforms, extensions: { derivatives: true },
+    vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
+      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid;
+      varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
+      void main(){
+        vec3 col = uBase;
+        if (uReflect > 0.0) {
+          vec2 ruv = vRefl.xy / vRefl.w;
+          vec2 rip = vec2(sin(vWorld.z * 2.3 + uTime * 0.9) * 0.6 + sin(vWorld.x * 1.1 - uTime * 0.5) * 0.4, cos(vWorld.x * 1.7 + vWorld.z * 0.4 + uTime * 0.6)) * uRipple;
+          vec3 r = texture2D(tReflect, ruv + rip).rgb * 0.36;
+          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak)).rgb * 0.22;
+          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
+          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          col += r * uReflect;
+        }
+        vec2 g; vec2 fw;
+        if (uPolar > 0.5) {
+          float rr = length(vWorld.xz);
+          float th = atan(vWorld.z, vWorld.x) / 6.2831853;
+          g = vec2(th * uSpokes, rr / uCell);
+          fw = vec2(min(fwidth(th), fwidth(fract(th + 0.5))) * uSpokes, fwidth(g.y));
+        } else {
+          g = vec2(vWorld.x, vWorld.z + uScroll) / uCell;
+          fw = fwidth(g);
+        }
+        fw = max(fw, vec2(1e-4));
+        vec2 dd = abs(fract(g - 0.5) - 0.5);
+        vec2 aa = dd / fw;
+        float ln = 1.0 - min(min(aa.x, aa.y), 1.0);
+        float halo = exp(-min(aa.x, aa.y) * 0.45);
+        float fade = 1.0 - smoothstep(0.18, 0.55, max(fw.x, fw.y));
+        col += uLine * (ln + halo * uGlow * 0.2) * fade * uGrid;
+        col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(size, size), mat);
+  floor.rotation.x = -Math.PI / 2;
+  if (mirror) mirror.receivers.push(floor);
+  return floor;
+}
+
+// A distant city: merged boxes with lit windows and a glowing roofline.
+function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff } = {}) {
+  const pos = [], nor = [], seed = [];
+  let x = -width / 2;
+  for (let i = 0; i < count && x < width / 2; i++) {
+    const w = rand(4, 11), h = rand(minH, maxH) * (1 - Math.abs(x) / width * 0.9), d = rand(depth * 0.5, depth);
+    const g = new THREE.BoxGeometry(w, h, d).toNonIndexed();
+    g.translate(x + w / 2, h / 2, z + rand(-8, 8));
+    const p = g.attributes.position.array, n = g.attributes.normal.array, s = Math.random();
+    for (let k = 0; k < p.length; k++) { pos.push(p[k]); nor.push(n[k]); }
+    for (let k = 0; k < p.length / 3; k++) seed.push(s);
+    x += w + rand(-1.5, 1.5);
+    g.dispose();
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, 2.2) }, uLit: { value: lit }, uTime: { value: 0 } }),
+    extensions: { derivatives: true },
+    vertexShader: `attribute float aSeed; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vN = normal; vSeed = aSeed; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
+      uniform vec3 uBase; uniform vec3 uWin; uniform float uLit; uniform float uTime; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
+      void main(){
+        vec3 col = uBase * (0.6 + 0.4 * max(vN.z, 0.0)) * (0.7 + 0.5 * smoothstep(0.0, 30.0, vWorld.y));
+        if (abs(vN.z) > 0.5 || abs(vN.x) > 0.5) {
+          vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
+          vec2 cell = floor(q); vec2 f = fract(q);
+          float on = step(hash13(vec3(cell, floor(vSeed * 97.0))), uLit);
+          float win = step(0.28, f.x) * step(f.x, 0.72) * step(0.32, f.y) * step(f.y, 0.78);
+          float flick = 0.85 + 0.15 * sin(uTime * 0.5 + hash13(vec3(cell, 3.0)) * 40.0);
+          vec3 wc = mix(uWin, uWin.bgr * 0.8, step(0.8, hash13(vec3(cell, 9.0))));
+          col += wc * win * on * flick * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
+        }
+        col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+// Layered mountains: gradient-filled peaks with a glowing ridge line.
+function makeRidge({ width = 560, z = -230, height = 40, n = 46, top = 0x3a1066, bottom = 0x0b0322, line = 0xff3ad4, lineK = 2.2, wire = true } = {}) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const x = -width / 2 + (width * i) / n;
+    const edge = Math.abs(x) / (width / 2);
+    const peak = i % 2 ? rand(0.55, 1) : rand(0.1, 0.42);
+    pts.push([x, peak * height * (0.3 + 0.7 * edge)]);
+  }
+  const pos = [], col = [];
+  const cTop = new THREE.Color(top), cBot = new THREE.Color(bottom);
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    const c0 = cBot.clone().lerp(cTop, y0 / height), c1 = cBot.clone().lerp(cTop, y1 / height);
+    pos.push(x0, 0, 0, x1, 0, 0, x1, y1, 0, x0, 0, 0, x1, y1, 0, x0, y0, 0);
+    [cBot, cBot, c1, cBot, c1, c0].forEach((c) => col.push(c.r, c.g, c.b));
+  }
+  const fg = new THREE.BufferGeometry();
+  fg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  fg.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  const grp = new THREE.Group();
+  grp.add(new THREE.Mesh(fg, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })));
+  const lp = [];
+  pts.forEach(([x, y]) => lp.push(x, y, 0.2));
+  const lg = new THREE.BufferGeometry();
+  lg.setAttribute("position", new THREE.Float32BufferAttribute(lp, 3));
+  grp.add(new THREE.Line(lg, new THREE.LineBasicMaterial({ color: neon(line, lineK) })));
+  if (wire) {
+    const wp = [];
+    const dx = width / n;
+    for (let i = 1; i < n; i++) {
+      const [x, y] = pts[i];
+      if (y > height * 0.3) wp.push(x, y, 0.1, x - dx * 0.8, y * 0.35, 0.1, x, y, 0.1, x + dx * 0.6, y * 0.25, 0.1);
+    }
+    const wg = new THREE.BufferGeometry();
+    wg.setAttribute("position", new THREE.Float32BufferAttribute(wp, 3));
+    grp.add(new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: neon(line, 0.7), transparent: true, opacity: 0.5 })));
+  }
+  grp.position.z = z;
+  return grp;
+}
+
+// A soft volumetric beam of light, hanging down from its origin.
+function makeLightCone({ color = 0xff3ad4, top = 0.25, bottom = 2.6, height = 8, intensity = 0.55 } = {}) {
+  const geo = new THREE.CylinderGeometry(top, bottom, height, 32, 1, true);
+  geo.translate(0, -height / 2, 0);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(color, 1) }, uI: { value: intensity }, uH: { value: height }, uTime: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: `uniform float uH; varying float vH; varying vec3 vN; varying vec3 vV;
+      void main(){ vH = 1.0 + position.y / uH; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uTime; varying float vH; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float face = pow(abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float fall = pow(clamp(vH, 0.0, 1.0), 1.4) * smoothstep(0.0, 0.18, vH);
+        float flick = 0.92 + 0.08 * sin(uTime * 13.0 + vH * 4.0);
+        gl_FragColor = vec4(uColor * uI * face * fall * flick, 1.0);
+      }`,
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.renderOrder = 5;
+  return m;
+}
+
+// A glowing pool of light lying on the floor.
+function makeLightPool({ color = 0xff3ad4, radius = 2.6, intensity = 0.9 } = {}) {
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(radius * 2, radius * 2),
+    new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(color, intensity), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })
+  );
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = 0.03;
+  m.renderOrder = 4;
+  return m;
+}
+
+// A rim of light around a shape, brightest where it turns away from you.
+function fresnelShell(geometry, color, { power = 2.4, intensity = 2, scale = 1.04 } = {}) {
+  const m = new THREE.Mesh(geometry, new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(color, 1) }, uP: { value: power }, uI: { value: intensity } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
+    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
+  }));
+  m.scale.setScalar(scale);
+  return m;
+}
+
+// A glowing ribbon trail (engine exhaust, tail lights). Points are pushed each
+// frame; the ribbon lies flat, perpendicular to its own direction.
+class Trail {
+  constructor({ length = 28, width = 0.3, color = 0xff3ad4, intensity = 2.5, up = new THREE.Vector3(0, 1, 0) } = {}) {
+    this.n = length;
+    this.width = width;
+    this.up = up;
+    this.pts = [];
+    const geo = new THREE.BufferGeometry();
+    this.pos = new Float32Array(this.n * 2 * 3);
+    const alpha = new Float32Array(this.n * 2);
+    for (let i = 0; i < this.n; i++) { const a = Math.pow(1 - i / (this.n - 1), 1.6); alpha[i * 2] = a; alpha[i * 2 + 1] = a; }
+    const idx = [];
+    for (let i = 0; i < this.n - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
+    geo.setAttribute("aAlpha", new THREE.BufferAttribute(alpha, 1));
+    geo.setIndex(idx);
+    this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: neon(color, intensity) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: "attribute float aAlpha; varying float vA; void main(){ vA = aAlpha; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying float vA; void main(){ gl_FragColor = vec4(uColor * vA, 1.0); }",
+    }));
+    this.mesh.frustumCulled = false;
+    this._a = new THREE.Vector3();
+    this._s = new THREE.Vector3();
+  }
+  reset(p) { this.pts = Array.from({ length: this.n }, () => p.clone()); }
+  push(p) {
+    if (!this.pts.length) this.reset(p);
+    const last = this.pts.pop();
+    last.copy(p);
+    this.pts.unshift(last);
+    for (let i = 0; i < this.n; i++) {
+      const a = this.pts[i], b = this.pts[Math.min(this.n - 1, i + 1)], c = this.pts[Math.max(0, i - 1)];
+      this._a.subVectors(c, b);
+      if (this._a.lengthSq() < 1e-8) this._a.set(0, 0, 1);
+      this._s.crossVectors(this._a, this.up).normalize().multiplyScalar(this.width * (1 - (i / this.n) * 0.6));
+      this.pos[i * 6] = a.x + this._s.x; this.pos[i * 6 + 1] = a.y + this._s.y; this.pos[i * 6 + 2] = a.z + this._s.z;
+      this.pos[i * 6 + 3] = a.x - this._s.x; this.pos[i * 6 + 4] = a.y - this._s.y; this.pos[i * 6 + 5] = a.z - this._s.z;
+    }
+    this.mesh.geometry.attributes.position.needsUpdate = true;
+  }
+  // Move every point (for worlds that scroll toward the camera).
+  shift(dx, dy, dz) { for (const p of this.pts) { p.x += dx; p.y += dy; p.z += dz; } }
+}
+
+// An environment map for glossy materials, made from a small neon scene:
+// a gradient sky plus a few bright panels that show up as reflections.
+function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
+  if (!GFX.ok) return null;
+  const sc = new THREE.Scene();
+  sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 40 }));
+  for (const p of panels) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(p.w || 10, p.h || 4), new THREE.MeshBasicMaterial({ color: neon(p.color, p.k || 3), side: THREE.DoubleSide }));
+    m.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    m.lookAt(0, 0, 0);
+    sc.add(m);
+  }
+  const pm = new THREE.PMREMGenerator(GFX.renderer);
+  const rt = pm.fromScene(sc, 0.02, 0.1, 100);
+  pm.dispose();
+  disposeTree(sc);
+  return rt.texture;
+}
+
+// A glossy material that picks up the neon around it.
+function glossy(color, { env = null, metal = 0.6, rough = 0.3, emissive = 0, emissiveK = 1, envI = 1.2 } = {}) {
+  return new THREE.MeshStandardMaterial({
+    color, metalness: metal, roughness: rough, envMap: env, envMapIntensity: envI,
+    emissive: emissive ? neon(emissive, emissiveK) : 0x000000, flatShading: true,
+  });
+}
+
+// An energy beam: hot white core, coloured falloff, crawling noise.
+function beamMaterial(color, intensity = 3) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(color, intensity) }, uTime: { value: 0 }, uFade: { value: 1 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vN; varying vec3 vV; varying vec2 vUv; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `${GLSL_NOISE}
+      uniform vec3 uColor; uniform float uTime; uniform float uFade; varying vec3 vN; varying vec3 vV; varying vec2 vUv;
+      void main(){
+        float f = abs(dot(normalize(vN), normalize(vV)));
+        float core = pow(f, 6.0) * 2.5 + pow(f, 1.5);
+        float crawl = 0.7 + 0.3 * vnoise(vec3(vUv.y * 30.0 - uTime * 25.0, vUv.x * 6.0, uTime));
+        gl_FragColor = vec4((uColor + vec3(core * 0.6)) * core * crawl * uFade, 1.0);
+      }`,
+  });
+}
+function beamBetween(from, to, color, radius = 0.1, intensity = 3) {
+  const dir = new THREE.Vector3().subVectors(to, from);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, dir.length(), 12, 1, true), beamMaterial(color, intensity));
+  m.position.copy(from).addScaledVector(dir, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  m.renderOrder = 6;
+  return m;
+}
+
+// Dust motes drifting in the air (or snow of sparks), additive soft dots.
+function makeMotes({ count = 160, box = [30, 10, 30], center = [0, 4, -8], color = 0xbfb3ff, size = 0.18, k = 1.4 } = {}) {
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    pos[i * 3] = center[0] + rand(-box[0], box[0]) / 2;
+    pos[i * 3 + 1] = center[1] + rand(-box[1], box[1]) / 2;
+    pos[i * 3 + 2] = center[2] + rand(-box[2], box[2]) / 2;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color: neon(color, k), map: glowTexture(), size, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  p.userData.base = pos.slice();
+  p.userData.drift = (t) => {
+    const a = g.attributes.position.array, b = p.userData.base;
+    for (let i = 0; i < count; i++) {
+      a[i * 3] = b[i * 3] + Math.sin(t * 0.3 + i) * 0.4;
+      a[i * 3 + 1] = b[i * 3 + 1] + Math.sin(t * 0.21 + i * 1.7) * 0.5;
+    }
+    g.attributes.position.needsUpdate = true;
+  };
+  return p;
+}
+
+// A falling star streaking across the sky now and then.
+function makeShootingStar() {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, -6, 1.2, 0], 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute([3, 3, 3.4, 0, 0, 0], 3));
+  const l = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  l.visible = false;
+  l.userData.t = rand(2, 6);
+  l.userData.tick = (dt) => {
+    const u = l.userData;
+    u.t -= dt;
+    if (u.t < 0 && !l.visible) {
+      l.visible = true;
+      u.life = 0;
+      l.position.set(rand(-120, 120), rand(60, 110), -300);
+      u.v = new THREE.Vector3(rand(-1, 1) > 0 ? 160 : -160, -36, 0);
+      l.scale.set(u.v.x > 0 ? -1 : 1, 1, 1);
+      l.scale.multiplyScalar(3);
+    }
+    if (l.visible) {
+      u.life += dt;
+      l.position.addScaledVector(u.v, dt);
+      l.material.opacity = Math.sin(Math.min(1, u.life / 0.9) * Math.PI);
+      if (u.life > 0.9) { l.visible = false; u.t = rand(4, 10); }
+    }
+  };
+  return l;
+}
+
 /* ---- 10-title.js ---- */
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
 class TitleScene extends Scene3D {
   constructor() {
-    super({ fov: 62, fog: [0x090320, 30, 250] });
+    super({ fov: 62, far: 900, fog: [0x2a0a44, 80, 620] });
     this.speed = 14;
     this.dist = 0;
     if (!this.has3D) return;
     const s = this.scene;
-    this.grid = makeGrid({ size: 420, step: 7, color: 0xff3ad4 });
-    s.add(this.grid);
-    this.sun = makeSun(46, ["#ffe14f", "#ff9b3d", "#ff3ad4"]);
-    this.sun.position.set(0, 24, -235);
+    this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8 });
+    s.add(this.sky);
+    this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.9 });
+    this.sun.position.set(0, 18, -360);
     s.add(this.sun);
-    s.add(makeMountains({ z: -200, color: 0xa65fff, height: 40 }));
-    const back = makeMountains({ z: -215, color: 0x35efff, height: 58, n: 30 });
-    back.position.y = -6;
-    s.add(back);
-    this.stars = makeStars(520, 320, { lowest: 0.02 });
-    s.add(this.stars);
+    s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
+    s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
+    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5 }));
+    this.mirror = new Mirror(0);
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009 });
+    s.add(this.floor);
+    s.userData.mirrors = [this.mirror];
+    this.shooting = makeShootingStar();
+    s.add(this.shooting);
+    s.userData.post = { exposure: 1.15, bloom: 1 };
     this.camBase.set(0, 3.4, 12);
-    this.lookAt.set(0, 7, -120);
+    this.lookAt.set(0, 9, -120);
   }
   boost() {
     this.tw.add(1.1, (k) => { this.speed = 14 + k * 160; }, null, Ease.inCubic);
@@ -2296,11 +2928,18 @@ class TitleScene extends Scene3D {
     super.update(dt);
     this.dist += this.speed * dt;
     if (!this.has3D) return;
-    scrollGrid(this.grid, this.dist);
-    this.stars.rotation.y += dt * 0.004;
-    this.sun.position.y = 24 + Math.sin(this.t * 0.4) * 0.6;
-    this.camBase.y = 3.4 + Math.sin(this.t * 0.7) * 0.15;
+    this.floor.material.uniforms.uScroll.value = -this.dist;
+    this.shooting.userData.tick(dt);
+    this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
+    this.camBase.set(Pointer.x * 1.2, 3.4 + Math.sin(this.t * 0.7) * 0.15 - Pointer.y * 0.5, 12);
+    this.lookAt.set(Pointer.x * 6, 9, -120);
     this.placeCamera();
+    followSky(this.sky, this.camera);
+    FX.sync(this.scene, this.t);
+  }
+  dispose() {
+    if (this.mirror) this.mirror.dispose();
+    super.dispose();
   }
 }
 
@@ -4995,8 +5634,8 @@ function showSettings() {
     <div class="scroll"><div class="wrap">
       ${row("Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
-      ${row("CRT filter", "Scanlines and screen glow", seg("crt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Pixels", "How chunky the 3D looks", seg("pixel", [["chunky", "CHUNKY"], ["retro", "RETRO"], ["sharp", "SHARP"]]))}
+      ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
@@ -5079,7 +5718,21 @@ function boot() {
 }
 
 // Test hook: open the page with #debug to expose internals to automated checks.
-if (/debug/.test(location.hash)) window.__arcade = { Scenes, Store, UI, CHAPTERS };
+if (/debug/.test(location.hash)) {
+  window.__arcade = {
+    Scenes, Store, UI, CHAPTERS, GFX,
+    // go("blaster", "2"), go("hub"), go("title"), go("guide") …
+    go(where, stage = "2") {
+      for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;
+      Sound.init();
+      if (where === "hub") return showHub();
+      if (where === "title") return showTitle();
+      if (where === "guide") return showGuide();
+      if (where === "exam") return startGame("exam", makeSelection("all"));
+      startGame(where, makeSelection(stage));
+    },
+  };
+}
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 else boot();

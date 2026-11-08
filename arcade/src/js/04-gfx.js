@@ -3,41 +3,56 @@
 const GFX = {
   renderer: null,
   ok: false,
-  post: null, // the CRT pipeline (null when the filter is off)
+  hdr: false, // half-float targets: neon can be brighter than white and bloom like light
+  pipe: null,
   w: window.innerWidth,
   h: window.innerHeight,
   t: 0,
-  ab: 0, // colour-fringe pulse, in output pixels
+  dyn: 1, // dynamic-resolution factor (HD look only)
+  lite: false, // set when the device struggles: no reflections, lighter bloom
+  ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   freeze: 0, // hit-stop seconds remaining
-  slow: 0,
   init() {
     if (window.THREE) {
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance" });
+        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance", stencil: false });
         this.renderer.setClearColor(0x090320, 1);
         this.ok = true;
       } catch (e) {
         this.ok = false;
       }
     }
-    if (!this.ok) document.body.classList.add("no-gl");
-    if (this.ok && Store.settings.crt) this.post = makeCRT(this.renderer);
+    if (!this.ok) {
+      document.body.classList.add("no-gl");
+      this.resize();
+      return;
+    }
+    const r = this.renderer;
+    const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
+    this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
+    this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
+    this.pipe = makePipeline(r, this.hdr);
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
-  // Resolution the 3D world is drawn at: low, for the chunky polygon look.
+  // HD (default) renders sharp and anti-aliased; RETRO and CHUNKY render low-res pixels.
+  get look() {
+    const p = Store.settings.pixel;
+    return p === "retro" || p === "chunky" ? p : "hd";
+  },
   scenePR() {
     const dpr = window.devicePixelRatio || 1;
-    const mode = Store.settings.pixel;
-    if (mode === "sharp") return Math.min(dpr, 2);
-    const target = mode === "chunky" ? 380 : 680; // pixels across the longest side
-    return clamp(target / Math.max(this.w, this.h), 0.12, dpr);
+    const look = this.look;
+    if (look === "retro") return clamp(680 / Math.max(this.w, this.h), 0.12, dpr);
+    if (look === "chunky") return clamp(380 / Math.max(this.w, this.h), 0.12, dpr);
+    const base = Math.min(dpr, this.small ? 1.5 : 2, 1900 / Math.max(this.w, this.h));
+    return Math.max(0.35, base * this.dyn);
   },
-  // Resolution of the final CRT image (curvature and scanlines need real pixels).
   outPR() {
-    if (!this.post) return this.scenePR();
-    return Math.min(window.devicePixelRatio || 1, this.slow ? 1 : 1.5);
+    // HD: the final image is drawn at the scene resolution (no upscale blur from post).
+    // Retro looks: draw the glass at a finer resolution so scanlines stay crisp.
+    return this.look === "hd" ? this.scenePR() : Math.min(window.devicePixelRatio || 1, 1.5);
   },
   resize() {
     this.w = window.innerWidth;
@@ -45,42 +60,52 @@ const GFX = {
     if (this.ok) {
       this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
-      if (this.post) this.post.resize(Math.max(2, Math.round(this.w * this.scenePR())), Math.max(2, Math.round(this.h * this.scenePR())));
-      $("#gl").classList.toggle("post", !!this.post);
+      const pr = this.scenePR();
+      this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
+      $("#gl").classList.toggle("post", this.look === "hd");
     }
     Scenes.resize();
   },
-  setCRT(on) {
-    if (!this.ok) return;
-    if (on && !this.post) this.post = makeCRT(this.renderer);
-    if (!on && this.post) { this.post.dispose(); this.post = null; }
-    this.resize();
-  },
+  setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
-    if (!this.post) {
-      this.renderer.setRenderTarget(null);
-      this.renderer.render(scene, camera);
-      return;
-    }
-    this.post.render(scene, camera, this.t, this.ab, this.flashAmt);
+    const mirrors = scene.userData.mirrors;
+    if (mirrors && !this.lite) for (const m of mirrors) m.render(this.renderer, scene, camera, this.pipe.mirrorSize);
+    this.pipe.render(scene, camera, {
+      t: this.t,
+      ab: this.ab,
+      flash: this.flashAmt,
+      glass: Store.settings.crt ? 1 : 0,
+      look: this.look,
+      post: scene.userData.post || {},
+      lite: this.lite,
+    });
   },
-  // Juice: colour fringing + white flash on the CRT, and a short freeze-frame.
+  // Juice: colour fringing + white flash, and a short freeze-frame.
   pulse(ab = 6, flash = 0.1) {
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
-  // Called with the real frame time; if the device struggles, drop the CRT to a lighter mode.
+  // Dynamic resolution: watch real frame times and trade sharpness for smoothness.
+  lockQuality() { this.locked = true; this.dyn = 1; this.lite = false; this.resize(); },
   watch(realDt) {
-    if (!this.post || this.slow) return;
-    this._acc = (this._acc || 0) * 0.97 + realDt * 0.03;
-    if (this._acc > 0.045 && this.t > 4) {
-      this.slow = 1;
-      this.post.lite = true;
+    if (!this.ok || !this.pipe || this.locked) return;
+    this._n = (this._n || 0) + 1;
+    this._sum = (this._sum || 0) + realDt;
+    if (this._n < 45) return;
+    const avg = this._sum / this._n;
+    this._n = 0;
+    this._sum = 0;
+    if (this.t < 3) return; // let the first frames settle
+    if (avg > 0.024) {
+      if (this.look === "hd" && this.dyn > 0.55) { this.dyn = Math.max(0.55, this.dyn * 0.85); this.resize(); }
+      else if (!this.lite) { this.lite = true; }
+    } else if (avg < 0.0145 && this.look === "hd" && this.dyn < 1) {
+      this.dyn = Math.min(1, this.dyn * 1.07);
       this.resize();
     }
   },
@@ -104,13 +129,18 @@ const Scenes = {
   },
 };
 
-// The CRT: draw the scene into a low-res target, bloom its neon, then show it
-// through curved glass with scanlines, an RGB phosphor mask and a vignette.
-function makeCRT(renderer) {
-  const lin = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
-  const rtScene = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: true }, lin));
-  const rtA = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
-  const rtB = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, lin));
+// The render pipeline: scene → HDR target → 5-level bloom → final pass with
+// exposure, ACES filmic tone mapping, colour grading, FXAA (HD) or pixel snap
+// (retro), and optional CRT glass (curvature, scanlines, phosphor mask).
+function makePipeline(renderer, hdr) {
+  const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
+  const rt = (depth) => new THREE.WebGLRenderTarget(2, 2, {
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: false,
+  });
+  const sceneRT = rt(true);
+  const brightRT = rt(false);
+  const LEVELS = 5;
+  const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const quadScene = new THREE.Scene();
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
@@ -118,10 +148,17 @@ function makeCRT(renderer) {
   quadScene.add(quad);
   const VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
   const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false });
-  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 0.5 } }, `
-    uniform sampler2D tDiffuse; uniform float uThreshold; varying vec2 vUv;
-    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = max(c.r, max(c.g, c.b));
-      gl_FragColor = vec4(c * smoothstep(uThreshold, 1.0, l), 1.0); }`);
+  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 1 }, uKnee: { value: 0.5 }, uPx: { value: new THREE.Vector2() } }, `
+    uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee; uniform vec2 uPx; varying vec2 vUv;
+    void main(){
+      vec3 c = 0.25 * (texture2D(tDiffuse, vUv + uPx * vec2(-0.5, -0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, -0.5)).rgb
+        + texture2D(tDiffuse, vUv + uPx * vec2(-0.5, 0.5)).rgb + texture2D(tDiffuse, vUv + uPx * vec2(0.5, 0.5)).rgb);
+      float l = max(c.r, max(c.g, c.b));
+      float soft = clamp(l - uThreshold + uKnee, 0.0, 2.0 * uKnee);
+      soft = soft * soft / (4.0 * uKnee + 1e-4);
+      float w = max(soft, l - uThreshold) / max(l, 1e-4);
+      gl_FragColor = vec4(min(c * w, vec3(24.0)), 1.0);
+    }`);
   const blur = mat({ tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } }, `
     uniform sampler2D tDiffuse; uniform vec2 uDir; varying vec2 vUv;
     void main(){
@@ -130,72 +167,141 @@ function makeCRT(renderer) {
       c += texture2D(tDiffuse, vUv - uDir * 1.3846154).rgb * 0.3162162;
       c += texture2D(tDiffuse, vUv + uDir * 3.2307692).rgb * 0.0702703;
       c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
-      gl_FragColor = vec4(c, 1.0); }`);
-  const crt = mat({
-    tScene: { value: null }, tBloom: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
-    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 },
+      gl_FragColor = vec4(c, 1.0);
+    }`);
+  const final = mat({
+    tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null },
+    uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
+    uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 }, uExposure: { value: 1 },
+    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
+    uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
   }, `
-    uniform sampler2D tScene; uniform sampler2D tBloom; uniform vec2 uRes; uniform vec2 uSceneRes;
-    uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom; varying vec2 vUv;
-    vec2 warp(vec2 uv){ vec2 c = uv - 0.5; c *= 1.0 + 0.11 * dot(c, c); return c + 0.5; }
-    vec3 px(vec2 uv){ return texture2D(tScene, (floor(uv * uSceneRes) + 0.5) / uSceneRes).rgb; }
+    uniform sampler2D tScene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4;
+    uniform vec2 uRes; uniform vec2 uSceneRes; uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom;
+    uniform float uExposure; uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
+    uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
+    varying vec2 vUv;
+    vec3 tex(vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
+    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
+    vec3 fxaa(vec2 uv){
+      vec2 px = 1.0 / uSceneRes;
+      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
+      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
+      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
+      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
+      vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+      float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
+      float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
+      dir = clamp(dir * rcp, -8.0, 8.0) * px;
+      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
+      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
+      float lB = luma(b);
+      return (lB < lMin || lB > lMax) ? a : b;
+    }
+    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
-      vec2 uv = warp(vUv);
+      vec2 uv = vUv;
+      if (uGlass > 0.5) { vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
-      float a = (0.7 + uAberr) / uRes.x;
-      vec3 col = vec3(px(uv + vec2(a, 0.0)).r, px(uv).g, px(uv - vec2(a, 0.0)).b);
-      col += texture2D(tBloom, uv).rgb * uBloom;
-      float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
-      col *= 0.8 + 0.2 * s;
-      float m = mod(gl_FragCoord.x, 3.0);
-      vec3 mask = m < 1.0 ? vec3(1.0, 0.82, 0.82) : (m < 2.0 ? vec3(0.82, 1.0, 0.82) : vec3(0.82, 0.82, 1.0));
-      col *= mix(vec3(1.0), mask, 0.3);
+      vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
+      float a = uAberr / uRes.x;
+      if (a > 0.0002) { col.r = tex(uv + vec2(a, 0.0)).r; col.b = tex(uv - vec2(a, 0.0)).b; }
+      vec3 bl = texture2D(tB0, uv).rgb * 1.0 + texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55
+        + texture2D(tB3, uv).rgb * 0.4 + texture2D(tB4, uv).rgb * 0.3;
+      col += bl * uBloom * 0.2;
+      col *= uExposure * uTint;
+      col = aces(col);
+      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = mix(vec3(l), col, uSat);
+      col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
+      if (uGlass > 0.5) {
+        float s = 0.5 + 0.5 * cos(6.2831853 * uv.y * uRes.y / 3.0);
+        col *= 1.0 - uScan * (1.0 - s);
+        float m = mod(gl_FragCoord.x, 3.0);
+        vec3 mask = m < 1.0 ? vec3(1.0, 0.85, 0.85) : (m < 2.0 ? vec3(0.85, 1.0, 0.85) : vec3(0.85, 0.85, 1.0));
+        col *= mix(vec3(1.0), mask, uScan * 1.4);
+        col *= 0.985 + 0.015 * sin(uTime * 95.0);
+      }
       vec2 v = uv * (1.0 - uv.yx);
-      col *= clamp(pow(v.x * v.y * 20.0, 0.2), 0.0, 1.0);
-      col *= 0.975 + 0.025 * sin(uTime * 95.0);
+      col *= mix(1.0, clamp(pow(v.x * v.y * 18.0, 0.25), 0.0, 1.0), uVignette);
       float n = fract(sin(dot(gl_FragCoord.xy + fract(uTime) * 91.7, vec2(12.9898, 78.233))) * 43758.5453);
-      col += (n - 0.5) * 0.03 + uFlash;
-      gl_FragColor = vec4(col * 1.22, 1.0);
+      col += (n - 0.5) * 0.018 + uFlash;
+      gl_FragColor = vec4(col, 1.0);
     }`);
   const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
-  let bw = 2, bh = 2;
+  const black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
+  black.needsUpdate = true;
+  let sw = 2, sh = 2;
   return {
-    lite: false,
+    hdr,
+    mirrorSize: { w: 2, h: 2 },
     resize(w, h) {
-      rtScene.setSize(w, h);
-      crt.uniforms.uSceneRes.value.set(w, h);
-      bw = Math.max(2, w >> 2);
-      bh = Math.max(2, h >> 2);
-      rtA.setSize(bw, bh);
-      rtB.setSize(bw, bh);
-    },
-    render(scene, camera, t, ab, flash) {
-      renderer.setRenderTarget(rtScene);
-      renderer.render(scene, camera);
-      if (!this.lite) {
-        bright.uniforms.tDiffuse.value = rtScene.texture;
-        pass(bright, rtA);
-        blur.uniforms.tDiffuse.value = rtA.texture;
-        blur.uniforms.uDir.value.set(1 / bw, 0);
-        pass(blur, rtB);
-        blur.uniforms.tDiffuse.value = rtB.texture;
-        blur.uniforms.uDir.value.set(0, 1 / bh);
-        pass(blur, rtA);
+      sw = w; sh = h;
+      sceneRT.setSize(w, h);
+      brightRT.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
+      let mw = w >> 1, mh = h >> 1;
+      for (const m of mips) {
+        mw = Math.max(2, mw >> 1);
+        mh = Math.max(2, mh >> 1);
+        m.w = mw; m.h = mh;
+        m.a.setSize(mw, mh);
+        m.b.setSize(mw, mh);
       }
-      const u = crt.uniforms;
-      u.tScene.value = rtScene.texture;
-      u.tBloom.value = rtA.texture;
-      u.uBloom.value = this.lite ? 0 : 1.05;
-      u.uTime.value = t;
-      u.uAberr.value = ab;
-      u.uFlash.value = flash;
-      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
-      pass(crt, null);
+      this.mirrorSize.w = Math.max(2, Math.round(w * 0.5));
+      this.mirrorSize.h = Math.max(2, Math.round(h * 0.5));
+      final.uniforms.uSceneRes.value.set(w, h);
     },
-    dispose() {
-      [rtScene, rtA, rtB].forEach((r) => r.dispose());
-      [bright, blur, crt].forEach((m) => m.dispose());
-      quad.geometry.dispose();
+    lastCalls: 0,
+    render(scene, camera, o) {
+      renderer.setRenderTarget(sceneRT);
+      renderer.render(scene, camera);
+      this.lastCalls = renderer.info.render.calls;
+      const p = o.post;
+      // bloom: soft-threshold bright pass at half res, then a blurred mip chain
+      bright.uniforms.tDiffuse.value = sceneRT.texture;
+      bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
+      bright.uniforms.uKnee.value = 0.45;
+      bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
+      pass(bright, brightRT);
+      const levels = o.lite ? 3 : LEVELS;
+      let src = brightRT;
+      for (let i = 0; i < LEVELS; i++) {
+        const m = mips[i];
+        if (i >= levels) continue;
+        blur.uniforms.tDiffuse.value = src.texture;
+        blur.uniforms.uDir.value.set(1 / m.w, 0);
+        pass(blur, m.b);
+        blur.uniforms.tDiffuse.value = m.b.texture;
+        blur.uniforms.uDir.value.set(0, 1 / m.h);
+        pass(blur, m.a);
+        src = m.a;
+      }
+      const u = final.uniforms;
+      u.tScene.value = sceneRT.texture;
+      u.tB0.value = mips[0].a.texture;
+      u.tB1.value = mips[1].a.texture;
+      u.tB2.value = mips[2].a.texture;
+      u.tB3.value = levels > 3 ? mips[3].a.texture : black;
+      u.tB4.value = levels > 4 ? mips[4].a.texture : black;
+      u.uRes.value.set(renderer.domElement.width, renderer.domElement.height);
+      u.uTime.value = o.t;
+      u.uAberr.value = o.ab;
+      u.uFlash.value = o.flash;
+      u.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
+      u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
+      u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
+      u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
+      u.uVignette.value = p.vignette !== undefined ? p.vignette : 1;
+      if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
+      const retro = o.look !== "hd";
+      u.uGlass.value = o.glass;
+      u.uSnap.value = retro ? 1 : 0;
+      u.uFXAA.value = retro ? 0 : 1;
+      u.uScan.value = retro ? 0.2 : 0.07;
+      u.uCurve.value = retro ? 0.11 : 0.06;
+      pass(final, null);
     },
   };
 }
@@ -241,6 +347,7 @@ class Scene3D {
     this.scene.background = new THREE.Color(bg);
     if (fog) this.scene.fog = new THREE.Fog(fog[0], fog[1], fog[2]);
     this.camera = new THREE.PerspectiveCamera(fov, GFX.w / GFX.h, near, far);
+    this.camera.layers.enable(1);
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
   }
@@ -305,6 +412,8 @@ class Scene3D {
   dispose() {
     this.tw.clear();
     if (this.scene) disposeTree(this.scene);
+    if (this.env) this.env.dispose();
+    if (this.mirror) this.mirror.dispose();
   }
 }
 
@@ -523,7 +632,7 @@ class Bursts {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(p, 3));
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(color).multiplyScalar(2.6), map: glowTexture(), size: size * 2.4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
     this.scene.add(pts);
     this.list.push({ pts, v, n, life, age: 0, gravity });
   }
