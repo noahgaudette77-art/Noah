@@ -41,7 +41,7 @@
         "Most provinces bar selling or encumbering the home without the other spouse's consent or court approval; a non-owner spouse can register a notice against title. Several matrimonial homes can exist at once, based on use.",
         "Quebec: if the owner disposes of the residence without consent, the other spouse can claim damages, or seek annulment if a declaration of family residence was registered before the transaction. Lenders should get consent and suggest independent legal advice.",
         "A declaration can also cover a rented residence: once the lessor is notified, the leasing spouse cannot sublet without consent. Without mutual consent, spouses cannot dispose of the furniture of the main family residence.",
-        "Quebec's protection applies whatever the matrimonial regime. Everywhere, a home brought into the marriage is not excluded if it is the matrimonial home when the marriage ends (Jean and Jeanne, Sudbury)."
+        "Quebec's protection applies whatever the matrimonial regime. Generally, a home brought into the marriage is not excluded if it is the matrimonial home when the marriage ends (Jean and Jeanne, Sudbury)."
       ]
     },
     {
@@ -97,7 +97,7 @@
       "page": "11•11",
       "points": [
         "Every couple has a regime governing their finances from the wedding (or civil union) until divorce, separation as to bed and board, dissolution, annulment or death. It can be chosen or changed by contract before or during the union.",
-        "No contract: married before July 1, 1970, community of property; after that date, partnership of acquests. Family patrimony is not a regime.",
+        "No contract: married before July 1, 1970, community of property; after that date, partnership of acquests (the course also says community ended January 1, 1970). Family patrimony is not a regime.",
         "Partnership of acquests: private = owned before the marriage or inherited during it; acquests = everything else acquired during it (wages, income from work or investments). Each manages his or her own; at the end each gets half the other's acquests.",
         "Separation as to property: only private property; each spouse keeps, manages and preserves his or her own assets.",
         "Community of property: legal regime until 1970, no longer regulated by the Civil Code but still binding on couples under it and available by notarized contract; most assets are common, and each keeps private property plus half the common property.",
@@ -299,7 +299,7 @@
       "topic": "Key numbers",
       "page": "11•9",
       "front": "Quebec family property: key dates",
-      "back": "July 1, 1970: acquests becomes the default regime. May 15, 1989: proceedings/separation cut-off. July 1, 1989: family patrimony starts. Dec. 31, 1990: opt-out deadline. Jan. 1, 1991: advance waivers null. June 2002: civil unions."
+      "back": "July 1, 1970: acquests becomes the default regime (the course also gives Jan. 1, 1970). May 15, 1989: proceedings/separation cut-off. July 1, 1989: family patrimony starts. Dec. 31, 1990: opt-out deadline. Jan. 1, 1991: advance waivers null. June 2002: civil unions."
     },
     {
       "id": "c11-f019",
@@ -369,7 +369,7 @@
       "topic": "Matrimonial regimes",
       "page": "11•11",
       "front": "Quebec default regime by marriage date",
-      "back": "Married before July 1, 1970: community of property. Married (or in a civil union) after that date: partnership of acquests."
+      "back": "Married before July 1, 1970: community of property. Married (or in a civil union) after that date: partnership of acquests. (The course elsewhere says community was the legal regime until January 1, 1970.)"
     },
     {
       "id": "c11-f029",
@@ -692,7 +692,7 @@
         "During the marriage, if each spouse gets legal advice"
       ],
       "answer": 0,
-      "explain": "Since January 1, 1991, spouses cannot renounce in advance; any earlier agreement is null. They can renounce (completely or partially, jointly or unilaterally) only at a divorce judgment, separation from bed and board, nullity, dissolution of a civil union or death."
+      "explain": "Spouses can renounce (completely or partially, jointly or unilaterally) only at a divorce judgment, separation from bed and board, nullity, dissolution of a civil union or death. Since January 1, 1991, an agreement made in advance of those events is null."
     },
     {
       "id": "c11-q012",
@@ -1214,7 +1214,7 @@
       "difficulty": 3,
       "topic": "Matrimonial regimes",
       "page": "11•22",
-      "q": "Jeanne, married under the partnership of acquests, holds a $50,000 GIC: $20,000 was a gift from her mother, $20,000 she saved before the marriage and $10,000 she saved during it. On divorce, what part of the GIC is shared as acquests?",
+      "q": "Jeanne, married under the partnership of acquests, holds a $50,000 GIC: $20,000 came from a gift her mother made her before the wedding, $20,000 she saved before the marriage and $10,000 she saved during it. On divorce, what part of the GIC is shared as acquests?",
       "options": [
         "The full $50,000, as it is a financial asset",
         "The $20,000 gift plus the $10,000 savings",
@@ -1222,7 +1222,7 @@
         "None of it, since GICs are not family patrimony"
       ],
       "answer": 2,
-      "explain": "A GIC is excluded from family patrimony, but the regime still applies: the $10,000 saved during the marriage is an acquest to be divided. Her pre-marriage savings and her mother's gift are not shared, as the course's answer shows."
+      "explain": "A GIC is excluded from family patrimony, but the regime still applies: the $10,000 saved during the marriage is an acquest to be divided. What she owned before the marriage, her savings and her mother's gift, is private property and is not shared, as the course's answer shows."
     },
     {
       "id": "c11-q046",
