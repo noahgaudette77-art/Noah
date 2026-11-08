@@ -67,6 +67,16 @@ const UI = {
     void f.offsetWidth;
     f.className = kind;
   },
+  // Black the screen, then run fn once that black frame is showing, then power the
+  // CRT back on. Building a scene (and, the first time, compiling its shaders)
+  // blocks for a moment on a phone: behind black it reads as the set switching
+  // channels, instead of the tap seeming to do nothing.
+  cover(fn) {
+    $("#flash").className = "cover";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try { fn(); } finally { this.flash("crt-on"); }
+    }));
+  },
   banner(text, color = COLORS.yellow, sub = "") {
     const b = this.el(`<div class="banner" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);

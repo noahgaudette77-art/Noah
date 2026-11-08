@@ -57,6 +57,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(134, 255, 94, 0.05) 40%, rgba(134, 255, 94, 0.35) 100%); }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
+#flash.cover { opacity: 1; background: #000; }
 #flash.crt-on { animation: crton 0.55s ease-out forwards; background: #000; }
 #flash.crt-on::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: #fff; box-shadow: 0 0 18px #fff; transform-origin: center; animation: crtline 0.55s ease-out forwards; }
 @keyframes crton { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }

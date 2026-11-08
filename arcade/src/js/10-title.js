@@ -82,7 +82,7 @@ function showTitle() {
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "PLAYER 1 READY";
     scene.boost();
-    setTimeout(() => { UI.flash("crt-on"); showHub(); }, 900);
+    setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };
   UI.show({
     el,

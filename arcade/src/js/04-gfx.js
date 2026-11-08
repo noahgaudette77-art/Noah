@@ -72,6 +72,10 @@ const GFX = {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
+    // Object matrices are updated once per frame here, not again in every pass that
+    // draws the scene (reflections draw it twice).
+    scene.updateMatrixWorld();
+    scene.autoUpdate = false;
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
@@ -260,7 +264,10 @@ function makePipeline(renderer, hdr) {
   const quadScene = new THREE.Scene();
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
   quad.frustumCulled = false;
+  quad.matrixAutoUpdate = false;
   quadScene.add(quad);
+  quadScene.autoUpdate = false; // the full-screen quad never moves
+  quadScene.updateMatrixWorld();
   const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
   const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
   const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "mediump" });

@@ -163,11 +163,11 @@ class Mirror {
     for (const r of this.receivers) r.visible = false;
     for (const o of this.hide) o.visible = false;
     const sky = scene.children.find((c) => c.userData.sky);
-    if (sky) sky.position.copy(vc.position);
+    if (sky) { sky.position.copy(vc.position); sky.updateMatrixWorld(); } // scenes don't auto-update matrices per pass (GFX.render)
     renderer.setRenderTarget(this.rt);
     renderer.clear();
     renderer.render(scene, vc);
-    if (sky) sky.position.copy(v.cam);
+    if (sky) { sky.position.copy(v.cam); sky.updateMatrixWorld(); }
     for (const r of this.receivers) r.visible = true;
     for (const o of this.hide) o.visible = true;
     this.blanked = false;

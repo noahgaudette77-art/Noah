@@ -70,6 +70,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(134, 255, 94, 0.05) 40%, rgba(134, 255, 94, 0.35) 100%); }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
+#flash.cover { opacity: 1; background: #000; }
 #flash.crt-on { animation: crton 0.55s ease-out forwards; background: #000; }
 #flash.crt-on::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: #fff; box-shadow: 0 0 18px #fff; transform-origin: center; animation: crtline 0.55s ease-out forwards; }
 @keyframes crton { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
@@ -1301,6 +1302,10 @@ const GFX = {
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
+    // Object matrices are updated once per frame here, not again in every pass that
+    // draws the scene (reflections draw it twice).
+    scene.updateMatrixWorld();
+    scene.autoUpdate = false;
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
@@ -1489,7 +1494,10 @@ function makePipeline(renderer, hdr) {
   const quadScene = new THREE.Scene();
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
   quad.frustumCulled = false;
+  quad.matrixAutoUpdate = false;
   quadScene.add(quad);
+  quadScene.autoUpdate = false; // the full-screen quad never moves
+  quadScene.updateMatrixWorld();
   const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
   const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
   const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "mediump" });
@@ -2246,6 +2254,16 @@ const UI = {
     void f.offsetWidth;
     f.className = kind;
   },
+  // Black the screen, then run fn once that black frame is showing, then power the
+  // CRT back on. Building a scene (and, the first time, compiling its shaders)
+  // blocks for a moment on a phone: behind black it reads as the set switching
+  // channels, instead of the tap seeming to do nothing.
+  cover(fn) {
+    $("#flash").className = "cover";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try { fn(); } finally { this.flash("crt-on"); }
+    }));
+  },
   banner(text, color = COLORS.yellow, sub = "") {
     const b = this.el(`<div class="banner" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
@@ -2858,11 +2876,11 @@ class Mirror {
     for (const r of this.receivers) r.visible = false;
     for (const o of this.hide) o.visible = false;
     const sky = scene.children.find((c) => c.userData.sky);
-    if (sky) sky.position.copy(vc.position);
+    if (sky) { sky.position.copy(vc.position); sky.updateMatrixWorld(); } // scenes don't auto-update matrices per pass (GFX.render)
     renderer.setRenderTarget(this.rt);
     renderer.clear();
     renderer.render(scene, vc);
-    if (sky) sky.position.copy(v.cam);
+    if (sky) { sky.position.copy(v.cam); sky.updateMatrixWorld(); }
     for (const r of this.receivers) r.visible = true;
     for (const o of this.hide) o.visible = true;
     this.blanked = false;
@@ -3325,7 +3343,7 @@ function showTitle() {
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "PLAYER 1 READY";
     scene.boost();
-    setTimeout(() => { UI.flash("crt-on"); showHub(); }, 900);
+    setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };
   UI.show({
     el,
@@ -4967,9 +4985,11 @@ function startGame(id, sel) {
     Sound.ambience(false);
     Sound.setIntensity(0);
     Sound.sfx("crton");
-    const g = new G(sel);
-    Scenes.set(g);
-    g.start();
+    UI.cover(() => {
+      const g = new G(sel);
+      Scenes.set(g);
+      g.start();
+    });
   };
   if (id === "exam") go();
   else withBriefing(sel, go);
