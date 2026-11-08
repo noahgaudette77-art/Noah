@@ -183,6 +183,7 @@ class BossGame extends QuizGame {
     this.motes = makeMotes({ count: 110, box: [46, 16, 34], center: [0, 7, -10], color: hex, size: 0.2, k: 1.5 });
     this.motes.layers.set(1);
     s.add(this.motes);
+    this.decor(this.motes);
     this.boss = this.makeBoss();
     this.boss.position.set(0, 14, 0);
     s.add(this.boss);
@@ -276,6 +277,7 @@ class BossGame extends QuizGame {
     const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(hex, 0.7), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     poolMesh.layers.set(1);
     s.add(poolMesh);
+    this.decor(poolMesh);
     const bg = new THREE.BufferGeometry();
     bg.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
     bg.setAttribute("normal", new THREE.Float32BufferAttribute(bn, 3));
@@ -311,6 +313,7 @@ class BossGame extends QuizGame {
     beams.frustumCulled = false;
     beams.renderOrder = 4;
     s.add(beams);
+    this.decor(beams);
     // the summoning circle and a pool of light under the boss
     this.rune = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 1.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.rune.rotation.x = -Math.PI / 2;

@@ -264,10 +264,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   position: absolute; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; z-index: 30;
   font: clamp(20px, 7vw, 46px)/1.2 var(--font-display); color: var(--c, var(--yellow));
   text-shadow: 0 0 14px var(--c, var(--yellow)), 0 4px 0 #000; animation: bannerin 1.3s ease-out forwards;
+  will-change: transform, opacity; /* rasterized once, then scaled by the compositor */
 }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
-.floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; }
+.floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
 @keyframes floatup { to { transform: translateY(-50px); opacity: 0; } }
 
 /* boss bar */
@@ -377,7 +378,7 @@ mark { background: var(--yellow); color: #12052e; }
 .dlg-foot .next { color: var(--yellow); animation: blink 0.9s steps(1) infinite; }
 .dlg-foot svg { width: 8px; height: 8px; vertical-align: middle; }
 .dlg-foot button { font: 8px/1 var(--font-display); color: var(--dim); padding: 6px 8px; border: 1px solid var(--line); }
-.bubble { position: absolute; left: 50%; transform: translateX(-50%); z-index: 22; max-width: min(92%, 520px); padding: 8px 12px; background: #fff; color: #12052e; border: 3px solid var(--c, var(--magenta)); box-shadow: 0 4px 0 #000; font-size: clamp(19px, 4.6vw, 24px); line-height: 1.05; text-align: center; pointer-events: none; animation: bubblein 0.18s ease-out; }
+.bubble { position: absolute; left: 50%; transform: translateX(-50%); z-index: 22; max-width: min(92%, 520px); padding: 8px 12px; background: #fff; color: #12052e; border: 3px solid var(--c, var(--magenta)); box-shadow: 0 4px 0 #000; font-size: clamp(19px, 4.6vw, 24px); line-height: 1.05; text-align: center; pointer-events: none; animation: bubblein 0.18s ease-out; will-change: transform, opacity; }
 .bubble::after { content: ""; position: absolute; left: 50%; top: -12px; margin-left: -8px; border: 8px solid transparent; border-bottom-color: var(--c, var(--magenta)); }
 .bubble b { display: block; font: 8px/1.5 var(--font-display); color: var(--c, var(--magenta)); }
 @keyframes bubblein { from { transform: translateX(-50%) scale(0.7); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }

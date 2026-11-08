@@ -198,6 +198,13 @@ class BlasterGame extends QuizGame {
     this.makeStreaks();
     this.makeTunnel();
     this.makeTargetKit();
+    // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
+    this.warmExtra = this.slotMats.map((M) => {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
+      g.position.z = -40;
+      return g;
+    });
     this.shards = new BlasterShards(s);
     this.ship = this.makeShip();
     s.add(this.ship);
@@ -240,6 +247,7 @@ class BlasterGame extends QuizGame {
     this.streaks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.streaks.frustumCulled = false;
     this.scene.add(this.streaks);
+    this.decor(this.streaks);
   }
   resetStreak(i, z) {
     const a = rand(Math.PI * 2), r = rand(3, 24);

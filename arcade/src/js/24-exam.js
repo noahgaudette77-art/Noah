@@ -255,6 +255,7 @@ class ExamGame extends QuizGame {
     const uplights = new THREE.Points(upGeo, new THREE.PointsMaterial({ color: neon(0x8a5cff, 0.6), map: glowTexture(), size: 2.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     uplights.layers.set(1);
     s.add(uplights);
+    this.decor(uplights);
     // moonlight slanting in through three of the windows
     const dir = new THREE.Vector3(-0.3, -0.62, 0.72).normalize();
     [-8, 8, 16].forEach((x) => {
@@ -263,6 +264,7 @@ class ExamGame extends QuizGame {
       b.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
       b.layers.set(1);
       s.add(b);
+      this.decor(b);
     });
 
     // polished floor: a polar grid around the plinth, and the reflection of it all
@@ -309,6 +311,7 @@ class ExamGame extends QuizGame {
     this.motes = makeMotes({ count: 55, box: [7, 9, 7], center: [0, 5, 0], color: 0xffe6c0, size: 0.08, k: 1.0 });
     this.moonMotes = makeMotes({ count: 50, box: [44, 12, 20], center: [0, 6, -8], color: 0xb8c4ff, size: 0.12, k: 0.75 });
     [this.motes, this.moonMotes].forEach((p) => { p.layers.set(1); s.add(p); });
+    this.decor(this.motes, this.moonMotes);
 
     // a quiet arc of studs round the front of the plinth: one per question
     const n = Math.max(1, this.rounds.length);

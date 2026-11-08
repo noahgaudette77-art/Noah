@@ -277,10 +277,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   position: absolute; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; z-index: 30;
   font: clamp(20px, 7vw, 46px)/1.2 var(--font-display); color: var(--c, var(--yellow));
   text-shadow: 0 0 14px var(--c, var(--yellow)), 0 4px 0 #000; animation: bannerin 1.3s ease-out forwards;
+  will-change: transform, opacity; /* rasterized once, then scaled by the compositor */
 }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
-.floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; }
+.floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
 @keyframes floatup { to { transform: translateY(-50px); opacity: 0; } }
 
 /* boss bar */
@@ -390,7 +391,7 @@ mark { background: var(--yellow); color: #12052e; }
 .dlg-foot .next { color: var(--yellow); animation: blink 0.9s steps(1) infinite; }
 .dlg-foot svg { width: 8px; height: 8px; vertical-align: middle; }
 .dlg-foot button { font: 8px/1 var(--font-display); color: var(--dim); padding: 6px 8px; border: 1px solid var(--line); }
-.bubble { position: absolute; left: 50%; transform: translateX(-50%); z-index: 22; max-width: min(92%, 520px); padding: 8px 12px; background: #fff; color: #12052e; border: 3px solid var(--c, var(--magenta)); box-shadow: 0 4px 0 #000; font-size: clamp(19px, 4.6vw, 24px); line-height: 1.05; text-align: center; pointer-events: none; animation: bubblein 0.18s ease-out; }
+.bubble { position: absolute; left: 50%; transform: translateX(-50%); z-index: 22; max-width: min(92%, 520px); padding: 8px 12px; background: #fff; color: #12052e; border: 3px solid var(--c, var(--magenta)); box-shadow: 0 4px 0 #000; font-size: clamp(19px, 4.6vw, 24px); line-height: 1.05; text-align: center; pointer-events: none; animation: bubblein 0.18s ease-out; will-change: transform, opacity; }
 .bubble::after { content: ""; position: absolute; left: 50%; top: -12px; margin-left: -8px; border: 8px solid transparent; border-bottom-color: var(--c, var(--magenta)); }
 .bubble b { display: block; font: 8px/1.5 var(--font-display); color: var(--c, var(--magenta)); }
 @keyframes bubblein { from { transform: translateX(-50%) scale(0.7); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
@@ -1311,6 +1312,10 @@ const GFX = {
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
     scene.autoUpdate = false;
+    const cheap = !!this.Q[this.qi].cheap;
+    if (cheap || scene.userData.cheap) { this.cheapen(scene, cheap); scene.userData.cheap = cheap; }
+    // lite mode drops decor (layers 2-3); the two weakest levels drop layers 4-5 too
+    camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
@@ -1320,6 +1325,8 @@ const GFX = {
       ab: this.ab,
       flash: this.flashAmt,
       glass: Store.settings.crt ? 1 : 0,
+      aa: this.Q[this.qi].aa,
+      bloom: this.Q[this.qi].bloom,
       look: this.look,
       post: scene.userData.post || {},
       lite: this.lite,
@@ -1334,8 +1341,12 @@ const GFX = {
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
   // A ladder of levels trades sharpness, then reflections, for frame rate:
-  //   0-2: lower resolution, no reflections or sun rays ("lite")
-  //   3-5: reflections on, resolution 75% -> 100%
+  //   0:   last resort: 36% resolution, one glow level (half the post passes)
+  //   0-1: metal surfaces drawn with cheaper Lambert twins (see twinOf)
+  //   1-2: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
+  //   3:   lite, FXAA back on
+  //   4-6: everything on, resolution 74% -> 100%
+  // Only very weak GPUs ever get below level 4.
   // Every 40 frames the average frame time is compared with the screen's frame
   // interval (measured, since browsers don't report it). Missing more than a few
   // frames: step down, since an uneven mix of short and long frames reads as judder.
@@ -1344,8 +1355,12 @@ const GFX = {
   // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
   // Each kind of scene remembers its level, so a light scene isn't stuck blurry
   // after a heavy one.
-  Q: [{ d: 0.55, lite: true }, { d: 0.62, lite: true }, { d: 0.7, lite: true }, { d: 0.75, lite: false }, { d: 0.86, lite: false }, { d: 1, lite: false }],
-  qi: 5,
+  Q: [
+    { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
+    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5 },
+    { d: 1, lite: false, aa: true, bloom: 5 },
+  ],
+  qi: 6,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
@@ -1357,6 +1372,37 @@ const GFX = {
     this.dyn = this.Q[i].d;
     this.lite = this.Q[i].lite;
     if (this.dyn !== was || force) this.resize();
+  },
+  // Weakest levels: physically-based (MeshStandard) surfaces swap to plain Lambert
+  // twins with the same colours (shared, so flashes still show) and maps, without
+  // the environment reflections (three r128's Lambert can't read PMREM maps).
+  // Twins are built and compiled while a scene loads (warm), so the swap never
+  // stalls a frame.
+  twinOf(m) {
+    const W = this._twins || (this._twins = new WeakMap());
+    let t = W.get(m);
+    if (!t) {
+      t = new THREE.MeshLambertMaterial({
+        map: m.map, emissiveMap: m.emissiveMap, vertexColors: m.vertexColors,
+        transparent: m.transparent, opacity: m.opacity, side: m.side, depthWrite: m.depthWrite, fog: m.fog,
+      });
+      t.color = m.color;
+      t.emissive = m.emissive;
+      t.emissiveIntensity = m.emissiveIntensity;
+      W.set(m, t);
+    }
+    return t;
+  },
+  cheapen(scene, on) {
+    scene.traverse((o) => {
+      const m = o.material;
+      if (on) {
+        if (m && !Array.isArray(m) && m.isMeshStandardMaterial) { o.userData.fullMat = m; o.material = this.twinOf(m); }
+      } else if (o.userData.fullMat) {
+        o.material = o.userData.fullMat;
+        o.userData.fullMat = null;
+      }
+    });
   },
   // One environment-map generator for the whole session. Making one per scene and
   // throwing it away recompiled its blur shaders every time a scene loaded.
@@ -1398,10 +1444,18 @@ const GFX = {
         type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
       });
     }
+    const mask = s.camera.layers.mask;
+    s.camera.layers.mask = mask | 60; // decor too
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
+      if (!scene.userData.cheap) {
+        this.cheapen(scene, true); // compile the Lambert twins too
+        r.render(scene, s.camera);
+        this.cheapen(scene, false);
+      }
     } catch (e) { /* best effort */ }
+    s.camera.layers.mask = mask;
     r.setRenderTarget(null);
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));
@@ -1575,14 +1629,14 @@ function makePipeline(renderer, hdr) {
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
-    uBezel: { value: new THREE.Vector2(16, 1) },
+    uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
     uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker;
     uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
-    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
+    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -1615,7 +1669,7 @@ function makePipeline(renderer, hdr) {
         HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
         col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
       }
-      col += texture2D(tGlow, uv).rgb;
+      col += texture2D(tGlow, uv).rgb * uGlowK;
       col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -1687,7 +1741,7 @@ function makePipeline(renderer, hdr) {
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
       pass(bright, brightRT);
       if (GFX.probe) GFX.probe("bright");
-      const levels = o.lite ? 3 : LEVELS;
+      const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
       let src = brightRT;
       for (let i = 0; i < levels; i++) {
         const m = mips[i];
@@ -1714,20 +1768,28 @@ function makePipeline(renderer, hdr) {
           if (GFX.probe) GFX.probe("rays");
         }
       }
-      const g = glow.uniforms;
-      g.tB0.value = mips[0].a.texture;
-      g.tB1.value = mips[1].a.texture;
-      g.tB2.value = mips[2].a.texture;
-      g.tB3.value = levels > 3 ? mips[3].a.texture : black;
-      g.tB4.value = levels > 4 ? mips[4].a.texture : black;
-      g.tRays.value = raysRT.texture;
-      g.uRays.value = raysOn;
-      g.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
-      pass(glow, glowRT);
-      if (GFX.probe) GFX.probe("glow");
+      const bloomK = p.bloom !== undefined ? p.bloom : 1;
       const u = final.uniforms;
+      if (levels === 1 && !raysOn) {
+        // a single glow level and no rays: the final pass reads the blur directly
+        u.tGlow.value = mips[0].a.texture;
+        u.uGlowK.value = bloomK * 0.2;
+      } else {
+        const g = glow.uniforms;
+        g.tB0.value = mips[0].a.texture;
+        g.tB1.value = levels > 1 ? mips[1].a.texture : black;
+        g.tB2.value = levels > 2 ? mips[2].a.texture : black;
+        g.tB3.value = levels > 3 ? mips[3].a.texture : black;
+        g.tB4.value = levels > 4 ? mips[4].a.texture : black;
+        g.tRays.value = raysRT.texture;
+        g.uRays.value = raysOn;
+        g.uBloom.value = bloomK;
+        pass(glow, glowRT);
+        if (GFX.probe) GFX.probe("glow");
+        u.tGlow.value = glowRT.texture;
+        u.uGlowK.value = 1;
+      }
       u.tScene.value = sceneRT.texture;
-      u.tGlow.value = glowRT.texture;
       u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       const cw = renderer.domElement.width, ch = renderer.domElement.height;
       u.uRes.value.set(cw, ch);
@@ -1743,7 +1805,7 @@ function makePipeline(renderer, hdr) {
       const retro = o.look !== "hd";
       u.uGlass.value = o.glass;
       u.uSnap.value = retro ? 1 : 0;
-      u.uFXAA.value = retro ? 0 : 1;
+      u.uFXAA.value = retro || !o.aa ? 0 : 1;
       u.uScan.value = retro ? 0.2 : 0.09;
       u.uCurve.value = retro ? 0.11 : 0.06;
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
@@ -1796,6 +1858,7 @@ class Scene3D {
     if (fog) this.scene.fog = new THREE.Fog(fog[0], fog[1], fog[2]);
     this.camera = new THREE.PerspectiveCamera(fov, GFX.w / GFX.h, near, far);
     this.camera.layers.enable(1);
+    this.camera.layers.mask |= 60; // decor layers 2-5 (see decor())
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
     // pooled shockwave rings (see shockwave()), built with the scene so a hit never
@@ -1839,6 +1902,24 @@ class Scene3D {
   }
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION ? a * 0.3 : a); }
   // An expanding ring of light that faces the camera.
+  // Purely decorative pieces (dust, light cones and shafts, trails...) that weak
+  // quality levels stop drawing. They move to their own layers, which the camera
+  // drops at those levels, so nothing recompiles and a scene's own show/hide logic
+  // is untouched. Lights are never moved.
+  //   decor(...)        layers 2 (reflected) / 3: hidden in lite mode
+  //   decorCheap(...)   layers 4 (reflected) / 5: hidden only at the two weakest levels
+  decor(...objs) { this.toLayers(objs, 4, 8); }
+  decorCheap(...objs) { this.toLayers(objs, 16, 32); }
+  toLayers(objs, refl, flat) {
+    for (const obj of objs) {
+      if (!obj) continue;
+      obj.traverse((o) => {
+        if (o.isLight) return;
+        const m = o.layers.mask;
+        o.layers.mask = (m & 1 ? refl : 0) | (m & 2 ? flat : 0) | (m & ~3);
+      });
+    }
+  }
   shockwave(pos, color, size = 5, dur = 0.55) {
     if (!this.has3D) return;
     const ring = this.shockRings[this.shockI++ % this.shockRings.length];
@@ -2128,6 +2209,7 @@ class Bursts {
   }
   burst(pos, color, { n = 60, speed = 10, size = 0.3, life = 1.1, gravity = -5, spread = 1 } = {}) {
     if (!this.scene) return;
+    if (GFX.ok && GFX.Q[GFX.qi].cheap) n = Math.ceil(n / 2); // weakest levels: half the overdraw
     const c = this._c.set(color).multiplyScalar(2.6);
     const P = this.pos, V = this.vel, C = this.col;
     for (let k = 0; k < n; k++) {
@@ -2755,6 +2837,7 @@ const FX = {
       if (!m || !m.uniforms) return;
       const u = m.uniforms;
       if (u.uTime) u.uTime.value = t;
+      if (u.uDetail) u.uDetail.value = GFX.ok && GFX.Q[GFX.qi].cheap ? 0 : 1;
       if (u.uFogColor && fog) { u.uFogColor.value.copy(fog.color); u.uFogNear.value = fog.near; u.uFogFar.value = fog.far; }
     });
   },
@@ -2766,14 +2849,14 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
   const uniforms = {
     uTop: { value: new THREE.Color(top) }, uMid: { value: new THREE.Color(mid) }, uHorizon: { value: new THREE.Color(horizon) },
     uBottom: { value: new THREE.Color(bottom) }, uGlow: { value: glow }, uStars: { value: stars }, uClouds: { value: clouds },
-    uNebula: { value: nebula }, uNebulaColor: { value: new THREE.Color(nebulaColor) }, uTime: { value: 0 },
+    uNebula: { value: nebula }, uNebulaColor: { value: new THREE.Color(nebulaColor) }, uTime: { value: 0 }, uDetail: { value: 1 },
   };
   const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false,
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `${GLSL_NOISE}
       uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; uniform vec3 uBottom; uniform vec3 uNebulaColor;
-      uniform float uGlow; uniform float uStars; uniform float uClouds; uniform float uNebula; uniform float uTime; varying vec3 vDir;
+      uniform float uGlow; uniform float uStars; uniform float uClouds; uniform float uNebula; uniform float uTime; uniform float uDetail; varying vec3 vDir;
       void main(){
         vec3 d = normalize(vDir); float h = d.y;
         vec3 col = mix(uHorizon, uMid, smoothstep(0.0, 0.2, h));
@@ -2781,8 +2864,10 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
         if (h < 0.0) col = mix(uHorizon * 0.55, uBottom, smoothstep(0.0, 0.18, -h));
         col += uHorizon * uGlow * (0.8 * exp(-abs(h) * 26.0) + 0.25 * exp(-abs(h) * 6.0));
         if (uNebula > 0.0) {
-          float n = vnoise(d * 3.0 + vec3(0.0, 0.0, uTime * 0.01)) * 0.55 + vnoise(d * 7.5 - vec3(uTime * 0.008)) * 0.3 + vnoise(d * 16.0) * 0.15;
-          float m = vnoise(d * 2.2 + 11.0);
+          // the weakest quality levels skip the two finest noise layers (uDetail 0)
+          float n = vnoise(d * 3.0 + vec3(0.0, 0.0, uTime * 0.01)) * 0.55 + vnoise(d * 7.5 - vec3(uTime * 0.008)) * 0.3;
+          float m = 0.5;
+          if (uDetail > 0.5) { n += vnoise(d * 16.0) * 0.15; m = vnoise(d * 2.2 + 11.0); } else n += 0.075;
           col += mix(uNebulaColor, uHorizon, m) * pow(max(n - 0.25, 0.0) * 1.4, 2.2) * uNebula;
         }
         // clouds and stars only exist above the horizon: skip their noise elsewhere
@@ -2861,6 +2946,7 @@ class Mirror {
     });
     this.cam = new THREE.PerspectiveCamera();
     this.cam.layers.set(0);
+    this.cam.layers.mask |= 4 | 16; // reflected decor (see Scene3D.decor)
     this.matrix = new THREE.Matrix4();
     this.receivers = [];
     this.hide = [];
@@ -4152,6 +4238,7 @@ class HubScene extends Scene3D {
     cones.renderOrder = 5;
     cones.layers.set(1);
     s.add(cones);
+    this.decor(cones);
     const D = (HUB_CACHE.dust = HUB_CACHE.dust || { p: new Float32Array(this.dustPts.p), x: new Float32Array(this.dustPts.x), g: new Float32Array(this.dustPts.g) });
     const dg = new THREE.BufferGeometry();
     dg.setAttribute("position", new THREE.BufferAttribute(D.p, 3));
@@ -4162,6 +4249,7 @@ class HubScene extends Scene3D {
     this.dust.frustumCulled = false;
     this.dust.layers.set(1);
     s.add(this.dust);
+    this.decor(this.dust);
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -5216,6 +5304,13 @@ class BlasterGame extends QuizGame {
     this.makeStreaks();
     this.makeTunnel();
     this.makeTargetKit();
+    // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
+    this.warmExtra = this.slotMats.map((M) => {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
+      g.position.z = -40;
+      return g;
+    });
     this.shards = new BlasterShards(s);
     this.ship = this.makeShip();
     s.add(this.ship);
@@ -5258,6 +5353,7 @@ class BlasterGame extends QuizGame {
     this.streaks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.streaks.frustumCulled = false;
     this.scene.add(this.streaks);
+    this.decor(this.streaks);
   }
   resetStreak(i, z) {
     const a = rand(Math.PI * 2), r = rand(3, 24);
@@ -6370,12 +6466,11 @@ class RacerEnv {
     this.strips[4].material.color.copy(sky.horizon).multiplyScalar(1.6);
     this.strips[5].material.color.copy(sky.mid).lerp(sky.horizon, 0.35).multiplyScalar(1.3);
     const rt = this.pm.fromScene(this.scene, 0.02, 0.1, 100);
-    if (this.rt) this.rt.dispose();
-    this.rt = rt;
+    (this.rts || (this.rts = [])).push(rt);
     return rt.texture;
   }
   dispose() {
-    if (this.rt) this.rt.dispose();
+    if (this.rts) this.rts.forEach((rt) => rt.dispose());
     disposeTree(this.scene);
   }
 }
@@ -6463,9 +6558,14 @@ class RacerGame extends QuizGame {
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
     s.add(this.amb, this.keyLight, this.gateLight, this.lampLight);
     if (GFX.ok) {
+      // The car's reflections follow the career sky. Rendering an environment map
+      // costs a dropped frame or two, so the whole career's maps are baked now,
+      // while the scene loads behind the screen transition, and play just
+      // switches between them.
       this.envKit = new RacerEnv();
-      this.env = this.envKit.build(sky0);
-      this.envP = 0;
+      this.envSet = [0, 0.25, 0.5, 0.75, 1].map((p) => ({ p, tex: this.envKit.build(skyAt(p)) }));
+      skyAt(0); // skyAt() refills one shared object: put sky0 back to dawn
+      this.env = this.envSet[0].tex;
     }
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
@@ -6548,6 +6648,8 @@ class RacerGame extends QuizGame {
     this.halos.layers.set(1);
     this.cones.layers.set(1);
     this.scene.add(this.props, this.halos, this.cones);
+    this.decor(this.halos, this.cones);
+    this.decorCheap(this.props); // thousands of small palm-frond triangles: kept except on the weakest hardware
     box.dispose();
     coneGeo.dispose();
   }
@@ -6670,6 +6772,7 @@ class RacerGame extends QuizGame {
       { t: new RacerTrail({ length: 7, width: 0.08, color: COLORS.cyan, intensity: 1.3 }), p: new THREE.Vector3(0.95, 1.04, 2.06), step: 0.2 },
     ];
     this.trails.forEach((tr) => this.scene.add(tr.t.mesh));
+    this.decor(...this.trails.map((tr) => tr.t.mesh));
     return car;
   }
   // Everything a gantry is made of is built once and shared; a gate per question is
@@ -7007,10 +7110,12 @@ class RacerGame extends QuizGame {
     this.skyP += (target - this.skyP) * Math.min(1, dt * 0.8);
     const sky = skyAt(this.skyP);
     this.applySky(sky);
-    if (this.envKit && Math.abs(this.skyP - this.envP) > 0.05 && Math.abs(target - this.skyP) < 0.004) {
-      this.envP = this.skyP;
-      this.env = this.envKit.build(sky);
-      [this.paint, this.glass, this.trim, this.gateFrameMat].forEach((m) => { m.envMap = this.env; });
+    if (this.envSet) {
+      const near = this.envSet.reduce((a, b) => (Math.abs(b.p - this.skyP) < Math.abs(a.p - this.skyP) ? b : a));
+      if (near.tex !== this.env) {
+        this.env = near.tex;
+        [this.paint, this.glass, this.trim, this.gateFrameMat].forEach((m) => { m.envMap = this.env; });
+      }
     }
     const step = sp * dt;
     this.dist += step;
@@ -7293,6 +7398,7 @@ class BossGame extends QuizGame {
     this.motes = makeMotes({ count: 110, box: [46, 16, 34], center: [0, 7, -10], color: hex, size: 0.2, k: 1.5 });
     this.motes.layers.set(1);
     s.add(this.motes);
+    this.decor(this.motes);
     this.boss = this.makeBoss();
     this.boss.position.set(0, 14, 0);
     s.add(this.boss);
@@ -7386,6 +7492,7 @@ class BossGame extends QuizGame {
     const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(hex, 0.7), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     poolMesh.layers.set(1);
     s.add(poolMesh);
+    this.decor(poolMesh);
     const bg = new THREE.BufferGeometry();
     bg.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
     bg.setAttribute("normal", new THREE.Float32BufferAttribute(bn, 3));
@@ -7421,6 +7528,7 @@ class BossGame extends QuizGame {
     beams.frustumCulled = false;
     beams.renderOrder = 4;
     s.add(beams);
+    this.decor(beams);
     // the summoning circle and a pool of light under the boss
     this.rune = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 1.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.rune.rotation.x = -Math.PI / 2;
@@ -8341,6 +8449,7 @@ class MemoryGame extends QuizGame {
       rivets.setMatrixAt(k, this._m.compose(this._p, this._q.identity(), this._s));
     }
     [guides, rivets].forEach((m) => { m.frustumCulled = false; m.layers.set(1); door.add(m); });
+    this.decor(guides, rivets);
     // the coin slot at twelve o'clock
     const slot = new THREE.Group();
     slot.position.set(0, MEMORY_SLOT_R, 0.3);
@@ -8370,6 +8479,7 @@ class MemoryGame extends QuizGame {
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
+    this.decor(pool);
 
     // stacks of gold bars under spotlights, either side of the door
     const ingot = memoryIngotGeometry();
@@ -8403,6 +8513,7 @@ class MemoryGame extends QuizGame {
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
     s.add(this.motes);
+    this.decor(this.motes, ...this.stacks);
     this.sparks = new MemorySparks(260);
     s.add(this.sparks.points);
     this.glintT = 0.5;
@@ -9003,6 +9114,7 @@ class ExamGame extends QuizGame {
     const uplights = new THREE.Points(upGeo, new THREE.PointsMaterial({ color: neon(0x8a5cff, 0.6), map: glowTexture(), size: 2.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     uplights.layers.set(1);
     s.add(uplights);
+    this.decor(uplights);
     // moonlight slanting in through three of the windows
     const dir = new THREE.Vector3(-0.3, -0.62, 0.72).normalize();
     [-8, 8, 16].forEach((x) => {
@@ -9011,6 +9123,7 @@ class ExamGame extends QuizGame {
       b.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
       b.layers.set(1);
       s.add(b);
+      this.decor(b);
     });
 
     // polished floor: a polar grid around the plinth, and the reflection of it all
@@ -9057,6 +9170,7 @@ class ExamGame extends QuizGame {
     this.motes = makeMotes({ count: 55, box: [7, 9, 7], center: [0, 5, 0], color: 0xffe6c0, size: 0.08, k: 1.0 });
     this.moonMotes = makeMotes({ count: 50, box: [44, 12, 20], center: [0, 6, -8], color: 0xb8c4ff, size: 0.12, k: 0.75 });
     [this.motes, this.moonMotes].forEach((p) => { p.layers.set(1); s.add(p); });
+    this.decor(this.motes, this.moonMotes);
 
     // a quiet arc of studs round the front of the plinth: one per question
     const n = Math.max(1, this.rounds.length);
@@ -9597,7 +9711,7 @@ function showSettings() {
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
-      ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-6)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-7)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>

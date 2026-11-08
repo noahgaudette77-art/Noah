@@ -776,6 +776,7 @@ class HubScene extends Scene3D {
     cones.renderOrder = 5;
     cones.layers.set(1);
     s.add(cones);
+    this.decor(cones);
     const D = (HUB_CACHE.dust = HUB_CACHE.dust || { p: new Float32Array(this.dustPts.p), x: new Float32Array(this.dustPts.x), g: new Float32Array(this.dustPts.g) });
     const dg = new THREE.BufferGeometry();
     dg.setAttribute("position", new THREE.BufferAttribute(D.p, 3));
@@ -786,6 +787,7 @@ class HubScene extends Scene3D {
     this.dust.frustumCulled = false;
     this.dust.layers.set(1);
     s.add(this.dust);
+    this.decor(this.dust);
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [

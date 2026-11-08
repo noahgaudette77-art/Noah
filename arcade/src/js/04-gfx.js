@@ -77,6 +77,10 @@ const GFX = {
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
     scene.autoUpdate = false;
+    const cheap = !!this.Q[this.qi].cheap;
+    if (cheap || scene.userData.cheap) { this.cheapen(scene, cheap); scene.userData.cheap = cheap; }
+    // lite mode drops decor (layers 2-3); the two weakest levels drop layers 4-5 too
+    camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
@@ -86,6 +90,8 @@ const GFX = {
       ab: this.ab,
       flash: this.flashAmt,
       glass: Store.settings.crt ? 1 : 0,
+      aa: this.Q[this.qi].aa,
+      bloom: this.Q[this.qi].bloom,
       look: this.look,
       post: scene.userData.post || {},
       lite: this.lite,
@@ -100,8 +106,12 @@ const GFX = {
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
   // A ladder of levels trades sharpness, then reflections, for frame rate:
-  //   0-2: lower resolution, no reflections or sun rays ("lite")
-  //   3-5: reflections on, resolution 75% -> 100%
+  //   0:   last resort: 36% resolution, one glow level (half the post passes)
+  //   0-1: metal surfaces drawn with cheaper Lambert twins (see twinOf)
+  //   1-2: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
+  //   3:   lite, FXAA back on
+  //   4-6: everything on, resolution 74% -> 100%
+  // Only very weak GPUs ever get below level 4.
   // Every 40 frames the average frame time is compared with the screen's frame
   // interval (measured, since browsers don't report it). Missing more than a few
   // frames: step down, since an uneven mix of short and long frames reads as judder.
@@ -110,8 +120,12 @@ const GFX = {
   // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
   // Each kind of scene remembers its level, so a light scene isn't stuck blurry
   // after a heavy one.
-  Q: [{ d: 0.55, lite: true }, { d: 0.62, lite: true }, { d: 0.7, lite: true }, { d: 0.75, lite: false }, { d: 0.86, lite: false }, { d: 1, lite: false }],
-  qi: 5,
+  Q: [
+    { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
+    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5 },
+    { d: 1, lite: false, aa: true, bloom: 5 },
+  ],
+  qi: 6,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
@@ -123,6 +137,37 @@ const GFX = {
     this.dyn = this.Q[i].d;
     this.lite = this.Q[i].lite;
     if (this.dyn !== was || force) this.resize();
+  },
+  // Weakest levels: physically-based (MeshStandard) surfaces swap to plain Lambert
+  // twins with the same colours (shared, so flashes still show) and maps, without
+  // the environment reflections (three r128's Lambert can't read PMREM maps).
+  // Twins are built and compiled while a scene loads (warm), so the swap never
+  // stalls a frame.
+  twinOf(m) {
+    const W = this._twins || (this._twins = new WeakMap());
+    let t = W.get(m);
+    if (!t) {
+      t = new THREE.MeshLambertMaterial({
+        map: m.map, emissiveMap: m.emissiveMap, vertexColors: m.vertexColors,
+        transparent: m.transparent, opacity: m.opacity, side: m.side, depthWrite: m.depthWrite, fog: m.fog,
+      });
+      t.color = m.color;
+      t.emissive = m.emissive;
+      t.emissiveIntensity = m.emissiveIntensity;
+      W.set(m, t);
+    }
+    return t;
+  },
+  cheapen(scene, on) {
+    scene.traverse((o) => {
+      const m = o.material;
+      if (on) {
+        if (m && !Array.isArray(m) && m.isMeshStandardMaterial) { o.userData.fullMat = m; o.material = this.twinOf(m); }
+      } else if (o.userData.fullMat) {
+        o.material = o.userData.fullMat;
+        o.userData.fullMat = null;
+      }
+    });
   },
   // One environment-map generator for the whole session. Making one per scene and
   // throwing it away recompiled its blur shaders every time a scene loaded.
@@ -164,10 +209,18 @@ const GFX = {
         type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
       });
     }
+    const mask = s.camera.layers.mask;
+    s.camera.layers.mask = mask | 60; // decor too
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
+      if (!scene.userData.cheap) {
+        this.cheapen(scene, true); // compile the Lambert twins too
+        r.render(scene, s.camera);
+        this.cheapen(scene, false);
+      }
     } catch (e) { /* best effort */ }
+    s.camera.layers.mask = mask;
     r.setRenderTarget(null);
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));
@@ -341,14 +394,14 @@ function makePipeline(renderer, hdr) {
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
-    uBezel: { value: new THREE.Vector2(16, 1) },
+    uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
     uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker;
     uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
-    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
+    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -381,7 +434,7 @@ function makePipeline(renderer, hdr) {
         HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
         col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
       }
-      col += texture2D(tGlow, uv).rgb;
+      col += texture2D(tGlow, uv).rgb * uGlowK;
       col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -453,7 +506,7 @@ function makePipeline(renderer, hdr) {
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
       pass(bright, brightRT);
       if (GFX.probe) GFX.probe("bright");
-      const levels = o.lite ? 3 : LEVELS;
+      const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
       let src = brightRT;
       for (let i = 0; i < levels; i++) {
         const m = mips[i];
@@ -480,20 +533,28 @@ function makePipeline(renderer, hdr) {
           if (GFX.probe) GFX.probe("rays");
         }
       }
-      const g = glow.uniforms;
-      g.tB0.value = mips[0].a.texture;
-      g.tB1.value = mips[1].a.texture;
-      g.tB2.value = mips[2].a.texture;
-      g.tB3.value = levels > 3 ? mips[3].a.texture : black;
-      g.tB4.value = levels > 4 ? mips[4].a.texture : black;
-      g.tRays.value = raysRT.texture;
-      g.uRays.value = raysOn;
-      g.uBloom.value = p.bloom !== undefined ? p.bloom : 1;
-      pass(glow, glowRT);
-      if (GFX.probe) GFX.probe("glow");
+      const bloomK = p.bloom !== undefined ? p.bloom : 1;
       const u = final.uniforms;
+      if (levels === 1 && !raysOn) {
+        // a single glow level and no rays: the final pass reads the blur directly
+        u.tGlow.value = mips[0].a.texture;
+        u.uGlowK.value = bloomK * 0.2;
+      } else {
+        const g = glow.uniforms;
+        g.tB0.value = mips[0].a.texture;
+        g.tB1.value = levels > 1 ? mips[1].a.texture : black;
+        g.tB2.value = levels > 2 ? mips[2].a.texture : black;
+        g.tB3.value = levels > 3 ? mips[3].a.texture : black;
+        g.tB4.value = levels > 4 ? mips[4].a.texture : black;
+        g.tRays.value = raysRT.texture;
+        g.uRays.value = raysOn;
+        g.uBloom.value = bloomK;
+        pass(glow, glowRT);
+        if (GFX.probe) GFX.probe("glow");
+        u.tGlow.value = glowRT.texture;
+        u.uGlowK.value = 1;
+      }
       u.tScene.value = sceneRT.texture;
-      u.tGlow.value = glowRT.texture;
       u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       const cw = renderer.domElement.width, ch = renderer.domElement.height;
       u.uRes.value.set(cw, ch);
@@ -509,7 +570,7 @@ function makePipeline(renderer, hdr) {
       const retro = o.look !== "hd";
       u.uGlass.value = o.glass;
       u.uSnap.value = retro ? 1 : 0;
-      u.uFXAA.value = retro ? 0 : 1;
+      u.uFXAA.value = retro || !o.aa ? 0 : 1;
       u.uScan.value = retro ? 0.2 : 0.09;
       u.uCurve.value = retro ? 0.11 : 0.06;
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
@@ -562,6 +623,7 @@ class Scene3D {
     if (fog) this.scene.fog = new THREE.Fog(fog[0], fog[1], fog[2]);
     this.camera = new THREE.PerspectiveCamera(fov, GFX.w / GFX.h, near, far);
     this.camera.layers.enable(1);
+    this.camera.layers.mask |= 60; // decor layers 2-5 (see decor())
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
     // pooled shockwave rings (see shockwave()), built with the scene so a hit never
@@ -605,6 +667,24 @@ class Scene3D {
   }
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION ? a * 0.3 : a); }
   // An expanding ring of light that faces the camera.
+  // Purely decorative pieces (dust, light cones and shafts, trails...) that weak
+  // quality levels stop drawing. They move to their own layers, which the camera
+  // drops at those levels, so nothing recompiles and a scene's own show/hide logic
+  // is untouched. Lights are never moved.
+  //   decor(...)        layers 2 (reflected) / 3: hidden in lite mode
+  //   decorCheap(...)   layers 4 (reflected) / 5: hidden only at the two weakest levels
+  decor(...objs) { this.toLayers(objs, 4, 8); }
+  decorCheap(...objs) { this.toLayers(objs, 16, 32); }
+  toLayers(objs, refl, flat) {
+    for (const obj of objs) {
+      if (!obj) continue;
+      obj.traverse((o) => {
+        if (o.isLight) return;
+        const m = o.layers.mask;
+        o.layers.mask = (m & 1 ? refl : 0) | (m & 2 ? flat : 0) | (m & ~3);
+      });
+    }
+  }
   shockwave(pos, color, size = 5, dur = 0.55) {
     if (!this.has3D) return;
     const ring = this.shockRings[this.shockI++ % this.shockRings.length];
@@ -894,6 +974,7 @@ class Bursts {
   }
   burst(pos, color, { n = 60, speed = 10, size = 0.3, life = 1.1, gravity = -5, spread = 1 } = {}) {
     if (!this.scene) return;
+    if (GFX.ok && GFX.Q[GFX.qi].cheap) n = Math.ceil(n / 2); // weakest levels: half the overdraw
     const c = this._c.set(color).multiplyScalar(2.6);
     const P = this.pos, V = this.vel, C = this.col;
     for (let k = 0; k < n; k++) {

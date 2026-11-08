@@ -525,12 +525,11 @@ class RacerEnv {
     this.strips[4].material.color.copy(sky.horizon).multiplyScalar(1.6);
     this.strips[5].material.color.copy(sky.mid).lerp(sky.horizon, 0.35).multiplyScalar(1.3);
     const rt = this.pm.fromScene(this.scene, 0.02, 0.1, 100);
-    if (this.rt) this.rt.dispose();
-    this.rt = rt;
+    (this.rts || (this.rts = [])).push(rt);
     return rt.texture;
   }
   dispose() {
-    if (this.rt) this.rt.dispose();
+    if (this.rts) this.rts.forEach((rt) => rt.dispose());
     disposeTree(this.scene);
   }
 }
@@ -618,9 +617,14 @@ class RacerGame extends QuizGame {
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
     s.add(this.amb, this.keyLight, this.gateLight, this.lampLight);
     if (GFX.ok) {
+      // The car's reflections follow the career sky. Rendering an environment map
+      // costs a dropped frame or two, so the whole career's maps are baked now,
+      // while the scene loads behind the screen transition, and play just
+      // switches between them.
       this.envKit = new RacerEnv();
-      this.env = this.envKit.build(sky0);
-      this.envP = 0;
+      this.envSet = [0, 0.25, 0.5, 0.75, 1].map((p) => ({ p, tex: this.envKit.build(skyAt(p)) }));
+      skyAt(0); // skyAt() refills one shared object: put sky0 back to dawn
+      this.env = this.envSet[0].tex;
     }
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
@@ -703,6 +707,8 @@ class RacerGame extends QuizGame {
     this.halos.layers.set(1);
     this.cones.layers.set(1);
     this.scene.add(this.props, this.halos, this.cones);
+    this.decor(this.halos, this.cones);
+    this.decorCheap(this.props); // thousands of small palm-frond triangles: kept except on the weakest hardware
     box.dispose();
     coneGeo.dispose();
   }
@@ -825,6 +831,7 @@ class RacerGame extends QuizGame {
       { t: new RacerTrail({ length: 7, width: 0.08, color: COLORS.cyan, intensity: 1.3 }), p: new THREE.Vector3(0.95, 1.04, 2.06), step: 0.2 },
     ];
     this.trails.forEach((tr) => this.scene.add(tr.t.mesh));
+    this.decor(...this.trails.map((tr) => tr.t.mesh));
     return car;
   }
   // Everything a gantry is made of is built once and shared; a gate per question is
@@ -1162,10 +1169,12 @@ class RacerGame extends QuizGame {
     this.skyP += (target - this.skyP) * Math.min(1, dt * 0.8);
     const sky = skyAt(this.skyP);
     this.applySky(sky);
-    if (this.envKit && Math.abs(this.skyP - this.envP) > 0.05 && Math.abs(target - this.skyP) < 0.004) {
-      this.envP = this.skyP;
-      this.env = this.envKit.build(sky);
-      [this.paint, this.glass, this.trim, this.gateFrameMat].forEach((m) => { m.envMap = this.env; });
+    if (this.envSet) {
+      const near = this.envSet.reduce((a, b) => (Math.abs(b.p - this.skyP) < Math.abs(a.p - this.skyP) ? b : a));
+      if (near.tex !== this.env) {
+        this.env = near.tex;
+        [this.paint, this.glass, this.trim, this.gateFrameMat].forEach((m) => { m.envMap = this.env; });
+      }
     }
     const step = sp * dt;
     this.dist += step;

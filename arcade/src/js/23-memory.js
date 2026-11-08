@@ -421,6 +421,7 @@ class MemoryGame extends QuizGame {
       rivets.setMatrixAt(k, this._m.compose(this._p, this._q.identity(), this._s));
     }
     [guides, rivets].forEach((m) => { m.frustumCulled = false; m.layers.set(1); door.add(m); });
+    this.decor(guides, rivets);
     // the coin slot at twelve o'clock
     const slot = new THREE.Group();
     slot.position.set(0, MEMORY_SLOT_R, 0.3);
@@ -450,6 +451,7 @@ class MemoryGame extends QuizGame {
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
+    this.decor(pool);
 
     // stacks of gold bars under spotlights, either side of the door
     const ingot = memoryIngotGeometry();
@@ -483,6 +485,7 @@ class MemoryGame extends QuizGame {
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
     s.add(this.motes);
+    this.decor(this.motes, ...this.stacks);
     this.sparks = new MemorySparks(260);
     s.add(this.sparks.points);
     this.glintT = 0.5;
