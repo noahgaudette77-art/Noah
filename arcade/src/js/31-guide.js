@@ -74,7 +74,7 @@ function showGuideChapter(n) {
       ${c.objectives.length ? `<div class="gsec" style="--c:${c.color}"><h3>LEARNING OBJECTIVES</h3><ol class="objectives selectable">${c.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ol></div>` : ""}
       ${c.guide.map((g) => `<div class="gsec" style="--c:${c.color}"><h3>${esc(g.heading)}${g.page ? `<span>P. ${esc(g.page)}</span>` : ""}</h3>
         <ul class="selectable">${g.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>`).join("") || `<p class="hub-desc">Notes for this chapter are not loaded yet.</p>`}
-      ${errata.length ? `<div class="tipbox selectable" style="border-color:${COLORS.red}"><div class="label" style="color:${COLORS.red}">WATCH OUT: THE BOOK DISAGREES WITH ITSELF HERE</div>${errata.map((x) => `<div>· ${esc(x.text)} <span class="label">P. ${esc(x.page)}</span></div>`).join("")}</div>` : ""}
+      ${errata.length ? `<div class="tipbox selectable" style="border-color:${COLORS.red}"><div class="label" style="color:${COLORS.red}">WATCH OUT: THE BOOK DISAGREES WITH ITSELF HERE</div>${errata.map((x) => `<div>· ${esc(x.text)} <span class="label nowrap">P. ${esc(x.page)}</span></div>`).join("")}</div>` : ""}
       ${c.tips.length ? `<div class="tipbox selectable"><div class="label" style="color:${COLORS.yellow}">TIPS</div>${c.tips.map((t) => `<div>· ${esc(t)}</div>`).join("")}</div>` : ""}
       <div class="actions">
         ${n > 1 ? `<button class="btn ghost" data-act="ch" data-n="${n - 1}">${icon("left")} STAGE ${n - 1}</button>` : ""}
