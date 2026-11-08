@@ -30,8 +30,10 @@ lists all of them again.
   rays, and live reflections on wet floors and roads. Each cabinet has its own
   world: a synthwave horizon on the title screen, a nebula tunnel of crystal
   targets in Risk Blaster, a wet highway under a career-long sunset in Nest Egg
-  Run, a searchlit arena with a mirror floor in Boss Rush. Setup → Graphics
-  switches between HD (sharp, anti-aliased), Retro and Chunky (pixel art).
+  Run, a searchlit arena with a mirror floor in Boss Rush, a gold bank-vault door
+  that opens a little more with every card you bank in Memory Bank, and a trophy
+  on a plinth in a moonlit hall for the Final Exam. Setup → Graphics switches
+  between HD (sharp, anti-aliased), Retro and Chunky (pixel art).
 - **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
   colour fringing and flashes when something hits, inside a bezel. Turn it off
   under Setup → CRT glass.

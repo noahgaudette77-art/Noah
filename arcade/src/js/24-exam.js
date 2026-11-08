@@ -14,9 +14,158 @@ function buildExam(n) {
   return shuffle(ids).map((id) => new Round(Q_BY_ID.get(id)));
 }
 
+// ---- the hall ----------------------------------------------------------------------
+// The floor is y = 0. A gold cup turns slowly on a black-and-gold plinth under a warm
+// spotlight, in a dark exam hall: tall arched windows full of stars, moonlight slanting
+// through them, a colonnade, and a polished floor that mirrors it all. Calm by design:
+// nothing flashes or hurries behind the questions.
+const EXAM_WALL_Z = -20;
+const EXAM_WINDOWS = [-32, -24, -16, -8, 0, 8, 16, 24, 32];
+
+// makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
+// nothing in r128, so dispose() releases the whole target.
+function examEnvMap({ top, horizon, bottom, glow, panels }) {
+  if (!GFX.ok) return null;
+  const sc = new THREE.Scene();
+  sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 40 }));
+  for (const p of panels) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.h), new THREE.MeshBasicMaterial({ color: neon(p.color, p.k), side: THREE.DoubleSide }));
+    m.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    m.lookAt(0, 0, 0);
+    sc.add(m);
+  }
+  const pm = new THREE.PMREMGenerator(GFX.renderer);
+  const rt = pm.fromScene(sc, 0.02, 0.1, 100);
+  pm.dispose();
+  disposeTree(sc);
+  return rt;
+}
+
+// A lathe about y from [radius, y] pairs listed bottom to top (that winding faces
+// outward); a third value `true` doubles the point so the edge there stays crisp.
+function examLathe(pts, segs = 64) {
+  const v = [];
+  pts.forEach(([r, y, crisp]) => {
+    v.push(new THREE.Vector2(r, y));
+    if (crisp) v.push(new THREE.Vector2(r, y));
+  });
+  return new THREE.LatheGeometry(v, segs);
+}
+
+// Merge geometries (position + normal) into one, for a single draw call.
+function examMerge(geos) {
+  const pos = [], nor = [];
+  for (const g of geos) {
+    const n = g.index ? g.toNonIndexed() : g;
+    const a = n.attributes.position, b = n.attributes.normal;
+    for (let i = 0; i < a.count; i++) {
+      pos.push(a.getX(i), a.getY(i), a.getZ(i));
+      nor.push(b.getX(i), b.getY(i), b.getZ(i));
+    }
+    if (n !== g) n.dispose();
+    g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  out.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  return out;
+}
+
+// The back wall: one shape with a row of arched window openings.
+function examWallGeometry(w, sill, spring) {
+  const shape = new THREE.Shape();
+  shape.moveTo(-80, 0);
+  shape.lineTo(80, 0);
+  shape.lineTo(80, 44);
+  shape.lineTo(-80, 44);
+  shape.lineTo(-80, 0);
+  for (const x of EXAM_WINDOWS) {
+    const h = new THREE.Path();
+    h.moveTo(x - w / 2, sill);
+    h.lineTo(x + w / 2, sill);
+    h.lineTo(x + w / 2, spring);
+    h.absarc(x, spring, w / 2, 0, Math.PI, false);
+    h.lineTo(x - w / 2, sill);
+    shape.holes.push(h);
+  }
+  return new THREE.ShapeGeometry(shape, 14);
+}
+
+// Neon outlines for the windows, with fainter mullions and transoms.
+function examWindowLines(w, sill, spring) {
+  const pos = [], col = [];
+  const frame = neon(0x9a6bff, 1.5), bar = neon(0x7a5cff, 0.45);
+  const seg = (x0, y0, x1, y1, c) => { pos.push(x0, y0, 0, x1, y1, 0); col.push(c.r, c.g, c.b, c.r, c.g, c.b); };
+  for (const x of EXAM_WINDOWS) {
+    const l = x - w / 2, r = x + w / 2;
+    seg(l, sill, r, sill, frame);
+    seg(r, sill, r, spring, frame);
+    seg(l, sill, l, spring, frame);
+    let px = r, py = spring;
+    for (let i = 1; i <= 16; i++) {
+      const a = (i / 16) * Math.PI, nx = x + Math.cos(a) * (w / 2), ny = spring + Math.sin(a) * (w / 2);
+      seg(px, py, nx, ny, frame);
+      px = nx; py = ny;
+    }
+    seg(x, sill, x, spring + w / 2, bar);
+    seg(l, spring, r, spring, bar);
+    seg(l, (sill + spring) / 2, r, (sill + spring) / 2, bar);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true }));
+}
+
+// The night outside the windows: a violet horizon, twinkling stars and a soft moon,
+// placed so it shows through the window to the right of the cup (and in the floor).
+function examNightMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uMoon: { value: new THREE.Vector3(10.8, 7.6, 1.3) } },
+    vertexShader: "varying vec3 vWorld; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
+    fragmentShader: `${GLSL_NOISE}
+      uniform float uTime; uniform vec3 uMoon; varying vec3 vWorld;
+      void main(){
+        float h = clamp(vWorld.y / 36.0, 0.0, 1.0);
+        vec3 col = mix(vec3(0.07, 0.035, 0.17), vec3(0.01, 0.008, 0.035), smoothstep(0.0, 0.6, h));
+        col += vec3(0.22, 0.1, 0.36) * exp(-vWorld.y * 0.3) * 0.35;
+        vec2 p = vWorld.xy * 1.35; vec2 c = floor(p); float r = hash13(vec3(c, 7.0));
+        if (r > 0.93) {
+          float s = smoothstep(0.32, 0.0, length(fract(p) - 0.5));
+          float tw = 0.65 + 0.35 * sin(uTime * (0.5 + r * 1.5) + r * 60.0);
+          col += vec3(0.9, 0.86, 1.0) * s * tw * (r > 0.992 ? 2.6 : 0.9);
+        }
+        float d = length(vWorld.xy - uMoon.xy);
+        col += vec3(0.95, 0.93, 1.0) * smoothstep(uMoon.z, uMoon.z - 0.06, d) * 1.2;
+        col += vec3(0.55, 0.5, 0.9) * exp(-max(d - uMoon.z, 0.0) * 0.45) * 0.35;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
+
+// A still shaft of light (like makeLightCone, without the flicker).
+function examBeam({ color, top, bottom, height, intensity }) {
+  const geo = new THREE.CylinderGeometry(top, bottom, height, 28, 1, true);
+  geo.translate(0, -height / 2, 0);
+  const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(color, 1) }, uI: { value: intensity }, uH: { value: height } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: `uniform float uH; varying float vH; varying vec3 vN; varying vec3 vV;
+      void main(){ vH = 1.0 + position.y / uH; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform vec3 uColor; uniform float uI; varying float vH; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float face = pow(abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float fall = pow(clamp(vH, 0.0, 1.0), 1.2) * smoothstep(0.0, 0.25, vH);
+        gl_FragColor = vec4(uColor * (uI * face * fall), 1.0);
+      }`,
+  }));
+  m.renderOrder = 5;
+  return m;
+}
+
 class ExamGame extends QuizGame {
   constructor(sel) {
-    super(sel, "exam", { fov: 55, fog: [0x0b0424, 12, 80], bg: 0x0b0424 });
+    super(sel, "exam", { fov: 55, fog: [0x07031a, 22, 78], bg: 0x07031a });
     this.rounds = buildExam(ExamPrefs.len);
     this.answers = new Array(this.rounds.length).fill(-1);
     this.flags = new Array(this.rounds.length).fill(false);
@@ -46,33 +195,179 @@ class ExamGame extends QuizGame {
   }
   build3D() {
     const s = this.scene;
-    addLights(s, { ambient: 0x9080d0, ai: 0.7, ki: 1.1, dir: [4, 8, 6] });
-    s.add(makeGrid({ size: 200, step: 4, color: 0xa65fff, y: -2 }));
-    s.add(makeStars(400, 140, { lowest: 0.05 }));
-    const profile = [[0, 0], [1.1, 0], [1.1, 0.22], [0.45, 0.38], [0.3, 1.3], [0.5, 1.6], [1.3, 2.2], [1.55, 3.4], [1.38, 3.42], [1.15, 2.45], [0, 2.25]];
-    const cup = neonSolid(new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), 8), COLORS.gold, { fill: 0x6a4a08, glow: 0.35 });
-    cup.userData.mat.side = THREE.DoubleSide;
-    const trophy = new THREE.Group();
-    trophy.add(cup);
-    [-1, 1].forEach((sd) => {
-      const h = neonSolid(new THREE.TorusGeometry(0.55, 0.1, 4, 10, Math.PI), COLORS.gold, { fill: 0x6a4a08, glow: 0.35 });
-      h.position.set(sd * 1.45, 2.65, 0);
-      h.rotation.z = sd > 0 ? -Math.PI / 2 : Math.PI / 2;
-      trophy.add(h);
+    // The lower half is warm: the cup's flaring bowl mirrors the spot-lit floor.
+    this.envRT = examEnvMap({
+      top: 0x0a0624, horizon: 0x5a2fb0, bottom: 0x3a2412, glow: 0.6,
+      panels: [
+        { color: 0xfff0d8, k: 2.6, w: 10, h: 4, pos: [0, 24, 10] }, // the spotlight's lamp
+        { color: 0xffe2b8, k: 1.5, w: 34, h: 7, pos: [0, 5, 30] }, // warm light behind the camera: the face of the cup
+        { color: 0xffd090, k: 1.4, w: 8, h: 14, pos: [-21, 6, 22] }, // warm fills, front left and right: its flanks
+        { color: 0xffd090, k: 1.0, w: 8, h: 14, pos: [23, 6, 18] },
+        { color: 0xa65fff, k: 1.6, w: 6, h: 24, pos: [-30, 4, 4] },
+        { color: 0x35efff, k: 1.0, w: 6, h: 24, pos: [30, 4, -2] },
+        { color: 0xb8c4ff, k: 1.2, w: 3, h: 10, pos: [-8, 7, -30] }, // the windows behind
+        { color: 0xb8c4ff, k: 1.2, w: 3, h: 10, pos: [8, 7, -30] },
+        { color: 0xffc070, k: 1.1, w: 34, h: 12, pos: [0, -12, 26] },
+      ],
     });
-    const ped = neonSolid(new THREE.BoxGeometry(2.6, 1.2, 2.6), COLORS.violet, { fill: 0x1c0d45, glow: 0.15 });
-    ped.position.y = -0.6;
-    trophy.add(ped);
-    trophy.position.set(0, -1.4, -12);
-    s.add(trophy);
-    this.trophy = trophy;
-    [-6, 6].forEach((x) => {
-      const spot = glowSprite(COLORS.cyan, 9, 0.25);
-      spot.position.set(x, 6, -16);
-      s.add(spot);
+    const env = this.envRT ? this.envRT.texture : null;
+    const gold = new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 });
+    const lacquer = new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 });
+    const marble = new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true });
+
+    s.add(new THREE.AmbientLight(0x2a1f55, 0.55));
+    const key = new THREE.DirectionalLight(0xfff2dd, 0.45);
+    key.position.set(-6, 14, 8);
+    s.add(key);
+    this.spotLight = new THREE.PointLight(0xffdcae, 1.3, 14, 1.6); // the lamp over the cup
+    this.spotLight.position.set(0, 7.5, 1.2);
+    s.add(this.spotLight);
+    const rim = new THREE.PointLight(0x9a6bff, 1.2, 26, 1.5);
+    rim.position.set(-6, 4.5, -5);
+    s.add(rim);
+    const rim2 = new THREE.PointLight(0x35d4ff, 0.7, 24, 1.5);
+    rim2.position.set(6.5, 3.5, -5);
+    s.add(rim2);
+
+    // the hall: a starry night through arched windows, pilasters and a colonnade
+    const night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial());
+    night.position.set(0, 26, EXAM_WALL_Z - 12);
+    s.add(night);
+    // a big, dim surface: per-vertex lighting is plenty here and cheap on phones
+    const wall = new THREE.Mesh(examWallGeometry(3.4, 2.2, 10.2), new THREE.MeshLambertMaterial({ color: 0x140b2b }));
+    wall.position.z = EXAM_WALL_Z;
+    s.add(wall);
+    const lines = examWindowLines(3.4, 2.2, 10.2);
+    lines.position.z = EXAM_WALL_Z + 0.06;
+    lines.layers.set(1);
+    s.add(lines);
+    const colGeo = examLathe([[1.0, 0], [1.0, 0.45, true], [0.84, 0.6], [0.8, 0.72, true], [0.66, 0.86, true], [0.58, 13.6, true], [0.7, 13.8], [0.88, 14.15, true], [1.0, 14.15, true], [1.0, 14.6, true], [0, 14.6]], 12);
+    const spots = EXAM_WINDOWS.slice(0, -1).map((x) => [x + 4, EXAM_WALL_Z + 0.35]);
+    [-1, 1].forEach((sd) => [-14, -8, -2].forEach((z) => spots.push([sd * 11, z])));
+    const cols = new THREE.InstancedMesh(colGeo, marble, spots.length);
+    const m = new THREE.Matrix4();
+    spots.forEach(([x, z], i) => cols.setMatrixAt(i, m.makeTranslation(x, 0, z)));
+    cols.frustumCulled = false;
+    s.add(cols);
+    // violet uplights washing the foot of each column
+    const up = new Float32Array(spots.length * 3);
+    spots.forEach(([x, z], i) => { up[i * 3] = x; up[i * 3 + 1] = 0.25; up[i * 3 + 2] = z + 1.1; });
+    const upGeo = new THREE.BufferGeometry();
+    upGeo.setAttribute("position", new THREE.BufferAttribute(up, 3));
+    const uplights = new THREE.Points(upGeo, new THREE.PointsMaterial({ color: neon(0x8a5cff, 0.6), map: glowTexture(), size: 2.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    uplights.layers.set(1);
+    s.add(uplights);
+    // moonlight slanting in through three of the windows
+    const dir = new THREE.Vector3(-0.3, -0.62, 0.72).normalize();
+    [-8, 8, 16].forEach((x) => {
+      const b = examBeam({ color: 0xa8b6ff, top: 1.5, bottom: 3.4, height: 26, intensity: 0.075 });
+      b.position.set(x, 7, EXAM_WALL_Z);
+      b.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
+      b.layers.set(1);
+      s.add(b);
     });
-    this.camBase.set(0, 1.5, 4);
-    this.lookAt.set(0, 0.6, -12);
+
+    // polished floor: a polar grid around the plinth, and the reflection of it all
+    this.mirror = new Mirror(0);
+    this.floor = makeNeonFloor({ size: 300, mirror: this.mirror, polar: true, spokes: 32, cell: 2.6, line: 0x7a4dff, lineK: 0.42, base: 0x030110, reflect: 0.62, glow: 0.3, ripple: 0.0018, streak: 0.013 });
+    s.add(this.floor);
+    s.userData.mirrors = [this.mirror];
+
+    // the plinth: black lacquer, gold bands, a violet ring of light at its foot
+    s.add(new THREE.Mesh(examLathe([[2.05, 0], [2.05, 0.2, true], [1.92, 0.3, true], [1.66, 0.3, true], [1.66, 0.4, true], [1.4, 0.46], [1.36, 0.56, true], [1.36, 1.48, true], [1.44, 1.56], [1.7, 1.62, true], [1.72, 1.8, true], [0, 1.8]], 72), lacquer));
+    s.add(new THREE.Mesh(examMerge([
+      new THREE.TorusGeometry(1.39, 0.045, 10, 72).rotateX(Math.PI / 2).translate(0, 0.62, 0),
+      new THREE.TorusGeometry(1.39, 0.045, 10, 72).rotateX(Math.PI / 2).translate(0, 1.42, 0),
+      new THREE.TorusGeometry(1.72, 0.05, 10, 72).rotateX(Math.PI / 2).translate(0, 1.8, 0),
+      new THREE.TorusGeometry(2.06, 0.05, 10, 72).rotateX(Math.PI / 2).translate(0, 0.2, 0),
+    ]), gold));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.32, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
+    ring.position.y = 0.04;
+    s.add(ring);
+    // the cup: a smooth loving cup with two handles, turning slowly
+    const cup = new THREE.Group();
+    cup.add(new THREE.Mesh(examLathe([
+      [0, 0], [0.98, 0, true], [1.0, 0.07], [0.93, 0.15, true], [0.62, 0.24], [0.42, 0.34], [0.3, 0.46], [0.24, 0.62], [0.22, 0.82],
+      [0.3, 0.9], [0.37, 0.98], [0.37, 1.06], [0.3, 1.14], [0.22, 1.22], [0.24, 1.42], [0.34, 1.56],
+      [0.55, 1.68], [0.8, 1.84], [1.02, 2.06], [1.2, 2.38], [1.33, 2.78], [1.42, 3.18], [1.5, 3.4, true], [1.53, 3.46, true], [1.47, 3.5, true],
+      [1.4, 3.42], [1.32, 3.12], [1.22, 2.74], [1.06, 2.36], [0.82, 2.1], [0.45, 1.94], [0, 1.9],
+    ], 64), gold));
+    const handle = (sd) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+      new THREE.Vector3(sd * 1.3, 3.05, 0), new THREE.Vector3(sd * 1.86, 3.2, 0), new THREE.Vector3(sd * 2.12, 2.74, 0),
+      new THREE.Vector3(sd * 1.88, 2.24, 0), new THREE.Vector3(sd * 1.12, 2.14, 0),
+    ]), 40, 0.075, 10, false);
+    cup.add(new THREE.Mesh(examMerge([handle(-1), handle(1)]), gold));
+    cup.position.y = 1.8;
+    s.add(cup);
+    this.cup = cup;
+    // the spotlight from above, its pool on the floor, dust turning in it
+    const beam = examBeam({ color: 0xffe6c0, top: 0.35, bottom: 3.0, height: 16, intensity: 0.2 });
+    beam.position.set(0, 16, 0);
+    beam.layers.set(1);
+    s.add(beam);
+    const pool = makeLightPool({ color: 0xffd9a0, radius: 3.8, intensity: 0.38 });
+    pool.layers.set(1);
+    s.add(pool);
+    this.motes = makeMotes({ count: 55, box: [7, 9, 7], center: [0, 5, 0], color: 0xffe6c0, size: 0.08, k: 1.0 });
+    this.moonMotes = makeMotes({ count: 50, box: [44, 12, 20], center: [0, 6, -8], color: 0xb8c4ff, size: 0.12, k: 0.75 });
+    [this.motes, this.moonMotes].forEach((p) => { p.layers.set(1); s.add(p); });
+
+    // a quiet arc of studs round the front of the plinth: one per question
+    const n = Math.max(1, this.rounds.length);
+    const sp = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI - 0.2 + ((i + 0.5) / n) * (Math.PI + 0.4);
+      sp[i * 3] = Math.cos(a) * 3.05;
+      sp[i * 3 + 1] = 0.06;
+      sp[i * 3 + 2] = -Math.sin(a) * 3.05;
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    sg.setAttribute("color", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    this.studs = new THREE.Points(sg, new THREE.PointsMaterial({ size: clamp(13 / n, 0.16, 0.5), map: glowTexture(), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.studs.layers.set(1);
+    s.add(this.studs);
+    // a soft ring that spreads across the floor when an answer is chosen
+    this.ripple = new THREE.Mesh(new THREE.RingGeometry(0.93, 1, 96), new THREE.MeshBasicMaterial({ color: neon(0xb48cff, 1.5), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.ripple.rotation.x = -Math.PI / 2;
+    this.ripple.position.y = 0.05;
+    this.ripple.layers.set(1);
+    this.ripple.visible = false;
+    s.add(this.ripple);
+    this.rippleT = 1;
+
+    s.userData.post = { exposure: 1.1, bloom: 0.85, threshold: 1.0, saturation: 1.06, contrast: 1.05, vignette: 1.15 };
+    this.dist = this.distT = 17;
+    this.camBase.set(0, 4.6, this.dist);
+    this.lookAt.set(0, 2.6, 0);
+  }
+  // Back the camera off until the cup and plinth sit comfortably in the band.
+  onResize(w, h) {
+    if (!this.camera || !this.cup) return;
+    const bandH = this.band ? this.band.h : h * 0.45;
+    const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    this.distT = clamp((5.7 * h) / (2 * tanH * Math.max(110, bandH * 0.66)), 11, 34);
+    if (!this.placed) {
+      this.dist = this.distT;
+      this.placed = !!this.band;
+    }
+  }
+  // Free what the scene graph walk misses: the env target and instance buffers.
+  dispose() {
+    if (this.envRT) this.envRT.dispose();
+    if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
+    super.dispose();
+  }
+  // Colour the studs: answered gold, flagged orange, the rest a faint violet.
+  paintStuds() {
+    if (!this.studs) return;
+    const c = this.studs.geometry.attributes.color;
+    for (let i = 0; i < this.rounds.length; i++) {
+      if (this.flags[i]) c.setXYZ(i, 2.2, 0.8, 0.2);
+      else if (this.answers[i] >= 0) c.setXYZ(i, 2.0, 1.35, 0.4);
+      else c.setXYZ(i, 0.42, 0.3, 0.8);
+    }
+    c.needsUpdate = true;
   }
   start() {
     Sound.play("calm");
@@ -95,6 +390,7 @@ class ExamGame extends QuizGame {
     nb.style.setProperty("--c", last ? COLORS.lime : COLORS.violet);
     $("[data-act=prev]", this.el).disabled = this.i === 0;
     $("[data-act=flag]", this.el).classList.toggle("flagged", this.flags[this.i]);
+    this.paintStuds();
     this.layoutBand();
   }
   go(d) {
@@ -109,6 +405,8 @@ class ExamGame extends QuizGame {
     this.answers[this.i] = i;
     this.quiz.select(i);
     Sound.sfx("blip");
+    this.paintStuds();
+    if (this.ripple) { this.rippleT = 0; this.ripple.visible = true; }
   }
   on(a, t) {
     if (a === "pause") return this.pause();
@@ -213,7 +511,27 @@ class ExamGame extends QuizGame {
       }
     }
     if (!this.has3D) return;
-    this.trophy.rotation.y += dt * 0.4;
+    const t = this.t;
+    this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
+    this.cup.rotation.y += dt * 0.35;
+    if (this.rippleT < 1) {
+      this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
+      const k = this.rippleT;
+      this.ripple.scale.setScalar(2.4 + k * 5);
+      this.ripple.material.opacity = 0.9 * (1 - k) * (1 - k);
+      this.ripple.visible = k < 1;
+    }
+    // the current question's stud breathes
+    if (this.state === "ask") {
+      const c = this.studs.geometry.attributes.color, p = 0.75 + 0.25 * Math.sin(t * 3);
+      c.setXYZ(this.i, 2.2 * p, 1.7 * p, 3.0 * p);
+      c.needsUpdate = true;
+    }
+    this.camBase.set(Pointer.x * 0.6, 2.6 + this.dist * 0.12 + Math.sin(t * 0.3) * 0.06 - Pointer.y * 0.25, this.dist);
+    this.lookAt.set(0, 2.6, 0);
     this.placeCamera();
+    this.motes.userData.drift(t);
+    this.moonMotes.userData.drift(t);
+    FX.sync(this.scene, t);
   }
 }

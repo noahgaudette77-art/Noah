@@ -434,6 +434,9 @@ function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glo
   const rt = pm.fromScene(sc, 0.02, 0.1, 100);
   pm.dispose();
   disposeTree(sc);
+  // In three r128 a render target's texture is only freed through the target, so
+  // disposing the returned texture (as scenes do) frees the whole target.
+  rt.texture.dispose = () => rt.dispose();
   return rt.texture;
 }
 
