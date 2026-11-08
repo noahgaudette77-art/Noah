@@ -454,6 +454,39 @@ mark { background: var(--yellow); color: #12052e; }
   .ans { min-height: 38px; font-size: 19px; }
 }
 
+/* ---- neon glass polish: depth, highlight lines, round arcade buttons ---------------- */
+.qpanel {
+  background: linear-gradient(180deg, rgba(38, 17, 96, 0.93), rgba(12, 5, 38, 0.95));
+  box-shadow: 0 0 0 2px #000, 0 0 24px -6px var(--violet), inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -14px 26px -14px rgba(166, 95, 255, 0.3);
+}
+.ans {
+  background: linear-gradient(180deg, rgba(32, 15, 82, 0.95), rgba(10, 4, 34, 0.96));
+  box-shadow: 0 3px 0 #000, 0 0 16px -7px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+.ans .k {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0, rgba(255, 255, 255, 0) 42%), var(--c);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 12px -2px var(--c);
+}
+.ans:active .k, .ans.sel .k { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), 0 0 16px var(--c); }
+.ans.good .k { background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0, rgba(255, 255, 255, 0) 42%), var(--lime); }
+.ans.bad .k { background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0, rgba(255, 255, 255, 0) 42%), var(--red); }
+.hub-card, .sheet, .dialog, .dlg, .tile, .panel, .stage, .face, .review li, .hit, .client-card, .debrief {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0) 38%);
+}
+.btn:not(.ghost) { background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 55%); }
+/* Frosted glass where it's cheap (desktop pointers); phones keep solid panels. */
+@media (pointer: fine) {
+  .qpanel, .ans, .hub-card, .sheet, .topbar .iconbtn, .chip, .rank {
+    -webkit-backdrop-filter: blur(9px) saturate(1.3); backdrop-filter: blur(9px) saturate(1.3);
+  }
+  .qpanel { background: linear-gradient(180deg, rgba(38, 17, 96, 0.8), rgba(12, 5, 38, 0.88)); }
+  .ans { background: linear-gradient(180deg, rgba(32, 15, 82, 0.82), rgba(10, 4, 34, 0.88)); }
+  .hub-card { background-color: rgba(13, 6, 40, 0.78); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #crt, .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
   .banner { animation-duration: 1.6s; }
@@ -1335,6 +1368,8 @@ function makePipeline(renderer, hdr) {
   });
   const sceneRT = rt(true);
   const brightRT = rt(false);
+  const raysRT = rt(false);
+  const lightV = new THREE.Vector3();
   const LEVELS = 5;
   const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -1365,17 +1400,33 @@ function makePipeline(renderer, hdr) {
       c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
       gl_FragColor = vec4(c, 1.0);
     }`);
+  // God rays: smear the bright pass toward a light (the sun), only near it.
+  const rays = mat({ tDiffuse: { value: null }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uRadius: { value: 0.35 }, uAspect: { value: 1 } }, `
+    uniform sampler2D tDiffuse; uniform vec2 uLight; uniform float uRadius; uniform float uAspect; varying vec2 vUv;
+    void main(){
+      vec2 delta = (vUv - uLight) / 32.0 * 0.92;
+      vec2 uv = vUv; float w = 1.0; vec3 acc = vec3(0.0);
+      for (int i = 0; i < 32; i++) {
+        uv -= delta;
+        vec2 d = (uv - uLight) * vec2(uAspect, 1.0);
+        acc += texture2D(tDiffuse, uv).rgb * w * smoothstep(uRadius, uRadius * 0.25, length(d));
+        w *= 0.955;
+      }
+      gl_FragColor = vec4(acc / 32.0, 1.0);
+    }`);
   const final = mat({
     tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
     uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 }, uExposure: { value: 1 },
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
+    tRays: { value: null }, uRays: { value: 0 }, uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4;
     uniform vec2 uRes; uniform vec2 uSceneRes; uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom;
     uniform float uExposure; uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
+    uniform sampler2D tRays; uniform float uRays; uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
     varying vec2 vUv;
     vec3 tex(vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -1402,13 +1453,17 @@ function makePipeline(renderer, hdr) {
       if (uGlass > 0.5) { vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
       vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
-      float a = uAberr / uRes.x;
-      if (a > 0.0002) { col.r = tex(uv + vec2(a, 0.0)).r; col.b = tex(uv - vec2(a, 0.0)).b; }
+      vec2 cd = uv - 0.5;
+      float a = (uAberr + 1.6 * dot(cd, cd)) / uRes.x;
+      if (a > 0.0002) { vec2 dv = normalize(cd + 1e-5) * a; col.r = tex(uv + dv).r; col.b = tex(uv - dv).b; }
       vec3 bl = texture2D(tB0, uv).rgb * 1.0 + texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55
         + texture2D(tB3, uv).rgb * 0.4 + texture2D(tB4, uv).rgb * 0.3;
       col += bl * uBloom * 0.2;
+      if (uRays > 0.0) col += texture2D(tRays, uv).rgb * uRays;
       col *= uExposure * uTint;
       col = aces(col);
+      float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = mix(col, col * mix(uShadow, uHigh, smoothstep(0.05, 0.75, lum)) * 1.25, uSplit);
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(vec3(l), col, uSat);
       col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
@@ -1437,6 +1492,7 @@ function makePipeline(renderer, hdr) {
       sw = w; sh = h;
       sceneRT.setSize(w, h);
       brightRT.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
+      raysRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
       let mw = w >> 1, mh = h >> 1;
       for (const m of mips) {
         mw = Math.max(2, mw >> 1);
@@ -1474,7 +1530,23 @@ function makePipeline(renderer, hdr) {
         pass(blur, m.a);
         src = m.a;
       }
+      // god rays toward a light the scene names (e.g. the sun), when it's on screen
+      let raysOn = 0;
+      if (p.rays && p.rays.pos && !o.lite) {
+        lightV.copy(p.rays.pos).project(camera);
+        if (lightV.z < 1 && Math.abs(lightV.x) < 1.6 && Math.abs(lightV.y) < 1.6) {
+          rays.uniforms.tDiffuse.value = brightRT.texture;
+          rays.uniforms.uLight.value.set(lightV.x * 0.5 + 0.5, lightV.y * 0.5 + 0.5);
+          rays.uniforms.uRadius.value = p.rays.radius || 0.35;
+          rays.uniforms.uAspect.value = sw / sh;
+          pass(rays, raysRT);
+          raysOn = p.rays.strength !== undefined ? p.rays.strength : 1;
+        }
+      }
       const u = final.uniforms;
+      u.tRays.value = raysRT.texture;
+      u.uRays.value = raysOn;
+      u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       u.tScene.value = sceneRT.texture;
       u.tB0.value = mips[0].a.texture;
       u.tB1.value = mips[1].a.texture;
@@ -2917,7 +2989,7 @@ class TitleScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.15, bloom: 1 };
+    s.userData.post = { exposure: 1.15, bloom: 1, rays: { pos: this.sun.position, strength: 0.9, radius: 0.42 } };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }

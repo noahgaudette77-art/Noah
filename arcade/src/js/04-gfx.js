@@ -139,6 +139,8 @@ function makePipeline(renderer, hdr) {
   });
   const sceneRT = rt(true);
   const brightRT = rt(false);
+  const raysRT = rt(false);
+  const lightV = new THREE.Vector3();
   const LEVELS = 5;
   const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -169,17 +171,33 @@ function makePipeline(renderer, hdr) {
       c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
       gl_FragColor = vec4(c, 1.0);
     }`);
+  // God rays: smear the bright pass toward a light (the sun), only near it.
+  const rays = mat({ tDiffuse: { value: null }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uRadius: { value: 0.35 }, uAspect: { value: 1 } }, `
+    uniform sampler2D tDiffuse; uniform vec2 uLight; uniform float uRadius; uniform float uAspect; varying vec2 vUv;
+    void main(){
+      vec2 delta = (vUv - uLight) / 32.0 * 0.92;
+      vec2 uv = vUv; float w = 1.0; vec3 acc = vec3(0.0);
+      for (int i = 0; i < 32; i++) {
+        uv -= delta;
+        vec2 d = (uv - uLight) * vec2(uAspect, 1.0);
+        acc += texture2D(tDiffuse, uv).rgb * w * smoothstep(uRadius, uRadius * 0.25, length(d));
+        w *= 0.955;
+      }
+      gl_FragColor = vec4(acc / 32.0, 1.0);
+    }`);
   const final = mat({
     tScene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) },
     uTime: { value: 0 }, uAberr: { value: 0 }, uFlash: { value: 0 }, uBloom: { value: 1 }, uExposure: { value: 1 },
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
+    tRays: { value: null }, uRays: { value: 0 }, uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4;
     uniform vec2 uRes; uniform vec2 uSceneRes; uniform float uTime; uniform float uAberr; uniform float uFlash; uniform float uBloom;
     uniform float uExposure; uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
+    uniform sampler2D tRays; uniform float uRays; uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit;
     varying vec2 vUv;
     vec3 tex(vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -206,13 +224,17 @@ function makePipeline(renderer, hdr) {
       if (uGlass > 0.5) { vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
       vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
-      float a = uAberr / uRes.x;
-      if (a > 0.0002) { col.r = tex(uv + vec2(a, 0.0)).r; col.b = tex(uv - vec2(a, 0.0)).b; }
+      vec2 cd = uv - 0.5;
+      float a = (uAberr + 1.6 * dot(cd, cd)) / uRes.x;
+      if (a > 0.0002) { vec2 dv = normalize(cd + 1e-5) * a; col.r = tex(uv + dv).r; col.b = tex(uv - dv).b; }
       vec3 bl = texture2D(tB0, uv).rgb * 1.0 + texture2D(tB1, uv).rgb * 0.75 + texture2D(tB2, uv).rgb * 0.55
         + texture2D(tB3, uv).rgb * 0.4 + texture2D(tB4, uv).rgb * 0.3;
       col += bl * uBloom * 0.2;
+      if (uRays > 0.0) col += texture2D(tRays, uv).rgb * uRays;
       col *= uExposure * uTint;
       col = aces(col);
+      float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = mix(col, col * mix(uShadow, uHigh, smoothstep(0.05, 0.75, lum)) * 1.25, uSplit);
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       col = mix(vec3(l), col, uSat);
       col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
@@ -241,6 +263,7 @@ function makePipeline(renderer, hdr) {
       sw = w; sh = h;
       sceneRT.setSize(w, h);
       brightRT.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1));
+      raysRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
       let mw = w >> 1, mh = h >> 1;
       for (const m of mips) {
         mw = Math.max(2, mw >> 1);
@@ -278,7 +301,23 @@ function makePipeline(renderer, hdr) {
         pass(blur, m.a);
         src = m.a;
       }
+      // god rays toward a light the scene names (e.g. the sun), when it's on screen
+      let raysOn = 0;
+      if (p.rays && p.rays.pos && !o.lite) {
+        lightV.copy(p.rays.pos).project(camera);
+        if (lightV.z < 1 && Math.abs(lightV.x) < 1.6 && Math.abs(lightV.y) < 1.6) {
+          rays.uniforms.tDiffuse.value = brightRT.texture;
+          rays.uniforms.uLight.value.set(lightV.x * 0.5 + 0.5, lightV.y * 0.5 + 0.5);
+          rays.uniforms.uRadius.value = p.rays.radius || 0.35;
+          rays.uniforms.uAspect.value = sw / sh;
+          pass(rays, raysRT);
+          raysOn = p.rays.strength !== undefined ? p.rays.strength : 1;
+        }
+      }
       const u = final.uniforms;
+      u.tRays.value = raysRT.texture;
+      u.uRays.value = raysOn;
+      u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       u.tScene.value = sceneRT.texture;
       u.tB0.value = mips[0].a.texture;
       u.tB1.value = mips[1].a.texture;

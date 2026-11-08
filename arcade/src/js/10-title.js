@@ -20,7 +20,7 @@ class TitleScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.15, bloom: 1 };
+    s.userData.post = { exposure: 1.15, bloom: 1, rays: { pos: this.sun.position, strength: 0.9, radius: 0.42 } };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }
