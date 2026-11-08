@@ -55,7 +55,7 @@ function boot() {
         new Promise((r) => setTimeout(r, 1800)),
       ]).catch(() => {})
     : Promise.resolve();
-  fonts.then(() => {
+  Promise.all([fonts, GFX.measureScreen()]).then(() => {
     showTitle();
     Store.connectRemote();
   });

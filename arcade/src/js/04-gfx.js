@@ -18,7 +18,9 @@ const GFX = {
   init() {
     if (window.THREE) {
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance", stencil: false });
+        // alpha: false: the frame is always opaque, so the browser can drop it on screen
+        // without blending it over the page behind it, on every frame.
+        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), alpha: false, antialias: false, powerPreference: "high-performance", stencil: false });
         this.renderer.setClearColor(0x090320, 1);
         this.ok = true;
       } catch (e) {
@@ -144,6 +146,36 @@ const GFX = {
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
+  // The screen's refresh rate, measured on a dozen blank frames before anything is
+  // drawn. watch() can only learn it from fast frames, which a slow GPU never shows,
+  // so without this a 120 Hz phone whose first scenes are heavy is taken for a 60 Hz
+  // one and settles a little under 60. Only ever raises the target (up to 120).
+  measureScreen() {
+    return new Promise((done) => {
+      const ts = [];
+      let over = false;
+      const finish = () => {
+        if (over) return;
+        over = true;
+        const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
+        this.screenProbe = d; // for the FPS tools
+        if (d.length >= 6) {
+          const hz = snapHz(d[d.length >> 1] / 1000); // the median interval
+          if (hz > 60) this.vsync = Math.min(this.vsync, 1 / Math.min(hz, 120));
+        }
+        done();
+      };
+      // each probe frame clears the canvas, so it is a real frame: a browser may slow
+      // frames that change nothing on screen
+      const tick = (t) => {
+        ts.push(t);
+        if (this.ok && !Scenes.cur) { this.renderer.setRenderTarget(null); this.renderer.clear(); }
+        if (ts.length < 14) requestAnimationFrame(tick); else finish();
+      };
+      requestAnimationFrame(tick);
+      setTimeout(finish, 600); // a hidden tab gets no frames: don't hold up the title
+    });
+  },
   setQ(i, force) {
     i = clamp(i, 0, this.Q.length - 1);
     if (i === this.qi && !force) return;
@@ -277,7 +309,7 @@ const GFX = {
     this._n = this._sum = 0;
     this._lo = [1, 1, 1];
     if (third > 0.003) {
-      const hz = [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - third) < Math.abs(1 / b - third) ? r : b), 60);
+      const hz = snapHz(third);
       // aim at the screen's rate, up to 120 fps (beyond that, sharpness wins)
       if (1 / Math.min(hz, 120) < this.vsync * 0.97) this.vsync = 1 / Math.min(hz, 120);
     }
@@ -301,6 +333,9 @@ const GFX = {
     } else this._good = 0;
   },
 };
+
+// The standard refresh rate nearest a frame interval (seconds).
+const snapHz = (dt) => [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - dt) < Math.abs(1 / b - dt) ? r : b), 60);
 
 const Scenes = {
   cur: null,

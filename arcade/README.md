@@ -37,9 +37,9 @@ lists all of them again.
 - **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
   colour fringing and flashes when something hits, inside a bezel. Turn it off
   under Setup → CRT glass.
-- **Smooth at your screen's refresh rate.** The game measures how fast your screen
-  refreshes (60, 90, 120 Hz...) and adjusts its quality as you play to hit every
-  frame: it lowers resolution, then reflections and decorative details (dust,
+- **Smooth at your screen's refresh rate.** Before drawing anything, the game
+  measures how fast your screen refreshes (60, 90, 120 Hz...), then adjusts its
+  quality as you play to hit every frame: it lowers resolution, then reflections and decorative details (dust,
   light shafts, trails), and on very weak hardware draws metal surfaces more
   simply; it steps back up when a scene is lighter. Each kind of scene remembers what suits it. A steady 30 fps cap (such as
   iOS Low Power Mode) is left alone, since lowering quality can't help it. iPhones

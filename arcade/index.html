@@ -1258,7 +1258,9 @@ const GFX = {
   init() {
     if (window.THREE) {
       try {
-        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: false, powerPreference: "high-performance", stencil: false });
+        // alpha: false: the frame is always opaque, so the browser can drop it on screen
+        // without blending it over the page behind it, on every frame.
+        this.renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), alpha: false, antialias: false, powerPreference: "high-performance", stencil: false });
         this.renderer.setClearColor(0x090320, 1);
         this.ok = true;
       } catch (e) {
@@ -1384,6 +1386,36 @@ const GFX = {
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
+  // The screen's refresh rate, measured on a dozen blank frames before anything is
+  // drawn. watch() can only learn it from fast frames, which a slow GPU never shows,
+  // so without this a 120 Hz phone whose first scenes are heavy is taken for a 60 Hz
+  // one and settles a little under 60. Only ever raises the target (up to 120).
+  measureScreen() {
+    return new Promise((done) => {
+      const ts = [];
+      let over = false;
+      const finish = () => {
+        if (over) return;
+        over = true;
+        const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
+        this.screenProbe = d; // for the FPS tools
+        if (d.length >= 6) {
+          const hz = snapHz(d[d.length >> 1] / 1000); // the median interval
+          if (hz > 60) this.vsync = Math.min(this.vsync, 1 / Math.min(hz, 120));
+        }
+        done();
+      };
+      // each probe frame clears the canvas, so it is a real frame: a browser may slow
+      // frames that change nothing on screen
+      const tick = (t) => {
+        ts.push(t);
+        if (this.ok && !Scenes.cur) { this.renderer.setRenderTarget(null); this.renderer.clear(); }
+        if (ts.length < 14) requestAnimationFrame(tick); else finish();
+      };
+      requestAnimationFrame(tick);
+      setTimeout(finish, 600); // a hidden tab gets no frames: don't hold up the title
+    });
+  },
   setQ(i, force) {
     i = clamp(i, 0, this.Q.length - 1);
     if (i === this.qi && !force) return;
@@ -1517,7 +1549,7 @@ const GFX = {
     this._n = this._sum = 0;
     this._lo = [1, 1, 1];
     if (third > 0.003) {
-      const hz = [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - third) < Math.abs(1 / b - third) ? r : b), 60);
+      const hz = snapHz(third);
       // aim at the screen's rate, up to 120 fps (beyond that, sharpness wins)
       if (1 / Math.min(hz, 120) < this.vsync * 0.97) this.vsync = 1 / Math.min(hz, 120);
     }
@@ -1541,6 +1573,9 @@ const GFX = {
     } else this._good = 0;
   },
 };
+
+// The standard refresh rate nearest a frame interval (seconds).
+const snapHz = (dt) => [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - dt) < Math.abs(1 / b - dt) ? r : b), 60);
 
 const Scenes = {
   cur: null,
@@ -2876,6 +2911,34 @@ float vnoise(vec3 p){
   return mix(mix(mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
              mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
 }`;
+// Merge geometries into one mesh (one draw call), keeping each piece's shared
+// vertices: an indexed mesh shades a vertex once, where a flattened copy shades it
+// again for every triangle that uses it (3-6x the vertex work on a lathe or torus).
+function mergeIndexed(geos, names = ["position", "normal"]) {
+  let count = 0;
+  for (const g of geos) count += g.attributes.position.count;
+  const out = new THREE.BufferGeometry();
+  for (const name of names) {
+    const size = geos[0].attributes[name].itemSize, arr = new Float32Array(count * size);
+    let o = 0;
+    for (const g of geos) {
+      const a = g.attributes[name];
+      for (let i = 0; i < a.count; i++) for (let k = 0; k < size; k++) arr[o++] = a.getComponent ? a.getComponent(i, k) : a.array[i * size + k];
+    }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, size));
+  }
+  const idx = [];
+  let base = 0;
+  for (const g of geos) {
+    const n = g.attributes.position.count;
+    if (g.index) { const I = g.index.array; for (let j = 0; j < g.index.count; j++) idx.push(base + I[j]); }
+    else for (let j = 0; j < n; j++) idx.push(base + j);
+    base += n;
+    g.dispose();
+  }
+  out.setIndex(idx);
+  return out;
+}
 // Fog the shaders apply themselves (kept in sync with scene.fog by FX.sync).
 const GLSL_FOG_PARS = "uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar;";
 const fogUniforms = () => ({ uFogColor: { value: new THREE.Color(0) }, uFogNear: { value: 1 }, uFogFar: { value: 1e5 } });
@@ -3618,7 +3681,7 @@ class HubBatch {
     this.key = key;
     this.ao = ao;
     this.done = HUB_CACHE.geo[key] || null;
-    this.p = []; this.n = []; this.c = []; this.u = []; this.x = []; this.g = [];
+    this.p = []; this.n = []; this.c = []; this.u = []; this.x = []; this.g = []; this.i = [];
   }
   // Add geometry placed by matrix m (a template marked hubKeep is reused, any
   // other geometry is consumed).
@@ -3633,9 +3696,13 @@ class HubBatch {
     const I = geo.index ? geo.index.array : null;
     const e = m.elements, ne = new THREE.Matrix3().getNormalMatrix(m).elements;
     const c = new THREE.Color(color).multiplyScalar(k);
-    const n = I ? I.length : P.length / 3;
-    for (let j = 0; j < n; j++) {
-      const i = I ? I[j] : j, x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+    // Each vertex is stored once and the piece's own triangles index it, so the
+    // batch keeps the pieces' shared vertices (about half the vertex work here).
+    const vc = P.length / 3, base = this.p.length / 3;
+    if (I) for (let j = 0; j < I.length; j++) this.i.push(base + I[j]);
+    else for (let j = 0; j < vc; j++) this.i.push(base + j);
+    for (let i = 0; i < vc; i++) {
+      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
       const wy = e[1] * x + e[5] * y + e[9] * z + e[13];
       this.p.push(e[0] * x + e[4] * y + e[8] * z + e[12], wy, e[2] * x + e[6] * y + e[10] * z + e[14]);
       if (N) {
@@ -3658,7 +3725,7 @@ class HubBatch {
     let d = this.done;
     if (!d) {
       const F = (a) => new Float32Array(a);
-      d = { p: F(this.p), n: F(this.n), c: F(this.c), u: F(this.u), x: F(this.x), g: F(this.g) };
+      d = { p: F(this.p), n: F(this.n), c: F(this.c), u: F(this.u), x: F(this.x), g: F(this.g), i: (this.p.length / 3 > 65535 ? Uint32Array : Uint16Array).from(this.i) };
       if (hubFontsReady()) HUB_CACHE.geo[this.key] = d;
     }
     const geo = new THREE.BufferGeometry();
@@ -3669,6 +3736,7 @@ class HubBatch {
     geo.setAttribute("uv", f(d.u, 2));
     geo.setAttribute("aMR", f(d.x, 2));
     geo.setAttribute("aGroup", f(d.g, 1));
+    geo.setIndex(f(d.i, 1));
     return new THREE.Mesh(geo, material);
   }
 }
@@ -8247,23 +8315,7 @@ function memoryShaftMaterial() {
 }
 
 // Merge geometries (position + normal) into one, for a single draw call.
-function memoryMerge(geos) {
-  const pos = [], nor = [];
-  for (const g of geos) {
-    const n = g.index ? g.toNonIndexed() : g;
-    const a = n.attributes.position, b = n.attributes.normal;
-    for (let i = 0; i < a.count; i++) {
-      pos.push(a.getX(i), a.getY(i), a.getZ(i));
-      nor.push(b.getX(i), b.getY(i), b.getZ(i));
-    }
-    if (n !== g) n.dispose();
-    g.dispose();
-  }
-  const out = new THREE.BufferGeometry();
-  out.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  out.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-  return out;
-}
+const memoryMerge = (geos) => mergeIndexed(geos);
 
 // The handle at the heart of the door: a domed hub and four spokes with ball grips.
 function memoryWheelGeometry() {
@@ -8962,23 +9014,7 @@ function examLathe(pts, segs = 64) {
 }
 
 // Merge geometries (position + normal) into one, for a single draw call.
-function examMerge(geos) {
-  const pos = [], nor = [];
-  for (const g of geos) {
-    const n = g.index ? g.toNonIndexed() : g;
-    const a = n.attributes.position, b = n.attributes.normal;
-    for (let i = 0; i < a.count; i++) {
-      pos.push(a.getX(i), a.getY(i), a.getZ(i));
-      nor.push(b.getX(i), b.getY(i), b.getZ(i));
-    }
-    if (n !== g) n.dispose();
-    g.dispose();
-  }
-  const out = new THREE.BufferGeometry();
-  out.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  out.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-  return out;
-}
+const examMerge = (geos) => mergeIndexed(geos);
 
 // The back wall: one shape with a row of arched window openings.
 function examWallGeometry(w, sill, spring) {
@@ -9858,7 +9894,7 @@ function boot() {
         new Promise((r) => setTimeout(r, 1800)),
       ]).catch(() => {})
     : Promise.resolve();
-  fonts.then(() => {
+  Promise.all([fonts, GFX.measureScreen()]).then(() => {
     showTitle();
     Store.connectRemote();
   });

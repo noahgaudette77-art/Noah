@@ -10,6 +10,34 @@ float vnoise(vec3 p){
   return mix(mix(mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
              mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x), mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
 }`;
+// Merge geometries into one mesh (one draw call), keeping each piece's shared
+// vertices: an indexed mesh shades a vertex once, where a flattened copy shades it
+// again for every triangle that uses it (3-6x the vertex work on a lathe or torus).
+function mergeIndexed(geos, names = ["position", "normal"]) {
+  let count = 0;
+  for (const g of geos) count += g.attributes.position.count;
+  const out = new THREE.BufferGeometry();
+  for (const name of names) {
+    const size = geos[0].attributes[name].itemSize, arr = new Float32Array(count * size);
+    let o = 0;
+    for (const g of geos) {
+      const a = g.attributes[name];
+      for (let i = 0; i < a.count; i++) for (let k = 0; k < size; k++) arr[o++] = a.getComponent ? a.getComponent(i, k) : a.array[i * size + k];
+    }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, size));
+  }
+  const idx = [];
+  let base = 0;
+  for (const g of geos) {
+    const n = g.attributes.position.count;
+    if (g.index) { const I = g.index.array; for (let j = 0; j < g.index.count; j++) idx.push(base + I[j]); }
+    else for (let j = 0; j < n; j++) idx.push(base + j);
+    base += n;
+    g.dispose();
+  }
+  out.setIndex(idx);
+  return out;
+}
 // Fog the shaders apply themselves (kept in sync with scene.fog by FX.sync).
 const GLSL_FOG_PARS = "uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar;";
 const fogUniforms = () => ({ uFogColor: { value: new THREE.Color(0) }, uFogNear: { value: 1 }, uFogFar: { value: 1e5 } });

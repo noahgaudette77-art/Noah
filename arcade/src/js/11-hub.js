@@ -104,7 +104,7 @@ class HubBatch {
     this.key = key;
     this.ao = ao;
     this.done = HUB_CACHE.geo[key] || null;
-    this.p = []; this.n = []; this.c = []; this.u = []; this.x = []; this.g = [];
+    this.p = []; this.n = []; this.c = []; this.u = []; this.x = []; this.g = []; this.i = [];
   }
   // Add geometry placed by matrix m (a template marked hubKeep is reused, any
   // other geometry is consumed).
@@ -119,9 +119,13 @@ class HubBatch {
     const I = geo.index ? geo.index.array : null;
     const e = m.elements, ne = new THREE.Matrix3().getNormalMatrix(m).elements;
     const c = new THREE.Color(color).multiplyScalar(k);
-    const n = I ? I.length : P.length / 3;
-    for (let j = 0; j < n; j++) {
-      const i = I ? I[j] : j, x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+    // Each vertex is stored once and the piece's own triangles index it, so the
+    // batch keeps the pieces' shared vertices (about half the vertex work here).
+    const vc = P.length / 3, base = this.p.length / 3;
+    if (I) for (let j = 0; j < I.length; j++) this.i.push(base + I[j]);
+    else for (let j = 0; j < vc; j++) this.i.push(base + j);
+    for (let i = 0; i < vc; i++) {
+      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
       const wy = e[1] * x + e[5] * y + e[9] * z + e[13];
       this.p.push(e[0] * x + e[4] * y + e[8] * z + e[12], wy, e[2] * x + e[6] * y + e[10] * z + e[14]);
       if (N) {
@@ -144,7 +148,7 @@ class HubBatch {
     let d = this.done;
     if (!d) {
       const F = (a) => new Float32Array(a);
-      d = { p: F(this.p), n: F(this.n), c: F(this.c), u: F(this.u), x: F(this.x), g: F(this.g) };
+      d = { p: F(this.p), n: F(this.n), c: F(this.c), u: F(this.u), x: F(this.x), g: F(this.g), i: (this.p.length / 3 > 65535 ? Uint32Array : Uint16Array).from(this.i) };
       if (hubFontsReady()) HUB_CACHE.geo[this.key] = d;
     }
     const geo = new THREE.BufferGeometry();
@@ -155,6 +159,7 @@ class HubBatch {
     geo.setAttribute("uv", f(d.u, 2));
     geo.setAttribute("aMR", f(d.x, 2));
     geo.setAttribute("aGroup", f(d.g, 1));
+    geo.setIndex(f(d.i, 1));
     return new THREE.Mesh(geo, material);
   }
 }

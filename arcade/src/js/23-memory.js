@@ -167,23 +167,7 @@ function memoryShaftMaterial() {
 }
 
 // Merge geometries (position + normal) into one, for a single draw call.
-function memoryMerge(geos) {
-  const pos = [], nor = [];
-  for (const g of geos) {
-    const n = g.index ? g.toNonIndexed() : g;
-    const a = n.attributes.position, b = n.attributes.normal;
-    for (let i = 0; i < a.count; i++) {
-      pos.push(a.getX(i), a.getY(i), a.getZ(i));
-      nor.push(b.getX(i), b.getY(i), b.getZ(i));
-    }
-    if (n !== g) n.dispose();
-    g.dispose();
-  }
-  const out = new THREE.BufferGeometry();
-  out.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  out.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-  return out;
-}
+const memoryMerge = (geos) => mergeIndexed(geos);
 
 // The handle at the heart of the door: a domed hub and four spokes with ball grips.
 function memoryWheelGeometry() {
