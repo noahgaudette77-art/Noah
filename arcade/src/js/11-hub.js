@@ -223,8 +223,8 @@ function hubGlowMaterial(levels, { map = null, additive = false, fog = 0.35, min
         #endif
         c *= max(vLv, uMin);
         #ifdef HUB_GLINT
-        float gx = vUv.x * 2.0 + (vUv.y - uSelV) * 2.2 - (fract(uTime * 0.18) * 5.5 - 1.0);
-        c += vec3(0.62, 0.58, 0.7) * vSel * exp(-gx * gx * 260.0) * vLv;
+        float gx = vUv.x * 2.0 + (vUv.y - uSelV) * 2.2 - (fract(uTime * 0.11) * 9.0 - 1.0);
+        c += vec3(0.3, 0.28, 0.36) * vSel * exp(-gx * gx * 700.0) * vLv;
         #endif
         float f = smoothstep(uFogNear, uFogFar, vDepth) * uFogAmt;
         ${additive ? "c *= 1.0 - f;" : "c = mix(c, uFogColor, f);"}
@@ -303,10 +303,11 @@ function hubScreenMaterial(tex, color) {
         vec2 su = (tuv - 0.5) / vec2(max(hx, 0.001), vy) + 0.5;
         float win = step(abs(tuv.x - 0.5), hx * 0.5) * step(abs(tuv.y - 0.5), vy * 0.5);
         vec3 img = texture2D(tMap, su).rgb;
-        img *= 1.6 / (1.0 + 0.45 * dot(img, vec3(0.299, 0.587, 0.114)));
+        img *= 1.35 / (1.0 + 0.45 * dot(img, vec3(0.299, 0.587, 0.114)));
         img = mix(vec3(2.4, 2.3, 2.6), img, smoothstep(0.55, 0.95, uPower));
-        float fw = fwidth(su.y * 120.0);
-        img *= mix(1.0, 0.76 + 0.24 * cos(su.y * 753.98), clamp(1.2 - fw * 1.6, 0.0, 1.0));
+        // 60 lines: wide enough to resolve on a phone, and faded out before they can beat against the pixels
+        float fw = fwidth(su.y * 60.0);
+        img *= mix(1.0, 0.86 + 0.14 * cos(su.y * 376.99), clamp(1.25 - fw * 2.5, 0.0, 1.0));
         img *= 1.0 - 0.2 * dot(q, q);
         vec3 crt = vec3(0.012, 0.016, 0.02) + img * win * uGain;
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.45;
@@ -528,14 +529,14 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
   x.strokeStyle = color;
   x.lineWidth = b;
   x.strokeRect(b * 1.3, b * 1.3, W - b * 2.6, H - b * 2.6);
-  const size = Math.floor(Math.min(H * (tag ? 0.28 : 0.4), (W * 0.84) / text.length));
+  const size = Math.floor(Math.min(H * (tag ? 0.28 : 0.4), (W * (tag ? 0.72 : 0.84)) / text.length));
   const ty = tag ? H * 0.42 : H * 0.53;
   x.font = `${size}px "Press Start 2P", "Courier New", monospace`;
   x.textAlign = "center";
   x.textBaseline = "middle";
   x.lineJoin = "round";
   x.strokeStyle = color;
-  [[0.62, 0.12], [0.42, 0.25], [0.28, 0.6]].forEach(([w, a]) => {
+  [[0.34, 0.14], [0.2, 0.3]].forEach(([w, a]) => { // a tight glow: wide soft strokes smeared the letters
     x.globalAlpha = a;
     x.lineWidth = size * w;
     x.strokeText(text, W / 2, ty);
@@ -562,11 +563,12 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
 function hubMarqueeAtlas() {
   if (HUB_CACHE.marquee) return HUB_CACHE.marquee;
   const c = document.createElement("canvas");
-  c.width = c.height = 1024;
+  c.width = c.height = 2048; // twice the old size: marquee lettering stays sharp on a phone's dense screen
   const x = c.getContext("2d");
+  x.scale(2, 2);
   x.fillStyle = "#000";
   x.fillRect(0, 0, 1024, 1024);
-  CABINETS.forEach((cab, i) => hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag));
+  CABINETS.forEach((cab, i) => { hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag); [34, 478].forEach((ex) => hubEmblem(x, cab.id, ex, i * 170 + 72, 17, cab.color)); });
   HUB_TITLES.forEach((t, i) => hubMarquee(x, 512 + (i % 2) * 256, Math.floor(i / 2) * 64, 256, 64, t, HUB_PALETTE[i % HUB_PALETTE.length]));
   if (hubFontsReady()) HUB_CACHE.marquee = c;
   return c;
@@ -816,6 +818,7 @@ class HubScene extends Scene3D {
       ...this.cabs.map((c, i) => ({ kind: "cab", parts: [grp(HUB_G.cab + i), { on: () => { c.scr.target = 1; }, off: () => { c.scr.target = 0; c.scr.power = 0; } }] })),
     ];
     this.flickT = 3;
+    this.extras = new HubExtras(this); // room props, patrons, the power-up effect
   }
   canvasTex(canvas) {
     const t = new THREE.CanvasTexture(canvas);
@@ -952,13 +955,13 @@ class HubScene extends Scene3D {
     [-0.2, 0.2].forEach((x) => B.glow.add(K.get("start", () => new THREE.CylinderGeometry(0.04, 0.04, 0.04, 10)), onPanel(x, 0.88, 0.04), 0xffffff, { k: 1.4, g }));
     // marquee in its lightbox, and the light leaking under it
     const mf = hubFace(HUB_BODY[7], HUB_BODY[8], 0.5, 0.005);
-    K.quad(B.marq, IW - 0.04, 0.67, at(0, mf.y, mf.z, mf.rx), 0xffffff, { k: 1.55, g, uv: hubUV(0, i * 170, 512, 170) });
+    K.quad(B.marq, IW - 0.04, 0.67, at(0, mf.y, mf.z, mf.rx), 0xffffff, { k: 1.12, g, uv: hubUV(0, i * 170, 512, 170) });
     const sp = hubFace(HUB_BODY[6], HUB_BODY[7], 0.62, 0.004);
     K.quad(B.glow, IW - 0.12, sp.len * 0.3, at(0, sp.y, sp.z, sp.rx), col, { k: 0.9, g });
     // the CRT
     const canvas = document.createElement("canvas");
-    canvas.width = 160;
-    canvas.height = 120;
+    canvas.width = 320; // drawn in 160 x 120 units at 2x, so the attract text is legible
+    canvas.height = 240;
     const tex = new THREE.CanvasTexture(canvas);
     tex.magFilter = THREE.NearestFilter;
     tex.minFilter = THREE.LinearFilter;
@@ -969,6 +972,8 @@ class HubScene extends Scene3D {
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.96, 1.5), mat);
     screen.applyMatrix4(at(0, sf.y, sf.z, sf.rx));
     this.scene.add(screen);
+    // what makes this cabinet unlike the other five (see 11b-hubextras.js)
+    hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
     const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(base);
     const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(base);
@@ -1111,11 +1116,17 @@ class HubScene extends Scene3D {
     super.update(dt);
     if (!this.has3D) return;
     const target = this.cabAngle(this.sel);
-    this.angle += (target - this.angle) * Math.min(1, dt * 6);
+    // A dolly move between cabinets: a damped spring eases out and in, and the camera
+    // draws back a little on the way across.
+    const h = Math.min(dt, 0.05);
+    this.angV = (this.angV || 0) + ((target - this.angle) * 46 - (this.angV || 0) * 13.6) * h;
+    this.angle += this.angV * h;
+    const travel = this.zooming || this.introRunning ? 0 : smoothstep(0, HUB_STEP * 0.7, Math.abs(target - this.angle));
     const a = this.angle;
     // Lean the view toward the finger / mouse a little: the room feels like a place.
     const pa = a + Pointer.x * 0.07;
-    this.camBase.set(Math.sin(a) * this.dolly, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15, -Math.cos(a) * this.dolly);
+    const dol = this.dolly - travel * 1.5;
+    this.camBase.set(Math.sin(a) * dol, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * dol);
     this.lookAt.set(Math.sin(pa) * HUB_R, 2.15 - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.
@@ -1157,6 +1168,7 @@ class HubScene extends Scene3D {
         if (c.demo.wait < 0) c.demo.wait = 0;
       }
     });
+    this.extras.update(dt);
     FX.sync(this.scene, this.t);
   }
   // Turn lamp states into light: neon levels, the room's real lights, and the
@@ -1224,9 +1236,10 @@ class HubScene extends Scene3D {
 // Tiny attract demos drawn on each cabinet's screen.
 function drawDemo(d, dt) {
   const x = d.ctx, W = 160, H = 120, t = d.t, c = d.cab.color;
+  x.setTransform(d.canvas.width / 160, 0, 0, d.canvas.height / 120, 0, 0);
   x.fillStyle = "#07021a";
   x.fillRect(0, 0, W, H);
-  x.font = '8px "Press Start 2P", monospace';
+  x.font = '10px "Press Start 2P", monospace';
   x.textAlign = "center";
   switch (d.cab.id) {
     case "blaster": {
@@ -1299,9 +1312,11 @@ function drawDemo(d, dt) {
     }
   }
   if (Math.floor(t * 1.4) % 2 === 0) {
+    x.fillStyle = "rgba(7, 2, 26, 0.85)"; // a dark plate, so the words read over any demo
+    x.fillRect(20, 103, 120, 15);
     x.fillStyle = c;
     x.textAlign = "center";
-    x.fillText("PRESS START", 80, 116);
+    x.fillText("PRESS START", 80, 115);
   }
   d.tex.needsUpdate = true;
 }

@@ -460,8 +460,10 @@ const Scenes = {
 // sample. Colour maths runs at half precision where the GPU has it (UVs stay high).
 function makePipeline(renderer, hdr) {
   const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
+  // Depth comes with stencil so it is 24 bits deep: this three.js gives a depth-only
+  // target 16 bits, which stripes any decal a few millimetres off a wall (screens, signs).
   const rt = (depth) => new THREE.WebGLRenderTarget(2, 2, {
-    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: false,
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: depth,
   });
   const sceneRT = rt(true);
   const brightRT = rt(false); // quarter res

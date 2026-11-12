@@ -116,8 +116,8 @@ build from before any visual work (153 answers in 8 games).
 |---|---|---|
 | A0 | Backup, extended regression test, before shots | done |
 | A1 | Title screen | done |
-| A2 | Arcade hub | next |
-| A3 | Risk Blaster | todo |
+| A2 | Arcade hub | done |
+| A3 | Risk Blaster | next |
 | A4 | Final Exam, Memory Bank, Strategy Guide | todo |
 | A5 | Shared audio, measurements, report | todo |
 
@@ -131,3 +131,20 @@ build from before any visual work (153 answers in 8 games).
   events of 12 kinds. Grid lines carry running pulses, the sun breathes, haze drifts.
   Logo: extruded depth, glow, a glint every 7 s. Fixed: the tip sits on a plate (grid
   line no longer crosses it); the sync toast drops below the MASTERY row.
+- A2 (hub): `11b-hubextras.js`. Each cabinet has its own build on the shared body:
+  Risk Blaster (swept fins, rocket pods, radar dish, antenna, twin sticks), Nest Egg
+  Run (steering wheel, shifter, rear wing, light bar, tyres, chequer strip), Boss Rush
+  (horns, spiked shoulders, teeth, red eye strip, slam button), Memory Bank (vault
+  wheel and bolts, dial, coin stacks, gold trim), Final Exam (clock, laurels, answer
+  sheet, pencil), Strategy Guide (book stacks, open book, reading lamp, ribbons); a
+  drawn emblem each side of every marquee. Room: jukebox with equaliser, claw machine
+  with a moving claw, dance pads, ticket printer, hoops, drinks machine and steam
+  grate, four ceiling fans, a cleaning robot, five walking silhouettes, and a band of
+  windows on the city with air traffic (10 props checked moving). Selecting a cabinet
+  powers it up (flare, sparks, screen surge, a sound). The camera pulls back and
+  rises while it travels between cabinets (a spring, no overshoot).
+  Crisp text: marquee atlas and attract screens are drawn at twice the resolution,
+  and the scene's depth buffer is now 24-bit (`04-gfx.js`): the old 16-bit one striped
+  every screen and sign a few millimetres off a wall, in every scene, on phones too.
+  Software test (auto scaler, worst second): hub 106 fps, racer 85, boss 107, title 62.
+  Known: title's worst second is close to 60 on the software test (average 133).
