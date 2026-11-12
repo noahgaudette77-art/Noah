@@ -675,7 +675,7 @@ class BossGame extends QuizGame {
       u.orbs.setMatrixAt(i, this._m.compose(this._v, this._q, this._s.set(1, 1, 1)));
     }
     u.orbs.instanceMatrix.needsUpdate = true;
-    u.charge.scale.setScalar(0.1 + f * 3.4 + (f > 0.8 ? Math.sin(this.t * 40) * 0.3 : 0));
+    u.charge.scale.setScalar(0.1 + f * 3.4 + (f > 0.8 ? Math.sin(this.t * 17) * 0.3 : 0)); // under 3 Hz
     u.eye.scale.y = 1.8 * (Math.sin(this.t * 0.7) > 0.985 ? 0.15 : 1);
     // charge: sparks spiral into the orb, faster and brighter as it fills
     const sp = u.sparks, pa = sp.geometry.attributes.position.array;
@@ -693,7 +693,7 @@ class BossGame extends QuizGame {
     }
     // light: the eye lights the arena as the attack charges; flashes decay
     u.eye.getWorldPosition(this.eyeLight.position);
-    this.eyeLight.intensity = 0.5 + f * 3.5 + (f > 0.8 ? Math.sin(this.t * 40) * 0.6 : 0);
+    this.eyeLight.intensity = 0.5 + f * 3.5 + (f > 0.8 ? Math.sin(this.t * 17) * 0.6 : 0);
     this.pool.material.color.copy(this.capMat.color).multiplyScalar(0.2 + f * 0.35);
     this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
     this.rune.material.color.copy(this.capMat.color).multiplyScalar(0.45 + f * 0.5);
@@ -722,11 +722,11 @@ class BossGame extends QuizGame {
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
       u.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
-      if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale;
+      if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
     }
     this.floor.material.uniforms.uReflect.value = GFX.lite ? 0 : 0.55;
     // a slow cinematic drift, with a touch of pointer parallax
-    const sway = REDUCED_MOTION ? 0.2 : 1;
+    const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
     this.lookAt.set(0, this.showY, 0);
     this.placeCamera();

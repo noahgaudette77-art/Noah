@@ -1184,7 +1184,7 @@ class HubScene extends Scene3D {
     const sc = this.cabs[this.sel];
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);
-    this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 23));
+    this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));

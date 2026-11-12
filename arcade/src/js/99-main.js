@@ -5,6 +5,7 @@ function boot() {
   document.body.classList.toggle("crt-off", !Store.settings.crt);
   UI.init();
   GFX.init();
+  GFX.applySettings();
 
   Pointer.init();
   // FPS counter (Setup): frames per second, the frame rate the game is aiming for

@@ -62,6 +62,7 @@ const UI = {
     this._toastT = setTimeout(() => t.classList.remove("show"), ms);
   },
   flash(kind) {
+    if (kind === "hit" && GFX.ok) GFX.glitch(1, 0.4); // a wrong answer tears the picture
     if (GFX.ok && GFX.hitFlash(kind)) return; // drawn by the renderer (see GFX.hitFlash)
     const f = $("#flash");
     f.className = "";

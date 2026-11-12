@@ -13,7 +13,7 @@ const freshState = () => ({
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false, tilt: true, voice: true },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false, tilt: true, voice: true, quality: "auto", calm: false, fx: {} },
   updated: 0,
 });
 

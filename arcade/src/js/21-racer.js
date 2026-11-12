@@ -223,7 +223,7 @@ function racerGroundMaterial(mirror, shared) {
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
       uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xff3ad4, 1.7) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
-      uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 },
+      uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
     }),
@@ -234,7 +234,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform float uScroll; uniform float uTime; uniform sampler2D tReflect; uniform float uReflect;
       uniform vec3 uAsphalt; uniform vec3 uBase; uniform vec3 uGrid; uniform vec3 uEdge; uniform vec3 uDash;
       uniform vec3 uLampL; uniform vec3 uLampR; uniform float uLampI;
-      uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY;
+      uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -252,6 +252,9 @@ function racerGroundMaterial(mirror, shared) {
         vec3 V = normalize(cameraPosition - vWorld);
         float fres = 0.05 + 0.95 * pow(1.0 - clamp(V.y, 0.0, 1.0), 5.0);
         float road = 1.0 - smoothstep(${RACER_ROAD}.0 - fx, ${RACER_ROAD}.0 + fx, ax);
+        // a service lane down each side, where the traffic runs
+        float lane2 = (1.0 - smoothstep(9.0 - fx, 9.0 + fx, ax)) * smoothstep(5.5 - fx, 5.5 + fx, ax);
+        road = max(road, lane2);
         // wet asphalt: puddles mirror cleanly, damp patches smear lights into streaks
         float wet = rn(vec2(x * 0.45, s * 0.0625), 512.0);
         float puddle = smoothstep(0.5, 0.78, wet) * road;
@@ -285,6 +288,7 @@ function racerGroundMaterial(mirror, shared) {
         float eline = 1.0 - smoothstep(0.07, 0.07 + fx * 1.5, ed);
         vec3 asphalt = uAsphalt * (0.8 + 0.45 * wet) * (1.0 - 0.45 * puddle);
         asphalt += uDash * dline + uEdge * (eline + exp(-ed * 2.6) * 0.1);
+        asphalt += uDash * (1.0 - smoothstep(0.045, 0.045 + fx * 1.5, abs(ax - 7.3))) * dash * lane2 * 0.45;
         // the grid floor beside it
         vec2 g = vec2(ax - ${RACER_ROAD}.0, s) / 8.0;
         vec2 gw = max(fwidth(g), vec2(1e-4));
@@ -294,6 +298,13 @@ function racerGroundMaterial(mirror, shared) {
         float gf = 1.0 - smoothstep(0.18, 0.55, max(gw.x, gw.y));
         vec3 floorc = uBase + uGrid * (gl + gh * 0.08) * gf;
         vec3 col = mix(floorc, asphalt, road) + refl;
+        if (uRain > 0.0 && road > 0.5) {
+          // rain on the road: rings spread from where each drop lands
+          vec2 rc = vec2(x, s) * 1.3; vec2 rf = fract(rc) - 0.5; float rr = rh(floor(rc) + 17.0);
+          float ph = fract(uTime * (0.7 + rr * 0.6) + rr * 9.0);
+          float ring = (1.0 - smoothstep(0.0, 0.04, abs(length(rf) - ph * 0.45))) * (1.0 - ph) * step(rr, 0.7 * uRain);
+          col += (refl * 1.4 + vec3(0.1, 0.14, 0.18)) * ring * min(uRain, 1.0) * (1.0 - smoothstep(0.12, 0.45, max(fwidth(rc.x), fwidth(rc.y))));
+        }
         // the car's shadow: tight and dark under the body, softer as the springs lift it
         vec2 sq = vec2(x - uCarX, z - ${racerF(RACER_CAR_Z)}) / vec2(1.02 + uCarY * 1.5, 2.28);
         float shade = 1.0 - smoothstep(0.55, 1.12, dot(sq * sq, sq * sq));
@@ -753,6 +764,7 @@ class RacerGame extends QuizGame {
     this.buildSpeedLines();
     this.car = this.makeCar();
     s.add(this.car);
+    this.world = new RacerWorld(this); // traffic, biomes and ambient events (look only)
     this.buildGateKit();
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
@@ -1394,14 +1406,14 @@ class RacerGame extends QuizGame {
     this.placeCamera();
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);
-    this.city.material.uniforms.uFogFar.value = 900; // the city stays crisp through the haze
+    this.city.material.uniforms.uFogFar.value = this.world.cityFog; // the city stays crisp through the haze, but not through a fog bank
   }
   // The look-only motion: steering, flames, trails, speed lines, lights on the road.
   updateLook(dt, sp, step, scroll, sky) {
     this.carKit.update(dt, sp, step, sky);
     this.flame = this.carKit.flame;
     // speed lines
-    const rush = clamp((sp - 36) / 50, 0, 1) * (REDUCED_MOTION ? 0.4 : 1);
+    const rush = clamp((sp - 36) / 50, 0, 1) * (REDUCED_MOTION || GFX.calm ? 0.4 : 1);
     const lu = this.lines.material.uniforms;
     lu.uI.value = rush;
     lu.uScroll.value = (lu.uScroll.value + step * 1.6) % 60;
@@ -1416,6 +1428,7 @@ class RacerGame extends QuizGame {
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
     g.uCarY.value = this.carKit.heave.x;
+    this.world.update(dt, sp, step, sky);
     const gate = this.gate || this.leaving;
     if (gate) {
       const gz = gate.position.z;

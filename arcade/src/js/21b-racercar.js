@@ -305,7 +305,7 @@ class RacerCar {
       uniforms: { uI: { value: 0 }, uTime: { value: 0 } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "attribute vec3 aCol; varying vec3 vCol; varying float vT; void main(){ vCol = aCol; vT = clamp(position.z - 2.36, 0.0, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform float uI; uniform float uTime; varying vec3 vCol; varying float vT; void main(){ float f = (1.0 - vT) * (0.8 + 0.2 * sin(uTime * 60.0 + vT * 20.0)); gl_FragColor = vec4(mix(vec3(3.0, 3.0, 3.4), vCol * 2.5, vT) * f * uI, 1.0); }",
+      fragmentShader: "uniform float uI; uniform float uTime; varying vec3 vCol; varying float vT; void main(){ float f = (1.0 - vT) * (0.85 + 0.15 * sin(uTime * 17.0 + vT * 20.0)); gl_FragColor = vec4(mix(vec3(3.0, 3.0, 3.4), vCol * 2.5, vT) * f * uI, 1.0); }",
     }));
     this.flames.layers.set(1);
     chassis.add(this.flames);
@@ -469,14 +469,17 @@ class RacerCar {
     ch[10] = 0.03 + 2.0 * this.heat * this.heat; // exhaust tips: dark when cold, white-orange after a boost
     ch[11] = 0.05 + 1.5 * Math.max(smoothstep(0, 0.5, this.brake), this.hazard > 0 ? 0.8 : 0); // brake discs glow
     // flames
-    const fl = this.flame * (0.75 + 0.25 * Math.sin(t * 47));
+    const fl = this.flame * (0.8 + 0.2 * Math.sin(t * 16));
     this.flames.material.uniforms.uI.value = fl;
     this.flames.material.uniforms.uTime.value = t;
     this.flames.scale.set(1, 1, 0.4 + fl * 1.4);
     this.flames.position.z = -2.36 * (0.4 + fl * 1.4 - 1); // keep the flame's root on the tip
     this.flames.visible = this.flame > 0.02;
-    this.beams.material.uniforms.uI.value = GFX.opt.beams ? (0.1 + 0.3 * lamps) * (1 + this.flame * 0.5) : 0;
-    this.beams.visible = !!GFX.opt.beams;
+    // the shafts fade out as the car turns away from the road ahead: in a spin they
+    // would otherwise sweep through the camera and white the picture out
+    const ahead = Math.pow(Math.max(0, Math.cos(this.car.rotation.y)), 6);
+    this.beams.material.uniforms.uI.value = GFX.opt.beams ? (0.1 + 0.3 * lamps) * (1 + this.flame * 0.5) * ahead : 0;
+    this.beams.visible = !!GFX.opt.beams && ahead > 0.02;
     // spray
     const su = this.spray.material.uniforms;
     su.uTime.value = t;

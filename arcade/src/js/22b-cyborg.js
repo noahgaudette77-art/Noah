@@ -906,6 +906,8 @@ class CyborgRig {
     // ---- what just happened
     if (g.hp < this.lastHp) {
       this.hitV += 2.4 + Math.min(2, (this.lastHp - g.hp) / 12);
+      this.env = 1; // the blow rolls out through the arena
+      if (g.floorRing) g.floorRing(g.cfg.color, 26, 1.1);
       this.tw.t = 0; // a spasm follows every hit
       if (g.bursts && g.hp > 0) { g.boss.updateMatrixWorld(true); g.bursts.burst(G.chest.getWorldPosition(new THREE.Vector3()).add(this.tmp.set(rand(-1.5, 1.5), rand(0, 2), 1.4).multiplyScalar(g.bossScale)), 0xffd9a0, { n: 14, speed: 7, size: 0.13, life: 0.45, gravity: -10 }); }
     }
@@ -1008,6 +1010,14 @@ class CyborgRig {
         const at = G[p.gn].localToWorld(this.tmp.copy(p.p0).addScaledVector(p.n, 0.2)).clone();
         g.bursts.burst(at, Math.random() < 0.5 ? 0xffffff : g.cfg.color, { n: 6, speed: 4, size: 0.1 * g.bossScale + 0.04, life: 0.4, gravity: -8 });
       }
+    }
+    // ---- the arena answers a hit: its lights surge, the sky flares, and settle
+    if (g.capMat) {
+      if (!this.capBase) { this.capBase = g.capMat.color.clone(); this.skyGlow = g.sky.material.uniforms.uGlow.value; }
+      this.env = Math.max(0, (this.env || 0) - dt * 1.6);
+      const e = this.env * this.env * calm;
+      g.capMat.color.copy(this.capBase).multiplyScalar(1 + 1.6 * e);
+      g.sky.material.uniforms.uGlow.value = this.skyGlow * (1 + 0.9 * e);
     }
     // ---- shadow
     const sh = this.shadow;

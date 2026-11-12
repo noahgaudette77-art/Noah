@@ -18,10 +18,24 @@ const GFX = {
   punch: 0, // impact zoom: the picture jumps toward you for a moment
   speedBlur: 0, // radial blur from speed; scenes set it each frame
   heat: { x: 0.5, y: 0.5, r: 0.1, a: 0 }, // heat haze behind an exhaust (see heatAt)
+  gl: { a: 0, t: 1, dur: 1 }, // a glitch: bands of the picture slip sideways (see glitch)
   // Every effect can be switched off (Setup > Effects). calm: reduced effects, and
   // also set while a question is on screen so the answers stay the brightest thing.
   opt: { bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true },
   calm: false,
+  flashAt: -9, hitAt: -9,
+  // Setup: the effect switches, Reduced effects, and the quality tier. Auto adapts
+  // to hold the screen's refresh rate; Low, Med and High hold one level.
+  applySettings() {
+    const s = Store.settings;
+    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true }, s.fx || {});
+    this.opt = s.fx;
+    this.calm = !!s.calm;
+    const tier = { low: 1, med: 4, high: this.Q.length - 1 }[s.quality];
+    if (tier !== undefined) { this.locked = this.tierLock = true; this.setQ(tier, true); }
+    else if (this.tierLock) { this.locked = this.tierLock = false; this.settle = 1; }
+    if (this.pipe) this.pipe.glowFresh = false;
+  },
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -89,6 +103,7 @@ const GFX = {
     this.fever += (this.feverT - this.fever) * Math.min(1, dt * (this.feverT > this.fever ? 5 : 2.5));
     this.punch *= Math.pow(0.0006, dt);
     const rp = this.rip, rk = Math.min(1, (rp.t += dt) / rp.dur);
+    const gk = Math.min(1, (this.gl.t += dt) / this.gl.dur);
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -99,20 +114,22 @@ const GFX = {
     camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
-    if (mirrors) for (const m of mirrors) { if (this.lite) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (mirrors) for (const m of mirrors) { if (this.lite || !this.opt.wet) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
-      ab: this.ab,
+      ab: this.opt.ca ? Math.max(this.ab, this.Q[this.qi].fx && !this.calm ? 0.9 : 0) : 0, // a light fringe always (top levels), more on a hit
       flash: this.flashAmt,
       hit: this.hit,
       hitAmt: hitAmt,
       fever: this.fever < 0.004 ? 0 : this.fever,
       feverCol: this.feverCol,
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
-      punch: this.punch < 0.0006 ? 0 : this.punch,
-      zoomBlur: this.lite ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      punch: this.punch < 0.0006 || this.calm ? 0 : this.punch,
+      zoomBlur: this.lite || !this.opt.blur || this.calm ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      opt: this.opt, calm: this.calm,
       heat: this.heat,
+      glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
       fx: !!this.Q[this.qi].fx,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
@@ -127,8 +144,13 @@ const GFX = {
   // Juice: colour fringing + white flash, and a short freeze-frame.
   // Streak aura: rays of light around the screen edge in the streak's colour.
   setFever(amount, rgb) {
-    this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
+    this.feverT = REDUCED_MOTION || this.calm ? amount * 0.5 : amount;
     if (rgb) this.feverCol = rgb;
+  },
+  // A wrong answer glitches the picture for a moment. amt 0..1.
+  glitch(amt = 1, dur = 0.4) {
+    if (REDUCED_MOTION || this.calm || !this.opt.ca || this.Q[this.qi].cheap) return;
+    this.gl.a = amt; this.gl.t = 0; this.gl.dur = dur;
   },
   // Heat haze around a point in the scene (an exhaust, a vent): the final pass makes
   // the picture swim there this frame. radius in world units, amt 0..1.
@@ -147,7 +169,7 @@ const GFX = {
   // A shockwave at a point in the scene bends the picture as it spreads: a ring of
   // refraction in the final pass. amp 0..1.
   ripple(camera, pos, amp = 1, dur = 0.55) {
-    if (REDUCED_MOTION || !camera || this.Q[this.qi].cheap) return;
+    if (REDUCED_MOTION || this.calm || !camera || this.Q[this.qi].cheap) return;
     const v = this._ripV || (this._ripV = new THREE.Vector3());
     v.copy(pos).project(camera);
     if (v.z > 1) return;
@@ -155,8 +177,11 @@ const GFX = {
     r.x = v.x * 0.5 + 0.5; r.y = v.y * 0.5 + 0.5; r.t = 0; r.dur = dur; r.amp = amp;
   },
   pulse(ab = 6, flash = 0.1) {
-    if (!REDUCED_MOTION && !this.Q[this.qi].cheap) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
-    if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
+    const soft = REDUCED_MOTION || this.calm;
+    if (!soft && !this.Q[this.qi].cheap) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
+    if (soft) { ab *= 0.3; flash *= 0.3; }
+    // never more than three flashes a second, however fast the hits come
+    if (flash > 0) { if (this.t - this.flashAt < 0.34) flash = 0; else this.flashAt = this.t; }
     this.ab = Math.max(this.ab, ab);
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
@@ -167,8 +192,10 @@ const GFX = {
   hitFlash(kind) {
     const K = { good: [[0.525, 1, 0.37], 0.07, 0.42, 0.35], hit: [[1, 0.28, 0.41], 0.2, 0.68, 0.45], white: [[1, 1, 1], 1, 1, 0.5] }[kind];
     if (!K) return false;
-    const h = this.hit;
-    h.col = K[0]; h.inner = K[1] * (REDUCED_MOTION ? 0.4 : 1); h.outer = K[2] * (REDUCED_MOTION ? 0.4 : 1); h.dur = K[3]; h.t = 0;
+    if (this.t - this.hitAt < 0.34) return true; // at most three a second
+    this.hitAt = this.t;
+    const h = this.hit, soft = REDUCED_MOTION || this.calm ? 0.4 : 1;
+    h.col = K[0]; h.inner = K[1] * soft; h.outer = K[2] * soft; h.dur = K[3]; h.t = 0;
     return true;
   },
   // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
@@ -333,6 +360,7 @@ const GFX = {
     if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
     this.speedBlur = this.punch = 0;
     this.rip.t = this.rip.dur;
+    this.gl.t = this.gl.dur;
     this._n = this._sum = this._good = 0;
     this._lo = [1, 1, 1];
     this.probed = false;
@@ -534,7 +562,7 @@ function makePipeline(renderer, hdr) {
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
-    uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 },
+    uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -544,7 +572,7 @@ function makePipeline(renderer, hdr) {
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever;
-    uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT;
+    uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -579,6 +607,12 @@ function makePipeline(renderer, hdr) {
         HP vec2 rd = (suv - uRip.xy) * asp;
         HP float ring = (length(rd) - uRip.z) * 14.0;
         suv += normalize(rd + 1e-5) / asp * (ring * exp(-ring * ring) * uRip.w * 0.045);
+      }
+      if (uGlitch > 0.0) {
+        // a wrong answer tears the picture: bands of it slip sideways for a moment
+        HP float gb = floor(vUv.y * 26.0) + floor(uT * 12.0) * 7.0;
+        HP float gn = fract(sin(gb * 12.9898) * 43758.5453);
+        suv.x += (gn - 0.5) * 0.09 * uGlitch * step(0.6, fract(gn * 7.31));
       }
       if (uHeat.w > 0.0) {
         // heat haze: hot air behind an exhaust makes the picture swim
@@ -630,7 +664,7 @@ function makePipeline(renderer, hdr) {
       HP vec2 v = uv * (1.0 - uv.yx);
       col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
       HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
-      col += (n - 0.5) * 0.018 + uFlash;
+      col += (n - 0.5) * 0.018 * uGrain + uFlash;
       if (uGlass > 0.5) {
         // the tube (drawn here rather than as page overlays, which phones would have
         // to blend over every frame): rounded corners, a dark rim and inner shadow,
@@ -690,11 +724,12 @@ function makePipeline(renderer, hdr) {
       bright.uniforms.uKnee.value = 0.45;
       bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
       const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
-      if (!reuseGlow) {
+      const noBloom = !o.opt.bloom, wantRays = !!(p.rays && p.rays.pos && !o.lite && o.opt.beams);
+      if (!reuseGlow && (!noBloom || wantRays)) {
         pass(bright, brightRT);
         if (GFX.probe) GFX.probe("bright");
         let src = brightRT;
-        for (let i = 0; i < levels; i++) {
+        for (let i = 0; i < (noBloom ? 0 : levels); i++) {
           const m = mips[i];
           blur.uniforms.tDiffuse.value = src.texture;
           blur.uniforms.uDir.value.set(1 / m.w, 0);
@@ -705,7 +740,7 @@ function makePipeline(renderer, hdr) {
           src = m.a;
         }
         if (GFX.probe) GFX.probe("bloom");
-        if (o.fx && levels > 1) {
+        if (o.fx && levels > 1 && o.opt.lens && !noBloom) {
           // anamorphic streaks: the eighth-res bloom, smeared sideways in two widening passes
           const m = mips[1];
           blur.uniforms.tDiffuse.value = m.a.texture;
@@ -721,7 +756,7 @@ function makePipeline(renderer, hdr) {
       this.glowFresh = true;
       // god rays toward a light the scene names (e.g. the sun), when it's on screen
       let raysOn = 0;
-      if (p.rays && p.rays.pos && !o.lite) {
+      if (wantRays) {
         lightV.copy(p.rays.pos).project(camera);
         if (lightV.z < 1 && Math.abs(lightV.x) < 1.6 && Math.abs(lightV.y) < 1.6) {
           rays.uniforms.tDiffuse.value = brightRT.texture;
@@ -733,9 +768,12 @@ function makePipeline(renderer, hdr) {
           if (GFX.probe) GFX.probe("rays");
         }
       }
-      const bloomK = p.bloom !== undefined ? p.bloom : 1;
+      const bloomK = noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1;
       const u = final.uniforms;
-      if (levels === 1 && !raysOn) {
+      if (noBloom && !raysOn) {
+        u.tGlow.value = black;
+        u.uGlowK.value = 0;
+      } else if (levels === 1 && !raysOn) {
         // a single glow level and no rays: the final pass reads the blur directly
         u.tGlow.value = mips[0].a.texture;
         u.uGlowK.value = bloomK * 0.2;
@@ -750,8 +788,8 @@ function makePipeline(renderer, hdr) {
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
         g.tStreak.value = streakA.texture;
-        g.uStreak.value = o.fx && levels > 1 ? (p.streak !== undefined ? p.streak : 1) * 0.65 : 0;
-        g.uFlare.value = o.fx && raysOn ? (p.rays.flare !== undefined ? p.rays.flare : 1) : 0;
+        g.uStreak.value = o.fx && levels > 1 && o.opt.lens && !noBloom ? (p.streak !== undefined ? p.streak : 1) * 0.65 : 0;
+        g.uFlare.value = o.fx && raysOn && o.opt.lens ? (p.rays.flare !== undefined ? p.rays.flare : 1) : 0;
         if (raysOn) g.uLight.value.copy(rays.uniforms.uLight.value);
         g.uAspect.value = sw / sh;
         if (!reuseGlow) pass(glow, glowRT);
@@ -764,7 +802,8 @@ function makePipeline(renderer, hdr) {
       const cw = renderer.domElement.width, ch = renderer.domElement.height;
       u.uRes.value.set(cw, ch);
       u.uNoise.value.set(Math.random() * 97, Math.random() * 97);
-      u.uFlicker.value = 0.985 + 0.015 * Math.sin(o.t * 95);
+      u.uFlicker.value = o.calm || !o.opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
+      u.uGrain.value = o.opt.grain ? 1 : 0;
       u.uAberr.value = o.ab;
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
@@ -775,16 +814,17 @@ function makePipeline(renderer, hdr) {
       u.uZoom.value.set(o.punch, o.zoomBlur);
       u.uHeat.value.set(o.heat.x, o.heat.y, Math.max(0.01, o.heat.r), o.heat.a);
       u.uT.value = o.t % 628.3185;
+      u.uGlitch.value = o.glitch;
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
-      u.uVignette.value = p.vignette !== undefined ? p.vignette : 1;
+      u.uVignette.value = o.opt.vignette ? (p.vignette !== undefined ? p.vignette : 1) : 0;
       if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
       const retro = o.look !== "hd";
       u.uGlass.value = o.glass;
       u.uSnap.value = retro ? 1 : 0;
       u.uFXAA.value = retro || !o.aa ? 0 : 1;
-      u.uScan.value = retro ? 0.2 : 0.09;
+      u.uScan.value = o.opt.scan ? (retro ? 0.2 : 0.09) : 0;
       u.uCurve.value = retro ? 0.11 : 0.06;
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
       u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);
@@ -904,7 +944,7 @@ class Scene3D {
     const bh = (this.band ? this.band.h : H) * perPx;
     return { w: W * perPx, h: bh };
   }
-  shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION ? a * 0.3 : a); }
+  shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION || GFX.calm ? a * 0.3 : a); }
   // An expanding ring of light that faces the camera.
   // Purely decorative pieces (dust, light cones and shafts, trails...) that weak
   // quality levels stop drawing. They move to their own layers, which the camera

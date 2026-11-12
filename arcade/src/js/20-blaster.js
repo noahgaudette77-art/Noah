@@ -819,7 +819,7 @@ class BlasterGame extends QuizGame {
     this.ship.position.y += (this.shipY - this.ship.position.y) * ease;
     this.ship.scale.setScalar(this.ship.scale.x + (this.shipScale - this.ship.scale.x) * ease);
     if (this.state === "ask") this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12);
-    const fl = 1 + Math.sin(this.t * 31) * 0.12 + Math.sin(this.t * 17.3) * 0.08 + w * 0.6;
+    const fl = 1 + Math.sin(this.t * 15) * 0.12 + Math.sin(this.t * 9.3) * 0.08 + w * 0.6;
     this.engineGlows.forEach((g, j) => g.scale.setScalar(0.8 * fl * (j ? 1.04 : 0.96)));
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();

@@ -70,6 +70,11 @@ function showSettings() {
       ${row("Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
+      ${row("Quality", "Auto holds your screen's frame rate; High is every effect at full resolution", seg("quality", [["auto", "AUTO"], ["low", "LOW"], ["med", "MED"], ["high", "HIGH"]]))}
+      ${row("Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
+      <div class="setting fxset"><div class="sl">Effects<small>Switch any of them off</small></div>
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+          .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-8)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
@@ -89,6 +94,15 @@ function showSettings() {
     el,
     on: (a, t) => {
       if (a === "back") { Sound.sfx("back"); showHub(); return; }
+      if (a === "fx") {
+        const k = t.dataset.k, fx = Store.settings.fx || (Store.settings.fx = {});
+        fx[k] = fx[k] === false;
+        Store.save();
+        t.setAttribute("aria-pressed", String(fx[k]));
+        GFX.applySettings();
+        Sound.sfx("blip");
+        return;
+      }
       if (a === "set") {
         const k = t.dataset.k;
         let v = t.dataset.v;
@@ -97,6 +111,7 @@ function showSettings() {
         Store.settings[k] = v;
         Store.save();
         $$(`[data-k=${k}]`, el).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+        if (k === "quality" || k === "calm") GFX.applySettings();
         if (k === "music") Sound.refreshMusic();
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "pixel") GFX.resize();

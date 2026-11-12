@@ -25,8 +25,8 @@ next to it is the trace that build produces.
 | 0 | Backup, regression test, "before" screenshots | done |
 | 1 | The car | done |
 | 2 | The bosses (a different cyborg for each of the 12) | done |
-| 3 | World and events (traffic, Event Director, biomes, feedback) | next (code written, not yet wired in) |
-| 4 | Post-FX toggles, Reduced effects, quality tiers, performance | todo |
+| 3 | World and events (traffic, Event Director, biomes, feedback) | done (final screenshots pending) |
+| 4 | Post-FX toggles, Reduced effects, quality tiers, performance | code in; measuring and reporting next |
 
 ## Done so far
 
@@ -61,15 +61,30 @@ next to it is the trace that build produces.
   under it on the mirror floor. It only reads the fight (HP, charge, state).
   Regression: identical.
 
+- Checkpoint 3 (world): `src/js/09b-director.js` is the Event Director (an event
+  every 3 to 8 s from a shuffled bag; slower and quiet-only while a question is up).
+  `src/js/21c-racerworld.js` adds traffic (sedan, truck, bus, bike, hover car, patrol
+  cruiser, rival racer as instanced meshes: our way on the right service lane,
+  oncoming on the left, hover lanes overhead; lane changes with indicators, brake
+  lights, a breakdown on hazards, parting on a right answer, soft shadows), five
+  biomes by career year (downtown 25-31, tunnel, coast, desert, tunnel, mountain,
+  tunnel, downtown at night) swapped behind a fog bank, each with its own scenery
+  and palette, and 18 events: meteors, fireworks, lightning, explosion, ufo, blimp,
+  helicopter, drones, lasers, birds, maglev, near-miss, rival, chase, breakdown,
+  squall, steam-burst. The road shader gained service lanes and rain rings.
+  A 60 s capture fired 16 events of 9 kinds and showed 6 vehicle kinds.
+  Regression: identical.
+- Checkpoint 4 (code): Setup has Quality (Auto/Low/Med/High), Reduced effects and
+  eleven effect switches (`GFX.applySettings`, `GFX.opt`, `GFX.calm`). Flashes are
+  rate-limited to three a second and every periodic flicker is under 3 Hz. A wrong
+  answer glitches the picture (`GFX.glitch`); a boss hit pulses the arena's lights.
+
 ## Next
 
-- Checkpoint 3: `src/js/09b-director.js` (Event Director) and
-  `src/js/21c-racerworld.js` (traffic, five biomes, 18 events) are written but not
-  yet called from `21-racer.js`. To wire in: create `this.world = new RacerWorld(this)`
-  after `makeCar()` in `build3D`, call `this.world.update(dt, sp, step, sky)` at the
-  end of `updateLook`, add `GFX.glitch`, the side lanes and rain ripples (`uRain`)
-  to the road shader, and use `this.world.cityFog` for the skyline's fog.
+- Measure fps (racer, boss) on a phone-size viewport; legibility screenshots during
+  busy moments; full walkthrough for console errors; before/after sheets; update
+  README and the PR; final report.
 
 ## Known issues
 
-- None yet.
+- None open.

@@ -32,7 +32,7 @@ const Hype = {
   // A shower of sparks in front of the camera, in the level's colour.
   confetti(col) {
     const s = Scenes.cur;
-    if (!s || !s.bursts || !s.camera || REDUCED_MOTION) return;
+    if (!s || !s.bursts || !s.camera || REDUCED_MOTION || GFX.calm) return;
     const at = s.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(9).add(s.camera.position);
     at.y += 1.5;
     s.bursts.burst(at, col, { n: 90, speed: 9, size: 0.3, life: 1.4, gravity: -7 });
