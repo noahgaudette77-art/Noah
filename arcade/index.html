@@ -306,9 +306,18 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
 .fever.bump { animation: feverbump 0.3s ease-out; }
 @keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
+/* a new question: light sweeps across the panel and the answers deal in (transform and opacity only) */
+.qpanel { position: relative; overflow: hidden; }
+.qpanel.fresh::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.2) 50%, transparent 62%); transform: translateX(-100%); animation: qsweep 0.55s ease-out; }
+@keyframes qsweep { to { transform: translateX(100%); } }
+.scr-game .answers .ans { animation: ansin 0.26s ease-out backwards; }
+.scr-game .answers .ans:nth-child(2) { animation-delay: 0.04s; }
+.scr-game .answers .ans:nth-child(3) { animation-delay: 0.08s; }
+.scr-game .answers .ans:nth-child(4) { animation-delay: 0.12s; }
+@keyframes ansin { from { transform: translateY(14px); opacity: 0; } }
 /* answers react: the right one pops, a wrong pick shakes (transform only) */
-.ans.good { animation: anspop 0.36s ease-out; }
-.ans.bad { animation: ansshake 0.4s ease-out; }
+.ans.good, .scr-game .answers .ans.good { animation: anspop 0.36s ease-out; }
+.ans.bad, .scr-game .answers .ans.bad { animation: ansshake 0.4s ease-out; }
 @keyframes anspop { 35% { transform: scale(1.03); } 100% { transform: none; } }
 @keyframes ansshake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } 100% { transform: none; } }
 .floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
@@ -519,7 +528,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
@@ -1372,6 +1381,9 @@ const GFX = {
   flashAmt: 0, // white flash pulse
   hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
   fever: 0, feverT: 0, feverCol: [1, 0.5, 0.1], // streak aura around the screen (see Hype)
+  rip: { x: 0.5, y: 0.5, t: 1, dur: 1, amp: 0 }, // a shockwave bending the picture (see ripple)
+  punch: 0, // impact zoom: the picture jumps toward you for a moment
+  speedBlur: 0, // radial blur from speed; scenes set it each frame
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -1437,6 +1449,8 @@ const GFX = {
     this.flashAmt *= Math.pow(0.003, dt);
     const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
     this.fever += (this.feverT - this.fever) * Math.min(1, dt * (this.feverT > this.fever ? 5 : 2.5));
+    this.punch *= Math.pow(0.0006, dt);
+    const rp = this.rip, rk = Math.min(1, (rp.t += dt) / rp.dur);
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -1457,6 +1471,10 @@ const GFX = {
       hitAmt: hitAmt,
       fever: this.fever < 0.004 ? 0 : this.fever,
       feverCol: this.feverCol,
+      rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
+      punch: this.punch < 0.0006 ? 0 : this.punch,
+      zoomBlur: this.lite ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      fx: !!this.Q[this.qi].fx,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
@@ -1472,7 +1490,18 @@ const GFX = {
     this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
     if (rgb) this.feverCol = rgb;
   },
+  // A shockwave at a point in the scene bends the picture as it spreads: a ring of
+  // refraction in the final pass. amp 0..1.
+  ripple(camera, pos, amp = 1, dur = 0.55) {
+    if (REDUCED_MOTION || !camera || this.Q[this.qi].cheap) return;
+    const v = this._ripV || (this._ripV = new THREE.Vector3());
+    v.copy(pos).project(camera);
+    if (v.z > 1) return;
+    const r = this.rip;
+    r.x = v.x * 0.5 + 0.5; r.y = v.y * 0.5 + 0.5; r.t = 0; r.dur = dur; r.amp = amp;
+  },
   pulse(ab = 6, flash = 0.1) {
+    if (!REDUCED_MOTION && !this.Q[this.qi].cheap) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
     this.flashAmt = Math.max(this.flashAmt, flash);
@@ -1496,6 +1525,7 @@ const GFX = {
   //   0-3: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
   //   4:   lite, FXAA back on
   //   5-7: everything on, resolution 74% -> 100%
+  //   6-7: plus the lens effects (anamorphic streaks, sun flare; see makePipeline)
   // Only very weak GPUs ever get below level 5.
   // Every 40 frames (or half a second, if frames are slow) the average frame time is
   // compared with the screen's frame interval (measured, since browsers don't report
@@ -1510,8 +1540,8 @@ const GFX = {
   Q: [
     { d: 0.3, lite: true, aa: false, bloom: 1, cheap: true },
     { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
-    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5 },
-    { d: 1, lite: false, aa: true, bloom: 5 },
+    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5, fx: true },
+    { d: 1, lite: false, aa: true, bloom: 5, fx: true },
   ],
   qi: 7,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
@@ -1647,6 +1677,8 @@ const GFX = {
   },
   sceneChanged(old, s) {
     if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
+    this.speedBlur = this.punch = 0;
+    this.rip.t = this.rip.dur;
     this._n = this._sum = this._good = 0;
     this._lo = [1, 1, 1];
     this.probed = false;
@@ -1753,6 +1785,7 @@ function makePipeline(renderer, hdr) {
   const brightRT = rt(false); // quarter res
   const raysRT = rt(false); // eighth res
   const glowRT = rt(false); // quarter res: every bloom level plus the rays
+  const streakA = rt(false), streakB = rt(false); // eighth res: anamorphic streaks
   const lightV = new THREE.Vector3();
   const LEVELS = 5;
   const MIRROR = 0.4; // reflections render at this fraction of the scene size
@@ -1809,13 +1842,31 @@ function makePipeline(renderer, hdr) {
       gl_FragColor = vec4(acc / 32.0, 1.0);
     }`);
   // All the glow in one quarter-res texture.
-  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 } }, `
-    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays;
-    uniform float uRays; uniform float uBloom; varying HP vec2 vUv;
+  // Lens effects (top quality levels): tStreak is the bloom smeared sideways, the
+  // streak an anamorphic lens draws through every light; uFlare adds the ghosts a
+  // sun throws across the frame, as bright as the sun is on screen.
+  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 },
+    tStreak: { value: null }, uStreak: { value: 0 }, uFlare: { value: 0 }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } }, `
+    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays; uniform sampler2D tStreak;
+    uniform float uRays; uniform float uBloom; uniform float uStreak; uniform float uFlare; uniform float uAspect; uniform HP vec2 uLight; varying HP vec2 vUv;
+    float disc(HP vec2 c, float r){ HP vec2 d = (vUv - c) * vec2(uAspect, 1.0); return smoothstep(r, r * 0.55, length(d)); }
     void main(){
       vec3 g = (texture2D(tB0, vUv).rgb + texture2D(tB1, vUv).rgb * 0.75 + texture2D(tB2, vUv).rgb * 0.55
         + texture2D(tB3, vUv).rgb * 0.4 + texture2D(tB4, vUv).rgb * 0.3) * (uBloom * 0.2);
       if (uRays > 0.0) g += texture2D(tRays, vUv).rgb * uRays;
+      if (uStreak > 0.0) {
+        vec3 st = texture2D(tStreak, vUv).rgb;
+        g += st * vec3(0.72, 0.84, 1.0) * (uStreak * (0.25 + 0.75 * smoothstep(0.1, 1.2, max(st.r, max(st.g, st.b)))));
+      }
+      if (uFlare > 0.0) {
+        vec3 sun = texture2D(tB2, clamp(uLight, 0.0, 1.0)).rgb;
+        float vis = uFlare * min(1.0, max(sun.r, max(sun.g, sun.b)) * 0.8);
+        if (vis > 0.01) {
+          HP vec2 ax = vec2(0.5) - uLight;
+          g += (vec3(0.2, 0.75, 1.0) * disc(uLight + ax * 0.55, 0.035) + vec3(1.0, 0.3, 0.75) * disc(uLight + ax * 1.3, 0.07)
+            + vec3(1.0, 0.65, 0.25) * disc(uLight + ax * 1.75, 0.12) + vec3(0.45, 0.4, 1.0) * disc(uLight + ax * 2.2, 0.05)) * (0.07 * vis);
+        }
+      }
       gl_FragColor = vec4(g, 1.0);
     }`);
   const final = mat({
@@ -1828,6 +1879,7 @@ function makePipeline(renderer, hdr) {
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
+    uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -1837,6 +1889,7 @@ function makePipeline(renderer, hdr) {
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever;
+    uniform HP vec4 uRip; uniform HP vec2 uZoom;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -1862,14 +1915,29 @@ function makePipeline(renderer, hdr) {
       HP vec2 uv = vUv;
       if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
-      vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
+      // Where the picture is read from: an impact zooms it toward you for a moment,
+      // and a shockwave bends it in a ring that spreads from the blast.
+      HP vec2 suv = uv;
+      if (uZoom.x > 0.0) suv = 0.5 + (suv - 0.5) * (1.0 - uZoom.x);
+      if (uRip.w > 0.0) {
+        HP vec2 asp = vec2(uRes.x / uRes.y, 1.0);
+        HP vec2 rd = (suv - uRip.xy) * asp;
+        HP float ring = (length(rd) - uRip.z) * 14.0;
+        suv += normalize(rd + 1e-5) / asp * (ring * exp(-ring * ring) * uRip.w * 0.045);
+      }
+      vec3 col = uFXAA > 0.5 ? fxaa(suv) : tex(suv);
+      if (uZoom.y > 0.0) {
+        // speed: the picture streaks outward from the centre
+        HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045);
+        col = (col + tex(suv + zd) + tex(suv + zd * 2.0) + tex(suv + zd * 3.0)) * 0.25;
+      }
       if (uAberr > 0.05) {
         // colour fringing, only while a hit pulse lasts (two extra samples)
-        HP vec2 cd = uv - 0.5;
+        HP vec2 cd = suv - 0.5;
         HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
-        col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
+        col.r = tex(suv + dv).r; col.b = tex(suv - dv).b;
       }
-      col += texture2D(tGlow, uv).rgb * uGlowK;
+      col += texture2D(tGlow, suv).rgb * uGlowK;
       col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -1937,6 +2005,8 @@ function makePipeline(renderer, hdr) {
         m.a.setSize(mw, mh);
         m.b.setSize(mw, mh);
       }
+      streakA.setSize(mips[1].w, mips[1].h);
+      streakB.setSize(mips[1].w, mips[1].h);
       this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
       this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
       final.uniforms.uSceneRes.value.set(w, h);
@@ -1974,6 +2044,17 @@ function makePipeline(renderer, hdr) {
           src = m.a;
         }
         if (GFX.probe) GFX.probe("bloom");
+        if (o.fx && levels > 1) {
+          // anamorphic streaks: the eighth-res bloom, smeared sideways in two widening passes
+          const m = mips[1];
+          blur.uniforms.tDiffuse.value = m.a.texture;
+          blur.uniforms.uDir.value.set(2.2 / m.w, 0);
+          pass(blur, streakB);
+          blur.uniforms.tDiffuse.value = streakB.texture;
+          blur.uniforms.uDir.value.set(5.5 / m.w, 0);
+          pass(blur, streakA);
+          if (GFX.probe) GFX.probe("streak");
+        }
       }
       this.glowLevels = levels;
       this.glowFresh = true;
@@ -2007,6 +2088,11 @@ function makePipeline(renderer, hdr) {
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
+        g.tStreak.value = streakA.texture;
+        g.uStreak.value = o.fx && levels > 1 ? (p.streak !== undefined ? p.streak : 1) * 0.65 : 0;
+        g.uFlare.value = o.fx && raysOn ? (p.rays.flare !== undefined ? p.rays.flare : 1) : 0;
+        if (raysOn) g.uLight.value.copy(rays.uniforms.uLight.value);
+        g.uAspect.value = sw / sh;
         if (!reuseGlow) pass(glow, glowRT);
         if (GFX.probe) GFX.probe("glow");
         u.tGlow.value = glowRT.texture;
@@ -2024,6 +2110,8 @@ function makePipeline(renderer, hdr) {
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
       u.uFever.value.set(o.fever, o.t % 628.3185);
+      u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
+      u.uZoom.value.set(o.punch, o.zoomBlur);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
@@ -2183,6 +2271,7 @@ class Scene3D {
     ring.material.color.set(color);
     ring.material.opacity = 1;
     ring.scale.setScalar(0.4);
+    GFX.ripple(this.camera, pos, clamp(size / 7, 0.45, 1), dur);
     this.tw.add(dur, (k) => {
       if (ring.userData.tok !== tok) return;
       ring.scale.setScalar(0.4 + k * size);
@@ -2708,6 +2797,9 @@ class QuizPanel {
     this.qEl.classList.toggle("long", q.q.length > 190);
     this.qEl.innerHTML = `<div class="qmeta"><span>${esc(meta || "STAGE " + q.ch + " · " + q.topic)}</span><span class="diff">${diff}</span></div>
       <div class="qtext selectable">${esc(q.q)}</div>`;
+    this.qEl.classList.remove("fresh");
+    void this.qEl.offsetWidth; // restart the sweep
+    this.qEl.classList.add("fresh");
     const longest = Math.max(...round.order.map((_, i) => round.text(i).length));
     this.aEl.className = "answers" + (round.tf ? " tf" : "") + (longest > 64 ? " long" : "");
     this.aEl.innerHTML = round.order
@@ -3182,6 +3274,22 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
             col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
           }
         }
+        // a shooting star now and then: a short streak of light across the upper sky
+        if (uStars > 0.0 && uDetail > 0.5 && h > 0.06) {
+          float mp = uTime / 3.7; float mid = floor(mp); float mf = fract(mp);
+          if (mf < 0.22) {
+            vec2 sp = vec2(atan(d.x, -d.z), h);
+            // it starts low enough to be in view and runs mostly sideways, sinking a little
+            float side = hash13(vec3(mid, 9.0, 4.0)) < 0.5 ? -1.0 : 1.0;
+            vec2 m0 = vec2(hash13(vec3(mid, 1.0, 7.0)) * 1.2 - 0.6 - side * 0.25, 0.2 + hash13(vec3(mid, 5.0, 2.0)) * 0.22);
+            vec2 mv = normalize(vec2(side, -0.3));
+            float k = mf / 0.22;
+            vec2 head = m0 + mv * k * 0.5;
+            float along = clamp(dot(sp - head, -mv), 0.0, 0.16);
+            float dist = length(sp - head + mv * along);
+            col += vec3(1.0, 0.92, 0.85) * smoothstep(0.006, 0.0, dist) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
+          }
+        }
         // Encode like built-in materials do: identity in the scene, RGBE when the
         // PMREM generator renders this sky into an environment map.
         gl_FragColor = linearToOutputTexel(vec4(col, 1.0));
@@ -3194,6 +3302,37 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
   m.frustumCulled = false;
   m.userData.sky = true;
   return m;
+}
+// A ringed gas giant, lit from one side with a bright limb: scenery for deep space.
+function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, ring = 0xffc98a } = {}) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(radius, 40, 24), new THREE.ShaderMaterial({
+    uniforms: { uA: { value: new THREE.Color(a) }, uB: { value: new THREE.Color(b) }, uRim: { value: neon(rim, 1.9) } },
+    vertexShader: "varying vec3 vN; varying vec3 vP; void main(){ vN = normalize(normalMatrix * normal); vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform vec3 uA; uniform vec3 uB; uniform vec3 uRim; varying vec3 vN; varying vec3 vP;
+      void main(){
+        vec3 n = normalize(vN);
+        float lit = max(dot(n, normalize(vec3(-0.62, 0.45, 0.64))), 0.0);
+        float band = 0.5 + 0.5 * sin(vP.y * ${(11 / radius).toFixed(3)} + sin(vP.x * ${(5 / radius).toFixed(3)}) * 1.3);
+        float limb = pow(1.0 - max(n.z, 0.0), 2.6);
+        gl_FragColor = vec4(mix(uA, uB, band) * (0.03 + 1.25 * lit) + uRim * limb * (0.12 + lit), 1.0);
+      }`,
+  }));
+  const rings = new THREE.Mesh(new THREE.RingGeometry(radius * 1.35, radius * 2.15, 64, 1), new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(ring, 1.1) } },
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform vec3 uColor; varying vec2 vP;
+      void main(){
+        float r = (length(vP) - ${(radius * 1.35).toFixed(2)}) / ${(radius * 0.8).toFixed(2)};
+        float lanes = 0.35 + 0.65 * abs(sin(r * 21.0)) * step(0.08, fract(r * 3.1));
+        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * smoothstep(1.0, 0.85, r) * 0.55, 1.0);
+      }`,
+  }));
+  rings.rotation.x = Math.PI / 2 - 0.42;
+  rings.rotation.y = 0.3;
+  g.add(body, rings);
+  return g;
 }
 // Keep a sky dome centred on the camera so it reads as infinitely far.
 function followSky(sky, camera) { sky.position.copy(camera.position); }
@@ -4690,6 +4829,17 @@ class HubScene extends Scene3D {
     this.dust.layers.set(1);
     s.add(this.dust);
     this.decor(this.dust);
+    // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
+    // They hang behind the ring of cabinets, so they cross the back of the room.
+    this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
+      const beam = makeBeam(col, 1.25);
+      const az = (i / 8) * Math.PI * 2 + 0.2;
+      beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
+      beam.material.uniforms.uFade.value = 0;
+      s.add(beam);
+      this.decor(beam);
+      return beam;
+    });
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -5017,6 +5167,16 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
+    // the lasers come on once the room has power, then sweep slowly
+    const lf = this.introRunning ? 0 : 1;
+    this.lasers.forEach((b) => {
+      const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
+      u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
+      aimBeam(b, u.from, u.to, 0.035);
+      const f = b.material.uniforms.uFade;
+      f.value += (lf * 0.55 - f.value) * Math.min(1, dt * 1.5);
+      b.material.uniforms.uTime.value = this.t;
+    });
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
@@ -5763,6 +5923,11 @@ class BlasterGame extends QuizGame {
     this.sky = makeSky({ top: 0x050113, mid: 0x0a0326, horizon: 0x6a1a8a, bottom: 0x050113, glow: 0, stars: 1.25, nebula: 0.62, nebulaColor: 0x1d64c8 });
     this.sky.rotation.x = -Math.PI / 2;
     s.add(this.sky);
+    // a ringed giant hangs beyond the tunnel wall
+    this.planet = makePlanet({ radius: 23 });
+    this.planet.position.set(50, 36, -215);
+    s.add(this.planet);
+    this.decor(this.planet);
     this.coreBase = neon(0x7b3dff, 0.55);
     this.core = glowSprite(this.coreBase, 150, 0.6);
     this.core.position.set(0, 0, -340);
@@ -6335,6 +6500,7 @@ class BlasterGame extends QuizGame {
     ru.uSpin.value = this.spin;
     ru.uColor.value.copy(this.waveCol).multiplyScalar(2.3);
     ru.uBoost.value = 1 + w * 1.3 + GFX.fever * 0.7; // the tunnel burns brighter on a streak
+    GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
     wu.uScroll.value = this.wallScroll;
     wu.uWarp.value = w;
     wu.uColor.value.copy(this.waveCol);
@@ -7576,6 +7742,7 @@ class RacerGame extends QuizGame {
     }
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
+    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.75) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
     Sound.rev(clamp(sp / 80, 0, 1.4));
     // Ease the sky toward this year of the career.
     const target = this.year / CAREER_YEARS;

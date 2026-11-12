@@ -293,9 +293,18 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
 .fever.bump { animation: feverbump 0.3s ease-out; }
 @keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
+/* a new question: light sweeps across the panel and the answers deal in (transform and opacity only) */
+.qpanel { position: relative; overflow: hidden; }
+.qpanel.fresh::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.2) 50%, transparent 62%); transform: translateX(-100%); animation: qsweep 0.55s ease-out; }
+@keyframes qsweep { to { transform: translateX(100%); } }
+.scr-game .answers .ans { animation: ansin 0.26s ease-out backwards; }
+.scr-game .answers .ans:nth-child(2) { animation-delay: 0.04s; }
+.scr-game .answers .ans:nth-child(3) { animation-delay: 0.08s; }
+.scr-game .answers .ans:nth-child(4) { animation-delay: 0.12s; }
+@keyframes ansin { from { transform: translateY(14px); opacity: 0; } }
 /* answers react: the right one pops, a wrong pick shakes (transform only) */
-.ans.good { animation: anspop 0.36s ease-out; }
-.ans.bad { animation: ansshake 0.4s ease-out; }
+.ans.good, .scr-game .answers .ans.good { animation: anspop 0.36s ease-out; }
+.ans.bad, .scr-game .answers .ans.bad { animation: ansshake 0.4s ease-out; }
 @keyframes anspop { 35% { transform: scale(1.03); } 100% { transform: none; } }
 @keyframes ansshake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } 100% { transform: none; } }
 .floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
@@ -506,7 +515,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }

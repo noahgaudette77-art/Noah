@@ -793,6 +793,17 @@ class HubScene extends Scene3D {
     this.dust.layers.set(1);
     s.add(this.dust);
     this.decor(this.dust);
+    // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
+    // They hang behind the ring of cabinets, so they cross the back of the room.
+    this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
+      const beam = makeBeam(col, 1.25);
+      const az = (i / 8) * Math.PI * 2 + 0.2;
+      beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
+      beam.material.uniforms.uFade.value = 0;
+      s.add(beam);
+      this.decor(beam);
+      return beam;
+    });
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -1120,6 +1131,16 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
+    // the lasers come on once the room has power, then sweep slowly
+    const lf = this.introRunning ? 0 : 1;
+    this.lasers.forEach((b) => {
+      const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
+      u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
+      aimBeam(b, u.from, u.to, 0.035);
+      const f = b.material.uniforms.uFade;
+      f.value += (lf * 0.55 - f.value) * Math.min(1, dt * 1.5);
+      b.material.uniforms.uTime.value = this.t;
+    });
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.

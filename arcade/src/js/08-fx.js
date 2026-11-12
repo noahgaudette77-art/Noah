@@ -98,6 +98,22 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
             col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
           }
         }
+        // a shooting star now and then: a short streak of light across the upper sky
+        if (uStars > 0.0 && uDetail > 0.5 && h > 0.06) {
+          float mp = uTime / 3.7; float mid = floor(mp); float mf = fract(mp);
+          if (mf < 0.22) {
+            vec2 sp = vec2(atan(d.x, -d.z), h);
+            // it starts low enough to be in view and runs mostly sideways, sinking a little
+            float side = hash13(vec3(mid, 9.0, 4.0)) < 0.5 ? -1.0 : 1.0;
+            vec2 m0 = vec2(hash13(vec3(mid, 1.0, 7.0)) * 1.2 - 0.6 - side * 0.25, 0.2 + hash13(vec3(mid, 5.0, 2.0)) * 0.22);
+            vec2 mv = normalize(vec2(side, -0.3));
+            float k = mf / 0.22;
+            vec2 head = m0 + mv * k * 0.5;
+            float along = clamp(dot(sp - head, -mv), 0.0, 0.16);
+            float dist = length(sp - head + mv * along);
+            col += vec3(1.0, 0.92, 0.85) * smoothstep(0.006, 0.0, dist) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
+          }
+        }
         // Encode like built-in materials do: identity in the scene, RGBE when the
         // PMREM generator renders this sky into an environment map.
         gl_FragColor = linearToOutputTexel(vec4(col, 1.0));
@@ -110,6 +126,37 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
   m.frustumCulled = false;
   m.userData.sky = true;
   return m;
+}
+// A ringed gas giant, lit from one side with a bright limb: scenery for deep space.
+function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, ring = 0xffc98a } = {}) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(radius, 40, 24), new THREE.ShaderMaterial({
+    uniforms: { uA: { value: new THREE.Color(a) }, uB: { value: new THREE.Color(b) }, uRim: { value: neon(rim, 1.9) } },
+    vertexShader: "varying vec3 vN; varying vec3 vP; void main(){ vN = normalize(normalMatrix * normal); vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform vec3 uA; uniform vec3 uB; uniform vec3 uRim; varying vec3 vN; varying vec3 vP;
+      void main(){
+        vec3 n = normalize(vN);
+        float lit = max(dot(n, normalize(vec3(-0.62, 0.45, 0.64))), 0.0);
+        float band = 0.5 + 0.5 * sin(vP.y * ${(11 / radius).toFixed(3)} + sin(vP.x * ${(5 / radius).toFixed(3)}) * 1.3);
+        float limb = pow(1.0 - max(n.z, 0.0), 2.6);
+        gl_FragColor = vec4(mix(uA, uB, band) * (0.03 + 1.25 * lit) + uRim * limb * (0.12 + lit), 1.0);
+      }`,
+  }));
+  const rings = new THREE.Mesh(new THREE.RingGeometry(radius * 1.35, radius * 2.15, 64, 1), new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: neon(ring, 1.1) } },
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform vec3 uColor; varying vec2 vP;
+      void main(){
+        float r = (length(vP) - ${(radius * 1.35).toFixed(2)}) / ${(radius * 0.8).toFixed(2)};
+        float lanes = 0.35 + 0.65 * abs(sin(r * 21.0)) * step(0.08, fract(r * 3.1));
+        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * smoothstep(1.0, 0.85, r) * 0.55, 1.0);
+      }`,
+  }));
+  rings.rotation.x = Math.PI / 2 - 0.42;
+  rings.rotation.y = 0.3;
+  g.add(body, rings);
+  return g;
 }
 // Keep a sky dome centred on the camera so it reads as infinitely far.
 function followSky(sky, camera) { sky.position.copy(camera.position); }

@@ -14,6 +14,9 @@ const GFX = {
   flashAmt: 0, // white flash pulse
   hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
   fever: 0, feverT: 0, feverCol: [1, 0.5, 0.1], // streak aura around the screen (see Hype)
+  rip: { x: 0.5, y: 0.5, t: 1, dur: 1, amp: 0 }, // a shockwave bending the picture (see ripple)
+  punch: 0, // impact zoom: the picture jumps toward you for a moment
+  speedBlur: 0, // radial blur from speed; scenes set it each frame
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -79,6 +82,8 @@ const GFX = {
     this.flashAmt *= Math.pow(0.003, dt);
     const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
     this.fever += (this.feverT - this.fever) * Math.min(1, dt * (this.feverT > this.fever ? 5 : 2.5));
+    this.punch *= Math.pow(0.0006, dt);
+    const rp = this.rip, rk = Math.min(1, (rp.t += dt) / rp.dur);
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -99,6 +104,10 @@ const GFX = {
       hitAmt: hitAmt,
       fever: this.fever < 0.004 ? 0 : this.fever,
       feverCol: this.feverCol,
+      rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
+      punch: this.punch < 0.0006 ? 0 : this.punch,
+      zoomBlur: this.lite ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      fx: !!this.Q[this.qi].fx,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
@@ -114,7 +123,18 @@ const GFX = {
     this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
     if (rgb) this.feverCol = rgb;
   },
+  // A shockwave at a point in the scene bends the picture as it spreads: a ring of
+  // refraction in the final pass. amp 0..1.
+  ripple(camera, pos, amp = 1, dur = 0.55) {
+    if (REDUCED_MOTION || !camera || this.Q[this.qi].cheap) return;
+    const v = this._ripV || (this._ripV = new THREE.Vector3());
+    v.copy(pos).project(camera);
+    if (v.z > 1) return;
+    const r = this.rip;
+    r.x = v.x * 0.5 + 0.5; r.y = v.y * 0.5 + 0.5; r.t = 0; r.dur = dur; r.amp = amp;
+  },
   pulse(ab = 6, flash = 0.1) {
+    if (!REDUCED_MOTION && !this.Q[this.qi].cheap) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
     this.flashAmt = Math.max(this.flashAmt, flash);
@@ -138,6 +158,7 @@ const GFX = {
   //   0-3: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
   //   4:   lite, FXAA back on
   //   5-7: everything on, resolution 74% -> 100%
+  //   6-7: plus the lens effects (anamorphic streaks, sun flare; see makePipeline)
   // Only very weak GPUs ever get below level 5.
   // Every 40 frames (or half a second, if frames are slow) the average frame time is
   // compared with the screen's frame interval (measured, since browsers don't report
@@ -152,8 +173,8 @@ const GFX = {
   Q: [
     { d: 0.3, lite: true, aa: false, bloom: 1, cheap: true },
     { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
-    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5 },
-    { d: 1, lite: false, aa: true, bloom: 5 },
+    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5, fx: true },
+    { d: 1, lite: false, aa: true, bloom: 5, fx: true },
   ],
   qi: 7,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
@@ -289,6 +310,8 @@ const GFX = {
   },
   sceneChanged(old, s) {
     if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
+    this.speedBlur = this.punch = 0;
+    this.rip.t = this.rip.dur;
     this._n = this._sum = this._good = 0;
     this._lo = [1, 1, 1];
     this.probed = false;
@@ -395,6 +418,7 @@ function makePipeline(renderer, hdr) {
   const brightRT = rt(false); // quarter res
   const raysRT = rt(false); // eighth res
   const glowRT = rt(false); // quarter res: every bloom level plus the rays
+  const streakA = rt(false), streakB = rt(false); // eighth res: anamorphic streaks
   const lightV = new THREE.Vector3();
   const LEVELS = 5;
   const MIRROR = 0.4; // reflections render at this fraction of the scene size
@@ -451,13 +475,31 @@ function makePipeline(renderer, hdr) {
       gl_FragColor = vec4(acc / 32.0, 1.0);
     }`);
   // All the glow in one quarter-res texture.
-  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 } }, `
-    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays;
-    uniform float uRays; uniform float uBloom; varying HP vec2 vUv;
+  // Lens effects (top quality levels): tStreak is the bloom smeared sideways, the
+  // streak an anamorphic lens draws through every light; uFlare adds the ghosts a
+  // sun throws across the frame, as bright as the sun is on screen.
+  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 },
+    tStreak: { value: null }, uStreak: { value: 0 }, uFlare: { value: 0 }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } }, `
+    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays; uniform sampler2D tStreak;
+    uniform float uRays; uniform float uBloom; uniform float uStreak; uniform float uFlare; uniform float uAspect; uniform HP vec2 uLight; varying HP vec2 vUv;
+    float disc(HP vec2 c, float r){ HP vec2 d = (vUv - c) * vec2(uAspect, 1.0); return smoothstep(r, r * 0.55, length(d)); }
     void main(){
       vec3 g = (texture2D(tB0, vUv).rgb + texture2D(tB1, vUv).rgb * 0.75 + texture2D(tB2, vUv).rgb * 0.55
         + texture2D(tB3, vUv).rgb * 0.4 + texture2D(tB4, vUv).rgb * 0.3) * (uBloom * 0.2);
       if (uRays > 0.0) g += texture2D(tRays, vUv).rgb * uRays;
+      if (uStreak > 0.0) {
+        vec3 st = texture2D(tStreak, vUv).rgb;
+        g += st * vec3(0.72, 0.84, 1.0) * (uStreak * (0.25 + 0.75 * smoothstep(0.1, 1.2, max(st.r, max(st.g, st.b)))));
+      }
+      if (uFlare > 0.0) {
+        vec3 sun = texture2D(tB2, clamp(uLight, 0.0, 1.0)).rgb;
+        float vis = uFlare * min(1.0, max(sun.r, max(sun.g, sun.b)) * 0.8);
+        if (vis > 0.01) {
+          HP vec2 ax = vec2(0.5) - uLight;
+          g += (vec3(0.2, 0.75, 1.0) * disc(uLight + ax * 0.55, 0.035) + vec3(1.0, 0.3, 0.75) * disc(uLight + ax * 1.3, 0.07)
+            + vec3(1.0, 0.65, 0.25) * disc(uLight + ax * 1.75, 0.12) + vec3(0.45, 0.4, 1.0) * disc(uLight + ax * 2.2, 0.05)) * (0.07 * vis);
+        }
+      }
       gl_FragColor = vec4(g, 1.0);
     }`);
   const final = mat({
@@ -470,6 +512,7 @@ function makePipeline(renderer, hdr) {
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
+    uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -479,6 +522,7 @@ function makePipeline(renderer, hdr) {
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever;
+    uniform HP vec4 uRip; uniform HP vec2 uZoom;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -504,14 +548,29 @@ function makePipeline(renderer, hdr) {
       HP vec2 uv = vUv;
       if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
-      vec3 col = uFXAA > 0.5 ? fxaa(uv) : tex(uv);
+      // Where the picture is read from: an impact zooms it toward you for a moment,
+      // and a shockwave bends it in a ring that spreads from the blast.
+      HP vec2 suv = uv;
+      if (uZoom.x > 0.0) suv = 0.5 + (suv - 0.5) * (1.0 - uZoom.x);
+      if (uRip.w > 0.0) {
+        HP vec2 asp = vec2(uRes.x / uRes.y, 1.0);
+        HP vec2 rd = (suv - uRip.xy) * asp;
+        HP float ring = (length(rd) - uRip.z) * 14.0;
+        suv += normalize(rd + 1e-5) / asp * (ring * exp(-ring * ring) * uRip.w * 0.045);
+      }
+      vec3 col = uFXAA > 0.5 ? fxaa(suv) : tex(suv);
+      if (uZoom.y > 0.0) {
+        // speed: the picture streaks outward from the centre
+        HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045);
+        col = (col + tex(suv + zd) + tex(suv + zd * 2.0) + tex(suv + zd * 3.0)) * 0.25;
+      }
       if (uAberr > 0.05) {
         // colour fringing, only while a hit pulse lasts (two extra samples)
-        HP vec2 cd = uv - 0.5;
+        HP vec2 cd = suv - 0.5;
         HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
-        col.r = tex(uv + dv).r; col.b = tex(uv - dv).b;
+        col.r = tex(suv + dv).r; col.b = tex(suv - dv).b;
       }
-      col += texture2D(tGlow, uv).rgb * uGlowK;
+      col += texture2D(tGlow, suv).rgb * uGlowK;
       col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
       col = aces(col);
       float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -579,6 +638,8 @@ function makePipeline(renderer, hdr) {
         m.a.setSize(mw, mh);
         m.b.setSize(mw, mh);
       }
+      streakA.setSize(mips[1].w, mips[1].h);
+      streakB.setSize(mips[1].w, mips[1].h);
       this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
       this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
       final.uniforms.uSceneRes.value.set(w, h);
@@ -616,6 +677,17 @@ function makePipeline(renderer, hdr) {
           src = m.a;
         }
         if (GFX.probe) GFX.probe("bloom");
+        if (o.fx && levels > 1) {
+          // anamorphic streaks: the eighth-res bloom, smeared sideways in two widening passes
+          const m = mips[1];
+          blur.uniforms.tDiffuse.value = m.a.texture;
+          blur.uniforms.uDir.value.set(2.2 / m.w, 0);
+          pass(blur, streakB);
+          blur.uniforms.tDiffuse.value = streakB.texture;
+          blur.uniforms.uDir.value.set(5.5 / m.w, 0);
+          pass(blur, streakA);
+          if (GFX.probe) GFX.probe("streak");
+        }
       }
       this.glowLevels = levels;
       this.glowFresh = true;
@@ -649,6 +721,11 @@ function makePipeline(renderer, hdr) {
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
+        g.tStreak.value = streakA.texture;
+        g.uStreak.value = o.fx && levels > 1 ? (p.streak !== undefined ? p.streak : 1) * 0.65 : 0;
+        g.uFlare.value = o.fx && raysOn ? (p.rays.flare !== undefined ? p.rays.flare : 1) : 0;
+        if (raysOn) g.uLight.value.copy(rays.uniforms.uLight.value);
+        g.uAspect.value = sw / sh;
         if (!reuseGlow) pass(glow, glowRT);
         if (GFX.probe) GFX.probe("glow");
         u.tGlow.value = glowRT.texture;
@@ -666,6 +743,8 @@ function makePipeline(renderer, hdr) {
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
       u.uFever.value.set(o.fever, o.t % 628.3185);
+      u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
+      u.uZoom.value.set(o.punch, o.zoomBlur);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
@@ -825,6 +904,7 @@ class Scene3D {
     ring.material.color.set(color);
     ring.material.opacity = 1;
     ring.scale.setScalar(0.4);
+    GFX.ripple(this.camera, pos, clamp(size / 7, 0.45, 1), dur);
     this.tw.add(dur, (k) => {
       if (ring.userData.tok !== tok) return;
       ring.scale.setScalar(0.4 + k * size);

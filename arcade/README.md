@@ -60,6 +60,14 @@ lists all of them again.
   redrawn mid-animation.
 - **Instant input.** Answers, flashcard flips and grades register the moment your
   finger touches the screen, not when it lifts.
+- **Lens and impact effects.** On capable devices every light draws a soft
+  horizontal streak, like an anamorphic film lens, and a low sun throws flare
+  ghosts across the frame. Explosions send a shockwave that bends the picture as
+  it spreads, hits punch the view toward you for a moment, and speed (Risk
+  Blaster's warp, flooring it in Nest Egg Run) streaks the picture outward.
+- **More to look at.** A ringed planet hangs beyond the Risk Blaster tunnel,
+  shooting stars cross the night skies, club lasers sweep the back of the arcade,
+  and each new question arrives with a sweep of light as its answers deal in.
 - **FEVER.** A run of right answers in Risk Blaster, Nest Egg Run or Boss Rush heats
   the cabinet up: HEATING UP at 3 in a row, ON FIRE at 6, UNSTOPPABLE at 10. Each
   level has its own colour, fanfare, crowd cheer and shower of sparks, rays of light

@@ -201,6 +201,11 @@ class BlasterGame extends QuizGame {
     this.sky = makeSky({ top: 0x050113, mid: 0x0a0326, horizon: 0x6a1a8a, bottom: 0x050113, glow: 0, stars: 1.25, nebula: 0.62, nebulaColor: 0x1d64c8 });
     this.sky.rotation.x = -Math.PI / 2;
     s.add(this.sky);
+    // a ringed giant hangs beyond the tunnel wall
+    this.planet = makePlanet({ radius: 23 });
+    this.planet.position.set(50, 36, -215);
+    s.add(this.planet);
+    this.decor(this.planet);
     this.coreBase = neon(0x7b3dff, 0.55);
     this.core = glowSprite(this.coreBase, 150, 0.6);
     this.core.position.set(0, 0, -340);
@@ -773,6 +778,7 @@ class BlasterGame extends QuizGame {
     ru.uSpin.value = this.spin;
     ru.uColor.value.copy(this.waveCol).multiplyScalar(2.3);
     ru.uBoost.value = 1 + w * 1.3 + GFX.fever * 0.7; // the tunnel burns brighter on a streak
+    GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
     wu.uScroll.value = this.wallScroll;
     wu.uWarp.value = w;
     wu.uColor.value.copy(this.waveCol);

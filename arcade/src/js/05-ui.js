@@ -169,6 +169,9 @@ class QuizPanel {
     this.qEl.classList.toggle("long", q.q.length > 190);
     this.qEl.innerHTML = `<div class="qmeta"><span>${esc(meta || "STAGE " + q.ch + " · " + q.topic)}</span><span class="diff">${diff}</span></div>
       <div class="qtext selectable">${esc(q.q)}</div>`;
+    this.qEl.classList.remove("fresh");
+    void this.qEl.offsetWidth; // restart the sweep
+    this.qEl.classList.add("fresh");
     const longest = Math.max(...round.order.map((_, i) => round.text(i).length));
     this.aEl.className = "answers" + (round.tf ? " tf" : "") + (longest > 64 ? " long" : "");
     this.aEl.innerHTML = round.order

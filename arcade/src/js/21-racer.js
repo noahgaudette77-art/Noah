@@ -1163,6 +1163,7 @@ class RacerGame extends QuizGame {
     }
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
+    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.75) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
     Sound.rev(clamp(sp / 80, 0, 1.4));
     // Ease the sky toward this year of the career.
     const target = this.year / CAREER_YEARS;
