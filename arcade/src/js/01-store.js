@@ -9,10 +9,11 @@ const freshState = () => ({
   items: {}, // id -> [box, seen, correct, lastSeenMinute]
   scores: { blaster: [], racer: [], boss: [], memory: [], exam: [] },
   boss: {}, // chapter -> best stars
+  ach: {}, // trophy id -> when it was unlocked (see Trophies)
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false, tilt: true, voice: true },
   updated: 0,
 });
 
@@ -40,6 +41,7 @@ function mergeStates(a, b) {
     for (const [ch, s] of Object.entries(src.boss || {})) out.boss[ch] = Math.max(out.boss[ch] || 0, s);
     for (const ch of Object.keys(src.read || {})) out.read[ch] = 1;
     for (const ch of Object.keys(src.met || {})) out.met[ch] = 1;
+    for (const [k, v] of Object.entries(src.ach || {})) out.ach[k] = out.ach[k] ? Math.min(out.ach[k], v) : v;
     for (const [k, v] of Object.entries(src.stats || {})) if (typeof v === "number") out.stats[k] = Math.max(out.stats[k] || 0, v);
   }
   const newer = (b && b.updated) > (a && a.updated) ? b : a;

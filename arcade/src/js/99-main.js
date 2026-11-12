@@ -64,7 +64,7 @@ function boot() {
 // Test hook: open the page with #debug to expose internals to automated checks.
 if (/debug/.test(location.hash)) {
   window.__arcade = {
-    Scenes, Store, UI, CHAPTERS, GFX,
+    Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype,
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {
       for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;

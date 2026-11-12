@@ -1191,8 +1191,8 @@ class RacerGame extends QuizGame {
     this.updateLook(dt, sp, step, scroll, sky);
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
-    this.camBase.x = this.carX * follow;
-    this.lookAt.x = this.carX * follow * 0.6;
+    this.camBase.x = this.carX * follow + Pointer.x * 0.35;
+    this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
     this.placeCamera();
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);

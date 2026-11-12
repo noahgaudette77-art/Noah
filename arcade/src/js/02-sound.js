@@ -25,6 +25,18 @@ const Sound = {
     this.sfxBus = c.createGain();
     this.sfxBus.gain.value = 0.55;
     this.sfxBus.connect(this.master);
+    // the arcade hall: every effect also feeds a short reverb (the music stays dry)
+    try {
+      const n = Math.floor(c.sampleRate * 1.1), ir = c.createBuffer(2, n, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = ir.getChannelData(ch);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8);
+      }
+      const verb = c.createConvolver(), send = c.createGain();
+      verb.buffer = ir;
+      send.gain.value = 0.2;
+      this.sfxBus.connect(send).connect(verb).connect(this.master);
+    } catch (e) { /* no convolver: effects stay dry */ }
     this.musicBus = c.createGain();
     this.musicBus.gain.value = 0.22;
     this.musicBus.connect(this.master);
@@ -53,7 +65,7 @@ const Sound = {
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g).connect(bus);
+    osc.connect(g).connect(this.panned(bus));
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
   },
@@ -71,13 +83,39 @@ const Sound = {
     const g = c.createGain();
     g.gain.setValueAtTime(vol, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    src.connect(f).connect(g).connect(bus || this.sfxBus);
+    src.connect(f).connect(g).connect(bus || this.panned(this.sfxBus));
     src.start(t0, Math.random() * 0.5);
     src.stop(t0 + dur + 0.02);
   },
 
-  sfx(name) {
+  // Where the effect being played sits between the speakers (-1 left .. 1 right).
+  pan: 0,
+  panned(bus) {
+    if (!this.pan || bus !== this.sfxBus || !this.ctx.createStereoPanner) return bus;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = clamp(this.pan, -1, 1);
+    p.connect(bus);
+    return p;
+  },
+  // The announcer: the browser's own speech voice, pitched down, for the big moments.
+  say(text) {
+    if (!Store.settings.sfx || !Store.settings.voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    try {
+      const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
+      u.lang = "en-US";
+      u.rate = 1.05;
+      u.pitch = 0.5;
+      u.volume = 0.9;
+      if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
+      speechSynthesis.speak(u);
+    } catch (e) { /* speech isn't allowed here */ }
+  },
+  sfx(name, pan = 0) {
     if (!this.ctx || !Store.settings.sfx) return;
+    this.pan = pan;
+    try { this._sfx(name); } finally { this.pan = 0; }
+  },
+  _sfx(name) {
     const T = (f, d, o) => this.tone(f, d, o);
     switch (name) {
       case "coin": T(988, 0.07, { vol: 0.2 }); T(1319, 0.32, { delay: 0.07, vol: 0.2 }); break;
@@ -114,6 +152,7 @@ const Sound = {
         this.cheer(0.5 + n * 0.25, 0.3);
         break;
       }
+      case "trophy": [659, 784, 988, 1319].forEach((f, i) => T(f, 0.12, { delay: i * 0.08, vol: 0.16 })); T(1976, 0.5, { delay: 0.34, vol: 0.1, type: "triangle" }); this.cheer(0.7, 0.25); break;
       case "zip": T(900, 0.09, { slide: 1500, vol: 0.1, type: "triangle" }); T(1800, 0.08, { delay: 0.07, vol: 0.08 }); break;
       case "shatter":
         [0, 0.05, 0.11, 0.18].forEach((d, i) => this.noise(0.16, { vol: 0.3 - i * 0.05, freq: 5200 - i * 700, type: "highpass", delay: d }));

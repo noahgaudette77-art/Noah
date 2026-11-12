@@ -60,6 +60,22 @@ lists all of them again.
   redrawn mid-animation.
 - **Instant input.** Answers, flashcard flips and grades register the moment your
   finger touches the screen, not when it lifts.
+- **FEVER.** A run of right answers in Risk Blaster, Nest Egg Run or Boss Rush heats
+  the cabinet up: HEATING UP at 3 in a row, ON FIRE at 6, UNSTOPPABLE at 10. Each
+  level has its own colour, fanfare, crowd cheer and shower of sparks, rays of light
+  pulse around the screen edge, and a streak counter sits in the HUD. Fast answers
+  earn a QUICK DRAW or LIGHTNING callout. A miss shatters the streak.
+- **Touch the world.** Tap a target in the Risk Blaster tunnel to shoot it. Drag a
+  flipped flashcard right to bank it, left to send it back, up for easy; it follows
+  your finger and a stamp shows what letting go will do. Swipe across the arcade
+  floor to walk between cabinets. Tilt your phone to look around the 3D scenes
+  (Setup → Tilt to look; iPhones ask for motion access when you switch it on).
+- **Trophies.** Sixteen goals (streaks, bosses, a million-dollar retirement, exam
+  marks, reading every stage's notes) unlock with a fanfare as you play and are
+  listed under STATS.
+- **Sound with depth.** Effects ring out in a hall reverb and sit left or right in
+  stereo where things happen, and an announcer calls out streaks, waves and
+  trophies (Setup → Announcer; it uses your device's speech voice).
 - **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
   (your screen's refresh rate, up to 120) and the current quality level (1-8).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the

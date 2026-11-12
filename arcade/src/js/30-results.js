@@ -3,6 +3,7 @@
 function showResults(o) {
   Store.state.stats.games++;
   Store.save();
+  Trophies.check(o);
   const go = (rank) => renderResults(o, rank);
   if (o.score > 0 && o.game !== "memory" && Store.qualifies(o.game, o.score)) askInitials(o, go);
   else go(-1);

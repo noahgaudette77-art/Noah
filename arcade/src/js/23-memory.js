@@ -300,9 +300,10 @@ class MemoryGame extends QuizGame {
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
       <span class="meter slide" style="--c:${COLORS.lime}"><i data-prog></i></span>
-      <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div></div>
+      <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div><div class="stamp" data-stamp hidden></div></div>
       <div class="grade" data-grade></div>
     </section>`);
+    this.bindSwipe();
   }
   build3D() {
     const s = this.scene;
@@ -546,13 +547,54 @@ class MemoryGame extends QuizGame {
       <div class="face back">
         <div class="ftop"><span>${esc(this.reverse ? "TERM" : "ANSWER")}</span><span>BOOK P. ${esc(f.page)}</span></div>
         <div class="fmain selectable">${esc(back)}</div>
-        <div class="fhint">HOW DID YOU DO?</div>
+        <div class="fhint">SWIPE: &lt; MISSED · GOT IT &gt; · UP = EASY</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
     UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
     UI.meter($("[data-prog]", this.el), this.total ? this.done / this.total : 0);
     UI.text($("[data-dep]", this.el), "BANKED " + this.deposits);
+    card.style.transform = card.style.transition = "";
+    // a long answer scrolls, so there an upward drag belongs to the text
+    const fm = $(".face.back .fmain", card);
+    card.style.touchAction = fm && fm.scrollHeight > fm.clientHeight + 2 ? "pan-y" : "none";
     this.state = "front";
+  }
+  // Drag the flipped card: right banks it, left sends it back, up marks it easy.
+  // The card follows the finger and a stamp shows what letting go will do.
+  bindSwipe() {
+    const card = $("[data-card]", this.el), stamp = $("[data-stamp]", this.el);
+    let d = null;
+    const kindOf = (dx, dy) => (dx > 80 ? "good" : dx < -80 ? "again" : dy < -80 ? "easy" : "");
+    const NAMES = { good: ["GOT IT", COLORS.cyan], again: ["MISSED", COLORS.red], easy: ["EASY", COLORS.lime] };
+    // the card is turned over (rotateY 180), so its own x axis points left
+    const pose = (dx, dy) => `rotateY(180deg) translate3d(${-dx}px, ${dy}px, 0) rotateZ(${-dx * 0.035}deg)`;
+    card.addEventListener("pointerdown", (e) => {
+      if (this.state !== "back" || this.paused || !e.isPrimary) return;
+      d = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, id: e.pointerId };
+      try { card.setPointerCapture(e.pointerId); } catch (err) { /* not capturable */ }
+      card.style.transition = "none";
+    });
+    card.addEventListener("pointermove", (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      d.dx = e.clientX - d.x;
+      d.dy = Math.min(0, e.clientY - d.y);
+      card.style.transform = pose(d.dx, d.dy);
+      const k = kindOf(d.dx, d.dy);
+      stamp.hidden = !k;
+      if (k) { stamp.textContent = NAMES[k][0]; stamp.style.setProperty("--c", NAMES[k][1]); }
+    });
+    const end = (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const k = e.type === "pointerup" ? kindOf(d.dx, d.dy) : "";
+      const from = pose(d.dx, d.dy);
+      d = null;
+      stamp.hidden = true;
+      card.style.transition = "";
+      if (k && this.state === "back") this.grade(k, from);
+      else card.style.transform = "";
+    };
+    card.addEventListener("pointerup", end);
+    card.addEventListener("pointercancel", end);
   }
   flip() {
     if (this.state !== "front" || this.paused) return;
@@ -565,7 +607,8 @@ class MemoryGame extends QuizGame {
       <button class="btn" data-act="easy" style="--c:${COLORS.lime}">EASY</button>`;
     this.state = "back";
   }
-  grade(kind) {
+  // from: the card's pose when a swipe let go of it, so it flies on from there
+  grade(kind, from) {
     if (this.state !== "back" || this.paused) return;
     const id = this.queue.shift();
     if (kind === "again") {
@@ -585,13 +628,16 @@ class MemoryGame extends QuizGame {
       this.spawnCoin();
     }
     Store.save();
+    Trophies.check();
     this.state = "next";
     const card = $("[data-card]", this.el);
     if (card.animate && !REDUCED_MOTION) {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.
       const anim = { duration: 260, easing: "ease-in" };
-      card.animate([{ transform: "rotateY(180deg) translateX(0)" }, { transform: `rotateY(180deg) translateX(${kind === "again" ? "" : "-"}120%)` }], anim);
+      const to = from && kind === "easy" ? "rotateY(180deg) translateY(-130%)" : `rotateY(180deg) translateX(${kind === "again" ? "" : "-"}120%)`;
+      card.animate([{ transform: from || "rotateY(180deg) translateX(0)" }, { transform: to }], anim);
+      if (from) card.style.transform = to; // hold the end pose until the next card is dealt
       // the faces are replaced by the next card, so they can stay faded out
       card.querySelectorAll(".face").forEach((f) => f.animate([{ opacity: 1 }, { opacity: 0 }], Object.assign({ fill: "forwards" }, anim)));
     }

@@ -1381,7 +1381,7 @@ function showHub() {
   };
   const move = (d) => {
     Hub.index = (Hub.index + d + CABINETS.length) % CABINETS.length;
-    Sound.sfx("move");
+    Sound.sfx("move", d * 0.7);
     render();
   };
   const play = () => {
@@ -1396,6 +1396,18 @@ function showHub() {
     }, 520);
   };
   render();
+  Trophies.check();
+  // swipe across the floor to walk to the next cabinet
+  const floor = $(".spacer", el);
+  let swipeX = null;
+  floor.addEventListener("pointerdown", (e) => { if (e.isPrimary) swipeX = e.clientX; });
+  floor.addEventListener("pointerup", (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) > 36) move(dx < 0 ? 1 : -1);
+  });
+  floor.addEventListener("pointercancel", () => { swipeX = null; });
   const mission = nextMission();
   $("[data-mission]", el).textContent = mission.text;
   let sx = null;

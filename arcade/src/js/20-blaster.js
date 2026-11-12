@@ -162,8 +162,20 @@ class BlasterGame extends QuizGame {
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
+      <div class="hint">TAP A TARGET, OR ITS ANSWER</div>
     </section>`);
     this.lives(this.shields, 3);
+    // Shoot by touching a target in the tunnel: the nearest one to the finger.
+    this.bandEl.addEventListener("pointerdown", (e) => {
+      if (this.state !== "ask" || this.paused || !this.has3D || !e.isPrimary) return;
+      let best = -1, bd = Math.max(70, GFX.w * 0.16);
+      this.targets.forEach((t, i) => {
+        const v = this._v.copy(t.position).project(this.camera);
+        const d = Math.hypot((v.x * 0.5 + 0.5) * GFX.w - e.clientX, (0.5 - v.y * 0.5) * GFX.h - e.clientY);
+        if (d < bd) { bd = d; best = i; }
+      });
+      if (best >= 0) this.pick(best);
+    });
   }
 
   build3D() {
@@ -565,8 +577,9 @@ class BlasterGame extends QuizGame {
     this.picked = i;
     this.quiz.select(i);
     this.quiz.lock();
-    Sound.sfx("laser");
     const t = this.targets[i];
+    this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
+    Sound.sfx("laser", this.panAt);
     if (t && this.has3D) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
@@ -604,7 +617,7 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
-      Sound.sfx("boom");
+      Sound.sfx("boom", this.panAt);
       Sound.sfx("correct");
       UI.flash("good");
       GFX.pulse(4, 0.1);
@@ -815,6 +828,9 @@ class BlasterGame extends QuizGame {
         tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(this.ship.matrixWorld));
       });
     }
+    // the view leans a little with the pointer, or with the phone's tilt
+    this.camBase.set(Pointer.x * 0.5, -Pointer.y * 0.3, 0);
+    this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
     followSky(this.sky, this.camera);

@@ -23,6 +23,8 @@ function showStats() {
         <div class="tile" style="--c:${COLORS.violet}"><span class="k">BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
       </div>
       <p class="label">SEEN ${Store.countSeen(allIds)} OF ${allIds.length} ITEMS. AN ITEM IS MASTERED AFTER THREE SPACED RIGHT ANSWERS.</p>
+      <h2 class="section-h">TROPHIES ${Trophies.count()}/${TROPHIES.length}</h2>
+      ${Trophies.html()}
       <h2 class="section-h">MASTERY BY STAGE</h2>
       <div class="mastery-list">${CHAPTERS.map((c) => {
         const m = chapterMastery(c);
@@ -65,8 +67,10 @@ function showSettings() {
     <div class="scroll"><div class="wrap">
       ${row("Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
+      ${row("Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
+      ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-8)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
@@ -97,6 +101,8 @@ function showSettings() {
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "pixel") GFX.resize();
         if (k === "fps") $("#fps").hidden = !v;
+        if (k === "tilt" && v) Pointer.initTilt(true);
+        if (k === "voice" && v) Sound.say("Announcer on");
         Sound.sfx("blip");
       }
     },

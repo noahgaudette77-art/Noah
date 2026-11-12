@@ -93,6 +93,7 @@ const UI = {
     }));
   },
   banner(text, color = COLORS.yellow, sub = "") {
+    Sound.say(text);
     const b = this.el(`<div class="banner" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
     setTimeout(() => b.remove(), 1400);
@@ -281,6 +282,7 @@ class RunStats {
     }
     Store.save();
     if (this.hype) Hype.answer(ok, this.streak, quick);
+    Trophies.check();
     return ok;
   }
 }

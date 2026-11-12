@@ -29,6 +29,15 @@ const Hype = {
     const s = Scenes.cur, b = s && s.band;
     return b ? b.top + b.h * f : GFX.h * (0.3 + f * 0.2);
   },
+  // A shower of sparks in front of the camera, in the level's colour.
+  confetti(col) {
+    const s = Scenes.cur;
+    if (!s || !s.bursts || !s.camera || REDUCED_MOTION) return;
+    const at = s.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(9).add(s.camera.position);
+    at.y += 1.5;
+    s.bursts.burst(at, col, { n: 90, speed: 9, size: 0.3, life: 1.4, gravity: -7 });
+    s.bursts.burst(at, 0xffffff, { n: 30, speed: 5, size: 0.2, life: 0.9, gravity: -7 });
+  },
   // quick: 0..1, how much of the clock was left (undefined when there is none).
   answer(ok, streak, quick) {
     const lv = ok ? this.levelFor(streak) : 0;
@@ -38,6 +47,8 @@ const Hype = {
         const b = UI.root.appendChild(UI.el(`<div class="banner hype" style="--c:${L.col};top:${Math.round(this.spot(0.12))}px">${L.name}!<small>${streak} IN A ROW</small></div>`));
         setTimeout(() => b.remove(), 1400);
         Sound.sfx("fever" + lv);
+        Sound.say(L.name);
+        this.confetti(L.col);
         Haptics.buzz([30, 40, 30, 40, 90]);
         GFX.pulse(9, 0.22);
         GFX.setFever(L.amt, L.rgb);

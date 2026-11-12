@@ -282,6 +282,21 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* trophies: the unlock card drops in from the top; the grid lives under STATS */
+.trophy { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; z-index: 60; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); padding: 10px 14px; background: #1c0d4a; border: 2px solid var(--yellow); box-shadow: 0 0 0 2px #000, 0 6px 0 #000; pointer-events: none; transform: translate(-50%, -160%); animation: trophyin 3.4s ease forwards; will-change: transform; }
+.trophy .ic svg { width: 26px; height: 26px; display: block; }
+.trophy .tx { display: grid; gap: 4px; }
+.trophy small { font: 8px/1 var(--font-display); color: var(--dim); }
+.trophy b { font: 11px/1.3 var(--font-display); color: var(--yellow); font-weight: 400; }
+.trophy i { font-style: normal; font-size: 19px; line-height: 1; color: var(--ink); }
+@keyframes trophyin { 0% { transform: translate(-50%, -160%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -160%); } }
+.trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 6px; margin-bottom: 12px; }
+.trophies .tr { display: flex; gap: 9px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); opacity: 0.6; }
+.trophies .tr.on { opacity: 1; border-color: var(--yellow); }
+.trophies .tr svg { width: 18px; height: 18px; display: block; }
+.trophies .tr b { display: block; font: 9px/1.4 var(--font-display); font-weight: 400; color: var(--dim); }
+.trophies .tr.on b { color: var(--yellow); }
+.trophies .tr small { display: block; font-size: 18px; line-height: 1; color: var(--ink); }
 /* FEVER (see Hype): its banner sits above the others; the streak pill lives in the HUD */
 .banner.hype { font-size: clamp(17px, 5.6vw, 38px); }
 .hud .grow { display: flex; justify-content: center; }
@@ -318,7 +333,10 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .goalbar { height: 6px; }
 
 /* ---- memory bank ----------------------------------------------------------- */
-.card-stage { flex: 1; display: grid; place-items: center; perspective: 1100px; min-height: 0; padding: 6px 0; }
+.card-stage { flex: 1; display: grid; place-items: center; perspective: 1100px; min-height: 0; padding: 6px 0; position: relative; }
+/* what letting go of a dragged card will do (see bindSwipe) */
+.stamp { position: absolute; top: 12%; left: 50%; transform: translateX(-50%) rotate(-7deg); z-index: 5; padding: 9px 13px; font: clamp(14px, 4.4vw, 22px)/1 var(--font-display); color: var(--c); border: 3px solid var(--c); background: rgba(7, 2, 26, 0.88); pointer-events: none; white-space: nowrap; }
+.scr-hub .spacer, .scr-game .band { touch-action: none; }
 .card3d { width: min(100%, 560px); height: min(100%, 360px); min-height: 220px; position: relative; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.3, 1.4, 0.5, 1); cursor: pointer; }
 .card3d.flipped { transform: rotateY(180deg); }
 .face {
@@ -638,10 +656,11 @@ const freshState = () => ({
   items: {}, // id -> [box, seen, correct, lastSeenMinute]
   scores: { blaster: [], racer: [], boss: [], memory: [], exam: [] },
   boss: {}, // chapter -> best stars
+  ach: {}, // trophy id -> when it was unlocked (see Trophies)
   read: {}, // chapter -> 1 once its notes were opened
   met: {}, // chapter -> 1 once its client briefing was shown
   stats: { answered: 0, correct: 0, bestStreak: 0, cards: 0, games: 0, exams: 0, bestExam: 0 },
-  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false },
+  settings: { sfx: true, music: true, crt: true, pixel: "hd", pace: "normal", explain: "smart", initials: "AAA", gfx2: true, fps: false, tilt: true, voice: true },
   updated: 0,
 });
 
@@ -669,6 +688,7 @@ function mergeStates(a, b) {
     for (const [ch, s] of Object.entries(src.boss || {})) out.boss[ch] = Math.max(out.boss[ch] || 0, s);
     for (const ch of Object.keys(src.read || {})) out.read[ch] = 1;
     for (const ch of Object.keys(src.met || {})) out.met[ch] = 1;
+    for (const [k, v] of Object.entries(src.ach || {})) out.ach[k] = out.ach[k] ? Math.min(out.ach[k], v) : v;
     for (const [k, v] of Object.entries(src.stats || {})) if (typeof v === "number") out.stats[k] = Math.max(out.stats[k] || 0, v);
   }
   const newer = (b && b.updated) > (a && a.updated) ? b : a;
@@ -883,6 +903,18 @@ const Sound = {
     this.sfxBus = c.createGain();
     this.sfxBus.gain.value = 0.55;
     this.sfxBus.connect(this.master);
+    // the arcade hall: every effect also feeds a short reverb (the music stays dry)
+    try {
+      const n = Math.floor(c.sampleRate * 1.1), ir = c.createBuffer(2, n, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = ir.getChannelData(ch);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8);
+      }
+      const verb = c.createConvolver(), send = c.createGain();
+      verb.buffer = ir;
+      send.gain.value = 0.2;
+      this.sfxBus.connect(send).connect(verb).connect(this.master);
+    } catch (e) { /* no convolver: effects stay dry */ }
     this.musicBus = c.createGain();
     this.musicBus.gain.value = 0.22;
     this.musicBus.connect(this.master);
@@ -911,7 +943,7 @@ const Sound = {
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g).connect(bus);
+    osc.connect(g).connect(this.panned(bus));
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
   },
@@ -929,13 +961,39 @@ const Sound = {
     const g = c.createGain();
     g.gain.setValueAtTime(vol, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    src.connect(f).connect(g).connect(bus || this.sfxBus);
+    src.connect(f).connect(g).connect(bus || this.panned(this.sfxBus));
     src.start(t0, Math.random() * 0.5);
     src.stop(t0 + dur + 0.02);
   },
 
-  sfx(name) {
+  // Where the effect being played sits between the speakers (-1 left .. 1 right).
+  pan: 0,
+  panned(bus) {
+    if (!this.pan || bus !== this.sfxBus || !this.ctx.createStereoPanner) return bus;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = clamp(this.pan, -1, 1);
+    p.connect(bus);
+    return p;
+  },
+  // The announcer: the browser's own speech voice, pitched down, for the big moments.
+  say(text) {
+    if (!Store.settings.sfx || !Store.settings.voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    try {
+      const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
+      u.lang = "en-US";
+      u.rate = 1.05;
+      u.pitch = 0.5;
+      u.volume = 0.9;
+      if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
+      speechSynthesis.speak(u);
+    } catch (e) { /* speech isn't allowed here */ }
+  },
+  sfx(name, pan = 0) {
     if (!this.ctx || !Store.settings.sfx) return;
+    this.pan = pan;
+    try { this._sfx(name); } finally { this.pan = 0; }
+  },
+  _sfx(name) {
     const T = (f, d, o) => this.tone(f, d, o);
     switch (name) {
       case "coin": T(988, 0.07, { vol: 0.2 }); T(1319, 0.32, { delay: 0.07, vol: 0.2 }); break;
@@ -972,6 +1030,7 @@ const Sound = {
         this.cheer(0.5 + n * 0.25, 0.3);
         break;
       }
+      case "trophy": [659, 784, 988, 1319].forEach((f, i) => T(f, 0.12, { delay: i * 0.08, vol: 0.16 })); T(1976, 0.5, { delay: 0.34, vol: 0.1, type: "triangle" }); this.cheer(0.7, 0.25); break;
       case "zip": T(900, 0.09, { slide: 1500, vol: 0.1, type: "triangle" }); T(1800, 0.08, { delay: 0.07, vol: 0.08 }); break;
       case "shatter":
         [0, 0.05, 0.11, 0.18].forEach((d, i) => this.noise(0.16, { vol: 0.3 - i * 0.05, freq: 5200 - i * 700, type: "highpass", delay: d }));
@@ -1988,6 +2047,31 @@ function makePipeline(renderer, hdr) {
 // the centre when a touch lifts.
 const Pointer = {
   x: 0, y: 0, tx: 0, ty: 0, touch: false,
+  tiltX: 0, tiltY: 0, tilt0: null,
+  // Tilting the phone looks around the scene, like the pointer does on a desktop.
+  // Android sends motion events freely; iOS asks first, so there it starts from the
+  // Setup switch (a tap). Where a page isn't allowed motion events, nothing happens.
+  initTilt(ask) {
+    if (this._tilt || typeof DeviceOrientationEvent === "undefined") return;
+    const listen = () => {
+      this._tilt = true;
+      window.addEventListener("deviceorientation", (e) => {
+        if (e.gamma == null || e.beta == null || !Store.settings.tilt) { this.tiltX = this.tiltY = 0; return; }
+        const ang = (screen.orientation && screen.orientation.angle) || 0;
+        const g = ang === 90 ? e.beta : ang === 270 ? -e.beta : e.gamma;
+        const b = ang === 90 ? -e.gamma : ang === 270 ? e.gamma : e.beta;
+        // measured from how the phone is being held, which re-centres slowly
+        if (!this.tilt0) this.tilt0 = { g, b };
+        this.tilt0.g += (g - this.tilt0.g) * 0.004;
+        this.tilt0.b += (b - this.tilt0.b) * 0.004;
+        this.tiltX = clamp((g - this.tilt0.g) / 16, -1, 1);
+        this.tiltY = clamp((b - this.tilt0.b) / 16, -1, 1);
+      }, { passive: true });
+    };
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      if (ask) DeviceOrientationEvent.requestPermission().then((r) => { if (r === "granted") listen(); else UI.toast("MOTION ACCESS WAS DECLINED"); }).catch(() => UI.toast("TILT ISN'T AVAILABLE HERE"));
+    } else listen();
+  },
   init() {
     const set = (e) => {
       this.tx = clamp((e.clientX / GFX.w) * 2 - 1, -1, 1);
@@ -1997,11 +2081,12 @@ const Pointer = {
     window.addEventListener("pointermove", set, { passive: true });
     window.addEventListener("pointerdown", set, { passive: true });
     window.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") { this.tx = 0; this.ty = 0; } }, { passive: true });
+    if (Store.settings.tilt) this.initTilt(false);
   },
   update(dt) {
     const k = Math.min(1, dt * 3);
-    this.x += (this.tx - this.x) * k;
-    this.y += (this.ty - this.y) * k;
+    this.x += (clamp(this.tx + this.tiltX, -1, 1) - this.x) * k;
+    this.y += (clamp(this.ty + this.tiltY, -1, 1) - this.y) * k;
   },
 };
 
@@ -2547,6 +2632,7 @@ const UI = {
     }));
   },
   banner(text, color = COLORS.yellow, sub = "") {
+    Sound.say(text);
     const b = this.el(`<div class="banner" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
     setTimeout(() => b.remove(), 1400);
@@ -2735,6 +2821,7 @@ class RunStats {
     }
     Store.save();
     if (this.hype) Hype.answer(ok, this.streak, quick);
+    Trophies.check();
     return ok;
   }
 }
@@ -3607,6 +3694,15 @@ const Hype = {
     const s = Scenes.cur, b = s && s.band;
     return b ? b.top + b.h * f : GFX.h * (0.3 + f * 0.2);
   },
+  // A shower of sparks in front of the camera, in the level's colour.
+  confetti(col) {
+    const s = Scenes.cur;
+    if (!s || !s.bursts || !s.camera || REDUCED_MOTION) return;
+    const at = s.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(9).add(s.camera.position);
+    at.y += 1.5;
+    s.bursts.burst(at, col, { n: 90, speed: 9, size: 0.3, life: 1.4, gravity: -7 });
+    s.bursts.burst(at, 0xffffff, { n: 30, speed: 5, size: 0.2, life: 0.9, gravity: -7 });
+  },
   // quick: 0..1, how much of the clock was left (undefined when there is none).
   answer(ok, streak, quick) {
     const lv = ok ? this.levelFor(streak) : 0;
@@ -3616,6 +3712,8 @@ const Hype = {
         const b = UI.root.appendChild(UI.el(`<div class="banner hype" style="--c:${L.col};top:${Math.round(this.spot(0.12))}px">${L.name}!<small>${streak} IN A ROW</small></div>`));
         setTimeout(() => b.remove(), 1400);
         Sound.sfx("fever" + lv);
+        Sound.say(L.name);
+        this.confetti(L.col);
         Haptics.buzz([30, 40, 30, 40, 90]);
         GFX.pulse(9, 0.22);
         GFX.setFever(L.amt, L.rgb);
@@ -3635,6 +3733,69 @@ const Hype = {
       this.el.className = "fever" + (lv ? " lv" + lv : "");
       if (ok && streak >= 2) { this.el.classList.remove("bump"); void this.el.offsetWidth; this.el.classList.add("bump"); }
     }
+  },
+};
+
+/* ---- 09-trophies.js ---- */
+// TROPHIES: goals that unlock as you play. Each is worked out from saved progress, so
+// they agree across synced devices; two need the game that just ended (o).
+const TROPHIES = [
+  { id: "first", name: "FIRST COIN", how: "Finish your first game", test: (s) => s.stats.games >= 1 },
+  { id: "streak5", name: "HOT HAND", how: "5 right answers in a row", test: (s) => s.stats.bestStreak >= 5 },
+  { id: "streak10", name: "UNSTOPPABLE", how: "10 right answers in a row", test: (s) => s.stats.bestStreak >= 10 },
+  { id: "streak20", name: "THE MACHINE", how: "20 right answers in a row", test: (s) => s.stats.bestStreak >= 20 },
+  { id: "ans100", name: "CENTURION", how: "Answer 100 questions", test: (s) => s.stats.answered >= 100 },
+  { id: "ans500", name: "VETERAN", how: "Answer 500 questions", test: (s) => s.stats.answered >= 500 },
+  { id: "cards50", name: "CARD SHARK", how: "Review 50 flashcards", test: (s) => s.stats.cards >= 50 },
+  { id: "boss1", name: "GIANT SLAYER", how: "Beat a boss", test: (s) => Object.values(s.boss).some((v) => v > 0) },
+  { id: "boss6", name: "BOSS HUNTER", how: "Beat 6 bosses", test: (s) => Object.values(s.boss).filter((v) => v > 0).length >= 6 },
+  { id: "boss12", name: "LAST ONE STANDING", how: "Beat all 12 bosses", test: (s) => Object.values(s.boss).filter((v) => v > 0).length >= 12 },
+  { id: "flawless", name: "FLAWLESS", how: "Earn 3 stars on a boss", test: (s) => Object.values(s.boss).some((v) => v >= 3) },
+  { id: "wave5", name: "DEEP SPACE", how: "Reach wave 5 in Risk Blaster", test: (s, o) => !!o && o.game === "blaster" && (o.tiles || []).some((t) => t.k === "WAVE" && t.v >= 5) },
+  { id: "million", name: "MILLIONAIRE", how: "Retire with $1,000,000", test: (s, o) => (!!o && o.game === "racer" && o.score >= 1e6) || (s.scores.racer || []).some((r) => r.s >= 1e6) },
+  { id: "exam60", name: "PASSED", how: "Pass a mock exam (60%)", test: (s) => (s.stats.bestExam || 0) >= 60 },
+  { id: "exam90", name: "HONOURS", how: "Score 90% on a mock exam", test: (s) => (s.stats.bestExam || 0) >= 90 },
+  { id: "reader", name: "BOOKWORM", how: "Open the notes of all 11 stages", test: (s) => Object.keys(s.read).length >= 11 },
+];
+
+const Trophies = {
+  queue: [],
+  showing: false,
+  has(id) { return !!(Store.state.ach || {})[id]; },
+  count() { return TROPHIES.filter((t) => this.has(t.id)).length; },
+  // o: the results of the game that just ended, when there is one.
+  check(o) {
+    const s = Store.state, got = s.ach || (s.ach = {});
+    const fresh = [];
+    for (const t of TROPHIES) {
+      if (got[t.id]) continue;
+      let ok = false;
+      try { ok = !!t.test(s, o); } catch (e) { ok = false; }
+      if (ok) { got[t.id] = Date.now(); fresh.push(t); }
+    }
+    if (!fresh.length) return;
+    Store.save();
+    // a first visit with old progress can earn several at once: one card for the lot
+    if (fresh.length > 2) this.queue.push({ name: fresh.length + " TROPHIES", how: "See them all under STATS" });
+    else this.queue.push(...fresh);
+    this.pump();
+  },
+  pump() {
+    if (this.showing || !this.queue.length) return;
+    const t = this.queue.shift();
+    this.showing = true;
+    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${icon("star", COLORS.yellow)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
+    Sound.sfx("trophy");
+    Sound.say("Trophy unlocked");
+    Haptics.buzz([20, 30, 20, 30, 70]);
+    setTimeout(() => { el.remove(); this.showing = false; this.pump(); }, 3400);
+  },
+  // The grid on the STATS screen: earned ones lit, the rest dim with how to earn them.
+  html() {
+    return `<div class="trophies">${TROPHIES.map((t) => {
+      const on = this.has(t.id);
+      return `<div class="tr${on ? " on" : ""}"><span class="ic">${icon("star", on ? COLORS.yellow : "#4a3d7a")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span></div>`;
+    }).join("")}</div>`;
   },
 };
 
@@ -5117,7 +5278,7 @@ function showHub() {
   };
   const move = (d) => {
     Hub.index = (Hub.index + d + CABINETS.length) % CABINETS.length;
-    Sound.sfx("move");
+    Sound.sfx("move", d * 0.7);
     render();
   };
   const play = () => {
@@ -5132,6 +5293,18 @@ function showHub() {
     }, 520);
   };
   render();
+  Trophies.check();
+  // swipe across the floor to walk to the next cabinet
+  const floor = $(".spacer", el);
+  let swipeX = null;
+  floor.addEventListener("pointerdown", (e) => { if (e.isPrimary) swipeX = e.clientX; });
+  floor.addEventListener("pointerup", (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) > 36) move(dx < 0 ? 1 : -1);
+  });
+  floor.addEventListener("pointercancel", () => { swipeX = null; });
   const mission = nextMission();
   $("[data-mission]", el).textContent = mission.text;
   let sx = null;
@@ -5551,8 +5724,20 @@ class BlasterGame extends QuizGame {
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
+      <div class="hint">TAP A TARGET, OR ITS ANSWER</div>
     </section>`);
     this.lives(this.shields, 3);
+    // Shoot by touching a target in the tunnel: the nearest one to the finger.
+    this.bandEl.addEventListener("pointerdown", (e) => {
+      if (this.state !== "ask" || this.paused || !this.has3D || !e.isPrimary) return;
+      let best = -1, bd = Math.max(70, GFX.w * 0.16);
+      this.targets.forEach((t, i) => {
+        const v = this._v.copy(t.position).project(this.camera);
+        const d = Math.hypot((v.x * 0.5 + 0.5) * GFX.w - e.clientX, (0.5 - v.y * 0.5) * GFX.h - e.clientY);
+        if (d < bd) { bd = d; best = i; }
+      });
+      if (best >= 0) this.pick(best);
+    });
   }
 
   build3D() {
@@ -5954,8 +6139,9 @@ class BlasterGame extends QuizGame {
     this.picked = i;
     this.quiz.select(i);
     this.quiz.lock();
-    Sound.sfx("laser");
     const t = this.targets[i];
+    this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
+    Sound.sfx("laser", this.panAt);
     if (t && this.has3D) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
@@ -5993,7 +6179,7 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
-      Sound.sfx("boom");
+      Sound.sfx("boom", this.panAt);
       Sound.sfx("correct");
       UI.flash("good");
       GFX.pulse(4, 0.1);
@@ -6204,6 +6390,9 @@ class BlasterGame extends QuizGame {
         tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(this.ship.matrixWorld));
       });
     }
+    // the view leans a little with the pointer, or with the phone's tilt
+    this.camBase.set(Pointer.x * 0.5, -Pointer.y * 0.3, 0);
+    this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
     followSky(this.sky, this.camera);
@@ -7415,8 +7604,8 @@ class RacerGame extends QuizGame {
     this.updateLook(dt, sp, step, scroll, sky);
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
-    this.camBase.x = this.carX * follow;
-    this.lookAt.x = this.carX * follow * 0.6;
+    this.camBase.x = this.carX * follow + Pointer.x * 0.35;
+    this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
     this.placeCamera();
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);
@@ -8611,9 +8800,10 @@ class MemoryGame extends QuizGame {
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
       <span class="meter slide" style="--c:${COLORS.lime}"><i data-prog></i></span>
-      <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div></div>
+      <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div><div class="stamp" data-stamp hidden></div></div>
       <div class="grade" data-grade></div>
     </section>`);
+    this.bindSwipe();
   }
   build3D() {
     const s = this.scene;
@@ -8857,13 +9047,54 @@ class MemoryGame extends QuizGame {
       <div class="face back">
         <div class="ftop"><span>${esc(this.reverse ? "TERM" : "ANSWER")}</span><span>BOOK P. ${esc(f.page)}</span></div>
         <div class="fmain selectable">${esc(back)}</div>
-        <div class="fhint">HOW DID YOU DO?</div>
+        <div class="fhint">SWIPE: &lt; MISSED · GOT IT &gt; · UP = EASY</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
     UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
     UI.meter($("[data-prog]", this.el), this.total ? this.done / this.total : 0);
     UI.text($("[data-dep]", this.el), "BANKED " + this.deposits);
+    card.style.transform = card.style.transition = "";
+    // a long answer scrolls, so there an upward drag belongs to the text
+    const fm = $(".face.back .fmain", card);
+    card.style.touchAction = fm && fm.scrollHeight > fm.clientHeight + 2 ? "pan-y" : "none";
     this.state = "front";
+  }
+  // Drag the flipped card: right banks it, left sends it back, up marks it easy.
+  // The card follows the finger and a stamp shows what letting go will do.
+  bindSwipe() {
+    const card = $("[data-card]", this.el), stamp = $("[data-stamp]", this.el);
+    let d = null;
+    const kindOf = (dx, dy) => (dx > 80 ? "good" : dx < -80 ? "again" : dy < -80 ? "easy" : "");
+    const NAMES = { good: ["GOT IT", COLORS.cyan], again: ["MISSED", COLORS.red], easy: ["EASY", COLORS.lime] };
+    // the card is turned over (rotateY 180), so its own x axis points left
+    const pose = (dx, dy) => `rotateY(180deg) translate3d(${-dx}px, ${dy}px, 0) rotateZ(${-dx * 0.035}deg)`;
+    card.addEventListener("pointerdown", (e) => {
+      if (this.state !== "back" || this.paused || !e.isPrimary) return;
+      d = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, id: e.pointerId };
+      try { card.setPointerCapture(e.pointerId); } catch (err) { /* not capturable */ }
+      card.style.transition = "none";
+    });
+    card.addEventListener("pointermove", (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      d.dx = e.clientX - d.x;
+      d.dy = Math.min(0, e.clientY - d.y);
+      card.style.transform = pose(d.dx, d.dy);
+      const k = kindOf(d.dx, d.dy);
+      stamp.hidden = !k;
+      if (k) { stamp.textContent = NAMES[k][0]; stamp.style.setProperty("--c", NAMES[k][1]); }
+    });
+    const end = (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const k = e.type === "pointerup" ? kindOf(d.dx, d.dy) : "";
+      const from = pose(d.dx, d.dy);
+      d = null;
+      stamp.hidden = true;
+      card.style.transition = "";
+      if (k && this.state === "back") this.grade(k, from);
+      else card.style.transform = "";
+    };
+    card.addEventListener("pointerup", end);
+    card.addEventListener("pointercancel", end);
   }
   flip() {
     if (this.state !== "front" || this.paused) return;
@@ -8876,7 +9107,8 @@ class MemoryGame extends QuizGame {
       <button class="btn" data-act="easy" style="--c:${COLORS.lime}">EASY</button>`;
     this.state = "back";
   }
-  grade(kind) {
+  // from: the card's pose when a swipe let go of it, so it flies on from there
+  grade(kind, from) {
     if (this.state !== "back" || this.paused) return;
     const id = this.queue.shift();
     if (kind === "again") {
@@ -8896,13 +9128,16 @@ class MemoryGame extends QuizGame {
       this.spawnCoin();
     }
     Store.save();
+    Trophies.check();
     this.state = "next";
     const card = $("[data-card]", this.el);
     if (card.animate && !REDUCED_MOTION) {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.
       const anim = { duration: 260, easing: "ease-in" };
-      card.animate([{ transform: "rotateY(180deg) translateX(0)" }, { transform: `rotateY(180deg) translateX(${kind === "again" ? "" : "-"}120%)` }], anim);
+      const to = from && kind === "easy" ? "rotateY(180deg) translateY(-130%)" : `rotateY(180deg) translateX(${kind === "again" ? "" : "-"}120%)`;
+      card.animate([{ transform: from || "rotateY(180deg) translateX(0)" }, { transform: to }], anim);
+      if (from) card.style.transform = to; // hold the end pose until the next card is dealt
       // the faces are replaced by the next card, so they can stay faded out
       card.querySelectorAll(".face").forEach((f) => f.animate([{ opacity: 1 }, { opacity: 0 }], Object.assign({ fill: "forwards" }, anim)));
     }
@@ -9653,6 +9888,7 @@ class ExamGame extends QuizGame {
 function showResults(o) {
   Store.state.stats.games++;
   Store.save();
+  Trophies.check(o);
   const go = (rank) => renderResults(o, rank);
   if (o.score > 0 && o.game !== "memory" && Store.qualifies(o.game, o.score)) askInitials(o, go);
   else go(-1);
@@ -9918,6 +10154,8 @@ function showStats() {
         <div class="tile" style="--c:${COLORS.violet}"><span class="k">BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
       </div>
       <p class="label">SEEN ${Store.countSeen(allIds)} OF ${allIds.length} ITEMS. AN ITEM IS MASTERED AFTER THREE SPACED RIGHT ANSWERS.</p>
+      <h2 class="section-h">TROPHIES ${Trophies.count()}/${TROPHIES.length}</h2>
+      ${Trophies.html()}
       <h2 class="section-h">MASTERY BY STAGE</h2>
       <div class="mastery-list">${CHAPTERS.map((c) => {
         const m = chapterMastery(c);
@@ -9960,8 +10198,10 @@ function showSettings() {
     <div class="scroll"><div class="wrap">
       ${row("Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
+      ${row("Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
+      ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-8)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
@@ -9992,6 +10232,8 @@ function showSettings() {
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
         if (k === "pixel") GFX.resize();
         if (k === "fps") $("#fps").hidden = !v;
+        if (k === "tilt" && v) Pointer.initTilt(true);
+        if (k === "voice" && v) Sound.say("Announcer on");
         Sound.sfx("blip");
       }
     },
@@ -10066,7 +10308,7 @@ function boot() {
 // Test hook: open the page with #debug to expose internals to automated checks.
 if (/debug/.test(location.hash)) {
   window.__arcade = {
-    Scenes, Store, UI, CHAPTERS, GFX,
+    Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype,
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {
       for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;

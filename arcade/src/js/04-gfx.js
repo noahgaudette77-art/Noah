@@ -689,6 +689,31 @@ function makePipeline(renderer, hdr) {
 // the centre when a touch lifts.
 const Pointer = {
   x: 0, y: 0, tx: 0, ty: 0, touch: false,
+  tiltX: 0, tiltY: 0, tilt0: null,
+  // Tilting the phone looks around the scene, like the pointer does on a desktop.
+  // Android sends motion events freely; iOS asks first, so there it starts from the
+  // Setup switch (a tap). Where a page isn't allowed motion events, nothing happens.
+  initTilt(ask) {
+    if (this._tilt || typeof DeviceOrientationEvent === "undefined") return;
+    const listen = () => {
+      this._tilt = true;
+      window.addEventListener("deviceorientation", (e) => {
+        if (e.gamma == null || e.beta == null || !Store.settings.tilt) { this.tiltX = this.tiltY = 0; return; }
+        const ang = (screen.orientation && screen.orientation.angle) || 0;
+        const g = ang === 90 ? e.beta : ang === 270 ? -e.beta : e.gamma;
+        const b = ang === 90 ? -e.gamma : ang === 270 ? e.gamma : e.beta;
+        // measured from how the phone is being held, which re-centres slowly
+        if (!this.tilt0) this.tilt0 = { g, b };
+        this.tilt0.g += (g - this.tilt0.g) * 0.004;
+        this.tilt0.b += (b - this.tilt0.b) * 0.004;
+        this.tiltX = clamp((g - this.tilt0.g) / 16, -1, 1);
+        this.tiltY = clamp((b - this.tilt0.b) / 16, -1, 1);
+      }, { passive: true });
+    };
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      if (ask) DeviceOrientationEvent.requestPermission().then((r) => { if (r === "granted") listen(); else UI.toast("MOTION ACCESS WAS DECLINED"); }).catch(() => UI.toast("TILT ISN'T AVAILABLE HERE"));
+    } else listen();
+  },
   init() {
     const set = (e) => {
       this.tx = clamp((e.clientX / GFX.w) * 2 - 1, -1, 1);
@@ -698,11 +723,12 @@ const Pointer = {
     window.addEventListener("pointermove", set, { passive: true });
     window.addEventListener("pointerdown", set, { passive: true });
     window.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") { this.tx = 0; this.ty = 0; } }, { passive: true });
+    if (Store.settings.tilt) this.initTilt(false);
   },
   update(dt) {
     const k = Math.min(1, dt * 3);
-    this.x += (this.tx - this.x) * k;
-    this.y += (this.ty - this.y) * k;
+    this.x += (clamp(this.tx + this.tiltX, -1, 1) - this.x) * k;
+    this.y += (clamp(this.ty + this.tiltY, -1, 1) - this.y) * k;
   },
 };
 
