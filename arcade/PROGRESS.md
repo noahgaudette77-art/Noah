@@ -274,3 +274,66 @@ place of the trophy; on a pass it dies (a death animation, then an explosion).
 Known and not done: not measured on a real iPhone. Boss Rush's final boss (the
 Examinator cyborg) is unchanged: the model was put in the Final Exam, as asked. The
 hub's Final Exam marquee still carries its trophy emblem.
+
+# The exam boss, reworked (fourth pass): progress log
+
+Request: "the boss is kind of blurry and small and not intimidating and not
+immersively scary". Look, staging, behaviour and sound only; the exam's rules, marks,
+timers and saved data are untouched.
+
+`arcade/backup/index.before-boss-rework.html` is the game before this pass.
+
+| # | Checkpoint | Status |
+|---|---|---|
+| C1 | Bigger, sharper, darker, alive (framing, surface detail, lighting, behaviour, sound) | done |
+| C2 | Regression, other paths, frame rate, walkthrough, docs | done |
+
+- Why it was small and soft. The whole body was framed in the band between the
+  question and the answers, so the face was about 25 px tall; phones drew the scene at
+  1.5x; the texture was 1024 px; a bright shaft of light stood in front of it. The
+  model's own 4096 px texture was checked at full size: it has no fine detail to give
+  (soft gradients), so sharpness had to come from somewhere else.
+- Size and framing. Nine units tall (was 6.2); the camera is close and low, under its
+  chin, and the shoulders run off both sides of the screen. The head is about ten times
+  larger on screen.
+- Sharpness. A 512 px tile of scratches, pits, dents and grain (drawn once from a
+  fixed seed) is laid on the armour from three sides; its slope bumps the normal, so
+  the damage catches the light. Edges of plates are picked out. The texture is 2048 px
+  and graded darker. The exam's picture is sharpened in the final pass (`post.sharpen`)
+  with no colour fringe and fainter scan lines (`post.crisp`). On a phone the exam can
+  draw at 2x instead of 1.5x (`post.pr`): two steps above the top quality level that
+  the frame-rate watcher climbs and drops like levels and remembers per scene, so a
+  phone that can't hold them is where it was before.
+- Light. A cold lamp above, red and blue rims behind, a cold light from under it that
+  turns red as the exam goes on; the armour reflects its own dark environment map. The
+  skull stays bone-pale, so the eyes (white-hot points, a red halo, a streak of glare,
+  their light on the bone done in the shader) are the brightest thing on screen. An
+  ember beats in its chest. The vignette closes in with the same measure.
+- Behaviour, all on its own clock. It wakes (kneeling in the dark, eyes light at
+  0.55 s, it rises, a roar and a shake at 2.35 s), then looms: breathing, the head
+  following the pointer or tilt, and a 16 s cycle of lean-in (with a growl), head tilt
+  and claw flex. `dread` = the larger of answered/total and time used/time allowed:
+  it hunches closer, the light reddens. `notice()` is the same small movement for
+  every pick. Nothing reads whether an answer is right.
+- Endings. A boss bar over both. Fail (3.6 s): roar, wind-up, a fist brought down at
+  the camera (one flash, shake and hit-stop; none of those with Reduced effects), then
+  a close glare. Pass: as before, with the hall's floor reflection switched back on.
+- Sound: a low drone and breathing while it looms (off on pause and in the ending),
+  and cues for the wake, roar, smash and growl. Synthesised; not auditioned by ear here.
+- Cost. While the questions are up the floor's reflection pass is skipped (the floor is
+  out of sight) and the scene has four point lights (the eye and fire lights were
+  folded into the shader and into the light under it).
+- C2 results. `npm run arcade:regress`: IDENTICAL to the original build (153 answers in
+  8 games, every saved byte), 0 hints before submit, the ending played in full (571
+  frames). Skip, reduced motion, Reduced effects, a fail and a replay all reach the
+  results with no errors. Full walkthrough: no console errors, no horizontal overflow.
+  Software renderer at its lowest level, exam, average / worst second, old and new
+  builds back to back, two runs: 107 / 97 and 106 / 101 before, 108 / 104 and 106 / 98
+  now. Through the pass ending: 86 / 67 before, 85 / 65 now. Through the fail ending:
+  94 / 82. Forced to the top level on the same software renderer (a fill-rate test, not
+  a phone): 19 fps before, 14 now at the same 1.5x (the boss now covers most of the
+  screen), 9 at 2x, which is why the extra resolution is adaptive.
+- The page is 3.4 MB (was 2.7 MB): the larger texture.
+
+Known and not done: not measured on a real iPhone (frame rate at 2x, how the sounds
+sit). The hub's Final Exam marquee still carries its trophy emblem.

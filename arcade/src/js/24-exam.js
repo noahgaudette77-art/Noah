@@ -20,6 +20,7 @@ function buildExam(n) {
 // through them, a colonnade, and a polished floor that mirrors it all. Calm by design:
 // nothing flashes or hurries behind the questions.
 const EXAM_WALL_Z = -20;
+const EXAM_LOOK_Y = 0.5 + 9 * 0.83; // where the camera looks: the boss's jaw (its dais plus 83% of its height)
 const EXAM_WINDOWS = [-32, -24, -16, -8, 0, 8, 16, 24, 32];
 
 // makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
@@ -151,7 +152,7 @@ function examBeam({ color, top, bottom, height, intensity }) {
 
 class ExamGame extends QuizGame {
   constructor(sel) {
-    super(sel, "exam", { fov: 55, fog: [0x07031a, 22, 78], bg: 0x07031a });
+    super(sel, "exam", { fov: 55, fog: [0x06021a, 14, 74], bg: 0x06021a }); // the hall falls away into the dark behind the boss
     this.rounds = buildExam(ExamPrefs.len);
     this.answers = new Array(this.rounds.length).fill(-1);
     this.flags = new Array(this.rounds.length).fill(false);
@@ -197,23 +198,37 @@ class ExamGame extends QuizGame {
       ],
     });
     const env = this.envRT ? this.envRT.texture : null;
+    // what the boss's armour reflects: not the warm hall but the dark, a cold lamp, red and blue behind it
+    this.bossEnvRT = examEnvMap({
+      top: 0x05040c, horizon: 0x1a1440, bottom: 0x0b0a14, glow: 0.3,
+      panels: [
+        { color: 0xdfe6ff, k: 2.4, w: 12, h: 5, pos: [3, 24, 16] },
+        { color: 0xff2f45, k: 2.2, w: 5, h: 22, pos: [-28, 8, -12] },
+        { color: 0x4f7cff, k: 1.6, w: 5, h: 22, pos: [28, 6, -10] },
+        { color: 0x8a5cff, k: 0.8, w: 30, h: 6, pos: [0, 4, -30] },
+        { color: 0x9fb0ff, k: 0.5, w: 20, h: 6, pos: [0, -14, 14] },
+      ],
+    });
     const gold = new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 });
     const lacquer = new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 });
     const marble = new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true });
 
-    s.add(new THREE.AmbientLight(0x2a1f55, 0.55));
-    const key = new THREE.DirectionalLight(0xfff2dd, 0.45);
-    key.position.set(-6, 14, 8);
+    // Light it to be feared: little ambient, a hard lamp high in front (its brow shadows
+    // its eyes), red from behind on one side and cold blue on the other to cut its
+    // outline out of the dark. (The boss adds its own: the red under it, its eyes.)
+    s.add(new THREE.AmbientLight(0x1e1840, 0.42));
+    const key = new THREE.DirectionalLight(0xfff2dd, 0.3);
+    key.position.set(-4, 16, 9);
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xffdcae, 1.7, 22, 1.5); // the lamp over the boss
-    this.spotLight.position.set(0, 10.5, 3.4);
+    this.spotLight = new THREE.PointLight(0xe6ecff, 2.6, 32, 1.5); // the lamp over the boss
+    this.spotLight.position.set(0.8, BOSS_DAIS + BOSS_S * 1.55, BOSS_S * 0.62);
     s.add(this.spotLight);
-    const rim = new THREE.PointLight(0x9a6bff, 1.2, 26, 1.5);
-    rim.position.set(-6, 4.5, -5);
-    s.add(rim);
-    const rim2 = new THREE.PointLight(0x35d4ff, 0.7, 24, 1.5);
-    rim2.position.set(6.5, 3.5, -5);
-    s.add(rim2);
+    this.rimA = new THREE.PointLight(0xff2f55, 2.8, 36, 1.5);
+    this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
+    s.add(this.rimA);
+    this.rimB = new THREE.PointLight(0x4f7cff, 1.8, 34, 1.5);
+    this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
+    s.add(this.rimB);
 
     // the hall: a starry night through arched windows, pilasters and a colonnade
     const night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial());
@@ -274,16 +289,20 @@ class ExamGame extends QuizGame {
     ring.position.y = 0.04;
     s.add(ring);
     // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
-    this.boss = BossModel.ok() ? new ExamBoss(this, env) : null;
+    this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null;
+    // while the questions are up the camera is under the boss's chin and the floor is out of
+    // sight: its reflection (the whole hall drawn a second time) waits for the ending
+    s.userData.mirrorOff = !!this.boss;
     // the spotlight from above, its pool on the floor, dust turning in it
-    const beam = examBeam({ color: 0xffe6c0, top: 0.4, bottom: 4.6, height: 18, intensity: 0.16 });
-    beam.position.set(0, 18, 0);
+    // (the shaft of light falls behind it, so it stands out against it instead of in its haze)
+    const beam = examBeam({ color: 0xd8ccff, top: 0.7, bottom: 7, height: 22, intensity: 0.1 });
+    beam.position.set(0, 22, -BOSS_S * 0.62);
     beam.layers.set(1);
     s.add(beam);
     const pool = makeLightPool({ color: 0xffd9a0, radius: 5.4, intensity: 0.38 });
     pool.layers.set(1);
     s.add(pool);
-    this.motes = makeMotes({ count: 55, box: [9, 10, 8], center: [0, 5.5, 0.5], color: 0xffe6c0, size: 0.08, k: 1.0 });
+    this.motes = makeMotes({ count: 70, box: [13, 9, 6], center: [0, BOSS_DAIS + BOSS_S * 0.8, BOSS_S * 0.45], color: 0xff7a3a, size: 0.08, k: 1.5 }); // embers adrift round it
     this.moonMotes = makeMotes({ count: 50, box: [44, 12, 20], center: [0, 6, -8], color: 0xb8c4ff, size: 0.12, k: 0.75 });
     [this.motes, this.moonMotes].forEach((p) => { p.layers.set(1); s.add(p); });
     this.decor(this.motes, this.moonMotes);
@@ -312,25 +331,40 @@ class ExamGame extends QuizGame {
     s.add(this.ripple);
     this.rippleT = 1;
 
-    s.userData.post = { exposure: 1.1, bloom: 0.85, threshold: 1.0, saturation: 1.06, contrast: 1.05, vignette: 1.15 };
-    this.dist = this.distT = 19;
+    // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
+    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, pr: 2 };
+    this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
-    this.lookAt.set(0, 3.5, 0);
+    this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
   }
-  // Back the camera off until the boss and its dais sit comfortably in the band.
+  // Frame the boss from below and close: its skull and shoulders fill the band (the
+  // shoulders run a little past the screen's edges), and what the band has room for
+  // of its chest. It is meant to be too big for the frame.
   onResize(w, h) {
     if (!this.camera || !this.studs) return;
     const bandH = this.band ? this.band.h : h * 0.45;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    this.distT = clamp((7.9 * h) / (2 * tanH * Math.max(110, bandH * 0.72)), 12, 40);
+    const tall = (BOSS_S * 0.48 * h) / (2 * tanH * Math.max(110, bandH * 0.9)); // head to mid-chest in the band's height
+    const wide = (BOSS_S * 0.87 * h) / (2 * tanH * 1.45 * w); // shoulders half as wide again as the screen
+    this.distT = clamp(Math.max(tall, wide), 7, 40);
     if (!this.placed) {
       this.dist = this.distT;
       this.placed = !!this.band;
     }
   }
+  pause() {
+    super.pause();
+    if (this.paused) Sound.dread(false);
+  }
+  resume() {
+    super.resume();
+    if (this.boss && this.boss.mode === "idle") Sound.dread(true);
+  }
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
+    Sound.dread(false);
     if (this.envRT) this.envRT.dispose();
+    if (this.bossEnvRT) this.bossEnvRT.dispose();
     if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
     super.dispose();
   }
@@ -351,6 +385,7 @@ class ExamGame extends QuizGame {
     UI.banner(this.boss ? "FINAL BOSS" : "BEGIN", COLORS.violet, this.rounds.length + " QUESTIONS" + (this.limit ? " · " + Math.round(this.limit / 60) + " MIN" : "") + (this.boss ? " · 60% BRINGS IT DOWN" : ""));
     this.state = "ask";
     this.show();
+    if (this.boss) this.boss.wake(); // it rises out of the dark
   }
   show() {
     const r = this.rounds[this.i];
@@ -383,6 +418,7 @@ class ExamGame extends QuizGame {
     Sound.sfx("blip");
     this.paintStuds();
     if (this.ripple) { this.rippleT = 0; this.ripple.visible = true; }
+    if (this.boss) this.boss.notice(); // (it starts at every pick alike: nothing in that says right or wrong)
   }
   on(a, t) {
     if (a === "pause") return this.pause();
@@ -478,7 +514,7 @@ class ExamGame extends QuizGame {
     });
     // Everything above is the exam itself, unchanged. What follows is only how the
     // result is shown: a pass kills the boss, a fail leaves it standing.
-    if (ending) this.boss.finale(passed, results);
+    if (ending) this.boss.finale(passed, score, results);
     else results();
   }
   update(dt) {
@@ -499,12 +535,25 @@ class ExamGame extends QuizGame {
     if (!this.has3D) return;
     const t = this.t;
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
-    if (this.boss) this.boss.update(dt, t);
+    const B = this.boss;
+    if (B) {
+      // it grows more menacing as the exam is worked through: how many are answered, never which were right
+      let done = 0;
+      for (let i = 0; i < this.answers.length; i++) if (this.answers[i] >= 0) done++;
+      // (or, on a timed exam, how much of the time is gone, whichever is further along)
+      B.dreadTo = this.state === "ask" && this.answers.length ? Math.max(done / this.answers.length, this.limit ? clamp(this.elapsed / this.limit, 0, 1) : 0) : 0;
+      B.update(dt, t);
+      this.spotLight.intensity = 2.6 * B.lightK;
+      this.rimA.intensity = 2.8 * B.lightK;
+      this.rimB.intensity = 1.8 * B.lightK;
+      // and the dark closes in round it
+      if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
+    }
     this.ambience.update(dt, t);
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
       const k = this.rippleT;
-      this.ripple.scale.setScalar(4.9 + k * 6);
+      this.ripple.scale.setScalar(BOSS_DAIS_R + 1 + k * 7);
       this.ripple.material.opacity = 0.9 * (1 - k) * (1 - k);
       this.ripple.visible = k < 1;
     }
@@ -514,9 +563,11 @@ class ExamGame extends QuizGame {
       c.setXYZ(this.i, 2.2 * p, 1.7 * p, 3.0 * p);
       c.needsUpdate = true;
     }
-    this.camBase.set(Pointer.x * 0.6, 2.6 + this.dist * 0.12 + Math.sin(t * 0.3) * 0.06 - Pointer.y * 0.25, this.dist);
-    this.lookAt.set(0, 3.5, 0);
-    if (this.boss && this.boss.mode !== "idle" && !this.boss.quick) this.boss.camera(dt); // the ending has its own camera
+    // from below, close, and closer still as the end nears or it leans in
+    const d = this.dist * (1 - (B ? 0.08 * B.dread + 0.05 * B.menace : 0));
+    this.camBase.set(Pointer.x * 0.5, EXAM_LOOK_Y - d * 0.28 + Math.sin(t * 0.3) * 0.05 - Pointer.y * 0.2, d);
+    this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
+    if (B && (B.mode === "die" || B.mode === "rage") && !B.quick) B.camera(dt); // the ending has its own camera
     this.placeCamera();
     this.motes.userData.drift(t);
     this.moonMotes.userData.drift(t);

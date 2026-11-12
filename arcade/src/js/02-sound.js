@@ -136,7 +136,14 @@ const Sound = {
         T(90, 1.4, { slide: -70, vol: 0.4, type: "sine" }); T(45, 2.0, { delay: 0.05, slide: -20, vol: 0.35, type: "sine" });
         for (let i = 0; i < 6; i++) this.noise(0.08, { delay: 0.35 + i * 0.17 + Math.random() * 0.06, vol: 0.18, freq: 1800 });
         break;
-      case "bossgrowl": T(80, 1.1, { slide: -35, vol: 0.2, type: "sawtooth" }); T(40, 1.2, { slide: -10, vol: 0.2, type: "square" }); break; // a page turning
+      case "bossgrowl": T(80, 1.1, { slide: -35, vol: 0.2, type: "sawtooth" }); T(40, 1.2, { slide: -10, vol: 0.2, type: "square" }); break;
+      // it wakes (a rising growl, servos, then its weight comes down), roars, and brings a fist down
+      case "bosswake":
+        T(52, 1.5, { slide: 70, vol: 0.28, type: "sawtooth" }); T(320, 0.8, { delay: 0.45, slide: 420, vol: 0.05, type: "square" });
+        this.noise(0.4, { delay: 1.78, vol: 0.4, freq: 320 }); T(64, 0.5, { delay: 1.78, slide: -34, vol: 0.32, type: "sine" });
+        break;
+      case "bossroar": T(130, 1.0, { slide: -70, vol: 0.3, type: "sawtooth" }); T(196, 1.0, { slide: -110, vol: 0.2, type: "square" }); this.noise(1.0, { vol: 0.35, freq: 900, type: "bandpass", q: 0.6 }); break;
+      case "bosssmash": T(70, 0.5, { slide: -40, vol: 0.45, type: "sine" }); this.noise(0.4, { vol: 0.5, freq: 350 }); this.noise(0.15, { vol: 0.3, freq: 2400 }); break; // a page turning
       case "move": T(440, 0.04, { vol: 0.1, type: "triangle" }); break;
       case "select": T(523, 0.06, { vol: 0.16 }); T(784, 0.1, { delay: 0.06, vol: 0.16 }); break;
       case "back": T(392, 0.06, { vol: 0.14 }); T(262, 0.1, { delay: 0.06, vol: 0.14 }); break;
@@ -248,6 +255,38 @@ const Sound = {
       this._amb = null;
       clearTimeout(a.t);
       try { a.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.2); a.src.stop(this.ctx.currentTime + 0.8); } catch (e) { /* already stopped */ }
+    }
+  },
+
+  // The Final Exam's boss, heard: a low drone that beats slowly against itself, and its breathing.
+  dread(on) {
+    if (!this.ctx) return;
+    if (on && !this._dread && Store.settings.sfx) {
+      const c = this.ctx, f = c.createBiquadFilter(), g = c.createGain(), o1 = c.createOscillator(), o2 = c.createOscillator();
+      f.type = "lowpass";
+      f.frequency.value = 380;
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(0.05, c.currentTime, 1.5);
+      o1.type = o2.type = "sawtooth";
+      o1.frequency.value = 55;
+      o2.frequency.value = 55.7;
+      o1.connect(f);
+      o2.connect(f);
+      f.connect(g).connect(this.sfxBus);
+      o1.start();
+      o2.start();
+      const breathe = () => {
+        if (!this._dread) return;
+        this.noise(1.1, { vol: 0.035, freq: 620, type: "bandpass", q: 0.9 }); // in
+        this.noise(1.7, { delay: 1.5, vol: 0.06, freq: 380, type: "bandpass", q: 0.8 }); // out
+        this._dread.t = setTimeout(breathe, 4800);
+      };
+      this._dread = { o1, o2, g, t: setTimeout(breathe, 1200) };
+    } else if (!on && this._dread) {
+      const d = this._dread;
+      this._dread = null;
+      clearTimeout(d.t);
+      try { d.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.3); d.o1.stop(this.ctx.currentTime + 1.2); d.o2.stop(this.ctx.currentTime + 1.2); } catch (e) { /* stopped */ }
     }
   },
 

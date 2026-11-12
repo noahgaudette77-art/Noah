@@ -56,21 +56,31 @@ lists all of them again.
   above the lanes: miss and it puts a bolt into your shield; clear the wave and it
   goes up. A seven-pip combo meter fills and warms, and the engines burn longer
   and bluer with it.
-- **The final boss.** A skull-faced armoured mech stands on a dais in the exam hall
-  (the model is the player's own, converted by `scripts/convert-boss.js` into 32
-  rigid parts on a 19-joint skeleton). Through the exam it only breathes, shifts
-  its weight and looks about: it never reacts to an answer, so the exam still
-  gives no hint until you submit. Submit with 60% or more and it dies: joints blow
-  out one after another in sparks and fire, a pauldron and a pylon are torn off,
-  an arm goes limp, it drops to its knees, its reactor runs away until light
-  pours out of the armour, and it blows apart into a couple of hundred fragments
-  of its own armour that arc, spin, land and skid, with a fireball, smoke, a wave
-  of dust, streamers of burning debris, two secondary blasts, a scorch on the
-  dais, and its skull thrown clear to roll to a stop in front of the wreck. Below
-  60% it squares up and stays standing. SKIP (or Enter) goes straight to the
-  results; Reduced effects plays it without shake or flash, and a device set to
-  reduce motion gets a still version. Outside the windows an aurora drifts and
-  lanterns rise.
+- **The final boss.** A skull-faced armoured mech (the player's own model, converted
+  by `scripts/convert-boss.js` into 32 rigid parts on a 19-joint skeleton) stands
+  over the Final Exam, seen from under its chin so it fills the screen: dark, worn
+  armour whose scratches, pits and dents stay sharp close up, a pale skull, two
+  burning eyes with a streak of glare across them, an ember beating in its chest.
+  It starts on its knees in the dark; its eyes light, it roars and rises. Through
+  the exam it breathes and watches: its head follows your finger (or the phone's
+  tilt), and every sixteen seconds it does something slow and unfriendly (leans in
+  with a low growl, cocks its head, flexes a claw). The further along the exam is
+  (questions answered or time used, never which answers are right), the closer it
+  hunches, the redder the light under it and the darker the hall. It makes the same
+  small movement whichever answer is chosen, so the exam still gives no hint until
+  you submit. Submit with 60% or more and it dies: joints blow out one after another
+  in sparks and fire, a pauldron and a pylon are torn off, an arm goes limp, it
+  drops to its knees, its reactor runs away until light pours out of the armour,
+  and it blows apart into a couple of hundred fragments of its own armour that arc,
+  spin, land and skid, with a fireball, smoke, a wave of dust, streamers of burning
+  debris, two secondary blasts, a scorch on the dais, and its skull thrown clear to
+  roll to a stop in front of the wreck. Below 60% it roars, winds up, brings a fist
+  down at the camera and glares from close up until the results. A boss bar over
+  the ending shows what your answers took off it. SKIP (or Enter) goes straight to
+  the results; Reduced effects plays it without shake or flash, and a device set to
+  reduce motion gets a still version. On a phone the exam is drawn at up to twice
+  the screen's point size (the other scenes use one and a half) when the phone
+  keeps its frame rate there.
 - **The vault's machinery.** Memory Bank's door has meshing gear trains round the
   dial, an arc of lamps over it (one per card in the deck), coin stacks by the
   bullion. Bank a card and it flies up into the coin slot, the gears spin on and

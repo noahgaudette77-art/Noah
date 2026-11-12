@@ -69,12 +69,23 @@ const GFX = {
     const p = Store.settings.pixel;
     return p === "retro" || p === "chunky" ? p : "hd";
   },
+  // A scene whose picture is one close subject can ask for more pixels than a phone
+  // normally gets (post.pr). Only the top level gives them, in two steps (up) that
+  // watch() climbs and drops like levels: a phone that can't hold them loses nothing.
+  up: 0,
+  morePR() {
+    const cur = Scenes.cur, want = cur && cur.scene && cur.scene.userData.post && cur.scene.userData.post.pr;
+    if (!want || this.look !== "hd") return 0;
+    const lim = Math.min(window.devicePixelRatio || 1, 1900 / Math.max(this.w, this.h));
+    return Math.max(0, Math.min(want, lim) - Math.min(this.small ? 1.5 : 2, lim));
+  },
   scenePR() {
     const dpr = window.devicePixelRatio || 1;
     const look = this.look;
     if (look === "retro") return clamp(680 / Math.max(this.w, this.h), 0.12, dpr);
     if (look === "chunky") return clamp(380 / Math.max(this.w, this.h), 0.12, dpr);
-    const base = Math.min(dpr, this.small ? 1.5 : 2, 1900 / Math.max(this.w, this.h));
+    let base = Math.min(dpr, this.small ? 1.5 : 2, 1900 / Math.max(this.w, this.h));
+    if (this.qi === this.Q.length - 1) base += this.morePR() * (this.locked ? 1 : this.up / 2);
     return Math.max(0.35, base * this.dyn);
   },
   outPR() {
@@ -88,12 +99,14 @@ const GFX = {
     if (this.ok) {
       this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
-      const pr = this.scenePR();
+      const pr = (this._pr = this.scenePR());
       this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
       $("#gl").classList.toggle("post", this.look === "hd");
     }
     Scenes.resize();
   },
+  // a new scene may want a different resolution (see scenePR)
+  refit() { if (this.ok && Math.abs(this.scenePR() - (this._pr || 0)) > 1e-3) this.resize(); },
   setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
     this.t += dt;
@@ -114,7 +127,7 @@ const GFX = {
     camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
-    if (mirrors) for (const m of mirrors) { if (this.lite || !this.opt.wet) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (mirrors) for (const m of mirrors) { if (this.lite || !this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
@@ -263,6 +276,7 @@ const GFX = {
     if (i === this.qi && !force) return;
     const was = this.dyn;
     this.qi = i;
+    if (i < this.Q.length - 1) this.up = 0;
     this.dyn = this.Q[i].d;
     this.lite = this.Q[i].lite;
     document.body.classList.toggle("lean", !!this.Q[i].cheap); // solid HUD panels (see style.css)
@@ -367,9 +381,12 @@ const GFX = {
     this.settle = 1; // a new scene's first frames compile shaders and upload textures
     if (this.locked || !this.ok) return;
     const name = (o) => (o && o.constructor ? o.constructor.name : "");
-    if (old) { this.mem[name(old)] = this.qi; this.saveMem(); }
+    // (a remembered level past the top is the top with extra resolution: see morePR)
+    const top = this.Q.length - 1;
+    if (old) { this.mem[name(old)] = this.qi + (this.qi === top ? this.up : 0); this.saveMem(); }
     const m = s ? this.mem[name(s)] : undefined;
-    if (m !== undefined) this.setQ(m);
+    if (m !== undefined) this.setQ(Math.min(m, top));
+    this.up = this.qi === top && this.morePR() > 0 ? (m !== undefined ? clamp(m - top, 0, 2) : 2) : 0;
   },
   // Each scene's settled quality level is remembered on this device between visits
   // (the key's "2": levels saved before the 8-level ladder would mean the wrong ones),
@@ -380,7 +397,7 @@ const GFX = {
   },
   saveMem(cur) {
     if (this.locked) return;
-    if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi;
+    if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi + (this.qi === this.Q.length - 1 ? this.up : 0);
     try { localStorage.setItem("inr-arcade-gfx2", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
   },
   watch(realDt) {
@@ -413,6 +430,12 @@ const GFX = {
       // that was never set left it at zero, and the probes kept coming)
       this.backoff = this.probed ? Math.min(240, (this.backoff || 15) * 2) : this.backoff || 15;
       this.probed = false;
+      if (this.up > 0) { // extra resolution is the first thing to go; the level stays
+        this.up--;
+        this.upT = this.t + this.backoff;
+        this.resize();
+        return;
+      }
       this.ceil = this.qi;
       this.ceilT = this.t + this.backoff;
       // far off: several steps at once. The big jumps need even the window's fast
@@ -424,6 +447,7 @@ const GFX = {
       this._good = 0;
       const top = this.t < (this.ceilT || 0) ? this.ceil - 1 : this.Q.length - 1;
       if (this.qi < top) { this.setQ(this.qi + 1); this.probed = true; }
+      else if (this.qi === this.Q.length - 1 && this.up < 2 && this.t > (this.upT || 0) && this.morePR() > 0) { this.up++; this.probed = true; this.resize(); }
     } else this._good = 0;
   },
 };
@@ -437,7 +461,7 @@ const Scenes = {
     const old = this.cur;
     this.cur = s;
     if (old && old !== s && !old.keepAlive) { if (GFX.ok) GFX.park(old); else old.dispose(); } // the hub stays built (see hubScene)
-    if (old !== s) GFX.sceneChanged(old, s);
+    if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); }
     if (s) s.resize(GFX.w, GFX.h);
     if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
     return s;
@@ -556,7 +580,7 @@ function makePipeline(renderer, hdr) {
   const final = mat({
     tScene: { value: null }, tGlow: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
-    uAberr: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 },
+    uAberr: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 }, uSharp: { value: 0 },
     uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
     uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
@@ -568,7 +592,7 @@ function makePipeline(renderer, hdr) {
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
-    uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker;
+    uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker; uniform float uSharp;
     uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
@@ -623,6 +647,12 @@ function makePipeline(renderer, hdr) {
         suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
       vec3 col = uFXAA > 0.5 ? fxaa(suv) : tex(suv);
+      if (uSharp > 0.0) {
+        // a scene that asks to be sharp: whatever a pixel has over its four neighbours is laid back on top of it
+        HP vec2 sp = 1.0 / uSceneRes;
+        vec3 nb = (tex(suv + vec2(sp.x, 0.0)) + tex(suv - vec2(sp.x, 0.0)) + tex(suv + vec2(0.0, sp.y)) + tex(suv - vec2(0.0, sp.y))) * 0.25;
+        col = max(col + clamp(col - nb, -0.4, 0.4) * uSharp, 0.0);
+      }
       if (uZoom.y > 0.0) {
         // speed: the picture streaks outward from the centre
         HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045);
@@ -806,7 +836,8 @@ function makePipeline(renderer, hdr) {
       u.uNoise.value.set(Math.random() * 97, Math.random() * 97);
       u.uFlicker.value = o.calm || !o.opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
       u.uGrain.value = o.opt.grain ? 1 : 0;
-      u.uAberr.value = o.ab;
+      u.uAberr.value = p.crisp && o.ab <= 0.9 ? 0 : o.ab; // (a crisp scene keeps the fringe for hits only)
+      u.uSharp.value = p.sharpen && !o.cheap ? p.sharpen : 0;
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
@@ -826,7 +857,7 @@ function makePipeline(renderer, hdr) {
       u.uGlass.value = o.glass;
       u.uSnap.value = retro ? 1 : 0;
       u.uFXAA.value = retro || !o.aa ? 0 : 1;
-      u.uScan.value = o.opt.scan ? (retro ? 0.2 : 0.09) : 0;
+      u.uScan.value = o.opt.scan ? (retro ? 0.2 : p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)
       u.uCurve.value = retro ? 0.11 : 0.06;
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
       u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);
