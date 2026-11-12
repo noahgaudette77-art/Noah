@@ -25,8 +25,8 @@ next to it is the trace that build produces.
 | 0 | Backup, regression test, "before" screenshots | done |
 | 1 | The car | done |
 | 2 | The bosses (a different cyborg for each of the 12) | done |
-| 3 | World and events (traffic, Event Director, biomes, feedback) | done (final screenshots pending) |
-| 4 | Post-FX toggles, Reduced effects, quality tiers, performance | code in; measuring and reporting next |
+| 3 | World and events (traffic, Event Director, biomes, feedback) | done |
+| 4 | Post-FX toggles, Reduced effects, quality tiers, performance | done |
 
 ## Done so far
 
@@ -79,12 +79,22 @@ next to it is the trace that build produces.
   rate-limited to three a second and every periodic flicker is under 3 Hz. A wrong
   answer glitches the picture (`GFX.glitch`); a boss hit pulses the arena's lights.
 
+- Checkpoint 4 (measured): the car's fine detail (bolts, treads, fittings) and
+  unused traffic slots are skipped on the weakest quality levels (LOD), after the
+  first measurement showed the new car cost a third of the frame there. City
+  events were moved into the visible air above the street. Final numbers on the
+  no-GPU software test at 390x844 with the auto scaler, worst second: racer 91 fps,
+  boss 94, blaster 109, hub 111. With High forced on that software renderer:
+  racer 11 fps, boss 17 (no GPU; not a phone measurement). 60 s captures: 17 events
+  of 10 kinds (coast), 17 of 9 kinds (downtown), 6 vehicle kinds. Full walkthrough:
+  no console errors. Regression: identical.
+
 ## Next
 
-- Measure fps (racer, boss) on a phone-size viewport; legibility screenshots during
-  busy moments; full walkthrough for console errors; before/after sheets; update
-  README and the PR; final report.
+- Nothing open. Ideas not done: a toll plaza and sign gantries across the main
+  road (they would compete with the question gates), ambient events in the boss
+  arena and Risk Blaster (the arena reacts to hits instead), real-phone fps.
 
 ## Known issues
 
-- None open.
+- High quality has only been measured on a software renderer (no GPU here).

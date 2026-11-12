@@ -28,7 +28,7 @@ class EventDirector {
     }
     // a question on screen, or Reduced effects: fewer events, and only quiet ones
     const quiet = calm || GFX.calm;
-    this.t -= dt * (GFX.calm ? 0.4 : calm ? 0.6 : 1);
+    this.t -= dt * (GFX.calm ? 0.4 : calm ? 0.8 : 1);
     if (this.t > 0) return;
     this.t = rand(this.min, this.max);
     const ev = this.pick(quiet);

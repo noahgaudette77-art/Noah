@@ -351,6 +351,8 @@ class RacerWorld {
       dirty.add(c.mesh);
     }
     for (const m of dirty) { m.instanceMatrix.needsUpdate = true; m.geometry.attributes.aL.needsUpdate = true; }
+    // draw only as many of each kind as are on the road (slots fill from the front)
+    for (const type in this.fleet) { let n = 0; for (const c of this.cars) if (c.type === type && c.on) n = Math.max(n, c.i + 1); this.fleet[type].count = n; }
     this.shadows.count = GFX.opt.shadows ? k : 0;
     this.shadows.instanceMatrix.needsUpdate = true;
     const u = this.trafficMat.uniforms;
@@ -647,12 +649,13 @@ class RacerWorld {
     // Where the sky is: in the city only the slot of air above the street shows, so
     // things happen there, nearer and smaller; in open country, across the whole sky.
     const city = () => this.biome === "downtown";
-    const win = () => (city() ? { w: 7.5, y0: 26, y1: 46, z: -135, s: 0.45 } : { w: 150, y0: 62, y1: 135, z: -300, s: 1 });
+    const win = () => (city() ? { w: 6, y0: 11.5, y1: 17.5, z: -56, s: 0.2 } : { w: 150, y0: 62, y1: 135, z: -300, s: 1 });
+    const wide = () => open() && !city(); // the whole sky is in view
 
     // -- 1. meteor shower: streaks across the sky
     const mg = new THREE.PlaneGeometry(1, 1);
     this.meteors = Array.from({ length: 7 }, () => { const m = new THREE.Mesh(mg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 })); m.visible = false; m.layers.set(1); s.add(m); return m; });
-    D.add({ id: "meteors", dur: 5, can: open,
+    D.add({ id: "meteors", dur: 5, can: wide,
       start: (r) => { const c = city(), W = c ? 20 : 230; r.z = c ? -210 : -420; r.s = c ? 0.3 : 1; r.m = this.meteors.map((m, i) => ({ m, t0: i * 0.45 + rand(0, 0.3), x: rand(-1.1, -0.1) * W, y: c ? rand(52, 74) : rand(120, 200), vx: rand(0.35, 0.6) * W, vy: -rand(0.16, 0.26) * W, col: Math.random() < 0.5 ? 0xbfe8ff : 0xffe2b0 })); },
       update: (dt, t, r) => { for (const o of r.m) { const k = (t - o.t0) / 1.3; o.m.visible = k > 0 && k < 1; if (!o.m.visible) continue; o.m.position.set(o.x + o.vx * k * 1.3, o.y + o.vy * k * 1.3, r.z); o.m.rotation.z = Math.atan2(o.vy, o.vx); o.m.scale.set(46 * r.s, 2.4 * r.s, 1); o.m.material.color.set(o.col).multiplyScalar(2.2); o.m.material.opacity = Math.sin(k * Math.PI); } },
       end: () => hide(...this.meteors) });
@@ -717,10 +720,10 @@ class RacerWorld {
       this.ufoBeam = racerShaft(0x8fffe0, 1.6, 11, 60, 14); this.ufoBeam.rotation.x = Math.PI;
       this.ufo.add(this.ufoBody, this.ufoBeam); this.ufo.visible = false; s.add(this.ufo); }
     D.add({ id: "ufo", dur: 9, can: open,
-      start: (r) => { const c = city(); r.c = c; r.sd = Math.random() < 0.5 ? -1 : 1; r.x = c ? rand(-3, 3) : rand(18, 70) * r.sd; this.ufo.visible = true; this.ufo.scale.setScalar(c ? 0.34 : 1); },
+      start: (r) => { const c = city(); r.c = c; r.sd = Math.random() < 0.5 ? -1 : 1; r.x = c ? rand(-2.5, 2.5) : rand(18, 70) * r.sd; this.ufo.visible = true; this.ufo.scale.setScalar(c ? 0.17 : 1); },
       update: (dt, t, r) => {
         const inn = smoothstep(0, 2.2, t), out = smoothstep(7, 9, t), q = r.c ? 0.3 : 1;
-        this.ufo.position.set(lerp(-r.sd * 320 * (r.c ? 0.1 : 1), r.x, inn) + out * r.sd * 420 * (r.c ? 0.08 : 1) + Math.sin(t * 1.3) * 3 * q, lerp(r.c ? 70 : 160, r.c ? 31 : 62, inn) + out * (r.c ? 60 : 180) + Math.sin(t * 2.1) * 1.5 * q, r.c ? -120 : -230);
+        this.ufo.position.set(lerp(-r.sd * 320 * (r.c ? 0.02 : 1), r.x, inn) + out * r.sd * 420 * (r.c ? 0.015 : 1) + Math.sin(t * 1.3) * 3 * q, lerp(r.c ? 26 : 160, r.c ? 14.5 : 62, inn) + out * (r.c ? 16 : 180) + Math.sin(t * 2.1) * 1.5 * q * 0.5, r.c ? -46 : -230);
         this.ufoBody.rotation.y = t * 1.6; this.ufo.rotation.z = Math.sin(t * 1.3) * 0.08 - out * r.sd * 0.5;
         this.ufoBeam.material.uniforms.uI.value = 0.55 * smoothstep(2.4, 3.2, t) * (1 - smoothstep(6.2, 6.9, t)) * (1 - 0.4 * this.calmK);
       },
@@ -737,7 +740,7 @@ class RacerWorld {
       const ge = new THREE.PlaneGeometry(30, 9); ge.setAttribute("aZ", new THREE.Float32BufferAttribute(new Float32Array(4), 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Float32Array(4).fill(0.37), 1));
       const ad = new THREE.Mesh(ge, racerAdMaterial(g.shared, RacerGame.adTex, false, false)); ad.position.set(0, 0.5, 10.1);
       this.blimp.add(body, ad); this.blimp.visible = false; s.add(this.blimp); }
-    D.add({ id: "blimp", dur: 30, can: open,
+    D.add({ id: "blimp", dur: 30, can: wide,
       start: (r) => { r.c = city(); r.y = r.c ? rand(40, 52) : rand(85, 125); this.blimp.visible = true; this.blimp.scale.setScalar(r.c ? 0.32 : 1); },
       update: (dt, t, r) => { const x = r.c ? -44 + t * 6.5 : -330 + t * 22; this.blimp.position.set(x, r.y + Math.sin(t * 0.5) * 2 * (r.c ? 0.4 : 1), r.c ? -170 : -360); if (r.c && x > 44) return false; },
       end: () => hide(this.blimp) });
@@ -758,7 +761,7 @@ class RacerWorld {
       this.heliBeam = racerShaft(0xfff0d2, 0.4, 7, 46, 12); this.heliBeam.position.set(1.9, -1.0, 0);
       this.heli.add(body, this.rotor, this.blades, this.heliBeam); this.heli.visible = false; s.add(this.heli); }
     D.add({ id: "helicopter", dur: 10, can: open,
-      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(26, 32); r.z = rand(-120, -70); r.x = rand(-3.5, 3.5); this.heli.visible = true; },
+      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(12.5, 15) : rand(26, 32); r.z = rand(-120, -70); r.x = rand(-3.5, 3.5); this.heli.visible = true; this.heli.scale.setScalar(r.c ? 0.7 : 1); },
       update: (dt, t, r) => {
         if (r.c) { this.heli.position.set(r.x + Math.sin(t * 0.7) * 1.5, r.y + Math.sin(t * 1.1) * 0.8, -215 + t * 23); this.heli.rotation.set(0, -Math.PI / 2, 0); }
         else { this.heli.position.set(r.sd * (-70 + t * 14), r.y + Math.sin(t * 1.1) * 0.8, r.z); this.heli.rotation.set(0, r.sd > 0 ? 0 : Math.PI, r.sd * -0.12); }
@@ -782,7 +785,7 @@ class RacerWorld {
 
     // -- 9. a laser show from the rooftops
     this.lasers = [0xff3ad4, 0x35efff, 0x5dffb0, 0xffd23d].map((c, i) => { const l = racerShaft(c, 0.25, 1.4, 240, 6); l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.visible = false; s.add(l); return l; });
-    D.add({ id: "lasers", dur: 8, can: () => open() && this.biome !== "desert" && this.biome !== "mountain",
+    D.add({ id: "lasers", dur: 8, can: () => wide() && this.biome !== "desert",
       start: (r) => { r.c = city(); this.lasers.forEach((l, i) => { l.visible = true; if (r.c) l.position.set((i % 2 ? 1 : -1) * 9.6, 30 + i * 2, -80 - i * 26); else l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.scale.setScalar(r.c ? 0.32 : 1); }); },
       update: (dt, t, r) => this.lasers.forEach((l, i) => { l.rotation.set(-0.5 + Math.sin(t * 0.7 + i * 1.7) * 0.4, 0, r.c ? (i % 2 ? 1 : -1) * (0.75 + Math.sin(t * 0.9 + i * 2.3) * 0.5) : Math.sin(t * 0.9 + i * 2.3) * 0.9); l.material.uniforms.uI.value = 0.75 * fade(t, 8) * (1 - 0.5 * this.calmK) * (GFX.opt.beams ? 1 : 0); }),
       end: () => hide(...this.lasers) });
@@ -798,7 +801,7 @@ class RacerWorld {
         fragmentShader: "uniform vec3 uColor; void main(){ gl_FragColor = vec4(uColor, 1.0); }" }));
       this.birds.frustumCulled = false; this.birds.visible = false; s.add(this.birds); }
     D.add({ id: "birds", dur: 11, can: open,
-      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(27, 36) : rand(38, 60); r.z = rand(-190, -120); this.birds.visible = true; this.birds.scale.setScalar(r.c ? 0.3 : 1); this.birds.material.uniforms.uColor.value.copy(g.scene.fog.color).multiplyScalar(0.25); },
+      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(9, 13) : rand(38, 60); r.z = rand(-190, -120); this.birds.visible = true; this.birds.scale.setScalar(r.c ? 0.22 : 1); this.birds.material.uniforms.uColor.value.copy(g.scene.fog.color).multiplyScalar(0.25); },
       update: (dt, t, r) => {
         if (r.c) { this.birds.position.set(Math.sin(t * 0.5) * 2.5, r.y + Math.sin(t * 0.6) * 1.5, -210 + t * 21); this.birds.rotation.y = -Math.PI / 2; }
         else { this.birds.position.set(r.sd * (-190 + t * 36), r.y + Math.sin(t * 0.6) * 3, r.z); this.birds.rotation.y = r.sd > 0 ? 0 : Math.PI; }

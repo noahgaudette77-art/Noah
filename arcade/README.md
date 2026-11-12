@@ -29,15 +29,55 @@ lists all of them again.
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
   world: a synthwave horizon on the title screen, a nebula tunnel of crystal
-  targets in Risk Blaster, a rain-soaked clockwork city in Nest Egg Run (towers
-  with lit windows, brass pipes and turning gears over the street, steam, and
-  neon signs that spell the course's own terms, driven in an armored rally car
-  from a grey dawn at 25 to neon night at 65), a searchlit arena with a mirror
-  floor in Boss Rush, whose final boss is a towering black-armored cyborg with
-  burning red eyes, a gold bank-vault door
+  targets in Risk Blaster, a road through five landscapes in Nest Egg Run (it
+  starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
+  gears and neon signs that spell the course's own terms), a searchlit arena
+  with a mirror floor in Boss Rush, where every boss is a different
+  black-armored cyborg with burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, and a trophy
   on a plinth in a moonlit hall for the Final Exam. Setup → Graphics switches
   between HD (sharp, anti-aliased), Retro and Chunky (pixel art).
+- **The car.** Nest Egg Run's armored rally coupe is built in layers of chamfered,
+  bolted gunmetal plate with mint trim that glows: a bull bar and winch, hood
+  scoop, armored pillars, a louvred rear window, a ducktail wing, a tubular rear
+  guard, five-spoke rims with brake discs, knobbly tyres. The roof light bar
+  works, the tail lamps brighten under braking, the exhausts glow after a boost
+  with heat haze behind them, and the headlights throw shafts through the rain.
+  The body rides on springs: it heaves over joints in the road, rolls in a lane
+  change, squats under boost and dives under braking, while spray flies off the
+  tyres.
+- **Twelve cyborgs.** Each boss is its own machine, built from one armor kit: a
+  salesman in a plated suit with a briefcase, a horned brute, a hooded one-eyed
+  wraith with an empty vault in its chest, a many-eyed scribe with quill arms, a
+  slab golem, a boiler with its gauge in the red, a crowned skeleton with an
+  hourglass heart, a judge in robe and wig with a gavel, a masked puppeteer, a
+  toll booth on tracks, a half-bone half-steel phantom with a cleaver, and the
+  hulking Examinator. They drop in dark and folded, land, and power up; breathe,
+  look about and twitch; wind up as their attack charges; recoil when hit. As
+  their HP falls the armor cracks, plates are shot off to bare the circuitry
+  underneath, an arm fails, and below 35% they rage. A hit pulses the whole arena.
+- **A world that moves.** Nest Egg Run's road runs through downtown, a tunnel, a
+  coast causeway (palms, a cable-stayed bridge over a sea that mirrors it, a
+  diner, a lighthouse and a big wheel far off), desert (mesas, a rock arch, cacti,
+  a gas station), a mountain pass (cliffs, pines, an avalanche gallery, a cable
+  car) and back downtown at night; each change happens inside a bank of fog.
+  Traffic runs both ways on service lanes beside the road and in hover lanes
+  overhead: sedans, trucks, buses, bikes, hover cars, each in its own colour,
+  changing lanes with indicators, braking, now and then broken down on hazard
+  lights. An Event Director makes something happen every 3 to 8 seconds: a train
+  crossing a viaduct, a helicopter with a searchlight, delivery drones, a patrol
+  chase, a rival racer, a near miss, fireworks, lasers, meteors, a UFO, a blimp
+  with an ad, a distant explosion, lightning, a squall, birds, steam. While a
+  question is on screen it slows down and holds the big ones for the gap between
+  questions. A right answer sets off fireworks and parts the traffic; a wrong one
+  tears the picture for a moment.
+- **Your call on effects.** Setup → Quality picks Auto (adapts to hold your
+  screen's frame rate), Low, Med or High (every effect at full resolution).
+  Setup → Effects switches each one off on its own: bloom, scanlines, colour
+  fringe, vignette, motion blur, film grain, light beams, wet reflections,
+  shadows, heat haze, lens streaks. Setup → Reduced effects cuts shake, flashes,
+  zoom and motion and thins out the background events. Nothing in the game
+  flashes more than three times a second.
 - **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
   colour fringing and flashes when something hits, inside a bezel. Turn it off
   under Setup → CRT glass.
@@ -138,7 +178,14 @@ the book.
 ```bash
 npm run arcade:check   # validate every content file (schema, balance, page coverage)
 npm run arcade         # rebuild arcade/index.html from src/ and content/
+npm run arcade:regress # prove a visual change left the rules alone (needs Playwright)
 ```
+
+`arcade:regress` plays Boss Rush, Nest Egg Run and Risk Blaster with a fixed script
+of right answers, wrong answers and timeouts on a virtual clock, and compares every
+HP, heart, score, nest egg, shield and frame number with the trace saved in
+`backup/` from before the visual upgrade. `PROGRESS.md` logs that upgrade's
+checkpoints.
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,
