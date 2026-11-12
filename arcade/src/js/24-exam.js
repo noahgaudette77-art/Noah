@@ -205,8 +205,8 @@ class ExamGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xfff2dd, 0.45);
     key.position.set(-6, 14, 8);
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xffdcae, 1.3, 14, 1.6); // the lamp over the cup
-    this.spotLight.position.set(0, 7.5, 1.2);
+    this.spotLight = new THREE.PointLight(0xffdcae, 1.7, 22, 1.5); // the lamp over the boss
+    this.spotLight.position.set(0, 10.5, 3.4);
     s.add(this.spotLight);
     const rim = new THREE.PointLight(0x9a6bff, 1.2, 26, 1.5);
     rim.position.set(-6, 4.5, -5);
@@ -264,32 +264,26 @@ class ExamGame extends QuizGame {
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
 
-    // the plinth: black lacquer, gold bands, a violet ring of light at its foot
-    s.add(new THREE.Mesh(examLathe([[2.05, 0], [2.05, 0.2, true], [1.92, 0.3, true], [1.66, 0.3, true], [1.66, 0.4, true], [1.4, 0.46], [1.36, 0.56, true], [1.36, 1.48, true], [1.44, 1.56], [1.7, 1.62, true], [1.72, 1.8, true], [0, 1.8]], 72), lacquer));
+    // the dais: black lacquer, gold bands, a violet ring of light at its foot
+    s.add(new THREE.Mesh(examLathe([[BOSS_DAIS_R + 0.35, 0], [BOSS_DAIS_R + 0.35, 0.14, true], [BOSS_DAIS_R + 0.2, 0.22, true], [BOSS_DAIS_R, 0.22, true], [BOSS_DAIS_R, BOSS_DAIS, true], [0, BOSS_DAIS]], 72), lacquer));
     s.add(new THREE.Mesh(examMerge([
-      new THREE.TorusGeometry(1.39, 0.045, 10, 72).rotateX(Math.PI / 2).translate(0, 0.62, 0),
-      new THREE.TorusGeometry(1.39, 0.045, 10, 72).rotateX(Math.PI / 2).translate(0, 1.42, 0),
-      new THREE.TorusGeometry(1.72, 0.05, 10, 72).rotateX(Math.PI / 2).translate(0, 1.8, 0),
-      new THREE.TorusGeometry(2.06, 0.05, 10, 72).rotateX(Math.PI / 2).translate(0, 0.2, 0),
+      new THREE.TorusGeometry(BOSS_DAIS_R, 0.045, 10, 96).rotateX(Math.PI / 2).translate(0, BOSS_DAIS, 0),
+      new THREE.TorusGeometry(BOSS_DAIS_R + 0.36, 0.05, 10, 96).rotateX(Math.PI / 2).translate(0, 0.14, 0),
     ]), gold));
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.32, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(BOSS_DAIS_R + 0.75, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
     ring.position.y = 0.04;
     s.add(ring);
-    // the Keystone (24b-examhero.js): crystal, claws, armillary, laurel, runes, halo
-    this.monument = new ExamMonument(this, gold, env);
-    const cup = this.monument.group;
-    cup.position.y = 1.8;
-    s.add(cup);
-    this.cup = cup;
+    // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
+    this.boss = BossModel.ok() ? new ExamBoss(this, env) : null;
     // the spotlight from above, its pool on the floor, dust turning in it
-    const beam = examBeam({ color: 0xffe6c0, top: 0.35, bottom: 3.0, height: 16, intensity: 0.2 });
-    beam.position.set(0, 16, 0);
+    const beam = examBeam({ color: 0xffe6c0, top: 0.4, bottom: 4.6, height: 18, intensity: 0.16 });
+    beam.position.set(0, 18, 0);
     beam.layers.set(1);
     s.add(beam);
-    const pool = makeLightPool({ color: 0xffd9a0, radius: 3.8, intensity: 0.38 });
+    const pool = makeLightPool({ color: 0xffd9a0, radius: 5.4, intensity: 0.38 });
     pool.layers.set(1);
     s.add(pool);
-    this.motes = makeMotes({ count: 55, box: [7, 9, 7], center: [0, 5, 0], color: 0xffe6c0, size: 0.08, k: 1.0 });
+    this.motes = makeMotes({ count: 55, box: [9, 10, 8], center: [0, 5.5, 0.5], color: 0xffe6c0, size: 0.08, k: 1.0 });
     this.moonMotes = makeMotes({ count: 50, box: [44, 12, 20], center: [0, 6, -8], color: 0xb8c4ff, size: 0.12, k: 0.75 });
     [this.motes, this.moonMotes].forEach((p) => { p.layers.set(1); s.add(p); });
     this.decor(this.motes, this.moonMotes);
@@ -299,9 +293,9 @@ class ExamGame extends QuizGame {
     const sp = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
       const a = Math.PI - 0.2 + ((i + 0.5) / n) * (Math.PI + 0.4);
-      sp[i * 3] = Math.cos(a) * 3.05;
+      sp[i * 3] = Math.cos(a) * (BOSS_DAIS_R + 1.3);
       sp[i * 3 + 1] = 0.06;
-      sp[i * 3 + 2] = -Math.sin(a) * 3.05;
+      sp[i * 3 + 2] = -Math.sin(a) * (BOSS_DAIS_R + 1.3);
     }
     const sg = new THREE.BufferGeometry();
     sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
@@ -319,16 +313,16 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     s.userData.post = { exposure: 1.1, bloom: 0.85, threshold: 1.0, saturation: 1.06, contrast: 1.05, vignette: 1.15 };
-    this.dist = this.distT = 17;
+    this.dist = this.distT = 19;
     this.camBase.set(0, 4.6, this.dist);
-    this.lookAt.set(0, 2.9, 0);
+    this.lookAt.set(0, 3.5, 0);
   }
-  // Back the camera off until the cup and plinth sit comfortably in the band.
+  // Back the camera off until the boss and its dais sit comfortably in the band.
   onResize(w, h) {
-    if (!this.camera || !this.cup) return;
+    if (!this.camera || !this.studs) return;
     const bandH = this.band ? this.band.h : h * 0.45;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    this.distT = clamp((6.5 * h) / (2 * tanH * Math.max(110, bandH * 0.66)), 11, 36);
+    this.distT = clamp((7.9 * h) / (2 * tanH * Math.max(110, bandH * 0.72)), 12, 40);
     if (!this.placed) {
       this.dist = this.distT;
       this.placed = !!this.band;
@@ -337,7 +331,6 @@ class ExamGame extends QuizGame {
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
     if (this.envRT) this.envRT.dispose();
-    if (this.monument) this.monument.dispose();
     if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
     super.dispose();
   }
@@ -355,7 +348,7 @@ class ExamGame extends QuizGame {
   start() {
     Sound.play("calm");
     if (!this.rounds.length) { UI.toast("NO QUESTIONS YET"); return this.quit(); }
-    UI.banner("BEGIN", COLORS.violet, this.rounds.length + " QUESTIONS" + (this.limit ? " · " + Math.round(this.limit / 60) + " MIN" : ""));
+    UI.banner(this.boss ? "FINAL BOSS" : "BEGIN", COLORS.violet, this.rounds.length + " QUESTIONS" + (this.limit ? " · " + Math.round(this.limit / 60) + " MIN" : "") + (this.boss ? " · 60% BRINGS IT DOWN" : ""));
     this.state = "ask";
     this.show();
   }
@@ -403,8 +396,13 @@ class ExamGame extends QuizGame {
     }
     if (a === "grid") return this.palette();
     if (a === "submit") return this.askSubmit();
+    if (a === "skipcine" && this.boss) return this.boss.skip();
   }
   key(e) {
+    if (this.state === "over") { // the ending is playing: any of these skips to the results
+      if (this.boss && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) { e.preventDefault(); this.boss.skip(); }
+      return;
+    }
     if (e.key === "Escape") { e.preventDefault(); return this.pause(); }
     if (e.key === "ArrowLeft") return this.go(-1);
     if (e.key === "ArrowRight" || e.key === "Enter") {
@@ -461,14 +459,15 @@ class ExamGame extends QuizGame {
     Store.state.stats.exams = (Store.state.stats.exams || 0) + 1;
     Store.state.stats.bestExam = Math.max(Store.state.stats.bestExam || 0, score);
     Store.save();
-    Sound.sfx(passed ? "win" : "gameover");
+    const ending = this.has3D && this.boss; // the boss dies (or stands) first; the results follow
+    if (!ending || !passed) Sound.sfx(passed ? "win" : "gameover");
     const mins = Math.floor(this.elapsed / 60), secs = Math.floor(this.elapsed % 60);
     const breakdown = Object.keys(by).sort((a, b) => a - b).map((n) => {
       const b = by[n], p = pct(b.ok, b.n);
       return `<div class="mrow"><span>STAGE ${n} · ${esc(CH(+n).title)}</span><b style="color:${p >= 60 ? COLORS.lime : COLORS.red}">${b.ok}/${b.n}</b>
         <span class="meter" style="--c:${p >= 60 ? COLORS.lime : COLORS.red}"><i style="width:${p}%"></i></span></div>`;
     }).join("");
-    showResults({
+    const results = () => showResults({
       game: "exam", sel: this.sel, run: this.run, score, boardLabel: this.rounds.length + "Q",
       title: passed ? "PASSED" : "NOT YET", color: passed ? COLORS.lime : COLORS.red,
       headline: score + "%", sub: `${correct} of ${this.rounds.length} correct · pass mark 60% · ${mins}:${pad(secs)} used`,
@@ -477,6 +476,10 @@ class ExamGame extends QuizGame {
       extraHTML: `<h2 class="section-h">BY CHAPTER</h2><div class="mastery-list">${breakdown}</div>`,
       reviewTitle: "QUESTIONS TO REVIEW", review,
     });
+    // Everything above is the exam itself, unchanged. What follows is only how the
+    // result is shown: a pass kills the boss, a fail leaves it standing.
+    if (ending) this.boss.finale(passed, results);
+    else results();
   }
   update(dt) {
     super.update(dt);
@@ -496,15 +499,12 @@ class ExamGame extends QuizGame {
     if (!this.has3D) return;
     const t = this.t;
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
-    // the Keystone fills with light as questions are answered: how many, never which were right
-    let done = 0;
-    for (let i = 0; i < this.answers.length; i++) if (this.answers[i] >= 0) done++;
-    this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
+    if (this.boss) this.boss.update(dt, t);
     this.ambience.update(dt, t);
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
       const k = this.rippleT;
-      this.ripple.scale.setScalar(2.4 + k * 5);
+      this.ripple.scale.setScalar(4.9 + k * 6);
       this.ripple.material.opacity = 0.9 * (1 - k) * (1 - k);
       this.ripple.visible = k < 1;
     }
@@ -515,7 +515,8 @@ class ExamGame extends QuizGame {
       c.needsUpdate = true;
     }
     this.camBase.set(Pointer.x * 0.6, 2.6 + this.dist * 0.12 + Math.sin(t * 0.3) * 0.06 - Pointer.y * 0.25, this.dist);
-    this.lookAt.set(0, 2.9, 0);
+    this.lookAt.set(0, 3.5, 0);
+    if (this.boss && this.boss.mode !== "idle" && !this.boss.quick) this.boss.camera(dt); // the ending has its own camera
     this.placeCamera();
     this.motes.userData.drift(t);
     this.moonMotes.userData.drift(t);

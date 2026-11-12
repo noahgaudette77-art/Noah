@@ -13,6 +13,8 @@
  *   arcade/src/body.html     the static markup
  *   arcade/src/js/*.js       the game, concatenated in filename order into one IIFE
  *   arcade/content/*.json    one file per chapter (ch06a + ch06b merge into ch06)
+ *   arcade/assets/boss/      the Final Exam boss model (boss.bin, albedo.jpg), made by
+ *                            scripts/convert-boss.js and inlined as base64
  *
  * Three.js r128 loads from cdnjs; the full build falls back to the vendored copy
  * in arcade/vendor/ when the CDN is unreachable, so the game also works offline
@@ -68,6 +70,18 @@ function loadStory() {
   return fs.existsSync(f) ? JSON.parse(read(f)) : { clients: {}, bosses: {} };
 }
 
+// Binary assets, inlined as base64 so the page stays one self-contained file.
+function loadAssets() {
+  const out = {}, dir = path.join(DIR, "assets", "boss");
+  if (fs.existsSync(path.join(dir, "boss.bin")) && fs.existsSync(path.join(dir, "albedo.jpg"))) {
+    out.boss = {
+      mesh: fs.readFileSync(path.join(dir, "boss.bin")).toString("base64"),
+      albedo: "data:image/jpeg;base64," + fs.readFileSync(path.join(dir, "albedo.jpg")).toString("base64"),
+    };
+  }
+  return out;
+}
+
 function build() {
   const chapters = loadContent();
   const errata = loadErrata();
@@ -82,6 +96,7 @@ function build() {
 
   // JSON is valid JS; escape "</" so no string can close the <script> element.
   const data = "window.INR_DATA=" + JSON.stringify({ chapters, errata, story }).replace(/<\//g, "<\\/") + ";";
+  const assets = "window.INR_ASSETS=" + JSON.stringify(loadAssets()) + ";";
 
   const head = [
     "<title>INR Arcade</title>",
@@ -98,6 +113,7 @@ function build() {
       `<script src="${THREE_CDN}"></script>`,
       withFallback ? `<script>window.THREE||document.write('<script src="vendor/three.min.js"><\\/script>')</script>` : "",
       `<script>${data}</script>`,
+      `<script>${assets}</script>`,
       `<script>\n${js}\n</script>`,
     ]
       .filter(Boolean)

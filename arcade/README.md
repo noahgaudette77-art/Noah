@@ -17,7 +17,7 @@ offline fallback.
 | **Nest Egg Run** | Lane racer through a 40-year career, one gate per year from age 25 to 65. Steer into the right answer's lane to compound your savings; three crashes force early retirement. Five-answer streaks buy an insurance policy that pays out on your next crash. Retiring with $1,000,000 takes about 95% accuracy. | Sustained accuracy |
 | **Boss Rush** | One boss per chapter, plus a final boss across the whole book. Bosses only take hard questions; answer before their attack charges. Clear with all three hearts for three stars. | The hardest, most exam-like questions |
 | **Memory Bank** | Flashcards for every key term, rule and number, with self-grading (missed / got it / easy) and a swap button to see definitions first. | Definitions and numbers |
-| **Final Exam** | Mock exam of 20, 50 or 100 questions weighted by chapter size, 90 seconds a question or untimed, no feedback until you submit. Pass mark 60%. | Exam readiness |
+| **Final Exam** | Mock exam of 20, 50 or 100 questions weighted by chapter size, 90 seconds a question or untimed, no feedback until you submit. Pass mark 60%. The final boss stands over it: pass and it is destroyed. | Exam readiness |
 | **Strategy Guide** | Condensed notes, learning objectives and tips for every chapter, a search across every note and card, and a list of places where the book contradicts itself. | Reading before you play |
 
 Every wrong answer shows the explanation and the book page, and the results screen
@@ -34,8 +34,8 @@ lists all of them again.
   gears and neon signs that spell the course's own terms), a searchlit arena
   with a mirror floor in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
-  that opens a little more with every card you bank in Memory Bank, a crystal
-  monument on a plinth in a moonlit hall for the Final Exam, and a vaulted archive
+  that opens a little more with every card you bank in Memory Bank, the final
+  boss on its dais in a moonlit hall for the Final Exam, and a vaulted archive
   behind the Strategy Guide. Setup → Graphics switches between HD (sharp,
   anti-aliased), Retro and Chunky (pixel art).
 - **The title.** A city that never sits still: megatowers with rolling ads and
@@ -56,12 +56,21 @@ lists all of them again.
   above the lanes: miss and it puts a bolt into your shield; clear the wave and it
   goes up. A seven-pip combo meter fills and warms, and the engines burn longer
   and bluer with it.
-- **The Keystone.** The Final Exam's centrepiece is a faceted crystal spire with
-  runes inside, held in gold claws on a jewelled foot, with an armillary of three
-  rings, a floating laurel and a halo of motes. It fills with light as you answer
-  (how many, never which were right: the exam still gives no hint until you
-  submit). Outside the windows an aurora drifts and lanterns rise. Everything in
-  the hall moves slowly and steadily.
+- **The final boss.** A skull-faced armoured mech stands on a dais in the exam hall
+  (the model is the player's own, converted by `scripts/convert-boss.js` into 32
+  rigid parts on a 19-joint skeleton). Through the exam it only breathes, shifts
+  its weight and looks about: it never reacts to an answer, so the exam still
+  gives no hint until you submit. Submit with 60% or more and it dies: joints blow
+  out one after another in sparks and fire, a pauldron and a pylon are torn off,
+  an arm goes limp, it drops to its knees, its reactor runs away until light
+  pours out of the armour, and it blows apart into a couple of hundred fragments
+  of its own armour that arc, spin, land and skid, with a fireball, smoke, a wave
+  of dust, streamers of burning debris, two secondary blasts, a scorch on the
+  dais, and its skull thrown clear to roll to a stop in front of the wreck. Below
+  60% it squares up and stays standing. SKIP (or Enter) goes straight to the
+  results; Reduced effects plays it without shake or flash, and a device set to
+  reduce motion gets a still version. Outside the windows an aurora drifts and
+  lanterns rise.
 - **The vault's machinery.** Memory Bank's door has meshing gear trains round the
   dial, an arc of lamps over it (one per card in the deck), coin stacks by the
   bullion. Bank a card and it flies up into the coin slot, the gears spin on and
@@ -228,7 +237,14 @@ npm run arcade:regress # prove a visual change left the rules alone (needs Playw
 timeouts on a virtual clock, and compares every HP, heart, score, nest egg, shield,
 card grade, exam mark, saved item and frame number with the trace saved in
 `backup/` from before the visual upgrades. It also fails if the Final Exam shows
-any hint before submit. `PROGRESS.md` logs the upgrades' checkpoints.
+any hint before submit, and it plays the exam's ending in full (holding its clock
+through it, so the saved results must match to the byte). `PROGRESS.md` logs the
+upgrades' checkpoints.
+
+The Final Exam's boss model lives in `arcade/assets/boss/` (`boss.bin`,
+`albedo.jpg`) and is inlined into the page by the build. To replace it, run
+`node scripts/convert-boss.js <model.glb>` (needs ImageMagick) and rebuild; the
+skeleton in `src/js/24c-examboss.js` maps the model's numbered parts to joints.
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,

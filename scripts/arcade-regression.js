@@ -55,8 +55,10 @@ function inPage() {
   let now = 5000;
   const timers = new Map();
   let tid = 1, rafs = [], rid = 1;
+  const hist = [now]; // the clock at every frame so far
+  let back = 0; // frames the wall clock is held back by (see wallBack)
   performance.now = () => now;
-  Date.now = () => 1767268800000 + now; // 2026-01-01 12:00 UTC + virtual ms
+  Date.now = () => 1767268800000 + hist[hist.length - 1 - back]; // 2026-01-01 12:00 UTC + virtual ms
   window.setTimeout = (fn, ms = 0, ...a) => { const id = tid++; timers.set(id, { t: now + Math.max(0, +ms || 0), fn, a }); return id; };
   window.clearTimeout = (id) => { timers.delete(id); };
   window.setInterval = (fn, ms, ...a) => { const id = tid++; timers.set(id, { t: now + (+ms || 0), fn, a, every: Math.max(1, +ms || 0) }); return id; };
@@ -69,10 +71,15 @@ function inPage() {
   let logic = null;
   Math.random = () => (logic ? logic() : visual());
   const T = (window.__t = { frame: 0, errors: [], trace: null, done: false, logicSeed(n) { logic = mulberry(0x9e3779b1 ^ (n * 2654435761)); } });
+  // Hold the wall clock (Date.now) still for one frame of a stretch that is show, not
+  // rule: what is saved afterwards then carries exactly the timestamps it always did
+  // (it reads the clock's own earlier values, so not even rounding differs). Frames still run.
+  T.wallBack = () => { back++; };
   window.addEventListener("error", (e) => T.errors.push(String(e.message)));
   window.__tick = (n) => {
     for (let i = 0; i < n && !T.done; i++) {
       now += 1000 / 60;
+      hist.push(now);
       // timers due this frame, in order; ones they set in turn wait for the next frame
       const due = [...timers].filter(([, t]) => t.t <= now).sort((a, b) => a[1].t - b[1].t || a[0] - b[0]);
       for (const [id, t] of due) {
@@ -95,7 +102,7 @@ function inPage() {
 function startPlay(play) {
   const A = window.__arcade, T = window.__t;
   const trace = (T.trace = { id: play.id, rounds: [], end: null });
-  let n = 0, f0 = T.frame, cur = null, seen = null, picks = 0, overAt = 0;
+  let n = 0, f0 = T.frame, cur = null, seen = null, picks = 0, overAt = 0, ending = 0, pending = false;
   A.GFX.lockQuality();
   // the rules never read a pixel back: skip the drawing itself so thousands of
   // frames run in seconds (scene updates, tweens and effects code all still run)
@@ -118,6 +125,8 @@ function startPlay(play) {
     if (skip) { skip.click(); return; }
     const name = s && s.constructor.name;
     const hi = document.querySelector(".modal .dialog [data-act=ok]"); // "new high score": keep the default initials
+    // the exam's ending has just finished: one tick's grace, so what follows is timed as it was when the results came at once
+    if (pending && (hi || document.querySelector(".screen .res-head"))) { pending = false; ending++; T.ending = ending; return; }
     if (hi) { hi.click(); return; }
     const res = document.querySelector(".screen .res-head");
     if (res) {
@@ -127,7 +136,10 @@ function startPlay(play) {
       const boxes = {};
       for (const id in st.items) boxes[st.items[id][0]] = (boxes[st.items[id][0]] || 0) + 1;
       trace.end = {
-        frame: overAt - f0,
+        // The Final Exam's results follow the boss's ending (its death, or its last stand).
+        // That ending is show, not rule, so its length is taken off: the results must
+        // then land on exactly the frame they always did.
+        frame: overAt - f0 - ending,
         results: res.closest(".screen").innerText.replace(/\s+/g, " ").trim(),
         stats: st.stats, boxes, items: Object.keys(st.items).length,
         scores: Object.fromEntries(Object.entries(st.scores || {}).map(([g, l]) => [g, l.map((e) => { const c = Object.assign({}, e); delete c.t; return c; })])),
@@ -136,6 +148,7 @@ function startPlay(play) {
         itemsHash: hash(JSON.stringify(Object.keys(st.items).sort().map((k) => [k, st.items[k]]))),
         savedHash: hash(JSON.stringify(Object.keys(st).filter((k) => k !== "settings").sort().map((k) => [k, st[k]]))),
       };
+      if (play.dump) T.dump = JSON.stringify(Object.keys(st).filter((k) => k !== "settings" && k !== "items").sort().map((k) => [k, st[k]]), null, 1); // REG_DUMP: what was saved, to look at
       T.done = true;
       return;
     }
@@ -151,6 +164,7 @@ function startPlay(play) {
       return;
     }
     if (name === "ExamGame") {
+      if (s.state === "over") { ending++; T.ending = ending; T.wallBack(); return; } // the ending is playing (it runs in full here)
       if (s.state !== "ask") return;
       if (!trace.exam) trace.exam = { n: s.rounds.length, limit: s.limit, hintsBeforeSubmit: 0, did: {} };
       const i = s.i, r = s.rounds[i];
@@ -163,7 +177,13 @@ function startPlay(play) {
       }
       // the exam must not say whether an answer is right until it is submitted
       trace.exam.hintsBeforeSubmit += document.querySelectorAll(".answers .ans.good, .answers .ans.bad, .answers.locked, .sheet").length;
-      if (i < s.rounds.length - 1) s.go(1); else { trace.exam.did = Object.keys(trace.exam.did).length; s.submit(); }
+      if (i < s.rounds.length - 1) s.go(1);
+      else {
+        trace.exam.did = Object.keys(trace.exam.did).length;
+        s.submit();
+        // the mark is worked out and saved by now. If an ending plays before the results, hold the wall clock through it.
+        if (!document.querySelector(".modal .dialog, .screen .res-head")) { pending = true; T.wallBack(); }
+      }
       return;
     }
     if (!s || !s.run || !s.picker) return;
@@ -227,7 +247,7 @@ function diff(a, b, at, out) {
       if (await page.evaluate(() => !!(window.__arcade && window.__arcade.Scenes.cur))) break;
       await page.waitForTimeout(20);
     }
-    await page.evaluate(`(${startPlay.toString().replace(/PLAYS_INDEX/g, String(pi))})(${JSON.stringify(play)})`);
+    await page.evaluate(`(${startPlay.toString().replace(/PLAYS_INDEX/g, String(pi))})(${JSON.stringify(Object.assign({ dump: !!process.env.REG_DUMP }, play))})`);
     const t0 = Date.now();
     let done = false;
     let lastLog = Date.now();
@@ -238,8 +258,10 @@ function diff(a, b, at, out) {
         console.log("  …", await page.evaluate(() => { const s = window.__arcade.Scenes.cur; return JSON.stringify({ frame: window.__t.frame, scene: s && s.constructor.name, state: s && s.state, rounds: window.__t.trace.rounds.length, sheet: !!(s && s.quiz && s.quiz.sheet), err: window.__t.errors.slice(0, 2) }); }));
       }
     }
-    const t = await page.evaluate(() => ({ trace: window.__t.trace, errors: window.__t.errors, frame: window.__t.frame }));
+    const t = await page.evaluate(() => ({ trace: window.__t.trace, errors: window.__t.errors, frame: window.__t.frame, ending: window.__t.ending || 0 }));
+    if (t.ending) console.log(`  the exam's ending ran for ${t.ending} frames after submit (${(t.ending / 60).toFixed(1)} s) before the results; not part of the comparison`);
     for (const r of t.trace.rounds) { delete r.stepObj; delete r.acted; }
+    if (process.env.REG_DUMP) fs.writeFileSync(process.env.REG_DUMP + "." + play.id + ".json", await page.evaluate(() => window.__t.dump || ""));
     if (t.trace.exam) { console.log(`  exam: ${t.trace.exam.n} questions, hints shown before submit: ${t.trace.exam.hintsBeforeSubmit}`); if (t.trace.exam.hintsBeforeSubmit) t.errors.push("the exam showed a hint before submit"); }
     t.trace.errors = t.errors;
     t.trace.finished = done;

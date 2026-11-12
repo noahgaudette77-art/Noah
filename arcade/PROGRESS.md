@@ -220,3 +220,57 @@ build from before any visual work (153 answers in 8 games).
 - The Final Exam has no event director on purpose (calm and consistent); its motion
   is continuous only.
 - Memory Bank's lamp panels on the wall only show on wide screens.
+
+# The exam boss (third pass): progress log
+
+Request: use the supplied 3D model as the final boss, standing in the Final Exam in
+place of the trophy; on a pass it dies (a death animation, then an explosion).
+
+`arcade/backup/index.before-exam-boss.html` is the game before this pass.
+
+| # | Checkpoint | Status |
+|---|---|---|
+| B0 | Backup, convert the model, inline it in the build | done |
+| B1 | The boss in the exam hall (skeleton, materials, idle, staging) | done |
+| B2 | The ending: death and explosion on a pass, a last stand on a fail | done |
+| B3 | Regression, other paths, frame rate, docs | done |
+
+- B0: the model is a Tripo-generated .glb (32 separate parts, 13,944 vertices, 12,243
+  triangles, one 4096 px colour texture, no rig, no animation). `scripts/convert-boss.js`
+  turns it into `arcade/assets/boss/boss.bin` (267 KB: 16-bit positions per part, byte
+  normals, 16-bit UVs and indices) and `albedo.jpg` (1024 px, 510 KB);
+  `scripts/build-arcade.js` inlines both as base64 (`window.INR_ASSETS`), so the page
+  is still one file (2.7 MB, was 1.65 MB). The original .glb is not in the repo.
+- B1: `24c-examboss.js`. The 32 parts hang on a 19-joint skeleton (hips, chest, head,
+  pauldrons, back pylons, arms, forearms, hands, thighs, shins, feet); each frame the
+  hips are placed so the feet (or, kneeling, the knees) stay on the dais. Two coals
+  burn in the skull's sockets. It replaces the Keystone monument on a wider, lower
+  dais; the camera frames it in the band. Idle only while the exam runs: breathing, a
+  slow look round, the weight of the arms. Nothing reads the answers.
+- B2: after submit only (the mark is already worked out and saved). Pass, 9.4 s:
+  struck; five joints blow in turn (sparks, a gout of fire, smoke from then on; the
+  right pauldron and the left pylon are torn off and fall as their own bodies); an arm
+  goes limp; it drops to its knees; the reactor runs away (the armour glows, light rays
+  pour out, the head goes back); the blast (every remaining part is cut into 2-12
+  fragments, about 200 in all, each thrown from the reactor with its own spin and the
+  moment it meets the dais or the hall floor, all in one draw call; a fireball of
+  noise-shaped puffs that burn down to smoke; a smoke column; a ring of dust and a ring
+  of light across the floor; two shock rings; nine streamers; three bursts of sparks;
+  two secondary blasts; a scorch; the skull thrown clear toward the camera). Fail,
+  2.9 s: it squares up, eyes blazing, and stays. Cinema bars, a SKIP button (Enter or
+  Escape too), the exam's panels fade out. Reduced effects: no shake, flash or hit-stop
+  and half the sparks. Reduced motion: a still version (about 1.7 s).
+  Flashes: joint pops are at least 0.5 s apart; the blast is one flash; the two
+  secondaries come 0.5 and 1.05 s later.
+- B3: `npm run arcade:regress` plays the ending in full (571 frames) and holds its wall
+  clock through it; result IDENTICAL to the original build (153 answers in 8 games,
+  every saved byte, 0 hints before submit). Skip, reduced motion, reduced effects, fail
+  and replay all reach the results with no errors.
+  Software renderer, lowest level, exam: 104 fps average, 91 worst second (117-121 /
+  101-107 before the boss). Through the death and explosion: 92 average, 62 worst
+  second. The boss is drawn one-sided while it idles (two-sided cost 20 fps there) and
+  switches to a two-sided twin, compiled with the scene, when the ending starts.
+
+Known and not done: not measured on a real iPhone. Boss Rush's final boss (the
+Examinator cyborg) is unchanged: the model was put in the Final Exam, as asked. The
+hub's Final Exam marquee still carries its trophy emblem.

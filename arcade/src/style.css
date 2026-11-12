@@ -549,3 +549,15 @@ mark { background: var(--yellow); color: #12052e; }
   box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.93), inset 0 0 22px rgba(9, 3, 32, 0.85), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.8); }
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }
+
+/* The Final Exam's ending: the exam's panels fade away, cinema bars close in, and the
+   boss has the whole screen. One button skips to the results. */
+.scr-game.cine > :not(.exam-cine) { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.exam-cine { position: absolute; inset: 0; pointer-events: none; }
+.exam-cine .bar { position: absolute; left: 0; right: 0; height: 8vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease-out; }
+.exam-cine .bar.top { top: 0; transform-origin: top; }
+.exam-cine .bar.bot { bottom: 0; transform-origin: bottom; }
+.exam-cine.on .bar { transform: scaleY(1); }
+.exam-cine .skip { position: absolute; right: var(--gut-r); bottom: calc(var(--gut-b) + 6px); pointer-events: auto; opacity: 0; transition: opacity 0.4s 0.6s; font-size: 9px; padding: 8px 10px; }
+.exam-cine.on .skip { opacity: 0.85; }
+@media (prefers-reduced-motion: reduce) { .exam-cine .bar { transition: none; } }

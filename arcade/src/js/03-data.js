@@ -71,7 +71,7 @@ const CABINETS = [
   { id: "memory", name: "MEMORY BANK", tag: "Spaced-repetition flashcards", color: COLORS.lime,
     desc: "Flip key terms, rules and numbers. Missed cards come back sooner, known cards later, until every one is banked.", unit: "cards" },
   { id: "exam", name: "FINAL EXAM", tag: "Mock exam · 60% to pass", color: COLORS.violet,
-    desc: "A timed mixed exam across all 11 chapters, with no hints until you submit. Then review every miss with its page reference.", unit: "%" },
+    desc: "The final boss: a timed mixed exam across all 11 chapters, with no hints until you submit. Score 60% and it falls.", unit: "%" },
   { id: "guide", name: "STRATEGY GUIDE", tag: "Chapter notes", color: COLORS.orange,
     desc: "Condensed notes, learning objectives and exam tips for every chapter, plus a search across every term in the book.", unit: "" },
 ];
