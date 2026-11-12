@@ -3970,6 +3970,68 @@ const Trophies = {
   },
 };
 
+/* ---- 09b-director.js ---- */
+// The Event Director: every few seconds something happens in the background of a
+// scene (a train crosses, a helicopter sweeps its light, fireworks go up). Scenes
+// register what can happen; the director decides when. Study comes first: while a
+// question is on screen it slows down and holds the big events for the gaps
+// between questions. Look only: nothing here touches the game's rules or clock.
+class EventDirector {
+  constructor(scene3d, o = {}) {
+    this.s = scene3d;
+    this.events = [];
+    this.active = [];
+    this.bag = [];
+    this.log = []; // { id, at } of everything fired (the 60-second capture reads this)
+    this.min = o.min || 3;
+    this.max = o.max || 8;
+    this.t = rand(1.5, 3);
+  }
+  // ev: { id, big, can(), start(run), update(dt, t, run) -> false when over, end(run), dur }
+  add(ev) { this.events.push(ev); return this; }
+  running(id) { return this.active.some((a) => a.ev.id === id); }
+  update(dt, calm) {
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const a = this.active[i];
+      a.t += dt;
+      if (a.ev.update(dt, a.t, a) === false || a.t > (a.ev.dur || 30)) {
+        if (a.ev.end) a.ev.end(a);
+        this.active.splice(i, 1);
+      }
+    }
+    // a question on screen, or Reduced effects: fewer events, and only quiet ones
+    const quiet = calm || GFX.calm;
+    this.t -= dt * (GFX.calm ? 0.4 : calm ? 0.6 : 1);
+    if (this.t > 0) return;
+    this.t = rand(this.min, this.max);
+    const ev = this.pick(quiet);
+    if (ev) this.fire(ev);
+  }
+  // A shuffled bag: every kind of event comes round before any repeats.
+  pick(quiet) {
+    const ok = (e) => (!quiet || !e.big) && !(GFX.calm && e.flashy) && !this.active.some((a) => a.ev === e) && (!e.can || e.can());
+    for (let pass = 0; pass < 2; pass++) {
+      if (!this.bag.length) this.bag = shuffle(this.events);
+      const i = this.bag.findIndex(ok);
+      if (i >= 0) return this.bag.splice(i, 1)[0];
+      if (pass === 0 && this.bag.length < this.events.length) this.bag = shuffle(this.events);
+    }
+    return null;
+  }
+  fire(ev, arg) {
+    const run = { ev, t: 0, arg };
+    if (ev.start(run) === false) return null;
+    this.active.push(run);
+    this.log.push({ id: ev.id, at: +this.s.t.toFixed(2) });
+    return run;
+  }
+  // Fire a named event now (answer feedback), unless it is already running.
+  force(id, arg) {
+    const ev = this.events.find((e) => e.id === id);
+    return ev && !this.active.some((a) => a.ev === ev) ? this.fire(ev, arg) : null;
+  }
+}
+
 /* ---- 10-title.js ---- */
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
 class TitleScene extends Scene3D {
@@ -8583,64 +8645,941 @@ class RacerCar {
 }
 const calmOnly = () => REDUCED_MOTION || GFX.calm;
 
+/* ---- 21c-racerworld.js ---- */
+// The world of Nest Egg Run beyond the road (look only; the game never reads it):
+//   traffic  seven kinds of vehicle: both ways on the service lanes, and in hover
+//            lanes overhead; they change lanes, brake, break down, part for a boost
+//   biomes   downtown, a coast causeway, desert, a mountain pass and a tunnel, each
+//            with its own scenery and palette, changed behind a bank of fog
+//   events   what the Event Director can make happen: trains, helicopters, drones,
+//            fireworks, lasers, meteors, a UFO, a blimp, lightning, explosions...
+
+const RACER_ADS = [["RRSP", "START AT 25"], ["TFSA", "TAX-FREE GROWTH"], ["TERM 20", "COVER THE MORTGAGE"], ["ANNUITY", "INCOME FOR LIFE"],
+  ["WRITE A WILL", "OR THE LAW DECIDES"], ["QPP", "CLAIM AT 65?"], ["DIVERSIFY", "MIND THE NEST EGG"], ["ASSURIS", "IF AN INSURER FAILS"]];
+// Billboard ads: a 2 x 4 sheet of original posters in the course's own vocabulary.
+function racerAdAtlas() {
+  const cw = 256, ch = 128, c = document.createElement("canvas");
+  c.width = cw * 2; c.height = ch * 4;
+  const x = c.getContext("2d");
+  x.fillStyle = "#05060c";
+  x.fillRect(0, 0, c.width, c.height);
+  const cols = ["#ff3ad4", "#35efff", "#ffd23d", "#5dffb0"];
+  x.textAlign = "center"; x.textBaseline = "middle";
+  RACER_ADS.forEach(([a, b], i) => {
+    const x0 = (i % 2) * cw, y0 = Math.floor(i / 2) * ch, col = cols[i % 4];
+    x.strokeStyle = col; x.lineWidth = 5; x.shadowColor = col; x.shadowBlur = 10;
+    x.strokeRect(x0 + 8, y0 + 8, cw - 16, ch - 16);
+    x.fillStyle = col;
+    x.font = (a.length > 7 ? 19 : 30) + 'px "Press Start 2P", monospace';
+    x.fillText(a, x0 + cw / 2, y0 + 50);
+    x.shadowBlur = 0; x.fillStyle = "#e8f0ff";
+    x.font = '22px "VT323", monospace';
+    x.fillText(b, x0 + cw / 2, y0 + 94);
+  });
+  const t = new THREE.CanvasTexture(c);
+  t.minFilter = THREE.LinearFilter;
+  t.generateMipmaps = false;
+  return t;
+}
+// Ad panels: each shows one poster, rolls to the next every few seconds. holo: a
+// see-through projection with scan lines. loop: rides the looping roadside.
+function racerAdMaterial(shared, tex, holo, loop) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uScroll: shared.uScroll, uLen: shared.uLen, uZMax: shared.uZMax, tAds: { value: tex }, uTime: { value: 0 }, uI: { value: 1 } }),
+    side: THREE.DoubleSide, transparent: !!holo, depthWrite: !holo, blending: holo ? THREE.AdditiveBlending : THREE.NormalBlending,
+    vertexShader: `${RACER_WRAP_GLSL}
+      attribute float aZ; attribute float aSeed; varying vec2 vUv; varying float vSeed; varying float vDepth; varying float vFar;
+      void main(){
+        vec3 p = position; vFar = 1.0;
+        ${loop ? "float zz = racerWrap(aZ); p.z += zz - aZ; vFar = racerFar(zz);" : ""}
+        vUv = uv; vSeed = aSeed;
+        vec4 mv = viewMatrix * modelMatrix * vec4(p, 1.0);
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform sampler2D tAds; uniform float uTime; uniform float uI; varying vec2 vUv; varying float vSeed; varying float vDepth; varying float vFar;
+      void main(){
+        float ph = uTime / 6.0 + vSeed * 8.0;
+        float idx = mod(floor(ph) + floor(vSeed * 8.0), 8.0);
+        float roll = smoothstep(0.88, 1.0, fract(ph));
+        vec2 uv = vec2(vUv.x, fract(vUv.y - roll));
+        if (roll > 0.0 && vUv.y - roll < 0.0) idx = mod(idx + 1.0, 8.0); // the next poster rolls in from the top
+        vec2 cell = vec2(mod(idx, 2.0), floor(idx / 2.0));
+        vec3 ad = texture2D(tAds, vec2((cell.x + uv.x) / 2.0, (3.0 - cell.y + uv.y) / 4.0)).rgb;
+        ${holo
+          ? "vec3 col = (ad * vec3(0.7, 1.0, 1.15) + vec3(0.0, 0.05, 0.07)) * (0.6 + 0.4 * sin(vUv.y * 120.0 - uTime * 5.0)) * (0.85 + 0.15 * sin(uTime * 2.3 + vSeed * 9.0)) * uI * 1.5 * vFar * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)); gl_FragColor = vec4(col, 1.0);"
+          : "vec3 col = ad * 1.9 * uI + vec3(0.01, 0.012, 0.02); float f = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar); gl_FragColor = vec4(mix(col, uFogColor, f), 1.0);"}
+      }`,
+  });
+}
+
+// ---- vehicles -----------------------------------------------------------------
+// Light channels: 1 headlamps, 2 tail lamps, 3 windows, 4 hazards, 5 glow strips,
+// 6/7 a patrol light bar, 8 steady markers. aPaint marks panels in the body colour.
+const RACER_PAINTS = [0xc0392b, 0x2e86c1, 0xf1c40f, 0x27ae60, 0x8e44ad, 0xe67e22, 0xecf0f1, 0x4a5a6e, 0x16a085, 0xd35400, 0x8f9aa3, 0xff6fb5];
+function racerVehicleGeo(type) {
+  const b = new RacerBatch(["aCh", "aPaint"]);
+  const box = new THREE.BoxGeometry(1, 1, 1), cyl = new THREE.CylinderGeometry(1, 1, 1, 10);
+  const GL = 0x0c141b, DK = 0x14161b, WH = 0xffffff;
+  const P = (w, h, d, x, y, z, color, paint = 0, rx = 0, c = 0.08) => { const g = racerPlate(w, h, d, c, true); b.add(g, racerM(x, y, z, 1, 1, 1, rx), color, 1, { aCh: 0, aPaint: paint }); g.dispose(); };
+  const L = (ch, w, h, d, x, y, z, color, k) => b.add(box, racerM(x, y, z, w, h, d), color, k, { aCh: ch, aPaint: 0 });
+  const wheel = (x, y, z, r, w) => {
+    b.add(cyl, racerM(x, y, z, r, w, r, 0, 0, Math.PI / 2), 0x0a0b0e, 1, { aCh: 0, aPaint: 0 });
+    b.add(cyl, racerM(x + Math.sign(x || 1) * w * 0.5, y, z, r * 0.56, 0.04, r * 0.56, 0, 0, Math.PI / 2), 0x9aa3ab, 1, { aCh: 0, aPaint: 0 });
+  };
+  const lamps = (hw, y, zf, zr, tw = 0.5) => {
+    [-1, 1].forEach((s) => { L(1, 0.42, 0.14, 0.06, s * hw, y, zf, 0xfff2d8, 5); L(2, tw, 0.13, 0.06, s * hw, y + 0.04, zr, 0xff1030, 3); L(4, 0.14, 0.13, 0.06, s * (hw + 0.36), y + 0.04, zr, 0xffa53d, 3); L(4, 0.14, 0.13, 0.06, s * (hw + 0.34), y, zf, 0xffa53d, 3); });
+  };
+  if (type === "sedan") {
+    P(1.84, 0.56, 4.4, 0, 0.6, 0, WH, 1, 0, 0.12);
+    P(1.7, 0.2, 4.2, 0, 0.3, 0, DK);
+    P(1.56, 0.5, 2.2, 0, 1.1, 0.25, GL, 0, 0, 0.18);
+    P(1.36, 0.07, 1.5, 0, 1.37, 0.3, WH, 1, 0, 0.03);
+    [-1, 1].forEach((s) => { L(3, 0.03, 0.24, 1.7, s * 0.79, 1.12, 0.25, 0xffe2a8, 1.1); wheel(s * 0.88, 0.34, -1.4, 0.34, 0.24); wheel(s * 0.88, 0.34, 1.4, 0.34, 0.24); });
+    lamps(0.62, 0.66, -2.2, 2.2);
+    L(2, 1.3, 0.05, 0.06, 0, 0.84, 2.2, 0xff1030, 1.6);
+  } else if (type === "truck") {
+    P(2.3, 1.6, 1.8, 0, 1.3, -3.0, WH, 1, 0, 0.14);
+    P(2.1, 0.62, 0.1, 0, 1.62, -3.9, GL);
+    P(2.5, 2.7, 5.6, 0, 2.05, 0.9, 0xd4d9de, 0, 0, 0.1);
+    P(2.1, 0.34, 7.9, 0, 0.56, -0.3, DK);
+    [-1, 1].forEach((s) => { L(8, 0.03, 0.34, 5.0, s * 1.265, 2.5, 0.9, WH, 0.001); b.add(box, racerM(s * 1.262, 1.5, 0.9, 0.03, 0.5, 4.8), WH, 1, { aCh: 0, aPaint: 1 }); [-2.9, 1.7, 2.8].forEach((z) => wheel(s * 1.08, 0.46, z, 0.46, 0.3)); });
+    [-0.9, -0.3, 0.3, 0.9].forEach((x) => L(8, 0.12, 0.07, 0.06, x, 3.44, -1.9, 0xffa53d, 2.6));
+    lamps(0.82, 0.86, -3.92, 3.72, 0.4);
+  } else if (type === "bus") {
+    P(2.56, 2.7, 9.8, 0, 1.85, 0, WH, 1, 0, 0.16);
+    P(2.3, 1.1, 0.1, 0, 2.2, -4.9, GL);
+    [-1, 1].forEach((s) => {
+      L(3, 0.03, 0.74, 8.6, s * 1.29, 2.3, 0.1, 0xfff0c8, 1.0);
+      for (let i = 0; i < 6; i++) b.add(box, racerM(s * 1.295, 2.3, -3.5 + i * 1.44, 0.03, 0.8, 0.12), WH, 1, { aCh: 0, aPaint: 1 });
+      L(8, 0.03, 0.56, 4.4, s * 1.292, 1.22, 0.8, 0xff3ad4, 1.0);
+      [-3.3, 3.0].forEach((z) => wheel(s * 1.12, 0.5, z, 0.5, 0.32));
+    });
+    L(8, 1.7, 0.26, 0.06, 0, 2.95, -4.92, 0xffb000, 2.2);
+    lamps(0.9, 0.8, -4.92, 4.92, 0.44);
+  } else if (type === "bike") {
+    P(0.34, 0.5, 1.5, 0, 0.66, 0, WH, 1, 0, 0.12);
+    [-0.72, 0.72].forEach((z) => { b.add(cyl, racerM(0, 0.34, z, 0.34, 0.14, 0.34, 0, 0, Math.PI / 2), 0x0a0b0e, 1, { aCh: 0, aPaint: 0 }); b.add(cyl, racerM(0, 0.34, z, 0.18, 0.16, 0.18, 0, 0, Math.PI / 2), 0x9aa3ab, 1, { aCh: 0, aPaint: 0 }); });
+    P(0.44, 0.66, 0.36, 0, 1.18, 0.1, 0x15171c, 0, -0.5);
+    P(0.3, 0.3, 0.32, 0, 1.6, -0.2, WH, 1, 0, 0.1);
+    P(0.62, 0.05, 0.08, 0, 1.05, -0.5, DK);
+    L(1, 0.18, 0.18, 0.06, 0, 0.84, -0.84, 0xfff2d8, 6);
+    L(2, 0.16, 0.09, 0.06, 0, 0.84, 0.8, 0xff1030, 3.5);
+  } else if (type === "hover" || type === "police") {
+    const pol = type === "police";
+    P(1.95, 0.46, 4.5, 0, 0, 0, WH, 1, 0, 0.18);
+    P(1.5, 0.3, 1.3, 0, -0.03, -2.6, pol ? DK : WH, pol ? 0 : 1, 0.14, 0.1);
+    P(1.34, 0.44, 2.0, 0, 0.42, 0.15, GL, 0, 0, 0.18);
+    [-1, 1].forEach((s) => {
+      [-1.35, 1.4].forEach((z) => { b.add(cyl, racerM(s * 0.98, -0.24, z, 0.44, 0.3, 0.44), DK, 1, { aCh: 0, aPaint: 0 }); b.add(cyl, racerM(s * 0.98, -0.41, z, 0.34, 0.04, 0.34), 0x35efff, 3, { aCh: 5, aPaint: 0 }); });
+      P(0.07, 0.52, 0.95, s * 0.92, 0.38, 1.75, WH, 1);
+      L(3, 0.03, 0.2, 1.5, s * 0.68, 0.46, 0.15, 0xffe2a8, 1.0);
+    });
+    L(1, 1.3, 0.08, 0.06, 0, 0.06, -3.24, 0xfff2d8, 5);
+    L(2, 1.55, 0.09, 0.06, 0, 0.1, 2.26, 0xff1030, 3.2);
+    if (pol) { L(6, 0.56, 0.16, 0.34, -0.36, 0.74, 0.1, 0xff1030, 4.5); L(7, 0.56, 0.16, 0.34, 0.36, 0.74, 0.1, 0x2a60ff, 5); P(1.4, 0.06, 0.5, 0, 0.66, 0.1, DK); b.add(box, racerM(0, 0.02, 0.4, 1.97, 0.16, 1.6), DK, 1, { aCh: 0, aPaint: 0 }); }
+  } else if (type === "rival") {
+    P(1.9, 0.42, 4.5, 0, 0.47, 0, WH, 1, 0, 0.14);
+    P(1.5, 0.26, 1.2, 0, 0.42, -2.55, WH, 1, 0.12, 0.08);
+    P(1.3, 0.4, 1.8, 0, 0.86, 0.3, GL, 0, 0, 0.16);
+    P(2.05, 0.06, 0.52, 0, 1.22, 2.05, DK);
+    [-1, 1].forEach((s) => { P(0.08, 0.5, 0.3, s * 0.8, 0.95, 2.05, DK); L(5, 0.03, 0.08, 3.7, s * 0.965, 0.52, 0, 0xff3ad4, 3); wheel(s * 0.9, 0.36, -1.45, 0.36, 0.3); wheel(s * 0.9, 0.36, 1.45, 0.38, 0.34); });
+    L(1, 1.4, 0.07, 0.06, 0, 0.52, -3.16, 0xfff2d8, 5);
+    L(2, 1.6, 0.08, 0.06, 0, 0.6, 2.26, 0xff1030, 3.4);
+    L(5, 0.3, 0.12, 0.06, 0, 0.3, 2.27, 0xffb86a, 3);
+  }
+  box.dispose(); cyl.dispose();
+  return b.build();
+}
+function racerTrafficMaterial(P) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uTime: { value: 0 }, uSkyC: { value: new THREE.Color(0x35406a) }, uDim: { value: 1 } }),
+    vertexShader: `attribute vec3 aCol; attribute float aCh; attribute float aPaint; attribute vec3 aTint; attribute vec4 aL;
+      uniform float uTime; uniform float uDim;
+      varying vec3 vCol; varying vec3 vN; varying vec3 vW; varying float vLit; varying float vDepth;
+      void main(){
+        #ifdef USE_INSTANCING
+          mat4 m = modelMatrix * instanceMatrix;
+        #else
+          mat4 m = modelMatrix;
+        #endif
+        vec4 w = m * vec4(position, 1.0);
+        vN = mat3(m) * normal; vW = w.xyz;
+        vec3 c = aCol * mix(vec3(1.0), aTint, aPaint);
+        vLit = 0.0;
+        if (aCh > 0.5) {
+          float k = 1.0;
+          vLit = 1.0;
+          if (aCh < 1.5) k = aL.x;
+          else if (aCh < 2.5) k = aL.y;
+          else if (aCh < 3.5) k = 0.25 + 0.75 * step(0.45, fract(aL.w * 7.3 + floor(position.z * 0.7) * 0.37));
+          else if (aCh < 4.5) k = aL.z * smoothstep(-0.1, 0.5, sin(uTime * 8.8 + aL.w * 20.0));
+          else if (aCh < 5.5) k = 0.8 + 0.2 * sin(uTime * 3.0 + aL.w * 9.0);
+          else if (aCh < 6.5) k = smoothstep(-0.2, 0.6, sin(uTime * 7.8));
+          else if (aCh < 7.5) k = smoothstep(-0.2, 0.6, -sin(uTime * 7.8));
+          else c = aCol * mix(vec3(1.0), aTint * 1.6, step(aCol.r + aCol.g + aCol.b, 0.01) + step(2.9, aCol.r + aCol.g + aCol.b) * 0.0);
+          c *= k * uDim;
+        }
+        vCol = c;
+        vec4 mv = viewMatrix * w;
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform vec3 uSkyC;
+      varying vec3 vCol; varying vec3 vN; varying vec3 vW; varying float vLit; varying float vDepth;
+      void main(){
+        vec3 col = vCol;
+        if (vLit < 0.5) {
+          vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vW);
+          float fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          col = vCol * (uAmb + uKey * max(dot(n, uKeyDir), 0.0)) + uSkyC * fr * 0.3 * (0.3 + 0.7 * max(n.y, 0.0));
+        }
+        gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
+      }`,
+  });
+}
+const RACER_FLEET = { sedan: 6, truck: 3, bus: 2, bike: 4, hover: 6, police: 1, rival: 1 };
+
+// A cone of light in the air (searchlights, tractor beams, lasers): bright at its
+// source, fading along its length and toward its edges.
+function racerShaft(color, r0, r1, len, sides = 12) {
+  const g = new THREE.CylinderGeometry(r1, r0, len, sides, 1, true);
+  g.translate(0, len / 2, 0);
+  const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
+    uniforms: { uI: { value: 1 }, uColor: { value: new THREE.Color(color) }, uLen: { value: len } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "uniform float uLen; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vT = clamp(position.y / uLen, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: "uniform float uI; uniform vec3 uColor; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.5) * smoothstep(0.0, 0.04, vT) * rim * rim; gl_FragColor = vec4(uColor * (a * uI), 1.0); }",
+  }));
+  m.layers.set(1);
+  m.frustumCulled = false;
+  return m;
+}
+
+// Which stretch of the career runs through which biome (years 0-39).
+function racerBiomeAt(year) {
+  if (year < 7) return "downtown";
+  if (year < 8) return "tunnel";
+  if (year < 16) return "coast";
+  if (year < 24) return "desert";
+  if (year < 25) return "tunnel";
+  if (year < 33) return "mountain";
+  if (year < 34) return "tunnel";
+  return "downtown";
+}
+// What each biome does to the career sky's palette. mix values blend toward the colour.
+const RACER_BIOME_PAL = {
+  downtown: { fog: 0x000000, fogMix: 0, hor: 0x000000, horMix: 0, grid: 0x000000, gridMix: 0, base: 0x000000, baseMix: 0, rain: 1, wet: 1, dust: 0, far: 470, lamps: 1, ridge: 1 },
+  coast: { fog: 0x3aa7b8, fogMix: 0.42, hor: 0xffb38a, horMix: 0.45, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
+  desert: { fog: 0xc86a2c, fogMix: 0.5, hor: 0xff7a2a, horMix: 0.55, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
+  mountain: { fog: 0x7f95c8, fogMix: 0.5, hor: 0xb8cdf5, horMix: 0.5, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
+  tunnel: { fog: 0x1c1208, fogMix: 0.9, hor: 0x1c1208, horMix: 0.9, grid: 0x000000, gridMix: 1, base: 0x0b0b0c, baseMix: 1, rain: 0, wet: 0.25, dust: 0.2, far: 260, lamps: 0, ridge: 0 },
+};
+
+class RacerWorld {
+  constructor(game) {
+    const g = (this.g = game);
+    this.t = 0;
+    this.calmK = 0;
+    this.part = 0; this.partT = 0;
+    this.lastAnswered = 0;
+    this.biome = racerBiomeAt(game.year);
+    this.pal = Object.assign({}, RACER_BIOME_PAL[this.biome]);
+    this.palC = { fog: new THREE.Color(), hor: new THREE.Color(), grid: new THREE.Color(), base: new THREE.Color() };
+    for (const k in this.palC) this.palC[k].set(RACER_BIOME_PAL[this.biome][k]);
+    this.swap = null;
+    this.cityFog = 900;
+    this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(); this._c = new THREE.Color();
+    RacerGame.adTex = RacerGame.adTex || racerAdAtlas();
+    this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+    this.addMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    this.buildTraffic();
+    this.buildBiomes();
+    this.buildEvents();
+    this.setBiome(this.biome);
+  }
+
+  // ===== traffic =================================================================
+  buildTraffic() {
+    const g = this.g;
+    this.trafficMat = racerTrafficMaterial(g.props.material.uniforms);
+    this.fleet = {};
+    this.cars = [];
+    for (const type in RACER_FLEET) {
+      const n = RACER_FLEET[type], geo = racerVehicleGeo(type);
+      const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
+      tint.setUsage(THREE.DynamicDrawUsage); lights.setUsage(THREE.DynamicDrawUsage);
+      geo.setAttribute("aTint", tint);
+      geo.setAttribute("aL", lights);
+      const mesh = new THREE.InstancedMesh(geo, this.trafficMat, n);
+      mesh.frustumCulled = false;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      const zero = new THREE.Matrix4().makeScale(0, 0, 0);
+      for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, zero); this.cars.push({ type, i, on: false, mesh, tint, lights }); }
+      g.scene.add(mesh);
+      this.fleet[type] = mesh;
+    }
+    this.spawnT = { R: 0.5, L: 1.2, H: 0.8 };
+  }
+  free(type) { return this.cars.find((c) => !c.on && c.type === type); }
+  // lane: "R" the right service lane (our way), "L" the left one (oncoming), "H" a hover lane, "M" the main road (events)
+  spawn(type, lane, o = {}) {
+    const c = this.free(type);
+    if (!c) return null;
+    const sp = this.g.speed;
+    Object.assign(c, { on: true, lane, special: o.special || null, hazard: 0, ind: 0, brake: 0, y: 0, age: 0, seed: Math.random(), s: rand(0.94, 1.06), yaw: 0, laneT: rand(3, 9) });
+    if (lane === "R") { c.dir = 1; c.x = c.tx = Math.random() < 0.5 ? 6.6 : 8.0; c.speed = type === "bike" ? rand(40, 50) : type === "sedan" ? rand(19, 25) : rand(15, 20); c.z = c.speed > sp ? 15 : -244; }
+    else if (lane === "L") { c.dir = -1; c.x = c.tx = Math.random() < 0.5 ? -6.6 : -8.0; c.speed = type === "bike" ? rand(26, 34) : rand(17, 25); c.z = -244; }
+    else if (lane === "H") { const hl = Math.floor(Math.random() * 3); c.dir = hl === 1 ? -1 : 1; c.y = 10 + hl * 3 + rand(-0.6, 0.6); c.x = c.tx = rand(-5.6, 5.6); c.speed = c.dir > 0 ? rand(36, 46) + hl * 6 : rand(22, 32); c.z = c.dir > 0 && c.speed > sp + 4 ? 18 : -244; }
+    Object.assign(c, o);
+    c.tint.setXYZ(c.i, 1, 1, 1);
+    const col = this._c.set(o.color !== undefined ? o.color : RACER_PAINTS[Math.floor(Math.random() * RACER_PAINTS.length)]);
+    if (o.color === undefined) col.offsetHSL(rand(-0.03, 0.03), 0, rand(-0.06, 0.06));
+    c.tint.setXYZ(c.i, col.r, col.g, col.b);
+    c.tint.needsUpdate = true;
+    return c;
+  }
+  updateTraffic(dt, sp, sky) {
+    const g = this.g, tunnel = this.biome === "tunnel";
+    const dense = (GFX.lite ? 0.6 : 1) * (1 - 0.4 * this.calmK);
+    const count = (l) => this.cars.reduce((a, c) => a + (c.on && c.lane === l && !c.special ? 1 : 0), 0);
+    const T = this.spawnT;
+    for (const l of ["R", "L", "H"]) {
+      T[l] -= dt;
+      if (T[l] > 0) continue;
+      T[l] = rand(0.7, 2.6) / dense;
+      const want = l === "H" ? (tunnel ? 0 : 4) : 3;
+      if (count(l) >= Math.round(want * dense)) continue;
+      const r = Math.random();
+      this.spawn(l === "H" ? "hover" : r < 0.42 ? "sedan" : r < 0.6 ? "bike" : r < 0.82 ? "truck" : "bus", l);
+    }
+    // a right answer: everything pulls aside for the boost
+    this.partT -= dt;
+    this.part += ((this.partT > 0 ? 1 : 0) - this.part) * Math.min(1, dt * 4);
+    const head = (0.3 + 0.7 * (sky ? sky.lamps : 1)) * (1 - 0.3 * this.calmK);
+    const dirty = new Set();
+    for (const c of this.cars) {
+      if (!c.on) continue;
+      c.age += dt;
+      const rel = c.dir > 0 ? sp - c.speed : sp + c.speed;
+      c.z += rel * dt;
+      if (c.z > 20 || c.z < -250 || (c.lane === "H" && tunnel)) { c.on = false; c.mesh.setMatrixAt(c.i, this._m.makeScale(0, 0, 0)); dirty.add(c.mesh); if (c.done) c.done(c); continue; }
+      // lane changes on the service lanes, indicator blinking; a stalled car is given room
+      if ((c.lane === "R" || c.lane === "L") && !c.special) {
+        c.laneT -= dt;
+        const side = Math.sign(c.x), stalled = this.cars.some((o) => o.on && o.special === "stall" && Math.sign(o.x) === side && o.z < c.z && o.z > c.z - 60);
+        if (stalled) c.tx = side * 6.5;
+        else if (c.laneT <= 0) { c.laneT = rand(4, 11); c.tx = side * (Math.abs(c.tx) < 7.3 ? 8.0 : 6.6); c.ind = 1.6; }
+      }
+      if (c.plan) c.plan(c, dt, sp);
+      const px = c.x;
+      c.x += (c.tx - c.x) * Math.min(1, dt * 1.5);
+      c.ind = Math.max(0, c.ind - dt);
+      c.yaw += (clamp((c.x - px) / Math.max(dt, 1e-3) * -0.05 * c.dir, -0.25, 0.25) - c.yaw) * Math.min(1, dt * 6);
+      const ground = c.lane !== "H";
+      const ox = ground && c.lane !== "M" ? Math.sign(c.x) * this.part * 0.9 : 0, oy = ground ? 0 : this.part * 2.2 + Math.sin(this.t * 1.3 + c.seed * 9) * 0.25;
+      this._e.set(0, (c.dir < 0 ? Math.PI : 0) + c.yaw, ground ? 0 : c.yaw * -1.2);
+      this._m.compose(this._p.set(c.x + ox, c.y + oy, c.z), this._q.setFromEuler(this._e), this._s.set(c.s, c.s, c.s));
+      c.mesh.setMatrixAt(c.i, this._m);
+      c.lights.setXYZW(c.i, head, 0.7 + (c.brake > 0 || this.part > 0.3 ? 1.1 : 0), c.hazard || c.ind > 0 ? 1 : 0, c.seed);
+      dirty.add(c.mesh);
+    }
+    for (const m of dirty) { m.instanceMatrix.needsUpdate = true; m.geometry.attributes.aL.needsUpdate = true; }
+    const u = this.trafficMat.uniforms;
+    u.uDim.value = 1 - 0.25 * this.calmK;
+    if (sky) u.uSkyC.value.copy(sky.horizon).lerp(sky.light, 0.4);
+  }
+
+  // ===== biomes ==================================================================
+  buildBiomes() {
+    const g = this.g, sh = g.shared;
+    const BOX = new THREE.BoxGeometry(1, 1, 1), CYL = new THREE.CylinderGeometry(1, 1, 1, 8), CONE = new THREE.CylinderGeometry(0, 1, 1, 7), ICO = new THREE.IcosahedronGeometry(1, 0);
+    const mk = () => new RacerBatch(["aZ", "aKind"]);
+    const put = (b, geo, x, y, z, sx, sy, sz, color, aZ, kind = 0, k = 1, rx = 0, ry = 0, rz = 0) => b.add(geo, racerM(x, y, z, sx, sy, sz, rx, ry, rz), color, k, { aZ, aKind: kind });
+    const strut = (b, a, c, t, color, aZ, kind = 0, k = 1) => racerStrut(b, BOX, new THREE.Vector3(a[0], a[1], a[2]), new THREE.Vector3(c[0], c[1], c[2]), t, color, k, { aZ, aKind: kind });
+    const loft = (b, rings, x, z, color, aZ) => { const ge = cyLoft(rings); b.add(ge, racerM(x, 0, z), color, 1, { aZ, aKind: 0 }); ge.dispose(); };
+    const mesh = (b) => { const m = new THREE.Mesh(b.build(), g.props.material); m.frustumCulled = false; return m; };
+    // ad panels: [x, y, z, w, h, ry, aZ]
+    const adMesh = (list, holo, loop = true) => {
+      const pos = [], uv = [], az = [], seed = [];
+      list.forEach(([x, y, z, w, h, ry, aZ], i) => {
+        const c = Math.cos(ry), s = Math.sin(ry), sd = (i * 0.37 + 0.11) % 1;
+        const P = (u, v) => { pos.push(x + (u - 0.5) * w * c, y + (v - 0.5) * h, z - (u - 0.5) * w * s); uv.push(u, v); az.push(aZ); seed.push(sd); };
+        P(0, 0); P(1, 0); P(1, 1); P(0, 0); P(1, 1); P(0, 1);
+      });
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      ge.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      ge.setAttribute("aZ", new THREE.Float32BufferAttribute(az, 1));
+      ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+      const m = new THREE.Mesh(ge, racerAdMaterial(sh, RacerGame.adTex, holo, loop));
+      m.frustumCulled = false;
+      if (holo) m.layers.set(1);
+      return m;
+    };
+    // a billboard on a post: frame, lamps along the top, the ad itself
+    const billboard = (b, ads, x, z, y = 9, w = 9, h = 4.5) => {
+      const aZ = z - 1, sd = Math.sign(x);
+      put(b, BOX, x, y / 2, z, 0.45, y, 0.45, 0x3a3f48, aZ);
+      put(b, BOX, x, y + h / 2, z + 0.2, w + 0.5, h + 0.5, 0.25, 0x15171c, aZ);
+      for (let i = 0; i < 4; i++) put(b, BOX, x - w / 2 + (i + 0.5) * (w / 4), y + h + 0.45, z - 0.5, 0.5, 0.12, 0.3, 0xfff0d2, aZ, 2, 2.2);
+      ads.push([x, y + h / 2, z + 0.05, w, h, sd * -0.0, aZ]);
+    };
+    const guard = (b, x, color = 0x9aa7b5) => { for (let i = 0; i < 16; i++) { const z = -i * 16, aZ = z - 16; put(b, BOX, x, 0.66, z - 8, 0.1, 0.14, 16, color, aZ); for (let k = 0; k < 4; k++) put(b, BOX, x, 0.36, z - 2 - k * 4, 0.13, 0.72, 0.13, 0x6a7480, aZ); } };
+    this.sets = {};
+    const set = (name, ...objs) => { const grp = new THREE.Group(); objs.forEach((o) => o && grp.add(o)); grp.visible = false; g.scene.add(grp); this.sets[name] = grp; return grp; };
+
+    // ---- downtown: what the clockwork city gains: a works site, ads, holograms
+    {
+      const b = mk(), ads = [], holos = [];
+      // road works on the right-hand shoulder: barriers, cones, an arrow board, a digger
+      for (let i = 0; i < 9; i++) { const z = -74 - i * 3.4, aZ = -106; put(b, BOX, 9.05, 0.55, z, 0.3, 1.0, 2.8, i % 2 ? 0xffa53d : 0xf2f2f2, aZ, i % 2 ? 1 : 0, i % 2 ? 1.5 : 1); put(b, BOX, 9.05, 1.25, z, 0.14, 0.14, 0.14, 0xffa53d, aZ, 2, 2.6); }
+      for (let i = 0; i < 6; i++) { put(b, CONE, 5.6, 0.4, -70 - i * 6, 0.24, 0.8, 0.24, 0xff7a2a, -106, 0, 1); put(b, BOX, 5.6, 0.52, -70 - i * 6, 0.3, 0.1, 0.3, 0xffffff, -106, 1, 1.2); }
+      put(b, BOX, 8.9, 3.4, -68, 0.2, 2.2, 3.2, 0x15171c, -106);
+      [[-0.7, 0.5], [-0.7, -0.5], [0.1, 0.5], [0.1, -0.5]].forEach(([dz, r]) => put(b, BOX, 8.78, 3.4 + r * 0.38, -68 + dz, 0.06, 0.16, 1.0, 0xffa53d, -106, 1, 2.4, r * -1.1));
+      put(b, BOX, 8.9, 1.2, -68, 0.16, 2.4, 0.16, 0x3a3f48, -106);
+      put(b, BOX, 8.6, 1.3, -96, 1.2, 1.6, 3.6, 0xf1c40f, -106); put(b, BOX, 8.6, 2.5, -96.6, 1.0, 1.0, 1.4, 0x20242a, -106);
+      strut(b, [8.6, 2.6, -95], [8.4, 5.4, -91], 0.36, 0xf1c40f, -106); strut(b, [8.4, 5.4, -91], [8.2, 2.4, -88.6], 0.3, 0xf1c40f, -106);
+      put(b, BOX, 8.2, 2.0, -88.4, 0.9, 0.7, 0.7, 0x3a3f48, -106);
+      // camera gantries over the service lanes only (the main road's gantries are the questions)
+      [[-1, -36], [1, -164]].forEach(([sd, z]) => { put(b, BOX, sd * 9.05, 3.6, z, 0.28, 7.2, 0.28, 0x3a3f48, z - 1); put(b, BOX, sd * 7.3, 7.1, z, 3.8, 0.24, 0.24, 0x3a3f48, z - 1); [6.6, 8.0].forEach((x) => { put(b, BOX, sd * x, 6.8, z, 0.5, 0.36, 0.4, 0x15171c, z - 1); put(b, BOX, sd * x, 6.8, z + 0.22, 0.2, 0.1, 0.05, 0xff3030, z - 1, 2, 2.4); }); });
+      // rooftop and wall ads, and holograms that hang over the pavements
+      ads.push([-9.1, 13.5, -58, 7, 3.5, Math.PI / 2, -62], [9.1, 15, -150, 7, 3.5, -Math.PI / 2, -154], [-9.1, 12.5, -212, 7, 3.5, Math.PI / 2, -216]);
+      holos.push([-7.4, 8.6, -116, 4.2, 2.1, 0.5, -118], [7.4, 9.2, -30, 4.2, 2.1, -0.5, -32], [7.2, 8.4, -206, 4.2, 2.1, -0.5, -208]);
+      [[-7.4, -116], [7.4, -30], [7.2, -206]].forEach(([x, z]) => { put(b, BOX, x * 1.2, 6.9, z, 0.5, 0.2, 0.5, 0x35efff, z - 2, 1, 2.2); put(b, BOX, x * 1.2, 3.4, z, 0.14, 6.8, 0.14, 0x3a3f48, z - 2); });
+      const holo = adMesh(holos, true);
+      g.decor(holo);
+      set("downtown", mesh(b), adMesh(ads, false), holo);
+    }
+
+    // ---- coast: a causeway between two seas: palms, a cable-stayed bridge, a diner
+    {
+      const b = mk(), ads = [];
+      guard(b, -9.7); guard(b, 9.7);
+      for (let i = 0; i < 14; i++) {
+        const sd = i % 2 ? 1 : -1, x = sd * rand(11, 15.2), z = -8 - i * 17.6 + rand(-3, 3), h = rand(6.5, 10), lean = rand(-0.12, 0.12), aZ = z - 4;
+        for (let k = 0; k < 5; k++) put(b, CYL, x + lean * (k / 5) * h * 1.2, ((k + 0.5) * h) / 5, z, 0.3 - k * 0.03, h / 5 + 0.05, 0.3 - k * 0.03, k % 2 ? 0x7a5a36 : 0x6a4a2a, aZ, 0, 1, 0, 0, -lean);
+        const tx = x + lean * h * 1.2;
+        for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2 + i; put(b, BOX, tx + Math.cos(a) * 1.5, h - 0.25, z + Math.sin(a) * 1.5, 3.3, 0.05, 0.62, k % 2 ? 0x1f8a52 : 0x176a40, aZ, 0, 1, 0, -a, -0.28); }
+        if (i % 3 === 0) for (let k = 0; k < 6; k++) put(b, BOX, x + lean * (k / 6) * h, 1 + (k * h) / 7.5, z, 0.72, 0.06, 0.72, 0xff3ad4, aZ, 1, 1.6, 0, k * 0.6, 0);
+      }
+      [-72, -200].forEach((z) => {
+        const aZ = z - 48;
+        for (const sd of [-1, 1]) {
+          put(b, BOX, sd * 19, 14, z, 1.6, 28, 2.2, 0x55606c, aZ); put(b, BOX, sd * 19, 28.6, z, 2.4, 1.2, 3.0, 0x6a7684, aZ);
+          put(b, BOX, sd * 19, 29.7, z, 0.5, 0.5, 0.5, 0xff3030, aZ, 2, 3);
+          put(b, BOX, sd * 14.6, 0.5, z, 9.4, 0.7, 3.2, 0x414a55, aZ);
+          for (let k = 1; k <= 5; k++) for (const fz of [-1, 1]) { strut(b, [sd * 19, 27 - k * 1.2, z], [sd * 10, 0.9, z + fz * k * 9], 0.09, 0xcfd8e0, aZ); put(b, BOX, sd * 10, 1.0, z + fz * k * 9, 0.2, 0.2, 0.2, 0xfff0d2, aZ, 2, 2.4); }
+        }
+      });
+      { // a neon diner
+        const z = -134, aZ = z - 6, x = 14.6;
+        put(b, BOX, x, 2.1, z, 7, 4.2, 9, 0xd8d0c4, aZ); put(b, BOX, x - 3.53, 2.1, z, 0.06, 1.5, 7.4, 0xffe2a8, aZ, 2, 1.5);
+        put(b, BOX, x, 4.45, z, 7.6, 0.3, 9.6, 0x35efff, aZ, 1, 2.2);
+        put(b, BOX, x - 2.4, 6.4, z + 2, 0.3, 4, 0.3, 0x8a8f98, aZ); put(b, BOX, x - 2.4, 9, z + 2, 3.6, 1.5, 0.25, 0x16181d, aZ);
+        [[0, 0.72, 3.6, 0.12], [0, -0.72, 3.6, 0.12], [1.76, 0, 0.12, 1.5], [-1.76, 0, 0.12, 1.5]].forEach(([dx, dy, w, h]) => put(b, BOX, x - 2.4 + dx, 9 + dy, z + 2.15, w, h, 0.06, 0xff3ad4, aZ, 1, 2.6));
+        put(b, BOX, x - 2.4, 9, z + 2.16, 2.2, 0.5, 0.05, 0xffd23d, aZ, 1, 2.2);
+      }
+      for (let i = 0; i < 4; i++) { const z = -30 - i * 7, c = [0xff9bb5, 0x8fd8ff, 0xfff0a0, 0x9bf0c0][i]; put(b, BOX, -13.2, 1.2, z, 2.4, 2.4, 2.4, c, z - 2); put(b, CONE, -13.2, 3.0, z, 2.0, 1.2, 2.0, 0xf2f2f2, z - 2); }
+      { const z = -100, aZ = z - 3; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => put(b, BOX, -13 + i * 0.9, 1.6, z + j * 0.9, 0.16, 3.2, 0.16, 0xe8e8e8, aZ)); put(b, BOX, -13, 4.1, z, 2.4, 1.8, 2.4, 0xff5a5a, aZ); put(b, BOX, -13, 5.2, z, 2.8, 0.2, 2.8, 0xf2f2f2, aZ); put(b, BOX, -13, 6.4, z, 0.06, 2.2, 0.06, 0xe8e8e8, aZ); put(b, BOX, -12.6, 7.1, z, 0.8, 0.5, 0.04, 0xff3030, aZ, 1, 1.6); }
+      [[-58, -40, 1], [70, -150, -1], [-96, -220, 1], [44, -60, -1]].forEach(([x, z, s], i) => { const aZ = z - 4; put(b, BOX, x, 0.7, z, 2.2, 1.2, 7, 0xf2f2f2, aZ); put(b, BOX, x, 5.5, z, 0.14, 9, 0.14, 0x8a8f98, aZ); put(b, BOX, x + s * 1.1, 5.2, z + 0.4, 0.06, 7.4, 3.6, [0xfff0d2, 0xff9bb5, 0x8fd8ff, 0xfff0a0][i], aZ, 0, 1, 0, 0, s * 0.16); put(b, BOX, x, 10.1, z, 0.22, 0.22, 0.22, 0xfff0d2, aZ, 2, 3); });
+      billboard(b, ads, -12.6, -168); billboard(b, ads, 12.8, -52);
+      // the sea on both sides: it mirrors the bridge, the palms and the sky
+      const sea = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+        uniforms: Object.assign(fogUniforms(), { tReflect: g.groundMat.uniforms.tReflect, uMirror: g.groundMat.uniforms.uMirror, uTime: { value: 0 }, uScroll: sh.uScroll, uDeep: { value: new THREE.Color(0x06323c) }, uSkyC: { value: new THREE.Color(0xffb38a) }, uReflect: { value: 1 } }),
+        vertexShader: "uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
+        fragmentShader: `${GLSL_FOG_PARS}
+          uniform sampler2D tReflect; uniform float uTime; uniform float uScroll; uniform vec3 uDeep; uniform vec3 uSkyC; uniform float uReflect;
+          varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
+          void main(){
+            if (abs(vWorld.x) < 16.5) discard; // the causeway
+            vec2 p = vec2(vWorld.x, vWorld.z - uScroll);
+            float w = sin(p.x * 0.35 + uTime * 0.9) * 0.5 + sin(p.y * 0.22 - uTime * 0.7 + p.x * 0.12) * 0.5;
+            float w2 = sin(p.x * 1.7 - uTime * 1.6 + p.y * 0.9) * sin(p.y * 1.3 + uTime * 1.1);
+            vec3 V = normalize(cameraPosition - vWorld);
+            float fres = 0.1 + 0.9 * pow(1.0 - clamp(V.y, 0.0, 1.0), 4.0);
+            vec2 uv = vRefl.xy / vRefl.w + vec2(w * 0.006 + w2 * 0.003, w2 * 0.004);
+            vec3 refl = uReflect > 0.5 ? texture2D(tReflect, uv).rgb : uSkyC * 0.55;
+            vec3 col = mix(uDeep * (0.75 + 0.25 * w), refl * 0.95 + uSkyC * 0.1, fres);
+            col += uSkyC * pow(max(w2, 0.0), 6.0) * 0.6 * fres;
+            float shore = 1.0 - smoothstep(16.5, 19.5, abs(vWorld.x));
+            col += vec3(0.9, 1.0, 1.0) * shore * (0.25 + 0.25 * sin(p.y * 0.8 + uTime * 1.4 + abs(p.x) * 2.0));
+            gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
+          }`,
+      }));
+      sea.rotation.x = -Math.PI / 2;
+      sea.position.set(0, 0.04, -440);
+      sea.scale.set(1400, 940, 1);
+      sea.frustumCulled = false;
+      g.mirror.receivers.push(sea);
+      this.sea = sea;
+      // far off: a lighthouse that sweeps its beam, and a big wheel turning on the pier
+      const far = new THREE.Group();
+      const fb = new RacerBatch();
+      for (let i = 0; i < 5; i++) fb.add(CYL, racerM(-170, 5 + i * 9, -330, 5 - i * 0.6, 9, 5 - i * 0.6), i % 2 ? 0xd8dde4 : 0xb84a4a, 0.55);
+      fb.add(CYL, racerM(-170, 49, -330, 3.2, 4, 3.2), 0xfff0d2, 3);
+      fb.add(BOX, racerM(-170, -2, -330, 60, 6, 30), 0x2a323c, 0.6);
+      const farMesh = new THREE.Mesh(fb.build("color"), this.glowMat);
+      this.beam = racerShaft(0xfff0d2, 2, 26, 260, 10);
+      this.beam.position.set(-170, 49, -330);
+      const wheel = new THREE.Group();
+      const wb = new RacerBatch();
+      const tor = new THREE.TorusGeometry(30, 0.6, 5, 28);
+      wb.add(tor, null, 0xff3ad4, 2.2); tor.dispose();
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; wb.add(BOX, racerM(Math.cos(a) * 15, Math.sin(a) * 15, 0, 30, 0.3, 0.3, 0, 0, a), 0x35efff, 1.5); wb.add(BOX, racerM(Math.cos(a) * 30, Math.sin(a) * 30, 0, 2.6, 2.6, 2.6), i % 2 ? 0xffd23d : 0x5dffb0, 2.4); }
+      wheel.add(new THREE.Mesh(wb.build("color"), this.glowMat));
+      wheel.position.set(190, 34, -345);
+      this.wheel = wheel;
+      far.add(farMesh, this.beam, wheel);
+      far.traverse((o) => { if (o.material && o.material.fog !== undefined && o !== this.beam) o.frustumCulled = false; });
+      set("coast", mesh(b), adMesh(ads, false), sea, far);
+    }
+
+    // ---- desert: mesas, an arch of rock over the road, cacti, a gas station
+    {
+      const b = mk(), ads = [];
+      const mesa = (x, z, w, h, d) => { const aZ = z - d; loft(b, [[0, w, d, w * 0.25], [h * 0.58, w * 0.8, d * 0.8, w * 0.22]], x, z, 0x8f4a28, aZ); loft(b, [[h * 0.58, w * 0.66, d * 0.66, w * 0.2], [h, w * 0.56, d * 0.56, w * 0.16]], x, z, 0xb5683a, aZ); put(b, BOX, x, h * 0.58, z, w * 1.66, 0.5, d * 1.66, 0xd89a62, aZ); };
+      [[-34, -30, 9, 20, 8], [40, -64, 12, 30, 10], [-58, -110, 14, 38, 12], [30, -150, 8, 16, 7], [-30, -196, 10, 26, 9], [56, -226, 13, 34, 11], [-78, -60, 12, 24, 10], [84, -130, 12, 28, 10]].forEach((m) => mesa(...m));
+      { // the arch
+        const z = -152, aZ = z - 4;
+        for (const sd of [-1, 1]) loft(b, [[0, 2.6, 2.2, 0.7], [7, 2.0, 1.9, 0.6], [13, 2.6, 2.1, 0.7]], sd * 13.6, z, 0xa55a30, aZ);
+        for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.4, 2.6 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, a + Math.PI / 2 + Math.PI / 2); }
+      }
+      for (let i = 0; i < 14; i++) {
+        const sd = i % 2 ? 1 : -1, x = sd * rand(10.8, 19), z = -6 - i * 17.8 + rand(-4, 4), h = rand(3.8, 6.4), aZ = z - 2;
+        put(b, CYL, x, h / 2, z, 0.42, h, 0.42, 0x2f7040, aZ);
+        [[1, 0.55], [-1, 0.38]].forEach(([s, f]) => { put(b, CYL, x + s * 0.7, h * f, z, 0.26, 1.2, 0.26, 0x2f7040, aZ, 0, 1, 0, 0, Math.PI / 2); put(b, CYL, x + s * 1.2, h * f + 0.8, z, 0.26, 1.8, 0.26, 0x377a48, aZ); });
+      }
+      for (let i = 0; i < 8; i++) {
+        const z = -i * 32, aZ = z - 32, x = -10.6;
+        put(b, CYL, x, 4, z, 0.14, 8, 0.14, 0x5a4630, aZ); put(b, BOX, x, 7.4, z, 2.2, 0.14, 0.14, 0x5a4630, aZ);
+        [-0.9, 0, 0.9].forEach((dx) => { for (let k = 0; k < 4; k++) { const s0 = Math.sin((k / 4) * Math.PI) * 0.7, s1 = Math.sin(((k + 1) / 4) * Math.PI) * 0.7; strut(b, [x + dx, 7.5 - s0, z - k * 8], [x + dx, 7.5 - s1, z - (k + 1) * 8], 0.035, 0x15171c, aZ); } });
+      }
+      { // a gas station under a lit canopy
+        const z = -88, aZ = z - 5, x = 15.4;
+        put(b, BOX, x, 5.2, z, 9, 0.5, 7, 0xe8e0d0, aZ); put(b, BOX, x, 4.92, z, 8.4, 0.08, 6.4, 0xfff0d2, aZ, 2, 1.3);
+        put(b, BOX, x, 5.2, z, 9.2, 0.16, 7.2, 0xff7a2a, aZ, 1, 2.2);
+        [[-3.6, -2.8], [3.6, -2.8], [-3.6, 2.8], [3.6, 2.8]].forEach(([dx, dz]) => put(b, BOX, x + dx, 2.5, z + dz, 0.3, 5, 0.3, 0x8a8f98, aZ));
+        [-1.6, 1.6].forEach((dz) => { put(b, BOX, x - 1.5, 0.9, z + dz, 0.7, 1.7, 0.5, 0xc0392b, aZ); put(b, BOX, x - 1.86, 1.4, z + dz, 0.04, 0.4, 0.34, 0x9fffd0, aZ, 2, 1.8); });
+        put(b, BOX, x + 4.4, 1.7, z, 3.4, 3.4, 6, 0xcfc6b6, aZ); put(b, BOX, x + 2.66, 1.9, z, 0.06, 1.3, 4.6, 0xffe2a8, aZ, 2, 1.4);
+        put(b, BOX, x - 5.2, 5, z + 3.4, 0.3, 10, 0.3, 0x8a8f98, aZ); put(b, BOX, x - 5.2, 10.6, z + 3.4, 2.6, 2.6, 0.3, 0x16181d, aZ);
+        [[0, 0.7, 1.7, 0.16, 0], [-0.5, -0.1, 1.2, 0.16, 0.9], [0.5, -0.1, 1.2, 0.16, -0.9]].forEach(([dx, dy, w, h, r]) => put(b, BOX, x - 5.2 + dx, 10.6 + dy, z + 3.58, w, h, 0.06, 0xffd23d, aZ, 1, 2.6, 0, 0, r));
+      }
+      { // a motel sign: an arrow of lamps
+        const z = -206, aZ = z - 2, x = -14;
+        put(b, BOX, x, 4.5, z, 0.3, 9, 0.3, 0x8a8f98, aZ); put(b, BOX, x, 9.8, z, 4.4, 2.0, 0.3, 0x16181d, aZ);
+        [[0, 0.86, 4.2, 0.12], [0, -0.86, 4.2, 0.12], [2.1, 0, 0.12, 1.8], [-2.1, 0, 0.12, 1.8]].forEach(([dx, dy, w, h]) => put(b, BOX, x + dx, 9.8 + dy, z + 0.18, w, h, 0.06, 0xff3ad4, aZ, 1, 2.6));
+        for (let i = 0; i < 7; i++) put(b, BOX, x + 2.2 - i * 0.55, 7.6 - Math.abs(i - 5) * 0 - (i > 4 ? 0 : 0), z + 0.2, 0.22, 0.22, 0.06, 0xffd23d, aZ, 2, 2.4);
+        [[-1.4, 8.0], [-1.4, 7.2], [-1.75, 7.6]].forEach(([dx, y]) => put(b, BOX, x + dx, y, z + 0.2, 0.22, 0.22, 0.06, 0xffd23d, aZ, 2, 2.4));
+      }
+      [[-46, -84], [50, -186]].forEach(([x, z]) => { const aZ = z - 2; put(b, CYL, x, 17, z, 0.5, 34, 0.5, 0x5a626c, aZ, 0, 1); put(b, CYL, x, 5, z, 1.4, 10, 1.4, 0x4a525c, aZ); [34, 24, 14].forEach((y) => put(b, BOX, x, y, z, 0.6, 0.6, 0.6, 0xff3030, aZ, 2, 3)); });
+      for (let i = 0; i < 9; i++) { const sd = i % 2 ? 1 : -1, z = -12 - i * 27; put(b, ICO, sd * rand(13, 36), -0.5, z, rand(6, 11), rand(1.3, 2.2), rand(5, 9), 0xa87848, z - 9); }
+      put(b, BOX, 11.6, 0.6, -34, 1.8, 0.7, 4, 0x7a3b22, -38, 0, 1, 0.05, 0.4, 0.18); put(b, BOX, 11.6, 1.2, -33.6, 1.5, 0.5, 1.8, 0x5a2c1a, -38, 0, 1, 0.05, 0.4, 0.18);
+      billboard(b, ads, -13, -52); billboard(b, ads, 13.4, -230);
+      set("desert", mesh(b), adMesh(ads, false));
+    }
+
+    // ---- mountain pass: a cliff on the right, pines and a drop on the left, a gallery
+    {
+      const b = mk(), ads = [];
+      guard(b, -9.7, 0xb8c2cc);
+      for (let i = 0; i < 16; i++) {
+        const z = -i * 16 - 8, aZ = z - 8, w = rand(5, 8), h = rand(22, 44), c = i % 2 ? 0x363c4a : 0x2a303c;
+        loft(b, [[0, w, 8.4, 1.6], [h * 0.6, w * 0.86, 8.0, 1.8], [h, w * 0.6, 6.5, 1.5]], 10.3 + w, z, c, aZ);
+        put(b, BOX, 10.3 + w, h + 0.3, z, w * 1.1, 0.7, 12, 0xe8f0ff, aZ);
+        if (i % 3 === 0) put(b, BOX, 10.6, rand(4, 9), z, 0.5, 0.5, 7, 0xe8f0ff, aZ);
+      }
+      const pine = (x, y, z, h) => { const aZ = z - 2; put(b, CYL, x, y + h * 0.12, z, 0.2, h * 0.24, 0.2, 0x4a3524, aZ); for (let k = 0; k < 3; k++) put(b, CONE, x, y + h * (0.36 + k * 0.24), z, h * (0.3 - k * 0.07), h * 0.36, h * (0.3 - k * 0.07), k % 2 ? 0x1d4a36 : 0x245a40, aZ); put(b, CONE, x, y + h * 0.98, z, h * 0.07, h * 0.12, h * 0.07, 0xe8f0ff, aZ); };
+      for (let i = 0; i < 26; i++) pine(-rand(11, 40), 0, -4 - i * 9.6 + rand(-3, 3), rand(5, 9.5));
+      for (let i = 0; i < 9; i++) { const z = -10 - i * 27; put(b, ICO, -rand(11, 26), 0.2, z, rand(1, 2.4), rand(0.8, 1.6), rand(1, 2.2), 0x4a5262, z - 3); }
+      { // an avalanche gallery: a roof over the road on a row of columns
+        const aZ = -146;
+        put(b, BOX, 0.3, 9.1, -121, 20.6, 0.7, 48, 0x565c66, aZ);
+        for (let i = 0; i < 7; i++) { put(b, BOX, -9.95, 4.4, -98 - i * 7.6, 0.8, 8.8, 0.8, 0x6a707a, aZ); put(b, BOX, 0.3, 8.6, -98 - i * 7.6, 20.4, 0.5, 0.6, 0x4a4f58, aZ); }
+        [-3.2, 3.2].forEach((x) => { for (let i = 0; i < 6; i++) put(b, BOX, x, 8.7, -101 - i * 7.6, 0.3, 0.1, 3.4, 0xffd9a0, aZ, 2, 2.2); });
+        put(b, BOX, 0.3, 9.6, -121, 21, 0.3, 48.4, 0xe8f0ff, aZ);
+      }
+      for (let i = 0; i < 5; i++) { const z = -28 - i * 8, aZ = z - 1; put(b, BOX, 9.6, 1.0, z, 0.12, 2, 0.12, 0x8a8f98, aZ); put(b, BOX, 9.55, 2.3, z, 0.1, 1.0, 1.0, 0x15171c, aZ); [0.55, -0.55].forEach((r) => put(b, BOX, 9.48, 2.3 + r * 0.2, z, 0.05, 0.14, 0.62, 0xffa53d, aZ, 1, 2.4, r * 1.4)); }
+      { // a cabin with its lamps lit
+        const z = -60, aZ = z - 4, x = -21;
+        put(b, BOX, x, 1.6, z, 6, 3.2, 5, 0x6a4a34, aZ);
+        [-1, 1].forEach((s) => put(b, BOX, x, 4.1, z + s * 1.4, 6.6, 0.3, 3.6, 0xe8f0ff, aZ, 0, 1, s * 0.6));
+        [-1.6, 1.6].forEach((dx) => put(b, BOX, x + dx, 1.8, z + 2.52, 1.0, 1.0, 0.05, 0xffd9a0, aZ, 2, 2));
+        put(b, BOX, x + 2, 5, z - 1, 0.7, 2.4, 0.7, 0x4a3a30, aZ);
+      }
+      { // a cable car over the pass
+        const z = -188, aZ = z - 2;
+        for (const sd of [-1, 1]) { put(b, BOX, sd * 26, 13, z, 0.8, 26, 0.8, 0x6a707a, aZ); put(b, BOX, sd * 26, 26.2, z, 3, 0.5, 1.2, 0x6a707a, aZ); }
+        strut(b, [-26, 26, z], [26, 26, z], 0.1, 0x15171c, aZ);
+        [-9, 8].forEach((x) => { put(b, BOX, x, 25, z, 0.1, 1.9, 0.1, 0x15171c, aZ); put(b, BOX, x, 22.9, z, 2.2, 2.3, 2.0, 0xc0392b, aZ); put(b, BOX, x, 23.3, z + 1.02, 1.8, 0.9, 0.05, 0xffe2a8, aZ, 2, 1.8); });
+      }
+      for (let i = 0; i < 6; i++) { const z = -202 - i * 7.6, aZ = -248; for (const sd of [-1, 1]) { put(b, BOX, sd * 9.85, 0.6, z, 0.5, 1.2, 7.6, 0x6a6e78, aZ); if (i % 2 === 0) { put(b, BOX, sd * 9.85, 1.9, z, 0.6, 1.4, 0.6, 0x7a7e88, aZ); put(b, BOX, sd * 9.85, 2.8, z, 0.34, 0.4, 0.34, 0xffd9a0, aZ, 2, 2.6); } } }
+      put(b, CYL, 26, 50, -80, 0.3, 14, 0.3, 0x8a8f98, -82); put(b, BOX, 26, 57.2, -80, 0.6, 0.6, 0.6, 0xff3030, -82, 2, 3);
+      billboard(b, ads, -13.4, -160, 7, 8, 4);
+      set("mountain", mesh(b), adMesh(ads, false));
+    }
+
+    // ---- tunnel: tiled walls, ribs, lines of light, fans, a way out every so often
+    {
+      const b = mk();
+      for (let i = 0; i < 16; i++) {
+        const z = -i * 16 - 8, aZ = z - 8;
+        for (const sd of [-1, 1]) {
+          put(b, BOX, sd * 9.9, 4.3, z, 0.5, 8.6, 16, 0x2a2c30, aZ);
+          put(b, BOX, sd * 9.62, 1.1, z, 0.08, 2.2, 16, 0x5a606a, aZ);
+          put(b, BOX, sd * 9.56, 2.3, z, 0.05, 0.1, 16, sd < 0 ? 0x35efff : 0xff3ad4, aZ, 1, 2.0);
+          put(b, BOX, sd * 9.4, 6.6, z, 0.5, 0.14, 16, 0x3a3d44, aZ);
+          put(b, BOX, sd * 6.2, 8.26, z, 0.4, 0.1, 16, 0xffd9a0, aZ, 2, 2.4);
+          put(b, BOX, sd * 9.5, 4.3, z - 7.7, 0.7, 8.6, 0.6, 0x3a3d44, aZ);
+        }
+        put(b, BOX, 0, 8.75, z, 20.4, 0.5, 16, 0x202226, aZ);
+        put(b, BOX, 0, 8.3, z - 7.7, 20, 0.6, 0.6, 0x3a3d44, aZ);
+        if (i % 3 === 1) [-3.4, 3.4].forEach((x) => { put(b, CYL, x, 7.5, z, 0.75, 3.2, 0.75, 0x4a4f58, aZ, 0, 1, Math.PI / 2); put(b, CYL, x, 7.5, z + 1.62, 0.6, 0.06, 0.6, 0x35efff, aZ, 1, 1.4, Math.PI / 2); });
+        if (i % 4 === 2) { put(b, BOX, 9.6, 1.3, z, 0.1, 2.4, 1.3, 0x2c6a44, aZ); put(b, BOX, 9.56, 2.9, z, 0.08, 0.5, 1.5, 0x5dffb0, aZ, 2, 2.4); put(b, BOX, -9.6, 1.5, z + 3, 0.2, 0.8, 0.6, 0xff7a2a, aZ, 1, 1.5); }
+      }
+      set("tunnel", mesh(b));
+    }
+    [BOX, CYL, CONE, ICO].forEach((ge) => ge.dispose());
+
+    // ---- floating dust, sand, snow or embers, in whatever the biome's air carries
+    this.motes = makeMotes({ count: 150, box: [44, 14, 70], center: [0, 6, -28], color: 0xffffff, size: 0.16, k: 1.2 });
+    this.motes.layers.set(1);
+    g.scene.add(this.motes);
+    g.decor(this.motes);
+    // ---- the fog bank a change of biome hides behind
+    this.curtain = new THREE.Mesh(new THREE.PlaneGeometry(900, 500), new THREE.MeshBasicMaterial({ color: 0x8090a0, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+    this.curtain.position.set(0, 60, -36);
+    this.curtain.renderOrder = 4;
+    this.curtain.visible = false;
+    this.curtain.layers.set(1);
+    g.scene.add(this.curtain);
+  }
+  setBiome(name) {
+    const g = this.g;
+    this.biome = name;
+    for (const k in this.sets) this.sets[k].visible = k === name;
+    const dt = name === "downtown";
+    [g.walls, g.cityDetail, g.signs, g.steam, g.towers, g.orrery].forEach((o) => { if (o) o.visible = dt; });
+    if (g.city) g.city.visible = dt || name === "coast";
+    const open = name !== "tunnel";
+    [g.props, g.halos, g.cones, g.sun, g.ridgeFar, g.ridgeNear].forEach((o) => { if (o) o.visible = open; });
+    const ry = RACER_BIOME_PAL[name].ridge || 1;
+    g.ridgeFar.scale.y = ry; g.ridgeNear.scale.y = ry;
+  }
+
+  // ===== events ====================================================================
+  buildEvents() {
+    const g = this.g, s = g.scene;
+    const D = (this.director = new EventDirector(g));
+    const BOX = new THREE.BoxGeometry(1, 1, 1), CYL = new THREE.CylinderGeometry(1, 1, 1, 10);
+    const basic = (b) => { const m = new THREE.Mesh(b.build("color"), this.glowMat); m.frustumCulled = false; m.visible = false; return m; };
+    const hide = (...o) => o.forEach((x) => { x.visible = false; });
+    const open = () => this.biome !== "tunnel";
+    const fade = (t, dur, a = 0.6, b = 0.8) => smoothstep(0, a, t) * (1 - smoothstep(dur - b, dur, t));
+
+    // -- 1. meteor shower: streaks across the sky
+    const mg = new THREE.PlaneGeometry(1, 1);
+    this.meteors = Array.from({ length: 7 }, () => { const m = new THREE.Mesh(mg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 })); m.visible = false; m.layers.set(1); s.add(m); return m; });
+    D.add({ id: "meteors", dur: 5, can: () => open() && g.skyP > 0.45,
+      start: (r) => { r.m = this.meteors.map((m, i) => ({ m, t0: i * 0.45 + rand(0, 0.3), x: rand(-260, 200), y: rand(120, 200), vx: rand(70, 130), vy: -rand(36, 60), col: Math.random() < 0.5 ? 0xbfe8ff : 0xffe2b0 })); },
+      update: (dt, t, r) => { for (const o of r.m) { const k = (t - o.t0) / 1.3; o.m.visible = k > 0 && k < 1; if (!o.m.visible) continue; o.m.position.set(o.x + o.vx * k * 1.3, o.y + o.vy * k * 1.3, -420); o.m.rotation.z = Math.atan2(o.vy, o.vx); o.m.scale.set(46, 2.4, 1); o.m.material.color.set(o.col).multiplyScalar(2.2); o.m.material.opacity = Math.sin(k * Math.PI); } },
+      end: () => hide(...this.meteors) });
+
+    // -- 2. fireworks over the skyline (also the answer to a right answer)
+    D.add({ id: "fireworks", big: true, dur: 3.2, can: open,
+      start: (r) => { r.n = 0; r.next = 0; r.max = r.arg && r.arg.n ? r.arg.n : 5; },
+      update: (dt, t, r) => {
+        if (r.n < r.max && t >= r.next) {
+          r.n++; r.next = t + rand(0.42, 0.6); // never more than two or three bursts a second
+          const p = new THREE.Vector3(rand(-150, 150), rand(70, 135), -300), col = [COLORS.magenta, COLORS.cyan, COLORS.yellow, COLORS.lime, COLORS.orange, 0xffffff][Math.floor(Math.random() * 6)];
+          g.bursts.burst(p, col, { n: 64, speed: 34, size: 3.4, life: 1.7, gravity: -9 });
+          g.bursts.burst(p, 0xffffff, { n: 18, speed: 16, size: 2.2, life: 0.9, gravity: -5 });
+        }
+      } });
+
+    // -- 3. lightning: one bolt, one flash of sky
+    const lpos = new Float32Array(14 * 18);
+    const lgeo = new THREE.BufferGeometry();
+    lgeo.setAttribute("position", new THREE.BufferAttribute(lpos, 3).setUsage(THREE.DynamicDrawUsage));
+    this.bolt = new THREE.Mesh(lgeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }));
+    this.bolt.frustumCulled = false; this.bolt.visible = false; this.bolt.layers.set(1);
+    s.add(this.bolt);
+    D.add({ id: "lightning", big: true, flashy: true, dur: 1.4, can: () => open() && this.pal.rain > 0.5,
+      start: () => {
+        let x = rand(-220, 220), y = 230;
+        for (let i = 0; i < 14; i++) {
+          const nx = x + rand(-22, 22), ny = y - 14, w = 1.6 - i * 0.07, o = i * 18;
+          [[x - w, y], [x + w, y], [nx + w, ny], [x - w, y], [nx + w, ny], [nx - w, ny]].forEach(([px, py], k) => { lpos[o + k * 3] = px; lpos[o + k * 3 + 1] = py; lpos[o + k * 3 + 2] = -430; });
+          x = nx; y = ny;
+        }
+        lgeo.attributes.position.needsUpdate = true;
+        this.bolt.visible = true;
+      },
+      update: (dt, t) => { const k = 1 - smoothstep(0.05, 0.5, t); this.bolt.material.color.setRGB(3.5 * k, 3.7 * k, 4.2 * k); this.skyFlash = Math.max(this.skyFlash || 0, k * 0.9); this.bolt.visible = k > 0.01; },
+      end: () => hide(this.bolt) });
+
+    // -- 4. a distant explosion: a flash on the horizon, a ring across the ground, then the shock arrives
+    this.blast = glowSprite(neon(0xffb86a, 2.4), 10, 0);
+    this.blast.visible = false; this.blast.layers.set(1);
+    this.blastRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    this.blastRing.rotation.x = -Math.PI / 2; this.blastRing.visible = false; this.blastRing.layers.set(1);
+    s.add(this.blast, this.blastRing);
+    D.add({ id: "explosion", big: true, flashy: true, dur: 2.6, can: open,
+      start: (r) => { r.p = new THREE.Vector3(rand(-150, 150), 14, -290); r.hit = false; this.blast.position.copy(r.p); this.blastRing.position.set(r.p.x, 0.3, r.p.z); this.blast.visible = this.blastRing.visible = true; g.bursts.burst(r.p, COLORS.orange, { n: 50, speed: 22, size: 4, life: 1.6, gravity: 3 }); },
+      update: (dt, t, r) => {
+        this.blast.scale.setScalar(30 + t * 70); this.blast.material.opacity = Math.max(0, 1 - t / 1.1);
+        const k = t / 2.2; this.blastRing.scale.setScalar(1 + k * 330); this.blastRing.material.opacity = Math.max(0, 1 - k) * 0.8;
+        if (!r.hit && t > 1.5) { r.hit = true; GFX.ripple(g.camera, new THREE.Vector3(r.p.x * 0.2, 2, -30), 0.5, 0.8); g.shake(0.16); }
+      },
+      end: () => hide(this.blast, this.blastRing) });
+
+    // -- 5. a UFO: slides in, hangs with its beam down, and is gone
+    { const b = new RacerBatch(), V = (r, y) => new THREE.Vector2(r, y);
+      const hull = new THREE.LatheGeometry([V(0.2, -1.2), V(7, -0.2), V(9, 0.5), V(5, 1.4), V(3.4, 1.5)], 16);
+      b.add(hull, null, 0x2a3140); hull.dispose();
+      const dome = new THREE.SphereGeometry(3.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+      b.add(dome, racerM(0, 1.4, 0), 0x9fe8ff, 0.8); dome.dispose();
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; b.add(BOX, racerM(Math.cos(a) * 8.2, 0.3, Math.sin(a) * 8.2, 0.9, 0.5, 0.9), [0x5dffb0, 0xff3ad4, 0xffd23d][i % 3], 2.6); }
+      this.ufo = new THREE.Group(); this.ufoBody = basic(b); this.ufoBody.visible = true;
+      this.ufoBeam = racerShaft(0x8fffe0, 1.6, 11, 60, 14); this.ufoBeam.rotation.x = Math.PI;
+      this.ufo.add(this.ufoBody, this.ufoBeam); this.ufo.visible = false; s.add(this.ufo); }
+    D.add({ id: "ufo", dur: 9, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.x = rand(18, 70) * r.sd; this.ufo.visible = true; },
+      update: (dt, t, r) => {
+        const inn = smoothstep(0, 2.2, t), out = smoothstep(7, 9, t);
+        this.ufo.position.set(lerp(-r.sd * 320, r.x, inn) + out * r.sd * 420 + Math.sin(t * 1.3) * 3, lerp(160, 62, inn) + out * 180 + Math.sin(t * 2.1) * 1.5, -230);
+        this.ufoBody.rotation.y = t * 1.6; this.ufo.rotation.z = Math.sin(t * 1.3) * 0.08 - out * r.sd * 0.5;
+        this.ufoBeam.material.uniforms.uI.value = 0.55 * smoothstep(2.4, 3.2, t) * (1 - smoothstep(6.2, 6.9, t)) * (1 - 0.4 * this.calmK);
+      },
+      end: () => hide(this.ufo) });
+
+    // -- 6. a neon blimp with an ad on its flank, crossing the whole sky
+    { const b = new RacerBatch();
+      const hull = new THREE.IcosahedronGeometry(1, 2); b.add(hull, racerM(0, 0, 0, 34, 10, 10), 0x1c2230); hull.dispose();
+      b.add(BOX, racerM(0, -10.5, 0, 9, 3, 4), 0x2a3140); b.add(BOX, racerM(0, -10.4, 2.05, 7, 1.2, 0.1), 0xffe2a8, 2);
+      [[-30, 5, 0], [-30, -5, 0], [-30, 0, 5], [-30, 0, -5]].forEach(([x, y, z]) => b.add(BOX, racerM(x, y, z, 10, y ? 7 : 0.6, z ? 7 : 0.6), 0x2a3140));
+      for (let i = 0; i < 9; i++) b.add(BOX, racerM(-28 + i * 7, -9.2 + Math.abs(i - 4) * 1.35, 9.4 - Math.abs(i - 4) * 1.5, 1, 1, 1), i % 2 ? 0xff3ad4 : 0x35efff, 2.6);
+      b.add(BOX, racerM(34.5, 0, 0, 1.2, 1.2, 1.2), 0xff3030, 3);
+      this.blimp = new THREE.Group(); const body = basic(b); body.visible = true;
+      const ge = new THREE.PlaneGeometry(30, 9); ge.setAttribute("aZ", new THREE.Float32BufferAttribute(new Float32Array(4), 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Float32Array(4).fill(0.37), 1));
+      const ad = new THREE.Mesh(ge, racerAdMaterial(g.shared, RacerGame.adTex, false, false)); ad.position.set(0, 0.5, 10.1);
+      this.blimp.add(body, ad); this.blimp.visible = false; s.add(this.blimp); }
+    D.add({ id: "blimp", dur: 30, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(85, 125); this.blimp.visible = true; this.blimp.rotation.y = r.sd > 0 ? 0 : 0; },
+      update: (dt, t, r) => { this.blimp.position.set(r.sd * (-330 + t * 22), r.y + Math.sin(t * 0.5) * 2, -360); this.blimp.scale.x = r.sd; },
+      end: () => hide(this.blimp) });
+
+    // -- 7. a helicopter sweeping a searchlight over the road
+    { const b = new RacerBatch();
+      const hull = new THREE.IcosahedronGeometry(1, 1); b.add(hull, racerM(0, 0, 0, 2.4, 1.5, 1.4), 0x20262e); hull.dispose();
+      b.add(BOX, racerM(-3.4, 0.3, 0, 4.6, 0.36, 0.36), 0x20262e); b.add(BOX, racerM(-5.6, 1.0, 0, 0.5, 1.6, 0.12), 0x20262e);
+      b.add(BOX, racerM(1.2, 0.2, 0, 1.2, 0.8, 1.2), 0x8fd8ff, 0.5);
+      [-0.8, 0.8].forEach((z) => { b.add(BOX, racerM(0, -1.7, z, 3.4, 0.1, 0.1), 0x3a3f48); [-1, 1].forEach((x) => b.add(BOX, racerM(x, -1.25, z * 0.9, 0.08, 0.9, 0.08), 0x3a3f48)); });
+      b.add(BOX, racerM(0, 0.2, 1.42, 0.3, 0.3, 0.1), 0x30ff60, 3); b.add(BOX, racerM(0, 0.2, -1.42, 0.3, 0.3, 0.1), 0xff3030, 3); b.add(BOX, racerM(-5.7, 1.9, 0, 0.26, 0.26, 0.26), 0xffffff, 3);
+      b.add(CYL, racerM(1.9, -0.9, 0, 0.36, 0.5, 0.36), 0xfff0d2, 3);
+      this.heli = new THREE.Group(); const body = basic(b); body.visible = true;
+      this.rotor = new THREE.Mesh(new THREE.CircleGeometry(4.6, 18), new THREE.MeshBasicMaterial({ color: 0x9fb4c8, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+      this.rotor.rotation.x = -Math.PI / 2; this.rotor.position.y = 1.7;
+      const blades = new RacerBatch(); [0, Math.PI / 2].forEach((a) => blades.add(BOX, racerM(0, 1.72, 0, 9.2, 0.05, 0.3, 0, a), 0x15171c));
+      this.blades = basic(blades); this.blades.visible = true;
+      this.heliBeam = racerShaft(0xfff0d2, 0.4, 7, 46, 12); this.heliBeam.position.set(1.9, -1.0, 0);
+      this.heli.add(body, this.rotor, this.blades, this.heliBeam); this.heli.visible = false; s.add(this.heli); }
+    D.add({ id: "helicopter", dur: 10, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(24, 32); r.z = rand(-120, -70); this.heli.visible = true; },
+      update: (dt, t, r) => {
+        const x = r.sd * (-70 + t * 14);
+        this.heli.position.set(x, r.y + Math.sin(t * 1.1) * 0.8, r.z);
+        this.heli.rotation.set(0, r.sd > 0 ? 0 : Math.PI, r.sd * -0.12);
+        this.blades.rotation.y = t * 14;
+        this.heliBeam.rotation.set(Math.PI + Math.sin(t * 0.8) * 0.3, 0, -0.5 + Math.sin(t * 0.55) * 0.3);
+        this.heliBeam.material.uniforms.uI.value = 0.42 * fade(t, 10) * (1 - 0.45 * this.calmK) * (GFX.opt.beams ? 1 : 0);
+      },
+      end: () => hide(this.heli) });
+
+    // -- 8. delivery drones in a line, each with a parcel and a winking light
+    { const b = new RacerBatch();
+      b.add(BOX, racerM(0, 0, 0, 0.9, 0.22, 0.9), 0x20262e); b.add(BOX, racerM(0, -0.5, 0, 0.7, 0.6, 0.7), 0xb8874a);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => { b.add(BOX, racerM(i * 0.6, 0.05, j * 0.6, 0.6, 0.06, 0.08, 0, Math.PI / 4 * i * j), 0x3a3f48); b.add(CYL, racerM(i * 0.85, 0.16, j * 0.85, 0.42, 0.02, 0.42), 0x8fd8ff, 0.55); });
+      b.add(BOX, racerM(0, 0.16, 0.5, 0.14, 0.14, 0.14), 0x5dffb0, 3); b.add(BOX, racerM(0, 0.16, -0.5, 0.14, 0.14, 0.14), 0xff3030, 3);
+      const ge = b.build("color");
+      this.drones = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(ge, this.glowMat); m.visible = false; m.frustumCulled = false; s.add(m); return m; }); }
+    D.add({ id: "drones", dur: 8, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(10.5, 14); r.z = rand(-60, -34); },
+      update: (dt, t, r) => this.drones.forEach((m, i) => { const x = r.sd * (-34 + (t - i * 0.5) * 9); m.visible = Math.abs(x) < 34; m.position.set(x, r.y + Math.sin(t * 2.4 + i) * 0.35 + i * 0.3, r.z - i * 1.6); m.rotation.set(0, r.sd > 0 ? Math.PI / 2 : -Math.PI / 2, Math.sin(t * 2 + i) * 0.08); m.scale.setScalar(1.25); }),
+      end: () => hide(...this.drones) });
+
+    // -- 9. a laser show from the rooftops
+    this.lasers = [0xff3ad4, 0x35efff, 0x5dffb0, 0xffd23d].map((c, i) => { const l = racerShaft(c, 0.25, 1.4, 240, 6); l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.visible = false; s.add(l); return l; });
+    D.add({ id: "lasers", dur: 8, can: () => open() && this.biome !== "desert" && this.biome !== "mountain",
+      start: () => this.lasers.forEach((l) => { l.visible = true; }),
+      update: (dt, t) => this.lasers.forEach((l, i) => { l.rotation.set(-0.5 + Math.sin(t * 0.7 + i * 1.7) * 0.4, 0, Math.sin(t * 0.9 + i * 2.3) * 0.9); l.material.uniforms.uI.value = 0.75 * fade(t, 8) * (1 - 0.5 * this.calmK) * (GFX.opt.beams ? 1 : 0); }),
+      end: () => hide(...this.lasers) });
+
+    // -- 10. birds crossing in a loose V
+    { const pos = [], wing = [], seed = [];
+      for (let i = 0; i < 11; i++) { const bx = -Math.abs(i - 5) * 3 + rand(-1, 1), bz = (i - 5) * 3.4, by = rand(-1.5, 1.5);
+        [[0, 0, 0, 0], [-1.2, 0, 2.0, 1], [0.9, 0, 0, 0], [0, 0, 0, 0], [0.9, 0, 0, 0], [-1.2, 0, -2.0, 1]].forEach(([x, y, z, w]) => { pos.push(bx + x, by + y, bz + z); wing.push(w); seed.push(i * 0.71); }); }
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("aWing", new THREE.Float32BufferAttribute(wing, 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+      this.birds = new THREE.Mesh(ge, new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x0a0c12) } }, side: THREE.DoubleSide,
+        vertexShader: "attribute float aWing; attribute float aSeed; uniform float uTime; void main(){ vec3 p = position; p.y += aWing * sin(uTime * 7.0 + aSeed * 6.0) * 1.3; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+        fragmentShader: "uniform vec3 uColor; void main(){ gl_FragColor = vec4(uColor, 1.0); }" }));
+      this.birds.frustumCulled = false; this.birds.visible = false; s.add(this.birds); }
+    D.add({ id: "birds", dur: 11, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(38, 60); r.z = rand(-190, -120); this.birds.visible = true; this.birds.material.uniforms.uColor.value.copy(g.scene.fog.color).multiplyScalar(0.25); },
+      update: (dt, t, r) => { this.birds.position.set(r.sd * (-190 + t * 36), r.y + Math.sin(t * 0.6) * 3, r.z); this.birds.rotation.y = r.sd > 0 ? 0 : Math.PI; },
+      end: () => hide(this.birds) });
+
+    // -- 11. an elevated train crossing a viaduct ahead: we pass under it
+    { const b = new RacerBatch();
+      b.add(BOX, racerM(0, 11.4, 0, 150, 0.9, 5.2), 0x2a2f38); b.add(BOX, racerM(0, 12.1, 0, 150, 0.3, 0.5), 0x35efff, 1.6);
+      [-9.7, 9.7, -30, 30, -52, 52].forEach((x) => b.add(BOX, racerM(x, 5.5, 0, 1.2, 11, 2.6), 0x343a44));
+      [-2.4, 2.4].forEach((z) => b.add(BOX, racerM(0, 12.0, z, 150, 0.9, 0.2), 0x3a4048));
+      this.viaduct = new THREE.Group(); const deck = basic(b); deck.visible = true;
+      const tb = new RacerBatch();
+      for (let i = 0; i < 6; i++) { const x = i * 13.4; tb.add(BOX, racerM(x, 14.2, 0, 12.6, 3.2, 3.4), i ? 0xd8dde4 : 0xc0392b, 0.5); tb.add(BOX, racerM(x, 14.6, 1.72, 11.4, 1.0, 0.06), 0xffe2a8, 1.9); tb.add(BOX, racerM(x, 14.6, -1.72, 11.4, 1.0, 0.06), 0xffe2a8, 1.9); tb.add(BOX, racerM(x, 12.75, 1.72, 12.6, 0.14, 0.06), 0xff3ad4, 2.2); }
+      tb.add(BOX, racerM(-6.4, 13.6, 0, 0.1, 0.6, 2.4), 0xfff2d8, 4);
+      this.train = basic(tb); this.train.visible = true;
+      this.viaduct.add(deck, this.train); this.viaduct.visible = false; s.add(this.viaduct); }
+    D.add({ id: "maglev", dur: 20, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; this.viaduct.position.set(0, 0, -252); this.viaduct.visible = true; },
+      update: (dt, t, r) => {
+        this.viaduct.position.z += this.step;
+        const k = (this.viaduct.position.z + 252) / 262;
+        this.train.position.x = -r.sd * (150 - k * 260) - (r.sd > 0 ? 67 : 0); this.train.scale.x = r.sd;
+        this.viaduct.children[0].material.fog = true;
+        if (this.viaduct.position.z > 16) return false;
+      },
+      end: () => hide(this.viaduct) });
+
+    // -- 12-16. things traffic does: a near miss, a rival, a chase, a breakdown
+    D.add({ id: "near-miss", dur: 9, can: () => g.state !== "ask" || g.lane !== null,
+      start: (r) => {
+        const n = g.round ? g.round.n : 4, lanes = RACER_GATE_LANES[n] || RACER_GATE_LANES[4];
+        const mine = g.carX, x = lanes.slice().sort((a, b2) => Math.abs(a - mine) - Math.abs(b2 - mine))[1];
+        r.c = this.spawn(Math.random() < 0.5 ? "sedan" : "bike", "M", { special: "pass", dir: 1, x, tx: x, z: 15, speed: g.speed + 26, y: 0 });
+        if (!r.c) return false;
+        r.c.plan = (c, dt, sp) => { c.speed = Math.max(c.speed, sp + 24); };
+      },
+      update: (dt, t, r) => r.c.on && r.c.special === "pass" });
+    D.add({ id: "rival", big: true, dur: 12,
+      start: (r) => {
+        const sd = g.carX > 0 ? -1 : 1;
+        r.c = this.spawn("rival", "M", { special: "rival", dir: 1, x: sd * 3.75, tx: sd * 3.75, z: 15, speed: g.speed + 10, y: 0, color: [0xff3ad4, 0xffd23d, 0x35efff][Math.floor(Math.random() * 3)] });
+        if (!r.c) return false;
+        r.c.plan = (c, dt, sp) => { c.speed = sp + (c.z > -16 ? 10 : c.z > -40 ? 5 : 30); if (c.z < -18 && c.z > -40) c.tx = sd * 1.25; c.brake = c.z < -16 && c.z > -40 ? 1 : 0; };
+      },
+      update: (dt, t, r) => r.c.on && r.c.special === "rival" });
+    D.add({ id: "chase", dur: 9, can: open,
+      start: (r) => {
+        const x = rand(-4, 4), y = rand(10.5, 13);
+        r.a = this.spawn("hover", "H", { special: "run", dir: 1, x, tx: x, y, z: 18, speed: g.speed + 34 });
+        r.b = this.spawn("police", "H", { special: "cop", dir: 1, x: x + 0.6, tx: x + 0.6, y: y + 0.4, z: 34, speed: g.speed + 34, color: 0xf2f2f2 });
+        if (!r.a || !r.b) { if (r.a) r.a.on = false; if (r.b) r.b.on = false; return false; }
+        r.a.plan = (c, dt, sp) => { c.speed = sp + 34; c.tx = x + Math.sin(c.age * 2.2) * 2.6; };
+        r.b.plan = (c, dt, sp) => { c.speed = sp + 34; c.tx = x + Math.sin(c.age * 2.2 - 0.7) * 2.6; };
+      },
+      update: (dt, t, r) => r.b.on && r.b.special === "cop" });
+    D.add({ id: "breakdown", dur: 16, can: () => this.biome !== "tunnel",
+      start: (r) => {
+        r.c = this.spawn(Math.random() < 0.6 ? "sedan" : "truck", "R", { special: "stall", dir: 1, x: 8.7, tx: 8.7, z: -244, speed: 0, hazard: 1 });
+        if (!r.c) return false;
+      },
+      update: (dt, t, r) => r.c.on && r.c.special === "stall" });
+
+    // -- 17. a squall: the rain (or dust, or snow) comes down hard, the road rings with it
+    D.add({ id: "squall", dur: 8, can: open, start: () => {}, update: (dt, t) => { this.gust = fade(t, 8, 1.5, 2); }, end: () => { this.gust = 0; } });
+
+    // -- 18. steam bursts from a manhole as we pass
+    D.add({ id: "steam-burst", dur: 2.4, can: () => this.biome === "downtown" || this.biome === "tunnel",
+      start: (r) => { r.x = (Math.random() < 0.5 ? -1 : 1) * 5.4; r.z = -70; r.n = 0; },
+      update: (dt, t, r) => { r.z += this.step; r.n -= dt; if (r.n <= 0 && r.z < 6) { r.n = 0.07; g.bursts.burst(new THREE.Vector3(r.x, 0.4, r.z), 0xdfe8ff, { n: 4, speed: 3.5, size: 0.9, life: 0.8, gravity: 7, spread: 0.4 }); } return r.z < 10; } });
+
+    BOX.dispose(); CYL.dispose();
+    this.gust = 0; this.skyFlash = 0; this.step = 0;
+  }
+
+  // What the world does when an answer lands (look only).
+  onAnswer(ok) {
+    if (ok) {
+      this.partT = 1.5; // traffic pulls aside for the boost
+      if (!GFX.calm) this.director.force("fireworks", { n: 3 });
+    } else GFX.glitch(1, 0.4);
+  }
+
+  update(dt, sp, step, sky) {
+    const g = this.g, P = RACER_BIOME_PAL;
+    this.t += dt;
+    this.step = step;
+    this.calmK += ((g.state === "ask" ? 1 : 0) - this.calmK) * Math.min(1, dt * 2);
+    if (g.run.answered !== this.lastAnswered) { this.lastAnswered = g.run.answered; this.onAnswer(g.run.streak > 0); }
+    // ---- a change of biome happens inside a bank of fog
+    const want = racerBiomeAt(g.year);
+    if (want !== this.biome && !this.swap && g.state !== "over") this.swap = { to: want, t: 0, done: false, dark: want === "tunnel" || this.biome === "tunnel" };
+    let fogK = 0;
+    if (this.swap) {
+      const s = this.swap;
+      s.t += dt;
+      fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, 3.2, s.t);
+      if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); }
+      if (s.t > 3.2) this.swap = null;
+    }
+    // ---- palette: ease toward this biome's, then lay it over the career sky
+    const T = P[this.biome], k = Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
+    for (const n of ["fogMix", "horMix", "gridMix", "baseMix", "rain", "wet", "dust", "far", "lamps"]) pal[n] += (T[n] - pal[n]) * k;
+    for (const n in this.palC) if (T[n + "Mix"] > 0) this.palC[n].lerp(this._c.set(T[n]), k);
+    const fog = g.scene.fog, su = g.sky.material.uniforms, gu = g.groundMat.uniforms;
+    fog.color.lerp(this.palC.fog, pal.fogMix);
+    g.scene.background.copy(fog.color);
+    su.uHorizon.value.lerp(this.palC.hor, pal.horMix);
+    su.uMid.value.lerp(this.palC.hor, pal.horMix * 0.35);
+    su.uGlow.value += (this.skyFlash || 0) * 3;
+    this.skyFlash = Math.max(0, (this.skyFlash || 0) - dt * 3);
+    gu.uGrid.value.lerp(this._c.copy(this.palC.grid).multiplyScalar(0.9), pal.gridMix);
+    gu.uBase.value.lerp(this.palC.base, pal.baseMix);
+    gu.uReflect.value *= GFX.opt.wet ? pal.wet : 0;
+    if (gu.uRain) gu.uRain.value = GFX.opt.wet ? clamp(pal.rain * (0.45 + this.gust * 0.9), 0, 1.4) : 0;
+    g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
+    const curtainCol = this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    this.curtain.visible = fogK > 0.01;
+    this.curtain.material.opacity = fogK;
+    this.curtain.material.color.copy(curtainCol);
+    this.curtain.position.x = g.camera.position.x;
+    fog.near = lerp(30, 5, fogK);
+    fog.far = lerp(pal.far, 40, fogK);
+    this.cityFog = lerp(900, 60, fogK);
+    // ---- weather
+    const ru = g.rain.material.uniforms;
+    g.rain.visible = pal.rain > 0.05;
+    ru.uColor.value.multiplyScalar(pal.rain * (1 + this.gust * 1.6));
+    const mo = this.motes.material.uniforms;
+    if (mo.uColor) mo.uColor.value.copy(this.biome === "desert" ? this._c.set(0xffc890) : this.biome === "mountain" ? this._c.set(0xffffff) : this._c.copy(sky.light)).multiplyScalar(0.5 + pal.dust * (0.9 + this.gust * 1.5));
+    if (this.motes.userData.drift) this.motes.userData.drift(this.t * (1 + sp * 0.02));
+    sky.dust = this.biome === "desert" ? this._c2 || (this._c2 = new THREE.Color(0xd9a066)) : null;
+    // ---- far showpieces of the coast
+    if (this.sets.coast.visible) {
+      this.beam.rotation.set(Math.PI / 2 - 0.06, 0, this.t * 0.35);
+      this.beam.material.uniforms.uI.value = GFX.opt.beams ? 0.5 * (0.3 + 0.7 * sky.lamps) : 0;
+      this.wheel.rotation.z = this.t * 0.12;
+      const sea = this.sea.material.uniforms;
+      sea.uSkyC.value.copy(su.uHorizon.value);
+      sea.uReflect.value = GFX.lite || !GFX.opt.wet ? 0 : 1;
+      sea.uDeep.value.set(0x06323c).lerp(fog.color, 0.25);
+    }
+    // ---- the sun breathes
+    g.sun.userData.disc.material.uniforms.uI.value = sky.sunI * (1 + 0.07 * Math.sin(this.t * 1.1));
+    this.updateTraffic(dt, sp, sky);
+    this.director.update(dt, g.state === "ask");
+  }
+}
+
 /* ---- 22-boss.js ---- */
 // BOSS RUSH — every chapter has a boss that only falls to its hardest questions.
 // The boss charges an attack while you read; answer right to shoot first.
 // Reuses blasterMerge() and BlasterShards from 20-blaster.js (concatenated first).
 
-// The boss's eye: a lit iris with a slit pupil, drawn for HDR (it glows).
-function bossEyeTexture(color) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const x = c.getContext("2d");
-  const lid = () => {
-    x.beginPath();
-    x.moveTo(6, 64);
-    x.quadraticCurveTo(64, 10, 122, 64);
-    x.quadraticCurveTo(64, 118, 6, 64);
-    x.closePath();
-  };
-  x.shadowColor = color;
-  x.shadowBlur = 16;
-  lid();
-  x.fillStyle = "#12061f";
-  x.fill();
-  x.shadowBlur = 0;
-  x.save();
-  lid();
-  x.clip();
-  const sc = x.createRadialGradient(64, 64, 8, 64, 64, 60);
-  sc.addColorStop(0, "#fff8ee");
-  sc.addColorStop(0.7, "#e8dcff");
-  sc.addColorStop(1, "#8a78b8");
-  x.fillStyle = sc;
-  x.fillRect(0, 0, 128, 128);
-  const ir = x.createRadialGradient(64, 64, 3, 64, 64, 27);
-  ir.addColorStop(0, "#ffffff");
-  ir.addColorStop(0.3, color);
-  ir.addColorStop(0.85, color);
-  ir.addColorStop(1, "#1a0626");
-  x.fillStyle = ir;
-  x.beginPath();
-  x.arc(64, 64, 27, 0, Math.PI * 2);
-  x.fill();
-  x.fillStyle = "#06010e";
-  x.beginPath();
-  x.ellipse(64, 64, 5.5, 21, 0, 0, Math.PI * 2);
-  x.fill();
-  x.fillStyle = "rgba(255,255,255,0.92)";
-  x.beginPath();
-  x.arc(74, 53, 5, 0, Math.PI * 2);
-  x.fill();
-  x.restore();
-  lid();
-  x.lineWidth = 6;
-  x.strokeStyle = "#0a0414";
-  x.stroke();
-  return new THREE.CanvasTexture(c);
-}
-
-// A summoning circle for the floor under the boss (white; tinted by the material).
 function bossRuneTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 512;
@@ -8915,93 +9854,13 @@ class BossGame extends QuizGame {
   // piston arms, a ribbed gut lit from inside and a thruster where legs would be.
   // It offers the same handles as the other bosses (core, eye, rings, orbs, charge,
   // sparks), so the fight's animation drives it unchanged.
-  makeCyborg() {
-    const cfg = this.cfg, hex = cfg.color;
-    const grp = new THREE.Group();
-    const M = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
-    const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-    const cyl = (rt, rb, h, n = 10) => new THREE.CylinderGeometry(rt, rb, h, n);
-    const ARMOR = new THREE.Color(1, 1, 1), PLATE = new THREE.Color(1.5, 1.5, 1.7), DARK = new THREE.Color(0.5, 0.5, 0.55);
-    const parts = [];
-    const add = (geo, matrix, color = ARMOR) => parts.push({ geo, matrix, color });
-    // chest: a barrel with two angled breastplates and a keel between them
-    add(box(3.5, 2.1, 1.9), M(0, 0.7, 0));
-    [-1, 1].forEach((sd) => {
-      add(box(1.55, 1.75, 0.34), M(sd * 0.88, 0.82, 1.02, -0.1, sd * 0.2, 0), PLATE);
-      add(box(1.2, 0.4, 0.4), M(sd * 0.95, -0.22, 0.95, 0.25, sd * 0.2, 0), DARK);
-    });
-    add(box(0.34, 1.9, 0.5), M(0, 0.78, 1.12, -0.1, 0, 0), DARK);
-    // gut: ribs with glowing gaps, then the hips and a thruster
-    for (let i = 0; i < 4; i++) add(box(2.15 - i * 0.12, 0.2, 1.45 - i * 0.06), M(0, -0.62 - i * 0.36, 0.05), i % 2 ? DARK : ARMOR);
-    add(box(2.7, 0.75, 1.7), M(0, -2.25, 0), PLATE);
-    [-1, 1].forEach((sd) => add(box(0.9, 0.9, 1.3), M(sd * 1.35, -2.5, 0.05, 0, 0, sd * 0.2)));
-    add(cyl(0.95, 0.5, 0.8, 8), M(0, -3.0, 0), DARK);
-    // gorget and a tall back plate behind the head
-    add(box(2.0, 0.55, 1.7), M(0, 1.98, 0.05), PLATE);
-    add(box(2.5, 1.35, 0.3), M(0, 2.55, -0.78, 0.12, 0, 0));
-    [-1, 1].forEach((sd) => add(cyl(0.2, 0.26, 1.7, 8), M(sd * 1.15, 2.5, -1.15, 0.15, 0, sd * 0.1), DARK));
-    // shoulders: ball joints under great slab shields
-    [-1, 1].forEach((sd) => {
-      add(new THREE.IcosahedronGeometry(0.82, 0), M(sd * 2.25, 1.5, 0));
-      add(box(1.95, 2.55, 0.42), M(sd * 2.95, 0.95, 0.62, 0.05, sd * 0.55, sd * -0.1), PLATE);
-      add(box(1.6, 0.35, 0.5), M(sd * 2.9, 2.28, 0.6, 0.05, sd * 0.55, sd * -0.1), DARK);
-      // arm: piston upper arm, elbow, heavy forearm, fist
-      add(cyl(0.48, 0.42, 1.5, 8), M(sd * 2.55, 0.25, -0.1, 0, 0, sd * -0.08), DARK);
-      add(new THREE.IcosahedronGeometry(0.52, 0), M(sd * 2.62, -0.62, 0));
-      add(box(0.95, 1.9, 1.05), M(sd * 2.72, -1.62, 0.42, -0.42, 0, 0));
-      add(box(0.3, 1.5, 0.3), M(sd * 3.22, -1.55, 0.5, -0.42, 0, 0), DARK);
-      add(box(0.92, 0.72, 0.95), M(sd * 2.72, -2.62, 0.98, -0.42, 0, 0));
-    });
-    // jaw, eye band and skull implants (the head's metal)
-    add(box(0.82, 0.4, 0.72), M(0, 2.3, 0.42), PLATE);
-    add(box(0.92, 0.17, 0.3), M(0, 2.84, 0.74), DARK);
-    add(box(0.12, 0.2, 1.0), M(0, 3.36, 0.1, -0.25, 0, 0), DARK);
-    [-1, 1].forEach((sd) => add(box(0.1, 0.5, 0.5), M(sd * 0.56, 2.75, 0.05), DARK));
-    const bodyGeo = blasterMerge(parts);
-    const mat = Object.assign(glossy(0x121318, { env: this.env, metal: 0.85, rough: 0.4, envI: 0.85, emissive: hex, emissiveK: 0.04 }), { vertexColors: true });
-    const body = new THREE.Group();
-    body.add(new THREE.Mesh(bodyGeo, mat));
-    // the skull: pale, bald, matte
-    const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), glossy(0xc9b2ac, { env: this.env, metal: 0.05, rough: 0.8, envI: 0.35 }));
-    skull.scale.set(0.9, 1.12, 1);
-    skull.position.set(0, 2.82, 0.2);
-    body.add(skull);
-    // red light: slits on the breastplates, the gut between the ribs, shield edges, vents
-    const lit = [];
-    const glow = (geo, matrix, k = 2.4) => lit.push({ geo, matrix, color: new THREE.Color(k, k, k) });
-    [-1, 1].forEach((sd) => {
-      for (let i = 0; i < 3; i++) glow(box(0.7, 0.07, 0.05), M(sd * 0.92, 1.25 - i * 0.2, 1.2, -0.1, sd * 0.2, 0));
-      glow(box(1.7, 0.06, 0.06), M(sd * 2.98, 2.08, 0.84, 0.05, sd * 0.55, sd * -0.1), 2.8);
-      glow(box(0.08, 1.2, 0.08), M(sd * 3.24, -1.5, 0.72, -0.42, 0, 0), 2.2);
-      glow(cyl(0.16, 0.16, 0.06, 8), M(sd * 1.15, 3.36, -1.28, 0.15, 0, sd * 0.1), 3);
-    });
-    for (let i = 0; i < 3; i++) glow(box(1.7 - i * 0.12, 0.09, 1.3), M(0, -0.8 - i * 0.36, 0.08), 1.7);
-    glow(cyl(0.42, 0.3, 0.1, 8), M(0, -3.42, 0), 3.2);
+  // Every boss is a cyborg from the kit in 22b-cyborg.js. This wraps one in what the
+  // fight expects: an eye that aims the beam, a halo, orbiting gems, the charge orb.
+  makeBoss() {
+    const hex = this.cfg.color;
+    const rig = (this.rig = new CyborgRig(this, this.bossKey));
+    const grp = rig.grp, body = rig.G.body, eye = rig.eye;
     this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex), vertexColors: true });
-    body.add(new THREE.Mesh(blasterMerge(lit), this.ringMat));
-    grp.add(body);
-    // the eyes: two coals in the skull, on one anchor that blinks and aims the beam
-    const c = document.createElement("canvas");
-    c.width = c.height = 64;
-    const x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, "#fff"); g.addColorStop(0.25, "#ff3a2a"); g.addColorStop(0.6, "rgba(255,30,30,0.35)"); g.addColorStop(1, "rgba(255,0,0,0)");
-    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const eyeMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, blending: THREE.AdditiveBlending });
-    eyeMat.color.setScalar(1.15);
-    const eye = new THREE.Group();
-    eye.material = eyeMat; // the fight tints the eye's material as the boss enrages
-    eye.position.set(0, 2.84, 0.84);
-    [-1, 1].forEach((sd) => {
-      const e = new THREE.Sprite(eyeMat);
-      e.scale.set(0.5, 0.5 / 1.8, 1); // the anchor is stretched 1.8x tall, and squashed to blink
-      e.position.x = sd * 0.21;
-      e.renderOrder = 5;
-      eye.add(e);
-    });
-    body.add(eye);
-    const jet = glowSprite(neon(hex, 1.8), 2.4, 0.7);
-    jet.position.set(0, -3.6, 0);
-    body.add(jet);
     // a halo of runner lights behind the shoulders, and a thin ring that sways
     const ringGeo = blasterMerge([{ geo: new THREE.TorusGeometry(3.5, 0.05, 4, 64), color: new THREE.Color(1.2, 1.2, 1.2) }]
       .concat([0, 1, 2, 3, 4, 5].map((i) => ({ geo: new THREE.TorusGeometry(3.5, 0.1, 4, 8, 0.32), matrix: new THREE.Matrix4().makeRotationZ((i / 6) * Math.PI * 2), color: new THREE.Color(2.7, 2.7, 2.7) }))));
@@ -9018,7 +9877,7 @@ class BossGame extends QuizGame {
     orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     grp.add(orbs);
     const charge = glowSprite(neon(hex, 2.4), 0.1, 1);
-    charge.position.set(0, 2.84, 1.0);
+    charge.position.set(0, 2.84, 1.25);
     charge.renderOrder = 6;
     body.add(charge);
     const N = 44;
@@ -9030,85 +9889,10 @@ class BossGame extends QuizGame {
     sparks.layers.set(1);
     body.add(sparks);
     this.sparkData = Array.from({ length: N }, () => ({ d: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-0.3, 1)).normalize(), r: rand(2.5, 5), p: Math.random() }));
-    // `core` takes the spin the other bosses' bodies get; here it is an empty handle
+    // `core` is an empty handle: the fight flashes its material (the armor) on a hit
     const core = new THREE.Group();
-    core.userData.mat = mat;
-    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns: new THREE.Group(), body, skull };
-    this._m = new THREE.Matrix4();
-    this._q = new THREE.Quaternion();
-    this._e = new THREE.Euler();
-    this._v = new THREE.Vector3();
-    this._s = new THREE.Vector3();
-    return grp;
-  }
-  makeBoss() {
-    if (this.cfg.shape === "cyborg") return this.makeCyborg();
-    const cfg = this.cfg, hex = cfg.color;
-    const col = new THREE.Color(hex);
-    const grp = new THREE.Group();
-    const geos = {
-      box: () => new THREE.BoxGeometry(3, 3, 3),
-      ico: () => new THREE.IcosahedronGeometry(2.1, 0),
-      octa: () => new THREE.OctahedronGeometry(2.4, 0),
-      dodeca: () => new THREE.DodecahedronGeometry(2.1, 0),
-      knot: () => new THREE.TorusKnotGeometry(1.35, 0.42, 64, 6, 2, 3),
-    };
-    const geo = geos[cfg.shape]();
-    // core: dark polished metal that mirrors the arena, HDR edges, a fresnel aura
-    const core = new THREE.Group();
-    const mat = glossy(col.clone().multiplyScalar(0.14).add(new THREE.Color(0x0d0a1c)), { env: this.env, metal: 0.92, rough: 0.22, envI: 1.45, emissive: hex, emissiveK: 0.08 });
-    const edgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 2.1) });
-    const aura = fresnelShell(geo, hex, { power: 2.3, intensity: 1.15, scale: 1.1 });
-    core.add(new THREE.Mesh(geo, mat), new THREE.LineSegments(new THREE.EdgesGeometry(geo, cfg.shape === "knot" ? 30 : 1), edgeMat), aura);
-    core.userData.mat = mat;
-    core.userData.edgeMat = edgeMat;
-    grp.add(core);
-    const eye = new THREE.Sprite(new THREE.SpriteMaterial({ map: bossEyeTexture(cfg.color), transparent: true, depthTest: false }));
-    eye.material.color.setScalar(1.15);
-    eye.scale.set(1.8, 1.8, 1);
-    eye.position.set(0, 0.25, 2.6);
-    eye.renderOrder = 5;
-    grp.add(eye);
-    const hornGeo = blasterMerge([-1, 1].map((sd) => {
-      const h = new THREE.ConeGeometry(0.38, 1.7, 4);
-      h.rotateZ(-sd * 0.5);
-      h.translate(sd * 1.35, 2.15, 0);
-      return { geo: h };
-    }));
-    const horns = new THREE.Mesh(hornGeo, Object.assign(glossy(0x2a2238, { env: this.env, metal: 0.9, rough: 0.25, envI: 1.5, emissive: hex, emissiveK: 0.15 }), { vertexColors: true }));
-    horns.add(new THREE.LineSegments(new THREE.EdgesGeometry(hornGeo, 1), new THREE.LineBasicMaterial({ color: neon(hex, 2.2) })));
-    grp.add(horns);
-    // a neon ring with bright runner arcs, and a thinner counter-ring
-    const ringGeo = blasterMerge([{ geo: new THREE.TorusGeometry(3.5, 0.06, 4, 64), color: new THREE.Color(1.3, 1.3, 1.3) }]
-      .concat([0, 1, 2, 3, 4, 5].map((i) => ({ geo: new THREE.TorusGeometry(3.5, 0.11, 4, 8, 0.32), matrix: new THREE.Matrix4().makeRotationZ((i / 6) * Math.PI * 2), color: new THREE.Color(2.7, 2.7, 2.7) }))));
-    this.ringMat = new THREE.MeshBasicMaterial({ color: col.clone(), vertexColors: true });
-    const ring = new THREE.Mesh(ringGeo, this.ringMat);
-    ring.rotation.x = Math.PI / 2.4;
-    grp.add(ring);
-    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(3.95, 0.03, 3, 72), new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) }));
-    ring2.rotation.set(1.05, 0, 0.55);
-    grp.add(ring2);
-    // orbiting gems (one instanced draw)
-    const orbs = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.34, 0), glossy(0x1a1430, { env: this.env, metal: 0.6, rough: 0.25, envI: 1.4, emissive: hex, emissiveK: 1.3 }), 6);
-    orbs.frustumCulled = false;
-    orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    grp.add(orbs);
-    // the attack charge: a hot orb at the eye that sucks in sparks
-    const charge = glowSprite(neon(hex, 2.4), 0.1, 1);
-    charge.position.set(0, 0.25, 2.7);
-    charge.renderOrder = 6;
-    grp.add(charge);
-    const N = 44;
-    const sparkPos = new Float32Array(N * 3);
-    const sg = new THREE.BufferGeometry();
-    sg.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
-    const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: neon(hex, 3), map: glowTexture(), size: 0.2, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    sparks.position.copy(charge.position);
-    sparks.frustumCulled = false;
-    sparks.layers.set(1);
-    grp.add(sparks);
-    this.sparkData = Array.from({ length: N }, () => ({ d: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-0.3, 1)).normalize(), r: rand(2.5, 5), p: Math.random() }));
-    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns };
+    core.userData.mat = rig.mat;
+    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns: new THREE.Group(), body };
     this._m = new THREE.Matrix4();
     this._q = new THREE.Quaternion();
     this._e = new THREE.Euler();
@@ -9460,6 +10244,7 @@ class BossGame extends QuizGame {
       u.body.rotation.z = Math.sin(this.t * 0.4 * rage) * 0.035;
       u.body.rotation.x = f * 0.16 + Math.sin(this.t * 0.7) * 0.02;
     }
+    this.rig.update(dt, f); // breathing, twitches, wind-up, recoil, damage, rage (look only)
     const orbR = u.body ? 4.7 : 3.7; // the cyborg's gems circle outside its shields
     for (let i = 0; i < 6; i++) {
       const a = this.t * 1.2 * rage + (i / 6) * Math.PI * 2;
@@ -9533,6 +10318,1031 @@ class BossGame extends QuizGame {
     }
     super.dispose();
   }
+}
+
+/* ---- 22b-cyborg.js ---- */
+// Twelve cyborgs, one for every boss, all built from one kit: black armor in
+// chamfered layers, pistons, cables and servos, a glowing ribbed core, red eyes.
+// Original designs. Each has its own frame, head, shoulders, hands and base.
+// The rig (CyborgRig) animates them from what the fight is doing (HP, the attack
+// charging, hits landing); it never changes the fight.
+const CY = { ARMOR: 0x15161c, PLATE: 0x22242d, DARK: 0x09090c, STEEL: 0x8b929c, BONE: 0xcdb8b0 };
+const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+// Armor: lit metal whose "glow" vertices are light sources on numbered channels
+// (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
+function cyborgArmor(env, hex) {
+  const m = glossy(0xffffff, { env, metal: 0.86, rough: 0.44, envI: 0.4, emissive: hex, emissiveK: 0.03 });
+  m.vertexColors = true;
+  const uL = { value: new Float32Array(8).fill(1) };
+  m.userData.uL = uL;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uL = uL;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float aGlow; uniform float uL[8]; varying float vGlow; varying vec3 vObjP;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlow = aGlow > 0.5 ? uL[int(aGlow + 0.5)] : -1.0; vObjP = position;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vGlow; varying vec3 vObjP;\nfloat cyH(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }")
+      .replace("#include <color_fragment>", `#include <color_fragment>
+        float cyLum = dot(vColor, vec3(0.3333));
+        float cyBone = smoothstep(0.62, 0.72, cyLum);
+        float cySteel = smoothstep(0.4, 0.5, cyLum) * (1.0 - cyBone);
+        // panel lines: seams across the plating, skipped on faces that lie along them
+        vec3 cyOn = abs(normalize(cross(dFdx(vObjP), dFdy(vObjP))));
+        vec3 cyQ = vObjP * vec3(1.05, 1.3, 0.9) + 0.31;
+        vec3 cyG = abs(fract(cyQ) - 0.5);
+        vec3 cyW = fwidth(cyQ) * 1.1 + 0.009;
+        vec3 cyLn = (1.0 - smoothstep(vec3(0.0), cyW, cyG)) * step(cyOn, vec3(0.7));
+        float cySeam = max(cyLn.x, max(cyLn.y, cyLn.z)) * step(0.3, cyH(floor(cyQ + 0.5) + 3.0));
+        diffuseColor.rgb *= 1.0 - (0.62 - 0.3 * cyBone) * cySeam;
+        if (vGlow > -0.5) {
+          if (vGlow < 0.004) discard; // a lamp that is off (a crack not yet opened) is not there at all
+          diffuseColor.rgb = vec3(0.0);
+        }`)
+      .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+        roughnessFactor = mix(mix(roughnessFactor, 0.2, cySteel), 0.8, cyBone);`)
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\nif (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;");
+  };
+  m.customProgramCacheKey = () => "cyborg-armor";
+  return m;
+}
+
+// A hull lofted through eight-sided rings [y, half-width, half-depth, chamfer], low to high.
+function cyLoft(rings) {
+  const R = rings.map(([y, w, d, c]) => [[w - c, y, -d], [w, y, -d + c], [w, y, d - c], [w - c, y, d], [-w + c, y, d], [-w, y, d - c], [-w, y, -d + c], [-w + c, y, -d]]);
+  const pos = [];
+  const tri = (a, b, c) => pos.push(...a, ...b, ...c);
+  for (let r = 0; r < R.length - 1; r++) {
+    for (let i = 0; i < 8; i++) { const j = (i + 1) % 8; tri(R[r][i], R[r + 1][i], R[r + 1][j]); tri(R[r][i], R[r + 1][j], R[r][j]); }
+  }
+  const top = R[R.length - 1], bot = R[0];
+  for (let i = 1; i < 7; i++) { tri(top[0], top[i + 1], top[i]); tri(bot[0], bot[i], bot[i + 1]); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  return g;
+}
+
+// ---- torsos -------------------------------------------------------------------
+// Shared: a ribbed gut with light between the ribs, hips, spine, flank hydraulics.
+function cyGut(K, o = {}) {
+  const n = o.n || 4, w = o.w || 2.15, d = o.d || 1.45, y0 = o.y || -0.62, gap = o.gap || 0.36;
+  for (let i = 0; i < n; i++) {
+    K.plate("body", w - i * 0.12, 0.2, d - i * 0.06, 0, y0 - i * gap, 0.05, i % 2 ? CY.DARK : CY.ARMOR, 0, 0, 0, 0.05);
+    if (i < n - 1) K.glow("body", 2, w - 0.45 - i * 0.12, 0.09, d - 0.15, 0, y0 - 0.18 - i * gap, 0.08, 1.7);
+  }
+  K.cyl("body", 0.3, 0.36, n * gap + 0.5, 0, y0 - (n * gap) / 2 + 0.1, -0.62, CY.DARK, 0, 0, 0, 8); // spine
+  for (let i = 0; i < n + 1; i++) K.plate("body", 0.5, 0.16, 0.34, 0, y0 + 0.3 - i * gap, -0.86, CY.PLATE, 0, 0, 0, 0.04);
+  K.sym((sd) => {
+    K.piston("body", [sd * (w * 0.5 + 0.12), y0 + 0.25, 0.3], [sd * (w * 0.5 - 0.2), y0 - n * gap + 0.1, 0.4], 0.1);
+    K.cable("body", [sd * (w * 0.42), y0 + 0.3, -0.5], [sd * (w * 0.36), y0 - n * gap, -0.55], 0.25, 0.06);
+  });
+}
+function cyHips(K, o = {}) {
+  const w = o.w || 2.7, y = o.y || -2.25;
+  K.plate("hips", w, 0.75, 1.7, 0, y, 0, CY.PLATE, 0, 0, 0, 0.1);
+  K.plate("hips", w * 0.5, 0.5, 0.3, 0, y - 0.1, 0.9, CY.ARMOR, 0, 0, 0, 0.06);
+  K.glow("hips", 3, w * 0.36, 0.06, 0.06, 0, y - 0.1, 1.07, 2.2);
+  K.sym((sd) => {
+    K.plate("hips", 0.9, 0.9, 1.3, sd * w * 0.5, y - 0.25, 0.05, CY.ARMOR, 0, 0, sd * 0.2, 0.1);
+    K.bolt("hips", sd * (w * 0.5 + 0.12), y - 0.1, 0.72);
+  });
+}
+const CY_TORSO = {
+  // a wide chest of two angled breastplates over a keel
+  hulk(K, o) {
+    K.add("chest", cyLoft([[-0.35, 1.45, 0.85, 0.25], [0.4, 1.75, 0.95, 0.3], [1.5, 1.8, 0.95, 0.3], [1.78, 1.3, 0.8, 0.3]]), null, CY.ARMOR);
+    K.sym((sd) => {
+      K.breakaway("chest", 1.5, 1.72, 0.3, sd * 0.88, 0.82, 1.0, CY.PLATE, -0.1, sd * 0.2, 0, sd < 0 ? 1 : 2, (lit) => { for (let i = 0; i < 3; i++) { if (o.chevrons) { lit(0.42, 0.09, -0.17, 0.4 - i * 0.3, 2.4, 3, 0.6); lit(0.42, 0.09, 0.17, 0.4 - i * 0.3, 2.4, 3, -0.6); } else lit(0.7, 0.07, sd * 0.04, 0.43 - i * 0.2); } });
+      K.plate("chest", 1.2, 0.4, 0.4, sd * 0.95, -0.22, 0.95, CY.DARK, 0.25, sd * 0.2, 0, 0.06);
+      K.vent("chest", sd * 1.0, 1.55, -0.98, 0.7, 0.5, 0, Math.PI, 0);
+    });
+    K.plate("chest", 0.34, 1.9, 0.5, 0, 0.78, 1.12, CY.DARK, -0.1, 0, 0, 0.06);
+    K.plate("chest", 2.0, 0.55, 1.7, 0, 1.98, 0.05, CY.PLATE, 0, 0, 0, 0.1); // gorget
+    K.plate("chest", 2.5, 1.35, 0.3, 0, 2.55, -0.78, CY.ARMOR, 0.12, 0, 0, 0.08); // back plate
+    cyGut(K, o.gut);
+    cyHips(K, o.hips);
+  },
+  // a sharp suit: narrow waist, lapels, a tie of light
+  suit(K, o) {
+    K.add("chest", cyLoft([[-0.4, 0.95, 0.7, 0.2], [0.5, 1.35, 0.85, 0.25], [1.55, 1.7, 0.9, 0.28], [1.82, 1.15, 0.75, 0.25]]), null, CY.ARMOR);
+    K.sym((sd) => {
+      K.breakaway("chest", 0.95, 1.9, 0.22, sd * 0.72, 0.75, 0.93, CY.PLATE, -0.06, sd * 0.16, sd * -0.2, sd < 0 ? 1 : 2); // lapels
+      K.plate("chest", 0.5, 0.12, 0.3, sd * 0.95, 1.32, 1.02, CY.STEEL, -0.06, sd * 0.16, sd * 0.5, 0.03); // pocket square / pin
+      K.vent("chest", sd * 0.8, 1.4, -0.9, 0.6, 0.45, 0, Math.PI, 0);
+    });
+    if (o.tie !== false) {
+      K.plate("chest", 0.5, 0.42, 0.3, 0, 1.52, 0.98, CY.PLATE, -0.06, 0, Math.PI / 4, 0.05); // knot
+      K.glow("chest", 3, 0.2, 1.5, 0.06, 0, 0.6, 1.02, 2.6, -0.06);
+      K.glow("chest", 3, 0.34, 0.34, 0.06, 0, -0.2, 0.98, 2.6, -0.06, 0, Math.PI / 4);
+    } else K.plate("chest", 0.5, 2.0, 0.3, 0, 0.7, 0.9, CY.DARK, -0.06, 0, 0, 0.05);
+    K.plate("chest", 1.8, 0.5, 1.5, 0, 1.98, 0.05, CY.PLATE, 0, 0, 0, 0.1);
+    K.sym((sd) => K.plate("chest", 0.9, 0.5, 0.12, sd * 0.55, 2.2, 0.72, CY.BONE, -0.2, sd * 0.35, sd * 0.4, 0.04)); // collar points
+    cyGut(K, Object.assign({ n: 5, w: 1.55, d: 1.15, gap: 0.3 }, o.gut));
+    cyHips(K, Object.assign({ w: 2.0 }, o.hips));
+  },
+  // a riveted pressure vessel, hooped and bulging
+  barrel(K, o) {
+    const V = (r, y) => new THREE.Vector2(r, y);
+    const g = new THREE.LatheGeometry([V(0.9, -2.0), V(1.7, -1.5), V(2.1, -0.5), V(2.15, 0.5), V(1.8, 1.4), V(1.2, 1.9), V(0.8, 2.0)], 14);
+    K.add("chest", g, racerM(0, 0, 0, 1, 1, 0.82), CY.ARMOR);
+    [-1.2, -0.3, 0.6, 1.4].forEach((y, i) => {
+      const r = [1.82, 2.16, 2.14, 1.82][i];
+      const t = new THREE.TorusGeometry(r, 0.09, 5, 20);
+      K.add("chest", t, racerM(0, y, 0, 1, 1, 0.82, Math.PI / 2), CY.PLATE);
+      for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI - Math.PI / 2 + 0.16; K.bolt("chest", Math.sin(a) * (r + 0.06), y, Math.cos(a) * (r + 0.06) * 0.82); }
+      if (i < 3) K.glow("chest", 2, 0.5, 0.07, 0.06, 0, y + 0.45, [1.66, 1.78, 1.58][i], 2.0);
+    });
+    K.breakaway("chest", 1.3, 1.1, 0.2, -1.0, -0.3, 1.5, CY.PLATE, 0, -0.5, 0, 1);
+    K.breakaway("chest", 1.3, 1.1, 0.2, 1.0, -0.3, 1.5, CY.PLATE, 0, 0.5, 0, 2);
+    K.plate("chest", 1.9, 0.45, 1.6, 0, 2.0, 0.05, CY.PLATE, 0, 0, 0, 0.1);
+    K.sym((sd) => { K.vent("chest", sd * 1.3, 1.75, 0.2, 0.5, 0.4, -Math.PI / 2, 0, 0); K.piston("chest", [sd * 1.4, -1.6, 0.5], [sd * 1.0, -2.3, 0.5], 0.1); });
+    K.plate("hips", 1.9, 0.6, 1.5, 0, -2.3, 0, CY.PLATE, 0, 0, 0, 0.1);
+  },
+  // an upright cabinet with doors, stripes and a coin slot
+  cabinet(K, o) {
+    K.plate("chest", 3.1, 3.3, 1.9, 0, 0.35, 0, CY.ARMOR, 0, 0, 0, 0.16);
+    K.sym((sd) => {
+      K.breakaway("chest", 1.35, 2.3, 0.2, sd * 0.74, 0.55, 1.0, CY.PLATE, 0, 0, 0, sd < 0 ? 1 : 2); // doors
+      K.plate("chest", 0.1, 0.5, 0.12, sd * 0.2, 0.55, 1.14, CY.STEEL, 0, 0, 0, 0.03); // handles
+      [1.7, -0.6].forEach((y) => K.bolt("chest", sd * 1.38, y, 0.98, Math.PI / 2));
+      K.vent("chest", sd * 1.58, 1.2, 0, 0.9, 0.6, 0, sd * Math.PI / 2, 0);
+    });
+    for (let i = 0; i < 7; i++) K.glow("chest", 3, 0.3, 0.14, 0.05, -1.05 + i * 0.35, -0.92, 1.0, i % 2 ? 0.25 : 2.3, 0, 0, 0.6);
+    K.plate("chest", 3.3, 0.3, 2.0, 0, 2.06, 0, CY.PLATE, 0, 0, 0, 0.08);
+    K.plate("hips", 2.6, 0.7, 1.6, 0, -1.75, 0, CY.DARK, 0, 0, 0, 0.1);
+    K.sym((sd) => K.piston("hips", [sd * 1.2, -1.4, 0.6], [sd * 1.5, -2.5, 0.5], 0.12));
+  },
+  // an open rib cage round whatever burns inside it
+  cage(K, o) {
+    K.cyl("chest", 0.28, 0.34, 3.6, 0, 0.3, -0.62, CY.BONE, 0, 0, 0, 8); // spine
+    for (let i = 0; i < 9; i++) K.plate("chest", 0.62, 0.2, 0.42, 0, 1.9 - i * 0.42, -0.72, CY.BONE, 0, 0, 0, 0.05);
+    for (let i = 0; i < 5; i++) {
+      const y = 1.55 - i * 0.44, w = 1.5 - Math.abs(i - 1.2) * 0.16;
+      K.sym((sd) => {
+        K.strut("chest", [sd * 0.2, y, -0.6], [sd * w, y - 0.1, -0.05], 0.16, CY.BONE);
+        K.strut("chest", [sd * w, y - 0.1, -0.05], [sd * w * 0.86, y - 0.3, 0.72], 0.15, CY.BONE);
+        K.strut("chest", [sd * w * 0.86, y - 0.3, 0.72], [sd * 0.22, y - 0.42, 0.98], 0.13, CY.BONE);
+        if (i < 4) K.glow("chest", 2, 0.05, 0.05, 0.9, sd * w * 0.9, y - 0.32, 0.3, 1.4);
+      });
+    }
+    K.plate("chest", 0.3, 2.2, 0.26, 0, 0.72, 1.02, CY.BONE, -0.02, 0, 0, 0.06); // sternum
+    K.sym((sd) => {
+      K.breakaway("chest", 1.25, 0.8, 0.2, sd * 0.85, 1.72, 0.8, CY.PLATE, -0.25, sd * 0.25, 0, sd < 0 ? 1 : 2); // collar plates
+      K.vent("chest", sd * 0.6, 1.9, -0.9, 0.5, 0.4, 0, Math.PI, 0);
+    });
+    K.plate("chest", 1.9, 0.4, 1.5, 0, 2.0, 0.0, CY.PLATE, 0, 0, 0, 0.1);
+    K.plate("hips", 1.9, 0.55, 1.3, 0, -2.0, 0, CY.BONE, 0, 0, 0, 0.1); // pelvis
+    K.sym((sd) => K.plate("hips", 0.8, 0.9, 0.9, sd * 1.05, -2.15, 0, CY.BONE, 0, 0, sd * 0.5, 0.1));
+  },
+  // a robed frame: a plated mantle that hangs to the floor
+  robe(K, o) {
+    K.add("chest", cyLoft([[-0.6, 1.2, 0.8, 0.25], [0.6, 1.55, 0.9, 0.28], [1.5, 1.7, 0.9, 0.28], [1.8, 1.2, 0.75, 0.25]]), null, CY.ARMOR);
+    K.sym((sd) => {
+      K.breakaway("chest", 1.25, 1.8, 0.24, sd * 0.78, 0.7, 0.96, CY.PLATE, -0.06, sd * 0.18, 0, sd < 0 ? 1 : 2);
+      K.vent("chest", sd * 0.9, 1.5, -0.95, 0.6, 0.45, 0, Math.PI, 0);
+    });
+    for (let i = 0; i < 4; i++) { K.plate("chest", 0.62 - i * 0.07, 0.3, 0.16, 0, 1.55 - i * 0.36, 1.12, CY.BONE, -0.06, 0, 0, 0.04); K.glow("chest", 2, 0.5 - i * 0.07, 0.06, 0.05, 0, 1.37 - i * 0.36, 1.1, 2.0, -0.06); } // bands at the throat
+    K.plate("chest", 2.1, 0.5, 1.7, 0, 1.98, 0.05, CY.PLATE, 0, 0, 0, 0.1);
+    K.cyl("body", 0.7, 0.9, 1.8, 0, -1.4, 0, CY.DARK, 0, 0, 0, 8);
+    const n = o.folds || 9;
+    for (let i = 0; i < n; i++) {
+      const a = ((i + 0.5) / n) * Math.PI * 2, len = (o.ragged ? 1.6 + cyHash(i * 3.1) * 1.3 : 2.5);
+      K.add("body", racerPlate(0.86, len, 0.12, 0.04, true), new THREE.Matrix4().makeRotationY(a).multiply(racerM(0, -0.75 - len / 2, 1.18 + (len - 1.6) * 0.07, 1, 1, 1, -0.11)), i % 2 ? CY.ARMOR : CY.PLATE);
+      if (i % 2 === 0) K.add("body", new THREE.BoxGeometry(0.06, len * 0.7, 0.03), new THREE.Matrix4().makeRotationY(a).multiply(racerM(0, -0.9 - len / 2, 1.27 + (len - 1.6) * 0.07, 1, 1, 1, -0.11)), K.hex, 1.9, 3);
+    }
+  },
+};
+
+// ---- heads --------------------------------------------------------------------
+function cyNeck(K) {
+  K.cyl("chest", 0.34, 0.4, 0.55, 0, 2.2, 0.05, CY.DARK, 0, 0, 0, 8);
+  K.sym((sd) => { K.piston("chest", [sd * 0.5, 2.0, -0.2], [sd * 0.36, 2.5, -0.05], 0.06); K.cable("head", [sd * 0.4, 2.7, -0.35], [sd * 0.75, 2.3, -0.6], 0.15, 0.05, 4); });
+}
+const CY_HEAD = {
+  // a pale skull in a steel jaw, wired at the temples
+  skull(K) {
+    K.ball("head", 0.62, 0, 2.82, 0.2, CY.BONE, 1, 0.9, 1.12, 1);
+    K.plate("head", 0.82, 0.4, 0.72, 0, 2.3, 0.42, CY.PLATE, 0, 0, 0, 0.06);
+    for (let i = 0; i < 5; i++) K.box("head", 0.1, 0.13, 0.06, -0.26 + i * 0.13, 2.52, 0.76, CY.BONE);
+    K.plate("head", 0.92, 0.17, 0.3, 0, 2.84, 0.74, CY.DARK, 0, 0, 0, 0.03);
+    K.plate("head", 0.12, 0.2, 1.0, 0, 3.36, 0.1, CY.DARK, -0.25, 0, 0, 0.03);
+    K.sym((sd) => {
+      K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.57, 2.75, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9);
+      K.cyl("head", 0.09, 0.09, 0.1, sd * 0.6, 3.02, 0.3, CY.STEEL, 0, 0, Math.PI / 2, 6);
+      K.eye(sd * 0.21, 2.84, 0.84, 0.5);
+    });
+  },
+  // a salesman's helmet: a wide grin of light under two small eyes
+  grin(K) {
+    K.add("head", cyLoft([[2.32, 0.5, 0.5, 0.15], [2.8, 0.64, 0.62, 0.2], [3.2, 0.52, 0.55, 0.2], [3.36, 0.3, 0.35, 0.12]]), null, CY.ARMOR);
+    K.fplate("head", 0.96, 0.62, 0.12, 0, 2.7, 0.62, CY.DARK);
+    K.glow("head", 3, 0.72, 0.09, 0.05, 0, 2.5, 0.72, 2.8);
+    K.sym((sd) => { K.glow("head", 3, 0.2, 0.08, 0.05, sd * 0.42, 2.56, 0.71, 2.8, 0, 0, sd * 0.6); K.eye(sd * 0.21, 2.92, 0.7, 0.34); K.cyl("head", 0.12, 0.12, 0.06, sd * 0.21, 2.92, 0.67, CY.STEEL, Math.PI / 2, 0, 0, 8); });
+    for (let i = 0; i < 7; i++) K.box("head", 0.025, 0.11, 0.07, -0.3 + i * 0.1, 2.5, 0.72, CY.DARK);
+    K.plate("head", 0.5, 0.09, 1.0, 0, 3.4, -0.05, CY.PLATE, 0.22, 0, 0, 0.03); // slicked-back crest
+    K.breakaway("head", 0.5, 0.6, 0.1, -0.66, 2.85, 0.1, CY.PLATE, 0, -Math.PI / 2, 0, 3);
+    K.tube("head", [0.66, 2.9, 0.1], [0.8, 2.52, 0.6], 0.035, CY.STEEL); // headset
+    K.glow("head", 3, 0.09, 0.09, 0.09, 0.8, 2.5, 0.62, 3);
+  },
+  // a wedge of a head under two swept horns
+  horned(K) {
+    K.add("head", cyLoft([[2.28, 0.45, 0.46, 0.12], [2.75, 0.72, 0.62, 0.2], [3.18, 0.56, 0.5, 0.18]]), null, CY.ARMOR);
+    K.fplate("head", 1.0, 0.3, 0.14, 0, 2.86, 0.6, CY.DARK);
+    K.plate("head", 0.3, 0.5, 0.5, 0, 2.42, 0.5, CY.PLATE, 0.3, 0, 0, 0.06); // snout
+    K.sym((sd) => {
+      K.glow("head", 1, 0.36, 0.07, 0.05, sd * 0.25, 2.87, 0.69, 2.6, 0, 0, sd * 0.32, 0xff2418);
+      K.eye(sd * 0.25, 2.87, 0.72, 0.46);
+      K.cone("head", [sd * 0.55, 3.0, 0], [sd * 1.3, 3.4, 0.1], 0.2, 0.15, CY.PLATE);
+      K.cone("head", [sd * 1.3, 3.4, 0.1], [sd * 1.55, 4.15, 0.45], 0.15, 0.02, CY.BONE);
+      K.cone("head", [sd * 0.3, 2.36, 0.6], [sd * 0.36, 1.95, 0.8], 0.09, 0.01, CY.BONE); // tusks
+      K.breakaway("head", 0.5, 0.45, 0.1, sd * 0.74, 2.72, 0.1, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9);
+    });
+    for (let i = 0; i < 3; i++) K.glow("head", 3, 0.16, 0.06, 0.05, -0.2 + i * 0.2, 3.08, 0.5, i % 2 ? 0.4 : 2.4, -0.5, 0, 0.7);
+  },
+  // one great lens deep in a hood
+  cyclops(K) {
+    K.ball("head", 0.78, 0, 2.86, 0.0, CY.ARMOR, 1, 1, 1.15, 1.05);
+    K.sym((sd) => {
+      K.fplate("head", 0.62, 1.25, 0.1, sd * 0.5, 2.88, 0.5, CY.PLATE, 0, sd * 0.62, sd * -0.1);
+      K.breakaway("head", 0.5, 0.7, 0.08, sd * 0.78, 2.7, 0.0, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9);
+    });
+    K.cone("head", [0, 3.5, -0.1], [0, 4.1, -0.7], 0.42, 0.03, CY.ARMOR, 6); // the hood's peak
+    K.add("head", new THREE.TorusGeometry(0.34, 0.07, 5, 14), racerM(0, 2.86, 0.6), CY.STEEL);
+    K.glowCyl("head", 1, 0.26, 0.05, 0, 2.86, 0.58, 1.6, Math.PI / 2, 0, 0, 0xff2418, 12);
+    K.eye(0, 2.86, 0.66, 0.9);
+  },
+  // a scribe's face: a cluster of small lenses over quill mandibles
+  cluster(K) {
+    K.add("head", cyLoft([[2.3, 0.5, 0.5, 0.14], [2.75, 0.66, 0.6, 0.18], [3.15, 0.6, 0.55, 0.18]]), racerM(0, 0, 0), CY.ARMOR);
+    K.fplate("head", 1.06, 0.92, 0.14, 0, 2.76, 0.58, CY.PLATE, 0.12);
+    [[0, 0.1, 0.34], [-0.3, 0.2, 0.24], [0.3, 0.2, 0.24], [-0.34, -0.1, 0.2], [0.34, -0.1, 0.2], [-0.13, -0.2, 0.17], [0.13, -0.2, 0.17]].forEach(([x, y, s]) => {
+      K.cyl("head", s * 0.42, s * 0.42, 0.08, x, 2.8 + y, 0.67 - y * 0.12, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 8);
+      K.eye(x, 2.8 + y, 0.73 - y * 0.12, s * 1.1);
+    });
+    K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
+    K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap
+    K.cone("head", [0.45, 3.25, -0.2], [0.75, 4.0, -0.5], 0.04, 0.01, CY.BONE); // a quill behind the ear
+  },
+  // a low dome sunk between the shoulders, one slit of light
+  dome(K) {
+    K.cyl("head", 0.78, 0.98, 0.55, 0, 2.3, 0.1, CY.PLATE, 0, 0, 0, 10);
+    K.ball("head", 0.78, 0, 2.56, 0.1, CY.ARMOR, 1, 1, 0.55, 1);
+    K.fplate("head", 1.1, 0.2, 0.1, 0, 2.44, 0.8, CY.DARK);
+    K.glow("head", 1, 0.9, 0.07, 0.05, 0, 2.44, 0.87, 2.2, 0, 0, 0, 0xff2418);
+    K.eye(-0.26, 2.44, 0.9, 0.42); K.eye(0.26, 2.44, 0.9, 0.42);
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; K.bolt("head", Math.sin(a) * 0.93, 2.12, 0.1 + Math.cos(a) * 0.93); }
+    K.breakaway("head", 0.6, 0.4, 0.1, 0.5, 2.78, 0.45, CY.PLATE, -0.6, 0.5, 0, 3);
+  },
+  // a boiler's head: goggles under a valve wheel
+  valve(K) {
+    K.cyl("head", 0.6, 0.72, 0.9, 0, 2.6, 0.1, CY.ARMOR, 0, 0, 0, 10);
+    K.ball("head", 0.6, 0, 3.05, 0.1, CY.PLATE, 1, 1, 0.5, 1);
+    K.cyl("head", 0.06, 0.06, 0.5, 0, 3.5, 0.1, CY.STEEL, 0, 0, 0, 6);
+    K.add("head", new THREE.TorusGeometry(0.4, 0.06, 5, 14), racerM(0, 3.75, 0.1, 1, 1, 1, Math.PI / 2), CY.STEEL);
+    for (let i = 0; i < 3; i++) K.box("head", 0.78, 0.05, 0.07, 0, 3.75, 0.1, CY.STEEL, 0, (i / 3) * Math.PI, 0);
+    K.sym((sd) => {
+      K.cyl("head", 0.24, 0.27, 0.22, sd * 0.3, 2.72, 0.66, CY.STEEL, Math.PI / 2, 0, 0, 10);
+      K.eye(sd * 0.3, 2.72, 0.8, 0.5);
+      K.cable("head", [sd * 0.55, 2.4, 0.3], [sd * 0.95, 2.1, 0.5], 0.2, 0.07, 4);
+    });
+    K.plate("head", 0.5, 0.18, 0.16, 0, 2.36, 0.72, CY.DARK, 0, 0, 0, 0.04); // grille
+    K.breakaway("head", 0.5, 0.6, 0.1, -0.66, 2.7, 0.1, CY.PLATE, 0, -Math.PI / 2, 0, 3);
+  },
+  // a narrow skull under a crown of spikes
+  crown(K) {
+    K.ball("head", 0.56, 0, 2.86, 0.2, CY.BONE, 1, 0.82, 1.2, 0.95);
+    K.plate("head", 0.5, 0.26, 0.5, 0, 2.2, 0.5, CY.BONE, 0.3, 0, 0, 0.05); // the jaw hangs open
+    for (let i = 0; i < 4; i++) K.box("head", 0.08, 0.14, 0.05, -0.17 + i * 0.113, 2.46, 0.66, CY.BONE);
+    K.sym((sd) => { K.box("head", 0.2, 0.22, 0.1, sd * 0.2, 2.88, 0.68, CY.DARK); K.eye(sd * 0.2, 2.88, 0.74, 0.4); K.plate("head", 0.12, 0.5, 0.3, sd * 0.42, 2.55, 0.35, CY.DARK, 0, 0, sd * 0.2, 0.03); });
+    K.add("head", new THREE.TorusGeometry(0.5, 0.07, 5, 12), racerM(0, 3.28, 0.15, 1, 1, 1, Math.PI / 2 - 0.12), CY.PLATE);
+    for (let i = 0; i < 7; i++) {
+      const a = ((i - 3) / 7) * Math.PI * 1.5, x = Math.sin(a) * 0.5, z = 0.15 + Math.cos(a) * 0.5, h = 0.75 - Math.abs(i - 3) * 0.1;
+      K.cone("head", [x, 3.3, z], [x * 1.45, 3.3 + h, z + (z - 0.15) * 0.35], 0.09, 0.01, CY.PLATE);
+      K.glow("head", 3, 0.06, 0.06, 0.06, x * 1.45, 3.32 + h, z + (z - 0.15) * 0.35, 2.6);
+    }
+    K.breakaway("head", 0.4, 0.5, 0.08, -0.5, 2.9, 0.1, CY.BONE, 0, -Math.PI / 2, 0, 3);
+  },
+  // a pale face between the curled plates of a judge's wig
+  judge(K) {
+    K.ball("head", 0.56, 0, 2.82, 0.1, CY.ARMOR, 1, 1, 1.15, 1);
+    K.fplate("head", 0.72, 0.9, 0.2, 0, 2.74, 0.5, CY.BONE);
+    K.plate("head", 0.16, 0.3, 0.2, 0, 2.66, 0.66, CY.BONE, -0.3, 0, 0, 0.04); // nose
+    K.box("head", 0.36, 0.05, 0.05, 0, 2.42, 0.62, CY.DARK);
+    K.sym((sd) => {
+      K.box("head", 0.22, 0.12, 0.08, sd * 0.19, 2.88, 0.6, CY.DARK);
+      K.eye(sd * 0.19, 2.88, 0.66, 0.36);
+      K.plate("head", 0.32, 1.5, 1.0, sd * 0.64, 2.5, 0.05, CY.PLATE, 0, 0, sd * -0.1, 0.06);
+      for (let i = 0; i < 5; i++) K.cyl("head", 0.13, 0.13, 1.02, sd * 0.78, 3.12 - i * 0.3, 0.05, CY.BONE, Math.PI / 2, 0, 0, 8);
+      K.breakaway("head", 0.9, 0.5, 0.08, sd * 0.84, 2.0, 0.05, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9);
+    });
+    for (let i = 0; i < 4; i++) K.cyl("head", 0.14, 0.14, 1.0, -0.45 + i * 0.3, 3.4, 0.05, CY.BONE, Math.PI / 2, 0, 0, 8);
+  },
+  // a smooth mask with slit eyes and no mouth
+  mask(K) {
+    K.ball("head", 0.62, 0, 2.86, 0.08, CY.ARMOR, 1, 1, 1.12, 1);
+    K.ball("head", 0.6, 0, 2.8, 0.42, CY.BONE, 1, 0.84, 1.26, 0.36);
+    K.sym((sd) => {
+      K.box("head", 0.3, 0.07, 0.06, sd * 0.2, 2.92, 0.62, CY.DARK, 0, 0, sd * 0.3);
+      K.eye(sd * 0.2, 2.92, 0.67, 0.42, 0.45);
+      K.plate("head", 0.07, 1.25, 0.62, sd * 0.68, 3.12, -0.1, CY.PLATE, 0.2, 0, sd * -0.28, 0.03); // fins
+      K.breakaway("head", 0.5, 0.6, 0.08, sd * 0.6, 2.6, 0.15, CY.DARK, 0, sd * 1.2, 0, sd < 0 ? 3 : 9);
+    });
+    K.glow("head", 3, 0.12, 0.12, 0.05, 0, 3.26, 0.52, 2.8, 0, 0, Math.PI / 4);
+    K.plate("head", 1.5, 0.5, 0.12, 0, 2.18, -0.3, CY.PLATE, -0.3, 0, 0, 0.05); // a high collar behind
+  },
+  // a signal head: three lenses stacked under little hoods
+  tri(K) {
+    K.plate("head", 0.86, 1.62, 0.76, 0, 2.98, 0.15, CY.PLATE, 0, 0, 0, 0.1);
+    [3.46, 2.98, 2.5].forEach((y, i) => {
+      K.cyl("head", 0.25, 0.25, 0.1, 0, y, 0.55, CY.DARK, Math.PI / 2, 0, 0, 10);
+      K.plate("head", 0.62, 0.05, 0.3, 0, y + 0.25, 0.66, CY.ARMOR, 0.2, 0, 0, 0.02);
+      K.eye(0, y, 0.62, 0.52);
+    });
+    K.sym((sd) => {
+      for (let i = 0; i < 4; i++) K.glow("head", 3, 0.05, 0.14, 0.3, sd * 0.445, 3.5 - i * 0.34, 0.15, i % 2 ? 0.3 : 2.3, 0.6);
+      K.breakaway("head", 0.6, 1.2, 0.08, sd * 0.47, 2.98, 0.15, CY.ARMOR, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9);
+    });
+    K.cyl("head", 0.1, 0.1, 0.3, 0, 3.95, 0.1, CY.DARK, 0, 0, 0, 8);
+    K.glowCyl("head", 3, 0.14, 0.16, 0, 4.14, 0.1, 2.6, 0, 0, 0, K.hex, 8);
+  },
+  // half a skull, half a machine, and a seam of light between them
+  split(K) {
+    K.ball("head", 0.6, -0.04, 2.82, 0.2, CY.BONE, 1, 0.9, 1.12, 1);
+    K.plate("head", 0.56, 1.3, 1.1, 0.34, 2.8, 0.18, CY.DARK, 0, 0, 0, 0.08);
+    K.glow("head", 3, 0.05, 1.34, 1.0, 0.045, 2.8, 0.24, 2.4);
+    K.cyl("head", 0.26, 0.3, 0.2, 0.3, 2.88, 0.72, CY.STEEL, Math.PI / 2, 0, 0, 10);
+    K.eye(0.3, 2.88, 0.86, 0.6);
+    K.eye(-0.24, 2.86, 0.74, 0.4);
+    K.box("head", 0.2, 0.2, 0.1, -0.24, 2.86, 0.68, CY.DARK);
+    K.add("head", new THREE.CylinderGeometry(0.2, 0.2, 0.08, 8), racerM(0.62, 3.1, 0.25, 1, 1, 1, 0, 0, Math.PI / 2), CY.STEEL);
+    K.add("head", new THREE.CylinderGeometry(0.13, 0.13, 0.08, 8), racerM(0.62, 2.74, 0.45, 1, 1, 1, 0, 0, Math.PI / 2), CY.STEEL);
+    K.plate("head", 0.4, 0.34, 0.6, -0.2, 2.28, 0.42, CY.BONE, 0.1, 0, 0, 0.05);
+    K.plate("head", 0.4, 0.4, 0.66, 0.24, 2.3, 0.42, CY.PLATE, 0, 0, 0, 0.05);
+    K.breakaway("head", 0.5, 0.6, 0.08, -0.6, 2.8, 0.1, CY.BONE, 0, -Math.PI / 2, 0, 3);
+  },
+};
+
+// ---- shoulders ----------------------------------------------------------------
+const CY_SHOULDER = {
+  shield(K, sd, o) {
+    K.ball("chest", 0.82, sd * 2.25, 1.5, 0, CY.ARMOR);
+    K.breakaway("chest", 1.95, 2.55, 0.42, sd * 2.95, 0.95, 0.62, CY.PLATE, 0.05, sd * 0.55, sd * -0.1, sd < 0 ? 2 : 3);
+    K.plate("chest", 1.6, 0.35, 0.5, sd * 2.9, 2.28, 0.6, CY.DARK, 0.05, sd * 0.55, sd * -0.1, 0.06);
+    K.glow("chest", 3, 1.7, 0.06, 0.06, sd * 2.98, 2.08, 0.86, 2.8, 0.05, sd * 0.55, sd * -0.1);
+    K.plate("chest", 1.5, 2.0, 0.2, sd * 2.8, 0.9, 0.3, CY.ARMOR, 0.05, sd * 0.55, sd * -0.1, 0.05);
+  },
+  pad(K, sd, o) {
+    K.ball("chest", 0.7, sd * 2.25, 1.5, 0, CY.ARMOR);
+    [[1.7, 1.85, 0.3], [1.35, 2.12, 0.26], [1.0, 2.34, 0.22]].forEach(([w, y, h], i) => {
+      if (i === 0) K.breakaway("chest", w, 1.5, h, sd * 2.45, y, 0, CY.PLATE, -Math.PI / 2, sd * 0.25, 0, sd < 0 ? 2 : 3);
+      else K.plate("chest", w, h, 1.5 - i * 0.2, sd * (2.45 - i * 0.06), y, 0, i % 2 ? CY.ARMOR : CY.PLATE, 0, 0, sd * -0.25, 0.07);
+    });
+    K.glow("chest", 3, 0.06, 0.06, 1.3, sd * 3.2, 1.62, 0, 2.4);
+  },
+  spike(K, sd, o) {
+    CY_SHOULDER.pad(K, sd, o);
+    [[-0.45, 0.9], [0, 1.25], [0.45, 0.9]].forEach(([z, h]) => K.cone("chest", [sd * 2.55, 2.3, z], [sd * (2.9 + h * 0.35), 2.4 + h, z * 1.3], 0.2, 0.01, CY.BONE));
+  },
+  stack(K, sd, o) {
+    CY_SHOULDER.pad(K, sd, o);
+    K.cyl("chest", 0.3, 0.38, 1.7, sd * 2.4, 3.0, -0.4, CY.DARK, 0.1, 0, sd * 0.08, 10);
+    K.add("chest", new THREE.TorusGeometry(0.34, 0.07, 5, 12), racerM(sd * 2.42, 3.82, -0.48, 1, 1, 1, Math.PI / 2 + 0.1), CY.PLATE);
+    K.glowCyl("chest", 3, 0.24, 0.06, sd * 2.42, 3.84, -0.48, 2.6, 0.1, 0, 0, K.hex, 10);
+    K.steam(sd * 2.42, 3.9, -0.5);
+  },
+  cannon(K, sd, o) {
+    CY_SHOULDER.pad(K, sd, o);
+    K.plate("chest", 0.8, 0.7, 1.0, sd * 2.6, 2.75, -0.1, CY.ARMOR, 0, 0, 0, 0.08);
+    K.cyl("chest", 0.26, 0.3, 1.7, sd * 2.6, 2.8, 0.75, CY.DARK, Math.PI / 2, 0, 0, 10);
+    K.cyl("chest", 0.33, 0.33, 0.2, sd * 2.6, 2.8, 1.55, CY.STEEL, Math.PI / 2, 0, 0, 10);
+    K.glowCyl("chest", 3, 0.2, 0.04, sd * 2.6, 2.8, 1.66, 2.6, Math.PI / 2, 0, 0, K.hex, 10);
+  },
+  pan(K, sd, o) {
+    K.ball("chest", 0.6, sd * 2.25, 1.5, 0, CY.ARMOR);
+    K.breakaway("chest", 1.4, 1.2, 0.26, sd * 2.4, 1.95, 0, CY.PLATE, -Math.PI / 2, sd * 0.2, 0, sd < 0 ? 2 : 3);
+    K.tube("chest", [sd * 2.3, 2.3, 0], [sd * 3.7, 2.75, 0], 0.07, CY.STEEL);
+    [[0, 0.55], [0.48, -0.28], [-0.48, -0.28]].forEach(([x, z]) => K.tube("chest", [sd * 3.7, 2.75, 0], [sd * 3.7 + x, 1.55, z], 0.02, CY.STEEL, 4));
+    K.cyl("chest", 0.68, 0.5, 0.16, sd * 3.7, 1.5, 0, CY.PLATE, 0, 0, 0, 12);
+    K.glowCyl("chest", 3, 0.5, 0.04, sd * 3.7, 1.6, 0, 1.8, 0, 0, 0, K.hex, 12);
+  },
+  block(K, sd, o) {
+    K.breakaway("chest", 1.5, 1.5, 0.3, sd * 2.7, 1.75, 0.7, CY.PLATE, 0, 0, 0, sd < 0 ? 2 : 3);
+    K.plate("chest", 1.6, 1.6, 1.5, sd * 2.7, 1.75, -0.1, CY.ARMOR, 0, 0, 0, 0.12);
+    K.glow("chest", 3, 1.64, 0.07, 1.54, sd * 2.7, 1.2, -0.1, 2.0);
+    K.glow("chest", 3, 0.07, 1.64, 1.54, sd * 2.2, 1.75, -0.1, 2.0);
+  },
+  fin(K, sd, o) {
+    K.ball("chest", 0.6, sd * 2.2, 1.5, 0, CY.ARMOR);
+    K.breakaway("chest", 1.9, 1.3, 0.3, sd * 2.5, 2.0, 0, CY.PLATE, -Math.PI / 2, sd * -0.16, 0, sd < 0 ? 2 : 3);
+    K.plate("chest", 0.6, 0.12, 1.0, sd * 3.45, 2.3, 0, CY.ARMOR, 0, 0, sd * 0.7, 0.04);
+    K.glow("chest", 3, 0.05, 0.05, 1.2, sd * 3.5, 2.2, 0, 2.6);
+  },
+  bone(K, sd, o) {
+    K.ball("chest", 0.55, sd * 2.2, 1.5, 0, CY.BONE);
+    K.cone("chest", [sd * 2.3, 1.8, 0], [sd * 3.1, 2.7, -0.2], 0.22, 0.02, CY.BONE);
+    K.plate("chest", 0.9, 0.2, 0.9, sd * 2.25, 1.98, 0, CY.PLATE, 0, 0, sd * -0.3, 0.05);
+  },
+};
+
+// ---- arms and hands (in the arm's own space: the shoulder is the origin) -------
+function cyArm(K, s, sd, o) {
+  const A = "arm" + s, F = "fore" + s, r = o.r, ua = o.ua, fa = o.fa;
+  if (o.style === "bone") {
+    K.sym((q) => K.cyl(A, 0.1, 0.09, ua - 0.3, q * 0.12, -ua / 2, 0, CY.BONE, 0, 0, 0, 6));
+    K.ball(A, 0.3, 0, -ua, 0, CY.DARK);
+    K.cable(A, [0, -0.2, -0.2], [0, -ua + 0.2, -0.25], 0.3, 0.04, 4);
+    K.sym((q) => K.cyl(F, 0.08, 0.07, fa - 0.2, q * 0.1, -fa / 2, 0, CY.BONE, 0, 0, 0, 6));
+    K.plate(F, 0.36, 0.3, 0.36, 0, -fa * 0.92, 0, CY.DARK, 0, 0, 0, 0.05);
+  } else if (o.style === "tube") {
+    for (let i = 0; i < 6; i++) K.cyl(A, r * (i % 2 ? 0.78 : 0.95), r * (i % 2 ? 0.95 : 0.78), ua / 6.4, 0, -0.25 - i * (ua - 0.4) / 6, 0, i % 2 ? CY.DARK : CY.ARMOR, 0, 0, 0, 8);
+    K.cyl(A, r * 1.1, r * 1.1, r * 1.5, 0, -ua, 0, CY.PLATE, 0, 0, Math.PI / 2, 10);
+    for (let i = 0; i < 5; i++) K.cyl(F, r * (i % 2 ? 0.7 : 0.88), r * (i % 2 ? 0.88 : 0.7), fa / 5.6, 0, -0.3 - i * (fa - 0.5) / 5, 0, i % 2 ? CY.DARK : CY.ARMOR, 0, 0, 0, 8);
+    K.glow(F, 3, 0.05, fa * 0.6, 0.05, sd * r * 0.95, -fa * 0.5, 0, 2.2);
+    K.cyl(F, r * 0.95, r * 0.95, 0.22, 0, -fa * 0.95, 0, CY.PLATE, 0, 0, 0, 8);
+  } else {
+    // piston / plated: a strut between two hydraulic rams, a servo at the elbow, a gauntlet
+    K.cyl(A, r * 0.9, r * 0.8, ua * 0.78, 0, -ua * 0.52, -0.05, CY.DARK, 0, 0, 0, 8);
+    K.piston(A, [0, -0.3, r * 0.95], [0, -ua + 0.3, r * 0.85], 0.11);
+    K.piston(A, [-sd * r * 0.9, -0.3, -0.1], [-sd * r * 0.8, -ua + 0.3, -0.1], 0.09);
+    K.plate(A, ua * 0.6, 0.3, r * 1.9, sd * r * 0.98, -ua * 0.46, 0, CY.PLATE, 0, 0, sd * -Math.PI / 2, 0.06, false);
+    K.cable(A, [-sd * 0.25, -0.1, -r], [-sd * 0.1, -ua + 0.1, -r * 0.9], 0.3, 0.06);
+    K.cyl(A, r * 1.15, r * 1.15, r * 1.9, 0, -ua, 0, CY.ARMOR, 0, 0, Math.PI / 2, 10);
+    K.sym((q) => K.cyl(A, r * 0.6, r * 0.6, 0.1, q * r * 0.98, -ua, 0, CY.STEEL, 0, 0, Math.PI / 2, 8));
+    K.plate(F, r * 2.1, fa * 0.95, r * 2.3, 0, -fa * 0.5, 0, CY.ARMOR, 0, 0, 0, 0.1);
+    K.breakaway(F, r * 1.7, fa * 0.72, 0.22, sd * r * 1.12, -fa * 0.5, 0, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 1 : 2);
+    K.piston(F, [0, -0.2, -r * 1.2], [0, -fa * 0.8, -r * 1.25], 0.09);
+    K.glow(F, 3, 0.08, fa * 0.62, 0.08, sd * r * 0.5, -fa * 0.5, r * 1.17, 2.2);
+    K.cyl(F, r * 1.05, r * 1.05, 0.24, 0, -fa * 0.97, 0, CY.DARK, 0, 0, 0, 8);
+    [-0.3, 0.3].forEach((dy) => K.bolt(F, sd * r * 0.6, -fa * 0.5 + dy * fa, r * 1.17, Math.PI / 2));
+  }
+  K.xf(racerM(0, -fa, 0, o.hs, o.hs, o.hs), () => CY_HAND[o.hand](K, F, sd));
+}
+const CY_HAND = {
+  fist(K, F, sd) {
+    K.plate(F, 0.95, 0.75, 0.98, 0, -0.42, 0.05, CY.ARMOR, 0, 0, 0, 0.1);
+    for (let i = 0; i < 4; i++) K.plate(F, 0.2, 0.24, 0.3, -0.34 + i * 0.226, -0.72, 0.42, CY.PLATE, 0.5, 0, 0, 0.04);
+    K.plate(F, 0.3, 0.4, 0.3, -sd * 0.52, -0.4, 0.42, CY.PLATE, 0, 0, 0, 0.05);
+  },
+  claw(K, F, sd) {
+    K.plate(F, 0.8, 0.45, 0.7, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
+    [-0.3, 0, 0.3].forEach((x) => { K.cone(F, [x, -0.4, 0.2], [x * 1.3, -1.0, 0.75], 0.13, 0.1, CY.PLATE); K.cone(F, [x * 1.3, -1.0, 0.75], [x * 1.1, -1.75, 0.55], 0.1, 0.01, CY.BONE); });
+    K.cone(F, [-sd * 0.4, -0.3, 0.0], [-sd * 0.75, -0.9, 0.35], 0.1, 0.01, CY.BONE);
+  },
+  open(K, F, sd) {
+    K.plate(F, 0.7, 0.5, 0.3, 0, -0.3, 0.05, CY.ARMOR, 0.3, 0, 0, 0.06);
+    for (let i = 0; i < 4; i++) { const x = -0.27 + i * 0.18; K.tube(F, [x, -0.5, 0.15], [x * 1.25, -1.0, 0.42], 0.05, CY.BONE, 5); K.cone(F, [x * 1.25, -1.0, 0.42], [x * 1.35, -1.5, 0.36], 0.05, 0.01, CY.BONE); }
+    K.cone(F, [-sd * 0.36, -0.3, 0.1], [-sd * 0.7, -0.8, 0.4], 0.06, 0.01, CY.BONE);
+  },
+  hammer(K, F, sd) {
+    K.plate(F, 0.6, 0.5, 0.6, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
+    K.tube(F, [0, -0.2, 0.3], [0, -0.5, 2.0], 0.1, CY.STEEL, 6);
+    K.plate(F, 1.7, 0.85, 0.85, 0, -0.55, 2.2, CY.PLATE, 0, 0, 0, 0.1);
+    K.sym((q) => { K.plate(F, 0.12, 0.95, 0.95, q * 0.6, -0.55, 2.2, CY.DARK, 0, 0, 0, 0.03); K.glow(F, 3, 0.04, 0.5, 0.5, q * 0.87, -0.55, 2.2, 2.2); });
+  },
+  needle(K, F, sd) {
+    K.cyl(F, 0.24, 0.3, 0.5, 0, -0.3, 0.05, CY.DARK, 0, 0, 0, 8);
+    K.cone(F, [0, -0.5, 0.1], [0, -2.5, 0.75], 0.14, 0.01, CY.STEEL, 6);
+    K.glow(F, 2, 0.09, 0.09, 0.09, 0, -2.52, 0.76, 3);
+    K.cyl(F, 0.16, 0.16, 0.5, sd * 0.3, -0.5, 0.0, CY.PLATE, 0, 0, 0, 8); // ink
+    K.glowCyl(F, 2, 0.1, 0.3, sd * 0.3, -0.5, 0.14, 1.6, 0, 0, 0, K.hex, 6);
+  },
+  barrier(K, F, sd) {
+    K.plate(F, 0.7, 0.6, 0.7, 0, -0.3, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
+    K.cyl(F, 0.2, 0.2, 0.9, 0, -0.6, 0.35, CY.STEEL, Math.PI / 2, 0, 0, 8);
+    for (let i = 0; i < 7; i++) {
+      const x = -sd * (0.3 + i * 0.52);
+      if (i % 2) K.glow(F, 3, 0.5, 0.26, 0.2, x, -0.6, 0.75, 1.9); else K.box(F, 0.5, 0.26, 0.2, x, -0.6, 0.75, CY.BONE);
+    }
+    K.glow(F, 1, 0.16, 0.16, 0.12, -sd * 3.75, -0.6, 0.75, 2.6, 0, 0, 0, 0xff2418);
+  },
+  cleaver(K, F, sd) {
+    K.plate(F, 0.6, 0.5, 0.6, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
+    K.fplate(F, 1.25, 2.5, 0.12, sd * 0.1, -1.6, 0.4, CY.PLATE, 0.25, sd * Math.PI / 2, 0);
+    K.glow(F, 3, 0.06, 2.45, 0.06, sd * 0.1, -1.85, 1.02, 2.8, 0.25);
+    K.plate(F, 0.2, 2.5, 0.16, sd * 0.1, -1.4, -0.16, CY.DARK, 0.25, 0, 0, 0.04);
+  },
+  strings(K, F, sd) {
+    K.plate(F, 0.9, 0.3, 0.5, 0, -0.2, 0.1, CY.ARMOR, 0.2, 0, 0, 0.06);
+    for (let i = 0; i < 5; i++) {
+      const x = -0.5 + i * 0.25, z = 0.5 + (2 - Math.abs(i - 2)) * 0.22;
+      K.tube(F, [x * 0.7, -0.3, 0.2], [x, -0.55, z], 0.045, CY.BONE, 5);
+      K.cone(F, [x, -0.55, z], [x * 1.1, -0.95, z + 0.25], 0.045, 0.01, CY.BONE);
+      K.tube(F, [x * 1.1, -0.95, z + 0.25], [x * 1.15, -2.5 + cyHash(i) * 0.6, z + 0.3], 0.012, CY.STEEL, 3);
+      K.glow(F, 3, 0.22, 0.04, 0.04, x * 1.15, -2.5 + cyHash(i) * 0.6, z + 0.3, 2.4, 0, i * 0.7);
+    }
+  },
+  cannon(K, F, sd) {
+    K.cyl(F, 0.5, 0.55, 1.3, 0, -0.7, 0.05, CY.ARMOR, 0, 0, 0, 10);
+    K.cyl(F, 0.58, 0.58, 0.2, 0, -1.3, 0.05, CY.STEEL, 0, 0, 0, 10);
+    K.glowCyl(F, 3, 0.36, 0.05, 0, -1.42, 0.05, 2.6, 0, 0, 0, K.hex, 10);
+    [0, 1, 2].forEach((i) => { const a = (i / 3) * Math.PI * 2; K.cyl(F, 0.11, 0.11, 1.1, Math.sin(a) * 0.52, -0.6, 0.05 + Math.cos(a) * 0.52, CY.DARK, 0, 0, 0, 6); });
+  },
+  // a briefcase on a short chain
+  kase(K, F, sd) {
+    K.plate(F, 0.6, 0.45, 0.6, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
+    K.tube(F, [0, -0.45, 0.1], [0, -0.85, 0.15], 0.035, CY.STEEL, 4);
+    K.add(F, new THREE.TorusGeometry(0.2, 0.04, 4, 10, Math.PI), racerM(0, -0.9, 0.15), CY.STEEL);
+    K.plate(F, 1.7, 1.15, 0.42, 0, -1.52, 0.15, CY.PLATE, 0, 0, 0, 0.08);
+    K.sym((q) => { K.plate(F, 0.2, 0.2, 0.46, q * 0.76, -1.05, 0.15, CY.STEEL, 0, 0, 0, 0.04); K.plate(F, 0.2, 0.2, 0.46, q * 0.76, -1.99, 0.15, CY.STEEL, 0, 0, 0, 0.04); });
+    K.glow(F, 3, 0.3, 0.12, 0.05, 0, -1.05, 0.38, 2.6);
+    K.box(F, 1.72, 0.04, 0.44, 0, -1.2, 0.15, CY.DARK);
+  },
+};
+
+// ---- bases --------------------------------------------------------------------
+const CY_BASE = {
+  jet(K) {
+    K.cyl("base", 0.95, 0.5, 0.8, 0, -3.0, 0, CY.DARK, 0, 0, 0, 8);
+    K.glowCyl("base", 2, 0.42, 0.1, 0, -3.42, 0, 3.2, 0, 0, 0, K.hex, 8);
+    for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2 + 0.78; K.plate("base", 0.1, 0.7, 0.5, Math.sin(a) * 0.8, -3.0, Math.cos(a) * 0.8, CY.PLATE, 0, a, 0, 0.03); }
+    K.jet(0, -3.6, 0, 2.4);
+  },
+  tri(K) {
+    [[-1.0, 0.3], [1.0, 0.3], [0, -0.8]].forEach(([x, z]) => {
+      K.tube("base", [x * 0.5, -2.5, z * 0.5], [x, -2.95, z], 0.09, CY.STEEL);
+      K.cyl("base", 0.42, 0.26, 0.6, x, -3.1, z, CY.DARK, 0, 0, 0, 8);
+      K.glowCyl("base", 2, 0.22, 0.08, x, -3.42, z, 3.0, 0, 0, 0, K.hex, 8);
+    });
+    K.jet(0, -3.6, 0, 2.8);
+  },
+  tail(K) {
+    for (let i = 0; i < 7; i++) {
+      const y = -2.75 - i * 0.3, z = -Math.pow(i, 1.5) * 0.09, s = 1 - i * 0.11;
+      K.plate("base", 1.0 * s, 0.24, 0.8 * s, 0, y, z, i % 2 ? CY.PLATE : CY.ARMOR, 0.1 + i * 0.07, 0, 0, 0.05);
+      if (i < 6) K.glow("base", 2, 0.5 * s, 0.07, 0.5 * s, 0, y - 0.15, z - 0.03, 1.8);
+    }
+    K.cone("base", [0, -4.8, -1.65], [0, -5.5, -2.2], 0.12, 0.01, CY.BONE);
+  },
+  skirt(K) {
+    K.cyl("base", 0.5, 0.3, 1.0, 0, -3.0, 0, CY.DARK, 0, 0, 0, 8);
+    K.glowCyl("base", 2, 0.26, 0.08, 0, -3.52, 0, 2.6, 0, 0, 0, K.hex, 8);
+    K.jet(0, -3.7, 0, 2.0);
+  },
+  treads(K) {
+    K.plate("base", 3.4, 0.5, 1.7, 0, -2.75, 0, CY.ARMOR, 0, 0, 0, 0.1);
+    K.sym((sd) => {
+      K.plate("base", 1.0, 1.0, 2.5, sd * 1.9, -3.15, 0.1, CY.DARK, 0, 0, 0, 0.2);
+      for (let i = 0; i < 4; i++) { K.cyl("base", 0.3, 0.3, 0.12, sd * 2.43, -3.2, -0.8 + i * 0.6, CY.STEEL, 0, 0, Math.PI / 2, 8); K.bolt("base", sd * 2.5, -3.2, -0.8 + i * 0.6, 0, sd * -Math.PI / 2); }
+      for (let i = 0; i < 9; i++) K.box("base", 1.04, 0.07, 0.2, sd * 1.9, -2.63, -1.0 + i * 0.28, CY.PLATE);
+      for (let i = 0; i < 4; i++) K.box("base", 1.04, 0.2, 0.07, sd * 1.9, -2.8 - i * 0.26, 1.37, CY.PLATE);
+      K.glow("base", 3, 0.5, 0.12, 0.05, sd * 1.9, -2.6, 1.38, 2.6);
+    });
+  },
+  legs(K) {
+    K.sym((sd) => {
+      K.plate("base", 1.2, 1.0, 1.3, sd * 0.9, -3.0, 0.05, CY.ARMOR, 0, 0, 0, 0.12);
+      K.plate("base", 1.45, 0.4, 1.8, sd * 0.9, -3.62, 0.3, CY.PLATE, 0, 0, 0, 0.1);
+      K.glow("base", 3, 1.24, 0.07, 1.34, sd * 0.9, -3.38, 0.05, 2.0);
+      K.piston("base", [sd * 0.4, -2.5, 0.5], [sd * 0.7, -3.4, 0.8], 0.09);
+    });
+  },
+  coil(K) {
+    K.cyl("base", 0.5, 0.5, 2.6, 0, -3.05, 0.2, CY.BONE, 0, 0, Math.PI / 2, 12);
+    K.sym((sd) => { K.cyl("base", 0.62, 0.62, 0.14, sd * 1.36, -3.05, 0.2, CY.PLATE, 0, 0, Math.PI / 2, 12); K.ball("base", 0.2, sd * 1.52, -3.05, 0.2, CY.STEEL); });
+    K.plate("base", 2.2, 1.4, 0.05, 0, -3.9, 0.66, CY.BONE, -0.12, 0, 0, 0.02);
+    for (let i = 0; i < 6; i++) K.glow("base", 2, 1.7 - cyHash(i * 2.2) * 0.9, 0.05, 0.03, -0.1 - cyHash(i) * 0.2, -3.4 - i * 0.17, 0.74 + i * 0.02, 1.8, -0.12);
+    K.tube("base", [0, -2.6, 0], [0, -3.0, 0.1], 0.2, CY.DARK);
+  },
+};
+
+// ---- cores (the light in the chest) ---------------------------------------------
+const CY_CORE = {
+  none() {},
+  reactor(K, z = 1.2, y = 0.75) {
+    K.add("chest", new THREE.TorusGeometry(0.46, 0.09, 5, 16), racerM(0, y, z), CY.STEEL);
+    K.glowCyl("chest", 2, 0.38, 0.08, 0, y, z - 0.04, 2.6, Math.PI / 2, 0, 0, K.hex, 14);
+    for (let i = 0; i < 3; i++) K.box("chest", 0.8 - Math.abs(i - 1) * 0.2, 0.07, 0.1, 0, y - 0.2 + i * 0.2, z + 0.03, CY.DARK);
+  },
+  gauge(K, z = 1.78, y = 0.3) {
+    K.cyl("chest", 0.74, 0.74, 0.14, 0, y, z, CY.BONE, Math.PI / 2, 0, 0, 16);
+    K.add("chest", new THREE.TorusGeometry(0.76, 0.08, 5, 18), racerM(0, y, z + 0.06), CY.STEEL);
+    for (let i = 0; i < 9; i++) { const a = -2.2 + (i / 8) * 4.4; K.glow("chest", 2, 0.05, 0.16, 0.04, Math.sin(a) * 0.56, y + Math.cos(a) * 0.56, z + 0.08, i > 5 ? 3 : 1.4, 0, 0, -a, i > 5 ? 0xff2418 : K.hex); }
+    K.box("chest", 0.06, 0.6, 0.05, 0.2, y + 0.16, z + 0.1, CY.DARK, 0, 0, -0.9); // the needle, far into the red
+    K.cyl("chest", 0.08, 0.08, 0.08, 0, y, z + 0.1, CY.STEEL, Math.PI / 2, 0, 0, 8);
+  },
+  hourglass(K) {
+    K.cone("chest", [0, 1.3, 0.25], [0, 0.6, 0.25], 0.42, 0.04, CY.STEEL, 8);
+    K.cone("chest", [0, -0.1, 0.25], [0, 0.6, 0.25], 0.42, 0.04, CY.STEEL, 8);
+    K.add("chest", new THREE.ConeGeometry(0.3, 0.45, 8), racerM(0, 0.12, 0.25), K.hex, 2.6, 2);
+    K.glow("chest", 2, 0.03, 0.5, 0.03, 0, 0.5, 0.25, 2.6);
+    K.sym((sd) => K.tube("chest", [sd * 0.46, 1.36, 0.25], [sd * 0.46, -0.16, 0.25], 0.03, CY.STEEL, 4));
+    [1.36, -0.16].forEach((y) => K.cyl("chest", 0.5, 0.5, 0.08, 0, y, 0.25, CY.PLATE, 0, 0, 0, 8));
+  },
+  vault(K, z = 1.16, y = 0.7) {
+    K.cyl("chest", 0.78, 0.78, 0.16, 0, y, z - 0.06, CY.DARK, Math.PI / 2, 0, 0, 16);
+    K.add("chest", new THREE.TorusGeometry(0.6, 0.07, 5, 18), racerM(0, y, z + 0.08), CY.STEEL);
+    for (let i = 0; i < 4; i++) K.box("chest", 1.2, 0.07, 0.07, 0, y, z + 0.08, CY.STEEL, 0, 0, (i / 4) * Math.PI);
+    K.cyl("chest", 0.16, 0.16, 0.14, 0, y, z + 0.1, CY.PLATE, Math.PI / 2, 0, 0, 8);
+    K.add("chest", new THREE.TorusGeometry(0.8, 0.035, 4, 24), racerM(0, y, z + 0.02), K.hex, 2.4, 2);
+  },
+  rings(K, z = 1.12, y = 0.85) {
+    [0.62, 0.42, 0.22].forEach((r, i) => K.add("chest", new THREE.TorusGeometry(r, 0.045, 4, 20), racerM(0, y, z + i * 0.03), K.hex, 2.0 + i * 0.4, 2));
+    K.glowCyl("chest", 2, 0.08, 0.06, 0, y, z + 0.1, 3, Math.PI / 2, 0, 0, 0xffffff, 8);
+    K.sym((sd) => K.tube("chest", [sd * 0.5, 1.9, 0.75], [sd * 0.3, y + 0.55, z], 0.025, CY.STEEL, 4)); // on a chain
+  },
+  slot(K, z = 1.14, y = 1.25) {
+    K.fplate("chest", 1.5, 0.5, 0.1, 0, y, z - 0.03, CY.DARK);
+    K.glow("chest", 2, 1.0, 0.1, 0.05, 0, y, z + 0.04, 2.8);
+    for (let i = 0; i < 3; i++) K.cyl("chest", 0.2, 0.2, 0.05, -0.36 + i * 0.36, y - 0.55, z + 0.02, CY.BONE, Math.PI / 2, 0, 0, 10);
+  },
+  text(K, z = 1.16) {
+    K.fplate("chest", 2.0, 2.2, 0.1, 0, 0.6, z - 0.04, CY.BONE);
+    for (let i = 0; i < 9; i++) K.glow("chest", 2, 1.6 - cyHash(i * 1.7) * 0.9, 0.06, 0.04, -0.12 - cyHash(i + 5) * 0.3, 1.5 - i * 0.22, z + 0.03, 1.9);
+    K.glow("chest", 3, 0.5, 0.05, 0.04, 0.5, -0.36, z + 0.03, 2.8);
+  },
+};
+
+// ---- the twelve -----------------------------------------------------------------
+// arm: [upper length, forearm length, thickness, style]; rest: [swing, spread, bend]
+const CYBORGS = {
+  // PRODUCT PUSHER: a salesman in a suit of plate, briefcase in one hand, the other held out
+  1: { torso: "suit", head: "grin", shoulder: "fin", arm: [2.0, 1.9, 0.36, "tube"], hands: ["kase", "open"], hs: 0.9, base: "jet", core: "none", rest: [-0.1, 0.1, -0.5], restR: [-0.5, 0.12, -1.25], sway: 1.3, breath: 2.2 },
+  // PERIL PRIME: a horned brute, all spikes, claws and hazard stripes
+  2: { torso: "hulk", chevrons: true, head: "horned", shoulder: "spike", arm: [2.05, 2.0, 0.5, "piston"], hands: ["claw", "claw"], hs: 1.1, base: "jet", core: "reactor", rest: [0, 0.16, -0.6], twitch: 1.6, breath: 2.6, extra(K) { for (let i = 0; i < 5; i++) K.glow("hips", 3, 0.24, 0.1, 0.05, -0.8 + i * 0.4, -2.52, 0.88, i % 2 ? 0.3 : 2.4, 0, 0, 0.7); } },
+  // SOLVENCY SPECTER: a hooded wraith in tattered plate, one eye, an empty vault in its chest
+  3: { torso: "robe", ragged: true, folds: 11, head: "cyclops", shoulder: "bone", arm: [2.2, 2.3, 0.3, "bone"], hands: ["open", "open"], hs: 1.15, base: "tail", core: "vault", rest: [-0.25, 0.3, -0.9], sway: 1.5, breath: 1.5, steam: 1.6 },
+  // THE FINE PRINT: a hunched scribe, many-eyed, four quill arms, clauses scrolling down its chest
+  4: { torso: "robe", folds: 7, head: "cluster", shoulder: "pad", arm: [1.9, 2.0, 0.3, "tube"], hands: ["needle", "needle"], hs: 0.95, base: "coil", core: "text", rest: [-0.35, 0.1, -1.0], hunch: 0.16, twitch: 1.8,
+    extra(K) { K.sym((sd) => { K.tube("chest", [sd * 1.5, 0.4, 0.5], [sd * 2.2, -0.3, 1.0], 0.1, CY.DARK); K.ball("chest", 0.2, sd * 2.2, -0.3, 1.0, CY.STEEL); K.cone("chest", [sd * 2.2, -0.3, 1.0], [sd * 1.7, -1.5, 1.8], 0.1, 0.01, CY.STEEL); K.glow("chest", 2, 0.08, 0.08, 0.08, sd * 1.7, -1.52, 1.82, 3); }); } },
+  // GROUP GOLEM: slabs on slabs, a head sunk between cube shoulders, fists like safes
+  5: { torso: "hulk", gut: { n: 3, w: 2.6, d: 1.6 }, hips: { w: 3.0 }, head: "dome", neck: 1.8, headS: 1.15, shoulder: "block", arm: [1.8, 1.9, 0.6, "piston"], hands: ["fist", "fist"], hs: 1.45, base: "legs", core: "reactor", rest: [0, 0.2, -0.35], sway: 0.6, breath: 1.4, twitch: 0.5 },
+  // INFLATION TITAN: a boiler about to burst, gauge in the red, stacks venting
+  6: { torso: "barrel", head: "valve", shoulder: "stack", arm: [1.9, 1.9, 0.42, "tube"], hands: ["fist", "fist"], hs: 1.0, base: "tri", core: "gauge", rest: [0, 0.34, -0.5], swell: 2.2, breath: 1.7, steam: 2.2, sw: 2.45 },
+  // LONGEVITY LICH: a crowned skeleton with an hourglass where its heart was
+  7: { torso: "cage", head: "crown", shoulder: "bone", arm: [2.2, 2.2, 0.3, "bone"], hands: ["open", "open"], hs: 1.25, base: "tail", core: "hourglass", rest: [-0.2, 0.22, -0.8], sway: 1.2, breath: 1.3 },
+  // LORD INTESTATE: a judge in a plated robe and wig, gavel raised, scales on his shoulders
+  8: { torso: "robe", folds: 10, head: "judge", shoulder: "pan", arm: [2.0, 2.0, 0.42, "piston"], hands: ["open", "hammer"], hs: 1.0, base: "skirt", core: "none", rest: [0, 0.14, -0.5], restR: [-0.7, 0.2, -1.3], sway: 0.8, breath: 1.6 },
+  // UNDUE INFLUENCER: a masked puppeteer, strings hanging from long fingers
+  9: { torso: "suit", tie: false, gut: { n: 6, w: 1.3 }, head: "mask", shoulder: "fin", arm: [2.2, 2.2, 0.3, "tube"], hands: ["strings", "strings"], hs: 1.0, base: "jet", core: "rings", rest: [-0.75, 0.42, -0.9], sway: 1.6, breath: 1.9,
+    extra(K) { K.sym((sd) => K.plate("hips", 0.9, 2.0, 0.1, sd * 0.75, -3.2, -0.75, CY.PLATE, 0.14, 0, sd * 0.08, 0.04)); } },
+  // PROBATRON: a toll booth on tracks, barrier arm down, shoulder guns, a signal for a head
+  10: { torso: "cabinet", head: "tri", neck: 2.15, shoulder: "cannon", arm: [1.9, 1.9, 0.46, "piston"], hands: ["barrier", "cannon"], hs: 1.0, base: "treads", core: "slot", rest: [0, 0.14, -0.55], restL: [-0.2, 0.22, -1.2], sway: 0.5, breath: 1.2, twitch: 0.7 },
+  // PATRIMONY PHANTOM: split down the middle: half armored, half bone, a cleaver to divide the rest
+  11: { torso: "hulk", head: "split", shoulder: ["shield", "bone"], arm: [2.05, 2.0, 0.46, "piston"], armR: [2.2, 2.2, 0.3, "bone"], hands: ["cleaver", "open"], hs: 1.05, base: "tail", core: "none", rest: [0, 0.14, -0.6], restL: [-0.5, 0.25, -1.0], sway: 1.1, breath: 1.8,
+    extra(K) { K.glow("chest", 3, 0.07, 2.3, 0.07, 0, 0.75, 1.38, 3, -0.1); K.glow("hips", 3, 0.07, 0.8, 0.07, 0, -2.25, 1.0, 3); } },
+  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, a skull that stares
+  all: { torso: "hulk", head: "skull", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.08, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
+    extra(K) { K.sym((sd) => { K.cyl("chest", 0.2, 0.26, 1.7, sd * 1.15, 2.5, -1.15, CY.DARK, 0.15, 0, sd * 0.1, 8); K.glowCyl("chest", 3, 0.16, 0.06, sd * 1.15, 3.36, -1.28, 3, 0.15, 0, sd * 0.1, K.hex, 8); K.steam(sd * 1.15, 3.45, -1.3); }); } },
+};
+
+class CyborgRig {
+  constructor(game, key) {
+    const g = (this.g = game), hex = game.cfg.color;
+    const D = (this.D = Object.assign({ sw: 2.25, sy: 1.5, neck: 2.05, sway: 1, breath: 2, twitch: 1, steam: 1, swell: 1, hunch: 0 }, CYBORGS[key] || CYBORGS.all));
+    this.mat = cyborgArmor(game.env, hex);
+    this.uL = this.mat.userData.uL.value;
+    const grp = (this.grp = new THREE.Group());
+    const G = (this.G = {}), B = {}, piv = { body: [0, 0, 0], hips: [0, 0, 0], base: [0, -2.6, 0], chest: [0, -0.5, 0], head: [0, D.neck, 0.1] };
+    const mk = (n, parent, x, y, z) => { const o = (G[n] = new THREE.Group()); o.position.set(x, y, z); parent.add(o); B[n] = new RacerBatch(["aGlow"]); return o; };
+    mk("body", grp, 0, 0, 0);
+    mk("hips", G.body, 0, 0, 0);
+    mk("base", G.body, 0, -2.6, 0);
+    mk("chest", G.body, 0, -0.5, 0);
+    mk("head", G.chest, 0, D.neck + 0.5, 0.1);
+    const armOf = (s) => (s === "R" && D.armR) || D.arm;
+    for (const [s, sd] of [["L", -1], ["R", 1]]) { mk("arm" + s, G.chest, sd * D.sw, D.sy + 0.5, 0); mk("fore" + s, G["arm" + s], 0, -armOf(s)[0], 0); }
+    this.plates = []; this.vents = []; this.eyes = []; this.jetAt = null;
+    const stack = [];
+    const BOX = new THREE.BoxGeometry(1, 1, 1), HEXB = new THREE.CylinderGeometry(0.05, 0.05, 0.05, 6), RX90 = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+    const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+    const full = (gn, m) => {
+      let mm = m ? m.clone() : new THREE.Matrix4();
+      for (let i = stack.length - 1; i >= 0; i--) mm.premultiply(stack[i]);
+      const p = piv[gn];
+      if (p) mm.premultiply(new THREE.Matrix4().makeTranslation(-p[0], -p[1], -p[2]));
+      return mm;
+    };
+    const hot = new THREE.Color(hex).lerp(new THREE.Color(0xffffff), 0.55);
+    const crackOn = (b, M, len, ang, ch, seed) => {
+      let px = (-Math.cos(ang) * len) / 2, py = (-Math.sin(ang) * len) / 2;
+      for (let i = 0; i < 6; i++) {
+        const l = (len / 6) * (0.7 + 0.6 * cyHash(seed + i)), na = ang + (i % 2 ? 1 : -1) * (0.45 + 0.4 * cyHash(seed + i + 9));
+        const nx = px + Math.cos(na) * l, ny = py + Math.sin(na) * l;
+        b.add(BOX, M.clone().multiply(racerM((px + nx) / 2, (py + ny) / 2, 0, l + 0.03, 0.06 * (1 - i / 10), 0.03, 0, 0, na)), hot, 2.6, { aGlow: ch });
+        if (i === 1 || i === 3) b.add(BOX, M.clone().multiply(racerM(nx + Math.cos(na + 1.2) * l * 0.35, ny + Math.sin(na + 1.2) * l * 0.35, 0, l * 0.7, 0.035, 0.03, 0, 0, na + 1.2)), hot, 2.2, { aGlow: ch });
+        px = nx; py = ny;
+      }
+    };
+    const K = {
+      hex, D,
+      add(gn, geo, m, color, k = 1, ch = 0) { B[gn].add(geo, full(gn, m), color, k, { aGlow: ch }); geo.dispose(); },
+      box(gn, w, h, d, x, y, z, c, rx = 0, ry = 0, rz = 0) { B[gn].add(BOX, full(gn, racerM(x, y, z, w, h, d, rx, ry, rz)), c, 1, { aGlow: 0 }); },
+      plate(gn, w, h, d, x, y, z, c, rx = 0, ry = 0, rz = 0, ch = 0.05, all = true) { K.add(gn, racerPlate(w, h, d, ch, all), racerM(x, y, z, 1, 1, 1, rx, ry, rz), c); },
+      // a plate that faces +z (w wide, h tall, t thick), chamfered on its face
+      fplate(gn, w, h, t, x, y, z, c, rx = 0, ry = 0, rz = 0) { K.add(gn, racerPlate(w, t, h, Math.min(0.05, t * 0.45)), racerM(x, y, z, 1, 1, 1, rx, ry, rz).multiply(RX90), c); },
+      cyl(gn, rt, rb, h, x, y, z, c, rx = 0, ry = 0, rz = 0, n = 10) { K.add(gn, new THREE.CylinderGeometry(rt, rb, h, n), racerM(x, y, z, 1, 1, 1, rx, ry, rz), c); },
+      ball(gn, r, x, y, z, c, det = 0, sx = 1, sy = 1, sz = 1) { K.add(gn, new THREE.IcosahedronGeometry(r, det), racerM(x, y, z, sx, sy, sz), c); },
+      bolt(gn, x, y, z, rx = 0, rz = 0) { B[gn].add(HEXB, full(gn, racerM(x, y, z, 1, 1, 1, rx, 0, rz)), CY.STEEL, 1, { aGlow: 0 }); },
+      cone(gn, a, b, r1, r2, c, n = 6) {
+        const A = V(a), Bv = V(b), d = new THREE.Vector3().subVectors(Bv, A);
+        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
+        K.add(gn, new THREE.CylinderGeometry(r2, r1, d.length(), n), new THREE.Matrix4().compose(A.add(Bv).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)), c);
+      },
+      tube(gn, a, b, r, c, n = 6) { K.cone(gn, a, b, r, r, c, n); },
+      strut(gn, a, b, t, c) {
+        const A = V(a), Bv = V(b), d = new THREE.Vector3().subVectors(Bv, A);
+        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), d.clone().normalize());
+        B[gn].add(BOX, full(gn, new THREE.Matrix4().compose(A.add(Bv).multiplyScalar(0.5), q, new THREE.Vector3(d.length() + t * 0.4, t, t))), c, 1, { aGlow: 0 });
+      },
+      glow(gn, ch, w, h, d, x, y, z, k = 2.4, rx = 0, ry = 0, rz = 0, color = hex) { B[gn].add(BOX, full(gn, racerM(x, y, z, w, h, d, rx, ry, rz)), color, k, { aGlow: ch }); },
+      glowCyl(gn, ch, r, h, x, y, z, k = 2.4, rx = 0, ry = 0, rz = 0, color = hex, n = 10) { K.add(gn, new THREE.CylinderGeometry(r, r, h, n), racerM(x, y, z, 1, 1, 1, rx, ry, rz), color, k, ch); },
+      // a hydraulic ram: dark sleeve, bright rod, collars
+      piston(gn, a, b, r) {
+        const A = V(a), Bv = V(b), mid = A.clone().lerp(Bv, 0.55);
+        K.tube(gn, a, [mid.x, mid.y, mid.z], r, CY.DARK, 8);
+        K.tube(gn, [mid.x, mid.y, mid.z], b, r * 0.55, CY.STEEL, 6);
+        K.ball(gn, r * 1.25, A.x, A.y, A.z, CY.PLATE);
+        K.ball(gn, r * 1.1, Bv.x, Bv.y, Bv.z, CY.PLATE);
+        K.tube(gn, [mid.x, mid.y, mid.z], [mid.x + (Bv.x - A.x) * 0.04, mid.y + (Bv.y - A.y) * 0.04, mid.z + (Bv.z - A.z) * 0.04], r * 1.2, CY.STEEL, 8);
+      },
+      // a cable that hangs between two points
+      cable(gn, a, b, sag = 0.3, r = 0.05, n = 5) {
+        let p = a;
+        for (let i = 1; i <= n; i++) {
+          const t = i / n, s = Math.sin(t * Math.PI) * sag;
+          const q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - s, a[2] + (b[2] - a[2]) * t - s * 0.5];
+          K.tube(gn, p, q, r, CY.DARK, 5);
+          p = q;
+        }
+      },
+      // a slatted vent that breathes steam
+      vent: (gn, x, y, z, w, h, rx = 0, ry = 0, rz = 0) => {
+        K.xf(racerM(x, y, z, 1, 1, 1, rx, ry, rz), () => {
+          K.fplate(gn, w, h, 0.08, 0, 0, 0, CY.DARK);
+          for (let i = 0; i < 4; i++) K.plate(gn, w * 0.86, 0.035, 0.12, 0, h * (0.32 - i * 0.21), 0.07, CY.PLATE, 0.6, 0, 0, 0.01);
+        });
+        const p = new THREE.Vector3(0, 0, 0.15).applyMatrix4(full(gn, racerM(x, y, z, 1, 1, 1, rx, ry, rz)));
+        this.vents.push(p);
+      },
+      steam: (x, y, z) => { this.vents.push(new THREE.Vector3(x, y + 0.5, z)); },
+      jet: (x, y, z, s) => { this.jetAt = [x, y, z, s]; },
+      // an armor plate (facing +z before rotation) that is shot off at a damage stage,
+      // baring a circuit board underneath
+      breakaway: (gn, w, h, t, x, y, z, c, rx = 0, ry = 0, rz = 0, stage = 1, deco) => {
+        const b = new RacerBatch(["aGlow"]);
+        const pg = racerPlate(w, t, h, Math.min(0.06, t * 0.45));
+        b.add(pg, RX90, c, 1, { aGlow: 0 });
+        pg.dispose();
+        // it cracks one stage before it goes
+        if (stage >= 2) crackOn(b, new THREE.Matrix4().makeTranslation(0, 0, t / 2 + 0.012), Math.min(w, h) * 0.95, cyHash(x * 3.1 + y) * 6.28, 4 + Math.min(3, stage - 1), x * 5.3 + y * 9.1);
+        if (deco) deco((gw, gh, gx, gy, k = 2.4, ch = 3, rz = 0) => b.add(BOX, racerM(gx, gy, t / 2 + 0.02, gw, gh, 0.05, 0, 0, rz), hex, k, { aGlow: ch }));
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => b.add(HEXB, racerM(i * (w / 2 - 0.12), j * (h / 2 - 0.12), t / 2, 1, 1, 1, Math.PI / 2), CY.STEEL, 1, { aGlow: 0 }));
+        const mesh = new THREE.Mesh(b.build("color"), this.mat);
+        const m = full(gn, racerM(x, y, z, 1, 1, 1, rx, ry, rz));
+        m.decompose(mesh.position, mesh.quaternion, mesh.scale);
+        G[gn].add(mesh);
+        this.plates.push({ mesh, stage, gn, p0: mesh.position.clone(), q0: mesh.quaternion.clone(), s0: mesh.scale.clone(), v: new THREE.Vector3(), w: new THREE.Vector3(), t: -1, n: new THREE.Vector3(0, 0, 1).applyQuaternion(mesh.quaternion) });
+        K.xf(racerM(x, y, z, 1, 1, 1, rx, ry, rz), () => {
+          K.box(gn, w * 0.88, h * 0.88, t * 0.5, 0, 0, -t * 0.2, CY.DARK);
+          const sdn = cyHash(x * 3.3 + y * 7.7 + z);
+          for (let i = 0; i < 4; i++) K.glow(gn, 4, w * (0.25 + cyHash(sdn + i) * 0.5), 0.035, 0.02, (cyHash(sdn + i * 2.3) - 0.5) * w * 0.3, h * (-0.32 + i * 0.21), t * 0.06, 2.2, 0, 0, 0, i % 2 ? 0xffffff : hex);
+          for (let i = 0; i < 3; i++) K.glow(gn, 4, 0.035, h * (0.2 + cyHash(sdn + i * 5.1) * 0.3), 0.02, w * (-0.3 + i * 0.3), (cyHash(sdn + i * 1.9) - 0.5) * h * 0.3, t * 0.06, 2.2);
+          K.box(gn, w * 0.22, h * 0.16, 0.05, w * 0.18, h * 0.12, t * 0.05, CY.STEEL);
+          K.box(gn, w * 0.16, h * 0.12, 0.05, -w * 0.22, -h * 0.2, t * 0.05, CY.PLATE);
+        });
+      },
+      // a jagged glowing crack across a surface that faces +z (before rotation)
+      crack(gn, stage, x, y, z, len, ang, rx = 0, ry = 0) { crackOn(B[gn], full(gn, racerM(x, y, z, 1, 1, 1, rx, ry, 0)), len, ang, 4 + stage, x * 5.3 + y * 9.1 + stage); },
+      eye: (x, y, z, s, asp = 1) => { const p = new THREE.Vector3(x, y, z).applyMatrix4(full("head", null)); this.eyes.push([p.x, p.y, p.z, s, asp]); },
+      sym(fn) { fn(-1); fn(1); },
+      xf(m, fn) { stack.push(m); fn(); stack.pop(); },
+    };
+    // ---- assemble this boss
+    const hunch = racerM(0, 0, 0, 1, 1, 1, D.hunch, 0, 0);
+    const hs = D.headS || 1;
+    const headM = new THREE.Matrix4().makeTranslation(0, D.neck + (D.headY || 0), 0.1).multiply(racerM(0, 0, 0, hs, hs, hs)).multiply(new THREE.Matrix4().makeTranslation(0, -2.05, -0.1));
+    K.xf(hunch, () => {
+      CY_TORSO[D.torso](K, D);
+      cyNeck(K);
+      K.xf(headM, () => CY_HEAD[D.head](K, D));
+      K.sym((sd) => { const t = Array.isArray(D.shoulder) ? D.shoulder[sd < 0 ? 0 : 1] : D.shoulder; CY_SHOULDER[t](K, sd, D); });
+      CY_CORE[D.core](K);
+    });
+    CY_BASE[D.base](K);
+    for (const [s, sd] of [["L", -1], ["R", 1]]) {
+      const a = armOf(s);
+      cyArm(K, s, sd, { ua: a[0], fa: a[1], r: a[2], style: a[3], hand: D.hands[sd < 0 ? 0 : 1], hs: D.hs || 1 });
+    }
+    if (D.extra) D.extra(K);
+    for (const n in B) if (B[n].pos.length) G[n].add(new THREE.Mesh(B[n].build("color"), this.mat));
+    BOX.dispose(); HEXB.dispose();
+    this.rest = { L: D.restL || D.rest, R: D.restR || D.rest };
+
+    // ---- eyes: red coals on one anchor that blinks and aims the beam
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const x = c.getContext("2d"), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, "#fff"); gr.addColorStop(0.25, "#ff3a2a"); gr.addColorStop(0.6, "rgba(255,30,30,0.35)"); gr.addColorStop(1, "rgba(255,0,0,0)");
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+    const eyeMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, blending: THREE.AdditiveBlending });
+    eyeMat.color.setScalar(1.15);
+    const eye = (this.eye = new THREE.Group());
+    eye.material = eyeMat; // the fight tints this as the boss enrages
+    const E = this.eyes.length ? this.eyes : [[0, 2.84, 0.84, 0.5, 1]];
+    const cx = E.reduce((a, e) => a + e[0], 0) / E.length, cy = E.reduce((a, e) => a + e[1], 0) / E.length, cz = Math.max(...E.map((e) => e[2]));
+    eye.position.set(cx, cy, cz);
+    for (const [ex, ey, ez, s, asp] of E) {
+      const sp = new THREE.Sprite(eyeMat);
+      sp.scale.set(s, (s * asp) / 1.8, 1); // the anchor is stretched 1.8x tall, and squashed to blink
+      sp.position.set(ex - cx, (ey - cy) / 1.8, ez - cz);
+      sp.renderOrder = 5;
+      eye.add(sp);
+    }
+    G.head.add(eye);
+    if (this.jetAt) {
+      this.jet = glowSprite(neon(hex, 1.8), this.jetAt[3], 0.7);
+      this.jet.position.set(this.jetAt[0], this.jetAt[1], this.jetAt[2]);
+      G.body.add(this.jet);
+    }
+
+    // ---- a red aura behind it that only shows in its rage
+    this.aura = glowSprite(neon(COLORS.red, 1.5), 12, 0);
+    this.aura.position.set(0, 0.6, -1.4);
+    this.aura.layers.set(1);
+    G.body.add(this.aura);
+    this.auraK = 0;
+
+    // ---- steam from the vents (look only, not reflected)
+    const NV = Math.max(1, this.vents.length), N = NV * 12;
+    const sp = new Float32Array(N * 3), ss = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const v = this.vents[i % NV] || new THREE.Vector3(0, 2, -1); sp[i * 3] = v.x; sp[i * 3 + 1] = v.y; sp[i * 3 + 2] = v.z; ss[i] = (i + Math.random()) / N; }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    sg.setAttribute("aSeed", new THREE.BufferAttribute(ss, 1));
+    this.steam = new THREE.Points(sg, new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uI: { value: 0.2 }, uH: { value: 800 }, uColor: { value: new THREE.Color(hex).lerp(new THREE.Color(0xdfe8ff), 0.75) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute float aSeed; uniform float uTime; uniform float uI; uniform float uH; varying float vA;
+        void main(){
+          float r1 = fract(aSeed * 91.7), r2 = fract(aSeed * 37.3);
+          float life = fract(aSeed * 7.31 + uTime * (0.35 + r1 * 0.3));
+          vec3 p = position + vec3((r1 - 0.5) * (0.3 + life * 1.3), life * (1.3 + r2 * 1.5), (r2 - 0.5) * (0.3 + life) - life * 0.5);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = uH * (0.25 + 1.3 * life) * (0.5 + r1) * length(modelMatrix[0].xyz) / max(0.1, -mv.z);
+          vA = uI * (1.0 - life) * smoothstep(0.0, 0.12, life);
+        }`,
+      fragmentShader: "uniform vec3 uColor; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5) * 2.0; float a = max(0.0, 1.0 - d); gl_FragColor = vec4(uColor * (vA * a * a * 0.5), 1.0); }",
+    }));
+    this.steam.frustumCulled = false;
+    this.steam.layers.set(1);
+    G.chest.add(this.steam);
+    game.decor(this.steam);
+
+    // ---- a shadow on the floor under it (a soft dark disc; the floor mirrors the rest)
+    this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.7, depthWrite: false }));
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.position.y = 0.045;
+    this.shadow.renderOrder = 1;
+    this.shadow.layers.set(1);
+    game.scene.add(this.shadow);
+
+    // ---- animation state
+    this.lastHp = game.hp; this.lastAtk = game.atk ? game.atk.tok : 0; this.stage = 0;
+    this.hit = 0; this.hitV = 0; this.lunge = 0; this.power = 0; this.landed = false; this.dead = 0;
+    this.tw = { t: 1.5, part: 0, amt: 0, cur: 0, hold: 0 };
+    this.crackK = [0, 0, 0];
+    this.sparkT = 0; this.tmp = new THREE.Vector3();
+  }
+  // Blow a plate off: it tumbles away under gravity and is gone.
+  shed(p, kick = 1) {
+    if (p.t >= 0) return;
+    p.t = 0;
+    p.v.copy(p.n).multiplyScalar(2.2 * kick).add(this.tmp.set(rand(-1.4, 1.4), rand(1.5, 3.2), rand(0.5, 1.5)).multiplyScalar(kick));
+    p.w.set(rand(-6, 6), rand(-6, 6), rand(-6, 6));
+    const g = this.g;
+    if (g.bursts) {
+      g.boss.updateMatrixWorld(true);
+      const at = p.mesh.getWorldPosition(new THREE.Vector3());
+      g.bursts.burst(at, 0xffd9a0, { n: 16, speed: 6, size: 0.16 * g.bossScale + 0.05, life: 0.5, gravity: -9 });
+      g.bursts.burst(at, g.cfg.color, { n: 10, speed: 3, size: 0.22 * g.bossScale + 0.05, life: 0.7 });
+    }
+  }
+  update(dt, f) {
+    const g = this.g, D = this.D, G = this.G, t = g.t, uL = this.uL;
+    const calm = REDUCED_MOTION || GFX.calm ? 0.5 : 1;
+    const hpF = clamp(g.hp / g.maxHp, 0, 1);
+    const stage = g.hp <= 0 ? 4 : hpF < 0.35 ? 3 : hpF <= 0.55 ? 2 : hpF <= 0.8 ? 1 : 0;
+    const rage = stage === 3 ? 1 : 0;
+    const intro = g.state === "intro";
+    // ---- what just happened
+    if (g.hp < this.lastHp) {
+      this.hitV += 2.4 + Math.min(2, (this.lastHp - g.hp) / 12);
+      this.tw.t = 0; // a spasm follows every hit
+      if (g.bursts && g.hp > 0) { g.boss.updateMatrixWorld(true); g.bursts.burst(G.chest.getWorldPosition(new THREE.Vector3()).add(this.tmp.set(rand(-1.5, 1.5), rand(0, 2), 1.4).multiplyScalar(g.bossScale)), 0xffd9a0, { n: 14, speed: 7, size: 0.13, life: 0.45, gravity: -10 }); }
+    }
+    this.lastHp = g.hp;
+    if (g.atk && g.atk.tok !== this.lastAtk) { this.lastAtk = g.atk.tok; this.lunge = 1; }
+    if (stage > this.stage) {
+      for (const p of this.plates) if ((p.stage <= stage || stage === 4) && p.t < 0) this.shed(p, stage === 4 ? 1.8 : 1);
+      this.stage = stage;
+      this.tw.t = 0;
+    }
+    if (stage === 4) this.dead += dt;
+    // ---- entrance: it falls folded and dark, lands, then powers up
+    const land = intro ? smoothstep(1.35, 2.3, t) : 1;
+    if (intro && !this.landed && t > 1.4) {
+      this.landed = true;
+      this.hitV -= 2.2;
+      if (g.bursts) for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; g.bursts.burst(new THREE.Vector3(Math.cos(a) * 3.2, 0.2, Math.sin(a) * 3.2), i % 2 ? g.cfg.color : 0xffd9a0, { n: 8, speed: 5, size: 0.2, life: 0.7, gravity: -6 }); }
+    }
+    const was = this.power;
+    this.power = stage === 4 ? Math.max(0, 1 - this.dead * 0.9) * (0.6 + 0.4 * Math.sin(t * 17)) : intro ? smoothstep(1.55, 2.5, t) : 1;
+    if (intro && was < 0.7 && this.power >= 0.7 && g.flashAt) { g.boss.updateMatrixWorld(true); g.flashAt(this.eye.getWorldPosition(new THREE.Vector3()), COLORS.red, 0.7, 4 * g.bossScale + 1); }
+    const crouch = 1 - land;
+    // ---- springs: hit recoil and the lunge of an attack
+    this.hitV += (-this.hit * 90 - this.hitV * 11) * dt;
+    this.hit += this.hitV * dt;
+    this.lunge = Math.max(0, this.lunge - dt * 2.6);
+    const lg = Math.sin(Math.min(1, this.lunge) * Math.PI) * this.lunge;
+    // ---- attack telegraph: it winds up as the charge fills, and shakes when it is about to fire
+    const tele = smoothstep(0.5, 1, f), brink = smoothstep(0.82, 1, f);
+    // ---- servo twitches: a part snaps a few degrees and settles
+    const tw = this.tw;
+    tw.t -= dt;
+    if (tw.t <= 0) { tw.t = rand(1.2, 3.6) / (D.twitch * (1 + stage * 0.5)); tw.part = Math.floor(Math.random() * 5); tw.amt = rand(-1, 1) * (0.1 + stage * 0.06) * calm; tw.hold = 0.11; }
+    tw.hold -= dt;
+    tw.cur += ((tw.hold > 0 ? tw.amt : 0) - tw.cur) * Math.min(1, dt * 26);
+    const twOf = (i) => (tw.part === i ? tw.cur : 0);
+    // ---- breathing
+    const br = Math.sin(t * D.breath * (1 + 0.7 * rage));
+    const sw = D.swell * (1 + 0.6 * rage) * calm;
+    G.chest.scale.set(1 + 0.012 * br * sw, 1 + 0.018 * br * sw, 1 + 0.04 * br * sw);
+    const sag = stage >= 2 && stage < 4 ? 0.1 : 0;
+    G.chest.position.y = -0.5 + 0.045 * br * sw - sag - crouch * 0.25 - this.dead * 0.25;
+    G.chest.rotation.x = crouch * 0.4 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.05 - brink * 0.12 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
+    G.chest.rotation.z = (stage >= 2 ? 0.05 : 0) + this.hit * 0.06 + (brink * Math.sin(t * 17) * 0.012) * calm;
+    // ---- head: looks about, glares down as it charges, snaps back when hit
+    G.head.rotation.y = Math.sin(t * 0.37 * D.sway) * 0.22 * land + Pointer.x * 0.25 + twOf(0) * 1.6;
+    G.head.rotation.x = crouch * 0.6 + tele * 0.2 - this.hit * 0.5 + lg * 0.25 + Math.sin(t * 0.23) * 0.04 + Math.min(1, this.dead * 1.4) * 0.7;
+    G.head.rotation.z = (stage >= 2 ? -0.12 : 0) + twOf(1) * 1.5 + Math.sin(t * 0.31) * 0.03;
+    // ---- arms
+    for (const [s, sd, i] of [["L", -1, 2], ["R", 1, 3]]) {
+      const r = this.rest[s];
+      const limp = stage >= 2 && sd < 0 && stage < 4 ? 1 : 0; // the left arm fails at half health
+      const A = G["arm" + s], F = G["fore" + s];
+      const idle = Math.sin(t * 0.6 * D.sway + sd) * 0.05 + br * 0.02;
+      A.rotation.x = lerp(r[0] + idle - tele * 0.55 * (1 - limp) - lg * 0.9 + this.hit * 0.5 + crouch * -0.5 + twOf(i), 0.12, limp * 0.8) + Math.min(1, this.dead) * (0.3 - r[0]);
+      A.rotation.z = sd * (r[1] + tele * 0.3 + rage * 0.14 + this.hit * 0.35 - crouch * 0.3 + br * 0.015);
+      F.rotation.x = lerp(r[2] - tele * 0.5 + lg * 0.7 - crouch * 0.9 + twOf(i) * 1.4 + this.hit * 0.3, -0.12 + twOf(i) * 2, limp * 0.85) + Math.min(1, this.dead) * (-0.1 - r[2]);
+    }
+    G.base.rotation.z = Math.sin(t * 0.8 * D.sway) * 0.07;
+    G.base.rotation.x = Math.sin(t * 0.55 * D.sway) * 0.05 - this.hit * 0.15;
+    // ---- lamps
+    const P = this.power;
+    uL[1] = P * (1 + 0.7 * tele + 0.6 * rage);
+    uL[2] = P * (0.75 + 0.25 * br + tele * (0.9 + 0.7 * Math.sin(t * (7 + 8 * tele))) + rage * 0.9 + Math.max(0, this.hit) * 3);
+    uL[3] = smoothstep(0.25, 0.9, P) * (0.85 + 0.15 * Math.sin(t * 1.3) + rage * (0.5 + 0.5 * Math.sin(t * 7.5)) + brink * 0.8);
+    uL[4] = P * (0.5 + 0.5 * Math.sin(t * 11) * Math.sin(t * 3.7)) * 1.3; // circuitry flickers softly
+    for (let i = 0; i < 3; i++) {
+      this.crackK[i] += ((stage > i ? 1 : 0) - this.crackK[i]) * Math.min(1, dt * 4);
+      uL[5 + i] = this.crackK[i] * P * (0.7 + 0.3 * Math.sin(t * (2.3 + i) + i * 2) + rage * 0.6);
+    }
+    this.eye.visible = P > 0.05;
+    this.eye.material.opacity = Math.min(1, P * (1 + 0.5 * tele));
+    if (this.jet) this.jet.material.opacity = 0.7 * P * (0.85 + 0.15 * Math.sin(t * 13));
+    this.auraK += (rage - this.auraK) * Math.min(1, dt * 2);
+    this.aura.material.opacity = this.auraK * P * (0.3 + 0.12 * Math.sin(t * 7.5));
+    this.aura.visible = this.auraK > 0.01;
+    // ---- steam: a wisp at rest, clouds when it winds up, is hurt or enraged
+    const su = this.steam.material.uniforms;
+    su.uTime.value = t;
+    su.uH.value = GFX.h * GFX.scenePR();
+    su.uI.value = P * D.steam * (0.1 + 0.25 * tele + 0.12 * stage + 0.3 * rage + Math.abs(this.hit) * 1.2);
+    // ---- plates that have been shot off fall away
+    for (const p of this.plates) {
+      if (p.t < 0) continue;
+      p.t += dt;
+      if (p.t > 1.6) { p.mesh.visible = false; continue; }
+      p.v.y -= 9 * dt;
+      p.mesh.position.addScaledVector(p.v, dt);
+      p.mesh.rotation.x += p.w.x * dt; p.mesh.rotation.y += p.w.y * dt; p.mesh.rotation.z += p.w.z * dt;
+      p.mesh.scale.copy(p.s0).multiplyScalar(1 - smoothstep(1.1, 1.6, p.t));
+    }
+    // ---- sparks jump from the wounds
+    this.sparkT -= dt;
+    if (g.bursts && stage >= 1 && stage < 4 && this.sparkT <= 0 && !intro) {
+      this.sparkT = rand(0.5, 1.6) / stage;
+      const gone = this.plates.filter((p) => p.t >= 0);
+      if (gone.length) {
+        const p = gone[Math.floor(Math.random() * gone.length)];
+        g.boss.updateMatrixWorld(true);
+        const at = G[p.gn].localToWorld(this.tmp.copy(p.p0).addScaledVector(p.n, 0.2)).clone();
+        g.bursts.burst(at, Math.random() < 0.5 ? 0xffffff : g.cfg.color, { n: 6, speed: 4, size: 0.1 * g.bossScale + 0.04, life: 0.4, gravity: -8 });
+      }
+    }
+    // ---- shadow
+    const sh = this.shadow;
+    sh.visible = !!GFX.opt.shadows;
+    if (sh.visible) {
+      const h = Math.max(0, g.boss.position.y - 3 * g.boss.scale.x);
+      sh.position.x = g.boss.position.x; sh.position.z = g.boss.position.z;
+      sh.scale.setScalar((9.5 + h * 0.9) * g.boss.scale.x);
+      sh.material.opacity = 0.78 / (1 + h * 0.22);
+    }
+  }
+  dispose() { /* geometries and materials are released with the scene */ }
 }
 
 /* ---- 23-memory.js ---- */

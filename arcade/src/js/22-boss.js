@@ -2,59 +2,6 @@
 // The boss charges an attack while you read; answer right to shoot first.
 // Reuses blasterMerge() and BlasterShards from 20-blaster.js (concatenated first).
 
-// The boss's eye: a lit iris with a slit pupil, drawn for HDR (it glows).
-function bossEyeTexture(color) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const x = c.getContext("2d");
-  const lid = () => {
-    x.beginPath();
-    x.moveTo(6, 64);
-    x.quadraticCurveTo(64, 10, 122, 64);
-    x.quadraticCurveTo(64, 118, 6, 64);
-    x.closePath();
-  };
-  x.shadowColor = color;
-  x.shadowBlur = 16;
-  lid();
-  x.fillStyle = "#12061f";
-  x.fill();
-  x.shadowBlur = 0;
-  x.save();
-  lid();
-  x.clip();
-  const sc = x.createRadialGradient(64, 64, 8, 64, 64, 60);
-  sc.addColorStop(0, "#fff8ee");
-  sc.addColorStop(0.7, "#e8dcff");
-  sc.addColorStop(1, "#8a78b8");
-  x.fillStyle = sc;
-  x.fillRect(0, 0, 128, 128);
-  const ir = x.createRadialGradient(64, 64, 3, 64, 64, 27);
-  ir.addColorStop(0, "#ffffff");
-  ir.addColorStop(0.3, color);
-  ir.addColorStop(0.85, color);
-  ir.addColorStop(1, "#1a0626");
-  x.fillStyle = ir;
-  x.beginPath();
-  x.arc(64, 64, 27, 0, Math.PI * 2);
-  x.fill();
-  x.fillStyle = "#06010e";
-  x.beginPath();
-  x.ellipse(64, 64, 5.5, 21, 0, 0, Math.PI * 2);
-  x.fill();
-  x.fillStyle = "rgba(255,255,255,0.92)";
-  x.beginPath();
-  x.arc(74, 53, 5, 0, Math.PI * 2);
-  x.fill();
-  x.restore();
-  lid();
-  x.lineWidth = 6;
-  x.strokeStyle = "#0a0414";
-  x.stroke();
-  return new THREE.CanvasTexture(c);
-}
-
-// A summoning circle for the floor under the boss (white; tinted by the material).
 function bossRuneTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 512;
@@ -329,93 +276,13 @@ class BossGame extends QuizGame {
   // piston arms, a ribbed gut lit from inside and a thruster where legs would be.
   // It offers the same handles as the other bosses (core, eye, rings, orbs, charge,
   // sparks), so the fight's animation drives it unchanged.
-  makeCyborg() {
-    const cfg = this.cfg, hex = cfg.color;
-    const grp = new THREE.Group();
-    const M = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
-    const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-    const cyl = (rt, rb, h, n = 10) => new THREE.CylinderGeometry(rt, rb, h, n);
-    const ARMOR = new THREE.Color(1, 1, 1), PLATE = new THREE.Color(1.5, 1.5, 1.7), DARK = new THREE.Color(0.5, 0.5, 0.55);
-    const parts = [];
-    const add = (geo, matrix, color = ARMOR) => parts.push({ geo, matrix, color });
-    // chest: a barrel with two angled breastplates and a keel between them
-    add(box(3.5, 2.1, 1.9), M(0, 0.7, 0));
-    [-1, 1].forEach((sd) => {
-      add(box(1.55, 1.75, 0.34), M(sd * 0.88, 0.82, 1.02, -0.1, sd * 0.2, 0), PLATE);
-      add(box(1.2, 0.4, 0.4), M(sd * 0.95, -0.22, 0.95, 0.25, sd * 0.2, 0), DARK);
-    });
-    add(box(0.34, 1.9, 0.5), M(0, 0.78, 1.12, -0.1, 0, 0), DARK);
-    // gut: ribs with glowing gaps, then the hips and a thruster
-    for (let i = 0; i < 4; i++) add(box(2.15 - i * 0.12, 0.2, 1.45 - i * 0.06), M(0, -0.62 - i * 0.36, 0.05), i % 2 ? DARK : ARMOR);
-    add(box(2.7, 0.75, 1.7), M(0, -2.25, 0), PLATE);
-    [-1, 1].forEach((sd) => add(box(0.9, 0.9, 1.3), M(sd * 1.35, -2.5, 0.05, 0, 0, sd * 0.2)));
-    add(cyl(0.95, 0.5, 0.8, 8), M(0, -3.0, 0), DARK);
-    // gorget and a tall back plate behind the head
-    add(box(2.0, 0.55, 1.7), M(0, 1.98, 0.05), PLATE);
-    add(box(2.5, 1.35, 0.3), M(0, 2.55, -0.78, 0.12, 0, 0));
-    [-1, 1].forEach((sd) => add(cyl(0.2, 0.26, 1.7, 8), M(sd * 1.15, 2.5, -1.15, 0.15, 0, sd * 0.1), DARK));
-    // shoulders: ball joints under great slab shields
-    [-1, 1].forEach((sd) => {
-      add(new THREE.IcosahedronGeometry(0.82, 0), M(sd * 2.25, 1.5, 0));
-      add(box(1.95, 2.55, 0.42), M(sd * 2.95, 0.95, 0.62, 0.05, sd * 0.55, sd * -0.1), PLATE);
-      add(box(1.6, 0.35, 0.5), M(sd * 2.9, 2.28, 0.6, 0.05, sd * 0.55, sd * -0.1), DARK);
-      // arm: piston upper arm, elbow, heavy forearm, fist
-      add(cyl(0.48, 0.42, 1.5, 8), M(sd * 2.55, 0.25, -0.1, 0, 0, sd * -0.08), DARK);
-      add(new THREE.IcosahedronGeometry(0.52, 0), M(sd * 2.62, -0.62, 0));
-      add(box(0.95, 1.9, 1.05), M(sd * 2.72, -1.62, 0.42, -0.42, 0, 0));
-      add(box(0.3, 1.5, 0.3), M(sd * 3.22, -1.55, 0.5, -0.42, 0, 0), DARK);
-      add(box(0.92, 0.72, 0.95), M(sd * 2.72, -2.62, 0.98, -0.42, 0, 0));
-    });
-    // jaw, eye band and skull implants (the head's metal)
-    add(box(0.82, 0.4, 0.72), M(0, 2.3, 0.42), PLATE);
-    add(box(0.92, 0.17, 0.3), M(0, 2.84, 0.74), DARK);
-    add(box(0.12, 0.2, 1.0), M(0, 3.36, 0.1, -0.25, 0, 0), DARK);
-    [-1, 1].forEach((sd) => add(box(0.1, 0.5, 0.5), M(sd * 0.56, 2.75, 0.05), DARK));
-    const bodyGeo = blasterMerge(parts);
-    const mat = Object.assign(glossy(0x121318, { env: this.env, metal: 0.85, rough: 0.4, envI: 0.85, emissive: hex, emissiveK: 0.04 }), { vertexColors: true });
-    const body = new THREE.Group();
-    body.add(new THREE.Mesh(bodyGeo, mat));
-    // the skull: pale, bald, matte
-    const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), glossy(0xc9b2ac, { env: this.env, metal: 0.05, rough: 0.8, envI: 0.35 }));
-    skull.scale.set(0.9, 1.12, 1);
-    skull.position.set(0, 2.82, 0.2);
-    body.add(skull);
-    // red light: slits on the breastplates, the gut between the ribs, shield edges, vents
-    const lit = [];
-    const glow = (geo, matrix, k = 2.4) => lit.push({ geo, matrix, color: new THREE.Color(k, k, k) });
-    [-1, 1].forEach((sd) => {
-      for (let i = 0; i < 3; i++) glow(box(0.7, 0.07, 0.05), M(sd * 0.92, 1.25 - i * 0.2, 1.2, -0.1, sd * 0.2, 0));
-      glow(box(1.7, 0.06, 0.06), M(sd * 2.98, 2.08, 0.84, 0.05, sd * 0.55, sd * -0.1), 2.8);
-      glow(box(0.08, 1.2, 0.08), M(sd * 3.24, -1.5, 0.72, -0.42, 0, 0), 2.2);
-      glow(cyl(0.16, 0.16, 0.06, 8), M(sd * 1.15, 3.36, -1.28, 0.15, 0, sd * 0.1), 3);
-    });
-    for (let i = 0; i < 3; i++) glow(box(1.7 - i * 0.12, 0.09, 1.3), M(0, -0.8 - i * 0.36, 0.08), 1.7);
-    glow(cyl(0.42, 0.3, 0.1, 8), M(0, -3.42, 0), 3.2);
+  // Every boss is a cyborg from the kit in 22b-cyborg.js. This wraps one in what the
+  // fight expects: an eye that aims the beam, a halo, orbiting gems, the charge orb.
+  makeBoss() {
+    const hex = this.cfg.color;
+    const rig = (this.rig = new CyborgRig(this, this.bossKey));
+    const grp = rig.grp, body = rig.G.body, eye = rig.eye;
     this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex), vertexColors: true });
-    body.add(new THREE.Mesh(blasterMerge(lit), this.ringMat));
-    grp.add(body);
-    // the eyes: two coals in the skull, on one anchor that blinks and aims the beam
-    const c = document.createElement("canvas");
-    c.width = c.height = 64;
-    const x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, "#fff"); g.addColorStop(0.25, "#ff3a2a"); g.addColorStop(0.6, "rgba(255,30,30,0.35)"); g.addColorStop(1, "rgba(255,0,0,0)");
-    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const eyeMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, blending: THREE.AdditiveBlending });
-    eyeMat.color.setScalar(1.15);
-    const eye = new THREE.Group();
-    eye.material = eyeMat; // the fight tints the eye's material as the boss enrages
-    eye.position.set(0, 2.84, 0.84);
-    [-1, 1].forEach((sd) => {
-      const e = new THREE.Sprite(eyeMat);
-      e.scale.set(0.5, 0.5 / 1.8, 1); // the anchor is stretched 1.8x tall, and squashed to blink
-      e.position.x = sd * 0.21;
-      e.renderOrder = 5;
-      eye.add(e);
-    });
-    body.add(eye);
-    const jet = glowSprite(neon(hex, 1.8), 2.4, 0.7);
-    jet.position.set(0, -3.6, 0);
-    body.add(jet);
     // a halo of runner lights behind the shoulders, and a thin ring that sways
     const ringGeo = blasterMerge([{ geo: new THREE.TorusGeometry(3.5, 0.05, 4, 64), color: new THREE.Color(1.2, 1.2, 1.2) }]
       .concat([0, 1, 2, 3, 4, 5].map((i) => ({ geo: new THREE.TorusGeometry(3.5, 0.1, 4, 8, 0.32), matrix: new THREE.Matrix4().makeRotationZ((i / 6) * Math.PI * 2), color: new THREE.Color(2.7, 2.7, 2.7) }))));
@@ -432,7 +299,7 @@ class BossGame extends QuizGame {
     orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     grp.add(orbs);
     const charge = glowSprite(neon(hex, 2.4), 0.1, 1);
-    charge.position.set(0, 2.84, 1.0);
+    charge.position.set(0, 2.84, 1.25);
     charge.renderOrder = 6;
     body.add(charge);
     const N = 44;
@@ -444,85 +311,10 @@ class BossGame extends QuizGame {
     sparks.layers.set(1);
     body.add(sparks);
     this.sparkData = Array.from({ length: N }, () => ({ d: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-0.3, 1)).normalize(), r: rand(2.5, 5), p: Math.random() }));
-    // `core` takes the spin the other bosses' bodies get; here it is an empty handle
+    // `core` is an empty handle: the fight flashes its material (the armor) on a hit
     const core = new THREE.Group();
-    core.userData.mat = mat;
-    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns: new THREE.Group(), body, skull };
-    this._m = new THREE.Matrix4();
-    this._q = new THREE.Quaternion();
-    this._e = new THREE.Euler();
-    this._v = new THREE.Vector3();
-    this._s = new THREE.Vector3();
-    return grp;
-  }
-  makeBoss() {
-    if (this.cfg.shape === "cyborg") return this.makeCyborg();
-    const cfg = this.cfg, hex = cfg.color;
-    const col = new THREE.Color(hex);
-    const grp = new THREE.Group();
-    const geos = {
-      box: () => new THREE.BoxGeometry(3, 3, 3),
-      ico: () => new THREE.IcosahedronGeometry(2.1, 0),
-      octa: () => new THREE.OctahedronGeometry(2.4, 0),
-      dodeca: () => new THREE.DodecahedronGeometry(2.1, 0),
-      knot: () => new THREE.TorusKnotGeometry(1.35, 0.42, 64, 6, 2, 3),
-    };
-    const geo = geos[cfg.shape]();
-    // core: dark polished metal that mirrors the arena, HDR edges, a fresnel aura
-    const core = new THREE.Group();
-    const mat = glossy(col.clone().multiplyScalar(0.14).add(new THREE.Color(0x0d0a1c)), { env: this.env, metal: 0.92, rough: 0.22, envI: 1.45, emissive: hex, emissiveK: 0.08 });
-    const edgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 2.1) });
-    const aura = fresnelShell(geo, hex, { power: 2.3, intensity: 1.15, scale: 1.1 });
-    core.add(new THREE.Mesh(geo, mat), new THREE.LineSegments(new THREE.EdgesGeometry(geo, cfg.shape === "knot" ? 30 : 1), edgeMat), aura);
-    core.userData.mat = mat;
-    core.userData.edgeMat = edgeMat;
-    grp.add(core);
-    const eye = new THREE.Sprite(new THREE.SpriteMaterial({ map: bossEyeTexture(cfg.color), transparent: true, depthTest: false }));
-    eye.material.color.setScalar(1.15);
-    eye.scale.set(1.8, 1.8, 1);
-    eye.position.set(0, 0.25, 2.6);
-    eye.renderOrder = 5;
-    grp.add(eye);
-    const hornGeo = blasterMerge([-1, 1].map((sd) => {
-      const h = new THREE.ConeGeometry(0.38, 1.7, 4);
-      h.rotateZ(-sd * 0.5);
-      h.translate(sd * 1.35, 2.15, 0);
-      return { geo: h };
-    }));
-    const horns = new THREE.Mesh(hornGeo, Object.assign(glossy(0x2a2238, { env: this.env, metal: 0.9, rough: 0.25, envI: 1.5, emissive: hex, emissiveK: 0.15 }), { vertexColors: true }));
-    horns.add(new THREE.LineSegments(new THREE.EdgesGeometry(hornGeo, 1), new THREE.LineBasicMaterial({ color: neon(hex, 2.2) })));
-    grp.add(horns);
-    // a neon ring with bright runner arcs, and a thinner counter-ring
-    const ringGeo = blasterMerge([{ geo: new THREE.TorusGeometry(3.5, 0.06, 4, 64), color: new THREE.Color(1.3, 1.3, 1.3) }]
-      .concat([0, 1, 2, 3, 4, 5].map((i) => ({ geo: new THREE.TorusGeometry(3.5, 0.11, 4, 8, 0.32), matrix: new THREE.Matrix4().makeRotationZ((i / 6) * Math.PI * 2), color: new THREE.Color(2.7, 2.7, 2.7) }))));
-    this.ringMat = new THREE.MeshBasicMaterial({ color: col.clone(), vertexColors: true });
-    const ring = new THREE.Mesh(ringGeo, this.ringMat);
-    ring.rotation.x = Math.PI / 2.4;
-    grp.add(ring);
-    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(3.95, 0.03, 3, 72), new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) }));
-    ring2.rotation.set(1.05, 0, 0.55);
-    grp.add(ring2);
-    // orbiting gems (one instanced draw)
-    const orbs = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.34, 0), glossy(0x1a1430, { env: this.env, metal: 0.6, rough: 0.25, envI: 1.4, emissive: hex, emissiveK: 1.3 }), 6);
-    orbs.frustumCulled = false;
-    orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    grp.add(orbs);
-    // the attack charge: a hot orb at the eye that sucks in sparks
-    const charge = glowSprite(neon(hex, 2.4), 0.1, 1);
-    charge.position.set(0, 0.25, 2.7);
-    charge.renderOrder = 6;
-    grp.add(charge);
-    const N = 44;
-    const sparkPos = new Float32Array(N * 3);
-    const sg = new THREE.BufferGeometry();
-    sg.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
-    const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: neon(hex, 3), map: glowTexture(), size: 0.2, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    sparks.position.copy(charge.position);
-    sparks.frustumCulled = false;
-    sparks.layers.set(1);
-    grp.add(sparks);
-    this.sparkData = Array.from({ length: N }, () => ({ d: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-0.3, 1)).normalize(), r: rand(2.5, 5), p: Math.random() }));
-    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns };
+    core.userData.mat = rig.mat;
+    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns: new THREE.Group(), body };
     this._m = new THREE.Matrix4();
     this._q = new THREE.Quaternion();
     this._e = new THREE.Euler();
@@ -874,6 +666,7 @@ class BossGame extends QuizGame {
       u.body.rotation.z = Math.sin(this.t * 0.4 * rage) * 0.035;
       u.body.rotation.x = f * 0.16 + Math.sin(this.t * 0.7) * 0.02;
     }
+    this.rig.update(dt, f); // breathing, twitches, wind-up, recoil, damage, rage (look only)
     const orbR = u.body ? 4.7 : 3.7; // the cyborg's gems circle outside its shields
     for (let i = 0; i < 6; i++) {
       const a = this.t * 1.2 * rage + (i / 6) * Math.PI * 2;
