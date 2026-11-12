@@ -122,7 +122,10 @@ const Sound = {
       case "blip": T(660, 0.05, { vol: 0.12 }); break;
       case "powerup": T(196, 0.42, { slide: 600, vol: 0.09, type: "sawtooth" }); [659, 880, 1319].forEach((f, i) => T(f, 0.09, { delay: 0.16 + i * 0.06, vol: 0.11 })); break; // a cabinet waking up
       case "lock": this.noise(0.08, { vol: 0.35, freq: 1800 }); T(140, 0.16, { delay: 0.03, vol: 0.2, type: "square" }); T(96, 0.22, { delay: 0.1, vol: 0.22, type: "square" }); break; // a vault bolt going home
-      case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break; // a page turning
+      case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break;
+      case "whoosh": this.noise(0.7, { vol: 0.1, freq: 900, type: "bandpass", q: 0.7 }); T(170, 0.6, { slide: -90, vol: 0.04, type: "sawtooth" }); break;
+      case "shield": T(520, 0.3, { slide: -380, vol: 0.12, type: "square" }); this.noise(0.25, { vol: 0.16, freq: 2600, type: "bandpass", q: 2 }); break;
+      case "combo": T(660, 0.07, { vol: 0.07 }); T(990, 0.09, { delay: 0.05, vol: 0.07 }); break; // a page turning
       case "move": T(440, 0.04, { vol: 0.1, type: "triangle" }); break;
       case "select": T(523, 0.06, { vol: 0.16 }); T(784, 0.1, { delay: 0.06, vol: 0.16 }); break;
       case "back": T(392, 0.06, { vol: 0.14 }); T(262, 0.1, { delay: 0.06, vol: 0.14 }); break;

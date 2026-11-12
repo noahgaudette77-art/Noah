@@ -228,6 +228,20 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .lives .lost { opacity: 0.18; }
 .tag { font: 9px/1.4 var(--font-display); color: var(--c, var(--cyan)); white-space: nowrap; }
 .combo { font: 10px/1 var(--font-display); color: var(--magenta); text-shadow: 0 0 8px var(--magenta); white-space: nowrap; }
+/* Risk Blaster's combo meter: seven pips that fill and warm up as the multiplier climbs */
+.combo-box { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.combo-meter { display: flex; gap: 1px; }
+.combo-meter i { width: 4px; height: 4px; background: rgba(255, 255, 255, 0.14); }
+.combo-meter i.on { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.combo[data-tier="1"] { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
+.combo[data-tier="2"] { color: var(--orange); text-shadow: 0 0 12px var(--orange); font-size: 11px; }
+.combo[data-tier="3"] { color: #fff; text-shadow: 0 0 6px #fff, 0 0 14px var(--magenta); font-size: 12px; }
+.combo[data-tier="1"] ~ .combo-meter i.on { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.combo[data-tier="2"] ~ .combo-meter i.on { background: var(--orange); box-shadow: 0 0 7px var(--orange); }
+.combo[data-tier="3"] ~ .combo-meter i.on { background: #fff; box-shadow: 0 0 8px var(--magenta); }
+.combo.pop { animation: combo-pop 0.28s ease-out; transform-origin: right center; }
+@keyframes combo-pop { from { transform: scale(1.5); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .combo.pop { animation: none; } }
 .timer { height: 6px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--line); }
 .timer > i { display: block; height: 100%; width: 100%; background: var(--cyan); transform-origin: left; }
 .timer.low > i { background: var(--red); }
@@ -1017,7 +1031,10 @@ const Sound = {
       case "blip": T(660, 0.05, { vol: 0.12 }); break;
       case "powerup": T(196, 0.42, { slide: 600, vol: 0.09, type: "sawtooth" }); [659, 880, 1319].forEach((f, i) => T(f, 0.09, { delay: 0.16 + i * 0.06, vol: 0.11 })); break; // a cabinet waking up
       case "lock": this.noise(0.08, { vol: 0.35, freq: 1800 }); T(140, 0.16, { delay: 0.03, vol: 0.2, type: "square" }); T(96, 0.22, { delay: 0.1, vol: 0.22, type: "square" }); break; // a vault bolt going home
-      case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break; // a page turning
+      case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break;
+      case "whoosh": this.noise(0.7, { vol: 0.1, freq: 900, type: "bandpass", q: 0.7 }); T(170, 0.6, { slide: -90, vol: 0.04, type: "sawtooth" }); break;
+      case "shield": T(520, 0.3, { slide: -380, vol: 0.12, type: "square" }); this.noise(0.25, { vol: 0.16, freq: 2600, type: "bandpass", q: 2 }); break;
+      case "combo": T(660, 0.07, { vol: 0.07 }); T(990, 0.09, { delay: 0.05, vol: 0.07 }); break; // a page turning
       case "move": T(440, 0.04, { vol: 0.1, type: "triangle" }); break;
       case "select": T(523, 0.06, { vol: 0.16 }); T(784, 0.1, { delay: 0.06, vol: 0.16 }); break;
       case "back": T(392, 0.06, { vol: 0.14 }); T(262, 0.1, { delay: 0.06, vol: 0.14 }); break;
@@ -6794,7 +6811,7 @@ class BlasterGame extends QuizGame {
       <div class="hud">
         <div class="score"><small data-wave>WAVE 1</small><span data-score>000000</span></div>
         <div class="grow"></div>
-        <span class="combo" data-combo>x1</span>
+        <div class="combo-box"><span class="combo" data-combo>x1</span><span class="combo-meter" data-meter>${"<i></i>".repeat(7)}</span></div>
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
@@ -6855,10 +6872,14 @@ class BlasterGame extends QuizGame {
     this.makeStreaks();
     this.makeTunnel();
     this.makeTargetKit();
+    this.corridor = new BlasterCorridor(this); // ribs, pylons, conduits, rocks, lasers, passing traffic
+    this.director = this.corridor.director;
+    this.carrier = new BlasterCarrier(this); // the wave's carrier, far down the corridor
     // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
-    this.warmExtra = this.slotMats.map((M) => {
+    this.warmExtra = this.slotMats.map((M, i) => {
       const g = new THREE.Group();
       g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
+      g.add(new THREE.Mesh(this.drones[i].body, this.dronePaint), new THREE.Mesh(this.drones[i].lamps, M.lamp));
       g.position.z = -40;
       return g;
     });
@@ -7009,10 +7030,13 @@ class BlasterGame extends QuizGame {
     this.spin = 0;
   }
 
-  // Targets are glowing crystals: a hot core, translucent env-mapped facets,
+  // Targets are holo-drones: an armoured airframe (one shape per slot) holding the
+  // answer core, a glowing crystal with a hot heart, translucent env-mapped facets,
   // neon edges and a fresnel rim, all in the slot colour. Shapes, materials and
   // badges are made once; each round only builds light-weight meshes from them.
   makeTargetKit() {
+    this.dronePaint = racerCarPaint(this.env, false);
+    this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
     this.tedge = this.tgeo.map((g) => new THREE.EdgesGeometry(g, 1));
     this.badges = new Map();
@@ -7027,6 +7051,7 @@ class BlasterGame extends QuizGame {
         edge: new THREE.LineBasicMaterial({ color: neon(hex, 2.3) }),
         rim,
         halo: new THREE.SpriteMaterial({ map: glowTexture(), color: neon(hex, 1.25), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
+        lamp: new THREE.MeshBasicMaterial({ color: neon(hex, 2.1), vertexColors: true }),
         baseEdge: neon(hex, 2.3),
         baseRim: rim.uniforms.uColor.value.clone(),
       };
@@ -7059,72 +7084,20 @@ class BlasterGame extends QuizGame {
     this.wallMat.uniforms.uFlashZ.value = pos.z;
   }
 
-  // The fighter: a glossy hull with neon trim, a glass canopy, wing cannons,
-  // twin engines with hot nozzles, blinking wing lights and ribbon trails.
+  // The fighter (20b-blasterjet.js). The game still owns where it is and where it aims.
   makeShip() {
-    const mtx = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) =>
-      new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
-    const parts = [];
-    const fus = new THREE.CylinderGeometry(0.36, 0.05, 2.5, 6, 1);
-    fus.rotateX(Math.PI / 2);
-    parts.push({ geo: fus, matrix: mtx(0, 0.02, -0.35, 0, 0, 0, 1, 0.62, 1), color: 0x2c3a86 });
-    const spine = new THREE.CylinderGeometry(0.1, 0.02, 1.5, 4, 1);
-    spine.rotateX(Math.PI / 2);
-    parts.push({ geo: spine, matrix: mtx(0, 0.2, 0.15, 0, 0, Math.PI / 4), color: 0x4a3c9a });
-    const wing = new THREE.Shape();
-    wing.moveTo(0.18, -0.55);
-    wing.lineTo(1.58, 0.4);
-    wing.lineTo(1.66, 0.66);
-    wing.lineTo(0.26, 0.62);
-    wing.closePath();
-    const fin = new THREE.Shape();
-    fin.moveTo(0, 0);
-    fin.lineTo(0.62, 0);
-    fin.lineTo(0.7, 0.5);
-    fin.closePath();
-    [-1, 1].forEach((sd) => {
-      const wg = new THREE.ExtrudeGeometry(wing, { depth: 0.06, bevelEnabled: false });
-      wg.rotateX(Math.PI / 2);
-      parts.push({ geo: wg, matrix: mtx(0, 0.02, 0, 0, 0, sd * -0.07, sd, 1, 1), color: 0x3a2c84 });
-      const eng = new THREE.CylinderGeometry(0.2, 0.15, 1.05, 8, 1);
-      eng.rotateX(Math.PI / 2);
-      parts.push({ geo: eng, matrix: mtx(sd * 0.44, -0.02, 0.36), color: 0x262a48 });
-      const gun = new THREE.BoxGeometry(0.07, 0.07, 0.8);
-      parts.push({ geo: gun, matrix: mtx(sd * 0.95, -0.01, 0.0), color: 0x30345a });
-      const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.04, bevelEnabled: false });
-      fg.rotateY(-Math.PI / 2);
-      parts.push({ geo: fg, matrix: mtx(sd * 0.3, 0.1, 0.12, 0, 0, sd * -0.42), color: 0x5a2e86 });
-    });
-    const hullGeo = blasterMerge(parts);
-    const ship = new THREE.Group();
-    const hull = new THREE.Mesh(hullGeo, Object.assign(glossy(0xffffff, { env: this.env, metal: 0.72, rough: 0.3, envI: 1.5 }), { vertexColors: true, side: THREE.DoubleSide }));
-    const trim = new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo, 28), new THREE.LineBasicMaterial({ color: neon(COLORS.cyan, 1.7) }));
-    const canopyGeo = new THREE.SphereGeometry(0.21, 12, 8);
-    canopyGeo.applyMatrix4(mtx(0, 0.17, -0.48, 0, 0, 0, 1, 0.75, 2.4));
-    const canopy = new THREE.Mesh(canopyGeo, Object.assign(glossy(0x0a3550, { env: this.env, metal: 0.3, rough: 0.04, envI: 2.4, emissive: 0x0a3a66, emissiveK: 0.5 }), { flatShading: false }));
-    const nozzleGeo = blasterMerge([-1, 1].map((sd) => ({ geo: new THREE.CircleGeometry(0.15, 16), matrix: mtx(sd * 0.44, -0.02, 0.895) })));
-    const nozzles = new THREE.Mesh(nozzleGeo, new THREE.MeshBasicMaterial({ color: neon(0xffa64d, 3.2), fog: false }));
-    ship.add(hull, trim, canopy, nozzles);
-    this.nozzles = [new THREE.Vector3(-0.44, -0.02, 0.95), new THREE.Vector3(0.44, -0.02, 0.95)];
-    this.engineGlows = this.nozzles.map((p) => {
-      const g = glowSprite(neon(COLORS.orange, 1.7), 0.8, 0.95);
-      g.position.copy(p);
-      ship.add(g);
-      return g;
-    });
-    this.wingLights = [[-1.66, COLORS.magenta], [1.66, COLORS.cyan]].map(([x, c]) => {
-      const g = glowSprite(neon(c, 2.6), 0.42, 1);
-      g.position.set(x, 0.0, 0.62);
-      ship.add(g);
-      return g;
-    });
-    this.muzzles = [new THREE.Vector3(-0.95, -0.01, -0.42), new THREE.Vector3(0.95, -0.01, -0.42)];
-    ship.position.set(0, -2.2, -7);
-    return ship;
+    const jet = (this.jet = new BlasterJet(this));
+    this.nozzles = jet.nozzles;
+    this.muzzles = jet.muzzles;
+    this.engineGlows = jet.engineGlows;
+    this.wingLights = jet.wingLights;
+    jet.ship.position.set(0, -2.2, -7);
+    return jet.ship;
   }
 
   start() {
     Sound.play("game");
+    if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -7133,6 +7106,12 @@ class BlasterGame extends QuizGame {
     UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
     UI.text($("[data-combo]", this.el), "x" + this.combo);
     this.lives(this.shields, 3);
+    // the combo meter: seven pips that fill and change colour as the multiplier climbs
+    const cb = $("[data-combo]", this.el);
+    cb.dataset.tier = this.combo >= 8 ? 3 : this.combo >= 6 ? 2 : this.combo >= 4 ? 1 : 0;
+    this.el.querySelectorAll("[data-meter] i").forEach((pip, i) => pip.classList.toggle("on", i < this.combo - 1));
+    if (this.combo > (this.comboShown || 1)) { cb.classList.remove("pop"); void cb.offsetWidth; cb.classList.add("pop"); }
+    this.comboShown = this.combo;
   }
   onLayout() {
     if (!this.has3D) return;
@@ -7192,6 +7171,12 @@ class BlasterGame extends QuizGame {
       rim.scale.setScalar(1.05);
       rot.add(core, body, edges, rim);
       rot.rotation.set(rand(Math.PI * 2), rand(Math.PI * 2), 0);
+      rot.scale.setScalar(0.62); // the answer core sits inside the drone's collar
+      const frame = new THREE.Group();
+      const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
+      // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
+      if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
+      frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
       const halo = new THREE.Sprite(M.halo);
       halo.scale.set(3.8, 3.8, 1);
       halo.position.z = -0.9;
@@ -7199,7 +7184,8 @@ class BlasterGame extends QuizGame {
       label.scale.set(1.24, 1.24, 1);
       label.position.z = 1.35;
       label.renderOrder = 10;
-      g.add(halo, rot, label);
+      g.add(halo, frame, rot, label);
+      g.userData.frame = frame;
       g.userData.slot = i;
       g.userData.spin = rand(0.6, 1.6) * (i % 2 ? 1 : -1);
       g.userData.rot = rot;
@@ -7225,6 +7211,7 @@ class BlasterGame extends QuizGame {
     const t = this.targets[i];
     this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
     Sound.sfx("laser", this.panAt);
+    if (this.has3D) this.jet.fire();
     if (t && this.has3D) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
@@ -7233,7 +7220,7 @@ class BlasterGame extends QuizGame {
       this.muzzles.forEach((m, gun) => {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
-        const from = this.ship.localToWorld(m.clone());
+        const from = this.jet.rig.localToWorld(m.clone());
         aimBeam(fx.beam, from, t.position, 0.06 + 0.07 * this.shipScale);
         fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
@@ -7262,6 +7249,8 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
+      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); }
+      if (this.combo >= 4) Sound.sfx("combo");
       Sound.sfx("boom", this.panAt);
       Sound.sfx("correct");
       UI.flash("good");
@@ -7277,6 +7266,7 @@ class BlasterGame extends QuizGame {
       this.combo = 1;
       this.shields--;
       title = this.shields > 0 ? "WRONG TARGET! SHIELD DOWN" : "WRONG TARGET! SHIELDS GONE";
+      this.shieldHit();
       Sound.sfx("wrong");
       Sound.sfx("hit");
       UI.flash("hit");
@@ -7301,6 +7291,7 @@ class BlasterGame extends QuizGame {
     this.quiz.reveal(-1);
     this.combo = 1;
     this.shields--;
+    this.shieldHit();
     Sound.sfx("hit");
     UI.flash("hit");
     this.shake(0.5);
@@ -7315,6 +7306,14 @@ class BlasterGame extends QuizGame {
     this.hud();
     this.quiz.feedback({ ok: false, title: this.shields > 0 ? "TOO SLOW! SHIELD DOWN" : "TOO SLOW! SHIELDS GONE", onNext: () => this.after() });
   }
+  // A shield goes (look and sound only): the carrier's bolt strikes, the lattice flares.
+  shieldHit() {
+    Sound.sfx("shield");
+    if (!this.has3D) return;
+    this.jet.setCombo(1);
+    this.jet.shieldLost();
+    this.carrier.volley();
+  }
   explode(t, color) {
     if (!t || !this.has3D) return;
     // far blasts are scaled up so they read on screen as well as near ones
@@ -7323,6 +7322,10 @@ class BlasterGame extends QuizGame {
     this.bursts.burst(t.position, 0xffffff, { n: 20, speed: 4 * df, size: 0.25 * df, life: 0.5 });
     this.shockwave(t.position.clone(), neon(color, 2.2), (4 * this.ts + 2) * df);
     this.shards.burst(t.position, color, 16, this.ts * df, (7 * this.ts + 3) * df);
+    this.shards.burst(t.position, 0x9aa3b8, 10, this.ts * df * 0.8, (5 * this.ts + 2) * df); // the airframe, in pieces
+    this.bursts.burst(t.position, COLORS.orange, { n: 22, speed: 2.2 * df, size: 0.22 * df, life: 1.5 }); // embers that linger
+    const at = t.position.clone();
+    this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(t.position, color, (7 * this.ts + 3) * df);
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
@@ -7345,6 +7348,13 @@ class BlasterGame extends QuizGame {
       if (this.has3D) this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1);
       Sound.sfx("levelup");
       Sound.sfx("warp");
+      if (this.has3D) {
+        // the wave's carrier goes up, the fighter rolls through the wreck, the next carrier comes up out of the dark
+        this.carrier.destroy();
+        this.jet.warp();
+        this.jet.shieldUp();
+        this.tw.wait(1.2, () => { if (!this.unmounted) this.carrier.arrive(this.wave); });
+      }
       this.warp = 1.4;
       GFX.pulse(6, 0.2);
       UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
@@ -7366,6 +7376,7 @@ class BlasterGame extends QuizGame {
       this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
       this.boom(this.ship.position, COLORS.orange, 6);
       this.ship.visible = false;
+      this.jet.down();
       this.trails.forEach((t) => { t.mesh.visible = false; });
       this.engineLight.intensity = 0;
     }
@@ -7437,6 +7448,8 @@ class BlasterGame extends QuizGame {
       wu.uFlash.value = k * k;
     }
     this.shards.update(dt);
+    this.corridor.update(dt, sp, w);
+    this.carrier.update(dt);
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
@@ -7446,6 +7459,8 @@ class BlasterGame extends QuizGame {
       t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
       u.rot.rotation.x += dt * u.spin;
       u.rot.rotation.y += dt * u.spin * 0.7;
+      u.frame.rotation.z = Math.sin(this.t * 0.9 + i * 2.1) * 0.07; // the airframe hovers: a slow sway, a lean into its side
+      u.frame.rotation.y = -u.bx * 0.035;
       if (u.hot) {
         const pulse = 1 + Math.sin(this.t * 10) * 0.12;
         t.scale.setScalar(this.ts * pulse * 1.15);
@@ -7460,10 +7475,12 @@ class BlasterGame extends QuizGame {
     this.ship.scale.setScalar(this.ship.scale.x + (this.shipScale - this.ship.scale.x) * ease);
     if (this.state === "ask") this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12);
     const fl = 1 + Math.sin(this.t * 15) * 0.12 + Math.sin(this.t * 9.3) * 0.08 + w * 0.6;
-    this.engineGlows.forEach((g, j) => g.scale.setScalar(0.8 * fl * (j ? 1.04 : 0.96)));
+    this.engineGlows.forEach((g, j) => g.scale.setScalar(0.5 * fl * (j ? 1.04 : 0.96)));
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
-    this.engineLight.position.set(0, 0, 1.6).applyMatrix4(this.ship.matrixWorld);
+    this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
+    const rigM = this.jet.rig.matrixWorld;
+    this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
     this.trailAcc = Math.min(4 / 60, (this.trailAcc || 0) + dt);
     while (this.trailAcc >= 1 / 60) {
@@ -7471,7 +7488,7 @@ class BlasterGame extends QuizGame {
       const step = Math.min(sp * 0.3, 9) / 60;
       this.trails.forEach((tr, j) => {
         tr.shift(0, 0, step);
-        tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(this.ship.matrixWorld));
+        tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(rigM));
       });
     }
     // the view leans a little with the pointer, or with the phone's tilt
@@ -7486,11 +7503,855 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
-      this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo].forEach((m) => m.dispose()));
+      this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
+      this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
+      this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
       this.shards.dispose();
     }
     super.dispose();
+  }
+}
+
+/* ---- 20b-blasterjet.js ---- */
+// Risk Blaster's fighter, and the small tools its hardware is built with. Look only:
+// nothing here reads or changes the score, the shields, the timer or the questions.
+
+const BK = { HULL: 0x26304e, PLATE: 0x3d4b72, GUN: 0x232a3c, DARK: 0x10131c, PALE: 0xb9c4d8, STEEL: 0x6a7388, TEAM: 0x1f8fb4, ROCK: 0x4a4458 };
+const BK_ROT = racerM(0, 0, 0, 1, 1, 1, -Math.PI / 2); // a loft built upward becomes one built nose-ward (-z)
+
+// A flat slab cut from a polygon in the x-z plane ([x, z] points), t thick and centred
+// on y = 0; its top edge is chamfered by bevel.
+function blasterSlab(pts, t, bevel = 0) {
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a[0] * b[1] - b[0] * a[1]; }
+  const P = area > 0 ? pts.slice().reverse() : pts; // wound so the top faces up
+  const n = P.length;
+  let cx = 0, cz = 0;
+  P.forEach((p) => { cx += p[0] / n; cz += p[1] / n; });
+  const top = P.map(([x, z]) => { const d = Math.hypot(x - cx, z - cz) || 1, k = Math.max(0, 1 - bevel / d); return [cx + (x - cx) * k, cz + (z - cz) * k]; });
+  const h = t / 2, hm = bevel ? h - Math.min(bevel * 0.6, t * 0.45) : h;
+  const pos = [];
+  const v = (p, y) => pos.push(p[0], y, p[1]);
+  THREE.ShapeUtils.triangulateShape(P.map((p) => new THREE.Vector2(p[0], p[1])), []).forEach(([a, b, c]) => {
+    const s = (P[b][0] - P[a][0]) * (P[c][1] - P[a][1]) - (P[b][1] - P[a][1]) * (P[c][0] - P[a][0]);
+    const [i, j, k] = s < 0 ? [a, b, c] : [a, c, b];
+    v(top[i], h); v(top[j], h); v(top[k], h);
+    v(P[i], -h); v(P[k], -h); v(P[j], -h);
+  });
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    v(P[i], -h); v(P[j], -h); v(P[j], hm); v(P[i], -h); v(P[j], hm); v(P[i], hm);
+    if (bevel) { v(P[i], hm); v(P[j], hm); v(top[j], h); v(P[i], hm); v(top[j], h); v(top[i], h); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  return g;
+}
+// The same geometry n times over, each copy tagged with its number (aIdx).
+function blasterRepeat(geo, n) {
+  const out = new THREE.BufferGeometry(), count = geo.attributes.position.count;
+  for (const name in geo.attributes) {
+    const a = geo.attributes[name], arr = new Float32Array(a.array.length * n);
+    for (let i = 0; i < n; i++) arr.set(a.array, i * a.array.length);
+    out.setAttribute(name, new THREE.BufferAttribute(arr, a.itemSize));
+  }
+  const idx = new Float32Array(count * n);
+  for (let i = 0; i < n; i++) idx.fill(i, i * count, (i + 1) * count);
+  out.setAttribute("aIdx", new THREE.BufferAttribute(idx, 1));
+  geo.dispose();
+  return out;
+}
+// Unlit HDR parts whose brightness comes from numbered channels (uL): lamps that blink and surge.
+function blasterLampMaterial(n) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uL: { value: new Float32Array(n).fill(1) } }),
+    vertexShader: `attribute vec3 aCol; attribute float aCh; uniform float uL[${n}]; varying vec3 vC; varying float vDepth;
+      void main(){ vC = aCol * uL[int(aCh + 0.5)]; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `${GLSL_FOG_PARS} varying vec3 vC; varying float vDepth;
+      void main(){ gl_FragColor = vec4(vC * (1.0 - 0.7 * smoothstep(uFogNear, uFogFar, vDepth)), 1.0); }`,
+  });
+}
+// Dark structural metal, lit without the scene's lights: a key from the camera's side,
+// the tunnel's own glow on faces that look inward, and the light of a blast. Parts
+// tagged aGlow shine: 1 the wave colour, 2 warm white, 3 energy flowing along a pylon.
+function blasterHullMaterial(o = {}) {
+  const wrap = !!o.wrap; // ribs repeat down the tunnel, sliding toward the camera
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), {
+      uWave: { value: neon(WAVE_COLORS[0], 1) }, uTime: { value: 0 }, uScroll: { value: 0 }, uSpin: { value: 0 }, uFade: { value: 1 }, uFogK: { value: o.fog === undefined ? 1 : o.fog },
+      uFlash: { value: 0 }, uFlashZ: { value: -50 }, uFlashColor: { value: new THREE.Color(1, 1, 1) }, uSurgeZ: { value: 99 }, uHot: { value: 0 },
+    }),
+    vertexShader: `attribute vec3 aCol; attribute float aGlow; ${wrap ? "attribute float aIdx; uniform float uScroll; uniform float uSpin;" : ""}
+      varying vec3 vC; varying float vGlow; varying vec3 vN; varying vec3 vW; varying float vDepth;
+      void main(){
+        vec3 p = position; vec3 n = normal;
+        ${wrap ? `float a = aIdx * 0.5236 - uSpin * 0.35; float c = cos(a); float s = sin(a);
+        p.xy = vec2(c * p.x - s * p.y, s * p.x + c * p.y); n.xy = vec2(c * n.x - s * n.y, s * n.x + c * n.y);
+        float z = -aIdx * 24.0 - 12.0 + uScroll; p.z += 4.0 - mod(4.0 - z, 168.0);` : ""}
+        vec4 w = modelMatrix * vec4(p, 1.0);
+        vW = w.xyz; vN = normalize(mat3(modelMatrix) * n); vC = aCol; vGlow = aGlow;
+        vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform vec3 uWave; uniform vec3 uFlashColor; uniform float uTime; uniform float uFade; uniform float uFogK; uniform float uFlash; uniform float uFlashZ; uniform float uSurgeZ; uniform float uHot;
+      varying vec3 vC; varying float vGlow; varying vec3 vN; varying vec3 vW; varying float vDepth;
+      void main(){
+        vec3 n = normalize(vN);
+        float key = max(dot(n, normalize(vec3(0.25, 0.5, 0.83))), 0.0);
+        float inner = max(dot(n.xy, -normalize(vW.xy + 1e-4)), 0.0);
+        vec3 col = vC * (0.2 + 0.95 * key) + vC * uWave * inner * 0.9;
+        col += vC * uFlashColor * (uFlash * exp(-abs(vW.z - uFlashZ) * 0.05) * 2.2);
+        float surge = exp(-abs(vW.z - uSurgeZ) * 0.09);
+        if (vGlow > 0.5) {
+          float pulse = 0.78 + 0.22 * sin(uTime * 1.9 + vW.z * 0.07);
+          vec3 g = vGlow < 1.5 ? uWave * 2.3 : (vGlow < 2.5 ? vec3(2.3, 2.0, 1.6) : uWave * (0.7 + 2.4 * pow(0.5 + 0.5 * sin(length(vW.xy) * 3.2 + uTime * 5.0), 6.0)));
+          col = g * vC * (pulse + surge * 1.6 + uHot * 1.6);
+        }
+        col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * uFogK) * uFade;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
+
+// The fighter: a twin-engine delta with canards and canted fins. Layered armour over
+// an eight-sided hull, a faceted glass canopy, lit intakes, wing strips, fences and
+// missile rails, ailerons that work, afterburners with shock diamonds and heat haze,
+// wingtip contrails, and an energy shield that flares when it takes a hit.
+//   ship: where it is and where it aims (the game drives this, as before)
+//   rig:  bank, pitch, recoil, rolls (look only)
+class BlasterJet {
+  constructor(game) {
+    const g = (this.g = game), env = g.env, C = BK;
+    const ship = (this.ship = new THREE.Group());
+    const rig = (this.rig = new THREE.Group());
+    ship.add(rig);
+    const P = new RacerBatch(), F = new RacerBatch(), L = new RacerBatch(["aCh"]);
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const put = (b, geo, m, color, k = 1, v) => { b.add(geo, m, color, k, v); geo.dispose(); };
+    const loft = (b, rings, color, m) => put(b, cyLoft(rings.map(([z, w, h, c]) => [-z, w, h, c])), m ? m.clone().multiply(BK_ROT) : BK_ROT, color);
+    const slab = (b, pts, t, bevel, m, color) => put(b, blasterSlab(pts, t, bevel), m, color);
+    const lamp = (ch, w, h, d, x, y, z, color, k = 1.6) => L.add(box, racerM(x, y, z, w, h, d), color, k, { aCh: ch });
+    const mir = (pts, sd) => pts.map(([x, z]) => [x * sd, z]);
+
+    // hull: eight-sided fuselage, pale radome behind a team-colour band, dorsal spine, pitot
+    loft(P, [[1.2, 0.4, 0.17, 0.09], [0.55, 0.5, 0.25, 0.12], [-0.35, 0.46, 0.29, 0.13], [-1.0, 0.33, 0.24, 0.1], [-1.5, 0.21, 0.16, 0.07]], C.HULL);
+    loft(P, [[-1.5, 0.21, 0.16, 0.07], [-1.85, 0.11, 0.09, 0.04], [-2.1, 0.03, 0.025, 0.01]], C.PALE);
+    loft(P, [[-1.4, 0.245, 0.19, 0.08], [-1.5, 0.22, 0.17, 0.074]], C.TEAM);
+    loft(P, [[1.05, 0.09, 0.05, 0.03], [0.2, 0.15, 0.09, 0.05], [-0.45, 0.17, 0.1, 0.05]], C.PLATE, racerM(0, 0.27, 0));
+    put(F, new THREE.CylinderGeometry(0.012, 0.012, 0.36, 5), racerM(0, 0, -2.25, 1, 1, 1, Math.PI / 2), C.STEEL);
+    for (let i = 0; i < 4; i++) F.add(box, racerM(0, 0.365, 0.02 + i * 0.13, 0.17, 0.014, 0.045), C.DARK); // spine vents
+    lamp(0, 0.03, 0.014, 0.5, 0, 0.335, 0.78, 0x5fd8ff, 1.2);
+    put(P, racerPlate(0.26, 0.07, 0.5, 0.025, true), racerM(0, 0.02, 1.2), C.PLATE); // tail between the engines
+    lamp(0, 0.1, 0.03, 0.02, 0, 0.03, 1.46, 0xffffff, 1.5);
+    // canopy frame and lit sills (the glass itself is its own mesh, below)
+    F.add(box, racerM(0, 0.4, -0.92, 0.025, 0.02, 0.86, 0.04), C.DARK);
+    [[-0.75, 0.21, 0.4], [-1.15, 0.18, 0.385]].forEach(([z, w, y]) => {
+      F.add(box, racerM(0, y, z, w * 1.5, 0.02, 0.03), C.DARK);
+      [-1, 1].forEach((sd) => F.add(box, racerM(sd * w, y - 0.07, z, 0.02, 0.15, 0.03, 0, 0, sd * 0.35), C.DARK));
+    });
+    [-1, 1].forEach((sd) => lamp(4, 0.02, 0.02, 0.8, sd * 0.205, 0.245, -0.9, 0x5fd8ff, 1.1));
+
+    const WING = [[0.44, -0.72], [0.95, -0.2], [1.82, 0.62], [1.82, 0.95], [1.1, 1.0], [0.44, 0.98]];
+    const ARMOR = [[0.52, -0.5], [0.92, -0.1], [1.56, 0.5], [1.56, 0.84], [0.52, 0.86]];
+    [-1, 1].forEach((sd) => {
+      // intake: armoured box, dark mouth, a lit fan, a shoulder plate with a pale edge
+      put(P, racerPlate(0.3, 0.3, 0.9, 0.05, true), racerM(sd * 0.55, -0.02, -0.35), C.PLATE);
+      P.add(box, racerM(sd * 0.55, -0.02, -0.805, 0.22, 0.2, 0.03), C.DARK);
+      lamp(5, 0.15, 0.13, 0.02, sd * 0.55, -0.02, -0.815, 0x5fd8ff, 1.5);
+      put(F, racerPlate(0.34, 0.035, 0.6, 0.02, true), racerM(sd * 0.55, 0.15, -0.3), C.HULL);
+      F.add(box, racerM(sd * 0.55, 0.172, -0.56, 0.3, 0.012, 0.05), C.PALE);
+      // wing: a bevelled delta, an armour panel over it, a recognition stripe, a team chevron
+      const wm = racerM(0, -0.02, 0, 1, 1, 1, 0, 0, sd * -0.06), up = (y) => wm.clone().multiply(racerM(0, y, 0));
+      slab(P, mir(WING, sd), 0.085, 0.03, wm, C.HULL);
+      slab(P, mir(ARMOR, sd), 0.03, 0.012, up(0.05), C.PLATE);
+      slab(F, mir([[0.62, 0.22], [1.5, 0.6], [1.5, 0.72], [0.62, 0.36]], sd), 0.012, 0, up(0.07), C.PALE);
+      slab(F, mir([[0.56, -0.38], [0.8, -0.14], [0.8, 0.0], [0.56, -0.2]], sd), 0.012, 0, up(0.07), C.TEAM);
+      const E = (x, z) => new THREE.Vector3(sd * x, -0.02 - 0.06 * x, z); // a point on the drooping wing
+      racerStrut(L, box, E(0.47, -0.69), E(0.95, -0.2), 0.024, 0x5fd8ff, 1.5, { aCh: 0 }); // leading-edge strips
+      racerStrut(L, box, E(0.95, -0.2), E(1.8, 0.6), 0.024, 0x5fd8ff, 1.5, { aCh: 0 });
+      [1.0, 1.4].forEach((x) => F.add(box, racerM(sd * x, 0.045 - 0.06 * x, 0.62, 0.02, 0.07, 0.42), C.DARK)); // fences
+      // wingtip rail and missile
+      P.add(box, racerM(sd * 1.85, -0.13, 0.74, 0.07, 0.07, 0.8), C.GUN);
+      put(F, new THREE.CylinderGeometry(0.045, 0.045, 0.6, 6), racerM(sd * 1.85, -0.21, 0.7, 1, 1, 1, Math.PI / 2), C.PALE);
+      put(F, new THREE.ConeGeometry(0.045, 0.16, 6), racerM(sd * 1.85, -0.21, 0.32, 1, 1, 1, -Math.PI / 2), C.TEAM);
+      // cannon in the wing root
+      P.add(box, racerM(sd * 0.72, -0.09, -0.62, 0.07, 0.07, 0.95), C.GUN);
+      F.add(box, racerM(sd * 0.72, -0.09, -1.06, 0.1, 0.1, 0.09), C.STEEL);
+      put(P, racerPlate(0.2, 0.09, 0.62, 0.03, true), racerM(sd * 0.72, -0.05, -0.3), C.PLATE);
+      lamp(7, 0.05, 0.05, 0.03, sd * 0.72, -0.09, -1.115, 0xffd9a0, 2.4);
+      // canard
+      slab(P, mir([[0.3, -1.3], [0.8, -1.04], [0.8, -0.92], [0.3, -1.0]], sd), 0.04, 0.012, racerM(0, 0.06, 0, 1, 1, 1, 0, 0, sd * 0.1), C.PLATE);
+      // canted fin: team-colour cap, pale rudder flash, a beacon at its tip
+      const fm = racerM(sd * 0.4, 0.2, 0, 1, 1, 1, 0, 0, Math.PI / 2 - sd * 0.32);
+      slab(P, [[0, 0.3], [0.8, 0.92], [0.8, 1.24], [0, 1.2]], 0.05, 0.015, fm, C.HULL);
+      slab(F, [[0.6, 0.77], [0.8, 0.92], [0.8, 1.24], [0.6, 1.23]], 0.06, 0, fm, C.TEAM);
+      slab(F, [[0.2, 0.62], [0.52, 0.86], [0.52, 0.94], [0.2, 0.72]], 0.058, 0, fm, C.PALE);
+      lamp(2, 0.04, 0.04, 0.08, sd * 0.66, 0.975, 1.2, 0xffffff, 2.6);
+      // engine: nacelle, turbine bands, ten nozzle petals, a white-hot core and a lit lip
+      const ex = sd * 0.36;
+      put(P, new THREE.CylinderGeometry(0.235, 0.285, 1.1, 10), racerM(ex, 0.02, 0.75, 1, 1, 1, Math.PI / 2), C.GUN);
+      [0.45, 0.85].forEach((z) => put(F, new THREE.TorusGeometry(0.275, 0.02, 4, 12), racerM(ex, 0.02, z), C.STEEL));
+      put(F, racerPlate(0.3, 0.04, 0.6, 0.02, true), racerM(sd * 0.38, 0.3, 0.72, 1, 1, 1, 0, 0, sd * -0.2), C.PLATE);
+      for (let i = 0; i < 10; i++) {
+        F.add(box, new THREE.Matrix4().makeTranslation(ex, 0.02, 0).multiply(new THREE.Matrix4().makeRotationZ((i / 10) * Math.PI * 2)).multiply(racerM(0, 0.205, 1.4, 0.135, 0.02, 0.26, 0.22)), C.STEEL);
+      }
+      const hot = new THREE.CircleGeometry(0.17, 12), core = new THREE.CircleGeometry(0.09, 10), lip = new THREE.TorusGeometry(0.19, 0.018, 4, 14);
+      L.add(hot, racerM(ex, 0.02, 1.32), 0xff9a3d, 1.3, { aCh: 3 });
+      L.add(core, racerM(ex, 0.02, 1.33), 0xfff0d0, 1.9, { aCh: 3 });
+      L.add(lip, racerM(ex, 0.02, 1.5), 0xffb060, 1.2, { aCh: 3 });
+      [hot, core, lip].forEach((x) => x.dispose());
+    });
+
+    this.paint = racerCarPaint(env, false);
+    const hull = new THREE.Mesh(P.build("color"), this.paint);
+    const fine = new THREE.Mesh(F.build("color"), this.paint);
+    this.lamps = blasterLampMaterial(8);
+    const lamps = new THREE.Mesh(L.build(), this.lamps);
+    const glassGeo = cyLoft([[0.4, 0.13, 0.05, 0.04], [0.75, 0.2, 0.15, 0.08], [1.15, 0.17, 0.13, 0.07], [1.5, 0.06, 0.03, 0.02]]);
+    glassGeo.applyMatrix4(racerM(0, 0.25, 0).multiply(BK_ROT));
+    glassGeo.computeVertexNormals();
+    this.glass = new THREE.MeshStandardMaterial({ color: 0x0b1a2a, metalness: 0.9, roughness: 0.06, envMap: env, envMapIntensity: 2.2, flatShading: true, emissive: 0x0a3a66, emissiveIntensity: 0.3 });
+    rig.add(hull, fine, lamps, new THREE.Mesh(glassGeo, this.glass));
+
+    // ailerons, hinged on the trailing edge: they deflect as the fighter rolls
+    this.flaps = [-1, 1].map((sd) => {
+      const b = new RacerBatch();
+      slab(b, mir([[0.5, 0.0], [1.76, -0.03], [1.72, 0.2], [0.5, 0.26]], sd), 0.05, 0.015, null, C.PLATE);
+      slab(b, mir([[1.3, -0.02], [1.76, -0.03], [1.72, 0.2], [1.3, 0.22]], sd), 0.058, 0, null, C.PALE);
+      const m = new THREE.Mesh(b.build("color"), this.paint);
+      m.position.set(0, -0.02, 1.0);
+      m.rotation.z = sd * -0.06;
+      rig.add(m);
+      return m;
+    });
+
+    // afterburners: an outer cone and a hot inner one per engine, shock diamonds running down them
+    const fb = new RacerBatch(["aCore"]);
+    [-1, 1].forEach((sd) => {
+      put(fb, new THREE.CylinderGeometry(0.03, 0.2, 1, 10, 4, true), racerM(sd * 0.36, 0.02, 0.5, 1, 1, 1, Math.PI / 2), null, 1, { aCore: 0 });
+      put(fb, new THREE.CylinderGeometry(0.01, 0.11, 0.7, 8, 3, true), racerM(sd * 0.36, 0.02, 0.35, 1, 1, 1, Math.PI / 2), null, 1, { aCore: 1 });
+    });
+    this.flameMat = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uLen: { value: 1 }, uI: { value: 1 }, uHot: { value: new THREE.Color(1.6, 2.2, 3.2) }, uCool: { value: new THREE.Color(3.0, 1.1, 0.25) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: `attribute float aCore; uniform float uTime; uniform float uLen; varying float vT; varying float vCore; varying vec3 vN; varying vec3 vV;
+        void main(){
+          vT = position.z / (aCore > 0.5 ? 0.7 : 1.0); vCore = aCore;
+          vec3 p = position; vec2 axis = vec2(sign(p.x) * 0.36, 0.02);
+          p.xy = axis + (p.xy - axis) * (1.0 + 0.1 * vT * sin(uTime * 14.0 + vT * 9.0 + axis.x * 8.0));
+          p.z *= uLen;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `uniform float uTime; uniform float uI; uniform vec3 uHot; uniform vec3 uCool; varying float vT; varying float vCore; varying vec3 vN; varying vec3 vV;
+        void main(){
+          float f = abs(dot(normalize(vN), normalize(vV)));
+          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
+          vec3 c = mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6);
+          gl_FragColor = vec4(c * (body * diamonds * uI * (vCore > 0.5 ? 1.3 : 0.75)), 1.0);
+        }`,
+    });
+    const flames = new THREE.Mesh(fb.build(), this.flameMat);
+    flames.position.z = 1.5;
+    flames.renderOrder = 5;
+    rig.add(flames);
+
+    // the shield: a hexagon lattice on a bubble of force, all but invisible until something hits it
+    this.shieldMat = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.25, 0.85, 1.0) }, uOn: { value: 1 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) }, uGlow: { value: 0 } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+      fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+        void main(){
+          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+          const vec2 s = vec2(1.0, 1.7320508);
+          vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
+          vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+          vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
+          vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+          float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
+          float dist = distance(vP, uHitP);
+          float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+          float flare = uHit * uHit * exp(-dist * 1.6);
+          float base = uOn * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008);
+          gl_FragColor = vec4(uColor * (base + line * (ring * 1.6 + flare * 1.2) + fres * (ring + flare) * 0.8), 1.0);
+        }`,
+    });
+    this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), this.shieldMat);
+    this.shield.scale.set(2.15, 0.9, 2.35);
+    this.shield.position.set(0, 0.06, -0.25);
+    this.shield.renderOrder = 7;
+    rig.add(this.shield);
+
+    // what the game reads: engine and gun positions, glows it flickers, lights it blinks
+    this.nozzles = [new THREE.Vector3(-0.36, 0.02, 1.52), new THREE.Vector3(0.36, 0.02, 1.52)];
+    this.muzzles = [new THREE.Vector3(-0.72, -0.09, -1.14), new THREE.Vector3(0.72, -0.09, -1.14)];
+    this.engineGlows = this.nozzles.map((p) => { const s = glowSprite(neon(COLORS.orange, 1.7), 0.5, 0.7); s.position.copy(p); rig.add(s); return s; });
+    this.wingLights = [[-1.85, COLORS.magenta], [1.85, COLORS.cyan]].map(([x, c]) => { const s = glowSprite(neon(c, 2.6), 0.42, 1); s.position.set(x, -0.13, 1.14); rig.add(s); return s; });
+    this.tips = [new THREE.Vector3(-1.85, -0.13, 1.14), new THREE.Vector3(1.85, -0.13, 1.14)];
+    this.contrails = this.tips.map(() => new Trail({ length: 18, width: 0.03, color: 0xbfe8ff, intensity: 0.7 }));
+    this.contrails.forEach((t) => { g.scene.add(t.mesh); g.decor(t.mesh); });
+    g.decorCheap(fine);
+    box.dispose();
+    this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
+    this._v = new THREE.Vector3();
+    this._c = new THREE.Color();
+    this.glowCool = neon(COLORS.orange, 1.2);
+    this.glowHot = neon(0x9fd8ff, 1.7);
+  }
+  // the guns fire: a kick back and a muzzle glow
+  fire() { this.recoil = 1; this.gun = 1; }
+  // a clean hit: a quick wing waggle
+  hit() { if (!REDUCED_MOTION && !GFX.calm) this.waggle = 1; }
+  // a streak heats the engines: longer, bluer flames, brighter strips and shield
+  setCombo(c) { this.heatTo = clamp((c - 1) / 7, 0, 1); }
+  // a shield is lost: the lattice flares red from the point of impact
+  shieldLost() {
+    const u = this.shieldMat.uniforms;
+    u.uHit.value = 1;
+    u.uHitP.value.set(rand(-0.4, 0.4), 0.55, -0.7).normalize();
+    u.uColor.value.setRGB(1.0, 0.28, 0.2);
+  }
+  // a shield comes back: the lattice sweeps on from the nose
+  shieldUp() {
+    const u = this.shieldMat.uniforms;
+    u.uHit.value = 0.9;
+    u.uHitP.value.set(0, 0.1, -1);
+    u.uColor.value.setRGB(0.6, 1.0, 1.0);
+  }
+  // through the warp between waves: one full roll
+  warp() { if (!REDUCED_MOTION && !GFX.calm) { this.spinT = 1; this.spinDir = Math.random() < 0.5 ? -1 : 1; } }
+  down() { this.contrails.forEach((t) => { t.mesh.visible = false; }); }
+  update(dt, sp, w) {
+    const g = this.g, t = g.t, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, h = Math.min(dt, 0.05);
+    this.heat += (this.heatTo - this.heat) * Math.min(1, dt * 3);
+    const heat = this.heat;
+    // bank into the drift and the pointer; waggle after a hit; one full roll through the warp
+    let roll = (quiet ? 0 : -Pointer.x * 0.4) - Math.cos(t * 0.9) * 0.14;
+    if (this.waggle > 0) { this.waggle = Math.max(0, this.waggle - dt * 1.5); roll += Math.sin((1 - this.waggle) * Math.PI * 2) * 0.5 * this.waggle; }
+    if (this.spinT > 0) {
+      this.spinT = Math.max(0, this.spinT - dt / 1.2);
+      roll += this.spinDir * Math.PI * 2 * smoothstep(0, 1, 1 - this.spinT);
+      if (this.spinT === 0) rig.rotation.z -= this.spinDir * Math.PI * 2; // a whole turn is no turn: nothing to unwind
+    }
+    this.rollV += ((roll - rig.rotation.z) * 60 - this.rollV * 11) * h;
+    rig.rotation.z += this.rollV * h;
+    rig.rotation.x += ((quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.05 - rig.rotation.x) * Math.min(1, dt * 6);
+    this.recoil *= Math.pow(0.004, dt);
+    this.gun *= Math.pow(0.02, dt);
+    rig.position.z = this.recoil * 0.14;
+    const d = clamp(this.rollV * 0.35, -0.5, 0.5);
+    this.flaps[0].rotation.x = d;
+    this.flaps[1].rotation.x = -d;
+    // engines
+    const fu = this.flameMat.uniforms;
+    fu.uLen.value = 0.8 + heat * 0.7 + w * 1.8;
+    fu.uI.value = 0.42 + heat * 0.35 + w * 0.8;
+    fu.uCool.value.setRGB(lerp(3.0, 1.2, heat), lerp(1.1, 1.9, heat), lerp(0.25, 3.0, heat));
+    this.engineGlows.forEach((s) => s.material.color.copy(this.glowCool).lerp(this.glowHot, heat));
+    const L = this.lamps.uniforms.uL.value;
+    L[0] = 1 + heat * 0.8;
+    L[2] = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8); // fin beacons: a soft pulse, well under 1 Hz
+    L[3] = 0.85 + 0.12 * Math.sin(t * 7) + heat * 0.6 + w;
+    L[5] = 0.7 + 0.3 * Math.sin(t * 2.2);
+    L[7] = this.gun;
+    this.glass.envMapIntensity = 2.1 + 0.5 * Math.sin(t * 0.8);
+    // shield: fades with the shields left, glows with the streak, settles back to blue after a hit
+    const su = this.shieldMat.uniforms;
+    this.shieldOn += (clamp(g.shields / 3, 0, 1) - this.shieldOn) * Math.min(1, dt * 4);
+    su.uOn.value = this.shieldOn;
+    su.uGlow.value = heat * 0.6;
+    su.uHit.value = Math.max(0, su.uHit.value - dt * 1.3);
+    if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, dt * 4));
+    // (the weakest quality levels only draw the bubble while it flares)
+    this.shield.visible = su.uHit.value > 0 || (this.shieldOn > 0.01 && !(GFX.ok && GFX.Q[GFX.qi].cheap));
+    rig.updateMatrixWorld();
+    GFX.heatAt(g.camera, this._v.set(0, 0.02, 2.2).applyMatrix4(rig.matrixWorld), 0.55 * g.shipScale, 0.4 + 0.6 * Math.max(heat, Math.min(1, w)));
+    // wingtip contrails, sampled at a fixed 60 Hz like the engine trails
+    this.acc = Math.min(4 / 60, this.acc + dt);
+    while (this.acc >= 1 / 60) {
+      this.acc -= 1 / 60;
+      const step = Math.min(sp * 0.3, 9) / 60;
+      this.contrails.forEach((tr, j) => {
+        tr.width = 0.03 * g.shipScale * (1 + heat);
+        tr.shift(0, 0, step);
+        tr.push(this._v.copy(this.tips[j]).applyMatrix4(rig.matrixWorld));
+      });
+    }
+  }
+}
+
+/* ---- 20c-blasterworld.js ---- */
+// Risk Blaster's surroundings: the corridor's structure and traffic, the holo-drones
+// that carry the answers, and the carrier that looms at the end of each wave. Look
+// only: nothing here reads or changes the score, shields, timer or the questions.
+
+// ---- holo-drones -----------------------------------------------------------------
+// Four airframes, one per answer slot, so a target is known by its shape as well as
+// its colour and letter. Each is wide rather than tall (the rows sit close together)
+// and holds the glowing answer core in a hexagonal collar.
+function blasterDroneGeo(shape, hex) {
+  const B = new RacerBatch(), L = new RacerBatch();
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  const put = (b, geo, m, color, k = 1) => { b.add(geo, m, color, k); geo.dispose(); };
+  const ring = (i, n) => new THREE.Matrix4().makeRotationZ((i / n) * Math.PI * 2);
+  const deg = (d) => new THREE.Matrix4().makeRotationZ((d * Math.PI) / 180);
+  // a slab drawn in [x, y] stands up facing the player, bevel forward
+  const stand = (pts, t, bevel, z) => { const geo = blasterSlab(pts.map(([x, y]) => [x, -y]), t, bevel); geo.applyMatrix4(racerM(0, 0, z, 1, 1, 1, Math.PI / 2)); return geo; };
+  const paint = new THREE.Color(hex).multiplyScalar(0.5).getHex();
+  // collar: six armour plates round the core, three carrying the slot's colour, lit bolts at the corners
+  for (let i = 0; i < 6; i++) {
+    put(B, racerPlate(1.42, 0.2, 0.36, 0.05, true), ring(i, 6).multiply(racerM(0, 1.2, -0.1)), i % 2 ? BK.GUN : BK.PLATE);
+    if (i % 2 === 0) B.add(box, ring(i, 6).multiply(racerM(0, 1.2, 0.09, 0.9, 0.11, 0.04)), paint);
+    L.add(box, ring(i + 0.5, 6).multiply(racerM(0, 1.39, 0.1, 0.11, 0.11, 0.06)), 0xffffff, 1);
+  }
+  put(B, new THREE.CylinderGeometry(0.8, 0.6, 0.5, 8), racerM(0, 0, -0.55, 1, 1, 1, Math.PI / 2), BK.GUN); // housing behind the core
+  L.add(box, racerM(0, -0.97, 0.1, 0.34, 0.07, 0.05), 0xffffff, 0.8); // sensor slit
+  if (shape === 0) {
+    // four rotor pods on swept arms
+    [28, 152, 208, 332].forEach((a) => {
+      B.add(box, deg(a - 90).multiply(racerM(0, 1.62, -0.1, 0.15, 0.62, 0.15)), BK.STEEL);
+      put(B, new THREE.CylinderGeometry(0.36, 0.36, 0.4, 10), deg(a - 90).multiply(racerM(0, 2.02, -0.1, 1, 1, 1, Math.PI / 2)), BK.GUN);
+      put(L, new THREE.TorusGeometry(0.29, 0.05, 4, 12), deg(a - 90).multiply(racerM(0, 2.02, 0.11)), 0xffffff, 1);
+      B.add(box, deg(a - 90).multiply(racerM(0, 2.02, 0.1, 0.5, 0.05, 0.03)), BK.PALE);
+    });
+  } else if (shape === 1) {
+    // a delta: two swept wings and a short dorsal fin
+    [-1, 1].forEach((sd) => {
+      put(B, stand([[sd * 1.15, 0.42], [sd * 2.35, -0.12], [sd * 2.35, -0.34], [sd * 1.15, -0.5]], 0.16, 0.04, -0.1), null, BK.PLATE);
+      put(B, stand([[sd * 1.3, 0.2], [sd * 2.1, -0.1], [sd * 2.1, -0.22], [sd * 1.3, -0.1]], 0.2, 0, -0.1), null, paint);
+      L.add(box, racerM(sd * 2.38, -0.23, -0.02, 0.07, 0.26, 0.1), 0xffffff, 1);
+    });
+    put(B, stand([[-0.3, 1.25], [0.3, 1.25], [0.1, 1.42], [-0.1, 1.42]], 0.14, 0, -0.1), null, BK.STEEL);
+  } else if (shape === 2) {
+    // twin booms: armoured side pods with light bars, a mast, a dish
+    [-1, 1].forEach((sd) => {
+      B.add(box, racerM(sd * 1.68, 0, -0.1, 0.8, 0.18, 0.18), BK.STEEL);
+      put(B, racerPlate(0.5, 1.5, 0.56, 0.1, true), racerM(sd * 2.18, 0, -0.1), BK.PLATE);
+      B.add(box, racerM(sd * 2.18, 0.5, 0.19, 0.4, 0.14, 0.04), paint);
+      L.add(box, racerM(sd * 2.18, -0.1, 0.2, 0.08, 0.86, 0.04), 0xffffff, 1);
+    });
+    B.add(box, racerM(0, 1.5, -0.1, 0.05, 0.38, 0.05), BK.STEEL);
+    L.add(box, racerM(0, 1.7, -0.1, 0.1, 0.1, 0.1), 0xffffff, 1.2);
+  } else {
+    // a saucer: an elliptical ring of nodes round the collar
+    put(B, new THREE.TorusGeometry(2.05, 0.11, 5, 22), racerM(0, 0, -0.1, 1, 0.64, 1), BK.GUN);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2, x = Math.cos(a) * 2.05, y = Math.sin(a) * 2.05 * 0.64;
+      if (i % 2) L.add(box, racerM(x, y, -0.02, 0.2, 0.2, 0.14), 0xffffff, 1);
+      else put(B, racerPlate(0.34, 0.34, 0.3, 0.07, true), racerM(x, y, -0.1), paint);
+    }
+    [0, 180].forEach((a) => B.add(box, deg(a - 90).multiply(racerM(0, 1.72, -0.1, 0.12, 0.5, 0.12)), BK.STEEL));
+  }
+  box.dispose();
+  return { body: B.build("color"), lamps: L.build("color") };
+}
+
+// ---- the corridor ----------------------------------------------------------------
+// Heavy ribs with energy pylons, light conduits, tumbling asteroids, laser chords,
+// station blocks drifting by beyond the wall, and a director that sends something
+// past every few seconds (a patrol of drones, a comet, a capital ship, a scan ring,
+// a buoy, a surge of power). While a question is up, only the quiet ones.
+class BlasterCorridor {
+  constructor(game) {
+    const g = (this.g = game), s = g.scene;
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const put = (b, geo, m, color, k = 1, v) => { b.add(geo, m, color, k, v); geo.dispose(); };
+    const ring = (i, n) => new THREE.Matrix4().makeRotationZ((i / n) * Math.PI * 2);
+    this._v = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4();
+
+    // ribs: twelve-sided frames every 24 units, clamps at the hexagon's corners, two pylons each
+    const R = new RacerBatch(["aGlow"]);
+    for (let i = 0; i < 12; i++) {
+      put(R, racerPlate(6.95, 0.7, 1.4, 0.16, true), ring(i, 12).multiply(racerM(0, 12.78, 0)), 0x232a40);
+      R.add(box, ring(i, 12).multiply(racerM(0, 12.4, 0, 5.0, 0.06, 0.14)), 0xffffff, 0.4, { aGlow: 1 });
+      R.add(box, ring(i + 0.5, 12).multiply(racerM(0, 12.1, 0, 0.26, 1.25, 0.26)), 0x2a3350);
+    }
+    for (let i = 0; i < 6; i++) {
+      put(R, racerPlate(1.5, 1.15, 1.9, 0.2, true), ring(i, 6).multiply(racerM(0, 12.42, 0)), 0x343d5e);
+      R.add(box, ring(i, 6).multiply(racerM(0, 11.82, 0.96, 0.5, 0.1, 0.03)), 0xffffff, 1, { aGlow: 2 });
+    }
+    [0.5, 6.5].forEach((i) => {
+      const m = ring(i, 12), at = (x, y, sx = 1, sy = 1, sz = 1, rz = 0) => m.clone().multiply(racerM(x, y, 0, sx, sy, sz, 0, 0, rz));
+      put(R, racerPlate(1.3, 0.9, 1.3, 0.2, true), at(0, 12.2), 0x343d5e);
+      put(R, new THREE.CylinderGeometry(0.36, 0.17, 2.7, 6), at(0, 10.55), 0x2a3350);
+      [11.3, 10.6, 9.9].forEach((r, k) => put(R, new THREE.CylinderGeometry(0.42 - k * 0.07, 0.42 - k * 0.07, 0.14, 6), at(0, r), 0xffffff, 1, { aGlow: 3 }));
+      put(R, new THREE.OctahedronGeometry(0.42, 0), at(0, 8.95, 1, 1.5, 1), 0xffffff, 1, { aGlow: 1 });
+      [-1, 1].forEach((sd) => R.add(box, at(sd * 0.34, 9.25, 0.08, 0.8, 0.08, sd * 0.25), 0x6a7388));
+    });
+    this.ribMat = blasterHullMaterial({ wrap: true });
+    this.ribs = new THREE.Mesh(blasterRepeat(R.build(), 7), this.ribMat);
+    this.ribs.frustumCulled = false;
+    s.add(this.ribs);
+    g.decorCheap(this.ribs); // the weakest quality levels fly the bare tunnel
+
+    // conduits: six lines of light along the wall, packets of energy running away down them
+    const cb = new RacerBatch();
+    for (let i = 0; i < 6; i++) [0, Math.PI / 2].forEach((ry) => put(cb, new THREE.PlaneGeometry(0.16, 196), ring(i + 0.5, 6).multiply(racerM(0, 12.62, -92, 1, 1, 1, Math.PI / 2, ry)), null));
+    this.conduitMat = new THREE.ShaderMaterial({
+      uniforms: Object.assign(fogUniforms(), { uWave: { value: neon(WAVE_COLORS[0], 1) }, uTime: { value: 0 }, uSurgeZ: { value: 99 } }),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: "varying float vZ; varying float vDepth; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vZ = w.z; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
+      fragmentShader: `${GLSL_FOG_PARS} uniform vec3 uWave; uniform float uTime; uniform float uSurgeZ; varying float vZ; varying float vDepth;
+        void main(){
+          float packet = pow(0.5 + 0.5 * sin(vZ * 0.21 + uTime * 2.6), 14.0);
+          float surge = exp(-abs(vZ - uSurgeZ) * 0.09);
+          float fade = smoothstep(1.0, 9.0, vDepth) * (1.0 - smoothstep(uFogNear, uFogFar, vDepth));
+          gl_FragColor = vec4(mix(uWave, vec3(1.0), 0.25) * ((0.2 + 1.7 * packet + 2.6 * surge) * fade), 1.0);
+        }`,
+    });
+    this.conduits = new THREE.Mesh(cb.build(), this.conduitMat);
+    this.conduits.frustumCulled = false;
+    s.add(this.conduits);
+
+    // laser chords: a triangle of beams strung across three of the ribs, well clear of the lanes
+    const lb = new RacerBatch(["aIdx"]);
+    [1, 4].forEach((idx) => {
+      const pts = [0, 1, 2].map((k) => new THREE.Vector3(Math.cos(Math.PI / 2 + (k * Math.PI * 2) / 3) * 12.3, Math.sin(Math.PI / 2 + (k * Math.PI * 2) / 3) * 12.3, 0));
+      [0, 1, 2].forEach((k) => racerStrut(lb, box, pts[k], pts[(k + 1) % 3], 0.04, null, 1, { aIdx: idx }));
+    });
+    this.laserMat = new THREE.ShaderMaterial({
+      uniforms: Object.assign(fogUniforms(), { uColor: { value: neon(0xff3ad4, 0.55) }, uTime: { value: 0 }, uScroll: { value: 0 }, uSpin: { value: 0 } }),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute float aIdx; uniform float uScroll; uniform float uSpin; uniform float uTime; varying float vI; varying float vDepth;
+        void main(){
+          float a = aIdx * 0.5236 - uSpin * 0.35 + uTime * 0.06; float c = cos(a); float s = sin(a);
+          vec3 p = vec3(c * position.x - s * position.y, s * position.x + c * position.y, position.z);
+          float z = -aIdx * 24.0 - 12.0 + uScroll; p.z += 4.0 - mod(4.0 - z, 168.0);
+          vI = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * 0.9 + aIdx * 2.1));
+          vec4 mv = modelViewMatrix * vec4(p, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `${GLSL_FOG_PARS} uniform vec3 uColor; varying float vI; varying float vDepth;
+        void main(){ gl_FragColor = vec4(uColor * (vI * smoothstep(6.0, 22.0, vDepth) * (1.0 - smoothstep(uFogNear, uFogFar, vDepth))), 1.0); }`,
+    });
+    this.lasers = new THREE.Mesh(lb.build(), this.laserMat);
+    this.lasers.frustumCulled = false;
+    s.add(this.lasers);
+    g.decor(this.lasers);
+
+    // asteroids: craggy rocks tumbling past between the lanes and the wall
+    const rock = new THREE.IcosahedronGeometry(1, 1), rp = rock.attributes.position;
+    for (let i = 0; i < rp.count; i++) {
+      const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i);
+      const hsh = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453, k = 0.7 + 0.55 * (hsh - Math.floor(hsh));
+      rp.setXYZ(i, x * k * 1.25, y * k * 0.85, z * k);
+    }
+    rock.computeVertexNormals();
+    this.rockMesh = new THREE.InstancedMesh(rock, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0.05, flatShading: true }), 14);
+    this.rockMesh.frustumCulled = false;
+    this.rocks = [];
+    const tint = new THREE.Color();
+    for (let i = 0; i < 14; i++) {
+      const r = { ax: new THREE.Vector3(), ph: rand(6.28) };
+      this.resetRock(r, rand(-175, -10));
+      this.rocks.push(r);
+      this.rockMesh.setColorAt(i, tint.set(BK.ROCK).multiplyScalar(rand(0.7, 1.35)));
+    }
+    s.add(this.rockMesh);
+    g.decorCheap(this.rockMesh);
+
+    // station blocks beyond the wall: dark girders with lit windows, drifting by at half speed
+    this.blockMat = new THREE.ShaderMaterial({
+      uniforms: fogUniforms(),
+      vertexShader: `varying vec3 vL; varying vec3 vN; varying float vDepth; varying float vSeed;
+        void main(){
+          vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
+          vL = position * sc; vN = normal; vSeed = instanceMatrix[3].x;
+          vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `${GLSL_FOG_PARS} varying vec3 vL; varying vec3 vN; varying float vDepth; varying float vSeed;
+        void main(){
+          vec2 uv = abs(vN.x) > 0.5 ? vL.zy : (abs(vN.y) > 0.5 ? vL.xz : vL.xy);
+          vec2 cell = floor(uv / vec2(1.7, 1.15));
+          float r = fract(sin(dot(cell + vSeed, vec2(127.1, 311.7))) * 43758.5453);
+          vec2 f = fract(uv / vec2(1.7, 1.15));
+          float win = step(0.74, r) * step(0.2, f.x) * step(f.x, 0.8) * step(0.3, f.y) * step(f.y, 0.75);
+          vec3 col = vec3(0.012, 0.014, 0.03) + win * mix(vec3(1.5, 1.1, 0.6), vec3(0.5, 1.2, 1.6), step(0.9, r)) * 0.9;
+          gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear * 2.0, uFogFar * 1.7, vDepth)), 1.0);
+        }`,
+    });
+    this.blockMesh = new THREE.InstancedMesh(box.clone(), this.blockMat, 8);
+    this.blockMesh.frustumCulled = false;
+    this.blocks = Array.from({ length: 8 }, (_, i) => ({ a: (i / 8) * 6.283 + rand(-0.25, 0.25), r: rand(21, 33), z: -260 + i * 40 + rand(-12, 12), s: [rand(3, 7), rand(3, 7), rand(28, 64)] }));
+    s.add(this.blockMesh);
+    g.decor(this.blockMesh);
+
+    this.buildEvents();
+    box.dispose();
+  }
+  resetRock(r, z) {
+    r.a = rand(6.283); r.r = rand(6.6, 10.8); r.z = z; r.f = rand(0.55, 1.05); r.w = rand(0.2, 0.9);
+    r.s = rand(0.3, 1.15);
+    r.ax.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize();
+  }
+
+  // What can pass by. Everything keeps to the wall or stays outside it, away from the targets.
+  buildEvents() {
+    const g = this.g, s = g.scene;
+    const D = (this.director = new EventDirector(g, { min: 4, max: 7 }));
+    const hull = (this.eventMat = blasterHullMaterial({ fog: 0.6 }));
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const put = (b, geo, m, color, k = 1, v) => { b.add(geo, m, color, k, v); geo.dispose(); };
+    // 1. a patrol of three escort drones overtakes along the wall
+    const eb = new RacerBatch(["aGlow"]);
+    put(eb, cyLoft([[-0.9, 0.2, 0.12, 0.06], [0.1, 0.3, 0.2, 0.09], [0.9, 0.06, 0.05, 0.02]]), BK_ROT, 0x3d4b72);
+    [-1, 1].forEach((sd) => {
+      put(eb, blasterSlab([[sd * 0.25, -0.3], [sd * 1.1, 0.5], [sd * 1.1, 0.75], [sd * 0.25, 0.7]], 0.07, 0.02), null, 0x26304e);
+      eb.add(box, racerM(sd * 1.1, 0, 0.62, 0.05, 0.05, 0.3), 0xffffff, 1, { aGlow: 1 });
+    });
+    eb.add(box, racerM(0, 0, 0.93, 0.26, 0.18, 0.04), 0xffffff, 1, { aGlow: 2 });
+    const escortGeo = eb.build();
+    const squad = new THREE.Group();
+    [[0, 0, 0], [-1.3, 0.25, 1.5], [1.3, 0.25, 1.5]].forEach((p) => { const m = new THREE.Mesh(escortGeo, hull); m.position.set(p[0], p[1], p[2]); squad.add(m); });
+    squad.visible = false;
+    s.add(squad);
+    g.decor(squad);
+    D.add({
+      id: "patrol", dur: 6,
+      start: (run) => { run.a = rand(6.283); run.dir = rand() < 0.5 ? -1 : 1; squad.visible = true; Sound.sfx("whoosh", Math.cos(run.a) * 0.7); },
+      update: (dt, t, run) => {
+        const a = run.a + run.dir * t * 0.3, z = 8 - t * 34;
+        squad.position.set(Math.cos(a) * 8.8, Math.sin(a) * 8.8, z);
+        squad.rotation.z = a + Math.PI / 2 + Math.sin(t * 1.4) * 0.2;
+        return z > -190;
+      },
+      end: () => { squad.visible = false; },
+    });
+    // 2. a comet crosses beyond the wall
+    const comet = glowSprite(neon(0x9fd8ff, 2.2), 5, 1), tail = new Trail({ length: 26, width: 0.9, color: 0x9fd8ff, intensity: 1.3 });
+    comet.visible = tail.mesh.visible = false;
+    s.add(comet, tail.mesh);
+    g.decor(comet, tail.mesh);
+    D.add({
+      id: "comet", dur: 4,
+      start: (run) => { run.sd = rand() < 0.5 ? -1 : 1; run.y = rand(14, 34); tail.pts = []; comet.visible = tail.mesh.visible = true; },
+      update: (dt, t, run) => { comet.position.set(run.sd * (-85 + t * 48), run.y - t * 5, -185 + t * 6); tail.push(comet.position); return t < 3.6; },
+      end: () => { comet.visible = tail.mesh.visible = false; },
+    });
+    // 3. a surge of power runs away down the conduits and pylons
+    D.add({ id: "surge", dur: 2.2, update: (dt, t) => { this.surgeZ = 6 - t * 95; return t < 2.1; }, start: () => {}, end: () => { this.surgeZ = 99; } });
+    // 4. a scan ring sweeps up the corridor toward the fighter
+    const scan = new THREE.Mesh(new THREE.TorusGeometry(12.2, 0.09, 4, 36), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    scan.visible = false;
+    s.add(scan);
+    D.add({
+      id: "scan", dur: 3,
+      start: () => { scan.visible = true; },
+      update: (dt, t) => { scan.position.z = -175 + t * 70; this.surgeZ = scan.position.z; scan.material.color.copy(g.waveCol).multiplyScalar(1.6 * smoothstep(0, 0.4, t) * smoothstep(2.6, 2.2, t)); return t < 2.6; },
+      end: () => { scan.visible = false; this.surgeZ = 99; },
+    });
+    // 5. a capital ship crosses far ahead, beyond the wall
+    const cap = new RacerBatch(["aGlow"]);
+    put(cap, cyLoft([[-22, 1.2, 0.9, 0.5], [-10, 3.2, 2.2, 1.0], [8, 3.6, 2.6, 1.2], [20, 2.4, 1.8, 0.8]]), racerM(0, 0, 0, 1, 1, 1, 0, 0, Math.PI / 2), 0x2a3350);
+    put(cap, racerPlate(7, 3.4, 3, 0.6, true), racerM(9, 3.4, 0), 0x343d5e);
+    put(cap, racerPlate(3, 2.6, 2, 0.4, true), racerM(11, 6.2, 0), 0x3d4b72);
+    for (let i = 0; i < 16; i++) cap.add(box, racerM(-16 + i * 2.2, 0.4 + (i % 3) * 0.5, 2.3 + Math.min(i, 8) * 0.04, 0.9, 0.16, 0.1), 0xffffff, 1, { aGlow: 2 });
+    cap.add(box, racerM(20.4, 0, 0, 0.3, 2.6, 2.6), 0xffffff, 1, { aGlow: 1 });
+    cap.add(box, racerM(11, 7.8, 0, 0.3, 0.6, 0.3), 0xffffff, 1, { aGlow: 1 });
+    const capital = new THREE.Mesh(cap.build(), blasterHullMaterial({ fog: 0.25 }));
+    this.capitalMat = capital.material;
+    capital.visible = false;
+    capital.frustumCulled = false;
+    s.add(capital);
+    g.decor(capital);
+    D.add({
+      id: "capital", dur: 16,
+      start: (run) => { run.sd = rand() < 0.5 ? -1 : 1; run.y = rand(20, 34); capital.visible = true; capital.rotation.y = run.sd > 0 ? Math.PI : 0; },
+      update: (dt, t, run) => { capital.position.set(run.sd * (-95 + t * 13), run.y, -172); return t < 14.6; },
+      end: () => { capital.visible = false; },
+    });
+    // 6. a navigation buoy drifts by on the wall, its lamp breathing
+    const bb = new RacerBatch(["aGlow"]);
+    put(bb, new THREE.OctahedronGeometry(0.6, 0), racerM(0, 0, 0, 1, 1.6, 1), 0x343d5e);
+    put(bb, new THREE.TorusGeometry(0.75, 0.06, 4, 12), racerM(0, 0, 0, 1, 1, 1, Math.PI / 2), 0x6a7388);
+    bb.add(box, racerM(0, 1.15, 0, 0.16, 0.3, 0.16), 0xffffff, 1, { aGlow: 2 });
+    const buoy = new THREE.Mesh(bb.build(), hull), buoyGlow = glowSprite(neon(0xffe14f, 1.6), 2.4, 1);
+    buoyGlow.position.y = 1.2;
+    buoy.add(buoyGlow);
+    buoy.visible = false;
+    s.add(buoy);
+    g.decor(buoy);
+    D.add({
+      id: "buoy", dur: 12,
+      start: (run) => { run.a = rand(6.283); run.z = -170; buoy.visible = true; },
+      update: (dt, t, run) => {
+        run.z += this.sp * dt;
+        buoy.position.set(Math.cos(run.a) * 10.4, Math.sin(run.a) * 10.4, run.z);
+        buoy.rotation.set(0, t * 0.8, run.a - Math.PI / 2);
+        buoyGlow.material.opacity = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(t * 4.4), 3);
+        return run.z < 8;
+      },
+      end: () => { buoy.visible = false; },
+    });
+    // 7. flak bursts outside the wall: only between questions
+    D.add({
+      id: "flak", big: true, flashy: true, dur: 1.6,
+      start: (run) => { run.n = 0; },
+      update: (dt, t, run) => {
+        if (run.n < 2 && t > run.n * 0.7) {
+          run.n++;
+          const a = rand(6.283), p = this._v.set(Math.cos(a) * rand(17, 24), Math.sin(a) * rand(17, 24), rand(-90, -45));
+          g.bursts.burst(p, COLORS.orange, { n: 46, speed: 12, size: 0.7, life: 1.0 });
+          g.bursts.burst(p, 0xffffff, { n: 14, speed: 5, size: 0.5, life: 0.5 });
+          g.boom(p.clone(), COLORS.orange, 16);
+          Sound.sfx("boom", Math.cos(a) * 0.8);
+        }
+        return t < 1.5;
+      },
+    });
+    this.surgeZ = 99;
+    this.sp = 26;
+    box.dispose();
+  }
+
+  update(dt, sp, w) {
+    const g = this.g;
+    this.sp = sp;
+    const ru = this.ribMat.uniforms, src = g.ringMat.uniforms;
+    ru.uScroll.value = g.ringScroll;
+    ru.uSpin.value = g.spin;
+    ru.uWave.value.copy(g.waveCol);
+    ru.uFlash.value = src.uFlash.value;
+    ru.uFlashZ.value = src.uFlashZ.value;
+    ru.uFlashColor.value.copy(src.uFlashColor.value);
+    ru.uSurgeZ.value = this.surgeZ;
+    ru.uHot.value = w * 0.8;
+    const cu = this.conduitMat.uniforms;
+    cu.uWave.value.copy(g.waveCol);
+    cu.uSurgeZ.value = this.surgeZ;
+    this.conduits.rotation.z = g.wall.rotation.z;
+    const lu = this.laserMat.uniforms;
+    lu.uScroll.value = g.ringScroll;
+    lu.uSpin.value = g.spin;
+    this.eventMat.uniforms.uWave.value.copy(g.waveCol);
+    this.capitalMat.uniforms.uWave.value.copy(g.waveCol);
+    // rocks
+    const m = this._m, q = this._q, v = this._v, sc = this._s;
+    this.rocks.forEach((r, i) => {
+      r.z += sp * r.f * dt;
+      r.ph += r.w * dt;
+      if (r.z > 10) this.resetRock(r, -178);
+      const near = smoothstep(-178, -150, r.z); // they grow out of the dark rather than popping in
+      this.rockMesh.setMatrixAt(i, m.compose(v.set(Math.cos(r.a) * r.r, Math.sin(r.a) * r.r, r.z), q.setFromAxisAngle(r.ax, r.ph), sc.setScalar(r.s * near)));
+    });
+    this.rockMesh.instanceMatrix.needsUpdate = true;
+    // station blocks
+    this.blocks.forEach((b, i) => {
+      b.z += sp * 0.5 * dt;
+      if (b.z > 70) b.z -= 330;
+      this.blockMesh.setMatrixAt(i, m.compose(v.set(Math.cos(b.a) * b.r, Math.sin(b.a) * b.r, b.z), q.set(0, 0, Math.sin(b.a / 2), Math.cos(b.a / 2)), sc.set(b.s[0], b.s[1], b.s[2])));
+    });
+    this.blockMesh.instanceMatrix.needsUpdate = true;
+    // a question on screen (or its explanation): quiet events only
+    this.director.update(dt, g.state !== "intro");
+  }
+}
+
+// ---- the carrier -----------------------------------------------------------------
+// Each wave has a carrier holding station at the far end of the corridor: the drones
+// are its brood. It answers a miss with a bolt at the shield, and when the wave is
+// cleared it goes up, and the fighter jumps through the wreck. Three hull forms.
+const BK_CARRIER_Y = 6.4; // it holds station above the lanes, so its eye is never mistaken for a target
+class BlasterCarrier {
+  constructor(game) {
+    const g = (this.g = game);
+    this.mat = blasterHullMaterial({ fog: 0.45 });
+    this.group = new THREE.Group();
+    this.group.position.set(0, BK_CARRIER_Y, -128);
+    g.scene.add(this.group);
+    this.bolt = makeBeam(0xff4d5a, 3.2);
+    g.scene.add(this.bolt);
+    this.fade = 0; this.hot = 0; this.tok = 0;
+    this._v = new THREE.Vector3();
+    this.build(1);
+  }
+  build(wave) {
+    if (this.mesh) { this.group.remove(this.mesh); this.mesh.geometry.dispose(); }
+    const v = (wave - 1) % 3, H = new RacerBatch(["aGlow"]);
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const put = (geo, m, color, glow = 0) => { H.add(geo, m, color, 1, { aGlow: glow }); geo.dispose(); };
+    const ring = (i, n) => new THREE.Matrix4().makeRotationZ((i / n) * Math.PI * 2);
+    // a slab drawn in [x, y] stands up facing the fighter, bevel forward
+    const stand = (pts, t, bevel, z) => { const geo = blasterSlab(pts.map(([x, y]) => [x, -y]), t, bevel); geo.applyMatrix4(racerM(0, 0, z, 1, 1, 1, Math.PI / 2)); return geo; };
+    const mir = (pts, sd) => pts.map(([x, y]) => [x * sd, y]);
+    const sx = [1, 0.72, 0.9][v], sy = [1, 1.4, 1.1][v];
+    // core block, brow and jaw, the reactor eye behind six iris blades
+    put(cyLoft([[-2.2, 2.6 * sx, 1.9 * sy, 0.7], [0, 3.1 * sx, 2.3 * sy, 0.9], [1.1, 2.4 * sx, 1.7 * sy, 0.7]]), racerM(0, 0, 0, 1, 1, 1, Math.PI / 2), 0x232a3c);
+    put(racerPlate(4.6 * sx, 0.55, 0.7, 0.14, true), racerM(0, 1.72 * sy, 0.95, 1, 1, 1, -0.3), 0x343d5e);
+    put(racerPlate(3.3 * sx, 0.45, 0.6, 0.12, true), racerM(0, -1.68 * sy, 0.85, 1, 1, 1, 0.3), 0x2a3350);
+    put(new THREE.CircleGeometry(1.25, 18), racerM(0, 0, 1.12), 0x8a8a8a, 1);
+    put(new THREE.CircleGeometry(0.5, 12), racerM(0, 0, 1.15), 0x9a9a9a, 2);
+    for (let i = 0; i < 6; i++) H.add(box, ring(i, 6).multiply(racerM(0, 1.42, 1.2, 1.3, 0.5, 0.12, 0, 0, 0.36)), 0x10131c, 1, { aGlow: 0 });
+    [-1, 1].forEach((sd) => {
+      const wing = [
+        [[2.4, 1.3], [8.6, 0.5], [8.9, -0.4], [6.5, -1.2], [2.4, -1.4]],
+        [[1.9, 1.7], [5.3, 2.7], [5.8, 1.9], [4.3, -1.9], [1.9, -2.3]],
+        [[2.2, 1.2], [6.8, 2.3], [7.7, 0.3], [6.7, -2.7], [5.5, -3.5], [5.9, -1.2], [5.0, 0.0], [2.2, -1.0]],
+      ][v];
+      put(stand(mir(wing, sd), 1.2, v === 2 ? 0 : 0.25, -0.4), null, 0x1c2134);
+      const plate = [[[3.0, 0.9], [7.8, 0.3], [7.9, -0.25], [3.0, -1.0]], [[2.4, 1.3], [4.9, 2.0], [4.4, -1.3], [2.4, -1.7]], [[2.7, 0.8], [6.4, 1.7], [6.9, 0.3], [5.4, 0.3], [2.7, -0.6]]][v];
+      put(stand(mir(plate, sd), 0.3, 0.08, 0.3), null, 0x343d5e);
+      // hangar bay with its strip lights, a row of windows, a wingtip lamp
+      const bay = [[3.6, 0.3, 2.4, 0.7], [2.7, 0.2, 1.5, 1.4], [3.2, 0.25, 2.0, 0.6]][v];
+      H.add(box, racerM(sd * (bay[0] + bay[2] / 2), bay[1], 0.5, bay[2], bay[3], 0.08), 0x05060a, 1, { aGlow: 0 });
+      [-1, 1].forEach((e) => H.add(box, racerM(sd * (bay[0] + bay[2] / 2), bay[1] + e * (bay[3] / 2 + 0.06), 0.52, bay[2], 0.05, 0.05), 0xffffff, 1, { aGlow: 2 }));
+      for (let i = 0; i < 7; i++) H.add(box, racerM(sd * (2.9 + i * 0.55) * sx, -1.05 * sy + (v === 1 ? i * 0.1 : 0), 0.5, 0.2, 0.09, 0.05), 0xffffff, 1, { aGlow: 2 });
+      const tip = [[8.75, 0.05], [5.55, 2.3], [7.25, 1.3]][v];
+      H.add(box, racerM(sd * tip[0], tip[1], 0.3, 0.22, 0.5, 0.22), 0xffffff, 1, { aGlow: 1 });
+      // armoured cheeks flanking the eye
+      put(blasterSlab(mir([[1.5, 0.5], [2.3, 0.2], [2.3, -0.2], [1.5, -0.5]], sd), 2.6 * sy, 0.1), racerM(0, 0, 1.3), 0x2a3350);
+    });
+    // masts and a keel
+    [[0, 2.3 * sy, 2.6], [-1.3 * sx, 2.1 * sy, 1.5], [1.3 * sx, 2.1 * sy, 1.5]].forEach(([x, y, hgt]) => {
+      H.add(box, racerM(x, y + hgt / 2, -0.4, 0.12, hgt, 0.12), 0x343d5e, 1, { aGlow: 0 });
+      H.add(box, racerM(x, y + hgt + 0.1, -0.4, 0.2, 0.2, 0.2), 0xffffff, 1, { aGlow: 1 });
+    });
+    put(stand([[-0.7, -2.2 * sy], [0.7, -2.2 * sy], [0.2, -2.2 * sy - 2.4], [-0.2, -2.2 * sy - 2.4]], 0.5, 0.1, -0.3), null, 0x1c2134);
+    if (v === 1) put(stand([[-0.8, 2.9], [0.8, 2.9], [0.25, 6.4], [-0.25, 6.4]], 0.6, 0.12, -0.6), null, 0x232a3c);
+    box.dispose();
+    this.mesh = new THREE.Mesh(H.build(), this.mat);
+    this.mesh.frustumCulled = false;
+    this.group.add(this.mesh);
+    this.group.visible = true;
+    this.fade = 0;
+    this.alive = true;
+  }
+  // a new wave's carrier comes up out of the dark
+  arrive(wave) { this.build(wave); }
+  // a miss: the carrier puts a bolt into the shield
+  volley() {
+    if (!this.alive) return;
+    const g = this.g, tok = ++this.tok, from = this._v.copy(this.group.position).setZ(this.group.position.z + 1.5).clone(), to = g.ship.position.clone();
+    this.hot = 1;
+    aimBeam(this.bolt, from, to, 0.14);
+    this.bolt.material.uniforms.uFade.value = 1;
+    g.tw.add(0.32, (k) => { if (this.tok === tok) this.bolt.material.uniforms.uFade.value = 1 - k; }, () => { if (this.tok === tok) this.bolt.visible = false; });
+  }
+  // the wave is cleared: it goes up
+  destroy() {
+    if (!this.alive) return;
+    this.alive = false;
+    const g = this.g, p = this.group.position.clone(), col = g.waveCol.clone();
+    this.hot = 2;
+    g.bursts.burst(p, col.getHex(), { n: 120, speed: 30, size: 1.5, life: 1.3 });
+    g.bursts.burst(p, 0xffffff, { n: 50, speed: 14, size: 1.1, life: 0.7 });
+    g.shockwave(p.clone(), col.clone().multiplyScalar(2.2), 34, 0.8);
+    g.shards.burst(p, col.getHex(), 22, 3, 46);
+    g.boom(p, col.getHex(), 40);
+    g.tw.wait(0.16, () => { if (!this.alive) this.group.visible = false; });
+  }
+  update(dt) {
+    const g = this.g, u = this.mat.uniforms;
+    this.fade = Math.min(1, this.fade + dt / 2.4);
+    this.hot = Math.max(0, this.hot - dt * 1.6);
+    u.uFade.value = this.fade * this.fade;
+    u.uHot.value = this.hot + 0.25 * Math.sin(g.t * 2.2); // the eye breathes
+    u.uWave.value.copy(g.waveCol);
+    u.uFlash.value = g.ringMat.uniforms.uFlash.value * 0.4;
+    u.uFlashZ.value = this.group.position.z;
+    this.group.position.set(0, BK_CARRIER_Y + Math.sin(g.t * 0.5) * 0.25, -128 - (1 - this.fade) * 30);
+    this.group.rotation.z = Math.sin(g.t * 0.3) * 0.03;
   }
 }
 

@@ -215,6 +215,20 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .lives .lost { opacity: 0.18; }
 .tag { font: 9px/1.4 var(--font-display); color: var(--c, var(--cyan)); white-space: nowrap; }
 .combo { font: 10px/1 var(--font-display); color: var(--magenta); text-shadow: 0 0 8px var(--magenta); white-space: nowrap; }
+/* Risk Blaster's combo meter: seven pips that fill and warm up as the multiplier climbs */
+.combo-box { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.combo-meter { display: flex; gap: 1px; }
+.combo-meter i { width: 4px; height: 4px; background: rgba(255, 255, 255, 0.14); }
+.combo-meter i.on { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.combo[data-tier="1"] { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
+.combo[data-tier="2"] { color: var(--orange); text-shadow: 0 0 12px var(--orange); font-size: 11px; }
+.combo[data-tier="3"] { color: #fff; text-shadow: 0 0 6px #fff, 0 0 14px var(--magenta); font-size: 12px; }
+.combo[data-tier="1"] ~ .combo-meter i.on { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.combo[data-tier="2"] ~ .combo-meter i.on { background: var(--orange); box-shadow: 0 0 7px var(--orange); }
+.combo[data-tier="3"] ~ .combo-meter i.on { background: #fff; box-shadow: 0 0 8px var(--magenta); }
+.combo.pop { animation: combo-pop 0.28s ease-out; transform-origin: right center; }
+@keyframes combo-pop { from { transform: scale(1.5); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .combo.pop { animation: none; } }
 .timer { height: 6px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--line); }
 .timer > i { display: block; height: 100%; width: 100%; background: var(--cyan); transform-origin: left; }
 .timer.low > i { background: var(--red); }

@@ -117,8 +117,8 @@ build from before any visual work (153 answers in 8 games).
 | A0 | Backup, extended regression test, before shots | done |
 | A1 | Title screen | done |
 | A2 | Arcade hub | done |
-| A3 | Risk Blaster | next |
-| A4 | Final Exam, Memory Bank, Strategy Guide | todo |
+| A3 | Risk Blaster | done |
+| A4 | Final Exam, Memory Bank, Strategy Guide | next |
 | A5 | Shared audio, measurements, report | todo |
 
 - A1 (title): `09c-ambient.js` is the shared sky kit (meteors, fireworks, lightning,
@@ -148,3 +148,24 @@ build from before any visual work (153 answers in 8 games).
   every screen and sign a few millimetres off a wall, in every scene, on phones too.
   Software test (auto scaler, worst second): hub 106 fps, racer 85, boss 107, title 62.
   Known: title's worst second is close to 60 on the software test (average 133).
+- A3 (Risk Blaster): `20b-blasterjet.js` is the fighter: a twin-engine delta with
+  canards and canted fins (layered armour, faceted glass canopy, lit intakes, wing
+  strips, fences and missile rails, working ailerons, afterburners with shock
+  diamonds and heat haze, wingtip contrails, a hexagon-lattice shield that flares
+  when a shield is lost). The game still owns its position and aim; a rig inside
+  banks with the pointer, kicks back when the guns fire, waggles after a hit and
+  rolls once through the warp. `20c-blasterworld.js`: the answers ride holo-drones
+  (four airframes, one per slot, round the old glowing core and letter badge); the
+  corridor gains heavy ribs with energy pylons, light conduits, tumbling asteroids,
+  laser chords, station blocks beyond the wall, and a director (patrol of escort
+  drones, comet, power surge, scan ring, capital ship, buoy; flak between questions
+  only); each wave has a carrier holding station above the lanes (three hull forms):
+  a miss draws a bolt at the shield, a cleared wave blows it up. Combo: a seven-pip
+  meter in the HUD that fills and warms; the engines burn longer and bluer, the
+  strips and shield brighten. New cues: whoosh, shield, combo.
+  A 60 s capture at level 7/8 fired 9 events of 6 kinds, no errors. Software test at
+  the lowest level: same as the build before this checkpoint when run back to back
+  (ribs and the idle shield are not drawn at the three weakest levels).
+  Note: the software test machine ran about 25% slower from this point on (the A2
+  build re-measured at 77 fps worst second in Risk Blaster, 102 an hour earlier), so
+  compare numbers within a checkpoint, not across.

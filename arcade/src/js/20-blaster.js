@@ -154,7 +154,7 @@ class BlasterGame extends QuizGame {
       <div class="hud">
         <div class="score"><small data-wave>WAVE 1</small><span data-score>000000</span></div>
         <div class="grow"></div>
-        <span class="combo" data-combo>x1</span>
+        <div class="combo-box"><span class="combo" data-combo>x1</span><span class="combo-meter" data-meter>${"<i></i>".repeat(7)}</span></div>
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
@@ -215,10 +215,14 @@ class BlasterGame extends QuizGame {
     this.makeStreaks();
     this.makeTunnel();
     this.makeTargetKit();
+    this.corridor = new BlasterCorridor(this); // ribs, pylons, conduits, rocks, lasers, passing traffic
+    this.director = this.corridor.director;
+    this.carrier = new BlasterCarrier(this); // the wave's carrier, far down the corridor
     // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
-    this.warmExtra = this.slotMats.map((M) => {
+    this.warmExtra = this.slotMats.map((M, i) => {
       const g = new THREE.Group();
       g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
+      g.add(new THREE.Mesh(this.drones[i].body, this.dronePaint), new THREE.Mesh(this.drones[i].lamps, M.lamp));
       g.position.z = -40;
       return g;
     });
@@ -369,10 +373,13 @@ class BlasterGame extends QuizGame {
     this.spin = 0;
   }
 
-  // Targets are glowing crystals: a hot core, translucent env-mapped facets,
+  // Targets are holo-drones: an armoured airframe (one shape per slot) holding the
+  // answer core, a glowing crystal with a hot heart, translucent env-mapped facets,
   // neon edges and a fresnel rim, all in the slot colour. Shapes, materials and
   // badges are made once; each round only builds light-weight meshes from them.
   makeTargetKit() {
+    this.dronePaint = racerCarPaint(this.env, false);
+    this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
     this.tedge = this.tgeo.map((g) => new THREE.EdgesGeometry(g, 1));
     this.badges = new Map();
@@ -387,6 +394,7 @@ class BlasterGame extends QuizGame {
         edge: new THREE.LineBasicMaterial({ color: neon(hex, 2.3) }),
         rim,
         halo: new THREE.SpriteMaterial({ map: glowTexture(), color: neon(hex, 1.25), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
+        lamp: new THREE.MeshBasicMaterial({ color: neon(hex, 2.1), vertexColors: true }),
         baseEdge: neon(hex, 2.3),
         baseRim: rim.uniforms.uColor.value.clone(),
       };
@@ -419,72 +427,20 @@ class BlasterGame extends QuizGame {
     this.wallMat.uniforms.uFlashZ.value = pos.z;
   }
 
-  // The fighter: a glossy hull with neon trim, a glass canopy, wing cannons,
-  // twin engines with hot nozzles, blinking wing lights and ribbon trails.
+  // The fighter (20b-blasterjet.js). The game still owns where it is and where it aims.
   makeShip() {
-    const mtx = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) =>
-      new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
-    const parts = [];
-    const fus = new THREE.CylinderGeometry(0.36, 0.05, 2.5, 6, 1);
-    fus.rotateX(Math.PI / 2);
-    parts.push({ geo: fus, matrix: mtx(0, 0.02, -0.35, 0, 0, 0, 1, 0.62, 1), color: 0x2c3a86 });
-    const spine = new THREE.CylinderGeometry(0.1, 0.02, 1.5, 4, 1);
-    spine.rotateX(Math.PI / 2);
-    parts.push({ geo: spine, matrix: mtx(0, 0.2, 0.15, 0, 0, Math.PI / 4), color: 0x4a3c9a });
-    const wing = new THREE.Shape();
-    wing.moveTo(0.18, -0.55);
-    wing.lineTo(1.58, 0.4);
-    wing.lineTo(1.66, 0.66);
-    wing.lineTo(0.26, 0.62);
-    wing.closePath();
-    const fin = new THREE.Shape();
-    fin.moveTo(0, 0);
-    fin.lineTo(0.62, 0);
-    fin.lineTo(0.7, 0.5);
-    fin.closePath();
-    [-1, 1].forEach((sd) => {
-      const wg = new THREE.ExtrudeGeometry(wing, { depth: 0.06, bevelEnabled: false });
-      wg.rotateX(Math.PI / 2);
-      parts.push({ geo: wg, matrix: mtx(0, 0.02, 0, 0, 0, sd * -0.07, sd, 1, 1), color: 0x3a2c84 });
-      const eng = new THREE.CylinderGeometry(0.2, 0.15, 1.05, 8, 1);
-      eng.rotateX(Math.PI / 2);
-      parts.push({ geo: eng, matrix: mtx(sd * 0.44, -0.02, 0.36), color: 0x262a48 });
-      const gun = new THREE.BoxGeometry(0.07, 0.07, 0.8);
-      parts.push({ geo: gun, matrix: mtx(sd * 0.95, -0.01, 0.0), color: 0x30345a });
-      const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.04, bevelEnabled: false });
-      fg.rotateY(-Math.PI / 2);
-      parts.push({ geo: fg, matrix: mtx(sd * 0.3, 0.1, 0.12, 0, 0, sd * -0.42), color: 0x5a2e86 });
-    });
-    const hullGeo = blasterMerge(parts);
-    const ship = new THREE.Group();
-    const hull = new THREE.Mesh(hullGeo, Object.assign(glossy(0xffffff, { env: this.env, metal: 0.72, rough: 0.3, envI: 1.5 }), { vertexColors: true, side: THREE.DoubleSide }));
-    const trim = new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo, 28), new THREE.LineBasicMaterial({ color: neon(COLORS.cyan, 1.7) }));
-    const canopyGeo = new THREE.SphereGeometry(0.21, 12, 8);
-    canopyGeo.applyMatrix4(mtx(0, 0.17, -0.48, 0, 0, 0, 1, 0.75, 2.4));
-    const canopy = new THREE.Mesh(canopyGeo, Object.assign(glossy(0x0a3550, { env: this.env, metal: 0.3, rough: 0.04, envI: 2.4, emissive: 0x0a3a66, emissiveK: 0.5 }), { flatShading: false }));
-    const nozzleGeo = blasterMerge([-1, 1].map((sd) => ({ geo: new THREE.CircleGeometry(0.15, 16), matrix: mtx(sd * 0.44, -0.02, 0.895) })));
-    const nozzles = new THREE.Mesh(nozzleGeo, new THREE.MeshBasicMaterial({ color: neon(0xffa64d, 3.2), fog: false }));
-    ship.add(hull, trim, canopy, nozzles);
-    this.nozzles = [new THREE.Vector3(-0.44, -0.02, 0.95), new THREE.Vector3(0.44, -0.02, 0.95)];
-    this.engineGlows = this.nozzles.map((p) => {
-      const g = glowSprite(neon(COLORS.orange, 1.7), 0.8, 0.95);
-      g.position.copy(p);
-      ship.add(g);
-      return g;
-    });
-    this.wingLights = [[-1.66, COLORS.magenta], [1.66, COLORS.cyan]].map(([x, c]) => {
-      const g = glowSprite(neon(c, 2.6), 0.42, 1);
-      g.position.set(x, 0.0, 0.62);
-      ship.add(g);
-      return g;
-    });
-    this.muzzles = [new THREE.Vector3(-0.95, -0.01, -0.42), new THREE.Vector3(0.95, -0.01, -0.42)];
-    ship.position.set(0, -2.2, -7);
-    return ship;
+    const jet = (this.jet = new BlasterJet(this));
+    this.nozzles = jet.nozzles;
+    this.muzzles = jet.muzzles;
+    this.engineGlows = jet.engineGlows;
+    this.wingLights = jet.wingLights;
+    jet.ship.position.set(0, -2.2, -7);
+    return jet.ship;
   }
 
   start() {
     Sound.play("game");
+    if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -493,6 +449,12 @@ class BlasterGame extends QuizGame {
     UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
     UI.text($("[data-combo]", this.el), "x" + this.combo);
     this.lives(this.shields, 3);
+    // the combo meter: seven pips that fill and change colour as the multiplier climbs
+    const cb = $("[data-combo]", this.el);
+    cb.dataset.tier = this.combo >= 8 ? 3 : this.combo >= 6 ? 2 : this.combo >= 4 ? 1 : 0;
+    this.el.querySelectorAll("[data-meter] i").forEach((pip, i) => pip.classList.toggle("on", i < this.combo - 1));
+    if (this.combo > (this.comboShown || 1)) { cb.classList.remove("pop"); void cb.offsetWidth; cb.classList.add("pop"); }
+    this.comboShown = this.combo;
   }
   onLayout() {
     if (!this.has3D) return;
@@ -552,6 +514,12 @@ class BlasterGame extends QuizGame {
       rim.scale.setScalar(1.05);
       rot.add(core, body, edges, rim);
       rot.rotation.set(rand(Math.PI * 2), rand(Math.PI * 2), 0);
+      rot.scale.setScalar(0.62); // the answer core sits inside the drone's collar
+      const frame = new THREE.Group();
+      const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
+      // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
+      if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
+      frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
       const halo = new THREE.Sprite(M.halo);
       halo.scale.set(3.8, 3.8, 1);
       halo.position.z = -0.9;
@@ -559,7 +527,8 @@ class BlasterGame extends QuizGame {
       label.scale.set(1.24, 1.24, 1);
       label.position.z = 1.35;
       label.renderOrder = 10;
-      g.add(halo, rot, label);
+      g.add(halo, frame, rot, label);
+      g.userData.frame = frame;
       g.userData.slot = i;
       g.userData.spin = rand(0.6, 1.6) * (i % 2 ? 1 : -1);
       g.userData.rot = rot;
@@ -585,6 +554,7 @@ class BlasterGame extends QuizGame {
     const t = this.targets[i];
     this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
     Sound.sfx("laser", this.panAt);
+    if (this.has3D) this.jet.fire();
     if (t && this.has3D) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
@@ -593,7 +563,7 @@ class BlasterGame extends QuizGame {
       this.muzzles.forEach((m, gun) => {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
-        const from = this.ship.localToWorld(m.clone());
+        const from = this.jet.rig.localToWorld(m.clone());
         aimBeam(fx.beam, from, t.position, 0.06 + 0.07 * this.shipScale);
         fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
@@ -622,6 +592,8 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
+      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); }
+      if (this.combo >= 4) Sound.sfx("combo");
       Sound.sfx("boom", this.panAt);
       Sound.sfx("correct");
       UI.flash("good");
@@ -637,6 +609,7 @@ class BlasterGame extends QuizGame {
       this.combo = 1;
       this.shields--;
       title = this.shields > 0 ? "WRONG TARGET! SHIELD DOWN" : "WRONG TARGET! SHIELDS GONE";
+      this.shieldHit();
       Sound.sfx("wrong");
       Sound.sfx("hit");
       UI.flash("hit");
@@ -661,6 +634,7 @@ class BlasterGame extends QuizGame {
     this.quiz.reveal(-1);
     this.combo = 1;
     this.shields--;
+    this.shieldHit();
     Sound.sfx("hit");
     UI.flash("hit");
     this.shake(0.5);
@@ -675,6 +649,14 @@ class BlasterGame extends QuizGame {
     this.hud();
     this.quiz.feedback({ ok: false, title: this.shields > 0 ? "TOO SLOW! SHIELD DOWN" : "TOO SLOW! SHIELDS GONE", onNext: () => this.after() });
   }
+  // A shield goes (look and sound only): the carrier's bolt strikes, the lattice flares.
+  shieldHit() {
+    Sound.sfx("shield");
+    if (!this.has3D) return;
+    this.jet.setCombo(1);
+    this.jet.shieldLost();
+    this.carrier.volley();
+  }
   explode(t, color) {
     if (!t || !this.has3D) return;
     // far blasts are scaled up so they read on screen as well as near ones
@@ -683,6 +665,10 @@ class BlasterGame extends QuizGame {
     this.bursts.burst(t.position, 0xffffff, { n: 20, speed: 4 * df, size: 0.25 * df, life: 0.5 });
     this.shockwave(t.position.clone(), neon(color, 2.2), (4 * this.ts + 2) * df);
     this.shards.burst(t.position, color, 16, this.ts * df, (7 * this.ts + 3) * df);
+    this.shards.burst(t.position, 0x9aa3b8, 10, this.ts * df * 0.8, (5 * this.ts + 2) * df); // the airframe, in pieces
+    this.bursts.burst(t.position, COLORS.orange, { n: 22, speed: 2.2 * df, size: 0.22 * df, life: 1.5 }); // embers that linger
+    const at = t.position.clone();
+    this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(t.position, color, (7 * this.ts + 3) * df);
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
@@ -705,6 +691,13 @@ class BlasterGame extends QuizGame {
       if (this.has3D) this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1);
       Sound.sfx("levelup");
       Sound.sfx("warp");
+      if (this.has3D) {
+        // the wave's carrier goes up, the fighter rolls through the wreck, the next carrier comes up out of the dark
+        this.carrier.destroy();
+        this.jet.warp();
+        this.jet.shieldUp();
+        this.tw.wait(1.2, () => { if (!this.unmounted) this.carrier.arrive(this.wave); });
+      }
       this.warp = 1.4;
       GFX.pulse(6, 0.2);
       UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
@@ -726,6 +719,7 @@ class BlasterGame extends QuizGame {
       this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
       this.boom(this.ship.position, COLORS.orange, 6);
       this.ship.visible = false;
+      this.jet.down();
       this.trails.forEach((t) => { t.mesh.visible = false; });
       this.engineLight.intensity = 0;
     }
@@ -797,6 +791,8 @@ class BlasterGame extends QuizGame {
       wu.uFlash.value = k * k;
     }
     this.shards.update(dt);
+    this.corridor.update(dt, sp, w);
+    this.carrier.update(dt);
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
@@ -806,6 +802,8 @@ class BlasterGame extends QuizGame {
       t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
       u.rot.rotation.x += dt * u.spin;
       u.rot.rotation.y += dt * u.spin * 0.7;
+      u.frame.rotation.z = Math.sin(this.t * 0.9 + i * 2.1) * 0.07; // the airframe hovers: a slow sway, a lean into its side
+      u.frame.rotation.y = -u.bx * 0.035;
       if (u.hot) {
         const pulse = 1 + Math.sin(this.t * 10) * 0.12;
         t.scale.setScalar(this.ts * pulse * 1.15);
@@ -820,10 +818,12 @@ class BlasterGame extends QuizGame {
     this.ship.scale.setScalar(this.ship.scale.x + (this.shipScale - this.ship.scale.x) * ease);
     if (this.state === "ask") this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12);
     const fl = 1 + Math.sin(this.t * 15) * 0.12 + Math.sin(this.t * 9.3) * 0.08 + w * 0.6;
-    this.engineGlows.forEach((g, j) => g.scale.setScalar(0.8 * fl * (j ? 1.04 : 0.96)));
+    this.engineGlows.forEach((g, j) => g.scale.setScalar(0.5 * fl * (j ? 1.04 : 0.96)));
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
-    this.engineLight.position.set(0, 0, 1.6).applyMatrix4(this.ship.matrixWorld);
+    this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
+    const rigM = this.jet.rig.matrixWorld;
+    this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
     this.trailAcc = Math.min(4 / 60, (this.trailAcc || 0) + dt);
     while (this.trailAcc >= 1 / 60) {
@@ -831,7 +831,7 @@ class BlasterGame extends QuizGame {
       const step = Math.min(sp * 0.3, 9) / 60;
       this.trails.forEach((tr, j) => {
         tr.shift(0, 0, step);
-        tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(this.ship.matrixWorld));
+        tr.push(this._v.copy(this.nozzles[j]).applyMatrix4(rigM));
       });
     }
     // the view leans a little with the pointer, or with the phone's tilt
@@ -846,7 +846,9 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
-      this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo].forEach((m) => m.dispose()));
+      this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
+      this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
+      this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
       this.shards.dispose();
     }
