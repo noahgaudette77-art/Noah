@@ -29,8 +29,12 @@ lists all of them again.
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
   world: a synthwave horizon on the title screen, a nebula tunnel of crystal
-  targets in Risk Blaster, a wet highway under a career-long sunset in Nest Egg
-  Run, a searchlit arena with a mirror floor in Boss Rush, a gold bank-vault door
+  targets in Risk Blaster, a rain-soaked clockwork city in Nest Egg Run (towers
+  with lit windows, brass pipes and turning gears over the street, steam, and
+  neon signs that spell the course's own terms, driven in an armored rally car
+  from a grey dawn at 25 to neon night at 65), a searchlit arena with a mirror
+  floor in Boss Rush, whose final boss is a towering black-armored cyborg with
+  burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, and a trophy
   on a plinth in a moonlit hall for the Final Exam. Setup → Graphics switches
   between HD (sharp, anti-aliased), Retro and Chunky (pixel art).

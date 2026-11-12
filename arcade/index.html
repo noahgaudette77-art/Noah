@@ -6590,22 +6590,23 @@ const START_AGE = 25;
 
 const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 
-// The sky across a career: dawn at 25, bright day mid-career, golden hour, dusk at 65.
+// The sky across a career, over a rain-soaked clockwork city: a grey dawn at 25, an
+// overcast working day, an amber smog-light evening, and neon night at 65.
 // Everything in the world takes its colour from here: sky dome, sun, fog, grid,
-// mountains, street lamps, the light on the car.
+// the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
-  { p: 0, bg: 0x1c0b44, fog: 0x261048, sunY: 18, tint: 0xffd6ea, grid: 0xff6ad5, stars: 0.5,
-    top: 0x0a0a34, mid: 0x33207a, horizon: 0xff6c7c, glow: 0.7, clouds: 0.7, sunTop: 0xfff2b0, sunBot: 0xff5078, halo: 0xff6a8a,
-    ridge: 0x4a2a8e, line: 0xff7ad9, lamps: 0.85, city: 0.3, light: 0xffc0d0, amb: 0x5040a0, exposure: 1.1, bloom: 1, wet: 1, sunI: 1.8 },
-  { p: 0.4, bg: 0x12256a, fog: 0x1f3c8c, sunY: 86, tint: 0xffffff, grid: 0x5ad0ff, stars: 0,
-    top: 0x08226e, mid: 0x2462c8, horizon: 0x9fe4ff, glow: 0.5, clouds: 1, sunTop: 0xffffff, sunBot: 0xffd36a, halo: 0xbfeaff,
-    ridge: 0x2e4cb0, line: 0x9fe8ff, lamps: 0.15, city: 0.08, light: 0xffffff, amb: 0x7080c0, exposure: 1, bloom: 0.85, wet: 0.42, sunI: 1.35 },
-  { p: 0.75, bg: 0x24082e, fog: 0x2e0c34, sunY: 34, tint: 0xffc08f, grid: 0xff3ad4, stars: 0.25,
-    top: 0x120626, mid: 0x5a1a40, horizon: 0xff8a2a, glow: 0.85, clouds: 0.9, sunTop: 0xffe680, sunBot: 0xff4a1a, halo: 0xff7a2a,
-    ridge: 0x6a1e4a, line: 0xffa040, lamps: 0.85, city: 0.45, light: 0xffa860, amb: 0x6a3a6a, exposure: 1.08, bloom: 1, wet: 0.85, sunI: 1.8 },
-  { p: 1, bg: 0x08021c, fog: 0x0c0324, sunY: 6, tint: 0xff8f70, grid: 0xa65fff, stars: 1,
-    top: 0x010006, mid: 0x0e0326, horizon: 0xb0208e, glow: 0.65, clouds: 0.4, sunTop: 0xffb060, sunBot: 0xff2a6a, halo: 0xff3ad4,
-    ridge: 0x2c1060, line: 0xff3ad4, lamps: 1, city: 0.6, light: 0xff9ad0, amb: 0x40308a, exposure: 1.14, bloom: 1.1, wet: 1, sunI: 1.9 },
+  { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xe8f4f0, sunBot: 0x9ad0d0, halo: 0x8ad0d0,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.8 },
+  { p: 0.4, bg: 0x16242e, fog: 0x2a424c, sunY: 80, tint: 0xf0f6f8, grid: 0x5ac8d8, stars: 0,
+    top: 0x18262e, mid: 0x30484f, horizon: 0x8fb0b4, glow: 0.4, clouds: 1, sunTop: 0xffffff, sunBot: 0xd8e8e8, halo: 0xc8e0e0,
+    ridge: 0x24363e, line: 0x7fd8e0, lamps: 0.45, city: 0.4, light: 0xe8f2f4, amb: 0x5a7480, exposure: 1.02, bloom: 0.9, wet: 0.8, sunI: 0.9 },
+  { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
+    top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd890, sunBot: 0xff7a2a, halo: 0xff8a3a,
+    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.3 },
+  { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
+    top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xb0f0f0, sunBot: 0x2fa0a8, halo: 0x2fd6c0,
+    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.9 },
 ];
 const RACER_SKY_COLORS = ["bg", "fog", "tint", "grid", "top", "mid", "horizon", "sunTop", "sunBot", "halo", "ridge", "line", "light", "amb"];
 const RACER_SKY_NUMS = ["sunY", "stars", "glow", "clouds", "lamps", "city", "exposure", "bloom", "wet", "sunI"];
@@ -6897,6 +6898,155 @@ function racerGroundMaterial(mirror, shared) {
 }
 
 // A street lamp: post, arm reaching over the road edge, a neon tube for a lamp.
+// The city: walls with rows of windows and a lit shopfront, brass pipes and gears
+// (kind 3; gears turn about their own axle in the vertex shader), all looping down
+// the avenue like the lamps do. P: the lamp material's uniforms, shared, so the
+// career sky lights both.
+function racerCityMaterial(shared, P) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 } }),
+    vertexShader: `${RACER_WRAP_GLSL}
+      attribute vec3 aCol; attribute float aZ; attribute float aKind; attribute float aCy; attribute float aCz; attribute float aSp; attribute float aSeed;
+      uniform float uTime;
+      varying vec3 vCol; varying vec3 vN; varying vec3 vL; varying vec3 vW; varying float vKind; varying float vDepth; varying float vFar; varying float vSeed;
+      void main(){
+        vec3 p = position; vec3 n = normal;
+        if (aSp != 0.0) {
+          // a gear turns about its axle: across the street (kind 3) or along it (kind 4,
+          // facing the driver; aCz then holds the axle's x)
+          float a = uTime * aSp; float c = cos(a); float s = sin(a);
+          if (aKind > 3.5) {
+            vec2 q = p.xy - vec2(aCz, aCy);
+            p.xy = vec2(aCz, aCy) + vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+            n.xy = vec2(c * n.x - s * n.y, s * n.x + c * n.y);
+          } else {
+            vec2 q = p.yz - vec2(aCy, aCz);
+            p.yz = vec2(aCy, aCz) + vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+            n.yz = vec2(c * n.y - s * n.z, s * n.y + c * n.z);
+          }
+        }
+        vL = p; // where it stands on its block: the windows ride along as the block loops
+        float zz = racerWrap(aZ);
+        p.z += zz - aZ;
+        vCol = aCol; vN = n; vKind = aKind; vSeed = aSeed; vFar = racerFar(zz);
+        vec4 w = modelMatrix * vec4(p, 1.0);
+        vW = w.xyz;
+        vec4 mv = viewMatrix * w;
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity;
+      varying vec3 vCol; varying vec3 vN; varying vec3 vL; varying vec3 vW; varying float vKind; varying float vDepth; varying float vFar; varying float vSeed;
+      float h21(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.y); }
+      void main(){
+        vec3 n = normalize(vN);
+        float lit = max(dot(n, uKeyDir), 0.0);
+        vec3 col;
+        if (vKind < 0.5) {
+          col = vCol * (uAmb + uKey * lit);
+          if (abs(n.y) < 0.5) {
+            vec2 q = abs(n.x) > 0.5 ? vec2(vL.z, vL.y) : vec2(vL.x, vL.y);
+            vec2 g = vec2(q.x / 1.9, q.y / 2.4);
+            vec2 cell = floor(g); vec2 f = fract(g);
+            float r = h21(cell + vSeed * 17.0);
+            float win = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.8) * step(4.8, q.y);
+            float on = step(r, 0.2 + 0.32 * uCity); // more windows light as night falls
+            vec3 wc = r < 0.07 ? vec3(0.3, 0.95, 1.0) : (r < 0.12 ? vec3(1.0, 0.3, 0.8) : vec3(1.0, 0.7, 0.36));
+            col = mix(col, col * 0.5, win * (1.0 - on));
+            col += wc * win * on * (0.45 + 1.25 * uCity);
+            // a shopfront glows at street level, in the block's own colour
+            float sk = fract(vSeed * 7.31);
+            vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
+            float open = step(0.45, h21(vec2(cell.x, vSeed * 3.0))); // some are shuttered
+            float shop = step(0.7, q.y) * step(q.y, 3.9) * step(0.14, f.x) * step(f.x, 0.86) * open;
+            col += sc * shop * (0.1 + 0.22 * uCity) * (0.6 + 0.4 * smoothstep(0.7, 3.9, q.y));
+            col += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
+          }
+        } else if (vKind < 1.5) col = vCol * uNeonI;
+        else {
+          // brass: warm metal with a highlight and a soft rim
+          vec3 v = normalize(cameraPosition - vW);
+          float spec = pow(max(dot(reflect(-uKeyDir, n), v), 0.0), 14.0);
+          float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          col = vCol * (uAmb * 1.5 + uKey * (0.25 + 0.8 * lit)) + vec3(1.0, 0.8, 0.5) * spec * 0.8 + vCol * rim * 0.4;
+        }
+        float fg = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar);
+        gl_FragColor = vec4(mix(col, uFogColor, fg), 1.0);
+      }`,
+  });
+}
+// Neon blade signs hang off the buildings facing the driver. Their words are the
+// course's own: one canvas holds them all, upright, in three neon colours.
+const RACER_SIGNS = ["RRSP", "TFSA", "RRIF", "QPP", "LIRA", "TERM", "WILL", "CLHIA"];
+function racerSignAtlas() {
+  const n = RACER_SIGNS.length, cw = 128, ch = 512;
+  const c = document.createElement("canvas");
+  c.width = cw * n; c.height = ch;
+  const x = c.getContext("2d");
+  x.fillStyle = "#04060a";
+  x.fillRect(0, 0, c.width, c.height);
+  const cols = ["#ff9b3d", "#2fe6c8", "#ff3ad4"];
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.font = '64px "Press Start 2P", monospace';
+  RACER_SIGNS.forEach((word, i) => {
+    const col = cols[i % 3], x0 = i * cw;
+    x.shadowColor = col; x.shadowBlur = 14;
+    x.strokeStyle = col; x.lineWidth = 6;
+    x.strokeRect(x0 + 10, 10, cw - 20, ch - 20);
+    x.fillStyle = col;
+    const step = Math.min(92, (ch - 70) / word.length);
+    const y0 = ch / 2 - (step * (word.length - 1)) / 2;
+    [...word].forEach((letter, k) => { x.fillText(letter, x0 + cw / 2, y0 + k * step); x.fillText(letter, x0 + cw / 2, y0 + k * step); });
+    x.shadowBlur = 0;
+  });
+  const t = new THREE.CanvasTexture(c);
+  t.minFilter = THREE.LinearFilter;
+  t.generateMipmaps = false;
+  return t;
+}
+function racerSignMaterial(shared, P, tex) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), shared, { tMap: { value: tex }, uNeonI: P.uNeonI }),
+    side: THREE.DoubleSide,
+    vertexShader: `${RACER_WRAP_GLSL}
+      attribute float aZ; varying vec2 vUv; varying float vDepth; varying float vFar;
+      void main(){
+        float zz = racerWrap(aZ);
+        vec3 p = position; p.z += zz - aZ;
+        vUv = uv; vFar = racerFar(zz);
+        vec4 mv = viewMatrix * modelMatrix * vec4(p, 1.0);
+        vDepth = -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform sampler2D tMap; uniform float uNeonI; varying vec2 vUv; varying float vDepth; varying float vFar;
+      void main(){
+        vec3 col = texture2D(tMap, vUv).rgb * (1.5 + 1.5 * uNeonI);
+        float fg = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar);
+        gl_FragColor = vec4(mix(col, uFogColor, fg), 1.0);
+      }`,
+  });
+}
+// A brass gear: a toothed rim on spokes around a hub. It faces down the street, so
+// the driver sees it turn (its axle runs along z). spin: radians per second.
+function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
+  const v = { aZ, aKind: 4, aCy: y, aCz: x, aSp: spin, aSeed: seed };
+  const BRASS = 0xb8823c, DARK = 0x6e4a22;
+  const rim = new THREE.TorusGeometry(R * 0.84, R * 0.13, 5, 22);
+  b.add(rim, racerM(x, y, z), BRASS, 1, v);
+  rim.dispose();
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  for (let k = 0; k < teeth; k++) {
+    const a = (k / teeth) * Math.PI * 2;
+    b.add(box, racerM(x + Math.cos(a) * R, y + Math.sin(a) * R, z, R * 0.22, R * 0.2, 0.5, 0, 0, a + Math.PI / 2), BRASS, 1, v);
+  }
+  for (let k = 0; k < 4; k++) b.add(box, racerM(x, y, z, R * 0.16, R * 1.5, 0.3, 0, 0, (k / 4) * Math.PI), DARK, 1, v);
+  const hub = new THREE.CylinderGeometry(R * 0.26, R * 0.26, 0.7, 10);
+  b.add(hub, racerM(x, y, z, 1, 1, 1, Math.PI / 2), BRASS, 1, v);
+  hub.dispose();
+  box.dispose();
+}
 function racerLamp(b, box, side, z, color) {
   const x = side * 6.4, hx = side * 4.75;
   const lit = { aZ: z, aKind: 0 }, glow = { aZ: z, aKind: 2 };
@@ -6907,59 +7057,6 @@ function racerLamp(b, box, side, z, color) {
   b.add(box, racerM(hx, RACER_HEAD + 0.04, z, 1.0, 0.06, 0.2), color, 4.5, glow);
   b.add(box, racerM(x - side * 0.09, 3.0, z, 0.03, 2.6, 0.06), color, 2.4, glow);
 }
-// A palm: a ringed trunk bending away from the road and a crown of drooping
-// fronds, dark like a silhouette but with glowing midribs.
-function racerPalm(b, x, z, h, glowColor) {
-  const side = Math.sign(x) || 1;
-  const segs = 6;
-  const lean = rand(0.1, 0.24) * side, lz = rand(-0.08, 0.08);
-  const pts = [];
-  for (let i = 0; i <= segs; i++) {
-    const t = i / segs;
-    pts.push(new THREE.Vector3(x + lean * h * t * t, h * t, z + lz * h * t * t));
-  }
-  const cyl = new THREE.CylinderGeometry(0.92, 1.12, 1, 6, 1, true);
-  const up = new THREE.Vector3(0, 1, 0), d = new THREE.Vector3(), q = new THREE.Quaternion();
-  const lit = { aZ: z, aKind: 0 };
-  for (let i = 0; i < segs; i++) {
-    d.subVectors(pts[i + 1], pts[i]);
-    const len = d.length();
-    q.setFromUnitVectors(up, d.normalize());
-    const r = 0.2 * (1 - (0.42 * i) / segs);
-    b.add(cyl, new THREE.Matrix4().compose(pts[i].clone().add(pts[i + 1]).multiplyScalar(0.5), q, new THREE.Vector3(r, len * 1.04, r)), i % 2 ? 0x34184e : 0x281240, 1, lit);
-  }
-  cyl.dispose();
-  const top = pts[segs];
-  const dark = new THREE.Color(0x14071f);
-  const neonV = { aZ: z, aKind: 1 };
-  const nF = 8, K = 6;
-  const ph = rand(Math.PI * 2);
-  for (let f = 0; f < nF; f++) {
-    const a = ph + (f / nF) * Math.PI * 2 + rand(-0.22, 0.22);
-    const dir = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
-    const perp = new THREE.Vector3(-dir.z, 0, dir.x);
-    const len = rand(2.7, 3.5) * (h / 8.5);
-    const lift = rand(0.25, 0.55);
-    const S = [], L = [], R = [], C = [];
-    for (let j = 0; j <= K; j++) {
-      const t = j / K;
-      const w = 0.16 * len * Math.sin(Math.PI * Math.pow(t, 0.7)) * (j % 2 ? 1 : 0.62);
-      const p = top.clone().addScaledVector(dir, len * t);
-      p.y += len * (lift * t - 0.66 * t * t);
-      S.push(p);
-      L.push(p.clone().addScaledVector(perp, w).setY(p.y - w * 0.5));
-      R.push(p.clone().addScaledVector(perp, -w).setY(p.y - w * 0.5));
-      C.push(new THREE.Color(glowColor).multiplyScalar(1.7 * (1 - 0.55 * t)));
-    }
-    for (let j = 0; j < K; j++) {
-      b.tri(L[j], S[j], L[j + 1], dark, C[j], dark, neonV);
-      b.tri(S[j], S[j + 1], L[j + 1], C[j], C[j + 1], dark, neonV);
-      b.tri(S[j], R[j], S[j + 1], C[j], dark, C[j + 1], neonV);
-      b.tri(R[j], R[j + 1], S[j + 1], dark, dark, C[j + 1], neonV);
-    }
-  }
-}
-
 // Car body as lofted cross-sections from nose to tail: [z, half-width, sill, shoulder, deck, crown].
 const RACER_BODY = [
   [-2.2, 0.84, 0.36, 0.52, 0.58, 0],
@@ -7245,14 +7342,13 @@ class RacerGame extends QuizGame {
     this.lookAt.set(0, 1.1, -18);
     this.applySky(sky0);
   }
-  // Street lamps and palms down both sides of the road, all in three draw calls.
+  // Street lamps down both sides of the road, in three draw calls; then the city.
   buildProps() {
     const b = new RacerBatch(["aZ", "aKind"]);
     const cones = new RacerBatch(["aZ"]);
     const halo = { pos: [], col: [], z: [], corner: [], size: [] };
     const box = new THREE.BoxGeometry(1, 1, 1);
     const coneGeo = new THREE.CylinderGeometry(0.32, 2.4, RACER_HEAD, 18, 1, true);
-    const palmCols = [0xff3ad4, 0x35efff, 0xa65fff, 0xff7ad9];
     const addHalo = (x, y, z, color, size) => {
       const c = new THREE.Color(color);
       for (const [cx, cy] of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) {
@@ -7266,8 +7362,6 @@ class RacerGame extends QuizGame {
         racerLamp(b, box, side, z, col);
         addHalo(side * 4.75, RACER_HEAD, z, col, 1.8);
         cones.add(coneGeo, racerM(side * 4.75, RACER_HEAD / 2, z), col, 0.32, { aZ: z });
-        racerPalm(b, side * rand(8.3, 9.8), z - RACER_P / 2 + rand(-4, 4), rand(7.2, 9.6), palmCols[(k * 2 + (side > 0 ? 1 : 0)) % 4]);
-        if ((k + (side > 0 ? 1 : 0)) % 2 === 0) racerPalm(b, side * rand(13, 19), z - rand(2, RACER_P - 2), rand(8.5, 11.5), palmCols[(k + 1) % 4]);
       }
     }
     this.props = new THREE.Mesh(b.build(), racerPropMaterial(this.shared));
@@ -7287,9 +7381,162 @@ class RacerGame extends QuizGame {
     this.cones.layers.set(1);
     this.scene.add(this.props, this.halos, this.cones);
     this.decor(this.halos, this.cones);
-    this.decorCheap(this.props); // thousands of small palm-frond triangles: kept except on the weakest hardware
+    this.buildCity();
     box.dispose();
     coneGeo.dispose();
+  }
+  // The city down both sides of the avenue: towers with lit windows, brass pipes and
+  // turning gears, neon blade signs, steam from the gratings and rain; far off, two
+  // clock towers and an armillary sphere of light turning over the skyline.
+  buildCity() {
+    const P = this.props.material.uniforms;
+    const extra = ["aZ", "aKind", "aCy", "aCz", "aSp", "aSeed"];
+    const walls = new RacerBatch(extra), detail = new RacerBatch(extra);
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const pipe = new THREE.CylinderGeometry(1, 1, 1, 8);
+    const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
+    const BRASS = 0xb8823c, COPPER = 0x8a5a34;
+    const signs = { pos: [], uv: [], z: [] };
+    const vents = [];
+    let seed = 0.11;
+    for (const side of [-1, 1]) {
+      let z = side > 0 ? -6 : 4, n = 0; // the two sides are staggered
+      while (z > -RACER_LEN + 8) {
+        const L = rand(13, 21), H = rand(18, 30) + (n % 3 === 0 ? rand(18, 34) : 0), D = 13;
+        const front = 9.2 + rand(0, 1.6), zc = z - L / 2;
+        const aZ = z - L; // a block loops as one, once its far end is behind the camera
+        const sd = (seed = (seed + 0.137) % 1);
+        const wv = { aZ, aKind: 0, aSeed: sd }, bv = { aZ, aKind: 3, aSeed: sd };
+        walls.add(box, racerM(side * (front + D / 2), H / 2, zc, D, H, L), WALLS[n % WALLS.length], 1, wv);
+        if (H > 40) walls.add(box, racerM(side * (front + D / 2 + 1.5), H + 4, zc, D - 3, 8, L - 4), WALLS[(n + 2) % WALLS.length], 1, wv);
+        // a pipe along the wall with a flange at each end, and a drop to the street
+        const py = rand(5.6, 8.5), px = side * (front - 0.45);
+        detail.add(pipe, racerM(px, py, zc, 0.34, L - 1, 0.34, Math.PI / 2), BRASS, 1, bv);
+        detail.add(pipe, racerM(px, py / 2, z - 1.2, 0.3, py, 0.3), COPPER, 1, bv);
+        [z - 0.8, z - L + 0.8].forEach((fz) => detail.add(pipe, racerM(px, py, fz, 0.5, 0.3, 0.5, Math.PI / 2), COPPER, 1, bv));
+        // every other block: a pair of meshing gears on the wall
+        if (n % 2 === 0) {
+          const R = rand(2.0, 2.9), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
+          const sp = rand(0.3, 0.55) * (Math.random() < 0.5 ? -1 : 1);
+          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd);
+          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd);
+          detail.add(box, racerM(side * (front - 0.3 - R / 2), gy, gz + 0.5, R + 0.8, 0.3, 0.3), COPPER, 1, bv); // its bracket
+        }
+        // a neon blade sign on a bracket, facing the driver
+        if (n % 2 === 1 || L > 18) {
+          const k = Math.floor(rand(RACER_SIGNS.length)), w = 1.7, h = 6.8, y0 = rand(6.5, 9), sz = z - rand(2, L - 2);
+          const xa = side * (front - 0.15), xb = side * (front - 0.15 - w), xl = Math.min(xa, xb), xr = Math.max(xa, xb);
+          const u0 = k / RACER_SIGNS.length, u1 = (k + 1) / RACER_SIGNS.length;
+          for (const [qx, qy, qu, qv] of [[xl, y0, u0, 0], [xr, y0, u1, 0], [xr, y0 + h, u1, 1], [xl, y0, u0, 0], [xr, y0 + h, u1, 1], [xl, y0 + h, u0, 1]]) {
+            signs.pos.push(qx, qy, sz); signs.uv.push(qu, qv); signs.z.push(aZ);
+          }
+          detail.add(box, racerM((xl + xr) / 2, y0 + h + 0.2, sz, w + 0.4, 0.16, 0.16), COPPER, 1, bv);
+        }
+        if (n % 3 === 1) vents.push([side * rand(6.7, 8.2), z - rand(2, L - 2)]);
+        z -= L + rand(1.5, 4);
+        n++;
+      }
+    }
+    // pipes cross over the street on three runs
+    [-52, -134, -214].forEach((gz, i) => {
+      const bv = { aZ: gz, aKind: 3, aSeed: i * 0.31 };
+      detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
+      detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
+      [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      // a great wheel and its pinion hang from the run, turning over the road
+      racerGear(detail, 0, 21.2 + i, gz + 0.9, 3.4, 16, 0.3 * (i % 2 ? -1 : 1), gz, i * 0.31);
+      racerGear(detail, 5.15, 20.1 + i, gz + 0.9, 1.7, 8, -0.6 * (i % 2 ? -1 : 1), gz, i * 0.31);
+    });
+    box.dispose();
+    pipe.dispose();
+    this.cityMat = racerCityMaterial(this.shared, P);
+    this.walls = new THREE.Mesh(walls.build(), this.cityMat);
+    this.cityDetail = new THREE.Mesh(detail.build(), this.cityMat);
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.Float32BufferAttribute(signs.pos, 3));
+    sg.setAttribute("uv", new THREE.Float32BufferAttribute(signs.uv, 2));
+    sg.setAttribute("aZ", new THREE.Float32BufferAttribute(signs.z, 1));
+    RacerGame.signTex = RacerGame.signTex || racerSignAtlas(); // one atlas for the session
+    this.signs = new THREE.Mesh(sg, racerSignMaterial(this.shared, P, RacerGame.signTex));
+    // steam: a column of soft puffs over each grating
+    const sp = [], sph = [], sz = [];
+    vents.forEach(([vx, vz], i) => { for (let k = 0; k < 7; k++) { sp.push(vx, 0.1, vz); sph.push((k / 7 + i * 0.37) % 1); sz.push(vz); } });
+    const stg = new THREE.BufferGeometry();
+    stg.setAttribute("position", new THREE.Float32BufferAttribute(sp, 3));
+    stg.setAttribute("aPh", new THREE.Float32BufferAttribute(sph, 1));
+    stg.setAttribute("aZ", new THREE.Float32BufferAttribute(sz, 1));
+    this.steam = new THREE.Points(stg, new THREE.ShaderMaterial({
+      uniforms: Object.assign({}, this.shared, { uTime: { value: 0 }, uH: { value: 800 }, uColor: { value: new THREE.Color(0.5, 0.62, 0.66) } }),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `${RACER_WRAP_GLSL}
+        attribute float aPh; attribute float aZ; uniform float uTime; uniform float uH; varying float vA;
+        void main(){
+          float k = fract(aPh + uTime * 0.16);
+          float zz = racerWrap(aZ);
+          vec3 p = position;
+          p.z += zz - aZ - k * 1.4;
+          p.y += k * 7.5;
+          p.x += sin(k * 6.0 + aPh * 20.0) * 0.55 * k;
+          vA = sin(k * 3.14159) * racerFar(zz);
+          vec4 mv = viewMatrix * modelMatrix * vec4(p, 1.0);
+          gl_PointSize = min((1.3 + k * 3.6) * uH * projectionMatrix[1][1] / max(-mv.z, 0.5) * 0.5, 240.0);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: "uniform vec3 uColor; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(uColor * smoothstep(0.5, 0.05, d) * vA * 0.17, 1.0); }",
+    }));
+    // rain: short streaks falling through a box around the road, leaning with speed
+    const rp = [], re = [], rs = [];
+    for (let i = 0; i < 520; i++) {
+      const x = rand(-17, 17), y = rand(0, 18), z = rand(-46, 8), sd = Math.random();
+      for (const e of [0, 1]) { rp.push(x, y, z); re.push(e); rs.push(sd); }
+    }
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute("position", new THREE.Float32BufferAttribute(rp, 3));
+    rg.setAttribute("aEnd", new THREE.Float32BufferAttribute(re, 1));
+    rg.setAttribute("aSeed", new THREE.Float32BufferAttribute(rs, 1));
+    this.rain = new THREE.LineSegments(rg, new THREE.ShaderMaterial({
+      uniforms: { uScroll: this.shared.uScroll, uTime: { value: 0 }, uLean: { value: 0.3 }, uColor: { value: new THREE.Color(0.3, 0.42, 0.46) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute float aEnd; attribute float aSeed; uniform float uTime; uniform float uScroll; uniform float uLean; varying float vA;
+        void main(){
+          vec3 p = position;
+          p.y = mod(position.y - uTime * (19.0 + aSeed * 9.0), 18.0) + aEnd * (0.5 + aSeed * 0.5);
+          p.z = 8.0 - mod(8.0 - position.z - uScroll, 54.0) - aEnd * uLean;
+          vA = (0.3 + 0.7 * aSeed) * (1.0 - aEnd * 0.6);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }`,
+      fragmentShader: "uniform vec3 uColor; varying float vA; void main(){ gl_FragColor = vec4(uColor * vA, 1.0); }",
+    }));
+    for (const m of [this.walls, this.cityDetail, this.signs, this.steam, this.rain]) m.frustumCulled = false;
+    this.steam.layers.set(1);
+    this.rain.layers.set(1);
+    this.scene.add(this.walls, this.cityDetail, this.signs, this.steam, this.rain);
+    this.decor(this.steam, this.rain);
+    this.decorCheap(this.cityDetail); // pipes and gears: thousands of small triangles, kept except on the weakest hardware
+    // far off: two clock towers above the skyline (dark, with lit faces)...
+    const T = (x, y, z, ry = 0, rz = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, rz)), new THREE.Vector3(1, 1, 1));
+    const C = (r, g, b) => new THREE.Color(r, g, b);
+    const tower = (x, z, h, w) => [
+      { geo: new THREE.BoxGeometry(w, h, w), matrix: T(x, h / 2, z), color: C(0.03, 0.045, 0.055) },
+      { geo: new THREE.BoxGeometry(w * 1.25, w * 1.3, w * 1.25), matrix: T(x, h + w * 0.65, z), color: C(0.045, 0.06, 0.07) },
+      { geo: new THREE.ConeGeometry(w * 0.95, w * 2.4, 4), matrix: T(x, h + w * 2.5, z, Math.PI / 4), color: C(0.025, 0.035, 0.045) },
+      { geo: new THREE.CircleGeometry(w * 0.5, 20), matrix: T(x, h + w * 0.65, z + w * 0.64), color: C(2.1, 1.65, 0.8) },
+      { geo: new THREE.BoxGeometry(w * 0.07, w * 0.44, 0.2), matrix: T(x + w * 0.1, h + w * 0.8, z + w * 0.66, 0, -0.5), color: C(0.02, 0.02, 0.03) },
+      { geo: new THREE.BoxGeometry(w * 0.08, w * 0.3, 0.2), matrix: T(x - w * 0.08, h + w * 0.56, z + w * 0.66, 0, 0.9), color: C(0.02, 0.02, 0.03) },
+    ];
+    this.towers = new THREE.Mesh(blasterMerge([...tower(-86, -318, 64, 9), ...tower(60, -326, 80, 10)]), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+    // ...and an armillary sphere of light turning over the vanishing point
+    this.orrery = new THREE.Group();
+    const ringMat = new THREE.MeshBasicMaterial({ color: neon(0x6fe8ff, 1.45), fog: false });
+    [17, 14.5, 12].forEach((r, i) => {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.2, 4, 48), ringMat);
+      ring.rotation.set(i * 1.1, i * 0.7, 0);
+      this.orrery.add(ring);
+    });
+    this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.2, 1), new THREE.MeshBasicMaterial({ color: C(0.5, 0.34, 0.14), fog: false })));
+    this.orrery.position.set(0, 76, -332);
+    this.scene.add(this.towers, this.orrery);
+    this.decor(this.orrery);
   }
   // Streaks of light that rush past when you floor it.
   buildSpeedLines() {
@@ -7747,6 +7994,9 @@ class RacerGame extends QuizGame {
     this.ridgeNear.children[1].material.color.copy(sky.line).multiplyScalar(2.4);
     this.ridgeNear.children[2].material.color.copy(sky.line).multiplyScalar(0.6);
     this.city.material.uniforms.uLit.value = sky.city;
+    this.cityMat.uniforms.uCity.value = sky.city;
+    this.rain.material.uniforms.uColor.value.copy(sky.light).multiplyScalar(0.3 * sky.wet);
+    this.steam.material.uniforms.uColor.value.copy(sky.fog).lerp(sky.light, 0.5);
     const g = this.groundMat.uniforms;
     g.uGrid.value.copy(sky.grid).multiplyScalar(1.5);
     g.uBase.value.copy(sky.bg).multiplyScalar(0.18);
@@ -7778,6 +8028,9 @@ class RacerGame extends QuizGame {
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
     GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.75) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
+    this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
+    this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
+    this.orrery.children.forEach((r, i) => { r.rotation.x += dt * (0.22 + i * 0.09); r.rotation.y += dt * (0.13 - i * 0.05); });
     Sound.rev(clamp(sp / 80, 0, 1.4));
     // Ease the sky toward this year of the career.
     const target = this.year / CAREER_YEARS;
