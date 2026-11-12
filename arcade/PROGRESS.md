@@ -69,7 +69,7 @@ next to it is the trace that build produces.
   lights, a breakdown on hazards, parting on a right answer, soft shadows), five
   biomes by career year (downtown 25-31, tunnel, coast, desert, tunnel, mountain,
   tunnel, downtown at night) swapped behind a fog bank, each with its own scenery
-  and palette, and 18 events: meteors, fireworks, lightning, explosion, ufo, blimp,
+  and palette, and 17 events: meteors, fireworks, lightning, explosion, ufo, blimp,
   helicopter, drones, lasers, birds, maglev, near-miss, rival, chase, breakdown,
   squall, steam-burst. The road shader gained service lanes and rain rings.
   A 60 s capture fired 16 events of 9 kinds and showed 6 vehicle kinds.
