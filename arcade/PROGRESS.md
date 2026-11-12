@@ -98,3 +98,25 @@ next to it is the trace that build produces.
 ## Known issues
 
 - High quality has only been measured on a software renderer (no GPU here).
+
+
+# Arcade upgrade (second pass): progress log
+
+Scope: title, hub, Risk Blaster, Final Exam, Memory Bank, Strategy Guide, shared
+audio. Nest Egg Run and Boss Rush were done in the pass above. Same rules: look,
+sound and feel only; never half-edited; a checkpoint commit after each screen.
+
+`arcade/backup/index.before-arcade-upgrade.html` is the game before this pass.
+`npm run arcade:regress` now also plays Memory Bank (card grades and boxes) and a
+50-question Final Exam (and fails if any hint shows before submit), and compares a
+hash of every saved item and of all saved progress; the baseline is still the
+build from before any visual work (153 answers in 8 games).
+
+| # | Checkpoint | Status |
+|---|---|---|
+| A0 | Backup, extended regression test, before shots | done |
+| A1 | Title screen | next |
+| A2 | Arcade hub | todo |
+| A3 | Risk Blaster | todo |
+| A4 | Final Exam, Memory Bank, Strategy Guide | todo |
+| A5 | Shared audio, measurements, report | todo |

@@ -392,7 +392,9 @@
      "boss1",
      "first",
      "streak5"
-    ]
+    ],
+    "itemsHash": "eac6667b",
+    "savedHash": "f2155d72"
    },
    "errors": [],
    "finished": true
@@ -560,7 +562,9 @@
     "boss": {},
     "ach": [
      "first"
-    ]
+    ],
+    "itemsHash": "dd95e497",
+    "savedHash": "2bf506bd"
    },
    "errors": [],
    "finished": true
@@ -766,7 +770,9 @@
      "first",
      "flawless",
      "streak5"
-    ]
+    ],
+    "itemsHash": "89afcef1",
+    "savedHash": "e7355ed2"
    },
    "errors": [],
    "finished": true
@@ -2169,7 +2175,9 @@
      "streak10",
      "streak20",
      "streak5"
-    ]
+    ],
+    "itemsHash": "88dcb889",
+    "savedHash": "bb9be861"
    },
    "errors": [],
    "finished": true
@@ -2381,7 +2389,756 @@
     "boss": {},
     "ach": [
      "first"
-    ]
+    ],
+    "itemsHash": "f96e90fd",
+    "savedHash": "1c1a23b7"
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "memory",
+   "rounds": [
+    {
+     "n": 0,
+     "id": "c03-f021",
+     "left": 20,
+     "kind": "good",
+     "frame": 3,
+     "after": {
+      "done": 1,
+      "deposits": 1,
+      "left": 19,
+      "missed": 0,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 1,
+     "id": "c03-f017",
+     "left": 19,
+     "kind": "good",
+     "frame": 19,
+     "after": {
+      "done": 2,
+      "deposits": 2,
+      "left": 18,
+      "missed": 0,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 2,
+     "id": "c03-f028",
+     "left": 18,
+     "kind": "again",
+     "frame": 35,
+     "after": {
+      "done": 2,
+      "deposits": 2,
+      "left": 18,
+      "missed": 1,
+      "item": "1/1/0/29454480"
+     }
+    },
+    {
+     "n": 3,
+     "id": "c03-f001",
+     "left": 18,
+     "kind": "easy",
+     "frame": 51,
+     "after": {
+      "done": 3,
+      "deposits": 3,
+      "left": 17,
+      "missed": 1,
+      "item": "3/1/1/29454480"
+     }
+    },
+    {
+     "n": 4,
+     "id": "c03-f003",
+     "left": 17,
+     "kind": "good",
+     "frame": 67,
+     "after": {
+      "done": 4,
+      "deposits": 4,
+      "left": 16,
+      "missed": 1,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 5,
+     "id": "c03-f024",
+     "left": 16,
+     "kind": "again",
+     "frame": 83,
+     "after": {
+      "done": 4,
+      "deposits": 4,
+      "left": 16,
+      "missed": 2,
+      "item": "1/1/0/29454480"
+     }
+    },
+    {
+     "n": 6,
+     "id": "c03-f028",
+     "left": 16,
+     "kind": "good",
+     "frame": 99,
+     "after": {
+      "done": 5,
+      "deposits": 5,
+      "left": 15,
+      "missed": 2,
+      "item": "2/2/1/29454480"
+     }
+    },
+    {
+     "n": 7,
+     "id": "c03-f004",
+     "left": 15,
+     "kind": "easy",
+     "frame": 115,
+     "after": {
+      "done": 6,
+      "deposits": 6,
+      "left": 14,
+      "missed": 2,
+      "item": "3/1/1/29454480"
+     }
+    },
+    {
+     "n": 8,
+     "id": "c03-f009",
+     "left": 14,
+     "kind": "good",
+     "frame": 131,
+     "after": {
+      "done": 7,
+      "deposits": 7,
+      "left": 13,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 9,
+     "id": "c03-f024",
+     "left": 13,
+     "kind": "good",
+     "frame": 147,
+     "after": {
+      "done": 8,
+      "deposits": 8,
+      "left": 12,
+      "missed": 2,
+      "item": "2/2/1/29454480"
+     }
+    },
+    {
+     "n": 10,
+     "id": "c03-f005",
+     "left": 12,
+     "kind": "good",
+     "frame": 163,
+     "after": {
+      "done": 9,
+      "deposits": 9,
+      "left": 11,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 11,
+     "id": "c03-f027",
+     "left": 11,
+     "kind": "good",
+     "frame": 179,
+     "after": {
+      "done": 10,
+      "deposits": 10,
+      "left": 10,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 12,
+     "id": "c03-f013",
+     "left": 10,
+     "kind": "good",
+     "frame": 195,
+     "after": {
+      "done": 11,
+      "deposits": 11,
+      "left": 9,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 13,
+     "id": "c03-f002",
+     "left": 9,
+     "kind": "good",
+     "frame": 211,
+     "after": {
+      "done": 12,
+      "deposits": 12,
+      "left": 8,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 14,
+     "id": "c03-f015",
+     "left": 8,
+     "kind": "good",
+     "frame": 227,
+     "after": {
+      "done": 13,
+      "deposits": 13,
+      "left": 7,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 15,
+     "id": "c03-f006",
+     "left": 7,
+     "kind": "good",
+     "frame": 243,
+     "after": {
+      "done": 14,
+      "deposits": 14,
+      "left": 6,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 16,
+     "id": "c03-f008",
+     "left": 6,
+     "kind": "good",
+     "frame": 259,
+     "after": {
+      "done": 15,
+      "deposits": 15,
+      "left": 5,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 17,
+     "id": "c03-f007",
+     "left": 5,
+     "kind": "good",
+     "frame": 275,
+     "after": {
+      "done": 16,
+      "deposits": 16,
+      "left": 4,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 18,
+     "id": "c03-f022",
+     "left": 4,
+     "kind": "good",
+     "frame": 291,
+     "after": {
+      "done": 17,
+      "deposits": 17,
+      "left": 3,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 19,
+     "id": "c03-f011",
+     "left": 3,
+     "kind": "good",
+     "frame": 307,
+     "after": {
+      "done": 18,
+      "deposits": 18,
+      "left": 2,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 20,
+     "id": "c03-f025",
+     "left": 2,
+     "kind": "good",
+     "frame": 323,
+     "after": {
+      "done": 19,
+      "deposits": 19,
+      "left": 1,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    },
+    {
+     "n": 21,
+     "id": "c03-f012",
+     "left": 1,
+     "kind": "good",
+     "frame": 339,
+     "after": {
+      "done": 20,
+      "deposits": 20,
+      "left": 0,
+      "missed": 2,
+      "item": "2/1/1/29454480"
+     }
+    }
+   ],
+   "end": {
+    "frame": 354,
+    "results": "DECK CLEARED 20 CARDS BANKED 0 of 29 cards in STAGE 3 are fully banked REMEMBERED 90% STILL DUE 9 XP EARNED +66 LV1 TRAINEE MASTERY STAGE 3 · The Insurance Industry 0% > 10% CARDS YOU MISSED (2) MCCSR vs MCT MCCSR (minimum continuing capital and surplus requirements): risk-based capital for life insurers since 1992. MCT (minimum capital test): for federally regulated P&C insurers since 2003. P. 3•17 · STAGE 3 · Key numbers Rebating Returning part of the premium, giving non-cash incentives of more than nominal value, or reducing fees to offset commissions, as an inducement to buy. Prohibited in most provinces. P. 3•16 · STAGE 3 · Unfair practices PLAY AGAIN CHANGE STAGE ARCADE",
+    "stats": {
+     "answered": 0,
+     "correct": 0,
+     "bestStreak": 0,
+     "cards": 22,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "2": 18,
+     "3": 2
+    },
+    "items": 20,
+    "scores": {
+     "blaster": [],
+     "racer": [],
+     "boss": [],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {},
+    "ach": [
+     "first"
+    ],
+    "itemsHash": "9c36294a",
+    "savedHash": "8d60ecae"
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "exam",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c06a-q005",
+     "order": "2301",
+     "picked": 2,
+     "frame": 2
+    },
+    {
+     "n": 1,
+     "q": "c09-q067",
+     "order": "3012",
+     "picked": 3,
+     "frame": 4
+    },
+    {
+     "n": 2,
+     "q": "c02-q027",
+     "order": "1230",
+     "picked": 3,
+     "frame": 6
+    },
+    {
+     "n": 3,
+     "q": "c06a-q023",
+     "order": "3021",
+     "picked": 1,
+     "frame": 8
+    },
+    {
+     "n": 4,
+     "q": "c09-q044",
+     "order": "2310",
+     "picked": 0,
+     "frame": 10
+    },
+    {
+     "n": 5,
+     "q": "c10-q009",
+     "order": "0321",
+     "picked": 1,
+     "frame": 12
+    },
+    {
+     "n": 6,
+     "q": "c09-q057",
+     "order": "2031",
+     "picked": -1,
+     "frame": 14
+    },
+    {
+     "n": 7,
+     "q": "c07-q058",
+     "order": "3120",
+     "picked": 2,
+     "frame": 16
+    },
+    {
+     "n": 8,
+     "q": "c10-q012",
+     "order": "1203",
+     "picked": 3,
+     "frame": 18
+    },
+    {
+     "n": 9,
+     "q": "c11-q036",
+     "order": "1320",
+     "picked": 0,
+     "frame": 20
+    },
+    {
+     "n": 10,
+     "q": "c02-q034",
+     "order": "0231",
+     "picked": 1,
+     "frame": 22
+    },
+    {
+     "n": 11,
+     "q": "c06b-q027",
+     "order": "1230",
+     "picked": 1,
+     "frame": 24
+    },
+    {
+     "n": 12,
+     "q": "c09-q064",
+     "order": "1023",
+     "picked": 3,
+     "frame": 26
+    },
+    {
+     "n": 13,
+     "q": "c04-q038",
+     "order": "01",
+     "picked": -1,
+     "frame": 28
+    },
+    {
+     "n": 14,
+     "q": "c10-q028",
+     "order": "01",
+     "picked": 0,
+     "frame": 30
+    },
+    {
+     "n": 15,
+     "q": "c08-q043",
+     "order": "3021",
+     "picked": 1,
+     "frame": 32
+    },
+    {
+     "n": 16,
+     "q": "c01-q014",
+     "order": "2103",
+     "picked": 3,
+     "frame": 34
+    },
+    {
+     "n": 17,
+     "q": "c11-q007",
+     "order": "2013",
+     "picked": 1,
+     "frame": 36
+    },
+    {
+     "n": 18,
+     "q": "c11-q030",
+     "order": "0123",
+     "picked": 3,
+     "frame": 38
+    },
+    {
+     "n": 19,
+     "q": "c06a-q003",
+     "order": "3021",
+     "picked": 1,
+     "frame": 40
+    },
+    {
+     "n": 20,
+     "q": "c07-q051",
+     "order": "0123",
+     "picked": -1,
+     "frame": 42
+    },
+    {
+     "n": 21,
+     "q": "c03-q034",
+     "order": "1203",
+     "picked": 0,
+     "frame": 44
+    },
+    {
+     "n": 22,
+     "q": "c11-q026",
+     "order": "1230",
+     "picked": 1,
+     "frame": 46
+    },
+    {
+     "n": 23,
+     "q": "c08-q017",
+     "order": "3012",
+     "picked": 2,
+     "frame": 48
+    },
+    {
+     "n": 24,
+     "q": "c08-q002",
+     "order": "1032",
+     "picked": 1,
+     "frame": 50
+    },
+    {
+     "n": 25,
+     "q": "c02-q040",
+     "order": "1203",
+     "picked": 0,
+     "frame": 52
+    },
+    {
+     "n": 26,
+     "q": "c03-q039",
+     "order": "01",
+     "picked": 1,
+     "frame": 54
+    },
+    {
+     "n": 27,
+     "q": "c06b-q021",
+     "order": "01",
+     "picked": -1,
+     "frame": 56
+    },
+    {
+     "n": 28,
+     "q": "c10-q037",
+     "order": "01",
+     "picked": 1,
+     "frame": 58
+    },
+    {
+     "n": 29,
+     "q": "c06b-q017",
+     "order": "2103",
+     "picked": 0,
+     "frame": 60
+    },
+    {
+     "n": 30,
+     "q": "c05-q015",
+     "order": "2130",
+     "picked": 3,
+     "frame": 62
+    },
+    {
+     "n": 31,
+     "q": "c07-q023",
+     "order": "3201",
+     "picked": 3,
+     "frame": 64
+    },
+    {
+     "n": 32,
+     "q": "c05-q022",
+     "order": "0213",
+     "picked": 1,
+     "frame": 66
+    },
+    {
+     "n": 33,
+     "q": "c06a-q030",
+     "order": "1320",
+     "picked": 3,
+     "frame": 68
+    },
+    {
+     "n": 34,
+     "q": "c04-q037",
+     "order": "0321",
+     "picked": -1,
+     "frame": 70
+    },
+    {
+     "n": 35,
+     "q": "c04-q040",
+     "order": "2031",
+     "picked": 1,
+     "frame": 72
+    },
+    {
+     "n": 36,
+     "q": "c06a-q014",
+     "order": "01",
+     "picked": 0,
+     "frame": 74
+    },
+    {
+     "n": 37,
+     "q": "c09-q039",
+     "order": "1230",
+     "picked": 0,
+     "frame": 76
+    },
+    {
+     "n": 38,
+     "q": "c01-q005",
+     "order": "3120",
+     "picked": 1,
+     "frame": 78
+    },
+    {
+     "n": 39,
+     "q": "c04-q007",
+     "order": "1023",
+     "picked": 3,
+     "frame": 80
+    },
+    {
+     "n": 40,
+     "q": "c04-q051",
+     "order": "3012",
+     "picked": 2,
+     "frame": 82
+    },
+    {
+     "n": 41,
+     "q": "c06b-q041",
+     "order": "0213",
+     "picked": -1,
+     "frame": 84
+    },
+    {
+     "n": 42,
+     "q": "c07-q026",
+     "order": "01",
+     "picked": 0,
+     "frame": 86
+    },
+    {
+     "n": 43,
+     "q": "c07-q048",
+     "order": "1203",
+     "picked": 2,
+     "frame": 88
+    },
+    {
+     "n": 44,
+     "q": "c09-q003",
+     "order": "01",
+     "picked": 0,
+     "frame": 90
+    },
+    {
+     "n": 45,
+     "q": "c10-q018",
+     "order": "3021",
+     "picked": 2,
+     "frame": 92
+    },
+    {
+     "n": 46,
+     "q": "c05-q040",
+     "order": "3120",
+     "picked": 2,
+     "frame": 94
+    },
+    {
+     "n": 47,
+     "q": "c05-q044",
+     "order": "3120",
+     "picked": 0,
+     "frame": 96
+    },
+    {
+     "n": 48,
+     "q": "c02-q011",
+     "order": "2310",
+     "picked": -1,
+     "frame": 98
+    },
+    {
+     "n": 49,
+     "q": "c03-q005",
+     "order": "0321",
+     "picked": 3,
+     "frame": 100
+    }
+   ],
+   "end": {
+    "frame": 103,
+    "results": "PASSED 64% 32 of 50 correct · pass mark 60% · 0:01 used SCORE 64% CORRECT 32/50 TIME 0:01 HIGH SCORE RANK #1 XP EARNED +760 LV2 JUNIOR ADVISOR BY CHAPTER STAGE 1 · Introduction: Risk and Insurance in Financial Planning 2/2 STAGE 2 · The Concept of Risk 3/4 STAGE 3 · The Insurance Industry 3/3 STAGE 4 · Insurance as a Contract 1/5 STAGE 5 · Group Insurance and Government Programs 3/4 STAGE 6 · Retirement Planning 4/9 STAGE 7 · Retirement Management 1/5 STAGE 8 · Intestacy or Dying Without a Will 1/3 STAGE 9 · Wills and Powers of Attorney 5/6 STAGE 10 · Probate and Forms of Property Ownership/Transfer 5/5 STAGE 11 · Family Law 4/4 MASTERY STAGE 1 · Introduction: Risk and Insurance in Financial Planning 0% > 2.2% STAGE 2 · The Concept of Risk 0% > 1.1% STAGE 3 · The Insurance Industry 0% > 1.4% STAGE 4 · Insurance as a Contract 0% > 0.2% STAGE 5 · Group Insurance and Government Programs 0% > 1.3% STAGE 6 · Retirement Planning 0% > 0.6% STAGE 7 · Retirement Management 0% > 0.3% STAGE 8 · Intestacy or Dying Without a Will 0% > 0.4% STAGE 9 · Wills and Powers of Attorney 0% > 1.1% STAGE 10 · Probate and Forms of Property Ownership/Transfer 0% > 1.7% STAGE 11 · Family Law 0% > 1.4% QUESTIONS TO REVIEW (18) Rémi is entitled to a CPP pension of $900 a month at 65 but starts it at exactly age 63. Ignoring indexation, what will he receive each month? YOU: $576.00 ANSWER: $770.40 The pension is reduced by 0.6% for each month before 65: 24 × 0.6% = 14.4%, so $900 × 0.856 = $770.40, permanently. $748.80 wrongly uses 0.7% (the deferral rate) and $576 applies the full 36% cut for age 60. P. 6•15 · STAGE 6 · CPP/QPP Years ago Omar named his sister beneficiary of his life insurance on the insurer's form. His new will names his partner as beneficiary of the policy instead, but he never notifies the insurer. Which statement is accurate? YOU: no answer ANSWER: The will's later designation prevails in law, but the insurer may still pay the sister A will can name or revoke a beneficiary of life insurance, an RRSP or a RRIF, and the designation made later prevails in law. But insurers usually pay the beneficiary on file, so a copy of the will (better, a new designation form) should be filed, or costly litigation may follow. P. 9•27 · STAGE 9 · Drafting points Rita is 85 on January 1 and her RRIF is worth $100,000. Using the RRIF minimum withdrawal table in the course's Appendix A, what is her minimum for the year? YOU: $20,000 ANSWER: $8,510 The Appendix A factor at age 85 is 8.51%, so her minimum is $8,510. The factors rise from 5.28% at 71 to 6.82% at 80, 11.92% at 90 and 20% at 95 or older. P. 7•28 · STAGE 7 · RRIFs Gilles, a Quebec resident, makes a $12,000 cash withdrawal from his RRSP, which is not locked in. Using the course's withholding table, how much tax is withheld in total? YOU: $1,800 ANSWER: $3,000 For $5,001–$15,000 in Quebec, 15% provincial plus 10% federal is withheld: 25% × $12,000 = $3,000. Outside Quebec, the rate for this band is 20% ($2,400). The withdrawal is also taxable income for the year. P. 6•45 · STAGE 6 · RRSP withdrawals If an innocent but material non-disclosure comes to light after the insured dies three years after issue, the insurer can still void the policy when the death was caused by the undisclosed condition. YOU: no answer ANSWER: False False. After two years the policy is incontestable: the insurer can no longer void it for a misstatement of a material fact, even if the death is related to the condition. Only fraud lets an insurer void a policy after two years. P. 4•19 · STAGE 4 · Misrepresentation & fraud A Quebec man dies intestate, leaving two children from his first marriage and one from his second. Which of them inherit as his descendants? YOU: Only the child of the marriage in force at his death ANSWER: All three children, whichever union they come from In Quebec, all of the deceased's children have the right to inherit, regardless of the marriage (or union) they come from. P. 8•24 · STAGE 8 · Quebec: heirs Modigliani and Brumberg's Life Cycle Hypothesis says a family's consumption is proportional to its total financial resources. What determines the factor of proportionality? YOU: The family's current income and marginal tax rate ANSWER: The size of the family and its remaining lifespan Under the Life Cycle Hypothesis (1954), the factor depends on the size of the family and its remaining lifespan (consumption period). When the timing of income doesn't match desired consumption, the family borrows or saves. P. 6•5 · STAGE 6 · Smoothing consumption Spouse 1 has a pension and an RRSP; spouse 2 was a homemaker with only a spousal RRSP. They want the SAFEST arrangement for spouse 2 if spouse 1 dies first, even at slightly lower income. Where should spouse 1's RRSP go? YOU: no answer ANSWER: A joint life annuity paying full benefits until the second death For the safest result, spouse 1's RRSP/DPSP should go into a joint life annuity paying full benefits until the later death. A term certain or RRIF based on spouse 2's age gives slightly more income with more risk, and spouse 2's own RRSP can go into a straight-life annuity or RRIF. P. 7•24 · STAGE 7 · Choosing a maturity option Victor, a widower with no will, has a $150,000 net estate. Of his four children, one predeceased him, leaving two children; the other three have none. If the law divides the estate per capita among Victor's issue, how much does each grandchild receive? YOU: $18,750 ANSWER: $30,000 Per capita among issue, every living descendant takes an equal share: three surviving children plus two grandchildren make five shares of $30,000. Per stirpes, the grandchildren would split their father's $37,500 ($18,750 each). P. 8•10 · STAGE 8 · Per stirpes and per capita Because any security listed on a designated stock exchange qualifies for an RRSP, an exchange-traded commodity futures contract can be held in the plan. YOU: no answer ANSWER: False The rule covers any listed security OTHER than a futures contract, and commodity futures contracts are specifically named among the investments that cannot be held in an RRSP. P. 6•42 · STAGE 6 · RRSP investments Which feature most clearly distinguishes a LIF from a RRIF? YOU: A LIF has no minimum withdrawal, so all of the income can be deferred indefinitely ANSWER: A LIF holds locked-in pension money and has a legal maximum withdrawal A LIF holds locked-in pension money, and the law sets both a minimum and a maximum annual withdrawal, while a RRIF only requires a prescribed minimum. Both let the holder manage the investments, but a LIF generally cannot start before about age 55. P. 7•13 · STAGE 7 · LIFs Eighteen months after issue, Victor dies in a car accident. The insurer then learns he innocently failed to disclose a heart murmur diagnosed in his teens. What can the insurer do? YOU: no answer ANSWER: Void the policy, even though the death had nothing to do with the heart murmur An innocent misrepresentation of a material fact lets the insurer void the policy if it acts within two years of issue or reinstatement, even for an unrelated death, because the contract should never have been issued. Reducing the benefit is the remedy for misstated age. P. 4•19 · STAGE 4 · Misrepresentation & fraud Between Ana's application and the delivery of her life policy, her agent learns she was recently hospitalized. What should the agent do? YOU: Deliver the policy, since it was approved before her health changed ANSWER: Hold the policy and return it to the insurer with a Non-Medical Questionnaire Both the Uniform Life Insurance Act and the Civil Code say a policy should not be delivered if the life insured's health changed after application. The agent records the particulars on a Non-Medical Questionnaire and returns it with the policy for further underwriting. P. 4•19 · STAGE 4 · Misrepresentation & fraud Because insurance contracts are unilateral, what can an insurer do if a policyowner simply stops paying the premiums? YOU: Sue the policyowner for the unpaid premiums plus interest ANSWER: Cancel the contract; it cannot force the policyowner to pay Only the policyowner can enforce a unilateral contract, suing for damages or specific performance if the insurer defaults. When premiums go unpaid, the insurer cannot enforce payment; all it can do is cancel the contract. P. 4•5 · STAGE 4 · Contract nature Mei has always contributed her full TFSA limit. In 2018 she withdrew $8,000 to buy a car. Using the course's 2019 limit, how much can she contribute to her TFSA in 2019? YOU: no answer ANSWER: $14,000 Withdrawals can be recontributed in any year after the year of withdrawal, on top of the regular room. In 2019 she has the $6,000 annual limit plus the $8,000 withdrawn in 2018: $14,000. P. 6•50 · STAGE 6 · TFSA Marcel's employer can either pay his lump-sum retirement payment to him so he can contribute it to his RRSP, or deposit it directly into his RRSP. Why is the direct deposit usually better? YOU: Paid to him, the sum is taxed twice: once when it is paid and again later inside the RRSP ANSWER: Paid to him, the sum has tax withheld, leaving a cash gap until he files his return A lump sum paid to the employee is income, so the employer must withhold tax at the marginal rate; the RRSP deduction only offsets it when the return is filed, creating a liquidity gap. A direct deposit into the RRSP avoids the withholding. P. 7•23 · STAGE 7 · Early retirement Using the course's typical Workers' Compensation formula, what weekly benefit would a worker earning $1,000 a week receive if deductions are $180 income tax, $50 CPP/QPP and $16 EI? YOU: $603.20 ANSWER: $678.60 The typical benefit is 90% of average weekly earnings after income tax, CPP/QPP and EI: ($1,000 − $180 − $50 − $16) × 0.9 = $754 × 0.9 = $678.60. It is paid tax-free. P. 5•19 · STAGE 5 · Workers' Compensation A windstorm tears the roof off Hélène's garage. In the course's terminology, the windstorm is the… YOU: no answer ANSWER: peril A peril is the cause of loss, here the windstorm, just as fire is the peril when a house burns. A hazard is a condition that increases the chance or severity of loss; risk is the uncertainty concerning loss. P. 2•6 · STAGE 2 · Peril and hazard PLAY AGAIN EXAM SETUP ARCADE",
+    "stats": {
+     "answered": 50,
+     "correct": 32,
+     "bestStreak": 3,
+     "cards": 0,
+     "games": 1,
+     "exams": 1,
+     "bestExam": 64
+    },
+    "boxes": {
+     "1": 18,
+     "2": 32
+    },
+    "items": 50,
+    "scores": {
+     "blaster": [],
+     "racer": [],
+     "boss": [],
+     "memory": [],
+     "exam": [
+      {
+       "n": "AAA",
+       "s": 64,
+       "c": "50Q"
+      }
+     ]
+    },
+    "boss": {},
+    "ach": [
+     "exam60",
+     "first"
+    ],
+    "itemsHash": "345390ce",
+    "savedHash": "db61258e"
+   },
+   "exam": {
+    "n": 50,
+    "limit": 4500,
+    "hintsBeforeSubmit": 0,
+    "did": 50
    },
    "errors": [],
    "finished": true
@@ -2391,9 +3148,9 @@
    "rounds": [
     {
      "n": 0,
-     "q": "c02-q032",
-     "order": "01",
-     "T": 21,
+     "q": "c02-q036",
+     "order": "2310",
+     "T": 36.933,
      "askFrame": 80,
      "step": "R@0.05",
      "before": {
@@ -2406,8 +3163,8 @@
       "correct": 0,
       "best": 0
      },
-     "pickFrame": 143,
-     "frac": 0.0508,
+     "pickFrame": 190,
+     "frac": 0.0501,
      "after": {
       "score": 195,
       "shields": 3,
@@ -2418,15 +3175,15 @@
       "correct": 1,
       "best": 1
      },
-     "sheetFrame": 191,
-     "title": "DIRECT HIT! +195\n      \n      False. All of the owner's asse"
+     "sheetFrame": 238,
+     "title": "DIRECT HIT! +195\n      \n      First, there is no maximum: yo"
     },
     {
      "n": 1,
-     "q": "c02-q050",
-     "order": "3012",
-     "T": 22.533,
-     "askFrame": 192,
+     "q": "c02-q055",
+     "order": "1032",
+     "T": 32.067,
+     "askFrame": 239,
      "step": "R@0.4",
      "before": {
       "score": 195,
@@ -2438,8 +3195,8 @@
       "correct": 1,
       "best": 1
      },
-     "pickFrame": 732,
-     "frac": 0.4001,
+     "pickFrame": 1008,
+     "frac": 0.4002,
      "after": {
       "score": 515,
       "shields": 3,
@@ -2450,15 +3207,15 @@
       "correct": 2,
       "best": 2
      },
-     "sheetFrame": 780,
-     "title": "DIRECT HIT! +320\n      \n      She is consciously aware of th"
+     "sheetFrame": 1056,
+     "title": "DIRECT HIT! +320\n      \n      The table pairs low frequency/"
     },
     {
      "n": 2,
-     "q": "c02-q012",
-     "order": "2310",
-     "T": 26.533,
-     "askFrame": 781,
+     "q": "c02-q043",
+     "order": "3120",
+     "T": 33.067,
+     "askFrame": 1057,
      "step": "W@0.1",
      "before": {
       "score": 515,
@@ -2470,8 +3227,8 @@
       "correct": 2,
       "best": 2
      },
-     "pickFrame": 940,
-     "frac": 0.1005,
+     "pickFrame": 1255,
+     "frac": 0.1003,
      "after": {
       "score": 515,
       "shields": 2,
@@ -2482,15 +3239,15 @@
       "correct": 2,
       "best": 2
      },
-     "sheetFrame": 984,
-     "title": "ANSWER A ·"
+     "sheetFrame": 1299,
+     "title": "ANSWER B ·"
     },
     {
      "n": 3,
-     "q": "c02-q029",
-     "order": "1023",
-     "T": 23.867,
-     "askFrame": 985,
+     "q": "c02-q018",
+     "order": "0213",
+     "T": 34.933,
+     "askFrame": 1300,
      "step": "R@0.05",
      "before": {
       "score": 515,
@@ -2502,8 +3259,8 @@
       "correct": 2,
       "best": 2
      },
-     "pickFrame": 1056,
-     "frac": 0.0503,
+     "pickFrame": 1404,
+     "frac": 0.0501,
      "after": {
       "score": 710,
       "shields": 2,
@@ -2514,15 +3271,15 @@
       "correct": 3,
       "best": 2
      },
-     "sheetFrame": 1104,
-     "title": "DIRECT HIT! +195\n      \n      About one in three. The one-in"
+     "sheetFrame": 1452,
+     "title": "DIRECT HIT! +195\n      \n      To an employer, a life's econo"
     },
     {
      "n": 4,
-     "q": "c02-q015",
-     "order": "1320",
-     "T": 27.6,
-     "askFrame": 1105,
+     "q": "c02-q021",
+     "order": "1302",
+     "T": 45.267,
+     "askFrame": 1453,
      "step": "R@0.05",
      "before": {
       "score": 710,
@@ -2534,7 +3291,7 @@
       "correct": 3,
       "best": 2
      },
-     "pickFrame": 1187,
+     "pickFrame": 1588,
      "frac": 0.0501,
      "after": {
       "score": 1100,
@@ -2546,15 +3303,15 @@
       "correct": 4,
       "best": 2
      },
-     "sheetFrame": 1235,
-     "title": "DIRECT HIT! +390\n      \n      The main types of pure risk ar"
+     "sheetFrame": 1636,
+     "title": "DIRECT HIT! +390\n      \n      Premature death creates more t"
     },
     {
      "n": 5,
      "q": "c02-q035",
-     "order": "3210",
+     "order": "3120",
      "T": 31.733,
-     "askFrame": 1236,
+     "askFrame": 1637,
      "step": "R@0.7",
      "before": {
       "score": 1100,
@@ -2566,7 +3323,7 @@
       "correct": 4,
       "best": 2
      },
-     "pickFrame": 2568,
+     "pickFrame": 2969,
      "frac": 0.7001,
      "after": {
       "score": 1490,
@@ -2578,15 +3335,15 @@
       "correct": 5,
       "best": 3
      },
-     "sheetFrame": 2616,
+     "sheetFrame": 3017,
      "title": "DIRECT HIT! +390\n      \n      In periods of rapid inflation,"
     },
     {
      "n": 6,
-     "q": "c02-q044",
-     "order": "3021",
-     "T": 24.067,
-     "askFrame": 2617,
+     "q": "c02-q046",
+     "order": "0123",
+     "T": 35.333,
+     "askFrame": 3018,
      "step": "R@0.05",
      "before": {
       "score": 1490,
@@ -2598,8 +3355,8 @@
       "correct": 5,
       "best": 3
      },
-     "pickFrame": 2689,
-     "frac": 0.0506,
+     "pickFrame": 3124,
+     "frac": 0.0505,
      "after": {
       "score": 2270,
       "shields": 2,
@@ -2610,15 +3367,15 @@
       "correct": 6,
       "best": 4
      },
-     "sheetFrame": 2737,
-     "title": "DIRECT HIT! +780\n      \n      Severity is the dollar cost of"
+     "sheetFrame": 3172,
+     "title": "DIRECT HIT! +780\n      \n      Not investing in equities avoi"
     },
     {
      "n": 7,
-     "q": "c02-q011",
-     "order": "2310",
-     "T": 18.333,
-     "askFrame": 2738,
+     "q": "c02-q041",
+     "order": "1203",
+     "T": 30.933,
+     "askFrame": 3173,
      "step": "R@0.05",
      "before": {
       "score": 2270,
@@ -2630,8 +3387,8 @@
       "correct": 6,
       "best": 4
      },
-     "pickFrame": 2793,
-     "frac": 0.0509,
+     "pickFrame": 3265,
+     "frac": 0.0501,
      "after": {
       "score": 3245,
       "shields": 2,
@@ -2642,15 +3399,15 @@
       "correct": 7,
       "best": 5
      },
-     "sheetFrame": 2841,
-     "title": "DIRECT HIT! +975\n      \n      A peril is the cause of loss, "
+     "sheetFrame": 3313,
+     "title": "DIRECT HIT! +975\n      \n      Unfamiliar environments create"
     },
     {
      "n": 8,
-     "q": "c02-q022",
-     "order": "3210",
-     "T": 38.6,
-     "askFrame": 2842,
+     "q": "c02-q016",
+     "order": "0213",
+     "T": 24.867,
+     "askFrame": 3314,
      "step": "R@0.05",
      "before": {
       "score": 3245,
@@ -2662,8 +3419,8 @@
       "correct": 7,
       "best": 5
      },
-     "pickFrame": 2957,
-     "frac": 0.0501,
+     "pickFrame": 3388,
+     "frac": 0.0503,
      "after": {
       "score": 4415,
       "shields": 2,
@@ -2674,15 +3431,15 @@
       "correct": 8,
       "best": 6
      },
-     "sheetFrame": 3005,
-     "title": "DIRECT HIT! +1170\n      \n      If the survivor plans to sell"
+     "sheetFrame": 3436,
+     "title": "DIRECT HIT! +1170\n      \n      The three major personal risk"
     },
     {
      "n": 9,
-     "q": "c02-q039",
-     "order": "2310",
-     "T": 37.733,
-     "askFrame": 3006,
+     "q": "c02-q037",
+     "order": "3210",
+     "T": 44.2,
+     "askFrame": 3437,
      "step": "R@0.05",
      "before": {
       "score": 4415,
@@ -2694,8 +3451,8 @@
       "correct": 8,
       "best": 6
      },
-     "pickFrame": 3119,
-     "frac": 0.0504,
+     "pickFrame": 3569,
+     "frac": 0.0502,
      "after": {
       "score": 5780,
       "shields": 2,
@@ -2706,15 +3463,15 @@
       "correct": 9,
       "best": 7
      },
-     "sheetFrame": 3167,
-     "title": "DIRECT HIT! +1365\n      \n      Physical-damage exposure is t"
+     "sheetFrame": 3617,
+     "title": "DIRECT HIT! +1365\n      \n      Directors' and officers' serv"
     },
     {
      "n": 10,
-     "q": "c02-q014",
-     "order": "3012",
-     "T": 30.176,
-     "askFrame": 3258,
+     "q": "c02-q025",
+     "order": "3201",
+     "T": 31.771,
+     "askFrame": 3707,
      "step": "R@0.05",
      "before": {
       "score": 7280,
@@ -2726,8 +3483,8 @@
       "correct": 9,
       "best": 7
      },
-     "pickFrame": 3348,
-     "frac": 0.0503,
+     "pickFrame": 3802,
+     "frac": 0.0504,
      "after": {
       "score": 8840,
       "shields": 3,
@@ -2738,15 +3495,15 @@
       "correct": 10,
       "best": 8
      },
-     "sheetFrame": 3396,
-     "title": "DIRECT HIT! +1560\n      \n      In disability insurance the i"
+     "sheetFrame": 3850,
+     "title": "DIRECT HIT! +1560\n      \n      The Canada or Quebec Pension "
     },
     {
      "n": 11,
-     "q": "c02-q037",
-     "order": "3210",
-     "T": 40.664,
-     "askFrame": 3397,
+     "q": "c02-q011",
+     "order": "2013",
+     "T": 16.867,
+     "askFrame": 3851,
      "step": "R@0.05",
      "before": {
       "score": 8840,
@@ -2758,8 +3515,8 @@
       "correct": 10,
       "best": 8
      },
-     "pickFrame": 3518,
-     "frac": 0.05,
+     "pickFrame": 3901,
+     "frac": 0.0504,
      "after": {
       "score": 10400,
       "shields": 3,
@@ -2770,15 +3527,15 @@
       "correct": 11,
       "best": 9
      },
-     "sheetFrame": 3566,
-     "title": "DIRECT HIT! +1560\n      \n      Directors' and officers' serv"
+     "sheetFrame": 3949,
+     "title": "DIRECT HIT! +1560\n      \n      A peril is the cause of loss,"
     },
     {
      "n": 12,
-     "q": "c02-q041",
-     "order": "0213",
-     "T": 28.459,
-     "askFrame": 3567,
+     "q": "c02-q051",
+     "order": "3210",
+     "T": 31.709,
+     "askFrame": 3950,
      "step": "T",
      "before": {
       "score": 10400,
@@ -2800,15 +3557,15 @@
       "correct": 11,
       "best": 9
      },
-     "sheetFrame": 5274,
-     "title": "ANSWER B ·"
+     "sheetFrame": 5852,
+     "title": "ANSWER D ·"
     },
     {
      "n": 13,
-     "q": "c02-q033",
-     "order": "2301",
-     "T": 34.899,
-     "askFrame": 5275,
+     "q": "c02-q004",
+     "order": "3120",
+     "T": 38.64,
+     "askFrame": 5853,
      "step": "R@0.05",
      "before": {
       "score": 10400,
@@ -2820,8 +3577,8 @@
       "correct": 11,
       "best": 9
      },
-     "pickFrame": 5379,
-     "frac": 0.0501,
+     "pickFrame": 5968,
+     "frac": 0.05,
      "after": {
       "score": 10595,
       "shields": 2,
@@ -2832,15 +3589,15 @@
       "correct": 12,
       "best": 9
      },
-     "sheetFrame": 5427,
-     "title": "DIRECT HIT! +195\n      \n      With no debt, the risk is limi"
+     "sheetFrame": 6016,
+     "title": "DIRECT HIT! +195\n      \n      Private insurers are in the bu"
     },
     {
      "n": 14,
      "q": "c02-q023",
-     "order": "0123",
+     "order": "3021",
      "T": 33.059,
-     "askFrame": 5428,
+     "askFrame": 6017,
      "step": "W@0.08",
      "before": {
       "score": 10595,
@@ -2852,7 +3609,7 @@
       "correct": 12,
       "best": 9
      },
-     "pickFrame": 5586,
+     "pickFrame": 6175,
      "frac": 0.0802,
      "after": {
       "score": 10595,
@@ -2864,15 +3621,15 @@
       "correct": 12,
       "best": 9
      },
-     "sheetFrame": 5630,
-     "title": "ANSWER B ·"
+     "sheetFrame": 6219,
+     "title": "ANSWER D ·"
     },
     {
      "n": 15,
-     "q": "c02-q012",
-     "order": "2301",
-     "T": 24.411,
-     "askFrame": 5631,
+     "q": "c02-q043",
+     "order": "0321",
+     "T": 30.421,
+     "askFrame": 6220,
      "step": "W@0.08",
      "before": {
       "score": 10595,
@@ -2884,8 +3641,8 @@
       "correct": 12,
       "best": 9
      },
-     "pickFrame": 5748,
-     "frac": 0.0806,
+     "pickFrame": 6366,
+     "frac": 0.0805,
      "after": {
       "score": 10595,
       "shields": 0,
@@ -2896,13 +3653,13 @@
       "correct": 12,
       "best": 9
      },
-     "sheetFrame": 5792,
-     "title": "ANSWER A ·"
+     "sheetFrame": 6410,
+     "title": "ANSWER D ·"
     }
    ],
    "end": {
-    "frame": 5889,
-    "results": "GAME OVER 010595 PTS Reached wave 2 on STAGE 2 ACCURACY 75% ANSWERED 16 BEST STREAK 9 WAVE 2 HIGH SCORE RANK #1 XP EARNED +120 LV1 TRAINEE MASTERY STAGE 2 · The Concept of Risk 0% > 4.6% REVIEW YOUR MISSES (4) Which of the following is a hazard rather than a peril? YOU: A collision with another vehicle at an intersection ANSWER: Storing cans of gasoline in a basement workshop A hazard is a condition that creates or increases the chance or severity of loss, and keeping gasoline at home is a fire hazard. Fire, collision and hail are perils: actual causes of loss. P. 2•6 · STAGE 2 · Peril and hazard Visiting London, Inès is hit by a car after looking left instead of right before crossing the street. Which travel risk from the course does this illustrate? YOU: no answer ANSWER: Exposure to an unfamiliar environment Unfamiliar environments create risk; the course's example is North American tourists in England who habitually look left instead of right. Other travel risks are more time in vehicles, crime or unrest, unusual health hazards and aggravated conditions. P. 2•19 · STAGE 2 · Travel risks Which 'triple combination' does the course say makes RESPs worth reviewing with every parent of a school-aged child? YOU: Tax-deductible deposits, tax-free withdrawals and guaranteed rates of return ANSWER: Tax-deferred savings, income splitting, and government grants and bonds RESPs combine tax-deferred savings, income splitting, and government grants and bonds, which makes them one of the most flexible and popular education savings vehicles. P. 2•10 · STAGE 2 · Education fund Which of the following is a hazard rather than a peril? YOU: A collision with another vehicle at an intersection ANSWER: Storing cans of gasoline in a basement workshop A hazard is a condition that creates or increases the chance or severity of loss, and keeping gasoline at home is a fire hazard. Fire, collision and hail are perils: actual causes of loss. P. 2•6 · STAGE 2 · Peril and hazard PLAY AGAIN CHANGE STAGE READ STAGE 2 NOTES ARCADE",
+    "frame": 6507,
+    "results": "GAME OVER 010595 PTS Reached wave 2 on STAGE 2 ACCURACY 75% ANSWERED 16 BEST STREAK 9 WAVE 2 HIGH SCORE RANK #1 XP EARNED +120 LV1 TRAINEE MASTERY STAGE 2 · The Concept of Risk 0% > 4.6% REVIEW YOUR MISSES (4) How does the course suggest a financial plan handle the risk of involuntary job loss? YOU: Transfer it with a private job-loss policy, as most insurers offer ANSWER: Retain it, with an emergency fund equal to three to six months' expenses Most private insurers won't insure job loss because it depends on many economic, social and political factors, and public programs often fall short. So the plan retains the risk, typically through a fund of three to six months' expenses. P. 2•20 · STAGE 2 · Job loss Which of the following is an example of passive risk retention? YOU: no answer ANSWER: A cottage owner never noticed his policy excluded the boathouse, which burned Passive retention occurs when risks are retained unknowingly, through ignorance, indifference or carelessness. The other three know about the risk and deliberately keep it, which is active retention. P. 2•23 · STAGE 2 · Risk retention Which 'triple combination' does the course say makes RESPs worth reviewing with every parent of a school-aged child? YOU: Tax-deductible deposits, income splitting and guaranteed returns ANSWER: Tax-deferred savings, income splitting, and government grants and bonds RESPs combine tax-deferred savings, income splitting, and government grants and bonds, which makes them one of the most flexible and popular education savings vehicles. P. 2•10 · STAGE 2 · Education fund How does the course suggest a financial plan handle the risk of involuntary job loss? YOU: Rely entirely on public programs, which fully replace lost income ANSWER: Retain it, with an emergency fund equal to three to six months' expenses Most private insurers won't insure job loss because it depends on many economic, social and political factors, and public programs often fall short. So the plan retains the risk, typically through a fund of three to six months' expenses. P. 2•20 · STAGE 2 · Job loss PLAY AGAIN CHANGE STAGE READ STAGE 2 NOTES ARCADE",
     "stats": {
      "answered": 16,
      "correct": 12,
@@ -2934,7 +3691,9 @@
     "ach": [
      "first",
      "streak5"
-    ]
+    ],
+    "itemsHash": "8627596f",
+    "savedHash": "769a4901"
    },
    "errors": [],
    "finished": true

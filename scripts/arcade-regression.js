@@ -43,6 +43,10 @@ const PLAYS = [
   // Nest Egg Run ended early by three crashes
   { id: "racer-crash", game: "racer", stage: "5", script: [R(0.05), W(0.05), W(0.05), R(0.05)], then: W(0.05) },
   // Risk Blaster into wave 2, then out of shields
+  // Memory Bank: got it, missed (comes back), easy; every grade moves a card's box
+  { id: "memory", game: "memory", stage: "3", cards: ["good", "good", "again", "easy", "good", "again", "good", "easy"], then: "good" },
+  // the Final Exam: three right in four, some left blank, then submit. No hint may show before that.
+  { id: "exam", game: "exam", stage: "all" },
   { id: "blaster", game: "blaster", stage: "2", script: [R(0.05), R(0.4), W(0.1), R(0.05), R(0.05), R(0.7), R(0.05), R(0.05), R(0.05), R(0.05), R(0.05), R(0.05), T(), R(0.05)], then: W(0.08) },
 ];
 
@@ -97,6 +101,10 @@ function startPlay(play) {
   // frames run in seconds (scene updates, tweens and effects code all still run)
   const rr = A.GFX.renderer;
   if (rr) { rr.render = () => {}; rr.compile = () => {}; }
+  // decks are drawn when a game is built: give that moment its own seed too
+  const cover = A.UI.cover.bind(A.UI);
+  A.UI.cover = (fn) => cover(() => { T.logicSeed(7000 + PLAYS_INDEX); fn(); });
+  const hash = (str) => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); };
   A.go(play.game, play.stage);
   const snap = (s) => {
     const o = {};
@@ -124,8 +132,38 @@ function startPlay(play) {
         stats: st.stats, boxes, items: Object.keys(st.items).length,
         scores: Object.fromEntries(Object.entries(st.scores || {}).map(([g, l]) => [g, l.map((e) => { const c = Object.assign({}, e); delete c.t; return c; })])),
         boss: st.boss || null, ach: Object.keys(st.ach || {}).sort(),
+        // every item's box, count and timestamp (the spaced-repetition state), and all saved progress but the settings
+        itemsHash: hash(JSON.stringify(Object.keys(st.items).sort().map((k) => [k, st.items[k]]))),
+        savedHash: hash(JSON.stringify(Object.keys(st).filter((k) => k !== "settings").sort().map((k) => [k, st[k]]))),
       };
       T.done = true;
+      return;
+    }
+    if (name === "MemoryGame") {
+      if (s.state === "front") { cur = { n, id: s.queue[0], left: s.queue.length }; s.flip(); return; }
+      if (s.state === "back") {
+        const kind = play.cards[n] || play.then;
+        n++;
+        s.grade(kind);
+        Object.assign(cur, { kind, frame: T.frame - f0, after: { done: s.done, deposits: s.deposits, left: s.queue.length, missed: s.missed.length, item: (A.Store.state.items[cur.id] || []).join("/") } });
+        trace.rounds.push(cur);
+      }
+      return;
+    }
+    if (name === "ExamGame") {
+      if (s.state !== "ask") return;
+      if (!trace.exam) trace.exam = { n: s.rounds.length, limit: s.limit, hintsBeforeSubmit: 0, did: {} };
+      const i = s.i, r = s.rounds[i];
+      if (trace.exam.did[i] === undefined) {
+        const k = i % 7 === 6 ? -1 : i % 4 === 3 ? (r.correct + 1) % r.n : r.correct;
+        if (k >= 0) s.pick(k);
+        trace.exam.did[i] = k;
+        trace.rounds.push({ n: i, q: r.q.id, order: r.order.join(""), picked: k, frame: T.frame - f0 });
+        return;
+      }
+      // the exam must not say whether an answer is right until it is submitted
+      trace.exam.hintsBeforeSubmit += document.querySelectorAll(".answers .ans.good, .answers .ans.bad, .answers.locked, .sheet").length;
+      if (i < s.rounds.length - 1) s.go(1); else { trace.exam.did = Object.keys(trace.exam.did).length; s.submit(); }
       return;
     }
     if (!s || !s.run || !s.picker) return;
@@ -202,6 +240,7 @@ function diff(a, b, at, out) {
     }
     const t = await page.evaluate(() => ({ trace: window.__t.trace, errors: window.__t.errors, frame: window.__t.frame }));
     for (const r of t.trace.rounds) { delete r.stepObj; delete r.acted; }
+    if (t.trace.exam) { console.log(`  exam: ${t.trace.exam.n} questions, hints shown before submit: ${t.trace.exam.hintsBeforeSubmit}`); if (t.trace.exam.hintsBeforeSubmit) t.errors.push("the exam showed a hint before submit"); }
     t.trace.errors = t.errors;
     t.trace.finished = done;
     result.plays.push(t.trace);
@@ -225,7 +264,7 @@ function diff(a, b, at, out) {
       diff(b, p, p.id, out);
     }
     if (out.length) { bad = true; console.log("DIFFERENT FROM BASELINE (" + base.build + "):\n  " + out.join("\n  ")); }
-    else console.log(`IDENTICAL to baseline ${base.build}: every HP, heart, score, streak, nest egg, shield, wave, question and frame matches (${result.plays.reduce((a, p) => a + p.rounds.length, 0)} answers in ${result.plays.length} games)`);
+    else console.log(`IDENTICAL to baseline ${base.build}: every HP, heart, score, streak, nest egg, shield, wave, card grade, exam mark, saved item, question and frame matches (${result.plays.reduce((a, p) => a + p.rounds.length, 0)} answers in ${result.plays.length} games)`);
   }
   process.exit(bad ? 1 : 0);
 })().catch((e) => { console.error("FAILED", e); process.exit(2); });
