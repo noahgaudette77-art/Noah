@@ -14,8 +14,18 @@ class TitleScene extends Scene3D {
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
     s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5 }));
+    // a nearer, taller layer either side of the sun: three depths of city slide past each other
+    const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), mw = 0.6 * A * 240;
+    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff }); mid.position.x = sd * mw * 0.95; s.add(mid); }
+    this.bursts = new Bursts(s);
+    this.city = new TitleCity(this);
+    // something happens in the sky or the streets every 3 to 6 seconds
+    this.director = new EventDirector(this, { min: 3, max: 6 });
+    this.skyFlash = 0;
+    this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
+    this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
@@ -34,6 +44,13 @@ class TitleScene extends Scene3D {
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
     this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
+    this.sun.userData.disc.material.uniforms.uI.value = 1.9 * (1 + 0.08 * Math.sin(this.t * 1.2)); // the sun breathes
+    this.bursts.update(dt);
+    this.city.update(dt);
+    this.director.update(dt, false);
+    this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
+    this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
+    this.scene.fog.far = 620 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
     this.camBase.set(Pointer.x * 1.2, 3.4 + Math.sin(this.t * 0.7) * 0.15 - Pointer.y * 0.5, 12);
     this.lookAt.set(Pointer.x * 6, 9, -120);
     this.placeCamera();
@@ -57,7 +74,7 @@ function showTitle() {
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
-      <h1 class="logo-main">INR<br>ARCADE</h1>
+      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span></h1>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
     <button class="insert-coin px" data-act="start">INSERT COIN</button>
@@ -73,6 +90,7 @@ function showTitle() {
   };
   showTip();
   let started = false;
+  document.body.classList.add("on-title"); // the sync toast sits below the top row here
   const timer = setInterval(showTip, 6500);
   const start = () => {
     if (started) return;
@@ -88,6 +106,6 @@ function showTitle() {
     el,
     on: (a) => { if (a === "start") start(); },
     key: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
-    destroy: () => clearInterval(timer),
+    destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); },
   });
 }

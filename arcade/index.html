@@ -140,17 +140,19 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .title-top b { color: var(--yellow); font-weight: 400; }
 .logo { display: grid; justify-items: center; gap: 14px; margin-top: 4vh; }
 .logo-kicker { font: clamp(8px, 2.2vw, 12px)/1.5 var(--font-display); color: var(--cyan); text-shadow: 0 0 10px rgba(53, 239, 255, 0.8); letter-spacing: 0.14em; }
-.logo-main {
-  font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em;
+.logo-main { position: relative; display: inline-grid; font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em; transform: skewX(-8deg); }
+.logo-main > span { grid-area: 1 / 1; }
+/* the letters' depth: a dark copy stepped back down and to the right */
+.logo-depth { color: #2a0b52; transform: translate(2px, 3px); text-shadow: 1px 1px 0 #35106a, 2px 2px 0 #2e0d5c, 3px 3px 0 #260a4c, 4px 4px 0 #1e083e, 5px 5px 0 #170630, 6px 6px 0 #100424, 8px 12px 22px rgba(0, 0, 0, 0.7); }
+.logo-face {
   background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
     linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
   background-size: 250% 100%, 100% 100%;
   background-position: 160% 0, 0 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: glint 5.5s ease-in-out 1.2s 1; /* one sweep: each frame of it repaints the logo and its blurred shadows */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
-  filter: drop-shadow(0 4px 0 #2a0b52) drop-shadow(0 0 18px rgba(255, 58, 212, 0.55));
-  transform: skewX(-8deg);
+  animation: glint 7s ease-in-out 1.2s infinite; /* a sweep of light every 7 s; the logo only repaints while it crosses */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+  filter: drop-shadow(0 0 14px rgba(255, 58, 212, 0.6)) drop-shadow(0 0 34px rgba(53, 239, 255, 0.28));
 }
 .logo-sub { font: clamp(20px, 5vw, 30px)/1 var(--font-body); color: var(--yellow); letter-spacing: 0.08em; text-shadow: 0 2px 0 #12052e, 0 0 6px #12052e, 0 0 12px #12052e; }
 .insert-coin {
@@ -158,8 +160,9 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-@keyframes glint { 0% { background-position: 160% 0, 0 0; } 35%, 100% { background-position: -60% 0, 0 0; } }
-.attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; }
+@keyframes glint { 0% { background-position: 160% 0, 0 0; } 17%, 100% { background-position: -60% 0, 0 0; } }
+.attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; background: rgba(9, 3, 32, 0.78); border: 1px solid rgba(53, 239, 255, 0.28); padding: 8px 12px; } /* a plate behind the tip: the grid's lines used to cross the words */
+.on-title #toast { top: calc(var(--gut-t) + 34px); } /* clear of the CREDIT / MASTERY / HI row */
 .attract b { color: var(--lime); font-weight: 400; }
 .title-foot { font: 8px/1.8 var(--font-display); color: var(--dim); }
 
@@ -531,7 +534,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-face, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
@@ -3521,12 +3524,12 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1 } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0 } = {}) {
   const uniforms = Object.assign(fogUniforms(), {
     uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
     tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
     uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
-    uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha },
+    uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha }, uPulse: { value: pulse },
   });
   const mat = new THREE.ShaderMaterial({
     uniforms, extensions: { derivatives: true },
@@ -3534,7 +3537,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
-      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid;
+      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){
         vec3 col = uBase;
@@ -3565,6 +3568,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         float halo = exp(-min(aa.x, aa.y) * 0.45);
         float fade = 1.0 - smoothstep(0.18, 0.55, max(fw.x, fw.y));
         col += uLine * (ln + halo * uGlow * 0.2) * fade * uGrid;
+        if (uPulse > 0.0) {
+          // packets of light running along the lines: toward us down the long ones, sideways on the cross ones
+          float pz = pow(0.5 + 0.5 * sin(g.y * 0.55 + uTime * 2.3 + floor(g.x - 0.5) * 1.7), 14.0);
+          float px = pow(0.5 + 0.5 * sin(g.x * 0.7 - uTime * 1.6 + floor(g.y - 0.5) * 2.3), 18.0);
+          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2;
+        }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -4076,6 +4085,192 @@ class EventDirector {
   }
 }
 
+/* ---- 09c-ambient.js ---- */
+// Things that happen in a sky, shared by every scene that has one: meteor showers,
+// fireworks, lightning, a distant explosion, a UFO, a blimp with an ad, a helicopter
+// with a searchlight, delivery drones, a laser show, birds. Each is built once,
+// hidden, and registered with the scene's Event Director. Look only.
+const AMBIENT_SHARED = { uScroll: { value: 0 }, uLen: { value: 256 }, uZMax: { value: 12 } };
+function adTexture() { return adTexture.t || (adTexture.t = racerAdAtlas()); }
+class AmbientSky {
+  // o: host (a Scene3D with scene, camera, bursts, shake), director, win() -> the
+  // slice of sky in view { w, y0, y1, z, s }, and optional city(), open(), wide(),
+  // calm() 0..1, storm(), flash(k), dry()
+  constructor(o) {
+    const g = o.host, s = g.scene, D = o.director;
+    this.o = o;
+    o.calm = o.calm || (() => 0);
+    o.storm = o.storm || (() => true);
+    o.flash = o.flash || (() => {});
+    const win = o.win, city = o.city || (() => false), open = o.open || (() => true), wide = o.wide || (() => open() && !city());
+    this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const BOX = new THREE.BoxGeometry(1, 1, 1), CYL = new THREE.CylinderGeometry(1, 1, 1, 10);
+    const basic = (b) => { const m = new THREE.Mesh(b.build("color"), this.glowMat); m.frustumCulled = false; m.visible = false; return m; };
+    const hide = (...x) => x.forEach((y) => { y.visible = false; });
+    const fade = (t, dur, a = 0.6, b = 0.8) => smoothstep(0, a, t) * (1 - smoothstep(dur - b, dur, t));
+
+    // -- 1. meteor shower: streaks across the sky
+    const mg = new THREE.PlaneGeometry(1, 1);
+    this.meteors = Array.from({ length: 7 }, () => { const m = new THREE.Mesh(mg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 })); m.visible = false; m.layers.set(1); s.add(m); return m; });
+    D.add({ id: "meteors", dur: 5, can: wide,
+      start: (r) => { const c = city(), W = c ? 20 : 230; r.z = c ? -210 : -420; r.s = c ? 0.3 : 1; r.m = this.meteors.map((m, i) => ({ m, t0: i * 0.45 + rand(0, 0.3), x: rand(-1.1, -0.1) * W, y: c ? rand(52, 74) : rand(120, 200), vx: rand(0.35, 0.6) * W, vy: -rand(0.16, 0.26) * W, col: Math.random() < 0.5 ? 0xbfe8ff : 0xffe2b0 })); },
+      update: (dt, t, r) => { for (const o of r.m) { const k = (t - o.t0) / 1.3; o.m.visible = k > 0 && k < 1; if (!o.m.visible) continue; o.m.position.set(o.x + o.vx * k * 1.3, o.y + o.vy * k * 1.3, r.z); o.m.rotation.z = Math.atan2(o.vy, o.vx); o.m.scale.set(46 * r.s, 2.4 * r.s, 1); o.m.material.color.set(o.col).multiplyScalar(2.2); o.m.material.opacity = Math.sin(k * Math.PI); } },
+      end: () => hide(...this.meteors) });
+
+    // -- 2. fireworks over the skyline (also the answer to a right answer)
+    D.add({ id: "fireworks", big: true, dur: 3.2, can: open,
+      start: (r) => { r.n = 0; r.next = 0; r.max = r.arg && r.arg.n ? r.arg.n : 5; },
+      update: (dt, t, r) => {
+        if (r.n < r.max && t >= r.next) {
+          r.n++; r.next = t + rand(0.42, 0.6); // never more than two or three bursts a second
+          const W = win(), p = new THREE.Vector3(rand(-W.w, W.w) * 0.85, rand(W.y0, W.y1), W.z), col = [COLORS.magenta, COLORS.cyan, COLORS.yellow, COLORS.lime, COLORS.orange, 0xffffff][Math.floor(Math.random() * 6)];
+          g.bursts.burst(p, col, { n: 64, speed: 34 * W.s, size: 3.4 * W.s, life: 1.7, gravity: -9 * W.s });
+          g.bursts.burst(p, 0xffffff, { n: 18, speed: 16 * W.s, size: 2.2 * W.s, life: 0.9, gravity: -5 * W.s });
+        }
+      } });
+
+    // -- 3. lightning: one bolt, one flash of sky
+    const lpos = new Float32Array(14 * 18);
+    const lgeo = new THREE.BufferGeometry();
+    lgeo.setAttribute("position", new THREE.BufferAttribute(lpos, 3).setUsage(THREE.DynamicDrawUsage));
+    this.bolt = new THREE.Mesh(lgeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }));
+    this.bolt.frustumCulled = false; this.bolt.visible = false; this.bolt.layers.set(1);
+    s.add(this.bolt);
+    D.add({ id: "lightning", big: true, flashy: true, dur: 1.4, can: () => open() && o.storm(),
+      start: () => {
+        const c = city(), q = c ? 0.2 : 1, z = c ? -200 : -430;
+        let x = c ? rand(-9, 9) : rand(-220, 220), y = c ? 76 : 230;
+        for (let i = 0; i < 14; i++) {
+          const nx = x + rand(-22, 22) * q, ny = y - 14 * q, w = (1.6 - i * 0.07) * (c ? 0.3 : 1), o = i * 18;
+          [[x - w, y], [x + w, y], [nx + w, ny], [x - w, y], [nx + w, ny], [nx - w, ny]].forEach(([px, py], k) => { lpos[o + k * 3] = px; lpos[o + k * 3 + 1] = py; lpos[o + k * 3 + 2] = z; });
+          x = nx; y = ny;
+        }
+        lgeo.attributes.position.needsUpdate = true;
+        this.bolt.visible = true;
+      },
+      update: (dt, t) => { const k = 1 - smoothstep(0.05, 0.5, t); this.bolt.material.color.setRGB(3.5 * k, 3.7 * k, 4.2 * k); o.flash(k * 0.9); this.bolt.visible = k > 0.01; },
+      end: () => hide(this.bolt) });
+
+    // -- 4. a distant explosion: a flash on the horizon, a ring across the ground, then the shock arrives
+    this.blast = glowSprite(neon(0xffb86a, 2.4), 10, 0);
+    this.blast.visible = false; this.blast.layers.set(1);
+    this.blastRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    this.blastRing.rotation.x = -Math.PI / 2; this.blastRing.visible = false; this.blastRing.layers.set(1);
+    s.add(this.blast, this.blastRing);
+    D.add({ id: "explosion", big: true, flashy: true, dur: 2.6, can: open,
+      start: (r) => { const c = city(); r.s = c ? 0.4 : 1; r.p = c ? new THREE.Vector3(rand(-5, 5), 12, -190) : new THREE.Vector3(rand(-1, 1) * win().w, 14, -290); r.hit = false; this.blast.position.copy(r.p); this.blastRing.position.set(r.p.x, 0.3, r.p.z); this.blast.visible = this.blastRing.visible = true; g.bursts.burst(r.p, COLORS.orange, { n: 50, speed: 22 * r.s, size: 4 * r.s, life: 1.6, gravity: 3 }); },
+      update: (dt, t, r) => {
+        this.blast.scale.setScalar((30 + t * 70) * r.s); this.blast.material.opacity = Math.max(0, 1 - t / 1.1);
+        const k = t / 2.2; this.blastRing.scale.setScalar(1 + k * 330 * (r.s < 1 ? 0.6 : 1)); this.blastRing.material.opacity = Math.max(0, 1 - k) * 0.8;
+        if (!r.hit && t > 1.5) { r.hit = true; GFX.ripple(g.camera, new THREE.Vector3(r.p.x * 0.2, 2, -30), 0.5, 0.8); g.shake(0.16); }
+      },
+      end: () => hide(this.blast, this.blastRing) });
+
+    // -- 5. a UFO: slides in, hangs with its beam down, and is gone
+    { const b = new RacerBatch(), V = (r, y) => new THREE.Vector2(r, y);
+      const hull = new THREE.LatheGeometry([V(0.2, -1.2), V(7, -0.2), V(9, 0.5), V(5, 1.4), V(3.4, 1.5)], 16);
+      b.add(hull, null, 0x2a3140); hull.dispose();
+      const dome = new THREE.SphereGeometry(3.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+      b.add(dome, racerM(0, 1.4, 0), 0x9fe8ff, 0.8); dome.dispose();
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; b.add(BOX, racerM(Math.cos(a) * 8.2, 0.3, Math.sin(a) * 8.2, 0.9, 0.5, 0.9), [0x5dffb0, 0xff3ad4, 0xffd23d][i % 3], 2.6); }
+      this.ufo = new THREE.Group(); this.ufoBody = basic(b); this.ufoBody.visible = true;
+      this.ufoBeam = racerShaft(0x8fffe0, 1.6, 11, 60, 14); this.ufoBeam.rotation.x = Math.PI;
+      this.ufo.add(this.ufoBody, this.ufoBeam); this.ufo.visible = false; s.add(this.ufo); }
+    D.add({ id: "ufo", dur: 9, can: open,
+      start: (r) => { const c = city(); r.c = c; r.sd = Math.random() < 0.5 ? -1 : 1; r.x = c ? rand(-2.5, 2.5) : rand(0.15, 0.5) * win().w * r.sd; r.hy = c ? 14.5 : win().y0; this.ufo.visible = true; this.ufo.scale.setScalar(c ? 0.17 : 1); },
+      update: (dt, t, r) => {
+        const inn = smoothstep(0, 2.2, t), out = smoothstep(7, 9, t), q = r.c ? 0.3 : 1;
+        this.ufo.position.set(lerp(-r.sd * 320 * (r.c ? 0.02 : 1), r.x, inn) + out * r.sd * 420 * (r.c ? 0.015 : 1) + Math.sin(t * 1.3) * 3 * q, lerp(r.c ? 26 : r.hy + 100, r.hy, inn) + out * (r.c ? 16 : 180) + Math.sin(t * 2.1) * 1.5 * q * 0.5, r.c ? -46 : -230);
+        this.ufoBody.rotation.y = t * 1.6; this.ufo.rotation.z = Math.sin(t * 1.3) * 0.08 - out * r.sd * 0.5;
+        this.ufoBeam.material.uniforms.uI.value = 0.55 * smoothstep(2.4, 3.2, t) * (1 - smoothstep(6.2, 6.9, t)) * (1 - 0.4 * o.calm());
+      },
+      end: () => hide(this.ufo) });
+
+    // -- 6. a neon blimp with an ad on its flank, crossing the whole sky
+    { const b = new RacerBatch();
+      const hull = new THREE.IcosahedronGeometry(1, 2); b.add(hull, racerM(0, 0, 0, 34, 10, 10), 0x1c2230); hull.dispose();
+      b.add(BOX, racerM(0, -10.5, 0, 9, 3, 4), 0x2a3140); b.add(BOX, racerM(0, -10.4, 2.05, 7, 1.2, 0.1), 0xffe2a8, 2);
+      [[-30, 5, 0], [-30, -5, 0], [-30, 0, 5], [-30, 0, -5]].forEach(([x, y, z]) => b.add(BOX, racerM(x, y, z, 10, y ? 7 : 0.6, z ? 7 : 0.6), 0x2a3140));
+      for (let i = 0; i < 9; i++) b.add(BOX, racerM(-28 + i * 7, -9.2 + Math.abs(i - 4) * 1.35, 9.4 - Math.abs(i - 4) * 1.5, 1, 1, 1), i % 2 ? 0xff3ad4 : 0x35efff, 2.6);
+      b.add(BOX, racerM(34.5, 0, 0, 1.2, 1.2, 1.2), 0xff3030, 3);
+      this.blimp = new THREE.Group(); const body = basic(b); body.visible = true;
+      const ge = new THREE.PlaneGeometry(30, 9); ge.setAttribute("aZ", new THREE.Float32BufferAttribute(new Float32Array(4), 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Float32Array(4).fill(0.37), 1));
+      const ad = new THREE.Mesh(ge, racerAdMaterial(AMBIENT_SHARED, adTexture(), false, false)); ad.position.set(0, 0.5, 10.1);
+      this.blimp.add(body, ad); this.blimp.visible = false; s.add(this.blimp); }
+    D.add({ id: "blimp", dur: 30, can: wide,
+      start: (r) => { r.c = city(); r.y = r.c ? rand(40, 52) : rand(win().y0, win().y1) * 1.42; this.blimp.visible = true; this.blimp.scale.setScalar(r.c ? 0.32 : 1); },
+      update: (dt, t, r) => { const x = r.c ? -44 + t * 6.5 : -330 + t * 22; this.blimp.position.set(x, r.y + Math.sin(t * 0.5) * 2 * (r.c ? 0.4 : 1), r.c ? -170 : -360); if (r.c && x > 44) return false; },
+      end: () => hide(this.blimp) });
+
+    // -- 7. a helicopter sweeping a searchlight over the road
+    { const b = new RacerBatch();
+      const hull = new THREE.IcosahedronGeometry(1, 1); b.add(hull, racerM(0, 0, 0, 2.4, 1.5, 1.4), 0x20262e); hull.dispose();
+      b.add(BOX, racerM(-3.4, 0.3, 0, 4.6, 0.36, 0.36), 0x20262e); b.add(BOX, racerM(-5.6, 1.0, 0, 0.5, 1.6, 0.12), 0x20262e);
+      b.add(BOX, racerM(1.2, 0.2, 0, 1.2, 0.8, 1.2), 0x8fd8ff, 0.5);
+      [-0.8, 0.8].forEach((z) => { b.add(BOX, racerM(0, -1.7, z, 3.4, 0.1, 0.1), 0x3a3f48); [-1, 1].forEach((x) => b.add(BOX, racerM(x, -1.25, z * 0.9, 0.08, 0.9, 0.08), 0x3a3f48)); });
+      b.add(BOX, racerM(0, 0.2, 1.42, 0.3, 0.3, 0.1), 0x30ff60, 3); b.add(BOX, racerM(0, 0.2, -1.42, 0.3, 0.3, 0.1), 0xff3030, 3); b.add(BOX, racerM(-5.7, 1.9, 0, 0.26, 0.26, 0.26), 0xffffff, 3);
+      b.add(CYL, racerM(1.9, -0.9, 0, 0.36, 0.5, 0.36), 0xfff0d2, 3);
+      this.heli = new THREE.Group(); const body = basic(b); body.visible = true;
+      this.rotor = new THREE.Mesh(new THREE.CircleGeometry(4.6, 18), new THREE.MeshBasicMaterial({ color: 0x9fb4c8, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+      this.rotor.rotation.x = -Math.PI / 2; this.rotor.position.y = 1.7;
+      const blades = new RacerBatch(); [0, Math.PI / 2].forEach((a) => blades.add(BOX, racerM(0, 1.72, 0, 9.2, 0.05, 0.3, 0, a), 0x15171c));
+      this.blades = basic(blades); this.blades.visible = true;
+      this.heliBeam = racerShaft(0xfff0d2, 0.4, 7, 46, 12); this.heliBeam.position.set(1.9, -1.0, 0);
+      this.heli.add(body, this.rotor, this.blades, this.heliBeam); this.heli.visible = false; s.add(this.heli); }
+    D.add({ id: "helicopter", dur: 10, can: open,
+      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(12.5, 15) : rand(26, 32); r.z = rand(-120, -70); r.x = rand(-3.5, 3.5); this.heli.visible = true; this.heli.scale.setScalar(r.c ? 0.7 : 1); },
+      update: (dt, t, r) => {
+        if (r.c) { this.heli.position.set(r.x + Math.sin(t * 0.7) * 1.5, r.y + Math.sin(t * 1.1) * 0.8, -215 + t * 23); this.heli.rotation.set(0, -Math.PI / 2, 0); }
+        else { this.heli.position.set(r.sd * (-70 + t * 14), r.y + Math.sin(t * 1.1) * 0.8, r.z); this.heli.rotation.set(0, r.sd > 0 ? 0 : Math.PI, r.sd * -0.12); }
+        this.blades.rotation.y = t * 14;
+        this.heliBeam.rotation.set(Math.PI + Math.sin(t * 0.8) * 0.3, 0, -0.5 + Math.sin(t * 0.55) * 0.3);
+        this.heliBeam.material.uniforms.uI.value = 0.42 * fade(t, 10) * (1 - 0.45 * o.calm()) * (GFX.opt.beams ? 1 : 0);
+      },
+      end: () => hide(this.heli) });
+
+    // -- 8. delivery drones in a line, each with a parcel and a winking light
+    { const b = new RacerBatch();
+      b.add(BOX, racerM(0, 0, 0, 0.9, 0.22, 0.9), 0x20262e); b.add(BOX, racerM(0, -0.5, 0, 0.7, 0.6, 0.7), 0xb8874a);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => { b.add(BOX, racerM(i * 0.6, 0.05, j * 0.6, 0.6, 0.06, 0.08, 0, Math.PI / 4 * i * j), 0x3a3f48); b.add(CYL, racerM(i * 0.85, 0.16, j * 0.85, 0.42, 0.02, 0.42), 0x8fd8ff, 0.55); });
+      b.add(BOX, racerM(0, 0.16, 0.5, 0.14, 0.14, 0.14), 0x5dffb0, 3); b.add(BOX, racerM(0, 0.16, -0.5, 0.14, 0.14, 0.14), 0xff3030, 3);
+      const ge = b.build("color");
+      this.drones = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(ge, this.glowMat); m.visible = false; m.frustumCulled = false; s.add(m); return m; }); }
+    D.add({ id: "drones", dur: 8, can: open,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(10.5, 14); r.z = rand(-60, -34); },
+      update: (dt, t, r) => this.drones.forEach((m, i) => { const x = r.sd * (-34 + (t - i * 0.5) * 9); m.visible = Math.abs(x) < (city() ? 8.4 : 34); m.position.set(x, r.y + Math.sin(t * 2.4 + i) * 0.35 + i * 0.3, r.z - i * 1.6); m.rotation.set(0, r.sd > 0 ? Math.PI / 2 : -Math.PI / 2, Math.sin(t * 2 + i) * 0.08); m.scale.setScalar(1.25); }),
+      end: () => hide(...this.drones) });
+
+    // -- 9. a laser show from the rooftops
+    this.lasers = [0xff3ad4, 0x35efff, 0x5dffb0, 0xffd23d].map((c, i) => { const l = racerShaft(c, 0.25, 1.4, 240, 6); l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.visible = false; s.add(l); return l; });
+    D.add({ id: "lasers", dur: 8, can: () => wide() && !GFX.lite && !(o.dry && o.dry()),
+      start: (r) => { r.c = city(); this.lasers.forEach((l, i) => { l.visible = true; if (r.c) l.position.set((i % 2 ? 1 : -1) * 9.6, 30 + i * 2, -80 - i * 26); else l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.scale.setScalar(r.c ? 0.32 : 1); }); },
+      update: (dt, t, r) => this.lasers.forEach((l, i) => { l.rotation.set(-0.5 + Math.sin(t * 0.7 + i * 1.7) * 0.4, 0, r.c ? (i % 2 ? 1 : -1) * (0.75 + Math.sin(t * 0.9 + i * 2.3) * 0.5) : Math.sin(t * 0.9 + i * 2.3) * 0.9); l.material.uniforms.uI.value = 0.75 * fade(t, 8) * (1 - 0.5 * o.calm()) * (GFX.opt.beams ? 1 : 0); }),
+      end: () => hide(...this.lasers) });
+
+    // -- 10. birds crossing in a loose V
+    { const pos = [], wing = [], seed = [];
+      for (let i = 0; i < 11; i++) { const bx = -Math.abs(i - 5) * 3 + rand(-1, 1), bz = (i - 5) * 3.4, by = rand(-1.5, 1.5);
+        [[0, 0, 0, 0], [-1.2, 0, 2.0, 1], [0.9, 0, 0, 0], [0, 0, 0, 0], [0.9, 0, 0, 0], [-1.2, 0, -2.0, 1]].forEach(([x, y, z, w]) => { pos.push(bx + x, by + y, bz + z); wing.push(w); seed.push(i * 0.71); }); }
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("aWing", new THREE.Float32BufferAttribute(wing, 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+      this.birds = new THREE.Mesh(ge, new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x0a0c12) } }, side: THREE.DoubleSide,
+        vertexShader: "attribute float aWing; attribute float aSeed; uniform float uTime; void main(){ vec3 p = position; p.y += aWing * sin(uTime * 7.0 + aSeed * 6.0) * 1.3; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+        fragmentShader: "uniform vec3 uColor; void main(){ gl_FragColor = vec4(uColor, 1.0); }" }));
+      this.birds.frustumCulled = false; this.birds.visible = false; s.add(this.birds); }
+    D.add({ id: "birds", dur: 11, can: open,
+      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(9, 13) : rand(38, 60); r.z = rand(-190, -120); this.birds.visible = true; this.birds.scale.setScalar(r.c ? 0.22 : 1); this.birds.material.uniforms.uColor.value.copy(g.scene.fog.color).multiplyScalar(0.25); },
+      update: (dt, t, r) => {
+        if (r.c) { this.birds.position.set(Math.sin(t * 0.5) * 2.5, r.y + Math.sin(t * 0.6) * 1.5, -210 + t * 21); this.birds.rotation.y = -Math.PI / 2; }
+        else { this.birds.position.set(r.sd * (-190 + t * 36), r.y + Math.sin(t * 0.6) * 3, r.z); this.birds.rotation.y = r.sd > 0 ? 0 : Math.PI; }
+      },
+      end: () => hide(this.birds) });
+
+    // the big see-through shafts cost fill-rate: on the lite quality levels they are left out
+    if (g.decor) g.decor(this.ufoBeam, this.heliBeam, ...this.lasers);
+    BOX.dispose(); CYL.dispose();
+  }
+}
+
 /* ---- 10-title.js ---- */
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
 class TitleScene extends Scene3D {
@@ -4093,8 +4288,18 @@ class TitleScene extends Scene3D {
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
     s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5 }));
+    // a nearer, taller layer either side of the sun: three depths of city slide past each other
+    const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), mw = 0.6 * A * 240;
+    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff }); mid.position.x = sd * mw * 0.95; s.add(mid); }
+    this.bursts = new Bursts(s);
+    this.city = new TitleCity(this);
+    // something happens in the sky or the streets every 3 to 6 seconds
+    this.director = new EventDirector(this, { min: 3, max: 6 });
+    this.skyFlash = 0;
+    this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
+    this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
@@ -4113,6 +4318,13 @@ class TitleScene extends Scene3D {
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
     this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
+    this.sun.userData.disc.material.uniforms.uI.value = 1.9 * (1 + 0.08 * Math.sin(this.t * 1.2)); // the sun breathes
+    this.bursts.update(dt);
+    this.city.update(dt);
+    this.director.update(dt, false);
+    this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
+    this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
+    this.scene.fog.far = 620 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
     this.camBase.set(Pointer.x * 1.2, 3.4 + Math.sin(this.t * 0.7) * 0.15 - Pointer.y * 0.5, 12);
     this.lookAt.set(Pointer.x * 6, 9, -120);
     this.placeCamera();
@@ -4136,7 +4348,7 @@ function showTitle() {
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
-      <h1 class="logo-main">INR<br>ARCADE</h1>
+      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span></h1>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
     <button class="insert-coin px" data-act="start">INSERT COIN</button>
@@ -4152,6 +4364,7 @@ function showTitle() {
   };
   showTip();
   let started = false;
+  document.body.classList.add("on-title"); // the sync toast sits below the top row here
   const timer = setInterval(showTip, 6500);
   const start = () => {
     if (started) return;
@@ -4167,8 +4380,196 @@ function showTitle() {
     el,
     on: (a) => { if (a === "start") start(); },
     key: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
-    destroy: () => clearInterval(timer),
+    destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); },
   });
+}
+
+/* ---- 10b-titlecity.js ---- */
+// The city on the title screen: megatowers laced with neon conduits, rolling ad
+// panels and flickering blade signs; a suspension bridge across the sun carrying
+// two streams of traffic, more streams in sky lanes at three depths; searchlights;
+// and what the Event Director sends through (a train, a patrol chase, cars passing
+// overhead, plus everything in AmbientSky). All original, all procedural.
+class TitleCity {
+  constructor(host) {
+    const g = (this.g = host), s = g.scene;
+    this.t = 0;
+    this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3();
+    const BOX = new THREE.BoxGeometry(1, 1, 1);
+    // How wide the view is at a distance: a phone held upright sees a narrow slice,
+    // so everything is laid out as a fraction of what is actually on screen.
+    const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), tall = A < 1;
+    const hw = (z) => 0.6 * A * (12 - z);
+    this.hw = hw;
+    const glow = (this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true }));
+    const put = (b, x, y, z, sx, sy, sz, c, k = 1, rx = 0, ry = 0, rz = 0) => b.add(BOX, racerM(x, y, z, sx, sy, sz, rx, ry, rz), c, k);
+    const strut = (b, a, c, t, col, k = 1) => racerStrut(b, BOX, new THREE.Vector3(a[0], a[1], a[2]), new THREE.Vector3(c[0], c[1], c[2]), t, col, k);
+
+    // ---- megatowers: stacked setbacks, conduits of light, window bands, beacons
+    const tb = new RacerBatch(), blinkA = new RacerBatch(), blinkB = new RacerBatch();
+    const ads = [], signs = [[], [], []];
+    const NEON = [0x35efff, 0xff3ad4, 0x5dffb0, 0xffd23d];
+    const tower = (x, z, w, h, i) => {
+      const c0 = [0x0b0a1c, 0x0e0c22, 0x090818][i % 3];
+      let y = 0, ww = w;
+      [0.52, 0.3, 0.18].forEach((f, k) => {
+        const hh = h * f;
+        put(tb, x, y + hh / 2, z, ww, hh, ww * 0.8, c0, 1 + k * 0.25);
+        put(tb, x, y + hh, z, ww + 1.2, 0.8, ww * 0.8 + 1.2, 0x1a1838); // ledge
+        put(tb, x, y + hh + 0.5, z + ww * 0.4 + 0.62, ww + 1.2, 0.18, 0.1, NEON[(i + k) % 4], 1.7);
+        // window bands on the face toward us: most steady, some on a slow twinkle
+        const rows = Math.floor(hh / 3.2);
+        for (let r = 0; r < rows; r++) {
+          if (Math.random() < 0.3) continue;
+          const wy = y + 2 + r * 3.2, lit = Math.random(), bw = ww * rand(0.3, 0.86), bx = x + rand(-1, 1) * (ww - bw) * 0.45;
+          const col = Math.random() < 0.7 ? 0xffcf7a : Math.random() < 0.5 ? 0x8fe8ff : 0xff9bd8;
+          (lit < 0.14 ? blinkA : lit < 0.28 ? blinkB : tb).add(BOX, racerM(bx, wy, z + ww * 0.4 + 0.05, bw, 1.0, 0.1), col, rand(0.5, 1.25));
+        }
+        y += hh; ww *= 0.72;
+      });
+      // conduits of light running up the face, kinked like cable trunks
+      [-0.32, 0.12, 0.36].forEach((f, k) => {
+        if ((i + k) % 3 === 0) return;
+        const col = NEON[(i * 2 + k) % 2], cx = x + f * w, zz = z + w * 0.4 + 0.16;
+        put(tb, cx, h * 0.14, zz, 0.28, h * 0.28, 0.1, col, 2.0);
+        put(tb, cx + 0.9, h * 0.28, zz, 2.0, 0.28, 0.1, col, 2.0);
+        put(tb, cx + 1.8, h * 0.4, zz, 0.28, h * 0.24, 0.1, col, 2.0);
+      });
+      put(tb, x, h + 5, z, 0.3, 10, 0.3, 0x1a1838);
+      put(tb, x, h + 10.2, z, 0.9, 0.9, 0.9, 0xff3030, 3);
+      // an ad panel that rolls to a new poster, and a blade sign that flickers
+      ads.push([x - w * 0.12, h * rand(0.3, 0.44), z + w * 0.4 + 0.5, w * 0.6, w * 0.3, 0]);
+      signs[i % 3].push([x + w * 0.5 + 1.2, h * rand(0.2, 0.34), z + w * 0.4, 2.4, 9.6, i]);
+    };
+    // nearer the middle they stay low, so the logo keeps clear sky behind it
+    [[-0.5, -150, 30], [-0.74, -168, 40], [-1.02, -146, 50], [0.52, -152, 32], [0.78, -170, 42], [1.04, -148, 52], [-1.5, -190, 96], [1.55, -192, 104], [-2.1, -200, 130], [2.15, -205, 120]]
+      .forEach(([f, z, h], i) => tower(f * hw(z), z, clamp(hw(z) * 0.2, 9, 26), tall ? h : h * 1.5, i));
+    s.add(new THREE.Mesh(tb.build("color"), glow));
+    this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
+    // ad panels (not looping) and blade signs
+    { const pos = [], uv = [], az = [], seed = [];
+      ads.forEach(([x, y, z, w, h], i) => { const P = (u, v) => { pos.push(x + (u - 0.5) * w, y + (v - 0.5) * h, z); uv.push(u, v); az.push(0); seed.push((i * 0.37 + 0.11) % 1); }; P(0, 0); P(1, 0); P(1, 1); P(0, 0); P(1, 1); P(0, 1); });
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      ge.setAttribute("aZ", new THREE.Float32BufferAttribute(az, 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+      const m = new THREE.Mesh(ge, racerAdMaterial(AMBIENT_SHARED, adTexture(), false, false));
+      m.frustumCulled = false;
+      s.add(m); }
+    RacerGame.signTex = RacerGame.signTex || racerSignAtlas();
+    this.signs = signs.map((list) => {
+      const pos = [], uv = [], n = RACER_SIGNS.length;
+      list.forEach(([x, y, z, w, h, i]) => { const k = i % n, u0 = k / n, u1 = (k + 1) / n; [[0, 0], [1, 0], [1, 1], [0, 0], [1, 1], [0, 1]].forEach(([a, b]) => { pos.push(x + (a - 0.5) * w, y + b * h, z); uv.push(a ? u1 : u0, b); }); });
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      const m = new THREE.Mesh(ge, new THREE.MeshBasicMaterial({ map: RacerGame.signTex, fog: false }));
+      s.add(m);
+      return m;
+    });
+
+    // ---- the bridge across the sun, and a lower causeway behind it
+    const bb = new RacerBatch(), DK = 0x0d0b20;
+    put(bb, 0, 16, -120, 560, 1.3, 9, DK, 1.4);
+    put(bb, 0, 16.9, -115.4, 560, 0.16, 0.16, 0x35efff, 1.8);
+    put(bb, 0, 16.9, -124.6, 560, 0.16, 0.16, 0xff3ad4, 1.2);
+    const BW = hw(-120), sp = BW * 0.56, TH = tall ? 30 : 46; // piers either side of the sun, none across its middle
+    for (let i = -6; i < 6; i++) put(bb, (i + 0.5) * sp, 7.7, -120, 2.4, 15.4, 5.5, DK, 1.2);
+    for (const tx of [-BW * 0.62, BW * 0.62]) {
+      for (const dz of [-4.6, 4.6]) put(bb, tx, TH / 2, -120 + dz, 1.5, TH, 1.5, DK, 1.6);
+      put(bb, tx, TH - 2, -120, 1.9, 1.6, 10.8, DK, 1.8); put(bb, tx, TH * 0.7, -120, 1.7, 1.3, 10.8, DK, 1.8);
+      put(bb, tx, TH + 0.9, -120, 0.9, 0.9, 0.9, 0xff3030, 3);
+      const run = BW * 0.52 / 7;
+      for (let k = 1; k <= 7; k++) for (const sd of [-1, 1]) { strut(bb, [tx, TH - 1 - k * (TH - 19) / 8, -115.4], [tx + sd * k * run, 16.9, -115.4], 0.16, 0x7f95d0, 1.0); put(bb, tx + sd * k * run, 17.3, -115.2, 0.4, 0.4, 0.3, 0xfff0d2, 2.2); }
+    }
+    put(bb, 0, 8.6, -196, 640, 0.9, 6, DK, 1.2); put(bb, 0, 9.3, -193, 640, 0.14, 0.14, 0xffa53d, 1.4);
+    for (let i = -8; i <= 8; i++) put(bb, i * 38, 4.2, -196, 2.4, 8.4, 4, DK, 1.1);
+    s.add(new THREE.Mesh(bb.build("color"), glow));
+
+    // ---- traffic as moving light: each car a short streak, white ahead and red behind,
+    // sliding along its lane in the vertex shader (one draw call for all of it)
+    { const pos = [], col = [], sp = [], x0 = [];
+      const lane = (y, z, dir, n, speed, size, tint) => { for (let i = 0; i < n; i++) {
+        const start = Math.random() * 640, v = speed * rand(0.8, 1.25) * dir, len = size * rand(2.6, 4.4), hh = size * 0.3, c = new THREE.Color(tint);
+        [[0, len * 0.5, [1.8, 1.7, 1.5]], [-len * 0.5, 0, [1.9, 0.12, 0.2]]].forEach(([a, b2, cc], part) => {
+          const A = dir > 0 ? a : -a, B = dir > 0 ? b2 : -b2, cl = part === 0 ? cc : [cc[0] * (0.6 + 0.4 * c.r), cc[1] + 0.25 * c.g, cc[2] + 0.5 * c.b];
+          [[A, -hh], [B, -hh], [B, hh], [A, -hh], [B, hh], [A, hh]].forEach(([dx, dy]) => { pos.push(dx, y + dy + (i % 3) * 0.5, z + (i % 2) * 1.4); col.push(cl[0], cl[1], cl[2]); sp.push(v); x0.push(start); });
+        }); } };
+      lane(17.9, -117.6, 1, 22, 16, 0.5, 0x000000); lane(17.9, -122.6, -1, 22, 14, 0.5, 0x000000);
+      lane(9.9, -195, 1, 16, 11, 0.4, 0x000000); lane(9.9, -197, -1, 16, 10, 0.4, 0x000000);
+      // sky lanes, placed in the open sky above the logo and in the gap beneath it
+      lane(55, -96, 1, 12, 30, 0.7, 0x35efff); lane(61, -100, -1, 12, 26, 0.7, 0x35efff);
+      lane(94, -210, -1, 16, 22, 0.9, 0xff3ad4); lane(102, -214, 1, 16, 20, 0.9, 0xff3ad4);
+      lane(138, -330, 1, 18, 15, 1.2, 0x5dffb0); lane(146, -334, -1, 18, 13, 1.2, 0x5dffb0);
+      lane(25, -150, 1, 10, 24, 0.6, 0xffd23d); lane(28.5, -154, -1, 10, 21, 0.6, 0xffd23d);
+      const ge = new THREE.BufferGeometry();
+      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
+      ge.setAttribute("aSp", new THREE.Float32BufferAttribute(sp, 1)); ge.setAttribute("aX0", new THREE.Float32BufferAttribute(x0, 1));
+      this.traffic = new THREE.Mesh(ge, new THREE.ShaderMaterial({
+        uniforms: { uTime: { value: 0 }, uI: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: "attribute vec3 aCol; attribute float aSp; attribute float aX0; uniform float uTime; varying vec3 vCol; void main(){ vCol = aCol; vec3 p = position; p.x += mod(aX0 + uTime * aSp, 640.0) - 320.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+        fragmentShader: "uniform float uI; varying vec3 vCol; void main(){ gl_FragColor = vec4(vCol * uI, 1.0); }",
+      }));
+      this.traffic.frustumCulled = false;
+      s.add(this.traffic); }
+
+    // ---- searchlights turning over the skyline
+    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.8, 9, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
+    g.decor(...this.lights);
+
+    // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
+    const U = { uKey: { value: new THREE.Color(0.9, 0.6, 0.9) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.32, 0.2, 0.5) } };
+    this.carMat = racerTrafficMaterial(U);
+    this.carMat.uniforms.uSkyC.value.set(0xff3ad4);
+    this.fleet = [["hover", 4], ["police", 1]].map(([type, n]) => {
+      const geo = racerVehicleGeo(type);
+      const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
+      geo.setAttribute("aTint", tint); geo.setAttribute("aL", lights);
+      const m = new THREE.InstancedMesh(geo, this.carMat, n);
+      m.frustumCulled = false; m.count = 0;
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      RACER_PAINTS.slice(0, n).forEach((c, i) => { const col = new THREE.Color(type === "police" ? 0xf2f2f2 : c); tint.setXYZ(i, col.r, col.g, col.b); });
+      s.add(m);
+      return m;
+    });
+    // ---- the train that crosses the bridge
+    { const b = new RacerBatch();
+      for (let i = 0; i < 7; i++) { const x = i * 12.6; put(b, x, 0, 0, 11.8, 3.0, 3.2, i ? 0xcfd6e2 : 0xff3ad4, 0.45); put(b, x, 0.4, 1.62, 10.6, 0.9, 0.06, 0xffe2a8, 2.0); put(b, x, -1.3, 1.62, 11.8, 0.14, 0.06, 0x35efff, 2.4); }
+      put(b, 82, 0, 0, 0.2, 0.7, 2.4, 0xfff2d8, 4);
+      this.train = new THREE.Mesh(b.build("color"), glow);
+      this.train.visible = false; this.train.frustumCulled = false;
+      s.add(this.train); }
+    BOX.dispose();
+  }
+  // Events of the city's own, added to the title's director.
+  events(D) {
+    const place = (m, i, x, y, z, ry, rz = 0, sc = 1) => { m.setMatrixAt(i, this._m.compose(this._p.set(x, y, z), this._q.setFromEuler(this._e.set(0, ry, rz)), this._s.set(sc, sc, sc))); m.instanceMatrix.needsUpdate = true; };
+    const [hover, police] = this.fleet;
+    D.add({ id: "maglev", dur: 11,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; this.train.visible = true; this.train.scale.x = r.sd; },
+      update: (dt, t, r) => { const far = this.hw(-120) + 110; this.train.position.set(r.sd * (-far + t * 46), 19.2, -120); if (t * 46 > far * 2 + 20) return false; },
+      end: () => { this.train.visible = false; } });
+    D.add({ id: "flyby", dur: 6,
+      start: (r) => { r.x = [rand(-9, -3), rand(3, 9), rand(-2, 2)]; hover.count = 3; },
+      update: (dt, t, r) => { for (let i = 0; i < 3; i++) { const k = t - i * 0.7; place(hover, i, r.x[i] + Math.sin(k * 1.4 + i) * 0.8, 6.5 + i * 1.6 + Math.sin(k * 2 + i) * 0.3, 26 - k * 58, 0, Math.sin(k * 1.4 + i) * 0.2, k > 0 ? 1 : 0); } },
+      end: () => { hover.count = 0; } });
+    D.add({ id: "chase", dur: 7,
+      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(9, 12); hover.count = 4; police.count = 1; for (let i = 0; i < 3; i++) place(hover, i, 0, -99, 0, 0, 0, 0); },
+      update: (dt, t, r) => {
+        const x = r.sd * (-this.hw(-70) - 30 + t * 30), w = Math.sin(t * 2.4) * 5;
+        place(hover, 3, x, r.y + w * 0.4, -70 + w, r.sd > 0 ? -Math.PI / 2 : Math.PI / 2, 0, 1.6);
+        place(police, 0, x - r.sd * 14, r.y + 0.6 + Math.sin(t * 2.4 - 0.6) * 2, -70 + Math.sin(t * 2.4 - 0.6) * 5, r.sd > 0 ? -Math.PI / 2 : Math.PI / 2, 0, 1.6);
+      },
+      end: () => { hover.count = 0; police.count = 0; } });
+  }
+  update(dt) {
+    const t = (this.t += dt);
+    this.traffic.material.uniforms.uTime.value = t;
+    this.carMat.uniforms.uTime.value = t;
+    // windows twinkle and signs flicker, slowly: nothing here changes faster than 3 Hz
+    this.blink[0].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.9));
+    this.blink[1].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.6 + 2));
+    this.signs.forEach((m, i) => { const f = Math.sin(t * (1.1 + i * 0.7) + i * 2.1), dip = Math.sin(t * (5.3 + i) + i) > 0.93 ? 0.45 : 1; m.material.color.setScalar((1.25 + 0.2 * f) * dip); });
+    this.lights.forEach((l, i) => { l.rotation.set(-0.25 + Math.sin(t * 0.21 + i * 2) * 0.2, 0, Math.sin(t * 0.33 + i * 1.9) * 0.75); l.material.uniforms.uI.value = GFX.opt.beams ? 0.3 : 0; });
+  }
 }
 
 /* ---- 11-hub.js ---- */
@@ -8963,7 +9364,7 @@ class RacerWorld {
     this.swap = null;
     this.cityFog = 900;
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(); this._c = new THREE.Color();
-    RacerGame.adTex = RacerGame.adTex || racerAdAtlas();
+    RacerGame.adTex = adTexture();
     this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     this.addMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
     this.buildTraffic();
@@ -9371,161 +9772,9 @@ class RacerWorld {
     const win = () => (city() ? { w: 6, y0: 11.5, y1: 17.5, z: -56, s: 0.2 } : { w: 150, y0: 62, y1: 135, z: -300, s: 1 });
     const wide = () => open() && !city(); // the whole sky is in view
 
-    // -- 1. meteor shower: streaks across the sky
-    const mg = new THREE.PlaneGeometry(1, 1);
-    this.meteors = Array.from({ length: 7 }, () => { const m = new THREE.Mesh(mg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 })); m.visible = false; m.layers.set(1); s.add(m); return m; });
-    D.add({ id: "meteors", dur: 5, can: wide,
-      start: (r) => { const c = city(), W = c ? 20 : 230; r.z = c ? -210 : -420; r.s = c ? 0.3 : 1; r.m = this.meteors.map((m, i) => ({ m, t0: i * 0.45 + rand(0, 0.3), x: rand(-1.1, -0.1) * W, y: c ? rand(52, 74) : rand(120, 200), vx: rand(0.35, 0.6) * W, vy: -rand(0.16, 0.26) * W, col: Math.random() < 0.5 ? 0xbfe8ff : 0xffe2b0 })); },
-      update: (dt, t, r) => { for (const o of r.m) { const k = (t - o.t0) / 1.3; o.m.visible = k > 0 && k < 1; if (!o.m.visible) continue; o.m.position.set(o.x + o.vx * k * 1.3, o.y + o.vy * k * 1.3, r.z); o.m.rotation.z = Math.atan2(o.vy, o.vx); o.m.scale.set(46 * r.s, 2.4 * r.s, 1); o.m.material.color.set(o.col).multiplyScalar(2.2); o.m.material.opacity = Math.sin(k * Math.PI); } },
-      end: () => hide(...this.meteors) });
-
-    // -- 2. fireworks over the skyline (also the answer to a right answer)
-    D.add({ id: "fireworks", big: true, dur: 3.2, can: open,
-      start: (r) => { r.n = 0; r.next = 0; r.max = r.arg && r.arg.n ? r.arg.n : 5; },
-      update: (dt, t, r) => {
-        if (r.n < r.max && t >= r.next) {
-          r.n++; r.next = t + rand(0.42, 0.6); // never more than two or three bursts a second
-          const W = win(), p = new THREE.Vector3(rand(-W.w, W.w) * 0.85, rand(W.y0, W.y1), W.z), col = [COLORS.magenta, COLORS.cyan, COLORS.yellow, COLORS.lime, COLORS.orange, 0xffffff][Math.floor(Math.random() * 6)];
-          g.bursts.burst(p, col, { n: 64, speed: 34 * W.s, size: 3.4 * W.s, life: 1.7, gravity: -9 * W.s });
-          g.bursts.burst(p, 0xffffff, { n: 18, speed: 16 * W.s, size: 2.2 * W.s, life: 0.9, gravity: -5 * W.s });
-        }
-      } });
-
-    // -- 3. lightning: one bolt, one flash of sky
-    const lpos = new Float32Array(14 * 18);
-    const lgeo = new THREE.BufferGeometry();
-    lgeo.setAttribute("position", new THREE.BufferAttribute(lpos, 3).setUsage(THREE.DynamicDrawUsage));
-    this.bolt = new THREE.Mesh(lgeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }));
-    this.bolt.frustumCulled = false; this.bolt.visible = false; this.bolt.layers.set(1);
-    s.add(this.bolt);
-    D.add({ id: "lightning", big: true, flashy: true, dur: 1.4, can: () => open() && this.pal.rain > 0.5,
-      start: () => {
-        const c = city(), q = c ? 0.2 : 1, z = c ? -200 : -430;
-        let x = c ? rand(-9, 9) : rand(-220, 220), y = c ? 76 : 230;
-        for (let i = 0; i < 14; i++) {
-          const nx = x + rand(-22, 22) * q, ny = y - 14 * q, w = (1.6 - i * 0.07) * (c ? 0.3 : 1), o = i * 18;
-          [[x - w, y], [x + w, y], [nx + w, ny], [x - w, y], [nx + w, ny], [nx - w, ny]].forEach(([px, py], k) => { lpos[o + k * 3] = px; lpos[o + k * 3 + 1] = py; lpos[o + k * 3 + 2] = z; });
-          x = nx; y = ny;
-        }
-        lgeo.attributes.position.needsUpdate = true;
-        this.bolt.visible = true;
-      },
-      update: (dt, t) => { const k = 1 - smoothstep(0.05, 0.5, t); this.bolt.material.color.setRGB(3.5 * k, 3.7 * k, 4.2 * k); this.skyFlash = Math.max(this.skyFlash || 0, k * 0.9); this.bolt.visible = k > 0.01; },
-      end: () => hide(this.bolt) });
-
-    // -- 4. a distant explosion: a flash on the horizon, a ring across the ground, then the shock arrives
-    this.blast = glowSprite(neon(0xffb86a, 2.4), 10, 0);
-    this.blast.visible = false; this.blast.layers.set(1);
-    this.blastRing = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
-    this.blastRing.rotation.x = -Math.PI / 2; this.blastRing.visible = false; this.blastRing.layers.set(1);
-    s.add(this.blast, this.blastRing);
-    D.add({ id: "explosion", big: true, flashy: true, dur: 2.6, can: open,
-      start: (r) => { const c = city(); r.s = c ? 0.4 : 1; r.p = c ? new THREE.Vector3(rand(-5, 5), 12, -190) : new THREE.Vector3(rand(-150, 150), 14, -290); r.hit = false; this.blast.position.copy(r.p); this.blastRing.position.set(r.p.x, 0.3, r.p.z); this.blast.visible = this.blastRing.visible = true; g.bursts.burst(r.p, COLORS.orange, { n: 50, speed: 22 * r.s, size: 4 * r.s, life: 1.6, gravity: 3 }); },
-      update: (dt, t, r) => {
-        this.blast.scale.setScalar((30 + t * 70) * r.s); this.blast.material.opacity = Math.max(0, 1 - t / 1.1);
-        const k = t / 2.2; this.blastRing.scale.setScalar(1 + k * 330 * (r.s < 1 ? 0.6 : 1)); this.blastRing.material.opacity = Math.max(0, 1 - k) * 0.8;
-        if (!r.hit && t > 1.5) { r.hit = true; GFX.ripple(g.camera, new THREE.Vector3(r.p.x * 0.2, 2, -30), 0.5, 0.8); g.shake(0.16); }
-      },
-      end: () => hide(this.blast, this.blastRing) });
-
-    // -- 5. a UFO: slides in, hangs with its beam down, and is gone
-    { const b = new RacerBatch(), V = (r, y) => new THREE.Vector2(r, y);
-      const hull = new THREE.LatheGeometry([V(0.2, -1.2), V(7, -0.2), V(9, 0.5), V(5, 1.4), V(3.4, 1.5)], 16);
-      b.add(hull, null, 0x2a3140); hull.dispose();
-      const dome = new THREE.SphereGeometry(3.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
-      b.add(dome, racerM(0, 1.4, 0), 0x9fe8ff, 0.8); dome.dispose();
-      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; b.add(BOX, racerM(Math.cos(a) * 8.2, 0.3, Math.sin(a) * 8.2, 0.9, 0.5, 0.9), [0x5dffb0, 0xff3ad4, 0xffd23d][i % 3], 2.6); }
-      this.ufo = new THREE.Group(); this.ufoBody = basic(b); this.ufoBody.visible = true;
-      this.ufoBeam = racerShaft(0x8fffe0, 1.6, 11, 60, 14); this.ufoBeam.rotation.x = Math.PI;
-      this.ufo.add(this.ufoBody, this.ufoBeam); this.ufo.visible = false; s.add(this.ufo); }
-    D.add({ id: "ufo", dur: 9, can: open,
-      start: (r) => { const c = city(); r.c = c; r.sd = Math.random() < 0.5 ? -1 : 1; r.x = c ? rand(-2.5, 2.5) : rand(18, 70) * r.sd; this.ufo.visible = true; this.ufo.scale.setScalar(c ? 0.17 : 1); },
-      update: (dt, t, r) => {
-        const inn = smoothstep(0, 2.2, t), out = smoothstep(7, 9, t), q = r.c ? 0.3 : 1;
-        this.ufo.position.set(lerp(-r.sd * 320 * (r.c ? 0.02 : 1), r.x, inn) + out * r.sd * 420 * (r.c ? 0.015 : 1) + Math.sin(t * 1.3) * 3 * q, lerp(r.c ? 26 : 160, r.c ? 14.5 : 62, inn) + out * (r.c ? 16 : 180) + Math.sin(t * 2.1) * 1.5 * q * 0.5, r.c ? -46 : -230);
-        this.ufoBody.rotation.y = t * 1.6; this.ufo.rotation.z = Math.sin(t * 1.3) * 0.08 - out * r.sd * 0.5;
-        this.ufoBeam.material.uniforms.uI.value = 0.55 * smoothstep(2.4, 3.2, t) * (1 - smoothstep(6.2, 6.9, t)) * (1 - 0.4 * this.calmK);
-      },
-      end: () => hide(this.ufo) });
-
-    // -- 6. a neon blimp with an ad on its flank, crossing the whole sky
-    { const b = new RacerBatch();
-      const hull = new THREE.IcosahedronGeometry(1, 2); b.add(hull, racerM(0, 0, 0, 34, 10, 10), 0x1c2230); hull.dispose();
-      b.add(BOX, racerM(0, -10.5, 0, 9, 3, 4), 0x2a3140); b.add(BOX, racerM(0, -10.4, 2.05, 7, 1.2, 0.1), 0xffe2a8, 2);
-      [[-30, 5, 0], [-30, -5, 0], [-30, 0, 5], [-30, 0, -5]].forEach(([x, y, z]) => b.add(BOX, racerM(x, y, z, 10, y ? 7 : 0.6, z ? 7 : 0.6), 0x2a3140));
-      for (let i = 0; i < 9; i++) b.add(BOX, racerM(-28 + i * 7, -9.2 + Math.abs(i - 4) * 1.35, 9.4 - Math.abs(i - 4) * 1.5, 1, 1, 1), i % 2 ? 0xff3ad4 : 0x35efff, 2.6);
-      b.add(BOX, racerM(34.5, 0, 0, 1.2, 1.2, 1.2), 0xff3030, 3);
-      this.blimp = new THREE.Group(); const body = basic(b); body.visible = true;
-      const ge = new THREE.PlaneGeometry(30, 9); ge.setAttribute("aZ", new THREE.Float32BufferAttribute(new Float32Array(4), 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Float32Array(4).fill(0.37), 1));
-      const ad = new THREE.Mesh(ge, racerAdMaterial(g.shared, RacerGame.adTex, false, false)); ad.position.set(0, 0.5, 10.1);
-      this.blimp.add(body, ad); this.blimp.visible = false; s.add(this.blimp); }
-    D.add({ id: "blimp", dur: 30, can: wide,
-      start: (r) => { r.c = city(); r.y = r.c ? rand(40, 52) : rand(85, 125); this.blimp.visible = true; this.blimp.scale.setScalar(r.c ? 0.32 : 1); },
-      update: (dt, t, r) => { const x = r.c ? -44 + t * 6.5 : -330 + t * 22; this.blimp.position.set(x, r.y + Math.sin(t * 0.5) * 2 * (r.c ? 0.4 : 1), r.c ? -170 : -360); if (r.c && x > 44) return false; },
-      end: () => hide(this.blimp) });
-
-    // -- 7. a helicopter sweeping a searchlight over the road
-    { const b = new RacerBatch();
-      const hull = new THREE.IcosahedronGeometry(1, 1); b.add(hull, racerM(0, 0, 0, 2.4, 1.5, 1.4), 0x20262e); hull.dispose();
-      b.add(BOX, racerM(-3.4, 0.3, 0, 4.6, 0.36, 0.36), 0x20262e); b.add(BOX, racerM(-5.6, 1.0, 0, 0.5, 1.6, 0.12), 0x20262e);
-      b.add(BOX, racerM(1.2, 0.2, 0, 1.2, 0.8, 1.2), 0x8fd8ff, 0.5);
-      [-0.8, 0.8].forEach((z) => { b.add(BOX, racerM(0, -1.7, z, 3.4, 0.1, 0.1), 0x3a3f48); [-1, 1].forEach((x) => b.add(BOX, racerM(x, -1.25, z * 0.9, 0.08, 0.9, 0.08), 0x3a3f48)); });
-      b.add(BOX, racerM(0, 0.2, 1.42, 0.3, 0.3, 0.1), 0x30ff60, 3); b.add(BOX, racerM(0, 0.2, -1.42, 0.3, 0.3, 0.1), 0xff3030, 3); b.add(BOX, racerM(-5.7, 1.9, 0, 0.26, 0.26, 0.26), 0xffffff, 3);
-      b.add(CYL, racerM(1.9, -0.9, 0, 0.36, 0.5, 0.36), 0xfff0d2, 3);
-      this.heli = new THREE.Group(); const body = basic(b); body.visible = true;
-      this.rotor = new THREE.Mesh(new THREE.CircleGeometry(4.6, 18), new THREE.MeshBasicMaterial({ color: 0x9fb4c8, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
-      this.rotor.rotation.x = -Math.PI / 2; this.rotor.position.y = 1.7;
-      const blades = new RacerBatch(); [0, Math.PI / 2].forEach((a) => blades.add(BOX, racerM(0, 1.72, 0, 9.2, 0.05, 0.3, 0, a), 0x15171c));
-      this.blades = basic(blades); this.blades.visible = true;
-      this.heliBeam = racerShaft(0xfff0d2, 0.4, 7, 46, 12); this.heliBeam.position.set(1.9, -1.0, 0);
-      this.heli.add(body, this.rotor, this.blades, this.heliBeam); this.heli.visible = false; s.add(this.heli); }
-    D.add({ id: "helicopter", dur: 10, can: open,
-      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(12.5, 15) : rand(26, 32); r.z = rand(-120, -70); r.x = rand(-3.5, 3.5); this.heli.visible = true; this.heli.scale.setScalar(r.c ? 0.7 : 1); },
-      update: (dt, t, r) => {
-        if (r.c) { this.heli.position.set(r.x + Math.sin(t * 0.7) * 1.5, r.y + Math.sin(t * 1.1) * 0.8, -215 + t * 23); this.heli.rotation.set(0, -Math.PI / 2, 0); }
-        else { this.heli.position.set(r.sd * (-70 + t * 14), r.y + Math.sin(t * 1.1) * 0.8, r.z); this.heli.rotation.set(0, r.sd > 0 ? 0 : Math.PI, r.sd * -0.12); }
-        this.blades.rotation.y = t * 14;
-        this.heliBeam.rotation.set(Math.PI + Math.sin(t * 0.8) * 0.3, 0, -0.5 + Math.sin(t * 0.55) * 0.3);
-        this.heliBeam.material.uniforms.uI.value = 0.42 * fade(t, 10) * (1 - 0.45 * this.calmK) * (GFX.opt.beams ? 1 : 0);
-      },
-      end: () => hide(this.heli) });
-
-    // -- 8. delivery drones in a line, each with a parcel and a winking light
-    { const b = new RacerBatch();
-      b.add(BOX, racerM(0, 0, 0, 0.9, 0.22, 0.9), 0x20262e); b.add(BOX, racerM(0, -0.5, 0, 0.7, 0.6, 0.7), 0xb8874a);
-      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([i, j]) => { b.add(BOX, racerM(i * 0.6, 0.05, j * 0.6, 0.6, 0.06, 0.08, 0, Math.PI / 4 * i * j), 0x3a3f48); b.add(CYL, racerM(i * 0.85, 0.16, j * 0.85, 0.42, 0.02, 0.42), 0x8fd8ff, 0.55); });
-      b.add(BOX, racerM(0, 0.16, 0.5, 0.14, 0.14, 0.14), 0x5dffb0, 3); b.add(BOX, racerM(0, 0.16, -0.5, 0.14, 0.14, 0.14), 0xff3030, 3);
-      const ge = b.build("color");
-      this.drones = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(ge, this.glowMat); m.visible = false; m.frustumCulled = false; s.add(m); return m; }); }
-    D.add({ id: "drones", dur: 8, can: open,
-      start: (r) => { r.sd = Math.random() < 0.5 ? -1 : 1; r.y = rand(10.5, 14); r.z = rand(-60, -34); },
-      update: (dt, t, r) => this.drones.forEach((m, i) => { const x = r.sd * (-34 + (t - i * 0.5) * 9); m.visible = Math.abs(x) < (city() ? 8.4 : 34); m.position.set(x, r.y + Math.sin(t * 2.4 + i) * 0.35 + i * 0.3, r.z - i * 1.6); m.rotation.set(0, r.sd > 0 ? Math.PI / 2 : -Math.PI / 2, Math.sin(t * 2 + i) * 0.08); m.scale.setScalar(1.25); }),
-      end: () => hide(...this.drones) });
-
-    // -- 9. a laser show from the rooftops
-    this.lasers = [0xff3ad4, 0x35efff, 0x5dffb0, 0xffd23d].map((c, i) => { const l = racerShaft(c, 0.25, 1.4, 240, 6); l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.visible = false; s.add(l); return l; });
-    D.add({ id: "lasers", dur: 8, can: () => wide() && this.biome !== "desert",
-      start: (r) => { r.c = city(); this.lasers.forEach((l, i) => { l.visible = true; if (r.c) l.position.set((i % 2 ? 1 : -1) * 9.6, 30 + i * 2, -80 - i * 26); else l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.scale.setScalar(r.c ? 0.32 : 1); }); },
-      update: (dt, t, r) => this.lasers.forEach((l, i) => { l.rotation.set(-0.5 + Math.sin(t * 0.7 + i * 1.7) * 0.4, 0, r.c ? (i % 2 ? 1 : -1) * (0.75 + Math.sin(t * 0.9 + i * 2.3) * 0.5) : Math.sin(t * 0.9 + i * 2.3) * 0.9); l.material.uniforms.uI.value = 0.75 * fade(t, 8) * (1 - 0.5 * this.calmK) * (GFX.opt.beams ? 1 : 0); }),
-      end: () => hide(...this.lasers) });
-
-    // -- 10. birds crossing in a loose V
-    { const pos = [], wing = [], seed = [];
-      for (let i = 0; i < 11; i++) { const bx = -Math.abs(i - 5) * 3 + rand(-1, 1), bz = (i - 5) * 3.4, by = rand(-1.5, 1.5);
-        [[0, 0, 0, 0], [-1.2, 0, 2.0, 1], [0.9, 0, 0, 0], [0, 0, 0, 0], [0.9, 0, 0, 0], [-1.2, 0, -2.0, 1]].forEach(([x, y, z, w]) => { pos.push(bx + x, by + y, bz + z); wing.push(w); seed.push(i * 0.71); }); }
-      const ge = new THREE.BufferGeometry();
-      ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("aWing", new THREE.Float32BufferAttribute(wing, 1)); ge.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
-      this.birds = new THREE.Mesh(ge, new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x0a0c12) } }, side: THREE.DoubleSide,
-        vertexShader: "attribute float aWing; attribute float aSeed; uniform float uTime; void main(){ vec3 p = position; p.y += aWing * sin(uTime * 7.0 + aSeed * 6.0) * 1.3; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
-        fragmentShader: "uniform vec3 uColor; void main(){ gl_FragColor = vec4(uColor, 1.0); }" }));
-      this.birds.frustumCulled = false; this.birds.visible = false; s.add(this.birds); }
-    D.add({ id: "birds", dur: 11, can: open,
-      start: (r) => { r.c = city(); r.sd = Math.random() < 0.5 ? -1 : 1; r.y = r.c ? rand(9, 13) : rand(38, 60); r.z = rand(-190, -120); this.birds.visible = true; this.birds.scale.setScalar(r.c ? 0.22 : 1); this.birds.material.uniforms.uColor.value.copy(g.scene.fog.color).multiplyScalar(0.25); },
-      update: (dt, t, r) => {
-        if (r.c) { this.birds.position.set(Math.sin(t * 0.5) * 2.5, r.y + Math.sin(t * 0.6) * 1.5, -210 + t * 21); this.birds.rotation.y = -Math.PI / 2; }
-        else { this.birds.position.set(r.sd * (-190 + t * 36), r.y + Math.sin(t * 0.6) * 3, r.z); this.birds.rotation.y = r.sd > 0 ? 0 : Math.PI; }
-      },
-      end: () => hide(this.birds) });
+    // the sky's own events (meteors, fireworks, lightning, explosion, UFO, blimp,
+    // helicopter, drones, lasers, birds) come from the shared kit
+    this.skyKit = new AmbientSky({ host: g, director: D, win, city, open, wide, calm: () => this.calmK, storm: () => this.pal.rain > 0.5, flash: (k) => { this.skyFlash = Math.max(this.skyFlash || 0, k); }, dry: () => this.biome === "desert" });
 
     // -- 11. an elevated train crossing a viaduct ahead: we pass under it
     { const b = new RacerBatch();

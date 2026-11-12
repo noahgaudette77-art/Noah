@@ -115,8 +115,19 @@ build from before any visual work (153 answers in 8 games).
 | # | Checkpoint | Status |
 |---|---|---|
 | A0 | Backup, extended regression test, before shots | done |
-| A1 | Title screen | next |
-| A2 | Arcade hub | todo |
+| A1 | Title screen | done |
+| A2 | Arcade hub | next |
 | A3 | Risk Blaster | todo |
 | A4 | Final Exam, Memory Bank, Strategy Guide | todo |
 | A5 | Shared audio, measurements, report | todo |
+
+- A1 (title): `09c-ambient.js` is the shared sky kit (meteors, fireworks, lightning,
+  explosion, UFO, blimp, helicopter, drones, lasers, birds), moved out of the racer
+  world so any scene can use it. `10b-titlecity.js` builds the title's city, laid out
+  to the screen's shape: megatowers with neon conduits, rolling ads and flickering
+  signs, a suspension bridge across the sun, traffic as GPU-animated light in ten
+  lanes, searchlights, and its own events (maglev on the bridge, patrol chase,
+  hover cars passing overhead). Event Director every 3-6 s: a 60 s capture fired 14
+  events of 12 kinds. Grid lines carry running pulses, the sun breathes, haze drifts.
+  Logo: extruded depth, glow, a glint every 7 s. Fixed: the tip sits on a plate (grid
+  line no longer crosses it); the sync toast drops below the MASTERY row.

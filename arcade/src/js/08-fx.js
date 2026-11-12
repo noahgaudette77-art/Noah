@@ -269,12 +269,12 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1 } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0 } = {}) {
   const uniforms = Object.assign(fogUniforms(), {
     uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
     tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
     uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
-    uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha },
+    uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha }, uPulse: { value: pulse },
   });
   const mat = new THREE.ShaderMaterial({
     uniforms, extensions: { derivatives: true },
@@ -282,7 +282,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
-      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid;
+      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){
         vec3 col = uBase;
@@ -313,6 +313,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         float halo = exp(-min(aa.x, aa.y) * 0.45);
         float fade = 1.0 - smoothstep(0.18, 0.55, max(fw.x, fw.y));
         col += uLine * (ln + halo * uGlow * 0.2) * fade * uGrid;
+        if (uPulse > 0.0) {
+          // packets of light running along the lines: toward us down the long ones, sideways on the cross ones
+          float pz = pow(0.5 + 0.5 * sin(g.y * 0.55 + uTime * 2.3 + floor(g.x - 0.5) * 1.7), 14.0);
+          float px = pow(0.5 + 0.5 * sin(g.x * 0.7 - uTime * 1.6 + floor(g.y - 0.5) * 2.3), 18.0);
+          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2;
+        }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,

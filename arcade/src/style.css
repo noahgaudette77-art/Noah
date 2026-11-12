@@ -127,17 +127,19 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .title-top b { color: var(--yellow); font-weight: 400; }
 .logo { display: grid; justify-items: center; gap: 14px; margin-top: 4vh; }
 .logo-kicker { font: clamp(8px, 2.2vw, 12px)/1.5 var(--font-display); color: var(--cyan); text-shadow: 0 0 10px rgba(53, 239, 255, 0.8); letter-spacing: 0.14em; }
-.logo-main {
-  font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em;
+.logo-main { position: relative; display: inline-grid; font: clamp(46px, 15vw, 128px)/0.95 var(--font-display); letter-spacing: 0.02em; transform: skewX(-8deg); }
+.logo-main > span { grid-area: 1 / 1; }
+/* the letters' depth: a dark copy stepped back down and to the right */
+.logo-depth { color: #2a0b52; transform: translate(2px, 3px); text-shadow: 1px 1px 0 #35106a, 2px 2px 0 #2e0d5c, 3px 3px 0 #260a4c, 4px 4px 0 #1e083e, 5px 5px 0 #170630, 6px 6px 0 #100424, 8px 12px 22px rgba(0, 0, 0, 0.7); }
+.logo-face {
   background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
     linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
   background-size: 250% 100%, 100% 100%;
   background-position: 160% 0, 0 0;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: glint 5.5s ease-in-out 1.2s 1; /* one sweep: each frame of it repaints the logo and its blurred shadows */
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
-  filter: drop-shadow(0 4px 0 #2a0b52) drop-shadow(0 0 18px rgba(255, 58, 212, 0.55));
-  transform: skewX(-8deg);
+  animation: glint 7s ease-in-out 1.2s infinite; /* a sweep of light every 7 s; the logo only repaints while it crosses */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+  filter: drop-shadow(0 0 14px rgba(255, 58, 212, 0.6)) drop-shadow(0 0 34px rgba(53, 239, 255, 0.28));
 }
 .logo-sub { font: clamp(20px, 5vw, 30px)/1 var(--font-body); color: var(--yellow); letter-spacing: 0.08em; text-shadow: 0 2px 0 #12052e, 0 0 6px #12052e, 0 0 12px #12052e; }
 .insert-coin {
@@ -145,8 +147,9 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-@keyframes glint { 0% { background-position: 160% 0, 0 0; } 35%, 100% { background-position: -60% 0, 0 0; } }
-.attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; }
+@keyframes glint { 0% { background-position: 160% 0, 0 0; } 17%, 100% { background-position: -60% 0, 0 0; } }
+.attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; background: rgba(9, 3, 32, 0.78); border: 1px solid rgba(53, 239, 255, 0.28); padding: 8px 12px; } /* a plate behind the tip: the grid's lines used to cross the words */
+.on-title #toast { top: calc(var(--gut-t) + 34px); } /* clear of the CREDIT / MASTERY / HI row */
 .attract b { color: var(--lime); font-weight: 400; }
 .title-foot { font: 8px/1.8 var(--font-display); color: var(--dim); }
 
@@ -518,7 +521,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-face, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
