@@ -1277,7 +1277,7 @@ const BOSSES = {
   9: { name: "UNDUE INFLUENCER", line: "Sign here. Trust me. Sign HERE.", color: COLORS.cyan, shape: "dodeca", hp: 120 },
   10: { name: "PROBATRON", line: "Every estate pays my toll.", color: COLORS.orange, shape: "knot", hp: 110 },
   11: { name: "PATRIMONY PHANTOM", line: "Half of everything. Partition is coming.", color: COLORS.violet, shape: "ico", hp: 100 },
-  all: { name: "THE EXAMINATOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "knot", hp: 200 },
+  all: { name: "THE EXAMINATOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "cyborg", hp: 200 },
 };
 
 const CABINETS = [
@@ -8213,7 +8213,139 @@ class BossGame extends QuizGame {
     this.pool.layers.set(1);
     s.add(this.pool);
   }
+  // The final boss: a war machine with a man's head. A pale skull with burning eyes
+  // and a steel jaw rides a black armored hulk: slab shields on the shoulders,
+  // piston arms, a ribbed gut lit from inside and a thruster where legs would be.
+  // It offers the same handles as the other bosses (core, eye, rings, orbs, charge,
+  // sparks), so the fight's animation drives it unchanged.
+  makeCyborg() {
+    const cfg = this.cfg, hex = cfg.color;
+    const grp = new THREE.Group();
+    const M = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
+    const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+    const cyl = (rt, rb, h, n = 10) => new THREE.CylinderGeometry(rt, rb, h, n);
+    const ARMOR = new THREE.Color(1, 1, 1), PLATE = new THREE.Color(1.5, 1.5, 1.7), DARK = new THREE.Color(0.5, 0.5, 0.55);
+    const parts = [];
+    const add = (geo, matrix, color = ARMOR) => parts.push({ geo, matrix, color });
+    // chest: a barrel with two angled breastplates and a keel between them
+    add(box(3.5, 2.1, 1.9), M(0, 0.7, 0));
+    [-1, 1].forEach((sd) => {
+      add(box(1.55, 1.75, 0.34), M(sd * 0.88, 0.82, 1.02, -0.1, sd * 0.2, 0), PLATE);
+      add(box(1.2, 0.4, 0.4), M(sd * 0.95, -0.22, 0.95, 0.25, sd * 0.2, 0), DARK);
+    });
+    add(box(0.34, 1.9, 0.5), M(0, 0.78, 1.12, -0.1, 0, 0), DARK);
+    // gut: ribs with glowing gaps, then the hips and a thruster
+    for (let i = 0; i < 4; i++) add(box(2.15 - i * 0.12, 0.2, 1.45 - i * 0.06), M(0, -0.62 - i * 0.36, 0.05), i % 2 ? DARK : ARMOR);
+    add(box(2.7, 0.75, 1.7), M(0, -2.25, 0), PLATE);
+    [-1, 1].forEach((sd) => add(box(0.9, 0.9, 1.3), M(sd * 1.35, -2.5, 0.05, 0, 0, sd * 0.2)));
+    add(cyl(0.95, 0.5, 0.8, 8), M(0, -3.0, 0), DARK);
+    // gorget and a tall back plate behind the head
+    add(box(2.0, 0.55, 1.7), M(0, 1.98, 0.05), PLATE);
+    add(box(2.5, 1.35, 0.3), M(0, 2.55, -0.78, 0.12, 0, 0));
+    [-1, 1].forEach((sd) => add(cyl(0.2, 0.26, 1.7, 8), M(sd * 1.15, 2.5, -1.15, 0.15, 0, sd * 0.1), DARK));
+    // shoulders: ball joints under great slab shields
+    [-1, 1].forEach((sd) => {
+      add(new THREE.IcosahedronGeometry(0.82, 0), M(sd * 2.25, 1.5, 0));
+      add(box(1.95, 2.55, 0.42), M(sd * 2.95, 0.95, 0.62, 0.05, sd * 0.55, sd * -0.1), PLATE);
+      add(box(1.6, 0.35, 0.5), M(sd * 2.9, 2.28, 0.6, 0.05, sd * 0.55, sd * -0.1), DARK);
+      // arm: piston upper arm, elbow, heavy forearm, fist
+      add(cyl(0.48, 0.42, 1.5, 8), M(sd * 2.55, 0.25, -0.1, 0, 0, sd * -0.08), DARK);
+      add(new THREE.IcosahedronGeometry(0.52, 0), M(sd * 2.62, -0.62, 0));
+      add(box(0.95, 1.9, 1.05), M(sd * 2.72, -1.62, 0.42, -0.42, 0, 0));
+      add(box(0.3, 1.5, 0.3), M(sd * 3.22, -1.55, 0.5, -0.42, 0, 0), DARK);
+      add(box(0.92, 0.72, 0.95), M(sd * 2.72, -2.62, 0.98, -0.42, 0, 0));
+    });
+    // jaw, eye band and skull implants (the head's metal)
+    add(box(0.82, 0.4, 0.72), M(0, 2.3, 0.42), PLATE);
+    add(box(0.92, 0.17, 0.3), M(0, 2.84, 0.74), DARK);
+    add(box(0.12, 0.2, 1.0), M(0, 3.36, 0.1, -0.25, 0, 0), DARK);
+    [-1, 1].forEach((sd) => add(box(0.1, 0.5, 0.5), M(sd * 0.56, 2.75, 0.05), DARK));
+    const bodyGeo = blasterMerge(parts);
+    const mat = Object.assign(glossy(0x121318, { env: this.env, metal: 0.85, rough: 0.4, envI: 0.85, emissive: hex, emissiveK: 0.04 }), { vertexColors: true });
+    const body = new THREE.Group();
+    body.add(new THREE.Mesh(bodyGeo, mat));
+    // the skull: pale, bald, matte
+    const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), glossy(0xc9b2ac, { env: this.env, metal: 0.05, rough: 0.8, envI: 0.35 }));
+    skull.scale.set(0.9, 1.12, 1);
+    skull.position.set(0, 2.82, 0.2);
+    body.add(skull);
+    // red light: slits on the breastplates, the gut between the ribs, shield edges, vents
+    const lit = [];
+    const glow = (geo, matrix, k = 2.4) => lit.push({ geo, matrix, color: new THREE.Color(k, k, k) });
+    [-1, 1].forEach((sd) => {
+      for (let i = 0; i < 3; i++) glow(box(0.7, 0.07, 0.05), M(sd * 0.92, 1.25 - i * 0.2, 1.2, -0.1, sd * 0.2, 0));
+      glow(box(1.7, 0.06, 0.06), M(sd * 2.98, 2.08, 0.84, 0.05, sd * 0.55, sd * -0.1), 2.8);
+      glow(box(0.08, 1.2, 0.08), M(sd * 3.24, -1.5, 0.72, -0.42, 0, 0), 2.2);
+      glow(cyl(0.16, 0.16, 0.06, 8), M(sd * 1.15, 3.36, -1.28, 0.15, 0, sd * 0.1), 3);
+    });
+    for (let i = 0; i < 3; i++) glow(box(1.7 - i * 0.12, 0.09, 1.3), M(0, -0.8 - i * 0.36, 0.08), 1.7);
+    glow(cyl(0.42, 0.3, 0.1, 8), M(0, -3.42, 0), 3.2);
+    this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex), vertexColors: true });
+    body.add(new THREE.Mesh(blasterMerge(lit), this.ringMat));
+    grp.add(body);
+    // the eyes: two coals in the skull, on one anchor that blinks and aims the beam
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "#fff"); g.addColorStop(0.25, "#ff3a2a"); g.addColorStop(0.6, "rgba(255,30,30,0.35)"); g.addColorStop(1, "rgba(255,0,0,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    const eyeMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, blending: THREE.AdditiveBlending });
+    eyeMat.color.setScalar(1.15);
+    const eye = new THREE.Group();
+    eye.material = eyeMat; // the fight tints the eye's material as the boss enrages
+    eye.position.set(0, 2.84, 0.84);
+    [-1, 1].forEach((sd) => {
+      const e = new THREE.Sprite(eyeMat);
+      e.scale.set(0.5, 0.5 / 1.8, 1); // the anchor is stretched 1.8x tall, and squashed to blink
+      e.position.x = sd * 0.21;
+      e.renderOrder = 5;
+      eye.add(e);
+    });
+    body.add(eye);
+    const jet = glowSprite(neon(hex, 1.8), 2.4, 0.7);
+    jet.position.set(0, -3.6, 0);
+    body.add(jet);
+    // a halo of runner lights behind the shoulders, and a thin ring that sways
+    const ringGeo = blasterMerge([{ geo: new THREE.TorusGeometry(3.5, 0.05, 4, 64), color: new THREE.Color(1.2, 1.2, 1.2) }]
+      .concat([0, 1, 2, 3, 4, 5].map((i) => ({ geo: new THREE.TorusGeometry(3.5, 0.1, 4, 8, 0.32), matrix: new THREE.Matrix4().makeRotationZ((i / 6) * Math.PI * 2), color: new THREE.Color(2.7, 2.7, 2.7) }))));
+    const ring = new THREE.Mesh(ringGeo, this.ringMat);
+    ring.position.set(0, 0.6, -1.5);
+    ring.scale.setScalar(0.9);
+    grp.add(ring);
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(4.05, 0.03, 3, 72), new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) }));
+    ring2.position.set(0, 0.6, -1.7);
+    ring2.scale.setScalar(0.9);
+    grp.add(ring2);
+    const orbs = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.3, 0), glossy(0x1a1430, { env: this.env, metal: 0.6, rough: 0.25, envI: 1.4, emissive: hex, emissiveK: 1.3 }), 6);
+    orbs.frustumCulled = false;
+    orbs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    grp.add(orbs);
+    const charge = glowSprite(neon(hex, 2.4), 0.1, 1);
+    charge.position.set(0, 2.84, 1.0);
+    charge.renderOrder = 6;
+    body.add(charge);
+    const N = 44;
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+    const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: neon(hex, 3), map: glowTexture(), size: 0.2, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sparks.position.copy(charge.position);
+    sparks.frustumCulled = false;
+    sparks.layers.set(1);
+    body.add(sparks);
+    this.sparkData = Array.from({ length: N }, () => ({ d: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-0.3, 1)).normalize(), r: rand(2.5, 5), p: Math.random() }));
+    // `core` takes the spin the other bosses' bodies get; here it is an empty handle
+    const core = new THREE.Group();
+    core.userData.mat = mat;
+    grp.userData = { core, eye, ring, ring2, orbs, charge, sparks, horns: new THREE.Group(), body, skull };
+    this._m = new THREE.Matrix4();
+    this._q = new THREE.Quaternion();
+    this._e = new THREE.Euler();
+    this._v = new THREE.Vector3();
+    this._s = new THREE.Vector3();
+    return grp;
+  }
   makeBoss() {
+    if (this.cfg.shape === "cyborg") return this.makeCyborg();
     const cfg = this.cfg, hex = cfg.color;
     const col = new THREE.Color(hex);
     const grp = new THREE.Group();
@@ -8625,9 +8757,16 @@ class BossGame extends QuizGame {
     u.core.rotation.x += dt * 0.15 * rage;
     u.ring.rotation.z += dt * rage;
     u.ring2.rotation.y = Math.sin(this.t * 0.5 * rage) * 0.5;
+    if (u.body) {
+      // the war machine shifts its weight, looks about and leans in as it charges
+      u.body.rotation.y = Math.sin(this.t * 0.55 * rage) * 0.16 + Pointer.x * 0.12;
+      u.body.rotation.z = Math.sin(this.t * 0.4 * rage) * 0.035;
+      u.body.rotation.x = f * 0.16 + Math.sin(this.t * 0.7) * 0.02;
+    }
+    const orbR = u.body ? 4.7 : 3.7; // the cyborg's gems circle outside its shields
     for (let i = 0; i < 6; i++) {
       const a = this.t * 1.2 * rage + (i / 6) * Math.PI * 2;
-      this._v.set(Math.cos(a) * 3.7, Math.sin(a * 2) * 0.7, Math.sin(a) * 3.7);
+      this._v.set(Math.cos(a) * orbR, Math.sin(a * 2) * 0.7, Math.sin(a) * orbR);
       this._q.setFromEuler(this._e.set(0, this.t * 3 + i, 0.6));
       u.orbs.setMatrixAt(i, this._m.compose(this._v, this._q, this._s.set(1, 1, 1)));
     }

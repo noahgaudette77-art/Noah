@@ -58,7 +58,7 @@ const BOSSES = {
   9: { name: "UNDUE INFLUENCER", line: "Sign here. Trust me. Sign HERE.", color: COLORS.cyan, shape: "dodeca", hp: 120 },
   10: { name: "PROBATRON", line: "Every estate pays my toll.", color: COLORS.orange, shape: "knot", hp: 110 },
   11: { name: "PATRIMONY PHANTOM", line: "Half of everything. Partition is coming.", color: COLORS.violet, shape: "ico", hp: 100 },
-  all: { name: "THE EXAMINATOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "knot", hp: 200 },
+  all: { name: "THE EXAMINATOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "cyborg", hp: 200 },
 };
 
 const CABINETS = [
