@@ -1,0 +1,2944 @@
+{
+ "build": "arcade/backup/index.before-visual-upgrade.html",
+ "plays": [
+  {
+   "id": "boss-final-win",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c07-q031",
+     "order": "0123",
+     "T": 37.267,
+     "askFrame": 99,
+     "step": "R@0.02",
+     "before": {
+      "hp": 200,
+      "maxHp": 200,
+      "hearts": 3,
+      "score": 0,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 143,
+     "frac": 0.0201,
+     "after": {
+      "hp": 180,
+      "maxHp": 200,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 186,
+     "title": "HIT! −20 HP\n      \n      On a spousal rollover, any remainin"
+    },
+    {
+     "n": 1,
+     "q": "c05-q025",
+     "order": "2310",
+     "T": 26.467,
+     "askFrame": 187,
+     "step": "R@0.33",
+     "before": {
+      "hp": 180,
+      "maxHp": 200,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 711,
+     "frac": 0.3306,
+     "after": {
+      "hp": 161,
+      "maxHp": 200,
+      "hearts": 3,
+      "score": 390,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 754,
+     "title": "HIT! −19 HP\n      \n      Shared premiums are not taxed pro r"
+    },
+    {
+     "n": 2,
+     "q": "c11-q042",
+     "order": "1230",
+     "T": 40.467,
+     "askFrame": 755,
+     "step": "W@0.1",
+     "before": {
+      "hp": 161,
+      "maxHp": 200,
+      "hearts": 3,
+      "score": 390,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 997,
+     "frac": 0.1001,
+     "after": {
+      "hp": 161,
+      "maxHp": 200,
+      "hearts": 2,
+      "score": 390,
+      "streak": 0,
+      "answered": 3,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 1029,
+     "title": "ANSWER D ·"
+    },
+    {
+     "n": 3,
+     "q": "c11-q032",
+     "order": "2031",
+     "T": 38.333,
+     "askFrame": 1030,
+     "step": "R@0.02",
+     "before": {
+      "hp": 161,
+      "maxHp": 200,
+      "hearts": 2,
+      "score": 390,
+      "streak": 0,
+      "answered": 3,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 1075,
+     "frac": 0.02,
+     "after": {
+      "hp": 141,
+      "maxHp": 200,
+      "hearts": 2,
+      "score": 590,
+      "streak": 1,
+      "answered": 4,
+      "correct": 3,
+      "best": 2
+     },
+     "sheetFrame": 1118,
+     "title": "HIT! −20 HP\n      \n      The $10,000 promise is an inter viv"
+    },
+    {
+     "n": 4,
+     "q": "c05-q022",
+     "order": "3120",
+     "T": 41.667,
+     "askFrame": 1119,
+     "step": "T",
+     "before": {
+      "hp": 141,
+      "maxHp": 200,
+      "hearts": 2,
+      "score": 590,
+      "streak": 1,
+      "answered": 4,
+      "correct": 3,
+      "best": 2
+     },
+     "after": {
+      "hp": 141,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 590,
+      "streak": 0,
+      "answered": 5,
+      "correct": 3,
+      "best": 2
+     },
+     "sheetFrame": 3651,
+     "title": "ANSWER C ·"
+    },
+    {
+     "n": 5,
+     "q": "c10-q051",
+     "order": "1203",
+     "T": 26.667,
+     "askFrame": 3652,
+     "step": "R@0.72",
+     "before": {
+      "hp": 141,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 590,
+      "streak": 0,
+      "answered": 5,
+      "correct": 3,
+      "best": 2
+     },
+     "pickFrame": 4803,
+     "frac": 0.72,
+     "after": {
+      "hp": 128,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 720,
+      "streak": 1,
+      "answered": 6,
+      "correct": 4,
+      "best": 2
+     },
+     "sheetFrame": 4846,
+     "title": "HIT! −13 HP\n      \n      With three equal joint tenants, Gre"
+    },
+    {
+     "n": 6,
+     "q": "c04-q041",
+     "order": "3021",
+     "T": 37.6,
+     "askFrame": 4847,
+     "step": "R@0.02",
+     "before": {
+      "hp": 128,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 720,
+      "streak": 1,
+      "answered": 6,
+      "correct": 4,
+      "best": 2
+     },
+     "pickFrame": 4892,
+     "frac": 0.0204,
+     "after": {
+      "hp": 106,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 940,
+      "streak": 2,
+      "answered": 7,
+      "correct": 5,
+      "best": 2
+     },
+     "sheetFrame": 4935,
+     "title": "HIT! −22 HP\n      \n      Suicide within two years of issue ("
+    },
+    {
+     "n": 7,
+     "q": "c09-q036",
+     "order": "0312",
+     "T": 38.933,
+     "askFrame": 4936,
+     "step": "R@0.04",
+     "before": {
+      "hp": 106,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 940,
+      "streak": 2,
+      "answered": 7,
+      "correct": 5,
+      "best": 2
+     },
+     "pickFrame": 5029,
+     "frac": 0.0402,
+     "after": {
+      "hp": 82,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1180,
+      "streak": 3,
+      "answered": 8,
+      "correct": 6,
+      "best": 3
+     },
+     "sheetFrame": 5072,
+     "title": "HIT! −24 HP\n      \n      Divorce doesn't generally revoke a "
+    },
+    {
+     "n": 8,
+     "q": "c04-q027",
+     "order": "1023",
+     "T": 25.267,
+     "askFrame": 5073,
+     "step": "R@0.04",
+     "before": {
+      "hp": 82,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1180,
+      "streak": 3,
+      "answered": 8,
+      "correct": 6,
+      "best": 3
+     },
+     "pickFrame": 5133,
+     "frac": 0.0402,
+     "after": {
+      "hp": 56,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1440,
+      "streak": 4,
+      "answered": 9,
+      "correct": 7,
+      "best": 4
+     },
+     "sheetFrame": 5176,
+     "title": "HIT! −26 HP\n      \n      Required insurance is now 80% × $50"
+    },
+    {
+     "n": 9,
+     "q": "c06b-q011",
+     "order": "2130",
+     "T": 21.533,
+     "askFrame": 5177,
+     "step": "R@0.04",
+     "before": {
+      "hp": 56,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1440,
+      "streak": 4,
+      "answered": 9,
+      "correct": 7,
+      "best": 4
+     },
+     "pickFrame": 5228,
+     "frac": 0.0402,
+     "after": {
+      "hp": 28,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1720,
+      "streak": 5,
+      "answered": 10,
+      "correct": 8,
+      "best": 5
+     },
+     "sheetFrame": 5271,
+     "title": "HIT! −28 HP\n      \n      Spousal contributions in the withdr"
+    },
+    {
+     "n": 10,
+     "q": "c10-q007",
+     "order": "2103",
+     "T": 44.2,
+     "askFrame": 5272,
+     "step": "R@0.04",
+     "before": {
+      "hp": 28,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 1720,
+      "streak": 5,
+      "answered": 10,
+      "correct": 8,
+      "best": 5
+     },
+     "pickFrame": 5378,
+     "frac": 0.0403,
+     "after": {
+      "hp": 0,
+      "maxHp": 200,
+      "hearts": 1,
+      "score": 2000,
+      "streak": 6,
+      "answered": 11,
+      "correct": 9,
+      "best": 6
+     },
+     "sheetFrame": 5429,
+     "title": "FINISHING BLOW! −28 HP\n      \n      Once probate is needed f"
+    }
+   ],
+   "end": {
+    "frame": 5622,
+    "results": "STAGE CLEAR 003000 PTS THE EXAMINATOR defeated with 1 heart left ACCURACY 82% ANSWERED 11 BEST STREAK 6 STARS 1/3 HIGH SCORE RANK #1 XP EARNED +150 LV1 TRAINEE MASTERY STAGE 4 · Insurance as a Contract 0% > 0.5% STAGE 5 · Group Insurance and Government Programs 0% > 0.4% STAGE 6 · Retirement Planning 0% > 0.2% STAGE 7 · Retirement Management 0% > 0.3% STAGE 9 · Wills and Powers of Attorney 0% > 0.2% STAGE 10 · Probate and Forms of Property Ownership/Transfer 0% > 0.7% STAGE 11 · Family Law 0% > 0.3% REVIEW YOUR MISSES (2) On their honeymoon, Maria signed a contract giving up any interest in the family home Manuel might buy. They married in Quebec without a marriage contract; the house is in Manuel's name. On divorce, what is the effect of her contract? YOU: It is valid, so Manuel keeps the full value of the house ANSWER: None; it is null, so the home's net value is split equally The house is the family residence acquired after the marriage, so its net value is split equally under family patrimony whatever the title. Family patrimony cannot be renounced during the marriage, so the honeymoon contract is null and void. P. 11•17 · STAGE 11 · Planning scenario Nadia's employer paid $300 of group life premiums last year for her $150,000 of coverage. She died in December, and her husband, the beneficiary, received $150,000. What are the tax results? YOU: no answer ANSWER: The $300 is taxable to Nadia on her final return; the $150,000 is tax-free The employer deducts the $300, which is a taxable benefit reported on Nadia's terminal return. The group life death benefit is tax-free to the beneficiary and is not a taxable benefit to Nadia or her estate. P. 5•12 · STAGE 5 · Tax: group life PLAY AGAIN CHANGE STAGE ARCADE",
+    "stats": {
+     "answered": 11,
+     "correct": 9,
+     "bestStreak": 6,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "1": 2,
+     "2": 9
+    },
+    "items": 11,
+    "scores": {
+     "blaster": [],
+     "racer": [],
+     "boss": [
+      {
+       "n": "AAA",
+       "s": 3000,
+       "c": "ALL STAGES"
+      }
+     ],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {
+     "all": 1
+    },
+    "ach": [
+     "boss1",
+     "first",
+     "streak5"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "boss-ch3-lose",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c03-q034",
+     "order": "3012",
+     "T": 33.8,
+     "askFrame": 99,
+     "step": "R@0.02",
+     "before": {
+      "hp": 100,
+      "maxHp": 100,
+      "hearts": 3,
+      "score": 0,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 139,
+     "frac": 0.0202,
+     "after": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 182,
+     "title": "HIT! −20 HP\n      \n      A low-value item given after the sa"
+    },
+    {
+     "n": 1,
+     "q": "c03-q025",
+     "order": "0132",
+     "T": 36.133,
+     "askFrame": 183,
+     "step": "W@0.05",
+     "before": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 291,
+     "frac": 0.0503,
+     "after": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 2,
+      "score": 200,
+      "streak": 0,
+      "answered": 2,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 324,
+     "title": "ANSWER C ·"
+    },
+    {
+     "n": 2,
+     "q": "c03-q036",
+     "order": "3012",
+     "T": 38.733,
+     "askFrame": 325,
+     "step": "W@0.52",
+     "before": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 2,
+      "score": 200,
+      "streak": 0,
+      "answered": 2,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 1533,
+     "frac": 0.5202,
+     "after": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 1,
+      "score": 200,
+      "streak": 0,
+      "answered": 3,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 1565,
+     "title": "ANSWER B ·"
+    },
+    {
+     "n": 3,
+     "q": "c03-q006",
+     "order": "3102",
+     "T": 37.867,
+     "askFrame": 1566,
+     "step": "T",
+     "before": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 1,
+      "score": 200,
+      "streak": 0,
+      "answered": 3,
+      "correct": 1,
+      "best": 1
+     },
+     "after": {
+      "hp": 80,
+      "maxHp": 100,
+      "hearts": 0,
+      "score": 200,
+      "streak": 0,
+      "answered": 4,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 3870,
+     "title": "ANSWER B ·"
+    }
+   ],
+   "end": {
+    "frame": 4039,
+    "results": "DEFEATED 000200 PTS SOLVENCY SPECTER survived with 80 HP. Read the guide and try again. ACCURACY 25% ANSWERED 4 BEST STREAK 1 BOSS HP LEFT 80 HIGH SCORE RANK #1 XP EARNED +10 LV1 TRAINEE MASTERY STAGE 3 · The Insurance Industry 0% > 0.5% REVIEW YOUR MISSES (3) How are Assuris limits counted for life insurance death benefits compared with cash surrender values? YOU: Both per family, so spouses share a single limit for all their policies ANSWER: Death benefits per life insured with one insurer; cash values per policyowner The $200,000 death-benefit maximum is computed per life insured with any one insurer, so two policies on the same life share it. Cash and annuity value limits are computed per policyowner, so each owner gets a separate limit. P. 3•12 · STAGE 3 · Assuris When is it acceptable for an agent to recommend that a client replace a life policy with a similar one from another insurer? YOU: When the new policy pays the agent a lower commission than the old policy did ANSWER: When it rests on accurate, fully disclosed facts and serves the client's interest Replacement is improper twisting only when it harms the client. It is acceptable if based on accurate, fully disclosed information and in the client's best interest, supported by a complete financial comparison. P. 3•16 · STAGE 3 · Unfair practices A struggling stock insurer wants to convert into a mutual company. What does the Insurance Act require? YOU: no answer ANSWER: Minister of Finance permission and a by-law approved by a majority of shareholders Mutualization requires applying to the Minister of Finance, with the conversion plan set out in a by-law approved by a majority of shareholders at a special general meeting. Valuing on surplus and issuing free shares describes demutualization. P. 3•5 · STAGE 3 · Mutualization PLAY AGAIN CHANGE STAGE READ STAGE 3 NOTES ARCADE",
+    "stats": {
+     "answered": 4,
+     "correct": 1,
+     "bestStreak": 1,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "1": 3,
+     "2": 1
+    },
+    "items": 4,
+    "scores": {
+     "blaster": [],
+     "racer": [],
+     "boss": [
+      {
+       "n": "AAA",
+       "s": 200,
+       "c": "STAGE 3"
+      }
+     ],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {},
+    "ach": [
+     "first"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "boss-ch7-win",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c07-q038",
+     "order": "1203",
+     "T": 32.933,
+     "askFrame": 99,
+     "step": "R@0.02",
+     "before": {
+      "hp": 110,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 0,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 138,
+     "frac": 0.0202,
+     "after": {
+      "hp": 90,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 181,
+     "title": "HIT! −20 HP\n      \n      A prescribed annuity spreads the ca"
+    },
+    {
+     "n": 1,
+     "q": "c07-q025",
+     "order": "1032",
+     "T": 38.4,
+     "askFrame": 182,
+     "step": "R@0.4",
+     "before": {
+      "hp": 90,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 200,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 1103,
+     "frac": 0.4002,
+     "after": {
+      "hp": 72,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 380,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 1146,
+     "title": "HIT! −18 HP\n      \n      LIF proceeds left to a spouse or pa"
+    },
+    {
+     "n": 2,
+     "q": "c07-q019",
+     "order": "3012",
+     "T": 23,
+     "askFrame": 1147,
+     "step": "R@0.03",
+     "before": {
+      "hp": 72,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 380,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 1188,
+     "frac": 0.0304,
+     "after": {
+      "hp": 48,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 620,
+      "streak": 3,
+      "answered": 3,
+      "correct": 3,
+      "best": 3
+     },
+     "sheetFrame": 1231,
+     "title": "HIT! −24 HP\n      \n      Before 71, the minimum is 1 divided"
+    },
+    {
+     "n": 3,
+     "q": "c07-q047",
+     "order": "1302",
+     "T": 25.4,
+     "askFrame": 1232,
+     "step": "R@0.03",
+     "before": {
+      "hp": 48,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 620,
+      "streak": 3,
+      "answered": 3,
+      "correct": 3,
+      "best": 3
+     },
+     "pickFrame": 1277,
+     "frac": 0.0302,
+     "after": {
+      "hp": 22,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 880,
+      "streak": 4,
+      "answered": 4,
+      "correct": 4,
+      "best": 4
+     },
+     "sheetFrame": 1320,
+     "title": "HIT! −26 HP\n      \n      On surrender, taxable income is the"
+    },
+    {
+     "n": 4,
+     "q": "c07-q014",
+     "order": "3021",
+     "T": 31.393,
+     "askFrame": 1321,
+     "step": "R@0.03",
+     "before": {
+      "hp": 22,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 880,
+      "streak": 4,
+      "answered": 4,
+      "correct": 4,
+      "best": 4
+     },
+     "pickFrame": 1377,
+     "frac": 0.0303,
+     "after": {
+      "hp": -6,
+      "maxHp": 110,
+      "hearts": 3,
+      "score": 1160,
+      "streak": 5,
+      "answered": 5,
+      "correct": 5,
+      "best": 5
+     },
+     "sheetFrame": 1428,
+     "title": "FINISHING BLOW! −28 HP\n      \n      A term certain annuity i"
+    }
+   ],
+   "end": {
+    "frame": 1621,
+    "results": "STAGE CLEAR 004160 PTS LONGEVITY LICH defeated with 3 hearts left GITANO · YOUR CLIENT Thanks! A joint pension protects my wife, and at 71 an RRIF based on her younger age keeps my withdrawals low. ACCURACY 100% ANSWERED 5 BEST STREAK 5 STARS 3/3 HIGH SCORE RANK #1 XP EARNED +230 LV1 TRAINEE MASTERY STAGE 7 · Retirement Management 0% > 1.5% NO MISSES. FLAWLESS. PLAY AGAIN CHANGE STAGE READ STAGE 7 NOTES ARCADE",
+    "stats": {
+     "answered": 5,
+     "correct": 5,
+     "bestStreak": 5,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "2": 5
+    },
+    "items": 5,
+    "scores": {
+     "blaster": [],
+     "racer": [],
+     "boss": [
+      {
+       "n": "AAA",
+       "s": 4160,
+       "c": "STAGE 7"
+      }
+     ],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {
+     "7": 3
+    },
+    "ach": [
+     "boss1",
+     "first",
+     "flawless",
+     "streak5"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "racer-career",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c02-q019",
+     "order": "3210",
+     "T": 28.91,
+     "askFrame": 80,
+     "step": "R@0.05",
+     "before": {
+      "egg": 25000,
+      "peak": 25000,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 0,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 166,
+     "frac": 0.0502,
+     "after": {
+      "egg": 30142.305,
+      "peak": 30142.305,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 0,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 297,
+     "title": "+$5,142 · 3% RETURN\n      \n      The readjustment period is "
+    },
+    {
+     "n": 1,
+     "q": "c02-q034",
+     "order": "3120",
+     "T": 30.94,
+     "askFrame": 298,
+     "step": "R@0.05",
+     "before": {
+      "egg": 30142.305,
+      "peak": 30142.305,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 1,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 390,
+     "frac": 0.0501,
+     "after": {
+      "egg": 35899.037,
+      "peak": 35899.037,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 1,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 521,
+     "title": "+$5,757 · 4% RETURN\n      \n      Additional living expenses "
+    },
+    {
+     "n": 2,
+     "q": "c02-q022",
+     "order": "2310",
+     "T": 40.53,
+     "askFrame": 522,
+     "step": "R@0.3",
+     "before": {
+      "egg": 35899.037,
+      "peak": 35899.037,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 2,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 1251,
+     "frac": 0.3002,
+     "after": {
+      "egg": 41969.329,
+      "peak": 41969.329,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 2,
+      "streak": 3,
+      "answered": 3,
+      "correct": 3,
+      "best": 3
+     },
+     "sheetFrame": 1379,
+     "title": "+$6,070 · 5% RETURN\n      \n      If the survivor plans to se"
+    },
+    {
+     "n": 3,
+     "q": "c02-q050",
+     "order": "2310",
+     "T": 23.66,
+     "askFrame": 1380,
+     "step": "R@0.05",
+     "before": {
+      "egg": 41969.329,
+      "peak": 41969.329,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 3,
+      "streak": 3,
+      "answered": 3,
+      "correct": 3,
+      "best": 3
+     },
+     "pickFrame": 1450,
+     "frac": 0.05,
+     "after": {
+      "egg": 49173.945,
+      "peak": 49173.945,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 3,
+      "streak": 4,
+      "answered": 4,
+      "correct": 4,
+      "best": 4
+     },
+     "sheetFrame": 1578,
+     "title": "+$7,205 · 5% RETURN\n      \n      She is consciously aware of"
+    },
+    {
+     "n": 4,
+     "q": "c02-q004",
+     "order": "3012",
+     "T": 44.1,
+     "askFrame": 1579,
+     "step": "R@0.05",
+     "before": {
+      "egg": 49173.945,
+      "peak": 49173.945,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 4,
+      "streak": 4,
+      "answered": 4,
+      "correct": 4,
+      "best": 4
+     },
+     "pickFrame": 1711,
+     "frac": 0.0503,
+     "after": {
+      "egg": 57302.267,
+      "peak": 57302.267,
+      "crashes": 0,
+      "insurance": 1,
+      "year": 4,
+      "streak": 5,
+      "answered": 5,
+      "correct": 5,
+      "best": 5
+     },
+     "sheetFrame": 1842,
+     "title": "+$8,128 · 6% RETURN\n      \n      Private insurers are in the"
+    },
+    {
+     "n": 5,
+     "q": "c02-q042",
+     "order": "01",
+     "T": 20.16,
+     "askFrame": 1843,
+     "step": "W@0.05",
+     "before": {
+      "egg": 57302.267,
+      "peak": 57302.267,
+      "crashes": 0,
+      "insurance": 1,
+      "year": 5,
+      "streak": 5,
+      "answered": 5,
+      "correct": 5,
+      "best": 5
+     },
+     "pickFrame": 1903,
+     "frac": 0.0504,
+     "after": {
+      "egg": 57302.267,
+      "peak": 57302.267,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 5,
+      "streak": 0,
+      "answered": 6,
+      "correct": 5,
+      "best": 5
+     },
+     "sheetFrame": 2034,
+     "title": "ANSWER F ·"
+    },
+    {
+     "n": 6,
+     "q": "c02-q001",
+     "order": "0123",
+     "T": 25.69,
+     "askFrame": 2035,
+     "step": "W@0.2",
+     "before": {
+      "egg": 57302.267,
+      "peak": 57302.267,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 6,
+      "streak": 0,
+      "answered": 6,
+      "correct": 5,
+      "best": 5
+     },
+     "pickFrame": 2343,
+     "frac": 0.2005,
+     "after": {
+      "egg": 48706.927,
+      "peak": 57302.267,
+      "crashes": 1,
+      "insurance": 0,
+      "year": 6,
+      "streak": 0,
+      "answered": 7,
+      "correct": 5,
+      "best": 5
+     },
+     "sheetFrame": 2479,
+     "title": "ANSWER D ·"
+    },
+    {
+     "n": 7,
+     "q": "c02-q030",
+     "order": "01",
+     "T": 20.23,
+     "askFrame": 2480,
+     "step": "N",
+     "before": {
+      "egg": 48706.927,
+      "peak": 57302.267,
+      "crashes": 1,
+      "insurance": 0,
+      "year": 7,
+      "streak": 0,
+      "answered": 7,
+      "correct": 5,
+      "best": 5
+     },
+     "after": {
+      "egg": 41400.888,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 7,
+      "streak": 0,
+      "answered": 8,
+      "correct": 5,
+      "best": 5
+     },
+     "sheetFrame": 3726,
+     "title": "ANSWER T ·"
+    },
+    {
+     "n": 8,
+     "q": "c02-q011",
+     "order": "2013",
+     "T": 19.25,
+     "askFrame": 3727,
+     "step": "R@0.05",
+     "before": {
+      "egg": 41400.888,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 8,
+      "streak": 0,
+      "answered": 8,
+      "correct": 5,
+      "best": 5
+     },
+     "pickFrame": 3784,
+     "frac": 0.0502,
+     "after": {
+      "egg": 47091.349,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 8,
+      "streak": 1,
+      "answered": 9,
+      "correct": 6,
+      "best": 5
+     },
+     "sheetFrame": 3912,
+     "title": "+$5,690 · 3% RETURN\n      \n      A peril is the cause of los"
+    },
+    {
+     "n": 9,
+     "q": "c02-q025",
+     "order": "0312",
+     "T": 36.26,
+     "askFrame": 3913,
+     "step": "R@0.6",
+     "before": {
+      "egg": 47091.349,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 9,
+      "streak": 1,
+      "answered": 9,
+      "correct": 6,
+      "best": 5
+     },
+     "pickFrame": 5218,
+     "frac": 0.6003,
+     "after": {
+      "egg": 52676.363,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 9,
+      "streak": 2,
+      "answered": 10,
+      "correct": 7,
+      "best": 5
+     },
+     "sheetFrame": 5346,
+     "title": "+$5,585 · 4% RETURN\n      \n      The Canada or Quebec Pensio"
+    },
+    {
+     "n": 10,
+     "q": "c02-q003",
+     "order": "2130",
+     "T": 34.79,
+     "askFrame": 5347,
+     "step": "R@0.05",
+     "before": {
+      "egg": 52676.363,
+      "peak": 57302.267,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 10,
+      "streak": 2,
+      "answered": 10,
+      "correct": 7,
+      "best": 5
+     },
+     "pickFrame": 5451,
+     "frac": 0.0503,
+     "after": {
+      "egg": 59887.24,
+      "peak": 59887.24,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 10,
+      "streak": 3,
+      "answered": 11,
+      "correct": 8,
+      "best": 5
+     },
+     "sheetFrame": 5579,
+     "title": "+$7,211 · 5% RETURN\n      \n      A speculative risk offers e"
+    },
+    {
+     "n": 11,
+     "q": "c02-q048",
+     "order": "01",
+     "T": 20.16,
+     "askFrame": 5580,
+     "step": "R@0.05",
+     "before": {
+      "egg": 59887.24,
+      "peak": 59887.24,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 11,
+      "streak": 3,
+      "answered": 11,
+      "correct": 8,
+      "best": 5
+     },
+     "pickFrame": 5640,
+     "frac": 0.0504,
+     "after": {
+      "egg": 67975.152,
+      "peak": 67975.152,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 11,
+      "streak": 4,
+      "answered": 12,
+      "correct": 9,
+      "best": 5
+     },
+     "sheetFrame": 5768,
+     "title": "+$8,088 · 5% RETURN\n      \n      False. Sprinklers do not st"
+    },
+    {
+     "n": 12,
+     "q": "c02-q016",
+     "order": "2013",
+     "T": 26.11,
+     "askFrame": 5769,
+     "step": "R@0.05",
+     "before": {
+      "egg": 67975.152,
+      "peak": 67975.152,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 12,
+      "streak": 4,
+      "answered": 12,
+      "correct": 9,
+      "best": 5
+     },
+     "pickFrame": 5847,
+     "frac": 0.0504,
+     "after": {
+      "egg": 77113.275,
+      "peak": 77113.275,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 12,
+      "streak": 5,
+      "answered": 13,
+      "correct": 10,
+      "best": 5
+     },
+     "sheetFrame": 5975,
+     "title": "+$9,138 · 6% RETURN\n      \n      The three major personal ri"
+    },
+    {
+     "n": 13,
+     "q": "c02-q044",
+     "order": "0231",
+     "T": 25.27,
+     "askFrame": 5976,
+     "step": "R@0.05",
+     "before": {
+      "egg": 77113.275,
+      "peak": 77113.275,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 13,
+      "streak": 5,
+      "answered": 13,
+      "correct": 10,
+      "best": 5
+     },
+     "pickFrame": 6051,
+     "frac": 0.0501,
+     "after": {
+      "egg": 87428.031,
+      "peak": 87428.031,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 13,
+      "streak": 6,
+      "answered": 14,
+      "correct": 11,
+      "best": 6
+     },
+     "sheetFrame": 6179,
+     "title": "+$10,315 · 6% RETURN\n      \n      Severity is the dollar cos"
+    },
+    {
+     "n": 14,
+     "q": "c02-q032",
+     "order": "01",
+     "T": 22.05,
+     "askFrame": 6180,
+     "step": "R@0.05",
+     "before": {
+      "egg": 87428.031,
+      "peak": 87428.031,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 14,
+      "streak": 6,
+      "answered": 14,
+      "correct": 11,
+      "best": 6
+     },
+     "pickFrame": 6246,
+     "frac": 0.0506,
+     "after": {
+      "egg": 99082.308,
+      "peak": 99082.308,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 14,
+      "streak": 7,
+      "answered": 15,
+      "correct": 12,
+      "best": 7
+     },
+     "sheetFrame": 6374,
+     "title": "+$11,654 · 7% RETURN\n      \n      False. All of the owner's "
+    },
+    {
+     "n": 15,
+     "q": "c02-q043",
+     "order": "3012",
+     "T": 34.72,
+     "askFrame": 6375,
+     "step": "R@0.05",
+     "before": {
+      "egg": 99082.308,
+      "peak": 99082.308,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 15,
+      "streak": 7,
+      "answered": 15,
+      "correct": 12,
+      "best": 7
+     },
+     "pickFrame": 6479,
+     "frac": 0.0504,
+     "after": {
+      "egg": 112311.81,
+      "peak": 112311.81,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 15,
+      "streak": 8,
+      "answered": 16,
+      "correct": 13,
+      "best": 8
+     },
+     "sheetFrame": 6607,
+     "title": "+$13,230 · 7% RETURN\n      \n      Most private insurers won'"
+    },
+    {
+     "n": 16,
+     "q": "c02-q027",
+     "order": "0321",
+     "T": 30.66,
+     "askFrame": 6608,
+     "step": "R@0.05",
+     "before": {
+      "egg": 112311.81,
+      "peak": 112311.81,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 16,
+      "streak": 8,
+      "answered": 16,
+      "correct": 13,
+      "best": 8
+     },
+     "pickFrame": 6699,
+     "frac": 0.05,
+     "after": {
+      "egg": 127321.721,
+      "peak": 127321.721,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 16,
+      "streak": 9,
+      "answered": 17,
+      "correct": 14,
+      "best": 9
+     },
+     "sheetFrame": 6827,
+     "title": "+$15,010 · 8% RETURN\n      \n      Disability is the second m"
+    },
+    {
+     "n": 17,
+     "q": "c02-q045",
+     "order": "2130",
+     "T": 43.26,
+     "askFrame": 6828,
+     "step": "R@0.05",
+     "before": {
+      "egg": 127321.721,
+      "peak": 127321.721,
+      "crashes": 2,
+      "insurance": 1,
+      "year": 17,
+      "streak": 9,
+      "answered": 17,
+      "correct": 14,
+      "best": 9
+     },
+     "pickFrame": 6957,
+     "frac": 0.0501,
+     "after": {
+      "egg": 144409.738,
+      "peak": 144409.738,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 17,
+      "streak": 10,
+      "answered": 18,
+      "correct": 15,
+      "best": 10
+     },
+     "sheetFrame": 7085,
+     "title": "+$17,088 · 8% RETURN\n      \n      Earthquakes and tornadoes "
+    },
+    {
+     "n": 18,
+     "q": "c02-q042",
+     "order": "01",
+     "T": 20.16,
+     "askFrame": 7086,
+     "step": "R@0.05",
+     "before": {
+      "egg": 144409.738,
+      "peak": 144409.738,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 18,
+      "streak": 10,
+      "answered": 18,
+      "correct": 15,
+      "best": 10
+     },
+     "pickFrame": 7146,
+     "frac": 0.0504,
+     "after": {
+      "egg": 162821.597,
+      "peak": 162821.597,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 18,
+      "streak": 11,
+      "answered": 19,
+      "correct": 16,
+      "best": 11
+     },
+     "sheetFrame": 7274,
+     "title": "+$18,412 · 8% RETURN\n      \n      False. Many travel insuran"
+    },
+    {
+     "n": 19,
+     "q": "c02-q001",
+     "order": "2013",
+     "T": 25.69,
+     "askFrame": 7275,
+     "step": "R@0.05",
+     "before": {
+      "egg": 162821.597,
+      "peak": 162821.597,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 19,
+      "streak": 11,
+      "answered": 19,
+      "correct": 16,
+      "best": 11
+     },
+     "pickFrame": 7352,
+     "frac": 0.0506,
+     "after": {
+      "egg": 182723.685,
+      "peak": 182723.685,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 19,
+      "streak": 12,
+      "answered": 20,
+      "correct": 17,
+      "best": 12
+     },
+     "sheetFrame": 7480,
+     "title": "+$19,902 · 8% RETURN\n      \n      Risk is 'uncertainty conce"
+    },
+    {
+     "n": 20,
+     "q": "c02-q030",
+     "order": "01",
+     "T": 20.23,
+     "askFrame": 7481,
+     "step": "R@0.05",
+     "before": {
+      "egg": 182723.685,
+      "peak": 182723.685,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 20,
+      "streak": 12,
+      "answered": 20,
+      "correct": 17,
+      "best": 12
+     },
+     "pickFrame": 7541,
+     "frac": 0.0503,
+     "after": {
+      "egg": 204199.58,
+      "peak": 204199.58,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 20,
+      "streak": 13,
+      "answered": 21,
+      "correct": 18,
+      "best": 13
+     },
+     "sheetFrame": 7672,
+     "title": "+$21,476 · 8% RETURN\n      \n      True. That is why clients "
+    },
+    {
+     "n": 21,
+     "q": "c02-q008",
+     "order": "01",
+     "T": 20.51,
+     "askFrame": 7673,
+     "step": "R@0.05",
+     "before": {
+      "egg": 204199.58,
+      "peak": 204199.58,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 21,
+      "streak": 13,
+      "answered": 21,
+      "correct": 18,
+      "best": 13
+     },
+     "pickFrame": 7734,
+     "frac": 0.0504,
+     "after": {
+      "egg": 227394.626,
+      "peak": 227394.626,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 21,
+      "streak": 14,
+      "answered": 22,
+      "correct": 19,
+      "best": 14
+     },
+     "sheetFrame": 7865,
+     "title": "+$23,195 · 8% RETURN\n      \n      True. The course's measure"
+    },
+    {
+     "n": 22,
+     "q": "c02-q035",
+     "order": "1320",
+     "T": 33.32,
+     "askFrame": 7866,
+     "step": "R@0.05",
+     "before": {
+      "egg": 227394.626,
+      "peak": 227394.626,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 22,
+      "streak": 14,
+      "answered": 22,
+      "correct": 19,
+      "best": 14
+     },
+     "pickFrame": 7965,
+     "frac": 0.05,
+     "after": {
+      "egg": 252476.597,
+      "peak": 252476.597,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 22,
+      "streak": 15,
+      "answered": 23,
+      "correct": 20,
+      "best": 15
+     },
+     "sheetFrame": 8096,
+     "title": "+$25,082 · 8% RETURN\n      \n      In periods of rapid inflat"
+    },
+    {
+     "n": 23,
+     "q": "c02-q026",
+     "order": "2310",
+     "T": 39.41,
+     "askFrame": 8097,
+     "step": "R@0.05",
+     "before": {
+      "egg": 252476.597,
+      "peak": 252476.597,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 23,
+      "streak": 15,
+      "answered": 23,
+      "correct": 20,
+      "best": 15
+     },
+     "pickFrame": 8215,
+     "frac": 0.0503,
+     "after": {
+      "egg": 279571.604,
+      "peak": 279571.604,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 23,
+      "streak": 16,
+      "answered": 24,
+      "correct": 21,
+      "best": 16
+     },
+     "sheetFrame": 8346,
+     "title": "+$27,095 · 8% RETURN\n      \n      Step 1 allows for lower in"
+    },
+    {
+     "n": 24,
+     "q": "c02-q040",
+     "order": "2013",
+     "T": 34.44,
+     "askFrame": 8347,
+     "step": "R@0.05",
+     "before": {
+      "egg": 279571.604,
+      "peak": 279571.604,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 24,
+      "streak": 16,
+      "answered": 24,
+      "correct": 21,
+      "best": 16
+     },
+     "pickFrame": 8450,
+     "frac": 0.0503,
+     "after": {
+      "egg": 308828.813,
+      "peak": 308828.813,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 24,
+      "streak": 17,
+      "answered": 25,
+      "correct": 22,
+      "best": 17
+     },
+     "sheetFrame": 8581,
+     "title": "+$29,257 · 8% RETURN\n      \n      Most travel policies exclu"
+    },
+    {
+     "n": 25,
+     "q": "c02-q051",
+     "order": "0123",
+     "T": 36.19,
+     "askFrame": 8582,
+     "step": "R@0.05",
+     "before": {
+      "egg": 308828.813,
+      "peak": 308828.813,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 25,
+      "streak": 17,
+      "answered": 25,
+      "correct": 22,
+      "best": 17
+     },
+     "pickFrame": 8690,
+     "frac": 0.0502,
+     "after": {
+      "egg": 340428.758,
+      "peak": 340428.758,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 25,
+      "streak": 18,
+      "answered": 26,
+      "correct": 23,
+      "best": 18
+     },
+     "sheetFrame": 8821,
+     "title": "+$31,600 · 8% RETURN\n      \n      Passive retention occurs w"
+    },
+    {
+     "n": 26,
+     "q": "c02-q013",
+     "order": "1032",
+     "T": 34.51,
+     "askFrame": 8822,
+     "step": "R@0.05",
+     "before": {
+      "egg": 340428.758,
+      "peak": 340428.758,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 26,
+      "streak": 18,
+      "answered": 26,
+      "correct": 23,
+      "best": 18
+     },
+     "pickFrame": 8925,
+     "frac": 0.0502,
+     "after": {
+      "egg": 374554.538,
+      "peak": 374554.538,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 26,
+      "streak": 19,
+      "answered": 27,
+      "correct": 24,
+      "best": 19
+     },
+     "sheetFrame": 9056,
+     "title": "+$34,126 · 8% RETURN\n      \n      Moral hazard is the tempta"
+    },
+    {
+     "n": 27,
+     "q": "c02-q046",
+     "order": "0231",
+     "T": 37.1,
+     "askFrame": 9057,
+     "step": "R@0.05",
+     "before": {
+      "egg": 374554.538,
+      "peak": 374554.538,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 27,
+      "streak": 19,
+      "answered": 27,
+      "correct": 24,
+      "best": 19
+     },
+     "pickFrame": 9168,
+     "frac": 0.0503,
+     "after": {
+      "egg": 411413.621,
+      "peak": 411413.621,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 27,
+      "streak": 20,
+      "answered": 28,
+      "correct": 25,
+      "best": 20
+     },
+     "sheetFrame": 9299,
+     "title": "+$36,859 · 8% RETURN\n      \n      Not investing in equities "
+    },
+    {
+     "n": 28,
+     "q": "c02-q052",
+     "order": "01",
+     "T": 23.38,
+     "askFrame": 9300,
+     "step": "R@0.05",
+     "before": {
+      "egg": 411413.621,
+      "peak": 411413.621,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 28,
+      "streak": 20,
+      "answered": 28,
+      "correct": 25,
+      "best": 20
+     },
+     "pickFrame": 9370,
+     "frac": 0.0506,
+     "after": {
+      "egg": 451195.511,
+      "peak": 451195.511,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 28,
+      "streak": 21,
+      "answered": 29,
+      "correct": 26,
+      "best": 21
+     },
+     "sheetFrame": 9501,
+     "title": "+$39,782 · 8% RETURN\n      \n      True. Because most risks c"
+    },
+    {
+     "n": 29,
+     "q": "c02-q037",
+     "order": "1302",
+     "T": 46.41,
+     "askFrame": 9502,
+     "step": "R@0.05",
+     "before": {
+      "egg": 451195.511,
+      "peak": 451195.511,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 29,
+      "streak": 21,
+      "answered": 29,
+      "correct": 26,
+      "best": 21
+     },
+     "pickFrame": 9641,
+     "frac": 0.0503,
+     "after": {
+      "egg": 494194.512,
+      "peak": 494194.512,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 29,
+      "streak": 22,
+      "answered": 30,
+      "correct": 27,
+      "best": 22
+     },
+     "sheetFrame": 9772,
+     "title": "+$42,999 · 8% RETURN\n      \n      Directors' and officers' s"
+    },
+    {
+     "n": 30,
+     "q": "c02-q031",
+     "order": "3012",
+     "T": 42.21,
+     "askFrame": 9773,
+     "step": "R@0.05",
+     "before": {
+      "egg": 494194.512,
+      "peak": 494194.512,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 30,
+      "streak": 22,
+      "answered": 30,
+      "correct": 27,
+      "best": 22
+     },
+     "pickFrame": 9899,
+     "frac": 0.0501,
+     "after": {
+      "egg": 540630.193,
+      "peak": 540630.193,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 30,
+      "streak": 23,
+      "answered": 31,
+      "correct": 28,
+      "best": 23
+     },
+     "sheetFrame": 10030,
+     "title": "+$46,436 · 8% RETURN\n      \n      Physical damage is a direc"
+    },
+    {
+     "n": 31,
+     "q": "c02-q018",
+     "order": "2013",
+     "T": 36.68,
+     "askFrame": 10031,
+     "step": "R@0.05",
+     "before": {
+      "egg": 540630.193,
+      "peak": 540630.193,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 31,
+      "streak": 23,
+      "answered": 31,
+      "correct": 28,
+      "best": 23
+     },
+     "pickFrame": 10141,
+     "frac": 0.0504,
+     "after": {
+      "egg": 590774.248,
+      "peak": 590774.248,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 31,
+      "streak": 24,
+      "answered": 32,
+      "correct": 29,
+      "best": 24
+     },
+     "sheetFrame": 10272,
+     "title": "+$50,144 · 8% RETURN\n      \n      To an employer, a life's e"
+    },
+    {
+     "n": 32,
+     "q": "c02-q053",
+     "order": "1023",
+     "T": 36.68,
+     "askFrame": 10273,
+     "step": "R@0.05",
+     "before": {
+      "egg": 590774.248,
+      "peak": 590774.248,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 32,
+      "streak": 24,
+      "answered": 32,
+      "correct": 29,
+      "best": 24
+     },
+     "pickFrame": 10383,
+     "frac": 0.0504,
+     "after": {
+      "egg": 644929.828,
+      "peak": 644929.828,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 32,
+      "streak": 25,
+      "answered": 33,
+      "correct": 30,
+      "best": 25
+     },
+     "sheetFrame": 10514,
+     "title": "+$54,156 · 8% RETURN\n      \n      Incorporation limits the l"
+    },
+    {
+     "n": 33,
+     "q": "c02-q021",
+     "order": "2031",
+     "T": 47.53,
+     "askFrame": 10515,
+     "step": "R@0.05",
+     "before": {
+      "egg": 644929.828,
+      "peak": 644929.828,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 33,
+      "streak": 25,
+      "answered": 33,
+      "correct": 30,
+      "best": 25
+     },
+     "pickFrame": 10657,
+     "frac": 0.0501,
+     "after": {
+      "egg": 703428.654,
+      "peak": 703428.654,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 33,
+      "streak": 26,
+      "answered": 34,
+      "correct": 31,
+      "best": 26
+     },
+     "sheetFrame": 10788,
+     "title": "+$58,499 · 8% RETURN\n      \n      Premature death creates mo"
+    },
+    {
+     "n": 34,
+     "q": "c02-q041",
+     "order": "0321",
+     "T": 32.48,
+     "askFrame": 10789,
+     "step": "R@0.05",
+     "before": {
+      "egg": 703428.654,
+      "peak": 703428.654,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 34,
+      "streak": 26,
+      "answered": 34,
+      "correct": 31,
+      "best": 26
+     },
+     "pickFrame": 10886,
+     "frac": 0.0503,
+     "after": {
+      "egg": 766591.187,
+      "peak": 766591.187,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 34,
+      "streak": 27,
+      "answered": 35,
+      "correct": 32,
+      "best": 27
+     },
+     "sheetFrame": 11017,
+     "title": "+$63,163 · 8% RETURN\n      \n      Unfamiliar environments cr"
+    },
+    {
+     "n": 35,
+     "q": "c02-q006",
+     "order": "0213",
+     "T": 34.16,
+     "askFrame": 11018,
+     "step": "R@0.05",
+     "before": {
+      "egg": 766591.187,
+      "peak": 766591.187,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 35,
+      "streak": 27,
+      "answered": 35,
+      "correct": 32,
+      "best": 27
+     },
+     "pickFrame": 11120,
+     "frac": 0.0503,
+     "after": {
+      "egg": 834809.962,
+      "peak": 834809.962,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 35,
+      "streak": 28,
+      "answered": 36,
+      "correct": 33,
+      "best": 28
+     },
+     "sheetFrame": 11251,
+     "title": "+$68,219 · 8% RETURN\n      \n      Expected loss is estimated"
+    },
+    {
+     "n": 36,
+     "q": "c02-q014",
+     "order": "1203",
+     "T": 34.44,
+     "askFrame": 11252,
+     "step": "R@0.05",
+     "before": {
+      "egg": 834809.962,
+      "peak": 834809.962,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 36,
+      "streak": 28,
+      "answered": 36,
+      "correct": 33,
+      "best": 28
+     },
+     "pickFrame": 11355,
+     "frac": 0.0503,
+     "after": {
+      "egg": 908486.239,
+      "peak": 908486.239,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 36,
+      "streak": 29,
+      "answered": 37,
+      "correct": 34,
+      "best": 29
+     },
+     "sheetFrame": 11486,
+     "title": "+$73,676 · 8% RETURN\n      \n      In disability insurance th"
+    },
+    {
+     "n": 37,
+     "q": "c02-q033",
+     "order": "0132",
+     "T": 39.83,
+     "askFrame": 11487,
+     "step": "R@0.05",
+     "before": {
+      "egg": 908486.239,
+      "peak": 908486.239,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 37,
+      "streak": 29,
+      "answered": 37,
+      "correct": 34,
+      "best": 29
+     },
+     "pickFrame": 11606,
+     "frac": 0.0502,
+     "after": {
+      "egg": 988063.098,
+      "peak": 988063.098,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 37,
+      "streak": 30,
+      "answered": 38,
+      "correct": 35,
+      "best": 30
+     },
+     "sheetFrame": 11737,
+     "title": "+$79,577 · 8% RETURN\n      \n      With no debt, the risk is "
+    },
+    {
+     "n": 38,
+     "q": "c02-q002",
+     "order": "01",
+     "T": 19.46,
+     "askFrame": 11738,
+     "step": "R@0.05",
+     "before": {
+      "egg": 988063.098,
+      "peak": 988063.098,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 38,
+      "streak": 30,
+      "answered": 38,
+      "correct": 35,
+      "best": 30
+     },
+     "pickFrame": 11796,
+     "frac": 0.0505,
+     "after": {
+      "egg": 1073962.905,
+      "peak": 1073962.905,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 38,
+      "streak": 31,
+      "answered": 39,
+      "correct": 36,
+      "best": 31
+     },
+     "sheetFrame": 11927,
+     "title": "+$85,900 · 8% RETURN\n      \n      False. Once the loss is oc"
+    },
+    {
+     "n": 39,
+     "q": "c02-q054",
+     "order": "3210",
+     "T": 33.6,
+     "askFrame": 11928,
+     "step": "R@0.05",
+     "before": {
+      "egg": 1073962.905,
+      "peak": 1073962.905,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 39,
+      "streak": 31,
+      "answered": 39,
+      "correct": 36,
+      "best": 31
+     },
+     "pickFrame": 12028,
+     "frac": 0.0501,
+     "after": {
+      "egg": 1166770.338,
+      "peak": 1166770.338,
+      "crashes": 2,
+      "insurance": 2,
+      "year": 39,
+      "streak": 32,
+      "answered": 40,
+      "correct": 37,
+      "best": 32
+     },
+     "sheetFrame": 12159,
+     "title": "+$92,807 · 8% RETURN\n      \n      Retention suits losses tha"
+    }
+   ],
+   "end": {
+    "frame": 12275,
+    "results": "RETIRED RICH $1,166,770 Retired at age 65 on STAGE 2 · peak $1,166,770 ACCURACY 93% ANSWERED 40 BEST STREAK 32 RETIRED AT 65 PEAK $1,166,770 HIGH SCORE RANK #1 XP EARNED +370 LV2 JUNIOR ADVISOR MASTERY STAGE 2 · The Concept of Risk 0% > 14% REVIEW YOUR MISSES (3) Because travel insurers pay foreign hospitals directly, clients need not keep any extra credit available while travelling abroad. YOU: True ANSWER: False False. Many travel insurance expenses are covered on a reimbursement basis only: the insured pays when and where costs arise and claims reimbursement on returning to Canada, so clients should carry a sufficient credit limit. P. 2•20 · STAGE 2 · Travel risks As the term is used in the risk management process, risk is best defined as… YOU: the probability that a loss will occur ANSWER: uncertainty concerning loss Risk is 'uncertainty concerning loss': the uncertainty itself, not the loss, the cause of loss (peril), the chance of loss, or a condition that increases it (hazard). P. 2•3 · STAGE 2 · Risk defined The course notes that, at most ages, the likelihood of becoming disabled is much greater than the likelihood of dying prematurely. YOU: no answer ANSWER: True True. That is why clients should check whether their group disability coverage is adequate and, if it is not, consider individual coverage to fill the gaps. P. 2•13 · STAGE 2 · Disability risk PLAY AGAIN CHANGE STAGE READ STAGE 2 NOTES ARCADE",
+    "stats": {
+     "answered": 40,
+     "correct": 37,
+     "bestStreak": 32,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "2": 37
+    },
+    "items": 37,
+    "scores": {
+     "blaster": [],
+     "racer": [
+      {
+       "n": "AAA",
+       "s": 1166770,
+       "c": "STAGE 2"
+      }
+     ],
+     "boss": [],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {},
+    "ach": [
+     "first",
+     "million",
+     "streak10",
+     "streak20",
+     "streak5"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "racer-crash",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c05-q010",
+     "order": "2013",
+     "T": 19.81,
+     "askFrame": 80,
+     "step": "R@0.05",
+     "before": {
+      "egg": 25000,
+      "peak": 25000,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 0,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 139,
+     "frac": 0.0505,
+     "after": {
+      "egg": 30117.465,
+      "peak": 30117.465,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 0,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 270,
+     "title": "+$5,117 · 3% RETURN\n      \n      A probationary period, typi"
+    },
+    {
+     "n": 1,
+     "q": "c05-q038",
+     "order": "01",
+     "T": 21.28,
+     "askFrame": 271,
+     "step": "W@0.05",
+     "before": {
+      "egg": 30117.465,
+      "peak": 30117.465,
+      "crashes": 0,
+      "insurance": 0,
+      "year": 1,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 334,
+     "frac": 0.0501,
+     "after": {
+      "egg": 25599.845,
+      "peak": 30117.465,
+      "crashes": 1,
+      "insurance": 0,
+      "year": 1,
+      "streak": 0,
+      "answered": 2,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 470,
+     "title": "ANSWER F ·"
+    },
+    {
+     "n": 2,
+     "q": "c05-q018",
+     "order": "1023",
+     "T": 43.47,
+     "askFrame": 471,
+     "step": "W@0.05",
+     "before": {
+      "egg": 25599.845,
+      "peak": 30117.465,
+      "crashes": 1,
+      "insurance": 0,
+      "year": 2,
+      "streak": 0,
+      "answered": 2,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 601,
+     "frac": 0.0502,
+     "after": {
+      "egg": 21759.868,
+      "peak": 30117.465,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 2,
+      "streak": 0,
+      "answered": 3,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 736,
+     "title": "ANSWER A ·"
+    },
+    {
+     "n": 3,
+     "q": "c05-q019",
+     "order": "01",
+     "T": 19.67,
+     "askFrame": 737,
+     "step": "R@0.05",
+     "before": {
+      "egg": 21759.868,
+      "peak": 30117.465,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 3,
+      "streak": 0,
+      "answered": 3,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 796,
+     "frac": 0.0508,
+     "after": {
+      "egg": 26763.929,
+      "peak": 30117.465,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 3,
+      "streak": 1,
+      "answered": 4,
+      "correct": 2,
+      "best": 1
+     },
+     "sheetFrame": 924,
+     "title": "+$5,004 · 3% RETURN\n      \n      False. Some coverages can b"
+    },
+    {
+     "n": 4,
+     "q": "c05-q021",
+     "order": "0321",
+     "T": 37.1,
+     "askFrame": 925,
+     "step": "W@0.05",
+     "before": {
+      "egg": 26763.929,
+      "peak": 30117.465,
+      "crashes": 2,
+      "insurance": 0,
+      "year": 4,
+      "streak": 1,
+      "answered": 4,
+      "correct": 2,
+      "best": 1
+     },
+     "pickFrame": 1036,
+     "frac": 0.0503,
+     "after": {
+      "egg": 22749.34,
+      "peak": 30117.465,
+      "crashes": 3,
+      "insurance": 0,
+      "year": 4,
+      "streak": 0,
+      "answered": 5,
+      "correct": 2,
+      "best": 1
+     },
+     "sheetFrame": 1170,
+     "title": "ANSWER A ·"
+    }
+   ],
+   "end": {
+    "frame": 1285,
+    "results": "RETIRED EARLY $22,749 Retired at age 30 on STAGE 5 · peak $30,117 ACCURACY 40% ANSWERED 5 BEST STREAK 1 RETIRED AT 30 PEAK $30,117 HIGH SCORE RANK #1 XP EARNED +20 LV1 TRAINEE MASTERY STAGE 5 · Group Insurance and Government Programs 0% > 0.9% REVIEW YOUR MISSES (3) Spouses can share their CPP/QPP retirement pensions simply by electing the Canada Revenue Agency's pension income splitting on their tax returns. YOU: True ANSWER: False False. Couples must apply to share their retirement pensions; it cannot be done through the CRA's pension income splitting program. Only pensions earned while married or living together can be shared, to a maximum of 50%. P. 5•17 · STAGE 5 · CPP/QPP Leah and Sam each have cafeteria plans whose dental option pays 50% of restorative orthodontics, up to $1,500 a year. Their child needs $3,000 of such work this year. What should they do? YOU: Only one elects it, since the second plan's coverage would be wasted ANSWER: Both elect the option, so the two plans together cover the full $3,000 Electing the same coverage is not always wasteful duplication. Here the two plans integrate: each pays half, up to $1,500, so together they cover the full $3,000. P. 5•10 · STAGE 5 · Cafeteria plans An employer pays the premiums for an employee's group life coverage. How are those premiums treated for tax? YOU: Not deductible to the employer and not a taxable benefit to the employee ANSWER: Deductible to the employer and a taxable benefit to the employee Employer-paid group life premiums are deductible to the employer and are a taxable benefit to the employee, reported on the T4. Group life premiums the employee pays personally are generally not deductible. P. 5•11 · STAGE 5 · Tax: group life PLAY AGAIN CHANGE STAGE READ STAGE 5 NOTES ARCADE",
+    "stats": {
+     "answered": 5,
+     "correct": 2,
+     "bestStreak": 1,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "1": 3,
+     "2": 2
+    },
+    "items": 5,
+    "scores": {
+     "blaster": [],
+     "racer": [
+      {
+       "n": "AAA",
+       "s": 22749,
+       "c": "STAGE 5"
+      }
+     ],
+     "boss": [],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {},
+    "ach": [
+     "first"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  },
+  {
+   "id": "blaster",
+   "rounds": [
+    {
+     "n": 0,
+     "q": "c02-q032",
+     "order": "01",
+     "T": 21,
+     "askFrame": 80,
+     "step": "R@0.05",
+     "before": {
+      "score": 0,
+      "shields": 3,
+      "wave": 1,
+      "combo": 1,
+      "streak": 0,
+      "answered": 0,
+      "correct": 0,
+      "best": 0
+     },
+     "pickFrame": 143,
+     "frac": 0.0508,
+     "after": {
+      "score": 195,
+      "shields": 3,
+      "wave": 1,
+      "combo": 2,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "sheetFrame": 191,
+     "title": "DIRECT HIT! +195\n      \n      False. All of the owner's asse"
+    },
+    {
+     "n": 1,
+     "q": "c02-q050",
+     "order": "3012",
+     "T": 22.533,
+     "askFrame": 192,
+     "step": "R@0.4",
+     "before": {
+      "score": 195,
+      "shields": 3,
+      "wave": 1,
+      "combo": 2,
+      "streak": 1,
+      "answered": 1,
+      "correct": 1,
+      "best": 1
+     },
+     "pickFrame": 732,
+     "frac": 0.4001,
+     "after": {
+      "score": 515,
+      "shields": 3,
+      "wave": 1,
+      "combo": 3,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 780,
+     "title": "DIRECT HIT! +320\n      \n      She is consciously aware of th"
+    },
+    {
+     "n": 2,
+     "q": "c02-q012",
+     "order": "2310",
+     "T": 26.533,
+     "askFrame": 781,
+     "step": "W@0.1",
+     "before": {
+      "score": 515,
+      "shields": 3,
+      "wave": 1,
+      "combo": 3,
+      "streak": 2,
+      "answered": 2,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 940,
+     "frac": 0.1005,
+     "after": {
+      "score": 515,
+      "shields": 2,
+      "wave": 1,
+      "combo": 1,
+      "streak": 0,
+      "answered": 3,
+      "correct": 2,
+      "best": 2
+     },
+     "sheetFrame": 984,
+     "title": "ANSWER A ·"
+    },
+    {
+     "n": 3,
+     "q": "c02-q029",
+     "order": "1023",
+     "T": 23.867,
+     "askFrame": 985,
+     "step": "R@0.05",
+     "before": {
+      "score": 515,
+      "shields": 2,
+      "wave": 1,
+      "combo": 1,
+      "streak": 0,
+      "answered": 3,
+      "correct": 2,
+      "best": 2
+     },
+     "pickFrame": 1056,
+     "frac": 0.0503,
+     "after": {
+      "score": 710,
+      "shields": 2,
+      "wave": 1,
+      "combo": 2,
+      "streak": 1,
+      "answered": 4,
+      "correct": 3,
+      "best": 2
+     },
+     "sheetFrame": 1104,
+     "title": "DIRECT HIT! +195\n      \n      About one in three. The one-in"
+    },
+    {
+     "n": 4,
+     "q": "c02-q015",
+     "order": "1320",
+     "T": 27.6,
+     "askFrame": 1105,
+     "step": "R@0.05",
+     "before": {
+      "score": 710,
+      "shields": 2,
+      "wave": 1,
+      "combo": 2,
+      "streak": 1,
+      "answered": 4,
+      "correct": 3,
+      "best": 2
+     },
+     "pickFrame": 1187,
+     "frac": 0.0501,
+     "after": {
+      "score": 1100,
+      "shields": 2,
+      "wave": 1,
+      "combo": 3,
+      "streak": 2,
+      "answered": 5,
+      "correct": 4,
+      "best": 2
+     },
+     "sheetFrame": 1235,
+     "title": "DIRECT HIT! +390\n      \n      The main types of pure risk ar"
+    },
+    {
+     "n": 5,
+     "q": "c02-q035",
+     "order": "3210",
+     "T": 31.733,
+     "askFrame": 1236,
+     "step": "R@0.7",
+     "before": {
+      "score": 1100,
+      "shields": 2,
+      "wave": 1,
+      "combo": 3,
+      "streak": 2,
+      "answered": 5,
+      "correct": 4,
+      "best": 2
+     },
+     "pickFrame": 2568,
+     "frac": 0.7001,
+     "after": {
+      "score": 1490,
+      "shields": 2,
+      "wave": 1,
+      "combo": 4,
+      "streak": 3,
+      "answered": 6,
+      "correct": 5,
+      "best": 3
+     },
+     "sheetFrame": 2616,
+     "title": "DIRECT HIT! +390\n      \n      In periods of rapid inflation,"
+    },
+    {
+     "n": 6,
+     "q": "c02-q044",
+     "order": "3021",
+     "T": 24.067,
+     "askFrame": 2617,
+     "step": "R@0.05",
+     "before": {
+      "score": 1490,
+      "shields": 2,
+      "wave": 1,
+      "combo": 4,
+      "streak": 3,
+      "answered": 6,
+      "correct": 5,
+      "best": 3
+     },
+     "pickFrame": 2689,
+     "frac": 0.0506,
+     "after": {
+      "score": 2270,
+      "shields": 2,
+      "wave": 1,
+      "combo": 5,
+      "streak": 4,
+      "answered": 7,
+      "correct": 6,
+      "best": 4
+     },
+     "sheetFrame": 2737,
+     "title": "DIRECT HIT! +780\n      \n      Severity is the dollar cost of"
+    },
+    {
+     "n": 7,
+     "q": "c02-q011",
+     "order": "2310",
+     "T": 18.333,
+     "askFrame": 2738,
+     "step": "R@0.05",
+     "before": {
+      "score": 2270,
+      "shields": 2,
+      "wave": 1,
+      "combo": 5,
+      "streak": 4,
+      "answered": 7,
+      "correct": 6,
+      "best": 4
+     },
+     "pickFrame": 2793,
+     "frac": 0.0509,
+     "after": {
+      "score": 3245,
+      "shields": 2,
+      "wave": 1,
+      "combo": 6,
+      "streak": 5,
+      "answered": 8,
+      "correct": 7,
+      "best": 5
+     },
+     "sheetFrame": 2841,
+     "title": "DIRECT HIT! +975\n      \n      A peril is the cause of loss, "
+    },
+    {
+     "n": 8,
+     "q": "c02-q022",
+     "order": "3210",
+     "T": 38.6,
+     "askFrame": 2842,
+     "step": "R@0.05",
+     "before": {
+      "score": 3245,
+      "shields": 2,
+      "wave": 1,
+      "combo": 6,
+      "streak": 5,
+      "answered": 8,
+      "correct": 7,
+      "best": 5
+     },
+     "pickFrame": 2957,
+     "frac": 0.0501,
+     "after": {
+      "score": 4415,
+      "shields": 2,
+      "wave": 1,
+      "combo": 7,
+      "streak": 6,
+      "answered": 9,
+      "correct": 8,
+      "best": 6
+     },
+     "sheetFrame": 3005,
+     "title": "DIRECT HIT! +1170\n      \n      If the survivor plans to sell"
+    },
+    {
+     "n": 9,
+     "q": "c02-q039",
+     "order": "2310",
+     "T": 37.733,
+     "askFrame": 3006,
+     "step": "R@0.05",
+     "before": {
+      "score": 4415,
+      "shields": 2,
+      "wave": 1,
+      "combo": 7,
+      "streak": 6,
+      "answered": 9,
+      "correct": 8,
+      "best": 6
+     },
+     "pickFrame": 3119,
+     "frac": 0.0504,
+     "after": {
+      "score": 5780,
+      "shields": 2,
+      "wave": 1,
+      "combo": 8,
+      "streak": 7,
+      "answered": 10,
+      "correct": 9,
+      "best": 7
+     },
+     "sheetFrame": 3167,
+     "title": "DIRECT HIT! +1365\n      \n      Physical-damage exposure is t"
+    },
+    {
+     "n": 10,
+     "q": "c02-q014",
+     "order": "3012",
+     "T": 30.176,
+     "askFrame": 3258,
+     "step": "R@0.05",
+     "before": {
+      "score": 7280,
+      "shields": 3,
+      "wave": 2,
+      "combo": 8,
+      "streak": 7,
+      "answered": 10,
+      "correct": 9,
+      "best": 7
+     },
+     "pickFrame": 3348,
+     "frac": 0.0503,
+     "after": {
+      "score": 8840,
+      "shields": 3,
+      "wave": 2,
+      "combo": 8,
+      "streak": 8,
+      "answered": 11,
+      "correct": 10,
+      "best": 8
+     },
+     "sheetFrame": 3396,
+     "title": "DIRECT HIT! +1560\n      \n      In disability insurance the i"
+    },
+    {
+     "n": 11,
+     "q": "c02-q037",
+     "order": "3210",
+     "T": 40.664,
+     "askFrame": 3397,
+     "step": "R@0.05",
+     "before": {
+      "score": 8840,
+      "shields": 3,
+      "wave": 2,
+      "combo": 8,
+      "streak": 8,
+      "answered": 11,
+      "correct": 10,
+      "best": 8
+     },
+     "pickFrame": 3518,
+     "frac": 0.05,
+     "after": {
+      "score": 10400,
+      "shields": 3,
+      "wave": 2,
+      "combo": 8,
+      "streak": 9,
+      "answered": 12,
+      "correct": 11,
+      "best": 9
+     },
+     "sheetFrame": 3566,
+     "title": "DIRECT HIT! +1560\n      \n      Directors' and officers' serv"
+    },
+    {
+     "n": 12,
+     "q": "c02-q041",
+     "order": "0213",
+     "T": 28.459,
+     "askFrame": 3567,
+     "step": "T",
+     "before": {
+      "score": 10400,
+      "shields": 3,
+      "wave": 2,
+      "combo": 8,
+      "streak": 9,
+      "answered": 12,
+      "correct": 11,
+      "best": 9
+     },
+     "after": {
+      "score": 10400,
+      "shields": 2,
+      "wave": 2,
+      "combo": 1,
+      "streak": 0,
+      "answered": 13,
+      "correct": 11,
+      "best": 9
+     },
+     "sheetFrame": 5274,
+     "title": "ANSWER B ·"
+    },
+    {
+     "n": 13,
+     "q": "c02-q033",
+     "order": "2301",
+     "T": 34.899,
+     "askFrame": 5275,
+     "step": "R@0.05",
+     "before": {
+      "score": 10400,
+      "shields": 2,
+      "wave": 2,
+      "combo": 1,
+      "streak": 0,
+      "answered": 13,
+      "correct": 11,
+      "best": 9
+     },
+     "pickFrame": 5379,
+     "frac": 0.0501,
+     "after": {
+      "score": 10595,
+      "shields": 2,
+      "wave": 2,
+      "combo": 2,
+      "streak": 1,
+      "answered": 14,
+      "correct": 12,
+      "best": 9
+     },
+     "sheetFrame": 5427,
+     "title": "DIRECT HIT! +195\n      \n      With no debt, the risk is limi"
+    },
+    {
+     "n": 14,
+     "q": "c02-q023",
+     "order": "0123",
+     "T": 33.059,
+     "askFrame": 5428,
+     "step": "W@0.08",
+     "before": {
+      "score": 10595,
+      "shields": 2,
+      "wave": 2,
+      "combo": 2,
+      "streak": 1,
+      "answered": 14,
+      "correct": 12,
+      "best": 9
+     },
+     "pickFrame": 5586,
+     "frac": 0.0802,
+     "after": {
+      "score": 10595,
+      "shields": 1,
+      "wave": 2,
+      "combo": 1,
+      "streak": 0,
+      "answered": 15,
+      "correct": 12,
+      "best": 9
+     },
+     "sheetFrame": 5630,
+     "title": "ANSWER B ·"
+    },
+    {
+     "n": 15,
+     "q": "c02-q012",
+     "order": "2301",
+     "T": 24.411,
+     "askFrame": 5631,
+     "step": "W@0.08",
+     "before": {
+      "score": 10595,
+      "shields": 1,
+      "wave": 2,
+      "combo": 1,
+      "streak": 0,
+      "answered": 15,
+      "correct": 12,
+      "best": 9
+     },
+     "pickFrame": 5748,
+     "frac": 0.0806,
+     "after": {
+      "score": 10595,
+      "shields": 0,
+      "wave": 2,
+      "combo": 1,
+      "streak": 0,
+      "answered": 16,
+      "correct": 12,
+      "best": 9
+     },
+     "sheetFrame": 5792,
+     "title": "ANSWER A ·"
+    }
+   ],
+   "end": {
+    "frame": 5889,
+    "results": "GAME OVER 010595 PTS Reached wave 2 on STAGE 2 ACCURACY 75% ANSWERED 16 BEST STREAK 9 WAVE 2 HIGH SCORE RANK #1 XP EARNED +120 LV1 TRAINEE MASTERY STAGE 2 · The Concept of Risk 0% > 4.6% REVIEW YOUR MISSES (4) Which of the following is a hazard rather than a peril? YOU: A collision with another vehicle at an intersection ANSWER: Storing cans of gasoline in a basement workshop A hazard is a condition that creates or increases the chance or severity of loss, and keeping gasoline at home is a fire hazard. Fire, collision and hail are perils: actual causes of loss. P. 2•6 · STAGE 2 · Peril and hazard Visiting London, Inès is hit by a car after looking left instead of right before crossing the street. Which travel risk from the course does this illustrate? YOU: no answer ANSWER: Exposure to an unfamiliar environment Unfamiliar environments create risk; the course's example is North American tourists in England who habitually look left instead of right. Other travel risks are more time in vehicles, crime or unrest, unusual health hazards and aggravated conditions. P. 2•19 · STAGE 2 · Travel risks Which 'triple combination' does the course say makes RESPs worth reviewing with every parent of a school-aged child? YOU: Tax-deductible deposits, tax-free withdrawals and guaranteed rates of return ANSWER: Tax-deferred savings, income splitting, and government grants and bonds RESPs combine tax-deferred savings, income splitting, and government grants and bonds, which makes them one of the most flexible and popular education savings vehicles. P. 2•10 · STAGE 2 · Education fund Which of the following is a hazard rather than a peril? YOU: A collision with another vehicle at an intersection ANSWER: Storing cans of gasoline in a basement workshop A hazard is a condition that creates or increases the chance or severity of loss, and keeping gasoline at home is a fire hazard. Fire, collision and hail are perils: actual causes of loss. P. 2•6 · STAGE 2 · Peril and hazard PLAY AGAIN CHANGE STAGE READ STAGE 2 NOTES ARCADE",
+    "stats": {
+     "answered": 16,
+     "correct": 12,
+     "bestStreak": 9,
+     "cards": 0,
+     "games": 1,
+     "exams": 0,
+     "bestExam": 0
+    },
+    "boxes": {
+     "1": 3,
+     "2": 12
+    },
+    "items": 15,
+    "scores": {
+     "blaster": [
+      {
+       "n": "AAA",
+       "s": 10595,
+       "c": "STAGE 2"
+      }
+     ],
+     "racer": [],
+     "boss": [],
+     "memory": [],
+     "exam": []
+    },
+    "boss": {},
+    "ach": [
+     "first",
+     "streak5"
+    ]
+   },
+   "errors": [],
+   "finished": true
+  }
+ ],
+ "consoleErrors": []
+}
