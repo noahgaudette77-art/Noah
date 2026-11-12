@@ -223,7 +223,7 @@ function racerGroundMaterial(mirror, shared) {
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
       uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xff3ad4, 1.7) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
-      uCarX: { value: 0 }, uUnder: { value: neon(0xff3ad4, 0.9) }, uHead: { value: 0.5 }, uTail: { value: 1 },
+      uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
     }),
@@ -234,7 +234,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform float uScroll; uniform float uTime; uniform sampler2D tReflect; uniform float uReflect;
       uniform vec3 uAsphalt; uniform vec3 uBase; uniform vec3 uGrid; uniform vec3 uEdge; uniform vec3 uDash;
       uniform vec3 uLampL; uniform vec3 uLampR; uniform float uLampI;
-      uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail;
+      uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -294,6 +294,10 @@ function racerGroundMaterial(mirror, shared) {
         float gf = 1.0 - smoothstep(0.18, 0.55, max(gw.x, gw.y));
         vec3 floorc = uBase + uGrid * (gl + gh * 0.08) * gf;
         vec3 col = mix(floorc, asphalt, road) + refl;
+        // the car's shadow: tight and dark under the body, softer as the springs lift it
+        vec2 sq = vec2(x - uCarX, z - ${racerF(RACER_CAR_Z)}) / vec2(1.02 + uCarY * 1.5, 2.28);
+        float shade = 1.0 - smoothstep(0.55, 1.12, dot(sq * sq, sq * sq));
+        col *= 1.0 - uShade * 0.78 * shade;
         // light falling on it
         float dzl = mod(z - uScroll + ${RACER_P / 2}.0, ${RACER_P}.0) - ${RACER_P / 2}.0;
         float dzr = mod(z - uScroll, ${RACER_P}.0) - ${RACER_P / 2}.0;
@@ -1010,111 +1014,16 @@ class RacerGame extends QuizGame {
   }
   // An 80s wedge in candy paint with a clearcoat that mirrors the career sky,
   // a full-width tail-light bar, neon light bars and ribbon trails.
+  // The car is its own module (RacerCar): model, lamps, springs, spray.
   makeCar() {
-    const car = new THREE.Group(); // lane position, bob, lean and spin (gameplay-driven)
-    const rig = new THREE.Group(); // steering yaw and squat (look only)
-    rig.position.z = RACER_CAR_Z;
-    car.add(rig);
-    this.carRig = rig;
-    const env = this.env || null;
-    // An armored rally coupe: gunmetal plating with mint accents, tall knobbly tyres
-    // on pale rims, a roof light bar and a rear guard. Plating and accents share one
-    // lit material, coloured per vertex.
-    this.paint = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.7, roughness: 0.42, clearcoat: 0.45, clearcoatRoughness: 0.25, envMap: env, envMapIntensity: 0.9, flatShading: true });
-    this.glass = new THREE.MeshStandardMaterial({ color: 0x0c1418, metalness: 0.88, roughness: 0.08, envMap: env, envMapIntensity: 1.8, flatShading: true });
-    this.trim = new THREE.MeshStandardMaterial({ color: 0x0b0c10, metalness: 0.35, roughness: 0.7, envMap: env, envMapIntensity: 0.5, flatShading: true });
-    const box = new THREE.BoxGeometry(1, 1, 1);
-    const STEEL = 0x2c323a, PLATE = 0x3a424c, MINT = 0x4fd69c;
-    const paint = new RacerBatch();
-    const bodyGeo = racerLoft(RACER_BODY, racerBodyRing, true);
-    paint.add(bodyGeo, null, STEEL);
-    // bolted plates: nose guard, hood scoop, flared arches, rear deck and guard
-    paint.add(box, racerM(0, 0.5, -2.26, 1.86, 0.3, 0.12), PLATE);
-    paint.add(box, racerM(0, 0.83, -1.15, 0.7, 0.07, 0.8, 0.05), PLATE);
-    paint.add(box, racerM(0, 0.98, 1.84, 1.5, 0.05, 0.44, -0.05), PLATE);
-    paint.add(box, racerM(0, 0.44, 2.2, 1.9, 0.14, 0.1), PLATE);
-    [[-1, -1.25], [1, -1.25], [-1, 1.3], [1, 1.3]].forEach(([sx, z]) => {
-      paint.add(box, racerM(sx * 1.08, 0.94, z, 0.34, 0.07, 1.0), PLATE);
-      paint.add(box, racerM(sx * 1.08, 0.8, z - 0.6, 0.34, 0.07, 0.42, 0.75), PLATE);
-      paint.add(box, racerM(sx * 1.08, 0.8, z + 0.6, 0.34, 0.07, 0.42, -0.75), PLATE);
-      // mint liners inside the arches, and a mint blade behind each wheel
-      paint.add(box, racerM(sx * 0.93, 0.74, z, 0.05, 0.3, 0.9), MINT);
-      paint.add(box, racerM(sx * 1.05, 0.5, z + 0.82, 0.07, 0.34, 0.2, -0.3), MINT);
-    });
-    [-1, 1].forEach((sx) => paint.add(box, racerM(sx * 1.03, 0.36, 0.02, 0.07, 0.13, 1.5), MINT));
-    // louvres over the rear window
-    const slope = Math.atan2(1.28 - 0.96, 1.0);
-    for (let i = 1; i <= 5; i++) {
-      const t = i / 6.5;
-      paint.add(box, racerM(0, 1.28 - 0.32 * t + 0.025, 0.5 + t, 1.16 + 0.36 * t, 0.026, 0.07, slope), STEEL);
-    }
-    // roof light bar: a rail and four pods
-    paint.add(box, racerM(0, 1.33, 0.02, 1.34, 0.05, 0.1), PLATE);
-    [-0.5, -0.17, 0.17, 0.5].forEach((x) => paint.add(box, racerM(x, 1.41, 0.0, 0.27, 0.13, 0.13), STEEL));
-    bodyGeo.dispose();
-    rig.add(new THREE.Mesh(paint.build("color"), this.paint));
-    const cabin = racerLoft(RACER_CABIN, racerCabinRing, false);
-    rig.add(new THREE.Mesh(cabin, this.glass));
-    // rubber and dark fittings: tyres with tread blocks, exhausts, aerial
-    const trim = new RacerBatch();
-    const tyre = new THREE.CylinderGeometry(0.46, 0.46, 0.44, 14);
-    const WHEELS = [[-1.04, -1.25], [1.04, -1.25], [-1.04, 1.3], [1.04, 1.3]];
-    WHEELS.forEach(([x, z]) => {
-      trim.add(tyre, racerM(x, 0.46, z, 1, 1, 1, 0, 0, Math.PI / 2), null);
-      for (let k = 0; k < 12; k++) {
-        const a = (k / 12) * Math.PI * 2;
-        trim.add(box, racerM(x, 0.46 + Math.sin(a) * 0.47, z + Math.cos(a) * 0.47, 0.46, 0.07, 0.1, Math.PI / 2 - a), null);
-      }
-    });
-    [-0.34, 0.34].forEach((x) => trim.add(tyre, racerM(x, 0.4, 2.12, 0.2, 0.5, 0.2, Math.PI / 2), null));
-    trim.add(box, racerM(0.78, 1.5, 1.2, 0.02, 0.9, 0.02, -0.12), null);
-    rig.add(new THREE.Mesh(trim.build(), this.trim));
-    tyre.dispose();
-    // lights and pale parts (unlit, HDR where they glow): tail lights, roof pods,
-    // mint under-glow, rims
-    const n = new RacerBatch();
-    n.add(box, racerM(0, 0.7, 2.115, 1.62, 0.07, 0.03), 0xff1438, 2);
-    [-0.66, 0.66].forEach((x) => n.add(box, racerM(x, 0.7, 2.12, 0.36, 0.15, 0.035), 0xff1438, 3));
-    [-0.5, -0.17, 0.17, 0.5].forEach((x) => {
-      n.add(box, racerM(x, 1.41, -0.075, 0.22, 0.09, 0.02), 0xdff4ff, 3.2); // the lamps face forward
-      n.add(box, racerM(x, 1.41, 0.07, 0.1, 0.04, 0.02), 0xffa53d, 2.2); // amber markers face the driver behind
-    });
-    [-1, 1].forEach((sx) => n.add(box, racerM(sx * 1.075, 0.3, 0.02, 0.025, 0.035, 1.46), 0x5dffb0, 2.4));
-    const rim = new THREE.CylinderGeometry(0.27, 0.27, 0.46, 12);
-    const hub = new THREE.CylinderGeometry(0.09, 0.09, 0.5, 8);
-    WHEELS.forEach(([x, z]) => {
-      n.add(rim, racerM(x, 0.46, z, 1, 1, 1, 0, 0, Math.PI / 2), 0xdfe6ea, 0.62);
-      n.add(hub, racerM(x, 0.46, z, 1, 1, 1, 0, 0, Math.PI / 2), 0x20242a, 1);
-    });
-    rim.dispose();
-    hub.dispose();
-    this.carNeon = new THREE.MeshBasicMaterial({ vertexColors: true });
-    rig.add(new THREE.Mesh(n.build("color"), this.carNeon));
-    // exhaust flames for the boost (look only, not reflected)
-    const fl = new RacerBatch();
-    const cone = new THREE.CylinderGeometry(0.01, 0.1, 1, 8, 1, true);
-    cone.translate(0, 0.5, 0);
-    [-0.34, 0.34].forEach((x) => fl.add(cone, racerM(x, 0.4, 2.14, 1, 1, 1, Math.PI / 2), 0x5ad8ff, 1));
-    cone.dispose();
-    this.flames = new THREE.Mesh(fl.build(), new THREE.ShaderMaterial({
-      uniforms: { uI: { value: 0 }, uTime: { value: 0 } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-      vertexShader: "attribute vec3 aCol; varying vec3 vCol; varying float vT; void main(){ vCol = aCol; vT = clamp(position.z - 2.14, 0.0, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform float uI; uniform float uTime; varying vec3 vCol; varying float vT; void main(){ float f = (1.0 - vT) * (0.8 + 0.2 * sin(uTime * 60.0 + vT * 20.0)); gl_FragColor = vec4(mix(vec3(3.0, 3.0, 3.4), vCol * 2.5, vT) * f * uI, 1.0); }",
-    }));
-    this.flames.layers.set(1);
-    rig.add(this.flames);
-    box.dispose();
-    // ribbon trails from the tail lights and the wing tips
-    this.trails = [
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(-0.66, 0.7, 2.14), step: 0.38 },
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(0.66, 0.7, 2.14), step: 0.38 },
-      { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(-1.08, 0.3, 0.75), step: 0.2 },
-      { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(1.08, 0.3, 0.75), step: 0.2 },
-    ];
-    this.trails.forEach((tr) => this.scene.add(tr.t.mesh));
-    this.decor(...this.trails.map((tr) => tr.t.mesh));
-    return car;
+    const kit = (this.carKit = new RacerCar(this));
+    this.carRig = kit.rig;
+    this.paint = kit.paint;
+    this.glass = kit.glass;
+    this.trim = kit.wheelPaint;
+    this.flames = kit.flames;
+    this.trails = kit.trails;
+    return kit.car;
   }
   // Everything a gantry is made of is built once and shared; a gate per question is
   // just a group of meshes pointing at it.
@@ -1489,22 +1398,8 @@ class RacerGame extends QuizGame {
   }
   // The look-only motion: steering, flames, trails, speed lines, lights on the road.
   updateLook(dt, sp, step, scroll, sky) {
-    const boost = this.boostRate ? 1 : 0;
-    const steer = clamp((this.lane === null ? 0 : laneX(this.lane, this.round ? this.round.n : 4)) - this.carX, -2.5, 2.5);
-    this.carRig.rotation.y = -steer * 0.045;
-    this.carRig.rotation.x = lerp(this.carRig.rotation.x, boost * -0.035, Math.min(1, dt * 6));
-    this.flame += (boost - this.flame) * Math.min(1, dt * 8);
-    const fl = this.flame * (0.75 + 0.25 * Math.sin(this.t * 47));
-    this.flames.material.uniforms.uI.value = fl;
-    this.flames.scale.set(1, 1, 0.4 + fl * 1.4);
-    this.flames.visible = this.flame > 0.02;
-    // trails ride the tail lights' real positions, through lane changes and spins
-    this.car.updateMatrixWorld(true);
-    const tI = 0.75 + 0.25 * clamp((sp - 30) / 45, 0, 1);
-    for (const tr of this.trails) {
-      tr.t.follow(this.carRig.localToWorld(this.tmp.copy(tr.p)), step, tr.step);
-      tr.t.mesh.material.uniforms.uI.value = tI;
-    }
+    this.carKit.update(dt, sp, step, sky);
+    this.flame = this.carKit.flame;
     // speed lines
     const rush = clamp((sp - 36) / 50, 0, 1) * (REDUCED_MOTION ? 0.4 : 1);
     const lu = this.lines.material.uniforms;
@@ -1517,7 +1412,10 @@ class RacerGame extends QuizGame {
     g.uCarX.value = this.carX;
     g.uReflect.value = GFX.lite ? 0 : sky.wet; // the road dries out around midday
     g.uHead.value = 0.45 + 0.75 * sky.lamps;
-    g.uUnder.value.set(COLORS.magenta).multiplyScalar(0.95 + 0.7 * this.flame);
+    g.uUnder.value.set(0x5dffb0).multiplyScalar(0.5 + 0.2 * Math.sin(this.t * 2.6) + 0.7 * this.flame); // mint under-glow
+    g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
+    g.uShade.value = GFX.opt.shadows ? 1 : 0;
+    g.uCarY.value = this.carKit.heave.x;
     const gate = this.gate || this.leaving;
     if (gate) {
       const gz = gate.position.z;

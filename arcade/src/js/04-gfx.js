@@ -17,6 +17,11 @@ const GFX = {
   rip: { x: 0.5, y: 0.5, t: 1, dur: 1, amp: 0 }, // a shockwave bending the picture (see ripple)
   punch: 0, // impact zoom: the picture jumps toward you for a moment
   speedBlur: 0, // radial blur from speed; scenes set it each frame
+  heat: { x: 0.5, y: 0.5, r: 0.1, a: 0 }, // heat haze behind an exhaust (see heatAt)
+  // Every effect can be switched off (Setup > Effects). calm: reduced effects, and
+  // also set while a question is on screen so the answers stay the brightest thing.
+  opt: { bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true },
+  calm: false,
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -107,6 +112,7 @@ const GFX = {
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
       punch: this.punch < 0.0006 ? 0 : this.punch,
       zoomBlur: this.lite ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      heat: this.heat,
       fx: !!this.Q[this.qi].fx,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
@@ -116,12 +122,27 @@ const GFX = {
       post: scene.userData.post || {},
       lite: this.lite,
     });
+    this.heat.a = 0; // a scene asks for its heat haze again every frame
   },
   // Juice: colour fringing + white flash, and a short freeze-frame.
   // Streak aura: rays of light around the screen edge in the streak's colour.
   setFever(amount, rgb) {
     this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
     if (rgb) this.feverCol = rgb;
+  },
+  // Heat haze around a point in the scene (an exhaust, a vent): the final pass makes
+  // the picture swim there this frame. radius in world units, amt 0..1.
+  heatAt(camera, pos, radius, amt) {
+    if (!camera || this.Q[this.qi].cheap) return;
+    const v = this._heatV || (this._heatV = new THREE.Vector3());
+    v.copy(pos).project(camera);
+    if (v.z > 1 || Math.abs(v.x) > 1.3 || Math.abs(v.y) > 1.3) return;
+    const h = this.heat;
+    h.x = v.x * 0.5 + 0.5; h.y = v.y * 0.5 + 0.5;
+    const y0 = v.y;
+    v.copy(pos); v.y += radius; v.project(camera);
+    h.r = Math.abs(v.y - y0) * 0.5;
+    h.a = amt;
   },
   // A shockwave at a point in the scene bends the picture as it spreads: a ring of
   // refraction in the final pass. amp 0..1.
@@ -513,6 +534,7 @@ function makePipeline(renderer, hdr) {
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
+    uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -522,7 +544,7 @@ function makePipeline(renderer, hdr) {
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever;
-    uniform HP vec4 uRip; uniform HP vec2 uZoom;
+    uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -557,6 +579,12 @@ function makePipeline(renderer, hdr) {
         HP vec2 rd = (suv - uRip.xy) * asp;
         HP float ring = (length(rd) - uRip.z) * 14.0;
         suv += normalize(rd + 1e-5) / asp * (ring * exp(-ring * ring) * uRip.w * 0.045);
+      }
+      if (uHeat.w > 0.0) {
+        // heat haze: hot air behind an exhaust makes the picture swim
+        HP vec2 hd = (suv - uHeat.xy) * vec2(uRes.x / uRes.y, 1.0) / uHeat.z;
+        HP float hm = exp(-dot(hd, hd)) * uHeat.w;
+        suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
       vec3 col = uFXAA > 0.5 ? fxaa(suv) : tex(suv);
       if (uZoom.y > 0.0) {
@@ -745,6 +773,8 @@ function makePipeline(renderer, hdr) {
       u.uFever.value.set(o.fever, o.t % 628.3185);
       u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
       u.uZoom.value.set(o.punch, o.zoomBlur);
+      u.uHeat.value.set(o.heat.x, o.heat.y, Math.max(0.01, o.heat.r), o.heat.a);
+      u.uT.value = o.t % 628.3185;
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
