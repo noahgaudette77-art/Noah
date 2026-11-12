@@ -1155,6 +1155,7 @@ class HubScene extends Scene3D {
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
+    const lean = GFX.ok && GFX.Q[GFX.qi].cheap; // the weakest quality levels redraw the demos half as often
     this.cabs.forEach((c, i) => {
       const sc = c.scr;
       sc.power = sc.target > 0 ? Math.min(1, sc.power + dt * 2.6) : 0;
@@ -1164,7 +1165,7 @@ class HubScene extends Scene3D {
       c.demo.wait = (c.demo.wait === undefined ? i / 40 : c.demo.wait) - dt;
       if (sc.power > 0 && c.demo.wait <= 0) {
         drawDemo(c.demo, dt);
-        c.demo.wait += i === this.sel ? 1 / 30 : 1 / 8;
+        c.demo.wait += (i === this.sel ? 1 / 30 : 1 / 8) * (lean ? 2 : 1);
         if (c.demo.wait < 0) c.demo.wait = 0;
       }
     });

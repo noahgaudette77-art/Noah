@@ -132,12 +132,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 /* the letters' depth: a dark copy stepped back down and to the right */
 .logo-depth { color: #2a0b52; transform: translate(2px, 3px); text-shadow: 1px 1px 0 #35106a, 2px 2px 0 #2e0d5c, 3px 3px 0 #260a4c, 4px 4px 0 #1e083e, 5px 5px 0 #170630, 6px 6px 0 #100424, 8px 12px 22px rgba(0, 0, 0, 0.7); }
 .logo-face {
-  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
-    linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
-  background-size: 250% 100%, 100% 100%;
-  background-position: 160% 0, 0 0;
+  background: linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: glint 7s ease-in-out 1.2s infinite; /* a sweep of light every 7 s; the logo only repaints while it crosses */
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
   filter: drop-shadow(0 0 14px rgba(255, 58, 212, 0.6)) drop-shadow(0 0 34px rgba(53, 239, 255, 0.28));
 }
@@ -147,7 +143,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-@keyframes glint { 0% { background-position: 160% 0, 0 0; } 17%, 100% { background-position: -60% 0, 0 0; } }
+/* The glint: a slanted window that slides across a fixed white copy of the letters
+   every 7 s. Window and letters move by equal and opposite transforms, so the browser
+   only shifts two layers: nothing is repainted while the light crosses. */
+.logo-glint { justify-self: start; width: 18%; height: 100%; overflow: hidden; pointer-events: none; transform-origin: 0 0; transform: translateX(-110%) skewX(-18deg); will-change: transform; animation: glint-band 7s ease-in-out 1.2s infinite; }
+.logo-glint > span { display: block; width: 555.56%; color: rgba(255, 255, 255, 0.92); transform-origin: 0 0; transform: skewX(18deg) translateX(19.8%); will-change: transform; animation: glint-text 7s ease-in-out 1.2s infinite; }
+@keyframes glint-band { 0% { transform: translateX(-110%) skewX(-18deg); } 17%, 100% { transform: translateX(600%) skewX(-18deg); } }
+@keyframes glint-text { 0% { transform: skewX(18deg) translateX(19.8%); } 17%, 100% { transform: skewX(18deg) translateX(-108%); } }
 .attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; background: rgba(9, 3, 32, 0.78); border: 1px solid rgba(53, 239, 255, 0.28); padding: 8px 12px; } /* a plate behind the tip: the grid's lines used to cross the words */
 .on-title #toast { top: calc(var(--gut-t) + 34px); } /* clear of the CREDIT / MASTERY / HI row */
 .attract b { color: var(--lime); font-weight: 400; }
@@ -535,7 +537,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-face, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-glint, .logo-glint > span, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }

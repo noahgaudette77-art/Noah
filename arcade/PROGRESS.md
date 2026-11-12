@@ -119,7 +119,7 @@ build from before any visual work (153 answers in 8 games).
 | A2 | Arcade hub | done |
 | A3 | Risk Blaster | done |
 | A4 | Final Exam, Memory Bank, Strategy Guide | done |
-| A5 | Shared audio, measurements, report | next |
+| A5 | Shared audio, measurements, report | done |
 
 - A1 (title): `09c-ambient.js` is the shared sky kit (meteors, fireworks, lightning,
   explosion, UFO, blimp, helicopter, drones, lasers, birds), moved out of the racer
@@ -192,3 +192,31 @@ build from before any visual work (153 answers in 8 games).
   sits on solid ground. With a chapter open the scene slows to a fifth.
   Software test, lowest level, worst second: memory 73 fps (75-81 before), exam 73
   (79 before), guide 103.
+- A5 (shared): the fighter has an engine hum that rises with the combo and the warp
+  (it stops on pause and game over). Master mute, the arcade-floor bed, UI blips,
+  whooshes and coin sounds were already there; this pass added power-up, lock, page,
+  whoosh, shield and combo cues. Two costs found by the final measurements and
+  fixed: the title logo's glint repainted the whole glowing logo every frame while
+  it crossed (now a slanted window sliding over a fixed white copy of the letters:
+  two layers move, nothing repaints), and the hub's six attract screens redraw half
+  as often at the three weakest quality levels.
+  Final state: regression IDENTICAL (153 answers in 8 games, 0 hint marks before
+  submit); walkthrough of every screen on a phone-sized window: no console errors,
+  no horizontal overflow.
+  Software renderer, phone-sized window, auto scaler (it sits at its lowest level
+  here, so these are floors, not phone measurements), average / worst second:
+  title 123 / 108, hub 126 / 111, Risk Blaster 95 / 85, Nest Egg Run 85 / 71,
+  Boss Rush 118 / 98, Memory Bank 128 / 105, Final Exam 118 / 100, guide 140 / 118.
+  The build from before this pass, same machine, same hour: title 176 / 110,
+  hub 135 / 105, Risk Blaster 129 / 112, Nest Egg Run 87 / 75, Boss Rush 110 / 95,
+  Memory Bank 125 / 107, Final Exam 119 / 105.
+
+## Known issues and what was not done (second pass)
+
+- Not measured on a real iPhone: frame rate, tilt, speech. The numbers above are a
+  software renderer, which is far slower than a phone GPU.
+- Risk Blaster's ribs and the idle shield bubble are not drawn at the three weakest
+  quality levels; the fighter, drones, carrier and conduits always are.
+- The Final Exam has no event director on purpose (calm and consistent); its motion
+  is continuous only.
+- Memory Bank's lamp panels on the wall only show on wide screens.

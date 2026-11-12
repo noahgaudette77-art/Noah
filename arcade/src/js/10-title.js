@@ -74,7 +74,7 @@ function showTitle() {
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
-      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span></h1>
+      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span><span class="logo-glint" aria-hidden="true"><span>INR<br>ARCADE</span></span></h1>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
     <button class="insert-coin px" data-act="start">INSERT COIN</button>

@@ -145,12 +145,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 /* the letters' depth: a dark copy stepped back down and to the right */
 .logo-depth { color: #2a0b52; transform: translate(2px, 3px); text-shadow: 1px 1px 0 #35106a, 2px 2px 0 #2e0d5c, 3px 3px 0 #260a4c, 4px 4px 0 #1e083e, 5px 5px 0 #170630, 6px 6px 0 #100424, 8px 12px 22px rgba(0, 0, 0, 0.7); }
 .logo-face {
-  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%) no-repeat,
-    linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
-  background-size: 250% 100%, 100% 100%;
-  background-position: 160% 0, 0 0;
+  background: linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #3a7bff 50%, #ff3ad4 72%, #ffe14f 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: glint 7s ease-in-out 1.2s infinite; /* a sweep of light every 7 s; the logo only repaints while it crosses */
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
   filter: drop-shadow(0 0 14px rgba(255, 58, 212, 0.6)) drop-shadow(0 0 34px rgba(53, 239, 255, 0.28));
 }
@@ -160,7 +156,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   text-shadow: 0 0 10px var(--magenta), 0 0 2px #fff, 0 2px 0 #12052e, 0 0 6px #12052e; animation: blink 1.1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-@keyframes glint { 0% { background-position: 160% 0, 0 0; } 17%, 100% { background-position: -60% 0, 0 0; } }
+/* The glint: a slanted window that slides across a fixed white copy of the letters
+   every 7 s. Window and letters move by equal and opposite transforms, so the browser
+   only shifts two layers: nothing is repainted while the light crosses. */
+.logo-glint { justify-self: start; width: 18%; height: 100%; overflow: hidden; pointer-events: none; transform-origin: 0 0; transform: translateX(-110%) skewX(-18deg); will-change: transform; animation: glint-band 7s ease-in-out 1.2s infinite; }
+.logo-glint > span { display: block; width: 555.56%; color: rgba(255, 255, 255, 0.92); transform-origin: 0 0; transform: skewX(18deg) translateX(19.8%); will-change: transform; animation: glint-text 7s ease-in-out 1.2s infinite; }
+@keyframes glint-band { 0% { transform: translateX(-110%) skewX(-18deg); } 17%, 100% { transform: translateX(600%) skewX(-18deg); } }
+@keyframes glint-text { 0% { transform: skewX(18deg) translateX(19.8%); } 17%, 100% { transform: skewX(18deg) translateX(-108%); } }
 .attract { max-width: 40ch; min-height: 3.3em; font-size: clamp(19px, 4.6vw, 24px); color: var(--ink); text-shadow: 0 2px 0 #000; background: rgba(9, 3, 32, 0.78); border: 1px solid rgba(53, 239, 255, 0.28); padding: 8px 12px; } /* a plate behind the tip: the grid's lines used to cross the words */
 .on-title #toast { top: calc(var(--gut-t) + 34px); } /* clear of the CREDIT / MASTERY / HI row */
 .attract b { color: var(--lime); font-weight: 400; }
@@ -548,7 +550,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-face, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-glint, .logo-glint > span, .ans.good, .ans.bad, .fever.bump, .scr-game .answers .ans, .qpanel.fresh::after { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
@@ -4378,7 +4380,7 @@ function showTitle() {
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
-      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span></h1>
+      <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span><span class="logo-glint" aria-hidden="true"><span>INR<br>ARCADE</span></span></h1>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
     <button class="insert-coin px" data-act="start">INSERT COIN</button>
@@ -5760,6 +5762,7 @@ class HubScene extends Scene3D {
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
+    const lean = GFX.ok && GFX.Q[GFX.qi].cheap; // the weakest quality levels redraw the demos half as often
     this.cabs.forEach((c, i) => {
       const sc = c.scr;
       sc.power = sc.target > 0 ? Math.min(1, sc.power + dt * 2.6) : 0;
@@ -5769,7 +5772,7 @@ class HubScene extends Scene3D {
       c.demo.wait = (c.demo.wait === undefined ? i / 40 : c.demo.wait) - dt;
       if (sc.power > 0 && c.demo.wait <= 0) {
         drawDemo(c.demo, dt);
-        c.demo.wait += i === this.sel ? 1 / 30 : 1 / 8;
+        c.demo.wait += (i === this.sel ? 1 / 30 : 1 / 8) * (lean ? 2 : 1);
         if (c.demo.wait < 0) c.demo.wait = 0;
       }
     });
@@ -7105,6 +7108,7 @@ class BlasterGame extends QuizGame {
 
   start() {
     Sound.play("game");
+    Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
@@ -7376,6 +7380,7 @@ class BlasterGame extends QuizGame {
   gameOver() {
     this.state = "over";
     Sound.stopMusic();
+    Sound.engine(false);
     Sound.sfx("gameover");
     UI.banner("GAME OVER", COLORS.red);
     if (this.has3D) {
@@ -7487,6 +7492,7 @@ class BlasterGame extends QuizGame {
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
+    Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
@@ -7507,7 +7513,16 @@ class BlasterGame extends QuizGame {
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);
   }
+  pause() {
+    super.pause();
+    if (this.paused) Sound.engine(false);
+  }
+  resume() {
+    super.resume();
+    if (this.state !== "over") Sound.engine(true);
+  }
   dispose() {
+    Sound.engine(false);
     this.clearTargets();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());

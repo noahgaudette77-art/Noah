@@ -440,6 +440,7 @@ class BlasterGame extends QuizGame {
 
   start() {
     Sound.play("game");
+    Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
@@ -711,6 +712,7 @@ class BlasterGame extends QuizGame {
   gameOver() {
     this.state = "over";
     Sound.stopMusic();
+    Sound.engine(false);
     Sound.sfx("gameover");
     UI.banner("GAME OVER", COLORS.red);
     if (this.has3D) {
@@ -822,6 +824,7 @@ class BlasterGame extends QuizGame {
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
+    Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
@@ -842,7 +845,16 @@ class BlasterGame extends QuizGame {
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);
   }
+  pause() {
+    super.pause();
+    if (this.paused) Sound.engine(false);
+  }
+  resume() {
+    super.resume();
+    if (this.state !== "over") Sound.engine(true);
+  }
   dispose() {
+    Sound.engine(false);
     this.clearTargets();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());

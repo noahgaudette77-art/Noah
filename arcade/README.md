@@ -28,15 +28,49 @@ lists all of them again.
 - **HD neon graphics.** Every scene renders in high dynamic range, so neon can burn
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
-  world: a synthwave horizon on the title screen, a nebula tunnel of crystal
-  targets in Risk Blaster, a road through five landscapes in Nest Egg Run (it
+  world: a living synthwave city on the title screen, a ribbed corridor of
+  holo-drones in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
   with a mirror floor in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
-  that opens a little more with every card you bank in Memory Bank, and a trophy
-  on a plinth in a moonlit hall for the Final Exam. Setup → Graphics switches
-  between HD (sharp, anti-aliased), Retro and Chunky (pixel art).
+  that opens a little more with every card you bank in Memory Bank, a crystal
+  monument on a plinth in a moonlit hall for the Final Exam, and a vaulted archive
+  behind the Strategy Guide. Setup → Graphics switches between HD (sharp,
+  anti-aliased), Retro and Chunky (pixel art).
+- **The title.** A city that never sits still: megatowers with rolling ads and
+  flickering blade signs, a suspension bridge across the sun, traffic as rivers of
+  light, searchlights, hover cars. Every three to six seconds something happens (a
+  maglev on the bridge, a patrol chase, a blimp, fireworks, a helicopter, drones,
+  a meteor shower, distant lightning). The logo has depth, glow and a glint that
+  crosses it every seven seconds.
+- **Risk Blaster.** You fly a twin-engine delta fighter: layered armour, a glass
+  canopy, lit intakes, wing strips and missile rails, ailerons that work,
+  afterburners with shock diamonds and heat haze, wingtip contrails, and a
+  hexagon-lattice shield that flares when you lose one. It banks with your finger,
+  kicks back when it fires and rolls through the warp between waves. The answers
+  ride holo-drones, a different airframe for each letter. The corridor has heavy
+  ribs with energy pylons, light conduits, tumbling asteroids, laser chords and
+  station blocks drifting by outside, and now and then a patrol, a comet, a
+  capital ship or a scan ring passes. Each wave has a carrier holding station
+  above the lanes: miss and it puts a bolt into your shield; clear the wave and it
+  goes up. A seven-pip combo meter fills and warms, and the engines burn longer
+  and bluer with it.
+- **The Keystone.** The Final Exam's centrepiece is a faceted crystal spire with
+  runes inside, held in gold claws on a jewelled foot, with an armillary of three
+  rings, a floating laurel and a halo of motes. It fills with light as you answer
+  (how many, never which were right: the exam still gives no hint until you
+  submit). Outside the windows an aurora drifts and lanterns rise. Everything in
+  the hall moves slowly and steadily.
+- **The vault's machinery.** Memory Bank's door has meshing gear trains round the
+  dial, an arc of lamps over it (one per card in the deck), coin stacks by the
+  bullion. Bank a card and it flies up into the coin slot, the gears spin on and
+  the lock goes home; miss one and it drops back toward the deck while the dark
+  lamps wash red.
+- **The archive.** The Strategy Guide opens on a vaulted aisle of bookshelves on
+  two tiers, hanging lamps, holo-books open on lecterns, loose pages adrift and a
+  rose window, seen through one framed window above the list. What you read sits
+  on solid ground, and the scene all but stops while a chapter is open.
 - **The car.** Nest Egg Run's armored rally coupe is built in layers of chamfered,
   bolted gunmetal plate with mint trim that glows: a bull bar and winch, hood
   scoop, armored pillars, a louvred rear window, a ducktail wing, a tubular rear
@@ -137,15 +171,23 @@ lists all of them again.
   takeaway. Replay any briefing from the stage's notes.
 - **Talking bosses.** Bosses introduce themselves, taunt your misses, groan when hit
   and get enraged below 35% HP.
-- **The arcade floor.** A room of lit cabinets with live screens, a polished tile
-  floor that reflects them, and neon on the ceiling. The lights clunk on the first
+- **The arcade floor.** Six cabinets, each its own machine on the same body (fins
+  and rocket pods, a steering wheel and wing, horns and teeth, a vault wheel and
+  coins, a clock and laurels, books and a reading lamp), each playing a live demo
+  of its game and powering up when you select it. Around them: a jukebox, a claw
+  machine with a moving claw, dance pads, a ticket printer, hoops, a drinks
+  machine, ceiling fans, a cleaning robot, people walking by, steam, and windows
+  on the city. A polished tile floor reflects it all. The camera pulls back as it
+  travels between cabinets. The lights clunk on the first
   time you walk in each session. The walls carry the INR Arcade sign, a Hall of
   Fame board with your best scores and rank, and a poster for every boss that fills
   with the stars you earn. The view leans toward your finger or mouse.
 - **Nest Egg Run's sky** follows your career: dawn at 25, bright day, golden hour,
   then dusk and stars at 65.
 - **Sound and feel.** Music adds layers as your streak grows; the floor hums with a
-  crowd and distant cabinets; the racer has an engine. Big hits freeze the frame
+  crowd and distant cabinets; the racer and the fighter have engines; cabinets
+  power up, locks go home, pages turn, shields crackle. One button on the arcade
+  floor mutes everything. Big hits freeze the frame
   for a beat, throw a shockwave and vibrate (on Android).
 - **Rank.** XP from everything you do moves you from Trainee to Arcade Legend.
 
@@ -181,11 +223,12 @@ npm run arcade         # rebuild arcade/index.html from src/ and content/
 npm run arcade:regress # prove a visual change left the rules alone (needs Playwright)
 ```
 
-`arcade:regress` plays Boss Rush, Nest Egg Run and Risk Blaster with a fixed script
-of right answers, wrong answers and timeouts on a virtual clock, and compares every
-HP, heart, score, nest egg, shield and frame number with the trace saved in
-`backup/` from before the visual upgrade. `PROGRESS.md` logs that upgrade's
-checkpoints.
+`arcade:regress` plays Boss Rush, Nest Egg Run, Risk Blaster, Memory Bank and a
+50-question Final Exam with a fixed script of right answers, wrong answers and
+timeouts on a virtual clock, and compares every HP, heart, score, nest egg, shield,
+card grade, exam mark, saved item and frame number with the trace saved in
+`backup/` from before the visual upgrades. It also fails if the Final Exam shows
+any hint before submit. `PROGRESS.md` logs the upgrades' checkpoints.
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,
