@@ -539,3 +539,11 @@ mark { background: var(--yellow); color: #12052e; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
+
+/* Strategy Guide: the archive scene shows through one window above the list; the
+   window's own spread shadow is the solid ground everything else is read on. */
+.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.93), rgba(9, 3, 32, 0.93)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
+.lib-window { position: relative; height: clamp(120px, 23vh, 210px); border: 2px solid var(--violet); pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.93), inset 0 0 22px rgba(9, 3, 32, 0.85), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.8); }
+.guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
+.lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }

@@ -4,10 +4,13 @@ function showGuide(chapterN) {
   Sound.play("calm");
   Sound.ambience(false);
   if (chapterN) return showGuideChapter(chapterN);
-  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
+  // The archive (31b-library.js) shows through a window above the list; everything
+  // that is read sits on a solid ground.
+  const el = UI.el(`<section class="screen guide-lib">
     ${topbar("STRATEGY GUIDE")}
     <div class="scroll"><div class="wrap" style="display:grid;gap:12px">
       <input class="search" id="guide-search" type="search" placeholder="Search terms, rules, numbers…" aria-label="Search the notes and flashcards" autocomplete="off">
+      <div class="lib-window" aria-hidden="true"><span>THE ARCHIVE</span></div>
       <div data-body></div>
     </div></div></section>`);
   const body = $("[data-body]", el);
@@ -43,22 +46,33 @@ function showGuide(chapterN) {
   let st = 0;
   const input = $("#guide-search", el);
   input.addEventListener("input", () => { clearTimeout(st); st = setTimeout(() => search(input.value.trim()), 140); });
+  const lib = libraryScene();
+  lib.reading = false;
   UI.show({
     el,
+    mounted: () => lib.setBand($(".lib-window", el)),
     on: (a, t) => {
       if (a === "back") { Sound.sfx("back"); showHub(); }
-      if (a === "ch") { Sound.sfx("select"); showGuideChapter(+t.dataset.n); }
+      if (a === "ch") { Sound.sfx("page"); showGuideChapter(+t.dataset.n); }
     },
     key: (e) => { if (e.key === "Escape") { if (input.value) { input.value = ""; search(""); } else showHub(); } },
   });
 }
 
+// The archive scene, shared by the guide's index and its chapters.
+function libraryScene() {
+  return Scenes.cur instanceof LibraryScene ? Scenes.cur : Scenes.set(new LibraryScene());
+}
+
 function showGuideChapter(n) {
   const c = CH(n);
+  const lib = libraryScene();
+  lib.reading = true; // a chapter is open: the archive behind it all but stops
+  lib.setBand(null);
   if (!Store.state.read[n]) { Store.state.read[n] = 1; Store.save(); }
   const mm = chapterMastery(c), m = (mm * 100).toFixed(1);
   const errata = (DATA.errata || []).filter((x) => x.ch === n);
-  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
+  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.9)">
     ${topbar("STAGE " + n + " NOTES", { back: "GUIDE" })}
     <div class="scroll"><div class="wrap">
       <div class="ch-hero" style="--c:${c.color}">
@@ -90,7 +104,7 @@ function showGuideChapter(n) {
     el,
     on: (a, t) => {
       if (a === "back") { Sound.sfx("back"); showGuide(); }
-      if (a === "ch") { Sound.sfx("move"); showGuideChapter(+t.dataset.n); }
+      if (a === "ch") { Sound.sfx("page"); showGuideChapter(+t.dataset.n); }
       if (a === "play") { Sound.sfx("select"); UI.flash("crt-on"); startGame(t.dataset.g, makeSelection(String(n))); }
       if (a === "brief") briefing(n);
     },

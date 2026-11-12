@@ -480,6 +480,7 @@ class MemoryGame extends QuizGame {
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
+    this.works = new MemoryWorks(this, { gold, steel, chrome }); // gear trains, deck lamps, coin stacks (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
@@ -635,7 +636,8 @@ class MemoryGame extends QuizGame {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.
       const anim = { duration: 260, easing: "ease-in" };
-      const to = from && kind === "easy" ? "rotateY(180deg) translateY(-130%)" : `rotateY(180deg) translateX(${kind === "again" ? "" : "-"}120%)`;
+      // a banked card shrinks away up into the coin slot; a missed one tips and drops back toward the deck
+      const to = kind === "again" ? "rotateY(180deg) translateY(115%) rotateZ(-9deg)" : "rotateY(180deg) translateY(-72%) scale(0.08)";
       card.animate([{ transform: from || "rotateY(180deg) translateX(0)" }, { transform: to }], anim);
       if (from) card.style.transform = to; // hold the end pose until the next card is dealt
       // the faces are replaced by the next card, so they can stay faded out
@@ -712,6 +714,7 @@ class MemoryGame extends QuizGame {
     this.shockwave(p, neon(0xffcf6e, 2.2), 4.2, 0.5);
     this.flash = 1;
     this.slotFlash = 1;
+    this.works.banked(); // the lock goes home: gear trains spin on, the card's lamp lights
     const from = this.dialA, to = from - (0.55 + Math.random() * 0.7);
     this.tw.add(0.9, (e) => { this.dialA = lerp(from, to, e); }, null, Ease.outBack);
     const want = this.total ? Math.floor((MEMORY_BOLTS * this.deposits) / this.total) : 0;
@@ -729,6 +732,7 @@ class MemoryGame extends QuizGame {
     const base = this.dialA;
     this.tw.add(0.7, (e, raw) => { this.dialA = base + 0.1 * Math.sin(raw * Math.PI * 4) * (1 - raw); }, () => { this.dialA = base; }, Ease.linear);
     this.slotFlash = -1;
+    this.works.missed(); // gear trains jerk back, the unlit lamps wash red
   }
   on(a, t) {
     if (a === "pause") this.pause();
@@ -815,6 +819,7 @@ class MemoryGame extends QuizGame {
     this.lookAt.set(0, MEMORY_DOOR_Y, 0);
     this.placeCamera();
     this.motes.userData.drift(t);
+    this.works.update(dt, t);
     this.sparks.update(dt, this.camera);
     FX.sync(this.scene, t);
   }

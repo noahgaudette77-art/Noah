@@ -118,8 +118,8 @@ build from before any visual work (153 answers in 8 games).
 | A1 | Title screen | done |
 | A2 | Arcade hub | done |
 | A3 | Risk Blaster | done |
-| A4 | Final Exam, Memory Bank, Strategy Guide | next |
-| A5 | Shared audio, measurements, report | todo |
+| A4 | Final Exam, Memory Bank, Strategy Guide | done |
+| A5 | Shared audio, measurements, report | next |
 
 - A1 (title): `09c-ambient.js` is the shared sky kit (meteors, fireworks, lightning,
   explosion, UFO, blimp, helicopter, drones, lasers, birds), moved out of the racer
@@ -169,3 +169,26 @@ build from before any visual work (153 answers in 8 games).
   Note: the software test machine ran about 25% slower from this point on (the A2
   build re-measured at 77 fps worst second in Risk Blaster, 102 an hour earlier), so
   compare numbers within a checkpoint, not across.
+- A4 (Final Exam): `24b-examhero.js`. The cup is replaced by the Keystone: a faceted
+  crystal spire with runes inside, held in three gold claws on a foot set with eleven
+  gems, an armillary of three gold rings each carrying a bead of light, a laurel
+  wreath floating over the tip, and a halo of orbiting motes. It fills with light
+  from the foot up as questions are ANSWERED (the count only: it is never told which
+  were right), more motes join, the gems warm. The hall gains an aurora over the
+  night sky, paper lanterns rising past the windows and moonbeams that sway. All
+  motion is slow and continuous: no events, no flashes. The regression test still
+  finds 0 hint marks before submit.
+- A4 (Memory Bank): `23b-memoryworks.js`. Twelve meshing gears round the dial (they
+  spin on at each deposit, jerk back on a miss), an arc of deck lamps over the door
+  (one per card: banked lit, the next one breathing, the dark ones wash red on a
+  miss), lamp panels on the wall, coin stacks by the bullion, a lock sound when the
+  coin lands. A banked card now shrinks away up into the coin slot; a missed one tips
+  and drops back toward the deck (same 260 ms as before).
+- A4 (Strategy Guide): `31b-library.js` is a new scene behind the guide: a vaulted
+  aisle of bookshelves on two tiers (spines, gilt bands and glowing holo-books drawn
+  in the shader), hanging lamps, four holo-books open on lecterns with text running
+  up their pages, a rolling ladder, loose pages adrift, dust, a rose window. The
+  index shows it through one framed window above the list; everything that is read
+  sits on solid ground. With a chapter open the scene slows to a fifth.
+  Software test, lowest level, worst second: memory 73 fps (75-81 before), exam 73
+  (79 before), guide 103.

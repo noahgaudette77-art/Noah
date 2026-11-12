@@ -111,6 +111,10 @@ function examNightMaterial() {
         float h = clamp(vWorld.y / 36.0, 0.0, 1.0);
         vec3 col = mix(vec3(0.07, 0.035, 0.17), vec3(0.01, 0.008, 0.035), smoothstep(0.0, 0.6, h));
         col += vec3(0.22, 0.1, 0.36) * exp(-vWorld.y * 0.3) * 0.35;
+        // an aurora: slow curtains of green shading to violet (it never flickers)
+        float au = sin(vWorld.x * 0.07 + uTime * 0.04 + 1.6 * sin(vWorld.y * 0.16 - uTime * 0.03));
+        float curtain = smoothstep(0.3, 1.0, au) * smoothstep(4.0, 8.0, vWorld.y) * (1.0 - smoothstep(10.0, 17.0, vWorld.y));
+        col += mix(vec3(0.07, 0.42, 0.36), vec3(0.34, 0.16, 0.62), smoothstep(7.0, 14.0, vWorld.y)) * curtain * (0.3 + 0.12 * sin(vWorld.x * 0.9 + uTime * 0.2));
         vec2 p = vWorld.xy * 1.35; vec2 c = floor(p); float r = hash13(vec3(c, 7.0));
         if (r > 0.93) {
           float s = smoothstep(0.32, 0.0, length(fract(p) - 0.5));
@@ -242,6 +246,7 @@ class ExamGame extends QuizGame {
     this.decor(uplights);
     // moonlight slanting in through three of the windows
     const dir = new THREE.Vector3(-0.3, -0.62, 0.72).normalize();
+    this.moonBeams = [];
     [-8, 8, 16].forEach((x) => {
       const b = examBeam({ color: 0xa8b6ff, top: 1.5, bottom: 3.4, height: 26, intensity: 0.075 });
       b.position.set(x, 7, EXAM_WALL_Z);
@@ -249,7 +254,9 @@ class ExamGame extends QuizGame {
       b.layers.set(1);
       s.add(b);
       this.decor(b);
+      this.moonBeams.push(b);
     });
+    this.ambience = new ExamAmbience(this, this.moonBeams); // lanterns past the windows, beams that sway
 
     // polished floor: a polar grid around the plinth, and the reflection of it all
     this.mirror = new Mirror(0);
@@ -268,19 +275,9 @@ class ExamGame extends QuizGame {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(2.32, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
     ring.position.y = 0.04;
     s.add(ring);
-    // the cup: a smooth loving cup with two handles, turning slowly
-    const cup = new THREE.Group();
-    cup.add(new THREE.Mesh(examLathe([
-      [0, 0], [0.98, 0, true], [1.0, 0.07], [0.93, 0.15, true], [0.62, 0.24], [0.42, 0.34], [0.3, 0.46], [0.24, 0.62], [0.22, 0.82],
-      [0.3, 0.9], [0.37, 0.98], [0.37, 1.06], [0.3, 1.14], [0.22, 1.22], [0.24, 1.42], [0.34, 1.56],
-      [0.55, 1.68], [0.8, 1.84], [1.02, 2.06], [1.2, 2.38], [1.33, 2.78], [1.42, 3.18], [1.5, 3.4, true], [1.53, 3.46, true], [1.47, 3.5, true],
-      [1.4, 3.42], [1.32, 3.12], [1.22, 2.74], [1.06, 2.36], [0.82, 2.1], [0.45, 1.94], [0, 1.9],
-    ], 64), gold));
-    const handle = (sd) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
-      new THREE.Vector3(sd * 1.3, 3.05, 0), new THREE.Vector3(sd * 1.86, 3.2, 0), new THREE.Vector3(sd * 2.12, 2.74, 0),
-      new THREE.Vector3(sd * 1.88, 2.24, 0), new THREE.Vector3(sd * 1.12, 2.14, 0),
-    ]), 40, 0.075, 10, false);
-    cup.add(new THREE.Mesh(examMerge([handle(-1), handle(1)]), gold));
+    // the Keystone (24b-examhero.js): crystal, claws, armillary, laurel, runes, halo
+    this.monument = new ExamMonument(this, gold, env);
+    const cup = this.monument.group;
     cup.position.y = 1.8;
     s.add(cup);
     this.cup = cup;
@@ -324,14 +321,14 @@ class ExamGame extends QuizGame {
     s.userData.post = { exposure: 1.1, bloom: 0.85, threshold: 1.0, saturation: 1.06, contrast: 1.05, vignette: 1.15 };
     this.dist = this.distT = 17;
     this.camBase.set(0, 4.6, this.dist);
-    this.lookAt.set(0, 2.6, 0);
+    this.lookAt.set(0, 2.9, 0);
   }
   // Back the camera off until the cup and plinth sit comfortably in the band.
   onResize(w, h) {
     if (!this.camera || !this.cup) return;
     const bandH = this.band ? this.band.h : h * 0.45;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    this.distT = clamp((5.7 * h) / (2 * tanH * Math.max(110, bandH * 0.66)), 11, 34);
+    this.distT = clamp((6.5 * h) / (2 * tanH * Math.max(110, bandH * 0.66)), 11, 36);
     if (!this.placed) {
       this.dist = this.distT;
       this.placed = !!this.band;
@@ -340,6 +337,7 @@ class ExamGame extends QuizGame {
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
     if (this.envRT) this.envRT.dispose();
+    if (this.monument) this.monument.dispose();
     if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
     super.dispose();
   }
@@ -498,7 +496,11 @@ class ExamGame extends QuizGame {
     if (!this.has3D) return;
     const t = this.t;
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
-    this.cup.rotation.y += dt * 0.35;
+    // the Keystone fills with light as questions are answered: how many, never which were right
+    let done = 0;
+    for (let i = 0; i < this.answers.length; i++) if (this.answers[i] >= 0) done++;
+    this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
+    this.ambience.update(dt, t);
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
       const k = this.rippleT;
@@ -513,7 +515,7 @@ class ExamGame extends QuizGame {
       c.needsUpdate = true;
     }
     this.camBase.set(Pointer.x * 0.6, 2.6 + this.dist * 0.12 + Math.sin(t * 0.3) * 0.06 - Pointer.y * 0.25, this.dist);
-    this.lookAt.set(0, 2.6, 0);
+    this.lookAt.set(0, 2.9, 0);
     this.placeCamera();
     this.motes.userData.drift(t);
     this.moonMotes.userData.drift(t);
