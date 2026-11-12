@@ -105,7 +105,43 @@ const Sound = {
       case "crton": T(1800, 0.25, { slide: 6000, vol: 0.05, type: "sine" }); T(60, 0.3, { slide: -20, vol: 0.3, type: "sine", delay: 0.05 }); break;
       case "rankup": [392, 523, 659, 784, 1047, 1319].forEach((f, i) => T(f, 0.16, { delay: i * 0.09, vol: 0.17 })); T(1568, 0.6, { delay: 0.56, vol: 0.12, type: "triangle" }); break;
       case "warp": T(200, 1.1, { slide: 2400, vol: 0.12, type: "sawtooth" }); this.noise(1.0, { vol: 0.2, freq: 1200, type: "bandpass", q: 0.5 }); break;
+      // FEVER: a riser into a fanfare, with the crowd behind it (bigger each level)
+      case "fever1": case "fever2": case "fever3": {
+        const n = +name.slice(5), root = [392, 440, 523][n - 1];
+        T(root / 2, 0.34, { slide: root * 1.5, vol: 0.1, type: "sawtooth" });
+        [1, 1.26, 1.5, 2, 2.52].slice(0, 2 + n).forEach((m, i) => T(root * m, 0.14, { delay: 0.3 + i * 0.07, vol: 0.17 }));
+        T(root * 2, 0.5, { delay: 0.3 + (2 + n) * 0.07, vol: 0.13, type: "triangle" });
+        this.cheer(0.5 + n * 0.25, 0.3);
+        break;
+      }
+      case "zip": T(900, 0.09, { slide: 1500, vol: 0.1, type: "triangle" }); T(1800, 0.08, { delay: 0.07, vol: 0.08 }); break;
+      case "shatter":
+        [0, 0.05, 0.11, 0.18].forEach((d, i) => this.noise(0.16, { vol: 0.3 - i * 0.05, freq: 5200 - i * 700, type: "highpass", delay: d }));
+        T(1400, 0.4, { slide: -1150, vol: 0.1, type: "triangle" });
+        break;
     }
+  },
+
+  // A crowd's cheer: band-passed noise that swells and rises, like "aaah".
+  cheer(dur = 0.8, delay = 0) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    const c = this.ctx, t0 = c.currentTime + delay;
+    [[700, 0.2], [1150, 0.14], [2600, 0.07]].forEach(([freq, vol]) => {
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 1.6;
+      f.frequency.setValueAtTime(freq * 0.8, t0);
+      f.frequency.linearRampToValueAtTime(freq * 1.25, t0 + dur * 0.5);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + dur * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(f).connect(g).connect(this.sfxBus);
+      src.start(t0, Math.random() * 0.4);
+      src.stop(t0 + dur + 0.05);
+    });
   },
 
   // Dialogue "voices": a short blip per letter, pitched per character.

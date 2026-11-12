@@ -269,6 +269,20 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* FEVER (see Hype): its banner sits above the others; the streak pill lives in the HUD */
+.banner.hype { font-size: clamp(17px, 5.6vw, 38px); }
+.hud .grow { display: flex; justify-content: center; }
+.fever { padding: 5px 8px; font: 8px/1 var(--font-display); color: var(--ink); border: 1px solid var(--line); background: rgba(0, 0, 0, 0.5); white-space: nowrap; will-change: transform; }
+.fever.lv1 { color: var(--orange); border-color: var(--orange); }
+.fever.lv2 { color: var(--magenta); border-color: var(--magenta); }
+.fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
+.fever.bump { animation: feverbump 0.3s ease-out; }
+@keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
+/* answers react: the right one pops, a wrong pick shakes (transform only) */
+.ans.good { animation: anspop 0.36s ease-out; }
+.ans.bad { animation: ansshake 0.4s ease-out; }
+@keyframes anspop { 35% { transform: scale(1.03); } 100% { transform: none; } }
+@keyframes ansshake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } 100% { transform: none; } }
 .floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
 @keyframes floatup { to { transform: translateY(-50px); opacity: 0; } }
 
@@ -474,7 +488,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }

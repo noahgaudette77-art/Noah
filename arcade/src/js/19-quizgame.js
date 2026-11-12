@@ -6,6 +6,8 @@ class QuizGame extends Scene3D {
     this.gameId = gameId;
     this.cab = CAB(gameId);
     this.run = new RunStats(sel);
+    this.run.hype = gameId === "blaster" || gameId === "racer" || gameId === "boss"; // streaks build FEVER
+    Hype.reset();
     this.paused = false;
     this.state = "intro";
     this.bursts = this.has3D ? new Bursts(this.scene) : null;
@@ -20,6 +22,7 @@ class QuizGame extends Scene3D {
     });
     this.quiz = new QuizPanel(this.el);
     this.bandEl = $(".band", this.el);
+    if (this.run.hype) Hype.bind(this.el);
   }
   on(a, t) {
     if (a === "pause") this.pause();
@@ -75,6 +78,7 @@ class QuizGame extends Scene3D {
   }
   dispose() {
     this.unmounted = true;
+    Hype.reset();
     super.dispose();
   }
 }

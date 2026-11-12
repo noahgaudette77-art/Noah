@@ -596,7 +596,7 @@ class BlasterGame extends QuizGame {
   }
   resolve(i) {
     const r = this.round;
-    const ok = this.run.record(r, i);
+    const ok = this.run.record(r, i, this.tLeft / this.T);
     this.quiz.reveal(i);
     let title;
     if (ok) {
@@ -759,7 +759,7 @@ class BlasterGame extends QuizGame {
     ru.uScroll.value = this.ringScroll;
     ru.uSpin.value = this.spin;
     ru.uColor.value.copy(this.waveCol).multiplyScalar(2.3);
-    ru.uBoost.value = 1 + w * 1.3;
+    ru.uBoost.value = 1 + w * 1.3 + GFX.fever * 0.7; // the tunnel burns brighter on a streak
     wu.uScroll.value = this.wallScroll;
     wu.uWarp.value = w;
     wu.uColor.value.copy(this.waveCol);

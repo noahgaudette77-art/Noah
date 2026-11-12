@@ -478,7 +478,7 @@ class BossGame extends QuizGame {
     if (this.state !== "ask" || this.paused) return;
     this.state = "resolve";
     const frac = this.charge / this.T;
-    const ok = this.run.record(this.round, i);
+    const ok = this.run.record(this.round, i, 1 - frac);
     this.quiz.reveal(i);
     if (ok) this.playerHit(frac);
     else this.bossAttack(false);

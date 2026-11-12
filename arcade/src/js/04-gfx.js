@@ -13,6 +13,7 @@ const GFX = {
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
+  fever: 0, feverT: 0, feverCol: [1, 0.5, 0.1], // streak aura around the screen (see Hype)
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -77,6 +78,7 @@ const GFX = {
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
     const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
+    this.fever += (this.feverT - this.fever) * Math.min(1, dt * (this.feverT > this.fever ? 5 : 2.5));
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -95,6 +97,8 @@ const GFX = {
       flash: this.flashAmt,
       hit: this.hit,
       hitAmt: hitAmt,
+      fever: this.fever < 0.004 ? 0 : this.fever,
+      feverCol: this.feverCol,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
@@ -105,6 +109,11 @@ const GFX = {
     });
   },
   // Juice: colour fringing + white flash, and a short freeze-frame.
+  // Streak aura: rays of light around the screen edge in the streak's colour.
+  setFever(amount, rgb) {
+    this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
+    if (rgb) this.feverCol = rgb;
+  },
   pulse(ab = 6, flash = 0.1) {
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
@@ -460,6 +469,7 @@ function makePipeline(renderer, hdr) {
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
+    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -468,6 +478,7 @@ function makePipeline(renderer, hdr) {
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
+    uniform vec3 uFeverCol; uniform HP vec2 uFever;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -512,6 +523,15 @@ function makePipeline(renderer, hdr) {
         // right/wrong flash: a coloured vignette, strongest at the edges
         float e = smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4142);
         col = mix(col, uHitCol, uHit.x * mix(uHit.y, uHit.z, e));
+      }
+      if (uFever.x > 0.0) {
+        // streak aura: rays of light sweeping round the screen edge, pulsing
+        HP vec2 fc = vUv - 0.5;
+        float fr = length(fc) * 1.4142;
+        HP float fa = atan(fc.y, fc.x);
+        float rays = max(sin(fa * 17.0 + uFever.y * 2.1) * sin(fa * 29.0 - uFever.y * 3.3) + 0.6 * sin(fa * 53.0 + uFever.y * 5.9), 0.0);
+        float edge = smoothstep(0.4, 1.02, fr);
+        col += uFeverCol * uFever.x * edge * (0.24 + 0.85 * rays * rays) * (0.82 + 0.18 * sin(uFever.y * 9.0));
       }
       if (uGlass > 0.5) {
         float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
@@ -644,6 +664,8 @@ function makePipeline(renderer, hdr) {
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
+      u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
+      u.uFever.value.set(o.fever, o.t % 628.3185);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;

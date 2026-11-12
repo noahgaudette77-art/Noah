@@ -979,7 +979,7 @@ class RacerGame extends QuizGame {
   arrive() {
     const r = this.round;
     const picked = this.lane === null ? -1 : this.lane;
-    const ok = this.run.record(r, picked);
+    const ok = this.run.record(r, picked, this.boostRate ? this.timeFrac : undefined);
     this.quiz.reveal(picked);
     this.state = "explain";
     let title;

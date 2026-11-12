@@ -282,6 +282,20 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* FEVER (see Hype): its banner sits above the others; the streak pill lives in the HUD */
+.banner.hype { font-size: clamp(17px, 5.6vw, 38px); }
+.hud .grow { display: flex; justify-content: center; }
+.fever { padding: 5px 8px; font: 8px/1 var(--font-display); color: var(--ink); border: 1px solid var(--line); background: rgba(0, 0, 0, 0.5); white-space: nowrap; will-change: transform; }
+.fever.lv1 { color: var(--orange); border-color: var(--orange); }
+.fever.lv2 { color: var(--magenta); border-color: var(--magenta); }
+.fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
+.fever.bump { animation: feverbump 0.3s ease-out; }
+@keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
+/* answers react: the right one pops, a wrong pick shakes (transform only) */
+.ans.good { animation: anspop 0.36s ease-out; }
+.ans.bad { animation: ansshake 0.4s ease-out; }
+@keyframes anspop { 35% { transform: scale(1.03); } 100% { transform: none; } }
+@keyframes ansshake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } 100% { transform: none; } }
 .floater { position: absolute; z-index: 25; pointer-events: none; font: 12px/1 var(--font-display); color: var(--c, var(--yellow)); text-shadow: 0 2px 0 #000; animation: floatup 1s ease-out forwards; will-change: transform, opacity; }
 @keyframes floatup { to { transform: translateY(-50px); opacity: 0; } }
 
@@ -487,7 +501,7 @@ mark { background: var(--yellow); color: #12052e; }
 .lean .scr-game .answers, .lean .scr-game .exam-nav, .lean .scr-game .grade { background: #0b0526; padding: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .insert-coin, .initials .slot.on .ch, .logo-main { animation: none; }
+  .insert-coin, .initials .slot.on .ch, .logo-main, .ans.good, .ans.bad, .fever.bump { animation: none; }
   .banner { animation-duration: 1.6s; }
   .card3d { transition: none; }
 }
@@ -949,7 +963,43 @@ const Sound = {
       case "crton": T(1800, 0.25, { slide: 6000, vol: 0.05, type: "sine" }); T(60, 0.3, { slide: -20, vol: 0.3, type: "sine", delay: 0.05 }); break;
       case "rankup": [392, 523, 659, 784, 1047, 1319].forEach((f, i) => T(f, 0.16, { delay: i * 0.09, vol: 0.17 })); T(1568, 0.6, { delay: 0.56, vol: 0.12, type: "triangle" }); break;
       case "warp": T(200, 1.1, { slide: 2400, vol: 0.12, type: "sawtooth" }); this.noise(1.0, { vol: 0.2, freq: 1200, type: "bandpass", q: 0.5 }); break;
+      // FEVER: a riser into a fanfare, with the crowd behind it (bigger each level)
+      case "fever1": case "fever2": case "fever3": {
+        const n = +name.slice(5), root = [392, 440, 523][n - 1];
+        T(root / 2, 0.34, { slide: root * 1.5, vol: 0.1, type: "sawtooth" });
+        [1, 1.26, 1.5, 2, 2.52].slice(0, 2 + n).forEach((m, i) => T(root * m, 0.14, { delay: 0.3 + i * 0.07, vol: 0.17 }));
+        T(root * 2, 0.5, { delay: 0.3 + (2 + n) * 0.07, vol: 0.13, type: "triangle" });
+        this.cheer(0.5 + n * 0.25, 0.3);
+        break;
+      }
+      case "zip": T(900, 0.09, { slide: 1500, vol: 0.1, type: "triangle" }); T(1800, 0.08, { delay: 0.07, vol: 0.08 }); break;
+      case "shatter":
+        [0, 0.05, 0.11, 0.18].forEach((d, i) => this.noise(0.16, { vol: 0.3 - i * 0.05, freq: 5200 - i * 700, type: "highpass", delay: d }));
+        T(1400, 0.4, { slide: -1150, vol: 0.1, type: "triangle" });
+        break;
     }
+  },
+
+  // A crowd's cheer: band-passed noise that swells and rises, like "aaah".
+  cheer(dur = 0.8, delay = 0) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    const c = this.ctx, t0 = c.currentTime + delay;
+    [[700, 0.2], [1150, 0.14], [2600, 0.07]].forEach(([freq, vol]) => {
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 1.6;
+      f.frequency.setValueAtTime(freq * 0.8, t0);
+      f.frequency.linearRampToValueAtTime(freq * 1.25, t0 + dur * 0.5);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + dur * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(f).connect(g).connect(this.sfxBus);
+      src.start(t0, Math.random() * 0.4);
+      src.stop(t0 + dur + 0.05);
+    });
   },
 
   // Dialogue "voices": a short blip per letter, pitched per character.
@@ -1262,6 +1312,7 @@ const GFX = {
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
+  fever: 0, feverT: 0, feverCol: [1, 0.5, 0.1], // streak aura around the screen (see Hype)
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -1326,6 +1377,7 @@ const GFX = {
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
     const hk = Math.min(1, (this.hit.t += dt) / this.hit.dur), hitAmt = 1 - hk * (2 - hk); // ease-out fade
+    this.fever += (this.feverT - this.fever) * Math.min(1, dt * (this.feverT > this.fever ? 5 : 2.5));
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -1344,6 +1396,8 @@ const GFX = {
       flash: this.flashAmt,
       hit: this.hit,
       hitAmt: hitAmt,
+      fever: this.fever < 0.004 ? 0 : this.fever,
+      feverCol: this.feverCol,
       cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
       aa: this.Q[this.qi].aa,
@@ -1354,6 +1408,11 @@ const GFX = {
     });
   },
   // Juice: colour fringing + white flash, and a short freeze-frame.
+  // Streak aura: rays of light around the screen edge in the streak's colour.
+  setFever(amount, rgb) {
+    this.feverT = REDUCED_MOTION ? amount * 0.5 : amount;
+    if (rgb) this.feverCol = rgb;
+  },
   pulse(ab = 6, flash = 0.1) {
     if (REDUCED_MOTION) { ab *= 0.3; flash *= 0.3; }
     this.ab = Math.max(this.ab, ab);
@@ -1709,6 +1768,7 @@ function makePipeline(renderer, hdr) {
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
+    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -1717,6 +1777,7 @@ function makePipeline(renderer, hdr) {
     uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
+    uniform vec3 uFeverCol; uniform HP vec2 uFever;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -1761,6 +1822,15 @@ function makePipeline(renderer, hdr) {
         // right/wrong flash: a coloured vignette, strongest at the edges
         float e = smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4142);
         col = mix(col, uHitCol, uHit.x * mix(uHit.y, uHit.z, e));
+      }
+      if (uFever.x > 0.0) {
+        // streak aura: rays of light sweeping round the screen edge, pulsing
+        HP vec2 fc = vUv - 0.5;
+        float fr = length(fc) * 1.4142;
+        HP float fa = atan(fc.y, fc.x);
+        float rays = max(sin(fa * 17.0 + uFever.y * 2.1) * sin(fa * 29.0 - uFever.y * 3.3) + 0.6 * sin(fa * 53.0 + uFever.y * 5.9), 0.0);
+        float edge = smoothstep(0.4, 1.02, fr);
+        col += uFeverCol * uFever.x * edge * (0.24 + 0.85 * rays * rays) * (0.82 + 0.18 * sin(uFever.y * 9.0));
       }
       if (uGlass > 0.5) {
         float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
@@ -1893,6 +1963,8 @@ function makePipeline(renderer, hdr) {
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
+      u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
+      u.uFever.value.set(o.fever, o.t % 628.3185);
       u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
@@ -2647,7 +2719,8 @@ class RunStats {
     this.t0 = Date.now();
     this.xp0 = xpTotal();
   }
-  record(round, picked) {
+  // quick: for the action games, how much of the clock was left (0..1).
+  record(round, picked, quick) {
     const ok = picked === round.correct;
     Store.record(round.q.id, ok);
     this.answered++;
@@ -2661,6 +2734,7 @@ class RunStats {
       this.missed.push({ id: round.q.id, picked: picked >= 0 ? round.text(picked) : null });
     }
     Store.save();
+    if (this.hype) Hype.answer(ok, this.streak, quick);
     return ok;
   }
 }
@@ -3500,6 +3574,69 @@ function makeShootingStar() {
   };
   return l;
 }
+
+/* ---- 09-hype.js ---- */
+// FEVER: a run of right answers heats the whole cabinet up. Three levels, each with
+// its own colour, a banner, a riser and a crowd cheer; the renderer wraps the screen
+// in rays of that colour (GFX.setFever) and the HUD shows the streak. A miss
+// shatters it. Only the action games use it (RunStats.hype).
+const Hype = {
+  level: 0,
+  el: null,
+  LV: [
+    null,
+    { name: "HEATING UP", at: 3, col: COLORS.orange, rgb: [1, 0.42, 0.08], amt: 0.5 },
+    { name: "ON FIRE", at: 6, col: COLORS.magenta, rgb: [1, 0.16, 0.7], amt: 0.75 },
+    { name: "UNSTOPPABLE", at: 10, col: COLORS.yellow, rgb: [1, 0.8, 0.25], amt: 1 },
+  ],
+  levelFor(streak) { return streak >= 10 ? 3 : streak >= 6 ? 2 : streak >= 3 ? 1 : 0; },
+  // The streak pill lives in the HUD's spare middle.
+  bind(screenEl) {
+    this.level = 0;
+    GFX.setFever(0);
+    const g = $(".hud .grow", screenEl);
+    this.el = g ? g.appendChild(UI.el(`<span class="fever" hidden></span>`)) : null;
+  },
+  reset() {
+    this.level = 0;
+    this.el = null;
+    GFX.setFever(0);
+  },
+  // Callouts sit in the strip of 3D between the HUD panels, clear of the question.
+  spot(f) {
+    const s = Scenes.cur, b = s && s.band;
+    return b ? b.top + b.h * f : GFX.h * (0.3 + f * 0.2);
+  },
+  // quick: 0..1, how much of the clock was left (undefined when there is none).
+  answer(ok, streak, quick) {
+    const lv = ok ? this.levelFor(streak) : 0;
+    if (ok) {
+      if (lv > this.level) {
+        const L = this.LV[lv];
+        const b = UI.root.appendChild(UI.el(`<div class="banner hype" style="--c:${L.col};top:${Math.round(this.spot(0.12))}px">${L.name}!<small>${streak} IN A ROW</small></div>`));
+        setTimeout(() => b.remove(), 1400);
+        Sound.sfx("fever" + lv);
+        Haptics.buzz([30, 40, 30, 40, 90]);
+        GFX.pulse(9, 0.22);
+        GFX.setFever(L.amt, L.rgb);
+      } else if (quick !== undefined && quick > 0.62 && streak > 1) {
+        UI.floater(quick > 0.82 ? "LIGHTNING!" : "QUICK DRAW!", GFX.w / 2 - 58, this.spot(0.1), COLORS.cyan);
+        Sound.sfx("zip");
+      }
+    } else if (this.level > 0) {
+      UI.floater("STREAK LOST", GFX.w / 2 - 62, this.spot(0.1), COLORS.red);
+      Sound.sfx("shatter");
+      GFX.setFever(0);
+    }
+    this.level = lv;
+    if (this.el) {
+      this.el.hidden = streak < 2;
+      UI.text(this.el, "STREAK " + streak);
+      this.el.className = "fever" + (lv ? " lv" + lv : "");
+      if (ok && streak >= 2) { this.el.classList.remove("bump"); void this.el.offsetWidth; this.el.classList.add("bump"); }
+    }
+  },
+};
 
 /* ---- 10-title.js ---- */
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
@@ -5156,6 +5293,8 @@ class QuizGame extends Scene3D {
     this.gameId = gameId;
     this.cab = CAB(gameId);
     this.run = new RunStats(sel);
+    this.run.hype = gameId === "blaster" || gameId === "racer" || gameId === "boss"; // streaks build FEVER
+    Hype.reset();
     this.paused = false;
     this.state = "intro";
     this.bursts = this.has3D ? new Bursts(this.scene) : null;
@@ -5170,6 +5309,7 @@ class QuizGame extends Scene3D {
     });
     this.quiz = new QuizPanel(this.el);
     this.bandEl = $(".band", this.el);
+    if (this.run.hype) Hype.bind(this.el);
   }
   on(a, t) {
     if (a === "pause") this.pause();
@@ -5225,6 +5365,7 @@ class QuizGame extends Scene3D {
   }
   dispose() {
     this.unmounted = true;
+    Hype.reset();
     super.dispose();
   }
 }
@@ -5844,7 +5985,7 @@ class BlasterGame extends QuizGame {
   }
   resolve(i) {
     const r = this.round;
-    const ok = this.run.record(r, i);
+    const ok = this.run.record(r, i, this.tLeft / this.T);
     this.quiz.reveal(i);
     let title;
     if (ok) {
@@ -6007,7 +6148,7 @@ class BlasterGame extends QuizGame {
     ru.uScroll.value = this.ringScroll;
     ru.uSpin.value = this.spin;
     ru.uColor.value.copy(this.waveCol).multiplyScalar(2.3);
-    ru.uBoost.value = 1 + w * 1.3;
+    ru.uBoost.value = 1 + w * 1.3 + GFX.fever * 0.7; // the tunnel burns brighter on a streak
     wu.uScroll.value = this.wallScroll;
     wu.uWarp.value = w;
     wu.uColor.value.copy(this.waveCol);
@@ -7062,7 +7203,7 @@ class RacerGame extends QuizGame {
   arrive() {
     const r = this.round;
     const picked = this.lane === null ? -1 : this.lane;
-    const ok = this.run.record(r, picked);
+    const ok = this.run.record(r, picked, this.boostRate ? this.timeFrac : undefined);
     this.quiz.reveal(picked);
     this.state = "explain";
     let title;
@@ -7835,7 +7976,7 @@ class BossGame extends QuizGame {
     if (this.state !== "ask" || this.paused) return;
     this.state = "resolve";
     const frac = this.charge / this.T;
-    const ok = this.run.record(this.round, i);
+    const ok = this.run.record(this.round, i, 1 - frac);
     this.quiz.reveal(i);
     if (ok) this.playerHit(frac);
     else this.bossAttack(false);

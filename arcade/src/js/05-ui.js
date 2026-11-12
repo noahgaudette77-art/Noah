@@ -265,7 +265,8 @@ class RunStats {
     this.t0 = Date.now();
     this.xp0 = xpTotal();
   }
-  record(round, picked) {
+  // quick: for the action games, how much of the clock was left (0..1).
+  record(round, picked, quick) {
     const ok = picked === round.correct;
     Store.record(round.q.id, ok);
     this.answered++;
@@ -279,6 +280,7 @@ class RunStats {
       this.missed.push({ id: round.q.id, picked: picked >= 0 ? round.text(picked) : null });
     }
     Store.save();
+    if (this.hype) Hype.answer(ok, this.streak, quick);
     return ok;
   }
 }
