@@ -832,9 +832,9 @@ before it.
 | # | Checkpoint | Status |
 |---|---|---|
 | J0 | Back up; remove the frog | done |
-| J1 | Depth without shadows; weak-device shedding and break-up; bigger rage and finale | next |
-| J2 | The demon's sounds | pending |
-| J3 | Frame-rate readout, throttled test, docs, PR, artifact, report | pending |
+| J1 | Depth without shadows; weak-device shedding and break-up; bigger rage and finale | done |
+| J2 | The demon's sounds | done |
+| J3 | Frame-rate readout, throttled test, docs, PR, artifact, report | next |
 
 ## Done so far
 
@@ -845,3 +845,35 @@ before it.
   version on weak quality levels; the answers' targets if its model is missing or
   will not decode (tested both ways). The page went from 6,604 KB to 5,186 KB.
   Regression IDENTICAL.
+- J1 (`20h-blasterdemon.js`):
+  - Depth with no shadow to cast: how closed-in every vertex is by the rest of the
+    model is worked out when it loads (the model is marked into a 58 by 44 by 28 grid;
+    nine rays go out round each vertex's normal) and darkens crevices; everything
+    that faces down is darker, and it darkens toward its tail. That shading dims what
+    it reflects, not its own light. Rim lights are stronger, with a cold one from
+    above and behind. The core's light spills on its chest, jaw and arms, the eyes'
+    on its brow and cheeks, the third eye's on its crest. What is furthest back
+    (its wings) sinks into the haze of the region's colour.
+  - The light version (weak quality levels): the same crevice and underside shading
+    from the same numbers; cracks drawn as thin lines of light; bits of armour fly
+    off it on every hit from the third; when it is destroyed its 21 joints fly apart
+    as chunks, turning and shrinking away, in the same blast as the full version.
+  - Rage (a wave's last three questions) starts with a moment of its own: wings
+    thrown wide, jaw open, a sting, a burst of embers, the aura swelling. Then
+    faster wings than before, arcs down its wings, more embers, a stronger aura.
+  - Finale: once in a run, at the wave that takes the player past their saved best
+    score (read only), its defeat is a last stand: it rears back and roars for 1.15 s
+    with the aura full, then two blasts 0.46 s apart (never faster), its parts thrown
+    1.7 times as far and its joints with them, a longer burn. Every defeat also grows
+    a little with the wave number (up to 30%).
+  - Game over: it has won, and roars over the wreck with its wings spread and the
+    aura up.
+- J2 (`02-sound.js`): eleven cues of its own, all made in the page: a layered roar and
+  a long one, a wing beat on every down-stroke (about one a second, very quiet), the
+  strike charging and let go, a hit on its armour, the rage sting, plates coming away,
+  the break-up, the blast and the finale's double blast. They go through the same bus
+  as every other effect, so the sound switch silences them (checked: no audio nodes
+  are made when it is off). Loudest: the blast, a little under the game's own
+  `bigboom`; the wing beat is a sixth of a `whoosh`.
+- Checks so far: regression IDENTICAL; every demon event run at full and low quality
+  with no console errors.
