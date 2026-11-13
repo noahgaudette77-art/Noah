@@ -818,3 +818,30 @@ no separate final-boss form: it is every wave's boss, and rages at each wave's e
 The frog's files stay in the page as the stand-in (about 1.4 MB of it). No KTX2 (it
 would need a transcoder in the page). No cast shadows in open space: its undersides
 and inner faces are shaded darker instead.
+
+# The demon, finished (eleventh pass): progress log
+
+The request: finish what the tenth pass left: the demon's own sounds, depth without
+cast shadows, a weak-device version that still sheds and breaks up, a bigger rage and
+a finale, remove the frog, Boss Rush only if cheap, and a frame-rate readout the
+player can read on a phone. `arcade/backup/index.before-demon-finish.html` is the game
+before it.
+
+## Checkpoints
+
+| # | Checkpoint | Status |
+|---|---|---|
+| J0 | Back up; remove the frog | done |
+| J1 | Depth without shadows; weak-device shedding and break-up; bigger rage and finale | next |
+| J2 | The demon's sounds | pending |
+| J3 | Frame-rate readout, throttled test, docs, PR, artifact, report | pending |
+
+## Done so far
+
+- J0: the frog's model files (`arcade/assets/frog/`), its source (`20e-blasterfrog.js`)
+  and its three sound cues are deleted; nothing in `arcade/src` or `scripts` names it
+  any more (the enemy's place in the game is `this.enemy`). The converter keeps its
+  path for dense sculpts, with no model using it. Fallback: the demon; its light
+  version on weak quality levels; the answers' targets if its model is missing or
+  will not decode (tested both ways). The page went from 6,604 KB to 5,186 KB.
+  Regression IDENTICAL.

@@ -159,7 +159,7 @@ const NEON_GLSL = `
 
 // The same look without the lighting, for the weakest quality levels: the texture's light and
 // shade as gunmetal, its old paint as a dim neon, and whatever colour the model keeps for itself
-// (keep: 1 leaves what is greener than it is red alone, the frog's skin).
+// (keep: 1 leaves what is greener than it is red alone).
 function neonLowMaterial(map, o = {}) {
   return new THREE.ShaderMaterial({
     side: o.side === undefined ? THREE.FrontSide : o.side,

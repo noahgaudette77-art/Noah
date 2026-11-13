@@ -159,10 +159,10 @@ class BlasterGame extends QuizGame {
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
-      <div class="hint">${this.frog ? "TAP YOUR ANSWER TO OPEN FIRE" : "TAP A TARGET, OR ITS ANSWER"}</div>
+      <div class="hint">${this.enemy ? "TAP YOUR ANSWER TO OPEN FIRE" : "TAP A TARGET, OR ITS ANSWER"}</div>
     </section>`);
     this.lives(this.shields, 3);
-    // Shoot by touching a target in the tunnel: the nearest one to the finger. (With one big frog
+    // Shoot by touching a target: the nearest one to the finger. (With the demon
     // for an enemy there are no targets to choose between: the answers are picked below.)
     this.bandEl.addEventListener("pointerdown", (e) => {
       if (this.state !== "ask" || this.paused || !this.has3D || !e.isPrimary) return;
@@ -213,10 +213,10 @@ class BlasterGame extends QuizGame {
     // open space all round: sky, stars, the giant, the star, clouds, rocks, traffic, and what happens out there (20f, 20g)
     this.space = new BlasterSpace(this);
     this.director = this.space.director || { force() { return null; }, update() {}, log: [] };
-    // the wave's carrier, far ahead (when the frog is the wave's enemy, there is none)
-    this.carrier = this.frog ? { update() {}, arrive() {}, destroy() {}, volley() {} } : new BlasterCarrier(this);
+    // the wave's carrier, far ahead (when the demon is the wave's enemy, there is none)
+    this.carrier = this.enemy ? { update() {}, arrive() {}, destroy() {}, volley() {} } : new BlasterCarrier(this);
     // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
-    this.warmExtra = this.frog ? [] : this.slotMats.map((M, i) => {
+    this.warmExtra = this.enemy ? [] : this.slotMats.map((M, i) => {
       const g = new THREE.Group();
       g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
       g.add(new THREE.Mesh(this.drones[i].body, this.dronePaint), new THREE.Mesh(this.drones[i].lamps, M.lamp));
@@ -281,15 +281,12 @@ class BlasterGame extends QuizGame {
   // neon edges and a fresnel rim, all in the slot colour. Shapes, materials and
   // badges are made once; each round only builds light-weight meshes from them.
   makeTargetKit() {
-    // The enemy: the player's space frog (20e-blasterfrog.js), one big one that the fighter fires on
-    // when an answer is right and that fires back when it is wrong. In a build without that model
-    // every answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
-    // (Now the enemy is the player's void demon, 20h-blasterdemon.js: it has the frog's part, and is kept in the same
-    // place, this.frog. The frog itself stands in if the demon's model is missing or will not decode.)
-    this.frog = null;
-    if (DemonModel.ok()) { try { this.frog = new BlasterDemon(this); } catch (e) { this.frog = null; } }
-    if (!this.frog && FrogModel.ok()) { try { this.frog = new BlasterFrog(this); } catch (e) { this.frog = null; } }
-    if (this.frog) return;
+    // The enemy: the player's void demon (20h-blasterdemon.js), which the fighter fires on when an answer is right
+    // and which strikes back when it is wrong. In a build without that model (or if it will not decode) every
+    // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
+    this.enemy = null;
+    if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
+    if (this.enemy) return;
     this.dronePaint = racerCarPaint(this.env, false);
     this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
@@ -355,7 +352,7 @@ class BlasterGame extends QuizGame {
     Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.director.force("squadron"); // a flight of fighters crosses as the game opens
     if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in
-    if (this.frog) this.frog.arrive(); // to meet the frog coming up the tunnel
+    if (this.enemy) this.enemy.arrive(); // to meet the demon coming up out of the distance
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -388,7 +385,7 @@ class BlasterGame extends QuizGame {
       this.ship.scale.setScalar(this.shipScale);
     }
     this.trails.forEach((t) => { t.width = 0.07 * this.shipScale; });
-    if (this.frog) this.frog.fit(this.bandSize(FROG_NEAR));
+    if (this.enemy) this.enemy.fit(this.bandSize(DEMON_NEAR));
     this.targets.forEach((t) => this.placeSlot(t));
   }
   placeSlot(t) {
@@ -415,7 +412,7 @@ class BlasterGame extends QuizGame {
   }
   spawnTargets() {
     this.clearTargets();
-    if (!this.has3D || this.frog) return; // (one big frog: there are no targets)
+    if (!this.has3D || this.enemy) return; // (the demon is the enemy: there are no targets)
     for (let i = 0; i < this.round.n; i++) {
       const shape = i % 4;
       const M = this.slotMats[i];
@@ -470,14 +467,14 @@ class BlasterGame extends QuizGame {
     this.quiz.lock();
     const t = this.targets[i];
     this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
-    // What the guns are laid on: the answer's own target, or the one big frog. The fighter only fires
-    // on the frog when the answer is right; when it is wrong the frog is already bringing its cannon
+    // What the guns are laid on: the answer's own target, or the demon. The fighter only fires
+    // on the demon when the answer is right; when it is wrong the demon is already rearing up
     // round. (Look and sound: the answer is checked and scored in resolve, as it always was.)
-    const right = i === this.round.correct, opens = !this.frog || right;
-    const at = !this.has3D ? null : this.frog ? (right ? this.frog.aimPoint(new THREE.Vector3()) : null) : t && t.position;
+    const right = i === this.round.correct, opens = !this.enemy || right;
+    const at = !this.has3D ? null : this.enemy ? (right ? this.enemy.aimPoint(new THREE.Vector3()) : null) : t && t.position;
     if (opens) Sound.sfx("laser", this.panAt);
     if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i]);
-    if (this.frog && !right) this.frog.attack();
+    if (this.enemy && !right) this.enemy.attack();
     if (at) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(at));
@@ -487,7 +484,7 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.frog ? 2.4 : 1)); // (the frog is close: fatter beams read)
+        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 2.4 : 1)); // (the demon is close: fatter beams read)
         fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
@@ -526,7 +523,7 @@ class BlasterGame extends QuizGame {
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       const p = this.bandPoint(0.3);
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
-      if (this.frog) this.frog.hit(SLOT_COLORS[i]); // the fighter's fire lands on the frog
+      if (this.enemy) this.enemy.hit(SLOT_COLORS[i]); // the fighter's fire lands on the demon
       else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
     } else {
@@ -542,7 +539,7 @@ class BlasterGame extends QuizGame {
       GFX.pulse(12, 0);
       Haptics.buzz([60, 40, 90]);
       Sound.setIntensity(0);
-      if (!this.frog) this.explode(this.targets[i], COLORS.red); // (the frog is already firing: see pick)
+      if (!this.enemy) this.explode(this.targets[i], COLORS.red); // (the demon is already striking: see pick)
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -572,17 +569,17 @@ class BlasterGame extends QuizGame {
       const z0 = t.position.z;
       this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
     });
-    if (this.frog) this.frog.attack(); // time's up: the frog opens fire
+    if (this.enemy) this.enemy.attack(); // time's up: the demon strikes
     this.hud();
     this.quiz.feedback({ ok: false, title: this.shields > 0 ? "TOO SLOW! SHIELD DOWN" : "TOO SLOW! SHIELDS GONE", onNext: () => this.after() });
   }
-  // A shield goes (look and sound only): the frog's cannon fire strikes and the lattice flares
-  // (BlasterFrog.attack; without the frog it is the carrier's bolt).
+  // A shield goes (look and sound only): the demon's strike lands and the lattice flares
+  // (BlasterDemon.attack; without the demon it is the carrier's bolt).
   shieldHit() {
     Sound.sfx("shield");
     if (!this.has3D) return;
     this.jet.setCombo(1);
-    if (this.frog) return;
+    if (this.enemy) return;
     this.jet.shieldLost();
     this.carrier.volley();
   }
@@ -593,7 +590,7 @@ class BlasterGame extends QuizGame {
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
   }
   // The blast where a shot lands: sparks, two shock rings, shards, embers, a flash on the tunnel
-  // (flash: how big that flash is. The frog is close and asks for a small one, with fewer sparks, a
+  // (flash: how big that flash is. The demon is close and asks for a small one, with fewer sparks, a
   // smaller ring and no white core, so it can be seen taking the hit).
   blastAt(pos, color, flash = 1) {
     // far blasts are scaled up so they read on screen as well as near ones
@@ -631,10 +628,10 @@ class BlasterGame extends QuizGame {
       if (this.has3D) {
         // the wave's carrier goes up, the fighter rolls through the wreck, the next carrier comes up out of the dark
         this.carrier.destroy();
-        if (this.frog) this.frog.destroy(); // (or the wave's frog does, and the next wave's flies up)
+        if (this.enemy) this.enemy.destroy(); // (or the wave's demon does, and the next wave's flies up)
         this.jet.warp();
         this.jet.shieldUp();
-        this.tw.wait(1.2, () => { if (!this.unmounted) { this.carrier.arrive(this.wave); if (this.frog) this.frog.arrive(); } });
+        this.tw.wait(1.2, () => { if (!this.unmounted) { this.carrier.arrive(this.wave); if (this.enemy) this.enemy.arrive(); } });
       }
       this.warp = 1.4;
       GFX.pulse(6, 0.2);
@@ -714,8 +711,8 @@ class BlasterGame extends QuizGame {
     this.shards.update(dt);
     this.space.update(dt, sp, w);
     this.carrier.update(dt);
-    // the frog comes closer as the question's time runs out (and holds where it is while the guns fire)
-    if (this.frog) this.frog.update(dt, this.state === "ask" || this.state === "firing" ? 1 - this.tLeft / this.T : null);
+    // the demon comes closer as the question's time runs out (and holds where it is while the guns fire)
+    if (this.enemy) this.enemy.update(dt, this.state === "ask" || this.state === "firing" ? 1 - this.tLeft / this.T : null);
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
@@ -745,7 +742,7 @@ class BlasterGame extends QuizGame {
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
-    if (this.frog && this.frog.late) this.frog.late(); // (the demon's heat haze, when it has more of it than the engines)
+    if (this.enemy && this.enemy.late) this.enemy.late(); // (the demon's heat haze, when it has more of it than the engines)
     Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
@@ -779,8 +776,8 @@ class BlasterGame extends QuizGame {
     Sound.engine(false);
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
-    if (this.frog) this.frog.dispose();
-    if (this.has3D && !this.frog) { // (the answers' target kit)
+    if (this.enemy) this.enemy.dispose();
+    if (this.has3D && !this.enemy) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });

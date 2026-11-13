@@ -14,7 +14,7 @@
  *   arcade/src/js/*.js       the game, concatenated in filename order into one IIFE
  *   arcade/content/*.json    one file per chapter (ch06a + ch06b merge into ch06)
  *   arcade/assets/<name>/    the models the player supplied: the Final Exam's boss,
- *                            Risk Blaster's fighter and its frog (<name>.bin, albedo.jpg),
+ *                            Risk Blaster's fighter and its demon (<name>.bin, albedo.jpg or .webp),
  *                            made by scripts/convert-model.js and inlined as base64
  *
  * Three.js r128 loads from cdnjs; the full build falls back to the vendored copy
@@ -74,7 +74,7 @@ function loadStory() {
 // Binary assets, inlined as base64 so the page stays one self-contained file.
 function loadAssets() {
   const out = {};
-  ["boss", "fighter", "demon", "frog"].forEach((name) => {
+  ["boss", "fighter", "demon"].forEach((name) => {
     const dir = path.join(DIR, "assets", name), mesh = path.join(dir, name + ".bin"), webp = path.join(dir, "albedo.webp"), tex = fs.existsSync(webp) ? webp : path.join(dir, "albedo.jpg");
     if (fs.existsSync(mesh) && fs.existsSync(tex)) {
       out[name] = { mesh: fs.readFileSync(mesh).toString("base64"), albedo: "data:image/" + (tex === webp ? "webp" : "jpeg") + ";base64," + fs.readFileSync(tex).toString("base64") };

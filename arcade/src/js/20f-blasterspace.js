@@ -737,7 +737,7 @@ class BlasterSpace {
       this.vortex.material.uniforms.uColB.value.copy(c.b).multiplyScalar(1.2);
     }
     // the halo behind the enemy (or the answers' targets)
-    const fr = g.frog && g.frog.root.visible ? g.frog : null, H = this.halo;
+    const fr = g.enemy && g.enemy.root.visible ? g.enemy : null, H = this.halo;
     if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
     H.quaternion.copy(g.camera.quaternion);
     this.haloU.uColor.value.copy(g.waveCol).multiplyScalar(0.55);

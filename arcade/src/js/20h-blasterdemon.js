@@ -1,6 +1,5 @@
 // Risk Blaster's enemy: the player's own void demon, a horned skull-faced torso on four
-// wings that flies ahead of the fighter. (It took the space frog's place; the frog stays
-// in the build as its stand-in, see 20e-blasterfrog.js.) The model has 106 loose parts,
+// wings that flies ahead of the fighter. The model has 106 loose parts,
 // one colour texture, no skeleton and no animation, so everything here is made in code:
 // the parts are gathered into 22 joints with pivots, it wears obsidian and gunmetal with
 // light in its eyes, third eye, mouth, core, horns and veins, and every move is posed
@@ -21,7 +20,7 @@ const DEMON = {
   core: [0.008, 0.255, 0.175], // where the fighter's fire lands
   hands: [[-0.285, 0.085, 0.17], [0.285, 0.085, 0.17]], tips: [[-0.46, 0.4, -0.12], [0.46, 0.4, -0.12], [-0.42, 0.7, -0.04], [0.42, 0.7, -0.04]],
 };
-const DEMON_FAR = 22, DEMON_NEAR = 14; // how far ahead it waits, and how close it has come when the time is up (as the frog did)
+const DEMON_FAR = 22, DEMON_NEAR = 14; // how far ahead it waits, and how close it has come when the time is up
 // The joints: what each hangs from, where it turns (model units), which of the model's parts it carries.
 const DEMON_RIG = {
   body: { at: [0, 0.3, 0.02], parts: [20, 42, 30, 39, 72, 43, 44, 47, 71, 74, 97, 100, 105, 99, 49] },
@@ -144,7 +143,7 @@ const DemonModel = {
   },
   texture() { return this._tex || (this._tex = inrModelTexture(window.INR_ASSETS.demon.albedo)); },
   // decode ahead of time, so opening the game never waits on it
-  preload() { if (this.ok()) { try { this.geometry(); this.texture(); } catch (e) { /* the game falls back to the frog */ } } },
+  preload() { if (this.ok()) { try { this.geometry(); this.texture(); } catch (e) { /* the game falls back to its answer targets */ } } },
 };
 
 const DEMON_VERT = `attribute vec3 aRest; attribute vec3 aC; attribute vec4 aK; attribute vec3 aZ;

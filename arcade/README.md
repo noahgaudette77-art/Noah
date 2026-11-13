@@ -103,8 +103,8 @@ lists all of them again.
   turn. In a wave's last three questions it rages: faster wings, red light, an
   aura round the view. Clear the wave and it staggers, breaks up into its 106
   parts and burns away. (The weakest quality levels draw a 3,900-triangle version
-  in a plain material. If the demon's model is missing or damaged, the space frog
-  it replaced stands in: a trooper in a yellow suit with a rotary cannon.)
+  in a plain material. If the demon's model is missing or damaged, every answer
+  becomes a target to shoot instead.)
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
@@ -299,18 +299,16 @@ any hint before submit, and it plays the exam's ending in full (holding its cloc
 through it, so the saved results must match to the byte). `PROGRESS.md` logs the
 upgrades' checkpoints.
 
-Four models the player supplied live in `arcade/assets/`: the Final Exam's boss
-(`boss/`), Risk Blaster's fighter (`fighter/`), its demon (`demon/`) and the frog
-that stands in for the demon (`frog/`), each a `<name>.bin` and an `albedo.jpg`
-(the demon's is `albedo.webp`). The build inlines them into the page. To replace
-one, run `node scripts/convert-model.js <model.glb> <boss|fighter|demon|frog>` (needs
-ImageMagick) and rebuild. The frog is a dense, meshopt-compressed sculpt:
-converting it also needs the `meshoptimizer` package, which is not a dependency of
-this repo (see the script's header). `src/js/24c-examboss.js` maps the boss's
+Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
+(`boss/`), Risk Blaster's fighter (`fighter/`) and its demon (`demon/`), each a
+`<name>.bin` and an `albedo.jpg` (the demon's is `albedo.webp`). The build inlines
+them into the page. To replace one, run
+`node scripts/convert-model.js <model.glb> <boss|fighter|demon>` (needs
+ImageMagick) and rebuild. `src/js/24c-examboss.js` maps the boss's
 numbered parts to joints; `src/js/20d-blasterfighter.js` lists where the fighter's
 engines, guns and lights are; `src/js/20h-blasterdemon.js` has the demon's joints, pivots and what each
-part is made of; `src/js/20e-blasterfrog.js` where the frog's cannon points. Without a fighter model in the build Risk Blaster flies its built-in jet;
-without the demon's model the frog is the enemy; without either every answer is a target to shoot, a crystal form in a
+part is made of. Without a fighter model in the build Risk Blaster flies its built-in jet;
+without the demon's model every answer is a target to shoot, a crystal form in a
 holo-drone (tap one, or its answer), and a carrier ship is the wave's enemy. If a
 model is damaged and will not decode, the game falls back the same way (the exam
 shows its old procedural centrepiece in place of the boss).

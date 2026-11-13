@@ -4,25 +4,24 @@
  *
  *   node scripts/convert-model.js <model.glb> <name> [textureSize=2048]
  *
- * <name> is "boss" (the Final Exam's boss), "fighter" (Risk Blaster's ship), "demon"
- * (Risk Blaster's enemy) or "frog" (the enemy it replaced, kept as its stand-in).
- * Writes into arcade/assets/<name>/ (or the folder in OUT_DIR):
+ * <name> is "boss" (the Final Exam's boss), "fighter" (Risk Blaster's ship) or "demon"
+ * (Risk Blaster's enemy). Writes into arcade/assets/<name>/ (or the folder in OUT_DIR):
  *   <name>.bin   every part of the model in one buffer: positions as 16-bit fractions
  *                of the part's bounding box, normals as signed bytes, UVs as 16-bit
  *                fractions, 16-bit indices, after a small JSON header
  *   albedo.jpg   the colour texture, resized and sharpened (needs ImageMagick's
- *                `convert`): the boss's in grey at 2048 px, the fighter's at 1024 px,
- *                the frog's at 2048 px. The demon's is written as albedo.webp at
- *                2048 px (a third of the size of the same picture as a JPEG).
- *                GRADE=off keeps any model's as it is.
+ *                `convert`): the boss's in grey at 2048 px, the fighter's at 1024 px.
+ *                The demon's is written as albedo.webp at 2048 px (a third of the
+ *                size of the same picture as a JPEG). GRADE=off keeps any model's
+ *                colours as they are.
  *
- * A model made of separate parts (the boss, the fighter) is kept part by part. A sculpt
- * (the frog: one meshopt-compressed mesh of 1.9 million triangles) is simplified
- * instead, keeping its texture mapping, to the triangle counts in TRIANGLES (default
- * "20000,3000": the game's version and a lighter one for weak quality levels, as
- * parts 0 and 1). That path needs the meshoptimizer package (MIT), which is not a
- * dependency of this repo: install it anywhere and point MESHOPTIMIZER at its
- * index.js, or have it in node_modules.
+ * A model made of separate parts (the boss, the fighter, the demon) is kept part by
+ * part. A sculpt (one dense, meshopt-compressed mesh) is simplified instead, keeping
+ * its texture mapping, to the triangle counts in TRIANGLES (default "20000,3000": the
+ * game's version and a lighter one for weak quality levels, as parts 0 and 1). That
+ * path needs the meshoptimizer package (MIT), which is not a dependency of this repo:
+ * install it anywhere and point MESHOPTIMIZER at its index.js, or have it in
+ * node_modules. (No model in the game uses it now.)
  *
  * The .glb is only read as numbers: nothing in it is executed.
  */
@@ -76,15 +75,15 @@ const xn = (m, x, y, z) => { const v = [m[0] * x + m[4] * y + m[8] * z, m[1] * x
 
 
 const src = process.argv[2], name = process.argv[3];
-if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter|demon|frog> [textureSize]"); process.exit(1); }
+if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter|demon> [textureSize]"); process.exit(1); }
 const outDir = path.resolve(process.env.OUT_DIR || path.join(__dirname, "..", "arcade", "assets", name));
 // In the arcade each model wears gunmetal and neon (src/js/08m-model.js), so its texture is only
 // read as light and shade and as a mask of where its paint was: the boss's is kept in grey at
 // full size (it is seen from very close), the fighter's in colour at half size (it is small).
 const texSize = +(process.argv[4] || { fighter: 1024 }[name] || 2048);
-const GRADES = { boss: ["-colorspace", "Gray", "-sigmoidal-contrast", "4x45%", "-unsharp", "0x1.2+0.8+0.02"], fighter: ["-unsharp", "0x1.0+0.7+0.01"], frog: ["-unsharp", "0x1.2+0.7+0.01"], demon: ["-unsharp", "0x1.0+0.6+0.02"] };
+const GRADES = { boss: ["-colorspace", "Gray", "-sigmoidal-contrast", "4x45%", "-unsharp", "0x1.2+0.8+0.02"], fighter: ["-unsharp", "0x1.0+0.7+0.01"], demon: ["-unsharp", "0x1.0+0.6+0.02"] };
 const GRADE = process.env.GRADE === "off" ? [] : GRADES[name] || [];
-const QUALITY = process.env.QUALITY || { boss: "74", fighter: "82", frog: "74", demon: "78" }[name] || "86";
+const QUALITY = process.env.QUALITY || { boss: "74", fighter: "82", demon: "78" }[name] || "86";
 const TEX = "albedo." + ({ demon: "webp" }[name] || "jpg"); // (WebP where the game can count on it: every browser since 2020)
 fs.mkdirSync(outDir, { recursive: true });
 

@@ -1,4 +1,4 @@
-// What Risk Blaster shows when the player's frog model is not in the build: the
+// What Risk Blaster shows when the player's demon model is not in the build: the
 // holo-drones that carry the answers, and the carrier that looms far ahead in each
 // wave. (The world round them is open space: 20f-blasterspace.js.) Look only: nothing
 // here reads or changes the score, shields, timer or the questions.
