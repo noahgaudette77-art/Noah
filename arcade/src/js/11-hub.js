@@ -26,7 +26,7 @@ const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4"
 // The room is rebuilt every time the player comes back from a game, so its
 // static geometry and artwork are kept for the session (once the pixel font
 // has loaded, so nothing is frozen in a fallback font).
-const HUB_CACHE = { geo: {}, dust: null, marquee: null, wall: null };
+const HUB_CACHE = { geo: {}, dust: null, marquee: null, wall: null, art: null };
 function hubFontsReady() {
   try { return !document.fonts || document.fonts.check('16px "Press Start 2P"'); } catch (e) { return false; }
 }
@@ -184,8 +184,8 @@ class HubKit {
 // ---- hub materials -----------------------------------------------------------
 // Glossy paint, chrome and plastic in one material: colour, metalness and
 // roughness come per vertex; the env map supplies the neon reflections.
-function hubLitMaterial(env) {
-  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4 });
+function hubLitMaterial(env, map = null) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4, map });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute vec2 aMR;\nvarying vec2 vMR;")
@@ -196,7 +196,7 @@ function hubLitMaterial(env) {
       .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;");
   };
   // every painted, plastic and chrome surface in the room gets a grain, hair scratches and smudges
-  return surfaceDetail(m, { scale: 3.4, height: 0.0015, smudge: 0.42 });
+  return surfaceDetail(m, { scale: 1.25, height: 0.0007, scratch: 0.8, smudge: 0.45 });
 }
 // Neon: per-vertex HDR colour times the level of the vertex's light group
 // (0 leaves an unlit glass tube). With a map it lights a texture instead; with
@@ -312,6 +312,8 @@ function hubScreenMaterial(tex, color) {
         img *= 1.0 - 0.2 * dot(q, q);
         vec3 crt = vec3(0.012, 0.016, 0.02) + img * win * uGain;
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.45;
+        // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
+        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.055 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.04);
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
         gl_FragColor = vec4(col, 1.0);
@@ -537,7 +539,7 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
   x.textBaseline = "middle";
   x.lineJoin = "round";
   x.strokeStyle = color;
-  [[0.34, 0.14], [0.2, 0.3]].forEach(([w, a]) => { // a tight glow: wide soft strokes smeared the letters
+  [[0.3, 0.16]].forEach(([w, a]) => { // a tight glow: wide soft strokes smeared the letters
     x.globalAlpha = a;
     x.lineWidth = size * w;
     x.strokeText(text, W / 2, ty);
@@ -554,11 +556,93 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
   x.fillStyle = tg;
   x.fillText(text, W / 2, ty);
   if (tag) {
-    x.font = `${Math.round(H * 0.075)}px "Press Start 2P", "Courier New", monospace`;
+    x.font = `${Math.round(H * 0.1)}px "Press Start 2P", "Courier New", monospace`;
     x.fillStyle = "#ffffff";
     x.fillText(tag.toUpperCase().replace("·", "-"), W / 2, H * 0.66);
   }
   x.restore();
+}
+// Printed art for the six cabinets, lit like the cabinets themselves: a control-panel
+// overlay each (speed stripes, a ring and compass under the stick, a ring and a legend
+// for every button, the game's emblem at both ends) and a coin-door plate.
+const HUB_SHAPE = { blaster: [1, 1], racer: [1.12, 0.95], boss: [1.04, 1.07], memory: [1, 0.98], exam: [0.9, 1.05], guide: [1.07, 0.95] }; // each cabinet's own width and height
+const HUB_ACCENT = { blaster: COLORS.magenta, racer: COLORS.magenta, boss: COLORS.cyan, memory: COLORS.yellow, exam: COLORS.yellow, guide: COLORS.cyan }; // the second colour in its art, its buttons and its rim light
+const HUB_LEGENDS = { blaster: ["FIRE", "SHIELD", "WARP", "LOCK", "SCAN", "BOMB"], racer: ["GAS", "BRAKE", "NITRO", "LANE", "HORN", "VIEW"], boss: ["STRIKE", "GUARD", "RAGE", "DODGE", "TAUNT", "HEAL"],
+  memory: ["FLIP", "KEEP", "SKIP", "HINT", "SWAP", "BANK"], exam: ["A", "B", "C", "D", "FLAG", "NEXT"], guide: ["PAGE", "FIND", "MARK", "ZOOM", "BACK", "HOME"] };
+function hubArtAtlas() {
+  if (HUB_CACHE.art) return HUB_CACHE.art;
+  const c = document.createElement("canvas");
+  c.width = c.height = 2048;
+  const x = c.getContext("2d");
+  x.scale(2, 2);
+  x.fillStyle = "#ffffff";
+  x.fillRect(0, 0, 1024, 1024);
+  const W = 512, H = 138, IW = 2.06;
+  CABINETS.forEach((cab, i) => {
+    const acc = HUB_ACCENT[cab.id] || COLORS.cyan, BTN = [cab.color, "#ffffff", acc, acc, cab.color, "#ffffff"];
+    const X = (i % 2) * W, Y = Math.floor(i / 2) * H, col = cab.color, U = (xw) => X + ((xw + IW / 2) / IW) * W, V = (sv) => Y + (1 - sv) * H;
+    x.save();
+    x.beginPath(); x.rect(X, Y, W, H); x.clip();
+    const bg = x.createLinearGradient(0, Y, 0, Y + H);
+    bg.addColorStop(0, "#150a2c"); bg.addColorStop(1, "#08050f");
+    x.fillStyle = bg; x.fillRect(X, Y, W, H);
+    // speed stripes sweeping in from both ends
+    for (let k = 0; k < 7; k++) for (const sd of [0, 1]) {
+      x.fillStyle = hubRGB(col, 0.9 - k * 0.1, 0.9 - k * 0.11);
+      const x0 = sd ? X + W - 14 - k * 15 : X + 14 + k * 15, sl = sd ? -34 : 34;
+      x.beginPath(); x.moveTo(x0, Y + H); x.lineTo(x0 + sl, Y); x.lineTo(x0 + sl + (sd ? -8 : 8), Y); x.lineTo(x0 + (sd ? -8 : 8), Y + H); x.fill();
+    }
+    x.strokeStyle = col; x.lineWidth = 2; x.strokeRect(X + 5, Y + 5, W - 10, H - 10);
+    x.strokeStyle = "rgba(255,255,255,0.55)"; x.lineWidth = 0.75; x.strokeRect(X + 8.5, Y + 8.5, W - 17, H - 17);
+    // the stick: a ring and an eight-point compass
+    const sx = U(-0.55), sy = V(0.5);
+    x.strokeStyle = col; x.lineWidth = 2.5; x.beginPath(); x.arc(sx, sy, 30, 0, 7); x.stroke();
+    x.strokeStyle = "rgba(255,255,255,0.7)"; x.lineWidth = 1; x.beginPath(); x.arc(sx, sy, 35, 0, 7); x.stroke();
+    x.fillStyle = "#ffffff";
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2, r0 = 39, r1 = k % 2 ? 44 : 49; x.beginPath(); x.moveTo(sx + Math.cos(a) * r1, sy + Math.sin(a) * r1); x.lineTo(sx + Math.cos(a + 0.09) * r0, sy + Math.sin(a + 0.09) * r0); x.lineTo(sx + Math.cos(a - 0.09) * r0, sy + Math.sin(a - 0.09) * r0); x.fill(); }
+    // the buttons: a ring in each one's colour, and what it does
+    x.font = `6px "Press Start 2P", "Courier New", monospace`; x.textAlign = "center"; x.textBaseline = "middle";
+    [[0, 0.64], [0.24, 0.64], [0.48, 0.64], [0.06, 0.36], [0.3, 0.36], [0.54, 0.36]].forEach(([bx, bs], k) => {
+      const px = U(bx), py = V(bs);
+      x.strokeStyle = BTN[k]; x.lineWidth = 2.2; x.beginPath(); x.arc(px, py, 20, 0, 7); x.stroke();
+      x.strokeStyle = hubRGB(BTN[k], 1, 0.35); x.lineWidth = 5; x.beginPath(); x.arc(px, py, 23.5, 0, 7); x.stroke();
+      x.fillStyle = "#ffffff"; x.fillText((HUB_LEGENDS[cab.id] || [])[k] || "", px, py + (bs > 0.5 ? -30 : 30));
+    });
+    [[-0.2, "1P"], [0.2, "2P"]].forEach(([bx, t]) => { const px = U(bx), py = V(0.88); x.strokeStyle = "#ffffff"; x.lineWidth = 1.2; x.beginPath(); x.arc(px, py, 12, 0, 7); x.stroke(); x.fillStyle = col; x.fillText(t, px + (bx < 0 ? -24 : 24), py); });
+    [X + 30, X + W - 30].forEach((ex) => hubEmblem(x, cab.id, ex, Y + H - 30, 12, "#ffffff"));
+    x.restore();
+  });
+  // the coin door: a plate with a frame, rivets, and what goes where
+  { const X = 0, Y = 420, S = 128;
+    const g = x.createLinearGradient(X, Y, X + S, Y + S);
+    g.addColorStop(0, "#3a3948"); g.addColorStop(0.5, "#23222d"); g.addColorStop(1, "#32313e");
+    x.fillStyle = g; x.fillRect(X, Y, S, S);
+    x.strokeStyle = "#5c5a70"; x.lineWidth = 3; x.strokeRect(X + 5, Y + 5, S - 10, S - 10);
+    x.strokeStyle = "#16151d"; x.lineWidth = 1; x.strokeRect(X + 9, Y + 9, S - 18, S - 18);
+    x.fillStyle = "#8a88a0"; [[12, 12], [S - 12, 12], [12, S - 12], [S - 12, S - 12]].forEach(([a, b]) => { x.beginPath(); x.arc(X + a, Y + b, 2.6, 0, 7); x.fill(); });
+    x.fillStyle = "#d8d6ea"; x.font = `6px "Press Start 2P", "Courier New", monospace`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("COINS", X + 84, Y + 22); x.fillText("RETURN", X + S / 2, Y + S - 20);
+    x.strokeStyle = "#ffb13a"; x.lineWidth = 1; [79, 104].forEach((a) => x.strokeRect(X + a - 6, Y + 30, 12, 32)); x.strokeRect(X + 28, Y + 84, 72, 14);
+    x.strokeStyle = "#8a88a0"; x.lineWidth = 2; x.beginPath(); x.arc(X + 28, Y + 44, 11, 0, 7); x.stroke(); }
+  // the front panels: bands of the cabinet's two colours sweeping up from the corners, its emblem large on either side of the door
+  CABINETS.forEach((cab, i) => {
+    const X = (i % 3) * 256, Y = 560 + Math.floor(i / 3) * 118, Wp = 256, Hp = 118, acc = HUB_ACCENT[cab.id] || COLORS.cyan;
+    x.save();
+    x.beginPath(); x.rect(X, Y, Wp, Hp); x.clip();
+    const bg = x.createLinearGradient(0, Y, 0, Y + Hp);
+    bg.addColorStop(0, "#0e0a1c"); bg.addColorStop(1, "#06040c");
+    x.fillStyle = bg; x.fillRect(X, Y, Wp, Hp);
+    for (const sd of [0, 1]) for (let k = 0; k < 6; k++) {
+      x.fillStyle = hubRGB(k % 2 ? acc : cab.color, 0.95 - k * 0.1, 0.95 - k * 0.12);
+      const x0 = sd ? X + Wp + 30 - k * 17 : X - 30 + k * 17, dx = sd ? -64 : 64, w = sd ? -9 : 9;
+      x.beginPath(); x.moveTo(x0, Y + Hp); x.lineTo(x0 + dx, Y); x.lineTo(x0 + dx + w, Y); x.lineTo(x0 + w, Y + Hp); x.fill();
+    }
+    x.strokeStyle = hubRGB(cab.color, 1, 0.9); x.lineWidth = 1.5; x.strokeRect(X + 3, Y + 3, Wp - 6, Hp - 6);
+    [X + 66, X + Wp - 66].forEach((ex) => { x.fillStyle = "rgba(6,4,12,0.72)"; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.fill(); x.strokeStyle = cab.color; x.lineWidth = 1.5; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.stroke(); hubEmblem(x, cab.id, ex, Y + Hp / 2, 17, "#ffffff"); });
+    x.restore();
+  });
+  if (hubFontsReady()) HUB_CACHE.art = c;
+  return c;
 }
 // Marquees: the six cabinets down the left half, sixteen wall machines on the right.
 function hubMarqueeAtlas() {
@@ -569,7 +653,7 @@ function hubMarqueeAtlas() {
   x.scale(2, 2);
   x.fillStyle = "#000";
   x.fillRect(0, 0, 1024, 1024);
-  CABINETS.forEach((cab, i) => { hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag); [34, 478].forEach((ex) => hubEmblem(x, cab.id, ex, i * 170 + 72, 17, cab.color)); });
+  CABINETS.forEach((cab, i) => { hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag); [36, 476].forEach((ex) => hubEmblem(x, cab.id, ex, i * 170 + 72, 22, cab.color)); });
   HUB_TITLES.forEach((t, i) => hubMarquee(x, 512 + (i % 2) * 256, Math.floor(i / 2) * 64, 256, 64, t, HUB_PALETTE[i % HUB_PALETTE.length]));
   if (hubFontsReady()) HUB_CACHE.marquee = c;
   return c;
@@ -712,7 +796,7 @@ function hubWallAtlas() {
 
 class HubScene extends Scene3D {
   constructor() {
-    super({ fov: 58, fog: [0x0b0424, 12, 44] });
+    super({ fov: 58, fog: [0x0b0424, 16, 62] });
     this.sel = Hub.index;
     this.angle = this.cabAngle(this.sel);
     this.restDolly = 1.2;
@@ -721,7 +805,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.05, bloom: 0.95, threshold: 1, saturation: 1.12, contrast: 1.1, vignette: 1.15 };
+    s.userData.post = { exposure: 1.06, bloom: 0.7, threshold: 1.1, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.3, sharpen: 0.4, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.35 };
     this.texs = [];
     // on[g]: what the lamps say; lv[g]: the level the shaders get (focus, buzz).
     this.on = new Float32Array(HUB_NG).fill(1);
@@ -751,8 +835,9 @@ class HubScene extends Scene3D {
     this.key.position.set(0, 10, 3);
     this.screenLight = new THREE.PointLight(0xffffff, 0, 7, 2);
     this.topLight = new THREE.PointLight(0xfff0f8, 0, 12, 1.4);
+    this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.lightCol = new THREE.Color(CABINETS[this.sel].color);
-    s.add(this.hemi, this.key, this.screenLight, this.topLight);
+    s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
     // The floor stays built while you play (see hubScene()); on the way back only
@@ -761,7 +846,8 @@ class HubScene extends Scene3D {
     this.wallTex = wallTex;
     this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
-    const B = { lit: new HubBatch("lit", 0.6), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
+    const artTex = this.canvasTex(hubArtAtlas());
+    const B = { lit: new HubBatch("lit", 0.6), art: new HubBatch("art"), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
     this.dustPts = { p: [], x: [], g: [] };
     const K = new HubKit();
     this.addRoom(B, K);
@@ -771,6 +857,7 @@ class HubScene extends Scene3D {
     K.dispose();
     const lv = this.lv;
     s.add(B.lit.mesh(hubLitMaterial(this.env), "color"));
+    s.add(B.art.mesh(hubLitMaterial(this.env, artTex), "color"));
     s.add(B.glow.mesh(hubGlowMaterial(lv)));
     this.marqMat = hubGlowMaterial(lv, { map: marqTex, fog: 0.45, glint: !REDUCED_MOTION });
     s.add(B.marq.mesh(this.marqMat));
@@ -823,7 +910,7 @@ class HubScene extends Scene3D {
   }
   canvasTex(canvas) {
     const t = new THREE.CanvasTexture(canvas);
-    if (GFX.ok) t.anisotropy = Math.min(4, GFX.renderer.capabilities.getMaxAnisotropy());
+    if (GFX.ok) t.anisotropy = Math.min(16, GFX.renderer.capabilities.getMaxAnisotropy());
     this.texs.push(t);
     return t;
   }
@@ -909,7 +996,9 @@ class HubScene extends Scene3D {
   // ceiling lamp whose beam falls on it.
   makeCabinet(cab, i, B, K) {
     const a = this.cabAngle(i);
-    const base = hubM(Math.sin(a) * HUB_R, 0, -Math.cos(a) * HUB_R, 0, -a);
+    const baseL = hubM(Math.sin(a) * HUB_R, 0, -Math.cos(a) * HUB_R, 0, -a);
+    const SH = HUB_SHAPE[cab.id] || [1, 1], ACC = HUB_ACCENT[cab.id] || COLORS.cyan;
+    const base = baseL.clone().scale(new THREE.Vector3(SH[0], SH[1], 1));
     const at = (...args) => base.clone().multiply(hubM(...args));
     const g = HUB_G.cab + i;
     const col = new THREE.Color(cab.color);
@@ -932,16 +1021,20 @@ class HubScene extends Scene3D {
     K.box(B.lit, IW, 0.16, 0.03, at(0, 0.08, zf + 0.015), CHROME, { aux: METAL });
     K.box(B.lit, 0.7, 0.68, 0.02, at(0, 0.62, zf + 0.01), CHROME, { aux: METAL });
     K.box(B.lit, 0.62, 0.6, 0.03, at(0, 0.62, zf + 0.018), 0x23212c, { aux: [0.85, 0.32] });
-    [-0.13, 0.13].forEach((x) => {
-      K.box(B.glow, 0.05, 0.13, 0.012, at(x, 0.76, zf + 0.036), 0xff5a2a, { k: 2.4, g });
-      K.box(B.glow, 0.1, 0.07, 0.012, at(x, 0.46, zf + 0.036), 0xffb13a, { k: 1.1, g });
-    });
-    [-0.74, 0.74].forEach((x) => K.box(B.lit, 0.16, 0.92, 0.008, at(x, 0.6, zf + 0.004), col, { k: 0.7, aux: GLOSS }));
+    [0.07, 0.19].forEach((x) => K.box(B.glow, 0.035, 0.12, 0.012, at(x, 0.75, zf + 0.036), 0xff5a2a, { k: 2.4, g }));
+    K.box(B.glow, 0.3, 0.035, 0.012, at(0, 0.45, zf + 0.036), 0xffb13a, { k: 0.9, g });
+    B.lit.add(K.get("lock", () => new THREE.CylinderGeometry(0.036, 0.036, 0.02, 14)), at(-0.17, 0.75, zf + 0.042, Math.PI / 2), CHROME, { aux: METAL });
+    // the front panel's printed art, either side of the door
+    K.quad(B.art, IW - 0.04, 0.92, at(0, 0.64, zf + 0.003), 0xffffff, { aux: [0.1, 0.32], uv: hubUV((i % 3) * 256, 560 + Math.floor(i / 3) * 118, 256, 118) });
     // control panel: chrome lip, coloured overlay, joystick, buttons
     const lip = hubFace(HUB_BODY[3], HUB_BODY[4], 0.5, 0.006);
     K.box(B.lit, IW, lip.len, 0.012, at(0, lip.y, lip.z, lip.rx), CHROME, { aux: METAL });
     const top = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.006);
     K.box(B.lit, IW, top.len, 0.012, at(0, top.y, top.z, top.rx), col, { k: 0.42, aux: [0.15, 0.3] });
+    // the printed overlay on the control panel, and the plate on the coin door
+    const art = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.0135);
+    K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
+    K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
     const onPanel = (x, s, h) => {
       const f = hubFace(HUB_BODY[4], HUB_BODY[5], s, 0.012 + h / 2);
       return at(x, f.y, f.z, f.rx).multiply(hubM(0, 0, 0, Math.PI / 2));
@@ -949,7 +1042,7 @@ class HubScene extends Scene3D {
     B.lit.add(K.get("stickBase", () => new THREE.CylinderGeometry(0.11, 0.11, 0.012, 14)), onPanel(-0.55, 0.5, 0.012), 0x111018, { aux: SATIN });
     B.lit.add(K.get("shaft", () => new THREE.CylinderGeometry(0.022, 0.022, 0.22, 8)), onPanel(-0.55, 0.5, 0.22), CHROME, { aux: METAL });
     B.lit.add(K.get("ball", () => new THREE.SphereGeometry(0.075, 12, 9)), onPanel(-0.55, 0.5, 0.46), 0xff2346, { aux: [0, 0.14] });
-    const BTN = [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime, COLORS.red, COLORS.orange];
+    const BTN = [cab.color, "#ffffff", ACC, ACC, cab.color, "#ffffff"];
     [[0, 0.64], [0.24, 0.64], [0.48, 0.64], [0.06, 0.36], [0.3, 0.36], [0.54, 0.36]].forEach(([x, s], k) => {
       B.glow.add(K.get("button", () => new THREE.CylinderGeometry(0.066, 0.066, 0.05, 14)), onPanel(x, s, 0.05), BTN[k], { k: 1.5, g });
     });
@@ -976,8 +1069,8 @@ class HubScene extends Scene3D {
     // what makes this cabinet unlike the other five (see 11b-hubextras.js)
     hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
-    const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(base);
-    const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(base);
+    const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(baseL);
+    const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(baseL);
     const dir = lamp.clone().sub(foot);
     const len = dir.length();
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
@@ -1065,7 +1158,7 @@ class HubScene extends Scene3D {
   // The first visit of a session powers the room on, piece by piece.
   powerOn() {
     this.lights.forEach((l) => l.parts.forEach((p) => p.off()));
-    this.room = 0.15;
+    this.room = 0.34; // (the room on standby: dim, but its shapes read before the lights come on)
     this.introRunning = true;
     this.introLook = 5.2;
     this.tw.add(2.9, (k) => { this.introLook = 5.2 * (1 - k); }, null, Ease.inOutQuad);
@@ -1097,7 +1190,7 @@ class HubScene extends Scene3D {
     if (!this.camera) return;
     const bandH = this.band ? this.band.h : h;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    const need = (4.6 * h) / (2 * tanH * Math.max(80, bandH));
+    const need = (5.25 * h) / (2 * tanH * Math.max(80, bandH));
     this.restDolly = clamp(HUB_R - need, -5, 1.6);
     if (!this.zooming) this.dolly = this.restDolly;
     if (this.dust) this.dust.material.uniforms.uScale.value = (h * GFX.scenePR()) / (2 * tanH);
@@ -1126,10 +1219,10 @@ class HubScene extends Scene3D {
     const a = this.angle;
     // Lean the view toward the finger / mouse a little: the room feels like a place.
     const pa = a + Pointer.x * 0.07;
-    const dol = this.dolly - travel * 1.5;
+    const dol = this.dolly - travel * 2.4;
     this.camBase.set(Math.sin(a) * dol, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * dol);
     // the lens is focused on the cabinet in front of us: the room behind it goes soft
-    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.2, far: 11, max: 0.011, k: 0.9 };
+    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.6, far: 26, max: 0.006, k: 0.6 };
     this.lookAt.set(Math.sin(pa) * HUB_R, 2.15 - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.
@@ -1204,6 +1297,9 @@ class HubScene extends Scene3D {
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
+    this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
+    this.rimLight.intensity = 2.2 * lv[G.cab + this.sel];
+    this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     const fu = this.floorMat.uniforms;
     fu.uReflect.value = GFX.lite ? 0 : 1;
     fu.uBlack.value = lv[G.tube];
@@ -1247,16 +1343,31 @@ function drawDemo(d, dt) {
   x.textAlign = "center";
   switch (d.cab.id) {
     case "blaster": {
+      // the game in miniature: stars streaming past, a horned shape with four lettered drones round it, the ship
+      // strafing below and firing on one drone after another, a score and three shields
       x.fillStyle = "#fff";
-      for (let i = 0; i < 40; i++) { const k = (i * 37.7 + t * 40 * (1 + (i % 3))) % 160; x.fillRect((i * 53) % W, k * 0.75, 1, 1 + (i % 2)); }
+      for (let i = 0; i < 46; i++) { const k = (i * 37.7 + t * 40 * (1 + (i % 3))) % 160; x.fillRect((i * 53) % W, k * 0.75, 1, 1 + (i % 2)); }
+      const bob = Math.sin(t * 1.3) * 2, turn = Math.floor(t / 1.6), k = (t / 1.6) % 1, aim = turn % 4;
+      x.fillStyle = "#3a1466"; x.beginPath(); x.moveTo(80, 22 + bob); x.lineTo(112, 14 + bob); x.lineTo(134, 34 + bob); x.lineTo(104, 40 + bob); x.lineTo(96, 58 + bob); x.lineTo(64, 58 + bob); x.lineTo(56, 40 + bob); x.lineTo(26, 34 + bob); x.lineTo(48, 14 + bob); x.fill();
+      x.fillStyle = COLORS.magenta; x.fillRect(66, 26 + bob, 28, 24); x.fillRect(62, 20 + bob, 5, 9); x.fillRect(93, 20 + bob, 5, 9);
+      x.fillStyle = "#07021a"; x.fillRect(70, 32 + bob, 7, 5); x.fillRect(83, 32 + bob, 7, 5);
+      x.fillStyle = COLORS.red; x.fillRect(72, 33 + bob, 3, 3); x.fillRect(85, 33 + bob, 3, 3);
+      x.fillStyle = "#ffd0f0"; x.fillRect(76, 42 + bob, 8, 5);
+      const P = [[24, 26], [136, 26], [28, 62], [132, 62]];
       SLOT_COLORS.forEach((col, i) => {
-        const s = 6 + ((t * 0.35 + i * 0.25) % 1) * 18;
-        x.fillStyle = col;
-        x.fillRect(40 + (i % 2) * 80 - s / 2, 30 + Math.floor(i / 2) * 34 - s / 2, s, s);
+        const hit = i === aim && k > 0.55, [px, py] = P[i];
+        if (hit && k > 0.8) return;
+        x.fillStyle = hit ? "#ffffff" : col;
+        x.beginPath(); x.moveTo(px, py - 8); x.lineTo(px + 8, py); x.lineTo(px, py + 8); x.lineTo(px - 8, py); x.fill();
+        x.fillStyle = "#07021a"; x.font = '5px "Press Start 2P", monospace'; x.fillText("ABCD"[i], px + 0.5, py + 2.5);
       });
-      x.fillStyle = COLORS.cyan;
-      x.beginPath(); x.moveTo(80, 96); x.lineTo(70, 112); x.lineTo(90, 112); x.fill();
-      if (Math.floor(t * 3) % 2) { x.fillStyle = COLORS.yellow; x.fillRect(79, 40, 2, 56); }
+      const sx = 80 + Math.sin(t * 0.9) * 26;
+      x.fillStyle = COLORS.cyan; x.beginPath(); x.moveTo(sx, 88); x.lineTo(sx - 11, 104); x.lineTo(sx - 3, 101); x.lineTo(sx, 106); x.lineTo(sx + 3, 101); x.lineTo(sx + 11, 104); x.fill();
+      x.fillStyle = COLORS.orange; x.fillRect(sx - 2, 106, 4, 3 + (Math.floor(t * 2.5) % 2) * 2);
+      if (k > 0.4 && k < 0.6) { x.strokeStyle = SLOT_COLORS[aim]; x.lineWidth = 2; x.beginPath(); x.moveTo(sx, 88); x.lineTo(P[aim][0], P[aim][1]); x.stroke(); x.lineWidth = 1; }
+      x.font = '5px "Press Start 2P", monospace'; x.textAlign = "left"; x.fillStyle = COLORS.yellow; x.fillText(String(100 * (turn % 90) + 1e5).slice(1), 4, 9);
+      x.fillStyle = COLORS.cyan; for (let i = 0; i < 3; i++) x.fillRect(132 + i * 8, 4, 6, 5);
+      x.font = '10px "Press Start 2P", monospace'; x.textAlign = "center";
       break;
     }
     case "racer": {
@@ -1272,24 +1383,41 @@ function drawDemo(d, dt) {
       break;
     }
     case "boss": {
-      const bob = Math.sin(t * 3) * 3;
-      x.fillStyle = COLORS.magenta; x.fillRect(50, 26 + bob, 60, 50);
-      x.fillStyle = "#07021a"; x.fillRect(60, 40 + bob, 12, 8); x.fillRect(88, 40 + bob, 12, 8);
-      x.fillStyle = COLORS.yellow; x.fillRect(64, 42 + bob, 4, 4); x.fillRect(92, 42 + bob, 4, 4);
-      x.fillStyle = "#07021a"; for (let i = 0; i < 5; i++) x.fillRect(58 + i * 10, 62 + bob, 6, 6);
-      x.fillStyle = "#333"; x.fillRect(20, 8, 120, 6);
-      x.fillStyle = COLORS.red; x.fillRect(20, 8, 120 * (0.3 + 0.7 * (1 - ((t * 0.15) % 1))), 6);
-      if (Math.floor(t * 2) % 3 === 0) { x.fillStyle = COLORS.cyan; x.fillRect(78, 80, 4, 30); }
+      // a fight in miniature: the boss sways, its charge fills, it strikes; your answer hits back; hearts and HP count down
+      const bob = Math.sin(t * 3) * 2, ph = (t * 0.28) % 1, charge = Math.min(1, ph / 0.7), strike = ph > 0.7 && ph < 0.82, answer = ph > 0.86;
+      x.fillStyle = "#1a0a34"; x.fillRect(0, 84, W, 36);
+      x.strokeStyle = COLORS.violet; for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(80 + (i - 2) * 12, 84); x.lineTo(80 + (i - 2) * 46, 120); x.stroke(); }
+      x.fillStyle = "#3d1048"; x.fillRect(32, 44 + bob, 14, 30 - (strike ? 14 : 0)); x.fillRect(114, 44 + bob, 14, 30 - (strike ? 14 : 0)); x.fillRect(58, 70 + bob, 44, 16);
+      x.fillStyle = COLORS.magenta; x.fillRect(50, 24 + bob, 60, 48);
+      x.fillStyle = "#07021a"; x.fillRect(60, 36 + bob, 12, 8); x.fillRect(88, 36 + bob, 12, 8);
+      x.fillStyle = strike ? COLORS.red : COLORS.yellow; x.fillRect(64, 38 + bob, 4, 4); x.fillRect(92, 38 + bob, 4, 4);
+      x.fillStyle = "#07021a"; for (let i = 0; i < 5; i++) x.fillRect(58 + i * 10, 56 + bob, 6, strike ? 9 : 5);
+      x.fillStyle = "#333"; x.fillRect(20, 6, 120, 5);
+      x.fillStyle = COLORS.red; x.fillRect(20, 6, 120 * (0.25 + 0.75 * (1 - ((t * 0.07) % 1))), 5);
+      x.fillStyle = "#222"; x.fillRect(20, 13, 120, 3);
+      x.fillStyle = COLORS.orange; x.fillRect(20, 13, 120 * charge, 3);
+      if (strike) { x.fillStyle = COLORS.red; x.fillRect(74, 76, 12, 30); x.fillRect(66, 100, 28, 6); }
+      if (answer) { x.fillStyle = COLORS.cyan; x.fillRect(78, 60, 4, 40); x.fillStyle = "#ffffff"; x.fillRect(72, 52, 16, 8); }
+      x.fillStyle = COLORS.red; for (let i = 0; i < 3; i++) x.fillRect(6 + i * 9, 108, 7, 6);
+      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 92 + i * 6, 42, 4); });
       break;
     }
     case "memory": {
-      const flip = Math.abs(Math.cos(t * 1.2));
-      x.fillStyle = Math.cos(t * 1.2) > 0 ? COLORS.lime : COLORS.cyan;
-      x.fillRect(80 - 50 * flip, 24, 100 * flip, 64);
-      x.fillStyle = "#07021a";
-      if (flip > 0.4) { x.fillRect(80 - 34 * flip, 44, 68 * flip, 6); x.fillRect(80 - 26 * flip, 60, 52 * flip, 6); }
-      x.fillStyle = COLORS.gold;
-      for (let i = 0; i < 6; i++) { const yy = ((t * 30 + i * 22) % 110); x.fillRect(12 + (i % 2) * 130, yy, 6, 6); }
+      // six cards: they turn over in turn, the ones you know light up and a coin drops into the vault for each
+      const turnN = Math.floor(t / 1.1), k = (t / 1.1) % 1, cur = turnN % 6;
+      for (let i = 0; i < 6; i++) {
+        const cx = 34 + (i % 3) * 46, cy = 30 + Math.floor(i / 3) * 40, banked = i < cur, w = i === cur ? Math.abs(Math.cos(k * Math.PI)) : 1, face = banked || (i === cur && k > 0.5);
+        x.fillStyle = face ? (banked ? COLORS.lime : "#e8e2ff") : "#2c1466";
+        x.fillRect(cx - 17 * w, cy - 15, 34 * w, 30);
+        x.strokeStyle = banked ? "#ffffff" : COLORS.violet; x.strokeRect(cx - 17 * w + 0.5, cy - 14.5, 34 * w - 1, 29);
+        if (face && w > 0.5) { x.fillStyle = "#07021a"; x.fillRect(cx - 10, cy - 7, 20, 3); x.fillRect(cx - 7, cy, 14, 3); }
+        else if (!face && w > 0.5) { x.fillStyle = COLORS.violet; x.fillRect(cx - 3, cy - 3, 6, 6); }
+      }
+      x.fillStyle = "#1a0f33"; x.fillRect(0, 92, W, 28);
+      x.fillStyle = COLORS.gold; for (let i = 0; i < cur; i++) x.fillRect(14 + i * 9, 110 - (i % 2) * 3, 7, 3);
+      if (k > 0.55) { x.beginPath(); x.arc(14 + cur * 9 + 3.5, 60 + (k - 0.55) * 110, 3.5, 0, 7); x.fill(); }
+      x.font = '5px "Press Start 2P", monospace'; x.textAlign = "right"; x.fillStyle = COLORS.lime; x.fillText("BANKED " + cur, 156, 100);
+      x.font = '10px "Press Start 2P", monospace'; x.textAlign = "center";
       break;
     }
     case "exam": {
@@ -1375,6 +1503,7 @@ function showHub() {
   if (fresh && !Hub.poweredOn && scene.has3D) {
     Hub.poweredOn = true;
     scene.powerOn();
+    Hub.booting = true;
     setTimeout(() => Sound.ambience(true), 2600);
   } else {
     scene.zoomOut();
@@ -1394,6 +1523,11 @@ function showHub() {
     <div class="spacer"></div>
     <div class="hub-card" data-card></div>
   </section>`);
+  if (Hub.booting) { // the room is powering on: what you read and press arrives once it is lit
+    Hub.booting = false;
+    el.classList.add("booting");
+    const iv = setInterval(() => { if (!scene.introRunning || !el.isConnected) { el.classList.remove("booting"); clearInterval(iv); } }, 120);
+  }
   const card = $("[data-card]", el);
   const render = () => {
     const cab = CABINETS[Hub.index];

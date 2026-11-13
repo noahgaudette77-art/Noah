@@ -191,9 +191,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .hub-nav { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; }
 .hub-nav .iconbtn { width: 44px; height: 44px; }
-.hub-name { font: clamp(14px, 4.2vw, 20px)/1.3 var(--font-display); color: var(--c); text-align: center; text-shadow: 0 0 12px var(--c); }
+.hub-name { white-space: nowrap; font: clamp(12px, 3.6vw, 20px)/1.3 var(--font-display); color: var(--c); text-align: center; text-shadow: 0 0 12px var(--c); }
 .hub-tag { text-align: center; color: var(--dim); font-size: 19px; margin-top: 4px; }
-.hub-desc { font-size: clamp(19px, 4.4vw, 22px); line-height: 1.1; }
+.hub-desc { font-size: clamp(19px, 4.4vw, 22px); line-height: 1.1; min-height: 4.4em; } /* four lines, always: the card's top edge does not move between games */
+.scr-hub .hub-card, .scr-hub .mission { transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+.scr-hub.booting .hub-card, .scr-hub.booting .mission { opacity: 0; transform: translateY(18px); pointer-events: none; }
 .hub-meta { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; font: 9px/1.5 var(--font-display); color: var(--dim); }
 .hub-meta b { color: var(--yellow); font-weight: 400; }
 .hub-card .btn { width: 100%; }
@@ -1408,7 +1410,7 @@ const BOSSES = {
 
 const CABINETS = [
   { id: "blaster", name: "RISK BLASTER", tag: "Rail shooter", color: COLORS.cyan,
-    desc: "Answers fly at you as targets. Shoot the right one before it reaches your shields. Streaks multiply your score.", unit: "pts" },
+    desc: "A void demon closes in while the clock runs. Shoot the drone that carries the right answer to strike it; a wrong one and it strikes you. Streaks multiply your score.", unit: "pts" },
   { id: "racer", name: "NEST EGG RUN", tag: "Neon lane racer", color: COLORS.yellow,
     desc: "A 40-year career, one gate per year. Steer into the lane with the right answer to compound your savings. Retire at 65 with $1,000,000.", unit: "$" },
   { id: "boss", name: "BOSS RUSH", tag: "Chapter boss fights", color: COLORS.magenta,
@@ -5667,7 +5669,7 @@ const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4"
 // The room is rebuilt every time the player comes back from a game, so its
 // static geometry and artwork are kept for the session (once the pixel font
 // has loaded, so nothing is frozen in a fallback font).
-const HUB_CACHE = { geo: {}, dust: null, marquee: null, wall: null };
+const HUB_CACHE = { geo: {}, dust: null, marquee: null, wall: null, art: null };
 function hubFontsReady() {
   try { return !document.fonts || document.fonts.check('16px "Press Start 2P"'); } catch (e) { return false; }
 }
@@ -5825,8 +5827,8 @@ class HubKit {
 // ---- hub materials -----------------------------------------------------------
 // Glossy paint, chrome and plastic in one material: colour, metalness and
 // roughness come per vertex; the env map supplies the neon reflections.
-function hubLitMaterial(env) {
-  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4 });
+function hubLitMaterial(env, map = null) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4, map });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute vec2 aMR;\nvarying vec2 vMR;")
@@ -5837,7 +5839,7 @@ function hubLitMaterial(env) {
       .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;");
   };
   // every painted, plastic and chrome surface in the room gets a grain, hair scratches and smudges
-  return surfaceDetail(m, { scale: 3.4, height: 0.0015, smudge: 0.42 });
+  return surfaceDetail(m, { scale: 1.25, height: 0.0007, scratch: 0.8, smudge: 0.45 });
 }
 // Neon: per-vertex HDR colour times the level of the vertex's light group
 // (0 leaves an unlit glass tube). With a map it lights a texture instead; with
@@ -5953,6 +5955,8 @@ function hubScreenMaterial(tex, color) {
         img *= 1.0 - 0.2 * dot(q, q);
         vec3 crt = vec3(0.012, 0.016, 0.02) + img * win * uGain;
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.45;
+        // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
+        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.055 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.04);
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
         gl_FragColor = vec4(col, 1.0);
@@ -6178,7 +6182,7 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
   x.textBaseline = "middle";
   x.lineJoin = "round";
   x.strokeStyle = color;
-  [[0.34, 0.14], [0.2, 0.3]].forEach(([w, a]) => { // a tight glow: wide soft strokes smeared the letters
+  [[0.3, 0.16]].forEach(([w, a]) => { // a tight glow: wide soft strokes smeared the letters
     x.globalAlpha = a;
     x.lineWidth = size * w;
     x.strokeText(text, W / 2, ty);
@@ -6195,11 +6199,93 @@ function hubMarquee(x, X, Y, W, H, text, color, tag) {
   x.fillStyle = tg;
   x.fillText(text, W / 2, ty);
   if (tag) {
-    x.font = `${Math.round(H * 0.075)}px "Press Start 2P", "Courier New", monospace`;
+    x.font = `${Math.round(H * 0.1)}px "Press Start 2P", "Courier New", monospace`;
     x.fillStyle = "#ffffff";
     x.fillText(tag.toUpperCase().replace("·", "-"), W / 2, H * 0.66);
   }
   x.restore();
+}
+// Printed art for the six cabinets, lit like the cabinets themselves: a control-panel
+// overlay each (speed stripes, a ring and compass under the stick, a ring and a legend
+// for every button, the game's emblem at both ends) and a coin-door plate.
+const HUB_SHAPE = { blaster: [1, 1], racer: [1.12, 0.95], boss: [1.04, 1.07], memory: [1, 0.98], exam: [0.9, 1.05], guide: [1.07, 0.95] }; // each cabinet's own width and height
+const HUB_ACCENT = { blaster: COLORS.magenta, racer: COLORS.magenta, boss: COLORS.cyan, memory: COLORS.yellow, exam: COLORS.yellow, guide: COLORS.cyan }; // the second colour in its art, its buttons and its rim light
+const HUB_LEGENDS = { blaster: ["FIRE", "SHIELD", "WARP", "LOCK", "SCAN", "BOMB"], racer: ["GAS", "BRAKE", "NITRO", "LANE", "HORN", "VIEW"], boss: ["STRIKE", "GUARD", "RAGE", "DODGE", "TAUNT", "HEAL"],
+  memory: ["FLIP", "KEEP", "SKIP", "HINT", "SWAP", "BANK"], exam: ["A", "B", "C", "D", "FLAG", "NEXT"], guide: ["PAGE", "FIND", "MARK", "ZOOM", "BACK", "HOME"] };
+function hubArtAtlas() {
+  if (HUB_CACHE.art) return HUB_CACHE.art;
+  const c = document.createElement("canvas");
+  c.width = c.height = 2048;
+  const x = c.getContext("2d");
+  x.scale(2, 2);
+  x.fillStyle = "#ffffff";
+  x.fillRect(0, 0, 1024, 1024);
+  const W = 512, H = 138, IW = 2.06;
+  CABINETS.forEach((cab, i) => {
+    const acc = HUB_ACCENT[cab.id] || COLORS.cyan, BTN = [cab.color, "#ffffff", acc, acc, cab.color, "#ffffff"];
+    const X = (i % 2) * W, Y = Math.floor(i / 2) * H, col = cab.color, U = (xw) => X + ((xw + IW / 2) / IW) * W, V = (sv) => Y + (1 - sv) * H;
+    x.save();
+    x.beginPath(); x.rect(X, Y, W, H); x.clip();
+    const bg = x.createLinearGradient(0, Y, 0, Y + H);
+    bg.addColorStop(0, "#150a2c"); bg.addColorStop(1, "#08050f");
+    x.fillStyle = bg; x.fillRect(X, Y, W, H);
+    // speed stripes sweeping in from both ends
+    for (let k = 0; k < 7; k++) for (const sd of [0, 1]) {
+      x.fillStyle = hubRGB(col, 0.9 - k * 0.1, 0.9 - k * 0.11);
+      const x0 = sd ? X + W - 14 - k * 15 : X + 14 + k * 15, sl = sd ? -34 : 34;
+      x.beginPath(); x.moveTo(x0, Y + H); x.lineTo(x0 + sl, Y); x.lineTo(x0 + sl + (sd ? -8 : 8), Y); x.lineTo(x0 + (sd ? -8 : 8), Y + H); x.fill();
+    }
+    x.strokeStyle = col; x.lineWidth = 2; x.strokeRect(X + 5, Y + 5, W - 10, H - 10);
+    x.strokeStyle = "rgba(255,255,255,0.55)"; x.lineWidth = 0.75; x.strokeRect(X + 8.5, Y + 8.5, W - 17, H - 17);
+    // the stick: a ring and an eight-point compass
+    const sx = U(-0.55), sy = V(0.5);
+    x.strokeStyle = col; x.lineWidth = 2.5; x.beginPath(); x.arc(sx, sy, 30, 0, 7); x.stroke();
+    x.strokeStyle = "rgba(255,255,255,0.7)"; x.lineWidth = 1; x.beginPath(); x.arc(sx, sy, 35, 0, 7); x.stroke();
+    x.fillStyle = "#ffffff";
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2, r0 = 39, r1 = k % 2 ? 44 : 49; x.beginPath(); x.moveTo(sx + Math.cos(a) * r1, sy + Math.sin(a) * r1); x.lineTo(sx + Math.cos(a + 0.09) * r0, sy + Math.sin(a + 0.09) * r0); x.lineTo(sx + Math.cos(a - 0.09) * r0, sy + Math.sin(a - 0.09) * r0); x.fill(); }
+    // the buttons: a ring in each one's colour, and what it does
+    x.font = `6px "Press Start 2P", "Courier New", monospace`; x.textAlign = "center"; x.textBaseline = "middle";
+    [[0, 0.64], [0.24, 0.64], [0.48, 0.64], [0.06, 0.36], [0.3, 0.36], [0.54, 0.36]].forEach(([bx, bs], k) => {
+      const px = U(bx), py = V(bs);
+      x.strokeStyle = BTN[k]; x.lineWidth = 2.2; x.beginPath(); x.arc(px, py, 20, 0, 7); x.stroke();
+      x.strokeStyle = hubRGB(BTN[k], 1, 0.35); x.lineWidth = 5; x.beginPath(); x.arc(px, py, 23.5, 0, 7); x.stroke();
+      x.fillStyle = "#ffffff"; x.fillText((HUB_LEGENDS[cab.id] || [])[k] || "", px, py + (bs > 0.5 ? -30 : 30));
+    });
+    [[-0.2, "1P"], [0.2, "2P"]].forEach(([bx, t]) => { const px = U(bx), py = V(0.88); x.strokeStyle = "#ffffff"; x.lineWidth = 1.2; x.beginPath(); x.arc(px, py, 12, 0, 7); x.stroke(); x.fillStyle = col; x.fillText(t, px + (bx < 0 ? -24 : 24), py); });
+    [X + 30, X + W - 30].forEach((ex) => hubEmblem(x, cab.id, ex, Y + H - 30, 12, "#ffffff"));
+    x.restore();
+  });
+  // the coin door: a plate with a frame, rivets, and what goes where
+  { const X = 0, Y = 420, S = 128;
+    const g = x.createLinearGradient(X, Y, X + S, Y + S);
+    g.addColorStop(0, "#3a3948"); g.addColorStop(0.5, "#23222d"); g.addColorStop(1, "#32313e");
+    x.fillStyle = g; x.fillRect(X, Y, S, S);
+    x.strokeStyle = "#5c5a70"; x.lineWidth = 3; x.strokeRect(X + 5, Y + 5, S - 10, S - 10);
+    x.strokeStyle = "#16151d"; x.lineWidth = 1; x.strokeRect(X + 9, Y + 9, S - 18, S - 18);
+    x.fillStyle = "#8a88a0"; [[12, 12], [S - 12, 12], [12, S - 12], [S - 12, S - 12]].forEach(([a, b]) => { x.beginPath(); x.arc(X + a, Y + b, 2.6, 0, 7); x.fill(); });
+    x.fillStyle = "#d8d6ea"; x.font = `6px "Press Start 2P", "Courier New", monospace`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("COINS", X + 84, Y + 22); x.fillText("RETURN", X + S / 2, Y + S - 20);
+    x.strokeStyle = "#ffb13a"; x.lineWidth = 1; [79, 104].forEach((a) => x.strokeRect(X + a - 6, Y + 30, 12, 32)); x.strokeRect(X + 28, Y + 84, 72, 14);
+    x.strokeStyle = "#8a88a0"; x.lineWidth = 2; x.beginPath(); x.arc(X + 28, Y + 44, 11, 0, 7); x.stroke(); }
+  // the front panels: bands of the cabinet's two colours sweeping up from the corners, its emblem large on either side of the door
+  CABINETS.forEach((cab, i) => {
+    const X = (i % 3) * 256, Y = 560 + Math.floor(i / 3) * 118, Wp = 256, Hp = 118, acc = HUB_ACCENT[cab.id] || COLORS.cyan;
+    x.save();
+    x.beginPath(); x.rect(X, Y, Wp, Hp); x.clip();
+    const bg = x.createLinearGradient(0, Y, 0, Y + Hp);
+    bg.addColorStop(0, "#0e0a1c"); bg.addColorStop(1, "#06040c");
+    x.fillStyle = bg; x.fillRect(X, Y, Wp, Hp);
+    for (const sd of [0, 1]) for (let k = 0; k < 6; k++) {
+      x.fillStyle = hubRGB(k % 2 ? acc : cab.color, 0.95 - k * 0.1, 0.95 - k * 0.12);
+      const x0 = sd ? X + Wp + 30 - k * 17 : X - 30 + k * 17, dx = sd ? -64 : 64, w = sd ? -9 : 9;
+      x.beginPath(); x.moveTo(x0, Y + Hp); x.lineTo(x0 + dx, Y); x.lineTo(x0 + dx + w, Y); x.lineTo(x0 + w, Y + Hp); x.fill();
+    }
+    x.strokeStyle = hubRGB(cab.color, 1, 0.9); x.lineWidth = 1.5; x.strokeRect(X + 3, Y + 3, Wp - 6, Hp - 6);
+    [X + 66, X + Wp - 66].forEach((ex) => { x.fillStyle = "rgba(6,4,12,0.72)"; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.fill(); x.strokeStyle = cab.color; x.lineWidth = 1.5; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.stroke(); hubEmblem(x, cab.id, ex, Y + Hp / 2, 17, "#ffffff"); });
+    x.restore();
+  });
+  if (hubFontsReady()) HUB_CACHE.art = c;
+  return c;
 }
 // Marquees: the six cabinets down the left half, sixteen wall machines on the right.
 function hubMarqueeAtlas() {
@@ -6210,7 +6296,7 @@ function hubMarqueeAtlas() {
   x.scale(2, 2);
   x.fillStyle = "#000";
   x.fillRect(0, 0, 1024, 1024);
-  CABINETS.forEach((cab, i) => { hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag); [34, 478].forEach((ex) => hubEmblem(x, cab.id, ex, i * 170 + 72, 17, cab.color)); });
+  CABINETS.forEach((cab, i) => { hubMarquee(x, 0, i * 170, 512, 170, cab.name, cab.color, cab.tag); [36, 476].forEach((ex) => hubEmblem(x, cab.id, ex, i * 170 + 72, 22, cab.color)); });
   HUB_TITLES.forEach((t, i) => hubMarquee(x, 512 + (i % 2) * 256, Math.floor(i / 2) * 64, 256, 64, t, HUB_PALETTE[i % HUB_PALETTE.length]));
   if (hubFontsReady()) HUB_CACHE.marquee = c;
   return c;
@@ -6353,7 +6439,7 @@ function hubWallAtlas() {
 
 class HubScene extends Scene3D {
   constructor() {
-    super({ fov: 58, fog: [0x0b0424, 12, 44] });
+    super({ fov: 58, fog: [0x0b0424, 16, 62] });
     this.sel = Hub.index;
     this.angle = this.cabAngle(this.sel);
     this.restDolly = 1.2;
@@ -6362,7 +6448,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.05, bloom: 0.95, threshold: 1, saturation: 1.12, contrast: 1.1, vignette: 1.15 };
+    s.userData.post = { exposure: 1.06, bloom: 0.7, threshold: 1.1, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.3, sharpen: 0.4, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.35 };
     this.texs = [];
     // on[g]: what the lamps say; lv[g]: the level the shaders get (focus, buzz).
     this.on = new Float32Array(HUB_NG).fill(1);
@@ -6392,8 +6478,9 @@ class HubScene extends Scene3D {
     this.key.position.set(0, 10, 3);
     this.screenLight = new THREE.PointLight(0xffffff, 0, 7, 2);
     this.topLight = new THREE.PointLight(0xfff0f8, 0, 12, 1.4);
+    this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.lightCol = new THREE.Color(CABINETS[this.sel].color);
-    s.add(this.hemi, this.key, this.screenLight, this.topLight);
+    s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
     // The floor stays built while you play (see hubScene()); on the way back only
@@ -6402,7 +6489,8 @@ class HubScene extends Scene3D {
     this.wallTex = wallTex;
     this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
-    const B = { lit: new HubBatch("lit", 0.6), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
+    const artTex = this.canvasTex(hubArtAtlas());
+    const B = { lit: new HubBatch("lit", 0.6), art: new HubBatch("art"), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
     this.dustPts = { p: [], x: [], g: [] };
     const K = new HubKit();
     this.addRoom(B, K);
@@ -6412,6 +6500,7 @@ class HubScene extends Scene3D {
     K.dispose();
     const lv = this.lv;
     s.add(B.lit.mesh(hubLitMaterial(this.env), "color"));
+    s.add(B.art.mesh(hubLitMaterial(this.env, artTex), "color"));
     s.add(B.glow.mesh(hubGlowMaterial(lv)));
     this.marqMat = hubGlowMaterial(lv, { map: marqTex, fog: 0.45, glint: !REDUCED_MOTION });
     s.add(B.marq.mesh(this.marqMat));
@@ -6464,7 +6553,7 @@ class HubScene extends Scene3D {
   }
   canvasTex(canvas) {
     const t = new THREE.CanvasTexture(canvas);
-    if (GFX.ok) t.anisotropy = Math.min(4, GFX.renderer.capabilities.getMaxAnisotropy());
+    if (GFX.ok) t.anisotropy = Math.min(16, GFX.renderer.capabilities.getMaxAnisotropy());
     this.texs.push(t);
     return t;
   }
@@ -6550,7 +6639,9 @@ class HubScene extends Scene3D {
   // ceiling lamp whose beam falls on it.
   makeCabinet(cab, i, B, K) {
     const a = this.cabAngle(i);
-    const base = hubM(Math.sin(a) * HUB_R, 0, -Math.cos(a) * HUB_R, 0, -a);
+    const baseL = hubM(Math.sin(a) * HUB_R, 0, -Math.cos(a) * HUB_R, 0, -a);
+    const SH = HUB_SHAPE[cab.id] || [1, 1], ACC = HUB_ACCENT[cab.id] || COLORS.cyan;
+    const base = baseL.clone().scale(new THREE.Vector3(SH[0], SH[1], 1));
     const at = (...args) => base.clone().multiply(hubM(...args));
     const g = HUB_G.cab + i;
     const col = new THREE.Color(cab.color);
@@ -6573,16 +6664,20 @@ class HubScene extends Scene3D {
     K.box(B.lit, IW, 0.16, 0.03, at(0, 0.08, zf + 0.015), CHROME, { aux: METAL });
     K.box(B.lit, 0.7, 0.68, 0.02, at(0, 0.62, zf + 0.01), CHROME, { aux: METAL });
     K.box(B.lit, 0.62, 0.6, 0.03, at(0, 0.62, zf + 0.018), 0x23212c, { aux: [0.85, 0.32] });
-    [-0.13, 0.13].forEach((x) => {
-      K.box(B.glow, 0.05, 0.13, 0.012, at(x, 0.76, zf + 0.036), 0xff5a2a, { k: 2.4, g });
-      K.box(B.glow, 0.1, 0.07, 0.012, at(x, 0.46, zf + 0.036), 0xffb13a, { k: 1.1, g });
-    });
-    [-0.74, 0.74].forEach((x) => K.box(B.lit, 0.16, 0.92, 0.008, at(x, 0.6, zf + 0.004), col, { k: 0.7, aux: GLOSS }));
+    [0.07, 0.19].forEach((x) => K.box(B.glow, 0.035, 0.12, 0.012, at(x, 0.75, zf + 0.036), 0xff5a2a, { k: 2.4, g }));
+    K.box(B.glow, 0.3, 0.035, 0.012, at(0, 0.45, zf + 0.036), 0xffb13a, { k: 0.9, g });
+    B.lit.add(K.get("lock", () => new THREE.CylinderGeometry(0.036, 0.036, 0.02, 14)), at(-0.17, 0.75, zf + 0.042, Math.PI / 2), CHROME, { aux: METAL });
+    // the front panel's printed art, either side of the door
+    K.quad(B.art, IW - 0.04, 0.92, at(0, 0.64, zf + 0.003), 0xffffff, { aux: [0.1, 0.32], uv: hubUV((i % 3) * 256, 560 + Math.floor(i / 3) * 118, 256, 118) });
     // control panel: chrome lip, coloured overlay, joystick, buttons
     const lip = hubFace(HUB_BODY[3], HUB_BODY[4], 0.5, 0.006);
     K.box(B.lit, IW, lip.len, 0.012, at(0, lip.y, lip.z, lip.rx), CHROME, { aux: METAL });
     const top = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.006);
     K.box(B.lit, IW, top.len, 0.012, at(0, top.y, top.z, top.rx), col, { k: 0.42, aux: [0.15, 0.3] });
+    // the printed overlay on the control panel, and the plate on the coin door
+    const art = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.0135);
+    K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
+    K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
     const onPanel = (x, s, h) => {
       const f = hubFace(HUB_BODY[4], HUB_BODY[5], s, 0.012 + h / 2);
       return at(x, f.y, f.z, f.rx).multiply(hubM(0, 0, 0, Math.PI / 2));
@@ -6590,7 +6685,7 @@ class HubScene extends Scene3D {
     B.lit.add(K.get("stickBase", () => new THREE.CylinderGeometry(0.11, 0.11, 0.012, 14)), onPanel(-0.55, 0.5, 0.012), 0x111018, { aux: SATIN });
     B.lit.add(K.get("shaft", () => new THREE.CylinderGeometry(0.022, 0.022, 0.22, 8)), onPanel(-0.55, 0.5, 0.22), CHROME, { aux: METAL });
     B.lit.add(K.get("ball", () => new THREE.SphereGeometry(0.075, 12, 9)), onPanel(-0.55, 0.5, 0.46), 0xff2346, { aux: [0, 0.14] });
-    const BTN = [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime, COLORS.red, COLORS.orange];
+    const BTN = [cab.color, "#ffffff", ACC, ACC, cab.color, "#ffffff"];
     [[0, 0.64], [0.24, 0.64], [0.48, 0.64], [0.06, 0.36], [0.3, 0.36], [0.54, 0.36]].forEach(([x, s], k) => {
       B.glow.add(K.get("button", () => new THREE.CylinderGeometry(0.066, 0.066, 0.05, 14)), onPanel(x, s, 0.05), BTN[k], { k: 1.5, g });
     });
@@ -6617,8 +6712,8 @@ class HubScene extends Scene3D {
     // what makes this cabinet unlike the other five (see 11b-hubextras.js)
     hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
-    const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(base);
-    const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(base);
+    const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(baseL);
+    const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(baseL);
     const dir = lamp.clone().sub(foot);
     const len = dir.length();
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
@@ -6706,7 +6801,7 @@ class HubScene extends Scene3D {
   // The first visit of a session powers the room on, piece by piece.
   powerOn() {
     this.lights.forEach((l) => l.parts.forEach((p) => p.off()));
-    this.room = 0.15;
+    this.room = 0.34; // (the room on standby: dim, but its shapes read before the lights come on)
     this.introRunning = true;
     this.introLook = 5.2;
     this.tw.add(2.9, (k) => { this.introLook = 5.2 * (1 - k); }, null, Ease.inOutQuad);
@@ -6738,7 +6833,7 @@ class HubScene extends Scene3D {
     if (!this.camera) return;
     const bandH = this.band ? this.band.h : h;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    const need = (4.6 * h) / (2 * tanH * Math.max(80, bandH));
+    const need = (5.25 * h) / (2 * tanH * Math.max(80, bandH));
     this.restDolly = clamp(HUB_R - need, -5, 1.6);
     if (!this.zooming) this.dolly = this.restDolly;
     if (this.dust) this.dust.material.uniforms.uScale.value = (h * GFX.scenePR()) / (2 * tanH);
@@ -6767,10 +6862,10 @@ class HubScene extends Scene3D {
     const a = this.angle;
     // Lean the view toward the finger / mouse a little: the room feels like a place.
     const pa = a + Pointer.x * 0.07;
-    const dol = this.dolly - travel * 1.5;
+    const dol = this.dolly - travel * 2.4;
     this.camBase.set(Math.sin(a) * dol, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * dol);
     // the lens is focused on the cabinet in front of us: the room behind it goes soft
-    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.2, far: 11, max: 0.011, k: 0.9 };
+    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.6, far: 26, max: 0.006, k: 0.6 };
     this.lookAt.set(Math.sin(pa) * HUB_R, 2.15 - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.
@@ -6845,6 +6940,9 @@ class HubScene extends Scene3D {
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
+    this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
+    this.rimLight.intensity = 2.2 * lv[G.cab + this.sel];
+    this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     const fu = this.floorMat.uniforms;
     fu.uReflect.value = GFX.lite ? 0 : 1;
     fu.uBlack.value = lv[G.tube];
@@ -6888,16 +6986,31 @@ function drawDemo(d, dt) {
   x.textAlign = "center";
   switch (d.cab.id) {
     case "blaster": {
+      // the game in miniature: stars streaming past, a horned shape with four lettered drones round it, the ship
+      // strafing below and firing on one drone after another, a score and three shields
       x.fillStyle = "#fff";
-      for (let i = 0; i < 40; i++) { const k = (i * 37.7 + t * 40 * (1 + (i % 3))) % 160; x.fillRect((i * 53) % W, k * 0.75, 1, 1 + (i % 2)); }
+      for (let i = 0; i < 46; i++) { const k = (i * 37.7 + t * 40 * (1 + (i % 3))) % 160; x.fillRect((i * 53) % W, k * 0.75, 1, 1 + (i % 2)); }
+      const bob = Math.sin(t * 1.3) * 2, turn = Math.floor(t / 1.6), k = (t / 1.6) % 1, aim = turn % 4;
+      x.fillStyle = "#3a1466"; x.beginPath(); x.moveTo(80, 22 + bob); x.lineTo(112, 14 + bob); x.lineTo(134, 34 + bob); x.lineTo(104, 40 + bob); x.lineTo(96, 58 + bob); x.lineTo(64, 58 + bob); x.lineTo(56, 40 + bob); x.lineTo(26, 34 + bob); x.lineTo(48, 14 + bob); x.fill();
+      x.fillStyle = COLORS.magenta; x.fillRect(66, 26 + bob, 28, 24); x.fillRect(62, 20 + bob, 5, 9); x.fillRect(93, 20 + bob, 5, 9);
+      x.fillStyle = "#07021a"; x.fillRect(70, 32 + bob, 7, 5); x.fillRect(83, 32 + bob, 7, 5);
+      x.fillStyle = COLORS.red; x.fillRect(72, 33 + bob, 3, 3); x.fillRect(85, 33 + bob, 3, 3);
+      x.fillStyle = "#ffd0f0"; x.fillRect(76, 42 + bob, 8, 5);
+      const P = [[24, 26], [136, 26], [28, 62], [132, 62]];
       SLOT_COLORS.forEach((col, i) => {
-        const s = 6 + ((t * 0.35 + i * 0.25) % 1) * 18;
-        x.fillStyle = col;
-        x.fillRect(40 + (i % 2) * 80 - s / 2, 30 + Math.floor(i / 2) * 34 - s / 2, s, s);
+        const hit = i === aim && k > 0.55, [px, py] = P[i];
+        if (hit && k > 0.8) return;
+        x.fillStyle = hit ? "#ffffff" : col;
+        x.beginPath(); x.moveTo(px, py - 8); x.lineTo(px + 8, py); x.lineTo(px, py + 8); x.lineTo(px - 8, py); x.fill();
+        x.fillStyle = "#07021a"; x.font = '5px "Press Start 2P", monospace'; x.fillText("ABCD"[i], px + 0.5, py + 2.5);
       });
-      x.fillStyle = COLORS.cyan;
-      x.beginPath(); x.moveTo(80, 96); x.lineTo(70, 112); x.lineTo(90, 112); x.fill();
-      if (Math.floor(t * 3) % 2) { x.fillStyle = COLORS.yellow; x.fillRect(79, 40, 2, 56); }
+      const sx = 80 + Math.sin(t * 0.9) * 26;
+      x.fillStyle = COLORS.cyan; x.beginPath(); x.moveTo(sx, 88); x.lineTo(sx - 11, 104); x.lineTo(sx - 3, 101); x.lineTo(sx, 106); x.lineTo(sx + 3, 101); x.lineTo(sx + 11, 104); x.fill();
+      x.fillStyle = COLORS.orange; x.fillRect(sx - 2, 106, 4, 3 + (Math.floor(t * 2.5) % 2) * 2);
+      if (k > 0.4 && k < 0.6) { x.strokeStyle = SLOT_COLORS[aim]; x.lineWidth = 2; x.beginPath(); x.moveTo(sx, 88); x.lineTo(P[aim][0], P[aim][1]); x.stroke(); x.lineWidth = 1; }
+      x.font = '5px "Press Start 2P", monospace'; x.textAlign = "left"; x.fillStyle = COLORS.yellow; x.fillText(String(100 * (turn % 90) + 1e5).slice(1), 4, 9);
+      x.fillStyle = COLORS.cyan; for (let i = 0; i < 3; i++) x.fillRect(132 + i * 8, 4, 6, 5);
+      x.font = '10px "Press Start 2P", monospace'; x.textAlign = "center";
       break;
     }
     case "racer": {
@@ -6913,24 +7026,41 @@ function drawDemo(d, dt) {
       break;
     }
     case "boss": {
-      const bob = Math.sin(t * 3) * 3;
-      x.fillStyle = COLORS.magenta; x.fillRect(50, 26 + bob, 60, 50);
-      x.fillStyle = "#07021a"; x.fillRect(60, 40 + bob, 12, 8); x.fillRect(88, 40 + bob, 12, 8);
-      x.fillStyle = COLORS.yellow; x.fillRect(64, 42 + bob, 4, 4); x.fillRect(92, 42 + bob, 4, 4);
-      x.fillStyle = "#07021a"; for (let i = 0; i < 5; i++) x.fillRect(58 + i * 10, 62 + bob, 6, 6);
-      x.fillStyle = "#333"; x.fillRect(20, 8, 120, 6);
-      x.fillStyle = COLORS.red; x.fillRect(20, 8, 120 * (0.3 + 0.7 * (1 - ((t * 0.15) % 1))), 6);
-      if (Math.floor(t * 2) % 3 === 0) { x.fillStyle = COLORS.cyan; x.fillRect(78, 80, 4, 30); }
+      // a fight in miniature: the boss sways, its charge fills, it strikes; your answer hits back; hearts and HP count down
+      const bob = Math.sin(t * 3) * 2, ph = (t * 0.28) % 1, charge = Math.min(1, ph / 0.7), strike = ph > 0.7 && ph < 0.82, answer = ph > 0.86;
+      x.fillStyle = "#1a0a34"; x.fillRect(0, 84, W, 36);
+      x.strokeStyle = COLORS.violet; for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(80 + (i - 2) * 12, 84); x.lineTo(80 + (i - 2) * 46, 120); x.stroke(); }
+      x.fillStyle = "#3d1048"; x.fillRect(32, 44 + bob, 14, 30 - (strike ? 14 : 0)); x.fillRect(114, 44 + bob, 14, 30 - (strike ? 14 : 0)); x.fillRect(58, 70 + bob, 44, 16);
+      x.fillStyle = COLORS.magenta; x.fillRect(50, 24 + bob, 60, 48);
+      x.fillStyle = "#07021a"; x.fillRect(60, 36 + bob, 12, 8); x.fillRect(88, 36 + bob, 12, 8);
+      x.fillStyle = strike ? COLORS.red : COLORS.yellow; x.fillRect(64, 38 + bob, 4, 4); x.fillRect(92, 38 + bob, 4, 4);
+      x.fillStyle = "#07021a"; for (let i = 0; i < 5; i++) x.fillRect(58 + i * 10, 56 + bob, 6, strike ? 9 : 5);
+      x.fillStyle = "#333"; x.fillRect(20, 6, 120, 5);
+      x.fillStyle = COLORS.red; x.fillRect(20, 6, 120 * (0.25 + 0.75 * (1 - ((t * 0.07) % 1))), 5);
+      x.fillStyle = "#222"; x.fillRect(20, 13, 120, 3);
+      x.fillStyle = COLORS.orange; x.fillRect(20, 13, 120 * charge, 3);
+      if (strike) { x.fillStyle = COLORS.red; x.fillRect(74, 76, 12, 30); x.fillRect(66, 100, 28, 6); }
+      if (answer) { x.fillStyle = COLORS.cyan; x.fillRect(78, 60, 4, 40); x.fillStyle = "#ffffff"; x.fillRect(72, 52, 16, 8); }
+      x.fillStyle = COLORS.red; for (let i = 0; i < 3; i++) x.fillRect(6 + i * 9, 108, 7, 6);
+      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 92 + i * 6, 42, 4); });
       break;
     }
     case "memory": {
-      const flip = Math.abs(Math.cos(t * 1.2));
-      x.fillStyle = Math.cos(t * 1.2) > 0 ? COLORS.lime : COLORS.cyan;
-      x.fillRect(80 - 50 * flip, 24, 100 * flip, 64);
-      x.fillStyle = "#07021a";
-      if (flip > 0.4) { x.fillRect(80 - 34 * flip, 44, 68 * flip, 6); x.fillRect(80 - 26 * flip, 60, 52 * flip, 6); }
-      x.fillStyle = COLORS.gold;
-      for (let i = 0; i < 6; i++) { const yy = ((t * 30 + i * 22) % 110); x.fillRect(12 + (i % 2) * 130, yy, 6, 6); }
+      // six cards: they turn over in turn, the ones you know light up and a coin drops into the vault for each
+      const turnN = Math.floor(t / 1.1), k = (t / 1.1) % 1, cur = turnN % 6;
+      for (let i = 0; i < 6; i++) {
+        const cx = 34 + (i % 3) * 46, cy = 30 + Math.floor(i / 3) * 40, banked = i < cur, w = i === cur ? Math.abs(Math.cos(k * Math.PI)) : 1, face = banked || (i === cur && k > 0.5);
+        x.fillStyle = face ? (banked ? COLORS.lime : "#e8e2ff") : "#2c1466";
+        x.fillRect(cx - 17 * w, cy - 15, 34 * w, 30);
+        x.strokeStyle = banked ? "#ffffff" : COLORS.violet; x.strokeRect(cx - 17 * w + 0.5, cy - 14.5, 34 * w - 1, 29);
+        if (face && w > 0.5) { x.fillStyle = "#07021a"; x.fillRect(cx - 10, cy - 7, 20, 3); x.fillRect(cx - 7, cy, 14, 3); }
+        else if (!face && w > 0.5) { x.fillStyle = COLORS.violet; x.fillRect(cx - 3, cy - 3, 6, 6); }
+      }
+      x.fillStyle = "#1a0f33"; x.fillRect(0, 92, W, 28);
+      x.fillStyle = COLORS.gold; for (let i = 0; i < cur; i++) x.fillRect(14 + i * 9, 110 - (i % 2) * 3, 7, 3);
+      if (k > 0.55) { x.beginPath(); x.arc(14 + cur * 9 + 3.5, 60 + (k - 0.55) * 110, 3.5, 0, 7); x.fill(); }
+      x.font = '5px "Press Start 2P", monospace'; x.textAlign = "right"; x.fillStyle = COLORS.lime; x.fillText("BANKED " + cur, 156, 100);
+      x.font = '10px "Press Start 2P", monospace'; x.textAlign = "center";
       break;
     }
     case "exam": {
@@ -7016,6 +7146,7 @@ function showHub() {
   if (fresh && !Hub.poweredOn && scene.has3D) {
     Hub.poweredOn = true;
     scene.powerOn();
+    Hub.booting = true;
     setTimeout(() => Sound.ambience(true), 2600);
   } else {
     scene.zoomOut();
@@ -7035,6 +7166,11 @@ function showHub() {
     <div class="spacer"></div>
     <div class="hub-card" data-card></div>
   </section>`);
+  if (Hub.booting) { // the room is powering on: what you read and press arrives once it is lit
+    Hub.booting = false;
+    el.classList.add("booting");
+    const iv = setInterval(() => { if (!scene.introRunning || !el.isConnected) { el.classList.remove("booting"); clearInterval(iv); } }, 120);
+  }
   const card = $("[data-card]", el);
   const render = () => {
     const cab = CABINETS[Hub.index];
@@ -7737,24 +7873,33 @@ function blasterMerge(parts) {
 // A round answer badge: dark disc, ring in the slot colour, a big white letter.
 // Readable over any background, at any distance.
 function blasterBadge(text, color) {
+  // An answer's letter, as its drone carries it: a dark plate in a ring of the answer's colour, the letter
+  // large, white and outlined, so it reads at a glance over anything behind it.
   const c = document.createElement("canvas");
-  c.width = c.height = 128;
+  c.width = c.height = 256;
   const x = c.getContext("2d");
   x.beginPath();
-  x.arc(64, 64, 47, 0, Math.PI * 2);
-  x.fillStyle = "rgba(9, 3, 28, 0.86)";
+  x.arc(128, 128, 96, 0, Math.PI * 2);
+  x.fillStyle = "rgba(7, 2, 22, 0.95)";
   x.fill();
   x.shadowColor = color;
-  x.shadowBlur = 16;
-  x.lineWidth = 7;
+  x.shadowBlur = 26;
+  x.lineWidth = 15;
   x.strokeStyle = color;
   x.stroke();
-  x.shadowBlur = 8;
-  x.fillStyle = "#ffffff";
-  x.font = '46px "Press Start 2P", "Courier New", monospace';
+  x.shadowBlur = 0;
+  x.lineWidth = 3;
+  x.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  x.beginPath(); x.arc(128, 128, 84, 0, Math.PI * 2); x.stroke();
+  x.font = '108px "Press Start 2P", "Courier New", monospace';
   x.textAlign = "center";
   x.textBaseline = "middle";
-  x.fillText(text, 67, 68);
+  x.lineJoin = "round";
+  x.lineWidth = 16;
+  x.strokeStyle = "#05010f";
+  x.strokeText(text, 134, 138);
+  x.fillStyle = "#ffffff";
+  x.fillText(text, 134, 138);
   return new THREE.CanvasTexture(c);
 }
 
@@ -7883,7 +8028,8 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.12, bloom: 1.15, threshold: 0.95, saturation: 1.16, contrast: 1.08, vignette: 1.15 };
+    s.userData.post = { exposure: 1.12, bloom: 1.0, threshold: 1.0, saturation: 1.18, contrast: 1.1, vignette: 1.15, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.5,
+      dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
       panels: [
@@ -7929,6 +8075,7 @@ class BlasterGame extends QuizGame {
       return g;
     });
     this.shards = new BlasterShards(s);
+    this.blastPuffs = new ExamPuffs(s, 56); // the body of a blast: a flash, fire that rolls outward, smoke it leaves behind
     this.ship = this.makeShip();
     s.add(this.ship);
     this.trails = [0, 1].map(() => new Trail({ length: 12, width: 0.07, color: 0xff7a3d, intensity: 2 }));
@@ -7991,7 +8138,8 @@ class BlasterGame extends QuizGame {
     // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
     this.enemy = null;
     if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
-    if (this.enemy) return;
+    // With the demon, the answers still have targets: four holo-drones that hold station round it, one to
+    // an answer, in the answer's colour and carrying its letter. The fighter fires on the one you tap.
     this.dronePaint = racerCarPaint(this.env, false);
     this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
@@ -8095,6 +8243,9 @@ class BlasterGame extends QuizGame {
   }
   placeSlot(t) {
     const i = t.userData.slot, n = this.round.n;
+    // round the demon: the upper corners of the view, then its flanks
+    t.userData.sx = i % 2 ? 1 : -1;
+    t.userData.sy = n === 2 || i < 2 ? 1 : -0.22;
     t.userData.bx = n === 2 ? (i === 0 ? -this.fx : this.fx) : i % 2 ? this.fx : -this.fx;
     t.userData.by = n === 2 ? 0 : i < 2 ? this.fy : -this.fy;
     t.scale.setScalar(this.ts);
@@ -8117,7 +8268,7 @@ class BlasterGame extends QuizGame {
   }
   spawnTargets() {
     this.clearTargets();
-    if (!this.has3D || this.enemy) return; // (the demon is the enemy: there are no targets)
+    if (!this.has3D) return;
     for (let i = 0; i < this.round.n; i++) {
       const shape = i % 4;
       const M = this.slotMats[i];
@@ -8143,7 +8294,7 @@ class BlasterGame extends QuizGame {
       halo.scale.set(3.8, 3.8, 1);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.set(1.24, 1.24, 1);
+      label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -8175,8 +8326,8 @@ class BlasterGame extends QuizGame {
     // What the guns are laid on: the answer's own target, or the demon. The fighter only fires
     // on the demon when the answer is right; when it is wrong the demon is already rearing up
     // round. (Look and sound: the answer is checked and scored in resolve, as it always was.)
-    const right = i === this.round.correct, opens = !this.enemy || right;
-    const at = !this.has3D ? null : this.enemy ? (right ? this.enemy.aimPoint(new THREE.Vector3()) : null) : t && t.position;
+    const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
+    const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
     if (opens) Sound.sfx("laser", this.panAt);
     if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i]);
     if (this.enemy && !right) this.enemy.attack();
@@ -8189,7 +8340,7 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 2.4 : 1)); // (the demon is close: fatter beams read)
+        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 1.3 : 1));
         fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
@@ -8228,8 +8379,12 @@ class BlasterGame extends QuizGame {
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       const p = this.bandPoint(0.3);
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
-      if (this.enemy) this.enemy.hit(SLOT_COLORS[i]); // the fighter's fire lands on the demon
-      else this.explode(this.targets[i], SLOT_COLORS[i]);
+      if (this.enemy) {
+        // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
+        const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
+        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 3, c.g * 3, c.b * 3], 0.5); this.explode(t, SLOT_COLORS[i], 0.45); }
+        this.enemy.hit(SLOT_COLORS[i]);
+      } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
     } else {
       this.combo = 1;
@@ -8244,7 +8399,7 @@ class BlasterGame extends QuizGame {
       GFX.pulse(12, 0);
       Haptics.buzz([60, 40, 90]);
       Sound.setIntensity(0);
-      if (!this.enemy) this.explode(this.targets[i], COLORS.red); // (the demon is already striking: see pick)
+      this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -8271,8 +8426,10 @@ class BlasterGame extends QuizGame {
     Sound.setIntensity(0);
     this.targets.forEach((t, i) => {
       if (i === r.correct) return this.highlight(t);
-      const z0 = t.position.z;
-      this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
+      const z0 = t.position.z, s0 = t.scale.x;
+      t.userData.gone = true;
+      if (this.enemy) this.tw.add(0.35, (k) => { t.scale.setScalar(s0 * (1 - k)); }, () => { t.visible = false; }, Ease.inCubic); // (a drone powers down where it is)
+      else this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
     });
     if (this.enemy) this.enemy.attack(); // time's up: the demon strikes
     this.hud();
@@ -8288,9 +8445,10 @@ class BlasterGame extends QuizGame {
     this.jet.shieldLost();
     this.carrier.volley();
   }
-  explode(t, color) {
+  explode(t, color, flash = 1) {
     if (!t || !this.has3D) return;
-    this.blastAt(t.position, color);
+    this.blastAt(t.position, color, flash);
+    t.userData.gone = true;
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
   }
@@ -8306,6 +8464,12 @@ class BlasterGame extends QuizGame {
     this.shards.burst(pos, color, 16, this.ts * df, (7 * this.ts + 3) * df);
     this.shards.burst(pos, 0x9aa3b8, 10, this.ts * df * 0.8, (5 * this.ts + 2) * df); // the airframe, in pieces
     this.bursts.burst(pos, COLORS.orange, { n: 22, speed: 2.2 * df, size: 0.22 * df, life: 1.5 }); // embers that linger
+    // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
+    { const sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * 0.7, sz * 3, 0.2);
+      for (let i = 0; i < 6; i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
+      for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
+      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(pos, color, (7 * this.ts + 3) * df * flash);
@@ -8414,24 +8578,34 @@ class BlasterGame extends QuizGame {
       this.boomLight.intensity = k * k * 8;
     }
     this.shards.update(dt);
+    this.blastPuffs.update(dt, this.camera, this.t);
     this.space.update(dt, sp, w);
     this.carrier.update(dt);
     // the demon comes closer as the question's time runs out (and holds where it is while the guns fire)
     if (this.enemy) this.enemy.update(dt, this.state === "ask" || this.state === "firing" ? 1 - this.tLeft / this.T : null);
+    if (this.enemy && this.scene.userData.post.dof) this.scene.userData.post.dof.focus = clamp(-this.enemy.root.position.z, 8, 60); // the lens follows it in
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
       const u = t.userData;
-      if (k !== null) t.position.z = lerp(-95, -12, k);
-      t.position.x = u.bx + Math.sin(this.t * 1.3 + i * 1.7) * 0.18 * this.ts;
-      t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
+      if (this.enemy) {
+        // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
+        const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
+        u.s = clamp(Math.min(b.h * 0.085, b.w * 0.074), 0.2, 1.6);
+        t.position.set(u.sx * b.w * 0.365 + Math.sin(this.t * 1.3 + i * 1.7) * 0.12 * u.s, u.sy * b.h * 0.34 + Math.cos(this.t * 1.1 + i) * 0.1 * u.s, dz);
+        if (!u.gone && !u.hot) t.scale.setScalar(u.s);
+      } else {
+        if (k !== null) t.position.z = lerp(-95, -12, k);
+        t.position.x = u.bx + Math.sin(this.t * 1.3 + i * 1.7) * 0.18 * this.ts;
+        t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
+      }
       u.rot.rotation.x += dt * u.spin;
       u.rot.rotation.y += dt * u.spin * 0.7;
       u.frame.rotation.z = Math.sin(this.t * 0.9 + i * 2.1) * 0.07; // the airframe hovers: a slow sway, a lean into its side
       u.frame.rotation.y = -u.bx * 0.035;
       if (u.hot) {
         const pulse = 1 + Math.sin(this.t * 10) * 0.12;
-        t.scale.setScalar(this.ts * pulse * 1.15);
+        t.scale.setScalar((this.enemy ? u.s : this.ts) * pulse * 1.15);
         u.M.edge.color.setHex(Math.sin(this.t * 10) > 0 ? 0xffffff : 0x86ff5e).multiplyScalar(2.6);
         u.M.rim.uniforms.uColor.value.setHex(0x86ff5e).multiplyScalar(1.4);
       }
@@ -8482,14 +8656,14 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
     if (this.enemy) this.enemy.dispose();
-    if (this.has3D && !this.enemy) { // (the answers' target kit)
+    if (this.has3D) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
-    if (this.has3D) { this.shards.dispose(); this.space.dispose(); }
+    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
     super.dispose();
   }
 }
@@ -9693,8 +9867,8 @@ else setTimeout(() => FighterModel.preload(), 2500);
 // right, degrees up) and the giant (planet: degrees right, degrees up, distance, radius)
 // are placed in the frame round it.
 const SPACE_REGIONS = [
-  { id: "nebula", name: "NEBULA", base: 0x06021a, a: 0x5a1fd0, b: 0xff3ad4, c: 0x35efff, gold: 0xffc46a, neb: 1.3, stars: 1.0, fog: 0x0b0324, amb: 0x7a5ac8, key: 0xeadcff,
-    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x7a2fff, cloudB: 0xff4fd0, rocks: 0.1, rockTint: 0x6a5a8a,
+  { id: "nebula", name: "NEBULA", base: 0x030418, a: 0x2334d8, b: 0x2aa8ff, c: 0x7a5cff, gold: 0xffc46a, neb: 1.25, stars: 1.1, fog: 0x050826, amb: 0x5e6ed0, key: 0xdce6ff,
+    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
     streak: 0xd9c8ff, traffic: { freighter: 2, tanker: 1, cruiser: 0, fighter: 3, drone: 2, shuttle: 2 } },
   { id: "belt", name: "ASTEROID BELT", base: 0x0a0406, a: 0x8a3a12, b: 0xff9a2a, c: 0xffd870, gold: 0xfff0c0, neb: 0.8, stars: 0.9, fog: 0x140806, amb: 0x9a7058, key: 0xffe6c0,
     sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11, 8.5, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
@@ -9891,7 +10065,7 @@ class BlasterSpace {
     this.key0 = g.keyLight ? g.keyLight.color.clone() : new THREE.Color(1, 1, 1);
 
     // ---- the sky: two layers of the nebula, each growing as the ship flies into it; one fades in as the other fades out
-    this.nebTex = spaceBakeNebula(1024);
+    this.nebTex = spaceBakeNebula(2048);
     this.skyU = {
       uNeb: { value: this.nebTex }, uBase: { value: new THREE.Color() }, uA: { value: new THREE.Color() }, uB: { value: new THREE.Color() }, uC: { value: new THREE.Color() }, uGold: { value: new THREE.Color() },
       uSunDir: { value: this.sunDir }, uSunCol: { value: new THREE.Color() }, uFlash: { value: new THREE.Color(0, 0, 0) }, uNebK: { value: 1 }, uStarK: { value: 1 }, uCalm: { value: 0.5 }, uZoom: { value: 0 },
@@ -9964,13 +10138,13 @@ class BlasterSpace {
         }`,
       fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * a * a, 1.0); }",
     });
-    this.farStars = new THREE.Points(starGeo(620, () => {
+    this.farStars = new THREE.Points(starGeo(2200, () => {
       const v = this._v.set(rand(-0.62, 0.62), rand(-0.56, 0.56), -1).normalize().multiplyScalar(940);
-      return { p: [v.x, v.y, v.z], k: Math.pow(Math.random(), 2.2) * 1.8 + 0.25, size: rand(1.4, 3.4), f: 0, range: 1 };
+      return { p: [v.x, v.y, v.z], k: Math.pow(Math.random(), 2.6) * 2.0 + 0.2, size: rand(0.9, 3.4), f: 0, range: 1 };
     }), this.starMat);
     this.farStars.frustumCulled = false;
     this.far.add(this.farStars);
-    this.field = new THREE.Points(starGeo(520, (i) => (i < 340
+    this.field = new THREE.Points(starGeo(1500, (i) => (i < 900
       ? { p: [rand(-230, 230), rand(-190, 190), rand(-820, -70)], k: rand(0.5, 1.6), size: rand(1.1, 2.6), f: 0.2, range: 750 }
       : { p: [rand(-46, 46), rand(-40, 40), rand(-330, 12)], k: rand(0.35, 0.9), size: rand(0.5, 1.2), f: 1, range: 342 })), this.starMat);
     this.field.frustumCulled = false;
@@ -11140,8 +11314,6 @@ const DemonModel = {
       g.setAttribute("aZ", new THREE.BufferAttribute(Z, 4));
       g.setIndex(new THREE.BufferAttribute(I, 1));
       out.full[name] = g;
-      out.low[name] = demonLowGeo(P, N, T, R, Z, I, 0.035);
-      out.lowTris += out.low[name].index.count / 3;
     }
     return (this._geo = out);
   },
@@ -11255,7 +11427,7 @@ function demonSkin(env, U) {
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(2.8, 0.7, 0.9) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(2.8, 0.7, 0.9) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -11304,12 +11476,11 @@ class BlasterDemon {
     const root = (this.root = new THREE.Group()), tilt = (this.tilt = new THREE.Group()), pose = (this.pose = new THREE.Group());
     this.J = {}; this.full = []; this.low = [];
     for (const name in DEMON_RIG) {
-      const d = DEMON_RIG[name], j = new THREE.Group(), from = d.p ? DEMON_RIG[d.p].at : DEMON.centre, mesh = new THREE.Mesh(geo.full[name], this.mat), low = new THREE.Mesh(geo.low[name], this.lowMat);
+      const d = DEMON_RIG[name], j = new THREE.Group(), from = d.p ? DEMON_RIG[d.p].at : DEMON.centre, mesh = new THREE.Mesh(geo.full[name], this.mat);
       j.position.set(d.at[0] - from[0], d.at[1] - from[1], d.at[2] - from[2]);
-      mesh.frustumCulled = low.frustumCulled = false; // (its vertices move in the shader)
-      low.visible = false; // (what the weakest quality levels draw in its place)
-      this.full.push(mesh); this.low.push(low);
-      j.add(mesh, low);
+      mesh.frustumCulled = false; // (its vertices move in the shader)
+      this.full.push(mesh);
+      j.add(mesh);
       (d.p ? this.J[d.p] : pose).add(j);
       // (where it rests, and which way it is thrown and how it turns when the demon comes apart in chunks)
       j.userData = { rest: j.position.clone(), dir: new THREE.Vector3(d.at[0] - DEMON.centre[0] + rand(-0.1, 0.1), d.at[1] - DEMON.centre[1] + rand(-0.1, 0.16), d.at[2] - DEMON.centre[2] + rand(-0.05, 0.25)).normalize(), spin: new THREE.Vector3(rand(-3, 3), rand(-3, 3), rand(-3, 3)) };

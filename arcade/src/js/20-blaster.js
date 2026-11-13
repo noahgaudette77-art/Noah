@@ -32,24 +32,33 @@ function blasterMerge(parts) {
 // A round answer badge: dark disc, ring in the slot colour, a big white letter.
 // Readable over any background, at any distance.
 function blasterBadge(text, color) {
+  // An answer's letter, as its drone carries it: a dark plate in a ring of the answer's colour, the letter
+  // large, white and outlined, so it reads at a glance over anything behind it.
   const c = document.createElement("canvas");
-  c.width = c.height = 128;
+  c.width = c.height = 256;
   const x = c.getContext("2d");
   x.beginPath();
-  x.arc(64, 64, 47, 0, Math.PI * 2);
-  x.fillStyle = "rgba(9, 3, 28, 0.86)";
+  x.arc(128, 128, 96, 0, Math.PI * 2);
+  x.fillStyle = "rgba(7, 2, 22, 0.95)";
   x.fill();
   x.shadowColor = color;
-  x.shadowBlur = 16;
-  x.lineWidth = 7;
+  x.shadowBlur = 26;
+  x.lineWidth = 15;
   x.strokeStyle = color;
   x.stroke();
-  x.shadowBlur = 8;
-  x.fillStyle = "#ffffff";
-  x.font = '46px "Press Start 2P", "Courier New", monospace';
+  x.shadowBlur = 0;
+  x.lineWidth = 3;
+  x.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  x.beginPath(); x.arc(128, 128, 84, 0, Math.PI * 2); x.stroke();
+  x.font = '108px "Press Start 2P", "Courier New", monospace';
   x.textAlign = "center";
   x.textBaseline = "middle";
-  x.fillText(text, 67, 68);
+  x.lineJoin = "round";
+  x.lineWidth = 16;
+  x.strokeStyle = "#05010f";
+  x.strokeText(text, 134, 138);
+  x.fillStyle = "#ffffff";
+  x.fillText(text, 134, 138);
   return new THREE.CanvasTexture(c);
 }
 
@@ -178,7 +187,8 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.12, bloom: 1.15, threshold: 0.95, saturation: 1.16, contrast: 1.08, vignette: 1.15 };
+    s.userData.post = { exposure: 1.12, bloom: 1.0, threshold: 1.0, saturation: 1.18, contrast: 1.1, vignette: 1.15, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.5,
+      dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
       panels: [
@@ -224,6 +234,7 @@ class BlasterGame extends QuizGame {
       return g;
     });
     this.shards = new BlasterShards(s);
+    this.blastPuffs = new ExamPuffs(s, 56); // the body of a blast: a flash, fire that rolls outward, smoke it leaves behind
     this.ship = this.makeShip();
     s.add(this.ship);
     this.trails = [0, 1].map(() => new Trail({ length: 12, width: 0.07, color: 0xff7a3d, intensity: 2 }));
@@ -286,7 +297,8 @@ class BlasterGame extends QuizGame {
     // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
     this.enemy = null;
     if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
-    if (this.enemy) return;
+    // With the demon, the answers still have targets: four holo-drones that hold station round it, one to
+    // an answer, in the answer's colour and carrying its letter. The fighter fires on the one you tap.
     this.dronePaint = racerCarPaint(this.env, false);
     this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
@@ -390,6 +402,9 @@ class BlasterGame extends QuizGame {
   }
   placeSlot(t) {
     const i = t.userData.slot, n = this.round.n;
+    // round the demon: the upper corners of the view, then its flanks
+    t.userData.sx = i % 2 ? 1 : -1;
+    t.userData.sy = n === 2 || i < 2 ? 1 : -0.22;
     t.userData.bx = n === 2 ? (i === 0 ? -this.fx : this.fx) : i % 2 ? this.fx : -this.fx;
     t.userData.by = n === 2 ? 0 : i < 2 ? this.fy : -this.fy;
     t.scale.setScalar(this.ts);
@@ -412,7 +427,7 @@ class BlasterGame extends QuizGame {
   }
   spawnTargets() {
     this.clearTargets();
-    if (!this.has3D || this.enemy) return; // (the demon is the enemy: there are no targets)
+    if (!this.has3D) return;
     for (let i = 0; i < this.round.n; i++) {
       const shape = i % 4;
       const M = this.slotMats[i];
@@ -438,7 +453,7 @@ class BlasterGame extends QuizGame {
       halo.scale.set(3.8, 3.8, 1);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.set(1.24, 1.24, 1);
+      label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -470,8 +485,8 @@ class BlasterGame extends QuizGame {
     // What the guns are laid on: the answer's own target, or the demon. The fighter only fires
     // on the demon when the answer is right; when it is wrong the demon is already rearing up
     // round. (Look and sound: the answer is checked and scored in resolve, as it always was.)
-    const right = i === this.round.correct, opens = !this.enemy || right;
-    const at = !this.has3D ? null : this.enemy ? (right ? this.enemy.aimPoint(new THREE.Vector3()) : null) : t && t.position;
+    const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
+    const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
     if (opens) Sound.sfx("laser", this.panAt);
     if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i]);
     if (this.enemy && !right) this.enemy.attack();
@@ -484,7 +499,7 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 2.4 : 1)); // (the demon is close: fatter beams read)
+        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 1.3 : 1));
         fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
@@ -523,8 +538,12 @@ class BlasterGame extends QuizGame {
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       const p = this.bandPoint(0.3);
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
-      if (this.enemy) this.enemy.hit(SLOT_COLORS[i]); // the fighter's fire lands on the demon
-      else this.explode(this.targets[i], SLOT_COLORS[i]);
+      if (this.enemy) {
+        // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
+        const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
+        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 3, c.g * 3, c.b * 3], 0.5); this.explode(t, SLOT_COLORS[i], 0.45); }
+        this.enemy.hit(SLOT_COLORS[i]);
+      } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
     } else {
       this.combo = 1;
@@ -539,7 +558,7 @@ class BlasterGame extends QuizGame {
       GFX.pulse(12, 0);
       Haptics.buzz([60, 40, 90]);
       Sound.setIntensity(0);
-      if (!this.enemy) this.explode(this.targets[i], COLORS.red); // (the demon is already striking: see pick)
+      this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -566,8 +585,10 @@ class BlasterGame extends QuizGame {
     Sound.setIntensity(0);
     this.targets.forEach((t, i) => {
       if (i === r.correct) return this.highlight(t);
-      const z0 = t.position.z;
-      this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
+      const z0 = t.position.z, s0 = t.scale.x;
+      t.userData.gone = true;
+      if (this.enemy) this.tw.add(0.35, (k) => { t.scale.setScalar(s0 * (1 - k)); }, () => { t.visible = false; }, Ease.inCubic); // (a drone powers down where it is)
+      else this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
     });
     if (this.enemy) this.enemy.attack(); // time's up: the demon strikes
     this.hud();
@@ -583,9 +604,10 @@ class BlasterGame extends QuizGame {
     this.jet.shieldLost();
     this.carrier.volley();
   }
-  explode(t, color) {
+  explode(t, color, flash = 1) {
     if (!t || !this.has3D) return;
-    this.blastAt(t.position, color);
+    this.blastAt(t.position, color, flash);
+    t.userData.gone = true;
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
   }
@@ -601,6 +623,12 @@ class BlasterGame extends QuizGame {
     this.shards.burst(pos, color, 16, this.ts * df, (7 * this.ts + 3) * df);
     this.shards.burst(pos, 0x9aa3b8, 10, this.ts * df * 0.8, (5 * this.ts + 2) * df); // the airframe, in pieces
     this.bursts.burst(pos, COLORS.orange, { n: 22, speed: 2.2 * df, size: 0.22 * df, life: 1.5 }); // embers that linger
+    // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
+    { const sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * 0.7, sz * 3, 0.2);
+      for (let i = 0; i < 6; i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
+      for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
+      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(pos, color, (7 * this.ts + 3) * df * flash);
@@ -709,24 +737,34 @@ class BlasterGame extends QuizGame {
       this.boomLight.intensity = k * k * 8;
     }
     this.shards.update(dt);
+    this.blastPuffs.update(dt, this.camera, this.t);
     this.space.update(dt, sp, w);
     this.carrier.update(dt);
     // the demon comes closer as the question's time runs out (and holds where it is while the guns fire)
     if (this.enemy) this.enemy.update(dt, this.state === "ask" || this.state === "firing" ? 1 - this.tLeft / this.T : null);
+    if (this.enemy && this.scene.userData.post.dof) this.scene.userData.post.dof.focus = clamp(-this.enemy.root.position.z, 8, 60); // the lens follows it in
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
       const u = t.userData;
-      if (k !== null) t.position.z = lerp(-95, -12, k);
-      t.position.x = u.bx + Math.sin(this.t * 1.3 + i * 1.7) * 0.18 * this.ts;
-      t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
+      if (this.enemy) {
+        // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
+        const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
+        u.s = clamp(Math.min(b.h * 0.085, b.w * 0.074), 0.2, 1.6);
+        t.position.set(u.sx * b.w * 0.365 + Math.sin(this.t * 1.3 + i * 1.7) * 0.12 * u.s, u.sy * b.h * 0.34 + Math.cos(this.t * 1.1 + i) * 0.1 * u.s, dz);
+        if (!u.gone && !u.hot) t.scale.setScalar(u.s);
+      } else {
+        if (k !== null) t.position.z = lerp(-95, -12, k);
+        t.position.x = u.bx + Math.sin(this.t * 1.3 + i * 1.7) * 0.18 * this.ts;
+        t.position.y = u.by + Math.cos(this.t * 1.1 + i) * 0.14 * this.ts;
+      }
       u.rot.rotation.x += dt * u.spin;
       u.rot.rotation.y += dt * u.spin * 0.7;
       u.frame.rotation.z = Math.sin(this.t * 0.9 + i * 2.1) * 0.07; // the airframe hovers: a slow sway, a lean into its side
       u.frame.rotation.y = -u.bx * 0.035;
       if (u.hot) {
         const pulse = 1 + Math.sin(this.t * 10) * 0.12;
-        t.scale.setScalar(this.ts * pulse * 1.15);
+        t.scale.setScalar((this.enemy ? u.s : this.ts) * pulse * 1.15);
         u.M.edge.color.setHex(Math.sin(this.t * 10) > 0 ? 0xffffff : 0x86ff5e).multiplyScalar(2.6);
         u.M.rim.uniforms.uColor.value.setHex(0x86ff5e).multiplyScalar(1.4);
       }
@@ -777,14 +815,14 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
     if (this.enemy) this.enemy.dispose();
-    if (this.has3D && !this.enemy) { // (the answers' target kit)
+    if (this.has3D) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
-    if (this.has3D) { this.shards.dispose(); this.space.dispose(); }
+    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
     super.dispose();
   }
 }

@@ -63,7 +63,7 @@ const BOSSES = {
 
 const CABINETS = [
   { id: "blaster", name: "RISK BLASTER", tag: "Rail shooter", color: COLORS.cyan,
-    desc: "Answers fly at you as targets. Shoot the right one before it reaches your shields. Streaks multiply your score.", unit: "pts" },
+    desc: "A void demon closes in while the clock runs. Shoot the drone that carries the right answer to strike it; a wrong one and it strikes you. Streaks multiply your score.", unit: "pts" },
   { id: "racer", name: "NEST EGG RUN", tag: "Neon lane racer", color: COLORS.yellow,
     desc: "A 40-year career, one gate per year. Steer into the lane with the right answer to compound your savings. Retire at 65 with $1,000,000.", unit: "$" },
   { id: "boss", name: "BOSS RUSH", tag: "Chapter boss fights", color: COLORS.magenta,

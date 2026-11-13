@@ -994,10 +994,10 @@ use the audit list under it as the to-do list for that screen.
 | # | Checkpoint | Status |
 |---|---|---|
 | K0 | Back up; Phase 0 audit of every screen | done |
-| K1 | Rendering: one maximum mode, full pixel density, multisampling, depth passes, bloom, grade | in progress |
-| K2 | Title screen | next |
-| K3 | Arcade hub | |
-| K4 | Risk Blaster | |
+| K1 | Rendering: one maximum mode, full pixel density, multisampling, depth passes, bloom, grade | done |
+| K2 | Title screen | done |
+| K3 | Arcade hub | done |
+| K4 | Risk Blaster | in progress |
 | K5 | Nest Egg Run and Boss Rush | |
 | K6 | Final Exam, Memory Bank, Strategy Guide | |
 | K7 | Interface design system | |
@@ -1099,3 +1099,85 @@ damaging first within each group; each is ticked off below as it is fixed.
 - U4. HUD bars and badges are plain.
 - U5. Results are flat.
 - U6. Screens change without choreography.
+
+## Done so far
+
+Method for each screen: implement; capture six or more moments at twice the page's
+pixel density (`tools/atlas.js` in the session scratchpad steps scenes in virtual
+time, so slow software frames do not matter); score it; hand the captures to a
+reviewing sub-agent that has seen nothing else; fix what it lists; regression;
+commit. The reviewer's scores are of the pass it saw; "after" is my own scoring of
+the fixed screen on the same rubric (detail, lighting, materials, depth, motion,
+cohesion, legibility).
+
+- **K1, rendering** (`04-gfx.js`, new `04b-pipeline.js`). G1 to G5 and G8.
+  - One mode. The eight quality levels, the frame-rate watcher, remembered levels,
+    plain twin materials and the Retro and Chunky looks are gone; Setup loses
+    Quality and Graphics. The scene is drawn at the screen's own pixels (its full
+    device pixel ratio, limited only by the largest texture the chip allows).
+  - The scene target is multisampled (4 samples on a phone, 8 where the density is
+    lower) with a 24-bit depth texture. A start-up check draws a quad at a known
+    depth and reads it back through the resolve: if a browser cannot do it, the
+    target is made without multisampling and FXAA carries on alone.
+  - From depth: ambient occlusion (20 taps, radius a fraction of each pixel's own
+    distance, depth-aware blur) and contact shadows (a 16-step march toward the
+    scene's key light); depth of field (56-tap disc at half size, laid back by each
+    pixel's circle of confusion; scenes set focus, ranges and whether the sky
+    blurs); camera motion blur from the previous frame's view (a 1/40 s shutter
+    whatever the frame rate). Light sources are left out of the shade.
+  - Bloom is a 13-tap bright pass, six downsamples and a tent upsample chain; a
+    dusty lens catches the widest glow; rays have 64 steps; ghosts gain two rings.
+  - The colour fringe is the lens's own now: none in the middle, growing toward the
+    corners, plus the pulse of a hit. Sharpening is on everywhere. Grain is finer
+    and strongest in the mid tones. Scanlines keep to three CSS pixels.
+  - Text drawn inside scenes is three times finer; every texture is filtered at the
+    chip's maximum anisotropy.
+  - `surfaceDetail()` (08-fx.js): one tiling texture (grain, hair scratches,
+    smudges) laid on any physically-based material without UVs, as relief in the
+    normal and variation in roughness, at two scales. G6 for those materials.
+  - Setup gains switches for depth of field and ambient shade; the readout shows
+    the multisampling in use instead of a quality level.
+- **K2, title** (`10-title.js`, `10b-titlecity.js`, new `10c-titlelife.js`, CSS).
+  T1 to T6. Reviewer (first pass): detail 3, lighting 2.5, materials 2.5, depth 3,
+  motion 2.5, cohesion 3, legibility 3.5. After: 4.5, 4, 4, 4.5, 4.5, 4.5, 5.
+  - `cityFacadeMaterial()` (08-fx.js): every dark box of a tower becomes glass and
+    steel with floors of windows (busy floors and dark ones, rooms brighter toward
+    their ceilings, piers, sashes), sky mirrored cyan to the left and magenta to
+    the right, the low sun glancing off the panes, lightning as a cold glint;
+    where windows would be smaller than a pixel they melt into an even glow.
+  - Six megatowers frame the view as a canyon with blade signs hung over the
+    street. Lamp posts slide past with the street; three strings of lanterns cross
+    it. Traffic is comets of light along four sky lanes and on the wet street.
+  - Always there: two twin-hulled sky-ferries flying down the avenue, a helicopter
+    working its searchlight in front of the sun and another crossing overhead, a
+    ribbon of sixty drones, 2,400 rain streaks with rings where they land, a storm
+    cloud that lights from within and throws forked bolts behind the mountains
+    (at most a double pulse, 0.42 s apart).
+  - The camera sways, pushes in and eases back, and rolls a hair.
+  - Layout: kicker and logo at the top; coin prompt, its caption, the tip (fixed
+    height) and the stats line in a dock on a scrim at the foot; the sun, bridge
+    and city between them are clear. The logo's glint is a narrow feathered band.
+  - Reviewer's resemblance notes: an ad blimp over a rainy sign canyon recalls a
+    well-known film (the blimps are now sky-ferries with cabin windows and no
+    screens); a sign carried a real association's acronym (replaced by a product
+    name from the course).
+- **K3, hub** (`11-hub.js`, CSS). H1 to H4. Reviewer (first pass): detail 2.5,
+  lighting 2.5, materials 2, depth 2.5, motion 2, cohesion 3, legibility 3.
+  After: 4.5, 4, 4, 4.5, 4, 4.5, 5.
+  - Clearer room: less haze, bloom from 0.95 to 0.7 with a higher threshold, a
+    gentle focus pull on the cabinet in front (signs behind stay readable).
+  - Six silhouettes: each cabinet has its own width and height, buttons and button
+    rings in its own two colours, and a rim light in its second colour.
+  - Printed art, lit like the cabinet: a control-panel overlay each (speed stripes,
+    a compass under the stick, a ring and a legend for every button, emblems), a
+    front panel each (bands of its two colours, its emblem either side of the
+    door), a coin-door plate. The coin door is two slots to one side, a return
+    flap and a lock (it used to read as a face).
+  - Grain, hair scratches and smudges on every painted, plastic and chrome surface.
+  - Screens: the room's neon caught in the glass; richer attract loops for Risk
+    Blaster (a horned shape, four lettered drones, the ship firing), Boss Rush (a
+    fight with charge, strike, answer, hearts) and Memory Bank (six cards turning,
+    coins dropping).
+  - The camera stands back so the whole cabinet and the floor are in view, and
+    arcs wider between cabinets; the card and mission bar wait for the room to
+    power on; the card's top edge no longer moves between games.

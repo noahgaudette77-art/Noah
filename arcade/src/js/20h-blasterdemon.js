@@ -171,8 +171,6 @@ const DemonModel = {
       g.setAttribute("aZ", new THREE.BufferAttribute(Z, 4));
       g.setIndex(new THREE.BufferAttribute(I, 1));
       out.full[name] = g;
-      out.low[name] = demonLowGeo(P, N, T, R, Z, I, 0.035);
-      out.lowTris += out.low[name].index.count / 3;
     }
     return (this._geo = out);
   },
@@ -286,7 +284,7 @@ function demonSkin(env, U) {
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(2.8, 0.7, 0.9) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(2.8, 0.7, 0.9) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -335,12 +333,11 @@ class BlasterDemon {
     const root = (this.root = new THREE.Group()), tilt = (this.tilt = new THREE.Group()), pose = (this.pose = new THREE.Group());
     this.J = {}; this.full = []; this.low = [];
     for (const name in DEMON_RIG) {
-      const d = DEMON_RIG[name], j = new THREE.Group(), from = d.p ? DEMON_RIG[d.p].at : DEMON.centre, mesh = new THREE.Mesh(geo.full[name], this.mat), low = new THREE.Mesh(geo.low[name], this.lowMat);
+      const d = DEMON_RIG[name], j = new THREE.Group(), from = d.p ? DEMON_RIG[d.p].at : DEMON.centre, mesh = new THREE.Mesh(geo.full[name], this.mat);
       j.position.set(d.at[0] - from[0], d.at[1] - from[1], d.at[2] - from[2]);
-      mesh.frustumCulled = low.frustumCulled = false; // (its vertices move in the shader)
-      low.visible = false; // (what the weakest quality levels draw in its place)
-      this.full.push(mesh); this.low.push(low);
-      j.add(mesh, low);
+      mesh.frustumCulled = false; // (its vertices move in the shader)
+      this.full.push(mesh);
+      j.add(mesh);
       (d.p ? this.J[d.p] : pose).add(j);
       // (where it rests, and which way it is thrown and how it turns when the demon comes apart in chunks)
       j.userData = { rest: j.position.clone(), dir: new THREE.Vector3(d.at[0] - DEMON.centre[0] + rand(-0.1, 0.1), d.at[1] - DEMON.centre[1] + rand(-0.1, 0.16), d.at[2] - DEMON.centre[2] + rand(-0.05, 0.25)).normalize(), spin: new THREE.Vector3(rand(-3, 3), rand(-3, 3), rand(-3, 3)) };

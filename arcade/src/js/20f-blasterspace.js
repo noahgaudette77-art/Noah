@@ -12,8 +12,8 @@
 // right, degrees up) and the giant (planet: degrees right, degrees up, distance, radius)
 // are placed in the frame round it.
 const SPACE_REGIONS = [
-  { id: "nebula", name: "NEBULA", base: 0x06021a, a: 0x5a1fd0, b: 0xff3ad4, c: 0x35efff, gold: 0xffc46a, neb: 1.3, stars: 1.0, fog: 0x0b0324, amb: 0x7a5ac8, key: 0xeadcff,
-    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x7a2fff, cloudB: 0xff4fd0, rocks: 0.1, rockTint: 0x6a5a8a,
+  { id: "nebula", name: "NEBULA", base: 0x030418, a: 0x2334d8, b: 0x2aa8ff, c: 0x7a5cff, gold: 0xffc46a, neb: 1.25, stars: 1.1, fog: 0x050826, amb: 0x5e6ed0, key: 0xdce6ff,
+    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
     streak: 0xd9c8ff, traffic: { freighter: 2, tanker: 1, cruiser: 0, fighter: 3, drone: 2, shuttle: 2 } },
   { id: "belt", name: "ASTEROID BELT", base: 0x0a0406, a: 0x8a3a12, b: 0xff9a2a, c: 0xffd870, gold: 0xfff0c0, neb: 0.8, stars: 0.9, fog: 0x140806, amb: 0x9a7058, key: 0xffe6c0,
     sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11, 8.5, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
@@ -210,7 +210,7 @@ class BlasterSpace {
     this.key0 = g.keyLight ? g.keyLight.color.clone() : new THREE.Color(1, 1, 1);
 
     // ---- the sky: two layers of the nebula, each growing as the ship flies into it; one fades in as the other fades out
-    this.nebTex = spaceBakeNebula(1024);
+    this.nebTex = spaceBakeNebula(2048);
     this.skyU = {
       uNeb: { value: this.nebTex }, uBase: { value: new THREE.Color() }, uA: { value: new THREE.Color() }, uB: { value: new THREE.Color() }, uC: { value: new THREE.Color() }, uGold: { value: new THREE.Color() },
       uSunDir: { value: this.sunDir }, uSunCol: { value: new THREE.Color() }, uFlash: { value: new THREE.Color(0, 0, 0) }, uNebK: { value: 1 }, uStarK: { value: 1 }, uCalm: { value: 0.5 }, uZoom: { value: 0 },
@@ -283,13 +283,13 @@ class BlasterSpace {
         }`,
       fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * a * a, 1.0); }",
     });
-    this.farStars = new THREE.Points(starGeo(620, () => {
+    this.farStars = new THREE.Points(starGeo(2200, () => {
       const v = this._v.set(rand(-0.62, 0.62), rand(-0.56, 0.56), -1).normalize().multiplyScalar(940);
-      return { p: [v.x, v.y, v.z], k: Math.pow(Math.random(), 2.2) * 1.8 + 0.25, size: rand(1.4, 3.4), f: 0, range: 1 };
+      return { p: [v.x, v.y, v.z], k: Math.pow(Math.random(), 2.6) * 2.0 + 0.2, size: rand(0.9, 3.4), f: 0, range: 1 };
     }), this.starMat);
     this.farStars.frustumCulled = false;
     this.far.add(this.farStars);
-    this.field = new THREE.Points(starGeo(520, (i) => (i < 340
+    this.field = new THREE.Points(starGeo(1500, (i) => (i < 900
       ? { p: [rand(-230, 230), rand(-190, 190), rand(-820, -70)], k: rand(0.5, 1.6), size: rand(1.1, 2.6), f: 0.2, range: 750 }
       : { p: [rand(-46, 46), rand(-40, 40), rand(-330, 12)], k: rand(0.35, 0.9), size: rand(0.5, 1.2), f: 1, range: 342 })), this.starMat);
     this.field.frustumCulled = false;
