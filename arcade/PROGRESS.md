@@ -645,9 +645,9 @@ pass behind it from one side of the frame to the other.
 | # | Checkpoint | Status |
 |---|---|---|
 | H1 | Tunnel removed; sky, stars at three depths, star and flare, ringed giant, galaxies, clouds, rocks, station, wrecks, gate; six regions blended | done |
-| H2 | Traffic: six ship designs, instanced, with windows, engines, lights, trails; parting on a right answer | next |
-| H3 | Event Director: 12+ kinds of event, every 3 to 6 s | pending |
-| H4 | Verify (shots against before, 60 s event capture, fps, regression), docs, PR, artifact, report | pending |
+| H2 | Traffic: six ship designs, instanced, with windows, engines, lights, trails; parting on a right answer | done |
+| H3 | Event Director: 16 kinds of ambient event, every 3 to 6 s | done |
+| H4 | Verify (shots against before, 60 s event capture, fps, regression), docs, PR, artifact, report | done |
 
 ## Done so far
 
@@ -680,3 +680,47 @@ pass behind it from one side of the frame to the other.
     a rim, the light of a blast, hull panels, rows of lit windows, engines, lamps that
     blink at 0.67 Hz each in its own time.
   - Checks: regression IDENTICAL (153 answers in 8 games); no console errors.
+- H2 (`20g-blastertraffic.js`, new):
+  - Six designs, each one geometry drawn many times: freighter (a spine hung with
+    containers, a lit bridge, twin engines), tanker (three spheres on a truss, one
+    engine bell), capital cruiser (a 120-unit wedge, stepped decks, a tower, flanks
+    of windows, six engines), fighter (a dart with forward-swept wings), patrol
+    drone (a core in a ring, three antennae, an eye), shuttle (a pale cabin with a
+    row of windows). Plus a derelict hulk and a space whale for the events.
+  - Paths: overtaking close on one side, coming the other way, slowly overtaken at
+    mid distance, crossing far ahead (behind the enemy, from one side of the frame
+    to the other). Each ship faces the way it goes, rolls a little, has an engine
+    trail. The region sets how many of each there are.
+  - Only the copies in use are drawn (the lowest free place is taken first).
+  - A right answer: everything within 320 units moves aside and comes back.
+- H3 (`20g-blastertraffic.js`): the Event Director fires every 3 to 6 s (0.8 of that
+  rate while a question or its explanation is up; 0.4, and nothing that flashes,
+  with Reduced effects). Sixteen ambient kinds: squadron, capital cruiser with
+  escorts, convoy, patrol, shuttle lane, dogfight (a shot every 0.45 s), explosion
+  (one flash, a ring, debris), comet, meteor shower, rock cluster, wormhole opening
+  (three fighters come out), space whale, ion storm (three pulses at 1.5 a second),
+  solar flare, warp jump, derelict. Fireworks are fired by right answers only.
+- Answer feel: right: the fighter's burst of thrust (eighth pass), the traffic
+  parts, three bursts of fireworks round the frame. Wrong: the picture's glitch
+  and the shield's flare (both already there), plus sparks off the hull and
+  forked arcs across the shield.
+- H4, the checks:
+  - No tunnel rings or wall code remains (`makeTunnel`, `BlasterCorridor` deleted).
+  - Six regions; 16 ambient event kinds; in a 60 s capture with a question on
+    screen 12 events fired, 12 different kinds; up to 29 ships at once.
+  - Regression IDENTICAL (153 answers in 8 games, every saved byte). Full
+    walkthrough: no console errors, no horizontal overflow. Without the frog model
+    the answers' targets and the carrier work in open space.
+  - Software renderer, 390 by 844, Risk Blaster, average / worst second, old and
+    new alternately: 123 / 104 and 119 / 103 with the tunnel, 120 / 98 and
+    118 / 95 in open space (the page's own frames: 114 / 98 and 111 / 95). Locked
+    at the top quality level the two builds cost the same (15 / 14 against 15 / 14).
+  - Reduced effects for 40 s: 3 events, none flashing, half the traffic.
+  - Scores against the tunnel (honest, after two rounds of tuning): openness 4.5,
+    depth 4, detail 4, cohesion 4.
+
+Known and not done: not measured on a real iPhone; no new sounds (a whoosh and a
+boom are reused, only between questions). With the frog as the enemy there are no
+per-answer targets to halo: the halo is behind the enemy. The hub's Risk Blaster
+cabinet keeps its old attract demo. No megastructure beyond the station and the
+gate (the whale was built instead). The frog itself is untouched.

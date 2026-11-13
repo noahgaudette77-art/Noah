@@ -13,7 +13,7 @@ offline fallback.
 
 | Cabinet | What it is | What it trains |
 |---|---|---|
-| **Risk Blaster** | Rail shooter. One big space frog comes at you down a neon tunnel while the clock runs. Tap the right answer and your fighter opens fire on it; tap a wrong one, or run out of time, and it fires on you. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
+| **Risk Blaster** | Rail shooter. One big space frog comes at you through open deep space while the clock runs. Tap the right answer and your fighter opens fire on it; tap a wrong one, or run out of time, and it fires on you. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
 | **Nest Egg Run** | Lane racer through a 40-year career, one gate per year from age 25 to 65. Steer into the right answer's lane to compound your savings; three crashes force early retirement. Five-answer streaks buy an insurance policy that pays out on your next crash. Retiring with $1,000,000 takes about 95% accuracy. | Sustained accuracy |
 | **Boss Rush** | One boss per chapter, plus a final boss across the whole book. Bosses only take hard questions; answer before their attack charges. Clear with all three hearts for three stars. | The hardest, most exam-like questions |
 | **Memory Bank** | Flashcards for every key term, rule and number, with self-grading (missed / got it / easy) and a swap button to see definitions first. | Definitions and numbers |
@@ -28,8 +28,8 @@ lists all of them again.
 - **HD neon graphics.** Every scene renders in high dynamic range, so neon can burn
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
-  world: a living synthwave city on the title screen, a ribbed corridor with a
-  giant frog trooper in it in Risk Blaster, a road through five landscapes in Nest Egg Run (it
+  world: a living synthwave city on the title screen, open deep space full of
+  traffic, with a giant frog trooper in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
   with a mirror floor in Boss Rush, where every boss is a different
@@ -45,9 +45,10 @@ lists all of them again.
   a meteor shower, distant lightning). The logo has depth, glow and a glint that
   crosses it every seven seconds.
 - **Risk Blaster.** You fly the player's own space fighter (a supplied model of
-  166 parts, converted by `scripts/convert-model.js`): weathered white and orange
-  paint over bare metal, with the panel lines and rivets of its texture raised so
-  they catch the light. Under its glass canopy sits a pilot in front of a
+  166 parts, converted by `scripts/convert-model.js`) in the arcade's neon: dark
+  gunmetal shaded by its old paint, panel lines and dents, anodised magenta and
+  cyan panels edged with light, cyan seams and small lights, a two-colour rim.
+  Under its glass canopy sits a pilot in front of a
   head-up display. It comes in from behind the camera when the game starts. Two
   main engines burn with shock diamonds and heat haze, and their bay glows; the
   four small thrusters in the wing pods flare when it rolls. The nose cannons and
@@ -56,22 +57,41 @@ lists all of them again.
   waves behind a bow wave of light. A hexagon-lattice shield flares when you lose
   one; down to the last, an engine sputters and trails smoke; lose that and it
   breaks up into some 250 pieces of itself in a ball of fire. (The three weakest
-  quality levels draw a lighter version of it, a fifth of the triangles.) The corridor has heavy
-  ribs with energy pylons, light conduits, tumbling asteroids, laser chords and
-  station blocks drifting by outside, and now and then a patrol, a comet, a
-  capital ship or a scan ring passes. A seven-pip combo meter fills and warms,
-  and the engines burn longer and bluer with it.
+  quality levels draw a lighter version of it, a fifth of the triangles.) After a
+  right answer it surges ahead on a burst of thrust; when a shield goes it is
+  knocked aside. A seven-pip combo meter fills and warms, and the engines burn
+  longer and bluer with it.
+- **Open space.** There is no tunnel. The ship flies into a sky of nebulae that
+  never ends and never repeats, past stars at three depths, a star with its lens
+  flare, a ringed gas giant, galaxies, passing clouds and chunky tumbling rocks.
+  A wave travels through two of six regions, each with its own colours and its
+  own landmark: nebula, asteroid belt, planet orbit, a station zone (a wheel
+  station with a lane of blinking markers), a ship graveyard (broken hulls
+  turning over), a wormhole gate. Sky, fog and light blend from one to the next.
+  Traffic is always on its way somewhere: freighters hung with containers,
+  tankers, capital cruisers with lit flanks, flights of fighters, patrol drones,
+  shuttles, each with windows, running lights and an engine trail. Every 3 to 6
+  seconds something happens: a squadron crosses, a cruiser slides past, a convoy,
+  a dogfight with laser fire, a ship blowing up far off, a comet, a meteor
+  shower, a cluster of rocks, a wormhole opening, a space whale, an ion storm, a
+  solar flare, ships jumping to warp, a derelict drifting by. While a question is
+  up it happens less often; with Reduced effects, half as often and nothing that
+  flashes. A right answer parts the traffic and sets off fireworks; a wrong one
+  throws sparks and arcs across the shield. Everything keeps clear of the way
+  ahead, and the picture is dimmed behind the enemy, so what must be read stays
+  clear. (Only the band between the question and the answers shows the 3D view,
+  so the scenery is composed in the frame round the enemy.)
 - **The frog.** Each wave has one enemy: the player's own space frog (a supplied
   sculpt, cut down by `scripts/convert-model.js` to 20,000 triangles with its own
   texture), a trooper in a yellow suit with a rotary cannon, hovering on the jets
-  of its backpack and big enough to fill the tunnel. It breathes, its throat
+  of its backpack and big enough to fill the view. It breathes, its throat
   works, and its head follows your finger. While a question's clock runs it comes
   closer. Answer right and your fighter opens fire: the frog whites out, yelps and
-  is knocked back down the tunnel, a little more scorched and smoking each time.
+  is knocked back into the distance, a little more scorched and smoking each time.
   Answer wrong and your guns stay silent: it swings its cannon round, eyes
   flaring, croaks, and puts six bolts into your shield. Run out of time and it
   does the same from point-blank. Clear the wave and it comes apart into light in
-  a blast of the wave's colour, and the next wave's frog flies up the tunnel.
+  a blast of the wave's colour, and the next wave's frog flies up out of the distance.
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
@@ -178,8 +198,7 @@ lists all of them again.
   ghosts across the frame. Explosions send a shockwave that bends the picture as
   it spreads, hits punch the view toward you for a moment, and speed (Risk
   Blaster's warp, flooring it in Nest Egg Run) streaks the picture outward.
-- **More to look at.** A ringed planet hangs beyond the Risk Blaster tunnel,
-  shooting stars cross the night skies, club lasers sweep the back of the arcade,
+- **More to look at.** Shooting stars cross the night skies, club lasers sweep the back of the arcade,
   and each new question arrives with a sweep of light as its answers deal in.
 - **FEVER.** A run of right answers in Risk Blaster, Nest Egg Run or Boss Rush heats
   the cabinet up: HEATING UP at 3 in a row, ON FIRE at 6, UNSTOPPABLE at 10. Each
@@ -278,7 +297,9 @@ numbered parts to joints; `src/js/20d-blasterfighter.js` lists where the fighter
 engines, guns and lights are; `src/js/20e-blasterfrog.js` where the frog's cannon
 points. Without a fighter model in the build Risk Blaster flies its built-in jet;
 without a frog model every answer is a target to shoot, a crystal form in a
-holo-drone (tap one in the tunnel, or its answer), and a carrier ship is the wave's enemy.
+holo-drone (tap one, or its answer), and a carrier ship is the wave's enemy. If a
+model is damaged and will not decode, the game falls back the same way (the exam
+shows its old procedural centrepiece in place of the boss).
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,

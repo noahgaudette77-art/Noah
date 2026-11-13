@@ -228,14 +228,15 @@ class BlasterSpace {
           w1 *= w1;
           vec4 t = texture2D(uNeb, uv * (2.9 * exp2(-2.0 * f1)) + uOff.xy) * w1 + texture2D(uNeb, uv * (2.9 * exp2(-2.0 * f2)) + uOff.zw) * (1.0 - w1);
           float dens = max(t.r * 1.1 + t.g * 0.55 - 0.78, 0.0);
+          if (uDetail > 0.5) { vec4 fine = texture2D(uNeb, uv * 7.0 + uOff.xw); dens *= 0.62 + 0.8 * fine.g * fine.r + 0.25 * fine.g; }
           vec3 col = mix(uA, uB, smoothstep(0.3, 0.68, t.b));
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
-          col = mix(col, uGold, smoothstep(0.45, 1.0, dens) * 0.7);
+          col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
           float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
-          vec3 c = uBase * (0.75 + 0.45 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.8 * uNebK * lane) + mix(uA, uB, t.b) * (0.03 * uNebK * (t.r + t.g));
+          vec3 c = uBase * (0.75 + 0.45 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.72 * uNebK * lane) + mix(uA, uB, t.b) * (0.03 * uNebK * (t.r + t.g));
           if (uDetail > 0.5) c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
-          c += uSunCol * (pow(sd, 5000.0) * 5.0 + pow(sd, 600.0) * 0.55 + pow(sd, 60.0) * 0.1);
+          c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
           // darker and quieter round the way ahead, where the enemy and the answers are
           c *= mix(1.0 - uCalm, 1.0, smoothstep(0.02, 0.2, length(uv - vec2(0.0, 0.015))));
           c += uFlash * (0.06 + dens * 0.9); // a blast lights the dust
@@ -434,6 +435,8 @@ class BlasterSpace {
     this.halo.renderOrder = 1;
     s.add(this.halo);
 
+    this.traffic = new SpaceTraffic(this); // ships on their way (20g-blastertraffic.js)
+    this.director = spaceEvents(this); // and what happens out there
     this.apply(1);
   }
 
@@ -628,7 +631,7 @@ class BlasterSpace {
     U.uSunCol.value.copy(c.sunCol).multiplyScalar(sunK);
     this.sun.position.copy(this.sunDir).multiplyScalar(950);
     this.sun.material.color.copy(c.sunCol).multiplyScalar(2.6 * sunK);
-    this.sun.scale.setScalar(64 * (1 + this.sunBoost * 0.5));
+    this.sun.scale.setScalar(46 * (1 + this.sunBoost * 0.5));
     const S = this.shared;
     S.uSunCol.value.copy(c.sunCol).multiplyScalar(1.15 * sunK);
     S.uAmb.value.copy(c.amb).multiplyScalar(0.42);
@@ -683,9 +686,9 @@ class BlasterSpace {
     const nearN = Math.round(16 * Math.min(1, c.rocks * 1.4)), farN = Math.round(96 * c.rocks);
     this.rockNear.count = nearN; this.rockFar.count = farN;
     this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
-    if (nearN + farN > 0) {
+    if (nearN + farN > 0 && !cheap) {
       this.rocks.forEach((r) => {
-        if (r.i >= (r.near ? nearN : farN)) return;
+        if (r.i >= (r.near ? nearN : farN) || (r.near && lite)) return;
         r.p.z += sp * r.f * dt;
         r.ph += r.w * dt;
         if (r.p.z > 30) this.resetRock(r, -660);
@@ -744,7 +747,26 @@ class BlasterSpace {
     if (this.ambLight) this.ambLight.color.copy(this.amb0).lerp(c.amb, 0.4);
     if (g.keyLight) g.keyLight.color.copy(this.key0).lerp(c.key, 0.4);
     if (this.traffic) this.traffic.update(dt, sp, w);
+    if (this.fx) this.fx.update(dt, sp);
     if (this.director) this.director.update(dt, g.state === "ask" || g.state === "explain");
+  }
+  // A right answer: the traffic near the fighter moves aside for it, and fireworks go up round the frame.
+  onRight(color) {
+    this.traffic.part();
+    this.director.force("fireworks", color);
+  }
+  // A wrong answer (with the picture's glitch and the shield's flare, which the game already does): sparks off the hull, arcs across the shield.
+  onWrong() {
+    const g = this.g, k = g.shipScale, p = g.ship.position;
+    [-1, 1].forEach((sd) => g.bursts.burst(this._v.set(p.x + sd * 2.4 * k, p.y + 0.5 * k, p.z - 0.5 * k), sd < 0 ? 0xffb357 : 0xbfe8ff, { n: GFX.calm ? 6 : 14, speed: 6 * k, size: 0.15 * k, life: 0.45 }));
+    if (!GFX.calm) for (let i = 0; i < 3; i++) { // three short forks, each of three kinks
+      const a = this._v.set(p.x + rand(-2.2, 2.2) * k, p.y + rand(0.3, 1.3) * k, p.z + rand(-0.8, 0.8) * k), b = this._w;
+      for (let j = 0; j < 3; j++) {
+        b.copy(a).add(this._s.set(rand(-0.5, 0.5) * k, rand(-0.45, 0.45) * k, rand(-0.3, 0.3) * k));
+        this.fx.beam(a, b, 0.2, [1.5, 2.0, 2.8], 0.035 * k);
+        a.copy(b);
+      }
+    }
   }
   // keep the far things where the camera is
   follow(camera) { this.far.position.copy(camera.position); }

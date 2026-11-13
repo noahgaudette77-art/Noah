@@ -511,7 +511,7 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
-      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); }
+      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); this.space.onRight(SLOT_COLORS[i]); } // (it boosts; the traffic parts; fireworks)
       if (this.combo >= 4) Sound.sfx("combo");
       Sound.sfx("boom", this.panAt);
       Sound.sfx("correct");
@@ -530,6 +530,7 @@ class BlasterGame extends QuizGame {
       this.shields--;
       title = this.shields > 0 ? "WRONG TARGET! SHIELD DOWN" : "WRONG TARGET! SHIELDS GONE";
       this.shieldHit();
+      if (this.has3D) this.space.onWrong(); // (sparks off the hull, arcs across the shield)
       Sound.sfx("wrong");
       Sound.sfx("hit");
       UI.flash("hit");
@@ -555,6 +556,7 @@ class BlasterGame extends QuizGame {
     this.combo = 1;
     this.shields--;
     this.shieldHit();
+    if (this.has3D) this.space.onWrong();
     Sound.sfx("hit");
     UI.flash("hit");
     this.shake(0.5);
