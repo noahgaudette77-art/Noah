@@ -203,8 +203,8 @@ class ExamGame extends QuizGame {
       top: 0x05040c, horizon: 0x1a1440, bottom: 0x0b0a14, glow: 0.3,
       panels: [
         { color: 0xdfe6ff, k: 2.4, w: 12, h: 5, pos: [3, 24, 16] },
-        { color: 0xff2f45, k: 2.2, w: 5, h: 22, pos: [-28, 8, -12] },
-        { color: 0x4f7cff, k: 1.6, w: 5, h: 22, pos: [28, 6, -10] },
+        { color: 0xff2fb0, k: 2.2, w: 5, h: 22, pos: [-28, 8, -12] },
+        { color: 0x2fd8ff, k: 1.8, w: 5, h: 22, pos: [28, 6, -10] },
         { color: 0x8a5cff, k: 0.8, w: 30, h: 6, pos: [0, 4, -30] },
         { color: 0x9fb0ff, k: 0.5, w: 20, h: 6, pos: [0, -14, 14] },
       ],
@@ -223,10 +223,10 @@ class ExamGame extends QuizGame {
     this.spotLight = new THREE.PointLight(0xe6ecff, 2.6, 32, 1.5); // the lamp over the boss
     this.spotLight.position.set(0.8, BOSS_DAIS + BOSS_S * 1.55, BOSS_S * 0.62);
     s.add(this.spotLight);
-    this.rimA = new THREE.PointLight(0xff2f55, 2.8, 36, 1.5);
+    this.rimA = new THREE.PointLight(0xff2fb0, 2.8, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.rimB = new THREE.PointLight(0x4f7cff, 1.8, 34, 1.5);
+    this.rimB = new THREE.PointLight(0x2fd8ff, 2.2, 34, 1.5);
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -289,7 +289,14 @@ class ExamGame extends QuizGame {
     ring.position.y = 0.04;
     s.add(ring);
     // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
-    this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null;
+    try { this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null; } catch (e) { this.boss = null; }
+    if (!this.boss) {
+      // no boss model in this build, or it would not decode: the hall's old centrepiece stands in (24b-examhero.js)
+      this.monument = new ExamMonument(this, gold, env);
+      this.monument.group.scale.setScalar(1.05);
+      this.monument.group.position.y = EXAM_LOOK_Y - 2.5; // afloat in the light, whole in the camera's frame
+      s.add(this.monument.group);
+    }
     // while the questions are up the camera is under the boss's chin and the floor is out of
     // sight: its reflection (the whole hall drawn a second time) waits for the ending
     s.userData.mirrorOff = !!this.boss;
@@ -365,6 +372,7 @@ class ExamGame extends QuizGame {
     Sound.dread(false);
     if (this.envRT) this.envRT.dispose();
     if (this.bossEnvRT) this.bossEnvRT.dispose();
+    if (this.monument) this.monument.dispose();
     if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
     super.dispose();
   }
@@ -543,9 +551,15 @@ class ExamGame extends QuizGame {
       // (or, on a timed exam, how much of the time is gone, whichever is further along)
       B.dreadTo = this.state === "ask" && this.answers.length ? Math.max(done / this.answers.length, this.limit ? clamp(this.elapsed / this.limit, 0, 1) : 0) : 0;
       B.update(dt, t);
+    } else if (this.monument) {
+      let done = 0;
+      for (let i = 0; i < this.answers.length; i++) if (this.answers[i] >= 0) done++;
+      this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
+    }
+    if (B) {
       this.spotLight.intensity = 2.6 * B.lightK;
       this.rimA.intensity = 2.8 * B.lightK;
-      this.rimB.intensity = 1.8 * B.lightK;
+      this.rimB.intensity = 2.2 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }

@@ -526,3 +526,82 @@ questions, the answer check, timers, shields and scoring are untouched.
 Known and not done: not measured on a real iPhone; the sounds were not auditioned.
 In landscape on a phone the band is about 70 px tall, so the frog is small there.
 The hub's Risk Blaster cabinet keeps its old attract demo of coloured squares.
+
+# The three supplied models, neon rebuild (eighth pass): progress log
+
+The request: focus only on the three supplied 3D models; make each look and move as
+well as it can in the arcade (premium, cinematic, detailed), in the arcade's neon
+style, with a procedural fallback, without touching the rules. The request was cut
+off after "DEFINITION OF DONE ... At"; each model is held to: screenshots at several
+angles and moments, a before/after comparison, a frame-rate measurement, and the
+rules regression identical. There is no `assets/models` folder: the models are in
+`arcade/assets/boss`, `arcade/assets/fighter` and `arcade/assets/frog`.
+
+`arcade/backup/index.before-neon-models.html` is the game as it was before this pass.
+
+## Step 1: what each model is
+
+| Model | Role | Parts | Triangles | Skeleton / clips | Texture as supplied | Decision |
+|---|---|---|---|---|---|---|
+| Mech (`boss`) | Final Exam boss | 32 separate parts | 12,243 | none / none | one 4096 px colour map: rusty tan and bone armour; no metal, roughness or normal maps | override: keep the map only as light and shade |
+| Starfighter (`fighter`) | Risk Blaster ship | 166 parts | 15,212 | none / none | one 8192 px colour map: weathered white and orange paint, rust | override: map kept as light and shade and as a mask of where the paint was |
+| Frog (`frog`) | Risk Blaster enemy | one sculpt | 1,930,336 (19,994 and 3,232 in the game) | none / none | one 4096 px colour map: painterly yellow suit, brown leather, rust stains | override the suit and cannon; keep its skin |
+
+None has a skeleton or animation, so all three are animated in code (the boss by its
+32 parts on a 19-joint rig, the fighter by its parts and as a whole, the frog in its
+vertex shader and as a whole).
+
+## Checkpoints
+
+| # | Checkpoint | Status |
+|---|---|---|
+| G0 | Backup; the shared neon look (detail tile, shader library, plain version for weak levels); lighter textures | done |
+| G1 | Mech boss | done |
+| G2 | Starfighter | next |
+| G3 | Frog | pending |
+| G4 | Final verification, docs, PR, artifact, report | pending |
+
+## Done so far
+
+- G0, the shared look (`08m-model.js`):
+  - `neonArmourTile()`: one 512 px tile drawn from a fixed seed. Red is height
+    (dents, scratches, pits, grain), green is panel lines (a groove, or a seam that
+    carries light), blue is small lights (their value sets colour and beat) and vent
+    slots. It is projected on each model along the dominant axis of its own normal,
+    in the part's own space, so it stays put as the part moves.
+  - `NEON_GLSL`: gunmetal from the old texture's brightness, grooves, a bump from
+    the tile's height, seams whose light runs along them, lamps that pulse each on
+    its own beat (the fastest about 0.5 Hz), a two-colour rim (magenta on the left
+    of the view, cyan on the right).
+  - `neonLowMaterial()`: the same look unlit, for the three weakest quality levels:
+    dark metal lit from above, pale bone, the two-colour rim, fog.
+  - `inrModelParts()` now refuses a model that is not one or was cut short (it used
+    to loop over a garbage length), so a damaged model falls back cleanly.
+  - Textures re-encoded smaller since they now only carry light and shade: the boss's
+    is greyscale (989 KB to 681 KB), the fighter's is 1024 px (795 KB to 294 KB).
+    The page went from 6,479 KB to 5,423 KB.
+- G1, the mech boss (`24c-examboss.js`, `24-exam.js`, `24b-examhero.js`):
+  - Materials: gunmetal plates (metalness 0.92, roughness from the texture and the
+    tile, worn bright edges), panel lines and a bump from the tile, cyan seams and
+    small lights, a magenta and cyan rim, a pale chrome skull, the red eyes as
+    before. The hall's two rim lights and its reflection panels are magenta and cyan.
+  - Reveal: its lights are off until it wakes, then come on from the feet up.
+  - Over the exam the seams go from cyan to magenta (by how far along the exam is,
+    never by which answers were right).
+  - Idle: servo twitches (a joint jerks a few degrees and settles, every 2 to 5 s,
+    on its own dice) on top of the breathing, head tracking and gestures it had.
+  - Pass ending: the panel lines open into glowing cracks as the plates blow, and
+    its lights stutter (a change at most 2.6 times a second, never fully out).
+  - Fail ending: seams and lights go red and bright.
+  - A soft contact shadow under it on the dais.
+  - Weak quality levels: the plain neon version, which follows the hall's light and
+    runs red in a rage and hot as it burns.
+  - Fallback: with no boss model in the build, or one that will not decode, the hall
+    shows its old procedural centrepiece (the crystal Keystone, restored from before
+    the boss), which fills with light as questions are answered (right or wrong
+    alike). Tested both ways.
+  - Checks: regression IDENTICAL (153 answers in 8 games, 0 exam hints); the ending's
+    other paths (skip, reduced motion, reduced effects, fail, replay) all end as
+    before; software renderer, exam, average / worst second, old and new alternately:
+    105 / 99 and 116 / 107 old, 107 / 99 and 104 / 93 new (run-to-run noise is larger
+    than the difference).

@@ -121,104 +121,53 @@ function bossJointGeometry(parts, pivot) {
   g.computeBoundingSphere();
   return g;
 }
-// The boss's surface: the model's paint, plus what makes it read as sharp, heavy metal
-// at any distance. Fine wear rides on each part (speckle in the colour and the gloss),
-// every hard edge of the armour catches the light as worn bright metal, and a rim of
-// red light runs round its outline. tint darkens the armour or leaves the skull pale.
-// A tile of fine surface damage for the armour: scratches, pits, shallow dents, grain.
-// Grey is height (mid grey is flat). Drawn once from a fixed seed; it wraps on both
-// axes. The model's own texture is soft; this is what stays sharp when it is close.
-function bossDetailTexture() {
-  if (bossDetailTexture.tex) return bossDetailTexture.tex;
-  const N = 512;
-  let tex;
-  try {
-    const c = document.createElement("canvas");
-    c.width = c.height = N;
-    const x = c.getContext("2d");
-    let seed = 20261112;
-    const r = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-    const wrap = (draw) => { for (let ox = -N; ox <= N; ox += N) for (let oy = -N; oy <= N; oy += N) { x.save(); x.translate(ox, oy); draw(); x.restore(); } };
-    x.fillStyle = "rgb(128,128,128)";
-    x.fillRect(0, 0, N, N);
-    for (let i = 0; i < 10; i++) { // shallow dents
-      const px = r() * N, py = r() * N, rad = 22 + r() * 44, a = 0.16 + r() * 0.2;
-      wrap(() => {
-        const g = x.createRadialGradient(px, py, 0, px, py, rad);
-        g.addColorStop(0, "rgba(40,40,40," + a + ")"); g.addColorStop(1, "rgba(40,40,40,0)");
-        x.fillStyle = g; x.beginPath(); x.arc(px, py, rad, 0, 6.2832); x.fill();
-      });
-    }
-    x.lineCap = "round";
-    for (let i = 0; i < 190; i++) { // scratches: most cut in, a few are raised burrs
-      const px = r() * N, py = r() * N, ang = r() * 3.1416, len = 8 + r() * r() * 170, bend = (r() - 0.5) * len * 0.12, w = 0.7 + r() * r() * 1.5;
-      const col = r() < 0.78 ? "rgba(12,12,12," + (0.3 + r() * 0.55) + ")" : "rgba(245,245,245," + (0.25 + r() * 0.4) + ")";
-      const dx = Math.cos(ang), dy = Math.sin(ang);
-      wrap(() => {
-        x.strokeStyle = col; x.lineWidth = w;
-        x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + dx * len * 0.5 - dy * bend, py + dy * len * 0.5 + dx * bend, px + dx * len, py + dy * len); x.stroke();
-      });
-    }
-    for (let i = 0; i < 300; i++) { // pits, each with a bright lip on one side
-      const px = r() * N, py = r() * N, rad = 0.7 + r() * r() * 3.4, a = 0.5 + r() * 0.45;
-      wrap(() => {
-        x.fillStyle = "rgba(240,240,240," + a * 0.5 + ")"; x.beginPath(); x.arc(px + rad * 0.45, py + rad * 0.45, rad, 0, 6.2832); x.fill();
-        x.fillStyle = "rgba(6,6,6," + a + ")"; x.beginPath(); x.arc(px, py, rad, 0, 6.2832); x.fill();
-      });
-    }
-    const img = x.getImageData(0, 0, N, N), d = img.data;
-    for (let i = 0; i < d.length; i += 4) { const v = clamp(d[i] + (r() - 0.5) * 22, 0, 255); d[i] = d[i + 1] = d[i + 2] = v; } // grain
-    x.putImageData(img, 0, 0);
-    tex = new THREE.CanvasTexture(c);
-  } catch (e) {
-    tex = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, THREE.RGBAFormat);
-    tex.needsUpdate = true;
-  }
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.anisotropy = 4;
-  return (bossDetailTexture.tex = tex);
-}
-
-function bossSkin(env, side, o, rim) {
-  const m = new THREE.MeshStandardMaterial({ map: BossModel.texture(), color: o.tint, metalness: o.metal, roughness: o.rough, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 });
+// The boss's surface. Its own texture is rusty tan paint; here it only gives light and
+// shade to the arcade's look (08m-model.js): gunmetal plates cut by panel lines, worn
+// bright on every hard edge, with seams and small lights that carry colour and a rim of
+// magenta and cyan. The skull (o.bone) stays pale and bare. U is one set of uniforms for
+// all of it: how bright the seams are and what colour, how far up the body they are lit
+// (the reveal), the cracks and the stutter of its destruction, the red rim of its dread.
+function bossSkin(env, side, o, U) {
+  const bone = !!o.bone;
+  const m = new THREE.MeshStandardMaterial({ map: BossModel.texture(), metalness: 1, roughness: 1, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 });
   m.extensions = { derivatives: true };
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uBossRim = rim;
-    sh.uniforms.uBossDetail = { value: bossDetailTexture() };
-    sh.uniforms.uBossEye = o.eye || { value: new THREE.Vector3() };
-    sh.uniforms.uBossEyeAt = { value: o.eyeAt || new THREE.Vector3() };
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal;");
+    Object.assign(sh.uniforms, neonUniforms(), U, { uBossEye: o.eye || { value: new THREE.Vector3() }, uBossEyeAt: { value: o.eyeAt || new THREE.Vector3() } });
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossY = (modelMatrix * vec4(transformed, 1.0)).y;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
-        varying vec3 vBossP; varying vec3 vBossN; uniform vec3 uBossRim; uniform sampler2D uBossDetail; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;
-        // a height's slope across the pixel tilts the normal (no tangents needed)
-        vec3 bossBump(vec3 pos, vec3 nrm, vec2 dH){
-          vec3 sx = dFdx(pos), sy = dFdy(pos), r1 = cross(sy, nrm), r2 = cross(nrm, sx);
-          float det = dot(sx, r1);
-          return normalize(abs(det) * nrm - sign(det) * (dH.x * r1 + dH.y * r2));
-        }
-        float bossH(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
-        float bossN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-          return mix(mix(mix(bossH(i), bossH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(bossH(i + vec3(0.0, 1.0, 0.0)), bossH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
-                     mix(mix(bossH(i + vec3(0.0, 0.0, 1.0)), bossH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(bossH(i + vec3(0.0, 1.0, 1.0)), bossH(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }`)
+        varying vec3 vBossP; varying vec3 vBossN; varying float vBossY;
+        uniform vec3 uBossRim; uniform vec3 uBossSeam; uniform float uBossPower; uniform float uBossSweep; uniform float uBossCrack; uniform float uBossDim; uniform float uBossRimK; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;
+        ${NEON_GLSL}`)
       .replace("#include <map_fragment>", `#include <map_fragment>
-        float bossWear = bossN(vBossP * 46.0);
-        // the damage tile, laid on from three sides so it never stretches or shows a seam
-        vec3 bossTW = max(abs(normalize(vBossN)) - 0.18, 0.0); bossTW /= bossTW.x + bossTW.y + bossTW.z + 0.0001;
-        vec3 bossQ = vBossP * 8.0;
-        float bossD = dot(vec3(texture2D(uBossDetail, bossQ.zy).r, texture2D(uBossDetail, bossQ.xz).r, texture2D(uBossDetail, bossQ.xy).r), bossTW);
+        vec3 bossT = neonTile(vBossP * 2.6, vBossN);
+        float bossL = clamp(dot(texelColor.rgb, vec3(0.3333)) * 1.25, 0.0, 1.0);
         float bossEdge = clamp(length(fwidth(normalize(vNormal))) * 4.5 - 0.1, 0.0, 1.0);
-        diffuseColor.rgb *= (0.8 + 0.34 * bossWear) * (0.56 + 0.88 * bossD);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.6, 0.58), bossEdge * 0.55);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(clamp(roughnessFactor * (0.62 + 0.7 * bossWear) + (0.5 - bossD) * 0.6, 0.14, 1.0), 0.2, bossEdge);")
-      .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\nnormal = bossBump(-vViewPosition, normal, vec2(dFdx(bossD), dFdy(bossD)) * 0.007);")
+        ${bone
+          ? "diffuseColor.rgb = mix(vec3(0.04, 0.04, 0.05), vec3(0.8, 0.78, 0.74), bossL) * (0.78 + 0.44 * bossT.r);"
+          : "diffuseColor.rgb = mix(neonMetal(bossL, bossT), vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}`)
+      .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+        roughnessFactor = ${bone ? "clamp(0.5 + (0.5 - bossT.r) * 0.5, 0.2, 0.9)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};`)
+      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.2" : "0.92"};`)
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        float bossH = ${bone ? "bossT.r" : "neonHeight(bossT)"};
+        normal = neonBump(-vViewPosition, normal, clamp(vec2(dFdx(bossH), dFdy(bossH)), -0.5, 0.5) * 0.008);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-        totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normalize(vNormal), normalize(vViewPosition))), 0.0, 1.0), 4.0);
+        vec3 bossV = normalize(vViewPosition);
+        totalEmissiveRadiance += neonRim(normal, bossV, 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
+        totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
+        ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
+        float bossOn = uBossPower * uBossDim * (1.0 - smoothstep(uBossSweep - 1.2, uBossSweep, vBossY));
+        totalEmissiveRadiance += neonGlow(bossT, vBossP * 2.6, uBossSeam) * bossOn;
+        // destroyed: its panel lines open and burn
+        totalEmissiveRadiance += vec3(3.4, 1.2, 0.3) * neonGroove(bossT) * uBossCrack * (0.45 + 0.55 * bossT.r);`}
         // the eyes' own light on the bone round them (the skull only: elsewhere uBossEye is zero)
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin";
+  m.customProgramCacheKey = () => "exam-boss-skin-" + (bone ? 1 : 0);
   return m;
 }
 
@@ -326,18 +275,38 @@ class ExamBoss {
     this.root.scale.setScalar(BOSS_S);
     this.root.position.y = BOSS_DAIS;
     s.add(this.root);
-    // Dark, worn armour and a pale skull. Through the exam both are drawn one-sided (the
+    // a soft shadow where it stands
+    this.shadow = new THREE.Mesh(new THREE.CircleGeometry(0.62, 32), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "varying vec2 vUv; void main(){ gl_FragColor = vec4(0.0, 0.0, 0.0, 0.8 * pow(1.0 - clamp(length(vUv - 0.5) * 2.0, 0.0, 1.0), 1.5)); }",
+    }));
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.position.y = 0.004;
+    this.root.add(this.shadow);
+    // Gunmetal armour and a pale skull. Through the exam both are drawn one-sided (the
     // shells are closed, and that halves the work); the ending bends and breaks them, so it
     // switches to two-sided twins, built and compiled with the scene so the switch costs nothing.
-    this.rim = { value: new THREE.Color(0, 0, 0) };
-    const ARMOUR = { tint: 0x6b6874, metal: 0.8, rough: 0.42, env: 1.0 }, BONE = { tint: 0xf4ecdf, metal: 0.05, rough: 0.55, env: 0.5 };
+    this.U = {
+      uBossRim: { value: new THREE.Color(0, 0, 0) }, uBossRimK: { value: 0 }, uBossSeam: { value: new THREE.Color(0, 0, 0) },
+      uBossPower: { value: 0 }, uBossSweep: { value: 100 }, uBossCrack: { value: 0 }, uBossDim: { value: 1 },
+    };
+    this.rim = this.U.uBossRim;
+    this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(1.35, 0.12, 0.85); this.seamRage = new THREE.Color(1.7, 0.28, 0.08);
+    this.flick = 1; this.flickT = 0; this.twT = 3; this.twK = 0; this.twA = 0; this.twJ = "head"; this.seed = 20261113;
+    const ARMOUR = { env: 1.1 }, BONE = { bone: true, env: 0.6 };
     BONE.eye = this.eyeU = { value: new THREE.Vector3() }; // how hard the eyes light the skull
     BONE.eyeAt = this.eyeAt = new THREE.Vector3();
-    this.mat = bossSkin(env, THREE.FrontSide, ARMOUR, this.rim);
-    this.bone = bossSkin(env, THREE.FrontSide, BONE, this.rim);
-    this.matOpen = bossSkin(env, THREE.DoubleSide, ARMOUR, this.rim);
-    this.boneOpen = bossSkin(env, THREE.DoubleSide, BONE, this.rim);
+    this.mat = bossSkin(env, THREE.FrontSide, ARMOUR, this.U);
+    this.bone = bossSkin(env, THREE.FrontSide, BONE, this.U);
+    this.matOpen = bossSkin(env, THREE.DoubleSide, ARMOUR, this.U);
+    this.boneOpen = bossSkin(env, THREE.DoubleSide, BONE, this.U);
     this.matOpen.emissive = this.bone.emissive = this.boneOpen.emissive = this.mat.emissive; // one glow for all four
+    // the same look for the weakest quality levels: unlit gunmetal and pale bone with the two-colour rim
+    this.lowTint = { value: new THREE.Color(1, 1, 1) };
+    [[this.mat, false, THREE.FrontSide], [this.bone, true, THREE.FrontSide], [this.matOpen, false, THREE.DoubleSide], [this.boneOpen, true, THREE.DoubleSide]].forEach(([m, bone, side]) => {
+      m.userData.twin = neonLowMaterial(BossModel.texture(), { bone, side, tint: this.lowTint, paint: 0, rim: bone ? 0.3 : 0.75 });
+    });
     this.heatCol = new THREE.Color(1.0, 0.36, 0.08);
     this.J = {};
     this.joints = BOSS_RIG.map(([name, parent, pivot, ids]) => {
@@ -385,7 +354,7 @@ class ExamBoss {
     this.firePos = new THREE.Vector3(); // where its fires burn: in the ending the light under it becomes their light
     // the wreck: every fragment of armour in one mesh, thrown and landed in the vertex shader
     this.blastMat = new THREE.ShaderMaterial({
-      uniforms: Object.assign(fogUniforms(), { map: { value: BossModel.texture() }, uTint: { value: new THREE.Color(ARMOUR.tint) }, uT: { value: 0 }, uG: { value: BOSS_G }, uFire: { value: 0 }, uCore: { value: new THREE.Vector3() } }),
+      uniforms: Object.assign(fogUniforms(), { map: { value: BossModel.texture() }, uTint: { value: new THREE.Color(0.5, 0.56, 0.72) }, uT: { value: 0 }, uG: { value: BOSS_G }, uFire: { value: 0 }, uCore: { value: new THREE.Vector3() } }),
       side: THREE.DoubleSide,
       vertexShader: `attribute vec3 aC; attribute vec3 aV; attribute vec4 aR; attribute vec2 aK; uniform float uT; uniform float uG;
         varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying float vHeat; varying float vDepth;
@@ -482,6 +451,8 @@ class ExamBoss {
   wake() { this.waking = true; if (this.mode === "idle") Sound.dread(true); }
   // an answer was chosen (any answer: it starts the same way at a right one and a wrong one)
   notice() { this.noticeK = 1; }
+  // (its own dice: the game's are never touched while a question is up)
+  lcg() { this.seed = (this.seed * 1664525 + 1013904223) >>> 0; return this.seed / 4294967296; }
   // Ease every joint toward the pose, add the small motions on top, then set the hips
   // so the feet (or the knees, once it kneels) stay on the dais where they stood.
   settle(dt) {
@@ -516,6 +487,18 @@ class ExamBoss {
           this.growled = false;
           if (which === 1) { R("head").z += 0.3 * w; R("head").y -= 0.12 * w; R("chest").z += 0.04 * w; }
           else { R("armR").x -= 0.55 * w; R("armR").z += 0.1 * w; R("foreR").x -= 0.85 * w; R("handR").x -= 0.35 * w; }
+        }
+        // servo twitches: every few seconds one joint jerks a little and settles (on its own dice)
+        if ((this.twT -= dt) <= 0) {
+          this.twT = 2.2 + 3.4 * this.lcg();
+          this.twJ = ["handL", "handR", "foreL", "foreR", "head", "pylonL", "pylonR", "padL", "padR"][Math.floor(this.lcg() * 9)];
+          this.twA = (this.lcg() - 0.5) * 0.1;
+          this.twK = 1;
+        }
+        if (this.twK > 0) {
+          this.twK = Math.max(0, this.twK - dt * 2);
+          const u = 1 - this.twK, o = this.twA * (u < 0.15 ? u / 0.15 : Math.pow(1 - (u - 0.15) / 0.85, 2));
+          R(this.twJ).x += o; R(this.twJ).z += o * 0.5;
         }
       }
     }
@@ -787,7 +770,22 @@ class ExamBoss {
         this.under.color.copy(this.underCold).lerp(this.underHot, this.mode === "rage" ? 1 : clamp(0.08 + 0.3 * this.dread + 0.22 * this.menace, 0, 0.6));
         this.under.intensity = (live ? (0.62 + 0.14 * this.dread + 0.2 * this.menace) * (0.88 + 0.12 * Math.sin(t * 3.1)) : 0.3) * this.lightK * (this.mode === "rage" ? 3 : 1);
       }
-      this.rim.value.setRGB(0.5, 0.03, 0.05).multiplyScalar((0.2 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
+      this.rim.value.setRGB(0.5, 0.03, 0.05).multiplyScalar((0.1 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
+      // Its seams and small lights. Off until it wakes, then lit from the feet up; cyan at first,
+      // magenta as the exam goes on (how far along it is, never which answers were right), red in a rage.
+      const U = this.U, rage = this.mode === "rage" ? 1 : 0, dying = this.mode === "die";
+      NEON_T.value = t;
+      U.uBossRimK.value = 0.42 * this.lightK;
+      U.uBossSeam.value.copy(this.seamCold).lerp(this.seamHot, clamp(this.dread * 0.9 + this.menace * 0.4, 0, 1)).lerp(this.seamRage, rage);
+      const lit = this.mode !== "wake" || this.wt > 1.0;
+      U.uBossPower.value += ((lit ? 0.7 + 0.3 * this.dread + 0.3 * this.menace + 0.9 * rage : 0) - U.uBossPower.value) * Math.min(1, dt * 3);
+      U.uBossSweep.value = this.mode === "wake" ? BOSS_DAIS + smoothstep(1.0, 2.6, this.wt) * (BOSS_S * 1.1 + 1.4) : 100;
+      // destroyed: the lights stutter (a change at most 2.6 times a second, and never fully out) and the panel lines open
+      if (dying && !this.soft) {
+        if ((this.flickT -= dt) <= 0) { this.flickT = 0.38; this.flick = this.lcg() < 0.55 ? 0.35 : 1; }
+      } else this.flick = 1;
+      U.uBossDim.value += (this.flick - U.uBossDim.value) * Math.min(1, dt * 14);
+      U.uBossCrack.value += ((dying ? clamp(this.popI / 5, 0, 1) * 0.45 + this.heat * 0.9 : 0) - U.uBossCrack.value) * Math.min(1, dt * 4);
       // vapour vents off its back, more of it as the end comes nearer
       this.vapT -= dt;
       if (this.vapT < 0 && this.mode === "idle") {
@@ -797,6 +795,10 @@ class ExamBoss {
       }
     }
     this.mat.emissive.copy(this.heatCol).multiplyScalar(this.heat * 0.55);
+    { // (the plain version follows the hall's light, runs red in a rage and hot as it burns)
+      const k = 0.12 + 0.88 * this.lightK, rg = this.mode === "rage" ? 1 : 0;
+      this.lowTint.value.setRGB(k * (1 + 0.6 * rg + 1.6 * this.heat), k * (1 - 0.25 * rg + 0.5 * this.heat), k * (1 - 0.3 * rg));
+    }
     // fire light, falling away
     this.fire *= Math.pow(0.12, dt);
     if (this.mode === "die") {
