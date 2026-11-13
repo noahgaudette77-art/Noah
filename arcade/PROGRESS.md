@@ -460,3 +460,69 @@ Known and not done: not measured on a real iPhone; the frog's croak and cannon a
 synthesised and were not auditioned by ear. Up close the 7,000-triangle frog is
 visibly faceted (in play it is 60 to 150 px tall). The hub's Risk Blaster cabinet
 keeps its old attract demo of coloured squares.
+
+# One big frog (seventh pass): progress log
+
+Feedback on the four frogs: "It needs to be 1 big turtle, not 4. So it's 1 component
+that shoots at me when I'm wrong and I shoot at it when I'm right." (The creature is
+the frog model supplied; it is called the frog here.) Look and sound only again: the
+questions, the answer check, timers, shields and scoring are untouched.
+
+`arcade/backup/index.before-big-frog.html` is the game before this pass (four frogs).
+
+| # | Checkpoint | Status |
+|---|---|---|
+| F0 | Backup; convert the frog again with its real texture | done |
+| F1 | One big frog as the wave's enemy | done |
+| F2 | Regression, walkthrough, frame rate, docs | done |
+
+- F0: one big frog is seen far closer than four small ones, and colours baked onto
+  7,000 triangles' vertices would not hold up. The sculpt's texture has only 639
+  charts, so the simplifier can keep its texture mapping (meshopt's
+  simplifyWithAttributes, seams held together): `scripts/convert-model.js` now writes
+  the frog at 19,994 triangles (and 3,232 for weak quality levels) with its own UVs,
+  normals averaged from the sculpt round each kept vertex, and `albedo.jpg` at
+  2048 px (632 KB; the texture has about 880 texels to the frog's height, and at its
+  closest the frog is 450 to 600 px tall). The vertex-colour path is gone.
+  `frog.bin` is 415 KB; the page is 6.48 MB (was 5.21 MB).
+- F1: `src/js/20e-blasterfrog.js` (was 20e-blasterfrogs.js). With the frog model in
+  the build the game makes no per-answer targets and no carrier; without it, both
+  come back as they were.
+  - Size: fitted to the band between the question and the answers, 80% of its
+    height or width at its closest. It waits 22 units down the tunnel and has come
+    to 14 when the question's time is up (the same clock that moved the targets),
+    so it is always big and gets bigger.
+  - Look: its texture; copper and leather, wet skin and cloth told apart by colour;
+    relief from the texture's brightness; a rim in the wave's colour. It breathes,
+    its throat works, its head follows the pointer or the phone's tilt, its eyes
+    carry a glint.
+  - Right answer: `pick()` now knows the answer is right before it fires (for the
+    look only; `resolve()` checks and scores as before). The fighter fires fatter
+    beams at the frog's chest; at resolve the frog whites out, yelps, and is knocked
+    back 9 units with a lean and a twist, inside a smaller version of the game's
+    blast (fewer sparks, a smaller ring, no white core, so it can be seen). Every
+    hit scorches it a little more, and after two it smokes from its backpack.
+  - Wrong answer: the fighter does not fire. The frog starts its attack at the
+    pick: it turns until the barrel it carries across its body (57 degrees off its
+    facing) points at the ship, keeps its head on the player, its eyes flare, it
+    croaks and fires six bolts 75 ms apart. The first one home flares the shield.
+  - Too slow: the same attack, from its closest.
+  - Wave cleared: it is eaten away by a noise with burning edges inside a blast of
+    the wave's colour; the next wave's frog flies up from the far dark 1.2 s later.
+  - Answers are picked with the A to D buttons or the keyboard. Tapping the tunnel
+    picked the nearest target; with one enemy there is nothing to choose there, so
+    the hint now reads TAP YOUR ANSWER TO OPEN FIRE.
+  - Weak quality levels: the 3,232-triangle frog with its texture unlit. Reduced
+    motion: no fly-in, sway or head movement, a shorter recoil. Reduced effects: no
+    flash puff, fewer sparks.
+- F2: `npm run arcade:regress`: IDENTICAL to the original build (153 answers in 8
+  games, every saved byte). Full walkthrough: no console errors, no horizontal
+  overflow. Software renderer, Risk Blaster, average / worst second, builds run
+  alternately: at its lowest level 120 / 105 and 120 / 103 with the one frog, 121 / 93
+  and 112 / 99 with the four; forced to the top level 37 / 15 and 53 / 16 (the frog
+  covers far more of the screen there, as the exam boss does; the adaptive ladder
+  is what a phone runs).
+
+Known and not done: not measured on a real iPhone; the sounds were not auditioned.
+In landscape on a phone the band is about 70 px tall, so the frog is small there.
+The hub's Risk Blaster cabinet keeps its old attract demo of coloured squares.

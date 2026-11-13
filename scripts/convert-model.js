@@ -8,20 +8,19 @@
  * (Risk Blaster's enemy). Writes into arcade/assets/<name>/ (or the folder in OUT_DIR):
  *   <name>.bin   every part of the model in one buffer: positions as 16-bit fractions
  *                of the part's bounding box, normals as signed bytes, UVs as 16-bit
- *                fractions (or colours as bytes: see below), 16-bit indices, after a
- *                small JSON header
+ *                fractions, 16-bit indices, after a small JSON header
  *   albedo.jpg   the colour texture, resized and sharpened (needs ImageMagick's
  *                `convert`). The boss is also graded: its bright paint is taken down
  *                to dark, worn metal (in the exam hall it is lit as a threat, not a
- *                toy). The fighter keeps its own colours. GRADE=off keeps any model's.
+ *                toy). The others keep their own colours. GRADE=off keeps any model's.
  *
- * A model made of separate parts (the boss, the fighter) is kept part by part with its
- * texture. A sculpt (the frog: one meshopt-compressed mesh of 1.9 million triangles)
- * is simplified instead, to the triangle counts in TRIANGLES (default "7000,1200": the
- * game's version and a lighter one for weak quality levels, as parts 0 and 1), with
- * its texture baked onto the vertices and no albedo.jpg. That path needs the
- * meshoptimizer package (MIT), which is not a dependency of this repo: install it
- * anywhere and point MESHOPTIMIZER at its index.js, or have it in node_modules.
+ * A model made of separate parts (the boss, the fighter) is kept part by part. A sculpt
+ * (the frog: one meshopt-compressed mesh of 1.9 million triangles) is simplified
+ * instead, keeping its texture mapping, to the triangle counts in TRIANGLES (default
+ * "20000,3000": the game's version and a lighter one for weak quality levels, as
+ * parts 0 and 1). That path needs the meshoptimizer package (MIT), which is not a
+ * dependency of this repo: install it anywhere and point MESHOPTIMIZER at its
+ * index.js, or have it in node_modules.
  *
  * The .glb is only read as numbers: nothing in it is executed.
  */
@@ -78,12 +77,20 @@ const src = process.argv[2], name = process.argv[3];
 if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter|frog> [textureSize]"); process.exit(1); }
 const outDir = path.resolve(process.env.OUT_DIR || path.join(__dirname, "..", "arcade", "assets", name));
 const texSize = +(process.argv[4] || 2048);
-const GRADES = { boss: ["-modulate", "74,46,100", "-sigmoidal-contrast", "5x42%", "-unsharp", "0x1.6+1.1+0.015"], fighter: ["-unsharp", "0x1.2+0.7+0.01"] };
+const GRADES = { boss: ["-modulate", "74,46,100", "-sigmoidal-contrast", "5x42%", "-unsharp", "0x1.6+1.1+0.015"], fighter: ["-unsharp", "0x1.2+0.7+0.01"], frog: ["-unsharp", "0x1.2+0.7+0.01"] };
 const GRADE = process.env.GRADE === "off" ? [] : GRADES[name] || [];
 const QUALITY = process.env.QUALITY || "86";
 fs.mkdirSync(outDir, { recursive: true });
 
 const g = readGlb(src), J = g.json;
+// the model's colour texture, resized (and graded) into albedo.jpg
+function writeTexture() {
+  const im = J.images[J.textures[J.materials[0].pbrMetallicRoughness.baseColorTexture.index].source], bv = J.bufferViews[im.bufferView];
+  const tmp = path.join(outDir, "albedo-source.tmp");
+  fs.writeFileSync(tmp, g.bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength));
+  execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, "-sampling-factor", "4:2:0", "-quality", QUALITY, "-strip", path.join(outDir, "albedo.jpg")]);
+  fs.unlinkSync(tmp);
+}
 if ((J.extensionsRequired || []).includes("EXT_meshopt_compression")) { sculpt().catch((e) => { console.error(e.message || e); process.exit(1); }); return; }
 const parts = [], blobs = [];
 let offset = 0;
@@ -114,18 +121,15 @@ head.writeUInt32LE(header.length + pad, 4);
 const bin = Buffer.concat([head, header, Buffer.alloc(pad, 0x20), ...blobs]);
 fs.writeFileSync(path.join(outDir, name + ".bin"), bin);
 
-const im = J.images[J.textures[J.materials[0].pbrMetallicRoughness.baseColorTexture.index].source], bv = J.bufferViews[im.bufferView];
-const tmp = path.join(outDir, "albedo-source.tmp");
-fs.writeFileSync(tmp, g.bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength));
-execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, "-sampling-factor", "4:2:0", "-quality", QUALITY, "-strip", path.join(outDir, "albedo.jpg")]);
-fs.unlinkSync(tmp);
+writeTexture();
 const tris = parts.reduce((s, p) => s + p.i / 3, 0), verts = parts.reduce((s, p) => s + p.v, 0);
 console.log(`${parts.length} parts, ${verts} vertices, ${tris} triangles -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
 
 // ---- a sculpt: one dense, meshopt-compressed mesh --------------------------------
-// Decoded, welded by position (so UV seams don't hold the simplifier back), simplified
-// to each count in TRIANGLES, and coloured: every original vertex gives its texel and
-// its normal to the nearest vertex that survived (on the same side of the surface).
+// Decoded and simplified to each count in TRIANGLES with its texture mapping kept (the
+// simplifier holds the seams between the texture's charts together). The vertices that
+// survive keep their own positions and UVs; their normals are the average of the
+// sculpt's normals round them, so the fine modelling that was cut away still shades it.
 async function sculpt() {
   let mo;
   try { mo = await import(process.env.MESHOPTIMIZER ? require("url").pathToFileURL(path.resolve(process.env.MESHOPTIMIZER)).href : "meshoptimizer"); }
@@ -142,64 +146,49 @@ async function sculpt() {
   if (acc(prim.attributes.POSITION).componentType !== 5126 || acc(prim.attributes.TEXCOORD_0).componentType !== 5126 || acc(prim.attributes.NORMAL).componentType !== 5120 || acc(prim.indices).componentType !== 5125) throw new Error("unexpected vertex layout in this sculpt");
   const P = new Float32Array(view(acc(prim.attributes.POSITION).bufferView).buffer), Nb = new Int8Array(view(acc(prim.attributes.NORMAL).bufferView).buffer);
   const T = new Float32Array(view(acc(prim.attributes.TEXCOORD_0).bufferView).buffer), I = new Uint32Array(view(acc(prim.indices).bufferView).buffer);
-  const nv = P.length / 3, remap = MeshoptSimplifier.generatePositionRemap(P, 3), W = new Uint32Array(I.length);
-  for (let i = 0; i < I.length; i++) W[i] = remap[I[i]];
-  // the texture, as raw pixels (1024 is plenty: each kept vertex averages hundreds of them)
-  const TS = 1024, im = J.images[J.textures[J.materials[0].pbrMetallicRoughness.baseColorTexture.index].source], bv = J.bufferViews[im.bufferView];
-  const tmp = path.join(outDir, "albedo-source.tmp"), raw = path.join(outDir, "albedo-source.rgb");
-  fs.writeFileSync(tmp, g.bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength));
-  execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${TS}x${TS}!`, "-depth", "8", "rgb:" + raw]);
-  const px = fs.readFileSync(raw);
-  fs.unlinkSync(tmp);
-  fs.unlinkSync(raw);
-  const texel = (v, o) => {
-    const x = Math.min(TS - 1, Math.max(0, Math.floor(T[v * 2] * TS))), y = Math.min(TS - 1, Math.max(0, Math.floor(T[v * 2 + 1] * TS))), k = (y * TS + x) * 3;
-    for (let c = 0; c < 3; c++) o[c] += Math.pow(px[k + c] / 255, 2.2); // (averaged as light, stored as sRGB)
-  };
+  const nv = P.length / 3, same = MeshoptSimplifier.generatePositionRemap(P, 3); // (same[v]: the first vertex at v's position; a seam has several)
   const parts = [], blobs = [], report = [];
   let offset = 0;
   const push = (typed) => { const b = Buffer.from(typed.buffer, typed.byteOffset, typed.byteLength), pad = (4 - (b.length % 4)) % 4, at = offset; blobs.push(b); if (pad) blobs.push(Buffer.alloc(pad)); offset += b.length + pad; return at; };
-  (process.env.TRIANGLES || "7000,1200").split(",").map(Number).forEach((want, lod) => {
-    const [S] = MeshoptSimplifier.simplify(W, P, 3, want * 3, 0.5, ["Permissive"]);
+  (process.env.TRIANGLES || "20000,3000").split(",").map(Number).forEach((want, lod) => {
+    const [S] = MeshoptSimplifier.simplifyWithAttributes(I, P, 3, T, 2, [1, 1], null, want * 3, 0.5, []);
     const id = new Map(), keep = [], X = new Uint16Array(S.length);
     for (let i = 0; i < S.length; i++) { let k = id.get(S[i]); if (k === undefined) { k = keep.length; id.set(S[i], k); keep.push(S[i]); } X[i] = k; }
     const n = keep.length;
     if (n > 65535) throw new Error("too many vertices for 16-bit indices: ask for fewer triangles");
+    // normals: one per kept position (both sides of a seam share it), gathered from the sculpt's vertices nearest it
+    const spot = new Map(), spots = [];
+    keep.forEach((v) => { if (!spot.has(same[v])) { spot.set(same[v], spots.length); spots.push(same[v]); } });
     let edge = 0;
     for (let i = 0; i < S.length; i += 3) { const a = S[i] * 3, b = S[i + 1] * 3; edge += Math.hypot(P[a] - P[b], P[a + 1] - P[b + 1], P[a + 2] - P[b + 2]); }
     const R = (edge / (S.length / 3)) * 0.75, grid = new Map(), cell = (x, y, z) => Math.floor(x / R) + "," + Math.floor(y / R) + "," + Math.floor(z / R);
-    keep.forEach((v, k) => { const c = cell(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); let list = grid.get(c); if (!list) grid.set(c, (list = [])); list.push(k); });
-    const C = new Float64Array(n * 3), NN = new Float64Array(n * 3), cnt = new Float64Array(n), o = [0, 0, 0];
+    spots.forEach((v, k) => { const c = cell(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); let list = grid.get(c); if (!list) grid.set(c, (list = [])); list.push(k); });
+    const NN = new Float64Array(spots.length * 3);
     for (let v = 0; v < nv; v++) {
       const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2], cx = Math.floor(x / R), cy = Math.floor(y / R), cz = Math.floor(z / R);
       let best = -1, bd = R * R;
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
         const list = grid.get((cx + dx) + "," + (cy + dy) + "," + (cz + dz));
         if (!list) continue;
-        for (const k of list) { const q = keep[k] * 3, d = (P[q] - x) ** 2 + (P[q + 1] - y) ** 2 + (P[q + 2] - z) ** 2; if (d < bd) { bd = d; best = k; } }
+        for (const k of list) { const q = spots[k] * 3, d = (P[q] - x) ** 2 + (P[q + 1] - y) ** 2 + (P[q + 2] - z) ** 2; if (d < bd) { bd = d; best = k; } }
       }
       if (best < 0) continue;
-      const kq = keep[best] * 4;
-      if (Nb[kq] * Nb[v * 4] + Nb[kq + 1] * Nb[v * 4 + 1] + Nb[kq + 2] * Nb[v * 4 + 2] < 0) continue; // (a thin part's other face has its own colours)
-      o[0] = o[1] = o[2] = 0;
-      texel(v, o);
-      for (let c = 0; c < 3; c++) { C[best * 3 + c] += o[c]; NN[best * 3 + c] += Nb[v * 4 + c]; }
-      cnt[best]++;
+      const q = spots[best] * 4;
+      if (Nb[q] * Nb[v * 4] + Nb[q + 1] * Nb[v * 4 + 1] + Nb[q + 2] * Nb[v * 4 + 2] < 0) continue; // (the other face of a thin part)
+      for (let c = 0; c < 3; c++) NN[best * 3 + c] += Nb[v * 4 + c];
     }
     const min = [1e9, 1e9, 1e9], max = [-1e9, -1e9, -1e9];
     keep.forEach((v) => { for (let c = 0; c < 3; c++) { min[c] = Math.min(min[c], P[v * 3 + c]); max[c] = Math.max(max[c], P[v * 3 + c]); } });
-    const qp = new Uint16Array(n * 3), qn = new Int8Array(n * 4), qc = new Uint8Array(n * 4);
+    const qp = new Uint16Array(n * 3), qn = new Int8Array(n * 4), qt = new Uint16Array(n * 2);
     keep.forEach((v, k) => {
-      if (!cnt[k]) { o[0] = o[1] = o[2] = 0; texel(v, o); for (let c = 0; c < 3; c++) { C[k * 3 + c] = o[c]; NN[k * 3 + c] = Nb[v * 4 + c]; } cnt[k] = 1; }
-      const l = Math.hypot(NN[k * 3], NN[k * 3 + 1], NN[k * 3 + 2]) || 1;
-      for (let c = 0; c < 3; c++) {
-        qp[k * 3 + c] = Math.round(((P[v * 3 + c] - min[c]) / (max[c] - min[c] || 1)) * 65535);
-        qn[k * 4 + c] = Math.round((NN[k * 3 + c] / l) * 127);
-        qc[k * 4 + c] = Math.round(Math.pow(C[k * 3 + c] / cnt[k], 1 / 2.2) * 255);
-      }
-      qc[k * 4 + 3] = 255;
+      const s3 = spot.get(same[v]) * 3;
+      let nx = NN[s3], ny = NN[s3 + 1], nz = NN[s3 + 2], l = Math.hypot(nx, ny, nz);
+      if (!l) { nx = Nb[v * 4]; ny = Nb[v * 4 + 1]; nz = Nb[v * 4 + 2]; l = Math.hypot(nx, ny, nz) || 1; }
+      qn[k * 4] = Math.round((nx / l) * 127); qn[k * 4 + 1] = Math.round((ny / l) * 127); qn[k * 4 + 2] = Math.round((nz / l) * 127);
+      for (let c = 0; c < 3; c++) qp[k * 3 + c] = Math.round(((P[v * 3 + c] - min[c]) / (max[c] - min[c] || 1)) * 65535);
+      for (let c = 0; c < 2; c++) qt[k * 2 + c] = Math.round(Math.min(1, Math.max(0, T[v * 2 + c])) * 65535);
     });
-    parts.push({ id: lod, v: n, i: X.length, min: min.map((v) => +v.toFixed(5)), max: max.map((v) => +v.toFixed(5)), p: push(qp), n: push(qn), c: push(qc), x: push(X) });
+    parts.push({ id: lod, v: n, i: X.length, min: min.map((v) => +v.toFixed(5)), max: max.map((v) => +v.toFixed(5)), p: push(qp), n: push(qn), t: push(qt), x: push(X) });
     report.push(`${X.length / 3} triangles (${n} vertices)`);
   });
   const header = Buffer.from(JSON.stringify({ version: 1, parts }), "utf8"), pad = (4 - (header.length % 4)) % 4, head = Buffer.alloc(8);
@@ -207,5 +196,6 @@ async function sculpt() {
   head.writeUInt32LE(header.length + pad, 4);
   const bin = Buffer.concat([head, header, Buffer.alloc(pad, 0x20), ...blobs]);
   fs.writeFileSync(path.join(outDir, name + ".bin"), bin);
-  console.log(`sculpt of ${I.length / 3} triangles -> ${report.join(", ")}, colours on the vertices -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB`);
+  writeTexture();
+  console.log(`sculpt of ${I.length / 3} triangles -> ${report.join(", ")} -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
 }
