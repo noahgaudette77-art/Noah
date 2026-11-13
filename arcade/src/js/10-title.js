@@ -8,7 +8,7 @@ class TitleScene extends Scene3D {
     const s = this.scene;
     this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.9 });
+    this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.08 });
     this.sun.position.set(0, 18, -360);
     s.add(this.sun);
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
@@ -19,6 +19,7 @@ class TitleScene extends Scene3D {
     for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff }); mid.position.x = sd * mw * 0.95; s.add(mid); }
     this.bursts = new Bursts(s);
     this.city = new TitleCity(this);
+    this.life = new TitleLife(this);
     // something happens in the sky or the streets every 3 to 6 seconds
     this.director = new EventDirector(this, { min: 3, max: 6 });
     this.skyFlash = 0;
@@ -30,7 +31,7 @@ class TitleScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.15, bloom: 1, rays: { pos: this.sun.position, strength: 0.9, radius: 0.42 } };
+    s.userData.post = { exposure: 1.12, bloom: 0.9, contrast: 1.1, saturation: 1.16, rays: { pos: this.sun.position, strength: 0.7, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.7 };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }
@@ -44,9 +45,10 @@ class TitleScene extends Scene3D {
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
     this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
-    this.sun.userData.disc.material.uniforms.uI.value = 1.9 * (1 + 0.08 * Math.sin(this.t * 1.2)); // the sun breathes
+    this.sun.userData.disc.material.uniforms.uI.value = 1.08 * (1 + 0.06 * Math.sin(this.t * 1.2)); // the sun breathes
     this.bursts.update(dt);
     this.city.update(dt);
+    this.life.update(dt);
     this.director.update(dt, false);
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;

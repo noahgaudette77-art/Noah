@@ -57,7 +57,8 @@ class TitleCity {
     // nearer the middle they stay low, so the logo keeps clear sky behind it
     [[-0.5, -150, 30], [-0.74, -168, 40], [-1.02, -146, 50], [0.52, -152, 32], [0.78, -170, 42], [1.04, -148, 52], [-1.5, -190, 96], [1.55, -192, 104], [-2.1, -200, 130], [2.15, -205, 120]]
       .forEach(([f, z, h], i) => tower(f * hw(z), z, clamp(hw(z) * 0.2, 9, 26), tall ? h : h * 1.5, i));
-    s.add(new THREE.Mesh(tb.build("color"), glow));
+    this.towers = new THREE.Mesh(tb.build("color"), cityFacadeMaterial({ lit: 0.36 }));
+    s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
     // ad panels (not looping) and blade signs
     { const pos = [], uv = [], az = [], seed = [];
@@ -110,8 +111,8 @@ class TitleCity {
       lane(9.9, -195, 1, 16, 11, 0.4, 0x000000); lane(9.9, -197, -1, 16, 10, 0.4, 0x000000);
       // sky lanes, placed in the open sky above the logo and in the gap beneath it
       lane(55, -96, 1, 12, 30, 0.7, 0x35efff); lane(61, -100, -1, 12, 26, 0.7, 0x35efff);
-      lane(94, -210, -1, 16, 22, 0.9, 0xff3ad4); lane(102, -214, 1, 16, 20, 0.9, 0xff3ad4);
-      lane(138, -330, 1, 18, 15, 1.2, 0x5dffb0); lane(146, -334, -1, 18, 13, 1.2, 0x5dffb0);
+      lane(112, -210, -1, 16, 22, 0.9, 0xff3ad4); lane(120, -214, 1, 16, 20, 0.9, 0xff3ad4);
+      lane(170, -330, 1, 18, 15, 1.2, 0x5dffb0); lane(178, -334, -1, 18, 13, 1.2, 0x5dffb0);
       lane(25, -150, 1, 10, 24, 0.6, 0xffd23d); lane(28.5, -154, -1, 10, 21, 0.6, 0xffd23d);
       const ge = new THREE.BufferGeometry();
       ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));

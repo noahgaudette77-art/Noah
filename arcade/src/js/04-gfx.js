@@ -28,13 +28,9 @@ const GFX = {
   // to hold the screen's refresh rate; Low, Med and High hold one level.
   applySettings() {
     const s = Store.settings;
-    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true }, s.fx || {});
+    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
     this.opt = s.fx;
     this.calm = !!s.calm;
-    const tier = { low: 1, med: 4, high: this.Q.length - 1 }[s.quality];
-    if (tier !== undefined) { this.locked = this.tierLock = true; this.setQ(tier, true); }
-    else if (this.tierLock) { this.locked = this.tierLock = false; this.settle = 1; }
-    if (this.pipe) this.pipe.glowFresh = false;
   },
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
@@ -56,6 +52,8 @@ const GFX = {
       return;
     }
     const r = this.renderer;
+    // every texture is filtered as finely as the graphics chip can, so signs, floors and walls stay sharp at a slant
+    try { THREE.Texture.DEFAULT_ANISOTROPY = Math.max(1, Math.min(16, r.capabilities.getMaxAnisotropy())); } catch (e) { /* default */ }
     const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
@@ -64,35 +62,14 @@ const GFX = {
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
-  // HD (default) renders sharp and anti-aliased; RETRO and CHUNKY render low-res pixels.
-  get look() {
-    const p = Store.settings.pixel;
-    return p === "retro" || p === "chunky" ? p : "hd";
-  },
-  // A scene whose picture is one close subject can ask for more pixels than a phone
-  // normally gets (post.pr). Only the top level gives them, in two steps (up) that
-  // watch() climbs and drops like levels: a phone that can't hold them loses nothing.
-  up: 0,
-  morePR() {
-    const cur = Scenes.cur, want = cur && cur.scene && cur.scene.userData.post && cur.scene.userData.post.pr;
-    if (!want || this.look !== "hd") return 0;
-    const lim = Math.min(window.devicePixelRatio || 1, 1900 / Math.max(this.w, this.h));
-    return Math.max(0, Math.min(want, lim) - Math.min(this.small ? 1.5 : 2, lim));
-  },
+  look: "hd",
+  // The scene is drawn at the screen's own pixels (its full device pixel ratio), limited
+  // only by the largest texture the graphics chip can make.
   scenePR() {
-    const dpr = window.devicePixelRatio || 1;
-    const look = this.look;
-    if (look === "retro") return clamp(680 / Math.max(this.w, this.h), 0.12, dpr);
-    if (look === "chunky") return clamp(380 / Math.max(this.w, this.h), 0.12, dpr);
-    let base = Math.min(dpr, this.small ? 1.5 : 2, 1900 / Math.max(this.w, this.h));
-    if (this.qi === this.Q.length - 1) base += this.morePR() * (this.locked ? 1 : this.up / 2);
-    return Math.max(0.35, base * this.dyn);
+    const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
+    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim));
   },
-  outPR() {
-    // HD: the final image is drawn at the scene resolution (no upscale blur from post).
-    // Retro looks: draw the glass at a finer resolution so scanlines stay crisp.
-    return this.look === "hd" ? this.scenePR() : Math.min(window.devicePixelRatio || 1, 1.5);
-  },
+  outPR() { return this.scenePR(); },
   resize() {
     this.w = window.innerWidth;
     this.h = window.innerHeight;
@@ -101,7 +78,7 @@ const GFX = {
       this.renderer.setSize(this.w, this.h, false);
       const pr = (this._pr = this.scenePR());
       this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
-      $("#gl").classList.toggle("post", this.look === "hd");
+      $("#gl").classList.add("post");
     }
     Scenes.resize();
   },
@@ -127,11 +104,12 @@ const GFX = {
     camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
-    if (mirrors) for (const m of mirrors) { if (this.lite || !this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (mirrors) for (const m of mirrors) { if (!this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
-      ab: this.opt.ca ? Math.max(this.ab, this.Q[this.qi].fx && !this.calm ? 0.9 : 0) : 0, // a light fringe always (top levels), more on a hit
+      ab: this.opt.ca && this.ab > 0.05 ? this.ab : 0, // the fringe of a hit (the lens's own, toward the corners, is the pipeline's)
+      dt: dt,
       flash: this.flashAmt,
       hit: this.hit,
       hitAmt: hitAmt,
@@ -139,7 +117,7 @@ const GFX = {
       feverCol: this.feverCol,
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
       punch: this.punch < 0.0006 || this.calm ? 0 : this.punch,
-      zoomBlur: this.lite || !this.opt.blur || this.calm ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
       opt: this.opt, calm: this.calm,
       heat: this.heat,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
@@ -231,13 +209,8 @@ const GFX = {
   // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
   // Each kind of scene remembers its level, so a light scene isn't stuck blurry
   // after a heavy one.
-  Q: [
-    { d: 0.3, lite: true, aa: false, bloom: 1, cheap: true },
-    { d: 0.36, lite: true, aa: false, bloom: 1, cheap: true }, { d: 0.44, lite: true, aa: false, bloom: 2, cheap: true }, { d: 0.52, lite: true, aa: false, bloom: 2 },
-    { d: 0.62, lite: true, aa: true, bloom: 3 }, { d: 0.74, lite: false, aa: true, bloom: 5 }, { d: 0.86, lite: false, aa: true, bloom: 5, fx: true },
-    { d: 1, lite: false, aa: true, bloom: 5, fx: true },
-  ],
-  qi: 7,
+  Q: [{ d: 1, lite: false, aa: true, bloom: 7, fx: true }], // one mode: maximum (the ladder of levels is gone)
+  qi: 0,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
   mem: {},
   lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
@@ -359,11 +332,6 @@ const GFX = {
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
-      if (!scene.userData.cheap) {
-        this.cheapen(scene, true); // compile the Lambert twins too
-        r.render(scene, s.camera);
-        this.cheapen(scene, false);
-      }
     } catch (e) { /* best effort */ }
     s.camera.layers.mask = mask;
     r.setRenderTarget(null);
@@ -371,86 +339,13 @@ const GFX = {
     extra.forEach((o) => scene.remove(o));
     s.warmExtra = null;
   },
-  sceneChanged(old, s) {
-    if (this.pipe) this.pipe.glowFresh = false; // never reuse the old scene's glow
+  sceneChanged() {
     this.speedBlur = this.punch = 0;
     this.rip.t = this.rip.dur;
     this.gl.t = this.gl.dur;
-    this._n = this._sum = this._good = 0;
-    this._lo = [1, 1, 1];
-    this.probed = false;
-    this.settle = 1; // a new scene's first frames compile shaders and upload textures
-    if (this.locked || !this.ok) return;
-    const name = (o) => (o && o.constructor ? o.constructor.name : "");
-    // (a remembered level past the top is the top with extra resolution: see morePR)
-    const top = this.Q.length - 1;
-    if (old) { this.mem[name(old)] = this.qi + (this.qi === top ? this.up : 0); this.saveMem(); }
-    const m = s ? this.mem[name(s)] : undefined;
-    if (m !== undefined) this.setQ(Math.min(m, top));
-    this.up = this.qi === top && this.morePR() > 0 ? (m !== undefined ? clamp(m - top, 0, 2) : 2) : 0;
   },
-  // Each scene's settled quality level is remembered on this device between visits
-  // (the key's "2": levels saved before the 8-level ladder would mean the wrong ones),
-  // so a new session starts where it should instead of stuttering while it adapts
-  // (it still probes upward). The refresh rate is measured afresh each session.
-  loadMem() {
-    try { const m = JSON.parse(localStorage.getItem("inr-arcade-gfx2") || "{}"); if (m && m.mem) this.mem = m.mem; } catch (e) { /* no storage */ }
-  },
-  saveMem(cur) {
-    if (this.locked) return;
-    if (cur && cur.constructor) this.mem[cur.constructor.name] = this.qi + (this.qi === this.Q.length - 1 ? this.up : 0);
-    try { localStorage.setItem("inr-arcade-gfx2", JSON.stringify({ mem: this.mem })); } catch (e) { /* no storage */ }
-  },
-  watch(realDt) {
-    if (!this.ok || !this.pipe) return;
-    // the screen's interval: the third-fastest frame of each window, snapped to a
-    // standard rate, and only ever lowered (a slow GPU never shows fast frames)
-    const lo = this._lo || (this._lo = [1, 1, 1]);
-    if (realDt < lo[2]) { lo[2] = realDt; lo.sort((a, b) => a - b); }
-    this._n = (this._n || 0) + 1;
-    this._sum = (this._sum || 0) + realDt;
-    // a window is 40 frames, or half a second when frames are slow, so a device far
-    // too weak for the current level finds its level in a second or two, not ten
-    if (this._n < 40 && !(this._sum >= 0.5 && this._n >= 6)) return;
-    const avg = this._sum / this._n, third = lo[2];
-    this._n = this._sum = 0;
-    this._lo = [1, 1, 1];
-    if (third > 0.003) {
-      const hz = snapHz(third);
-      // aim at the screen's rate, up to 120 fps (beyond that, sharpness wins)
-      if (1 / Math.min(hz, 120) < this.vsync * 0.97) this.vsync = 1 / Math.min(hz, 120);
-    }
-    this.fpsAvg = avg;
-    if (this.locked) return;
-    if (this.t < 1 || this.settle > 0) { this.settle = Math.max(0, (this.settle || 0) - 1); return; }
-    const v = this.vsync;
-    const capped = third > 0.028 && avg < 0.0365 && v < 0.025;
-    if (avg > v * 1.15 && !capped) {
-      this._good = 0;
-      // a failed probe doubles the wait before the next (from 15 s: doubling a wait
-      // that was never set left it at zero, and the probes kept coming)
-      this.backoff = this.probed ? Math.min(240, (this.backoff || 15) * 2) : this.backoff || 15;
-      this.probed = false;
-      if (this.up > 0) { // extra resolution is the first thing to go; the level stays
-        this.up--;
-        this.upT = this.t + this.backoff;
-        this.resize();
-        return;
-      }
-      this.ceil = this.qi;
-      this.ceilT = this.t + this.backoff;
-      // far off: several steps at once. The big jumps need even the window's fast
-      // frames to be slow, so one hitch can't throw away several levels.
-      const slow = third / v;
-      if (this.qi > 0) this.setQ(this.qi - (slow > 4.5 ? 4 : slow > 3 ? 3 : avg > v * 2.2 ? 2 : 1));
-    } else if (avg < v * 1.04) {
-      if (++this._good < 4) return;
-      this._good = 0;
-      const top = this.t < (this.ceilT || 0) ? this.ceil - 1 : this.Q.length - 1;
-      if (this.qi < top) { this.setQ(this.qi + 1); this.probed = true; }
-      else if (this.qi === this.Q.length - 1 && this.up < 2 && this.t > (this.upT || 0) && this.morePR() > 0) { this.up++; this.probed = true; this.resize(); }
-    } else this._good = 0;
-  },
+  loadMem() {}, saveMem() {},
+  watch() {}, // (nothing adapts: there is one mode)
 };
 
 // The standard refresh rate nearest a frame interval (seconds).
@@ -475,399 +370,6 @@ const Scenes = {
     if (GFX.ok && s.scene && s.camera) GFX.render(s.scene, s.camera, realDt);
   },
 };
-
-// The render pipeline: scene → HDR target → bloom → final pass with exposure, ACES
-// filmic tone mapping, colour grading, FXAA (HD) or pixel snap (retro), and the
-// optional CRT glass (curvature, scanlines, phosphor mask, rounded tube and bezel).
-// Tuned for phones: the bright pass goes straight to quarter resolution, sun rays run
-// at an eighth, and all the glow (five bloom levels plus rays) is gathered into one
-// quarter-res texture, so the full-screen final pass reads the scene and one glow
-// sample. Colour maths runs at half precision where the GPU has it (UVs stay high).
-function makePipeline(renderer, hdr) {
-  const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
-  // Depth comes with stencil so it is 24 bits deep: this three.js gives a depth-only
-  // target 16 bits, which stripes any decal a few millimetres off a wall (screens, signs).
-  const rt = (depth) => new THREE.WebGLRenderTarget(2, 2, {
-    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type, depthBuffer: depth, stencilBuffer: depth,
-  });
-  const sceneRT = rt(true);
-  const brightRT = rt(false); // quarter res
-  const raysRT = rt(false); // eighth res
-  const glowRT = rt(false); // quarter res: every bloom level plus the rays
-  const streakA = rt(false), streakB = rt(false); // eighth res: anamorphic streaks
-  const lightV = new THREE.Vector3();
-  const LEVELS = 5;
-  const MIRROR = 0.4; // reflections render at this fraction of the scene size
-  const mips = Array.from({ length: LEVELS }, () => ({ a: rt(false), b: rt(false), w: 2, h: 2 }));
-  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  const quadScene = new THREE.Scene();
-  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
-  quad.frustumCulled = false;
-  quad.matrixAutoUpdate = false;
-  quadScene.add(quad);
-  quadScene.autoUpdate = false; // the full-screen quad never moves
-  quadScene.updateMatrixWorld();
-  const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
-  const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
-  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "mediump" });
-  // Bright pass + downsample: four bilinear taps cover the 4x4 block under each
-  // quarter-res pixel; each 2x2 average is thresholded on its own, so thin neon
-  // lines keep their glow.
-  const bright = mat({ tDiffuse: { value: null }, uThreshold: { value: 1 }, uKnee: { value: 0.5 }, uPx: { value: new THREE.Vector2() } }, `
-    uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee; uniform HP vec2 uPx; varying HP vec2 vUv;
-    vec3 bright(vec3 c){
-      float l = max(c.r, max(c.g, c.b));
-      float soft = clamp(l - uThreshold + uKnee, 0.0, 2.0 * uKnee);
-      soft = soft * soft / (4.0 * uKnee + 1e-4);
-      return c * (max(soft, l - uThreshold) / max(l, 1e-4));
-    }
-    void main(){
-      vec3 c = bright(texture2D(tDiffuse, vUv - uPx).rgb) + bright(texture2D(tDiffuse, vUv + uPx).rgb)
-        + bright(texture2D(tDiffuse, vUv + vec2(uPx.x, -uPx.y)).rgb) + bright(texture2D(tDiffuse, vUv + vec2(-uPx.x, uPx.y)).rgb);
-      gl_FragColor = vec4(min(c * 0.25, vec3(24.0)), 1.0);
-    }`);
-  const blur = mat({ tDiffuse: { value: null }, uDir: { value: new THREE.Vector2() } }, `
-    uniform sampler2D tDiffuse; uniform HP vec2 uDir; varying HP vec2 vUv;
-    void main(){
-      vec3 c = texture2D(tDiffuse, vUv).rgb * 0.2270270;
-      c += texture2D(tDiffuse, vUv + uDir * 1.3846154).rgb * 0.3162162;
-      c += texture2D(tDiffuse, vUv - uDir * 1.3846154).rgb * 0.3162162;
-      c += texture2D(tDiffuse, vUv + uDir * 3.2307692).rgb * 0.0702703;
-      c += texture2D(tDiffuse, vUv - uDir * 3.2307692).rgb * 0.0702703;
-      gl_FragColor = vec4(c, 1.0);
-    }`);
-  // God rays: smear the bright pass toward a light (the sun), only near it.
-  const rays = mat({ tDiffuse: { value: null }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uRadius: { value: 0.35 }, uAspect: { value: 1 } }, `
-    uniform sampler2D tDiffuse; uniform HP vec2 uLight; uniform float uRadius; uniform float uAspect; varying HP vec2 vUv;
-    void main(){
-      HP vec2 delta = (vUv - uLight) / 32.0 * 0.92;
-      HP vec2 uv = vUv; float w = 1.0; vec3 acc = vec3(0.0);
-      for (int i = 0; i < 32; i++) {
-        uv -= delta;
-        HP vec2 d = (uv - uLight) * vec2(uAspect, 1.0);
-        acc += texture2D(tDiffuse, uv).rgb * w * smoothstep(uRadius, uRadius * 0.25, length(d));
-        w *= 0.955;
-      }
-      gl_FragColor = vec4(acc / 32.0, 1.0);
-    }`);
-  // All the glow in one quarter-res texture.
-  // Lens effects (top quality levels): tStreak is the bloom smeared sideways, the
-  // streak an anamorphic lens draws through every light; uFlare adds the ghosts a
-  // sun throws across the frame, as bright as the sun is on screen.
-  const glow = mat({ tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, tB4: { value: null }, tRays: { value: null }, uRays: { value: 0 }, uBloom: { value: 1 },
-    tStreak: { value: null }, uStreak: { value: 0 }, uFlare: { value: 0 }, uLight: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } }, `
-    uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform sampler2D tB4; uniform sampler2D tRays; uniform sampler2D tStreak;
-    uniform float uRays; uniform float uBloom; uniform float uStreak; uniform float uFlare; uniform float uAspect; uniform HP vec2 uLight; varying HP vec2 vUv;
-    float disc(HP vec2 c, float r){ HP vec2 d = (vUv - c) * vec2(uAspect, 1.0); return smoothstep(r, r * 0.55, length(d)); }
-    void main(){
-      vec3 g = (texture2D(tB0, vUv).rgb + texture2D(tB1, vUv).rgb * 0.75 + texture2D(tB2, vUv).rgb * 0.55
-        + texture2D(tB3, vUv).rgb * 0.4 + texture2D(tB4, vUv).rgb * 0.3) * (uBloom * 0.2);
-      if (uRays > 0.0) g += texture2D(tRays, vUv).rgb * uRays;
-      if (uStreak > 0.0) {
-        vec3 st = texture2D(tStreak, vUv).rgb;
-        g += st * vec3(0.72, 0.84, 1.0) * (uStreak * (0.25 + 0.75 * smoothstep(0.1, 1.2, max(st.r, max(st.g, st.b)))));
-      }
-      if (uFlare > 0.0) {
-        vec3 sun = texture2D(tB2, clamp(uLight, 0.0, 1.0)).rgb;
-        float vis = uFlare * min(1.0, max(sun.r, max(sun.g, sun.b)) * 0.8);
-        if (vis > 0.01) {
-          HP vec2 ax = vec2(0.5) - uLight;
-          g += (vec3(0.2, 0.75, 1.0) * disc(uLight + ax * 0.55, 0.035) + vec3(1.0, 0.3, 0.75) * disc(uLight + ax * 1.3, 0.07)
-            + vec3(1.0, 0.65, 0.25) * disc(uLight + ax * 1.75, 0.12) + vec3(0.45, 0.4, 1.0) * disc(uLight + ax * 2.2, 0.05)) * (0.07 * vis);
-        }
-      }
-      gl_FragColor = vec4(g, 1.0);
-    }`);
-  const final = mat({
-    tScene: { value: null }, tGlow: { value: null },
-    uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
-    uAberr: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 }, uSharp: { value: 0 },
-    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 }, uSnap: { value: 0 },
-    uFXAA: { value: 1 }, uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
-    uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
-    uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 },
-    uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
-    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
-    uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
-    uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
-  }, `
-    uniform sampler2D tScene; uniform sampler2D tGlow;
-    uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
-    uniform float uAberr; uniform float uFlash; uniform float uExposure; uniform float uFlicker; uniform float uSharp;
-    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uSnap;
-    uniform float uFXAA; uniform float uScan; uniform float uCurve; uniform vec3 uTint;
-    uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
-    uniform vec3 uHitCol; uniform vec3 uHit;
-    uniform vec3 uFeverCol; uniform HP vec2 uFever;
-    uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
-    varying HP vec2 vUv;
-    vec3 tex(HP vec2 uv){ if (uSnap > 0.5) uv = (floor(uv * uSceneRes) + 0.5) / uSceneRes; return texture2D(tScene, uv).rgb; }
-    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
-    vec3 fxaa(HP vec2 uv){
-      HP vec2 px = 1.0 / uSceneRes;
-      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
-      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
-      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
-      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
-      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
-      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
-      HP vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
-      HP float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
-      HP float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
-      dir = clamp(dir * rcp, -8.0, 8.0) * px;
-      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
-      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
-      float lB = luma(b);
-      return (lB < lMin || lB > lMax) ? a : b;
-    }
-    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
-    void main(){
-      HP vec2 uv = vUv;
-      if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
-      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
-      // Where the picture is read from: an impact zooms it toward you for a moment,
-      // and a shockwave bends it in a ring that spreads from the blast.
-      HP vec2 suv = uv;
-      if (uZoom.x > 0.0) suv = 0.5 + (suv - 0.5) * (1.0 - uZoom.x);
-      if (uRip.w > 0.0) {
-        HP vec2 asp = vec2(uRes.x / uRes.y, 1.0);
-        HP vec2 rd = (suv - uRip.xy) * asp;
-        HP float ring = (length(rd) - uRip.z) * 14.0;
-        suv += normalize(rd + 1e-5) / asp * (ring * exp(-ring * ring) * uRip.w * 0.045);
-      }
-      if (uGlitch > 0.0) {
-        // a wrong answer tears the picture: bands of it slip sideways for a moment
-        HP float gb = floor(vUv.y * 26.0) + floor(uT * 12.0) * 7.0;
-        HP float gn = fract(sin(gb * 12.9898) * 43758.5453);
-        suv.x += (gn - 0.5) * 0.09 * uGlitch * step(0.6, fract(gn * 7.31));
-      }
-      if (uHeat.w > 0.0) {
-        // heat haze: hot air behind an exhaust makes the picture swim
-        HP vec2 hd = (suv - uHeat.xy) * vec2(uRes.x / uRes.y, 1.0) / uHeat.z;
-        HP float hm = exp(-dot(hd, hd)) * uHeat.w;
-        suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
-      }
-      vec3 col = uFXAA > 0.5 ? fxaa(suv) : tex(suv);
-      if (uSharp > 0.0) {
-        // a scene that asks to be sharp: whatever a pixel has over its four neighbours is laid back on top of it
-        HP vec2 sp = 1.0 / uSceneRes;
-        vec3 nb = (tex(suv + vec2(sp.x, 0.0)) + tex(suv - vec2(sp.x, 0.0)) + tex(suv + vec2(0.0, sp.y)) + tex(suv - vec2(0.0, sp.y))) * 0.25;
-        col = max(col + clamp(col - nb, -0.4, 0.4) * uSharp, 0.0);
-      }
-      if (uZoom.y > 0.0) {
-        // speed: the picture streaks outward from the centre
-        HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045);
-        col = (col + tex(suv + zd) + tex(suv + zd * 2.0) + tex(suv + zd * 3.0)) * 0.25;
-      }
-      if (uAberr > 0.05) {
-        // colour fringing, only while a hit pulse lasts (two extra samples)
-        HP vec2 cd = suv - 0.5;
-        HP vec2 dv = normalize(cd + 1e-5) * ((uAberr + 1.6 * dot(cd, cd)) / uRes.x);
-        col.r = tex(suv + dv).r; col.b = tex(suv - dv).b;
-      }
-      col += texture2D(tGlow, suv).rgb * uGlowK;
-      col = min(col * uExposure * uTint, vec3(64.0)); // keeps the tone curve inside half-float range
-      col = aces(col);
-      float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-      col = mix(col, col * mix(uShadow, uHigh, smoothstep(0.05, 0.75, lum)) * 1.25, uSplit);
-      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
-      col = mix(vec3(l), col, uSat);
-      col = clamp((col - 0.5) * uContrast + 0.5, 0.0, 1.0);
-      if (uHit.x > 0.002) {
-        // right/wrong flash: a coloured vignette, strongest at the edges
-        float e = smoothstep(0.3, 1.0, length(vUv - 0.5) * 1.4142);
-        col = mix(col, uHitCol, uHit.x * mix(uHit.y, uHit.z, e));
-      }
-      if (uFever.x > 0.0) {
-        // streak aura: rays of light sweeping round the screen edge, pulsing
-        HP vec2 fc = vUv - 0.5;
-        float fr = length(fc) * 1.4142;
-        HP float fa = atan(fc.y, fc.x);
-        float rays = max(sin(fa * 17.0 + uFever.y * 2.1) * sin(fa * 29.0 - uFever.y * 3.3) + 0.6 * sin(fa * 53.0 + uFever.y * 5.9), 0.0);
-        float edge = smoothstep(0.4, 1.02, fr);
-        col += uFeverCol * uFever.x * edge * (0.24 + 0.85 * rays * rays) * (0.82 + 0.18 * sin(uFever.y * 9.0));
-      }
-      if (uGlass > 0.5) {
-        float s = abs(fract(uv.y * uRes.y / 3.0) * 2.0 - 1.0);
-        col *= 1.0 - uScan * (1.0 - s);
-        HP float mx = mod(gl_FragCoord.x, 3.0);
-        vec3 mask = mx < 1.0 ? vec3(1.0, 0.85, 0.85) : (mx < 2.0 ? vec3(0.85, 1.0, 0.85) : vec3(0.85, 0.85, 1.0));
-        col *= mix(vec3(1.0), mask, uScan * 1.4) * uFlicker;
-      }
-      HP vec2 v = uv * (1.0 - uv.yx);
-      col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
-      HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
-      col += (n - 0.5) * 0.018 * uGrain + uFlash;
-      if (uGlass > 0.5) {
-        // the tube (drawn here rather than as page overlays, which phones would have
-        // to blend over every frame): rounded corners, a dark rim and inner shadow,
-        // and a sliver of glare
-        HP vec2 q = abs(vUv - 0.5) * uRes - (uRes * 0.5 - uBezel.x);
-        HP float d = (length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - uBezel.x) / uBezel.y; // CSS px, < 0 inside
-        col *= 1.0 - 0.75 * (1.0 - smoothstep(8.0, 36.0, -d)) - 0.15 * step(-d, 2.0);
-        HP float t = 0.5 + (0.342 * uRes.x * (vUv.x - 0.5) + 0.94 * uRes.y * (0.5 - vUv.y)) / (0.342 * uRes.x + 0.94 * uRes.y);
-        float g = t < 0.22 ? mix(0.07, 0.015, t / 0.22) : 0.015 * clamp(1.0 - (t - 0.22) / 0.18, 0.0, 1.0);
-        col += (1.0 - col) * g;
-        col = mix(vec3(0.0118, 0.0078, 0.0235), col, clamp(0.5 - d * uBezel.y, 0.0, 1.0));
-      }
-      gl_FragColor = vec4(col, 1.0);
-    }`);
-  const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
-  const black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat);
-  black.needsUpdate = true;
-  let sw = 2, sh = 2;
-  return {
-    hdr,
-    mirrorSize: { w: 2, h: 2 },
-    resize(w, h) {
-      sw = w; sh = h;
-      sceneRT.setSize(w, h);
-      brightRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
-      glowRT.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2));
-      raysRT.setSize(Math.max(2, w >> 3), Math.max(2, h >> 3));
-      let mw = w >> 1, mh = h >> 1;
-      for (const m of mips) {
-        mw = Math.max(2, mw >> 1);
-        mh = Math.max(2, mh >> 1);
-        m.w = mw; m.h = mh;
-        m.a.setSize(mw, mh);
-        m.b.setSize(mw, mh);
-      }
-      streakA.setSize(mips[1].w, mips[1].h);
-      streakB.setSize(mips[1].w, mips[1].h);
-      this.mirrorSize.w = Math.max(2, Math.round(w * MIRROR));
-      this.mirrorSize.h = Math.max(2, Math.round(h * MIRROR));
-      final.uniforms.uSceneRes.value.set(w, h);
-      this.glowFresh = false;
-    },
-    lastCalls: 0, lastTris: 0,
-    render(scene, camera, o) {
-      renderer.setRenderTarget(sceneRT);
-      renderer.render(scene, camera);
-      this.lastCalls = renderer.info.render.calls;
-      this.lastTris = renderer.info.render.triangles; // (the scene's own, for the readout)
-      if (GFX.probe) GFX.probe("scene");
-      const p = o.post;
-      // the two weakest levels refresh the glow every other frame and reuse it in
-      // between (a one-frame lag in the glow doesn't show at these frame rates)
-      this.frameNo = (this.frameNo || 0) + 1;
-      const reuseGlow = o.cheap && this.glowLevels === Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)) && (this.frameNo & 1) === 1 && this.glowFresh;
-      // bloom: soft-threshold bright pass straight to quarter res, then a blurred mip chain
-      bright.uniforms.tDiffuse.value = sceneRT.texture;
-      bright.uniforms.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
-      bright.uniforms.uKnee.value = 0.45;
-      bright.uniforms.uPx.value.set(1 / sw, 1 / sh);
-      const levels = Math.max(1, Math.min(LEVELS, o.bloom || LEVELS)); // weak devices: fewer blur levels
-      const noBloom = !o.opt.bloom, wantRays = !!(p.rays && p.rays.pos && !o.lite && o.opt.beams);
-      if (!reuseGlow && (!noBloom || wantRays)) {
-        pass(bright, brightRT);
-        if (GFX.probe) GFX.probe("bright");
-        let src = brightRT;
-        for (let i = 0; i < (noBloom ? 0 : levels); i++) {
-          const m = mips[i];
-          blur.uniforms.tDiffuse.value = src.texture;
-          blur.uniforms.uDir.value.set(1 / m.w, 0);
-          pass(blur, m.b);
-          blur.uniforms.tDiffuse.value = m.b.texture;
-          blur.uniforms.uDir.value.set(0, 1 / m.h);
-          pass(blur, m.a);
-          src = m.a;
-        }
-        if (GFX.probe) GFX.probe("bloom");
-        if (o.fx && levels > 1 && o.opt.lens && !noBloom) {
-          // anamorphic streaks: the eighth-res bloom, smeared sideways in two widening passes
-          const m = mips[1];
-          blur.uniforms.tDiffuse.value = m.a.texture;
-          blur.uniforms.uDir.value.set(2.2 / m.w, 0);
-          pass(blur, streakB);
-          blur.uniforms.tDiffuse.value = streakB.texture;
-          blur.uniforms.uDir.value.set(5.5 / m.w, 0);
-          pass(blur, streakA);
-          if (GFX.probe) GFX.probe("streak");
-        }
-      }
-      this.glowLevels = levels;
-      this.glowFresh = true;
-      // god rays toward a light the scene names (e.g. the sun), when it's on screen
-      let raysOn = 0;
-      if (wantRays) {
-        lightV.copy(p.rays.pos).project(camera);
-        if (lightV.z < 1 && Math.abs(lightV.x) < 1.6 && Math.abs(lightV.y) < 1.6) {
-          rays.uniforms.tDiffuse.value = brightRT.texture;
-          rays.uniforms.uLight.value.set(lightV.x * 0.5 + 0.5, lightV.y * 0.5 + 0.5);
-          rays.uniforms.uRadius.value = p.rays.radius || 0.35;
-          rays.uniforms.uAspect.value = sw / sh;
-          pass(rays, raysRT);
-          raysOn = p.rays.strength !== undefined ? p.rays.strength : 1;
-          if (GFX.probe) GFX.probe("rays");
-        }
-      }
-      const bloomK = noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1;
-      const u = final.uniforms;
-      if (noBloom && !raysOn) {
-        u.tGlow.value = black;
-        u.uGlowK.value = 0;
-      } else if (levels === 1 && !raysOn) {
-        // a single glow level and no rays: the final pass reads the blur directly
-        u.tGlow.value = mips[0].a.texture;
-        u.uGlowK.value = bloomK * 0.2;
-      } else {
-        const g = glow.uniforms;
-        g.tB0.value = mips[0].a.texture;
-        g.tB1.value = levels > 1 ? mips[1].a.texture : black;
-        g.tB2.value = levels > 2 ? mips[2].a.texture : black;
-        g.tB3.value = levels > 3 ? mips[3].a.texture : black;
-        g.tB4.value = levels > 4 ? mips[4].a.texture : black;
-        g.tRays.value = raysRT.texture;
-        g.uRays.value = raysOn;
-        g.uBloom.value = bloomK;
-        g.tStreak.value = streakA.texture;
-        g.uStreak.value = o.fx && levels > 1 && o.opt.lens && !noBloom ? (p.streak !== undefined ? p.streak : 1) * 0.65 : 0;
-        g.uFlare.value = o.fx && raysOn && o.opt.lens ? (p.rays.flare !== undefined ? p.rays.flare : 1) : 0;
-        if (raysOn) g.uLight.value.copy(rays.uniforms.uLight.value);
-        g.uAspect.value = sw / sh;
-        if (!reuseGlow) pass(glow, glowRT);
-        if (GFX.probe) GFX.probe("glow");
-        u.tGlow.value = glowRT.texture;
-        u.uGlowK.value = 1;
-      }
-      u.tScene.value = sceneRT.texture;
-      u.uSplit.value = p.split !== undefined ? p.split : 0.12;
-      const cw = renderer.domElement.width, ch = renderer.domElement.height;
-      u.uRes.value.set(cw, ch);
-      u.uNoise.value.set(Math.random() * 97, Math.random() * 97);
-      u.uFlicker.value = o.calm || !o.opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
-      u.uGrain.value = o.opt.grain ? 1 : 0;
-      u.uAberr.value = p.crisp && o.ab <= 0.9 ? 0 : o.ab; // (a crisp scene keeps the fringe for hits only)
-      u.uSharp.value = p.sharpen && !o.cheap ? p.sharpen : 0;
-      u.uFlash.value = o.flash;
-      u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
-      u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
-      u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
-      u.uFever.value.set(o.fever, o.t % 628.3185);
-      u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
-      u.uZoom.value.set(o.punch, o.zoomBlur);
-      u.uHeat.value.set(o.heat.x, o.heat.y, Math.max(0.01, o.heat.r), o.heat.a);
-      u.uT.value = o.t % 628.3185;
-      u.uGlitch.value = o.glitch;
-      u.uExposure.value = p.exposure !== undefined ? p.exposure : 1.2;
-      u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
-      u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
-      u.uVignette.value = o.opt.vignette ? (p.vignette !== undefined ? p.vignette : 1) : 0;
-      if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
-      const retro = o.look !== "hd";
-      u.uGlass.value = o.glass;
-      u.uSnap.value = retro ? 1 : 0;
-      u.uFXAA.value = retro || !o.aa ? 0 : 1;
-      u.uScan.value = o.opt.scan ? (retro ? 0.2 : p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)
-      u.uCurve.value = retro ? 0.11 : 0.06;
-      const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
-      u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);
-      pass(final, null);
-      if (GFX.probe) GFX.probe("final");
-    },
-  };
-}
 
 // Where the finger or mouse is, from -1 to 1, for camera parallax. Eases back to
 // the centre when a touch lifts.
@@ -1175,25 +677,27 @@ function makeMountains({ width = 460, z = -190, color = 0xa65fff, fill = 0x10052
   return grp;
 }
 
+// Text for the 3D scenes is drawn three times finer than asked and filtered down, so it
+// stays razor-sharp close up and at a slant (the sizes callers pass are unchanged).
+const TEXT_K = 3;
 function textCanvas(text, { w = 256, h = 64, size = 26, color = "#ffffff", bg = null, glow = null, font = "Press Start 2P", align = "center", lh = 1.35 } = {}) {
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
+  const c = document.createElement("canvas"), K = TEXT_K;
+  c.width = w * K;
+  c.height = h * K;
   const x = c.getContext("2d");
+  x.scale(K, K);
   if (bg) { x.fillStyle = bg; x.fillRect(0, 0, w, h); }
   x.font = `${size}px "${font}", "Courier New", monospace`;
   x.textAlign = align;
   x.textBaseline = "middle";
-  if (glow) { x.shadowColor = glow; x.shadowBlur = Math.max(4, size * 0.45); }
+  if (glow) { x.shadowColor = glow; x.shadowBlur = Math.max(4, size * 0.45) * K; }
   x.fillStyle = color;
   const lines = String(text).split("\n");
   lines.forEach((ln, i) => x.fillText(ln, align === "center" ? w / 2 : 10, h / 2 + (i - (lines.length - 1) / 2) * size * lh));
   return c;
 }
 function textTexture(text, opts) {
-  const t = new THREE.CanvasTexture(textCanvas(text, opts));
-  t.magFilter = THREE.NearestFilter;
-  return t;
+  return new THREE.CanvasTexture(textCanvas(text, opts));
 }
 function labelSprite(text, color, scale = 1.4) {
   const s = new THREE.Sprite(

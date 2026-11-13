@@ -630,3 +630,79 @@ function makeShootingStar() {
   };
   return l;
 }
+
+// A city tower's skin, for boxes merged by RacerBatch (position, normal, color). Dark
+// boxes become glass and steel: floors of windows lit at random (whole floors busy,
+// whole floors dark), a few on a slow twinkle, rooms brighter toward their ceilings,
+// unlit glass mirroring the sky, light from the street climbing the lower storeys.
+// Bright boxes (trim, lamps, signs) pass through as light. Where the windows would be
+// smaller than a pixel or two they melt into an even glow instead of shimmering.
+function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uWin: { value: neon(win, 2.3) }, uCool: { value: neon(cool, 1.8) }, uHot: { value: neon(hot, 1.9) },
+      uSky: { value: new THREE.Color(sky) }, uSkyB: { value: new THREE.Color(skyB) }, uZen: { value: new THREE.Color(zenith) }, uStreet: { value: neon(street, 0.4) }, uLit: { value: lit }, uCell: { value: new THREE.Vector2(cell[0], cell[1]) }, uK: { value: k } }),
+    vertexColors: true, extensions: { derivatives: true },
+    vertexShader: `varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = mat3(modelMatrix) * normal; vC = color; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
+      uniform float uTime; uniform vec3 uWin; uniform vec3 uCool; uniform vec3 uHot; uniform vec3 uSky; uniform vec3 uSkyB; uniform vec3 uZen; uniform vec3 uStreet; uniform float uLit; uniform vec2 uCell; uniform float uK;
+      varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
+      void main(){
+        vec3 col = vC;
+        if (max(vC.r, max(vC.g, vC.b)) < 0.3) {
+          vec3 n = normalize(vN), V = normalize(cameraPosition - vW), R = reflect(-V, n);
+          float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+          // the glass mirrors the sky: cyan off the towers to the left, magenta off those to the right
+          vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
+          col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.025 + 0.3 * fres);
+          if (abs(n.y) < 0.5) {
+            float along = abs(n.z) > abs(n.x) ? vW.x : vW.z;
+            vec2 q = vec2(along / uCell.x, vW.y / uCell.y), id = floor(q), f = fract(q);
+            float fine = 1.0 - smoothstep(0.22, 0.6, max(fwidth(q.x), fwidth(q.y)));
+            float h1 = hash13(vec3(id, 1.0)), h2 = hash13(vec3(id, 5.0)), h3 = hash13(vec3(id, 9.0));
+            float busy = step(0.6, hash13(vec3(id.y, floor(along / 17.0), 3.0)));
+            float on = step(h1, uLit * (0.25 + 1.6 * busy));
+            // structure: a pier every sixth bay, a spandrel under every window, two sashes to a bay
+            float pier = step(0.5, mod(id.x, 6.0));
+            float pane = smoothstep(0.1, 0.16, f.x) * smoothstep(0.9, 0.84, f.x) * smoothstep(0.22, 0.28, f.y) * smoothstep(0.9, 0.84, f.y) * pier;
+            pane *= 0.3 + 0.7 * smoothstep(0.0, 0.04, abs(f.x - 0.5));
+            vec3 wc = h2 < 0.5 ? uWin : (h2 < 0.72 ? uWin * vec3(1.0, 0.8, 0.55) : (h2 < 0.9 ? uCool : uHot));
+            float level = 0.22 + 0.78 * h3 * h3; // most rooms dim, a few bright
+            float room = 0.4 + 0.6 * smoothstep(0.22, 0.9, f.y); // brighter toward the ceiling lights
+            float tw = 0.85 + 0.15 * sin(uTime * (0.3 + h2 * 0.9) + h1 * 40.0);
+            vec3 glass = skyc * (0.1 + 0.6 * fres);
+            vec3 near = mix(glass, wc * level * room * tw, on), far = glass + uWin * (uLit * 0.16);
+            col = mix(col, mix(far, near, fine), mix(0.55, pane, fine));
+            col += skyc * 0.06 * smoothstep(0.55, 1.0, vnoise(vec3(along * 1.1, vW.y * 0.06, 2.0))) * fine; // rain running down the glass
+          }
+          col += uStreet * smoothstep(26.0, 0.0, vW.y) * (0.2 + 0.6 * fres);
+        }
+        col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
+
+// A lit skin for things that fly (blimps, helicopters, drones), merged by RacerBatch:
+// a key light, a glow from the city below, the sky caught at a glance. Bright boxes
+// (lamps, panels) pass through as light.
+function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xff3ad4, sky = 0x6a4cff, k = 1 } = {}) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uKey: { value: neon(key, 1.1) }, uKeyDir: { value: new THREE.Vector3(keyDir[0], keyDir[1], keyDir[2]).normalize() }, uUnder: { value: neon(under, 0.6) }, uSky: { value: new THREE.Color(sky) }, uK: { value: k } }),
+    vertexColors: true,
+    vertexShader: `varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = mat3(modelMatrix) * normal; vC = color; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `${GLSL_FOG_PARS} uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uUnder; uniform vec3 uSky; uniform float uK;
+      varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
+      void main(){
+        vec3 col = vC;
+        if (max(vC.r, max(vC.g, vC.b)) < 0.75) {
+          vec3 n = normalize(vN), V = normalize(cameraPosition - vW);
+          float fres = pow(1.0 - max(dot(n, V), 0.0), 2.6);
+          col = vC * (0.5 + uKey * max(dot(n, uKeyDir), 0.0) * 2.2 + uUnder * max(-n.y, 0.0) * 1.6) + uSky * fres * 0.5 + uKey * pow(max(dot(reflect(-V, n), uKeyDir), 0.0), 24.0) * 0.6;
+        }
+        col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.85);
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}

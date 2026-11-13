@@ -69,14 +69,12 @@ function showSettings() {
       ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
       ${row("Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Graphics", "HD is sharp and smooth; Retro and Chunky are pixel art", seg("pixel", [["hd", "HD"], ["retro", "RETRO"], ["chunky", "CHUNKY"]]))}
-      ${row("Quality", "Auto holds your screen's frame rate; High is every effect at full resolution", seg("quality", [["auto", "AUTO"], ["low", "LOW"], ["med", "MED"], ["high", "HIGH"]]))}
       ${row("Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl">Effects<small>Switch any of them off</small></div>
-        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("FPS counter", "Frame rate, its target, quality level (1-8), slowest frame, triangles and draw calls", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
@@ -111,10 +109,9 @@ function showSettings() {
         Store.settings[k] = v;
         Store.save();
         $$(`[data-k=${k}]`, el).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
-        if (k === "quality" || k === "calm") GFX.applySettings();
+        if (k === "calm") GFX.applySettings();
         if (k === "music") Sound.refreshMusic();
         if (k === "crt") { document.body.classList.toggle("crt-off", !v); GFX.setCRT(v); }
-        if (k === "pixel") GFX.resize();
         if (k === "fps") $("#fps").hidden = !v;
         if (k === "tilt" && v) Pointer.initTilt(true);
         if (k === "voice" && v) Sound.say("Announcer on");

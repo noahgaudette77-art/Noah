@@ -24,7 +24,7 @@ function boot() {
       fpsWorst = Math.max(fpsWorst, now - last);
       if (now - fpsT >= 500) {
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
-        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · TARGET ${Math.round(1 / GFX.vsync)} · Q${GFX.qi + 1}/${GFX.Q.length}<br>WORST ${Math.round(fpsWorst)} MS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}`;
+        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · WORST ${Math.round(fpsWorst)} MS<br>${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}${GFX.ok && GFX.pipe && GFX.pipe.samples ? " · MSAA " + GFX.pipe.samples : ""}`;
         fpsN = 0;
         fpsT = now;
         fpsWorst = 0;
