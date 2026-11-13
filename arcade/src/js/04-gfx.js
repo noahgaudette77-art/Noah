@@ -740,11 +740,12 @@ function makePipeline(renderer, hdr) {
       final.uniforms.uSceneRes.value.set(w, h);
       this.glowFresh = false;
     },
-    lastCalls: 0,
+    lastCalls: 0, lastTris: 0,
     render(scene, camera, o) {
       renderer.setRenderTarget(sceneRT);
       renderer.render(scene, camera);
       this.lastCalls = renderer.info.render.calls;
+      this.lastTris = renderer.info.render.triangles; // (the scene's own, for the readout)
       if (GFX.probe) GFX.probe("scene");
       const p = o.post;
       // the two weakest levels refresh the glow every other frame and reuse it in

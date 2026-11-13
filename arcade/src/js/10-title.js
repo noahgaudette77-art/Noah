@@ -81,6 +81,7 @@ function showTitle() {
     <p class="attract" data-tip></p>
     <div class="title-foot">TAP OR PRESS ENTER</div>
   </section>`);
+  $(".logo", el).addEventListener("pointerdown", () => Perf.tap()); // three taps on the title: the frame-rate readout, for this visit
   const tipEl = $("[data-tip]", el);
   let tipI = Math.floor(Math.random() * Math.max(1, ALL_TIPS.length));
   const showTip = () => {

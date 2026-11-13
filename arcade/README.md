@@ -100,10 +100,23 @@ lists all of them again.
   (studs first, the plates over its core last), smokes and sparks. Answer wrong,
   or run out of time, and it rears up with its claws charged (the warning), then
   strikes: bolts from both claws, a lunge and a swipe, or a roar and a blast, in
-  turn. In a wave's last three questions it rages: faster wings, red light, an
-  aura round the view. Clear the wave and it staggers, breaks up into its 106
-  parts and burns away. (The weakest quality levels draw a 3,900-triangle version
-  in a plain material. If the demon's model is missing or damaged, every answer
+  turn. In a wave's last three questions it rages, and the rage begins with a
+  moment of its own (wings thrown wide, jaw open, a roar, a burst of embers); then
+  faster wings, red light, arcs down its wings and an aura round the view. Clear
+  the wave and it staggers, breaks up into its 106 parts and burns away, a little
+  bigger each wave. Once a run, at the wave that takes you past your best score, it
+  makes a last stand instead: a longer roar with the aura across the whole view,
+  then two blasts and a wider break-up. Lose the run and it roars over the wreck.
+  Space has no floor for a shadow to fall on, so its depth is shaded onto it:
+  crevices and everything that faces down are darker (worked out from the model
+  when it loads), its rim lights are strong, its eyes and core light the armour
+  next to them, and its far wings sink into the haze. It has eleven sounds of its
+  own, all made in the page: roars, a quiet wing beat on each down-stroke, the
+  strike charging and let go, hits, plates coming away, the break-up and the
+  blasts. The sound switch silences them like everything else. (The weakest
+  quality levels draw a 3,900-triangle version in a plain material, with the same
+  glow and animation: it throws off bits of armour when hit and flies apart in
+  chunks when destroyed. If the demon's model is missing or damaged, every answer
   becomes a target to shoot instead.)
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
@@ -230,7 +243,11 @@ lists all of them again.
   stereo where things happen, and an announcer calls out streaks, waves and
   trophies (Setup → Announcer; it uses your device's speech voice).
 - **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
-  (your screen's refresh rate, up to 120) and the current quality level (1-8).
+  (your screen's refresh rate, up to 120) and the current quality level (1-8), and
+  under them the slowest frame of the last half second, the triangles and draw
+  calls in the scene and the size it is drawn at. Tapping the title's logo three
+  times within a second turns it on or off for that visit without opening Setup
+  (so does `#fps` at the end of the address).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
   book (Alfred, Sean, Jasmine, Gitano, Angelo, Manfred, Maureen, Maria). The first
   time you play a stage they brief you, with a pixel portrait and typed-out

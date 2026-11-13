@@ -834,9 +834,9 @@ before it.
 | J0 | Back up; remove the frog | done |
 | J1 | Depth without shadows; weak-device shedding and break-up; bigger rage and finale | done |
 | J2 | The demon's sounds | done |
-| J3 | Frame-rate readout, throttled test, docs, PR, artifact, report | next |
+| J3 | Frame-rate readout, throttled test, docs, PR, artifact, report | done |
 
-## Done so far
+## Done
 
 - J0: the frog's model files (`arcade/assets/frog/`), its source (`20e-blasterfrog.js`)
   and its three sound cues are deleted; nothing in `arcade/src` or `scripts` names it
@@ -873,7 +873,98 @@ before it.
   strike charging and let go, a hit on its armour, the rage sting, plates coming away,
   the break-up, the blast and the finale's double blast. They go through the same bus
   as every other effect, so the sound switch silences them (checked: no audio nodes
-  are made when it is off). Loudest: the blast, a little under the game's own
-  `bigboom`; the wing beat is a sixth of a `whoosh`.
-- Checks so far: regression IDENTICAL; every demon event run at full and low quality
-  with no console errors.
+  are made when it is off). Levels were then measured (below) and the wing beat
+  raised by 6 dB, as it sat too far under everything else to be heard.
+- J3:
+  - The readout (`99-main.js`, `04-gfx.js`, `05-ui.js`, `10-title.js`): Setup's FPS
+    counter has a second line: the slowest frame of the last half second (ms), the
+    scene's triangles and draw calls, and the size it is drawn at. Three taps on the
+    title's logo inside a second turn it on or off for the visit; nothing is saved
+    (Setup's own switch still is, and still shows the saved choice). `#fps` at the
+    end of the address does the same. The logo starts nothing, so the taps cannot
+    start a game.
+  - Boss Rush: not done. The demon is built on Risk Blaster's own scene (its fighter
+    and shields, its clock, its wave counter, the band the view is fitted to, the
+    open-space effects), and Boss Rush stages its bosses its own way (HP, an attack
+    charge, dialogue). A thirteenth boss would also need questions of its own, a place
+    in the stage list and in saved progress, which this pass may not touch.
+
+## Measured
+
+- **Page:** 6,604 KB with the frog, 5,202 KB now (1.4 MB less).
+- **Frame rate** (software rendering with no GPU, 390 by 844, the build before this
+  pass and this one run alternately; average / worst second on screen): 86 / 72 and
+  88 / 81 before, 83 / 71 and 89 / 78 after. The same, within the run-to-run spread.
+- **Slowed-down phone emulation** (phone-sized touch page, the page's main thread
+  slowed 4 and 6 times with the browser's CPU throttle). Two things were measured:
+  - *Whole frames on this machine* (lightest quality level, which is where software
+    rendering puts it; page frames a second, average / worst second): 81 / 71 at full
+    speed, 54 / 45 and 58 / 46 at 4 times slower (51 / 42 before this pass), 39 / 31 at
+    6 times slower. These are pessimistic: each frame waits for the software
+    rasteriser, and the throttle stretches that wait as well.
+  - *The game's own work in a frame* (script and issuing the draw calls, not the
+    drawing; median / 95th percentile / 99th, ms; a 60 fps frame has 16.7):
+
+    | Quality | full speed | 4 times slower | 6 times slower |
+    |---|---|---|---|
+    | Top (full demon, 58k triangles, 100 draw calls) | 2.2 / 5.1 / 8.1 | 9.0 / 17.2 / 27.1 | 11.7 / 24.3 / 44.5 |
+    | Lightest (light demon, 20k triangles, 60 draw calls) | 0.7 / 1.2 / 2.5 | 3.2 / 6.4 / 9.5 | 4.9 / 9.7 / 13.6 |
+
+    Of the top level's 9 ms at 4 times slower: the demon's animation 0.35 ms, the
+    space scenery 0.8 ms, issuing the draw calls and post-processing 7.1 ms. So a
+    processor 4 times slower than this one would hold 60 at the lighter levels and
+    miss about one frame in twenty at the top one, where the quality ladder steps
+    down by itself. What a phone's graphics chip does with it cannot be measured
+    here: that is what the readout is for.
+- **Sound levels** (each cue rendered offline through the game's own effects bus,
+  reverb and master gain; peak, then the loudest 0.3 s, dB below full scale):
+
+  | Cue | Peak | Loudest 0.3 s |
+  |---|---|---|
+  | The game's right, wrong, laser, shield, level-up cues | -22 to -25 | -35 to -44 |
+  | The game's `boom` / `hit` | -17.4 / -18.8 | -33.8 / -32.3 |
+  | Boss Rush's roar / smash / blast (already in the game) | -13.6 / -13.5 / -10.6 | -27.6 / -27.9 / -21.7 |
+  | Demon: hit / plates coming away / break-up | -19.5 / -31.2 / -28.6 | -35.3 / -49.5 / -43.0 |
+  | Demon: charge / release | -25.4 / -18.4 | -40.2 / -34.7 |
+  | Demon: roar / long roar / rage sting | -16.5 / -16.3 / -17.3 | -27.8 / -25.5 / -30.8 |
+  | Demon: blast / finale | -13.3 / -14.6 | -25.8 / -23.5 |
+  | Demon: wing beat (after the raise) | -34.0 | -48.8 |
+
+  Everything that can sound at once, started together: a right answer -10.8 without
+  the demon's cues and -9.5 with them; a wave cleared -10.3; the finale -12.0; the
+  run ending -15.7. The loudest moment the game already had (Boss Rush's blast with
+  a hit) is -9.6. Nothing comes near clipping, and no demon cue is louder than the
+  loudest cue the game already had.
+
+## Final checks
+
+- `npm run arcade:regress`: IDENTICAL to the original build (153 answers in 8 games).
+- Full walkthrough on a phone-sized page (35 captures: title, hub, every game,
+  results, guide, search, stats, Setup): no console errors, no horizontal overflow.
+- Every demon event (entrance, three strikes, hits, damage, rage and its onset, the
+  finale, the roar when the run ends, defeat) at the top and the lightest quality
+  level: no console errors.
+- Fallback: demon model missing, and damaged: no enemy, four answer targets, no errors.
+- The readout, with real touch taps: hidden at first; three taps show it; it stays
+  on in a game and in Setup (nothing wider than the page); three more hide it; two
+  taps, a pause and a third do nothing; the saved setting is unchanged.
+- Sound switch off: no audio nodes are made by any demon cue.
+
+## Choices to flag
+
+- **The finale's moment.** Risk Blaster never ends by itself, so there is no last
+  wave. The finale plays once in a run, at the wave whose clearing takes the score
+  past the saved best (read, never written); on a first run that is the first wave.
+  And when the run ends (the highest wave reached), the demon has won, so it roars
+  over the wreck instead of blowing up. Every defeat also grows with the wave number.
+- **The rage's onset** comes as a question appears, so it has no ring and no shake.
+- **The triple-tap is for the visit only.** Setup's switch is the lasting one.
+- **Sounds** were measured, not heard: no speaker here.
+- **Older backups** in `arcade/backup/` still hold the frog, as they are snapshots.
+- **The converter** keeps its path for dense sculpts; no model uses it now.
+
+## Not done
+
+- Boss Rush bonus boss (above).
+- Not verified on a real iPhone: read the numbers off the readout there.
+

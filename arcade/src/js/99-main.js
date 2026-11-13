@@ -10,21 +10,27 @@ function boot() {
   Pointer.init();
   // FPS counter (Setup): frames per second, the frame rate the game is aiming for
   // (the screen's measured refresh rate, up to 120) and the adaptive quality level.
+  // The readout is switched on in Settings (saved), or for this visit only by tapping the title three times (Perf.tap,
+  // see the title screen) or by opening the page with #fps. Second line: the slowest frame of the last half second,
+  // the triangles and draw calls of the scene itself, and the size it is drawn at.
   const fpsEl = $("#fps");
-  fpsEl.hidden = !Store.settings.fps;
-  let fpsN = 0, fpsT = performance.now();
+  fpsEl.hidden = !(Store.settings.fps || /fps/.test(location.hash));
+  let fpsN = 0, fpsT = performance.now(), fpsWorst = 0;
   let last = performance.now();
   const loop = (now) => {
     const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
-    last = now;
     if (!fpsEl.hidden) {
       fpsN++;
+      fpsWorst = Math.max(fpsWorst, now - last);
       if (now - fpsT >= 500) {
-        fpsEl.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · TARGET ${Math.round(1 / GFX.vsync)} · Q${GFX.qi + 1}/${GFX.Q.length}`;
+        const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
+        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · TARGET ${Math.round(1 / GFX.vsync)} · Q${GFX.qi + 1}/${GFX.Q.length}<br>WORST ${Math.round(fpsWorst)} MS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}`;
         fpsN = 0;
         fpsT = now;
+        fpsWorst = 0;
       }
     }
+    last = now;
     let dt = real;
     // hit-stop: a beat of slow motion on big hits. The world never fully stops, so
     // an impact reads as weight, not as a stutter.

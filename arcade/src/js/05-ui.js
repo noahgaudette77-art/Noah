@@ -309,3 +309,19 @@ function pauseMenu(game) {
     mounted: () => $("[data-act=resume]", el).focus(),
   });
 }
+
+// Three taps on the title show or hide the frame-rate readout (frames a second, the slowest frame, triangles, draw
+// calls, the quality level, the size of the picture) for this visit. Nothing is saved: the switch in Settings is.
+const Perf = {
+  taps: [],
+  tap() {
+    const now = performance.now();
+    this.taps = this.taps.filter((t) => now - t < 1000); // (three taps inside a second)
+    this.taps.push(now);
+    if (this.taps.length < 3) return;
+    this.taps = [];
+    const el = $("#fps");
+    el.hidden = !el.hidden;
+    Sound.sfx("blip");
+  },
+};

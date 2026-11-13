@@ -76,7 +76,7 @@ function showSettings() {
         <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("FPS counter", "Frame rate, the rate it aims for (your screen's, up to 120) and quality level (1-8)", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("FPS counter", "Frame rate, its target, quality level (1-8), slowest frame, triangles and draw calls", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
