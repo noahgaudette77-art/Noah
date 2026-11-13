@@ -971,3 +971,131 @@ before it.
 - Boss Rush bonus boss (above).
 - Not verified on a real iPhone: read the numbers off the readout there.
 
+
+# The ultimate polish pass (twelfth pass): progress log
+
+The request: a full art-direction and rendering overhaul, screen by screen. Visual
+quality is the only priority; frame rate is not one. One mode: maximum (no quality
+tiers, no auto-scaling, no weak-device versions). Off limits: the question bank,
+answer checking, scoring, timers, spaced repetition, progression, saved progress,
+sync and all question and card text; text stays legible; the Final Exam gives no hint
+before submit. Everything original. `arcade/backup/index.before-ultimate-polish.html`
+is the game before it.
+
+## How to resume
+
+Work goes checkpoint by checkpoint (table below). Each checkpoint is one commit on
+`claude/sleepy-fermat-21jujj` with the game building and the regression test
+IDENTICAL. To pick up: read the table, take the first row that is not `done`, and
+use the audit list under it as the to-do list for that screen.
+
+## Checkpoints
+
+| # | Checkpoint | Status |
+|---|---|---|
+| K0 | Back up; Phase 0 audit of every screen | done |
+| K1 | Rendering: one maximum mode, full pixel density, multisampling, depth passes, bloom, grade | in progress |
+| K2 | Title screen | next |
+| K3 | Arcade hub | |
+| K4 | Risk Blaster | |
+| K5 | Nest Egg Run and Boss Rush | |
+| K6 | Final Exam, Memory Bank, Strategy Guide | |
+| K7 | Interface design system | |
+| K8 | Originality audit, final checks, report | |
+
+## Phase 0 audit
+
+Every screen was captured at the old top quality level, 90 states in all (title at
+four moments; the hub at each of its six cabinets and mid-dolly; Risk Blaster's
+entrance, question, fire, hit, approach, warning, strike, explanation, rage, defeat
+and game over; Nest Egg Run at four moments and three later biomes; ten bosses and a
+fight; the vault's card front, flip, back, banked and missed; the exam's ending; the
+guide's list, chapter and search; stats, Setup, pause, results). Weaknesses, most
+damaging first within each group; each is ticked off below as it is fixed.
+
+**Everywhere**
+
+- G1. The 3D picture is soft beside the page's text: drawn at 1.5 times the page's
+  pixels at most, not multisampled, with a colour fringe that is always on and
+  smears thin lines and signs.
+- G2. Bloom lays a haze over the mid tones; the wide glow is blocky.
+- G3. No depth cues: nothing shades a crevice, nothing casts a contact shadow,
+  nothing is out of focus. Objects float.
+- G4. Quality tiers, auto-scaling, plain twin materials and hidden decoration.
+- G5. Text inside the scenes (signs, marquees) is drawn small and stretched.
+- G6. Flat, untextured surfaces: solid colours with no relief, wear or roughness
+  (hub cabinets, bosses, the title's city most of all).
+- G7. One palette everywhere: magenta and violet from subject to background, so
+  subjects do not separate (Risk Blaster most of all).
+- G8. Camera moves have no blur; screens change with plain fades.
+
+**Title**
+
+- T1. The city is a thin strip in the middle third; the top is empty haze and the
+  bottom a dark floor.
+- T2. Buildings are plain boxes with dot windows: no signs, no variety, no layers.
+- T3. The sky is empty but for a few dashes; blimps, trains and helicopters are
+  rarely in frame; no clouds; the rain does not read.
+- T4. The sun is blown out to a white blob and its reflection is a smear.
+- T5. The logo's depth is flat; INR touches ARCADE; the lines above and below it
+  are fringed, and the lower one collides with the bridge.
+- T6. INSERT COIN sits on the skyline with little contrast.
+
+**Arcade hub**
+
+- H1. Cabinets are flat plastic with a glowing outline round every edge: no side
+  art in view, no wear, plain control decks.
+- H2. Marquee text is soft; the attract screens are coarse.
+- H3. The room behind is washed out and hard to read; the floor's reflections
+  smear; the arrival frame is nearly black.
+- H4. Nothing grounds the cabinets: no shadows under them; the ceiling is empty.
+
+**Risk Blaster**
+
+- B1. Demon, fighter and nebula are all magenta and violet and merge.
+- B2. The answers have no targets in the scene (the brief asks for clear
+  holo-drone targets).
+- B3. A hit whites the whole demon out to a flat silhouette.
+- B4. The nebula is blotchy close up; stars are sparse; the planet is small.
+- B5. Explosions are soft blobs with little structure.
+- B6. A light version of the demon and plain twins exist for weak devices.
+
+**Nest Egg Run**
+
+- R1. The base picture is fringed; the crash frame tears it apart.
+- R2. The car is dark and blocky, with little paint or metal to catch light.
+- R3. The road is flat; buildings are boxes with dot windows.
+- R4. The middle distance is sparse; traffic is thin in most frames.
+
+**Boss Rush**
+
+- X1. Bosses are flat-shaded block figures: no panel detail, bevels or trim.
+- X2. The arena is one ring, a grid and two beams, with nothing behind it.
+- X3. Flat light; no shadow on the floor.
+- X4. The entrance starts on a nearly black frame.
+
+**Final Exam**
+
+- E1. The mech's chrome skull and red eyes read as a film robot everyone knows.
+- E2. The hall round it is dark and empty.
+
+**Memory Bank**
+
+- M1. The card is a flat rectangle of the page laid over the vault: it does not
+  flip in 3D, and it hides the scene.
+- M2. The vault's gears and coins are soft and lit flat gold.
+- M3. Banking a card and missing one barely show.
+
+**Strategy Guide**
+
+- S1. The library is a small banner; everything else is a flat list.
+- S2. The banner's shelves are sparse.
+
+**Interface**
+
+- U1. Panels are flat fills with a two-pixel border: no depth, no glass.
+- U2. Buttons are flat blocks with little response.
+- U3. Stats and Setup are long flat lists on a plain ground.
+- U4. HUD bars and badges are plain.
+- U5. Results are flat.
+- U6. Screens change without choreography.
