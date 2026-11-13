@@ -944,6 +944,9 @@ before it.
 - Every demon event (entrance, three strikes, hits, damage, rage and its onset, the
   finale, the roar when the run ends, defeat) at the top and the lightest quality
   level: no console errors.
+- The strikes, a hit, the rage's onset, the finale, the run's end and the light
+  version's hits and break-up again with Reduced effects on: no console errors; no
+  aura, no sway, slower wings; the finale's two blasts stay 0.46 s apart.
 - Fallback: demon model missing, and damaged: no enemy, four answer targets, no errors.
 - The readout, with real touch taps: hidden at first; three taps show it; it stays
   on in a game and in Setup (nothing wider than the page); three more hide it; two
