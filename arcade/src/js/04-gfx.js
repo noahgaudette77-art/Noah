@@ -288,6 +288,7 @@ const GFX = {
   // Twins are built and compiled while a scene loads (warm), so the swap never
   // stalls a frame.
   twinOf(m) {
+    if (m.userData.twin) return m.userData.twin; // (a material can bring its own plain version)
     const W = this._twins || (this._twins = new WeakMap());
     let t = W.get(m);
     if (!t) {

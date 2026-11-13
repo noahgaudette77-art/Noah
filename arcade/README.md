@@ -13,7 +13,7 @@ offline fallback.
 
 | Cabinet | What it is | What it trains |
 |---|---|---|
-| **Risk Blaster** | Rail shooter. Answers fly down a neon tunnel as targets; shoot the right one before it reaches your shields. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
+| **Risk Blaster** | Rail shooter. A space frog carries each answer down a neon tunnel; shoot the right one before they reach your shields. Shoot the wrong one, or none in time, and a frog shoots back. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
 | **Nest Egg Run** | Lane racer through a 40-year career, one gate per year from age 25 to 65. Steer into the right answer's lane to compound your savings; three crashes force early retirement. Five-answer streaks buy an insurance policy that pays out on your next crash. Retiring with $1,000,000 takes about 95% accuracy. | Sustained accuracy |
 | **Boss Rush** | One boss per chapter, plus a final boss across the whole book. Bosses only take hard questions; answer before their attack charges. Clear with all three hearts for three stars. | The hardest, most exam-like questions |
 | **Memory Bank** | Flashcards for every key term, rule and number, with self-grading (missed / got it / easy) and a swap button to see definitions first. | Definitions and numbers |
@@ -29,7 +29,7 @@ lists all of them again.
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
   world: a living synthwave city on the title screen, a ribbed corridor of
-  holo-drones in Risk Blaster, a road through five landscapes in Nest Egg Run (it
+  frog troopers in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
   with a mirror floor in Boss Rush, where every boss is a different
@@ -56,14 +56,21 @@ lists all of them again.
   waves behind a bow wave of light. A hexagon-lattice shield flares when you lose
   one; down to the last, an engine sputters and trails smoke; lose that and it
   breaks up into some 250 pieces of itself in a ball of fire. (The three weakest
-  quality levels draw a lighter version of it, a fifth of the triangles.) The answers
-  ride holo-drones, a different airframe for each letter. The corridor has heavy
+  quality levels draw a lighter version of it, a fifth of the triangles.) The corridor has heavy
   ribs with energy pylons, light conduits, tumbling asteroids, laser chords and
   station blocks drifting by outside, and now and then a patrol, a comet, a
   capital ship or a scan ring passes. Each wave has a carrier holding station
-  above the lanes: miss and it puts a bolt into your shield; clear the wave and it
-  goes up. A seven-pip combo meter fills and warms, and the engines burn longer
-  and bluer with it.
+  above the lanes; clear the wave and it goes up. A seven-pip combo meter fills
+  and warms, and the engines burn longer and bluer with it.
+- **The frogs.** Every answer is carried by the player's own space frog (a supplied
+  sculpt, cut down by `scripts/convert-model.js`): a trooper in a yellow suit with
+  a rotary cannon, hovering on the jets of its backpack, its answer's letter at its
+  shoulder and its answer's colour in its rim light and jet glow. It breathes, turns
+  its head and keeps half an eye on your ship. Shoot the right one and it whites
+  out and comes apart into light inside the blast. Shoot a wrong one and the shot
+  glances off: it swings its cannon round, croaks, and puts six bolts into your
+  shield, while the frog with the right answer glows green. Run out of time and the
+  others rush past while the one with the right answer does the firing.
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
@@ -259,13 +266,18 @@ any hint before submit, and it plays the exam's ending in full (holding its cloc
 through it, so the saved results must match to the byte). `PROGRESS.md` logs the
 upgrades' checkpoints.
 
-Two models the player supplied live in `arcade/assets/`: the Final Exam's boss
-(`boss/boss.bin`, `boss/albedo.jpg`) and Risk Blaster's fighter (`fighter/fighter.bin`,
-`fighter/albedo.jpg`). The build inlines them into the page. To replace one, run
-`node scripts/convert-model.js <model.glb> <boss|fighter>` (needs ImageMagick) and
-rebuild. `src/js/24c-examboss.js` maps the boss's numbered parts to joints;
+Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
+(`boss/boss.bin`, `boss/albedo.jpg`), Risk Blaster's fighter (`fighter/fighter.bin`,
+`fighter/albedo.jpg`) and its frogs (`frog/frog.bin`, colours on the vertices). The
+build inlines them into the page. To replace one, run
+`node scripts/convert-model.js <model.glb> <boss|fighter|frog>` (needs ImageMagick)
+and rebuild. The frog is a dense, meshopt-compressed sculpt: converting it also
+needs the `meshoptimizer` package, which is not a dependency of this repo (see the
+script's header). `src/js/24c-examboss.js` maps the boss's numbered parts to joints;
 `src/js/20d-blasterfighter.js` lists where the fighter's engines, guns and lights
-are. Without a fighter model in the build, Risk Blaster flies its built-in jet.
+are; `src/js/20e-blasterfrogs.js` where the frog's cannon points. Without a fighter
+model in the build Risk Blaster flies its built-in jet, and without a frog model its
+answers ride crystal forms in holo-drones.
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,

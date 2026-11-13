@@ -399,3 +399,64 @@ the game's rules, scores, timers and saved data are untouched.
 
 Known and not done: not measured on a real iPhone. The hub's Risk Blaster cabinet
 keeps its generic ship emblem.
+
+# The space frogs (sixth pass): progress log
+
+Request: the fighter should shoot at the supplied space frog instead of at forms, and
+on a wrong answer the frog shoots back. Look and sound only: which target is which
+answer, picking, timers, shields and scoring are untouched.
+
+`arcade/backup/index.before-space-frogs.html` is the game before this pass.
+
+| # | Checkpoint | Status |
+|---|---|---|
+| E0 | Backup, convert the model (decode, simplify, bake colours), inline it | done |
+| E1 | Frogs as the targets; a frog fires back on a miss | done |
+| E2 | Regression, walkthrough, frame rate, docs | done |
+
+- E0: the .glb is one sculpted mesh, compressed with meshopt (gltfpack): 1,013,580
+  vertices, 1,930,336 triangles, one 4096 px texture. No phone draws four of those,
+  so `scripts/convert-model.js` gained a path for a sculpt: decode, weld by position
+  (so UV seams don't hold the simplifier back), simplify to 6,980 triangles (and to
+  1,192 for weak quality levels), and bake the texture onto the vertices (every
+  original vertex gives its texel and normal to the nearest surviving vertex on its
+  side of the surface). `arcade/assets/frog/frog.bin` is 103 KB with no texture.
+  Decoding and simplifying use the `meshoptimizer` package (MIT); it is not a
+  dependency of the repo: the script loads it from the path in MESHOPTIMIZER or from
+  node_modules. The page is 5.21 MB (was 5.06 MB). The original .glb is not in the repo.
+- E1: `src/js/20e-blasterfrogs.js`. A frog is what a target looks like; the game's
+  target groups, positions, picking and timing are as they were (in a build without
+  the model, the crystal forms in holo-drones come back).
+  - One material per answer slot (the frog's own colours, a soft fill, a rim and a
+    jet glow in the slot's colour). The vertex shader makes the sculpt breathe, turns
+    its head about its neck and kicks its cannon back; nothing is rigged.
+  - It hovers on two backpack jets, half turned toward the ship, its letter badge at
+    its shoulder.
+  - Right answer: inside the game's blast, the frog whites out and is eaten away by a
+    noise with burning edges (0.42 s).
+  - Wrong answer: a red ring where the shot glances off, then the frog swings its
+    barrel onto the ship (the barrel points 49 degrees off its facing, so the body
+    turns), croaks and fires six bolts 75 ms apart. The bolts come almost straight
+    at the camera, so each is a ball of light, not a beam seen end-on. The first one
+    home flares the ship's shield; each lands with a few sparks. The glow at the
+    muzzle is one swell over the burst, not a flicker. The frog with the right
+    answer glows green.
+  - Too slow: the other frogs rush past as the targets always did, and the frog with
+    the right answer does the firing.
+  - The wave's carrier no longer fires on a miss; it still blows up when the wave is
+    cleared.
+  - Weak quality levels: the 1,192-triangle frog, unlit in its own colours (whiter
+    when hit, greener when it was the right one). `GFX.twinOf` now lets a material
+    bring its own plain version; the fighter's hull uses that too, for a version
+    with the same soft fill. The frogs' shaders are in the scene's warm-up, so the
+    first question compiles nothing.
+- E2: `npm run arcade:regress`: IDENTICAL to the original build (153 answers in 8
+  games, every saved byte). Full walkthrough: no console errors, no horizontal
+  overflow. Software renderer, Risk Blaster, average / worst second, builds run
+  alternately: at its lowest level 101-120 / 85-105 with the frogs over four runs
+  and 101-111 / 85-101 without; forced to the top level 52 / 17 and 46 / 18.
+
+Known and not done: not measured on a real iPhone; the frog's croak and cannon are
+synthesised and were not auditioned by ear. Up close the 7,000-triangle frog is
+visibly faceted (in play it is 60 to 150 px tall). The hub's Risk Blaster cabinet
+keeps its old attract demo of coloured squares.

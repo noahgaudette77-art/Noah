@@ -239,6 +239,8 @@ class BlasterFighter {
       uEngAt: { value: new THREE.Vector3((Math.abs(eng[0].x) + Math.abs(eng[1].x)) / 2, eng[0].y, eng[0].z) }, uGunAt: { value: new THREE.Vector3(1.58, -0.1, -0.43) },
     };
     this.hullMat = fighterSkin(env, THREE.FrontSide, this.U);
+    // (its plain version for the weakest quality levels carries the same soft fill, so the paint reads in the dark tunnel)
+    this.hullMat.userData.twin = new THREE.MeshLambertMaterial({ map: FighterModel.texture(), emissive: 0x504d5c, emissiveMap: FighterModel.texture() });
     this.hullOpen = fighterSkin(env, THREE.DoubleSide, this.U); // for the wreck: its fragments are seen from inside too
     this.hull = new THREE.Mesh(geo.hull, this.hullMat);
     rig.add(this.hull);

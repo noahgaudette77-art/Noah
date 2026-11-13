@@ -124,6 +124,11 @@ const Sound = {
       case "lock": this.noise(0.08, { vol: 0.35, freq: 1800 }); T(140, 0.16, { delay: 0.03, vol: 0.2, type: "square" }); T(96, 0.22, { delay: 0.1, vol: 0.22, type: "square" }); break; // a vault bolt going home
       case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break;
       case "whoosh": this.noise(0.7, { vol: 0.1, freq: 900, type: "bandpass", q: 0.7 }); T(170, 0.6, { slide: -90, vol: 0.04, type: "sawtooth" }); break;
+      case "frogfire": // a frog's cannon: a croak, then six shots
+        T(96, 0.13, { slide: 46, vol: 0.13, type: "sawtooth" }); T(128, 0.16, { delay: 0.1, slide: -58, vol: 0.13, type: "sawtooth" });
+        for (let i = 0; i < 6; i++) { this.noise(0.05, { delay: 0.2 + i * 0.075, vol: 0.3, freq: 520 }); T(170, 0.06, { delay: 0.2 + i * 0.075, slide: -80, vol: 0.14, type: "square" }); }
+        break;
+      case "frogout": T(700, 0.22, { slide: 900, vol: 0.08, type: "triangle" }); this.noise(0.2, { vol: 0.1, freq: 3200, type: "bandpass", q: 1.5 }); break; // a frog comes apart into light
       case "shield": T(520, 0.3, { slide: -380, vol: 0.12, type: "square" }); this.noise(0.25, { vol: 0.16, freq: 2600, type: "bandpass", q: 2 }); break;
       case "combo": T(660, 0.07, { vol: 0.07 }); T(990, 0.09, { delay: 0.05, vol: 0.07 }); break;
       // the Final Exam's boss: it starts to fail, a joint blows, it drops to its knees, the reactor runs away, the blast, a growl

@@ -238,6 +238,7 @@ class BlasterGame extends QuizGame {
       g.position.z = -40;
       return g;
     });
+    if (this.frogs) this.warmExtra.push(this.frogs.warm());
     this.shards = new BlasterShards(s);
     this.ship = this.makeShip();
     s.add(this.ship);
@@ -390,6 +391,9 @@ class BlasterGame extends QuizGame {
   // neon edges and a fresnel rim, all in the slot colour. Shapes, materials and
   // badges are made once; each round only builds light-weight meshes from them.
   makeTargetKit() {
+    // What an answer's target looks like: the player's space frog (20e-blasterfrogs.js), or,
+    // in a build without that model, a crystal form in a holo-drone.
+    this.frogs = FrogModel.ok() ? new BlasterFrogs(this) : null;
     this.dronePaint = racerCarPaint(this.env, false);
     this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
@@ -522,26 +526,31 @@ class BlasterGame extends QuizGame {
       M.rim.uniforms.uColor.value.copy(M.baseRim);
       const g = new THREE.Group();
       const rot = new THREE.Group();
-      const core = new THREE.Mesh(this.tgeo[shape], M.core);
-      core.scale.setScalar(0.42);
-      const body = new THREE.Mesh(this.tgeo[shape], M.body);
-      const edges = new THREE.LineSegments(this.tedge[shape], M.edge);
-      const rim = new THREE.Mesh(this.tgeo[shape], M.rim);
-      rim.scale.setScalar(1.05);
-      rot.add(core, body, edges, rim);
+      let frame;
+      if (this.frogs) {
+        frame = this.frogs.spawn(i); // a frog carries this answer (rot stays empty: there is no form to turn)
+      } else {
+        const core = new THREE.Mesh(this.tgeo[shape], M.core);
+        core.scale.setScalar(0.42);
+        const body = new THREE.Mesh(this.tgeo[shape], M.body);
+        const edges = new THREE.LineSegments(this.tedge[shape], M.edge);
+        const rim = new THREE.Mesh(this.tgeo[shape], M.rim);
+        rim.scale.setScalar(1.05);
+        rot.add(core, body, edges, rim);
+        frame = new THREE.Group();
+        const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
+        // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
+        if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
+        frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
+      }
       rot.rotation.set(rand(Math.PI * 2), rand(Math.PI * 2), 0);
       rot.scale.setScalar(0.62); // the answer core sits inside the drone's collar
-      const frame = new THREE.Group();
-      const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
-      // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
-      if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
-      frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
       const halo = new THREE.Sprite(M.halo);
       halo.scale.set(3.8, 3.8, 1);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.set(1.24, 1.24, 1);
-      label.position.z = 1.35;
+      if (this.frogs) { label.scale.set(1.05, 1.05, 1); label.position.set(-0.86, 0.66, 1.2); } // the letter is a tag at the frog's shoulder
+      else { label.scale.set(1.24, 1.24, 1); label.position.z = 1.35; }
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
       g.userData.frame = frame;
@@ -556,6 +565,7 @@ class BlasterGame extends QuizGame {
     }
   }
   clearTargets() {
+    if (this.frogs) this.frogs.clear();
     // the meshes share geometry, materials and badges with the kit: only detach them
     this.targets.forEach((t) => this.scene.remove(t));
     this.targets = [];
@@ -633,7 +643,8 @@ class BlasterGame extends QuizGame {
       GFX.pulse(12, 0);
       Haptics.buzz([60, 40, 90]);
       Sound.setIntensity(0);
-      this.explode(this.targets[i], COLORS.red);
+      if (this.frogs) this.frogs.attack(this.targets[i]); // the frog that was shot at shrugs it off and fires back
+      else this.explode(this.targets[i], COLORS.red);
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -662,14 +673,17 @@ class BlasterGame extends QuizGame {
       const z0 = t.position.z;
       this.tw.add(0.35, (k) => { t.position.z = lerp(z0, 4, k); }, () => { t.visible = false; }, Ease.inCubic);
     });
+    if (this.frogs && this.has3D) this.frogs.attack(this.targets[r.correct]); // the frog nobody shot does the shooting
     this.hud();
     this.quiz.feedback({ ok: false, title: this.shields > 0 ? "TOO SLOW! SHIELD DOWN" : "TOO SLOW! SHIELDS GONE", onNext: () => this.after() });
   }
-  // A shield goes (look and sound only): the carrier's bolt strikes, the lattice flares.
+  // A shield goes (look and sound only): a frog's cannon fire strikes and the lattice flares
+  // (BlasterFrogs.attack; without frogs it is the carrier's bolt).
   shieldHit() {
     Sound.sfx("shield");
     if (!this.has3D) return;
     this.jet.setCombo(1);
+    if (this.frogs) return;
     this.jet.shieldLost();
     this.carrier.volley();
   }
@@ -686,6 +700,7 @@ class BlasterGame extends QuizGame {
     const at = t.position.clone();
     this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(t.position, color, (7 * this.ts + 3) * df);
+    if (this.frogs && this.frogs.frog(t)) return this.frogs.blast(t); // (a frog comes apart into light instead of swelling and vanishing)
     const s0 = t.scale.x;
     this.tw.add(0.2, (k) => t.scale.setScalar(s0 * (1 + k * 0.6)), () => { t.visible = false; });
   }
@@ -809,6 +824,7 @@ class BlasterGame extends QuizGame {
     this.shards.update(dt);
     this.corridor.update(dt, sp, w);
     this.carrier.update(dt);
+    if (this.frogs) this.frogs.update(dt);
     // targets
     const k = this.state === "ask" ? 1 - this.tLeft / this.T : null;
     this.targets.forEach((t, i) => {
@@ -871,6 +887,7 @@ class BlasterGame extends QuizGame {
     Sound.engine(false);
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
+    if (this.frogs) this.frogs.dispose();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));

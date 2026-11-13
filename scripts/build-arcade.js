@@ -13,8 +13,9 @@
  *   arcade/src/body.html     the static markup
  *   arcade/src/js/*.js       the game, concatenated in filename order into one IIFE
  *   arcade/content/*.json    one file per chapter (ch06a + ch06b merge into ch06)
- *   arcade/assets/<name>/    the models the player supplied: the Final Exam's boss and
- *                            Risk Blaster's fighter (<name>.bin, albedo.jpg), made by
+ *   arcade/assets/<name>/    the models the player supplied: the Final Exam's boss,
+ *                            Risk Blaster's fighter and its frogs (<name>.bin, and
+ *                            albedo.jpg for the first two), made by
  *                            scripts/convert-model.js and inlined as base64
  *
  * Three.js r128 loads from cdnjs; the full build falls back to the vendored copy
@@ -74,11 +75,11 @@ function loadStory() {
 // Binary assets, inlined as base64 so the page stays one self-contained file.
 function loadAssets() {
   const out = {};
-  ["boss", "fighter"].forEach((name) => {
+  [["boss", true], ["fighter", true], ["frog", false]].forEach(([name, textured]) => { // (the frog's colours are on its vertices)
     const dir = path.join(DIR, "assets", name), mesh = path.join(dir, name + ".bin"), tex = path.join(dir, "albedo.jpg");
-    if (fs.existsSync(mesh) && fs.existsSync(tex)) {
-      out[name] = { mesh: fs.readFileSync(mesh).toString("base64"), albedo: "data:image/jpeg;base64," + fs.readFileSync(tex).toString("base64") };
-    }
+    if (!fs.existsSync(mesh) || (textured && !fs.existsSync(tex))) return;
+    out[name] = { mesh: fs.readFileSync(mesh).toString("base64") };
+    if (textured) out[name].albedo = "data:image/jpeg;base64," + fs.readFileSync(tex).toString("base64");
   });
   return out;
 }
