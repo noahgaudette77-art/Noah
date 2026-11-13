@@ -337,3 +337,65 @@ timers and saved data are untouched.
 
 Known and not done: not measured on a real iPhone (frame rate at 2x, how the sounds
 sit). The hub's Final Exam marquee still carries its trophy emblem.
+
+# The space fighter (fifth pass): progress log
+
+Request: replace Risk Blaster's jet with the supplied space fighter model, as
+immersive and as well drawn as it can be, down to the details. Look and sound only;
+the game's rules, scores, timers and saved data are untouched.
+
+`arcade/backup/index.before-space-fighter.html` is the game before this pass.
+
+| # | Checkpoint | Status |
+|---|---|---|
+| D0 | Backup, convert the model, inline it in the build | done |
+| D1 | The fighter in the game (materials, cockpit, engines, guns, shield, motion, fly-in, break-up, light version) | done |
+| D2 | Regression, walkthrough, frame rate, docs | done |
+
+- D0: a Tripo-generated .glb (166 separate parts, 23,368 vertices, 15,212 triangles,
+  one 8192 px colour texture and nothing else: no normal map, no rig, no animation).
+  The converter is now `scripts/convert-model.js <model.glb> <boss|fighter>` (it was
+  `convert-boss.js`); it writes `arcade/assets/fighter/fighter.bin` (431 KB) and
+  `albedo.jpg` (2048 px, 795 KB: the texture is soft, and nothing visible is lost
+  below 8192). `build-arcade.js` inlines every model in `arcade/assets/`; the decoder
+  both models share is `src/js/08m-model.js`. The page is 5.06 MB (was 3.39 MB). The
+  original .glb is not in the repo. Its nose is the pointed orange end and the two
+  big barrels are its main engines, so it is turned to fly down the tunnel.
+- D1: `src/js/20d-blasterfighter.js`, behind the same interface the old jet had (the
+  game still places it, aims it and scores; the old jet is the stand-in if a build
+  has no model).
+  - Hull: one mesh. Paint and metal are read out of the colour texture (bright or
+    saturated is a semi-gloss coat, dark grey is metal), and a change of brightness
+    from one pixel to the next tilts the normal, so panel lines and rivets stand
+    proud. It has its own reflection map (the tunnel's washed the white paint
+    magenta), a soft fill, a rim in the wave's colour, an engine bay that glows,
+    and the flash of its guns on the plating round them.
+  - It flies tipped back 10 degrees toward the camera: seen level from behind, the
+    model shows mostly its dark tail.
+  - Cockpit: the canopy is real glass (clear head-on, a mirror at its edges) over a
+    pilot (helmet, shoulders, seat) and a head-up display.
+  - Engines: a white-hot disc and a flame with shock diamonds in each main nozzle,
+    blue ion flames in the four pod thrusters (they flare with a roll), glows, heat
+    haze, vapour trails off the wingtips, navigation lights, a beacon on the aerial.
+  - Guns: the nose cannons and the wing-pod cannons take turns; the beams start at
+    whichever fired.
+  - Moments: it flies in from behind the camera at the start (1.6 s, with a whoosh);
+    at warp it rolls, surges forward and pushes a bow wave of light; on its last
+    shield one engine sputters and trails smoke and something shorts every few
+    seconds; destroyed, it breaks into about 250 fragments of itself (the parts,
+    the larger ones cut up) thrown, spun and shrunk in the vertex shader, with fire,
+    smoke and a second blast.
+  - The three weakest quality levels draw a lighter hull (3,032 triangles: the
+    larger parts only, vertices merged on a grid 3% of the span wide) without pilot
+    or display. Reduced motion: no fly-in, and it simply vanishes when destroyed.
+    Reduced effects: no flash puffs, smoke or pointer banking.
+- D2: `npm run arcade:regress`: IDENTICAL to the original build (153 answers in 8
+  games, every saved byte; the Risk Blaster game in it runs to game over). Full
+  walkthrough: no console errors, no horizontal overflow. Software renderer, Risk
+  Blaster, average / worst second, old and new builds back to back: at its lowest
+  level 121 / 105 with the old jet, 108 / 96 with the fighter (15,000 triangles cost
+  the software renderer 3 ms; the lighter hull brings that to under 1); forced to the
+  top level 45 / 17 and 50 / 16 (the same within noise).
+
+Known and not done: not measured on a real iPhone. The hub's Risk Blaster cabinet
+keeps its generic ship emblem.

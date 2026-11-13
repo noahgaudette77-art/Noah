@@ -72,36 +72,11 @@ const BossModel = {
   ok() { return !!(window.THREE && window.INR_ASSETS && window.INR_ASSETS.boss); },
   parts() {
     if (this._parts) return this._parts;
-    const raw = atob(window.INR_ASSETS.boss.mesh), buf = new ArrayBuffer(raw.length), u8 = new Uint8Array(buf);
-    for (let i = 0; i < raw.length; i++) u8[i] = raw.charCodeAt(i);
-    const hl = new DataView(buf).getUint32(4, true), base = 8 + hl;
-    let json = "";
-    for (let i = 0; i < hl; i++) json += String.fromCharCode(u8[8 + i]);
     const out = new Map();
-    JSON.parse(json).parts.forEach((p) => {
-      const qp = new Uint16Array(buf, base + p.p, p.v * 3), qn = new Int8Array(buf, base + p.n, p.v * 4), qt = new Uint16Array(buf, base + p.t, p.v * 2);
-      const pos = new Float32Array(p.v * 3), nor = new Float32Array(p.v * 3), uv = new Float32Array(p.v * 2);
-      for (let i = 0; i < p.v; i++) {
-        for (let k = 0; k < 3; k++) { pos[i * 3 + k] = p.min[k] + (qp[i * 3 + k] / 65535) * (p.max[k] - p.min[k]); nor[i * 3 + k] = qn[i * 4 + k] / 127; }
-        uv[i * 2] = qt[i * 2] / 65535; uv[i * 2 + 1] = qt[i * 2 + 1] / 65535;
-      }
-      const part = { id: p.id, pos, nor, uv, ix: new Uint16Array(buf, base + p.x, p.i) };
-      bossChunks(part);
-      out.set(p.id, part);
-    });
+    inrModelParts(window.INR_ASSETS.boss.mesh).forEach((part) => { bossChunks(part); out.set(part.id, part); });
     return (this._parts = out);
   },
-  texture() {
-    if (!this._tex) {
-      const img = new Image(), t = (this._tex = new THREE.Texture(img));
-      t.flipY = false;
-      t.encoding = THREE.sRGBEncoding;
-      if (GFX.ok) t.anisotropy = Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy());
-      img.onload = () => { t.needsUpdate = true; };
-      img.src = window.INR_ASSETS.boss.albedo;
-    }
-    return this._tex;
-  },
+  texture() { return this._tex || (this._tex = inrModelTexture(window.INR_ASSETS.boss.albedo)); },
   // decode ahead of time, so opening the exam never waits on it
   preload() { if (this.ok()) { try { this.parts(); this.texture(); } catch (e) { /* the exam falls back to an empty dais */ } } },
 };

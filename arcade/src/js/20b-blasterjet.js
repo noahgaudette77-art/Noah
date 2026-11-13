@@ -98,7 +98,8 @@ function blasterHullMaterial(o = {}) {
   });
 }
 
-// The fighter: a twin-engine delta with canards and canted fins. Layered armour over
+// The built-in fighter, drawn when the player's own model (20d-blasterfighter.js) is not
+// in the build: a twin-engine delta with canards and canted fins. Layered armour over
 // an eight-sided hull, a faceted glass canopy, lit intakes, wing strips, fences and
 // missile rails, ailerons that work, afterburners with shock diamonds and heat haze,
 // wingtip contrails, and an energy shield that flares when it takes a hit.
@@ -306,7 +307,7 @@ class BlasterJet {
   }
   // through the warp between waves: one full roll
   warp() { if (!REDUCED_MOTION && !GFX.calm) { this.spinT = 1; this.spinDir = Math.random() < 0.5 ? -1 : 1; } }
-  down() { this.contrails.forEach((t) => { t.mesh.visible = false; }); }
+  down() { this.ship.visible = false; this.contrails.forEach((t) => { t.mesh.visible = false; }); }
   update(dt, sp, w) {
     const g = this.g, t = g.t, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, h = Math.min(dt, 0.05);
     this.heat += (this.heatTo - this.heat) * Math.min(1, dt * 3);

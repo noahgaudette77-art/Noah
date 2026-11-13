@@ -44,11 +44,19 @@ lists all of them again.
   maglev on the bridge, a patrol chase, a blimp, fireworks, a helicopter, drones,
   a meteor shower, distant lightning). The logo has depth, glow and a glint that
   crosses it every seven seconds.
-- **Risk Blaster.** You fly a twin-engine delta fighter: layered armour, a glass
-  canopy, lit intakes, wing strips and missile rails, ailerons that work,
-  afterburners with shock diamonds and heat haze, wingtip contrails, and a
-  hexagon-lattice shield that flares when you lose one. It banks with your finger,
-  kicks back when it fires and rolls through the warp between waves. The answers
+- **Risk Blaster.** You fly the player's own space fighter (a supplied model of
+  166 parts, converted by `scripts/convert-model.js`): weathered white and orange
+  paint over bare metal, with the panel lines and rivets of its texture raised so
+  they catch the light. Under its glass canopy sits a pilot in front of a
+  head-up display. It comes in from behind the camera when the game starts. Two
+  main engines burn with shock diamonds and heat haze, and their bay glows; the
+  four small thrusters in the wing pods flare when it rolls. The nose cannons and
+  the wing cannons take turns, and their flash lights the hull. It banks with your
+  finger, kicks back when it fires, and rolls and surges through the warp between
+  waves behind a bow wave of light. A hexagon-lattice shield flares when you lose
+  one; down to the last, an engine sputters and trails smoke; lose that and it
+  breaks up into some 250 pieces of itself in a ball of fire. (The three weakest
+  quality levels draw a lighter version of it, a fifth of the triangles.) The answers
   ride holo-drones, a different airframe for each letter. The corridor has heavy
   ribs with energy pylons, light conduits, tumbling asteroids, laser chords and
   station blocks drifting by outside, and now and then a patrol, a comet, a
@@ -57,7 +65,7 @@ lists all of them again.
   goes up. A seven-pip combo meter fills and warms, and the engines burn longer
   and bluer with it.
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
-  by `scripts/convert-boss.js` into 32 rigid parts on a 19-joint skeleton) stands
+  by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
   armour whose scratches, pits and dents stay sharp close up, a pale skull, two
   burning eyes with a streak of glare across them, an ember beating in its chest.
@@ -251,10 +259,13 @@ any hint before submit, and it plays the exam's ending in full (holding its cloc
 through it, so the saved results must match to the byte). `PROGRESS.md` logs the
 upgrades' checkpoints.
 
-The Final Exam's boss model lives in `arcade/assets/boss/` (`boss.bin`,
-`albedo.jpg`) and is inlined into the page by the build. To replace it, run
-`node scripts/convert-boss.js <model.glb>` (needs ImageMagick) and rebuild; the
-skeleton in `src/js/24c-examboss.js` maps the model's numbered parts to joints.
+Two models the player supplied live in `arcade/assets/`: the Final Exam's boss
+(`boss/boss.bin`, `boss/albedo.jpg`) and Risk Blaster's fighter (`fighter/fighter.bin`,
+`fighter/albedo.jpg`). The build inlines them into the page. To replace one, run
+`node scripts/convert-model.js <model.glb> <boss|fighter>` (needs ImageMagick) and
+rebuild. `src/js/24c-examboss.js` maps the boss's numbered parts to joints;
+`src/js/20d-blasterfighter.js` lists where the fighter's engines, guns and lights
+are. Without a fighter model in the build, Risk Blaster flies its built-in jet.
 
 Sources live in `src/` (`style.css`, `body.html`, and `js/*.js`, concatenated in
 filename order). Keyboard: 1–4 or A–D to answer, T/F for true/false, Enter for next,

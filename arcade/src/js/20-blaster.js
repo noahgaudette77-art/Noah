@@ -191,6 +191,18 @@ class BlasterGame extends QuizGame {
         { color: 0xffffff, pos: [6, 8, 14], w: 5, h: 1.4, k: 4 },
       ],
     });
+    // What the fighter's hull reflects: the tunnel's neon as accents round a white lamp
+    // above and behind it, so its own paint reads (the tunnel's map would wash it magenta).
+    this.shipEnv = makeEnvMap({
+      top: 0x0b0d1e, horizon: 0x4a3a8c, bottom: 0x06050e, glow: 0.5,
+      panels: [
+        { color: 0xffffff, pos: [3, 14, 10], w: 12, h: 5, k: 3.2 },
+        { color: 0x35efff, pos: [16, 3, -6], w: 10, h: 3, k: 2.2 },
+        { color: 0xff3ad4, pos: [-16, 4, -4], w: 10, h: 3, k: 2.2 },
+        { color: 0xffa040, pos: [0, -4, 14], w: 8, h: 3, k: 1.6 },
+        { color: 0xa65fff, pos: [0, -12, -8], w: 14, h: 4, k: 1.0 },
+      ],
+    });
     addLights(s, { ambient: 0x5a4aa0, ai: 0.6, key: 0xe0d8ff, ki: 1.1, dir: [2, 5, 6] });
     this.boomLight = new THREE.PointLight(0xffffff, 0, 36, 2);
     s.add(this.boomLight);
@@ -427,9 +439,10 @@ class BlasterGame extends QuizGame {
     this.wallMat.uniforms.uFlashZ.value = pos.z;
   }
 
-  // The fighter (20b-blasterjet.js). The game still owns where it is and where it aims.
+  // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
+  // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
-    const jet = (this.jet = new BlasterJet(this));
+    const jet = (this.jet = FighterModel.ok() ? new BlasterFighter(this) : new BlasterJet(this));
     this.nozzles = jet.nozzles;
     this.muzzles = jet.muzzles;
     this.engineGlows = jet.engineGlows;
@@ -442,6 +455,7 @@ class BlasterGame extends QuizGame {
     Sound.play("game");
     Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
+    if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -464,8 +478,9 @@ class BlasterGame extends QuizGame {
     this.fy = Math.min(1.8, far.h * 0.22);
     this.ts = clamp(Math.min(far.h * 0.16, far.w * 0.1), 0.4, 1.2);
     const near = this.bandSize(7);
-    this.shipY = -near.h * 0.36;
-    this.shipScale = clamp(Math.min((near.w * 0.6) / 3.4, (near.h * 0.3) / 1.2), 0.4, 1);
+    const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
+    this.shipY = -near.h * fit.y;
+    this.shipScale = clamp(Math.min((near.w * 0.6) / fit.w, (near.h * 0.3) / fit.h), 0.4, 1);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {
       this.laidOut = true;
@@ -555,7 +570,7 @@ class BlasterGame extends QuizGame {
     const t = this.targets[i];
     this.panAt = t ? clamp(t.userData.bx / 3.4, -1, 1) * 0.8 : 0; // the target's side, for the stereo
     Sound.sfx("laser", this.panAt);
-    if (this.has3D) this.jet.fire();
+    if (this.has3D) this.jet.fire(SLOT_COLORS[i]);
     if (t && this.has3D) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(t.position));
@@ -720,8 +735,7 @@ class BlasterGame extends QuizGame {
       this.shards.burst(this.ship.position, COLORS.cyan, 20, 0.7, 6);
       this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
       this.boom(this.ship.position, COLORS.orange, 6);
-      this.ship.visible = false;
-      this.jet.down();
+      this.jet.down(); // (the ship goes: at once, or in pieces)
       this.trails.forEach((t) => { t.mesh.visible = false; });
       this.engineLight.intensity = 0;
     }
@@ -856,6 +870,7 @@ class BlasterGame extends QuizGame {
   dispose() {
     Sound.engine(false);
     this.clearTargets();
+    if (this.shipEnv) this.shipEnv.dispose();
     if (this.has3D) {
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
