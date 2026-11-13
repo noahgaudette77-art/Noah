@@ -1,15 +1,16 @@
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
 class TitleScene extends Scene3D {
   constructor() {
-    super({ fov: 62, far: 900, fog: [0x2a0a44, 80, 620] });
+    super({ fov: 62, far: 900, fog: [0x2a0a44, 105, 560] });
     this.speed = 14;
     this.dist = 0;
     if (!this.has3D) return;
     const s = this.scene;
     this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 58, top: 0xffe36a, bottom: 0xff2a8a, intensity: 1.08 });
-    this.sun.position.set(0, 18, -360);
+    this.sun = makeNeonSun({ radius: 52, top: 0xffd24a, bottom: 0xff1f8f, intensity: 0.86 });
+    this.sun.userData.glow.material.opacity = 0.3; // (a tighter halo: the city in front of it keeps its edges)
+    this.sun.position.set(0, 30, -360);
     s.add(this.sun);
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
@@ -31,7 +32,7 @@ class TitleScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.12, bloom: 0.9, contrast: 1.1, saturation: 1.16, rays: { pos: this.sun.position, strength: 0.7, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.7 };
+    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.35, rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }
@@ -44,18 +45,22 @@ class TitleScene extends Scene3D {
     if (!this.has3D) return;
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
-    this.sun.position.y = 18 + Math.sin(this.t * 0.4) * 0.8;
-    this.sun.userData.disc.material.uniforms.uI.value = 1.08 * (1 + 0.06 * Math.sin(this.t * 1.2)); // the sun breathes
+    this.sun.position.y = 30 + Math.sin(this.t * 0.4) * 0.8;
+    this.sun.userData.disc.material.uniforms.uI.value = 0.86 * (1 + 0.05 * Math.sin(this.t * 1.2)); // the sun breathes
     this.bursts.update(dt);
     this.city.update(dt);
     this.life.update(dt);
     this.director.update(dt, false);
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
-    this.scene.fog.far = 620 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.camBase.set(Pointer.x * 1.2, 3.4 + Math.sin(this.t * 0.7) * 0.15 - Pointer.y * 0.5, 12);
-    this.lookAt.set(Pointer.x * 6, 9, -120);
+    this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
+    this.scene.userData.post.exposure = 1.12 + 0.16 * (this.life.flash || 0); // lightning lifts the whole picture for a moment
+    // the camera is never still: it sways across the avenue, pushes slowly in toward the city and eases back, and rolls a hair
+    const mv = REDUCED_MOTION || GFX.calm ? 0.25 : 1, t = this.t, sway = Math.sin(t * 0.11) * 3.4 * mv, push = (0.5 - 0.5 * Math.cos(t * 0.085)) * 9 * mv;
+    this.camBase.set(sway + Pointer.x * 1.2, 3.4 + Math.sin(t * 0.7) * 0.15 - Pointer.y * 0.5 + push * 0.1, 12 - push);
+    this.lookAt.set(Pointer.x * 6 + Math.sin(t * 0.11 + 0.9) * 2.4 * mv, 9, -120);
     this.placeCamera();
+    this.camera.rotation.z += Math.sin(t * 0.09) * 0.014 * mv;
     followSky(this.sky, this.camera);
     FX.sync(this.scene, this.t);
   }
@@ -77,11 +82,13 @@ function showTitle() {
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
       <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span><span class="logo-glint" aria-hidden="true"><span>INR<br>ARCADE</span></span></h1>
+    </div>
+    <div class="title-dock">
+      <button class="insert-coin px" data-act="start">INSERT COIN</button>
+      <div class="title-foot">TAP OR PRESS ENTER</div>
+      <p class="attract" data-tip></p>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
-    <button class="insert-coin px" data-act="start">INSERT COIN</button>
-    <p class="attract" data-tip></p>
-    <div class="title-foot">TAP OR PRESS ENTER</div>
   </section>`);
   $(".logo", el).addEventListener("pointerdown", () => Perf.tap()); // three taps on the title: the frame-rate readout, for this visit
   const tipEl = $("[data-tip]", el);
@@ -89,7 +96,7 @@ function showTitle() {
   const showTip = () => {
     if (!ALL_TIPS.length) { tipEl.textContent = "Study content loading…"; return; }
     const tip = ALL_TIPS[tipI++ % ALL_TIPS.length];
-    tipEl.innerHTML = `<b>STAGE ${tip.ch}</b> · ${esc(tip.t)}`;
+    tipEl.innerHTML = `<span><b>STAGE ${tip.ch}</b> · ${esc(tip.t)}</span>`; // (one child: the plate centres it at a fixed height, so nothing above it jumps when a tip is longer)
   };
   showTip();
   let started = false;

@@ -195,7 +195,8 @@ function hubLitMaterial(env) {
       .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vMR.y;")
       .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;");
   };
-  return m;
+  // every painted, plastic and chrome surface in the room gets a grain, hair scratches and smudges
+  return surfaceDetail(m, { scale: 3.4, height: 0.0015, smudge: 0.42 });
 }
 // Neon: per-vertex HDR colour times the level of the vertex's light group
 // (0 leaves an unlit glass tube). With a map it lights a texture instead; with
@@ -1127,6 +1128,8 @@ class HubScene extends Scene3D {
     const pa = a + Pointer.x * 0.07;
     const dol = this.dolly - travel * 1.5;
     this.camBase.set(Math.sin(a) * dol, 2.3 + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * dol);
+    // the lens is focused on the cabinet in front of us: the room behind it goes soft
+    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.2, far: 11, max: 0.011, k: 0.9 };
     this.lookAt.set(Math.sin(pa) * HUB_R, 2.15 - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.

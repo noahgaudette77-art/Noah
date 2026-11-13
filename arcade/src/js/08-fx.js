@@ -640,11 +640,13 @@ function makeShootingStar() {
 function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uWin: { value: neon(win, 2.3) }, uCool: { value: neon(cool, 1.8) }, uHot: { value: neon(hot, 1.9) },
-      uSky: { value: new THREE.Color(sky) }, uSkyB: { value: new THREE.Color(skyB) }, uZen: { value: new THREE.Color(zenith) }, uStreet: { value: neon(street, 0.4) }, uLit: { value: lit }, uCell: { value: new THREE.Vector2(cell[0], cell[1]) }, uK: { value: k } }),
+      uSky: { value: new THREE.Color(sky) }, uSkyB: { value: new THREE.Color(skyB) }, uZen: { value: new THREE.Color(zenith) }, uStreet: { value: neon(street, 0.4) }, uLit: { value: lit }, uCell: { value: new THREE.Vector2(cell[0], cell[1]) }, uK: { value: k },
+      uSunDir: { value: new THREE.Vector3(0, 0.06, -1).normalize() }, uSunCol: { value: neon(0xffa860, 1.5) }, uFlash: { value: 0 } }),
     vertexColors: true, extensions: { derivatives: true },
     vertexShader: `varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = mat3(modelMatrix) * normal; vC = color; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
+      uniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uFlash;
       uniform float uTime; uniform vec3 uWin; uniform vec3 uCool; uniform vec3 uHot; uniform vec3 uSky; uniform vec3 uSkyB; uniform vec3 uZen; uniform vec3 uStreet; uniform float uLit; uniform vec2 uCell; uniform float uK;
       varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
       void main(){
@@ -654,7 +656,7 @@ function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, s
           float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
           // the glass mirrors the sky: cyan off the towers to the left, magenta off those to the right
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
-          col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.025 + 0.3 * fres);
+          col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
           if (abs(n.y) < 0.5) {
             float along = abs(n.z) > abs(n.x) ? vW.x : vW.z;
             vec2 q = vec2(along / uCell.x, vW.y / uCell.y), id = floor(q), f = fract(q);
@@ -670,12 +672,16 @@ function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, s
             float level = 0.22 + 0.78 * h3 * h3; // most rooms dim, a few bright
             float room = 0.4 + 0.6 * smoothstep(0.22, 0.9, f.y); // brighter toward the ceiling lights
             float tw = 0.85 + 0.15 * sin(uTime * (0.3 + h2 * 0.9) + h1 * 40.0);
-            vec3 glass = skyc * (0.1 + 0.6 * fres);
+            vec3 glass = skyc * (0.06 + 0.34 * fres);
             vec3 near = mix(glass, wc * level * room * tw, on), far = glass + uWin * (uLit * 0.16);
-            col = mix(col, mix(far, near, fine), mix(0.55, pane, fine));
+            float gl = mix(0.55, pane, fine);
+            col = mix(col, mix(far, near, fine), gl);
+            // the low sun glancing off the panes, and lightning: a cold glint on the same glass, for a moment
+            col += (uSunCol * pow(max(dot(R, uSunDir), 0.0), 9.0) * 0.5 + vec3(0.6, 0.72, 1.0) * uFlash * 0.5) * gl * (0.15 + 0.85 * fres);
             col += skyc * 0.06 * smoothstep(0.55, 1.0, vnoise(vec3(along * 1.1, vW.y * 0.06, 2.0))) * fine; // rain running down the glass
           }
           col += uStreet * smoothstep(26.0, 0.0, vW.y) * (0.2 + 0.6 * fres);
+          col += vec3(0.6, 0.72, 1.0) * uFlash * 0.05;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
@@ -691,7 +697,13 @@ function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xf
     uniforms: Object.assign(fogUniforms(), { uKey: { value: neon(key, 1.1) }, uKeyDir: { value: new THREE.Vector3(keyDir[0], keyDir[1], keyDir[2]).normalize() }, uUnder: { value: neon(under, 0.6) }, uSky: { value: new THREE.Color(sky) }, uK: { value: k } }),
     vertexColors: true,
     vertexShader: `varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
-      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = mat3(modelMatrix) * normal; vC = color; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+      void main(){
+        #ifdef USE_INSTANCING
+        mat4 mm = modelMatrix * instanceMatrix;
+        #else
+        mat4 mm = modelMatrix;
+        #endif
+        vec4 w = mm * vec4(position, 1.0); vW = w.xyz; vN = mat3(mm) * normal; vC = color; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS} uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uUnder; uniform vec3 uSky; uniform float uK;
       varying vec3 vW; varying vec3 vN; varying vec3 vC; varying float vDepth;
       void main(){
@@ -705,4 +717,84 @@ function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xf
         gl_FragColor = vec4(col, 1.0);
       }`,
   });
+}
+
+// ---- surface detail for physically-based materials -----------------------------------
+// One tiling texture, made once: r = fine grain (cast metal, pebbled plastic), g = hair
+// scratches, b = smudges (where a surface has been handled it is a little glossier or
+// duller). surfaceDetail() lays it on a MeshStandardMaterial without any UVs (three
+// projections, blended by the surface's facing) as real relief in the normal and as
+// variation in roughness, at two scales so no repeat shows. Reflections break up over
+// it the way they do on a real cabinet, hull or vault door.
+function detailTile() {
+  if (detailTile.t) return detailTile.t;
+  const S = 512, c = document.createElement("canvas");
+  c.width = c.height = S;
+  const x = c.getContext("2d"), img = x.createImageData(S, S), d = img.data;
+  let seed = 12345;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // tiling value noise on a lattice of n cells
+  const lattice = (n) => { const g = new Float32Array(n * n); for (let i = 0; i < g.length; i++) g[i] = rnd(); return (u, v) => {
+    const fx = u * n, fy = v * n, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    const a = g[(y0 % n) * n + (x0 % n)], b = g[(y0 % n) * n + ((x0 + 1) % n)], e = g[((y0 + 1) % n) * n + (x0 % n)], f = g[((y0 + 1) % n) * n + ((x0 + 1) % n)];
+    return a + (b - a) * sx + (e - a) * sy + (a - b - e + f) * sx * sy; }; };
+  const g1 = lattice(128), g2 = lattice(48), s1 = lattice(6), s2 = lattice(14), s3 = lattice(31);
+  // scratches on their own canvas, each drawn nine times so they wrap
+  const sc = document.createElement("canvas"); sc.width = sc.height = S;
+  const y = sc.getContext("2d");
+  y.fillStyle = "#000"; y.fillRect(0, 0, S, S);
+  y.lineCap = "round";
+  for (let i = 0; i < 150; i++) {
+    const px = rnd() * S, py = rnd() * S, a = rnd() * Math.PI, len = 12 + rnd() * rnd() * 150, bend = (rnd() - 0.5) * 22, al = 0.18 + rnd() * 0.6;
+    y.strokeStyle = `rgba(255,255,255,${al})`; y.lineWidth = 0.6 + rnd() * 0.8;
+    for (let ox = -S; ox <= S; ox += S) for (let oy = -S; oy <= S; oy += S) {
+      y.beginPath(); y.moveTo(px + ox, py + oy);
+      y.quadraticCurveTo(px + ox + Math.cos(a) * len * 0.5 - Math.sin(a) * bend, py + oy + Math.sin(a) * len * 0.5 + Math.cos(a) * bend, px + ox + Math.cos(a) * len, py + oy + Math.sin(a) * len);
+      y.stroke();
+    }
+  }
+  const sd = y.getImageData(0, 0, S, S).data;
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const u = i / S, v = j / S, k = (j * S + i) * 4;
+    d[k] = 255 * clamp(0.5 + (g1(u, v) - 0.5) * 0.9 + (g2(u, v) - 0.5) * 0.5 + (rnd() - 0.5) * 0.25, 0, 1);
+    d[k + 1] = sd[k];
+    d[k + 2] = 255 * clamp(0.5 + (s1(u, v) - 0.5) * 0.9 + (s2(u, v) - 0.5) * 0.5 + (s3(u, v) - 0.5) * 0.25, 0, 1);
+    d[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return (detailTile.t = t);
+}
+// scale: repeats per unit of the object's own space. height: relief in the same units.
+// grain, scratch: how much of each. smudge: roughness variation (0..1). big: the second,
+// larger layer's scale as a fraction of the first.
+function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, smudge = 0.35, big = 0.19 } = {}) {
+  const prev = m.onBeforeCompile, prevKey = (m.customProgramCacheKey ? m.customProgramCacheKey() : "") + (prev ? prev.toString() : "");
+  const U = { tDetail: { value: detailTile() }, uDetail: { value: new THREE.Vector4(scale, grain * height, scratch * height, smudge) }, uDetailBig: { value: big } };
+  m.extensions = Object.assign({}, m.extensions, { derivatives: true });
+  m.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
+    Object.assign(sh.uniforms, U);
+    if (sh.fragmentShader.indexOf("#include <normal_fragment_begin>") < 0 || sh.fragmentShader.indexOf("#include <normal_fragment_maps>") < 0) return; // (a material with its own normal work keeps it)
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vDetailP; varying vec3 vDetailN;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvDetailP = transformed; vDetailN = objectNormal;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", `#include <common>
+        varying vec3 vDetailP; varying vec3 vDetailN; uniform sampler2D tDetail; uniform vec4 uDetail; uniform float uDetailBig;
+        vec3 detailTri(vec3 p, vec3 w){ return texture2D(tDetail, p.yz).rgb * w.x + texture2D(tDetail, p.xz).rgb * w.y + texture2D(tDetail, p.xy).rgb * w.z; }`)
+      .replace("#include <normal_fragment_begin>", `
+        vec3 dtW = abs(normalize(vDetailN)); dtW = dtW * dtW * dtW * dtW; dtW /= dtW.x + dtW.y + dtW.z;
+        vec3 dtA = detailTri(vDetailP * uDetail.x, dtW), dtB = detailTri(vDetailP * (uDetail.x * uDetailBig) + 0.37, dtW);
+        roughnessFactor = clamp(roughnessFactor * (1.0 + uDetail.w * (dtB.b * 2.0 - 1.0)) - dtA.g * 0.22 * step(1e-7, uDetail.z), 0.05, 1.0);
+        #include <normal_fragment_begin>`)
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        { float dh = (dtA.r - 0.5) * uDetail.y + (dtB.r - 0.5) * uDetail.y * 2.5 - dtA.g * uDetail.z;
+          vec3 dsx = dFdx(-vViewPosition), dsy = dFdy(-vViewPosition), dr1 = cross(dsy, normal), dr2 = cross(normal, dsx);
+          float ddet = dot(dsx, dr1);
+          normal = normalize(abs(ddet) * normal - sign(ddet) * (dFdx(dh) * dr1 + dFdy(dh) * dr2)); }`);
+  };
+  m.customProgramCacheKey = () => prevKey + "|detail";
+  return m;
 }

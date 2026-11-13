@@ -414,7 +414,7 @@ function racerCityMaterial(shared, P) {
 }
 // Neon blade signs hang off the buildings facing the driver. Their words are the
 // course's own: one canvas holds them all, upright, in three neon colours.
-const RACER_SIGNS = ["RRSP", "TFSA", "RRIF", "QPP", "LIRA", "TERM", "WILL", "CLHIA"];
+const RACER_SIGNS = ["RRSP", "TFSA", "RRIF", "QPP", "LIRA", "TERM", "WILL", "RESP"]; // (product names from the course: no organisation's name is put up in lights)
 function racerSignAtlas() {
   const n = RACER_SIGNS.length, cw = 128, ch = 512;
   const c = document.createElement("canvas");

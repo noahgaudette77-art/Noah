@@ -103,10 +103,10 @@ class TitleCity {
     { const pos = [], col = [], sp = [], x0 = [];
       const lane = (y, z, dir, n, speed, size, tint) => { for (let i = 0; i < n; i++) {
         const start = Math.random() * 640, v = speed * rand(0.8, 1.25) * dir, len = size * rand(2.6, 4.4), hh = size * 0.3, c = new THREE.Color(tint);
-        [[0, len * 0.5, [1.8, 1.7, 1.5]], [-len * 0.5, 0, [1.9, 0.12, 0.2]]].forEach(([a, b2, cc], part) => {
-          const A = dir > 0 ? a : -a, B = dir > 0 ? b2 : -b2, cl = part === 0 ? cc : [cc[0] * (0.6 + 0.4 * c.r), cc[1] + 0.25 * c.g, cc[2] + 0.5 * c.b];
-          [[A, -hh], [B, -hh], [B, hh], [A, -hh], [B, hh], [A, hh]].forEach(([dx, dy]) => { pos.push(dx, y + dy + (i % 3) * 0.5, z + (i % 2) * 1.4); col.push(cl[0], cl[1], cl[2]); sp.push(v); x0.push(start); });
-        }); } };
+        // a comet: bright at its head, gone at its tail, in its lane's own colour (warm white where it has none)
+        const hue = c.r + c.g + c.b > 0.05 ? [0.5 + 1.9 * c.r, 0.5 + 1.9 * c.g, 0.5 + 1.9 * c.b] : [2.2, 1.9, 1.4], L = len * 1.7, jy = (i % 3) * 0.5 + rand(-0.35, 0.35), jz = (i % 2) * 1.4;
+        [[0, -hh, 1], [-L, -hh, 0], [-L, hh, 0], [0, -hh, 1], [-L, hh, 0], [0, hh, 1]].forEach(([dx, dy, k]) => { pos.push(dx * dir, y + dy + jy, z + jz); col.push(hue[0] * k, hue[1] * k, hue[2] * k); sp.push(v); x0.push(start); });
+      } };
       lane(17.9, -117.6, 1, 22, 16, 0.5, 0x000000); lane(17.9, -122.6, -1, 22, 14, 0.5, 0x000000);
       lane(9.9, -195, 1, 16, 11, 0.4, 0x000000); lane(9.9, -197, -1, 16, 10, 0.4, 0x000000);
       // sky lanes, placed in the open sky above the logo and in the gap beneath it
