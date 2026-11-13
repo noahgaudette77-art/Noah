@@ -102,7 +102,7 @@ lists all of them again.
   strikes: bolts from both claws, a lunge and a swipe, or a roar and a blast, in
   turn. In a wave's last three questions it rages: faster wings, red light, an
   aura round the view. Clear the wave and it staggers, breaks up into its 106
-  parts and burns away. (The weakest quality levels draw a 3,500-triangle version
+  parts and burns away. (The weakest quality levels draw a 3,900-triangle version
   in a plain material. If the demon's model is missing or damaged, the space frog
   it replaced stands in: a trooper in a yellow suit with a rotary cannon.)
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted

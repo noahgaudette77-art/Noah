@@ -797,7 +797,7 @@ blade under it and a lower pair of blades. 19 of the parts are small studs.
   13. defeat: stagger, then every part thrown outward and burned away in a blast
   Hooks: wave start, right answer, wrong answer, time up, wave cleared; the wave's
   progress and its right answers stand for its HP.
-- Weak quality levels: a 3,500-triangle version (vertices merged by cell) in a plain
+- Weak quality levels: a 3,900-triangle version (vertices merged by cell) in a plain
   material; no shedding or break-up there. Reduced effects: slower wings, no aura,
   ring, mist or arcs; fewer embers. Reduced motion: no fly-in.
 - Fallback: with no demon model, or a damaged one, the frog is the enemy; with
