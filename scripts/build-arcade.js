@@ -74,10 +74,10 @@ function loadStory() {
 // Binary assets, inlined as base64 so the page stays one self-contained file.
 function loadAssets() {
   const out = {};
-  ["boss", "fighter", "frog"].forEach((name) => {
-    const dir = path.join(DIR, "assets", name), mesh = path.join(dir, name + ".bin"), tex = path.join(dir, "albedo.jpg");
+  ["boss", "fighter", "demon", "frog"].forEach((name) => {
+    const dir = path.join(DIR, "assets", name), mesh = path.join(dir, name + ".bin"), webp = path.join(dir, "albedo.webp"), tex = fs.existsSync(webp) ? webp : path.join(dir, "albedo.jpg");
     if (fs.existsSync(mesh) && fs.existsSync(tex)) {
-      out[name] = { mesh: fs.readFileSync(mesh).toString("base64"), albedo: "data:image/jpeg;base64," + fs.readFileSync(tex).toString("base64") };
+      out[name] = { mesh: fs.readFileSync(mesh).toString("base64"), albedo: "data:image/" + (tex === webp ? "webp" : "jpeg") + ";base64," + fs.readFileSync(tex).toString("base64") };
     }
   });
   return out;

@@ -724,3 +724,97 @@ boom are reused, only between questions). With the frog as the enemy there are n
 per-answer targets to halo: the halo is behind the enemy. The hub's Risk Blaster
 cabinet keeps its old attract demo. No megastructure beyond the station and the
 gate (the whale was built instead). The frog itself is untouched.
+
+# The void demon (tenth pass): progress log
+
+The request: the new demon model replaces the frog wherever the frog appeared; make it
+look and move as well as it can; rig it from its loose parts; keep the old boss as a
+fallback; get its file well under 3 MB. `arcade/backup/index.before-demon.html` is the
+game before it.
+
+## What the file is
+
+`void_demon_3d_model.glb` (10.45 MB, not in the repo): 106 separate parts
+(`tripo_part_0` to `105`), 25,589 vertices, 20,645 triangles, one material, one
+8192 px JPEG of 9.4 MB (a muddy stone brown cut into thousands of tiny charts), no
+skeleton, no animation. One unit across the wings, 0.73 tall, facing +z. It is a torso
+with no legs: a skull with two horns and a third-eye gem, a lower jaw that is one part
+with the neck, shoulder plates, a chest plate over a core, a waist that tapers to a
+point (its tail), two arms with clawed hands, and on each side a bony wing arm, a wing
+blade under it and a lower pair of blades. 19 of the parts are small studs.
+
+## Checkpoints
+
+| # | Checkpoint | Status |
+|---|---|---|
+| I0 | Back up; inspect; convert (texture to 2048 px WebP); inline | done |
+| I1 | Rig, materials, lights, particles, framing, entrance | done |
+| I2 | Animations hooked to the game's events | done |
+| I3 | Verify, docs, PR, artifact, report | done |
+
+## Done
+
+- I0: `scripts/convert-model.js` and the build know `demon`: `demon.bin` 485 KB
+  (the 106 parts, quantised as the other models are) and `albedo.webp` 315 KB at
+  2048 px: 0.8 MB in all, from 10.45 MB. The page is 6.6 MB.
+- I1 (`20h-blasterdemon.js`, new; two lines in `20-blaster.js`):
+  - Placement: Risk Blaster's enemy in every wave, in the frog's place and on the
+    frog's clock (22 units ahead when a question starts, 14 when its time is up).
+    Sized so that at its closest it fills the band from top to bottom and its
+    wingtips run past the sides (the frog was fitted inside the band). It is not in
+    Boss Rush: its twelve bosses talk, each for its chapter, and stay as they are.
+  - Rig: the parts are merged at load into 21 joints with pivots (body, waist, tail,
+    head, jaw, two shoulder plates, arm, forearm, hand and claws a side, wing arm,
+    wing blade and lower wing a side). Each vertex keeps where it was at rest, its
+    part's middle, what it is made of, how far along its part it is, and when it is
+    shed.
+  - Materials (the baked texture is only read as light and shade): gunmetal armour
+    and obsidian skull, horns, blades and claws, with relief from the texture and
+    the shared detail tile, worn bright edges, an environment map.
+  - Light: crimson eyes (light in the sockets and two sprites), a violet third eye,
+    fangs and a mouth that glow as the jaw opens, a core with a heart of light that
+    beats, horn and wing-spike tips, veins and small lights in the armour, 19 studs
+    each on its own beat, a magenta and cyan rim, a breath of violet glow behind it.
+    Its lights come on from below as it arrives.
+  - Particles and air: embers rising, dark mist off the wingtips, sparks and smoke
+    from its wounds, arcs between its claws (one every 0.4 s at most), heat haze
+    when it rears, strikes, rages or burns.
+  - Wing blades eaten ragged toward their outer and lower edges, the edges burning.
+- I2, the animations (all posed from smooth curves; what is further out follows later):
+  1. idle hover: breathing, a bob on the wing beat, a sway
+  2. wing beats with follow-through (wing arm, then blade, then lower wing)
+  3. tail sway (waist, then tail)
+  4. head tracking (it watches the player; the pointer turns it)
+  5. entrance at a wave's start: fly-in, wings thrown wide, a roar, lights on
+  6. the warning: it rears up, arms raised, claws charged, jaw opening
+  7. strike one: bolts from both claws
+  8. strike two: a lunge and a claw swipe
+  9. strike three: a roar (jaw wide, a ring of force) and a blast from its mouth
+  10. hit reaction: a flash, thrown back over a few frames, wings folding in
+  11. damage states: cracks, armour shed in order (studs first, the plates over the
+      core last), the core laid bare, lights stuttering (2.5 changes a second at most)
+  12. rage in a wave's last three questions: faster wings, red light, an aura
+  13. defeat: stagger, then every part thrown outward and burned away in a blast
+  Hooks: wave start, right answer, wrong answer, time up, wave cleared; the wave's
+  progress and its right answers stand for its HP.
+- Weak quality levels: a 3,500-triangle version (vertices merged by cell) in a plain
+  material; no shedding or break-up there. Reduced effects: slower wings, no aura,
+  ring, mist or arcs; fewer embers. Reduced motion: no fly-in.
+- Fallback: with no demon model, or a damaged one, the frog is the enemy; with
+  neither, the answers' targets. Tested each way.
+- I3, the checks: regression IDENTICAL (153 answers in 8 games, every saved byte);
+  full walkthrough with no console errors and no horizontal overflow; every demon
+  event run with Reduced effects on. Software renderer, 390 by 844, Risk Blaster,
+  average / worst second, frog build and demon build alternately: 97 / 85 and
+  93 / 87 with the frog, 86 / 80 and 103 / 87 with the demon (before its light
+  version existed the page's own rate was 52). Locked at the top quality level:
+  13 with the frog, 11 with the demon.
+- Scores (honest, after two rounds of tuning): detail 4, polish 4, smoothness 4
+  (judged from stills and from the curves, not from video), cohesion 4.
+
+Known and not done: not measured on a real iPhone; no new sounds (the boss's cues
+are reused). It was not put in Boss Rush. Risk Blaster has no last wave, so there is
+no separate final-boss form: it is every wave's boss, and rages at each wave's end.
+The frog's files stay in the page as the stand-in (about 1.4 MB of it). No KTX2 (it
+would need a transcoder in the page). No cast shadows in open space: its undersides
+and inner faces are shaded darker instead.

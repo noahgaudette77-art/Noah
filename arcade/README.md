@@ -13,7 +13,7 @@ offline fallback.
 
 | Cabinet | What it is | What it trains |
 |---|---|---|
-| **Risk Blaster** | Rail shooter. One big space frog comes at you through open deep space while the clock runs. Tap the right answer and your fighter opens fire on it; tap a wrong one, or run out of time, and it fires on you. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
+| **Risk Blaster** | Rail shooter. A winged void demon comes at you through open deep space while the clock runs. Tap the right answer and your fighter opens fire on it; tap a wrong one, or run out of time, and it fires on you. Waves of 10 get faster; streaks multiply your score. | Fast recall under time pressure |
 | **Nest Egg Run** | Lane racer through a 40-year career, one gate per year from age 25 to 65. Steer into the right answer's lane to compound your savings; three crashes force early retirement. Five-answer streaks buy an insurance policy that pays out on your next crash. Retiring with $1,000,000 takes about 95% accuracy. | Sustained accuracy |
 | **Boss Rush** | One boss per chapter, plus a final boss across the whole book. Bosses only take hard questions; answer before their attack charges. Clear with all three hearts for three stars. | The hardest, most exam-like questions |
 | **Memory Bank** | Flashcards for every key term, rule and number, with self-grading (missed / got it / easy) and a swap button to see definitions first. | Definitions and numbers |
@@ -29,7 +29,7 @@ lists all of them again.
   brighter than white: multi-level bloom, filmic tone mapping, colour grading, sun
   rays, and live reflections on wet floors and roads. Each cabinet has its own
   world: a living synthwave city on the title screen, open deep space full of
-  traffic, with a giant frog trooper in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
+  traffic, with a winged void demon in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
   with a mirror floor in Boss Rush, where every boss is a different
@@ -81,17 +81,30 @@ lists all of them again.
   ahead, and the picture is dimmed behind the enemy, so what must be read stays
   clear. (Only the band between the question and the answers shows the 3D view,
   so the scenery is composed in the frame round the enemy.)
-- **The frog.** Each wave has one enemy: the player's own space frog (a supplied
-  sculpt, cut down by `scripts/convert-model.js` to 20,000 triangles with its own
-  texture), a trooper in a yellow suit with a rotary cannon, hovering on the jets
-  of its backpack and big enough to fill the view. It breathes, its throat
-  works, and its head follows your finger. While a question's clock runs it comes
-  closer. Answer right and your fighter opens fire: the frog whites out, yelps and
-  is knocked back into the distance, a little more scorched and smoking each time.
-  Answer wrong and your guns stay silent: it swings its cannon round, eyes
-  flaring, croaks, and puts six bolts into your shield. Run out of time and it
-  does the same from point-blank. Clear the wave and it comes apart into light in
-  a blast of the wave's colour, and the next wave's frog flies up out of the distance.
+- **The demon.** Each wave has one enemy: the player's own void demon (a supplied
+  model of 106 loose parts with no skeleton, converted by
+  `scripts/convert-model.js` from 10.4 MB to 0.8 MB), a horned, skull-faced torso
+  on four wings. The game gathers its parts into 21 joints (head, jaw, shoulders,
+  arms, forearms, hands, claws, wings in three pieces a side, waist and tail) and
+  poses them from smooth curves. It wears obsidian and gunmetal instead of its
+  muddy baked texture: panel lines, wear and bright worn edges, veins of magenta
+  and violet light, crimson eyes, a violet third eye, glowing fangs, a core that
+  beats, horns and wing spikes that glow toward their tips, studs that are small
+  lights, wing blades eaten ragged with burning edges, a magenta and cyan rim.
+  Embers rise from it, dark mist trails off its wings, energy crackles in its
+  claws. It hovers on slow wing beats (the outer wing follows the inner), breathes,
+  sways its tail and watches you. A wave starts: it flies up out of the distance,
+  throws its wings wide and roars as its lights come on from below. While a
+  question's clock runs it comes closer. Answer right and your fire lands on its
+  core: it whites out and is thrown back, and by and by it cracks, sheds armour
+  (studs first, the plates over its core last), smokes and sparks. Answer wrong,
+  or run out of time, and it rears up with its claws charged (the warning), then
+  strikes: bolts from both claws, a lunge and a swipe, or a roar and a blast, in
+  turn. In a wave's last three questions it rages: faster wings, red light, an
+  aura round the view. Clear the wave and it staggers, breaks up into its 106
+  parts and burns away. (The weakest quality levels draw a 3,500-triangle version
+  in a plain material. If the demon's model is missing or damaged, the space frog
+  it replaced stands in: a trooper in a yellow suit with a rotary cannon.)
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
@@ -286,17 +299,18 @@ any hint before submit, and it plays the exam's ending in full (holding its cloc
 through it, so the saved results must match to the byte). `PROGRESS.md` logs the
 upgrades' checkpoints.
 
-Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
-(`boss/`), Risk Blaster's fighter (`fighter/`) and its frog (`frog/`), each a
-`<name>.bin` and an `albedo.jpg`. The build inlines them into the page. To replace
-one, run `node scripts/convert-model.js <model.glb> <boss|fighter|frog>` (needs
+Four models the player supplied live in `arcade/assets/`: the Final Exam's boss
+(`boss/`), Risk Blaster's fighter (`fighter/`), its demon (`demon/`) and the frog
+that stands in for the demon (`frog/`), each a `<name>.bin` and an `albedo.jpg`
+(the demon's is `albedo.webp`). The build inlines them into the page. To replace
+one, run `node scripts/convert-model.js <model.glb> <boss|fighter|demon|frog>` (needs
 ImageMagick) and rebuild. The frog is a dense, meshopt-compressed sculpt:
 converting it also needs the `meshoptimizer` package, which is not a dependency of
 this repo (see the script's header). `src/js/24c-examboss.js` maps the boss's
 numbered parts to joints; `src/js/20d-blasterfighter.js` lists where the fighter's
-engines, guns and lights are; `src/js/20e-blasterfrog.js` where the frog's cannon
-points. Without a fighter model in the build Risk Blaster flies its built-in jet;
-without a frog model every answer is a target to shoot, a crystal form in a
+engines, guns and lights are; `src/js/20h-blasterdemon.js` has the demon's joints, pivots and what each
+part is made of; `src/js/20e-blasterfrog.js` where the frog's cannon points. Without a fighter model in the build Risk Blaster flies its built-in jet;
+without the demon's model the frog is the enemy; without either every answer is a target to shoot, a crystal form in a
 holo-drone (tap one, or its answer), and a carrier ship is the wave's enemy. If a
 model is damaged and will not decode, the game falls back the same way (the exam
 shows its old procedural centrepiece in place of the boss).

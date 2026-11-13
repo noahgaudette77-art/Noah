@@ -4,14 +4,17 @@
  *
  *   node scripts/convert-model.js <model.glb> <name> [textureSize=2048]
  *
- * <name> is "boss" (the Final Exam's boss), "fighter" (Risk Blaster's ship) or "frog"
- * (Risk Blaster's enemy). Writes into arcade/assets/<name>/ (or the folder in OUT_DIR):
+ * <name> is "boss" (the Final Exam's boss), "fighter" (Risk Blaster's ship), "demon"
+ * (Risk Blaster's enemy) or "frog" (the enemy it replaced, kept as its stand-in).
+ * Writes into arcade/assets/<name>/ (or the folder in OUT_DIR):
  *   <name>.bin   every part of the model in one buffer: positions as 16-bit fractions
  *                of the part's bounding box, normals as signed bytes, UVs as 16-bit
  *                fractions, 16-bit indices, after a small JSON header
  *   albedo.jpg   the colour texture, resized and sharpened (needs ImageMagick's
  *                `convert`): the boss's in grey at 2048 px, the fighter's at 1024 px,
- *                the frog's at 2048 px. GRADE=off keeps any model's as it is.
+ *                the frog's at 2048 px. The demon's is written as albedo.webp at
+ *                2048 px (a third of the size of the same picture as a JPEG).
+ *                GRADE=off keeps any model's as it is.
  *
  * A model made of separate parts (the boss, the fighter) is kept part by part. A sculpt
  * (the frog: one meshopt-compressed mesh of 1.9 million triangles) is simplified
@@ -73,24 +76,26 @@ const xn = (m, x, y, z) => { const v = [m[0] * x + m[4] * y + m[8] * z, m[1] * x
 
 
 const src = process.argv[2], name = process.argv[3];
-if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter|frog> [textureSize]"); process.exit(1); }
+if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter|demon|frog> [textureSize]"); process.exit(1); }
 const outDir = path.resolve(process.env.OUT_DIR || path.join(__dirname, "..", "arcade", "assets", name));
 // In the arcade each model wears gunmetal and neon (src/js/08m-model.js), so its texture is only
 // read as light and shade and as a mask of where its paint was: the boss's is kept in grey at
 // full size (it is seen from very close), the fighter's in colour at half size (it is small).
 const texSize = +(process.argv[4] || { fighter: 1024 }[name] || 2048);
-const GRADES = { boss: ["-colorspace", "Gray", "-sigmoidal-contrast", "4x45%", "-unsharp", "0x1.2+0.8+0.02"], fighter: ["-unsharp", "0x1.0+0.7+0.01"], frog: ["-unsharp", "0x1.2+0.7+0.01"] };
+const GRADES = { boss: ["-colorspace", "Gray", "-sigmoidal-contrast", "4x45%", "-unsharp", "0x1.2+0.8+0.02"], fighter: ["-unsharp", "0x1.0+0.7+0.01"], frog: ["-unsharp", "0x1.2+0.7+0.01"], demon: ["-unsharp", "0x1.0+0.6+0.02"] };
 const GRADE = process.env.GRADE === "off" ? [] : GRADES[name] || [];
-const QUALITY = process.env.QUALITY || { boss: "74", fighter: "82", frog: "74" }[name] || "86";
+const QUALITY = process.env.QUALITY || { boss: "74", fighter: "82", frog: "74", demon: "78" }[name] || "86";
+const TEX = "albedo." + ({ demon: "webp" }[name] || "jpg"); // (WebP where the game can count on it: every browser since 2020)
 fs.mkdirSync(outDir, { recursive: true });
 
 const g = readGlb(src), J = g.json;
-// the model's colour texture, resized (and graded) into albedo.jpg
+// the model's colour texture, resized (and graded) into albedo.jpg or albedo.webp
 function writeTexture() {
   const im = J.images[J.textures[J.materials[0].pbrMetallicRoughness.baseColorTexture.index].source], bv = J.bufferViews[im.bufferView];
   const tmp = path.join(outDir, "albedo-source.tmp");
   fs.writeFileSync(tmp, g.bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength));
-  execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, "-sampling-factor", "4:2:0", "-quality", QUALITY, "-strip", path.join(outDir, "albedo.jpg")]);
+  const enc = TEX.endsWith(".webp") ? ["-quality", QUALITY, "-define", "webp:method=6"] : ["-sampling-factor", "4:2:0", "-quality", QUALITY];
+  execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, ...enc, "-strip", path.join(outDir, TEX)]);
   fs.unlinkSync(tmp);
 }
 if ((J.extensionsRequired || []).includes("EXT_meshopt_compression")) { sculpt().catch((e) => { console.error(e.message || e); process.exit(1); }); return; }
@@ -125,7 +130,7 @@ fs.writeFileSync(path.join(outDir, name + ".bin"), bin);
 
 writeTexture();
 const tris = parts.reduce((s, p) => s + p.i / 3, 0), verts = parts.reduce((s, p) => s + p.v, 0);
-console.log(`${parts.length} parts, ${verts} vertices, ${tris} triangles -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
+console.log(`${parts.length} parts, ${verts} vertices, ${tris} triangles -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, ${TEX} ${(fs.statSync(path.join(outDir, TEX)).size / 1024).toFixed(0)} KB (${texSize}px)`);
 
 // ---- a sculpt: one dense, meshopt-compressed mesh --------------------------------
 // Decoded and simplified to each count in TRIANGLES with its texture mapping kept (the
@@ -199,5 +204,5 @@ async function sculpt() {
   const bin = Buffer.concat([head, header, Buffer.alloc(pad, 0x20), ...blobs]);
   fs.writeFileSync(path.join(outDir, name + ".bin"), bin);
   writeTexture();
-  console.log(`sculpt of ${I.length / 3} triangles -> ${report.join(", ")} -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
+  console.log(`sculpt of ${I.length / 3} triangles -> ${report.join(", ")} -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, ${TEX} ${(fs.statSync(path.join(outDir, TEX)).size / 1024).toFixed(0)} KB (${texSize}px)`);
 }

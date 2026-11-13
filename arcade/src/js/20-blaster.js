@@ -284,7 +284,11 @@ class BlasterGame extends QuizGame {
     // The enemy: the player's space frog (20e-blasterfrog.js), one big one that the fighter fires on
     // when an answer is right and that fires back when it is wrong. In a build without that model
     // every answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
-    this.frog = FrogModel.ok() ? new BlasterFrog(this) : null;
+    // (Now the enemy is the player's void demon, 20h-blasterdemon.js: it has the frog's part, and is kept in the same
+    // place, this.frog. The frog itself stands in if the demon's model is missing or will not decode.)
+    this.frog = null;
+    if (DemonModel.ok()) { try { this.frog = new BlasterDemon(this); } catch (e) { this.frog = null; } }
+    if (!this.frog && FrogModel.ok()) { try { this.frog = new BlasterFrog(this); } catch (e) { this.frog = null; } }
     if (this.frog) return;
     this.dronePaint = racerCarPaint(this.env, false);
     this.drones = SLOT_COLORS.map((hex, i) => blasterDroneGeo(i, hex));
@@ -741,6 +745,7 @@ class BlasterGame extends QuizGame {
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
+    if (this.frog && this.frog.late) this.frog.late(); // (the demon's heat haze, when it has more of it than the engines)
     Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
