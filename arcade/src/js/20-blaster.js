@@ -2,10 +2,7 @@
 // tunnel; shoot the right one before the targets reach your shields.
 const WAVE_COLORS = [0xff3ad4, 0x35efff, 0xffe14f, 0x86ff5e, 0xa65fff, 0xff9b3d];
 const WAVE_LEN = 10;
-// The tunnel: hex rings every BLASTER_GAP units, recycled as they pass the camera.
-const BLASTER_RINGS = 14;
-const BLASTER_GAP = 12;
-const BLASTER_R = 12;
+// (The world round the fighter is open space: see 20f-blasterspace.js.)
 
 // Merge parts ({ geo, matrix, color }) into one non-indexed geometry with a
 // per-vertex colour, so a detailed model costs one draw call. Also used by BOSS RUSH.
@@ -139,7 +136,7 @@ class BlasterShards {
 
 class BlasterGame extends QuizGame {
   constructor(sel) {
-    super(sel, "blaster", { fov: 60, fog: [0x07021a, 22, 135], bg: 0x05010f });
+    super(sel, "blaster", { fov: 60, far: 2400, fog: [0x0b0324, 120, 1500], bg: 0x05010f });
     this.picker = new QuestionPicker(selectionQids(sel));
     this.score = 0;
     this.combo = 1;
@@ -204,33 +201,19 @@ class BlasterGame extends QuizGame {
         { color: 0xa65fff, pos: [0, -12, -8], w: 14, h: 4, k: 1.0 },
       ],
     });
-    addLights(s, { ambient: 0x5a4aa0, ai: 0.6, key: 0xe0d8ff, ki: 1.1, dir: [2, 5, 6] });
+    this.keyLight = addLights(s, { ambient: 0x5a4aa0, ai: 0.6, key: 0xe0d8ff, ki: 1.1, dir: [2, 5, 6] });
     this.boomLight = new THREE.PointLight(0xffffff, 0, 36, 2);
     s.add(this.boomLight);
     this.engineLight = new THREE.PointLight(COLORS.orange, 1.4, 5, 2);
     s.add(this.engineLight);
-    // Deep space: the sky dome is tipped so its zenith (stars + nebula) sits at
-    // the end of the tunnel, with a soft galactic glow at the vanishing point.
-    this.sky = makeSky({ top: 0x050113, mid: 0x0a0326, horizon: 0x6a1a8a, bottom: 0x050113, glow: 0, stars: 1.25, nebula: 0.62, nebulaColor: 0x1d64c8 });
-    this.sky.rotation.x = -Math.PI / 2;
-    s.add(this.sky);
-    // a ringed giant hangs beyond the tunnel wall
-    this.planet = makePlanet({ radius: 23 });
-    this.planet.position.set(50, 36, -215);
-    s.add(this.planet);
-    this.decor(this.planet);
-    this.coreBase = neon(0x7b3dff, 0.55);
-    this.core = glowSprite(this.coreBase, 150, 0.6);
-    this.core.position.set(0, 0, -340);
-    s.add(this.core);
     this.waveCol = neon(WAVE_COLORS[0], 1);
     this.waveTarget = this.waveCol.clone();
     this.makeStreaks();
-    this.makeTunnel();
     this.makeTargetKit();
-    this.corridor = new BlasterCorridor(this); // ribs, pylons, conduits, rocks, lasers, passing traffic
-    this.director = this.corridor.director;
-    // the wave's carrier, far down the corridor (when the frog is the wave's enemy, there is none)
+    // open space all round: sky, stars, the giant, the star, clouds, rocks, traffic, and what happens out there (20f, 20g)
+    this.space = new BlasterSpace(this);
+    this.director = this.space.director || { force() { return null; }, update() {}, log: [] };
+    // the wave's carrier, far ahead (when the frog is the wave's enemy, there is none)
     this.carrier = this.frog ? { update() {}, arrive() {}, destroy() {}, volley() {} } : new BlasterCarrier(this);
     // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
     this.warmExtra = this.frog ? [] : this.slotMats.map((M, i) => {
@@ -285,106 +268,12 @@ class BlasterGame extends QuizGame {
     this.decor(this.streaks);
   }
   resetStreak(i, z) {
-    const a = rand(Math.PI * 2), r = rand(3, 24);
+    const a = rand(Math.PI * 2), r = rand(5, 46);
     const x = Math.cos(a) * r, y = Math.sin(a) * r;
     const p = this.streakPos;
     this.streakLen[i] = rand(1.5, 5);
     p[i * 6] = x; p[i * 6 + 1] = y; p[i * 6 + 2] = z;
     p[i * 6 + 3] = x; p[i * 6 + 4] = y; p[i * 6 + 5] = z - this.streakLen[i];
-  }
-
-  // The tunnel: 14 HDR hex rings with hot corner nodes (one draw call, moved in the
-  // vertex shader) inside a faint honeycomb wall whose grid streams past.
-  makeTunnel() {
-    const parts = [{ geo: new THREE.TorusGeometry(BLASTER_R, 0.085, 4, 6), color: new THREE.Color(1, 1, 1) }];
-    for (let j = 0; j < 6; j++) {
-      const a = (j / 6) * Math.PI * 2;
-      parts.push({ geo: new THREE.OctahedronGeometry(0.22, 0), matrix: new THREE.Matrix4().makeTranslation(Math.cos(a) * BLASTER_R, Math.sin(a) * BLASTER_R, 0), color: new THREE.Color(2.1, 2.1, 2.1) });
-    }
-    const one = blasterMerge(parts);
-    const n = one.attributes.position.count;
-    const pos = new Float32Array(n * BLASTER_RINGS * 3), k = new Float32Array(n * BLASTER_RINGS), idx = new Float32Array(n * BLASTER_RINGS);
-    const src = one.attributes.position.array, srcK = one.attributes.color.array;
-    for (let r = 0; r < BLASTER_RINGS; r++) {
-      pos.set(src, r * n * 3);
-      for (let i = 0; i < n; i++) k[r * n + i] = srcK[i * 3];
-      idx.fill(r, r * n, (r + 1) * n);
-    }
-    one.dispose();
-    const rg = new THREE.BufferGeometry();
-    rg.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    rg.setAttribute("aK", new THREE.BufferAttribute(k, 1));
-    rg.setAttribute("aIdx", new THREE.BufferAttribute(idx, 1));
-    const flash = () => ({ uFlash: { value: 0 }, uFlashZ: { value: -50 }, uFlashColor: { value: new THREE.Color(1, 1, 1) } });
-    this.ringMat = new THREE.ShaderMaterial({
-      uniforms: Object.assign(fogUniforms(), flash(), { uColor: { value: neon(WAVE_COLORS[0], 2.3) }, uScroll: { value: 0 }, uSpin: { value: 0 }, uTime: { value: 0 }, uBoost: { value: 1 } }),
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute float aIdx; attribute float aK; uniform float uScroll; uniform float uSpin;
-        varying float vDepth; varying float vZ; varying float vK;
-        void main(){
-          float a = aIdx * 0.17 + uSpin; float c = cos(a); float s = sin(a);
-          vec3 p = vec3(c * position.x - s * position.y, s * position.x + c * position.y, position.z);
-          float z = -aIdx * ${BLASTER_GAP}.0 - 6.0 + uScroll;
-          p.z += 4.0 - mod(4.0 - z, ${BLASTER_RINGS * BLASTER_GAP}.0);
-          vZ = p.z; vK = aK;
-          vec4 mv = modelViewMatrix * vec4(p, 1.0);
-          vDepth = -mv.z;
-          gl_Position = projectionMatrix * mv;
-        }`,
-      fragmentShader: `${GLSL_FOG_PARS}
-        uniform vec3 uColor; uniform vec3 uFlashColor; uniform float uFlash; uniform float uFlashZ; uniform float uBoost; uniform float uTime;
-        varying float vDepth; varying float vZ; varying float vK;
-        void main(){
-          float chase = 0.8 + 0.7 * pow(0.5 + 0.5 * sin(vZ * 0.11 + uTime * 4.0), 10.0);
-          vec3 col = uColor * vK * chase * uBoost;
-          col += uFlashColor * uFlash * exp(-abs(vZ - uFlashZ) * 0.07) * 2.5;
-          col *= 1.0 - smoothstep(uFogNear, uFogFar, vDepth);
-          gl_FragColor = vec4(col, 1.0);
-        }`,
-    });
-    this.rings = new THREE.Mesh(rg, this.ringMat);
-    this.rings.frustumCulled = false;
-    this.scene.add(this.rings);
-    // the honeycomb wall
-    const L = 200;
-    const wg = new THREE.CylinderGeometry(12.9, 12.9, L, 36, 1, true);
-    wg.rotateX(-Math.PI / 2);
-    wg.translate(0, 0, -L / 2 + 6);
-    this.wallMat = new THREE.ShaderMaterial({
-      uniforms: Object.assign(fogUniforms(), flash(), { uColor: { value: neon(WAVE_COLORS[0], 1) }, uScroll: { value: 0 }, uWarp: { value: 0 }, uTime: { value: 0 } }),
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
-      vertexShader: `varying vec2 vUv; varying float vZ; varying float vDepth;
-        void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vZ = w.z; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
-      fragmentShader: `${GLSL_FOG_PARS}
-        uniform vec3 uColor; uniform vec3 uFlashColor; uniform float uFlash; uniform float uFlashZ; uniform float uScroll; uniform float uWarp; uniform float uTime;
-        varying vec2 vUv; varying float vZ; varying float vDepth;
-        void main(){
-          vec2 p = vec2(vUv.x * 20.0, (vZ - uScroll) / (4.0 * (1.0 + uWarp * 6.0)));
-          const vec2 s = vec2(1.0, 1.7320508);
-          vec4 hc = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
-          vec4 h = vec4(p - hc.xy * s, p - (hc.zw + 0.5) * s);
-          vec2 gv = dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw;
-          vec2 id = p - gv;
-          vec2 a = abs(gv);
-          float d = 0.5 - max(dot(a, s * 0.5), a.x);
-          float line = 1.0 - smoothstep(0.0, fwidth(d) * 1.6, d);
-          float r = fract(sin(dot(floor(id * 2.0 + 0.5), vec2(12.9898, 78.233))) * 43758.5453);
-          float lit = step(0.9, r) * (0.5 + 0.5 * sin(uTime * (1.5 + r * 5.0) + r * 60.0));
-          float fade = smoothstep(1.0, 14.0, vDepth) * (1.0 - smoothstep(uFogNear, uFogFar, vDepth));
-          float far = smoothstep(14.0, 40.0, vDepth);
-          fade *= 1.0 - smoothstep(40.0, 110.0, vDepth) * 0.75;
-          vec3 tone = mix(vec3(0.32, 0.22, 1.0), uColor, 0.4);
-          vec3 col = tone * (line * 0.2 + lit * far * (0.04 + 0.14 * smoothstep(0.35, 0.0, d))) * fade * (1.0 + uWarp * 2.6);
-          col += uFlashColor * uFlash * exp(-abs(vZ - uFlashZ) * 0.06) * (0.12 + line * 0.9) * fade;
-          gl_FragColor = vec4(col, 1.0);
-        }`,
-    });
-    this.wall = new THREE.Mesh(wg, this.wallMat);
-    this.wall.frustumCulled = false;
-    this.scene.add(this.wall);
-    this.ringScroll = 0;
-    this.wallScroll = 0;
-    this.spin = 0;
   }
 
   // Targets are holo-drones: an armoured airframe (one shape per slot) holding the
@@ -439,11 +328,7 @@ class BlasterGame extends QuizGame {
     this.flashSprite.material.color.copy(neon(color, 2.4));
     this.boomLight.position.copy(pos);
     this.boomLight.color.set(color);
-    const c = new THREE.Color(color);
-    this.ringMat.uniforms.uFlashColor.value.copy(c);
-    this.wallMat.uniforms.uFlashColor.value.copy(c);
-    this.ringMat.uniforms.uFlashZ.value = pos.z;
-    this.wallMat.uniforms.uFlashZ.value = pos.z;
+    this.space.flash(pos, color); // its light on the dust and on whatever is near
   }
 
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
@@ -464,7 +349,7 @@ class BlasterGame extends QuizGame {
   start() {
     Sound.play("game");
     Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
-    if (this.has3D) this.corridor.director.force("flak"); // an opening salvo outside the wall
+    if (this.has3D) this.director.force("squadron"); // a flight of fighters crosses as the game opens
     if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in
     if (this.frog) this.frog.arrive(); // to meet the frog coming up the tunnel
     UI.banner("WAVE 1", COLORS.magenta, this.sel.label);
@@ -726,13 +611,15 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.shields <= 0) return this.gameOver();
     this.inWave++;
+    // a wave travels through two regions of space: the second comes up half-way, the next wave's with the warp (look only)
+    if (this.has3D && this.inWave === Math.floor(WAVE_LEN / 2)) this.space.setRegion((this.wave - 1) * 2 + 1, 7);
     if (this.inWave >= WAVE_LEN) {
       this.inWave = 0;
       this.wave++;
       const bonus = this.shields * 500 + this.wave * 250;
       this.score += bonus;
       this.shields = Math.min(3, this.shields + 1);
-      if (this.has3D) this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1);
+      if (this.has3D) { this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1); this.space.setRegion((this.wave - 1) * 2, 2.4); }
       Sound.sfx("levelup");
       Sound.sfx("warp");
       if (this.has3D) {
@@ -807,24 +694,9 @@ class BlasterGame extends QuizGame {
     }
     this.streaks.geometry.attributes.position.needsUpdate = true;
     this.streaks.material.color.setScalar(1 + w * 1.6);
-    // tunnel: scroll, spin, wave colour, warp glow, blast light
-    this.ringScroll = (this.ringScroll + sp * dt) % (BLASTER_RINGS * BLASTER_GAP);
-    this.wallScroll = (this.wallScroll + sp * dt) % (4 * Math.sqrt(3) * 60);
-    this.spin += dt * (0.2 + w * 1.2);
+    // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
-    const ru = this.ringMat.uniforms, wu = this.wallMat.uniforms;
-    ru.uScroll.value = this.ringScroll;
-    ru.uSpin.value = this.spin;
-    ru.uColor.value.copy(this.waveCol).multiplyScalar(2.3);
-    ru.uBoost.value = 1 + w * 1.3 + GFX.fever * 0.7; // the tunnel burns brighter on a streak
     GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
-    wu.uScroll.value = this.wallScroll;
-    wu.uWarp.value = w;
-    wu.uColor.value.copy(this.waveCol);
-    this.wall.rotation.z = -this.spin * 0.35;
-    this.sky.rotation.y += dt * (0.012 + w * 0.5);
-    this.core.scale.setScalar(160 * (1 + w * 1.6));
-    this.core.material.color.copy(this.coreBase).multiplyScalar(1 + w * 2.5);
     if (this.boomT > 0) {
       this.boomT = Math.max(0, this.boomT - dt * 2.6);
       const k = this.boomT;
@@ -832,11 +704,9 @@ class BlasterGame extends QuizGame {
       this.flashSprite.scale.setScalar(this.boomSize * (1.4 - k * 0.6));
       this.flashSprite.material.opacity = k * k;
       this.boomLight.intensity = k * k * 8;
-      ru.uFlash.value = k * k;
-      wu.uFlash.value = k * k;
     }
     this.shards.update(dt);
-    this.corridor.update(dt, sp, w);
+    this.space.update(dt, sp, w);
     this.carrier.update(dt);
     // the frog comes closer as the question's time runs out (and holds where it is while the guns fire)
     if (this.frog) this.frog.update(dt, this.state === "ask" || this.state === "firing" ? 1 - this.tLeft / this.T : null);
@@ -887,7 +757,7 @@ class BlasterGame extends QuizGame {
     this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
-    followSky(this.sky, this.camera);
+    this.space.follow(this.camera);
     FX.sync(this.scene, this.t);
   }
   pause() {
@@ -910,7 +780,7 @@ class BlasterGame extends QuizGame {
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
-    if (this.has3D) this.shards.dispose();
+    if (this.has3D) { this.shards.dispose(); this.space.dispose(); }
     super.dispose();
   }
 }

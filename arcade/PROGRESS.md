@@ -558,8 +558,8 @@ vertex shader and as a whole).
 | G0 | Backup; the shared neon look (detail tile, shader library, plain version for weak levels); lighter textures | done |
 | G1 | Mech boss | done |
 | G2 | Starfighter | done |
-| G3 | Frog | next |
-| G4 | Final verification, docs, PR, artifact, report | pending |
+| G3 | Frog | ON HOLD at the user's request (they are making a new boss; the frog is untouched) |
+| G4 | Final verification, docs, PR, artifact, report | folded into the ninth pass's last step |
 
 ## Done so far
 
@@ -628,3 +628,55 @@ vertex shader and as a whole).
   - Checks: regression IDENTICAL; software renderer, Risk Blaster, average / worst
     second, old and new alternately: 117 / 105 and 119 / 101 old, 120 / 107 and
     127 / 108 new.
+
+# Risk Blaster in open space (ninth pass): progress log
+
+The request: only Risk Blaster's surroundings. Replace the polygon tunnel with a
+wide-open deep-space world full of life; keep the fighter, the models and all quiz
+logic as they are. `arcade/backup/index.before-open-space.html` is the game before it.
+
+One thing found on the way: in the game only the band between the question and the
+answers shows the 3D view (about 30 by 27 degrees round the way ahead), and the enemy
+fills its middle. So the scenery is composed in the frame round the enemy, and things
+pass behind it from one side of the frame to the other.
+
+## Checkpoints
+
+| # | Checkpoint | Status |
+|---|---|---|
+| H1 | Tunnel removed; sky, stars at three depths, star and flare, ringed giant, galaxies, clouds, rocks, station, wrecks, gate; six regions blended | done |
+| H2 | Traffic: six ship designs, instanced, with windows, engines, lights, trails; parting on a right answer | next |
+| H3 | Event Director: 12+ kinds of event, every 3 to 6 s | pending |
+| H4 | Verify (shots against before, 60 s event capture, fps, regression), docs, PR, artifact, report | pending |
+
+## Done so far
+
+- H1 (`20f-blasterspace.js`, new; `20-blaster.js`; `20c-blasterworld.js`):
+  - Gone: the hex rings, the honeycomb wall, the ribs, pylons, conduits, laser chords
+    and wall blocks (`makeTunnel`, `BlasterCorridor`). The old fog (22 to 135 units)
+    is now 120 to 1500 and the camera sees 2400 units.
+  - Sky: one nebula texture baked on the graphics card at load (tiling noise: billows,
+    filaments, hue and lanes, star dust), drawn as two layers that each grow as the
+    ship flies into them; one fades in as the other fades out, so the flight never
+    ends and never repeats. Coloured by the region (three colours and a bright heart).
+    Darker round the way ahead, where the enemy and the answers are.
+  - Stars at three depths: 620 far ones that stand still and twinkle slowly, 340 that
+    drift, 180 specks of dust that stream past (plus the 240 line streaks the game had).
+  - A star with a glow in the sky and five ghosts in the lens; three galaxies; a ringed
+    gas giant with bands, a storm, an atmosphere that glows past its limb, rings seen
+    nearly edge-on with the planet's shadow across them, a moon.
+  - Wisps of nebula that pass the ship (14 soft clouds filled with the nebula's billows).
+  - Rocks: 16 detailed ones (320 faces, noise and craters, flat faces) and 96 lighter
+    ones, as many as the region has, tumbling past and shrinking away as they pass.
+  - Region pieces: a station (spindle, turning wheel, solar wings, mast, a lane of
+    blinking markers), nine wrecks, a wormhole gate (a whirl held by three arms). The
+    station and the gate come slowly nearer while their region lasts.
+  - Regions: nebula, asteroid belt, planet orbit, station zone, ship graveyard,
+    wormhole gate. A wave travels through two: the second comes up after its fifth
+    question (a 7 s blend), the next wave's with the warp (2.4 s). Sky colours, fog,
+    the scene's two lights, star, giant, clouds and rocks all blend.
+  - A soft dark halo behind the enemy (or the answers' targets).
+  - One material for everything solid (`spaceHullMaterial`): the star's light, ambient,
+    a rim, the light of a blast, hull panels, rows of lit windows, engines, lamps that
+    blink at 0.67 Hz each in its own time.
+  - Checks: regression IDENTICAL (153 answers in 8 games); no console errors.
