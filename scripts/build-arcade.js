@@ -13,8 +13,9 @@
  *   arcade/src/body.html     the static markup
  *   arcade/src/js/*.js       the game, concatenated in filename order into one IIFE
  *   arcade/content/*.json    one file per chapter (ch06a + ch06b merge into ch06)
- *   arcade/assets/boss/      the Final Exam boss model (boss.bin, albedo.jpg), made by
- *                            scripts/convert-boss.js and inlined as base64
+ *   arcade/assets/<name>/    the models the player supplied: the Final Exam's boss and
+ *                            Risk Blaster's fighter (<name>.bin, albedo.jpg), made by
+ *                            scripts/convert-model.js and inlined as base64
  *
  * Three.js r128 loads from cdnjs; the full build falls back to the vendored copy
  * in arcade/vendor/ when the CDN is unreachable, so the game also works offline
@@ -72,13 +73,13 @@ function loadStory() {
 
 // Binary assets, inlined as base64 so the page stays one self-contained file.
 function loadAssets() {
-  const out = {}, dir = path.join(DIR, "assets", "boss");
-  if (fs.existsSync(path.join(dir, "boss.bin")) && fs.existsSync(path.join(dir, "albedo.jpg"))) {
-    out.boss = {
-      mesh: fs.readFileSync(path.join(dir, "boss.bin")).toString("base64"),
-      albedo: "data:image/jpeg;base64," + fs.readFileSync(path.join(dir, "albedo.jpg")).toString("base64"),
-    };
-  }
+  const out = {};
+  ["boss", "fighter"].forEach((name) => {
+    const dir = path.join(DIR, "assets", name), mesh = path.join(dir, name + ".bin"), tex = path.join(dir, "albedo.jpg");
+    if (fs.existsSync(mesh) && fs.existsSync(tex)) {
+      out[name] = { mesh: fs.readFileSync(mesh).toString("base64"), albedo: "data:image/jpeg;base64," + fs.readFileSync(tex).toString("base64") };
+    }
+  });
   return out;
 }
 

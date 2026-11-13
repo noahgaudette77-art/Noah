@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 /**
- * Converts the Final Exam boss model (.glb) into the compact form the arcade inlines.
+ * Converts a supplied 3D model (.glb) into the compact form the arcade inlines.
  *
- *   node scripts/convert-boss.js <model.glb> [outDir=arcade/assets/boss] [textureSize=2048]
+ *   node scripts/convert-model.js <model.glb> <name> [textureSize=2048]
  *
- * Writes
- *   boss.bin     every part of the model in one buffer: positions as 16-bit fractions of
- *                the part's bounding box, normals as signed bytes, UVs as 16-bit
+ * <name> is "boss" (the Final Exam's boss) or "fighter" (Risk Blaster's ship). Writes
+ * into arcade/assets/<name>/ (or the folder in OUT_DIR):
+ *   <name>.bin   every part of the model in one buffer: positions as 16-bit fractions
+ *                of the part's bounding box, normals as signed bytes, UVs as 16-bit
  *                fractions, 16-bit indices, after a small JSON header
- *   albedo.jpg   the colour texture, resized, graded and sharpened (needs ImageMagick's
- *                `convert`). The grade takes the model's bright paint down to dark,
- *                worn metal (less saturation, deeper shadows): in the exam hall it is
- *                lit as a threat, not a toy. BOSS_GRADE=off keeps the model's own colours.
+ *   albedo.jpg   the colour texture, resized and sharpened (needs ImageMagick's
+ *                `convert`). The boss is also graded: its bright paint is taken down
+ *                to dark, worn metal (in the exam hall it is lit as a threat, not a
+ *                toy). The fighter keeps its own colours. GRADE=off keeps any model's.
  *
  * The .glb is only read as numbers: nothing in it is executed.
  */
@@ -64,11 +65,13 @@ const xf = (m, x, y, z) => [m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m
 const xn = (m, x, y, z) => { const v = [m[0] * x + m[4] * y + m[8] * z, m[1] * x + m[5] * y + m[9] * z, m[2] * x + m[6] * y + m[10] * z], l = Math.hypot(...v) || 1; return v.map((c) => c / l); };
 
 
-const src = process.argv[2];
-const outDir = path.resolve(process.argv[3] || path.join(__dirname, "..", "arcade", "assets", "boss"));
+const src = process.argv[2], name = process.argv[3];
+if (!src || !/^[a-z]+$/.test(name || "")) { console.error("usage: convert-model.js <model.glb> <boss|fighter> [textureSize]"); process.exit(1); }
+const outDir = path.resolve(process.env.OUT_DIR || path.join(__dirname, "..", "arcade", "assets", name));
 const texSize = +(process.argv[4] || 2048);
-const GRADE = process.env.BOSS_GRADE === "off" ? [] : ["-modulate", "74,46,100", "-sigmoidal-contrast", "5x42%", "-unsharp", "0x1.6+1.1+0.015"];
-if (!src) { console.error("usage: convert-boss.js <model.glb> [outDir] [textureSize]"); process.exit(1); }
+const GRADES = { boss: ["-modulate", "74,46,100", "-sigmoidal-contrast", "5x42%", "-unsharp", "0x1.6+1.1+0.015"], fighter: ["-unsharp", "0x1.2+0.7+0.01"] };
+const GRADE = process.env.GRADE === "off" ? [] : GRADES[name] || [];
+const QUALITY = process.env.QUALITY || "86";
 fs.mkdirSync(outDir, { recursive: true });
 
 const g = readGlb(src), J = g.json;
@@ -99,12 +102,12 @@ const pad = (4 - (header.length % 4)) % 4, head = Buffer.alloc(8);
 head.write("INRB", 0, "ascii");
 head.writeUInt32LE(header.length + pad, 4);
 const bin = Buffer.concat([head, header, Buffer.alloc(pad, 0x20), ...blobs]);
-fs.writeFileSync(path.join(outDir, "boss.bin"), bin);
+fs.writeFileSync(path.join(outDir, name + ".bin"), bin);
 
 const im = J.images[J.textures[J.materials[0].pbrMetallicRoughness.baseColorTexture.index].source], bv = J.bufferViews[im.bufferView];
 const tmp = path.join(outDir, "albedo-source.tmp");
 fs.writeFileSync(tmp, g.bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength));
-execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, "-sampling-factor", "4:2:0", "-quality", "86", "-strip", path.join(outDir, "albedo.jpg")]);
+execFileSync("convert", [(im.mimeType === "image/png" ? "png:" : "jpeg:") + tmp, "-resize", `${texSize}x${texSize}`, ...GRADE, "-sampling-factor", "4:2:0", "-quality", QUALITY, "-strip", path.join(outDir, "albedo.jpg")]);
 fs.unlinkSync(tmp);
 const tris = parts.reduce((s, p) => s + p.i / 3, 0), verts = parts.reduce((s, p) => s + p.v, 0);
-console.log(`${parts.length} parts, ${verts} vertices, ${tris} triangles -> boss.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
+console.log(`${parts.length} parts, ${verts} vertices, ${tris} triangles -> ${name}.bin ${(bin.length / 1024).toFixed(0)} KB, albedo.jpg ${(fs.statSync(path.join(outDir, "albedo.jpg")).size / 1024).toFixed(0)} KB (${texSize}px)`);
