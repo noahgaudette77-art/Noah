@@ -449,7 +449,10 @@ class BlasterGame extends QuizGame {
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
   // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
-    const jet = (this.jet = FighterModel.ok() ? new BlasterFighter(this) : new BlasterJet(this));
+    let jet = null;
+    if (FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
+    if (!jet) jet = new BlasterJet(this);
+    this.jet = jet;
     this.nozzles = jet.nozzles;
     this.muzzles = jet.muzzles;
     this.engineGlows = jet.engineGlows;

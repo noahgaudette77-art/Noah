@@ -557,8 +557,8 @@ vertex shader and as a whole).
 |---|---|---|
 | G0 | Backup; the shared neon look (detail tile, shader library, plain version for weak levels); lighter textures | done |
 | G1 | Mech boss | done |
-| G2 | Starfighter | next |
-| G3 | Frog | pending |
+| G2 | Starfighter | done |
+| G3 | Frog | next |
 | G4 | Final verification, docs, PR, artifact, report | pending |
 
 ## Done so far
@@ -605,3 +605,26 @@ vertex shader and as a whole).
     before; software renderer, exam, average / worst second, old and new alternately:
     105 / 99 and 116 / 107 old, 107 / 99 and 104 / 93 new (run-to-run noise is larger
     than the difference).
+- G2, the starfighter (`20d-blasterfighter.js`, `20-blaster.js`):
+  - Materials: the white and orange paint is gone. Its brightness shades a dark
+    gunmetal with panel lines, dents and a bump from the tile; where the paint had a
+    colour (read from a blurrier level of the texture, so rust specks do not count)
+    the panel is anodised magenta on the port side and cyan on the starboard, with a
+    line of light round its edge; cyan seams and small lights; a magenta and cyan
+    rim; worn bright edges; a glow from below in the wave's colour. Engine heat, gun
+    flash and the break-up are as before.
+  - Its lights come on as it arrives, burn brighter with the streak and the thrust,
+    dim on its last shield and die with it.
+  - Motion added: a hover (a slow bob on two beats, the nose leading it, a yaw that
+    trails the bank), a burst of thrust after a clean hit (it surges ahead with long
+    flames and wider vapour trails, then settles back), a knock when a shield is
+    lost (down and over to one side; the roll's spring carries the wobble), flames a
+    little longer in later waves. It already had: banking, the fly-in, recoil, the
+    wing waggle, the roll through the warp, shield flare, smoke and sparks on its
+    last shield, the break-up.
+  - Weak quality levels: the 3,032-triangle version in the plain neon material.
+  - Fallback: with no fighter model, or one that will not decode, the built-in
+    procedural jet flies (tested both ways).
+  - Checks: regression IDENTICAL; software renderer, Risk Blaster, average / worst
+    second, old and new alternately: 117 / 105 and 119 / 101 old, 120 / 107 and
+    127 / 108 new.

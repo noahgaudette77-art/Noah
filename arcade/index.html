@@ -7410,7 +7410,10 @@ class BlasterGame extends QuizGame {
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
   // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
-    const jet = (this.jet = FighterModel.ok() ? new BlasterFighter(this) : new BlasterJet(this));
+    let jet = null;
+    if (FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
+    if (!jet) jet = new BlasterJet(this);
+    this.jet = jet;
     this.nozzles = jet.nozzles;
     this.muzzles = jet.muzzles;
     this.engineGlows = jet.engineGlows;
@@ -8870,15 +8873,16 @@ const FighterModel = {
 // and its tail is seen in shadow), a rim of the tunnel's colour at its edges, metal that
 // glows round the engines, the flash of its own guns, and the break-up (see FighterModel.geometry).
 function fighterSkin(env, side, U) {
-  const m = new THREE.MeshStandardMaterial({ map: FighterModel.texture(), color: 0xffffff, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 0.9, side });
+  const m = new THREE.MeshStandardMaterial({ map: FighterModel.texture(), color: 0xffffff, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.0, side });
   m.extensions = { derivatives: true };
   m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, U);
+    Object.assign(sh.uniforms, neonUniforms(), U);
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", `#include <common>
-        attribute vec3 aC; attribute vec4 aK; uniform float uBoom; varying vec3 vFtrP;
+        attribute vec3 aC; attribute vec4 aK; uniform float uBoom; varying vec3 vFtrP; varying vec3 vFtrN;
         vec3 ftrSpin(vec3 v, vec3 ax, float a){ float c = cos(a), s = sin(a); return v * c + cross(ax, v) * s + ax * dot(ax, v) * (1.0 - c); }`)
       .replace("#include <beginnormal_vertex>", `#include <beginnormal_vertex>
+        vFtrN = objectNormal;
         vec3 ftrAx = normalize(aK.xyz * 2.0 - 1.0 + vec3(0.001));
         float ftrAng = uBoom * (1.5 + 7.0 * aK.w);
         objectNormal = ftrSpin(objectNormal, ftrAx, ftrAng);`)
@@ -8892,36 +8896,49 @@ function fighterSkin(env, side, U) {
         transformed = aC + ftrSpin(transformed - aC, ftrAx, ftrAng) * (1.0 - smoothstep(1.1, 2.3, uBoom)) + ftrDir * (2.2 + 6.5 * aK.w) * ftrGo + vec3(0.0, -0.5, 2.2) * (0.5 * uBoom * uBoom);`);
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
-        varying vec3 vFtrP; uniform float uBoomHot; uniform float uHeat; uniform vec3 uRim; uniform vec3 uGun; uniform vec3 uEngAt; uniform vec3 uGunAt;
-        // a height's slope across the pixel tilts the normal (no tangents needed)
-        vec3 ftrBump(vec3 pos, vec3 nrm, vec2 dH){
-          vec3 sx = dFdx(pos), sy = dFdy(pos), r1 = cross(sy, nrm), r2 = cross(nrm, sx);
-          float det = dot(sx, r1);
-          return normalize(abs(det) * nrm - sign(det) * (dH.x * r1 + dH.y * r2));
-        }`)
+        ${NEON_GLSL}
+        varying vec3 vFtrP; varying vec3 vFtrN; uniform float uBoomHot; uniform float uHeat; uniform vec3 uRim; uniform vec3 uGun; uniform vec3 uEngAt; uniform vec3 uGunAt;
+        uniform vec3 uFtrSeam; uniform float uFtrPow; uniform float uFtrRimK; uniform float uFtrSide; uniform vec3 uFtrUnder;`)
+      // The hull as supplied is white and orange paint, weathered. Here its brightness shades a
+      // dark gunmetal, and where the paint had a colour (the orange bands) a strip of light runs:
+      // magenta on the port side, cyan on the starboard, like its wing lights.
       .replace("#include <map_fragment>", `#include <map_fragment>
         vec3 ftrAlb = texelColor.rgb;
         float ftrL = dot(ftrAlb, vec3(0.3, 0.59, 0.11));
         float ftrMx = max(ftrAlb.r, max(ftrAlb.g, ftrAlb.b)), ftrMn = min(ftrAlb.r, min(ftrAlb.g, ftrAlb.b));
-        float ftrPaint = max(smoothstep(0.3, 0.6, (ftrMx - ftrMn) / (ftrMx + 0.02)), smoothstep(0.16, 0.42, ftrL));
-        float ftrH = sqrt(ftrL);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(0.7, 0.42, smoothstep(0.02, 0.16, ftrL)), 0.4, ftrPaint);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.88, 0.16, ftrPaint);")
+        // (the paint mask is read from a blurrier level of the texture, so rust specks do not count as paint)
+        vec3 ftrSoft = texture2D(map, vUv, 2.5).rgb;
+        float ftrSMx = max(ftrSoft.r, max(ftrSoft.g, ftrSoft.b)), ftrSMn = min(ftrSoft.r, min(ftrSoft.g, ftrSoft.b));
+        float ftrSat = smoothstep(0.36, 0.62, (ftrSMx - ftrSMn) / (ftrSMx + 0.02)) * smoothstep(0.1, 0.25, ftrSMx);
+        float ftrTrim = clamp(length(vec2(dFdx(ftrSat), dFdy(ftrSat))) * 2.2, 0.0, 1.0); // the edge of a painted area: a line of light
+        float ftrH = sqrt(ftrL);
+        vec3 ftrT = neonTile(vFtrP * 0.85, vFtrN);
+        vec3 ftrAcc = mix(vec3(1.5, 0.14, 0.95), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide));
+        float ftrEdge = smoothstep(0.25, 0.9, length(fwidth(normalize(vNormal))) * 3.0); // (worn bright where a plate turns sharply)
+        diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT), vec3(0.42, 0.45, 0.52), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.5 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.55, 0.16, 0.95), 0.22, ftrEdge), 0.3, ftrSat);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.92, 0.55, ftrSat);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-        // (relief by the change in brightness from one pixel to the next: an edge tilts the normal, grain does not)
+        // (relief from the change in the old paint's brightness from one pixel to the next, and from the tile's dents and panel lines)
         vec2 ftrD = vec2(dFdx(ftrH), dFdy(ftrH));
         ftrD *= smoothstep(0.012, 0.06, length(ftrD)) * 1.5;
-        normal = ftrBump(-vViewPosition, normal, clamp(ftrD, -0.7, 0.7) * vec2(length(dFdx(vViewPosition)), length(dFdy(vViewPosition))));`)
+        float ftrTH = neonHeight(ftrT);
+        normal = neonBump(-vViewPosition, normal, clamp(ftrD, -0.7, 0.7) * vec2(length(dFdx(vViewPosition)), length(dFdy(vViewPosition))) + clamp(vec2(dFdx(ftrTH), dFdy(ftrTH)), -0.5, 0.5) * 0.007);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-        totalEmissiveRadiance += diffuseColor.rgb * (1.0 - metalnessFactor) * vec3(0.34, 0.33, 0.4);
-        totalEmissiveRadiance += uRim * pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 6.0);
+        vec3 ftrV = normalize(vViewPosition);
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(0.3, 0.3, 0.38); // a soft fill, so it reads in the dark tunnel
+        totalEmissiveRadiance += neonRim(normal, ftrV, 3.0) * uFtrRimK;
+        totalEmissiveRadiance += uRim * pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 6.0);
+        totalEmissiveRadiance += ftrAcc * (ftrSat * 0.07 * (0.3 + 0.7 * ftrH) + ftrTrim * 1.25) * uFtrPow; // where its paint was: anodised colour, with a line of light round it
+        totalEmissiveRadiance += neonGlow(ftrT, vFtrP * 0.85, uFtrSeam) * uFtrPow * (1.0 - ftrSat); // seams and small lights
+        totalEmissiveRadiance += uFtrUnder * max(0.0, -vFtrN.y) * (0.3 + 0.7 * ftrH) * (1.0 - 0.6 * neonGroove(ftrT)); // lit from below by its own glow
         vec3 ftrE = vec3(abs(vFtrP.x) - uEngAt.x, vFtrP.yz - uEngAt.yz);
         totalEmissiveRadiance += vec3(2.6, 0.7, 0.16) * (0.25 + ftrH) * uHeat * exp(-dot(ftrE, ftrE) * 13.0);
         vec3 ftrG = vec3(abs(vFtrP.x) - uGunAt.x, vFtrP.yz - uGunAt.yz);
         totalEmissiveRadiance += uGun * (0.3 + ftrL) * exp(-dot(ftrG, ftrG) * 5.0);
         totalEmissiveRadiance += vec3(2.6, 0.8, 0.16) * uBoomHot * (0.35 + 0.65 * ftrL);`);
   };
-  m.customProgramCacheKey = () => "blaster-fighter";
+  m.customProgramCacheKey = () => "blaster-fighter-neon";
   return m;
 }
 
@@ -8956,10 +8973,14 @@ class BlasterFighter {
     this.U = {
       uBoom: { value: 0 }, uBoomHot: { value: 0 }, uHeat: { value: 0.2 }, uRim: { value: new THREE.Color(0, 0, 0) }, uGun: { value: new THREE.Color(0, 0, 0) },
       uEngAt: { value: new THREE.Vector3((Math.abs(eng[0].x) + Math.abs(eng[1].x)) / 2, eng[0].y, eng[0].z) }, uGunAt: { value: new THREE.Vector3(1.58, -0.1, -0.43) },
+      // the neon it wears: seam colour, how lit its lights are, its two-colour rim, which side is cyan, the glow under it
+      uFtrSeam: { value: new THREE.Color(0.15, 0.95, 1.25) }, uFtrPow: { value: 0 }, uFtrRimK: { value: 0.4 }, uFtrSide: { value: ftrP(FTR.lamps[1]).x < 0 ? -1 : 1 }, uFtrUnder: { value: new THREE.Color(0, 0, 0) },
     };
+    this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(0.75, 1.25, 1.7);
     this.hullMat = fighterSkin(env, THREE.FrontSide, this.U);
-    // (its plain version for the weakest quality levels carries the same soft fill, so the paint reads in the dark tunnel)
-    this.hullMat.userData.twin = new THREE.MeshLambertMaterial({ map: FighterModel.texture(), emissive: 0x504d5c, emissiveMap: FighterModel.texture() });
+    // (its plain version for the weakest quality levels: the same dark metal, strips of light and rim, unlit)
+    this.lowTint = { value: new THREE.Color(1, 1, 1) };
+    this.hullMat.userData.twin = neonLowMaterial(FighterModel.texture(), { accent: 0x35efff, rim: 0.7, tint: this.lowTint });
     this.hullOpen = fighterSkin(env, THREE.DoubleSide, this.U); // for the wreck: its fragments are seen from inside too
     this.hull = new THREE.Mesh(geo.hull, this.hullMat);
     rig.add(this.hull);
@@ -9156,6 +9177,7 @@ class BlasterFighter {
     this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
     this.inT = REDUCED_MOTION ? 1 : 0; this.launched = false; this.hold = 0; // the fly-in
     this.hurt = 0; this.smokeT = 0; this.sparkT = 2; this.boom = -1; this.cook = 0; this.barrel = 1;
+    this.boost = 0; this.jolt = 0; this.pow = 0;
     this.gunCol = new THREE.Color(1, 0.8, 0.5);
     this._v = new THREE.Vector3();
     this._w = new THREE.Vector3();
@@ -9179,8 +9201,8 @@ class BlasterFighter {
     this.U.uGunAt.value.set(Math.abs(this.muzzles[0].x), this.muzzles[0].y, this.muzzles[0].z);
     if (col !== undefined) this.gunCol.set(col);
   }
-  // a clean hit: a quick wing waggle
-  hit() { if (!REDUCED_MOTION && !GFX.calm) this.waggle = 1; }
+  // a clean hit: a quick wing waggle and a burst of thrust (it surges ahead, engines long, and settles back)
+  hit() { if (!REDUCED_MOTION && !GFX.calm) { this.waggle = 1; this.boost = 1; } }
   // a streak heats the engines: longer, bluer flames, a brighter shield
   setCombo(c) { this.heatTo = clamp((c - 1) / 7, 0, 1); }
   // a shield is lost: the lattice flares red from the point of impact
@@ -9189,6 +9211,8 @@ class BlasterFighter {
     u.uHit.value = 1;
     u.uHitP.value.set(rand(-0.4, 0.4), 0.55, -0.7).normalize();
     u.uColor.value.setRGB(1.0, 0.28, 0.2);
+    // and it is knocked: down and over to one side, then it rights itself (the roll's own spring carries the wobble)
+    if (!REDUCED_MOTION && !GFX.calm && this.boom < 0 && this.inT >= 1) { this.jolt = 1; this.rollV += (u.uHitP.value.x < 0 ? -1 : 1) * 4.5; }
   }
   // a shield comes back: the lattice sweeps on from the nose
   shieldUp() {
@@ -9223,6 +9247,8 @@ class BlasterFighter {
       this.boom += dt;
       U.uBoom.value = this.boom;
       U.uBoomHot.value = Math.exp(-this.boom * 2.2);
+      U.uFtrPow.value = Math.max(0, U.uFtrPow.value - dt * 5); // its lights die with it
+      U.uFtrUnder.value.multiplyScalar(Math.pow(0.01, dt));
       if (this.cook && this.boom > this.cook) { // a tank goes, a moment after the rest
         this.cook = 0;
         const p = this._v.copy(this.ship.position); p.z += 0.5 * k; p.x += rand(-0.8, 0.8) * k;
@@ -9240,7 +9266,14 @@ class BlasterFighter {
     // the fly-in: from behind and below the camera to its place, rolling level as it arrives
     if (!this.launched && this.inT < 1 && (this.hold += dt) > 1) this.launch();
     if (this.launched && this.inT < 1) this.inT = Math.min(1, this.inT + dt / 1.6);
-    const inK = this.inT < 1 ? Math.pow(1 - this.inT, 3) : 0, burn = Math.max(w, Math.min(1.2, inK * 3));
+    // a burst of thrust after a clean hit: out fast, back slowly
+    this.boost = Math.max(0, this.boost - dt / 1.1);
+    const lunge = this.boost > 0 ? Math.sin(Math.PI * Math.pow(1 - this.boost, 0.5)) : 0;
+    this.jolt = Math.max(0, this.jolt - dt * 2.4);
+    const inK = this.inT < 1 ? Math.pow(1 - this.inT, 3) : 0, burn = Math.max(w, Math.min(1.2, inK * 3), lunge * 0.85) + clamp((sp / 26 - 1) / 0.6, 0, 1) * 0.12;
+    // hovering: a slow bob on two beats, the nose leading it a little, and a yaw that trails the bank
+    const hov = quiet ? 0 : 1 - Math.min(1, inK * 3);
+    const bob = (Math.sin(t * 1.9) * 0.045 + Math.sin(t * 3.1 + 1.3) * 0.016) * hov;
     // bank into the drift and the pointer; waggle after a hit; one full roll through the warp
     let roll = (quiet ? 0 : -Pointer.x * 0.4) - Math.cos(t * 0.9) * 0.14 - Math.min(1, inK * 2.5) * 1.3;
     if (this.waggle > 0) { this.waggle = Math.max(0, this.waggle - dt * 1.5); roll += Math.sin((1 - this.waggle) * Math.PI * 2) * 0.5 * this.waggle; }
@@ -9251,10 +9284,11 @@ class BlasterFighter {
     }
     this.rollV += ((roll - rig.rotation.z) * 60 - this.rollV * 11) * h;
     rig.rotation.z += this.rollV * h;
-    rig.rotation.x += (FTR_TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.05 - Math.min(1, inK * 2) * 0.22 - rig.rotation.x) * Math.min(1, dt * 6);
+    rig.rotation.x += (FTR_TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.05 - Math.min(1, inK * 2) * 0.22 + Math.sin(t * 1.9 + 0.9) * 0.014 * hov - lunge * 0.045 + this.jolt * this.jolt * 0.07 - rig.rotation.x) * Math.min(1, dt * 6);
+    rig.rotation.y += ((-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov - rig.rotation.y) * Math.min(1, dt * 2.5);
     this.recoil *= Math.pow(0.004, dt);
     this.gun *= Math.pow(0.02, dt);
-    rig.position.set(0, -inK * 1.6, this.recoil * 0.14 + inK * 12.5 - (quiet ? 0 : w * 0.5)); // (it surges forward into the warp)
+    rig.position.set(0, -inK * 1.6 + bob - this.jolt * this.jolt * 0.2, this.recoil * 0.14 + inK * 12.5 - (quiet ? 0 : w * 0.5) - lunge * 0.85); // (it surges forward into the warp, and after a clean hit)
     // engines: the mains burn longer and bluer with the streak and the warp; the pod thrusters answer a roll
     const turn = Math.min(0.5, Math.abs(this.rollV) * 0.3);
     FU.uTime.value = t;
@@ -9270,6 +9304,14 @@ class BlasterFighter {
     if (g.engineLight && this.ship.visible) { g.engineLight.intensity = 0.5 + 0.5 * Math.min(1, burn) + 0.25 * heat; g.engineLight.color.copy(this.glowCool).lerp(this.glowHot, heat).multiplyScalar(0.6); }
     U.uGun.value.copy(this.gunCol).multiplyScalar(this.gun * 2.4);
     U.uRim.value.copy(g.waveCol).multiplyScalar(0.7 + 0.4 * heat);
+    // its neon: lights come on as it arrives, burn brighter with the streak and the thrust, dim on its last shield
+    NEON_T.value = t;
+    this.pow += ((this.inT > 0.55 ? 1 : 0) - this.pow) * Math.min(1, dt * 2.5);
+    U.uFtrPow.value = this.pow * (0.8 + 0.5 * heat + 0.5 * lunge) * (1 - 0.35 * this.hurt);
+    U.uFtrSeam.value.copy(this.seamCold).lerp(this.seamHot, heat);
+    U.uFtrRimK.value = 0.36 + 0.2 * heat + 0.25 * lunge;
+    U.uFtrUnder.value.copy(g.waveCol).multiplyScalar(0.09 + 0.1 * heat + 0.2 * Math.min(1, burn));
+    this.lowTint.value.setScalar(1 + 0.25 * heat + 0.3 * lunge);
     // lights: the aerial's beacon (a soft pulse, well under 1 Hz), the head-up display, the canopy
     this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8);
     this.hudMat.uniforms.uTime.value = t;
@@ -9306,7 +9348,7 @@ class BlasterFighter {
       this.acc -= 1 / 60;
       const step = Math.min(sp * 0.3, 9) / 60;
       this.contrails.forEach((tr, j) => {
-        tr.width = 0.03 * k * (1 + heat);
+        tr.width = 0.03 * k * (1 + heat + lunge);
         tr.shift(0, 0, step);
         tr.push(this._v.copy(this.tips[j]).applyMatrix4(rig.matrixWorld));
       });
