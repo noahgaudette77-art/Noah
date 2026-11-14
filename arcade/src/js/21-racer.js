@@ -1324,7 +1324,7 @@ class RacerGame extends QuizGame {
     this.timeFrac = 1 - this.gp;
     this.boostRate = Math.max(1 / this.T, (1 - this.gp) / 0.7);
     Sound.sfx("swoosh");
-    GFX.pulse(2.5, 0);
+    GFX.pulse(0.9, 0); // (flooring it streaks the street; the colours part on a crash only)
   }
   key(e) {
     if (this.state === "ask" && !this.quiz.sheet && !this.paused && !UI.modal) {
@@ -1621,7 +1621,7 @@ class RacerGame extends QuizGame {
       this.skidMat.opacity = 0.82 * smoothstep(0, 0.3, this.skidK);
     }
     { // while an explanation is up, the picture rides higher: the car stays in view above the sheet
-      const b = this.band, want = b && this.quiz && this.quiz.sheet && this.sheetTop != null ? clamp(b.bottom - this.sheetTop + 12, 0, b.h * 0.3) : 0;
+      const b = this.band, want = b && this.quiz && this.quiz.sheet && this.sheetTop != null ? clamp(b.bottom - this.sheetTop + 12, 0, b.h * 0.42) : 0;
       this.lift = (this.lift || 0) + (want - (this.lift || 0)) * Math.min(1, dt * 6);
       if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
         this.liftSet = this.lift < 0.25 ? 0 : this.lift;

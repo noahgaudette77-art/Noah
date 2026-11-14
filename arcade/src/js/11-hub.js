@@ -1098,7 +1098,7 @@ class HubScene extends Scene3D {
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
     const one = new THREE.Vector3(1, 1, 1);
     const coneCol = new THREE.Color(0xfff1e6).lerp(col, 0.4);
-    B.cones.add(K.get("cone", () => new THREE.CylinderGeometry(0.2, 1.75, len, 28, 1, true)), new THREE.Matrix4().compose(foot.clone().addScaledVector(dir, 0.5), q, one), coneCol, { k: 0.46, g });
+    B.cones.add(K.get("cone", () => new THREE.CylinderGeometry(0.2, 1.75, len, 28, 1, true)), new THREE.Matrix4().compose(foot.clone().addScaledVector(dir, 0.5), q, one), coneCol, { k: 0.27, g });
     const lampM = new THREE.Matrix4().compose(lamp.clone().addScaledVector(dir, 0.18 / len), q, one);
     B.lit.add(K.get("can", () => new THREE.CylinderGeometry(0.2, 0.26, 0.42, 14)), lampM.clone(), 0x1a1724, { aux: [0.8, 0.35] });
     B.glow.add(K.get("lens", () => new THREE.CircleGeometry(0.2, 14)), lampM.clone().multiply(hubM(0, -0.215, 0, Math.PI / 2)), 0xfff1e0, { k: 3, g });
@@ -1464,7 +1464,7 @@ function drawDemo(d, dt) {
       if (strike) { x.fillStyle = COLORS.red; x.fillRect(74, 76, 12, 30); x.fillRect(66, 100, 28, 6); }
       if (answer) { x.fillStyle = COLORS.cyan; x.fillRect(78, 60, 4, 40); x.fillStyle = "#ffffff"; x.fillRect(72, 52, 16, 8); }
       x.fillStyle = COLORS.red; for (let i = 0; i < 3; i++) x.fillRect(6 + i * 9, 108, 7, 6);
-      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 92 + i * 6, 42, 4); });
+      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 74 + i * 6, 42, 4); });
       break;
     }
     case "memory": {

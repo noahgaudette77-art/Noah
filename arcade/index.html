@@ -1317,7 +1317,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-blaster .band { position: relative; }
 .scr-blaster .band::after { content: ""; position: absolute; left: -16px; right: -16px; bottom: -2px; height: 26px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0), rgba(7, 2, 26, 0.86)); }
 .combo-meter i { width: 6px; height: 6px; }
-.scr-game .hud .tag, .scr-game .hud small { font-size: 10px; }
+.scr-blaster .hud small { font-size: 9px; }
 .answers .ans { text-wrap: balance; }
 
 /* Final Exam, after its independent review. The bar under the HUD is the clock's (yellow, like the clock): it
@@ -1355,6 +1355,23 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-notes .gsec { position: relative; background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0) 0 27px, rgba(255, 255, 255, 0.035) 27px 28px); }
 .scr-notes .gsec::after { content: ""; position: absolute; right: 0; top: 0; width: 18px; height: 18px; pointer-events: none;
   background: linear-gradient(225deg, #0b0527 0 50%, color-mix(in srgb, var(--c, var(--cyan)) 55%, #2a1c6a) 50% 100%); box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.45); }
+.boot-bar { border: 0; padding: 0; height: 12px; background: rgba(150, 130, 255, 0.24); box-shadow: none; } /* (segments of a dim track, a bright sweep running through them) */
+/* Hub dots: an outline in each cabinet's true colour (mixed into the card's violet, yellow and orange went olive and brown); the one in front is filled. */
+.hub-meta .dots i { background: transparent; box-shadow: inset 0 0 0 2px var(--d, var(--line)); opacity: 0.8; }
+.hub-meta .dots i.on { background: var(--d, var(--c)); box-shadow: 0 0 7px var(--d, var(--c)); opacity: 1; }
+
+/* Interface, closing fixes after its last independent review. Every meter is a track of ten cells you can see
+   when it is empty (a hairline read as a divider). The exam grid's key is larger; "you are here" on that grid is
+   a gold ring, so the white ring means keyboard focus and nothing else. Captions a step lighter. */
+.stage .meter, .mrow .meter, .pcard .meter { position: relative; height: 8px; background: #241c5c; border: 0; box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6); }
+.stage .meter::after, .mrow .meter::after, .pcard .meter::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(11, 5, 39, 0) 0, rgba(11, 5, 39, 0) calc(10% - 2px), #0b0527 calc(10% - 2px), #0b0527 10%); }
+.pal-key { font-size: 9px; gap: 7px 12px; color: #ddd6fb; }
+.pal-key i { width: 13px; height: 13px; }
+.pal-key i.here { box-shadow: inset 0 0 0 2px var(--yellow); }
+.palette button.here { box-shadow: 0 0 0 2px var(--yellow), 0 0 12px -2px var(--yellow); }
+.stage .meta, .tile .k { color: #dad3fb; }
+.boot-bar { background: rgba(170, 150, 255, 0.36); }
 
 </style>
 </head>
@@ -7677,7 +7694,7 @@ class HubScene extends Scene3D {
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
     const one = new THREE.Vector3(1, 1, 1);
     const coneCol = new THREE.Color(0xfff1e6).lerp(col, 0.4);
-    B.cones.add(K.get("cone", () => new THREE.CylinderGeometry(0.2, 1.75, len, 28, 1, true)), new THREE.Matrix4().compose(foot.clone().addScaledVector(dir, 0.5), q, one), coneCol, { k: 0.46, g });
+    B.cones.add(K.get("cone", () => new THREE.CylinderGeometry(0.2, 1.75, len, 28, 1, true)), new THREE.Matrix4().compose(foot.clone().addScaledVector(dir, 0.5), q, one), coneCol, { k: 0.27, g });
     const lampM = new THREE.Matrix4().compose(lamp.clone().addScaledVector(dir, 0.18 / len), q, one);
     B.lit.add(K.get("can", () => new THREE.CylinderGeometry(0.2, 0.26, 0.42, 14)), lampM.clone(), 0x1a1724, { aux: [0.8, 0.35] });
     B.glow.add(K.get("lens", () => new THREE.CircleGeometry(0.2, 14)), lampM.clone().multiply(hubM(0, -0.215, 0, Math.PI / 2)), 0xfff1e0, { k: 3, g });
@@ -8043,7 +8060,7 @@ function drawDemo(d, dt) {
       if (strike) { x.fillStyle = COLORS.red; x.fillRect(74, 76, 12, 30); x.fillRect(66, 100, 28, 6); }
       if (answer) { x.fillStyle = COLORS.cyan; x.fillRect(78, 60, 4, 40); x.fillStyle = "#ffffff"; x.fillRect(72, 52, 16, 8); }
       x.fillStyle = COLORS.red; for (let i = 0; i < 3; i++) x.fillRect(6 + i * 9, 108, 7, 6);
-      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 92 + i * 6, 42, 4); });
+      [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime].forEach((col, i) => { x.fillStyle = col; x.fillRect(112, 74 + i * 6, 42, 4); });
       break;
     }
     case "memory": {
@@ -8438,7 +8455,7 @@ function hubCabinetStyle(id, o) {
     glow("ball", ball, at(0.98, 3.62, 1.33), [0.07, 0.07, 0.07], 0xfff0c8, 3);
     { const L = V(0.98, 3.6, 1.32), T = V(0.5, 1.5, 0.74), d = L.clone().sub(T), len = d.length();
       const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
-      B.cones.add(K.get("deskcone", () => new THREE.CylinderGeometry(0.05, 0.56, 1, 20, 1, true)), at(0, 0, 0).multiply(new THREE.Matrix4().compose(T.clone().addScaledVector(d, 0.5), q, V(1, len, 1))), 0xffd9a0, { k: 0.62, g }); }
+      B.cones.add(K.get("deskcone", () => new THREE.CylinderGeometry(0.05, 0.56, 1, 20, 1, true)), at(0, 0, 0).multiply(new THREE.Matrix4().compose(T.clone().addScaledVector(d, 0.5), q, V(1, len, 1))), 0xffd9a0, { k: 0.4, g }); }
     [-1, 1].forEach((sx) => { box(0.012, 0.7, 0.08, at(sx * 1.11, 2.4, 0.3), 0xff4769, GLOSS, 0.7); box(0.012, 0.5, 0.08, at(sx * 1.11, 2.5, 0.05), 0x35efff, GLOSS, 0.7); });
   }
 }
@@ -14185,7 +14202,7 @@ class RacerGame extends QuizGame {
     this.timeFrac = 1 - this.gp;
     this.boostRate = Math.max(1 / this.T, (1 - this.gp) / 0.7);
     Sound.sfx("swoosh");
-    GFX.pulse(2.5, 0);
+    GFX.pulse(0.9, 0); // (flooring it streaks the street; the colours part on a crash only)
   }
   key(e) {
     if (this.state === "ask" && !this.quiz.sheet && !this.paused && !UI.modal) {
@@ -14482,7 +14499,7 @@ class RacerGame extends QuizGame {
       this.skidMat.opacity = 0.82 * smoothstep(0, 0.3, this.skidK);
     }
     { // while an explanation is up, the picture rides higher: the car stays in view above the sheet
-      const b = this.band, want = b && this.quiz && this.quiz.sheet && this.sheetTop != null ? clamp(b.bottom - this.sheetTop + 12, 0, b.h * 0.3) : 0;
+      const b = this.band, want = b && this.quiz && this.quiz.sheet && this.sheetTop != null ? clamp(b.bottom - this.sheetTop + 12, 0, b.h * 0.42) : 0;
       this.lift = (this.lift || 0) + (want - (this.lift || 0)) * Math.min(1, dt * 6);
       if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
         this.liftSet = this.lift < 0.25 ? 0 : this.lift;

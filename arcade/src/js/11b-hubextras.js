@@ -101,7 +101,7 @@ function hubCabinetStyle(id, o) {
     glow("ball", ball, at(0.98, 3.62, 1.33), [0.07, 0.07, 0.07], 0xfff0c8, 3);
     { const L = V(0.98, 3.6, 1.32), T = V(0.5, 1.5, 0.74), d = L.clone().sub(T), len = d.length();
       const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
-      B.cones.add(K.get("deskcone", () => new THREE.CylinderGeometry(0.05, 0.56, 1, 20, 1, true)), at(0, 0, 0).multiply(new THREE.Matrix4().compose(T.clone().addScaledVector(d, 0.5), q, V(1, len, 1))), 0xffd9a0, { k: 0.62, g }); }
+      B.cones.add(K.get("deskcone", () => new THREE.CylinderGeometry(0.05, 0.56, 1, 20, 1, true)), at(0, 0, 0).multiply(new THREE.Matrix4().compose(T.clone().addScaledVector(d, 0.5), q, V(1, len, 1))), 0xffd9a0, { k: 0.4, g }); }
     [-1, 1].forEach((sx) => { box(0.012, 0.7, 0.08, at(sx * 1.11, 2.4, 0.3), 0xff4769, GLOSS, 0.7); box(0.012, 0.5, 0.08, at(sx * 1.11, 2.5, 0.05), 0x35efff, GLOSS, 0.7); });
   }
 }
