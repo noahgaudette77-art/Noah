@@ -32,18 +32,29 @@ lists all of them again.
   traffic, with a winged void demon in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
-  with a mirror floor in Boss Rush, where every boss is a different
+  with a mirror floor, ringed by an amphitheatre full of lights, in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, the final
   boss on its dais in a moonlit hall for the Final Exam, and a vaulted archive
-  behind the Strategy Guide. Setup → Graphics switches between HD (sharp,
-  anti-aliased), Retro and Chunky (pixel art).
-- **The title.** A city that never sits still: megatowers with rolling ads and
-  flickering blade signs, a suspension bridge across the sun, traffic as rivers of
-  light, searchlights, hover cars. Every three to six seconds something happens (a
-  maglev on the bridge, a patrol chase, a blimp, fireworks, a helicopter, drones,
-  a meteor shower, distant lightning). The logo has depth, glow and a glint that
-  crosses it every seven seconds.
+  behind the Strategy Guide. There is one way it is drawn: at the screen's own
+  pixels, with everything on.
+- **The title.** A city that never sits still, seen down an avenue between
+  megatowers whose every floor has windows (some floors busy, some dark, rooms
+  brighter toward their ceilings; the glass mirrors the sky cyan on one side and
+  magenta on the other, and the low sun glances off it). Blade signs hang over the
+  street spelling the course's own terms; lamp posts slide past; strings of
+  lanterns cross from tower to tower. Traffic is comets of light, along four sky
+  lanes into the city and on the wet street. Always there: two twin-hulled
+  sky-ferries flying down the avenue, a helicopter working its searchlight in
+  front of the sun and another crossing overhead, a ribbon of sixty drones, rain
+  (with rings where it lands), and a storm cloud that lights from within and
+  throws forked bolts behind the mountains. Every three to six seconds something
+  more happens (a maglev on the bridge, a patrol chase, fireworks, a meteor
+  shower). The camera sways, pushes slowly in and eases back. The kicker and the
+  logo sit at the top; the coin prompt, the tip and the totals are in a dock at
+  the foot of the screen, so the sun, the bridge and the city between them are
+  clear. The logo has depth, glow and a narrow glint that crosses it every seven
+  seconds.
 - **Risk Blaster.** You fly the player's own space fighter (a supplied model of
   166 parts, converted by `scripts/convert-model.js`) in the arcade's neon: dark
   gunmetal shaded by its old paint, panel lines and dents, anodised magenta and
@@ -56,8 +67,7 @@ lists all of them again.
   finger, kicks back when it fires, and rolls and surges through the warp between
   waves behind a bow wave of light. A hexagon-lattice shield flares when you lose
   one; down to the last, an engine sputters and trails smoke; lose that and it
-  breaks up into some 250 pieces of itself in a ball of fire. (The three weakest
-  quality levels draw a lighter version of it, a fifth of the triangles.) After a
+  breaks up into some 250 pieces of itself in a ball of fire. After a
   right answer it surges ahead on a burst of thrust; when a shield goes it is
   knocked aside. A seven-pip combo meter fills and warms, and the engines burn
   longer and bluer with it.
@@ -95,8 +105,11 @@ lists all of them again.
   claws. It hovers on slow wing beats (the outer wing follows the inner), breathes,
   sways its tail and watches you. A wave starts: it flies up out of the distance,
   throws its wings wide and roars as its lights come on from below. While a
-  question's clock runs it comes closer. Answer right and your fire lands on its
-  core: it whites out and is thrown back, and by and by it cracks, sheds armour
+  question's clock runs it comes closer. Four holo-drones hold station round it,
+  one to an answer, in the answer's colour and carrying its letter large on a dark
+  plate: tap an answer and your fighter fires on its drone. If it is the right one
+  the drone bursts and the shot goes through it into the demon's core: its edges
+  flare and it is thrown back, and by and by it cracks, sheds armour
   (studs first, the plates over its core last), smokes and sparks. Answer wrong,
   or run out of time, and it rears up with its claws charged (the warning), then
   strikes: bolts from both claws, a lunge and a swipe, or a roar and a blast, in
@@ -113,16 +126,13 @@ lists all of them again.
   next to them, and its far wings sink into the haze. It has eleven sounds of its
   own, all made in the page: roars, a quiet wing beat on each down-stroke, the
   strike charging and let go, hits, plates coming away, the break-up and the
-  blasts. The sound switch silences them like everything else. (The weakest
-  quality levels draw a 3,900-triangle version in a plain material, with the same
-  glow and animation: it throws off bits of armour when hit and flies apart in
-  chunks when destroyed. If the demon's model is missing or damaged, every answer
-  becomes a target to shoot instead.)
+  blasts. The sound switch silences them like everything else. (If the demon's
+  model is missing or damaged, the drones fly at you on their own instead.)
 - **The final boss.** A skull-faced armoured mech (the player's own model, converted
   by `scripts/convert-model.js` into 32 rigid parts on a 19-joint skeleton) stands
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
   armour whose scratches, pits and dents stay sharp close up, a pale skull, two
-  burning eyes with a streak of glare across them, an ember beating in its chest.
+  violet-white lamps for eyes with a streak of glare across them, an ember beating in its chest.
   It starts on its knees in the dark; its eyes light, it roars and rises. Through
   the exam it breathes and watches: its head follows your finger (or the phone's
   tilt), and every sixteen seconds it does something slow and unfriendly (leans in
@@ -140,9 +150,7 @@ lists all of them again.
   down at the camera and glares from close up until the results. A boss bar over
   the ending shows what your answers took off it. SKIP (or Enter) goes straight to
   the results; Reduced effects plays it without shake or flash, and a device set to
-  reduce motion gets a still version. On a phone the exam is drawn at up to twice
-  the screen's point size (the other scenes use one and a half) when the phone
-  keeps its frame rate there.
+  reduce motion gets a still version.
 - **The vault's machinery.** Memory Bank's door has meshing gear trains round the
   dial, an arc of lamps over it (one per card in the deck), coin stacks by the
   bullion. Bank a card and it flies up into the coin slot, the gears spin on and
@@ -186,34 +194,36 @@ lists all of them again.
   question is on screen it slows down and holds the big ones for the gap between
   questions. A right answer sets off fireworks and parts the traffic; a wrong one
   tears the picture for a moment.
-- **Your call on effects.** Setup → Quality picks Auto (adapts to hold your
-  screen's frame rate), Low, Med or High (every effect at full resolution).
-  Setup → Effects switches each one off on its own: bloom, scanlines, colour
-  fringe, vignette, motion blur, film grain, light beams, wet reflections,
-  shadows, heat haze, lens streaks. Setup → Reduced effects cuts shake, flashes,
-  zoom and motion and thins out the background events. Nothing in the game
-  flashes more than three times a second.
+- **One mode: maximum.** There are no quality levels and nothing adapts to the
+  device: every scene is drawn at the screen's own pixels (its full device pixel
+  ratio), multisampled, into a high-dynamic-range picture with its depth beside
+  it. From depth come ambient occlusion (crevices and corners darken) and contact
+  shadows toward each scene's key light, depth of field (the lens holds the
+  cabinet, the boss, the demon; what is far behind goes soft) and camera motion
+  blur. Bloom is a six-level chain with a dusty lens, god rays, anamorphic
+  streaks and lens ghosts; then an ACES filmic curve, a split-toned grade,
+  sharpening, a lens fringe that only shows toward the corners, film grain and
+  the CRT glass. Frame rate is not a goal: on a phone it may run at 20 to 30
+  frames a second.
+- **Surface detail.** Every physically-based surface (cabinets, the vault's
+  metals, the exam hall's gold and lacquer, the bosses' armour, the car's paint)
+  carries a fine grain, hair scratches and smudges as real relief, so reflections
+  break up over it the way they do on the real thing.
+- **Your call on effects.** Setup → Effects switches each one off on its own:
+  bloom, depth of field, ambient shade, scanlines, colour fringe, vignette,
+  motion blur, film grain, light beams, wet reflections, shadows, heat haze, lens
+  streaks. Setup → Reduced effects cuts shake, flashes, zoom and motion and thins
+  out the background events. Nothing in the game flashes more than three times a
+  second.
 - **CRT glass.** Curved screen, scanlines, an RGB phosphor mask, vignette, and
   colour fringing and flashes when something hits, inside a bezel. Turn it off
   under Setup → CRT glass.
-- **Smooth at your screen's refresh rate.** Before drawing anything, the game
-  measures how fast your screen refreshes (60, 90, 120 Hz...), then adjusts its
-  quality as you play to hit every frame: it lowers resolution, then reflections
-  and decorative details (dust, light shafts, trails). On very weak hardware it
-  also draws metal surfaces more simply and makes the question and answer panels
-  solid, so the browser needn't blend them over the 3D. It steps back up when a
-  scene is lighter, and each kind of scene remembers what suits it. A steady
-  30 fps cap (such as iOS Low Power Mode) is left alone, since lowering quality
-  can't help it. iPhones run web pages at 60 fps unless Safari's "Prefer Page
-  Rendering Updates near 60fps" feature flag is turned off, and apps' built-in
-  browsers may stay at 60.
 - **No hitches.** Every shader a scene needs is built while it loads, behind a
   black CRT channel-switch that appears the moment you tap, and effects come from
   reusable pools, so the first explosion or beam never stalls a frame. Replaying a
   game reuses its shaders, and the arcade floor stays built while you play, so
   both are instant. Big hits slow time for a beat instead of freezing it.
-  Progress saves happen between frames. Each scene's quality level is remembered
-  on the device, so a new session starts where it should. The on-screen panels
+  Progress saves happen between frames. The on-screen panels
   stay still while the 3D moves: timers and health bars slide, text is rewritten
   only when it changes, and buttons don't fade, so the page never has to be
   redrawn mid-animation.
@@ -242,10 +252,9 @@ lists all of them again.
 - **Sound with depth.** Effects ring out in a hall reverb and sit left or right in
   stereo where things happen, and an announcer calls out streaks, waves and
   trophies (Setup → Announcer; it uses your device's speech voice).
-- **FPS counter.** Setup → FPS counter shows the frame rate, the rate it aims for
-  (your screen's refresh rate, up to 120) and the current quality level (1-8), and
-  under them the slowest frame of the last half second, the triangles and draw
-  calls in the scene and the size it is drawn at. Tapping the title's logo three
+- **FPS counter.** Setup → FPS counter shows the frame rate and the slowest frame
+  of the last half second, and under them the triangles and draw calls in the
+  scene, the size it is drawn at and the multisampling in use. Tapping the title's logo three
   times within a second turns it on or off for that visit without opening Setup
   (so does `#fps` at the end of the address).
 - **Clients.** Every stage has a client from that chapter's opening scenario in the
@@ -255,9 +264,13 @@ lists all of them again.
   takeaway. Replay any briefing from the stage's notes.
 - **Talking bosses.** Bosses introduce themselves, taunt your misses, groan when hit
   and get enraged below 35% HP.
-- **The arcade floor.** Six cabinets, each its own machine on the same body (fins
+- **The arcade floor.** Six cabinets, each with its own width and height, its own
+  two colours, printed art on its control panel (speed stripes, a compass under
+  the stick, a ring and a legend for every button) and on its front panel, a coin
+  door with slots, a return flap and a lock, and a rim light in its second colour
+  (and on top of each: fins
   and rocket pods, a steering wheel and wing, horns and teeth, a vault wheel and
-  coins, a clock and laurels, books and a reading lamp), each playing a live demo
+  coins, a clock and laurels, books and a reading lamp)), each playing a live demo
   of its game and powering up when you select it. Around them: a jukebox, a claw
   machine with a moving claw, dance pads, a ticket printer, hoops, a drinks
   machine, ceiling fans, a cleaning robot, people walking by, steam, and windows

@@ -17,11 +17,26 @@ const Hype = {
     this.level = 0;
     GFX.setFever(0);
     const g = $(".hud .grow", screenEl);
+    this.grow = g;
+    this.band = $(".band", screenEl);
+    this.docked = false;
     this.el = g ? g.appendChild(UI.el(`<span class="fever" hidden></span>`)) : null;
+  },
+  // A HUD with no room to spare (Nest Egg Run on a phone) would have the pill sit on the readouts:
+  // there it docks in the corner of the 3D strip instead, and stays there for the run.
+  place() {
+    const el = this.el;
+    if (!el || this.docked || el.hidden || !this.grow || !this.band) return;
+    if (el.offsetWidth <= this.grow.clientWidth - 4) return;
+    this.docked = true;
+    this.band.appendChild(el);
+    el.classList.add("dock");
   },
   reset() {
     this.level = 0;
     this.el = null;
+    this.grow = this.band = null;
+    this.docked = false;
     GFX.setFever(0);
   },
   // Callouts sit in the strip of 3D between the HUD panels, clear of the question.
@@ -65,7 +80,8 @@ const Hype = {
     if (this.el) {
       this.el.hidden = streak < 2;
       UI.text(this.el, "STREAK " + streak);
-      this.el.className = "fever" + (lv ? " lv" + lv : "");
+      this.el.className = "fever" + (lv ? " lv" + lv : "") + (this.docked ? " dock" : "");
+      this.place();
       if (ok && streak >= 2) { this.el.classList.remove("bump"); void this.el.offsetWidth; this.el.classList.add("bump"); }
     }
   },

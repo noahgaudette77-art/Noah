@@ -41,6 +41,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
+  font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0; /* (fi and fl are two letters each: the pixel faces' ligatures smear them) */
   margin: 0;
   background: var(--void);
   color: var(--ink);
@@ -233,7 +234,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .hud { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .hud .grow { flex: 1; min-width: 0; }
 .score { font: clamp(10px, 2.8vw, 13px)/1.3 var(--font-display); color: var(--yellow); text-shadow: 0 0 8px rgba(255, 225, 79, 0.6); white-space: nowrap; }
-.score small { display: block; font-size: 8px; color: var(--dim); text-shadow: none; }
+.score small { display: block; font-size: 8px; color: #c4b8ee; text-shadow: 0 1px 0 #05010f; }
 .lives { display: flex; gap: 3px; }
 .lives svg { width: 18px; height: 18px; }
 .lives .lost { opacity: 0.18; }
@@ -287,7 +288,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .ans.dim { opacity: 0.45; }
 .answers.locked .ans { pointer-events: none; }
 .answers.long .ans { font-size: clamp(18px, 4.1vw, 22px); }
-.hint { text-align: center; font: 8px/1.5 var(--font-display); color: var(--dim); }
+.hint { text-align: center; font: clamp(8px, 2.2vw, 10px)/1.5 var(--font-display); color: var(--ink); opacity: 0.82; letter-spacing: 0.04em; text-shadow: 0 1px 0 #05010f, 0 0 6px #05010f; }
 
 .sheet {
   position: absolute; left: var(--gut-l); right: var(--gut-r); bottom: var(--gut-b); z-index: 20;
@@ -297,7 +298,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   will-change: transform; /* its own layer: sliding in and leaving don't repaint the HUD */
 }
 @keyframes sheetin { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-.sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); }
+.sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); text-wrap: balance; }
 .sheet .answer { font-size: clamp(20px, 4.6vw, 24px); color: var(--lime); line-height: 1.05; }
 .sheet .answer b { font-weight: 400; color: var(--dim); }
 .sheet .explain { font-size: clamp(19px, 4.4vw, 23px); line-height: 1.08; }
@@ -314,13 +315,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
 /* trophies: the unlock card drops in from the top; the grid lives under STATS */
-.trophy { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; z-index: 60; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); padding: 10px 14px; background: #1c0d4a; border: 2px solid var(--yellow); box-shadow: 0 0 0 2px #000, 0 6px 0 #000; pointer-events: none; transform: translate(-50%, -160%); animation: trophyin 3.4s ease forwards; will-change: transform; }
+.trophy { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 48px); left: 50%; z-index: 60; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); padding: 10px 14px; background: #1c0d4a; border: 2px solid var(--yellow); box-shadow: 0 0 0 2px #000, 0 6px 0 #000; pointer-events: none; transform: translate(-50%, -160%); animation: trophyin 3.4s ease forwards; will-change: transform; }
 .trophy .ic svg { width: 26px; height: 26px; display: block; }
 .trophy .tx { display: grid; gap: 4px; }
 .trophy small { font: 8px/1 var(--font-display); color: var(--dim); }
 .trophy b { font: 11px/1.3 var(--font-display); color: var(--yellow); font-weight: 400; }
 .trophy i { font-style: normal; font-size: 19px; line-height: 1; color: var(--ink); }
-@keyframes trophyin { 0% { transform: translate(-50%, -160%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -160%); } }
+@keyframes trophyin { 0% { transform: translate(-50%, -280%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -280%); } }
 .trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 6px; margin-bottom: 12px; }
 .trophies .tr { display: flex; gap: 9px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); opacity: 0.6; }
 .trophies .tr.on { opacity: 1; border-color: var(--yellow); }
@@ -336,6 +337,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .fever.lv2 { color: var(--magenta); border-color: var(--magenta); }
 .fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
 .fever.bump { animation: feverbump 0.3s ease-out; }
+.fever.dock { position: absolute; left: 0; top: 8px; z-index: 2; pointer-events: none; background: rgba(8, 3, 26, 0.72); }
+.fever.dock.lv3 { background: var(--yellow); }
 @keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
 /* a new question: light sweeps across the panel and the answers deal in (transform and opacity only) */
 .qpanel { position: relative; overflow: hidden; }
@@ -492,7 +495,7 @@ mark { background: var(--yellow); color: #12052e; }
 .debrief .who { font: 8px/1.5 var(--font-display); color: var(--lime); }
 
 /* ---- modal ---------------------------------------------------------------------- */
-.modal { position: fixed; inset: 0; z-index: 50; background: rgba(4, 1, 14, 0.78); display: grid; place-items: center; padding: var(--gut-t) var(--gut-r) var(--gut-b) var(--gut-l); }
+.modal { position: fixed; inset: 0; z-index: 50; background: rgba(4, 1, 14, 0.6); display: grid; place-items: center; padding: var(--gut-t) var(--gut-r) var(--gut-b) var(--gut-l); }
 .dialog { width: min(100%, 440px); background: var(--panel-2); border: 2px solid var(--c, var(--magenta)); box-shadow: 0 0 0 2px #000, 0 0 30px -6px var(--c, var(--magenta)); padding: 16px; display: grid; gap: 14px; text-align: center; max-height: 100%; overflow-y: auto; }
 .dialog h2 { font: 13px/1.5 var(--font-display); color: var(--c, var(--magenta)); }
 .dialog p { font-size: 22px; line-height: 1.1; }
@@ -4703,11 +4706,26 @@ const Hype = {
     this.level = 0;
     GFX.setFever(0);
     const g = $(".hud .grow", screenEl);
+    this.grow = g;
+    this.band = $(".band", screenEl);
+    this.docked = false;
     this.el = g ? g.appendChild(UI.el(`<span class="fever" hidden></span>`)) : null;
+  },
+  // A HUD with no room to spare (Nest Egg Run on a phone) would have the pill sit on the readouts:
+  // there it docks in the corner of the 3D strip instead, and stays there for the run.
+  place() {
+    const el = this.el;
+    if (!el || this.docked || el.hidden || !this.grow || !this.band) return;
+    if (el.offsetWidth <= this.grow.clientWidth - 4) return;
+    this.docked = true;
+    this.band.appendChild(el);
+    el.classList.add("dock");
   },
   reset() {
     this.level = 0;
     this.el = null;
+    this.grow = this.band = null;
+    this.docked = false;
     GFX.setFever(0);
   },
   // Callouts sit in the strip of 3D between the HUD panels, clear of the question.
@@ -4751,7 +4769,8 @@ const Hype = {
     if (this.el) {
       this.el.hidden = streak < 2;
       UI.text(this.el, "STREAK " + streak);
-      this.el.className = "fever" + (lv ? " lv" + lv : "");
+      this.el.className = "fever" + (lv ? " lv" + lv : "") + (this.docked ? " dock" : "");
+      this.place();
       if (ok && streak >= 2) { this.el.classList.remove("bump"); void this.el.offsetWidth; this.el.classList.add("bump"); }
     }
   },
@@ -8101,7 +8120,7 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.12, bloom: 1.0, threshold: 1.0, saturation: 1.18, contrast: 1.1, vignette: 1.15, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.5,
+    s.userData.post = { exposure: 1.12, bloom: 0.9, threshold: 1.05, saturation: 1.18, contrast: 1.1, vignette: 1.0, fringe: 0.25, sharpen: 0.12, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.4,
       dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
@@ -8240,7 +8259,7 @@ class BlasterGame extends QuizGame {
     const key = text + i;
     if (!this.badges.has(key)) {
       const m = new THREE.SpriteMaterial({ map: blasterBadge(text, SLOT_COLORS[i]), transparent: true, depthTest: false, depthWrite: false, fog: false });
-      m.color.setScalar(1.12);
+      m.color.setScalar(1.0); // (the letter itself does not bloom: it stays crisp)
       this.badges.set(key, m);
     }
     return this.badges.get(key);
@@ -8302,7 +8321,7 @@ class BlasterGame extends QuizGame {
     this.ts = clamp(Math.min(far.h * 0.16, far.w * 0.1), 0.4, 1.2);
     const near = this.bandSize(7);
     const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
-    this.shipY = -near.h * fit.y;
+    this.shipY = -near.h * (fit.y + (this.enemy ? 0.045 : 0));
     this.shipScale = clamp(Math.min((near.w * 0.6) / fit.w, (near.h * 0.3) / fit.h), 0.4, 1);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {
@@ -8318,7 +8337,7 @@ class BlasterGame extends QuizGame {
     const i = t.userData.slot, n = this.round.n;
     // round the demon: the upper corners of the view, then its flanks
     t.userData.sx = i % 2 ? 1 : -1;
-    t.userData.sy = n === 2 || i < 2 ? 1 : -0.22;
+    t.userData.sy = n === 2 || i < 2 ? 0.27 : -0.07; // (fractions of the picture's height: clear of the question above and the fighter below)
     t.userData.bx = n === 2 ? (i === 0 ? -this.fx : this.fx) : i % 2 ? this.fx : -this.fx;
     t.userData.by = n === 2 ? 0 : i < 2 ? this.fy : -this.fy;
     t.scale.setScalar(this.ts);
@@ -8357,14 +8376,15 @@ class BlasterGame extends QuizGame {
       rim.scale.setScalar(1.05);
       rot.add(core, body, edges, rim);
       rot.rotation.set(rand(Math.PI * 2), rand(Math.PI * 2), 0);
-      rot.scale.setScalar(0.62); // the answer core sits inside the drone's collar
+      rot.scale.setScalar(this.enemy ? 0.4 : 0.62); // the answer core sits inside the drone's collar (smaller round the demon: the letter is the face)
       const frame = new THREE.Group();
       const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
       // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
       if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
-      frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
+      frame.add(hullMesh);
+      if (!this.enemy) frame.add(new THREE.Mesh(this.drones[shape].lamps, M.lamp)); // (round the demon the drones carry no loose lamps: nothing that could be read as a letter)
       const halo = new THREE.Sprite(M.halo);
-      halo.scale.set(3.8, 3.8, 1);
+      halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
       label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
@@ -8413,8 +8433,8 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 1.3 : 1));
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
+        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 0.9 : 1));
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 2.5 : 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
@@ -8638,7 +8658,7 @@ class BlasterGame extends QuizGame {
       if (p[i * 6 + 5] > 2) this.resetStreak(i, -170);
     }
     this.streaks.geometry.attributes.position.needsUpdate = true;
-    this.streaks.material.color.setScalar(1 + w * 1.6);
+    this.streaks.material.color.setScalar(0.4 + w * 2.2);
     // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
     GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
@@ -8664,8 +8684,8 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
         const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
-        u.s = clamp(Math.min(b.h * 0.085, b.w * 0.074), 0.2, 1.6);
-        t.position.set(u.sx * b.w * 0.365 + Math.sin(this.t * 1.3 + i * 1.7) * 0.12 * u.s, u.sy * b.h * 0.34 + Math.cos(this.t * 1.1 + i) * 0.1 * u.s, dz);
+        u.s = clamp(Math.min(b.h * 0.074, b.w * 0.066), 0.2, 1.6);
+        t.position.set(u.sx * b.w * 0.3 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);
@@ -9482,7 +9502,7 @@ function fighterSkin(env, side, U) {
         vec3 ftrAcc = mix(vec3(1.5, 0.14, 0.95), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide));
         float ftrEdge = smoothstep(0.25, 0.9, length(fwidth(normalize(vNormal))) * 3.0); // (worn bright where a plate turns sharply)
         diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT), vec3(0.42, 0.45, 0.52), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.5 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.55, 0.16, 0.95), 0.22, ftrEdge), 0.3, ftrSat);")
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.52 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.4, 0.3, 0.95), 0.34, ftrEdge), 0.3, ftrSat);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.92, 0.55, ftrSat);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         // (relief from the change in the old paint's brightness from one pixel to the next, and from the tile's dents and panel lines)
@@ -9875,7 +9895,7 @@ class BlasterFighter {
     this.pow += ((this.inT > 0.55 ? 1 : 0) - this.pow) * Math.min(1, dt * 2.5);
     U.uFtrPow.value = this.pow * (0.8 + 0.5 * heat + 0.5 * lunge) * (1 - 0.35 * this.hurt);
     U.uFtrSeam.value.copy(this.seamCold).lerp(this.seamHot, heat);
-    U.uFtrRimK.value = 0.36 + 0.2 * heat + 0.25 * lunge;
+    U.uFtrRimK.value = 0.62 + 0.2 * heat + 0.25 * lunge; // (edged in light: it stands out from the demon behind it)
     U.uFtrUnder.value.copy(g.waveCol).multiplyScalar(0.09 + 0.1 * heat + 0.2 * Math.min(1, burn));
     this.lowTint.value.setScalar(1 + 0.25 * heat + 0.3 * lunge);
     // lights: the aerial's beacon (a soft pulse, well under 1 Hz), the head-up display, the canopy
@@ -9894,7 +9914,7 @@ class BlasterFighter {
     su.uHit.value = Math.max(0, su.uHit.value - dt * 1.3);
     if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, dt * 4));
     // (the weakest quality levels only draw the bubble while it flares)
-    this.shield.visible = su.uHit.value > 0 || (this.shieldOn > 0.01 && !cheap);
+    this.shield.visible = su.uHit.value > 0; // (the lattice only shows when something lands on it: at rest it read as a wire dome across the demon)
     rig.updateMatrixWorld();
     if (inK < 0.5) GFX.heatAt(g.camera, this._v.set(0, 0.3, 2.5).applyMatrix4(rig.matrixWorld), 0.6 * k, 0.4 + 0.6 * Math.max(heat, Math.min(1, burn))); // (not while it is still behind the camera)
     // down to its last shield: the engine that was hit trails smoke, and now and then something shorts
@@ -10209,7 +10229,7 @@ class BlasterSpace {
           gl_PointSize = max(1.0, size * uPx);
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * a * a, 1.0); }",
+      fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * (a * a * a * 1.5 + 0.12 * a), 1.0); }",
     });
     this.farStars = new THREE.Points(starGeo(2200, () => {
       const v = this._v.set(rand(-0.62, 0.62), rand(-0.56, 0.56), -1).normalize().multiplyScalar(940);
@@ -10355,8 +10375,9 @@ class BlasterSpace {
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.55, aura = exp(-pow((r - 0.62) * 3.4, 2.0)) * 0.1 + exp(-r * r * 2.6) * 0.04;
-          gl_FragColor = vec4(uColor * aura * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.5, aura = exp(-pow((r - 0.62) * 3.4, 2.0)) * 0.1 + exp(-r * r * 2.6) * 0.04;
+          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-pow((r - 0.5) * 2.2, 2.0)) * 0.16 + exp(-r * r * 1.4) * 0.07); // a cold backlight
+          gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
     }));
@@ -11452,7 +11473,7 @@ function demonSkin(env, U) {
         vec3 dmGun = mix(neonMetal(clamp(dmL * 2.6, 0.0, 1.0), dmT), vec3(0.42, 0.44, 0.52), dmEdge * 0.55);
         vec3 dmObs = (vec3(0.014, 0.011, 0.022) + vec3(0.075, 0.055, 0.11) * clamp(dmL * 1.5, 0.0, 1.0)) * (0.7 + 0.6 * dmT.r) * (1.0 - 0.55 * neonGroove(dmT));
         diffuseColor.rgb = mix(dmObs, dmGun, dmArm);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(clamp(0.13 + (0.5 - dmT.r) * 0.4 + 0.3 * neonGroove(dmT), 0.05, 0.6), mix(clamp(0.5 - 0.2 * dmL + (0.5 - dmT.r) * 0.6, 0.18, 0.95), 0.22, dmEdge), dmArm);")
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(clamp(0.3 + (0.5 - dmT.r) * 0.3 + 0.3 * neonGroove(dmT), 0.26, 0.7), mix(clamp(0.5 - 0.2 * dmL + (0.5 - dmT.r) * 0.6, 0.18, 0.95), 0.22, dmEdge), dmArm);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.82, 0.92, dmArm);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         // (relief from the change in the texture's brightness from one pixel to the next, and from the tile's dents and lines)
@@ -11600,8 +11621,8 @@ class BlasterDemon {
   // Its size and height, from the room there is: at its closest it fills the band between the question and the
   // answers from top to bottom and its wingtips run past the sides; when a question starts it is two thirds of that.
   fit(band) {
-    this.fitS = clamp(Math.min((band.h * 1.12) / DEMON.height, (band.w * 1.3) / DEMON.width), 1.5, 14);
-    this.fitY = (band.h * 0.1) / DEMON_NEAR;
+    this.fitS = clamp(Math.min((band.h * 0.98) / DEMON.height, (band.w * 1.22) / DEMON.width), 1.5, 14);
+    this.fitY = (band.h * 0.175) / DEMON_NEAR;
     if (!this.root.visible) { this.S = this.fitS; this.yK = this.fitY; }
   }
   // A wave starts: the next demon flies up out of the distance. (If the last one is still breaking up, it waits for that.)
@@ -11812,8 +11833,8 @@ class BlasterDemon {
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.6 * tele + 0.4 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
-    U.uDmRimK.value = 0.4 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
-    U.uDmKick.value = 0.5 * (1 - 0.6 * rage);
+    U.uDmRimK.value = 0.62 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
+    U.uDmKick.value = 1.25 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);

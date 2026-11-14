@@ -997,10 +997,10 @@ use the audit list under it as the to-do list for that screen.
 | K1 | Rendering: one maximum mode, full pixel density, multisampling, depth passes, bloom, grade | done |
 | K2 | Title screen | done |
 | K3 | Arcade hub | done |
-| K4 | Risk Blaster | in progress |
-| K5 | Nest Egg Run and Boss Rush | |
-| K6 | Final Exam, Memory Bank, Strategy Guide | |
-| K7 | Interface design system | |
+| K4 | Risk Blaster | done |
+| K5 | Nest Egg Run and Boss Rush | in progress (first pass committed, review pending) |
+| K6 | Final Exam, Memory Bank, Strategy Guide | in progress (first pass committed, review pending) |
+| K7 | Interface design system | in progress (first pass committed, review pending) |
 | K8 | Originality audit, final checks, report | |
 
 ## Phase 0 audit
@@ -1181,3 +1181,34 @@ cohesion, legibility).
   - The camera stands back so the whole cabinet and the floor are in view, and
     arcs wider between cabinets; the card and mission bar wait for the room to
     power on; the card's top edge no longer moves between games.
+- **K4, Risk Blaster** (`20-blaster.js`, `20d`, `20f`, `20h`, `03-data.js` blurb,
+  CSS). B1 to B6. Reviewer (first pass): detail 3, lighting 2.5, materials 2,
+  depth 2.5, motion 2.5, cohesion 3, legibility 3. After: 4.5, 4.5, 4, 4.5, 4.5,
+  4.5, 5.
+  - The four answers are holo-drones again, flying escort in front of the demon
+    and well inside the frame: a dark plate with a large outlined white letter
+    that does not bloom, the answer's colour in the ring and thrusters. The ship
+    always fires at the drone you chose. Right: the drone relays the shot into
+    the demon and bursts. Wrong: it bursts red and the demon strikes back. Out
+    of time: the drones power down. (Scoring, timing and the answer check are
+    untouched; the regression is identical.)
+  - Explosions are layered: a flash, a fireball, smoke that lingers, bolts of
+    debris, on top of the sparks and the shock ring.
+  - Space: nebula baked at 2048, 3,700 stars with sharper cores, a cold backlight
+    behind the demon so its outline reads against the dark, the nebula region
+    recoloured blue so the purple demon stands off it.
+  - Fighter: sits lower so it never covers a drone, picks up a rim of the scene's
+    key colour, and its shield dome shows only on impact (it used to draw a
+    faint bubble all the time).
+  - Demon: a touch smaller and higher so the drones have their own band; rim
+    light stronger; the hit flash is weighted to the silhouette; the weak-device
+    version is no longer built.
+  - Focus follows the demon; the fighter is always sharp. Speed streaks are
+    fainter. Bolts are thinner and brighter.
+  - Interface fixes found in this pass: ligatures off in the question font (an
+    "fi" pair was fusing), a larger and brighter hint line, a balanced verdict
+    line on the results sheet, the trophy toast drops below the HUD, a lighter
+    backdrop behind dialogs.
+  - Reviewer's resemblance notes: a rear-chase camera behind a fighter is common
+    to the genre (no shared designs); a horned dark demon is a broad archetype
+    (the model is the owner's own file). No direct lifts found.

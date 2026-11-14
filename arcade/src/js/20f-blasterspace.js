@@ -281,7 +281,7 @@ class BlasterSpace {
           gl_PointSize = max(1.0, size * uPx);
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * a * a, 1.0); }",
+      fragmentShader: "varying vec3 vC; void main(){ float a = max(0.0, 1.0 - length(gl_PointCoord - 0.5) * 2.0); gl_FragColor = vec4(vC * (a * a * a * 1.5 + 0.12 * a), 1.0); }",
     });
     this.farStars = new THREE.Points(starGeo(2200, () => {
       const v = this._v.set(rand(-0.62, 0.62), rand(-0.56, 0.56), -1).normalize().multiplyScalar(940);
@@ -427,8 +427,9 @@ class BlasterSpace {
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.55, aura = exp(-pow((r - 0.62) * 3.4, 2.0)) * 0.1 + exp(-r * r * 2.6) * 0.04;
-          gl_FragColor = vec4(uColor * aura * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.5, aura = exp(-pow((r - 0.62) * 3.4, 2.0)) * 0.1 + exp(-r * r * 2.6) * 0.04;
+          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-pow((r - 0.5) * 2.2, 2.0)) * 0.16 + exp(-r * r * 1.4) * 0.07); // a cold backlight
+          gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
     }));

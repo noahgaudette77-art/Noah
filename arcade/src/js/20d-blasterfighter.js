@@ -194,7 +194,7 @@ function fighterSkin(env, side, U) {
         vec3 ftrAcc = mix(vec3(1.5, 0.14, 0.95), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide));
         float ftrEdge = smoothstep(0.25, 0.9, length(fwidth(normalize(vNormal))) * 3.0); // (worn bright where a plate turns sharply)
         diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT), vec3(0.42, 0.45, 0.52), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.5 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.55, 0.16, 0.95), 0.22, ftrEdge), 0.3, ftrSat);")
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.52 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.4, 0.3, 0.95), 0.34, ftrEdge), 0.3, ftrSat);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.92, 0.55, ftrSat);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         // (relief from the change in the old paint's brightness from one pixel to the next, and from the tile's dents and panel lines)
@@ -587,7 +587,7 @@ class BlasterFighter {
     this.pow += ((this.inT > 0.55 ? 1 : 0) - this.pow) * Math.min(1, dt * 2.5);
     U.uFtrPow.value = this.pow * (0.8 + 0.5 * heat + 0.5 * lunge) * (1 - 0.35 * this.hurt);
     U.uFtrSeam.value.copy(this.seamCold).lerp(this.seamHot, heat);
-    U.uFtrRimK.value = 0.36 + 0.2 * heat + 0.25 * lunge;
+    U.uFtrRimK.value = 0.62 + 0.2 * heat + 0.25 * lunge; // (edged in light: it stands out from the demon behind it)
     U.uFtrUnder.value.copy(g.waveCol).multiplyScalar(0.09 + 0.1 * heat + 0.2 * Math.min(1, burn));
     this.lowTint.value.setScalar(1 + 0.25 * heat + 0.3 * lunge);
     // lights: the aerial's beacon (a soft pulse, well under 1 Hz), the head-up display, the canopy
@@ -606,7 +606,7 @@ class BlasterFighter {
     su.uHit.value = Math.max(0, su.uHit.value - dt * 1.3);
     if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, dt * 4));
     // (the weakest quality levels only draw the bubble while it flares)
-    this.shield.visible = su.uHit.value > 0 || (this.shieldOn > 0.01 && !cheap);
+    this.shield.visible = su.uHit.value > 0; // (the lattice only shows when something lands on it: at rest it read as a wire dome across the demon)
     rig.updateMatrixWorld();
     if (inK < 0.5) GFX.heatAt(g.camera, this._v.set(0, 0.3, 2.5).applyMatrix4(rig.matrixWorld), 0.6 * k, 0.4 + 0.6 * Math.max(heat, Math.min(1, burn))); // (not while it is still behind the camera)
     // down to its last shield: the engine that was hit trails smoke, and now and then something shorts

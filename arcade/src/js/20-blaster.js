@@ -187,7 +187,7 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.12, bloom: 1.0, threshold: 1.0, saturation: 1.18, contrast: 1.1, vignette: 1.15, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.5,
+    s.userData.post = { exposure: 1.12, bloom: 0.9, threshold: 1.05, saturation: 1.18, contrast: 1.1, vignette: 1.0, fringe: 0.25, sharpen: 0.12, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.4,
       dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
@@ -326,7 +326,7 @@ class BlasterGame extends QuizGame {
     const key = text + i;
     if (!this.badges.has(key)) {
       const m = new THREE.SpriteMaterial({ map: blasterBadge(text, SLOT_COLORS[i]), transparent: true, depthTest: false, depthWrite: false, fog: false });
-      m.color.setScalar(1.12);
+      m.color.setScalar(1.0); // (the letter itself does not bloom: it stays crisp)
       this.badges.set(key, m);
     }
     return this.badges.get(key);
@@ -388,7 +388,7 @@ class BlasterGame extends QuizGame {
     this.ts = clamp(Math.min(far.h * 0.16, far.w * 0.1), 0.4, 1.2);
     const near = this.bandSize(7);
     const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
-    this.shipY = -near.h * fit.y;
+    this.shipY = -near.h * (fit.y + (this.enemy ? 0.045 : 0));
     this.shipScale = clamp(Math.min((near.w * 0.6) / fit.w, (near.h * 0.3) / fit.h), 0.4, 1);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {
@@ -404,7 +404,7 @@ class BlasterGame extends QuizGame {
     const i = t.userData.slot, n = this.round.n;
     // round the demon: the upper corners of the view, then its flanks
     t.userData.sx = i % 2 ? 1 : -1;
-    t.userData.sy = n === 2 || i < 2 ? 1 : -0.22;
+    t.userData.sy = n === 2 || i < 2 ? 0.27 : -0.07; // (fractions of the picture's height: clear of the question above and the fighter below)
     t.userData.bx = n === 2 ? (i === 0 ? -this.fx : this.fx) : i % 2 ? this.fx : -this.fx;
     t.userData.by = n === 2 ? 0 : i < 2 ? this.fy : -this.fy;
     t.scale.setScalar(this.ts);
@@ -443,14 +443,15 @@ class BlasterGame extends QuizGame {
       rim.scale.setScalar(1.05);
       rot.add(core, body, edges, rim);
       rot.rotation.set(rand(Math.PI * 2), rand(Math.PI * 2), 0);
-      rot.scale.setScalar(0.62); // the answer core sits inside the drone's collar
+      rot.scale.setScalar(this.enemy ? 0.4 : 0.62); // the answer core sits inside the drone's collar (smaller round the demon: the letter is the face)
       const frame = new THREE.Group();
       const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
       // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
       if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
-      frame.add(hullMesh, new THREE.Mesh(this.drones[shape].lamps, M.lamp));
+      frame.add(hullMesh);
+      if (!this.enemy) frame.add(new THREE.Mesh(this.drones[shape].lamps, M.lamp)); // (round the demon the drones carry no loose lamps: nothing that could be read as a letter)
       const halo = new THREE.Sprite(M.halo);
-      halo.scale.set(3.8, 3.8, 1);
+      halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
       label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
@@ -499,8 +500,8 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 1.3 : 1));
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
+        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 0.9 : 1));
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 2.5 : 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
@@ -724,7 +725,7 @@ class BlasterGame extends QuizGame {
       if (p[i * 6 + 5] > 2) this.resetStreak(i, -170);
     }
     this.streaks.geometry.attributes.position.needsUpdate = true;
-    this.streaks.material.color.setScalar(1 + w * 1.6);
+    this.streaks.material.color.setScalar(0.4 + w * 2.2);
     // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
     GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
@@ -750,8 +751,8 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
         const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
-        u.s = clamp(Math.min(b.h * 0.085, b.w * 0.074), 0.2, 1.6);
-        t.position.set(u.sx * b.w * 0.365 + Math.sin(this.t * 1.3 + i * 1.7) * 0.12 * u.s, u.sy * b.h * 0.34 + Math.cos(this.t * 1.1 + i) * 0.1 * u.s, dz);
+        u.s = clamp(Math.min(b.h * 0.074, b.w * 0.066), 0.2, 1.6);
+        t.position.set(u.sx * b.w * 0.3 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);

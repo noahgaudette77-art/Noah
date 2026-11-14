@@ -28,6 +28,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
+  font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0; /* (fi and fl are two letters each: the pixel faces' ligatures smear them) */
   margin: 0;
   background: var(--void);
   color: var(--ink);
@@ -220,7 +221,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .hud { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .hud .grow { flex: 1; min-width: 0; }
 .score { font: clamp(10px, 2.8vw, 13px)/1.3 var(--font-display); color: var(--yellow); text-shadow: 0 0 8px rgba(255, 225, 79, 0.6); white-space: nowrap; }
-.score small { display: block; font-size: 8px; color: var(--dim); text-shadow: none; }
+.score small { display: block; font-size: 8px; color: #c4b8ee; text-shadow: 0 1px 0 #05010f; }
 .lives { display: flex; gap: 3px; }
 .lives svg { width: 18px; height: 18px; }
 .lives .lost { opacity: 0.18; }
@@ -274,7 +275,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .ans.dim { opacity: 0.45; }
 .answers.locked .ans { pointer-events: none; }
 .answers.long .ans { font-size: clamp(18px, 4.1vw, 22px); }
-.hint { text-align: center; font: 8px/1.5 var(--font-display); color: var(--dim); }
+.hint { text-align: center; font: clamp(8px, 2.2vw, 10px)/1.5 var(--font-display); color: var(--ink); opacity: 0.82; letter-spacing: 0.04em; text-shadow: 0 1px 0 #05010f, 0 0 6px #05010f; }
 
 .sheet {
   position: absolute; left: var(--gut-l); right: var(--gut-r); bottom: var(--gut-b); z-index: 20;
@@ -284,7 +285,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   will-change: transform; /* its own layer: sliding in and leaving don't repaint the HUD */
 }
 @keyframes sheetin { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-.sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); }
+.sheet .verdict { font: clamp(13px, 3.6vw, 17px)/1.3 var(--font-display); color: var(--c); text-shadow: 0 0 10px var(--c); text-wrap: balance; }
 .sheet .answer { font-size: clamp(20px, 4.6vw, 24px); color: var(--lime); line-height: 1.05; }
 .sheet .answer b { font-weight: 400; color: var(--dim); }
 .sheet .explain { font-size: clamp(19px, 4.4vw, 23px); line-height: 1.08; }
@@ -301,13 +302,13 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .banner small { display: block; font-size: 0.38em; color: var(--ink); margin-top: 10px; }
 @keyframes bannerin { 0% { transform: scale(2.2); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
 /* trophies: the unlock card drops in from the top; the grid lives under STATS */
-.trophy { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; z-index: 60; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); padding: 10px 14px; background: #1c0d4a; border: 2px solid var(--yellow); box-shadow: 0 0 0 2px #000, 0 6px 0 #000; pointer-events: none; transform: translate(-50%, -160%); animation: trophyin 3.4s ease forwards; will-change: transform; }
+.trophy { position: fixed; top: calc(max(10px, env(safe-area-inset-top)) + 48px); left: 50%; z-index: 60; display: flex; gap: 10px; align-items: center; max-width: calc(100% - 24px); padding: 10px 14px; background: #1c0d4a; border: 2px solid var(--yellow); box-shadow: 0 0 0 2px #000, 0 6px 0 #000; pointer-events: none; transform: translate(-50%, -160%); animation: trophyin 3.4s ease forwards; will-change: transform; }
 .trophy .ic svg { width: 26px; height: 26px; display: block; }
 .trophy .tx { display: grid; gap: 4px; }
 .trophy small { font: 8px/1 var(--font-display); color: var(--dim); }
 .trophy b { font: 11px/1.3 var(--font-display); color: var(--yellow); font-weight: 400; }
 .trophy i { font-style: normal; font-size: 19px; line-height: 1; color: var(--ink); }
-@keyframes trophyin { 0% { transform: translate(-50%, -160%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -160%); } }
+@keyframes trophyin { 0% { transform: translate(-50%, -280%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -280%); } }
 .trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 6px; margin-bottom: 12px; }
 .trophies .tr { display: flex; gap: 9px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); opacity: 0.6; }
 .trophies .tr.on { opacity: 1; border-color: var(--yellow); }
@@ -323,6 +324,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .fever.lv2 { color: var(--magenta); border-color: var(--magenta); }
 .fever.lv3 { color: #12052e; background: var(--yellow); border-color: var(--yellow); }
 .fever.bump { animation: feverbump 0.3s ease-out; }
+.fever.dock { position: absolute; left: 0; top: 8px; z-index: 2; pointer-events: none; background: rgba(8, 3, 26, 0.72); }
+.fever.dock.lv3 { background: var(--yellow); }
 @keyframes feverbump { 0% { transform: scale(1.5); } 100% { transform: none; } }
 /* a new question: light sweeps across the panel and the answers deal in (transform and opacity only) */
 .qpanel { position: relative; overflow: hidden; }
@@ -479,7 +482,7 @@ mark { background: var(--yellow); color: #12052e; }
 .debrief .who { font: 8px/1.5 var(--font-display); color: var(--lime); }
 
 /* ---- modal ---------------------------------------------------------------------- */
-.modal { position: fixed; inset: 0; z-index: 50; background: rgba(4, 1, 14, 0.78); display: grid; place-items: center; padding: var(--gut-t) var(--gut-r) var(--gut-b) var(--gut-l); }
+.modal { position: fixed; inset: 0; z-index: 50; background: rgba(4, 1, 14, 0.6); display: grid; place-items: center; padding: var(--gut-t) var(--gut-r) var(--gut-b) var(--gut-l); }
 .dialog { width: min(100%, 440px); background: var(--panel-2); border: 2px solid var(--c, var(--magenta)); box-shadow: 0 0 0 2px #000, 0 0 30px -6px var(--c, var(--magenta)); padding: 16px; display: grid; gap: 14px; text-align: center; max-height: 100%; overflow-y: auto; }
 .dialog h2 { font: 13px/1.5 var(--font-display); color: var(--c, var(--magenta)); }
 .dialog p { font-size: 22px; line-height: 1.1; }

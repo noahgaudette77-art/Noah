@@ -236,7 +236,7 @@ function demonSkin(env, U) {
         vec3 dmGun = mix(neonMetal(clamp(dmL * 2.6, 0.0, 1.0), dmT), vec3(0.42, 0.44, 0.52), dmEdge * 0.55);
         vec3 dmObs = (vec3(0.014, 0.011, 0.022) + vec3(0.075, 0.055, 0.11) * clamp(dmL * 1.5, 0.0, 1.0)) * (0.7 + 0.6 * dmT.r) * (1.0 - 0.55 * neonGroove(dmT));
         diffuseColor.rgb = mix(dmObs, dmGun, dmArm);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(clamp(0.13 + (0.5 - dmT.r) * 0.4 + 0.3 * neonGroove(dmT), 0.05, 0.6), mix(clamp(0.5 - 0.2 * dmL + (0.5 - dmT.r) * 0.6, 0.18, 0.95), 0.22, dmEdge), dmArm);")
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(clamp(0.3 + (0.5 - dmT.r) * 0.3 + 0.3 * neonGroove(dmT), 0.26, 0.7), mix(clamp(0.5 - 0.2 * dmL + (0.5 - dmT.r) * 0.6, 0.18, 0.95), 0.22, dmEdge), dmArm);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.82, 0.92, dmArm);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         // (relief from the change in the texture's brightness from one pixel to the next, and from the tile's dents and lines)
@@ -384,8 +384,8 @@ class BlasterDemon {
   // Its size and height, from the room there is: at its closest it fills the band between the question and the
   // answers from top to bottom and its wingtips run past the sides; when a question starts it is two thirds of that.
   fit(band) {
-    this.fitS = clamp(Math.min((band.h * 1.12) / DEMON.height, (band.w * 1.3) / DEMON.width), 1.5, 14);
-    this.fitY = (band.h * 0.1) / DEMON_NEAR;
+    this.fitS = clamp(Math.min((band.h * 0.98) / DEMON.height, (band.w * 1.22) / DEMON.width), 1.5, 14);
+    this.fitY = (band.h * 0.175) / DEMON_NEAR;
     if (!this.root.visible) { this.S = this.fitS; this.yK = this.fitY; }
   }
   // A wave starts: the next demon flies up out of the distance. (If the last one is still breaking up, it waits for that.)
@@ -596,8 +596,8 @@ class BlasterDemon {
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.6 * tele + 0.4 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
-    U.uDmRimK.value = 0.4 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
-    U.uDmKick.value = 0.5 * (1 - 0.6 * rage);
+    U.uDmRimK.value = 0.62 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
+    U.uDmKick.value = 1.25 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);
