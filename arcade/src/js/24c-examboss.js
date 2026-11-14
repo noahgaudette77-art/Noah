@@ -146,11 +146,11 @@ function bossSkin(env, side, o, U) {
         float bossL = clamp(dot(texelColor.rgb, vec3(0.3333)) * 1.25, 0.0, 1.0);
         float bossEdge = clamp(length(fwidth(normalize(vNormal))) * 4.5 - 0.1, 0.0, 1.0);
         ${bone
-          ? "diffuseColor.rgb = mix(vec3(0.04, 0.04, 0.05), vec3(0.8, 0.78, 0.74), bossL) * (0.78 + 0.44 * bossT.r);"
+          ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = mix(vec3(0.03, 0.03, 0.04), vec3(0.5, 0.455, 0.4), bossL) * (0.74 + 0.5 * bossT.r) * (1.0 - 0.6 * exp(-dot(bossS, bossS) * 150.0));"
           : "diffuseColor.rgb = mix(neonMetal(bossL, bossT), vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
-        roughnessFactor = ${bone ? "clamp(0.5 + (0.5 - bossT.r) * 0.5, 0.2, 0.9)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};`)
-      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.2" : "0.92"};`)
+        roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};`)
+      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.38" : "0.92"};`)
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         float bossH = ${bone ? "bossT.r" : "neonHeight(bossT)"};
         normal = neonBump(-vViewPosition, normal, clamp(vec2(dFdx(bossH), dFdy(bossH)), -0.5, 0.5) * 0.008);`)
@@ -168,7 +168,7 @@ function bossSkin(env, side, o, U) {
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin-2-" + (bone ? 1 : 0);
+  m.customProgramCacheKey = () => "exam-boss-skin-3-" + (bone ? 1 : 0);
   return m;
 }
 
@@ -219,7 +219,7 @@ class ExamPuffs {
             rgb = fire * heat * 1.05 + vec3(0.05, 0.045, 0.055) * a;
           } else if (vQ.z < 1.5) {
             a = shape * smoothstep(0.0, 0.12, age) * pow(1.0 - age, 1.3) * 0.55;
-            rgb = (mix(vec3(0.04, 0.035, 0.05), vec3(0.2, 0.18, 0.22), n) + vec3(1.2, 0.45, 0.1) * uGlow * (1.0 - vUv.y) * 0.5) * a;
+            rgb = (mix(vec3(0.02, 0.018, 0.028), vec3(0.085, 0.075, 0.1), n) + vec3(1.2, 0.45, 0.1) * uGlow * (1.0 - vUv.y) * 0.32) * a;
           } else if (vQ.z < 2.5) {
             a = 0.0;
             rgb = vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(1.0 - age, 2.0);
@@ -552,7 +552,7 @@ class ExamBoss {
       Sound.sfx("bossdown");
       this.pose = this.quick ? BOSS_POSE.down : BOSS_POSE.struck;
       this.hp(this.quick ? 0 : 88);
-      if (!this.soft) { g.shake(0.25); GFX.pulse(5, 0.05); }
+      if (!this.soft) { g.shake(0.25); GFX.pulse(2.5, 0.05); }
     } else {
       UI.banner("NOT YET", COLORS.red, "IT STILL STANDS · 60% BRINGS IT DOWN");
       this.pose = this.quick ? BOSS_POSE.glare : BOSS_POSE.roar;
@@ -718,7 +718,7 @@ class ExamBoss {
     this.fire = 1.8;
     this.firePos.copy(at);
     Sound.sfx("bossblast");
-    if (!this.soft) { g.shake(1.1); GFX.pulse(14, 0.2); GFX.hitStop(140); }
+    if (!this.soft) { g.shake(1.1); GFX.pulse(4.5, 0.2); GFX.hitStop(140); }
     Haptics.buzz([80, 40, 160]);
   }
   update(dt, t) {
@@ -775,7 +775,7 @@ class ExamBoss {
       // rose-gold as the exam goes on (how far along it is, never which answers were right), bright gold in a rage.
       const U = this.U, rage = this.mode === "rage" ? 1 : 0, dying = this.mode === "die";
       NEON_T.value = t;
-      U.uBossRimK.value = 0.42 * this.lightK;
+      U.uBossRimK.value = 0.64 * this.lightK;
       U.uBossSeam.value.copy(this.seamCold).lerp(this.seamHot, clamp(this.dread * 0.9 + this.menace * 0.4, 0, 1)).lerp(this.seamRage, rage);
       const lit = this.mode !== "wake" || this.wt > 1.0;
       U.uBossPower.value += ((lit ? 0.7 + 0.3 * this.dread + 0.3 * this.menace + 0.9 * rage : 0) - U.uBossPower.value) * Math.min(1, dt * 3);
@@ -794,7 +794,7 @@ class ExamBoss {
         this.puffs.emit(3, p, this._w.set(rand(-0.2, 0.2), 1.0, -0.25).multiplyScalar(K), 0.7 * K, 2.8 * K, 3.2, 0.3 * K, 0.5);
       }
     }
-    this.mat.emissive.copy(this.heatCol).multiplyScalar(this.heat * 0.55);
+    this.mat.emissive.copy(this.heatCol).multiplyScalar(this.heat * 0.15);
     // fire light, falling away
     this.fire *= Math.pow(0.12, dt);
     if (this.mode === "die") {
@@ -931,7 +931,7 @@ class ExamBoss {
         g.bursts.burst(p, 0xbfb3ff, { n: 24, speed: 6 * K, size: 0.3 * K, life: 0.9 });
         g.shockwave(p.clone(), neon(0xffb040, 2), 18 * K, 0.5);
         Sound.sfx("bosssmash");
-        if (!this.soft) { UI.flash("hit"); g.shake(1.0); GFX.pulse(10, 0.1); GFX.hitStop(90); }
+        if (!this.soft) { UI.flash("hit"); g.shake(1.0); GFX.pulse(4, 0.1); GFX.hitStop(90); }
         Haptics.buzz([70, 30, 120]);
       }
     } else { this.pose = BOSS_POSE.glare; this.stiff = 4; this.tremor = 0.06; this.eyeTo = 2.6; }

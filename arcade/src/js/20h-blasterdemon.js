@@ -228,6 +228,8 @@ function demonSkin(env, U) {
         vec3 dmNr = normalize(vDmN);
         float dmShade = mix(0.26, 1.0, vDmZ.w * vDmZ.w) * mix(0.42, 1.0, smoothstep(-0.7, 0.35, dmNr.y)) * mix(0.7, 1.0, smoothstep(0.05, 0.5, vDmP.y));
         totalEmissiveRadiance += diffuseColor.rgb * vec3(0.15, 0.13, 0.2) * dmShade; // a soft fill
+        // a cool key from the upper left: its front is no longer a black shape cut out by its rim
+        totalEmissiveRadiance += (diffuseColor.rgb * 2.6 + vec3(0.012, 0.014, 0.024)) * vec3(0.55, 0.68, 1.0) * (pow(max(dot(normal, normalize(vec3(-0.55, 0.62, 0.56))), 0.0), 1.6) * 1.15 * dmShade);
         // rim lights: magenta and cyan from the sides, the wave's colour, and a cold one from above and behind
         totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(1.0 - dmNV, 4.0) + vec3(0.42, 0.5, 0.95) * (pow(1.0 - dmNV, 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
         // its own light spills on the armour near it: the core's on its chest, jaw and arms, the eyes' on its brow and cheeks
@@ -257,12 +259,12 @@ function demonSkin(env, U) {
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(2.8, 0.7, 0.9) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
-        "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
+        "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
   };
-  m.customProgramCacheKey = () => "blaster-demon-2";
+  m.customProgramCacheKey = () => "blaster-demon-3";
   return m;
 }
 class BlasterDemon {
@@ -352,7 +354,7 @@ class BlasterDemon {
   // Its size and height, from the room there is: at its closest it fills the band between the question and the
   // answers from top to bottom and its wingtips run past the sides; when a question starts it is two thirds of that.
   fit(band) {
-    this.fitS = clamp(Math.min((band.h * 0.98) / DEMON.height, (band.w * 1.22) / DEMON.width), 1.5, 14);
+    this.fitS = clamp(Math.min((band.h * 0.8) / DEMON.height, (band.w * 1.0) / DEMON.width), 1.5, 14); // (four fifths of what it was: the drones round it stand clear of its wings and claws)
     this.fitY = (band.h * 0.175) / DEMON_NEAR;
     if (!this.root.visible) { this.S = this.fitS; this.yK = this.fitY; }
   }
@@ -424,10 +426,12 @@ class BlasterDemon {
     g.bursts.burst(p, 0xffffff, { n: 24, speed: 6 * k, size: 0.28 * k, life: 0.7 });
     g.bursts.burst(p, 0xff3a6a, { n: Math.round(40 * big), speed: 5 * k, size: 0.3 * k, life: 1.6, gravity: 1.5 });
     g.shockwave(p.clone(), col.clone().multiplyScalar(2.2), 16 * k, 0.8);
-    g.shards.burst(p, col.getHex(), 22, 1.4 * k, 18 * k);
-    g.shards.burst(p, 0x3a3848, 14, 1.1 * k, 12 * k); // its armour, in pieces
-    g.boom(p, col.getHex(), 7 * k);
-    if (!GFX.calm) this.puffs.emit(2, p, v.set(0, 0, 0), 1.3 * k, 3.8 * k, 0.24); // (Reduced effects: no flash)
+    g.shards.burst(p, col.getHex(), 9, 1.2 * k, 19 * k);
+    g.shards.burst(p, 0x2a2836, 26, 1.2 * k, 13 * k); // its armour, in pieces: dark plate, not coloured glass
+    g.shockwave(p.clone(), new THREE.Color(2.2, 2.0, 2.3), 9 * k, 0.5); // a tight white ring inside the wave's
+    g.bursts.burst(p, 0xffd9ec, { n: 46, speed: 21 * k, size: 0.12 * k, life: 0.55 }); // sparks thrown straight out
+    g.boom(p, col.getHex(), 4.2 * k);
+    if (!GFX.calm) this.puffs.emit(2, p, v.set(0, 0, 0), 0.9 * k, 2.3 * k, 0.2); // (Reduced effects: no flash) (a core, not a white-out)
     for (let i = 0; i < 6; i++) this.puffs.emit(0, this._b.set(p.x + rand(-2, 2) * k, p.y + rand(-1.4, 1.6) * k, p.z + rand(-0.6, 0.6) * k), v.set(rand(-2, 2), rand(-0.5, 2), rand(1, 4)), 0.9 * k, (2.1 + rand(0.8)) * k, 0.9 + rand(0.4), 0.6);
     for (let i = 0; i < 4; i++) this.puffs.emit(1, this._b.set(p.x + rand(-1.6, 1.6) * k, p.y + rand(-1, 1.4) * k, p.z), v.set(rand(-1.5, 1.5), rand(0, 1.5), rand(2, 5)), 1.6 * k, (3.6 + rand(1.4)) * k, 1.5 + rand(0.5), 0.5);
     Sound.sfx(this.finale ? "demonfinale" : "demonboom");

@@ -247,7 +247,7 @@ class ExamGame extends QuizGame {
     this.limit = ExamPrefs.timed ? this.rounds.length * 90 : 0;
     this.elapsed = 0;
     if (this.has3D) this.build3D();
-    this.mountUI(`<section class="screen scr-game">
+    this.mountUI(`<section class="screen scr-game scr-exam">
       <div class="hud">
         <span class="tag" style="--c:${COLORS.violet}" data-pos>Q 1/${this.rounds.length}</span>
         <div class="grow"></div>
@@ -303,7 +303,9 @@ class ExamGame extends QuizGame {
     // Light it to be feared: little ambient, a hard lamp high in front (its brow shadows
     // its eyes), red from behind on one side and cold blue on the other to cut its
     // outline out of the dark. (The boss adds its own: the red under it, its eyes.)
-    s.add(new THREE.AmbientLight(0x1e1840, 0.42));
+    s.add(new THREE.AmbientLight(0x1e1840, 0.56));
+    // two violet lamps back in the colonnade: the columns either side of the boss have a lit edge
+    [-1, 1].forEach((sd) => { const l = new THREE.PointLight(0x8f6cff, 1.5, 46, 1.3); l.position.set(sd * 15, 7.5, -4); s.add(l); });
     const key = new THREE.DirectionalLight(0xfff2dd, 0.3);
     key.position.set(-4, 16, 9);
     s.add(key);
@@ -345,7 +347,7 @@ class ExamGame extends QuizGame {
     spots.forEach(([x, z], i) => { up[i * 3] = x; up[i * 3 + 1] = 0.25; up[i * 3 + 2] = z + 1.1; });
     const upGeo = new THREE.BufferGeometry();
     upGeo.setAttribute("position", new THREE.BufferAttribute(up, 3));
-    const uplights = new THREE.Points(upGeo, new THREE.PointsMaterial({ color: neon(0x8a5cff, 0.6), map: glowTexture(), size: 2.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const uplights = new THREE.Points(upGeo, new THREE.PointsMaterial({ color: neon(0x8a5cff, 1.0), map: glowTexture(), size: 3.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     uplights.layers.set(1);
     s.add(uplights);
     // moonlight slanting in through three of the windows
@@ -358,6 +360,13 @@ class ExamGame extends QuizGame {
       b.layers.set(1);
       s.add(b);
       this.moonBeams.push(b);
+    });
+    // mist at hip height: wide, faint sheets of violet light lying over the floor, front to back
+    this.mist = [[-9, 1.0, -12, 30, 3.2, 0.07], [8, 0.9, -7, 26, 2.8, 0.06], [-5, 0.8, -2, 24, 2.4, 0.05], [10, 0.9, -15, 30, 3.4, 0.07], [0, 1.1, -18, 44, 4, 0.08]].map(([x, y, z, w, h, o], i) => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: neon(0x6a58d8, 1), transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending }));
+      m.position.set(x, y, z); m.scale.set(w, h, 1); m.layers.set(1); m.userData = { x, ph: i * 1.7 };
+      s.add(m);
+      return m;
     });
     this.ambience = new ExamAmbience(this, this.moonBeams); // lanterns past the windows, beams that sway
 
@@ -554,6 +563,7 @@ class ExamGame extends QuizGame {
     const el = UI.el(`<div class="modal"><div class="dialog" style="--c:${COLORS.violet}" role="dialog" aria-modal="true" aria-label="All questions">
       <h2>ALL QUESTIONS</h2>
       <p>${this.answers.filter((a) => a >= 0).length} answered · ${this.flags.filter(Boolean).length} flagged</p>
+      <div class="pal-key" aria-hidden="true"><span><i class="done"></i>ANSWERED</span><span><i></i>OPEN</span><span><i class="flag"></i>FLAGGED</span><span><i class="here"></i>HERE</span></div>
       <div class="palette">${this.rounds.map((_, i) => `<button data-act="jump" data-i="${i}" class="${[this.answers[i] >= 0 ? "done" : "", this.flags[i] ? "flag" : "", i === this.i ? "here" : ""].join(" ")}">${i + 1}</button>`).join("")}</div>
       <button class="btn" data-act="submit" style="--c:${COLORS.lime}">SUBMIT EXAM</button>
       <button class="btn ghost" data-act="close">BACK TO QUESTION</button></div></div>`);

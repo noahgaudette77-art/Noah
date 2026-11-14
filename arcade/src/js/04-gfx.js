@@ -16,6 +16,7 @@ const GFX = {
   punch: 0, // impact zoom: the picture jumps toward you for a moment
   speedBlur: 0, // radial blur from speed; scenes set it each frame
   heat: { x: 0.5, y: 0.5, r: 0.1, a: 0 }, // heat haze behind an exhaust (see heatAt)
+  keep: { x: 0.5, y: 0.5, rx: 0.1, ry: 0.1, a: 0 }, // the subject of the shot: the speed streak and the colour split leave it sharp (see keepAt)
   gl: { a: 0, t: 1, dur: 1 }, // a glitch: bands of the picture slip sideways (see glitch)
   // Every effect can be switched off (Setup > Effects). calm: reduced effects, and
   // also set while a question is on screen so the answers stay the brightest thing.
@@ -112,12 +113,14 @@ const GFX = {
       zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(0.72, this.speedBlur + this.punch * 9), // (streaks, not a smear: the subject stays readable through a boost or a blow)
       opt: this.opt, calm: this.calm,
       heat: this.heat,
+      keep: this.keep,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
       glass: Store.settings.crt ? 1 : 0,
       look: this.look,
       post: scene.userData.post || {},
     });
     this.heat.a = 0; // a scene asks for its heat haze again every frame
+    this.keep.a = 0; // and names its subject again
   },
   // Juice: colour fringing + white flash, and a short freeze-frame.
   // Streak aura: rays of light around the screen edge in the streak's colour.
@@ -143,6 +146,19 @@ const GFX = {
     v.copy(pos); v.y += radius; v.project(camera);
     h.r = Math.abs(v.y - y0) * 0.5;
     h.a = amt;
+  },
+  // The subject of the shot (a car, say): this frame the speed streak and the colour split of a blow leave an
+  // ellipse round it alone, so it stays readable while the world streaks past. halfW/halfH in world units.
+  keepAt(camera, pos, halfW, halfH, amt = 1) {
+    if (!camera) return;
+    const v = this._keepV || (this._keepV = new THREE.Vector3());
+    v.copy(pos).project(camera);
+    if (v.z > 1) return;
+    const k = this.keep, x0 = v.x, y0 = v.y;
+    k.x = x0 * 0.5 + 0.5; k.y = y0 * 0.5 + 0.5;
+    v.copy(pos); v.y += halfH; v.project(camera); k.ry = Math.max(0.02, Math.abs(v.y - y0) * 0.5);
+    v.copy(pos); v.x += halfW; v.project(camera); k.rx = Math.max(0.02, Math.abs(v.x - x0) * 0.5);
+    k.a = amt;
   },
   // A shockwave at a point in the scene bends the picture as it spreads: a ring of
   // refraction in the final pass. amp 0..1.
@@ -341,6 +357,21 @@ const Haptics = {
 };
 
 // Base for every 3D scene. Works without WebGL too (update still runs, nothing draws).
+// The ring of a shockwave, across its width: a thin bright stroke near the outer edge, a soft tail inside it,
+// nothing at either rim. (The ring's mesh spans 0.69 to 1 of its outer radius.)
+let _shockTex = null;
+function shockTexture() {
+  if (_shockTex) return _shockTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const x = c.getContext("2d"), g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+  [[0, 0], [0.7, 0], [0.86, 0.08], [0.925, 0.3], [0.95, 1], [0.972, 0.45], [1, 0]].forEach(([r, v]) => { const k = Math.round(v * 255); g.addColorStop(r, `rgb(${k},${k},${k})`); });
+  x.fillStyle = g;
+  x.fillRect(0, 0, 256, 256);
+  _shockTex = new THREE.CanvasTexture(c);
+  return _shockTex;
+}
+
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
     this.tw = new TweenSet();
@@ -358,9 +389,9 @@ class Scene3D {
     this.lookAt = new THREE.Vector3(0, 0, -10);
     // pooled shockwave rings (see shockwave()), built with the scene so a hit never
     // creates GPU objects
-    const rg = new THREE.RingGeometry(0.55, 0.8, 40);
+    const rg = new THREE.RingGeometry(0.55, 0.8, 72);
     this.shockRings = Array.from({ length: 4 }, () => {
-      const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+      const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: shockTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
       ring.visible = false;
       ring.userData.tok = 0;
       this.scene.add(ring);

@@ -1,5 +1,5 @@
-// Memory Bank's machinery: the lock's movement in the middle of the door (three brass
-// gears round a steel one, under the handwheel), an arc of deck lamps over the door (one
+// Memory Bank's machinery: the lock's movement in the middle of the door (four brass
+// gears round a nickel one, under the handwheel), an arc of deck lamps over the door (one
 // per card, lit as each is banked), coin piles by the bullion, lamp panels on the wall.
 // Look and sound only: nothing here touches the cards, grades or boxes.
 
@@ -26,15 +26,16 @@ class MemoryWorks {
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(1, 1, 1); this._z = new THREE.Vector3(0, 0, 1);
     this.turn = 0; // how far the movement has turned
     this.kick = 0; // a deposit spins it on; a miss jerks it back
-    // The movement: a steel gear on the handwheel's arbor and three brass gears round it, on the dark plate in
+    // The movement: a nickel gear on the handwheel's arbor and four brass gears round it, on the dark plate in
     // the middle of the door (a clock's train, large enough to watch; the door itself has no teeth). Meshed
     // gears turn opposite ways, at speeds set by their teeth.
     const pitchP = 1.4, pitchS = (pitchP * MEMORY_SUN_TEETH) / MEMORY_PLANET_TEETH; // pitch radii: the same tooth on both
-    this.sun = new THREE.Mesh(memoryGearGeometry(pitchS / 0.9, MEMORY_SUN_TEETH, 0.2, 3, 0.2), mats.chrome);
-    this.planets = new THREE.InstancedMesh(memoryGearGeometry(pitchP / 0.9, MEMORY_PLANET_TEETH, 0.2, 4, 0.25), mats.brass, 3);
-    this.planetAt = [90, 210, 330].map((d) => { const a = (d * Math.PI) / 180; return { a, x: Math.cos(a) * (pitchP + pitchS), y: Math.sin(a) * (pitchP + pitchS) }; });
+    this.sun = new THREE.Mesh(memoryGearGeometry(pitchS / 0.9, MEMORY_SUN_TEETH, 0.2, 3, 0.2), mats.nickel);
+    this.planets = new THREE.InstancedMesh(memoryGearGeometry(pitchP / 0.9, MEMORY_PLANET_TEETH, 0.2, 4, 0.25), mats.brass, 4);
+    // (the four stand in a cross, seen between the handwheel's spokes)
+    this.planetAt = [0, 90, 180, 270].map((d) => { const a = (d * Math.PI) / 180; return { a, x: Math.cos(a) * (pitchP + pitchS), y: Math.sin(a) * (pitchP + pitchS) }; });
     // a pin through each brass gear
-    const pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.17, 0.34, 12).rotateX(Math.PI / 2), mats.chrome, 3);
+    const pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.17, 0.34, 12).rotateX(Math.PI / 2), mats.chrome, 4);
     this.planetAt.forEach((p, i) => pins.setMatrixAt(i, this._m.compose(this._p.set(p.x, p.y, 0.12), this._q.identity(), this._s)));
     this.planets.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     [this.sun, this.planets, pins].forEach((m) => {
@@ -78,9 +79,9 @@ class MemoryWorks {
           float m = max(abs(vP.x), abs(vP.y));
           float lens = 1.0 - smoothstep(0.66, 0.76, m);
           float rim = smoothstep(0.7, 0.8, m);
-          vec3 col = mix(vec3(0.05, 0.3, 0.2) * (0.8 + 0.4 * smoothstep(-1.0, 1.0, vP.y)), vec3(0.22, 2.0, 0.5) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
-          col = mix(col, vec3(2.0, 1.4, 0.3) * (0.78 + 0.22 * sin(uTime * 2.4)), next);
-          col = mix(col, vec3(2.9, 0.2, 0.36), uMiss * (1.0 - on));
+          vec3 col = mix(vec3(0.06, 0.04, 0.15) * (0.8 + 0.4 * smoothstep(-1.0, 1.0, vP.y)), vec3(0.12, 1.75, 0.5) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
+          col = mix(col, vec3(2.3, 1.5, 0.22) * (0.82 + 0.18 * sin(uTime * 2.4)), next);
+          col = mix(col, vec3(2.9, 0.2, 0.36), uMiss * next);
           vec3 bezel = vec3(0.36, 0.42, 0.4) * (0.35 + 0.65 * smoothstep(-1.2, 1.2, vP.y - vP.x)); // lit from the upper left
           gl_FragColor = vec4(mix(col * lens + vec3(0.012, 0.016, 0.02) * (1.0 - lens), bezel, rim), 1.0);
         }`,

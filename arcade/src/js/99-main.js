@@ -72,7 +72,7 @@ function boot() {
 // Test hook: open the page with #debug to expose internals to automated checks.
 if (/debug/.test(location.hash)) {
   window.__arcade = {
-    Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype,
+    Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype, drawPortrait, client,
     show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {

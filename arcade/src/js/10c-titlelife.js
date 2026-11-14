@@ -108,14 +108,15 @@ class TitleLife {
 
     // ---- 4. two sky-ferries: twin hulls under one deck, a row of lit cabins down each side
     const ferry = (scale) => {
-      const b = new RacerBatch(), HULL = 0x34315a, DARK = 0x1a1836;
+      const b = new RacerBatch(), HULL = 0x34315a, DARK = 0x1a1836, KEEL = 0x17152e;
       put(b, 0, -0.5, 0, 15, 0.6, 5.4, DARK); put(b, 0.5, 0.35, 0, 11, 1.1, 3.0, HULL); put(b, 3.6, 1.25, 0, 3.2, 0.7, 2.2, HULL); // deck, cabin, bridge
       put(b, 5.25, 1.3, 0, 0.1, 0.42, 1.9, 0x9fe8ff, 1.6);
       for (let i = -6; i <= 6; i++) for (const z of [-1, 1]) { put(b, 0.5 + i * 0.78, 0.4, z * 1.52, 0.5, 0.42, 0.06, i % 4 === 0 ? 0x9fe8ff : 0xffe2a8, 2.4); put(b, i * 1.9, -0.86, z * 2.6, 0.22, 0.14, 0.22, i % 2 ? 0x35efff : 0xff3ad4, 3); }
       put(b, -11.2, 1.7, 0, 3.2, 3.6, 0.22, HULL); put(b, -11.4, 0.6, 0, 2.6, 0.22, 6.4, HULL); // tail
       for (const z of [-1, 1]) { put(b, -6.4, -1.3, z * 2.6, 2.4, 1.0, 1.0, DARK); put(b, -7.7, -1.3, z * 2.6, 0.12, 1.2, 1.2, 0x35efff, 2.4); }
       put(b, 12.6, 0.2, 2.6, 0.5, 0.5, 0.5, 0x30ff60, 4); put(b, 12.6, 0.2, -2.6, 0.5, 0.5, 0.5, 0xff3030, 4); put(b, -12.9, 3.7, 0, 0.5, 0.5, 0.5, 0xffffff, 4);
-      const hulls = [-2.6, 2.6].map((z) => smooth(SPH, new THREE.Matrix4().makeTranslation(0, -0.5, z).multiply(new THREE.Matrix4().makeScale(13.4, 1.9, 1.9)), HULL));
+      for (const z of [-1, 1]) { put(b, -13.1, -0.5, z * 2.6, 0.14, 1.5, 1.5, 0x35efff, 3.2); put(b, -12.7, -0.5, z * 2.6, 0.7, 2.0, 2.0, DARK); } // an engine at the stern of each hull
+      const hulls = [-2.6, 2.6].map((z) => smooth(SPH, new THREE.Matrix4().makeTranslation(0, -0.5, z).multiply(new THREE.Matrix4().makeScale(13.4, 1.9, 1.9)), KEEL));
       const m = new THREE.Mesh(mergeIndexed(hulls.concat([b.build("color")]), ["position", "normal", "color"]), this.hullMat);
       m.scale.setScalar(scale);
       m.frustumCulled = false;
@@ -126,16 +127,16 @@ class TitleLife {
 
     // ---- 5. two helicopters with searchlights
     const heli = (scale) => {
-      const b = new RacerBatch(), grp = new THREE.Group(), NAVY = 0x1c2444;
+      const b = new RacerBatch(), grp = new THREE.Group(), NAVY = 0x27325e;
       put(b, -3.9, 0.35, 0, 5.2, 0.34, 0.34, NAVY); put(b, -6.3, 1.1, 0, 0.6, 1.9, 0.12, NAVY); put(b, -6.3, 0.45, 0, 1.4, 0.1, 1.5, NAVY); // boom, fin, stabiliser
-      put(b, -6.5, 1.1, 0.2, 0.06, 1.5, 1.5, 0x9fb4c8, 0.5); // tail rotor, seen as a disc
+      put(b, -6.5, 1.1, 0.2, 0.05, 1.2, 0.16, 0x4a5676, 1); // tail rotor: a blade, not a pale disc
       put(b, 0.2, -0.05, 0.94, 2.6, 0.12, 0.05, 0xff3ad4, 2.2); put(b, 0.2, -0.05, -0.94, 2.6, 0.12, 0.05, 0xff3ad4, 2.2); // a stripe of light down each flank
       [-0.9, 0.9].forEach((z) => { put(b, 0, -1.6, z, 3.8, 0.1, 0.1, 0x3a4058); [-1.1, 1.1].forEach((x) => put(b, x, -1.2, z * 0.92, 0.08, 0.8, 0.08, 0x3a4058)); });
       put(b, 0.4, 0.2, 1.02, 0.3, 0.3, 0.1, 0x30ff60, 4); put(b, 0.4, 0.2, -1.02, 0.3, 0.3, 0.1, 0xff3030, 4); put(b, -6.4, 2.2, 0, 0.28, 0.28, 0.28, 0xffffff, 4);
       put(b, 2.2, -0.75, 0, 0.5, 0.42, 0.5, 0xfff0d2, 5);
       const hull = smooth(SPH, new THREE.Matrix4().makeScale(2.9, 1.25, 1.2), NAVY), glass = smooth(SPH, new THREE.Matrix4().makeTranslation(1.25, 0.28, 0).multiply(new THREE.Matrix4().makeScale(1.55, 0.92, 1.02)), 0x35b8e8);
       const body = new THREE.Mesh(mergeIndexed([hull, glass, b.build("color")], ["position", "normal", "color"]), this.hullMat);
-      const rotor = new THREE.Mesh(new THREE.CircleGeometry(4.9, 28), new THREE.MeshBasicMaterial({ color: 0xb8c8dc, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide }));
+      const rotor = new THREE.Mesh(new THREE.CircleGeometry(4.9, 28), new THREE.MeshBasicMaterial({ color: 0xb8c8dc, transparent: true, opacity: 0.022, depthWrite: false, side: THREE.DoubleSide }));
       rotor.rotation.x = -Math.PI / 2; rotor.position.y = 1.5;
       const bl = new RacerBatch(); [0, Math.PI / 2].forEach((a) => bl.add(BOX, racerM(0, 1.52, 0, 9.8, 0.05, 0.3, 0, a), 0x15171c)); put(bl, 0, 1.3, 0, 0.3, 0.5, 0.3, 0x15171c);
       const bladesM = new THREE.Mesh(bl.build("color"), this.hullMat);
@@ -150,7 +151,7 @@ class TitleLife {
     this.helis = [heli(1.45), heli(1)];
 
     // ---- 6. a ribbon of drones, sixty lights following each other through the sky
-    { const N = 60, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+    { const N = 34, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) { const c = new THREE.Color([0x35efff, 0xff3ad4, 0xffd23d][i % 3]); col.set([c.r * 2.4, c.g * 2.4, c.b * 2.4], i * 3); }
       const ge = new THREE.BufferGeometry();
       ge.setAttribute("position", new THREE.BufferAttribute(pos, 3)); ge.setAttribute("aCol", new THREE.BufferAttribute(col, 3));
@@ -254,7 +255,7 @@ class TitleLife {
     const seg = (x1, y1, x2, y2, w) => { if (n >= 40) return; const dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy) || 1, px = (-dy / l) * w, py = (dx / l) * w, o = n++ * 18;
       a.set([x1 - px, y1 - py, -404, x1 + px, y1 + py, -404, x2 + px, y2 + py, -404, x1 - px, y1 - py, -404, x2 + px, y2 + py, -404, x2 - px, y2 - py, -404], o); };
     const run = (x, y, steps, dy, drift, w) => { for (let i = 0; i < steps; i++) { const nx = x + drift + rand(-9, 9), ny = y - dy * rand(0.7, 1.3); seg(x, y, nx, ny, w * (1 - (i / steps) * 0.5)); if (w > 0.9 && (i === 3 || i === 7)) run(nx, ny, 5, dy * 0.7, (Math.random() < 0.5 ? -1 : 1) * rand(6, 12), 0.55); x = nx; y = ny; } };
-    run(x0, 262, 13, 16, rand(-2.5, 2.5), 1.25);
+    run(x0, 262, 13, 16, rand(-2.5, 2.5), 0.8);
     for (let i = n * 18; i < a.length; i++) a[i] = 0;
     P.needsUpdate = true;
   }
@@ -281,8 +282,9 @@ class TitleLife {
       f1.position.set(12 + Math.sin(t * 0.17 + 2) * 1.5, 96 - v * 22 + Math.sin(t * 0.3) * 1.2, -360 + v * 420); f1.rotation.set(Math.sin(t * 0.27) * 0.05, -Math.PI / 2, -0.03); }
     // helicopters: one holds station in front of the sun, working its light across the water; one crosses overhead
     const [h0, h1] = this.helis;
-    h0.position.set(Math.sin(t * 0.19) * 7, 9.2 + Math.sin(t * 0.43) * 0.9, -58 + Math.sin(t * 0.13) * 6);
-    h0.rotation.set(0, -Math.PI / 2 + Math.sin(t * 0.19 + 1.2) * 0.6, Math.cos(t * 0.19) * -0.1);
+    { const ph = t * 0.085, dir = Math.cos(ph);
+      h0.position.set(Math.sin(ph) * hw(-58) * 0.82, 15.2 + Math.sin(t * 0.43) * 0.9, -58 + Math.sin(t * 0.13) * 5);
+      h0.rotation.set(0, lerp(Math.PI, 0, smoothstep(-0.3, 0.3, dir)), dir * -0.08); }
     h0.userData.blades.rotation.y = t * 13;
     h0.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.5) * 0.28, 0, -0.35 + Math.sin(t * 0.37) * 0.3);
     h1.position.set(loop(t + 7, hw(-104) + 30, 26), 60 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
@@ -311,7 +313,7 @@ class TitleLife {
       this.boltT = rand(5, 10);
       this.boltAge = 0;
       this.double = !calm && Math.random() < 0.5;
-      const bx = rand(0.36, 0.64);
+      const bx = 0.5 + (Math.random() < 0.5 ? -1 : 1) * rand(0.072, 0.116);
       this.clouds.material.uniforms.uBolt.value.set(bx, rand(0.3, 0.5), 0);
       this.boltK = calm ? 0.4 : rand(0.8, 1.2);
       this.strike((bx - 0.5) * 900);
@@ -322,7 +324,7 @@ class TitleLife {
     this.clouds.material.uniforms.uBolt.value.z = k;
     this.clouds.material.uniforms.uTime.value = t;
     this.boltMesh.visible = k > 0.02 && !calm;
-    this.boltMesh.material.color.setRGB(k * 5, k * 5.6, k * 8);
+    this.boltMesh.material.color.setRGB(k * 3.0, k * 3.2, k * 4.6);
     // its light on the towers' glass, and on the sky
     this.facade.material.uniforms.uFlash.value = k;
     if (g.city.towers) g.city.towers.material.uniforms.uFlash.value = k;

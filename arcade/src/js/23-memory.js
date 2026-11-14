@@ -8,7 +8,7 @@ const DECK_SIZE = 20;
 // slot at twelve o'clock, chrome bolts across a glowing seam, a steel frame and a wall
 // of safe-deposit boxes. The camera dollies so the dial ring sits just outside the card.
 const MEMORY_DOOR_Y = 8.7;
-const MEMORY_EYE_Y = MEMORY_DOOR_Y - 0.9; // the camera looks a little below the door's centre: the floor and the gold on it are in the window too
+const MEMORY_EYE_Y = MEMORY_DOOR_Y + 0.1; // the camera looks a little below the door's centre: the floor and the gold on it are in the window too
 const MEMORY_BOLTS = 12;
 const MEMORY_DIAL_R = 5.5; // inner edge of the dial ring: the card sits inside it
 const MEMORY_SLOT_R = 7.2; // the coin slot, at twelve o'clock
@@ -118,7 +118,7 @@ function memoryWallMaterial() {
         vec2 d = min(f, 1.0 - f) * cs;
         float seam = smoothstep(0.03, 0.03 + px * 1.5, min(d.x, d.y));
         float h = hash13(vec3(id, 3.0));
-        vec3 col = vec3(0.082, 0.09, 0.1) * (0.75 + 0.5 * h);
+        vec3 col = vec3(0.066, 0.074, 0.09) * (0.75 + 0.5 * h);
         float top = 1.0 - smoothstep(0.0, 0.1 + px, (1.0 - f.y) * cs.y - 0.03);
         float bot = 1.0 - smoothstep(0.0, 0.1 + px, f.y * cs.y - 0.03);
         col += vec3(0.16, 0.14, 0.34) * top; // a violet light along the top edge of every box
@@ -132,7 +132,7 @@ function memoryWallMaterial() {
         float r = length(vWorld.xy - uDoor.xy);
         float spill = exp(-max(r - uDoor.z, 0.0) * 0.2);
         col *= 0.62 + 2.2 * spill * uGlow + 0.3 * smoothstep(36.0, 12.0, vWorld.y);
-        col += vec3(0.1, 0.16, 0.42) * exp(-max(r - uDoor.z, 0.0) * 0.3) * 0.5; // a cool halo on the wall round the frame
+        col += vec3(0.1, 0.16, 0.42) * exp(-max(r - uDoor.z, 0.0) * 0.3) * 0.3; // a cool halo on the wall round the frame
         float lit = step(h, uLit);
         col += uGold * plate * seam * lit * (0.8 + 0.2 * sin(uTime * 1.7 + h * 40.0));
         float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0));
@@ -171,13 +171,14 @@ function memoryShaftMaterial() {
 // Merge geometries (position + normal) into one, for a single draw call.
 const memoryMerge = (geos) => mergeIndexed(geos);
 
-// The handle at the heart of the door: a domed hub and four spokes with ball grips.
+// The handle at the heart of the door: a domed hub, four stout spokes, a rim with a ball grip where each spoke meets it.
 function memoryWheelGeometry() {
-  const parts = [memoryLathe([[1.35, 0.6], [1.35, 0.85], [1.2, 1.05, true], [0.85, 1.22, true], [0.4, 1.3, true], [0, 1.32]], 40)];
+  const parts = [memoryLathe([[1.02, 0.6], [1.02, 0.85], [0.9, 1.02, true], [0.62, 1.15, true], [0.3, 1.21, true], [0, 1.23]], 40)];
+  parts.push(new THREE.TorusGeometry(4.3, 0.21, 10, 56).translate(0, 0, 0.95)); // the rim the hands turn
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2, c = Math.cos(a), s = Math.sin(a);
-    const spoke = new THREE.CylinderGeometry(0.17, 0.2, 3.1, 12).rotateZ(a - Math.PI / 2).translate(c * 2.75, s * 2.75, 0.95);
-    const grip = new THREE.SphereGeometry(0.38, 16, 12).translate(c * 4.35, s * 4.35, 0.95);
+    const spoke = new THREE.CylinderGeometry(0.24, 0.27, 3.4, 12).rotateZ(a - Math.PI / 2).translate(c * 2.6, s * 2.6, 0.95);
+    const grip = new THREE.SphereGeometry(0.4, 16, 12).translate(c * 4.3, s * 4.3, 0.95);
     parts.push(spoke, grip);
   }
   return memoryMerge(parts);
@@ -195,7 +196,8 @@ function memoryIngotGeometry(endOn) {
   // each face its own tone, as cast gold takes the light: bright on top, deeper on the long sides, darkest on the ends
   const n = g.attributes.normal, c = new Float32Array(p.count * 3);
   for (let i = 0; i < p.count; i++) {
-    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.35 : (Math.abs(n.getX(i)) > 0.5) === !!endOn ? 0.72 : 0.46; // (the faces that will be turned to the lens are the lighter ones)
+    const up = p.getY(i) / 0.56; // 0 at the foot, 1 at the top edge
+    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.3 : ((Math.abs(n.getX(i)) > 0.5) === !!endOn ? 0.6 : 0.33) * (0.72 + 0.56 * up); // (the faces turned to the lens are the lighter ones, and every side is brightest at its top edge)
     c[i * 3] = k; c[i * 3 + 1] = k * (0.92 + 0.08 * k); c[i * 3 + 2] = k * (0.78 + 0.22 * k);
   }
   g.setAttribute("color", new THREE.BufferAttribute(c, 3));
@@ -300,7 +302,7 @@ class MemoryGame extends QuizGame {
     this.flipped = false;
     this.coins = [];
     if (this.has3D) this.build3D();
-    this.mountUI(`<section class="screen scr-game">
+    this.mountUI(`<section class="screen scr-game scr-memory">
       <div class="hud">
         <div class="score"><small>${esc(sel.label)}</small><span data-pos>CARD 1/${this.total}</span></div>
         <div class="grow"></div>
@@ -320,10 +322,10 @@ class MemoryGame extends QuizGame {
     this.envRT = memoryEnvMap({
       top: 0x030a07, horizon: 0x5a3a10, bottom: 0x010302, glow: 0.55,
       panels: [
-        { color: 0xfff0d0, k: 1.7, w: 44, h: 1.8, pos: [0, 6, 29] }, // a light strip behind the camera: a bright arc on the gold
+        { color: 0xfff0d0, k: 1.25, w: 44, h: 3.2, pos: [0, 6, 29] }, // a light strip behind the camera: a broad arc on the gold
         { color: 0xffc46a, k: 0.35, w: 30, h: 3, pos: [0, -6, 29] }, // warm bounce off the floor
-        { color: 0x22d47c, k: 1.3, w: 5, h: 30, pos: [-30, 6, 12] },
-        { color: 0x22d47c, k: 1.3, w: 5, h: 30, pos: [30, 6, 12] },
+        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [-30, 6, 12] },
+        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [30, 6, 12] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [-15, 24, 6] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [17, 21, 10] },
       ],
@@ -332,7 +334,7 @@ class MemoryGame extends QuizGame {
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf6bd42, vertexColors: true, metalness: 0.84, roughness: 0.26, envMap: env, envMapIntensity: 1.25, emissive: 0x4a2c05 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xffcc48, vertexColors: true, metalness: 0.5, roughness: 0.44, envMap: env, envMapIntensity: 0.75, emissive: 0x3a2204 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
     const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
@@ -342,7 +344,7 @@ class MemoryGame extends QuizGame {
         .replace("#include <color_fragment>", `#include <color_fragment>
           float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
           float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
-          diffuseColor.rgb *= mix(0.4, 1.12, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
+          diffuseColor.rgb *= mix(0.62, 1.1, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
             float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
@@ -350,7 +352,8 @@ class MemoryGame extends QuizGame {
     };
     spun.customProgramCacheKey = () => "memory-spun-gold";
     const doorGold = surfaceDetail(spun, { scale: 1.5, height: 0.0014, scratch: 1.3 });
-    const brass = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xe2b85a, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 1.45, emissive: 0x2a1a04 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
+    const brass = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xd9a944, metalness: 1, roughness: 0.4, envMap: env, envMapIntensity: 0.95, emissive: 0x241603 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
+    const nickel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x9fb2cf, metalness: 0.75, roughness: 0.42, envMap: env, envMapIntensity: 0.6, emissive: 0x0b1220 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -359,7 +362,10 @@ class MemoryGame extends QuizGame {
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
     // two cool lights from behind and to the sides: every bar, coin and gear tooth gets an edge of mint against the gold
-    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0x9affdc, 0.4); rim.position.set(x, y, z); s.add(rim); });
+    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0xffe9c8, 0.36); rim.position.set(x, y, z); s.add(rim); });
+    const lowFill = new THREE.PointLight(0xffb866, 0.6, 46, 1.3); // warm light low in front: the bars' and coins' faces toward the lens
+    lowFill.position.set(0, 2.4, 15);
+    s.add(lowFill);
     this.vaultLight = new THREE.PointLight(0xffc46a, 0.35, 22, 1.5); // warm light from the seam
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
@@ -383,7 +389,7 @@ class MemoryGame extends QuizGame {
     door.add(new THREE.Mesh(memoryLathe([[12.1, -1.25], [11.35, 0.3], [9.6, 0.3], [9.6, 0.6], [9.02, 0.6], [8.94, 0.52], [8.94, -1.25]]), steel));
     door.add(new THREE.Mesh(memoryLathe([[8.5, -1.1], [8.5, 0.44], [8.4, 0.56], [8.02, 0.56], [7.95, 0.49], [7.95, 0.3], [5.32, 0.3], [5.32, 0.42], [5.2, 0.52], [2.2, 0.52], [2.2, 0.66], [0, 0.66]]), doorGold));
     // the middle of the door is a dark plate: the lock's movement turns on it (its gears are in 23b-memoryworks.js)
-    const works = new THREE.Mesh(new THREE.RingGeometry(2.22, 5.19, 96, 1), surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1b1612, metalness: 0.9, roughness: 0.46, envMap: env, envMapIntensity: 0.9 }), { scale: 1.2, height: 0.002, scratch: 1.2, smudge: 0.5 }));
+    const works = new THREE.Mesh(new THREE.RingGeometry(2.22, 5.19, 96, 1), surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1b1612, metalness: 0.85, roughness: 0.62, envMap: env, envMapIntensity: 0.45 }), { scale: 1.2, height: 0.002, scratch: 1.2, smudge: 0.5 }));
     works.position.z = 0.53;
     door.add(works);
     // the seam between door and frame, lit from inside the vault
@@ -447,13 +453,16 @@ class MemoryGame extends QuizGame {
     // the coin slot at twelve o'clock
     const slot = new THREE.Group();
     slot.position.set(0, MEMORY_SLOT_R, 0.3);
-    const plate = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.45, 0.3), steel);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.9, 0.3), gold); // a brass escutcheon, the slot cut in a dark inlay
     plate.position.z = 0.15;
+    const inlay = new THREE.Mesh(new THREE.BoxGeometry(0.52, 1.46, 0.04), steel);
+    inlay.position.z = 0.31;
+    slot.add(inlay);
     this.slitMat = new THREE.MeshBasicMaterial({ color: neon(0xffd27a, 2) });
     this.slitBase = new THREE.Color(0xffd27a);
     this.slitMiss = new THREE.Color(4, 0.3, 0.25);
-    const slit = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 1.0), this.slitMat);
-    slit.position.z = 0.305;
+    const slit = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 1.2), this.slitMat);
+    slit.position.z = 0.335;
     slot.add(plate, slit);
     door.add(slot);
     this.slotWorld = new THREE.Vector3(0, Y + MEMORY_SLOT_R, 0.62);
@@ -492,13 +501,13 @@ class MemoryGame extends QuizGame {
     // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
     // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
     const ingot = memoryIngotGeometry(), ingotEnd = memoryIngotGeometry(true), S = 1.3, SB = 1.6, tone = new THREE.Color();
-    const cast = (m, i) => m.setColorAt(i, tone.setScalar(rand(0.84, 1.08))); // no two bars poured quite alike
+    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.84, 1.08) * k)); // no two bars poured quite alike
     this.stacks = [-1, 1].map((sd) => {
       const st = new THREE.InstancedMesh(ingot, barGold, 6);
       let n = 0;
       for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
         st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
-        cast(st, n++);
+        cast(st, n++, 0.5); // (the heaps in the corners are dressing: they sit darker than the bars you bank)
       }
       st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
@@ -517,9 +526,12 @@ class MemoryGame extends QuizGame {
     });
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.34, 4.0), steel);
     plinth.position.set(0, 0.17, 6.3);
-    const plinthLip = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.09, 0.14), gold);
-    plinthLip.position.set(0, 0.34, 8.26);
-    s.add(plinth, plinthLip);
+    const plinthLip = new THREE.Group();
+    [[0, 8.26, 10.8, 0.14], [0, 4.34, 10.8, 0.14], [-5.33, 6.3, 0.14, 4.0], [5.33, 6.3, 0.14, 4.0]].forEach(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), gold); m.position.set(x, 0.35, z); plinthLip.add(m); });
+    // the plinth's front edge is a line of the bank's own light: where your gold goes is the lit place in the vault
+    const plinthGlow = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: neon(COLORS.lime, 1.5) }));
+    plinthGlow.position.set(0, 0.2, 8.34);
+    s.add(plinth, plinthLip, plinthGlow);
     this.bank = new THREE.InstancedMesh(ingotEnd, barGold, DECK_SIZE);
     this.bankRest = [];
     [6, 5, 4, 3, 2].forEach((w, L) => { for (let i = 0; i < w; i++) this.bankRest.push({ p: new THREE.Vector3((i - (w - 1) / 2) * 1.6, 0.34 + L * 0.9, 6.3), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, Math.PI / 2 + rand(-0.04, 0.04)) }); });
@@ -530,7 +542,7 @@ class MemoryGame extends QuizGame {
     this.bank.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.bank.frustumCulled = false;
     s.add(this.bank);
-    const bankGlow = makeLightPool({ color: 0xffd27a, radius: 7.5, intensity: 0.09 });
+    const bankGlow = makeLightPool({ color: 0xffd27a, radius: 7.5, intensity: 0.16 });
     bankGlow.position.set(0, 0.37, 6.6);
     bankGlow.layers.set(1);
     s.add(bankGlow);
@@ -547,12 +559,12 @@ class MemoryGame extends QuizGame {
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
-    this.works = new MemoryWorks(this, { gold, steel, chrome, brass }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
+    this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.2, bloom: 0.7, threshold: 1.15, saturation: 1.14, contrast: 1.12, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
+    s.userData.post = { exposure: 1.2, bloom: 0.58, threshold: 1.2, saturation: 1.14, contrast: 1.14, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.18, sharpen: 0.45, fringe: 0.2 };
     this.camBase.set(0, MEMORY_EYE_Y, this.dist);
     this.lookAt.set(0, MEMORY_EYE_Y, 0);
   }
@@ -566,7 +578,7 @@ class MemoryGame extends QuizGame {
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     const bh = Math.max(60, win ? win.offsetHeight : h * 0.34), bw = win ? win.offsetWidth : w - 32;
     // tall enough for the lamps' arc and the floor, wide enough for the door's frame
-    this.dist = clamp(Math.max((11.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
+    this.dist = clamp(Math.max((12.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
     this.scene.fog.near = this.dist + 8;
     this.scene.fog.far = this.dist + 73;
     // the gold stands either side of the door's foot, as far out as the window shows
@@ -575,7 +587,7 @@ class MemoryGame extends QuizGame {
   }
   placeBolts() {
     for (let k = 0; k < MEMORY_BOLTS; k++) {
-      const a = this.boltAng[k], r = lerp(8.95, 7.5, this.boltK[k]);
+      const a = this.boltAng[k], r = lerp(8.62, 7.3, this.boltK[k]);
       this._p.set(Math.cos(a) * r, Math.sin(a) * r, 0.86);
       this._q.setFromAxisAngle(this._z, a - Math.PI / 2);
       this.bolts.setMatrixAt(k, this._m.compose(this._p, this._q, this._s));
@@ -598,7 +610,9 @@ class MemoryGame extends QuizGame {
     if (!f) return this.finish();
     this.flipped = false;
     const card = $("[data-card]", this.el);
-    // Snap back to the front without animating, or the next card's answer flashes by.
+    // Snap back to the front without animating, or the next card's answer flashes by. The fly-away of the card
+    // before it is cut off first: it has a frame or two left to run, turned to its answer side.
+    if (card.getAnimations) card.getAnimations().forEach((a) => a.cancel());
     card.style.transition = "none";
     card.classList.remove("flipped");
     void card.offsetWidth;
@@ -616,7 +630,7 @@ class MemoryGame extends QuizGame {
       <div class="face back">
         <div class="ftop"><span>${esc(this.reverse ? "TERM" : "ANSWER")}</span><span>BOOK P. ${esc(f.page)}</span></div>
         <div class="fmain selectable">${esc(back)}</div>
-        <div class="fhint">${touch ? (this.done < 3 ? "OR SWIPE: LEFT MISSED · RIGHT GOT IT · UP EASY" : "") : "1 MISSED · 2 GOT IT · 3 EASY"}</div>
+        <div class="fhint">${touch ? (this.done < 3 ? "<span class=\"lead\">OR SWIPE:</span> <span>LEFT MISSED ·</span> <span>RIGHT GOT IT ·</span> <span>UP EASY</span>" : "") : "<span>1 MISSED ·</span> <span>2 GOT IT ·</span> <span>3 EASY</span>"}</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
     UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
@@ -881,7 +895,7 @@ class MemoryGame extends QuizGame {
     const t = this.t;
     const want = this.total ? this.deposits / this.total : 0;
     this.open += (want - this.open) * Math.min(1, dt * 2);
-    this.flash *= Math.pow(0.05, dt);
+    this.flash *= Math.pow(0.0006, dt); // (a deposit's flash is over in four tenths of a second)
     this.slotFlash *= Math.pow(0.02, dt);
     // the dial: a slow drift plus the spins of each deposit
     this.dialA -= dt * 0.03;
@@ -889,16 +903,16 @@ class MemoryGame extends QuizGame {
     this.wheel.rotation.z = -this.open * Math.PI * 0.5;
     this.placeBolts();
     // the vault glows brighter the more of the deck is banked
-    const g = 1 + 1.6 * this.open + 2 * this.flash + 0.1 * Math.sin(t * 2.1);
-    this.seamMat.color.copy(this.seamBase).multiplyScalar(1.4 * g);
-    this.halo.material.opacity = 0.1 + 0.22 * this.open + 0.3 * this.flash;
-    this.shafts.material.uniforms.uI.value = 0.1 + 0.32 * this.open + 0.45 * this.flash;
-    this.wall.material.uniforms.uGlow.value = 0.22 + 0.35 * this.open + 0.35 * this.flash;
+    const g = 1 + 0.45 * this.open + 1.3 * this.flash + 0.06 * Math.sin(t * 2.1);
+    this.seamMat.color.copy(this.seamBase).multiplyScalar(0.92 * g);
+    this.halo.material.opacity = 0.06 + 0.07 * this.open + 0.14 * this.flash;
+    this.shafts.material.uniforms.uI.value = 0.05 + 0.1 * this.open + 0.22 * this.flash;
+    this.wall.material.uniforms.uGlow.value = 0.22 + 0.12 * this.open + 0.2 * this.flash;
     this.wall.material.uniforms.uLit.value = this.open * 0.55;
     const sf = this.slotFlash;
     this.slitMat.color.copy(this.slitBase).multiplyScalar(1.6 + 0.3 * Math.sin(t * 3) + 7 * Math.max(0, sf));
     if (sf < 0) this.slitMat.color.lerp(this.slitMiss, -sf);
-    this.vaultLight.intensity = 0.6 + 0.6 * this.open + 0.8 * this.flash;
+    this.vaultLight.intensity = 0.6 + 0.4 * this.open + 0.6 * this.flash;
     // glints on the gold now and then
     this.glintT -= dt;
     if (this.glintT < 0) {

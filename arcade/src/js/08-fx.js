@@ -161,21 +161,21 @@ function followSky(sky, camera) { sky.position.copy(camera.position); }
 // The synthwave sun: a gradient disc with stripe gaps that scroll down.
 // (egg: the disc is an egg instead, fuller below its middle, with a sheen and a few speckles and no gaps:
 // Nest Egg Run's own sun.)
-function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false } = {}) {
+function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false, lift = 0 } = {}) {
   const g = new THREE.Group();
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 } },
+    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uLift: { value: lift }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 } },
     transparent: true, depthWrite: false, extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `
-      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; varying vec2 vUv;
+      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; uniform float uLift; varying vec2 vUv;
       void main(){
         vec2 p = vUv * 2.0 - 1.0; float r = length(p);
         vec2 q = p;
         if (uEgg > 0.5) { q = vec2(p.x / (0.77 * (1.0 - 0.2 * p.y)), p.y / 0.98); r = length(q); }
         float fw = fwidth(r);
         float a = 1.0 - smoothstep(1.0 - fw * 1.5, 1.0, r);
-        vec3 col = mix(uBottom, uTop, smoothstep(-0.85, 0.85, p.y)) * uI * uTint;
+        vec3 col = mix(uBottom, uTop, smoothstep(-0.85 + uLift, 0.85 + uLift, p.y)) * uI * uTint;
         col *= 1.0 + 0.35 * smoothstep(0.6, 1.0, r);
         if (uEgg > 0.5) {
           // a shell, not a disc: lit from its upper left, falling to shade at its lower right, a bright
@@ -343,7 +343,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
 }
 
 // A distant city: merged boxes with lit windows and a glowing roofline.
-function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff } = {}) {
+function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff, winK = 2.2 } = {}) {
   const pos = [], nor = [], seed = [];
   let x = -width / 2;
   for (let i = 0; i < count && x < width / 2; i++) {
@@ -361,7 +361,7 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
   geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
   geo.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
   const mat = new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, 2.2) }, uLit: { value: lit }, uTime: { value: 0 } }),
+    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, winK) }, uLit: { value: lit }, uTime: { value: 0 } }),
     extensions: { derivatives: true },
     vertexShader: `attribute float aSeed; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vN = normal; vSeed = aSeed; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,

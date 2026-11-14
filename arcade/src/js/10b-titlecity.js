@@ -20,7 +20,7 @@ class TitleCity {
 
     // ---- megatowers: stacked setbacks, conduits of light, window bands, beacons
     const tb = new RacerBatch(), blinkA = new RacerBatch(), blinkB = new RacerBatch();
-    const ads = [], signs = [[], [], []];
+    const ads = [], signs = [[], [], []], spills = [];
     const NEON = [0x35efff, 0xff3ad4, 0x5dffb0, 0xffd23d];
     const tower = (x, z, w, h, i) => {
       const c0 = [0x0b0a1c, 0x0e0c22, 0x090818][i % 3];
@@ -52,7 +52,9 @@ class TitleCity {
       put(tb, x, h + 10.2, z, 0.9, 0.9, 0.9, 0xff3030, 3);
       // an ad panel that rolls to a new poster, and a blade sign that flickers
       ads.push([x - w * 0.12, h * rand(0.3, 0.44), z + w * 0.4 + 0.5, w * 0.6, w * 0.3, 0]);
-      signs[i % 3].push([x + w * 0.5 + 1.2, h * rand(0.2, 0.34), z + w * 0.4, 2.4, 9.6, i]);
+      const sy = h * rand(0.2, 0.34);
+      signs[i % 3].push([x + w * 0.5 + 1.2, sy, z + w * 0.4, 2.4, 9.6, i]);
+      spills.push([x + w * 0.28, sy + 4.8, z + w * 0.4 + 0.2, w * 0.62, 15, NEON[i % 4]]);
     };
     // nearer the middle they stay low, so the logo keeps clear sky behind it
     [[-0.5, -150, 30], [-0.74, -168, 40], [-1.02, -146, 50], [0.52, -152, 32], [0.78, -170, 42], [1.04, -148, 52], [-1.5, -190, 96], [1.55, -192, 104], [-2.1, -200, 130], [2.15, -205, 120]]
@@ -60,6 +62,12 @@ class TitleCity {
     this.towers = new THREE.Mesh(tb.build("color"), cityFacadeMaterial({ lit: 0.36 }));
     s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
+    spills.forEach(([x, y, z, w, h, c]) => { // a sign's light on the wall beside it
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.3), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.position.set(x, y, z);
+      m.layers.set(1);
+      s.add(m);
+    });
     // ad panels (not looping) and blade signs
     { const pos = [], uv = [], az = [], seed = [];
       ads.forEach(([x, y, z, w, h], i) => { const P = (u, v) => { pos.push(x + (u - 0.5) * w, y + (v - 0.5) * h, z); uv.push(u, v); az.push(0); seed.push((i * 0.37 + 0.11) % 1); }; P(0, 0); P(1, 0); P(1, 1); P(0, 0); P(1, 1); P(0, 1); });
@@ -129,9 +137,9 @@ class TitleCity {
     this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.8, 9, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
 
     // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
-    const U = { uKey: { value: new THREE.Color(0.9, 0.6, 0.9) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.32, 0.2, 0.5) } };
+    const U = { uKey: { value: new THREE.Color(0.62, 0.42, 0.72) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.3, 0.19, 0.48) } };
     this.carMat = racerTrafficMaterial(U);
-    this.carMat.uniforms.uSkyC.value.set(0xff3ad4);
+    this.carMat.uniforms.uSkyC.value.setRGB(1.5, 0.5, 1.6); // (the sky's magenta along every edge that turns away)
     this.fleet = [["hover", 4], ["police", 1]].map(([type, n]) => {
       const geo = racerVehicleGeo(type);
       const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
@@ -153,7 +161,7 @@ class TitleCity {
       const m = new THREE.InstancedMesh(geo, this.carMat, n);
       m.frustumCulled = false;
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      RACER_PAINTS.slice(k * 2, k * 2 + n).forEach((c, i) => { const col = new THREE.Color(c); tint.setXYZ(i, col.r, col.g, col.b); });
+      RACER_PAINTS.slice(k * 2, k * 2 + n).forEach((c, i) => { const col = new THREE.Color(c).lerp(new THREE.Color(0x2c2260), 0.45).multiplyScalar(0.62); tint.setXYZ(i, col.r, col.g, col.b); }); // (night paint: deep, a little toward the street's violet)
       s.add(m);
       for (let i = 0; i < n; i++) this.street.push({ m, i });
     });

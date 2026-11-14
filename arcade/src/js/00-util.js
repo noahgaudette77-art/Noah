@@ -119,6 +119,7 @@ const COLORS = {
   cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",
   orange: "#ff9b3d", red: "#ff4769", violet: "#a65fff", gold: "#ffc93d", ink: "#f4efff",
 };
-// Answer slots share a colour in 3D and in the HUD: A cyan, B magenta, C yellow, D lime.
-const SLOT_COLORS = [COLORS.cyan, COLORS.magenta, COLORS.yellow, COLORS.lime];
+// Answer slots share a colour in 3D and in the HUD: A cyan, B magenta, C yellow, D orange. (D was lime: green is
+// what a right answer turns once it is marked, and no answer should wear the colour of "correct" beforehand.)
+const SLOT_COLORS = [COLORS.cyan, COLORS.magenta, COLORS.yellow, "#ff8a2a"];
 const SLOT_KEYS = ["A", "B", "C", "D"];

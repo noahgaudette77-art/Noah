@@ -137,7 +137,7 @@ function fighterSkin(env, side, U) {
         float ftrTrim = clamp(length(vec2(dFdx(ftrSat), dFdy(ftrSat))) * 2.2, 0.0, 1.0); // the edge of a painted area: a line of light
         float ftrH = sqrt(ftrL);
         vec3 ftrT = neonTile(vFtrP * 0.85, vFtrN);
-        vec3 ftrAcc = mix(vec3(1.5, 0.14, 0.95), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide));
+        vec3 ftrAcc = mix(vec3(0.5, 0.42, 1.75), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide)); // (violet-blue to port, cyan to starboard: pink is the enemy's colour)
         float ftrEdge = smoothstep(0.25, 0.9, length(fwidth(normalize(vNormal))) * 3.0); // (worn bright where a plate turns sharply)
         diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT), vec3(0.42, 0.45, 0.52), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.52 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.4, 0.3, 0.95), 0.34, ftrEdge), 0.3, ftrSat);")
@@ -150,8 +150,8 @@ function fighterSkin(env, side, U) {
         normal = neonBump(-vViewPosition, normal, clamp(ftrD, -0.7, 0.7) * vec2(length(dFdx(vViewPosition)), length(dFdy(vViewPosition))) + clamp(vec2(dFdx(ftrTH), dFdy(ftrTH)), -0.5, 0.5) * 0.007);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         vec3 ftrV = normalize(vViewPosition);
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(0.3, 0.3, 0.38); // a soft fill, so it reads in the dark tunnel
-        totalEmissiveRadiance += neonRim(normal, ftrV, 3.0) * uFtrRimK;
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(0.3, 0.33, 0.48); // a soft fill, cool: steel with a violet cast
+        totalEmissiveRadiance += vec3(0.32, 0.8, 1.5) * (pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 3.0) * uFtrRimK * 1.15); // an ice-blue rim
         totalEmissiveRadiance += uRim * pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 6.0);
         totalEmissiveRadiance += ftrAcc * (ftrSat * 0.07 * (0.3 + 0.7 * ftrH) + ftrTrim * 1.25) * uFtrPow; // where its paint was: anodised colour, with a line of light round it
         totalEmissiveRadiance += neonGlow(ftrT, vFtrP * 0.85, uFtrSeam) * uFtrPow * (1.0 - ftrSat); // seams and small lights
@@ -162,7 +162,7 @@ function fighterSkin(env, side, U) {
         totalEmissiveRadiance += uGun * (0.3 + ftrL) * exp(-dot(ftrG, ftrG) * 5.0);
         totalEmissiveRadiance += vec3(2.6, 0.8, 0.16) * uBoomHot * (0.35 + 0.65 * ftrL);`);
   };
-  m.customProgramCacheKey = () => "blaster-fighter-neon";
+  m.customProgramCacheKey = () => "blaster-fighter-neon-2";
   return m;
 }
 

@@ -123,7 +123,7 @@ class BlasterGame extends QuizGame {
     this.targets = [];
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
     if (this.has3D) this.build3D();
-    this.mountUI(`<section class="screen scr-game">
+    this.mountUI(`<section class="screen scr-game scr-blaster">
       <div class="hud">
         <div class="score"><small data-wave>WAVE 1</small><span data-score>000000</span></div>
         <div class="grow"></div>
@@ -154,7 +154,7 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.12, bloom: 0.9, threshold: 1.05, saturation: 1.18, contrast: 1.1, vignette: 1.0, fringe: 0.25, sharpen: 0.12, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.4,
+    s.userData.post = { exposure: 1.03, bloom: 0.7, threshold: 1.1, saturation: 1.18, contrast: 1.16, vignette: 1.0, fringe: 0.2, sharpen: 0.3, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.28,
       dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,
@@ -355,7 +355,7 @@ class BlasterGame extends QuizGame {
     this.ts = clamp(Math.min(far.h * 0.16, far.w * 0.1), 0.4, 1.2);
     const near = this.bandSize(7);
     const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
-    this.shipY = -near.h * (fit.y + (this.enemy ? 0.045 : 0));
+    this.shipY = -near.h * (fit.y + (this.enemy ? -0.012 : 0)); // (clear of the first answer's top edge)
     this.shipScale = clamp(Math.min((near.w * 0.7) / fit.w, (near.h * 0.35) / fit.h), 0.4, 1.2);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {

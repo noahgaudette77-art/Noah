@@ -18,15 +18,17 @@ function hubCabinetStyle(id, o) {
     [-1, 1].forEach((sx) => {
       box(0.62, 0.06, 1.0, at(sx * 1.36, 2.35, -0.05, 0, sx * -0.35, sx * 0.42), col, GLOSS, 0.4);
       gbox(0.64, 0.02, 0.05, at(sx * 1.37, 2.4, 0.46, 0, sx * -0.35, sx * 0.42), col, 2.2);
-      lit("cyl", cyl, at(sx * 1.27, 3.58, 0.2, H), [0.13, 0.8, 0.13], DARK, METAL);
+      lit("cyl", cyl, at(sx * 1.27, 3.58, 0.2, H), [0.13, 0.8, 0.13], 0x47506e, { aux: [0.5, 0.36] });
       lit("cone", cone, at(sx * 1.27, 3.58, 0.72, H), [0.13, 0.26, 0.13], 0xff2346, GLOSS);
       glow("cyl", cyl, at(sx * 1.27, 3.58, -0.22, H), [0.09, 0.04, 0.09], 0xff9b3d, 2.6);
-      box(0.05, 0.3, 0.3, at(sx * 1.27, 3.3, 0.1), DARK);
+      gbox(0.012, 0.03, 0.62, at(sx * (1.27 + sx * 0.0) , 3.72, 0.2), col, 1.6); // a stripe along each pod
+      box(0.05, 0.3, 0.3, at(sx * 1.27, 3.3, 0.1), 0x30344e);
     });
-    lit("cyl", cyl, at(0.55, 4.18, -0.05), [0.06, 0.3, 0.06], CHROME, METAL);
-    lit("cone", cone, at(0.55, 4.42, 0.02, 2.4), [0.36, 0.2, 0.36], CHROME, METAL);
-    lit("cyl", cyl, at(-0.62, 4.45, -0.1), [0.016, 0.86, 0.016], CHROME, METAL);
-    glow("ball", ball, at(-0.62, 4.9, -0.1), [0.05, 0.05, 0.05], 0xff2346, 3);
+    lit("cyl", cyl, at(0.55, 4.18, -0.05), [0.06, 0.3, 0.06], 0x7c88b4, { aux: [0.6, 0.32] });
+    lit("cone", cone, at(0.55, 4.42, 0.02, 2.4), [0.36, 0.2, 0.36], 0x8e9ccc, { aux: [0.62, 0.3] }, 0.8);
+    glow("ball", ball, at(0.55, 4.5, 0.22), [0.035, 0.035, 0.035], col, 2.6); // the dish's feed
+    lit("cyl", cyl, at(-0.62, 4.34, -0.1), [0.016, 0.62, 0.016], 0xaab4d8, { aux: [0.45, 0.32] });
+    glow("ball", ball, at(-0.62, 4.68, -0.1), [0.05, 0.05, 0.05], 0xff2346, 3);
     lit("cyl", cyl, onPanel(0.82, 0.5, 0.22), [0.022, 0.22, 0.022], CHROME, METAL);
     lit("ball", ball, onPanel(0.82, 0.5, 0.46), [0.06, 0.09, 0.06], DARK);
     glow("ball", ball, onPanel(0.82, 0.5, 0.56), [0.03, 0.03, 0.03], 0xff2346, 3);
@@ -52,9 +54,11 @@ function hubCabinetStyle(id, o) {
   } else if (id === "boss") {
     // a war machine: horns, spiked shoulders, a row of teeth, a red eye, one big slam button
     [-1, 1].forEach((sx) => {
-      lit("cone", cone, at(sx * 0.8, 4.5, -0.05, 0, 0, sx * -0.5), [0.17, 1.0, 0.17], 0xcdb8b0, { aux: [0.05, 0.7] });
-      box(0.36, 1.0, 1.05, at(sx * 1.34, 3.25, -0.05, 0, 0, sx * -0.22), 0x14151b, { aux: [0.85, 0.4] });
+      lit("cone", cone, at(sx * 0.8, 4.5, -0.05, 0, 0, sx * -0.5), [0.17, 1.0, 0.17], 0xe8d8cc, { aux: [0.05, 0.62] });
+      box(0.36, 1.0, 1.05, at(sx * 1.34, 3.25, -0.05, 0, 0, sx * -0.22), 0x423c50, { aux: [0.45, 0.42] });
       gbox(0.02, 0.9, 0.05, at(sx * 1.53, 3.2, 0.5, 0, 0, sx * -0.22), col, 2.2);
+      gbox(0.34, 0.02, 0.05, at(sx * 1.449, 3.746, 0.48, 0, 0, sx * -0.22), col, 1.8); // and along each shoulder's top edge
+      for (let i = 0; i < 3; i++) box(0.3, 0.03, 0.02, at(sx * 1.36, 2.98 + i * 0.2, 0.485, 0, 0, sx * -0.22), 0x17151f, { aux: [0.2, 0.6] }); // a speaker's slats
       [3.75, 3.35, 2.95].forEach((y) => lit("cone", cone, at(sx * 1.62, y, 0.1, 0, 0, sx * -H), [0.09, 0.34, 0.09], CHROME, METAL));
     });
     for (let i = 0; i < 7; i++) lit("cone", cone, at(-0.72 + i * 0.24, 3.13, 0.5, Math.PI), [0.07, 0.2, 0.07], 0xcdb8b0, { aux: [0.05, 0.7] });
@@ -71,14 +75,14 @@ function hubCabinetStyle(id, o) {
     for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; lit("cyl", cyl, at(Math.cos(a) * 0.4, 0.62 + Math.sin(a) * 0.4, o.zf + 0.065, H), [0.03, 0.03, 0.03], CHROME, METAL); }
     lit("cyl", cyl, onPanel(0.62, 0.5, 0.06), [0.17, 0.06, 0.17], 0x2a2c33, METAL);
     for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; K.box(B.glow, 0.012, 0.012, 0.05, onPanel(0.62 + Math.cos(a) * 0.13, 0.5, 0.1).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0)), col, { k: 1.8, g }); }
-    [[-0.62, 5], [-0.3, 8], [0.05, 4], [0.4, 7], [0.7, 3]].forEach(([x, n]) => { for (let i = 0; i < n; i++) lit("cyl", cyl, at(x + (i % 2) * 0.012, 4.09 + i * 0.058, 0.12), [0.15, 0.05, 0.15], i % 3 ? GOLD : 0xf2c766, METAL); });
+    [[-0.62, 5], [-0.3, 8], [0.05, 4], [0.4, 7], [0.7, 3]].forEach(([x, n]) => { for (let i = 0; i < n; i++) lit("cyl", cyl, at(x + (i % 2) * 0.012, 4.09 + i * 0.058, 0.12), [0.15, 0.05, 0.15], i % 3 ? 0xd9981c : 0xf0bc3a, { aux: [0.42, 0.4] }, 0.82); });
     [-1, 1].forEach((sx) => { box(0.06, 0.8, 0.06, at(sx * 1.0, 3.57, 0.56), GOLD, METAL); for (let i = 0; i < 4; i++) box(0.012, 0.3, 0.5, at(sx * 1.108, 1.9 + i * 0.4, 0.1), GOLD, METAL, 0.7); });
   } else if (id === "exam") {
     // an examination desk: a clock over it, laurels, an answer sheet and a pencil
     lit("cyl", cyl, at(0, 4.56, 0.2, H), [0.44, 0.1, 0.44], 0x1a1724, METAL);
-    lit("cyl", cyl, at(0, 4.56, 0.26, H), [0.38, 0.02, 0.38], 0xf2efe6, { aux: [0, 0.6] });
+    lit("cyl", cyl, at(0, 4.56, 0.26, H), [0.38, 0.02, 0.38], 0xb9b2d0, { aux: [0, 0.6] }, 0.8);
     glow("tor", tor, at(0, 4.56, 0.26), [0.41, 0.41, 0.2], col, 2.2);
-    box(0.03, 0.26, 0.02, at(0.0, 4.66, 0.29, 0, 0, -0.5), DARK); box(0.03, 0.18, 0.02, at(0.06, 4.58, 0.29, 0, 0, -1.9), DARK);
+    box(0.05, 0.26, 0.02, at(0.0, 4.66, 0.29, 0, 0, -0.5), DARK); box(0.05, 0.18, 0.02, at(0.06, 4.58, 0.29, 0, 0, -1.9), DARK);
     for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; box(0.02, 0.05, 0.01, at(Math.sin(a) * 0.33, 4.56 + Math.cos(a) * 0.33, 0.275, 0, 0, -a), DARK); }
     box(0.1, 0.5, 0.1, at(0, 4.14, 0.15), 0x1a1724, METAL);
     [-1, 1].forEach((sx) => { for (let i = 0; i < 6; i++) { const a = 0.5 + i * 0.36; lit("ball", ball, at(sx * (0.3 + Math.sin(a) * 0.62), 4.14 + (1 - Math.cos(a)) * 0.5, 0.2, 0, 0, sx * -(a + 0.5)), [0.05, 0.16, 0.03], 0xd9a441, METAL); } });
@@ -95,6 +99,9 @@ function hubCabinetStyle(id, o) {
     lit("cyl", cyl, at(0.98, 3.86, 1.05, 1.9), [0.02, 0.5, 0.02], CHROME, METAL);
     lit("cone", cone, at(0.98, 3.7, 1.3, 0.3), [0.17, 0.2, 0.17], col, GLOSS, 0.5);
     glow("ball", ball, at(0.98, 3.62, 1.33), [0.07, 0.07, 0.07], 0xfff0c8, 3);
+    { const L = V(0.98, 3.6, 1.32), T = V(0.5, 1.5, 0.74), d = L.clone().sub(T), len = d.length();
+      const q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.clone().normalize());
+      B.cones.add(K.get("deskcone", () => new THREE.CylinderGeometry(0.05, 0.56, 1, 20, 1, true)), at(0, 0, 0).multiply(new THREE.Matrix4().compose(T.clone().addScaledVector(d, 0.5), q, V(1, len, 1))), 0xffd9a0, { k: 0.62, g }); }
     [-1, 1].forEach((sx) => { box(0.012, 0.7, 0.08, at(sx * 1.11, 2.4, 0.3), 0xff4769, GLOSS, 0.7); box(0.012, 0.5, 0.08, at(sx * 1.11, 2.5, 0.05), 0x35efff, GLOSS, 0.7); });
   }
 }
@@ -113,6 +120,18 @@ function hubEmblem(x, id, cx, cy, s, color) {
   x.restore();
 }
 
+// Painted props: lit by the room and by the cabinet in front, like the cabinets themselves. A piece whose colour
+// runs past white is a lamp and keeps its own light.
+function hubPropMaterial(env) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.1, envMap: env, envMapIntensity: 0.5 });
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <color_fragment>", "float hubLamp = step(1.05, max(vColor.r, max(vColor.g, vColor.b)));\n diffuseColor.rgb *= vColor * (1.0 - hubLamp) * 0.4;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor * hubLamp;");
+  };
+  m.customProgramCacheKey = () => "hub-prop";
+  return m;
+}
 // ---- the room's life --------------------------------------------------------------
 class HubExtras {
   constructor(hub) {
@@ -122,11 +141,11 @@ class HubExtras {
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(1, 1, 1);
     const BOX = new THREE.BoxGeometry(1, 1, 1), CYL = new THREE.CylinderGeometry(1, 1, 1, 12);
     const all = [];
-    const dark = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const dark = hubPropMaterial(hub.env);
     // lamps on numbered channels, like the car's: one mesh for every blinking thing in the room
     this.ch = new Float32Array(16).fill(1);
     this.lampMat = new THREE.ShaderMaterial({ uniforms: { uL: { value: this.ch } },
-      vertexShader: "attribute vec3 aCol; attribute float aCh; uniform float uL[16]; varying vec3 vCol; void main(){ vCol = aCol * uL[int(aCh + 0.5)]; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      vertexShader: "attribute vec3 aCol; attribute float aCh; uniform float uL[16]; varying vec3 vCol; void main(){ vCol = aCol * uL[int(aCh + 0.5)] * 0.6; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: "varying vec3 vCol; void main(){ gl_FragColor = vec4(vCol, 1.0); }" });
     const st = new RacerBatch(), L = new RacerBatch(["aCh"]);
     // a frame of reference standing on the floor at (angle, radius), facing the room's centre
@@ -134,48 +153,60 @@ class HubExtras {
     const put = (F, x, y, z, sx, sy, sz, c, k = 1, rx = 0, ry = 0, rz = 0) => st.add(BOX, F.clone().multiply(racerM(x, y, z, sx, sy, sz, rx, ry, rz)), c, k);
     const rod = (F, x, y, z, r, h, c, k = 1, rx = 0, rz = 0) => st.add(CYL, F.clone().multiply(racerM(x, y, z, r, h, r, rx, 0, rz)), c, k);
     const lamp = (F, ch, x, y, z, sx, sy, sz, c, k = 2) => L.add(BOX, F.clone().multiply(racerM(x, y, z, sx, sy, sz)), c, k, { aCh: ch });
-    const gap = (i, side = 1) => hub.cabAngle(i) + side * 0.178; // beside cabinet i, in view when it is selected
-    const R = 13.3, CASE = 0x16122a, EDGE = 0x2a2350;
+    const gap = (i, side = 1) => hub.cabAngle(i) + side * 0.208; // beside cabinet i, in view when it is selected (half way to the next one: a dark gap stands between it and the cabinet)
+    const R = 13.3, CASE = 0x40338e, EDGE = 0x9a92d0, INSET = 0x1b1440, TOR = new THREE.TorusGeometry(1, 0.07, 6, 22);
+    const ring = (F, ch, x, y, z, r, c, k = 1.8) => L.add(TOR, F.clone().multiply(racerM(x, y, z, r, r, r)), c, k, { aCh: ch }); // a ring of light, facing the room
 
     // -- a jukebox with a dancing equaliser (beside cabinet 0)
     { const F = frame(gap(0), R);
-      put(F, 0, 1.0, 0, 1.3, 2.0, 0.8, CASE); put(F, 0, 2.25, 0, 1.3, 0.5, 0.8, 0x3a1450);
-      rod(F, 0, 2.5, 0, 0.65, 0.8, 0x3a1450, 1, Math.PI / 2);
+      put(F, 0, 1.0, 0, 1.3, 2.0, 0.8, CASE); put(F, 0, 2.25, 0, 1.3, 0.5, 0.8, 0x7c32a4);
+      rod(F, 0, 2.5, 0, 0.65, 0.8, 0x7c32a4, 1, Math.PI / 2);
+      put(F, 0, 0.09, 0.02, 1.4, 0.18, 0.86, 0x231a52);
       lamp(F, 0, 0, 2.5, 0.42, 1.1, 0.06, 0.04, 0xff3ad4, 2.2); [-0.6, 0.6].forEach((x) => lamp(F, 0, x, 1.3, 0.42, 0.05, 2.0, 0.04, 0x35efff, 2));
       for (let i = 0; i < 7; i++) lamp(F, 1 + (i % 4), -0.42 + i * 0.14, 1.5, 0.42, 0.1, 0.5, 0.03, [0x86ff5e, 0xffe14f, 0xff9b3d, 0xff3ad4][i % 4], 2.2);
-      put(F, 0, 0.75, 0.42, 0.9, 0.5, 0.04, 0x241a40); for (let i = 0; i < 6; i++) put(F, -0.36 + i * 0.145, 0.75, 0.45, 0.1, 0.4, 0.02, [0xff4769, 0x35efff, 0xffe14f][i % 3], 0.5); }
+      put(F, 0, 0.75, 0.42, 0.9, 0.5, 0.04, INSET); for (let i = 0; i < 6; i++) put(F, -0.36 + i * 0.145, 0.75, 0.45, 0.1, 0.4, 0.02, [0xff4769, 0x35efff, 0xffe14f][i % 3], 0.9); }
     // -- a claw machine (beside cabinet 1): the claw itself is a mover, built below
     { const F = (this.clawF = frame(gap(1), R));
-      put(F, 0, 0.6, 0, 1.5, 1.2, 1.3, 0x4a1450); put(F, 0, 2.95, 0, 1.6, 0.34, 1.4, 0x4a1450);
+      put(F, 0, 0.6, 0, 1.5, 1.2, 1.3, 0x6c2f9e); put(F, 0, 2.95, 0, 1.6, 0.34, 1.4, 0x6c2f9e);
+      lamp(F, 5, 0, 0.1, 0.66, 1.5, 0.04, 0.03, 0x35efff, 1.6);
       [[-0.72, -0.62], [0.72, -0.62], [-0.72, 0.62], [0.72, 0.62]].forEach(([x, z]) => put(F, x, 2.0, z, 0.07, 1.6, 0.07, EDGE));
-      put(F, 0, 1.28, 0, 1.4, 0.16, 1.2, 0x241a40);
+      put(F, 0, 1.28, 0, 1.4, 0.16, 1.2, 0x2f2470);
       for (let i = 0; i < 14; i++) st.add(BOX, F.clone().multiply(racerM(-0.5 + (i % 5) * 0.25 + (i % 2) * 0.05, 1.42 + Math.floor(i / 5) * 0.14, -0.3 + ((i * 7) % 5) * 0.16, 0.2, 0.2, 0.2, i, i * 2, i * 3)), [0xff4769, 0x35efff, 0xffe14f, 0x86ff5e, 0xff9b3d, 0xa65fff][i % 6], 0.75);
       lamp(F, 5, 0, 3.0, 0.72, 1.3, 0.16, 0.03, 0xffe14f, 2.4); lamp(F, 0, 0, 2.76, 0, 1.3, 0.04, 1.1, 0xf2f6ff, 1.4);
-      put(F, 0.45, 1.22, 0.68, 0.34, 0.1, 0.16, 0x16122a); rod(F, 0.45, 1.36, 0.68, 0.02, 0.2, 0xd2d0e4); lamp(F, 6, 0.3, 1.3, 0.7, 0.07, 0.04, 0.07, 0xff2346, 2.6); }
+      put(F, 0.45, 1.22, 0.68, 0.34, 0.1, 0.16, INSET); rod(F, 0.45, 1.36, 0.68, 0.02, 0.2, 0xd2d0e4); lamp(F, 6, 0.3, 1.3, 0.7, 0.07, 0.04, 0.07, 0xff2346, 2.6); }
     // -- a dance machine: a screen of bars and four arrow pads that light in turn (beside cabinet 2)
     { const F = frame(gap(2), R);
-      put(F, 0, 1.5, -0.3, 1.5, 3.0, 0.5, CASE); put(F, 0, 0.09, 0.7, 1.7, 0.18, 1.5, 0x241a40);
+      put(F, 0, 1.5, -0.3, 1.5, 3.0, 0.5, CASE); put(F, 0, 0.09, 0.7, 1.7, 0.18, 1.5, 0x2f2470);
+      [-0.42, 0.42].forEach((x, i) => { st.add(CYL, F.clone().multiply(racerM(x, 1.02, -0.045, 0.3, 0.02, 0.3, Math.PI / 2)), 0x120c2a); ring(F, 1 + i * 2, x, 1.02, -0.03, 0.3, i ? 0xff3ad4 : 0x35efff, 1.7); ring(F, 2 + i * 2, x, 1.02, -0.03, 0.13, 0xffe14f, 1.5); });
+      put(F, 0, 0.42, -0.04, 1.2, 0.3, 0.02, INSET); [-0.42, -0.14, 0.14, 0.42].forEach((x, i) => lamp(F, 7 + i, x, 0.42, -0.02, 0.16, 0.16, 0.02, [0xff3ad4, 0x35efff, 0x86ff5e, 0xffe14f][i], 1.5));
+      lamp(F, 0, 0, 0.17, 1.46, 1.7, 0.03, 0.03, 0xff3ad4, 2); [-0.86, 0.86].forEach((x) => lamp(F, 0, x, 0.17, 0.7, 0.03, 0.03, 1.5, 0x35efff, 1.7));
       for (let i = 0; i < 9; i++) lamp(F, 1 + (i % 4), -0.52 + i * 0.13, 2.1, -0.04, 0.09, 0.9, 0.03, [0x35efff, 0xff3ad4, 0xffe14f, 0x86ff5e][i % 4], 2);
       [[-0.42, 0.42, 7], [0.42, 0.42, 8], [-0.42, 1.05, 9], [0.42, 1.05, 10]].forEach(([x, z, ch], i) => { lamp(F, ch, x, 0.19, z, 0.56, 0.02, 0.5, [0xff3ad4, 0x35efff, 0x86ff5e, 0xffe14f][i], 2.2); });
       [-0.78, 0.78].forEach((x) => { rod(F, x, 0.8, 1.4, 0.03, 1.4, 0xd2d0e4); }); rod(F, 0, 1.5, 1.4, 0.03, 1.6, 0xd2d0e4, 1, 0, Math.PI / 2);
       lamp(F, 0, 0, 3.05, -0.04, 1.4, 0.07, 0.03, 0xff3ad4, 2.4); }
     // -- a ticket printer (beside cabinet 3): its strip is a mover
     { const F = (this.tickF = frame(gap(3), R));
-      put(F, 0, 0.75, 0, 0.9, 1.5, 0.7, 0x123a4a); put(F, 0, 1.56, 0, 1.0, 0.14, 0.8, 0x1a5468);
+      put(F, 0, 0.75, 0, 0.9, 1.5, 0.7, 0x256e8c); put(F, 0, 1.56, 0, 1.0, 0.14, 0.8, 0x34a0c4);
+      put(F, 0, 0.5, 0.355, 0.62, 0.62, 0.02, INSET); lamp(F, 11, 0, 0.5, 0.37, 0.4, 0.05, 0.02, 0xffe14f, 1.6); lamp(F, 11, 0, 0.5, 0.37, 0.05, 0.4, 0.02, 0xffe14f, 1.6); lamp(F, 0, 0, 0.06, 0.36, 0.9, 0.03, 0.03, 0x35efff, 1.5);
       put(F, 0, 1.12, 0.36, 0.6, 0.06, 0.04, 0x05060a);
       for (let i = 0; i < 5; i++) lamp(F, 11, -0.24 + i * 0.12, 1.36, 0.36, 0.08, 0.12, 0.02, 0xff9b3d, 2.2);
-      rod(F, 0, 1.72, 0, 0.09, 0.18, 0x241a40); lamp(F, 12, 0, 1.86, 0, 0.14, 0.1, 0.14, 0xffe14f, 2.6); }
+      rod(F, 0, 1.72, 0, 0.09, 0.18, 0x3a2f80); lamp(F, 12, 0, 1.86, 0, 0.14, 0.1, 0.14, 0xffe14f, 2.6); }
     // -- hoops: a backboard, a ring, a ball that keeps going in (beside cabinet 4)
     { const F = (this.hoopF = frame(gap(4), R));
-      put(F, 0, 0.5, 0.3, 1.5, 1.0, 1.9, 0x4a2a14); put(F, 0, 2.6, -0.6, 1.3, 1.0, 0.08, 0xf2efe6, 0.5);
-      lamp(F, 0, 0, 2.5, -0.55, 0.5, 0.36, 0.02, 0xff4769, 1.6);
+      put(F, 0, 0.5, 0.3, 1.5, 1.0, 1.9, CASE); put(F, 0, 2.6, -0.6, 1.3, 1.0, 0.08, 0x121a40);
+      lamp(F, 0, 0, 1.0, 1.25, 1.5, 0.035, 0.03, 0xff9b3d, 2); [-0.75, 0.75].forEach((x) => lamp(F, 0, x, 1.0, 0.3, 0.03, 0.035, 1.9, 0xff9b3d, 1.5));
+      st.add(CYL, F.clone().multiply(racerM(0, 0.5, 1.255, 0.3, 0.02, 0.3, Math.PI / 2)), 0xff7a2a, 0.95); put(F, 0, 0.5, 1.27, 0.6, 0.03, 0.012, 0x1a0d2a); put(F, 0, 0.5, 1.27, 0.03, 0.6, 0.012, 0x1a0d2a);
+      [[0, 3.09, 1.3, 0.03], [0, 2.11, 1.3, 0.03], [-0.64, 2.6, 0.03, 1.0], [0.64, 2.6, 0.03, 1.0]].forEach(([x, y, w, h]) => lamp(F, 0, x, y, -0.55, w, h, 0.02, 0xdfe8ff, 1.2));
+      [[0, 2.68, 0.5, 0.028], [0, 2.32, 0.5, 0.028], [-0.25, 2.5, 0.028, 0.36], [0.25, 2.5, 0.028, 0.36]].forEach(([x, y, w, h]) => lamp(F, 0, x, y, -0.55, w, h, 0.02, 0xff4769, 1.9));
+      L.add(BOX, F.clone().multiply(racerM(-0.34, 2.82, -0.553, 0.46, 0.03, 0.01, 0, 0, 0.7)), 0xcfdcff, 0.6, { aCh: 0 }); L.add(BOX, F.clone().multiply(racerM(0.38, 2.34, -0.553, 0.3, 0.024, 0.01, 0, 0, 0.7)), 0xcfdcff, 0.4, { aCh: 0 });
       const ring = new THREE.TorusGeometry(0.24, 0.025, 5, 16); st.add(ring, F.clone().multiply(racerM(0, 2.3, -0.3, 1, 1, 1, Math.PI / 2)), 0xff9b3d, 1.2); ring.dispose();
       [-0.72, 0.72].forEach((x) => { put(F, x, 1.9, 0.2, 0.05, 1.9, 0.05, EDGE); put(F, x, 2.85, -0.2, 0.05, 0.05, 0.9, EDGE); });
       for (let i = 0; i < 4; i++) lamp(F, 1 + i, -0.45 + i * 0.3, 3.2, -0.58, 0.24, 0.16, 0.03, 0xffe14f, 2.2); }
     // -- a drinks machine and a floor grate that breathes steam (beside cabinet 5, on its left)
     { const F = frame(gap(5, -1), R);
-      put(F, 0, 1.15, 0, 1.2, 2.3, 0.8, 0x10283c); lamp(F, 13, 0, 1.45, 0.41, 0.9, 1.3, 0.03, 0x9fe8ff, 0.9);
-      for (let i = 0; i < 12; i++) put(F, -0.3 + (i % 4) * 0.2, 1.0 + Math.floor(i / 4) * 0.42, 0.43, 0.13, 0.3, 0.03, [0xff4769, 0x86ff5e, 0xffe14f, 0x35efff][i % 4], 0.6);
+      put(F, 0, 1.15, 0, 1.2, 2.3, 0.8, 0x2a3e86); lamp(F, 13, 0, 1.45, 0.41, 0.9, 1.3, 0.03, 0x9fe8ff, 0.9);
+      lamp(F, 0, 0, 2.24, 0.41, 1.1, 0.04, 0.02, 0x35efff, 1.7);
+      for (let i = 0; i < 12; i++) put(F, -0.3 + (i % 4) * 0.2, 1.0 + Math.floor(i / 4) * 0.42, 0.43, 0.13, 0.3, 0.03, [0xff4769, 0x86ff5e, 0xffe14f, 0x35efff][i % 4], 0.36);
       put(F, 0, 0.3, 0.42, 0.7, 0.24, 0.03, 0x05060a); lamp(F, 6, 0.48, 1.0, 0.42, 0.08, 0.3, 0.03, 0x86ff5e, 2.2);
       this.steamAt = new THREE.Vector3(0.95, 0.1, 0.6).applyMatrix4(F); put(F, 0.95, 0.03, 0.6, 0.7, 0.04, 0.5, 0x05060a); }
     const stMesh = new THREE.Mesh(st.build("color"), dark), lMesh = new THREE.Mesh(L.build(), this.lampMat);
@@ -186,8 +217,8 @@ class HubExtras {
     const basic = (b) => { const m = new THREE.Mesh(b.build("color"), dark); s.add(m); all.push(m); return m; };
     // ceiling fans
     { const b = new RacerBatch();
-      b.add(CYL, racerM(0, 0.45, 0, 0.03, 0.9, 0.03), 0x2a2350); b.add(CYL, racerM(0, 0, 0, 0.16, 0.14, 0.16), 0x3a3260);
-      for (let i = 0; i < 4; i++) b.add(BOX, racerM(Math.cos(i * 1.5708) * 0.9, -0.02, Math.sin(i * 1.5708) * 0.9, 1.5, 0.03, 0.3, 0.12, -i * 1.5708), 0x231d44);
+      b.add(CYL, racerM(0, 0.45, 0, 0.03, 0.9, 0.03), 0x5a5490); b.add(CYL, racerM(0, 0, 0, 0.16, 0.14, 0.16), 0x7a72b0);
+      for (let i = 0; i < 4; i++) b.add(BOX, racerM(Math.cos(i * 1.5708) * 0.9, -0.02, Math.sin(i * 1.5708) * 0.9, 1.5, 0.03, 0.3, 0.12, -i * 1.5708), 0x4c4680);
       b.add(CYL, racerM(0, -0.12, 0, 0.1, 0.06, 0.1), 0xfff0c8, 1.8);
       const ge = b.build("color");
       this.fans = [-1.0, -0.36, 0.3, 0.95].map((a, i) => { const m = new THREE.Mesh(ge, dark); m.position.set(Math.sin(a) * 13.2, 7.4, -Math.cos(a) * 13.2); m.userData.sp = 2.2 + i * 0.5; s.add(m); all.push(m); return m; }); }
@@ -204,11 +235,19 @@ class HubExtras {
     { const ge = new THREE.IcosahedronGeometry(0.17, 1), b = new RacerBatch(); b.add(ge, null, 0xff7a2a, 0.9); ge.dispose(); this.ball = basic(b); }
     // a cleaning robot that works its way along the floor
     { const b = new RacerBatch();
-      b.add(CYL, racerM(0, 0.36, 0, 0.5, 0.5, 0.5), 0x2a3140); b.add(CYL, racerM(0, 0.68, 0, 0.42, 0.14, 0.42), 0x3a4458);
-      b.add(CYL, racerM(0, 1.0, 0, 0.04, 0.6, 0.04), 0xd2d0e4, 0.6); b.add(BOX, racerM(0, 1.34, 0, 0.16, 0.12, 0.16), 0xffa53d, 2.6);
-      b.add(BOX, racerM(0.44, 0.34, 0, 0.06, 0.1, 0.6), 0x35efff, 2.4); b.add(BOX, racerM(0.2, 0.74, 0.18, 0.1, 0.08, 0.1), 0x86ff5e, 2.4); b.add(BOX, racerM(0.2, 0.74, -0.18, 0.1, 0.08, 0.1), 0x86ff5e, 2.4);
-      [-0.36, 0.36].forEach((z) => b.add(CYL, racerM(0.34, 0.06, z, 0.2, 0.05, 0.2), 0x9aa3ab, 0.5));
-      this.robot = basic(b); }
+      const dome = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+      b.add(CYL, racerM(0, 0.34, 0, 0.56, 0.44, 0.56), 0x7f8cb4); b.add(CYL, racerM(0, 0.1, 0, 0.6, 0.1, 0.6), 0x2c3044); // drum, rubber skirt
+      b.add(dome, racerM(0, 0.56, 0, 0.5, 0.36, 0.5), 0xb4c0e4); dome.dispose();
+      b.add(CYL, racerM(0, 0.57, 0, 0.57, 0.035, 0.57), 0xffe14f, 0.9); // a yellow band round its middle
+      b.add(BOX, racerM(0.4, 0.7, 0, 0.14, 0.13, 0.52), 0x10142a); // a dark visor, two eyes in it
+      b.add(BOX, racerM(0.475, 0.7, 0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6); b.add(BOX, racerM(0.475, 0.7, -0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6);
+      b.add(CYL, racerM(-0.12, 1.12, 0, 0.022, 0.5, 0.022), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.12, 1.42, 0, 0.13, 0.11, 0.13), 0xffa53d, 2.6); // aerial and beacon
+      b.add(BOX, racerM(0.6, 0.07, 0, 0.1, 0.09, 0.9), 0x35efff, 2.2); // the brush bar's light
+      [-0.5, 0.5].forEach((z) => b.add(CYL, racerM(0.42, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));
+      this.robot = basic(b);
+      const blob = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.8, depthWrite: false }));
+      blob.rotation.x = -Math.PI / 2; blob.position.y = 0.012; blob.renderOrder = 1;
+      this.robot.add(blob); }
     // people walking by in silhouette: one instanced mesh, legs and arms swinging in the shader
     { const b = new RacerBatch(["aSw", "aPv"]);
       const part = (geo, m, c, k, sw = 0, pv = 0) => b.add(geo, m, c, k, { aSw: sw, aPv: pv });
@@ -292,7 +331,8 @@ class HubExtras {
     this.surge = 0;
     // none of this is mirrored in the floor
     all.forEach((m) => m.layers.set(1));
-    BOX.dispose(); CYL.dispose();
+    this.robot.layers.set(0); // (but the robot crosses the polished tiles in front of the cabinets: the floor shows it)
+    BOX.dispose(); CYL.dispose(); TOR.dispose();
   }
   // Selecting a cabinet wakes it: a flare off its marquee, sparks, a rising tone.
   powerUp(i) {
@@ -324,7 +364,7 @@ class HubExtras {
     ch[5] = 0.7 + 0.3 * Math.sin(t * 2.1);
     ch[6] = Math.sin(t * 4.2) > 0 ? 1 : 0.25;
     const step = Math.floor(t * 1.6) % 4;
-    for (let i = 0; i < 4; i++) ch[7 + i] = i === step ? 1.3 : 0.16; // the dance pads light in turn
+    for (let i = 0; i < 4; i++) ch[7 + i] = i === step ? 1.3 : 0.3; // the dance pads light in turn
     ch[11] = 0.4 + 0.6 * Math.abs(Math.sin(t * 2.2)); ch[12] = 0.5 + 0.5 * Math.sin(t * 5.0); ch[13] = 0.85 + 0.15 * Math.sin(t * 0.8);
     this.fans.forEach((f) => { f.rotation.y += dt * f.userData.sp; });
     // the claw: across, down, up, back (an 8 second cycle)
@@ -338,8 +378,9 @@ class HubExtras {
       const y = u < 1 ? 1.2 + u * 3.3 - u * u * 2.2 : 2.3 - (k - 0.62) * 4.2, z = u < 1 ? 1.1 - u * 1.4 : -0.3;
       this.place(this.ball, this.hoopF, Math.sin(Math.floor(t / 2.6) * 2.4) * 0.12, Math.max(1.16, y), z); this.ball.rotation.x = t * 4; }
     // the robot sweeps to and fro along the row
-    { const a = Math.sin(t * 0.11) * 1.25, dir = Math.cos(t * 0.11) >= 0 ? 1 : -1, r = 11.6;
-      this.robot.position.set(Math.sin(a) * r, 0, -Math.cos(a) * r); this.robot.rotation.y = -a + (dir > 0 ? 0 : Math.PI); }
+    // (on the open tiles in front of the cabinets: it crosses under the one you are looking at, lit by its screen)
+    { const a = Math.sin(t * 0.11 + 0.9) * 1.3, dir = Math.cos(t * 0.11 + 0.9) >= 0 ? 1 : -1, r = 7.25;
+      this.robot.position.set(Math.sin(a) * r, 0, -Math.cos(a) * r); this.robot.rotation.y = -a + (dir > 0 ? 0 : Math.PI) + Math.sin(t * 1.7) * 0.05; }
     // people stroll past, turn at the ends of the room
     this.walk.forEach((w, i) => {
       w.a += w.dir * w.sp * dt;

@@ -151,7 +151,7 @@ const NEON_GLSL = `
     float seam = smoothstep(0.7, 0.92, tile.g), led = smoothstep(0.36, 0.44, tile.b);
     float run = 0.5 + 0.5 * sin(uNeonT * 1.6 - dot(p, vec3(2.1, 3.3, 1.7)));
     vec3 lamp = mix(vec3(0.25, 1.7, 2.0), vec3(2.1, 0.3, 1.4), step(0.72, tile.b)) * (0.35 + 1.65 * pow(0.5 + 0.5 * sin(uNeonT * (0.9 + tile.b * 2.2) + tile.b * 37.0), 4.0));
-    return seamCol * seam * (0.8 + 1.5 * run * run) + lamp * led;
+    return seamCol * seam * (0.8 + 1.5 * run * run) + lamp * led * 0.3;
   }
   // a rim of the arcade's two colours: magenta from one side, cyan from the other (n and v in view space)
   vec3 neonRim(vec3 n, vec3 v, float power){ float f = pow(1.0 - clamp(abs(dot(n, v)), 0.0, 1.0), power); return mix(vec3(1.5, 0.12, 0.95), vec3(0.1, 1.05, 1.5), smoothstep(-0.35, 0.35, n.x)) * f; }

@@ -348,6 +348,7 @@ function makePipeline(renderer, hdr) {
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
+    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -358,6 +359,7 @@ function makePipeline(renderer, hdr) {
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
+    uniform HP vec4 uKeep; uniform float uKeepA;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -412,9 +414,12 @@ function makePipeline(renderer, hdr) {
         vec3 nb = (tex(suv + vec2(sp.x, 0.0)) + tex(suv - vec2(sp.x, 0.0)) + tex(suv + vec2(0.0, sp.y)) + tex(suv - vec2(0.0, sp.y))) * 0.25;
         col = max(col + clamp(col - nb, -0.4, 0.4) * uSharp, 0.0);
       }
-      if (uZoom.y > 0.0) {
+      // the shot's subject keeps out of the streak and the colour split (1 everywhere else)
+      float keepK = 1.0;
+      if (uKeepA > 0.0) { HP vec2 kd = (suv - uKeep.xy) / uKeep.zw; keepK = 1.0 - uKeepA * (1.0 - smoothstep(0.8, 1.6, length(kd))); }
+      if (uZoom.y * keepK > 0.0) {
         // speed: the picture streaks outward from the centre
-        HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045);
+        HP vec2 zd = (0.5 - suv) * (uZoom.y * 0.045 * keepK);
         float zj = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
         for (int i = 1; i < 12; i++) col += tex(suv + zd * (float(i) + zj) * 0.3);
         col /= 12.0;
@@ -422,7 +427,7 @@ function makePipeline(renderer, hdr) {
       {
         // the lens: colours part company toward the corners (never in the middle), and for a moment on a hit
         HP vec2 cd = suv - 0.5;
-        HP float ca = (uAberr + uEdge * dot(cd, cd) * 4.0) * uPr;
+        HP float ca = (uAberr * keepK + uEdge * dot(cd, cd) * 4.0) * uPr;
         if (ca > 0.05) {
           HP vec2 dv = normalize(cd + 1e-5) * (ca / uRes.x);
           col.r = mix(col.r, tex(suv + dv).r, 0.85); col.b = mix(col.b, tex(suv - dv).b, 0.85);
@@ -671,6 +676,7 @@ function makePipeline(renderer, hdr) {
       u.uFever.value.set(o.fever, o.t % 628.3185);
       u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
       u.uZoom.value.set(o.punch, o.zoomBlur);
+      if (o.keep) { u.uKeep.value.set(o.keep.x, o.keep.y, o.keep.rx, o.keep.ry); u.uKeepA.value = o.keep.a; } else u.uKeepA.value = 0;
       u.uHeat.value.set(o.heat.x, o.heat.y, Math.max(0.01, o.heat.r), o.heat.a);
       u.uT.value = o.t % 628.3185;
       u.uGlitch.value = o.glitch;

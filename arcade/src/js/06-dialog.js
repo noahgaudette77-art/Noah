@@ -48,21 +48,25 @@ function drawPortrait(canvas, look = {}) {
   if (look.style === "curly") for (let i = 6; i < 18; i += 2) { px(hair, i, 1, 1, 2); px(hair, i + 1, 2, 1, 2); }
   if (look.style === "bun") px(hair, 10, 0, 4, 3);
   if (look.style === "ponytail") px(hair, 17, 6, 2, 9);
+  if (look.style === "bun" || look.style === "ponytail") { // hair down beside the cheeks, an earring under it
+    px(hair, 6, 6, 1, 6); px(hair, 17, 6, 1, 6);
+    px("#ffd45e", 6, 12, 1, 1); px("#ffd45e", 17, 12, 1, 1);
+  }
   // eyes and brows (the brows carry the mood: level, lifted in the middle when worried, drawn down when cross)
   const brow = hair === HAIR.white ? "#b9b8c2" : hair, mood = look.mood;
   if (mood === "worry") { px(brow, 8, 8, 2, 1); px(brow, 10, 7, 1, 1); px(brow, 13, 7, 1, 1); px(brow, 14, 8, 2, 1); }
   else if (mood === "grump") { px(brow, 8, 7, 1, 1); px(brow, 9, 8, 2, 1); px(brow, 13, 8, 2, 1); px(brow, 15, 7, 1, 1); }
   else { px(brow, 8, 8, 3, 1); px(brow, 13, 8, 3, 1); }
-  px("#ffffff", 9, 10, 2, 1);
-  px("#ffffff", 13, 10, 2, 1);
-  px("#1b1420", 10, 10, 1, 1);
-  px("#1b1420", 13, 10, 1, 1);
+  const e1 = look.glasses ? 8 : 9, e2 = look.glasses ? 14 : 13; // (behind spectacles the eyes sit in the middle of each lens)
+  px("#ffffff", e1, 10, 2, 1);
+  px("#ffffff", e2, 10, 2, 1);
+  px("#1b1420", e1 + 1, 10, 1, 1);
+  px("#1b1420", e2, 10, 1, 1);
   // nose
   px("rgba(0,0,0,0.15)", 11, 11, 2, 2);
-  if (look.glasses) { // spectacles: a wire under each eye, the bridge, the hinges (the eyes and brows stay clear)
-    const rim = look.skin === "brown" || look.skin === "dark" ? "#f0c35a" : "#6b4416";
-    px(rim, 8, 11, 4, 1); px(rim, 12, 11, 4, 1);
-    px(rim, 7, 10, 2, 1); px(rim, 15, 10, 2, 1);
+  if (look.glasses) { // spectacles: a thin rim round each lens (the eye and the cheek under it show through), a bridge over the nose
+    const rim = look.skin === "brown" || look.skin === "dark" ? "#e8b84a" : "#2c2546";
+    [7, 13].forEach((lx) => { px(rim, lx, 9, 4, 1); px(rim, lx, 12, 4, 1); px(rim, lx, 10, 1, 2); px(rim, lx + 3, 10, 1, 2); });
     px(rim, 11, 10, 2, 1);
   }
   // mouth (it carries the mood too), cheeks

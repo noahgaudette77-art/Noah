@@ -31,8 +31,8 @@ const LIB_ROSE = `
     float W = min(0.3927 * r - LEAD, 0.34 * (0.61 - r)) - LEAD;
     float leaf = (1.0 - smoothstep(W - E, W, d8)) * zone * step(0.0, W);
     vec3 leafCol = mod(i8, 2.0) < 0.5 ? vec3(1.0, 0.09, 0.2) : vec3(0.1, 0.34, 1.0);
-    float breathe8 = 0.86 + 0.14 * sin(t * 0.35 + i8 * 1.3), breathe16 = 0.86 + 0.14 * sin(t * 0.3 + i16 * 0.9);
-    col += leafCol * 1.4 * leaf * breathe8 * (1.0 - 0.42 * glass * pow(clamp(d8 / max(W, 1e-3), 0.0, 1.0), 2.0)) * mott;
+    float breathe8 = 0.8 + 0.2 * sin(t * 0.55 + i8 * 1.3), breathe16 = 0.8 + 0.2 * sin(t * 0.47 + i16 * 0.9);
+    col += leafCol * 1.55 * leaf * breathe8 * (1.0 - 0.55 * glass * pow(clamp(d8 / max(W, 1e-3), 0.0, 1.0), 2.0)) * mott;
     float quarry = zone * smoothstep(W + 2.0 * LEAD, W + 2.0 * LEAD + E, d8) * smoothstep(LEAD * 0.6, LEAD * 0.6 + E, (0.5 - abs(f8)) * arc8);
     col += vec3(0.05, 0.42, 0.3) * 0.55 * quarry * mott;
     // the band
@@ -43,7 +43,10 @@ const LIB_ROSE = `
     float head = 0.955 - 0.1 * (1.0 - sqrt(max(0.0, 1.0 - f16 * f16 / 0.1764)));
     float lightW = 0.42 - 0.012 / max(r, 0.3);
     float light = (1.0 - smoothstep(lightW - 0.03, lightW, abs(f16))) * smoothstep(0.7, 0.715, r) * (1.0 - smoothstep(head - 0.02, head, r));
-    col += libJewel(i16) * 1.25 * light * breathe16 * (1.0 - 0.4 * glass * pow(abs(f16) / lightW, 2.0)) * mott;
+    col += libJewel(i16) * 1.35 * light * breathe16 * (1.0 - 0.5 * glass * pow(abs(f16) / lightW, 2.0)) * mott;
+    // the tracery between the pieces: dark violet stone, not a void (only in the window itself)
+    float cover = clamp(1.0 - smoothstep(0.108 - E, 0.108, r) + leaf + quarry + band + light, 0.0, 1.0);
+    col += vec3(0.055, 0.04, 0.13) * glass * (1.0 - cover);
     return col * step(r, 1.0);
   }`;
 
@@ -80,8 +83,8 @@ function libraryShelfMaterial(len, tall, lampY) {
         vec3 col = mix(many, one, detail);
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
-        float lampK = exp(-dz * dz * 0.16) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.1, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
-        vec3 light = vec3(0.46, 0.4, 0.98) * 1.5 + vec3(1.3, 0.94, 0.6) * lampK * 2.7 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
+        float lampK = exp(-dz * dz * 0.075) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.085, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
+        vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
         col *= light;
         float holo = book * step(0.972, h2) * detail;
         vec3 hc = h1 < 0.33 ? vec3(0.2, 0.95, 1.0) : (h1 < 0.66 ? vec3(1.0, 0.25, 0.85) : vec3(1.0, 0.85, 0.3));
@@ -132,7 +135,7 @@ class LibraryScene extends Scene3D {
     super({ fov: 58, far: 260, fog: [0x0e0830, 20, 128], bg: 0x0e0830 });
     this.reading = false; // a chapter is open: hold almost still
     this.calm = 1;
-    this.pan = 0;
+    this.readK = 0; // 0 in the list's window, 1 behind a chapter's banner
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2, LAMP_X = 4.0, LAMP_Y = 12.5, ROSE_Y = 11.5;
     s.userData.post = { exposure: 1.18, bloom: 0.62, threshold: 1.1, saturation: 1.22, contrast: 1.14, vignette: 0.6, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.15, sharpen: 0.5, fringe: 0.15,
@@ -159,8 +162,11 @@ class LibraryScene extends Scene3D {
     const WOOD = 0x2a1c2e, DARK = 0x130c1c, BRASS = 0x9a6a2a;
     const put = (geo, m, color, b = B, k = 1) => { b.add(geo, m, color, k); geo.dispose(); };
     [-1, 1].forEach((sd) => {
-      for (let z = Z0; z >= Z0 - L; z -= 4) B.add(box, racerM(sd * 5.05, 5, z, 0.34, 10, 0.22), WOOD);
-      B.add(box, racerM(sd * 5.0, 10.2, zc, 0.9, 0.4, L), WOOD); // cornice
+      for (let z = Z0; z >= Z0 - L; z -= 4) {
+        B.add(box, racerM(sd * 5.05, 5, z, 0.34, 10, 0.22), 0x4a3350);
+        G.add(box, racerM(sd * 4.87, 5, z + 0.12, 0.03, 10, 0.03), 0x6a5cff, 0.55); // its edge toward the reader, rimmed violet
+      }
+      B.add(box, racerM(sd * 5.0, 10.2, zc, 0.9, 0.4, L), 0x4a3350); // cornice
       B.add(box, racerM(sd * 6.05, 10.52, zc, 2.3, 0.2, L), DARK); // gallery floor
       B.add(box, racerM(sd * 5.0, 11.55, zc, 0.07, 0.07, L), BRASS); // its rail
       G.add(box, racerM(sd * 4.97, 10.36, zc, 0.05, 0.06, L), 0x5fd8ff, 1.2); // a line of cyan light under the gallery
@@ -198,7 +204,7 @@ class LibraryScene extends Scene3D {
       this.nearLamps.push([x, y - 0.045, z]);
     });
     // lecterns: a pair by the desk
-    this.lecterns = [[-2.9, -22], [2.9, -22]];
+    this.lecterns = [[-3.5, -22], [3.5, -22]];
     this.lecterns.forEach(([x, z]) => {
       put(racerPlate(0.9, 0.16, 0.9, 0.05, true), racerM(x, 0.08, z), DARK);
       put(new THREE.CylinderGeometry(0.11, 0.2, 2.0, 6), racerM(x, 1.1, z), WOOD);
@@ -222,7 +228,9 @@ class LibraryScene extends Scene3D {
       B.add(box, racerM(x, 2.66, z - 0.03, 0.07, 1.7, 0.09, -0.5), BRASS); // its spine
       B.add(box, racerM(x, 3.2, z - 0.66, 0.06, 2.7, 0.06), BRASS); // the lamp's post
       B.add(box, racerM(x, 4.66, z - 0.36, 1.7, 0.07, 0.5), BRASS); // its cap
-      G.add(box, racerM(x, 4.47, z - 0.36, 1.6, 0.3, 0.44), 0xffb040, 1.5); // and its shade of amber glass over the book
+      G.add(box, racerM(x, 4.47, z - 0.36, 1.6, 0.3, 0.44), 0xf09a2a, 1.25); // and its shade of amber glass over the book
+      G.add(box, racerM(x, 4.33, z - 0.13, 1.6, 0.05, 0.03), 0xfff0c8, 2.4); // the light under its lip
+      [-1, 1].forEach((sd) => B.add(box, racerM(x + sd * 0.84, 4.48, z - 0.36, 0.08, 0.36, 0.5), BRASS)); // brass ends
       [-1, 1].forEach((sd) => {
         const pg = new THREE.PlaneGeometry(1.36, 1.66, 6, 1), pp = pg.attributes.position;
         for (let i = 0; i < pp.count; i++) { const u = (pp.getX(i) / 0.68) * sd; pp.setZ(i, 0.018 * (1 - u) * (1 - u)); } // the leaves swell toward the gutter
@@ -232,9 +240,6 @@ class LibraryScene extends Scene3D {
         ledgerPages.push(pg);
       });
     }
-    // a rolling ladder on the left-hand shelves
-    [-0.35, 0.35].forEach((dz) => racerStrut(B, box, new THREE.Vector3(-3.9, 0, -32 + dz), new THREE.Vector3(-5.0, 9.8, -32 + dz), 0.08, BRASS));
-    for (let i = 1; i < 12; i++) B.add(box, racerM(-3.9 - (1.1 * i) / 12.5, (9.8 * i) / 12.5, -32, 0.06, 0.06, 0.7), BRASS);
     this.joinery = new THREE.Mesh(B.build("color"), new THREE.MeshLambertMaterial({ vertexColors: true }));
     this.lights = new THREE.Mesh(G.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true }));
     s.add(this.joinery, this.lights);
@@ -355,6 +360,7 @@ class LibraryScene extends Scene3D {
     // shafts of the window's light, from its lowest panes down to the floor: each in its pane's colour, dark where
     // it leaves the glass (so nothing hangs in front of the window) and gone again before it lands
     const tilt = Math.atan(SLOPE);
+    this.shafts = [];
     [[-2, 0x9b5cff], [-1, 0x35d0ff], [0, 0xffc04a], [1, 0xff4fb8], [2, 0x4dff9a]].forEach(([k, color]) => {
       const ang = -Math.PI / 2 + k * 0.3927, x = Math.cos(ang) * 4.3, y = ROSE_Y + Math.sin(ang) * 4.3;
       const shaft = examBeam({ color, top: 0.42, bottom: 0.95, height: y / Math.sin(tilt), intensity: 0.55 });
@@ -363,7 +369,11 @@ class LibraryScene extends Scene3D {
       shaft.rotation.x = -(Math.PI / 2 - tilt);
       shaft.layers.set(1);
       s.add(shaft);
+      this.shafts.push(shaft);
     });
+    this.shaftMotes = makeMotes({ count: 46, box: [8, 6.5, 26], center: [0, 3.6, -50], color: 0xdccbff, size: 0.09, k: 1.25 });
+    this.shaftMotes.layers.set(1);
+    s.add(this.shaftMotes);
     // holo-books: two pages of light standing open over each lectern, lines of text running up them
     this.holoMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 } },
@@ -383,8 +393,8 @@ class LibraryScene extends Scene3D {
     const hb = [], tints = [[0.25, 0.95, 1.0], [1.0, 0.3, 0.85], [1.0, 0.85, 0.35], [0.55, 1.0, 0.45]];
     this.lecterns.forEach(([x, z], i) => {
       [-1, 1].forEach((sd) => {
-        const pg = new THREE.PlaneGeometry(0.72, 0.96);
-        pg.applyMatrix4(racerM(x + sd * 0.36, 3.05, z, 1, 1, 1, -0.25, sd * -0.32));
+        const pg = new THREE.PlaneGeometry(1.0, 1.34);
+        pg.applyMatrix4(racerM(x + sd * 0.5, 3.25, z, 1, 1, 1, -0.25, sd * -0.32));
         const n = pg.attributes.position.count;
         pg.setAttribute("aTint", new THREE.Float32BufferAttribute(Array.from({ length: n * 3 }, (_, k) => tints[i % 4][k % 3]), 3));
         pg.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Array(n).fill(i * 7.3 + sd), 1));
@@ -416,7 +426,7 @@ class LibraryScene extends Scene3D {
     box.dispose();
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(1, 1, 1);
     this.camBase.set(0, LIB_EYE, 6);
-    this.lookAt.set(0, LIB_EYE - 0.94, -30);
+    this.lookAt.set(0, LIB_EYE - 1.3, -30);
     this.lt = 0;
   }
   // Where a loose page starts (or starts again, once it has risen out of sight).
@@ -437,10 +447,18 @@ class LibraryScene extends Scene3D {
     });
     this.pageMesh.instanceMatrix.needsUpdate = true;
     this.camBase.set(Math.sin(lt * 0.07) * 0.3 + Pointer.x * 0.25, LIB_EYE + Math.sin(lt * 0.09) * 0.12 - Pointer.y * 0.15, 5.2 + Math.sin(lt * 0.05) * 1.0);
-    this.pan += ((this.reading ? -5.4 : 0) - this.pan) * Math.min(1, dt * 2.5);
-    this.lookAt.set(Math.sin(lt * 0.04) * 0.4 + this.pan, LIB_EYE - 0.94 - this.pan * 0.3, -30); // (and lifts, so the window sits in the banner's height)
+    const rk = (this.readK += ((this.reading ? 1 : 0) - this.readK) * Math.min(1, dt * 2.5));
+    this.lookAt.set(Math.sin(lt * 0.04) * 0.4 - 8.6 * rk, LIB_EYE - 1.3 + 4.3 * rk, -30);
+    if (Math.abs(this.camera.fov - (58 + 30 * rk)) > 0.01) { this.camera.fov = 58 + 30 * rk; this.camera.updateProjectionMatrix(); }
+    const post = this.scene.userData.post;
+    post.saturation = 1.22 - 1.1 * rk;
+    post.tint = [1 - 0.22 * rk, 1 - 0.46 * rk, 1 + 0.6 * rk];
+    post.contrast = 1.14 + 0.24 * rk;
+    post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
     this.motes.userData.drift(lt);
+    this.shaftMotes.userData.drift(lt * 0.8);
+    this.shafts.forEach((sh, i) => { sh.material.uniforms.uI.value = 0.55 * (0.72 + 0.28 * Math.sin(lt * 1.05 + i * 1.9)); }); // each shaft swells and thins on its own time (about six seconds)
     FX.sync(this.scene, lt);
   }
   dispose() {

@@ -1073,7 +1073,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
    its height when a search starts or ends (redrawing the ground on every frame of that showed the scene through). */
 .ch-banner { position: relative; display: grid; gap: 8px; padding: 15px 14px 14px; margin: 0 0 14px; min-height: 84px; align-content: center;
   outline: 4px solid #2b1c6e; outline-offset: -4px; box-shadow: 0 0 0 9999px #0b0527, 0 0 0 2px #000, 0 0 0 4px var(--violet), inset 0 0 0 5px #000; }
-.ch-banner::before { content: ""; position: absolute; inset: 5px; pointer-events: none; background: linear-gradient(90deg, rgba(11, 5, 39, 0.94) 0, rgba(11, 5, 39, 0.84) 44%, rgba(11, 5, 39, 0.3) 78%, rgba(11, 5, 39, 0.42) 100%); }
+.ch-banner::before { content: ""; position: absolute; inset: 5px; pointer-events: none; background: linear-gradient(90deg, rgba(11, 5, 39, 0.94) 0, rgba(11, 5, 39, 0.84) 44%, rgba(11, 5, 39, 0.26) 76%, rgba(11, 5, 39, 0.3) calc(100% - 16px), rgba(11, 5, 39, 0.96) 100%); }
 .guide-lib .wrap > .ch-banner { z-index: 0; }
 .ch-banner > * { position: relative; }
 .ch-banner .kick { font: 400 9px/1.5 var(--font-display); color: #d9ccff; letter-spacing: 0.08em; text-shadow: 0 1px 0 #000, 0 0 6px #000; }
@@ -1111,3 +1111,234 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .face.front .fmain.short { font-size: clamp(36px, 9.2vw, 52px); }
 .grade .btn { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 84%, #fff) 0, var(--c) 44%, color-mix(in srgb, var(--c) 70%, #000) 100%);
   box-shadow: 0 0 0 2px #000, 0 6px 0 #000, inset 0 0 0 2px rgba(0, 0, 0, 0.3), inset 0 5px 0 rgba(255, 255, 255, 0.36), inset 0 -6px 0 rgba(0, 0, 0, 0.2); filter: saturate(0.9); }
+
+/* Strategy Guide, fourth independent review. The window is a little taller (floor shows under the desk); the
+   smallest captions are larger and lighter; the results count stands clear of the first result; the head bar has
+   an edge for the notes to slide under. */
+.lib-window { height: clamp(170px, 34vh, 330px); }
+.hit .hr { font-size: 10px; color: #b9b0ff; }
+.gsec h3 span { font-size: 10px; color: #b9b0ff; }
+.guide-lib [data-body] > .label { margin-bottom: 8px; }
+.guide-lib .topbar { box-shadow: 0 2px 0 #4b3bb0; }
+
+/* Memory Bank, third independent review. The band behind the HUD is solid ground too (a miss's red light showed
+   behind it and stopped dead at the gutters). The card turns with less perspective, so it stays in its lane. The
+   dial's ring behind a term fades where the term's lines pass. A hint breaks before a separating dot, never after. */
+.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(3, 9, 7, 0.996); }
+.scr-game .card-stage.below { perspective: 2200px; }
+.face.front::after {
+  -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%), linear-gradient(180deg, #000 0, #000 30%, transparent 40%, transparent 60%, #000 70%, #000 100%);
+  -webkit-mask-composite: source-in; mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%), linear-gradient(180deg, #000 0, #000 30%, transparent 40%, transparent 60%, #000 70%, #000 100%);
+  mask-composite: intersect;
+}
+.face .fhint span { white-space: nowrap; }
+
+/* Boss Rush, second independent review (these hold for every quiz). A marked answer carries its tick or cross
+   inside its right end (it straddled the button's corner). The topic line over a question is larger. The answers
+   stand on ground of their own: the scene no longer shows between the buttons or through a dimmed one. The boss's
+   attack row leaves with the boss. */
+.ans.good .k::after, .ans.bad .k::after { content: none; }
+.ans.good, .ans.bad { position: relative; padding-right: 40px; }
+.ans.good::after, .ans.bad::after {
+  position: absolute; right: 9px; top: 50%; width: 24px; height: 24px; margin-top: -12px; display: grid; place-items: center; border-radius: 50%;
+  font: 700 15px/1 Arial, "Segoe UI Symbol", sans-serif; color: #06021a;
+  box-shadow: 0 0 0 2px #06021a, 0 2px 0 2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: mark-pop 0.32s var(--ease-spring, cubic-bezier(0.3, 1.5, 0.5, 1)) 0.08s backwards;
+}
+.ans.good::after { content: "\2713"; background: #b4ff96; }
+.ans.bad::after { content: "\2715"; background: #ff8a9d; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .ans.good::after, .ans.bad::after { animation: none !important; } }
+.qmeta { font-size: 9px; color: #ddd3ff; }
+.scr-game .answers { position: relative; }
+.scr-game .answers::before { content: ""; position: absolute; z-index: -1; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); top: -10px; bottom: calc(var(--gut-b) * -1 - 8px); pointer-events: none;
+  background: linear-gradient(180deg, rgba(13, 6, 32, 0), rgba(13, 6, 32, 0.95) 12px, rgba(13, 6, 32, 0.97)); }
+.scr-game.finale .barrow.threat { visibility: hidden; }
+
+/* Title, after its independent review. The wordmark stands on a feathered shade of its own (signs behind its
+   ends frayed its outline). The top row sits on a shade. A tip's heading has its own line and its text is set
+   left; the plate is wide and tall enough for the longest tip, so INSERT COIN never moves when the tip changes. */
+.logo { position: relative; }
+.logo::before { content: ""; position: absolute; z-index: -1; left: -6%; right: -6%; top: 16%; bottom: -8%; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(16, 5, 44, 0.62) 0, rgba(16, 5, 44, 0.5) 46%, rgba(16, 5, 44, 0) 72%); }
+.scr-title::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: calc(var(--gut-t) + 46px); pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 4, 32, 0.86), rgba(10, 4, 32, 0)); }
+.attract { max-width: min(100%, 340px); min-height: 7.6em; text-align: left; padding: 10px 16px 12px; }
+.attract > span { display: grid; gap: 6px; }
+.attract b { display: block; font: 400 8px/1.5 var(--font-display); letter-spacing: 0.06em; color: var(--lime); }
+.attract i { font-style: normal; text-wrap: pretty; }
+
+/* Arcade Hub, after its independent review. The card is one height for all six cabinets: the copy has four
+   lines' room and sits in the middle of it, the dots share the stat's row (each in its own cabinet's colour) and
+   nothing hangs under the button, so more of the floor shows in front of the cabinet. A cabinet's name is a
+   lighter tint of its colour (the Final Exam's violet was dark on the card's violet). */
+.hub-card { padding: 12px 14px 14px; gap: 8px; }
+.hub-desc { --fs: clamp(19px, 4.4vw, 22px); font-size: var(--fs); height: calc(var(--fs) * 4.4); min-height: 0; margin: 0; display: grid; align-content: center; overflow: hidden; }
+.hub-desc > span { display: block; font-size: var(--fs); line-height: 1.1; text-wrap: balance; }
+.hub-meta { flex-wrap: nowrap; align-items: center; white-space: nowrap; margin: 2px 0; }
+.hub-meta .dots { flex: none; gap: 5px; }
+.dots i { width: 10px; height: 10px; background: var(--line); background: color-mix(in srgb, var(--d, var(--line)) 44%, #0d0628); }
+.dots i.on { background: var(--d, var(--c)); box-shadow: 0 0 7px var(--d, var(--c)); transform: scale(1.2); }
+.hub-name { color: color-mix(in srgb, var(--c) 60%, #fff); text-shadow: 0 0 12px var(--c), 0 2px 0 rgba(0, 0, 0, 0.55); }
+.hub-tag { font-size: clamp(15px, calc((100vw - 168px) / 11.5), 19px); } /* the longest tag keeps to one line on a 360 px phone, so the card's height holds there too */
+
+/* Nest Egg Run, after its independent review. The HUD row fits with two insurance shields in it (it used to push
+   the pause button past the gutter): a tighter gap, smaller shields, hearts a size down. The gain of a right
+   answer pops large over the car. */
+.scr-racer .hud { gap: 6px; }
+.scr-racer .hud > * { flex: none; }
+.scr-racer .hud .grow { flex: 1 1 0; min-width: 0; }
+.scr-racer .hud .egg { min-width: 0; }
+.scr-racer .hud .egg small { font-size: clamp(7px, 2.05vw, 8px); white-space: nowrap; }
+.scr-racer .hud .combo { font-size: 9px; }
+.scr-racer .lives svg { width: 16px; height: 16px; }
+.scr-racer [data-ins] { gap: 2px; }
+.scr-racer [data-ins]:empty { display: none; }
+.scr-racer [data-ins] svg { width: 14px; height: 14px; }
+.floater.big { font-size: clamp(18px, 5.6vw, 24px); letter-spacing: 0.02em; text-shadow: 0 3px 0 #000, 0 0 16px var(--c, var(--yellow)); white-space: nowrap; }
+/* A loss's minus sign (a fallback glyph that sat on the baseline like an underscore) stands at the middle of its figures. */
+.verdict .minus { display: inline-block; transform: translateY(-0.34em); }
+/* A chosen answer: a solid violet plate inside a white ring, the same for every slot (so it says nothing about
+   right or wrong, in the exam above all), with its text light. It replaces a pale plate that was the brightest,
+   least on-palette thing on the screen. */
+.ans.sel, body:not(.crt-off) .ans.sel {
+  background: linear-gradient(180deg, #6f58ee, #4a35bd);
+  color: #fff; text-shadow: 0 1px 0 rgba(12, 5, 44, 0.85);
+  box-shadow: 0 0 0 3px #fff, 0 0 26px -2px rgba(196, 182, 255, 0.95), 0 4px 0 2px #000;
+}
+
+/* ================= Interface, after its independent review =================
+   Neon is spent on state, not on outlines: borders are panel violet, cyan means "on", and each screen lights one
+   thing. */
+/* Secondary text a step lighter (it was dim and striped by the scanlines); the smallest labels a size up. */
+:root { --dim: #cbc3f6; }
+.tile .k { font-size: 9px; color: #cfc7f8; }
+.stage .meta { font-size: 9px; }
+.pc-xp { text-wrap: balance; }
+.setting .sl small { color: #cbc3f6; }
+/* Stage select: the stage to play next is the one lit row; the rest keep a quiet border. */
+.stage.focal {
+  border-color: var(--c, var(--cyan));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 46%), color-mix(in srgb, var(--c, var(--cyan)) 17%, rgba(24, 14, 68, 0.86));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 18px -1px var(--c, var(--cyan)), 0 5px 0 rgba(0, 0, 0, 0.6);
+}
+.stage.focal .t { color: #fff; }
+/* A card that cannot be used yet is muted violet with a lock on it (its dark red read as a fault). */
+.stage.wide[disabled] { --c: #9a8fd6 !important; opacity: 0.62; }
+.stage.wide[disabled] .wico svg { color: #9a8fd6; }
+/* Boss pictures (stage rows, the results medal): the armour is lifted off black and stands on a plate of its colour. */
+.scr-select.is-boss .stage .n.pic canvas, .scr-select.is-boss .wpic { filter: brightness(1.5) contrast(0.94); background: color-mix(in srgb, var(--c) 22%, #120838); }
+.res-hero > canvas { filter: brightness(1.5) contrast(0.94); background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--c) 36%, #1a0d46), #0b0426 78%); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 70%, #fff); }
+/* Stat tiles are read-outs, not buttons: sunk into the page, no drop shadow, the figure on the bottom line
+   whatever its label's length. Three of them make one row. */
+.tile {
+  background: linear-gradient(180deg, rgba(3, 1, 14, 0.8), rgba(14, 7, 42, 0.74));
+  border: 1px solid rgba(150, 122, 255, 0.36);
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.75), inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  align-content: space-between; padding: 9px 9px 8px;
+}
+.tiles { grid-template-columns: repeat(6, 1fr); }
+.tiles .tile { grid-column: span 3; }
+.tiles .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.tiles .tile:first-child:nth-last-child(3), .tiles .tile:first-child:nth-last-child(3) ~ .tile { grid-column: span 2; }
+.tiles .tile:first-child:nth-last-child(3) .k, .tiles .tile:first-child:nth-last-child(3) ~ .tile .k { font-size: 8px; }
+/* Setup, the effect switches: quiet chips (panel border, 44 px tall) with a lamp that is lit cyan or hollow. */
+.seg.wrap button, .seg.wrap button[aria-pressed="true"] { min-height: 44px; background: rgba(10, 5, 34, 0.72); border-color: rgba(150, 122, 255, 0.38); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.seg.wrap button { color: #bdb4ee; }
+.seg.wrap button[aria-pressed="true"] { color: #f1fbff; }
+.seg.wrap button::before { width: 10px; height: 10px; background: transparent; box-shadow: inset 0 0 0 2px #5d4db0; }
+.seg.wrap button[aria-pressed="true"]::before { background: var(--cyan); box-shadow: 0 0 9px var(--cyan), inset 0 -2px 0 rgba(0, 0, 0, 0.28), inset 0 2px 0 rgba(255, 255, 255, 0.5); }
+/* One secondary button everywhere (pause, results, the exam's grid, the guide): dark, a panel-violet edge, a white label. */
+.btn.ghost, .ch-hero .acts .btn.ghost {
+  background: linear-gradient(180deg, rgba(34, 19, 88, 0.94), rgba(13, 7, 42, 0.95)); color: #fff;
+  box-shadow: 0 4px 0 #000, inset 0 0 0 2px #5a48b4, inset 0 3px 0 rgba(255, 255, 255, 0.07);
+}
+.btn.ghost svg { color: var(--c, currentColor); }
+.btn.ghost[data-act="reset"] { color: #ff9aac; box-shadow: 0 4px 0 #000, inset 0 0 0 2px #8a3a58, inset 0 3px 0 rgba(255, 255, 255, 0.07); }
+/* Lists end in a fade above whatever is pinned under them, never in a glyph cut by a hard edge; a pinned bar has a lit top edge. */
+.scr-results .scroll, .scr-select .scroll { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 30px), transparent); }
+.actions.pinned { box-shadow: inset 0 2px 0 rgba(150, 122, 255, 0.5), 0 -12px 22px -10px rgba(4, 1, 18, 0.9); }
+/* Results: the rank is a strip across the page, gold-edged like the rank card on the stats page, with a thick bar. */
+.res-rank { position: relative; margin: 0 0 12px; }
+.res-rank .rank { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px 12px; width: 100%; padding: 10px 12px; border-color: rgba(255, 225, 79, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 16px -4px rgba(255, 225, 79, 0.6), 0 4px 0 rgba(0, 0, 0, 0.55); }
+.res-rank .rank .rn { font-size: 10px; }
+.res-rank .rank .meter { height: 8px; }
+.res-rank[data-xp] .rank { padding-right: 92px; }
+.res-rank[data-xp]::after { content: attr(data-xp); position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: 9px/1 var(--font-display); color: var(--yellow); white-space: nowrap; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7); pointer-events: none; }
+/* The exam's question grid: answered cells are filled (the same neutral violet as a chosen answer: it says nothing
+   about right or wrong), open ones are hollow, a flag is an orange corner, the question you are on has a white
+   ring; a key says so. Its title and its second button are no longer the dimmest things on it. */
+.dialog h2 { color: color-mix(in srgb, var(--c, var(--cyan)) 62%, #fff); }
+.pal-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; margin: -2px 0 2px; font: 7px/1 var(--font-display); color: #cbc3f6; }
+.pal-key span { display: inline-flex; align-items: center; gap: 5px; }
+.pal-key i { width: 11px; height: 11px; display: block; box-shadow: inset 0 0 0 1px #5d4db0; background: rgba(10, 5, 34, 0.8); position: relative; }
+.pal-key i.done { background: linear-gradient(180deg, #6f58ee, #4a35bd); box-shadow: none; }
+.pal-key i.flag { background: linear-gradient(225deg, var(--orange) 0 42%, rgba(10, 5, 34, 0.8) 43%); }
+.pal-key i.here { box-shadow: inset 0 0 0 2px #fff; }
+.palette button { background: rgba(10, 5, 34, 0.8); border: 1px solid #5d4db0; color: #cbc3f6; position: relative; }
+.palette button.done { background: linear-gradient(180deg, #6f58ee, #4a35bd); border-color: #8f7cf6; color: #fff; }
+.palette button.flag { border-color: #5d4db0; color: #cbc3f6; background-image: linear-gradient(225deg, var(--orange) 0 9px, transparent 10px); }
+.palette button.done.flag { background-image: linear-gradient(225deg, var(--orange) 0 9px, transparent 10px), linear-gradient(180deg, #6f58ee, #4a35bd); border-color: #8f7cf6; color: #fff; }
+.palette button.here { background-color: transparent; box-shadow: 0 0 0 2px #fff, 0 0 12px -2px #fff; color: #fff; }
+.palette { margin-bottom: 8px; }
+/* Loading: the first screen is not the plainest. A large wordmark, a bar of segments, the floor grid running to the horizon. */
+#boot { overflow: hidden; gap: 22px; }
+#boot::before { content: ""; position: absolute; left: -30%; right: -30%; top: 56%; bottom: -10%; pointer-events: none; opacity: 0.5;
+  background: repeating-linear-gradient(90deg, rgba(255, 58, 212, 0.55) 0 1px, transparent 1px 44px), repeating-linear-gradient(180deg, rgba(255, 58, 212, 0.5) 0 1px, transparent 1px 30px);
+  transform: perspective(300px) rotateX(62deg); transform-origin: 50% 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent); }
+#boot::after { content: ""; position: absolute; left: 0; right: 0; top: 56%; height: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(53, 239, 255, 0.8), transparent); box-shadow: 0 0 18px 2px rgba(53, 239, 255, 0.45); }
+#boot > * { position: relative; z-index: 1; }
+.boot-logo { font-size: clamp(16px, 5.5vw, 26px); gap: 10px; }
+.boot-logo b { font-size: clamp(38px, 14.5vw, 76px); letter-spacing: 0.02em; }
+.boot-bar { width: min(70vw, 300px); height: 14px; padding: 2px; border-color: rgba(255, 255, 255, 0.5);
+  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 13px); mask-image: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 13px); }
+.boot-tip { font-size: 10px; color: #d8cffb; }
+/* The focus ring is white inside a dark gap (a saturated yellow one fought the gold of titles, ranks and stars). */
+:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.btn:focus-visible, .iconbtn:focus-visible, .stage:focus-visible, .ans:focus-visible, .palette button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.scr-results .scroll > .wrap, .scr-select .scroll > .wrap { padding-bottom: 34px; } /* (the last row scrolls clear of the fade) */
+
+/* Risk Blaster, after its independent review: the scene fades into the answers at its foot (the fighter's trails
+   were cut by the first button's edge); the streak pips are large enough to read; answers break evenly. */
+.scr-blaster .band { position: relative; }
+.scr-blaster .band::after { content: ""; position: absolute; left: -16px; right: -16px; bottom: -2px; height: 26px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0), rgba(7, 2, 26, 0.86)); }
+.combo-meter i { width: 6px; height: 6px; }
+.scr-game .hud .tag, .scr-game .hud small { font-size: 10px; }
+.answers .ans { text-wrap: balance; }
+
+/* Final Exam, after its independent review. The bar under the HUD is the clock's (yellow, like the clock): it
+   drains with the time. Answers are a size larger and stand on a scrim (slivers of the boss showed between
+   them); the flag button is a full touch target; the grid has a line and room above SUBMIT. */
+.scr-exam .timer i { background: linear-gradient(90deg, #ffb13a, var(--yellow)); box-shadow: 0 0 10px -2px var(--yellow); }
+.scr-exam .answers .ans { font-size: clamp(19px, 5vw, 22px); }
+.scr-exam .answers { position: relative; }
+.scr-exam .answers::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -14px; bottom: -70px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(7, 2, 26, 0), rgba(7, 2, 26, 0.93) 16px, rgba(7, 2, 26, 0.96)); }
+.exam-nav { position: relative; z-index: 1; }
+.exam-nav [data-act="flag"] { min-width: 46px; padding-left: 12px; padding-right: 12px; }
+.dialog .palette + .btn { margin-top: 16px; position: relative; }
+.dialog .palette + .btn::before { content: ""; position: absolute; left: 0; right: 0; top: -13px; height: 1px; background: rgba(150, 122, 255, 0.45); }
+/* Arcade Hub: a shade under the top bar and the mission banner (fragments of wall signs and the window band showed between them). */
+.scr-hub::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: calc(var(--gut-t) + 168px); pointer-events: none;
+  background: linear-gradient(180deg, rgba(7, 2, 26, 0.94) 0, rgba(7, 2, 26, 0.8) 62%, rgba(7, 2, 26, 0)); }
+
+/* Memory Bank, closing fixes after its last independent review. The window's pulse is a ring on its own frame
+   (as a drop-shadow it lit the dark ground round the window too, a hard-sided block over the HUD); a deposit holds
+   its green for a beat, so a success is no quieter than a miss. The card's topic label is brighter. The swipe hint
+   starts a line of its own and never begins a line with a separator. */
+.vault-window { outline: 3px solid transparent; outline-offset: 0; }
+.vault-window.bank { animation: vault-bank 0.95s ease-out; }
+.vault-window.miss { animation: vault-miss 0.7s ease-out; }
+@keyframes vault-bank { 0%, 38% { border-color: #a6ffb9; outline-color: rgba(120, 255, 150, 0.95); filter: none; } 100% { border-color: rgba(255, 201, 61, 0.8); outline-color: rgba(120, 255, 150, 0); filter: none; } }
+@keyframes vault-miss { 0%, 20% { border-color: #ff8c9f; outline-color: rgba(255, 77, 109, 0.95); filter: none; } 100% { border-color: rgba(255, 201, 61, 0.8); outline-color: rgba(255, 77, 109, 0); filter: none; } }
+.face .ftopic { color: #f1ecff; font-size: 10px; }
+.face .fhint .lead { display: block; margin-bottom: 3px; }
+
+/* Strategy Guide, closing fixes after its last independent review. A stage row's meter is the chapter page's
+   ten-cell meter (a thin empty bar read as a divider). A page of notes is a page: ruled faintly, its corner turned. */
+.guide-lib .stage .meter { position: relative; height: 7px; background: #241c5c; border: 0; box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6); }
+.guide-lib .stage .meter::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(11, 5, 39, 0) 0, rgba(11, 5, 39, 0) calc(10% - 2px), #0b0527 calc(10% - 2px), #0b0527 10%); }
+.scr-notes .gsec { position: relative; background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0) 0 27px, rgba(255, 255, 255, 0.035) 27px 28px); }
+.scr-notes .gsec::after { content: ""; position: absolute; right: 0; top: 0; width: 18px; height: 18px; pointer-events: none;
+  background: linear-gradient(225deg, #0b0527 0 50%, color-mix(in srgb, var(--c, var(--cyan)) 55%, #2a1c6a) 50% 100%); box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.45); }

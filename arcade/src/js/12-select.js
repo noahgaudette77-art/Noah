@@ -14,6 +14,12 @@ function showSelect(gameId) {
   Sound.play("hub");
   const isMemory = gameId === "memory", isBoss = gameId === "boss";
   const weakN = isMemory ? weakIds(ALL_FIDS).length : weakIds(ALL_QIDS).length;
+  // The one row that is lit: the stage to play next (the first boss not yet three-starred; otherwise the stage the
+  // next mission names, or the one mastered least).
+  const playable = CHAPTERS.filter((c) => (isMemory ? c.fids : c.qids).length);
+  const mis = nextMission();
+  const focal = isBoss ? playable.find((c) => (Store.state.boss[c.n] || 0) < 3)
+    : playable.find((c) => c.n === mis.ch) || playable.slice().sort((a, b) => chapterMastery(a) - chapterMastery(b))[0];
   const tile = (c) => {
     const ids = isMemory ? c.fids : c.qids;
     const mm = chapterMastery(c), m = (mm * 100).toFixed(1);
@@ -24,12 +30,12 @@ function showSelect(gameId) {
         : `<span>${ids.length} Q</span><span>${mpct(mm)}% MASTERED</span>`;
     // the row's picture: the boss that holds this chapter, or the client whose file it is
     const pic = isBoss || !!client(c.n);
-    return `<button class="stage" data-act="pick" data-sel="${c.n}" style="--c:${c.color}" ${ids.length ? "" : "disabled"}>
+    return `<button class="stage${focal && focal.n === c.n ? " focal" : ""}" data-act="pick" data-sel="${c.n}" style="--c:${c.color}" ${ids.length ? "" : "disabled"}>
       <span class="n${pic ? " pic" : ""}">${pic ? `<canvas data-pt="${c.n}" aria-hidden="true"></canvas><b>${c.n}</b>` : c.n}</span><span class="t">${esc(c.title)}</span>
       <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
       <span class="meta">${meta}</span></button>`;
   };
-  const el = UI.el(`<section class="screen scr-select" style="background:rgba(9,3,32,.55)">
+  const el = UI.el(`<section class="screen scr-select${isBoss ? " is-boss" : ""}" style="background:rgba(9,3,32,.55)">
     ${topbar("SELECT STAGE", { right: `<span class="chip" style="color:${cab.color}">${esc(cab.name)}</span>` })}
     <div class="scroll"><div class="wrap">
       <div class="quick">
@@ -41,7 +47,7 @@ function showSelect(gameId) {
           <span class="wico">${icon("play")}</span>
           <span class="t">NEXT BOSS</span><span class="meta">The first boss you haven't 3-starred</span></button>`
         : `<button class="stage wide" data-act="pick" data-sel="weak" style="--c:${COLORS.red}" ${weakN ? "" : "disabled"}>
-          <span class="wico">${icon("flag")}</span>
+          <span class="wico">${icon(weakN ? "flag" : "lock")}</span>
           <span class="t">WEAK SPOTS</span><span class="meta">${weakN ? weakN + " items you keep missing" : "None yet — play a stage first"}</span></button>`}
       </div>
       ${SECTIONS.map((s) => `<h2 class="world wbar" style="--c:${s.color}"><i>${icon(["shield", "coin", "book", "heart"][s.n - 1] || "star")}</i><span>WORLD ${s.n} · ${esc(s.title.toUpperCase())}</span></h2>

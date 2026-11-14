@@ -8,16 +8,16 @@ class TitleScene extends Scene3D {
     const s = this.scene;
     this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 52, top: 0xffd24a, bottom: 0xff1f8f, intensity: 0.86 });
-    this.sun.userData.glow.material.opacity = 0.3; // (a tighter halo: the city in front of it keeps its edges)
+    this.sun = makeNeonSun({ radius: 52, top: 0xffc640, bottom: 0xff2a86, intensity: 0.9, lift: 0.5 }); // (gold at its crown, rose where it meets the skyline)
+    this.sun.userData.glow.material.opacity = 0.4; // (a halo, but tight: the city in front of it keeps its edges)
     this.sun.position.set(0, 30, -360);
     s.add(this.sun);
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
-    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5 }));
+    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5, winK: 1.05 })); // (far windows: small lit squares, not sparks)
     // a nearer, taller layer either side of the sun: three depths of city slide past each other
     const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), mw = 0.6 * A * 240;
-    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff }); mid.position.x = sd * mw * 0.95; s.add(mid); }
+    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff, winK: 1.25 }); mid.position.x = sd * mw * 0.95; s.add(mid); }
     this.bursts = new Bursts(s);
     this.city = new TitleCity(this);
     this.life = new TitleLife(this);
@@ -100,7 +100,10 @@ function showTitle() {
   const showTip = () => {
     if (!ALL_TIPS.length) { tipEl.textContent = "Study content loading…"; return; }
     const tip = ALL_TIPS[tipI++ % ALL_TIPS.length];
-    tipEl.innerHTML = `<span><b>STAGE ${tip.ch}</b> · ${esc(tip.t)}</span>`; // (one child: the plate centres it at a fixed height, so nothing above it jumps when a tip is longer)
+    // (one child: the plate centres it at a fixed height, so nothing above it jumps when a tip is longer. A tip's
+    // own lead-in, "EXAM TIP:" or "DID YOU KNOW?", joins the stage on the heading line: every word is kept.)
+    const lead = /^([A-Z][A-Z ']{2,22}[:?])\s+(.*)$/.exec(tip.t);
+    tipEl.innerHTML = `<span><b>STAGE ${tip.ch}${lead ? " · " + esc(lead[1]) : ""}</b><i>${esc(lead ? lead[2] : tip.t)}</i></span>`;
   };
   showTip();
   let started = false;

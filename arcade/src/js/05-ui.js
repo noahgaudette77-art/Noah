@@ -99,8 +99,8 @@ const UI = {
     this.root.appendChild(b);
     setTimeout(() => b.remove(), 1400);
   },
-  floater(text, x, y, color = COLORS.yellow) {
-    const f = this.el(`<div class="floater" style="--c:${color};left:${x}px;top:${y}px">${esc(text)}</div>`);
+  floater(text, x, y, color = COLORS.yellow, big = false) {
+    const f = this.el(`<div class="floater${big ? " big" : ""}" style="--c:${color};left:${x}px;top:${y}px">${esc(text)}</div>`);
     this.root.appendChild(f);
     setTimeout(() => f.remove(), 1000);
   },
@@ -155,6 +155,9 @@ function toggleMute() {
 }
 
 // The question panel + answer buttons + explanation sheet shared by the games.
+// A minus sign set in the display face comes from a fallback font and sits on the baseline, where it reads as an
+// underscore: it is lifted to the middle of the figures it belongs to (the text itself is unchanged).
+const minusUp = (html) => html.replace(/−/g, '<span class="minus">−</span>');
 class QuizPanel {
   constructor(screenEl) {
     this.el = screenEl;
@@ -215,7 +218,7 @@ class QuizPanel {
     const r = this.round, q = r.q;
     const c = color || (ok ? COLORS.lime : COLORS.red);
     const el = UI.el(`<div class="sheet" style="--c:${c}" role="dialog" aria-label="Explanation">
-      <div class="verdict">${/^[^!]{2,12}! ./.test(title) ? `<span class="v1">${esc(title.slice(0, title.indexOf("! ") + 1))}</span> <span class="v2">${esc(title.slice(title.indexOf("! ") + 2))}</span>` : esc(title)}</div>
+      <div class="verdict">${/^[^!]{2,12}! ./.test(title) ? `<span class="v1">${esc(title.slice(0, title.indexOf("! ") + 1))}</span> <span class="v2">${minusUp(esc(title.slice(title.indexOf("! ") + 2)))}</span>` : minusUp(esc(title))}</div>
       ${ok ? "" : `<div class="answer"><b>ANSWER ${r.labels[r.correct]} ·</b> ${esc(r.correctText)}</div>`}
       <div class="explain selectable">${esc(q.explain)}</div>
       <div class="sheet-foot">

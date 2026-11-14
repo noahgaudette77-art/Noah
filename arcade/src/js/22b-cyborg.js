@@ -612,10 +612,13 @@ const CY_BASE = {
     });
   },
   coil(K) {
-    K.cyl("base", 0.5, 0.5, 2.6, 0, -3.05, 0.2, CY.BONE, 0, 0, Math.PI / 2, 12);
+    K.cyl("base", 0.5, 0.5, 2.6, 0, -3.05, 0.2, 0xbfb2a6, 0, 0, Math.PI / 2, 12);
     K.sym((sd) => { K.cyl("base", 0.62, 0.62, 0.14, sd * 1.36, -3.05, 0.2, CY.PLATE, 0, 0, Math.PI / 2, 12); K.ball("base", 0.2, sd * 1.52, -3.05, 0.2, CY.STEEL); });
-    K.plate("base", 2.2, 1.4, 0.05, 0, -3.9, 0.66, CY.BONE, -0.12, 0, 0, 0.02);
-    for (let i = 0; i < 6; i++) K.glow("base", 2, 1.7 - cyHash(i * 2.2) * 0.9, 0.05, 0.03, -0.1 - cyHash(i) * 0.2, -3.4 - i * 0.17, 0.74 + i * 0.02, 1.8, -0.12);
+    K.plate("base", 2.2, 1.4, 0.05, 0, -3.9, 0.66, 0xbfb2a6, -0.12, 0, 0, 0.02);
+    for (let i = 0; i < 6; i++) { // lines of ink down it, two of them lit like the clauses on its chest
+      const w = 1.7 - cyHash(i * 2.2) * 0.9, x = -0.1 - cyHash(i) * 0.2, y = -3.4 - i * 0.17, z = 0.74 + i * 0.02;
+      if (i === 1 || i === 4) K.glow("base", 2, w, 0.05, 0.03, x, y, z, 1.5, -0.12); else K.box("base", w, 0.045, 0.02, x, y, z, 0x221c1a, -0.12);
+    }
     K.tube("base", [0, -2.6, 0], [0, -3.0, 0.1], 0.2, CY.DARK);
   },
 };

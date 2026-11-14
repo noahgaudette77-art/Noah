@@ -23,6 +23,7 @@ function blasterDroneGeo(shape, hex) {
     L.add(box, ring(i + 0.5, 6).multiply(racerM(0, 1.39, 0.1, 0.11, 0.11, 0.06)), 0xffffff, 1);
   }
   put(B, new THREE.CylinderGeometry(0.8, 0.6, 0.5, 8), racerM(0, 0, -0.55, 1, 1, 1, Math.PI / 2), BK.GUN); // housing behind the core
+  put(L, new THREE.TorusGeometry(1.62, 0.045, 4, 44), racerM(0, 0, 0.13), 0xffffff, 0.95); // a ring of the answer's colour round it
   L.add(box, racerM(0, -0.97, 0.1, 0.34, 0.07, 0.05), 0xffffff, 0.8); // sensor slit
   if (shape === 0) {
     // four rotor pods on swept arms

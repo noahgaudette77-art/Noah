@@ -423,8 +423,8 @@ class BlasterSpace {
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.5, aura = exp(-pow((r - 0.62) * 3.4, 2.0)) * 0.1 + exp(-r * r * 2.6) * 0.04;
-          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-pow((r - 0.5) * 2.2, 2.0)) * 0.16 + exp(-r * r * 1.4) * 0.07); // a cold backlight
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.6, aura = exp(-r * r * 2.6) * 0.06;
+          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.11); // a cold backlight (no ring: it read as a pale hoop behind the demon)
           gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,

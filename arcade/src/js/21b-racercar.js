@@ -146,6 +146,30 @@ class RacerCar {
     this.paint = racerCarPaint(env, true);
     this.wheelPaint = racerCarPaint(env, false);
     this.glass = new THREE.MeshStandardMaterial({ color: 0x0a1216, metalness: 0.9, roughness: 0.07, envMap: env, envMapIntensity: 1.9, flatShading: true });
+    {
+      // What the glass shows of the street: a cyan bar from each left-hand lamp and a pink one from each right-hand
+      // lamp slide over it, front to back, as the car passes under them, and under those it holds the sky, warmer
+      // toward the tail (the horizon behind the car).
+      const sh0 = game.shared || {};
+      const U = (this.glassU = { uScroll: sh0.uScroll || { value: 0 }, uLampI: sh0.uLampI || { value: 1 }, uGlassL: { value: neon(RACER_LAMP[0], 1) }, uGlassR: { value: neon(RACER_LAMP[1], 1) },
+        uGlassSky: { value: new THREE.Color(0x3a1c40) }, uGlassSky2: { value: new THREE.Color(0x160c38) } });
+      this.glass.onBeforeCompile = (sh) => {
+        Object.assign(sh.uniforms, U);
+        sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vGlassP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlassP = position;");
+        sh.fragmentShader = sh.fragmentShader
+          .replace("#include <common>", "#include <common>\nvarying vec3 vGlassP; uniform float uScroll; uniform float uLampI; uniform vec3 uGlassL; uniform vec3 uGlassR; uniform vec3 uGlassSky; uniform vec3 uGlassSky2;")
+          .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+          {
+            float dl = mod(uScroll + ${racerF(RACER_P / 2 - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0; // how far ahead (-) or behind (+) the nearest left lamp stands
+            float dr = mod(uScroll + ${racerF(RACER_P - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0;
+            float bl = exp(-pow((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3, 2.0)) * smoothstep(0.8, -0.45, vGlassP.x);
+            float br = exp(-pow((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3, 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
+            totalEmissiveRadiance += (uGlassL * bl + uGlassR * br) * (0.34 * uLampI);
+            totalEmissiveRadiance += mix(uGlassSky2, uGlassSky, smoothstep(-0.9, 1.7, vGlassP.z)) * 0.36;
+          }`);
+      };
+      this.glass.customProgramCacheKey = () => "racer-glass-2";
+    }
     const box = new THREE.BoxGeometry(1, 1, 1);
     const cyl = new THREE.CylinderGeometry(1, 1, 1, 8);
     const hex = new THREE.CylinderGeometry(0.022, 0.022, 0.022, 6);
@@ -482,6 +506,7 @@ class RacerCar {
     this.flame += (boost - this.flame) * Math.min(1, dt * 8);
     const lamps = sky ? sky.lamps : 1;
     if (sky) this.paint.userData.rim.value.copy(sky.light).lerp(sky.horizon, 0.35).multiplyScalar(0.62);
+    if (sky && this.glassU) { this.glassU.uGlassSky.value.copy(sky.horizon).multiplyScalar(0.62); this.glassU.uGlassSky2.value.copy(sky.top).multiplyScalar(0.7); }
     ch[0] = 0.85 + 0.15 * Math.sin(t * 2.1) + this.flame * 0.5; // mint trim breathes
     ch[1] = 0.56 + 0.8 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking (lit, not a haze over the whole tail)
     ch[2] = 0.75 + 0.35 * lamps + this.flame * 0.9; // roof lamps
