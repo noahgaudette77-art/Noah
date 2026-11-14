@@ -633,6 +633,9 @@ class MemoryGame extends QuizGame {
     Trophies.check();
     this.state = "next";
     const card = $("[data-card]", this.el);
+    // say what just happened, where the card was (the coin and the vault's answer follow in the scene)
+    const cr = card.getBoundingClientRect();
+    UI.floater(kind === "again" ? "BACK IN THE DECK" : "BANKED", cr.left + cr.width / 2 - (kind === "again" ? 96 : 36), cr.top + cr.height * (kind === "again" ? 0.72 : 0.16), kind === "again" ? COLORS.red : COLORS.yellow);
     if (card.animate && !REDUCED_MOTION) {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.

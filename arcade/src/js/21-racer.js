@@ -727,7 +727,10 @@ class RacerGame extends QuizGame {
     this.keyLight.position.set(-3, 6, 6);
     this.gateLight = new THREE.PointLight(0xc9b8ff, 0, 16, 2);
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
-    s.add(this.amb, this.keyLight, this.gateLight, this.lampLight);
+    // the sun is ahead of the car: a light from there lays its colour along the roof, the hood and every top edge
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 0);
+    this.sunLight.position.set(0, 2.6, -10);
+    s.add(this.amb, this.keyLight, this.gateLight, this.lampLight, this.sunLight);
     if (GFX.ok) {
       // The car's reflections follow the career sky. Rendering an environment map
       // costs a dropped frame or two, so the whole career's maps are baked now,
@@ -1351,6 +1354,8 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
+    this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
+    this.sunLight.intensity = 1.5 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
     this.post.exposure = sky.exposure;
     this.post.bloom = sky.bloom;
     // sun rays through the skyline: strongest when the sun is low, faint at midday
@@ -1370,7 +1375,7 @@ class RacerGame extends QuizGame {
     }
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
-    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.75) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
+    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.55) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
     this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
     this.orrery.children.forEach((r, i) => { r.rotation.x += dt * (0.22 + i * 0.09); r.rotation.y += dt * (0.13 - i * 0.05); });

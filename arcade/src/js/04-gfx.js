@@ -108,7 +108,7 @@ const GFX = {
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
-      ab: this.opt.ca && this.ab > 0.05 ? this.ab : 0, // the fringe of a hit (the lens's own, toward the corners, is the pipeline's)
+      ab: this.opt.ca && this.ab > 0.05 ? 5.5 * Math.tanh(this.ab / 5.5) : 0, // the fringe of a hit, eased off at the top so the hardest blow splits the picture without tearing it in three (the lens's own fringe, toward the corners, is the pipeline's)
       dt: dt,
       flash: this.flashAmt,
       hit: this.hit,
@@ -117,7 +117,7 @@ const GFX = {
       feverCol: this.feverCol,
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
       punch: this.punch < 0.0006 || this.calm ? 0 : this.punch,
-      zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(1, this.speedBlur + this.punch * 14),
+      zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(0.72, this.speedBlur + this.punch * 9), // (streaks, not a smear: the subject stays readable through a boost or a blow)
       opt: this.opt, calm: this.calm,
       heat: this.heat,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
