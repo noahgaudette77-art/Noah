@@ -320,9 +320,10 @@ class MemoryGame extends QuizGame {
       ],
     });
     const env = this.envRT ? this.envRT.texture : null;
-    const gold = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.2 });
-    const steel = new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1 });
-    const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.5 });
+    // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
+    const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
     s.add(new THREE.AmbientLight(0x1d3a2c, 0.6));
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
@@ -485,7 +486,7 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.12, bloom: 0.95, threshold: 1.0, saturation: 1.1, contrast: 1.06, vignette: 1.25 };
+    s.userData.post = { exposure: 1.12, bloom: 0.8, threshold: 1.08, saturation: 1.12, contrast: 1.1, vignette: 1.25, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.3 };
     this.camBase.set(0, Y, this.dist);
     this.lookAt.set(0, Y, 0);
   }

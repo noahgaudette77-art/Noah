@@ -86,7 +86,7 @@ function racerWheelGeo() {
 // Gunmetal paint with what real plating has: matte where it is rubber or recess,
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
-  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.44, clearcoat: 0.5, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 0.8, flatShading: true });
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.26, envMap: env, envMapIntensity: 1.15, flatShading: true });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vCarP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvCarP = position;");
     sh.fragmentShader = sh.fragmentShader
@@ -113,7 +113,7 @@ function racerCarPaint(env, hull) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal;");
   };
   m.customProgramCacheKey = () => "racer-car-paint-" + (hull ? 1 : 0);
-  return m;
+  return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
 class RacerCar {

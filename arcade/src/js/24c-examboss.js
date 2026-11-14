@@ -1,7 +1,7 @@
 // The Final Exam's boss. The model is the player's own (arcade/assets/boss, converted
 // from a .glb by scripts/convert-boss.js): 32 rigid parts, hung here on a skeleton of
 // 19 joints. It towers over the camera on its dais: dark, worn armour under a bone
-// skull, two red coals for eyes, lit from above, from below and from behind.
+// skull, two violet-white lamps for eyes (its own colour: not the red eyes of every film robot), lit from above, from below and from behind.
 //
 // Look and sound only. While the exam is being taken it wakes, looms, breathes, watches
 // whoever is in front of it and now and then leans in or flexes a claw, all slowly and
@@ -323,13 +323,13 @@ class ExamBoss {
       warm.visible = false;
       this.root.add(warm);
     });
-    // eyes: two red coals deep in the skull's sockets, a hard streak of glare across each, their light on its face
+    // eyes: two violet-white lamps deep in the skull's sockets, a hard streak of glare across each, their light on its face
     const hp = this.J.head.pivot;
-    this.eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(5.0, 0.85, 0.24) });
-    this.eyeBase = new THREE.Color(5.0, 0.85, 0.24);
+    this.eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.3, 1.5, 5.2) });
+    this.eyeBase = new THREE.Color(2.3, 1.5, 5.2);
     this.eyes = [];
     [-0.031, 0.031].forEach((x) => {
-      const e = new THREE.Mesh(new THREE.SphereGeometry(0.0072, 10, 8), this.eyeMat), gl = glowSprite(new THREE.Color(1.5, 0.05, 0.02), 0.07, 0.9), streak = glowSprite(new THREE.Color(1.3, 0.1, 0.04), 0.1, 0.7);
+      const e = new THREE.Mesh(new THREE.SphereGeometry(0.0072, 10, 8), this.eyeMat), gl = glowSprite(new THREE.Color(0.6, 0.25, 1.6), 0.07, 0.9), streak = glowSprite(new THREE.Color(0.55, 0.3, 1.4), 0.1, 0.7);
       e.position.set(x - hp[0], 0.879 - hp[1], 0.128 - hp[2]);
       gl.position.copy(e.position); gl.position.z += 0.012;
       streak.position.copy(gl.position);
@@ -758,7 +758,7 @@ class ExamBoss {
         e.gl.material.opacity = clamp(eye * 0.85, 0, 1); e.gl.scale.setScalar(0.07 * (0.8 + 0.3 * eye));
         e.streak.material.opacity = clamp(eye * 0.5, 0, 0.85); e.streak.scale.set(0.19 * (0.7 + 0.4 * eye), 0.011, 1);
       });
-      this.eyeU.value.set(1.0, 0.085, 0.03).multiplyScalar(0.62 * eye * this.lightK);
+      this.eyeU.value.set(0.5, 0.3, 1.0).multiplyScalar(0.62 * eye * this.lightK);
       // the light under it beats, slowly, like something alive
       const live = this.mode === "idle" || this.mode === "wake" || this.mode === "rage";
       // an ember in its chest, beating with that light

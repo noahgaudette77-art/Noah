@@ -566,9 +566,9 @@ mark { background: var(--yellow); color: #12052e; }
 
 /* Strategy Guide: the archive scene shows through one window above the list; the
    window's own spread shadow is the solid ground everything else is read on. */
-.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.93), rgba(9, 3, 32, 0.93)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
-.lib-window { position: relative; height: clamp(120px, 23vh, 210px); border: 2px solid var(--violet); pointer-events: none;
-  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.93), inset 0 0 22px rgba(9, 3, 32, 0.85), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.8); }
+.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.86), rgba(9, 3, 32, 0.86)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
+.lib-window { position: relative; height: clamp(150px, 28vh, 270px); border: 2px solid var(--violet); pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.86), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }
 
@@ -588,6 +588,79 @@ mark { background: var(--yellow); color: #12052e; }
 .exam-cine .bossbar span { display: block; height: 9px; border: 2px solid #fff; background: rgba(0, 0, 0, 0.6); }
 .exam-cine .bossbar i { display: block; height: 100%; background: linear-gradient(90deg, #ff2a2a, #ff7a3a); transform-origin: left; transition: transform 0.45s ease-out; }
 @media (prefers-reduced-motion: reduce) { .exam-cine .bar, .exam-cine .bossbar i { transition: none; } }
+
+/* ---- the design system, finished (twelfth pass) -----------------------------------
+   One language for every panel, button, bar and badge. Frame rate is not a goal now,
+   so the glass is real: what is behind a floating panel blurs and deepens. Nothing
+   here changes what is written on a panel or how big it is to read. */
+:root { --ease-out: cubic-bezier(0.2, 0.9, 0.3, 1); --ease-spring: cubic-bezier(0.3, 1.45, 0.45, 1); --drop: 0 14px 30px -12px rgba(0, 0, 0, 0.85); }
+
+/* 1. floating panels: frosted glass over the live scene, a lit top edge, an inner glow of their own colour, a soft drop shadow */
+.qpanel, .answers .ans, .hub-card, .mission, .chip, .iconbtn, .sheet, .dlg, .trophy, #toast, .attract, .exam-nav, .grade, .logo-kicker, .insert-coin {
+  -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3);
+}
+.qpanel { background: linear-gradient(180deg, rgba(44, 20, 108, 0.82), rgba(12, 5, 38, 0.9)); box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--violet), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -16px 28px -14px rgba(166, 95, 255, 0.34); }
+.ans { background: linear-gradient(180deg, rgba(34, 16, 88, 0.84), rgba(10, 4, 34, 0.92)); box-shadow: 0 3px 0 #000, 0 0 18px -6px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 22px -12px var(--c); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease, opacity 0.25s ease; }
+.ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); }
+.hub-card { background-color: rgba(13, 6, 40, 0.78); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 34px -14px var(--c, var(--cyan)); }
+.sheet { background: linear-gradient(180deg, rgba(42, 19, 104, 0.93), rgba(16, 7, 48, 0.96)); box-shadow: 0 0 0 2px #000, 0 0 32px -6px var(--c, var(--lime)), 0 -10px 30px -14px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 34px -16px var(--c, var(--lime)); }
+.chip, .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.8), rgba(10, 5, 34, 0.86)); box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.14); transition: transform 0.12s var(--ease-out), border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+.iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+.mission { background: linear-gradient(180deg, rgba(66, 48, 12, 0.5), rgba(13, 6, 40, 0.88)); box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease; }
+.mission:active { transform: translateY(2px); }
+.dlg { box-shadow: 0 0 0 3px #000, 0 0 34px -6px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 30px -14px var(--c, var(--cyan)); }
+#toast, .trophy { box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+
+/* full-page screens (stats, Setup, results, the guide, stage select) are a sheet of glass over the arcade: it glows through, out of focus */
+.screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.8), rgba(6, 2, 22, 0.92)) !important; -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); }
+
+/* 2. buttons: a lit face, a glow of their own colour, a press you can feel, a sheen that crosses the big ones now and then */
+.btn { position: relative; overflow: hidden; transition: transform 0.1s var(--ease-out), box-shadow 0.16s ease, filter 0.16s ease; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.75), 0 0 24px -6px var(--c, var(--yellow)), inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.4); }
+.btn:not(.ghost):not(.small)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%); transform: translateX(-120%); animation: btn-sheen 6s ease-in-out 1.5s infinite; pointer-events: none; }
+@keyframes btn-sheen { 0%, 74% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.btn:active { transform: translateY(3px) scale(0.985); }
+.btn.ghost { box-shadow: 0 4px 0 #000, 0 0 18px -8px var(--c, var(--line)), inset 0 0 0 2px var(--c, var(--line)), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+
+/* 3. bars: a lit fill with a bright leading edge, in a recessed track */
+.meter, .timer, .charge { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.6); }
+.timer > i { background: linear-gradient(90deg, #1fb8d8, var(--cyan) 72%, #eaffff); box-shadow: 0 0 12px var(--cyan); }
+.timer.low > i { background: linear-gradient(90deg, #b01838, var(--red) 72%, #ffd0d8); box-shadow: 0 0 12px var(--red); }
+.charge > i { box-shadow: 0 0 10px var(--orange); }
+.meter > i { box-shadow: 0 0 10px -2px var(--c, var(--lime)); }
+.dots i { transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.25s var(--ease-spring); }
+.dots i.on { transform: scale(1.25); }
+
+/* 4. the HUD: the score glows; a life that goes shrinks out of line */
+.score span { text-shadow: 0 0 10px rgba(255, 225, 79, 0.8), 0 2px 0 #000; }
+.lives svg { filter: drop-shadow(0 0 5px rgba(255, 71, 105, 0.7)); transition: opacity 0.3s ease, transform 0.35s var(--ease-spring); }
+.lives .lost { transform: scale(0.78); filter: none; }
+
+/* 5. tiles, panels and rows: depth and a lit top edge; rows lift when touched */
+.tile, .panel, .stage, .review li, .client-card { box-shadow: 0 3px 0 #000, var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+.stage { transition: transform 0.14s var(--ease-out), border-color 0.18s ease, box-shadow 0.18s ease; }
+.stage:hover, .stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+.stage:active { transform: translateY(1px); }
+.tile .v { text-shadow: 0 0 10px var(--c, var(--cyan)); }
+.section-h::after { content: ""; display: block; height: 2px; margin-top: 6px; background: linear-gradient(90deg, var(--yellow), transparent 72%); opacity: 0.6; }
+.seg button { transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease; }
+.seg button[aria-pressed="true"] { box-shadow: 0 0 14px -2px var(--c, var(--cyan)), inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.25); }
+
+/* 6. the flashcard: thicker, lit from its own colour, and it turns with a little more weight */
+.face { background: linear-gradient(180deg, #26135e, #150a3c); box-shadow: 0 0 0 3px #000, 0 0 40px -8px var(--c, var(--lime)), 0 22px 40px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime)); }
+.card3d { transition: transform 0.68s cubic-bezier(0.3, 1.3, 0.45, 1); }
+
+/* 7. arrivals: on every screen but the games (whose layout the 3D view is fitted to), each block rises into place a beat after the one above it; modals swell in */
+.screen:not(.scr-game) > * { animation: rise-in 0.42s var(--ease-out) backwards; }
+.screen:not(.scr-game) > *:nth-child(2) { animation-delay: 0.05s; }
+.screen:not(.scr-game) > *:nth-child(3) { animation-delay: 0.1s; }
+.screen:not(.scr-game) > *:nth-child(4) { animation-delay: 0.15s; }
+.screen:not(.scr-game) > *:nth-child(n + 5) { animation-delay: 0.2s; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px); } }
+.modal { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); animation: fade-in 0.18s ease-out backwards; }
+.modal > * { animation: pop-in 0.3s var(--ease-spring) backwards; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.93) translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .screen > *, .modal, .modal > *, .btn::after { animation: none !important; } }
 
 </style>
 </head>
@@ -12639,7 +12712,8 @@ class RacerGame extends QuizGame {
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 1, threshold: 1, saturation: 1.14, contrast: 1.06, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 } };
+    this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+      dof: { focus: 9, near: 400, far: 260, max: 0.005, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.1, 7.4);
     this.lookAt.set(0, 1.1, -18);
@@ -13426,7 +13500,7 @@ function racerWheelGeo() {
 // Gunmetal paint with what real plating has: matte where it is rubber or recess,
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
-  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.44, clearcoat: 0.5, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 0.8, flatShading: true });
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.26, envMap: env, envMapIntensity: 1.15, flatShading: true });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vCarP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvCarP = position;");
     sh.fragmentShader = sh.fragmentShader
@@ -13453,7 +13527,7 @@ function racerCarPaint(env, hull) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal;");
   };
   m.customProgramCacheKey = () => "racer-car-paint-" + (hull ? 1 : 0);
-  return m;
+  return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
 class RacerCar {
@@ -14748,7 +14822,8 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
-    s.userData.post = { exposure: 1.08, bloom: 0.82, threshold: 1.1, saturation: 1.14, contrast: 1.1, vignette: 1.15, tint: [1, 1, 1] };
+    s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
+      dof: { focus: 16, near: 200, far: 70, max: 0.006, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
@@ -14768,12 +14843,14 @@ class BossGame extends QuizGame {
         { color: 0xffffff, pos: [4, 14, 10], w: 6, h: 1.5, k: 3.2 },
       ],
     });
-    this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.5);
+    this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.36);
     this.ambientBase = this.ambient.color.clone();
     s.add(this.ambient);
-    const key = new THREE.DirectionalLight(0xdcd4ff, 0.85);
+    const key = new THREE.DirectionalLight(0xdcd4ff, 1.1);
     key.position.set(3, 8, 10);
     s.add(key);
+    // two lights from behind, either side: the boss is edged in cyan and magenta against the dark
+    [[-11, 0x35efff], [11, 0xff3ad4]].forEach(([x, c]) => { const l = new THREE.PointLight(c, 2.4, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
     this.eyeLight = new THREE.PointLight(hex, 0.6, 26, 2);
     s.add(this.eyeLight);
     this.hitLight = new THREE.PointLight(0xffffff, 0, 30, 2);
@@ -14794,6 +14871,7 @@ class BossGame extends QuizGame {
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.makeArena();
+    this.makeCrowd();
     this.motes = makeMotes({ count: 110, box: [46, 16, 34], center: [0, 7, -10], color: hex, size: 0.2, k: 1.5 });
     this.motes.layers.set(1);
     s.add(this.motes);
@@ -14945,6 +15023,50 @@ class BossGame extends QuizGame {
   // sparks), so the fight's animation drives it unchanged.
   // Every boss is a cyborg from the kit in 22b-cyborg.js. This wraps one in what the
   // fight expects: an eye that aims the beam, a halo, orbiting gems, the charge orb.
+  // Behind the ring: four tiers of an amphitheatre curving round the back, each with a rail of the boss's colour
+  // and a crowd of lights along it (they sway, and surge when a blow lands).
+  makeCrowd() {
+    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [];
+    const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xffffff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xffd27a)];
+    for (let k = 0; k < 4; k++) {
+      const Rk = 27 + k * 6, y = 2.2 + k * 4.1, N = 44;
+      for (let i = 0; i < N; i++) {
+        const a0 = (-118 + (236 * i) / N) * (Math.PI / 180), a1 = (-118 + (236 * (i + 1)) / N) * (Math.PI / 180), am = (a0 + a1) / 2;
+        const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
+        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x15112c : 0x1b1638 });
+        rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
+        for (let j = 0; j < 3; j++) {
+          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.2 + Math.random() * 0.5, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
+          pos.push(Math.sin(a) * r, y + 2.25 + Math.random() * 0.9, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        }
+      }
+    }
+    const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.7, rough: 0.5, envI: 0.8 }), { vertexColors: true }));
+    wall.layers.set(1); // (not in the floor's reflection)
+    s.add(wall);
+    this.railMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) });
+    const rail = new THREE.Mesh(blasterMerge(rails), this.railMat);
+    rail.layers.set(1);
+    s.add(rail);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+    this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
+        void main(){
+          vec3 p = position;
+          p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
+          vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_PointSize = uPx * 260.0 / -mv.z; gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 8.0) + 0.2 * exp(-r * 2.0)), 1.0); }",
+    }));
+    this.crowd.frustumCulled = false;
+    this.crowd.layers.set(1);
+    s.add(this.crowd);
+    this.cheer = 0;
+  }
   makeBoss() {
     const hex = this.cfg.color;
     const rig = (this.rig = new CyborgRig(this, this.bossKey));
@@ -15398,6 +15520,11 @@ class BossGame extends QuizGame {
     this.lookAt.set(0, this.showY, 0);
     this.placeCamera();
     followSky(this.sky, this.camera);
+    if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
+      this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
+      const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      this.railMat.color.copy(this.capMat.color).multiplyScalar(0.6);
+    }
     FX.sync(this.scene, this.t);
   }
   dispose() {
@@ -15421,7 +15548,7 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.86, rough: 0.44, envI: 0.4, emissive: hex, emissiveK: 0.03 });
+  const m = glossy(0xffffff, { env, metal: 0.88, rough: 0.4, envI: 0.95, emissive: hex, emissiveK: 0.03 });
   m.vertexColors = true;
   const uL = { value: new Float32Array(8).fill(1) };
   m.userData.uL = uL;
@@ -15451,10 +15578,12 @@ function cyborgArmor(env, hex) {
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
         roughnessFactor = mix(mix(roughnessFactor, 0.2, cySteel), 0.8, cyBone);`)
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
-      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\nif (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;");
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
+        else totalEmissiveRadiance += emissive * 16.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor";
-  return m;
+  m.customProgramCacheKey = () => "cyborg-armor-2";
+  return surfaceDetail(m, { scale: 0.8, height: 0.0045, scratch: 1.2, smudge: 0.4 });
 }
 
 // A hull lofted through eight-sided rings [y, half-width, half-depth, chamfer], low to high.
@@ -16767,9 +16896,10 @@ class MemoryGame extends QuizGame {
       ],
     });
     const env = this.envRT ? this.envRT.texture : null;
-    const gold = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.2 });
-    const steel = new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1 });
-    const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.5 });
+    // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
+    const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
     s.add(new THREE.AmbientLight(0x1d3a2c, 0.6));
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
@@ -16932,7 +17062,7 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.12, bloom: 0.95, threshold: 1.0, saturation: 1.1, contrast: 1.06, vignette: 1.25 };
+    s.userData.post = { exposure: 1.12, bloom: 0.8, threshold: 1.08, saturation: 1.12, contrast: 1.1, vignette: 1.25, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.3 };
     this.camBase.set(0, Y, this.dist);
     this.lookAt.set(0, Y, 0);
   }
@@ -17688,9 +17818,9 @@ class ExamGame extends QuizGame {
         { color: 0x9fb0ff, k: 0.5, w: 20, h: 6, pos: [0, -14, 14] },
       ],
     });
-    const gold = new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 });
-    const lacquer = new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 });
-    const marble = new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true });
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 }), { scale: 1.4, height: 0.0012, scratch: 1.2 });
+    const lacquer = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 }), { scale: 1.1, height: 0.0008, grain: 0.5, scratch: 1.4, smudge: 0.55 });
+    const marble = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true }), { scale: 0.6, height: 0.003, smudge: 0.5 });
 
     // Light it to be feared: little ambient, a hard lamp high in front (its brow shadows
     // its eyes), red from behind on one side and cold blue on the other to cut its
@@ -17818,7 +17948,8 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, pr: 2 };
+    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+      dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
     this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
@@ -18059,6 +18190,7 @@ class ExamGame extends QuizGame {
     // from below, close, and closer still as the end nears or it leans in
     const d = this.dist * (1 - (B ? 0.08 * B.dread + 0.05 * B.menace : 0));
     this.camBase.set(Pointer.x * 0.5, EXAM_LOOK_Y - d * 0.28 + Math.sin(t * 0.3) * 0.05 - Pointer.y * 0.2, d);
+    if (this.scene.userData.post.dof) this.scene.userData.post.dof.focus = Math.max(2, d - 0.4);
     this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
     if (B && (B.mode === "die" || B.mode === "rage") && !B.quick) B.camera(dt); // the ending has its own camera
     this.placeCamera();
@@ -18301,7 +18433,7 @@ class ExamMonument {
 // The Final Exam's boss. The model is the player's own (arcade/assets/boss, converted
 // from a .glb by scripts/convert-boss.js): 32 rigid parts, hung here on a skeleton of
 // 19 joints. It towers over the camera on its dais: dark, worn armour under a bone
-// skull, two red coals for eyes, lit from above, from below and from behind.
+// skull, two violet-white lamps for eyes (its own colour: not the red eyes of every film robot), lit from above, from below and from behind.
 //
 // Look and sound only. While the exam is being taken it wakes, looms, breathes, watches
 // whoever is in front of it and now and then leans in or flexes a claw, all slowly and
@@ -18623,13 +18755,13 @@ class ExamBoss {
       warm.visible = false;
       this.root.add(warm);
     });
-    // eyes: two red coals deep in the skull's sockets, a hard streak of glare across each, their light on its face
+    // eyes: two violet-white lamps deep in the skull's sockets, a hard streak of glare across each, their light on its face
     const hp = this.J.head.pivot;
-    this.eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(5.0, 0.85, 0.24) });
-    this.eyeBase = new THREE.Color(5.0, 0.85, 0.24);
+    this.eyeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.3, 1.5, 5.2) });
+    this.eyeBase = new THREE.Color(2.3, 1.5, 5.2);
     this.eyes = [];
     [-0.031, 0.031].forEach((x) => {
-      const e = new THREE.Mesh(new THREE.SphereGeometry(0.0072, 10, 8), this.eyeMat), gl = glowSprite(new THREE.Color(1.5, 0.05, 0.02), 0.07, 0.9), streak = glowSprite(new THREE.Color(1.3, 0.1, 0.04), 0.1, 0.7);
+      const e = new THREE.Mesh(new THREE.SphereGeometry(0.0072, 10, 8), this.eyeMat), gl = glowSprite(new THREE.Color(0.6, 0.25, 1.6), 0.07, 0.9), streak = glowSprite(new THREE.Color(0.55, 0.3, 1.4), 0.1, 0.7);
       e.position.set(x - hp[0], 0.879 - hp[1], 0.128 - hp[2]);
       gl.position.copy(e.position); gl.position.z += 0.012;
       streak.position.copy(gl.position);
@@ -19058,7 +19190,7 @@ class ExamBoss {
         e.gl.material.opacity = clamp(eye * 0.85, 0, 1); e.gl.scale.setScalar(0.07 * (0.8 + 0.3 * eye));
         e.streak.material.opacity = clamp(eye * 0.5, 0, 0.85); e.streak.scale.set(0.19 * (0.7 + 0.4 * eye), 0.011, 1);
       });
-      this.eyeU.value.set(1.0, 0.085, 0.03).multiplyScalar(0.62 * eye * this.lightK);
+      this.eyeU.value.set(0.5, 0.3, 1.0).multiplyScalar(0.62 * eye * this.lightK);
       // the light under it beats, slowly, like something alive
       const live = this.mode === "idle" || this.mode === "wake" || this.mode === "rage";
       // an ember in its chest, beating with that light
@@ -19570,7 +19702,7 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.08, bloom: 0.85, threshold: 1.0, saturation: 1.06, contrast: 1.04, vignette: 1.2 };
+    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25 };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);

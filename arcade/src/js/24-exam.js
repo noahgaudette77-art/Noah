@@ -209,9 +209,9 @@ class ExamGame extends QuizGame {
         { color: 0x9fb0ff, k: 0.5, w: 20, h: 6, pos: [0, -14, 14] },
       ],
     });
-    const gold = new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 });
-    const lacquer = new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 });
-    const marble = new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true });
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 }), { scale: 1.4, height: 0.0012, scratch: 1.2 });
+    const lacquer = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 }), { scale: 1.1, height: 0.0008, grain: 0.5, scratch: 1.4, smudge: 0.55 });
+    const marble = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true }), { scale: 0.6, height: 0.003, smudge: 0.5 });
 
     // Light it to be feared: little ambient, a hard lamp high in front (its brow shadows
     // its eyes), red from behind on one side and cold blue on the other to cut its
@@ -339,7 +339,8 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, pr: 2 };
+    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+      dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
     this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
@@ -580,6 +581,7 @@ class ExamGame extends QuizGame {
     // from below, close, and closer still as the end nears or it leans in
     const d = this.dist * (1 - (B ? 0.08 * B.dread + 0.05 * B.menace : 0));
     this.camBase.set(Pointer.x * 0.5, EXAM_LOOK_Y - d * 0.28 + Math.sin(t * 0.3) * 0.05 - Pointer.y * 0.2, d);
+    if (this.scene.userData.post.dof) this.scene.userData.post.dof.focus = Math.max(2, d - 0.4);
     this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
     if (B && (B.mode === "die" || B.mode === "rage") && !B.quick) B.camera(dt); // the ending has its own camera
     this.placeCamera();

@@ -553,9 +553,9 @@ mark { background: var(--yellow); color: #12052e; }
 
 /* Strategy Guide: the archive scene shows through one window above the list; the
    window's own spread shadow is the solid ground everything else is read on. */
-.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.93), rgba(9, 3, 32, 0.93)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
-.lib-window { position: relative; height: clamp(120px, 23vh, 210px); border: 2px solid var(--violet); pointer-events: none;
-  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.93), inset 0 0 22px rgba(9, 3, 32, 0.85), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.8); }
+.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.86), rgba(9, 3, 32, 0.86)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
+.lib-window { position: relative; height: clamp(150px, 28vh, 270px); border: 2px solid var(--violet); pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.86), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }
 
@@ -575,3 +575,76 @@ mark { background: var(--yellow); color: #12052e; }
 .exam-cine .bossbar span { display: block; height: 9px; border: 2px solid #fff; background: rgba(0, 0, 0, 0.6); }
 .exam-cine .bossbar i { display: block; height: 100%; background: linear-gradient(90deg, #ff2a2a, #ff7a3a); transform-origin: left; transition: transform 0.45s ease-out; }
 @media (prefers-reduced-motion: reduce) { .exam-cine .bar, .exam-cine .bossbar i { transition: none; } }
+
+/* ---- the design system, finished (twelfth pass) -----------------------------------
+   One language for every panel, button, bar and badge. Frame rate is not a goal now,
+   so the glass is real: what is behind a floating panel blurs and deepens. Nothing
+   here changes what is written on a panel or how big it is to read. */
+:root { --ease-out: cubic-bezier(0.2, 0.9, 0.3, 1); --ease-spring: cubic-bezier(0.3, 1.45, 0.45, 1); --drop: 0 14px 30px -12px rgba(0, 0, 0, 0.85); }
+
+/* 1. floating panels: frosted glass over the live scene, a lit top edge, an inner glow of their own colour, a soft drop shadow */
+.qpanel, .answers .ans, .hub-card, .mission, .chip, .iconbtn, .sheet, .dlg, .trophy, #toast, .attract, .exam-nav, .grade, .logo-kicker, .insert-coin {
+  -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3);
+}
+.qpanel { background: linear-gradient(180deg, rgba(44, 20, 108, 0.82), rgba(12, 5, 38, 0.9)); box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--violet), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -16px 28px -14px rgba(166, 95, 255, 0.34); }
+.ans { background: linear-gradient(180deg, rgba(34, 16, 88, 0.84), rgba(10, 4, 34, 0.92)); box-shadow: 0 3px 0 #000, 0 0 18px -6px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 22px -12px var(--c); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease, opacity 0.25s ease; }
+.ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); }
+.hub-card { background-color: rgba(13, 6, 40, 0.78); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 34px -14px var(--c, var(--cyan)); }
+.sheet { background: linear-gradient(180deg, rgba(42, 19, 104, 0.93), rgba(16, 7, 48, 0.96)); box-shadow: 0 0 0 2px #000, 0 0 32px -6px var(--c, var(--lime)), 0 -10px 30px -14px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 34px -16px var(--c, var(--lime)); }
+.chip, .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.8), rgba(10, 5, 34, 0.86)); box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.14); transition: transform 0.12s var(--ease-out), border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+.iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+.mission { background: linear-gradient(180deg, rgba(66, 48, 12, 0.5), rgba(13, 6, 40, 0.88)); box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease; }
+.mission:active { transform: translateY(2px); }
+.dlg { box-shadow: 0 0 0 3px #000, 0 0 34px -6px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 30px -14px var(--c, var(--cyan)); }
+#toast, .trophy { box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+
+/* full-page screens (stats, Setup, results, the guide, stage select) are a sheet of glass over the arcade: it glows through, out of focus */
+.screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.8), rgba(6, 2, 22, 0.92)) !important; -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); }
+
+/* 2. buttons: a lit face, a glow of their own colour, a press you can feel, a sheen that crosses the big ones now and then */
+.btn { position: relative; overflow: hidden; transition: transform 0.1s var(--ease-out), box-shadow 0.16s ease, filter 0.16s ease; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.75), 0 0 24px -6px var(--c, var(--yellow)), inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.4); }
+.btn:not(.ghost):not(.small)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%); transform: translateX(-120%); animation: btn-sheen 6s ease-in-out 1.5s infinite; pointer-events: none; }
+@keyframes btn-sheen { 0%, 74% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.btn:active { transform: translateY(3px) scale(0.985); }
+.btn.ghost { box-shadow: 0 4px 0 #000, 0 0 18px -8px var(--c, var(--line)), inset 0 0 0 2px var(--c, var(--line)), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+
+/* 3. bars: a lit fill with a bright leading edge, in a recessed track */
+.meter, .timer, .charge { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.6); }
+.timer > i { background: linear-gradient(90deg, #1fb8d8, var(--cyan) 72%, #eaffff); box-shadow: 0 0 12px var(--cyan); }
+.timer.low > i { background: linear-gradient(90deg, #b01838, var(--red) 72%, #ffd0d8); box-shadow: 0 0 12px var(--red); }
+.charge > i { box-shadow: 0 0 10px var(--orange); }
+.meter > i { box-shadow: 0 0 10px -2px var(--c, var(--lime)); }
+.dots i { transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.25s var(--ease-spring); }
+.dots i.on { transform: scale(1.25); }
+
+/* 4. the HUD: the score glows; a life that goes shrinks out of line */
+.score span { text-shadow: 0 0 10px rgba(255, 225, 79, 0.8), 0 2px 0 #000; }
+.lives svg { filter: drop-shadow(0 0 5px rgba(255, 71, 105, 0.7)); transition: opacity 0.3s ease, transform 0.35s var(--ease-spring); }
+.lives .lost { transform: scale(0.78); filter: none; }
+
+/* 5. tiles, panels and rows: depth and a lit top edge; rows lift when touched */
+.tile, .panel, .stage, .review li, .client-card { box-shadow: 0 3px 0 #000, var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+.stage { transition: transform 0.14s var(--ease-out), border-color 0.18s ease, box-shadow 0.18s ease; }
+.stage:hover, .stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+.stage:active { transform: translateY(1px); }
+.tile .v { text-shadow: 0 0 10px var(--c, var(--cyan)); }
+.section-h::after { content: ""; display: block; height: 2px; margin-top: 6px; background: linear-gradient(90deg, var(--yellow), transparent 72%); opacity: 0.6; }
+.seg button { transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease; }
+.seg button[aria-pressed="true"] { box-shadow: 0 0 14px -2px var(--c, var(--cyan)), inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.25); }
+
+/* 6. the flashcard: thicker, lit from its own colour, and it turns with a little more weight */
+.face { background: linear-gradient(180deg, #26135e, #150a3c); box-shadow: 0 0 0 3px #000, 0 0 40px -8px var(--c, var(--lime)), 0 22px 40px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime)); }
+.card3d { transition: transform 0.68s cubic-bezier(0.3, 1.3, 0.45, 1); }
+
+/* 7. arrivals: on every screen but the games (whose layout the 3D view is fitted to), each block rises into place a beat after the one above it; modals swell in */
+.screen:not(.scr-game) > * { animation: rise-in 0.42s var(--ease-out) backwards; }
+.screen:not(.scr-game) > *:nth-child(2) { animation-delay: 0.05s; }
+.screen:not(.scr-game) > *:nth-child(3) { animation-delay: 0.1s; }
+.screen:not(.scr-game) > *:nth-child(4) { animation-delay: 0.15s; }
+.screen:not(.scr-game) > *:nth-child(n + 5) { animation-delay: 0.2s; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px); } }
+.modal { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); animation: fade-in 0.18s ease-out backwards; }
+.modal > * { animation: pop-in 0.3s var(--ease-spring) backwards; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.93) translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .screen > *, .modal, .modal > *, .btn::after { animation: none !important; } }

@@ -773,7 +773,8 @@ class RacerGame extends QuizGame {
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 1, threshold: 1, saturation: 1.14, contrast: 1.06, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 } };
+    this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+      dof: { focus: 9, near: 400, far: 260, max: 0.005, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.1, 7.4);
     this.lookAt.set(0, 1.1, -18);

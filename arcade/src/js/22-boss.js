@@ -81,7 +81,8 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
-    s.userData.post = { exposure: 1.08, bloom: 0.82, threshold: 1.1, saturation: 1.14, contrast: 1.1, vignette: 1.15, tint: [1, 1, 1] };
+    s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
+      dof: { focus: 16, near: 200, far: 70, max: 0.006, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
@@ -101,12 +102,14 @@ class BossGame extends QuizGame {
         { color: 0xffffff, pos: [4, 14, 10], w: 6, h: 1.5, k: 3.2 },
       ],
     });
-    this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.5);
+    this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.36);
     this.ambientBase = this.ambient.color.clone();
     s.add(this.ambient);
-    const key = new THREE.DirectionalLight(0xdcd4ff, 0.85);
+    const key = new THREE.DirectionalLight(0xdcd4ff, 1.1);
     key.position.set(3, 8, 10);
     s.add(key);
+    // two lights from behind, either side: the boss is edged in cyan and magenta against the dark
+    [[-11, 0x35efff], [11, 0xff3ad4]].forEach(([x, c]) => { const l = new THREE.PointLight(c, 2.4, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
     this.eyeLight = new THREE.PointLight(hex, 0.6, 26, 2);
     s.add(this.eyeLight);
     this.hitLight = new THREE.PointLight(0xffffff, 0, 30, 2);
@@ -127,6 +130,7 @@ class BossGame extends QuizGame {
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.makeArena();
+    this.makeCrowd();
     this.motes = makeMotes({ count: 110, box: [46, 16, 34], center: [0, 7, -10], color: hex, size: 0.2, k: 1.5 });
     this.motes.layers.set(1);
     s.add(this.motes);
@@ -278,6 +282,50 @@ class BossGame extends QuizGame {
   // sparks), so the fight's animation drives it unchanged.
   // Every boss is a cyborg from the kit in 22b-cyborg.js. This wraps one in what the
   // fight expects: an eye that aims the beam, a halo, orbiting gems, the charge orb.
+  // Behind the ring: four tiers of an amphitheatre curving round the back, each with a rail of the boss's colour
+  // and a crowd of lights along it (they sway, and surge when a blow lands).
+  makeCrowd() {
+    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [];
+    const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xffffff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xffd27a)];
+    for (let k = 0; k < 4; k++) {
+      const Rk = 27 + k * 6, y = 2.2 + k * 4.1, N = 44;
+      for (let i = 0; i < N; i++) {
+        const a0 = (-118 + (236 * i) / N) * (Math.PI / 180), a1 = (-118 + (236 * (i + 1)) / N) * (Math.PI / 180), am = (a0 + a1) / 2;
+        const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
+        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x15112c : 0x1b1638 });
+        rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
+        for (let j = 0; j < 3; j++) {
+          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.2 + Math.random() * 0.5, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
+          pos.push(Math.sin(a) * r, y + 2.25 + Math.random() * 0.9, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        }
+      }
+    }
+    const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.7, rough: 0.5, envI: 0.8 }), { vertexColors: true }));
+    wall.layers.set(1); // (not in the floor's reflection)
+    s.add(wall);
+    this.railMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) });
+    const rail = new THREE.Mesh(blasterMerge(rails), this.railMat);
+    rail.layers.set(1);
+    s.add(rail);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
+    this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
+        void main(){
+          vec3 p = position;
+          p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
+          vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_PointSize = uPx * 260.0 / -mv.z; gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 8.0) + 0.2 * exp(-r * 2.0)), 1.0); }",
+    }));
+    this.crowd.frustumCulled = false;
+    this.crowd.layers.set(1);
+    s.add(this.crowd);
+    this.cheer = 0;
+  }
   makeBoss() {
     const hex = this.cfg.color;
     const rig = (this.rig = new CyborgRig(this, this.bossKey));
@@ -731,6 +779,11 @@ class BossGame extends QuizGame {
     this.lookAt.set(0, this.showY, 0);
     this.placeCamera();
     followSky(this.sky, this.camera);
+    if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
+      this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
+      const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      this.railMat.color.copy(this.capMat.color).multiplyScalar(0.6);
+    }
     FX.sync(this.scene, this.t);
   }
   dispose() {
