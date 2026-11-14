@@ -161,14 +161,14 @@ function followSky(sky, camera) { sky.position.copy(camera.position); }
 // The synthwave sun: a gradient disc with stripe gaps that scroll down.
 // (egg: the disc is an egg instead, fuller below its middle, with a sheen and a few speckles and no gaps:
 // Nest Egg Run's own sun.)
-function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false, lift = 0 } = {}) {
+function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false, lift = 0, stripeTop = 0.18, stripeN = 7 } = {}) {
   const g = new THREE.Group();
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uLift: { value: lift }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 } },
+    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uLift: { value: lift }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 }, uStripeTop: { value: stripeTop }, uStripeN: { value: stripeN } },
     transparent: true, depthWrite: false, extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `
-      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; uniform float uLift; varying vec2 vUv;
+      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; uniform float uLift; uniform float uStripeTop; uniform float uStripeN; varying vec2 vUv;
       void main(){
         vec2 p = vUv * 2.0 - 1.0; float r = length(p);
         vec2 q = p;
@@ -191,9 +191,9 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           col *= 1.0 - 0.2 * step(0.9, sh) * (1.0 - smoothstep(0.12 + 0.2 * fract(sh * 7.0), 0.3 + 0.2 * fract(sh * 7.0), length(sf)));
         }
         if (uStripes > 0.5) {
-          float yy = 0.18 - p.y;
+          float yy = uStripeTop - p.y;
           if (yy > 0.0) {
-            float ph = fract(yy * 7.0 + uTime * 0.25);
+            float ph = fract(yy * uStripeN + uTime * 0.25);
             float th = clamp(0.06 + yy * 0.55, 0.06, 0.8);
             float w = fwidth(ph) * 1.2;
             a *= smoothstep(th - w, th + w, ph);
@@ -374,7 +374,9 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
           vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
           vec2 cell = floor(q); vec2 f = fract(q);
           float on = step(hash13(vec3(cell, floor(vSeed * 97.0))), uLit);
-          float win = step(0.28, f.x) * step(f.x, 0.72) * step(0.32, f.y) * step(f.y, 0.78);
+          vec2 fw = fwidth(q);
+          float win = smoothstep(0.28 - fw.x, 0.28 + fw.x, f.x) * (1.0 - smoothstep(0.72 - fw.x, 0.72 + fw.x, f.x)) * smoothstep(0.32 - fw.y, 0.32 + fw.y, f.y) * (1.0 - smoothstep(0.78 - fw.y, 0.78 + fw.y, f.y));
+          win = mix(win, 0.2, smoothstep(0.3, 0.85, max(fw.x, fw.y))); // (far off a window is smaller than a pixel: its average light, not a sparkle)
           float flick = 0.85 + 0.15 * sin(uTime * 0.5 + hash13(vec3(cell, 3.0)) * 40.0);
           vec3 wc = mix(uWin, uWin.bgr * 0.8, step(0.8, hash13(vec3(cell, 9.0))));
           col += wc * win * on * flick * (abs(vN.z) > 0.5 ? 1.0 : 0.5);

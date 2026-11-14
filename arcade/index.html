@@ -1724,6 +1724,22 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* the band fades under the question as it does over the answers (a hard panel edge cut the demon's horns and its ring) */
 .scr-blaster .band::before { content: ""; position: absolute; z-index: 1; left: -16px; right: -16px; top: -2px; height: 22px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0.86), rgba(7, 2, 26, 0)); }
 
+/* ---- Title, pass 8 ---- */
+/* the wordmark keeps its edge against the sky: a dark keyline round every letter, and ARCADE starts pale cyan (its periwinkle top melted into the violet) */
+.logo-face { background-image: linear-gradient(180deg, #ffffff 0%, #c9f8ff 38%, #9fe6ff 50%, #5f8dff 57%, #ff3ad4 74%, #ffe14f 100%);
+  filter: brightness(calc(1 + var(--bolt, 0) * 0.1)) drop-shadow(1.5px 0 0 #170a44) drop-shadow(-1.5px 0 0 #170a44) drop-shadow(0 1.5px 0 #170a44) drop-shadow(0 -1.5px 0 #170a44); }
+/* the prompt stands clear of the button's lip; the totals are a quiet line, not a second yellow button */
+.title-foot { margin-top: 5px; }
+.logo-sub { color: #cfc6f5; }
+/* the tip's panel is cut at the corners like the plates on every other page, with a line of light inside its top edge */
+.attract { clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(53, 239, 255, 0.16); }
+/* the dock's shade is full under the button (the street's lines ran into its top edge) */
+.title-dock::before { background: linear-gradient(180deg, rgba(5, 1, 20, 0) 0%, rgba(5, 1, 20, 0.84) 20%, rgba(5, 1, 20, 0.94) 100%); }
+
+/* ---- Arcade Hub, pass 8 ---- */
+/* the mission strip is a strip, not a second PLAY button: its glow is turned down */
+.mission { box-shadow: 0 3px 0 #000, 0 0 12px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+
 </style>
 </head>
 <body>
@@ -5003,14 +5019,14 @@ function followSky(sky, camera) { sky.position.copy(camera.position); }
 // The synthwave sun: a gradient disc with stripe gaps that scroll down.
 // (egg: the disc is an egg instead, fuller below its middle, with a sheen and a few speckles and no gaps:
 // Nest Egg Run's own sun.)
-function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false, lift = 0 } = {}) {
+function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false, lift = 0, stripeTop = 0.18, stripeN = 7 } = {}) {
   const g = new THREE.Group();
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uLift: { value: lift }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 } },
+    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uLift: { value: lift }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 }, uStripeTop: { value: stripeTop }, uStripeN: { value: stripeN } },
     transparent: true, depthWrite: false, extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `
-      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; uniform float uLift; varying vec2 vUv;
+      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; uniform float uLift; uniform float uStripeTop; uniform float uStripeN; varying vec2 vUv;
       void main(){
         vec2 p = vUv * 2.0 - 1.0; float r = length(p);
         vec2 q = p;
@@ -5033,9 +5049,9 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           col *= 1.0 - 0.2 * step(0.9, sh) * (1.0 - smoothstep(0.12 + 0.2 * fract(sh * 7.0), 0.3 + 0.2 * fract(sh * 7.0), length(sf)));
         }
         if (uStripes > 0.5) {
-          float yy = 0.18 - p.y;
+          float yy = uStripeTop - p.y;
           if (yy > 0.0) {
-            float ph = fract(yy * 7.0 + uTime * 0.25);
+            float ph = fract(yy * uStripeN + uTime * 0.25);
             float th = clamp(0.06 + yy * 0.55, 0.06, 0.8);
             float w = fwidth(ph) * 1.2;
             a *= smoothstep(th - w, th + w, ph);
@@ -5216,7 +5232,9 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
           vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
           vec2 cell = floor(q); vec2 f = fract(q);
           float on = step(hash13(vec3(cell, floor(vSeed * 97.0))), uLit);
-          float win = step(0.28, f.x) * step(f.x, 0.72) * step(0.32, f.y) * step(f.y, 0.78);
+          vec2 fw = fwidth(q);
+          float win = smoothstep(0.28 - fw.x, 0.28 + fw.x, f.x) * (1.0 - smoothstep(0.72 - fw.x, 0.72 + fw.x, f.x)) * smoothstep(0.32 - fw.y, 0.32 + fw.y, f.y) * (1.0 - smoothstep(0.78 - fw.y, 0.78 + fw.y, f.y));
+          win = mix(win, 0.2, smoothstep(0.3, 0.85, max(fw.x, fw.y))); // (far off a window is smaller than a pixel: its average light, not a sparkle)
           float flick = 0.85 + 0.15 * sin(uTime * 0.5 + hash13(vec3(cell, 3.0)) * 40.0);
           vec3 wc = mix(uWin, uWin.bgr * 0.8, step(0.8, hash13(vec3(cell, 9.0))));
           col += wc * win * on * flick * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
@@ -6292,16 +6310,16 @@ class TitleScene extends Scene3D {
     const s = this.scene;
     this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 52, top: 0xffc640, bottom: 0xff2a86, intensity: 0.9, lift: 0.5 }); // (gold at its crown, rose where it meets the skyline)
+    this.sun = makeNeonSun({ radius: 52, top: 0xffc640, bottom: 0xff2a86, intensity: 0.9, lift: 0.5, stripeTop: 0.9, stripeN: 5.5 }); // (gold at its crown, rose where it meets the skyline)
     this.sun.userData.glow.material.opacity = 0.4; // (a halo, but tight: the city in front of it keeps its edges)
     this.sun.position.set(0, 30, -360);
     s.add(this.sun);
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
-    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5, winK: 1.05 })); // (far windows: small lit squares, not sparks)
+    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5, winK: 0.8 })); // (far windows: small lit squares, not sparks)
     // a nearer, taller layer either side of the sun: three depths of city slide past each other
     const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), mw = 0.6 * A * 240;
-    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff, winK: 1.25 }); mid.position.x = sd * mw * 0.95; s.add(mid); }
+    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff, winK: 0.95 }); mid.position.x = sd * mw * 0.95; s.add(mid); }
     this.bursts = new Bursts(s);
     this.city = new TitleCity(this);
     this.life = new TitleLife(this);
@@ -6311,12 +6329,13 @@ class TitleScene extends Scene3D {
     this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
     this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.25, rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
+    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.25, sharpen: 0.1, // (little sharpening: it turned the far windows into crosses)
+      rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }
@@ -6338,7 +6357,7 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.15 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
+    this.scene.userData.post.exposure = 1.12 + 0.22 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
     { // and the logo with it: its face takes the flash too (written only when it changes)
       const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
       if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }
@@ -6477,7 +6496,7 @@ class TitleCity {
     s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
     spills.forEach(([x, y, z, w, h, c]) => { // a sign's light on the wall beside it
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.3), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
       m.position.set(x, y, z);
       m.layers.set(1);
       s.add(m);
@@ -6673,7 +6692,7 @@ class TitleLife {
       put(nb, x, h + 16, z, 0.4, 20, 0.4, 0x1a1838);
       put(nb, x, h + 26.4, z, 1, 1, 1, 0xff3030, 3);
       // blade signs hung out over the street, facing down the avenue
-      for (let y = 30, k = 0; y < Math.min(h - 20, 62); y += 25, k++) blades.push([inner + sd * 2.3, y, z + d / 2 - 1 - (k % 2) * 4, 3.4, 13, blades.length]);
+      if (z < -100) blades.push([inner + sd * 2.3, 30, z + d / 2 - 1, 3.4, 13, blades.length]); // (the further towers only, one row: the nearest signs stood behind the wordmark, cut by its letters)
     };
     for (const sd of [-1, 1]) {
       mega(sd * (hw(-80) + 2.6), -80, 15, 13, 236, sd > 0 ? 1 : 0);
@@ -6709,6 +6728,11 @@ class TitleLife {
         return { m, pools, sd: k ? 1 : -1 };
       });
       post.dispose();
+      // the street has a middle and edges (it was a sheet of glass with a grid on it): pale dashes between its lanes, a line of cyan along each kerb
+      this.dashes = new THREE.InstancedMesh(new THREE.BoxGeometry(0.2, 0.03, 3.4), new THREE.MeshBasicMaterial({ color: neon(0xd9ccff, 1.15) }), 78);
+      this.dashes.frustumCulled = false; this.dashes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      s.add(this.dashes);
+      for (const sd of [-1, 1]) { const kerb = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 420), new THREE.MeshBasicMaterial({ color: neon(0x35efff, 1.45) })); kerb.position.set(sd * 7.7, 0.04, -196); s.add(kerb); }
       const cb = new RacerBatch(), V = (x, y, z) => new THREE.Vector3(x, y, z);
       [[-72, 15.5, 6.5, 20.5], [-100, 25, 7.5, 23], [-136, 36, 8, 25.5]].forEach(([z, y, sag, X], ci) => {
         const N = 22, pt = (i) => { const u = i / N, k = 2 * u - 1; return V(k * X, y - sag * (1 - k * k) + (ci === 1 ? k * 2.2 : 0), z); };
@@ -6726,12 +6750,12 @@ class TitleLife {
     { const pos = [], col = [], sp = [], z0 = [];
       const lane = (x, y, dir, n, speed, size, tint) => { for (let i = 0; i < n; i++) {
         const start = Math.random() * 340, v = speed * rand(0.8, 1.25) * dir, len = size * rand(5, 9), hh = size * 0.3, c = new THREE.Color(tint), jx = rand(-0.5, 0.5), jy = rand(-0.3, 0.3);
-        const head = dir < 0 ? [2.6, 0.3 + 0.4 * c.g, 0.4 + 0.6 * c.b] : [2.4, 2.3, 2.0];
+        const head = dir < 0 ? (y > 10 ? [0.4 + 1.8 * c.r, 0.4 + 1.8 * c.g, 0.4 + 1.8 * c.b] : [2.6, 0.3 + 0.4 * c.g, 0.4 + 0.6 * c.b]) : [2.4, 2.3, 2.0];
         // two crossed blades: a streak from below and from the side. Bright at its head, gone at its tail.
         [[1, 0], [0, 1]].forEach(([ax, ay]) => [[0, -1], [1, -1], [1, 1], [0, -1], [1, 1], [0, 1]].forEach(([a, b]) => {
           pos.push(x + jx + b * hh * ax, y + jy + b * hh * ay, (dir < 0 ? a : -a) * len); const k = 1 - a; col.push(head[0] * k * k, head[1] * k * k, head[2] * k * k); sp.push(v); z0.push(start);
         })); } };
-      [[9, 30, 0x35efff], [13, 46, 0xff3ad4], [17, 62, 0x5dffb0], [6.5, 78, 0xffd23d]].forEach(([x, y, tint], k) => {
+      [[9, 30, 0x35efff], [13, 44, 0xff3ad4]].forEach(([x, y, tint], k) => {
         for (const sd of [-1, 1]) { lane(sd * x, y, -1, 10, 34 + k * 4, 0.42 + k * 0.05, tint); lane(sd * (x + 2.2), y + 2.4, 1, 8, 30 + k * 4, 0.42 + k * 0.05, tint); }
       });
       // the street itself: four lanes close to the ground, reflected in the wet floor
@@ -6741,7 +6765,7 @@ class TitleLife {
       ge.setAttribute("aSp", new THREE.Float32BufferAttribute(sp, 1)); ge.setAttribute("aZ0", new THREE.Float32BufferAttribute(z0, 1));
       this.streams = new THREE.Mesh(ge, new THREE.ShaderMaterial({
         uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-        vertexShader: "attribute vec3 aCol; attribute float aSp; attribute float aZ0; uniform float uTime; varying vec3 vCol; void main(){ vec3 p = position; float z = mod(aZ0 + uTime * aSp, 340.0) - 310.0; p.z += z; vCol = aCol * smoothstep(-310.0, -250.0, z) * smoothstep(30.0, 4.0, z); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+        vertexShader: "attribute vec3 aCol; attribute float aSp; attribute float aZ0; uniform float uTime; varying vec3 vCol; void main(){ vec3 p = position; float z = mod(aZ0 + uTime * aSp, 340.0) - 310.0; p.z += z; vCol = aCol * smoothstep(-310.0, -250.0, z) * smoothstep(30.0, 4.0, z) * (position.y > 10.0 ? smoothstep(-70.0, -130.0, z) : 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
         fragmentShader: "varying vec3 vCol; void main(){ gl_FragColor = vec4(vCol, 1.0); }",
       }));
       this.streams.frustumCulled = false;
@@ -6895,9 +6919,9 @@ class TitleLife {
     const P = this.boltGeo.attributes.position, a = P.array;
     let n = 0;
     const seg = (x1, y1, x2, y2, w) => { if (n >= 40) return; const dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy) || 1, px = (-dy / l) * w, py = (dx / l) * w, o = n++ * 18;
-      a.set([x1 - px, y1 - py, -404, x1 + px, y1 + py, -404, x2 + px, y2 + py, -404, x1 - px, y1 - py, -404, x2 + px, y2 + py, -404, x2 - px, y2 - py, -404], o); };
-    const run = (x, y, steps, dy, drift, w) => { for (let i = 0; i < steps; i++) { const nx = x + drift + rand(-9, 9), ny = y - dy * rand(0.7, 1.3); seg(x, y, nx, ny, w * (1 - (i / steps) * 0.5)); if (w > 0.9 && (i === 3 || i === 7)) run(nx, ny, 5, dy * 0.7, (Math.random() < 0.5 ? -1 : 1) * rand(6, 12), 0.55); x = nx; y = ny; } };
-    run(x0, 262, 13, 16, rand(-2.5, 2.5), 0.8);
+      a.set([x1 - px, y1 - py, -342, x1 + px, y1 + py, -342, x2 + px, y2 + py, -342, x1 - px, y1 - py, -342, x2 + px, y2 + py, -342, x2 - px, y2 - py, -342], o); };
+    const run = (x, y, steps, dy, drift, w) => { for (let i = 0; i < steps; i++) { const nx = x + drift + rand(-9, 9), ny = y - dy * rand(0.7, 1.3); seg(x, y, nx, ny, w * (1 - (i / steps) * 0.5)); if (w > 1.8 && (i === 3 || i === 7)) run(nx, ny, 5, dy * 0.7, (Math.random() < 0.5 ? -1 : 1) * rand(6, 12), 1.25); x = nx; y = ny; } };
+    run(x0, 262, 13, 16, rand(-2.5, 2.5), 2.3); // (a trunk four pixels wide on a phone: at 0.8 it was a hair, and it never forked)
     for (let i = n * 18; i < a.length; i++) a[i] = 0;
     P.needsUpdate = true;
   }
@@ -6916,7 +6940,9 @@ class TitleLife {
           P.pools.setMatrixAt(i, M.makeRotationX(-Math.PI / 2).scale(V).setPosition(P.sd * 9.0, 0.06, z));
         }
         P.m.instanceMatrix.needsUpdate = true; P.pools.instanceMatrix.needsUpdate = true;
-      } }
+      }
+      for (let i = 0; i < 78; i++) this.dashes.setMatrixAt(i, M.makeTranslation((i % 3 - 1) * 4, 0.035, -L + 14 + ((Math.floor(i / 3) * 14 + d) % L)));
+      this.dashes.instanceMatrix.needsUpdate = true; }
     // sky-ferries along the avenue: one passes overhead and away into the city, one comes out of it toward us
     const [f0, f1] = this.ferries;
     { const u = ((t + 6) % 36) / 36, v = ((t + 21) % 46) / 46;
@@ -6929,7 +6955,7 @@ class TitleLife {
       h0.rotation.set(0, lerp(Math.PI, 0, smoothstep(-0.3, 0.3, dir)), dir * -0.08); }
     h0.userData.blades.rotation.y = t * 13;
     h0.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.5) * 0.28, 0, -0.35 + Math.sin(t * 0.37) * 0.3);
-    h1.position.set(loop(t + 7, hw(-104) + 30, 26), 60 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
+    h1.position.set(loop(t + 7, hw(-104) + 30, 26), 34 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
     h1.userData.blades.rotation.y = t * 13;
     h1.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.7) * 0.25, 0, -0.5 + Math.sin(t * 0.45) * 0.25);
     const beamK = GFX.opt.beams ? (calm ? 0.16 : 0.26) : 0;
@@ -6955,7 +6981,7 @@ class TitleLife {
       this.boltT = rand(5, 10);
       this.boltAge = 0;
       this.double = !calm && Math.random() < 0.5;
-      const bx = 0.5 + (Math.random() < 0.5 ? -1 : 1) * rand(0.072, 0.116);
+      const bx = 0.5 + (Math.random() < 0.5 ? -1 : 1) * rand(0.026, 0.064); // (in the open sky: further out it struck behind the towers, unseen)
       this.clouds.material.uniforms.uBolt.value.set(bx, rand(0.3, 0.5), 0);
       this.boltK = calm ? 0.4 : rand(0.8, 1.2);
       this.strike((bx - 0.5) * 900);
@@ -7800,7 +7826,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.5, threshold: 1.22, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
+    s.userData.post = { exposure: 1.06, bloom: 0.4, threshold: 1.3, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
     this.screenY = 2.3;
     this.texs = [];
@@ -8252,7 +8278,7 @@ class HubScene extends Scene3D {
     const D = HUB_R - dol, b = a + 0.2 * (1 - zk);
     this.camBase.set(Math.sin(a) * HUB_R - Math.sin(b) * D, eye + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * HUB_R + Math.cos(b) * D);
     // the lens is focused on the cabinet in front of us: the room behind it goes soft
-    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.6, far: 15, max: 0.0085, k: 0.85 };
+    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 5.4, far: 13, max: 0.0075, k: 0.85 }; // (the cabinet in front is sharp from its topper to its base; the hall behind goes soft sooner)
     this.lookAt.set(Math.sin(pa) * HUB_R, aim - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.
@@ -8315,7 +8341,7 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.5; lv[G.signs] *= 0.5; lv[G.sign] *= 0.56; lv[G.signC] *= 0.56; lv[G.board] *= 0.7;
+    lv[G.bg] *= 0.4; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -8545,8 +8571,8 @@ function drawDemo(d, dt) {
     }
   }
   if (Math.floor(t * 1.4) % 2 === 0) {
-    x.fillStyle = "rgba(7, 2, 26, 0.85)"; // a dark plate, so the words read over any demo
-    x.fillRect(20, 103, 120, 15);
+    x.fillStyle = "rgba(7, 2, 26, 0.95)"; // a dark plate, so the words read over any demo
+    x.fillRect(15, 101, 130, 19);
     x.fillStyle = c;
     x.textAlign = "center";
     x.fillText("PRESS START", 80, 115);
@@ -8651,7 +8677,7 @@ function showHub() {
       boss: `BOSSES BEATEN <b>${Object.values(Store.state.boss).filter((v) => v > 0).length}/12</b>`,
       memory: `CARDS BANKED <b>${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</b>`,
       exam: `BEST EXAM <b>${Store.state.stats.bestExam || 0}%</b>`,
-      guide: `${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)} <b>NOTE PAGES</b>`,
+      guide: `<b>${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)}</b> NOTE PAGES`,
     }[cab.id];
     card.innerHTML = `<div class="hub-nav">
         <button class="iconbtn" data-act="prev" aria-label="Previous cabinet">${icon("left")}</button>
@@ -8764,7 +8790,7 @@ function hubCabinetStyle(id, o) {
     });
     lit("cyl", cyl, at(0.5, 4.16, -0.05), [0.08, 0.3, 0.08], 0x7c88b4, { aux: [0.6, 0.32] });
     lit("cone", cone, at(0.5, 4.44, 0.04, 2.4), [0.54, 0.26, 0.54], 0x5a6696, { aux: [0.62, 0.3] }, 0.8);
-    glow("tor", tor, at(0.5, 4.5, 0.11, 2.4 - H), [0.53, 0.53, 0.16], col, 2.2); // the dish's rim, lit
+    glow("tor", tor, at(0.5, 4.5, 0.11, 2.4 - H), [0.53, 0.53, 0.16], col, 1.5); // the dish's rim, lit
     glow("ball", ball, at(0.5, 4.56, 0.3), [0.05, 0.05, 0.05], 0xffffff, 2.6); // its feed
     lit("cyl", cyl, at(-0.66, 4.32, -0.1), [0.028, 0.6, 0.028], 0xaab4d8, { aux: [0.45, 0.32] });
     glow("ball", ball, at(-0.66, 4.66, -0.1), [0.075, 0.075, 0.075], 0xff2346, 3);
@@ -8796,7 +8822,7 @@ function hubCabinetStyle(id, o) {
     // a war machine: horns, spiked shoulders, a row of teeth, a red eye, one big slam button
     [-1, 1].forEach((sx) => {
       lit("cone", cone, at(sx * 0.8, 4.5, -0.05, 0, 0, sx * -0.5), [0.25, 1.0, 0.25], 0xf2e6da, { aux: [0.05, 0.5] });
-      glow("cone", cone, at(sx * (0.8 + 0.2), 4.87, -0.05, 0, 0, sx * -0.5), [0.07, 0.24, 0.07], 0xff2418, 2.4); // their tips burn
+      glow("cone", cone, at(sx * (0.8 + 0.2), 4.87, -0.05, 0, 0, sx * -0.5), [0.07, 0.24, 0.07], 0xff2418, 1.7); // their tips burn
       box(0.36, 1.0, 1.05, at(sx * 1.34, 3.25, -0.05, 0, 0, sx * -0.22), 0x423c50, { aux: [0.45, 0.42] });
       gbox(0.02, 0.9, 0.05, at(sx * 1.53, 3.2, 0.5, 0, 0, sx * -0.22), col, 2.2);
       gbox(0.34, 0.02, 0.05, at(sx * 1.449, 3.746, 0.48, 0, 0, sx * -0.22), col, 1.8); // and along each shoulder's top edge
@@ -8822,8 +8848,8 @@ function hubCabinetStyle(id, o) {
   } else if (id === "exam") {
     // an examination desk: a clock over it, laurels, an answer sheet and a pencil
     lit("cyl", cyl, at(0, 4.62, 0.2, H), [0.56, 0.1, 0.56], 0x1a1724, METAL);
-    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0xd9d2ee, { aux: [0, 0.6] }, 0.8);
-    glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 2.4);
+    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x9a94c4, { aux: [0, 0.6] }, 0.62); // (a lilac dial: paper white, it outshone the marquee under it)
+    glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 1.6);
     box(0.07, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), DARK); box(0.07, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), DARK);
     for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; box(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), DARK); }
     box(0.1, 0.5, 0.1, at(0, 4.14, 0.15), 0x1a1724, METAL);
@@ -8977,15 +9003,18 @@ class HubExtras {
     { const ge = new THREE.IcosahedronGeometry(0.17, 1), b = new RacerBatch(); b.add(ge, null, 0xff7a2a, 0.9); ge.dispose(); this.ball = basic(b); }
     // a cleaning robot that works its way along the floor
     { const b = new RacerBatch();
-      const dome = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-      b.add(CYL, racerM(0, 0.34, 0, 0.56, 0.44, 0.56), 0x7f8cb4); b.add(CYL, racerM(0, 0.1, 0, 0.6, 0.1, 0.6), 0x2c3044); // drum, rubber skirt
-      b.add(dome, racerM(0, 0.56, 0, 0.5, 0.36, 0.5), 0xb4c0e4); dome.dispose();
-      b.add(CYL, racerM(0, 0.57, 0, 0.57, 0.035, 0.57), 0xffe14f, 0.9); // a yellow band round its middle
-      b.add(BOX, racerM(0.4, 0.7, 0, 0.14, 0.13, 0.52), 0x10142a); // a dark visor, two eyes in it
-      b.add(BOX, racerM(0.475, 0.7, 0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6); b.add(BOX, racerM(0.475, 0.7, -0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6);
-      b.add(CYL, racerM(-0.12, 1.12, 0, 0.022, 0.5, 0.022), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.12, 1.42, 0, 0.13, 0.11, 0.13), 0xffa53d, 2.6); // aerial and beacon
+      // (a sled, a mast and a small tube for a face. It was a drum under a dome, which a reviewer read as a well-known
+      // film droid: nothing round is left on it but its brushes)
+      b.add(BOX, racerM(0, 0.21, 0, 1.0, 0.26, 0.86), 0x333a66); b.add(BOX, racerM(0, 0.07, 0, 1.08, 0.1, 0.94), 0x14162a); // sled, rubber skirt
+      b.add(BOX, racerM(-0.22, 0.44, 0, 0.48, 0.2, 0.6), 0x4a5488); // its motor box
+      [-0.28, 0, 0.28].forEach((z) => b.add(BOX, racerM(0.24, 0.35, z, 0.34, 0.03, 0.12), 0xffe14f, 0.9)); // hazard bars across its deck
+      b.add(BOX, racerM(-0.22, 0.8, 0, 0.07, 0.54, 0.07), 0x8a93b8); // mast
+      b.add(BOX, racerM(-0.16, 1.16, 0, 0.3, 0.27, 0.42), 0x20244a); // its head: a small tube monitor
+      b.add(BOX, racerM(-0.004, 1.16, 0, 0.02, 0.19, 0.33), 0x0a0c1c); // the screen
+      b.add(BOX, racerM(0.01, 1.17, 0, 0.02, 0.05, 0.24), 0x86ff5e, 2.6); // one wide eye: a strip of lime
+      b.add(BOX, racerM(-0.2, 1.36, 0.14, 0.025, 0.14, 0.025), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.2, 1.45, 0.14, 0.07, 0.06, 0.07), 0xffa53d, 2.6); // aerial and beacon
       b.add(BOX, racerM(0.6, 0.07, 0, 0.1, 0.09, 0.9), 0x35efff, 2.2); // the brush bar's light
-      [-0.5, 0.5].forEach((z) => b.add(CYL, racerM(0.42, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));
+      [-0.4, 0.4].forEach((z) => b.add(CYL, racerM(0.45, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));
       this.robot = basic(b);
       const blob = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.8, depthWrite: false }));
       blob.rotation.x = -Math.PI / 2; blob.position.y = 0.012; blob.renderOrder = 1;
@@ -13545,10 +13574,10 @@ function racerGroundMaterial(mirror, shared) {
       uScroll: shared.uScroll, uLampI: shared.uLampI, uTime: { value: 0 },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 },
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
-      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xff3ad4, 1.7) },
+      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
-      uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-11.5, 2.3, 0) },
+      uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
     }),
     extensions: { derivatives: true },
@@ -13600,7 +13629,8 @@ function racerGroundMaterial(mirror, shared) {
             refl = texture2D(tReflect, uv).rgb * 0.5 + (texture2D(tReflect, uv + vec2(0.0, 0.004)).rgb + texture2D(tReflect, uv - vec2(0.0, 0.004)).rgb) * 0.25;
             refl *= 0.36;
           }
-          refl *= uReflect * fres;
+          float rl = dot(refl, vec3(0.3, 0.5, 0.2));
+          refl *= uReflect * (fres + 0.36 * road * smoothstep(0.1, 0.62, rl)); // (signs, lamps and tail-lights lie in the wet road near the car too; the dark sky does not)
         }
         // the road: dashed lane lines, solid neon edges
         float lx = x - 2.5 * floor(x / 2.5 + 0.5);
@@ -14198,7 +14228,7 @@ class RacerGame extends QuizGame {
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
@@ -14553,6 +14583,9 @@ class RacerGame extends QuizGame {
     this.badgeMats = {};
     this.badgeGlowMats = {};
     this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
+    this.badgeBackGeo = new THREE.CircleGeometry(0.585, 30);
+    this.badgeBackMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    this.owned.push(this.badgeBackGeo, this.badgeBackMat);
     this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
     this.badgeStemGeo.translate(0, 0.5, 0);
     this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
@@ -14589,8 +14622,8 @@ class RacerGame extends QuizGame {
       lane.position.set(laneX(i, r.n), 0, -11.5);
       const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
       tag.rotation.x = -Math.PI / 2;
-      tag.scale.set(tf ? 0.7 : 0.86, 2.9, 1);
-      tag.position.y = 0.045;
+      tag.scale.set(tf ? 0.7 : 0.86, 7.6, 1); // (the lane's colour lies on the road from under its badge to the car's nose)
+      tag.position.set(0, 0.045, 3.2);
       tag.layers.set(1); // (not in the wet road's mirror)
       tag.renderOrder = 2;
       // the badge stands over the far end of its strip, with a glow behind it and a stem of light under it
@@ -14608,8 +14641,16 @@ class RacerGame extends QuizGame {
       stem.renderOrder = 3;
       stem.visible = false; // (the badge hangs from the bar now)
       const badge = new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]);
-      badge.scale.setScalar(2.05);
+      badge.scale.setScalar(tf ? 2.05 : 2.42);
       badge.position.y = 1.62;
+      if (!tf) { // a dark board behind it: gears, signs and the sun do not show round its rim
+        const back = new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat);
+        back.scale.setScalar(2.42);
+        back.position.set(0, 1.62, -0.03);
+        back.layers.set(1);
+        back.renderOrder = 3;
+        post.add(back);
+      }
       badge.layers.set(1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's)
       badge.renderOrder = 4;
       post.add(glow, stem, badge);
@@ -14948,6 +14989,7 @@ class RacerGame extends QuizGame {
       const on = this.state === "ask" ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
+      this.badgeBackMat.opacity = 0.82 * Math.min(1, k * 1.25);
       if (this.laneBar) { // the bar slides out to its width as the question comes up, and bobs a little on its pods
         const e = Ease.outBack(Math.min(1, k * 1.15));
         this.laneBar.visible = k > 0.03;
@@ -15651,7 +15693,7 @@ function racerAdAtlas() {
   const cw = 256, ch = 128, c = document.createElement("canvas");
   c.width = cw * 2; c.height = ch * 4;
   const x = c.getContext("2d");
-  x.fillStyle = "#05060c";
+  x.fillStyle = "#1c1258";
   x.fillRect(0, 0, c.width, c.height);
   const cols = ["#ff3ad4", "#35efff", "#ffd23d", "#5dffb0"];
   x.textAlign = "center"; x.textBaseline = "middle";
@@ -16179,7 +16221,7 @@ class RacerWorld {
       { // the arch
         const z = -152, aZ = z - 4;
         for (const sd of [-1, 1]) loft(b, [[0, 2.6, 2.2, 0.7], [7, 2.0, 1.9, 0.6], [13, 2.6, 2.1, 0.7]], sd * 13.6, z, 0xa55a30, aZ);
-        for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.4, 2.6 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, a + Math.PI / 2 + Math.PI / 2); }
+        for (let i = 0; i < 9; i++) { const a = (i / 8) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.6, 2.5 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, Math.atan2(4.6 * Math.cos(a), -13.4 * Math.sin(a))); }
       }
       for (let i = 0; i < 34; i++) {
         const sd = i % 2 ? 1 : -1, x = sd * rand(10.8, i % 3 ? 19 : 34), z = -6 - i * 7.3 + rand(-3, 3), h = rand(3.2, 6.6), aZ = z - 2;

@@ -8,16 +8,16 @@ class TitleScene extends Scene3D {
     const s = this.scene;
     this.sky = makeSky({ top: 0x030009, mid: 0x170536, horizon: 0xd92aa6, bottom: 0x09031f, glow: 0.75, stars: 1, clouds: 0.8, radius: 860 }); // inside the 900 far plane, beyond the mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 52, top: 0xffc640, bottom: 0xff2a86, intensity: 0.9, lift: 0.5 }); // (gold at its crown, rose where it meets the skyline)
+    this.sun = makeNeonSun({ radius: 52, top: 0xffc640, bottom: 0xff2a86, intensity: 0.9, lift: 0.5, stripeTop: 0.9, stripeN: 5.5 }); // (gold at its crown, rose where it meets the skyline)
     this.sun.userData.glow.material.opacity = 0.4; // (a halo, but tight: the city in front of it keeps its edges)
     this.sun.position.set(0, 30, -360);
     s.add(this.sun);
     s.add(makeRidge({ z: -330, width: 900, height: 78, n: 30, top: 0x2a0c52, bottom: 0x16063a, line: 0x35efff, lineK: 1.3 }));
     s.add(makeRidge({ z: -300, width: 760, height: 50, n: 44, top: 0x3c1068, bottom: 0x0c0326, line: 0xff3ad4, lineK: 2.3 }));
-    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5, winK: 1.05 })); // (far windows: small lit squares, not sparks)
+    s.add(makeSkyline({ z: -262, width: 300, count: 70, maxH: 34, minH: 5, winK: 0.8 })); // (far windows: small lit squares, not sparks)
     // a nearer, taller layer either side of the sun: three depths of city slide past each other
     const A = clamp(GFX.w / Math.max(1, GFX.h), 0.42, 2.2), mw = 0.6 * A * 240;
-    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff, winK: 1.25 }); mid.position.x = sd * mw * 0.95; s.add(mid); }
+    for (const sd of [-1, 1]) { const mid = makeSkyline({ z: -228, width: mw * 1.1, count: 22, maxH: A < 1 ? 46 : 70, minH: 16, lit: 0.42, edge: sd < 0 ? 0xff3ad4 : 0x35efff, winK: 0.95 }); mid.position.x = sd * mw * 0.95; s.add(mid); }
     this.bursts = new Bursts(s);
     this.city = new TitleCity(this);
     this.life = new TitleLife(this);
@@ -27,12 +27,13 @@ class TitleScene extends Scene3D {
     this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
     this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.7, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.25, rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
+    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.25, sharpen: 0.1, // (little sharpening: it turned the far windows into crosses)
+      rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);
   }
@@ -54,7 +55,7 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.15 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
+    this.scene.userData.post.exposure = 1.12 + 0.22 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
     { // and the logo with it: its face takes the flash too (written only when it changes)
       const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
       if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }

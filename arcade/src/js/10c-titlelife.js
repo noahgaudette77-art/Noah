@@ -32,7 +32,7 @@ class TitleLife {
       put(nb, x, h + 16, z, 0.4, 20, 0.4, 0x1a1838);
       put(nb, x, h + 26.4, z, 1, 1, 1, 0xff3030, 3);
       // blade signs hung out over the street, facing down the avenue
-      for (let y = 30, k = 0; y < Math.min(h - 20, 62); y += 25, k++) blades.push([inner + sd * 2.3, y, z + d / 2 - 1 - (k % 2) * 4, 3.4, 13, blades.length]);
+      if (z < -100) blades.push([inner + sd * 2.3, 30, z + d / 2 - 1, 3.4, 13, blades.length]); // (the further towers only, one row: the nearest signs stood behind the wordmark, cut by its letters)
     };
     for (const sd of [-1, 1]) {
       mega(sd * (hw(-80) + 2.6), -80, 15, 13, 236, sd > 0 ? 1 : 0);
@@ -68,6 +68,11 @@ class TitleLife {
         return { m, pools, sd: k ? 1 : -1 };
       });
       post.dispose();
+      // the street has a middle and edges (it was a sheet of glass with a grid on it): pale dashes between its lanes, a line of cyan along each kerb
+      this.dashes = new THREE.InstancedMesh(new THREE.BoxGeometry(0.2, 0.03, 3.4), new THREE.MeshBasicMaterial({ color: neon(0xd9ccff, 1.15) }), 78);
+      this.dashes.frustumCulled = false; this.dashes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      s.add(this.dashes);
+      for (const sd of [-1, 1]) { const kerb = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 420), new THREE.MeshBasicMaterial({ color: neon(0x35efff, 1.45) })); kerb.position.set(sd * 7.7, 0.04, -196); s.add(kerb); }
       const cb = new RacerBatch(), V = (x, y, z) => new THREE.Vector3(x, y, z);
       [[-72, 15.5, 6.5, 20.5], [-100, 25, 7.5, 23], [-136, 36, 8, 25.5]].forEach(([z, y, sag, X], ci) => {
         const N = 22, pt = (i) => { const u = i / N, k = 2 * u - 1; return V(k * X, y - sag * (1 - k * k) + (ci === 1 ? k * 2.2 : 0), z); };
@@ -85,12 +90,12 @@ class TitleLife {
     { const pos = [], col = [], sp = [], z0 = [];
       const lane = (x, y, dir, n, speed, size, tint) => { for (let i = 0; i < n; i++) {
         const start = Math.random() * 340, v = speed * rand(0.8, 1.25) * dir, len = size * rand(5, 9), hh = size * 0.3, c = new THREE.Color(tint), jx = rand(-0.5, 0.5), jy = rand(-0.3, 0.3);
-        const head = dir < 0 ? [2.6, 0.3 + 0.4 * c.g, 0.4 + 0.6 * c.b] : [2.4, 2.3, 2.0];
+        const head = dir < 0 ? (y > 10 ? [0.4 + 1.8 * c.r, 0.4 + 1.8 * c.g, 0.4 + 1.8 * c.b] : [2.6, 0.3 + 0.4 * c.g, 0.4 + 0.6 * c.b]) : [2.4, 2.3, 2.0];
         // two crossed blades: a streak from below and from the side. Bright at its head, gone at its tail.
         [[1, 0], [0, 1]].forEach(([ax, ay]) => [[0, -1], [1, -1], [1, 1], [0, -1], [1, 1], [0, 1]].forEach(([a, b]) => {
           pos.push(x + jx + b * hh * ax, y + jy + b * hh * ay, (dir < 0 ? a : -a) * len); const k = 1 - a; col.push(head[0] * k * k, head[1] * k * k, head[2] * k * k); sp.push(v); z0.push(start);
         })); } };
-      [[9, 30, 0x35efff], [13, 46, 0xff3ad4], [17, 62, 0x5dffb0], [6.5, 78, 0xffd23d]].forEach(([x, y, tint], k) => {
+      [[9, 30, 0x35efff], [13, 44, 0xff3ad4]].forEach(([x, y, tint], k) => {
         for (const sd of [-1, 1]) { lane(sd * x, y, -1, 10, 34 + k * 4, 0.42 + k * 0.05, tint); lane(sd * (x + 2.2), y + 2.4, 1, 8, 30 + k * 4, 0.42 + k * 0.05, tint); }
       });
       // the street itself: four lanes close to the ground, reflected in the wet floor
@@ -100,7 +105,7 @@ class TitleLife {
       ge.setAttribute("aSp", new THREE.Float32BufferAttribute(sp, 1)); ge.setAttribute("aZ0", new THREE.Float32BufferAttribute(z0, 1));
       this.streams = new THREE.Mesh(ge, new THREE.ShaderMaterial({
         uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-        vertexShader: "attribute vec3 aCol; attribute float aSp; attribute float aZ0; uniform float uTime; varying vec3 vCol; void main(){ vec3 p = position; float z = mod(aZ0 + uTime * aSp, 340.0) - 310.0; p.z += z; vCol = aCol * smoothstep(-310.0, -250.0, z) * smoothstep(30.0, 4.0, z); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
+        vertexShader: "attribute vec3 aCol; attribute float aSp; attribute float aZ0; uniform float uTime; varying vec3 vCol; void main(){ vec3 p = position; float z = mod(aZ0 + uTime * aSp, 340.0) - 310.0; p.z += z; vCol = aCol * smoothstep(-310.0, -250.0, z) * smoothstep(30.0, 4.0, z) * (position.y > 10.0 ? smoothstep(-70.0, -130.0, z) : 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }",
         fragmentShader: "varying vec3 vCol; void main(){ gl_FragColor = vec4(vCol, 1.0); }",
       }));
       this.streams.frustumCulled = false;
@@ -254,9 +259,9 @@ class TitleLife {
     const P = this.boltGeo.attributes.position, a = P.array;
     let n = 0;
     const seg = (x1, y1, x2, y2, w) => { if (n >= 40) return; const dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy) || 1, px = (-dy / l) * w, py = (dx / l) * w, o = n++ * 18;
-      a.set([x1 - px, y1 - py, -404, x1 + px, y1 + py, -404, x2 + px, y2 + py, -404, x1 - px, y1 - py, -404, x2 + px, y2 + py, -404, x2 - px, y2 - py, -404], o); };
-    const run = (x, y, steps, dy, drift, w) => { for (let i = 0; i < steps; i++) { const nx = x + drift + rand(-9, 9), ny = y - dy * rand(0.7, 1.3); seg(x, y, nx, ny, w * (1 - (i / steps) * 0.5)); if (w > 0.9 && (i === 3 || i === 7)) run(nx, ny, 5, dy * 0.7, (Math.random() < 0.5 ? -1 : 1) * rand(6, 12), 0.55); x = nx; y = ny; } };
-    run(x0, 262, 13, 16, rand(-2.5, 2.5), 0.8);
+      a.set([x1 - px, y1 - py, -342, x1 + px, y1 + py, -342, x2 + px, y2 + py, -342, x1 - px, y1 - py, -342, x2 + px, y2 + py, -342, x2 - px, y2 - py, -342], o); };
+    const run = (x, y, steps, dy, drift, w) => { for (let i = 0; i < steps; i++) { const nx = x + drift + rand(-9, 9), ny = y - dy * rand(0.7, 1.3); seg(x, y, nx, ny, w * (1 - (i / steps) * 0.5)); if (w > 1.8 && (i === 3 || i === 7)) run(nx, ny, 5, dy * 0.7, (Math.random() < 0.5 ? -1 : 1) * rand(6, 12), 1.25); x = nx; y = ny; } };
+    run(x0, 262, 13, 16, rand(-2.5, 2.5), 2.3); // (a trunk four pixels wide on a phone: at 0.8 it was a hair, and it never forked)
     for (let i = n * 18; i < a.length; i++) a[i] = 0;
     P.needsUpdate = true;
   }
@@ -275,7 +280,9 @@ class TitleLife {
           P.pools.setMatrixAt(i, M.makeRotationX(-Math.PI / 2).scale(V).setPosition(P.sd * 9.0, 0.06, z));
         }
         P.m.instanceMatrix.needsUpdate = true; P.pools.instanceMatrix.needsUpdate = true;
-      } }
+      }
+      for (let i = 0; i < 78; i++) this.dashes.setMatrixAt(i, M.makeTranslation((i % 3 - 1) * 4, 0.035, -L + 14 + ((Math.floor(i / 3) * 14 + d) % L)));
+      this.dashes.instanceMatrix.needsUpdate = true; }
     // sky-ferries along the avenue: one passes overhead and away into the city, one comes out of it toward us
     const [f0, f1] = this.ferries;
     { const u = ((t + 6) % 36) / 36, v = ((t + 21) % 46) / 46;
@@ -288,7 +295,7 @@ class TitleLife {
       h0.rotation.set(0, lerp(Math.PI, 0, smoothstep(-0.3, 0.3, dir)), dir * -0.08); }
     h0.userData.blades.rotation.y = t * 13;
     h0.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.5) * 0.28, 0, -0.35 + Math.sin(t * 0.37) * 0.3);
-    h1.position.set(loop(t + 7, hw(-104) + 30, 26), 60 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
+    h1.position.set(loop(t + 7, hw(-104) + 30, 26), 34 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
     h1.userData.blades.rotation.y = t * 13;
     h1.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.7) * 0.25, 0, -0.5 + Math.sin(t * 0.45) * 0.25);
     const beamK = GFX.opt.beams ? (calm ? 0.16 : 0.26) : 0;
@@ -314,7 +321,7 @@ class TitleLife {
       this.boltT = rand(5, 10);
       this.boltAge = 0;
       this.double = !calm && Math.random() < 0.5;
-      const bx = 0.5 + (Math.random() < 0.5 ? -1 : 1) * rand(0.072, 0.116);
+      const bx = 0.5 + (Math.random() < 0.5 ? -1 : 1) * rand(0.026, 0.064); // (in the open sky: further out it struck behind the towers, unseen)
       this.clouds.material.uniforms.uBolt.value.set(bx, rand(0.3, 0.5), 0);
       this.boltK = calm ? 0.4 : rand(0.8, 1.2);
       this.strike((bx - 0.5) * 900);

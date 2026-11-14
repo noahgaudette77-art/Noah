@@ -26,7 +26,7 @@ function hubCabinetStyle(id, o) {
     });
     lit("cyl", cyl, at(0.5, 4.16, -0.05), [0.08, 0.3, 0.08], 0x7c88b4, { aux: [0.6, 0.32] });
     lit("cone", cone, at(0.5, 4.44, 0.04, 2.4), [0.54, 0.26, 0.54], 0x5a6696, { aux: [0.62, 0.3] }, 0.8);
-    glow("tor", tor, at(0.5, 4.5, 0.11, 2.4 - H), [0.53, 0.53, 0.16], col, 2.2); // the dish's rim, lit
+    glow("tor", tor, at(0.5, 4.5, 0.11, 2.4 - H), [0.53, 0.53, 0.16], col, 1.5); // the dish's rim, lit
     glow("ball", ball, at(0.5, 4.56, 0.3), [0.05, 0.05, 0.05], 0xffffff, 2.6); // its feed
     lit("cyl", cyl, at(-0.66, 4.32, -0.1), [0.028, 0.6, 0.028], 0xaab4d8, { aux: [0.45, 0.32] });
     glow("ball", ball, at(-0.66, 4.66, -0.1), [0.075, 0.075, 0.075], 0xff2346, 3);
@@ -58,7 +58,7 @@ function hubCabinetStyle(id, o) {
     // a war machine: horns, spiked shoulders, a row of teeth, a red eye, one big slam button
     [-1, 1].forEach((sx) => {
       lit("cone", cone, at(sx * 0.8, 4.5, -0.05, 0, 0, sx * -0.5), [0.25, 1.0, 0.25], 0xf2e6da, { aux: [0.05, 0.5] });
-      glow("cone", cone, at(sx * (0.8 + 0.2), 4.87, -0.05, 0, 0, sx * -0.5), [0.07, 0.24, 0.07], 0xff2418, 2.4); // their tips burn
+      glow("cone", cone, at(sx * (0.8 + 0.2), 4.87, -0.05, 0, 0, sx * -0.5), [0.07, 0.24, 0.07], 0xff2418, 1.7); // their tips burn
       box(0.36, 1.0, 1.05, at(sx * 1.34, 3.25, -0.05, 0, 0, sx * -0.22), 0x423c50, { aux: [0.45, 0.42] });
       gbox(0.02, 0.9, 0.05, at(sx * 1.53, 3.2, 0.5, 0, 0, sx * -0.22), col, 2.2);
       gbox(0.34, 0.02, 0.05, at(sx * 1.449, 3.746, 0.48, 0, 0, sx * -0.22), col, 1.8); // and along each shoulder's top edge
@@ -84,8 +84,8 @@ function hubCabinetStyle(id, o) {
   } else if (id === "exam") {
     // an examination desk: a clock over it, laurels, an answer sheet and a pencil
     lit("cyl", cyl, at(0, 4.62, 0.2, H), [0.56, 0.1, 0.56], 0x1a1724, METAL);
-    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0xd9d2ee, { aux: [0, 0.6] }, 0.8);
-    glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 2.4);
+    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x9a94c4, { aux: [0, 0.6] }, 0.62); // (a lilac dial: paper white, it outshone the marquee under it)
+    glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 1.6);
     box(0.07, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), DARK); box(0.07, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), DARK);
     for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; box(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), DARK); }
     box(0.1, 0.5, 0.1, at(0, 4.14, 0.15), 0x1a1724, METAL);
@@ -239,15 +239,18 @@ class HubExtras {
     { const ge = new THREE.IcosahedronGeometry(0.17, 1), b = new RacerBatch(); b.add(ge, null, 0xff7a2a, 0.9); ge.dispose(); this.ball = basic(b); }
     // a cleaning robot that works its way along the floor
     { const b = new RacerBatch();
-      const dome = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-      b.add(CYL, racerM(0, 0.34, 0, 0.56, 0.44, 0.56), 0x7f8cb4); b.add(CYL, racerM(0, 0.1, 0, 0.6, 0.1, 0.6), 0x2c3044); // drum, rubber skirt
-      b.add(dome, racerM(0, 0.56, 0, 0.5, 0.36, 0.5), 0xb4c0e4); dome.dispose();
-      b.add(CYL, racerM(0, 0.57, 0, 0.57, 0.035, 0.57), 0xffe14f, 0.9); // a yellow band round its middle
-      b.add(BOX, racerM(0.4, 0.7, 0, 0.14, 0.13, 0.52), 0x10142a); // a dark visor, two eyes in it
-      b.add(BOX, racerM(0.475, 0.7, 0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6); b.add(BOX, racerM(0.475, 0.7, -0.13, 0.02, 0.07, 0.11), 0x86ff5e, 2.6);
-      b.add(CYL, racerM(-0.12, 1.12, 0, 0.022, 0.5, 0.022), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.12, 1.42, 0, 0.13, 0.11, 0.13), 0xffa53d, 2.6); // aerial and beacon
+      // (a sled, a mast and a small tube for a face. It was a drum under a dome, which a reviewer read as a well-known
+      // film droid: nothing round is left on it but its brushes)
+      b.add(BOX, racerM(0, 0.21, 0, 1.0, 0.26, 0.86), 0x333a66); b.add(BOX, racerM(0, 0.07, 0, 1.08, 0.1, 0.94), 0x14162a); // sled, rubber skirt
+      b.add(BOX, racerM(-0.22, 0.44, 0, 0.48, 0.2, 0.6), 0x4a5488); // its motor box
+      [-0.28, 0, 0.28].forEach((z) => b.add(BOX, racerM(0.24, 0.35, z, 0.34, 0.03, 0.12), 0xffe14f, 0.9)); // hazard bars across its deck
+      b.add(BOX, racerM(-0.22, 0.8, 0, 0.07, 0.54, 0.07), 0x8a93b8); // mast
+      b.add(BOX, racerM(-0.16, 1.16, 0, 0.3, 0.27, 0.42), 0x20244a); // its head: a small tube monitor
+      b.add(BOX, racerM(-0.004, 1.16, 0, 0.02, 0.19, 0.33), 0x0a0c1c); // the screen
+      b.add(BOX, racerM(0.01, 1.17, 0, 0.02, 0.05, 0.24), 0x86ff5e, 2.6); // one wide eye: a strip of lime
+      b.add(BOX, racerM(-0.2, 1.36, 0.14, 0.025, 0.14, 0.025), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.2, 1.45, 0.14, 0.07, 0.06, 0.07), 0xffa53d, 2.6); // aerial and beacon
       b.add(BOX, racerM(0.6, 0.07, 0, 0.1, 0.09, 0.9), 0x35efff, 2.2); // the brush bar's light
-      [-0.5, 0.5].forEach((z) => b.add(CYL, racerM(0.42, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));
+      [-0.4, 0.4].forEach((z) => b.add(CYL, racerM(0.45, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));
       this.robot = basic(b);
       const blob = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.8, depthWrite: false }));
       blob.rotation.x = -Math.PI / 2; blob.position.y = 0.012; blob.renderOrder = 1;

@@ -221,10 +221,10 @@ function racerGroundMaterial(mirror, shared) {
       uScroll: shared.uScroll, uLampI: shared.uLampI, uTime: { value: 0 },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 },
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
-      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xff3ad4, 1.7) },
+      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
-      uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-11.5, 2.3, 0) },
+      uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
     }),
     extensions: { derivatives: true },
@@ -276,7 +276,8 @@ function racerGroundMaterial(mirror, shared) {
             refl = texture2D(tReflect, uv).rgb * 0.5 + (texture2D(tReflect, uv + vec2(0.0, 0.004)).rgb + texture2D(tReflect, uv - vec2(0.0, 0.004)).rgb) * 0.25;
             refl *= 0.36;
           }
-          refl *= uReflect * fres;
+          float rl = dot(refl, vec3(0.3, 0.5, 0.2));
+          refl *= uReflect * (fres + 0.36 * road * smoothstep(0.1, 0.62, rl)); // (signs, lamps and tail-lights lie in the wet road near the car too; the dark sky does not)
         }
         // the road: dashed lane lines, solid neon edges
         float lx = x - 2.5 * floor(x / 2.5 + 0.5);
@@ -874,7 +875,7 @@ class RacerGame extends QuizGame {
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
@@ -1229,6 +1230,9 @@ class RacerGame extends QuizGame {
     this.badgeMats = {};
     this.badgeGlowMats = {};
     this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
+    this.badgeBackGeo = new THREE.CircleGeometry(0.585, 30);
+    this.badgeBackMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    this.owned.push(this.badgeBackGeo, this.badgeBackMat);
     this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
     this.badgeStemGeo.translate(0, 0.5, 0);
     this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
@@ -1265,8 +1269,8 @@ class RacerGame extends QuizGame {
       lane.position.set(laneX(i, r.n), 0, -11.5);
       const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
       tag.rotation.x = -Math.PI / 2;
-      tag.scale.set(tf ? 0.7 : 0.86, 2.9, 1);
-      tag.position.y = 0.045;
+      tag.scale.set(tf ? 0.7 : 0.86, 7.6, 1); // (the lane's colour lies on the road from under its badge to the car's nose)
+      tag.position.set(0, 0.045, 3.2);
       tag.layers.set(1); // (not in the wet road's mirror)
       tag.renderOrder = 2;
       // the badge stands over the far end of its strip, with a glow behind it and a stem of light under it
@@ -1284,8 +1288,16 @@ class RacerGame extends QuizGame {
       stem.renderOrder = 3;
       stem.visible = false; // (the badge hangs from the bar now)
       const badge = new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]);
-      badge.scale.setScalar(2.05);
+      badge.scale.setScalar(tf ? 2.05 : 2.42);
       badge.position.y = 1.62;
+      if (!tf) { // a dark board behind it: gears, signs and the sun do not show round its rim
+        const back = new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat);
+        back.scale.setScalar(2.42);
+        back.position.set(0, 1.62, -0.03);
+        back.layers.set(1);
+        back.renderOrder = 3;
+        post.add(back);
+      }
       badge.layers.set(1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's)
       badge.renderOrder = 4;
       post.add(glow, stem, badge);
@@ -1624,6 +1636,7 @@ class RacerGame extends QuizGame {
       const on = this.state === "ask" ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
+      this.badgeBackMat.opacity = 0.82 * Math.min(1, k * 1.25);
       if (this.laneBar) { // the bar slides out to its width as the question comes up, and bobs a little on its pods
         const e = Ease.outBack(Math.min(1, k * 1.15));
         this.laneBar.visible = k > 0.03;

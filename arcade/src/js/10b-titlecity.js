@@ -63,7 +63,7 @@ class TitleCity {
     s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
     spills.forEach(([x, y, z, w, h, c]) => { // a sign's light on the wall beside it
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.3), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
       m.position.set(x, y, z);
       m.layers.set(1);
       s.add(m);

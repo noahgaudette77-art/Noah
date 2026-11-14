@@ -13,7 +13,7 @@ function racerAdAtlas() {
   const cw = 256, ch = 128, c = document.createElement("canvas");
   c.width = cw * 2; c.height = ch * 4;
   const x = c.getContext("2d");
-  x.fillStyle = "#05060c";
+  x.fillStyle = "#1c1258";
   x.fillRect(0, 0, c.width, c.height);
   const cols = ["#ff3ad4", "#35efff", "#ffd23d", "#5dffb0"];
   x.textAlign = "center"; x.textBaseline = "middle";
@@ -541,7 +541,7 @@ class RacerWorld {
       { // the arch
         const z = -152, aZ = z - 4;
         for (const sd of [-1, 1]) loft(b, [[0, 2.6, 2.2, 0.7], [7, 2.0, 1.9, 0.6], [13, 2.6, 2.1, 0.7]], sd * 13.6, z, 0xa55a30, aZ);
-        for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.4, 2.6 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, a + Math.PI / 2 + Math.PI / 2); }
+        for (let i = 0; i < 9; i++) { const a = (i / 8) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.6, 2.5 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, Math.atan2(4.6 * Math.cos(a), -13.4 * Math.sin(a))); }
       }
       for (let i = 0; i < 34; i++) {
         const sd = i % 2 ? 1 : -1, x = sd * rand(10.8, i % 3 ? 19 : 34), z = -6 - i * 7.3 + rand(-3, 3), h = rand(3.2, 6.6), aZ = z - 2;

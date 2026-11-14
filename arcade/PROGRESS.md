@@ -2107,7 +2107,51 @@ shade behind it is the figure's size so the columns show; the fail ends at floor
 pool of light on the wreck. Not done: stencil marks on the armour, a larger fist in the punch, a heap that fills half
 the picture.
 
-### Risk Blaster and Boss Rush, pass 8
+### Risk Blaster, pass 8 (its last)
 
-Both are in this build and tested; their reviews follow in the next entry.
+The fighter is gunmetal violet with a thin two-colour rim and takes the demon's colour as a key light (red in a
+rage); its mirror of the sky is turned down and its painting is read from a softer copy, so the speckle is gone. The
+drones sit in the corners, clear of the wings, each lamp in its answer's colour. A shot is two thin beams in the
+answer's colour; a drone's burst by the demon is small and gone in a few frames, so the demon is seen taking the hit.
+The shield is cyan at rest and ripples red where it is struck. While an explanation is up the picture rides higher, so
+the fighter stays in view above it. The sky's nebula and clouds are turned down; the ring behind the demon is a thin
+line.
+
+Third independent review: **3.5, 3, 3, 3, 3.5, 3.5, 3.5 (3.3)**, below the 3.5 of the one before it: a new reader,
+and a harder one on the firing and wind-up frames. (It read frames 10 and 11, the fighter's own loss, as the demon's
+defeat: the caption did not say whose.) Closing fixes after it: a disc of light inside the ring, so the demon is a
+dark shape on lighter ground, and the ring swells over its shoulders and has three slow breaks in it; the shot has a
+white heart in a sheath of the answer's colour and is as bright seen from behind as from the side (shaded by the
+angle of its surface it was a pale hair), and the shot through the drone is the same width, so it reads fighter to
+drone to demon; the wind-up no longer melts the demon into a bright smear; a dark plate behind each drone, so the
+planet, the nebula and the wings do not tangle with it, and its badge is as bright as the button it stands for; the
+bar of light beside drone C, which read as a stray letter I, is three lamps; after a miss the right drone's ring and
+lamps go lime; the shield's lattice lights where it is struck and stays faint elsewhere, with a hot point at the
+blow; rocks are dark indigo; the band fades under the question as it does over the answers. Not done: a second ring
+and spread wings for the rage (its pose is the model's own rig), drones blown away at the end, star streaks that
+converge behind the demon.
+
+### Boss Rush, pass 8 (its last)
+
+A right answer's bolt leaves from the badge of the answer that was tapped, in that answer's colour, and lands as a
+star; the boss's blow is red whatever the boss's colour, with three slashes across the whole screen. Sparks are hard
+square pixels. The arena has swallow-tail pennants, banded pillars and a front row of heads between the lens and the
+ring. THE PROCTOR wears a monocle and a larger cap; the scribe's loupe is larger.
+
+Fourth independent review: **3.5, 3, 3, 3.5, 3.5, 4, 4 (3.5)**; the one before was 3.6. Closing fixes after it,
+which follow its "one lighting-hierarchy pass": the stands fall back (each tier darker than the one below, lilac
+heads in place of tan, rails and glow sticks dim, the mist in front of them thinner); less ambient light, a harder
+edge of the boss's own colour from behind, a brighter pool on the floor and a darker shadow right under its feet; a
+hit is a flat star in the answer's colour with a dark keyline and a small white heart, and the ring is that colour
+too (it bloomed to white); its blow is a blade in three hard bands (white, red, dark red) from the eye to the lens,
+hottest at the eye (two soft tubes made a pink wedge of fog, brightest at the floor); the front row keeps to the
+bottom edge of the strip whatever the strip's height, so only heads crest it, each with a hairline of the arena's
+light, and it sinks out of the picture when the fight ends; a falling boss keeps its colours after a three-frame
+flash (it went chalk white) and the lens closes on it; the orbiting gems are cut stones that take the light; the
+scribe is more hunched with a bigger head and a glint on its glass; THE PROCTOR's cap is a violet board tilted to
+show its top; what the armour mirrors from above is lilac and lower (a plate that faced it blew out to white); the
+salesman's case is bronze hide with a warm clasp; the question's topic is in the reading face (in every mode); the
+attack bar fills in segments like the health bar. Not done: the salesman's case held forward at chest height (the
+case hangs from his hand along his forearm, so raising it pointed it at the lens end-on: he keeps his pose, with a
+larger hand and case); the right answer's badge keeping its own colour (green is "right" everywhere in the arcade).
 

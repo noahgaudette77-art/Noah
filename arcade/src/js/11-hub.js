@@ -821,7 +821,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.5, threshold: 1.22, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
+    s.userData.post = { exposure: 1.06, bloom: 0.4, threshold: 1.3, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
     this.screenY = 2.3;
     this.texs = [];
@@ -1273,7 +1273,7 @@ class HubScene extends Scene3D {
     const D = HUB_R - dol, b = a + 0.2 * (1 - zk);
     this.camBase.set(Math.sin(a) * HUB_R - Math.sin(b) * D, eye + Math.sin(this.t * 0.8) * 0.04 - Pointer.y * 0.15 + travel * 0.18, -Math.cos(a) * HUB_R + Math.cos(b) * D);
     // the lens is focused on the cabinet in front of us: the room behind it goes soft
-    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 3.6, far: 15, max: 0.0085, k: 0.85 };
+    if (this.scene.userData.post) this.scene.userData.post.dof = { focus: Math.max(1.5, HUB_R - dol - 0.5), near: 5.4, far: 13, max: 0.0075, k: 0.85 }; // (the cabinet in front is sharp from its topper to its base; the hall behind goes soft sooner)
     this.lookAt.set(Math.sin(pa) * HUB_R, aim - Pointer.y * 0.9 + (this.introRunning ? this.introLook : 0), -Math.cos(pa) * HUB_R);
     this.placeCamera();
     // Old neon flickers now and then.
@@ -1336,7 +1336,7 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.5; lv[G.signs] *= 0.5; lv[G.sign] *= 0.56; lv[G.signC] *= 0.56; lv[G.board] *= 0.7;
+    lv[G.bg] *= 0.4; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -1566,8 +1566,8 @@ function drawDemo(d, dt) {
     }
   }
   if (Math.floor(t * 1.4) % 2 === 0) {
-    x.fillStyle = "rgba(7, 2, 26, 0.85)"; // a dark plate, so the words read over any demo
-    x.fillRect(20, 103, 120, 15);
+    x.fillStyle = "rgba(7, 2, 26, 0.95)"; // a dark plate, so the words read over any demo
+    x.fillRect(15, 101, 130, 19);
     x.fillStyle = c;
     x.textAlign = "center";
     x.fillText("PRESS START", 80, 115);
@@ -1672,7 +1672,7 @@ function showHub() {
       boss: `BOSSES BEATEN <b>${Object.values(Store.state.boss).filter((v) => v > 0).length}/12</b>`,
       memory: `CARDS BANKED <b>${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</b>`,
       exam: `BEST EXAM <b>${Store.state.stats.bestExam || 0}%</b>`,
-      guide: `${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)} <b>NOTE PAGES</b>`,
+      guide: `<b>${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)}</b> NOTE PAGES`,
     }[cab.id];
     card.innerHTML = `<div class="hub-nav">
         <button class="iconbtn" data-act="prev" aria-label="Previous cabinet">${icon("left")}</button>
