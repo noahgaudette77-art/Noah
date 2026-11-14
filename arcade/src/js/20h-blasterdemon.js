@@ -299,7 +299,7 @@ class BlasterDemon {
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
     pose.add(this.glow);
-    // behind it, an eclipse: a thin limb of cold light with its corona, so the dark wings and horns are cut out
+    // behind it, a ring of cold light (a thin bright line with a soft glow inside it), so the dark wings and horns are cut out
     // against light instead of sinking into the nebula
     this.limbU = { uColor: { value: new THREE.Color(0.5, 0.85, 1.0) }, uK: { value: 0 }, uTime: { value: 0 } };
     this.limb = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
@@ -585,7 +585,7 @@ class BlasterDemon {
     this.claws.forEach((s, i) => { s.material.opacity = Math.min(1, charge * 0.9); s.scale.setScalar(0.12 + 0.16 * charge * (1 + 0.15 * sin(t * 9 + i * 2))); });
     this.glow.material.opacity = this.pow * (0.05 + 0.1 * rage + 0.08 * tele + 0.14 * gloat) + 0.2 * roar;
     this.glow.material.color.setRGB(0.5, 0.1, 0.75).lerp(this._c2.setRGB(0.9, 0.06, 0.16), U.uDmRage.value);
-    // the eclipse behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
+    // the ring behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
     this.limbU.uTime.value = t;
     this.limbU.uK.value = dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
     this.limbU.uColor.value.setRGB(0.5, 0.85, 1.0).lerp(g.waveCol, 0.22).lerp(this._c2.setRGB(1.0, 0.3, 0.22), 0.7 * U.uDmRage.value);

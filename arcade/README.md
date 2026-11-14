@@ -107,7 +107,7 @@ lists all of them again.
   claws. It hovers on slow wing beats (the outer wing follows the inner), breathes,
   sways its tail and watches you. A wave starts: it flies up out of the distance,
   throws its wings wide and roars as its lights come on from below. While a
-  question's clock runs it comes closer. An eclipse of cold light stands behind
+  question's clock runs it comes closer. A thin ring of cold light stands behind
   it, so its dark wings and horns are cut out against the sky. Four holo-drones
   hold station round it, one to an answer, each with the answer's own badge for
   a face (the coloured disc and letter from the answer's button): tap an answer and your fighter fires on its drone. If it is the right one

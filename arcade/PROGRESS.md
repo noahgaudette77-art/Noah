@@ -1820,3 +1820,43 @@ Checkpoint log (newest last):
   item to a line (same words, same order). While searching the window folds
   away entirely. Small type is larger. Not done: the book's own page notation
   ("6•3") stays as the book prints it.
+
+### Name audit (round M)
+
+A separate agent ran one or two web searches on every name in the game (a web
+screen, not a trademark search) and judged the design ideas from general
+knowledge. No name came back as a real conflict.
+
+| Names | Verdict | Note and outcome |
+|---|---|---|
+| PRODUCT PUSHER, PERILMONGER, SOLVENCY SPECTER, GROUP GOLEM, LONGEVITY LICH, LORD INTESTATE, PROBATE TOLLGATE, PATRIMONY PHANTOM | clear | kept |
+| INFLATION TITAN | clear | "titan" is a common word; kept |
+| THE FINE PRINT, UNDUE INFLUENCER | minor | everyday phrases used as titles elsewhere; kept |
+| THE PROCTOR | minor | an obscure comic villain and an ordinary job title; kept, flagged (the agent's alternative: THE INVIGILATOR) |
+| NEST EGG RUN, STRATEGY GUIDE, INR ARCADE | clear | kept |
+| RISK BLASTER | minor | no game of that name, but "<subject> Blaster" is how an old edutainment series named its games; kept because it is the owner's working name, flagged (alternative: RISK INTERCEPT) |
+| BOSS RUSH, MEMORY BANK, FINAL EXAM | minor | generic terms; kept |
+| Background cabinets: COMET CLASH, ASTRO MINER, GALE WING, NEON DRIFT, LASER GRID, PIXEL QUEST, SKY ACE, ROOFTOP DASH, NOVA RAID, ROBO BRAWL, DRAKE DUEL, SKYLIGHT SPRINT | minor | exact or near titles of small real games, or echoes | replaced with COMET SKIRMISH, REGOLITH RUSH, GALE GLIDER, NEON HAIRPIN, LASER LATTICE, PIXEL PILGRIM, STRATO ACE, SKYLIGHT SLALOM, NOVA SORTIE, TIN TUSSLE, WYVERN DUEL (each searched: no match) |
+| Background cabinets: REDLINE RALLY, LANTERN MAZE, RIFT SKIPPER, BUMPER BLITZ, STACKWORKS | clear | kept |
+| COMPOUNDING, FIRST COIN, HONOURS | clear | kept |
+| BULL RUN, BLUE CHIP, QUICK DRAW, LIGHTNING, FEVER, HOT HAND, THE MACHINE, CENTURION, VETERAN, GIANT SLAYER, BOSS HUNTER, LAST ONE STANDING, DEEP SPACE, CARD SHARK, FLAWLESS, MILLIONAIRE, BOOKWORM | minor | everyday words that are also titles of something; none confusable as a label; kept |
+
+Design ideas, the agent's verdicts and what was done:
+
+- Golden egg as the sun of a synthwave road: the road is the genre's trope, the
+  egg is original. Kept.
+- Round vault door ringed with gear teeth: leans toward one game series. The
+  gear trains now run in straight lines inside the door; its rim is bolts and
+  rivets. No number on the door, no blue and yellow.
+- A ring of light behind a winged demon: mostly generic; an eclipse behind a
+  winged demon echoes a manga. It is a thin clean ring with a soft backlight,
+  no dark disc; the notes no longer call it an eclipse.
+- Hexagonal drones with lettered discs: generic. The answer shapes are discs
+  and rectangles, not pointed lozenge bars, and the four colours are not a
+  quiz app's colour-and-shape set.
+- A black-armoured robot in a square academic cap with a monocle: generic and
+  original; the helmet is nothing like a film villain's.
+- A toll booth on tracks, a crowned skeleton with an hourglass, a hooded
+  one-eyed wraith with a vault in its chest: generic or original. Kept.
+- Supplied models (the exam mech, the fighter, the demon) are the owner's own
+  files; their shapes are not mine to vouch for. Flagged as before.
