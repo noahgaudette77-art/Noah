@@ -16,13 +16,13 @@ function showStats() {
         <div class="tile" style="--c:${COLORS.lime}"><span class="k">MASTERY</span><span class="v">${mpct(Store.masteryOf(allIds))}%</span></div>
         <div class="tile"><span class="k">QUESTIONS MASTERED</span><span class="v">${Store.countMastered(ALL_QIDS)}/${ALL_QIDS.length}</span></div>
         <div class="tile"><span class="k">CARDS BANKED</span><span class="v">${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</span></div>
-        <div class="tile" style="--c:${COLORS.yellow}"><span class="k">ACCURACY</span><span class="v">${pct(st.correct, st.answered)}%</span></div>
+        <div class="tile"${st.answered ? ` style="--c:${pct(st.correct, st.answered) >= 80 ? COLORS.lime : pct(st.correct, st.answered) >= 60 ? COLORS.yellow : COLORS.red}"` : ""}><span class="k">ACCURACY</span><span class="v">${pct(st.correct, st.answered)}%</span></div>
         <div class="tile"><span class="k">ANSWERED</span><span class="v">${st.answered}</span></div>
-        <div class="tile" style="--c:${COLORS.magenta}"><span class="k">BEST STREAK</span><span class="v">${st.bestStreak}</span></div>
+        <div class="tile"><span class="k">BEST STREAK</span><span class="v">${st.bestStreak}</span></div>
         <div class="tile" style="--c:${COLORS.yellow}"><span class="k">BOSS STARS</span><span class="v">${stars}/36</span></div>
-        <div class="tile" style="--c:${COLORS.violet}"><span class="k">BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
+        <div class="tile"${(st.bestExam || 0) >= 60 ? ` style="--c:${COLORS.lime}"` : ""}><span class="k">BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
       </div>
-      <p class="label">SEEN ${Store.countSeen(allIds)} OF ${allIds.length} ITEMS. AN ITEM IS MASTERED AFTER THREE SPACED RIGHT ANSWERS.</p>
+      <p class="label note">SEEN ${Store.countSeen(allIds)} OF ${allIds.length} ITEMS. AN ITEM IS MASTERED AFTER THREE SPACED RIGHT ANSWERS.</p>
       <h2 class="section-h">TROPHIES ${Trophies.count()}/${TROPHIES.length}</h2>
       ${Trophies.html()}
       <h2 class="section-h">MASTERY BY STAGE</h2>

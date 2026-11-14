@@ -989,6 +989,11 @@ Work goes checkpoint by checkpoint (table below). Each checkpoint is one commit 
 IDENTICAL. To pick up: read the table, take the first row that is not `done`, and
 use the audit list under it as the to-do list for that screen.
 
+The regression reads the final boss's old name as its new one (`RENAMED` at the
+top of the comparison in `scripts/arcade-regression.js`): the name was changed on
+purpose in the originality audit, and that results line is the only text that
+differs from the baseline.
+
 ## Checkpoints
 
 | # | Checkpoint | Status |
@@ -998,10 +1003,10 @@ use the audit list under it as the to-do list for that screen.
 | K2 | Title screen | done |
 | K3 | Arcade hub | done |
 | K4 | Risk Blaster | done |
-| K5 | Nest Egg Run and Boss Rush | in progress (first pass committed, review pending) |
-| K6 | Final Exam, Memory Bank, Strategy Guide | in progress (first pass committed, review pending) |
-| K7 | Interface design system | in progress (first pass committed, review pending) |
-| K8 | Originality audit, final checks, report | |
+| K5 | Nest Egg Run and Boss Rush | done (two reviews) |
+| K6 | Final Exam, Memory Bank, Strategy Guide | done (reviewed) |
+| K7 | Interface design system | done (reviewed) |
+| K8 | Originality audit, final checks, report | in progress (final captures, PR, artifact, report) |
 
 ## Phase 0 audit
 
@@ -1276,3 +1281,149 @@ cohesion, legibility).
     loupe; one boss line that echoed a film catchphrase is reworded). Kept, as
     conventions no one owns: hearts for lives, four answer colours, block-built
     robots, a neon road.
+- **K5, second review** (a fresh reviewer, after the fixes above): detail 2.5,
+  lighting 2.5, materials 2, depth 2.5, motion 3, cohesion 2.5, legibility 3.5.
+  (Stricter than the first; several of its points came from the contact sheet
+  itself: four of the six boss cells showed the same boss, and thin cyan and
+  magenta trim reads as colour misregistration when a frame is shrunk to a
+  sixth of its size. At full size the frame is clean.) Its points and outcomes:
+  1. One boss repeated, limbs lost in the dark, a blown-out white chest with no
+     print on it. The Fine Print's chest is now a page: a heading, seventeen
+     lines of print that shrink down the page, three clauses lit in its colour,
+     two folds, a turned corner, a signature line, a wax seal with ribbons, on
+     paper dark enough not to clip. (The sheet for the next look shows four
+     different bosses.)
+  2. Colour split at rest: none in the full-size frame; no change beyond the
+     lens fringe already lowered.
+  3. Lane letters small and grey. Each lane's tag is now a tile in the answer's
+     colour with a dark letter, like the answer's badge, larger and further up
+     the road.
+  4. Car: roof burned out, jammed against the answers. The roof is gunmetal
+     again; the camera is higher and further back and aims lower, so there is
+     road under the car's tail.
+  5. Egg a flat pale ellipse; mustard skies; sparse props. The egg is shaded as
+     a shell (lit from upper left, shade lower right, a bright rim, a sheen,
+     speckles of two sizes) at lower intensity so the gold holds; the desert
+     sky runs violet to amber and the mountain's indigo to lilac; the desert has
+     2.4 times the cacti, twice the rocks and 70 pieces of scrub, the pass 2.5
+     times the pines and three times the rocks.
+  6. Arena: crowd on flat bands, hairline ring. The stands fall back into haze
+     (fog 24 to 86, was 26 to 120); the floor ring is drawn at three times the
+     resolution with heavier lines, larger and brighter.
+  7. Interface: the boss's charge bar is labelled BOSS ATTACK; the verdict
+     headline's glow is tight so its letters stay clean; the hint line is a
+     size larger.
+  - Resemblances it named: a single red lens (the scribe's loupe now glows in
+    the boss's own colour, with a dark pupil, not a red eye). Car from behind on
+    a neon road under a low sun, and block-built robots, are the genre and the
+    house style; kept.
+- **K7, interface** (`style.css`, `00-util.js` icons, `09-trophies.js`, `05-ui.js`
+  confirm, `32-stats.js`, `30-results.js`, `body.html` splash). U1 to U6.
+  Reviewer: detail 2.5, lighting 2.5, materials 2, depth 2.5, motion 2.5,
+  cohesion 3, legibility 3. Its seven points and what was done:
+  1. Panels were flat fills. Every tile, panel, stage row, review item, search
+     hit, trophy row, mastery row, rank chip and Setup row is one lit-glass
+     panel (a bright top edge, a violet glow, a soft drop, blur of what is
+     behind); Setup's rows are panels instead of text between dashed rules.
+  2. Colour had no roles. A stat's value is white unless its colour means
+     something (green: mastery or a good rate; yellow: a reward; red: a poor
+     rate); accuracy is coded the same way on Stats and on results; dialogs
+     share one violet frame and only the title takes the context's colour.
+     Submitting an exam with blanks is an amber dialog whose filled button is
+     KEEP WORKING (SUBMIT is an outline); with nothing blank it is green as
+     before. Same two buttons, same actions.
+  3. Small type. The secondary colour is brighter everywhere (#bdb4ee); stage
+     and tile labels are a step larger; the Stats note is in the reading face;
+     locked trophies are not dimmed: they carry a lock.
+  4. Switches. A selected OFF is plainly off (grey, no glow); effect chips are
+     tinted keys with a lamp that lights when on.
+  5. Numerals. A hard drop shadow only; values are larger (long sums of money
+     keep the smaller size so they stay in their tile).
+  6. Results. Stars are 38 px and arrive one after another; no orphan words
+     (balanced wrapping); the rank bar has weight.
+  7. Trophies and focus. Each of the 16 trophies has its own pixel emblem (a
+     token, a flame, a bolt, a gear, a crested helmet, chevrons, cards, a sword,
+     a sight, a crown, a gem, a rocket, a purse, a ticked box, a rosette, a
+     book), also on the unlock toast; the focus ring is a solid white outline.
+  - Earlier in this checkpoint: the boot splash, bevelled stage numbers, the
+    neutral filled style for a chosen answer, faint scanlines on the panels'
+    ground (with CRT glass on), a labelled boss charge bar, a one-line hint.
+  - Resemblances: none named.
+- **K6, Final Exam, Memory Bank, Strategy Guide** (`24-exam.js`, `24c`,
+  `23-memory.js`, `31-guide.js`, `31b`, CSS). E1, E2, M1 to M3, S1, S2.
+  Reviewer: detail 3, lighting 3, materials 2.5, depth 3, motion 2.5, cohesion 3,
+  legibility 3. Its seven points and what was done:
+  1. The end of the pass cinematic was its emptiest frame, with a large flat
+     orange shard. Wreckage is shaded inside and out; its heat is veins of glow
+     that die down to embers instead of a flat fill.
+  2. Memory Bank: the card hides the door's hub; banking barely shows in a
+     still. Kept by design: the dial ring is built to frame the card, and what
+     is read comes first. Banking is a coin that flies for most of a second,
+     sparks, a shock ring, the dial spinning and bolts sliding back (none of it
+     in a frame taken a third of a second in); a BANKED / BACK IN THE DECK label
+     now marks the moment where the card was.
+  3. A chosen exam answer filled with its slot colour, and a green or pink fill
+     can read as a verdict. Every chosen answer now has ONE neutral fill (pale
+     violet glass, a white ring); the slot colour stays on the badge and border.
+  4. Results were a bare form. The odd last tile takes the full row; chapter
+     fractions are larger; the scene behind shows through more at the top.
+  5. Micro labels. HUD tags, card captions and stage lines are a size larger
+     and lighter; long labels break evenly. The book's own page numbers
+     ("4•30") are card data and are left as they are.
+  6. Exam boss: helmet clipped, halo cropped to two arcs. Lower key and
+     exposure; the halo is sized to fit inside the window on a phone.
+  7. Guide: the rose window read as a loading spinner; search left room for two
+     results; four filled buttons competed. The window is filled panes (a gold
+     hub, eight inner and sixteen outer panes, thin leads); while there are
+     search results the archive folds to a strip; a chapter has one filled
+     button (BLASTER) and three outlines.
+  - Resemblances it named, and my call:
+    - The exam mech's crest and twin ear antennae, with red and blue light, read
+      as a famous film robot; its skull as another. The model is the owner's
+      own file. Done here: it is lit in violet and gold (no red and blue), its
+      heat and its death glow are amber, its eyes violet-white. Not done: its
+      head shape cannot be changed without remodelling the file; flagged in the
+      report as the owner's call.
+    - The rune ring: several marks read as real letters. Marks are now arcs and
+      dots only.
+    - A vault with gears echoes a game series whose vault door is itself a
+      giant gear. Ours is a round combination-dial door with clockwork on it,
+      which the brief asks for by name (gears, locks, coins, light panels);
+      kept.
+
+## Phase 0 audit list: outcomes
+
+| Item | Outcome |
+|---|---|
+| G1 soft 3D picture | Fixed: the scene is drawn at the screen's own pixels, multisampled; text canvases at three times their size with full anisotropy; the lens fringe is a trace in the corners. |
+| G2 bloom haze | Fixed: 13-tap bright pass, seven-level chain, tent upsample, a higher threshold per scene. |
+| G3 no depth cues | Fixed: ambient occlusion, contact shadows, depth of field, contact-shadow discs under the bosses. |
+| G4 tiers and auto-scaling | Fixed: one mode. Two files still hold unused weak-device code (the fighter's and the exam mech's plain twins); nothing calls it. |
+| G5 small in-scene text | Fixed: supersampled text canvases; lane signs and the floor ring redrawn at three times the size. |
+| G6 flat surfaces | Fixed: relief, scratches and smudges on every PBR surface (fading out below a pixel), facade and hull materials on the title, printed art on the cabinets. |
+| G7 one palette | Fixed: a colour script per scene (blue space behind the purple demon, each boss lit in its own colour, the exam in violet and gold, a sea-blue coast, a violet-to-amber desert, an indigo pass). |
+| G8 plain motion | Fixed: camera motion blur, arrivals and dialogs that rise and pop in, stars that arrive in turn, a boot splash. |
+| T1 to T6 title | Fixed (K2). |
+| H1 to H4 hub | Fixed (K3). |
+| B1 to B6 Risk Blaster | Fixed (K4). |
+| R1 fringe, crash tearing | Fixed: fringe is a trace; a crash tears in bands for half a second with an eased colour split and no radial smear. |
+| R2 dark blocky car | Fixed: champagne-gold shell, open rear glass with a spine fin, one light blade, a rim light from the sun's side. |
+| R3 flat road and boxes | Fixed: the wet road mirrors the scene; lane tiles in the answers' colours; the clockwork city keeps its detail in the distance. |
+| R4 thin traffic | Fixed: about three times the traffic, with spacing, following and passing; denser plants and rocks in the desert and the pass. |
+| X1 flat-shaded bosses | Fixed: armour relief, rim of their own colour, panel seams; the scribe carries a page of print. |
+| X2 bare arena | Fixed: four tiers of stands with about 1,300 spectators, glow sticks, aisle lights, haze. |
+| X3 flat light, no shadow | Fixed: key, two rims and an under-light in the boss's colour, a pool of light and a contact shadow. |
+| X4 black entrance frame | Justified: the first half second is the screen's power-on wipe, the same on every game. |
+| E1 film-robot look of the exam mech | Partly fixed: eyes violet-white, light violet and gold, heat amber. Its head shape is the owner's model and is unchanged (flagged). |
+| E2 dark empty hall | Fixed in part: a halo of runes behind the boss that fits the window; the hall itself stays dark on purpose (the earlier brief asked for a boss that fills the frame). |
+| M1 flat card over the vault | Justified and improved: the card is the page's own (so its text stays sharp and selectable) and flips in 3D; it now has a patterned face and a lit top. The dial ring is built to frame it. |
+| M2 soft, flat gold | Fixed: relief and scratches on gold, steel and chrome, with no sparkle. |
+| M3 banking and missing barely show | Fixed: the existing coin, sparks, dial and bolts, plus a label where the card was. |
+| S1 library is a banner | Justified and improved: reading comes first, so the archive stays in one window; more of it shows round the list, and it folds away while searching. |
+| S2 sparse shelves | Fixed earlier in the pass (K6 first pass: denser shelves, holo-books, pages) and the rose window is filled panes. |
+| U1 flat panels | Fixed: one lit-glass panel everywhere. |
+| U2 flat buttons | Fixed: lit faces, glow, press, sheen; one filled button per group. |
+| U3 long flat lists | Fixed: panels per row, role colours, trophy emblems. |
+| U4 plain HUD bars and badges | Fixed: lit bars with a bright leading edge, labelled boss charge, a docking streak pill. |
+| U5 flat results | Fixed: large stars arriving in turn, balanced text, full-width last tile. |
+| U6 no choreography | Fixed: arrivals, dialogs, the boot splash. |

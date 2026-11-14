@@ -7,7 +7,7 @@
   --panel-2: rgba(28, 13, 74, 0.94);
   --line: #3d2c80;
   --ink: #f4efff;
-  --dim: #a99cdc;
+  --dim: #bdb4ee;
   --cyan: #35efff;
   --magenta: #ff3ad4;
   --yellow: #ffe14f;
@@ -41,7 +41,7 @@ body {
 }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
 input { font: inherit; }
-:focus-visible { outline: 2px dashed var(--yellow); outline-offset: 3px; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 h1, h2, h3, p, ol, ul { margin: 0; }
 .selectable, .selectable * { user-select: text; -webkit-user-select: text; }
 .px { font-family: var(--font-display); letter-spacing: 0.04em; }
@@ -556,9 +556,9 @@ mark { background: var(--yellow); color: #12052e; }
 
 /* Strategy Guide: the archive scene shows through one window above the list; the
    window's own spread shadow is the solid ground everything else is read on. */
-.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.86), rgba(9, 3, 32, 0.86)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
+.guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.74), rgba(9, 3, 32, 0.74)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
 .lib-window { position: relative; height: clamp(150px, 28vh, 270px); border: 2px solid var(--violet); pointer-events: none;
-  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.86), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
+  box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.74), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }
 
@@ -689,3 +689,96 @@ mark { background: var(--yellow); color: #12052e; }
 .seg.wrap button { line-height: 1.45; min-height: 44px; display: grid; place-items: center; text-align: center; }
 /* The small label over a question (stage, topic, difficulty): bright enough to read at a glance on the violet panel. */
 .qmeta { color: #d6ccff; text-shadow: 0 1px 0 rgba(5, 1, 15, 0.9); }
+/* The boss's charge bar carries its name (it was an unlabelled sliver); the verdict line glows less so
+   its letters stay clean; the hint line under the answers is a size larger. */
+.charge.labelled { position: relative; height: 12px; }
+.charge.labelled span { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font: 7px/1 var(--font-display); letter-spacing: 0.08em; color: #ffd9c9; text-shadow: 0 1px 0 #000, 0 0 3px #000; pointer-events: none; }
+.sheet .verdict { text-shadow: 0 0 4px color-mix(in srgb, var(--c) 60%, transparent), 0 2px 0 rgba(0, 0, 0, 0.7); }
+.hint { font-size: clamp(8px, 2.2vw, 10.5px); opacity: 0.92; white-space: nowrap; color: #efe9ff; }
+/* Panels share the screen's glass: the same faint scanlines run across their ground (never across the
+   letters, which are drawn on top of it), unless CRT glass is switched off. */
+body:not(.crt-off) .qpanel { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.024) 0 1px, rgba(0, 0, 0, 0) 1px 3px), linear-gradient(180deg, rgba(44, 20, 108, 0.82), rgba(12, 5, 38, 0.9)); }
+body:not(.crt-off) .ans:not(.sel):not(.good):not(.bad) { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, rgba(0, 0, 0, 0) 1px 3px), linear-gradient(180deg, rgba(34, 16, 88, 0.84), rgba(10, 4, 34, 0.92)); }
+body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 1px, rgba(0, 0, 0, 0) 1px 3px), linear-gradient(180deg, rgba(42, 19, 104, 0.93), rgba(16, 7, 48, 0.96)); }
+
+/* ============ Interface review (seven points) ============ */
+/* 1. One panel for everything that holds content: lit glass, a bright top edge, a violet glow, a soft drop.
+      Setup's rows are panels too (they were text between dashed rules). */
+.tile, .panel, .stage, .review li, .hit, .trophies .tr, .setting, .rank, .mrow {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 46%), rgba(24, 14, 68, 0.74);
+  border: 2px solid rgba(150, 122, 255, 0.52);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -12px 18px -12px rgba(120, 90, 255, 0.34), 0 0 14px -3px rgba(120, 90, 255, 0.34), 0 4px 0 rgba(0, 0, 0, 0.55);
+}
+.client-card, .debrief { background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 46%), rgba(24, 14, 68, 0.74); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 16px -3px var(--c, var(--lime)), 0 4px 0 rgba(0, 0, 0, 0.55); }
+.setting { padding: 12px; margin-bottom: 8px; }
+.mrow { padding: 9px 11px; }
+.stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
+
+/* 2. Colour by role. A stat's value is white unless its colour means something (green: a good rate or
+      mastery; yellow: a reward; red: a poor rate). Dialogs share one frame; only their title takes the
+      context's colour. */
+.tile .v { color: var(--c, #fff); }
+.dialog, .modal .panel { border-color: #9b7cff; box-shadow: 0 0 0 2px #000, 0 0 34px -6px rgba(150, 110, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
+
+/* 3. Small type: one step larger, never dimmer than the secondary colour; sentences in the reading face. */
+.stage .meta { font-size: 9px; color: var(--dim); }
+.tile .k { font-size: 9px; color: var(--dim); }
+.label.note { font: 19px/1.15 var(--font-body); letter-spacing: 0.02em; color: #cfc6f8; text-transform: none; }
+.stars svg { width: 13px; height: 13px; }
+.trophies .tr { opacity: 1; gap: 11px; padding: 9px 11px; }
+.trophies .tr .ic svg { width: 24px; height: 24px; }
+.trophies .tr b { font-size: 10px; color: #d8d0fb; }
+.trophies .tr small { color: var(--dim); }
+.trophies .tr.on { border-color: var(--yellow); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 16px -3px rgba(255, 225, 79, 0.7), 0 4px 0 rgba(0, 0, 0, 0.55); }
+.trophies .tr.on .ic svg { filter: drop-shadow(0 0 5px rgba(255, 225, 79, 0.8)); }
+.trophies .tr .lk { margin-left: auto; flex: none; }
+.trophies .tr .lk svg { width: 12px; height: 12px; }
+
+/* 4. Switches say which way they are set: ON is lit, OFF is plainly off. Effect chips are tinted keys with
+      a lamp, not thirteen solid slabs. */
+.seg button[aria-pressed="true"] { box-shadow: 0 0 12px -3px var(--c, var(--cyan)), inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.25); }
+.seg button[aria-pressed="true"][data-v="false"] { background: rgba(255, 255, 255, 0.14); color: #e2dcff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+.seg.wrap button { display: flex; align-items: center; justify-content: center; gap: 7px; color: var(--dim); background: rgba(10, 5, 34, 0.7); border-color: rgba(150, 122, 255, 0.4); }
+.seg.wrap button::before { content: ""; flex: none; width: 6px; height: 6px; background: #3a2f6e; box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6); }
+.seg.wrap button[aria-pressed="true"] { background: rgba(53, 239, 255, 0.13); border-color: var(--cyan); color: #e6fdff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 12px -5px var(--cyan); }
+.seg.wrap button[aria-pressed="true"]::before { background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }
+
+/* 5. Numerals: a hard drop only (glow smeared an 8 toward an S and clogged the zeros). */
+.tile .v, .score span, .egg span, .res-head .big, .mrow b, .bossbar .name span { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7); }
+.tile .v { font-size: 19px; }
+.tile .v.long { font-size: 15px; } /* (a long sum of money keeps to its tile) */
+
+/* 6. Results: stars you can see, arriving one after another; no orphan words; a rank bar with some weight. */
+.res-stars .stars { gap: 8px; }
+.res-stars .stars svg { width: 38px; height: 38px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px rgba(255, 225, 79, 0.45)); animation: star-pop 0.5s var(--ease-spring) backwards; }
+.res-stars .stars svg:nth-child(2) { animation-delay: 0.14s; }
+.res-stars .stars svg:nth-child(3) { animation-delay: 0.28s; }
+@keyframes star-pop { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
+.res-head p, .debrief p, .client-card p, .dialog p, .hub-desc { text-wrap: balance; }
+.rank { padding: 7px 10px; gap: 6px; }
+.rank .rn { font-size: 9px; }
+.rank .meter { height: 7px; }
+@media (prefers-reduced-motion: reduce) { .res-stars .stars svg { animation: none; } }
+
+/* ============ Exam, vault and guide review ============ */
+/* A chosen answer: ONE neutral fill for every slot (a pale violet glass and a white ring). The slot's own
+   colour stays on its badge and its border only, so a green or a pink fill can never be read as a verdict. */
+.ans.sel {
+  background: linear-gradient(180deg, rgba(186, 170, 255, 0.46), rgba(118, 98, 226, 0.34));
+  box-shadow: 0 0 0 2px #fff, 0 0 22px -2px rgba(214, 204, 255, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+/* Results: an odd last tile takes the whole row; chapter fractions are a size larger; the scene behind a
+   full-page screen shows through a little more at the top. */
+.tiles .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.mrow b { font-size: 10px; }
+.screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.6), rgba(8, 3, 28, 0.86) 46%, rgba(6, 2, 22, 0.92)) !important; }
+/* Small labels: a size up; long ones break evenly instead of leaving one word alone. */
+.hud .tag { font-size: 10px; color: color-mix(in srgb, var(--c, var(--cyan)) 55%, #fff); }
+.world, .label, .ch-list .label, .section-h { text-wrap: balance; }
+.face .ftop, .face .fhint { font-size: 9px; color: #cfc6f8; }
+.stage .meta { white-space: nowrap; }
+/* Guide: while there are search results the archive folds down to a strip; a chapter has one filled button. */
+.lib-window { transition: height 0.3s var(--ease-out); }
+.guide-lib.searching .lib-window { height: 64px; }

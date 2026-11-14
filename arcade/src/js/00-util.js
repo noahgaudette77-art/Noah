@@ -82,6 +82,25 @@ const PIXELS = {
   coin: [".XXX.", "XX.XX", "XX.XX", "XX.XX", ".XXX."],
   full: ["XX.XX", "X...X", ".....", "X...X", "XX.XX"],
   book: ["XXX.XXX", "X.XXX.X", "X.XXX.X", "X.XXX.X", "XXXXXXX"],
+  lock: ["..XXX..", ".X...X.", ".X...X.", "XXXXXXX", "XXX.XXX", "XXX.XXX", "XXXXXXX"],
+  // one emblem per trophy (t_ + its id): a token, a flame, a bolt, a gear, a crested helmet, rank chevrons,
+  // two cards, a sword, a sight, a crown, a gem, a rocket, a full purse, a ticked box, a rosette
+  t_first: ["..XXXXX..", ".XX...XX.", "XX..X..XX", "XX.XXX.XX", "XX..X..XX", "XX..X..XX", "XX.XXX.XX", ".XX...XX.", "..XXXXX.."],
+  t_streak5: ["....X....", "...XX....", "...XXX...", "..XXXX.X.", ".XXXXXXX.", ".XX.XXXXX", "XXX..XXXX", ".XX...XX.", "..XXXXX.."],
+  t_streak10: [".....XXX.", "....XXX..", "...XXX...", "..XXXXXX.", ".XXXXXX..", "....XXX..", "...XXX...", "..XX.....", ".X......."],
+  t_streak20: ["...X.X...", ".X.XXX.X.", "..XXXXX..", "XXX...XXX", ".XX...XX.", "XXX...XXX", "..XXXXX..", ".X.XXX.X.", "...X.X..."],
+  t_ans100: ["..XXXXX..", ".XXXXXXX.", "XXXXXXXXX", "..XXXXX..", ".XXXXXXX.", ".XX...XX.", ".XX.X.XX.", ".XX...XX.", "..XX.XX.."],
+  t_ans500: ["....X....", "...XXX...", "..XX.XX..", ".XX...XX.", "XX..X..XX", "...XXX...", "..XX.XX..", ".XX...XX.", "XX.....XX"],
+  t_cards50: ["..XXXXXX.", "..X....X.", "XXXXXX.X.", "X....X.X.", "X.XX.X.X.", "X.XX.XXX.", "X....X...", "X....X...", "XXXXXX..."],
+  t_boss1: [".......XX", "......XXX", ".....XXX.", "....XXX..", "X..XXX...", "XXXXX....", ".XXX.....", "XX.XX....", "X...X...."],
+  t_boss6: ["....X....", "..XXXXX..", ".X..X..X.", ".X.....X.", "XXX.X.XXX", ".X.....X.", ".X..X..X.", "..XXXXX..", "....X...."],
+  t_boss12: [".........", "X...X...X", "X...X...X", "XX.XXX.XX", "XXXXXXXXX", "XXXXXXXXX", "XX.X.X.XX", "XXXXXXXXX", "........."],
+  t_flawless: ["..XXXXX..", ".XX.X.XX.", "XXXXXXXXX", ".XX.X.XX.", "..XX.XX..", "..XX.XX..", "...XXX...", "...XXX...", "....X...."],
+  t_wave5: ["....X....", "...XXX...", "...XXX...", "..XX.XX..", "..XX.XX..", "..XXXXX..", ".XXXXXXX.", ".X.XXX.X.", "...X.X..."],
+  t_million: ["...XXX...", "...XXX...", "..XXXXX..", ".XXX.XXX.", "XXX.X.XXX", "XXXX.XXXX", "XXX.X.XXX", "XXXX.XXXX", ".XXXXXXX."],
+  t_exam60: ["XXXXXXXXX", "X.......X", "X......XX", "X.....XXX", "XX...XX.X", "XXX.XX..X", "X.XXX...X", "X..X....X", "XXXXXXXXX"],
+  t_exam90: ["..XXXXX..", ".XX...XX.", ".X..X..X.", ".X.XXX.X.", ".X..X..X.", ".XX...XX.", "..XXXXX..", "..XX.XX..", ".XX...XX."],
+  t_reader: ["XXXX.XXXX", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "XXXXXXXXX", "...XXX...", "........."],
 };
 function icon(name, color = "currentColor") {
   const rows = PIXELS[name];

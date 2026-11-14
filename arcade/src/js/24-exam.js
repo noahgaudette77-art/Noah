@@ -160,15 +160,16 @@ function examHalo() {
       x.save();
       x.rotate((i / N) * 6.2832);
       x.translate(0, -R * 0.815);
-      // a mark: four to six strokes between the points of a 3 x 4 lattice, each starting where the last ended
-      const u = 13, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 4) - 1.5) * u];
-      let p = pt();
-      x.lineWidth = 4.2;
-      x.beginPath(); x.moveTo(p[0], p[1]);
-      const n = 4 + Math.floor(rnd() * 3);
-      for (let k = 0; k < n; k++) { let q = pt(); if (q[0] === p[0] && q[1] === p[1]) q = [-q[0], -q[1]]; if (rnd() < 0.22) x.moveTo(q[0], q[1]); else x.lineTo(q[0], q[1]); p = q; }
-      x.stroke();
-      if (rnd() < 0.45) { const d = pt(); x.beginPath(); x.arc(d[0], d[1], 3.2, 0, 6.2832); x.fill(); }
+      // a mark: two or three arcs hung on the points of a small lattice, a dot or two, sometimes a short bar
+      // under it (curves and dots only: straight strokes kept coming out as letters)
+      const u = 12, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 3) - 1) * u];
+      x.lineWidth = 3.8;
+      for (let k = 0, n = 2 + Math.floor(rnd() * 2); k < n; k++) {
+        const c = pt(), rad = u * (rnd() < 0.5 ? 0.5 : 1), a0 = Math.floor(rnd() * 4) * 1.5708, sw = (1 + Math.floor(rnd() * 3)) * 1.5708;
+        x.beginPath(); x.arc(c[0], c[1], rad, a0, a0 + sw); x.stroke();
+      }
+      for (let k = 0, n = 1 + Math.floor(rnd() * 2); k < n; k++) { const d = pt(); x.beginPath(); x.arc(d[0] + (rnd() - 0.5) * 7, d[1] + (rnd() - 0.5) * 7, 2.8, 0, 6.2832); x.fill(); }
+      if (rnd() < 0.4) { const t = (Math.floor(rnd() * 3) - 1) * u; x.beginPath(); x.moveTo(t - 6, u * 1.9); x.lineTo(t + 6, u * 1.9); x.stroke(); }
       x.restore();
       // a small diamond between marks
       x.save(); x.rotate(((i + 0.5) / N) * 6.2832); x.translate(0, -R * 0.815); x.rotate(0.7854); x.fillRect(-2.6, -2.6, 5.2, 5.2); x.restore();
@@ -188,7 +189,7 @@ function examHalo() {
     x.setLineDash([26, 14]);
     x.beginPath(); x.arc(0, 0, R * 0.64, 0, 6.2832); x.stroke();
   });
-  const g = new THREE.Group(), D = 9.4;
+  const g = new THREE.Group(), D = 6.5; // (sized so the whole ring is inside the window on a phone: it reads as a halo, not as two arcs)
   // (the marks write depth, where they are drawn at all, so the lens focuses them where they hang and not on the wall behind)
   const plane = (map, color, size, solid = true) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: solid, alphaTest: solid ? 0.02 : 0, fog: false }));
@@ -293,13 +294,13 @@ class ExamGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xfff2dd, 0.3);
     key.position.set(-4, 16, 9);
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xe6ecff, 2.6, 32, 1.5); // the lamp over the boss
+    this.spotLight = new THREE.PointLight(0xe6ecff, 2.15, 32, 1.5); // the lamp over the boss (low enough that its helmet keeps its surface)
     this.spotLight.position.set(0.8, BOSS_DAIS + BOSS_S * 1.55, BOSS_S * 0.62);
     s.add(this.spotLight);
-    this.rimA = new THREE.PointLight(0xff2fb0, 2.8, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
+    this.rimA = new THREE.PointLight(0x9a66ff, 3.0, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.rimB = new THREE.PointLight(0x2fd8ff, 2.2, 34, 1.5);
+    this.rimB = new THREE.PointLight(0xffc474, 2.0, 34, 1.5);
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -372,7 +373,7 @@ class ExamGame extends QuizGame {
     }
     if (this.boss) {
       this.halo = examHalo();
-      this.halo.position.set(0, BOSS_DAIS + BOSS_S * 0.9, -BOSS_S * 0.36); // behind its head and shoulders, in front of the shaft of light
+      this.halo.position.set(0, BOSS_DAIS + BOSS_S * 0.93, -BOSS_S * 0.36); // behind its head and shoulders, in front of the shaft of light
       this.haloK = 0;
       s.add(this.halo);
     }
@@ -418,7 +419,7 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.post = { exposure: 1.08, bloom: 0.72, threshold: 1.05, saturation: 1.02, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+    s.userData.post = { exposure: 1.02, bloom: 0.72, threshold: 1.05, saturation: 1.06, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
@@ -559,7 +560,7 @@ class ExamGame extends QuizGame {
     UI.confirm({
       title: "SUBMIT EXAM?",
       text: blank ? `${blank} question${blank === 1 ? " is" : "s are"} unanswered and will be marked wrong.` : "You answered every question.",
-      yes: "SUBMIT", no: "KEEP WORKING", color: COLORS.lime,
+      yes: "SUBMIT", no: "KEEP WORKING", color: blank ? COLORS.orange : COLORS.lime, careful: blank > 0,
       onYes: () => this.submit(),
     });
   }
@@ -637,9 +638,9 @@ class ExamGame extends QuizGame {
       this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
     }
     if (B) {
-      this.spotLight.intensity = 2.6 * B.lightK;
-      this.rimA.intensity = 2.8 * B.lightK;
-      this.rimB.intensity = 2.2 * B.lightK;
+      this.spotLight.intensity = 2.15 * B.lightK;
+      this.rimA.intensity = 3.0 * B.lightK;
+      this.rimB.intensity = 2.0 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }

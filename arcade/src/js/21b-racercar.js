@@ -179,7 +179,7 @@ class RacerCar {
       bolt(sx * 0.28, 0.9, -1.56);
     });
     // --- cabin armour: pillars, visor, roof plate ----------------------------
-    P(1.27, 0.045, 0.8, 0, 1.3, 0.15, C.BODY, 0, 0, 0, 0.03);
+    P(1.27, 0.045, 0.8, 0, 1.3, 0.15, C.PLATE, 0, 0, 0, 0.03); // (the roof stays gunmetal: under the light bar a gold one burned out to white)
     P(1.24, 0.03, 0.24, 0, 1.262, -0.31, C.STEEL, -0.5, 0, 0, 0.02); // visor over the windscreen
     [-1, 1].forEach((sx) => {
       racerStrut(paint, box, new THREE.Vector3(sx * 0.8, 0.79, -0.95), new THREE.Vector3(sx * 0.615, 1.275, -0.2), 0.075, C.STEEL);
@@ -204,7 +204,7 @@ class RacerCar {
       P(0.25, 0.14, 0.17, x, 1.485, -0.1, C.DARK, 0, 0, 0, 0.03, true);
       Pf(0.27, 0.02, 0.2, x, 1.565, -0.1, C.PLATE, 0, 0, 0, 0.012); // cowl
       lamp(2, 0.19, 0.088, 0.02, x, 1.485, -0.19, 0xdff4ff, 3.4); // the lamps face forward
-      lamp(3 + i, 0.13, 0.055, 0.02, x, 1.485, -0.01, 0xffa53d, 2.6); // amber markers face the driver behind
+      lamp(3 + i, 0.12, 0.05, 0.02, x, 1.485, -0.01, 0xffa53d, 1.45); // amber markers face the driver behind (lit, not blazing: four of them side by side bloomed into one blob over the roof)
     });
     // --- flanks: door armour in two layers, skirts, flares, flaps ------------
     [-1, 1].forEach((sx) => {

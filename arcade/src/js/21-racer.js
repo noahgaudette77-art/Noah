@@ -18,16 +18,16 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 const CAREER_SKY = [
   { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
     top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffe6a8, sunBot: 0xf0a04e, halo: 0xd8b070,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.66 },
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.58 },
   { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
     top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xffeeb0, sunBot: 0xffae46, halo: 0xe6c888,
-    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.66 },
+    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.56 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
     top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd27a, sunBot: 0xff7a2a, halo: 0xff8a3a,
-    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 0.85 },
+    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 0.7 },
   { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
     top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xffe29a, sunBot: 0xe08a2e, halo: 0xb07a3a,
-    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.62 },
+    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.56 },
 ];
 const RACER_SKY_COLORS = ["bg", "fog", "tint", "grid", "top", "mid", "horizon", "sunTop", "sunBot", "halo", "ridge", "line", "light", "amb"];
 const RACER_SKY_NUMS = ["sunY", "stars", "glow", "clouds", "lamps", "city", "exposure", "bloom", "wet", "sunI"];
@@ -677,6 +677,35 @@ function racerSignTexture(label, color, wide) {
   return t;
 }
 
+// A lane's tag, painted on the road: a tile in the answer's colour with its letter dark on it, like the
+// badge on the answer's button. (A solid tile reads at the shallow angle the road is seen from.)
+function racerTagTexture(label, color, wide) {
+  const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 128;
+  c.width = W * K;
+  c.height = H * K;
+  const x = c.getContext("2d");
+  x.scale(K, K);
+  x.fillStyle = "#07031a";
+  x.fillRect(0, 0, W, H);
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, color);
+  g.addColorStop(1, color);
+  x.fillStyle = g;
+  x.fillRect(7, 7, W - 14, H - 14);
+  x.fillStyle = "rgba(255,255,255,0.28)";
+  x.fillRect(7, 7, W - 14, 10);
+  x.fillStyle = "rgba(0,0,0,0.22)";
+  x.fillRect(7, H - 19, W - 14, 12);
+  x.font = `${wide ? 62 : 84}px "Press Start 2P", "Courier New", monospace`;
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.fillStyle = "#12052e";
+  x.fillText(label, W / 2 + (wide ? 3 : 4), H / 2 + 6);
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 16;
+  return t;
+}
+
 class RacerGame extends QuizGame {
   constructor(sel) {
     super(sel, "racer", { fov: 62, far: 900, fog: [0x12052e, 30, 470], bg: 0x0c0326 });
@@ -782,8 +811,8 @@ class RacerGame extends QuizGame {
     this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
-    this.camBase.set(0, 3.1, 7.4);
-    this.lookAt.set(0, 1.1, -18);
+    this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
+    this.lookAt.set(0, 0.7, -18);
     this.applySky(sky0);
   }
   // Street lamps down both sides of the road, in three draw calls; then the city.
@@ -1098,9 +1127,10 @@ class RacerGame extends QuizGame {
     Object.values(this.signMats).forEach((m) => this.owned.push(m.map, m));
     // the same letters laid on the road ahead of the car, one per lane, so a lane and its answer are one thing
     this.tagMats = {};
-    Object.keys(this.signMats).forEach((label) => {
-      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: this.signMats[label].map, color: new THREE.Color(1.25, 1.25, 1.25), transparent: true, opacity: 0, depthWrite: false, fog: false });
-      this.owned.push(this.tagMats[label]);
+    ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
+      const tf = label.length > 1;
+      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerTagTexture(label, SLOT_COLORS[tf ? i - 4 : i], tf), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.owned.push(this.tagMats[label].map, this.tagMats[label]);
     });
   }
   makeGate() {
@@ -1126,8 +1156,8 @@ class RacerGame extends QuizGame {
       const label = r.tf ? (i === 0 ? "TRUE" : "FALSE") : r.labels[i];
       const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
       tag.rotation.x = -Math.PI / 2;
-      tag.scale.set(r.n === 2 ? 0.62 : 0.8, 2.3, 1);
-      tag.position.set(laneX(i, r.n), 0.045, -10.5);
+      tag.scale.set(r.n === 2 ? 0.7 : 0.86, 2.9, 1);
+      tag.position.set(laneX(i, r.n), 0.045, -11.5);
       tag.layers.set(1); // (not in the wet road's mirror)
       tag.renderOrder = 2;
       tags.add(tag);

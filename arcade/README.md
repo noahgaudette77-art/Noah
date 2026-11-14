@@ -133,10 +133,11 @@ lists all of them again.
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
   armour whose scratches, pits and dents stay sharp close up, a pale skull, two
   violet-white lamps for eyes with a streak of glare across them, an ember beating in its chest.
-  Behind it a halo of runes (marks made up for this game, with no meaning) turns
+  It is lit in violet and gold. Behind it a halo of runes (marks made up for this game, arcs and dots with no meaning) turns
   slowly, a ring of ticks turning the other way, at the same pace all exam long.
-  An answer you choose fills with its own slot colour: it shows what you picked
-  and nothing about whether it is right.
+  An answer you choose fills with one neutral colour, the same for every slot (pale
+  violet glass with a white ring): it shows what you picked and nothing about
+  whether it is right.
   It starts on its knees in the dark; its eyes light, it roars and rises. Through
   the exam it breathes and watches: its head follows your finger (or the phone's
   tilt), and every sixteen seconds it does something slow and unfriendly (leans in

@@ -226,8 +226,8 @@ const RACER_BIOME_PAL = {
   downtown: { fog: 0x000000, fogMix: 0, hor: 0x000000, horMix: 0, grid: 0x000000, gridMix: 0, base: 0x000000, baseMix: 0, rain: 1, wet: 1, dust: 0, far: 470, lamps: 1, ridge: 1 },
   // (the coast has a colour script of its own: a deep sea-blue sky over a coral horizon, clear air, teal haze only far out)
   coast: { fog: 0x2a86a8, fogMix: 0.5, hor: 0xff8a66, horMix: 0.72, top: 0x08223f, topMix: 0.85, mid: 0x1d6c88, midMix: 0.7, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 720, lamps: 1, ridge: 0.6 },
-  desert: { fog: 0xc86a2c, fogMix: 0.5, hor: 0xff7a2a, horMix: 0.55, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
-  mountain: { fog: 0x7f95c8, fogMix: 0.5, hor: 0xb8cdf5, horMix: 0.5, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
+  desert: { fog: 0xb0522e, fogMix: 0.42, hor: 0xff8a3a, horMix: 0.6, top: 0x241040, topMix: 0.85, mid: 0x7a2f5c, midMix: 0.7, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
+  mountain: { fog: 0x5f6fb0, fogMix: 0.45, hor: 0xc8b4f0, horMix: 0.55, top: 0x0c1036, topMix: 0.85, mid: 0x38418c, midMix: 0.7, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
   tunnel: { fog: 0x1c1208, fogMix: 0.9, hor: 0x1c1208, horMix: 0.9, grid: 0x000000, gridMix: 1, base: 0x0b0b0c, baseMix: 1, rain: 0, wet: 0.25, dust: 0.2, far: 260, lamps: 0, ridge: 0 },
 };
 
@@ -542,8 +542,8 @@ class RacerWorld {
         for (const sd of [-1, 1]) loft(b, [[0, 2.6, 2.2, 0.7], [7, 2.0, 1.9, 0.6], [13, 2.6, 2.1, 0.7]], sd * 13.6, z, 0xa55a30, aZ);
         for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI, x = Math.cos(a) * 13.4, y = 13 + Math.sin(a) * 4.6; put(b, BOX, x, y, z, 5.4, 2.6 + (i % 2) * 0.5, 3.6, i % 2 ? 0xb5683a : 0x9a5230, aZ, 0, 1, 0, 0, a + Math.PI / 2 + Math.PI / 2); }
       }
-      for (let i = 0; i < 14; i++) {
-        const sd = i % 2 ? 1 : -1, x = sd * rand(10.8, 19), z = -6 - i * 17.8 + rand(-4, 4), h = rand(3.8, 6.4), aZ = z - 2;
+      for (let i = 0; i < 34; i++) {
+        const sd = i % 2 ? 1 : -1, x = sd * rand(10.8, i % 3 ? 19 : 34), z = -6 - i * 7.3 + rand(-3, 3), h = rand(3.2, 6.6), aZ = z - 2;
         put(b, CYL, x, h / 2, z, 0.42, h, 0.42, 0x2f7040, aZ);
         [[1, 0.55], [-1, 0.38]].forEach(([s, f]) => { put(b, CYL, x + s * 0.7, h * f, z, 0.26, 1.2, 0.26, 0x2f7040, aZ, 0, 1, 0, 0, Math.PI / 2); put(b, CYL, x + s * 1.2, h * f + 0.8, z, 0.26, 1.8, 0.26, 0x377a48, aZ); });
       }
@@ -570,7 +570,9 @@ class RacerWorld {
         [[-1.4, 8.0], [-1.4, 7.2], [-1.75, 7.6]].forEach(([dx, y]) => put(b, BOX, x + dx, y, z + 0.2, 0.22, 0.22, 0.06, 0xffd23d, aZ, 2, 2.4));
       }
       [[-46, -84], [50, -186]].forEach(([x, z]) => { const aZ = z - 2; put(b, CYL, x, 17, z, 0.5, 34, 0.5, 0x5a626c, aZ, 0, 1); put(b, CYL, x, 5, z, 1.4, 10, 1.4, 0x4a525c, aZ); [34, 24, 14].forEach((y) => put(b, BOX, x, y, z, 0.6, 0.6, 0.6, 0xff3030, aZ, 2, 3)); });
-      for (let i = 0; i < 9; i++) { const sd = i % 2 ? 1 : -1, z = -12 - i * 27; put(b, ICO, sd * rand(13, 36), -0.5, z, rand(6, 11), rand(1.3, 2.2), rand(5, 9), 0xa87848, z - 9); }
+      for (let i = 0; i < 20; i++) { const sd = i % 2 ? 1 : -1, z = -12 - i * 12.2; put(b, ICO, sd * rand(13, 40), -0.5, z, rand(5, 11), rand(1.3, 2.4), rand(4, 9), i % 3 ? 0xa87848 : 0x96603a, z - 9); }
+      // scrub and stones between them: the ground is not bare
+      for (let i = 0; i < 70; i++) { const sd = i % 2 ? 1 : -1, z = -3 - i * 3.5 + rand(-1.5, 1.5), k = rand(0.5, 1.3); put(b, ICO, sd * rand(10.4, 30), 0.1, z, k, k * 0.7, k, i % 4 ? 0x5e6a38 : 0x8a6a48, z - 1.5); }
       put(b, BOX, 11.6, 0.6, -34, 1.8, 0.7, 4, 0x7a3b22, -38, 0, 1, 0.05, 0.4, 0.18); put(b, BOX, 11.6, 1.2, -33.6, 1.5, 0.5, 1.8, 0x5a2c1a, -38, 0, 1, 0.05, 0.4, 0.18);
       billboard(b, ads, -13, -52); billboard(b, ads, 13.4, -230);
       set("desert", mesh(b), adMesh(ads, false));
@@ -587,8 +589,8 @@ class RacerWorld {
         if (i % 3 === 0) put(b, BOX, 10.6, rand(4, 9), z, 0.5, 0.5, 7, 0xe8f0ff, aZ);
       }
       const pine = (x, y, z, h) => { const aZ = z - 2; put(b, CYL, x, y + h * 0.12, z, 0.2, h * 0.24, 0.2, 0x4a3524, aZ); for (let k = 0; k < 3; k++) put(b, CONE, x, y + h * (0.36 + k * 0.24), z, h * (0.3 - k * 0.07), h * 0.36, h * (0.3 - k * 0.07), k % 2 ? 0x1d4a36 : 0x245a40, aZ); put(b, CONE, x, y + h * 0.98, z, h * 0.07, h * 0.12, h * 0.07, 0xe8f0ff, aZ); };
-      for (let i = 0; i < 26; i++) pine(-rand(11, 40), 0, -4 - i * 9.6 + rand(-3, 3), rand(5, 9.5));
-      for (let i = 0; i < 9; i++) { const z = -10 - i * 27; put(b, ICO, -rand(11, 26), 0.2, z, rand(1, 2.4), rand(0.8, 1.6), rand(1, 2.2), 0x4a5262, z - 3); }
+      for (let i = 0; i < 64; i++) pine(-rand(11, i % 3 ? 40 : 62), 0, -4 - i * 3.9 + rand(-2, 2), rand(4.5, 10.5));
+      for (let i = 0; i < 26; i++) { const z = -10 - i * 9.4; put(b, ICO, -rand(11, 30), 0.2, z, rand(0.8, 2.6), rand(0.7, 1.8), rand(0.8, 2.4), i % 3 ? 0x4a5262 : 0x5c6678, z - 3); }
       { // an avalanche gallery: a roof over the road on a row of columns
         const aZ = -146;
         put(b, BOX, 0.3, 9.1, -121, 20.6, 0.7, 48, 0x565c66, aZ);

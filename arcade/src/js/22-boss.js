@@ -4,15 +4,16 @@
 
 function bossRuneTexture() {
   const c = document.createElement("canvas");
-  c.width = c.height = 512;
+  c.width = c.height = 1536; // (three times the old size, with heavier rings: it was a hairline on the floor)
   const x = c.getContext("2d");
+  x.scale(3, 3);
   x.translate(256, 256);
   x.strokeStyle = x.fillStyle = "#ffffff";
   const ring = (r, w) => { x.lineWidth = w; x.beginPath(); x.arc(0, 0, r, 0, Math.PI * 2); x.stroke(); };
-  ring(244, 7);
-  ring(222, 2.5);
-  ring(150, 3.5);
-  ring(134, 1.5);
+  ring(242, 11);
+  ring(220, 4);
+  ring(150, 5.5);
+  ring(134, 2.5);
   for (let i = 0; i < 60; i++) {
     x.save();
     x.rotate((i / 60) * Math.PI * 2);
@@ -41,7 +42,7 @@ function bossRuneTexture() {
 
 class BossGame extends QuizGame {
   constructor(sel) {
-    super(sel, "boss", { fov: 60, fog: [0x0a0322, 26, 120], bg: 0x0a0322 });
+    super(sel, "boss", { fov: 60, fog: [0x0a0322, 24, 86], bg: 0x0a0322 }); // (the stands fall back into haze; the boss, 16 away, stays clear)
     this.bossKey = sel.chapters.length === 1 ? sel.chapters[0] : "all";
     this.cfg = BOSSES[this.bossKey];
     this.maxHp = this.cfg.hp;
@@ -70,7 +71,7 @@ class BossGame extends QuizGame {
         <div class="name"><span>${esc(this.cfg.name)}</span><span data-hp>${this.hp}/${this.maxHp}</span></div>
         <span class="meter slide" style="--c:${c}"><i data-hpbar style="transform:none"></i></span>
       </div>
-      <div class="charge" title="Boss attack charge"><i data-charge></i></div>
+      <div class="charge labelled" title="Boss attack charge"><i data-charge></i><span>BOSS ATTACK</span></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -281,7 +282,7 @@ class BossGame extends QuizGame {
     s.add(beams);
     this.decor(beams);
     // the summoning circle and a pool of light under the boss
-    this.rune = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 1.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.rune = new THREE.Mesh(new THREE.PlaneGeometry(13.5, 13.5), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 2.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.rune.rotation.x = -Math.PI / 2;
     this.rune.position.y = 0.05;
     this.rune.layers.set(1);

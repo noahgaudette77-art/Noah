@@ -45,7 +45,7 @@ const Trophies = {
     if (this.showing || !this.queue.length) return;
     const t = this.queue.shift();
     this.showing = true;
-    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${icon("star", COLORS.yellow)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
+    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", COLORS.yellow)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
     Sound.sfx("trophy");
     Sound.say("Trophy unlocked");
     Haptics.buzz([20, 30, 20, 30, 70]);
@@ -55,7 +55,7 @@ const Trophies = {
   html() {
     return `<div class="trophies">${TROPHIES.map((t) => {
       const on = this.has(t.id);
-      return `<div class="tr${on ? " on" : ""}"><span class="ic">${icon("star", on ? COLORS.yellow : "#4a3d7a")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span></div>`;
+      return `<div class="tr${on ? " on" : ""}"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", on ? COLORS.yellow : "#8d82c8")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
     }).join("")}</div>`;
   },
 };

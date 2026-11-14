@@ -486,7 +486,7 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.12, bloom: 0.8, threshold: 1.08, saturation: 1.12, contrast: 1.1, vignette: 1.25, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.3 };
+    s.userData.post = { exposure: 1.12, bloom: 0.8, threshold: 1.08, saturation: 1.12, contrast: 1.1, vignette: 1.25, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
     this.camBase.set(0, Y, this.dist);
     this.lookAt.set(0, Y, 0);
   }

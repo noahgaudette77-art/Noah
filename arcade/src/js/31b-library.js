@@ -137,13 +137,19 @@ class LibraryScene extends Scene3D {
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform float uTime; varying vec2 vUv;
         void main(){
-          vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
-          float petal = 0.5 + 0.5 * cos(a * 12.0);
-          float lead = smoothstep(0.1, 0.0, abs(petal - 0.5) - 0.42) + smoothstep(0.03, 0.0, abs(r - 0.34)) + smoothstep(0.03, 0.0, abs(r - 0.66)) + smoothstep(0.04, 0.0, abs(r - 0.97));
-          vec3 glass = mix(vec3(0.5, 0.25, 1.0), vec3(0.2, 0.85, 1.0), smoothstep(0.2, 0.95, r));
-          glass = mix(glass, vec3(1.0, 0.7, 0.35), step(r, 0.34));
-          glass *= 0.75 + 0.25 * sin(uTime * 0.35 + floor(a * 1.9099 + 6.0) * 1.3);
-          vec3 col = glass * 1.5 * (1.0 - clamp(lead, 0.0, 1.0)) * step(r, 1.0);
+          // a window of filled panes (a gold hub, eight inner panes, sixteen outer ones in alternating jewel
+          // colours, thin leads between): a solid object at any distance, not a ring of dashes
+          vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x) / 6.2832;
+          float a8 = abs(fract(a * 8.0) - 0.5), a16 = abs(fract(a * 16.0 + 0.5) - 0.5);
+          float i8 = floor(a * 8.0), i16 = floor(a * 16.0 + 0.5);
+          float lead = smoothstep(0.035, 0.0, abs(r - 0.2)) + smoothstep(0.035, 0.0, abs(r - 0.6)) + smoothstep(0.05, 0.0, abs(r - 0.96));
+          lead += step(0.2, r) * step(r, 0.6) * smoothstep(0.455, 0.5, a8) + step(0.6, r) * smoothstep(0.44, 0.5, a16);
+          vec3 inner = mix(vec3(0.42, 0.2, 0.95), vec3(0.16, 0.5, 1.0), mod(i8, 2.0));
+          vec3 outer = mix(vec3(0.12, 0.7, 0.85), vec3(0.75, 0.25, 0.85), mod(i16, 2.0));
+          vec3 glass = r < 0.2 ? vec3(1.0, 0.72, 0.36) : (r < 0.6 ? inner : outer);
+          glass *= 0.8 + 0.2 * sin(uTime * 0.35 + (r < 0.6 ? i8 : i16) * 1.3);
+          glass *= 0.72 + 0.4 * smoothstep(1.0, 0.0, r);
+          vec3 col = glass * 1.05 * (1.0 - clamp(lead, 0.0, 1.0)) * step(r, 1.0);
           gl_FragColor = vec4(col, 1.0);
         }`,
     });

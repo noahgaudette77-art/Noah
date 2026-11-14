@@ -83,12 +83,12 @@ function renderResults(o, rank) {
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
         <h1>${esc(o.title)}</h1>
-        ${o.stars !== undefined ? `<div>${starsHTML(o.stars)}</div>` : ""}
+        ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
       ${cl && cl.debrief ? `<div class="debrief"><canvas aria-hidden="true"></canvas><div><div class="who">${esc(cl.name.toUpperCase())} · YOUR CLIENT</div><p class="selectable">${esc(cl.debrief)}</p></div></div>` : ""}
-      <div class="tiles">${tiles.map((t) => `<div class="tile" style="--c:${t.c || COLORS.cyan}"><span class="k">${esc(t.k)}</span><span class="v">${esc(t.v)}</span></div>`).join("")}</div>
+      <div class="tiles">${tiles.map((t) => `<div class="tile"${t.c ? ` style="--c:${t.c}"` : ""}><span class="k">${esc(t.k)}</span><span class="v${String(t.v).length > 7 ? " long" : ""}">${esc(t.v)}</span></div>`).join("")}</div>
       <div class="row center" style="margin-bottom:12px">${rankChip()}</div>
       ${o.extraHTML || ""}
       ${changes.length ? `<h2 class="section-h">MASTERY</h2><div class="mastery-list">${changes.map((x) => {

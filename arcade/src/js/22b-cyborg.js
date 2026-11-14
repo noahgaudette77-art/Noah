@@ -285,7 +285,8 @@ const CY_HEAD = {
     K.eye(-0.27, 2.9, 0.72, 0.26);
     K.cyl("head", 0.2, 0.25, 0.34, 0.24, 2.88, 0.8, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 10); // the loupe's barrel
     K.add("head", new THREE.TorusGeometry(0.21, 0.035, 6, 16), racerM(0.24, 2.9, 0.98, 1, 1, 1, 0.12), CY.BONE); // its rim
-    K.eye(0.24, 2.9, 0.985, 0.52);
+    K.glowCyl("head", 3, 0.165, 0.03, 0.24, 2.9, 0.985, 2.3, Math.PI / 2 + 0.12); // the lens, lit in its own colour (not an eye)
+    K.cyl("head", 0.06, 0.06, 0.04, 0.24, 2.9, 1.0, CY.DARK, Math.PI / 2 + 0.12, 0, 0, 8);
     K.tube("head", [0.44, 2.98, 0.72], [0.62, 3.12, 0.3], 0.025, CY.STEEL); // its arm, back to the temple
     [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.028 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.2)); // the fine print
     K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
@@ -654,10 +655,28 @@ const CY_CORE = {
     K.glow("chest", 2, 1.0, 0.1, 0.05, 0, y, z + 0.04, 2.8);
     for (let i = 0; i < 3; i++) K.cyl("chest", 0.2, 0.2, 0.05, -0.36 + i * 0.36, y - 0.55, z + 0.02, CY.BONE, Math.PI / 2, 0, 0, 10);
   },
+  // a page of contract bolted to its chest: a heading, lines of print that get shorter, thinner and closer
+  // together down the page, three clauses lit in its colour in the smallest print, two folds, a turned
+  // corner, a signature line and a wax seal with ribbon tails
   text(K, z = 1.16) {
-    K.fplate("chest", 2.0, 2.2, 0.1, 0, 0.6, z - 0.04, CY.BONE);
-    for (let i = 0; i < 9; i++) K.glow("chest", 2, 1.6 - cyHash(i * 1.7) * 0.9, 0.06, 0.04, -0.12 - cyHash(i + 5) * 0.3, 1.5 - i * 0.22, z + 0.03, 1.9);
-    K.glow("chest", 3, 0.5, 0.05, 0.04, 0.5, -0.36, z + 0.03, 2.8);
+    // (the armour's shader sorts its colours by brightness: paper has to be as pale as bone to be matt, and
+    // ink as dark as armour; anything between would come out as polished steel)
+    const PAPER = 0xc6b8a8, INK = 0x221c1a, FOLD = INK;
+    K.fplate("chest", 2.0, 2.2, 0.1, 0, 0.6, z - 0.04, PAPER);
+    [0.98, 0.22].forEach((y) => K.box("chest", 1.96, 0.012, 0.012, 0, y, z + 0.012, FOLD));
+    K.box("chest", 0.3, 0.3, 0.02, 0.87, 1.57, z + 0.02, 0xd8cabc, 0, 0, Math.PI / 4);
+    K.box("chest", 1.0, 0.1, 0.014, -0.4, 1.5, z + 0.016, INK);
+    let y = 1.3;
+    for (let i = 0; i < 17; i++) {
+      const t = i / 16, h = 0.052 - 0.03 * t, w = 1.72 - cyHash(i * 1.7) * (i % 4 === 3 ? 0.9 : 0.25);
+      if (i === 10 || i === 13 || i === 15) K.glow("chest", 2, w, h * 1.1, 0.03, -0.88 + w / 2, y, z + 0.03, 2.1);
+      else K.box("chest", w, h, 0.014, -0.88 + w / 2, y, z + 0.016, INK);
+      y -= 0.118 - 0.05 * t;
+    }
+    K.glow("chest", 3, 0.56, 0.04, 0.03, 0.5, -0.33, z + 0.03, 2.6); // sign here
+    K.cyl("chest", 0.19, 0.19, 0.05, -0.62, -0.26, z + 0.03, 0x7e1320, Math.PI / 2, 0, 0, 12); // the seal
+    K.cyl("chest", 0.11, 0.11, 0.07, -0.62, -0.26, z + 0.035, 0xa81c2c, Math.PI / 2, 0, 0, 8);
+    [-0.25, 0.3].forEach((rz) => K.box("chest", 0.11, 0.36, 0.016, -0.62 + rz * 0.5, -0.5, z + 0.02, 0x7e1320, 0, 0, rz));
   },
 };
 

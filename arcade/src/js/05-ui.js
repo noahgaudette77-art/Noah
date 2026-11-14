@@ -117,11 +117,13 @@ const UI = {
     m.el.remove();
     if (m.destroy) m.destroy();
   },
-  confirm({ title, text = "", yes = "YES", no = "CANCEL", color = COLORS.magenta, onYes, onNo }) {
+  // careful: the answer that changes nothing is the filled button and the other is an outline (for a yes
+  // that cannot be undone, such as submitting an exam with questions still blank).
+  confirm({ title, text = "", yes = "YES", no = "CANCEL", color = COLORS.magenta, careful = false, onYes, onNo }) {
     const el = this.el(`<div class="modal"><div class="dialog" style="--c:${color}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
       <h2>${esc(title)}</h2>${text ? `<p>${esc(text)}</p>` : ""}
-      <button class="btn" data-act="yes" style="--c:${color}">${esc(yes)}</button>
-      <button class="btn ghost" data-act="no">${esc(no)}</button></div></div>`);
+      <button class="btn${careful ? " ghost" : ""}" data-act="yes" style="--c:${color}">${esc(yes)}</button>
+      <button class="btn${careful ? "" : " ghost"}" data-act="no"${careful ? ` style="--c:${COLORS.cyan}"` : ""}>${esc(no)}</button></div></div>`);
     this.openModal({
       el,
       on: (a) => { this.closeModal(); if (a === "yes") onYes && onYes(); else onNo && onNo(); },

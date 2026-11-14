@@ -24,6 +24,10 @@ function showGuide(chapterN) {
     }).join("")}</div>`).join("");
   const search = (q) => {
     const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
+    if (el.classList.contains("searching") !== words.length > 0) { // the archive's window folds down to a strip while there are results to read
+      el.classList.toggle("searching", words.length > 0);
+      setTimeout(() => { const w = $(".lib-window", el); if (w && el.isConnected) lib.setBand(w); }, 340); // (the scene re-frames itself in the new window)
+    }
     if (!words.length) { body.innerHTML = index(); return; }
     const hits = [];
     const has = (txt) => { const t = txt.toLowerCase(); return words.every((w) => t.includes(w)); };
@@ -82,14 +86,14 @@ function showGuideChapter(n) {
         <div class="label">${mpct(mm)}% MASTERED · ${Store.countMastered(c.qids)}/${c.qids.length} QUESTIONS · ${Store.countMastered(c.fids)}/${c.fids.length} CARDS</div>
         <div class="row">
           <button class="btn small" data-act="play" data-g="blaster" style="--c:${COLORS.cyan}">${icon("play")} BLASTER</button>
-          <button class="btn small" data-act="play" data-g="memory" style="--c:${COLORS.lime}">FLASHCARDS</button>
-          <button class="btn small" data-act="play" data-g="boss" style="--c:${COLORS.magenta}">BOSS: ${esc(BOSSES[n].name)}</button>
+          <button class="btn small ghost" data-act="play" data-g="memory" style="--c:${COLORS.lime}">FLASHCARDS</button>
+          <button class="btn small ghost" data-act="play" data-g="boss" style="--c:${COLORS.magenta}">BOSS: ${esc(BOSSES[n].name)}</button>
         </div>
       </div>
       ${client(n) ? `<div class="client-card" style="--c:${c.color}"><canvas aria-hidden="true"></canvas><div>
         <div class="who">CLIENT FILE · ${esc(client(n).name.toUpperCase())}${client(n).age ? ", " + client(n).age : ""}</div>
         <p class="selectable">${esc(client(n).lines[0] || "")}</p>
-        <div class="row"><button class="btn small" data-act="brief" style="--c:${c.color}">${icon("play")} PLAY BRIEFING</button></div></div></div>` : ""}
+        <div class="row"><button class="btn small ghost" data-act="brief" style="--c:${c.color}">${icon("play")} PLAY BRIEFING</button></div></div></div>` : ""}
       ${c.objectives.length ? `<div class="gsec" style="--c:${c.color}"><h3>LEARNING OBJECTIVES</h3><ol class="objectives selectable">${c.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ol></div>` : ""}
       ${c.guide.map((g) => `<div class="gsec" style="--c:${c.color}"><h3>${esc(g.heading)}${g.page ? `<span>P. ${esc(g.page)}</span>` : ""}</h3>
         <ul class="selectable">${g.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div>`).join("") || `<p class="hub-desc">Notes for this chapter are not loaded yet.</p>`}

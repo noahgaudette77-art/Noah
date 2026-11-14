@@ -805,7 +805,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.7, threshold: 1.1, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.3, sharpen: 0.4, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.35 };
+    s.userData.post = { exposure: 1.06, bloom: 0.7, threshold: 1.1, saturation: 1.14, contrast: 1.12, vignette: 1.1, fringe: 0.2, sharpen: 0.4, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.35 };
     this.texs = [];
     // on[g]: what the lamps say; lv[g]: the level the shaders get (focus, buzz).
     this.on = new Float32Array(HUB_NG).fill(1);

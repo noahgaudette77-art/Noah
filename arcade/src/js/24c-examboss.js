@@ -292,7 +292,7 @@ class ExamBoss {
       uBossPower: { value: 0 }, uBossSweep: { value: 100 }, uBossCrack: { value: 0 }, uBossDim: { value: 1 },
     };
     this.rim = this.U.uBossRim;
-    this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(1.35, 0.12, 0.85); this.seamRage = new THREE.Color(1.7, 0.28, 0.08);
+    this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(1.35, 0.12, 0.85); this.seamRage = new THREE.Color(1.75, 0.95, 0.2);
     this.flick = 1; this.flickT = 0; this.twT = 3; this.twK = 0; this.twA = 0; this.twJ = "head"; this.seed = 20261113;
     const ARMOUR = { env: 1.1 }, BONE = { bone: true, env: 0.6 };
     BONE.eye = this.eyeU = { value: new THREE.Vector3() }; // how hard the eyes light the skull
@@ -341,12 +341,12 @@ class ExamBoss {
     // a red light at its feet, throwing its shadows upward
     // the light from under it: cold at first (the skull stays bone, the eyes are the only red),
     // then redder as the exam nears its end
-    this.underCold = new THREE.Color(0x93a8ff); this.underHot = new THREE.Color(0xff2412);
+    this.underCold = new THREE.Color(0x93a8ff); this.underHot = new THREE.Color(0xffa030);
     this.under = new THREE.PointLight(0x93a8ff, 0, 22, 1.5);
     this.under.position.set(0, BOSS_DAIS + 0.38 * BOSS_S, 0.52 * BOSS_S);
     s.add(this.under);
     // the reactor: a glow on the chest and a light inside, dark until it fails
-    this.coreHot = neon(0xffb060, 1.6); this.coreEmber = new THREE.Color(1.5, 0.1, 0.05);
+    this.coreHot = neon(0xffb060, 1.6); this.coreEmber = new THREE.Color(1.5, 0.62, 0.1);
     this.coreGlow = glowSprite(this.coreHot.clone(), 0.5, 0);
     this.coreGlow.position.set(BOSS_CORE[0] - this.J.chest.pivot[0], BOSS_CORE[1] - this.J.chest.pivot[1], 0.2);
     this.coreGlow.layers.set(1);
@@ -357,7 +357,7 @@ class ExamBoss {
       uniforms: Object.assign(fogUniforms(), { map: { value: BossModel.texture() }, uTint: { value: new THREE.Color(0.5, 0.56, 0.72) }, uT: { value: 0 }, uG: { value: BOSS_G }, uFire: { value: 0 }, uCore: { value: new THREE.Vector3() } }),
       side: THREE.DoubleSide,
       vertexShader: `attribute vec3 aC; attribute vec3 aV; attribute vec4 aR; attribute vec2 aK; uniform float uT; uniform float uG;
-        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying float vHeat; varying float vDepth;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth;
         vec3 spin(vec3 v, vec3 k, float a){ float c = cos(a), s = sin(a); return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c); }
         void main(){
           float t = min(uT, aK.x), rest = max(uT - aK.x, 0.0);
@@ -365,21 +365,24 @@ class ExamBoss {
           c.xz += aV.xz * 0.2 * (1.0 - exp(-rest * 2.5)); // a short skid where it lands
           float ang = aR.w * (t + (1.0 - exp(-rest * 3.0)) / 3.0);
           vec3 p = c + spin(position - aC, aR.xyz, ang);
-          vN = spin(normal, aR.xyz, ang); vP = p; vHeat = aK.y; vUv = uv;
+          vN = spin(normal, aR.xyz, ang); vP = p; vHeat = aK.y; vUv = uv; vL = position;
           vec4 mv = modelViewMatrix * vec4(p, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D map; uniform vec3 uTint; uniform float uT; uniform float uFire; uniform vec3 uCore;
-        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying float vHeat; varying float vDepth;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth;
         void main(){
           vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
           vec3 alb = texture2D(map, vUv).rgb; alb *= alb * uTint;
           vec3 toCore = uCore - vP;
           float fire = uFire * max(dot(n, normalize(toCore)), 0.0) / (1.0 + dot(toCore, toCore) * 6.0);
           vec3 lit = alb * (vec3(0.2, 0.16, 0.32) + vec3(1.0, 0.92, 0.8) * 1.1 * max(dot(n, normalize(vec3(-0.3, 0.75, 0.6))), 0.0) + vec3(3.4, 1.5, 0.5) * fire);
-          float cool = exp(-uT * (0.7 + vHeat * 1.3));
+          float cool = exp(-uT * (0.95 + vHeat * 1.5));
+          // the heat is not a flat fill: veins of it across the metal, brightest in the cracks, dying down to embers
+          float vein = 0.5 + 0.5 * sin(vL.x * 310.0 + sin(vL.y * 230.0) * 2.2) * sin(vL.z * 270.0 + vL.y * 110.0);
+          vec3 glow = vec3(3.0, 1.05, 0.22) * (cool * (0.12 + 0.88 * smoothstep(0.3, 0.95, vein)) + 0.05 * smoothstep(0.82, 1.0, vein));
           vec3 col = gl_FrontFacing
-            ? lit * mix(1.0, 0.5, smoothstep(0.0, 1.5, uT)) + vec3(2.2, 0.7, 0.16) * cool * (0.25 + 0.5 * vHeat) // scorched outside
-            : vec3(0.03, 0.025, 0.03) + vec3(3.0, 1.1, 0.25) * cool; // glowing inside
+            ? lit * mix(1.0, 0.5, smoothstep(0.0, 1.5, uT)) + glow * (0.2 + 0.45 * vHeat) // scorched outside
+            : lit * 0.32 + vec3(0.02, 0.016, 0.022) + glow; // the torn inside: bare metal, shaded like the rest, glowing in veins
           gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
         }`,
     });
@@ -934,7 +937,7 @@ class ExamBoss {
         const p = this.at("handR", 0.36, 0.3, 0.14, this._v);
         g.bursts.burst(p, COLORS.red, { n: this.soft ? 20 : 44, speed: 12 * K, size: 0.34 * K, life: 0.8, gravity: -10 * K });
         g.bursts.burst(p, 0xbfb3ff, { n: 24, speed: 6 * K, size: 0.3 * K, life: 0.9 });
-        g.shockwave(p.clone(), neon(0xff3a2a, 2), 18 * K, 0.5);
+        g.shockwave(p.clone(), neon(0xffb040, 2), 18 * K, 0.5);
         Sound.sfx("bosssmash");
         if (!this.soft) { UI.flash("hit"); g.shake(1.0); GFX.pulse(10, 0.1); GFX.hitStop(90); }
         Haptics.buzz([70, 30, 120]);

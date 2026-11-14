@@ -181,10 +181,16 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
         vec3 col = mix(uBottom, uTop, smoothstep(-0.85, 0.85, p.y)) * uI * uTint;
         col *= 1.0 + 0.35 * smoothstep(0.6, 1.0, r);
         if (uEgg > 0.5) {
-          vec2 hl = q - vec2(-0.3, 0.36);
-          col *= 0.86 + 0.26 * smoothstep(1.0, 0.25, r); // rounder: fuller in the middle
-          col += uTop * uTint * uI * 0.4 * exp(-dot(hl, hl) * 6.5); // a sheen on its shoulder
-          col *= 1.0 - 0.2 * step(0.988, fract(sin(dot(floor(q * 30.0), vec2(127.1, 311.7))) * 43758.5453)); // speckles
+          // a shell, not a disc: lit from its upper left, falling to shade at its lower right, a bright
+          // rim all round, a sheen on its shoulder, speckles of two sizes
+          vec3 en = vec3(q, sqrt(max(0.0, 1.0 - r * r)));
+          float lit = clamp(dot(en, normalize(vec3(-0.45, 0.5, 0.74))), 0.0, 1.0);
+          col *= 0.5 + 0.75 * lit;
+          col += uTop * uTint * uI * 0.55 * pow(lit, 14.0);
+          col += uBottom * uTint * uI * 0.5 * smoothstep(0.86, 1.0, r);
+          vec2 sq = floor(q * 22.0), sf = fract(q * 22.0) - 0.5;
+          float sh = fract(sin(dot(sq, vec2(127.1, 311.7))) * 43758.5453);
+          col *= 1.0 - 0.34 * step(0.9, sh) * (1.0 - smoothstep(0.12 + 0.2 * fract(sh * 7.0), 0.3 + 0.2 * fract(sh * 7.0), length(sf)));
         }
         if (uStripes > 0.5) {
           float yy = 0.18 - p.y;
