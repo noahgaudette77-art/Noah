@@ -632,7 +632,7 @@ class BlasterSpace {
     S.uSunCol.value.copy(c.sunCol).multiplyScalar(1.15 * sunK);
     S.uAmb.value.copy(c.amb).multiplyScalar(0.42);
     S.uRimCol.value.copy(c.b).lerp(c.c, 0.4).multiplyScalar(1.1);
-    this.rockMat.uniforms.uTint.value.copy(c.rockTint).multiplyScalar(1.5);
+    this.rockMat.uniforms.uTint.value.copy(c.rockTint).lerp(this._rockInk || (this._rockInk = new THREE.Color(0x2c2470)), 0.5).multiplyScalar(0.8);
     const sv = this._v.copy(this.sunDir).multiplyScalar(950).add(g.camera.position).project(g.camera), on = sv.z < 1 && Math.abs(sv.x) < 1.25 && Math.abs(sv.y) < 1.25 && !calm;
     const fade = on ? clamp(1.35 - Math.max(Math.abs(sv.x), Math.abs(sv.y)), 0, 1) * sunK : 0;
     this.ghosts.forEach((gh) => {

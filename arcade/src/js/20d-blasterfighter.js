@@ -367,9 +367,10 @@ class BlasterFighter {
           float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
           float dist = distance(vP, uHitP);
           float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
-          float flare = uHit * uHit * exp(-dist * 1.6);
-          float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit);
-          gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.55) + fres * (ring + flare * 0.4) * 0.8), 1.0);
+          float flare = uHit * uHit * exp(-dist * 3.0);
+          float near = exp(-dist * 1.5); // (how close to the blow)
+          float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
+          gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.7) + fres * (ring + flare * 0.4) * 0.8) + vec3(1.7, 1.5, 1.4) * uHit * uHit * exp(-dist * 9.0), 1.0);
         }`,
     });
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), this.shieldMat);

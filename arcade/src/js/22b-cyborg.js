@@ -221,14 +221,14 @@ const CY_HEAD = {
     }
     // the cap: a square board set corner-forward at a tilt, a button, a cord to one corner, a lit tassel
     K.cyl("head", 0.4, 0.46, 0.16, 0, 3.36, 0, CY.DARK, 0, 0, 0, 8);
-    K.plate("head", 1.9, 0.11, 1.9, 0, 3.48, 0, CY.PLATE, 0.06, Math.PI / 4, 0, 0.02);
+    K.plate("head", 1.9, 0.13, 1.9, 0, 3.48, 0, 0x4a4672, 0.2, Math.PI / 4, 0, 0.02); // (violet felt, lighter than the armour: a board, not an outline)
     for (let i = 0; i < 4; i++) { // its four edges, in gold light
       const a = Math.PI / 4 + (i * Math.PI) / 2;
-      K.glow("head", 3, 1.88, 0.1, 0.09, Math.cos(a) * 0.94, 3.5 - Math.sin(a) * 0.056, Math.sin(a) * 0.94, 1.5, 0, Math.PI / 2 - a, 0, 0xffc93d);
+      K.glow("head", 3, 1.88, 0.1, 0.09, Math.cos(a) * 0.94, 3.5 - Math.sin(a) * 0.187, Math.sin(a) * 0.92, 1.5, 0.2, Math.PI / 2 - a, 0, 0xffc93d); // (tilted with the board)
     }
     K.cyl("head", 0.09, 0.09, 0.07, 0, 3.56, 0, CY.BONE, 0, 0, 0, 8);
     K.cable("head", [0, 3.56, 0], [1.16, 3.5, 0.06], 0.04, 0.03, 4);
-    K.glow("head", 3, 0.15, 0.56, 0.15, 1.2, 3.2, 0.06, 2.4, 0, 0, 0, 0xffc93d);
+    K.glow("head", 3, 0.2, 0.62, 0.2, 1.2, 3.17, 0.06, 2.4, 0, 0, 0, 0xffc93d);
   },
   // a pale skull in a steel jaw, wired at the temples
   skull(K) {
@@ -293,6 +293,7 @@ const CY_HEAD = {
     K.add("head", new THREE.TorusGeometry(0.31, 0.05, 6, 16), racerM(0.24, 2.9, 1.03, 1, 1, 1, 0.12), CY.BONE); // its rim
     K.glowCyl("head", 3, 0.25, 0.03, 0.24, 2.9, 1.035, 2.3, Math.PI / 2 + 0.12); // the lens, lit in its own colour (not an eye)
     K.cyl("head", 0.08, 0.08, 0.04, 0.24, 2.9, 1.05, CY.DARK, Math.PI / 2 + 0.12, 0, 0, 8);
+    K.glow("head", 3, 0.1, 0.045, 0.02, 0.34, 3.03, 1.07, 3.4, 0.12, 0, -0.7, 0xffffff); // one hard glint on the glass
     K.tube("head", [0.44, 2.98, 0.72], [0.62, 3.12, 0.3], 0.025, CY.STEEL); // its arm, back to the temple
     [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.028 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.2)); // the fine print
     K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
@@ -558,9 +559,9 @@ const CY_HAND = {
     K.plate(F, 0.6, 0.45, 0.6, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
     K.tube(F, [0, -0.45, 0.1], [0, -0.85, 0.15], 0.035, CY.STEEL, 4);
     K.add(F, new THREE.TorusGeometry(0.2, 0.04, 4, 10, Math.PI), racerM(0, -0.9, 0.15), CY.STEEL);
-    K.plate(F, 2.3, 1.56, 0.52, 0, -1.72, 0.15, 0xc9a877, 0, 0, 0, 0.08); // (tan hide: the one warm thing he carries)
+    K.plate(F, 2.3, 1.56, 0.52, 0, -1.72, 0.15, 0x94714a, 0, 0, 0, 0.08); // (tan hide: the one warm thing he carries; darker than it was, which blew out to white under the floor lamp)
     K.sym((q) => { K.plate(F, 0.24, 0.24, 0.56, q * 1.04, -1.06, 0.15, CY.STEEL, 0, 0, 0, 0.04); K.plate(F, 0.24, 0.24, 0.56, q * 1.04, -2.38, 0.15, CY.STEEL, 0, 0, 0, 0.04); });
-    K.glow(F, 3, 0.36, 0.14, 0.05, 0, -1.1, 0.43, 2.6);
+    K.glow(F, 3, 0.42, 0.17, 0.05, 0, -1.1, 0.43, 3, 0, 0, 0, 0xffb347); // its clasp, in warm light
     K.box(F, 2.32, 0.05, 0.54, 0, -1.3, 0.15, CY.DARK);
   },
 };
@@ -693,13 +694,13 @@ const CY_CORE = {
 // arm: [upper length, forearm length, thickness, style]; rest: [swing, spread, bend]
 const CYBORGS = {
   // PRODUCT PUSHER: a salesman in a suit of plate, briefcase in one hand, the other held out
-  1: { torso: "suit", cloth: 0x34416e, head: "grin", shoulder: "fin", arm: [2.0, 1.9, 0.36, "tube"], hands: ["kase", "open"], hs: 0.9, base: "jet", core: "none", rest: [-0.1, 0.1, -0.5], restR: [-0.5, 0.12, -1.25], sway: 1.3, breath: 2.2 },
+  1: { torso: "suit", cloth: 0x34416e, head: "grin", shoulder: "fin", arm: [2.0, 1.9, 0.36, "tube"], hands: ["kase", "open"], hs: 1.0, base: "jet", core: "none", rest: [-0.16, 0.16, -0.62], restR: [-0.5, 0.12, -1.25], sway: 1.3, breath: 2.2 },
   // PERILMONGER: a horned brute, all spikes, claws and hazard stripes
   2: { torso: "hulk", chevrons: true, head: "horned", shoulder: "spike", arm: [2.05, 2.0, 0.5, "piston"], hands: ["claw", "claw"], hs: 1.1, base: "jet", core: "reactor", rest: [0, 0.16, -0.6], twitch: 1.6, breath: 2.6, extra(K) { for (let i = 0; i < 5; i++) K.glow("hips", 3, 0.24, 0.1, 0.05, -0.8 + i * 0.4, -2.52, 0.88, i % 2 ? 0.3 : 2.4, 0, 0, 0.7); } },
   // SOLVENCY SPECTER: a hooded wraith in tattered plate, one eye, an empty vault in its chest
   3: { torso: "robe", ragged: true, folds: 11, head: "cyclops", shoulder: "bone", arm: [2.2, 2.3, 0.3, "bone"], hands: ["open", "open"], hs: 1.15, base: "tail", core: "vault", rest: [-0.25, 0.3, -0.9], sway: 1.5, breath: 1.5, steam: 1.6 },
   // THE FINE PRINT: a hunched scribe, many-eyed, four quill arms, clauses scrolling down its chest
-  4: { torso: "robe", folds: 7, head: "cluster", shoulder: "pad", arm: [1.9, 2.0, 0.3, "tube"], hands: ["needle", "needle"], hs: 0.95, base: "coil", core: "text", rest: [-0.35, 0.1, -1.0], hunch: 0.16, twitch: 1.8,
+  4: { torso: "robe", folds: 7, head: "cluster", shoulder: "pad", arm: [1.9, 2.0, 0.3, "tube"], hands: ["needle", "needle"], hs: 0.95, base: "coil", core: "text", rest: [-0.35, 0.1, -1.0], hunch: 0.27, headS: 1.28, twitch: 1.8,
     extra(K) { K.sym((sd) => { K.tube("chest", [sd * 1.5, 0.4, 0.5], [sd * 2.2, -0.3, 1.0], 0.1, CY.DARK); K.ball("chest", 0.2, sd * 2.2, -0.3, 1.0, CY.STEEL); K.cone("chest", [sd * 2.2, -0.3, 1.0], [sd * 1.7, -1.5, 1.8], 0.1, 0.01, CY.STEEL); K.glow("chest", 2, 0.08, 0.08, 0.08, sd * 1.7, -1.52, 1.82, 3); }); } },
   // GROUP GOLEM: slabs on slabs, a head sunk between cube shoulders, fists like safes
   5: { torso: "hulk", gut: { n: 3, w: 2.6, d: 1.6 }, hips: { w: 3.0 }, head: "dome", neck: 1.8, headS: 1.15, shoulder: "block", arm: [1.8, 1.9, 0.6, "piston"], hands: ["fist", "fist"], hs: 1.45, base: "legs", core: "reactor", rest: [0, 0.2, -0.35], sway: 0.6, breath: 1.4, twitch: 0.5 },

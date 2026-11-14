@@ -47,7 +47,7 @@ function blasterDroneGeo(shape, hex) {
       B.add(box, racerM(sd * 1.68, 0, -0.1, 0.8, 0.18, 0.18), BK.STEEL);
       put(B, racerPlate(0.5, 1.5, 0.56, 0.1, true), racerM(sd * 2.18, 0, -0.1), BK.PLATE);
       B.add(box, racerM(sd * 2.18, 0.5, 0.19, 0.4, 0.14, 0.04), paint);
-      L.add(box, racerM(sd * 2.18, -0.1, 0.2, 0.08, 0.86, 0.04), 0xffffff, 1);
+      [-0.4, -0.1, 0.2].forEach((y) => L.add(box, racerM(sd * 2.18, y, 0.2, 0.12, 0.13, 0.04), 0xffffff, 1));
     });
     B.add(box, racerM(0, 1.5, -0.1, 0.05, 0.38, 0.05), BK.STEEL);
     L.add(box, racerM(0, 1.7, -0.1, 0.1, 0.1, 0.1), 0xffffff, 1.2);

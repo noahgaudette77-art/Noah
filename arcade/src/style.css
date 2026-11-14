@@ -1699,3 +1699,14 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
    button. The copy starts at one height whatever its length. */
 .hub-card { background: linear-gradient(180deg, rgba(34, 19, 92, 0.9), rgba(15, 8, 48, 0.92)); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
 .hub-card .hub-desc { align-content: start; }
+
+/* ---- Boss Rush, closing fixes after its fourth independent review ---- */
+/* the question's topic in the reading face (lower-case words in the display face were hard to read, and wrapped) */
+.qmeta > span:first-child { font: 400 16px/1 var(--font-body); letter-spacing: 0.05em; color: #e4dcff; }
+/* the attack bar fills in hard segments, like the health bar above it */
+.barrow.threat .charge { position: relative; }
+.barrow.threat .charge::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 9px, #0a0420 9px 11px); }
+
+/* ---- Risk Blaster, closing fixes after its third independent review ---- */
+/* the band fades under the question as it does over the answers (a hard panel edge cut the demon's horns and its ring) */
+.scr-blaster .band::before { content: ""; position: absolute; z-index: 1; left: -16px; right: -16px; top: -2px; height: 22px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0.86), rgba(7, 2, 26, 0)); }

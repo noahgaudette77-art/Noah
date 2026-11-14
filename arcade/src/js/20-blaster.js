@@ -110,6 +110,22 @@ class BlasterShards {
   dispose() { if (this.mesh.dispose) this.mesh.dispose(); }
 }
 
+// A shot seen from behind runs almost straight away from the lens, where the shared beam's shading (by the angle of
+// its surface) goes dim. This one is shaded across its width instead: a white heart in a sheath of the answer's colour.
+function blasterShotMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(1, 1, 1) }, uTime: { value: 0 }, uFade: { value: 1 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vN; varying vec3 vV; varying vec3 vAx; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vAx = normalize((modelViewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz); gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform vec3 uColor; uniform float uFade; varying vec3 vN; varying vec3 vV; varying vec3 vAx;
+      void main(){
+        vec3 v = normalize(vV);
+        float x = clamp(abs(dot(normalize(vN), v)) / max(length(cross(v, normalize(vAx))), 0.03), 0.0, 1.0); // 1 along its middle, 0 at its edges, from any angle
+        float core = smoothstep(0.84, 0.93, x);
+        gl_FragColor = vec4(mix(uColor * (0.45 + 0.55 * x), vec3(1.7), core) * uFade, 1.0);
+      }`,
+  });
+}
 class BlasterGame extends QuizGame {
   constructor(sel) {
     super(sel, "blaster", { fov: 60, far: 2400, fog: [0x0b0324, 120, 1500], bg: 0x05010f });
@@ -213,6 +229,8 @@ class BlasterGame extends QuizGame {
     // one beam and muzzle flash per gun, reused for every shot
     this.shotFX = [0, 1].map(() => {
       const fx = { beam: makeBeam(SLOT_COLORS[0], 3.6), flash: glowSprite(0xffffff, 1, 1), tok: 0 };
+      fx.beam.material.dispose();
+      fx.beam.material = blasterShotMaterial();
       fx.flash.visible = false;
       s.add(fx.beam, fx.flash);
       return fx;
@@ -285,6 +303,8 @@ class BlasterGame extends QuizGame {
         lamp: new THREE.MeshBasicMaterial({ color: neon(hex, 2.1), vertexColors: true }),
         baseEdge: neon(hex, 2.3),
         baseRim: rim.uniforms.uColor.value.clone(),
+        baseLamp: neon(hex, 2.1),
+        baseHalo: neon(hex, 1.25),
       };
       return M;
     });
@@ -294,7 +314,7 @@ class BlasterGame extends QuizGame {
     if (!this.badges.has(key)) {
       // the answer's own badge (the one on its button): its colour is the drone's face, the letter dark on it
       const m = new THREE.SpriteMaterial({ map: answerBadgeTexture(text, SLOT_COLORS[i], false), transparent: true, depthTest: false, depthWrite: false, fog: false });
-      m.color.setScalar(0.96); // (the badge itself does not bloom: it stays crisp)
+      m.color.setScalar(1.08); // (the badge itself barely blooms: it stays crisp, and as bright as the button it stands for)
       this.badges.set(key, m);
     }
     return this.badges.get(key);
@@ -402,6 +422,8 @@ class BlasterGame extends QuizGame {
       const M = this.slotMats[i];
       M.edge.color.copy(M.baseEdge);
       M.rim.uniforms.uColor.value.copy(M.baseRim);
+      M.lamp.color.copy(M.baseLamp);
+      M.halo.color.copy(M.baseHalo);
       const g = new THREE.Group();
       const rot = new THREE.Group();
       const core = new THREE.Mesh(this.tgeo[shape], M.core);
@@ -420,6 +442,11 @@ class BlasterGame extends QuizGame {
       const halo = new THREE.Sprite(M.halo);
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
+      if (this.enemy) { // a dark plate behind it: the planet, the nebula and the demon's wings do not show through its collar
+        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.6, 28)), this.dronePlateMat || (this.dronePlateMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0.88, depthWrite: false })));
+        plate.position.z = -0.62;
+        frame.add(plate);
+      }
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
       label.scale.setScalar(this.enemy ? 1.36 : 1.12); // (round the demon the letter is the drone's face, inside its collar: the armour round it shows)
       label.position.z = 1.35;
@@ -467,8 +494,8 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, this.enemy ? 0.017 + 0.021 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.9 : 3.6));
+        aimBeam(fx.beam, from, at, this.enemy ? 0.03 + 0.036 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.7 : 2.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
@@ -509,7 +536,7 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
-        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 2.2, c.g * 2.2, c.b * 2.2], 0.14); this.explode(t, SLOT_COLORS[i], 0.45); }
+        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 2.2, c.g * 2.2, c.b * 2.2], 0.085); this.explode(t, SLOT_COLORS[i], 0.45); }
         this.enemy.hit(SLOT_COLORS[i]);
       } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
@@ -595,14 +622,14 @@ class BlasterGame extends QuizGame {
     // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
     { const tight = !!this.enemy && !full, sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
       // (round the demon a drone's flash is small and gone in a few frames: the demon is seen taking the hit, not whited out)
-      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.45 : 0.7), sz * (tight ? 1.7 : 3), tight ? 0.12 : 0.2);
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.34 : 0.7), sz * (tight ? 1.2 : 3), tight ? 0.12 : 0.2);
       this.boomFast = tight;
       for (let i = 0; i < (tight ? 4 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
       for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
       for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
-    this.boom(pos, color, (7 * this.ts + 3) * df * flash * (this.enemy && !full ? 0.6 : 1));
+    this.boom(pos, color, (7 * this.ts + 3) * df * flash * (this.enemy && !full ? 0.38 : 1));
   }
   highlight(t) {
     if (!t) return;
@@ -738,6 +765,8 @@ class BlasterGame extends QuizGame {
         t.scale.setScalar((this.enemy ? u.s : this.ts) * pulse * 1.15);
         u.M.edge.color.setHex(Math.sin(this.t * 10) > 0 ? 0xffffff : 0x86ff5e).multiplyScalar(2.6);
         u.M.rim.uniforms.uColor.value.setHex(0x86ff5e).multiplyScalar(1.4);
+        u.M.lamp.color.setHex(0x86ff5e).multiplyScalar(2.3 + 0.7 * Math.sin(this.t * 10)); // (its ring and lamps go lime too: this was the one)
+        u.M.halo.color.setHex(0x86ff5e).multiplyScalar(1.5);
       }
     });
     // the ship: drift, bank, engine flicker, blinking wing lights, ribbon trails

@@ -311,12 +311,14 @@ class BlasterDemon {
         void main(){
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
           float R = 0.6;
-          float limb = exp(-pow((r - R) / 0.009, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0));
+          float wd = mix(0.006, 0.016, smoothstep(-0.7, 0.6, p.y)); // (the line swells over its shoulders and thins under it)
+          float gap = smoothstep(0.012, 0.034, abs(fract(a * 0.4775 + uTime * 0.012) - 0.5)); // three breaks in it, turning slowly
+          float limb = (exp(-pow((r - R) / wd, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0))) * (0.2 + 0.8 * gap);
           float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
           float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
-          float back = exp(-r * r * 4.2); // the light behind it: wings and horns are dark against this
+          float back = (1.0 - smoothstep(R - 0.06, R, r)) * (1.0 - 0.62 * smoothstep(0.0, R, r)); // a disc of light inside the ring: wings and horns are dark against it
           float over = 0.6 + 0.4 * smoothstep(-0.55, 0.35, p.y); // (brightest over its shoulders)
-          gl_FragColor = vec4(uColor * ((limb * 1.5 + corona * 0.22 + back * 0.22) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
+          gl_FragColor = vec4(uColor * ((limb * 1.5 + corona * 0.22 + back * 0.42) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
         }`,
     }));
     this.limb.position.set(0, 0.03, -0.2);
@@ -563,7 +565,7 @@ class BlasterDemon {
     U.uDmSweep.value = this.inT < 1 ? -0.1 + smoothstep(0.55, 1, this.inT) * 1.0 : 9;
     if ((this.hits >= 6 || dying) && !quiet) { if ((this.flickT -= dt) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.4 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
     U.uDmDim.value += (this.flick - U.uDmDim.value) * Math.min(1, dt * 12);
-    U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.6 * tele + 0.4 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
+    U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.28 * tele + 0.22 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
     U.uDmRimK.value = 0.8 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
@@ -576,7 +578,7 @@ class BlasterDemon {
     U.uDmMouth.value = Math.min(1.6, open * 2.6) * this.pow;
     const charge = Math.max(tele, strike * 0.6, 0.35 * rage, 0.8 * roar, 0.7 * gloat);
     U.uDmClaw.value = charge * 1.6;
-    const eye = this.pow * (0.75 + 0.2 * sin(t * 2.1) + 1.4 * tele + 1.0 * strike + 0.5 * rage + onset + gloat) * U.uDmDim.value;
+    const eye = this.pow * (0.75 + 0.2 * sin(t * 2.1) + 0.8 * tele + 0.6 * strike + 0.5 * rage + onset + gloat) * U.uDmDim.value;
     U.uDmEye.value.setRGB(2.8, 0.12, 0.3).multiplyScalar(eye * 0.9);
     this._c.setRGB(2.4, 0.3, 1.0).lerp(this._c2.setRGB(3.0, 0.25, 0.35), U.uDmRage.value); // the core's colour: magenta, crimson in a rage
     U.uDmCoreCol.value.copy(this._c).multiplyScalar(this.pow * U.uDmDim.value * (0.45 + 0.9 * beat + 0.8 * U.uDmExpose.value));
