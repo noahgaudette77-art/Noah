@@ -819,3 +819,63 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
   m.customProgramCacheKey = () => prevKey + "|detail2";
   return m;
 }
+
+// The badge from an answer's button, for the 3D scenes: a disc (a lozenge for TRUE and FALSE) in the answer's
+// colour, rimmed dark and then pale, its letter dark with a pale edge. It stands in the answer's lane in Nest Egg
+// Run and is the face of the answer's drone in Risk Blaster: one badge, wherever an answer is shown.
+function answerBadgeTexture(label, color, wide) {
+  const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 256;
+  c.width = W * K;
+  c.height = H * K;
+  const x = c.getContext("2d");
+  x.scale(K, K);
+  const R = H / 2 - 10;
+  const shape = (inset) => {
+    const r = R - inset;
+    x.beginPath();
+    x.moveTo(H / 2, H / 2 - r);
+    x.lineTo(W - H / 2, H / 2 - r);
+    x.arc(W - H / 2, H / 2, r, -Math.PI / 2, Math.PI / 2);
+    x.lineTo(H / 2, H / 2 + r);
+    x.arc(H / 2, H / 2, r, Math.PI / 2, Math.PI * 1.5);
+    x.closePath();
+  };
+  shape(0);
+  x.fillStyle = "#05021a";
+  x.fill();
+  shape(9);
+  x.fillStyle = "#fff8e8";
+  x.fill();
+  shape(17);
+  x.fillStyle = "#05021a";
+  x.fill();
+  shape(23);
+  const g = x.createLinearGradient(0, H / 2 - R, 0, H / 2 + R);
+  g.addColorStop(0, color);
+  g.addColorStop(1, color);
+  x.fillStyle = g;
+  x.fill();
+  x.save();
+  shape(23);
+  x.clip();
+  const hi = x.createLinearGradient(0, H / 2 - R, 0, H / 2 + R);
+  hi.addColorStop(0, "rgba(255,255,255,0.26)");
+  hi.addColorStop(0.34, "rgba(255,255,255,0)");
+  hi.addColorStop(0.55, "rgba(0,0,0,0)");
+  hi.addColorStop(1, "rgba(10,0,60,0.5)");
+  x.fillStyle = hi;
+  x.fillRect(0, 0, W, H);
+  x.restore();
+  x.font = `${wide ? 78 : 132}px "Press Start 2P", "Courier New", monospace`;
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.lineJoin = "round";
+  x.lineWidth = wide ? 9 : 12;
+  x.strokeStyle = "rgba(255,255,255,0.75)";
+  x.strokeText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
+  x.fillStyle = "#12052e";
+  x.fillText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 16;
+  return t;
+}

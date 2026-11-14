@@ -44,11 +44,13 @@ lists all of them again.
   magenta on the other, and the low sun glances off it). Blade signs hang over the
   street spelling the course's own terms; lamp posts slide past; strings of
   lanterns cross from tower to tower. Traffic is comets of light, along four sky
-  lanes into the city and on the wet street. Always there: two twin-hulled
+  lanes into the city and on the wet street, and close by in the kerb lanes it is
+  real cars, a bus and trucks, mirrored in the wet road. Always there: two twin-hulled
   sky-ferries flying down the avenue, a helicopter working its searchlight in
   front of the sun and another crossing overhead, a ribbon of sixty drones, rain
   (with rings where it lands), and a storm cloud that lights from within and
-  throws forked bolts behind the mountains. Every three to six seconds something
+  throws forked bolts behind the mountains; a strike lights the sky, the towers,
+  the traffic and the logo for half a second. Every three to six seconds something
   more happens (a maglev on the bridge, a patrol chase, fireworks, a meteor
   shower). The camera sways, pushes slowly in and eases back. The kicker and the
   logo sit at the top; the coin prompt, the tip and the totals are in a dock at
@@ -105,9 +107,10 @@ lists all of them again.
   claws. It hovers on slow wing beats (the outer wing follows the inner), breathes,
   sways its tail and watches you. A wave starts: it flies up out of the distance,
   throws its wings wide and roars as its lights come on from below. While a
-  question's clock runs it comes closer. Four holo-drones hold station round it,
-  one to an answer, in the answer's colour and carrying its letter large on a dark
-  plate: tap an answer and your fighter fires on its drone. If it is the right one
+  question's clock runs it comes closer. An eclipse of cold light stands behind
+  it, so its dark wings and horns are cut out against the sky. Four holo-drones
+  hold station round it, one to an answer, each with the answer's own badge for
+  a face (the coloured disc and letter from the answer's button): tap an answer and your fighter fires on its drone. If it is the right one
   the drone bursts and the shot goes through it into the demon's core: its edges
   flare and it is thrown back, and by and by it cracks, sheds armour
   (studs first, the plates over its core last), smokes and sparks. Answer wrong,
@@ -199,8 +202,10 @@ lists all of them again.
   a gas station), a mountain pass (cliffs, pines, an avalanche gallery, a cable
   car) and back downtown at night; each change happens inside a bank of fog.
   The sun over this road is a golden egg on the horizon, and it grows as your nest
-  egg does. Each lane carries its answer's letter on the road ahead of the car, in
-  the answer's colour, as well as on the gantry that approaches.
+  egg does. Each lane has its answer's badge standing in it ahead of the car (the
+  coloured disc and letter from the answer's button, on a stem of light over a
+  strip of its colour), as well as its letter on the gantry that approaches; the
+  lane you take stands taller and brighter.
   Traffic runs thick both ways on service lanes beside the road and in hover lanes
   overhead: sedans, trucks, buses, bikes, hover cars, each in its own colour,
   holding a gap behind a slower one with brake lights on, pulling out to pass
@@ -229,9 +234,19 @@ lists all of them again.
   fades out instead of sparkling, so it shows up close and stays quiet far off.
 - **A loading screen.** The logo and a sweeping bar are on screen from the first
   paint, while the page is still loading, and fade into the title.
+- **Pictures where there were lists.** Every row of a stage list carries a
+  portrait: the stage's client, or in Boss Rush a pixel bust of that boss (one
+  drawn for each of the twelve). Each world sits under a banner with its emblem.
+  Results open with a medal (the boss you fought, or the game's emblem) over
+  slow rays, and PLAY AGAIN, CHANGE STAGE and ARCADE stay pinned to the foot of
+  the screen. In a game, the HUD sits on a shade of its own, its bars are
+  labelled (GOAL, TIME), and after an answer a tick is pinned to the right
+  answer's badge and a cross to the wrong one's (never before submit in the
+  Final Exam). Stats opens on a rank card: a medal with your level, the rank's
+  name and the way to the next.
 - **Your call on effects.** Setup → Effects switches each one off on its own:
   bloom, depth of field, ambient shade, scanlines, colour fringe, vignette,
-  motion blur, film grain, light beams, wet reflections, shadows, heat haze, lens
+  motion blur, film grain, light beams, reflections, shadows, heat haze, lens
   streaks. Setup → Reduced effects cuts shake, flashes, zoom and motion and thins
   out the background events. Nothing in the game flashes more than three times a
   second.
@@ -339,6 +354,7 @@ the book.
 npm run arcade:check   # validate every content file (schema, balance, page coverage)
 npm run arcade         # rebuild arcade/index.html from src/ and content/
 npm run arcade:regress # prove a visual change left the rules alone (needs Playwright)
+npm run arcade:sequence # play the games back to back on one page (needs Playwright)
 ```
 
 `arcade:regress` plays Boss Rush, Nest Egg Run, Risk Blaster, Memory Bank and a
@@ -347,7 +363,11 @@ timeouts on a virtual clock, and compares every HP, heart, score, nest egg, shie
 card grade, exam mark, saved item and frame number with the trace saved in
 `backup/` from before the visual upgrades. It also fails if the Final Exam shows
 any hint before submit, and it plays the exam's ending in full (holding its clock
-through it, so the saved results must match to the byte). `PROGRESS.md` logs the
+through it, so the saved results must match to the byte). It opens a fresh page for
+every play, so `arcade-sequence.js` covers what it cannot: it starts thirteen games
+and screens one after another on a single page, each while the one before is still
+up (which tears the old scene down), and fails if any of them does not reach its
+playing state or anything throws. Run both after every change. `PROGRESS.md` logs the
 upgrades' checkpoints, and for the polish pass the audit, each reviewer's scores,
 what was done about every point, the originality audit and what was left undone.
 `docs/polish-pass/` holds that pass's before-and-after contact sheets, one per

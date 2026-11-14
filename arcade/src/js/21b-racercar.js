@@ -88,11 +88,14 @@ function racerWheelGeo() {
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
   const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 1.2, flatShading: true });
+  m.userData.rim = { value: new THREE.Color(0.2, 0.42, 0.5) };
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.uCarRim = m.userData.rim;
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vCarP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvCarP = position;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vCarP;
+        uniform vec3 uCarRim;
         float carH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float carN(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(carH(i), carH(i + vec2(1.0, 0.0)), f.x), mix(carH(i + vec2(0.0, 1.0)), carH(i + vec2(1.0, 1.0)), f.x), f.y); }
         float carSeam(float v, float at, float w){ return 1.0 - smoothstep(w, w * 2.2, abs(v - at)); }`)
@@ -110,12 +113,21 @@ function racerCarPaint(env, hull) {
         float carWear = carN(vCarP.zy * 7.0 + vCarP.x * 5.0) * 0.6 + carN(vCarP.xz * 23.0) * 0.4;
         roughnessFactor = mix(0.94, clamp(roughnessFactor * (0.78 + 0.5 * carWear), 0.08, 1.0), carMetal);
         float carBody = smoothstep(0.18, 0.34, vColor.r - vColor.b); // the gold shell: a deep, glossy lacquer
-        roughnessFactor = mix(roughnessFactor, clamp(0.36 + 0.14 * carWear, 0.05, 1.0), carBody);`)
+        roughnessFactor = mix(roughnessFactor, clamp(0.36 + 0.14 * carWear, 0.05, 1.0), carBody);
+        // roof, rear deck and wing: the plates that face up. A low sun dead ahead mirrors off them straight into
+        // the chase camera and burns them out to white bars, so their finish is a satin non-slip, not a mirror.
+        vec3 carFaceN = normalize(cross(dFdx(vCarP), dFdy(vCarP)));
+        float carUp = smoothstep(0.8, 0.97, abs(carFaceN.y)) * smoothstep(0.86, 0.96, vCarP.y);
+        roughnessFactor = mix(roughnessFactor, max(roughnessFactor, 0.7), carUp);`)
+      .replace("#include <lights_physical_fragment>", `#include <lights_physical_fragment>
+        material.clearcoat *= 1.0 - 0.9 * carUp;`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night`)
+        totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night
+        // the sky's light catches every edge turned away from the camera: the car keeps its outline on a dark road
+        totalEmissiveRadiance += uCarRim * (pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0) * carMetal * (1.0 - 0.75 * carUp));`)
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal; metalnessFactor = mix(metalnessFactor, 0.45, smoothstep(0.18, 0.34, vColor.r - vColor.b));");
   };
-  m.customProgramCacheKey = () => "racer-car-paint3-" + (hull ? 1 : 0);
+  m.customProgramCacheKey = () => "racer-car-paint4-" + (hull ? 1 : 0);
   return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
@@ -375,8 +387,8 @@ class RacerCar {
 
     // --- ribbon trails from the tail lights and the under-glow ----------------
     this.trails = [
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(-0.64, 0.73, 2.16), step: 0.38 },
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(0.64, 0.73, 2.16), step: 0.38 },
+      { t: new RacerTrail({ length: 14, width: 0.16, color: 0xff1a40, intensity: 1.25 }), p: new THREE.Vector3(-0.64, 0.73, 2.16), step: 0.38 },
+      { t: new RacerTrail({ length: 14, width: 0.16, color: 0xff1a40, intensity: 1.25 }), p: new THREE.Vector3(0.64, 0.73, 2.16), step: 0.38 },
       { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(-1.02, 0.22, 0.75), step: 0.2 },
       { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(1.02, 0.22, 0.75), step: 0.2 },
     ];
@@ -473,8 +485,9 @@ class RacerCar {
     this.hazard = Math.max(0, this.hazard - dt);
     this.flame += (boost - this.flame) * Math.min(1, dt * 8);
     const lamps = sky ? sky.lamps : 1;
+    if (sky) this.paint.userData.rim.value.copy(sky.light).lerp(sky.horizon, 0.35).multiplyScalar(0.62);
     ch[0] = 0.85 + 0.15 * Math.sin(t * 2.1) + this.flame * 0.5; // mint trim breathes
-    ch[1] = 0.62 + 1.25 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking
+    ch[1] = 0.56 + 0.8 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking (lit, not a haze over the whole tail)
     ch[2] = 0.75 + 0.35 * lamps + this.flame * 0.9; // roof lamps
     const chase = (t * (0.6 + 0.5 * this.flame)) % 1; // a chase across the four markers, well under 3 Hz
     for (let i = 0; i < 4; i++) {

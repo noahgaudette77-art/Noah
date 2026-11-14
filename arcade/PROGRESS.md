@@ -1613,3 +1613,108 @@ short of 4.5. Its eight points and what was done (pass 5 or 6 for each screen):
   The skull is the owner's model; the purple is mine and replaced red and blue,
   which another reviewer tied to a film robot. Any strong colour on a
   skull-faced robot will recall something; flagged for the owner.
+
+### Second independent look at the other four screens
+
+A fresh reviewer (same brief, had not seen the work) looked at the title, Risk
+Blaster, Nest Egg Run and the interface. Scores, in the order detail, lighting,
+materials, depth, motion, cohesion, legibility:
+
+| Screen | Scores | Average |
+|---|---|---|
+| Title | 3.5, 3.5, 3, 3.5, 2.5, 4, 3.5 | 3.4 |
+| Risk Blaster | 3.5, 3, 3, 2.5, 3.5, 3.5, 3.5 | 3.2 |
+| Nest Egg Run | 3.5, 3.5, 3, 4, 3, 3, 3 | 3.3 |
+| Interface | 2.5, 2, 2.5, 2, 2, 4, 3.5 | 2.6 |
+
+Its eight points and what was done:
+
+1. Nest Egg Run: the lane letters were tiny tiles lying flat. Each lane now has
+   the answer's own badge standing in it (the disc from the answer's button,
+   a lozenge for TRUE and FALSE), on a stem of light over a strip of its colour;
+   the lane taken stands taller and brighter. Risk Blaster's drones carry the
+   same badge, so an answer looks the same wherever it is shown.
+2. Hero car: the roof and rear deck burned out to white bars (a low sun mirrored
+   off them into the chase camera) and the tail sat in a pink haze. Plates that
+   face up have a satin finish and no clearcoat; the tail lamps and their trails
+   are about a third dimmer; a rim of sky light on every edge turned from the
+   camera gives the car its outline.
+3. Interface: lists with no pictures, results with no art and the way on below
+   the fold. Stage rows carry a portrait (the stage's client, or in Boss Rush a
+   pixel bust of that boss: twelve, one drawn for each); each world sits under a
+   banner with its emblem; results open with a medal (the boss fought, or the
+   game's emblem) over slow rays; PLAY AGAIN, CHANGE STAGE and ARCADE are pinned
+   to the foot of the screen.
+4. Title: an empty road between skyline and button, a weak lightning frame, a
+   logo from edge to edge. Cars, a bus and trucks now run the kerb lanes close
+   to the camera, mirrored in the wet road; a strike lifts the picture twice as
+   far and its light hangs for half a second on sky, towers, traffic and logo;
+   the logo is about 13% smaller, with air either side.
+5. Risk Blaster feedback: right was shown only by green, which is also the
+   fourth answer's colour. A tick is pinned to the right answer's badge and a
+   cross to the wrong one's, in every game (after the answer only; the Final
+   Exam shows neither before submit, as before).
+6. Risk Blaster: dark wings sank into the nebula; little depth; small fighter.
+   An eclipse (a thin limb of cold light with a corona) sits behind the demon,
+   its rim lights are about a third stronger, rocks tumble past in every region,
+   and the fighter is about 15% larger.
+7. Nest Egg Run HUD and city: clutter behind the figures, two unlabelled bars,
+   the egg buried by gear trains and reading as a grey moon. The HUD of every
+   game sits on a shade; the bars are labelled GOAL (to $1M) and TIME; the dawn
+   egg is higher, deeper gold and haloed; the great wheels hang over the kerbs,
+   so the middle of the street is open to the egg.
+8. Type and controls: joined letter pairs, invisible empty stars, an unfilled
+   OFF, ragged effect chips. Ligatures are off on every element (the font
+   shorthand had switched them back on wherever an element set its own font);
+   an unearned star is a dim violet star; a switched-off switch is filled
+   violet; the effects are a two-column list, one line each.
+
+- A class-name clash found on the way: the new world banners used a class the
+  rank-up banner already owned and vanished under the list; renamed.
+- Resemblances it named: the chase toward a low sun is the genre's lineage,
+  "not a copy"; the title is the stock synthwave poster (the brief asks for a
+  synthwave city); the client portrait "may read as" a blocky game character
+  (it is a plain 24 by 24 pixel face with hair, glasses and a collar; left as
+  it is and flagged). Demon, fighter and drones: none.
+
+### A fault found on the way, and a new test
+
+While capturing Risk Blaster and then Nest Egg Run on one page, the second game
+never left its intro. Cause: Risk Blaster's teardown called a `dispose` method
+that its blast-smoke system did not have. The error stopped the scene change
+half way, so whatever was started next after a game of Risk Blaster (another
+game, or PLAY AGAIN) could hang at its intro. It came in with the Risk Blaster
+polish pass (commit 9f88559) and was in every build since, including artifact
+version 25. The method now exists; the scene tears down cleanly.
+
+Why the regression test did not catch it: it opens a fresh page for every play,
+so no scene is ever torn down. There is now a second test that does exactly
+that:
+
+    node scripts/arcade-sequence.js
+
+It starts thirteen things in a row on one page (Risk Blaster, Nest Egg Run,
+Boss Rush, Memory Bank, Final Exam, Risk Blaster twice more, the hub, Nest Egg
+Run, the title, Boss Rush, the Strategy Guide, Memory Bank), each while the one
+before is still up, and fails if any step does not reach its playing state or
+anything throws. On the last committed build it fails at the second step; on
+this build all thirteen pass. Run it with the regression test after every
+change from now on.
+
+The regression's comparison of the results screen now leaves out the button
+labels at its end: the buttons were moved (three pinned to the foot of the
+screen, the notes link left in the list), which changes the order their labels
+are read in and nothing else. Its verdict line says so. Everything before the
+buttons must still match the baseline exactly.
+
+Also in this round, after the eight points:
+
+- Stats opens on a rank card: a medal with your level on it, the rank's name,
+  XP and how far to the next rank.
+- Nest Egg Run downtown: the street is a slot between towers, so the egg could
+  never be seen whole there. Downtown (and in the tunnel) it is drawn small
+  enough to stand in the gap at the end of the road; in open country it is the
+  size of the sky, as before.
+- Risk Blaster's eclipse was first built at four times the demon's size (the
+  model is one unit across, not four), which only fogged the picture; it now
+  runs just outside the wing tips.

@@ -316,7 +316,7 @@ class TitleLife {
       this.boltK = calm ? 0.4 : rand(0.8, 1.2);
       this.strike((bx - 0.5) * 900);
     }
-    const a = this.boltAge, env = (x) => (x < 0 ? 0 : x < 0.06 ? x / 0.06 : Math.exp(-(x - 0.06) * 6));
+    const a = this.boltAge, env = (x) => (x < 0 ? 0 : x < 0.06 ? x / 0.06 : Math.exp(-(x - 0.06) * 3.6)); // (one flash, and its light hangs for half a second)
     const k = this.boltK * Math.max(env(a), this.double ? 0.7 * env(a - 0.42) : 0);
     this.flash = k;
     this.clouds.material.uniforms.uBolt.value.z = k;
@@ -326,6 +326,8 @@ class TitleLife {
     // its light on the towers' glass, and on the sky
     this.facade.material.uniforms.uFlash.value = k;
     if (g.city.towers) g.city.towers.material.uniforms.uFlash.value = k;
-    g.skyFlash = Math.max(g.skyFlash, k * 0.45);
+    g.skyFlash = Math.max(g.skyFlash, k * 0.8);
+    // and on everything in the street: the cars and the bus are lit cold from the sky for as long as it lasts
+    if (g.city.carMat) g.city.carMat.uniforms.uAmb.value.setRGB(0.32 + 0.5 * k, 0.2 + 0.58 * k, 0.5 + 0.8 * k);
   }
 }

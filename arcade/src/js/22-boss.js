@@ -513,7 +513,7 @@ class BossGame extends QuizGame {
       Dialog.open({
         lines: this.lines.intro,
         name: this.cfg.name,
-        boss: true,
+        boss: this.bossKey,
         color: this.cfg.color,
         voice: 140,
         skipLabel: "FIGHT!",

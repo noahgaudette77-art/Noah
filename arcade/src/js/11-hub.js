@@ -773,7 +773,7 @@ function hubWallAtlas() {
     x.strokeStyle = stars ? cfg.color : "#3d2c80";
     x.lineWidth = 4;
     x.strokeRect(2, 2, 92, 140);
-    const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#4a3a7a");
+    const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#6a5aa6", k);
     x.imageSmoothingEnabled = false;
     x.drawImage(face, 18, 14, 60, 60);
     x.textAlign = "center";

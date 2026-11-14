@@ -354,6 +354,29 @@ class BlasterDemon {
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
     pose.add(this.glow);
+    // behind it, an eclipse: a thin limb of cold light with its corona, so the dark wings and horns are cut out
+    // against light instead of sinking into the nebula
+    this.limbU = { uColor: { value: new THREE.Color(0.5, 0.85, 1.0) }, uK: { value: 0 }, uTime: { value: 0 } };
+    this.limb = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: this.limbU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uTime; varying vec2 vUv;
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
+          float R = 0.6;
+          float limb = exp(-pow((r - R) / 0.02, 2.0));
+          float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
+          float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
+          float back = exp(-r * r * 4.2); // the light behind it: wings and horns are dark against this
+          float over = 0.6 + 0.4 * smoothstep(-0.55, 0.35, p.y); // (brightest over its shoulders)
+          gl_FragColor = vec4(uColor * ((limb * 1.7 + corona * 0.75 + back * 0.5) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
+        }`,
+    }));
+    this.limb.position.set(0, 0.03, -0.2);
+    this.limb.scale.setScalar(2.1); // (the model is one unit from wing tip to wing tip: the limb runs just outside them)
+    this.limb.renderOrder = 1;
+    this.limb.frustumCulled = false;
+    pose.add(this.limb);
     tilt.add(pose);
     root.add(tilt);
     root.visible = false; // (it arrives when the game starts)
@@ -596,8 +619,8 @@ class BlasterDemon {
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.6 * tele + 0.4 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
-    U.uDmRimK.value = 0.62 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
-    U.uDmKick.value = 1.25 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
+    U.uDmRimK.value = 0.8 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
+    U.uDmKick.value = 1.8 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);
@@ -619,6 +642,10 @@ class BlasterDemon {
     this.claws.forEach((s, i) => { s.material.opacity = Math.min(1, charge * 0.9); s.scale.setScalar(0.12 + 0.16 * charge * (1 + 0.15 * sin(t * 9 + i * 2))); });
     this.glow.material.opacity = this.pow * (0.05 + 0.1 * rage + 0.08 * tele + 0.14 * gloat) * (cheap ? 0 : 1) + (cheap ? 0 : 0.2 * roar);
     this.glow.material.color.setRGB(0.5, 0.1, 0.75).lerp(this._c2.setRGB(0.9, 0.06, 0.16), U.uDmRage.value);
+    // the eclipse behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
+    this.limbU.uTime.value = t;
+    this.limbU.uK.value = cheap || dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
+    this.limbU.uColor.value.setRGB(0.5, 0.85, 1.0).lerp(g.waveCol, 0.22).lerp(this._c2.setRGB(1.0, 0.3, 0.22), 0.7 * U.uDmRage.value);
     this.heat = Math.max(0.25 * rage, tele, strike * 0.8, dying ? 0.9 : 0, gloat);
     // the aura: the edges of the view glow red. It breathes slowly in a rage, swells as the rage begins, and fills the
     // view for its last stand and when it has won. (Not with Reduced effects.)
@@ -711,7 +738,7 @@ class BlasterDemon {
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
-    [this.mat, this.lowMat, this.aura.material, this.aura.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
+    [this.mat, this.lowMat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));
     this.g.scene.remove(this.aura);
   }

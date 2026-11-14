@@ -113,7 +113,7 @@ function icon(name, color = "currentColor") {
   return `<svg viewBox="0 0 ${w} ${h}" fill="${color}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
 const starsHTML = (n, max = 3) =>
-  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#3d2c80")).join("")}</span>`;
+  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#7868cc")).join("")}</span>`;
 
 const COLORS = {
   cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",

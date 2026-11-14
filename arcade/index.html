@@ -837,6 +837,113 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 /* Counts keep to one line each (a break never falls between a number and what it counts). */
 .nb { white-space: nowrap; }
 
+/* === Third review (title, Risk Blaster, Nest Egg Run, interface) ====================================== */
+/* Letter pairs stay two letters everywhere: the font shorthand resets the page's own setting, so an element
+   with a font of its own brought the ligatures back (ff and fl read as one smeared glyph). */
+*, *::before, *::after { font-variant-ligatures: none !important; font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 !important; }
+/* The HUD sits on a shade of its own, so its figures read whatever the scene puts behind them. */
+.scr-game::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(var(--gut-t) + 78px); z-index: -1;
+  background: linear-gradient(180deg, rgba(5, 2, 18, 0.94), rgba(5, 2, 18, 0.8) 60%, rgba(5, 2, 18, 0));
+  pointer-events: none; transition: opacity 0.4s;
+}
+.scr-game.cine::before { opacity: 0; }
+/* Each bar under the HUD says what it measures. */
+.barrow { display: flex; align-items: center; gap: 6px; width: 100%; max-width: 1040px; margin-left: auto; margin-right: auto; }
+.barrow > b { flex: none; font: 400 7px/1 var(--font-display); letter-spacing: 0.06em; color: var(--c, var(--cyan)); text-shadow: 0 1px 0 #000, 0 0 5px #000; }
+.barrow > .timer, .barrow > .meter { flex: 1 1 0; min-width: 0; width: auto; max-width: none; margin: 0; }
+.scr-game.cine > .barrow { opacity: 0; }
+/* Verdicts carry a mark as well as a colour (green is also the fourth answer's colour): a tick pinned to the
+   right answer's badge, a cross to the wrong one's. */
+.ans.good .k, .ans.bad .k { position: relative; overflow: visible; }
+.ans.good .k::after, .ans.bad .k::after {
+  position: absolute; right: -10px; bottom: -9px; width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%;
+  font: 700 13px/1 Arial, "Segoe UI Symbol", sans-serif; color: #06021a;
+  box-shadow: 0 0 0 2px #06021a, 0 2px 0 2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: mark-pop 0.32s var(--ease-spring, cubic-bezier(0.3, 1.5, 0.5, 1)) 0.08s backwards;
+}
+.ans.good .k::after { content: "\2713"; background: #b4ff96; }
+.ans.bad .k::after { content: "\2715"; background: #ff8a9d; font-size: 11px; }
+@keyframes mark-pop { from { transform: scale(0.2) rotate(-25deg); opacity: 0; } }
+/* Setup: a switched-off switch is as filled as a switched-on one (violet, not cyan); the effects are a
+   two-column checklist, one line each. */
+.seg button[aria-pressed="true"][data-v="false"] {
+  background: linear-gradient(180deg, #8674e6, #5a48bc); color: #fff;
+  box-shadow: 0 0 12px -4px #9a86ff, inset 0 2px 0 rgba(255, 255, 255, 0.34), inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+}
+.seg.wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.seg.wrap button { min-height: 40px; padding: 8px 9px; justify-content: flex-start; text-align: left; white-space: nowrap; font-size: 8px; letter-spacing: 0; line-height: 1; overflow: hidden; }
+/* Stage list: a picture on every row (the boss that holds the chapter, or the client whose file it is), its
+   number on a tab at the corner; each world under a banner with its emblem. */
+.stage .n.pic { position: relative; width: 48px; height: 48px; padding: 0; background: #0c0326; border: 2px solid var(--c, var(--cyan)); box-shadow: 0 0 14px -4px var(--c, var(--cyan)), 0 3px 0 #000; text-shadow: none; }
+.stage .n.pic canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.stage .n.pic b {
+  position: absolute; left: -7px; top: -7px; min-width: 19px; height: 19px; padding: 0 3px; display: grid; place-items: center;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--cyan)) 70%, #fff), var(--c, var(--cyan)));
+  color: #12052e; font: 400 9px/1 var(--font-display); box-shadow: 0 2px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.stage.wide { grid-template-columns: auto 1fr; column-gap: 10px; align-items: center; text-align: left; }
+.stage.wide .wico, .stage.wide .wpic { grid-row: span 2; width: 34px; height: 34px; display: grid; place-items: center; color: var(--c); }
+.stage.wide .wico svg { width: 24px; height: 24px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px var(--c)); }
+.stage.wide .wpic { image-rendering: pixelated; border: 2px solid var(--c); background: #0c0326; }
+.stage.wide .meta { justify-content: flex-start; }
+.world.wbar {
+  display: flex; align-items: center; gap: 10px; margin: 16px 0 9px; padding: 8px 10px 8px 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 70%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 7%, transparent) 62%, transparent);
+  border-left: 4px solid var(--c); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+.world.wbar i { flex: none; width: 26px; height: 26px; display: grid; place-items: center; background: #0c0326; border: 2px solid var(--c); box-shadow: 0 0 10px -3px var(--c); }
+.world.wbar i svg { width: 14px; height: 14px; }
+.world.wbar span { min-width: 0; }
+/* Results: a medal over the headline (the boss that was fought, or the game's emblem) with rays turning slowly
+   behind it; the way on is pinned to the foot of the screen, never below the fold. */
+.res-hero { position: relative; width: 76px; height: 76px; margin: 22px auto 14px; display: grid; place-items: center; }
+.res-hero::before {
+  content: ""; position: absolute; inset: -34px; border-radius: 50%; opacity: 0.9;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.16) 0 8deg, transparent 8deg 22.5deg);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, var(--yellow)) 42%, transparent) 0 8deg, transparent 8deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 26%, transparent 70%); mask: radial-gradient(circle, #000 26%, transparent 70%);
+  animation: hero-rays 36s linear infinite;
+}
+.res-hero::after {
+  content: ""; position: absolute; inset: 0; border: 3px solid var(--c, var(--yellow));
+  background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.2), rgba(12, 3, 38, 0.92) 68%), #0c0326;
+  box-shadow: 0 0 0 3px #000, 0 0 0 5px color-mix(in srgb, var(--c, var(--yellow)) 40%, #000), 0 0 30px -4px var(--c, var(--yellow)), inset 0 0 20px -6px var(--c, var(--yellow)), 0 8px 0 -2px rgba(0, 0, 0, 0.6);
+}
+.res-hero > svg, .res-hero > canvas { position: relative; z-index: 1; }
+.res-hero > svg { width: 44px; height: 44px; color: var(--c, var(--yellow)); fill: currentColor; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px var(--c, var(--yellow))); }
+.res-hero > canvas { width: 70px; height: 70px; image-rendering: pixelated; }
+@keyframes hero-rays { to { transform: rotate(360deg); } }
+.actions.pinned {
+  flex: none; padding: 10px 0 2px; margin: 0 calc(var(--gut-l) * -1) 0 calc(var(--gut-r) * -1); padding-left: var(--gut-l); padding-right: var(--gut-r);
+  display: block; background: linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); box-shadow: inset 0 1px 0 rgba(150, 122, 255, 0.28);
+}
+.actions.pinned .wrap { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+.actions.pinned .btn { padding: 13px 6px; font-size: clamp(8px, 2.5vw, 11px); line-height: 1.35; min-height: 46px; }
+.scr-results .scroll .actions { grid-template-columns: 1fr; padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .res-hero::before, .ans.good .k::after, .ans.bad .k::after { animation: none !important; } }
+/* Title: the logo sits inside the frame with air either side (it ran edge to edge), and takes the light of a
+   lightning strike with the rest of the street. */
+.logo-main { font-size: clamp(40px, 13vw, 128px); }
+@media (max-height: 560px) and (orientation: landscape) { .logo-main { font-size: clamp(30px, 9vh, 60px); } }
+.logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.55)); }
+/* Stats opens on the player's rank: a medal with the level on it, the rank's name, and the way to the next. */
+.pcard {
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 20px; align-items: center; padding: 6px 16px 6px 12px; margin-bottom: 12px; overflow: hidden;
+  border: 2px solid rgba(255, 225, 79, 0.75);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 46%), radial-gradient(120% 140% at 0% 50%, rgba(255, 201, 61, 0.2), rgba(24, 14, 68, 0.74) 62%);
+  box-shadow: 0 3px 0 #000, 0 0 26px -10px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.res-hero.small { width: 58px; height: 58px; margin: 18px 12px 18px 16px; }
+.res-hero.small::before { inset: -26px; }
+.res-hero.small > b { position: relative; z-index: 1; font: 400 22px/1 var(--font-display); color: var(--c); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.75), 0 0 12px var(--c); }
+.pc-body { display: grid; gap: 7px; min-width: 0; }
+.pc-k { font: 400 8px/1 var(--font-display); letter-spacing: 0.08em; color: var(--dim); }
+.pc-name { font: 400 clamp(13px, 4.2vw, 18px)/1.15 var(--font-display); color: var(--c); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 225, 79, 0.5); }
+.pc-xp { font: 400 8px/1.3 var(--font-display); letter-spacing: 0.04em; color: #e9e2ff; }
+.pcard .meter { height: 8px; }
+
 </style>
 </head>
 <body>
@@ -970,7 +1077,7 @@ function icon(name, color = "currentColor") {
   return `<svg viewBox="0 0 ${w} ${h}" fill="${color}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
 const starsHTML = (n, max = 3) =>
-  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#3d2c80")).join("")}</span>`;
+  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#7868cc")).join("")}</span>`;
 
 const COLORS = {
   cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",
@@ -3726,8 +3833,86 @@ function drawPortrait(canvas, look = {}) {
   return canvas;
 }
 
-// A boss portrait: its body colour, one big eye, horns.
-function drawBossPortrait(canvas, color) {
+// Boss busts, 24×24: one for each of the twelve, drawn from its cyborg (the head it wears, what it carries).
+// Letters are colours: K armour, S steel, B bone, C the boss's own colour, c that colour dimmed, W white,
+// D near-black, G gold, w a pale veil. Each row is [colour, x, y, width, height].
+const BUSTS = {
+  // PRODUCT PUSHER: a salesman in plate, slick hair, a fixed grin
+  1: [["K", 2, 19, 20, 5], ["S", 8, 19, 2, 5], ["S", 14, 19, 2, 5], ["C", 11, 19, 2, 5], ["W", 10, 19, 1, 1], ["W", 13, 19, 1, 1], ["S", 10, 16, 4, 3],
+    ["S", 7, 5, 10, 11], ["S", 8, 16, 8, 1], ["K", 6, 3, 12, 3], ["K", 6, 6, 1, 3], ["K", 17, 6, 1, 3], ["K", 7, 8, 10, 2], ["C", 8, 8, 3, 2], ["C", 13, 8, 3, 2],
+    ["W", 8, 12, 8, 3], ["D", 8, 13, 8, 1], ["D", 10, 12, 1, 3], ["D", 13, 12, 1, 3]],
+  // PERIL PRIME: horns, slanted eyes, a jaw of spikes
+  2: [["K", 1, 19, 22, 5], ["B", 2, 17, 2, 2], ["B", 1, 15, 1, 2], ["B", 20, 17, 2, 2], ["B", 22, 15, 1, 2], ["C", 10, 21, 4, 1], ["C", 9, 22, 2, 1], ["C", 13, 22, 2, 1],
+    ["K", 7, 6, 10, 11], ["S", 7, 6, 10, 2], ["K", 9, 17, 6, 2], ["B", 5, 5, 2, 3], ["B", 4, 2, 2, 4], ["B", 5, 1, 1, 1], ["B", 17, 5, 2, 3], ["B", 18, 2, 2, 4], ["B", 18, 1, 1, 1],
+    ["C", 8, 10, 3, 1], ["C", 9, 11, 2, 1], ["C", 13, 10, 3, 1], ["C", 13, 11, 2, 1], ["D", 9, 14, 6, 1], ["B", 9, 15, 1, 2], ["B", 11, 15, 1, 2], ["B", 13, 15, 1, 2]],
+  // SOLVENCY SPECTER: a hood, nothing in it but one eye; an empty vault in the chest
+  3: [["c", 11, 1, 2, 1], ["c", 10, 2, 4, 1], ["c", 9, 3, 6, 1], ["c", 8, 4, 8, 2], ["c", 7, 6, 10, 10], ["c", 5, 10, 14, 8], ["c", 3, 17, 18, 7],
+    ["0", 5, 22, 1, 2], ["0", 9, 23, 1, 1], ["0", 14, 22, 1, 2], ["0", 18, 23, 1, 1], ["D", 9, 7, 6, 8], ["W", 10, 9, 4, 3], ["C", 11, 9, 2, 3], ["D", 11, 10, 2, 1],
+    ["S", 10, 18, 4, 4], ["D", 11, 19, 2, 2]],
+  // THE FINE PRINT: a hunched scribe, one small eye and a loupe, clauses down its front
+  4: [["K", 4, 12, 16, 2], ["K", 2, 14, 20, 10], ["K", 7, 4, 10, 9], ["S", 7, 4, 10, 1], ["D", 8, 6, 8, 6], ["W", 9, 8, 2, 2], ["D", 10, 9, 1, 1],
+    ["C", 13, 6, 5, 1], ["C", 13, 11, 5, 1], ["C", 12, 7, 1, 4], ["C", 18, 7, 1, 4], ["c", 13, 7, 5, 4], ["D", 15, 8, 2, 2], ["C", 19, 11, 1, 1], ["C", 20, 12, 1, 2],
+    ["w", 5, 16, 14, 1], ["w", 5, 18, 10, 1], ["C", 5, 20, 5, 1], ["w", 11, 20, 7, 1], ["w", 5, 22, 12, 1]],
+  // GROUP GOLEM: a small dome sunk between two slabs
+  5: [["S", 0, 9, 7, 15], ["S", 17, 9, 7, 15], ["w", 0, 9, 7, 1], ["w", 17, 9, 7, 1], ["D", 2, 12, 1, 1], ["D", 4, 12, 1, 1], ["D", 19, 12, 1, 1], ["D", 21, 12, 1, 1],
+    ["C", 0, 15, 7, 1], ["C", 17, 15, 7, 1], ["K", 7, 15, 10, 9], ["S", 9, 9, 6, 6], ["S", 10, 8, 4, 1], ["D", 9, 11, 6, 2], ["C", 10, 11, 4, 1],
+    ["C", 11, 18, 2, 2], ["W", 11, 18, 1, 1], ["S", 7, 22, 10, 1]],
+  // INFLATION TITAN: a boiler; a valve wheel for a head, a gauge in the red, stacks venting
+  6: [["K", 4, 16, 16, 8], ["S", 4, 17, 16, 1], ["S", 4, 22, 16, 1], ["W", 10, 18, 4, 4], ["D", 11, 19, 2, 2], ["R", 12, 18, 1, 2], ["K", 2, 10, 3, 6], ["K", 19, 10, 3, 6],
+    ["w", 2, 7, 2, 2], ["w", 4, 5, 2, 2], ["w", 20, 7, 2, 2], ["w", 18, 5, 2, 2], ["S", 11, 13, 2, 3],
+    ["C", 9, 2, 6, 1], ["C", 9, 12, 6, 1], ["C", 7, 4, 1, 7], ["C", 16, 4, 1, 7], ["C", 8, 3, 1, 1], ["C", 15, 3, 1, 1], ["C", 8, 11, 1, 1], ["C", 15, 11, 1, 1],
+    ["C", 11, 3, 2, 9], ["C", 8, 6, 8, 2], ["S", 10, 5, 4, 4], ["D", 11, 6, 2, 2]],
+  // LONGEVITY LICH: a crowned skull over bare ribs
+  7: [["B", 11, 17, 2, 7], ["B", 6, 19, 12, 1], ["B", 7, 21, 10, 1], ["B", 8, 23, 8, 1], ["B", 3, 18, 3, 3], ["B", 18, 18, 3, 3],
+    ["B", 7, 6, 10, 8], ["B", 8, 5, 8, 1], ["B", 8, 14, 8, 2], ["D", 8, 9, 3, 3], ["D", 13, 9, 3, 3], ["C", 9, 10, 1, 1], ["C", 14, 10, 1, 1], ["D", 11, 12, 2, 2],
+    ["D", 9, 15, 1, 1], ["D", 11, 15, 1, 1], ["D", 13, 15, 1, 1], ["D", 15, 15, 1, 1], ["G", 7, 4, 10, 2], ["G", 7, 2, 2, 2], ["G", 11, 1, 2, 3], ["G", 15, 2, 2, 2], ["C", 11, 4, 2, 1]],
+  // LORD INTESTATE: a judge's wig, a stern plate face, bands at the throat
+  8: [["K", 2, 18, 20, 6], ["W", 10, 18, 4, 3], ["W", 11, 21, 2, 2], ["S", 8, 6, 8, 10], ["S", 9, 16, 6, 2], ["K", 8, 8, 8, 1], ["C", 9, 9, 2, 1], ["C", 13, 9, 2, 1],
+    ["D", 10, 13, 4, 1], ["D", 9, 14, 1, 1], ["D", 14, 14, 1, 1], ["B", 7, 2, 10, 3], ["B", 6, 3, 12, 3], ["B", 4, 5, 4, 13], ["B", 16, 5, 4, 13],
+    ["k", 4, 8, 4, 1], ["k", 4, 11, 4, 1], ["k", 4, 14, 4, 1], ["k", 16, 8, 4, 1], ["k", 16, 11, 4, 1], ["k", 16, 14, 4, 1], ["k", 11, 2, 1, 4]],
+  // UNDUE INFLUENCER: a smooth mask with a painted smile, strings rising off it
+  9: [["w", 1, 0, 1, 13], ["w", 4, 0, 1, 9], ["w", 19, 0, 1, 7], ["w", 22, 0, 1, 12], ["K", 3, 19, 18, 5], ["S", 9, 19, 1, 5], ["S", 14, 19, 1, 5], ["C", 15, 20, 2, 1], ["K", 10, 16, 4, 3],
+    ["B", 8, 4, 8, 1], ["B", 7, 5, 10, 10], ["B", 8, 15, 8, 1], ["B", 9, 16, 6, 1], ["k", 12, 4, 5, 12], ["D", 8, 9, 3, 1], ["D", 13, 9, 3, 1], ["C", 9, 9, 1, 1], ["C", 14, 9, 1, 1],
+    ["D", 9, 13, 6, 1], ["D", 8, 12, 1, 1], ["D", 15, 12, 1, 1], ["C", 8, 11, 1, 1], ["C", 15, 11, 1, 1]],
+  // PROBATRON: a toll booth; a signal for a head, a barrier across the chest, a gun on each shoulder
+  10: [["K", 4, 16, 16, 8], ["C", 4, 18, 3, 2], ["D", 7, 18, 3, 2], ["C", 10, 18, 3, 2], ["D", 13, 18, 3, 2], ["C", 16, 18, 4, 2], ["D", 10, 21, 4, 1], ["S", 11, 13, 2, 3],
+    ["S", 1, 13, 3, 5], ["D", 1, 13, 3, 1], ["S", 20, 13, 3, 5], ["D", 20, 13, 3, 1], ["K", 8, 0, 8, 13], ["S", 8, 0, 8, 1], ["S", 8, 12, 8, 1],
+    ["r", 10, 1, 4, 3], ["C", 10, 5, 4, 3], ["W", 11, 6, 2, 1], ["l", 10, 9, 4, 3]],
+  // PATRIMONY PHANTOM: split down the middle, half plate and half bone
+  11: [["S", 1, 17, 10, 7], ["C", 1, 17, 10, 1], ["B", 14, 19, 8, 2], ["B", 16, 21, 3, 3], ["K", 6, 5, 6, 12], ["S", 6, 5, 6, 1], ["C", 8, 9, 2, 2], ["K", 7, 17, 5, 1],
+    ["B", 13, 5, 5, 10], ["B", 13, 15, 4, 2], ["D", 13, 9, 3, 3], ["C", 14, 10, 1, 1], ["D", 14, 16, 1, 1], ["D", 16, 16, 1, 1], ["C", 12, 3, 1, 21]],
+  // THE PROCTOR: an examiner's cap and tassel, a monocle on its chain, slab shoulders
+  all: [["K", 0, 17, 24, 7], ["S", 0, 15, 6, 4], ["S", 18, 15, 6, 4], ["C", 0, 19, 6, 1], ["C", 18, 19, 6, 1], ["C", 11, 20, 2, 2], ["W", 11, 20, 1, 1],
+    ["K", 7, 6, 10, 10], ["S", 8, 14, 8, 2], ["S", 4, 3, 16, 2], ["w", 4, 3, 16, 1], ["K", 7, 5, 10, 1], ["G", 19, 4, 1, 5], ["G", 18, 9, 3, 2],
+    ["C", 9, 9, 2, 2], ["c", 13, 9, 4, 3], ["C", 14, 10, 2, 1], ["G", 13, 8, 4, 1], ["G", 13, 12, 4, 1], ["G", 12, 9, 1, 3], ["G", 17, 9, 1, 3], ["G", 17, 13, 1, 1], ["G", 18, 14, 1, 2],
+    ["D", 9, 13, 6, 1]],
+};
+function drawBossBust(canvas, key, color) {
+  canvas.width = canvas.height = 24;
+  const x = canvas.getContext("2d");
+  const pal = { K: "#1b1730", S: "#69708c", B: "#e2dac6", C: color, W: "#ffffff", D: "#07040f", G: "#ffc93d", R: "#ff4769", "0": "#0c0326" };
+  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#86ff5e", 0.4] };
+  x.fillStyle = "#0c0326";
+  x.fillRect(0, 0, 24, 24);
+  x.globalAlpha = 0.16; // its own light behind it
+  x.fillStyle = color;
+  x.fillRect(3, 2, 18, 20);
+  x.fillRect(6, 0, 12, 24);
+  x.globalAlpha = 1;
+  for (const [k, a, b, w, h] of BUSTS[key]) {
+    if (veil[k]) { x.globalAlpha = veil[k][1]; x.fillStyle = veil[k][0]; }
+    else { x.globalAlpha = 1; x.fillStyle = pal[k]; }
+    x.fillRect(a, b, w, h);
+  }
+  x.globalAlpha = 1;
+  x.fillStyle = "rgba(255,255,255,0.03)";
+  for (let i = 0; i < 24; i += 2) x.fillRect(0, i, 24, 1);
+  return canvas;
+}
+
+// A boss portrait: its own bust when the boss is known (by its key), else a plain horned block in its colour.
+function drawBossPortrait(canvas, color, key) {
+  if (key !== undefined && key !== null && BUSTS[key]) return drawBossBust(canvas, key, color);
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
   x.fillStyle = "#0c0326";
@@ -3761,7 +3946,7 @@ const Dialog = {
         </div>
       </div></div>`);
     const face = $(".dlg-face", el);
-    if (boss) drawBossPortrait(face, color);
+    if (boss) drawBossPortrait(face, color, boss === true ? null : boss);
     else drawPortrait(face, look);
     const text = $(".dlg-text", el);
     const next = $(".next", el);
@@ -4724,6 +4909,66 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
   return m;
 }
 
+// The badge from an answer's button, for the 3D scenes: a disc (a lozenge for TRUE and FALSE) in the answer's
+// colour, rimmed dark and then pale, its letter dark with a pale edge. It stands in the answer's lane in Nest Egg
+// Run and is the face of the answer's drone in Risk Blaster: one badge, wherever an answer is shown.
+function answerBadgeTexture(label, color, wide) {
+  const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 256;
+  c.width = W * K;
+  c.height = H * K;
+  const x = c.getContext("2d");
+  x.scale(K, K);
+  const R = H / 2 - 10;
+  const shape = (inset) => {
+    const r = R - inset;
+    x.beginPath();
+    x.moveTo(H / 2, H / 2 - r);
+    x.lineTo(W - H / 2, H / 2 - r);
+    x.arc(W - H / 2, H / 2, r, -Math.PI / 2, Math.PI / 2);
+    x.lineTo(H / 2, H / 2 + r);
+    x.arc(H / 2, H / 2, r, Math.PI / 2, Math.PI * 1.5);
+    x.closePath();
+  };
+  shape(0);
+  x.fillStyle = "#05021a";
+  x.fill();
+  shape(9);
+  x.fillStyle = "#fff8e8";
+  x.fill();
+  shape(17);
+  x.fillStyle = "#05021a";
+  x.fill();
+  shape(23);
+  const g = x.createLinearGradient(0, H / 2 - R, 0, H / 2 + R);
+  g.addColorStop(0, color);
+  g.addColorStop(1, color);
+  x.fillStyle = g;
+  x.fill();
+  x.save();
+  shape(23);
+  x.clip();
+  const hi = x.createLinearGradient(0, H / 2 - R, 0, H / 2 + R);
+  hi.addColorStop(0, "rgba(255,255,255,0.26)");
+  hi.addColorStop(0.34, "rgba(255,255,255,0)");
+  hi.addColorStop(0.55, "rgba(0,0,0,0)");
+  hi.addColorStop(1, "rgba(10,0,60,0.5)");
+  x.fillStyle = hi;
+  x.fillRect(0, 0, W, H);
+  x.restore();
+  x.font = `${wide ? 78 : 132}px "Press Start 2P", "Courier New", monospace`;
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.lineJoin = "round";
+  x.lineWidth = wide ? 9 : 12;
+  x.strokeStyle = "rgba(255,255,255,0.75)";
+  x.strokeText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
+  x.fillStyle = "#12052e";
+  x.fillText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 16;
+  return t;
+}
+
 /* ---- 08m-model.js ---- */
 // Models the player supplied (.glb), converted by scripts/convert-model.js and inlined
 // by the build as window.INR_ASSETS.<name> = { mesh, albedo }.
@@ -5369,7 +5614,11 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.16 * (this.life.flash || 0); // lightning lifts the whole picture for a moment
+    this.scene.userData.post.exposure = 1.12 + 0.36 * (this.life.flash || 0); // lightning lifts the whole picture for a moment
+    { // and the logo with it: its face takes the flash too (written only when it changes)
+      const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
+      if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }
+    }
     // the camera is never still: it sways across the avenue, pushes slowly in toward the city and eases back, and rolls a hair
     const mv = REDUCED_MOTION || GFX.calm ? 0.25 : 1, t = this.t, sway = Math.sin(t * 0.11) * 3.4 * mv, push = (0.5 - 0.5 * Math.cos(t * 0.085)) * 9 * mv;
     this.camBase.set(sway + Pointer.x * 1.2, 3.4 + Math.sin(t * 0.7) * 0.15 - Pointer.y * 0.5 + push * 0.1, 12 - push);
@@ -5582,6 +5831,26 @@ class TitleCity {
       s.add(m);
       return m;
     });
+    // ---- the street's own traffic in the kerb lanes, close enough to see what it is: cars, a bus and a truck heading
+    // into the city on the left, others coming out of it on the right, all of them mirrored in the wet road
+    this.street = [];
+    [["sedan", 5], ["bus", 1], ["truck", 2]].forEach(([type, n], k) => {
+      const geo = racerVehicleGeo(type);
+      const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
+      geo.setAttribute("aTint", tint); geo.setAttribute("aL", lights);
+      const m = new THREE.InstancedMesh(geo, this.carMat, n);
+      m.frustumCulled = false;
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      RACER_PAINTS.slice(k * 2, k * 2 + n).forEach((c, i) => { const col = new THREE.Color(c); tint.setXYZ(i, col.r, col.g, col.b); });
+      s.add(m);
+      for (let i = 0; i < n; i++) this.street.push({ m, i });
+    });
+    this.street.forEach((c, k) => {
+      c.dir = k % 8 === 1 || k % 8 === 4 || k % 8 === 7 ? 1 : -1; // (three come out of the city, five go in)
+      c.x = c.dir < 0 ? -8.1 : 8.1;
+      c.v = c.dir < 0 ? rand(12, 19) : rand(44, 56);
+      c.z = c.dir < 0 ? 18 - k * 34 : -30 - k * 30;
+    });
     // ---- the train that crosses the bridge
     { const b = new RacerBatch();
       for (let i = 0; i < 7; i++) { const x = i * 12.6; put(b, x, 0, 0, 11.8, 3.0, 3.2, i ? 0xcfd6e2 : 0xff3ad4, 0.45); put(b, x, 0.4, 1.62, 10.6, 0.9, 0.06, 0xffe2a8, 2.0); put(b, x, -1.3, 1.62, 11.8, 0.14, 0.06, 0x35efff, 2.4); }
@@ -5616,6 +5885,14 @@ class TitleCity {
     const t = (this.t += dt);
     this.traffic.material.uniforms.uTime.value = t;
     this.carMat.uniforms.uTime.value = t;
+    // the kerb lanes: each car runs its lane and comes round again at the far end
+    for (const c of this.street) {
+      c.z += c.dir * c.v * dt;
+      if (c.dir < 0 && c.z < -250) { c.z = 22 + rand(0, 30); c.v = rand(12, 19); }
+      else if (c.dir > 0 && c.z > 26) { c.z = -250 - rand(0, 70); c.v = rand(44, 56); }
+      c.m.setMatrixAt(c.i, this._m.compose(this._p.set(c.x, 0, c.z), this._q.setFromEuler(this._e.set(0, c.dir < 0 ? 0 : Math.PI, 0)), this._s.set(1.5, 1.5, 1.5)));
+      c.m.instanceMatrix.needsUpdate = true;
+    }
     // windows twinkle and signs flicker, slowly: nothing here changes faster than 3 Hz
     this.blink[0].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.9));
     this.blink[1].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.6 + 2));
@@ -5943,7 +6220,7 @@ class TitleLife {
       this.boltK = calm ? 0.4 : rand(0.8, 1.2);
       this.strike((bx - 0.5) * 900);
     }
-    const a = this.boltAge, env = (x) => (x < 0 ? 0 : x < 0.06 ? x / 0.06 : Math.exp(-(x - 0.06) * 6));
+    const a = this.boltAge, env = (x) => (x < 0 ? 0 : x < 0.06 ? x / 0.06 : Math.exp(-(x - 0.06) * 3.6)); // (one flash, and its light hangs for half a second)
     const k = this.boltK * Math.max(env(a), this.double ? 0.7 * env(a - 0.42) : 0);
     this.flash = k;
     this.clouds.material.uniforms.uBolt.value.z = k;
@@ -5953,7 +6230,9 @@ class TitleLife {
     // its light on the towers' glass, and on the sky
     this.facade.material.uniforms.uFlash.value = k;
     if (g.city.towers) g.city.towers.material.uniforms.uFlash.value = k;
-    g.skyFlash = Math.max(g.skyFlash, k * 0.45);
+    g.skyFlash = Math.max(g.skyFlash, k * 0.8);
+    // and on everything in the street: the cars and the bus are lit cold from the sky for as long as it lasts
+    if (g.city.carMat) g.city.carMat.uniforms.uAmb.value.setRGB(0.32 + 0.5 * k, 0.2 + 0.58 * k, 0.5 + 0.8 * k);
   }
 }
 
@@ -6733,7 +7012,7 @@ function hubWallAtlas() {
     x.strokeStyle = stars ? cfg.color : "#3d2c80";
     x.lineWidth = 4;
     x.strokeRect(2, 2, 92, 140);
-    const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#4a3a7a");
+    const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#6a5aa6", k);
     x.imageSmoothingEnabled = false;
     x.drawImage(face, 18, 14, 60, 60);
     x.textAlign = "center";
@@ -7984,8 +8263,10 @@ function showSelect(gameId) {
       : isMemory
         ? `<span>${ids.length} CARDS</span><span>${dueCount(ids)} DUE</span>`
         : `<span>${ids.length} Q</span><span>${mpct(mm)}% MASTERED</span>`;
+    // the row's picture: the boss that holds this chapter, or the client whose file it is
+    const pic = isBoss || !!client(c.n);
     return `<button class="stage" data-act="pick" data-sel="${c.n}" style="--c:${c.color}" ${ids.length ? "" : "disabled"}>
-      <span class="n">${c.n}</span><span class="t">${esc(c.title)}</span>
+      <span class="n${pic ? " pic" : ""}">${pic ? `<canvas data-pt="${c.n}" aria-hidden="true"></canvas><b>${c.n}</b>` : c.n}</span><span class="t">${esc(c.title)}</span>
       <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
       <span class="meta">${meta}</span></button>`;
   };
@@ -7994,17 +8275,25 @@ function showSelect(gameId) {
     <div class="scroll"><div class="wrap">
       <div class="quick">
         <button class="stage wide" data-act="pick" data-sel="all" style="--c:${COLORS.yellow}">
+          ${isBoss ? `<canvas class="wpic" data-pt="all" aria-hidden="true"></canvas>` : `<span class="wico">${icon("grid")}</span>`}
           <span class="t">${isBoss ? "FINAL BOSS" : "ALL STAGES"}</span>
           <span class="meta">${isBoss ? esc(BOSSES.all.name) + " · every chapter" : "Every chapter, mixed"}</span></button>
         ${isBoss ? `<button class="stage wide" data-act="pick" data-sel="rush" style="--c:${COLORS.red}">
+          <span class="wico">${icon("play")}</span>
           <span class="t">NEXT BOSS</span><span class="meta">The first boss you haven't 3-starred</span></button>`
         : `<button class="stage wide" data-act="pick" data-sel="weak" style="--c:${COLORS.red}" ${weakN ? "" : "disabled"}>
+          <span class="wico">${icon("flag")}</span>
           <span class="t">WEAK SPOTS</span><span class="meta">${weakN ? weakN + " items you keep missing" : "None yet — play a stage first"}</span></button>`}
       </div>
-      ${SECTIONS.map((s) => `<h2 class="world" style="--c:${s.color}">WORLD ${s.n} · ${esc(s.title.toUpperCase())}</h2>
+      ${SECTIONS.map((s) => `<h2 class="world wbar" style="--c:${s.color}"><i>${icon(["shield", "coin", "book", "heart"][s.n - 1] || "star")}</i><span>WORLD ${s.n} · ${esc(s.title.toUpperCase())}</span></h2>
         <div class="stages">${s.chapters.map((n) => tile(CH(n))).join("")}</div>`).join("")}
     </div></div>
   </section>`);
+  $$("canvas[data-pt]", el).forEach((cv) => {
+    const k = cv.dataset.pt, cl = client(k);
+    if (isBoss) drawBossPortrait(cv, BOSSES[k].color, k === "all" ? "all" : +k);
+    else if (cl) drawPortrait(cv, Object.assign({ age: cl.age }, cl.look));
+  });
   const start = (key) => {
     let k = key;
     if (k === "rush") {
@@ -8204,39 +8493,6 @@ function blasterMerge(parts) {
   return out;
 }
 
-// A round answer badge: dark disc, ring in the slot colour, a big white letter.
-// Readable over any background, at any distance.
-function blasterBadge(text, color) {
-  // An answer's letter, as its drone carries it: a dark plate in a ring of the answer's colour, the letter
-  // large, white and outlined, so it reads at a glance over anything behind it.
-  const c = document.createElement("canvas");
-  c.width = c.height = 256;
-  const x = c.getContext("2d");
-  x.beginPath();
-  x.arc(128, 128, 96, 0, Math.PI * 2);
-  x.fillStyle = "rgba(7, 2, 22, 0.95)";
-  x.fill();
-  x.shadowColor = color;
-  x.shadowBlur = 26;
-  x.lineWidth = 15;
-  x.strokeStyle = color;
-  x.stroke();
-  x.shadowBlur = 0;
-  x.lineWidth = 3;
-  x.strokeStyle = "rgba(255, 255, 255, 0.85)";
-  x.beginPath(); x.arc(128, 128, 84, 0, Math.PI * 2); x.stroke();
-  x.font = '108px "Press Start 2P", "Courier New", monospace';
-  x.textAlign = "center";
-  x.textBaseline = "middle";
-  x.lineJoin = "round";
-  x.lineWidth = 16;
-  x.strokeStyle = "#05010f";
-  x.strokeText(text, 134, 138);
-  x.fillStyle = "#ffffff";
-  x.fillText(text, 134, 138);
-  return new THREE.CanvasTexture(c);
-}
-
 // Tumbling crystal shards for explosions: one pooled instanced mesh, lit by a
 // cheap flat-shading shader in HDR colours. Also used by BOSS RUSH.
 class BlasterShards {
@@ -8339,7 +8595,7 @@ class BlasterGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <div class="timer"><i></i></div>
+      <div class="barrow" style="--c:${COLORS.cyan}"><b>TIME</b><div class="timer"><i></i></div></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -8500,8 +8756,9 @@ class BlasterGame extends QuizGame {
   badge(text, i) {
     const key = text + i;
     if (!this.badges.has(key)) {
-      const m = new THREE.SpriteMaterial({ map: blasterBadge(text, SLOT_COLORS[i]), transparent: true, depthTest: false, depthWrite: false, fog: false });
-      m.color.setScalar(1.0); // (the letter itself does not bloom: it stays crisp)
+      // the answer's own badge (the one on its button): its colour is the drone's face, the letter dark on it
+      const m = new THREE.SpriteMaterial({ map: answerBadgeTexture(text, SLOT_COLORS[i], false), transparent: true, depthTest: false, depthWrite: false, fog: false });
+      m.color.setScalar(0.96); // (the badge itself does not bloom: it stays crisp)
       this.badges.set(key, m);
     }
     return this.badges.get(key);
@@ -8564,7 +8821,7 @@ class BlasterGame extends QuizGame {
     const near = this.bandSize(7);
     const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
     this.shipY = -near.h * (fit.y + (this.enemy ? 0.045 : 0));
-    this.shipScale = clamp(Math.min((near.w * 0.6) / fit.w, (near.h * 0.3) / fit.h), 0.4, 1);
+    this.shipScale = clamp(Math.min((near.w * 0.7) / fit.w, (near.h * 0.35) / fit.h), 0.4, 1.2);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {
       this.laidOut = true;
@@ -8629,7 +8886,7 @@ class BlasterGame extends QuizGame {
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
+      label.scale.setScalar(this.enemy ? 1.62 : 1.12); // (round the demon the letter is the drone's face)
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -10874,7 +11131,8 @@ class BlasterSpace {
       this.cloudMesh.geometry.attributes.aData.needsUpdate = true;
     }
     // rocks: as many as the region has, tumbling past
-    const nearN = Math.round(16 * Math.min(1, c.rocks * 1.4)), farN = Math.round(96 * c.rocks);
+    // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
+    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
     this.rockNear.count = nearN; this.rockFar.count = farN;
     this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
     if (nearN + farN > 0 && !cheap) {
@@ -11833,6 +12091,29 @@ class BlasterDemon {
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
     pose.add(this.glow);
+    // behind it, an eclipse: a thin limb of cold light with its corona, so the dark wings and horns are cut out
+    // against light instead of sinking into the nebula
+    this.limbU = { uColor: { value: new THREE.Color(0.5, 0.85, 1.0) }, uK: { value: 0 }, uTime: { value: 0 } };
+    this.limb = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: this.limbU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uTime; varying vec2 vUv;
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
+          float R = 0.6;
+          float limb = exp(-pow((r - R) / 0.02, 2.0));
+          float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
+          float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
+          float back = exp(-r * r * 4.2); // the light behind it: wings and horns are dark against this
+          float over = 0.6 + 0.4 * smoothstep(-0.55, 0.35, p.y); // (brightest over its shoulders)
+          gl_FragColor = vec4(uColor * ((limb * 1.7 + corona * 0.75 + back * 0.5) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
+        }`,
+    }));
+    this.limb.position.set(0, 0.03, -0.2);
+    this.limb.scale.setScalar(2.1); // (the model is one unit from wing tip to wing tip: the limb runs just outside them)
+    this.limb.renderOrder = 1;
+    this.limb.frustumCulled = false;
+    pose.add(this.limb);
     tilt.add(pose);
     root.add(tilt);
     root.visible = false; // (it arrives when the game starts)
@@ -12075,8 +12356,8 @@ class BlasterDemon {
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.6 * tele + 0.4 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
-    U.uDmRimK.value = 0.62 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
-    U.uDmKick.value = 1.25 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
+    U.uDmRimK.value = 0.8 + 0.3 * rage + 0.4 * tele + 0.3 * gloat + 0.3 * roar;
+    U.uDmKick.value = 1.8 * (1 - 0.5 * rage); // (a cold light from above and behind: its wings and horns are edged against the sky)
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);
@@ -12098,6 +12379,10 @@ class BlasterDemon {
     this.claws.forEach((s, i) => { s.material.opacity = Math.min(1, charge * 0.9); s.scale.setScalar(0.12 + 0.16 * charge * (1 + 0.15 * sin(t * 9 + i * 2))); });
     this.glow.material.opacity = this.pow * (0.05 + 0.1 * rage + 0.08 * tele + 0.14 * gloat) * (cheap ? 0 : 1) + (cheap ? 0 : 0.2 * roar);
     this.glow.material.color.setRGB(0.5, 0.1, 0.75).lerp(this._c2.setRGB(0.9, 0.06, 0.16), U.uDmRage.value);
+    // the eclipse behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
+    this.limbU.uTime.value = t;
+    this.limbU.uK.value = cheap || dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
+    this.limbU.uColor.value.setRGB(0.5, 0.85, 1.0).lerp(g.waveCol, 0.22).lerp(this._c2.setRGB(1.0, 0.3, 0.22), 0.7 * U.uDmRage.value);
     this.heat = Math.max(0.25 * rage, tele, strike * 0.8, dying ? 0.9 : 0, gloat);
     // the aura: the edges of the view glow red. It breathes slowly in a rage, swells as the rage begins, and fills the
     // view for its last stand and when it has won. (Not with Reduced effects.)
@@ -12190,7 +12475,7 @@ class BlasterDemon {
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
-    [this.mat, this.lowMat, this.aura.material, this.aura.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
+    [this.mat, this.lowMat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));
     this.g.scene.remove(this.aura);
   }
@@ -12218,16 +12503,16 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 // Everything in the world takes its colour from here: sky dome, sun, fog, grid,
 // the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
-  { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
-    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffe6a8, sunBot: 0xf0a04e, halo: 0xd8b070,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.58 },
+  { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 30, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffd668, sunBot: 0xf2862a, halo: 0xf2a848,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.76 },
   { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
     top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xffeeb0, sunBot: 0xffae46, halo: 0xe6c888,
     ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.56 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
     top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd27a, sunBot: 0xff7a2a, halo: 0xff8a3a,
     ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 0.7 },
-  { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
+  { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 24, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
     top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xffe29a, sunBot: 0xe08a2e, halo: 0xb07a3a,
     ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.56 },
 ];
@@ -12934,8 +13219,8 @@ class RacerGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter goalbar slide" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
-      <div class="timer"><i></i></div>
+      <div class="barrow" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><b>GOAL</b><span class="meter goalbar slide" style="--c:${COLORS.lime}"><i data-goal></i></span><b>$1M</b></div>
+      <div class="barrow" style="--c:${COLORS.cyan}"><b>TIME</b><div class="timer"><i></i></div></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -13118,9 +13403,11 @@ class RacerGame extends QuizGame {
       detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
       detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
       [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
-      // a great wheel and its pinion hang from the run, turning over the road
-      racerGear(detail, 0, 21.2 + i, gz + 0.9, 3.4, 16, 0.3 * (i % 2 ? -1 : 1), gz, i * 0.31);
-      racerGear(detail, 5.15, 20.1 + i, gz + 0.9, 1.7, 8, -0.6 * (i % 2 ? -1 : 1), gz, i * 0.31);
+      // a great wheel and its pinion hang from the run, turning over one kerb or the other: the middle of the
+      // street stays open, so the egg at the end of it is never behind the works
+      const gs = i % 2 ? 1 : -1;
+      racerGear(detail, gs * 5.7, 21.2 + i, gz + 0.9, 3.4, 16, 0.3 * gs, gz, i * 0.31);
+      racerGear(detail, gs * 2.15, 24.75 + i, gz + 0.9, 1.7, 8, -0.6 * gs, gz, i * 0.31);
     });
     box.dispose();
     pipe.dispose();
@@ -13334,6 +13621,19 @@ class RacerGame extends QuizGame {
       this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerTagTexture(label, SLOT_COLORS[tf ? i - 4 : i], tf), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false });
       this.owned.push(this.tagMats[label].map, this.tagMats[label]);
     });
+    // and standing in each lane, the answer's own badge: a lit disc on a stem of light
+    this.badgeMats = {};
+    this.badgeGlowMats = {};
+    this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
+    this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
+    this.badgeStemGeo.translate(0, 0.5, 0);
+    this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
+    ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
+      const tf = label.length > 1, col = SLOT_COLORS[tf ? i - 4 : i];
+      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(0.94, 0.94, 0.94), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.badgeGlowMats[label] = new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(col, 1), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+      this.owned.push(this.badgeMats[label].map, this.badgeMats[label], this.badgeGlowMats[label]);
+    });
   }
   makeGate() {
     const g = new THREE.Group();
@@ -13354,15 +13654,38 @@ class RacerGame extends QuizGame {
     // lane letters on the road: they fade in with the question and go when the gate is passed
     this.dropTags();
     const tags = (this.laneTags = new THREE.Group());
+    const tf = r.n === 2;
     for (let i = 0; i < r.n; i++) {
       const label = r.tf ? (i === 0 ? "TRUE" : "FALSE") : r.labels[i];
+      const lane = new THREE.Group();
+      lane.position.set(laneX(i, r.n), 0, -11.5);
       const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
       tag.rotation.x = -Math.PI / 2;
-      tag.scale.set(r.n === 2 ? 0.7 : 0.86, 2.9, 1);
-      tag.position.set(laneX(i, r.n), 0.045, -11.5);
+      tag.scale.set(tf ? 0.7 : 0.86, 2.9, 1);
+      tag.position.y = 0.045;
       tag.layers.set(1); // (not in the wet road's mirror)
       tag.renderOrder = 2;
-      tags.add(tag);
+      // the badge stands over the far end of its strip, with a glow behind it and a stem of light under it
+      const post = new THREE.Group();
+      post.position.set(0, 0, -1.6);
+      const glow = new THREE.Mesh(this.badgeGeo[0], this.badgeGlowMats[label]);
+      glow.scale.set(tf ? 6.4 : 4.4, 4.2, 1);
+      glow.position.set(0, 1.62, -0.06);
+      glow.layers.set(1);
+      glow.renderOrder = 3;
+      const stem = new THREE.Mesh(this.badgeStemGeo, this.badgeGlowMats[label]);
+      stem.scale.set(0.5, 0.75, 1);
+      stem.position.y = 0.05;
+      stem.layers.set(1);
+      stem.renderOrder = 3;
+      const badge = new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]);
+      badge.scale.setScalar(2.05);
+      badge.position.y = 1.62;
+      badge.renderOrder = 4;
+      post.add(glow, stem, badge);
+      lane.add(tag, post);
+      lane.userData = { tag, post, badge, glow, stem, slot: i, k: 0 };
+      tags.add(lane);
     }
     this.tagK = 0;
     this.scene.add(tags);
@@ -13594,7 +13917,7 @@ class RacerGame extends QuizGame {
     su.uTint.value.copy(sky.tint);
     su.uI.value = sky.sunI;
     this.sun.position.y = sky.sunY;
-    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(0.8); // (a soft halo: the egg keeps its outline against the sky)
+    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(1.05); // (a gold halo, soft enough that the egg keeps its outline against the sky)
     // far range hazy and lit by the horizon, near range dark with a neon crest
     this.ridgeFar.children[0].material.color.copy(sky.ridge).lerp(sky.horizon, 0.22).lerp(sky.fog, 0.35);
     this.ridgeFar.children[1].material.color.copy(sky.horizon).multiplyScalar(1.1);
@@ -13617,7 +13940,11 @@ class RacerGame extends QuizGame {
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
     this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * 0.03;
-    this.sun.scale.setScalar(this.sunK);
+    // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
+    // end of the road (out in the open it is the size of the sky)
+    const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
+    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * 0.03);
+    this.sun.scale.setScalar(this.sunK * this.sunSlot);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
     this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
     this.post.exposure = sky.exposure;
@@ -13664,8 +13991,19 @@ class RacerGame extends QuizGame {
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
       const on = this.state === "ask" ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
-      const o = 0.85 * this.tagK * (0.9 + 0.1 * Math.sin(this.t * 2.2));
-      this.laneTags.children.forEach((c) => { c.material.opacity = o; });
+      const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
+      this.laneTags.children.forEach((c) => {
+        const u = c.userData, mine = this.lane === u.slot, none = this.lane === null;
+        // the lane taken stands taller and brighter; the others step back a little (never out of reading)
+        u.k += ((mine ? 1 : 0) - u.k) * Math.min(1, dt * 9);
+        u.tag.material.opacity = 0.5 * k * breathe * (none ? 1 : 0.55 + 0.6 * u.k);
+        u.badge.material.opacity = Math.min(1, k * 1.25) * (none ? 1 : 0.86 + 0.14 * u.k);
+        u.glow.material.opacity = k * (0.14 + 0.26 * u.k) * breathe;
+        const pop = 0.55 + 0.45 * Ease.outBack(Math.min(1, k * 1.15));
+        u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
+        u.post.position.y = 0.06 * Math.sin(this.t * 1.7 + u.slot * 1.3) + 0.12 * u.k;
+        u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
+      });
       if (!on && this.tagK < 0.02) this.dropTags();
     }
     const n = this.round ? this.round.n : 4;
@@ -13839,11 +14177,14 @@ function racerWheelGeo() {
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
   const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 1.2, flatShading: true });
+  m.userData.rim = { value: new THREE.Color(0.2, 0.42, 0.5) };
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.uCarRim = m.userData.rim;
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vCarP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvCarP = position;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vCarP;
+        uniform vec3 uCarRim;
         float carH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float carN(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(carH(i), carH(i + vec2(1.0, 0.0)), f.x), mix(carH(i + vec2(0.0, 1.0)), carH(i + vec2(1.0, 1.0)), f.x), f.y); }
         float carSeam(float v, float at, float w){ return 1.0 - smoothstep(w, w * 2.2, abs(v - at)); }`)
@@ -13861,12 +14202,21 @@ function racerCarPaint(env, hull) {
         float carWear = carN(vCarP.zy * 7.0 + vCarP.x * 5.0) * 0.6 + carN(vCarP.xz * 23.0) * 0.4;
         roughnessFactor = mix(0.94, clamp(roughnessFactor * (0.78 + 0.5 * carWear), 0.08, 1.0), carMetal);
         float carBody = smoothstep(0.18, 0.34, vColor.r - vColor.b); // the gold shell: a deep, glossy lacquer
-        roughnessFactor = mix(roughnessFactor, clamp(0.36 + 0.14 * carWear, 0.05, 1.0), carBody);`)
+        roughnessFactor = mix(roughnessFactor, clamp(0.36 + 0.14 * carWear, 0.05, 1.0), carBody);
+        // roof, rear deck and wing: the plates that face up. A low sun dead ahead mirrors off them straight into
+        // the chase camera and burns them out to white bars, so their finish is a satin non-slip, not a mirror.
+        vec3 carFaceN = normalize(cross(dFdx(vCarP), dFdy(vCarP)));
+        float carUp = smoothstep(0.8, 0.97, abs(carFaceN.y)) * smoothstep(0.86, 0.96, vCarP.y);
+        roughnessFactor = mix(roughnessFactor, max(roughnessFactor, 0.7), carUp);`)
+      .replace("#include <lights_physical_fragment>", `#include <lights_physical_fragment>
+        material.clearcoat *= 1.0 - 0.9 * carUp;`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night`)
+        totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night
+        // the sky's light catches every edge turned away from the camera: the car keeps its outline on a dark road
+        totalEmissiveRadiance += uCarRim * (pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0) * carMetal * (1.0 - 0.75 * carUp));`)
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal; metalnessFactor = mix(metalnessFactor, 0.45, smoothstep(0.18, 0.34, vColor.r - vColor.b));");
   };
-  m.customProgramCacheKey = () => "racer-car-paint3-" + (hull ? 1 : 0);
+  m.customProgramCacheKey = () => "racer-car-paint4-" + (hull ? 1 : 0);
   return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
@@ -14126,8 +14476,8 @@ class RacerCar {
 
     // --- ribbon trails from the tail lights and the under-glow ----------------
     this.trails = [
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(-0.64, 0.73, 2.16), step: 0.38 },
-      { t: new RacerTrail({ length: 14, width: 0.2, color: 0xff1a40, intensity: 1.9 }), p: new THREE.Vector3(0.64, 0.73, 2.16), step: 0.38 },
+      { t: new RacerTrail({ length: 14, width: 0.16, color: 0xff1a40, intensity: 1.25 }), p: new THREE.Vector3(-0.64, 0.73, 2.16), step: 0.38 },
+      { t: new RacerTrail({ length: 14, width: 0.16, color: 0xff1a40, intensity: 1.25 }), p: new THREE.Vector3(0.64, 0.73, 2.16), step: 0.38 },
       { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(-1.02, 0.22, 0.75), step: 0.2 },
       { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(1.02, 0.22, 0.75), step: 0.2 },
     ];
@@ -14224,8 +14574,9 @@ class RacerCar {
     this.hazard = Math.max(0, this.hazard - dt);
     this.flame += (boost - this.flame) * Math.min(1, dt * 8);
     const lamps = sky ? sky.lamps : 1;
+    if (sky) this.paint.userData.rim.value.copy(sky.light).lerp(sky.horizon, 0.35).multiplyScalar(0.62);
     ch[0] = 0.85 + 0.15 * Math.sin(t * 2.1) + this.flame * 0.5; // mint trim breathes
-    ch[1] = 0.62 + 1.25 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking
+    ch[1] = 0.56 + 0.8 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking (lit, not a haze over the whole tail)
     ch[2] = 0.75 + 0.35 * lamps + this.flame * 0.9; // roof lamps
     const chase = (t * (0.6 + 0.5 * this.flame)) % 1; // a chase across the four markers, well under 3 Hz
     for (let i = 0; i < 4; i++) {
@@ -15630,7 +15981,7 @@ class BossGame extends QuizGame {
       Dialog.open({
         lines: this.lines.intro,
         name: this.cfg.name,
-        boss: true,
+        boss: this.bossKey,
         color: this.cfg.color,
         voice: 140,
         skipLabel: "FIGHT!",
@@ -19309,6 +19660,11 @@ class ExamPuffs {
     this.mesh.renderOrder = 7;
     scene.add(this.mesh);
   }
+  dispose() {
+    if (this.mesh.parent) this.mesh.parent.remove(this.mesh);
+    this.mesh.geometry.dispose();
+    this.mat.dispose();
+  }
   // kind: 0 fire, 1 smoke, 2 flash, 3 vapour
   emit(kind, pos, vel, s0, s1, life, lift = 0, drag = 0.35) {
     if (this.list.length >= this.cap) { // full: the oldest puff makes room
@@ -20122,9 +20478,14 @@ function renderResults(o, rank) {
     if (o.game === "exam") startGame("exam", o.sel);
     else startGame(o.game, o.sel);
   };
-  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.86)">
+  // the picture over the headline: the boss that was fought, or the game's own emblem, on a medal with turning rays
+  const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
+  const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
+  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  const el = UI.el(`<section class="screen scr-results" style="background:rgba(9,3,32,.86)">
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
+        <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
@@ -20146,12 +20507,14 @@ function renderResults(o, rank) {
           ${r.e ? `<div class="re">${esc(r.e)}</div>` : ""}
           <div class="rr">${esc(r.r)}</div></li>`).join("")}</ol>`
         : run.answered ? `<h2 class="section-h" style="color:${COLORS.lime}">NO MISSES. FLAWLESS.</h2>` : ""}
-      <div class="actions">
-        <button class="btn" data-act="again" style="--c:${COLORS.lime}">${icon("play")} PLAY AGAIN</button>
-        <button class="btn ghost" data-act="stage">${o.game === "exam" ? "EXAM SETUP" : "CHANGE STAGE"}</button>
-        ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>` : ""}
-        <button class="btn ghost" data-act="hub">ARCADE</button>
-      </div>
+      ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<div class="actions">
+        <button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>
+      </div>` : ""}
+    </div></div>
+    <div class="actions pinned"><div class="wrap">
+      <button class="btn" data-act="again" style="--c:${COLORS.lime}">${icon("play")} PLAY AGAIN</button>
+      <button class="btn ghost" data-act="stage">${o.game === "exam" ? "EXAM SETUP" : "CHANGE STAGE"}</button>
+      <button class="btn ghost" data-act="hub">ARCADE</button>
     </div></div></section>`);
   UI.show({
     el,
@@ -20170,6 +20533,8 @@ function renderResults(o, rank) {
       $("[data-act=again]", el).focus({ preventScroll: true });
       const face = $(".debrief canvas", el);
       if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
+      const bust = $(".res-hero canvas", el);
+      if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
       if (r1.i > r0.i) {
         setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
       }
@@ -20600,9 +20965,19 @@ function showStats() {
   const st = Store.state.stats;
   const allIds = ALL_QIDS.concat(ALL_FIDS);
   const stars = Object.values(Store.state.boss).reduce((s, v) => s + v, 0);
+  const xp = xpTotal(), rk = rankOf(xp);
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("STATS & HIGH SCORES")}
     <div class="scroll"><div class="wrap">
+      <div class="pcard" style="--c:${COLORS.yellow}">
+        <div class="res-hero small" aria-hidden="true"><b>${rk.level}</b></div>
+        <div class="pc-body">
+          <div class="pc-k">YOUR RANK</div>
+          <div class="pc-name">${esc(rk.name)}</div>
+          <span class="meter" style="--c:${COLORS.yellow}"><i style="width:${(rk.frac * 100).toFixed(1)}%"></i></span>
+          <div class="pc-xp">${xp} XP${rk.next ? ` · ${rk.next - xp} TO ${esc(RANKS[rk.i + 1][1])}` : " · TOP RANK"}</div>
+        </div>
+      </div>
       <div class="tiles">
         <div class="tile" style="--c:${COLORS.lime}"><span class="k">MASTERY</span><span class="v">${mpct(Store.masteryOf(allIds))}%</span></div>
         <div class="tile"><span class="k">QUESTIONS MASTERED</span><span class="v">${Store.countMastered(ALL_QIDS)}/${ALL_QIDS.length}</span></div>
@@ -20662,7 +21037,7 @@ function showSettings() {
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl">Effects<small>Switch any of them off</small></div>
-        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}
@@ -20791,6 +21166,7 @@ function boot() {
 if (/debug/.test(location.hash)) {
   window.__arcade = {
     Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype,
+    show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {
       for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;

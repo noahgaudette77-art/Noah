@@ -16,16 +16,16 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 // Everything in the world takes its colour from here: sky dome, sun, fog, grid,
 // the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
-  { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
-    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffe6a8, sunBot: 0xf0a04e, halo: 0xd8b070,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.58 },
+  { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 30, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffd668, sunBot: 0xf2862a, halo: 0xf2a848,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.76 },
   { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
     top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xffeeb0, sunBot: 0xffae46, halo: 0xe6c888,
     ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.56 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
     top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd27a, sunBot: 0xff7a2a, halo: 0xff8a3a,
     ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 0.7 },
-  { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
+  { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 24, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
     top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xffe29a, sunBot: 0xe08a2e, halo: 0xb07a3a,
     ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.56 },
 ];
@@ -732,8 +732,8 @@ class RacerGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter goalbar slide" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><i data-goal></i></span>
-      <div class="timer"><i></i></div>
+      <div class="barrow" style="--c:${COLORS.lime}" title="Progress to $1,000,000"><b>GOAL</b><span class="meter goalbar slide" style="--c:${COLORS.lime}"><i data-goal></i></span><b>$1M</b></div>
+      <div class="barrow" style="--c:${COLORS.cyan}"><b>TIME</b><div class="timer"><i></i></div></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -916,9 +916,11 @@ class RacerGame extends QuizGame {
       detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
       detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
       [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
-      // a great wheel and its pinion hang from the run, turning over the road
-      racerGear(detail, 0, 21.2 + i, gz + 0.9, 3.4, 16, 0.3 * (i % 2 ? -1 : 1), gz, i * 0.31);
-      racerGear(detail, 5.15, 20.1 + i, gz + 0.9, 1.7, 8, -0.6 * (i % 2 ? -1 : 1), gz, i * 0.31);
+      // a great wheel and its pinion hang from the run, turning over one kerb or the other: the middle of the
+      // street stays open, so the egg at the end of it is never behind the works
+      const gs = i % 2 ? 1 : -1;
+      racerGear(detail, gs * 5.7, 21.2 + i, gz + 0.9, 3.4, 16, 0.3 * gs, gz, i * 0.31);
+      racerGear(detail, gs * 2.15, 24.75 + i, gz + 0.9, 1.7, 8, -0.6 * gs, gz, i * 0.31);
     });
     box.dispose();
     pipe.dispose();
@@ -1132,6 +1134,19 @@ class RacerGame extends QuizGame {
       this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerTagTexture(label, SLOT_COLORS[tf ? i - 4 : i], tf), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false });
       this.owned.push(this.tagMats[label].map, this.tagMats[label]);
     });
+    // and standing in each lane, the answer's own badge: a lit disc on a stem of light
+    this.badgeMats = {};
+    this.badgeGlowMats = {};
+    this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
+    this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
+    this.badgeStemGeo.translate(0, 0.5, 0);
+    this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
+    ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
+      const tf = label.length > 1, col = SLOT_COLORS[tf ? i - 4 : i];
+      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(0.94, 0.94, 0.94), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.badgeGlowMats[label] = new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(col, 1), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+      this.owned.push(this.badgeMats[label].map, this.badgeMats[label], this.badgeGlowMats[label]);
+    });
   }
   makeGate() {
     const g = new THREE.Group();
@@ -1152,15 +1167,38 @@ class RacerGame extends QuizGame {
     // lane letters on the road: they fade in with the question and go when the gate is passed
     this.dropTags();
     const tags = (this.laneTags = new THREE.Group());
+    const tf = r.n === 2;
     for (let i = 0; i < r.n; i++) {
       const label = r.tf ? (i === 0 ? "TRUE" : "FALSE") : r.labels[i];
+      const lane = new THREE.Group();
+      lane.position.set(laneX(i, r.n), 0, -11.5);
       const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
       tag.rotation.x = -Math.PI / 2;
-      tag.scale.set(r.n === 2 ? 0.7 : 0.86, 2.9, 1);
-      tag.position.set(laneX(i, r.n), 0.045, -11.5);
+      tag.scale.set(tf ? 0.7 : 0.86, 2.9, 1);
+      tag.position.y = 0.045;
       tag.layers.set(1); // (not in the wet road's mirror)
       tag.renderOrder = 2;
-      tags.add(tag);
+      // the badge stands over the far end of its strip, with a glow behind it and a stem of light under it
+      const post = new THREE.Group();
+      post.position.set(0, 0, -1.6);
+      const glow = new THREE.Mesh(this.badgeGeo[0], this.badgeGlowMats[label]);
+      glow.scale.set(tf ? 6.4 : 4.4, 4.2, 1);
+      glow.position.set(0, 1.62, -0.06);
+      glow.layers.set(1);
+      glow.renderOrder = 3;
+      const stem = new THREE.Mesh(this.badgeStemGeo, this.badgeGlowMats[label]);
+      stem.scale.set(0.5, 0.75, 1);
+      stem.position.y = 0.05;
+      stem.layers.set(1);
+      stem.renderOrder = 3;
+      const badge = new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]);
+      badge.scale.setScalar(2.05);
+      badge.position.y = 1.62;
+      badge.renderOrder = 4;
+      post.add(glow, stem, badge);
+      lane.add(tag, post);
+      lane.userData = { tag, post, badge, glow, stem, slot: i, k: 0 };
+      tags.add(lane);
     }
     this.tagK = 0;
     this.scene.add(tags);
@@ -1392,7 +1430,7 @@ class RacerGame extends QuizGame {
     su.uTint.value.copy(sky.tint);
     su.uI.value = sky.sunI;
     this.sun.position.y = sky.sunY;
-    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(0.8); // (a soft halo: the egg keeps its outline against the sky)
+    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(1.05); // (a gold halo, soft enough that the egg keeps its outline against the sky)
     // far range hazy and lit by the horizon, near range dark with a neon crest
     this.ridgeFar.children[0].material.color.copy(sky.ridge).lerp(sky.horizon, 0.22).lerp(sky.fog, 0.35);
     this.ridgeFar.children[1].material.color.copy(sky.horizon).multiplyScalar(1.1);
@@ -1415,7 +1453,11 @@ class RacerGame extends QuizGame {
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
     this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * 0.03;
-    this.sun.scale.setScalar(this.sunK);
+    // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
+    // end of the road (out in the open it is the size of the sky)
+    const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
+    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * 0.03);
+    this.sun.scale.setScalar(this.sunK * this.sunSlot);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
     this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
     this.post.exposure = sky.exposure;
@@ -1462,8 +1504,19 @@ class RacerGame extends QuizGame {
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
       const on = this.state === "ask" ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
-      const o = 0.85 * this.tagK * (0.9 + 0.1 * Math.sin(this.t * 2.2));
-      this.laneTags.children.forEach((c) => { c.material.opacity = o; });
+      const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
+      this.laneTags.children.forEach((c) => {
+        const u = c.userData, mine = this.lane === u.slot, none = this.lane === null;
+        // the lane taken stands taller and brighter; the others step back a little (never out of reading)
+        u.k += ((mine ? 1 : 0) - u.k) * Math.min(1, dt * 9);
+        u.tag.material.opacity = 0.5 * k * breathe * (none ? 1 : 0.55 + 0.6 * u.k);
+        u.badge.material.opacity = Math.min(1, k * 1.25) * (none ? 1 : 0.86 + 0.14 * u.k);
+        u.glow.material.opacity = k * (0.14 + 0.26 * u.k) * breathe;
+        const pop = 0.55 + 0.45 * Ease.outBack(Math.min(1, k * 1.15));
+        u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
+        u.post.position.y = 0.06 * Math.sin(this.t * 1.7 + u.slot * 1.3) + 0.12 * u.k;
+        u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
+      });
       if (!on && this.tagK < 0.02) this.dropTags();
     }
     const n = this.round ? this.round.n : 4;

@@ -79,9 +79,14 @@ function renderResults(o, rank) {
     if (o.game === "exam") startGame("exam", o.sel);
     else startGame(o.game, o.sel);
   };
-  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.86)">
+  // the picture over the headline: the boss that was fought, or the game's own emblem, on a medal with turning rays
+  const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
+  const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
+  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  const el = UI.el(`<section class="screen scr-results" style="background:rgba(9,3,32,.86)">
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
+        <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
@@ -103,12 +108,14 @@ function renderResults(o, rank) {
           ${r.e ? `<div class="re">${esc(r.e)}</div>` : ""}
           <div class="rr">${esc(r.r)}</div></li>`).join("")}</ol>`
         : run.answered ? `<h2 class="section-h" style="color:${COLORS.lime}">NO MISSES. FLAWLESS.</h2>` : ""}
-      <div class="actions">
-        <button class="btn" data-act="again" style="--c:${COLORS.lime}">${icon("play")} PLAY AGAIN</button>
-        <button class="btn ghost" data-act="stage">${o.game === "exam" ? "EXAM SETUP" : "CHANGE STAGE"}</button>
-        ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>` : ""}
-        <button class="btn ghost" data-act="hub">ARCADE</button>
-      </div>
+      ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<div class="actions">
+        <button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>
+      </div>` : ""}
+    </div></div>
+    <div class="actions pinned"><div class="wrap">
+      <button class="btn" data-act="again" style="--c:${COLORS.lime}">${icon("play")} PLAY AGAIN</button>
+      <button class="btn ghost" data-act="stage">${o.game === "exam" ? "EXAM SETUP" : "CHANGE STAGE"}</button>
+      <button class="btn ghost" data-act="hub">ARCADE</button>
     </div></div></section>`);
   UI.show({
     el,
@@ -127,6 +134,8 @@ function renderResults(o, rank) {
       $("[data-act=again]", el).focus({ preventScroll: true });
       const face = $(".debrief canvas", el);
       if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
+      const bust = $(".res-hero canvas", el);
+      if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
       if (r1.i > r0.i) {
         setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
       }

@@ -29,39 +29,6 @@ function blasterMerge(parts) {
   return out;
 }
 
-// A round answer badge: dark disc, ring in the slot colour, a big white letter.
-// Readable over any background, at any distance.
-function blasterBadge(text, color) {
-  // An answer's letter, as its drone carries it: a dark plate in a ring of the answer's colour, the letter
-  // large, white and outlined, so it reads at a glance over anything behind it.
-  const c = document.createElement("canvas");
-  c.width = c.height = 256;
-  const x = c.getContext("2d");
-  x.beginPath();
-  x.arc(128, 128, 96, 0, Math.PI * 2);
-  x.fillStyle = "rgba(7, 2, 22, 0.95)";
-  x.fill();
-  x.shadowColor = color;
-  x.shadowBlur = 26;
-  x.lineWidth = 15;
-  x.strokeStyle = color;
-  x.stroke();
-  x.shadowBlur = 0;
-  x.lineWidth = 3;
-  x.strokeStyle = "rgba(255, 255, 255, 0.85)";
-  x.beginPath(); x.arc(128, 128, 84, 0, Math.PI * 2); x.stroke();
-  x.font = '108px "Press Start 2P", "Courier New", monospace';
-  x.textAlign = "center";
-  x.textBaseline = "middle";
-  x.lineJoin = "round";
-  x.lineWidth = 16;
-  x.strokeStyle = "#05010f";
-  x.strokeText(text, 134, 138);
-  x.fillStyle = "#ffffff";
-  x.fillText(text, 134, 138);
-  return new THREE.CanvasTexture(c);
-}
-
 // Tumbling crystal shards for explosions: one pooled instanced mesh, lit by a
 // cheap flat-shading shader in HDR colours. Also used by BOSS RUSH.
 class BlasterShards {
@@ -164,7 +131,7 @@ class BlasterGame extends QuizGame {
         <div class="lives" data-lives></div>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <div class="timer"><i></i></div>
+      <div class="barrow" style="--c:${COLORS.cyan}"><b>TIME</b><div class="timer"><i></i></div></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -325,8 +292,9 @@ class BlasterGame extends QuizGame {
   badge(text, i) {
     const key = text + i;
     if (!this.badges.has(key)) {
-      const m = new THREE.SpriteMaterial({ map: blasterBadge(text, SLOT_COLORS[i]), transparent: true, depthTest: false, depthWrite: false, fog: false });
-      m.color.setScalar(1.0); // (the letter itself does not bloom: it stays crisp)
+      // the answer's own badge (the one on its button): its colour is the drone's face, the letter dark on it
+      const m = new THREE.SpriteMaterial({ map: answerBadgeTexture(text, SLOT_COLORS[i], false), transparent: true, depthTest: false, depthWrite: false, fog: false });
+      m.color.setScalar(0.96); // (the badge itself does not bloom: it stays crisp)
       this.badges.set(key, m);
     }
     return this.badges.get(key);
@@ -389,7 +357,7 @@ class BlasterGame extends QuizGame {
     const near = this.bandSize(7);
     const fit = this.jet.fit || { w: 3.4, h: 1.2, y: 0.36 }; // the room the ship needs, and where it sits
     this.shipY = -near.h * (fit.y + (this.enemy ? 0.045 : 0));
-    this.shipScale = clamp(Math.min((near.w * 0.6) / fit.w, (near.h * 0.3) / fit.h), 0.4, 1);
+    this.shipScale = clamp(Math.min((near.w * 0.7) / fit.w, (near.h * 0.35) / fit.h), 0.4, 1.2);
     // the band changes with each question's length: the ship eases to its new spot
     if (!this.laidOut) {
       this.laidOut = true;
@@ -454,7 +422,7 @@ class BlasterGame extends QuizGame {
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.setScalar(this.enemy ? 1.8 : 1.24); // (round the demon the letter is the drone's face)
+      label.scale.setScalar(this.enemy ? 1.62 : 1.12); // (round the demon the letter is the drone's face)
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);

@@ -54,7 +54,11 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.16 * (this.life.flash || 0); // lightning lifts the whole picture for a moment
+    this.scene.userData.post.exposure = 1.12 + 0.36 * (this.life.flash || 0); // lightning lifts the whole picture for a moment
+    { // and the logo with it: its face takes the flash too (written only when it changes)
+      const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
+      if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }
+    }
     // the camera is never still: it sways across the avenue, pushes slowly in toward the city and eases back, and rolls a hair
     const mv = REDUCED_MOTION || GFX.calm ? 0.25 : 1, t = this.t, sway = Math.sin(t * 0.11) * 3.4 * mv, push = (0.5 - 0.5 * Math.cos(t * 0.085)) * 9 * mv;
     this.camBase.set(sway + Pointer.x * 1.2, 3.4 + Math.sin(t * 0.7) * 0.15 - Pointer.y * 0.5 + push * 0.1, 12 - push);

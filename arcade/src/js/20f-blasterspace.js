@@ -684,7 +684,8 @@ class BlasterSpace {
       this.cloudMesh.geometry.attributes.aData.needsUpdate = true;
     }
     // rocks: as many as the region has, tumbling past
-    const nearN = Math.round(16 * Math.min(1, c.rocks * 1.4)), farN = Math.round(96 * c.rocks);
+    // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
+    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
     this.rockNear.count = nearN; this.rockFar.count = farN;
     this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
     if (nearN + farN > 0 && !cheap) {

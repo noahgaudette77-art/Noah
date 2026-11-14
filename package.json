@@ -10,7 +10,8 @@
     "serve": "node scripts/serve.js",
     "arcade": "node scripts/build-arcade.js",
     "arcade:check": "node scripts/validate-arcade.js",
-    "arcade:regress": "node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json"
+    "arcade:regress": "node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json",
+    "arcade:sequence": "node scripts/arcade-sequence.js"
   },
   "license": "MIT"
 }

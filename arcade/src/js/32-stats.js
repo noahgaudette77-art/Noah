@@ -9,9 +9,19 @@ function showStats() {
   const st = Store.state.stats;
   const allIds = ALL_QIDS.concat(ALL_FIDS);
   const stars = Object.values(Store.state.boss).reduce((s, v) => s + v, 0);
+  const xp = xpTotal(), rk = rankOf(xp);
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("STATS & HIGH SCORES")}
     <div class="scroll"><div class="wrap">
+      <div class="pcard" style="--c:${COLORS.yellow}">
+        <div class="res-hero small" aria-hidden="true"><b>${rk.level}</b></div>
+        <div class="pc-body">
+          <div class="pc-k">YOUR RANK</div>
+          <div class="pc-name">${esc(rk.name)}</div>
+          <span class="meter" style="--c:${COLORS.yellow}"><i style="width:${(rk.frac * 100).toFixed(1)}%"></i></span>
+          <div class="pc-xp">${xp} XP${rk.next ? ` · ${rk.next - xp} TO ${esc(RANKS[rk.i + 1][1])}` : " · TOP RANK"}</div>
+        </div>
+      </div>
       <div class="tiles">
         <div class="tile" style="--c:${COLORS.lime}"><span class="k">MASTERY</span><span class="v">${mpct(Store.masteryOf(allIds))}%</span></div>
         <div class="tile"><span class="k">QUESTIONS MASTERED</span><span class="v">${Store.countMastered(ALL_QIDS)}/${ALL_QIDS.length}</span></div>
@@ -71,7 +81,7 @@ function showSettings() {
       ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl">Effects<small>Switch any of them off</small></div>
-        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "WET REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}

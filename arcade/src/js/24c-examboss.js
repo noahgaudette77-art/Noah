@@ -236,6 +236,11 @@ class ExamPuffs {
     this.mesh.renderOrder = 7;
     scene.add(this.mesh);
   }
+  dispose() {
+    if (this.mesh.parent) this.mesh.parent.remove(this.mesh);
+    this.mesh.geometry.dispose();
+    this.mat.dispose();
+  }
   // kind: 0 fire, 1 smoke, 2 flash, 3 vapour
   emit(kind, pos, vel, s0, s1, life, lift = 0, drag = 0.35) {
     if (this.list.length >= this.cap) { // full: the oldest puff makes room

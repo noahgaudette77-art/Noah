@@ -22,8 +22,10 @@ function showSelect(gameId) {
       : isMemory
         ? `<span>${ids.length} CARDS</span><span>${dueCount(ids)} DUE</span>`
         : `<span>${ids.length} Q</span><span>${mpct(mm)}% MASTERED</span>`;
+    // the row's picture: the boss that holds this chapter, or the client whose file it is
+    const pic = isBoss || !!client(c.n);
     return `<button class="stage" data-act="pick" data-sel="${c.n}" style="--c:${c.color}" ${ids.length ? "" : "disabled"}>
-      <span class="n">${c.n}</span><span class="t">${esc(c.title)}</span>
+      <span class="n${pic ? " pic" : ""}">${pic ? `<canvas data-pt="${c.n}" aria-hidden="true"></canvas><b>${c.n}</b>` : c.n}</span><span class="t">${esc(c.title)}</span>
       <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
       <span class="meta">${meta}</span></button>`;
   };
@@ -32,17 +34,25 @@ function showSelect(gameId) {
     <div class="scroll"><div class="wrap">
       <div class="quick">
         <button class="stage wide" data-act="pick" data-sel="all" style="--c:${COLORS.yellow}">
+          ${isBoss ? `<canvas class="wpic" data-pt="all" aria-hidden="true"></canvas>` : `<span class="wico">${icon("grid")}</span>`}
           <span class="t">${isBoss ? "FINAL BOSS" : "ALL STAGES"}</span>
           <span class="meta">${isBoss ? esc(BOSSES.all.name) + " · every chapter" : "Every chapter, mixed"}</span></button>
         ${isBoss ? `<button class="stage wide" data-act="pick" data-sel="rush" style="--c:${COLORS.red}">
+          <span class="wico">${icon("play")}</span>
           <span class="t">NEXT BOSS</span><span class="meta">The first boss you haven't 3-starred</span></button>`
         : `<button class="stage wide" data-act="pick" data-sel="weak" style="--c:${COLORS.red}" ${weakN ? "" : "disabled"}>
+          <span class="wico">${icon("flag")}</span>
           <span class="t">WEAK SPOTS</span><span class="meta">${weakN ? weakN + " items you keep missing" : "None yet — play a stage first"}</span></button>`}
       </div>
-      ${SECTIONS.map((s) => `<h2 class="world" style="--c:${s.color}">WORLD ${s.n} · ${esc(s.title.toUpperCase())}</h2>
+      ${SECTIONS.map((s) => `<h2 class="world wbar" style="--c:${s.color}"><i>${icon(["shield", "coin", "book", "heart"][s.n - 1] || "star")}</i><span>WORLD ${s.n} · ${esc(s.title.toUpperCase())}</span></h2>
         <div class="stages">${s.chapters.map((n) => tile(CH(n))).join("")}</div>`).join("")}
     </div></div>
   </section>`);
+  $$("canvas[data-pt]", el).forEach((cv) => {
+    const k = cv.dataset.pt, cl = client(k);
+    if (isBoss) drawBossPortrait(cv, BOSSES[k].color, k === "all" ? "all" : +k);
+    else if (cl) drawPortrait(cv, Object.assign({ age: cl.age }, cl.look));
+  });
   const start = (key) => {
     let k = key;
     if (k === "rush") {

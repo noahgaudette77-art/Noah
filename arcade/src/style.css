@@ -823,3 +823,110 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .charge.labelled span { left: auto; right: 6px; color: #fff3ec; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 0 #000; }
 /* Counts keep to one line each (a break never falls between a number and what it counts). */
 .nb { white-space: nowrap; }
+
+/* === Third review (title, Risk Blaster, Nest Egg Run, interface) ====================================== */
+/* Letter pairs stay two letters everywhere: the font shorthand resets the page's own setting, so an element
+   with a font of its own brought the ligatures back (ff and fl read as one smeared glyph). */
+*, *::before, *::after { font-variant-ligatures: none !important; font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 !important; }
+/* The HUD sits on a shade of its own, so its figures read whatever the scene puts behind them. */
+.scr-game::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(var(--gut-t) + 78px); z-index: -1;
+  background: linear-gradient(180deg, rgba(5, 2, 18, 0.94), rgba(5, 2, 18, 0.8) 60%, rgba(5, 2, 18, 0));
+  pointer-events: none; transition: opacity 0.4s;
+}
+.scr-game.cine::before { opacity: 0; }
+/* Each bar under the HUD says what it measures. */
+.barrow { display: flex; align-items: center; gap: 6px; width: 100%; max-width: 1040px; margin-left: auto; margin-right: auto; }
+.barrow > b { flex: none; font: 400 7px/1 var(--font-display); letter-spacing: 0.06em; color: var(--c, var(--cyan)); text-shadow: 0 1px 0 #000, 0 0 5px #000; }
+.barrow > .timer, .barrow > .meter { flex: 1 1 0; min-width: 0; width: auto; max-width: none; margin: 0; }
+.scr-game.cine > .barrow { opacity: 0; }
+/* Verdicts carry a mark as well as a colour (green is also the fourth answer's colour): a tick pinned to the
+   right answer's badge, a cross to the wrong one's. */
+.ans.good .k, .ans.bad .k { position: relative; overflow: visible; }
+.ans.good .k::after, .ans.bad .k::after {
+  position: absolute; right: -10px; bottom: -9px; width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%;
+  font: 700 13px/1 Arial, "Segoe UI Symbol", sans-serif; color: #06021a;
+  box-shadow: 0 0 0 2px #06021a, 0 2px 0 2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: mark-pop 0.32s var(--ease-spring, cubic-bezier(0.3, 1.5, 0.5, 1)) 0.08s backwards;
+}
+.ans.good .k::after { content: "\2713"; background: #b4ff96; }
+.ans.bad .k::after { content: "\2715"; background: #ff8a9d; font-size: 11px; }
+@keyframes mark-pop { from { transform: scale(0.2) rotate(-25deg); opacity: 0; } }
+/* Setup: a switched-off switch is as filled as a switched-on one (violet, not cyan); the effects are a
+   two-column checklist, one line each. */
+.seg button[aria-pressed="true"][data-v="false"] {
+  background: linear-gradient(180deg, #8674e6, #5a48bc); color: #fff;
+  box-shadow: 0 0 12px -4px #9a86ff, inset 0 2px 0 rgba(255, 255, 255, 0.34), inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+}
+.seg.wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.seg.wrap button { min-height: 40px; padding: 8px 9px; justify-content: flex-start; text-align: left; white-space: nowrap; font-size: 8px; letter-spacing: 0; line-height: 1; overflow: hidden; }
+/* Stage list: a picture on every row (the boss that holds the chapter, or the client whose file it is), its
+   number on a tab at the corner; each world under a banner with its emblem. */
+.stage .n.pic { position: relative; width: 48px; height: 48px; padding: 0; background: #0c0326; border: 2px solid var(--c, var(--cyan)); box-shadow: 0 0 14px -4px var(--c, var(--cyan)), 0 3px 0 #000; text-shadow: none; }
+.stage .n.pic canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.stage .n.pic b {
+  position: absolute; left: -7px; top: -7px; min-width: 19px; height: 19px; padding: 0 3px; display: grid; place-items: center;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--cyan)) 70%, #fff), var(--c, var(--cyan)));
+  color: #12052e; font: 400 9px/1 var(--font-display); box-shadow: 0 2px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.stage.wide { grid-template-columns: auto 1fr; column-gap: 10px; align-items: center; text-align: left; }
+.stage.wide .wico, .stage.wide .wpic { grid-row: span 2; width: 34px; height: 34px; display: grid; place-items: center; color: var(--c); }
+.stage.wide .wico svg { width: 24px; height: 24px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px var(--c)); }
+.stage.wide .wpic { image-rendering: pixelated; border: 2px solid var(--c); background: #0c0326; }
+.stage.wide .meta { justify-content: flex-start; }
+.world.wbar {
+  display: flex; align-items: center; gap: 10px; margin: 16px 0 9px; padding: 8px 10px 8px 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 70%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 7%, transparent) 62%, transparent);
+  border-left: 4px solid var(--c); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+}
+.world.wbar i { flex: none; width: 26px; height: 26px; display: grid; place-items: center; background: #0c0326; border: 2px solid var(--c); box-shadow: 0 0 10px -3px var(--c); }
+.world.wbar i svg { width: 14px; height: 14px; }
+.world.wbar span { min-width: 0; }
+/* Results: a medal over the headline (the boss that was fought, or the game's emblem) with rays turning slowly
+   behind it; the way on is pinned to the foot of the screen, never below the fold. */
+.res-hero { position: relative; width: 76px; height: 76px; margin: 22px auto 14px; display: grid; place-items: center; }
+.res-hero::before {
+  content: ""; position: absolute; inset: -34px; border-radius: 50%; opacity: 0.9;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.16) 0 8deg, transparent 8deg 22.5deg);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, var(--yellow)) 42%, transparent) 0 8deg, transparent 8deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 26%, transparent 70%); mask: radial-gradient(circle, #000 26%, transparent 70%);
+  animation: hero-rays 36s linear infinite;
+}
+.res-hero::after {
+  content: ""; position: absolute; inset: 0; border: 3px solid var(--c, var(--yellow));
+  background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.2), rgba(12, 3, 38, 0.92) 68%), #0c0326;
+  box-shadow: 0 0 0 3px #000, 0 0 0 5px color-mix(in srgb, var(--c, var(--yellow)) 40%, #000), 0 0 30px -4px var(--c, var(--yellow)), inset 0 0 20px -6px var(--c, var(--yellow)), 0 8px 0 -2px rgba(0, 0, 0, 0.6);
+}
+.res-hero > svg, .res-hero > canvas { position: relative; z-index: 1; }
+.res-hero > svg { width: 44px; height: 44px; color: var(--c, var(--yellow)); fill: currentColor; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 10px var(--c, var(--yellow))); }
+.res-hero > canvas { width: 70px; height: 70px; image-rendering: pixelated; }
+@keyframes hero-rays { to { transform: rotate(360deg); } }
+.actions.pinned {
+  flex: none; padding: 10px 0 2px; margin: 0 calc(var(--gut-l) * -1) 0 calc(var(--gut-r) * -1); padding-left: var(--gut-l); padding-right: var(--gut-r);
+  display: block; background: linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); box-shadow: inset 0 1px 0 rgba(150, 122, 255, 0.28);
+}
+.actions.pinned .wrap { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+.actions.pinned .btn { padding: 13px 6px; font-size: clamp(8px, 2.5vw, 11px); line-height: 1.35; min-height: 46px; }
+.scr-results .scroll .actions { grid-template-columns: 1fr; padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .res-hero::before, .ans.good .k::after, .ans.bad .k::after { animation: none !important; } }
+/* Title: the logo sits inside the frame with air either side (it ran edge to edge), and takes the light of a
+   lightning strike with the rest of the street. */
+.logo-main { font-size: clamp(40px, 13vw, 128px); }
+@media (max-height: 560px) and (orientation: landscape) { .logo-main { font-size: clamp(30px, 9vh, 60px); } }
+.logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.55)); }
+/* Stats opens on the player's rank: a medal with the level on it, the rank's name, and the way to the next. */
+.pcard {
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 20px; align-items: center; padding: 6px 16px 6px 12px; margin-bottom: 12px; overflow: hidden;
+  border: 2px solid rgba(255, 225, 79, 0.75);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 46%), radial-gradient(120% 140% at 0% 50%, rgba(255, 201, 61, 0.2), rgba(24, 14, 68, 0.74) 62%);
+  box-shadow: 0 3px 0 #000, 0 0 26px -10px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.res-hero.small { width: 58px; height: 58px; margin: 18px 12px 18px 16px; }
+.res-hero.small::before { inset: -26px; }
+.res-hero.small > b { position: relative; z-index: 1; font: 400 22px/1 var(--font-display); color: var(--c); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.75), 0 0 12px var(--c); }
+.pc-body { display: grid; gap: 7px; min-width: 0; }
+.pc-k { font: 400 8px/1 var(--font-display); letter-spacing: 0.08em; color: var(--dim); }
+.pc-name { font: 400 clamp(13px, 4.2vw, 18px)/1.15 var(--font-display); color: var(--c); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 225, 79, 0.5); }
+.pc-xp { font: 400 8px/1.3 var(--font-display); letter-spacing: 0.04em; color: #e9e2ff; }
+.pcard .meter { height: 8px; }

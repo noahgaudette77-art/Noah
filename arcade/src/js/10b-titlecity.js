@@ -144,6 +144,26 @@ class TitleCity {
       s.add(m);
       return m;
     });
+    // ---- the street's own traffic in the kerb lanes, close enough to see what it is: cars, a bus and a truck heading
+    // into the city on the left, others coming out of it on the right, all of them mirrored in the wet road
+    this.street = [];
+    [["sedan", 5], ["bus", 1], ["truck", 2]].forEach(([type, n], k) => {
+      const geo = racerVehicleGeo(type);
+      const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
+      geo.setAttribute("aTint", tint); geo.setAttribute("aL", lights);
+      const m = new THREE.InstancedMesh(geo, this.carMat, n);
+      m.frustumCulled = false;
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      RACER_PAINTS.slice(k * 2, k * 2 + n).forEach((c, i) => { const col = new THREE.Color(c); tint.setXYZ(i, col.r, col.g, col.b); });
+      s.add(m);
+      for (let i = 0; i < n; i++) this.street.push({ m, i });
+    });
+    this.street.forEach((c, k) => {
+      c.dir = k % 8 === 1 || k % 8 === 4 || k % 8 === 7 ? 1 : -1; // (three come out of the city, five go in)
+      c.x = c.dir < 0 ? -8.1 : 8.1;
+      c.v = c.dir < 0 ? rand(12, 19) : rand(44, 56);
+      c.z = c.dir < 0 ? 18 - k * 34 : -30 - k * 30;
+    });
     // ---- the train that crosses the bridge
     { const b = new RacerBatch();
       for (let i = 0; i < 7; i++) { const x = i * 12.6; put(b, x, 0, 0, 11.8, 3.0, 3.2, i ? 0xcfd6e2 : 0xff3ad4, 0.45); put(b, x, 0.4, 1.62, 10.6, 0.9, 0.06, 0xffe2a8, 2.0); put(b, x, -1.3, 1.62, 11.8, 0.14, 0.06, 0x35efff, 2.4); }
@@ -178,6 +198,14 @@ class TitleCity {
     const t = (this.t += dt);
     this.traffic.material.uniforms.uTime.value = t;
     this.carMat.uniforms.uTime.value = t;
+    // the kerb lanes: each car runs its lane and comes round again at the far end
+    for (const c of this.street) {
+      c.z += c.dir * c.v * dt;
+      if (c.dir < 0 && c.z < -250) { c.z = 22 + rand(0, 30); c.v = rand(12, 19); }
+      else if (c.dir > 0 && c.z > 26) { c.z = -250 - rand(0, 70); c.v = rand(44, 56); }
+      c.m.setMatrixAt(c.i, this._m.compose(this._p.set(c.x, 0, c.z), this._q.setFromEuler(this._e.set(0, c.dir < 0 ? 0 : Math.PI, 0)), this._s.set(1.5, 1.5, 1.5)));
+      c.m.instanceMatrix.needsUpdate = true;
+    }
     // windows twinkle and signs flicker, slowly: nothing here changes faster than 3 Hz
     this.blink[0].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.9));
     this.blink[1].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.6 + 2));
