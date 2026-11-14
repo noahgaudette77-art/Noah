@@ -1558,3 +1558,58 @@ my lowest scores each had another pass:
 - **Hub (pass 4).** The lamp over the cabinet in front throws a shaft you can
   see, in the cabinet's colour, with dust turning in it and a pool of light on
   the floor; all three follow the selection and come up with its power.
+
+### Second independent look (after the second round)
+
+A fresh reviewer, told that the pixel font and block-built figures are the house
+style and to judge execution within it. Scores are detail, lighting, materials,
+depth, motion, cohesion, legibility:
+
+| Screen | Scores | Average | First look |
+|---|---|---|---|
+| Hub | 4, 3.5, 3, 3.5, 3, 4, 4 | 3.6 | 2.5 |
+| Boss Rush | 3.5, 3, 2.5, 3, 3, 3.5, 4 | 3.2 | 2.6 to 2.9 |
+| Memory Bank | 3, 2.5, 2.5, 2.5, 2.5, 3, 3.5 | 2.8 | 2.9 (with the exam and guide) |
+| Strategy Guide | 3, 2.5, 2.5, 3, 2.5, 3.5, 4 | 3.0 | 2.9 (with the exam and vault) |
+| Final Exam | 3.5, 3, 3, 3, 3, 3.5, 4 | 3.3 | 2.9 (with the vault and guide) |
+
+Up by about half a point to a point where a comparison exists, and still well
+short of 4.5. Its eight points and what was done (pass 5 or 6 for each screen):
+
+1. Memory Bank: the card read as a pasted web panel and banking left the vault
+   unchanged. The card is a brass-framed plate with a rivet in each corner and a
+   cast shadow, with a larger term; the coin piles by the bullion start two
+   coins high and gain a coin for every card banked; the deck lamps are brighter.
+2. Boss Rush: one hue flooded boss, stands and floor. The far mist is deep
+   indigo, the near mist fainter, and one of the two back lights is the boss
+   colour's complement, so the figure stands off the room.
+3. Boss Rush: speckle on the armour, a brown crowd, diamonds adrift. The rim
+   follows the plate's true shape (not its grain) and the grain is finer;
+   spectators are fewer, larger and in brighter clothes; the pillars are lighter
+   and their caps are smaller lamps.
+4. Strategy Guide: the archive was murky with no focal point. A reading desk in
+   the middle of the nave carries a great ledger of gold light under its own
+   lamp; exposure is up; pages are fewer and none crosses the middle near the
+   lens; the lens holds the desk.
+5. Boss Rush hit: a white veil over the frame, unreadable faded answers. The
+   burst is smaller and at 60% strength; an answer you did not pick stays at
+   70% (was 45%), in every game.
+6. Final Exam: the chosen answer read as a hover; the robot's lower half sank
+   into black; the halo barely showed. A chosen answer is a pale solid plate
+   with dark text; a low fill light lifts its chest and arms; the halo's marks
+   and ticks are about 40% brighter.
+7. Small type: the charge bar's label sits at the far end with an outline; the
+   guide's count line never breaks between a number and its noun; card hints
+   are in the reading face, larger, on one line.
+8. Hub: neighbours near-black. The room's fill is about 30% brighter. Signs cut
+   off by the frame edge are left as they are (the camera moves; they are
+   whole at other moments).
+
+- Found by my own check at 360 by 640 (a small phone): the boss's speech bubble
+  covered the title of the explanation sheet after a wrong answer. The bubble
+  now sits just above the sheet whenever one is up.
+- Resemblances it named, both mild: the exam robot's pale skull face in purple
+  armour (a cartoon villain), and the vault's cog-ringed door (a game series).
+  The skull is the owner's model; the purple is mine and replaced red and blue,
+  which another reviewer tied to a film robot. Any strong colour on a
+  skull-faced robot will recall something; flagged for the owner.

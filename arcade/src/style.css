@@ -787,3 +787,39 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 /* Guide: while there are search results the archive folds down to a strip; a chapter has one filled button. */
 .lib-window { transition: height 0.3s var(--ease-out); }
 .guide-lib.searching .lib-window { height: 64px; }
+
+/* ============ Second review of the lowest screens ============ */
+/* An answer you did not pick stays readable while you compare it with the right one. */
+.ans.dim { opacity: 0.7; }
+/* A chosen answer: a pale solid plate with dark text. It cannot be taken for a hover or for the NEXT button,
+   it is the same for every slot, and it says nothing about right or wrong. The slot's colour stays on its badge. */
+.ans.sel {
+  background: linear-gradient(180deg, #f4f0ff, #d7cdff);
+  color: #160a3a; text-shadow: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 22px -2px rgba(214, 204, 255, 0.9), 0 3px 0 #000;
+}
+body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cdff); }
+/* The flashcard is a plate, not a pane: a brass frame with a rivet in each corner, a cast shadow on the vault
+   behind it, and a larger term. */
+.face {
+  box-shadow: 0 0 0 2px #1a0f02, 0 0 0 6px #c8963a, 0 0 0 7px #5a3d0c, 0 0 0 9px #000,
+    0 0 40px -8px var(--c, var(--lime)), 0 30px 46px -12px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime));
+}
+.face::before {
+  content: ""; position: absolute; inset: 2px; pointer-events: none;
+  background:
+    radial-gradient(circle at 6px 6px, #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at calc(100% - 6px) 6px, #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at 6px calc(100% - 6px), #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at calc(100% - 6px) calc(100% - 6px), #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px);
+}
+.face .fmain { font-size: clamp(30px, 7.6vw, 44px); }
+.face.back .fmain { font-size: clamp(22px, 5.4vw, 30px); }
+/* Hints on the card: the reading face, a size larger, one line. */
+.face .fhint { font: 19px/1 var(--font-body); letter-spacing: 0.05em; white-space: nowrap; color: #d8d0fb; }
+/* The boss's charge bar: its name sits at the far end, over the empty track until the attack is all but ready,
+   outlined so it reads on the fill too. */
+.charge.labelled span { left: auto; right: 6px; color: #fff3ec; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 0 #000; }
+/* Counts keep to one line each (a break never falls between a number and what it counts). */
+.nb { white-space: nowrap; }

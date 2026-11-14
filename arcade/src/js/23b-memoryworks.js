@@ -70,7 +70,7 @@ class MemoryWorks {
         void main(){
           float on = step(vI + 0.5, uLit);
           float next = step(abs(vI - floor(uLit + 0.001)), 0.5) * (1.0 - on);
-          vec3 col = mix(vec3(0.07, 0.11, 0.09), vec3(0.5, 1.9, 0.75) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
+          vec3 col = mix(vec3(0.07, 0.11, 0.09), vec3(0.7, 2.6, 1.0) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
           col += vec3(1.3, 1.0, 0.3) * next * (0.35 + 0.3 * sin(uTime * 2.4));
           col += vec3(2.4, 0.18, 0.14) * uMiss * (1.0 - on);
           gl_FragColor = vec4(col, 1.0);
@@ -112,15 +112,18 @@ class MemoryWorks {
     const piles = [[-2.75, 0.95, 7], [-2.1, 1.5, 4], [2.6, 1.05, 9], [3.25, 0.55, 5], [0.4, 1.75, 3]];
     const count = piles.reduce((n, p) => n + p[2], 0);
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion();
+    this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
       const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
+      // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
+      // piles start two coins high and gain a coin for each card banked (what you bank stays banked, in view).
       let n = 0;
-      piles.forEach(([x, z, h]) => {
-        for (let i = 0; i < h; i++) {
-          tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-          m.setMatrixAt(n++, this._m.compose(this._p.set(x + rand(-0.03, 0.03), 0.06 + i * 0.122, z + rand(-0.03, 0.03)), tw, this._s));
-        }
+      for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
+        if (i >= h) return;
+        tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x + rand(-0.03, 0.03), 0.06 + i * 0.122, z + rand(-0.03, 0.03)), tw, this._s));
       });
+      m.count = Math.min(count, 10);
       m.frustumCulled = false;
       grp.add(m);
       g.decor(m);
@@ -151,6 +154,8 @@ class MemoryWorks {
     this.flashT = Math.max(0, this.flashT - dt * 1.2);
     const u = this.lampMat.uniforms;
     u.uLit.value += (g.deposits - u.uLit.value) * Math.min(1, dt * 6);
+    const show = Math.min(this.coinTotal, 10 + g.deposits); // the piles by the bullion rise with every card banked
+    this.coins.forEach((m) => { if (m.count !== show) m.count = show; });
     u.uMiss.value = this.missT * this.missT;
     u.uFlash.value = this.flashT;
     const pu = this.panelMat.uniforms;

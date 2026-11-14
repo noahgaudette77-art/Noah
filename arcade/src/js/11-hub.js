@@ -1295,8 +1295,8 @@ class HubScene extends Scene3D {
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
-    this.hemi.intensity = 0.62 * room;
-    this.key.intensity = 0.5 * room;
+    this.hemi.intensity = 0.8 * room;
+    this.key.intensity = 0.62 * room;
     const sc = this.cabs[this.sel];
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);

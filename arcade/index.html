@@ -801,6 +801,42 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .lib-window { transition: height 0.3s var(--ease-out); }
 .guide-lib.searching .lib-window { height: 64px; }
 
+/* ============ Second review of the lowest screens ============ */
+/* An answer you did not pick stays readable while you compare it with the right one. */
+.ans.dim { opacity: 0.7; }
+/* A chosen answer: a pale solid plate with dark text. It cannot be taken for a hover or for the NEXT button,
+   it is the same for every slot, and it says nothing about right or wrong. The slot's colour stays on its badge. */
+.ans.sel {
+  background: linear-gradient(180deg, #f4f0ff, #d7cdff);
+  color: #160a3a; text-shadow: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 22px -2px rgba(214, 204, 255, 0.9), 0 3px 0 #000;
+}
+body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cdff); }
+/* The flashcard is a plate, not a pane: a brass frame with a rivet in each corner, a cast shadow on the vault
+   behind it, and a larger term. */
+.face {
+  box-shadow: 0 0 0 2px #1a0f02, 0 0 0 6px #c8963a, 0 0 0 7px #5a3d0c, 0 0 0 9px #000,
+    0 0 40px -8px var(--c, var(--lime)), 0 30px 46px -12px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime));
+}
+.face::before {
+  content: ""; position: absolute; inset: 2px; pointer-events: none;
+  background:
+    radial-gradient(circle at 6px 6px, #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at calc(100% - 6px) 6px, #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at 6px calc(100% - 6px), #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px),
+    radial-gradient(circle at calc(100% - 6px) calc(100% - 6px), #fff2c4 0 1.4px, #c8963a 2px 3.6px, rgba(0, 0, 0, 0.55) 4px 5px, transparent 5.4px);
+}
+.face .fmain { font-size: clamp(30px, 7.6vw, 44px); }
+.face.back .fmain { font-size: clamp(22px, 5.4vw, 30px); }
+/* Hints on the card: the reading face, a size larger, one line. */
+.face .fhint { font: 19px/1 var(--font-body); letter-spacing: 0.05em; white-space: nowrap; color: #d8d0fb; }
+/* The boss's charge bar: its name sits at the far end, over the empty track until the attack is all but ready,
+   outlined so it reads on the fill too. */
+.charge.labelled span { left: auto; right: 6px; color: #fff3ec; text-shadow: 0 0 2px #000, 0 0 2px #000, 0 1px 0 #000; }
+/* Counts keep to one line each (a break never falls between a number and what it counts). */
+.nb { white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -3781,13 +3817,23 @@ const Dialog = {
     const b = UI.el(`<div class="bubble" style="--c:${color};top:${Math.round(top)}px">${name ? `<b>${esc(name)}</b>` : ""}<span></span></div>`);
     host.appendChild(b);
     const span = b.querySelector("span");
+    // Never over the explanation: if a sheet is up, or comes up while this is on screen (a short phone has no
+    // room for both in the 3D strip), the bubble sits just above the sheet instead.
+    const clear = () => {
+      const sh = host.querySelector(".sheet");
+      if (!sh || !b.isConnected) return;
+      const lim = sh.offsetTop - 10 - b.offsetHeight;
+      if (b.offsetTop > lim) b.style.top = Math.max(4, lim) + "px";
+    };
     let n = 0;
     const t = setInterval(() => {
       n++;
+      clear();
       span.textContent = text.slice(0, n);
       if (n % 2 === 0 && text[n - 1] !== " ") Sound.voice(voice);
       if (n >= text.length) clearInterval(t);
     }, REDUCED_MOTION ? 2 : 20);
+    [120, 320, 700, 1200].forEach((d) => setTimeout(clear, d + text.length * 20)); // (and once the last line has been typed)
     setTimeout(() => { clearInterval(t); b.remove(); }, ms + text.length * 20);
   },
 };
@@ -7209,8 +7255,8 @@ class HubScene extends Scene3D {
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
-    this.hemi.intensity = 0.62 * room;
-    this.key.intensity = 0.5 * room;
+    this.hemi.intensity = 0.8 * room;
+    this.key.intensity = 0.62 * room;
     const sc = this.cabs[this.sel];
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);
@@ -15208,7 +15254,8 @@ class BossGame extends QuizGame {
     // Lit in its own colour: two lamps behind it, either side (one its colour, one that colour paled toward
     // white), edge it against the dark stands; a third at its feet in front lights it from below.
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
-    [[-11, col.getHex(), 3.6], [11, col.clone().lerp(new THREE.Color(0xffffff), 0.55).getHex(), 3.0]].forEach(([x, c, k]) => { const l = new THREE.PointLight(c, k * big, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
+    // (the complement is an edge, not a second key: at full strength it turned black armour pale)
+    [[-11, col.getHex(), 3.4 * big], [11, col.clone().offsetHSL(0.5, 0, 0).lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.5]].forEach(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
     const under = new THREE.PointLight(col.getHex(), 1.5 * big, 24, 1.8);
     under.position.set(0, 0.7, 6.5);
     s.add(under);
@@ -15308,9 +15355,9 @@ class BossGame extends QuizGame {
       const x = Math.sin(a) * R, z = -Math.cos(a) * R;
       const at = (y) => new THREE.Matrix4().makeRotationY(-a).setPosition(x, y, z);
       body.push({ geo: new THREE.BoxGeometry(2, 0.5, 2), matrix: at(0.25), color: 0x2a2244 });
-      body.push({ geo: shaft.clone(), matrix: at(0), color: 0x1c1733 });
+      body.push({ geo: shaft.clone(), matrix: at(0), color: 0x3a3266 });
       body.push({ geo: new THREE.BoxGeometry(1.4, 0.35, 1.4), matrix: at(9.6), color: 0x2a2244 });
-      caps.push({ geo: new THREE.OctahedronGeometry(0.55, 0), matrix: at(10.5) });
+      caps.push({ geo: new THREE.OctahedronGeometry(0.36, 0), matrix: at(10.2) });
       const pool = new THREE.PlaneGeometry(7, 7);
       pool.rotateX(-Math.PI / 2);
       pools.push({ geo: pool, matrix: at(0.04) });
@@ -15335,7 +15382,8 @@ class BossGame extends QuizGame {
     eg.setAttribute("position", new THREE.Float32BufferAttribute(edges, 3));
     this.pillarEdgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 1.8) });
     s.add(new THREE.LineSegments(eg, this.pillarEdgeMat));
-    this.capMat = new THREE.MeshBasicMaterial({ color: neon(hex, 2.6) });
+    this.capMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.7) }); // (the lamps on the pillars: lit, not blazing)
+    this.themeCol = neon(hex, 2.6); // the arena's colour at full strength: its floor ring, pool, rails and mist take theirs from it
     s.add(new THREE.Mesh(blasterMerge(caps), this.capMat));
     const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(hex, 0.7), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     poolMesh.layers.set(1);
@@ -15407,11 +15455,11 @@ class BossGame extends QuizGame {
         parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x0b0918 : 0x0f0c20 });
         rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
         // the people: two rows on every tier, shoulder to shoulder, some with their arms up
-        const per = Math.max(3, Math.floor(w / 0.8));
+        const per = Math.max(2, Math.floor(w / 1.15));
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
-          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 0.88 + Math.random() * 0.26, sd = Math.random();
+          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
           const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
-          const cloth = new THREE.Color().setHSL(Math.random(), 0.3 + Math.random() * 0.3, 0.035 + Math.random() * 0.06), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.35, 0.1 + Math.random() * 0.12);
+          const cloth = new THREE.Color().setHSL(Math.random(), 0.55 + Math.random() * 0.35, 0.09 + Math.random() * 0.1), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.4, 0.16 + Math.random() * 0.14);
           people.push({ geo: new THREE.BoxGeometry(0.6 * sc, 0.82 * sc, 0.32), matrix: at(0, 0.45, 0), color: cloth }); pSeed.push(sd, 36);
           people.push({ geo: new THREE.IcosahedronGeometry(0.19 * sc, 0), matrix: at(0, 1.04, 0), color: skin }); pSeed.push(sd, 60);
           if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
@@ -15474,11 +15522,12 @@ class BossGame extends QuizGame {
     this.cheer = 0;
     // mist between the fight and the stands, in the boss's colour: two curtains of it that drift past each other
     const hazeTex = bossHazeTexture();
-    this.haze = [[-12, 90, 13, 1.6, 0.15], [-21, 150, 19, 2.6, 0.24]].map(([z, w, h, rep, k]) => {
+    this.haze = [[-12, 90, 13, 1.6, 0.09], [-21, 150, 19, 2.6, 0.3]].map(([z, w, h, rep, k]) => {
       const map = hazeTex.clone();
       map.needsUpdate = true;
       map.repeat.set(rep, 1);
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(hex, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(z < -15 ? 0x2a2f9c : hex, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.userData.far = z < -15;
       m.position.set(0, h / 2 - 0.2, z);
       m.layers.set(1);
       m.renderOrder = 1;
@@ -15650,7 +15699,7 @@ class BossGame extends QuizGame {
         this.bursts.burst(at, this.cfg.color, { n: 60, speed: 7, size: 0.35 });
         this.bursts.burst(at, COLORS.cyan, { n: 24, speed: 5, size: 0.3, life: 0.6 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
-        this.flashAt(at, COLORS.cyan, 1, 5 * this.bossScale + 2);
+        this.flashAt(at, COLORS.cyan, 1, 3.4 * this.bossScale + 1.5);
         const em = b.userData.core.userData.mat.emissive;
         const base = em.clone();
         this.tw.add(0.4, (k) => { em.setRGB(lerp(1.1, base.r, k), lerp(1.1, base.g, k), lerp(1.1, base.b, k)); });
@@ -15904,15 +15953,15 @@ class BossGame extends QuizGame {
     // light: the eye lights the arena as the attack charges; flashes decay
     u.eye.getWorldPosition(this.eyeLight.position);
     this.eyeLight.intensity = 0.5 + f * 3.5 + (f > 0.8 ? Math.sin(this.t * 17) * 0.6 : 0);
-    this.pool.material.color.copy(this.capMat.color).multiplyScalar(0.2 + f * 0.35);
+    this.pool.material.color.copy(this.themeCol).multiplyScalar(0.2 + f * 0.35);
     this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
-    this.rune.material.color.copy(this.capMat.color).multiplyScalar(0.45 + f * 0.5);
+    this.rune.material.color.copy(this.themeCol).multiplyScalar(0.45 + f * 0.5);
     if (this.flashT > 0) {
       this.flashT = Math.max(0, this.flashT - dt * 2.4);
       const k = Math.min(1, this.flashT);
       this.flash.visible = k > 0;
       this.flash.scale.setScalar(this.flashSize * (1.4 - k * 0.5));
-      this.flash.material.opacity = k * k;
+      this.flash.material.opacity = 0.6 * k * k; // (a burst on the boss, not a veil over the picture)
       this.hitLight.intensity = this.flashT * this.flashT * 6;
     }
     this.shards.update(dt);
@@ -15945,9 +15994,9 @@ class BossGame extends QuizGame {
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
-      this.railMat.color.copy(this.capMat.color).multiplyScalar(0.6);
+      this.railMat.color.copy(this.themeCol).multiplyScalar(0.6);
       const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
-      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; m.material.color.copy(this.capMat.color).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
+      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; if (!m.userData.far) m.material.color.copy(this.themeCol).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
   }
@@ -15972,7 +16021,7 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.33, envI: 1.25, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
+  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.34, envI: 1.05, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
   m.vertexColors = true;
   const uL = { value: new Float32Array(8).fill(1) };
   m.userData.uL = uL;
@@ -16004,10 +16053,10 @@ function cyborgArmor(env, hex) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
-        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
+        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(geometryNormal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor-3";
-  return surfaceDetail(m, { scale: 0.8, height: 0.002, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
+  m.customProgramCacheKey = () => "cyborg-armor-4";
+  return surfaceDetail(m, { scale: 0.8, height: 0.0011, grain: 0.6, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
 // A hull lofted through eight-sided rings [y, half-width, half-depth, chamfer], low to high.
@@ -17992,7 +18041,7 @@ class MemoryWorks {
         void main(){
           float on = step(vI + 0.5, uLit);
           float next = step(abs(vI - floor(uLit + 0.001)), 0.5) * (1.0 - on);
-          vec3 col = mix(vec3(0.07, 0.11, 0.09), vec3(0.5, 1.9, 0.75) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
+          vec3 col = mix(vec3(0.07, 0.11, 0.09), vec3(0.7, 2.6, 1.0) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
           col += vec3(1.3, 1.0, 0.3) * next * (0.35 + 0.3 * sin(uTime * 2.4));
           col += vec3(2.4, 0.18, 0.14) * uMiss * (1.0 - on);
           gl_FragColor = vec4(col, 1.0);
@@ -18034,15 +18083,18 @@ class MemoryWorks {
     const piles = [[-2.75, 0.95, 7], [-2.1, 1.5, 4], [2.6, 1.05, 9], [3.25, 0.55, 5], [0.4, 1.75, 3]];
     const count = piles.reduce((n, p) => n + p[2], 0);
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion();
+    this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
       const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
+      // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
+      // piles start two coins high and gain a coin for each card banked (what you bank stays banked, in view).
       let n = 0;
-      piles.forEach(([x, z, h]) => {
-        for (let i = 0; i < h; i++) {
-          tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-          m.setMatrixAt(n++, this._m.compose(this._p.set(x + rand(-0.03, 0.03), 0.06 + i * 0.122, z + rand(-0.03, 0.03)), tw, this._s));
-        }
+      for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
+        if (i >= h) return;
+        tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x + rand(-0.03, 0.03), 0.06 + i * 0.122, z + rand(-0.03, 0.03)), tw, this._s));
       });
+      m.count = Math.min(count, 10);
       m.frustumCulled = false;
       grp.add(m);
       g.decor(m);
@@ -18073,6 +18125,8 @@ class MemoryWorks {
     this.flashT = Math.max(0, this.flashT - dt * 1.2);
     const u = this.lampMat.uniforms;
     u.uLit.value += (g.deposits - u.uLit.value) * Math.min(1, dt * 6);
+    const show = Math.min(this.coinTotal, 10 + g.deposits); // the piles by the bullion rise with every card banked
+    this.coins.forEach((m) => { if (m.count !== show) m.count = show; });
     u.uMiss.value = this.missT * this.missT;
     u.uFlash.value = this.flashT;
     const pu = this.panelMat.uniforms;
@@ -18287,8 +18341,8 @@ function examHalo() {
   };
   g.userData.glow = plane(glowTexture(), neon(0x7a4cff, 1), D * 1.5, false);
   g.userData.glow.position.z = -0.2;
-  g.userData.runes = plane(runes, neon(0xffe2b0, 1.5), D);
-  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.4), D * 1.12);
+  g.userData.runes = plane(runes, neon(0xffe2b0, 2.1), D);
+  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.9), D * 1.12);
   g.userData.ticks.position.z = -0.1;
   // a ring of dust rides the halo: motes of light on its circle, each a little off it, turning slowly with the marks
   const n = 180, dp = new Float32Array(n * 3);
@@ -18401,6 +18455,9 @@ class ExamGame extends QuizGame {
     this.rimA = new THREE.PointLight(0x9a66ff, 3.0, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
+    this.fillLow = new THREE.PointLight(0x6a55ff, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
+    s.add(this.fillLow);
     this.rimB = new THREE.PointLight(0xffc474, 2.0, 34, 1.5);
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
@@ -18742,6 +18799,7 @@ class ExamGame extends QuizGame {
       this.spotLight.intensity = 2.15 * B.lightK;
       this.rimA.intensity = 3.0 * B.lightK;
       this.rimB.intensity = 2.0 * B.lightK;
+      this.fillLow.intensity = 1.1 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }
@@ -18751,9 +18809,9 @@ class ExamGame extends QuizGame {
       this.haloK += ((B && B.mode !== "die" ? clamp(B.lightK, 0, 1) : 0) - this.haloK) * Math.min(1, dt * 1.2);
       H.runes.rotation.z += dt * 0.03 * slow;
       H.ticks.rotation.z -= dt * 0.018 * slow;
-      H.runes.material.opacity = 0.8 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
-      H.ticks.material.opacity = 0.55 * this.haloK;
-      H.glow.material.opacity = 0.3 * this.haloK;
+      H.runes.material.opacity = 1.0 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
+      H.ticks.material.opacity = 0.8 * this.haloK;
+      H.glow.material.opacity = 0.42 * this.haloK;
       H.dust.rotation.z += dt * 0.045 * slow;
       H.dust.material.opacity = 0.8 * this.haloK * (0.85 + 0.15 * Math.sin(t * 0.9));
     }
@@ -20205,7 +20263,7 @@ function showGuideChapter(n) {
         <div class="kick">WORLD ${c.section.n} · ${esc(c.section.title.toUpperCase())}</div>
         <h2>${esc(c.title)}</h2>
         <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
-        <div class="label">${mpct(mm)}% MASTERED · ${Store.countMastered(c.qids)}/${c.qids.length} QUESTIONS · ${Store.countMastered(c.fids)}/${c.fids.length} CARDS</div>
+        <div class="label"><span class="nb">${mpct(mm)}% MASTERED</span> · <span class="nb">${Store.countMastered(c.qids)}/${c.qids.length} QUESTIONS</span> · <span class="nb">${Store.countMastered(c.fids)}/${c.fids.length} CARDS</span></div>
         <div class="row">
           <button class="btn small" data-act="play" data-g="blaster" style="--c:${COLORS.cyan}">${icon("play")} BLASTER</button>
           <button class="btn small ghost" data-act="play" data-g="memory" style="--c:${COLORS.lime}">FLASHCARDS</button>
@@ -20293,10 +20351,10 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
+    s.userData.post = { exposure: 1.3, bloom: 0.75, threshold: 1.1, saturation: 1.12, contrast: 1.1, vignette: 1.05, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
       // light pours down the nave from the rose window; the lens holds the lecterns and lets what hangs close to it go soft
       rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.68, radius: 0.6 },
-      dof: { focus: 24, near: 12, far: 320, max: 0.0065, k: 0.75 } };
+      dof: { focus: 15, near: 8, far: 320, max: 0.0065, k: 0.75 } };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);
@@ -20355,6 +20413,17 @@ class LibraryScene extends Scene3D {
       B.add(box, racerM(x, 2.03, z + 0.46, 1.5, 0.08, 0.05, 0.5), BRASS);
       put(new THREE.TorusGeometry(0.62, 0.02, 4, 24), racerM(x, 0.18, z, 1, 1, 1, Math.PI / 2), 0x5fd8ff, G, 1.4);
     });
+    // the reading desk in the middle of the nave: the one thing the eye goes to (a great ledger of light stands open on it, see the holo-books)
+    this.heroDesk = [0, -9];
+    {
+      const [x, z] = this.heroDesk;
+      put(racerPlate(2.6, 0.2, 1.5, 0.06, true), racerM(x, 0.1, z), DARK);
+      put(racerPlate(2.2, 1.5, 1.1, 0.05, true), racerM(x, 0.95, z), WOOD);
+      put(racerPlate(2.5, 0.12, 1.4, 0.04, true), racerM(x, 1.76, z), WOOD);
+      B.add(box, racerM(x, 1.84, z + 0.62, 2.5, 0.06, 0.05), BRASS);
+      [-1, 1].forEach((sd) => B.add(box, racerM(x + sd * 1.06, 0.95, z + 0.56, 0.05, 1.5, 0.05), BRASS));
+      put(new THREE.TorusGeometry(1.5, 0.03, 4, 40), racerM(x, 0.2, z, 1, 1, 1, Math.PI / 2), 0xffd27a, G, 1.6);
+    }
     // a rolling ladder on the left-hand shelves
     [-0.35, 0.35].forEach((dz) => racerStrut(B, box, new THREE.Vector3(-3.9, 0, -8 + dz), new THREE.Vector3(-5.0, 9.8, -8 + dz), 0.08, BRASS));
     for (let i = 1; i < 12; i++) B.add(box, racerM(-3.9 - (1.1 * i) / 12.5, (9.8 * i) / 12.5, -8, 0.06, 0.06, 0.7), BRASS);
@@ -20374,6 +20443,19 @@ class LibraryScene extends Scene3D {
       s.add(gl, cone);
       this.decor(cone);
     });
+    {
+      const [x, z] = this.heroDesk;
+      const cone = examBeam({ color: 0xffe2b0, top: 0.25, bottom: 2.6, height: 15, intensity: 0.1 });
+      cone.position.set(x, 15.4, z);
+      cone.layers.set(1);
+      const gl = glowSprite(neon(0xffd27a, 1.2), 5.2, 0.42);
+      gl.position.set(x, 3.0, z + 0.3);
+      gl.layers.set(1);
+      const lamp = new THREE.PointLight(0xffd9a0, 1.5, 14, 1.6);
+      lamp.position.set(x, 4.6, z + 1.2);
+      s.add(cone, gl, lamp);
+      this.decor(cone, gl);
+    }
     this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffc878, 1.1), 0.9, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); this.decor(gl); });
     // the floor: dark stone flags, a warm pool under each lamp, the window's light lying along it
     this.floorMat = new THREE.ShaderMaterial({
@@ -20452,15 +20534,24 @@ class LibraryScene extends Scene3D {
         hb.push(pg);
       });
     });
+    [-1, 1].forEach((sd) => { // the ledger on the desk: twice the size of the others, in gold
+      const pg = new THREE.PlaneGeometry(1.5, 1.9);
+      pg.applyMatrix4(racerM(this.heroDesk[0] + sd * 0.76, 3.0, this.heroDesk[1], 1, 1, 1, -0.2, sd * -0.3));
+      const n = pg.attributes.position.count;
+      pg.setAttribute("aTint", new THREE.Float32BufferAttribute(Array.from({ length: n * 3 }, (_, k) => [1.5, 1.15, 0.5][k % 3]), 3));
+      pg.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Array(n).fill(31.7 + sd), 1));
+      hb.push(pg);
+    });
     this.holo = new THREE.Mesh(mergeIndexed(hb, ["position", "uv", "aTint", "aSeed"]), this.holoMat);
     this.holo.layers.set(1);
     s.add(this.holo);
     // loose pages adrift in the aisle
-    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 38);
+    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 26);
     this.pageMesh.frustumCulled = false;
     this.pageMesh.layers.set(1);
-    // (32 down the nave, 6 close to the lens: those go by large and out of focus)
-    this.pages = Array.from({ length: 38 }, (_, i) => ({ near: i >= 32, x: i >= 32 ? rand(-1.6, 1.6) : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 32 ? rand(-3.5, 1.5) : rand(-4, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
+    // (23 down the nave, 3 close to the lens and to one side: those go by large and out of focus)
+    const nearX = () => (Math.random() < 0.5 ? -1 : 1) * rand(0.9, 1.7);
+    this.pages = Array.from({ length: 26 }, (_, i) => ({ near: i >= 23, x: i >= 23 ? nearX() : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 23 ? rand(-3.5, 1.5) : rand(-14, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
     s.add(this.pageMesh);
     this.decorCheap(this.pageMesh);
     this.motes = makeMotes({ count: 90, box: [10, 11, 50], center: [0, 6, -18], color: 0xffe2a8, size: 0.09, k: 0.9 });
@@ -20481,7 +20572,7 @@ class LibraryScene extends Scene3D {
     const lt = (this.lt += dt * this.calm);
     this.pages.forEach((p, i) => {
       p.y += p.v * dt * this.calm;
-      if (p.y > 13) { p.y = 0.4; p.x = p.near ? rand(-1.6, 1.6) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-4, -52); }
+      if (p.y > 13) { p.y = 0.4; p.x = p.near ? (Math.random() < 0.5 ? -1 : 1) * rand(0.9, 1.7) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-14, -52); }
       this.pageMesh.setMatrixAt(i, this._m.compose(this._p.set(p.x + Math.sin(lt * 0.3 + p.ph) * 0.5, p.y, p.z), this._q.setFromAxisAngle(p.ax, p.ph + lt * p.w), this._s));
     });
     this.pageMesh.instanceMatrix.needsUpdate = true;

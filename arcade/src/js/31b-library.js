@@ -44,10 +44,10 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
+    s.userData.post = { exposure: 1.3, bloom: 0.75, threshold: 1.1, saturation: 1.12, contrast: 1.1, vignette: 1.05, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
       // light pours down the nave from the rose window; the lens holds the lecterns and lets what hangs close to it go soft
       rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.68, radius: 0.6 },
-      dof: { focus: 24, near: 12, far: 320, max: 0.0065, k: 0.75 } };
+      dof: { focus: 15, near: 8, far: 320, max: 0.0065, k: 0.75 } };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);
@@ -106,6 +106,17 @@ class LibraryScene extends Scene3D {
       B.add(box, racerM(x, 2.03, z + 0.46, 1.5, 0.08, 0.05, 0.5), BRASS);
       put(new THREE.TorusGeometry(0.62, 0.02, 4, 24), racerM(x, 0.18, z, 1, 1, 1, Math.PI / 2), 0x5fd8ff, G, 1.4);
     });
+    // the reading desk in the middle of the nave: the one thing the eye goes to (a great ledger of light stands open on it, see the holo-books)
+    this.heroDesk = [0, -9];
+    {
+      const [x, z] = this.heroDesk;
+      put(racerPlate(2.6, 0.2, 1.5, 0.06, true), racerM(x, 0.1, z), DARK);
+      put(racerPlate(2.2, 1.5, 1.1, 0.05, true), racerM(x, 0.95, z), WOOD);
+      put(racerPlate(2.5, 0.12, 1.4, 0.04, true), racerM(x, 1.76, z), WOOD);
+      B.add(box, racerM(x, 1.84, z + 0.62, 2.5, 0.06, 0.05), BRASS);
+      [-1, 1].forEach((sd) => B.add(box, racerM(x + sd * 1.06, 0.95, z + 0.56, 0.05, 1.5, 0.05), BRASS));
+      put(new THREE.TorusGeometry(1.5, 0.03, 4, 40), racerM(x, 0.2, z, 1, 1, 1, Math.PI / 2), 0xffd27a, G, 1.6);
+    }
     // a rolling ladder on the left-hand shelves
     [-0.35, 0.35].forEach((dz) => racerStrut(B, box, new THREE.Vector3(-3.9, 0, -8 + dz), new THREE.Vector3(-5.0, 9.8, -8 + dz), 0.08, BRASS));
     for (let i = 1; i < 12; i++) B.add(box, racerM(-3.9 - (1.1 * i) / 12.5, (9.8 * i) / 12.5, -8, 0.06, 0.06, 0.7), BRASS);
@@ -125,6 +136,19 @@ class LibraryScene extends Scene3D {
       s.add(gl, cone);
       this.decor(cone);
     });
+    {
+      const [x, z] = this.heroDesk;
+      const cone = examBeam({ color: 0xffe2b0, top: 0.25, bottom: 2.6, height: 15, intensity: 0.1 });
+      cone.position.set(x, 15.4, z);
+      cone.layers.set(1);
+      const gl = glowSprite(neon(0xffd27a, 1.2), 5.2, 0.42);
+      gl.position.set(x, 3.0, z + 0.3);
+      gl.layers.set(1);
+      const lamp = new THREE.PointLight(0xffd9a0, 1.5, 14, 1.6);
+      lamp.position.set(x, 4.6, z + 1.2);
+      s.add(cone, gl, lamp);
+      this.decor(cone, gl);
+    }
     this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffc878, 1.1), 0.9, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); this.decor(gl); });
     // the floor: dark stone flags, a warm pool under each lamp, the window's light lying along it
     this.floorMat = new THREE.ShaderMaterial({
@@ -203,15 +227,24 @@ class LibraryScene extends Scene3D {
         hb.push(pg);
       });
     });
+    [-1, 1].forEach((sd) => { // the ledger on the desk: twice the size of the others, in gold
+      const pg = new THREE.PlaneGeometry(1.5, 1.9);
+      pg.applyMatrix4(racerM(this.heroDesk[0] + sd * 0.76, 3.0, this.heroDesk[1], 1, 1, 1, -0.2, sd * -0.3));
+      const n = pg.attributes.position.count;
+      pg.setAttribute("aTint", new THREE.Float32BufferAttribute(Array.from({ length: n * 3 }, (_, k) => [1.5, 1.15, 0.5][k % 3]), 3));
+      pg.setAttribute("aSeed", new THREE.Float32BufferAttribute(new Array(n).fill(31.7 + sd), 1));
+      hb.push(pg);
+    });
     this.holo = new THREE.Mesh(mergeIndexed(hb, ["position", "uv", "aTint", "aSeed"]), this.holoMat);
     this.holo.layers.set(1);
     s.add(this.holo);
     // loose pages adrift in the aisle
-    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 38);
+    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 26);
     this.pageMesh.frustumCulled = false;
     this.pageMesh.layers.set(1);
-    // (32 down the nave, 6 close to the lens: those go by large and out of focus)
-    this.pages = Array.from({ length: 38 }, (_, i) => ({ near: i >= 32, x: i >= 32 ? rand(-1.6, 1.6) : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 32 ? rand(-3.5, 1.5) : rand(-4, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
+    // (23 down the nave, 3 close to the lens and to one side: those go by large and out of focus)
+    const nearX = () => (Math.random() < 0.5 ? -1 : 1) * rand(0.9, 1.7);
+    this.pages = Array.from({ length: 26 }, (_, i) => ({ near: i >= 23, x: i >= 23 ? nearX() : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 23 ? rand(-3.5, 1.5) : rand(-14, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
     s.add(this.pageMesh);
     this.decorCheap(this.pageMesh);
     this.motes = makeMotes({ count: 90, box: [10, 11, 50], center: [0, 6, -18], color: 0xffe2a8, size: 0.09, k: 0.9 });
@@ -232,7 +265,7 @@ class LibraryScene extends Scene3D {
     const lt = (this.lt += dt * this.calm);
     this.pages.forEach((p, i) => {
       p.y += p.v * dt * this.calm;
-      if (p.y > 13) { p.y = 0.4; p.x = p.near ? rand(-1.6, 1.6) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-4, -52); }
+      if (p.y > 13) { p.y = 0.4; p.x = p.near ? (Math.random() < 0.5 ? -1 : 1) * rand(0.9, 1.7) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-14, -52); }
       this.pageMesh.setMatrixAt(i, this._m.compose(this._p.set(p.x + Math.sin(lt * 0.3 + p.ph) * 0.5, p.y, p.z), this._q.setFromAxisAngle(p.ax, p.ph + lt * p.w), this._s));
     });
     this.pageMesh.instanceMatrix.needsUpdate = true;

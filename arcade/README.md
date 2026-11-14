@@ -32,7 +32,7 @@ lists all of them again.
   traffic, with a winged void demon in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
-  with a mirror floor, ringed by footlights and an amphitheatre of spectators who sway, hold up lights and jump when a blow lands, with mist in the boss's colour drifting between, in Boss Rush, where every boss is a different
+  with a mirror floor, ringed by footlights and an amphitheatre of spectators who sway, hold up lights and jump when a blow lands, with mist drifting between (the boss's colour close by, deep indigo further back, and a rim light in the boss's complementary colour, so the figure stands off the room), in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, the final
   boss on its dais in a moonlit hall for the Final Exam, and a vaulted archive
@@ -138,9 +138,8 @@ lists all of them again.
   of runes (marks made up for this game, arcs and dots with no meaning) turns
   slowly, a ring of ticks turning the other way and a ring of light motes riding
   it, at the same pace all exam long.
-  An answer you choose fills with one neutral colour, the same for every slot (pale
-  violet glass with a white ring): it shows what you picked and nothing about
-  whether it is right.
+  An answer you choose becomes a pale solid plate with dark text, the same for
+  every slot: it shows what you picked and nothing about whether it is right.
   It starts on its knees in the dark; its eyes light, it roars and rises. Through
   the exam it breathes and watches: its head follows your finger (or the phone's
   tilt), and every sixteen seconds it does something slow and unfriendly (leans in
@@ -167,7 +166,8 @@ lists all of them again.
 - **The archive.** The Strategy Guide opens on a vaulted aisle of bookshelves on
   two tiers, hanging lamps, holo-books open on lecterns, loose pages adrift and a
   rose window of coloured panes whose light pours down the nave, seen through one
-  framed window above the list. Two lanterns and a few pages hang close to the
+  framed window above the list. In the middle of the nave a great ledger of gold
+  light stands open on a reading desk under its own lamp. Two lanterns and a few pages hang close to the
   lens, out of focus, and slide across the aisle behind them as the view drifts.
   What you read sits on solid ground, the scene all but stops while a chapter is
   open, and the window folds down to a strip while you search.

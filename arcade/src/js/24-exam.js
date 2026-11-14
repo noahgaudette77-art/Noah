@@ -199,8 +199,8 @@ function examHalo() {
   };
   g.userData.glow = plane(glowTexture(), neon(0x7a4cff, 1), D * 1.5, false);
   g.userData.glow.position.z = -0.2;
-  g.userData.runes = plane(runes, neon(0xffe2b0, 1.5), D);
-  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.4), D * 1.12);
+  g.userData.runes = plane(runes, neon(0xffe2b0, 2.1), D);
+  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.9), D * 1.12);
   g.userData.ticks.position.z = -0.1;
   // a ring of dust rides the halo: motes of light on its circle, each a little off it, turning slowly with the marks
   const n = 180, dp = new Float32Array(n * 3);
@@ -313,6 +313,9 @@ class ExamGame extends QuizGame {
     this.rimA = new THREE.PointLight(0x9a66ff, 3.0, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
+    this.fillLow = new THREE.PointLight(0x6a55ff, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
+    s.add(this.fillLow);
     this.rimB = new THREE.PointLight(0xffc474, 2.0, 34, 1.5);
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
@@ -654,6 +657,7 @@ class ExamGame extends QuizGame {
       this.spotLight.intensity = 2.15 * B.lightK;
       this.rimA.intensity = 3.0 * B.lightK;
       this.rimB.intensity = 2.0 * B.lightK;
+      this.fillLow.intensity = 1.1 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }
@@ -663,9 +667,9 @@ class ExamGame extends QuizGame {
       this.haloK += ((B && B.mode !== "die" ? clamp(B.lightK, 0, 1) : 0) - this.haloK) * Math.min(1, dt * 1.2);
       H.runes.rotation.z += dt * 0.03 * slow;
       H.ticks.rotation.z -= dt * 0.018 * slow;
-      H.runes.material.opacity = 0.8 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
-      H.ticks.material.opacity = 0.55 * this.haloK;
-      H.glow.material.opacity = 0.3 * this.haloK;
+      H.runes.material.opacity = 1.0 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
+      H.ticks.material.opacity = 0.8 * this.haloK;
+      H.glow.material.opacity = 0.42 * this.haloK;
       H.dust.rotation.z += dt * 0.045 * slow;
       H.dust.material.opacity = 0.8 * this.haloK * (0.85 + 0.15 * Math.sin(t * 0.9));
     }

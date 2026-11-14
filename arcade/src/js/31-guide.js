@@ -83,7 +83,7 @@ function showGuideChapter(n) {
         <div class="kick">WORLD ${c.section.n} · ${esc(c.section.title.toUpperCase())}</div>
         <h2>${esc(c.title)}</h2>
         <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
-        <div class="label">${mpct(mm)}% MASTERED · ${Store.countMastered(c.qids)}/${c.qids.length} QUESTIONS · ${Store.countMastered(c.fids)}/${c.fids.length} CARDS</div>
+        <div class="label"><span class="nb">${mpct(mm)}% MASTERED</span> · <span class="nb">${Store.countMastered(c.qids)}/${c.qids.length} QUESTIONS</span> · <span class="nb">${Store.countMastered(c.fids)}/${c.fids.length} CARDS</span></div>
         <div class="row">
           <button class="btn small" data-act="play" data-g="blaster" style="--c:${COLORS.cyan}">${icon("play")} BLASTER</button>
           <button class="btn small ghost" data-act="play" data-g="memory" style="--c:${COLORS.lime}">FLASHCARDS</button>

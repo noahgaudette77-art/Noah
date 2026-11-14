@@ -159,13 +159,23 @@ const Dialog = {
     const b = UI.el(`<div class="bubble" style="--c:${color};top:${Math.round(top)}px">${name ? `<b>${esc(name)}</b>` : ""}<span></span></div>`);
     host.appendChild(b);
     const span = b.querySelector("span");
+    // Never over the explanation: if a sheet is up, or comes up while this is on screen (a short phone has no
+    // room for both in the 3D strip), the bubble sits just above the sheet instead.
+    const clear = () => {
+      const sh = host.querySelector(".sheet");
+      if (!sh || !b.isConnected) return;
+      const lim = sh.offsetTop - 10 - b.offsetHeight;
+      if (b.offsetTop > lim) b.style.top = Math.max(4, lim) + "px";
+    };
     let n = 0;
     const t = setInterval(() => {
       n++;
+      clear();
       span.textContent = text.slice(0, n);
       if (n % 2 === 0 && text[n - 1] !== " ") Sound.voice(voice);
       if (n >= text.length) clearInterval(t);
     }, REDUCED_MOTION ? 2 : 20);
+    [120, 320, 700, 1200].forEach((d) => setTimeout(clear, d + text.length * 20)); // (and once the last line has been typed)
     setTimeout(() => { clearInterval(t); b.remove(); }, ms + text.length * 20);
   },
 };
