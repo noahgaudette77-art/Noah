@@ -44,7 +44,7 @@ function cyborgArmor(env, hex) {
         else totalEmissiveRadiance += emissive * 16.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
   m.customProgramCacheKey = () => "cyborg-armor-2";
-  return surfaceDetail(m, { scale: 0.8, height: 0.0045, scratch: 1.2, smudge: 0.4 });
+  return surfaceDetail(m, { scale: 0.8, height: 0.002, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
 // A hull lofted through eight-sided rings [y, half-width, half-depth, chamfer], low to high.
@@ -199,6 +199,31 @@ function cyNeck(K) {
   K.sym((sd) => { K.piston("chest", [sd * 0.5, 2.0, -0.2], [sd * 0.36, 2.5, -0.05], 0.06); K.cable("head", [sd * 0.4, 2.7, -0.35], [sd * 0.75, 2.3, -0.6], 0.15, 0.05, 4); });
 }
 const CY_HEAD = {
+  // the examiner: a square-capped helm with a tassel, a stern brow over two lenses (one ringed like a
+  // monocle, on a chain), and a row of answer bubbles where a mouth would be, one of them filled in
+  proctor(K) {
+    K.add("head", cyLoft([[2.26, 0.46, 0.48, 0.14], [2.6, 0.66, 0.62, 0.2], [3.06, 0.68, 0.62, 0.2], [3.3, 0.5, 0.5, 0.16]]), null, CY.ARMOR);
+    K.fplate("head", 1.06, 0.36, 0.14, 0, 2.88, 0.6, CY.DARK); // visor recess
+    K.plate("head", 1.22, 0.16, 0.4, 0, 3.1, 0.62, CY.PLATE, 0.2, 0, 0, 0.04); // brow
+    K.sym((sd) => {
+      K.eye(sd * 0.25, 2.88, 0.7, 0.4);
+      K.breakaway("head", 0.5, 0.6, 0.1, sd * 0.7, 2.76, 0.06, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); // cheek guards
+    });
+    K.add("head", new THREE.TorusGeometry(0.17, 0.028, 6, 18), racerM(0.25, 2.88, 0.74), CY.STEEL); // the monocle
+    K.cable("head", [0.42, 2.84, 0.7], [0.64, 2.46, 0.46], 0.12, 0.02, 4); // and its chain
+    K.fplate("head", 0.9, 0.2, 0.08, 0, 2.48, 0.6, CY.DARK); // the plate the bubbles are stamped in
+    for (let i = 0; i < 4; i++) {
+      const x = -0.3 + i * 0.2;
+      K.add("head", new THREE.TorusGeometry(0.065, 0.018, 5, 12), racerM(x, 2.48, 0.67), CY.BONE);
+      if (i === 2) K.glowCyl("head", 3, 0.045, 0.03, x, 2.48, 0.66, 2.6, Math.PI / 2);
+    }
+    // the cap: a square board set corner-forward at a tilt, a button, a cord to one corner, a lit tassel
+    K.cyl("head", 0.4, 0.46, 0.16, 0, 3.36, 0, CY.DARK, 0, 0, 0, 8);
+    K.plate("head", 1.5, 0.07, 1.5, 0, 3.48, 0, CY.PLATE, 0.06, Math.PI / 4, 0, 0.02);
+    K.cyl("head", 0.07, 0.07, 0.06, 0, 3.55, 0, CY.STEEL, 0, 0, 0, 8);
+    K.cable("head", [0, 3.56, 0], [1.0, 3.5, 0.06], 0.04, 0.02, 4);
+    K.glow("head", 3, 0.07, 0.34, 0.07, 1.03, 3.3, 0.06, 2.4);
+  },
   // a pale skull in a steel jaw, wired at the temples
   skull(K) {
     K.ball("head", 0.62, 0, 2.82, 0.2, CY.BONE, 1, 0.9, 1.12, 1);
@@ -660,8 +685,8 @@ const CYBORGS = {
   // PATRIMONY PHANTOM: split down the middle: half armored, half bone, a cleaver to divide the rest
   11: { torso: "hulk", head: "split", shoulder: ["shield", "bone"], arm: [2.05, 2.0, 0.46, "piston"], armR: [2.2, 2.2, 0.3, "bone"], hands: ["cleaver", "open"], hs: 1.05, base: "tail", core: "none", rest: [0, 0.14, -0.6], restL: [-0.5, 0.25, -1.0], sway: 1.1, breath: 1.8,
     extra(K) { K.glow("chest", 3, 0.07, 2.3, 0.07, 0, 0.75, 1.38, 3, -0.1); K.glow("hips", 3, 0.07, 0.8, 0.07, 0, -2.25, 1.0, 3); } },
-  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, a skull that stares
-  all: { torso: "hulk", head: "skull", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.08, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
+  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, an examiner's capped helm
+  all: { torso: "hulk", head: "proctor", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.08, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
     extra(K) { K.sym((sd) => { K.cyl("chest", 0.2, 0.26, 1.7, sd * 1.15, 2.5, -1.15, CY.DARK, 0.15, 0, sd * 0.1, 8); K.glowCyl("chest", 3, 0.16, 0.06, sd * 1.15, 3.36, -1.28, 3, 0.15, 0, sd * 0.1, K.hex, 8); K.steam(sd * 1.15, 3.45, -1.3); }); } },
 };
 

@@ -649,7 +649,11 @@ mark { background: var(--yellow); color: #12052e; }
 .seg button[aria-pressed="true"] { box-shadow: 0 0 14px -2px var(--c, var(--cyan)), inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.25); }
 
 /* 6. the flashcard: thicker, lit from its own colour, and it turns with a little more weight */
-.face { background: linear-gradient(180deg, #26135e, #150a3c); box-shadow: 0 0 0 3px #000, 0 0 40px -8px var(--c, var(--lime)), 0 22px 40px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime)); }
+.face { background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.09), transparent 62%),
+    repeating-radial-gradient(circle at 50% 135%, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 7px),
+    repeating-radial-gradient(circle at -20% 50%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, #26135e, #150a3c); box-shadow: 0 0 0 3px #000, 0 0 40px -8px var(--c, var(--lime)), 0 22px 40px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 40px -16px var(--c, var(--lime)); }
 .card3d { transition: transform 0.68s cubic-bezier(0.3, 1.3, 0.45, 1); }
 
 /* 7. arrivals: on every screen but the games (whose layout the 3D view is fitted to), each block rises into place a beat after the one above it; modals swell in */
@@ -664,10 +668,43 @@ mark { background: var(--yellow); color: #12052e; }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.93) translateY(10px); } }
 @media (prefers-reduced-motion: reduce) { .screen > *, .modal, .modal > *, .btn::after { animation: none !important; } }
+/* Numbered tiles (stage list): a lit, bevelled key rather than a flat square. */
+.stage .n {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--cyan)) 72%, #fff) 0%, var(--c, var(--cyan)) 48%, color-mix(in srgb, var(--c, var(--cyan)) 64%, #000) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -3px 0 rgba(0, 0, 0, 0.26), 0 0 14px -3px var(--c, var(--cyan));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+/* Loading state: the page's own splash, on screen from the first paint until the title is up. */
+#boot {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none; display: grid; place-content: center; justify-items: center; gap: 20px;
+  background: radial-gradient(90% 60% at 50% 46%, #2a0d5c 0%, #0c0326 55%, #05010f 100%);
+  transition: opacity 0.6s ease, visibility 0.6s;
+}
+#boot.done { opacity: 0; visibility: hidden; }
+.boot-logo { display: grid; justify-items: center; gap: 8px; font: 16px/1 var(--font-display); letter-spacing: 0.08em; color: var(--cyan); text-shadow: 0 0 14px rgba(53, 239, 255, 0.8); }
+.boot-logo b { font-size: clamp(22px, 8vw, 40px); font-weight: 400; color: #fff; text-shadow: 0 0 6px #fff, 0 0 22px var(--magenta), 0 3px 0 #2a0a55; }
+.boot-bar { width: min(62vw, 260px); height: 10px; border: 2px solid rgba(255, 255, 255, 0.35); background: rgba(0, 0, 0, 0.5); overflow: hidden; box-shadow: 0 0 18px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+.boot-bar i { display: block; width: 38%; height: 100%; background: linear-gradient(90deg, transparent, var(--cyan) 35%, #fff 50%, var(--magenta) 65%, transparent); animation: boot-sweep 1.5s ease-in-out infinite; }
+.boot-tip { font: 8px/1.4 var(--font-display); letter-spacing: 0.12em; color: #b9aaf0; }
+@keyframes boot-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(275%); } }
+@media (prefers-reduced-motion: reduce) { .boot-bar i { animation: none; width: 100%; opacity: 0.6; } #boot { transition: none; } }
+/* A chosen answer (the exam, or the instant before a verdict): filled with its own slot colour, which says
+   nothing about right or wrong. */
+.ans.sel {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 34%, #1c0d4a) 0%, color-mix(in srgb, var(--c) 15%, #0a0422) 100%);
+  box-shadow: 0 0 0 2px var(--c), 0 0 24px -2px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+/* Setup: a switch sits to the right of its label whenever the two fit on a line; effect names that
+   run to two lines keep their lines apart. */
+.setting .sl { flex: 1 1 11.5em; min-width: 0; }
+.setting .seg { flex: none; }
+.setting .seg.wrap { flex: 1 1 100%; }
+.seg.wrap button { line-height: 1.45; min-height: 44px; display: grid; place-items: center; text-align: center; }
 
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"><div class="boot-logo"><span>INR</span><b>ARCADE</b></div><div class="boot-bar"><i></i></div><div class="boot-tip">WARMING UP THE TUBES</div></div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <main id="ui"></main>
 <div id="flash" aria-hidden="true"></div>
@@ -4486,16 +4523,21 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
         vec3 detailTri(vec3 p, vec3 w){ return texture2D(tDetail, p.yz).rgb * w.x + texture2D(tDetail, p.xz).rgb * w.y + texture2D(tDetail, p.xy).rgb * w.z; }`)
       .replace("#include <normal_fragment_begin>", `
         vec3 dtW = abs(normalize(vDetailN)); dtW = dtW * dtW * dtW * dtW; dtW /= dtW.x + dtW.y + dtW.z;
-        vec3 dtA = detailTri(vDetailP * uDetail.x, dtW), dtB = detailTri(vDetailP * (uDetail.x * uDetailBig) + 0.37, dtW);
-        roughnessFactor = clamp(roughnessFactor * (1.0 + uDetail.w * (dtB.b * 2.0 - 1.0)) - dtA.g * 0.22 * step(1e-7, uDetail.z), 0.05, 1.0);
+        vec3 dtP = vDetailP * uDetail.x;
+        vec3 dtA = detailTri(dtP, dtW), dtB = detailTri(dtP * uDetailBig + 0.37, dtW);
+        // How many of the tile's texels land in one pixel. Relief finer than the pixel grid cannot be
+        // drawn, only sparkle, so each layer fades out as it gets there (the broad layer lasts longer).
+        float dtPx = max(length(dFdx(dtP)), length(dFdy(dtP))) * 512.0;
+        float dtFine = 1.0 - smoothstep(0.55, 1.7, dtPx), dtBroad = 1.0 - smoothstep(0.55, 1.7, dtPx * uDetailBig);
+        roughnessFactor = clamp(roughnessFactor * (1.0 + uDetail.w * (dtB.b * 2.0 - 1.0) * dtBroad) - dtA.g * 0.22 * dtFine * step(1e-7, uDetail.z), 0.05, 1.0);
         #include <normal_fragment_begin>`)
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-        { float dh = (dtA.r - 0.5) * uDetail.y + (dtB.r - 0.5) * uDetail.y * 2.5 - dtA.g * uDetail.z;
+        { float dh = ((dtA.r - 0.5) * uDetail.y - dtA.g * uDetail.z) * dtFine + (dtB.r - 0.5) * uDetail.y * 2.5 * dtBroad;
           vec3 dsx = dFdx(-vViewPosition), dsy = dFdy(-vViewPosition), dr1 = cross(dsy, normal), dr2 = cross(normal, dsx);
           float ddet = dot(dsx, dr1);
           normal = normalize(abs(ddet) * normal - sign(ddet) * (dFdx(dh) * dr1 + dFdy(dh) * dr2)); }`);
   };
-  m.customProgramCacheKey = () => prevKey + "|detail";
+  m.customProgramCacheKey = () => prevKey + "|detail2";
   return m;
 }
 
@@ -11977,17 +12019,17 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 // the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
   { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
-    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xe8f4f0, sunBot: 0x9ad0d0, halo: 0x8ad0d0,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.8 },
-  { p: 0.4, bg: 0x16242e, fog: 0x2a424c, sunY: 80, tint: 0xf0f6f8, grid: 0x5ac8d8, stars: 0,
-    top: 0x18262e, mid: 0x30484f, horizon: 0x8fb0b4, glow: 0.4, clouds: 1, sunTop: 0xffffff, sunBot: 0xd8e8e8, halo: 0xc8e0e0,
-    ridge: 0x24363e, line: 0x7fd8e0, lamps: 0.45, city: 0.4, light: 0xe8f2f4, amb: 0x5a7480, exposure: 1.02, bloom: 0.9, wet: 0.8, sunI: 0.9 },
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xfff0e2, sunBot: 0xe89aa8, halo: 0x8ad0d0,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.72 },
+  { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
+    top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xfff3cc, sunBot: 0xffb87a, halo: 0xd4ecd8,
+    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.74 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
     top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd890, sunBot: 0xff7a2a, halo: 0xff8a3a,
-    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.3 },
+    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.0 },
   { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
     top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xb0f0f0, sunBot: 0x2fa0a8, halo: 0x2fd6c0,
-    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.9 },
+    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.8 },
 ];
 const RACER_SKY_COLORS = ["bg", "fog", "tint", "grid", "top", "mid", "horizon", "sunTop", "sunBot", "halo", "ridge", "line", "light", "amb"];
 const RACER_SKY_NUMS = ["sunY", "stars", "glow", "clouds", "lamps", "city", "exposure", "bloom", "wet", "sunI"];
@@ -12734,7 +12776,7 @@ class RacerGame extends QuizGame {
     wg.position.z = -60;
     this.warmExtra = [wg];
     this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
-      dof: { focus: 9, near: 400, far: 260, max: 0.005, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
+      dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.1, 7.4);
     this.lookAt.set(0, 1.1, -18);
@@ -14155,7 +14197,7 @@ function racerTrafficMaterial(P) {
       }`,
   });
 }
-const RACER_FLEET = { sedan: 6, truck: 3, bus: 2, bike: 4, hover: 6, police: 1, rival: 1 };
+const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1, rival: 1 };
 
 // A cone of light in the air (searchlights, tractor beams, lasers): bright at its
 // source, fading along its length and toward its edges.
@@ -14187,7 +14229,7 @@ function racerBiomeAt(year) {
 // What each biome does to the career sky's palette. mix values blend toward the colour.
 const RACER_BIOME_PAL = {
   downtown: { fog: 0x000000, fogMix: 0, hor: 0x000000, horMix: 0, grid: 0x000000, gridMix: 0, base: 0x000000, baseMix: 0, rain: 1, wet: 1, dust: 0, far: 470, lamps: 1, ridge: 1 },
-  coast: { fog: 0x3aa7b8, fogMix: 0.42, hor: 0xffb38a, horMix: 0.45, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
+  coast: { fog: 0x2f96b4, fogMix: 0.42, hor: 0xff9a6e, horMix: 0.55, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
   desert: { fog: 0xc86a2c, fogMix: 0.5, hor: 0xff7a2a, horMix: 0.55, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
   mountain: { fog: 0x7f95c8, fogMix: 0.5, hor: 0xb8cdf5, horMix: 0.5, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
   tunnel: { fog: 0x1c1208, fogMix: 0.9, hor: 0x1c1208, horMix: 0.9, grid: 0x000000, gridMix: 1, base: 0x0b0b0c, baseMix: 1, rain: 0, wet: 0.25, dust: 0.2, far: 260, lamps: 0, ridge: 0 },
@@ -14253,7 +14295,7 @@ class RacerWorld {
     const c = this.free(type);
     if (!c) return null;
     const sp = this.g.speed;
-    Object.assign(c, { on: true, lane, plan: null, done: null, special: o.special || null, hazard: 0, ind: 0, brake: 0, y: 0, age: 0, seed: Math.random(), s: rand(0.94, 1.06), yaw: 0, laneT: rand(3, 9) });
+    Object.assign(c, { on: true, lane, plan: null, done: null, special: o.special || null, hazard: 0, ind: 0, brake: 0, cruise: 0, y: 0, age: 0, seed: Math.random(), s: rand(0.94, 1.06), yaw: 0, laneT: rand(3, 9) });
     if (lane === "R") { c.dir = 1; c.x = c.tx = Math.random() < 0.5 ? 6.6 : 8.0; c.speed = type === "bike" ? rand(40, 50) : type === "sedan" ? rand(19, 25) : rand(15, 20); c.z = c.speed > sp ? 15 : -244; }
     else if (lane === "L") { c.dir = -1; c.x = c.tx = Math.random() < 0.5 ? -6.6 : -8.0; c.speed = type === "bike" ? rand(26, 34) : rand(17, 25); c.z = -244; }
     else if (lane === "H") { const hl = Math.floor(Math.random() * 3); c.dir = hl === 1 ? -1 : 1; c.y = 10 + hl * 3 + rand(-0.6, 0.6); c.x = c.tx = rand(-5.6, 5.6); c.speed = c.dir > 0 ? rand(36, 46) + hl * 6 : rand(22, 32); c.z = c.dir > 0 && c.speed > sp + 4 ? 18 : -244; }
@@ -14273,11 +14315,16 @@ class RacerWorld {
     for (const l of ["R", "L", "H"]) {
       T[l] -= dt;
       if (T[l] > 0) continue;
-      T[l] = rand(0.7, 2.6) / dense;
-      const want = l === "H" ? (tunnel ? 0 : 4) : 3;
+      T[l] = rand(0.35, 1.3) / dense;
+      const want = l === "H" ? (tunnel ? 0 : 11) : 8;
       if (count(l) >= Math.round(want * dense)) continue;
       const r = Math.random();
-      this.spawn(l === "H" ? "hover" : r < 0.42 ? "sedan" : r < 0.6 ? "bike" : r < 0.82 ? "truck" : "bus", l);
+      const c = this.spawn(l === "H" ? "hover" : r < 0.42 ? "sedan" : r < 0.6 ? "bike" : r < 0.82 ? "truck" : "bus", l);
+      // never on top of one that is already there: take the other lane of the pair, or wait
+      if (c && l !== "H") {
+        const taken = (x) => this.cars.some((o) => o !== c && o.on && o.lane === l && Math.abs(o.x - x) < 1 && Math.abs(o.z - c.z) < 20);
+        if (taken(c.x)) { const ox = Math.sign(c.x) * (Math.abs(c.x) < 7.3 ? 8.0 : 6.6); if (taken(ox)) { c.on = false; T[l] = 0.25; } else c.x = c.tx = ox; }
+      }
     }
     // a right answer: everything pulls aside for the boost
     this.partT -= dt;
@@ -14298,6 +14345,26 @@ class RacerWorld {
         const side = Math.sign(c.x), stalled = this.cars.some((o) => o.on && o.special === "stall" && Math.sign(o.x) === side && o.z < c.z && o.z > c.z - 60);
         if (stalled) c.tx = side * 6.5;
         else if (c.laneT <= 0) { c.laneT = rand(4, 11); c.tx = side * (Math.abs(c.tx) < 7.3 ? 8.0 : 6.6); c.ind = 1.6; }
+        // Following: one that catches a slower one in its lane brakes and holds the gap, then pulls
+        // out to pass when the lane beside it is clear (nothing drives through anything).
+        c.cruise = c.cruise || c.speed;
+        let lead = null, gap = 1e9;
+        for (const o of this.cars) {
+          if (o === c || !o.on || o.lane !== c.lane || Math.abs(o.x - c.x) > 1.1) continue;
+          const d = (c.z - o.z) * c.dir; // how far ahead of me it is, along my way
+          if (d > 0 && d < gap) { gap = d; lead = o; }
+        }
+        const room = 9 + (SH[c.type] ? SH[c.type][1] : 6) * 0.5 + (lead && SH[lead.type] ? SH[lead.type][1] : 6) * 0.5;
+        if (lead && gap < room + 10 && lead.speed < c.speed + 0.5) {
+          c.speed = Math.max(lead.speed - (gap < room ? 4 : 0), c.speed - dt * 14);
+          c.brake = 0.3;
+          const other = side * (Math.abs(c.tx) < 7.3 ? 8.0 : 6.6);
+          const clear = !this.cars.some((o) => o !== c && o.on && o.lane === c.lane && Math.abs(o.tx - other) < 1 && Math.abs(o.z - c.z) < 17);
+          if (clear && c.ind <= 0 && Math.abs(c.x - c.tx) < 0.2) { c.tx = other; c.ind = 1.4; c.laneT = rand(5, 11); }
+        } else {
+          c.speed = Math.min(c.cruise, c.speed + dt * 5);
+          c.brake = Math.max(0, (c.brake || 0) - dt);
+        }
       }
       if (c.plan) c.plan(c, dt, sp);
       const px = c.x;
@@ -14844,7 +14911,7 @@ class BossGame extends QuizGame {
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
     s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
-      dof: { focus: 16, near: 200, far: 70, max: 0.006, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
+      dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
@@ -15047,7 +15114,7 @@ class BossGame extends QuizGame {
   // Behind the ring: four tiers of an amphitheatre curving round the back, each with a rail of the boss's colour
   // and a crowd of lights along it (they sway, and surge when a blow lands).
   makeCrowd() {
-    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [];
+    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [], people = [], pSeed = [];
     const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xffffff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xffd27a)];
     for (let k = 0; k < 4; k++) {
       const Rk = 27 + k * 6, y = 2.2 + k * 4.1, N = 44;
@@ -15056,12 +15123,42 @@ class BossGame extends QuizGame {
         const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
         parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x15112c : 0x1b1638 });
         rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
-        for (let j = 0; j < 3; j++) {
-          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.2 + Math.random() * 0.5, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
-          pos.push(Math.sin(a) * r, y + 2.25 + Math.random() * 0.9, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        // the people: two rows on every tier, shoulder to shoulder, some with their arms up
+        const per = Math.max(3, Math.floor(w / 0.8));
+        for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
+          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 0.88 + Math.random() * 0.26, sd = Math.random();
+          const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
+          const cloth = new THREE.Color().setHSL(Math.random(), 0.3 + Math.random() * 0.3, 0.035 + Math.random() * 0.06), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.35, 0.1 + Math.random() * 0.12);
+          people.push({ geo: new THREE.BoxGeometry(0.6 * sc, 0.82 * sc, 0.32), matrix: at(0, 0.45, 0), color: cloth }); pSeed.push(sd, 36);
+          people.push({ geo: new THREE.IcosahedronGeometry(0.19 * sc, 0), matrix: at(0, 1.04, 0), color: skin }); pSeed.push(sd, 60);
+          if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
         }
+        // what they hold up: glow sticks in the house colours, a few phone lights
+        for (let j = 0; j < 4; j++) {
+          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.1 + Math.random() * 0.55, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
+          pos.push(Math.sin(a) * r, y + 3.15 + Math.random() * 0.7, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        }
+        // aisle lights down the face of the tier, every fourth bay
+        if (i % 4 === 0) for (let q = 0; q < 5; q++) rails.push({ geo: new THREE.BoxGeometry(0.16, 0.09, 0.06), matrix: new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)) });
       }
     }
+    // The crowd itself: unlit by its own lamps, lit by the arena's, bobbing on the spot and jumping at a blow.
+    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } };
+    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
+    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); v += pSeed[i + 1]; }
+    pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
+    const pm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0, envMap: this.env, envMapIntensity: 0.35 });
+    pm.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer;
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute float aSeed; uniform float uTime; uniform float uCheer;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);");
+    };
+    pm.customProgramCacheKey = () => "boss-crowd";
+    const folk = new THREE.Mesh(pg, pm);
+    folk.layers.set(1);
+    folk.frustumCulled = false;
+    s.add(folk);
     const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.7, rough: 0.5, envI: 0.8 }), { vertexColors: true }));
     wall.layers.set(1); // (not in the floor's reflection)
     s.add(wall);
@@ -15072,16 +15169,16 @@ class BossGame extends QuizGame {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
     this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
         void main(){
           vec3 p = position;
           p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
           vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
-          gl_PointSize = uPx * 260.0 / -mv.z; gl_Position = projectionMatrix * mv;
+          gl_PointSize = uPx * 230.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 8.0) + 0.2 * exp(-r * 2.0)), 1.0); }",
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * smoothstep(1.0, 0.55, r), 1.0); }",
     }));
     this.crowd.frustumCulled = false;
     this.crowd.layers.set(1);
@@ -15604,7 +15701,7 @@ function cyborgArmor(env, hex) {
         else totalEmissiveRadiance += emissive * 16.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
   m.customProgramCacheKey = () => "cyborg-armor-2";
-  return surfaceDetail(m, { scale: 0.8, height: 0.0045, scratch: 1.2, smudge: 0.4 });
+  return surfaceDetail(m, { scale: 0.8, height: 0.002, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
 // A hull lofted through eight-sided rings [y, half-width, half-depth, chamfer], low to high.
@@ -15759,6 +15856,31 @@ function cyNeck(K) {
   K.sym((sd) => { K.piston("chest", [sd * 0.5, 2.0, -0.2], [sd * 0.36, 2.5, -0.05], 0.06); K.cable("head", [sd * 0.4, 2.7, -0.35], [sd * 0.75, 2.3, -0.6], 0.15, 0.05, 4); });
 }
 const CY_HEAD = {
+  // the examiner: a square-capped helm with a tassel, a stern brow over two lenses (one ringed like a
+  // monocle, on a chain), and a row of answer bubbles where a mouth would be, one of them filled in
+  proctor(K) {
+    K.add("head", cyLoft([[2.26, 0.46, 0.48, 0.14], [2.6, 0.66, 0.62, 0.2], [3.06, 0.68, 0.62, 0.2], [3.3, 0.5, 0.5, 0.16]]), null, CY.ARMOR);
+    K.fplate("head", 1.06, 0.36, 0.14, 0, 2.88, 0.6, CY.DARK); // visor recess
+    K.plate("head", 1.22, 0.16, 0.4, 0, 3.1, 0.62, CY.PLATE, 0.2, 0, 0, 0.04); // brow
+    K.sym((sd) => {
+      K.eye(sd * 0.25, 2.88, 0.7, 0.4);
+      K.breakaway("head", 0.5, 0.6, 0.1, sd * 0.7, 2.76, 0.06, CY.PLATE, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); // cheek guards
+    });
+    K.add("head", new THREE.TorusGeometry(0.17, 0.028, 6, 18), racerM(0.25, 2.88, 0.74), CY.STEEL); // the monocle
+    K.cable("head", [0.42, 2.84, 0.7], [0.64, 2.46, 0.46], 0.12, 0.02, 4); // and its chain
+    K.fplate("head", 0.9, 0.2, 0.08, 0, 2.48, 0.6, CY.DARK); // the plate the bubbles are stamped in
+    for (let i = 0; i < 4; i++) {
+      const x = -0.3 + i * 0.2;
+      K.add("head", new THREE.TorusGeometry(0.065, 0.018, 5, 12), racerM(x, 2.48, 0.67), CY.BONE);
+      if (i === 2) K.glowCyl("head", 3, 0.045, 0.03, x, 2.48, 0.66, 2.6, Math.PI / 2);
+    }
+    // the cap: a square board set corner-forward at a tilt, a button, a cord to one corner, a lit tassel
+    K.cyl("head", 0.4, 0.46, 0.16, 0, 3.36, 0, CY.DARK, 0, 0, 0, 8);
+    K.plate("head", 1.5, 0.07, 1.5, 0, 3.48, 0, CY.PLATE, 0.06, Math.PI / 4, 0, 0.02);
+    K.cyl("head", 0.07, 0.07, 0.06, 0, 3.55, 0, CY.STEEL, 0, 0, 0, 8);
+    K.cable("head", [0, 3.56, 0], [1.0, 3.5, 0.06], 0.04, 0.02, 4);
+    K.glow("head", 3, 0.07, 0.34, 0.07, 1.03, 3.3, 0.06, 2.4);
+  },
   // a pale skull in a steel jaw, wired at the temples
   skull(K) {
     K.ball("head", 0.62, 0, 2.82, 0.2, CY.BONE, 1, 0.9, 1.12, 1);
@@ -16220,8 +16342,8 @@ const CYBORGS = {
   // PATRIMONY PHANTOM: split down the middle: half armored, half bone, a cleaver to divide the rest
   11: { torso: "hulk", head: "split", shoulder: ["shield", "bone"], arm: [2.05, 2.0, 0.46, "piston"], armR: [2.2, 2.2, 0.3, "bone"], hands: ["cleaver", "open"], hs: 1.05, base: "tail", core: "none", rest: [0, 0.14, -0.6], restL: [-0.5, 0.25, -1.0], sway: 1.1, breath: 1.8,
     extra(K) { K.glow("chest", 3, 0.07, 2.3, 0.07, 0, 0.75, 1.38, 3, -0.1); K.glow("hips", 3, 0.07, 0.8, 0.07, 0, -2.25, 1.0, 3); } },
-  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, a skull that stares
-  all: { torso: "hulk", head: "skull", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.08, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
+  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, an examiner's capped helm
+  all: { torso: "hulk", head: "proctor", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.08, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
     extra(K) { K.sym((sd) => { K.cyl("chest", 0.2, 0.26, 1.7, sd * 1.15, 2.5, -1.15, CY.DARK, 0.15, 0, sd * 0.1, 8); K.glowCyl("chest", 3, 0.16, 0.06, sd * 1.15, 3.36, -1.28, 3, 0.15, 0, sd * 0.1, K.hex, 8); K.steam(sd * 1.15, 3.45, -1.3); }); } },
 };
 
@@ -17761,6 +17883,79 @@ function examNightMaterial() {
 }
 
 // A still shaft of light (like makeLightCone, without the flicker).
+// A halo of runes for the hall's centrepiece: a ring of marks (made up here, stroke by stroke on a small
+// lattice: no alphabet, no meaning), a ring of ticks that turns the other way, and a faint disc of light
+// behind them. It turns slowly and steadily, whatever is answered.
+function examHalo() {
+  const S = 1024, R = S / 2;
+  const ring = (draw) => {
+    const c = document.createElement("canvas");
+    c.width = c.height = S;
+    const x = c.getContext("2d");
+    x.translate(R, R);
+    x.lineCap = "round"; x.lineJoin = "round";
+    draw(x);
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = 8;
+    return t;
+  };
+  let seed = 90210;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const runes = ring((x) => {
+    x.strokeStyle = "rgba(255, 226, 170, 0.95)"; x.fillStyle = "rgba(255, 226, 170, 0.95)";
+    x.shadowColor = "rgba(190, 130, 255, 0.9)"; x.shadowBlur = 10;
+    x.lineWidth = 2;
+    x.beginPath(); x.arc(0, 0, R * 0.93, 0, 6.2832); x.stroke();
+    x.beginPath(); x.arc(0, 0, R * 0.7, 0, 6.2832); x.stroke();
+    const N = 30;
+    for (let i = 0; i < N; i++) {
+      x.save();
+      x.rotate((i / N) * 6.2832);
+      x.translate(0, -R * 0.815);
+      // a mark: four to six strokes between the points of a 3 x 4 lattice, each starting where the last ended
+      const u = 13, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 4) - 1.5) * u];
+      let p = pt();
+      x.lineWidth = 4.2;
+      x.beginPath(); x.moveTo(p[0], p[1]);
+      const n = 4 + Math.floor(rnd() * 3);
+      for (let k = 0; k < n; k++) { let q = pt(); if (q[0] === p[0] && q[1] === p[1]) q = [-q[0], -q[1]]; if (rnd() < 0.22) x.moveTo(q[0], q[1]); else x.lineTo(q[0], q[1]); p = q; }
+      x.stroke();
+      if (rnd() < 0.45) { const d = pt(); x.beginPath(); x.arc(d[0], d[1], 3.2, 0, 6.2832); x.fill(); }
+      x.restore();
+      // a small diamond between marks
+      x.save(); x.rotate(((i + 0.5) / N) * 6.2832); x.translate(0, -R * 0.815); x.rotate(0.7854); x.fillRect(-2.6, -2.6, 5.2, 5.2); x.restore();
+    }
+  });
+  const ticks = ring((x) => {
+    x.strokeStyle = "rgba(200, 160, 255, 0.95)";
+    x.shadowColor = "rgba(160, 110, 255, 0.9)"; x.shadowBlur = 8;
+    x.lineWidth = 1.6;
+    x.beginPath(); x.arc(0, 0, R * 0.985, 0, 6.2832); x.stroke();
+    for (let i = 0; i < 144; i++) {
+      const a = (i / 144) * 6.2832, long = i % 12 === 0, r0 = R * (long ? 0.945 : 0.965), r1 = R * 0.985;
+      x.lineWidth = long ? 3 : 1.6;
+      x.beginPath(); x.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); x.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); x.stroke();
+    }
+    x.lineWidth = 1.4;
+    x.setLineDash([26, 14]);
+    x.beginPath(); x.arc(0, 0, R * 0.64, 0, 6.2832); x.stroke();
+  });
+  const g = new THREE.Group(), D = 9.4;
+  // (the marks write depth, where they are drawn at all, so the lens focuses them where they hang and not on the wall behind)
+  const plane = (map, color, size, solid = true) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: solid, alphaTest: solid ? 0.02 : 0, fog: false }));
+    m.layers.set(1);
+    g.add(m);
+    return m;
+  };
+  g.userData.glow = plane(glowTexture(), neon(0x7a4cff, 1), D * 1.5, false);
+  g.userData.glow.position.z = -0.2;
+  g.userData.runes = plane(runes, neon(0xffe2b0, 1.5), D);
+  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.4), D * 1.12);
+  g.userData.ticks.position.z = -0.1;
+  return g;
+}
+
 function examBeam({ color, top, bottom, height, intensity }) {
   const geo = new THREE.CylinderGeometry(top, bottom, height, 28, 1, true);
   geo.translate(0, -height / 2, 0);
@@ -17926,6 +18121,12 @@ class ExamGame extends QuizGame {
       this.monument.group.scale.setScalar(1.05);
       this.monument.group.position.y = EXAM_LOOK_Y - 2.5; // afloat in the light, whole in the camera's frame
       s.add(this.monument.group);
+    }
+    if (this.boss) {
+      this.halo = examHalo();
+      this.halo.position.set(0, BOSS_DAIS + BOSS_S * 0.9, -BOSS_S * 0.36); // behind its head and shoulders, in front of the shaft of light
+      this.haloK = 0;
+      s.add(this.halo);
     }
     // while the questions are up the camera is under the boss's chin and the floor is out of
     // sight: its reflection (the whole hall drawn a second time) waits for the ending
@@ -18195,6 +18396,15 @@ class ExamGame extends QuizGame {
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }
     this.ambience.update(dt, t);
+    if (this.halo) { // the halo turns at one slow pace all exam long; it goes out with the boss
+      const slow = REDUCED_MOTION || GFX.calm ? 0.3 : 1, H = this.halo.userData;
+      this.haloK += ((B && B.mode !== "die" ? clamp(B.lightK, 0, 1) : 0) - this.haloK) * Math.min(1, dt * 1.2);
+      H.runes.rotation.z += dt * 0.03 * slow;
+      H.ticks.rotation.z -= dt * 0.018 * slow;
+      H.runes.material.opacity = 0.8 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
+      H.ticks.material.opacity = 0.55 * this.haloK;
+      H.glow.material.opacity = 0.3 * this.haloK;
+    }
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
       const k = this.rippleT;
@@ -20098,6 +20308,9 @@ function boot() {
     : Promise.resolve();
   Promise.all([fonts, GFX.measureScreen()]).then(() => {
     showTitle();
+    // the boot splash (drawn by the page itself while this script was still loading) fades out over the title
+    const splash = $("#boot");
+    if (splash) { splash.classList.add("done"); setTimeout(() => splash.remove(), 900); }
     Store.connectRemote();
   });
 }

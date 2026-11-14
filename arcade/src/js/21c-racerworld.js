@@ -192,7 +192,7 @@ function racerTrafficMaterial(P) {
       }`,
   });
 }
-const RACER_FLEET = { sedan: 6, truck: 3, bus: 2, bike: 4, hover: 6, police: 1, rival: 1 };
+const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1, rival: 1 };
 
 // A cone of light in the air (searchlights, tractor beams, lasers): bright at its
 // source, fading along its length and toward its edges.
@@ -224,7 +224,7 @@ function racerBiomeAt(year) {
 // What each biome does to the career sky's palette. mix values blend toward the colour.
 const RACER_BIOME_PAL = {
   downtown: { fog: 0x000000, fogMix: 0, hor: 0x000000, horMix: 0, grid: 0x000000, gridMix: 0, base: 0x000000, baseMix: 0, rain: 1, wet: 1, dust: 0, far: 470, lamps: 1, ridge: 1 },
-  coast: { fog: 0x3aa7b8, fogMix: 0.42, hor: 0xffb38a, horMix: 0.45, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
+  coast: { fog: 0x2f96b4, fogMix: 0.42, hor: 0xff9a6e, horMix: 0.55, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
   desert: { fog: 0xc86a2c, fogMix: 0.5, hor: 0xff7a2a, horMix: 0.55, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
   mountain: { fog: 0x7f95c8, fogMix: 0.5, hor: 0xb8cdf5, horMix: 0.5, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
   tunnel: { fog: 0x1c1208, fogMix: 0.9, hor: 0x1c1208, horMix: 0.9, grid: 0x000000, gridMix: 1, base: 0x0b0b0c, baseMix: 1, rain: 0, wet: 0.25, dust: 0.2, far: 260, lamps: 0, ridge: 0 },
@@ -290,7 +290,7 @@ class RacerWorld {
     const c = this.free(type);
     if (!c) return null;
     const sp = this.g.speed;
-    Object.assign(c, { on: true, lane, plan: null, done: null, special: o.special || null, hazard: 0, ind: 0, brake: 0, y: 0, age: 0, seed: Math.random(), s: rand(0.94, 1.06), yaw: 0, laneT: rand(3, 9) });
+    Object.assign(c, { on: true, lane, plan: null, done: null, special: o.special || null, hazard: 0, ind: 0, brake: 0, cruise: 0, y: 0, age: 0, seed: Math.random(), s: rand(0.94, 1.06), yaw: 0, laneT: rand(3, 9) });
     if (lane === "R") { c.dir = 1; c.x = c.tx = Math.random() < 0.5 ? 6.6 : 8.0; c.speed = type === "bike" ? rand(40, 50) : type === "sedan" ? rand(19, 25) : rand(15, 20); c.z = c.speed > sp ? 15 : -244; }
     else if (lane === "L") { c.dir = -1; c.x = c.tx = Math.random() < 0.5 ? -6.6 : -8.0; c.speed = type === "bike" ? rand(26, 34) : rand(17, 25); c.z = -244; }
     else if (lane === "H") { const hl = Math.floor(Math.random() * 3); c.dir = hl === 1 ? -1 : 1; c.y = 10 + hl * 3 + rand(-0.6, 0.6); c.x = c.tx = rand(-5.6, 5.6); c.speed = c.dir > 0 ? rand(36, 46) + hl * 6 : rand(22, 32); c.z = c.dir > 0 && c.speed > sp + 4 ? 18 : -244; }
@@ -310,11 +310,16 @@ class RacerWorld {
     for (const l of ["R", "L", "H"]) {
       T[l] -= dt;
       if (T[l] > 0) continue;
-      T[l] = rand(0.7, 2.6) / dense;
-      const want = l === "H" ? (tunnel ? 0 : 4) : 3;
+      T[l] = rand(0.35, 1.3) / dense;
+      const want = l === "H" ? (tunnel ? 0 : 11) : 8;
       if (count(l) >= Math.round(want * dense)) continue;
       const r = Math.random();
-      this.spawn(l === "H" ? "hover" : r < 0.42 ? "sedan" : r < 0.6 ? "bike" : r < 0.82 ? "truck" : "bus", l);
+      const c = this.spawn(l === "H" ? "hover" : r < 0.42 ? "sedan" : r < 0.6 ? "bike" : r < 0.82 ? "truck" : "bus", l);
+      // never on top of one that is already there: take the other lane of the pair, or wait
+      if (c && l !== "H") {
+        const taken = (x) => this.cars.some((o) => o !== c && o.on && o.lane === l && Math.abs(o.x - x) < 1 && Math.abs(o.z - c.z) < 20);
+        if (taken(c.x)) { const ox = Math.sign(c.x) * (Math.abs(c.x) < 7.3 ? 8.0 : 6.6); if (taken(ox)) { c.on = false; T[l] = 0.25; } else c.x = c.tx = ox; }
+      }
     }
     // a right answer: everything pulls aside for the boost
     this.partT -= dt;
@@ -335,6 +340,26 @@ class RacerWorld {
         const side = Math.sign(c.x), stalled = this.cars.some((o) => o.on && o.special === "stall" && Math.sign(o.x) === side && o.z < c.z && o.z > c.z - 60);
         if (stalled) c.tx = side * 6.5;
         else if (c.laneT <= 0) { c.laneT = rand(4, 11); c.tx = side * (Math.abs(c.tx) < 7.3 ? 8.0 : 6.6); c.ind = 1.6; }
+        // Following: one that catches a slower one in its lane brakes and holds the gap, then pulls
+        // out to pass when the lane beside it is clear (nothing drives through anything).
+        c.cruise = c.cruise || c.speed;
+        let lead = null, gap = 1e9;
+        for (const o of this.cars) {
+          if (o === c || !o.on || o.lane !== c.lane || Math.abs(o.x - c.x) > 1.1) continue;
+          const d = (c.z - o.z) * c.dir; // how far ahead of me it is, along my way
+          if (d > 0 && d < gap) { gap = d; lead = o; }
+        }
+        const room = 9 + (SH[c.type] ? SH[c.type][1] : 6) * 0.5 + (lead && SH[lead.type] ? SH[lead.type][1] : 6) * 0.5;
+        if (lead && gap < room + 10 && lead.speed < c.speed + 0.5) {
+          c.speed = Math.max(lead.speed - (gap < room ? 4 : 0), c.speed - dt * 14);
+          c.brake = 0.3;
+          const other = side * (Math.abs(c.tx) < 7.3 ? 8.0 : 6.6);
+          const clear = !this.cars.some((o) => o !== c && o.on && o.lane === c.lane && Math.abs(o.tx - other) < 1 && Math.abs(o.z - c.z) < 17);
+          if (clear && c.ind <= 0 && Math.abs(c.x - c.tx) < 0.2) { c.tx = other; c.ind = 1.4; c.laneT = rand(5, 11); }
+        } else {
+          c.speed = Math.min(c.cruise, c.speed + dt * 5);
+          c.brake = Math.max(0, (c.brake || 0) - dt);
+        }
       }
       if (c.plan) c.plan(c, dt, sp);
       const px = c.x;

@@ -64,6 +64,9 @@ function boot() {
     : Promise.resolve();
   Promise.all([fonts, GFX.measureScreen()]).then(() => {
     showTitle();
+    // the boot splash (drawn by the page itself while this script was still loading) fades out over the title
+    const splash = $("#boot");
+    if (splash) { splash.classList.add("done"); setTimeout(() => splash.remove(), 900); }
     Store.connectRemote();
   });
 }

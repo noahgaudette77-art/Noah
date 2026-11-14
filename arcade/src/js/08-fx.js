@@ -786,15 +786,20 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
         vec3 detailTri(vec3 p, vec3 w){ return texture2D(tDetail, p.yz).rgb * w.x + texture2D(tDetail, p.xz).rgb * w.y + texture2D(tDetail, p.xy).rgb * w.z; }`)
       .replace("#include <normal_fragment_begin>", `
         vec3 dtW = abs(normalize(vDetailN)); dtW = dtW * dtW * dtW * dtW; dtW /= dtW.x + dtW.y + dtW.z;
-        vec3 dtA = detailTri(vDetailP * uDetail.x, dtW), dtB = detailTri(vDetailP * (uDetail.x * uDetailBig) + 0.37, dtW);
-        roughnessFactor = clamp(roughnessFactor * (1.0 + uDetail.w * (dtB.b * 2.0 - 1.0)) - dtA.g * 0.22 * step(1e-7, uDetail.z), 0.05, 1.0);
+        vec3 dtP = vDetailP * uDetail.x;
+        vec3 dtA = detailTri(dtP, dtW), dtB = detailTri(dtP * uDetailBig + 0.37, dtW);
+        // How many of the tile's texels land in one pixel. Relief finer than the pixel grid cannot be
+        // drawn, only sparkle, so each layer fades out as it gets there (the broad layer lasts longer).
+        float dtPx = max(length(dFdx(dtP)), length(dFdy(dtP))) * 512.0;
+        float dtFine = 1.0 - smoothstep(0.55, 1.7, dtPx), dtBroad = 1.0 - smoothstep(0.55, 1.7, dtPx * uDetailBig);
+        roughnessFactor = clamp(roughnessFactor * (1.0 + uDetail.w * (dtB.b * 2.0 - 1.0) * dtBroad) - dtA.g * 0.22 * dtFine * step(1e-7, uDetail.z), 0.05, 1.0);
         #include <normal_fragment_begin>`)
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-        { float dh = (dtA.r - 0.5) * uDetail.y + (dtB.r - 0.5) * uDetail.y * 2.5 - dtA.g * uDetail.z;
+        { float dh = ((dtA.r - 0.5) * uDetail.y - dtA.g * uDetail.z) * dtFine + (dtB.r - 0.5) * uDetail.y * 2.5 * dtBroad;
           vec3 dsx = dFdx(-vViewPosition), dsy = dFdy(-vViewPosition), dr1 = cross(dsy, normal), dr2 = cross(normal, dsx);
           float ddet = dot(dsx, dr1);
           normal = normalize(abs(ddet) * normal - sign(ddet) * (dFdx(dh) * dr1 + dFdy(dh) * dr2)); }`);
   };
-  m.customProgramCacheKey = () => prevKey + "|detail";
+  m.customProgramCacheKey = () => prevKey + "|detail2";
   return m;
 }

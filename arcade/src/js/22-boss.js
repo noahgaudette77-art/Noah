@@ -82,7 +82,7 @@ class BossGame extends QuizGame {
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
     s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
-      dof: { focus: 16, near: 200, far: 70, max: 0.006, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
+      dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
@@ -285,7 +285,7 @@ class BossGame extends QuizGame {
   // Behind the ring: four tiers of an amphitheatre curving round the back, each with a rail of the boss's colour
   // and a crowd of lights along it (they sway, and surge when a blow lands).
   makeCrowd() {
-    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [];
+    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [], people = [], pSeed = [];
     const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xffffff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xffd27a)];
     for (let k = 0; k < 4; k++) {
       const Rk = 27 + k * 6, y = 2.2 + k * 4.1, N = 44;
@@ -294,12 +294,42 @@ class BossGame extends QuizGame {
         const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
         parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x15112c : 0x1b1638 });
         rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
-        for (let j = 0; j < 3; j++) {
-          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.2 + Math.random() * 0.5, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
-          pos.push(Math.sin(a) * r, y + 2.25 + Math.random() * 0.9, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        // the people: two rows on every tier, shoulder to shoulder, some with their arms up
+        const per = Math.max(3, Math.floor(w / 0.8));
+        for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
+          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 0.88 + Math.random() * 0.26, sd = Math.random();
+          const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
+          const cloth = new THREE.Color().setHSL(Math.random(), 0.3 + Math.random() * 0.3, 0.035 + Math.random() * 0.06), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.35, 0.1 + Math.random() * 0.12);
+          people.push({ geo: new THREE.BoxGeometry(0.6 * sc, 0.82 * sc, 0.32), matrix: at(0, 0.45, 0), color: cloth }); pSeed.push(sd, 36);
+          people.push({ geo: new THREE.IcosahedronGeometry(0.19 * sc, 0), matrix: at(0, 1.04, 0), color: skin }); pSeed.push(sd, 60);
+          if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
         }
+        // what they hold up: glow sticks in the house colours, a few phone lights
+        for (let j = 0; j < 4; j++) {
+          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.1 + Math.random() * 0.55, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
+          pos.push(Math.sin(a) * r, y + 3.15 + Math.random() * 0.7, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
+        }
+        // aisle lights down the face of the tier, every fourth bay
+        if (i % 4 === 0) for (let q = 0; q < 5; q++) rails.push({ geo: new THREE.BoxGeometry(0.16, 0.09, 0.06), matrix: new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)) });
       }
     }
+    // The crowd itself: unlit by its own lamps, lit by the arena's, bobbing on the spot and jumping at a blow.
+    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } };
+    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
+    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); v += pSeed[i + 1]; }
+    pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
+    const pm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0, envMap: this.env, envMapIntensity: 0.35 });
+    pm.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer;
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute float aSeed; uniform float uTime; uniform float uCheer;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);");
+    };
+    pm.customProgramCacheKey = () => "boss-crowd";
+    const folk = new THREE.Mesh(pg, pm);
+    folk.layers.set(1);
+    folk.frustumCulled = false;
+    s.add(folk);
     const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.7, rough: 0.5, envI: 0.8 }), { vertexColors: true }));
     wall.layers.set(1); // (not in the floor's reflection)
     s.add(wall);
@@ -310,16 +340,16 @@ class BossGame extends QuizGame {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
     this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
         void main(){
           vec3 p = position;
           p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
           vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
-          gl_PointSize = uPx * 260.0 / -mv.z; gl_Position = projectionMatrix * mv;
+          gl_PointSize = uPx * 230.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 8.0) + 0.2 * exp(-r * 2.0)), 1.0); }",
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * smoothstep(1.0, 0.55, r), 1.0); }",
     }));
     this.crowd.frustumCulled = false;
     this.crowd.layers.set(1);

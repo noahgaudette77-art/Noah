@@ -32,7 +32,7 @@ lists all of them again.
   traffic, with a winged void demon in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
-  with a mirror floor, ringed by an amphitheatre full of lights, in Boss Rush, where every boss is a different
+  with a mirror floor, ringed by an amphitheatre of spectators who sway, hold up lights and jump when a blow lands, in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, the final
   boss on its dais in a moonlit hall for the Final Exam, and a vaulted archive
@@ -175,7 +175,8 @@ lists all of them again.
   slab golem, a boiler with its gauge in the red, a crowned skeleton with an
   hourglass heart, a judge in robe and wig with a gavel, a masked puppeteer, a
   toll booth on tracks, a half-bone half-steel phantom with a cleaver, and the
-  hulking Examinator. They drop in dark and folded, land, and power up; breathe,
+  hulking Examinator in an examiner's square cap with a lit tassel, a monocle on
+  a chain and a row of answer bubbles for a mouth. They drop in dark and folded, land, and power up; breathe,
   look about and twitch; wind up as their attack charges; recoil when hit. As
   their HP falls the armor cracks, plates are shot off to bare the circuitry
   underneath, an arm fails, and below 35% they rage. A hit pulses the whole arena.
@@ -184,10 +185,10 @@ lists all of them again.
   diner, a lighthouse and a big wheel far off), desert (mesas, a rock arch, cacti,
   a gas station), a mountain pass (cliffs, pines, an avalanche gallery, a cable
   car) and back downtown at night; each change happens inside a bank of fog.
-  Traffic runs both ways on service lanes beside the road and in hover lanes
+  Traffic runs thick both ways on service lanes beside the road and in hover lanes
   overhead: sedans, trucks, buses, bikes, hover cars, each in its own colour,
-  changing lanes with indicators, braking, now and then broken down on hazard
-  lights. An Event Director makes something happen every 3 to 8 seconds: a train
+  holding a gap behind a slower one with brake lights on, pulling out to pass
+  with indicators, now and then broken down on hazard lights. An Event Director makes something happen every 3 to 8 seconds: a train
   crossing a viaduct, a helicopter with a searchlight, delivery drones, a patrol
   chase, a rival racer, a near miss, fireworks, lasers, meteors, a UFO, a blimp
   with an ad, a distant explosion, lightning, a squall, birds, steam. While a

@@ -131,6 +131,79 @@ function examNightMaterial() {
 }
 
 // A still shaft of light (like makeLightCone, without the flicker).
+// A halo of runes for the hall's centrepiece: a ring of marks (made up here, stroke by stroke on a small
+// lattice: no alphabet, no meaning), a ring of ticks that turns the other way, and a faint disc of light
+// behind them. It turns slowly and steadily, whatever is answered.
+function examHalo() {
+  const S = 1024, R = S / 2;
+  const ring = (draw) => {
+    const c = document.createElement("canvas");
+    c.width = c.height = S;
+    const x = c.getContext("2d");
+    x.translate(R, R);
+    x.lineCap = "round"; x.lineJoin = "round";
+    draw(x);
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = 8;
+    return t;
+  };
+  let seed = 90210;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const runes = ring((x) => {
+    x.strokeStyle = "rgba(255, 226, 170, 0.95)"; x.fillStyle = "rgba(255, 226, 170, 0.95)";
+    x.shadowColor = "rgba(190, 130, 255, 0.9)"; x.shadowBlur = 10;
+    x.lineWidth = 2;
+    x.beginPath(); x.arc(0, 0, R * 0.93, 0, 6.2832); x.stroke();
+    x.beginPath(); x.arc(0, 0, R * 0.7, 0, 6.2832); x.stroke();
+    const N = 30;
+    for (let i = 0; i < N; i++) {
+      x.save();
+      x.rotate((i / N) * 6.2832);
+      x.translate(0, -R * 0.815);
+      // a mark: four to six strokes between the points of a 3 x 4 lattice, each starting where the last ended
+      const u = 13, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 4) - 1.5) * u];
+      let p = pt();
+      x.lineWidth = 4.2;
+      x.beginPath(); x.moveTo(p[0], p[1]);
+      const n = 4 + Math.floor(rnd() * 3);
+      for (let k = 0; k < n; k++) { let q = pt(); if (q[0] === p[0] && q[1] === p[1]) q = [-q[0], -q[1]]; if (rnd() < 0.22) x.moveTo(q[0], q[1]); else x.lineTo(q[0], q[1]); p = q; }
+      x.stroke();
+      if (rnd() < 0.45) { const d = pt(); x.beginPath(); x.arc(d[0], d[1], 3.2, 0, 6.2832); x.fill(); }
+      x.restore();
+      // a small diamond between marks
+      x.save(); x.rotate(((i + 0.5) / N) * 6.2832); x.translate(0, -R * 0.815); x.rotate(0.7854); x.fillRect(-2.6, -2.6, 5.2, 5.2); x.restore();
+    }
+  });
+  const ticks = ring((x) => {
+    x.strokeStyle = "rgba(200, 160, 255, 0.95)";
+    x.shadowColor = "rgba(160, 110, 255, 0.9)"; x.shadowBlur = 8;
+    x.lineWidth = 1.6;
+    x.beginPath(); x.arc(0, 0, R * 0.985, 0, 6.2832); x.stroke();
+    for (let i = 0; i < 144; i++) {
+      const a = (i / 144) * 6.2832, long = i % 12 === 0, r0 = R * (long ? 0.945 : 0.965), r1 = R * 0.985;
+      x.lineWidth = long ? 3 : 1.6;
+      x.beginPath(); x.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); x.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); x.stroke();
+    }
+    x.lineWidth = 1.4;
+    x.setLineDash([26, 14]);
+    x.beginPath(); x.arc(0, 0, R * 0.64, 0, 6.2832); x.stroke();
+  });
+  const g = new THREE.Group(), D = 9.4;
+  // (the marks write depth, where they are drawn at all, so the lens focuses them where they hang and not on the wall behind)
+  const plane = (map, color, size, solid = true) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: solid, alphaTest: solid ? 0.02 : 0, fog: false }));
+    m.layers.set(1);
+    g.add(m);
+    return m;
+  };
+  g.userData.glow = plane(glowTexture(), neon(0x7a4cff, 1), D * 1.5, false);
+  g.userData.glow.position.z = -0.2;
+  g.userData.runes = plane(runes, neon(0xffe2b0, 1.5), D);
+  g.userData.ticks = plane(ticks, neon(0xb48cff, 1.4), D * 1.12);
+  g.userData.ticks.position.z = -0.1;
+  return g;
+}
+
 function examBeam({ color, top, bottom, height, intensity }) {
   const geo = new THREE.CylinderGeometry(top, bottom, height, 28, 1, true);
   geo.translate(0, -height / 2, 0);
@@ -296,6 +369,12 @@ class ExamGame extends QuizGame {
       this.monument.group.scale.setScalar(1.05);
       this.monument.group.position.y = EXAM_LOOK_Y - 2.5; // afloat in the light, whole in the camera's frame
       s.add(this.monument.group);
+    }
+    if (this.boss) {
+      this.halo = examHalo();
+      this.halo.position.set(0, BOSS_DAIS + BOSS_S * 0.9, -BOSS_S * 0.36); // behind its head and shoulders, in front of the shaft of light
+      this.haloK = 0;
+      s.add(this.halo);
     }
     // while the questions are up the camera is under the boss's chin and the floor is out of
     // sight: its reflection (the whole hall drawn a second time) waits for the ending
@@ -565,6 +644,15 @@ class ExamGame extends QuizGame {
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }
     this.ambience.update(dt, t);
+    if (this.halo) { // the halo turns at one slow pace all exam long; it goes out with the boss
+      const slow = REDUCED_MOTION || GFX.calm ? 0.3 : 1, H = this.halo.userData;
+      this.haloK += ((B && B.mode !== "die" ? clamp(B.lightK, 0, 1) : 0) - this.haloK) * Math.min(1, dt * 1.2);
+      H.runes.rotation.z += dt * 0.03 * slow;
+      H.ticks.rotation.z -= dt * 0.018 * slow;
+      H.runes.material.opacity = 0.8 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
+      H.ticks.material.opacity = 0.55 * this.haloK;
+      H.glow.material.opacity = 0.3 * this.haloK;
+    }
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);
       const k = this.rippleT;

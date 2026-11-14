@@ -17,17 +17,17 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 // the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
   { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
-    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xe8f4f0, sunBot: 0x9ad0d0, halo: 0x8ad0d0,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.8 },
-  { p: 0.4, bg: 0x16242e, fog: 0x2a424c, sunY: 80, tint: 0xf0f6f8, grid: 0x5ac8d8, stars: 0,
-    top: 0x18262e, mid: 0x30484f, horizon: 0x8fb0b4, glow: 0.4, clouds: 1, sunTop: 0xffffff, sunBot: 0xd8e8e8, halo: 0xc8e0e0,
-    ridge: 0x24363e, line: 0x7fd8e0, lamps: 0.45, city: 0.4, light: 0xe8f2f4, amb: 0x5a7480, exposure: 1.02, bloom: 0.9, wet: 0.8, sunI: 0.9 },
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xfff0e2, sunBot: 0xe89aa8, halo: 0x8ad0d0,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.72 },
+  { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
+    top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xfff3cc, sunBot: 0xffb87a, halo: 0xd4ecd8,
+    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.74 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
     top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd890, sunBot: 0xff7a2a, halo: 0xff8a3a,
-    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.3 },
+    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.0 },
   { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
     top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xb0f0f0, sunBot: 0x2fa0a8, halo: 0x2fd6c0,
-    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.9 },
+    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.8 },
 ];
 const RACER_SKY_COLORS = ["bg", "fog", "tint", "grid", "top", "mid", "horizon", "sunTop", "sunBot", "halo", "ridge", "line", "light", "amb"];
 const RACER_SKY_NUMS = ["sunY", "stars", "glow", "clouds", "lamps", "city", "exposure", "bloom", "wet", "sunI"];
@@ -774,7 +774,7 @@ class RacerGame extends QuizGame {
     wg.position.z = -60;
     this.warmExtra = [wg];
     this.post = { exposure: 1.1, bloom: 1, threshold: 1.05, saturation: 1.16, contrast: 1.1, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
-      dof: { focus: 9, near: 400, far: 260, max: 0.005, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
+      dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     this.camBase.set(0, 3.1, 7.4);
     this.lookAt.set(0, 1.1, -18);

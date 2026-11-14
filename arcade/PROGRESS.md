@@ -1212,3 +1212,32 @@ cohesion, legibility).
   - Reviewer's resemblance notes: a rear-chase camera behind a fighter is common
     to the genre (no shared designs); a horned dark demon is a broad archetype
     (the model is the owner's own file). No direct lifts found.
+- **K5 to K7, second pass (before the reviewers)**. Found from my own captures:
+  - Shared: surface relief (grain, scratches) now fades out where it would be finer
+    than a pixel, so far-off armour, gold and gears no longer sparkle; the broad
+    relief stays. `08-fx.js`.
+  - Nest Egg Run: traffic is about three times as thick (up to 8 a side on the
+    service lanes, 11 in the hover lanes), spawns only into a clear slot, holds a
+    gap behind a slower vehicle with its brake lights on and pulls out to pass.
+    The midday sky is a deep teal instead of grey, the sun keeps its colour, the
+    coast's horizon is warmer, the far city is no longer blurred to blobs. The
+    streak pill docks in the corner of the 3D strip (the HUD had no room for it).
+  - Boss Rush: the amphitheatre has people in it (two rows a tier, about 1,300,
+    lit by the arena's lights, bobbing, jumping when a blow lands, some with
+    their arms up), glow sticks above them, aisle lights down each tier. Armour
+    relief is a soft hammered plate instead of glitter. The final boss has a new
+    head (see the originality notes): an examiner's square cap with a lit tassel,
+    a monocle on a chain, a row of answer bubbles for a mouth.
+  - Final Exam: a halo of runes turns slowly behind the boss (marks made up
+    stroke by stroke, a ring of ticks turning the other way, a faint disc of
+    light); it writes depth so the lens keeps it in focus; it goes out with the
+    boss. A chosen answer is filled with its own slot colour (it was only a
+    slightly thicker outline), which says nothing about right or wrong.
+  - Memory Bank: card faces have a fine banknote-style pattern and a lit top.
+  - Interface: a boot splash (logo, sweep bar) is on screen from the first paint
+    until the title is up; stage numbers are bevelled keys; Setup's two-line
+    effect names no longer overlap and every two-way switch sits to the right of
+    its label.
+  - Capture tool: clicks go through the DOM (Playwright's click waits for two
+    steady frames, which at several seconds a frame timed out and silently
+    skipped the exam's answers).
