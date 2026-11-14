@@ -83,6 +83,14 @@ const PIXELS = {
   full: ["XX.XX", "X...X", ".....", "X...X", "XX.XX"],
   book: ["XXX.XXX", "X.XXX.X", "X.XXX.X", "X.XXX.X", "XXXXXXX"],
   lock: ["..XXX..", ".X...X.", ".X...X.", "XXXXXXX", "XXX.XXX", "XXX.XXX", "XXXXXXX"],
+  clock: [".XXXXX.", "XX.X.XX", "X..X..X", "X..XX.X", "X.....X", "XX...XX", ".XXXXX."],
+  speaker: ["...X...", "..XX.X.", "XXXX..X", "XXXX..X", "XXXX..X", "..XX.X.", "...X..."],
+  mic: ["..XXX..", "..XXX..", "X.XXX.X", "X.XXX.X", ".X...X.", "..XXX..", "...X..."],
+  tube: ["XXXXXXX", "X.....X", "X.....X", "X.....X", "XXXXXXX", "..XXX..", ".XXXXX."],
+  moon: ["..XXX..", ".XXX...", "XXX....", "XXX....", "XXX....", ".XXX...", "..XXX.."],
+  spark: ["...X...", ".X.X.X.", "..XXX..", "XXX.XXX", "..XXX..", ".X.X.X.", "...X..."],
+  phone: [".XXXXX.", ".X...X.", ".X...X.", ".X...X.", ".X...X.", ".XXXXX.", ".XX.XX."],
+  gauge: ["..XXX..", ".X...X.", "X...X.X", "X..X..X", "X.....X", ".X...X.", "..XXX.."],
   // one emblem per trophy (t_ + its id): a token, a flame, a bolt, a gear, a crested helmet, rank chevrons,
   // two cards, a sword, a sight, a crown, a gem, a rocket, a full purse, a ticked box, a rosette
   t_first: ["..XXXXX..", ".XX...XX.", "XX..X..XX", "XX.XXX.XX", "XX..X..XX", "XX..X..XX", "XX.XXX.XX", ".XX...XX.", "..XXXXX.."],
@@ -114,6 +122,12 @@ function icon(name, color = "currentColor") {
 }
 const starsHTML = (n, max = 3) =>
   `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#7868cc")).join("")}</span>`;
+
+// The emblem in front of a stat's label: a read-out says what it measures before its caption is read.
+const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BANKED": "t_cards50", ACCURACY: "t_boss6", ANSWERED: "t_exam60", "BEST STREAK": "t_streak5",
+  "BOSS STARS": "star", STARS: "star", "BEST EXAM": "t_exam90", "BEST SCORE": "t_exam90", SCORE: "t_exam90", "EXAMS TAKEN": "t_exam60", "QUESTION BANK": "book", CORRECT: "check",
+  TIME: "clock", "HIGH SCORE RANK": "t_boss12", "XP EARNED": "up", WAVE: "t_wave5", "RETIRED AT": "flag", PEAK: "t_million", "BOSS HP LEFT": "heart", REMEMBERED: "t_cards50", "STILL DUE": "clock" };
+const tileIcon = (k) => (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
 
 const COLORS = {
   cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",

@@ -234,7 +234,7 @@ class BlasterSpace {
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
           float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
-          vec3 c = uBase * (0.75 + 0.45 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.72 * uNebK * lane) + mix(uA, uB, t.b) * (0.03 * uNebK * (t.r + t.g));
+          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
           c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
           c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
@@ -423,8 +423,8 @@ class BlasterSpace {
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.6, aura = exp(-r * r * 2.6) * 0.06;
-          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.11); // a cold backlight (no ring: it read as a pale hoop behind the demon)
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.66, aura = exp(-r * r * 2.6) * 0.05;
+          vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.07); // a cold backlight (no ring: it read as a pale hoop behind the demon)
           gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
@@ -669,7 +669,7 @@ class BlasterSpace {
     const m = this._m, q = this._q, v = this._v, sc = this._s;
     this.cloudMesh.visible = c.clouds > 0.02;
     if (this.cloudMesh.visible) {
-      this.cloudU.uCA.value.copy(c.cloudA); this.cloudU.uCB.value.copy(c.cloudB); this.cloudU.uK.value = c.clouds * 0.45;
+      this.cloudU.uCA.value.copy(c.cloudA); this.cloudU.uCB.value.copy(c.cloudB); this.cloudU.uK.value = c.clouds * 0.3;
       this.clouds.forEach((cl, i) => {
         cl.p.z += sp * 0.55 * dt;
         if (cl.p.z > -30) this.resetCloud(cl, i, -640);

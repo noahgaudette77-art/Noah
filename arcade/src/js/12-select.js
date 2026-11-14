@@ -45,7 +45,7 @@ function showSelect(gameId) {
           <span class="meta">${isBoss ? esc(BOSSES.all.name) + " · every chapter" : "Every chapter, mixed"}</span></button>
         ${isBoss ? `<button class="stage wide" data-act="pick" data-sel="rush" style="--c:${COLORS.red}">
           <span class="wico">${icon("play")}</span>
-          <span class="t">NEXT BOSS</span><span class="meta">The first boss you haven't 3-starred</span></button>`
+          <span class="t">NEXT BOSS</span><span class="meta"><span>The first boss you haven't <span style="white-space:nowrap">3-starred</span></span></span></button>`
         : `<button class="stage wide" data-act="pick" data-sel="weak" style="--c:${COLORS.red}" ${weakN ? "" : "disabled"}>
           <span class="wico">${icon(weakN ? "flag" : "lock")}</span>
           <span class="t">WEAK SPOTS</span><span class="meta">${weakN ? weakN + " items you keep missing" : "None yet — play a stage first"}</span></button>`}
@@ -84,30 +84,40 @@ function showExamSetup() {
   Sound.play("calm");
   const best = Store.state.stats.bestExam || 0;
   const recent = (Store.state.scores.exam || []).slice(0, 5);
-  const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.7)">
+  const el = UI.el(`<section class="screen scr-examsetup" style="background:rgba(9,3,32,.7)">
     ${topbar("FINAL EXAM")}
-    <div class="scroll"><div class="wrap" style="display:grid;gap:14px">
-      <div class="panel" style="--c:${COLORS.violet};border-color:${COLORS.violet}">
+    <div class="scroll"><div class="wrap">
+      <div class="panel exam-brief" style="--c:${COLORS.violet}">
+        <canvas class="eb-pic" aria-hidden="true"></canvas>
         <p class="hub-desc">A mock exam drawn from all 11 chapters in proportion to their size. No hints or explanations until you submit, like the real thing. You need <b style="color:${COLORS.yellow};font-weight:400">60%</b> to pass.</p>
       </div>
       <div><div class="label">NUMBER OF QUESTIONS</div>
-        <div class="seg" style="--c:${COLORS.violet};margin-top:8px" role="group" aria-label="Number of questions">
+        <div class="seg" style="--c:${COLORS.cyan};margin-top:8px" role="group" aria-label="Number of questions">
           ${[20, 50, 100].map((n) => `<button data-act="len" data-v="${n}" aria-pressed="${ExamPrefs.len === n}">${n}</button>`).join("")}
         </div></div>
       <div><div class="label">CLOCK</div>
-        <div class="seg" style="--c:${COLORS.violet};margin-top:8px" role="group" aria-label="Clock">
+        <div class="seg" style="--c:${COLORS.cyan};margin-top:8px" role="group" aria-label="Clock">
           <button data-act="timed" data-v="1" aria-pressed="${ExamPrefs.timed}">90 SEC / Q</button>
           <button data-act="timed" data-v="0" aria-pressed="${!ExamPrefs.timed}">UNTIMED</button>
         </div></div>
       <div class="tiles">
-        <div class="tile" style="--c:${COLORS.yellow}"><span class="k">BEST SCORE</span><span class="v">${best}%</span></div>
-        <div class="tile"><span class="k">EXAMS TAKEN</span><span class="v">${Store.state.stats.exams || 0}</span></div>
-        <div class="tile" style="--c:${COLORS.lime}"><span class="k">QUESTION BANK</span><span class="v">${ALL_QIDS.length}</span></div>
+        <div class="tile" style="--c:${COLORS.yellow}"><span class="k">${tileIcon("BEST SCORE")}BEST SCORE</span><span class="v">${best}%</span></div>
+        <div class="tile"><span class="k">${tileIcon("EXAMS TAKEN")}EXAMS TAKEN</span><span class="v">${Store.state.stats.exams || 0}</span></div>
+        <div class="tile" style="--c:${COLORS.lime}"><span class="k">${tileIcon("QUESTION BANK")}QUESTION BANK</span><span class="v">${ALL_QIDS.length}</span></div>
       </div>
+      <div class="passline" aria-hidden="true" style="--v:${Math.min(100, best)}">
+        <span class="pl-k">YOUR BEST</span><span class="pl-bar"><i></i><b></b></span><span class="pl-v">PASS 60%</span></div>
+      <div class="mixstrip" aria-hidden="true"><span class="pl-k">THE MIX</span>
+        <span class="mx-bar">${CHAPTERS.map((c) => `<i style="flex:${c.qids.length};--c:${c.color}"><b>${c.n}</b></i>`).join("")}</span></div>
       ${recent.length ? `<div><div class="label" style="margin-bottom:8px">TOP RESULTS</div><div class="board">${recent.map((r, i) => `<div><span>${i + 1}.</span><span>${esc(r.n)}</span><span>${r.s}% · ${r.c || ""}</span></div>`).join("")}</div></div>` : ""}
-      <button class="btn" data-act="go" style="--c:${COLORS.violet}">START EXAM ${icon("play")}</button>
+      <div class="exam-wm" aria-hidden="true"><canvas></canvas></div>
+    </div></div>
+    <div class="actions pinned"><div class="wrap one">
+      <button class="btn" data-act="go" style="--c:${COLORS.lime}">START EXAM ${icon("play")}</button>
     </div></div>
   </section>`);
+  drawBossPortrait($(".eb-pic", el), BOSSES.all.color, "all");
+  drawBossPortrait($(".exam-wm canvas", el), BOSSES.all.color, "all"); // the proctor again, large and dim, in whatever room is left above START
   UI.show({
     el,
     on: (a, t) => {

@@ -2045,3 +2045,69 @@ split leave a scene's subject sharp. Shock rings are thin strokes.
   have passes left (Boss Rush 1, Title 2, Arcade Hub 2, Nest Egg Run 2,
   Interface 1, Risk Blaster 1, Final Exam 1); they come next, each from its
   last review's list, and are recorded in the section after this one.
+
+## Round N: the passes that were left
+
+Seven screens had passes left after the checkpoint above. They are used here, lowest score first, each from its last
+review's list, each followed by a fresh independent review and by the small fixes that review asked for. Scores are
+in the order detail, lighting, materials, depth, motion, cohesion, legibility.
+
+### Interface, pass 8 (its last)
+
+The kit is three materials (it was one violet slab doing every job). A **plate** is a row you press or read (stages,
+settings, trophies, mastery rows, review items, the client's card): moulded, two corners cut, a lit band along its top,
+a dark lip along its foot; the one lit row on a page throws its colour. A **read-out** shows a figure (stat tiles,
+score boards, switch housings, the tag in the top bar): black glass in a bezel, a glint across one corner, an emblem in
+front of its label, the figure lit from inside. A **key** is every button: a cap on a lip of its own colour in a dark
+socket; the way forward lights the bar it stands on.
+
+Also: a focus ring shows only once a key has been used (a button the game focuses for you no longer wears one on a
+phone); the head of each menu page has the loading screen's horizon under it; stage pictures a size larger and bosses
+larger still, the boss list tinted from the top; dialogs have a title half as big again and a bracket at each corner,
+QUIT in a warning tint; results: a larger medal on long and short rays, tiles arriving one after another; the exam's
+front page has the proctor's emblem beside the brief, your best against the pass line, the eleven chapters' shares of
+the paper as a strip, the proctor large and dim above START, and START on the bar at the foot in the green of every
+other way forward; the loading screen has stars and its wordmark stands clear above the horizon.
+
+**A fault found and fixed.** The exam's front page showed only the middle of its introduction: the hub card's
+four-line box (hub pass 5) applied to every element of that class, and this page's brief is one. The first and last
+lines were cut off. The rule now applies inside the hub card only.
+
+Third independent review: **3.5, 3, 3.5, 3.5, 3.5, 4, 4 (3.6)**, up from 3.4. Its points, and what was done after
+(closing fixes): a lit floor and horizon behind every menu page; the tube's scanlines on plates and read-outs, read-outs
+a hair off black; a star not yet earned is hollow; trophies sit in sockets edged with the hue of what they are for;
+setup rows carry a glyph and share a height; what is chosen on the exam's pages is cyan like every other switch; the
+sheen crosses a button under its label; the proctor above START is crisp pixels behind scanlines. Not done: new faces
+for stage rows (the course's case studies keep one client for several chapters, so the face stays; the mood now shows
+beside it), a score that counts up (the test harness reads the results page's text as it appears).
+
+### Final Exam, pass 8 (its last)
+
+Relit: a key from the upper left lights its planes on that side, its rim light is gold along the far edges only, a
+soft shade stands between the figure and the hall's haze, the bloom takes less. Its light and shade are read from a
+softer copy of the model's painting (the grain in it showed as static). The burn of the pass ending starts at the
+reactor and spreads, wide and white-hot near it, thin and red further out; a fail lights its seams hot violet, not
+gold. The endings are shot low and wide so the figure towers; the lens holds what the shot is of. The blast has a shape
+(a white core, sixteen streaks, a fireball a third the size, firelight in a pool not across the hall); a fist, a
+shoulder plate, a pylon and a foot are thrown clear whole and lie in the wreck in the boss's own gunmetal and panel
+lines (the fragments had a woven pattern nothing else wears). The scene fades into the answers; the clock's bar is a
+bar; the ending's bars are indigo glass and SKIP sits in the lower one.
+
+**Its head.** Two reviewers, independently, said the helmet (a crest between two ear antennae) with the stacks behind
+the shoulders recalls a film robot. The model is the owner's file and is untouched, but in the game the antennae end at
+the helmet's own line and it wears the proctor's square cap with a gold tassel, as its small self does in Boss Rush.
+The next reviewer named no single likeness ("no direct lift"). This is a change to how a supplied model is shown:
+flagged for the owner.
+
+Third independent review: **3.5, 3.5, 3, 3.5, 3.5, 3.5, 4 (3.5)**, up from 3.4. Answer leak: none visible. Closing
+fixes after it: what the armour mirrors is cool (the warm room built for the old gold monument turned black plate to
+brass); half the wear in its shade; the cap is felt and is knocked back at the first failure so the face shows through
+the kneel; the reactor is an ember you can see from the first failure; the rune ring's bands and marks are heavier; the
+shade behind it is the figure's size so the columns show; the fail ends at floor level under its chin; embers keep a
+pool of light on the wreck. Not done: stencil marks on the armour, a larger fist in the punch, a heap that fills half
+the picture.
+
+### Risk Blaster and Boss Rush, pass 8
+
+Both are in this build and tested; their reviews follow in the next entry.
+

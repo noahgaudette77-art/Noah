@@ -311,16 +311,16 @@ class BlasterDemon {
         void main(){
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
           float R = 0.6;
-          float limb = exp(-pow((r - R) / 0.02, 2.0));
+          float limb = exp(-pow((r - R) / 0.009, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0));
           float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
           float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
           float back = exp(-r * r * 4.2); // the light behind it: wings and horns are dark against this
           float over = 0.6 + 0.4 * smoothstep(-0.55, 0.35, p.y); // (brightest over its shoulders)
-          gl_FragColor = vec4(uColor * ((limb * 1.7 + corona * 0.75 + back * 0.5) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
+          gl_FragColor = vec4(uColor * ((limb * 1.5 + corona * 0.22 + back * 0.22) * over * uK * (1.0 - smoothstep(0.86, 1.0, r))), 1.0);
         }`,
     }));
     this.limb.position.set(0, 0.03, -0.2);
-    this.limb.scale.setScalar(2.1); // (the model is one unit from wing tip to wing tip: the limb runs just outside them)
+    this.limb.scale.setScalar(1.72); // (the model is one unit from wing tip to wing tip: the ring passes behind its wings, well inside the drones)
     this.limb.renderOrder = 1;
     this.limb.frustumCulled = false;
     pose.add(this.limb);
@@ -334,7 +334,7 @@ class BlasterDemon {
     this.aura = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
       uniforms: this.auraU, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform vec3 uColor; uniform float uK; varying vec2 vUv; void main(){ vec2 d = abs(vUv - 0.5) * 2.0; float e = smoothstep(0.3, 1.0, max(d.x, d.y)) * 0.8 + 0.3 * smoothstep(0.6, 1.3, length(d)); gl_FragColor = vec4(uColor * (e * e * uK), 1.0); }",
+      fragmentShader: "uniform vec3 uColor; uniform float uK; varying vec2 vUv; void main(){ vec2 d = abs(vUv - 0.5) * 2.0; float e = smoothstep(0.56, 1.0, max(d.x, d.y)) * 0.8 + 0.3 * smoothstep(0.8, 1.3, length(d)); gl_FragColor = vec4(uColor * (e * e * uK), 1.0); }",
     }));
     this.aura.renderOrder = 55;
     this.aura.frustumCulled = false;
@@ -592,7 +592,7 @@ class BlasterDemon {
     // the ring behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
     this.limbU.uTime.value = t;
     this.limbU.uK.value = dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
-    this.limbU.uColor.value.setRGB(0.5, 0.85, 1.0).lerp(g.waveCol, 0.22).lerp(this._c2.setRGB(1.0, 0.3, 0.22), 0.7 * U.uDmRage.value);
+    this.limbU.uColor.value.setRGB(0.32, 0.72, 1.25).lerp(g.waveCol, 0.4).lerp(this._c2.setRGB(1.2, 0.2, 0.16), 0.8 * U.uDmRage.value);
     this.heat = Math.max(0.25 * rage, tele, strike * 0.8, dying ? 0.9 : 0, gloat);
     // the aura: the edges of the view glow red. It breathes slowly in a rage, swells as the rage begins, and fills the
     // view for its last stand and when it has won. (Not with Reduced effects.)

@@ -152,18 +152,20 @@ function examHalo() {
   const runes = ring((x) => {
     x.strokeStyle = "rgba(255, 226, 170, 0.95)"; x.fillStyle = "rgba(255, 226, 170, 0.95)";
     x.shadowColor = "rgba(190, 130, 255, 0.9)"; x.shadowBlur = 10;
-    x.lineWidth = 2;
+    x.lineWidth = 5;
     x.beginPath(); x.arc(0, 0, R * 0.93, 0, 6.2832); x.stroke();
-    x.beginPath(); x.arc(0, 0, R * 0.7, 0, 6.2832); x.stroke();
-    const N = 30;
+    x.beginPath(); x.arc(0, 0, R * 0.69, 0, 6.2832); x.stroke();
+    x.lineWidth = 2;
+    x.beginPath(); x.arc(0, 0, R * 0.905, 0, 6.2832); x.stroke();
+    const N = 22;
     for (let i = 0; i < N; i++) {
       x.save();
       x.rotate((i / N) * 6.2832);
       x.translate(0, -R * 0.815);
       // a mark: two or three arcs hung on the points of a small lattice, a dot or two, sometimes a short bar
       // under it (curves and dots only: straight strokes kept coming out as letters)
-      const u = 12, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 3) - 1) * u];
-      x.lineWidth = 3.8;
+      const u = 17, pt = () => [(Math.floor(rnd() * 3) - 1) * u, (Math.floor(rnd() * 3) - 1) * u];
+      x.lineWidth = 5.6;
       for (let k = 0, n = 2 + Math.floor(rnd() * 2); k < n; k++) {
         const c = pt(), rad = u * (rnd() < 0.5 ? 0.5 : 1), a0 = Math.floor(rnd() * 4) * 1.5708, sw = (1 + Math.floor(rnd() * 3)) * 1.5708;
         x.beginPath(); x.arc(c[0], c[1], rad, a0, a0 + sw); x.stroke();
@@ -270,7 +272,18 @@ class ExamGame extends QuizGame {
   build3D() {
     const s = this.scene;
     // The lower half is warm: the cup's flaring bowl mirrors the spot-lit floor.
-    this.envRT = examEnvMap({
+    this.envRT = examEnvMap(BossModel.ok() ? {
+      top: 0x0a0624, horizon: 0x4a2a9a, bottom: 0x090618, glow: 0.5,
+      panels: [
+        { color: 0xe6e9ff, k: 2.0, w: 10, h: 4, pos: [0, 24, 10] }, // the lamp over it
+        { color: 0x8f86c8, k: 0.6, w: 34, h: 7, pos: [0, 5, 30] }, // the dim hall behind the lens
+        { color: 0xcfd6ff, k: 1.2, w: 8, h: 14, pos: [-21, 7, 22] }, // the key's side
+        { color: 0xffc474, k: 1.0, w: 6, h: 14, pos: [24, 7, -8] }, // gold from behind on the far side: an edge, not a wash
+        { color: 0xa65fff, k: 1.4, w: 6, h: 24, pos: [-30, 4, 4] },
+        { color: 0xb8c4ff, k: 1.2, w: 3, h: 10, pos: [-8, 7, -30] }, // the windows behind
+        { color: 0xb8c4ff, k: 1.2, w: 3, h: 10, pos: [8, 7, -30] },
+      ],
+    } : {
       top: 0x0a0624, horizon: 0x5a2fb0, bottom: 0x3a2412, glow: 0.6,
       panels: [
         { color: 0xfff0d8, k: 2.6, w: 10, h: 4, pos: [0, 24, 10] }, // the spotlight's lamp
@@ -306,19 +319,19 @@ class ExamGame extends QuizGame {
     s.add(new THREE.AmbientLight(0x1e1840, 0.56));
     // two violet lamps back in the colonnade: the columns either side of the boss have a lit edge
     [-1, 1].forEach((sd) => { const l = new THREE.PointLight(0x8f6cff, 1.5, 46, 1.3); l.position.set(sd * 15, 7.5, -4); s.add(l); });
-    const key = new THREE.DirectionalLight(0xfff2dd, 0.3);
-    key.position.set(-4, 16, 9);
+    const key = (this.keyLight = new THREE.DirectionalLight(0xe4e9ff, 0.9));
+    key.position.set(-10, 13, 10);
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xe6ecff, 2.15, 32, 1.5); // the lamp over the boss (low enough that its helmet keeps its surface)
+    this.spotLight = new THREE.PointLight(0xe6ecff, 1.5, 32, 1.5); // the lamp over the boss (low enough that its helmet keeps its surface)
     this.spotLight.position.set(0.8, BOSS_DAIS + BOSS_S * 1.55, BOSS_S * 0.62);
     s.add(this.spotLight);
-    this.rimA = new THREE.PointLight(0x9a66ff, 3.0, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
+    this.rimA = new THREE.PointLight(0x9a66ff, 1.5, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.fillLow = new THREE.PointLight(0x6a55ff, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow = new THREE.PointLight(0x7c84c4, 0.85, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
-    this.rimB = new THREE.PointLight(0xffc474, 2.0, 34, 1.5);
+    this.rimB = new THREE.PointLight(0xffc474, 2.7, 34, 1.5);
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -399,6 +412,11 @@ class ExamGame extends QuizGame {
       this.halo.position.set(0, BOSS_DAIS + BOSS_S * 0.93, -BOSS_S * 0.36); // behind its head and shoulders, in front of the shaft of light
       this.haloK = 0;
       s.add(this.halo);
+      this.backShade = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0x030110, transparent: true, opacity: 0.78, depthWrite: false, fog: false }));
+      this.backShade.position.set(0, BOSS_DAIS + BOSS_S * 0.62, -BOSS_S * 0.5);
+      this.backShade.scale.set(BOSS_S * 2.3, BOSS_S * 2.3, 1);
+      this.backShade.layers.set(1); // (it sorts by depth with the hall's other veils: over the shaft of light behind it, under the halo's ring)
+      s.add(this.backShade);
     }
     // while the questions are up the camera is under the boss's chin and the floor is out of
     // sight: its reflection (the whole hall drawn a second time) waits for the ending
@@ -441,7 +459,7 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.post = { exposure: 1.02, bloom: 0.72, threshold: 1.05, saturation: 1.06, contrast: 1.14, vignette: 1.45, sharpen: 0.55, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+    s.userData.post = { exposure: 1.06, bloom: 0.5, threshold: 1.24, saturation: 1.06, contrast: 1.14, vignette: 1.45, sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
@@ -560,7 +578,7 @@ class ExamGame extends QuizGame {
     if (i >= 0) { e.preventDefault(); this.pick(i); }
   }
   palette() {
-    const el = UI.el(`<div class="modal"><div class="dialog" style="--c:${COLORS.violet}" role="dialog" aria-modal="true" aria-label="All questions">
+    const el = UI.el(`<div class="modal"><div class="dialog" style="--c:${COLORS.cyan}" role="dialog" aria-modal="true" aria-label="All questions">
       <h2>ALL QUESTIONS</h2>
       <p>${this.answers.filter((a) => a >= 0).length} answered · ${this.flags.filter(Boolean).length} flagged</p>
       <div class="pal-key" aria-hidden="true"><span><i class="done"></i>ANSWERED</span><span><i></i>OPEN</span><span><i class="flag"></i>FLAGGED</span><span><i class="here"></i>HERE</span></div>
@@ -661,10 +679,11 @@ class ExamGame extends QuizGame {
       this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
     }
     if (B) {
-      this.spotLight.intensity = 2.15 * B.lightK;
-      this.rimA.intensity = 3.0 * B.lightK;
-      this.rimB.intensity = 2.0 * B.lightK;
-      this.fillLow.intensity = 1.1 * B.lightK;
+      this.keyLight.intensity = 0.9 * B.lightK;
+      this.spotLight.intensity = 1.5 * B.lightK;
+      this.rimA.intensity = 1.5 * B.lightK;
+      this.rimB.intensity = 2.7 * B.lightK;
+      this.fillLow.intensity = 0.85 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
     }
@@ -676,7 +695,7 @@ class ExamGame extends QuizGame {
       H.ticks.rotation.z -= dt * 0.018 * slow;
       H.runes.material.opacity = 1.0 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
       H.ticks.material.opacity = 0.8 * this.haloK;
-      H.glow.material.opacity = 0.42 * this.haloK;
+      H.glow.material.opacity = 0.2 * this.haloK;
       H.dust.rotation.z += dt * 0.045 * slow;
       H.dust.material.opacity = 0.8 * this.haloK * (0.85 + 0.15 * Math.sin(t * 0.9));
     }

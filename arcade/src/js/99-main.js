@@ -73,7 +73,7 @@ function boot() {
 if (/debug/.test(location.hash)) {
   window.__arcade = {
     Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype, drawPortrait, client,
-    show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
+    show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults, examSetup: showExamSetup, guide: showGuide }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {
       for (let n = 1; n <= 11; n++) Store.state.met[n] = 1;

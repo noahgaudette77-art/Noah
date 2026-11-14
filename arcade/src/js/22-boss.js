@@ -100,6 +100,7 @@ class BossGame extends QuizGame {
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
+      <i class="slashes" aria-hidden="true"></i>
     </section>`);
     this.hud();
   }
@@ -165,10 +166,10 @@ class BossGame extends QuizGame {
     // the reflective polar-grid floor
     this.mirror = new Mirror(0);
     this.lineBase = neon(hex, 1.35);
-    this.floor = makeNeonFloor({ size: 600, cell: 3, line: hex, lineK: 1.35, base: 0x05010f, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.3, ripple: 0.0018, streak: 0.01 });
+    this.floor = makeNeonFloor({ size: 600, cell: 3, line: hex, lineK: 1.35, base: 0x05010f, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.17, ripple: 0.0018, streak: 0.01 });
     s.add(this.floor);
     // where it stands: a wide pool of its own light on the floor, and its shadow in the middle of the pool
-    const pool = makeLightPool({ color: hex, radius: 11, intensity: 0.5 });
+    const pool = makeLightPool({ color: hex, radius: 11, intensity: 0.26 });
     pool.layers.set(1);
     s.add(pool);
     this.contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.92, depthWrite: false }));
@@ -194,6 +195,30 @@ class BossGame extends QuizGame {
     s.add(this.flash);
     // the player's plasma bolt, the boss's eye beam and the floor shockwaves: built
     // once, reused every time (a fresh set per shot stalled the frame)
+    { // sparks: hard square pixels (the soft round ones went to discs of bokeh, the only round soft things in a world of blocks)
+      const c = document.createElement("canvas"); c.width = c.height = 4;
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 4, 4);
+      const tx = new THREE.CanvasTexture(c); tx.magFilter = tx.minFilter = THREE.NearestFilter;
+      this.bursts.pts.material.uniforms.tMap.value = tx;
+      const burst = this.bursts.burst.bind(this.bursts);
+      this.bursts.burst = (pos, color, o = {}) => burst(pos, color, Object.assign({}, o, { size: (o.size || 0.3) * 0.5 }));
+    }
+    this.hitStar = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: { uK: { value: 0 }, uColor: { value: new THREE.Color(1, 1, 1) } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `uniform float uK; uniform vec3 uColor; varying vec2 vUv;
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0; float r = length(p), seg = atan(p.y, p.x) * 1.2732, id = floor(seg + 0.5), w = abs(seg - id); // eight points
+          float len = mod(id, 2.0) < 0.5 ? 1.0 : 0.56;
+          float spike = step(w, 0.2 * (1.0 - r / len)) * step(r, len) * step(0.08, r); // hard edges: a cut-out star, not a glow
+          float core = step(r, 0.16);
+          gl_FragColor = vec4((uColor * spike + vec3(2.6) * core) * uK, 1.0);
+        }`,
+    }));
+    this.hitStar.layers.set(1);
+    this.hitStar.renderOrder = 9;
+    this.hitStar.visible = false;
+    s.add(this.hitStar);
     const bolt = { shot: glowSprite(neon(COLORS.cyan, 3), 1.4, 1), hot: glowSprite(neon(0xffffff, 3), 0.55, 1), tail: new Trail({ length: 12, width: 0.14, color: COLORS.cyan, intensity: 2.6 }), tok: 0 };
     bolt.shot.add(bolt.hot);
     bolt.tc0 = bolt.tail.mesh.material.uniforms.uColor.value.clone();
@@ -237,7 +262,8 @@ class BossGame extends QuizGame {
     const coneNI = cone.toNonIndexed();
     cone.dispose();
     const cp = coneNI.attributes.position.array, cn = coneNI.attributes.normal.array, cv = cp.length / 3;
-    const body = [], caps = [], pools = [], edges = [];
+    const body = [], caps = [], pools = [], edges = [], banners = [], penCol = new THREE.Color(hex).multiplyScalar(0.36).getHex();
+    const penShape = new THREE.Shape([[-0.42, 0], [0.42, 0], [0.42, -2.9], [0, -2.45], [-0.42, -2.9]].map(([x, y]) => new THREE.Vector2(x, y)));
     const bp = [], bn = [], bb = [], bph = [], bt = [];
     const v = new THREE.Vector3();
     angles.forEach((a, i) => {
@@ -247,6 +273,13 @@ class BossGame extends QuizGame {
       body.push({ geo: shaft.clone(), matrix: at(0), color: 0x3a3266 });
       body.push({ geo: new THREE.BoxGeometry(1.4, 0.35, 1.4), matrix: at(9.6), color: 0x2a2244 });
       caps.push({ geo: new THREE.OctahedronGeometry(0.36, 0), matrix: at(10.2) });
+      [2.4, 5.2, 8.0].forEach((y) => caps.push({ geo: new THREE.BoxGeometry(1.02 - y * 0.02, 0.09, 1.02 - y * 0.02), matrix: at(y) })); // three lit bands round the shaft
+      // a pennant on the ring's side of it: the boss's colour, a dark bar, a swallow tail
+      const hang = (geo, y, c, dz) => banners.push({ geo, matrix: at(y).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.82 + dz)), color: c }); // (local +z is toward the ring's centre)
+      hang(new THREE.ShapeGeometry(penShape), 8.3, penCol, 0); // the cloth: a swallow tail
+      hang(new THREE.PlaneGeometry(1.0, 0.1), 8.34, 0x2a2244, 0.012); // its rod
+      hang(new THREE.PlaneGeometry(0.62, 0.09), 7.72, 0x0a0618, 0.012); hang(new THREE.PlaneGeometry(0.62, 0.09), 7.5, 0x0a0618, 0.012); // two dark bars
+      { const d = new THREE.PlaneGeometry(0.34, 0.34); d.rotateZ(Math.PI / 4); hang(d, 6.72, 0x0a0618, 0.012); } // a lozenge
       const pool = new THREE.PlaneGeometry(7, 7);
       pool.rotateX(-Math.PI / 2);
       pools.push({ geo: pool, matrix: at(0.04) });
@@ -271,6 +304,18 @@ class BossGame extends QuizGame {
     eg.setAttribute("position", new THREE.Float32BufferAttribute(edges, 3));
     this.pillarEdgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 1.8) });
     s.add(new THREE.LineSegments(eg, this.pillarEdgeMat));
+    s.add(new THREE.Mesh(blasterMerge(banners), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })));
+    { // the front row: heads and shoulders in the dark between the lens and the ring (the arena had no foreground)
+      const row = [];
+      for (let i = 0; i < 15; i++) {
+        const x = (i - 7) * 1.12 + ((i * 37) % 7) * 0.05, h = 0.3 + ((i * 53) % 9) * 0.03, z = 7.3 + (i % 2) * 0.55;
+        row.push({ geo: new THREE.SphereGeometry(0.2, 8, 6), matrix: new THREE.Matrix4().makeTranslation(x, h + 0.27, z), color: 0x0a0618 });
+        row.push({ geo: new THREE.BoxGeometry(0.62, 0.36, 0.26), matrix: new THREE.Matrix4().makeTranslation(x, h - 0.02, z), color: 0x0a0618 });
+      }
+      const fr = new THREE.Mesh(blasterMerge(row), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+      fr.layers.set(1); // (not in the floor's mirror)
+      s.add(fr);
+    }
     this.capMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.7) }); // (the lamps on the pillars: lit, not blazing)
     this.themeCol = neon(hex, 2.6); // the arena's colour at full strength: its floor ring, pool, rails and mist take theirs from it
     s.add(new THREE.Mesh(blasterMerge(caps), this.capMat));
@@ -318,7 +363,7 @@ class BossGame extends QuizGame {
     this.rune.position.y = 0.05;
     this.rune.layers.set(1);
     s.add(this.rune);
-    this.pool = makeLightPool({ color: hex, radius: 7, intensity: 0.34 });
+    this.pool = makeLightPool({ color: hex, radius: 7, intensity: 0.2 });
     this.pool.layers.set(1);
     s.add(this.pool);
   }
@@ -559,7 +604,7 @@ class BossGame extends QuizGame {
     const frac = this.charge / this.T;
     const ok = this.run.record(this.round, i, 1 - frac);
     this.quiz.reveal(i);
-    if (ok) this.playerHit(frac);
+    if (ok) this.playerHit(frac, i);
     else this.bossAttack(false);
   }
   timeout() {
@@ -568,8 +613,9 @@ class BossGame extends QuizGame {
     this.quiz.reveal(-1);
     this.bossAttack(true);
   }
-  playerHit(frac) {
+  playerHit(frac, slot) {
     const dmg = 10 + Math.round(10 * (1 - frac)) + Math.min(8, (this.run.streak - 1) * 2);
+    const hitCol = slot >= 0 && SLOT_COLORS[slot] ? SLOT_COLORS[slot] : COLORS.cyan; // (the look of the blow: the answer's own colour)
     Sound.sfx("shot");
     const land = () => {
       const wasCalm = !this.enraged;
@@ -578,7 +624,7 @@ class BossGame extends QuizGame {
       Sound.sfx("boom");
       Sound.sfx("correct");
       UI.flash("good");
-      GFX.pulse(5, 0.12);
+      GFX.pulse(3, 0.06);
       GFX.hitStop(this.hp <= 0 ? 260 : 80);
       Haptics.buzz(30);
       Sound.setIntensity(this.enraged ? 3 : Sound.intensityFor(this.run.streak));
@@ -588,17 +634,25 @@ class BossGame extends QuizGame {
         if (this.has3D) this.scene.fog.color.setHex(0x2a0614);
       }
       const p = this.bandPoint(0.25);
-      UI.floater("-" + dmg + " HP", p.x, p.y, this.cfg.color);
+      if (this.has3D) { // the figure lands on the boss itself, large
+        const v = this._v.copy(this.boss.position).project(this.camera);
+        p.x = clamp((v.x * 0.5 + 0.5) * GFX.w, 60, GFX.w - 60); p.y = (0.5 - v.y * 0.5) * GFX.h - 10;
+      }
+      UI.floater("-" + dmg + " HP", p.x, p.y, hitCol, true);
       if (this.has3D) {
         const b = this.boss;
         const at = b.position.clone().add(new THREE.Vector3(0, 0, 2 * this.bossScale));
         this.bursts.burst(at, this.cfg.color, { n: 60, speed: 7, size: 0.35 });
-        this.bursts.burst(at, COLORS.cyan, { n: 24, speed: 5, size: 0.3, life: 0.6 });
+        this.bursts.burst(at, hitCol, { n: 24, speed: 5, size: 0.3, life: 0.6 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
-        this.flashAt(at, COLORS.cyan, 0.7, 2.6 * this.bossScale + 1.2);
+        this.flashAt(at, hitCol, 0.34, 1.7 * this.bossScale + 1);
+        if (!GFX.calm && !REDUCED_MOTION) { // a hard-edged star where the bolt lands, in the answer's colour
+          const st = this.hitStar;
+          st.position.copy(at); st.material.uniforms.uColor.value.copy(neon(hitCol, 2.6)); st.visible = true; this.hitStarT = 0;
+        }
         const em = b.userData.core.userData.mat.emissive;
         const base = em.clone();
-        this.tw.add(0.4, (k) => { em.setRGB(lerp(1.1, base.r, k), lerp(1.1, base.g, k), lerp(1.1, base.b, k)); });
+        this.tw.add(0.2, (k) => { em.setRGB(lerp(0.42, base.r, k), lerp(0.42, base.g, k), lerp(0.42, base.b, k)); }); // (it flares for a few frames and keeps its shape: at full white it was a blob)
         this.tw.add(0.35, (k) => { b.position.z = -Math.sin(k * Math.PI) * 1.2; });
         this.shockwave(b.position.clone(), neon(this.cfg.color, 2), 6);
       }
@@ -611,15 +665,23 @@ class BossGame extends QuizGame {
     };
     if (this.has3D) {
       // a plasma bolt with a ribbon tail
-      const { shot, tail, tc0 } = this.bolt;
+      const { shot, tail } = this.bolt;
       const tok = ++this.bolt.tok;
       const from = new THREE.Vector3(0, this.camY - 1.2, this.camZ - 3);
+      { // it leaves from the side of the screen its answer's letter is on, at the foot of the picture
+        const el = $$(".answers .ans .k", this.el)[slot], r = el && el.getBoundingClientRect();
+        if (r && this.band) {
+          const d = this._v.set(((r.left + r.width / 2) / GFX.w) * 2 - 1, 1 - (Math.min(this.band.bottom + 30, GFX.h) / GFX.h) * 2, 0.5).unproject(this.camera).sub(this.camera.position).normalize();
+          from.copy(this.camera.position).addScaledVector(d, 3.4);
+        }
+      }
       const to = this.boss.position.clone();
       shot.position.copy(from);
+      shot.material.color.copy(neon(hitCol, 3));
       shot.visible = true;
       tail.reset(from);
       tail.mesh.visible = true;
-      const tc = tail.mesh.material.uniforms.uColor.value;
+      const tc = tail.mesh.material.uniforms.uColor.value, tc0 = neon(hitCol, 2.6);
       tc.copy(tc0);
       this.tw.add(0.3, (k) => { if (this.bolt.tok === tok) { shot.position.lerpVectors(from, to, k); tail.push(shot.position); } }, () => {
         if (this.bolt.tok === tok) shot.visible = false;
@@ -638,7 +700,8 @@ class BossGame extends QuizGame {
       Sound.sfx("hit");
       UI.flash("hit");
       this.shake(0.55);
-      GFX.pulse(14, 0);
+      GFX.pulse(7, 0);
+      this.slash();
       Haptics.buzz([60, 40, 90]);
       Sound.setIntensity(this.enraged ? 3 : 0);
       this.taunt(this.hearts > 0 ? pick(this.lines.miss) : this.lines.win);
@@ -655,7 +718,7 @@ class BossGame extends QuizGame {
       this.boss.userData.eye.getWorldPosition(eye);
       const to = new THREE.Vector3(0, this.camY - 1.0, this.camZ - 1.5);
       const r = 0.25 * this.bossScale + 0.05;
-      const col = this.enraged ? COLORS.red : this.cfg.color;
+      const col = COLORS.red; // (its blow is red whatever colour it is: red is "you were hurt" everywhere in the arcade)
       const { beam, glow, muzzle } = this.atk;
       const tok = ++this.atk.tok;
       aimBeam(beam, eye, to, r);
@@ -669,7 +732,7 @@ class BossGame extends QuizGame {
       muzzle.scale.setScalar(3 * this.bossScale);
       muzzle.position.copy(eye);
       muzzle.visible = true;
-      this.flashAt(eye, col, 1, 7 * this.bossScale + 2);
+      this.flashAt(eye, col, 0.6, 3 * this.bossScale + 1.5); // (a flare at its eye, not a white blob over the whole figure)
       this.tw.add(0.5, (k) => {
         if (this.atk.tok !== tok) return;
         beam.material.uniforms.uFade.value = 1 - k;
@@ -680,6 +743,14 @@ class BossGame extends QuizGame {
       this.tw.wait(0.12, hit);
     } else hit();
     this.charge = 0;
+  }
+  // Three slashes across the whole screen, panels and all: its blow lands on the player, not in the arena.
+  slash() {
+    const el = $(".slashes", this.el);
+    if (!el || REDUCED_MOTION || GFX.calm) return;
+    el.classList.remove("go");
+    void el.offsetWidth; // (so the stroke starts again from its beginning)
+    el.classList.add("go");
   }
   // A flash of light at a point: a bloom sprite plus a real light on the metal.
   flashAt(pos, color, k = 1, size = 8) {
@@ -828,8 +899,8 @@ class BossGame extends QuizGame {
     const lungeK = Math.sin(Math.min(1, this.atkK) * Math.PI);
     if (this.state !== "over") {
       this.showScale += (this.bossScale - this.showScale) * ease;
-      this.boss.scale.setScalar(this.showScale * (1 + 0.07 * wind + 0.2 * lungeK));
-      if (this.state !== "resolve" || lungeK > 0) this.boss.position.z = (0.9 * wind + 2.4 * lungeK) * this.showScale;
+      this.boss.scale.setScalar(this.showScale * (1 + 0.12 * wind + 0.2 * lungeK));
+      if (this.state !== "resolve" || lungeK > 0) this.boss.position.z = (1.6 * wind + 2.4 * lungeK) * this.showScale;
     }
     this.rune.scale.setScalar(0.45 + this.showScale * 0.75);
     this.pool.scale.setScalar(0.5 + this.showScale * 0.6);
@@ -842,7 +913,7 @@ class BossGame extends QuizGame {
       // the war machine shifts its weight, looks about and leans in as it charges
       u.body.rotation.y = Math.sin(this.t * 0.55 * rage) * 0.16 + Pointer.x * 0.12;
       u.body.rotation.z = Math.sin(this.t * 0.4 * rage) * 0.035;
-      u.body.rotation.x = f * 0.16 + Math.sin(this.t * 0.7) * 0.02;
+      u.body.rotation.x = f * 0.16 + wind * 0.14 + Math.sin(this.t * 0.7) * 0.02;
     }
     this.rig.update(dt, f); // breathing, twitches, wind-up, recoil, damage, rage (look only)
     const orbR = u.body ? 4.7 : 3.7; // the cyborg's gems circle outside its shields
@@ -885,6 +956,13 @@ class BossGame extends QuizGame {
       this.hitLight.intensity = this.flashT * this.flashT * 6;
     }
     this.shards.update(dt);
+    if (this.hitStar.visible) { // the star a bolt leaves: it opens fast and is gone in a quarter of a second
+      const k = Math.min(1, (this.hitStarT += dt / 0.34)), e = 1 - (1 - k) * (1 - k);
+      this.hitStar.quaternion.copy(this.camera.quaternion);
+      this.hitStar.scale.setScalar((2.6 + 4.4 * e) * this.bossScale);
+      this.hitStar.material.uniforms.uK.value = 1 - k * k;
+      this.hitStar.visible = k < 1;
+    }
     this.motes.userData.drift(this.t);
     // enraged: the arena bleeds red
     this.rageK += ((this.enraged && this.hp > 0 ? 1 : 0) - this.rageK) * Math.min(1, dt * 1.5);

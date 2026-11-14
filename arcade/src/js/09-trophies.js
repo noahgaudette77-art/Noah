@@ -55,7 +55,8 @@ const Trophies = {
   html() {
     return `<div class="trophies">${TROPHIES.map((t) => {
       const on = this.has(t.id);
-      return `<div class="tr${on ? " on" : ""}"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", on ? COLORS.yellow : "#8d82c8")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
+      const hue = /^streak/.test(t.id) ? COLORS.orange : /^ans|^wave/.test(t.id) ? COLORS.cyan : /^cards|^reader/.test(t.id) ? COLORS.lime : /^boss|^flawless/.test(t.id) ? COLORS.magenta : /^exam/.test(t.id) ? COLORS.violet : COLORS.yellow;
+      return `<div class="tr${on ? " on" : ""}" style="--t:${hue}"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", on ? COLORS.yellow : "#8d82c8")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
     }).join("")}</div>`;
   },
 };

@@ -1359,3 +1359,309 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .palette button.here { box-shadow: 0 0 0 2px var(--yellow), 0 0 12px -2px var(--yellow); }
 .stage .meta, .tile .k { color: #dad3fb; }
 .boot-bar { background: rgba(170, 150, 255, 0.36); }
+
+/* ================= Interface, pass 8 (after its second independent review) =================
+   The kit is three materials (it was one violet slab doing every job). A PLATE is something you press or read as a
+   row (stages, settings, trophies, mastery rows, review items): moulded, two corners cut, a lit band along its top
+   and a dark lip along its foot. A READ-OUT shows a figure (stat tiles, score boards, switch housings): black glass
+   sunk in a bezel, a glint across one corner, the figure lit from inside. A KEY is every button: a cap standing
+   on a lip of its own colour, in a dark socket. Whatever is lit throws its colour on what is beside it. */
+
+/* ---- plates ---- */
+.stage, .setting, .trophies .tr, .mrow, .review li, .hit, .panel, .debrief, .client-card {
+  --n: 9px; --pb: #5848b8; --pf: rgba(27, 16, 78, 0.9); --spill: transparent; --sx: 100%; --bl: 2px;
+  position: relative; z-index: 0; background: none; border-color: transparent; box-shadow: none;
+}
+.stage::before, .setting::before, .trophies .tr::before, .mrow::before, .review li::before, .hit::before, .panel::before, .debrief::before, .client-card::before {
+  content: ""; position: absolute; inset: -2px; left: calc(var(--bl) * -1); z-index: -1; pointer-events: none; box-sizing: border-box;
+  border: 2px solid var(--pb);
+  -webkit-clip-path: polygon(var(--n) 0, 100% 0, 100% calc(100% - var(--n)), calc(100% - var(--n)) 100%, 0 100%, 0 var(--n));
+  clip-path: polygon(var(--n) 0, 100% 0, 100% calc(100% - var(--n)), calc(100% - var(--n)) 100%, 0 100%, 0 var(--n));
+  background:
+    linear-gradient(135deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 0 0 / 30px 30px no-repeat border-box,
+    linear-gradient(315deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 100% 100% / 30px 30px no-repeat border-box,
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0 4px, rgba(255, 255, 255, 0.08) 4px 5px, rgba(255, 255, 255, 0) 5px) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0 1px, rgba(255, 255, 255, 0.13) 1px, rgba(255, 255, 255, 0) 46%) padding-box,
+    radial-gradient(75% 150% at var(--sx) 50%, var(--spill), rgba(0, 0, 0, 0) 72%) padding-box,
+    linear-gradient(var(--pf), var(--pf)) padding-box;
+}
+.stage:hover, .stage:focus-visible { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); }
+.stage.focal { border-color: transparent; background: none; box-shadow: none; --pb: var(--c, var(--cyan));
+  --pf: color-mix(in srgb, var(--c, var(--cyan)) 19%, rgba(22, 13, 66, 0.94)); --spill: color-mix(in srgb, var(--c, var(--cyan)) 34%, transparent); --sx: 0%;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--c, var(--cyan)) 78%, transparent)); }
+.stage.wide { --pb: color-mix(in srgb, var(--c) 62%, #2a1c78); --spill: color-mix(in srgb, var(--c) 17%, transparent); --sx: 0%; }
+.stage.wide[disabled] { --spill: transparent; }
+.trophies .tr.on { border-color: transparent; box-shadow: none; --pb: #d7b53c; --spill: rgba(255, 225, 79, 0.2); --sx: 0%; filter: drop-shadow(0 0 5px rgba(255, 225, 79, 0.5)); }
+.trophies .tr:not(.on) { --pb: #4a3c9c; --pf: rgba(20, 12, 60, 0.9); }
+/* the client's card (briefing, debrief) is a plate edged in its own colour, lit from the portrait's side */
+.debrief, .client-card { --pb: var(--c, var(--lime)); --spill: color-mix(in srgb, var(--c, var(--lime)) 18%, transparent); --sx: 0%;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c, var(--lime)) 50%, transparent)); }
+.review li { --bl: 6px; --pb: #5848b8; }
+.review li::before { background:
+    linear-gradient(135deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 0 0 / 30px 30px no-repeat border-box,
+    linear-gradient(315deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 100% 100% / 30px 30px no-repeat border-box,
+    linear-gradient(var(--c, var(--red)), var(--c, var(--red))) 0 0 / 6px 100% no-repeat border-box,
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0 4px, rgba(255, 255, 255, 0.08) 4px 5px, rgba(255, 255, 255, 0) 5px) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0 1px, rgba(255, 255, 255, 0.13) 1px, rgba(255, 255, 255, 0) 46%) padding-box,
+    radial-gradient(60% 150% at 0% 50%, color-mix(in srgb, var(--c, var(--red)) 15%, transparent), rgba(0, 0, 0, 0) 72%) padding-box,
+    linear-gradient(var(--pf), var(--pf)) padding-box; }
+/* a switch that is on lights its end of the row */
+.setting:has(.seg:not(.wrap) [data-v="true"][aria-pressed="true"]) { --spill: rgba(53, 239, 255, 0.15); }
+.setting { padding: 12px 12px 14px; }
+.mrow { padding: 9px 11px 12px; }
+.stage { padding-bottom: 12px; }
+
+/* ---- read-outs ---- */
+.tile, .board, .chip {
+  border: 2px solid #3d2f92;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.09) 0, rgba(255, 255, 255, 0.05) 21%, rgba(255, 255, 255, 0) 21.4%), linear-gradient(180deg, #030109, #0c0627);
+  box-shadow: inset 0 0 0 1px #000, inset 0 5px 9px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.tiles { grid-auto-rows: 1fr; }
+.tile { min-height: 60px; }
+.tile .k { display: flex; align-items: flex-start; gap: 6px; }
+.tile .k svg { flex: none; width: 11px; height: 11px; margin-top: 1px; color: var(--c, #a99cf0); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c, #a99cf0) 70%, transparent)); }
+.tile .v { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7), 0 5px 16px color-mix(in srgb, var(--c, #b7a9ff) 55%, transparent); }
+.board { padding: 9px 11px; }
+.boards h3 { margin-bottom: 6px; text-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent); }
+.chip { color: #dad3fb; padding: 7px 9px; }
+
+/* ---- switches: a housing of black glass, the chosen side a lit key ---- */
+.seg { padding: 2px; gap: 2px; border: 2px solid #3d2f92; background: #05020f; box-shadow: inset 0 0 0 1px #000, inset 0 4px 7px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.12); }
+.seg:not(.wrap) button { min-height: 38px; min-width: 46px; padding: 0 11px; color: #b3a9e6; }
+.seg:not(.wrap) button[aria-pressed="true"] { color: #12052e; background: linear-gradient(180deg, color-mix(in srgb, var(--c, var(--cyan)) 74%, #fff), var(--c, var(--cyan)));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), inset 0 -4px 0 rgba(0, 0, 0, 0.24), 0 0 14px -2px var(--c, var(--cyan)); }
+.seg:not(.wrap) button[aria-pressed="true"][data-v="false"] { color: #f1ecff; background: linear-gradient(180deg, #5a48b8, #3f2f94); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -4px 0 rgba(0, 0, 0, 0.3); }
+/* the effect switches: keys with a lamp. Lit: a white label and a cyan lamp that spills on the cap. Off: a dim label, a dark socket. */
+.seg.wrap { padding: 0; border: 0; background: none; box-shadow: none; gap: 9px 7px; }
+.seg.wrap button, .seg.wrap button[aria-pressed="true"] {
+  min-height: 44px; padding: 7px 9px 11px; gap: 9px; border: 0; color: #9f94d8;
+  background: linear-gradient(180deg, #2a1b72, #1b104f);
+  box-shadow: 0 0 0 2px #05020f, inset 0 0 0 2px #46389e, inset 0 -6px 0 #120a3c, inset 0 4px 0 rgba(255, 255, 255, 0.07);
+}
+.seg.wrap button[aria-pressed="true"] { color: #f4fdff;
+  background: radial-gradient(70% 150% at 0% 45%, rgba(53, 239, 255, 0.26), rgba(53, 239, 255, 0) 70%), linear-gradient(180deg, #2f2080, #1d1156);
+  box-shadow: 0 0 0 2px #05020f, inset 0 0 0 2px #5b78d8, inset 0 -6px 0 #120a3c, inset 0 4px 0 rgba(255, 255, 255, 0.1); }
+.seg.wrap button::before { width: 14px; height: 14px; margin-bottom: 3px; background: #07031a; box-shadow: inset 0 0 0 2px #3d318c, inset 0 3px 3px rgba(0, 0, 0, 0.9); }
+.seg.wrap button[aria-pressed="true"]::before { background: radial-gradient(circle at 36% 30%, #fff 0, #c9fbff 20%, var(--cyan) 52%); box-shadow: 0 0 0 2px #0b3540, 0 0 10px 2px rgba(53, 239, 255, 0.75); }
+.seg.wrap button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* ---- keys ---- */
+.btn {
+  box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 color-mix(in srgb, var(--c, var(--yellow)) 46%, #05020f), 0 5px 0 2px #05020f,
+    0 0 22px -9px var(--c, var(--yellow)), 0 17px 22px -13px var(--c, var(--yellow)), inset 0 2px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 color-mix(in srgb, var(--c, var(--yellow)) 46%, #05020f), 0 1px 0 2px #05020f, inset 0 2px 0 rgba(255, 255, 255, 0.4); }
+.btn.ghost, .ch-hero .acts .btn.ghost { box-shadow: 0 0 0 2px #05020f, 0 4px 0 0 #1d1259, 0 4px 0 2px #05020f, inset 0 0 0 2px #5a48b4, inset 0 4px 0 rgba(255, 255, 255, 0.08); }
+.btn.ghost:active { transform: translateY(3px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f, inset 0 0 0 2px #5a48b4; }
+.btn.ghost[data-act="reset"], .btn.ghost[data-act="quit"] { color: #ff9ab0; box-shadow: 0 0 0 2px #05020f, 0 4px 0 0 #3a122c, 0 4px 0 2px #05020f, inset 0 0 0 2px #96406a, inset 0 4px 0 rgba(255, 255, 255, 0.08); }
+.iconbtn { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+.iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); }
+.iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
+/* the way forward lights the bar it stands on */
+.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
+.actions.pinned .wrap.one { grid-template-columns: 1fr; }
+.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+
+/* ---- a focus ring is the keyboard's (see UI.init): none until a key has been used ---- */
+html:not([data-input="keys"]) :focus-visible { outline: none !important; }
+
+/* ---- the head of a menu page: the loading screen's horizon runs under it, its grid fades up behind the title ---- */
+.screen[style*="background:rgba(9,3,32"] > .topbar { position: relative; z-index: 0; padding-bottom: 10px; margin-bottom: 6px; }
+.screen[style*="background:rgba(9,3,32"] > .topbar::after { content: ""; position: absolute; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); bottom: 0; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(53, 239, 255, 0), rgba(53, 239, 255, 0.75) 16%, rgba(255, 58, 212, 0.75) 84%, rgba(255, 58, 212, 0)); box-shadow: 0 0 14px 1px rgba(130, 150, 255, 0.45); }
+.screen[style*="background:rgba(9,3,32"] > .topbar::before { content: ""; position: absolute; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); top: calc(var(--gut-t) * -1); bottom: 2px; z-index: -1; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255, 58, 212, 0.13) 0 1px, rgba(0, 0, 0, 0) 1px 26px), repeating-linear-gradient(0deg, rgba(255, 58, 212, 0.11) 0 1px, rgba(0, 0, 0, 0) 1px 13px);
+  -webkit-mask-image: linear-gradient(0deg, #000, rgba(0, 0, 0, 0.1)); mask-image: linear-gradient(0deg, #000, rgba(0, 0, 0, 0.1)); }
+/* stage select: the title keeps to one line beside the game's tag; pictures a size up; a boss list is the boss's
+   colour from the top down, with the bosses large */
+.scr-select .topbar h1 { white-space: nowrap; font-size: clamp(9px, 2.9vw, 12px); }
+.scr-select .topbar .chip { font-size: clamp(7px, 2.1vw, 9px); padding: 7px 7px; }
+.stage .n.pic { width: 56px; height: 56px; }
+.scr-select.is-boss .stage .n.pic { width: 66px; height: 66px; }
+.scr-select.is-boss > .topbar::after { background: linear-gradient(90deg, rgba(255, 58, 212, 0), rgba(255, 58, 212, 0.85) 16%, rgba(255, 71, 105, 0.85) 84%, rgba(255, 71, 105, 0)); box-shadow: 0 0 14px 1px rgba(255, 58, 212, 0.5); }
+.scr-select.is-boss { background-image: radial-gradient(120% 34% at 50% 0%, rgba(255, 58, 212, 0.2), rgba(255, 58, 212, 0) 70%), linear-gradient(180deg, rgba(16, 7, 50, 0.6), rgba(8, 3, 28, 0.86) 46%, rgba(6, 2, 22, 0.92)) !important; }
+.scr-select.is-boss .stage .meta span:last-child { color: color-mix(in srgb, var(--c) 70%, #fff); }
+
+/* ---- dialogs: a title half as big again, lit from its own colour, a bracket at each corner of the box ---- */
+.dialog { --bk: color-mix(in srgb, var(--c, #9b7cff) 70%, #fff); padding: 22px 18px 26px;
+  background:
+    linear-gradient(var(--bk), var(--bk)) 7px 7px / 16px 3px no-repeat, linear-gradient(var(--bk), var(--bk)) 7px 7px / 3px 16px no-repeat,
+    linear-gradient(var(--bk), var(--bk)) calc(100% - 7px) 7px / 16px 3px no-repeat, linear-gradient(var(--bk), var(--bk)) calc(100% - 7px) 7px / 3px 16px no-repeat,
+    linear-gradient(var(--bk), var(--bk)) 7px calc(100% - 7px) / 16px 3px no-repeat, linear-gradient(var(--bk), var(--bk)) 7px calc(100% - 7px) / 3px 16px no-repeat,
+    linear-gradient(var(--bk), var(--bk)) calc(100% - 7px) calc(100% - 7px) / 16px 3px no-repeat, linear-gradient(var(--bk), var(--bk)) calc(100% - 7px) calc(100% - 7px) / 3px 16px no-repeat,
+    radial-gradient(90% 56% at 50% 0%, color-mix(in srgb, var(--c, #9b7cff) 26%, transparent), rgba(0, 0, 0, 0) 72%),
+    linear-gradient(180deg, #26156a, #110733); }
+.dialog h2 { font-size: clamp(15px, 4.7vw, 19px); line-height: 1.3; letter-spacing: 0.06em; text-wrap: balance; padding: 0 16px;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 0 16px color-mix(in srgb, var(--c, #9b7cff) 80%, transparent); }
+
+/* ---- results: a larger medal on brighter rays; the read-outs arrive one after another ---- */
+.res-hero { width: 88px; height: 88px; margin-top: 30px; }
+.res-hero::before { inset: -46px; opacity: 1;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, var(--yellow)) 62%, transparent) 0 7deg, transparent 7deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 30%, transparent 72%); mask: radial-gradient(circle, #000 30%, transparent 72%); animation-duration: 26s; }
+.res-hero > svg { width: 52px; height: 52px; }
+.res-hero > canvas { width: 82px; height: 82px; }
+.res-hero.small { width: 58px; height: 58px; margin-top: 18px; }
+.res-hero.small::before { inset: -26px; }
+.scr-results .tiles .tile { animation: tile-in 0.38s var(--ease-out) backwards; }
+.scr-results .tiles .tile:nth-child(1) { animation-delay: 0.3s; }
+.scr-results .tiles .tile:nth-child(2) { animation-delay: 0.38s; }
+.scr-results .tiles .tile:nth-child(3) { animation-delay: 0.46s; }
+.scr-results .tiles .tile:nth-child(4) { animation-delay: 0.54s; }
+.scr-results .tiles .tile:nth-child(5) { animation-delay: 0.62s; }
+.scr-results .tiles .tile:nth-child(n + 6) { animation-delay: 0.7s; }
+@keyframes tile-in { from { opacity: 0; transform: translateY(10px) scale(0.95); } }
+@media (prefers-reduced-motion: reduce) { .scr-results .tiles .tile { animation: none; } }
+
+/* ---- the exam's front page: the proctor's emblem beside a brief you can read whole (the hub card's four-line
+   box had cut it down to its middle lines), your best against the pass line, START on the bar at the foot ---- */
+.hub-desc { height: auto; display: block; overflow: visible; min-height: 0; }
+.hub-card .hub-desc { height: calc(var(--fs) * 4.4); display: grid; align-content: center; overflow: hidden; }
+.exam-brief { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 12px 14px 14px 12px; --pb: #a987ff; --spill: rgba(166, 95, 255, 0.3); --sx: 0%; }
+.exam-brief .eb-pic { width: 66px; height: 66px; image-rendering: pixelated; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 22%, #120838); filter: brightness(1.5) contrast(0.94); box-shadow: 0 0 16px -4px var(--c), 0 3px 0 #000; }
+.exam-brief .hub-desc { font-size: clamp(18px, 4.6vw, 21px); line-height: 1.08; margin: 0; text-wrap: pretty; }
+.passline { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; font: 8px/1 var(--font-display); letter-spacing: 0.04em; color: #dad3fb; margin-top: -2px; }
+.pl-bar { position: relative; height: 14px; background: #05020f; border: 2px solid #3d2f92; box-shadow: inset 0 0 0 1px #000, inset 0 3px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.12); }
+.pl-bar i { position: absolute; left: 1px; top: 1px; bottom: 1px; width: calc(var(--v) * 1% - 2px); min-width: 0; background: linear-gradient(90deg, #ffb13a, var(--yellow)); box-shadow: 0 0 10px -2px var(--yellow); }
+.pl-bar b { position: absolute; left: 60%; top: -6px; bottom: -6px; width: 2px; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+.pl-v { color: var(--lime); text-shadow: 0 0 8px rgba(134, 255, 94, 0.5); }
+
+/* ---- loading: stars over the horizon, a warm light where the egg will rise, a track you can see ---- */
+.boot-logo::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 54vh; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(44% 34% at 50% 104%, rgba(255, 196, 80, 0.3), rgba(255, 120, 60, 0.1) 46%, rgba(0, 0, 0, 0) 72%),
+    linear-gradient(#fff, #fff) 11% 16% / 2px 2px no-repeat, linear-gradient(#bff9ff, #bff9ff) 24% 34% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 37% 9% / 3px 3px no-repeat,
+    linear-gradient(#ffc8f3, #ffc8f3) 46% 27% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 58% 14% / 2px 2px no-repeat, linear-gradient(#bff9ff, #bff9ff) 69% 31% / 3px 3px no-repeat,
+    linear-gradient(#fff, #fff) 81% 11% / 2px 2px no-repeat, linear-gradient(#ffc8f3, #ffc8f3) 90% 26% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 6% 44% / 2px 2px no-repeat,
+    linear-gradient(#fff, #fff) 17% 58% / 2px 2px no-repeat, linear-gradient(#bff9ff, #bff9ff) 31% 49% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 73% 52% / 2px 2px no-repeat,
+    linear-gradient(#ffc8f3, #ffc8f3) 86% 46% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 95% 60% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 52% 42% / 2px 2px no-repeat,
+    linear-gradient(#bff9ff, #bff9ff) 3% 72% / 2px 2px no-repeat, linear-gradient(#fff, #fff) 64% 68% / 2px 2px no-repeat;
+  animation: boot-stars 3.2s steps(2, end) infinite; }
+@keyframes boot-stars { 50% { opacity: 0.72; } }
+.boot-bar { background: rgba(190, 172, 255, 0.5); }
+@media (prefers-reduced-motion: reduce) { .boot-logo::before { animation: none; } }
+
+/* the exam's front page, continued: the eleven chapters' shares of the paper as a strip in their worlds' colours;
+   the proctor waits, large and dim, in whatever room is left above START */
+.scr-examsetup .scroll > .wrap { display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+.mixstrip { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; font: 8px/1 var(--font-display); letter-spacing: 0.04em; color: #dad3fb; }
+.mixstrip .pl-k { padding-top: 3px; }
+.mx-bar { display: flex; gap: 2px; }
+.mx-bar i { position: relative; display: block; min-width: 0; height: 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 78%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 60%, #000)); box-shadow: 0 0 9px -3px var(--c); }
+.mx-bar i b { position: absolute; left: 50%; top: 17px; transform: translateX(-50%); font: 400 7px/1 var(--font-display); color: color-mix(in srgb, var(--c) 55%, #fff); }
+.mixstrip { padding-bottom: 12px; }
+.exam-wm { flex: 1 1 0; min-height: 0; position: relative; overflow: hidden; }
+.exam-wm canvas { position: absolute; left: 50%; top: 50%; height: min(84%, 210px); aspect-ratio: 1; transform: translate(-50%, -50%); image-rendering: pixelated; opacity: 0.2; filter: brightness(1.5) saturate(0.8);
+  -webkit-mask-image: radial-gradient(circle, #000 40%, transparent 74%); mask-image: radial-gradient(circle, #000 40%, transparent 74%); }
+
+/* Final Exam, pass 8 (after its second independent review). The scene fades into the answers over a long band (the
+   first answer's edge cut the boss at the waist). The clock's bar is thick enough to be read as a bar, on a track.
+   The ending's bars are the arcade's indigo glass with a lit edge (they were black), and SKIP sits in the lower one. */
+.scr-exam .answers::before { top: -72px; background: linear-gradient(180deg, rgba(7, 2, 26, 0), rgba(7, 2, 26, 0.5) 40px, rgba(7, 2, 26, 0.93) 74px, rgba(7, 2, 26, 0.96)); }
+.scr-exam .timer { height: 9px; border: 0; background: #1c1450; box-shadow: inset 0 0 0 1px #000, inset 0 2px 3px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1); }
+.exam-cine .bar { background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, rgba(0, 0, 0, 0) 1px 3px), linear-gradient(180deg, #110838, #080320); }
+.exam-cine .bar.top { box-shadow: 0 2px 0 rgba(150, 122, 255, 0.6), 0 12px 20px -10px rgba(120, 90, 255, 0.55); }
+.exam-cine .bar.bot { box-shadow: 0 -2px 0 rgba(150, 122, 255, 0.6), 0 -12px 20px -10px rgba(120, 90, 255, 0.55); }
+.exam-cine .skip { bottom: max(calc(4vh - 17px), var(--gut-b)); }
+
+/* ================= Interface, closing fixes after its third independent review =================
+   Light: a menu page stands on the arcade's floor (a lit horizon and a grid running to it, behind everything on the
+   page), so its plates are somewhere, not adrift on black. Glass: the tube's scanlines run across plates and
+   read-outs too (under the words, never over them; off with CRT glass). */
+.screen[style*="background:rgba(9,3,32"]::before { content: ""; position: absolute; left: -40%; right: -40%; top: 64%; bottom: -14%; z-index: -1; pointer-events: none; opacity: 0.55;
+  background: repeating-linear-gradient(90deg, rgba(255, 58, 212, 0.5) 0 1px, rgba(0, 0, 0, 0) 1px 46px), repeating-linear-gradient(180deg, rgba(255, 58, 212, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 30px);
+  transform: perspective(320px) rotateX(63deg); transform-origin: 50% 0;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0), #000 22%, #000 78%, rgba(0, 0, 0, 0)); mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0), #000 22%, #000 78%, rgba(0, 0, 0, 0)); }
+.screen[style*="background:rgba(9,3,32"]::after { content: ""; position: absolute; left: 0; right: 0; top: 46%; height: 36%; z-index: -1; pointer-events: none;
+  background: radial-gradient(64% 50% at 50% 50%, rgba(255, 58, 212, 0.2), rgba(120, 70, 255, 0.1) 46%, rgba(0, 0, 0, 0) 72%), linear-gradient(90deg, rgba(53, 239, 255, 0), rgba(53, 239, 255, 0.5) 30%, rgba(255, 58, 212, 0.5) 70%, rgba(255, 58, 212, 0)) 0 50% / 100% 2px no-repeat; }
+body:not(.crt-off) .stage::before, body:not(.crt-off) .setting::before, body:not(.crt-off) .trophies .tr::before, body:not(.crt-off) .mrow::before, body:not(.crt-off) .hit::before, body:not(.crt-off) .panel::before, body:not(.crt-off) .debrief::before, body:not(.crt-off) .client-card::before {
+  background:
+    linear-gradient(135deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 0 0 / 30px 30px no-repeat border-box,
+    linear-gradient(315deg, transparent calc(var(--n) * 0.7071 - 0.5px), var(--pb) calc(var(--n) * 0.7071 - 0.5px) calc(var(--n) * 0.7071 + 2px), transparent calc(var(--n) * 0.7071 + 2px)) 100% 100% / 30px 30px no-repeat border-box,
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, rgba(0, 0, 0, 0) 1px 3px) padding-box,
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0 4px, rgba(255, 255, 255, 0.08) 4px 5px, rgba(255, 255, 255, 0) 5px) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0 1px, rgba(255, 255, 255, 0.13) 1px, rgba(255, 255, 255, 0) 46%) padding-box,
+    radial-gradient(75% 150% at var(--sx) 50%, var(--spill), rgba(0, 0, 0, 0) 72%) padding-box,
+    linear-gradient(var(--pf), var(--pf)) padding-box; }
+/* read-outs: glass you can see into (a hair off black, a deeper shadow under the bezel's top edge, the glint, the lines) */
+.tile, .board, .chip {
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.11) 0, rgba(255, 255, 255, 0.05) 21%, rgba(255, 255, 255, 0) 21.4%), linear-gradient(180deg, #07041c, #150c40);
+  box-shadow: inset 0 0 0 1px #000, inset 0 7px 10px rgba(0, 0, 0, 0.72), inset 0 -1px 0 rgba(255, 255, 255, 0.07), 0 1px 0 rgba(255, 255, 255, 0.12); }
+body:not(.crt-off) .tile, body:not(.crt-off) .board, body:not(.crt-off) .chip {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, rgba(0, 0, 0, 0) 1px 3px), linear-gradient(118deg, rgba(255, 255, 255, 0.11) 0, rgba(255, 255, 255, 0.05) 21%, rgba(255, 255, 255, 0) 21.4%), linear-gradient(180deg, #07041c, #150c40); }
+/* a lit plate throws its colour a little further */
+.stage.focal { filter: drop-shadow(0 0 9px color-mix(in srgb, var(--c, var(--cyan)) 85%, transparent)); }
+.stage.wide:not([disabled]) { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 45%, transparent)); }
+.exam-brief { filter: drop-shadow(0 0 7px rgba(166, 95, 255, 0.6)); }
+/* the sheen crosses a button under its label, not over it (START greyed out as it passed) */
+.btn { isolation: isolate; }
+.btn:not(.ghost):not(.small)::after { z-index: -1; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.34) 50%, transparent 60%); }
+/* a star not yet earned is hollow (a solid violet one read as earned) */
+.stars svg[fill="#7868cc"] { fill: #170c40; filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0); }
+.res-stars .stars svg[fill="#7868cc"] { filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)); }
+/* trophies: the emblem sits in a socket edged with the hue of what it is for; one not yet won shows that hue dimly */
+.trophies .tr .ic { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: #05020f; border: 2px solid #3d2f92; border-left: 4px solid color-mix(in srgb, var(--t, #8d82c8) 62%, #1a1050);
+  box-shadow: inset 0 0 0 1px #000, inset 0 4px 6px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.1); }
+.trophies .tr .ic svg { width: 22px; height: 22px; }
+.trophies .tr:not(.on) .ic svg { fill: color-mix(in srgb, var(--t, #8d82c8) 50%, #8d82c8); }
+.trophies .tr.on .ic { border-color: #d7b53c; border-left-color: var(--t); }
+.trophies .tr .lk { opacity: 0.6; }
+/* setup: a glyph at the head of each row; rows share a height; a row's second line breaks evenly */
+.setting .sl { flex: 1 1 6.4em; }
+.setting .si { flex: none; width: 30px; height: 30px; display: grid; place-items: center; background: #05020f; border: 2px solid #3d2f92; color: #cfc7ff;
+  box-shadow: inset 0 0 0 1px #000, inset 0 3px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.1); }
+.setting .si svg { width: 16px; height: 16px; }
+.setting:has(.seg:not(.wrap) [data-v="true"][aria-pressed="true"]) .si { color: var(--cyan); }
+.setting { min-height: 76px; align-items: center; }
+.setting .sl small { text-wrap: balance; }
+.fxset .sl { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; }
+.fxset .sl small { grid-column: 2; }
+.fxset .sl .si { grid-row: span 2; }
+/* the quick cards over a stage list: the list's own leading, a larger emblem */
+.stage.wide .meta { line-height: 1.25; }
+.stage.wide .wico, .stage.wide .wpic { width: 40px; height: 40px; }
+.stage.wide .wico svg { width: 28px; height: 28px; }
+/* results: the medal has a lip and throws light; its rays are long and short by turns; the rank's bar is the ten-cell meter */
+.res-hero::after { box-shadow: 0 0 0 3px #000, 0 0 0 5px color-mix(in srgb, var(--c, var(--yellow)) 40%, #000), 0 0 30px 2px color-mix(in srgb, var(--c, var(--yellow)) 60%, transparent),
+  inset 0 0 20px -6px var(--c, var(--yellow)), inset 0 3px 0 rgba(255, 255, 255, 0.28), inset 0 -6px 0 rgba(0, 0, 0, 0.4), 0 8px 0 -2px rgba(0, 0, 0, 0.6); }
+.res-hero::before { background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c, var(--yellow)) 70%, transparent) 0 6deg, transparent 6deg 15deg, color-mix(in srgb, var(--c, var(--yellow)) 34%, transparent) 15deg 18deg, transparent 18deg 30deg); }
+.rank .meter { position: relative; background: #241c5c; border: 0; box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6); }
+.rank .meter::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(11, 5, 39, 0) 0, rgba(11, 5, 39, 0) calc(10% - 2px), #0b0527 calc(10% - 2px), #0b0527 10%); }
+/* the exam's front page: the proctor in the room above START is crisp pixels behind the tube's lines, standing on a lit floor */
+.exam-wm canvas { opacity: 0.2; filter: none; -webkit-mask-image: repeating-linear-gradient(0deg, #000 0 3px, rgba(0, 0, 0, 0.25) 3px 5px); mask-image: repeating-linear-gradient(0deg, #000 0 3px, rgba(0, 0, 0, 0.25) 3px 5px); }
+.exam-wm::after { content: ""; position: absolute; left: 50%; bottom: 4%; width: min(74%, 250px); height: 18px; transform: translateX(-50%); pointer-events: none; background: radial-gradient(50% 50% at 50% 50%, rgba(255, 58, 212, 0.4), rgba(255, 58, 212, 0) 72%); }
+/* loading: the wordmark and its bar stand clear above the horizon; the wordmark has the headings' hard edge; the grid's lines glow */
+#boot { padding-bottom: 13vh; }
+.boot-logo b { text-shadow: 0 0 6px #fff, 0 0 22px var(--magenta), 0 4px 0 #6a34d8, 0 7px 0 #2a0a55; }
+#boot::before { filter: drop-shadow(0 0 3px rgba(255, 58, 212, 0.9)); }
+.boot-bar { background: rgba(120, 160, 255, 0.36); }
+.boot-bar i { background: linear-gradient(90deg, transparent, var(--cyan) 30%, #fff 50%, var(--cyan) 70%, transparent); }
+
+/* Risk Blaster, pass 8 (after its second independent review). An answer keeps the room for its mark from the start, so
+   marking it never rewraps its words (the panel grew and the picture above it jumped as the shot landed). The streak's
+   pips are squares you can count, empty ones outlined; the multiplier is a size up; the clock's bar is a bar. */
+.scr-game:not(.scr-exam) .answers .ans { padding-right: 38px; }
+.scr-blaster .combo-meter { gap: 2px; }
+.scr-blaster .combo-meter i { width: 8px; height: 8px; background: rgba(10, 5, 34, 0.7); box-shadow: inset 0 0 0 1px rgba(170, 150, 255, 0.55); }
+.scr-blaster .combo-meter i.on { box-shadow: 0 0 6px var(--cyan); }
+.scr-blaster .combo { font-size: 12px; }
+.scr-blaster .timer { height: 8px; border: 0; background: #1c1450; box-shadow: inset 0 0 0 1px #000, inset 0 2px 3px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1); }
+
+/* A trophy that arrives during the exam's ending sits under the boss's bar, not on it. */
+body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
+
+/* Boss Rush, pass 8 (after its third independent review). The boss's blow lands on the player: three slashes run
+   across the whole screen, panels included (once an attack; not with Reduced effects). The ENRAGED tag is dark
+   lettering on a hot plate; the attack row's label heats instead of fading as the bar fills. */
+.slashes { position: absolute; inset: 0; z-index: 40; pointer-events: none; opacity: 0;
+  background:
+    linear-gradient(118deg, rgba(0, 0, 0, 0) calc(37% - 10px), rgba(255, 71, 105, 0.9) calc(37% - 9px), #fff calc(37% - 2px), #fff 37%, rgba(255, 71, 105, 0.9) calc(37% + 5px), rgba(0, 0, 0, 0) calc(37% + 7px)),
+    linear-gradient(118deg, rgba(0, 0, 0, 0) calc(50% - 14px), rgba(255, 71, 105, 0.95) calc(50% - 12px), #fff calc(50% - 3px), #fff 50%, rgba(255, 71, 105, 0.95) calc(50% + 8px), rgba(0, 0, 0, 0) calc(50% + 10px)),
+    linear-gradient(118deg, rgba(0, 0, 0, 0) calc(63% - 10px), rgba(255, 71, 105, 0.9) calc(63% - 9px), #fff calc(63% - 2px), #fff 63%, rgba(255, 71, 105, 0.9) calc(63% + 5px), rgba(0, 0, 0, 0) calc(63% + 7px));
+  filter: drop-shadow(0 0 8px rgba(255, 71, 105, 0.8)); }
+.slashes.go { animation: slash-in 0.46s ease-out; }
+@keyframes slash-in { 0% { opacity: 1; -webkit-clip-path: inset(0 0 100% 0); clip-path: inset(0 0 100% 0); } 26% { opacity: 1; -webkit-clip-path: inset(0); clip-path: inset(0); } 100% { opacity: 0; -webkit-clip-path: inset(0); clip-path: inset(0); } }
+.bossbar .ragetag { color: #23030c; background: linear-gradient(180deg, #ff8a9d, #ff4769); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 10px -2px #ff4769; }
+.barrow.threat.hot > b { color: #fff; text-shadow: 0 1px 0 #000, 0 0 8px #ff4769; }
+@keyframes threat-pulse { to { color: #ffb3c0; } }

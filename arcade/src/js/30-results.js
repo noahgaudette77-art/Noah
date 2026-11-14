@@ -93,7 +93,7 @@ function renderResults(o, rank) {
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
       ${cl && cl.debrief ? `<div class="debrief"><canvas aria-hidden="true"></canvas><div><div class="who">${esc(cl.name.toUpperCase())} · YOUR CLIENT</div><p class="selectable">${esc(cl.debrief)}</p></div></div>` : ""}
-      <div class="tiles">${tiles.map((t) => `<div class="tile"${t.c ? ` style="--c:${t.c}"` : ""}><span class="k">${esc(t.k)}</span><span class="v${String(t.v).length > 7 ? " long" : ""}">${esc(t.v)}</span></div>`).join("")}</div>
+      <div class="tiles">${tiles.map((t) => `<div class="tile"${t.c ? ` style="--c:${t.c}"` : ""}><span class="k">${tileIcon(t.k)}${esc(t.k)}</span><span class="v${String(t.v).length > 7 ? " long" : ""}">${esc(t.v)}</span></div>`).join("")}</div>
       <div class="res-rank"${xp1 > xp0 ? ` data-xp="+${xp1 - xp0} XP"` : ` data-xp="${xp1} XP"`}>${rankChip()}</div>
       ${o.extraHTML || ""}
       ${changes.length ? `<h2 class="section-h">MASTERY</h2><div class="mastery-list">${changes.map((x) => {

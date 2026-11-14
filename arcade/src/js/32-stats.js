@@ -23,14 +23,14 @@ function showStats() {
         </div>
       </div>
       <div class="tiles">
-        <div class="tile" style="--c:${COLORS.lime}"><span class="k">MASTERY</span><span class="v">${mpct(Store.masteryOf(allIds))}%</span></div>
-        <div class="tile"><span class="k">QUESTIONS MASTERED</span><span class="v">${Store.countMastered(ALL_QIDS)}/${ALL_QIDS.length}</span></div>
-        <div class="tile"><span class="k">CARDS BANKED</span><span class="v">${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</span></div>
-        <div class="tile"${st.answered ? ` style="--c:${pct(st.correct, st.answered) >= 80 ? COLORS.lime : pct(st.correct, st.answered) >= 60 ? COLORS.yellow : COLORS.red}"` : ""}><span class="k">ACCURACY</span><span class="v">${pct(st.correct, st.answered)}%</span></div>
-        <div class="tile"><span class="k">ANSWERED</span><span class="v">${st.answered}</span></div>
-        <div class="tile"><span class="k">BEST STREAK</span><span class="v">${st.bestStreak}</span></div>
-        <div class="tile" style="--c:${COLORS.yellow}"><span class="k">BOSS STARS</span><span class="v">${stars}/36</span></div>
-        <div class="tile"${(st.bestExam || 0) >= 60 ? ` style="--c:${COLORS.lime}"` : ""}><span class="k">BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
+        <div class="tile" style="--c:${COLORS.lime}"><span class="k">${tileIcon("MASTERY")}MASTERY</span><span class="v">${mpct(Store.masteryOf(allIds))}%</span></div>
+        <div class="tile"><span class="k">${tileIcon("QUESTIONS MASTERED")}QUESTIONS MASTERED</span><span class="v">${Store.countMastered(ALL_QIDS)}/${ALL_QIDS.length}</span></div>
+        <div class="tile"><span class="k">${tileIcon("CARDS BANKED")}CARDS BANKED</span><span class="v">${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</span></div>
+        <div class="tile"${st.answered ? ` style="--c:${pct(st.correct, st.answered) >= 80 ? COLORS.lime : pct(st.correct, st.answered) >= 60 ? COLORS.yellow : COLORS.red}"` : ""}><span class="k">${tileIcon("ACCURACY")}ACCURACY</span><span class="v">${pct(st.correct, st.answered)}%</span></div>
+        <div class="tile"><span class="k">${tileIcon("ANSWERED")}ANSWERED</span><span class="v">${st.answered}</span></div>
+        <div class="tile"><span class="k">${tileIcon("BEST STREAK")}BEST STREAK</span><span class="v">${st.bestStreak}</span></div>
+        <div class="tile" style="--c:${COLORS.yellow}"><span class="k">${tileIcon("BOSS STARS")}BOSS STARS</span><span class="v">${stars}/36</span></div>
+        <div class="tile"${(st.bestExam || 0) >= 60 ? ` style="--c:${COLORS.lime}"` : ""}><span class="k">${tileIcon("BEST EXAM")}BEST EXAM</span><span class="v">${st.bestExam || 0}%</span></div>
       </div>
       <p class="label note">SEEN ${Store.countSeen(allIds)} OF ${allIds.length} ITEMS. AN ITEM IS MASTERED AFTER THREE SPACED RIGHT ANSWERS.</p>
       <h2 class="section-h">TROPHIES ${Trophies.count()}/${TROPHIES.length}</h2>
@@ -70,23 +70,23 @@ function showStats() {
 function showSettings() {
   const s = Store.settings;
   const seg = (key, opts) => `<div class="seg" role="group" style="--c:${COLORS.cyan}">${opts.map(([v, label]) => `<button data-act="set" data-k="${key}" data-v="${v}" aria-pressed="${String(s[key]) === String(v)}">${label}</button>`).join("")}</div>`;
-  const row = (label, sub, control) => `<div class="setting"><div class="sl">${label}<small>${sub}</small></div>${control}</div>`;
+  const row = (ic, label, sub, control) => `<div class="setting"><span class="si" aria-hidden="true">${icon(ic)}</span><div class="sl">${label}<small>${sub}</small></div>${control}</div>`;
   const synced = !!Store.remote;
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("SETUP")}
     <div class="scroll"><div class="wrap">
-      ${row("Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
-      ${row("CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
-      <div class="setting fxset"><div class="sl">Effects<small>Switch any of them off</small></div>
+      ${row("speaker", "Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
+      ${row("note", "Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
+      ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
+      ${row("tube", "CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("moon", "Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
+      <div class="setting fxset"><div class="sl"><span class="si" aria-hidden="true">${icon("spark")}</span>Effects<small>Switch any of them off</small></div>
         <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
-      ${row("Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}
-      ${row("Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
-      ${row("After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
+      ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("gauge", "FPS counter", "Frame rate, slowest frame, triangles, draw calls and the size the picture is drawn at", seg("fps", [[true, "ON"], [false, "OFF"]]))}
+      ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
+      ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
       <h2 class="section-h">HOW IT WORKS</h2>
       <div class="howto">

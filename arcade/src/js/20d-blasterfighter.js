@@ -97,7 +97,7 @@ const FighterModel = {
 // and its tail is seen in shadow), a rim of the tunnel's colour at its edges, metal that
 // glows round the engines, the flash of its own guns, and the break-up (see FighterModel.geometry).
 function fighterSkin(env, side, U) {
-  const m = new THREE.MeshStandardMaterial({ map: FighterModel.texture(), color: 0xffffff, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.0, side });
+  const m = new THREE.MeshStandardMaterial({ map: FighterModel.texture(), color: 0xffffff, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 0.62, side });
   m.extensions = { derivatives: true };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, neonUniforms(), U);
@@ -121,13 +121,14 @@ function fighterSkin(env, side, U) {
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         ${NEON_GLSL}
-        varying vec3 vFtrP; varying vec3 vFtrN; uniform float uBoomHot; uniform float uHeat; uniform vec3 uRim; uniform vec3 uGun; uniform vec3 uEngAt; uniform vec3 uGunAt;
+        varying vec3 vFtrP; varying vec3 vFtrN; uniform float uBoomHot; uniform float uHeat; uniform vec3 uRim; uniform vec3 uGun; uniform vec3 uEngAt; uniform vec3 uGunAt; uniform vec3 uFtrKey;
         uniform vec3 uFtrSeam; uniform float uFtrPow; uniform float uFtrRimK; uniform float uFtrSide; uniform vec3 uFtrUnder;`)
       // The hull as supplied is white and orange paint, weathered. Here its brightness shades a
       // dark gunmetal, and where the paint had a colour (the orange bands) a strip of light runs:
       // magenta on the port side, cyan on the starboard, like its wing lights.
       .replace("#include <map_fragment>", `#include <map_fragment>
-        vec3 ftrAlb = texelColor.rgb;
+        // (its light and shade are read from a softer copy of the old paint: at full sharpness its rust specks sparkled all over the hull)
+        vec3 ftrAlb = mapTexelToLinear(texture2D(map, vUv, 1.6)).rgb;
         float ftrL = dot(ftrAlb, vec3(0.3, 0.59, 0.11));
         float ftrMx = max(ftrAlb.r, max(ftrAlb.g, ftrAlb.b)), ftrMn = min(ftrAlb.r, min(ftrAlb.g, ftrAlb.b));
         // (the paint mask is read from a blurrier level of the texture, so rust specks do not count as paint)
@@ -139,22 +140,23 @@ function fighterSkin(env, side, U) {
         vec3 ftrT = neonTile(vFtrP * 0.85, vFtrN);
         vec3 ftrAcc = mix(vec3(0.5, 0.42, 1.75), vec3(0.12, 1.05, 1.5), smoothstep(-0.1, 0.1, vFtrP.x * uFtrSide)); // (violet-blue to port, cyan to starboard: pink is the enemy's colour)
         float ftrEdge = smoothstep(0.25, 0.9, length(fwidth(normalize(vNormal))) * 3.0); // (worn bright where a plate turns sharply)
-        diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT), vec3(0.42, 0.45, 0.52), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.52 - 0.2 * ftrL + (0.5 - ftrT.r) * 0.4, 0.3, 0.95), 0.34, ftrEdge), 0.3, ftrSat);")
+        diffuseColor.rgb = mix(mix(neonMetal(clamp(ftrL * 1.25, 0.0, 1.0), ftrT) * vec3(0.8, 0.74, 1.12), vec3(0.3, 0.3, 0.44), ftrEdge * 0.5), ftrAcc * (0.05 + 0.1 * ftrH) * (0.7 + 0.6 * ftrT.r) * (1.0 - 0.5 * neonGroove(ftrT)), ftrSat);`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(clamp(0.46 - 0.12 * ftrL + (0.5 - ftrT.r) * 0.14, 0.3, 0.8), 0.34, ftrEdge), 0.3, ftrSat);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.92, 0.55, ftrSat);")
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         // (relief from the change in the old paint's brightness from one pixel to the next, and from the tile's dents and panel lines)
         vec2 ftrD = vec2(dFdx(ftrH), dFdy(ftrH));
-        ftrD *= smoothstep(0.012, 0.06, length(ftrD)) * 1.5;
+        ftrD *= smoothstep(0.012, 0.06, length(ftrD)) * 0.45;
         float ftrTH = neonHeight(ftrT);
         normal = neonBump(-vViewPosition, normal, clamp(ftrD, -0.7, 0.7) * vec2(length(dFdx(vViewPosition)), length(dFdy(vViewPosition))) + clamp(vec2(dFdx(ftrTH), dFdy(ftrTH)), -0.5, 0.5) * 0.007);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         vec3 ftrV = normalize(vViewPosition);
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(0.3, 0.33, 0.48); // a soft fill, cool: steel with a violet cast
-        totalEmissiveRadiance += vec3(0.32, 0.8, 1.5) * (pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 3.0) * uFtrRimK * 1.15); // an ice-blue rim
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(0.16, 0.14, 0.32); // a soft fill: dark steel with a violet cast
+        totalEmissiveRadiance += mix(vec3(0.55, 0.3, 1.5), vec3(0.16, 0.9, 1.5), smoothstep(-0.35, 0.35, normal.x)) * (pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 3.4) * uFtrRimK * 0.72); // a thin rim: violet from one side, cyan from the other
+        totalEmissiveRadiance += uFtrKey * max(0.0, vFtrN.y) * (0.3 + 0.7 * ftrH) * (1.0 - 0.6 * neonGroove(ftrT)); // its back takes the colour of what is ahead of it: the demon's violet, its red in a rage
         totalEmissiveRadiance += uRim * pow(1.0 - clamp(abs(dot(normal, ftrV)), 0.0, 1.0), 6.0);
-        totalEmissiveRadiance += ftrAcc * (ftrSat * 0.07 * (0.3 + 0.7 * ftrH) + ftrTrim * 1.25) * uFtrPow; // where its paint was: anodised colour, with a line of light round it
-        totalEmissiveRadiance += neonGlow(ftrT, vFtrP * 0.85, uFtrSeam) * uFtrPow * (1.0 - ftrSat); // seams and small lights
+        totalEmissiveRadiance += ftrAcc * (ftrSat * 0.07 * (0.3 + 0.7 * ftrH) + ftrTrim * 2.1) * uFtrPow; // where its paint was: anodised colour, with a line of light round it
+        totalEmissiveRadiance += neonGlow(ftrT, vFtrP * 0.85, uFtrSeam) * uFtrPow * 1.35 * (1.0 - ftrSat); // seams and small lights
         totalEmissiveRadiance += uFtrUnder * max(0.0, -vFtrN.y) * (0.3 + 0.7 * ftrH) * (1.0 - 0.6 * neonGroove(ftrT)); // lit from below by its own glow
         vec3 ftrE = vec3(abs(vFtrP.x) - uEngAt.x, vFtrP.yz - uEngAt.yz);
         totalEmissiveRadiance += vec3(2.6, 0.7, 0.16) * (0.25 + ftrH) * uHeat * exp(-dot(ftrE, ftrE) * 13.0);
@@ -162,7 +164,7 @@ function fighterSkin(env, side, U) {
         totalEmissiveRadiance += uGun * (0.3 + ftrL) * exp(-dot(ftrG, ftrG) * 5.0);
         totalEmissiveRadiance += vec3(2.6, 0.8, 0.16) * uBoomHot * (0.35 + 0.65 * ftrL);`);
   };
-  m.customProgramCacheKey = () => "blaster-fighter-neon-2";
+  m.customProgramCacheKey = () => "blaster-fighter-neon-3";
   return m;
 }
 
@@ -198,7 +200,7 @@ class BlasterFighter {
       uBoom: { value: 0 }, uBoomHot: { value: 0 }, uHeat: { value: 0.2 }, uRim: { value: new THREE.Color(0, 0, 0) }, uGun: { value: new THREE.Color(0, 0, 0) },
       uEngAt: { value: new THREE.Vector3((Math.abs(eng[0].x) + Math.abs(eng[1].x)) / 2, eng[0].y, eng[0].z) }, uGunAt: { value: new THREE.Vector3(1.58, -0.1, -0.43) },
       // the neon it wears: seam colour, how lit its lights are, its two-colour rim, which side is cyan, the glow under it
-      uFtrSeam: { value: new THREE.Color(0.15, 0.95, 1.25) }, uFtrPow: { value: 0 }, uFtrRimK: { value: 0.4 }, uFtrSide: { value: ftrP(FTR.lamps[1]).x < 0 ? -1 : 1 }, uFtrUnder: { value: new THREE.Color(0, 0, 0) },
+      uFtrSeam: { value: new THREE.Color(0.15, 0.95, 1.25) }, uFtrPow: { value: 0 }, uFtrRimK: { value: 0.4 }, uFtrSide: { value: ftrP(FTR.lamps[1]).x < 0 ? -1 : 1 }, uFtrUnder: { value: new THREE.Color(0, 0, 0) }, uFtrKey: { value: new THREE.Color(0, 0, 0) },
     };
     this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(0.75, 1.25, 1.7);
     this.hullMat = fighterSkin(env, THREE.FrontSide, this.U);
@@ -366,8 +368,8 @@ class BlasterFighter {
           float dist = distance(vP, uHitP);
           float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
           float flare = uHit * uHit * exp(-dist * 1.6);
-          float base = uOn * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008);
-          gl_FragColor = vec4(uColor * (base + line * (ring * 1.6 + flare * 1.2) + fres * (ring + flare) * 0.8), 1.0);
+          float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit);
+          gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.55) + fres * (ring + flare * 0.4) * 0.8), 1.0);
         }`,
     });
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), this.shieldMat);
@@ -526,6 +528,7 @@ class BlasterFighter {
     U.uFtrPow.value = this.pow * (0.8 + 0.5 * heat + 0.5 * lunge) * (1 - 0.35 * this.hurt);
     U.uFtrSeam.value.copy(this.seamCold).lerp(this.seamHot, heat);
     U.uFtrRimK.value = 0.62 + 0.2 * heat + 0.25 * lunge; // (edged in light: it stands out from the demon behind it)
+    { const rage = g.enemy && g.enemy.U ? g.enemy.U.uDmRage.value : 0; U.uFtrKey.value.setRGB(lerp(0.5, 1.5, rage), lerp(0.1, 0.1, rage), lerp(0.85, 0.14, rage)).multiplyScalar((0.13 + 0.3 * rage) * this.pow); }
     U.uFtrUnder.value.copy(g.waveCol).multiplyScalar(0.09 + 0.1 * heat + 0.2 * Math.min(1, burn));
     // lights: the aerial's beacon (a soft pulse, well under 1 Hz), the head-up display, the canopy
     this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8);

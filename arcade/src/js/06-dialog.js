@@ -45,6 +45,10 @@ function drawPortrait(canvas, look = {}) {
     px(hair, 6, 7, 1, 3);
     px(hair, 17, 7, 1, 3);
   }
+  px("rgba(0,0,0,0.1)", 15, 6, 2, 10); px("rgba(0,0,0,0.1)", 13, 15, 1, 4); // the side away from the light
+  px("rgba(255,255,255,0.22)", 4, 20, 5, 1); px("rgba(0,0,0,0.16)", 16, 20, 5, 4); // a lit shoulder, a shaded one
+  if (look.style !== "bald") { px("rgba(255,255,255,0.2)", 9, 3, 4, 1); px("rgba(0,0,0,0.18)", 14, 4, 3, 2); } // light on the crown
+  if (look.style === "short") { px(hair, 7, 6, 4, 1); px(hair, 7, 7, 2, 1); } // a fringe swept to one side
   if (look.style === "curly") for (let i = 6; i < 18; i += 2) { px(hair, i, 1, 1, 2); px(hair, i + 1, 2, 1, 2); }
   if (look.style === "bun") px(hair, 10, 0, 4, 3);
   if (look.style === "ponytail") px(hair, 17, 6, 2, 9);
@@ -75,6 +79,9 @@ function drawPortrait(canvas, look = {}) {
   if (mood === "smile") { px("#a8434f", 9, 13, 1, 1); px("#a8434f", 14, 13, 1, 1); }
   if (mood === "grump") { px("#a8434f", 9, 15, 1, 1); px("#a8434f", 14, 15, 1, 1); }
   if ((look.age || 0) >= 60) { px("rgba(0,0,0,0.12)", 8, 12, 1, 2); px("rgba(0,0,0,0.12)", 15, 12, 1, 2); }
+  if (mood === "worry") { px("#7fe3ff", 19, 5, 1, 2); px("#7fe3ff", 18, 6, 1, 1); px("#d7f7ff", 19, 5, 1, 1); } // a bead of sweat
+  if (mood === "grump") { px("#ff5a6e", 19, 3, 2, 1); px("#ff5a6e", 19, 5, 2, 1); px("#ff5a6e", 18, 4, 1, 1); px("#ff5a6e", 21, 4, 1, 1); } // a cross little mark
+  if (mood === "smile") { px("#fff3a8", 20, 3, 1, 3); px("#fff3a8", 19, 4, 3, 1); } // a glint
   if (look.beard) { px(hair, 7, 12, 10, 4); px(hair, 9, 16, 6, 1); px("#a8434f", 10, 14, 4, 1); px(skin, 10, 13, 4, 1); }
   return canvas;
 }

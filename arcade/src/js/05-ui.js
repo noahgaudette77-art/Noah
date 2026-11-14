@@ -12,6 +12,11 @@ const UI = {
     // the same touch is then ignored, wherever it lands.
     const FAST = { ans: 1, flip: 1, again: 1, good: 1, easy: 1 };
     let fast = null;
+    // A focus ring is the keyboard's. It shows once a key has been used and goes again when a finger or the mouse
+    // takes over (a button the game focuses for you, RESUME or PLAY AGAIN, wore a ring nobody had asked for).
+    const root = document.documentElement;
+    document.addEventListener("pointerdown", () => { if (root.dataset.input !== "pointer") root.dataset.input = "pointer"; }, true);
+    document.addEventListener("keydown", (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey && root.dataset.input !== "keys") root.dataset.input = "keys"; }, true);
     document.addEventListener("pointerdown", (e) => {
       if (e.button !== 0 || !e.isPrimary) return;
       const t = e.target.closest("[data-act]");

@@ -47,8 +47,8 @@ const BOSS_POSE = {
   idle: { hips: [0.06, 0, 0], chest: [0.16, 0, 0], head: [0.24, 0, 0], armL: [-0.18, 0, -0.16], foreL: [-0.42, 0, 0], handL: [-0.25, 0, 0], armR: [-0.18, 0, 0.16], foreR: [-0.42, 0, 0], handR: [-0.25, 0, 0], padL: [0, 0, -0.06], padR: [0, 0, 0.06] },
   struck: { chest: [-0.28, 0, 0], head: [-0.38, 0, 0], armL: [0, 0, -0.55], armR: [0, 0, 0.55], foreL: [-0.4, 0, 0], foreR: [-0.4, 0, 0] },
   stagger: {
-    hips: [0.05, 0.14, 0], chest: [-0.05, -0.18, 0.08], head: [0.18, 0.3, 0.1], armL: [-0.8, 0, -0.18], foreL: [-1.25, 0, 0.45], armR: [0.14, 0, 0.12], foreR: [-0.2, 0, 0],
-    legL: [-0.22, 0, 0], shinL: [0.42, 0, 0], footL: [-0.2, 0, 0], legR: [-0.32, 0, 0], shinR: [0.58, 0, 0], footR: [-0.26, 0, 0],
+    hips: [0.06, 0.22, 0.05], chest: [0.1, -0.36, 0.14], head: [0.3, 0.34, 0.12], armL: [-0.42, 0.3, 0.34], foreL: [-1.9, 0, 0.3], handL: [-0.3, 0, 0], armR: [0.4, 0, 0.62], foreR: [-0.45, 0, 0], handR: [0.4, 0, 0],
+    legL: [-0.2, 0, 0], shinL: [0.4, 0, 0], footL: [-0.2, 0, 0], legR: [-0.72, 0, 0], shinR: [1.05, 0, 0], footR: [-0.2, 0, 0],
   },
   limp: {
     hips: [0.08, -0.1, 0.03], chest: [0.12, 0.12, -0.1], head: [0.3, -0.25, -0.12], armL: [-0.7, 0, -0.2], foreL: [-1.3, 0, 0.45], armR: [0.3, 0, 0.02], foreR: [-0.05, 0, 0], handR: [0.5, 0, 0],
@@ -134,20 +134,23 @@ function bossSkin(env, side, o, U) {
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, neonUniforms(), U, { uBossEye: o.eye || { value: new THREE.Vector3() }, uBossEyeAt: { value: o.eyeAt || new THREE.Vector3() } });
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossY = (modelMatrix * vec4(transformed, 1.0)).y;");
+      .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossW = (modelMatrix * vec4(transformed, 1.0)).xyz; vBossY = vBossW.y;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
-        varying vec3 vBossP; varying vec3 vBossN; varying float vBossY;
+        varying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;
+        uniform vec3 uBossCoreW; uniform float uBossAll;
         uniform vec3 uBossRim; uniform vec3 uBossSeam; uniform float uBossPower; uniform float uBossSweep; uniform float uBossCrack; uniform float uBossDim; uniform float uBossRimK; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;
         ${NEON_GLSL}`)
       .replace("#include <map_fragment>", `#include <map_fragment>
         vec3 bossT = neonTile(vBossP * 2.6, vBossN);
-        float bossL = clamp(dot(texelColor.rgb, vec3(0.3333)) * 1.25, 0.0, 1.0);
+        // (its light and shade come from a softer copy of the painting: the grain in it read as static, worst in the chest's hollow)
+        float bossL = clamp(dot(mapTexelToLinear(texture2D(map, vUv, 1.7)).rgb, vec3(0.3333)) * 1.25, 0.0, 1.0);
         float bossEdge = clamp(length(fwidth(normalize(vNormal))) * 4.5 - 0.1, 0.0, 1.0);
+        ${bone ? "if (abs(vBossP.x) > 0.044 && vBossP.y > 0.14) discard; // (the antennae end at the helmet's own line)" : ""}
         ${bone
           ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = mix(vec3(0.03, 0.03, 0.04), vec3(0.5, 0.455, 0.4), bossL) * (0.74 + 0.5 * bossT.r) * (1.0 - 0.6 * exp(-dot(bossS, bossS) * 150.0));"
-          : "diffuseColor.rgb = mix(neonMetal(bossL, bossT), vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}`)
+          : "diffuseColor.rgb = mix(neonMetal(bossL, vec3(mix(0.5, bossT.r, 0.5), bossT.gb)) * 0.82, vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
         roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};`)
       .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.38" : "0.92"};`)
@@ -157,18 +160,25 @@ function bossSkin(env, side, o, U) {
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         vec3 bossV = normalize(vViewPosition);
         // (its rim is violet from one side and gold from the other: not the arcade's magenta and cyan, which on this figure read as red and blue)
-        totalEmissiveRadiance += mix(vec3(0.8, 0.42, 1.6), vec3(1.5, 1.0, 0.36), smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
+        // (and it is one-sided: gold along the edges that face away from the key light, next to nothing on the lit side, so the
+        // outline is a lit plane on one hand and a bright edge on the other, not one pale fringe all the way round)
+        totalEmissiveRadiance += mix(vec3(0.8, 0.42, 1.6) * 0.14, vec3(1.5, 1.0, 0.36) * 1.3, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
         totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
         ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
         float bossOn = uBossPower * uBossDim * (1.0 - smoothstep(uBossSweep - 1.2, uBossSweep, vBossY));
         totalEmissiveRadiance += neonGlow(bossT, vBossP * 2.6, uBossSeam) * bossOn;
         // destroyed: its panel lines open and burn
-        totalEmissiveRadiance += vec3(3.4, 1.2, 0.3) * neonGroove(bossT) * uBossCrack * (0.45 + 0.55 * bossT.r);`}
+        // (the burn starts at the reactor and spreads: near it the lines are wide and white-hot, further out thin and red,
+        // and beyond its reach still dark. Thrown pieces burn all over, and cool.)
+        float bossReach = uBossCrack * 1.5;
+        float bossBurn = max(uBossAll, smoothstep(bossReach, bossReach - 0.4, length(vBossW - uBossCoreW) * ${(1 / BOSS_S).toFixed(5)} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
+        float bossHot = bossBurn * min(uBossCrack, 1.0);
+        totalEmissiveRadiance += mix(vec3(2.2, 0.42, 0.08), vec3(4.2, 2.0, 0.7), bossHot * bossHot) * (smoothstep(0.2 - 0.19 * bossHot, 0.45, bossT.g) + 0.22 * smoothstep(0.0, 0.3, bossT.g) * bossHot) * bossHot * (0.3 + 1.0 * bossT.r);`}
         // the eyes' own light on the bone round them (the skull only: elsewhere uBossEye is zero)
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin-3-" + (bone ? 1 : 0);
+  m.customProgramCacheKey = () => "exam-boss-skin-6-" + (bone ? 1 : 0);
   return m;
 }
 
@@ -296,11 +306,12 @@ class ExamBoss {
     this.U = {
       uBossRim: { value: new THREE.Color(0, 0, 0) }, uBossRimK: { value: 0 }, uBossSeam: { value: new THREE.Color(0, 0, 0) },
       uBossPower: { value: 0 }, uBossSweep: { value: 100 }, uBossCrack: { value: 0 }, uBossDim: { value: 1 },
+      uBossCoreW: { value: new THREE.Vector3() }, uBossAll: { value: 0 },
     };
     this.rim = this.U.uBossRim;
-    this.seamCold = new THREE.Color(0.62, 0.5, 1.35); this.seamHot = new THREE.Color(1.4, 0.62, 0.42); this.seamRage = new THREE.Color(1.75, 0.95, 0.2);
+    this.seamCold = new THREE.Color(0.62, 0.5, 1.35); this.seamHot = new THREE.Color(1.4, 0.62, 0.42); this.seamRage = new THREE.Color(1.35, 0.5, 2.3);
     this.flick = 1; this.flickT = 0; this.twT = 3; this.twK = 0; this.twA = 0; this.twJ = "head"; this.seed = 20261113;
-    const ARMOUR = { env: 1.1 }, BONE = { bone: true, env: 0.6 };
+    const ARMOUR = { env: 0.9 }, BONE = { bone: true, env: 0.6 };
     BONE.eye = this.eyeU = { value: new THREE.Vector3() }; // how hard the eyes light the skull
     BONE.eyeAt = this.eyeAt = new THREE.Vector3();
     this.mat = bossSkin(env, THREE.FrontSide, ARMOUR, this.U);
@@ -319,6 +330,25 @@ class ExamBoss {
       return (this.J[name] = { name, parent, pivot, ids, grp, mesh, rot: new THREE.Vector3(), on: true });
     });
     this.hipRest = this.J.hips.grp.position.clone();
+    // The proctor's cap: a square board on a band, gold along its edges, a gold tassel hung from the button to one
+    // corner. It rides the head's own mesh, so it nods, turns and, at the end, flies off with it.
+    {
+      const cloth = new THREE.MeshStandardMaterial({ color: 0x1c1a2a, metalness: 0.05, roughness: 0.92, envMap: env, envMapIntensity: 0.5, emissive: 0x07050f, emissiveIntensity: 1 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xe0a83c, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 1.1, emissive: 0x6a3c06, emissiveIntensity: 0.3 });
+      const cap = new THREE.Group(), W = 0.106, add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); cap.add(m); return m; };
+      add(new THREE.CylinderGeometry(0.05, 0.056, 0.03, 20), cloth, 0, -0.016, 0);
+      add(new THREE.BoxGeometry(W * 2, 0.009, W * 2), cloth, 0, 0.004, 0);
+      [[0, W, W * 2, 0.006], [0, -W, W * 2, 0.006], [W, 0, 0.006, W * 2], [-W, 0, 0.006, W * 2]].forEach(([x, z, sx, sz]) => add(new THREE.BoxGeometry(sx + 0.004, 0.012, sz + 0.004), gold, x, 0.004, z));
+      add(new THREE.SphereGeometry(0.009, 10, 8), gold, 0, 0.012, 0);
+      const cord = add(new THREE.CylinderGeometry(0.0022, 0.0022, W * 1.04, 6), gold, -W * 0.5, 0.011, W * 0.5);
+      cord.rotation.set(Math.PI / 2, 0, Math.PI / 4);
+      add(new THREE.CylinderGeometry(0.0022, 0.0022, 0.05, 6), gold, -W * 0.98, -0.016, W * 0.98);
+      add(new THREE.CylinderGeometry(0.004, 0.0085, 0.036, 8), gold, -W * 0.98, -0.058, W * 0.98);
+      cap.position.set(-0.001, 0.173, 0.022);
+      cap.rotation.set(0.1, 0.2, 0.05); // (a little askew; the tassel hangs clear of the eye, beside the temple)
+      this.J.head.mesh.add(cap);
+      this.cap = cap;
+    }
     [this.matOpen, this.boneOpen].forEach((m) => { // (never seen: here so the two-sided twins are compiled while the scene loads)
       const warm = new THREE.Mesh(this.J.footL.mesh.geometry, m);
       warm.visible = false;
@@ -355,10 +385,10 @@ class ExamBoss {
     this.firePos = new THREE.Vector3(); // where its fires burn: in the ending the light under it becomes their light
     // the wreck: every fragment of armour in one mesh, thrown and landed in the vertex shader
     this.blastMat = new THREE.ShaderMaterial({
-      uniforms: Object.assign(fogUniforms(), { map: { value: BossModel.texture() }, uTint: { value: new THREE.Color(0.5, 0.56, 0.72) }, uT: { value: 0 }, uG: { value: BOSS_G }, uFire: { value: 0 }, uCore: { value: new THREE.Vector3() } }),
-      side: THREE.DoubleSide,
+      uniforms: Object.assign(fogUniforms(), neonUniforms(), { map: { value: BossModel.texture() }, uTint: { value: new THREE.Color(0.5, 0.56, 0.72) }, uT: { value: 0 }, uG: { value: BOSS_G }, uFire: { value: 0 }, uCore: { value: new THREE.Vector3() } }),
+      side: THREE.DoubleSide, extensions: { derivatives: true },
       vertexShader: `attribute vec3 aC; attribute vec3 aV; attribute vec4 aR; attribute vec2 aK; uniform float uT; uniform float uG;
-        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth; varying vec3 vN0; varying vec3 vW;
         vec3 spin(vec3 v, vec3 k, float a){ float c = cos(a), s = sin(a); return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c); }
         void main(){
           float t = min(uT, aK.x), rest = max(uT - aK.x, 0.0);
@@ -366,24 +396,34 @@ class ExamBoss {
           c.xz += aV.xz * 0.2 * (1.0 - exp(-rest * 2.5)); // a short skid where it lands
           float ang = aR.w * (t + (1.0 - exp(-rest * 3.0)) / 3.0);
           vec3 p = c + spin(position - aC, aR.xyz, ang);
-          vN = spin(normal, aR.xyz, ang); vP = p; vHeat = aK.y; vUv = uv; vL = position;
+          vN = spin(normal, aR.xyz, ang); vP = p; vHeat = aK.y; vUv = uv; vL = position; vN0 = normal; vW = (modelMatrix * vec4(p, 1.0)).xyz;
           vec4 mv = modelViewMatrix * vec4(p, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D map; uniform vec3 uTint; uniform float uT; uniform float uFire; uniform vec3 uCore;
-        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vP; varying vec3 vL; varying float vHeat; varying float vDepth; varying vec3 vN0; varying vec3 vW;
+        ${NEON_GLSL}
         void main(){
           vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n;
-          vec3 alb = texture2D(map, vUv).rgb; alb *= alb * uTint;
+          // the armour it was: the same gunmetal, the same panel lines
+          vec3 tile = neonTile(vL * 2.6, vN0);
+          vec3 tx = texture2D(map, vUv, 1.7).rgb;
+          vec3 alb = neonMetal(clamp(dot(tx * tx, vec3(0.3333)) * 1.25, 0.0, 1.0), tile) * 2.4;
           vec3 toCore = uCore - vP;
           float fire = uFire * max(dot(n, normalize(toCore)), 0.0) / (1.0 + dot(toCore, toCore) * 6.0);
-          vec3 lit = alb * (vec3(0.2, 0.16, 0.32) + vec3(1.0, 0.92, 0.8) * 1.1 * max(dot(n, normalize(vec3(-0.3, 0.75, 0.6))), 0.0) + vec3(3.4, 1.5, 0.5) * fire);
-          float cool = exp(-uT * (0.95 + vHeat * 1.5));
-          // the heat is not a flat fill: veins of it across the metal, brightest in the cracks, dying down to embers
-          float vein = 0.5 + 0.5 * sin(vL.x * 310.0 + sin(vL.y * 230.0) * 2.2) * sin(vL.z * 270.0 + vL.y * 110.0);
-          vec3 glow = vec3(3.0, 1.05, 0.22) * (cool * (0.12 + 0.88 * smoothstep(0.3, 0.95, vein)) + 0.05 * smoothstep(0.82, 1.0, vein));
+          vec3 V = normalize(cameraPosition - vW), Lk = normalize(vec3(-0.45, 0.7, 0.55));
+          float fres = pow(1.0 - clamp(dot(n, V), 0.0, 1.0), 3.0);
+          vec3 lit = alb * (vec3(0.2, 0.16, 0.32) + vec3(0.9, 0.92, 1.0) * 1.2 * max(dot(n, Lk), 0.0) + vec3(3.4, 1.5, 0.5) * fire);
+          // polished plate: a highlight from the key, the hall's violet in it at grazing angles, a gold edge like the figure's
+          lit += vec3(0.9, 0.92, 1.0) * pow(max(dot(n, normalize(Lk + V)), 0.0), 46.0) * 0.5 * (1.0 - neonGroove(tile));
+          lit += mix(vec3(0.012, 0.008, 0.03), vec3(0.2, 0.13, 0.42), smoothstep(-0.3, 0.9, reflect(-V, n).y)) * (0.2 + 0.8 * fres);
+          lit += vec3(1.3, 0.85, 0.3) * fres * 0.22;
+          float cool = exp(-uT * (0.75 + vHeat * 1.3));
+          // the heat is in its lines: wide and white-hot at first, thin red embers at the end
+          float groove = smoothstep(0.2 - 0.14 * cool, 0.45, tile.g);
+          vec3 glow = mix(vec3(2.0, 0.36, 0.06), vec3(4.2, 2.0, 0.7), cool * cool) * groove * (0.3 + 1.0 * tile.r) * (0.16 + 0.84 * cool);
           vec3 col = gl_FrontFacing
-            ? lit * mix(1.0, 0.5, smoothstep(0.0, 1.5, uT)) + glow * (0.2 + 0.45 * vHeat) // scorched outside
-            : lit * 0.32 + vec3(0.02, 0.016, 0.022) + glow; // the torn inside: bare metal, shaded like the rest, glowing in veins
+            ? lit * mix(1.0, 0.62, smoothstep(0.0, 1.5, uT)) + glow // scorched outside
+            : alb * 0.3 + vec3(0.02, 0.016, 0.026) + vec3(3.0, 1.0, 0.2) * cool * (0.05 + 0.6 * smoothstep(0.6, 0.92, tile.r)); // the torn inside: bare metal, a few hot veins
           gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
         }`,
     });
@@ -424,6 +464,24 @@ class ExamBoss {
     this.scorch.position.y = BOSS_DAIS + 0.03;
     this.scorch.visible = false;
     s.add(this.ring, this.scorch);
+    this.star = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: { uK: { value: 0 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `uniform float uK; varying vec2 vUv;
+        float sH(float n){ return fract(sin(n * 127.1) * 43758.5453); }
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0; float r = length(p), seg = atan(p.y, p.x) * 2.5465, id = floor(seg + 0.5), w = abs(seg - id); // sixteen spokes
+          id = mod(id + 16.0, 16.0);
+          float len = 0.3 + 0.7 * sH(id + 3.0), thick = 0.05 + 0.09 * sH(id);
+          float spike = smoothstep(thick, 0.0, w) * smoothstep(len, len * 0.25, r) * smoothstep(0.03, 0.14, r);
+          float core = pow(max(1.0 - r * 2.4, 0.0), 3.0);
+          gl_FragColor = vec4(vec3(3.8, 2.7, 1.5) * (spike * 1.3 + core * 2.2) * uK, 1.0);
+        }`,
+    }));
+    this.star.layers.set(1);
+    this.star.renderOrder = 8;
+    this.star.visible = false;
+    s.add(this.star);
     this.streamers = Array.from({ length: 9 }, () => {
       const tr = new Trail({ length: 20, width: 0.16 * K, color: 0xff9a3d, intensity: 2.2, up: new THREE.Vector3(0, 0, 1) }), head = glowSprite(neon(0xffd9a0, 2), 0.9 * K, 1);
       tr.mesh.visible = head.visible = false;
@@ -607,6 +665,9 @@ class ExamBoss {
     if (this.blown) return;
     this.blown = true;
     const g = this.g, K = BOSS_K, P = BossModel.parts(), core = this.root.worldToLocal(this.core(new THREE.Vector3())), inv = this._m.copy(this.root.matrixWorld).invert();
+    // a fist, a shoulder plate, a pylon and a foot leave it whole (the rest breaks up): parts you can name, lying in the wreck
+    ["handL", "padL", "pylonR", "handR", "footL"].forEach((n) => this.sever(n, this._v.set(rand(-6, 6), rand(5, 9), rand(1.5, 6)).multiplyScalar(K)));
+    this.U.uBossAll.value = 1;
     const live = this.joints.filter((j) => j.on && j.name !== "head");
     let tris = 0, nChunk = 0;
     live.forEach((j) => j.ids.forEach((id) => { tris += P.get(id).ix.length / 3; nChunk += P.get(id).nChunk; }));
@@ -644,7 +705,7 @@ class ExamBoss {
       if (v.lengthSq() < 1e-6) v.set(0, 1, 0);
       v.normalize().add(this._w.set(rand(-0.4, 0.4), rand(-0.1, 0.5), rand(-0.4, 0.4))).normalize();
       const sp = (quiet ? 0.5 : 1) * (1.1 + 3.4 * Math.pow(Math.random(), 1.6));
-      const vx = v.x * sp, vy = v.y * sp + 0.7 + Math.random() * 0.9, vz = v.z * sp + 0.25; // (a little toward the hall, where it can be seen)
+      const vx = v.x * sp, vy = v.y * sp + 0.7 + Math.random() * 0.9, vz = Math.min(v.z * sp + 0.25, 1.15); // (a little toward the hall, where it can be seen; none of it into the lens)
       cv[c * 3] = vx; cv[c * 3 + 1] = vy; cv[c * 3 + 2] = vz;
       this._w.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize();
       cr[c * 4] = this._w.x; cr[c * 4 + 1] = this._w.y; cr[c * 4 + 2] = this._w.z; cr[c * 4 + 3] = rand(2, 9) * (Math.random() < 0.5 ? -1 : 1);
@@ -685,19 +746,21 @@ class ExamBoss {
     // the head is thrown clear in one piece, toward the camera, and rolls to a stop
     this.sever("head", this._v.set(rand(-0.5, 0.5), quiet ? 3 : 9.5, quiet ? 2 : 4.4).multiplyScalar(K));
     this.headBody = this.bodies[this.bodies.length - 1];
-    this.bodies.forEach((b) => { if (b !== this.headBody) { b.still = false; b.v.set(rand(-9, 9), rand(4, 9), rand(0, 8)).multiplyScalar(quiet ? 0.2 * K : K); } });
+    this.bodies.forEach((b) => { if (b !== this.headBody) { b.still = false; b.v.set(rand(-9, 9), rand(4, 9), rand(-3.5, 3)).multiplyScalar(quiet ? 0.2 * K : K); } });
     if (quiet) return;
     const k = this.soft ? 0.5 : 1;
     g.bursts.burst(at, 0xffffff, { n: Math.round(110 * k), speed: 34 * K, size: 0.4 * K, life: 0.8, gravity: -6 * K });
     g.bursts.burst(at, COLORS.orange, { n: Math.round(170 * k), speed: 20 * K, size: 0.42 * K, life: 1.6, gravity: -14 * K });
     g.bursts.burst(at, COLORS.yellow, { n: Math.round(70 * k), speed: 6 * K, size: 0.3 * K, life: 2.6, gravity: 1.5 * K });
-    this.puffs.emit(2, at, v.set(0, 0, 0), 4 * K, 15 * K, 0.28);
+    this.puffs.emit(2, at, v.set(0, 0, 0), 3 * K, 10 * K, 0.24);
+    // (a fireball with a shape: billows a third the size they were, up and gone in a second, not a wash of orange over the hall)
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * 6.283 + rand(0.5), r = i < 3 ? 0 : 1;
-      this.puffs.emit(0, this._w.copy(at).add(v.set(Math.cos(a) * r * 1.2, rand(-0.6, 1.2), Math.sin(a) * r * 0.8 + 0.6).multiplyScalar(K)), v.set(Math.cos(a) * r * 5.5, rand(2, 6), Math.sin(a) * r * 3 + 1.5).multiplyScalar(K), 3.2 * K, (8.5 + rand(3)) * K, 1.5 + rand(0.7), 2.4 * K);
+      this.puffs.emit(0, this._w.copy(at).add(v.set(Math.cos(a) * r * 1.0, rand(-0.6, 1.0), Math.sin(a) * r * 0.7 + 0.6).multiplyScalar(K)), v.set(Math.cos(a) * r * 4.2, rand(2.5, 6.5), Math.sin(a) * r * 2.4 + 1.2).multiplyScalar(K), 1.7 * K, (4.3 + rand(1.5)) * K, 1.0 + rand(0.5), 3.2 * K);
     }
     // smoke that climbs out of the fireball, and a low wave of dust across the floor
-    for (let i = 0; i < 6; i++) this.puffs.emit(1, this._w.copy(at).add(v.set(rand(-1.5, 1.5), rand(0, 1.5), rand(-0.8, 1)).multiplyScalar(K)), v.set(rand(-1, 1), rand(3, 5.5), rand(-0.5, 0.8)).multiplyScalar(K), 3.5 * K, (10 + rand(3)) * K, 2.6 + rand(1), 1.6 * K);
+    for (let i = 0; i < 6; i++) this.puffs.emit(1, this._w.copy(at).add(v.set(rand(-1.3, 1.3), rand(0, 1.5), rand(-0.8, 1)).multiplyScalar(K)), v.set(rand(-1, 1), rand(3, 5.5), rand(-0.5, 0.8)).multiplyScalar(K), 2.4 * K, (6.6 + rand(2)) * K, 2.6 + rand(1), 1.6 * K);
+    if (!this.soft) { this.star.position.copy(at); this.star.visible = true; this.starT = 0; }
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * 6.283;
       this.puffs.emit(1, this._w.set(at.x + Math.cos(a) * 2.2 * K, BOSS_DAIS + 0.5 * K, at.z + Math.sin(a) * 2.2 * K), v.set(Math.cos(a) * 11 * K, 0.5 * K, Math.sin(a) * 11 * K), 1.6 * K, 4.6 * K, 1.1, 0.3 * K, 0.12);
@@ -752,6 +815,15 @@ class ExamBoss {
     }
     if (this.mode === "die" && !this.quick && !this.blown) eye = this.eyeDie;
     if (!this.blown) this.settle(dt);
+    if (!this.blown) this.core(this.U.uBossCoreW.value);
+    else { this.U.uBossCrack.value = Math.max(0.16, this.U.uBossCrack.value - dt * 0.36); this.heat *= Math.pow(0.2, dt); } // what is left of it cools to embers
+    if (this.star.visible) {
+      const k = Math.min(1, (this.starT += dt / 0.42)), e = 1 - (1 - k) * (1 - k);
+      this.star.quaternion.copy(g.camera.quaternion);
+      this.star.scale.setScalar((7 + 31 * e) * K);
+      this.star.material.uniforms.uK.value = Math.pow(1 - k, 1.5);
+      this.star.visible = k < 1;
+    }
     if (!this.blown) {
       this.eyeMat.color.copy(this.eyeBase).multiplyScalar(eye);
       this.eyes.forEach((e) => {
@@ -764,7 +836,7 @@ class ExamBoss {
       // an ember in its chest, beating with that light
       if (this.mode !== "die") {
         const k = live ? (0.3 + 0.12 * Math.sin(t * 3.1) + 0.06 * this.dread + 0.12 * this.menace) * this.lightK : 0;
-        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = k; this.coreGlow.scale.setScalar(0.3 + 0.24 * k);
+        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = Math.min(1, k * 1.5); this.coreGlow.scale.setScalar(0.34 + 0.3 * k);
       }
       if (this.mode !== "die") {
         this.under.color.copy(this.underCold).lerp(this.underHot, this.mode === "rage" ? 1 : clamp(0.08 + 0.3 * this.dread + 0.22 * this.menace, 0, 0.6));
@@ -799,8 +871,8 @@ class ExamBoss {
     this.fire *= Math.pow(0.12, dt);
     if (this.mode === "die") {
       const ul = this.under;
-      ul.position.copy(this.firePos); ul.color.setHex(0xff8a3a); ul.distance = 60 * K; ul.decay = 1.6;
-      ul.intensity = this.fire * 9;
+      ul.position.copy(this.firePos); ul.color.setHex(0xff8a3a); ul.distance = 34 * K; ul.decay = 2; // (a pool of firelight round the wreck: it used to fill the hall orange)
+      ul.intensity = this.fire * 6.5;
     }
     u.uFire.value = this.fire;
     this.puffs.mat.uniforms.uGlow.value = Math.min(1, this.fire);
@@ -873,6 +945,7 @@ class ExamBoss {
         else this.puffs.emit(1, p, this._w.set(rand(-0.4, 0.4), 2.4, rand(-0.2, 0.2)).multiplyScalar(K), 1.6 * K, 5.5 * K, 2.6, 1.4 * K);
         this.fire = Math.max(this.fire, 0.22 * Math.exp(-this.blastT * 0.5));
       }
+      if (this.blastT > 1.2) { this.fire = Math.max(this.fire, 0.2); this.lightTo = 0.55; } // embers keep a pool of light on the wreck; the hall's lamps come down (their glare on the dais's steps outshone it)
     }
     this.puffs.update(dt, g.camera, t);
     if (this.passed && this.blown && !this.finished && !this.cheered && this.blastT > 1.3) {
@@ -888,6 +961,15 @@ class ExamBoss {
     if (this.blown) { if (ct > 9.4) this.finish(); return; }
     this.stiff = 7;
     while (this.popI < POPS.length && ct >= POPS[this.popI][0]) { const p = POPS[this.popI++]; this.pop(p[1], p[2]); this.hp(88 - this.popI * 15); }
+    if (this.cap && this.popI > 0) { // the first failure knocks its cap back and askew: the face shows from here on
+      const e = Math.min(1, dt * 5), c = this.cap;
+      c.rotation.x += (-0.62 - c.rotation.x) * e; c.rotation.z += (0.3 - c.rotation.z) * e; c.position.z += (-0.012 - c.position.z) * e; c.position.y += (0.166 - c.position.y) * e;
+    }
+    if (ct < 4.5) { // the reactor shows through from the first failure: an ember that grows with each one
+      this.coreGlow.material.color.copy(this.coreHot);
+      this.coreGlow.material.opacity = Math.min(0.75, 0.16 + 0.12 * this.popI);
+      this.coreGlow.scale.setScalar(0.34 + 0.07 * this.popI);
+    }
     if (ct < 0.5) { this.pose = BOSS_POSE.struck; this.tremor = 0.5; this.eyeDie = 1.8; }
     else if (ct < 3.45) {
       this.pose = ct < 1.6 ? BOSS_POSE.stagger : BOSS_POSE.limp;
@@ -907,11 +989,11 @@ class ExamBoss {
       this.heat = 0.12 + 0.88 * k * k;
       this.eyeDie = 1 + 2.2 * k;
       this.coreGlow.material.color.copy(this.coreHot);
-      this.coreGlow.material.opacity = k;
-      this.coreGlow.scale.setScalar(0.5 + 1.5 * k * k);
+      this.coreGlow.material.opacity = 0.8 * k;
+      this.coreGlow.scale.setScalar(0.5 + 1.0 * k * k);
       this.fire = Math.max(this.fire, 0.45 * k);
       this.firePos.copy(this.core(this._v));
-      if (post && !this.soft) post.rays = { pos: this.firePos, strength: 0.75 * k, radius: 0.45 };
+      if (post && !this.soft) post.rays = { pos: this.firePos, strength: 0.46 * k, radius: 0.4 };
       if (!hold && !this.soft) g.shake(0.05 + 0.1 * k);
     } else this.detonate(false);
   }
@@ -941,8 +1023,8 @@ class ExamBoss {
   camera(dt) {
     const g = this.g, K = BOSS_K, ct = this.ct, fit = Math.max(1, 0.56 / g.camera.aspect), b = this.blown ? this.blastT : -1;
     const KEYS = this.mode === "rage"
-      ? [[0, 0.3, 2.3, 10.5, 0, 4.4, 0], [0.9, -0.6, 2.0, 11.4, 0, 4.3, 0], [1.6, 0.0, 2.7, 8.4, 0, 4.5, 1.2], [3.6, 0.0, 3.6, 4.9, 0, 4.75, 1.9]]
-      : [[0, 2.4, 2.4, 11.8, 0, 3.7, 0], [3.2, -1.8, 2.2, 11.2, 0, 3.5, 0], [4.4, -1.0, 1.7, 9.6, 0, 2.6, 0.9], [5.55, 0.3, 2.0, 12.6, 0, 2.8, 0.6], [5.9, 0.3, 2.7, 16.5, 0, 3.0, 0], [9.4, 0.7, 1.9, 13.6, 0, 1.2, 2.2]];
+      ? [[0, 0.3, 1.1, 8.4, 0, 4.1, 0], [0.9, -0.6, 0.9, 8.9, 0, 4.1, 0], [1.6, 0.0, 1.4, 6.6, 0, 4.5, 1.2], [3.6, 0.0, 1.5, 3.9, 0, 5.3, 1.7]]
+      : [[0, 1.9, 1.0, 8.6, 0, 3.8, 0], [3.2, -1.5, 0.9, 8.3, 0, 3.6, 0], [4.4, -0.9, 0.8, 7.4, 0, 2.6, 0.9], [5.55, 0.3, 1.0, 9.6, 0, 2.9, 0.6], [5.9, 0.3, 1.9, 13.2, 0, 3.0, 0], [9.4, 0.5, 1.0, 7.6, 0, 1.0, 1.8]];
     let i = 0;
     while (i < KEYS.length - 2 && ct > KEYS[i + 1][0]) i++;
     const a = KEYS[i], c = KEYS[Math.min(i + 1, KEYS.length - 1)], k = smoothstep(a[0], c[0] || 1, ct);
@@ -952,6 +1034,9 @@ class ExamBoss {
     const e = 1 - Math.exp(-dt * (b >= 0 && b < 0.5 ? 9 : this.mode === "rage" && ct > 1.4 ? 5 : 2.6));
     this.camP.lerp(this._v, e); this.camL.lerp(this._w, e);
     g.camBase.copy(this.camP); g.lookAt.copy(this.camL);
+    if (Math.abs(g.camera.fov - 66) > 0.05) { g.camera.fov += (66 - g.camera.fov) * Math.min(1, dt * 2.2); g.camera.updateProjectionMatrix(); } // a wider lens, eased in
+    const post = g.scene.userData.post;
+    if (post && post.dof) { post.dof.focus = Math.max(2, this.camP.distanceTo(this.camL) - 0.6); post.dof.far = 64; post.dof.max = 0.0045; }
   }
 }
 

@@ -171,7 +171,7 @@ class BlasterGame extends QuizGame {
     this.shipEnv = makeEnvMap({
       top: 0x0b0d1e, horizon: 0x4a3a8c, bottom: 0x06050e, glow: 0.5,
       panels: [
-        { color: 0xffffff, pos: [3, 14, 10], w: 12, h: 5, k: 3.2 },
+        { color: 0xbfb6ff, pos: [3, 14, 10], w: 12, h: 5, k: 1.5 },
         { color: 0x35efff, pos: [16, 3, -6], w: 10, h: 3, k: 2.2 },
         { color: 0xff3ad4, pos: [-16, 4, -4], w: 10, h: 3, k: 2.2 },
         { color: 0xffa040, pos: [0, -4, 14], w: 8, h: 3, k: 1.6 },
@@ -270,7 +270,8 @@ class BlasterGame extends QuizGame {
     this.tgeo = [new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1.15, 0), new THREE.DodecahedronGeometry(1, 0), new THREE.TetrahedronGeometry(1.25, 0)];
     this.tedge = this.tgeo.map((g) => new THREE.EdgesGeometry(g, 1));
     this.badges = new Map();
-    this.slotMats = SLOT_COLORS.map((hex) => {
+    // (what glows on a drone is a shade apart for C and D: lemon and red-orange. Under bloom the buttons' yellow and orange both went gold.)
+    this.slotMats = [SLOT_COLORS[0], SLOT_COLORS[1], "#f6f43a", "#ff5a1c"].map((hex) => {
       const c = new THREE.Color(hex);
       const rim = fresnelShell(this.tgeo[0], hex, { power: 2.0, intensity: 1.7 }).material;
       const M = {
@@ -280,7 +281,7 @@ class BlasterGame extends QuizGame {
         }),
         edge: new THREE.LineBasicMaterial({ color: neon(hex, 2.3) }),
         rim,
-        halo: new THREE.SpriteMaterial({ map: glowTexture(), color: neon(hex, 1.25), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
+        halo: new THREE.SpriteMaterial({ map: glowTexture(), color: neon(hex, 1.25), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }),
         lamp: new THREE.MeshBasicMaterial({ color: neon(hex, 2.1), vertexColors: true }),
         baseEdge: neon(hex, 2.3),
         baseRim: rim.uniforms.uColor.value.clone(),
@@ -349,6 +350,7 @@ class BlasterGame extends QuizGame {
   }
   onLayout() {
     if (!this.has3D) return;
+    this.liftSet = 0; // (the band was just laid out afresh: any lift is applied again from there)
     const far = this.bandSize(12);
     this.fx = Math.min(3.4, far.w * 0.27);
     this.fy = Math.min(1.8, far.h * 0.22);
@@ -371,7 +373,7 @@ class BlasterGame extends QuizGame {
     const i = t.userData.slot, n = this.round.n;
     // round the demon: the upper corners of the view, then its flanks
     t.userData.sx = i % 2 ? 1 : -1;
-    t.userData.sy = n === 2 || i < 2 ? 0.27 : -0.07; // (fractions of the picture's height: clear of the question above and the fighter below)
+    t.userData.sy = n === 2 || i < 2 ? 0.3 : -0.1; // (fractions of the picture's height: clear of the question above and the fighter below)
     t.userData.bx = n === 2 ? (i === 0 ? -this.fx : this.fx) : i % 2 ? this.fx : -this.fx;
     t.userData.by = n === 2 ? 0 : i < 2 ? this.fy : -this.fy;
     t.scale.setScalar(this.ts);
@@ -414,12 +416,12 @@ class BlasterGame extends QuizGame {
       const frame = new THREE.Group();
       const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
       frame.add(hullMesh);
-      if (!this.enemy) frame.add(new THREE.Mesh(this.drones[shape].lamps, M.lamp)); // (round the demon the drones carry no loose lamps: nothing that could be read as a letter)
+      frame.add(new THREE.Mesh(this.drones[shape].lamps, M.lamp)); // its ring, bolts and slit, in the answer's colour (the only things on it that glow, with the letter)
       const halo = new THREE.Sprite(M.halo);
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.setScalar(this.enemy ? 1.62 : 1.12); // (round the demon the letter is the drone's face)
+      label.scale.setScalar(this.enemy ? 1.36 : 1.12); // (round the demon the letter is the drone's face, inside its collar: the armour round it shows)
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -465,19 +467,19 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, (0.06 + 0.07 * this.shipScale) * (this.enemy ? 0.9 : 1));
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 2.5 : 3.6));
+        aimBeam(fx.beam, from, at, this.enemy ? 0.017 + 0.021 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.9 : 3.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
         fx.flash.position.copy(from);
-        fx.flash.scale.setScalar(1.3 * this.shipScale);
+        fx.flash.scale.setScalar((this.enemy ? 0.8 : 1.3) * this.shipScale);
         fx.flash.visible = true;
         this.tw.add(0.3, (k) => {
           if (fx.tok !== tok) return;
           fx.beam.material.uniforms.uFade.value = 1 - k;
           fx.flash.material.opacity = 1 - k;
-          fx.flash.scale.setScalar((1.3 + k * 0.8) * this.shipScale);
+          fx.flash.scale.setScalar(((this.enemy ? 0.8 : 1.3) + k * 0.8) * this.shipScale);
         }, () => { if (fx.tok === tok) { fx.beam.visible = false; fx.flash.visible = false; } });
       });
     }
@@ -532,6 +534,7 @@ class BlasterGame extends QuizGame {
     this.tw.wait(0.5, () => {
       if (this.unmounted) return;
       this.quiz.feedback({ ok, title, auto: this.explainAuto(ok), onNext: () => this.after() });
+      this.sheetTop = this.quiz.sheet ? this.quiz.sheet.getBoundingClientRect().top : null;
     });
   }
   timeout() {
@@ -590,14 +593,16 @@ class BlasterGame extends QuizGame {
     this.shards.burst(pos, 0x9aa3b8, 10, this.ts * df * 0.8, (5 * this.ts + 2) * df); // the airframe, in pieces
     this.bursts.burst(pos, COLORS.orange, { n: 22, speed: 2.2 * df, size: 0.22 * df, life: 1.5 }); // embers that linger
     // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
-    { const sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
-      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * 0.7, sz * 3, 0.2);
-      for (let i = 0; i < 6; i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
+    { const tight = !!this.enemy && !full, sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
+      // (round the demon a drone's flash is small and gone in a few frames: the demon is seen taking the hit, not whited out)
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.45 : 0.7), sz * (tight ? 1.7 : 3), tight ? 0.12 : 0.2);
+      this.boomFast = tight;
+      for (let i = 0; i < (tight ? 4 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
       for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
       for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
-    this.boom(pos, color, (7 * this.ts + 3) * df * flash);
+    this.boom(pos, color, (7 * this.ts + 3) * df * flash * (this.enemy && !full ? 0.6 : 1));
   }
   highlight(t) {
     if (!t) return;
@@ -695,7 +700,7 @@ class BlasterGame extends QuizGame {
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
     GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
     if (this.boomT > 0) {
-      this.boomT = Math.max(0, this.boomT - dt * 2.6);
+      this.boomT = Math.max(0, this.boomT - dt * (this.boomFast ? 6.5 : 2.6));
       const k = this.boomT;
       this.flashSprite.visible = k > 0;
       this.flashSprite.scale.setScalar(this.boomSize * (1.4 - k * 0.6));
@@ -716,8 +721,8 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
         const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
-        u.s = clamp(Math.min(b.h * 0.074, b.w * 0.066), 0.2, 1.6);
-        t.position.set(u.sx * b.w * 0.3 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
+        u.s = clamp(Math.min(b.h * 0.06, b.w * 0.054), 0.2, 1.3); // (a fifth smaller, and out in the corners: clear of its wings and claws)
+        t.position.set(u.sx * b.w * 0.37 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);
@@ -764,6 +769,14 @@ class BlasterGame extends QuizGame {
     this.camBase.set(Pointer.x * 0.5, -Pointer.y * 0.3, 0);
     this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
+    { // while an explanation is up the picture rides higher, so the fighter and its shield stay in view above it
+      const b = this.band, up = b && this.quiz && this.quiz.sheet && this.sheetTop != null && this.state === "explain" ? clamp(b.bottom - this.sheetTop + 10, 0, b.h * 0.4) : 0;
+      this.lift = (this.lift || 0) + (up - (this.lift || 0)) * Math.min(1, dt * 6);
+      if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
+        this.liftSet = this.lift < 0.25 ? 0 : this.lift;
+        this.camera.setViewOffset(GFX.w, GFX.h, 0, GFX.h / 2 - ((b.top + b.bottom) / 2 - this.liftSet), GFX.w, GFX.h);
+      }
+    }
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
     this.space.follow(this.camera);
     FX.sync(this.scene, this.t);
