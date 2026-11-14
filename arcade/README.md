@@ -341,7 +341,10 @@ card grade, exam mark, saved item and frame number with the trace saved in
 `backup/` from before the visual upgrades. It also fails if the Final Exam shows
 any hint before submit, and it plays the exam's ending in full (holding its clock
 through it, so the saved results must match to the byte). `PROGRESS.md` logs the
-upgrades' checkpoints.
+upgrades' checkpoints, and for the polish pass the audit, each reviewer's scores,
+what was done about every point, the originality audit and what was left undone.
+`docs/polish-pass/` holds that pass's before-and-after contact sheets, one per
+screen (before on top, after below).
 
 Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
 (`boss/`), Risk Blaster's fighter (`fighter/`) and its demon (`demon/`), each a

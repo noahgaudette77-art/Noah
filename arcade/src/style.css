@@ -713,6 +713,7 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .client-card, .debrief { background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 46%), rgba(24, 14, 68, 0.74); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 16px -3px var(--c, var(--lime)), 0 4px 0 rgba(0, 0, 0, 0.55); }
 .setting { padding: 12px; margin-bottom: 8px; }
+.setting .sl { flex: 1 1 9.4em; } /* (inside a panel there is less room: the label gives way first, so a two-way switch stays on its right) */
 .mrow { padding: 9px 11px; }
 .stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
 
@@ -777,8 +778,9 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 /* Small labels: a size up; long ones break evenly instead of leaving one word alone. */
 .hud .tag { font-size: 10px; color: color-mix(in srgb, var(--c, var(--cyan)) 55%, #fff); }
 .world, .label, .ch-list .label, .section-h { text-wrap: balance; }
-.face .ftop, .face .fhint { font-size: 9px; color: #cfc6f8; }
-.stage .meta { white-space: nowrap; }
+.face .ftop { font-size: 9px; color: #cfc6f8; }
+.face .fhint { color: #cfc6f8; white-space: nowrap; font-size: clamp(7px, 2.05vw, 9px); } /* (one line on a phone) */
+.stage:not(.wide) .meta { white-space: nowrap; } /* (the two wide tiles at the top of a stage list carry a sentence, which wraps) */
 /* Guide: while there are search results the archive folds down to a strip; a chapter has one filled button. */
 .lib-window { transition: height 0.3s var(--ease-out); }
 .guide-lib.searching .lib-window { height: 64px; }

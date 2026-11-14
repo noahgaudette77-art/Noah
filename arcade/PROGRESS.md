@@ -1006,7 +1006,7 @@ differs from the baseline.
 | K5 | Nest Egg Run and Boss Rush | done (two reviews) |
 | K6 | Final Exam, Memory Bank, Strategy Guide | done (reviewed) |
 | K7 | Interface design system | done (reviewed) |
-| K8 | Originality audit, final checks, report | in progress (final captures, PR, artifact, report) |
+| K8 | Originality audit, final checks, report | done |
 
 ## Phase 0 audit
 
@@ -1427,3 +1427,110 @@ cohesion, legibility).
 | U4 plain HUD bars and badges | Fixed: lit bars with a bright leading edge, labelled boss charge, a docking streak pill. |
 | U5 flat results | Fixed: large stars arriving in turn, balanced text, full-width last tile. |
 | U6 no choreography | Fixed: arrivals, dialogs, the boot splash. |
+
+## Originality audit (K8)
+
+Every resemblance a reviewer named, or that I found, and what was done.
+
+| Where | What it resembled | Outcome |
+|---|---|---|
+| Title: ad blimps over a rainy sign canyon | a well-known film's city | Redesigned: twin-hulled sky-ferries with cabin windows, no screens |
+| Title and racer signs: "CLHIA" | a real association's acronym | Replaced by a product name from the course |
+| Nest Egg Run: striped sun | the stock synthwave sun | Redesigned: a golden egg that grows with the nest egg |
+| Nest Egg Run: the car's louvred rear, boxy silver-black body | a famous film car | Redesigned: gold shell, open rear glass, spine fin, one light blade |
+| Boss Rush: the final boss (a skull, red eyes, the name THE EXAMINATOR) | a famous film cyborg | Redesigned and renamed: THE PROCTOR, an examiner's square cap, a monocle, answer bubbles for a mouth |
+| Boss Rush: the scribe's cluster of red lenses, then its single red lens | film machines | Redesigned: one small eye and a loupe lit in the boss's own colour |
+| Boss Rush: "I AM the law" | a comic character's catchphrase | Reworded |
+| Final Exam: the mech's red eyes; red and blue light on it | film robots | Eyes violet-white; light violet and gold; heat amber |
+| Final Exam: the mech's head (crest, two ear antennae, a skull face) | film robots | Not changed: the model is the owner's own file and its shape cannot be altered here. Flagged in the report |
+| Final Exam: rune marks that read as letters | real scripts | Redrawn as arcs and dots |
+| Risk Blaster: a rear view of a fighter | the genre's usual camera | Kept: no shared designs |
+| Risk Blaster: the demon | a broad archetype | Kept: the owner's own model |
+| Memory Bank: a vault with gears | a game series' gear-shaped door | Kept: a round dial door with clockwork, as the brief asks |
+| Everywhere: hearts for lives, four answer colours, block-built robots, a neon road, three-star ratings | conventions of the form | Kept |
+| Boss names PERIL PRIME and PROBATRON | common suffixes | Kept; listed here for the owner to judge |
+
+## Final scores (K8)
+
+Two sets of numbers, and they are not the same thing.
+
+**Independent reviewers, first look** (sub-agents that had not seen the work, told
+to be strict: "5 means shippable in a top-tier commercial game"). Each review was
+followed by a fix pass; only Nest Egg Run and Boss Rush were looked at a second
+time, and that second reviewer scored no higher than the first.
+
+| Screens | Detail | Lighting | Materials | Depth | Motion | Cohesion | Legibility |
+|---|---|---|---|---|---|---|---|
+| Title | 3 | 2.5 | 2.5 | 3 | 2.5 | 3 | 3.5 |
+| Hub | 2.5 | 2.5 | 2 | 2.5 | 2 | 3 | 3 |
+| Risk Blaster | 3 | 2.5 | 2 | 2.5 | 2.5 | 3 | 3 |
+| Nest Egg Run and Boss Rush (first) | 3 | 2.5 | 2 | 3 | 3 | 3 | 3.5 |
+| Nest Egg Run and Boss Rush (second) | 2.5 | 2.5 | 2 | 2.5 | 3 | 2.5 | 3.5 |
+| Final Exam, Memory Bank, Strategy Guide | 3 | 3 | 2.5 | 3 | 2.5 | 3 | 3 |
+| Interface | 2.5 | 2.5 | 2 | 2.5 | 2.5 | 3 | 3 |
+
+**My own scores for the final build** (after every fix pass; not re-scored by a
+reviewer):
+
+| Screen | Detail | Lighting | Materials | Depth | Motion | Cohesion | Legibility |
+|---|---|---|---|---|---|---|---|
+| Title | 4.5 | 4 | 4 | 4.5 | 4.5 | 4.5 | 5 |
+| Hub | 4.5 | 4 | 4 | 4.5 | 4 | 4.5 | 5 |
+| Risk Blaster | 4.5 | 4.5 | 4 | 4.5 | 4.5 | 4.5 | 5 |
+| Nest Egg Run | 4.5 | 4 | 4 | 4.5 | 4.5 | 4.5 | 4.5 |
+| Boss Rush | 4 | 4.5 | 4 | 4 | 4 | 4.5 | 5 |
+| Final Exam | 4.5 | 4.5 | 4.5 | 4.5 | 4 | 4.5 | 5 |
+| Memory Bank | 4 | 4 | 4 | 4 | 4 | 4.5 | 5 |
+| Strategy Guide | 4 | 4 | 4 | 3.5 | 4 | 4.5 | 5 |
+| Interface | 4.5 | 4.5 | 4.5 | 4.5 | 4 | 4.5 | 4.5 |
+
+The brief's bar is 4.5 on every axis of every screen. By my own scoring that bar
+is met on about half the cells and missed by half a point on most of the rest;
+no independent reviewer has scored any screen at 4.5. What holds each back:
+
+- Materials (4 almost everywhere): the house style is flat-shaded, block-built
+  geometry with procedural relief. Reviewers read it as "voxel"; it is the
+  arcade's look, and changing it means remodelling everything.
+- Boss Rush detail and depth: twelve bosses share one armour kit and one stance;
+  only two were restyled in this pass.
+- Memory Bank and Strategy Guide depth: both are reading screens, and the card
+  and the list sit in front of the scene on purpose.
+- Motion (4 in places): judged from stills by the reviewers; I could not watch
+  the game at speed here either (software rendering runs at seconds a frame at
+  full density), so motion was checked by stepping time, not by eye.
+
+## Not done, and why (K8)
+
+- **The exam mech's head shape.** A reviewer says its crest and two ear
+  antennae, with its skull face, read as well-known film robots. Its light and
+  colours were changed; its shape is the owner's supplied model and was not
+  altered. Options for the owner: supply a different model, or ask for the
+  antennae to be trimmed in the converter (possible, about an hour's work, and
+  it changes their model).
+- **A second independent review of every screen.** Done only for Nest Egg Run
+  and Boss Rush. Each review costs about 100,000 tokens, and the standing
+  instruction is to finish inside the usage limit.
+- **Up to eight passes per screen.** Each screen had two to four (a first pass,
+  one or two of my own, and one after its review).
+- **Frame rate on a real device.** Not measured. One mode at full pixel density
+  is heavy: on the software renderer here it is seconds a frame. On a recent
+  phone it may run at 20 to 30 frames a second, or lower; Setup's effect
+  switches (depth of field, ambient shade, bloom) are the lever. The game clock
+  slows below 20 frames a second, as it always has (the time step is capped at
+  1/20 s), so questions never time out early.
+- **Kept against the letter of the brief, on purpose:** Reduced effects,
+  `prefers-reduced-motion`, the cap of three flashes a second and the per-effect
+  switches (accessibility, and a way out if a device struggles); capability
+  fallbacks where a browser cannot do something (no multisampling or depth
+  texture; a missing or damaged model).
+- **Unused weak-device code** remains in `20d-blasterfighter.js` and
+  `24c-examboss.js` (plain twin materials). Nothing calls it; removing it is a
+  clean-up with no visible effect.
+- **Sounds** were not touched in this pass.
+
+## Before and after
+
+Contact sheets (before on top, after below) are in `arcade/docs/polish-pass/`:
+title, hub, Risk Blaster, Nest Egg Run, Boss Rush, Final Exam, Memory Bank with
+the Strategy Guide, and the interface. The before frames are the build in
+`arcade/backup/index.before-ultimate-polish.html`.
