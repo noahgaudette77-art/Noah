@@ -281,12 +281,13 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0 } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null } = {}) {
   const uniforms = Object.assign(fogUniforms(), {
     uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
     tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
     uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
     uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha }, uPulse: { value: pulse },
+    uFall: { value: fall ? new THREE.Vector2(fall[0], fall[1]) : new THREE.Vector2(0, 0) }, // [z where it starts to thin, how fast]
   });
   const mat = new THREE.ShaderMaterial({
     uniforms, extensions: { derivatives: true },
@@ -294,7 +295,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
-      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse;
+      uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse; uniform vec2 uFall;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){
         vec3 col = uBase;
@@ -306,7 +307,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
           r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
           r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
-          col += r * uReflect;
+          col += r * uReflect * mix(1.0, exp(-max(vWorld.z - uFall.x, 0.0) * uFall.y), step(1e-6, uFall.y));
         }
         vec2 g; vec2 fw;
         if (uPolar > 0.5) {

@@ -72,32 +72,35 @@ function libraryScene() {
 }
 
 // A line of notes, set for reading: its lead-in term (the words before the first colon, when they are few) in
-// the accent colour, and a numbered run ("1) ... 2) ... 3) ...") with each item on a line of its own. Only the
+// the accent colour, and a numbered run ("1) ... 2) ... 3) ...") with each item on a line of its own, hung. Only the
 // presentation changes: every word and mark of the text is kept, in order.
 function noteHTML(text, marked) {
   let out = marked ? marked(text) : esc(text);
   const lead = /^((?:<mark>|<\/mark>|[^<:]){2,46}?):\s/.exec(out);
   if (lead && !/\d\)/.test(lead[1])) out = `<span class="lead">${lead[1]}:</span> ` + out.slice(lead[0].length);
-  if (/(^|\s)1\)\s/.test(out) && /\s2\)\s/.test(out)) out = out.replace(/\s(?=(?:<mark>)?\d\)(?:<\/mark>)?\s)/g, "<br>");
+  if (/(^|\s)1\)\s/.test(out) && /\s2\)\s/.test(out)) {
+    out = out.split(/\s(?=(?:<mark>)?\d\)(?:<\/mark>)?\s)/).map((part) => (/^(?:<mark>)?\d\)/.test(part) ? `<span class="ni">${part}</span>` : part)).join(" ");
+  }
   return out;
 }
 
 function showGuideChapter(n) {
   const c = CH(n);
   const lib = libraryScene();
-  lib.reading = true; // a chapter is open: the archive behind it all but stops
-  lib.setBand(null);
+  lib.reading = true; // a chapter is open: the archive all but stops (a strip of it shows behind the title)
   if (!Store.state.read[n]) { Store.state.read[n] = 1; Store.save(); }
   const mm = chapterMastery(c), m = (mm * 100).toFixed(1);
   const errata = (DATA.errata || []).filter((x) => x.ch === n);
-  const el = UI.el(`<section class="screen scr-notes" style="background:rgba(11,5,39,.985)">
+  const el = UI.el(`<section class="screen guide-lib scr-notes">
     ${topbar("STAGE " + n + " NOTES", { back: "GUIDE" })}
     <div class="scroll"><div class="wrap">
-      <div class="ch-hero" style="--c:${c.color}">
+      <div class="ch-banner" style="--c:${c.color}">
         <div class="kick">WORLD ${c.section.n} · STAGE ${n}</div>
         <h2>${esc(c.title)}</h2>
-        <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
-        <div class="chips"><span>${mpct(mm)}% MASTERED</span><span>${Store.countMastered(c.qids)}/${c.qids.length} Q</span><span>${Store.countMastered(c.fids)}/${c.fids.length} CARDS</span></div>
+      </div>
+      <div class="ch-hero" style="--c:${c.color}">
+        <span class="meter ten" style="--c:${c.color}"><i style="width:${m}%"></i></span>
+        <div class="stats3"><div><b>${mpct(mm)}%</b><span>MASTERED</span></div><div><b>${Store.countMastered(c.qids)}/${c.qids.length}</b><span>QUESTIONS</span></div><div><b>${Store.countMastered(c.fids)}/${c.fids.length}</b><span>CARDS</span></div></div>
         <div class="acts">
           <button class="btn" data-act="play" data-g="blaster" style="--c:${COLORS.cyan}">${icon("play")} PLAY RISK BLASTER</button>
           <button class="btn ghost" data-act="play" data-g="memory">FLASHCARDS</button>
@@ -127,6 +130,7 @@ function showGuideChapter(n) {
       if (a === "brief") briefing(n);
     },
     mounted: () => {
+      lib.setBand($(".ch-banner", el));
       const face = $(".client-card canvas", el);
       if (face && client(n)) drawPortrait(face, Object.assign({ age: client(n).age }, client(n).look));
     },

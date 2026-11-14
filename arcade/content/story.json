@@ -9,7 +9,8 @@
         "style": "short",
         "glasses": true,
         "beard": false,
-        "shirt": "cyan"
+        "shirt": "cyan",
+        "mood": "smile"
       },
       "lines": [
         "Hi, I'm Alfred Jones: 52, a widower, and worth about $1,000,000, not counting my house.",
@@ -29,7 +30,8 @@
         "style": "short",
         "glasses": true,
         "beard": false,
-        "shirt": "orange"
+        "shirt": "orange",
+        "mood": "worry"
       },
       "lines": [
         "Alfred again. Time to look at what could go wrong, starting with my $400,000 house and $200,000 cottage.",
@@ -49,7 +51,8 @@
         "style": "short",
         "glasses": true,
         "beard": false,
-        "shirt": "violet"
+        "shirt": "violet",
+        "mood": "grump"
       },
       "lines": [
         "Insurance? Bah! Term just eats your premiums, and most folks never collect a dime.",
@@ -69,7 +72,8 @@
         "style": "curly",
         "glasses": false,
         "beard": false,
-        "shirt": "lime"
+        "shirt": "lime",
+        "mood": "smile"
       },
       "lines": [
         "Hi, I'm Sean, Alfred's son: 24 and just out of university.",
@@ -89,7 +93,8 @@
         "style": "curly",
         "glasses": false,
         "beard": false,
-        "shirt": "yellow"
+        "shirt": "yellow",
+        "mood": "worry"
       },
       "lines": [
         "Sean again. I've just started my first job, and I have to decide whether to join the group plan.",
@@ -109,7 +114,8 @@
         "style": "bun",
         "glasses": true,
         "beard": false,
-        "shirt": "magenta"
+        "shirt": "magenta",
+        "mood": "smile"
       },
       "lines": [
         "Hi, I'm Jasmine. I'm 48, single, and finally able to save seriously for retirement.",
@@ -169,7 +175,8 @@
         "style": "short",
         "glasses": true,
         "beard": true,
-        "shirt": "violet"
+        "shirt": "violet",
+        "mood": "worry"
       },
       "lines": [
         "I'm Manfred, 79, and a bit forgetful lately. I picked up a do-it-yourself will kit. Would you witness it?",
@@ -209,7 +216,8 @@
         "style": "ponytail",
         "glasses": false,
         "beard": false,
-        "shirt": "yellow"
+        "shirt": "yellow",
+        "mood": "smile"
       },
       "lines": [
         "I'm Maria. Manuel and I married in Quebec and have lived here 12 years. Now he's talking about divorce.",

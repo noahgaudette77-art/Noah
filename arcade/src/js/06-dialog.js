@@ -17,6 +17,8 @@ function drawPortrait(canvas, look = {}) {
   const hair = HAIR[look.hair] || HAIR.brown;
   const shirt = SHIRT[look.shirt] || COLORS.cyan;
   px("#1a0d45", 0, 0, 24, 24);
+  // a soft light behind the head, in the colour they wear
+  x.globalAlpha = 0.14; px(shirt, 0, 0, 24, 24); x.globalAlpha = 0.16; px(shirt, 3, 1, 18, 17); px(shirt, 5, 0, 14, 19); x.globalAlpha = 1;
   for (let i = 0; i < 24; i += 2) px("rgba(255,255,255,0.03)", 0, i, 24, 1);
   // shoulders, collar, neck
   px(shirt, 3, 19, 18, 5);
@@ -46,23 +48,28 @@ function drawPortrait(canvas, look = {}) {
   if (look.style === "curly") for (let i = 6; i < 18; i += 2) { px(hair, i, 1, 1, 2); px(hair, i + 1, 2, 1, 2); }
   if (look.style === "bun") px(hair, 10, 0, 4, 3);
   if (look.style === "ponytail") px(hair, 17, 6, 2, 9);
-  // eyes and brows
-  px(hair === HAIR.white ? "#b9b8c2" : hair, 8, 8, 3, 1);
-  px(hair === HAIR.white ? "#b9b8c2" : hair, 13, 8, 3, 1);
+  // eyes and brows (the brows carry the mood: level, lifted in the middle when worried, drawn down when cross)
+  const brow = hair === HAIR.white ? "#b9b8c2" : hair, mood = look.mood;
+  if (mood === "worry") { px(brow, 8, 8, 2, 1); px(brow, 10, 7, 1, 1); px(brow, 13, 7, 1, 1); px(brow, 14, 8, 2, 1); }
+  else if (mood === "grump") { px(brow, 8, 7, 1, 1); px(brow, 9, 8, 2, 1); px(brow, 13, 8, 2, 1); px(brow, 15, 7, 1, 1); }
+  else { px(brow, 8, 8, 3, 1); px(brow, 13, 8, 3, 1); }
   px("#ffffff", 9, 10, 2, 1);
   px("#ffffff", 13, 10, 2, 1);
   px("#1b1420", 10, 10, 1, 1);
   px("#1b1420", 13, 10, 1, 1);
-  if (look.glasses) {
-    x.strokeStyle = "#20152e";
-    x.lineWidth = 1;
-    x.strokeRect(8.5, 9.5, 3, 2);
-    x.strokeRect(12.5, 9.5, 3, 2);
-    px("#20152e", 11, 10, 2, 1);
-  }
-  // nose, mouth, cheeks
+  // nose
   px("rgba(0,0,0,0.15)", 11, 11, 2, 2);
-  px("#a8434f", 10, 14, 4, 1);
+  if (look.glasses) { // spectacles: a wire under each eye, the bridge, the hinges (the eyes and brows stay clear)
+    const rim = look.skin === "brown" || look.skin === "dark" ? "#f0c35a" : "#6b4416";
+    px(rim, 8, 11, 4, 1); px(rim, 12, 11, 4, 1);
+    px(rim, 7, 10, 2, 1); px(rim, 15, 10, 2, 1);
+    px(rim, 11, 10, 2, 1);
+  }
+  // mouth (it carries the mood too), cheeks
+  if (mood === "worry") px("#a8434f", 11, 14, 2, 1);
+  else px("#a8434f", 10, 14, 4, 1);
+  if (mood === "smile") { px("#a8434f", 9, 13, 1, 1); px("#a8434f", 14, 13, 1, 1); }
+  if (mood === "grump") { px("#a8434f", 9, 15, 1, 1); px("#a8434f", 14, 15, 1, 1); }
   if ((look.age || 0) >= 60) { px("rgba(0,0,0,0.12)", 8, 12, 1, 2); px("rgba(0,0,0,0.12)", 15, 12, 1, 2); }
   if (look.beard) { px(hair, 7, 12, 10, 4); px(hair, 9, 16, 6, 1); px("#a8434f", 10, 14, 4, 1); px(skin, 10, 13, 4, 1); }
   return canvas;

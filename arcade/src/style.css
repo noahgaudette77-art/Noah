@@ -1039,3 +1039,75 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .gsec ul { gap: 9px; }
 .client-card { grid-template-columns: auto 1fr; }
 .client-card .btn.wide { grid-column: 1 / -1; width: 100%; min-height: 44px; }
+
+/* Strategy Guide, second independent review. The archive's name sits on a tab at the head of its window (it
+   covered the scene's corner). A chapter's notes: solid ground; three equal tiles of figures, the figure over
+   its name; a progress bar of ten cells (the empty one read as a blank field); room between the blocks; each
+   section of notes on a page of its own. Numbered runs hang. The search box's focus ring stays inside it. */
+.lib-window span { left: 10px; top: -1px; bottom: auto; padding: 5px 9px 5px 10px; box-shadow: 0 0 0 2px #000, 0 3px 0 #000; }
+.ch-hero { gap: 12px; margin-bottom: 18px; }
+.ch-hero .meter.ten { position: relative; height: 10px; background: #241c5c; border: 0; box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.6); }
+.ch-hero .meter.ten::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(11, 5, 39, 0) 0, rgba(11, 5, 39, 0) calc(10% - 3px), #0b0527 calc(10% - 3px), #0b0527 10%); }
+.stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stats3 > div { display: grid; gap: 6px; justify-items: center; padding: 10px 4px 8px; background: linear-gradient(180deg, rgba(150, 122, 255, 0.22), rgba(150, 122, 255, 0.1)); border: 1px solid rgba(150, 122, 255, 0.55); box-shadow: 0 2px 0 #000; }
+.stats3 b { font: 400 14px/1 var(--font-display); color: #fff; letter-spacing: 0.02em; white-space: nowrap; }
+.stats3 span { font: 400 8px/1 var(--font-display); color: #d8d0ff; letter-spacing: 0.06em; }
+.ch-hero .acts { gap: 10px; margin-top: 6px; }
+.ch-hero .acts .btn:first-child { box-shadow: 0 4px 0 #000, 0 0 14px -6px var(--c); }
+.client-card { margin-bottom: 20px; }
+.gsec { margin: 0 0 14px; padding: 0 0 13px; border: 1px solid #4a3bb0; border-left: 3px solid var(--c, var(--cyan)); background: linear-gradient(180deg, #1a0f4d 0, #130a3c 96px); box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+.gsec h3 { margin: 0; padding: 11px 12px 9px; background: #1d1156; }
+.gsec ul { padding: 12px 14px 0 calc(13px + 1.1em); }
+.gsec .objectives { padding: 12px 14px 0 calc(13px + 1.3em); gap: 7px; }
+.tipbox { margin: 0 0 14px; }
+.ni { display: block; padding-left: 3ch; text-indent: -3ch; }
+.ni + .ni, .lead + .ni { margin-top: 3px; }
+.hit .hr { margin-top: 8px; }
+.guide-lib.searching .scroll { background: #0b0527; } /* (no window to leave clear while searching: plain ground) */
+.search:focus-visible { outline: 0; border-color: var(--yellow); box-shadow: inset 0 0 0 2px rgba(255, 221, 87, 0.3), 0 0 16px -4px var(--yellow); }
+
+/* Strategy Guide, third independent review. A chapter's title stands on a banner: a strip of the archive, dimmed
+   (the rose window to the right, the title's side dark), so the notes still belong to the library; the page's
+   foot fades like the list's. The ten cells of the progress bar are outlined, so an empty bar still reads as a
+   bar; small figures on the rows are lighter; a row's progress track is outlined. The window no longer animates
+   its height when a search starts or ends (redrawing the ground on every frame of that showed the scene through). */
+.ch-banner { position: relative; display: grid; gap: 8px; padding: 15px 14px 14px; margin: 0 0 14px; min-height: 84px; align-content: center;
+  outline: 4px solid #2b1c6e; outline-offset: -4px; box-shadow: 0 0 0 9999px #0b0527, 0 0 0 2px #000, 0 0 0 4px var(--violet), inset 0 0 0 5px #000; }
+.ch-banner::before { content: ""; position: absolute; inset: 5px; pointer-events: none; background: linear-gradient(90deg, rgba(11, 5, 39, 0.94) 0, rgba(11, 5, 39, 0.84) 44%, rgba(11, 5, 39, 0.3) 78%, rgba(11, 5, 39, 0.42) 100%); }
+.guide-lib .wrap > .ch-banner { z-index: 0; }
+.ch-banner > * { position: relative; }
+.ch-banner .kick { font: 400 9px/1.5 var(--font-display); color: #d9ccff; letter-spacing: 0.08em; text-shadow: 0 1px 0 #000, 0 0 6px #000; }
+.ch-banner h2 { font: clamp(14px, 4vw, 20px)/1.4 var(--font-display); color: var(--ink); text-wrap: balance; text-shadow: 0 2px 0 #000, 0 0 10px #0b0527, 0 0 4px #0b0527; max-width: 82%; }
+.ch-hero .meter.ten { background: #1f1752; box-shadow: none; }
+.ch-hero .meter.ten::after { background: repeating-linear-gradient(90deg, #8f7fe8 0, #8f7fe8 1px, rgba(143, 127, 232, 0) 1px, rgba(143, 127, 232, 0) calc(10% - 4px), #8f7fe8 calc(10% - 4px), #8f7fe8 calc(10% - 3px), #0b0527 calc(10% - 3px), #0b0527 10%),
+  linear-gradient(180deg, #8f7fe8 0, #8f7fe8 1px, rgba(143, 127, 232, 0) 1px, rgba(143, 127, 232, 0) calc(100% - 1px), #8f7fe8 calc(100% - 1px)); }
+.stage .meta { color: #b8adff; }
+.stage .meter { box-shadow: 0 0 0 1px #4b3ea6, inset 0 1px 0 rgba(0, 0, 0, 0.5); }
+.guide-lib .label { color: #b8adff; }
+.lib-window { transition: none; }
+
+/* Memory Bank, second independent review. The vault shows only in its window: the gutters beside it and the
+   ground under it are solid (the gold's glow used to spill past the frame). The card's brass bezel lines up with
+   the window and the buttons, with clear ground between it and the window. A card banked or missed shows on the
+   window's frame (one pulse) and on the BANKED counter. The card's header and hint are ruled off, the ring of
+   the dial behind a term is plainer to see, a short term is set larger. The three grades are framed keys. */
+.scr-game .card-stage.below { flex: 0 1 392px; min-height: 250px; padding: 16px 9px 13px; }
+/* (These grounds are a hair short of opaque on purpose. Two fully opaque rectangles meeting round the window made the
+   browser's compositor count the 3D canvas behind them as covered and stop drawing it: the window went blank.) */
+.scr-game .card-stage.below::before { top: -6px; background: rgba(3, 9, 7, 0.996); }
+.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(3, 9, 7, 0.996); pointer-events: none; }
+.vault-window::before { right: calc(100% + 2px); }
+.vault-window::after { left: calc(100% + 2px); }
+.vault-window.bank { animation: vault-bank 0.6s ease-out; }
+.vault-window.miss { animation: vault-miss 0.6s ease-out; }
+@keyframes vault-bank { 0% { border-color: #a6ffb9; filter: drop-shadow(0 0 12px rgba(93, 255, 138, 0.95)); } 100% { border-color: rgba(255, 201, 61, 0.8); filter: drop-shadow(0 0 0 rgba(93, 255, 138, 0)); } }
+@keyframes vault-miss { 0% { border-color: #ff8c9f; filter: drop-shadow(0 0 12px rgba(255, 77, 109, 0.95)); } 100% { border-color: rgba(255, 201, 61, 0.8); filter: drop-shadow(0 0 0 rgba(255, 77, 109, 0)); } }
+.tag.bank { animation: tag-bank 0.55s ease-out; transform-origin: 100% 50%; }
+@keyframes tag-bank { 0% { transform: scale(1.3); color: #a6ffb9; text-shadow: 0 0 12px rgba(93, 255, 138, 0.9); } 100% { transform: scale(1); } }
+.face .ftop { padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.16); }
+.face .fhint { padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.face.front::after { opacity: 0.2; width: min(84%, 270px);
+  -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%); mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%); }
+.face.front .fmain.short { font-size: clamp(36px, 9.2vw, 52px); }
+.grade .btn { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 84%, #fff) 0, var(--c) 44%, color-mix(in srgb, var(--c) 70%, #000) 100%);
+  box-shadow: 0 0 0 2px #000, 0 6px 0 #000, inset 0 0 0 2px rgba(0, 0, 0, 0.3), inset 0 5px 0 rgba(255, 255, 255, 0.36), inset 0 -6px 0 rgba(0, 0, 0, 0.2); filter: saturate(0.9); }

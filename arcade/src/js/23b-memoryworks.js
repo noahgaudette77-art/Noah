@@ -1,9 +1,11 @@
-// Memory Bank's machinery: gear trains round the dial, a row of deck lamps over the
-// door (one per card, lit as each is banked), coin stacks by the bullion, lamp panels
-// on the wall. Look and sound only: nothing here touches the cards, grades or boxes.
+// Memory Bank's machinery: the lock's movement in the middle of the door (three brass
+// gears round a steel one, under the handwheel), an arc of deck lamps over the door (one
+// per card, lit as each is banked), coin piles by the bullion, lamp panels on the wall.
+// Look and sound only: nothing here touches the cards, grades or boxes.
 
-// A spur gear lying in the x-y plane: flat-topped teeth, a hub, five lightening holes.
-function memoryGearGeometry(r, teeth, thick) {
+// A spur gear lying in the x-y plane: flat-topped teeth, a hub hole, lightening holes
+// (five small ones, or as many larger ones as asked for).
+function memoryGearGeometry(r, teeth, thick, holes = 5, holeR = 0.14) {
   const shape = new THREE.Shape(), n = teeth * 4, ri = r * 0.8;
   for (let i = 0; i < n; i++) {
     const a = ((i - 0.5) / n) * Math.PI * 2, rr = i % 4 < 2 ? r : ri, x = Math.cos(a) * rr, y = Math.sin(a) * rr;
@@ -12,39 +14,40 @@ function memoryGearGeometry(r, teeth, thick) {
   shape.closePath();
   const hole = (x, y, hr) => { const h = new THREE.Path(); h.absarc(x, y, hr, 0, Math.PI * 2, true); shape.holes.push(h); };
   hole(0, 0, r * 0.17);
-  for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; hole(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48, r * 0.14); }
-  return new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 1, curveSegments: 6 });
+  for (let k = 0; k < holes; k++) { const a = ((k + 0.5) / holes) * Math.PI * 2; hole(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48, r * holeR); }
+  return new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 1, curveSegments: 8 });
 }
+
+const MEMORY_SUN_TEETH = 9, MEMORY_PLANET_TEETH = 8;
 
 class MemoryWorks {
   constructor(game, mats) {
     const g = (this.g = game), s = g.scene, Y = MEMORY_DOOR_Y;
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(1, 1, 1); this._z = new THREE.Vector3(0, 0, 1);
-    this.turn = 0; // how far the trains have turned
-    this.kick = 0; // a deposit spins them on; a miss jerks them back
-    // gear trains: three gears each side of the coin slot, and the same below the dial, each
-    // train in a straight line like a clock's (not round the door: a door ringed with gear
-    // teeth is another game's vault). Neighbours mesh, so they turn opposite ways at speeds
-    // set by their teeth.
-    const small = memoryGearGeometry(0.6, 10, 0.16), big = memoryGearGeometry(0.7, 12, 0.16);
-    this.small = new THREE.InstancedMesh(small, mats.chrome, 8);
-    this.big = new THREE.InstancedMesh(big, mats.gold, 4);
-    this.gears = [];
-    let ns = 0, nb = 0;
-    [1, -1].forEach((v) => [-1, 1].forEach((sd) => [[1.22, 10], [2.4, 12], [3.58, 10]].forEach(([gx, teeth], k) => {
-      this.gears.push({ mesh: teeth === 10 ? this.small : this.big, i: teeth === 10 ? ns++ : nb++, x: sd * gx, y: v * 6.72, w: (k % 2 ? -1 : 1) * sd * v * (10 / teeth), ph: k % 2 ? Math.PI / teeth : 0 });
-    })));
-    [this.small, this.big].forEach((m) => {
-      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.turn = 0; // how far the movement has turned
+    this.kick = 0; // a deposit spins it on; a miss jerks it back
+    // The movement: a steel gear on the handwheel's arbor and three brass gears round it, on the dark plate in
+    // the middle of the door (a clock's train, large enough to watch; the door itself has no teeth). Meshed
+    // gears turn opposite ways, at speeds set by their teeth.
+    const pitchP = 1.4, pitchS = (pitchP * MEMORY_SUN_TEETH) / MEMORY_PLANET_TEETH; // pitch radii: the same tooth on both
+    this.sun = new THREE.Mesh(memoryGearGeometry(pitchS / 0.9, MEMORY_SUN_TEETH, 0.2, 3, 0.2), mats.chrome);
+    this.planets = new THREE.InstancedMesh(memoryGearGeometry(pitchP / 0.9, MEMORY_PLANET_TEETH, 0.2, 4, 0.25), mats.brass, 3);
+    this.planetAt = [90, 210, 330].map((d) => { const a = (d * Math.PI) / 180; return { a, x: Math.cos(a) * (pitchP + pitchS), y: Math.sin(a) * (pitchP + pitchS) }; });
+    // a pin through each brass gear
+    const pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.17, 0.34, 12).rotateX(Math.PI / 2), mats.chrome, 3);
+    this.planetAt.forEach((p, i) => pins.setMatrixAt(i, this._m.compose(this._p.set(p.x, p.y, 0.12), this._q.identity(), this._s)));
+    this.planets.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    [this.sun, this.planets, pins].forEach((m) => {
       m.frustumCulled = false;
       m.layers.set(1); // (not in the floor's reflection: that pass stays cheap)
-      m.position.set(0, Y, 0.3);
+      m.position.set(0, Y, 0.69);
       s.add(m);
     });
+    this.pins = pins;
 
     // deck lamps: an arc of them over the door, one per card in the deck. Banked cards
-    // light theirs; the next one breathes; a miss washes the dark ones red for a moment.
-    const lamp = new THREE.BoxGeometry(0.56, 0.8, 0.12), N = Math.max(1, Math.min(DECK_SIZE, g.total || DECK_SIZE));
+    // light theirs; the next one breathes gold; a miss turns the dark ones red and holds them so for a moment.
+    const lamp = new THREE.BoxGeometry(0.76, 1.02, 0.12), N = Math.max(1, Math.min(DECK_SIZE, g.total || DECK_SIZE));
     const lp = lamp.attributes.position, pos = new Float32Array(lp.count * N * 3), idx = new Float32Array(lp.count * N), ind = [];
     for (let i = 0; i < N; i++) {
       pos.set(lp.array, i * lp.count * 3);
@@ -57,13 +60,13 @@ class MemoryWorks {
     lg.setAttribute("aIdx", new THREE.BufferAttribute(idx, 1));
     lg.setIndex(ind);
     this.lampMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uCount: { value: N }, uLit: { value: 0 }, uMiss: { value: 0 }, uFlash: { value: 0 }, uStep: { value: Math.min(0.07, 1.6 / N) } },
+      uniforms: { uTime: { value: 0 }, uCount: { value: N }, uLit: { value: 0 }, uMiss: { value: 0 }, uFlash: { value: 0 }, uStep: { value: Math.min(0.092, 1.75 / N) } },
       vertexShader: `attribute float aIdx; uniform float uCount; uniform float uStep; varying float vI; varying vec2 vP;
         void main(){
           vI = aIdx;
-          vP = position.xy / vec2(0.28, 0.4);
+          vP = position.xy / vec2(0.38, 0.51);
           float a = -(aIdx - (uCount - 1.0) * 0.5) * uStep; float c = cos(a); float s = sin(a);
-          vec3 p = position + vec3(0.0, 10.42, 0.0);
+          vec3 p = position + vec3(0.0, 10.44, 0.0);
           p.xy = vec2(c * p.x - s * p.y, s * p.x + c * p.y);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
         }`,
@@ -71,13 +74,15 @@ class MemoryWorks {
         void main(){
           float on = step(vI + 0.5, uLit);
           float next = step(abs(vI - floor(uLit + 0.001)), 0.5) * (1.0 - on);
-          // a lamp is a lens in a dark bezel: unlit it is a dull green you can still count, lit it burns
-          float lens = 1.0 - smoothstep(0.62, 0.86, max(abs(vP.x), abs(vP.y)));
-          vec3 col = mix(vec3(0.02, 0.13, 0.09), vec3(0.55, 2.5, 0.5) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
-          col += vec3(1.5, 1.1, 0.3) * next * (0.4 + 0.3 * sin(uTime * 2.4));
-          col = mix(col, vec3(2.6, 0.26, 0.42), uMiss * (1.0 - on) * 0.85);
-          col = mix(vec3(0.012, 0.016, 0.02), col, lens);
-          gl_FragColor = vec4(col, 1.0);
+          // a lamp is a lens in a bezel: unlit it is a green you can count, lit it burns, the card in hand breathes gold
+          float m = max(abs(vP.x), abs(vP.y));
+          float lens = 1.0 - smoothstep(0.66, 0.76, m);
+          float rim = smoothstep(0.7, 0.8, m);
+          vec3 col = mix(vec3(0.05, 0.3, 0.2) * (0.8 + 0.4 * smoothstep(-1.0, 1.0, vP.y)), vec3(0.22, 2.0, 0.5) * (1.0 + uFlash * step(uLit - 1.5, vI)), on);
+          col = mix(col, vec3(2.0, 1.4, 0.3) * (0.78 + 0.22 * sin(uTime * 2.4)), next);
+          col = mix(col, vec3(2.9, 0.2, 0.36), uMiss * (1.0 - on));
+          vec3 bezel = vec3(0.36, 0.42, 0.4) * (0.35 + 0.65 * smoothstep(-1.2, 1.2, vP.y - vP.x)); // lit from the upper left
+          gl_FragColor = vec4(mix(col * lens + vec3(0.012, 0.016, 0.02) * (1.0 - lens), bezel, rim), 1.0);
         }`,
     });
     this.lamps = new THREE.Mesh(lg, this.lampMat);
@@ -111,20 +116,20 @@ class MemoryWorks {
       return p;
     });
 
-    // coin stacks beside the bullion
-    const piles = [[-2.75, 0.95, 7], [-2.1, 1.5, 4], [2.6, 1.05, 9], [3.25, 0.55, 5], [0.4, 1.75, 3]];
+    // coin piles in front of each heap of bars (half as large again as a coin in flight ends, so a pile reads as coins)
+    const piles = [[-1.5, 2.3, 4], [-0.2, 3.2, 3], [1.3, 2.6, 8], [2.8, 2.1, 6], [3.9, 2.9, 5]], K = 1.5; // (x counted outward from the door)
     const count = piles.reduce((n, p) => n + p[2], 0);
-    const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion();
+    const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
       const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
       // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
-      // piles start two coins high and gain a coin for each card banked (what you bank stays banked, in view).
+      // piles start two coins high and gain a coin for each card banked.
       let n = 0;
       for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
         if (i >= h) return;
         tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-        m.setMatrixAt(n++, this._m.compose(this._p.set(x + rand(-0.03, 0.03), 0.06 + i * 0.122, z + rand(-0.03, 0.03)), tw, this._s));
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x * grp.userData.side + rand(-0.04, 0.04), (0.06 + i * 0.122) * K, z + rand(-0.04, 0.04)), tw, big));
       });
       m.count = Math.min(count, 10);
       m.frustumCulled = false;
@@ -136,36 +141,39 @@ class MemoryWorks {
     this.place();
   }
   place() {
-    const a = this.turn;
-    this.gears.forEach((gr) => {
-      gr.mesh.setMatrixAt(gr.i, this._m.compose(this._p.set(gr.x, gr.y, 0), this._q.setFromAxisAngle(this._z, a * gr.w + gr.ph), this._s));
+    const a = this.turn * 0.8, ratio = MEMORY_SUN_TEETH / MEMORY_PLANET_TEETH;
+    this.sun.rotation.z = a;
+    this.planetAt.forEach((p, i) => {
+      // (the angle at which this gear's teeth fall between the steel one's, wherever it stands round it)
+      this.planets.setMatrixAt(i, this._m.compose(this._p.set(p.x, p.y, 0), this._q.setFromAxisAngle(this._z, p.a + Math.PI + (p.a - a) * ratio - Math.PI / MEMORY_PLANET_TEETH), this._s));
     });
-    this.small.instanceMatrix.needsUpdate = true;
-    this.big.instanceMatrix.needsUpdate = true;
+    this.planets.instanceMatrix.needsUpdate = true;
   }
-  // a card is banked: the trains spin on, its lamp lights, the lock goes home
+  // a card is banked: the movement spins on, its lamp lights, the lock goes home
   banked() { this.kick = 2.6; this.flashT = 1; Sound.sfx("lock"); }
-  // a card is missed: the trains jerk back, the dark lamps wash red
+  // a card is missed: the movement jerks back, the dark lamps turn red and hold
   missed() { this.kick = -1.4; this.missT = 1; }
   update(dt, t) {
     const g = this.g;
     this.kick *= Math.pow(0.03, dt);
     this.turn += dt * (0.22 + this.kick);
     this.place();
-    this.missT = Math.max(0, this.missT - dt * 1.4);
+    this.missT = Math.max(0, this.missT - dt * 0.95);
     this.flashT = Math.max(0, this.flashT - dt * 1.2);
     const u = this.lampMat.uniforms;
     u.uLit.value += (g.deposits - u.uLit.value) * Math.min(1, dt * 6);
     const show = Math.min(this.coinTotal, 10 + g.deposits); // the piles by the bullion rise with every card banked
     this.coins.forEach((m) => { if (m.count !== show) m.count = show; });
-    u.uMiss.value = this.missT * this.missT;
+    const red = Math.min(1, this.missT * 2.4); // full red for the first half second, then away (one slow pulse)
+    u.uMiss.value = red;
     u.uFlash.value = this.flashT;
+    u.uTime.value = t;
     const pu = this.panelMat.uniforms;
     pu.uOpen.value = g.open;
-    pu.uMiss.value = this.missT * this.missT;
+    pu.uMiss.value = red;
   }
   dispose() {
     // (the coin stacks share the game's coin geometry and material: the game frees those)
-    [this.small, this.big, ...this.coins].forEach((m) => m.dispose());
+    [this.planets, this.pins, ...this.coins].forEach((m) => m.dispose());
   }
 }

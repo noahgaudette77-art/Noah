@@ -118,10 +118,10 @@ function memoryWallMaterial() {
         vec2 d = min(f, 1.0 - f) * cs;
         float seam = smoothstep(0.03, 0.03 + px * 1.5, min(d.x, d.y));
         float h = hash13(vec3(id, 3.0));
-        vec3 col = vec3(0.05, 0.062, 0.057) * (0.75 + 0.5 * h);
+        vec3 col = vec3(0.082, 0.09, 0.1) * (0.75 + 0.5 * h);
         float top = 1.0 - smoothstep(0.0, 0.1 + px, (1.0 - f.y) * cs.y - 0.03);
         float bot = 1.0 - smoothstep(0.0, 0.1 + px, f.y * cs.y - 0.03);
-        col += vec3(0.07, 0.085, 0.075) * top;
+        col += vec3(0.16, 0.14, 0.34) * top; // a violet light along the top edge of every box
         col *= 1.0 - 0.55 * bot;
         vec2 c = (f - vec2(0.5, 0.58)) * cs;
         float plate = 1.0 - smoothstep(-px, px, max(abs(c.x) - 0.27, abs(c.y) - 0.1));
@@ -131,7 +131,8 @@ function memoryWallMaterial() {
         col *= seam * 0.85 + 0.15;
         float r = length(vWorld.xy - uDoor.xy);
         float spill = exp(-max(r - uDoor.z, 0.0) * 0.2);
-        col *= 0.5 + 2.2 * spill * uGlow + 0.3 * smoothstep(36.0, 12.0, vWorld.y);
+        col *= 0.62 + 2.2 * spill * uGlow + 0.3 * smoothstep(36.0, 12.0, vWorld.y);
+        col += vec3(0.1, 0.16, 0.42) * exp(-max(r - uDoor.z, 0.0) * 0.3) * 0.5; // a cool halo on the wall round the frame
         float lit = step(h, uLit);
         col += uGold * plate * seam * lit * (0.8 + 0.2 * sin(uTime * 1.7 + h * 40.0));
         float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0));
@@ -182,8 +183,8 @@ function memoryWheelGeometry() {
   return memoryMerge(parts);
 }
 
-// A gold ingot: a box with its top drawn in, flat-shaded.
-function memoryIngotGeometry() {
+// A gold ingot: a box with its top drawn in, flat-shaded. endOn: for bars laid with an end toward the lens.
+function memoryIngotGeometry(endOn) {
   const g = new THREE.BoxGeometry(1.95, 0.56, 0.96).toNonIndexed();
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -194,7 +195,7 @@ function memoryIngotGeometry() {
   // each face its own tone, as cast gold takes the light: bright on top, deeper on the long sides, darkest on the ends
   const n = g.attributes.normal, c = new Float32Array(p.count * 3);
   for (let i = 0; i < p.count; i++) {
-    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.35 : Math.abs(n.getX(i)) > 0.5 ? 0.46 : 0.7;
+    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.35 : (Math.abs(n.getX(i)) > 0.5) === !!endOn ? 0.72 : 0.46; // (the faces that will be turned to the lens are the lighter ones)
     c[i * 3] = k; c[i * 3 + 1] = k * (0.92 + 0.08 * k); c[i * 3 + 2] = k * (0.78 + 0.22 * k);
   }
   g.setAttribute("color", new THREE.BufferAttribute(c, 3));
@@ -332,6 +333,24 @@ class MemoryGame extends QuizGame {
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
     const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf6bd42, vertexColors: true, metalness: 0.84, roughness: 0.26, envMap: env, envMapIntensity: 1.25, emissive: 0x4a2c05 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
+    // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
+    const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
+    spun.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvSpunP = position; vSpunN = normal;");
+      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;")
+        .replace("#include <color_fragment>", `#include <color_fragment>
+          float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
+          float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
+          diffuseColor.rgb *= mix(0.4, 1.12, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
+        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+          { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
+            float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
+            totalEmissiveRadiance += vec3(1.0, 0.76, 0.34) * wedge * spunFace * 0.55 * smoothstep(2.4, 5.6, spunR); }`);
+    };
+    spun.customProgramCacheKey = () => "memory-spun-gold";
+    const doorGold = surfaceDetail(spun, { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const brass = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xe2b85a, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 1.45, emissive: 0x2a1a04 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -362,11 +381,15 @@ class MemoryGame extends QuizGame {
     this.door = door;
     // steel frame, gold door (rim, a recessed track for the bolts, a raised centre)
     door.add(new THREE.Mesh(memoryLathe([[12.1, -1.25], [11.35, 0.3], [9.6, 0.3], [9.6, 0.6], [9.02, 0.6], [8.94, 0.52], [8.94, -1.25]]), steel));
-    door.add(new THREE.Mesh(memoryLathe([[8.5, -1.1], [8.5, 0.44], [8.4, 0.56], [8.02, 0.56], [7.95, 0.49], [7.95, 0.3], [5.32, 0.3], [5.32, 0.42], [5.2, 0.52], [2.2, 0.52], [2.2, 0.66], [0, 0.66]]), gold));
+    door.add(new THREE.Mesh(memoryLathe([[8.5, -1.1], [8.5, 0.44], [8.4, 0.56], [8.02, 0.56], [7.95, 0.49], [7.95, 0.3], [5.32, 0.3], [5.32, 0.42], [5.2, 0.52], [2.2, 0.52], [2.2, 0.66], [0, 0.66]]), doorGold));
+    // the middle of the door is a dark plate: the lock's movement turns on it (its gears are in 23b-memoryworks.js)
+    const works = new THREE.Mesh(new THREE.RingGeometry(2.22, 5.19, 96, 1), surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1b1612, metalness: 0.9, roughness: 0.46, envMap: env, envMapIntensity: 0.9 }), { scale: 1.2, height: 0.002, scratch: 1.2, smudge: 0.5 }));
+    works.position.z = 0.53;
+    door.add(works);
     // the seam between door and frame, lit from inside the vault
     this.seamMat = new THREE.MeshBasicMaterial({ color: neon(0xffd38a, 1.5) });
     this.seamBase = new THREE.Color(0xffd38a);
-    const seam = new THREE.Mesh(new THREE.RingGeometry(8.36, 9.1, 128), this.seamMat);
+    const seam = new THREE.Mesh(new THREE.RingGeometry(8.54, 8.9, 128), this.seamMat);
     seam.position.z = -0.35;
     door.add(seam);
     // the combination dial: a dark steel ring with glowing graduations
@@ -402,6 +425,7 @@ class MemoryGame extends QuizGame {
     this._p = new THREE.Vector3();
     this._s = new THREE.Vector3(1, 1, 1);
     this._z = new THREE.Vector3(0, 0, 1);
+    this._v = new THREE.Vector3();
     this.placeBolts();
     // bolt guides and rivets (small: layer 1, so the floor reflection stays cheap)
     const guides = new THREE.InstancedMesh(new THREE.BoxGeometry(0.95, 0.36, 0.8), gold, MEMORY_BOLTS);
@@ -416,7 +440,8 @@ class MemoryGame extends QuizGame {
       const outer = k < 40, a = outer ? (k / 40) * Math.PI * 2 : ((k - 40) / 32) * Math.PI * 2 + 0.05;
       const r = outer ? 10.5 : 9.31;
       this._p.set(Math.cos(a) * r, Math.sin(a) * r, outer ? 0.3 : 0.6);
-      rivets.setMatrixAt(k, this._m.compose(this._p, this._q.identity(), this._s));
+      if (outer && Math.abs(a - Math.PI / 2) < 1.0) rivets.setMatrixAt(k, this._m.makeScale(0, 0, 0)); // (the deck lamps stand in this arc)
+      else rivets.setMatrixAt(k, this._m.compose(this._p, this._q.identity(), this._s));
     }
     [guides, rivets].forEach((m) => { m.frustumCulled = false; m.layers.set(1); door.add(m); });
     // the coin slot at twelve o'clock
@@ -441,29 +466,43 @@ class MemoryGame extends QuizGame {
 
     // polished dark floor: a polar grid radiating from the vault, and its reflection
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.6, base: 0x010504, reflect: 0.46, glow: 0.25, ripple: 0.001, streak: 0 });
+    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.6, base: 0x010504, reflect: 0.4, glow: 0.25, ripple: 0.001, streak: 0, fall: [1.5, 0.05] });
     s.add(this.floor);
+    // a threshold under the door, and the shade the door and its frame lay on the floor in front of it
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(18.8, 0.5, 2.0), steel);
+    sill.position.set(0, 0.25, 0.7);
+    const sillLip = new THREE.Mesh(new THREE.BoxGeometry(18.8, 0.08, 0.12), gold);
+    sillLip.position.set(0, 0.5, 1.66);
+    const shade = new THREE.Mesh(new THREE.PlaneGeometry(30, 8), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "varying vec2 vUv; void main(){ float a = (1.0 - smoothstep(0.25, 1.0, abs(vUv.x - 0.5) * 2.0)) * smoothstep(0.0, 1.0, vUv.y); gl_FragColor = vec4(0.0, 0.0, 0.0, 0.78 * a * a); }",
+    }));
+    shade.rotation.x = -Math.PI / 2;
+    shade.position.set(0, 0.035, 5.7);
+    shade.renderOrder = 3;
+    shade.layers.set(1);
+    s.add(sill, sillLip, shade);
     s.userData.mirrors = [this.mirror];
     const pool = makeLightPool({ color: 0xffb84d, radius: 11, intensity: 0.12 });
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
 
-    // stacks of gold bars under spotlights, either side of the door
-    const ingot = memoryIngotGeometry();
+    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
+    // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
+    const ingot = memoryIngotGeometry(), ingotEnd = memoryIngotGeometry(true), S = 1.3, SB = 1.6, tone = new THREE.Color();
+    const cast = (m, i) => m.setColorAt(i, tone.setScalar(rand(0.84, 1.08))); // no two bars poured quite alike
     this.stacks = [-1, 1].map((sd) => {
-      // a heap four bars wide: its bottom row is there from the start, and every card banked lays one more bar
-      // on it (row by row, then a second small heap beside it), so what you bank stays in view
-      const st = new THREE.InstancedMesh(ingot, barGold, 14);
-      const rest = [];
-      for (let L = 0; L < 4; L++) for (let i = 0; i < 4 - L; i++) rest.push([(i - (3 - L) / 2) * 2.04, L * 0.57, 0]);
-      rest.push([-sd * 4.9, 0, 0.5], [-sd * 6.94, 0, 0.5], [-sd * 5.92, 0.57, 0.5], [-sd * 5.9, 0, 1.6]);
-      st.userData.rest = rest.map(([x, y, z]) => ({ p: new THREE.Vector3(x, y, z), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)) }));
-      st.userData.rest.forEach((r, i) => st.setMatrixAt(i, this._m.compose(r.p, r.q, this._s)));
-      st.count = 4;
-      st.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      const st = new THREE.InstancedMesh(ingot, barGold, 6);
+      let n = 0;
+      for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
+        st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
+        cast(st, n++);
+      }
+      st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
-      st.rotation.y = -sd * 0.22;
+      st.rotation.y = -sd * 0.3;
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
@@ -476,6 +515,25 @@ class MemoryGame extends QuizGame {
       g.userData.bars = st;
       return g;
     });
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.34, 4.0), steel);
+    plinth.position.set(0, 0.17, 6.3);
+    const plinthLip = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.09, 0.14), gold);
+    plinthLip.position.set(0, 0.34, 8.26);
+    s.add(plinth, plinthLip);
+    this.bank = new THREE.InstancedMesh(ingotEnd, barGold, DECK_SIZE);
+    this.bankRest = [];
+    [6, 5, 4, 3, 2].forEach((w, L) => { for (let i = 0; i < w; i++) this.bankRest.push({ p: new THREE.Vector3((i - (w - 1) / 2) * 1.6, 0.34 + L * 0.9, 6.3), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, Math.PI / 2 + rand(-0.04, 0.04)) }); });
+    this.bankScale = new THREE.Vector3(SB, SB, SB);
+    for (let i = 0; i < DECK_SIZE; i++) { const r = this.bankRest[Math.min(i, this.bankRest.length - 1)]; this.bank.setMatrixAt(i, this._m.compose(r.p, r.q, this.bankScale)); cast(this.bank, i); }
+    this.bank.instanceColor.needsUpdate = true;
+    this.bank.count = 0;
+    this.bank.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.bank.frustumCulled = false;
+    s.add(this.bank);
+    const bankGlow = makeLightPool({ color: 0xffd27a, radius: 7.5, intensity: 0.09 });
+    bankGlow.position.set(0, 0.37, 6.6);
+    bankGlow.layers.set(1);
+    s.add(bankGlow);
 
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
@@ -489,7 +547,7 @@ class MemoryGame extends QuizGame {
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
-    this.works = new MemoryWorks(this, { gold, steel, chrome }); // gear trains, deck lamps, coin stacks (23b-memoryworks.js)
+    this.works = new MemoryWorks(this, { gold, steel, chrome, brass }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
@@ -513,7 +571,7 @@ class MemoryGame extends QuizGame {
     this.scene.fog.far = this.dist + 73;
     // the gold stands either side of the door's foot, as far out as the window shows
     const half = (this.dist * tanH * bw) / h;
-    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - 3.4, 8.2, 14), 0, 2.4); });
+    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - 5.0, 7.4, 13.4), 0, 3.0); });
   }
   placeBolts() {
     for (let k = 0; k < MEMORY_BOLTS; k++) {
@@ -552,7 +610,7 @@ class MemoryGame extends QuizGame {
     const touch = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
     card.innerHTML = `<div class="face front" style="--c:${CH(f.ch).color}">
         <div class="ftop"><span class="ftopic">${esc(f.topic)}</span><span class="fchip">${status}</span></div>
-        <div class="fmain selectable">${esc(front)}</div>
+        <div class="fmain selectable${front.length <= 44 ? " short" : ""}">${esc(front)}</div>
         <div class="fhint">${touch ? "TAP TO FLIP" : "CLICK OR PRESS SPACE TO FLIP"}</div>
       </div>
       <div class="face back">
@@ -636,6 +694,7 @@ class MemoryGame extends QuizGame {
       this.done++;
       Sound.sfx("deposit");
       this.spawnCoin();
+      this.pulse("[data-dep]", "bank");
     }
     Store.save();
     Trophies.check();
@@ -681,7 +740,8 @@ class MemoryGame extends QuizGame {
       const settle = clamp((e - 0.74) / 0.2, 0, 1);
       const edge = Math.round((a - Math.PI / 2) / Math.PI) * Math.PI + Math.PI / 2;
       c.rotation.set(0.45 * (1 - e) * Math.sin(e * 9), lerp(a, edge, settle * settle * (3 - 2 * settle)), 0.3 * (1 - e));
-      if (e < 0.96 && n++ % 2 === 0) this.sparks.emit(c.position.x + rand(-0.12, 0.12), c.position.y + rand(-0.12, 0.12), c.position.z - 0.1, rand(-0.3, 0.3), rand(-0.5, 0.2), 0, rand(0.3, 0.55), rand(0.1, 0.22), trail, -1.5);
+      c.scale.setScalar(lerp(lerp(1, 2.6, smoothstep(0.1, 0.5, e)), 1, smoothstep(0.82, 1, e)));
+      if (e < 0.96) this.sparks.emit(c.position.x + rand(-0.3, 0.3), c.position.y + rand(-0.3, 0.3), c.position.z - 0.1, rand(-0.4, 0.4), rand(-0.6, 0.2), 0, rand(0.4, 0.7), rand(0.2, 0.4), trail, -1.5);
       // a glint whenever a face turns to the camera
       const face = Math.round(a / Math.PI);
       if (face !== lastFace && settle < 0.5) {
@@ -711,19 +771,19 @@ class MemoryGame extends QuizGame {
       slot.clone(),
     ], false, "centripetal");
   }
-  // One more bar on the gold: on the smaller heap of the two, dropped from just above its place.
+  // One more bar on the pile in the middle, at the door's foot: dropped from above its place, with a ring of sparks.
   addBar() {
-    const st = this.stacks.map((g) => g.userData.bars).sort((a, b) => a.count - b.count)[0];
-    if (!st || st.count >= st.userData.rest.length) return;
-    const i = st.count++, r = st.userData.rest[i], p = new THREE.Vector3();
-    const put = (lift) => { st.setMatrixAt(i, this._m.compose(p.copy(r.p).setY(r.p.y + lift), r.q, this._s)); st.instanceMatrix.needsUpdate = true; };
+    const st = this.bank;
+    if (!st || st.count >= this.bankRest.length) return;
+    const i = st.count++, r = this.bankRest[i], p = new THREE.Vector3();
+    const put = (lift) => { st.setMatrixAt(i, this._m.compose(p.copy(r.p).setY(r.p.y + lift), r.q, this.bankScale)); st.instanceMatrix.needsUpdate = true; };
     if (REDUCED_MOTION) return put(0);
-    put(2.6);
-    this.tw.add(0.42, (k) => put(2.6 * (1 - k)), () => {
+    put(3.6);
+    this.tw.add(0.46, (k) => put(3.6 * (1 - k)), () => {
       put(0);
-      st.parent.updateMatrixWorld();
-      const w = p.copy(r.p).applyMatrix4(st.matrixWorld), hot = neon(0xfff3d6, 3);
-      for (let n = 0; n < 6; n++) this.sparks.emit(w.x + rand(-0.9, 0.9), w.y + 0.5, w.z + 0.3, rand(-1.5, 1.5), rand(1, 3), rand(0, 1), rand(0.35, 0.6), rand(0.14, 0.3), hot, -6);
+      const hot = neon(0xfff3d6, 3), gold = neon(0xffc35a, 2.4);
+      for (let n = 0; n < 12; n++) this.sparks.emit(r.p.x + rand(-0.8, 0.8), r.p.y + 0.7, r.p.z + 1.7, rand(-2.4, 2.4), rand(1.5, 4.5), rand(0, 1.5), rand(0.4, 0.75), rand(0.2, 0.42), n % 3 ? gold : hot, -7);
+      this.sparks.emit(r.p.x, r.p.y + 0.6, r.p.z + 1.8, 0, 0, 0, 0.3, 2.6, hot); // one bright glint where it lands
     }, Ease.outBounce || ((k) => k * k));
   }
   // The coin lands: sparkles out of the slot, the dial spins, the seam flares and, as
@@ -739,8 +799,9 @@ class MemoryGame extends QuizGame {
     this.shockwave(p, neon(0xffcf6e, 2.2), 4.2, 0.5);
     this.flash = 1;
     this.slotFlash = 1;
-    this.works.banked(); // the lock goes home: gear trains spin on, the card's lamp lights
+    this.works.banked(); // the lock goes home: the movement spins on, the card's lamp lights
     this.addBar();
+    this.pulse(".vault-window", "bank");
     const from = this.dialA, to = from - (0.55 + Math.random() * 0.7);
     this.tw.add(0.9, (e) => { this.dialA = lerp(from, to, e); }, null, Ease.outBack);
     const want = this.total ? Math.floor((MEMORY_BOLTS * this.deposits) / this.total) : 0;
@@ -752,13 +813,23 @@ class MemoryGame extends QuizGame {
     }
     GFX.pulse(1.2, 0.012);
   }
+  // One pulse of a class on an element of the screen (the window's frame, the BANKED counter).
+  pulse(sel, cls) {
+    const el = this.el && $(sel, this.el);
+    if (!el) return;
+    el.classList.remove("bank", "miss");
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
   // A miss: the dial jerks back like a wrong combination and the slot dims red.
   wrongCombo() {
     if (!this.has3D) return;
     const base = this.dialA;
     this.tw.add(0.7, (e, raw) => { this.dialA = base + 0.1 * Math.sin(raw * Math.PI * 4) * (1 - raw); }, () => { this.dialA = base; }, Ease.linear);
     this.slotFlash = -1;
-    this.works.missed(); // gear trains jerk back, the unlit lamps wash red
+    this.works.missed(); // the movement jerks back, the unlit lamps turn red
+    this.pulse(".vault-window", "miss");
+    this.shake(0.22 * (this.dist / 22));
   }
   on(a, t) {
     if (a === "pause") this.pause();
@@ -838,7 +909,8 @@ class MemoryGame extends QuizGame {
         this.sparks.emit(Math.cos(a) * r, MEMORY_DOOR_Y + Math.sin(a) * r, 0.65, 0, 0, 0, 0.45, rand(0.5, 0.9), hot);
       } else {
         const st = pick(this.stacks);
-        this.sparks.emit(st.position.x + rand(-2.4, 2.4), rand(0.4, 1.6), st.position.z + rand(-0.4, 0.4), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        if (this.bank.count && Math.random() < 0.5) this.sparks.emit(rand(-4.2, 4.2) * Math.min(1, this.bank.count / 6), rand(0.7, 1.4), 8.1, 0, 0, 0, 0.45, rand(0.5, 0.9), hot);
+        else this.sparks.emit(st.position.x + rand(-3, 3), rand(0.5, 2.0), st.position.z + rand(0.2, 0.9), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
       }
     }
     { const k = this.dist / 22;
