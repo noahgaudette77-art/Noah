@@ -381,6 +381,17 @@ what was done about every point, the originality audit and what was left undone.
 `docs/polish-pass/` holds that pass's before-and-after contact sheets, one per
 screen (before on top, after below).
 
+The last round of that pass had a fresh reviewer (an agent that had not seen the
+work) score every screen again, some of them three or four times, with a fix pass
+after each. Their averages ended between 3.4 and 3.9 out of 5; none gave a screen
+4.5. What each asked for, what was done and what was left is under "Round M" in
+`PROGRESS.md`. Two things from that round worth knowing when you change the look:
+a scene can name its subject each frame (`GFX.keepAt`), and the speed streak and
+the colour split of a blow then leave an ellipse round it sharp (Nest Egg Run's car
+uses it); and a still for review must be drawn from a held scene (the capture
+tools step the game with almost no time passing while they shoot), or the camera's
+motion blur smears the frame in a way no player sees.
+
 Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
 (`boss/`), Risk Blaster's fighter (`fighter/`) and its demon (`demon/`), each a
 `<name>.bin` and an `albedo.jpg` (the demon's is `albedo.webp`). The build inlines

@@ -1860,3 +1860,188 @@ Design ideas, the agent's verdicts and what was done:
   one-eyed wraith with a vault in its chest: generic or original. Kept.
 - Supplied models (the exam mech, the fighter, the demon) are the owner's own
   files; their shapes are not mine to vouch for. Flagged as before.
+
+### Round M, continued: every screen reviewed again, and what each review led to (checkpoint)
+
+Each review below is a fresh agent that had never seen the project, given a
+contact sheet and full-size frames of one screen, the house style to judge
+within, a description of what moves, and this scale: 5 ship as is in a top
+commercial game, 4.5 one or two nits, 4 good with visible weaknesses, 3
+competent but plain ("be strict and do not round up"). Scores are in the order
+detail, lighting, materials, depth, motion, cohesion, legibility. Every
+review's full text is kept with the working files; its points and what was
+done are summarised here.
+
+**What the numbers show.** No screen has reached 4.5 from an independent
+reviewer. Averages in this round run from 3.4 to 4.1 and do not climb with
+the work: a new reviewer, shown a screen whose last reviewer's points had
+been fixed, found a new list and scored it about the same or lower (Strategy
+Guide 4.0 then 3.6; Arcade Hub 3.9 then 3.5 then 3.8; Memory Bank 3.9 then
+3.6; Title 4.1 then 3.9). The scores measure a reviewer's severity as much
+as the screen. The lists were useful every time; the averages are reported
+as they came.
+
+| Screen | Passes used | Independent reviews this round (average of seven) | Last review |
+|---|---|---|---|
+| Strategy Guide | 8 of 8 | 3.5, 3.4, 3.9, 4.0, 3.6 | 3.5, 3.5, 3, 3.5, 3.5, 4, 4 |
+| Memory Bank | 8 of 8 | 3.4, 3.7, 3.9, 3.6 | 4, 3.5, 4, 3.5, 3.5, 3.5, 3.5 |
+| Boss Rush | 7 | 3.7, 3.7, 3.6 | 3.5, 3.5, 3, 3.5, 3.5, 4, 4 |
+| Title | 6 | 4.1, 3.9 | 4, 3.5, 3.5, 4, 4, 4, 4 |
+| Arcade Hub | 6 | 3.9, 3.5, 3.8 | 4, 3.5, 3, 4, 4, 4, 4 |
+| Nest Egg Run | 6 | 3.9, 3.7 | 3.5, 4, 3.5, 4, 3.5, 3.5, 4 |
+| Interface | 7 | 3.6, 3.4 | 3.5, 3.5, 3, 3.5, 3, 4, 3.5 |
+| Risk Blaster | 7 | 3.5, 3.5 | 3.5, 3.5, 3, 3.5, 3.5, 3.5, 4 |
+| Final Exam | 7 | 3.7, 3.4 | 3.5, 3, 3, 3.5, 3.5, 3.5, 4 |
+
+**Strategy Guide** (passes 7 and 8, then the last review's points). The
+archive is a hall again, not a strip: tall shelves with lamp pools, a
+gallery, lecterns with lit pages, a desk with a ledger under a shaded lamp,
+two near lanterns, loose pages, and at the far end a rose window whose
+colours fall down the hall as five shafts and lie on the floor. A chapter
+opens under a banner that shows the rose in a two-tone print; three figures
+and a ten-cell meter; notes set as pages (ruled, a turned corner) with
+numbered runs one to a line. Search results lie on solid ground. The window
+no longer animates its height (a redraw fault showed the hall through the
+results once). Stage rows carry the ten-cell meter. Client portraits have
+moods (smile, worry, frown), spectacles you can see through, earrings.
+Not done from the last review: light from the rose and the lamps that tints
+the shelves and the ledger (the shelves are lit by their own shader's pools,
+not by the window), a rebuilt desk lamp and lanterns, less on a chapter's
+first screen before the notes start, the terminal font's wide apostrophe.
+
+**Memory Bank** (passes 7 and 8, then the last review's points). The door is
+spun gold with a handwheel, a steel gear and four brass gears that mesh and
+turn; an arc of lamps, one per card (violet unlit, green banked, gold in
+hand, red on a miss for that one lamp); ingots stack on a lit plinth, one per
+card banked; the corner heaps sit darker. The window pulses on its own frame
+(green held for a beat on a deposit, red on a miss). The whole arc of lamps
+now stands under the title strip. A fault found on the way: two fully opaque
+page layers meeting round the window made the browser stop drawing the 3D
+view inside it (see "Faults found" below). Not done from the last review:
+magenta and cyan light in the vault, contact shadows under the earned bars,
+bevelled gears, thickness and a sheen on the card as it flips.
+
+**Boss Rush** (pass 7). Motes behind the boss, a white edge light from
+behind, a stronger contact shadow, a darker and less saturated crowd, the
+charge glow at the chest; the boss is fitted to the strip from its own
+measured size; on defeat it comes apart (head, arms, forearms, hips and base
+drift and turn) instead of shrinking; the verdict's tick or cross sits at the
+right end of the answer; the attack bar hides during the finale. The capture
+tool was the larger fault here: see "Faults found".
+
+**Title.** The sun carries its gold higher and sits behind a tighter halo;
+the skylines' windows are quieter; street traffic is darker with a cool rim;
+each blade sign lights the wall beside it; the helicopter crosses the avenue
+above the bridge instead of hanging in the middle; lightning strikes in the
+side sky with a thin core; fewer drones in the ribbon; ferries have dark
+hulls and stern engines; the wordmark stands on a feathered shade; a tip has
+its heading on its own line and the plate holds the longest tip, so INSERT
+COIN never moves.
+
+**Arcade Hub** (passes 5 and 6). The card is one height for all six cabinets
+(four lines of copy; the longest description steps its type down half a
+pixel at a time until it fits; every word kept), with the dots in the stat's
+row, each in its cabinet's colour. Each cabinet is framed for its own
+height, so horns, clock and dish stand clear of the mission banner and the
+floor shows in front. The cabinet is seen from a little to one side, so its
+painted side panel shows. The room behind it is dimmer, hazier and further
+out of focus; props beside the cabinets are lit by the room instead of
+glowing flat, and stand half-way to the next cabinet. The pink wall tubes
+run behind the marquees, not along the cabinets' top edges. The big sign is
+cyan INR, pink ARCADE (Boss Rush's horns stood on a sign of their own pink).
+Marquees have a field deep enough for their lettering in any colour. The
+Strategy Guide's reading lamp lights its desk. Coins are gold, not mirrors.
+New attract demos for the Final Exam (a pencil filling a bubble sheet under a
+draining clock; no marks) and the Strategy Guide (an open book, a marker, a
+page turn). The cleaning robot works the tiles in front of the cabinets and
+is mirrored in them; the ceiling fans throw turning shadows on the wall. A
+move between cabinets no longer smears the picture. The wall machines'
+attract screens are bars and lines, not random squares (a reviewer saw
+shapes from other games in the squares). After the third review: the dots
+under the card are outlines in each cabinet's true colour with the current
+one filled, and the reading lamps' beams are thinner.
+
+**Nest Egg Run** (pass 6). A right answer is a clean reward: the car stays
+sharp inside the speed streak (the pipeline now keeps an ellipse round a
+scene's subject out of the streak and the colour split), the burst is the
+lane's colour, the gain pops large over the car; the colours part on a crash
+only. Badges are not mirrored in the wet road (a puddle showed one lane's
+and not another's, which could pass for a hint). Gears are thick wheels with
+a dark face, windows between the spokes, bright flanks and a lit ring; the
+great wheels hang lower, inside the picture. Lane tiles are the lane's colour
+at about 60% with a bright rim and a dark letter; lane dashes stop under the
+two wide TRUE/FALSE tiles. The car's glass shows the street's lamps sliding
+over it and holds the sky. A crash throws a fan of sparks and lays two skid
+marks; while an explanation is up the picture rides higher so the car stays
+in view above it. Walls have storeys with ledges, piers, glazing bars,
+blinds and windows of many brightnesses; shopfronts have mullions. The HUD
+row fits with two insurance shields in it. A loss's minus sign stands at the
+middle of its figures. After the second review: the boost no longer splits
+the colours (a crash does), and the picture is lifted by at most two fifths
+of the strip while an explanation is up.
+
+**Interface** (pass 7). One lit row on each stage list (the stage to play
+next); a locked card is muted violet with a lock; stat tiles are sunken
+read-outs with the figure on the bottom line, three to a row on results;
+effect switches are quiet chips with a lamp; one secondary button skin
+everywhere; boss pictures lifted off black on a plate; lists fade above a
+pinned bar; the rank on results is a gold-edged strip with a thick bar and
+the XP gained; the exam's grid fills answered cells, has a key and a line
+above SUBMIT; a larger wordmark, a segmented bar and a floor grid on the
+loading screen; a white focus ring; secondary text a step lighter. A chosen
+answer is a solid violet plate in a white ring, the same for every slot (two
+reviewers called the pale plate the brightest, least on-palette thing on the
+screen). After the second review: stage rows, mastery rows and profile cards
+show progress as ten cells, the exam grid's key is larger with a gold ring
+for "here", captions are a step lighter, and the loading bar has a track.
+
+**Risk Blaster** (pass 7). The demon is four fifths the size and a little
+into the haze, lit by a cool key from the upper left; each drone stands in a
+ring of its answer's colour; the pale hoop behind the demon is gone; small
+lights on all three supplied models are a trace, not a glitter; the fighter
+is steel with violet-blue and cyan light (magenta is the demon's); space is
+darker with a tighter bloom; the demon breaks up as dark armour with burning
+edges inside a tight white ring; the fighter rides clear of the first
+answer; the scene fades into the answers; streak pips are larger; answers
+break evenly.
+
+**Final Exam** (pass 7). The ending is regraded: the armour stays dark and
+its cracks and core burn (the whole figure used to glow one flat orange),
+smoke is dark, the colours part less. The hall behind the boss has violet
+light on its columns, stronger uplights and mist on the floor. The skull is
+aged ivory with gloss and dark sockets. A stronger rim on fists and
+shoulders. The bar under the HUD is the clock's yellow. Answers are a size
+larger on a scrim; the flag button is a full touch target.
+
+**Across screens.** Answer D is orange, not lime (two reviewers said a green
+answer reads as "correct" before it is). The speed streak and the colour
+split leave a scene's subject sharp. Shock rings are thin strokes.
+
+### Faults found this round
+
+- **A window onto the 3D view went blank** (Memory Bank). Two fully opaque
+  CSS rectangles meeting round a transparent window made Chrome's compositor
+  treat the canvas behind as covered and stop drawing it. The grounds are now
+  99.6% opaque. Found by bisecting scene parts, then files, then CSS rules.
+- **A possible one-frame glimpse of the next card's answer** (Memory Bank):
+  the card's flip animation could still be running when the next card was
+  dealt. The card's animations are cancelled first.
+- **The capture tool smeared and missed moments.** Stills were taken after
+  jumping the game half a second ahead, so the camera's motion blur saw a
+  half-second move and smeared the frame: three reviews' "full-frame smear"
+  was this, not what a player sees. Stills are now drawn from a held scene.
+  The boss capture ran in real time, where software rendering is so slow
+  that a charge never filled: its "attack" and "hit" frames showed nothing.
+  It now steps the game inside the page until the moment arrives.
+- **A lane's badge reflected in a puddle** beside the car, and only that
+  lane's: it could pass for a hint. Badges are no longer mirrored.
+
+### Where this checkpoint stands
+
+- Regression on this build: identical to the baseline, no console errors,
+  50 exam questions with no hint before submit; the 13-step walkthrough
+  passes.
+- Strategy Guide and Memory Bank have used all eight passes. Seven screens
+  have passes left (Boss Rush 1, Title 2, Arcade Hub 2, Nest Egg Run 2,
+  Interface 1, Risk Blaster 1, Final Exam 1); they come next, each from its
+  last review's list, and are recorded in the section after this one.
