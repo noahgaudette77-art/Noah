@@ -321,7 +321,7 @@ class MemoryGame extends QuizGame {
     });
     const env = this.envRT ? this.envRT.texture : null;
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
-    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xe2a030, metalness: 0.84, roughness: 0.24, envMap: env, envMapIntensity: 1.0 }), { scale: 1.5, height: 0.0014, scratch: 1.3 }); // (a little short of pure metal, so the lamps shade each face of a bar differently and it reads as a solid)
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -329,6 +329,8 @@ class MemoryGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
+    // two cool lights from behind and to the sides: every bar, coin and gear tooth gets an edge of mint against the gold
+    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0x7affd0, 0.55); rim.position.set(x, y, z); s.add(rim); });
     this.vaultLight = new THREE.PointLight(0xffc46a, 0.35, 22, 1.5); // warm light from the seam
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
@@ -456,10 +458,10 @@ class MemoryGame extends QuizGame {
       }
       st.frustumCulled = false;
       st.rotation.y = -sd * 0.35;
-      const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.085 });
+      const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
-      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.17 });
+      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.09 });
       glow.layers.set(1);
       const g = new THREE.Group();
       g.add(st, cone, glow);
@@ -486,7 +488,7 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.3, bloom: 0.85, threshold: 1.08, saturation: 1.14, contrast: 1.08, vignette: 1.1, ao: 0.7, shadow: 0.5, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
+    s.userData.post = { exposure: 1.2, bloom: 0.7, threshold: 1.15, saturation: 1.14, contrast: 1.12, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
     this.camBase.set(0, Y, this.dist);
     this.lookAt.set(0, Y, 0);
   }

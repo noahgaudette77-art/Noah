@@ -838,6 +838,13 @@ class HubScene extends Scene3D {
     this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.lightCol = new THREE.Color(CABINETS[this.sel].color);
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight);
+    // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
+    this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
+    this.heroPool = makeLightPool({ color: 0xffffff, radius: 3.4, intensity: 1 });
+    this.heroMotes = makeMotes({ count: 80, box: [4.4, 6.4, 4.4], center: [0, 3.5, 0], color: 0xffe9f6, size: 0.06, k: 1.0 });
+    [this.heroCone, this.heroPool, this.heroMotes].forEach((o) => { o.layers.set(1); s.add(o); });
+    this.decor(this.heroCone, this.heroPool, this.heroMotes);
+    this._white = new THREE.Color(1, 1, 1);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
     // The floor stays built while you play (see hubScene()); on the way back only
@@ -1300,6 +1307,16 @@ class HubScene extends Scene3D {
     this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
     this.rimLight.intensity = 2.2 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
+    { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
+      const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
+      this.heroCone.position.set(hx, 7.4, hz);
+      this.heroCone.material.uniforms.uI.value = 0.075 * hk;
+      this.heroCone.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.45);
+      this.heroPool.position.set(Math.sin(a) * (HUB_R - 1.7), 0.03, -Math.cos(a) * (HUB_R - 1.7));
+      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.26 * hk);
+      this.heroMotes.position.set(hx, 0, hz);
+      this.heroMotes.userData.drift(this.t);
+    }
     const fu = this.floorMat.uniforms;
     fu.uReflect.value = GFX.lite ? 0 : 1;
     fu.uBlack.value = lv[G.tube];

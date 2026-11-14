@@ -32,7 +32,7 @@ lists all of them again.
   traffic, with a winged void demon in it, in Risk Blaster, a road through five landscapes in Nest Egg Run (it
   starts in a rain-soaked clockwork city of lit windows, brass pipes, turning
   gears and neon signs that spell the course's own terms), a searchlit arena
-  with a mirror floor, ringed by an amphitheatre of spectators who sway, hold up lights and jump when a blow lands, in Boss Rush, where every boss is a different
+  with a mirror floor, ringed by footlights and an amphitheatre of spectators who sway, hold up lights and jump when a blow lands, with mist in the boss's colour drifting between, in Boss Rush, where every boss is a different
   black-armored cyborg with burning red eyes, a gold bank-vault door
   that opens a little more with every card you bank in Memory Bank, the final
   boss on its dais in a moonlit hall for the Final Exam, and a vaulted archive
@@ -163,8 +163,11 @@ lists all of them again.
   lamps wash red.
 - **The archive.** The Strategy Guide opens on a vaulted aisle of bookshelves on
   two tiers, hanging lamps, holo-books open on lecterns, loose pages adrift and a
-  rose window, seen through one framed window above the list. What you read sits
-  on solid ground, and the scene all but stops while a chapter is open.
+  rose window of coloured panes whose light pours down the nave, seen through one
+  framed window above the list. Two lanterns and a few pages hang close to the
+  lens, out of focus, and slide across the aisle behind them as the view drifts.
+  What you read sits on solid ground, the scene all but stops while a chapter is
+  open, and the window folds down to a strip while you search.
 - **The car.** Nest Egg Run's armored rally coupe has a shell of champagne-gold
   lacquer (the nest egg's colour) under layers of chamfered, bolted gunmetal
   plate with mint trim that glows: a bull bar and winch, hood scoop, armored
@@ -281,7 +284,8 @@ lists all of them again.
 - **The arcade floor.** Six cabinets, each with its own width and height, its own
   two colours, printed art on its control panel (speed stripes, a compass under
   the stick, a ring and a legend for every button) and on its front panel, a coin
-  door with slots, a return flap and a lock, and a rim light in its second colour
+  door with slots, a return flap and a lock, a rim light in its second colour, and
+  over the one in front a lamp whose shaft you can see, with dust turning in it
   (and on top of each: fins
   and rocket pods, a steering wheel and wing, horns and teeth, a vault wheel and
   coins, a clock and laurels, books and a reading lamp)), each playing a live demo

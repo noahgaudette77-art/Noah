@@ -557,7 +557,7 @@ mark { background: var(--yellow); color: #12052e; }
 /* Strategy Guide: the archive scene shows through one window above the list; the
    window's own spread shadow is the solid ground everything else is read on. */
 .guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.74), rgba(9, 3, 32, 0.74)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
-.lib-window { position: relative; height: clamp(150px, 28vh, 270px); border: 2px solid var(--violet); pointer-events: none;
+.lib-window { position: relative; height: clamp(160px, 32vh, 310px); border: 2px solid var(--violet); pointer-events: none;
   box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.74), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }

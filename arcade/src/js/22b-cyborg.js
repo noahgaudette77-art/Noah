@@ -9,7 +9,7 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.88, rough: 0.4, envI: 0.95, emissive: hex, emissiveK: 0.03 });
+  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.33, envI: 1.25, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
   m.vertexColors = true;
   const uL = { value: new Float32Array(8).fill(1) };
   m.userData.uL = uL;
@@ -41,9 +41,9 @@ function cyborgArmor(env, hex) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
-        else totalEmissiveRadiance += emissive * 16.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
+        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor-2";
+  m.customProgramCacheKey = () => "cyborg-armor-3";
   return surfaceDetail(m, { scale: 0.8, height: 0.002, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 

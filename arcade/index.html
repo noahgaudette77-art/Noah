@@ -570,7 +570,7 @@ mark { background: var(--yellow); color: #12052e; }
 /* Strategy Guide: the archive scene shows through one window above the list; the
    window's own spread shadow is the solid ground everything else is read on. */
 .guide-lib { background: linear-gradient(rgba(9, 3, 32, 0.74), rgba(9, 3, 32, 0.74)) top / 100% calc(var(--gut-t) + 62px) no-repeat; }
-.lib-window { position: relative; height: clamp(150px, 28vh, 270px); border: 2px solid var(--violet); pointer-events: none;
+.lib-window { position: relative; height: clamp(160px, 32vh, 310px); border: 2px solid var(--violet); pointer-events: none;
   box-shadow: 0 0 0 9999px rgba(9, 3, 32, 0.74), 0 0 26px -4px var(--violet), inset 0 0 22px rgba(9, 3, 32, 0.8), inset 0 -34px 30px -18px rgba(9, 3, 32, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.18); } /* (the archive glows faintly through the ground the list is read on, and its window is taller) */
 .guide-lib .wrap > :not(.lib-window) { position: relative; z-index: 1; } /* the list and the search box sit on that ground, not under it */
 .lib-window span { position: absolute; left: 8px; bottom: 6px; font: 8px/1 var(--font-display); color: var(--dim); letter-spacing: 1px; }
@@ -6749,6 +6749,13 @@ class HubScene extends Scene3D {
     this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.lightCol = new THREE.Color(CABINETS[this.sel].color);
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight);
+    // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
+    this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
+    this.heroPool = makeLightPool({ color: 0xffffff, radius: 3.4, intensity: 1 });
+    this.heroMotes = makeMotes({ count: 80, box: [4.4, 6.4, 4.4], center: [0, 3.5, 0], color: 0xffe9f6, size: 0.06, k: 1.0 });
+    [this.heroCone, this.heroPool, this.heroMotes].forEach((o) => { o.layers.set(1); s.add(o); });
+    this.decor(this.heroCone, this.heroPool, this.heroMotes);
+    this._white = new THREE.Color(1, 1, 1);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
     // The floor stays built while you play (see hubScene()); on the way back only
@@ -7211,6 +7218,16 @@ class HubScene extends Scene3D {
     this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
     this.rimLight.intensity = 2.2 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
+    { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
+      const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
+      this.heroCone.position.set(hx, 7.4, hz);
+      this.heroCone.material.uniforms.uI.value = 0.075 * hk;
+      this.heroCone.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.45);
+      this.heroPool.position.set(Math.sin(a) * (HUB_R - 1.7), 0.03, -Math.cos(a) * (HUB_R - 1.7));
+      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.26 * hk);
+      this.heroMotes.position.set(hx, 0, hz);
+      this.heroMotes.userData.drift(this.t);
+    }
     const fu = this.floorMat.uniforms;
     fu.uReflect.value = GFX.lite ? 0 : 1;
     fu.uBlack.value = lv[G.tube];
@@ -15053,6 +15070,31 @@ class RacerWorld {
 // The boss charges an attack while you read; answer right to shoot first.
 // Reuses blasterMerge() and BlasterShards from 20-blaster.js (concatenated first).
 
+// Mist for the arena: thickest at the floor, thinning upward, in soft uneven banks.
+function bossHazeTexture() {
+  const c = document.createElement("canvas");
+  c.width = 512; c.height = 256;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, "rgba(255,255,255,0)");
+  g.addColorStop(0.45, "rgba(255,255,255,0.16)");
+  g.addColorStop(1, "rgba(255,255,255,0.7)");
+  x.fillStyle = g;
+  x.fillRect(0, 0, 512, 256);
+  let seed = 4242;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  x.globalCompositeOperation = "destination-out"; // bite soft holes out of it, so it is banks and not a sheet
+  for (let i = 0; i < 26; i++) {
+    const px = rnd() * 512, py = 40 + rnd() * 190, r = 26 + rnd() * 60, h = x.createRadialGradient(px, py, 0, px, py, r);
+    h.addColorStop(0, `rgba(0,0,0,${0.25 + rnd() * 0.4})`);
+    h.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = h;
+    for (const ox of [-512, 0, 512]) { x.save(); x.translate(ox, 0); x.fillRect(px - r, py - r, r * 2, r * 2); x.restore(); }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  return t;
+}
 function bossRuneTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 1536; // (three times the old size, with heavier rings: it was a hairline on the floor)
@@ -15380,6 +15422,11 @@ class BossGame extends QuizGame {
         if (i % 4 === 0) for (let q = 0; q < 5; q++) rails.push({ geo: new THREE.BoxGeometry(0.16, 0.09, 0.06), matrix: new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)) });
       }
     }
+    // footlights round the edge of the floor, at the foot of the stands
+    for (let i = 0; i < 64; i++) {
+      const a = (-118 + (236 * (i + 0.5)) / 64) * (Math.PI / 180);
+      rails.push({ geo: new THREE.BoxGeometry(0.5, 0.14, 0.2), matrix: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6) });
+    }
     // The crowd itself: unlit by its own lamps, lit by the arena's, bobbing on the spot and jumping at a blow.
     const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } };
     const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
@@ -15422,6 +15469,21 @@ class BossGame extends QuizGame {
     this.crowd.layers.set(1);
     s.add(this.crowd);
     this.cheer = 0;
+    // mist between the fight and the stands, in the boss's colour: two curtains of it that drift past each other
+    const hazeTex = bossHazeTexture();
+    this.haze = [[-12, 90, 13, 1.6, 0.15], [-21, 150, 19, 2.6, 0.24]].map(([z, w, h, rep, k]) => {
+      const map = hazeTex.clone();
+      map.needsUpdate = true;
+      map.repeat.set(rep, 1);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(hex, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.position.set(0, h / 2 - 0.2, z);
+      m.layers.set(1);
+      m.renderOrder = 1;
+      m.userData.k = k;
+      s.add(m);
+      return m;
+    });
+    this.decor(...this.haze);
   }
   makeBoss() {
     const hex = this.cfg.color;
@@ -15881,6 +15943,8 @@ class BossGame extends QuizGame {
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
       this.railMat.color.copy(this.capMat.color).multiplyScalar(0.6);
+      const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
+      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; m.material.color.copy(this.capMat.color).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
   }
@@ -15905,7 +15969,7 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.88, rough: 0.4, envI: 0.95, emissive: hex, emissiveK: 0.03 });
+  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.33, envI: 1.25, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
   m.vertexColors = true;
   const uL = { value: new Float32Array(8).fill(1) };
   m.userData.uL = uL;
@@ -15937,9 +16001,9 @@ function cyborgArmor(env, hex) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
-        else totalEmissiveRadiance += emissive * 16.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
+        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor-2";
+  m.customProgramCacheKey = () => "cyborg-armor-3";
   return surfaceDetail(m, { scale: 0.8, height: 0.002, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
@@ -17302,7 +17366,7 @@ class MemoryGame extends QuizGame {
     });
     const env = this.envRT ? this.envRT.texture : null;
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
-    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.26, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xe2a030, metalness: 0.84, roughness: 0.24, envMap: env, envMapIntensity: 1.0 }), { scale: 1.5, height: 0.0014, scratch: 1.3 }); // (a little short of pure metal, so the lamps shade each face of a bar differently and it reads as a solid)
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -17310,6 +17374,8 @@ class MemoryGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
+    // two cool lights from behind and to the sides: every bar, coin and gear tooth gets an edge of mint against the gold
+    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0x7affd0, 0.55); rim.position.set(x, y, z); s.add(rim); });
     this.vaultLight = new THREE.PointLight(0xffc46a, 0.35, 22, 1.5); // warm light from the seam
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
@@ -17437,10 +17503,10 @@ class MemoryGame extends QuizGame {
       }
       st.frustumCulled = false;
       st.rotation.y = -sd * 0.35;
-      const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.085 });
+      const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
-      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.17 });
+      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.09 });
       glow.layers.set(1);
       const g = new THREE.Group();
       g.add(st, cone, glow);
@@ -17467,7 +17533,7 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.3, bloom: 0.85, threshold: 1.08, saturation: 1.14, contrast: 1.08, vignette: 1.1, ao: 0.7, shadow: 0.5, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
+    s.userData.post = { exposure: 1.2, bloom: 0.7, threshold: 1.15, saturation: 1.14, contrast: 1.12, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
     this.camBase.set(0, Y, this.dist);
     this.lookAt.set(0, Y, 0);
   }
@@ -20206,7 +20272,10 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25 };
+    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
+      // light pours down the nave from the rose window; the lens holds the lecterns and lets what hangs close to it go soft
+      rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.68, radius: 0.6 },
+      dof: { focus: 24, near: 12, far: 320, max: 0.0065, k: 0.75 } };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);
@@ -20246,6 +20315,16 @@ class LibraryScene extends Scene3D {
       put(new THREE.SphereGeometry(0.24, 8, 6), racerM(0, 17.52, z), 0xffe2a8, G, 2.2);
       this.lampZ.push(z);
     }
+    // two lanterns hang close to the lens, one either side: as the view drifts they slide across the nave behind them
+    this.nearLamps = [];
+    [[-0.74, 4.02, 0.9], [0.98, 4.2, 0.3]].forEach(([x, y, z]) => {
+      B.add(box, racerM(x, y + 2.4, z, 0.02, 4.4, 0.02), DARK); // chain
+      put(new THREE.CylinderGeometry(0.035, 0.11, 0.1, 6), racerM(x, y + 0.2, z), BRASS); // cap
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([dx, dz]) => B.add(box, racerM(x + dx * 0.085, y, z + dz * 0.085, 0.014, 0.3, 0.014), BRASS)); // cage
+      put(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 6), racerM(x, y - 0.16, z), BRASS); // foot
+      put(new THREE.SphereGeometry(0.06, 8, 6), racerM(x, y, z), 0xffe2a8, G, 2.6); // flame
+      this.nearLamps.push([x, y, z]);
+    });
     // lecterns
     this.lecterns = [[-2.6, -4], [2.7, -11], [-2.7, -19], [2.6, -28]];
     this.lecterns.forEach(([x, z]) => {
@@ -20274,6 +20353,7 @@ class LibraryScene extends Scene3D {
       s.add(gl, cone);
       this.decor(cone);
     });
+    this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffc878, 1.1), 0.9, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); this.decor(gl); });
     // the floor: dark stone flags, a warm pool under each lamp, the window's light lying along it
     this.floorMat = new THREE.ShaderMaterial({
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 } }),
@@ -20355,10 +20435,11 @@ class LibraryScene extends Scene3D {
     this.holo.layers.set(1);
     s.add(this.holo);
     // loose pages adrift in the aisle
-    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.85 }), 22);
+    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 38);
     this.pageMesh.frustumCulled = false;
     this.pageMesh.layers.set(1);
-    this.pages = Array.from({ length: 22 }, () => ({ x: rand(-3.6, 3.6), y: rand(0.6, 12), z: rand(4, -46), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
+    // (32 down the nave, 6 close to the lens: those go by large and out of focus)
+    this.pages = Array.from({ length: 38 }, (_, i) => ({ near: i >= 32, x: i >= 32 ? rand(-1.6, 1.6) : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 32 ? rand(-3.5, 1.5) : rand(-4, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
     s.add(this.pageMesh);
     this.decorCheap(this.pageMesh);
     this.motes = makeMotes({ count: 90, box: [10, 11, 50], center: [0, 6, -18], color: 0xffe2a8, size: 0.09, k: 0.9 });
@@ -20379,11 +20460,11 @@ class LibraryScene extends Scene3D {
     const lt = (this.lt += dt * this.calm);
     this.pages.forEach((p, i) => {
       p.y += p.v * dt * this.calm;
-      if (p.y > 13) { p.y = 0.4; p.x = rand(-3.6, 3.6); p.z = rand(4, -46); }
+      if (p.y > 13) { p.y = 0.4; p.x = p.near ? rand(-1.6, 1.6) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-4, -52); }
       this.pageMesh.setMatrixAt(i, this._m.compose(this._p.set(p.x + Math.sin(lt * 0.3 + p.ph) * 0.5, p.y, p.z), this._q.setFromAxisAngle(p.ax, p.ph + lt * p.w), this._s));
     });
     this.pageMesh.instanceMatrix.needsUpdate = true;
-    this.camBase.set(Math.sin(lt * 0.07) * 0.5 + Pointer.x * 0.3, 3.4 + Math.sin(lt * 0.09) * 0.12 - Pointer.y * 0.15, 6 - 2.2 + Math.sin(lt * 0.05) * 2.2);
+    this.camBase.set(Math.sin(lt * 0.07) * 0.5 + Pointer.x * 0.3, 3.4 + Math.sin(lt * 0.09) * 0.12 - Pointer.y * 0.15, 5.2 + Math.sin(lt * 0.05) * 1.0);
     this.lookAt.set(Math.sin(lt * 0.04) * 0.5, 5.2, -30);
     this.placeCamera();
     this.motes.userData.drift(lt);

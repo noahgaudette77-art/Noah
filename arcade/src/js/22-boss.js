@@ -2,6 +2,31 @@
 // The boss charges an attack while you read; answer right to shoot first.
 // Reuses blasterMerge() and BlasterShards from 20-blaster.js (concatenated first).
 
+// Mist for the arena: thickest at the floor, thinning upward, in soft uneven banks.
+function bossHazeTexture() {
+  const c = document.createElement("canvas");
+  c.width = 512; c.height = 256;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, "rgba(255,255,255,0)");
+  g.addColorStop(0.45, "rgba(255,255,255,0.16)");
+  g.addColorStop(1, "rgba(255,255,255,0.7)");
+  x.fillStyle = g;
+  x.fillRect(0, 0, 512, 256);
+  let seed = 4242;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  x.globalCompositeOperation = "destination-out"; // bite soft holes out of it, so it is banks and not a sheet
+  for (let i = 0; i < 26; i++) {
+    const px = rnd() * 512, py = 40 + rnd() * 190, r = 26 + rnd() * 60, h = x.createRadialGradient(px, py, 0, px, py, r);
+    h.addColorStop(0, `rgba(0,0,0,${0.25 + rnd() * 0.4})`);
+    h.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = h;
+    for (const ox of [-512, 0, 512]) { x.save(); x.translate(ox, 0); x.fillRect(px - r, py - r, r * 2, r * 2); x.restore(); }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  return t;
+}
 function bossRuneTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 1536; // (three times the old size, with heavier rings: it was a hairline on the floor)
@@ -329,6 +354,11 @@ class BossGame extends QuizGame {
         if (i % 4 === 0) for (let q = 0; q < 5; q++) rails.push({ geo: new THREE.BoxGeometry(0.16, 0.09, 0.06), matrix: new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)) });
       }
     }
+    // footlights round the edge of the floor, at the foot of the stands
+    for (let i = 0; i < 64; i++) {
+      const a = (-118 + (236 * (i + 0.5)) / 64) * (Math.PI / 180);
+      rails.push({ geo: new THREE.BoxGeometry(0.5, 0.14, 0.2), matrix: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6) });
+    }
     // The crowd itself: unlit by its own lamps, lit by the arena's, bobbing on the spot and jumping at a blow.
     const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } };
     const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
@@ -371,6 +401,21 @@ class BossGame extends QuizGame {
     this.crowd.layers.set(1);
     s.add(this.crowd);
     this.cheer = 0;
+    // mist between the fight and the stands, in the boss's colour: two curtains of it that drift past each other
+    const hazeTex = bossHazeTexture();
+    this.haze = [[-12, 90, 13, 1.6, 0.15], [-21, 150, 19, 2.6, 0.24]].map(([z, w, h, rep, k]) => {
+      const map = hazeTex.clone();
+      map.needsUpdate = true;
+      map.repeat.set(rep, 1);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(hex, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.position.set(0, h / 2 - 0.2, z);
+      m.layers.set(1);
+      m.renderOrder = 1;
+      m.userData.k = k;
+      s.add(m);
+      return m;
+    });
+    this.decor(...this.haze);
   }
   makeBoss() {
     const hex = this.cfg.color;
@@ -830,6 +875,8 @@ class BossGame extends QuizGame {
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
       this.railMat.color.copy(this.capMat.color).multiplyScalar(0.6);
+      const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
+      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; m.material.color.copy(this.capMat.color).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
   }

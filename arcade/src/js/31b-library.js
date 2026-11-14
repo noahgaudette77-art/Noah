@@ -44,7 +44,10 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25 };
+    s.userData.post = { exposure: 1.08, bloom: 0.75, threshold: 1.05, saturation: 1.08, contrast: 1.08, vignette: 1.2, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
+      // light pours down the nave from the rose window; the lens holds the lecterns and lets what hangs close to it go soft
+      rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.68, radius: 0.6 },
+      dof: { focus: 24, near: 12, far: 320, max: 0.0065, k: 0.75 } };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);
@@ -84,6 +87,16 @@ class LibraryScene extends Scene3D {
       put(new THREE.SphereGeometry(0.24, 8, 6), racerM(0, 17.52, z), 0xffe2a8, G, 2.2);
       this.lampZ.push(z);
     }
+    // two lanterns hang close to the lens, one either side: as the view drifts they slide across the nave behind them
+    this.nearLamps = [];
+    [[-0.74, 4.02, 0.9], [0.98, 4.2, 0.3]].forEach(([x, y, z]) => {
+      B.add(box, racerM(x, y + 2.4, z, 0.02, 4.4, 0.02), DARK); // chain
+      put(new THREE.CylinderGeometry(0.035, 0.11, 0.1, 6), racerM(x, y + 0.2, z), BRASS); // cap
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([dx, dz]) => B.add(box, racerM(x + dx * 0.085, y, z + dz * 0.085, 0.014, 0.3, 0.014), BRASS)); // cage
+      put(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 6), racerM(x, y - 0.16, z), BRASS); // foot
+      put(new THREE.SphereGeometry(0.06, 8, 6), racerM(x, y, z), 0xffe2a8, G, 2.6); // flame
+      this.nearLamps.push([x, y, z]);
+    });
     // lecterns
     this.lecterns = [[-2.6, -4], [2.7, -11], [-2.7, -19], [2.6, -28]];
     this.lecterns.forEach(([x, z]) => {
@@ -112,6 +125,7 @@ class LibraryScene extends Scene3D {
       s.add(gl, cone);
       this.decor(cone);
     });
+    this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffc878, 1.1), 0.9, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); this.decor(gl); });
     // the floor: dark stone flags, a warm pool under each lamp, the window's light lying along it
     this.floorMat = new THREE.ShaderMaterial({
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 } }),
@@ -193,10 +207,11 @@ class LibraryScene extends Scene3D {
     this.holo.layers.set(1);
     s.add(this.holo);
     // loose pages adrift in the aisle
-    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.85 }), 22);
+    this.pageMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.5, 0.66), new THREE.MeshBasicMaterial({ color: neon(0xcfc6ff, 0.6), side: THREE.DoubleSide, transparent: true, opacity: 0.72 }), 38);
     this.pageMesh.frustumCulled = false;
     this.pageMesh.layers.set(1);
-    this.pages = Array.from({ length: 22 }, () => ({ x: rand(-3.6, 3.6), y: rand(0.6, 12), z: rand(4, -46), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
+    // (32 down the nave, 6 close to the lens: those go by large and out of focus)
+    this.pages = Array.from({ length: 38 }, (_, i) => ({ near: i >= 32, x: i >= 32 ? rand(-1.6, 1.6) : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 32 ? rand(-3.5, 1.5) : rand(-4, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
     s.add(this.pageMesh);
     this.decorCheap(this.pageMesh);
     this.motes = makeMotes({ count: 90, box: [10, 11, 50], center: [0, 6, -18], color: 0xffe2a8, size: 0.09, k: 0.9 });
@@ -217,11 +232,11 @@ class LibraryScene extends Scene3D {
     const lt = (this.lt += dt * this.calm);
     this.pages.forEach((p, i) => {
       p.y += p.v * dt * this.calm;
-      if (p.y > 13) { p.y = 0.4; p.x = rand(-3.6, 3.6); p.z = rand(4, -46); }
+      if (p.y > 13) { p.y = 0.4; p.x = p.near ? rand(-1.6, 1.6) : rand(-3.6, 3.6); p.z = p.near ? rand(-3.5, 1.5) : rand(-4, -52); }
       this.pageMesh.setMatrixAt(i, this._m.compose(this._p.set(p.x + Math.sin(lt * 0.3 + p.ph) * 0.5, p.y, p.z), this._q.setFromAxisAngle(p.ax, p.ph + lt * p.w), this._s));
     });
     this.pageMesh.instanceMatrix.needsUpdate = true;
-    this.camBase.set(Math.sin(lt * 0.07) * 0.5 + Pointer.x * 0.3, 3.4 + Math.sin(lt * 0.09) * 0.12 - Pointer.y * 0.15, 6 - 2.2 + Math.sin(lt * 0.05) * 2.2);
+    this.camBase.set(Math.sin(lt * 0.07) * 0.5 + Pointer.x * 0.3, 3.4 + Math.sin(lt * 0.09) * 0.12 - Pointer.y * 0.15, 5.2 + Math.sin(lt * 0.05) * 1.0);
     this.lookAt.set(Math.sin(lt * 0.04) * 0.5, 5.2, -30);
     this.placeCamera();
     this.motes.userData.drift(lt);

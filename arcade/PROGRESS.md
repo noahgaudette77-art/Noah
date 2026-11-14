@@ -1534,3 +1534,27 @@ Contact sheets (before on top, after below) are in `arcade/docs/polish-pass/`:
 title, hub, Risk Blaster, Nest Egg Run, Boss Rush, Final Exam, Memory Bank with
 the Strategy Guide, and the interface. The before frames are the build in
 `arcade/backup/index.before-ultimate-polish.html`.
+
+## Second round on the four lowest screens
+
+After the close-out the owner asked for the work to go on. The four screens with
+my lowest scores each had another pass:
+
+- **Strategy Guide (pass 4).** Depth was 3.5. Light now pours down the nave from
+  the rose window (god rays); the lens holds the lecterns (depth of field); two
+  brass lanterns and six pages hang close to the lens and go by out of focus,
+  so the view has a near, a middle and a far; 32 pages drift down the nave
+  (was 22); the window on the list is taller (32% of the screen's height).
+- **Memory Bank (pass 4).** The gold read as flat yellow under a haze. The
+  spotlights' shafts and pools over the bars are less than half as bright, the
+  gold is a little short of pure metal so each face of a bar shades differently,
+  two mint rim lights from behind edge every bar, coin and gear tooth, and the
+  grade is firmer (less bloom, more contrast).
+- **Boss Rush (pass 5).** Two curtains of mist in the boss's colour drift past
+  each other between the fight and the stands (brighter for a moment when a
+  blow lands); footlights ring the floor at the foot of the stands; the armour
+  is more polished (it shows the arena's lamps) with a stronger rim of its own
+  colour.
+- **Hub (pass 4).** The lamp over the cabinet in front throws a shaft you can
+  see, in the cabinet's colour, with dust turning in it and a pool of light on
+  the floor; all three follow the selection and come up with its power.
