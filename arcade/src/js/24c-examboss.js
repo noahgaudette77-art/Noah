@@ -156,7 +156,8 @@ function bossSkin(env, side, o, U) {
         normal = neonBump(-vViewPosition, normal, clamp(vec2(dFdx(bossH), dFdy(bossH)), -0.5, 0.5) * 0.008);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         vec3 bossV = normalize(vViewPosition);
-        totalEmissiveRadiance += neonRim(normal, bossV, 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
+        // (its rim is violet from one side and gold from the other: not the arcade's magenta and cyan, which on this figure read as red and blue)
+        totalEmissiveRadiance += mix(vec3(0.8, 0.42, 1.6), vec3(1.5, 1.0, 0.36), smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
         totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
         ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
         float bossOn = uBossPower * uBossDim * (1.0 - smoothstep(uBossSweep - 1.2, uBossSweep, vBossY));
@@ -167,7 +168,7 @@ function bossSkin(env, side, o, U) {
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin-" + (bone ? 1 : 0);
+  m.customProgramCacheKey = () => "exam-boss-skin-2-" + (bone ? 1 : 0);
   return m;
 }
 
@@ -292,7 +293,7 @@ class ExamBoss {
       uBossPower: { value: 0 }, uBossSweep: { value: 100 }, uBossCrack: { value: 0 }, uBossDim: { value: 1 },
     };
     this.rim = this.U.uBossRim;
-    this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(1.35, 0.12, 0.85); this.seamRage = new THREE.Color(1.75, 0.95, 0.2);
+    this.seamCold = new THREE.Color(0.62, 0.5, 1.35); this.seamHot = new THREE.Color(1.4, 0.62, 0.42); this.seamRage = new THREE.Color(1.75, 0.95, 0.2);
     this.flick = 1; this.flickT = 0; this.twT = 3; this.twK = 0; this.twA = 0; this.twJ = "head"; this.seed = 20261113;
     const ARMOUR = { env: 1.1 }, BONE = { bone: true, env: 0.6 };
     BONE.eye = this.eyeU = { value: new THREE.Vector3() }; // how hard the eyes light the skull
@@ -773,9 +774,9 @@ class ExamBoss {
         this.under.color.copy(this.underCold).lerp(this.underHot, this.mode === "rage" ? 1 : clamp(0.08 + 0.3 * this.dread + 0.22 * this.menace, 0, 0.6));
         this.under.intensity = (live ? (0.62 + 0.14 * this.dread + 0.2 * this.menace) * (0.88 + 0.12 * Math.sin(t * 3.1)) : 0.3) * this.lightK * (this.mode === "rage" ? 3 : 1);
       }
-      this.rim.value.setRGB(0.5, 0.03, 0.05).multiplyScalar((0.1 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
-      // Its seams and small lights. Off until it wakes, then lit from the feet up; cyan at first,
-      // magenta as the exam goes on (how far along it is, never which answers were right), red in a rage.
+      this.rim.value.setRGB(0.55, 0.26, 0.03).multiplyScalar((0.1 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
+      // Its seams and small lights. Off until it wakes, then lit from the feet up; violet at first,
+      // rose-gold as the exam goes on (how far along it is, never which answers were right), bright gold in a rage.
       const U = this.U, rage = this.mode === "rage" ? 1 : 0, dying = this.mode === "die";
       NEON_T.value = t;
       U.uBossRimK.value = 0.42 * this.lightK;

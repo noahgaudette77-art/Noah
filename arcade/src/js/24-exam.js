@@ -202,6 +202,19 @@ function examHalo() {
   g.userData.runes = plane(runes, neon(0xffe2b0, 1.5), D);
   g.userData.ticks = plane(ticks, neon(0xb48cff, 1.4), D * 1.12);
   g.userData.ticks.position.z = -0.1;
+  // a ring of dust rides the halo: motes of light on its circle, each a little off it, turning slowly with the marks
+  const n = 180, dp = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 6.2832 + rnd() * 0.05, r = D * (0.4 + rnd() * 0.1);
+    dp[i * 3] = Math.cos(a) * r; dp[i * 3 + 1] = Math.sin(a) * r; dp[i * 3 + 2] = (rnd() - 0.5) * 0.6;
+  }
+  const dg = new THREE.BufferGeometry();
+  dg.setAttribute("position", new THREE.BufferAttribute(dp, 3));
+  const dust = new THREE.Points(dg, new THREE.PointsMaterial({ size: 0.13, map: glowTexture(), color: neon(0xffe2b0, 1.5), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  dust.layers.set(1);
+  dust.frustumCulled = false;
+  g.add(dust);
+  g.userData.dust = dust;
   return g;
 }
 
@@ -653,6 +666,8 @@ class ExamGame extends QuizGame {
       H.runes.material.opacity = 0.8 * this.haloK * (0.92 + 0.08 * Math.sin(t * 0.6));
       H.ticks.material.opacity = 0.55 * this.haloK;
       H.glow.material.opacity = 0.3 * this.haloK;
+      H.dust.rotation.z += dt * 0.045 * slow;
+      H.dust.material.opacity = 0.8 * this.haloK * (0.85 + 0.15 * Math.sin(t * 0.9));
     }
     if (this.rippleT < 1) {
       this.rippleT = Math.min(1, this.rippleT + dt / 1.2);

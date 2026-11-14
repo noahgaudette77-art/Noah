@@ -133,8 +133,11 @@ lists all of them again.
   over the Final Exam, seen from under its chin so it fills the screen: dark, worn
   armour whose scratches, pits and dents stay sharp close up, a pale skull, two
   violet-white lamps for eyes with a streak of glare across them, an ember beating in its chest.
-  It is lit in violet and gold. Behind it a halo of runes (marks made up for this game, arcs and dots with no meaning) turns
-  slowly, a ring of ticks turning the other way, at the same pace all exam long.
+  It is lit in violet and gold, and so are its own seams and the rim along its
+  edges (violet at the start of an exam, rose-gold by the end). Behind it a halo
+  of runes (marks made up for this game, arcs and dots with no meaning) turns
+  slowly, a ring of ticks turning the other way and a ring of light motes riding
+  it, at the same pace all exam long.
   An answer you choose fills with one neutral colour, the same for every slot (pale
   violet glass with a white ring): it shows what you picked and nothing about
   whether it is right.
@@ -143,7 +146,7 @@ lists all of them again.
   tilt), and every sixteen seconds it does something slow and unfriendly (leans in
   with a low growl, cocks its head, flexes a claw). The further along the exam is
   (questions answered or time used, never which answers are right), the closer it
-  hunches, the redder the light under it and the darker the hall. It makes the same
+  hunches, the more amber the light under it and the darker the hall. It makes the same
   small movement whichever answer is chosen, so the exam still gives no hint until
   you submit. Submit with 60% or more and it dies: joints blow out one after another
   in sparks and fire, a pauldron and a pylon are torn off, an arm goes limp, it
