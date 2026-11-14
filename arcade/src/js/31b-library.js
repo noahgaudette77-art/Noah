@@ -44,10 +44,10 @@ class LibraryScene extends Scene3D {
     this.calm = 1;
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2;
-    s.userData.post = { exposure: 1.3, bloom: 0.75, threshold: 1.1, saturation: 1.12, contrast: 1.1, vignette: 1.05, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
+    s.userData.post = { exposure: 1.22, bloom: 0.7, threshold: 1.1, saturation: 1.2, contrast: 1.1, vignette: 1.05, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.35, sharpen: 0.4, fringe: 0.25,
       // light pours down the nave from the rose window; the lens holds the lecterns and lets what hangs close to it go soft
-      rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.68, radius: 0.6 },
-      dof: { focus: 15, near: 8, far: 320, max: 0.0065, k: 0.75 } };
+      rays: { pos: new THREE.Vector3(0, 11.5, Z0 - L + 1), strength: 0.4, radius: 0.55 },
+      dof: { focus: 15, near: 26, far: 320, max: 0.0065, k: 0.75 } };
     s.add(new THREE.AmbientLight(0x4a3d78, 0.9));
     const key = new THREE.DirectionalLight(0xffe0b0, 0.7);
     key.position.set(2, 10, 6);
@@ -94,7 +94,7 @@ class LibraryScene extends Scene3D {
       put(new THREE.CylinderGeometry(0.035, 0.11, 0.1, 6), racerM(x, y + 0.2, z), BRASS); // cap
       [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([dx, dz]) => B.add(box, racerM(x + dx * 0.085, y, z + dz * 0.085, 0.014, 0.3, 0.014), BRASS)); // cage
       put(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 6), racerM(x, y - 0.16, z), BRASS); // foot
-      put(new THREE.SphereGeometry(0.06, 8, 6), racerM(x, y, z), 0xffe2a8, G, 2.6); // flame
+      put(new THREE.SphereGeometry(0.052, 8, 6), racerM(x, y, z), 0xffa63a, G, 1.9); // flame
       this.nearLamps.push([x, y, z]);
     });
     // lecterns
@@ -130,11 +130,10 @@ class LibraryScene extends Scene3D {
       const gl = glowSprite(neon(0xffd9a0, 1.2), 4.2, 0.55);
       gl.position.set(0, 17.5, z);
       gl.layers.set(1);
-      const cone = examBeam({ color: 0xffdcae, top: 0.3, bottom: 4.6, height: 17.5, intensity: 0.06 }); // (a still shaft: no flicker)
+      const cone = examBeam({ color: 0xffc27a, top: 0.3, bottom: 4.6, height: 17.5, intensity: 0.036 }); // (a still shaft: no flicker)
       cone.position.set(0, 17.4, z);
       cone.layers.set(1);
       s.add(gl, cone);
-      this.decor(cone);
     });
     {
       const [x, z] = this.heroDesk;
@@ -147,9 +146,8 @@ class LibraryScene extends Scene3D {
       const lamp = new THREE.PointLight(0xffd9a0, 1.5, 14, 1.6);
       lamp.position.set(x, 4.6, z + 1.2);
       s.add(cone, gl, lamp);
-      this.decor(cone, gl);
     }
-    this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffc878, 1.1), 0.9, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); this.decor(gl); });
+    this.nearLamps.forEach(([x, y, z]) => { const gl = glowSprite(neon(0xffb040, 1.3), 1.5, 0.5); gl.position.set(x, y, z); gl.layers.set(1); s.add(gl); });
     // the floor: dark stone flags, a warm pool under each lamp, the window's light lying along it
     this.floorMat = new THREE.ShaderMaterial({
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 } }),
@@ -169,37 +167,60 @@ class LibraryScene extends Scene3D {
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(0, 0, zc);
     s.add(floor);
-    // the rose window: twelve petals of coloured light, breathing slowly
+    // the rose window: jewel glass in dark leads (a gold eye, eight leaves, a band of amber, sixteen round-headed
+    // lights in six colours), set in a rim of cut stone that its own light falls on. Its panes breathe slowly.
     this.roseMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 } },
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform float uTime; varying vec2 vUv;
+        vec3 jewel(float i){
+          i = mod(i, 6.0);
+          return i < 0.5 ? vec3(1.0, 0.1, 0.55) : i < 1.5 ? vec3(0.08, 0.7, 1.0) : i < 2.5 ? vec3(1.0, 0.68, 0.12) : i < 3.5 ? vec3(0.45, 0.16, 1.0) : i < 4.5 ? vec3(0.1, 0.95, 0.5) : vec3(1.0, 0.26, 0.16);
+        }
         void main(){
-          // a window of filled panes (a gold hub, eight inner panes, sixteen outer ones in alternating jewel
-          // colours, thin leads between): a solid object at any distance, not a ring of dashes
-          vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x) / 6.2832;
-          float a8 = abs(fract(a * 8.0) - 0.5), a16 = abs(fract(a * 16.0 + 0.5) - 0.5);
-          float i8 = floor(a * 8.0), i16 = floor(a * 16.0 + 0.5);
-          float lead = smoothstep(0.035, 0.0, abs(r - 0.2)) + smoothstep(0.035, 0.0, abs(r - 0.6)) + smoothstep(0.05, 0.0, abs(r - 0.96));
-          lead += step(0.2, r) * step(r, 0.6) * smoothstep(0.455, 0.5, a8) + step(0.6, r) * smoothstep(0.44, 0.5, a16);
-          vec3 inner = mix(vec3(0.42, 0.2, 0.95), vec3(0.16, 0.5, 1.0), mod(i8, 2.0));
-          vec3 outer = mix(vec3(0.12, 0.7, 0.85), vec3(0.75, 0.25, 0.85), mod(i16, 2.0));
-          vec3 glass = r < 0.2 ? vec3(1.0, 0.72, 0.36) : (r < 0.6 ? inner : outer);
-          glass *= 0.8 + 0.2 * sin(uTime * 0.35 + (r < 0.6 ? i8 : i16) * 1.3);
-          glass *= 0.72 + 0.4 * smoothstep(1.0, 0.0, r);
-          vec3 col = glass * 1.05 * (1.0 - clamp(lead, 0.0, 1.0)) * step(r, 1.0);
+          vec2 q = vUv * 2.0 - 1.0; float rr = length(q);
+          float r = rr / 0.825; // the glass ends at 0.825 of the disc; the rest is the stone rim
+          float a = atan(q.y, q.x) / 6.2832 + 0.5 + 0.0625;
+          float i8 = floor(a * 8.0), f8 = fract(a * 8.0) - 0.5, i16 = floor(a * 16.0), f16 = fract(a * 16.0) - 0.5;
+          vec3 col = vec3(0.0);
+          // glass, from the middle out. Each pane's edge is its lead: the colour falls to black just inside it.
+          float eye = 1.0 - smoothstep(0.1, 0.125, r);
+          float leafW = 0.44 * pow(sin(3.14159 * clamp((r - 0.15) / 0.46, 0.0, 1.0)), 0.75);
+          float leaf = (1.0 - smoothstep(leafW - 0.035 / max(r, 0.2), leafW, abs(f8))) * step(0.15, r) * step(r, 0.61);
+          float between = step(0.16, r) * step(r, 0.6) * (1.0 - leaf); // the glass between the leaves: deep and dim
+          float band = smoothstep(0.625, 0.64, r) * (1.0 - smoothstep(0.665, 0.68, r));
+          float head = 0.955 - 0.1 * (1.0 - sqrt(max(0.0, 1.0 - f16 * f16 / 0.1764)));
+          float lightW = 0.42 - 0.012 / max(r, 0.3);
+          float light = (1.0 - smoothstep(lightW - 0.03, lightW, abs(f16))) * smoothstep(0.7, 0.715, r) * (1.0 - smoothstep(head - 0.02, head, r));
+          float breathe8 = 0.86 + 0.14 * sin(uTime * 0.35 + i8 * 1.3), breathe16 = 0.86 + 0.14 * sin(uTime * 0.3 + i16 * 0.9);
+          col += vec3(1.0, 0.7, 0.24) * 1.5 * eye;
+          col += jewel(i8 * 2.0 + 1.0) * 1.0 * leaf * breathe8 * (0.8 + 0.4 * (1.0 - r));
+          col += vec3(0.16, 0.06, 0.42) * between;
+          col += vec3(1.0, 0.66, 0.16) * 1.15 * band;
+          col += jewel(i16) * 0.95 * light * breathe16;
+          col *= step(r, 1.0);
+          // the rim: cut blocks, their joints dark, the edge nearest the glass catching its light
+          if (r > 1.0) {
+            float t = (rr - 0.825) / 0.175; // 0 at the glass, 1 at the outside
+            float j = abs(fract(a * 28.0) - 0.5);
+            float joint = smoothstep(0.47, 0.5, j);
+            float grain = fract(sin(dot(floor(vec2(a * 28.0, t * 3.0)), vec2(12.9898, 78.233))) * 43758.5453);
+            vec3 stone = vec3(0.07, 0.055, 0.13) * (0.75 + 0.5 * grain);
+            stone += vec3(0.5, 0.3, 0.95) * 0.5 * exp(-t * 7.0); // the window's own light on its inner edge
+            stone += vec3(0.16, 0.13, 0.3) * smoothstep(0.75, 1.0, t) * 0.5; // and a paler outer arris
+            col = stone * (1.0 - 0.7 * joint) * (1.0 - smoothstep(0.93, 1.0, t) * 0.6) * step(rr, 1.0);
+          }
           gl_FragColor = vec4(col, 1.0);
         }`,
     });
-    const rose = new THREE.Mesh(new THREE.CircleGeometry(5.2, 48), this.roseMat);
+    const rose = new THREE.Mesh(new THREE.CircleGeometry(6.3, 64), this.roseMat);
     rose.position.set(0, 11.5, Z0 - L + 0.02);
     s.add(rose);
-    const shaft = examBeam({ color: 0x9a8cff, top: 2.2, bottom: 6.5, height: 46, intensity: 0.05 });
+    const shaft = examBeam({ color: 0xa06cff, top: 2.2, bottom: 6.5, height: 46, intensity: 0.028 });
     shaft.position.set(0, 11.5, Z0 - L + 1);
     shaft.rotation.x = -(Math.PI / 2 - 0.2); // down the aisle, toward the reader
     shaft.layers.set(1);
     s.add(shaft);
-    this.decor(shaft);
     // holo-books: two pages of light standing open over each lectern, lines of text running up them
     this.holoMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 } },
@@ -246,11 +267,9 @@ class LibraryScene extends Scene3D {
     const nearX = () => (Math.random() < 0.5 ? -1 : 1) * rand(0.9, 1.7);
     this.pages = Array.from({ length: 26 }, (_, i) => ({ near: i >= 23, x: i >= 23 ? nearX() : rand(-3.6, 3.6), y: rand(0.6, 12), z: i >= 23 ? rand(-3.5, 1.5) : rand(-14, -52), v: rand(0.08, 0.22), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.12, 0.4) }));
     s.add(this.pageMesh);
-    this.decorCheap(this.pageMesh);
     this.motes = makeMotes({ count: 90, box: [10, 11, 50], center: [0, 6, -18], color: 0xffe2a8, size: 0.09, k: 0.9 });
     this.motes.layers.set(1);
     s.add(this.motes);
-    this.decor(this.motes);
     box.dispose();
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._p = new THREE.Vector3(); this._s = new THREE.Vector3(1, 1, 1);
     this.camBase.set(0, 3.4, 6);

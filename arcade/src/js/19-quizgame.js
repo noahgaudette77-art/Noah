@@ -63,7 +63,10 @@ class QuizGame extends Scene3D {
   }
   lives(n, max, kind = "shield", color = COLORS.cyan) {
     const box = $("[data-lives]", this.el);
-    if (box) box.innerHTML = Array.from({ length: max }, (_, i) => `<span class="${i < n ? "" : "lost"}">${icon(kind, color)}</span>`).join("");
+    if (!box) return;
+    const was = box.dataset.n === undefined ? n : +box.dataset.n; // (the one that has just gone gets its own moment)
+    box.dataset.n = n;
+    box.innerHTML = Array.from({ length: max }, (_, i) => `<span class="${i < n ? "" : "lost"}${i >= n && i < was ? " just" : ""}">${icon(kind, color)}</span>`).join("");
   }
   explainAuto(ok) { return ok && Store.settings.explain === "smart" ? 2600 : 0; }
   // Screen position of the centre of the 3D band (for floating score text).

@@ -127,7 +127,6 @@ class TitleCity {
 
     // ---- searchlights turning over the skyline
     this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.8, 9, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
-    g.decor(...this.lights);
 
     // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
     const U = { uKey: { value: new THREE.Color(0.9, 0.6, 0.9) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.32, 0.2, 0.5) } };

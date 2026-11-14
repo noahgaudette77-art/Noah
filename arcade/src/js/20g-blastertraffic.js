@@ -170,7 +170,6 @@ class SpaceTraffic {
     this._zero = new THREE.Matrix4().makeScale(0, 0, 0);
     for (let i = 0; i < total; i++) { this.trails.setMatrixAt(i, this._zero); this.trails.setColorAt(i, new THREE.Color(0, 0, 0)); }
     g.scene.add(this.trails);
-    g.decorCheap(this.trails);
     this.ships = [];
     this.cool = 0.5; this.sp0 = 26;
     this._p = new THREE.Vector3(); this._h = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._r = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._c = new THREE.Color();
@@ -214,12 +213,12 @@ class SpaceTraffic {
     else { const z = -rand(280, 460); this.spawn(type, { p: [-sd * (-z * 0.3 + 26), -z * rand(0.1, 0.17) * (Math.random() < 0.7 ? 1 : -1), z], v: [sd * rand(14, 22), 0, -sp], life: 60 }); } // or crossing far ahead
   }
   update(dt, sp, w) {
-    const g = this.g, cheap = GFX.ok && GFX.Q[GFX.qi].cheap, tr = this.space.cur.traffic, m = this._m, q = this._q, p = this._p;
+    const g = this.g, tr = this.space.cur.traffic, m = this._m, q = this._q, p = this._p;
     if (w < 0.02) this.sp0 = sp;
     // keep the region's traffic up
     if ((this.cool -= dt) <= 0 && w < 0.05) {
       this.cool = rand(0.5, 1.3);
-      const dens = (GFX.calm ? 0.5 : 1) * (cheap ? 0.45 : 1), want = SPACE_SHIPS.filter((n) => this.count(n) < Math.round(tr[n] * dens));
+      const dens = GFX.calm ? 0.5 : 1, want = SPACE_SHIPS.filter((n) => this.count(n) < Math.round(tr[n] * dens));
       if (want.length) this.ambient(want[randInt(0, want.length - 1)]);
     }
     const dirty = {}, hi = {};
@@ -406,7 +405,6 @@ function spaceEvents(space) {
   const comet = glowSprite(neon(0xbfe8ff, 2.2), 7, 1), tail = new Trail({ length: 26, width: 1.4, color: 0x9fd8ff, intensity: 1.2 });
   comet.visible = tail.mesh.visible = false;
   g.scene.add(comet, tail.mesh);
-  g.decor(tail.mesh);
   D.add({ id: "comet", dur: 6,
     start: (run) => { const sd = side(); run.a = frame(-sd * 15, rand(9, 12.5), 430); run.b = frame(sd * 15, rand(4, 9), 380); tail.pts = []; comet.visible = tail.mesh.visible = true; },
     update: (dt, t, run) => { comet.position.lerpVectors(run.a, run.b, t / 5.4); tail.push(comet.position); return t < 5.4; },
@@ -422,7 +420,6 @@ function spaceEvents(space) {
   const cluster = spaceInstanced(space.rockNear.geometry.clone(), space.rockMat, 8), cq = new THREE.Quaternion(), cm = new THREE.Matrix4(), cs = new THREE.Vector3();
   cluster.visible = false;
   g.scene.add(cluster);
-  g.decorCheap(cluster);
   D.add({ id: "asteroids", dur: 18, can: inReg("nebula", "belt", "orbit", "graveyard", "gate"),
     start: (run) => { run.sd = side(); run.x = run.sd * rand(22, 32); run.y = rand(-10, 15); run.z = -620; run.r = Array.from({ length: 8 }, () => ({ o: new THREE.Vector3(rand(-9, 9), rand(-8, 8), rand(-22, 22)), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), w: rand(0.3, 1.1), s: rand(1.2, 3.6) })); cluster.visible = true; },
     update: (dt, t, run) => {

@@ -276,8 +276,7 @@ class BlasterJet {
     this.wingLights = [[-1.85, COLORS.magenta], [1.85, COLORS.cyan]].map(([x, c]) => { const s = glowSprite(neon(c, 2.6), 0.42, 1); s.position.set(x, -0.13, 1.14); rig.add(s); return s; });
     this.tips = [new THREE.Vector3(-1.85, -0.13, 1.14), new THREE.Vector3(1.85, -0.13, 1.14)];
     this.contrails = this.tips.map(() => new Trail({ length: 18, width: 0.03, color: 0xbfe8ff, intensity: 0.7 }));
-    this.contrails.forEach((t) => { g.scene.add(t.mesh); g.decor(t.mesh); });
-    g.decorCheap(fine);
+    this.contrails.forEach((t) => { g.scene.add(t.mesh); });
     box.dispose();
     this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
     this._v = new THREE.Vector3();
@@ -349,8 +348,7 @@ class BlasterJet {
     su.uGlow.value = heat * 0.6;
     su.uHit.value = Math.max(0, su.uHit.value - dt * 1.3);
     if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, dt * 4));
-    // (the weakest quality levels only draw the bubble while it flares)
-    this.shield.visible = su.uHit.value > 0 || (this.shieldOn > 0.01 && !(GFX.ok && GFX.Q[GFX.qi].cheap));
+    this.shield.visible = su.uHit.value > 0 || this.shieldOn > 0.01;
     rig.updateMatrixWorld();
     GFX.heatAt(g.camera, this._v.set(0, 0.02, 2.2).applyMatrix4(rig.matrixWorld), 0.55 * g.shipScale, 0.4 + 0.6 * Math.max(heat, Math.min(1, w)));
     // wingtip contrails, sampled at a fixed 60 Hz like the engine trails

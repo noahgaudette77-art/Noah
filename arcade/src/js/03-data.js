@@ -48,7 +48,7 @@ const ALL_TIPS = CHAPTERS.flatMap((c) => c.tips.map((t) => ({ t, ch: c.n })));
 // One boss per chapter, plus the final boss for the all-chapters run.
 const BOSSES = {
   1: { name: "PRODUCT PUSHER", line: "Why plan when you can just BUY?", color: COLORS.cyan, shape: "box", hp: 90 },
-  2: { name: "PERIL PRIME", line: "Hazards feed me. Perils ARE me.", color: COLORS.red, shape: "ico", hp: 100 },
+  2: { name: "PERILMONGER", line: "Hazards feed me. Perils ARE me.", color: COLORS.red, shape: "ico", hp: 100 },
   3: { name: "SOLVENCY SPECTER", line: "Your insurer's capital is... evaporating.", color: COLORS.violet, shape: "octa", hp: 100 },
   4: { name: "THE FINE PRINT", line: "Read the contract? Nobody reads the contract.", color: COLORS.yellow, shape: "dodeca", hp: 110 },
   5: { name: "GROUP GOLEM", line: "Your benefits end when your job does.", color: COLORS.orange, shape: "box", hp: 100 },
@@ -56,7 +56,7 @@ const BOSSES = {
   7: { name: "LONGEVITY LICH", line: "You will outlive your money. I will see to it.", color: COLORS.lime, shape: "ico", hp: 110 },
   8: { name: "LORD INTESTATE", line: "No will? Then the law decides. And it never asks what you wanted.", color: COLORS.magenta, shape: "octa", hp: 100 },
   9: { name: "UNDUE INFLUENCER", line: "Sign here. Trust me. Sign HERE.", color: COLORS.cyan, shape: "dodeca", hp: 120 },
-  10: { name: "PROBATRON", line: "Every estate pays my toll.", color: COLORS.orange, shape: "knot", hp: 110 },
+  10: { name: "PROBATE TOLLGATE", line: "Every estate pays my toll.", color: COLORS.orange, shape: "knot", hp: 110 },
   11: { name: "PATRIMONY PHANTOM", line: "Half of everything. Partition is coming.", color: COLORS.violet, shape: "ico", hp: 100 },
   all: { name: "THE PROCTOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "cyborg", hp: 200 },
 };

@@ -3,7 +3,7 @@
 const TROPHIES = [
   { id: "first", name: "FIRST COIN", how: "Finish your first game", test: (s) => s.stats.games >= 1 },
   { id: "streak5", name: "HOT HAND", how: "5 right answers in a row", test: (s) => s.stats.bestStreak >= 5 },
-  { id: "streak10", name: "UNSTOPPABLE", how: "10 right answers in a row", test: (s) => s.stats.bestStreak >= 10 },
+  { id: "streak10", name: "BLUE CHIP", how: "10 right answers in a row", test: (s) => s.stats.bestStreak >= 10 },
   { id: "streak20", name: "THE MACHINE", how: "20 right answers in a row", test: (s) => s.stats.bestStreak >= 20 },
   { id: "ans100", name: "CENTURION", how: "Answer 100 questions", test: (s) => s.stats.answered >= 100 },
   { id: "ans500", name: "VETERAN", how: "Answer 500 questions", test: (s) => s.stats.answered >= 500 },

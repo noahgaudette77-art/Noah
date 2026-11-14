@@ -853,7 +853,6 @@ class RacerGame extends QuizGame {
     this.halos.layers.set(1);
     this.cones.layers.set(1);
     this.scene.add(this.props, this.halos, this.cones);
-    this.decor(this.halos, this.cones);
     this.buildCity();
     box.dispose();
     coneGeo.dispose();
@@ -986,8 +985,6 @@ class RacerGame extends QuizGame {
     this.steam.layers.set(1);
     this.rain.layers.set(1);
     this.scene.add(this.walls, this.cityDetail, this.signs, this.steam, this.rain);
-    this.decor(this.steam, this.rain);
-    this.decorCheap(this.cityDetail); // pipes and gears: thousands of small triangles, kept except on the weakest hardware
     // far off: two clock towers above the skyline (dark, with lit faces)...
     const T = (x, y, z, ry = 0, rz = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, rz)), new THREE.Vector3(1, 1, 1));
     const C = (r, g, b) => new THREE.Color(r, g, b);
@@ -1011,7 +1008,6 @@ class RacerGame extends QuizGame {
     this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.2, 1), new THREE.MeshBasicMaterial({ color: C(0.5, 0.34, 0.14), fog: false })));
     this.orrery.position.set(0, 76, -332);
     this.scene.add(this.towers, this.orrery);
-    this.decor(this.orrery);
   }
   // Streaks of light that rush past when you floor it.
   buildSpeedLines() {
@@ -1550,7 +1546,7 @@ class RacerGame extends QuizGame {
     // the ground's lights
     const g = this.groundMat.uniforms;
     g.uCarX.value = this.carX;
-    g.uReflect.value = GFX.lite ? 0 : sky.wet; // the road dries out around midday
+    g.uReflect.value = sky.wet; // the road dries out around midday
     g.uHead.value = 0.45 + 0.75 * sky.lamps;
     g.uUnder.value.set(0x5dffb0).multiplyScalar(0.5 + 0.2 * Math.sin(this.t * 2.6) + 0.7 * this.flame); // mint under-glow
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);

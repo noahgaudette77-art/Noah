@@ -154,7 +154,7 @@ class AmbientSky {
 
     // -- 9. a laser show from the rooftops
     this.lasers = [0xff3ad4, 0x35efff, 0x5dffb0, 0xffd23d].map((c, i) => { const l = racerShaft(c, 0.25, 1.4, 240, 6); l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.visible = false; s.add(l); return l; });
-    D.add({ id: "lasers", dur: 8, can: () => wide() && !GFX.lite && !(o.dry && o.dry()),
+    D.add({ id: "lasers", dur: 8, can: () => wide() && !(o.dry && o.dry()),
       start: (r) => { r.c = city(); this.lasers.forEach((l, i) => { l.visible = true; if (r.c) l.position.set((i % 2 ? 1 : -1) * 9.6, 30 + i * 2, -80 - i * 26); else l.position.set((i - 1.5) * 38, 26, -220 - (i % 2) * 40); l.scale.setScalar(r.c ? 0.32 : 1); }); },
       update: (dt, t, r) => this.lasers.forEach((l, i) => { l.rotation.set(-0.5 + Math.sin(t * 0.7 + i * 1.7) * 0.4, 0, r.c ? (i % 2 ? 1 : -1) * (0.75 + Math.sin(t * 0.9 + i * 2.3) * 0.5) : Math.sin(t * 0.9 + i * 2.3) * 0.9); l.material.uniforms.uI.value = 0.75 * fade(t, 8) * (1 - 0.5 * o.calm()) * (GFX.opt.beams ? 1 : 0); }),
       end: () => hide(...this.lasers) });
@@ -177,8 +177,6 @@ class AmbientSky {
       },
       end: () => hide(this.birds) });
 
-    // the big see-through shafts cost fill-rate: on the lite quality levels they are left out
-    if (g.decor) g.decor(this.ufoBeam, this.heliBeam, ...this.lasers);
     BOX.dispose(); CYL.dispose();
   }
 }

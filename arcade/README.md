@@ -161,19 +161,24 @@ lists all of them again.
   the ending shows what your answers took off it. SKIP (or Enter) goes straight to
   the results; Reduced effects plays it without shake or flash, and a device set to
   reduce motion gets a still version.
-- **The vault's machinery.** Memory Bank's door has meshing gear trains round the
-  dial, an arc of lamps over it (one per card in the deck), coin stacks by the
-  bullion. Bank a card and it flies up into the coin slot, the gears spin on and
-  the lock goes home; miss one and it drops back toward the deck while the dark
-  lamps wash red.
+- **The vault.** In Memory Bank the whole vault stands in a window over the card:
+  a round gold door with a handwheel, a dial and twelve bolts, two short gear
+  trains like a clock's, an arc of lamps over it (one per card in the deck),
+  gold bars and coin piles at its foot on a mirrored floor. Bank a card and it
+  shrinks up toward the window, a coin flies across and drops into the slot,
+  the gears spin on, the card's lamp lights and a gold bar drops onto the heap;
+  miss one and it tips back toward the deck while the dark lamps wash red. The
+  card keeps its full height on every phone: the window takes what is left.
 - **The archive.** The Strategy Guide opens on a vaulted aisle of bookshelves on
   two tiers, hanging lamps, holo-books open on lecterns, loose pages adrift and a
-  rose window of coloured panes whose light pours down the nave, seen through one
-  framed window above the list. In the middle of the nave a great ledger of gold
+  rose window of jewel glass in dark leads, set in a rim of cut stone, whose light
+  pours down the nave, seen through one framed window above the list. In the middle of the nave a great ledger of gold
   light stands open on a reading desk under its own lamp. Two lanterns and a few pages hang close to the
   lens, out of focus, and slide across the aisle behind them as the view drifts.
-  What you read sits on solid ground, the scene all but stops while a chapter is
-  open, and the window folds down to a strip while you search.
+  What you read sits on solid ground (the archive shows only in its window), the
+  scene all but stops while a chapter is open, and the window folds away while you
+  search. Chapter rows carry their client's portrait; in a chapter's notes the
+  term that opens a line stands out and numbered runs sit one item to a line.
 - **The car.** Nest Egg Run's armored rally coupe has a shell of champagne-gold
   lacquer (the nest egg's colour) under layers of chamfered, bolted gunmetal
   plate with mint trim that glows: a bull bar and winch, hood scoop, armored
@@ -193,7 +198,10 @@ lists all of them again.
   toll booth on tracks, a half-bone half-steel phantom with a cleaver, and the
   hulking Proctor in an examiner's square cap with a lit tassel, a monocle on
   a chain and a row of answer bubbles for a mouth. They drop in dark and folded, land, and power up; breathe,
-  look about and twitch; wind up as their attack charges; recoil when hit. As
+  look about and twitch; wind up as their attack charges (arms up and wide, leaning
+  in, growing, the floor's ring running hot, the attack bar ramping from yellow to
+  red and the question's frame pulsing in the last quarter); lunge at the lens when
+  it lands; recoil when hit. As
   their HP falls the armor cracks, plates are shot off to bare the circuitry
   underneath, an arm fails, and below 35% they rage. A hit pulses the whole arena.
 - **A world that moves.** Nest Egg Run's road runs through downtown, a tunnel, a
@@ -216,8 +224,8 @@ lists all of them again.
   question is on screen it slows down and holds the big ones for the gap between
   questions. A right answer sets off fireworks and parts the traffic; a wrong one
   tears the picture for a moment.
-- **One mode: maximum.** There are no quality levels and nothing adapts to the
-  device: every scene is drawn at the screen's own pixels (its full device pixel
+- **One mode: maximum.** There are no quality levels, no plain versions of anything
+  for weak devices, and nothing adapts to the device: every scene is drawn at the screen's own pixels (its full device pixel
   ratio), multisampled, into a high-dynamic-range picture with its depth beside
   it. From depth come ambient occlusion (crevices and corners darken) and contact
   shadows toward each scene's key light, depth of field (the lens holds the
@@ -272,7 +280,7 @@ lists all of them again.
 - **More to look at.** Shooting stars cross the night skies, club lasers sweep the back of the arcade,
   and each new question arrives with a sweep of light as its answers deal in.
 - **FEVER.** A run of right answers in Risk Blaster, Nest Egg Run or Boss Rush heats
-  the cabinet up: HEATING UP at 3 in a row, ON FIRE at 6, UNSTOPPABLE at 10. Each
+  the cabinet up: COMPOUNDING at 3 in a row, BULL RUN at 6, BLUE CHIP at 10. Each
   level has its own colour, fanfare, crowd cheer and shower of sparks, rays of light
   pulse around the screen edge, and a streak counter sits in the HUD. Fast answers
   earn a QUICK DRAW or LIGHTNING callout. A miss shatters the streak.

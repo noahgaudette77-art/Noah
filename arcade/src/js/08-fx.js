@@ -51,7 +51,6 @@ const FX = {
       if (!m || !m.uniforms) return;
       const u = m.uniforms;
       if (u.uTime) u.uTime.value = t;
-      if (u.uDetail) u.uDetail.value = GFX.ok && GFX.Q[GFX.qi].cheap ? 0 : 1;
       if (u.uFogColor && fog) { u.uFogColor.value.copy(fog.color); u.uFogNear.value = fog.near; u.uFogFar.value = fog.far; }
     });
   },
@@ -63,14 +62,14 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
   const uniforms = {
     uTop: { value: new THREE.Color(top) }, uMid: { value: new THREE.Color(mid) }, uHorizon: { value: new THREE.Color(horizon) },
     uBottom: { value: new THREE.Color(bottom) }, uGlow: { value: glow }, uStars: { value: stars }, uClouds: { value: clouds },
-    uNebula: { value: nebula }, uNebulaColor: { value: new THREE.Color(nebulaColor) }, uTime: { value: 0 }, uDetail: { value: 1 },
+    uNebula: { value: nebula }, uNebulaColor: { value: new THREE.Color(nebulaColor) }, uTime: { value: 0 },
   };
   const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 24), new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false,
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `${GLSL_NOISE}
       uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; uniform vec3 uBottom; uniform vec3 uNebulaColor;
-      uniform float uGlow; uniform float uStars; uniform float uClouds; uniform float uNebula; uniform float uTime; uniform float uDetail; varying vec3 vDir;
+      uniform float uGlow; uniform float uStars; uniform float uClouds; uniform float uNebula; uniform float uTime; varying vec3 vDir;
       void main(){
         vec3 d = normalize(vDir); float h = d.y;
         vec3 col = mix(uHorizon, uMid, smoothstep(0.0, 0.2, h));
@@ -78,10 +77,8 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
         if (h < 0.0) col = mix(uHorizon * 0.55, uBottom, smoothstep(0.0, 0.18, -h));
         col += uHorizon * uGlow * (0.8 * exp(-abs(h) * 26.0) + 0.25 * exp(-abs(h) * 6.0));
         if (uNebula > 0.0) {
-          // the weakest quality levels skip the two finest noise layers (uDetail 0)
-          float n = vnoise(d * 3.0 + vec3(0.0, 0.0, uTime * 0.01)) * 0.55 + vnoise(d * 7.5 - vec3(uTime * 0.008)) * 0.3;
-          float m = 0.5;
-          if (uDetail > 0.5) { n += vnoise(d * 16.0) * 0.15; m = vnoise(d * 2.2 + 11.0); } else n += 0.075;
+          float n = vnoise(d * 3.0 + vec3(0.0, 0.0, uTime * 0.01)) * 0.55 + vnoise(d * 7.5 - vec3(uTime * 0.008)) * 0.3 + vnoise(d * 16.0) * 0.15;
+          float m = vnoise(d * 2.2 + 11.0);
           col += mix(uNebulaColor, uHorizon, m) * pow(max(n - 0.25, 0.0) * 1.4, 2.2) * uNebula;
         }
         // clouds and stars only exist above the horizon: skip their noise elsewhere
@@ -99,7 +96,7 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
           }
         }
         // a shooting star now and then: a short streak of light across the upper sky
-        if (uStars > 0.0 && uDetail > 0.5 && h > 0.06) {
+        if (uStars > 0.0 && h > 0.06) {
           float mp = uTime / 3.7; float mid = floor(mp); float mf = fract(mp);
           if (mf < 0.22) {
             vec2 sp = vec2(atan(d.x, -d.z), h);
@@ -223,7 +220,6 @@ class Mirror {
     });
     this.cam = new THREE.PerspectiveCamera();
     this.cam.layers.set(0);
-    this.cam.layers.mask |= 4 | 16; // reflected decor (see Scene3D.decor)
     this.matrix = new THREE.Matrix4();
     this.receivers = [];
     this.hide = [];

@@ -7,9 +7,9 @@ const Hype = {
   el: null,
   LV: [
     null,
-    { name: "HEATING UP", at: 3, col: COLORS.orange, rgb: [1, 0.42, 0.08], amt: 0.5 },
-    { name: "ON FIRE", at: 6, col: COLORS.magenta, rgb: [1, 0.16, 0.7], amt: 0.75 },
-    { name: "UNSTOPPABLE", at: 10, col: COLORS.yellow, rgb: [1, 0.8, 0.25], amt: 1 },
+    { name: "COMPOUNDING", at: 3, col: COLORS.orange, rgb: [1, 0.42, 0.08], amt: 0.5 },
+    { name: "BULL RUN", at: 6, col: COLORS.magenta, rgb: [1, 0.16, 0.7], amt: 0.75 },
+    { name: "BLUE CHIP", at: 10, col: COLORS.yellow, rgb: [1, 0.8, 0.25], amt: 1 },
   ],
   levelFor(streak) { return streak >= 10 ? 3 : streak >= 6 ? 2 : streak >= 3 ? 1 : 0; },
   // The streak pill lives in the HUD's spare middle.

@@ -306,7 +306,7 @@ class RacerWorld {
   }
   updateTraffic(dt, sp, sky) {
     const g = this.g, tunnel = this.biome === "tunnel";
-    const dense = (GFX.lite ? 0.6 : 1) * (1 - 0.4 * this.calmK);
+    const dense = 1 - 0.4 * this.calmK;
     const count = (l) => this.cars.reduce((a, c) => a + (c.on && c.lane === l && !c.special ? 1 : 0), 0);
     const T = this.spawnT;
     for (const l of ["R", "L", "H"]) {
@@ -445,7 +445,6 @@ class RacerWorld {
       holos.push([-7.4, 8.6, -116, 4.2, 2.1, 0.5, -118], [7.4, 9.2, -30, 4.2, 2.1, -0.5, -32], [7.2, 8.4, -206, 4.2, 2.1, -0.5, -208]);
       [[-7.4, -116], [7.4, -30], [7.2, -206]].forEach(([x, z]) => { put(b, BOX, x * 1.2, 6.9, z, 0.5, 0.2, 0.5, 0x35efff, z - 2, 1, 2.2); put(b, BOX, x * 1.2, 3.4, z, 0.14, 6.8, 0.14, 0x3a3f48, z - 2); });
       const holo = adMesh(holos, true);
-      g.decor(holo);
       set("downtown", mesh(b), adMesh(ads, false), holo);
     }
 
@@ -644,7 +643,6 @@ class RacerWorld {
     this.motes = makeMotes({ count: 150, box: [44, 14, 70], center: [0, 6, -28], color: 0xffffff, size: 0.16, k: 1.2 });
     this.motes.layers.set(1);
     g.scene.add(this.motes);
-    g.decor(this.motes);
     // ---- the fog bank a change of biome hides behind
     this.curtain = new THREE.Mesh(new THREE.PlaneGeometry(900, 500), new THREE.MeshBasicMaterial({ color: 0x8090a0, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     this.curtain.position.set(0, 60, -36);
@@ -818,7 +816,7 @@ class RacerWorld {
       this.wheel.rotation.z = this.t * 0.12;
       const sea = this.sea.material.uniforms;
       sea.uSkyC.value.copy(su.uHorizon.value);
-      sea.uReflect.value = GFX.lite || !GFX.opt.wet ? 0 : 1;
+      sea.uReflect.value = GFX.opt.wet ? 1 : 0;
       sea.uDeep.value.set(0x06323c).lerp(fog.color, 0.25);
     }
     // ---- the sun breathes

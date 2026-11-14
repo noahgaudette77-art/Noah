@@ -93,10 +93,10 @@ class BossGame extends QuizGame {
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
       <div class="bossbar" style="--c:${c}">
-        <div class="name"><span>${esc(this.cfg.name)}</span><span data-hp>${this.hp}/${this.maxHp}</span></div>
+        <div class="name"><span>${esc(this.cfg.name)}<em class="ragetag">ENRAGED</em></span><span data-hp>${this.hp}/${this.maxHp}</span></div>
         <span class="meter slide" style="--c:${c}"><i data-hpbar style="transform:none"></i></span>
       </div>
-      <div class="charge labelled" title="Boss attack charge"><i data-charge></i><span>BOSS ATTACK</span></div>
+      <div class="barrow threat" title="Boss attack charge"><b>BOSS ATTACK</b><div class="charge"><i data-charge></i></div></div>
       <div class="qpanel"></div>
       <div class="band"></div>
       <div class="answers"></div>
@@ -112,6 +112,7 @@ class BossGame extends QuizGame {
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
+    this.hotCol = neon(0xff5a3c, 2.4); // what the floor's ring and pool turn to as an attack comes due
     this.rageMid = new THREE.Color(0x2a0410);
     this.rageFog = new THREE.Color(0x2a0614);
     this.rageLine = neon(COLORS.red, 1.6);
@@ -128,10 +129,10 @@ class BossGame extends QuizGame {
         { color: 0xffffff, pos: [4, 14, 10], w: 6, h: 1.5, k: 3.2 },
       ],
     });
-    this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.36);
+    this.ambient = new THREE.AmbientLight(0x7566c4, 0.5);
     this.ambientBase = this.ambient.color.clone();
     s.add(this.ambient);
-    const key = new THREE.DirectionalLight(0xe6deff, 1.45);
+    const key = new THREE.DirectionalLight(0xe6deff, 1.28);
     key.position.set(3, 8, 10);
     s.add(key);
     // Lit in its own colour: two lamps behind it, either side (one its colour, one that colour paled toward
@@ -139,7 +140,10 @@ class BossGame extends QuizGame {
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
     // (the complement is an edge, not a second key: at full strength it turned black armour pale)
     [[-11, col.getHex(), 3.4 * big], [11, col.clone().offsetHSL(0.5, 0, 0).lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.5]].forEach(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
-    const under = new THREE.PointLight(col.getHex(), 1.5 * big, 24, 1.8);
+    const under = new THREE.PointLight(col.getHex(), 1.15 * big, 24, 1.8);
+    const fill = new THREE.PointLight(0x8f7cff, 0.9, 40, 1.6); // a violet fill from the lens side, low: the limbs' dark faces keep their shape
+    fill.position.set(-5, 3.2, 13);
+    s.add(fill);
     under.position.set(0, 0.7, 6.5);
     s.add(under);
     this.eyeLight = new THREE.PointLight(hex, 0.6, 26, 2);
@@ -176,7 +180,6 @@ class BossGame extends QuizGame {
     this.motes = makeMotes({ count: 110, box: [46, 16, 34], center: [0, 7, -10], color: hex, size: 0.2, k: 1.5 });
     this.motes.layers.set(1);
     s.add(this.motes);
-    this.decor(this.motes);
     this.boss = this.makeBoss();
     this.boss.position.set(0, 14, 0);
     s.add(this.boss);
@@ -271,7 +274,6 @@ class BossGame extends QuizGame {
     const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(hex, 0.7), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     poolMesh.layers.set(1);
     s.add(poolMesh);
-    this.decor(poolMesh);
     const bg = new THREE.BufferGeometry();
     bg.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
     bg.setAttribute("normal", new THREE.Float32BufferAttribute(bn, 3));
@@ -307,7 +309,6 @@ class BossGame extends QuizGame {
     beams.frustumCulled = false;
     beams.renderOrder = 4;
     s.add(beams);
-    this.decor(beams);
     // the summoning circle and a pool of light under the boss
     this.rune = new THREE.Mesh(new THREE.PlaneGeometry(13.5, 13.5), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 2.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.rune.rotation.x = -Math.PI / 2;
@@ -342,7 +343,7 @@ class BossGame extends QuizGame {
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
           const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
           const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
-          const cloth = new THREE.Color().setHSL(Math.random(), 0.55 + Math.random() * 0.35, 0.09 + Math.random() * 0.1), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.4, 0.16 + Math.random() * 0.14);
+          const cloth = new THREE.Color().setHSL(Math.random(), 0.5 + Math.random() * 0.3, 0.06 + Math.random() * 0.07), skin = new THREE.Color().setHSL(0.05 + Math.random() * 0.05, 0.4, 0.11 + Math.random() * 0.1);
           people.push({ geo: new THREE.BoxGeometry(0.6 * sc, 0.82 * sc, 0.32), matrix: at(0, 0.45, 0), color: cloth }); pSeed.push(sd, 36);
           people.push({ geo: new THREE.IcosahedronGeometry(0.19 * sc, 0), matrix: at(0, 1.04, 0), color: skin }); pSeed.push(sd, 60);
           if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
@@ -418,7 +419,6 @@ class BossGame extends QuizGame {
       s.add(m);
       return m;
     });
-    this.decor(...this.haze);
   }
   makeBoss() {
     const hex = this.cfg.color;
@@ -467,7 +467,7 @@ class BossGame extends QuizGame {
   onLayout() {
     if (!this.has3D) return;
     const bs = this.bandSize(16);
-    this.bossScale = clamp(Math.min((bs.h * 0.8) / 7.4, (bs.w * 0.86) / 8), 0.3, 1.1);
+    this.bossScale = clamp(Math.min((bs.h * 0.74) / 7.4, (bs.w * 0.84) / 8), 0.3, 1.1);
     // hover just above the floor so the reflection sits in view
     this.bossY = 1.1 + 3.25 * this.bossScale;
     // the band changes with each question's length: ease into the new framing
@@ -495,10 +495,10 @@ class BossGame extends QuizGame {
   start() {
     Sound.play("boss");
     Sound.sfx("charge");
-    UI.banner("WARNING", COLORS.red, "BOSS APPROACHING");
+    UI.banner("STAND BY", COLORS.red, this.cfg.name + " ENTERS", "low");
     this.layoutBand();
     if (this.has3D) {
-      this.tw.add(1.4, (k) => { this.boss.position.y = lerp(14, this.bossY, k); }, () => {
+      this.tw.add(1.4, (k) => { this.boss.position.y = lerp(this.bossY + 7.5, this.bossY, k); }, () => {
         this.shockwave(new THREE.Vector3(0, 0.2, 0), neon(this.cfg.color, 2), 9, 0.8);
         this.floorRing(this.cfg.color, 18, 1);
         this.flashAt(new THREE.Vector3(0, 0.6, 0), this.cfg.color, 0.8, 10);
@@ -527,6 +527,8 @@ class BossGame extends QuizGame {
     UI.text($("[data-hp]", this.el), Math.max(0, this.hp) + "/" + this.maxHp);
     UI.meter($("[data-hpbar]", this.el), this.hp / this.maxHp);
     this.lives(this.hearts, 3, "heart", COLORS.red);
+    const plate = $(".bossbar", this.el);
+    if (plate) plate.classList.toggle("rage", this.enraged && this.hp > 0);
   }
   get enraged() { return this.hp / this.maxHp < 0.35; }
   nextQuestion() {
@@ -537,6 +539,7 @@ class BossGame extends QuizGame {
     this.quiz.show(this.round, `STAGE ${q.ch} · ${q.topic}`);
     this.T = readTime(this.round, this.enraged ? 0.85 : 1);
     this.charge = 0;
+    this.el.classList.remove("threat");
     this.layoutBand();
     this.state = "ask";
   }
@@ -582,7 +585,7 @@ class BossGame extends QuizGame {
         this.bursts.burst(at, this.cfg.color, { n: 60, speed: 7, size: 0.35 });
         this.bursts.burst(at, COLORS.cyan, { n: 24, speed: 5, size: 0.3, life: 0.6 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
-        this.flashAt(at, COLORS.cyan, 1, 3.4 * this.bossScale + 1.5);
+        this.flashAt(at, COLORS.cyan, 0.7, 2.6 * this.bossScale + 1.2);
         const em = b.userData.core.userData.mat.emissive;
         const base = em.clone();
         this.tw.add(0.4, (k) => { em.setRGB(lerp(1.1, base.r, k), lerp(1.1, base.g, k), lerp(1.1, base.b, k)); });
@@ -619,6 +622,7 @@ class BossGame extends QuizGame {
   }
   bossAttack(slow) {
     this.hearts--;
+    this.atkK = REDUCED_MOTION || GFX.calm ? 0.45 : 1;
     Sound.sfx("charge");
     const hit = () => {
       Sound.sfx("hit");
@@ -712,9 +716,9 @@ class BossGame extends QuizGame {
     GFX.pulse(12, 0.45);
     Haptics.buzz([100, 50, 200]);
     if (this.has3D) {
-      this.shockwave(this.boss.position.clone(), neon(0xfff4e0, 1.6), 14, 1.1);
+      this.shockwave(this.boss.position.clone(), neon(0xfff4e0, 0.9), 12, 1.1); // (a ring, not a white band across the strip)
       this.floorRing(this.cfg.color, 26, 1.4);
-      this.flashAt(this.boss.position, 0xffffff, 1.2, 10 * this.bossScale + 3);
+      this.flashAt(this.boss.position, 0xffffff, 0.75, 7 * this.bossScale + 2);
     }
     this.tw.wait(0.9, () => UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS")));
     if (this.has3D) {
@@ -724,7 +728,7 @@ class BossGame extends QuizGame {
           const p = this.boss.position.clone().add(new THREE.Vector3(rand(-2, 2), rand(-2, 2), 1).multiplyScalar(bs));
           this.bursts.burst(p, i % 2 ? this.cfg.color : 0xffffff, { n: 44, speed: 8 * bs, size: 0.3 * bs, life: 1.1 });
           this.shards.burst(p, i % 2 ? this.cfg.color : 0xffffff, 6, bs * 1.3, 10 * bs, 7);
-          this.flashAt(p, i % 2 ? this.cfg.color : 0xffffff, 1, 8 * this.bossScale + 2);
+          this.flashAt(p, i % 2 ? this.cfg.color : 0xffffff, 0.6, 5 * this.bossScale + 1.5);
           Sound.sfx("boom");
         });
       }
@@ -743,8 +747,14 @@ class BossGame extends QuizGame {
         this.shards.burst(p, this.cfg.color, 20, s0 * 1.4, 12 * s0, 6);
         this.shockwave(p, neon(this.cfg.color, 2.4), 18, 1.2);
         this.floorRing(0xffffff, 34, 1.6);
-        this.flashAt(p, 0xffffff, 1.3, 14 * s0 + 4);
+        this.flashAt(p, 0xffffff, 0.9, 9 * s0 + 3);
         this.shake(0.5);
+        // what is left of it comes down across the floor for a second or two
+        for (let i = 0; i < 5; i++) this.tw.wait(0.12 + i * 0.22, () => {
+          const q = p.clone().add(new THREE.Vector3(rand(-4, 4), rand(1.5, 4.5), rand(-1, 2)).multiplyScalar(s0));
+          this.shards.burst(q, i % 2 ? this.cfg.color : 0x8f95a8, 7, s0 * 1.1, 3 * s0, 16);
+          this.bursts.burst(q, 0xffd9a0, { n: 16, speed: 3 * s0, size: 0.2 * s0, life: 1.3, gravity: -7 });
+        });
       }, Ease.inCubic);
     }
     this.tw.wait(1.4, () => Sound.sfx("win"));
@@ -782,7 +792,13 @@ class BossGame extends QuizGame {
       this.charge += dt;
       const f = this.charge / this.T;
       const bar = $("[data-charge]", this.el);
-      if (bar) bar.style.transform = `scaleX(${clamp(f, 0, 1).toFixed(3)})`;
+      if (bar) {
+        const fc = clamp(f, 0, 1);
+        bar.style.transform = `scaleX(${fc.toFixed(3)})`;
+        bar.style.setProperty("--f", Math.max(0.02, fc).toFixed(3)); // (the ramp is laid along the whole track, not squeezed into the fill)
+        const hot = fc > 0.72, row = bar.parentNode.parentNode;
+        if (row.classList.contains("hot") !== hot) { row.classList.toggle("hot", hot); this.el.classList.toggle("threat", hot); } // the last quarter: the bar and the question's frame warn
+      }
       if (f >= 1) this.timeout();
     }
     if (!this.has3D) return;
@@ -791,9 +807,13 @@ class BossGame extends QuizGame {
     const rage = this.enraged ? 1.8 : 1;
     const ease = Math.min(1, dt * 3);
     this.showY += (this.bossY - this.showY) * ease;
+    const wind = smoothstep(0.45, 1, f); // the wind-up, as the attack charges
+    this.atkK = Math.max(0, (this.atkK || 0) - dt * 3.4); // the lunge of an attack, decaying
+    const lungeK = Math.sin(Math.min(1, this.atkK) * Math.PI);
     if (this.state !== "over") {
       this.showScale += (this.bossScale - this.showScale) * ease;
-      this.boss.scale.setScalar(this.showScale);
+      this.boss.scale.setScalar(this.showScale * (1 + 0.07 * wind + 0.2 * lungeK));
+      if (this.state !== "resolve" || lungeK > 0) this.boss.position.z = (0.9 * wind + 2.4 * lungeK) * this.showScale;
     }
     this.rune.scale.setScalar(0.45 + this.showScale * 0.75);
     this.pool.scale.setScalar(0.5 + this.showScale * 0.6);
@@ -836,9 +856,10 @@ class BossGame extends QuizGame {
     // light: the eye lights the arena as the attack charges; flashes decay
     u.eye.getWorldPosition(this.eyeLight.position);
     this.eyeLight.intensity = 0.5 + f * 3.5 + (f > 0.8 ? Math.sin(this.t * 17) * 0.6 : 0);
-    this.pool.material.color.copy(this.themeCol).multiplyScalar(0.2 + f * 0.35);
+    const hotK = smoothstep(0.55, 0.95, f);
+    this.pool.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.2 + f * 0.4);
     this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
-    this.rune.material.color.copy(this.themeCol).multiplyScalar(0.45 + f * 0.5);
+    this.rune.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.45 + f * 0.75);
     if (this.flashT > 0) {
       this.flashT = Math.max(0, this.flashT - dt * 2.4);
       const k = Math.min(1, this.flashT);
@@ -866,12 +887,12 @@ class BossGame extends QuizGame {
       u.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
       if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
     }
-    this.floor.material.uniforms.uReflect.value = GFX.lite ? 0 : 0.55;
+    this.floor.material.uniforms.uReflect.value = 0.55;
     // a slow cinematic drift, with a touch of pointer parallax
     const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
     this.lookAt.set(0, this.showY - 0.42 * this.showScale, 0); // (aimed below its middle: it stands higher in the strip, with floor under its feet)
-    if (this.contact) { const cs = 6.4 * this.showScale; this.contact.scale.set(cs, cs, 1); this.contact.position.x = this.boss.position.x; this.contact.position.z = this.boss.position.z; this.contact.material.opacity = 0.78 * clamp(1.6 - this.boss.position.y / (this.showY + 0.001) * 0.6, 0, 1); }
+    if (this.contact) { const cs = 7.6 * this.showScale; this.contact.scale.set(cs, cs, 1); this.contact.position.x = this.boss.position.x; this.contact.position.z = this.boss.position.z; this.contact.material.opacity = 0.9 * clamp(1.6 - this.boss.position.y / (this.showY + 0.001) * 0.6, 0, 1); }
     this.placeCamera();
     followSky(this.sky, this.camera);
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up

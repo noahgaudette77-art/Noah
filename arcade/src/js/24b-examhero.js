@@ -15,7 +15,6 @@ class ExamAmbience {
       g.scene.add(s);
       return s;
     });
-    g.decor(...this.lanterns);
     this.base = new THREE.Vector3(-0.3, -0.62, 0.72);
     this._d = new THREE.Vector3();
     this._up = new THREE.Vector3(0, -1, 0);
@@ -148,7 +147,6 @@ class ExamMonument {
     const rim = fresnelShell(cg, 0x9fb8ff, { power: 2.2, intensity: 1.1, scale: 1.02 });
     rim.renderOrder = 5;
     mon.add(core, shell, rim);
-    g.decorCheap(rim); // (the weakest quality levels go without the rim of light)
     // the armillary: three gold rings about the crystal, each on its own axis, each carrying a bead of light
     this.beadMat = new THREE.MeshBasicMaterial({ color: neon(0xffe2a8, 1.8) });
     this.rings = [[1.22, 0.5, 0.2, 0.16], [1.4, -0.7, 0.9, -0.12], [1.58, 1.15, -0.5, 0.09]].map(([r, tx, tz, w]) => {
@@ -206,7 +204,6 @@ class ExamMonument {
     this.halo.frustumCulled = false;
     this.halo.layers.set(1);
     g.scene.add(this.halo); // (not in the turning group: the motes keep their own orbits)
-    g.decor(this.halo);
   }
   // k: the share of the exam answered so far (0..1)
   update(dt, t, k) {

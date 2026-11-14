@@ -112,7 +112,7 @@ function showTitle() {
     Sound.init();
     Sound.sfx("coin");
     $("[data-credit]", el).textContent = "01";
-    $(".insert-coin", el).textContent = "PLAYER 1 READY";
+    $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();
     setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };

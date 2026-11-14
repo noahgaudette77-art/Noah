@@ -243,7 +243,6 @@ class BlasterGame extends QuizGame {
     this.streaks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.streaks.frustumCulled = false;
     this.scene.add(this.streaks);
-    this.decor(this.streaks);
   }
   resetStreak(i, z) {
     const a = rand(Math.PI * 2), r = rand(5, 46);
@@ -414,8 +413,6 @@ class BlasterGame extends QuizGame {
       rot.scale.setScalar(this.enemy ? 0.4 : 0.62); // the answer core sits inside the drone's collar (smaller round the demon: the letter is the face)
       const frame = new THREE.Group();
       const hullMesh = new THREE.Mesh(this.drones[shape].body, this.dronePaint);
-      // (weak quality levels are already on the plain twin of every metal: a new mesh must join them)
-      if (GFX.ok && GFX.Q[GFX.qi].cheap) { hullMesh.userData.fullMat = this.dronePaint; hullMesh.material = GFX.twinOf(this.dronePaint); }
       frame.add(hullMesh);
       if (!this.enemy) frame.add(new THREE.Mesh(this.drones[shape].lamps, M.lamp)); // (round the demon the drones carry no loose lamps: nothing that could be read as a letter)
       const halo = new THREE.Sprite(M.halo);

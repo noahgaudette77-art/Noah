@@ -19,7 +19,7 @@ const HUB_SIDE = [[-0.72, 0], [0.7, 0], [0.7, 1.1], [0.98, 1.2], [1, 1.36], [0.4
 const HUB_BODY = [[-0.7, 0], [0.655, 0], [0.655, 1.11], [0.935, 1.205], [0.955, 1.335], [0.43, 1.53], [0.2, 3.07], [0.5, 3.19], [0.535, 3.95], [-0.47, 4.05], [-0.7, 3.71]];
 const HUB_MINI = [[-0.55, 0], [0.5, 0], [0.5, 1], [0.78, 1.1], [0.8, 1.22], [0.36, 1.38], [0.18, 2.68], [0.42, 2.78], [0.45, 3.32], [-0.45, 3.4], [-0.55, 3.1]];
 const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#ff9b3d", "#a65fff", "#ff4769"];
-const HUB_TITLES = ["STAR FURY", "NOVA RAID", "TURBO 88", "NINJA RUN", "ROBO BRAWL", "NEON DRIFT", "LASER GRID", "PIXEL QUEST", "ASTRO MINER", "THUNDER JET", "GHOST MAZE", "VOID RUNNER", "HYPER BALL", "DRAGON II", "MEGA BLOX", "SKY ACE"];
+const HUB_TITLES = ["COMET SKIRMISH", "NOVA SORTIE", "REDLINE RALLY", "SKYLIGHT SLALOM", "TIN TUSSLE", "NEON HAIRPIN", "LASER LATTICE", "PIXEL PILGRIM", "REGOLITH RUSH", "GALE GLIDER", "LANTERN MAZE", "RIFT SKIPPER", "BUMPER BLITZ", "WYVERN DUEL", "STACKWORKS", "STRATO ACE"]; // (made-up titles for the machines in the background; each was searched for and is no real game's name)
 const HUB_RINGS = [[3.62, "#35efff"], [5.7, "#ff3ad4"], [5.92, "#ff3ad4"]]; // wall neon: height, colour
 // Neon signs on the wall: text, colour, angle, width (their atlas row is the index).
 const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#86ff5e", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
@@ -843,7 +843,6 @@ class HubScene extends Scene3D {
     this.heroPool = makeLightPool({ color: 0xffffff, radius: 3.4, intensity: 1 });
     this.heroMotes = makeMotes({ count: 80, box: [4.4, 6.4, 4.4], center: [0, 3.5, 0], color: 0xffe9f6, size: 0.06, k: 1.0 });
     [this.heroCone, this.heroPool, this.heroMotes].forEach((o) => { o.layers.set(1); s.add(o); });
-    this.decor(this.heroCone, this.heroPool, this.heroMotes);
     this._white = new THREE.Color(1, 1, 1);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
@@ -878,7 +877,6 @@ class HubScene extends Scene3D {
     cones.renderOrder = 5;
     cones.layers.set(1);
     s.add(cones);
-    this.decor(cones);
     const D = (HUB_CACHE.dust = HUB_CACHE.dust || { p: new Float32Array(this.dustPts.p), x: new Float32Array(this.dustPts.x), g: new Float32Array(this.dustPts.g) });
     const dg = new THREE.BufferGeometry();
     dg.setAttribute("position", new THREE.BufferAttribute(D.p, 3));
@@ -889,7 +887,6 @@ class HubScene extends Scene3D {
     this.dust.frustumCulled = false;
     this.dust.layers.set(1);
     s.add(this.dust);
-    this.decor(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
     this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
@@ -898,7 +895,6 @@ class HubScene extends Scene3D {
       beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
       beam.material.uniforms.uFade.value = 0;
       s.add(beam);
-      this.decor(beam);
       return beam;
     });
     // Everything that lights up, so the room can power on piece by piece.
@@ -1258,7 +1254,6 @@ class HubScene extends Scene3D {
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
-    const lean = GFX.ok && GFX.Q[GFX.qi].cheap; // the weakest quality levels redraw the demos half as often
     this.cabs.forEach((c, i) => {
       const sc = c.scr;
       sc.power = sc.target > 0 ? Math.min(1, sc.power + dt * 2.6) : 0;
@@ -1268,7 +1263,7 @@ class HubScene extends Scene3D {
       c.demo.wait = (c.demo.wait === undefined ? i / 40 : c.demo.wait) - dt;
       if (sc.power > 0 && c.demo.wait <= 0) {
         drawDemo(c.demo, dt);
-        c.demo.wait += (i === this.sel ? 1 / 30 : 1 / 8) * (lean ? 2 : 1);
+        c.demo.wait += i === this.sel ? 1 / 30 : 1 / 8;
         if (c.demo.wait < 0) c.demo.wait = 0;
       }
     });
@@ -1318,7 +1313,7 @@ class HubScene extends Scene3D {
       this.heroMotes.userData.drift(this.t);
     }
     const fu = this.floorMat.uniforms;
-    fu.uReflect.value = GFX.lite ? 0 : 1;
+    fu.uReflect.value = 1;
     fu.uBlack.value = lv[G.tube];
     fu.uInlay.value = lv[G.tube];
     fu.uRoom.value = room;

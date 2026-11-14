@@ -9,7 +9,7 @@ function boot() {
 
   Pointer.init();
   // FPS counter (Setup): frames per second, the frame rate the game is aiming for
-  // (the screen's measured refresh rate, up to 120) and the adaptive quality level.
+  // (the screen's measured refresh rate, up to 120).
   // The readout is switched on in Settings (saved), or for this visit only by tapping the title three times (Perf.tap,
   // see the title screen) or by opening the page with #fps. Second line: the slowest frame of the last half second,
   // the triangles and draw calls of the scene itself, and the size it is drawn at.
@@ -37,7 +37,6 @@ function boot() {
     if (GFX.freeze > 0) { GFX.freeze -= real; dt = real * 0.3; }
     try {
       Pointer.update(real);
-      GFX.watch(real);
       Scenes.frame(dt, real);
     } catch (e) {
       console.error(e);
@@ -52,9 +51,8 @@ function boot() {
     if (s && s.pause && s.state && s.state !== "over" && s.state !== "intro") s.pause();
     Store.flush();
     Store.flushRemote();
-    GFX.saveMem(Scenes.cur);
   });
-  window.addEventListener("pagehide", () => { Store.flush(); GFX.saveMem(Scenes.cur); });
+  window.addEventListener("pagehide", () => { Store.flush(); });
 
   const fonts = document.fonts && document.fonts.load
     ? Promise.race([

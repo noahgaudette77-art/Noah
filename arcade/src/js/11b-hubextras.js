@@ -290,9 +290,8 @@ class HubExtras {
     s.add(this.flare);
     this.bursts = new Bursts(s);
     this.surge = 0;
-    // none of this is mirrored in the floor, and the lite quality levels leave it out
+    // none of this is mirrored in the floor
     all.forEach((m) => m.layers.set(1));
-    hub.decor(...all);
     BOX.dispose(); CYL.dispose();
   }
   // Selecting a cabinet wakes it: a flare off its marquee, sparks, a rising tone.

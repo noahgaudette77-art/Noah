@@ -103,7 +103,6 @@ function startPlay(play) {
   const A = window.__arcade, T = window.__t;
   const trace = (T.trace = { id: play.id, rounds: [], end: null });
   let n = 0, f0 = T.frame, cur = null, seen = null, picks = 0, overAt = 0, ending = 0, pending = false;
-  A.GFX.lockQuality();
   // the rules never read a pixel back: skip the drawing itself so thousands of
   // frames run in seconds (scene updates, tweens and effects code all still run)
   const rr = A.GFX.renderer;
@@ -220,7 +219,7 @@ function startPlay(play) {
 // Display names changed on purpose since the baseline was recorded (the originality audit renamed the final
 // boss). The baseline's text is read with the new names; everything else must still match exactly, and the
 // verdict line says that a rename was applied.
-const RENAMED = [["THE EXAMINATOR", "THE PROCTOR"]];
+const RENAMED = [["THE EXAMINATOR", "THE PROCTOR"], ["PERIL PRIME", "PERILMONGER"], ["PROBATRON", "PROBATE TOLLGATE"], ["UNSTOPPABLE", "BLUE CHIP"]];
 // The results screen's buttons were moved (PLAY AGAIN, CHANGE STAGE and ARCADE to a bar pinned at the foot of the
 // screen, READ … NOTES left at the end of the list): the same four buttons, in another order. The results text is
 // compared without the button labels at its end; everything before them must still match exactly, and the verdict

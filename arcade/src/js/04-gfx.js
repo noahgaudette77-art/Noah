@@ -8,8 +8,6 @@ const GFX = {
   w: window.innerWidth,
   h: window.innerHeight,
   t: 0,
-  dyn: 1, // dynamic-resolution factor (HD look only)
-  lite: false, // set when the device struggles: no reflections, lighter bloom
   ab: 0, // colour-fringe pulse
   flashAmt: 0, // white flash pulse
   hit: { t: 1, dur: 1, col: [1, 1, 1], inner: 0, outer: 0 }, // coloured hit flash (see hitFlash)
@@ -24,8 +22,7 @@ const GFX = {
   opt: { bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true },
   calm: false,
   flashAt: -9, hitAt: -9,
-  // Setup: the effect switches, Reduced effects, and the quality tier. Auto adapts
-  // to hold the screen's refresh rate; Low, Med and High hold one level.
+  // Setup: the effect switches and Reduced effects.
   applySettings() {
     const s = Store.settings;
     s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
@@ -58,7 +55,6 @@ const GFX = {
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
     this.pipe = makePipeline(r, this.hdr);
-    this.loadMem();
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
@@ -98,10 +94,6 @@ const GFX = {
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
     scene.autoUpdate = false;
-    const cheap = !!this.Q[this.qi].cheap;
-    if (cheap || scene.userData.cheap) { this.cheapen(scene, cheap); scene.userData.cheap = cheap; }
-    // lite mode drops decor (layers 2-3); the two weakest levels drop layers 4-5 too
-    camera.layers.mask = (camera.layers.mask & ~60) | (this.lite ? 0 : 12) | (cheap ? 0 : 48);
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
     if (mirrors) for (const m of mirrors) { if (!this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
@@ -121,14 +113,9 @@ const GFX = {
       opt: this.opt, calm: this.calm,
       heat: this.heat,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
-      fx: !!this.Q[this.qi].fx,
-      cheap: !!this.Q[this.qi].cheap,
       glass: Store.settings.crt ? 1 : 0,
-      aa: this.Q[this.qi].aa,
-      bloom: this.Q[this.qi].bloom,
       look: this.look,
       post: scene.userData.post || {},
-      lite: this.lite,
     });
     this.heat.a = 0; // a scene asks for its heat haze again every frame
   },
@@ -140,13 +127,13 @@ const GFX = {
   },
   // A wrong answer glitches the picture for a moment. amt 0..1.
   glitch(amt = 1, dur = 0.4) {
-    if (REDUCED_MOTION || this.calm || !this.opt.ca || this.Q[this.qi].cheap) return;
+    if (REDUCED_MOTION || this.calm || !this.opt.ca) return;
     this.gl.a = amt; this.gl.t = 0; this.gl.dur = dur;
   },
   // Heat haze around a point in the scene (an exhaust, a vent): the final pass makes
   // the picture swim there this frame. radius in world units, amt 0..1.
   heatAt(camera, pos, radius, amt) {
-    if (!camera || this.Q[this.qi].cheap) return;
+    if (!camera) return;
     const v = this._heatV || (this._heatV = new THREE.Vector3());
     v.copy(pos).project(camera);
     if (v.z > 1 || Math.abs(v.x) > 1.3 || Math.abs(v.y) > 1.3) return;
@@ -160,7 +147,7 @@ const GFX = {
   // A shockwave at a point in the scene bends the picture as it spreads: a ring of
   // refraction in the final pass. amp 0..1.
   ripple(camera, pos, amp = 1, dur = 0.55) {
-    if (REDUCED_MOTION || this.calm || !camera || this.Q[this.qi].cheap) return;
+    if (REDUCED_MOTION || this.calm || !camera) return;
     const v = this._ripV || (this._ripV = new THREE.Vector3());
     v.copy(pos).project(camera);
     if (v.z > 1) return;
@@ -169,7 +156,7 @@ const GFX = {
   },
   pulse(ab = 6, flash = 0.1) {
     const soft = REDUCED_MOTION || this.calm;
-    if (!soft && !this.Q[this.qi].cheap) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
+    if (!soft) this.punch = Math.max(this.punch, Math.min(0.03, ab * 0.0022));
     if (soft) { ab *= 0.3; flash *= 0.3; }
     // never more than three flashes a second, however fast the hits come
     if (flash > 0) { if (this.t - this.flashAt < 0.34) flash = 0; else this.flashAt = this.t; }
@@ -189,31 +176,7 @@ const GFX = {
     h.col = K[0]; h.inner = K[1] * soft; h.outer = K[2] * soft; h.dur = K[3]; h.t = 0;
     return true;
   },
-  // Adaptive quality, aimed at the screen's own refresh rate (60, 90, 120 Hz...).
-  // A ladder of levels trades sharpness, then reflections, for frame rate:
-  //   0-1: last resorts: 30% and 36% resolution, one glow level (half the post passes)
-  //   0-2: metal surfaces drawn with cheaper Lambert twins (see twinOf), and solid
-  //        HUD panels that the browser needn't blend over the 3D (body.lean)
-  //   0-3: low resolution, no reflections, sun rays or decor ("lite"), no FXAA
-  //   4:   lite, FXAA back on
-  //   5-7: everything on, resolution 74% -> 100%
-  //   6-7: plus the lens effects (anamorphic streaks, sun flare; see makePipeline)
-  // Only very weak GPUs ever get below level 5.
-  // Every 40 frames (or half a second, if frames are slow) the average frame time is
-  // compared with the screen's frame interval (measured, since browsers don't report
-  // it). Missing more than a few frames: step down, several levels at once when even
-  // the fastest frames are far too slow, since an uneven mix of short and long frames
-  // reads as judder.
-  // Smooth for a few windows: probe one step up, but not to a level that just
-  // failed (the wait doubles each time a probe fails). A steady 30 fps with no
-  // faster frames is a frame-rate cap (iOS low-power mode), so it's left alone.
-  // Each kind of scene remembers its level, so a light scene isn't stuck blurry
-  // after a heavy one.
-  Q: [{ d: 1, lite: false, aa: true, bloom: 7, fx: true }], // one mode: maximum (the ladder of levels is gone)
-  qi: 0,
   vsync: 1 / 60, // the screen's frame interval, refined as frames come in
-  mem: {},
-  lockQuality() { this.locked = true; this.setQ(this.Q.length - 1, true); },
   // The screen's refresh rate, measured on a dozen blank frames before anything is
   // drawn. watch() can only learn it from fast frames, which a slow GPU never shows,
   // so without this a 120 Hz phone whose first scenes are heavy is taken for a 60 Hz
@@ -242,49 +205,6 @@ const GFX = {
       };
       requestAnimationFrame(tick);
       setTimeout(finish, 600); // a hidden tab gets no frames: don't hold up the title
-    });
-  },
-  setQ(i, force) {
-    i = clamp(i, 0, this.Q.length - 1);
-    if (i === this.qi && !force) return;
-    const was = this.dyn;
-    this.qi = i;
-    if (i < this.Q.length - 1) this.up = 0;
-    this.dyn = this.Q[i].d;
-    this.lite = this.Q[i].lite;
-    document.body.classList.toggle("lean", !!this.Q[i].cheap); // solid HUD panels (see style.css)
-    if (this.dyn !== was || force) this.resize();
-  },
-  // Weakest levels: physically-based (MeshStandard) surfaces swap to plain Lambert
-  // twins with the same colours (shared, so flashes still show) and maps, without
-  // the environment reflections (three r128's Lambert can't read PMREM maps).
-  // Twins are built and compiled while a scene loads (warm), so the swap never
-  // stalls a frame.
-  twinOf(m) {
-    if (m.userData.twin) return m.userData.twin; // (a material can bring its own plain version)
-    const W = this._twins || (this._twins = new WeakMap());
-    let t = W.get(m);
-    if (!t) {
-      t = new THREE.MeshLambertMaterial({
-        map: m.map, emissiveMap: m.emissiveMap, vertexColors: m.vertexColors,
-        transparent: m.transparent, opacity: m.opacity, side: m.side, depthWrite: m.depthWrite, fog: m.fog,
-      });
-      t.color = m.color;
-      t.emissive = m.emissive;
-      t.emissiveIntensity = m.emissiveIntensity;
-      W.set(m, t);
-    }
-    return t;
-  },
-  cheapen(scene, on) {
-    scene.traverse((o) => {
-      const m = o.material;
-      if (on) {
-        if (m && !Array.isArray(m) && m.isMeshStandardMaterial) { o.userData.fullMat = m; o.material = this.twinOf(m); }
-      } else if (o.userData.fullMat) {
-        o.material = o.userData.fullMat;
-        o.userData.fullMat = null;
-      }
     });
   },
   // One environment-map generator for the whole session. Making one per scene and
@@ -327,13 +247,10 @@ const GFX = {
         type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
       });
     }
-    const mask = s.camera.layers.mask;
-    s.camera.layers.mask = mask | 60; // decor too
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
     } catch (e) { /* best effort */ }
-    s.camera.layers.mask = mask;
     r.setRenderTarget(null);
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));
@@ -344,8 +261,6 @@ const GFX = {
     this.rip.t = this.rip.dur;
     this.gl.t = this.gl.dur;
   },
-  loadMem() {}, saveMem() {},
-  watch() {}, // (nothing adapts: there is one mode)
 };
 
 // The standard refresh rate nearest a frame interval (seconds).
@@ -439,7 +354,6 @@ class Scene3D {
     if (fog) this.scene.fog = new THREE.Fog(fog[0], fog[1], fog[2]);
     this.camera = new THREE.PerspectiveCamera(fov, GFX.w / GFX.h, near, far);
     this.camera.layers.enable(1);
-    this.camera.layers.mask |= 60; // decor layers 2-5 (see decor())
     this.camBase = new THREE.Vector3();
     this.lookAt = new THREE.Vector3(0, 0, -10);
     // pooled shockwave rings (see shockwave()), built with the scene so a hit never
@@ -483,24 +397,6 @@ class Scene3D {
   }
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, REDUCED_MOTION || GFX.calm ? a * 0.3 : a); }
   // An expanding ring of light that faces the camera.
-  // Purely decorative pieces (dust, light cones and shafts, trails...) that weak
-  // quality levels stop drawing. They move to their own layers, which the camera
-  // drops at those levels, so nothing recompiles and a scene's own show/hide logic
-  // is untouched. Lights are never moved.
-  //   decor(...)        layers 2 (reflected) / 3: hidden in lite mode
-  //   decorCheap(...)   layers 4 (reflected) / 5: hidden only at the two weakest levels
-  decor(...objs) { this.toLayers(objs, 4, 8); }
-  decorCheap(...objs) { this.toLayers(objs, 16, 32); }
-  toLayers(objs, refl, flat) {
-    for (const obj of objs) {
-      if (!obj) continue;
-      obj.traverse((o) => {
-        if (o.isLight) return;
-        const m = o.layers.mask;
-        o.layers.mask = (m & 1 ? refl : 0) | (m & 2 ? flat : 0) | (m & ~3);
-      });
-    }
-  }
   shockwave(pos, color, size = 5, dur = 0.55) {
     if (!this.has3D) return;
     const ring = this.shockRings[this.shockI++ % this.shockRings.length];
@@ -793,7 +689,6 @@ class Bursts {
   }
   burst(pos, color, { n = 60, speed = 10, size = 0.3, life = 1.1, gravity = -5, spread = 1 } = {}) {
     if (!this.scene) return;
-    if (GFX.ok && GFX.Q[GFX.qi].cheap) n = Math.ceil(n / 2); // weakest levels: half the overdraw
     const c = this._c.set(color).multiplyScalar(2.6);
     const P = this.pos, V = this.vel, C = this.col;
     for (let k = 0; k < n; k++) {

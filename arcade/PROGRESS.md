@@ -1718,3 +1718,105 @@ Also in this round, after the eight points:
 - Risk Blaster's eclipse was first built at four times the demon's size (the
   model is one unit across, not four), which only fogged the picture; it now
   runs just outside the wing tips.
+
+## Round M: renames, dead code out, a fresh review of every screen
+
+The owner's instructions for this round: raise every screen to 4.5, lowest
+first; a separate reviewer for every screen; rename PERIL PRIME and PROBATRON
+and anything else that sounds like a franchise; delete the unused weak-device
+code; re-run the regression; update this file and the pull request.
+
+Checkpoint log (newest last):
+
+- M1 names. PERIL PRIME is now PERILMONGER and PROBATRON is now PROBATE
+  TOLLGATE (data, dialogue, comments). The final boss's own lines still said
+  THE EXAMINATOR although it was renamed THE PROCTOR two rounds ago: fixed.
+  Four lines of boss dialogue echoed well-known film and television lines and
+  were reworded ("Kneel before", "does not compute", "live long and", "good,
+  good"). The streak levels were HEATING UP, ON FIRE and UNSTOPPABLE (the first
+  two are a basketball arcade game's announcer); they are now COMPOUNDING, BULL
+  RUN and BLUE CHIP, and the ten-in-a-row trophy takes the last name. The line
+  after a coin goes in was PLAYER 1 READY (a novel and film title backwards);
+  it is GET READY!. The sixteen made-up titles on the hub's background
+  cabinets were replaced with ones a web search found no game for (several of
+  the old ones were real games: Voidrunner, Star Fury's ships, Turbo, Hyper
+  Ball in a monster-catching series). A separate agent searched every name in
+  the game; its table is under "Name audit" below.
+- M2 dead code. The quality ladder went two rounds ago but its branches stayed:
+  plain "twin" materials and light meshes for weak devices, `cheap` and `lite`
+  switches that were always off, layers that existed so weak levels could drop
+  decoration. All of it is gone: from the three model files (fighter, exam
+  boss, demon: a simplified hull, three unlit materials, the code that built
+  and swapped them), the shared model helper, the graphics core (twinOf,
+  cheapen, setQ, the ladder's notes, the decor layers), every scene's `cheap`
+  and `lite` branches, the weak-device HUD styles, and forty-seven decor tags.
+  What the one mode draws is unchanged. Reduced effects, the system
+  reduced-motion setting, the three-flashes-a-second cap and the Setup switches
+  are untouched. The saved settings object still carries three old keys
+  (`pixel`, `gfx2`, `quality`) that nothing reads: left alone, because saved
+  progress and sync must not change shape. Build: 21 KB smaller.
+- M3 reviews, first three screens (lowest first). Each reviewer was a fresh
+  agent that had not seen the work, given a contact sheet and full-size frames
+  and a stated scale (5 ship as is, 4.5 one or two nits, 4 good with visible
+  weaknesses, 3 competent but plain). Scores in the order detail, lighting,
+  materials, depth, motion, cohesion, legibility:
+
+  | Screen | Scores | Average |
+  |---|---|---|
+  | Strategy Guide | 3.5, 3.5, 3, 3.5, 3.5, 3.5, 4 | 3.5 |
+  | Memory Bank | 3.5, 3, 3, 3.5, 3, 3.5, 4 | 3.4 |
+  | Boss Rush | 4, 3.5, 3.5, 4, 3, 4, 4 | 3.7 |
+
+  Each listed twelve weaknesses. What was done:
+
+  **Memory Bank** (pass 6). The reviewer's first point: "not a vault": only
+  slivers of the door showed above and below the card. The vault now stands
+  whole in a window over the card (door, handwheel, bolts, the lamps' arc, the
+  gold at its foot); the card keeps its full height first and the window takes
+  the rest. One lamp per card runs over the door, countable unlit, bright when
+  banked, red for a moment on a miss. Every card banked drops a gold bar onto
+  the heap as its coin goes into the slot. Dial numerals only on the upper arc
+  (below, they hung upside down). Floor mirror quieter, no smeared highlights.
+  Bars are larger with a tone for each face. Card header is one line (the
+  topic) with the card's state on a chip; hints say what a phone can do; the
+  swipe hint shows for the first three cards only; grade buttons are 54 px
+  tall; the thin progress bar is gone (lamps and BANKED say it). The gear
+  trains run in straight lines like a clock's, not round the door (two
+  reviewers said a door ringed with gear teeth leans toward a game series).
+  Found on the way: on a 360-pixel-wide phone the back of a card was wider
+  than the card (a one-line hint forced it) and the answer's text was cut off
+  at the right. Fixed; checked at 360 and 320 wide.
+
+  **Boss Rush** (pass 6). The attack bar is a labelled row, taller, ramping
+  yellow to red; in its last quarter the bar and the question's frame pulse
+  slowly. The wind-up is a pose: arms higher and wider, chest in, the boss
+  grows and leans toward the lens, the floor's ring runs hot. An attack is a
+  lunge at the lens. A lost heart flares and breaks. ENRAGED is a tag on the
+  name plate with the bar edged red. A hit lights the boss, not the strip. The
+  defeat is seen coming apart, with debris still falling when the banner comes.
+  The entrance banner sits low on its own band and reads STAND BY, <name>
+  ENTERS (it was WARNING, BOSS APPROACHING, a shoot-'em-up's line); the boss
+  drops from just above the strip, not from behind the HUD. More fill light on
+  black plate, less key and floor light on pale parts, a bigger contact
+  shadow, the boss a little smaller in the strip. The crowd is a third darker.
+  PRODUCT PUSHER wears a slate-blue suit with lit lapels and carries a tan
+  case half as big again. THE PROCTOR's cap has gold edges and a gold tassel.
+  The speech bubble is a dark plate in the boss's colour. The explanation's
+  verdict has its first word on its own line, larger; the page reference
+  reads; NEXT is a full-width button; the focus ring is the arcade's yellow.
+  Answers wrap without orphans and sit on a shade; the screen's foot has 14 px
+  of margin.
+
+  **Strategy Guide** (pass 6). The archive shows only in its window; the rest
+  is solid ground (it glowed through the list and drifted under the text).
+  The window has a bezel, a glint and a tab for its label. The rose window is
+  jewel glass in dark leads (a gold eye, eight leaves, an amber band, sixteen
+  round-headed lights) in a rim of cut stone; the near lanterns are amber
+  flames in cages; the shafts of light are fainter. Chapter rows carry the
+  clients' portraits and each world its banner, as on the stage lists. A
+  chapter's page opens on a short eyebrow, three chips of figures, one filled
+  action and two outlined; headings are larger than their text, in capitals,
+  over a rule; the term that opens a line stands out; a numbered run sits one
+  item to a line (same words, same order). While searching the window folds
+  away entirely. Small type is larger. Not done: the book's own page notation
+  ("6•3") stays as the book prints it.

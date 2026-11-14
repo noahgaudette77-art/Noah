@@ -157,29 +157,3 @@ const NEON_GLSL = `
   vec3 neonRim(vec3 n, vec3 v, float power){ float f = pow(1.0 - clamp(abs(dot(n, v)), 0.0, 1.0), power); return mix(vec3(1.5, 0.12, 0.95), vec3(0.1, 1.05, 1.5), smoothstep(-0.35, 0.35, n.x)) * f; }
 `;
 
-// The same look without the lighting, for the weakest quality levels: the texture's light and
-// shade as gunmetal, its old paint as a dim neon, and whatever colour the model keeps for itself
-// (keep: 1 leaves what is greener than it is red alone).
-function neonLowMaterial(map, o = {}) {
-  return new THREE.ShaderMaterial({
-    side: o.side === undefined ? THREE.FrontSide : o.side,
-    uniforms: Object.assign(fogUniforms(), {
-      map: { value: map }, uTint: o.tint || { value: new THREE.Color(1, 1, 1) }, uAccent: { value: new THREE.Color(o.accent === undefined ? 0x35efff : o.accent) },
-      uKeep: { value: o.keep || 0 }, uPaint: { value: o.paint === undefined ? 1 : o.paint }, uBone: { value: o.bone ? 1 : 0 }, uRimK: { value: o.rim === undefined ? 0.5 : o.rim },
-    }),
-    vertexShader: "varying vec2 vUv; varying float vDepth; varying float vRim; varying float vNx; varying float vLit; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; vec3 n = normalize(normalMatrix * normal); vRim = 1.0 - abs(n.z); vNx = n.x; vLit = 0.62 + 0.38 * n.y; gl_Position = projectionMatrix * mv; }",
-    fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D map; uniform vec3 uTint; uniform vec3 uAccent; uniform float uKeep; uniform float uPaint; uniform float uBone; uniform float uRimK; varying vec2 vUv; varying float vDepth; varying float vRim; varying float vNx; varying float vLit;
-      void main(){
-        vec3 t = texture2D(map, vUv).rgb; t *= t; // (near enough to linear)
-        float l = dot(t, vec3(0.3, 0.59, 0.11)), mx = max(t.r, max(t.g, t.b)), mn = min(t.r, min(t.g, t.b));
-        float paint = uPaint * smoothstep(0.3, 0.6, (mx - mn) / (mx + 0.02));
-        float keep = uKeep * smoothstep(1.02, 1.2, t.g / (t.r + 0.02));
-        vec3 c = mix(vec3(0.014, 0.016, 0.024), vec3(0.17, 0.185, 0.24), l) * vLit; // (dark metal, lit from above)
-        c = mix(c, uAccent * (0.2 + 0.6 * l), paint * (1.0 - keep));
-        c = mix(c, t * 1.3, keep);
-        c = mix(c, mix(vec3(0.03, 0.03, 0.04), vec3(0.6, 0.58, 0.56), l) * vLit, uBone); // (pale, where it is bone)
-        c += mix(vec3(1.0, 0.12, 0.7), vec3(0.1, 0.8, 1.1), smoothstep(-0.35, 0.35, vNx)) * (vRim * vRim * uRimK);
-        gl_FragColor = vec4(mix(c * uTint, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
-      }`,
-  });
-}

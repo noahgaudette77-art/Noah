@@ -191,7 +191,7 @@ class ExamPuffs {
     g.setAttribute("aQ", this.aQ);
     g.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uGlow: { value: 0 }, uDetail: { value: 1 } },
+      uniforms: { uTime: { value: 0 }, uGlow: { value: 0 } },
       transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
       vertexShader: `attribute vec4 aP; attribute vec4 aQ; varying vec2 vUv; varying vec4 vQ;
         void main(){
@@ -201,14 +201,14 @@ class ExamPuffs {
           mv.xy += vec2(c * position.x - s * position.y, s * position.x + c * position.y) * aP.w;
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: `uniform float uTime; uniform float uGlow; uniform float uDetail; varying vec2 vUv; varying vec4 vQ;
+      fragmentShader: `uniform float uTime; uniform float uGlow; varying vec2 vUv; varying vec4 vQ;
         float pH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float pN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(pH(i), pH(i + vec2(1.0, 0.0)), f.x), mix(pH(i + vec2(0.0, 1.0)), pH(i + vec2(1.0, 1.0)), f.x), f.y); }
         void main(){
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), age = vQ.x;
           vec2 q = p * 1.7 + vQ.y * 31.0 + vec2(0.0, -uTime * 0.5 - age * 0.8);
           float n = pN(q) * 0.62 + pN(q * 2.1 + 7.3) * 0.38;
-          if (uDetail > 0.5) n = n * 0.82 + pN(q * 4.6 + 1.7) * 0.18;
+          n = n * 0.82 + pN(q * 4.6 + 1.7) * 0.18;
           float shape = smoothstep(1.0, 0.2, r + (n - 0.5) * 0.9);
           vec3 rgb; float a;
           if (vQ.z < 0.5) {
@@ -308,11 +308,6 @@ class ExamBoss {
     this.matOpen = bossSkin(env, THREE.DoubleSide, ARMOUR, this.U);
     this.boneOpen = bossSkin(env, THREE.DoubleSide, BONE, this.U);
     this.matOpen.emissive = this.bone.emissive = this.boneOpen.emissive = this.mat.emissive; // one glow for all four
-    // the same look for the weakest quality levels: unlit gunmetal and pale bone with the two-colour rim
-    this.lowTint = { value: new THREE.Color(1, 1, 1) };
-    [[this.mat, false, THREE.FrontSide], [this.bone, true, THREE.FrontSide], [this.matOpen, false, THREE.DoubleSide], [this.boneOpen, true, THREE.DoubleSide]].forEach(([m, bone, side]) => {
-      m.userData.twin = neonLowMaterial(BossModel.texture(), { bone, side, tint: this.lowTint, paint: 0, rim: bone ? 0.3 : 0.75 });
-    });
     this.heatCol = new THREE.Color(1.0, 0.36, 0.08);
     this.J = {};
     this.joints = BOSS_RIG.map(([name, parent, pivot, ids]) => {
@@ -537,13 +532,9 @@ class ExamBoss {
     this.mode = passed ? "die" : "rage";
     this.menace = 0;
     this.lightTo = 1;
-    const g = this.g, cheap = GFX.ok && GFX.Q[GFX.qi].cheap;
+    const g = this.g;
     Sound.dread(false);
-    this.joints.forEach((j) => {
-      const open = j.name === "head" ? this.boneOpen : this.matOpen;
-      j.mesh.userData.fullMat = cheap ? open : null;
-      j.mesh.material = cheap ? GFX.twinOf(open) : open;
-    });
+    this.joints.forEach((j) => { j.mesh.material = j.name === "head" ? this.boneOpen : this.matOpen; });
     g.setBand(null);
     g.scene.userData.post.vignette = 1.3; // (the dark that closed in during the exam opens up for the ending)
     g.scene.userData.mirrorOff = false; // (and the floor, out of sight until now, reflects again)
@@ -804,10 +795,6 @@ class ExamBoss {
       }
     }
     this.mat.emissive.copy(this.heatCol).multiplyScalar(this.heat * 0.55);
-    { // (the plain version follows the hall's light, runs red in a rage and hot as it burns)
-      const k = 0.12 + 0.88 * this.lightK, rg = this.mode === "rage" ? 1 : 0;
-      this.lowTint.value.setRGB(k * (1 + 0.6 * rg + 1.6 * this.heat), k * (1 - 0.25 * rg + 0.5 * this.heat), k * (1 - 0.3 * rg));
-    }
     // fire light, falling away
     this.fire *= Math.pow(0.12, dt);
     if (this.mode === "die") {
@@ -817,7 +804,6 @@ class ExamBoss {
     }
     u.uFire.value = this.fire;
     this.puffs.mat.uniforms.uGlow.value = Math.min(1, this.fire);
-    this.puffs.mat.uniforms.uDetail.value = GFX.ok && GFX.Q[GFX.qi].cheap ? 0 : 1;
     // smoke from every joint that has failed
     this.smokeT -= dt;
     if (this.smokeT < 0 && this.smokers.length && !this.blown) {

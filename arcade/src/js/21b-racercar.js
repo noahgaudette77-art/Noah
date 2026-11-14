@@ -40,7 +40,7 @@ const RACER_WHEEL_Y = 0.5;
 // rows of tread blocks, a dished pale rim with five spokes, hub, lug nuts, brake disc.
 function racerWheelGeo() {
   const C = RACER_CAR;
-  const b = new RacerBatch(), f = new RacerBatch(); // f: the fine detail the weakest quality levels leave out
+  const b = new RacerBatch(), f = new RacerBatch(); // f: the fine detail, built as a second mesh
   const toX = racerM(0, 0, 0, 1, 1, 1, 0, 0, -Math.PI / 2); // lathe/cylinder axis y -> x
   const V = (r, x) => new THREE.Vector2(r, x);
   const tyre = new THREE.LatheGeometry([V(0.3, -0.2), V(0.39, -0.235), V(0.45, -0.215), V(0.474, -0.15), V(0.474, 0.15), V(0.45, 0.215), V(0.39, 0.235), V(0.3, 0.2)], 20);
@@ -150,7 +150,7 @@ class RacerCar {
     const cyl = new THREE.CylinderGeometry(1, 1, 1, 8);
     const hex = new THREE.CylinderGeometry(0.022, 0.022, 0.022, 6);
     // Two batches: `paint` is the car's shape; `fine` is the small stuff (bolts,
-    // vents, fittings, flaps) that the weakest quality levels leave out (LOD).
+    // vents, fittings, flaps).
     const paint = new RacerBatch(), fine = new RacerBatch();
     const L = new RacerBatch(["aCh"]); // lights and glowing trim, by channel
     const plateInto = (b) => (w, h, d, x, y, z, color, rx = 0, ry = 0, rz = 0, c = 0.025, all = false) => { const g = racerPlate(w, h, d, c, all); b.add(g, racerM(x, y, z, 1, 1, 1, rx, ry, rz), color); g.dispose(); };
@@ -299,7 +299,6 @@ class RacerCar {
 
     // --- wheels: four copies of one geometry; calipers and disc glow stay put -
     const wheelGeo = racerWheelGeo();
-    const fineParts = [fineMesh];
     const stat = new RacerBatch();
     const hot = new RacerBatch(["aCh"]);
     const ring = new THREE.RingGeometry(0.11, 0.238, 14);
@@ -311,7 +310,6 @@ class RacerCar {
       w.scale.x = sx; // outer face outward
       const wf = new THREE.Mesh(wheelGeo.fine, this.wheelPaint); // treads, ribs, lug nuts
       w.add(wf);
-      fineParts.push(wf);
       steer.add(w);
       wheelBase.add(steer);
       const cal = racerPlate(0.07, 0.1, 0.17, 0.02, true);
@@ -393,8 +391,6 @@ class RacerCar {
       { t: new RacerTrail({ length: 7, width: 0.08, color: 0x5dffb0, intensity: 1.2 }), p: new THREE.Vector3(1.02, 0.22, 0.75), step: 0.2 },
     ];
     this.trails.forEach((tr) => game.scene.add(tr.t.mesh));
-    game.decor(...this.trails.map((tr) => tr.t.mesh), this.spray, this.beams);
-    game.decorCheap(...fineParts);
 
     // spring state (look only)
     this.heave = { x: 0, v: 0 };
@@ -530,7 +526,7 @@ class RacerCar {
       g.bursts.burst(p.clone(), spinning ? COLORS.orange : 0xbfe8ff, { n: 5, speed: spinning ? 6 : 4, size: 0.13, life: 0.38, gravity: -12 });
     }
     // exhaust heat bends the picture behind the pipes
-    if (GFX.opt.shimmer && !GFX.lite && !calmOnly()) {
+    if (GFX.opt.shimmer && !calmOnly()) {
       this.car.updateMatrixWorld(true);
       GFX.heatAt(g.camera, this.chassis.localToWorld(this.tmp.set(0, 0.42, 2.75)), 0.55, 0.35 + 0.65 * this.heat);
     }

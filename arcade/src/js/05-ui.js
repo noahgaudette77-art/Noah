@@ -93,9 +93,9 @@ const UI = {
       try { fn(); } finally { this.covering = false; this.flash("crt-on"); }
     }));
   },
-  banner(text, color = COLORS.yellow, sub = "") {
+  banner(text, color = COLORS.yellow, sub = "", cls = "") {
     Sound.say(text);
-    const b = this.el(`<div class="banner" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
+    const b = this.el(`<div class="banner${cls ? " " + cls : ""}" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
     setTimeout(() => b.remove(), 1400);
   },
@@ -215,12 +215,12 @@ class QuizPanel {
     const r = this.round, q = r.q;
     const c = color || (ok ? COLORS.lime : COLORS.red);
     const el = UI.el(`<div class="sheet" style="--c:${c}" role="dialog" aria-label="Explanation">
-      <div class="verdict">${esc(title)}</div>
+      <div class="verdict">${/^[^!]{2,12}! ./.test(title) ? `<span class="v1">${esc(title.slice(0, title.indexOf("! ") + 1))}</span> <span class="v2">${esc(title.slice(title.indexOf("! ") + 2))}</span>` : esc(title)}</div>
       ${ok ? "" : `<div class="answer"><b>ANSWER ${r.labels[r.correct]} ·</b> ${esc(r.correctText)}</div>`}
       <div class="explain selectable">${esc(q.explain)}</div>
-      <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="sheet-foot">
         <span class="ref">BOOK P. ${esc(q.page || "")} · ${esc(q.topic || "")}</span>
-        <button class="btn small" data-act="next" style="--c:${c}">${esc(nextLabel)} ${icon("play")}</button>
+        <button class="btn" data-act="next" style="--c:${c}">${esc(nextLabel)} ${icon("play")}</button>
       </div>
       ${auto ? `<div class="autobar"><i></i></div>` : ""}</div>`);
     this.el.appendChild(el);
@@ -313,7 +313,7 @@ function pauseMenu(game) {
 }
 
 // Three taps on the title show or hide the frame-rate readout (frames a second, the slowest frame, triangles, draw
-// calls, the quality level, the size of the picture) for this visit. Nothing is saved: the switch in Settings is.
+// calls, the size of the picture) for this visit. Nothing is saved: the switch in Settings is.
 const Perf = {
   taps: [],
   tap() {

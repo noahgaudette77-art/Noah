@@ -23,65 +23,13 @@ const FTR = {
 // a point on the model, in the rig's units: scaled, centred, and turned to fly down the tunnel (-z)
 const ftrP = (p, out) => (out || new THREE.Vector3()).set(-p[0] * FTR_S, (p[1] - FTR_Y) * FTR_S, -p[2] * FTR_S);
 
-// The same ship for the weakest quality levels, where it is a hundred pixels across:
-// only its larger parts (no canopy frame, no fittings), every vertex moved to the middle
-// of the small cell it falls in, and the triangles that survive that. A fifth of the
-// triangles; each UV island keeps its own vertices, so the paint stays where it was.
-function fighterLow(parts) {
-  const G = 0.03 * FTR_S, cells = new Map(), verts = new Map(), P = [], N = [], T = [], I = [];
-  const big = parts.filter((p) => p.id !== FTR.GLASS && p.id !== FTR.CAGE && p.diag >= 0.12 * FTR_S);
-  big.forEach((p) => {
-    p.keys = [];
-    for (let i = 0; i < p.pos.length / 3; i++) {
-      const k = Math.floor(p.pos[i * 3] / G) + "," + Math.floor(p.pos[i * 3 + 1] / G) + "," + Math.floor(p.pos[i * 3 + 2] / G);
-      let c = cells.get(k);
-      if (!c) cells.set(k, (c = [0, 0, 0, 0]));
-      c[0] += p.pos[i * 3]; c[1] += p.pos[i * 3 + 1]; c[2] += p.pos[i * 3 + 2]; c[3]++;
-      p.keys.push(k);
-    }
-  });
-  let islands = 0;
-  big.forEach((p) => {
-    const n = p.pos.length / 3, par = new Int32Array(n);
-    for (let i = 0; i < n; i++) par[i] = i;
-    const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
-    for (let t = 0; t < p.ix.length; t += 3) { const a = find(p.ix[t]); par[find(p.ix[t + 1])] = a; par[find(p.ix[t + 2])] = a; }
-    const vert = (i) => {
-      const k = p.keys[i] + "|" + (islands + find(i));
-      let o = verts.get(k);
-      if (o === undefined) {
-        const c = cells.get(p.keys[i]);
-        o = P.length / 3;
-        verts.set(k, o);
-        P.push(c[0] / c[3], c[1] / c[3], c[2] / c[3]); N.push(0, 0, 0); T.push(p.uv[i * 2], p.uv[i * 2 + 1]);
-      }
-      N[o * 3] += p.nor[i * 3]; N[o * 3 + 1] += p.nor[i * 3 + 1]; N[o * 3 + 2] += p.nor[i * 3 + 2];
-      return o;
-    };
-    for (let t = 0; t < p.ix.length; t += 3) {
-      const a = p.ix[t], b = p.ix[t + 1], c = p.ix[t + 2];
-      if (p.keys[a] !== p.keys[b] && p.keys[b] !== p.keys[c] && p.keys[a] !== p.keys[c]) I.push(vert(a), vert(b), vert(c));
-    }
-    islands += n;
-  });
-  for (let i = 0; i < N.length; i += 3) { const l = Math.hypot(N[i], N[i + 1], N[i + 2]) || 1; N[i] /= l; N[i + 1] /= l; N[i + 2] /= l; }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
-  g.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
-  g.setAttribute("uv", new THREE.Float32BufferAttribute(T, 2));
-  g.setIndex(I);
-  g.computeBoundingSphere();
-  return g;
-}
-
 const FighterModel = {
   _geo: null, _tex: null,
   ok() { return !!(window.THREE && window.INR_ASSETS && window.INR_ASSETS.fighter); },
-  // Three geometries in the rig's units. hull: every part but the glass, as one mesh. The
+  // Two geometries in the rig's units. hull: every part but the glass, as one mesh. The
   // big parts are cut into fragments; no vertex is shared between two fragments, and
   // each carries its fragment's centre (aC) and four random numbers (aK), so the
   // vertex shader can throw the ship apart when it is destroyed. glass: the canopy.
-  // low: the hull again, far lighter (see fighterLow).
   geometry() {
     if (this._geo) return this._geo;
     const S = FTR_S, P = [], N = [], T = [], C = [], K = [], I = [];
@@ -89,13 +37,11 @@ const FighterModel = {
     const r = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
     const parts = inrModelParts(window.INR_ASSETS.fighter.mesh);
     parts.forEach((p) => {
-      const n = p.pos.length / 3, tris = p.ix.length / 3, lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+      const n = p.pos.length / 3, tris = p.ix.length / 3;
       for (let i = 0; i < n; i++) { // into the rig's units, nose to -z
         p.pos[i * 3] *= -S; p.pos[i * 3 + 1] = (p.pos[i * 3 + 1] - FTR_Y) * S; p.pos[i * 3 + 2] *= -S;
         p.nor[i * 3] *= -1; p.nor[i * 3 + 2] *= -1;
-        for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p.pos[i * 3 + k]); hi[k] = Math.max(hi[k], p.pos[i * 3 + k]); }
       }
-      p.diag = Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
       if (p.id === FTR.GLASS) {
         glass = new THREE.BufferGeometry();
         glass.setAttribute("position", new THREE.BufferAttribute(p.pos, 3));
@@ -137,7 +83,7 @@ const FighterModel = {
     hull.setIndex(P.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(I, 1) : new THREE.Uint16BufferAttribute(I, 1));
     hull.computeBoundingSphere();
     if (glass) glass.computeBoundingSphere();
-    return (this._geo = { hull, glass, low: fighterLow(parts) });
+    return (this._geo = { hull, glass });
   },
   texture() { return this._tex || (this._tex = inrModelTexture(window.INR_ASSETS.fighter.albedo)); },
   // decode ahead of time, so opening the game never waits on it
@@ -256,17 +202,12 @@ class BlasterFighter {
     };
     this.seamCold = new THREE.Color(0.15, 0.95, 1.25); this.seamHot = new THREE.Color(0.75, 1.25, 1.7);
     this.hullMat = fighterSkin(env, THREE.FrontSide, this.U);
-    // (its plain version for the weakest quality levels: the same dark metal, strips of light and rim, unlit)
-    this.lowTint = { value: new THREE.Color(1, 1, 1) };
-    this.hullMat.userData.twin = neonLowMaterial(FighterModel.texture(), { accent: 0x35efff, rim: 0.7, tint: this.lowTint });
     this.hullOpen = fighterSkin(env, THREE.DoubleSide, this.U); // for the wreck: its fragments are seen from inside too
     this.hull = new THREE.Mesh(geo.hull, this.hullMat);
     rig.add(this.hull);
     const warm = new THREE.Mesh(geo.hull, this.hullOpen); // (never seen: here so the two-sided twin is compiled while the scene loads)
     warm.visible = false;
-    this.hullLow = new THREE.Mesh(geo.low, this.hullMat); // what the weakest quality levels draw in its place
-    this.hullLow.visible = false;
-    rig.add(warm, this.hullLow);
+    rig.add(warm);
 
     // ---- cockpit: a pilot under the glass, a head-up display in front of them ----------
     const b = new RacerBatch(), box = new THREE.BoxGeometry(1, 1, 1), ball = new THREE.SphereGeometry(1, 10, 8);
@@ -306,7 +247,6 @@ class BlasterFighter {
     this.glass = new THREE.Mesh(geo.glass || new THREE.BufferGeometry(), this.glassMat);
     this.glass.renderOrder = 4;
     rig.add(this.pilot, this.hud, this.glass);
-    g.decorCheap(this.pilot, this.hud);
 
     // ---- engines: a white-hot disc in each nozzle, a flame with shock diamonds behind it ----
     this.FU = {
@@ -448,9 +388,9 @@ class BlasterFighter {
     rig.add(this.beacon);
     this.tips = [ftrP(FTR.tips[1]), ftrP(FTR.tips[0])];
     this.contrails = this.tips.map(() => new Trail({ length: 18, width: 0.03, color: 0xbfe8ff, intensity: 0.7 }));
-    this.contrails.forEach((t) => { g.scene.add(t.mesh); g.decor(t.mesh); });
+    this.contrails.forEach((t) => { g.scene.add(t.mesh); });
     this.puffs = new ExamPuffs(g.scene, 40); // smoke when it is hurt, fire when it goes
-    this.extras = [this.hullLow, this.glass, this.pilot, this.hud, this.cores, this.flames, this.bow, this.shield, this.beacon, ...this.engineGlows, ...this.podGlows, ...this.wingLights];
+    this.extras = [this.glass, this.pilot, this.hud, this.cores, this.flames, this.bow, this.shield, this.beacon, ...this.engineGlows, ...this.podGlows, ...this.wingLights];
 
     this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
     this.inT = REDUCED_MOTION ? 1 : 0; this.launched = false; this.hold = 0; // the fly-in
@@ -506,7 +446,7 @@ class BlasterFighter {
     const g = this.g, k = g.shipScale;
     this.contrails.forEach((t) => { t.mesh.visible = false; });
     this.extras.forEach((o) => { o.visible = false; });
-    if (REDUCED_MOTION || this.inT < 1 || this.hull.material !== this.hullMat) { this.ship.visible = false; return; } // (still: it is simply gone, as is the plain version the weakest quality levels draw)
+    if (REDUCED_MOTION || this.inT < 1 || this.hull.material !== this.hullMat) { this.ship.visible = false; return; } // (still: it is simply gone)
     this.boom = 0;
     this.cook = 0.45;
     this.hull.material = this.hullOpen;
@@ -518,9 +458,8 @@ class BlasterFighter {
   }
   update(dt, sp, w) {
     const g = this.g, t = g.t, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, h = Math.min(dt, 0.05), U = this.U, FU = this.FU;
-    const cheap = GFX.ok && GFX.Q[GFX.qi].cheap, k = g.shipScale;
+    const k = g.shipScale;
     this.puffs.update(dt, g.camera, t);
-    this.puffs.mat.uniforms.uDetail.value = cheap ? 0 : 1;
     if (this.boom >= 0) { // it is gone: only the wreck moves
       this.boom += dt;
       U.uBoom.value = this.boom;
@@ -534,11 +473,10 @@ class BlasterFighter {
         this.puffs.emit(0, p, this._w.set(rand(-1, 1), rand(0, 1.5), 1.5), 0.8 * k, 2.2 * k, 0.9, 0.5);
         g.bursts.burst(p, COLORS.orange, { n: 34, speed: 9 * k, size: 0.2 * k, life: 0.7 });
       }
-      if (this.boom > 2.6 || this.hull.material !== this.hullOpen) this.hull.visible = false; // (a quality drop swaps in a plain material that can't move the fragments)
+      if (this.boom > 2.6) this.hull.visible = false;
       return;
     }
-    this.hull.visible = !cheap;
-    this.hullLow.visible = cheap;
+    this.hull.visible = true;
     this.heat += (this.heatTo - this.heat) * Math.min(1, dt * 3);
     const heat = this.heat;
     // the fly-in: from behind and below the camera to its place, rolling level as it arrives
@@ -589,12 +527,11 @@ class BlasterFighter {
     U.uFtrSeam.value.copy(this.seamCold).lerp(this.seamHot, heat);
     U.uFtrRimK.value = 0.62 + 0.2 * heat + 0.25 * lunge; // (edged in light: it stands out from the demon behind it)
     U.uFtrUnder.value.copy(g.waveCol).multiplyScalar(0.09 + 0.1 * heat + 0.2 * Math.min(1, burn));
-    this.lowTint.value.setScalar(1 + 0.25 * heat + 0.3 * lunge);
     // lights: the aerial's beacon (a soft pulse, well under 1 Hz), the head-up display, the canopy
     this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8);
     this.hudMat.uniforms.uTime.value = t;
     this.glassMat.envMapIntensity = 2.2 + 0.5 * Math.sin(t * 0.8);
-    this.bow.visible = w > 0.02 && !cheap && !REDUCED_MOTION;
+    this.bow.visible = w > 0.02 && !REDUCED_MOTION;
     this.bowMat.uniforms.uW.value = w * 0.8;
     this.bowMat.uniforms.uTime.value = t;
     // shield: fades with the shields left, glows with the streak, settles back to blue after a hit
@@ -605,7 +542,6 @@ class BlasterFighter {
     su.uGlow.value = heat * 0.6;
     su.uHit.value = Math.max(0, su.uHit.value - dt * 1.3);
     if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, dt * 4));
-    // (the weakest quality levels only draw the bubble while it flares)
     this.shield.visible = su.uHit.value > 0; // (the lattice only shows when something lands on it: at rest it read as a wire dome across the demon)
     rig.updateMatrixWorld();
     if (inK < 0.5) GFX.heatAt(g.camera, this._v.set(0, 0.3, 2.5).applyMatrix4(rig.matrixWorld), 0.6 * k, 0.4 + 0.6 * Math.max(heat, Math.min(1, burn))); // (not while it is still behind the camera)

@@ -104,9 +104,10 @@ const CY_TORSO = {
   },
   // a sharp suit: narrow waist, lapels, a tie of light
   suit(K, o) {
-    K.add("chest", cyLoft([[-0.4, 0.95, 0.7, 0.2], [0.5, 1.35, 0.85, 0.25], [1.55, 1.7, 0.9, 0.28], [1.82, 1.15, 0.75, 0.25]]), null, CY.ARMOR);
+    K.add("chest", cyLoft([[-0.4, 0.95, 0.7, 0.2], [0.5, 1.35, 0.85, 0.25], [1.55, 1.7, 0.9, 0.28], [1.82, 1.15, 0.75, 0.25]]), null, o.cloth || CY.ARMOR);
     K.sym((sd) => {
-      K.breakaway("chest", 0.95, 1.9, 0.22, sd * 0.72, 0.75, 0.93, CY.PLATE, -0.06, sd * 0.16, sd * -0.2, sd < 0 ? 1 : 2); // lapels
+      K.breakaway("chest", 0.95, 1.9, 0.22, sd * 0.72, 0.75, 0.93, o.cloth ? 0x46558c : CY.PLATE, -0.06, sd * 0.16, sd * -0.2, sd < 0 ? 1 : 2); // lapels
+      if (o.cloth) K.glow("chest", 3, 0.05, 1.7, 0.05, sd * 0.3, 0.8, 1.06, 1.7, -0.06, sd * 0.16, sd * -0.2); // their edges, lit
       K.plate("chest", 0.5, 0.12, 0.3, sd * 0.95, 1.32, 1.02, CY.STEEL, -0.06, sd * 0.16, sd * 0.5, 0.03); // pocket square / pin
       K.vent("chest", sd * 0.8, 1.4, -0.9, 0.6, 0.45, 0, Math.PI, 0);
     });
@@ -219,10 +220,14 @@ const CY_HEAD = {
     }
     // the cap: a square board set corner-forward at a tilt, a button, a cord to one corner, a lit tassel
     K.cyl("head", 0.4, 0.46, 0.16, 0, 3.36, 0, CY.DARK, 0, 0, 0, 8);
-    K.plate("head", 1.5, 0.07, 1.5, 0, 3.48, 0, CY.PLATE, 0.06, Math.PI / 4, 0, 0.02);
-    K.cyl("head", 0.07, 0.07, 0.06, 0, 3.55, 0, CY.STEEL, 0, 0, 0, 8);
+    K.plate("head", 1.62, 0.07, 1.62, 0, 3.48, 0, CY.PLATE, 0.06, Math.PI / 4, 0, 0.02);
+    for (let i = 0; i < 4; i++) { // its four edges, in gold light
+      const a = Math.PI / 4 + (i * Math.PI) / 2;
+      K.glow("head", 3, 1.6, 0.05, 0.05, Math.cos(a) * 0.8, 3.5 - Math.sin(a) * 0.048, Math.sin(a) * 0.8, 1.5, 0, Math.PI / 2 - a, 0, 0xffc93d);
+    }
+    K.cyl("head", 0.09, 0.09, 0.07, 0, 3.56, 0, CY.BONE, 0, 0, 0, 8);
     K.cable("head", [0, 3.56, 0], [1.0, 3.5, 0.06], 0.04, 0.02, 4);
-    K.glow("head", 3, 0.07, 0.34, 0.07, 1.03, 3.3, 0.06, 2.4);
+    K.glow("head", 3, 0.09, 0.4, 0.09, 1.03, 3.28, 0.06, 2.4, 0, 0, 0, 0xffc93d);
   },
   // a pale skull in a steel jaw, wired at the temples
   skull(K) {
@@ -552,10 +557,10 @@ const CY_HAND = {
     K.plate(F, 0.6, 0.45, 0.6, 0, -0.25, 0.05, CY.ARMOR, 0, 0, 0, 0.08);
     K.tube(F, [0, -0.45, 0.1], [0, -0.85, 0.15], 0.035, CY.STEEL, 4);
     K.add(F, new THREE.TorusGeometry(0.2, 0.04, 4, 10, Math.PI), racerM(0, -0.9, 0.15), CY.STEEL);
-    K.plate(F, 1.7, 1.15, 0.42, 0, -1.52, 0.15, CY.PLATE, 0, 0, 0, 0.08);
-    K.sym((q) => { K.plate(F, 0.2, 0.2, 0.46, q * 0.76, -1.05, 0.15, CY.STEEL, 0, 0, 0, 0.04); K.plate(F, 0.2, 0.2, 0.46, q * 0.76, -1.99, 0.15, CY.STEEL, 0, 0, 0, 0.04); });
-    K.glow(F, 3, 0.3, 0.12, 0.05, 0, -1.05, 0.38, 2.6);
-    K.box(F, 1.72, 0.04, 0.44, 0, -1.2, 0.15, CY.DARK);
+    K.plate(F, 2.3, 1.56, 0.52, 0, -1.72, 0.15, 0xc9a877, 0, 0, 0, 0.08); // (tan hide: the one warm thing he carries)
+    K.sym((q) => { K.plate(F, 0.24, 0.24, 0.56, q * 1.04, -1.06, 0.15, CY.STEEL, 0, 0, 0, 0.04); K.plate(F, 0.24, 0.24, 0.56, q * 1.04, -2.38, 0.15, CY.STEEL, 0, 0, 0, 0.04); });
+    K.glow(F, 3, 0.36, 0.14, 0.05, 0, -1.1, 0.43, 2.6);
+    K.box(F, 2.32, 0.05, 0.54, 0, -1.3, 0.15, CY.DARK);
   },
 };
 
@@ -684,8 +689,8 @@ const CY_CORE = {
 // arm: [upper length, forearm length, thickness, style]; rest: [swing, spread, bend]
 const CYBORGS = {
   // PRODUCT PUSHER: a salesman in a suit of plate, briefcase in one hand, the other held out
-  1: { torso: "suit", head: "grin", shoulder: "fin", arm: [2.0, 1.9, 0.36, "tube"], hands: ["kase", "open"], hs: 0.9, base: "jet", core: "none", rest: [-0.1, 0.1, -0.5], restR: [-0.5, 0.12, -1.25], sway: 1.3, breath: 2.2 },
-  // PERIL PRIME: a horned brute, all spikes, claws and hazard stripes
+  1: { torso: "suit", cloth: 0x34416e, head: "grin", shoulder: "fin", arm: [2.0, 1.9, 0.36, "tube"], hands: ["kase", "open"], hs: 0.9, base: "jet", core: "none", rest: [-0.1, 0.1, -0.5], restR: [-0.5, 0.12, -1.25], sway: 1.3, breath: 2.2 },
+  // PERILMONGER: a horned brute, all spikes, claws and hazard stripes
   2: { torso: "hulk", chevrons: true, head: "horned", shoulder: "spike", arm: [2.05, 2.0, 0.5, "piston"], hands: ["claw", "claw"], hs: 1.1, base: "jet", core: "reactor", rest: [0, 0.16, -0.6], twitch: 1.6, breath: 2.6, extra(K) { for (let i = 0; i < 5; i++) K.glow("hips", 3, 0.24, 0.1, 0.05, -0.8 + i * 0.4, -2.52, 0.88, i % 2 ? 0.3 : 2.4, 0, 0, 0.7); } },
   // SOLVENCY SPECTER: a hooded wraith in tattered plate, one eye, an empty vault in its chest
   3: { torso: "robe", ragged: true, folds: 11, head: "cyclops", shoulder: "bone", arm: [2.2, 2.3, 0.3, "bone"], hands: ["open", "open"], hs: 1.15, base: "tail", core: "vault", rest: [-0.25, 0.3, -0.9], sway: 1.5, breath: 1.5, steam: 1.6 },
@@ -703,7 +708,7 @@ const CYBORGS = {
   // UNDUE INFLUENCER: a masked puppeteer, strings hanging from long fingers
   9: { torso: "suit", tie: false, gut: { n: 6, w: 1.3 }, head: "mask", shoulder: "fin", arm: [2.2, 2.2, 0.3, "tube"], hands: ["strings", "strings"], hs: 1.0, base: "jet", core: "rings", rest: [-0.75, 0.42, -0.9], sway: 1.6, breath: 1.9,
     extra(K) { K.sym((sd) => K.plate("hips", 0.9, 2.0, 0.1, sd * 0.75, -3.2, -0.75, CY.PLATE, 0.14, 0, sd * 0.08, 0.04)); } },
-  // PROBATRON: a toll booth on tracks, barrier arm down, shoulder guns, a signal for a head
+  // PROBATE TOLLGATE: a toll booth on tracks, barrier arm down, shoulder guns, a signal for a head
   10: { torso: "cabinet", head: "tri", neck: 2.15, shoulder: "cannon", arm: [1.9, 1.9, 0.46, "piston"], hands: ["barrier", "cannon"], hs: 1.0, base: "treads", core: "slot", rest: [0, 0.14, -0.55], restL: [-0.2, 0.22, -1.2], sway: 0.5, breath: 1.2, twitch: 0.7 },
   // PATRIMONY PHANTOM: split down the middle: half armored, half bone, a cleaver to divide the rest
   11: { torso: "hulk", head: "split", shoulder: ["shield", "bone"], arm: [2.05, 2.0, 0.46, "piston"], armR: [2.2, 2.2, 0.3, "bone"], hands: ["cleaver", "open"], hs: 1.05, base: "tail", core: "none", rest: [0, 0.14, -0.6], restL: [-0.5, 0.25, -1.0], sway: 1.1, breath: 1.8,
@@ -915,7 +920,6 @@ class CyborgRig {
     this.steam.frustumCulled = false;
     this.steam.layers.set(1);
     G.chest.add(this.steam);
-    game.decor(this.steam);
 
     // ---- a shadow on the floor under it (a soft dark disc; the floor mirrors the rest)
     this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.7, depthWrite: false }));
@@ -986,7 +990,7 @@ class CyborgRig {
     this.lunge = Math.max(0, this.lunge - dt * 2.6);
     const lg = Math.sin(Math.min(1, this.lunge) * Math.PI) * this.lunge;
     // ---- attack telegraph: it winds up as the charge fills, and shakes when it is about to fire
-    const tele = smoothstep(0.5, 1, f), brink = smoothstep(0.82, 1, f);
+    const tele = smoothstep(0.42, 1, f), brink = smoothstep(0.82, 1, f);
     // ---- servo twitches: a part snaps a few degrees and settles
     const tw = this.tw;
     tw.t -= dt;
@@ -1000,7 +1004,7 @@ class CyborgRig {
     G.chest.scale.set(1 + 0.012 * br * sw, 1 + 0.018 * br * sw, 1 + 0.04 * br * sw);
     const sag = stage >= 2 && stage < 4 ? 0.1 : 0;
     G.chest.position.y = -0.5 + 0.045 * br * sw - sag - crouch * 0.25 - this.dead * 0.25;
-    G.chest.rotation.x = crouch * 0.4 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.05 - brink * 0.12 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
+    G.chest.rotation.x = crouch * 0.4 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.16 - brink * 0.1 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
     G.chest.rotation.z = (stage >= 2 ? 0.05 : 0) + this.hit * 0.06 + (brink * Math.sin(t * 17) * 0.012) * calm;
     // ---- head: looks about, glares down as it charges, snaps back when hit
     G.head.rotation.y = Math.sin(t * 0.37 * D.sway) * 0.22 * land + Pointer.x * 0.25 + twOf(0) * 1.6;
@@ -1012,8 +1016,8 @@ class CyborgRig {
       const limp = stage >= 2 && sd < 0 && stage < 4 ? 1 : 0; // the left arm fails at half health
       const A = G["arm" + s], F = G["fore" + s];
       const idle = Math.sin(t * 0.6 * D.sway + sd) * 0.05 + br * 0.02;
-      A.rotation.x = lerp(r[0] + idle - tele * 0.55 * (1 - limp) - lg * 0.9 + this.hit * 0.5 + crouch * -0.5 + twOf(i), 0.12, limp * 0.8) + Math.min(1, this.dead) * (0.3 - r[0]);
-      A.rotation.z = sd * (r[1] + tele * 0.3 + rage * 0.14 + this.hit * 0.35 - crouch * 0.3 + br * 0.015);
+      A.rotation.x = lerp(r[0] + idle - tele * 0.95 * (1 - limp) - lg * 0.9 + this.hit * 0.5 + crouch * -0.5 + twOf(i), 0.12, limp * 0.8) + Math.min(1, this.dead) * (0.3 - r[0]);
+      A.rotation.z = sd * (r[1] + tele * 0.46 + rage * 0.14 + this.hit * 0.35 - crouch * 0.3 + br * 0.015);
       F.rotation.x = lerp(r[2] - tele * 0.5 + lg * 0.7 - crouch * 0.9 + twOf(i) * 1.4 + this.hit * 0.3, -0.12 + twOf(i) * 2, limp * 0.85) + Math.min(1, this.dead) * (-0.1 - r[2]);
     }
     G.base.rotation.z = Math.sin(t * 0.8 * D.sway) * 0.07;

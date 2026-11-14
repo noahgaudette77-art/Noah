@@ -88,44 +88,17 @@ function demonOcclusion(parts) {
   };
 }
 
-// A far lighter copy of a joint's mesh for the weakest quality levels: vertices that fall in the same small cell of
-// space (and are made of the same thing) become one, and triangles that collapse are dropped.
-function demonLowGeo(P, N, T, R, Z, I, cell) {
-  const map = new Map(), n = P.length / 3, remap = new Int32Array(n), oP = [], oN = [], oT = [], oR = [], oZ = [], oI = [];
-  for (let i = 0; i < n; i++) {
-    const key = Math.round(R[i * 3] / cell) + "," + Math.round(R[i * 3 + 1] / cell) + "," + Math.round(R[i * 3 + 2] / cell) + "," + Z[i * 4];
-    let at = map.get(key);
-    if (at === undefined) {
-      at = oP.length / 3;
-      map.set(key, at);
-      oP.push(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); oN.push(0, 0, 0); oT.push(T[i * 2], T[i * 2 + 1]); oR.push(R[i * 3], R[i * 3 + 1], R[i * 3 + 2]); oZ.push(Z[i * 4], Z[i * 4 + 1], Z[i * 4 + 2], Z[i * 4 + 3]);
-    }
-    oN[at * 3] += N[i * 3]; oN[at * 3 + 1] += N[i * 3 + 1]; oN[at * 3 + 2] += N[i * 3 + 2];
-    remap[i] = at;
-  }
-  for (let t = 0; t < I.length; t += 3) { const a = remap[I[t]], b = remap[I[t + 1]], c = remap[I[t + 2]]; if (a !== b && b !== c && a !== c) oI.push(a, b, c); }
-  for (let i = 0; i < oN.length; i += 3) { const l = Math.hypot(oN[i], oN[i + 1], oN[i + 2]) || 1; oN[i] /= l; oN[i + 1] /= l; oN[i + 2] /= l; }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(oP, 3));
-  g.setAttribute("normal", new THREE.Float32BufferAttribute(oN, 3));
-  g.setAttribute("uv", new THREE.Float32BufferAttribute(oT, 2));
-  g.setAttribute("aRest", new THREE.Float32BufferAttribute(oR, 3));
-  g.setAttribute("aZ", new THREE.Float32BufferAttribute(oZ, 4));
-  g.setIndex(oI);
-  return g;
-}
-
 const DemonModel = {
   _geo: null, _tex: null,
   ok() { return !!(window.THREE && window.INR_ASSETS && window.INR_ASSETS.demon); },
-  // One mesh for each joint (full), and a far lighter one (low): its parts merged, measured from its pivot. Every vertex also knows where it was on the
+  // One mesh for each joint (full): its parts merged, measured from its pivot. Every vertex also knows where it was on the
   // model at rest (aRest), its part's middle and four random numbers (aC, aK: a part can come away and tumble),
   // and what it is made of, how far along its part it is, when it is shed, and how open it is to the sky (aZ).
   geometry() {
     if (this._geo) return this._geo;
     const parts = inrModelParts(window.INR_ASSETS.demon.mesh), byId = new Map(parts.map((p) => [p.id, p]));
     if (parts.length < 80) throw new Error("demon: parts missing");
-    const zone = {}, drop = {}, listed = new Set(), out = { full: {}, low: {}, lowTris: 0 };
+    const zone = {}, drop = {}, listed = new Set(), out = { full: {} };
     for (const z in DEMON_ZONE) DEMON_ZONE[z].forEach((id) => { zone[id] = +z; });
     DEMON_SHED.forEach((id, i) => { drop[id] = 0.06 + (0.88 * i) / (DEMON_SHED.length - 1); });
     for (const n in DEMON_RIG) DEMON_RIG[n].parts.forEach((id) => listed.add(id));
@@ -292,33 +265,6 @@ function demonSkin(env, U) {
   m.customProgramCacheKey = () => "blaster-demon-2";
   return m;
 }
-// The same demon for the weakest quality levels: unlit obsidian and gunmetal, the two-colour rim, its lights. (No
-// shedding or break-up here: when it is destroyed it simply goes in the blast.)
-function demonLow(U) {
-  return new THREE.ShaderMaterial({
-    side: THREE.DoubleSide,
-    uniforms: Object.assign(fogUniforms(), { map: { value: DemonModel.texture() }, uNeonT: NEON_T }, U),
-    vertexShader: `attribute vec3 aRest; attribute vec4 aZ; varying vec2 vUv; varying vec3 vP; varying vec4 vZ; varying float vDepth; varying float vRim; varying float vNx; varying float vLit;
-      void main(){ vUv = uv; vP = aRest; vZ = aZ; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; vec3 n = normalize(normalMatrix * normal); vRim = 1.0 - abs(n.z); vNx = n.x; vLit = (0.5 + 0.5 * n.y) * mix(0.35, 1.0, aZ.w * aZ.w); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D map; uniform float uDmCrack; uniform float uDmExpose; uniform float uDmHit; uniform float uDmPow; uniform float uDmDim; uniform float uDmRage; uniform float uDmBeat; uniform float uDmMouth; uniform float uDmRimK; uniform vec3 uDmEye;
-      varying vec2 vUv; varying vec3 vP; varying vec4 vZ; varying float vDepth; varying float vRim; varying float vNx; varying float vLit;
-      void main(){
-        vec3 t = texture2D(map, vUv).rgb; t *= t;
-        float l = dot(t, vec3(0.3, 0.59, 0.11)), zone = floor(vZ.x + 0.5), on = uDmPow * uDmDim;
-        vec3 c = zone < 0.5 ? mix(vec3(0.014, 0.016, 0.024), vec3(0.17, 0.185, 0.24), clamp(l * 2.6, 0.0, 1.0)) : vec3(0.014, 0.011, 0.022) + vec3(0.07, 0.05, 0.1) * clamp(l * 1.5, 0.0, 1.0);
-        c *= vLit;
-        c += mix(vec3(1.0, 0.12, 0.7), vec3(0.1, 0.8, 1.1), smoothstep(-0.35, 0.35, vNx)) * (vRim * vRim * (0.4 + 0.5 * uDmRimK));
-        vec3 hot = mix(vec3(1.6, 0.2, 0.9), vec3(2.0, 0.15, 0.25), uDmRage) * on * (0.6 + 0.6 * uDmBeat);
-        if (zone > 2.5 && zone < 5.5) c += hot;
-        else if (zone > 7.5) c += hot * (1.3 + 1.2 * uDmExpose);
-        else if (zone < 0.5) c += vec3(1.7, 0.25, 0.4) * (uDmCrack * smoothstep(0.03, 0.0, abs(fract(vP.x * 19.0 + vP.y * 13.0 + sin(vP.z * 37.0) * 0.35) - 0.5))); // cracks in its armour
-        else if (zone > 1.5 && zone < 2.5) c += hot * pow(vZ.y, 3.0);
-        c += vec3(1.0, 0.9, 1.0) * uDmHit;
-        gl_FragColor = vec4(mix(c, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
-      }`,
-  });
-}
-
 class BlasterDemon {
   constructor(game) {
     const g = (this.g = game), geo = DemonModel.geometry();
@@ -328,10 +274,9 @@ class BlasterDemon {
       uDmEye: { value: new THREE.Color(0, 0, 0) }, uDmRim: { value: new THREE.Color(0, 0, 0) }, uDmCoreCol: { value: new THREE.Color(0, 0, 0) }, uDmHaze: { value: new THREE.Color(0, 0, 0) },
     };
     this.mat = demonSkin(g.shipEnv || g.env, this.U);
-    this.lowMat = this.mat.userData.twin = demonLow(this.U);
     //   root: where it is · tilt: thrown back by a hit, leaning into a strike · pose: its size · then its joints
     const root = (this.root = new THREE.Group()), tilt = (this.tilt = new THREE.Group()), pose = (this.pose = new THREE.Group());
-    this.J = {}; this.full = []; this.low = [];
+    this.J = {}; this.full = [];
     for (const name in DEMON_RIG) {
       const d = DEMON_RIG[name], j = new THREE.Group(), from = d.p ? DEMON_RIG[d.p].at : DEMON.centre, mesh = new THREE.Mesh(geo.full[name], this.mat);
       j.position.set(d.at[0] - from[0], d.at[1] - from[1], d.at[2] - from[2]);
@@ -430,7 +375,7 @@ class BlasterDemon {
   // A right answer: the fighter's fire lands on its core. It whites out, is thrown back, and is a little more broken.
   hit(color) {
     if (!this.alive) return;
-    const g = this.g, U = this.U, k6 = this.S / 6, cheap = GFX.ok && GFX.Q[GFX.qi].cheap, p = this.aimPoint(this._a);
+    const g = this.g, U = this.U, k6 = this.S / 6, p = this.aimPoint(this._a);
     g.blastAt(p, color, 0.42);
     U.uDmHit.value = 1;
     this.kickTo = 1;
@@ -444,7 +389,7 @@ class BlasterDemon {
     this.fall = 0;
     Sound.sfx("demonhit");
     if (this.hits >= 3) {
-      g.shards.burst(p, 0x3a3848, cheap ? 7 : 3, 0.45 * k6, 6 * k6);
+      g.shards.burst(p, 0x3a3848, 3, 0.45 * k6, 6 * k6);
       Sound.sfx("demonshed");
     }
   }
@@ -501,12 +446,11 @@ class BlasterDemon {
   }
   // advance: how much of the question's time has gone (0 to 1), or null between questions
   update(dt, advance) {
-    const g = this.g, t = g.t, U = this.U, J = this.J, cheap = GFX.ok && GFX.Q[GFX.qi].cheap, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
+    const g = this.g, t = g.t, U = this.U, J = this.J, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
     this.S += (this.fitS - this.S) * Math.min(1, dt * 3);
     this.yK += (this.fitY - this.yK) * Math.min(1, dt * 3);
     const S = this.S, k6 = S / 6;
     this.puffs.update(dt, g.camera, t);
-    this.puffs.mat.uniforms.uDetail.value = cheap ? 0 : 1;
     NEON_T.value = t;
     // bolts on their way (they outlive whatever it does next)
     this.bolts.forEach((b) => {
@@ -525,7 +469,6 @@ class BlasterDemon {
     });
     this.aura.visible = false;
     if (!this.root.visible) return;
-    if (this.wasCheap !== cheap) { this.wasCheap = cheap; this.full.forEach((m) => { m.visible = !cheap; }); this.low.forEach((m) => { m.visible = cheap; }); }
 
     // ---- how it is: arriving, raging, hurt, striking, winning, dying (each a smooth weight, 0 to 1)
     const A = this.att;
@@ -640,11 +583,11 @@ class BlasterDemon {
     this.core.material.color.copy(this._c);
     this.maw.material.opacity = Math.min(1, open * 1.6 * this.pow);
     this.claws.forEach((s, i) => { s.material.opacity = Math.min(1, charge * 0.9); s.scale.setScalar(0.12 + 0.16 * charge * (1 + 0.15 * sin(t * 9 + i * 2))); });
-    this.glow.material.opacity = this.pow * (0.05 + 0.1 * rage + 0.08 * tele + 0.14 * gloat) * (cheap ? 0 : 1) + (cheap ? 0 : 0.2 * roar);
+    this.glow.material.opacity = this.pow * (0.05 + 0.1 * rage + 0.08 * tele + 0.14 * gloat) + 0.2 * roar;
     this.glow.material.color.setRGB(0.5, 0.1, 0.75).lerp(this._c2.setRGB(0.9, 0.06, 0.16), U.uDmRage.value);
     // the eclipse behind it: cold and steady, a little of the wave's colour in it; it reddens with its rage and goes out with it
     this.limbU.uTime.value = t;
-    this.limbU.uK.value = cheap || dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
+    this.limbU.uK.value = dying ? 0 : this.pow * (0.72 + 0.1 * sin(t * 0.8) + 0.5 * tele + 0.3 * roar);
     this.limbU.uColor.value.setRGB(0.5, 0.85, 1.0).lerp(g.waveCol, 0.22).lerp(this._c2.setRGB(1.0, 0.3, 0.22), 0.7 * U.uDmRage.value);
     this.heat = Math.max(0.25 * rage, tele, strike * 0.8, dying ? 0.9 : 0, gloat);
     // the aura: the edges of the view glow red. It breathes slowly in a rage, swells as the rage begins, and fills the
@@ -683,7 +626,7 @@ class BlasterDemon {
       if (!quiet) g.shockwave(this.at(DEMON.mouth, this._a).clone(), new THREE.Color(1.3, 0.25, 1.0), 4.2 * k6, 0.8);
     }
     // ---- what comes off it: embers, mist from its wings, sparks from its wounds, arcs between its claws and across its wings
-    if (!cheap && this.inT > 0.5 && !this.blown) {
+    if (this.inT > 0.5 && !this.blown) {
       if ((this.emberT -= dt) <= 0) {
         this.emberT = (quiet ? 0.5 : 0.2) / (1 + 2.6 * rage + 2 * roar);
         g.bursts.burst(this.at([rand(-0.3, 0.3), rand(0.1, 0.55), rand(-0.1, 0.15)], this._a), rage > 0.5 || this.lcg() < 0.5 ? 0xff3a5a : 0xd04fff, { n: 1, speed: 0.6 * k6, size: 0.1 * k6, life: 1.5, gravity: 1.6 });
@@ -721,13 +664,12 @@ class BlasterDemon {
         U.uDmBoomHot.value = Math.exp(-b * 2.2);
         U.uDmGone.value = clamp(b / (this.finale ? 2.0 : 1.5), 0, 1);
         [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws).forEach((s) => { s.material.opacity = 0; });
-        // The plain version cannot throw its parts in the shader: there its joints fly apart as chunks, turning and
-        // shrinking away. (In the last stand the full version's joints are thrown too, on top of its parts.)
-        if (cheap || this.finale) {
-          const go = (1 - Math.exp(-b * 1.8)) * (cheap ? 0.3 : 0.12) * (this.finale ? 1.5 : 1), shrink = cheap ? Math.max(0.001, 1 - smoothstep(0.6, 1.35, b)) : 1;
+        // In the last stand its joints are thrown as well, on top of the parts the shader throws.
+        if (this.finale) {
+          const go = (1 - Math.exp(-b * 1.8)) * 0.18;
           for (const n in J) {
             const j = J[n], u = j.userData;
-            if (n !== "body") { j.position.copy(u.rest).addScaledVector(u.dir, go); j.rotation.x += u.spin.x * b; j.rotation.y += u.spin.y * b; j.rotation.z += u.spin.z * b; j.scale.setScalar(shrink); } else j.scale.multiplyScalar(shrink);
+            if (n !== "body") { j.position.copy(u.rest).addScaledVector(u.dir, go); j.rotation.x += u.spin.x * b; j.rotation.y += u.spin.y * b; j.rotation.z += u.spin.z * b; j.scale.setScalar(1); }
           }
         }
       }
@@ -738,7 +680,7 @@ class BlasterDemon {
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
-    [this.mat, this.lowMat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
+    [this.mat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));
     this.g.scene.remove(this.aura);
   }

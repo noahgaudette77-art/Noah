@@ -214,13 +214,13 @@ class BlasterSpace {
     this.skyU = {
       uNeb: { value: this.nebTex }, uBase: { value: new THREE.Color() }, uA: { value: new THREE.Color() }, uB: { value: new THREE.Color() }, uC: { value: new THREE.Color() }, uGold: { value: new THREE.Color() },
       uSunDir: { value: this.sunDir }, uSunCol: { value: new THREE.Color() }, uFlash: { value: new THREE.Color(0, 0, 0) }, uNebK: { value: 1 }, uStarK: { value: 1 }, uCalm: { value: 0.5 }, uZoom: { value: 0 },
-      uOff: { value: new THREE.Vector4(0.13, 0.71, 0.58, 0.29) }, uDetail: { value: 1 },
+      uOff: { value: new THREE.Vector4(0.13, 0.71, 0.58, 0.29) },
     };
     this.sky = new THREE.Mesh(new THREE.SphereGeometry(1000, 32, 16), new THREE.ShaderMaterial({
       uniforms: this.skyU, side: THREE.BackSide, depthWrite: false,
       vertexShader: "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform sampler2D uNeb; uniform vec3 uBase; uniform vec3 uA; uniform vec3 uB; uniform vec3 uC; uniform vec3 uGold; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uFlash;
-        uniform float uNebK; uniform float uStarK; uniform float uCalm; uniform float uZoom; uniform float uDetail; uniform vec4 uOff; varying vec3 vDir;
+        uniform float uNebK; uniform float uStarK; uniform float uCalm; uniform float uZoom; uniform vec4 uOff; varying vec3 vDir;
         void main(){
           vec3 d = normalize(vDir);
           vec2 uv = d.xy / (1.0 - min(d.z, 0.5)); // a chart of the sky ahead
@@ -228,13 +228,14 @@ class BlasterSpace {
           w1 *= w1;
           vec4 t = texture2D(uNeb, uv * (2.9 * exp2(-2.0 * f1)) + uOff.xy) * w1 + texture2D(uNeb, uv * (2.9 * exp2(-2.0 * f2)) + uOff.zw) * (1.0 - w1);
           float dens = max(t.r * 1.1 + t.g * 0.55 - 0.78, 0.0);
-          if (uDetail > 0.5) { vec4 fine = texture2D(uNeb, uv * 7.0 + uOff.xw); dens *= 0.62 + 0.8 * fine.g * fine.r + 0.25 * fine.g; }
+          vec4 fine = texture2D(uNeb, uv * 7.0 + uOff.xw);
+          dens *= 0.62 + 0.8 * fine.g * fine.r + 0.25 * fine.g;
           vec3 col = mix(uA, uB, smoothstep(0.3, 0.68, t.b));
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
           float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
           vec3 c = uBase * (0.75 + 0.45 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.72 * uNebK * lane) + mix(uA, uB, t.b) * (0.03 * uNebK * (t.r + t.g));
-          if (uDetail > 0.5) c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
+          c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
           c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
           // darker and quieter round the way ahead, where the enemy and the answers are
@@ -294,7 +295,6 @@ class BlasterSpace {
       : { p: [rand(-46, 46), rand(-40, 40), rand(-330, 12)], k: rand(0.35, 0.9), size: rand(0.5, 1.2), f: 1, range: 342 })), this.starMat);
     this.field.frustumCulled = false;
     s.add(this.field);
-    g.decorCheap(this.field);
 
     // ---- galaxies, very far off
     this.galaxyTex = spaceGalaxyTexture();
@@ -316,7 +316,6 @@ class BlasterSpace {
       sp.renderOrder = 60;
       sp.userData = { k, al };
       s.add(sp);
-      g.decor(sp);
       return sp;
     });
 
@@ -400,7 +399,6 @@ class BlasterSpace {
     this.cloudMesh.frustumCulled = false;
     this.clouds = Array.from({ length: N }, (_, i) => { const c = { p: new THREE.Vector3(), s: 1, rot: 0 }; this.resetCloud(c, i, rand(-600, -60)); return c; });
     s.add(this.cloudMesh);
-    g.decor(this.cloudMesh);
 
     // ---- rocks: a handful of big detailed ones near the ship's path, many small ones filling the distance
     this.rockMat = spaceHullMaterial(this.shared);
@@ -413,8 +411,6 @@ class BlasterSpace {
       this.rocks.push(r);
     }
     s.add(this.rockNear, this.rockFar);
-    g.decor(this.rockNear);
-    g.decorCheap(this.rockFar);
 
     this.buildStation();
     this.buildWrecks();
@@ -520,7 +516,6 @@ class BlasterSpace {
     for (let i = 0; i < 28; i++) seed[i] = Math.floor(i / 2) * 0.0105; // (the blink runs along the lane)
     this.laneMesh.visible = false;
     g.scene.add(this.laneMesh);
-    g.decorCheap(this.laneMesh);
     box.dispose();
   }
   // ---- the graveyard: broken hulls, each a different size and lie, turning slowly; a few emergency lamps still blink
@@ -606,7 +601,7 @@ class BlasterSpace {
 
   update(dt, sp, w) {
     const v0z = this._z || (this._z = new THREE.Vector3(0, 0, 1));
-    const g = this.g, t = g.t, c = this.cur, cheap = GFX.ok && GFX.Q[GFX.qi].cheap, lite = GFX.ok && GFX.Q[GFX.qi].lite, calm = GFX.calm || REDUCED_MOTION;
+    const g = this.g, t = g.t, c = this.cur, calm = GFX.calm || REDUCED_MOTION;
     if (this.blend < 1) { this.blend = Math.min(1, this.blend + dt / this.blendDur); this.apply(this.blend); }
     this.travel += sp * dt;
     this.sp = sp;
@@ -673,7 +668,7 @@ class BlasterSpace {
     // clouds
     const m = this._m, q = this._q, v = this._v, sc = this._s;
     this.cloudMesh.visible = c.clouds > 0.02;
-    if (this.cloudMesh.visible && !lite) {
+    if (this.cloudMesh.visible) {
       this.cloudU.uCA.value.copy(c.cloudA); this.cloudU.uCB.value.copy(c.cloudB); this.cloudU.uK.value = c.clouds * 0.45;
       this.clouds.forEach((cl, i) => {
         cl.p.z += sp * 0.55 * dt;
@@ -688,9 +683,9 @@ class BlasterSpace {
     const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
     this.rockNear.count = nearN; this.rockFar.count = farN;
     this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
-    if (nearN + farN > 0 && !cheap) {
+    if (nearN + farN > 0) {
       this.rocks.forEach((r) => {
-        if (r.i >= (r.near ? nearN : farN) || (r.near && lite)) return;
+        if (r.i >= (r.near ? nearN : farN)) return;
         r.p.z += sp * r.f * dt;
         r.ph += r.w * dt;
         if (r.p.z > 30) this.resetRock(r, -660);

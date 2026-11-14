@@ -244,7 +244,7 @@
     },
     "2": {
       "intro": [
-        "I am PERIL PRIME, the cause of every loss! Fire! Theft! Collision!",
+        "I am the PERILMONGER, the cause of every loss! Fire! Theft! Collision!",
         "And every hazard you ignore makes my odds better! Mwa-ha-ha!"
       ],
       "hit": [
@@ -259,8 +259,8 @@
         "That icy road was a hazard, and you skated right in!",
         "Low frequency, high severity, and all on you!"
       ],
-      "defeat": "Avoided, prevented, reduced, transferred... PERIL PRIME is DOWN!",
-      "win": "Unmanaged risk, total loss! PERIL PRIME strikes again!"
+      "defeat": "Avoided, prevented, reduced, transferred... the PERILMONGER is DOWN!",
+      "win": "Unmanaged risk, total loss! The PERILMONGER strikes again!"
     },
     "3": {
       "intro": [
@@ -357,14 +357,14 @@
         "Forgot the RRSP deadline at 71? I didn't!",
         "Straight-life annuity with a spouse? Perfect!",
         "Your savings will expire long before you do!",
-        "Live long... and run out of money! Mwa-ha-ha!"
+        "A long life... and an empty account! Mwa-ha-ha!"
       ],
       "defeat": "Income for life?! My curse is broken... I crumble to dust!",
       "win": "Your money ran out, but your years didn't! Mwa-ha-ha!"
     },
     "8": {
       "intro": [
-        "Kneel before LORD INTESTATE! No will? Then the law picks your heirs!",
+        "All rise for LORD INTESTATE! No will? Then the law picks your heirs!",
         "Your spouse, your children, your estate... all split by MY rules!"
       ],
       "hit": [
@@ -394,7 +394,7 @@
         "A notary?! I can't push a notary around!"
       ],
       "miss": [
-        "Good, good... now sign right here. Trust me!",
+        "That's it... now sign right here. Trust me!",
         "Your free will? Now it's MY will!",
         "Shh... no need to tell your lawyer about me.",
         "Who needs independent advice? You have ME!"
@@ -404,14 +404,14 @@
     },
     "10": {
       "intro": [
-        "PROBATRON ONLINE. Scanning will... validity UNCONFIRMED. Probate initiated!",
+        "PROBATE TOLLGATE ONLINE. Scanning will... validity UNCONFIRMED. Probate initiated!",
         "BEEP! Assets passing through your will detected. Calculating fees..."
       ],
       "hit": [
         "ERROR! Named beneficiary. Asset bypassed!",
         "SYSTEM FAULT: notarial will. No probate needed!",
         "WARNING: inter vivos gift. Asset already gone!",
-        "DOES NOT COMPUTE! A trust? Fee base shrinking!"
+        "CANNOT PROCESS! A trust? Fee base shrinking!"
       ],
       "miss": [
         "Fee meter rising! Thank you for your estate!",
@@ -420,7 +420,7 @@
         "Joint with a minor? Control LOST! Ha-ha-beep!"
       ],
       "defeat": "Probate... bypassed... Estate... settled... Shutting... down...",
-      "win": "Estate processed. Fees collected. PROBATRON thanks you. BEEP!"
+      "win": "Estate processed. Fees collected. PROBATE TOLLGATE thanks you. BEEP!"
     },
     "11": {
       "intro": [
@@ -444,7 +444,7 @@
     },
     "all": {
       "intro": [
-        "I am THE EXAMINATOR! Eleven chapters. One exam. Zero mercy.",
+        "I am THE PROCTOR! Eleven chapters. One exam. Zero mercy.",
         "Risk, contracts, retirement, wills, family law... prove you know it ALL!"
       ],
       "hit": [
@@ -456,7 +456,7 @@
       "miss": [
         "WRONG! Back to Stage 1 with you!",
         "Ha! Did you even read the scenario?",
-        "Incorrect! The Examinator never forgets!",
+        "Incorrect! The Proctor never forgets!",
         "Was that a guess? I can always tell!"
       ],
       "defeat": "Impossible... You have PASSED! Go forth and plan, champion!",

@@ -8,6 +8,7 @@ const DECK_SIZE = 20;
 // slot at twelve o'clock, chrome bolts across a glowing seam, a steel frame and a wall
 // of safe-deposit boxes. The camera dollies so the dial ring sits just outside the card.
 const MEMORY_DOOR_Y = 8.7;
+const MEMORY_EYE_Y = MEMORY_DOOR_Y - 0.9; // the camera looks a little below the door's centre: the floor and the gold on it are in the window too
 const MEMORY_BOLTS = 12;
 const MEMORY_DIAL_R = 5.5; // inner edge of the dial ring: the card sits inside it
 const MEMORY_SLOT_R = 7.2; // the coin slot, at twelve o'clock
@@ -59,7 +60,7 @@ function memoryDialTexture() {
     const major = i % 10 === 0, mid = i % 5 === 0;
     const w = major ? 6 : mid ? 4 : 3;
     x.fillRect(px - w / 2, 8, w, major ? 50 : mid ? 38 : 24);
-    if (major) x.fillText(String(i), px, 88);
+    if (major && (i <= 20 || i >= 80)) x.fillText(String(i), px, 88);
   }
   x.fillRect(0, 0, 2048, 3);
   const t = new THREE.CanvasTexture(c);
@@ -183,13 +184,20 @@ function memoryWheelGeometry() {
 
 // A gold ingot: a box with its top drawn in, flat-shaded.
 function memoryIngotGeometry() {
-  const g = new THREE.BoxGeometry(1.5, 0.42, 0.72).toNonIndexed();
+  const g = new THREE.BoxGeometry(1.95, 0.56, 0.96).toNonIndexed();
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     if (p.getY(i) > 0) { p.setX(i, p.getX(i) * 0.84); p.setZ(i, p.getZ(i) * 0.7); }
   }
-  g.translate(0, 0.21, 0);
+  g.translate(0, 0.28, 0);
   g.computeVertexNormals();
+  // each face its own tone, as cast gold takes the light: bright on top, deeper on the long sides, darkest on the ends
+  const n = g.attributes.normal, c = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.35 : Math.abs(n.getX(i)) > 0.5 ? 0.46 : 0.7;
+    c[i * 3] = k; c[i * 3 + 1] = k * (0.92 + 0.08 * k); c[i * 3 + 2] = k * (0.78 + 0.22 * k);
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(c, 3));
   return g;
 }
 
@@ -299,8 +307,8 @@ class MemoryGame extends QuizGame {
         <button class="iconbtn" data-act="reverse" aria-pressed="false" title="Swap sides: show the definition first">SWAP</button>
         <button class="iconbtn" data-act="pause" aria-label="Pause">${icon("pause")}</button>
       </div>
-      <span class="meter slide" style="--c:${COLORS.lime}"><i data-prog></i></span>
-      <div class="card-stage"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div><div class="stamp" data-stamp hidden></div></div>
+      <div class="vault-window" aria-hidden="true"><span>THE VAULT</span></div>
+      <div class="card-stage below"><div class="card3d" data-card data-act="flip" role="button" tabindex="0" aria-label="Flip card"></div><div class="stamp" data-stamp hidden></div></div>
       <div class="grade" data-grade></div>
     </section>`);
     this.bindSwipe();
@@ -323,7 +331,7 @@ class MemoryGame extends QuizGame {
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xc98a22, metalness: 0.82, roughness: 0.3, envMap: env, envMapIntensity: 0.7 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf6bd42, vertexColors: true, metalness: 0.84, roughness: 0.26, envMap: env, envMapIntensity: 1.25, emissive: 0x4a2c05 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -411,7 +419,6 @@ class MemoryGame extends QuizGame {
       rivets.setMatrixAt(k, this._m.compose(this._p, this._q.identity(), this._s));
     }
     [guides, rivets].forEach((m) => { m.frustumCulled = false; m.layers.set(1); door.add(m); });
-    this.decor(guides, rivets);
     // the coin slot at twelve o'clock
     const slot = new THREE.Group();
     slot.position.set(0, MEMORY_SLOT_R, 0.3);
@@ -434,48 +441,45 @@ class MemoryGame extends QuizGame {
 
     // polished dark floor: a polar grid radiating from the vault, and its reflection
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.7, base: 0x010504, reflect: 0.72, glow: 0.25, ripple: 0.001, streak: 0.004 });
+    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.6, base: 0x010504, reflect: 0.46, glow: 0.25, ripple: 0.001, streak: 0 });
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     const pool = makeLightPool({ color: 0xffb84d, radius: 11, intensity: 0.12 });
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
-    this.decor(pool);
 
     // stacks of gold bars under spotlights, either side of the door
     const ingot = memoryIngotGeometry();
     this.stacks = [-1, 1].map((sd) => {
-      const st = new THREE.InstancedMesh(ingot, barGold, 19);
-      let n = 0;
-      for (let L = 0; L < 4; L++) {
-        const across = 4 - L, rows = L < 3 ? 2 : 1;
-        for (let i = 0; i < across; i++) {
-          for (let r = 0; r < rows; r++) {
-            this._p.set((i - (across - 1) / 2) * 1.56, L * 0.43, rows === 1 ? 0 : (r - 0.5) * 0.78);
-            this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.04, 0.04));
-            st.setMatrixAt(n++, this._m.compose(this._p, this._q, this._s));
-          }
-        }
-      }
+      // a heap four bars wide: its bottom row is there from the start, and every card banked lays one more bar
+      // on it (row by row, then a second small heap beside it), so what you bank stays in view
+      const st = new THREE.InstancedMesh(ingot, barGold, 14);
+      const rest = [];
+      for (let L = 0; L < 4; L++) for (let i = 0; i < 4 - L; i++) rest.push([(i - (3 - L) / 2) * 2.04, L * 0.57, 0]);
+      rest.push([-sd * 4.9, 0, 0.5], [-sd * 6.94, 0, 0.5], [-sd * 5.92, 0.57, 0.5], [-sd * 5.9, 0, 1.6]);
+      st.userData.rest = rest.map(([x, y, z]) => ({ p: new THREE.Vector3(x, y, z), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)) }));
+      st.userData.rest.forEach((r, i) => st.setMatrixAt(i, this._m.compose(r.p, r.q, this._s)));
+      st.count = 4;
+      st.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       st.frustumCulled = false;
-      st.rotation.y = -sd * 0.35;
+      st.rotation.y = -sd * 0.22;
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
-      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.05 });
+      const glow = makeLightPool({ color: 0xffd27a, radius: 5.2, intensity: 0.035 });
       glow.layers.set(1);
       const g = new THREE.Group();
       g.add(st, cone, glow);
       s.add(g);
       g.userData.side = sd;
+      g.userData.bars = st;
       return g;
     });
 
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
     s.add(this.motes);
-    this.decor(this.motes, ...this.stacks);
     this.sparks = new MemorySparks(260);
     s.add(this.sparks.points);
     this.glintT = 0.5;
@@ -491,25 +495,25 @@ class MemoryGame extends QuizGame {
     this.slotFlash = 0;
     this.dist = 22;
     s.userData.post = { exposure: 1.2, bloom: 0.7, threshold: 1.15, saturation: 1.14, contrast: 1.12, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.4, sharpen: 0.4, fringe: 0.2 };
-    this.camBase.set(0, Y, this.dist);
-    this.lookAt.set(0, Y, 0);
+    this.camBase.set(0, MEMORY_EYE_Y, this.dist);
+    this.lookAt.set(0, MEMORY_EYE_Y, 0);
   }
-  // Dolly so the dial ring sits just outside the card; move the gold to where it shows.
+  // Dolly back until the whole door, the lamps over it and the gold at its foot stand in the window above the
+  // card (the door used to sit behind the card, where only slivers of it showed).
   onResize(w, h) {
     if (!this.camera || !this.door) return;
-    const card = this.el && $(".card3d", this.el);
+    const card = this.el && $(".card3d", this.el), win = this.el && $(".vault-window", this.el);
     this.cardW = card ? card.offsetWidth : Math.min(w - 32, 560);
     this.cardH = card ? card.offsetHeight : 360;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    this.dist = clamp((MEMORY_DIAL_R * h) / (2 * tanH * (this.cardH / 2 + 10)), 12, 40);
-    // the gold sits where the floor shows: beside the door on wide screens, in front
-    // of its foot on tall ones
-    const wide = w / h > 1;
-    this.stacks.forEach((g) => {
-      const sd = g.userData.side;
-      if (wide) g.position.set(sd * 14, 0, 1.2);
-      else g.position.set(sd * 4.6, 0, 0.8);
-    });
+    const bh = Math.max(60, win ? win.offsetHeight : h * 0.34), bw = win ? win.offsetWidth : w - 32;
+    // tall enough for the lamps' arc and the floor, wide enough for the door's frame
+    this.dist = clamp(Math.max((11.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
+    this.scene.fog.near = this.dist + 8;
+    this.scene.fog.far = this.dist + 73;
+    // the gold stands either side of the door's foot, as far out as the window shows
+    const half = (this.dist * tanH * bw) / h;
+    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - 3.4, 8.2, 14), 0, 2.4); });
   }
   placeBolts() {
     for (let k = 0; k < MEMORY_BOLTS; k++) {
@@ -528,7 +532,7 @@ class MemoryGame extends QuizGame {
     }
     this.state = "front";
     this.render();
-    requestAnimationFrame(() => { if (!this.unmounted) this.setBand($(".card-stage", this.el)); });
+    requestAnimationFrame(() => { if (!this.unmounted) this.setBand($(".vault-window", this.el)); });
   }
   get card() { return F_BY_ID.get(this.queue[0]); }
   render() {
@@ -545,19 +549,19 @@ class MemoryGame extends QuizGame {
     const back = this.reverse ? f.front : f.back;
     const box = Store.box(f.id);
     const status = ["NEW", "MISSED LAST TIME", "LEARNING", "REVIEW", "BANKED", "BANKED"][box];
+    const touch = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
     card.innerHTML = `<div class="face front" style="--c:${CH(f.ch).color}">
-        <div class="ftop"><span>STAGE ${f.ch} · ${esc(f.topic)}</span><span>${status}</span></div>
+        <div class="ftop"><span class="ftopic">${esc(f.topic)}</span><span class="fchip">${status}</span></div>
         <div class="fmain selectable">${esc(front)}</div>
-        <div class="fhint">TAP CARD OR PRESS SPACE TO FLIP</div>
+        <div class="fhint">${touch ? "TAP TO FLIP" : "CLICK OR PRESS SPACE TO FLIP"}</div>
       </div>
       <div class="face back">
         <div class="ftop"><span>${esc(this.reverse ? "TERM" : "ANSWER")}</span><span>BOOK P. ${esc(f.page)}</span></div>
         <div class="fmain selectable">${esc(back)}</div>
-        <div class="fhint">SWIPE: &lt; MISSED · GOT IT &gt; · UP = EASY</div>
+        <div class="fhint">${touch ? (this.done < 3 ? "OR SWIPE: LEFT MISSED · RIGHT GOT IT · UP EASY" : "") : "1 MISSED · 2 GOT IT · 3 EASY"}</div>
       </div>`;
     $("[data-grade]", this.el).innerHTML = `<button class="btn" data-act="flip" style="--c:${COLORS.cyan};grid-column:1/-1">FLIP CARD</button>`;
     UI.text($("[data-pos]", this.el), `CARD ${Math.min(this.done + 1, this.total)}/${this.total}`);
-    UI.meter($("[data-prog]", this.el), this.total ? this.done / this.total : 0);
     UI.text($("[data-dep]", this.el), "BANKED " + this.deposits);
     card.style.transform = card.style.transition = "";
     // a long answer scrolls, so there an upward drag belongs to the text
@@ -690,24 +694,37 @@ class MemoryGame extends QuizGame {
       this.deposit();
     }, (k) => k * (1.35 - 0.35 * k));
   }
-  // Up from below the screen, out past the card's side (where the screen has room),
-  // over the top and down into the slot. Waypoints are placed in screen space.
+  // Up from the card below the window, out to one side, over the door and down into the slot. Waypoints are
+  // placed in screen space.
   coinPath(side) {
     const D = this.dist, H = GFX.h, Y = MEMORY_DOOR_Y;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    const yc = this.band ? (this.band.top + this.band.bottom) / 2 : H / 2;
     // a point dx, dy pixels from the band centre, d units in front of the camera
-    const at = (dx, dy, d) => { const k = (2 * d * tanH) / H; return new THREE.Vector3(dx * k, Y - dy * k, D - d); };
-    const cw = (this.cardW || 360) / 2, ch = (this.cardH || 360) / 2;
-    const out = Math.min(cw + 80, GFX.w / 2 - 34);
+    const at = (dx, dy, d) => { const k = (2 * d * tanH) / H; return new THREE.Vector3(dx * k, MEMORY_EYE_Y - dy * k, D - d); };
+    const bh = this.band ? this.band.h : 300, out = Math.min(GFX.w * 0.3, 130);
     const slot = this.slotWorld;
     return new THREE.CatmullRomCurve3([
-      at(side * Math.min(90, GFX.w * 0.2), H - yc + 50, Math.min(8, D * 0.42)),
-      at(side * out, ch * 0.35, D * 0.55),
-      at(side * (out - 10), -ch - 40, D * 0.72),
+      at(side * 14, bh / 2 + 34, D * 0.16), // from under the window's sill, close to the lens
+      at(side * out, bh * 0.2, D * 0.42),
+      at(side * out * 0.7, -bh * 0.36, D * 0.76),
       new THREE.Vector3(side * 0.8, slot.y + 1.0, slot.z + 1.8),
       slot.clone(),
     ], false, "centripetal");
+  }
+  // One more bar on the gold: on the smaller heap of the two, dropped from just above its place.
+  addBar() {
+    const st = this.stacks.map((g) => g.userData.bars).sort((a, b) => a.count - b.count)[0];
+    if (!st || st.count >= st.userData.rest.length) return;
+    const i = st.count++, r = st.userData.rest[i], p = new THREE.Vector3();
+    const put = (lift) => { st.setMatrixAt(i, this._m.compose(p.copy(r.p).setY(r.p.y + lift), r.q, this._s)); st.instanceMatrix.needsUpdate = true; };
+    if (REDUCED_MOTION) return put(0);
+    put(2.6);
+    this.tw.add(0.42, (k) => put(2.6 * (1 - k)), () => {
+      put(0);
+      st.parent.updateMatrixWorld();
+      const w = p.copy(r.p).applyMatrix4(st.matrixWorld), hot = neon(0xfff3d6, 3);
+      for (let n = 0; n < 6; n++) this.sparks.emit(w.x + rand(-0.9, 0.9), w.y + 0.5, w.z + 0.3, rand(-1.5, 1.5), rand(1, 3), rand(0, 1), rand(0.35, 0.6), rand(0.14, 0.3), hot, -6);
+    }, Ease.outBounce || ((k) => k * k));
   }
   // The coin lands: sparkles out of the slot, the dial spins, the seam flares and, as
   // the share of the deck banked grows, bolts slide back.
@@ -723,6 +740,7 @@ class MemoryGame extends QuizGame {
     this.flash = 1;
     this.slotFlash = 1;
     this.works.banked(); // the lock goes home: gear trains spin on, the card's lamp lights
+    this.addBar();
     const from = this.dialA, to = from - (0.55 + Math.random() * 0.7);
     this.tw.add(0.9, (e) => { this.dialA = lerp(from, to, e); }, null, Ease.outBack);
     const want = this.total ? Math.floor((MEMORY_BOLTS * this.deposits) / this.total) : 0;
@@ -823,8 +841,9 @@ class MemoryGame extends QuizGame {
         this.sparks.emit(st.position.x + rand(-2.4, 2.4), rand(0.4, 1.6), st.position.z + rand(-0.4, 0.4), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
       }
     }
-    this.camBase.set(Pointer.x * 0.7, MEMORY_DOOR_Y + 0.12 * Math.sin(t * 0.45) - Pointer.y * 0.35, this.dist);
-    this.lookAt.set(0, MEMORY_DOOR_Y, 0);
+    { const k = this.dist / 22;
+      this.camBase.set(Pointer.x * 0.7 * k, MEMORY_EYE_Y + (0.12 * Math.sin(t * 0.45) - Pointer.y * 0.35) * k, this.dist); }
+    this.lookAt.set(0, MEMORY_EYE_Y, 0);
     this.placeCamera();
     this.motes.userData.drift(t);
     this.works.update(dt, t);
