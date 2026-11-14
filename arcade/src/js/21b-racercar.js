@@ -31,7 +31,8 @@ function racerTube(b, cyl, a, c, r, color, k = 1, v = {}) {
   const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
   b.add(cyl, new THREE.Matrix4().compose(a.clone().add(c).multiplyScalar(0.5), q, new THREE.Vector3(r, d.length(), r)), color, k, v);
 }
-const RACER_CAR = { STEEL: 0x2b3139, PLATE: 0x4d5764, DARK: 0x14171c, RUBBER: 0x0a0b0e, MINT: 0x4fd69c, RIM: 0xd2d9de, BOLT: 0x8b949d, DISC: 0x5b6169 };
+// (BODY: the shell is a champagne-gold lacquer, the nest egg's colour; the armour bolted over it stays gunmetal.)
+const RACER_CAR = { BODY: 0xc88a2a, STEEL: 0x2b3139, PLATE: 0x4d5764, DARK: 0x14171c, RUBBER: 0x0a0b0e, MINT: 0x4fd69c, RIM: 0xd2d9de, BOLT: 0x8b949d, DISC: 0x5b6169 };
 const RACER_WHEELS = [[-1.07, -1.25], [1.07, -1.25], [-1.07, 1.3], [1.07, 1.3]];
 const RACER_WHEEL_Y = 0.5;
 
@@ -86,7 +87,7 @@ function racerWheelGeo() {
 // Gunmetal paint with what real plating has: matte where it is rubber or recess,
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
-  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.26, envMap: env, envMapIntensity: 1.15, flatShading: true });
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 1.2, flatShading: true });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vCarP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvCarP = position;");
     sh.fragmentShader = sh.fragmentShader
@@ -107,12 +108,14 @@ function racerCarPaint(env, hull) {
         diffuseColor.rgb *= mix(0.7 + 0.14 * carGrime, 1.0, smoothstep(0.24, 0.6, vCarP.y));` : ""}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
         float carWear = carN(vCarP.zy * 7.0 + vCarP.x * 5.0) * 0.6 + carN(vCarP.xz * 23.0) * 0.4;
-        roughnessFactor = mix(0.94, clamp(roughnessFactor * (0.78 + 0.5 * carWear), 0.08, 1.0), carMetal);`)
+        roughnessFactor = mix(0.94, clamp(roughnessFactor * (0.78 + 0.5 * carWear), 0.08, 1.0), carMetal);
+        float carBody = smoothstep(0.18, 0.34, vColor.r - vColor.b); // the gold shell: a deep, glossy lacquer
+        roughnessFactor = mix(roughnessFactor, clamp(0.36 + 0.14 * carWear, 0.05, 1.0), carBody);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night`)
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal;");
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal; metalnessFactor = mix(metalnessFactor, 0.45, smoothstep(0.18, 0.34, vColor.r - vColor.b));");
   };
-  m.customProgramCacheKey = () => "racer-car-paint-" + (hull ? 1 : 0);
+  m.customProgramCacheKey = () => "racer-car-paint3-" + (hull ? 1 : 0);
   return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
@@ -148,7 +151,7 @@ class RacerCar {
 
     // --- the hull ------------------------------------------------------------
     const bodyGeo = racerLoft(RACER_BODY, racerBodyRing, true);
-    paint.add(bodyGeo, null, C.STEEL);
+    paint.add(bodyGeo, null, C.BODY);
     bodyGeo.dispose();
 
     // --- front: bumper, skid plate, bull bar, winch, lamps, grille -----------
@@ -176,7 +179,7 @@ class RacerCar {
       bolt(sx * 0.28, 0.9, -1.56);
     });
     // --- cabin armour: pillars, visor, roof plate ----------------------------
-    P(1.27, 0.045, 0.8, 0, 1.3, 0.15, C.PLATE, 0, 0, 0, 0.03);
+    P(1.27, 0.045, 0.8, 0, 1.3, 0.15, C.BODY, 0, 0, 0, 0.03);
     P(1.24, 0.03, 0.24, 0, 1.262, -0.31, C.STEEL, -0.5, 0, 0, 0.02); // visor over the windscreen
     [-1, 1].forEach((sx) => {
       racerStrut(paint, box, new THREE.Vector3(sx * 0.8, 0.79, -0.95), new THREE.Vector3(sx * 0.615, 1.275, -0.2), 0.075, C.STEEL);
@@ -187,10 +190,12 @@ class RacerCar {
       racerStrut(fine, box, new THREE.Vector3(sx * 0.84, 0.86, -0.74), new THREE.Vector3(sx * 1.02, 0.94, -0.76), 0.03, C.DARK);
       Pf(0.17, 0.1, 0.05, sx * 1.06, 0.96, -0.75, C.STEEL, 0, 0, 0, 0.02, true);
     });
-    // --- louvres over the rear window ----------------------------------------
-    for (let i = 0; i < 7; i++) {
-      const t = (i + 0.6) / 7.6;
-      P(1.2 + 0.36 * t, 0.024, 0.1, 0, 1.3 - 0.32 * t, 0.5 + t, C.STEEL, 0.12, 0, 0, 0.012);
+    // --- over the rear window: open glass, a spine fin down the middle, a rail either side -------
+    {
+      const a0 = new THREE.Vector3(0, 1.31, 0.52), a1 = new THREE.Vector3(0, 1.0, 1.52), ang = Math.atan2(a0.y - a1.y, a1.z - a0.z);
+      P(0.035, 0.2, 1.08, 0, 1.25, 1.02, C.BODY, ang, 0, 0, 0.012, true); // the fin
+      P(0.05, 0.03, 1.06, 0, 1.165, 1.02, C.STEEL, ang, 0, 0, 0.01); // its foot
+      [-1, 1].forEach((sx) => racerStrut(paint, box, new THREE.Vector3(sx * 0.6, 1.3, 0.5), new THREE.Vector3(sx * 0.78, 0.99, 1.5), 0.045, C.PLATE));
     }
     // --- roof light bar: stanchions, rail, four pods -------------------------
     [-0.58, 0.58].forEach((x) => P(0.06, 0.11, 0.1, x, 1.375, -0.1, C.PLATE));
@@ -230,15 +235,17 @@ class RacerCar {
     });
     fine.add(cyl, racerM(1.03, 0.72, 0.98, 0.06, 0.03, 0.06, 0, 0, H), C.BOLT); // fuel cap
     // --- tail: deck, ducktail wing, lamp housings, guard, exhausts, diffuser --
-    P(1.5, 0.04, 0.5, 0, 0.955, 1.8, C.PLATE, -0.05, 0, 0, 0.03);
+    P(1.5, 0.04, 0.5, 0, 0.955, 1.8, C.BODY, -0.05, 0, 0, 0.03);
     [[-0.66, 1.62], [0.66, 1.62], [-0.66, 1.98], [0.66, 1.98]].forEach(([x, z]) => bolt(x, 0.985 - (z - 1.8) * 0.05, z));
     P(1.74, 0.045, 0.38, 0, 1.06, 1.96, C.PLATE, -0.15, 0, 0, 0.03);
     [-0.5, 0.5].forEach((x) => Pf(0.05, 0.1, 0.2, x, 1.0, 1.92, C.DARK));
     [-0.885, 0.885].forEach((x) => P(0.035, 0.19, 0.44, x, 1.03, 1.96, C.MINT, -0.15, 0, 0, 0.014, true));
     lamp(0, 1.62, 0.016, 0.016, 0, 1.094, 2.148, 0x5dffb0, 1.5); // mint lip on the wing
     P(1.86, 0.05, 0.26, 0, 0.72, 2.1, C.DARK, H, 0, 0, 0.02); // lamp panel
-    [-0.64, 0.64].forEach((x) => [-0.17, 0, 0.17].forEach((dx) => lamp(1, 0.13, 0.13, 0.02, x + dx, 0.73, 2.135, 0xff0826, 2.3)));
-    lamp(1, 1.74, 0.026, 0.02, 0, 0.625, 2.135, 0xff0826, 1.5);
+    // tail lamps: one blade across the whole width, broken round the emblem, with an upright at each end
+    [-0.53, 0.53].forEach((x) => lamp(1, 0.66, 0.05, 0.02, x, 0.735, 2.135, 0xff0826, 2.4));
+    [-0.845, 0.845].forEach((x) => lamp(1, 0.05, 0.2, 0.02, x, 0.735, 2.135, 0xff0826, 2.4));
+    [-0.53, 0.53].forEach((x) => lamp(1, 0.6, 0.014, 0.02, x, 0.655, 2.135, 0xff0826, 1.3));
     [-0.92, 0.92].forEach((x) => lamp(9, 0.07, 0.13, 0.02, x, 0.73, 2.135, 0xffa53d, 2.6)); // indicators
     // an original emblem: a mint chevron
     [-1, 1].forEach((s) => L.add(box, racerM(s * 0.052, 0.735, 2.135, 0.15, 0.024, 0.014, 0, 0, s * 0.62), 0x5dffb0, 1.9, { aCh: 0 }));

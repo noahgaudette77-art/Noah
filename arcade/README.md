@@ -164,10 +164,12 @@ lists all of them again.
   two tiers, hanging lamps, holo-books open on lecterns, loose pages adrift and a
   rose window, seen through one framed window above the list. What you read sits
   on solid ground, and the scene all but stops while a chapter is open.
-- **The car.** Nest Egg Run's armored rally coupe is built in layers of chamfered,
-  bolted gunmetal plate with mint trim that glows: a bull bar and winch, hood
-  scoop, armored pillars, a louvred rear window, a ducktail wing, a tubular rear
-  guard, five-spoke rims with brake discs, knobbly tyres. The roof light bar
+- **The car.** Nest Egg Run's armored rally coupe has a shell of champagne-gold
+  lacquer (the nest egg's colour) under layers of chamfered, bolted gunmetal
+  plate with mint trim that glows: a bull bar and winch, hood scoop, armored
+  pillars, an open rear window with a spine fin down its middle, a ducktail wing,
+  one tail-light blade across the whole width with an upright at each end, a
+  tubular rear guard, five-spoke rims with brake discs, knobbly tyres. The roof light bar
   works, the tail lamps brighten under braking, the exhausts glow after a boost
   with heat haze behind them, and the headlights throw shafts through the rain.
   The body rides on springs: it heaves over joints in the road, rolls in a lane
@@ -175,11 +177,11 @@ lists all of them again.
   tyres.
 - **Twelve cyborgs.** Each boss is its own machine, built from one armor kit: a
   salesman in a plated suit with a briefcase, a horned brute, a hooded one-eyed
-  wraith with an empty vault in its chest, a many-eyed scribe with quill arms, a
+  wraith with an empty vault in its chest, a scribe with a jeweller's loupe over one eye and quill arms, a
   slab golem, a boiler with its gauge in the red, a crowned skeleton with an
   hourglass heart, a judge in robe and wig with a gavel, a masked puppeteer, a
   toll booth on tracks, a half-bone half-steel phantom with a cleaver, and the
-  hulking Examinator in an examiner's square cap with a lit tassel, a monocle on
+  hulking Proctor in an examiner's square cap with a lit tassel, a monocle on
   a chain and a row of answer bubbles for a mouth. They drop in dark and folded, land, and power up; breathe,
   look about and twitch; wind up as their attack charges; recoil when hit. As
   their HP falls the armor cracks, plates are shot off to bare the circuitry
@@ -189,6 +191,9 @@ lists all of them again.
   diner, a lighthouse and a big wheel far off), desert (mesas, a rock arch, cacti,
   a gas station), a mountain pass (cliffs, pines, an avalanche gallery, a cable
   car) and back downtown at night; each change happens inside a bank of fog.
+  The sun over this road is a golden egg on the horizon, and it grows as your nest
+  egg does. Each lane carries its answer's letter on the road ahead of the car, in
+  the answer's colour, as well as on the gantry that approaches.
   Traffic runs thick both ways on service lanes beside the road and in hover lanes
   overhead: sedans, trucks, buses, bikes, hover cars, each in its own colour,
   holding a gap behind a slower one with brake lights on, pulling out to pass

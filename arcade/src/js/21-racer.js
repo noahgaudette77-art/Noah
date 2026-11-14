@@ -17,17 +17,17 @@ const laneX = (i, n) => (n === 2 ? [-2.5, 2.5] : [-3.75, -1.25, 1.25, 3.75])[i];
 // the far hills, street lamps, windows, the light on the car.
 const CAREER_SKY = [
   { p: 0, bg: 0x0a1420, fog: 0x14262e, sunY: 16, tint: 0xd6ecf0, grid: 0x2fd6c0, stars: 0,
-    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xfff0e2, sunBot: 0xe89aa8, halo: 0x8ad0d0,
-    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.72 },
+    top: 0x060c14, mid: 0x12222c, horizon: 0x4a7a84, glow: 0.55, clouds: 1, sunTop: 0xffe6a8, sunBot: 0xf0a04e, halo: 0xd8b070,
+    ridge: 0x16242c, line: 0x2fd6c0, lamps: 0.9, city: 0.75, light: 0xa8d8e0, amb: 0x3a5a6a, exposure: 1.12, bloom: 1.05, wet: 1, sunI: 0.66 },
   { p: 0.4, bg: 0x10202e, fog: 0x24465a, sunY: 80, tint: 0xf4f8f0, grid: 0x4fd2e6, stars: 0,
-    top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xfff3cc, sunBot: 0xffb87a, halo: 0xd4ecd8,
-    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.74 },
+    top: 0x0e2238, mid: 0x235068, horizon: 0x86c8cc, glow: 0.5, clouds: 1, sunTop: 0xffeeb0, sunBot: 0xffae46, halo: 0xe6c888,
+    ridge: 0x1c3644, line: 0x7fe4ec, lamps: 0.5, city: 0.5, light: 0xf0f4ea, amb: 0x54788c, exposure: 1.04, bloom: 0.92, wet: 0.8, sunI: 0.66 },
   { p: 0.75, bg: 0x1c1210, fog: 0x30201a, sunY: 30, tint: 0xffc890, grid: 0xff9b3d, stars: 0,
-    top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd890, sunBot: 0xff7a2a, halo: 0xff8a3a,
-    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 1.0 },
+    top: 0x120c0c, mid: 0x3a2418, horizon: 0xe07a30, glow: 0.8, clouds: 1, sunTop: 0xffd27a, sunBot: 0xff7a2a, halo: 0xff8a3a,
+    ridge: 0x2a1a14, line: 0xff9b3d, lamps: 0.9, city: 0.8, light: 0xffb070, amb: 0x5a4034, exposure: 1.1, bloom: 1.05, wet: 0.95, sunI: 0.85 },
   { p: 1, bg: 0x03070c, fog: 0x08141a, sunY: 8, tint: 0xa8e8e8, grid: 0xff3ad4, stars: 0.15,
-    top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xb0f0f0, sunBot: 0x2fa0a8, halo: 0x2fd6c0,
-    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.8 },
+    top: 0x010204, mid: 0x05101a, horizon: 0x1f6f78, glow: 0.6, clouds: 0.7, sunTop: 0xffe29a, sunBot: 0xe08a2e, halo: 0xb07a3a,
+    ridge: 0x0a141c, line: 0xff3ad4, lamps: 1, city: 1, light: 0x8fd8e8, amb: 0x2a4460, exposure: 1.16, bloom: 1.15, wet: 1, sunI: 0.62 },
 ];
 const RACER_SKY_COLORS = ["bg", "fog", "tint", "grid", "top", "mid", "horizon", "sunTop", "sunBot", "halo", "ridge", "line", "light", "amb"];
 const RACER_SKY_NUMS = ["sunY", "stars", "glow", "clouds", "lamps", "city", "exposure", "bloom", "wet", "sunI"];
@@ -648,11 +648,12 @@ class RacerEnv {
 
 // Gantry sign faces: the letter blazes, the panel stays dark.
 function racerSignTexture(label, color, wide) {
-  const c = document.createElement("canvas");
-  c.width = wide ? 512 : 256;
-  c.height = 128;
+  const c = document.createElement("canvas"), K = 3; // drawn at three times the size: the letters stay sharp on the gantry and on the road
+  const W = wide ? 512 : 256, H = 128;
+  c.width = W * K;
+  c.height = H * K;
   const x = c.getContext("2d");
-  const W = c.width, H = c.height;
+  x.scale(K, K);
   const g = x.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, "#0c0424");
   g.addColorStop(1, "#02010a");
@@ -672,7 +673,7 @@ function racerSignTexture(label, color, wide) {
   x.fillStyle = "rgba(255,255,255,0.35)";
   x.fillText(label, W / 2, H / 2 + 5);
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 4;
+  t.anisotropy = 16;
   return t;
 }
 
@@ -744,7 +745,9 @@ class RacerGame extends QuizGame {
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
     s.add(this.sky);
-    this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo });
+    // the sun of this road is a golden egg on the horizon, and it grows as the nest egg does (look only)
+    this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo, egg: true, stripes: false });
+    this.sunK = 0.8;
     this.sun.position.set(0, sky0.sunY, -430);
     this.sun.userData.glow.layers.set(1); // the wet road mirrors the disc, not its huge halo
     s.add(this.sun);
@@ -1093,6 +1096,12 @@ class RacerGame extends QuizGame {
     });
     this.owned.push(this.gateFrameMat, this.gateGlowMat, this.gateConeMat);
     Object.values(this.signMats).forEach((m) => this.owned.push(m.map, m));
+    // the same letters laid on the road ahead of the car, one per lane, so a lane and its answer are one thing
+    this.tagMats = {};
+    Object.keys(this.signMats).forEach((label) => {
+      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: this.signMats[label].map, color: new THREE.Color(1.25, 1.25, 1.25), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.owned.push(this.tagMats[label]);
+    });
   }
   makeGate() {
     const g = new THREE.Group();
@@ -1110,12 +1119,32 @@ class RacerGame extends QuizGame {
       sign.userData.slot = i;
       g.add(sign);
     }
+    // lane letters on the road: they fade in with the question and go when the gate is passed
+    this.dropTags();
+    const tags = (this.laneTags = new THREE.Group());
+    for (let i = 0; i < r.n; i++) {
+      const label = r.tf ? (i === 0 ? "TRUE" : "FALSE") : r.labels[i];
+      const tag = new THREE.Mesh(k.sign, this.tagMats[label]);
+      tag.rotation.x = -Math.PI / 2;
+      tag.scale.set(r.n === 2 ? 0.62 : 0.8, 2.3, 1);
+      tag.position.set(laneX(i, r.n), 0.045, -10.5);
+      tag.layers.set(1); // (not in the wet road's mirror)
+      tag.renderOrder = 2;
+      tags.add(tag);
+    }
+    this.tagK = 0;
+    this.scene.add(tags);
     g.userData.n = n;
     g.position.z = -170;
     // the gantry rises out of the road
     g.scale.y = 0.01;
     this.tw.add(0.5, (e) => { g.scale.y = Math.max(0.01, e); }, null, Ease.outBack);
     return g;
+  }
+  dropTags() {
+    if (!this.laneTags) return;
+    this.scene.remove(this.laneTags);
+    this.laneTags = null;
   }
   dropGate(g) {
     if (!g) return;
@@ -1242,7 +1271,8 @@ class RacerGame extends QuizGame {
       Sound.sfx("wrong");
       UI.flash("hit");
       this.shake(0.5);
-      GFX.pulse(12, 0);
+      GFX.pulse(7, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
+      GFX.glitch(0.9, 0.5);
       GFX.hitStop(120);
       Haptics.buzz([70, 40, 110]);
       Sound.setIntensity(0);
@@ -1332,7 +1362,7 @@ class RacerGame extends QuizGame {
     su.uTint.value.copy(sky.tint);
     su.uI.value = sky.sunI;
     this.sun.position.y = sky.sunY;
-    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(1.5);
+    this.sun.userData.glow.material.color.copy(sky.halo).multiplyScalar(0.8); // (a soft halo: the egg keeps its outline against the sky)
     // far range hazy and lit by the horizon, near range dark with a neon crest
     this.ridgeFar.children[0].material.color.copy(sky.ridge).lerp(sky.horizon, 0.22).lerp(sky.fog, 0.35);
     this.ridgeFar.children[1].material.color.copy(sky.horizon).multiplyScalar(1.1);
@@ -1354,8 +1384,10 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
+    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * 0.03;
+    this.sun.scale.setScalar(this.sunK);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
-    this.sunLight.intensity = 1.5 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
+    this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
     this.post.exposure = sky.exposure;
     this.post.bloom = sky.bloom;
     // sun rays through the skyline: strongest when the sun is low, faint at midday
@@ -1397,6 +1429,13 @@ class RacerGame extends QuizGame {
     const scroll = this.dist % RACER_WRAP;
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
+    if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
+      const on = this.state === "ask" ? 1 : 0;
+      this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
+      const o = 0.85 * this.tagK * (0.9 + 0.1 * Math.sin(this.t * 2.2));
+      this.laneTags.children.forEach((c) => { c.material.opacity = o; });
+      if (!on && this.tagK < 0.02) this.dropTags();
+    }
     const n = this.round ? this.round.n : 4;
     const tx = this.lane === null ? 0 : laneX(this.lane, n);
     const prev = this.carX;

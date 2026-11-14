@@ -54,11 +54,11 @@ const BOSSES = {
   5: { name: "GROUP GOLEM", line: "Your benefits end when your job does.", color: COLORS.orange, shape: "box", hp: 100 },
   6: { name: "INFLATION TITAN", line: "I eat three percent of your savings a year.", color: COLORS.gold, shape: "knot", hp: 120 },
   7: { name: "LONGEVITY LICH", line: "You will outlive your money. I will see to it.", color: COLORS.lime, shape: "ico", hp: 110 },
-  8: { name: "LORD INTESTATE", line: "No will? Then the law decides. I AM the law.", color: COLORS.magenta, shape: "octa", hp: 100 },
+  8: { name: "LORD INTESTATE", line: "No will? Then the law decides. And it never asks what you wanted.", color: COLORS.magenta, shape: "octa", hp: 100 },
   9: { name: "UNDUE INFLUENCER", line: "Sign here. Trust me. Sign HERE.", color: COLORS.cyan, shape: "dodeca", hp: 120 },
   10: { name: "PROBATRON", line: "Every estate pays my toll.", color: COLORS.orange, shape: "knot", hp: 110 },
   11: { name: "PATRIMONY PHANTOM", line: "Half of everything. Partition is coming.", color: COLORS.violet, shape: "ico", hp: 100 },
-  all: { name: "THE EXAMINATOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "cyborg", hp: 200 },
+  all: { name: "THE PROCTOR", line: "Eleven chapters. One of me. No partial credit.", color: COLORS.red, shape: "cyborg", hp: 200 },
 };
 
 const CABINETS = [

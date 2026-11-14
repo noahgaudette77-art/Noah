@@ -1241,3 +1241,38 @@ cohesion, legibility).
   - Capture tool: clicks go through the DOM (Playwright's click waits for two
     steady frames, which at several seconds a frame timed out and silently
     skipped the exam's answers).
+- **K5, Nest Egg Run and Boss Rush** (`21-racer.js`, `21b`, `21c`, `22-boss.js`,
+  `22b`, `03-data.js` names, `08-fx.js`, `04b`, CSS). R1 to R4, X1 to X4.
+  Reviewer (first pass): detail 3, lighting 2.5, materials 2, depth 3, motion 3,
+  cohesion 3, legibility 3.5. Its seven points and what was done:
+  1. Bosses merged into the stands; spotlights lit nothing; the crowd read as
+     confetti. Now each boss is edged from behind in its own colour (and that
+     colour paled), lit from below in front in its colour, and stands in a pool
+     of its light with its shadow in the middle; the key is stronger; the stands
+     are darker and duller; glow sticks are half as many, smaller and dimmer; the
+     final boss is lit 30% harder.
+  2. Striped sun and neon lanes were stock synthwave. The sun of this road is
+     now a golden egg (fuller below its middle, a sheen, speckles, no stripes)
+     that grows with the nest egg.
+  3. Bloom swallowed the bosses' feet and the first answer cropped them. Floor
+     glow is lower; the boss is a little smaller and stands higher in the strip
+     with floor under it.
+  4. The coast was grey-beige haze. It has its own colour script: a deep
+     sea-blue sky over a coral horizon, clearer air.
+  5. The car was a matte black box whose louvred rear read as a film car. The
+     shell is champagne-gold lacquer under the gunmetal armour; the louvres are
+     gone (open glass, a spine fin, two rails); the tail lamps are one blade with
+     an upright at each end.
+  6. Lanes and answers were not linked. Each lane has its letter on the road
+     ahead of the car in the answer's colour; signs are drawn at three times the
+     resolution.
+  7. Fringe at rest smeared edges; labels were faint; boost and crash looked
+     alike. The lens's own fringe is a trace (default 0.25, was 0.8); question
+     labels are brighter; a crash tears the picture in bands and goes red with no
+     radial streak; a boost streaks without smearing.
+  - Originality (reviewer's list and my call): the film-car rear, the final
+    boss's name and skull, and the scribe's cluster of red eyes are redesigned
+    (the final boss is THE PROCTOR; the scribe has one eye and a jeweller's
+    loupe; one boss line that echoed a film catchphrase is reworded). Kept, as
+    conventions no one owns: hearts for lives, four answer colours, block-built
+    robots, a neon road.

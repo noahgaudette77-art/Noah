@@ -217,8 +217,13 @@ function startPlay(play) {
   };
 }
 
+// Display names changed on purpose since the baseline was recorded (the originality audit renamed the final
+// boss). The baseline's text is read with the new names; everything else must still match exactly, and the
+// verdict line says that a rename was applied.
+const RENAMED = [["THE EXAMINATOR", "THE PROCTOR"]];
 function diff(a, b, at, out) {
   if (out.length > 40) return;
+  if (typeof a === "string") for (const [was, now] of RENAMED) a = a.split(was).join(now);
   if (typeof a !== typeof b || (a === null) !== (b === null)) return void out.push(`${at}: ${JSON.stringify(a)} -> ${JSON.stringify(b)}`);
   if (a && typeof a === "object") {
     for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) diff(a[k], b[k], at + "." + k, out);
@@ -286,7 +291,7 @@ function diff(a, b, at, out) {
       diff(b, p, p.id, out);
     }
     if (out.length) { bad = true; console.log("DIFFERENT FROM BASELINE (" + base.build + "):\n  " + out.join("\n  ")); }
-    else console.log(`IDENTICAL to baseline ${base.build}: every HP, heart, score, streak, nest egg, shield, wave, card grade, exam mark, saved item, question and frame matches (${result.plays.reduce((a, p) => a + p.rounds.length, 0)} answers in ${result.plays.length} games)`);
+    else console.log(`IDENTICAL to baseline ${base.build} (reading ${RENAMED.map(([was, now]) => `"${was}" as "${now}"`).join(", ")}: a display name changed on purpose): every HP, heart, score, streak, nest egg, shield, wave, card grade, exam mark, saved item, question and frame matches (${result.plays.reduce((a, p) => a + p.rounds.length, 0)} answers in ${result.plays.length} games)`);
   }
   process.exit(bad ? 1 : 0);
 })().catch((e) => { console.error("FAILED", e); process.exit(2); });

@@ -687,3 +687,5 @@ mark { background: var(--yellow); color: #12052e; }
 .setting .seg { flex: none; }
 .setting .seg.wrap { flex: 1 1 100%; }
 .seg.wrap button { line-height: 1.45; min-height: 44px; display: grid; place-items: center; text-align: center; }
+/* The small label over a question (stage, topic, difficulty): bright enough to read at a glance on the violet panel. */
+.qmeta { color: #d6ccff; text-shadow: 0 1px 0 rgba(5, 1, 15, 0.9); }

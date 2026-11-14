@@ -276,14 +276,18 @@ const CY_HEAD = {
     K.glowCyl("head", 1, 0.26, 0.05, 0, 2.86, 0.58, 1.6, Math.PI / 2, 0, 0, 0xff2418, 12);
     K.eye(0, 2.86, 0.66, 0.9);
   },
-  // a scribe's face: a cluster of small lenses over quill mandibles
+  // a scribe's face: one small eye, and over the other a jeweller's loupe on a long barrel (for reading what
+  // nobody else can); under them, lines of print that get smaller and smaller; quill mandibles
   cluster(K) {
     K.add("head", cyLoft([[2.3, 0.5, 0.5, 0.14], [2.75, 0.66, 0.6, 0.18], [3.15, 0.6, 0.55, 0.18]]), racerM(0, 0, 0), CY.ARMOR);
     K.fplate("head", 1.06, 0.92, 0.14, 0, 2.76, 0.58, CY.PLATE, 0.12);
-    [[0, 0.1, 0.34], [-0.3, 0.2, 0.24], [0.3, 0.2, 0.24], [-0.34, -0.1, 0.2], [0.34, -0.1, 0.2], [-0.13, -0.2, 0.17], [0.13, -0.2, 0.17]].forEach(([x, y, s]) => {
-      K.cyl("head", s * 0.42, s * 0.42, 0.08, x, 2.8 + y, 0.67 - y * 0.12, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 8);
-      K.eye(x, 2.8 + y, 0.73 - y * 0.12, s * 1.1);
-    });
+    K.cyl("head", 0.1, 0.1, 0.08, -0.27, 2.9, 0.66, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 8);
+    K.eye(-0.27, 2.9, 0.72, 0.26);
+    K.cyl("head", 0.2, 0.25, 0.34, 0.24, 2.88, 0.8, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 10); // the loupe's barrel
+    K.add("head", new THREE.TorusGeometry(0.21, 0.035, 6, 16), racerM(0.24, 2.9, 0.98, 1, 1, 1, 0.12), CY.BONE); // its rim
+    K.eye(0.24, 2.9, 0.985, 0.52);
+    K.tube("head", [0.44, 2.98, 0.72], [0.62, 3.12, 0.3], 0.025, CY.STEEL); // its arm, back to the temple
+    [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.028 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.2)); // the fine print
     K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
     K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap
     K.cone("head", [0.45, 3.25, -0.2], [0.75, 4.0, -0.5], 0.04, 0.01, CY.BONE); // a quill behind the ear
@@ -685,7 +689,7 @@ const CYBORGS = {
   // PATRIMONY PHANTOM: split down the middle: half armored, half bone, a cleaver to divide the rest
   11: { torso: "hulk", head: "split", shoulder: ["shield", "bone"], arm: [2.05, 2.0, 0.46, "piston"], armR: [2.2, 2.2, 0.3, "bone"], hands: ["cleaver", "open"], hs: 1.05, base: "tail", core: "none", rest: [0, 0.14, -0.6], restL: [-0.5, 0.25, -1.0], sway: 1.1, breath: 1.8,
     extra(K) { K.glow("chest", 3, 0.07, 2.3, 0.07, 0, 0.75, 1.38, 3, -0.1); K.glow("hips", 3, 0.07, 0.8, 0.07, 0, -2.25, 1.0, 3); } },
-  // THE EXAMINATOR: the hulking black-armored cyborg: slab shields, piston arms, an examiner's capped helm
+  // THE PROCTOR: the hulking black-armored cyborg: slab shields, piston arms, an examiner's capped helm
   all: { torso: "hulk", head: "proctor", shoulder: "shield", arm: [2.1, 2.0, 0.5, "piston"], hands: ["fist", "fist"], hs: 1.0, base: "jet", core: "reactor", rest: [0, 0.08, -0.42], sway: 1, breath: 2.0,
     extra(K) { K.sym((sd) => { K.cyl("chest", 0.2, 0.26, 1.7, sd * 1.15, 2.5, -1.15, CY.DARK, 0.15, 0, sd * 0.1, 8); K.glowCyl("chest", 3, 0.16, 0.06, sd * 1.15, 3.36, -1.28, 3, 0.15, 0, sd * 0.1, K.hex, 8); K.steam(sd * 1.15, 3.45, -1.3); }); } },
 };

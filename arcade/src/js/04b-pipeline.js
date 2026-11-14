@@ -662,7 +662,7 @@ function makePipeline(renderer, hdr) {
       u.uFlicker.value = o.calm || !opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
       u.uGrain.value = opt.grain ? 1 : 0;
       u.uAberr.value = o.ab;
-      u.uEdge.value = opt.ca ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.35 : 0.8) : 0;
+      u.uEdge.value = opt.ca ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
       u.uSharp.value = p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);

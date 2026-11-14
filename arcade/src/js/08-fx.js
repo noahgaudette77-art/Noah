@@ -162,20 +162,30 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
 function followSky(sky, camera) { sky.position.copy(camera.position); }
 
 // The synthwave sun: a gradient disc with stripe gaps that scroll down.
-function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4 } = {}) {
+// (egg: the disc is an egg instead, fuller below its middle, with a sheen and a few speckles and no gaps:
+// Nest Egg Run's own sun.)
+function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity = 2.4, stripes = true, halo = 0xff3ad4, egg = false } = {}) {
   const g = new THREE.Group();
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uTint: { value: new THREE.Color(1, 1, 1) } },
+    uniforms: { uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) }, uI: { value: intensity }, uTime: { value: 0 }, uStripes: { value: stripes ? 1 : 0 }, uTint: { value: new THREE.Color(1, 1, 1) }, uEgg: { value: egg ? 1 : 0 } },
     transparent: true, depthWrite: false, extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
     fragmentShader: `
-      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; varying vec2 vUv;
+      uniform vec3 uTop; uniform vec3 uBottom; uniform vec3 uTint; uniform float uI; uniform float uTime; uniform float uStripes; uniform float uEgg; varying vec2 vUv;
       void main(){
         vec2 p = vUv * 2.0 - 1.0; float r = length(p);
+        vec2 q = p;
+        if (uEgg > 0.5) { q = vec2(p.x / (0.77 * (1.0 - 0.2 * p.y)), p.y / 0.98); r = length(q); }
         float fw = fwidth(r);
         float a = 1.0 - smoothstep(1.0 - fw * 1.5, 1.0, r);
         vec3 col = mix(uBottom, uTop, smoothstep(-0.85, 0.85, p.y)) * uI * uTint;
         col *= 1.0 + 0.35 * smoothstep(0.6, 1.0, r);
+        if (uEgg > 0.5) {
+          vec2 hl = q - vec2(-0.3, 0.36);
+          col *= 0.86 + 0.26 * smoothstep(1.0, 0.25, r); // rounder: fuller in the middle
+          col += uTop * uTint * uI * 0.4 * exp(-dot(hl, hl) * 6.5); // a sheen on its shoulder
+          col *= 1.0 - 0.2 * step(0.988, fract(sin(dot(floor(q * 30.0), vec2(127.1, 311.7))) * 43758.5453)); // speckles
+        }
         if (uStripes > 0.5) {
           float yy = 0.18 - p.y;
           if (yy > 0.0) {

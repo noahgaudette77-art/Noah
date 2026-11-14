@@ -105,11 +105,16 @@ class BossGame extends QuizGame {
     this.ambient = new THREE.AmbientLight(0x6a5aa8, 0.36);
     this.ambientBase = this.ambient.color.clone();
     s.add(this.ambient);
-    const key = new THREE.DirectionalLight(0xdcd4ff, 1.1);
+    const key = new THREE.DirectionalLight(0xe6deff, 1.45);
     key.position.set(3, 8, 10);
     s.add(key);
-    // two lights from behind, either side: the boss is edged in cyan and magenta against the dark
-    [[-11, 0x35efff], [11, 0xff3ad4]].forEach(([x, c]) => { const l = new THREE.PointLight(c, 2.4, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
+    // Lit in its own colour: two lamps behind it, either side (one its colour, one that colour paled toward
+    // white), edge it against the dark stands; a third at its feet in front lights it from below.
+    const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
+    [[-11, col.getHex(), 3.6], [11, col.clone().lerp(new THREE.Color(0xffffff), 0.55).getHex(), 3.0]].forEach(([x, c, k]) => { const l = new THREE.PointLight(c, k * big, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
+    const under = new THREE.PointLight(col.getHex(), 1.5 * big, 24, 1.8);
+    under.position.set(0, 0.7, 6.5);
+    s.add(under);
     this.eyeLight = new THREE.PointLight(hex, 0.6, 26, 2);
     s.add(this.eyeLight);
     this.hitLight = new THREE.PointLight(0xffffff, 0, 30, 2);
@@ -126,8 +131,18 @@ class BossGame extends QuizGame {
     // the reflective polar-grid floor
     this.mirror = new Mirror(0);
     this.lineBase = neon(hex, 1.35);
-    this.floor = makeNeonFloor({ size: 600, cell: 3, line: hex, lineK: 1.35, base: 0x05010f, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.5, ripple: 0.0018, streak: 0.01 });
+    this.floor = makeNeonFloor({ size: 600, cell: 3, line: hex, lineK: 1.35, base: 0x05010f, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.3, ripple: 0.0018, streak: 0.01 });
     s.add(this.floor);
+    // where it stands: a wide pool of its own light on the floor, and its shadow in the middle of the pool
+    const pool = makeLightPool({ color: hex, radius: 11, intensity: 0.5 });
+    pool.layers.set(1);
+    s.add(pool);
+    this.contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.78, depthWrite: false }));
+    this.contact.rotation.x = -Math.PI / 2;
+    this.contact.position.y = 0.05;
+    this.contact.renderOrder = 5;
+    this.contact.layers.set(1);
+    s.add(this.contact);
     s.userData.mirrors = [this.mirror];
     this.makeArena();
     this.makeCrowd();
@@ -292,7 +307,7 @@ class BossGame extends QuizGame {
       for (let i = 0; i < N; i++) {
         const a0 = (-118 + (236 * i) / N) * (Math.PI / 180), a1 = (-118 + (236 * (i + 1)) / N) * (Math.PI / 180), am = (a0 + a1) / 2;
         const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
-        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x15112c : 0x1b1638 });
+        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: k % 2 ? 0x0b0918 : 0x0f0c20 });
         rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
         // the people: two rows on every tier, shoulder to shoulder, some with their arms up
         const per = Math.max(3, Math.floor(w / 0.8));
@@ -305,8 +320,8 @@ class BossGame extends QuizGame {
           if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
-        for (let j = 0; j < 4; j++) {
-          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.1 + Math.random() * 0.55, t = tints[Math.floor(Math.random() * tints.length)], b = 0.9 + Math.random() * 1.6;
+        for (let j = 0; j < 2; j++) {
+          const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.1 + Math.random() * 0.55, t = tints[Math.floor(Math.random() * tints.length)], b = 0.45 + Math.random() * 0.8;
           pos.push(Math.sin(a) * r, y + 3.15 + Math.random() * 0.7, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
         }
         // aisle lights down the face of the tier, every fourth bay
@@ -330,7 +345,7 @@ class BossGame extends QuizGame {
     folk.layers.set(1);
     folk.frustumCulled = false;
     s.add(folk);
-    const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.7, rough: 0.5, envI: 0.8 }), { vertexColors: true }));
+    const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.5, rough: 0.62, envI: 0.3 }), { vertexColors: true }));
     wall.layers.set(1); // (not in the floor's reflection)
     s.add(wall);
     this.railMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) });
@@ -347,7 +362,7 @@ class BossGame extends QuizGame {
           p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
           vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
-          gl_PointSize = uPx * 230.0 / -mv.z; gl_Position = projectionMatrix * mv;
+          gl_PointSize = uPx * 150.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * smoothstep(1.0, 0.55, r), 1.0); }",
     }));
@@ -403,7 +418,7 @@ class BossGame extends QuizGame {
   onLayout() {
     if (!this.has3D) return;
     const bs = this.bandSize(16);
-    this.bossScale = clamp(Math.min((bs.h * 0.86) / 7.4, (bs.w * 0.86) / 8), 0.3, 1.1);
+    this.bossScale = clamp(Math.min((bs.h * 0.8) / 7.4, (bs.w * 0.86) / 8), 0.3, 1.1);
     // hover just above the floor so the reflection sits in view
     this.bossY = 1.1 + 3.25 * this.bossScale;
     // the band changes with each question's length: ease into the new framing
@@ -806,7 +821,8 @@ class BossGame extends QuizGame {
     // a slow cinematic drift, with a touch of pointer parallax
     const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
-    this.lookAt.set(0, this.showY, 0);
+    this.lookAt.set(0, this.showY - 0.42 * this.showScale, 0); // (aimed below its middle: it stands higher in the strip, with floor under its feet)
+    if (this.contact) { const cs = 6.4 * this.showScale; this.contact.scale.set(cs, cs, 1); this.contact.position.x = this.boss.position.x; this.contact.position.z = this.boss.position.z; this.contact.material.opacity = 0.78 * clamp(1.6 - this.boss.position.y / (this.showY + 0.001) * 0.6, 0, 1); }
     this.placeCamera();
     followSky(this.sky, this.camera);
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up

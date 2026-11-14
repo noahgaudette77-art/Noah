@@ -224,7 +224,8 @@ function racerBiomeAt(year) {
 // What each biome does to the career sky's palette. mix values blend toward the colour.
 const RACER_BIOME_PAL = {
   downtown: { fog: 0x000000, fogMix: 0, hor: 0x000000, horMix: 0, grid: 0x000000, gridMix: 0, base: 0x000000, baseMix: 0, rain: 1, wet: 1, dust: 0, far: 470, lamps: 1, ridge: 1 },
-  coast: { fog: 0x2f96b4, fogMix: 0.42, hor: 0xff9a6e, horMix: 0.55, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 560, lamps: 1, ridge: 0.6 },
+  // (the coast has a colour script of its own: a deep sea-blue sky over a coral horizon, clear air, teal haze only far out)
+  coast: { fog: 0x2a86a8, fogMix: 0.5, hor: 0xff8a66, horMix: 0.72, top: 0x08223f, topMix: 0.85, mid: 0x1d6c88, midMix: 0.7, grid: 0x35efff, gridMix: 0.7, base: 0x3a2f1c, baseMix: 0.85, rain: 0, wet: 0.45, dust: 0.25, far: 720, lamps: 1, ridge: 0.6 },
   desert: { fog: 0xc86a2c, fogMix: 0.5, hor: 0xff7a2a, horMix: 0.55, grid: 0xffa53d, gridMix: 0.8, base: 0x40220e, baseMix: 0.9, rain: 0, wet: 0, dust: 1, far: 520, lamps: 1, ridge: 1.6 },
   mountain: { fog: 0x7f95c8, fogMix: 0.5, hor: 0xb8cdf5, horMix: 0.5, grid: 0xcfe0ff, gridMix: 0.7, base: 0x141b2c, baseMix: 0.8, rain: 0.8, wet: 0.6, dust: 0.5, far: 380, lamps: 1, ridge: 2.3 },
   tunnel: { fog: 0x1c1208, fogMix: 0.9, hor: 0x1c1208, horMix: 0.9, grid: 0x000000, gridMix: 1, base: 0x0b0b0c, baseMix: 1, rain: 0, wet: 0.25, dust: 0.2, far: 260, lamps: 0, ridge: 0 },
@@ -239,7 +240,8 @@ class RacerWorld {
     this.lastAnswered = 0;
     this.biome = racerBiomeAt(game.year);
     this.pal = Object.assign({}, RACER_BIOME_PAL[this.biome]);
-    this.palC = { fog: new THREE.Color(), hor: new THREE.Color(), grid: new THREE.Color(), base: new THREE.Color() };
+    this.palC = { fog: new THREE.Color(), hor: new THREE.Color(), grid: new THREE.Color(), base: new THREE.Color(), top: new THREE.Color(), mid: new THREE.Color() };
+    this.pal.topMix = this.pal.topMix || 0; this.pal.midMix = this.pal.midMix || 0;
     for (const k in this.palC) this.palC[k].set(RACER_BIOME_PAL[this.biome][k]);
     this.swap = null;
     this.cityFog = 900;
@@ -777,11 +779,14 @@ class RacerWorld {
     // ---- palette: ease toward this biome's, then lay it over the career sky
     const T = P[this.biome], k = Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
     for (const n of ["fogMix", "horMix", "gridMix", "baseMix", "rain", "wet", "dust", "far", "lamps"]) pal[n] += (T[n] - pal[n]) * k;
+    for (const n of ["topMix", "midMix"]) pal[n] += ((T[n] || 0) - pal[n]) * k;
     for (const n in this.palC) if (T[n + "Mix"] > 0) this.palC[n].lerp(this._c.set(T[n]), k);
     const fog = g.scene.fog, su = g.sky.material.uniforms, gu = g.groundMat.uniforms;
     fog.color.lerp(this.palC.fog, pal.fogMix);
     su.uHorizon.value.lerp(this.palC.hor, pal.horMix);
     su.uMid.value.lerp(this.palC.hor, pal.horMix * 0.35);
+    if (pal.topMix > 0.001) su.uTop.value.lerp(this.palC.top, pal.topMix);
+    if (pal.midMix > 0.001) su.uMid.value.lerp(this.palC.mid, pal.midMix);
     su.uGlow.value += (this.skyFlash || 0) * 3;
     this.skyFlash = Math.max(0, (this.skyFlash || 0) - dt * 3);
     gu.uGrid.value.lerp(this._c.copy(this.palC.grid).multiplyScalar(0.9), pal.gridMix);
