@@ -1,0 +1,473 @@
+{
+  "chapter": 1,
+  "title": "Introduction: Risk and Insurance in Financial Planning",
+  "objectives": [
+    "Comment on the shift by financial institutions away from just the sale of financial products and towards financial planning.",
+    "Understand the factors driving that shift.",
+    "Describe how the elements of risk and insurance fit into the financial plans of individuals."
+  ],
+  "guide": [
+    {
+      "heading": "Integration of financial services and the planning process",
+      "page": "1•3",
+      "points": [
+        "Since the mid-1990s the breakdown of the barriers separating the four pillars has integrated the Canadian financial marketplace: one institution can supply every product a client needs and often becomes the client's single source of advice.",
+        "Financial planning = balancing current resources with current and future lifestyle goals, including current and expected future financial needs. It gives an orderly approach to building a personal strategy.",
+        "Step 1: assess the client's current position and identify financial and lifestyle goals. Goal-setting creates the priorities that shape the plan.",
+        "Goals must be quantified (restated in specific dollar values) before strategies can be built. Education fund example: how many children, how much each needs, and when the money is needed.",
+        "Then develop strategies (a set of options the client chooses from with the advisor's help) and plan risk management strategies to protect the wealth the plan creates.",
+        "The main theme of the course: wealth preservation through risk management."
+      ]
+    },
+    {
+      "heading": "Risk analysis and choosing an alternative",
+      "page": "1•4",
+      "points": [
+        "Risk analysis = identifying and measuring the client's risk exposures. Exact odds (e.g., 'a 12% chance of a $27,000 loss') are rarely possible or practical, but a general categorization still helps.",
+        "Potential risks matrix: severity of loss (low = unimportant, medium = important, high = critical) against frequency (low, medium, high). Grouping exposures this way reveals the priorities that need attention.",
+        "Two headings for managing risk. Loss control = taking action to reduce the frequency or the severity (size) of potential losses.",
+        "Loss financing = deciding who will pay for a loss and how: absorb it yourself (e.g., a savings fund) or buy insurance to pay when the loss occurs.",
+        "The choice rests on cost, risk tolerance and the client's ultimate financial goals.",
+        "Insurance is a wealth preservation tool complementary to savings and investment programs: it transfers risk exposure to insurers and protects the current and future value of accumulated resources."
+      ]
+    },
+    {
+      "heading": "Shift to a planning emphasis: five forces and an aging population",
+      "page": "1•5",
+      "points": [
+        "The shift from selling products to planning and wealth management is driven by five forces: demographic shifts, changes in households, changing economic conditions, changes in the workplace and product proliferation.",
+        "Canada's population is aging (a trend immigration may curtail). Fewer workers will fund benefits for a growing retired population, so individuals face pressure to be more self-sufficient and less reliant on government programs.",
+        "An aging population makes insurance even more important as a way to preserve the current generation's wealth base and transfer it to the next generation."
+      ]
+    },
+    {
+      "heading": "Wealth transfer and changes in households",
+      "page": "1•6",
+      "points": [
+        "Canadians can expect a $750 billion windfall from aging relatives over the next decade (course figure). Inheritors gain an instant need for wealth management and risk protection; plans move from debt reduction to accumulating and conserving wealth.",
+        "Family formation (marriage, living together, children) now happens at a later average age, so planning goals follow the household's stage of family formation rather than its age profile.",
+        "High rates of family breakdown and reformation, and many single-parent households, change how policies are underwritten. Take great care naming and changing life insurance beneficiaries: proceeds can be a major transfer of wealth.",
+        "Care of dependants: the number of seniors requiring care is projected to double between 2012 and 2031, so plans must provide for care and for resources if the caregiver dies.",
+        "Dual-income households: historically the second income paid for extras (vacations, luxury items); today most need it, and some use it to build wealth. Protect against losing either income to disability or premature death (life and disability insurance)."
+      ]
+    },
+    {
+      "heading": "Economy, workplace and product proliferation",
+      "page": "1•7",
+      "points": [
+        "Economic change and reduced government programs have raised consumers' needs and awareness; e.g., interest rate changes affect short-term strategies such as debt reduction and the choice of investment vehicles.",
+        "Past: high, stable interest rates let savers buy long-term government and corporate bonds and count on a comfortable retirement. With fluctuating rates and volatile markets that no longer works; consumers accept more risk to earn an adequate return.",
+        "Cuts to government benefits push clients to fund more of their own retirement, creating demand for competent, trustworthy advisors.",
+        "Workplace: most people change jobs at least three times and often change careers at least once.",
+        "The self-employed and small-business owners lack a large employer's safety net (health insurance, retirement benefits, financial stability), so they are more vulnerable to losses and need competent advice more.",
+        "Deregulation led to product proliferation: a wide range of products from many companies causes client confusion, so wealthy clients and high earners need guidance."
+      ]
+    },
+    {
+      "heading": "Summary and the Alfred Jones scenario",
+      "page": "1•8",
+      "points": [
+        "The industry has shifted from merely selling products to a financial planning approach, driven by aging demographics, changing households, the economic environment, the nature of the workforce and product proliferation.",
+        "These changes move the emphasis from debt reduction and wealth accumulation to wealth preservation, heightening the need for risk management strategies.",
+        "Alfred Jones (52, widower, about $1,000,000 net worth excluding his house, spread over 11 institutions) wants a comfortable retirement and a significant legacy for his two children.",
+        "First step: the 'qualification' of Alfred's goals, i.e., clarifying and quantifying them. Second step: by dealing with one planner and one financial group he can assemble a comprehensive look at the value and mix of all his assets.",
+        "His plan would combine loss control (balanced portfolio, hedging strategies, tax planning) with loss financing (possibly life and disability insurance)."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Loss control reduces how often or how badly losses happen; loss financing decides who pays for them: you or an insurer.",
+    "EXAM TIP: Setting aside a savings fund to pay for a possible loss is loss financing (you absorb the loss), not loss control.",
+    "EXAM TIP: Goals must be quantified in dollars before financial and risk management strategies can be developed.",
+    "DID YOU KNOW? Canadians can expect a $750 billion windfall from aging relatives over the next decade (figure used in the course).",
+    "EXAM TIP: Five forces drove the shift to planning: demographics, households, the economy, the workplace and product proliferation.",
+    "DID YOU KNOW? Most people change jobs at least three times and often change careers at least once.",
+    "EXAM TIP: The self-employed need more advice because they lack an employer's safety net of health insurance and retirement benefits."
+  ],
+  "flashcards": [
+    {
+      "id": "c01-f001",
+      "topic": "Planning process",
+      "page": "1•3",
+      "front": "Financial planning (definition)",
+      "back": "The process of balancing current resources with current and future lifestyle goals, including current and expected future financial needs. It provides an orderly approach to developing a personal financial planning strategy."
+    },
+    {
+      "id": "c01-f002",
+      "topic": "Industry integration",
+      "page": "1•3",
+      "front": "What has integrated Canada's financial services marketplace since the mid-1990s?",
+      "back": "The breakdown of the barriers separating the four pillars of the Canadian financial system. Institutions can now supply every product and service a client needs and often become the client's single source of advice and products."
+    },
+    {
+      "id": "c01-f003",
+      "topic": "Planning process",
+      "page": "1•3",
+      "front": "Quantifying goals: the education fund example",
+      "back": "Goals must be restated in specific dollar values before strategies can be built. For an education fund you must know how many children are involved, how much each child's education will cost and when the money will be needed."
+    },
+    {
+      "id": "c01-f004",
+      "topic": "Risk analysis",
+      "page": "1•4",
+      "front": "Risk analysis and the potential risks matrix",
+      "back": "Risk analysis identifies and measures the client's risk exposures. Exact odds are rarely practical, so exposures are grouped by severity (low = unimportant, medium = important, high = critical) and frequency (low, medium, high) to reveal priorities."
+    },
+    {
+      "id": "c01-f005",
+      "topic": "Managing risk",
+      "page": "1•4",
+      "front": "Loss control vs loss financing",
+      "back": "Loss control: actions that reduce the frequency or severity (size) of potential losses. Loss financing: deciding who pays for a loss and how, either absorbing it yourself or buying insurance. The choice weighs cost, risk tolerance and financial goals."
+    },
+    {
+      "id": "c01-f006",
+      "topic": "Shift to planning",
+      "page": "1•5",
+      "front": "Five factors driving the shift from product sales to planning",
+      "back": "1) Demographic shifts (an aging population). 2) Changes in households. 3) Changing economic conditions. 4) Changes in the workplace. 5) Product proliferation."
+    },
+    {
+      "id": "c01-f007",
+      "topic": "Key numbers",
+      "page": "1•6",
+      "front": "Expected wealth transfer from aging relatives (course figure)",
+      "back": "About $750 billion that Canadians can expect to receive from aging relatives over the next decade, with a huge impact on estate planning and on inheritors' need for wealth management and risk protection."
+    },
+    {
+      "id": "c01-f008",
+      "topic": "Key numbers",
+      "page": "1•6",
+      "front": "Seniors requiring care: projected trend",
+      "back": "The number of seniors requiring care is projected to double between 2012 and 2031, increasing the need to plan for adequate care and for financial resources if the caregiver were to die."
+    },
+    {
+      "id": "c01-f009",
+      "topic": "Changes in households",
+      "page": "1•6",
+      "front": "Dual-income households: the second income then vs now",
+      "back": "Historically: used for exceptional purchases such as vacations and luxury items. Today: a necessity for most households, though some use it for wealth accumulation. The household must be protected against losing either income to disability or premature death."
+    },
+    {
+      "id": "c01-f010",
+      "topic": "Key numbers",
+      "page": "1•7",
+      "front": "Job and career changes over a typical working life",
+      "back": "Most people change jobs at least three times and often change careers at least once; working for one employer for most of a career is now less and less common."
+    },
+    {
+      "id": "c01-f011",
+      "topic": "Workplace changes",
+      "page": "1•7",
+      "front": "Why the self-employed have a greater need for financial advice",
+      "back": "They lack the safety net of a large corporate employer providing health insurance, retirement benefits and financial stability, so they are more vulnerable to the consequences of potential losses."
+    },
+    {
+      "id": "c01-f012",
+      "topic": "Product proliferation",
+      "page": "1•7",
+      "front": "Product proliferation: cause and effect",
+      "back": "Deregulation of the financial services industry led each institution to offer a wide assortment of products. The result is client confusion, so many wealthy clients and high income-earners need guidance and planning advice."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c01-q001",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Planning process",
+      "page": "1•3",
+      "q": "How does the course define financial planning?",
+      "options": [
+        "Consolidating all of a client's investments within one institution",
+        "Transferring all of a client's risk exposures to insurance companies",
+        "Choosing the highest-returning investment products for a client's current savings",
+        "Balancing current resources with current and future lifestyle goals and needs"
+      ],
+      "answer": 3,
+      "explain": "Financial planning balances current resources against current and future lifestyle goals, including current and expected future financial needs. Consolidation and insurance may be part of a plan, but they are not the definition."
+    },
+    {
+      "id": "c01-q002",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Industry integration",
+      "page": "1•3",
+      "q": "What has led to the integration of the Canadian financial services marketplace since the mid-1990s?",
+      "options": [
+        "The merger of every major bank with a life insurance company",
+        "A new rule requiring every client to have a financial plan",
+        "The breakdown of the barriers that separated the four pillars",
+        "The creation of a single national financial regulator"
+      ],
+      "answer": 2,
+      "explain": "The barriers separating the four pillars of the Canadian financial system broke down, so one institution can now supply all the products and services a client needs and often becomes the client's single source of advice."
+    },
+    {
+      "id": "c01-q003",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Planning process",
+      "page": "1•3",
+      "q": "Hugo and Mina tell their planner they 'want to help the kids with university someday.' According to the planning process, what must happen before an education-funding strategy can be developed?",
+      "options": [
+        "The couple must first buy enough life insurance to cover the full cost of a university degree",
+        "The planner must select the specific investment product to recommend for the fund",
+        "The goal must be quantified: how many children, the cost for each and when it is needed",
+        "The couple must pay off their mortgage so that a second income is free for savings"
+      ],
+      "answer": 2,
+      "explain": "Goals must be restated in specific dollar values before proper financial and risk management strategies can be developed. For an education fund that means knowing how many children, how much each needs and when the money is needed."
+    },
+    {
+      "id": "c01-q004",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Risk analysis",
+      "page": "1•4",
+      "q": "A risk analysis is only useful if the planner can state the exact probability and dollar size of each potential loss.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Exact figures (such as 'a 12% chance of a $27,000 loss') are often impossible or impractical, but a general categorization of exposures, such as a potential risks matrix, still benefits the client."
+    },
+    {
+      "id": "c01-q005",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Risk analysis",
+      "page": "1•4",
+      "q": "What is the main purpose of grouping a client's exposures in a potential risks matrix of loss severity versus frequency?",
+      "options": [
+        "To calculate the exact premium the client should pay for each policy",
+        "To identify which of the loss exposures are priorities requiring attention",
+        "To determine which exposures the law requires the client to insure",
+        "To show that every low-severity exposure can be ignored by the planner"
+      ],
+      "answer": 1,
+      "explain": "Sorting exposures by severity (unimportant, important, critical) and by frequency lets the client and advisor see which loss exposures are priorities needing attention. The matrix does not price policies or set legal requirements."
+    },
+    {
+      "id": "c01-q006",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Managing risk",
+      "page": "1•4",
+      "q": "In the course, 'loss control' means…",
+      "options": [
+        "taking action to reduce the frequency or severity of potential losses",
+        "buying insurance so that an insurer pays when a loss occurs",
+        "setting aside savings to absorb a loss if it ever happens",
+        "deciding who will pay for a potential loss and how it will be paid for"
+      ],
+      "answer": 0,
+      "explain": "Loss control acts on the loss itself, reducing how often it happens or how large it is. Deciding who pays, whether by absorbing the loss through savings or by buying insurance, is loss financing."
+    },
+    {
+      "id": "c01-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Managing risk",
+      "page": "1•4",
+      "q": "Which of the following actions is an example of loss financing rather than loss control?",
+      "options": [
+        "Building a savings fund to cover household bills if an earner becomes disabled",
+        "Moving cans of paint thinner away from the furnace in a basement workshop",
+        "Rebalancing an investment portfolio to reduce the likely size of potential losses",
+        "Installing a sprinkler system that puts out a fire before it can spread"
+      ],
+      "answer": 0,
+      "explain": "A fund that pays the bills if a loss occurs decides who pays (the client), so it is loss financing by self-funding. Separating flammables and installing sprinklers cut frequency or severity, and the course treats a balanced portfolio as loss control."
+    },
+    {
+      "id": "c01-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Managing risk",
+      "page": "1•4",
+      "q": "How does the course describe the role of insurance relative to a client's savings and investment programs?",
+      "options": [
+        "A speculative investment that can produce gains as well as losses",
+        "A final step that is needed only once all of the client's savings goals are met",
+        "A complementary wealth preservation tool protecting accumulated resources",
+        "A substitute that removes the need for a separate savings program"
+      ],
+      "answer": 2,
+      "explain": "Insurance complements savings and investing: by transferring risk exposure to insurers it protects the current and future value of the client's accumulated resources, so unmanaged risks cannot ruin the plan."
+    },
+    {
+      "id": "c01-q009",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Shift to planning",
+      "page": "1•5",
+      "q": "Which of the following is NOT one of the factors the course links to the shift toward financial planning and wealth management?",
+      "options": [
+        "Greater job security with a single lifelong employer",
+        "Demographic shifts such as an aging population",
+        "Changes in the makeup of Canadian households",
+        "The proliferation of financial products and services"
+      ],
+      "answer": 0,
+      "explain": "The five drivers are demographic shifts, changes in households, changing economic conditions, changes in the workplace and product proliferation. Job security has actually declined: most people change jobs at least three times."
+    },
+    {
+      "id": "c01-q010",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Demographic shifts",
+      "page": "1•5",
+      "q": "Why does an aging Canadian population put pressure on individuals to become more financially self-sufficient?",
+      "options": [
+        "Older Canadians are no longer eligible for most government programs",
+        "Fewer workers will be funding benefits for a growing retired population",
+        "Immigration has stopped adding working-age people to the population",
+        "Insurers will no longer issue new policies to people approaching retirement age"
+      ],
+      "answer": 1,
+      "explain": "As the population ages, government programs become less able to carry the financial burden because fewer workers fund benefits for more retirees. Immigration policies may curtail the aging trend; they have not stopped it."
+    },
+    {
+      "id": "c01-q011",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Key numbers",
+      "page": "1•6",
+      "q": "About how large a windfall can Canadians expect to receive from aging relatives over the next decade (figure used in the course)?",
+      "options": [
+        "$750 billion",
+        "$1.5 trillion",
+        "$250 billion",
+        "$75 billion"
+      ],
+      "answer": 0,
+      "explain": "The course cites a potential $750 billion transfer from parents and other aging relatives over the next decade, with a huge impact on estate planning and on inheritors' need for wealth management and risk protection."
+    },
+    {
+      "id": "c01-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Changes in households",
+      "page": "1•6",
+      "q": "Given high rates of family breakdown and reformation, what does the course say requires substantial care in life insurance?",
+      "options": [
+        "Naming and changing beneficiaries",
+        "Picking the insurer with the lowest premium",
+        "Selecting the policy's investment options",
+        "Choosing the length of the premium period"
+      ],
+      "answer": 0,
+      "explain": "With household structures changing, beneficiary designations must be made and updated carefully, because the insurance proceeds may represent a significant transfer of wealth to the beneficiaries."
+    },
+    {
+      "id": "c01-q013",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Changes in households",
+      "page": "1•6",
+      "q": "Historically, dual-income households tended to use the second income for exceptional purchases such as vacations, whereas most now find it a necessity.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The second income once paid for extras such as vacations and luxury items. Today most dual-income households need it to live, and some use it to accumulate wealth."
+    },
+    {
+      "id": "c01-q014",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Changes in households",
+      "page": "1•6",
+      "q": "Priya and Dev both work full time and need both salaries to cover their mortgage and daily expenses. Which planning need does the course stress for a household like theirs?",
+      "options": [
+        "Insuring only the higher earner, since the second income is really just a bonus",
+        "Relying on government programs to replace either income if it is ever lost",
+        "Directing the second income mainly toward vacations, travel and other luxury purchases",
+        "Protecting against the loss of either income through disability or premature death"
+      ],
+      "answer": 3,
+      "explain": "Because the household depends on both incomes, losing either one through disability or premature death is a serious risk; life and disability insurance help survivors meet their obligations. Spending the second income on extras was the historical pattern."
+    },
+    {
+      "id": "c01-q015",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Economic environment",
+      "page": "1•7",
+      "q": "Gérard retired decades ago on a portfolio of long-term government and corporate bonds and lived comfortably. His daughter wants to copy that plan exactly. What does the course suggest?",
+      "options": [
+        "She can rely on government benefits, which have been expanded to fill any shortfall",
+        "She should avoid all market risk by holding only cash until the day she retires",
+        "With fluctuating rates and volatile markets, she may need more risk to earn an adequate return",
+        "The plan still works, because long-term bonds have always assured a comfortable retirement income"
+      ],
+      "answer": 2,
+      "explain": "That strategy worked when interest rates were high and relatively stable. With fluctuating rates and a volatile stock market it is no longer appropriate, and consumers now recognize they must assume more risk to earn an adequate return."
+    },
+    {
+      "id": "c01-q016",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Workplace changes",
+      "page": "1•7",
+      "q": "After 15 years at a large engineering firm, Sophie leaves to open her own consulting practice. Why does the course say people like Sophie have a greater need for competent financial advice?",
+      "options": [
+        "Business owners nearly always earn less than comparable salaried employees",
+        "Self-employed people are shut out of most of the government programs that employees use",
+        "Her business income can no longer be protected by any form of insurance",
+        "She has lost an employer's safety net of health insurance and retirement benefits"
+      ],
+      "answer": 3,
+      "explain": "With job security less common, more people are self-employed. Without a large employer providing health insurance, retirement benefits and financial stability, they are more exposed to the consequences of losses and need competent advisors."
+    },
+    {
+      "id": "c01-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Product proliferation",
+      "page": "1•7",
+      "q": "According to the course, what has deregulation of the financial services industry contributed to, and with what result?",
+      "options": [
+        "Higher product prices, which has reduced demand for advice",
+        "Product proliferation, which has contributed to client confusion",
+        "Fewer products, which has made comparison shopping simple",
+        "Fewer providers, which has limited clients' choice of advisor"
+      ],
+      "answer": 1,
+      "explain": "Deregulation led each institution to offer a wide assortment of products, from a large number of companies. That environment contributes to client confusion, so many wealthy clients and high earners need planning advice."
+    },
+    {
+      "id": "c01-q018",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Summary",
+      "page": "1•8",
+      "q": "The course concludes that the forces reshaping financial services are shifting clients' emphasis away from wealth preservation and toward debt reduction.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False, it is the reverse. The emphasis is shifting from debt reduction and wealth accumulation to wealth preservation, which heightens the need for risk management strategies to help clients protect their wealth."
+    },
+    {
+      "id": "c01-q019",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Alfred Jones scenario",
+      "page": "1•8",
+      "q": "Planner Anna meets Alfred Jones (52, widower, about $1,000,000 spread across 11 institutions), who wants a comfortable retirement and a legacy for his two children. According to the scenario follow-up, what is the FIRST step toward an effective plan?",
+      "options": [
+        "Buying life and disability insurance to protect his two children",
+        "Consolidating all of his assets with a single financial institution",
+        "Clarifying and quantifying his goals: a comfortable retirement and a legacy",
+        "Choosing investments that maximize the return on his whole $1,000,000 portfolio"
+      ],
+      "answer": 2,
+      "explain": "The follow-up names the first step as the 'qualification' of Alfred's goals (a comfortable retirement and passing assets to his children), that is, pinning them down and putting numbers on them. Assembling a comprehensive view of all his assets, made easy by dealing with one planner and one financial group, is the second step."
+    }
+  ]
+}

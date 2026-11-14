@@ -1,0 +1,1487 @@
+{
+  "chapter": 7,
+  "title": "Retirement Management",
+  "objectives": [
+    "Assist clients to identify the sources of retirement income available to them.",
+    "Identify the various options available when an RRSP must be liquidated.",
+    "Determine the amount of retirement income offered by a simple early retirement package."
+  ],
+  "guide": [
+    {
+      "heading": "Managing income needs in retirement",
+      "page": "7•3",
+      "points": [
+        "Government pensions (CPP/QPP, OAS) and registered pension plans pay automatically, usually monthly. Discretionary savings (RRSPs, other investments) must be managed to produce the income needed.",
+        "There is no single 'best' solution: it depends on the client's objectives, personal situation at retirement and the financial environment at that time.",
+        "Survivor gap: often only 50% to 66.7% of a deceased spouse's pension continues, and a single person does not live half as cheaply as a couple. Discretionary savings are not cut at death, so they cushion the gap.",
+        "Joe and Maria: Joe's pension is $4,000 a month; Maria needs 75% ($3,000) but the plan pays 2/3 ($2,667), a $333 monthly shortfall.",
+        "Mainly affects couples relying on one spouse's pension (historically women, who live longer with less pension). Usually not singles, professional couples with their own plans, or the self-employed."
+      ]
+    },
+    {
+      "heading": "Covering the survivor gap: savings, insurance, government programs",
+      "page": "7•4",
+      "points": [
+        "RRSP decisions must be made by age 71 at the latest. The risk of having too little has three solutions, each with a cost: self-insurance, life insurance, and tax-sheltered annuities or RRIFs.",
+        "Self-insurance (extra savings): cost is foregone current consumption; capital needed is hard to estimate, there is no risk-pooling, and the estate may end up larger than intended. May be the only option if insurance is unobtainable.",
+        "Life insurance on the spouse whose death causes the drop: proceeds buy an annuity covering the gap. If started after 65, only permanent policies are available, so it is very expensive.",
+        "Insuring the whole survivor pension to take a higher no-guarantee annuity: premiums come from taxable annuity income (higher bracket) while proceeds are tax-free to the lower-bracket survivor, so lots of tax up front for less benefit later.",
+        "Joe: $5,000 a month with no survivor benefit vs $4,000 with a 2/3 survivor benefit; the extra $1,000 could pay for term-to-100 insurance.",
+        "Government programs: OAS and GIS give some 'insurance'; CPP/QPP survivor benefits are about 60% of the deceased spouse's pension, plus a $2,500 death benefit for deaths after Dec 31, 2018.",
+        "Every option has risks: a survivor benefit lowers income and may never pay if the spouse dies first; no survivor benefit leaves the spouse exposed; insurance needs depend on the pensioner's date of death, rates then and the survivor's life expectancy."
+      ]
+    },
+    {
+      "heading": "Tax-sheltered rollovers and RRSP cash withdrawals",
+      "page": "7•6",
+      "points": [
+        "A rollover is a transfer with no immediate tax consequences under the Income Tax Act, so funds moved into an annuity or RRIF are taxed only when paid out.",
+        "Eligible: an RRSP before the end of the year the annuitant turns 71 (or it is deemed surrendered); a DC pension balance at retirement (annuities, sometimes a RRIF if plan terms allow); a DPSP balance (annuity, or paid out in 10 annual instalments).",
+        "A defined benefit plan may occasionally offer payment alternatives with insurance options. A RRIF is effectively a special type of annuity.",
+        "Cash withdrawals are the simplest maturity option. To be tax-effective they should start several years before 71 and be kept below the top marginal rate.",
+        "Terry, 60, $90,000 RRSP, $30,000 other income: about $10,000 a year from now is taxed at about 15% federally, vs 20.5% and 26% if the plan is collapsed at 71.",
+        "Not practical for older clients, large RRSP balances, or clients who want to keep funds tax-deferred as long as possible."
+      ]
+    },
+    {
+      "heading": "Annuities: basics, taxation and clientele",
+      "page": "7•7",
+      "points": [
+        "An annuity converts an existing sum of capital into guaranteed periodic payments for a set term or for life; it is not a revenue-generating investment like a bond. Issued mainly by life insurers (trust companies too, for term certain).",
+        "Forms: term certain, life, and joint and survivorship. Usually paid monthly (annual, semi-annual or quarterly on request); the amount never varies unless the annuity is indexed.",
+        "Registered funds (RRSP, RRIF, RPP, DPSP, locked-in): the whole payment, capital and interest, is taxable. Non-registered (after-tax) funds: only the interest portion is taxable.",
+        "Insurers use separate mortality tables for annuitants, who live longer on average. Cash-flow analogy: a mortgage loan plus an insurance contract.",
+        "Clients: people of modest means protecting their living standard for life, and people avoiding tax on a lump sum in one year (Helene, 71: about 45% if her $200,000 RRSP is collapsed vs about 36% on $20,000 a year).",
+        "Error to avoid: the client loses control of the capital, which shrinks with each payment, so an annuity is not like a bank deposit.",
+        "Insurance element: the insurer 'wins' if the annuitant dies early and 'loses' if he or she lives long; pooling means a life annuitant can never outlive the income."
+      ]
+    },
+    {
+      "heading": "Registered annuity options",
+      "page": "7•9",
+      "points": [
+        "Straight-life: level payments until death, nothing for the estate; the highest income of any life annuity, but unsuitable if survivors depend on it.",
+        "Life with guaranteed term: on death within the guarantee, a spouse may continue the payments or take their present value; any other beneficiary gets the commuted lump sum. Death after the guarantee ends: nothing more is paid.",
+        "Guarantee periods: 5, 10, 15, 20 or 25 years, not beyond age 90 of the annuitant (or the spouse, if younger). The longer the guarantee, the lower the income.",
+        "Joint life and last survivor: pays until the second death, equal or reduced for the survivor, with an optional guarantee; pays less than straight-life, especially if one spouse is a younger woman.",
+        "Substandard health annuity: higher payout with proven reduced life expectancy, though a guaranteed annuity or a RRIF (which keeps the remaining principal) may suit better.",
+        "Term certain: level payments to age 90 of the annuitant or spouse, then stops (must end at 90 to be an RRSP maturity option); no insurance; on early death, continued to a spouse or commuted. Several staggered contracts can vary income or be de-registered for cash.",
+        "Indexed annuities rise by up to 4% a year but start lower. Annuity brokers compare issuers' rates and are paid by the issuers, so the service costs the client nothing."
+      ]
+    },
+    {
+      "heading": "Registered retirement income funds (RRIFs)",
+      "page": "7•11",
+      "points": [
+        "An investment fund receiving RRSP proceeds, with a prescribed minimum withdrawal each year. No insurance, flexible investments (same qualified-investment rules as RRSPs), and only withdrawals are taxed. Can be set up at any time.",
+        "Minimum = % of the Jan 1 market value: under 71, 1 / (90 - age); 71: 5.28%; 80: 6.82%; 85: 8.51%; 90: 11.92%; 95 or older: 20% (Appendix A). No maximum age. A younger spouse's age may be used to lower the minimum.",
+        "The first withdrawal can wait until the end of the year after the RRIF is set up. Marty, 71, $250,000: next year's minimum is 5.28%, or $13,200.",
+        "Withdraw only the minimum to protect against inflation, don't deplete it too quickly, and name a beneficiary so proceeds bypass the estate, creditors and (in common-law provinces) probate fees.",
+        "The holder keeps control: can switch RRIFs or self-administer. Converting with the same carrier moves self-directed and mutual fund holdings without selling. RRIF to annuity is allowed; annuity to RRIF is not (except an annuity inside an RRSP).",
+        "At death: a spouse or partner beneficiary can roll it tax-free to an RRSP, RRIF or life annuity; other beneficiaries get a lump sum taxable to the deceased's estate."
+      ]
+    },
+    {
+      "heading": "Life income funds (LIFs)",
+      "page": "7•13",
+      "points": [
+        "Introduced by Quebec as an alternative to a life annuity; now allowed in most provinces. Before LIFs, locked-in pension money, locked-in RRSPs and LIRAs could only buy a life annuity, possibly at low rates (Abdul).",
+        "Funds come from a pension plan directly or via a LIRA (provincial) or a locked-in RRSP (federal); the LIF follows the jurisdiction of the originating RPP, so rules differ.",
+        "Old federal rule: convert to a life annuity by the end of the year the holder turns 80 (not required in Manitoba or Quebec). Now federally regulated funds may stay in the LIF past 80.",
+        "Usually available no earlier than 10 years before the plan's normal retirement age, typically 55. Law sets a minimum and a maximum, calculated each January from age, balance and a yearly base rate (spouse's age may be used).",
+        "Income may start at once but must begin by the end of the year after the LIF is set up. Withdrawals are taxable; withholding usually applies only above the minimum. After a LIF-to-LIF transfer, the new LIF's maximum is zero that year.",
+        "At death: a spouse can roll it over tax-deferred (possibly no longer locked in, by jurisdiction); for other beneficiaries it is taxable to the deceased on the terminal return."
+      ]
+    },
+    {
+      "heading": "De-registration, divorce and registered plans at death",
+      "page": "7•14",
+      "points": [
+        "An RRSP not converted by the end of the year the annuitant turns 71 may be deregistered the following year, and its full value is taxed for that year (Moe: $45,000 added to this year's income).",
+        "On divorce or legal separation, RRSP, RRIF or LIF value can be divided, with the partner's share rolled tax-free into his or her own RRSP, RRIF or LIF.",
+        "RRSP at death: fair market value is income of the deceased. A named beneficiary keeps it out of the estate (no probate fees where applicable). Spouse, partner or dependent infirm child: taxed to them as a refund of premiums; can roll to their RRSP/RRIF.",
+        "RRIF to a spouse (designated benefit): continue the payments, set up a new RRIF, roll to his or her RRSP, or take it all into income. Any unpaid minimum for the year of death is taxed to the spouse, not rolled over.",
+        "RRIF to anyone else (not a dependent child): FMV is added to the deceased's income, and the deceased and beneficiary are jointly liable for the tax. No beneficiary: lump sum to the estate, taxed on the terminal return. LIF/LRIF: same rules."
+      ]
+    },
+    {
+      "heading": "Pension income splitting",
+      "page": "7•15",
+      "points": [
+        "Allocate up to one-half of eligible pension income to a resident spouse or common-law partner. It is for tax only: the pension is still paid to the pensioner, so the administrator is not notified.",
+        "The couple must live together on December 31 and both be Canadian residents for the year. Both must agree and file form T1032 (Joint Election to Split Pension Income) with their returns; the amount can change every year.",
+        "Eligible: income qualifying for the pension income amount: taxable part of pension annuities; over 65, registered and non-registered annuities and RRIF/LIF payments; under 65, RRSP/RRIF/LIF payments due to a former spouse's death.",
+        "OAS, CPP and QPP never qualify, though CPP/QPP have their own pension-sharing rules. Withholding tax is allocated in the same ratio as the income.",
+        "Thomas and Gerri: allocating $22,500 (50% of $45,000) saves Thomas $9,000 at 40% and costs Gerri $5,400 at 24%, a net $3,600, plus $480 because $2,000 qualifies her for the pension income credit."
+      ]
+    },
+    {
+      "heading": "Immediate vs deferred; prescribed vs non-prescribed annuities",
+      "page": "7•16",
+      "points": [
+        "Immediate annuity: payments start within the first payment period (one month later for monthly income). Deferred: income starts later, with interest credited meanwhile, e.g., to lock in today's rate if rates are expected to fall.",
+        "Once bought, an annuity cannot be changed even if rates rise. Insurer tables are deliberately conservative (a man of 69: 14.2 more years), so quoting a 'return' over life expectancy is invalid.",
+        "Women get less: $25,000 at 65 with a 10-year guarantee pays about $160 a month for a woman vs $180 for a man; a man with a 15-year guarantee gets about $165. Straight-life suits annuitants with no dependants who need maximum income.",
+        "Non-prescribed: the interest portion is large early, then declines like a mortgage's; loads and commissions are deductible in the first policy year. Income accrued on deferred contracts is reported annually (gain over ACB).",
+        "Prescribed: capital is spread evenly over the term or life expectancy, so taxable income is level. Freida's $100,000: $6,666.67 a year over a 15-year term, or $4,424.78 over a 22.6-year life expectancy, however long she lives.",
+        "Total income reported is the same either way; only the timing differs. Conditions: equal payments (J&S may drop for the survivor), payments start in the year of purchase, term or guarantee not past the 91st birthday, owner = annuitant."
+      ]
+    },
+    {
+      "heading": "Investment options and reverse mortgages",
+      "page": "7•19",
+      "points": [
+        "Annuities allow no self-directed investing (RRIFs and LIFs do). Safety comes first in retirement: shift from equities to blue-chip preferreds, government bonds and guaranteed debt, and choose a sound, reputable annuity issuer.",
+        "Reverse mortgages require only clear title to a home; they suit seniors who are 'house rich and cash poor'.",
+        "Reverse annuity mortgage: borrow (usually up to 50% of the home's value) to buy an annuity; the amount depends on age, sex, marital status and appraisal. Net income = annuity minus mortgage payment (Zhou: $1,025.82 - $447.29 = $578.53).",
+        "The mortgage payment is smaller despite a higher rate because it is amortized longer. Terms must coincide; some plans pay for life, some provinces cap them at 5 years. CRA: the payments are tax-free.",
+        "Straight reverse mortgage: negative amortization; no payments until the house is sold. For the lender it is the future value of an annuity (Nans: $467.50 a month for 10 years at 11% grows to $100,000).",
+        "Drawbacks: legal, application and closing costs; uncertain home values, rates and willingness to sell; debt may exceed the home's value (the lender bears it); a smaller estate, so get independent legal advice. Joint last-to-die term-to-100 insurance can offset it."
+      ]
+    },
+    {
+      "heading": "Cash-value life insurance and early retirement packages",
+      "page": "7•21",
+      "points": [
+        "Cash value in an exempt policy (e.g., universal life) can supplement retirement income without surrendering the coverage.",
+        "Policy loan up to the ACB: not a disposition, so a tax-free refund of capital; any excess is taxable. Bank loan: usually up to 90% of the cash surrender value, tax-free, with the policy pledged; cost is interest plus capital.",
+        "Some bank-insurer alliances accrue all interest and principal until death, repaid from the death benefit. Any unpaid loan reduces the death benefit (Jean: $1,000,000 to $730,000, less interest).",
+        "Forced surrender: cash surrender value minus ACB is taxable (T5) while the cash is pledged. Jean: $150,000 gain, about $70,000 of tax, only $30,000 net, so about $40,000 short.",
+        "Early retirement: first get a detailed evaluation from the person in charge of the program; senior managers with a pre-determined remuneration envelope should see a planner with retirement expertise; consult a tax expert.",
+        "A lump-sum retirement payment paid to the employee is income with tax withheld at the marginal rate, a cash gap until the RRSP deduction is claimed; deposited directly into the RRSP, no withholding applies."
+      ]
+    },
+    {
+      "heading": "Choosing a retirement maturity option",
+      "page": "7•24",
+      "points": [
+        "Three possibly conflicting objectives: protect the surviving spouse, get the highest income from discretionary sources (competitive quotes), and leave an estate.",
+        "Single with no children: straight-life is almost always best, if bought when interest rates are high. Ample-income family wanting an estate: guaranteed annuities, term certain or a RRIF; the RRIF is probably best (lower payout, more deferral).",
+        "Limited assets, both spouses vulnerable: safest is joint and last survivor annuities or a RRIF; term certain annuities pay more but are riskier. OAS + GIS give a safety net of about $18,000 a year at most.",
+        "One-earner couple: spouse 2's (spousal) RRSP into a straight-life annuity or RRIF; spouse 1's RRSP/DPSP into a term certain or RRIF on spouse 2's age (more income, more risk) or a joint life annuity at full benefits (safest).",
+        "Health matters: if one spouse is in poor health, pensions that depend on his or her survival are less certain.",
+        "Four tax principles: postpone selling non-registered assets with capital gains; postpone registered withdrawals; equalize spouses' taxable incomes; use non-registered assets before registered ones."
+      ]
+    },
+    {
+      "heading": "When to annuitize, and the Gitano scenario",
+      "page": "7•25",
+      "points": [
+        "Maturity options can be chosen at any time, but employer pension options usually must be chosen at retirement.",
+        "Considerations: 1) waiting keeps a valuable option open (e.g., a spouse dies before 71); 2) tax deferral builds assets faster; 3) annuitize when rates are high, but forecasting is risky. Under 71, unregistered annuities can be bought inside the RRSP.",
+        "No minimum age for RRSPs or RRIFs; LIRAs, LIFs and LRIFs generally not before 55. Basing a RRIF, LIF or LRIF on a younger spouse's age lowers the minimum (and the maximum, where one applies): Mark, 71: 5.28% vs about 4.17% on his wife's 66.",
+        "Usually best to delay maturity until 71 (or later with a younger spouse) if other income covers the target lifestyle.",
+        "Gitano: match lifestyle to income (delay or lower sights if short; delay only helps if benefits grow faster than inflation), take a pension guaranteeing his wife an ongoing pension, and use a RRIF on her age at the minimum, shifting to secure assets.",
+        "Gitano should probably avoid a reverse mortgage unless he badly needs income, especially if he wants to leave an estate to his children."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Age 90 caps registered term certain annuities and guarantees; the 91st birthday caps a prescribed annuity's term or guarantee. RRIFs have no age limit.",
+    "EXAM TIP: RRIF minimum before 71 = 1 / (90 - age). At 71 it is 5.28%, rising to 20% at 95. Using a younger spouse's age lowers it.",
+    "EXAM TIP: Annuity bought with RRSP money? The whole payment is taxable. Bought with after-tax savings? Only the interest portion is taxed.",
+    "DID YOU KNOW? Quebec introduced the life income fund (LIF) as an alternative to buying a life annuity with locked-in pension money.",
+    "EXAM TIP: OAS, CPP and QPP never qualify for pension income splitting. RRIF and LIF payments qualify over age 65 (earlier on a former spouse's death).",
+    "DID YOU KNOW? Reverse annuity mortgage income is tax-free: the CRA ruled that an annuity bought with mortgage proceeds pays non-taxable income.",
+    "EXAM TIP: Prescribed and non-prescribed annuities report the same total income; only the timing differs (level vs declining).",
+    "EXAM TIP: A spouse can continue a guaranteed annuity's payments or take a lump sum; any other beneficiary gets the commuted (present) value.",
+    "DID YOU KNOW? Annuity brokers are paid by the issuers, so shopping annuity rates through one costs the client nothing.",
+    "EXAM TIP: Policy loans are tax-free up to the ACB. On a surrender, cash value minus ACB is taxable, even if a bank holds the policy as collateral.",
+    "EXAM TIP: An RRSP not converted by the end of the year you turn 71 is deregistered the next year, and its full value is taxed in that year."
+  ],
+  "flashcards": [
+    {
+      "id": "c07-f001",
+      "topic": "Survivor income gap",
+      "page": "7•3",
+      "front": "Typical survivor share of a deceased spouse's employer pension",
+      "back": "Usually 50% to 66.7%. Since a single person doesn't live half as cheaply as a couple, the survivor can face a gap between income and needs; discretionary savings such as RRSPs are not reduced at death and help cushion it."
+    },
+    {
+      "id": "c07-f002",
+      "topic": "Managing funds at retirement",
+      "page": "7•4",
+      "front": "Three solutions to the risk of too little retirement income for a survivor",
+      "back": "1) Self-insurance through extra discretionary savings (cost: foregone current consumption); 2) life insurance on the spouse whose death would cut income; 3) tax-sheltered annuities or RRIFs funded by rollovers."
+    },
+    {
+      "id": "c07-f003",
+      "topic": "Managing funds at retirement",
+      "page": "7•5",
+      "front": "Insuring a survivor pension gap after age 65",
+      "back": "Very expensive, because only permanent life policies are available at that age. The death benefit should be enough to buy an annuity covering the gap between the pension before death and the reduced survivor pension."
+    },
+    {
+      "id": "c07-f004",
+      "topic": "Pension survivor options",
+      "page": "7•6",
+      "front": "Three unknowns in sizing insurance for a survivor's pension",
+      "back": "1) The date the pensioner dies; 2) the interest rate available then to buy the survivor's annuity; 3) the survivor's life expectancy. None can be known when the insurance is bought."
+    },
+    {
+      "id": "c07-f005",
+      "topic": "Key numbers",
+      "page": "7•5",
+      "front": "CPP/QPP benefits at a contributor's death (course figures)",
+      "back": "A survivor pension of about 60% of the deceased spouse's pension, plus a $2,500 lump-sum death benefit for deaths after December 31, 2018."
+    },
+    {
+      "id": "c07-f006",
+      "topic": "Rollovers",
+      "page": "7•6",
+      "front": "Rollover: meaning, and what can be rolled into an annuity or RRIF",
+      "back": "A transfer with no immediate tax under the Income Tax Act. Eligible: an RRSP before the end of the year the annuitant turns 71; a DC pension balance at retirement (annuities, sometimes a RRIF); a DPSP (annuity, or 10 annual instalments)."
+    },
+    {
+      "id": "c07-f007",
+      "topic": "Annuity basics",
+      "page": "7•7",
+      "front": "Annuity (definition)",
+      "back": "A contract converting an existing lump sum into guaranteed periodic payments for a set term or for life. Not a revenue-generating investment like a bond. Issued mainly by life insurers; trust companies also issue term-certain annuities."
+    },
+    {
+      "id": "c07-f008",
+      "topic": "Annuity basics",
+      "page": "7•7",
+      "front": "Annuity taxation: registered vs non-registered funds",
+      "back": "Registered funds (RRSP, RRIF, RPP, DPSP, locked-in): the whole payment, capital and interest, is taxable. Non-registered after-tax funds: only the interest portion is taxable; the capital portion is tax-free."
+    },
+    {
+      "id": "c07-f009",
+      "topic": "Annuity basics",
+      "page": "7•8",
+      "front": "Most effective use of a registered annuity",
+      "back": "Sheltering a lump sum, such as an RRSP that must mature at 71, from being taxed all in one year. Income spread over many years stays in lower brackets: Helene pays about 36% instead of about 45%."
+    },
+    {
+      "id": "c07-f010",
+      "topic": "Annuity options",
+      "page": "7•9",
+      "front": "Straight-life annuity",
+      "back": "No-frills life annuity: level payments until death, nothing left for the estate. Pays the highest income of any life annuity; generally unsuitable if survivors depend on the annuitant's assets."
+    },
+    {
+      "id": "c07-f011",
+      "topic": "Annuity options",
+      "page": "7•9",
+      "front": "Life annuity with a guaranteed term: death during the guarantee",
+      "back": "The rest of the guarantee goes to the beneficiary or estate. A spouse may continue the payments or take their present value; any other beneficiary gets the commuted lump sum. Death after the guarantee: nothing more."
+    },
+    {
+      "id": "c07-f012",
+      "topic": "Key numbers",
+      "page": "7•9",
+      "front": "Guarantee periods on a registered life annuity",
+      "back": "5, 10, 15, 20 or 25 years, but never beyond age 90 of the annuitant, or of the spouse or common-law partner if younger. The longer the guarantee, the lower the payments."
+    },
+    {
+      "id": "c07-f013",
+      "topic": "Annuity options",
+      "page": "7•9",
+      "front": "Joint life and last survivor annuity",
+      "back": "Pays through the lifetimes of two people (usually spouses): equal, or reduced after the first death, with an optional guarantee. Pays less than straight-life; much less if one spouse is a younger woman."
+    },
+    {
+      "id": "c07-f014",
+      "topic": "Annuity options",
+      "page": "7•10",
+      "front": "Substandard health annuity",
+      "back": "Pays more if the annuitant proves a reduced life expectancy. But a guaranteed-term annuity or a RRIF, which does not lose the remaining principal at death, may be more appropriate."
+    },
+    {
+      "id": "c07-f015",
+      "topic": "Annuity options",
+      "page": "7•10",
+      "front": "Registered term certain annuity",
+      "back": "Level payments to age 90 of the annuitant or spouse (annuitant's choice), then stops; it must end at 90 to be an RRSP maturity option. No insurance. On early death: continued to a spouse beneficiary or commuted to a lump sum."
+    },
+    {
+      "id": "c07-f016",
+      "topic": "Annuity options",
+      "page": "7•10",
+      "front": "Indexed annuity",
+      "back": "Payments rise by up to 4% a year, matching income to rising costs during inflation. Trade-off: early payments are lower than under a similar level-payment contract."
+    },
+    {
+      "id": "c07-f017",
+      "topic": "RRIFs",
+      "page": "7•11",
+      "front": "RRIF (registered retirement income fund)",
+      "back": "An investment fund receiving RRSP proceeds, from which a prescribed minimum must be withdrawn yearly. No insurance; flexible investments; growth stays tax-deferred and only withdrawals are taxed. Can be set up at any age."
+    },
+    {
+      "id": "c07-f018",
+      "topic": "RRIFs",
+      "page": "7•12",
+      "front": "RRIF minimum before age 71 (formula)",
+      "back": "1 divided by (90 minus age at the start of the year). Age 65: 1/25 = 4%; age 66: 1/24 = about 4.17%. The age of a younger spouse may be used instead, to lower the minimum."
+    },
+    {
+      "id": "c07-f019",
+      "topic": "Key numbers",
+      "page": "7•12",
+      "front": "Deadline for the first RRIF withdrawal",
+      "back": "By the end of the year after the calendar year the RRIF is set up (RRIF opened in 2018: first withdrawal by Dec 31, 2019). An RRSP matured at 71 therefore pays its first RRIF minimum by the end of the year the annuitant turns 72."
+    },
+    {
+      "id": "c07-f020",
+      "topic": "RRIFs",
+      "page": "7•12",
+      "front": "Converting an RRSP to a RRIF with the same carrier",
+      "back": "Self-directed RRSP investments, and mutual funds, can simply be transferred to the RRIF without being sold. The holder keeps control and can switch to another RRIF at his or her option."
+    },
+    {
+      "id": "c07-f021",
+      "topic": "Plans at death",
+      "page": "7•12",
+      "front": "Spouse as RRIF beneficiary: what he or she can do",
+      "back": "Roll the proceeds tax-free into an RRSP, RRIF or life annuity. As a designated benefit, the spouse can 1) continue the payments, 2) set up a new RRIF, 3) roll the assets to his or her own RRSP, or 4) take it all into income."
+    },
+    {
+      "id": "c07-f022",
+      "topic": "LIFs",
+      "page": "7•13",
+      "front": "Life income fund (LIF): origin and purpose",
+      "back": "Introduced by Quebec as an alternative to a life annuity; now allowed in most provinces. Before LIFs, locked-in pension money, locked-in RRSPs and LIRAs could only buy a life annuity, possibly at low interest rates."
+    },
+    {
+      "id": "c07-f023",
+      "topic": "LIFs",
+      "page": "7•13",
+      "front": "LIF jurisdiction",
+      "back": "Money comes from a pension plan directly or through a LIRA (provincial) or a locked-in RRSP (federal). The LIF follows the jurisdiction of the RPP the funds came from, so the rules vary by jurisdiction."
+    },
+    {
+      "id": "c07-f024",
+      "topic": "LIFs",
+      "page": "7•13",
+      "front": "LIF withdrawal limits",
+      "back": "The law sets a minimum and a maximum, calculated each January by the institution from the holder's age, the balance and a base rate set yearly (the spouse's age may be used). Some provinces allow extra withdrawals in certain cases."
+    },
+    {
+      "id": "c07-f025",
+      "topic": "Key numbers",
+      "page": "7•13",
+      "front": "Earliest LIF start, and deadline for the first LIF payment",
+      "back": "Generally no earlier than 10 years before the plan's normal retirement age, usually 55. Income may start at once but must begin by the end of the calendar year after the LIF is set up."
+    },
+    {
+      "id": "c07-f026",
+      "topic": "LIFs",
+      "page": "7•14",
+      "front": "LIF-to-LIF transfer during the year",
+      "back": "The maximum withdrawal from the new LIF is zero for the year of the transfer, so that year's withdrawal must come from the old LIF before the transfer. Withholding usually applies only to amounts above the minimum."
+    },
+    {
+      "id": "c07-f027",
+      "topic": "De-registration & divorce",
+      "page": "7•14",
+      "front": "RRSP not converted by the end of the year the annuitant turns 71",
+      "back": "It may be deregistered in the following year, and its full value is taxed to the annuitant for the year of de-registration (Moe turned 71 last year: his $45,000 is added to this year's income)."
+    },
+    {
+      "id": "c07-f028",
+      "topic": "Plans at death",
+      "page": "7•14",
+      "front": "RRSP at death: general rule and exception",
+      "back": "FMV is income of the deceased in the year of death. If the beneficiary is a spouse, common-law partner or child dependent due to a physical or mental impairment, it is taxed to them as a refund of premiums and can usually roll to their RRSP/RRIF."
+    },
+    {
+      "id": "c07-f029",
+      "topic": "Plans at death",
+      "page": "7•15",
+      "front": "RRIF left to a non-spouse, or with no beneficiary named",
+      "back": "Non-spouse (not a dependent child): FMV is added to the deceased's income for the year of death, and deceased and beneficiary are jointly liable for the tax. No beneficiary: lump sum to the estate, taxed on the terminal return. LIF/LRIF: same rules."
+    },
+    {
+      "id": "c07-f030",
+      "topic": "Plans at death",
+      "page": "7•15",
+      "front": "Unpaid RRIF minimum when the RRIF rolls to a spouse",
+      "back": "Any minimum for the year of death not yet paid is paid out and taxed to the surviving spouse; it is not rolled over. Payments made to the annuitant before death are taxed on his or her terminal return."
+    },
+    {
+      "id": "c07-f031",
+      "topic": "Pension income splitting",
+      "page": "7•15",
+      "front": "Pension income splitting: who and how much",
+      "back": "Up to one-half of eligible pension income, to a spouse or common-law partner living with the pensioner on December 31; both Canadian residents. Both must agree, filing form T1032 each year; the amount can change yearly."
+    },
+    {
+      "id": "c07-f032",
+      "topic": "Pension income splitting",
+      "page": "7•15",
+      "front": "Pension income splitting: what qualifies",
+      "back": "Income eligible for the pension income amount: taxable part of pension annuities; over 65, registered and non-registered annuities and RRIF/LIF payments; under 65, RRSP/RRIF/LIF payments due to a former spouse's death. Never OAS, CPP or QPP."
+    },
+    {
+      "id": "c07-f033",
+      "topic": "Pension income splitting",
+      "page": "7•16",
+      "front": "Withholding tax when pension income is split",
+      "back": "Allocated in the same ratio as the income (40% of the pension allocated = credit for 40% of the withholding). The pension is still paid to the pensioner, so the plan administrator need not be notified."
+    },
+    {
+      "id": "c07-f034",
+      "topic": "Immediate & deferred annuities",
+      "page": "7•16",
+      "front": "Immediate vs deferred life annuity",
+      "back": "Immediate: payments begin within the first payment period (a month later for monthly income). Deferred: income starts later and interest is credited meanwhile, raising income; useful to lock in a rate expected to fall."
+    },
+    {
+      "id": "c07-f035",
+      "topic": "Key numbers",
+      "page": "7•17",
+      "front": "Course illustration: $25,000 life annuity bought at age 65",
+      "back": "10-year guarantee: about $160 a month for a woman, $180 for a man. A man choosing a 15-year guarantee: about $165. Women get less because they live longer; longer guarantees reduce income."
+    },
+    {
+      "id": "c07-f036",
+      "topic": "Immediate & deferred annuities",
+      "page": "7•17",
+      "front": "Why a 'return' based on life expectancy tables misleads",
+      "back": "Insurers' tables are deliberately conservative, covering costs and the risk that life expectancy rises (a man of 69: 14.2 more years, to 83.2), so a return figure over that period is invalid. Annuity rates move with interest rates."
+    },
+    {
+      "id": "c07-f037",
+      "topic": "Prescribed annuities",
+      "page": "7•17",
+      "front": "Non-prescribed annuity: taxation",
+      "back": "Interest is computed like a mortgage: large early, declining over time. Loads and commissions are deductible from annuity income in the first policy year. Income accruing on a deferred contract is reported annually (gain over ACB)."
+    },
+    {
+      "id": "c07-f038",
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "front": "Prescribed annuity: taxation",
+      "back": "Capital is spread evenly over the term (term certain) or life expectancy (life annuity), so capital and taxable portions are level, even past life expectancy. Total income reported equals a non-prescribed annuity's; only timing differs."
+    },
+    {
+      "id": "c07-f039",
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "front": "Conditions for a prescribed annuity",
+      "back": "Equal payments (J&S may reduce for the survivor); payments start within the calendar year of purchase; guarantee or term not beyond the annuitant's 91st birthday (younger joint annuitant); owner and annuitant generally the same person."
+    },
+    {
+      "id": "c07-f040",
+      "topic": "Investment options",
+      "page": "7•19",
+      "front": "Investment priorities for retirees",
+      "back": "Safety first, since retirees can't easily return to work or economize: shift from equities to blue-chip preferreds, government bonds and guaranteed debt. Self-administered RRIF: capital security plus income. Annuity: a sound, reputable issuer."
+    },
+    {
+      "id": "c07-f041",
+      "topic": "Reverse mortgages",
+      "page": "7•19",
+      "front": "Reverse annuity mortgage (RAM)",
+      "back": "A mortgage (usually up to 50% of the home's value) used to buy an annuity; the senior gets the annuity minus the mortgage payment. Amount depends on age, sex, marital status and appraised value. Terms must coincide; payments are tax-free."
+    },
+    {
+      "id": "c07-f042",
+      "topic": "Reverse mortgages",
+      "page": "7•20",
+      "front": "Straight reverse mortgage",
+      "back": "Negative amortization: no payments until the house is sold; interest and principal compound to the end of the term. For the lender, the monthly advances are the future value of an annuity, repaid from the sale."
+    },
+    {
+      "id": "c07-f043",
+      "topic": "Reverse mortgages",
+      "page": "7•21",
+      "front": "Main drawbacks of reverse mortgages",
+      "back": "Legal, application and closing costs; uncertain house values, interest rates and willingness to sell; the debt may exceed the home's value (the lender bears that loss); a smaller estate, so get independent legal advice."
+    },
+    {
+      "id": "c07-f044",
+      "topic": "Cash-value life insurance",
+      "page": "7•21",
+      "front": "Policy loan up to the adjusted cost basis (ACB)",
+      "back": "Not a disposition, so it is a tax-free refund of capital, as a lump sum or periodic loans. Any amount borrowed above the ACB is taxable income. Cost: interest, which may accrue against the death benefit."
+    },
+    {
+      "id": "c07-f045",
+      "topic": "Cash-value life insurance",
+      "page": "7•22",
+      "front": "Bank (third-party) loan against a life insurance policy",
+      "back": "Usually up to 90% of the cash surrender value, tax-free, with the policy pledged as collateral. Cost: interest plus capital repayment. Some bank-insurer alliances defer all payments until death, repaid from the death benefit."
+    },
+    {
+      "id": "c07-f046",
+      "topic": "Cash-value life insurance",
+      "page": "7•23",
+      "front": "Risks of borrowing against a policy's cash value",
+      "back": "The death benefit drops by the loan plus interest (Jean: $1,000,000 to $730,000). On a forced surrender, cash value minus ACB is taxable (T5) while the cash is pledged: Jean faced about $70,000 of tax with $30,000 net."
+    },
+    {
+      "id": "c07-f047",
+      "topic": "Early retirement",
+      "page": "7•23",
+      "front": "First step when a client is offered early retirement",
+      "back": "Get detailed information and evaluations from the person in charge of the employer's program. Senior managers negotiating a pre-determined remuneration envelope should be referred to a planner with retirement expertise."
+    },
+    {
+      "id": "c07-f048",
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "front": "Three objectives when choosing a maturity option",
+      "back": "1) Protect the surviving spouse (or both spouses); 2) get the highest income from discretionary sources, via competitive quotes; 3) leave an estate to the heirs. The client decides which matters most."
+    },
+    {
+      "id": "c07-f049",
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "front": "Best option for an ample-income family that wants to enrich the estate",
+      "back": "Guaranteed-term annuities, a term certain annuity or a RRIF; the RRIF is probably best, because its lower payout allows more tax-deferred growth in the early years."
+    },
+    {
+      "id": "c07-f050",
+      "topic": "Key numbers",
+      "page": "7•24",
+      "front": "OAS + GIS safety net (course figure)",
+      "back": "A maximum of approximately $18,000 a year. CPP/QPP survivor benefits can help close any remaining gap."
+    },
+    {
+      "id": "c07-f051",
+      "topic": "Choosing a maturity option",
+      "page": "7•25",
+      "front": "Four tax principles for using retirement savings",
+      "back": "1) Postpone selling non-registered assets with capital gains; 2) postpone registered withdrawals; 3) equalize spouses' taxable incomes; 4) use non-registered assets before registered ones."
+    },
+    {
+      "id": "c07-f052",
+      "topic": "When to annuitize",
+      "page": "7•25",
+      "front": "Three considerations on when to annuitize",
+      "back": "1) Option value: waiting keeps choices open (e.g., if a spouse dies before 71); 2) tax: sheltered assets build faster and larger; 3) interest rates: annuity rates are highest when interest rates are highest."
+    },
+    {
+      "id": "c07-f053",
+      "topic": "When to annuitize",
+      "page": "7•26",
+      "front": "Basing a RRIF, LIF or LRIF on a younger spouse's age",
+      "back": "Allowed by the Income Tax Act. It lowers the required minimum (more tax-deferred growth) but also lowers the maximum, where one applies. Mark, 71, wife 66: 5.28% on his age vs about 4.17% on hers."
+    },
+    {
+      "id": "c07-f054",
+      "topic": "Key numbers",
+      "page": "7•28",
+      "front": "RRIF minimum factors (Appendix A)",
+      "back": "Under 71: 1 / (90 - age). Age 71: 5.28%; 75: 5.82%; 80: 6.82%; 85: 8.51%; 90: 11.92%; 95 or older: 20%, and it stays at 20% after that. Applied to the January 1 market value; there is no maximum age."
+    },
+    {
+      "id": "c07-f055",
+      "topic": "Planning scenario",
+      "page": "7•27",
+      "front": "Gitano scenario: key recommendations",
+      "back": "Match lifestyle to income (delay or lower sights if short); choose a pension guaranteeing his wife an ongoing pension; at 71, a RRIF on her younger age at the minimum, shifting to secure investments; probably no reverse mortgage."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c07-q001",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Survivor income gap",
+      "page": "7•3",
+      "q": "Rolf and Ines live on Rolf's company pension of $5,400 a month. Ines would need 70% of it to live comfortably if Rolf died, but the plan's survivor pension is only 50% of his pension. What monthly shortfall would she face?",
+      "options": [
+        "$1,620",
+        "$2,700",
+        "$1,080",
+        "$3,780"
+      ],
+      "answer": 2,
+      "explain": "She needs 70% x $5,400 = $3,780 but would receive 50% x $5,400 = $2,700, a gap of $1,080 a month (the method of the course's Joe and Maria example). Survivor pensions typically pay only 50% to 66.7% of the deceased's pension."
+    },
+    {
+      "id": "c07-q002",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Survivor income gap",
+      "page": "7•4",
+      "q": "Which retired household is MOST exposed to a drop in income when one spouse dies?",
+      "options": [
+        "A couple relying on one spouse's pension, with a reduced survivor benefit",
+        "A single retiree whose income comes from one employer pension",
+        "A couple of professionals who each have a good retirement program",
+        "A self-employed couple living mainly on their RRSPs and other personal savings"
+      ],
+      "answer": 0,
+      "explain": "The gap arises when only part of one spouse's pension continues to the survivor. It doesn't apply to singles, and usually not to professional couples with their own plans or to the self-employed, whose discretionary savings, such as RRSPs, are not reduced at death."
+    },
+    {
+      "id": "c07-q003",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Managing funds at retirement",
+      "page": "7•4",
+      "q": "A couple decides to 'self-insure' the survivor income gap by saving extra during their working years. According to the course, what is the cost of this solution?",
+      "options": [
+        "The premiums paid to a life insurance company",
+        "The reduction in the pensioner's monthly pension",
+        "The tax on early RRSP withdrawals before age 71",
+        "The current consumption they give up to save more"
+      ],
+      "answer": 3,
+      "explain": "Self-insurance is self-financing: its cost is foregone current consumption. Its drawbacks are that the capital needed is hard to estimate, the family gives up the risk-pooling of insurance, and it may leave a larger estate than intended."
+    },
+    {
+      "id": "c07-q004",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Managing funds at retirement",
+      "page": "7•5",
+      "q": "Victor plans to take a life annuity with no guarantee and use the extra income to pay for life insurance that would replace his wife's survivor pension. What tax drawback does the course point out?",
+      "options": [
+        "The death benefit is taxed as income to his wife in the year she receives it",
+        "Premiums come from taxable income, but the payout goes tax-free to a lower-bracket spouse",
+        "Annuity income from an RRSP is tax-free, so the premiums cannot be deducted from that income",
+        "His wife must pay tax on the policy's full face value when she buys her own annuity"
+      ],
+      "answer": 1,
+      "explain": "Annuity income from sheltered sources is taxed in the pensioner's higher bracket, so premiums are paid with after-tax dollars, while the proceeds are tax-free to a survivor in a lower bracket: a lot of tax up front for a lesser benefit later. The longer he lives, the more premiums he pays."
+    },
+    {
+      "id": "c07-q005",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Government programs",
+      "page": "7•5",
+      "q": "According to the course (2020 edition figures), what do CPP and QPP provide when a contributor dies after December 31, 2018?",
+      "options": [
+        "A survivor pension of about 50% of the deceased's pension and a $5,000 death benefit",
+        "A survivor pension of about 60% of the deceased's pension and a $2,500 death benefit",
+        "A survivor pension of about 75% of the deceased's pension but no death benefit",
+        "A $2,500 lump-sum death benefit only, with no ongoing survivor pension"
+      ],
+      "answer": 1,
+      "explain": "CPP and QPP pay survivor benefits of roughly 60% of the deceased spouse's pension, plus a $2,500 lump-sum death benefit for deaths after Dec 31, 2018. OAS and the GIS also provide some of the 'insurance' a survivor needs."
+    },
+    {
+      "id": "c07-q006",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pension survivor options",
+      "page": "7•5",
+      "q": "Compared with a straight life pension, what does choosing a joint and survivor pension option typically cost the couple?",
+      "options": [
+        "A higher pension while the pensioner lives, but nothing at all for the survivor afterward",
+        "The same pension for both lives, funded by a one-time extra premium",
+        "A lower pension only after the pensioner dies, with no cost before then",
+        "A lower pension while the pensioner lives, and usually a reduced one for the survivor"
+      ],
+      "answer": 3,
+      "explain": "A survivor benefit reduces the pensioner's own monthly income, and the survivor usually receives only part of it (e.g., 2/3) after the pensioner's death. Joe's pension would be $5,000 with no survivor benefit but $4,000 with a 2/3 survivor benefit."
+    },
+    {
+      "id": "c07-q007",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Rollovers",
+      "page": "7•6",
+      "q": "Which statement about rolling retirement savings into an annuity or a RRIF is correct?",
+      "options": [
+        "A DPSP balance can be rolled into an annuity or paid out in 10 annual instalments",
+        "An RRSP can be rolled over at any time until the end of the year the annuitant turns 75",
+        "A defined-contribution pension balance can always be rolled into a RRIF",
+        "A rollover is a transfer taxed at a reduced rate under the Income Tax Act"
+      ],
+      "answer": 0,
+      "explain": "A DPSP can go into an annuity or be paid in 10 annual instalments. An RRSP must be rolled over by the end of the year the annuitant turns 71; a DC pension balance only sometimes goes into a RRIF, depending on plan terms; and a rollover has no immediate tax consequences."
+    },
+    {
+      "id": "c07-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Cash withdrawals",
+      "page": "7•7",
+      "q": "Lena, 61, has a $75,000 RRSP and about $32,000 a year of other retirement income. She doesn't think the RRSP is big enough to annuitize or convert to a RRIF. Which approach does the course favour?",
+      "options": [
+        "Wait until 71 and collapse the whole plan at once to defer tax as long as possible",
+        "Collapse the plan now and invest the after-tax proceeds in non-registered GICs",
+        "Start withdrawing about $8,000 a year now so the money is taxed at a low rate",
+        "Leave it untouched past 71, since small RRSPs are exempt from maturing"
+      ],
+      "answer": 2,
+      "explain": "Like Terry in the course, Lena can spread cash withdrawals over the years before 71 so they are taxed at a low marginal rate (about 15% federally in the example). Collapsing the whole plan at 71 would push much of it into the 20.5% and 26% federal brackets."
+    },
+    {
+      "id": "c07-q009",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Annuity basics",
+      "page": "7•7",
+      "q": "How are annuity payments taxed when the annuity was bought with registered funds such as an RRSP?",
+      "options": [
+        "Only the interest portion is taxable; the capital is returned tax-free",
+        "The payments are tax-free, since tax was paid when funds left the RRSP",
+        "Only the capital portion is taxable; the interest remains sheltered",
+        "The entire payment, both capital and interest, is taxable income"
+      ],
+      "answer": 3,
+      "explain": "Registered funds (RRSPs, RRIFs, RPPs, DPSPs, locked-in plans) were never taxed, so both principal and interest are taxable to the recipient. With non-registered savings tax was already paid, so only the interest portion is taxable."
+    },
+    {
+      "id": "c07-q010",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Annuity basics",
+      "page": "7•8",
+      "q": "Once a client buys an annuity, the invested capital stays intact and can be withdrawn later, much like a bank deposit.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. With an annuity the client loses control of the capital, which is reduced with each payment and is not normally returned. The course warns that it is not comparable to a bank deposit, where the capital is maintained."
+    },
+    {
+      "id": "c07-q011",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Annuity options",
+      "page": "7•9",
+      "q": "Paul and Luc each die 4 years into a registered life annuity guaranteed for 15 years. Paul named his wife as beneficiary; Luc named his nephew. Which statement is correct?",
+      "options": [
+        "Both beneficiaries must take the same monthly payments for the 11 years left in the guarantee",
+        "Both receive a lump sum equal to the undiscounted total of the payments left",
+        "Paul's wife may keep the payments or take a lump sum; the nephew gets the commuted value",
+        "Paul's wife gets the commuted value; the nephew gets nothing, as he is not a spouse"
+      ],
+      "answer": 2,
+      "explain": "A spouse beneficiary can choose between continuing the remaining guaranteed payments and a lump sum equal to their present value. Any other beneficiary receives the commuted lump sum, here the present value of the 11 years of payments left."
+    },
+    {
+      "id": "c07-q012",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Annuity options",
+      "page": "7•9",
+      "q": "Claude, 71, is maturing his RRSP into a life annuity with a guarantee; his wife is 67. Using the guarantee periods the course lists (5, 10, 15, 20 or 25 years), what is the longest guarantee available to him?",
+      "options": [
+        "15 years, since the term cannot run beyond his own age 90",
+        "20 years, since the term can run to his younger wife's age 90",
+        "25 years, since guarantee periods are not limited by age",
+        "10 years, since guarantees are capped at 10 years after age 70"
+      ],
+      "answer": 1,
+      "explain": "The guarantee cannot extend beyond age 90 of the annuitant, or of the spouse if younger. Based on his 67-year-old wife, up to 23 years would fit, so 20 years is the longest listed period; based on his own age (19 years to 90), only 15 years would fit."
+    },
+    {
+      "id": "c07-q013",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Annuity options",
+      "page": "7•9",
+      "q": "Why does a joint life and last survivor annuity pay less than a straight-life annuity bought with the same premium?",
+      "options": [
+        "Payments are expected to last longer, until the second death",
+        "Its payments must be indexed to inflation by up to 4% a year",
+        "A guarantee period of at least 10 years must be attached to it",
+        "Its income is taxed more lightly, so the insurer pays out less"
+      ],
+      "answer": 0,
+      "explain": "Income continues through the lifetimes of two people, so the expected payout period is longer. The reduction can be considerable when one spouse is a younger woman, since women in Canada outlive men on average. Payments may stay equal or reduce for the survivor."
+    },
+    {
+      "id": "c07-q014",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Annuity options",
+      "page": "7•10",
+      "q": "Which statement correctly distinguishes a registered term certain annuity from a life annuity?",
+      "options": [
+        "It pays for life like a life annuity, but stops if the spouse dies first",
+        "It pools mortality risk, so payments stop at death with nothing left over",
+        "It pays to a fixed end date with no insurance, so there is no protection past 90",
+        "It is sold only by life insurers, while life annuities also come from trust companies"
+      ],
+      "answer": 2,
+      "explain": "A term certain annuity is essentially the RRSP paid out gradually to age 90 (of the annuitant or spouse), so no insurance is directly involved and there is no protection beyond 90 of the younger spouse. If the annuitant dies early, payments continue to a spouse beneficiary or are commuted to a lump sum."
+    },
+    {
+      "id": "c07-q015",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Annuity options",
+      "page": "7•10",
+      "q": "Indexed annuities can increase by up to 4% a year, and their early payments are higher than those of a comparable level-payment annuity.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The 4% annual maximum is right, but the early payments are lower than under a similar level-payment contract. The benefit is that income matches rising costs more accurately during inflation."
+    },
+    {
+      "id": "c07-q016",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "RRIFs",
+      "page": "7•11",
+      "q": "A RRIF contains no insurance at all, but it gives the holder more investment flexibility than an annuity.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. A RRIF is essentially an investment fund (GICs, bonds, stocks, mutual funds) from which a prescribed minimum must be withdrawn each year. Annuity contracts, by contrast, do not let the holder make his or her own investments."
+    },
+    {
+      "id": "c07-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRIFs",
+      "page": "7•11",
+      "q": "Why does the course recommend naming a beneficiary when a RRIF is set up?",
+      "options": [
+        "Proceeds bypass the estate, creditors and, in common-law provinces, probate fees",
+        "It exempts the RRIF from all income tax on the annuitant's death",
+        "It lets the annuitant skip the annual minimum withdrawal",
+        "It converts the RRIF into a life annuity payable to the beneficiary after the death"
+      ],
+      "answer": 0,
+      "explain": "A named beneficiary lets RRIF proceeds bypass the deceased's estate, exposure to creditors, and the probate fees charged in the common-law provinces. It does not remove income tax, which depends on who the beneficiary is."
+    },
+    {
+      "id": "c07-q018",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRIFs",
+      "page": "7•12",
+      "q": "Josée moves her RRSP into a RRIF in March 2021. What is the latest date by which she must take her first minimum withdrawal?",
+      "options": [
+        "December 31, 2021",
+        "March 31, 2022",
+        "January 1, 2022",
+        "December 31, 2022"
+      ],
+      "answer": 3,
+      "explain": "RRIF withdrawals need not start until the end of the year following the calendar year in which the RRIF is set up. For a RRIF opened in 2021, the first withdrawal can wait until December 31, 2022."
+    },
+    {
+      "id": "c07-q019",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "RRIFs",
+      "page": "7•12",
+      "q": "Diane is 65 on January 1 and has $240,000 in a RRIF she opened early. Using the course's formula for RRIFs begun before age 71, what is her minimum withdrawal this year?",
+      "options": [
+        "$12,672",
+        "$9,600",
+        "$8,000",
+        "$10,435"
+      ],
+      "answer": 1,
+      "explain": "Before 71, the minimum is 1 divided by (90 minus age at the start of the year): 1 / (90 - 65) = 1/25 = 4%, and 4% x $240,000 = $9,600. Using the age-71 factor of 5.28% would wrongly give $12,672."
+    },
+    {
+      "id": "c07-q020",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "RRIFs",
+      "page": "7•12",
+      "q": "A RRIF must be fully paid out by the time the annuitant reaches age 90.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. A RRIF has no maximum age. The minimum withdrawal rises to 20% of the remaining assets at age 95 and stays there. It is the registered term certain annuity that stops paying at age 90."
+    },
+    {
+      "id": "c07-q021",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRIFs",
+      "page": "7•12",
+      "q": "Which of these switches between retirement income options is generally NOT permitted?",
+      "options": [
+        "Converting a RRIF into a life annuity",
+        "Converting a life annuity into a RRIF",
+        "Converting an RRSP into a RRIF at age 65",
+        "Moving a RRIF to another carrier's RRIF"
+      ],
+      "answer": 1,
+      "explain": "RRIFs can be converted into annuities, but switches from an annuity to a RRIF are not allowed. The one exception is an annuity held inside an RRSP when that RRSP is converted into a RRIF."
+    },
+    {
+      "id": "c07-q022",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "LIFs",
+      "page": "7•13",
+      "q": "Which government introduced the life income fund (LIF) as an alternative to a life annuity?",
+      "options": [
+        "Ontario",
+        "The federal government",
+        "Manitoba",
+        "Quebec"
+      ],
+      "answer": 3,
+      "explain": "Quebec introduced the LIF, and most provinces and territories now allow them. Before LIFs, the only maturity option for pension money, locked-in RRSPs or LIRAs was a life annuity."
+    },
+    {
+      "id": "c07-q023",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "LIFs",
+      "page": "7•13",
+      "q": "Which feature most clearly distinguishes a LIF from a RRIF?",
+      "options": [
+        "A LIF holds locked-in pension money and has a legal maximum withdrawal",
+        "A LIF has no minimum withdrawal, so all of the income can be deferred indefinitely",
+        "A LIF cannot hold self-directed investments",
+        "A LIF can be opened at any age, like a RRIF"
+      ],
+      "answer": 0,
+      "explain": "A LIF holds locked-in pension money, and the law sets both a minimum and a maximum annual withdrawal, while a RRIF only requires a prescribed minimum. Both let the holder manage the investments, but a LIF generally cannot start before about age 55."
+    },
+    {
+      "id": "c07-q024",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "LIFs",
+      "page": "7•13",
+      "q": "Under the current rules described in the course, a federally regulated LIF must be converted into a life annuity by the end of the year its holder turns 80.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. That was the former federal rule, which provinces such as Manitoba and Quebec did not have. Now funds from a federally regulated locked-in RRSP may stay in the LIF beyond age 80, until the plan matures."
+    },
+    {
+      "id": "c07-q025",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "LIFs",
+      "page": "7•13",
+      "q": "Lise dies holding a LIF. Which statement about the treatment of the remaining funds is correct?",
+      "options": [
+        "Any beneficiary at all may roll them tax-free into a locked-in plan in his or her own name",
+        "They must stay locked in for every beneficiary, including a surviving spouse",
+        "A spouse can roll them over tax-deferred; if left to her daughter, they are taxed to Lise",
+        "Only her estate can receive them, and the estate pays tax at a flat 50% rate"
+      ],
+      "answer": 2,
+      "explain": "LIF proceeds left to a spouse or partner can be rolled over tax-deferred and, depending on jurisdiction, may no longer need to stay locked in. Proceeds left to anyone else are taxable to the deceased in the terminal return; the death rules mirror a RRIF's."
+    },
+    {
+      "id": "c07-q026",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "LIFs",
+      "page": "7•14",
+      "q": "Withholding tax is usually applied only to LIF withdrawals in excess of the minimum amount.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. LIF withdrawals are added to taxable income in the year received, but withholding tax is usually only applied to sums greater than the required minimum."
+    },
+    {
+      "id": "c07-q027",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "De-registration & divorce",
+      "page": "7•14",
+      "q": "Doris turned 71 last March but never converted her $60,000 RRSP to a RRIF or annuity by December 31. What is the tax result?",
+      "options": [
+        "The $60,000 is added to last year's income, the year she turned 71",
+        "The RRSP is automatically turned into a RRIF, and only the minimum withdrawal is taxed",
+        "She has until the end of the year she turns 72 to convert, with no tax",
+        "The plan is deemed de-registered this year, adding $60,000 to this year's income"
+      ],
+      "answer": 3,
+      "explain": "An RRSP not converted to an income stream by the end of the year the annuitant turns 71 may be deregistered in the following year, and its value is taxed to the annuitant for the year of de-registration, as with Moe in the course."
+    },
+    {
+      "id": "c07-q028",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "De-registration & divorce",
+      "page": "7•14",
+      "q": "When a married or common-law couple separates, how can one partner's RRSP, RRIF or LIF be shared under the Income Tax Act?",
+      "options": [
+        "The plan must be collapsed and taxed before its value is divided",
+        "The plan stays with the annuitant, and the other partner is paid in cash",
+        "The other partner's share can roll tax-free to his or her RRSP, RRIF or LIF",
+        "The other partner's share is taxed to him or her as a refund of premiums"
+      ],
+      "answer": 2,
+      "explain": "On divorce or legal separation, the Income Tax Act allows the plan's value to be divided, with the non-annuitant spouse's or partner's share transferred on a tax-free rollover basis to an RRSP, RRIF or LIF in his or her own name."
+    },
+    {
+      "id": "c07-q029",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Plans at death",
+      "page": "7•14",
+      "q": "Gaston dies before maturing his RRSP. In which case are the proceeds taxed to the recipient as a refund of premiums, rather than as Gaston's income?",
+      "options": [
+        "The beneficiary is his healthy 30-year-old son, who lives on his own",
+        "The beneficiary is a child who depends on him due to a mental impairment",
+        "No beneficiary is named, so the RRSP is paid to his estate",
+        "The beneficiary is his brother, who is also the liquidator of his estate"
+      ],
+      "answer": 1,
+      "explain": "If a spouse, common-law partner or child dependent because of a physical or mental impairment is named, the proceeds are taxed to the recipient as a refund of premiums and can generally be rolled to his or her own RRSP or RRIF. Otherwise, the plan's fair market value is income of the deceased."
+    },
+    {
+      "id": "c07-q030",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Plans at death",
+      "page": "7•14",
+      "q": "A surviving spouse named as beneficiary of a RRIF (a 'designated benefit') can do each of the following EXCEPT:",
+      "options": [
+        "Transfer it tax-free to the couple's adult child",
+        "Continue receiving the RRIF payments",
+        "Collapse it and roll the assets into an RRSP in his or her name",
+        "Collapse it and take the entire amount into income"
+      ],
+      "answer": 0,
+      "explain": "A spouse beneficiary can continue the payments, collapse the RRIF and set up a new one, roll the assets into his or her own RRSP, or take everything into income. A tax-free transfer to a child is not one of the options."
+    },
+    {
+      "id": "c07-q031",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Plans at death",
+      "page": "7•15",
+      "q": "Bernard dies in August. His RRIF passes to his wife by spousal rollover, but he had not yet taken this year's minimum payment. How is that unpaid minimum handled?",
+      "options": [
+        "It is rolled over with the rest of the RRIF and is never taxed",
+        "It is taxed on Bernard's terminal return with his earlier payments",
+        "It is paid out and taxed to his wife, and is not rolled over",
+        "It is waived, since no minimum applies in the year of death"
+      ],
+      "answer": 2,
+      "explain": "On a spousal rollover, any remaining RRIF minimum not paid before death is paid out and taxed to the surviving spouse; it does not get rolled over. Payments Bernard received before his death are taxed on his terminal return."
+    },
+    {
+      "id": "c07-q032",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pension income splitting",
+      "page": "7•15",
+      "q": "Yvette, 68, receives RRIF payments, a CPP retirement pension and OAS. Which of these can she allocate to her husband under pension income splitting?",
+      "options": [
+        "Only the RRIF payments",
+        "The RRIF payments and the CPP pension",
+        "Only the CPP pension",
+        "All three sources of income"
+      ],
+      "answer": 0,
+      "explain": "For pensioners over 65, RRIF and LIF payments qualify as eligible pension income. OAS, CPP and QPP payments do not qualify for pension income splitting, although CPP/QPP pensions can be shared separately under their own rules."
+    },
+    {
+      "id": "c07-q033",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Pension income splitting",
+      "page": "7•15",
+      "q": "RRIF payments received by a 58-year-old as a result of the death of a former spouse can qualify for pension income splitting with a current spouse.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. RRIF and LIF payments normally qualify only for pensioners over 65, but RRSP, RRIF and LIF payments received by someone under 65 because of a former spouse's death also qualify for splitting with a current spouse."
+    },
+    {
+      "id": "c07-q034",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Pension income splitting",
+      "page": "7•16",
+      "q": "When pension income is split, the pension administrator must be notified so that part of each payment can be sent directly to the spouse.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The allocation is for tax purposes only: the whole pension stays payable to the pensioner, so the administrator need not be notified. The couple files form T1032 with both federal returns each year."
+    },
+    {
+      "id": "c07-q035",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Pension income splitting",
+      "page": "7•16",
+      "q": "Raymond, 67, has $60,000 of eligible pension income taxed at a 43% marginal rate. His wife Carole would pay 28% on income allocated to her. If he allocates the maximum allowed, what is the couple's approximate net tax saving, ignoring credits?",
+      "options": [
+        "$12,900",
+        "$9,000",
+        "$2,250",
+        "$4,500"
+      ],
+      "answer": 3,
+      "explain": "The maximum allocation is half of $60,000, or $30,000. Raymond saves 43% x $30,000 = $12,900 and Carole pays 28% x $30,000 = $8,400, for a net saving of $4,500 (the method of the course's Thomas and Gerri example)."
+    },
+    {
+      "id": "c07-q036",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Immediate & deferred annuities",
+      "page": "7•17",
+      "q": "Paulette, 66, won't need annuity income for four years but expects annuity rates to fall. Which approach fits the course's description?",
+      "options": [
+        "Buy an immediate annuity now and reinvest all the payments for the next four years",
+        "Buy a deferred annuity now, securing today's rate with income starting later",
+        "Wait four years, since an annuity can be repriced if rates rise later",
+        "Buy an indexed annuity, since its payments rise with interest rates"
+      ],
+      "answer": 1,
+      "explain": "With a deferred annuity the rate is secured now while income begins later, and interest credited during the deferral produces higher income. An immediate annuity starts paying within the first payment period, and once bought an annuity cannot be changed even if rates rise."
+    },
+    {
+      "id": "c07-q037",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Prescribed annuities",
+      "page": "7•17",
+      "q": "Under a non-prescribed annuity, how does the taxable interest portion of each payment behave over time?",
+      "options": [
+        "Level for the life of the contract, with capital spread evenly",
+        "Large in the early years, then declining, as with a mortgage",
+        "Small in the early years, then rising as capital is repaid",
+        "Zero until the original capital has been fully returned"
+      ],
+      "answer": 1,
+      "explain": "In a non-prescribed contract, interest is calculated like mortgage repayments: much larger than the capital portion at first, then declining until it is minimal at the end. Level interest and capital portions describe a prescribed annuity."
+    },
+    {
+      "id": "c07-q038",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "q": "Simone, 64, buys a $120,000 prescribed life annuity with non-registered savings; her life expectancy is 24 years. What tax-free capital portion will she receive each year?",
+      "options": [
+        "$5,000, until she reaches her life expectancy",
+        "$8,000, based on a 15-year payout period",
+        "$4,800, based on a 25-year payout period",
+        "$5,000, even if she outlives her life expectancy"
+      ],
+      "answer": 3,
+      "explain": "A prescribed annuity spreads the capital evenly over the life expectancy: $120,000 / 24 = $5,000 a year. As in Freida's example, the tax-free capital portion stays constant whether she lives a shorter or longer time than expected."
+    },
+    {
+      "id": "c07-q039",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "q": "Over the full life of the contract, a prescribed annuity reports less total taxable income than an otherwise identical non-prescribed annuity.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Total income reported is exactly the same; only the timing differs (level versus declining). The advantage of prescribed treatment is that less income is reported early, leaving more after-tax income to reinvest."
+    },
+    {
+      "id": "c07-q040",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "q": "Which feature would prevent a non-registered annuity from qualifying as a prescribed annuity?",
+      "options": [
+        "Payments that rise by 3% every year",
+        "Payments that reduce for the survivor under a joint and survivorship contract",
+        "A term certain ending at the annuitant's age 88",
+        "Quarterly payments starting in the year of purchase"
+      ],
+      "answer": 0,
+      "explain": "Prescribed annuity payments must be equal, except that a joint and survivorship contract may reduce for the survivor. Payments must also start within the calendar year of purchase and not run past the annuitant's 91st birthday, and owner and annuitant are generally the same person."
+    },
+    {
+      "id": "c07-q041",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Prescribed annuities",
+      "page": "7•18",
+      "q": "For an annuity to qualify as prescribed, its guarantee period or term certain must not extend beyond which point?",
+      "options": [
+        "The annuitant's 90th birthday",
+        "The annuitant's 71st birthday",
+        "The annuitant's 91st birthday",
+        "The annuitant's 95th birthday"
+      ],
+      "answer": 2,
+      "explain": "For prescribed status, a life annuity's guarantee period or a term certain must not extend beyond the annuitant's 91st birthday (the younger annuitant's, for a joint contract). Age 90 is the limit for registered term certain annuities and guarantee periods."
+    },
+    {
+      "id": "c07-q042",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Reverse mortgages",
+      "page": "7•19",
+      "q": "According to the course, the only requirement for obtaining a reverse mortgage is clear title to a house or other suitable property.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Reverse mortgages are designed for seniors who are 'house rich and cash poor', and the only requirement is clear title to a house or other suitable property. With a reverse annuity mortgage, usually up to 50% of the home's value can be advanced."
+    },
+    {
+      "id": "c07-q043",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Reverse mortgages",
+      "page": "7•20",
+      "q": "What makes a straight reverse mortgage a form of negative amortization?",
+      "options": [
+        "Payments are made, but they cover only part of the interest that accrues each month",
+        "The loan is repaid from an annuity bought with the mortgage proceeds",
+        "The balance owed shrinks each year as the value of the house rises",
+        "No payments are due, so interest and principal compound until the house is sold"
+      ],
+      "answer": 3,
+      "explain": "Under a straight reverse mortgage, no payments are due until the house is sold; interest and principal are left to compound to the end of the agreement. From the lender's point of view, its monthly advances are the future value of an annuity."
+    },
+    {
+      "id": "c07-q044",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Reverse mortgages",
+      "page": "7•20",
+      "q": "The monthly payments a senior receives from a reverse annuity mortgage are tax-free.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The Canada Revenue Agency has ruled that if mortgage proceeds are used to buy an annuity, the resulting monthly payments are not taxable. This is one of the main advantages of a reverse annuity mortgage."
+    },
+    {
+      "id": "c07-q045",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Cash-value life insurance",
+      "page": "7•21",
+      "q": "Why can a policy owner borrow up to the policy's adjusted cost basis (ACB) from the insurer without paying tax?",
+      "options": [
+        "Policy loans are always tax-free, whatever amount is borrowed",
+        "The loan interest is tax-deductible, which offsets any taxable income from the loan",
+        "A loan up to the ACB is not a disposition, so it is a tax-free refund of capital",
+        "Exempt policies are not taxed in any way until the insured dies"
+      ],
+      "answer": 2,
+      "explain": "Borrowing up to the ACB does not count as a disposition of the policy, so the funds are a tax-free refund of capital. Any amount borrowed beyond the ACB is taxable income to the policy owner."
+    },
+    {
+      "id": "c07-q046",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Cash-value life insurance",
+      "page": "7•22",
+      "q": "Nicole's universal life policy has a $200,000 cash surrender value and an $80,000 ACB. Following the course's example, roughly how much could she access tax-free through a policy loan from the insurer versus a bank loan?",
+      "options": [
+        "$200,000 from the insurer; $80,000 from a bank",
+        "$80,000 from the insurer; $180,000 from a bank",
+        "$80,000 from the insurer; $72,000 from a bank",
+        "$180,000 from the insurer; $200,000 from a bank"
+      ],
+      "answer": 1,
+      "explain": "A policy loan is tax-free only up to the ACB ($80,000). A bank will usually lend up to 90% of the cash surrender value (90% x $200,000 = $180,000), with the policy pledged as collateral, as in Jean's example."
+    },
+    {
+      "id": "c07-q047",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Cash-value life insurance",
+      "page": "7•23",
+      "q": "Sylvie's policy has a $240,000 cash surrender value and a $100,000 ACB, and she has borrowed $216,000 from a bank against it. If she is forced to surrender the policy, how much income must she report?",
+      "options": [
+        "$140,000",
+        "$216,000",
+        "$240,000",
+        "$24,000"
+      ],
+      "answer": 0,
+      "explain": "On surrender, taxable income is the cash surrender value minus the ACB: $240,000 - $100,000 = $140,000, reported on a T5. The bank loan is not income, and she would receive only $24,000 net, likely too little to pay the tax."
+    },
+    {
+      "id": "c07-q048",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Early retirement",
+      "page": "7•23",
+      "q": "Marcel's employer can either pay his lump-sum retirement payment to him so he can contribute it to his RRSP, or deposit it directly into his RRSP. Why is the direct deposit usually better?",
+      "options": [
+        "Paid to him, the sum is taxed twice: once when it is paid and again later inside the RRSP",
+        "Paid to him, the sum can no longer be contributed to an RRSP at all",
+        "Paid to him, the sum has tax withheld, leaving a cash gap until he files his return",
+        "Paid to him, the sum loses its status as eligible pension income"
+      ],
+      "answer": 2,
+      "explain": "A lump sum paid to the employee is income, so the employer must withhold tax at the marginal rate; the RRSP deduction only offsets it when the return is filed, creating a liquidity gap. A direct deposit into the RRSP avoids the withholding."
+    },
+    {
+      "id": "c07-q049",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "q": "Bruno, 70, is single with no children and wants the highest possible income from his RRSP. Interest rates are currently high. Which option does the course say is almost always preferable for him?",
+      "options": [
+        "A straight-life annuity",
+        "A RRIF taking only the minimum",
+        "A life annuity with a 25-year guarantee",
+        "A joint and last survivor annuity"
+      ],
+      "answer": 0,
+      "explain": "When protecting a survivor and leaving an estate don't matter, a straight-life annuity is almost always preferable if bought when rates are high: it pays the highest income of any life annuity, though nothing is left for the estate. Guarantees and survivor features would lower his income."
+    },
+    {
+      "id": "c07-q050",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "q": "A couple with limited assets would each face an unacceptable drop in living standard if the other died. Which pairing matches the course's safest strategy and its slightly riskier, higher-income alternative?",
+      "options": [
+        "Safest: term certain annuities; riskier: joint and last survivor annuities or a RRIF",
+        "Safest: straight-life annuities for both; riskier: a RRIF with large withdrawals",
+        "Safest: a reverse mortgage; riskier: joint and last survivor annuities",
+        "Safest: joint and last survivor annuities or a RRIF; riskier: term certain annuities"
+      ],
+      "answer": 3,
+      "explain": "Joint and last survivor annuities for both spouses, or a RRIF, are the safest choices. Term certain annuities give a higher payout but are slightly riskier, since their payments stop at a fixed date rather than continuing for life."
+    },
+    {
+      "id": "c07-q051",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "q": "Spouse 1 has a pension and an RRSP; spouse 2 was a homemaker with only a spousal RRSP. They want the SAFEST arrangement for spouse 2 if spouse 1 dies first, even at slightly lower income. Where should spouse 1's RRSP go?",
+      "options": [
+        "A straight-life annuity on spouse 1's life, for maximum income",
+        "A joint life annuity paying full benefits until the second death",
+        "A term certain annuity ending at spouse 1's own age 90",
+        "A RRIF based on spouse 1's age, withdrawing as much as possible"
+      ],
+      "answer": 1,
+      "explain": "For the safest result, spouse 1's RRSP/DPSP should go into a joint life annuity paying full benefits until the later death. A term certain or RRIF based on spouse 2's age gives slightly more income with more risk, and spouse 2's own RRSP can go into a straight-life annuity or RRIF."
+    },
+    {
+      "id": "c07-q052",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Choosing a maturity option",
+      "page": "7•24",
+      "q": "Benoît, 64, must choose a pension: $3,000 a month straight life, $2,700 for life guaranteed 10 years, or $2,250 with a 2/3 survivor pension. His wife is 70 and in poor health. He needs high income but wants a safety net if he dies soon. Which fits best?",
+      "options": [
+        "The straight life pension, since his wife will likely die first",
+        "The 10-year guarantee, which costs just 10% of his maximum pension",
+        "The survivor pension, since it gives his wife lifetime protection",
+        "The survivor pension, since it pays the most over two lifetimes"
+      ],
+      "answer": 1,
+      "explain": "Given her age and health, Benoît will probably outlive his wife, so a survivor pension is costly and likely wasted. The guarantee costs only 10% of his maximum pension yet protects her if he dies within 10 years, a period likely to exceed her life expectancy."
+    },
+    {
+      "id": "c07-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Choosing a maturity option",
+      "page": "7•25",
+      "q": "A retiree needs $15,000 of extra cash this year. Following the course's tax planning principles, which asset should she generally draw on FIRST?",
+      "options": [
+        "High-yield bonds held inside her RRSP",
+        "Stocks held outside her RRSP with large unrealized gains",
+        "A bond fund in her RRIF, above the required minimum",
+        "A cashable GIC held outside her RRSP"
+      ],
+      "answer": 3,
+      "explain": "Non-registered assets should be used before registered ones, and sales that trigger capital gains should be postponed. A cashable GIC outside the RRSP satisfies both principles; the highest-yielding investments inside the registered plan should be tapped last."
+    },
+    {
+      "id": "c07-q054",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "When to annuitize",
+      "page": "7•25",
+      "q": "Fernand, 63, thinks interest rates are unusually high and wants to lock them in, but he does not want retirement income yet. What does the course suggest?",
+      "options": [
+        "Buy an unregistered annuity inside his RRSP as an eligible investment",
+        "Collapse his RRSP now and buy a non-registered prescribed annuity",
+        "Convert his RRSP to a RRIF and withdraw only the minimum",
+        "Buy a registered life annuity now and defer it to age 71"
+      ],
+      "answer": 0,
+      "explain": "A client under 71 can buy unregistered annuities inside the RRSP as an eligible investment to lock in high rates without starting income, then roll them into a RRIF or exchange them for a registered annuity later. The course warns that rate forecasting is risky."
+    },
+    {
+      "id": "c07-q055",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "When to annuitize",
+      "page": "7•26",
+      "q": "Which statement about minimum ages for maturing registered plans is correct?",
+      "options": [
+        "RRSPs and RRIFs cannot be matured before age 55; LIFs have no minimum age at all",
+        "All registered plans, including LIRAs, can be matured at any age",
+        "RRSPs and RRIFs have no minimum age; LIFs generally cannot start before 55",
+        "RRSPs cannot be matured before 65; LIFs cannot start before 60"
+      ],
+      "answer": 2,
+      "explain": "There is no minimum age to surrender, annuitize or convert an RRSP or RRIF. Locked-in plans (LIRAs) generally cannot be matured before 55, and a LIF or LRIF generally cannot begin until 55."
+    },
+    {
+      "id": "c07-q056",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "When to annuitize",
+      "page": "7•26",
+      "q": "On January 1, Paul is 71 and his wife is 65; his RRIF holds $300,000. How much lower is this year's required minimum if the RRIF is based on her age rather than his?",
+      "options": [
+        "$3,340",
+        "$12,000",
+        "$15,840",
+        "$3,840"
+      ],
+      "answer": 3,
+      "explain": "Based on his age: 5.28% x $300,000 = $15,840. Based on his wife's age: 1 / (90 - 65) = 4%, or $12,000. The $3,840 difference stays tax-sheltered, which is why a younger spouse's age is often used."
+    },
+    {
+      "id": "c07-q057",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Planning scenario",
+      "page": "7•27",
+      "q": "Gitano, 60, has a $150,000 RRSP mostly in Canadian equity funds and a 55-year-old wife, and he doesn't need maximum income from it. What does the course's solution suggest for the RRSP at 71?",
+      "options": [
+        "A straight-life annuity on his own life, to get the highest income",
+        "A RRIF based on his own age, keeping all of the equity funds to help fight inflation",
+        "A RRIF based on his wife's age, taking the minimum and moving toward secure assets",
+        "Collapse the RRSP and invest the after-tax proceeds in Canadian equities"
+      ],
+      "answer": 2,
+      "explain": "Since Gitano doesn't need maximum income, he should convert to a RRIF based on his younger wife's age and take the minimum, maximizing tax deferral. The investments should shift gradually from all-equity to mainly secure or guaranteed investments."
+    },
+    {
+      "id": "c07-q058",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRIFs",
+      "page": "7•28",
+      "q": "Rita is 85 on January 1 and her RRIF is worth $100,000. Using the RRIF minimum withdrawal table in the course's Appendix A, what is her minimum for the year?",
+      "options": [
+        "$6,820",
+        "$8,510",
+        "$20,000",
+        "$5,280"
+      ],
+      "answer": 1,
+      "explain": "The Appendix A factor at age 85 is 8.51%, so her minimum is $8,510. The factors rise from 5.28% at 71 to 6.82% at 80, 11.92% at 90 and 20% at 95 or older."
+    }
+  ]
+}

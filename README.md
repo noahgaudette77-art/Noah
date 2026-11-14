@@ -8,6 +8,9 @@ dependencies, and **no third-party requests at all**: fonts are self-hosted and
 every photograph is a generated SVG committed to the repo. Drop the repository
 on any static host and it works.
 
+> **Also in this repo:** [`arcade/`](arcade/) — INR Arcade, a retro 3D study arcade
+> for the CSI *Insurance and Retirement – Quebec* course. Open `arcade/index.html`.
+
 ## Run it
 
 ```bash

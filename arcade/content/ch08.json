@@ -1,0 +1,1070 @@
+{
+  "chapter": 8,
+  "title": "Intestacy or Dying Without a Will",
+  "objectives": [
+    "Recognize potential wealth transfer problems that may arise as a consequence of a client's dying without a will (intestate)."
+  ],
+  "guide": [
+    {
+      "heading": "Intestacy: definition, causes and scope",
+      "page": "8•3",
+      "points": [
+        "Intestate = dying without a will, without a valid will, or when a valid will cannot be located. Partial intestacy = a will exists but part of the property is not effectively disposed of.",
+        "Causes: no will ever made; will improperly signed or witnessed; will revoked (even unknowingly); form not valid where the person dies; wording misses some property; beneficiary predeceased with no provision; will traced to the client but never found (presumed revoked).",
+        "Assets in one name with no beneficiary designation pass through the estate under intestacy law. Insurance, registered plans and (common-law provinces) joint property with survivorship bypass it, unless the beneficiary predeceased and no contingent was named.",
+        "Intestacy can be a 'disaster': desired beneficiaries may not inherit, avoidable messes arise and tax is paid earlier than necessary. Planners should explain the province's rules and steer hesitant clients to the right professionals.",
+        "Property and civil rights are provincial, so who inherits differs by province (Quebec: the Civil Code; an intestate succession is called a legal succession). Federal income tax applies the same way to every intestate estate."
+      ]
+    },
+    {
+      "heading": "Court appointment and administration",
+      "page": "8•5",
+      "points": [
+        "Common-law provinces: no one is in charge until the court appoints an administrator (Ontario: 'Estate Trustee Without a Will'). Separate applications may name a custodian/guardian of minor children and a guardian of their property.",
+        "Quebec: the law identifies the heirs, who act as liquidators or choose a liquidator by majority vote; if they cannot agree, the court decides, as elsewhere. A tutor holds custody and management of a minor's property.",
+        "Usual priority: spouse (includes a common-law spouse in ON, SK, NS and BC, not in Quebec), child, grandchild or other descendant, father, mother, brother or sister. With no next of kin a government office may apply; creditors may apply too.",
+        "Trap: a common-law spouse may be appointed administrator in Ontario but inherits nothing on intestacy.",
+        "Equal-ranking applicants (e.g., five children) may all be appointed: unanimity (five signatures) is then needed on everything and conflict is likely. An administrator may hire a trust company as agent for large estates or real estate.",
+        "A will lets the testator choose the executors and the guardians (tutors in Quebec) instead of leaving these choices to the courts."
+      ]
+    },
+    {
+      "heading": "Creditors and designated beneficiaries",
+      "page": "8•6",
+      "points": [
+        "Creditors are paid before any heir, including the CRA: taxes on lifetime income plus taxes triggered early because the intestate distribution does not pass everything to the spouse on a tax-deferred basis.",
+        "Designated beneficiaries of life insurance and registered plans are paid outside the estate, ahead of the intestate heirs.",
+        "Trap: a registered plan is paid in full to the beneficiary with no withholding tax (unless non-resident), but the deemed income is taxed to the deceased, so the tax comes out of the intestate estate and shrinks the heirs' shares."
+      ]
+    },
+    {
+      "heading": "The spouse's preferential share",
+      "page": "8•7",
+      "points": [
+        "Where children survive, many provinces first pay the married spouse a preferential share; the balance is then divided between spouse and children. If the net estate is below the share, the spouse takes everything.",
+        "'Spouse' here means a married spouse: most provinces exclude common-law (and, per the course, same-sex) partners from intestate entitlements.",
+        "Course figures: Ontario $200,000; Saskatchewan $100,000; Nova Scotia $50,000 (the spouse may elect the matrimonial home instead); NWT and Nunavut $50,000; New Brunswick: the deceased's interest in marital property.",
+        "Manitoba (body text): all to the spouse if all the children are also the spouse's, otherwise the greater of $50,000 or half. Some provinces (e.g., NL and PEI) give no preferential share.",
+        "Exam trap: the body text gives Alberta $40,000, BC $65,000 (plus a life interest in the home) and the Territories $50,000, but Appendix A differs (AB: all to the spouse, or the greater of $150,000 or 50%; BC: $300,000 or $150,000; Yukon: $75,000).",
+        "In most provinces the preferential share still applies on a partial intestacy: an undisposed portion worth no more than the share goes entirely to the spouse."
+      ]
+    },
+    {
+      "heading": "Quebec: the spouse is protected before the intestacy rules apply",
+      "page": "8•7",
+      "points": [
+        "Quebec has no preferential share. The surviving spouse is protected by the Civil Code: family patrimony and matrimonial regime rights take precedence over the intestacy rules.",
+        "Order (Leo and Martha): partition the family patrimony between the spouse and the estate, then settle the matrimonial regime, and only then does the liquidator distribute the estate under the intestacy rules.",
+        "Example: if the estate includes the family home, one-half of its value enters the family patrimony partition calculation.",
+        "'Spouse' in Quebec = a married or civil union spouse (civil unions can include same-sex couples). De facto (common-law) spouses have no protection on intestacy."
+      ]
+    },
+    {
+      "heading": "Per stirpes and per capita",
+      "page": "8•8",
+      "points": [
+        "Per stirpes = 'by stocks' or 'by roots': a predeceased child's share is divided among his or her own children. In Quebec this is the rule of representation, which applies to all direct-line descendants on intestacy.",
+        "Per capita (common law) = by heads among the living: a predeceased beneficiary's share goes to the remaining beneficiaries. In Quebec, per capita means an equal split and the beneficiary need not be alive (his or her estate may inherit).",
+        "'Issue' = all descendants; 'children' = one generation. The choice does not matter per stirpes (always issue) but changes a per capita result. Per stirpes is the opposite of 'children per capita'.",
+        "Miguel ($120,000, three children, eldest predeceased leaving two): per stirpes $40,000 + $40,000 + $20,000 to each grandchild; per capita among issue 4 x $30,000; per capita among children 2 x $60,000.",
+        "Quebec art. 665: where representation is permitted, partition is by roots; a root with several branches is subdivided by roots in each branch, and members of the same branch share by heads."
+      ]
+    },
+    {
+      "heading": "Who inherits: spouse, children and next of kin",
+      "page": "8•10",
+      "points": [
+        "Spouse and no descendants (common-law provinces): everything to the spouse. No spouse: the children share equally, a predeceased child's share going to his or her children.",
+        "Spouse and one child: after any preferential share, the rest is split equally. Exceptions: Quebec (1/3 spouse, 2/3 child) and Manitoba (all to the spouse if the child is also the spouse's child).",
+        "Spouse and two or more children: after any preferential share, 1/3 to the spouse and 2/3 to the children in equal shares. In Quebec all the deceased's children inherit, whatever union they come from.",
+        "Common-law provinces, no spouse or children: parents, then brothers and sisters, then nieces and nephews (per capita in Ontario), then next of kin by consanguinity, then the state.",
+        "Quebec, no spouse or descendants: 50% to the parents and 50% to the siblings (or their children), then the closest next of kin by consanguinity, then the state.",
+        "Germain (Quebec): his parents share 50% equally; his brother Joseph and sister Lise share the other 50% equally (Lise's children take nothing while she is alive).",
+        "Quebec spouse plus mother, no descendants (course answer, Eric): after family patrimony, the spouse takes 2/3 and the mother 1/3; as heirs they act together as liquidators or agree on one."
+      ]
+    },
+    {
+      "heading": "Partial intestacy",
+      "page": "8•11",
+      "points": [
+        "A will that does not dispose of everything (e.g., the residuary beneficiary predeceases with no gift over) leaves that portion to the intestacy rules.",
+        "John ($500,000): each son receives $100,000 under the will; Marie had to survive him by 30 days but died two weeks later, so the residue passes by intestacy and the estranged daughter receives about $100,000.",
+        "Prevention: trace 'what if' scenarios (deaths, marriages, divorces) and add contingent legacies or distributions, with an expert will-drafting lawyer (a notary in Quebec).",
+        "Quebec: if one of several universal (residuary) legatees predeceases, accretion lets the others take the share, so there is no intestacy (course answer). A common-law province would apply intestacy to that share.",
+        "Quebec example (Sylvain): the residue left to a predeceased wife passes by intestacy, 50% to his parents and 50% to his brother, after the cash legacies are paid."
+      ]
+    },
+    {
+      "heading": "Drawbacks: delay, cost, lifestyle and minors",
+      "page": "8•12",
+      "points": [
+        "Delay: common-law courts require a diligent search for testamentary documents before appointing an administrator; until then no one can manage the assets, so post-mortem steps such as John's spousal RRSP contribution can be lost.",
+        "Cost: a court application and often a bond make intestacy slower and costlier than a testate succession. Quebec: the heirs must act as liquidator or agree on one, which takes time and can cause disputes.",
+        "Lifestyle: Mr. Smith ($600,000, Ontario) left his wife $200,000 + 1/3 of $400,000; the children's 2/3 went into court, so she could not afford their private school and had to apply to court, at a cost, for help.",
+        "Common-law provinces: a minor's share is paid into court, earns interest and is repaid at majority (18); a payout for maintenance or education needs a court application (a fee each time; the court decides).",
+        "Quebec: the tutor manages the share until 18 and can generally use it for maintenance and education without a court order, but needs certain tutorship council or court approvals and is overseen by the council and the Public Curator.",
+        "At 18 a beneficiary can demand the whole share, mature or not: Herman and Olga's 17-year-old twins collected $250,000 each less than a year after their parents' deaths."
+      ]
+    },
+    {
+      "heading": "Drawbacks: excluded or unintended heirs, escheat and tax",
+      "page": "8•14",
+      "points": [
+        "Children of a former marriage may get nothing, e.g., when the estate is smaller than the new spouse's preferential share.",
+        "Common-law and same-sex partners are unprotected in most provinces: a divorced person who 'remarries' common-law may see everything go to first-marriage children. Course note: BC, Saskatchewan and Nova Scotia recognize common-law spouses.",
+        "Joe and Elsie: together for 50+ years but never married; Joe inherits nothing and can only sue for support, and Elsie's long-lost legal husband, if alive, would take the whole estate.",
+        "Quebec civil union (different- or same-sex couples) is equivalent to marriage: civil union spouses inherit from each other on intestacy.",
+        "Escheat: the estate goes to the government only if no heirs are known, which is rare because an extensive search is made.",
+        "Tax: without authority from a will, the administrator cannot contribute to a spousal RRSP, file a rights or things return or carry the estate's net capital losses back; capital gains may be triggered early or a plan partly deregistered.",
+        "Unintended heirs: Marie's estate passed to her daughter Josie, who died a day later; Josie's estate went to her father John, Marie's ex-husband."
+      ]
+    },
+    {
+      "heading": "Planning scenario: Angelo and Maria",
+      "page": "8•16",
+      "points": [
+        "Ontario: Maria gets the first $200,000 plus 1/3 of the rest. If the $500,000 business were the only estate asset: Maria $300,000 and each of the three children about $67,000, paid now (the daughter's at 18).",
+        "Advice: see a good estate lawyer; consider holding assets jointly with right of survivorship with Maria or, better, have a proper will that also handles other contingencies.",
+        "Quebec (separation as to property, house in Angelo's name): Maria first receives 50% of the value of the family residence and the RRSP under family patrimony, and nothing from the regime.",
+        "Quebec, then: Maria inherits 1/3 of the remainder. Business only: Maria $166,666 and each child $111,111, paid at Angelo's death (the daughter's at 18), not at Maria's death as he intended."
+      ]
+    },
+    {
+      "heading": "Appendix A: provincial intestacy table",
+      "page": "8•17",
+      "points": [
+        "Spouse only: everything to the spouse (in Quebec, though, a surviving parent, for example, also shares: Eric's spouse 2/3, mother 1/3). Children only: the children share equally.",
+        "Amount first to the spouse, then the rest split equally with one child or 1/3 spouse, 2/3 children: Ontario $200,000, Saskatchewan $100,000, Yukon $75,000 (body text: $50,000), Nova Scotia, NWT and Nunavut $50,000.",
+        "No preferential amount: Newfoundland and Labrador and PEI (one child: equal split; two or more: 1/3 spouse, 2/3 children). New Brunswick: marital property to the spouse first, then the same splits.",
+        "Manitoba: all to the spouse or common-law partner if all the children are also theirs. Alberta (body text: $40,000): all to the spouse if the children are also the spouse's; otherwise the greater of $150,000 (or a prescribed amount) or 50%, rest to the children.",
+        "British Columbia (body text: $65,000): preferential share $300,000 if the children are also the spouse's, $150,000 if not; the rest is split equally between the spouse and the children.",
+        "Quebec: one-third to the spouse and two-thirds to the child or children."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Quebec has no spouse's preferential share. Settle family patrimony, then the matrimonial regime, then apply the intestacy rules.",
+    "EXAM TIP: In Quebec, a surviving spouse takes 1/3 on intestacy whether there is one child or several; the descendants take 2/3.",
+    "EXAM TIP: Common-law next-of-kin order: parents, siblings, nieces and nephews, next of kin by blood, then the state.",
+    "DID YOU KNOW? In Quebec, with no spouse or descendants, the parents and the siblings split the estate 50-50.",
+    "EXAM TIP: Per stirpes = by roots (a dead child's share goes to his kids). Per capita = by heads among the living.",
+    "DID YOU KNOW? Common-law partners inherit nothing on intestacy in most provinces, but a Quebec civil union spouse inherits like a married spouse.",
+    "EXAM TIP: Escheat to the government is not automatic on intestacy. It happens only when no heir can be found.",
+    "DID YOU KNOW? Under intestacy, a minor heir can demand the whole share at 18, whether or not that is prudent.",
+    "EXAM TIP: Ontario (course figure): the spouse takes the first $200,000, then 1/2 of the rest with one child or 1/3 with two or more."
+  ],
+  "flashcards": [
+    {
+      "id": "c08-f001",
+      "topic": "Intestacy basics",
+      "page": "8•3",
+      "front": "Intestate (definition)",
+      "back": "Dying without a will, without a valid will, or when a valid will cannot be located."
+    },
+    {
+      "id": "c08-f002",
+      "topic": "Intestacy basics",
+      "page": "8•4",
+      "front": "Partial intestacy",
+      "back": "A will exists but part of the estate is not referred to or effectively disposed of (e.g., a beneficiary predeceased with no alternate); that part passes under the intestacy rules."
+    },
+    {
+      "id": "c08-f003",
+      "topic": "Quebec terminology",
+      "page": "8•4",
+      "front": "Quebec: another name for an intestate succession",
+      "back": "A legal succession: the law (the Civil Code of Quebec) identifies the heirs and their shares."
+    },
+    {
+      "id": "c08-f004",
+      "topic": "How intestacies arise",
+      "page": "8•4",
+      "front": "Ways a person ends up fully or partly intestate",
+      "back": "No will; will improperly signed or witnessed; will revoked (even unknowingly); form not valid where the person dies; wording misses some property; beneficiary predeceased with no provision; will cannot be found (presumed revoked)."
+    },
+    {
+      "id": "c08-f005",
+      "topic": "How intestacies arise",
+      "page": "8•4",
+      "front": "Named beneficiary of insurance or a registered plan predeceases, no contingent named",
+      "back": "The proceeds generally revert to the owner's estate and are governed by the intestacy."
+    },
+    {
+      "id": "c08-f006",
+      "topic": "Court appointment",
+      "page": "8•5",
+      "front": "Ontario's term for the administrator of an intestate estate",
+      "back": "Estate Trustee Without a Will. Quebec uses the term liquidator."
+    },
+    {
+      "id": "c08-f007",
+      "topic": "Quebec: liquidator",
+      "page": "8•5",
+      "front": "Quebec: who administers an intestate estate?",
+      "back": "The heirs identified by law act as liquidators or choose a liquidator by majority vote; if they cannot agree, the court steps in, as in the rest of Canada."
+    },
+    {
+      "id": "c08-f008",
+      "topic": "Quebec terminology",
+      "page": "8•5",
+      "front": "Quebec: tutor vs guardian of a minor",
+      "back": "Tutor: holds custody and management of the minor's property. 'Guardian' may designate the person who has custody of the minor."
+    },
+    {
+      "id": "c08-f009",
+      "topic": "Court appointment",
+      "page": "8•5",
+      "front": "Usual priority for appointment as administrator (common-law provinces)",
+      "back": "Spouse (includes a common-law spouse in ON, SK, NS and BC; not in Quebec), child, grandchild or other descendant, father, mother, brother or sister. Then a government office; creditors may also apply."
+    },
+    {
+      "id": "c08-f010",
+      "topic": "Court appointment",
+      "page": "8•6",
+      "front": "Several heirs with an equal right to be appointed (e.g., five children)",
+      "back": "All may be appointed together: unanimity of action (five signatures) is needed on everything and conflict is likely. An administrator may hire a trust company as agent."
+    },
+    {
+      "id": "c08-f011",
+      "topic": "Designated beneficiaries",
+      "page": "8•6",
+      "front": "RRSP with a designated beneficiary when the owner dies intestate",
+      "back": "Paid in full outside the estate, ahead of the heirs, without withholding (unless non-resident); the tax on the deemed income is charged to the deceased and paid by the intestate estate."
+    },
+    {
+      "id": "c08-f012",
+      "topic": "Preferential share",
+      "page": "8•6",
+      "front": "Spouse's preferential share (concept)",
+      "back": "Where children survive, many provinces first pay the married spouse a set amount; the balance is shared between spouse and children. If the estate is smaller than the share, the spouse takes it all."
+    },
+    {
+      "id": "c08-f013",
+      "topic": "Key numbers",
+      "page": "8•7",
+      "front": "Preferential share: Ontario, Saskatchewan, Nova Scotia (course figures)",
+      "back": "Ontario $200,000; Saskatchewan $100,000; Nova Scotia $50,000 (the spouse may elect the matrimonial home instead). NWT and Nunavut also $50,000 per Appendix A. Quebec: no preferential share."
+    },
+    {
+      "id": "c08-f014",
+      "topic": "Quebec: spouse's protection",
+      "page": "8•7",
+      "front": "Quebec: who is a 'spouse' for intestacy?",
+      "back": "A married spouse or a civil union spouse (civil unions can include same-sex couples). De facto (common-law) spouses have no protection on intestacy."
+    },
+    {
+      "id": "c08-f015",
+      "topic": "Quebec: order of settlement",
+      "page": "8•8",
+      "front": "Quebec: steps before the intestacy rules apply",
+      "back": "1) Partition the family patrimony between the spouse and the estate; 2) settle matrimonial regime rights; 3) the liquidator distributes the rest under the Civil Code's intestacy rules."
+    },
+    {
+      "id": "c08-f016",
+      "topic": "Per stirpes and per capita",
+      "page": "8•8",
+      "front": "Per stirpes",
+      "back": "'By stocks' or 'by roots': a predeceased child's share is divided equally among his or her own children. In Quebec this is the rule of representation."
+    },
+    {
+      "id": "c08-f017",
+      "topic": "Per stirpes and per capita",
+      "page": "8•8",
+      "front": "Per capita: common-law vs Quebec meaning",
+      "back": "Common law: by heads among living beneficiaries; a predeceased one's share goes to the others. Quebec: an equal split, and the beneficiary need not be alive (his or her estate may inherit)."
+    },
+    {
+      "id": "c08-f018",
+      "topic": "Per stirpes and per capita",
+      "page": "8•8",
+      "front": "Issue vs children",
+      "back": "Issue = all descendants; children = one generation. No effect per stirpes (always issue) but it changes a per capita result: per stirpes is the opposite of 'children per capita'."
+    },
+    {
+      "id": "c08-f019",
+      "topic": "Spouse and children",
+      "page": "8•10",
+      "front": "Spouse and one child: basic rule and exceptions",
+      "back": "After any preferential share, the rest is split equally. Exceptions: Quebec (1/3 spouse, 2/3 child) and Manitoba (all to the spouse if the child is also the spouse's child)."
+    },
+    {
+      "id": "c08-f020",
+      "topic": "Spouse and children",
+      "page": "8•11",
+      "front": "Spouse and two or more children",
+      "back": "After any preferential share: 1/3 to the spouse and 2/3 to the children in equal shares (Quebec: same split, with no preferential share)."
+    },
+    {
+      "id": "c08-f021",
+      "topic": "Next of kin",
+      "page": "8•11",
+      "front": "Next-of-kin order, common-law provinces (no spouse or children)",
+      "back": "Parents, then brothers and sisters, then nieces and nephews (per capita in Ontario), then the next of kin by consanguinity (closeness of blood), then the state."
+    },
+    {
+      "id": "c08-f022",
+      "topic": "Quebec: next of kin",
+      "page": "8•11",
+      "front": "Quebec: no spouse or descendants",
+      "back": "50-50 between the parents and the siblings (or the siblings' children); if none, the closest next of kin by consanguinity; if none, the state."
+    },
+    {
+      "id": "c08-f023",
+      "topic": "Partial intestacy",
+      "page": "8•12",
+      "front": "How to avoid creating a partial intestacy",
+      "back": "Map out 'what if' scenarios (deaths, marriages, divorces) and fill the gaps with contingent legacies or distributions, using an expert will-drafting lawyer (a notary in Quebec)."
+    },
+    {
+      "id": "c08-f024",
+      "topic": "Cost and delay",
+      "page": "8•13",
+      "front": "Why intestate administration is slower and costlier (common-law provinces)",
+      "back": "A diligent search for a will, a court application to appoint an administrator and often a fee to post a bond; meanwhile no one can manage the assets."
+    },
+    {
+      "id": "c08-f025",
+      "topic": "Minor beneficiaries",
+      "page": "8•13",
+      "front": "Common-law provinces: minor's share of an intestate estate",
+      "back": "Paid into court, where it earns interest, and repaid at majority (18). A partial payout for maintenance or education needs a court application, with a fee each time, at the court's discretion."
+    },
+    {
+      "id": "c08-f026",
+      "topic": "Quebec: minors",
+      "page": "8•13",
+      "front": "Quebec: minor's share of an intestate estate",
+      "back": "Managed by the tutor until 18 under Civil Code tutorship rules; usable for maintenance and education generally without a court order, but some acts need council or court approval; overseen by the tutorship council and Public Curator."
+    },
+    {
+      "id": "c08-f027",
+      "topic": "Key numbers",
+      "page": "8•13",
+      "front": "Age at which a minor heir can demand his or her share",
+      "back": "18, the age of majority: the whole share must then be paid out, whether or not that is prudent."
+    },
+    {
+      "id": "c08-f028",
+      "topic": "Common-law spouses",
+      "page": "8•15",
+      "front": "Provinces recognizing common-law spouses on intestacy (course note)",
+      "back": "British Columbia, Saskatchewan and Nova Scotia (Appendix A also names common-law partners in Manitoba). In Quebec, only married and civil union spouses inherit."
+    },
+    {
+      "id": "c08-f029",
+      "topic": "Escheat",
+      "page": "8•15",
+      "front": "Escheat",
+      "back": "Transfer of the estate to the government when no heirs are known. Rare, because an extensive search for relatives is made."
+    },
+    {
+      "id": "c08-f030",
+      "topic": "Tax planning",
+      "page": "8•15",
+      "front": "Tax elections an administrator cannot make without a will's authority",
+      "back": "Contributing to a spousal RRSP, filing a rights or things return, and electing to carry the estate's net capital losses back to the deceased's terminal return."
+    },
+    {
+      "id": "c08-f031",
+      "topic": "Appendix A: provinces",
+      "page": "8•18",
+      "front": "Newfoundland and Labrador and PEI (Appendix A)",
+      "back": "No preferential amount: spouse and one child split equally; spouse and two or more children: 1/3 to the spouse, 2/3 to the children."
+    },
+    {
+      "id": "c08-f032",
+      "topic": "Appendix A: provinces",
+      "page": "8•18",
+      "front": "New Brunswick (Appendix A)",
+      "back": "The spouse first takes the deceased's marital property; the rest is split equally with one child, or 1/3 to the spouse and 2/3 to the children."
+    },
+    {
+      "id": "c08-f033",
+      "topic": "Quebec: partial intestacy",
+      "page": "8•23",
+      "front": "Quebec: one of several residuary (universal) legatees predeceases",
+      "back": "Accretion: the surviving universal legatees take the lapsed share, so no intestacy arises. In a common-law province that share would pass by intestacy."
+    },
+    {
+      "id": "c08-f034",
+      "topic": "Quebec: heirs",
+      "page": "8•24",
+      "front": "Quebec: spouse and mother survive, no descendants or siblings",
+      "back": "Course example (Eric): after the family patrimony partition, the spouse receives 2/3 and the mother 1/3; together they act as liquidators or agree on one."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c08-q001",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Intestacy basics",
+      "page": "8•3",
+      "q": "Which situation makes a person intestate under the course's definition?",
+      "options": [
+        "The will names a beneficiary as the estate's liquidator",
+        "The will was drawn up by a notary rather than a lawyer",
+        "A valid will exists but cannot be located after the death",
+        "The will leaves the entire estate to a single charity"
+      ],
+      "answer": 2,
+      "explain": "A person dies intestate if there is no will, no valid will, or a valid will that cannot be located. Naming a beneficiary as liquidator, using a notary or leaving everything to charity are all valid choices."
+    },
+    {
+      "id": "c08-q002",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Intestacy basics",
+      "page": "8•3",
+      "q": "Diane dies without a will. Which of her assets will be divided under the provincial intestacy rules?",
+      "options": [
+        "A non-registered account in her sole name, with no beneficiary",
+        "Life insurance payable to her sister as named beneficiary",
+        "An RRSP naming her brother as the designated beneficiary",
+        "An Ontario cottage held jointly with right of survivorship"
+      ],
+      "answer": 0,
+      "explain": "Assets in one name with no beneficiary designation pass through the estate and are governed by intestacy. Insurance and RRSPs with a living designated beneficiary, and (in common-law provinces) joint property with right of survivorship, pass outside the estate."
+    },
+    {
+      "id": "c08-q003",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "How intestacies arise",
+      "page": "8•4",
+      "q": "Raj named his wife as sole beneficiary of his life insurance and named no contingent beneficiary. She died before him, and Raj never made a will. What happens to the proceeds when Raj dies?",
+      "options": [
+        "They are paid to his late wife's estate as the named beneficiary",
+        "They are paid to his children directly, outside the estate",
+        "They are forfeited to the insurer since no beneficiary survived",
+        "They revert to Raj's estate and pass under the intestacy rules"
+      ],
+      "answer": 3,
+      "explain": "A beneficiary designation keeps proceeds out of the estate only if the beneficiary survives. If the named beneficiary predeceased and no alternate or contingent beneficiary was named, the proceeds generally revert to the owner's estate and are governed by the intestacy."
+    },
+    {
+      "id": "c08-q004",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Jurisdiction",
+      "page": "8•4",
+      "q": "Why can the answer to 'who inherits what' on an intestacy differ from one Canadian province to another?",
+      "options": [
+        "Each province sets its own income tax rules for estates",
+        "Property and civil rights fall under provincial jurisdiction",
+        "Federal intestacy law lets each court choose the shares",
+        "The Canada Revenue Agency approves each distribution plan"
+      ],
+      "answer": 1,
+      "explain": "Under the constitution, property and civil rights are provincial matters, so each province has its own intestacy law (in Quebec, the Civil Code). Federal income tax legislation, by contrast, affects all intestate estates the same way."
+    },
+    {
+      "id": "c08-q005",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec: liquidator",
+      "page": "8•5",
+      "q": "In Quebec, who takes charge of the estate of a person who dies intestate?",
+      "options": [
+        "A notary chosen by the Public Curator from a list of liquidators",
+        "The surviving spouse alone, as the automatic sole liquidator",
+        "The heirs, who act as liquidators or choose one by majority vote",
+        "An administrator appointed by the court in every case"
+      ],
+      "answer": 2,
+      "explain": "In Quebec the law identifies the heirs, who must act as liquidators or select a liquidator by majority vote. Only if they cannot agree does the court get involved, as in the common-law provinces."
+    },
+    {
+      "id": "c08-q006",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Court appointment",
+      "page": "8•5",
+      "q": "In the common-law provinces, which order of priority does the court usually follow when appointing the administrator of an intestate estate?",
+      "options": [
+        "Spouse, child, grandchild, father, mother, brother or sister",
+        "Child, spouse, father, mother, grandchild, brother or sister",
+        "Spouse, father, mother, child, brother or sister, grandchild",
+        "Spouse, child, brother or sister, father, mother, grandchild"
+      ],
+      "answer": 0,
+      "explain": "Practice usually ranks the surviving spouse first, then a child, a grandchild or other descendant, the father, the mother, then a brother or sister. With no next of kin, a provincial government office may apply; creditors may also apply."
+    },
+    {
+      "id": "c08-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Common-law spouses",
+      "page": "8•5",
+      "q": "Pierre lived common-law with Ann in Ontario for 15 years and died without a will. According to the course, what is Ann's position?",
+      "options": [
+        "She inherits as a spouse but cannot be appointed administrator",
+        "She receives the preferential share but none of the residue",
+        "She can neither be appointed administrator nor inherit",
+        "She may be appointed administrator but inherits nothing"
+      ],
+      "answer": 3,
+      "explain": "In Ontario (as in Saskatchewan, Nova Scotia and BC) a common-law spouse ranks with the spouse for appointment as administrator, but the course stresses that a common-law spouse inherits nothing on an Ontario intestacy."
+    },
+    {
+      "id": "c08-q008",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Creditors",
+      "page": "8•6",
+      "q": "Before any heir becomes entitled to a share of an intestate estate, the estate's creditors, including the Canada Revenue Agency, must be paid.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "Creditors come first. The CRA is owed tax on lifetime income and also tax triggered early because the intestate distribution does not pass everything to the spouse, losing the deferral a spousal transfer could provide."
+    },
+    {
+      "id": "c08-q009",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Designated beneficiaries",
+      "page": "8•6",
+      "q": "Luc dies intestate. His $150,000 RRSP names his adult son as beneficiary; the rest of his assets pass under intestacy to his wife and children. How is the RRSP handled, according to the course?",
+      "options": [
+        "The son receives it net of withholding tax, which settles the tax",
+        "The son receives it in full; the tax on it is paid by the estate",
+        "It falls into the estate and is shared under the intestacy rules",
+        "The son receives it, and the tax is reported on his own return"
+      ],
+      "answer": 1,
+      "explain": "Designated beneficiaries are paid outside the estate, ahead of the heirs, with no withholding tax (unless non-resident). The deemed income is taxed to the deceased, so the tax comes out of the intestate estate, reducing what the wife and other heirs receive."
+    },
+    {
+      "id": "c08-q010",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Preferential share",
+      "page": "8•6",
+      "q": "In most provinces, a common-law spouse is entitled to the spouse's preferential share when his or her partner dies intestate.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "For the preferential share, 'spouse' means a married spouse only. Most provinces do not include common-law partners in intestate entitlements, which is why intestacy is especially risky for such couples."
+    },
+    {
+      "id": "c08-q011",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Preferential share",
+      "page": "8•7",
+      "q": "Hector, an Ontario resident, dies intestate leaving his wife, three children and a net estate of $180,000. Using the course's Ontario rules, how much does his wife receive?",
+      "options": [
+        "$60,000",
+        "$90,000",
+        "$180,000",
+        "$120,000"
+      ],
+      "answer": 2,
+      "explain": "Ontario's preferential share is $200,000 (course figure). When the net estate is smaller than the preferential share, the entire estate passes to the surviving spouse and the children receive nothing."
+    },
+    {
+      "id": "c08-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec: spouse's protection",
+      "page": "8•7",
+      "q": "How is a surviving married spouse protected on an intestacy in Quebec, compared with Ontario?",
+      "options": [
+        "No preferential share; family patrimony is partitioned first",
+        "A $200,000 preferential share is paid before any partition",
+        "The spouse gets only a life interest in the family residence",
+        "The spouse inherits the whole estate if the children are minors"
+      ],
+      "answer": 0,
+      "explain": "Quebec has no spouse's preferential share. The Civil Code protects the spouse instead: family patrimony (e.g., half the family home's value) and matrimonial regime rights are settled before the intestacy rules divide what remains."
+    },
+    {
+      "id": "c08-q013",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Quebec: spouse's protection",
+      "page": "8•7",
+      "q": "In Quebec, a de facto (common-law) spouse of 20 years inherits one-third of the estate when the partner dies intestate leaving children.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "For Quebec intestacy, 'spouse' means a married or civil union spouse (civil unions can include same-sex couples). De facto spouses have no protection on intestacy, however long the relationship."
+    },
+    {
+      "id": "c08-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec: order of settlement",
+      "page": "8•8",
+      "q": "A Quebec resident dies intestate, survived by his wife and two children. In what order is his estate settled?",
+      "options": [
+        "Intestacy rules, then family patrimony, then matrimonial regime",
+        "Matrimonial regime, then intestacy rules, then family patrimony",
+        "Family patrimony, then intestacy rules, then matrimonial regime",
+        "Family patrimony, then matrimonial regime, then intestacy rules"
+      ],
+      "answer": 3,
+      "explain": "As in the Leo and Martha example, the family patrimony is partitioned first, then matrimonial regime rights are settled; only then does the liquidator distribute the estate under the Civil Code's intestacy rules."
+    },
+    {
+      "id": "c08-q015",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Per stirpes and per capita",
+      "page": "8•8",
+      "q": "According to the course, how does the meaning of 'per capita' in Quebec differ from its meaning in the common-law provinces?",
+      "options": [
+        "In Quebec it means by roots, so a dead heir's children take his share",
+        "In Quebec it means an equal split, and the heir need not be alive",
+        "In Quebec it applies only between spouses, never to descendants",
+        "In Quebec the heir must survive the deceased by at least 30 days"
+      ],
+      "answer": 1,
+      "explain": "In common-law usage, per capita beneficiaries must be alive: a predeceased beneficiary's share goes to the others. In Quebec, per capita (by heads) means an equal distribution, and the beneficiary need not be alive; in some cases his or her estate inherits."
+    },
+    {
+      "id": "c08-q016",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Per stirpes and per capita",
+      "page": "8•9",
+      "q": "Nadia, a widow with no will, leaves a $90,000 net estate divided among her issue per stirpes. Of her three children, one predeceased her, leaving three children of his own; the other two have no children. How much does each of those grandchildren receive?",
+      "options": [
+        "$18,000",
+        "$30,000",
+        "$10,000",
+        "$0"
+      ],
+      "answer": 2,
+      "explain": "Per stirpes, each child's root gets $30,000. The predeceased son's $30,000 is divided equally among his three children: $10,000 each. ($18,000 would result from per capita among issue; $0 from per capita among children.)"
+    },
+    {
+      "id": "c08-q017",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Per stirpes and per capita",
+      "page": "8•10",
+      "q": "Victor, a widower with no will, has a $150,000 net estate. Of his four children, one predeceased him, leaving two children; the other three have none. If the law divides the estate per capita among Victor's issue, how much does each grandchild receive?",
+      "options": [
+        "$30,000",
+        "$18,750",
+        "$37,500",
+        "$0"
+      ],
+      "answer": 0,
+      "explain": "Per capita among issue, every living descendant takes an equal share: three surviving children plus two grandchildren make five shares of $30,000. Per stirpes, the grandchildren would split their father's $37,500 ($18,750 each)."
+    },
+    {
+      "id": "c08-q018",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Per stirpes and per capita",
+      "page": "8•10",
+      "q": "In a common-law province, when an estate is divided per capita among the deceased's children (rather than issue), the share of a predeceased child passes to that child's own children.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "A per capita distribution among children counts only the surviving children, so a predeceased child's share is divided among them and the grandchildren get nothing. Passing the share down to the grandchildren is a per stirpes result."
+    },
+    {
+      "id": "c08-q019",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec: representation",
+      "page": "8•10",
+      "q": "Under article 665 of the Civil Code of Quebec, how is an estate partitioned where representation is permitted?",
+      "options": [
+        "By heads among all living descendants, whatever their generation",
+        "By roots up to the grandchildren, after which the state takes the share",
+        "By heads among the children; grandchildren take only if all children died",
+        "By roots, and members of the same branch share among themselves by heads"
+      ],
+      "answer": 3,
+      "explain": "Article 665: where representation is permitted, partition is effected by roots; if a root has several branches, the subdivision is also made by roots in each branch, and members of the same branch share among themselves by heads."
+    },
+    {
+      "id": "c08-q020",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Spouse and children",
+      "page": "8•10",
+      "q": "Julie, a Quebec resident, dies intestate leaving her husband and one daughter. After family patrimony and matrimonial regime rights are settled, $240,000 remains in her estate. How is it divided?",
+      "options": [
+        "$120,000 to the husband and $120,000 to the daughter",
+        "$80,000 to the husband and $160,000 to the daughter",
+        "$160,000 to the husband and $80,000 to the daughter",
+        "All $240,000 to the husband, as the daughter is his child"
+      ],
+      "answer": 1,
+      "explain": "Quebec is an exception to the equal split with one child: the spouse takes one-third ($80,000) and the child two-thirds ($160,000). Giving everything to the spouse when the child is also the spouse's child is Manitoba's rule."
+    },
+    {
+      "id": "c08-q021",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Spouse and children",
+      "page": "8•11",
+      "q": "Gordon, an Ontario resident, dies intestate leaving his wife, two children and a net estate of $800,000. Using the course's Ontario rules, how much does his wife receive?",
+      "options": [
+        "$500,000",
+        "$266,667",
+        "$400,000",
+        "$200,000"
+      ],
+      "answer": 2,
+      "explain": "She first takes the $200,000 preferential share, then one-third of the $600,000 remainder ($200,000), for $400,000. The children share the other $400,000 equally. An equal split of the remainder would apply only with one child."
+    },
+    {
+      "id": "c08-q022",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Next of kin",
+      "page": "8•11",
+      "q": "In the common-law provinces, if an intestate leaves no spouse, no children and no surviving parents, who is next in line to inherit?",
+      "options": [
+        "Brothers and sisters",
+        "Nieces and nephews",
+        "Grandparents",
+        "The provincial government"
+      ],
+      "answer": 0,
+      "explain": "The order is parents, then brothers and sisters, then nieces and nephews, then the next of kin by closeness of blood relationship (consanguinity), and only then the state."
+    },
+    {
+      "id": "c08-q023",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Quebec: next of kin",
+      "page": "8•11",
+      "q": "Remi, a single Quebecer with no children, dies intestate. His mother and father, his brother Simon and his sister Annie all survive him. His estate is worth $240,000. How much does Simon receive?",
+      "options": [
+        "$48,000",
+        "$30,000",
+        "$0",
+        "$60,000"
+      ],
+      "answer": 3,
+      "explain": "In Quebec, with no spouse or descendants, the estate is split 50-50 between the parents and the siblings (or their children). The siblings' $120,000 half is shared equally, so Simon gets $60,000. In a common-law province, the parents would take everything."
+    },
+    {
+      "id": "c08-q024",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Partial intestacy",
+      "page": "8•12",
+      "q": "Paula's will leaves $50,000 to each of her two nieces and the residue to her husband, with no alternate beneficiary. Her husband dies before her. She also has an adult son she meant to exclude. What happens to the residue?",
+      "options": [
+        "It is shared by the two nieces, as the only surviving legatees",
+        "It passes under the intestacy rules, so her son likely receives it",
+        "It goes to the province, because the residuary legatee died first",
+        "The whole will fails and the entire estate passes by intestacy"
+      ],
+      "answer": 1,
+      "explain": "This is a partial intestacy: the nieces' legacies are paid under the will, but the residue is not effectively disposed of, so it passes under the intestacy rules, where the son ranks first. As in the John example, an heir the testator meant to exclude can inherit."
+    },
+    {
+      "id": "c08-q025",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Partial intestacy",
+      "page": "8•12",
+      "q": "In most provinces, the spouse's preferential share still applies on a partial intestacy, so an undisposed portion worth no more than that share goes entirely to the spouse.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "The course notes that the preferential share must still be considered in a partial intestacy; when the intestate portion is less than or equal to the preferential share, it all goes to the spouse."
+    },
+    {
+      "id": "c08-q026",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Cost and delay",
+      "page": "8•12",
+      "q": "Why might an intestacy cost a deceased the chance to have a final spousal RRSP contribution made on his behalf, as in the course's example of John and Marie?",
+      "options": [
+        "Contributions to a spousal RRSP are banned once the owner dies",
+        "Only a surviving child may contribute on the deceased's behalf",
+        "No one can act until the court appoints an administrator",
+        "Unused contribution room is cancelled by the CRA at death"
+      ],
+      "answer": 2,
+      "explain": "Normally the executor could contribute to a spousal RRSP in the survivor's name. With an intestacy, no one can manage the estate until the court appoints an administrator (who also lacks will-granted powers), so the income stays on the deceased's terminal return."
+    },
+    {
+      "id": "c08-q027",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Minor beneficiaries",
+      "page": "8•13",
+      "q": "Mr. Lee, an Ontario resident, dies intestate leaving his homemaker wife, two minor children and a $650,000 estate. Under the course's rules, what happens to the children's share?",
+      "options": [
+        "$150,000 each is paid into court until they turn 18",
+        "$150,000 each is managed by their mother until they turn 18",
+        "$216,667 each is paid into court until they turn 18",
+        "$225,000 each is held by the administrator until age 25"
+      ],
+      "answer": 0,
+      "explain": "The wife takes $200,000 plus one-third of the $450,000 remainder ($150,000). The children's two-thirds ($300,000) is $150,000 each, paid into court and released at the age of majority (18); the mother must apply to the court for any payout."
+    },
+    {
+      "id": "c08-q028",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec: minors",
+      "page": "8•13",
+      "q": "In Quebec, how is a minor's share of an intestate estate managed until the minor turns 18?",
+      "options": [
+        "It is paid into court and released only on a court order each time",
+        "By the liquidator, who must keep it inside the estate until age 18",
+        "By the Public Curator directly, who must invest it and report to court",
+        "By a tutor, overseen by the tutorship council and the Public Curator"
+      ],
+      "answer": 3,
+      "explain": "The minor's tutor manages the share under the Civil Code's tutorship rules and can generally use it for maintenance and education without a court order, though some acts need tutorship council or court approval. The council and the Public Curator oversee the tutor."
+    },
+    {
+      "id": "c08-q029",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Minor beneficiaries",
+      "page": "8•14",
+      "q": "A couple with $400,000 of jointly owned assets and no wills die together, leaving 17-year-old twins they planned to exclude until the twins settled down. What happens when the twins turn 18?",
+      "options": [
+        "The court releases the funds in stages until each is 25",
+        "Each can demand and receive the full $200,000 share",
+        "The administrator decides when each twin is mature enough",
+        "The shares stay in trust until each twin finishes school"
+      ],
+      "answer": 1,
+      "explain": "At the age of majority (18), a beneficiary can legally demand the share held for him or her, whatever their maturity, as with Herman and Olga's twins. Intestacy gives no way to delay the payout or to exclude the children."
+    },
+    {
+      "id": "c08-q030",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Common-law spouses",
+      "page": "8•14",
+      "q": "Ken lived for 30 years with Rita, who never divorced her first husband. Rita dies childless and without a will in a province that gives common-law partners no intestate rights. What is Ken's position?",
+      "options": [
+        "He inherits everything after 30 years of living with her",
+        "He shares the estate equally with Rita's legal husband",
+        "He inherits nothing and can only sue the estate for support",
+        "He receives the preferential share but nothing more"
+      ],
+      "answer": 2,
+      "explain": "With no recognition of common-law spouses, Ken inherits nothing and can only sue the estate for support. If Rita's legal husband is alive, he is entitled to the whole estate, as in the course's Joe and Elsie example."
+    },
+    {
+      "id": "c08-q031",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Quebec: civil union",
+      "page": "8•14",
+      "q": "In Quebec, civil union spouses inherit from each other on an intestacy, just as married spouses do.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "Quebec's civil union, open to couples of different or same sex, is equivalent to marriage: civil union spouses have the same rights and obligations as married spouses, including inheriting from each other on intestacy."
+    },
+    {
+      "id": "c08-q032",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Escheat",
+      "page": "8•15",
+      "q": "Escheat, the transfer of an estate to the government, is an automatic consequence of dying intestate.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "Escheat happens only when no heirs can be found, which is rare because an extensive search for relatives is made. Most intestate estates go to the spouse, descendants or other next of kin under provincial law."
+    },
+    {
+      "id": "c08-q033",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Tax planning",
+      "page": "8•15",
+      "q": "Which post-mortem tax technique is lost on an intestacy because the administrator lacks the authority that a will can grant?",
+      "options": [
+        "Filing a rights or things return for the deceased",
+        "Claiming the deceased's basic personal credit on the final return",
+        "Paying the deceased's income tax from the estate's bank account",
+        "Reporting the deemed income from an RRSP on the final return"
+      ],
+      "answer": 0,
+      "explain": "Without powers granted in a will, an administrator may not make certain elections: spousal RRSP contributions, filing a rights or things return, or carrying the estate's net capital losses back to the terminal return. The other items are routine obligations."
+    },
+    {
+      "id": "c08-q034",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Unintended beneficiaries",
+      "page": "8•15",
+      "q": "Sandra, who is divorced, dies intestate in a car accident; her only child, aged 9, dies in hospital the next day. Who most likely ends up with Sandra's estate?",
+      "options": [
+        "Sandra's parents, as her closest next of kin",
+        "The province, since both heirs died within a day",
+        "Sandra's siblings, shared equally by roots",
+        "Her ex-husband, as the child's surviving parent"
+      ],
+      "answer": 3,
+      "explain": "Sandra's estate passes to her surviving child. The child's own estate, now including Sandra's assets, passes on the child's intestacy to the surviving parent: the ex-husband, likely the last person Sandra wanted to benefit."
+    },
+    {
+      "id": "c08-q035",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Planning scenario",
+      "page": "8•16",
+      "q": "Angelo, an Ontario resident, dies intestate leaving his wife Maria and three children. Assume his $500,000 business is his only estate asset. Under the course's Ontario rules, about how much does each child receive?",
+      "options": [
+        "About $111,111",
+        "About $66,667",
+        "About $100,000",
+        "Nothing until Maria dies"
+      ],
+      "answer": 1,
+      "explain": "Maria takes the first $200,000 plus one-third of the remaining $300,000: $300,000. The other $200,000 goes to the three children, about $67,000 each, paid now (the 17-year-old's at 18), not after Maria's death as Angelo assumed."
+    },
+    {
+      "id": "c08-q036",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Planning scenario",
+      "page": "8•16",
+      "q": "Angelo and Maria live in Quebec, married under separation as to property; Maria has no assets of her own. Angelo dies intestate leaving Maria and three children. Of his $500,000 business (not part of the family patrimony), how much does Maria inherit?",
+      "options": [
+        "$300,000, the first $200,000 plus a third",
+        "$250,000, one-half of its value",
+        "$166,666, one-third of its value",
+        "$500,000, as the surviving spouse"
+      ],
+      "answer": 2,
+      "explain": "Quebec has no preferential share. After the family patrimony partition (half the value of the family residence and the RRSP), Maria inherits one-third of the rest: $166,666 of the business, with $111,111 to each child. Separation as to property gives her nothing more."
+    },
+    {
+      "id": "c08-q037",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Preferential share",
+      "page": "8•7",
+      "q": "According to the course, what preferential share does a surviving spouse receive in New Brunswick when the intestate also leaves children?",
+      "options": [
+        "The deceased's interest in marital property",
+        "$50,000, or the matrimonial home instead",
+        "The first $200,000 of the net estate",
+        "None: New Brunswick has no preferential share"
+      ],
+      "answer": 0,
+      "explain": "Both the body text and Appendix A give a New Brunswick spouse the deceased's interest in marital property (as defined in the Marital Property Act) first; the rest is then split equally with one child, or one-third to the spouse and two-thirds to the children. $50,000 or the home is Nova Scotia's rule; $200,000 is Ontario's."
+    },
+    {
+      "id": "c08-q038",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Appendix A: provinces",
+      "page": "8•18",
+      "q": "According to the course, Manitoba gives the entire estate to the surviving spouse when all of the deceased's children are also children of that spouse.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "Both the body text and Appendix A say so, whether there is one child or several: Manitoba is the exception to the usual sharing between spouse and children. (Appendix A also extends this rule to a common-law partner.)"
+    },
+    {
+      "id": "c08-q039",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Appendix A: provinces",
+      "page": "8•19",
+      "q": "Bill, a Saskatchewan resident, dies intestate leaving his wife, one child and a net estate of $300,000. According to the course's Appendix A, how much does his wife receive?",
+      "options": [
+        "$166,667",
+        "$150,000",
+        "$100,000",
+        "$200,000"
+      ],
+      "answer": 3,
+      "explain": "Saskatchewan gives the spouse the first $100,000. With one child, the remaining $200,000 is split equally, so the wife receives $100,000 + $100,000 = $200,000 and the child $100,000."
+    },
+    {
+      "id": "c08-q040",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Appendix A: provinces",
+      "page": "8•18",
+      "q": "Carla, a Nova Scotia resident, dies intestate leaving her husband and three children; $350,000 passes through her estate. Using the course's figures, how much does her husband receive?",
+      "options": [
+        "$200,000",
+        "$150,000",
+        "$116,667",
+        "$50,000"
+      ],
+      "answer": 1,
+      "explain": "Nova Scotia's preferential share is $50,000. The remaining $300,000 is split one-third to the spouse ($100,000) and two-thirds to the children, so the husband receives $150,000 in total."
+    },
+    {
+      "id": "c08-q041",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Quebec: heirs",
+      "page": "8•24",
+      "q": "Martin, a Quebec resident, dies intestate. He is survived by his wife and his mother; he had no children or siblings, and his father died years ago. After family patrimony and matrimonial regime rights are settled, $270,000 remains. How is it divided?",
+      "options": [
+        "All $270,000 to his wife; his mother gets nothing",
+        "$135,000 to his wife and $135,000 to his mother",
+        "$180,000 to his wife and $90,000 to his mother",
+        "$90,000 to his wife and $180,000 to his mother"
+      ],
+      "answer": 2,
+      "explain": "As in the course's Quebec example of Eric, the spouse receives two-thirds and the surviving mother one-third of what remains after the family patrimony partition. Both are legal heirs, so they act together as liquidators or agree on one."
+    },
+    {
+      "id": "c08-q042",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Quebec: partial intestacy",
+      "page": "8•23",
+      "q": "Helene, a Quebec widow, left the residue of her estate 'in equal shares to my three children'. One child died before her without descendants, and she never updated her will. According to the course, what happens to the residue?",
+      "options": [
+        "The two surviving children take all of it, by accretion",
+        "One-third passes under the Civil Code's intestacy rules",
+        "The predeceased child's third goes to the Public Curator",
+        "The entire residue passes under the intestacy rules"
+      ],
+      "answer": 0,
+      "explain": "The Civil Code provides for accretion between universal (residuary) legatees, so the surviving children take the whole residue and no intestacy arises. In a common-law province, the lapsed third would pass under the intestacy rules."
+    },
+    {
+      "id": "c08-q043",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Quebec: heirs",
+      "page": "8•24",
+      "q": "A Quebec man dies intestate, leaving two children from his first marriage and one from his second. Which of them inherit as his descendants?",
+      "options": [
+        "Only the child of the marriage in force at his death",
+        "Only the two children of the first marriage",
+        "Each mother, who then divides her share among her children",
+        "All three children, whichever union they come from"
+      ],
+      "answer": 3,
+      "explain": "In Quebec, all of the deceased's children have the right to inherit, regardless of the marriage (or union) they come from."
+    }
+  ]
+}

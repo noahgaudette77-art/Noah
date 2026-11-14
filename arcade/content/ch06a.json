@@ -1,0 +1,1530 @@
+{
+  "chapter": 6,
+  "part": "a",
+  "title": "Retirement Planning",
+  "objectives": [
+    "Ascertain a client's retirement lifestyle goals.",
+    "Determine how much retirement income a client will need to reach those goals.",
+    "Determine how much of the retirement income will come from the various sources that the client has built up during the working years.",
+    "Show how to allow for the effects of inflation while planning for the above.",
+    "Discuss the different sources of retirement savings that the client's household can reasonably expect to profit from during the different stages of its life cycle."
+  ],
+  "guide": [
+    {
+      "heading": "Retirement and smoothing consumption",
+      "page": "6•3",
+      "points": [
+        "Most Canadians are ill-prepared: fewer than half of workers have a company pension and one-third have no regular savings. Self-employed and precarious workers often have no employer plan.",
+        "Retirement starts whenever a person stops working, not at a set age (some retire around 50, others after 65). Savings may need to last 30 years or more.",
+        "Savings target often suggested: 5% to 10% of family take-home earnings. Mortgage payments and CPP/QPP, RPP and EPP contributions are forced savings.",
+        "Savings = income not consumed in a period; its purpose is to smooth consumption over a lifetime. Real value of savings = change in net worth (includes asset growth, forced savings and debt repayment).",
+        "Diminishing marginal utility: each extra unit of consumption adds less benefit, so moving $10,000 from a high-consumption year to a lean year raises total well-being (gain A always exceeds loss B).",
+        "Life Cycle Hypothesis (Modigliani and Brumberg, 1954): consumption is proportional to total resources (incl. PV of future income); the factor depends on family size and remaining lifespan. Debt peaks at ages 35 to 44."
+      ]
+    },
+    {
+      "heading": "The planning process and Step 1: retirement goals",
+      "page": "6•6",
+      "points": [
+        "Why plan earlier: uncertain CPP/QPP and OAS benefits, future health-care costs, shrinking employer pensions, frequent job changes, more self-employment, and more people wanting to retire before 65.",
+        "Four steps: 1) ascertain the client's goals, 2) calculate how much is needed, 3) determine sources of revenue at retirement, 4) adjust finances to meet the goals.",
+        "Step 1 questions: when to retire, what lifestyle, where to live, and the client's life expectancy. Also consider possible health problems and care for aging parents.",
+        "An earlier retirement date means fewer years to accumulate and more years to fund. The course assumes a life expectancy of 90 for both men and women.",
+        "Lifestyle and location drive income needs: the Itos (moving to a cheaper rural home, growing their own food) need less than the Noisettes (downtown condo, frequent travel abroad)."
+      ]
+    },
+    {
+      "heading": "Step 2: needs, inflation and before-tax income",
+      "page": "6•8",
+      "points": [
+        "Four sub-steps: estimate expenses in today's dollars; inflate them to the retirement year; gross up to before-tax income with the average tax rate; take the present value at a real interest rate.",
+        "Expenses that fall: second car, food, clothing and dry cleaning, housecleaning, shelter. Expenses that rise: health care (possibly $20,000+ a year), formerly employer-paid benefits, travel and recreation.",
+        "Inflation: the course uses 3%, so prices rise about 1.8 times in 20 years ($1,000 becomes about $1,806). Peter and Suzanne's $47,000 becomes $92,759 after 23 years.",
+        "Use the AVERAGE tax rate (total tax ÷ total income), not the marginal rate. Conservatively use the client's current average rate, even though rates in retirement may be lower.",
+        "Before-tax income = after-tax need ÷ (1 − average rate): $92,759 ÷ (1 − 0.33) = $138,446. For a couple, rate = combined tax ÷ combined income; better income splitting lowers it."
+      ]
+    },
+    {
+      "heading": "Step 2: capital required and real interest rates",
+      "page": "6•10",
+      "points": [
+        "The retirement period is critical: Peter retires at 55 and Suzanne (then 53) is expected to live to 90, so the plan covers 37 years.",
+        "Indexed income is not a fixed payment, so it can't be discounted at the nominal rate. Nominal risk-free rate = anticipated inflation + real rate; risky assets also carry a risk premium.",
+        "Real rate = (1 + nominal) ÷ (1 + inflation) − 1 (5% and 2% give 2.94%). Subtracting gives 3%, slightly overstating it. Real rates are usually 2% to 4% and stable; the course uses 3%.",
+        "PV of required income: $138,446 a year for 37 years at 3% real = $3,068,965, in future dollars (not comparable with today's). A higher real return or later retirement reduces it.",
+        "Compare apples to apples: interest, employment, pension and RRIF income are fully taxed, dividends roughly one-third less, and only 50% of capital gains is taxable. Use after-tax, real returns."
+      ]
+    },
+    {
+      "heading": "Step 3: sources of retirement income",
+      "page": "6•12",
+      "points": [
+        "Company pension coverage is shrinking and government benefits are uncertain, so retirement planning is best seen as the individual's responsibility.",
+        "Process: estimate each source's benefit; find its PV when it will be collected; if it starts after the retirement date, find its PV at retirement.",
+        "Sources: CPP/QPP, OAS, GIS, RPPs, RRSPs/RRIFs/annuities, locked-in funds (LIF, LRIF, PRIF, RLIF), non-registered investments, life insurance cash surrender value, DPSPs, IPPs and RCAs.",
+        "Three categories: governmental (CPP/QPP, OAS, GIS), job related (RPP, DPSP, other annuity) and the client's own assets (RRSP, RRIF, locked-in funds).",
+        "CPP and QPP are indexed each January to the CPI; OAS and GIS are indexed quarterly. The 2019 maximum CPP/QPP pension at 65 was $1,154.58 a month."
+      ]
+    },
+    {
+      "heading": "CPP and QPP: contributions",
+      "page": "6•13",
+      "points": [
+        "Mandatory for employed and self-employed people aged 18+ with employment income over $3,500; people working in Quebec contribute to the QPP (RRQ). The two plans' rules are almost identical.",
+        "Contributory period: from 18 to the earliest of the month before the pension starts, the month the worker turns 70, or death. In Quebec, a working QPP pensioner under 70 earning over $3,500 keeps contributing.",
+        "Drop-outs (both): child-rearing (children under 7) and disability months. CPP only: low-income months after 65; 17% of lowest years (max 8). QPP only: 15% of lowest years; months on non-reduced CSST benefits.",
+        "Contributions are based on salary or net business income (never investment income) between $3,500 and the maximum pensionable earnings ($57,400 in 2019; $55,900 in 2018), adjusted each January.",
+        "2019 rates: CPP 5.10% each for employee and employer (self-employed 10.2%, max $5,497.80); QPP 5.55% for employees (max $2,991.45) and 11.10% for the self-employed (max $5,982.90).",
+        "Example: an employee earning $38,000 pays ($38,000 − $3,500) × 5.10% = $1,759.50, matched by the employer; if self-employed, $3,519."
+      ]
+    },
+    {
+      "heading": "CPP and QPP: benefits and family rules",
+      "page": "6•15",
+      "points": [
+        "Eligibility: CPP needs one contribution, QPP one year of contributions, plus age 60+. Benefits never start automatically: you must apply. People receiving disability benefits can't get a retirement pension.",
+        "Before 65: −0.6% a month (−36% at 60; QPP as little as −0.5% a month for low earners), permanently. After 65: +0.7% a month (+42% at 70). Timing depends on need, the real rate and life expectancy.",
+        "Post-Retirement Benefit (in Quebec, the retirement pension supplement): an extra lifetime benefit for pensioners aged 60 to 70 who keep working and contributing.",
+        "Common-law partners (either sex, together 1+ year) have spouses' rights. On divorce, credits earned during the union may be split equally. Survivor: up to 60%; orphans under 18 (25 if full-time students).",
+        "Death benefit: $2,500 one time, to the estate (CPP) or, in Quebec, to whoever paid the funeral (or their heirs). Pension sharing: both 60+, and both receiving if both contributed.",
+        "Contributed to both plans? Apply to the QPP if living in Quebec, the CPP elsewhere; the paying plan's rules apply to all contributions. Enhancement from 2019: one-third of earnings replaced, fully in place by 2025."
+      ]
+    },
+    {
+      "heading": "OAS, the Allowances and the GIS",
+      "page": "6•19",
+      "points": [
+        "OAS is paid from 65 to those with at least 10 years' residence in Canada, at 1/40 per year of residence; the full pension needs 40 years after age 18. Rates are reviewed quarterly.",
+        "Clawback (2019): 15 cents per dollar of net income above $77,580, fully clawed back at $125,696. The amount repaid is deductible in computing net income.",
+        "Allowance: low-income spouses/partners aged 60 to 64 of OAS pensioners; becomes OAS at 65. Stops if income is too high, the person leaves Canada 6+ months in a row, the application isn't renewed, or on separation or death.",
+        "Allowance for the Survivor: low-income survivors aged 60 to 64; it also stops on remarriage or a common-law union lasting more than 12 months.",
+        "GIS: monthly, tax-free benefit for low-income residents receiving a full or partial OAS; must be applied for every year; depends on marital status and income."
+      ]
+    },
+    {
+      "heading": "Registered pension plans: design, payments, DB and DC",
+      "page": "6•20",
+      "points": [
+        "An RPP provides lifetime income for past service under a formula. Sponsor: only the employer or a union. Joining isn't always mandatory, and non-members get no extra pay for the forgone employer contributions.",
+        "Design considerations: comparison with peers' plans, retirement income adequacy, plan equity (fair treatment of groups), special situations (e.g. accrual during total disability) and administration cost.",
+        "Payments only on leaving the employer, retirement, plan wind-up or CRA-permitted cases. Contributions deductible, growth sheltered, payments subject to withholding, tax-free transfers to registered plans.",
+        "DB formulas: flat benefit, career average, final or best average, combination. Common cap: lesser of 2% × final average × service and $2,000 × service (35 years max). The employer bears the risk.",
+        "CRA limit on DB accrual: 2% of pay per year of service, up to 1/9 of the money purchase limit ($3,025.56 for 2019, reached at $151,278 of earnings).",
+        "DC (money purchase): pension = contributions + earnings; contributions capped at the lesser of 18% of pay and the annual limit; the employee bears the risk; simpler, with fixed costs.",
+        "Older employees prefer DB as a safety net, though it may cost them other pay; DC is easier to take along when changing jobs. Indexing after retirement is possible but uncommon."
+      ]
+    },
+    {
+      "heading": "Vesting, locking-in, LIRAs and pension adjustments",
+      "page": "6•25",
+      "points": [
+        "Vesting: employer contributions become the member's after a set period (often 2 years). Leaving earlier, the member gets only his or her own contributions plus earnings.",
+        "Locking-in: no cash payout before a set age or period of service. Portability (moving credits to a new employer's plan) rarely works, so job-changers often end up with several pensions.",
+        "Leaving before 55: keep funds in the plan, or move them to another RPP, a LIRA or locked-in RRSP, or a LIF. LIRA = provincial law; locked-in RRSP = federal (banks, air or rail transport, radio and TV).",
+        "LIRAs take no contributions; withdrawals only for shortened life expectancy, hardship or non-residency. No maturity 10+ years before normal retirement (usually 55); convert by the end of the year the holder turns 71.",
+        "PA = total RPP and DPSP credits (on the T4). DC: all contributions; DB: (benefit accrual × 9) − $600. RRSP room = lesser of 18% of earned income and the dollar limit, minus the PA.",
+        "Example: $50,000 salary, 5% + 5% to a DC RPP and $700 employer DPSP contribution: PA = $5,700, so RRSP room = $9,000 − $5,700 = $3,300."
+      ]
+    },
+    {
+      "heading": "PARs, group RRSPs, spouses, death and divorce",
+      "page": "6•28",
+      "points": [
+        "PAR: restores RRSP room on leaving a plan when the termination benefit is below the PAs/PSPAs (DB) or unvested credits are forfeited (DC/DPSP). Leaving the plan is enough; due 60 days after quarter-end (Q4: Jan. 31).",
+        "Group RRSP: employer contributions are taxable to the employee but offset by the RRSP deduction; the employee bears the risk; contributions vest immediately.",
+        "Since the 1980s reforms the required spousal form is joint-and-last-survivor, at least 60% to the survivor, unless waived in writing. Pension credits are a family asset; in Quebec, part of the family patrimony.",
+        "Assets needed = PV of required income − PV of CPP/QPP and pension benefits: $3,068,965 − $197,775 − $168,639 − $1,463,038 = $1,239,513, i.e. saving $15,583 a year for 23 years at 10%.",
+        "Death after retirement: pension to the month of death goes on the final return (executor; liquidator in Quebec); a spousal continuation is taxed to the survivor; with no spouse or beneficiary, the value is estate income (T3).",
+        "Death before retirement: paid to the spouse unless waived (in some provinces into a locked-in plan), else the designated beneficiary bears the tax, else estate income. Quebec divorce: split by court order or agreement (max 50%)."
+      ]
+    },
+    {
+      "heading": "DPSPs, IPPs and RCAs",
+      "page": "6•31",
+      "points": [
+        "DPSP: employees share in profits tax-deferred. Employer-only contributions from profits, capped at the lesser of 18% of pay and $13,615 (2019); PA = employer contributions. Not for owners of more than 10% of any class of shares.",
+        "DPSP payouts: lump sum, equal instalments over up to 10 years, annuity, RRSP, another DPSP (5+ members, 1+ year old) or securities in specie. Reported on a T4A (plus a Relevé 2 in Quebec). After 1991, vested within 2 years.",
+        "IPP: a DB plan for one person (often the owner-manager) that maximizes deductible contributions; suits older high earners (40 to 71 and over $151,278 on 6•33; 50+ and about $150,000 on 6•34). Limits grow 7.5% a year; set-up costs $1,500 to $5,000.",
+        "IPP pros: higher contributions than an RRSP, employer top-ups, investment control, creditor protection, deductible. Cons: no spousal contributions, locked in, costly and complex.",
+        "RCA: employer-funded supplementary payments outside an RPP at retirement or termination. No minimum or maximum contributions; employer contributions deductible, employee contributions usually not."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Real rate = (1 + nominal) ÷ (1 + inflation) − 1. Simply subtracting inflation is only an approximation that slightly overstates it.",
+    "EXAM TIP: Gross up retirement needs with the AVERAGE tax rate: before-tax income = after-tax need ÷ (1 − average tax rate).",
+    "EXAM TIP: CPP/QPP started early drops 0.6% a month (−36% at 60); delayed, it rises 0.7% a month (+42% at 70). The early cut is permanent.",
+    "DID YOU KNOW? In Quebec, the $2,500 QPP death benefit goes to whoever paid the funeral expenses (or their heirs), not automatically to the estate.",
+    "EXAM TIP: Defined benefit = the employer bears the investment risk. Defined contribution = the employee bears it. Older employees usually prefer DB.",
+    "EXAM TIP: PA for a DC plan = all contributions; for a DB plan = (benefit accrual × 9) − $600. RRSP room = 18% of earned income (to the limit) − PA.",
+    "DID YOU KNOW? Employees can't contribute to a DPSP, and a DPSP can't cover anyone owning more than 10% of any class of the employer's shares.",
+    "DID YOU KNOW? Polls cited in the course found fewer than half of working Canadians have a company pension, and one-third have no regular savings."
+  ],
+  "flashcards": [
+    {
+      "id": "c06a-f001",
+      "topic": "Key numbers",
+      "page": "6•3",
+      "front": "Savings objective often suggested by the popular financial press",
+      "back": "5% to 10% of family take-home earnings."
+    },
+    {
+      "id": "c06a-f002",
+      "topic": "Smoothing consumption",
+      "page": "6•4",
+      "front": "Law of Diminishing Marginal Utility",
+      "back": "The marginal utility of consumption declines as a family's consumption rises. Marginal utility is the extra benefit from one more unit of consumption, so money saved in good years is worth more when spent in lean years."
+    },
+    {
+      "id": "c06a-f003",
+      "topic": "Smoothing consumption",
+      "page": "6•5",
+      "front": "Life Cycle Hypothesis (Modigliani and Brumberg, 1954)",
+      "back": "Families maximize the utility of consumption over time, subject to total financial resources (including the PV of future income). Consumption is proportional to total resources; the factor depends on family size and remaining lifespan."
+    },
+    {
+      "id": "c06a-f004",
+      "topic": "Planning process",
+      "page": "6•6",
+      "front": "The four steps of the retirement planning process",
+      "back": "1. Ascertain the client's retirement goals. 2. Calculate how much is needed to meet them. 3. Determine the sources of revenue at retirement. 4. Adjust finances to meet the retirement goals."
+    },
+    {
+      "id": "c06a-f005",
+      "topic": "Step 1: Goals",
+      "page": "6•7",
+      "front": "Key questions to ask in Step 1 (retirement goals)",
+      "back": "When does the client want to retire? What lifestyle? Where will the client live? What is the client's life expectancy (the course uses 90 for men and women)? Also consider health problems and care for aging parents."
+    },
+    {
+      "id": "c06a-f006",
+      "topic": "Step 2: Needs",
+      "page": "6•8",
+      "front": "The four sub-steps of Step 2 (calculating retirement needs)",
+      "back": "1. Estimate expenses at retirement in today's dollars. 2. Project them to the retirement year at the assumed inflation rate. 3. Compute the before-tax income needed using the average tax rate. 4. Find its PV at a real interest rate."
+    },
+    {
+      "id": "c06a-f007",
+      "topic": "Step 2: Needs",
+      "page": "6•9",
+      "front": "Expenses that typically fall vs rise at retirement",
+      "back": "Fall: second car, food (fewer meals out), clothing and dry cleaning, housecleaning, shelter (smaller home). Rise: health care (in drastic cases $20,000+ a year), formerly employer-paid benefits, travel and recreation."
+    },
+    {
+      "id": "c06a-f008",
+      "topic": "Key numbers",
+      "page": "6•9",
+      "front": "Effect of 3% annual inflation over 20 years",
+      "back": "Prices rise about 1.8 times (1.8061): $1,000 today costs about $1,806. The course uses 3% inflation, though Canadian inflation has averaged around 2% for years."
+    },
+    {
+      "id": "c06a-f009",
+      "topic": "Step 2: Needs",
+      "page": "6•9",
+      "front": "Average tax rate: definition and use in Step 2",
+      "back": "Total tax ÷ total income (e.g. $15,000 ÷ $50,000 = 30%). Used, rather than the marginal rate, to find the before-tax income needed. Conservative practice: use the client's current average rate."
+    },
+    {
+      "id": "c06a-f010",
+      "topic": "Step 2: Needs",
+      "page": "6•10",
+      "front": "Before-tax retirement income needed (formula)",
+      "back": "After-tax income needed ÷ (1 − average tax rate). Course example: $92,759 ÷ (1 − 0.33) ≈ $138,446 in future dollars, equal to about $70,149 in today's dollars."
+    },
+    {
+      "id": "c06a-f011",
+      "topic": "Step 2: Capital required",
+      "page": "6•11",
+      "front": "Nominal vs real interest rate",
+      "back": "Nominal risk-free rate = anticipated inflation + real rate (the price for deferring consumption). Real rate = (1 + nominal) ÷ (1 + inflation) − 1, e.g. 1.05 ÷ 1.02 − 1 = 2.94%. Subtracting (3%) slightly overstates it."
+    },
+    {
+      "id": "c06a-f012",
+      "topic": "Key numbers",
+      "page": "6•11",
+      "front": "Typical range of real interest rates, and the rate the course uses",
+      "back": "Generally 2% to 4% a year and fairly stable. The course uses 3%, so with 3% inflation the nominal risk-free rate would be 6%."
+    },
+    {
+      "id": "c06a-f013",
+      "topic": "Step 3: Sources",
+      "page": "6•12",
+      "front": "Step 3 process for each source of retirement income",
+      "back": "a) Estimate the benefit to be received. b) Calculate its present value when it will be collected. c) If it starts later than the retirement date, calculate its present value at retirement."
+    },
+    {
+      "id": "c06a-f014",
+      "topic": "Step 3: Sources",
+      "page": "6•13",
+      "front": "Three categories of retirement income 'assets'",
+      "back": "Governmental (CPP/QPP, OAS, GIS); job related (RPP, DPSP, other annuity); the client's own assets (RRSP, RRIF, locked-in funds such as LIF, LRIF, PRIF, RLIF)."
+    },
+    {
+      "id": "c06a-f015",
+      "topic": "CPP/QPP",
+      "page": "6•13",
+      "front": "CPP/QPP: who contributes, and how benefits are indexed",
+      "back": "Mandatory for employed and self-employed people aged 18+ with employment income over $3,500 (QPP, or RRQ, if working in Quebec). CPP/QPP are indexed each January to the CPI; OAS and GIS are indexed quarterly."
+    },
+    {
+      "id": "c06a-f016",
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "front": "CPP/QPP contributory period",
+      "back": "Starts at age 18 (or January 1966). Ends at the earliest of: the month before the first pension payment, the month the worker turns 70 (even if still working), or the month of death."
+    },
+    {
+      "id": "c06a-f017",
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "front": "CPP vs QPP drop-out provisions",
+      "back": "Both: years caring for children under 7; months eligible for a disability pension. CPP only: low-income months after 65; 17% of lowest years (max 8). QPP only: 15% of lowest years; months on a non-reduced CSST benefit after 1985."
+    },
+    {
+      "id": "c06a-f018",
+      "topic": "Key numbers",
+      "page": "6•15",
+      "front": "CPP and QPP contributions, 2019 (course figures)",
+      "back": "On earnings from $3,500 to $57,400. CPP: 5.10% employee + 5.10% employer; self-employed 10.2% (max $5,497.80). QPP: 5.55% employee (max $2,991.45); self-employed 11.10% (max $5,982.90)."
+    },
+    {
+      "id": "c06a-f019",
+      "topic": "Key numbers",
+      "page": "6•15",
+      "front": "Early or late CPP/QPP pension: adjustment per month",
+      "back": "Before 65: −0.6% a month (−36% at 60; QPP can be as little as 0.5% a month for low earners). After 65: +0.7% a month (+42% at 70). The early reduction is permanent."
+    },
+    {
+      "id": "c06a-f020",
+      "topic": "CPP/QPP",
+      "page": "6•15",
+      "front": "Eligibility for a CPP vs QPP retirement pension",
+      "back": "CPP: at least one contribution and age 60+. QPP: at least one year of contributions and age 60+. Benefits never start automatically: you must apply. People receiving disability benefits are not eligible."
+    },
+    {
+      "id": "c06a-f021",
+      "topic": "CPP/QPP",
+      "page": "6•16",
+      "front": "Three factors in deciding when to start CPP/QPP",
+      "back": "Whether the person needs the pension before 70; the assumed real interest rate over the period it would be received; and the person's life expectancy."
+    },
+    {
+      "id": "c06a-f022",
+      "topic": "CPP/QPP",
+      "page": "6•17",
+      "front": "Post-Retirement Benefit (Quebec: retirement pension supplement)",
+      "back": "A lifetime benefit added to the CPP/QPP pension of people aged 60 to 70 who receive a CPP/QPP pension and keep working and contributing."
+    },
+    {
+      "id": "c06a-f023",
+      "topic": "CPP/QPP",
+      "page": "6•17",
+      "front": "Common-law partners under the CPP/QPP",
+      "back": "Two people, of either sex, in a conjugal relationship for at least one year. Like married spouses, they can claim income equalization on separation, sharing of pension benefits in retirement and a survivor's pension."
+    },
+    {
+      "id": "c06a-f024",
+      "topic": "CPP/QPP",
+      "page": "6•17",
+      "front": "CPP/QPP survivor and orphan benefits",
+      "back": "The surviving spouse gets a portion of the benefits (maximum 60%), based on the survivor's age, responsibility for dependent children and other factors. Children under 18 (to 25 if full-time students) may get orphan's benefits."
+    },
+    {
+      "id": "c06a-f025",
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "front": "CPP/QPP death benefit (deaths after Dec. 31, 2018)",
+      "back": "A one-time $2,500 payment. CPP: paid to the estate. QPP (Quebec): paid to the person or charity that paid the funeral expenses, or to their heirs."
+    },
+    {
+      "id": "c06a-f026",
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "front": "CPP/QPP pension sharing between spouses",
+      "back": "Both spouses must be 60 or over; if both contributed, both must be receiving a pension. The share depends on the time spent living together; each keeps what was earned outside the relationship."
+    },
+    {
+      "id": "c06a-f027",
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "front": "Contributed to both the CPP and QPP: where to apply?",
+      "back": "To the QPP if living in Quebec, to the CPP if elsewhere in Canada; if living abroad, to the plan of the province last lived in. The benefit uses contributions to both plans under the paying plan's rules."
+    },
+    {
+      "id": "c06a-f028",
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "front": "CPP/QPP enhancement starting in 2019",
+      "back": "Will eventually replace one-third of average work earnings instead of one-quarter. Contribution rates rise gradually over 7 years (fully in place by 2025); full enhanced benefits after about 40 years of enhanced contributions."
+    },
+    {
+      "id": "c06a-f029",
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "front": "Old Age Security (OAS) eligibility and amount",
+      "back": "Paid from age 65 to people resident in Canada at least 10 years, at 1/40 per year of residence; the full pension needs 40 years of residence after age 18. Rates are reviewed quarterly for CPI increases."
+    },
+    {
+      "id": "c06a-f030",
+      "topic": "Key numbers",
+      "page": "6•19",
+      "front": "OAS clawback, 2019 (course figures)",
+      "back": "Repay 15 cents per dollar of net income above $77,580; OAS is fully clawed back at $125,696. The amount clawed back is deductible in computing net income."
+    },
+    {
+      "id": "c06a-f031",
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "front": "OAS Allowance vs Allowance for the Survivor",
+      "back": "Allowance: low-income 60–64-year-old spouses or partners of OAS pensioners. Allowance for the Survivor: low-income 60–64-year-old survivors of OAS pensioners; it stops on remarriage or a common-law union of over 12 months."
+    },
+    {
+      "id": "c06a-f032",
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "front": "Guaranteed Income Supplement (GIS)",
+      "back": "Monthly benefit for low-income residents receiving a full or partial OAS. It must be applied for every year, is received tax-free and depends on marital status and income."
+    },
+    {
+      "id": "c06a-f033",
+      "topic": "Registered pension plans",
+      "page": "6•20",
+      "front": "Registered pension plan (RPP) and its sponsor",
+      "back": "A formal arrangement under which an employer provides a regular lifetime income to employees for past service, under a benefit formula. A form of forced savings. Only the employer or a labour union may sponsor it."
+    },
+    {
+      "id": "c06a-f034",
+      "topic": "Registered pension plans",
+      "page": "6•21",
+      "front": "Optional plan features for special employee situations",
+      "back": "Waive eligibility rules for long service; credit service before the plan began; different formulas for executives, salaried and hourly staff; continued accrual during total disability; subsidized early or encouraged later retirement."
+    },
+    {
+      "id": "c06a-f035",
+      "topic": "Registered pension plans",
+      "page": "6•21",
+      "front": "Pension plan equity",
+      "back": "Fair treatment of all member groups under the plan. It may conflict with flexibility, but different formulas for different groups (e.g. bonus-paid executives vs hourly staff) can actually be more equitable."
+    },
+    {
+      "id": "c06a-f036",
+      "topic": "Registered pension plans",
+      "page": "6•22",
+      "front": "RPP payments and tax treatment",
+      "back": "Benefits are paid only on leaving the employer, retirement, plan wind-up or other CRA-permitted conditions. Contributions are deductible, growth is sheltered, payments are subject to withholding tax, and transfers to registered plans are tax-free."
+    },
+    {
+      "id": "c06a-f037",
+      "topic": "Registered pension plans",
+      "page": "6•22",
+      "front": "Extra RPP contributions vs RRSP contributions",
+      "back": "RRSP: more flexibility, own choice of investments, and income splitting through a spousal plan. RPP: professional management and broader diversification. (Contributory plan: both pay; non-contributory: employer only.)"
+    },
+    {
+      "id": "c06a-f038",
+      "topic": "Defined benefit plans",
+      "page": "6•22",
+      "front": "Four types of defined benefit formulas",
+      "back": "Flat benefit (a dollar amount per year of service); career average (average pay over all service); final or best average (e.g. final few or best 3 to 5 years); and a combination of formulas."
+    },
+    {
+      "id": "c06a-f039",
+      "topic": "Defined benefit plans",
+      "page": "6•23",
+      "front": "Common cap on DB benefits (combination formula)",
+      "back": "The lesser of 2% of final average earnings × pensionable service and $2,000 × pensionable service, each to a maximum of 35 years."
+    },
+    {
+      "id": "c06a-f040",
+      "topic": "Defined benefit plans",
+      "page": "6•24",
+      "front": "Maximum DB pension accrual allowed by the CRA",
+      "back": "2% of earnings per year of service, up to a dollar cap of 1/9 of the money purchase limit: $3,025.56 for 2019 ($27,230 ÷ 9), reached at earnings of $151,278. Investment risk is with the employer."
+    },
+    {
+      "id": "c06a-f041",
+      "topic": "Defined contribution plans",
+      "page": "6•24",
+      "front": "Defined contribution (money purchase) plan",
+      "back": "Pension = all employer and employee contributions plus investment income. Contributions capped at the lesser of 18% of pay and the annual limit. The employee bears the investment risk; simpler, with fixed annual costs."
+    },
+    {
+      "id": "c06a-f042",
+      "topic": "DB vs DC",
+      "page": "6•25",
+      "front": "DB vs DC: risk and employee perceptions",
+      "back": "DB: employer bears the shortfall risk, so employees (especially older ones) see it as safer, though they may get less in other pay. DC: employee bears the risk but may earn a very good return; easier to transfer when changing jobs."
+    },
+    {
+      "id": "c06a-f043",
+      "topic": "Vesting and locking-in",
+      "page": "6•25",
+      "front": "Vesting",
+      "back": "Employer contributions become irrevocably the member's after a set period of membership (many plans: 2 years). Leaving before then, the member keeps only his or her own contributions plus earnings."
+    },
+    {
+      "id": "c06a-f044",
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "front": "Locking-in vs portability",
+      "back": "Locking-in: pension money can't be paid out in cash if the departing member hasn't reached a set age or period of service. Portability: moving pension credits and money to a new employer's plan (rarely achieved in Canada)."
+    },
+    {
+      "id": "c06a-f045",
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "front": "Options when leaving an RPP (or retiring early) before age 55",
+      "back": "Leave the money in the plan; transfer it to another RPP; transfer it to a LIRA or locked-in RRSP; or transfer it to a LIF."
+    },
+    {
+      "id": "c06a-f046",
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "front": "LIRA vs locked-in RRSP",
+      "back": "Both hold locked-in pension money that the holder manages. LIRA: provincial legislation. Locked-in RRSP: federal (e.g. banks, air or rail transport, radio and TV). No contributions; withdrawals only for shortened life expectancy, hardship or non-residency."
+    },
+    {
+      "id": "c06a-f047",
+      "topic": "Vesting and locking-in",
+      "page": "6•27",
+      "front": "LIRA maturity rules",
+      "back": "Usually can't mature more than 10 years before normal retirement age (so not before 55) and can't pay an income. Must be converted by the end of the year the holder turns 71: LIF, LRIF, PRIF, RLIF, life annuity or a combination."
+    },
+    {
+      "id": "c06a-f048",
+      "topic": "Pension adjustment",
+      "page": "6•27",
+      "front": "Pension adjustment (PA) and how it is calculated",
+      "back": "Total RPP and DPSP credits for the year, reported on the T4. DC plan: employer + employee contributions. DB plan: (benefit accrual × 9) − $600. DPSP: employer contributions. RRSP room = lesser of 18% of earned income and the limit, minus PA."
+    },
+    {
+      "id": "c06a-f049",
+      "topic": "Pension adjustment",
+      "page": "6•28",
+      "front": "Pension adjustment reversal (PAR)",
+      "back": "Restores RRSP room on leaving a plan: DB, when the termination benefit is less than the PAs and PSPAs; DC or DPSP, for credits forfeited because the member was not fully vested. Can be carried forward."
+    },
+    {
+      "id": "c06a-f050",
+      "topic": "Key numbers",
+      "page": "6•28",
+      "front": "PAR reporting deadlines",
+      "back": "PARs arising in the first three quarters: within 60 days after the end of the quarter. Fourth quarter: by January 31 of the following year. Reported to the employee and the CRA."
+    },
+    {
+      "id": "c06a-f051",
+      "topic": "Group RRSP",
+      "page": "6•28",
+      "front": "Group RRSP: key features",
+      "back": "Employer contributions are taxable income to the employee, offset by the RRSP deduction. The employee bears the risk, the employer avoids DB/DC plan costs, and contributions vest immediately."
+    },
+    {
+      "id": "c06a-f052",
+      "topic": "Spouses and pensions",
+      "page": "6•29",
+      "front": "Employer pension credits on marriage breakdown",
+      "back": "Increasingly treated as a family asset divisible on separation or divorce: the other spouse may claim a share of the payments or of the lump-sum PV. In Quebec, pension plans are part of the family patrimony."
+    },
+    {
+      "id": "c06a-f053",
+      "topic": "Pensions on death",
+      "page": "6•30",
+      "front": "RPP member dies after retiring",
+      "back": "The executor (liquidator in Quebec) reports all pension received, including for the month of death, on the final return. A continuing spousal benefit is taxed to the survivor. With no spouse or named recipient, the commuted value is estate income on the T3 return."
+    },
+    {
+      "id": "c06a-f054",
+      "topic": "Pensions on death",
+      "page": "6•30",
+      "front": "RPP member dies before retiring",
+      "back": "The interest generally goes to the spouse unless waived (in some provinces into a locked-in plan), with no tax to the estate. With no spouse, a designated beneficiary bears the tax; otherwise it is taxed as estate income."
+    },
+    {
+      "id": "c06a-f055",
+      "topic": "Pensions on divorce (Quebec)",
+      "page": "6•30",
+      "front": "Quebec: splitting supplemental pension benefits on a breakdown",
+      "back": "By court order under the Civil Code, or by agreement between unmarried spouses under the Supplemental Pension Plans Act (maximum 50%). Partitioned LIRA, LIF or annuity rights stay locked in, except amounts seized for support."
+    },
+    {
+      "id": "c06a-f056",
+      "topic": "DPSPs",
+      "page": "6•31",
+      "front": "Deferred profit sharing plan (DPSP)",
+      "back": "Lets employees share in the employer's profits without immediate tax. Only the employer contributes, out of profits; employees cannot. Not available to employees owning more than 10% of any class of shares."
+    },
+    {
+      "id": "c06a-f057",
+      "topic": "Key numbers",
+      "page": "6•31",
+      "front": "DPSP employer contribution limit (2019 course figures)",
+      "back": "The lesser of 18% of the employee's gross income and 50% of the money purchase limit ($27,230 × 50% = $13,615)."
+    },
+    {
+      "id": "c06a-f058",
+      "topic": "DPSPs",
+      "page": "6•31",
+      "front": "DPSP reporting forms",
+      "back": "The trustee files an annual T3D return. Payments out are reported on a T4A (plus a Relevé 2 for Quebec residents); payments to non-residents on an NR4. Lump sums can go to an RRSP without tax withheld."
+    },
+    {
+      "id": "c06a-f059",
+      "topic": "DPSPs",
+      "page": "6•31",
+      "front": "DPSP payout options",
+      "back": "Lump sum (taxable that year); equal annual instalments over up to 10 years; transfer to an annuity; transfer to an RRSP; transfer to another DPSP (5+ members, existing 1+ year); or settlement in securities (in specie)."
+    },
+    {
+      "id": "c06a-f060",
+      "topic": "DPSPs",
+      "page": "6•32",
+      "front": "DPSP vesting rules",
+      "back": "After 1991: fully vested after 2 years of membership (some plans immediately) and always on death, retirement or disability. Before 1991: vested within 5 years after the end of the year amounts were allocated."
+    },
+    {
+      "id": "c06a-f061",
+      "topic": "IPPs",
+      "page": "6•33",
+      "front": "Individual pension plan (IPP)",
+      "back": "A registered DB plan, usually set up by a company for one employee (often the owner-manager), to maximize deductible contributions. Suits older high earners: ages 40 to 71 with T4 income above $151,278 (2019) on 6•33; 50+ earning over about $150,000 on 6•34."
+    },
+    {
+      "id": "c06a-f062",
+      "topic": "IPPs",
+      "page": "6•33",
+      "front": "IPP contribution features",
+      "back": "Age-based contributions (older members can put in more than an RRSP allows); limits grow 7.5% a year on an actuarial basis; deductible top-ups if returns fall short of inflation + 3.5%; generous past-service contributions."
+    },
+    {
+      "id": "c06a-f063",
+      "topic": "Key numbers",
+      "page": "6•33",
+      "front": "IPP set-up and maintenance costs",
+      "back": "Initial set-up: $1,500 to $5,000. Ongoing maintenance: $500 to $2,000. Each IPP is registered separately, and the plan sponsor can deduct the fees."
+    },
+    {
+      "id": "c06a-f064",
+      "topic": "IPPs",
+      "page": "6•34",
+      "front": "IPP advantages vs disadvantages",
+      "back": "Pros: higher contributions than an RRSP, forced savings, employer top-up, customized, investment control, creditor-proof, deductible. Cons: no spousal contributions, locked in until retirement, higher costs, complex rules."
+    },
+    {
+      "id": "c06a-f065",
+      "topic": "RCAs",
+      "page": "6•34",
+      "front": "Retirement compensation arrangement (RCA)",
+      "back": "Employer-funded arrangement for supplementary payments (apart from an RPP) at retirement, termination or another substantial change in employment. No minimum or maximum contributions; employer contributions deductible, employee ones usually not."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c06a-q001",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Smoothing consumption",
+      "page": "6•3",
+      "q": "A young couple with small children and a large mortgage tells you they cannot save anything at this stage. Which point from the course best applies?",
+      "options": [
+        "They should pause mortgage payments until they can save 10% of take-home pay",
+        "Their mortgage and CPP/QPP payments already count as forced savings",
+        "Forced savings only apply to employees who belong to an employer pension plan",
+        "Savings only count once cash is left over after all family expenses are paid"
+      ],
+      "answer": 1,
+      "explain": "Young families are rarely able to save much, but mortgage payments and contributions to mandatory plans (CPP/QPP, RPPs, employer plans) are themselves forced savings. Savings are not limited to leftover cash."
+    },
+    {
+      "id": "c06a-q002",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Smoothing consumption",
+      "page": "6•4",
+      "q": "The Tremblays consume $85,000 this year. They can spend an extra $10,000 now, or save it for a later year when their income and consumption are expected to drop to $35,000. Under the law of diminishing marginal utility, which is correct?",
+      "options": [
+        "Spending it in the $35,000 year adds more utility than spending it now",
+        "The utility is the same either way, since the amount is the same $10,000",
+        "Spending it now adds more utility, since a higher income magnifies each dollar",
+        "Saving it lowers lifetime utility, because all consumption is postponed"
+      ],
+      "answer": 0,
+      "explain": "Marginal utility falls as consumption rises, so an extra $10,000 matters far more at $35,000 of consumption than at $85,000. That is why saving for lean years (or retirement) smooths consumption and raises overall well-being."
+    },
+    {
+      "id": "c06a-q003",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Smoothing consumption",
+      "page": "6•5",
+      "q": "Modigliani and Brumberg's Life Cycle Hypothesis says a family's consumption is proportional to its total financial resources. What determines the factor of proportionality?",
+      "options": [
+        "The family's current income and marginal tax rate",
+        "The real interest rate and the expected inflation rate",
+        "The family's net worth and its debt-to-asset ratio",
+        "The size of the family and its remaining lifespan"
+      ],
+      "answer": 3,
+      "explain": "Under the Life Cycle Hypothesis (1954), the factor depends on the size of the family and its remaining lifespan (consumption period). When the timing of income doesn't match desired consumption, the family borrows or saves."
+    },
+    {
+      "id": "c06a-q004",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Smoothing consumption",
+      "page": "6•6",
+      "q": "Under the broader, net-worth-based definition of savings used in the course, which of the following counts as savings?",
+      "options": [
+        "Paying down principal on the family mortgage",
+        "Spending a year-end bonus on a family vacation",
+        "Paying the monthly grocery and utility bills",
+        "Taking a cash advance to buy a new vehicle"
+      ],
+      "answer": 0,
+      "explain": "The real value of savings is the change in net worth from one period to the next. It includes changes in asset values and forced savings such as pension contributions and mortgage payments, since paying off liabilities raises net worth."
+    },
+    {
+      "id": "c06a-q005",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Planning process",
+      "page": "6•6",
+      "q": "Which of the following is NOT one of the factors the course cites for retirement planning becoming a concern at a younger age?",
+      "options": [
+        "Steadily rising benefits under employer pension plans",
+        "Uncertainty about future CPP/QPP and OAS benefits",
+        "Uncertainty about the future cost of health care",
+        "Workers changing jobs more often during their careers"
+      ],
+      "answer": 0,
+      "explain": "The course cites a REDUCTION in employer pension benefits, not an increase. The other listed factors are uncertainty about government pensions and health care, frequent job changes, more self-employment and a wish to retire before 65."
+    },
+    {
+      "id": "c06a-q006",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 1: Goals",
+      "page": "6•7",
+      "q": "Jasmine, 48, is weighing retiring at 60 instead of 65. Using the course's planning life expectancy of 90, how does the earlier date change her plan compared with retiring at 65?",
+      "options": [
+        "Five more years of retirement to fund, with the same years of saving",
+        "Ten more years of retirement to fund, from five fewer years of saving",
+        "Five more years of retirement to fund, from five fewer years of saving",
+        "The same retirement period to fund, with five fewer years of saving"
+      ],
+      "answer": 2,
+      "explain": "Retiring at 60 means funding 30 years (to age 90) instead of 25, and accumulating for 12 years instead of 17. An earlier date both shortens the saving period and lengthens the period the assets must cover."
+    },
+    {
+      "id": "c06a-q007",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 1: Goals",
+      "page": "6•8",
+      "q": "Two couples have similar savings. The first plans to sell a city home, buy a cheaper rural property and grow much of its own food. The second plans to buy an upscale downtown condo and travel abroad often. Which statement is most accurate?",
+      "options": [
+        "Both couples need the same income, since their savings are similar",
+        "The second couple will likely need less income, as condos cost less to run",
+        "The first couple will likely need less income and may free up capital",
+        "The first couple needs more income, since home-grown food is taxable"
+      ],
+      "answer": 2,
+      "explain": "As with the course's Ito and Noisette couples, downsizing can free up capital and a quiet rural life costs less; home-grown food saves after-tax spending and is not taxed. A travel-heavy city lifestyle may cost more than working life."
+    },
+    {
+      "id": "c06a-q008",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Step 2: Needs",
+      "page": "6•9",
+      "q": "A couple estimates its retirement expenses at $50,000 a year in today's dollars and plans to retire in 20 years. Assuming the course's 3% annual inflation rate, roughly what will those expenses cost in the first year of retirement?",
+      "options": [
+        "About $100,000",
+        "About $90,300",
+        "About $50,000",
+        "About $80,000"
+      ],
+      "answer": 1,
+      "explain": "At 3% compounded for 20 years, prices rise about 1.8061 times, so $50,000 × 1.8061 ≈ $90,306. $80,000 wrongly applies simple (non-compounded) inflation, and $50,000 ignores inflation entirely."
+    },
+    {
+      "id": "c06a-q009",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 2: Needs",
+      "page": "6•9",
+      "q": "Why does Step 2 use the client's average tax rate, rather than the marginal rate, to work out the before-tax income needed in retirement?",
+      "options": [
+        "It is set by law for pension income and does not change over time",
+        "It is the rate that applies to the next dollar of income the client earns",
+        "It is always lower in retirement, so it gives a more optimistic estimate",
+        "It reflects the total tax paid on all of the client's income"
+      ],
+      "answer": 3,
+      "explain": "We need the tax paid on the whole retirement income, i.e. the average rate (total tax ÷ total income). The marginal rate applies to a specific increase or decrease in income. The course conservatively uses the client's current average rate."
+    },
+    {
+      "id": "c06a-q010",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Step 2: Needs",
+      "page": "6•9",
+      "q": "Lina will need $63,000 a year after tax in retirement (future dollars). She now pays $15,000 of tax on $50,000 of income. Using the course's conservative approach, what before-tax income will she need?",
+      "options": [
+        "$90,000",
+        "$84,000",
+        "$78,000",
+        "$81,900"
+      ],
+      "answer": 0,
+      "explain": "Her current average tax rate is $15,000 ÷ $50,000 = 30%. Before-tax income = $63,000 ÷ (1 − 0.30) = $90,000. Multiplying $63,000 by 1.30 ($81,900) understates the need because tax applies to the gross amount."
+    },
+    {
+      "id": "c06a-q011",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Step 2: Needs",
+      "page": "6•10",
+      "q": "Spouse 1 earns $60,000 and pays $15,000 of tax; Spouse 2 earns $40,000 and pays $7,000. Using the course's method for a couple, what average tax rate should be used for their retirement income?",
+      "options": [
+        "22%",
+        "21.25%",
+        "25%",
+        "17.5%"
+      ],
+      "answer": 0,
+      "explain": "The couple's rate is total tax ÷ total income: ($15,000 + $7,000) ÷ ($60,000 + $40,000) = 22%. Averaging the two individual rates (25% and 17.5%) gives 21.25%, which is not the course method. Better income splitting in retirement would lower the rate."
+    },
+    {
+      "id": "c06a-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 2: Capital required",
+      "page": "6•10",
+      "q": "Why can't the stream of income a client needs in retirement simply be discounted at the nominal interest rate, as with a consumer loan?",
+      "options": [
+        "Retirement income is paid monthly, while nominal rates are annual",
+        "The income must rise with inflation, so the payments are not fixed",
+        "The nominal rate already excludes the anticipated rate of inflation",
+        "Nominal rates apply only to risk-free assets such as Treasury bills"
+      ],
+      "answer": 1,
+      "explain": "To keep its purchasing power, the required income has to increase every year with inflation, so the payments are not fixed. Discounting at the real rate, which is net of inflation, neutralizes this effect."
+    },
+    {
+      "id": "c06a-q013",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Step 2: Capital required",
+      "page": "6•11",
+      "q": "A GIC pays a nominal 6% and inflation is expected to be 2%. Using the course's exact formula, what is the real rate of return?",
+      "options": [
+        "2.00%",
+        "3.92%",
+        "4.00%",
+        "8.12%"
+      ],
+      "answer": 1,
+      "explain": "Real rate = (1 + nominal) ÷ (1 + inflation) − 1 = 1.06 ÷ 1.02 − 1 = 3.92%. Subtracting (6% − 2% = 4%) is only an approximation that slightly overstates the real rate; 8.12% wrongly multiplies the two factors."
+    },
+    {
+      "id": "c06a-q014",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Step 2: Capital required",
+      "page": "6•11",
+      "q": "Approximating the real interest rate by subtracting the inflation rate from the nominal rate tends to slightly overstate the real rate.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The exact real rate is (1 + nominal) ÷ (1 + inflation) − 1. With 5% nominal and 2% inflation, subtraction gives 3% while the exact figure is 2.94%."
+    },
+    {
+      "id": "c06a-q015",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Step 2: Capital required",
+      "page": "6•11",
+      "q": "A retirement capital requirement calculated in future dollars can be compared directly with amounts expressed in today's dollars.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The course stresses that Peter and Suzanne's $3,068,965 is in future dollars (23 years from now) and cannot be compared directly with today's dollars, because inflation changes purchasing power. A higher real return or a later retirement would reduce that figure."
+    },
+    {
+      "id": "c06a-q016",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 2: Capital required",
+      "page": "6•12",
+      "q": "When comparing different types of investment income, why does the course insist on looking at after-tax rates of return ('apples to apples')?",
+      "options": [
+        "Interest income becomes tax-free once the investor reaches age 65",
+        "Capital gains are fully taxable, while dividends are not taxed at all",
+        "Interest is fully taxed; dividends and capital gains are taxed less",
+        "All investment income is taxed at the same rate once a client retires"
+      ],
+      "answer": 2,
+      "explain": "Interest (like employment, pension and RRIF income) is taxed at the full marginal rate, dividends at a rate roughly one-third lower, and only 50% of net capital gains is taxable, so pre-tax yields aren't comparable."
+    },
+    {
+      "id": "c06a-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "q": "Gilles, 66, still works full time and has not applied for his CPP pension. At the latest, when does his CPP contributory period end?",
+      "options": [
+        "The month he turns 70, even if he is still working",
+        "The month he turned 65, the normal retirement age",
+        "The month he stops working, whatever his age",
+        "The end of the year in which he turns 71"
+      ],
+      "answer": 0,
+      "explain": "The contributory period ends at the earliest of: the month before the first pension payment, the month the worker turns 70 (even if still working), or the month of death. Age 71 is an RRSP/LIRA deadline, not a CPP one."
+    },
+    {
+      "id": "c06a-q018",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "q": "In Quebec, a QPP pensioner under age 70 who keeps working and earns more than $3,500 continues to contribute to the QPP.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Under the QPP, a person who keeps working and earns more than $3,500 continues to contribute, which may raise the pension if the new earnings replace a lower year. Contributions are not required after age 70."
+    },
+    {
+      "id": "c06a-q019",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "q": "Which drop-out provision is specific to the QPP?",
+      "options": [
+        "Excluding 17% of the lowest-earning years, up to 8 years",
+        "Excluding months on a non-reduced CSST income replacement benefit",
+        "Excluding periods spent caring for children under the age of 7",
+        "Excluding all months of eligibility for a CPP or QPP disability pension"
+      ],
+      "answer": 1,
+      "explain": "Only the QPP excludes months after December 31, 1985 with a non-reduced CSST benefit (it also has a 15% general drop-out). Child-rearing and disability months apply to both plans; the 17% (max 8 years) drop-out is CPP-only."
+    },
+    {
+      "id": "c06a-q020",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•14",
+      "q": "The CPP general drop-out excludes 15% of a contributor's lowest-earning years, while the QPP's excludes 17%.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. It is the reverse: the CPP drops 17% of the lowest-earning years (up to a maximum of 8 years) and the QPP drops 15%."
+    },
+    {
+      "id": "c06a-q021",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•15",
+      "q": "Using the course's 2019 figures (basic exemption $3,500, maximum pensionable earnings $57,400, employee rate 5.10%), what CPP contribution does Olivia, an Ontario employee earning $72,000, pay for the year?",
+      "options": [
+        "$2,748.90",
+        "$3,493.50",
+        "$5,497.80",
+        "$3,672.00"
+      ],
+      "answer": 0,
+      "explain": "Contributions apply only to earnings between $3,500 and $57,400: ($57,400 − $3,500) × 5.10% = $2,748.90, the 2019 employee maximum. $5,497.80 is the combined employer-employee (or self-employed) maximum."
+    },
+    {
+      "id": "c06a-q022",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•15",
+      "q": "Using the course's 2019 QPP rates (self-employed rate 11.10%, basic exemption $3,500), what QPP contribution does a Quebec self-employed consultant with $43,500 of net business income owe?",
+      "options": [
+        "$4,080.00",
+        "$4,828.50",
+        "$4,440.00",
+        "$2,220.00"
+      ],
+      "answer": 2,
+      "explain": "Self-employed workers pay both halves: ($43,500 − $3,500) × 11.10% = $4,440. $2,220 uses only the 5.55% employee share, and $4,080 applies the CPP's 10.2% rate instead of the QPP's."
+    },
+    {
+      "id": "c06a-q023",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•15",
+      "q": "Rémi is entitled to a CPP pension of $900 a month at 65 but starts it at exactly age 63. Ignoring indexation, what will he receive each month?",
+      "options": [
+        "$576.00",
+        "$748.80",
+        "$792.00",
+        "$770.40"
+      ],
+      "answer": 3,
+      "explain": "The pension is reduced by 0.6% for each month before 65: 24 × 0.6% = 14.4%, so $900 × 0.856 = $770.40, permanently. $748.80 wrongly uses 0.7% (the deferral rate) and $576 applies the full 36% cut for age 60."
+    },
+    {
+      "id": "c06a-q024",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "CPP/QPP",
+      "page": "6•15",
+      "q": "CPP and QPP retirement pensions start automatically the month after the contributor's 65th birthday.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. CPP and QPP benefits do not start automatically: the contributor must apply. Benefits can begin as early as the month after the 60th birthday, whether or not the person has stopped working."
+    },
+    {
+      "id": "c06a-q025",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•16",
+      "q": "Lise, 66, would receive a CPP pension of $800 a month at 65 but plans to start it on her 69th birthday. Ignoring indexation, what monthly pension will she receive?",
+      "options": [
+        "$1,136.00",
+        "$1,001.60",
+        "$1,030.40",
+        "$1,068.80"
+      ],
+      "answer": 3,
+      "explain": "The pension rises 0.7% for each month after 65: 48 months × 0.7% = 33.6%, so $800 × 1.336 = $1,068.80. Count from 65, not from her current age (36 months gives $1,001.60); $1,030.40 wrongly uses the 0.6% early-start rate."
+    },
+    {
+      "id": "c06a-q026",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•17",
+      "q": "Who may qualify for the CPP Post-Retirement Benefit (called the retirement pension supplement under the QPP)?",
+      "options": [
+        "A person aged 65 or older who has stopped working and has a low income",
+        "A pensioner aged 60 to 70 who is still working and contributing",
+        "A person who defers the CPP/QPP pension past 65 and keeps working",
+        "A surviving spouse aged 60 to 64 of a deceased CPP/QPP contributor"
+      ],
+      "answer": 1,
+      "explain": "The PRB (retirement pension supplement in Quebec) is a lifetime benefit added to the pension of people aged 60 to 70 who are receiving a CPP/QPP pension while still working and contributing to the plan."
+    },
+    {
+      "id": "c06a-q027",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•17",
+      "q": "Marc has contributed to the CPP for 24 years. He and Julie have been married for the last 12 of those years, and Julie has contributed only during the marriage. If they divorce, how are their CPP credits shared?",
+      "options": [
+        "Credits each earned during the 12-year marriage are split equally",
+        "Credits are split in proportion to the amounts each contributed",
+        "Each keeps their own credits, since both contributed to the plan",
+        "All of Marc's 24 years of credits are pooled with Julie's and halved"
+      ],
+      "answer": 0,
+      "explain": "On separation or divorce, credits earned during the marriage or common-law union may be shared equally, whatever each contributed. Marc shares about half of his credits (12 of 24 years); Julie shares all of hers."
+    },
+    {
+      "id": "c06a-q028",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "q": "Under the QPP, who receives the one-time $2,500 death benefit (deaths after December 31, 2018)?",
+      "options": [
+        "The deceased's estate in every case, exactly as under the CPP",
+        "The deceased's children under age 18, in equal shares",
+        "The person or charity that paid the funeral expenses, or their heirs",
+        "The surviving spouse only, whether or not they paid for the funeral"
+      ],
+      "answer": 2,
+      "explain": "Under the CPP the $2,500 death benefit is paid to the estate, but in Quebec it goes to the person or charitable organization that paid the funeral expenses, or to their heirs."
+    },
+    {
+      "id": "c06a-q029",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "q": "A couple wants to share their CPP/QPP retirement pensions to split income. Which condition applies?",
+      "options": [
+        "Both must have contributed to the plan for at least ten years each",
+        "Both must be at least 65, and the pension is always split exactly 50/50",
+        "Only the spouse with the higher marginal tax rate may request the sharing",
+        "Both must be 60+, and both must be receiving a pension if both contributed"
+      ],
+      "answer": 3,
+      "explain": "Both spouses must be at least 60; it is not necessary that both contributed, but if both did, both must be receiving their pensions. The split follows the period they lived together, not an automatic 50/50."
+    },
+    {
+      "id": "c06a-q030",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "CPP/QPP",
+      "page": "6•18",
+      "q": "Nadia worked 20 years in Ontario and 15 years in Quebec and now lives in Quebec. Where does she apply for her retirement pension, and how is it calculated?",
+      "options": [
+        "To the QPP, using contributions to both plans under QPP rules",
+        "To the plan she contributed to longest, under that plan's rules",
+        "To both plans separately, each paying for its own years of work",
+        "To the CPP, using only her Ontario contributions under CPP rules"
+      ],
+      "answer": 0,
+      "explain": "The request goes to the QPP if the person lives in Quebec when applying (to the CPP if elsewhere in Canada). The amount is based on contributions to both plans and the legislation of the plan that pays."
+    },
+    {
+      "id": "c06a-q031",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "q": "In 2019 (course figures), OAS was clawed back at 15 cents per dollar of net income above $77,580. How much OAS must a pensioner with net income of $93,580 repay for the year?",
+      "options": [
+        "$14,037",
+        "$2,400",
+        "$4,800",
+        "$1,600"
+      ],
+      "answer": 1,
+      "explain": "The clawback applies only to income above the threshold: ($93,580 − $77,580) × 15% = $16,000 × 0.15 = $2,400. Applying 15% to the full income ($14,037) is a common error. The repaid amount is deductible in computing net income."
+    },
+    {
+      "id": "c06a-q032",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "q": "Raymond, 67, receives a partial OAS pension and has a very low income. What should he know about the Guaranteed Income Supplement?",
+      "options": [
+        "He cannot receive it, because his OAS pension is only a partial one",
+        "It is paid to him automatically, but it is added to taxable income",
+        "It replaces his OAS pension once his income falls below a threshold",
+        "He must apply for it every year, and the payments are tax-free"
+      ],
+      "answer": 3,
+      "explain": "The GIS is a monthly benefit for low-income residents who receive a full or partial OAS. It must be applied for each year, is received tax-free, and depends on marital status and income. It is paid on top of OAS, not instead of it."
+    },
+    {
+      "id": "c06a-q033",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "OAS and GIS",
+      "page": "6•19",
+      "q": "The OAS Allowance for the Survivor stops if the survivor remarries or lives in a common-law relationship for more than 12 months.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The Allowance for the Survivor (for low-income survivors aged 60 to 64) also stops in the situations that end the regular Allowance, such as leaving Canada for more than six consecutive months."
+    },
+    {
+      "id": "c06a-q034",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Registered pension plans",
+      "page": "6•20",
+      "q": "Employees at a company want a registered pension plan set up. According to the course, who may act as the plan sponsor?",
+      "options": [
+        "A trust company acting on behalf of the employees",
+        "Any group of five or more employees of the same company",
+        "Only the employer or a labour union for its employees",
+        "The employees' own financial advisor or planner"
+      ],
+      "answer": 2,
+      "explain": "The plan sponsor may only be the employer or a labour union representing the company's employees. Trustees, insurers or advisors may hold assets or give advice, but they do not sponsor the plan."
+    },
+    {
+      "id": "c06a-q035",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Registered pension plans",
+      "page": "6•21",
+      "q": "A pension plan uses one benefit formula for hourly workers and a different one for executives, whose pay depends much more on bonuses. How does the course view this in terms of plan equity?",
+      "options": [
+        "It is not allowed by the CRA, since a plan may use only one formula",
+        "It is inequitable by definition, since every group needs the same formula",
+        "It is equitable only if executives get lower benefits than hourly staff",
+        "It may actually be more equitable, since the groups are paid differently"
+      ],
+      "answer": 3,
+      "explain": "Plan equity means fair treatment of all member groups. Different formulas may look inequitable, but because a large part of executives' pay comes from bonuses, separate formulas can actually produce more equitable benefits."
+    },
+    {
+      "id": "c06a-q036",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Registered pension plans",
+      "page": "6•21",
+      "q": "Which of the following is NOT one of the optional features the course lists for special employee situations in a pension plan?",
+      "options": [
+        "Giving credit for service rendered before the plan took effect",
+        "Waiving some eligibility requirements for long-service employees",
+        "Requiring identical benefit formulas for all employee groups",
+        "Continuing pension accrual during periods of total disability"
+      ],
+      "answer": 2,
+      "explain": "The listed features include waiving eligibility for long service, crediting prior service, using DIFFERENT formulas for executives, salaried and hourly staff, continuing accrual during total disability, and subsidizing early or encouraging later retirement."
+    },
+    {
+      "id": "c06a-q037",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Defined benefit plans",
+      "page": "6•23",
+      "q": "Lucie's DB plan pays 2% × years of plan membership × the average of her best three of her last five years' earnings. She was hired 28 years ago and joined the plan 3 years later. Her last five years' earnings, oldest first: $72,000, $80,000, $78,000, $76,000, $70,000. What is her annual pension?",
+      "options": [
+        "$37,333",
+        "$37,600",
+        "$39,000",
+        "$43,680"
+      ],
+      "answer": 2,
+      "explain": "Best three: $80,000, $78,000 and $76,000, averaging $78,000. Membership is 25 years (28 − 3). Pension = $78,000 × 2% × 25 = $39,000. Using 28 years gives $43,680; using the last three years gives $37,333."
+    },
+    {
+      "id": "c06a-q038",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Defined contribution plans",
+      "page": "6•24",
+      "q": "In a defined contribution plan, investment risk lies with the employee, and the employer is not expected to fund any shortfall.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Poor investment performance simply means a smaller fund at retirement. In a defined benefit plan, by contrast, the employer bears the investment risk and must fund the promised benefits."
+    },
+    {
+      "id": "c06a-q039",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Defined contribution plans",
+      "page": "6•24",
+      "q": "Combined employer and employee contributions to a defined contribution RPP are deductible as long as they do not exceed what?",
+      "options": [
+        "The lesser of 18% of remuneration and the annual contribution limit",
+        "The greater of 18% of remuneration and the annual contribution limit",
+        "The lesser of 2% of remuneration and the money purchase limit",
+        "50% of the money purchase limit, whatever the employee's pay"
+      ],
+      "answer": 0,
+      "explain": "For DC plans, combined contributions are deductible up to the lesser of the annual contribution limit and 18% of remuneration. The 2% figure is the DB benefit accrual cap, and 50% of the money purchase limit is the DPSP cap."
+    },
+    {
+      "id": "c06a-q040",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Defined benefit plans",
+      "page": "6•24",
+      "q": "CRA limits a DB pension to 2% of earnings per year of service, up to a dollar maximum. For 2019 (course figures) that maximum was $3,025.56, i.e. 1/9 of the $27,230 money purchase limit. Above what level of earnings does the dollar maximum, rather than 2%, set the limit?",
+      "options": [
+        "$147,222",
+        "$57,400",
+        "$151,278",
+        "$125,696"
+      ],
+      "answer": 2,
+      "explain": "$3,025.56 ÷ 2% = $151,278 (equivalently, $151,278 × 18% = $27,230). Above that level the dollar cap applies. $147,222 was the 2018 figure, $57,400 is the 2019 CPP maximum, and $125,696 is the full OAS clawback level."
+    },
+    {
+      "id": "c06a-q041",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "DB vs DC",
+      "page": "6•25",
+      "q": "According to the course, why do older employees typically favour defined benefit plans over defined contribution plans?",
+      "options": [
+        "A guaranteed benefit shields them from market drops before retiring",
+        "DB plans are easier to transfer to a new employer when changing jobs",
+        "DB plans let each member choose the investments in the pension fund",
+        "DB plans pay members all contributions plus earnings as a lump sum"
+      ],
+      "answer": 0,
+      "explain": "A guaranteed benefit is a safety net against negative market swings between joining and retiring, because the employer bears the risk. It is DC plans that are easier to withdraw from or transfer and that pay out the accumulated fund."
+    },
+    {
+      "id": "c06a-q042",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Vesting and locking-in",
+      "page": "6•25",
+      "q": "Tom leaves his employer after 18 months in its pension plan, which vests after two years of membership. What can he take with him?",
+      "options": [
+        "Only his own contributions, with the earnings on them",
+        "Nothing at all, since he left before the plan vested",
+        "Only his employer's contributions, since his are locked in",
+        "His own and his employer's contributions, with earnings"
+      ],
+      "answer": 0,
+      "explain": "Until the vesting period is up, employer contributions are not irrevocably the member's. An employee who leaves before vesting can withdraw only his or her own contributions, with accrued earnings."
+    },
+    {
+      "id": "c06a-q043",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "q": "Sylvie, 38, leaves a job at a bank (a federally regulated employer). She wants to move her pension money out of the plan and manage it herself while it keeps accumulating. Where must it go?",
+      "options": [
+        "A TFSA, since pension money has already been taxed",
+        "A regular RRSP, since bank pensions are not locked in",
+        "A locked-in RRSP, governed by federal legislation",
+        "A LIRA, governed by federal pension legislation"
+      ],
+      "answer": 2,
+      "explain": "LIRAs are for pensions under provincial jurisdiction; funds from the plan of a federally regulated business (banks, air or rail transport, radio and TV) must go to a locked-in RRSP. Both are subject to locking-in rules."
+    },
+    {
+      "id": "c06a-q044",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "q": "A LIRA holder may make new contributions to the LIRA in any year she has unused RRSP contribution room.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Contributions cannot be made to LIRAs or locked-in RRSPs; only funds coming from a pension plan can be transferred into them."
+    },
+    {
+      "id": "c06a-q045",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Vesting and locking-in",
+      "page": "6•26",
+      "q": "Jasmine (age 48) wants some savings she can reach in an emergency. Suppose part of her savings came from a former employer's pension and now sits in a LIRA. What does the course say about withdrawing from it?",
+      "options": [
+        "Only in limited cases such as hardship or shortened life expectancy",
+        "She may withdraw any amount once she reaches 50, with tax withheld",
+        "She may withdraw freely, but must repay the amount within 15 years",
+        "No withdrawal is ever allowed before the end of the year she turns 71"
+      ],
+      "answer": 0,
+      "explain": "Locking-in rules allow no withdrawals except in limited circumstances such as shortened life expectancy, financial hardship or becoming a non-resident. Age 71 is the deadline to convert a LIRA into retirement income, not a withdrawal rule."
+    },
+    {
+      "id": "c06a-q046",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Pension adjustment",
+      "page": "6•27",
+      "q": "Last year Marc earned $70,000. He and his employer each contributed 4% of his salary to a defined contribution RPP, and the employer put $1,000 into a DPSP for him. Ignoring carry-forward room (and assuming 18% is under the dollar limit), what is his RRSP limit this year?",
+      "options": [
+        "$8,800",
+        "$6,000",
+        "$12,600",
+        "$7,000"
+      ],
+      "answer": 1,
+      "explain": "18% × $70,000 = $12,600. PA = $2,800 (employer RPP) + $2,800 (Marc's RPP) + $1,000 (DPSP) = $6,600. RRSP limit = $12,600 − $6,600 = $6,000. Forgetting Marc's own RPP contribution gives $8,800; forgetting the DPSP gives $7,000."
+    },
+    {
+      "id": "c06a-q047",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pension adjustment",
+      "page": "6•27",
+      "q": "Céline's defined benefit plan reports a benefit accrual of $1,200 for the year. Using the course formula, what pension adjustment appears on her T4?",
+      "options": [
+        "$9,000",
+        "$10,800",
+        "$11,400",
+        "$10,200"
+      ],
+      "answer": 3,
+      "explain": "For a DB plan, PA = (benefit accrual × 9) − $600 = ($1,200 × 9) − $600 = $10,200. Forgetting the $600 offset gives $10,800. For a DC plan, the PA would simply be the total contributions."
+    },
+    {
+      "id": "c06a-q048",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Pension adjustment",
+      "page": "6•28",
+      "q": "Under a money purchase RPP or a DPSP, when will an individual have a pension adjustment reversal (PAR)?",
+      "options": [
+        "When they retire and start receiving a pension from the plan",
+        "When they are fully vested and transfer their benefit to an RRSP",
+        "When they leave the plan before being fully vested",
+        "When their employer raises the plan's contribution rate"
+      ],
+      "answer": 2,
+      "explain": "A PAR under a money purchase provision or DPSP arises only if the member is not fully vested at termination: it restores RRSP room for amounts included in pension credits that the member forfeits."
+    },
+    {
+      "id": "c06a-q049",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Group RRSP",
+      "page": "6•28",
+      "q": "How are employer contributions to a group RRSP treated, according to the course?",
+      "options": [
+        "They vest only after two years of plan membership, as in most RPPs",
+        "They are deductible by the employee but locked in until retirement",
+        "They are tax-free to the employee and use none of the RRSP room",
+        "They are taxable to the employee, offset by the RRSP deduction"
+      ],
+      "answer": 3,
+      "explain": "Employer contributions to a group RRSP are taxable income to the employee, offset by the extra RRSP deduction. The employee bears the risk, the employer avoids DB/DC administration costs, and group RRSPs vest immediately."
+    },
+    {
+      "id": "c06a-q050",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Spouses and pensions",
+      "page": "6•29",
+      "q": "Under the pension reforms of the 1980s, what form of pension is required for a plan member with a spouse, unless the spouse waives it in writing?",
+      "options": [
+        "Joint-and-last-survivor, with at least 50% continuing to the survivor",
+        "Single life, with a guarantee period of at least 10 years",
+        "Joint-and-last-survivor, with 100% continuing to the survivor",
+        "Joint-and-last-survivor, with at least 60% continuing to the survivor"
+      ],
+      "answer": 3,
+      "explain": "The required form is joint-and-last-survivor, with the surviving spouse or common-law partner entitled to at least 60% of the full pension. The spouse may waive this in writing so the pensioner can choose another option."
+    },
+    {
+      "id": "c06a-q051",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Capital required",
+      "page": "6•29",
+      "q": "A couple needs $2,400,000 at retirement (present value) to fund its required before-tax income. The present value of their CPP/QPP benefits is $350,000 and of an employer pension, $1,050,000. How much must they accumulate in their own assets?",
+      "options": [
+        "$3,800,000",
+        "$1,000,000",
+        "$1,350,000",
+        "$2,050,000"
+      ],
+      "answer": 1,
+      "explain": "Following the course's Peter and Suzanne example, subtract the PV of expected government and employer benefits from the PV of required income: $2,400,000 − $350,000 − $1,050,000 = $1,000,000 of privately-owned assets."
+    },
+    {
+      "id": "c06a-q052",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Pensions on death",
+      "page": "6•30",
+      "q": "A retired RPP member dies with no surviving spouse and no designated beneficiary. How is the remaining commuted value or refund of contributions taxed?",
+      "options": [
+        "As income of the deceased, reported on the final return",
+        "As income of the estate, reported on the estate's T3 return",
+        "As a capital gain of the estate, of which 50% is taxable",
+        "It is tax-free, since the pension was already being taxed"
+      ],
+      "answer": 1,
+      "explain": "With no spouse and no designated recipient, the commuted value or refund is paid to the estate and taxed as income of the estate on its T3 return, rather than on the deceased's final return."
+    },
+    {
+      "id": "c06a-q053",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Pensions on divorce (Quebec)",
+      "page": "6•30",
+      "q": "In Quebec, pension rights in a LIRA that were partitioned following a marriage breakdown remain locked-in.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Partitioned rights in a LIRA, LIF or life annuity contract stay locked-in; only amounts seized to cover support payments are not. Pension plans are part of the family patrimony in Quebec."
+    },
+    {
+      "id": "c06a-q054",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "DPSPs",
+      "page": "6•31",
+      "q": "Employees may make voluntary contributions to their employer's deferred profit sharing plan (DPSP).",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Employees are not allowed to contribute to a DPSP. All contributions come from the employer and must be made out of, or calculated with reference to, profits."
+    },
+    {
+      "id": "c06a-q055",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "DPSPs",
+      "page": "6•31",
+      "q": "Using the course's 2019 figures (money purchase limit $27,230), what is the most an employer can contribute to a DPSP for an employee earning $90,000?",
+      "options": [
+        "$13,615",
+        "$26,500",
+        "$16,200",
+        "$27,230"
+      ],
+      "answer": 0,
+      "explain": "The limit is the lesser of 18% of the employee's income ($16,200) and 50% of the money purchase limit ($13,615), so $13,615 applies. $27,230 is the full money purchase limit, and $26,500 is the 2019 RRSP dollar limit."
+    },
+    {
+      "id": "c06a-q056",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "IPPs",
+      "page": "6•33",
+      "q": "According to the course, an individual pension plan (IPP) is generally most attractive for whom?",
+      "options": [
+        "An older owner-manager or key executive earning over about $150,000",
+        "A young employee earning less than the CPP maximum pensionable earnings",
+        "A self-employed person with no corporation and no employment income",
+        "An employee who wants the plan to accept contributions for a spouse"
+      ],
+      "answer": 0,
+      "explain": "An IPP is a DB plan, usually for one employee who is often the owner-manager, designed to maximize deductible contributions. The course aims it at older high earners (ages 40 to 71 with T4 income above $151,278 on 6•33; 50 and older earning over about $150,000 on 6•34). Spousal contributions are not allowed."
+    },
+    {
+      "id": "c06a-q057",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "IPPs",
+      "page": "6•34",
+      "q": "Which of the following is a disadvantage of an IPP compared with an RRSP?",
+      "options": [
+        "The assets are exposed to the member's creditors",
+        "The member has no say over the investments",
+        "Spousal contributions cannot be made",
+        "Contributions are not deductible from income"
+      ],
+      "answer": 2,
+      "explain": "IPPs do not allow spousal contributions, are locked in, cost more and are complex. But contributions are deductible, the individual has discretion over investments, and the assets are secure from creditors."
+    },
+    {
+      "id": "c06a-q058",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "RCAs",
+      "page": "6•34",
+      "q": "Which statement about retirement compensation arrangements (RCAs) is correct, according to the course?",
+      "options": [
+        "An RCA is a type of registered pension plan for executives",
+        "Employee contributions are always fully tax-deductible",
+        "There are no minimum or maximum contribution limits",
+        "Employer contributions are capped at 18% of the employee's pay"
+      ],
+      "answer": 2,
+      "explain": "An RCA finances supplementary payments apart from a registered pension plan, at retirement or termination. There are no minimum or maximum contributions; employer contributions are deductible, employee contributions usually are not."
+    }
+  ]
+}

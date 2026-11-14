@@ -1,0 +1,1241 @@
+{
+  "chapter": 6,
+  "part": "b",
+  "title": "Retirement Planning",
+  "objectives": [],
+  "guide": [
+    {
+      "heading": "RRSP basics and contribution room",
+      "page": "6•35",
+      "points": [
+        "RRSPs are discretionary; for a worker with no pension plan they work like a defined contribution (money purchase) plan run by the holder. Contributions are deductible while the annuitant hasn't passed age 71 in the year; growth is tax-deferred.",
+        "Principal and earnings are taxed only when withdrawn (or used to buy non-sheltered investments). Income smoothing: deductions save tax in high-income working years; withdrawals are taxed in lower-income retirement years.",
+        "Room = 18% of the PREVIOUS year's earned income, capped at the year's dollar limit ($26,230 for 2018, $26,500 for 2019, indexed for 2020), minus the previous year's pension adjustment (PA), plus unused room.",
+        "Previous-year figures are used because pension contributions aren't known until the year ends. The PA creates equity: members of generous pension plans get less RRSP room.",
+        "Earned income: employment, royalty, net business and rental income, taxable alimony received, wage-loss/LTD income, CPP/QPP disability benefits, net research grants, minus union/professional fees, business/rental losses, deductible employment expenses and alimony paid.",
+        "Excluded: interest, dividends, capital gains, scholarships, unemployment benefits, non-taxable pension and insurance income, family allowance, death benefits, RRSP/RRIF/DPSP money. E.g. $81,000 × 18% = $14,580 − $5,000 PA = $9,580.",
+        "Unused room carries forward indefinitely, but one big catch-up deduction may save tax at lower rates and misses years of tax-deferred growth, so encourage early, regular contributions."
+      ]
+    },
+    {
+      "heading": "Over-contributions and spousal RRSPs",
+      "page": "6•39",
+      "points": [
+        "Up to $2,000 (lifetime) may be over-contributed without penalty; it is not deductible and is taxed when withdrawn. Excess over $2,000 is penalized 1% per month. Break-even takes about 15 years at 10% and a 50% tax rate; paying down debt is usually better.",
+        "Spousal RRSP: the contributor deducts the contributions (within his or her own limit) while the spouse or partner is the annuitant, so the income is later taxed at the lower-income spouse's rate — income splitting.",
+        "Attribution: if spousal contributions were made in the withdrawal year or the two preceding years, the lesser of the withdrawal and those contributions is taxed to the contributor. Form T2205 is filed for spousal RRSP withdrawals.",
+        "Spouse = spouse and common-law partner, opposite or same sex (since 2001). In Quebec, the definition also includes de facto spouses and civil union spouses.",
+        "On a breakdown the plan stays with the annuitant spouse (the contributor can't reclaim it); with a court order or written agreement, funds transfer tax-free. An equalization claim (family patrimony in Quebec) may apply."
+      ]
+    },
+    {
+      "heading": "Self-directed RRSPs and specie contributions",
+      "page": "6•40",
+      "points": [
+        "Self-administered RRSPs (brokers, banks, trust companies) let the holder choose any eligible investment; the annual fee plus brokerage charges make them sensible from about $10,000.",
+        "Self-administered and pooled-fund RRSPs are only as safe as what they hold. Pooled funds (investors share a fund in proportion to contributions) are well diversified with low relative costs — good for small investors.",
+        "Specie contribution: an existing eligible investment is contributed instead of cash, deemed made at fair market value (e.g. the day's closing price). Handy for cash-strapped clients and to shelter high-yield assets.",
+        "FMV above ACB triggers a capital gain; a loss is deemed nil, so instead sell on the market, wait 30 days (superficial loss rules) and buy inside the RRSP. Accrued unpaid interest on contributed debt must be reported."
+      ]
+    },
+    {
+      "heading": "What an RRSP can hold",
+      "page": "6•41",
+      "points": [
+        "Qualified: GICs, term deposits, cash (any currency) at Canadian institutions, T-bills, Canadian and foreign government bonds, listed corporate debt, mutual and segregated funds, listed shares in or outside Canada, small business shares, Canadian mortgages, gold/silver bullion.",
+        "Not allowed: precious jewels, gems and stones; real estate; personal property such as antiques, coin collections and works of art; commodity futures contracts. There is no foreign content restriction.",
+        "Prohibited investment: one the plan's controlling individual is closely connected to (10%+ interest as shareholder or debtholder). Prohibited or non-qualified holdings: 50% tax on value (sometimes refundable) + 100% tax on income/gains.",
+        "Your own mortgage can be held (even partly bought out), so interest is paid to your RRSP. Drawbacks: legal and appraisal fees, annual fee, mandatory CMHC insurance, less diversification; often not worthwhile below about $50,000."
+      ]
+    },
+    {
+      "heading": "Safety of RRSPs: CDIC and Assuris",
+      "page": "6•43",
+      "points": [
+        "An RRSP is only as safe as its underlying investments: deposit insurance covers insurable deposits made through a registered plan, not the plan itself.",
+        "CDIC covers deposits at chartered banks, trust and loan companies made in Canada, in Canadian funds and repayable within five years (savings, chequing, term deposits, GICs; capital and interest): up to $100,000 per person per institution since 1983.",
+        "Joint deposits, trust deposits, RRSP deposits and RRIF deposits are each insured separately up to $100,000.",
+        "Life insurance company deposits and credit union deposits (provincial insurers) are not CDIC-covered. Assuris (1990) protects RRSP/RRIF holders at life insurers up to $100,000."
+      ]
+    },
+    {
+      "heading": "Timing contributions, borrowing and withdrawals",
+      "page": "6•44",
+      "points": [
+        "Cost of waiting: at 8%, Francine's $20,000 (age 20–30) grows to about $428,375 by 65, beating Cathy's $70,000 (age 30–65) at about $344,633, thanks to ten extra years of pre-tax compounding.",
+        "Contributing at the start of the year beats the end ($500 a year at 10%: $90,472 vs $82,247 after 30 years). As fund prices tend to rise early in the year, monthly contributions (cost averaging, less tax at source) are a growing trend.",
+        "Borrowing to contribute usually pays if the loan is repaid within the year: the interest is NOT deductible, but tax-deferred growth starts immediately. Better to borrow than not contribute at all.",
+        "A non-locked-in RRSP can be cashed before maturity; the withdrawal is income for that year. Withholding outside Quebec: 10% (up to $5,000), 20% ($5,001–$15,000), 30% (over $15,000). In Quebec: 15% provincial + 5%, 10% or 15% federal."
+      ]
+    },
+    {
+      "heading": "Home Buyers' Plan (HBP)",
+      "page": "6•46",
+      "points": [
+        "A first-time buyer and spouse/partner can each withdraw up to $35,000 tax-free. Neither may have owned and lived in a principal residence in any of the 5 prior calendar years (since the 2019 budget, a relationship breakdown can override this).",
+        "Funds must be in the RRSP 90+ days. The home must be in Canada, bought or built before October 1 of the following year and be the principal residence within one year. Joint buyers (siblings, friends) can qualify.",
+        "Normal RRSP contribution limits still apply for the year, and the plan can be used again once the balance is back to zero.",
+        "Repay in equal instalments over 15 years, starting the 2nd calendar year after the withdrawal (up to 60 days after year-end). Any shortfall is added to that year's taxable income and permanently shrinks the RRSP.",
+        "Early payments reduce the first instalment (the period is unchanged); prepaying more than it means nothing is due that year. Paying extra reduces later instalments proportionately (e.g. $13,000 ÷ 14 = $929).",
+        "Pros: tax-efficient down payment and lower mortgage payments. Con: lost RRSP compounding for up to 17 years ($45,263 vs $92,500 in the course example), to be weighed against mortgage interest saved."
+      ]
+    },
+    {
+      "heading": "Lifelong Learning Plan (LLP)",
+      "page": "6•48",
+      "points": [
+        "Tax-free RRSP withdrawals to finance full-time training or education for the owner or spouse/partner; program of at least 3 months (disabled students may be part-time); the owner must be a Canadian resident.",
+        "Up to $10,000 per year and $20,000 in total, over up to four years, possibly from several RRSPs; funds must have been in the RRSP at least 90 days.",
+        "Repaid interest-free in equal instalments over 10 years. The first repayment is due within 60 days after the end of the earlier of: the year after the last year of enrolment, or the 5th year after the first withdrawal.",
+        "Missed repayments are added to income. The LLP can be used again, but only after all previous repayments are made."
+      ]
+    },
+    {
+      "heading": "Tax-free savings account (TFSA)",
+      "page": "6•49",
+      "points": [
+        "Since 2009, Canadian residents 18+ may contribute $6,000 a year (2019 figure); unused room carries forward. Limits: $5,000 (2009–12), $5,500 (2013–14), $10,000 (2015), $5,500 (2016–18), $6,000 (2019): $63,500 in all.",
+        "Contributions are NOT deductible; income grows tax-free, and withdrawals of contributions or income are never taxed — at any time, for any purpose (home, renovations, business, car, debt).",
+        "Withdrawals can be recontributed in any LATER year, on top of regular room (Hans withdraws $25,000 for renovations and can put it back in a later year).",
+        "Giving a spouse money for his or her own TFSA triggers no attribution. At death, assets can pass to the surviving spouse without using the survivor's room, or a spouse named successor holder takes over the plan.",
+        "TFSA income and withdrawals do not affect federal income-tested benefits such as the GIS and the Child Tax Credit."
+      ]
+    },
+    {
+      "heading": "Investment and savings strategies for retirement",
+      "page": "6•50",
+      "points": [
+        "First, use deferral and shelter vehicles to the maximum (pay the mortgage down fast, max RRSPs); only then use non-deferred vehicles, assuming adequate liquid funds. Reduce or eliminate debt before retiring.",
+        "Non-registered portfolio: builds net worth, is easier to modify than sheltered plans, and high-growth investments save tax since only 50% of net capital gains is taxable.",
+        "Mortgage or RRSP first? No single answer (age, life span, liquidity, plans for the house, inflation). Debt-first camp: an RRSP only delays tax (rates may rise) and real estate has outpaced financial assets after inflation.",
+        "Dudley example (46% rate): $5,000 grossed up to $9,259.26 in the RRSP [$5,000 ÷ (1 − 0.46)] vs prepaying the mortgage: both about $48,600 after 17 years. Key: mortgage rate vs investment return, then objectives and risk tolerance.",
+        "Self-employed with no pension plan: the RRSP is the priority; contribute and use the tax refund to pay down the mortgage.",
+        "Inside an RRSP all income is taxed like interest (no dividend tax credit or capital gains deduction), so hold interest-bearing assets (e.g. zero-coupon bonds) there, equities outside, and review both accounts as ONE portfolio."
+      ]
+    },
+    {
+      "heading": "Step 4: adjusting finances, and conclusion",
+      "page": "6•55",
+      "points": [
+        "When goals exceed resources: reduce expenses, increase income, abandon some goals, or combine all three. The professional suggests options; the client makes the decisions.",
+        "Raising income is often hard: a stay-at-home parent's new job brings clothing, transport and daycare costs. Cutting expenses (e.g. postponing furniture to fund an RRSP) or goals can be done quickly.",
+        "Plans can be revised later (e.g. postpone retirement), and 'what if' scenarios (e.g. a 4% real rate instead of 3%) test assumptions in seconds with software.",
+        "Closing checklist: the client's goals; awareness of retirement's financial implications; need and readiness to adjust; knowledge of vehicles and their taxation; income needed; how to generate income near retirement; need for a planner or specialist.",
+        "Jasmine (48): never too late to start. Maximize pension and RRSP contributions early (borrow if needed), use carried-forward room, hold debt securities in the RRSP and diversify with other asset classes."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: RRSP room = 18% of LAST year's earned income (capped at the dollar limit), minus last year's PA, plus unused room carried forward.",
+    "EXAM TIP: Spousal RRSP withdrawals are taxed to the contributor if spousal contributions were made that year or in the two years before.",
+    "DID YOU KNOW? You can over-contribute up to $2,000 (lifetime) to RRSPs penalty-free; anything above that costs 1% per month.",
+    "EXAM TIP: HBP = $35,000, repaid over 15 years from the 2nd year after withdrawal. LLP = $10,000/yr, $20,000 total, repaid over 10 years.",
+    "DID YOU KNOW? In Quebec, RRSP withdrawals face 15% provincial withholding on top of 5%, 10% or 15% federal withholding.",
+    "EXAM TIP: TFSA withdrawals can be recontributed only in a LATER calendar year, on top of that year's regular room.",
+    "EXAM TIP: Hold interest-paying investments in the RRSP: inside it, dividends and capital gains lose their tax breaks.",
+    "DID YOU KNOW? A loss on shares contributed in kind to an RRSP is denied: sell first, wait 30 days, then buy inside the plan."
+  ],
+  "flashcards": [
+    {
+      "id": "c06b-f001",
+      "topic": "RCAs",
+      "page": "6•35",
+      "front": "RCA refundable tax (and Quebec)",
+      "back": "50% of employer contributions (remitted to the CRA when made), plus 50% of employee contributions, investment income and net realized gains (paid by the custodian). Refunded $1 for every $2 of benefits paid out. In Quebec, there is no refundable tax."
+    },
+    {
+      "id": "c06b-f002",
+      "topic": "RCAs",
+      "page": "6•35",
+      "front": "RCA vesting, investments and transfers",
+      "back": "Vested amounts are paid on retirement, termination or a substantial change in employment (taxable part subject to withholding). No investment restrictions; the employer bears the risk. Tax-neutral RCA-to-RCA transfers; payments can roll into an RRSP within limits."
+    },
+    {
+      "id": "c06b-f003",
+      "topic": "RRSP basics",
+      "page": "6•36",
+      "front": "RRSP tax treatment in a nutshell",
+      "back": "Contributions (within limits) are deductible; earnings grow tax-deferred; principal and earnings are taxed only when withdrawn or used to buy non-sheltered investments. For a worker with no pension plan, it acts like a money purchase (DC) plan."
+    },
+    {
+      "id": "c06b-f004",
+      "topic": "Key numbers",
+      "page": "6•36",
+      "front": "Age limit for deducting RRSP contributions",
+      "back": "Contributions can be deducted as long as the annuitant has not passed age 71 in the year."
+    },
+    {
+      "id": "c06b-f005",
+      "topic": "RRSP contribution room",
+      "page": "6•36",
+      "front": "RRSP contribution room (course formula)",
+      "back": "18% of the previous year's earned income, up to the current year's dollar limit, minus the previous year's pension adjustment (PA), plus unused room. Prior-year figures are used because pension contributions aren't known until year-end."
+    },
+    {
+      "id": "c06b-f006",
+      "topic": "Key numbers",
+      "page": "6•36",
+      "front": "RRSP dollar limits quoted in the course",
+      "back": "2018: $26,230 · 2019: $26,500 · 2020: indexed."
+    },
+    {
+      "id": "c06b-f007",
+      "topic": "Earned income",
+      "page": "6•37",
+      "front": "Earned income for RRSP purposes: what counts",
+      "back": "+ employment income, royalties, net business and rental income, taxable alimony received, wage-loss and LTD income, CPP/QPP disability benefits, net research grants; − union and professional fees, business/rental losses, deductible employment expenses and alimony paid."
+    },
+    {
+      "id": "c06b-f008",
+      "topic": "Earned income",
+      "page": "6•37",
+      "front": "Earned income: what is EXCLUDED",
+      "back": "Interest and dividends, capital gains, scholarships, unemployment benefits, non-taxable pension income, insurance income, family allowance, death benefits, and money received from an RRSP, RRIF or DPSP."
+    },
+    {
+      "id": "c06b-f009",
+      "topic": "RRSP contribution room",
+      "page": "6•38",
+      "front": "Carry-forward of unused RRSP room",
+      "back": "Unused room carries forward indefinitely. But one large catch-up deduction may save tax at lower marginal rates than regular ones and misses years of tax-deferred growth, so encourage early contributions."
+    },
+    {
+      "id": "c06b-f010",
+      "topic": "Key numbers",
+      "page": "6•39",
+      "front": "RRSP over-contribution: allowance and penalty",
+      "back": "Up to $2,000 cumulative (lifetime) without penalty, but not deductible and taxed on withdrawal. Excess over $2,000: 1% per month. Break-even on it takes about 15 years at a 10% return and 50% tax rate."
+    },
+    {
+      "id": "c06b-f011",
+      "topic": "Spousal RRSPs",
+      "page": "6•39",
+      "front": "Spousal RRSP",
+      "back": "An RRSP whose annuitant is the contributor's spouse or common-law partner. The contributor deducts the contributions (within his or her own limit); withdrawals are taxed at the lower-income spouse's rate, a form of income splitting."
+    },
+    {
+      "id": "c06b-f012",
+      "topic": "Spousal RRSPs",
+      "page": "6•39",
+      "front": "Spousal RRSP attribution rule",
+      "back": "If spousal contributions were made in the year of withdrawal or the two preceding years, the lesser of the amount withdrawn and those contributions is taxed in the contributor's hands. Form T2205 is filed for spousal RRSP withdrawals."
+    },
+    {
+      "id": "c06b-f013",
+      "topic": "Spousal RRSPs",
+      "page": "6•40",
+      "front": "Definition of spouse for tax purposes (Quebec)",
+      "back": "Since 2001: 'spouse and common-law partner', opposite or same sex. In Quebec, the definition also includes de facto spouses and those in a civil union."
+    },
+    {
+      "id": "c06b-f014",
+      "topic": "Spousal RRSPs",
+      "page": "6•40",
+      "front": "Spousal RRSP after a marriage or common-law breakdown",
+      "back": "It belongs to the spouse in whose name it is registered; the contributor can't reclaim it. Funds can move tax-free under a court order or written agreement. It may be subject to an equalization claim (family patrimony in Quebec)."
+    },
+    {
+      "id": "c06b-f015",
+      "topic": "Self-directed RRSPs",
+      "page": "6•40",
+      "front": "Self-administered RRSP",
+      "back": "Offered by brokers, banks and trust companies; the holder picks eligible investments. Annual fee plus brokerage charges, so generally worthwhile only from about $10,000. Only as safe as what it holds."
+    },
+    {
+      "id": "c06b-f016",
+      "topic": "Self-directed RRSPs",
+      "page": "6•41",
+      "front": "Specie (in-kind) contribution: tax results",
+      "back": "Deemed contribution = fair market value (e.g. closing price). FMV > ACB: capital gain realized. FMV < ACB: loss deemed nil, so sell on the market and rebuy in the RRSP after 30 days. Interest-bearing assets: report accrued interest."
+    },
+    {
+      "id": "c06b-f017",
+      "topic": "RRSP investments",
+      "page": "6•41",
+      "front": "Examples of RRSP-qualified investments",
+      "back": "GICs, term deposits, cash (any currency) at Canadian institutions, T-bills, Canadian and foreign government bonds, listed corporate debt, mutual and segregated funds, credit union shares, listed shares (Canada or abroad), Canadian mortgages, gold and silver bullion."
+    },
+    {
+      "id": "c06b-f018",
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "front": "Investments that CANNOT be held in an RRSP",
+      "back": "Precious jewels, gems and stones; real estate; personal property such as antiques, coin collections and works of art; commodity futures contracts."
+    },
+    {
+      "id": "c06b-f019",
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "front": "Prohibited investment and its penalties",
+      "back": "An investment the plan's controlling individual is closely connected to (an interest of 10% or more, as shareholder or debtholder). Prohibited or non-qualified holdings: 50% tax on value (refundable in some cases) + 100% tax on income or gains."
+    },
+    {
+      "id": "c06b-f020",
+      "topic": "RRSP investments",
+      "page": "6•43",
+      "front": "Holding your own mortgage in your RRSP",
+      "back": "Allowed, even as a partial buy-out, so mortgage interest goes to your RRSP. Drawbacks: legal and appraisal fees, annual self-administration fee, mandatory CMHC insurance, less diversification. Often not worthwhile below about $50,000."
+    },
+    {
+      "id": "c06b-f021",
+      "topic": "Safety of RRSPs",
+      "page": "6•43",
+      "front": "CDIC deposit insurance (as described in the course)",
+      "back": "Deposits at banks, trust and loan companies, made in Canada, in Canadian funds, repayable within 5 years: up to $100,000 per person per institution (capital and interest). Joint, trust, RRSP and RRIF deposits are each insured separately."
+    },
+    {
+      "id": "c06b-f022",
+      "topic": "Safety of RRSPs",
+      "page": "6•44",
+      "front": "Assuris",
+      "back": "The life insurance industry's consumer protection plan (introduced 1990): up to $100,000 of compensation for those holding RRSPs or RRIFs with a life insurer, whose deposits are not covered by CDIC."
+    },
+    {
+      "id": "c06b-f023",
+      "topic": "Contribution timing",
+      "page": "6•45",
+      "front": "Why contribute early in the year (or monthly)?",
+      "back": "Early contributions compound longer ($500 a year at 10% for 30 years: $90,472 if made at the start of each year vs $82,247 at the end). Since fund prices tend to rise early in the year, monthly contributions add cost averaging and lower tax at source."
+    },
+    {
+      "id": "c06b-f024",
+      "topic": "RRSP withdrawals",
+      "page": "6•45",
+      "front": "RRSP withdrawal withholding tax rates",
+      "back": "Outside Quebec: 10% (up to $5,000), 20% ($5,001–$15,000), 30% (over $15,000). In Quebec: 15% provincial plus 5%, 10% or 15% federal (20%, 25%, 30% in total). The withdrawal is taxable income for the year."
+    },
+    {
+      "id": "c06b-f025",
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "front": "Home Buyers' Plan (HBP): key conditions",
+      "back": "Up to $35,000 each (buyer and spouse), tax-free. No home owned and lived in as principal residence in the 5 prior calendar years. Funds in RRSP 90+ days. Home in Canada, bought before Oct. 1 of the next year, principal residence within 1 year."
+    },
+    {
+      "id": "c06b-f026",
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "front": "HBP repayment rules",
+      "back": "Equal instalments over 15 years, starting the 2nd calendar year after the withdrawal (pay by 60 days after year-end). Early payments reduce the first instalment; paying more than a required instalment cuts later ones proportionately. Any shortfall is added to taxable income."
+    },
+    {
+      "id": "c06b-f027",
+      "topic": "Home Buyers' Plan",
+      "page": "6•47",
+      "front": "Main drawback of the HBP",
+      "back": "Lost tax-deferred compounding inside the RRSP for up to 17 years (course example: $45,263 vs $92,500). Missed repayments become taxable and permanently shrink the RRSP."
+    },
+    {
+      "id": "c06b-f028",
+      "topic": "Lifelong Learning Plan",
+      "page": "6•48",
+      "front": "Lifelong Learning Plan (LLP): key numbers",
+      "back": "Full-time study for the owner or spouse (program of 3+ months; disabled students may be part-time). Max $10,000 a year and $20,000 in total over up to 4 years. Funds in RRSP 90+ days. Repaid over 10 years, interest-free."
+    },
+    {
+      "id": "c06b-f029",
+      "topic": "Lifelong Learning Plan",
+      "page": "6•49",
+      "front": "LLP: when is the first repayment due?",
+      "back": "Within 60 days after the end of the earlier of: the year after the last year the student was enrolled, or the 5th year after the year of the first withdrawal. A new LLP requires all earlier repayments to be made first."
+    },
+    {
+      "id": "c06b-f030",
+      "topic": "TFSA",
+      "page": "6•49",
+      "front": "Tax-free savings account (TFSA): basics",
+      "back": "Since 2009; Canadian residents 18+; $6,000 a year (2019 figure). Contributions NOT deductible; income and withdrawals tax-free; withdraw any time, for any purpose; unused room carries forward."
+    },
+    {
+      "id": "c06b-f031",
+      "topic": "Key numbers",
+      "page": "6•49",
+      "front": "TFSA annual limits, 2009–2019",
+      "back": "$5,000 (2009–2012) · $5,500 (2013–2014) · $10,000 (2015) · $5,500 (2016–2018) · $6,000 (2019). Total by 2019: $63,500."
+    },
+    {
+      "id": "c06b-f032",
+      "topic": "TFSA",
+      "page": "6•50",
+      "front": "TFSA recontribution rule",
+      "back": "Amounts withdrawn may be recontributed in any year AFTER the year of withdrawal, in addition to that year's regular contribution room."
+    },
+    {
+      "id": "c06b-f033",
+      "topic": "TFSA",
+      "page": "6•50",
+      "front": "TFSA: spouses, death and the GIS",
+      "back": "Giving a spouse money for his or her TFSA: no attribution. At death: transfer to the surviving spouse (up to value at death) without using the survivor's room, or a successor holder takes over. TFSA income/withdrawals don't affect the GIS."
+    },
+    {
+      "id": "c06b-f034",
+      "topic": "Retirement strategies",
+      "page": "6•50",
+      "front": "First strategic rule for retirement saving",
+      "back": "Whatever the client's age, use deferral and tax-shelter vehicles to the maximum (often: pay down the mortgage quickly and max RRSPs) before non-deferred vehicles, assuming enough liquid funds. Reduce or eliminate debt before retiring."
+    },
+    {
+      "id": "c06b-f035",
+      "topic": "Retirement strategies",
+      "page": "6•51",
+      "front": "Three advantages of a non-registered portfolio",
+      "back": "1) Adds to net worth (assets that earn income or can be sold); 2) easier to modify than tax-sheltered programs; 3) high-growth investments save tax, since only 50% of net capital gains is taxable."
+    },
+    {
+      "id": "c06b-f036",
+      "topic": "Retirement strategies",
+      "page": "6•52",
+      "front": "Dudley Tufts: RRSP contribution vs mortgage prepayment",
+      "back": "With a 46% tax rate and equal out-of-pocket cost, the RRSP option ($48,642) and the mortgage-first option ($48,654) give about the same after 17 years. Key: mortgage rate vs investment return, plus objectives and risk tolerance."
+    },
+    {
+      "id": "c06b-f037",
+      "topic": "Retirement strategies",
+      "page": "6•53",
+      "front": "Gross-up shortcut: RRSP contribution with reinvested refunds",
+      "back": "Contribution = out-of-pocket cost ÷ (1 − marginal tax rate). E.g. $5,000 ÷ (1 − 0.46) = $9,259.26, which generates a $4,259.26 refund."
+    },
+    {
+      "id": "c06b-f038",
+      "topic": "Retirement strategies",
+      "page": "6•54",
+      "front": "Which investments belong inside an RRSP?",
+      "back": "Interest-bearing ones (GICs, bonds; zero-coupon bonds suit well): interest is the most heavily taxed income, and inside an RRSP dividends and capital gains lose their tax breaks. Review RRSP and non-registered holdings as one portfolio."
+    },
+    {
+      "id": "c06b-f039",
+      "topic": "Step 4: adjustments",
+      "page": "6•55",
+      "front": "Step 4: ways to close a retirement shortfall",
+      "back": "Reduce expenses, increase income, abandon some goals, or combine all three; later, postpone retirement or revise plans, and test 'what if' scenarios. The client, not the professional, makes the decisions."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c06b-q001",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RCAs",
+      "page": "6•35",
+      "q": "Outside Quebec, an employer contributes $200,000 to a retirement compensation arrangement (RCA) trust, which then earns $10,000 of investment income. No benefits are paid out that year. How much refundable tax applies?",
+      "options": [
+        "$105,000",
+        "$100,000",
+        "$210,000",
+        "$5,000"
+      ],
+      "answer": 0,
+      "explain": "RCA refundable tax is 50% of contributions plus 50% of the trust's investment income and net realized gains: 50% × ($200,000 + $10,000) = $105,000. It is refunded at $1 for every $2 of taxable benefits later paid out."
+    },
+    {
+      "id": "c06b-q002",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "RCAs",
+      "page": "6•35",
+      "q": "In Quebec, there is no refundable tax on contributions to a retirement compensation arrangement (RCA).",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "Federally, a 50% refundable tax is remitted to the CRA on RCA contributions and trust income, refunded $1 for every $2 of benefits paid. The course notes that in Quebec there is no refundable tax."
+    },
+    {
+      "id": "c06b-q003",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRSP basics",
+      "page": "6•35",
+      "q": "How does an RRSP achieve 'income smoothing' for most households?",
+      "options": [
+        "Withdrawals are taxed only at a flat withholding rate, whatever the holder's income level in retirement",
+        "Plan growth is never taxed, so retirement withdrawals are excluded from taxable income",
+        "Deductions cut income in high-tax working years; withdrawals add income in lower-tax retirement years",
+        "Contributions are averaged over the holder's working life to produce a single lifetime tax rate"
+      ],
+      "answer": 2,
+      "explain": "Progressive brackets tax high incomes more heavily. RRSP deductions reduce income in high-income working years, and withdrawals are taxed in retirement, when income and the tax rate are usually lower. Withdrawals are fully taxable, not tax-free."
+    },
+    {
+      "id": "c06b-q004",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "RRSP basics",
+      "page": "6•36",
+      "q": "Generally, until what point can a client keep deducting RRSP contributions from total income?",
+      "options": [
+        "As long as the annuitant has not passed age 65 in the year",
+        "As long as the annuitant has not passed age 71 in the year",
+        "As long as the annuitant has not passed age 69 in the year",
+        "As long as the annuitant still has employment income"
+      ],
+      "answer": 1,
+      "explain": "Within the limits, RRSP contributions are deductible as long as the annuitant has not passed age 71 in the year. Age 65 is a common retirement age, not the RRSP cut-off."
+    },
+    {
+      "id": "c06b-q005",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Earned income",
+      "page": "6•37",
+      "q": "Which of these amounts is NOT included in earned income for RRSP purposes?",
+      "options": [
+        "Net rental income from real estate",
+        "CPP or QPP disability benefits",
+        "Royalties from an author's rights",
+        "A scholarship"
+      ],
+      "answer": 3,
+      "explain": "Scholarships are specifically excluded from earned income. Net rental income, CPP/QPP disability benefits and authors' or inventors' royalties are all included."
+    },
+    {
+      "id": "c06b-q006",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "RRSP contribution room",
+      "page": "6•37",
+      "q": "Last year Nadia had employment income of $92,000, net rental income of $4,000, dividends of $3,000, a $6,000 capital gain and $1,000 of annual union fees. Her pension adjustment was $7,500. The dollar limit is not an issue and she has no unused room. What is her RRSP contribution limit this year?",
+      "options": [
+        "$9,780",
+        "$11,220",
+        "$9,600",
+        "$17,100"
+      ],
+      "answer": 2,
+      "explain": "Earned income = $92,000 + $4,000 − $1,000 union fees = $95,000; dividends and capital gains are excluded. 18% × $95,000 = $17,100, minus the $7,500 PA = $9,600."
+    },
+    {
+      "id": "c06b-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "RRSP contribution room",
+      "page": "6•36",
+      "q": "Olivier is self-employed and has no pension plan, so his PA is zero. His net business income last year was $175,000, and he has $4,000 of unused RRSP room carried forward. Using the course's 2019 dollar limit of $26,500, what is his maximum deductible RRSP contribution for 2019?",
+      "options": [
+        "$30,500",
+        "$35,500",
+        "$26,500",
+        "$31,500"
+      ],
+      "answer": 0,
+      "explain": "18% of $175,000 is $31,500, but new room is capped at the $26,500 dollar limit. Unused room carries forward indefinitely, so he adds the $4,000: $26,500 + $4,000 = $30,500."
+    },
+    {
+      "id": "c06b-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRSP contribution room",
+      "page": "6•38",
+      "q": "Frank hasn't contributed to his RRSP in seven years; only about $5,000–$10,000 of his income each year is taxed in the top bracket. Why will one $35,000 catch-up contribution save him less tax than $5,000 contributions each year would have?",
+      "options": [
+        "Carried-forward RRSP room expires after five years, so part of it is lost",
+        "Catch-up contributions above the annual dollar limit are penalized at 1% per month",
+        "Deductions for carried-forward room are only allowed at the taxpayer's lowest marginal tax rate",
+        "Only part of the large deduction saves tax at the top rate; the rest saves at lower rates"
+      ],
+      "answer": 3,
+      "explain": "Room carries forward indefinitely, but a large deduction drops income into lower brackets, so only about $5,000–$10,000 of it saves tax at the top rate. Earlier contributions would also have had more years of tax-deferred growth."
+    },
+    {
+      "id": "c06b-q009",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Over-contributions",
+      "page": "6•39",
+      "q": "An RRSP over-contribution that stays within the $2,000 penalty-free amount can be deducted from income in the year it is made.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "The $2,000 lifetime over-contribution is allowed without penalty but is not deductible, and it will be taxed when withdrawn. That is why it takes years of tax-deferred growth (about 15 at 10% and a 50% tax rate) to break even."
+    },
+    {
+      "id": "c06b-q010",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Over-contributions",
+      "page": "6•39",
+      "q": "Mireille's cumulative RRSP contributions exceed her deduction limits by $3,500, and she leaves the excess in her plan. Under the rules in the course, what penalty applies?",
+      "options": [
+        "1% per month on $3,500",
+        "1% per month on $1,500",
+        "1% per month on $2,000",
+        "1% per year on $1,500"
+      ],
+      "answer": 1,
+      "explain": "The first $2,000 of over-contributions (lifetime) is penalty-free. Only the excess above $2,000, here $3,500 − $2,000 = $1,500, is penalized at 1% per month."
+    },
+    {
+      "id": "c06b-q011",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Spousal RRSPs",
+      "page": "6•39",
+      "q": "Marc contributed to a spousal RRSP for his wife Sophie: $3,000 in 20x3, $1,500 in 20x4, $2,500 in 20x5 and nothing in 20x6. In 20x6, Sophie withdraws $6,000. How much of the withdrawal is taxed in Marc's hands?",
+      "options": [
+        "$2,500",
+        "$4,000",
+        "$6,000",
+        "$0"
+      ],
+      "answer": 1,
+      "explain": "Spousal contributions in the withdrawal year and the two preceding years (20x4–20x6) total $4,000. The lesser of that and the $6,000 withdrawn, $4,000, is taxed to Marc; the other $2,000 is taxed to Sophie."
+    },
+    {
+      "id": "c06b-q012",
+      "type": "tf",
+      "difficulty": 3,
+      "topic": "Spousal RRSPs",
+      "page": "6•39",
+      "q": "In March, Luc makes his first-ever contribution to a spousal RRSP for his partner Ana: $5,000. Ana withdraws $3,000 in November of the same year. Because the withdrawal is less than the contribution, the $3,000 is taxed in Ana's hands.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "Attribution applies to the lesser of the amount withdrawn ($3,000) and spousal contributions made in the current and two preceding years ($5,000). So the whole $3,000 is taxed in Luc's hands, not Ana's."
+    },
+    {
+      "id": "c06b-q013",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Spousal RRSPs",
+      "page": "6•40",
+      "q": "For the tax rules on spousal RRSPs, who is included in the definition of spouse in Quebec?",
+      "options": [
+        "Married spouses only, since common-law partners are excluded in Quebec",
+        "Married and civil union spouses, but not de facto spouses",
+        "Married and de facto spouses, but only couples of the opposite sex",
+        "Married, de facto and civil union spouses, whether opposite or same sex"
+      ],
+      "answer": 3,
+      "explain": "Since 2001, 'spouse' means spouse and common-law partner, of the opposite or same sex. In Quebec, the definition also includes de facto spouses and those in a civil union."
+    },
+    {
+      "id": "c06b-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Spousal RRSPs",
+      "page": "6•40",
+      "q": "Paul contributed to a spousal RRSP for his common-law partner, Lise. They have now separated. Which statement is correct?",
+      "options": [
+        "The plan belongs to Lise; a court order or written agreement allows a tax-free transfer",
+        "Paul can reclaim the plan, since he made all the contributions and claimed the deductions",
+        "The plan must be collapsed, and the proceeds are taxed in Paul's hands",
+        "The plan is split equally, and the transfer is taxable to both partners"
+      ],
+      "answer": 0,
+      "explain": "A spousal RRSP belongs to the partner in whose name it is registered and cannot be reclaimed by the contributor. With a court-ordered division or a written agreement, RRSP funds can be transferred tax-free. (In Quebec, the family patrimony may also apply.)"
+    },
+    {
+      "id": "c06b-q015",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Self-directed RRSPs",
+      "page": "6•41",
+      "q": "Inès contributes 500 shares to her self-directed RRSP. The shares closed at $30 that day, and her adjusted cost base is $20 per share. What are the results?",
+      "options": [
+        "A $15,000 contribution and no capital gain",
+        "A $10,000 contribution and no capital gain",
+        "A $15,000 contribution and a $5,000 capital gain",
+        "A $10,000 contribution and a $5,000 capital gain"
+      ],
+      "answer": 2,
+      "explain": "A specie contribution is deemed made at fair market value: 500 × $30 closing price = $15,000. Because that exceeds the $10,000 adjusted cost base, the transfer triggers a $5,000 capital gain."
+    },
+    {
+      "id": "c06b-q016",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Self-directed RRSPs",
+      "page": "6•41",
+      "q": "Teresa wants to contribute shares worth $4,000 (adjusted cost base $7,000) to her self-directed RRSP to get a deduction. What does the course suggest she do?",
+      "options": [
+        "Sell them to realize the loss, then buy the same shares inside the RRSP after 30 days",
+        "Contribute them in kind, since the $3,000 capital loss is claimed on the transfer",
+        "Contribute them in kind at their $7,000 cost base to obtain a larger deduction",
+        "Sell them to realize the loss, then buy the same shares inside the RRSP the next day"
+      ],
+      "answer": 0,
+      "explain": "A loss on a specie contribution is deemed nil, so the $3,000 loss would be wasted. Selling on the open market realizes it, and waiting 30 days before rebuying inside the RRSP avoids the superficial loss rules."
+    },
+    {
+      "id": "c06b-q017",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "q": "Which of these can NOT be held in an RRSP?",
+      "options": [
+        "Shares of a small business corporation",
+        "Units of a segregated fund",
+        "A rental condominium",
+        "Bonds issued by a foreign government"
+      ],
+      "answer": 2,
+      "explain": "Real estate cannot be held in an RRSP. Shares of small business corporations, segregated (and mutual) fund units and debt issued by foreign governments are all qualified investments."
+    },
+    {
+      "id": "c06b-q018",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "q": "A client wants to move one of these holdings into her self-directed RRSP. Which one is a qualified investment?",
+      "options": [
+        "An antique coin collection",
+        "Gold bullion certificates",
+        "Loose precious gemstones",
+        "A valuable work of art"
+      ],
+      "answer": 1,
+      "explain": "Gold and silver bullion, coins and certificates qualify. Personal property such as antiques, coin collections and works of art, and precious jewels, gems and stones, cannot be held in an RRSP."
+    },
+    {
+      "id": "c06b-q019",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "q": "What special taxes does the Tax Act impose when a registered plan holds a prohibited or non-qualified investment?",
+      "options": [
+        "1% per month of the investment's value for as long as it stays in the plan",
+        "100% of the investment's value plus 50% of any income or gains it produces",
+        "Deregistration of the whole plan, with its entire value added to the holder's taxable income",
+        "50% of the investment's value (sometimes refundable) and 100% of its income or gains"
+      ],
+      "answer": 3,
+      "explain": "Two special taxes apply: 50% of the investment's value, refundable in certain circumstances, and 100% of any income or capital gain from it. A prohibited investment is one the controlling individual is closely connected to (a 10%+ interest)."
+    },
+    {
+      "id": "c06b-q020",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "q": "RRSPs are subject to a foreign content restriction, so most of the plan must be invested in Canadian securities.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "The course states there is no foreign content restriction on RRSP investments. Shares listed on prescribed exchanges inside or outside Canada, and debt of foreign governments, all qualify."
+    },
+    {
+      "id": "c06b-q021",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "RRSP investments",
+      "page": "6•42",
+      "q": "Because any security listed on a designated stock exchange qualifies for an RRSP, an exchange-traded commodity futures contract can be held in the plan.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "The rule covers any listed security OTHER than a futures contract, and commodity futures contracts are specifically named among the investments that cannot be held in an RRSP."
+    },
+    {
+      "id": "c06b-q022",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "RRSP investments",
+      "page": "6•43",
+      "q": "Which is a drawback of holding your own mortgage in your self-directed RRSP, according to the course?",
+      "options": [
+        "The RRSP must buy out the entire mortgage from the financial institution at the outset",
+        "Your own mortgage is a non-qualified investment subject to a 50% tax",
+        "High set-up and annual costs, mandatory CMHC insurance and less diversification",
+        "The RRSP's return is capped at the rate paid on money market funds"
+      ],
+      "answer": 2,
+      "explain": "Costs include legal and appraisal fees plus the annual self-administration fee, and the mortgage must be CMHC-insured; it also reduces diversification. Partial buy-outs are allowed, and some advisors say it isn't worthwhile below about $50,000."
+    },
+    {
+      "id": "c06b-q023",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Safety of RRSPs",
+      "page": "6•44",
+      "q": "At one chartered bank, Hélène has a $70,000 savings account in her own name, an $80,000 joint account with her husband and a $90,000 three-year GIC in her RRSP, all in Canadian dollars. Based on the course, how much of this is protected by CDIC?",
+      "options": [
+        "$240,000",
+        "$100,000",
+        "$160,000",
+        "$150,000"
+      ],
+      "answer": 0,
+      "explain": "Coverage is $100,000 per person per institution, and joint deposits and RRSP deposits are each insured separately up to $100,000. Each holding is within its own limit, so all $240,000 is covered."
+    },
+    {
+      "id": "c06b-q024",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Safety of RRSPs",
+      "page": "6•43",
+      "q": "Which of these RRSP holdings is covered by CDIC deposit insurance?",
+      "options": [
+        "A 7-year GIC in Canadian dollars at a chartered bank",
+        "A term deposit in US dollars at a chartered bank",
+        "A term deposit in Canadian dollars at a credit union",
+        "A 4-year GIC in Canadian dollars at a trust company"
+      ],
+      "answer": 3,
+      "explain": "CDIC covers deposits at banks, trust and loan companies that are made in Canada, in Canadian funds and repayable within five years. A 7-year term or a US-dollar deposit fails these tests, and credit unions are insured by provincial agencies."
+    },
+    {
+      "id": "c06b-q025",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Contribution timing",
+      "page": "6•44",
+      "q": "In the course example, Francine contributes $2,000 a year to her RRSP from age 20 to 30 and then stops; Cathy contributes $2,000 a year from age 30 to 65. Assuming 8%, what is the result at age 65?",
+      "options": [
+        "Cathy has more, since she contributed $50,000 more in total",
+        "Francine has about 25% more, although she contributed $50,000 less",
+        "They end up with about the same amount, since compound growth evens out",
+        "Francine has more, because her early deductions saved more tax"
+      ],
+      "answer": 1,
+      "explain": "Francine's $20,000 grows to about $428,375 versus about $344,633 for Cathy's $70,000 (almost 25% more), because her money compounds at pre-tax rates for 10 more years. There is a substantial cost to waiting."
+    },
+    {
+      "id": "c06b-q026",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Contribution timing",
+      "page": "6•45",
+      "q": "Interest on a loan taken to make an RRSP contribution is tax-deductible, which is the main reason the course favours borrowing to contribute.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "RRSP loan interest is not tax-deductible. Borrowing still usually makes sense if the loan is repaid within the year, because the contribution starts earning tax-deferred income right away."
+    },
+    {
+      "id": "c06b-q027",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "RRSP withdrawals",
+      "page": "6•45",
+      "q": "Gilles, a Quebec resident, makes a $12,000 cash withdrawal from his RRSP, which is not locked in. Using the course's withholding table, how much tax is withheld in total?",
+      "options": [
+        "$2,400",
+        "$3,000",
+        "$1,800",
+        "$3,600"
+      ],
+      "answer": 1,
+      "explain": "For $5,001–$15,000 in Quebec, 15% provincial plus 10% federal is withheld: 25% × $12,000 = $3,000. Outside Quebec, the rate for this band is 20% ($2,400). The withdrawal is also taxable income for the year."
+    },
+    {
+      "id": "c06b-q028",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "RRSP withdrawals",
+      "page": "6•45",
+      "q": "A Quebec resident who withdraws $4,000 from an RRSP has 10% withheld in total, the same as a resident of any other province.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "Outside Quebec, 10% is withheld on withdrawals up to $5,000. In Quebec, the withholding is 15% provincial plus 5% federal, for 20% in total."
+    },
+    {
+      "id": "c06b-q029",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "q": "Under the Home Buyers' Plan, how much can each eligible buyer withdraw tax-free from his or her RRSPs (figure used in the course)?",
+      "options": [
+        "$25,000",
+        "$20,000",
+        "$10,000",
+        "$35,000"
+      ],
+      "answer": 3,
+      "explain": "A first-time buyer and his or her spouse or partner can each withdraw up to $35,000. The $20,000 and $10,000 figures are the Lifelong Learning Plan's total and annual limits."
+    },
+    {
+      "id": "c06b-q030",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "q": "Which condition must be met for a withdrawal under the Home Buyers' Plan?",
+      "options": [
+        "The funds must have been in the RRSP at least 90 days before the withdrawal",
+        "The home must be bought before December 31 of the same year as the withdrawal",
+        "The home may be outside Canada if it becomes the principal residence",
+        "Only married or common-law couples buying together can use the plan"
+      ],
+      "answer": 0,
+      "explain": "Funds must be in the RRSP at least 90 days. The home must be in Canada, bought before October 1 of the following year and become the principal residence within one year; siblings or friends buying jointly can also qualify."
+    },
+    {
+      "id": "c06b-q031",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "q": "Karine and her husband sold the home they lived in three years ago and have rented ever since. Can Karine use the Home Buyers' Plan to buy a new home now?",
+      "options": [
+        "Yes — neither of them owns a home on the date of the withdrawal, which is what counts",
+        "Yes — only the spouse whose name was on the title is barred",
+        "No — they owned and lived in a home within the five prior calendar years",
+        "No — anyone who has ever owned a home is permanently excluded from the plan"
+      ],
+      "answer": 2,
+      "explain": "Neither the buyer nor the spouse or partner may have owned and lived in a home as a principal residence in any of the five calendar years before the withdrawal. Three years ago falls inside that window, so she does not qualify yet."
+    },
+    {
+      "id": "c06b-q032",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Home Buyers' Plan",
+      "page": "6•46",
+      "q": "Since the 2019 federal budget, a person whose marriage or common-law relationship has broken down can use the HBP even without meeting the first-time homebuyer requirement.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "The 2019 federal budget allowed people who experienced the breakdown of a marriage or common-law relationship to qualify for the HBP even if they are not first-time homebuyers."
+    },
+    {
+      "id": "c06b-q033",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Home Buyers' Plan",
+      "page": "6•47",
+      "q": "Samir withdrew $21,000 under the Home Buyers' Plan. His first required repayment of $1,400 is due this year, but he repays $3,500. What is his minimum required repayment next year?",
+      "options": [
+        "$1,250",
+        "$1,400",
+        "$0",
+        "$1,346"
+      ],
+      "answer": 0,
+      "explain": "Repaying more than the required instalment reduces later ones proportionately: the $17,500 balance is spread over the 14 remaining years, so $17,500 ÷ 14 = $1,250. He cannot skip next year's payment."
+    },
+    {
+      "id": "c06b-q034",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Home Buyers' Plan",
+      "page": "6•47",
+      "q": "Julie withdrew $27,000 under the Home Buyers' Plan in 20x1. In 20x2, before her repayment period began, she repaid $3,000. What are her minimum required repayments for 20x3 and 20x4?",
+      "options": [
+        "Nil for 20x3, then $1,800.00 for 20x4",
+        "$1,800.00 for 20x3, then $1,600.00 for 20x4",
+        "Nil for 20x3, then $1,714.29 for 20x4",
+        "Nil for 20x3, then $1,846.15 for 20x4"
+      ],
+      "answer": 2,
+      "explain": "Repayments start in the second year after the withdrawal (20x3) at $27,000 ÷ 15 = $1,800. Her $3,000 prepayment exceeds that, so nothing is due for 20x3, and the rest is spread proportionately: ($27,000 − $3,000) ÷ 14 = $1,714.29."
+    },
+    {
+      "id": "c06b-q035",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Home Buyers' Plan",
+      "page": "6•47",
+      "q": "Éric's required Home Buyers' Plan repayment this year is $1,500, but he repays only $600. What is the consequence?",
+      "options": [
+        "$900 is added to next year's required instalment",
+        "$900 is added to his taxable income for this year",
+        "$1,500 is added to his taxable income for this year",
+        "He owes interest on the $900 shortfall"
+      ],
+      "answer": 1,
+      "explain": "Any unpaid part of a required HBP instalment is included in that year's taxable income: $1,500 − $600 = $900. The unpaid amount also permanently reduces the value of the RRSP."
+    },
+    {
+      "id": "c06b-q036",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Lifelong Learning Plan",
+      "page": "6•48",
+      "q": "What withdrawal limits apply under the Lifelong Learning Plan (LLP), as given in the course?",
+      "options": [
+        "$20,000 a year and $35,000 in total",
+        "$10,000 a year and $35,000 in total",
+        "$5,000 a year and $20,000 in total",
+        "$10,000 a year and $20,000 in total"
+      ],
+      "answer": 3,
+      "explain": "LLP withdrawals are capped at $10,000 a year and $20,000 in total, over up to four years, and may come from more than one RRSP. $35,000 is the Home Buyers' Plan limit."
+    },
+    {
+      "id": "c06b-q037",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Lifelong Learning Plan",
+      "page": "6•48",
+      "q": "Funds can be withdrawn under the Lifelong Learning Plan to pay for the full-time studies of the RRSP owner's spouse or common-law partner, not only the owner's.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "The LLP finances full-time training or education for the RRSP owner or his or her spouse or common-law partner. The program must last at least three months; disabled students may study part time."
+    },
+    {
+      "id": "c06b-q038",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Lifelong Learning Plan",
+      "page": "6•49",
+      "q": "Chantal made her first Lifelong Learning Plan withdrawal in 20x1. Her program ends in 20x3, the last year she is enrolled. By when must she make her first repayment?",
+      "options": [
+        "Within 60 days after the end of 20x6",
+        "Within 60 days after the end of 20x3",
+        "Within 60 days after the end of 20x4",
+        "By the end of 20x2, the year after the withdrawal"
+      ],
+      "answer": 2,
+      "explain": "The first repayment is due within 60 days after the end of the earlier of the year after the last year of enrolment (20x4) and the 5th year after the first withdrawal (20x6). Repayments then run over 10 years."
+    },
+    {
+      "id": "c06b-q039",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "TFSA",
+      "page": "6•49",
+      "q": "Which statement correctly describes the tax treatment of a tax-free savings account (TFSA)?",
+      "options": [
+        "Contributions are not deductible, but growth and withdrawals are tax-free",
+        "Contributions are deductible, and withdrawals are taxed as regular income",
+        "Contributions are deductible, but growth inside the plan is taxed yearly",
+        "Contributions are not deductible, and withdrawals of growth are taxable"
+      ],
+      "answer": 0,
+      "explain": "Unlike RRSP contributions, TFSA deposits are not deductible. Income earned in the plan is not taxed while it accrues or when it is withdrawn, so neither contributions nor income are taxable."
+    },
+    {
+      "id": "c06b-q040",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "TFSA",
+      "page": "6•49",
+      "q": "Sanjay turned 18 in 2005 and has been a Canadian resident ever since, but he has never opened a TFSA. Using the annual limits given in the course, how much TFSA contribution room does he have in 2019?",
+      "options": [
+        "$60,500",
+        "$66,000",
+        "$59,000",
+        "$63,500"
+      ],
+      "answer": 3,
+      "explain": "Room has accrued since 2009 and carries forward: $5,000 × 4 (2009–12) + $5,500 × 2 (2013–14) + $10,000 (2015) + $5,500 × 3 (2016–18) + $6,000 (2019) = $63,500."
+    },
+    {
+      "id": "c06b-q041",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "TFSA",
+      "page": "6•50",
+      "q": "Mei has always contributed her full TFSA limit. In 2018 she withdrew $8,000 to buy a car. Using the course's 2019 limit, how much can she contribute to her TFSA in 2019?",
+      "options": [
+        "$6,000",
+        "$14,000",
+        "$8,000",
+        "$19,500"
+      ],
+      "answer": 1,
+      "explain": "Withdrawals can be recontributed in any year after the year of withdrawal, on top of the regular room. In 2019 she has the $6,000 annual limit plus the $8,000 withdrawn in 2018: $14,000."
+    },
+    {
+      "id": "c06b-q042",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "TFSA",
+      "page": "6•50",
+      "q": "Robert gave his wife money to contribute to her own TFSA and named her successor holder of his TFSA. Robert has now died. Which statement is correct?",
+      "options": [
+        "Income earned on the gifted funds was attributed back to Robert",
+        "The gift caused no income attribution, and she simply takes over his TFSA",
+        "His TFSA must be collapsed and its growth taxed on his final return",
+        "She can take over his TFSA only by using her own unused contribution room"
+      ],
+      "answer": 1,
+      "explain": "A taxpayer may give a spouse money for her own TFSA without income attribution. A spouse named successor holder simply takes over the deceased's plan; alternatively, assets up to their value at death can be transferred without affecting her own room."
+    },
+    {
+      "id": "c06b-q043",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "TFSA",
+      "page": "6•50",
+      "q": "Income earned in a TFSA and withdrawals from it do not affect eligibility for federal income-tested benefits such as the Guaranteed Income Supplement (GIS).",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "The course notes that TFSA income and withdrawals do not impact eligibility for federal income-tested benefits and credits such as the GIS and the Child Tax Credit."
+    },
+    {
+      "id": "c06b-q044",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Retirement strategies",
+      "page": "6•51",
+      "q": "Which of the following is one of the three main advantages of a non-registered investment portfolio described in the course?",
+      "options": [
+        "Its interest income is taxed at only half of the holder's marginal rate",
+        "Its contributions become deductible once RRSP room is used up",
+        "It qualifies for CDIC coverage whatever investments it holds",
+        "It can be modified more easily than tax-sheltered savings programs"
+      ],
+      "answer": 3,
+      "explain": "The three advantages: it builds net worth, it can be modified more easily than sheltered plans, and high-growth investments save tax because only 50% of net capital gains is taxable. Interest gets no such break."
+    },
+    {
+      "id": "c06b-q045",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Retirement strategies",
+      "page": "6•51",
+      "q": "Which argument do some financial planners make for paying down the mortgage before contributing to an RRSP?",
+      "options": [
+        "An RRSP only delays tax, and tax rates may well be higher later on",
+        "RRSP contributions are not deductible for self-employed clients",
+        "Mortgage interest on a home is deductible, unlike RRSP loan interest",
+        "An RRSP cannot hold interest-bearing investments such as GICs"
+      ],
+      "answer": 0,
+      "explain": "Their two arguments: an RRSP does not cancel a tax liability, it only delays it (and tax increases have historically been the norm); and real estate, including homes, has generally outpaced financial assets after inflation."
+    },
+    {
+      "id": "c06b-q046",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Retirement strategies",
+      "page": "6•53",
+      "q": "A client wants an RRSP contribution whose net out-of-pocket cost, after reinvesting all the tax refunds it generates, is exactly $4,000. His marginal tax rate is 40%. Using the course's shortcut, how much can he contribute?",
+      "options": [
+        "$5,600.00",
+        "$10,000.00",
+        "$6,666.67",
+        "$6,240.00"
+      ],
+      "answer": 2,
+      "explain": "Divide the out-of-pocket amount by one minus the marginal rate: $4,000 ÷ (1 − 0.40) = $6,666.67. The resulting $2,666.67 refund brings his net cost back to exactly $4,000."
+    },
+    {
+      "id": "c06b-q047",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Retirement strategies",
+      "page": "6•54",
+      "q": "In the course's Dudley Tufts example, a $5,000 RRSP contribution and a $5,000 mortgage prepayment led to about the same amount after 17 years. Which factor is key in deciding between them, from a strictly financial view?",
+      "options": [
+        "The mortgage interest rate compared with the return available on investments",
+        "The client's age compared with the remaining amortization of the mortgage",
+        "Whether the mortgage is insured with CMHC or with a private insurer",
+        "The size of the monthly mortgage payment compared with the RRSP dollar limit"
+      ],
+      "answer": 0,
+      "explain": "With equal out-of-pocket costs and a constant 46% tax rate, both options gave about $48,600. The key assumption is the mortgage rate versus the investment return; low mortgage rates and rising markets favour the RRSP, if the client can handle the risk."
+    },
+    {
+      "id": "c06b-q048",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Retirement strategies",
+      "page": "6•54",
+      "q": "For a self-employed client with no pension plan, the course suggests that contributing as much as possible to an RRSP, and using the tax refund to pay down the mortgage, makes a lot of sense.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "The decision rests on the client's objectives, situation and risk tolerance. For a self-employed person without a pension plan the RRSP will provide most retirement income, so maximizing it and putting the refund on the mortgage makes sense."
+    },
+    {
+      "id": "c06b-q049",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Retirement strategies",
+      "page": "6•54",
+      "q": "Why can holding dividend-paying shares inside an RRSP be a poor choice for a client who also has non-registered savings?",
+      "options": [
+        "Dividends received inside an RRSP are taxed each year at the marginal rate",
+        "Dividend-paying shares are non-qualified and attract a 50% special tax",
+        "The dividend tax credit is lost: withdrawals are taxed like interest",
+        "Dividends received in an RRSP reduce the holder's earned income"
+      ],
+      "answer": 2,
+      "explain": "Inside an RRSP, income loses its identity: withdrawals are fully taxable like interest, with no dividend tax credit or capital gains deduction. So interest-bearing investments belong in the RRSP, and equities fit better in the non-registered account."
+    },
+    {
+      "id": "c06b-q050",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Retirement strategies",
+      "page": "6•54",
+      "q": "A client has an RRSP and a non-registered account and a target mix of 50% equity, 40% debt and 10% cash. How should the advisor assess diversification?",
+      "options": [
+        "Give each account the full 50/40/10 mix on its own",
+        "Review both accounts together as a single portfolio",
+        "Assess only the RRSP, since the other money is discretionary",
+        "Hold the equities in the RRSP and the debt outside it"
+      ],
+      "answer": 1,
+      "explain": "Registered and non-registered investments should be reviewed as one portfolio. Because interest-paying instruments get priority in the RRSP, the unsheltered money should be largely in stocks or mutual funds to diversify properly."
+    },
+    {
+      "id": "c06b-q051",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Step 4: adjustments",
+      "page": "6•55",
+      "q": "In Step 4 of the retirement planning process, when resources fall short of the goals, which adjustments does the course describe?",
+      "options": [
+        "Raising the assumed rate of return until the projected shortfall disappears",
+        "Moving all savings into higher-risk investments to catch up quickly",
+        "Stopping RRSP contributions until the mortgage is fully paid off",
+        "Reducing expenses, increasing income, abandoning some goals, or a mix"
+      ],
+      "answer": 3,
+      "explain": "Adjustments can be made by reducing expenses, increasing income, abandoning some goals, or a combination of all three. The professional can suggest options, but the client makes the decisions."
+    },
+    {
+      "id": "c06b-q052",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Step 4: adjustments",
+      "page": "6•55",
+      "q": "Why is 'increasing revenues' often a weak Step 4 adjustment for a household in which one spouse stays home with three children?",
+      "options": [
+        "Employment income earned by a second spouse does not create any new RRSP room",
+        "A second income would immediately cut the family's CPP/QPP benefits",
+        "A new job adds costs such as daycare and transport, so the net gain is small",
+        "The working spouse's pension adjustment would rise and cut RRSP room"
+      ],
+      "answer": 2,
+      "explain": "Taking a job brings extra expenses (clothing, transportation, day nursery), so unless the salary is quite high, the net increase is small. Reducing expenses or abandoning goals are adjustments most households can make quickly."
+    },
+    {
+      "id": "c06b-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Conclusion",
+      "page": "6•56",
+      "q": "Jasmine, 48 and single, is finally able to save seriously for retirement. Which approach matches the course's advice for her?",
+      "options": [
+        "Contribute the maximum early, borrowing if needed, and use her carried-forward room",
+        "Wait until her income peaks in her late 50s, then make one large catch-up contribution",
+        "Skip RRSPs, since at 48 there is too little time left for tax-deferred growth to matter",
+        "Hold mostly equities inside her RRSP and keep her debt securities outside it"
+      ],
+      "answer": 0,
+      "explain": "It is never too late to start: she should maximize pension and RRSP contributions as soon as possible (borrowing if necessary), use her carried-forward room, and focus on debt securities inside the RRSP, diversifying with other asset classes."
+    }
+  ]
+}
