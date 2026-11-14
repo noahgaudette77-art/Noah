@@ -32,7 +32,7 @@ class TitleLife {
       put(nb, x, h + 16, z, 0.4, 20, 0.4, 0x1a1838);
       put(nb, x, h + 26.4, z, 1, 1, 1, 0xff3030, 3);
       // blade signs hung out over the street, facing down the avenue
-      for (let y = 34, k = 0; y < Math.min(h - 20, 150); y += 27, k++) blades.push([inner + sd * 2.3, y, z + d / 2 - 1 - (k % 2) * 4, 3.4, 13, i * 3 + k]);
+      for (let y = 30, k = 0; y < Math.min(h - 20, 62); y += 25, k++) blades.push([inner + sd * 2.3, y, z + d / 2 - 1 - (k % 2) * 4, 3.4, 13, blades.length]);
     };
     for (const sd of [-1, 1]) {
       mega(sd * (hw(-80) + 2.6), -80, 15, 13, 236, sd > 0 ? 1 : 0);
@@ -62,7 +62,7 @@ class TitleLife {
         const m = new THREE.InstancedMesh(ge, this.hullMat, 13);
         m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(m);
-        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(0.55), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
+        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(0.95), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
         pools.frustumCulled = false; pools.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(pools);
         return { m, pools, sd: k ? 1 : -1 };
@@ -128,19 +128,20 @@ class TitleLife {
     // ---- 5. two helicopters with searchlights
     const heli = (scale) => {
       const b = new RacerBatch(), grp = new THREE.Group(), NAVY = 0x27325e;
-      put(b, -3.9, 0.35, 0, 5.2, 0.34, 0.34, NAVY); put(b, -6.3, 1.1, 0, 0.6, 1.9, 0.12, NAVY); put(b, -6.3, 0.45, 0, 1.4, 0.1, 1.5, NAVY); // boom, fin, stabiliser
+      put(b, -3.9, 0.35, 0, 5.2, 0.56, 0.5, NAVY); put(b, -6.3, 1.15, 0, 0.9, 2.0, 0.22, NAVY); put(b, -6.3, 0.45, 0, 1.4, 0.14, 1.7, NAVY); // boom, fin, stabiliser
+      put(b, 0, 0, 0, 3.5, 1.7, 1.9, NAVY); put(b, -2.1, 0.2, 0, 1.3, 1.1, 1.3, NAVY); put(b, 2.0, -0.3, 0, 1.0, 1.1, 1.5, NAVY); // cabin, tail root, chin
+      put(b, 1.35, 0.44, 0, 1.6, 0.84, 1.66, 0x35b8e8, 1.15); put(b, 0.2, 1.0, 0, 1.7, 0.34, 1.1, 0x1b2346); // canopy (a block of glass), engine housing
       put(b, -6.5, 1.1, 0.2, 0.05, 1.2, 0.16, 0x4a5676, 1); // tail rotor: a blade, not a pale disc
       put(b, 0.2, -0.05, 0.94, 2.6, 0.12, 0.05, 0xff3ad4, 2.2); put(b, 0.2, -0.05, -0.94, 2.6, 0.12, 0.05, 0xff3ad4, 2.2); // a stripe of light down each flank
-      [-0.9, 0.9].forEach((z) => { put(b, 0, -1.6, z, 3.8, 0.1, 0.1, 0x3a4058); [-1.1, 1.1].forEach((x) => put(b, x, -1.2, z * 0.92, 0.08, 0.8, 0.08, 0x3a4058)); });
+      [-0.9, 0.9].forEach((z) => { put(b, 0, -1.6, z, 3.9, 0.17, 0.17, 0x3a4058); [-1.1, 1.1].forEach((x) => put(b, x, -1.2, z * 0.92, 0.13, 0.8, 0.13, 0x3a4058)); });
       put(b, 0.4, 0.2, 1.02, 0.3, 0.3, 0.1, 0x30ff60, 4); put(b, 0.4, 0.2, -1.02, 0.3, 0.3, 0.1, 0xff3030, 4); put(b, -6.4, 2.2, 0, 0.28, 0.28, 0.28, 0xffffff, 4);
       put(b, 2.2, -0.75, 0, 0.5, 0.42, 0.5, 0xfff0d2, 5);
-      const hull = smooth(SPH, new THREE.Matrix4().makeScale(2.9, 1.25, 1.2), NAVY), glass = smooth(SPH, new THREE.Matrix4().makeTranslation(1.25, 0.28, 0).multiply(new THREE.Matrix4().makeScale(1.55, 0.92, 1.02)), 0x35b8e8);
-      const body = new THREE.Mesh(mergeIndexed([hull, glass, b.build("color")], ["position", "normal", "color"]), this.hullMat);
+      const body = new THREE.Mesh(b.build("color"), this.hullMat);
       const rotor = new THREE.Mesh(new THREE.CircleGeometry(4.9, 28), new THREE.MeshBasicMaterial({ color: 0xb8c8dc, transparent: true, opacity: 0.022, depthWrite: false, side: THREE.DoubleSide }));
       rotor.rotation.x = -Math.PI / 2; rotor.position.y = 1.5;
       const bl = new RacerBatch(); [0, Math.PI / 2].forEach((a) => bl.add(BOX, racerM(0, 1.52, 0, 9.8, 0.05, 0.3, 0, a), 0x15171c)); put(bl, 0, 1.3, 0, 0.3, 0.5, 0.3, 0x15171c);
       const bladesM = new THREE.Mesh(bl.build("color"), this.hullMat);
-      const beam = racerShaft(0xfff0d2, 0.3, 9, 80, 18); beam.position.set(2.2, -0.8, 0);
+      const beam = racerShaft(0xfff0d2, 0.3, 3.4, 80, 18); beam.position.set(2.2, -0.8, 0);
       grp.add(body, rotor, bladesM, beam);
       grp.userData = { blades: bladesM, beam };
       grp.scale.setScalar(scale);
@@ -148,7 +149,7 @@ class TitleLife {
       s.add(grp);
       return grp;
     };
-    this.helis = [heli(1.45), heli(1)];
+    this.helis = [heli(0.9), heli(0.68)];
 
     // ---- 6. a ribbon of drones, sixty lights following each other through the sky
     { const N = 34, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
@@ -283,14 +284,14 @@ class TitleLife {
     // helicopters: one holds station in front of the sun, working its light across the water; one crosses overhead
     const [h0, h1] = this.helis;
     { const ph = t * 0.085, dir = Math.cos(ph);
-      h0.position.set(Math.sin(ph) * hw(-58) * 0.82, 15.2 + Math.sin(t * 0.43) * 0.9, -58 + Math.sin(t * 0.13) * 5);
+      h0.position.set(Math.sin(ph) * hw(-58) * 0.82, 23.4 + Math.sin(t * 0.43) * 0.9, -58 + Math.sin(t * 0.13) * 5); // (above the sun's disc, under the wordmark)
       h0.rotation.set(0, lerp(Math.PI, 0, smoothstep(-0.3, 0.3, dir)), dir * -0.08); }
     h0.userData.blades.rotation.y = t * 13;
     h0.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.5) * 0.28, 0, -0.35 + Math.sin(t * 0.37) * 0.3);
     h1.position.set(loop(t + 7, hw(-104) + 30, 26), 60 + Math.sin(t * 0.6) * 1.2, -104); h1.rotation.set(0, 0, -0.12);
     h1.userData.blades.rotation.y = t * 13;
     h1.userData.beam.rotation.set(Math.PI + Math.sin(t * 0.7) * 0.25, 0, -0.5 + Math.sin(t * 0.45) * 0.25);
-    const beamK = GFX.opt.beams ? (calm ? 0.2 : 0.34) : 0;
+    const beamK = GFX.opt.beams ? (calm ? 0.16 : 0.26) : 0;
     h0.userData.beam.material.uniforms.uI.value = beamK; h1.userData.beam.material.uniforms.uI.value = beamK;
     // drones: each follows the one ahead along a path that winds between the towers
     { const P = this.drones.geometry.attributes.position, W = hw(-190) * 0.62;

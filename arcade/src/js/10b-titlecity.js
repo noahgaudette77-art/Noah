@@ -100,7 +100,10 @@ class TitleCity {
       put(bb, tx, TH - 2, -120, 1.9, 1.6, 10.8, DK, 1.8); put(bb, tx, TH * 0.7, -120, 1.7, 1.3, 10.8, DK, 1.8);
       put(bb, tx, TH + 0.9, -120, 0.9, 0.9, 0.9, 0xff3030, 3);
       const run = BW * 0.52 / 7;
-      for (let k = 1; k <= 7; k++) for (const sd of [-1, 1]) { strut(bb, [tx, TH - 1 - k * (TH - 19) / 8, -115.4], [tx + sd * k * run, 16.9, -115.4], 0.16, 0x7f95d0, 1.0); put(bb, tx + sd * k * run, 17.3, -115.2, 0.4, 0.4, 0.3, 0xfff0d2, 2.2); }
+      for (const k of [1.5, 3, 4.5, 6]) for (const sd of [-1, 1]) {
+        const kk = sd * Math.sign(tx) < 0 ? k * 0.62 : k; // (toward the sun they stop short: none of them crosses the disc)
+        strut(bb, [tx, TH - 1 - kk * (TH - 19) / 8, -115.4], [tx + sd * kk * run, 16.9, -115.4], 0.34, 0x2aa9c8, 1.25); put(bb, tx + sd * kk * run, 17.3, -115.2, 0.5, 0.5, 0.3, 0xfff0d2, 2.2);
+      }
     }
     put(bb, 0, 8.6, -196, 640, 0.9, 6, DK, 1.2); put(bb, 0, 9.3, -193, 640, 0.14, 0.14, 0xffa53d, 1.4);
     for (let i = -8; i <= 8; i++) put(bb, i * 38, 4.2, -196, 2.4, 8.4, 4, DK, 1.1);
@@ -134,7 +137,7 @@ class TitleCity {
       s.add(this.traffic); }
 
     // ---- searchlights turning over the skyline
-    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.8, 9, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
+    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.6, 4, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
 
     // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
     const U = { uKey: { value: new THREE.Color(0.62, 0.42, 0.72) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.3, 0.19, 0.48) } };

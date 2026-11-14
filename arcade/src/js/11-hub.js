@@ -312,9 +312,10 @@ function hubScreenMaterial(tex, color) {
         img *= mix(1.0, 0.86 + 0.14 * cos(su.y * 376.99), clamp(1.25 - fw * 2.5, 0.0, 1.0));
         img *= 1.0 - 0.2 * dot(q, q);
         vec3 crt = vec3(0.012, 0.016, 0.02) + img * win * uGain;
-        crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.45;
+        crt *= 1.0 - 0.5 * smoothstep(-0.11, 0.0, sd); // the tube sits back in its bezel: its edge is in shadow
+        crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.8;
         // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
-        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.055 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.04);
+        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.11 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.07);
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
         gl_FragColor = vec4(col, 1.0);
@@ -1216,7 +1217,7 @@ class HubScene extends Scene3D {
     const bandH = Math.max(80, this.band ? this.band.h : h);
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     const f = h / (2 * tanH); // the lens, in px
-    const mT = 10, mB = clamp(bandH * 0.13, 22, 58);
+    const mT = 26, mB = clamp(bandH * 0.13, 22, 58);
     const tt = Math.atan((bandH / 2 - mT) / f), tf = Math.atan((bandH / 2 - mB) / f);
     this.fits = CABINETS.map((cab) => {
       const SH = HUB_SHAPE[cab.id] || [1, 1], top = HUB_TOP[cab.id] || 4.6;
@@ -1335,7 +1336,7 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.5; lv[G.signs] *= 0.66; lv[G.sign] *= 0.78; lv[G.signC] *= 0.78; lv[G.board] *= 0.8;
+    lv[G.bg] *= 0.5; lv[G.signs] *= 0.5; lv[G.sign] *= 0.56; lv[G.signC] *= 0.56; lv[G.board] *= 0.7;
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -1349,11 +1350,11 @@ class HubScene extends Scene3D {
     this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
     this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
-    this.rimLight.intensity = 2.2 * lv[G.cab + this.sel];
+    this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     // a cool light behind and above it, from the other side: what stands on the cabinet gets a lit top and a bright edge
-    this.backLight.intensity = 2.3 * lv[G.cab + this.sel];
-    this.backLight.position.set(Math.sin(a - 0.17) * (HUB_R + 2.1), 6.3, -Math.cos(a - 0.17) * (HUB_R + 2.1));
+    this.backLight.intensity = 3.0 * lv[G.cab + this.sel];
+    this.backLight.position.set(Math.sin(a - 0.17) * (HUB_R + 2.1), 7.1, -Math.cos(a - 0.17) * (HUB_R + 2.1));
     if (this.deskAt) { this.deskLight.position.copy(this.deskAt); this.deskLight.intensity = 1.5 * lv[G.cab + this.deskCab]; }
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);

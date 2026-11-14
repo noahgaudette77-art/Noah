@@ -718,6 +718,20 @@ function racerSignTexture(label, color, wide) {
 
 // A lane's tag, painted on the road: a tile in the answer's colour with its letter dark on it, like the
 // badge on the answer's button. (A solid tile reads at the shallow angle the road is seen from.)
+// The light a lane's badge throws on the road under it: the lane's colour, soft at every edge, strongest under the badge.
+function racerWashTexture(color) {
+  const c = document.createElement("canvas"), W = 128, H = 256;
+  c.width = W; c.height = H;
+  const x = c.getContext("2d"), col = new THREE.Color(color), rgb = `${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)}`;
+  const g = x.createLinearGradient(0, 0, 0, H); // (the canvas's top is the far end of the strip, under the badge)
+  g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(0.16, `rgba(${rgb},0.78)`); g.addColorStop(0.5, `rgba(${rgb},0.44)`); g.addColorStop(1, `rgba(${rgb},0)`);
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = "destination-in";
+  const m = x.createLinearGradient(0, 0, W, 0);
+  m.addColorStop(0, "rgba(0,0,0,0)"); m.addColorStop(0.16, "rgba(0,0,0,1)"); m.addColorStop(0.84, "rgba(0,0,0,1)"); m.addColorStop(1, "rgba(0,0,0,0)");
+  x.fillStyle = m; x.fillRect(0, 0, W, H);
+  return new THREE.CanvasTexture(c);
+}
 function racerTagTexture(label, color, wide) {
   const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 128;
   c.width = W * K;
@@ -1075,7 +1089,7 @@ class RacerGame extends QuizGame {
       if (Math.abs(x) < 5.6) continue;
       made++;
       const r = new THREE.Vector2(x, y - 3).normalize();
-      const w = new THREE.Vector3(-r.y, r.x, 0).multiplyScalar(rand(0.015, 0.035));
+      const w = new THREE.Vector3(-r.y, r.x, 0).multiplyScalar(rand(0.02, 0.05));
       const z0 = rand(-50, 10), l = rand(3, 6);
       const quad = [[-1, 0], [1, 0], [1, 1], [-1, 0], [1, 1], [-1, 1]];
       for (const [sx, t] of quad) {
@@ -1185,8 +1199,31 @@ class RacerGame extends QuizGame {
     this.tagMats = {};
     ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
       const tf = label.length > 1;
-      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerTagTexture(label, SLOT_COLORS[tf ? i - 4 : i], tf), color: new THREE.Color(1.05, 1.05, 1.05), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerWashTexture(SLOT_COLORS[tf ? i - 4 : i]), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
       this.owned.push(this.tagMats[label].map, this.tagMats[label]);
+    });
+    // the bar the badges hang from: a slim truss with a strip of light along it and a hover pod at each end
+    this.barKit = {};
+    [2, 4].forEach((n) => {
+      const bx = new THREE.BoxGeometry(1, 1, 1), frame = new RacerBatch(), glow = new RacerBatch(), Y = 2.84;
+      frame.add(bx, racerM(0, Y, 0, 11.3, 0.13, 0.16), metal);
+      frame.add(bx, racerM(0, Y + 0.16, 0, 11.3, 0.05, 0.1), 0x1a1230);
+      for (let i = 0; i < 22; i++) racerStrut(frame, bx, new THREE.Vector3(-5.5 + i * 0.5, i % 2 ? Y + 0.16 : Y, 0), new THREE.Vector3(-5.0 + i * 0.5, i % 2 ? Y : Y + 0.16, 0), 0.035, metal);
+      glow.add(bx, racerM(0, Y - 0.085, 0.07, 11.1, 0.035, 0.03), 0xd8ccff, 2.6);
+      for (const sx of [-1, 1]) {
+        frame.add(bx, racerM(sx * 5.85, Y + 0.04, 0, 0.56, 0.34, 0.5), 0x2e2458);
+        frame.add(bx, racerM(sx * 5.85, Y - 0.2, 0, 0.3, 0.16, 0.3), 0x1a1230);
+        glow.add(bx, racerM(sx * 5.85, Y - 0.3, 0, 0.22, 0.05, 0.22), COLORS.cyan, 3.2); // its thruster
+        glow.add(bx, racerM(sx * 6.15, Y + 0.04, 0, 0.04, 0.2, 0.3), sx < 0 ? COLORS.cyan : COLORS.magenta, 2.6); // a running light
+      }
+      const w = n === 2 ? 1.25 : 0.52;
+      RACER_GATE_LANES[n].forEach((x, i) => { // each badge hangs on two short rods, under a clamp in its colour
+        [-w, w].forEach((dx) => frame.add(bx, racerM(x + dx, Y - 0.17, 0, 0.04, 0.24, 0.04), 0x8f86c8));
+        glow.add(bx, racerM(x, Y + 0.02, 0.09, w * 2 + 0.3, 0.07, 0.03), SLOT_COLORS[i], 2.4);
+      });
+      this.barKit[n] = { frame: frame.build("color"), glow: glow.build("color") };
+      this.owned.push(this.barKit[n].frame, this.barKit[n].glow);
+      bx.dispose();
     });
     // and standing in each lane, the answer's own badge: a lit disc on a stem of light
     this.badgeMats = {};
@@ -1245,6 +1282,7 @@ class RacerGame extends QuizGame {
       stem.position.y = 0.05;
       stem.layers.set(1);
       stem.renderOrder = 3;
+      stem.visible = false; // (the badge hangs from the bar now)
       const badge = new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]);
       badge.scale.setScalar(2.05);
       badge.position.y = 1.62;
@@ -1254,6 +1292,13 @@ class RacerGame extends QuizGame {
       lane.add(tag, post);
       lane.userData = { tag, post, badge, glow, stem, slot: i, k: 0 };
       tags.add(lane);
+    }
+    { // the bar they hang from, across the road (it is in the wet road's mirror: it is the same for every lane)
+      const bar = (this.laneBar = new THREE.Group());
+      bar.add(new THREE.Mesh(this.barKit[n].frame, this.gateFrameMat), new THREE.Mesh(this.barKit[n].glow, this.gateGlowMat));
+      bar.position.set(0, 0, -13.12);
+      bar.visible = false;
+      tags.add(bar);
     }
     this.tagK = 0;
     this.scene.add(tags);
@@ -1268,6 +1313,7 @@ class RacerGame extends QuizGame {
     if (!this.laneTags) return;
     this.scene.remove(this.laneTags);
     this.laneTags = null;
+    this.laneBar = null;
   }
   dropGate(g) {
     if (!g) return;
@@ -1357,7 +1403,7 @@ class RacerGame extends QuizGame {
       Sound.sfx("correct");
       Sound.sfx("deposit");
       UI.flash("good");
-      GFX.pulse(1.1, 0.08); // (the colours part on a crash, not on a win)
+      GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       this.speedKick();
@@ -1397,8 +1443,8 @@ class RacerGame extends QuizGame {
       Sound.sfx("wrong");
       UI.flash("hit");
       this.shake(0.5);
-      GFX.pulse(7, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
-      GFX.glitch(0.9, 0.5);
+      GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
+      GFX.glitch(0.6, 0.34);
       GFX.hitStop(120);
       Haptics.buzz([70, 40, 110]);
       Sound.setIntensity(0);
@@ -1552,7 +1598,7 @@ class RacerGame extends QuizGame {
     }
     if (!this.has3D) return;
     const sp = this.speed + (this.boostRate ? 45 : 0);
-    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.55) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view
+    GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.15) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view (lightly: the lines beside the road carry the speed)
     this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
     this.orrery.children.forEach((r, i) => { r.rotation.x += dt * (0.22 + i * 0.09); r.rotation.y += dt * (0.13 - i * 0.05); });
@@ -1578,16 +1624,23 @@ class RacerGame extends QuizGame {
       const on = this.state === "ask" ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
+      if (this.laneBar) { // the bar slides out to its width as the question comes up, and bobs a little on its pods
+        const e = Ease.outBack(Math.min(1, k * 1.15));
+        this.laneBar.visible = k > 0.03;
+        this.laneBar.scale.set(0.25 + 0.75 * e, 1, 1);
+        this.laneBar.position.y = 0.05 * Math.sin(this.t * 1.7) + (1 - Math.min(1, k * 1.4)) * 1.2;
+      }
       this.laneTags.children.forEach((c) => {
+        if (c === this.laneBar) return;
         const u = c.userData, mine = this.lane === u.slot, none = this.lane === null;
         // the lane taken stands taller and brighter; the others step back a little (never out of reading)
         u.k += ((mine ? 1 : 0) - u.k) * Math.min(1, dt * 9);
-        u.tag.material.opacity = Math.min(1, 0.96 * k * (0.94 + 0.06 * breathe) * (none ? 1 : 0.6 + 0.4 * u.k));
+        u.tag.material.opacity = Math.min(1, 0.9 * k * (0.94 + 0.06 * breathe) * (none ? 0.8 : 0.42 + 0.58 * u.k)); // (the light on the road: brightest under the lane taken)
         u.badge.material.opacity = Math.min(1, k * 1.25) * (none ? 1 : 0.86 + 0.14 * u.k);
         u.glow.material.opacity = k * (0.14 + 0.26 * u.k) * breathe;
         const pop = 0.55 + 0.45 * Ease.outBack(Math.min(1, k * 1.15));
         u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
-        u.post.position.y = 0.06 * Math.sin(this.t * 1.7 + u.slot * 1.3) + 0.12 * u.k;
+        u.post.position.y = 0.05 * Math.sin(this.t * 1.7) + 0.04 * u.k; // (it rides with the bar)
         u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
       });
       if (!on && this.tagK < 0.02) this.dropTags();
@@ -1632,7 +1685,7 @@ class RacerGame extends QuizGame {
     // speed lines
     const rush = clamp((sp - 36) / 50, 0, 1) * (REDUCED_MOTION || GFX.calm ? 0.4 : 1);
     const lu = this.lines.material.uniforms;
-    lu.uI.value = rush;
+    lu.uI.value = rush * 1.6;
     lu.uScroll.value = (lu.uScroll.value + step * 1.6) % 60;
     lu.uStretch.value = 1 + rush * 1.5;
     this.lines.visible = rush > 0.01;

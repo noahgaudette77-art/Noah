@@ -210,9 +210,9 @@ class BossGame extends QuizGame {
         void main(){
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), seg = atan(p.y, p.x) * 1.2732, id = floor(seg + 0.5), w = abs(seg - id); // eight points
           float len = mod(id, 2.0) < 0.5 ? 1.0 : 0.56;
-          float spike = step(w, 0.2 * (1.0 - r / len)) * step(r, len) * step(0.08, r); // hard edges: a cut-out star, not a glow
-          float core = step(r, 0.16);
-          gl_FragColor = vec4((uColor * spike + vec3(2.6) * core) * uK, 1.0);
+          float spike = step(w, 0.13 * (1.0 - r / len)) * step(r, len) * step(0.07, r); // hard edges: a cut-out star, not a glow
+          float core = step(r, 0.09);
+          gl_FragColor = vec4((uColor * spike + vec3(1.3) * core) * uK, 1.0);
         }`,
     }));
     this.hitStar.layers.set(1);
@@ -642,17 +642,17 @@ class BossGame extends QuizGame {
       if (this.has3D) {
         const b = this.boss;
         const at = b.position.clone().add(new THREE.Vector3(0, 0, 2 * this.bossScale));
-        this.bursts.burst(at, this.cfg.color, { n: 60, speed: 7, size: 0.35 });
-        this.bursts.burst(at, hitCol, { n: 24, speed: 5, size: 0.3, life: 0.6 });
+        // (sparks leave from round the point of the blow, not all from one spot: piled on one another they were a white ball)
+        for (let q = 0; q < 6; q++) this.bursts.burst(this._v.copy(at).add(this._s.set(rand(-1, 1), rand(-1, 1), rand(-0.3, 0.3)).multiplyScalar(0.9 * this.bossScale)), q % 2 ? hitCol : this.cfg.color, { n: 7, speed: 7, size: 0.3, life: q % 2 ? 0.6 : 1 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
         this.flashAt(at, hitCol, 0.34, 1.7 * this.bossScale + 1);
         if (!GFX.calm && !REDUCED_MOTION) { // a hard-edged star where the bolt lands, in the answer's colour
           const st = this.hitStar;
-          st.position.copy(at); st.material.uniforms.uColor.value.copy(neon(hitCol, 2.6)); st.visible = true; this.hitStarT = 0;
+          st.position.copy(at); st.material.uniforms.uColor.value.copy(neon(hitCol, 1.25)); st.visible = true; this.hitStarT = 0;
         }
         const em = b.userData.core.userData.mat.emissive;
         const base = em.clone();
-        this.tw.add(0.2, (k) => { em.setRGB(lerp(0.42, base.r, k), lerp(0.42, base.g, k), lerp(0.42, base.b, k)); }); // (it flares for a few frames and keeps its shape: at full white it was a blob)
+        this.tw.add(0.2, (k) => { em.setRGB(lerp(0.26, base.r, k), lerp(0.26, base.g, k), lerp(0.26, base.b, k)); }); // (it flares for a few frames and keeps its shape: at full white it was a blob)
         this.tw.add(0.35, (k) => { b.position.z = -Math.sin(k * Math.PI) * 1.2; });
         this.shockwave(b.position.clone(), neon(this.cfg.color, 2), 6);
       }

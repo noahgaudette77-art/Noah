@@ -1665,3 +1665,37 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 .bossbar .ragetag { color: #23030c; background: linear-gradient(180deg, #ff8a9d, #ff4769); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 10px -2px #ff4769; }
 .barrow.threat.hot > b { color: #fff; text-shadow: 0 1px 0 #000, 0 0 8px #ff4769; }
 @keyframes threat-pulse { to { color: #ffb3c0; } }
+
+/* Nest Egg Run, pass 7 (after its second independent review). The HUD's small labels are a size up and the clock's
+   bar is a bar; the streak is a tab on the question's panel (it floated over the street and changed from an outline
+   to a solid block); a chosen answer's ring is a thin pale line (a thick white one read as a browser's focus ring). */
+.scr-racer .hud .egg small { font-size: clamp(8px, 2.3vw, 9px); }
+.scr-racer .hud .combo { font-size: 10px; text-shadow: 0 1px 0 #000, 0 0 8px var(--magenta); }
+.scr-racer .barrow > b { font-size: 8px; }
+.scr-racer .timer { height: 8px; border: 0; background: #1c1450; box-shadow: inset 0 0 0 1px #000, inset 0 2px 3px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.1); }
+.scr-racer .goalbar { height: 8px; }
+.fever.dock { top: -2px; left: 10px; padding: 6px 9px 5px; border: 2px solid #9b7cff; border-top: 0; background: linear-gradient(180deg, #24135f, #170c48); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.55); }
+.fever.dock.lv1 { border-color: #9b7cff; color: var(--orange); }
+.fever.dock.lv2 { border-color: #9b7cff; color: #ff8fe6; }
+.fever.dock.lv3 { border-color: var(--yellow); color: var(--yellow); background: linear-gradient(180deg, #2d2060, #1b1048); }
+.ans.sel, body:not(.crt-off) .ans.sel { box-shadow: 0 0 0 2px #d8ccff, 0 0 18px -4px rgba(196, 182, 255, 0.8), 0 4px 0 2px #000; }
+
+/* Title, pass 7 (after its second independent review). INSERT COIN is the one yellow thing on the screen: a yellow
+   border and crisp yellow letters on a solid plate. Lightning no longer bleaches the wordmark. A tip's heading stays
+   where it is whatever the tip's length. The read-outs along the top stand on a shade. */
+.insert-coin { color: var(--yellow); border-color: var(--yellow); background: linear-gradient(180deg, #2c1b58, #130a34);
+  text-shadow: 0 2px 0 #12052e; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: none; backdrop-filter: none; animation: coin-pulse-y 1.6s ease-in-out infinite; }
+@keyframes coin-pulse-y { 0%, 100% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 16px -4px rgba(255, 225, 79, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+  50% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 34px -2px rgba(255, 225, 79, 0.95), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
+.logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.1)); }
+.attract { align-content: start; }
+.title-top { padding: 6px 10px 12px; margin: -6px -10px -6px; width: calc(100% + 20px); color: #dad3fb; background: linear-gradient(180deg, rgba(5, 1, 15, 0.78), rgba(5, 1, 15, 0)); }
+.title-foot { opacity: 1; color: #efeaff; }
+@media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }
+
+/* Arcade Hub, pass 7 (after its third independent review). The card's ground is one indigo for every cabinet (a
+   cabinet's yellow or orange mixed into violet went khaki): its colour is in the border, the glow, the name and the
+   button. The copy starts at one height whatever its length. */
+.hub-card { background: linear-gradient(180deg, rgba(34, 19, 92, 0.9), rgba(15, 8, 48, 0.92)); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+.hub-card .hub-desc { align-content: start; }

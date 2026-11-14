@@ -509,7 +509,7 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
-        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 3, c.g * 3, c.b * 3], 0.5); this.explode(t, SLOT_COLORS[i], 0.45); }
+        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 2.2, c.g * 2.2, c.b * 2.2], 0.14); this.explode(t, SLOT_COLORS[i], 0.45); }
         this.enemy.hit(SLOT_COLORS[i]);
       } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);

@@ -94,9 +94,11 @@ function racerVehicleGeo(type) {
   } else if (type === "truck") {
     P(2.3, 1.6, 1.8, 0, 1.3, -3.0, WH, 1, 0, 0.14);
     P(2.1, 0.62, 0.1, 0, 1.62, -3.9, GL);
-    P(2.5, 2.7, 5.6, 0, 2.05, 0.9, 0xd4d9de, 0, 0, 0.1);
+    P(2.5, 2.7, 5.6, 0, 2.05, 0.9, 0x454c68, 0, 0, 0.1); // (a slate box in its firm's livery: a pale one read as a blank white slab)
+    P(2.3, 0.1, 5.2, 0, 3.42, 0.9, 0x2c3148);
+    b.add(box, racerM(0, 2.05, 3.71, 2.3, 2.4, 0.04), 0x2c3148, 1, { aCh: 0, aPaint: 0 }); b.add(box, racerM(0, 2.05, 3.74, 0.05, 2.3, 0.03), 0x12141c, 1, { aCh: 0, aPaint: 0 }); // rear doors and their seam
     P(2.1, 0.34, 7.9, 0, 0.56, -0.3, DK);
-    [-1, 1].forEach((s) => { L(9, 0.03, 0.34, 5.0, s * 1.265, 2.5, 0.9, WH, 1); b.add(box, racerM(s * 1.262, 1.5, 0.9, 0.03, 0.5, 4.8), WH, 1, { aCh: 0, aPaint: 1 }); [-2.9, 1.7, 2.8].forEach((z) => wheel(s * 1.08, 0.46, z, 0.46, 0.3)); });
+    [-1, 1].forEach((s) => { L(9, 0.03, 0.34, 5.0, s * 1.265, 2.5, 0.9, WH, 1); b.add(box, racerM(s * 1.262, 1.75, 0.9, 0.03, 1.15, 5.0), WH, 1, { aCh: 0, aPaint: 1 }); [-2.9, 1.7, 2.8].forEach((z) => wheel(s * 1.08, 0.46, z, 0.46, 0.3)); });
     [-0.9, -0.3, 0.3, 0.9].forEach((x) => L(8, 0.12, 0.07, 0.06, x, 3.44, -1.9, 0xffa53d, 2.6));
     lamps(0.82, 0.86, -3.92, 3.72, 0.4);
   } else if (type === "bus") {

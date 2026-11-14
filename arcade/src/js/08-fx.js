@@ -182,12 +182,13 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           // rim all round, a sheen on its shoulder, speckles of two sizes
           vec3 en = vec3(q, sqrt(max(0.0, 1.0 - r * r)));
           float lit = clamp(dot(en, normalize(vec3(-0.45, 0.5, 0.74))), 0.0, 1.0);
-          col *= 0.5 + 0.75 * lit;
+          col *= 0.74 + 0.6 * lit;
           col += uTop * uTint * uI * 0.55 * pow(lit, 14.0);
-          col += uBottom * uTint * uI * 0.5 * smoothstep(0.86, 1.0, r);
+          col += uTop * uTint * uI * 0.34 * (1.0 - r * r); // lit from inside
+          col += mix(uBottom, uTop, 0.5) * uTint * uI * 0.95 * smoothstep(0.84, 1.0, r); // a bright edge all round
           vec2 sq = floor(q * 22.0), sf = fract(q * 22.0) - 0.5;
           float sh = fract(sin(dot(sq, vec2(127.1, 311.7))) * 43758.5453);
-          col *= 1.0 - 0.34 * step(0.9, sh) * (1.0 - smoothstep(0.12 + 0.2 * fract(sh * 7.0), 0.3 + 0.2 * fract(sh * 7.0), length(sf)));
+          col *= 1.0 - 0.2 * step(0.9, sh) * (1.0 - smoothstep(0.12 + 0.2 * fract(sh * 7.0), 0.3 + 0.2 * fract(sh * 7.0), length(sf)));
         }
         if (uStripes > 0.5) {
           float yy = 0.18 - p.y;

@@ -87,7 +87,7 @@ function racerWheelGeo() {
 // Gunmetal paint with what real plating has: matte where it is rubber or recess,
 // seams between panels, road grime low down and a worn, uneven gloss.
 function racerCarPaint(env, hull) {
-  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.3, envMap: env, envMapIntensity: 1.2, flatShading: true });
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, metalness: 0.84, roughness: 0.32, clearcoat: 0.9, clearcoatRoughness: 0.16, envMap: env, envMapIntensity: 1.55, flatShading: true }); // (wet paint: the street's lights lie on it)
   m.userData.rim = { value: new THREE.Color(0.2, 0.42, 0.5) };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uCarRim = m.userData.rim;
