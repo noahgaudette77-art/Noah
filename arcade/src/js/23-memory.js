@@ -321,7 +321,9 @@ class MemoryGame extends QuizGame {
     });
     const env = this.envRT ? this.envRT.texture : null;
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
-    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xe2a030, metalness: 0.84, roughness: 0.24, envMap: env, envMapIntensity: 1.0 }), { scale: 1.5, height: 0.0014, scratch: 1.3 }); // (a little short of pure metal, so the lamps shade each face of a bar differently and it reads as a solid)
+    const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xc98a22, metalness: 0.82, roughness: 0.3, envMap: env, envMapIntensity: 0.7 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
@@ -330,7 +332,7 @@ class MemoryGame extends QuizGame {
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
     // two cool lights from behind and to the sides: every bar, coin and gear tooth gets an edge of mint against the gold
-    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0x7affd0, 0.55); rim.position.set(x, y, z); s.add(rim); });
+    [[-13, 7, -0.6], [13, 5, -0.6]].forEach(([x, y, z]) => { const rim = new THREE.DirectionalLight(0x9affdc, 0.4); rim.position.set(x, y, z); s.add(rim); });
     this.vaultLight = new THREE.PointLight(0xffc46a, 0.35, 22, 1.5); // warm light from the seam
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
@@ -444,7 +446,7 @@ class MemoryGame extends QuizGame {
     // stacks of gold bars under spotlights, either side of the door
     const ingot = memoryIngotGeometry();
     this.stacks = [-1, 1].map((sd) => {
-      const st = new THREE.InstancedMesh(ingot, gold, 19);
+      const st = new THREE.InstancedMesh(ingot, barGold, 19);
       let n = 0;
       for (let L = 0; L < 4; L++) {
         const across = 4 - L, rows = L < 3 ? 2 : 1;
@@ -461,7 +463,7 @@ class MemoryGame extends QuizGame {
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
-      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.09 });
+      const glow = makeLightPool({ color: 0xffd27a, radius: 3.6, intensity: 0.05 });
       glow.layers.set(1);
       const g = new THREE.Group();
       g.add(st, cone, glow);
