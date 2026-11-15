@@ -1751,6 +1751,15 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
   50% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
 @media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }
 
+/* Nest Egg Run's top row must fit with two shields and three hearts showing. Pass 7 made its label and rate a size
+   larger, and with five icons the row then pushed the pause button 6 px past the margin at 390 wide (24 px at 360).
+   The label and rate are back at the sizes the row was fitted with, and on narrow phones the icons close up. */
+.scr-racer .hud .egg small { font-size: clamp(7px, 2.05vw, 8px); }
+.scr-racer .hud .combo { font-size: 9px; }
+.scr-racer .hud .lives { gap: 1px; }
+@media (max-width: 374px) { .scr-racer .hud { gap: 4px; } .scr-racer .hud .lives svg { width: 15px; height: 15px; } .scr-racer .hud .combo { font-size: 8px; } }
+@media (max-width: 339px) { .scr-racer .hud .lives svg { width: 12px; height: 12px; } .scr-racer .hud .combo { font-size: 7px; letter-spacing: -0.02em; } .scr-racer .hud .egg small { font-size: 6px; } .scr-racer .hud .iconbtn { width: 32px; height: 32px; } }
+
 </style>
 </head>
 <body>
