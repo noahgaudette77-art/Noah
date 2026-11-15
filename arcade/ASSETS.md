@@ -43,10 +43,11 @@ Blockade Labs Skybox AI, Model 3 (8K equirectangular, 1 credit each), packed at 
 | `blaster-deep-4.webp` | Risk Blaster: the ominous regions (crimson nebula on a dense star field) | M3 Advanced (photo/render) | seam runs through the red nebula without a join |
 | `blaster-deep-5.webp` | Risk Blaster: the wormhole gate region (cyan and magenta vortices) | M3 Advanced (artistic) | seam clean |
 
-Generated and not used: `blaster-nebula`, `blaster-nebula-b`, `blaster-belt`, `blaster-graveyard`, `blaster-gate`
-(the first prompts came back as alien landscapes with ground, ships and structures), `blaster-deep-2` (a band of
-different texture down the seam), `blaster-deep-3` (a visible join through its bright star). Skies for the other
-modes are generated and are added to this table as each mode's phase picks them.
+Rejected and deleted (2026-11-15; they were never committed and no code loads them): `blaster-nebula`,
+`blaster-nebula-b`, `blaster-belt`, `blaster-graveyard`, `blaster-gate` (the first prompts came back as alien
+landscapes with ground, ships and structures: not open space), `blaster-deep-2` (a band of different texture down
+the seam), `blaster-deep-3` (a visible join through its bright star). Their seven credits stay in the spend log.
+Skies for the other modes are generated and are added to this table as each mode's phase picks them.
 
 ## Sound (`assets/audio/`)
 
