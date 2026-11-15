@@ -1,0 +1,1818 @@
+{
+  "chapter": 4,
+  "title": "Insurance as a Contract",
+  "objectives": [
+    "Distinguish the different components and provisions of common insurance contracts, and recognize and apply the most common terms used in those contracts.",
+    "Help clients review their insurance contracts (especially the basic agreement and the exclusions) before assessing the scope of the coverage provided.",
+    "Explain to clients their rights and responsibilities under their insurance contracts."
+  ],
+  "guide": [
+    {
+      "heading": "Review: risk, chance of loss, peril, hazard and loss",
+      "page": "4•3",
+      "points": [
+        "Risk = the uncertainty about incurring a loss. Mortality tables give averages, but they cannot predict whether any one person will die in the coming year.",
+        "Chance of loss = the likelihood of incurring the loss. The insurer combines the person's own profile (health, occupation, hobbies) with the experience of like individuals in the same class to set the premium.",
+        "Peril = the cause that gives rise to a loss (collision, theft, fire). Hazard = a factor that increases the likelihood or the severity of a loss (bald, worn-out tires).",
+        "Loss = the cost, usually in dollars, to the insured if the peril actually damages or destroys the property (e.g., $2,500 to repair or $24,000 to replace a car).",
+        "Exam trap: the public uses these words interchangeably; contracts do not. Worn tires = hazard, the collision = peril, the repair bill = loss."
+      ]
+    },
+    {
+      "heading": "Legal requirements; unilateral contracts and contracts of adhesion",
+      "page": "4•4",
+      "points": [
+        "Every insurance contract must meet the requirements of a legal contract under common law or, in Quebec, the Civil Code: legal capacity, legal consent, legal object and consideration.",
+        "Legal capacity: the legal age set by the province where the contract is signed (usually 18, but 16 for life and disability policies), mental competence, and not acting under the influence of drugs or alcohol.",
+        "Legal consent: enlightened and freely given. No duress (force or threat of force) and no undue influence (influence by another so strong that free will is obliterated).",
+        "Legal object: a legal purpose (coverage in exchange for premiums); life and disability policies also need an insurable interest. Consideration: the premium, so a life policy cannot come into force until the first premium is tendered (common law and Civil Code).",
+        "Unilateral: only the policyowner can enforce the contract, suing for damages or specific performance. If premiums go unpaid, the insurer cannot enforce payment; all it can do is cancel.",
+        "Adhesion: the insurer sets the terms and the applicant accepts them as is or rejects the whole contract (no bargaining). Ambiguities are decided in favour of the party who did not draft it, the policyowner, in common law and in Quebec."
+      ]
+    },
+    {
+      "heading": "Declarations and the insuring agreement",
+      "page": "4•6",
+      "points": [
+        "Declarations (usually page one): the risk insured, the identity of the parties (insurer, person insured, policyowner), the policy period, the amount of coverage, and the amount and frequency of premiums.",
+        "Insuring agreement (main body of the policy): summarizes the insurer's major promises, stating what it will do and under what conditions.",
+        "All-risk (all-perils): pays for loss from all causes except those specifically excluded. Most life policies are all-risk (suicide within two years is a typical exclusion). Rule: if it isn't excluded, it's covered.",
+        "Named peril (specific risk): covers only the listed perils, e.g., accidental-death-only cover, flight insurance, rain cancelling an outdoor concert. Often cheap because cover is narrow; all-perils costs more but suits most needs.",
+        "Every valid contract must set out declarations, the insuring agreement, conditions and exclusions. Endorsements are optional: added later by attached schedule, at the insured's request or the insurer's offer."
+      ]
+    },
+    {
+      "heading": "Exclusions and why they exist",
+      "page": "4•7",
+      "points": [
+        "Three types: excluded perils (war, insurrection, terrorism in life/disability; earthquake and flood in homeowner's), excluded property (automobiles; a wind-prone satellite dish) and excluded losses (professional liability under homeowner's liability).",
+        "Reasons: the peril is uninsurable (unpredictable or unmeasurable, e.g., earthquake); an unusual or catastrophic hazard (hazardous materials); cover exists under another contract (autos); moral hazard; or the cover is not commonly needed (jewellery, furs).",
+        "Moral hazard arises because the insured no longer bears the financial consequences of his or her own acts. Disability cover is therefore limited to a percentage of income, so no one is better off disabled than working.",
+        "Exclusions are often the most important clauses, especially in all-perils contracts. Review them, and if an excluded peril matters (e.g., sewer backup), ask about adding a rider to cover it."
+      ]
+    },
+    {
+      "heading": "Entire contract, definitions, conditions and signature",
+      "page": "4•9",
+      "points": [
+        "Entire contract clause (Uniform Life Insurance Act: all provinces and territories except Quebec, which has similar law): the contract is the application, declarations page, insuring agreement, riders and ancillary benefits, and written agreements among agent, insurer and insured.",
+        "Named insured: the person the policy protects. Additional insureds: covered without being named, e.g., a relative staying in the home or someone driving the car with the owner's consent. Always read the policy definitions.",
+        "Statutory conditions: required by law in every automobile, accident and sickness, and fire policy, setting out the rights and responsibilities of both insured and insurer.",
+        "Particular conditions qualify or limit the insurer's promise and impose duties on the insured before a loss is paid, e.g., co-operation (send information, help locate witnesses). If they are not met, the insurer may refuse the claim.",
+        "Signatures: competent parties, proper execution, normally witnessed; a change such as naming an irrevocable beneficiary needs the owner's witnessed signature. In Quebec, the signed delivery receipt helps decide whether Quebec law governs the policy."
+      ]
+    },
+    {
+      "heading": "Riders, endorsements and miscellaneous provisions",
+      "page": "4•11",
+      "points": [
+        "Endorsement: a written provision that deletes, adds to or amends the original contract, the usual term in property and liability. Rider: the usual term in life and health, generally adding extra coverage (e.g., guaranteed insurability).",
+        "Once contracted, endorsements in property and liability contracts take precedence over the original terms, but they cannot make the contract contravene standard insurance legislation.",
+        "A rider piggybacks on the existing policy and adds little administration expense, so adding cover (a new cottage, a boat, snowmobiles) is usually much cheaper than buying a separate policy.",
+        "Read the existing policy first: its blanket coverage may already protect the risk (e.g., a student child's belongings in residence), making a rider unnecessary.",
+        "Miscellaneous provisions cover items not dealt with elsewhere or unique to the policy, e.g., an auto policy endorsement covering mopeds and golf carts."
+      ]
+    },
+    {
+      "heading": "Limits, deductibles and co-insurance",
+      "page": "4•12",
+      "points": [
+        "Limits of insurance cap the insurer's risk (e.g., $200,000 on the dwelling and $100,000 on contents; $1M or $2M of auto liability). In life insurance, the face amount is the total death benefit.",
+        "TIA (temporary insurance agreement): interim cover for apparently healthy applicants while a life policy is underwritten, often below the amount applied for (Hakim: $500,000 TIA on a $1.5M application).",
+        "Occurrence limit: caps total claims from a single event (e.g., one plane crash). Claims above it are pro-rated: $10M limit ÷ $15M of claims = 66.67% of each policy's face amount.",
+        "Three clauses limit amounts payable: deductibles, co-insurance and apportionment. A deductible is the part of a loss the insured bears before the insurer pays; it controls moral hazard, and a bigger deductible lowers the premium.",
+        "Health co-insurance: the insured's percentage of each claim beyond the deductible. Deductible first, then co-insurance on the rest: $1,000 claim, $100 deductible, 80% co-insurance = insurer $720, insured $280.",
+        "Property co-insurance: insure at least a set % (often 80%) of the building's value, land excluded. If under-insured, payout = carried ÷ required × loss (Maurice: $100,000 ÷ $112,500 × $20,000 = $17,778).",
+        "Trap: the ratio uses the required amount, not market value, and never pays more than the loss. Deductibles and co-insurance cost the insured but keep premiums low by sharing costs and discouraging small nuisance claims."
+      ]
+    },
+    {
+      "heading": "Apportionment, pro-rata and excess insurance",
+      "page": "4•15",
+      "points": [
+        "Apportionment clauses limit each insurer's liability when other policies also cover the loss. Pro-rata clauses, usually found in property insurance, are a special type.",
+        "Each insurer pays its face amount ÷ total coverage in force × loss. A $200,000 + B $175,000 on a $250,000 loss: A pays $133,333, B pays $116,667.",
+        "Shares depend on the total coverage in force, not on the property's value: the split is the same even if the building is worth more than the combined coverage.",
+        "Excess insurance: when two plans cover one loss, the primary plan pays first (the lesser of the loss or its maximum) and the secondary plan pays the excess. Total recovery can never exceed the actual loss."
+      ]
+    },
+    {
+      "heading": "Premiums and termination of contracts",
+      "page": "4•16",
+      "points": [
+        "The insured must pay premiums when due, often in advance. Unpaid after the 30-day grace period, the policy may be terminated; if the insurer gives notice it will terminate at renewal, a claim in the meantime will likely have unpaid premiums deducted.",
+        "Life: the insurer generally cannot cancel and must keep the policy in force while premiums are paid, except for material misrepresentation or fraud at application. The policyowner may cancel at any time.",
+        "Disability/health, cancellable: premiums and/or benefits can change, but only for a class of policies and with 30 or 60 days' notice. Guaranteed renewable: must be renewed, but premiums can change for a class (never one insured) with notice.",
+        "Non-cancellable and guaranteed renewable: once issued, the insurer cannot cancel or alter premiums or benefits.",
+        "Property: either the insurer or the insured can cancel, following the procedure stated in the policy."
+      ]
+    },
+    {
+      "heading": "Life contracts: ownership, entire contract and insurable interest",
+      "page": "4•17",
+      "points": [
+        "Outside Quebec, life contracts are governed by the Uniform Life Insurance Act; Quebec has analogous legislation. The 10-day right of rescission is a convention, not mandated, but appears in virtually every policy.",
+        "Ownership clause: while the life insured lives, the policyowner holds all rights: name and change the beneficiary, surrender, borrow on cash values, choose dividend and settlement options. The life insured and the beneficiary hold none.",
+        "Parties: the insurer and the policyowner (called the insured); a third-party contract adds a separate life insured. The beneficiary is not a legal party. An irrevocable beneficiary must assent in writing to a surrender or most changes.",
+        "The entire contract clause protects the owner against unilateral changes and the beneficiary against claim denials based on the application, unless there was fraud or a material misrepresentation.",
+        "Insurable interest: the applicant would lose capital, income or support on the death. Deemed for one's own life, spouse, common-law partner or child; may be shown for a business partner, key employee or someone acting as a parent.",
+        "Needed only at application/issue; without it, the life to be insured must consent in writing. Common-law provinces: the policy can later be assigned to anyone. Quebec: only to someone with an insurable interest."
+      ]
+    },
+    {
+      "heading": "Misrepresentation, fraud, incontestability and suicide",
+      "page": "4•18",
+      "points": [
+        "Application statements are representations. A material fact is one that would affect the underwriting decision (a misdated clear checkup is not; a heart condition is). Misrepresentation can be by commission (stating a wrong fact) or omission (failing to reveal one).",
+        "Innocent misrepresentation of a material fact: the insurer may void the policy if it acts within 2 years of issue or reinstatement, even for an unrelated death. After 2 years the policy is incontestable.",
+        "Fraud: intentionally misrepresenting a material fact to obtain a policy the insurer would not otherwise issue (most often, smokers claiming to be non-smokers). The insurer can void the policy at any time, even after a claim.",
+        "No change in insurability (ULIA and Civil Code): if the life insured's health changed between application and delivery, the agent must not deliver; take the details on a Non-Medical Questionnaire and return it with the policy.",
+        "Suicide within 2 years of issue or reinstatement voids the contract: no death benefit, but premiums paid are refunded to the policyowner (or the estate). After 2 years the claim is paid."
+      ]
+    },
+    {
+      "heading": "Policy values, free look, grace period, misstated age and reinstatement",
+      "page": "4•20",
+      "points": [
+        "Change of plan: coverage can be decreased on request; a change that adds risk requires proof of insurability and a higher premium.",
+        "Permanent policies build a cash surrender value (CSV), a reserve for future mortality costs. Loans are typically capped at 90% of CSV and paid within about 5 days. On surrender: CSV less loans, loan interest and overdue premiums ($8,000 - $4,000 - $200 = $3,800).",
+        "Free look: 10 calendar days from delivery (not issue) to return the policy for a refund of all premiums, with no reason needed. A late delivery stretches the window, so agents must deliver promptly.",
+        "Grace period: usually 30 days after a premium (other than the first) falls due. A death during the grace period is paid in full, less the overdue premium.",
+        "Misstated age found while the insured is alive: coverage is adjusted to what the premium buys at the true age, or the premium is adjusted retroactively. Found at death: the benefit is what the premium paid would have bought (Rod: $200,000 became $187,500).",
+        "Reinstatement: life contracts must allow it (ULIA). Within 2 or 3 years of lapse if the life insured is alive and insurable and overdue premiums are paid with interest; many insurers allow 30 days after grace with no evidence. It preserves the original-age premium.",
+        "A policy intentionally cancelled cannot be reinstated. Accident and sickness insureds cannot force reinstatement unless the policy provides for it (most state conditions)."
+      ]
+    },
+    {
+      "heading": "Term renewal, conversion, riders and settlement options",
+      "page": "4•22",
+      "points": [
+        "Term policies run for a guaranteed term (typically 1, 5, 10 or 20 years, or to 65). Non-renewable: ends with the term. Renewable: the policyowner may renew for another term, usually at a higher premium.",
+        "Conversion: before a set age (usually between 55 and 65), the right to switch to a permanent plan with the same insurer without medical evidence; the premium is based on the plan chosen and the attained age at conversion.",
+        "Typical life riders: waiver of premium, additional term insurance, accidental death and dismemberment, and guaranteed insurability.",
+        "Guaranteed insurability: buy more coverage at preset option dates (e.g., every 3 or 5 years) without medical evidence, at attained-age rates, within per-option and lifetime maximums; the right usually ends around age 55.",
+        "Settlement options: lump sum; interest only (income for life, then capital to the residual beneficiary); fixed period; fixed amount; life annuity (nothing after death). Funds unpaid under a fixed period or amount at the beneficiary's death go to the residual beneficiary.",
+        "Options other than lump sum provide income without the burden of investing and/or preserve capital for others. If the policyowner pre-selects an option, the beneficiary cannot change it."
+      ]
+    },
+    {
+      "heading": "Assignment, beneficiaries and creditor protection",
+      "page": "4•24",
+      "points": [
+        "Absolute assignment: all rights pass to the assignee (new owner); it is a disposition for tax, and the assignee becomes beneficiary until he or she changes it. Quebec, assignments after January 1, 1994: the assignee needs an insurable interest or the policy is null and void.",
+        "Collateral assignment: cash values and/or the death benefit are pledged to a lender as security for a loan; only the specified rights pass, and it is not a disposition for tax.",
+        "No beneficiary, or the beneficiary died first: proceeds go to the policyowner, or the owner's estate if the owner was the life insured, so name a contingent beneficiary. Common law: if the order of deaths is unknown, the beneficiary is presumed to die first.",
+        "Minor beneficiary: the money is paid into a trust; the child can receive it and give a valid discharge only at the age of majority (18).",
+        "Common law: revocable (default), irrevocable (written consent needed to change the beneficiary, surrender, assign collaterally, borrow or withdraw cash, but extra creditor protection) or the estate. Divorce does not revoke a designation.",
+        "Quebec (since October 29, 1976): the succession or a person (revocable or irrevocable). A married or civil union spouse named as beneficiary is irrevocable unless stated otherwise, and divorce automatically revokes the spouse's designation.",
+        "Proceeds paid to a named beneficiary belong to that beneficiary, beyond the insured's creditors; paid to the estate, they are unprotected. CSVs may also be protected (e.g., if the beneficiary is a spouse or irrevocable)."
+      ]
+    },
+    {
+      "heading": "Group insurance and disability (health) contract provisions",
+      "page": "4•27",
+      "points": [
+        "Group: the master contract (insurer and sponsor, usually the employer) sets the general terms; each member receives a certificate of insurance showing the insurer, policy, amounts on member and dependants, and termination terms and rights.",
+        "Termination or replacement provisions: members' options when the plan ends or they leave (retire, resign, are let go); the insurer stays liable for some earlier events, and members can usually convert to an individual policy.",
+        "Health and disability policies also have the 10-day free look, incontestability and the grace period. Elimination period: the days from onset until benefits start, a 'time deductible', usually longer for sickness than injury; lengthening it cuts the premium.",
+        "Benefit period: the maximum time benefits are paid (1, 2 or 5 years, to 65 or for life), ending earlier on a return to work.",
+        "Recurrent disability: the same condition recurring within 6 months is one claim, so there is no new elimination period, but the remaining benefit period shrinks (Bob: 5 years - 18 months = 3.5 years). After 6 months, it is a new claim.",
+        "Waiver of premium (optional): premiums are waived while benefits are paid and premiums paid during the disability are refunded. Future coverage option: buy more as income rises, regardless of health, within income limits.",
+        "Quebec: a health policy can be in force before the initial premium is paid; to cancel for non-payment of that premium, the insurer must give 15 days' written notice."
+      ]
+    },
+    {
+      "heading": "General insurance: co-insurance penalty, subrogation and indemnity",
+      "page": "4•30",
+      "points": [
+        "General insurance covers a wide range of items and events, so it has wider definitions of perils, conditions that change over time, and issues of negligence.",
+        "Co-insurance penalty: amount payable = (insurance carried ÷ insurance required) × loss. Ho: $90,000 ÷ (80% × $200,000) × $50,000 = $28,125, a $21,875 penalty. If the carried amount exceeds the requirement, the loss is paid in full, but never more than the loss.",
+        "Subrogation: the insurer is substituted for the insured to claim indemnity from a responsible third party, e.g., paying for Selma's car repair and then pursuing the negligent driver.",
+        "Purposes: stop the insured from collecting twice for one loss, hold the negligent person responsible, and hold down insurance rates.",
+        "Principles: if the policy is silent, the insurer keeps recoveries only after the insured is fully indemnified; the insured cannot block subrogation; insurers can waive it; it does not apply to life and most health insurance; no subrogation against one's own insured.",
+        "Indemnity: insurance compensates for loss and cannot pay more than the loss. An item covered by two policies cannot be claimed twice; if both respond, they would share the loss under a pro-rata clause."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: Peril = the cause of a loss (fire, collision). Hazard = what makes a loss likelier or worse (worn tires). Loss = the dollar cost.",
+    "EXAM TIP: Under an all-perils policy, if it isn't excluded, it's covered. Under a named-peril policy, if it isn't named, it isn't covered.",
+    "EXAM TIP: Insurance contracts are unilateral and contracts of adhesion: only the policyowner can enforce them, and ambiguities favour the policyowner.",
+    "EXAM TIP: Deductible first, co-insurance second. Never apply the co-insurance percentage to the deductible portion of a claim.",
+    "EXAM TIP: Property co-insurance pays (insurance carried ÷ insurance required) × loss, and never more than the loss itself.",
+    "EXAM TIP: The 2-year clocks for contestability and suicide run from issue or reinstatement. Fraud lets the insurer void the policy at any time.",
+    "DID YOU KNOW? The 10-day free look starts at delivery, not issue: a policy delivered a year late can still be returned for a full refund.",
+    "EXAM TIP: The grace period (usually 30 days) never covers the first premium. A life policy isn't in force until that first premium is paid.",
+    "DID YOU KNOW? In Quebec a health policy can be in force before its first premium is paid; cancelling for non-payment needs 15 days' written notice.",
+    "EXAM TIP: In Quebec a named married or civil union spouse is presumed irrevocable, and divorce revokes the designation. Neither rule applies in common law.",
+    "EXAM TIP: Absolute assignment is a tax disposition; collateral assignment is not. In Quebec, an absolute assignee needs an insurable interest.",
+    "DID YOU KNOW? Subrogation lets your insurer pursue the at-fault party after paying you, but it doesn't apply to life or most health insurance."
+  ],
+  "flashcards": [
+    {
+      "id": "c04-f001",
+      "topic": "Risk concepts",
+      "page": "4•3",
+      "front": "Risk vs chance of loss vs loss",
+      "back": "Risk: the uncertainty about incurring a loss. Chance of loss: the likelihood of incurring it, judged from the person's own profile and like individuals in the same class. Loss: the cost, usually in dollars, to the insured if the peril actually causes damage."
+    },
+    {
+      "id": "c04-f002",
+      "topic": "Risk concepts",
+      "page": "4•4",
+      "front": "Peril vs hazard",
+      "back": "Peril: the cause that gives rise to a loss (collision, theft, fire). Hazard: a factor that increases the likelihood or severity of a loss (e.g., worn tires that make a blowout and collision more likely)."
+    },
+    {
+      "id": "c04-f003",
+      "topic": "Legal requirements",
+      "page": "4•4",
+      "front": "The four legal requirements of an insurance contract",
+      "back": "Legal capacity, legal consent, legal object (a legal purpose: coverage in exchange for premiums) and consideration (the premium), as set by common law or, in Quebec, the Civil Code."
+    },
+    {
+      "id": "c04-f004",
+      "topic": "Key numbers",
+      "page": "4•4",
+      "front": "Legal age to enter an insurance contract",
+      "back": "Set by the province where the contract is signed: usually 18, or 16 for life and disability insurance policies. The parties must also be mentally competent and not under the influence of drugs or alcohol."
+    },
+    {
+      "id": "c04-f005",
+      "topic": "Legal requirements",
+      "page": "4•4",
+      "front": "Legal consent: duress vs undue influence",
+      "back": "Consent must be enlightened (aware of the terms) and freely given. Duress = force or threat of force. Undue influence = influence by another person so strong that free will has been obliterated."
+    },
+    {
+      "id": "c04-f006",
+      "topic": "Legal requirements",
+      "page": "4•5",
+      "front": "Consideration in an insurance contract",
+      "back": "The exchange of money, goods or promises of value. The premium is the consideration, so a life policy cannot come into force until the first premium is tendered, at common law and under the Civil Code."
+    },
+    {
+      "id": "c04-f007",
+      "topic": "Contract nature",
+      "page": "4•5",
+      "front": "Unilateral contract",
+      "back": "Only one party, the policyowner, can enforce it, suing for damages or specific performance if the insurer fails to perform. If premiums go unpaid, the insurer cannot enforce payment; it can only cancel the contract."
+    },
+    {
+      "id": "c04-f008",
+      "topic": "Contract nature",
+      "page": "4•5",
+      "front": "Contract of adhesion",
+      "back": "The insurer sets the terms and the applicant must accept them as is or reject the whole contract; there is no bargaining. Ambiguities are decided in favour of the party who did not draft it (the policyowner), in common law and Quebec."
+    },
+    {
+      "id": "c04-f009",
+      "topic": "Policy structure",
+      "page": "4•6",
+      "front": "Declarations section: what it shows",
+      "back": "Usually on page one: the risk insured, the identity of the parties (insurer, person insured, policyowner), the policy period, the amount of coverage, and the amount and frequency of premiums."
+    },
+    {
+      "id": "c04-f010",
+      "topic": "Policy structure",
+      "page": "4•6",
+      "front": "Insuring agreement",
+      "back": "In the main body of the policy: summarizes the insurer's major promises, stating what it promises to do and under what conditions. Two broad types: all-risk (all-peril) and specific risk (named peril)."
+    },
+    {
+      "id": "c04-f011",
+      "topic": "Policy structure",
+      "page": "4•7",
+      "front": "All-risk (all-perils) vs named-peril (specific risk) contracts",
+      "back": "All-risk: covers loss from all causes except listed exclusions (most life policies); costlier but suits most needs. Named peril: covers only listed perils (accidental death, flight insurance); often cheap because the cover is narrow."
+    },
+    {
+      "id": "c04-f012",
+      "topic": "Policy structure",
+      "page": "4•36",
+      "front": "Components every insurance contract must contain",
+      "back": "Declarations, the insuring agreement, conditions and exclusions. Endorsements are optional: offered by the insurer or requested by the insured, they are added by attached schedule and then become part of the contract."
+    },
+    {
+      "id": "c04-f013",
+      "topic": "Exclusions",
+      "page": "4•7",
+      "front": "Three types of exclusions",
+      "back": "1) Excluded perils (war, terrorism; earthquake and flood in homeowner's). 2) Excluded property (automobiles; a wind-prone satellite dish). 3) Excluded losses (professional liability under a homeowner's liability section)."
+    },
+    {
+      "id": "c04-f014",
+      "topic": "Exclusions",
+      "page": "4•8",
+      "front": "Five reasons insurers build exclusions into contracts",
+      "back": "1) The peril is uninsurable (not predictable or measurable). 2) An unusual or catastrophic hazard. 3) The cover is available under another contract. 4) To address moral hazard. 5) The cover is not commonly needed."
+    },
+    {
+      "id": "c04-f015",
+      "topic": "Exclusions",
+      "page": "4•13",
+      "front": "Moral hazard",
+      "back": "The tendency for insureds to be careless or fraudulent because they are exempted from the consequences of their actions or may even benefit. Controlled by deductibles and by limiting disability cover to a percentage of income."
+    },
+    {
+      "id": "c04-f016",
+      "topic": "Policy structure",
+      "page": "4•9",
+      "front": "Entire contract clause: what makes up the contract",
+      "back": "Under the Uniform Life Insurance Act (all provinces and territories except Quebec, which has similar law): the application, declarations page, insuring agreement, riders and ancillary benefits, and written agreements among agent, insurer and insured."
+    },
+    {
+      "id": "c04-f017",
+      "topic": "Policy structure",
+      "page": "4•9",
+      "front": "Named insured vs additional insureds",
+      "back": "Named insured: the person the policy is written to protect. Additional insureds (interests): people covered without being named, e.g., a relative staying in the home or a person driving the car with the owner's consent."
+    },
+    {
+      "id": "c04-f018",
+      "topic": "Policy structure",
+      "page": "4•10",
+      "front": "Statutory conditions vs particular conditions",
+      "back": "Statutory: required by law in every automobile, accident and sickness, and fire policy; set out both parties' rights and duties. Particular: qualify the insurer's promise and impose duties on the insured (e.g., co-operation); if unmet, the claim may be refused."
+    },
+    {
+      "id": "c04-f019",
+      "topic": "Policy structure",
+      "page": "4•10",
+      "front": "Quebec: why the signed delivery receipt matters",
+      "back": "Signatures are normally witnessed, and the applicant may sign a form acknowledging delivery of the policy. Under Quebec law this is a very important factor in deciding whether the policy was delivered in Quebec and so is subject to Quebec law."
+    },
+    {
+      "id": "c04-f020",
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "front": "Endorsement vs rider",
+      "back": "Both are written provisions that delete, add to or amend the original contract, and the terms are often used interchangeably. Endorsement: the usual term in property and liability. Rider: the usual term in life and health, generally adding extra coverage."
+    },
+    {
+      "id": "c04-f021",
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "front": "Endorsements: which prevails if they conflict with the original policy?",
+      "back": "Once contracted, an endorsement in a property or liability contract takes precedence over the original terms. But an endorsement cannot modify a contract so that it contravenes standard insurance legislation."
+    },
+    {
+      "id": "c04-f022",
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "front": "Why add coverage by rider instead of a new policy",
+      "back": "A rider piggybacks on the existing contract and adds little or no administration expense, while a separate policy carries a whole new set of costs. But read the existing policy first: it may already cover the risk."
+    },
+    {
+      "id": "c04-f023",
+      "topic": "Limits & deductibles",
+      "page": "4•12",
+      "front": "Temporary insurance agreement (TIA)",
+      "back": "Interim life coverage for apparently healthy applicants while their policy is being underwritten. It is often limited to less than the amount applied for (e.g., a $500,000 TIA on a $1.5 million application)."
+    },
+    {
+      "id": "c04-f024",
+      "topic": "Limits & deductibles",
+      "page": "4•12",
+      "front": "Occurrence limit",
+      "back": "A cap on the total an insurer will pay for all claims from a single event, such as one plane crash. If claims exceed it, each benefit is pro-rated: a $10M limit against $15M of claims pays 66.67% of each face amount."
+    },
+    {
+      "id": "c04-f025",
+      "topic": "Limits & deductibles",
+      "page": "4•12",
+      "front": "Three clauses that limit the amount payable on a loss",
+      "back": "Deductibles, co-insurance clauses and apportionment clauses."
+    },
+    {
+      "id": "c04-f026",
+      "topic": "Limits & deductibles",
+      "page": "4•13",
+      "front": "Deductible",
+      "back": "The amount of a loss the insured must bear before the insurer becomes liable; usually a dollar amount, sometimes a % of the loss. It controls moral hazard and is a form of self-insurance: the larger the deductible, the lower the premium."
+    },
+    {
+      "id": "c04-f027",
+      "topic": "Co-insurance",
+      "page": "4•13",
+      "front": "Co-insurance in health insurance",
+      "back": "The percentage of each claim the insured must pay, over and above any deductible. An 80% co-insurance factor for the insurer on prescription drugs means the insured pays 20% of their cost."
+    },
+    {
+      "id": "c04-f028",
+      "topic": "Co-insurance",
+      "page": "4•13",
+      "front": "Co-insurance clause in property insurance",
+      "back": "Requires insurance of at least a set % of the property's current value (often 80%), usually on the building only, not the land. If under-insured, the insured shares the loss: payout = (carried ÷ required) × loss, never more than the loss."
+    },
+    {
+      "id": "c04-f029",
+      "topic": "Co-insurance",
+      "page": "4•14",
+      "front": "Deductible plus co-insurance: order of calculation",
+      "back": "They are mutually exclusive: allocate the deductible to the insured first, then apply co-insurance only to the remainder. $1,000 claim, $100 deductible, 80%: the insurer pays $720 (80% of $900) and the insured pays $280."
+    },
+    {
+      "id": "c04-f030",
+      "topic": "Apportionment & excess",
+      "page": "4•15",
+      "front": "Apportionment (pro-rata) clause",
+      "back": "When several policies cover one loss, each insurer pays its face amount ÷ total coverage in force × the loss. Shares depend on the total coverage, not on the property's value. Pro-rata clauses are usually found in property insurance."
+    },
+    {
+      "id": "c04-f031",
+      "topic": "Apportionment & excess",
+      "page": "4•15",
+      "front": "Excess insurance: primary vs secondary plan",
+      "back": "When two plans cover the same loss, the primary plan pays first (the lesser of the loss or its maximum benefit) and the secondary plan pays the excess. Total claims can never exceed the actual loss."
+    },
+    {
+      "id": "c04-f032",
+      "topic": "Premiums & termination",
+      "page": "4•16",
+      "front": "Who can cancel: life vs property contracts",
+      "back": "Life: the insurer generally cannot cancel while premiums are paid (except for material misrepresentation or fraud at application); the policyowner can cancel at any time. Property: either the insurer or the insured can cancel, following the policy's procedure."
+    },
+    {
+      "id": "c04-f033",
+      "topic": "Premiums & termination",
+      "page": "4•16",
+      "front": "Disability/health: cancellable vs guaranteed renewable vs non-cancellable",
+      "back": "Cancellable: premiums and/or benefits can change, only for a class of policies, with 30 or 60 days' notice. Guaranteed renewable: must renew; class premiums can change with notice. Non-cancellable and guaranteed renewable: no cancellation or changes at all."
+    },
+    {
+      "id": "c04-f034",
+      "topic": "Ownership & insurable interest",
+      "page": "4•17",
+      "front": "Ownership clause: the policyowner's rights",
+      "back": "While the life insured is living, the owner holds all rights: naming and changing the beneficiary, surrendering, borrowing against cash values, choosing dividend and settlement options. The life insured and beneficiary hold no ownership rights."
+    },
+    {
+      "id": "c04-f035",
+      "topic": "Ownership & insurable interest",
+      "page": "4•17",
+      "front": "Parties to a life insurance contract",
+      "back": "The insurer and the insured (the policyowner). A third-party contract also involves a separate life insured. The beneficiary is not a legal party to the contract at all."
+    },
+    {
+      "id": "c04-f036",
+      "topic": "Ownership & insurable interest",
+      "page": "4•18",
+      "front": "Insurable interest",
+      "back": "The applicant would suffer a loss of capital, income or support on the death of the life insured. Always deemed for one's own life and that of a spouse, common-law partner or child; may be shown for a business partner, key employee or someone acting as a parent."
+    },
+    {
+      "id": "c04-f037",
+      "topic": "Ownership & insurable interest",
+      "page": "4•18",
+      "front": "Insurable interest: when it must exist, and later transfers",
+      "back": "Only at application/issue. Without it, the life to be insured must consent in writing. Common-law provinces: the issued policy can be assigned to anyone. Quebec: only to someone with an insurable interest in the life insured."
+    },
+    {
+      "id": "c04-f038",
+      "topic": "Misrepresentation & fraud",
+      "page": "4•18",
+      "front": "Material fact; misrepresentation by commission vs omission",
+      "back": "A material fact is information that would affect the insurer's underwriting decision; not all facts are material. Commission = stating an incorrect fact. Omission = failing to reveal a fact."
+    },
+    {
+      "id": "c04-f039",
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "front": "Incontestability (the two-year rule)",
+      "back": "For an innocent misrepresentation of a material fact, the insurer may void the policy only if it acts within 2 years of issue or reinstatement, even for an unrelated death claim. After that the policy is incontestable, except for fraud."
+    },
+    {
+      "id": "c04-f040",
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "front": "Fraud in a life insurance application",
+      "back": "Intentionally misrepresenting a material fact to induce the insurer to issue a policy it would not otherwise issue. The insurer may void the policy at any time, even after a claim. Most common case: smokers declaring themselves non-smokers."
+    },
+    {
+      "id": "c04-f041",
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "front": "No change in insurability",
+      "back": "If the life insured's health changed between application and delivery, the agent must not deliver the policy; instead, take the details on a Non-Medical Questionnaire and return it with the policy for further underwriting (ULIA and Civil Code)."
+    },
+    {
+      "id": "c04-f042",
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "front": "Suicide clause",
+      "back": "If the life insured commits suicide within 2 years of issue (or reinstatement), the contract is void: no death benefit, but premiums paid to date are refunded to the policyowner (or the estate). After 2 years, the claim is paid."
+    },
+    {
+      "id": "c04-f043",
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "front": "Change of plan",
+      "back": "Coverage may be decreased at the insured's request. Insurers consider changes that add no insurance risk; if more risk is assumed, the insured must establish insurability and pay a higher premium."
+    },
+    {
+      "id": "c04-f044",
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "front": "Cash surrender value and policy loans",
+      "back": "Permanent policies build a CSV, a reserve for future mortality costs. Loans are typically limited to 90% of CSV and usually paid within 5 days. On surrender, the CSV net of loans, loan interest and outstanding premiums is paid out."
+    },
+    {
+      "id": "c04-f045",
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "front": "Right of rescission (10-day free look)",
+      "back": "10 calendar days from the date of policy delivery to return the contract; the insurer cancels it and refunds any premium paid, and no reason is required. A convention in virtually every Canadian policy, though not mandated."
+    },
+    {
+      "id": "c04-f046",
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "front": "Grace period",
+      "back": "Usually 30 days after a premium (other than the initial premium) is due, during which the insurance stays in force. If the life insured dies in this period, the full benefit is paid less the overdue premium; otherwise the policy then lapses."
+    },
+    {
+      "id": "c04-f047",
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "front": "Misstatement of age: what the insurer does",
+      "back": "Found during the insured's lifetime: adjust the coverage to what the premium paid would buy at the correct age, or adjust the premium retroactively. Found at death: reduce the benefit to what the premium paid would have bought."
+    },
+    {
+      "id": "c04-f048",
+      "topic": "Life policy provisions",
+      "page": "4•22",
+      "front": "Reinstatement of a lapsed life policy",
+      "back": "Within 2 or 3 years of lapse (per the policy), if the life insured is alive and insurable and all overdue premiums are paid with interest. Many insurers allow 30 days after the grace period without evidence. Not available if the policy was intentionally cancelled."
+    },
+    {
+      "id": "c04-f049",
+      "topic": "Key numbers",
+      "page": "4•21",
+      "front": "Life policy time limits to know",
+      "back": "Free look: 10 calendar days from delivery. Grace: usually 30 days (not the first premium). Contestability and suicide exclusion: 2 years from issue or reinstatement. Reinstatement: 2 or 3 years after lapse; often 30 days after grace with no evidence."
+    },
+    {
+      "id": "c04-f050",
+      "topic": "Term renewal & conversion",
+      "page": "4•22",
+      "front": "Renewable vs non-renewable term insurance",
+      "back": "Term policies run for a guaranteed term (typically 1, 5, 10 or 20 years, or to age 65). Non-renewable: ends with the term. Renewable: may be renewed for another term at the policyowner's discretion, usually at a higher premium."
+    },
+    {
+      "id": "c04-f051",
+      "topic": "Term renewal & conversion",
+      "page": "4•23",
+      "front": "Conversion privilege",
+      "back": "Before a set age (usually between 55 and 65), the policyowner may convert term coverage to a permanent plan with the same insurer without medical evidence. The new premium depends on the plan chosen and the attained age at conversion."
+    },
+    {
+      "id": "c04-f052",
+      "topic": "Life riders",
+      "page": "4•23",
+      "front": "Four typical life insurance riders",
+      "back": "Waiver of premium, additional term insurance, accidental death and dismemberment, and guaranteed insurability."
+    },
+    {
+      "id": "c04-f053",
+      "topic": "Life riders",
+      "page": "4•23",
+      "front": "Guaranteed insurability rider",
+      "back": "The right to buy more coverage at preset option dates (e.g., every 3 or 5 years) without medical evidence, priced at the attained age when exercised. Maximums apply per option and over the policy's life; the right usually ends around age 55."
+    },
+    {
+      "id": "c04-f054",
+      "topic": "Life riders",
+      "page": "4•29",
+      "front": "Waiver of premium",
+      "back": "Built-in disability insurance: premiums are waived while the insured is disabled (not for job loss). Under disability contracts it is optional; premiums paid during the disability are refunded, and some contracts cover partial disability too."
+    },
+    {
+      "id": "c04-f055",
+      "topic": "Settlement options",
+      "page": "4•23",
+      "front": "Five contractual settlement options",
+      "back": "Lump sum; interest only (income to the primary beneficiary for life, then capital to a residual beneficiary); fixed period payments; fixed amount payments; life annuity (payments for the primary beneficiary's life, nothing after death)."
+    },
+    {
+      "id": "c04-f056",
+      "topic": "Settlement options",
+      "page": "4•24",
+      "front": "Fixed period vs fixed amount settlement",
+      "back": "Fixed period: equal instalments for a set number of years, then nothing more. Fixed amount: a set payment (e.g., $2,500 a month) from capital and income until the funds run out. Funds left at the primary beneficiary's death go to the residual beneficiary."
+    },
+    {
+      "id": "c04-f057",
+      "topic": "Settlement options",
+      "page": "4•24",
+      "front": "Who chooses the settlement option?",
+      "back": "Either the policyowner pre-selects it, or the beneficiary chooses at the time of claim. If the policyowner pre-selected an option (e.g., an annuity for a spouse who manages money poorly), the beneficiary cannot change it."
+    },
+    {
+      "id": "c04-f058",
+      "topic": "Assignment",
+      "page": "4•24",
+      "front": "Absolute assignment",
+      "back": "All rights and benefits pass to the assignee (new owner), and the assignor is deemed to have disposed of the policy for tax. The assignee becomes the beneficiary until he or she changes it. Typical: a parent transfers a child's policy to the child."
+    },
+    {
+      "id": "c04-f059",
+      "topic": "Assignment",
+      "page": "4•25",
+      "front": "Quebec: absolute assignment and insurable interest",
+      "back": "For assignments executed after January 1, 1994, the assignment is valid only if the assignee has an insurable interest in the life insured; otherwise the assigned policy becomes null and void. The common-law provinces have no such rule."
+    },
+    {
+      "id": "c04-f060",
+      "topic": "Assignment",
+      "page": "4•25",
+      "front": "Collateral assignment",
+      "back": "The policy's cash values and/or death benefit are assigned to a lender as collateral for a loan. The assignor gives up only the rights specified, not all rights, and it is not a disposition for income tax purposes."
+    },
+    {
+      "id": "c04-f061",
+      "topic": "Beneficiaries",
+      "page": "4•25",
+      "front": "No beneficiary named, or the beneficiary dies first",
+      "back": "The proceeds are paid to the policyowner, or to the policyowner's estate if the owner was also the life insured. To avoid this, name a contingent beneficiary to receive the proceeds if the primary beneficiary is not alive."
+    },
+    {
+      "id": "c04-f062",
+      "topic": "Beneficiaries",
+      "page": "4•25",
+      "front": "Common-law presumption when insured and beneficiary die together",
+      "back": "If they die at the same time, or the order of death can't be determined, the beneficiary is presumed to have died first. The proceeds pass to the insured's estate, under the will or, without one, the intestate succession rules."
+    },
+    {
+      "id": "c04-f063",
+      "topic": "Beneficiaries",
+      "page": "4•25",
+      "front": "Minor named as beneficiary",
+      "back": "The money must be paid into a trust for the minor. The child can receive the insurance money and give a valid discharge only on reaching the age of majority (18)."
+    },
+    {
+      "id": "c04-f064",
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "front": "Beneficiary classes in the common-law provinces",
+      "back": "Three classes: revocable beneficiaries (the default unless the owner specifies otherwise), irrevocable beneficiaries, and the estate of the policyowner (also the default if no valid beneficiary is named)."
+    },
+    {
+      "id": "c04-f065",
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "front": "Irrevocable beneficiary: restrictions and appeal",
+      "back": "Without the beneficiary's written consent, the owner cannot change the beneficiary, surrender the policy, assign it collaterally, take a policy loan or withdraw cash. Some owners accept this for the extra creditor protection the ULIA provides."
+    },
+    {
+      "id": "c04-f066",
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "front": "Quebec: beneficiary classes and the spouse rule",
+      "back": "Since October 29, 1976: the succession (estate) or a person, who may be revocable or irrevocable. A married or civil union spouse named as beneficiary is automatically irrevocable unless the policyowner stipulates otherwise."
+    },
+    {
+      "id": "c04-f067",
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "front": "Divorce and an ex-spouse's beneficiary designation",
+      "back": "Common-law provinces: divorce does NOT automatically revoke it; the policyowner must specifically revoke the designation. Quebec: divorce automatically revokes a spouse's beneficiary designation."
+    },
+    {
+      "id": "c04-f068",
+      "topic": "Beneficiaries",
+      "page": "4•27",
+      "front": "Creditor protection of life insurance",
+      "back": "Proceeds payable to a named beneficiary belong to that beneficiary and are not subject to the insured's creditors. Paid to the estate, they have no protection. CSVs may also be protected, e.g., when the beneficiary is the spouse or irrevocable."
+    },
+    {
+      "id": "c04-f069",
+      "topic": "Group insurance",
+      "page": "4•27",
+      "front": "Group insurance: master contract vs certificate of insurance",
+      "back": "Master contract: the agreement between the insurer and the sponsor (usually the employer) setting the general terms. Certificate: evidence of insurance for each member, naming the insurer and policy, amounts on member and dependants, and termination terms and rights."
+    },
+    {
+      "id": "c04-f070",
+      "topic": "Group insurance",
+      "page": "4•27",
+      "front": "Group termination or replacement provisions",
+      "back": "Set out members' options when the group contract ends or they leave the group (retire, resign, are terminated). The insurer stays liable for certain benefits from earlier events, and members can usually convert to an individual policy."
+    },
+    {
+      "id": "c04-f071",
+      "topic": "Disability provisions",
+      "page": "4•28",
+      "front": "Elimination period",
+      "back": "The days between the onset of disability and the start of benefits, a 'time deductible'. Usually longer for sickness than for injury (e.g., 90 vs 30 days). Lengthening it is one of the most effective ways to reduce the premium."
+    },
+    {
+      "id": "c04-f072",
+      "topic": "Disability provisions",
+      "page": "4•28",
+      "front": "Benefit period (disability)",
+      "back": "The maximum period benefits are payable: 1 year, 2 years, 5 years, to age 65 or for life. Benefits are paid until the insured returns to work or the benefit period ends, whichever comes first."
+    },
+    {
+      "id": "c04-f073",
+      "topic": "Disability provisions",
+      "page": "4•28",
+      "front": "Recurrent disability clause",
+      "back": "A disability from the same condition within six months of the last benefits is treated as a continuation: no new elimination period, but the remaining benefit period is reduced by benefits already paid. After six months it is a new claim."
+    },
+    {
+      "id": "c04-f074",
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "front": "Future coverage option (disability)",
+      "back": "The right to buy additional coverage at specified intervals regardless of health status, as income rises, up to the insurer's maximum percentage of income and dollar cap. Once the cap is reached, coverage can't be increased."
+    },
+    {
+      "id": "c04-f075",
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "front": "Quebec: initial premium on a health insurance policy",
+      "back": "Unlike life insurance, payment of the initial premium is not required for a Quebec health policy to come into force. To cancel for non-payment of the initial premium, the insurer must give 15 days' written notice."
+    },
+    {
+      "id": "c04-f076",
+      "topic": "Indemnity & subrogation",
+      "page": "4•30",
+      "front": "Subrogation",
+      "back": "The substitution of the insurer for the insured to claim indemnity from a responsible third party. After paying its insured's claim, the insurer can collect damages from the negligent party (or that party's insurer)."
+    },
+    {
+      "id": "c04-f077",
+      "topic": "Indemnity & subrogation",
+      "page": "4•30",
+      "front": "Three purposes of subrogation",
+      "back": "1) Prevent the insured from collecting twice for the same loss. 2) Hold the negligent person responsible for the loss. 3) Hold down insurance rates."
+    },
+    {
+      "id": "c04-f078",
+      "topic": "Indemnity & subrogation",
+      "page": "4•31",
+      "front": "Five general principles of subrogation",
+      "back": "1) If the policy is silent, the insurer keeps recoveries only after the insured is fully indemnified. 2) The insured can't block it. 3) Insurers can waive it. 4) It doesn't apply to life and most health insurance. 5) No subrogation against one's own insured."
+    },
+    {
+      "id": "c04-f079",
+      "topic": "Indemnity & subrogation",
+      "page": "4•32",
+      "front": "Indemnity (indemnification)",
+      "back": "The concept of compensation for loss: the insured cannot be paid more in benefits than the cost of the loss. So one loss covered by two policies cannot be claimed twice; the policies would share it under a pro-rata clause."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c04-q001",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Legal requirements",
+      "page": "4•32",
+      "q": "Sean, 24, signed an application for a $250,000 whole life policy after a salesman plied him with drinks in a bar. Sober, he doesn't want the policy. What should Anna tell him?",
+      "options": [
+        "He can cancel, but the first premium is forfeited as the contract's consideration",
+        "He is bound once he signs; only the insurer can cancel a life insurance contract",
+        "He could cancel only within 10 days of signing the application, so that right has passed",
+        "His capacity may have been impaired, and he can return it within 10 days of delivery"
+      ],
+      "answer": 3,
+      "explain": "A valid contract needs parties with legal capacity, not acting under the influence of alcohol. Either way, the 10-day free look runs from policy delivery: returning the policy within it cancels the contract with a refund of any premium, and no reason is needed."
+    },
+    {
+      "id": "c04-q002",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Beneficiaries",
+      "page": "4•32",
+      "q": "Alfred's policy on his own life still names his late wife as beneficiary. If he dies without changing it, what happens to the death benefit?",
+      "options": [
+        "It is held by the insurer until a court appoints a replacement beneficiary",
+        "It is paid to his estate and passes under his will or the succession rules",
+        "It is paid in equal shares to his sons as his closest surviving relatives",
+        "It is paid to his late wife's estate, since she is still the named beneficiary"
+      ],
+      "answer": 1,
+      "explain": "If the named beneficiary is not alive when the insured dies, the proceeds go to the policyowner, or to the owner's estate when, as here, the owner is the life insured. To direct the money to his sons, Alfred should file a new designation naming them, e.g., 50% each."
+    },
+    {
+      "id": "c04-q003",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Indemnity & subrogation",
+      "page": "4•32",
+      "q": "Alfred's $5,000 stereo is stolen from his cottage. His home and cottage policies both cover contents on and off the premises. Which outcome best fits the chapter?",
+      "options": [
+        "He can claim the full $5,000 under each policy, since he pays both premiums",
+        "Only the home policy pays, since the stereo is kept at the house most of the year",
+        "He recovers at most $5,000 in total; if both policies respond, they share it pro rata",
+        "Neither policy pays, because insuring one item twice voids both coverages"
+      ],
+      "answer": 2,
+      "explain": "Insurance indemnifies: it cannot pay more than the loss, so Alfred can't collect twice. The policy covering the premises where the theft happened (the cottage) would likely respond; if both policies did, they would share the $5,000 under a pro-rata clause."
+    },
+    {
+      "id": "c04-q004",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Risk concepts",
+      "page": "4•4",
+      "q": "Fred's car tires are so worn that the cord shows through, making a blowout and a collision more likely. In insurance terms, the worn tires are a:",
+      "options": [
+        "Risk",
+        "Chance of loss",
+        "Peril",
+        "Hazard"
+      ],
+      "answer": 3,
+      "explain": "A hazard is a factor that increases the likelihood or severity of a loss. The collision would be the peril (the cause of the loss), and the cost to repair or replace the car would be the loss."
+    },
+    {
+      "id": "c04-q005",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Legal requirements",
+      "page": "4•4",
+      "q": "Which situation would most likely make an insurance contract invalid for failing a basic legal requirement?",
+      "options": [
+        "The applicant accepted the insurer's standard wording without bargaining",
+        "A 17-year-old applied for disability insurance on his own life",
+        "A mother bought a policy on her own child's life rather than her own",
+        "The applicant signed only because the agent threatened to harm him"
+      ],
+      "answer": 3,
+      "explain": "Consent must be enlightened and freely given; signing under a threat of force is duress. The legal age for life and disability policies is 16, contracts of adhesion involve no bargaining by design, and a parent has an insurable interest in a child."
+    },
+    {
+      "id": "c04-q006",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Legal requirements",
+      "page": "4•5",
+      "q": "Under the Civil Code of Quebec, unlike at common law, a life insurance contract can come into force before the first premium is paid.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The premium is the consideration, and a life insurance contract cannot come into force until the first premium is tendered, both at common law and under the Civil Code. Quebec's exception applies to health insurance, not life insurance."
+    },
+    {
+      "id": "c04-q007",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Contract nature",
+      "page": "4•5",
+      "q": "Because insurance contracts are unilateral, what can an insurer do if a policyowner simply stops paying the premiums?",
+      "options": [
+        "Collect the unpaid premiums from the named beneficiary instead",
+        "Obtain an order for specific performance of the premium payments",
+        "Cancel the contract; it cannot force the policyowner to pay",
+        "Sue the policyowner for the unpaid premiums plus interest"
+      ],
+      "answer": 2,
+      "explain": "Only the policyowner can enforce a unilateral contract, suing for damages or specific performance if the insurer defaults. When premiums go unpaid, the insurer cannot enforce payment; all it can do is cancel the contract."
+    },
+    {
+      "id": "c04-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Contract nature",
+      "page": "4•5",
+      "q": "A homeowner and her insurer disagree over the meaning of an ambiguous phrase in her policy. How are courts bound to resolve it, at common law and under the Civil Code?",
+      "options": [
+        "In favour of the insurer, since the applicant accepted its terms as is",
+        "In favour of the policyowner, since the insurer drafted the contract",
+        "By striking out the clause and pro-rating the claim between the parties",
+        "According to the agent's explanation of the clause at the time of sale"
+      ],
+      "answer": 1,
+      "explain": "Insurance policies are contracts of adhesion: the insurer sets the terms and the applicant can only accept or reject them. So ambiguities are decided in favour of the party who did not draw up the contract, the policyowner, under both legal systems."
+    },
+    {
+      "id": "c04-q009",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Policy structure",
+      "page": "4•6",
+      "q": "Marie's life policy pays on her death from virtually any cause, apart from a few listed exclusions such as suicide in the first two years. What type of insuring agreement is this?",
+      "options": [
+        "Excess coverage",
+        "All-risk (all-perils)",
+        "Occurrence-limited",
+        "Named peril (specific risk)"
+      ],
+      "answer": 1,
+      "explain": "An all-risk (all-perils) agreement covers loss from all causes except those specifically excluded, and most life policies work this way. Named peril and specific risk are two names for cover limited to listed perils, such as accidental death only."
+    },
+    {
+      "id": "c04-q010",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Policy structure",
+      "page": "4•36",
+      "q": "Which of the following is NOT a component that every valid insurance contract must contain?",
+      "options": [
+        "Insuring agreement",
+        "Exclusions",
+        "Declarations",
+        "Endorsements"
+      ],
+      "answer": 3,
+      "explain": "Declarations, the insuring agreement, conditions and exclusions must all be set out in the contract. Endorsements are optional: offered by the insurer or requested by the insured, they are added by attached schedule and then form part of the contract."
+    },
+    {
+      "id": "c04-q011",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Exclusions",
+      "page": "4•32",
+      "q": "Because Alfred's homeowner's policies are comprehensive all-perils policies, every type of loss to everything he owns is covered.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. All-perils means the policy is not limited to named perils or property, but every property policy has exclusions: types of property, types of loss and causes such as earthquake. Under an all-perils policy, if it isn't excluded, it's covered."
+    },
+    {
+      "id": "c04-q012",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Exclusions",
+      "page": "4•7",
+      "q": "Marcel's homeowner's policy covers wind damage in general, but not wind damage to his satellite dish. Which type of exclusion is this?",
+      "options": [
+        "Excluded peril",
+        "Excluded loss",
+        "Excluded property",
+        "Particular condition"
+      ],
+      "answer": 2,
+      "explain": "Excluded property limits or disallows cover on specific items, here property prone to frequent wind damage. Wind is still a covered peril, so it isn't an excluded peril; an excluded loss is a type of loss, such as professional liability."
+    },
+    {
+      "id": "c04-q013",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Exclusions",
+      "page": "4•8",
+      "q": "Rafael would take home more from disability benefits than from working. Which reason for exclusions and limits does this illustrate, and how do disability insurers respond?",
+      "options": [
+        "Cover not commonly needed; they exclude disabilities lasting under a year",
+        "An unpredictable peril; they exclude disabilities caused by sickness",
+        "Moral hazard; they limit cover to a percentage of the insured's income",
+        "A catastrophic hazard; they decline applicants in risky occupations"
+      ],
+      "answer": 2,
+      "explain": "Moral hazard exists when insurance could leave the insured better off by causing or prolonging a loss. To counter it, disability policies limit the percentage of the insured's income that can be covered."
+    },
+    {
+      "id": "c04-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Exclusions",
+      "page": "4•37",
+      "q": "Hugo is building a house in a minor earthquake zone. He isn't worried about quakes but has heard quake coverage carries huge premiums. What does the chapter suggest?",
+      "options": [
+        "Choose a named-peril policy, which always covers earthquakes more cheaply",
+        "Rely on an all-perils policy, which automatically includes earthquake damage at no cost",
+        "Leave earthquake damage excluded, as most homeowner's policies do, to keep costs down",
+        "Buy a separate earthquake policy, since a rider can never add an excluded peril"
+      ],
+      "answer": 2,
+      "explain": "Earthquake losses can be so widespread and hard to predict that most homeowner's policies exclude them. Accepting such exclusions is one way to reduce the cost of coverage; if the peril did matter, he could ask about adding it by rider."
+    },
+    {
+      "id": "c04-q015",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Policy structure",
+      "page": "4•9",
+      "q": "Under the entire contract provision for life and disability policies, which of these is NOT part of the contract?",
+      "options": [
+        "Written agreements among agent, insurer and insured",
+        "Verbal assurances the agent gave during the sale",
+        "Riders and ancillary benefits",
+        "The application for insurance"
+      ],
+      "answer": 1,
+      "explain": "The contract consists of the application, the declarations page, the insuring agreement, any riders and ancillary benefits, and written agreements among the agent, insurer and insured. Unwritten promises are not part of it; the point is clarity and certainty."
+    },
+    {
+      "id": "c04-q016",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Policy structure",
+      "page": "4•10",
+      "q": "Statutory conditions are required by law in every automobile, accident and sickness, and fire insurance policy, and they set out the rights and responsibilities of both the insured and the insurer.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Statutory conditions are imposed by law for those types of policy. Particular conditions, by contrast, are inserted to qualify the insurer's promise and impose duties on the insured before a loss is paid."
+    },
+    {
+      "id": "c04-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Policy structure",
+      "page": "4•10",
+      "q": "After a burglary, Kim refuses to send her insurer receipts or help it locate witnesses. Her policy has a co-operation clause. What is the likely result?",
+      "options": [
+        "The insurer may refuse to pay, because a policy condition was not met",
+        "The insurer must pay, but may raise her premium at the next renewal",
+        "The insurer must pay, because conditions bind only the insurer",
+        "The claim is reduced in proportion to the documents she withheld"
+      ],
+      "answer": 0,
+      "explain": "Conditions qualify the insurer's promise and impose duties on the insured before a loss is collected. A co-operation clause requires the insured to forward information, help locate witnesses and not hinder settlement; if conditions aren't met, the insurer may refuse the claim."
+    },
+    {
+      "id": "c04-q018",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Policy structure",
+      "page": "4•10",
+      "q": "Under Quebec law, why does it matter that the insured signs a form acknowledging that the policy was delivered?",
+      "options": [
+        "It makes the insured's spouse an irrevocable beneficiary unless stated otherwise",
+        "It helps show whether the policy was delivered in Quebec and so is subject to Quebec law",
+        "It is the consideration that brings a Quebec life insurance policy into force",
+        "It starts the two-year period during which the insurer may contest the policy for misstatements"
+      ],
+      "answer": 1,
+      "explain": "In Quebec, the signed delivery acknowledgement is a very important factor in deciding whether the policy was delivered in Quebec and is therefore governed by Quebec law. Contestability runs from issue or reinstatement, and the consideration is the premium."
+    },
+    {
+      "id": "c04-q019",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "q": "The term rider is more common in life and health insurance, while endorsement is more common in property and liability insurance.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Both describe written provisions that add to, delete or amend the original contract, and the terms are often used interchangeably. In life and health insurance, riders generally add extra coverage."
+    },
+    {
+      "id": "c04-q020",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "q": "An endorsement on Paolo's property policy conflicts with a clause in the original contract. Which statement is correct?",
+      "options": [
+        "The endorsement prevails, unless it would make the contract breach insurance legislation",
+        "The original clause prevails, since endorsements can only add coverage, never limit it",
+        "Both are void, and the conflict is resolved in favour of the insurer that drafted them",
+        "The endorsement prevails only if the insured signed it in front of a witness"
+      ],
+      "answer": 0,
+      "explain": "Once contracted, endorsements in property and liability contracts take precedence over the terms of the original contract. But an endorsement cannot modify a contract so that it contravenes standard insurance legislation."
+    },
+    {
+      "id": "c04-q021",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Riders & endorsements",
+      "page": "4•11",
+      "q": "Priya has a homeowner's policy and has just bought a cottage that she wants insured against fire and vandalism. What is usually the most cost-effective approach?",
+      "options": [
+        "Add the cottage to her existing policy by rider or endorsement",
+        "Buy a separate named-peril policy covering only the cottage",
+        "Raise her home's dwelling limit, which then covers any property she owns",
+        "Buy a separate all-perils policy so each property has its own contract"
+      ],
+      "answer": 0,
+      "explain": "A rider or endorsement piggybacks on the existing contract and adds little administration expense, while a separate policy brings a whole new set of costs. A careful read of her current policy might even show the cover already exists."
+    },
+    {
+      "id": "c04-q022",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Limits & deductibles",
+      "page": "4•12",
+      "q": "Hakim applied for a $1.5 million life policy. While underwriting, the insurer gave him a temporary insurance agreement (TIA) for $500,000. What does the TIA provide?",
+      "options": [
+        "Interim coverage, often below the amount applied for, pending approval",
+        "Full $1.5 million coverage from the date the application was signed",
+        "Permanent $500,000 coverage, even if the full policy is later declined",
+        "A refund of premiums if he is declined, but no death coverage meanwhile"
+      ],
+      "answer": 0,
+      "explain": "A TIA gives interim coverage to apparently healthy applicants pending approval of the policy. It is often limited to less than the amount applied for; here $500,000 is the most the insurer allows under a TIA."
+    },
+    {
+      "id": "c04-q023",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Limits & deductibles",
+      "page": "4•12",
+      "q": "An insurer's occurrence limit for any single air crash is $6 million. One crash produces $8 million of death claims against it. How much does the beneficiary of a $400,000 policy receive?",
+      "options": [
+        "$266,667",
+        "$240,000",
+        "$400,000",
+        "$300,000"
+      ],
+      "answer": 3,
+      "explain": "With an occurrence limit, the insurer pro-rates each claim so the total paid stays within the limit: $6M ÷ $8M = 75%, and 75% × $400,000 = $300,000."
+    },
+    {
+      "id": "c04-q024",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Limits & deductibles",
+      "page": "4•37",
+      "q": "Colette is choosing between a $250 and a $1,000 collision deductible on her new car. Which statement is accurate?",
+      "options": [
+        "The $1,000 deductible lowers her premium, but she bears the first $1,000 of each loss",
+        "The deductible is a percentage of each claim that she pays after the insurer",
+        "The $1,000 deductible raises her premium, since the insurer then takes on more of the risk",
+        "Both deductibles carry the same premium; only the claim payout differs"
+      ],
+      "answer": 0,
+      "explain": "A deductible is a form of self-insurance: the insured bears that part of each loss before the insurer pays, so the larger the deductible, the lower the premium. Paying a percentage of each claim is co-insurance, not a deductible."
+    },
+    {
+      "id": "c04-q025",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Co-insurance",
+      "page": "4•14",
+      "q": "Gail's health plan has a $150 annual deductible and an 80% co-insurance factor for the insurer. Her first claim of the year is $1,150. How much does the insurer pay?",
+      "options": [
+        "$770",
+        "$1,000",
+        "$800",
+        "$920"
+      ],
+      "answer": 2,
+      "explain": "Deductible and co-insurance are mutually exclusive: take off the $150 deductible first, then apply 80% to the $1,000 balance = $800. Gail pays $350 ($150 + 20% of $1,000). Applying 80% to the whole bill wrongly ignores the deductible."
+    },
+    {
+      "id": "c04-q026",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Co-insurance",
+      "page": "4•14",
+      "q": "Luc's cottage property is now worth $260,000: $60,000 for the land and $200,000 for the building. His policy has an 80% co-insurance clause, and he carries $120,000 on the building. A fire causes $40,000 of damage. What does the insurer pay?",
+      "options": [
+        "$24,000",
+        "$23,077",
+        "$30,000",
+        "$40,000"
+      ],
+      "answer": 2,
+      "explain": "Co-insurance applies to the building, not the land: required = 80% × $200,000 = $160,000. Payout = carried ÷ required × loss = $120,000 ÷ $160,000 × $40,000 = $30,000; Luc bears the other $10,000 for being under-insured."
+    },
+    {
+      "id": "c04-q027",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Co-insurance",
+      "page": "4•36",
+      "q": "A store was insured for $480,000, exactly 80% of its $600,000 value. Its value has since dropped to $500,000 with the coverage unchanged, and a fire causes $50,000 of damage. What does the insurer pay?",
+      "options": [
+        "$40,000",
+        "$48,000",
+        "$50,000",
+        "$60,000"
+      ],
+      "answer": 2,
+      "explain": "Required insurance is now 80% × $500,000 = $400,000, and $480,000 is carried, so the co-insurance test is more than met and the loss is paid in full. But the insurer never pays more than the actual $50,000 loss."
+    },
+    {
+      "id": "c04-q028",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Apportionment & excess",
+      "page": "4•15",
+      "q": "Insurer A covers a building for $300,000 and Insurer B for $200,000. The building is worth $600,000 when a fire causes a $150,000 loss. Under a pro-rata clause, how is the loss shared?",
+      "options": [
+        "A pays $75,000 and B pays $75,000",
+        "A pays $90,000 and B pays $60,000",
+        "A pays $75,000 and B pays $50,000",
+        "A pays $150,000 and B pays nothing"
+      ],
+      "answer": 1,
+      "explain": "Each insurer pays its share of the total coverage in force ($500,000), not of the property's value: A pays 60% of $150,000 = $90,000 and B pays 40% = $60,000. Basing the shares on the $600,000 value would wrongly leave $25,000 unpaid."
+    },
+    {
+      "id": "c04-q029",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Apportionment & excess",
+      "page": "4•15",
+      "q": "Tariq is covered by his employer's health plan and, as a spouse, by his wife's plan. Each pays up to $1,000 for a type of claim. He incurs $1,500 of eligible expenses. How is the claim paid?",
+      "options": [
+        "$1,000 from each plan, for a total recovery of $2,000",
+        "$1,000 from his own plan first, then $500 from his wife's plan",
+        "$750 from each plan, since the two insurers share equally",
+        "$1,000 from his wife's plan first, then $500 from his own plan"
+      ],
+      "answer": 1,
+      "explain": "His own plan is primary and pays first, up to the lesser of the loss or its maximum; his wife's plan, as secondary, pays the excess. His total recovery can never exceed his actual expenses."
+    },
+    {
+      "id": "c04-q030",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Premiums & termination",
+      "page": "4•16",
+      "q": "Which statement about cancelling insurance contracts is correct?",
+      "options": [
+        "A non-cancellable disability policy can be cancelled by the insurer at renewal",
+        "A property policy can be cancelled by either the insurer or the insured",
+        "A life policyowner can cancel only on a policy anniversary date",
+        "A life insurer can cancel any policy by giving 30 days' written notice"
+      ],
+      "answer": 1,
+      "explain": "Property contracts can be cancelled by either party, following the procedure in the policy. A life insurer generally cannot cancel (except for material misrepresentation or fraud at application), while the policyowner may cancel at any time."
+    },
+    {
+      "id": "c04-q031",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Premiums & termination",
+      "page": "4•16",
+      "q": "Lena's disability policy is guaranteed renewable. After she makes a large claim, the insurer wants to raise her premium alone at renewal. Which is correct?",
+      "options": [
+        "It cannot single her out; it may change premiums only for her whole class, with notice",
+        "It may raise her premium, since guaranteed renewable fixes benefits but not premiums",
+        "It cannot change her premium or anyone else's, since the policy is guaranteed renewable",
+        "It may decline to renew her policy, since a large claim has changed the risk"
+      ],
+      "answer": 0,
+      "explain": "A guaranteed renewable contract must be renewed, but the insurer may change premiums for a class of policyowners, never for just one insured, with notice. Only a non-cancellable and guaranteed renewable policy freezes premiums and benefits."
+    },
+    {
+      "id": "c04-q032",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Life policy provisions",
+      "page": "4•17",
+      "q": "The 10-day right of rescission found in virtually every Canadian life insurance contract is mandated by the Uniform Life Insurance Act.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The 10-day right of rescission is a convention followed throughout Canada. It is not mandated by the Act, yet it is part of virtually every life insurance contract issued."
+    },
+    {
+      "id": "c04-q033",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Ownership & insurable interest",
+      "page": "4•17",
+      "q": "Felix owns a policy on the life of his daughter Mia, with his wife Rosa named as revocable beneficiary. Which statement is correct?",
+      "options": [
+        "Felix can change the beneficiary or surrender the policy on his own",
+        "Felix can rewrite the policy's conditions as long as Rosa agrees",
+        "Rosa is a legal party to the contract and must approve any change",
+        "Mia, as the life insured, chooses the settlement option for the benefit"
+      ],
+      "answer": 0,
+      "explain": "The policyowner holds all contractual rights while the insured lives: naming and changing the beneficiary, surrendering, borrowing, and choosing dividend and settlement options. The life insured and beneficiary hold none, and the owner can't change the policy's conditions unless a clause permits it."
+    },
+    {
+      "id": "c04-q034",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Ownership & insurable interest",
+      "page": "4•18",
+      "q": "Which applicant would need the written consent of the person to be insured before a life policy could be issued?",
+      "options": [
+        "Dana, insuring a friend whose death would not affect her financially",
+        "Lise, insuring the life of her 10-year-old son",
+        "Raj, insuring the life of his common-law partner",
+        "A firm insuring a key employee whose death would hurt its profits"
+      ],
+      "answer": 0,
+      "explain": "Insurable interest is deemed in one's own life and that of a spouse, common-law partner or child, and can be shown for a key employee or business partner. Without it, as with Dana's friend, the life to be insured must consent in writing."
+    },
+    {
+      "id": "c04-q035",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Ownership & insurable interest",
+      "page": "4•18",
+      "q": "For a life policy to stay valid, the policyowner must keep an insurable interest in the life insured right up to the date of death.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. Insurable interest matters only at application and issue. In the common-law provinces the policy can later be assigned even to someone with no insurable interest; in Quebec, an assignee must have one."
+    },
+    {
+      "id": "c04-q036",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Misrepresentation & fraud",
+      "page": "4•18",
+      "q": "On his application, Omar misdates his last routine checkup, which was clear, by a month. Asked about kidney disorders, he forgets a kidney condition diagnosed years ago. How do these compare?",
+      "options": [
+        "Both are material, so the insurer may void the policy at any time",
+        "The checkup date is material; the kidney condition isn't, since he forgot it",
+        "Neither is material, because both errors were made innocently",
+        "The checkup date isn't material; the kidney condition is a material omission"
+      ],
+      "answer": 3,
+      "explain": "A material fact is one that would affect the underwriting decision; a one-month error on a clear checkup would not. Failing to reveal a relevant condition is a misrepresentation by omission, and even if innocent it lets the insurer void the policy within two years."
+    },
+    {
+      "id": "c04-q037",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "q": "Eighteen months after issue, Victor dies in a car accident. The insurer then learns he innocently failed to disclose a heart murmur diagnosed in his teens. What can the insurer do?",
+      "options": [
+        "Pay the claim, since the cause of death was unrelated to the heart condition",
+        "Void the policy, even though the death had nothing to do with the heart murmur",
+        "Nothing, since the omission was innocent and the claim must be paid in full",
+        "Pay a reduced benefit equal to what the premium would buy for a heart patient"
+      ],
+      "answer": 1,
+      "explain": "An innocent misrepresentation of a material fact lets the insurer void the policy if it acts within two years of issue or reinstatement, even for an unrelated death, because the contract should never have been issued. Reducing the benefit is the remedy for misstated age."
+    },
+    {
+      "id": "c04-q038",
+      "type": "tf",
+      "difficulty": 3,
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "q": "If an innocent but material non-disclosure comes to light after the insured dies three years after issue, the insurer can still void the policy when the death was caused by the undisclosed condition.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. After two years the policy is incontestable: the insurer can no longer void it for a misstatement of a material fact, even if the death is related to the condition. Only fraud lets an insurer void a policy after two years."
+    },
+    {
+      "id": "c04-q039",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "q": "Kevin, a smoker, ticked 'non-smoker' on his application to get lower rates. He dies six years later. What may the insurer do?",
+      "options": [
+        "Pay the claim, since the two-year contestable period expired long before his death",
+        "Pay the claim, less the extra premiums a smoker would have paid",
+        "Void the policy, but only if smoking contributed to his death",
+        "Void the policy, since fraud can be raised at any time, even after a claim"
+      ],
+      "answer": 3,
+      "explain": "Intentionally misrepresenting a material fact to obtain a policy is fraud, and smokers posing as non-smokers is the most common case. With fraud, the insurer may void the policy at any time, including after a claim; incontestability does not protect it."
+    },
+    {
+      "id": "c04-q040",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Misrepresentation & fraud",
+      "page": "4•19",
+      "q": "Between Ana's application and the delivery of her life policy, her agent learns she was recently hospitalized. What should the agent do?",
+      "options": [
+        "Deliver the policy, since it was approved before her health changed",
+        "Deliver the policy, noting that her free-look period is extended to 30 days",
+        "Hold the policy and return it to the insurer with a Non-Medical Questionnaire",
+        "Deliver the policy and let the insurer contest it within two years if needed"
+      ],
+      "answer": 2,
+      "explain": "Both the Uniform Life Insurance Act and the Civil Code say a policy should not be delivered if the life insured's health changed after application. The agent records the particulars on a Non-Medical Questionnaire and returns it with the policy for further underwriting."
+    },
+    {
+      "id": "c04-q041",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "q": "Glen bought a $300,000 term policy on his own life in March 2018, paying a $900 premium each March. He died by suicide in December 2019. What does the insurer pay?",
+      "options": [
+        "A $900 refund of the latest premium, but no death benefit",
+        "Nothing at all: neither the death benefit nor any premiums",
+        "The $300,000 death benefit, less any premium that remains unpaid at death",
+        "A $1,800 refund of premiums to his estate, but no death benefit"
+      ],
+      "answer": 3,
+      "explain": "Suicide within two years of issue (or reinstatement) voids the contract: no death benefit is paid, but the premiums paid to the date of death, two annual premiums of $900, are refunded to the policyowner's estate. After two years, the claim would be paid."
+    },
+    {
+      "id": "c04-q042",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "q": "An insurer will usually agree to reduce a policy's coverage on request, but to increase it the insured must show insurability and pay a higher premium.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Insurers consider plan changes that place no additional insurance risk on them. If a change means more risk, the insured must establish insurability and pay a higher premium."
+    },
+    {
+      "id": "c04-q043",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Life policy provisions",
+      "page": "4•20",
+      "q": "Doreen surrenders her whole life policy. It has a $12,000 cash surrender value, a $5,000 policy loan with $300 of unpaid loan interest, and an overdue $250 premium. How much does she receive?",
+      "options": [
+        "$6,450",
+        "$6,700",
+        "$10,800",
+        "$7,000"
+      ],
+      "answer": 0,
+      "explain": "On surrender the insurer no longer needs the reserve, so it pays the CSV net of loans, loan interest and outstanding premiums: $12,000 - $5,000 - $300 - $250 = $6,450. The 90% figure is the usual cap on policy loans, not the surrender payout."
+    },
+    {
+      "id": "c04-q044",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "q": "Raymond's new life policy was issued in March, but his agent didn't deliver it until the following February, after Raymond had paid a year of premiums. A week after delivery he decides he doesn't want it. What can he do?",
+      "options": [
+        "Nothing, since the free look expired 10 days after the policy was issued",
+        "Cancel it and receive only the policy's cash surrender value",
+        "Return it, but forfeit the premiums for the months he was covered",
+        "Return it within 10 days of delivery and get back all the premiums he paid"
+      ],
+      "answer": 3,
+      "explain": "The 10-day free look runs from the date of delivery, not issue. Returning the policy within 10 calendar days cancels it with a refund of all premiums paid, even though he was covered meanwhile. That is why agents should deliver policies promptly."
+    },
+    {
+      "id": "c04-q045",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "q": "Sofia's $250,000 term policy has a $900 annual premium due June 1. She forgets to pay it and dies in an accident on June 20. What does her beneficiary receive?",
+      "options": [
+        "Nothing, since the policy lapsed on June 1",
+        "$249,100: the full benefit less the overdue premium",
+        "$250,000: the full benefit, since coverage continued",
+        "Only a refund of the premiums paid to date"
+      ],
+      "answer": 1,
+      "explain": "A death during the grace period (usually 30 days) is covered: the full death benefit is paid less the outstanding premium, $250,000 - $900 = $249,100. The policy lapses only if the premium is still unpaid when the grace period ends."
+    },
+    {
+      "id": "c04-q046",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Life policy provisions",
+      "page": "4•21",
+      "q": "If the first premium on a new life policy is never paid, the policy still stays in force for the 30-day grace period.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. The grace period applies to premiums due except the initial premium. A life policy cannot come into force until the first premium, the consideration, has been paid."
+    },
+    {
+      "id": "c04-q047",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Life policy provisions",
+      "page": "4•22",
+      "q": "Pierre's $300,000 policy premium was set at $1,000 a year: $3.00 per $1,000 of coverage for his stated age plus a $100 policy fee. At his death it emerges he was a year older, when the rate was $3.20. What is paid?",
+      "options": [
+        "$300,000",
+        "$281,250",
+        "$312,500",
+        "$299,940"
+      ],
+      "answer": 1,
+      "explain": "When a misstated age is found at death, the benefit becomes what the premium paid would have bought at the true age: ($1,000 - $100 fee) ÷ $3.20 × $1,000 = $281,250. Found during his lifetime, the coverage or premium could have been adjusted instead."
+    },
+    {
+      "id": "c04-q048",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Life policy provisions",
+      "page": "4•22",
+      "q": "Yves's life policy lapsed for non-payment 20 months ago. He wants it reinstated rather than buying a new policy at his current age. What is generally required?",
+      "options": [
+        "Evidence of insurability, plus all overdue premiums with interest",
+        "Nothing, provided he applies within five years of the lapse",
+        "A new application, with premiums based on his current age and health",
+        "Only the overdue premiums, since no evidence is ever needed"
+      ],
+      "answer": 0,
+      "explain": "A lapsed life policy can usually be reinstated within two or three years if the life insured is alive and insurable and all overdue premiums are paid with interest. This keeps the premium based on his age at original issue. Only in the 30 days after the grace period do many insurers waive evidence."
+    },
+    {
+      "id": "c04-q049",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Term renewal & conversion",
+      "page": "4•23",
+      "q": "Nadia, 52, holds a convertible 20-year term policy and has just been diagnosed with diabetes. She wants coverage for life. What is her best option?",
+      "options": [
+        "Convert to a permanent plan without medical evidence, at a premium for her current age",
+        "Apply for a new permanent policy, since any conversion requires proof of good health first",
+        "Convert to a permanent plan, keeping the premium rate of her original term policy",
+        "Renew the term policy, which automatically becomes permanent coverage at renewal"
+      ],
+      "answer": 0,
+      "explain": "Before a set age (usually 55 to 65), the conversion privilege lets her switch to a permanent plan with the same insurer without medical evidence. The new premium is based on the plan chosen and her attained age, not the old term premium. Renewal only extends the term."
+    },
+    {
+      "id": "c04-q050",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Life riders",
+      "page": "4•23",
+      "q": "At 30, Alicia bought a life policy with a guaranteed insurability rider. At 40 she exercises an option to buy $100,000 more coverage. Which is true?",
+      "options": [
+        "No medical evidence is needed, and the premium is based on her age at 40",
+        "She must pass a medical, but the premium is based on her age at 30",
+        "She may buy any amount she wants, since the rider has no maximums",
+        "No medical evidence is needed, and the premium is based on her age at 30"
+      ],
+      "answer": 0,
+      "explain": "A guaranteed insurability rider lets the policyowner buy more coverage at set option dates without evidence of insurability, priced at the attained age when the option is exercised. Maximums apply per option and over the life of the policy; the right usually ends around age 55."
+    },
+    {
+      "id": "c04-q051",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Settlement options",
+      "page": "4•23",
+      "q": "Gilles wants his wife to receive income for life from his life insurance without managing the capital, and wants the capital itself to go to their children when she dies. Which settlement option fits best?",
+      "options": [
+        "Lump sum",
+        "Interest only",
+        "Fixed period payments",
+        "Life annuity"
+      ],
+      "answer": 1,
+      "explain": "Under interest only, the proceeds are invested and only the income is paid to the primary beneficiary for life; at her death the capital goes to the residual beneficiary. A life annuity also pays for life but leaves nothing at death."
+    },
+    {
+      "id": "c04-q052",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Settlement options",
+      "page": "4•24",
+      "q": "Irene pre-selected a life annuity settlement for her $1 million policy because her husband manages money poorly. After her death, he asks the insurer for a lump sum instead. What happens?",
+      "options": [
+        "He can switch to interest only, which preserves the capital for his heirs",
+        "He can't change it; he gets annuity payments for life, and nothing after his death",
+        "He can switch to a lump sum, since the beneficiary chooses at the time of claim",
+        "He gets annuity payments, and any capital left at his death goes to his estate"
+      ],
+      "answer": 1,
+      "explain": "A beneficiary may choose the settlement option at claim, unless the policyowner pre-selected one, which the beneficiary cannot change. A life annuity pays for the primary beneficiary's lifetime, with no further payments at death."
+    },
+    {
+      "id": "c04-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Assignment",
+      "page": "4•24",
+      "q": "Which statement correctly contrasts absolute and collateral assignments of a life insurance policy?",
+      "options": [
+        "A collateral assignment transfers all rights; an absolute one only those specified",
+        "Both are dispositions for tax purposes, but only collateral ones need a lender",
+        "An absolute assignment leaves the beneficiary unchanged; a collateral one names the lender",
+        "An absolute assignment is a disposition for tax purposes; a collateral one is not"
+      ],
+      "answer": 3,
+      "explain": "An absolute assignment transfers all rights to the new owner, counts as a disposition for tax, and makes the assignee the beneficiary until he or she changes it. A collateral assignment, typically to a lender, passes only the rights specified and is not a disposition."
+    },
+    {
+      "id": "c04-q054",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Assignment",
+      "page": "4•25",
+      "q": "In 2020, Hélène, who lives in Quebec, absolutely assigned her life insurance policy to a friend who has no insurable interest in her life. What is the effect?",
+      "options": [
+        "It is valid, but it is treated as a collateral assignment instead",
+        "It is valid, provided the friend has reached the age of majority",
+        "The assignment is invalid, and the assigned policy becomes null and void",
+        "It is valid, since insurable interest matters only when a policy is issued"
+      ],
+      "answer": 2,
+      "explain": "In Quebec, an assignment executed after January 1, 1994 is valid only if the assignee has an insurable interest in the life insured; otherwise the assigned policy becomes null and void. The common-law provinces have no such requirement."
+    },
+    {
+      "id": "c04-q055",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "q": "Sanjay, who lives in Ontario, named his sister as irrevocable beneficiary of his life policy. He now wants to take a policy loan. What does he need?",
+      "options": [
+        "Nothing, since an owner can always borrow against the cash value",
+        "The insurer's approval and fresh evidence of his insurability",
+        "A court order setting aside the irrevocable designation first",
+        "His sister's express written consent before taking the loan"
+      ],
+      "answer": 3,
+      "explain": "Without an irrevocable beneficiary's written consent, the owner cannot change the beneficiary, surrender, assign collaterally, take a policy loan or withdraw cash. Owners sometimes accept these limits for the extra creditor protection the Uniform Life Insurance Act provides."
+    },
+    {
+      "id": "c04-q056",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Beneficiaries",
+      "page": "4•27",
+      "q": "Martin, who lives in Quebec, named his wife as beneficiary of his life policy without saying whether the designation is revocable. He now wants to name his brother instead. Which is correct?",
+      "options": [
+        "He can change it freely, since the irrevocable rule applies only to civil unions",
+        "He can change it freely, since a designation is revocable unless stated otherwise",
+        "He needs his wife's consent only if she is also the policy's life insured",
+        "He needs his wife's consent, since a named married spouse is presumed irrevocable"
+      ],
+      "answer": 3,
+      "explain": "In Quebec, a married or civil union spouse named as beneficiary is automatically irrevocable unless the policyowner stipulates otherwise, so Martin needs her consent. In the common-law provinces, a designation is revocable unless the owner specifies otherwise."
+    },
+    {
+      "id": "c04-q057",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Beneficiaries",
+      "page": "4•26",
+      "q": "In the common-law provinces, divorce does not automatically revoke a life insurance beneficiary designation in favour of the former spouse.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. In the common-law provinces the policyowner must specifically revoke the ex-spouse's designation. In Quebec, by contrast, divorce automatically revokes a spouse's beneficiary designation."
+    },
+    {
+      "id": "c04-q058",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Beneficiaries",
+      "page": "4•27",
+      "q": "Owen has heavy business debts. Which arrangement best shelters his life insurance proceeds from his creditors at his death?",
+      "options": [
+        "Naming his daughter as beneficiary, so the proceeds belong to her",
+        "Assigning the policy collaterally to his largest creditor",
+        "Naming his estate as beneficiary, so his will can direct the money",
+        "Leaving the beneficiary blank, so the proceeds go into his estate"
+      ],
+      "answer": 0,
+      "explain": "Proceeds payable to a named beneficiary belong to that beneficiary and are not subject to the insured's creditors. Proceeds paid to the estate, whether named or by default, have no creditor protection."
+    },
+    {
+      "id": "c04-q059",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Group insurance",
+      "page": "4•27",
+      "q": "Karine is leaving the employer whose group plan insures her life. What does the group contract usually allow her to do?",
+      "options": [
+        "Transfer the master contract into her own name",
+        "Keep the group coverage indefinitely at the employer's cost",
+        "Convert her group coverage to an individual policy",
+        "Nothing, since all her coverage ends with no further rights"
+      ],
+      "answer": 2,
+      "explain": "Termination or replacement provisions set out members' options when the plan ends or they leave the group, and there is usually a provision allowing conversion to an individual policy. Her certificate of insurance states her rights on termination."
+    },
+    {
+      "id": "c04-q060",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Disability provisions",
+      "page": "4•28",
+      "q": "Bruno is comparing two disability policies that are identical except for a 30-day versus a 180-day elimination period. Which statement is correct?",
+      "options": [
+        "The 30-day policy costs less, since its claims are settled sooner",
+        "The 180-day policy costs more, since its benefits are paid for longer",
+        "The 180-day policy costs much less, since many disabilities are short",
+        "Both cost the same; the elimination period only affects benefit amounts"
+      ],
+      "answer": 2,
+      "explain": "The elimination period is a 'time deductible': the insured finances the first days of disability. Lengthening it is one of the most effective ways to reduce the premium, because many disabilities are short and never reach the payment stage."
+    },
+    {
+      "id": "c04-q061",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "q": "Bea's disability policy pays benefits for up to 5 years. She was off work for 2 years, returned, and 4 months later went back on claim for the same condition. Which is correct?",
+      "options": [
+        "A new elimination period applies, but a fresh 5-year benefit period starts",
+        "No new elimination period applies, and a fresh 5-year benefit period starts",
+        "No new elimination period applies, and at most 3 more years of benefits remain",
+        "A new elimination period applies, and at most 3 more years of benefits remain"
+      ],
+      "answer": 2,
+      "explain": "A recurrence of the same condition within six months is treated as a continuation of the first claim: benefits resume with no new elimination period, but the benefit period is reduced by what was already paid (5 - 2 = 3 years). After six months, it would be a new claim."
+    },
+    {
+      "id": "c04-q062",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "q": "Leo's disability policy includes waiver of premium and premium refund. He becomes disabled and pays two premiums while his claim is being set up. Once benefits begin, what happens?",
+      "options": [
+        "Premiums are waived only after he has been disabled for a full year",
+        "Premiums continue, but are deducted from each benefit payment he receives",
+        "Premiums are waived while he receives benefits, but the two he paid are kept",
+        "Premiums are waived while he receives benefits, and the two he paid are refunded"
+      ],
+      "answer": 3,
+      "explain": "Under this optional feature, the insurer waives premiums while the insured is receiving benefits and returns premiums paid during the illness period. Some contracts also extend the waiver to partial disability."
+    },
+    {
+      "id": "c04-q063",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "q": "Daniel's disability policy has a future coverage option he can exercise every two years until age 50. His income has risen, but his health has declined. What can he do at the next option date?",
+      "options": [
+        "Buy unlimited extra coverage, since the option overrides the income limits",
+        "Buy more coverage only if he passes a medical, since his health has changed",
+        "Buy more coverage regardless of his health, within the insurer's income limits",
+        "Nothing, since the option can be used only if his health is unchanged"
+      ],
+      "answer": 2,
+      "explain": "A future coverage option lets the insured buy additional coverage at set intervals regardless of health status, up to the insurer's maximum percentage of income and dollar cap. Once the cap is reached, coverage can't be increased."
+    },
+    {
+      "id": "c04-q064",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Disability provisions",
+      "page": "4•29",
+      "q": "A Quebec insurer issues a health insurance policy to Chloé, who has met every requirement except paying the initial premium. Which is correct?",
+      "options": [
+        "It can be in force; cancelling for non-payment requires 15 days' written notice",
+        "It is not in force until the initial premium is paid, exactly as with life insurance",
+        "It can be in force, but the insurer may cancel it at any time without any notice",
+        "It is in force only during a 30-day grace period, after which it lapses automatically"
+      ],
+      "answer": 0,
+      "explain": "For health policies issued in Quebec, paying the initial premium is not a requirement for the contract to begin, unlike life insurance. If the insurer wants to cancel for non-payment of the initial premium, it must give the insured 15 days' written notice."
+    },
+    {
+      "id": "c04-q065",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Indemnity & subrogation",
+      "page": "4•30",
+      "q": "A negligent driver damages Selena's car. Her insurer pays the $1,000 repair bill and then pursues the other driver to recover it. This is an example of:",
+      "options": [
+        "Co-insurance",
+        "Subrogation",
+        "Excess insurance",
+        "Apportionment"
+      ],
+      "answer": 1,
+      "explain": "Subrogation substitutes the insurer for the insured to claim indemnity from a responsible third party, giving the insurer the ability to collect damages from a negligent driver after paying its own insured."
+    },
+    {
+      "id": "c04-q066",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Indemnity & subrogation",
+      "page": "4•31",
+      "q": "After her insurer pays for her damaged car, Jo signs an agreement releasing the at-fault driver from all further claims, hoping to avoid a dispute. Which subrogation principle has she breached?",
+      "options": [
+        "Recoveries go first to the insurer and only then to the insured",
+        "The insurer cannot subrogate against its own insured to reduce its obligation",
+        "Subrogation does not apply to life and most health insurance contracts",
+        "The insured cannot stand in the way of the insurer's subrogation rights"
+      ],
+      "answer": 3,
+      "explain": "Once the insurer has paid, it is entitled to pursue the negligent party, and the insured cannot block those rights. Insurers may choose to waive subrogation, but the insured cannot waive it for them. (If the policy is silent, recoveries go to the insured first, until fully indemnified.)"
+    },
+    {
+      "id": "c04-q067",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Indemnity & subrogation",
+      "page": "4•31",
+      "q": "Subrogation does not apply to life insurance or to most health insurance contracts.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. This is one of the five general principles of subrogation. Subrogation is a feature of general (property and casualty) insurance, letting the insurer recover from a negligent third party."
+    }
+  ]
+}
