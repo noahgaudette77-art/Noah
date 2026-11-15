@@ -59,6 +59,9 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
 #flash.cover { opacity: 1; background: #000; }
+#loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 56; display: flex; flex-direction: column; align-items: center; gap: 12px; font: 10px "Press Start 2P", monospace; letter-spacing: 2px; color: #35efff; text-shadow: 0 0 10px rgba(53, 239, 255, 0.7); pointer-events: none; }
+#loading .lbar { width: 168px; height: 6px; border: 1px solid rgba(53, 239, 255, 0.55); background: rgba(10, 4, 40, 0.9); }
+#loading .lbar i { display: block; height: 100%; background: linear-gradient(90deg, #ff3ad4, #35efff); transform-origin: left center; transform: scaleX(0.03); transition: transform 0.2s linear; box-shadow: 0 0 10px rgba(255, 58, 212, 0.7); }
 #flash.crt-on { animation: crton 0.55s ease-out forwards; background: #000; }
 #flash.crt-on::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: #fff; box-shadow: 0 0 18px #fff; transform-origin: center; animation: crtline 0.55s ease-out forwards; }
 @keyframes crton { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
@@ -1750,3 +1753,25 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* The floor's horizon behind a menu page is a glow, not a line: as a bright 2 px line it ran through any words on the
    page's own ground that sat at its height (the caption under the stats tiles had a line through it). */
 .screen[style*="background:rgba(9,3,32"]::after { background: radial-gradient(64% 50% at 50% 50%, rgba(255, 58, 212, 0.2), rgba(120, 70, 255, 0.1) 46%, rgba(0, 0, 0, 0) 72%), linear-gradient(90deg, rgba(53, 239, 255, 0), rgba(53, 239, 255, 0.09) 30%, rgba(255, 58, 212, 0.09) 70%, rgba(255, 58, 212, 0)) 0 50% / 100% 2px no-repeat; }
+
+/* ==== combat pass: what a blow does to the HUD (see HudFX) ==== */
+.scr-game.hud-hurt .hud, .scr-game.hud-hurt .timer, .scr-game.hud-hurt .bossbar { animation: hud-hurt 0.6s steps(1, end); }
+@keyframes hud-hurt { 0% { opacity: 0.35; transform: translate(-3px, 1px) skewX(-4deg); filter: drop-shadow(3px 0 0 rgba(255, 40, 80, 0.85)) drop-shadow(-3px 0 0 rgba(53, 239, 255, 0.7)); } 12% { opacity: 1; transform: translate(2px, -1px) skewX(2deg); } 24% { opacity: 0.55; transform: translate(-1px, 0); filter: drop-shadow(2px 0 0 rgba(255, 40, 80, 0.7)) drop-shadow(-2px 0 0 rgba(53, 239, 255, 0.5)); } 40% { opacity: 1; transform: none; filter: none; } 62% { opacity: 0.8; } 100% { opacity: 1; transform: none; filter: none; } }
+.hud-cracks { position: absolute; z-index: 6; pointer-events: none; opacity: 0; }
+.hud-cracks svg { width: 100%; height: 100%; overflow: visible; }
+.hud-cracks path { fill: none; stroke: rgba(255, 236, 244, 0.95); stroke-width: 0.7; vector-effect: non-scaling-stroke; stroke-linejoin: bevel; filter: drop-shadow(0 0 3px rgba(255, 71, 105, 0.95)); stroke-dasharray: 220; stroke-dashoffset: 220; }
+.hud-cracks.go { animation: cracks-fade 1.5s ease-out forwards; }
+.hud-cracks.go path { animation: cracks-draw 0.16s ease-out forwards; }
+@keyframes cracks-draw { to { stroke-dashoffset: 0; } }
+@keyframes cracks-fade { 0% { opacity: var(--k, 1); } 55% { opacity: calc(var(--k, 1) * 0.8); } 100% { opacity: 0; } }
+.scr-game.hud-low .lives span:not(.lost) svg { animation: life-low 0.9s ease-in-out infinite; }
+.scr-game.hud-low .hud { box-shadow: inset 0 -2px 0 rgba(255, 71, 105, 0.75), 0 6px 18px -8px rgba(255, 40, 80, 0.9); }
+@keyframes life-low { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255, 71, 105, 0.7)); } 18% { transform: scale(1.28); filter: drop-shadow(0 0 11px rgba(255, 40, 80, 1)); } 36% { transform: scale(1.05); } 50% { transform: scale(1.2); filter: drop-shadow(0 0 9px rgba(255, 40, 80, 0.95)); } }
+.life-shard { position: fixed; z-index: 60; width: 5px; height: 7px; margin: -3px; background: #ff4769; clip-path: polygon(50% 0, 100% 60%, 30% 100%, 0 35%); box-shadow: 0 0 6px rgba(255, 71, 105, 0.9); pointer-events: none; animation: life-shard 0.6s cubic-bezier(0.2, 0.6, 0.4, 1) forwards; }
+@keyframes life-shard { 0% { transform: translate(0, 0) rotate(0) scale(1.2); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(0.4); opacity: 0; } }
+.reward-bit { position: fixed; z-index: 61; width: 16px; height: 16px; margin: -8px; pointer-events: none; opacity: 0; filter: drop-shadow(0 0 6px var(--c, #ffe14f)); will-change: transform; }
+.reward-bit svg { width: 100%; height: 100%; display: block; }
+.reward-bit.spark { width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: var(--c, #ffe14f); box-shadow: 0 0 10px var(--c, #ffe14f); }
+.reward-pop { animation: reward-pop 0.45s var(--ease-spring, ease-out); }
+@keyframes reward-pop { 0% { transform: scale(1); } 35% { transform: scale(1.32); filter: brightness(1.8) drop-shadow(0 0 10px #ffe14f); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .scr-game.hud-hurt .hud, .scr-game.hud-hurt .timer, .scr-game.hud-hurt .bossbar, .scr-game.hud-low .lives span:not(.lost) svg { animation: none; } }

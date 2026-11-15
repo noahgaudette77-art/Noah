@@ -37,6 +37,7 @@ function boot() {
     if (GFX.freeze > 0) { GFX.freeze -= real; dt = real * 0.3; }
     try {
       Pointer.update(real);
+      VFX.frame(dt, real);
       Scenes.frame(dt, real);
     } catch (e) {
       console.error(e);
@@ -72,7 +73,7 @@ function boot() {
 // Test hook: open the page with #debug to expose internals to automated checks.
 if (/debug/.test(location.hash)) {
   window.__arcade = {
-    Scenes, Store, UI, CHAPTERS, GFX, Sound, Trophies, Hype, drawPortrait, client,
+    Scenes, Store, UI, CHAPTERS, GFX, VFX, Sound, Assets, CombatFX, HudFX, gameAssets, Trophies, Hype, drawPortrait, client,
     show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults, examSetup: showExamSetup, guide: showGuide }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {

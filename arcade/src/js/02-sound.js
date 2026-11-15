@@ -1,5 +1,7 @@
-// Chiptune sound: every effect and the music are synthesised with WebAudio,
-// so there are no audio files. Audio starts only after the first tap.
+// Sound. Two layers: recorded sound (effects, announcer and music in arcade/assets/audio, loaded by Assets when
+// the page can fetch them) and, under it, the chiptune synth that makes every effect and the music with WebAudio
+// from nothing. A sound that has a recording plays it; one that has none, or whose file has not arrived, is
+// synthesised, so the game is never silent and never waits. Audio starts only after the first tap.
 const Sound = {
   ctx: null,
   master: null,
@@ -10,6 +12,10 @@ const Sound = {
   step: 0,
   nextTime: 0,
   timer: 0,
+  sprites: {}, // name -> AudioBuffer: one file holding many effects end to end
+  bank: {}, // cue name -> [{ buf, at, dur, vol }]: where each recorded effect lies (several takes of one sound are picked in turn)
+  tracks: {}, // name -> { buf, loop: [from, to], vol }: recorded music
+  loops: {}, // id -> a looping effect that is playing (see loop)
 
   init() {
     if (this.ctx) return this.resume();
@@ -21,7 +27,12 @@ const Sound = {
     const c = this.ctx;
     this.master = c.createGain();
     this.master.gain.value = 0.7;
-    this.master.connect(c.destination);
+    // a limiter on the way out: a blast, the music and the announcer at once must not clip
+    try {
+      const lim = c.createDynamicsCompressor();
+      lim.threshold.value = -9; lim.knee.value = 10; lim.ratio.value = 8; lim.attack.value = 0.004; lim.release.value = 0.22;
+      this.master.connect(lim).connect(c.destination);
+    } catch (e) { this.master.connect(c.destination); }
     this.sfxBus = c.createGain();
     this.sfxBus.gain.value = 0.55;
     this.sfxBus.connect(this.master);
@@ -39,7 +50,21 @@ const Sound = {
     } catch (e) { /* no convolver: effects stay dry */ }
     this.musicBus = c.createGain();
     this.musicBus.gain.value = 0.22;
-    this.musicBus.connect(this.master);
+    // the music ducks under the announcer and the biggest blasts (see duck)
+    this.duckGain = c.createGain();
+    this.musicBus.connect(this.duckGain).connect(this.master);
+    // recorded music has its own way in: a filter that opens as the streak grows, then the same duck
+    this.trackBus = c.createGain();
+    this.trackBus.gain.value = 0.5;
+    this.trackTone = c.createBiquadFilter();
+    this.trackTone.type = "lowpass";
+    this.trackTone.frequency.value = 20000;
+    this.trackTone.Q.value = 0.5;
+    this.trackBus.connect(this.trackTone).connect(this.duckGain);
+    // the announcer: dry, over everything
+    this.voiceBus = c.createGain();
+    this.voiceBus.gain.value = 0.95;
+    this.voiceBus.connect(this.master);
     const len = c.sampleRate * 1;
     this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
@@ -99,7 +124,11 @@ const Sound = {
   },
   // The announcer: the browser's own speech voice, pitched down, for the big moments.
   say(text) {
-    if (!Store.settings.sfx || !Store.settings.voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    if (!Store.settings.sfx || !Store.settings.voice) return;
+    // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
+    const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim();
+    if (this.ctx && this.bank[key]) { this.duck(0.4, 1.1, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0 }); return; }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
     try {
       const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
       u.lang = "en-US";
@@ -110,10 +139,103 @@ const Sound = {
       speechSynthesis.speak(u);
     } catch (e) { /* speech isn't allowed here */ }
   },
-  sfx(name, pan = 0) {
+  // Play an effect. o: { vol, rate, delay } scale a recorded take; the synth ignores them.
+  sfx(name, pan = 0, o) {
     if (!this.ctx || !Store.settings.sfx) return;
+    if (this.bank[name]) { this._cue(name, pan, o); return; }
     this.pan = pan;
-    try { this._sfx(name); } finally { this.pan = 0; }
+    try { this._sfx(this.ALIAS[name] || name); } finally { this.pan = 0; }
+  },
+  // What the synth plays for a sound that only exists as a recording (when the recordings are not loaded).
+  ALIAS: {
+    laser_fire: "laser", laser_heavy: "laser", plasma_fire: "shot", muzzle: "tick", shell: "tick",
+    impact_good: "boom", impact_big: "bigboom", impact_reject: "wrong", impact_hull: "hit", impact_shield: "shield", impact_metal: "clunk",
+    explosion_small: "boom", explosion_big: "bigboom", explosion_huge: "bossblast", debris: "shatter",
+    charge_up: "charge", charge_long: "bosscharge", warning: "buzz", lock_on: "tick", alarm: "buzz",
+    beam_fire: "laser", missile_fire: "swoosh", missile_hit: "boom", slam: "bosssmash", wave_fire: "whoosh",
+    boss_roar: "bossroar", boss_hurt: "hit", boss_stagger: "bossdown", boss_break: "bosspop", boss_death: "bossblast",
+    player_hit: "hit", heart_lost: "shatter", shield_down: "shield", low_health: "buzz",
+    crash: "hit", crash_glass: "shatter", skid: "swoosh", near_miss: "whoosh", boost: "warp", boost_flame: "whoosh",
+    reward: "coin", slowmo_in: "whoosh", ui_click: "blip", ui_select: "select", ui_back: "back",
+  },
+  // A recorded effect. Takes of one sound are played in turn, each a touch different in pitch and level.
+  _cue(name, pan, o = {}) {
+    const takes = this.bank[name], c = this.ctx;
+    if (!takes || !c) return null;
+    const k = (takes.i = ((takes.i || 0) + 1 + (takes.length > 2 ? Math.floor(Math.random() * (takes.length - 1)) : 0)) % takes.length), q = takes[k];
+    const src = c.createBufferSource(), g = c.createGain(), vary = o.vary === undefined ? 1 : o.vary;
+    src.buffer = q.buf;
+    src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() - 0.5) * 0.06 * vary);
+    g.gain.value = (o.vol === undefined ? 1 : o.vol) * q.vol * (1 - Math.random() * 0.12 * vary);
+    let out = o.bus || this.sfxBus;
+    if (pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(out); out = p; }
+    src.connect(g).connect(out);
+    const t0 = c.currentTime + (o.delay || 0);
+    src.start(t0, q.at, q.dur);
+    if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    return src;
+  },
+  // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
+  // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false
+  // when there is no recording by that name, so the caller can fall back on the synth.
+  loop(id, name, o = {}) {
+    if (!this.ctx || !Store.settings.sfx || !this.bank[name]) return false;
+    if (this.loops[id]) { if (this.loops[id].name === name) return true; this.stopLoop(id, 0.05); }
+    const c = this.ctx, q = this.bank[name][0], src = c.createBufferSource(), g = c.createGain();
+    src.buffer = q.buf; src.loop = true; src.loopStart = q.at; src.loopEnd = q.at + q.dur;
+    src.playbackRate.value = o.rate || 1;
+    g.gain.value = 0.0001;
+    g.gain.setTargetAtTime((o.vol === undefined ? 1 : o.vol) * q.vol, c.currentTime, o.fade || 0.25);
+    src.connect(g).connect(this.sfxBus);
+    src.start(c.currentTime, q.at);
+    this.loops[id] = { name, src, g, vol: q.vol };
+    return true;
+  },
+  loopSet(id, o) {
+    const l = this.loops[id];
+    if (!l) return;
+    const t = this.ctx.currentTime;
+    if (o.vol !== undefined) l.g.gain.setTargetAtTime(Math.max(0.0001, o.vol * l.vol), t, 0.08);
+    if (o.rate !== undefined) l.src.playbackRate.setTargetAtTime(o.rate, t, 0.08);
+  },
+  stopLoop(id, fade = 0.25) {
+    const l = this.loops[id];
+    if (!l) return;
+    delete this.loops[id];
+    try { l.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, fade / 3); l.src.stop(this.ctx.currentTime + fade + 0.1); } catch (e) { /* stopped */ }
+  },
+  stopLoops() { for (const id in this.loops) this.stopLoop(id, 0.15); },
+  // The music steps back for a moment (the announcer, a great blast) and comes back up.
+  duck(depth = 0.45, hold = 0.5, release = 0.8) {
+    if (!this.ctx || !this.duckGain) return;
+    const g = this.duckGain.gain, t = this.ctx.currentTime;
+    try { g.cancelScheduledValues(t); g.setTargetAtTime(depth, t, 0.03); g.setTargetAtTime(1, t + hold, release / 3); } catch (e) { /* not supported */ }
+  },
+  // ---- recorded sound, loaded by Assets --------------------------------------------------
+  _decode(buf) { return new Promise((res, rej) => { try { const p = this.ctx.decodeAudioData(buf.slice(0), res, rej); if (p && p.catch) p.catch(rej); } catch (e) { rej(e); } }); },
+  // One file of effects and the list of where each lies: Assets.files.sprites[name] = { file, cues: { cue: [[at, dur, vol, duck]...] } }
+  loadSprite(name) {
+    const sp = Assets.files.sprites[name];
+    if (!sp || !this.ctx) return Promise.resolve(null);
+    return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
+      this.sprites[name] = buf;
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
+      return buf;
+    }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
+  },
+  // A piece of music: Assets.files.music[name] = { file, loop: [from, to], vol }. If it is the one that should be
+  // playing by the time it arrives, it takes over from the synth.
+  loadTrack(name) {
+    const m = Assets.files.music[name];
+    if (!m || !this.ctx) return Promise.resolve(null);
+    if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
+    const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
+      this.tracks[name] = { buf, loop: m.loop || [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
+      if (this.trackName === name && Store.settings.music) { this.trackName = null; this.play(name); }
+      return buf;
+    }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
+    (this._trackLoad || (this._trackLoad = {}))[name] = p;
+    return p;
   },
   _sfx(name) {
     const T = (f, d, o) => this.tone(f, d, o);
@@ -341,7 +463,15 @@ const Sound = {
 
   // Music builds with your streak: 0 calm, 1 hats, 2 lead, 3 everything.
   intensity: 0,
-  setIntensity(n) { this.intensity = clamp(n, 0, 3); },
+  setIntensity(n) {
+    this.intensity = clamp(n, 0, 3);
+    // recorded music opens up with the streak: a touch darker and lower while it is calm, everything at the top
+    if (this.ctx && this.trackTone) {
+      const t = this.ctx.currentTime, i = this.intensity;
+      this.trackTone.frequency.setTargetAtTime([5200, 8000, 12500, 20000][Math.round(i)], t, 0.4);
+      this.trackBus.gain.setTargetAtTime([0.4, 0.44, 0.48, 0.52][Math.round(i)], t, 0.4);
+    }
+  },
   intensityFor(streak) { return streak >= 8 ? 3 : streak >= 5 ? 2 : streak >= 2 ? 1 : 0; },
 
   // --- music: a tiny step sequencer ----------------------------------------
@@ -350,13 +480,28 @@ const Sound = {
     hub: { bpm: 92, prog: [[38, 50, 53, 57], [43, 50, 55, 59], [36, 48, 52, 55], [41, 48, 53, 57]], arp: [0, 2, 1, 3, 2, 1, 3, 2], lead: null },
     game: { bpm: 128, prog: [[45, 57, 60, 64], [45, 57, 60, 64], [41, 53, 57, 60], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 1, 2, 3, 2], lead: null },
     boss: { bpm: 140, prog: [[40, 52, 55, 59], [40, 52, 55, 59], [41, 53, 56, 60], [38, 50, 53, 57]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: null },
+    get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
   },
   play(name) {
-    if (this.trackName === name && this.timer) return;
+    if (this.trackName === name && (this.timer || this._now)) return;
     this.trackName = name;
     this.stopMusic();
-    if (!this.ctx || !Store.settings.music || !this.TRACKS[name]) return;
+    if (!this.ctx || !Store.settings.music) return;
+    const rec = this.tracks[name];
+    if (rec) { // the recording: looped between its loop points, faded in
+      const c = this.ctx, src = c.createBufferSource(), g = c.createGain();
+      src.buffer = rec.buf; src.loop = true; src.loopStart = rec.loop[0]; src.loopEnd = rec.loop[1];
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(rec.vol, c.currentTime, 0.5);
+      src.connect(g).connect(this.trackBus);
+      src.start(c.currentTime, rec.loop[0]);
+      this._now = { src, g };
+      this.setIntensity(this.intensity);
+      return;
+    }
+    if (Assets.on && Assets.files.music[name]) this.loadTrack(name); // (it takes over when it arrives; the synth plays meanwhile)
+    if (!this.TRACKS[name]) return;
     this.track = this.TRACKS[name];
     this.step = 0;
     this.nextTime = this.ctx.currentTime + 0.08;
@@ -365,6 +510,11 @@ const Sound = {
   stopMusic() {
     clearInterval(this.timer);
     this.timer = 0;
+    if (this._now) {
+      const n = this._now;
+      this._now = null;
+      try { n.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.18); n.src.stop(this.ctx.currentTime + 0.9); } catch (e) { /* stopped */ }
+    }
   },
   refreshMusic() {
     const n = this.trackName;

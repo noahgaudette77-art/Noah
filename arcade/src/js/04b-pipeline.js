@@ -345,7 +345,7 @@ function makePipeline(renderer, hdr) {
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 }, uPr: { value: 1 },
     uHitCol: { value: new THREE.Vector3(1, 1, 1) }, uHit: { value: new THREE.Vector3() },
-    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() },
+    uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() }, uDanger: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
     uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 },
@@ -357,7 +357,7 @@ function makePipeline(renderer, hdr) {
     uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
-    uniform vec3 uFeverCol; uniform HP vec2 uFever;
+    uniform vec3 uFeverCol; uniform HP vec2 uFever; uniform HP vec2 uDanger;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
     uniform HP vec4 uKeep; uniform float uKeepA;
     varying HP vec2 vUv;
@@ -454,6 +454,14 @@ function makePipeline(renderer, hdr) {
         float rays = max(sin(fa * 17.0 + uFever.y * 2.1) * sin(fa * 29.0 - uFever.y * 3.3) + 0.6 * sin(fa * 53.0 + uFever.y * 5.9), 0.0);
         float edge = smoothstep(0.4, 1.02, fr);
         col += uFeverCol * uFever.x * edge * (0.24 + 0.85 * rays * rays) * (0.82 + 0.18 * sin(uFever.y * 9.0));
+      }
+      if (uDanger.x > 0.0) {
+        // low health: a red vignette that beats twice and rests, like a pulse; the middle of the picture stays clear
+        float dr = length((vUv - 0.5) * vec2(1.0, 1.25)) * 1.4142;
+        HP float ph = fract(uDanger.y * 0.85);
+        float beat = exp(-ph * 9.0) + 0.7 * exp(-abs(ph - 0.22) * 14.0);
+        float de = smoothstep(0.42, 1.05, dr);
+        col = mix(col, vec3(0.92, 0.03, 0.09) * (0.55 + 0.45 * dot(col, vec3(0.3333))), uDanger.x * de * (0.42 + 0.58 * beat));
       }
       if (uGlass > 0.5) {
         // scanlines three CSS pixels tall and a phosphor triad, both at the screen's own pixels
@@ -638,7 +646,7 @@ function makePipeline(renderer, hdr) {
           if (GFX.probe) GFX.probe("rays");
         }
       }
-      const bloomK = noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1;
+      const bloomK = (noBloom ? 0 : p.bloom !== undefined ? p.bloom : 1) * (1 + (o.bloomKick || 0));
       const u = final.uniforms;
       if (noBloom && !raysOn) {
         u.tGlow.value = black;
@@ -676,6 +684,7 @@ function makePipeline(renderer, hdr) {
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
       u.uFeverCol.value.set(o.feverCol[0], o.feverCol[1], o.feverCol[2]);
       u.uFever.value.set(o.fever, o.t % 628.3185);
+      u.uDanger.value.set(o.danger || 0, o.t % 628.3185);
       u.uRip.value.set(o.rip.x, o.rip.y, o.ripR, o.ripAmp);
       u.uZoom.value.set(o.punch, o.zoomBlur);
       if (o.keep) { u.uKeep.value.set(o.keep.x, o.keep.y, o.keep.rx, o.keep.ry); u.uKeepA.value = o.keep.a; } else u.uKeepA.value = 0;

@@ -348,7 +348,7 @@ class BlasterGame extends QuizGame {
   }
 
   start() {
-    Sound.play("game");
+    Sound.play("blaster");
     Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.director.force("squadron"); // a flight of fighters crosses as the game opens
     if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in

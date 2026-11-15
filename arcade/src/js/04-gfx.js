@@ -23,6 +23,8 @@ const GFX = {
   opt: { bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true },
   calm: false,
   flashAt: -9, hitAt: -9,
+  danger: 0, dangerT: 0, // low health: a red vignette that beats (see setDanger)
+  bloomKick: 0, // a blow's bloom: the glow of the whole picture swells for a moment (see bloomPulse)
   // Setup: the effect switches and Reduced effects.
   applySettings() {
     const s = Store.settings;
@@ -91,6 +93,8 @@ const GFX = {
     this.punch *= Math.pow(0.0006, dt);
     const rp = this.rip, rk = Math.min(1, (rp.t += dt) / rp.dur);
     const gk = Math.min(1, (this.gl.t += dt) / this.gl.dur);
+    this.danger += (this.dangerT - this.danger) * Math.min(1, dt * 3);
+    this.bloomKick *= Math.pow(0.0015, dt);
     // Object matrices are updated once per frame here, not again in every pass that
     // draws the scene (reflections draw it twice).
     scene.updateMatrixWorld();
@@ -115,6 +119,8 @@ const GFX = {
       heat: this.heat,
       keep: this.keep,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
+      danger: this.danger < 0.004 ? 0 : this.danger,
+      bloomKick: this.bloomKick < 0.004 ? 0 : this.bloomKick,
       glass: Store.settings.crt ? 1 : 0,
       look: this.look,
       post: scene.userData.post || {},
@@ -180,6 +186,10 @@ const GFX = {
     this.flashAmt = Math.max(this.flashAmt, flash);
   },
   hitStop(ms) { if (!REDUCED_MOTION) this.freeze = Math.max(this.freeze, ms / 1000); },
+  // Low health: a red vignette round the picture that beats like a pulse, until it is set back to 0. amt 0..1.
+  setDanger(amt) { this.dangerT = REDUCED_MOTION || this.calm ? amt * 0.45 : amt; },
+  // The glow of the whole picture swells for a moment (a blow that lands, a blast). k 0..1.5.
+  bloomPulse(k = 0.6) { if (!REDUCED_MOTION && !this.calm) this.bloomKick = Math.max(this.bloomKick, k); },
   // Right/wrong flashes, drawn by the final shader as a coloured vignette over the
   // 3D view (they used to be a full-screen page layer, which the browser had to
   // blend on every frame of the fade, plus a forced layout to restart it).
@@ -274,9 +284,45 @@ const GFX = {
   },
   sceneChanged() {
     this.speedBlur = this.punch = 0;
+    this.danger = this.dangerT = this.bloomKick = 0;
+    VFX.reset();
     this.rip.t = this.rip.dur;
     this.gl.t = this.gl.dur;
   },
+};
+
+// The show clock. Everything that is look and not rule (effects, model animation, telegraphs, deaths) runs on
+// VFX.dt instead of the scene's own dt, so a hit-stop or a beat of slow motion changes what is seen and never when
+// a rule fires: timers, charge bars and the order of events run on, frame for frame, as they always did.
+//   VFX.hitStop(frames)      freeze the show for that many 60 Hz frames (2 or 3 on a big impact)
+//   VFX.slowMo(k, dur, hold) drop to k of full speed, hold, and ease back to full over dur seconds (real time)
+//   VFX.dt                   this frame's show time step; VFX.k its speed (0..1); VFX.t show time so far
+const VFX = {
+  dt: 0, k: 1, t: 0,
+  stop: 0, // seconds of freeze left
+  slow: { k: 1, t: 0, dur: 0, hold: 0 },
+  hitStop(frames = 3) { if (!REDUCED_MOTION && !GFX.calm) this.stop = Math.max(this.stop, frames / 60); },
+  slowMo(k = 0.25, dur = 0.5, hold = 0.12) {
+    if (REDUCED_MOTION || GFX.calm) return;
+    const s = this.slow;
+    if (s.t < s.dur + s.hold && s.k < k) return; // a deeper one is already running
+    s.k = k; s.t = 0; s.dur = dur; s.hold = hold;
+  },
+  // called once a frame by the main loop, with the scene's time step and the real one
+  frame(dt, real) {
+    let k = 1;
+    const s = this.slow;
+    if (s.t < s.dur + s.hold) {
+      s.t += real;
+      const u = clamp((s.t - s.hold) / Math.max(1e-4, s.dur), 0, 1);
+      k = lerp(s.k, 1, u * u * (3 - 2 * u));
+    }
+    if (this.stop > 0) { this.stop -= real; k = 0; }
+    this.k = k;
+    this.dt = dt * k;
+    this.t += this.dt;
+  },
+  reset() { this.stop = 0; this.slow.t = this.slow.dur = this.slow.hold = 0; this.k = 1; },
 };
 
 // The standard refresh rate nearest a frame interval (seconds).

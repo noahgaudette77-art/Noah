@@ -86,17 +86,24 @@ class QuizGame extends Scene3D {
   }
 }
 
+// The asset files one play needs beyond its game's standing set: Boss Rush fights one boss, so it loads one.
+function gameAssets(id, sel) {
+  if (id === "boss") return ["model:boss-" + (sel && sel.chapters && sel.chapters.length === 1 ? sel.chapters[0] : "all")];
+  return [];
+}
 function startGame(id, sel) {
   const G = { blaster: BlasterGame, racer: RacerGame, boss: BossGame, memory: MemoryGame, exam: ExamGame }[id];
   const go = () => {
     Sound.ambience(false);
     Sound.setIntensity(0);
     Sound.sfx("crton");
-    UI.cover(() => {
+    // (the game's asset files first, when the page can fetch them: see Assets. With nothing to wait for this runs
+    // straight through, as it always did.)
+    Assets.with(id, gameAssets(id, sel), () => UI.cover(() => {
       const g = new G(sel);
       Scenes.set(g);
       g.start();
-    });
+    }));
   };
   if (id === "exam") go();
   else withBriefing(sel, go);

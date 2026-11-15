@@ -1361,7 +1361,7 @@ class RacerGame extends QuizGame {
   }
 
   start() {
-    Sound.play("game");
+    Sound.play("racer");
     Sound.engine(true);
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());

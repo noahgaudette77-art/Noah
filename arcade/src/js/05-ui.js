@@ -98,6 +98,15 @@ const UI = {
       try { fn(); } finally { this.covering = false; this.flash("crt-on"); }
     }));
   },
+  // The loading line: shown over a black screen while a game's asset files arrive (see Assets.with).
+  loading(on, frac) {
+    const f = $("#flash");
+    let l = $("#loading");
+    if (!on) { if (l) l.remove(); return; }
+    f.className = "cover";
+    if (!l) { l = this.el('<div id="loading" role="status"><span>LOADING</span><div class="lbar"><i></i></div></div>'); document.body.appendChild(l); }
+    $("i", l).style.transform = `scaleX(${clamp(frac || 0, 0.03, 1).toFixed(3)})`;
+  },
   banner(text, color = COLORS.yellow, sub = "", cls = "") {
     Sound.say(text);
     const b = this.el(`<div class="banner${cls ? " " + cls : ""}" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
