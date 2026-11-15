@@ -2342,7 +2342,17 @@
    }
   }
  },
- "music": {},
+ "music": {
+  "blaster": {
+   "file": "audio/music-blaster.mp3",
+   "loop": [
+    0.7,
+    59.9041
+   ],
+   "vol": 1,
+   "take": 0
+  }
+ },
  "built": {
   "sfx-core": {
    "file": "audio/sfx-core.mp3",
@@ -2368,6 +2378,11 @@
    "file": "audio/voice.mp3",
    "bytes": 845785,
    "seconds": 70.41
+  },
+  "music-blaster": {
+   "file": "audio/music-blaster.mp3",
+   "bytes": 1204812,
+   "seconds": 60.17
   }
  }
 }
