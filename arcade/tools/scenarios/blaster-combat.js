@@ -109,6 +109,14 @@ module.exports = async (cap) => {
     await cap.until(() => !!window.__arcade.Scenes.cur.quiz.sheet, 200);
     await cap.fast(50);
     await still("17a-demon-critical", { band: true }); // (the wave's last blow has landed: it hangs there, breaking up, until the wave is closed)
+    // (The stars and coins that fly to the score are page animations, which run on the real clock: a capture steps a
+    // virtual one, and would show them already landed. For the capture they are stepped with the frames instead.)
+    await page(() => {
+      const animate = Element.prototype.animate, live = [];
+      Element.prototype.animate = function (frames, o) { const a = animate.call(this, frames, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
+      const step = () => { const now = performance.now(); for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } } requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
     await cap.next();
     // (from the top of the screen to the foot of the band: the stars and coins fly from the last blast up to the score)
     const b = await cap.band(0);

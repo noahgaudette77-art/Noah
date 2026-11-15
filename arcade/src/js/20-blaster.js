@@ -784,7 +784,12 @@ class BlasterGame extends QuizGame {
     this.streaks.material.color.setScalar(0.4 + w * 2.2);
     // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
-    GFX.speedBlur = w * (this.stage && this.state === "ask" ? 0.3 : 0.9) + GFX.fever * 0.12; // warp streaks the picture outward (staged: the warp follows the demon's death and may still be ending as the next question comes up: it is held down while there is something to read)
+    // warp streaks the picture outward. (Staged: the warp follows the demon's death and is still running as the next
+    // question comes up. From then on the picture is not streaked: the stars still stretch and the view still rolls,
+    // and the answers' drones are sharp.)
+    if (this.warpBlur === undefined) this.warpBlur = 0.9;
+    if (this.stage) this.warpBlur += ((this.state === "ask" ? 0 : 0.9) - this.warpBlur) * Math.min(1, dt * 12);
+    GFX.speedBlur = w * this.warpBlur + GFX.fever * 0.12;
     if (this.boomT > 0) {
       this.boomT = Math.max(0, this.boomT - dt * (this.boomFast ? 6.5 : 2.6));
       const k = this.boomT;
@@ -887,7 +892,7 @@ class BlasterGame extends QuizGame {
     // (staged) the picture sliding to a new place on the page is not the camera moving: for those frames it is not
     // streaked as if it were. Nor while a blow shakes it: a shaken picture stays sharp, so the answers' letters can
     // be read through it.
-    if (this.stage) { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || this.shakeAmt > 0.012 ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
+    if (this.stage) { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask") ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
     this.space.follow(this.camera);
     FX.sync(this.scene, this.t);
