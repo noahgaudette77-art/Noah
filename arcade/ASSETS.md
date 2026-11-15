@@ -63,6 +63,7 @@ each (the game plays the takes of a sound in turn). Loops: the same model with `
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.5 MB, 34 s |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.1 MB, 9 s |
 | `voice.mp3` | 55 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", streak names, milestones ...) | 0.8 MB, 70 s |
+| `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
 
 ## Spend log
 

@@ -6192,7 +6192,24 @@ const Sound = {
     const t0 = c.currentTime + (o.delay || 0);
     src.start(t0, q.at, q.dur);
     if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    const live = this.live || (this.live = new Set()), e = { src, g, born: c.currentTime, end: t0 + q.dur / src.playbackRate.value + 0.2 }; // (kept until it ends, so hush can cut it short)
+    if (live.size > 48) live.forEach((x) => { if (x.end < c.currentTime) live.delete(x); }); // (should an end go unreported)
+    live.add(e);
+    src.onended = () => live.delete(e);
     return src;
+  },
+  // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
+  // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
+  // was started in this same moment is left alone: the menu's own blip.
+  hush(fade = 0.12) {
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
+    if (!this.ctx || !this.live) return;
+    const t = this.ctx.currentTime;
+    this.live.forEach((e) => {
+      if (e.born >= t) return;
+      try { e.g.gain.cancelScheduledValues(t); e.g.gain.setTargetAtTime(0.0001, t, fade / 3); e.src.stop(t + fade + 0.05); } catch (err) { /* ended */ }
+      this.live.delete(e);
+    });
   },
   // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
   // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false
@@ -6767,15 +6784,17 @@ const Assets = {
     if (this.fresh["model:" + name]) return Promise.resolve(this.fresh["model:" + name]);
     return this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
       const parts = {};
+      let inr = gltf.scene.userData && gltf.scene.userData.inr; // (the processing tool's notes: parts, pivots, anchors. They ride the file's root node.)
       gltf.scene.traverse((o) => {
         if (o.name) parts[o.name] = o;
+        if (!inr && o.userData && o.userData.inr) inr = o.userData.inr;
         if (o.isMesh) {
           o.frustumCulled = !o.isSkinnedMesh; // (a skinned mesh's bounds are those of its rest pose)
           const ms = Array.isArray(o.material) ? o.material : [o.material];
           ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) m[k].anisotropy = Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()); });
         }
       });
-      const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: (gltf.scene.userData && gltf.scene.userData.inr) || (gltf.asset && gltf.asset.extras) || {} };
+      const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
       this.fresh["model:" + name] = m;
       return m;
     }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; });
@@ -8754,7 +8773,9 @@ const Perf = {
 //   HudFX.low(root, on)          low health: the lives beat red and the HUD's edge turns red until it is switched off
 //   HudFX.lifeLost(root)         the life that has just gone breaks into shards
 //   HudFX.blink(root, ms)        the short invulnerability blink after a hit (a class the scene can read: root.dataset.blink)
-//   HudFX.reward(root, from, to, { n, kind, color })   stars, coins or sparks fly from a point to a place in the HUD
+//   HudFX.reward(root, from, to, { n, kind, color, clear })   stars, coins or sparks fly from a point to a place in the HUD
+//                                (clear: an element, or a selector inside root, that they must not cross: the question.
+//                                They go round it, up the margin at its side.)
 const HudFX = {
   CRACKS: [
     "M0 0 L14 9 L22 6 L37 19 L46 17 L61 31 M14 9 L11 24 L19 33 M37 19 L33 34 M22 6 L30 0",
@@ -8807,8 +8828,27 @@ const HudFX = {
     const el = typeof to === "string" ? $(to, root) : to && to.nodeType ? to : null;
     const tr = el ? el.getBoundingClientRect() : null, tx = tr ? tr.left + tr.width / 2 : to.x, ty = tr ? tr.top + tr.height / 2 : to.y;
     const n = o.n || 10, kind = o.kind || "star", color = o.color || COLORS.yellow;
+    // what the flight must go round (the question panel, when it lies between the start and the HUD)
+    const ce = typeof o.clear === "string" ? $(o.clear, root) : o.clear && o.clear.nodeType ? o.clear : null, cr = ce ? ce.getBoundingClientRect() : null;
+    const round = cr && cr.height > 0 && from.y > cr.bottom && ty < cr.top + cr.height * 0.5;
     for (let i = 0; i < n; i++) {
       const sx = from.x + rand(-26, 26), sy = from.y + rand(-22, 22), mx = (sx + tx) / 2 + rand(-70, 70), my = Math.min(sy, ty) - rand(20, 90);
+      if (round) { // out to the margin at the side the target is on, up it past the panel, and in
+        const p = UI.el(`<i class="reward-bit ${kind}" style="left:0;top:0;--c:${color}">${kind === "spark" ? "" : icon(kind === "coin" ? "coin" : "star", color)}</i>`);
+        UI.root.appendChild(p);
+        const left = tx < innerWidth / 2, ex = clamp(left ? cr.left - 9 + rand(-2, 2) : cr.right + 9 + rand(-2, 2), 7, innerWidth - 7), dur = 640 + i * 38 + rand(0, 120);
+        if (p.animate) {
+          p.animate([
+            { transform: `translate(${sx}px,${sy}px) scale(0.3) rotate(0deg)`, opacity: 0 },
+            { transform: `translate(${sx}px,${sy}px) scale(1.25) rotate(40deg)`, opacity: 1, offset: 0.1 },
+            { transform: `translate(${ex}px,${cr.bottom + rand(14, 46)}px) scale(0.9) rotate(150deg)`, opacity: 1, offset: 0.42 },
+            { transform: `translate(${ex}px,${cr.top - rand(2, 8)}px) scale(0.8) rotate(260deg)`, opacity: 1, offset: 0.76 },
+            { transform: `translate(${tx}px,${ty}px) scale(0.45) rotate(360deg)`, opacity: 0.9 },
+          ], { duration: dur, delay: i * 34, easing: "cubic-bezier(0.3, 0, 0.3, 1)", fill: "both" });
+        }
+        setTimeout(() => p.remove(), dur + i * 34 + 60);
+        continue;
+      }
       const p = UI.el(`<i class="reward-bit ${kind}" style="left:0;top:0;--c:${color}">${kind === "spark" ? "" : icon(kind === "coin" ? "coin" : "star", color)}</i>`);
       UI.root.appendChild(p);
       const dur = 520 + i * 38 + rand(0, 120);
@@ -10121,13 +10161,13 @@ function answerBadgeTexture(label, color, wide) {
 //   fx.explosion(pos, { size, color, smoke, ring, ground })      a layered blast
 //   fx.sparks(pos, color, { n, speed, dir, spread, gravity, life, len })
 //   fx.embers(pos, color, { n, rise, life })                     slow, drifting
-//   fx.fire(pos, { size, life, vel }) / fx.smoke(pos, { size, life, vel, dark })
+//   fx.fire(pos, { size, life, vel }) / fx.smoke(pos, { size, life, vel, dark, cold })   (cold: smoke with no fire under it)
 //   fx.debris(pos, { n, size, speed, color, hot, gravity })      tumbling chunks (armour, glass)
 //   fx.light(pos, color, intensity, dur, range)                  a real light for a moment (it lights lit materials)
 //   fx.ring(pos, color, { size, dur, flat })                     a shock ring (flat: lying on the ground)
 //   fx.mark(kind, pos, color, { size, dur, flat })               a warning marker before an attack: "ring" | "lock" | "bang"
 //   fx.scorch(pos, { size, life, kind })                         a mark left on the ground: "scorch" | "skid"
-//   fx.trailer(fn, { smoke, fire, sparks, rate })                smoke or fire trailing from a moving point (a handle: .on)
+//   fx.trailer(fn, { smoke, fire, sparks, rate, a })             smoke or fire trailing from a moving point (a handle: .on; a: how thick its smoke)
 //   fx.drift                                                     the world's scroll (units/s) carried by every particle
 const fxRGB = (c, k = 1) => { const q = c && c.isColor ? c : new THREE.Color(c); return [q.r * k, q.g * k, q.b * k]; };
 
@@ -10183,7 +10223,7 @@ function fxPuffMaterial(fire) {
              col = mix(col, vec3(1.0, 0.9, 0.7) * 1.7, smoothstep(0.74, 1.0, heat));
              gl_FragColor = vec4(col * body * vCol.a * (1.0 - age * age), 1.0);`
           : `float a = body * vCol.a * (1.0 - smoothstep(0.45, 1.0, age)) * smoothstep(0.0, 0.08, age);
-             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9;
+             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
              gl_FragColor = vec4(col, a);`}
       }`,
   });
@@ -10373,13 +10413,13 @@ class CombatFX {
     q.age = 0; q.life = o.life; q.s0 = o.s0 * u; q.s1 = o.s1 * u; q.spin = rand(-1, 1) * (o.spin === undefined ? 0.8 : o.spin); q.rise = (o.rise || 0) * u; q.drag = o.drag === undefined ? 0.35 : o.drag;
     q.v.copy(o.vel || this._d.set(0, 0, 0));
     P.pos[i * 3] = pos.x; P.pos[i * 3 + 1] = pos.y; P.pos[i * 3 + 2] = pos.z;
-    P.data[i * 4] = q.s0; P.data[i * 4 + 1] = rand(6.283); P.data[i * 4 + 2] = 0; P.data[i * 4 + 3] = Math.random();
+    P.data[i * 4] = q.s0; P.data[i * 4 + 1] = rand(6.283); P.data[i * 4 + 2] = 0; P.data[i * 4 + 3] = Math.random() + (o.cold ? 2 : 0);
     P.col[i * 4] = o.col[0]; P.col[i * 4 + 1] = o.col[1]; P.col[i * 4 + 2] = o.col[2]; P.col[i * 4 + 3] = o.a === undefined ? 1 : o.a;
     P.aCol.needsUpdate = true;
     P.live = true; P.mesh.visible = true;
   }
   fire(pos, o = {}) { const s = o.size || 1; this._puff(this.fireP, pos, { life: o.life || 0.5, s0: s * 0.45, s1: s * 1.25, vel: o.vel, rise: o.rise === undefined ? 0.8 : o.rise, col: fxRGB(o.color === undefined ? 0xff6a14 : o.color, o.k || 1.5), a: o.a, spin: o.spin, drag: o.drag }); }
-  smoke(pos, o = {}) { const s = o.size || 1, d = o.dark === undefined ? 0.12 : o.dark; this._puff(this.smokeP, pos, { life: o.life || 1.4, s0: s * 0.5, s1: s * 1.9, vel: o.vel, rise: o.rise === undefined ? 0.6 : o.rise, col: o.color !== undefined ? fxRGB(o.color) : [d * 1.05, d * 0.9, d * 1.25], a: o.a === undefined ? 0.7 : o.a, spin: 0.5, drag: o.drag }); }
+  smoke(pos, o = {}) { const s = o.size || 1, d = o.dark === undefined ? 0.12 : o.dark; this._puff(this.smokeP, pos, { life: o.life || 1.4, s0: s * 0.5, s1: s * 1.9, vel: o.vel, rise: o.rise === undefined ? 0.6 : o.rise, col: o.color !== undefined ? fxRGB(o.color) : [d * 1.05, d * 0.9, d * 1.25], a: o.a === undefined ? 0.7 : o.a, spin: 0.5, drag: o.drag, cold: o.cold }); }
   debris(pos, o = {}) {
     const n = o.n || 8, col = fxRGB(o.color === undefined ? 0x23232e : o.color, o.k || 1), hot = o.hot === false ? [0, 0, 0] : fxRGB(o.hot === undefined || o.hot === true ? 0xff7a1e : o.hot, 1.1), u = this.unit;
     let k = 0;
@@ -10432,11 +10472,24 @@ class CombatFX {
     b.m.material.uniforms.uColor.value.setRGB(b.col[0], b.col[1], b.col[2]);
     b.m.visible = b.a.visible = b.b.visible = true;
     b.a.material.color.setRGB(b.col[0], b.col[1], b.col[2]); b.b.material.color.copy(b.a.material.color);
-    return { set: (a, c) => { b.from.copy(a); b.to.copy(c); }, stop: () => { b.dur = Math.min(b.dur, b.t + 0.08); }, live: () => b.on };
+    return { set: (a, c) => { b.from.copy(a); b.to.copy(c); }, stop: () => { b.dur = b.dur > 0 ? Math.min(b.dur, b.t + 0.08) : b.t + 0.08; }, live: () => b.on };
   }
+  // A small hot heart, a tongue of flame down the line of fire and four short spikes round it: a star, not a ball.
   muzzle(pos, dir, color, size = 1) {
-    this.flash(pos, 0xffffff, 0.5 * size, 1.5 * size, 0.09, 1, 2.6);
-    this.flash(pos, color, 0.9 * size, 2.6 * size, 0.16, 0.8, 2.4);
+    const u = this.unit, col = fxRGB(color, 2.6), hot = [2.6, 2.6, 2.6];
+    this.flash(pos, 0xffffff, 0.2 * size, 0.62 * size, 0.07, 1, 2.6);
+    this.flash(pos, color, 0.36 * size, 1.0 * size, 0.1, 0.5, 2.2);
+    const side = new THREE.Vector3().crossVectors(dir, Math.abs(dir.y) > 0.9 ? this._d.set(1, 0, 0) : this._d.set(0, 1, 0)).normalize(), up = new THREE.Vector3().crossVectors(side, dir).normalize();
+    const spike = (x, y, f, len, w, c, life) => {
+      const q = this._dart();
+      q.v.set(0, 0, 0).addScaledVector(side, x).addScaledVector(up, y).addScaledVector(dir, f).normalize();
+      q.p.copy(pos).addScaledVector(q.v, len * u * 0.5);
+      q.v.multiplyScalar((len * u * 0.5) / life);
+      q.life = q.t = life; q.w = w * u; q.len = len * u; q.stretch = 0; q.g = 0; q.drag = 0.1; q.fade = 1.3; q.col = c; q.bolt = null;
+    };
+    spike(0, 0, 1, 1.7 * size, 0.24 * size, hot, 0.07);
+    spike(0, 0, 1, 2.3 * size, 0.36 * size, col, 0.09);
+    for (const [x, y] of [[1, 0.3], [-1, -0.3], [0.3, -1], [-0.3, 1]]) spike(x, y, 0.55, 0.95 * size, 0.15 * size, col, 0.08);
     this.sparks(pos, color, { n: 5, speed: 9 * size, dir, spread: 0.45, life: 0.16, len: 0.6 * size, w: 0.05 * size });
     this.light(pos, color, 3.2 * size, 0.12, 9 * size);
   }
@@ -10447,8 +10500,8 @@ class CombatFX {
   // A right answer landing.
   impact(pos, color, o = {}) {
     const s = o.size || 1;
-    this.flash(pos, 0xffffff, 0.7 * s, 2.8 * s, 0.12, 1, 3);
-    this.flash(pos, color, 1.4 * s, 5.5 * s, 0.3, 0.85, 2.2);
+    this.flash(pos, 0xffffff, 0.5 * s, 2.0 * s, 0.11, 1, 3);
+    this.flash(pos, color, 1.0 * s, 3.4 * s, 0.24, 0.7, 2.2);
     this.sparks(pos, color, { n: Math.round(20 * Math.min(2, s)), speed: 13 * s, dir: o.dir, spread: 1.4, life: 0.45, len: 0.9 * s, w: 0.075 * s });
     this.sparks(pos, 0xffffff, { n: Math.round(8 * Math.min(2, s)), speed: 18 * s, dir: o.dir, spread: 1.6, life: 0.22, len: 1.2 * s, w: 0.05 * s, k: 2.2 });
     this.embers(pos, color, { n: 8, radius: 0.5 * s, life: 1.1 });
@@ -10470,22 +10523,22 @@ class CombatFX {
       d.p.copy(pos).addScaledVector(v, 0.55 * s * u); d.v.copy(v).multiplyScalar(0.6 * s * u);
       d.life = d.t = 0.26; d.w = 0.16 * s * u; d.len = 0.8 * s * u; d.stretch = 0; d.g = 0; d.drag = 0.2; d.fade = 1.4; d.col = fxRGB(0xc81e30, 1.5);
     }
-    for (let i = 0; i < 4; i++) this.smoke(new THREE.Vector3(rand(-0.4, 0.4) * s * u, rand(-0.25, 0.35) * s * u, 0).add(pos), { size: 1.25 * s, life: 0.8, rise: 0.5, a: 0.72, dark: 0.05 });
+    for (let i = 0; i < 4; i++) this.smoke(new THREE.Vector3(rand(-0.4, 0.4) * s * u, rand(-0.25, 0.35) * s * u, 0).add(pos), { size: 1.25 * s, life: 0.8, rise: 0.5, a: 0.72, dark: 0.05, cold: true }); // (cold: no glow of fire in it. A reject is a dud.)
   }
   // A blow on plate or hull: sparks off the surface, a little smoke.
   hull(pos, color, o = {}) {
     const s = o.size || 1;
-    this.flash(pos, color, 0.6 * s, 2.4 * s, 0.14, 0.9, 2.2);
+    this.flash(pos, color, 0.4 * s, 1.6 * s, 0.12, 0.9, 2.2);
     this.sparks(pos, 0xffd9a0, { n: 14, speed: 10 * s, dir: o.dir, spread: 1.1, life: 0.4, len: 0.7 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity, k: 2 });
     this.sparks(pos, color, { n: 8, speed: 7 * s, dir: o.dir, spread: 1.4, life: 0.5, len: 0.5 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity });
-    this.smoke(pos, { size: 1.1 * s, life: 0.9, a: 0.5 });
+    this.smoke(pos, { size: 0.9 * s, life: 0.8, a: 0.45, cold: true }); // (cold: a struck plate smokes, it does not burn)
     this.light(pos, color, 3.5 * s, 0.18, 12 * s);
   }
   // A layered blast.
   explosion(pos, o = {}) {
     const s = o.size || 1, col = o.color === undefined ? 0xff8a2a : o.color, u = this.unit, d = this._d;
-    this.flash(pos, 0xffffff, 0.9 * s, 3.4 * s, 0.1, 1, 2.4);
-    this.flash(pos, col, 1.6 * s, 6.5 * s, 0.4, 0.55, 1.5);
+    this.flash(pos, 0xffffff, 0.6 * s, 2.2 * s, 0.1, 1, 2.4);
+    this.flash(pos, col, 1.0 * s, 4.2 * s, 0.36, 0.42, 1.5); // (its light is a heart, not the whole of it: fire, sparks, ring and debris give it its size)
     const nf = Math.round(6 + 3 * Math.min(2, s));
     for (let i = 0; i < nf; i++) {
       const v = new THREE.Vector3(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize().multiplyScalar(rand(1, 4) * s * u);
@@ -10529,7 +10582,7 @@ class CombatFX {
   }
   // Smoke, fire or sparks trailing from a point that moves (a damaged engine, a burning wreck). Set .on = false to stop.
   trailer(at, o = {}) {
-    const t = { at, on: true, acc: 0, rate: o.rate || 14, smoke: o.smoke === undefined ? 1 : o.smoke, fire: o.fire || 0, sparks: o.sparks || 0, size: o.size || 1, vel: o.vel || null, life: o.life || 1.2, color: o.color };
+    const t = { at, on: true, acc: 0, rate: o.rate || 14, smoke: o.smoke === undefined ? 1 : o.smoke, fire: o.fire || 0, sparks: o.sparks || 0, size: o.size || 1, vel: o.vel || null, life: o.life || 1.2, color: o.color, a: o.a === undefined ? 0.5 : o.a };
     this.trailers.push(t);
     return t;
   }
@@ -10548,7 +10601,7 @@ class CombatFX {
         const p = t.at(d);
         if (!p) break;
         const jit = new THREE.Vector3(rand(-0.15, 0.15), rand(-0.1, 0.15), rand(-0.15, 0.15)).multiplyScalar(t.size * this.unit).add(p);
-        if (t.smoke && Math.random() < t.smoke) this.smoke(jit, { size: 0.7 * t.size, life: t.life, vel: t.vel, a: 0.5 });
+        if (t.smoke && Math.random() < t.smoke) this.smoke(jit, { size: 0.7 * t.size, life: t.life, vel: t.vel, a: t.a });
         if (t.fire && Math.random() < t.fire) this.fire(jit, { size: 0.6 * t.size, life: 0.35, vel: t.vel, color: t.color });
         if (t.sparks && Math.random() < t.sparks) this.sparks(jit, t.color === undefined ? 0xffb060 : t.color, { n: 1, speed: 4 * t.size, life: 0.4, len: 0.3 * t.size, w: 0.05 * t.size, gravity: this.ground === null ? 0 : 6 });
       }
@@ -10564,7 +10617,7 @@ class CombatFX {
         d.subVectors(b.to, b.from).normalize();
         dart.p.copy(b.p).addScaledVector(d, -len * 0.5); dart.len = len; dart.w = b.w; dart.dirv = d.clone(); dart.life = Math.max(dart.life, 0.03);
       }
-      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 5); b.sp.material.opacity = 0.85;
+      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 2.6); b.sp.material.opacity = 0.6; // (a glow that hugs its head: the bolt is its dart, not a ball of light)
       if (b.lit) this.lights.length && this.lights[0].t <= 0.02 && (this.lights[0].l.position.copy(b.p), this.lights[0].l.color.setRGB(Math.min(1, b.col[0]), Math.min(1, b.col[1]), Math.min(1, b.col[2])), (this.lights[0].i = 2.2), (this.lights[0].t = this.lights[0].dur = 0.05));
       if (k >= 1) { b.on = false; b.sp.visible = false; if (dart && dart.bolt === b) { dart.life = 0; dart.bolt = null; } const f = b.onHit; b.onHit = null; if (f) f(b.to); }
     }
@@ -10659,8 +10712,8 @@ class CombatFX {
       b.m.quaternion.setFromUnitVectors(z, d);
       b.m.scale.set(b.w, b.w, Math.max(0.001, len));
       const U = b.m.material.uniforms; U.uFade.value = fade; U.uTime.value = this.t; U.uLen.value = len / this.unit;
-      b.a.position.copy(b.from); b.a.scale.setScalar(b.w * 4.2); b.a.material.opacity = 0.9 * fade;
-      b.b.position.copy(b.from).addScaledVector(d, len); b.b.scale.setScalar(b.w * 5.5 * (0.9 + 0.1 * Math.sin(this.t * 40))); b.b.material.opacity = fade;
+      b.a.position.copy(b.from); b.a.scale.setScalar(b.w * 2.4); b.a.material.opacity = 0.7 * fade;
+      b.b.position.copy(b.from).addScaledVector(d, len); b.b.scale.setScalar(b.w * 3.0 * (0.9 + 0.1 * Math.sin(this.t * 40))); b.b.material.opacity = 0.8 * fade;
     }
     // warning markers
     for (const k of this.marks) {
@@ -10723,7 +10776,7 @@ function makePanoSky(sky, o = {}) {
         if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
-        gl_FragColor = vec4(c * uTint, 1.0);
+        gl_FragColor = linearToOutputTexel(vec4(c * uTint, 1.0)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
@@ -10741,6 +10794,45 @@ function applySkyEnv(scene, sky) {
   if (sky && sky.env) scene.environment = sky.env;
   return !!(sky && sky.env);
 }
+// A loaded model made ready to move. In the file a part is a mesh that carries its own packing transform, so it does
+// not turn where it hinges, and the anchors are only listed (model.info.anchors: places in the model's own frame).
+//   rigModel(model, { ride: { muzzleL: "cannonL" }, tree: { head: "body" } });
+//   model.parts[name]     now a node at the part's hinge (model.info.parts[name].pivot) holding the part: turn or move this
+//   model.mesh[name]      the part's mesh
+//   model.anchors[name]   an empty node at the anchor. ride hangs it on a part, so it moves with that part
+//   model.rest[name]      where the hinge is at rest, in the model's own frame
+// tree hangs one part on another (an arm on a body, wings on a back): the model stands as it stood, and now moves as one.
+function rigModel(model, o = {}) {
+  if (model.rigged) return model;
+  const info = model.info || {}, P = info.parts || {}, A = info.anchors || {}, root = model.scene, ride = o.ride || {}, tree = o.tree || {}, v = new THREE.Vector3();
+  root.updateMatrixWorld(true);
+  model.mesh = {}; model.anchors = {}; model.rest = {};
+  for (const name in P) {
+    const node = model.parts[name];
+    if (!node) continue;
+    const pivot = (model.rest[name] = new THREE.Vector3().fromArray(P[name].pivot));
+    if (!node.isMesh) { model.mesh[name] = node.children.find((c) => c.isMesh) || null; continue; } // (a joint that already stands at its hinge, its mesh under it)
+    const hinge = new THREE.Group(), parent = node.parent;
+    hinge.name = name;
+    node.name = name + "_mesh";
+    hinge.position.copy(parent.worldToLocal(v.copy(pivot)));
+    parent.add(hinge);
+    hinge.attach(node);
+    model.parts[name] = hinge;
+    model.mesh[name] = node;
+  }
+  for (const name in tree) if (model.parts[name] && model.parts[tree[name]]) model.parts[tree[name]].attach(model.parts[name]);
+  for (const name in A) {
+    const a = new THREE.Object3D(), host = (ride[name] && model.parts[ride[name]]) || root;
+    a.name = "anchor_" + name;
+    host.updateWorldMatrix(true, false);
+    a.position.copy(host.worldToLocal(v.fromArray(A[name])));
+    host.add(a);
+    model.anchors[name] = model.parts[a.name] = a;
+  }
+  model.rigged = true;
+  return model;
+}
 // A loaded model's materials set for this renderer: how strongly they mirror the sky, how brightly their light
 // strips burn (past white, so they bloom), and nothing drawn twice for nothing.
 function tuneModel(model, o = {}) {
@@ -10754,7 +10846,7 @@ function tuneModel(model, o = {}) {
       if (m.emissiveMap) { m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = o.glow === undefined ? 2.4 : o.glow; }
       if (o.rough !== undefined) m.roughness = o.rough;
       if (o.metal !== undefined) m.metalness = o.metal;
-      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal, o.normal);
+      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal * (m.normalScale.x < 0 ? -1 : 1), o.normal * (m.normalScale.y < 0 ? -1 : 1)); // (the loader turns one axis over for a model without tangents: that is kept)
       m.needsUpdate = true;
     });
   });
@@ -14648,6 +14740,14 @@ class BlasterGame extends QuizGame {
     this.speed = 26;
     this.targets = [];
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the three skies, the starfighter, the demon. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, fighter: null, demon: null };
+    if (this.has3D && GFX.ok) {
+      for (const n of ["blaster-deep-1", "blaster-deep-4", "blaster-deep-5"]) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.fighter = Assets.model("starfighter");
+      this.gen.demon = Assets.model("demon");
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-blaster">
       <div class="hud">
@@ -14709,6 +14809,10 @@ class BlasterGame extends QuizGame {
     s.add(this.boomLight);
     this.engineLight = new THREE.PointLight(COLORS.orange, 1.4, 5, 2);
     s.add(this.engineLight);
+    // the panoramas, when they arrived: the sky, the lamps and what chrome mirrors (20i-blastersky.js)
+    this.pano = null;
+    if (this.gen.skies["blaster-deep-1"]) { try { this.pano = new BlasterSky(this, this.gen.skies, SPACE_REGIONS[0].id); } catch (e) { this.pano = null; } }
+    if (this.pano) s.userData.post.dof.max = 0.0032; // (against a painted sky, what drifts far behind keeps its shape: softened, not smeared to a blot)
     this.waveCol = neon(WAVE_COLORS[0], 1);
     this.waveTarget = this.waveCol.clone();
     this.makeStreaks();
@@ -14732,6 +14836,7 @@ class BlasterGame extends QuizGame {
     s.add(this.ship);
     this.trails = [0, 1].map(() => new Trail({ length: 12, width: 0.07, color: 0xff7a3d, intensity: 2 }));
     this.trails.forEach((t) => s.add(t.mesh));
+    if (this.jet.model) this.trails.forEach((t) => { t.mesh.visible = false; }); // (the starfighter burns its own five flames)
     this.flashSprite = glowSprite(0xffffff, 1, 0);
     this.flashSprite.visible = false;
     this.flashSprite.renderOrder = 8;
@@ -14750,6 +14855,9 @@ class BlasterGame extends QuizGame {
     this._v = new THREE.Vector3();
     this.camBase.set(0, 0, 0);
     this.lookAt.set(0, 0, -20);
+    // The combat as it is staged round the overlord (20l-blasterstage.js): its own effects kit (this.kit) and a set
+    // of show-only timers (this.show). With the built-in demon there is none, and everything is shown as it always was.
+    this.stage = this.enemy && this.enemy.model ? new BlasterStage(this) : null;
   }
 
   // Star streaks: bright heads, tails fading into the dark; they stretch at warp.
@@ -14790,7 +14898,8 @@ class BlasterGame extends QuizGame {
     // and which strikes back when it is wrong. In a build without that model (or if it will not decode) every
     // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
     this.enemy = null;
-    if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
+    if (this.gen.demon) { try { this.enemy = new BlasterOverlord(this, this.gen.demon); } catch (e) { console.warn("demon: " + e.message); this.enemy = null; } } // (the overlord, when its model arrived: 20k)
+    if (!this.enemy && DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
     // With the demon, the answers still have targets: four holo-drones that hold station round it, one to
     // an answer, in the answer's colour and carrying its letter. The fighter fires on the one you tap.
     this.dronePaint = racerCarPaint(this.env, false);
@@ -14842,11 +14951,21 @@ class BlasterGame extends QuizGame {
     this.space.flash(pos, color, this.boomFast ? 0.45 : 1); // its light on the dust and on whatever is near
   }
 
+  // What a loaded model's chrome mirrors: the region's sky and its lamps (BlasterSky.mirror), or, without a panorama,
+  // the map the built-in fighter wears. k: how strongly.
+  chrome(mat, k = 1) {
+    if (this.pano) return this.pano.mirror(mat, k);
+    mat.envMap = this.shipEnv || this.env;
+    mat.envMapIntensity = k * 0.6;
+    mat.needsUpdate = true;
+    return mat;
+  }
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
   // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
     let jet = null;
-    if (FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
+    if (this.gen.fighter) { try { jet = new BlasterStarfighter(this, this.gen.fighter); } catch (e) { console.warn("starfighter: " + e.message); jet = null; } } // (the starfighter, when its model arrived: 20j)
+    if (!jet && FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
     if (!jet) jet = new BlasterJet(this);
     this.jet = jet;
     this.nozzles = jet.nozzles;
@@ -14859,7 +14978,7 @@ class BlasterGame extends QuizGame {
 
   start() {
     Sound.play("blaster");
-    Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
+    if (this.stage) this.stage.start(); else Sound.engine(true); // the fighter's engines: a low hum that rises with the combo and the warp
     if (this.has3D) this.director.force("squadron"); // a flight of fighters crosses as the game opens
     if (this.has3D && this.jet.launch) this.jet.launch(); // and the fighter flies in
     if (this.enemy) this.enemy.arrive(); // to meet the demon coming up out of the distance
@@ -14870,7 +14989,7 @@ class BlasterGame extends QuizGame {
     UI.text($("[data-score]", this.el), fmtScore(this.score));
     UI.text($("[data-wave]", this.el), "WAVE " + this.wave + " · " + this.sel.label);
     UI.text($("[data-combo]", this.el), "x" + this.combo);
-    this.lives(this.shields, 3);
+    this.lives(this.shields + (this.stage ? this.stage.owed : 0), 3); // (staged: a shield is seen to go when the demon's blow lands, a moment after the rule took it)
     // the combo meter: seven pips that fill and change colour as the multiplier climbs
     const cb = $("[data-combo]", this.el);
     cb.dataset.tier = this.combo >= 8 ? 3 : this.combo >= 6 ? 2 : this.combo >= 4 ? 1 : 0;
@@ -14881,6 +15000,7 @@ class BlasterGame extends QuizGame {
   onLayout() {
     if (!this.has3D) return;
     this.liftSet = 0; // (the band was just laid out afresh: any lift is applied again from there)
+    this.cutT = 2; // (staged: the picture has jumped to its new place, which is not a move of the camera. See update.)
     const far = this.bandSize(12);
     this.fx = Math.min(3.4, far.w * 0.27);
     this.fy = Math.min(1.8, far.h * 0.22);
@@ -15004,10 +15124,11 @@ class BlasterGame extends QuizGame {
     // round. (Look and sound: the answer is checked and scored in resolve, as it always was.)
     const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
     const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
-    if (opens) Sound.sfx("laser", this.panAt);
-    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
+    if (this.stage) this.stage.fire(i, right); // (staged: three volleys from both cannons as the fighter turns toward its target: 20l)
+    else if (opens) Sound.sfx("laser", this.panAt);
+    if (opens && this.has3D && !this.stage) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
     if (this.enemy && !right) this.enemy.attack();
-    if (at) {
+    if (at && !this.stage) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
       this.ship.lookAt(this.ship.position.clone().multiplyScalar(2).sub(at));
       this.ship.updateMatrixWorld();
@@ -15044,18 +15165,19 @@ class BlasterGame extends QuizGame {
       this.score += pts;
       title = `DIRECT HIT! +${pts}`;
       this.combo = Math.min(8, this.combo + 1);
-      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); this.space.onRight(SLOT_COLORS[i]); } // (it boosts; the traffic parts; fireworks)
+      if (this.has3D) { this.jet.hit(); this.jet.setCombo(this.combo); if (this.stage) this.space.traffic.part(); else this.space.onRight(SLOT_COLORS[i]); } // (it boosts; the traffic parts; fireworks. Staged: the blow itself is the show.)
       if (this.combo >= 4) Sound.sfx("combo");
-      Sound.sfx("boom", this.panAt);
+      if (!this.stage) Sound.sfx("boom", this.panAt); // (staged: the drone's burst and the blow on the demon's core have their own sounds)
       Sound.sfx("correct");
       UI.flash("good");
-      GFX.pulse(4, 0.1);
+      GFX.pulse(this.stage ? 1.6 : 4, this.stage ? 0.03 : 0.1); // (staged: the blow has its own flash where it lands; the whole picture is not lifted to white over it)
       GFX.hitStop(70);
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       const p = this.bandPoint(0.3);
       UI.floater("+" + pts, p.x, p.y, COLORS.yellow);
-      if (this.enemy) {
+      if (this.stage) { this.stage.right(i); this.enemy.hit(SLOT_COLORS[i]); } // (staged: the drone bursts, a lance goes through it into the demon's core)
+      else if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
         if (t) { this.space.fx.lance(t.position, this.enemy.aimPoint(new THREE.Vector3()), 0.34, [c.r * 2.1 + 0.06, c.g * 2.1 + 0.06, c.b * 2.1 + 0.06], 0.5 * t.scale.x); this.explode(t, SLOT_COLORS[i], 0.45); }
@@ -15066,16 +15188,23 @@ class BlasterGame extends QuizGame {
       this.combo = 1;
       this.shields--;
       title = this.shields > 0 ? "WRONG TARGET! SHIELD DOWN" : "WRONG TARGET! SHIELDS GONE";
-      this.shieldHit();
-      if (this.has3D) this.space.onWrong(); // (sparks off the hull, arcs across the shield)
-      Sound.sfx("wrong");
-      Sound.sfx("hit");
-      UI.flash("hit");
-      this.shake(0.35);
-      GFX.pulse(12, 0);
-      Haptics.buzz([60, 40, 90]);
-      Sound.setIntensity(0);
-      this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
+      if (this.stage) { // (staged: the shot dies on the drone in a dull red fizzle now; the shield is seen to go when the demon's strike lands)
+        this.jet.setCombo(1);
+        this.stage.wrong(i);
+        Sound.sfx("wrong");
+        Sound.setIntensity(0);
+      } else {
+        this.shieldHit();
+        if (this.has3D) this.space.onWrong(); // (sparks off the hull, arcs across the shield)
+        Sound.sfx("wrong");
+        Sound.sfx("hit");
+        UI.flash("hit");
+        this.shake(0.35);
+        GFX.pulse(12, 0);
+        Haptics.buzz([60, 40, 90]);
+        Sound.setIntensity(0);
+        this.explode(this.targets[i], COLORS.red, this.enemy ? 0.4 : 1); // (with the demon, it is already striking: see pick)
+      }
       this.highlight(this.targets[r.correct]);
     }
     this.hud();
@@ -15093,14 +15222,20 @@ class BlasterGame extends QuizGame {
     this.quiz.reveal(-1);
     this.combo = 1;
     this.shields--;
-    this.shieldHit();
-    if (this.has3D) this.space.onWrong();
-    Sound.sfx("hit");
-    UI.flash("hit");
-    this.shake(0.5);
-    GFX.pulse(12, 0);
-    Haptics.buzz([60, 40, 90]);
-    Sound.setIntensity(0);
+    if (this.stage) { // (staged: the shield is seen to go when the demon's strike lands. It began to wind up as the clock ran down.)
+      this.jet.setCombo(1);
+      this.stage.timeout();
+      Sound.setIntensity(0);
+    } else {
+      this.shieldHit();
+      if (this.has3D) this.space.onWrong();
+      Sound.sfx("hit");
+      UI.flash("hit");
+      this.shake(0.5);
+      GFX.pulse(12, 0);
+      Haptics.buzz([60, 40, 90]);
+      Sound.setIntensity(0);
+    }
     this.targets.forEach((t, i) => {
       if (i === r.correct) return this.highlight(t);
       const z0 = t.position.z, s0 = t.scale.x;
@@ -15171,19 +15306,19 @@ class BlasterGame extends QuizGame {
       const bonus = this.shields * 500 + this.wave * 250;
       this.score += bonus;
       this.shields = Math.min(3, this.shields + 1);
-      if (this.has3D) { this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1); this.space.setRegion((this.wave - 1) * 2, 2.4); }
+      if (this.has3D) { this.waveTarget = neon(WAVE_COLORS[(this.wave - 1) % WAVE_COLORS.length], 1); if (!this.stage) this.space.setRegion((this.wave - 1) * 2, 2.4); }
       Sound.sfx("levelup");
-      Sound.sfx("warp");
+      if (!this.stage) Sound.sfx("warp");
       if (this.has3D) {
         // the wave's carrier goes up, the fighter rolls through the wreck, the next carrier comes up out of the dark
         this.carrier.destroy();
         if (this.enemy) this.enemy.destroy(); // (or the wave's demon does, and the next wave's flies up)
-        this.jet.warp();
-        this.jet.shieldUp();
+        if (this.stage) this.stage.waveEnd((this.wave - 1) * 2); // (staged: the demon's death is seen first; the warp, the roll and the next region follow its last blast. Look only.)
+        else { this.jet.warp(); this.jet.shieldUp(); }
         this.tw.wait(1.2, () => { if (!this.unmounted) { this.carrier.arrive(this.wave); if (this.enemy) this.enemy.arrive(); } });
       }
-      this.warp = 1.4;
-      GFX.pulse(6, 0.2);
+      if (!this.stage) this.warp = 1.4;
+      GFX.pulse(this.stage ? 2 : 6, 0.2); // (staged: the demon's death starts here, and is seen sharp)
       UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
       this.hud();
       this.state = "intro";
@@ -15199,10 +15334,13 @@ class BlasterGame extends QuizGame {
     Sound.sfx("gameover");
     UI.banner("GAME OVER", COLORS.red);
     if (this.has3D) {
-      this.bursts.burst(this.ship.position, COLORS.cyan, { n: 90, speed: 6, size: 0.3, life: 1.4 });
-      this.shards.burst(this.ship.position, COLORS.cyan, 20, 0.7, 6);
-      this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
-      this.boom(this.ship.position, COLORS.orange, 6);
+      if (this.stage) this.stage.over(); // (staged: a layered blast, then a second as a tank goes)
+      else {
+        this.bursts.burst(this.ship.position, COLORS.cyan, { n: 90, speed: 6, size: 0.3, life: 1.4 });
+        this.shards.burst(this.ship.position, COLORS.cyan, 20, 0.7, 6);
+        this.shockwave(this.ship.position.clone(), neon(COLORS.orange, 2.2), 5);
+        this.boom(this.ship.position, COLORS.orange, 6);
+      }
       this.jet.down(); // (the ship goes: at once, or in pieces)
       this.trails.forEach((t) => { t.mesh.visible = false; });
       this.engineLight.intensity = 0;
@@ -15231,7 +15369,7 @@ class BlasterGame extends QuizGame {
     let w = 0;
     if (this.warp > 0) {
       this.warp = Math.max(0, this.warp - dt);
-      w = Math.sin((this.warp / 1.4) * Math.PI);
+      w = Math.sin((this.warp / (this.warpDur || 1.4)) * Math.PI); // (warpDur: staged, a shorter warp that follows the demon's death)
       this.camera.fov = 60 + w * 22;
       this.camera.updateProjectionMatrix();
     }
@@ -15248,7 +15386,12 @@ class BlasterGame extends QuizGame {
     this.streaks.material.color.setScalar(0.4 + w * 2.2);
     // the wave's colour, the warp's blur
     this.waveCol.lerp(this.waveTarget, Math.min(1, dt * 2.5));
-    GFX.speedBlur = w * 0.9 + GFX.fever * 0.12; // warp streaks the picture outward
+    // warp streaks the picture outward. (Staged: the warp follows the demon's death and is still running as the next
+    // question comes up. From then on the picture is not streaked: the stars still stretch and the view still rolls,
+    // and the answers' drones are sharp.)
+    if (this.warpBlur === undefined) this.warpBlur = 0.9;
+    if (this.stage) this.warpBlur += ((this.state === "ask" ? 0 : 0.9) - this.warpBlur) * Math.min(1, dt * 12);
+    GFX.speedBlur = w * this.warpBlur + GFX.fever * 0.12;
     if (this.boomT > 0) {
       this.boomT = Math.max(0, this.boomT - dt * (this.boomFast ? 6.5 : 2.6));
       const k = this.boomT;
@@ -15299,20 +15442,30 @@ class BlasterGame extends QuizGame {
         u.M.lamp.color.setHex(0x86ff5e).multiplyScalar(2.3 + 0.7 * Math.sin(this.t * 10)); // (its ring and lamps go lime too: this was the one)
         u.M.halo.color.setHex(0x86ff5e).multiplyScalar(1.5);
       }
+      if (u.rejected && !u.gone) { // (staged) the wrong one took the shot and locked out: it shrinks back, its lamps a dull red
+        u.rej = Math.min(1, (u.rej || 0) + VFX.dt * 5);
+        t.scale.setScalar(u.s * (1 - 0.2 * u.rej));
+        u.M.edge.color.setRGB(0.7, 0.07, 0.1); u.M.lamp.color.setRGB(0.6, 0.06, 0.09); u.M.halo.color.setRGB(0.35, 0.03, 0.05);
+        u.M.rim.uniforms.uColor.value.setRGB(0.5, 0.05, 0.08);
+      }
     });
     // the ship: drift, bank, engine flicker, blinking wing lights, ribbon trails
     this.ship.position.x = Math.sin(this.t * 0.9) * 0.15;
     const ease = Math.min(1, dt * 3);
     this.ship.position.y += (this.shipY - this.ship.position.y) * ease;
     this.ship.scale.setScalar(this.ship.scale.x + (this.shipScale - this.ship.scale.x) * ease);
-    if (this.state === "ask") this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12);
+    if (this.state === "ask" && !this.stage) this.ship.rotation.set(Math.sin(this.t) * 0.05, 0, Math.sin(this.t * 0.9) * 0.12); // (staged: the stage eases it between its hover and its aim)
     const fl = 1 + Math.sin(this.t * 15) * 0.12 + Math.sin(this.t * 9.3) * 0.08 + w * 0.6;
     this.engineGlows.forEach((g, j) => g.scale.setScalar(0.5 * fl * (j ? 1.04 : 0.96)));
     this.wingLights.forEach((g, j) => { g.material.opacity = Math.sin(this.t * 4 + j * Math.PI) > 0.2 ? 1 : 0.25; });
     this.ship.updateMatrixWorld();
     this.jet.update(dt, sp, w); // bank, flaps, flames, shield, contrails (look only)
     if (this.enemy && this.enemy.late) this.enemy.late(); // (the demon's heat haze, when it has more of it than the engines)
-    Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
+    if (this.stage) { // the staged combat, on the show clock: its timers, what it has in flight, and the effects kit
+      this.show.update(VFX.dt);
+      this.stage.update(dt, sp, w);
+      this.kit.update(VFX.dt);
+    } else Sound.rev(0.5 + this.jet.heat * 0.45 + w * 0.5);
     const rigM = this.jet.rig.matrixWorld;
     this.engineLight.position.set(0, 0, 2.0).applyMatrix4(rigM);
     // trails sample at a fixed 60 Hz so their length doesn't depend on the frame rate
@@ -15335,25 +15488,32 @@ class BlasterGame extends QuizGame {
       if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
         this.liftSet = this.lift < 0.25 ? 0 : this.lift;
         this.camera.setViewOffset(GFX.w, GFX.h, 0, GFX.h / 2 - ((b.top + b.bottom) / 2 - this.liftSet), GFX.w, GFX.h);
+        this.cutT = 2;
       }
     }
+    // (staged) the picture sliding to a new place on the page is not the camera moving: for those frames it is not
+    // streaked as if it were. Nor while a blow shakes it: a shaken picture stays sharp, so the answers' letters can
+    // be read through it.
+    if (this.stage) { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask") ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
     if (w > 0.001 && !REDUCED_MOTION) this.camera.rotateZ(Math.sin(this.warp * 2.4) * w * 0.14);
     this.space.follow(this.camera);
     FX.sync(this.scene, this.t);
   }
   pause() {
     super.pause();
-    if (this.paused) Sound.engine(false);
+    if (this.paused) { if (this.stage) this.stage.pause(); else Sound.engine(false); } // (nothing keeps sounding behind the menu)
   }
   resume() {
     super.resume();
-    if (this.state !== "over") Sound.engine(true);
+    if (this.state !== "over") { if (this.stage) this.stage.resume(); else Sound.engine(true); }
   }
   dispose() {
     Sound.engine(false);
+    if (this.stage) this.stage.dispose();
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
     if (this.enemy) this.enemy.dispose();
+    if (this.jet && this.jet.dispose) this.jet.dispose();
     if (this.has3D) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
@@ -15362,6 +15522,7 @@ class BlasterGame extends QuizGame {
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
     if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
+    if (this.pano) this.pano.dispose();
     super.dispose();
   }
 }
@@ -16099,6 +16260,46 @@ function fighterFlame(o, p, r, len, core, kind) {
   }
 }
 
+// At warp: a bow wave of light off the nose (a dome whose top points down the way ahead).
+function fighterBowMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uW: { value: 0 }, uColor: { value: new THREE.Color(0.5, 0.95, 1.4) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float a = atan(vP.y, vP.x);
+        float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
+        gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
+      }`,
+  });
+}
+// The shield: a hexagon lattice on a bubble of force, all but invisible until something hits it.
+function fighterShieldMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.25, 0.85, 1.0) }, uOn: { value: 1 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) }, uGlow: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+        const vec2 s = vec2(1.0, 1.7320508);
+        vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
+        vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+        vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
+        vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+        float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
+        float dist = distance(vP, uHitP);
+        float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+        float flare = uHit * uHit * exp(-dist * 3.0);
+        float near = exp(-dist * 1.5); // (how close to the blow)
+        float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
+        gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.7) + fres * (ring + flare * 0.4) * 0.8) + vec3(1.7, 1.5, 1.4) * uHit * uHit * exp(-dist * 9.0), 1.0);
+      }`,
+  });
+}
+
 class BlasterFighter {
   constructor(game) {
     const g = (this.g = game), env = g.shipEnv || g.env, S = FTR_S, geo = FighterModel.geometry();
@@ -16242,18 +16443,7 @@ class BlasterFighter {
     rig.add(this.cores, this.flames);
 
     // ---- at warp: a bow wave of light off the nose --------------------------------------
-    this.bowMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uW: { value: 0 }, uColor: { value: new THREE.Color(0.5, 0.95, 1.4) } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-      vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-      fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
-        void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.6);
-          float a = atan(vP.y, vP.x);
-          float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
-          gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
-        }`,
-    });
+    this.bowMat = fighterBowMaterial();
     const dome = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
     dome.rotateX(-Math.PI / 2); // the dome's top points down the tunnel
     this.bow = new THREE.Mesh(dome, this.bowMat);
@@ -16264,27 +16454,7 @@ class BlasterFighter {
     rig.add(this.bow);
 
     // ---- the shield: a hexagon lattice on a bubble of force, all but invisible until something hits it ----
-    this.shieldMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.25, 0.85, 1.0) }, uOn: { value: 1 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) }, uGlow: { value: 0 } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-      fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
-        void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
-          const vec2 s = vec2(1.0, 1.7320508);
-          vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
-          vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
-          vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
-          vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
-          float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
-          float dist = distance(vP, uHitP);
-          float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
-          float flare = uHit * uHit * exp(-dist * 3.0);
-          float near = exp(-dist * 1.5); // (how close to the blow)
-          float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
-          gl_FragColor = vec4(vec3(0.25, 0.85, 1.0) * base + uColor * (line * (ring * 1.6 + flare * 0.7) + fres * (ring + flare * 0.4) * 0.8) + vec3(1.7, 1.5, 1.4) * uHit * uHit * exp(-dist * 9.0), 1.0);
-        }`,
-    });
+    this.shieldMat = fighterShieldMaterial();
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), this.shieldMat);
     this.shield.scale.set(2.1, 1.2, 2.15);
     this.shield.position.set(0, 0.12, 0);
@@ -16685,8 +16855,12 @@ class BlasterSpace {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._c = new THREE.Color();
-    this.regions = SPACE_REGIONS.map((r) => this.parse(r));
-    this.cur = this.parse(SPACE_REGIONS[0]);
+    // With a panorama for a sky (when the page could fetch one: see 20i-blastersky.js) each region takes its fog, its
+    // hulls' light and its clouds from that picture. Without one, everything here is as it always was.
+    const pano = !!g.pano;
+    const regs = pano ? SPACE_REGIONS.map((r) => Object.assign({}, r, (BLASTER_SKIES[r.id] || {}).space)) : SPACE_REGIONS;
+    this.regions = regs.map((r) => this.parse(r));
+    this.cur = this.parse(regs[0]);
     this.from = this.regions[0]; this.to = this.regions[0]; this.ri = 0; this.blend = 1; this.blendDur = 1;
     this.travel = 0; this.zoom = 0; this.flashK = 0;
     this.sunDir = new THREE.Vector3(-0.17, 0.17, -1).normalize();
@@ -16909,13 +17083,13 @@ class BlasterSpace {
     this.buildGate();
 
     // ---- a halo behind the enemy: the picture is dimmed there and ringed with the wave's colour, so what must be read stands clear
-    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 } };
+    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 }, uDim: { value: 0.66 } };
     this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
       uniforms: this.haloU, transparent: true, depthWrite: false,
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
+      fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uDim; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.66, aura = exp(-r * r * 2.6) * 0.05;
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * uDim, aura = exp(-r * r * 2.6) * 0.05;
           vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.07); // a cold backlight (no ring: it read as a pale hoop behind the demon)
           gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
@@ -16927,6 +17101,18 @@ class BlasterSpace {
     this.traffic = new SpaceTraffic(this); // ships on their way (20g-blastertraffic.js)
     this.director = spaceEvents(this); // and what happens out there
     this.apply(1);
+    // The panorama, when there is one: it is the backdrop and the light. What was drawn here in its place is put away
+    // (the nebula, the galaxies, the star and its ghosts in the lens); the stars at depth, the clouds, the rocks, the
+    // giant, the landmarks and the traffic stay, since they are what moves past.
+    this.pano = g.pano || null;
+    if (this.pano) {
+      this.sky.visible = false; this.sun.visible = false; this.galaxies.forEach((sp) => { sp.visible = false; });
+      // Against a painted sky a rock is a dark shape with one lit side and a bright edge: it stands in front of the
+      // nebula instead of fading into it. (Its own light, apart from the hulls'.)
+      const ru = this.rockMat.uniforms;
+      ru.uAmb = { value: new THREE.Color() }; ru.uSunCol = { value: new THREE.Color() }; ru.uRimCol = { value: new THREE.Color() };
+      this.haloU.uDim.value = 0.72; // (and the sky behind the fight is taken down a little further, over a wider patch: see update)
+    }
   }
 
   // a region as numbers and colours that can be blended
@@ -16948,6 +17134,7 @@ class BlasterSpace {
     this.ri = ((i % n) + n) % n;
     this.blend = 0;
     this.blendDur = Math.max(0.01, dur);
+    if (this.pano) this.pano.go(to.id, this.blendDur);
   }
   snapshot() {
     const c = this.cur, o = {};
@@ -17089,6 +17276,7 @@ class BlasterSpace {
     this.flashCol = this.flashCol || new THREE.Color();
     this.flashCol.set(color);
     this.shared.uFlashPos.value.copy(pos);
+    if (this.pano) this.pano.flash(k);
   }
 
   update(dt, sp, w) {
@@ -17125,10 +17313,17 @@ class BlasterSpace {
     S.uAmb.value.copy(c.amb).multiplyScalar(0.42);
     S.uRimCol.value.copy(c.b).lerp(c.c, 0.4).multiplyScalar(1.1);
     this.rockMat.uniforms.uTint.value.copy(c.rockTint).lerp(this._rockInk || (this._rockInk = new THREE.Color(0x2c2470)), 0.5).multiplyScalar(0.8);
+    if (this.pano) {
+      const ru = this.rockMat.uniforms, P = this.pano;
+      ru.uTint.value.multiplyScalar(0.55);
+      ru.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
+      if (P.key) ru.uSunCol.value.copy(P.key.color).multiplyScalar(1.5);
+      ru.uRimCol.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(1.5);
+    }
     const sv = this._v.copy(this.sunDir).multiplyScalar(950).add(g.camera.position).project(g.camera), on = sv.z < 1 && Math.abs(sv.x) < 1.25 && Math.abs(sv.y) < 1.25 && !calm;
     const fade = on ? clamp(1.35 - Math.max(Math.abs(sv.x), Math.abs(sv.y)), 0, 1) * sunK : 0;
     this.ghosts.forEach((gh) => {
-      gh.visible = fade > 0.02;
+      gh.visible = fade > 0.02 && !this.pano;
       if (!gh.visible) return;
       const a = this._w.set(sv.x * gh.userData.k, sv.y * gh.userData.k, -1).unproject(g.camera), b = this._s.set(sv.x * gh.userData.k, sv.y * gh.userData.k, 1).unproject(g.camera);
       gh.position.copy(g.camera.position).add(b.sub(a).normalize().multiplyScalar(60));
@@ -17227,7 +17422,7 @@ class BlasterSpace {
     }
     // the halo behind the enemy (or the answers' targets)
     const fr = g.enemy && g.enemy.root.visible ? g.enemy : null, H = this.halo;
-    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
+    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); if (this.pano) H.scale.set(fr.S * 1.75, fr.S * 1.4, 1); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
     H.quaternion.copy(g.camera.quaternion);
     this.haloU.uColor.value.copy(g.waveCol).multiplyScalar(0.55);
     this.haloU.uK.value += ((g.state === "over" ? 0 : 1) - this.haloU.uK.value) * Math.min(1, dt * 3);
@@ -17235,6 +17430,7 @@ class BlasterSpace {
     if (g.scene.fog) g.scene.fog.color.copy(c.fog);
     if (this.ambLight) this.ambLight.color.copy(this.amb0).lerp(c.amb, 0.4);
     if (g.keyLight) g.keyLight.color.copy(this.key0).lerp(c.key, 0.4);
+    if (this.pano) this.pano.update(dt, w); // (the panorama's own lamps, over those two)
     if (this.traffic) this.traffic.update(dt, sp, w);
     if (this.fx) this.fx.update(dt, sp);
     if (this.director) this.director.update(dt, g.state === "ask" || g.state === "explain");
@@ -17258,7 +17454,7 @@ class BlasterSpace {
     }
   }
   // keep the far things where the camera is
-  follow(camera) { this.far.position.copy(camera.position); }
+  follow(camera) { this.far.position.copy(camera.position); if (this.pano) this.pano.follow(camera); }
   dispose() {
     if (this.nebTex.rt) this.nebTex.rt.dispose(); else this.nebTex.dispose();
     this.galaxyTex.dispose();
@@ -17657,6 +17853,10 @@ function spaceEvents(space) {
   const g = space.g, T = space.traffic, FX = (space.fx = new SpaceFX(space)), D = new EventDirector(g, { min: 3, max: 6 });
   const side = () => (Math.random() < 0.5 ? -1 : 1), quiet = () => g.state === "ask" || g.state === "explain", R = Math.PI / 180;
   const frame = (ax, ay, d, out) => (out || new THREE.Vector3()).set(d * Math.tan(ax * R), d * Math.tan(ay * R), -d); // a place in the window: degrees right, degrees up, how far
+  // (With the painted sky and the staged fight, the window's upper corners are where the answers' drones stand, and
+  // with four answers its sides as well: what was set in a corner is set at the window's edge instead, in the gap
+  // between the upper drones and the lower ones.)
+  const corner = (ax, ay, d, out) => (space.pano ? frame(ax * 1.3, lerp(1.4, 3.8, clamp((Math.abs(ay) - 7) / 3, 0, 1)), d, out) : frame(ax, ay, d, out));
   const inReg = (...ids) => () => ids.includes(space.cur.id), alive = (run) => run.ships.some((s) => s.alive);
   const v = new THREE.Vector3(), w = new THREE.Vector3();
 
@@ -17702,7 +17902,7 @@ function spaceEvents(space) {
   // 6. a dogfight in the distance: one chases the other round, firing (a shot every 0.45 s); they break off
   D.add({ id: "dogfight", dur: 8,
     start: (run) => {
-      const sd = side(), c = frame(sd * 10.5, 9, 175), ph = rand(6.283);
+      const sd = side(), c = corner(sd * 10.5, 9, 175), ph = rand(6.283);
       const path = (lag) => (s, t) => { const a = (t - lag) * 1.5 + ph; if (t < 5.4) s.p.set(c.x + Math.cos(a) * 14, c.y + Math.sin(a * 2) * 5, c.z + Math.sin(a) * 16); else { s.script = null; s.v.set(sd * (lag ? 46 : -38), lag ? 12 : -8, -T.sp0 - 30); } };
       run.ships = [T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0), s: 1.25 }), T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0.5), s: 1.25 })].filter(Boolean);
       run.shot = 0.8;
@@ -17715,7 +17915,7 @@ function spaceEvents(space) {
     } });
   // 7. far off, a ship blows up: one flash, a ring, debris
   D.add({ id: "explosion", dur: 3, flashy: true, can: () => space.cur.id !== "station",
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
     update: (dt, t, run) => {
       if (!run.done && t > 0.7) {
         run.done = true;
@@ -17762,7 +17962,7 @@ function spaceEvents(space) {
   hole.visible = false;
   g.scene.add(hole);
   D.add({ id: "wormhole", dur: 5,
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
     update: (dt, t, run) => {
       run.p.z += space.sp * 0.2 * dt;
       hole.position.copy(run.p);
@@ -17785,7 +17985,7 @@ function spaceEvents(space) {
     end: () => { whale.visible = false; } });
   // 13. an ion storm: three slow pulses of light in the clouds, a fork of lightning with each (1.5 a second at most)
   D.add({ id: "ionstorm", dur: 2.6, flashy: true, can: inReg("nebula", "orbit", "graveyard", "gate"),
-    start: (run) => { run.p = frame(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
+    start: (run) => { run.p = corner(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
     update: (dt, t, run) => {
       if (run.n < 3 && t > 0.2 + run.n * 0.66) {
         run.n++;
@@ -18528,6 +18728,1717 @@ class BlasterDemon {
 
 if (typeof requestIdleCallback === "function") requestIdleCallback(() => DemonModel.preload(), { timeout: 6000 });
 else setTimeout(() => DemonModel.preload(), 3000);
+
+/* ---- 20i-blastersky.js ---- */
+// Risk Blaster's sky when the page could fetch it (when it could not, 20f-blasterspace.js draws its own, as it always
+// did): three panoramas of deep space, cross-faded as a wave travels from region to region; the lamps that light
+// whatever flies in it; and what chrome mirrors there. Look only: nothing here reads or changes a rule.
+//
+// Only a window of about 30 by 27 degrees is ever seen (the band between the question and the answers), and a
+// panorama has 11 pixels to the degree: true to scale, the band would show a blur 340 pixels across. So each dome is
+// stretched along the way ahead (zoom): the band takes in two to three times the angle, a star is near its own size
+// again, and a whole nebula stands behind the demon instead of one soft corner of it.
+//
+// A region: which panorama (sky), the point of it that stands dead ahead (at: across and down the picture, 0 to 1),
+// its roll, how wide a piece the band shows (zoom), its gain and how far its brightest parts are lifted past white.
+// lamps: the key (above and behind the lens, on the side the picture's own light comes from), two rims far ahead, one
+// to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
+// chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
+// space: what this region changes in the world round it (fog, rocks, clouds, the hulls' light: see SPACE_REGIONS).
+const BLASTER_SKIES = {
+  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
+    key: [0xdfe6ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xbfd0ff, 0.8], amb: [0x5a4aa0, 0.5],
+    space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70] } },
+  belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.72, lift: 1.2, envGain: 0.9,
+    key: [0xd8ecff, 1.0], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xcfe0ff, 0.7], amb: [0x5a4a6a, 0.5],
+    space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80] } },
+  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
+    key: [0xe6ecff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0xc8dcff, 0.8], amb: [0x4a5aa8, 0.5],
+    space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
+  station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
+    key: [0xfff0f4, 1.0], rimA: [0xff3ad4, 1.6], rimB: [0x5ad8ff, 1.4], top: [0xe0d0ff, 0.8], amb: [0x6a4aa0, 0.5],
+    space: { fog: 0x08030f, amb: 0x7a64c0, key: 0xf0e8ff, cloudA: 0xa03ad8, cloudB: 0x35c8ff, clouds: 0.2, rockTint: 0x7a70a0, rocks: 0.05, stars: 0.5, planet: [-34, -8, 1800, 72] } },
+  graveyard: { sky: "blaster-deep-4", at: [0.27, 0.37], roll: 0.2, zoom: 2.4, gain: 1.15, lift: 1.5,
+    key: [0xd8e0ff, 0.9], rimA: [0x7a6aff, 1.5], rimB: [0xff5a3a, 1.3], top: [0xb8c8ff, 0.7], amb: [0x40486a, 0.5],
+    space: { fog: 0x04050c, amb: 0x5a6a90, key: 0xd0dcff, cloudA: 0x3a3a8a, cloudB: 0x8a9aff, clouds: 0.35, rockTint: 0x5a6078, rocks: 0.45, stars: 0.5, planet: [-34, 4, 1900, 60] } },
+  gate: { sky: "blaster-deep-5", at: [0.709, 0.5625], roll: 0, zoom: 2.3, gain: 0.85, lift: 1.4,
+    key: [0xe6f4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x2ad8ff, 1.7], top: [0xb0e8ff, 0.8], amb: [0x40609a, 0.5],
+    space: { fog: 0x03060f, amb: 0x5a80c0, key: 0xe0f2ff, cloudA: 0x1a8ad0, cloudB: 0xff3ad4, clouds: 0.45, rockTint: 0x7090b0, rocks: 0.08, stars: 0.45, planet: [34, -7, 1700, 64] } },
+};
+// Where the lamps stand (toward each, from anything they light). The fighter is seen from behind and above and the
+// demon from the front, so between them these put a highlight on both: the key on what faces the lens, the rims on
+// the edges that turn away, the top light on the fighter's back and the demon's shoulders and horns.
+const BLASTER_LAMPS = { key: [-0.5, 0.58, 0.64], rimA: [-0.9, 0.16, -0.4], rimB: [0.9, 0.2, -0.38], top: [0.3, 0.84, -0.45], kick: [0, 0.42, -0.9] };
+// (kick: a cold backlight, behind the fight and a little above it. Every edge that turns away from the lens mirrors it:
+// that thin line of cyan-white is what cuts the demon and the fighter out of a sky of their own colours.)
+const BLASTER_KICK = [0xbfe8ff, 1.0];
+
+class BlasterSky {
+  // (built by the game before anything that mirrors it; first: the region the run starts in)
+  constructor(game, skies, first) {
+    const g = (this.g = game), s = g.scene;
+    this.skies = skies;
+    this.main = skies["blaster-deep-1"];
+    this.root = new THREE.Group(); // (it keeps the camera's place: see follow)
+    s.add(this.root);
+    // two domes: the region the ship is in, and the one coming up over it (added on top as the first is turned down)
+    this.layers = [0, 1].map((i) => {
+      const stretch = new THREE.Group(), dome = makePanoSky(this.main, { radius: 300 });
+      if (i) { dome.material.transparent = true; dome.material.blending = THREE.AdditiveBlending; dome.renderOrder = -19; dome.visible = false; }
+      stretch.add(dome);
+      this.root.add(stretch);
+      return { stretch, dome, c: null };
+    });
+    // The picture is only ever seen through that narrow window, far from the one line where a panorama's two ends
+    // meet, so it can be filtered through its smaller copies: no star sparkles as the view sways.
+    for (const n in skies) { const m = skies[n] && skies[n].map; if (m) { m.minFilter = THREE.LinearMipmapLinearFilter; m.generateMipmaps = true; m.needsUpdate = true; } }
+    // the lamps: the game's own ambient and key, re-aimed, and three more
+    this.amb = s.children.find((o) => o.isAmbientLight) || null;
+    this.key = g.keyLight || null;
+    const lamp = (dir) => { const l = new THREE.DirectionalLight(0xffffff, 0); l.position.fromArray(dir).multiplyScalar(40); s.add(l); return l; };
+    this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = lamp(BLASTER_LAMPS.top); this.kick = lamp(BLASTER_LAMPS.kick);
+    if (this.key) this.key.position.fromArray(BLASTER_LAMPS.key).multiplyScalar(40);
+    this.envs = {}; // what chrome mirrors, one map to a region, made when the region is first entered
+    this.users = []; // materials that mirror it (the fighter's, the demon's): see mirror
+    this.envK = 1; this.age = 0; this.flashK = 0; this.aimY = 0.085; // (aimY: how far above the way ahead the demon rides, as a slope)
+    this._c = new THREE.Color(); this._c2 = new THREE.Color();
+    this.cur = this.conf(first);
+    this.next = null; this.k = 0;
+    this.show(this.layers[0], this.cur, 1);
+    this.env = this.envFor(this.cur);
+  }
+  // a region's sky as numbers (its own panorama if it arrived, else the main one)
+  conf(id) {
+    const r = BLASTER_SKIES[id] || BLASTER_SKIES.nebula, sky = this.skies[r.sky] || this.main, D = Math.PI * 2;
+    return { id, r, sky, yaw: (r.at[0] - 0.25) * D, pitch: (0.5 - r.at[1]) * Math.PI, roll: r.roll || 0, zoom: r.zoom || 2, gain: r.gain === undefined ? 1 : r.gain, lift: r.lift === undefined ? 1.4 : r.lift };
+  }
+  // one dome showing a region, at k of its strength
+  show(L, c, k, sway = 0, zoomK = 1) {
+    const u = L.dome.material.uniforms;
+    L.dome.visible = k > 0.004;
+    if (!L.dome.visible) return;
+    if (u.tA.value !== c.sky.map) u.tA.value = u.tB.value = c.sky.map;
+    u.uMix.value = 0;
+    u.uGain.value = c.gain * k;
+    u.uLift.value = c.lift;
+    u.uRot.value = (c.yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
+    // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
+    L.dome.rotation.set(-c.pitch + Math.atan(this.aimY * c.zoom * zoomK) - Math.sin(sway * 0.037 + 1) * 0.02, 0, c.roll);
+    L.stretch.scale.set(1, 1, c.zoom * zoomK);
+  }
+  // What chrome mirrors in a region: the panorama itself, turned as the band shows it and brighter (a mirror the
+  // size of a hull plate shows little of so dark a sky otherwise), and the lamps as cards of light.
+  envFor(c) {
+    if (this.envs[c.id] !== undefined) return this.envs[c.id];
+    let tex = null;
+    if (GFX.ok) {
+      try {
+        const r = c.r, sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 1.5 : r.envGain, lift: 0.7, rot: c.yaw });
+        dome.rotation.set(-c.pitch, 0, c.roll);
+        sc.add(dome);
+        // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
+        // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
+        // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
+        // lies over what.)
+        const card = (dir, col, k, w, h, order = 0) => {
+          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
+            const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
+            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+            m.lookAt(0, 0, 0);
+            m.scale.set(w * s, h * s, 1);
+            m.renderOrder = order + i * 0.1;
+            sc.add(m);
+          });
+        };
+        card([0.3, 0.1, 1], r.top[0], 0.5, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
+        card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
+        card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
+        card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
+        card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
+        card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
+        card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
+        const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
+        disposeTree(sc);
+        rt.texture.dispose = () => rt.dispose(); // (see makeEnvMap: the target owns the texture)
+        tex = rt.texture;
+        c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
+      } catch (e) { tex = null; }
+    }
+    return (this.envs[c.id] = tex);
+  }
+  // A material that should mirror the region's sky and lamps: its map is kept up to date as regions change.
+  // k: how strongly it mirrors (its envMapIntensity at full).
+  mirror(mat, k = 1) {
+    this.users.push({ mat, k });
+    mat.envMap = this.env;
+    mat.envMapIntensity = k * this.envK;
+    mat.needsUpdate = true;
+    return mat;
+  }
+  // The world moves on to another region (BlasterSpace.setRegion calls this with the same time).
+  go(id, dur) {
+    if (this.next && this.next.id === id) return;
+    if (!this.next && this.cur.id === id) return;
+    if (this.next) { this.queued = { id, dur }; this.rate = Math.max(this.rate, 1 / 0.6); return; } // (a change on top of a change: the first is hurried home, then the second starts)
+    this.next = this.conf(id);
+    this.k = 0; this.rate = 1 / Math.max(0.01, dur); this.swapped = false;
+    this.envFor(this.next);
+  }
+  // a blast lights the sky for a moment (the game's boom calls this through BlasterSpace.flash)
+  flash(k) { this.flashK = Math.max(this.flashK, k); }
+  update(dt, w) {
+    const calm = GFX.calm || REDUCED_MOTION, g = this.g;
+    this.age += dt;
+    if (g.enemy && g.enemy.yK > 0) this.aimY += (g.enemy.yK - this.aimY) * Math.min(1, dt * 3);
+    this.flashK = Math.max(0, this.flashK - dt * 2.6);
+    let e = 0;
+    if (this.next) {
+      this.k = Math.min(1, this.k + dt * this.rate);
+      e = this.k * this.k * (3 - 2 * this.k);
+      if (!this.swapped && this.k >= 0.5) { // half way: chrome starts to mirror the new region (it is turned down while the change is made)
+        this.swapped = true;
+        this.env = this.envFor(this.next) || this.env;
+        for (const u of this.users) u.mat.envMap = this.env;
+      }
+      if (this.k >= 1) {
+        this.cur = this.next; this.next = null; e = 0; this.age = 0;
+        if (this.queued) { const q = this.queued; this.queued = null; this.go(q.id, q.dur); }
+      }
+    }
+    // the sky: flying into it, very slowly (and fast through the warp); a little sway, so it is never a still picture
+    const fly = 1.05 - 0.1 * clamp(this.age / 90, 0, 1) - (calm ? 0 : 0.22 * w), t = calm ? 0 : g.t, lit = 1 + this.flashK * this.flashK * 0.35;
+    this.show(this.layers[0], this.cur, (1 - e) * lit, t, fly);
+    if (this.next) this.show(this.layers[1], this.next, e * lit, t, 1.12 - 0.07 * e - (calm ? 0 : 0.22 * w)); else this.layers[1].dome.visible = false;
+    // the lamps, blended between the two regions
+    const A = this.cur.r, B = this.next ? this.next.r : A;
+    const set = (l, a, b, k = 1) => { if (!l) return; l.color.copy(this._c.set(a[0])).lerp(this._c2.set(b[0]), e); l.intensity = lerp(a[1], b[1], e) * k; };
+    set(this.key, A.key, B.key);
+    set(this.rimA, A.rimA, B.rimA);
+    set(this.rimB, A.rimB, B.rimB);
+    set(this.top, A.top, B.top, 0.22); // (as a lamp it is faint: a flat chrome back facing a hard light is a slab of white. Its soft card in the mirror map does the work.)
+    set(this.amb, A.amb, B.amb);
+    set(this.kick, A.kick || BLASTER_KICK, B.kick || BLASTER_KICK, 0.55);
+    // what chrome mirrors is turned down through the change, so the new map never pops in
+    this.envK = 1 - 0.6 * Math.sin(Math.PI * (this.next ? this.k : 0));
+    for (const u of this.users) u.mat.envMapIntensity = u.k * this.envK;
+  }
+  follow(camera) { this.root.position.copy(camera.position); }
+  dispose() {
+    for (const id in this.envs) if (this.envs[id]) this.envs[id].dispose();
+    this.envs = {};
+    this.users.length = 0;
+  }
+}
+
+/* ---- 20j-blasterstarfighter.js ---- */
+// Risk Blaster's starfighter, when its model arrived (Assets.model("starfighter"); without it 20d's fighter or
+// 20b's jet flies, as before): a manta wing in black chrome, cyan along its leading edges, magenta rings round its
+// five engines, twin cannons at its wing tips. The model is thirteen rigid parts; everything it does is posed here.
+// Look and sound only: the game still owns where the ship is, where it aims, and everything that scores.
+//   ship: where it is and where it aims (the game drives this)
+//   rig:  bank, pitch, recoil, rolls, the fly-in (look only)
+// Everything here runs on the show clock (VFX.dt), so a hit-stop holds it still and the rules never wait for it.
+const STAR = {
+  S: 3.6, // game units to one model unit (the model is one unit from cannon to cannon)
+  TILT: 0.34, // it flies tipped back toward the camera behind it, which then sees its back, its neon and its engine rings, not only its tail
+  RIDE: { muzzleL: "cannonL", muzzleR: "cannonR", tipL: "cannonL", tipR: "cannonR", exhaustC: "engineC", exhaustL: "engineL", exhaustR: "engineR", exhaustLL: "engineLL", exhaustLR: "engineLR", cockpit: "canopy" },
+  TREE: { cannonL: "wingL", cannonR: "wingR" }, // (a cannon rides its wing tip: when the wing flexes, it goes with it)
+  ENGINES: ["exhaustC", "exhaustL", "exhaustR", "exhaustLL", "exhaustLR"], // three mains across the tail, two smaller under them
+  NOZZLE: 0.046, // a nozzle's radius, in the model's units
+};
+
+// Every vertex of a loaded model told where it stands in the model's own frame at rest (aRest): what a shader needs
+// to light a place on it (an engine, a core, a wound) whatever pose it is in.
+function blasterBakeRest(model) {
+  const v = new THREE.Vector3();
+  model.scene.updateMatrixWorld(true);
+  model.scene.traverse((o) => {
+    if (!o.isMesh || o.geometry.attributes.aRest) return;
+    const p = o.geometry.attributes.position, a = p.array, out = new Float32Array(p.count * 3);
+    const k = !p.normalized ? 1 : a instanceof Int16Array ? 1 / 32767 : a instanceof Uint16Array ? 1 / 65535 : a instanceof Int8Array ? 1 / 127 : a instanceof Uint8Array ? 1 / 255 : 1;
+    for (let i = 0; i < p.count; i++) { v.set(p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k).applyMatrix4(o.matrixWorld); out[i * 3] = v.x; out[i * 3 + 1] = v.y; out[i * 3 + 2] = v.z; }
+    o.geometry.setAttribute("aRest", new THREE.BufferAttribute(out, 3));
+  });
+}
+// A loaded model's maps, let go with the scene. (Its colour map goes in the scene's own sweep; these are the rest. A
+// model is handed to one scene only, so nothing else is using them.)
+function blasterDropMaps(mats) {
+  const seen = new Set();
+  mats.forEach((m) => ["emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"].forEach((k) => { if (m[k] && !seen.has(m[k])) { seen.add(m[k]); m[k].dispose(); } }));
+}
+// What the game teaches a loaded model's material (one recipe for the fighter and the demon):
+//   uSkGlow     its own light (the neon in its emissive map): a colour times a strength
+//   uSkRimA/B   a thin rim on the edges that turn away from the lens: one colour from the left, one from the right
+//   uSkKick     a cold kicker from above and behind: every upper edge is drawn in light, so the shape stands clear of the sky
+//   uSkHit      a flash along its edges (it has just been struck)
+//   uSkGone     0 to 1: it is eaten away from a noise, the edge of every hole burning (uSkBurn); uSkGoneF: how fine the noise
+//   uSkHot      heat: all of it glows (a wreck, cooling)
+//   uSkSpec     the most a lamp's own highlight may add (a flat chrome plate that turns to face a hard lamp would
+//               otherwise be a slab of white: its sheen comes from the soft cards in what it mirrors instead)
+// Chrome sparkles where its normal map is finer than a pixel: there it is made a little rougher (uSkAA), so a
+// highlight slides over a plate instead of crawling across it.
+// o.pars, o.cut, o.albedo, o.emissive: more GLSL for one model (declarations; before its texture is read; after; with the light it gives off).
+const blasterSkinUniforms = () => ({
+  uSkGlow: { value: new THREE.Color(1, 1, 1) }, uSkRimA: { value: new THREE.Color(0, 0, 0) }, uSkRimB: { value: new THREE.Color(0, 0, 0) }, uSkHit: { value: new THREE.Color(0, 0, 0) },
+  uSkGone: { value: 0 }, uSkGoneF: { value: 14 }, uSkBurn: { value: new THREE.Color(5, 1.6, 0.5) }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkAA: { value: 1.4 }, uSkKick: { value: new THREE.Color(0, 0, 0) }, uSkSpec: { value: 1.4 },
+});
+function blasterSkin(mat, U, o = {}) {
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute vec3 aRest; varying vec3 vRest;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvRest = aRest;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", `#include <common>
+        varying vec3 vRest;
+        uniform vec3 uSkGlow; uniform vec3 uSkRimA; uniform vec3 uSkRimB; uniform vec3 uSkHit; uniform float uSkGone; uniform float uSkGoneF; uniform vec3 uSkBurn; uniform vec3 uSkHot; uniform float uSkAA; uniform vec3 uSkKick; uniform float uSkSpec;
+        float skH(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+        float skN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(mix(skH(i), skH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(skH(i + vec3(0.0, 1.0, 0.0)), skH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+                     mix(mix(skH(i + vec3(0.0, 0.0, 1.0)), skH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(skH(i + vec3(0.0, 1.0, 1.0)), skH(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }
+        ${o.pars || ""}`)
+      .replace("#include <map_fragment>", `float skBurn = 0.0;
+        if (uSkGone > 0.0) {
+          float skG = skN(vRest * uSkGoneF) * 0.68 + skN(vRest * uSkGoneF * 2.7) * 0.32 - uSkGone * 1.1;
+          if (skG < 0.0) discard;
+          skBurn = 1.0 - smoothstep(0.0, 0.08, skG);
+        }
+        ${o.cut || ""}
+        #include <map_fragment>
+        ${o.albedo || ""}`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        { vec3 skD = max(abs(dFdx(normal)), abs(dFdy(normal))); roughnessFactor = min(1.0, roughnessFactor + max(max(skD.x, skD.y), skD.z) * uSkAA); }
+        float skNV = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), skF = 1.0 - skNV;
+        totalEmissiveRadiance *= uSkGlow;
+        ${o.emissive || ""}
+        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, normal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g) * (0.12 + 0.88 * smoothstep(0.3, 0.72, skN(vRest * 26.0) * 0.65 + skN(vRest * 61.0) * 0.35)); // (heat glows in patches, like embers, dark between them: never a coat of orange)`);
+    sh.fragmentShader = sh.fragmentShader.replace("reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance", "min(reflectedLight.directSpecular, vec3(uSkSpec)) + reflectedLight.indirectSpecular + totalEmissiveRadiance");
+  };
+  mat.customProgramCacheKey = () => "blaster-skin-" + (o.key || "");
+  mat.needsUpdate = true;
+  return mat;
+}
+
+// The exhaust of every engine as one mesh: for each, a soft outer cone and a hot inner one, rings from the nozzle
+// (t = 0) to the tip (t = 1), in the rig's frame (the tail is +z). kind 0: a main engine; 1: one of the two under them.
+function starPlumes(list) {
+  const R = 7, M = 14, o = { pos: [], nor: [], t: [], core: [], axis: [], kind: [], z0: [], ph: [], idx: [] };
+  list.forEach(({ p, r, len, kind, ph }) => {
+    for (const core of [0, 1]) {
+      const base = o.pos.length / 3;
+      for (let i = 0; i < R; i++) {
+        const t = i / (R - 1), rr = r * (core ? 0.36 : 0.92) * Math.pow(1 - t, 0.7) + r * 0.03;
+        for (let j = 0; j < M; j++) {
+          const a = (j / M) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+          o.pos.push(p.x + c * rr, p.y + s * rr, p.z + t * len * (core ? 0.62 : 1));
+          o.nor.push(c, s, 0.25);
+          o.t.push(t); o.core.push(core); o.axis.push(p.x, p.y); o.kind.push(kind); o.z0.push(p.z); o.ph.push(ph);
+        }
+      }
+      for (let i = 0; i < R - 1; i++) for (let j = 0; j < M; j++) { const a = base + i * M + j, b = base + i * M + ((j + 1) % M); o.idx.push(a, b, a + M, b, b + M, a + M); }
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(o.pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(o.nor, 3));
+  g.setAttribute("aT", new THREE.Float32BufferAttribute(o.t, 1));
+  g.setAttribute("aCore", new THREE.Float32BufferAttribute(o.core, 1));
+  g.setAttribute("aAxis", new THREE.Float32BufferAttribute(o.axis, 2));
+  g.setAttribute("aKind", new THREE.Float32BufferAttribute(o.kind, 1));
+  g.setAttribute("aZ0", new THREE.Float32BufferAttribute(o.z0, 1));
+  g.setAttribute("aPh", new THREE.Float32BufferAttribute(o.ph, 1));
+  g.setIndex(o.idx);
+  return g;
+}
+function starPlumeMaterial(U) {
+  const VARY = "varying float vT; varying float vCore; varying float vPow; varying vec3 vN; varying vec3 vV;";
+  return new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: `attribute float aT; attribute float aCore; attribute vec2 aAxis; attribute float aKind; attribute float aZ0; attribute float aPh;
+      uniform float uTime; uniform vec2 uLen; uniform vec2 uPow; uniform float uHurt; ${VARY}
+      void main(){
+        vT = aT; vCore = aCore;
+        // each engine flickers in its own time (small and fast: a shimmer, never a flash); the one that was hit sputters
+        float pw = (aKind < 0.5 ? uPow.x : uPow.y) * (0.93 + 0.05 * sin(uTime * 23.0 + aPh * 5.1) + 0.03 * sin(uTime * 57.0 + aPh * 11.3));
+        if (aPh > 0.5 && aPh < 1.5) pw *= 1.0 - uHurt * (0.5 + 0.4 * sin(uTime * 11.0) * sin(uTime * 4.3));
+        vPow = pw;
+        vec3 p = position;
+        p.xy = aAxis + (p.xy - aAxis) * (1.0 + 0.12 * aT * sin(uTime * 14.0 + aT * 9.0 + aPh * 8.0));
+        p.z = aZ0 + (p.z - aZ0) * (aKind < 0.5 ? uLen.x : uLen.y) * (0.85 + 0.15 * pw);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uTail; ${VARY}
+      void main(){
+        float f = abs(dot(normalize(vN), normalize(vV)));
+        float body = pow(1.0 - vT, 1.3) * (0.3 + 0.7 * f);
+        float diamonds = 0.74 + 0.5 * pow(0.5 + 0.5 * sin(vT * 16.0 - uTime * 10.0), 3.0); // shock diamonds, running down the flame
+        vec3 c = vCore > 0.5 ? mix(uCool, uHot, pow(1.0 - vT, 2.0)) : mix(uTail, uCool, pow(1.0 - vT, 1.6));
+        gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.6 : 0.4)), 1.0);
+      }`,
+  });
+}
+
+class BlasterStarfighter {
+  constructor(game, model) {
+    const g = (this.g = game), S = STAR.S;
+    const M = (this.model = rigModel(model, { ride: STAR.RIDE, tree: STAR.TREE }));
+    blasterBakeRest(M);
+    const ship = (this.ship = new THREE.Group()), rig = (this.rig = new THREE.Group()), P = (this.P = M.parts);
+    ship.add(rig);
+    this.fit = { w: 3.6, h: 1.72, y: 0.275 }; // the room it needs in the band, and how far below the middle it sits (the game scales and places it)
+    M.scene.rotation.y = Math.PI; // (the model's nose is +z: it flies down the way ahead, -z)
+    M.scene.scale.setScalar(S);
+    rig.add(M.scene);
+    for (const n in P) P[n].userData.rest = P[n].position.clone();
+    // a point of the model at rest, in the rig's frame
+    const at = (p, out) => (out || new THREE.Vector3()).set(-p[0] * S, p[1] * S, -p[2] * S);
+
+    // ---- its chrome: what it mirrors (the region's sky and lamps), how its neon burns, and what the game adds
+    tuneModel(M, { glow: 2.3, metal: 0.92, rough: 1.4, normal: 0.85 }); // (a satin chrome: a flat wing that turns to face a lamp takes a sheen, not a slab of white)
+    this.U = blasterSkinUniforms();
+    this.U.uSkAA.value = 1.6;
+    this.U.uSkSpec.value = 0.55;
+    this.UE = Object.assign({}, this.U, { uSkGlow: { value: new THREE.Color(1, 1, 1) } }); // the engines' own light: it follows the thrust
+    const EM = `vec3 stE = vec3(max(abs(vRest.x) - 0.17, 0.0), vRest.y - 0.01, (vRest.z + 0.46) * 0.8);
+        totalEmissiveRadiance += uStHeat * exp(-dot(stE, stE) * 110.0) * (0.3 + 0.7 * diffuseColor.g);
+        vec3 stG = vec3(abs(vRest.x) - 0.4535, vRest.y + 0.0134, vRest.z - 0.2);
+        totalEmissiveRadiance += uStGun * exp(-dot(stG * vec3(1.0, 1.0, 0.45), stG * vec3(1.0, 1.0, 0.45)) * 420.0);`;
+    this.U.uStHeat = this.UE.uStHeat = { value: new THREE.Color(0, 0, 0) }; // metal glowing round the nozzles
+    this.U.uStGun = this.UE.uStGun = { value: new THREE.Color(0, 0, 0) }; // the barrels, hot from firing
+    const base = M.mesh.body.material;
+    this.mat = blasterSkin(base, this.U, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM });
+    this.engMat = blasterSkin(base.clone(), this.UE, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM });
+    STAR.ENGINES.forEach((n) => { const m = M.mesh[n.replace("exhaust", "engine")]; if (m) m.material = this.engMat; });
+    this.glassMat = blasterSkin(base.clone(), this.U, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM }); // the canopy: glass over the cockpit
+    this.glassMat.roughness = 0.55;
+    if (M.mesh.canopy) M.mesh.canopy.material = this.glassMat;
+    this.mats = [this.mat, this.engMat, this.glassMat];
+    this.mats.forEach((m) => m.color.setScalar(0.82)); // (black chrome: a shade darker than it was made, so its neon and its engines are the bright things on it)
+    g.chrome(this.mat, 1.05); g.chrome(this.engMat, 1.05); g.chrome(this.glassMat, 1.7);
+
+    // ---- engines: five nozzles, each with a flame and a glow
+    const noz = STAR.ENGINES.map((n) => at(M.info.anchors[n]));
+    this.FU = { uTime: { value: 0 }, uLen: { value: new THREE.Vector2(1, 1) }, uPow: { value: new THREE.Vector2(1, 1) }, uHurt: { value: 0 },
+      uHot: { value: new THREE.Color(2.6, 3.0, 3.4) }, uCool: { value: new THREE.Color(0.3, 1.5, 3.0) }, uTail: { value: new THREE.Color(1.3, 0.3, 2.4) } };
+    this.flames = new THREE.Mesh(starPlumes(noz.map((p, i) => ({ p, r: STAR.NOZZLE * S * (i < 3 ? 1 : 0.92), len: i < 3 ? 1.5 : 1.0, kind: i < 3 ? 0 : 1, ph: i }))), starPlumeMaterial(this.FU));
+    this.flames.renderOrder = 5;
+    this.flames.frustumCulled = false;
+    rig.add(this.flames);
+    this.engineGlow = noz.map((p, i) => { const s = glowSprite(new THREE.Color(0.7, 1.7, 2.6), 0.5, 0.8); s.position.copy(p).setZ(p.z + 0.05); s.renderOrder = 5; rig.add(s); return s; });
+    // ---- lights it carries: one at each wing tip (magenta to port, cyan to starboard), a beacon on its back
+    this.navLights = [["tipR", 0xff3ad4], ["tipL", 0x35efff]].map(([n, c]) => { const s = glowSprite(neon(c, 2.4), 0.3, 1); M.anchors[n].add(s); s.scale.setScalar(0.3 / S); return s; });
+    this.beacon = glowSprite(neon(0xff3a2a, 3.2), 0.15, 0); // (a lamp: a point of light, not a patch of red on the canopy)
+    at([0, 0.125, -0.2], this.beacon.position);
+    rig.add(this.beacon);
+    // ---- at warp: a bow wave of light off the nose
+    this.bowMat = fighterBowMaterial();
+    const dome = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+    dome.rotateX(-Math.PI / 2);
+    this.bow = new THREE.Mesh(dome, this.bowMat);
+    this.bow.scale.set(2.1, 1.0, 2.6);
+    this.bow.position.set(0, 0.05, 0.5);
+    this.bow.renderOrder = 6;
+    this.bow.visible = false;
+    rig.add(this.bow);
+    // ---- the shield: a hexagon lattice on a bubble of force, unseen until something lands on it
+    this.shieldMat = fighterShieldMaterial();
+    this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), this.shieldMat);
+    this.shield.scale.set(2.25, 1.0, 2.1);
+    this.shield.position.set(0, 0.1, 0);
+    this.shield.renderOrder = 7;
+    this.shield.visible = false;
+    rig.add(this.shield);
+    // ---- vapour off the wing tips
+    this.contrails = [0, 1].map(() => new Trail({ length: 18, width: 0.03, color: 0xbfe8ff, intensity: 0.7 }));
+    this.contrails.forEach((t) => { g.scene.add(t.mesh); });
+
+    // ---- what the game reads (all in the rig's frame): where the guns and the engines are; the glows it used to flicker itself are this ship's own now
+    this.nozzles = noz.map((p) => p.clone().setZ(p.z + 0.02));
+    this.muzzles = [at(M.info.anchors.muzzleR), at(M.info.anchors.muzzleL)]; // (port, starboard: the model's R is the ship's port once it is turned to fly away from the lens)
+    this.engineGlows = [];
+    this.wingLights = [];
+    this.extras = [this.flames, this.bow, this.shield, this.beacon, ...this.engineGlow, ...this.navLights];
+
+    this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.kick = [0, 0]; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
+    this.inT = REDUCED_MOTION ? 1 : 0; this.launched = false; this.hold = 0; // the fly-in
+    this.hurt = 0; this.boom = -1; this.boost = 0; this.jolt = 0; this.joltX = 0; this.pow = 0; this.blink = 0; this.struck = 0; this.barrelHot = 0;
+    this.gunCol = new THREE.Color(1, 0.8, 0.5);
+    this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._c = new THREE.Color();
+    rig.position.set(0, -1.6, this.inT < 1 ? 12.5 : 0); // (it waits behind the camera until the game starts)
+    rig.rotation.x = STAR.TILT;
+  }
+  // ---- where things are on it, in the world (each fills `out` and returns it) --------------------------------
+  // the mouth of a cannon (0: port, 1: starboard)
+  muzzle(i, out) { return this.model.anchors[i ? "muzzleL" : "muzzleR"].getWorldPosition(out); }
+  // the way a cannon points
+  aim(out) { return out.set(0, 0, -1).transformDirection(this.rig.matrixWorld); }
+  // an engine's nozzle (0 to 4: the three mains, then the two under them)
+  exhaust(i, out) { return this.rig.localToWorld(out.copy(this.nozzles[i % this.nozzles.length])); }
+  cockpit(out) { return this.model.anchors.cockpit.getWorldPosition(out); }
+  nose(out) { return this.model.anchors.nose.getWorldPosition(out); }
+  // a wing tip (0: port, 1: starboard)
+  tip(i, out) { return this.model.anchors[i ? "tipL" : "tipR"].getWorldPosition(out); }
+  // its middle, and how big it is drawn (for a blast, a shield hit)
+  centre(out) { return this.rig.getWorldPosition(out); }
+
+  // the game starts: it comes in from behind the camera, engines wide open
+  launch() {
+    if (this.launched) return;
+    this.launched = true;
+    if (this.inT < 1) Sound.sfx("whoosh");
+  }
+  // the guns fire: a kick back, the cannons slide in their mounts, the barrels heat. (gun: 0 port, 1 starboard, or both.)
+  fire(col, pods, gun) {
+    this.recoil = 1; this.gun = 1;
+    if (gun === undefined) this.kick[0] = this.kick[1] = 1; else this.kick[gun] = 1;
+    this.barrelHot = Math.min(1.6, this.barrelHot + 0.45);
+    if (col !== undefined) this.gunCol.set(col);
+  }
+  // a clean hit: a quick wing waggle and a burst of thrust (it surges ahead, engines long, and settles back)
+  hit() { if (!REDUCED_MOTION && !GFX.calm) { this.waggle = 1; this.boost = 1; } }
+  // a streak heats the engines: longer, whiter flames
+  setCombo(c) { this.heatTo = clamp((c - 1) / 7, 0, 1); }
+  // a shield is lost: the lattice flares red from the point of impact, and the ship is knocked aside
+  shieldLost(from) {
+    const u = this.shieldMat.uniforms;
+    u.uHit.value = 1;
+    u.uHitP.value.set(from ? clamp(-from.x, -0.6, 0.6) : rand(-0.4, 0.4), 0.55, -0.7).normalize();
+    u.uColor.value.setRGB(1.0, 0.28, 0.2);
+    this.struck = 1;
+    if (!REDUCED_MOTION && !GFX.calm && this.boom < 0 && this.inT >= 1) { const sd = u.uHitP.value.x < 0 ? -1 : 1; this.jolt = 1; this.joltX = -sd; this.rollV += sd * 4.5; }
+  }
+  // a shield comes back: the lattice sweeps on from the nose
+  shieldUp() {
+    const u = this.shieldMat.uniforms;
+    u.uHit.value = 0.9;
+    u.uHitP.value.set(0, 0.1, -1);
+    u.uColor.value.setRGB(0.6, 1.0, 1.0);
+  }
+  // through the warp between waves: one full roll
+  warp() { if (!REDUCED_MOTION && !GFX.calm) { this.spinT = 1; this.spinDir = Math.random() < 0.5 ? -1 : 1; } }
+  // the last shield is gone: it comes apart into its own thirteen parts, each thrown its own way, burning
+  down() {
+    const g = this.g, M = this.model, root = M.scene.children[0] || M.scene;
+    this.contrails.forEach((t) => { t.mesh.visible = false; });
+    this.extras.forEach((o) => { o.visible = false; });
+    if (REDUCED_MOTION || this.inT < 1 || this.boom >= 0) { this.ship.visible = false; return; } // (still: it is simply gone)
+    this.boom = 0;
+    this.wreck = [];
+    for (const n in M.mesh) {
+      const h = this.P[n];
+      if (!h || !M.mesh[n]) continue;
+      root.attach(h); // (every part on its own now)
+      const d = new THREE.Vector3(h.position.x + rand(-0.08, 0.08), h.position.y + rand(-0.02, 0.1), h.position.z * 0.6 + rand(-0.1, 0.1));
+      if (d.lengthSq() < 0.002) d.set(rand(-0.3, 0.3), 0.4, rand(-0.3, 0.3));
+      this.wreck.push({ h, v: d.normalize().multiplyScalar(rand(0.25, 0.7)), w: new THREE.Vector3(rand(-5, 5), rand(-5, 5), rand(-5, 5)) });
+    }
+  }
+  update(dt, sp, w) {
+    const g = this.g, d = VFX.dt, t = VFX.t, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, h = Math.min(d, 0.05), U = this.U, FU = this.FU, P = this.P, k = g.shipScale;
+    if (this.boom >= 0) { // it is gone: only the wreck moves
+      this.boom += d;
+      const b = this.boom;
+      for (const q of this.wreck) {
+        q.h.position.addScaledVector(q.v, d * Math.exp(-b * 0.9));
+        q.h.position.z -= d * 0.22 * b; // (it falls behind: toward the lens)
+        q.h.rotation.x += q.w.x * d; q.h.rotation.y += q.w.y * d; q.h.rotation.z += q.w.z * d;
+      }
+      U.uSkHot.value.setRGB(2.6, 0.9, 0.22).multiplyScalar(Math.exp(-b * 2.0));
+      U.uSkGone.value = this.UE.uSkGone.value = clamp((b - 0.25) / 1.9, 0, 1);
+      U.uSkGlow.value.multiplyScalar(Math.pow(0.004, d)); this.UE.uSkGlow.value.multiplyScalar(Math.pow(0.004, d)); // its lights die with it
+      if (b > 2.4) this.model.scene.visible = false;
+      return;
+    }
+    this.heat += (this.heatTo - this.heat) * Math.min(1, d * 3);
+    const heat = this.heat;
+    // the fly-in: from behind and below the camera to its place, rolling level as it arrives
+    if (!this.launched && this.inT < 1 && (this.hold += d) > 1) this.launch();
+    if (this.launched && this.inT < 1) this.inT = Math.min(1, this.inT + d / 1.6);
+    // a burst of thrust after a clean hit: out fast, back slowly
+    this.boost = Math.max(0, this.boost - d / 1.1);
+    const lunge = this.boost > 0 ? Math.sin(Math.PI * Math.pow(1 - this.boost, 0.5)) : 0;
+    this.jolt = Math.max(0, this.jolt - d * 2.2);
+    const inK = this.inT < 1 ? Math.pow(1 - this.inT, 3) : 0, burn = Math.max(w, Math.min(1.2, inK * 3), lunge * 0.85) + clamp((sp / 26 - 1) / 0.6, 0, 1) * 0.12;
+    // hovering: a slow bob on two beats, the nose leading it a little, and a yaw that trails the bank
+    const hov = quiet ? 0 : 1 - Math.min(1, inK * 3);
+    const bob = (Math.sin(t * 1.9) * 0.05 + Math.sin(t * 3.1 + 1.3) * 0.018) * hov;
+    // bank into the drift and the pointer; waggle after a hit; one full roll through the warp
+    let roll = (quiet ? 0 : -Pointer.x * 0.5) - Math.cos(t * 0.9) * 0.12 * hov - Math.min(1, inK * 2.5) * 1.3;
+    if (this.waggle > 0) { this.waggle = Math.max(0, this.waggle - d * 1.5); roll += Math.sin((1 - this.waggle) * Math.PI * 2) * 0.5 * this.waggle; }
+    if (this.spinT > 0) {
+      this.spinT = Math.max(0, this.spinT - d / 1.2);
+      roll += this.spinDir * Math.PI * 2 * smoothstep(0, 1, 1 - this.spinT);
+      if (this.spinT === 0) rig.rotation.z -= this.spinDir * Math.PI * 2; // a whole turn is no turn: nothing to unwind
+    }
+    const jj = this.jolt * this.jolt;
+    this.rollV += ((roll - rig.rotation.z) * 60 - this.rollV * 11) * h;
+    rig.rotation.z += this.rollV * h;
+    rig.rotation.x += (STAR.TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.035 - Math.min(1, inK * 2) * 0.3 + Math.sin(t * 1.9 + 0.9) * 0.016 * hov - lunge * 0.06 + jj * 0.09 - rig.rotation.x) * Math.min(1, d * 6);
+    rig.rotation.y += ((-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov + jj * this.joltX * 0.25 - rig.rotation.y) * Math.min(1, d * 2.5);
+    this.recoil *= Math.pow(0.004, d);
+    this.gun *= Math.pow(0.02, d);
+    this.struck = Math.max(0, this.struck - d * 3.5);
+    rig.position.set(jj * this.joltX * 0.5, -inK * 1.6 + bob - jj * 0.22, this.recoil * 0.1 + inK * 12.5 - (quiet ? 0 : w * 0.5) - lunge * 0.85); // (it surges forward into the warp, and after a clean hit)
+    // ---- its parts: the wings flex with the roll (the one it rolls toward lags) and breathe; the cannons slide back in
+    // their mounts when they fire; the fins answer the roll; the engines point a little against a turn
+    const rate = clamp(this.rollV, -6, 6), flap = (quiet ? 0 : Math.sin(t * 1.9 + 0.5) * 0.022 + lunge * 0.05 - Math.min(1, inK * 2) * 0.12) + heat * 0.01;
+    if (P.wingL) P.wingL.rotation.set(0, -lunge * 0.05, -flap - rate * 0.035);
+    if (P.wingR) P.wingR.rotation.set(0, lunge * 0.05, flap - rate * 0.035);
+    for (let i = 0; i < 2; i++) {
+      this.kick[i] *= Math.pow(0.0015, d);
+      const c = P[i ? "cannonL" : "cannonR"];
+      if (c) c.position.z = c.userData.rest.z - this.kick[i] * 0.03;
+    }
+    if (P.finL) P.finL.rotation.z = clamp(-rate * 0.12, -0.45, 0.45);
+    if (P.finR) P.finR.rotation.z = clamp(-rate * 0.12, -0.45, 0.45);
+    STAR.ENGINES.forEach((n, i) => { const e = P[n.replace("exhaust", "engine")]; if (e) e.rotation.set(clamp(rig.rotation.x - STAR.TILT, -0.2, 0.2) * -0.5, clamp(rate * 0.02, -0.08, 0.08), 0); });
+    // ---- engines: they burn longer and whiter with the streak, the warp and a surge; the two under the mains answer a roll
+    const turn = Math.min(0.5, Math.abs(this.rollV) * 0.3);
+    this.hurt += ((g.shields <= 1 && g.state !== "over" ? 1 : 0) - this.hurt) * Math.min(1, d * 3);
+    FU.uTime.value = t;
+    FU.uLen.value.set(0.75 + heat * 0.5 + burn * 1.2, 0.7 + heat * 0.35 + burn * 0.9 + turn);
+    FU.uPow.value.set(0.5 + heat * 0.3 + burn * 0.45, 0.42 + heat * 0.25 + burn * 0.35 + turn * 0.6);
+    FU.uHurt.value = this.hurt;
+    FU.uCool.value.setRGB(lerp(0.3, 0.8, heat), lerp(1.5, 1.9, heat), 3.0);
+    const flick = 1 + (quiet ? 0 : Math.sin(t * 23) * 0.05 + Math.sin(t * 9.3) * 0.04);
+    this.engineGlow.forEach((s, j) => {
+      const hurt = j === 1 ? 1 - this.hurt * (0.5 + 0.4 * Math.sin(t * 11) * Math.sin(t * 4.3)) : 1, pw = (j < 3 ? FU.uPow.value.x : FU.uPow.value.y) * hurt;
+      s.scale.setScalar((j < 3 ? 0.42 : 0.34) * (0.8 + 0.3 * pw) * flick);
+      s.material.opacity = Math.min(0.85, 0.4 + 0.3 * pw);
+    });
+    this.UE.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(this.pow * (0.7 + 0.5 * FU.uPow.value.x) * flick); // the nozzles' own light follows the thrust
+    U.uStHeat.value.setRGB(0.25, 1.0, 2.2).multiplyScalar(this.pow * (0.12 + heat * 0.35 + Math.min(1, burn) * 0.6));
+    if (g.engineLight && this.ship.visible) { g.engineLight.intensity = (0.8 + 0.4 * Math.min(1, burn) + 0.3 * heat) * this.pow * flick; g.engineLight.color.setRGB(0.45, 0.8, 1.0); g.engineLight.distance = 6 * k + 2; }
+    // ---- the barrels cool; its neon comes on as it arrives, burns brighter with the streak and the thrust, dims on its last shield
+    this.barrelHot = Math.max(0, this.barrelHot - d * 0.9);
+    U.uStGun.value.copy(this.gunCol).multiplyScalar(this.gun * 2.2).add(this._c.setRGB(2.6, 0.75, 0.16).multiplyScalar(Math.min(1, this.barrelHot)));
+    this.pow += ((this.inT > 0.4 ? 1 : 0) - this.pow) * Math.min(1, d * 2.5);
+    this.blink = g.el && g.el.dataset.blink ? Math.min(1, this.blink + d * 8) : Math.max(0, this.blink - d * 5);
+    const bl = this.blink * (0.5 + 0.5 * Math.sin(t * 2.6 * Math.PI * 2)); // (after a hit it cannot be hit again for a moment: its edges pulse, under three times a second)
+    U.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(this.pow * (0.85 + 0.35 * heat + 0.4 * lunge) * (1 - 0.3 * this.hurt * (0.5 + 0.5 * Math.sin(t * 5.0))));
+    const rimK = 0.5 + 0.25 * heat + 0.3 * lunge, pano = g.pano;
+    if (pano) { U.uSkRimA.value.copy(pano.rimA.color).multiplyScalar(rimK * 0.8); U.uSkRimB.value.copy(pano.rimB.color).multiplyScalar(rimK * 0.8); } else { U.uSkRimA.value.setRGB(0.55, 0.3, 1.5).multiplyScalar(rimK); U.uSkRimB.value.setRGB(0.16, 0.9, 1.5).multiplyScalar(rimK); }
+    U.uSkKick.value.setRGB(0.55, 0.9, 1.15).multiplyScalar(1.1 * this.pow); // (cyan-white along its upper edges: its back stands clear of whatever is behind it)
+    U.uSkHit.value.setRGB(0.5, 1.4, 2.0).multiplyScalar(bl * 0.6).add(this._c.setRGB(2.4, 0.5, 0.4).multiplyScalar(this.struck * this.struck * 0.5)); // (struck: a red rim for a moment. Its shield's lattice and the sparks off its hull say the rest; the hull itself is never washed out.)
+    // lights: the beacon on its back (a soft pulse, well under 1 Hz), the wing tips
+    this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * this.pow;
+    this.navLights.forEach((s, j) => { s.material.opacity = (0.55 + 0.45 * Math.sin(t * 2.2 + j * Math.PI)) * this.pow; });
+    this.bow.visible = w > 0.02 && !REDUCED_MOTION;
+    this.bowMat.uniforms.uW.value = w * 0.8;
+    this.bowMat.uniforms.uTime.value = t;
+    // shield: fades with the shields left, glows with the streak, settles back to blue after a hit
+    const su = this.shieldMat.uniforms;
+    this.shieldOn += (clamp(g.shields / 3, 0, 1) - this.shieldOn) * Math.min(1, d * 4);
+    su.uTime.value = t;
+    su.uOn.value = this.shieldOn;
+    su.uGlow.value = heat * 0.6;
+    su.uHit.value = Math.max(0, su.uHit.value - d * 1.3);
+    if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, d * 4));
+    this.shield.visible = su.uHit.value > 0;
+    rig.updateMatrixWorld(true);
+    // (what the game reads, in the rig's frame: the cannons' mouths as they are now, flexed and slid)
+    for (let i = 0; i < 2; i++) rig.worldToLocal(this.muzzle(i, this.muzzles[i]));
+    if (inK < 0.5) GFX.heatAt(g.camera, this._v.set(0, 0.2, 2.6).applyMatrix4(rig.matrixWorld), 0.55 * k, 0.4 + 0.6 * Math.max(heat, Math.min(1, burn))); // (not while it is still behind the camera)
+    // wingtip vapour trails, sampled at a fixed 60 Hz
+    this.acc = Math.min(4 / 60, this.acc + d);
+    while (this.acc >= 1 / 60) {
+      this.acc -= 1 / 60;
+      const step = Math.min(sp * 0.3, 9) / 60;
+      this.contrails.forEach((tr, j) => {
+        tr.width = 0.028 * k * (1 + heat + lunge);
+        tr.shift(0, 0, step);
+        tr.push(this.tip(j, this._v));
+      });
+    }
+  }
+  dispose() {
+    blasterDropMaps(this.mats);
+    this.mats.concat([this.flames.material, this.bowMat, this.shieldMat, this.beacon.material], this.engineGlow.map((s) => s.material), this.navLights.map((s) => s.material)).forEach((m) => m.dispose());
+    this.contrails.forEach((t) => { this.g.scene.remove(t.mesh); t.mesh.geometry.dispose(); t.mesh.material.dispose(); });
+  }
+}
+
+/* ---- 20k-blasteroverlord.js ---- */
+// Risk Blaster's enemy when its model arrived (Assets.model("demon"); without it 20h's demon flies, as before): a
+// ram-horned overlord in black chrome, wings of armour blades, a reactor core burning magenta in its chest. The
+// model is eleven rigid parts (body, head, tail, two wings, and each arm as shoulder, elbow, hand); every move is
+// posed here from smooth curves. Look and sound only. The game still asks, times, checks and scores:
+//   a wave starts            it flies up out of the distance, throws its wings wide and roars
+//   while the clock runs     it comes closer; as the last half second runs out it is already winding up
+//   a right answer           the fighter's fire lands on its core: it is thrown back, and is a little more broken
+//   a wrong answer, or none  it winds up (the warning) and strikes: five strikes in turn, each wound up its own way
+//   the last three questions it rages
+//   the wave is cleared      it dies: a chain of blasts takes it apart, then the last one
+// The blows, the bolts and the blasts themselves are staged by 20l-blasterstage.js (g.stage) from what happens here.
+// Everything runs on the show clock (VFX.dt): a hit-stop holds it still, and the rules never wait for it.
+const LORD = {
+  width: 1.0, height: 0.98, // the model: one unit across the wings
+  RIDE: { core: "body", thrusters: "body", mouth: "head", eyes: "head", clawL: "handL", clawR: "handR", wingTipL: "wingL", wingTipR: "wingR", tailTip: "tail" },
+  TREE: { head: "body", wingL: "body", wingR: "body", shoulderL: "body", shoulderR: "body", tail: "body" }, // (everything hangs from its torso; the arms are chains already)
+  // The strikes, in the order it uses them, and when each lets go (seconds after it starts to wind up).
+  //   volley    both claws raised at the player: a burst of plasma bolts from each in turn
+  //   swipe     it draws back, one arm cocked high, then lunges and rakes its claws across the fighter
+  //   wave      wings wide, head thrown back: it roars a ring of force down the way
+  //   beam      arms drawn in round its core, which burns white: a beam swept across the fighter
+  //   missiles  wings raised high: seekers leave its wing tips and curve in
+  ATTACKS: ["volley", "swipe", "wave", "beam", "missiles"], GO: 0.5,
+  // The wounds a wave's hits open in it, in order: a place on the model at rest and how wide (its own units).
+  // Armour is eaten away there to a burning edge; what is behind shows through.
+  WOUNDS: [
+    [0.072, 0.105, 0.16, 0.034], // the plate over its left breast
+    [-0.33, 0.1, -0.05, 0.075], // a hole through its right wing
+    [-0.135, 0.275, 0.07, 0.046], // the curl of its right horn
+    [-0.07, 0.02, 0.15, 0.034], // the plate under its right breast
+    [0.31, 0.24, -0.05, 0.085], // a hole through its left wing
+    [0.175, 0.125, 0.06, 0.042], // its left shoulder
+  ],
+};
+
+const lordUniforms = () => Object.assign(blasterSkinUniforms(), {
+  uLdWound: { value: LORD.WOUNDS.map(() => new THREE.Vector4(0, 0, 0, 0)) }, uLdCoreK: { value: 0 }, uLdEyeK: { value: 0 }, uLdSweep: { value: 9 }, uLdCrack: { value: 0 },
+  uLdCrackCol: { value: new THREE.Color(2.6, 0.5, 0.7) }, uLdClaw: { value: new THREE.Color(0, 0, 0) }, uLdMouth: { value: new THREE.Color(0, 0, 0) }, uLdTip: { value: new THREE.Color(0, 0, 0) },
+  uDmRage: { value: 0 }, // (how red its mood is: the built-in fighter's back takes its colour from this)
+});
+const LORD_GLSL = {
+  key: "lord",
+  pars: "uniform vec4 uLdWound[6]; uniform float uLdCoreK; uniform float uLdEyeK; uniform float uLdSweep; uniform float uLdCrack; uniform vec3 uLdCrackCol; uniform vec3 uLdClaw; uniform vec3 uLdMouth; uniform vec3 uLdTip;",
+  // its wounds: armour eaten away from each (a ragged edge, from a noise), burning where it ends, scorched round that
+  cut: `float ldW = 9.0;
+        for (int i = 0; i < 6; i++) { if (uLdWound[i].w > 0.0) ldW = min(ldW, length(vRest - uLdWound[i].xyz) / uLdWound[i].w); }
+        float ldN = skN(vRest * 46.0) * 0.6 + skN(vRest * 110.0) * 0.4, ldCut = ldW + (ldN - 0.5) * 0.6;
+        if (ldCut < 0.8) discard;
+        float ldEdge = 1.0 - smoothstep(0.8, 1.04, ldCut), ldScorch = 1.0 - smoothstep(0.95, 2.0, ldCut);`,
+  albedo: "diffuseColor.rgb *= 1.0 - 0.8 * ldScorch;",
+  emissive: `totalEmissiveRadiance *= 1.0 - smoothstep(uLdSweep - 0.08, uLdSweep, vRest.y); // its lights come on from the bottom up as it arrives
+        vec3 ldC = vRest - vec3(0.0, 0.065, 0.17), ldE = (vRest - vec3(0.0, 0.262, 0.16)) * vec3(1.0, 2.0, 1.0);
+        totalEmissiveRadiance *= 1.0 + uLdCoreK * exp(-dot(ldC, ldC) * 520.0) + uLdEyeK * exp(-dot(ldE, ldE) * 800.0); // its core and its eyes burn brighter than its strips
+        float ldV = abs(skN(vRest * 31.0) - 0.5) * 2.0; // cracks: thin veins that spread from patch to patch as it is hurt
+        totalEmissiveRadiance += uLdCrackCol * ((1.0 - smoothstep(0.0, 0.06, ldV)) * smoothstep(1.0 - uLdCrack, 1.3 - uLdCrack, skN(vRest * 6.5 + 3.1)) * step(0.001, uLdCrack));
+        totalEmissiveRadiance += vec3(5.5, 1.7, 0.5) * ldEdge * (0.55 + 0.45 * ldN) + vec3(1.0, 0.16, 0.3) * ldScorch * 0.2;
+        vec3 ldH = vec3(abs(vRest.x) - 0.285, vRest.y + 0.24, vRest.z - 0.15), ldM = vRest - vec3(0.0, 0.195, 0.15), ldT = vec3(abs(vRest.x) - 0.44, (vRest.y - 0.4) * 0.6, vRest.z + 0.05);
+        totalEmissiveRadiance += uLdClaw * exp(-dot(ldH * vec3(1.0, 0.7, 1.0), ldH * vec3(1.0, 0.7, 1.0)) * 300.0) * (0.2 + 0.8 * skF) + uLdMouth * exp(-dot(ldM, ldM) * 1500.0) + uLdTip * exp(-dot(ldT, ldT) * 60.0) * (0.2 + 0.8 * skF); // energy in its claws, light in its mouth, a charge along its wing blades`,
+};
+
+class BlasterOverlord {
+  constructor(game, model) {
+    const g = (this.g = game);
+    const M = (this.model = rigModel(model, { ride: LORD.RIDE, tree: LORD.TREE }));
+    blasterBakeRest(M);
+    const J = (this.J = M.parts), A = (this.A = M.anchors);
+    //   root: where it is · tilt: thrown back by a hit, leaning into a strike · pose: its size · then its joints
+    const root = (this.root = new THREE.Group()), tilt = (this.tilt = new THREE.Group()), pose = (this.pose = new THREE.Group());
+    pose.add(M.scene);
+    tilt.add(pose);
+    root.add(tilt);
+    root.visible = false; // (it arrives when the game starts)
+    g.scene.add(root);
+    this.names = Object.keys(M.mesh).filter((n) => J[n]);
+    for (const n of this.names) { const j = J[n]; j.userData.home = { parent: j.parent, p: j.position.clone(), q: j.quaternion.clone() }; } // (where each part belongs, for when it is whole again)
+
+    // ---- its chrome
+    tuneModel(M, { glow: 2.2, metal: 0.93, rough: 1.0, normal: 0.9 });
+    this.U = lordUniforms();
+    this.U.uSkSpec.value = 1.5;
+    this.mat = blasterSkin(M.mesh.body.material, this.U, LORD_GLSL);
+    this.mat.color.setScalar(1.3); // (black chrome mirrors little: a shade lighter, and its plates show what stands round it)
+    g.chrome(this.mat, 1.7);
+    // a part that has come away burns up on its own: it wears a copy of the skin with its own heat and its own dissolve
+    this.scrapU = [0, 1, 2, 3].map(() => Object.assign({}, this.U, { uSkGone: { value: 0 }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkGlow: { value: new THREE.Color(1, 1, 1) } }));
+    this.scrapMat = this.scrapU.map((U) => g.chrome(blasterSkin(this.mat.clone(), U, LORD_GLSL), 1.7));
+    this.scrap = []; // parts in flight: { j, v, w, t, slot }
+
+    // ---- light with no surface: its core, its eyes and mouth, the energy in its claws and wing tips, a breath of light behind it
+    const spr = (host, color, size, order = 3) => { const s = glowSprite(color, size, 0); s.renderOrder = order; host.add(s); return s; };
+    this.coreGlow = spr(A.core, new THREE.Color(2.4, 0.25, 1.4), 0.3);
+    this.eyeGlow = spr(A.eyes, new THREE.Color(2.6, 0.2, 1.2), 0.12);
+    this.eyeDots = [-0.031, 0.031].map((x) => { const s = spr(A.eyes, new THREE.Color(3.0, 0.5, 1.6), 0.03, 4); s.position.set(x, 0.002, 0.004); return s; }); // a point of light in each eye: they are seen from the far end of a wave
+    this.maw = spr(A.mouth, new THREE.Color(2.6, 0.5, 1.2), 0.16);
+    this.claws = [spr(A.clawL, new THREE.Color(1.3, 0.35, 2.6), 0.2), spr(A.clawR, new THREE.Color(1.3, 0.35, 2.6), 0.2)];
+    this.tips = [spr(A.wingTipL, new THREE.Color(2.6, 1.3, 0.3), 0.16), spr(A.wingTipR, new THREE.Color(2.6, 1.3, 0.3), 0.16)];
+    this.glow = glowSprite(new THREE.Color(0.35, 0.3, 0.9), 2.4, 0); // (cold light behind it: its dark wings and horns stand against it)
+    this.glow.position.set(0, 0.05, -0.3);
+    this.glow.renderOrder = 2;
+    pose.add(this.glow);
+    this.coreLight = new THREE.PointLight(0xff3ad4, 0, 14, 2); // its core lights its own chest and arms, and the fighter when it comes close
+    this.keyLight = new THREE.SpotLight(0xdfe6ff, 0, 30, 0.5, 0.7, 1.5); // a lamp of its own, above and before it on the key's side, aimed at it alone: it is lit wherever it flies, and the fighter under it is not
+    g.scene.add(this.coreLight, this.keyLight, this.keyLight.target);
+    // the aura of its rage: the edges of the view glow red
+    this.auraU = { uColor: { value: new THREE.Color(1.0, 0.08, 0.2) }, uK: { value: 0 } };
+    this.aura = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: this.auraU, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 uColor; uniform float uK; varying vec2 vUv; void main(){ vec2 d = abs(vUv - 0.5) * 2.0; float e = smoothstep(0.56, 1.0, max(d.x, d.y)) * 0.8 + 0.3 * smoothstep(0.8, 1.3, length(d)); gl_FragColor = vec4(uColor * (e * e * uK), 1.0); }",
+    }));
+    this.aura.renderOrder = 55;
+    this.aura.frustumCulled = false;
+    this.aura.visible = false;
+    g.scene.add(this.aura);
+
+    this.S = this.fitS = 6; this.yK = this.fitY = 0.04; // its size and how high it rides (see fit)
+    this.alive = false; this.inT = 1; this.adv = 0; this.kick = 0; this.kickTo = 0; this.twist = 1; this.hits = 0; this.look = 0; this.nod = 0; this.stagger = 0;
+    this.att = null; this.atkN = 0; // the strike under way: { time, kind, go, pre }
+    this.recoil = [0, 0]; // each arm's kick as its claw lets a bolt go (the stage sets these)
+    this.dieT = -1; this.pending = false; this.blown = false; this.chain = 0;
+    this.finale = false; this.finaleDone = false;
+    this.rageOn = false; this.rageT = 9; this.gloatT = -1; this.beatN = 0;
+    this.flap = 0; this.rage = 0; this.pow = 0; this.flick = 1; this.dim = 1; this.flickT = 0; this.emberT = 0; this.sparkT = 3; this.heat = 0; this.roared = false; this.seed = 7741; this.wounds = 0; this.lost = {};
+    this.flash = 0; this.flashCol = new THREE.Color(1, 1, 1);
+    this.crit = false; this.critK = 0; // the wave's last blow has landed: it hangs there breaking up until the wave is closed (look only)
+    this._a = new THREE.Vector3(); this._b = new THREE.Vector3(); this._d = new THREE.Vector3(); this._c = new THREE.Color(); this._c2 = new THREE.Color();
+  }
+  lcg() { return (this.seed = (this.seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  // Its size and height, from the room there is: at its closest its wings fill the band from side to side; when a
+  // question starts it is two thirds of that.
+  fit(band) {
+    this.fitS = clamp(Math.min((band.h * 0.98) / LORD.height, (band.w * 0.9) / LORD.width), 1.5, 14);
+    this.fitY = (band.h * 0.15) / DEMON_NEAR;
+    if (!this.root.visible) { this.S = this.fitS; this.yK = this.fitY; }
+  }
+  // ---- where things are on it, in the world (each fills `out` and returns it) --------------------------------
+  anchor(name, out) { return this.A[name].getWorldPosition(out); }
+  aimPoint(out) { return this.A.core.getWorldPosition(out); } // its core: where the fighter's fire lands
+  claw(i, out) { return this.A[i ? "clawR" : "clawL"].getWorldPosition(out); } // (0: its left, on the player's right)
+  mouth(out) { return this.A.mouth.getWorldPosition(out); }
+  eyes(out) { return this.A.eyes.getWorldPosition(out); }
+  wingTip(i, out) { return this.A[i ? "wingTipR" : "wingTipL"].getWorldPosition(out); }
+  tailTip(out) { return this.A.tailTip.getWorldPosition(out); }
+  // a point on the model at rest (its own units), where it is now in the world
+  at(p, out) { this.pose.updateWorldMatrix(true, false); return this.pose.localToWorld(out.set(p[0], p[1], p[2])); }
+
+  // A wave starts: the next demon flies up out of the distance. (If the last one is still breaking up, it waits for that.)
+  arrive() {
+    if (this.dieT >= 0) { this.pending = true; return; }
+    const U = this.U;
+    this.alive = true; this.att = null; this.hits = 0; this.adv = 0; this.kick = this.kickTo = 0; this.rage = 0; this.pow = 0; this.roared = false; this.pending = false; this.blown = false; this.stagger = 0; this.chain = 0;
+    this.finale = false; this.rageOn = false; this.rageT = 9; this.wounds = 0; this.lost = {}; this.crit = false; this.critK = 0;
+    this.inT = REDUCED_MOTION ? 1 : 0;
+    U.uSkGone.value = 0; U.uSkHot.value.setRGB(0, 0, 0); U.uLdCrack.value = 0;
+    U.uLdWound.value.forEach((w) => w.set(0, 0, 0, 0));
+    // whole again: every part back on its joint, in its own skin
+    this.scrap.length = 0;
+    for (const n of this.names) { const j = this.J[n], h = j.userData.home; h.parent.add(j); j.position.copy(h.p); j.quaternion.copy(h.q); j.scale.setScalar(1); j.visible = true; if (this.model.mesh[n]) this.model.mesh[n].material = this.mat; }
+    this.root.visible = true;
+    if (this.g.stage) this.g.stage.demonArrive(this);
+  }
+  // A right answer: the fighter's fire lands on its core. Its edges flash in the answer's colour, it is thrown
+  // back, and it is a little more broken: a wound opens, and by and by parts of it come away.
+  hit(color) {
+    if (!this.alive) return;
+    const g = this.g, p = this.aimPoint(this._a);
+    this.flash = 1;
+    this.flashCol.set(color).lerp(this._c.setRGB(1, 1, 1), 0.25);
+    this.kickTo = 1;
+    this.twist = -this.twist;
+    this.hits++;
+    if (this.att && !this.att.go) { this.att = null; if (g.stage) g.stage.demonFoiled(this); } // (struck as it wound up for the clock running out: the blow breaks its strike)
+    if (this.hits % 3 === 0) this.stagger = 1; // every third blow staggers it
+    if (g.inWave >= WAVE_LEN - 1) { this.crit = true; this.stagger = 1; } // the wave's last question, answered right: this blow is the one it does not get up from
+    if (g.stage) g.stage.demonHit(this, p, color, this.stagger > 0); else { g.blastAt(p, color, 0.42); Sound.sfx("demonhit"); }
+    this.damage();
+  }
+  // What a wave's hits do to it, in order: wounds open (2nd, 3rd, 5th, 6th, 7th, 9th hit), its tail is shot away
+  // (4th), a wing is torn off (8th).
+  damage() {
+    const h = this.hits, g = this.g;
+    const open = { 2: 0, 3: 1, 5: 2, 6: 3, 7: 4, 9: 5 }[h];
+    if (open !== undefined) {
+      const W = LORD.WOUNDS[open], u = this.U.uLdWound.value[open];
+      u.set(W[0], W[1], W[2], 0.001);
+      u.grow = W[3];
+      this.wounds = Math.max(this.wounds, open + 1);
+      if (g.stage) g.stage.demonWound(this, open); else Sound.sfx("demonshed");
+    }
+    if (h === 4) this.shed("tail");
+    if (h === 8) this.shed(this.twist > 0 ? "wingL" : "wingR");
+  }
+  // A part comes away: it is cut loose from its joint, thrown clear, and burns up as it falls behind.
+  // quiet: no blast of its own (the death's chain stages those).
+  shed(name, quiet) {
+    const j = this.J[name], g = this.g;
+    if (!j || this.lost[name] || !j.visible) return null;
+    const slot = this.scrap.length % this.scrapMat.length, U = this.scrapU[slot], p = j.getWorldPosition(new THREE.Vector3());
+    this.lost[name] = true;
+    g.scene.attach(j); // (it keeps its place, size and turn in the world)
+    j.traverse((o) => { if (o.isMesh) o.material = this.scrapMat[slot]; });
+    U.uSkGone.value = 0; U.uSkHot.value.setRGB(2.4, 0.7, 0.3); U.uSkGlow.value.setRGB(1, 1, 1);
+    const out = this._d.copy(p).sub(this.root.position);
+    out.z = 0;
+    if (out.lengthSq() < 0.01) out.set(0, -1, 0);
+    out.normalize();
+    const s = { j, name, slot, t: 0, life: quiet ? 1.3 : 1.9, v: new THREE.Vector3(out.x * rand(3, 5.5), out.y * rand(2, 4) + 1.2, rand(3, 6)), w: new THREE.Vector3(rand(-3, 3), rand(-3, 3), rand(-4, 4)) };
+    this.scrap.push(s);
+    if (g.stage && !quiet) g.stage.demonShed(this, p, name);
+    return s;
+  }
+  // A wrong answer, or none in time: it winds up, then strikes. If the clock ran out, it has been winding up for the
+  // last half second already (see update) and now lets go.
+  attack() {
+    const g = this.g;
+    if (this.att && !this.att.go) { this.att.go = true; this.atkN++; return; }
+    if (this.att) return;
+    if (!this.alive) { g.jet.shieldLost(); if (g.stage) g.stage.playerHit(null, -1); return; } // (between demons: the shield still shows the hit)
+    this.att = { time: 0, kind: this.atkN++ % LORD.ATTACKS.length, go: true, pre: false };
+    if (g.stage) g.stage.demonAttack(this, this.att); else Sound.sfx("demoncharge");
+  }
+  // The wave is cleared: it dies. (Once in a run, at the wave that takes the player past their best score, it makes
+  // a last stand of it first. Read from the saved scores; nothing is written.)
+  destroy() {
+    if (!this.alive) return;
+    const g = this.g;
+    this.alive = false;
+    this.att = null;
+    this.dieT = 0;
+    this.blown = false; this.chain = 0;
+    this.finale = !this.finaleDone && typeof Store !== "undefined" && g.score > Store.best("blaster");
+    if (this.finale) this.finaleDone = true;
+    // the order it comes apart in: a claw, a wing, the other claw, its tail, the other wing; then the blast takes the rest
+    this.order = ["handL", "wingR", "handR", "tail", "wingL"].filter((n) => !this.lost[n]);
+    if (g.stage) g.stage.demonDeath(this); else Sound.sfx(this.finale ? "demonroarlong" : "demonroar");
+  }
+  // the blast that ends it: every part still on it is thrown clear, and its torso burns away where it stood
+  blow() {
+    const g = this.g, p = this.aimPoint(new THREE.Vector3());
+    this.blown = true;
+    this.flash = 1; this.flashCol.setRGB(1, 0.9, 0.95);
+    for (const n of this.names) if (n !== "body" && !this.lost[n]) this.shed(n, true);
+    this.U.uSkHot.value.setRGB(2.6, 0.8, 0.5);
+    if (g.stage) g.stage.demonBlast(this, p); else { g.blastAt(p, g.waveCol.getHex(), 1); Sound.sfx("demonboom"); }
+  }
+  // advance: how much of the question's time has gone (0 to 1), or null between questions
+  update(dt, advance) {
+    const g = this.g, d = VFX.dt, t = VFX.t, U = this.U, J = this.J, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
+    this.S += (this.fitS - this.S) * Math.min(1, d * 3);
+    this.yK += (this.fitY - this.yK) * Math.min(1, d * 3);
+    const S = this.S, k6 = S / 6;
+    // parts that have come away: they tumble off, fall behind, and burn up
+    for (let i = this.scrap.length - 1; i >= 0; i--) {
+      const s = this.scrap[i], Us = this.scrapU[s.slot];
+      s.t += d;
+      const u = s.t / s.life;
+      s.j.position.addScaledVector(s.v, d);
+      s.v.multiplyScalar(Math.pow(0.5, d)); s.v.y -= 1.6 * d;
+      s.j.rotation.x += s.w.x * d; s.j.rotation.y += s.w.y * d; s.j.rotation.z += s.w.z * d;
+      Us.uSkGone.value = clamp((u - 0.2) / 0.8, 0, 1);
+      Us.uSkHot.value.multiplyScalar(Math.pow(0.12, d));
+      Us.uSkGlow.value.multiplyScalar(Math.pow(0.05, d));
+      if (u >= 1) { s.j.visible = false; this.scrap.splice(i, 1); }
+    }
+    this.aura.visible = false;
+    if (!this.root.visible) { this.coreLight.intensity = this.keyLight.intensity = 0; return; }
+
+    // ---- how it is: arriving, raging, hurt, winding up, striking, winning, dying (each a smooth weight, 0 to 1)
+    const dying = this.dieT >= 0;
+    if (dying) this.dieT += d;
+    if (this.inT < 1) this.inT = Math.min(1, this.inT + d / 2.0);
+    // As the clock runs out it starts to wind up, half a second early: if the time does run out, its strike is let go
+    // at once (attack); if an answer lands first, the wind-up is broken (hit) or becomes the strike (a wrong answer).
+    if (this.alive && !this.att && this.inT >= 1 && g.state === "ask" && g.tLeft > 0 && g.tLeft < LORD.GO) {
+      this.att = { time: 0, kind: this.atkN % LORD.ATTACKS.length, go: false, pre: true };
+      if (g.stage) g.stage.demonAttack(this, this.att);
+    }
+    const A = this.att;
+    if (A) A.time = A.go ? A.time + d : Math.min(LORD.GO - 0.04, A.time + d); // (wound up and held until it is let go)
+    const inK = Math.pow(1 - this.inT, 3), flare = smoothstep(0.6, 0.78, this.inT) * (1 - smoothstep(0.86, 1, this.inT)); // (its wings thrown wide as it arrives)
+    // rage: the wave's last three questions. As it begins it throws its wings wide and roars, once.
+    const rageNow = this.alive && g.inWave >= WAVE_LEN - 3;
+    if (rageNow && !this.rageOn) { this.rageT = 0; if (g.stage) g.stage.demonRage(this); else Sound.sfx("demonrage"); }
+    this.rageOn = rageNow;
+    this.rageT += d;
+    this.rage += ((rageNow ? 1 : 0) - this.rage) * Math.min(1, d * 1.5);
+    const rage = this.rage, hurt = clamp((this.hits - 1) / 7, 0, 1), onset = smoothstep(0, 0.25, this.rageT) * (1 - smoothstep(0.55, 1.3, this.rageT));
+    // the run is over: it has won, and roars over the wreck with its wings spread
+    if (g.state === "over" && this.alive && this.gloatT < 0) { this.gloatT = 0; if (g.stage) g.stage.demonGloat(this); else Sound.sfx("demonroarlong"); }
+    if (this.gloatT >= 0) this.gloatT += d;
+    const gloat = this.gloatT >= 0 ? smoothstep(0, 0.35, this.gloatT) * (1 - smoothstep(1.7, 2.6, this.gloatT)) : 0;
+    // a strike: tele is the wind-up (the warning), strike what follows the moment it lets go; one of each per kind
+    const kind = A ? A.kind : -1, GO = LORD.GO;
+    const tele = A ? smoothstep(0, GO - 0.12, A.time) * (1 - smoothstep(GO - 0.02, GO + 0.1, A.time)) : 0;
+    const strike = A ? smoothstep(GO - 0.02, GO + 0.1, A.time) * (1 - smoothstep(GO + 0.4, GO + 0.95, A.time)) : 0;
+    const tV = kind === 0 ? tele : 0, tS = kind === 1 ? tele : 0, tW = kind === 2 ? tele : 0, tB = kind === 3 ? tele : 0, tM = kind === 4 ? tele : 0;
+    const sV = kind === 0 ? strike : 0, sS = kind === 1 ? strike : 0, sW = kind === 2 ? strike : 0, sB = kind === 3 ? strike : 0, sM = kind === 4 ? strike : 0;
+    this.kickTo *= Math.pow(0.03, d);
+    this.kick += (this.kickTo - this.kick) * Math.min(1, d * 22);
+    this.stagger = Math.max(0, this.stagger - d / 1.0);
+    const stg = sin(Math.min(1, this.stagger * 1.25) * Math.PI) * 0.8; // staggered: it sags and reels, then gathers itself
+    // dying: it sags and reels; in its last stand it rears back and roars first
+    this.critK += ((this.crit && this.alive ? 1 : 0) - this.critK) * Math.min(1, d * 2.5);
+    const crit = this.critK;
+    const blowAt = this.finale ? 1.0 : 0.8, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(0.36, 0.56, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
+    const over = dying && !this.blown ? smoothstep(0.1, blowAt, this.dieT) : 0; // its core running away, toward the blast
+    const raise = Math.min(1.2, tV + 0.75 * sV + 0.8 * roar + 0.7 * gloat + 0.5 * onset + 0.7 * flare); // (arms up and out, claws open at the player)
+    // wings: a slow beat, faster in a rage and as it flies in. Each down-beat is heard, quietly.
+    this.flap += d * (2.6 + 3.2 * rage + 7 * Math.min(1, inK * 4) + 2.2 * tele + 3 * gloat) * (quiet ? 0.6 : 1);
+    const ph = this.flap, beat = Math.pow(0.5 + 0.5 * sin(t * (5.4 + 3 * rage + 9 * over)), 6), beatN = Math.floor((ph - 1.5708) / 6.2832);
+    if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying && g.state !== "over") Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6), { vol: 0.5 }); } // (not once the run is over: it is seen to gloat, and after its roar nothing more is heard)
+    // ---- where it is: as far ahead as the time left says, further when a hit has thrown it back, flying up when it is new
+    if (dying) this.adv += (0.9 - this.adv) * Math.min(1, d * 2.6); // (dying, it falls in toward the fighter: its end is seen close)
+    else if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, d * 5);
+    else if (!A) this.adv += ((this.crit ? 0.45 : 0) - this.adv) * Math.min(1, d * 1.1);
+    const lunge = (sS * 6.5 + sW * 1.4 + sB * 0.9 + sV * 0.5 - tS * 2.4 - (tele - tS) * 0.5) * (REDUCED_MOTION ? 0.3 : 1);
+    const z = -lerp(DEMON_FAR, DEMON_NEAR, this.adv) - kick * (REDUCED_MOTION ? 3 : 7) - inK * 130 + lunge - stag * 0.6 + gloat * 3;
+    const bob = quiet ? 0 : -sin(ph + 0.4) * 0.014 * S * (1 + 0.5 * rage);
+    const lost = (this.lost.wingL ? 1 : 0) - (this.lost.wingR ? 1 : 0); // (a wing gone: it lists toward the side that still flies)
+    this.root.position.set((quiet ? 0 : sin(t * 0.45) * 0.06 * S) - lost * 0.04 * S, this.yK * -z + bob + (quiet ? 0 : sin(t * 0.8) * 0.012 * S) + (tS * 0.07 + tW * 0.03 + tM * 0.02 - sS * 0.09) * S - sag * 0.08 * S + roar * 0.05 * S - inK * 9, z);
+    this.pose.scale.setScalar(S);
+    const dv = this._d.subVectors(ship, this.root.position), toShip = Math.atan2(dv.x, dv.z), down = Math.atan2(-dv.y, Math.hypot(dv.x, dv.z));
+    // the whole of it: leaning over the player; back as it rears and when it is hit; down into its strike
+    this.tilt.rotation.set(
+      0.08 + down * 0.3 - 0.1 * tV - 0.34 * tS - 0.3 * tW - 0.14 * tB + 0.14 * tM + 0.12 * sV + 0.55 * sS + 0.36 * sW + 0.18 * sB - 0.06 * sM - 0.45 * kick - 0.3 * sag - 0.3 * roar - 0.2 * gloat + 0.5 * Math.min(1, inK * 3) - 0.22 * flare,
+      toShip * 0.5 + this.twist * 0.2 * kick + (sS - tS) * this.twist * 0.25,
+      (quiet ? 0 : sin(t * 0.7) * 0.035) + this.twist * 0.16 * kick + lost * 0.14 + (dying ? sin(this.dieT * 13) * 0.08 * (1 - 0.6 * smoothstep(0.5, blowAt, this.dieT)) : 0) + stg * 0.12 * sin(t * 9) + crit * 0.07 * sin(t * 3.1) + (rage > 0.5 ? 0.012 * sin(t * 9.1) * sin(t * 1.7) : 0) - tS * this.twist * 0.18 + sS * this.twist * 0.3);
+    // ---- its joints. Angles from smooth curves; what is further out follows a little later.
+    const breath = sin(t * 1.9), sway = quiet ? 0.4 : 1, amp = (quiet ? 0.5 : 1) * (1 + 0.35 * rage) * (1 - 0.7 * stag) * (1 - 0.6 * tele);
+    // wings: raised (up), swept forward to shield or strike (fwd), and beating
+    const up = 0.26 * tV + 0.22 * tS + 0.58 * tW - 0.12 * tB + 0.78 * tM - 0.1 * sV - 0.5 * sS - 0.32 * sW + 0.1 * sB - 0.7 * sM + 0.42 * flare - 0.5 * sag + 0.5 * roar - 0.22 * kick + 0.38 * onset + 0.45 * gloat - 0.5 * Math.min(1, inK * 3);
+    const fwd = -0.1 * tV + 0.5 * tS - 0.3 * tW + 0.42 * tB - 0.25 * tM + 0.65 * sS + 0.55 * sW - 0.25 * sB + 0.6 * sM + 0.5 * kick + 0.25 * sag - 0.2 * roar + 0.6 * Math.min(1, inK * 3);
+    const wing = (sd) => sd * (0.02 + up + amp * 0.11 * sin(ph) + 0.015 * sin(t * 0.6 + sd));
+    if (J.wingL) J.wingL.rotation.set(amp * 0.03 * sin(ph - 0.6), -fwd - amp * 0.09 * cos(ph), wing(1));
+    if (J.wingR) J.wingR.rotation.set(amp * 0.03 * sin(ph - 0.6), fwd + amp * 0.09 * cos(ph), wing(-1));
+    // body and tail: breathing, and a sway that runs down it
+    J.body.rotation.set(0.03 * breath + 0.02 * sin(ph + 1.2) * amp, (quiet ? 0 : sin(t * 0.5) * 0.05) + (sS - tS) * this.twist * 0.2, 0);
+    J.body.scale.setScalar(1 + 0.012 * breath + 0.03 * tW);
+    if (J.tail) J.tail.rotation.set(0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway);
+    // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
+    this.look += ((quiet ? 0 : 0.14 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.3) * (1 - strike) - this.look) * Math.min(1, d * 7);
+    this.nod += ((0.2 - clamp(Pointer.y, -1, 1) * 0.1) - 0.14 * tV - 0.1 * tS - 0.62 * tW + 0.14 * tB + 0.26 * tM + 0.36 * sS + 0.5 * sW + 0.1 * sB - 0.5 * kick - 0.4 * roar - 0.32 * gloat - 0.3 * onset - 0.4 * flare - this.nod) * Math.min(1, d * 9);
+    if (J.head) J.head.rotation.set(this.nod + (rage > 0.5 && !quiet ? 0.03 * sin(t * 7.3) * sin(t * 1.3) : 0) + 0.35 * sag * sin((dying ? this.dieT : t) * 3 + 1), this.look + 0.3 * sag * sin((dying ? this.dieT : t) * 4), 0.05 * sin(t * 0.8) * sway + this.twist * 0.22 * kick + 0.25 * sag);
+    // arms: hanging, swaying, the hands flexing; each strike has its own carriage; thrown wide by a hit
+    this.recoil[0] *= Math.pow(0.002, d); this.recoil[1] *= Math.pow(0.002, d);
+    const arm = (sd, i, sh, el, ha) => {
+      const o = sd * 1.3, hi = sd * this.twist > 0 ? 1 : 0.2, rc = this.recoil[i]; // (hi: the arm that swipes)
+      if (sh) sh.rotation.set(0.04 * sin(t * 0.9 + o) * sway - 0.25 * raise + 0.4 * tS * hi - 0.9 * sS * hi + 0.2 * tW - 0.3 * sW - 0.2 * tB + 0.3 * tM - 0.3 * kick + 0.25 * rc, 0,
+        sd * (0.03 * sin(t * 0.7 + o) * sway + 0.42 * raise + 0.8 * tS * hi - 0.5 * sS * hi + 0.3 * tW - 0.38 * tB + 0.55 * sB - 0.1 * tM + 0.4 * kick - 0.12 * sag + 0.05 * breath));
+      if (el) el.rotation.set(0.05 * sin(t * 1.1 + o + 0.6) * sway - 0.4 * raise - 0.45 * tS * hi + 0.7 * sS * hi - 0.5 * tB + 0.2 * sB + 0.2 * tM - 0.25 * kick + 0.2 * sag + 0.2 * rc, 0, sd * (0.3 * raise + 0.3 * tS * hi - 0.4 * sS * hi - 0.5 * tB + 0.4 * sB + 0.25 * kick));
+      if (ha) ha.rotation.set(-0.06 + 0.08 * sin(t * 1.3 + o + 1.2) * sway - 0.75 * raise - 0.3 * tS * hi + 0.6 * sS * hi - 0.55 * tB - 0.2 * sB + 0.3 * tM + 0.25 * sag + 0.1 * rage * sin(t * 3.1 + o) + 0.3 * rc, 0, sd * (0.04 * sin(t * 1.7 + o) * sway + 0.25 * raise - 0.5 * sS * hi - 0.5 * tB + 0.3 * sB));
+    };
+    arm(1, 0, J.shoulderL, J.elbowL, J.handL);
+    arm(-1, 1, J.shoulderR, J.elbowR, J.handR);
+
+    // ---- its light
+    const lit = this.inT > 0.55 && !dying;
+    this.pow += ((lit ? 1 : 0) - this.pow) * Math.min(1, d * (dying ? 6 : 2.5));
+    U.uLdSweep.value = this.inT < 1 ? -0.55 + smoothstep(0.55, 1, this.inT) * 1.2 : 9;
+    if ((this.hits >= 6 || dying || this.crit) && !quiet) { if ((this.flickT -= d) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.45 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
+    this.dim += (this.flick - this.dim) * Math.min(1, d * 12);
+    const rg = (U.uDmRage.value = Math.max(rage, 0.5 * tele + 0.7 * strike, gloat, roar)), pw = (this.pow * (0.85 + 0.25 * rage + 0.3 * tele + 0.25 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.7 + 0.5 * roar + 0.4 * over : 0)) * this.dim;
+    U.uSkGlow.value.setRGB(lerp(1, 1.5, rg), lerp(1, 0.3, rg), lerp(1, 0.24, rg)).multiplyScalar(pw); // its neon: magenta, crimson in a rage
+    U.uLdCoreK.value = 0.5 + 1.6 * beat + 0.9 * (this.wounds >= 4 ? 1 : 0) + 3.0 * tB + 2.0 * sB + 2.5 * over + 1.2 * crit;
+    U.uLdEyeK.value = 0.8 + 1.4 * tele + 1.0 * strike + 0.8 * rage + onset + gloat;
+    this.flash = Math.max(0, this.flash - d * 6.5);
+    U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 0.9); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
+    U.uLdCrack.value += ((dying ? 0.9 : Math.max(hurt * 0.6, 0.8 * crit)) - U.uLdCrack.value) * Math.min(1, d * 3);
+    U.uLdCrackCol.value.setRGB(2.6, 0.5, 0.7).multiplyScalar(0.5 + 0.5 * beat + 0.7 * over); // (thin bright veins: it is still seen as what it is, breaking)
+    U.uLdWound.value.forEach((w) => { if (w.w > 0 && w.grow) w.w = Math.min(w.grow, w.w + d * w.grow * 5); }); // a wound opens in a fifth of a second
+    const pano = g.pano, rimK = 0.95 + 0.25 * rage + 0.35 * tele + 0.3 * gloat + 0.3 * roar;
+    if (pano) { U.uSkRimA.value.copy(pano.rimA.color).multiplyScalar(rimK); U.uSkRimB.value.copy(pano.rimB.color).multiplyScalar(rimK); } else { U.uSkRimA.value.setRGB(1.2, 0.25, 1.0).multiplyScalar(rimK); U.uSkRimB.value.setRGB(0.2, 0.9, 1.4).multiplyScalar(rimK); }
+    U.uSkKick.value.setRGB(0.5, 0.86, 1.15).multiplyScalar(1.5 * (0.35 + 0.65 * this.pow) * (1 - 0.35 * rage)); // (a cold kicker from above and behind: wings, horns and shoulders are drawn in cyan-white against the sky)
+    // what it is gathering, and where: violet plasma in its claws, light in its mouth, its core, amber along its wing blades
+    const cClaw = Math.max(tV, 0.7 * sV, 0.3 * rage, 0.8 * roar, 0.7 * gloat, 0.6 * tS), cTip = Math.max(tM, 0.5 * sM);
+    U.uLdClaw.value.setRGB(1.3, 0.3, 2.4).lerp(this._c2.setRGB(2.4, 0.2, 0.4), Math.max(rage, tS)).multiplyScalar(cClaw * 2.4);
+    U.uLdTip.value.setRGB(2.6, 1.2, 0.25).multiplyScalar(cTip * 2.2);
+    const open = Math.min(1, 1.2 * tW + sW + 0.5 * kick + 0.8 * flare + 0.9 * roar + 0.7 * onset + 0.8 * gloat); // (its mouth: light in it when it roars)
+    U.uLdMouth.value.setRGB(2.6, 0.5, 1.1).multiplyScalar(open * 1.5 * this.pow);
+    this._c.setRGB(2.4, 0.25, 1.4).lerp(this._c2.setRGB(3.0, 0.25, 0.4), rg).lerp(this._c2.setRGB(3.0, 2.6, 2.4), Math.max(0.7 * tB, 0.8 * over)); // the core's colour: magenta, crimson in a rage, white as it charges or runs away
+    this.coreGlow.material.color.copy(this._c);
+    this.coreGlow.material.opacity = Math.min(1, pw * (0.16 + 0.22 * beat + 0.25 * (this.wounds >= 4 ? 1 : 0) + 0.2 * rage + 0.6 * tB + 0.35 * over));
+    this.coreGlow.scale.setScalar(0.2 + 0.06 * beat + 0.1 * (this.wounds >= 4 ? 1 : 0) + 0.1 * tB + 0.1 * over);
+    this.eyeGlow.material.opacity = Math.min(1, pw * (0.2 + 0.5 * tele + 0.4 * strike + 0.3 * rage + 0.5 * onset + 0.5 * gloat));
+    this.eyeGlow.scale.setScalar(0.1 + 0.06 * Math.min(1, tele + strike + rage));
+    this.eyeDots.forEach((s) => { s.material.opacity = Math.min(1, pw * 0.9); s.scale.setScalar(0.028 + 0.012 * Math.min(1, tele + strike + rage)); });
+    this.maw.material.opacity = Math.min(1, open * 0.9 * this.pow);
+    this.maw.scale.setScalar(0.05 + 0.06 * open);
+    this.claws.forEach((s, i) => { s.material.opacity = Math.min(1, cClaw * 0.9); s.scale.setScalar(0.05 + 0.08 * cClaw * (1 + 0.12 * sin(t * 9 + i * 2))); s.visible = !this.lost[i ? "handR" : "handL"]; });
+    this.tips.forEach((s, i) => { s.material.opacity = Math.min(1, cTip); s.scale.setScalar(0.05 + 0.08 * cTip); s.visible = !this.lost[i ? "wingR" : "wingL"]; });
+    this.glow.material.opacity = this.pow * (0.2 + 0.06 * tele + 0.1 * gloat) + 0.14 * roar;
+    this.glow.material.color.setRGB(0.35, 0.3, 0.9).lerp(this._c2.setRGB(0.5, 0.12, 0.5), rg); // (it stays cold: in a rage its red neon stands against it)
+    this.aimPoint(this.coreLight.position);
+    this.coreLight.position.z += 0.12 * S;
+    this.coreLight.color.copy(this._c).multiplyScalar(0.4);
+    this.coreLight.intensity = pw * (1.2 + 1.6 * beat + 1.2 * rage + 0.8 * this.flash + 3 * tB + 1.5 * over);
+    this.coreLight.distance = 2.6 * S;
+    this.keyLight.position.copy(this.root.position).add(this._a.set(-0.75 * S, 0.8 * S, 1.5 * S));
+    this.aimPoint(this.keyLight.target.position);
+    this.keyLight.intensity = this.blown ? 0 : 2.4 * (0.4 + 0.6 * this.pow);
+    this.keyLight.distance = 4.5 * S;
+    if (pano && pano.key) this.keyLight.color.copy(pano.key.color);
+    this.heat = Math.max(0.25 * rage, tele, strike * 0.8, dying ? 0.45 : 0, gloat);
+    // the aura: the edges of the view glow red. It breathes slowly in a rage, swells as the rage begins, and fills the
+    // view for its last stand and when it has won. (Not with Reduced effects.)
+    const au = quiet ? 0 : rage * (0.2 + 0.07 * sin(t * 2.6)) + 0.16 * tele + 0.4 * onset + 0.8 * gloat + 0.95 * roar;
+    if (au > 0.01) {
+      const cam = g.camera, b = g.bandSize(6);
+      this.aura.visible = true;
+      this.aura.position.copy(cam.position).add(this._a.set(0, 0, -6).applyQuaternion(cam.quaternion));
+      this.aura.quaternion.copy(cam.quaternion);
+      this.aura.scale.set(b.w * 1.3, b.h * 1.3, 1); // (its brightest part lies just outside the band)
+      this.auraU.uK.value = au;
+    }
+    this.root.updateMatrixWorld(true);
+
+    // ---- the strike is over when its carriage is; without the stage, one blow on the shield as it lands
+    if (A) {
+      if (!g.stage && A.go && !A.hit && A.time > GO + 0.28) { A.hit = true; g.jet.shieldLost(); Sound.sfx(kind === 2 ? "demonroar" : "demonrelease"); }
+      if (A.time > GO + 1.0) this.att = null;
+    }
+    // arriving: it spreads its wings and roars, once
+    if (!this.roared && this.inT > 0.68 && this.inT < 1) {
+      this.roared = true;
+      if (g.stage) g.stage.demonRoar(this); else { Sound.sfx("demonroar"); if (!quiet) g.shockwave(this.mouth(this._a).clone(), new THREE.Color(1.3, 0.25, 1.0), 4.2 * k6, 0.8); }
+    }
+    // ---- what comes off it: embers, and sparks from its wounds
+    if (this.inT > 0.5 && !this.blown) {
+      if ((this.emberT -= d) <= 0) {
+        this.emberT = (quiet ? 0.5 : 0.22) / (1 + 2.6 * rage + 2 * roar + 3 * over);
+        const ec = rage > 0.5 || this.lcg() < 0.5 ? 0xff3a5a : 0xd04fff, ep = this.at([rand(-0.3, 0.3), rand(-0.1, 0.35), rand(-0.1, 0.15)], this._a);
+        if (g.kit) g.kit.embers(ep, ec, { n: 1, radius: 0.1, life: 1.6, speed: 0.7 * k6, rise: 1.0 }); else g.bursts.burst(ep, ec, { n: 1, speed: 0.6 * k6, size: 0.1 * k6, life: 1.5, gravity: 1.6 });
+      }
+      if (this.wounds > 0 && !quiet && (this.sparkT -= d) <= 0) {
+        this.sparkT = rand(1.2, 2.6) / (1 + hurt + 3 * crit);
+        const W = LORD.WOUNDS[Math.floor(this.lcg() * this.wounds)];
+        if (g.stage) g.stage.demonLeak(this, this.at(W, this._a)); else g.bursts.burst(this.at(W, this._a), 0xff7a4a, { n: 12, speed: 4 * k6, size: 0.13 * k6, life: 0.45 });
+      }
+    }
+    // ---- dying: it reels (or, in its last stand, roars first), a chain of blasts takes it apart, then the last one
+    // throws what is left of it clear and its torso burns away where it stood
+    if (dying) {
+      const first = blowAt - 0.1 - this.order.length * 0.11;
+      while (!this.blown && this.chain < this.order.length && this.dieT > first + this.chain * 0.11) {
+        const s = this.shed(this.order[this.chain], true);
+        if (s && g.stage) g.stage.demonChain(this, s.j.getWorldPosition(this._a), this.chain);
+        this.chain++;
+      }
+      if (!this.blown && this.dieT > blowAt) this.blow();
+      if (this.blown) {
+        const b = this.dieT - blowAt;
+        U.uSkGone.value = clamp(b / 1.1, 0, 1);
+        U.uSkHot.value.multiplyScalar(Math.pow(0.1, d));
+        [this.coreGlow, this.eyeGlow, this.maw, this.glow].concat(this.claws, this.eyeDots, this.tips).forEach((s) => { s.material.opacity = 0; });
+        this.coreLight.intensity *= Math.max(0, 1 - b);
+      }
+      if (this.dieT > blowAt + 1.4 && !this.scrap.length) { this.dieT = -1; this.root.visible = false; if (this.pending) this.arrive(); }
+    }
+  }
+  // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
+  late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
+  dispose() {
+    const mats = [this.mat].concat(this.scrapMat);
+    blasterDropMaps(mats);
+    mats.concat([this.aura.material, this.coreGlow.material, this.eyeGlow.material, this.maw.material, this.glow.material], this.claws.map((s) => s.material), this.eyeDots.map((s) => s.material), this.tips.map((s) => s.material)).forEach((m) => m.dispose());
+    this.aura.geometry.dispose();
+    this.g.scene.remove(this.aura);
+    // (parts that were in flight when the scene closed are in the scene itself and go with it)
+  }
+}
+
+/* ---- 20l-blasterstage.js ---- */
+// Risk Blaster's combat, staged (when the overlord's model arrived: with the built-in demon the game shows what it
+// always showed). The rules decide what happens and when (20-blaster.js: pick, resolve, timeout, after); this file
+// decides what is seen and heard of it, with the shared effects kit (CombatFX), on the show clock:
+//   the fighter fires        three volleys from both cannons in a seventh of a second: bolts, muzzle flashes that light
+//                            the hull, spent cells, recoil, hot barrels
+//   a right answer           the bolts hold as two beams on the answer's drone; at the rule's moment the drone bursts
+//                            and a lance goes through it into the demon's core: sparks, a ring, the glow of the whole
+//                            picture, a hit-stop
+//   a wrong answer           each bolt dies on the drone in a dull red fizzle; the drone locks out
+//   the demon strikes        a telegraph (wind-up, a marker on the fighter, a charging sound, a beat of slow motion as
+//                            it lets go), then one of five strikes, each its own colour, flight and impact
+//   the strike lands         now the shield is seen to go: flash, colour split, shake by how much is left, sparks,
+//                            shards, the HUD cracks and the lost shield breaks, the ship blinks
+//   one shield left          a red vignette that beats, an alarm, smoke and fire trailing from the hurt engine
+//   the demon dies           slow motion, a chain of blasts as it comes apart, the last one, and stars to the score
+// Nothing here is read by a rule. A shield lost is shown when the blow lands (a moment after the rule took it), so
+// the game's HUD asks this file how many are still owed (owed) before it draws its lives.
+class BlasterStage {
+  constructor(game) {
+    const g = (this.g = game), s = g.scene;
+    g.show = new TweenSet(); // show-only timing: nothing in it is a rule
+    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: null, sparks: 380, chunks: 84, firePuffs: 120, smokePuffs: 120, lights: 3 });
+    this.shot = null; // the burst being fired
+    this.atk = null; // the demon's strike being staged
+    this.debts = []; // shields the rules have taken that have not been seen to go yet
+    this.low = 0; this.lowT = 0; this.lowK = 0; this.alarmAt = 0; this.trail = null; this.misses = 0; this.leaks = []; this.warpAt = -1; // (low: 1 with one shield left, 2 with none)
+    this.aimQ = new THREE.Quaternion(); this.idleQ = new THREE.Quaternion(); this.aimT = 0;
+    this.engine = false; this.alarm = false; this.charge = false; // (which of its running sounds are recordings that are playing)
+    // the wave of force its roar throws: rings that travel from its mouth to the fighter
+    const wg = new THREE.PlaneGeometry(2, 2);
+    this.waves = [0, 1, 2].map(() => {
+      const m = new THREE.Mesh(wg, new THREE.ShaderMaterial({
+        uniforms: { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 0 }, uT: { value: 0 } },
+        transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: `${GLSL_NOISE}
+          uniform vec3 uColor; uniform float uK; uniform float uT; varying vec2 vP;
+          void main(){
+            float r = length(vP), a = atan(vP.y, vP.x);
+            float front = smoothstep(0.7, 0.93, r) * (1.0 - smoothstep(0.93, 1.0, r)); // the front of the wave: a bright band at its rim
+            float rays = 0.5 + 0.5 * vnoise(vec3(a * 6.0, r * 5.0 - uT * 8.0, 1.7));    // torn into streaks that run outward
+            float skin = smoothstep(0.2, 0.9, r) * (1.0 - smoothstep(0.9, 1.0, r)) * 0.2; // a thin skin of force inside it
+            gl_FragColor = vec4((uColor * (front * (0.55 + 0.9 * rays) + skin * rays) + vec3(1.0) * front * front * 0.6) * uK, 1.0);
+          }`,
+      }));
+      m.visible = false; m.renderOrder = 6; m.frustumCulled = false;
+      s.add(m);
+      return { m, t: -1, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), s0: 1, s1: 1, live: false };
+    });
+    // its seekers: a hot head each, with a trail of fire and smoke the kit lays behind it
+    this.missiles = [0, 1, 2, 3].map(() => {
+      const sp = glowSprite(new THREE.Color(3, 1.6, 0.5), 0.5, 1), tail = new Trail({ length: 18, width: 0.1, color: 0xff9a2a, intensity: 2.4, up: new THREE.Vector3(0, 0, 1) }); // (the ribbon lies across the line of sight)
+      sp.visible = tail.mesh.visible = false; sp.renderOrder = 9; tail.mesh.renderOrder = 8;
+      s.add(sp, tail.mesh);
+      return { sp, tail, t: -1, dur: 1, out: 0, acc: 0, a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), p: new THREE.Vector3(), first: false };
+    });
+    // one shield left: the edges of the band close in, dark red, and swell with each tone of the alarm (it lies over
+    // the picture's edges only: the answers' drones stand inside it)
+    this.frameU = { uK: { value: 0 } };
+    this.frame = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: this.frameU, transparent: true, depthTest: false, depthWrite: false,
+      blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, // (premultiplied: it darkens what it lies over and adds its own red)
+      vertexShader: "varying vec2 vP; void main(){ vP = (uv - 0.5) * 3.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }", // (the quad is half as large again as the band: vP is 1 at the band's edge)
+      fragmentShader: `uniform float uK; varying vec2 vP;
+        void main(){
+          vec2 d = abs(vP);
+          float ex = smoothstep(0.76, 1.02, d.x), ey = smoothstep(0.7, 1.02, d.y), e = 1.0 - (1.0 - ex) * (1.0 - ey);
+          e = e * e * (1.0 - smoothstep(1.0, 1.45, max(d.x, d.y)));
+          gl_FragColor = vec4(vec3(0.9, 0.03, 0.07) * (e * uK * 0.7), e * uK * 0.5);
+        }`,
+    }));
+    this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
+    s.add(this.frame);
+    // Everything that used to throw a burst of soft round dots here (the streak's confetti, a far blast, a derelict
+    // shorting) throws sparks instead while the fight is staged: darts with a point, a tail and a hot heart.
+    g.bursts.burst = (pos, color, o = {}) => {
+      const n = o.n || 60, size = o.size || 0.3, life = o.life || 1.1;
+      if (n <= 2) return this.kit.embers(pos, color, { n, radius: size, life, speed: (o.speed || 10) * 0.6 });
+      this.kit.sparks(pos, color, { n: Math.min(46, Math.ceil(n * 0.55)), speed: (o.speed || 10) * 1.15, life: life * 0.7, len: size * 2.6, w: size * 0.3, gravity: o.gravity === undefined ? 2.5 : -o.gravity * 0.5, drag: 0.35 });
+    };
+    this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._up = new THREE.Vector3(0, 1, 0); this._e = new THREE.Euler();
+  }
+  // ---- where things are (the starfighter and the built-in fighter both answer) -----------------------------
+  shipPos(out) { const j = this.g.jet; return j.centre ? j.centre(out) : out.copy(this.g.ship.position); }
+  muzzle(i, out) { const j = this.g.jet; return j.muzzle ? j.muzzle(i, out) : j.rig.localToWorld(out.copy(j.muzzles[i % j.muzzles.length])); }
+  exhaust(i, out) { const j = this.g.jet; return j.exhaust ? j.exhaust(i, out) : j.rig.localToWorld(out.copy(j.nozzles[i % j.nozzles.length])); }
+  // a place in the world, as a place on the screen (pixels)
+  screen(p) { const v = this._u.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
+  pan(p) { return clamp(p.x / 4, -1, 1) * 0.7; }
+  // how many shields the HUD should still show beyond what the rules hold (a blow on its way)
+  get owed() { return this.debts.length; }
+
+  // ---- sound that runs on: the engines, the alarm ------------------------------------------------------------
+  start() { this.loops(true); }
+  loops(on) {
+    const g = this.g;
+    if (on) {
+      this.engine = Sound.loop("blaster-engine", "engine_ship", { vol: 0.3, rate: 0.9, fade: 0.6 });
+      if (!this.engine) Sound.engine(true); // (no recording: the synth's hum, as before)
+      if (this.low === 1) this.alarmOn();
+      if (this.atk && !this.atk.released) this.charge = Sound.loop("blaster-charge", "charge_hum", { vol: 0.5, rate: 1.2, fade: 0.08 }); // (paused in the middle of a wind-up: its charge is heard again)
+    } else {
+      Sound.stopLoop("blaster-engine", 0.2); Sound.stopLoop("blaster-alarm", 0.1); Sound.stopLoop("blaster-charge", 0.05);
+      Sound.engine(false);
+      this.engine = this.alarm = this.charge = false;
+    }
+  }
+  alarmOn() { this.alarm = Sound.loop("blaster-alarm", "alarm", { vol: 0.34 }); this.alarmAt = Sound.ctx ? Sound.ctx.currentTime : 0; } // (alarmAt: when its first tone began. The red frame swells with each one.)
+  pause() { this.loops(false); Sound.hush(); } // (nothing keeps sounding behind the menu: the loops, and whatever was still ringing)
+  resume() { if (this.g.state !== "over") this.loops(true); }
+
+  // ---- the fighter fires (the rule: pick) --------------------------------------------------------------------
+  // right: whether the answer is the right one (look only: the rule checks it itself, 0.22 s on)
+  fire(i, right) {
+    const g = this.g, t = g.targets[i];
+    if (!t) return;
+    const at = t.position.clone(), p = g.ship.position;
+    // it turns toward its target, most of the way (its bolts do the rest), quickly but never in a snap
+    this.aimQ.setFromRotationMatrix(this._m.lookAt(p, at, this._up));
+    this.aimQ.slerp(this._q.set(0, 0, 0, 1), 0.38);
+    this.aimT = 0.62;
+    if (this.shot && this.shot.beams) this.shot.beams.forEach((b) => b.stop());
+    this.shot = { i, right, col: SLOT_COLORS[i], at, n: 0, time: 0, beams: null, until: 1e9, side: at.x < 0 ? -1 : 1 };
+  }
+  volley(sh) {
+    const g = this.g, kit = this.kit, k = g.shipScale, n = sh.n;
+    for (let gun = 0; gun < 2; gun++) {
+      const from = this.muzzle(gun, new THREE.Vector3()), to = sh.at.clone().add(this._v.set((gun ? 0.12 : -0.12) * (1 + n), rand(-0.08, 0.08), 0)), dir = this._w.subVectors(to, from).normalize();
+      kit.muzzle(from, dir, sh.col, 0.4 * k);
+      kit.bolt(from, to, sh.col, { dur: 0.085, width: 0.2 * k, len: 3.6 * k, onHit: (hit) => this.boltLands(sh, gun, n, hit) });
+      kit.shells(from, this._v.set(gun ? 1 : -1, 0.5, 0.6).normalize());
+      if (g.jet.fire) g.jet.fire(sh.col, true, g.jet.model ? gun : undefined);
+    }
+    Sound.sfx("laser_fire", sh.side * 0.5, { vol: 0.8, rate: 1 + n * 0.06 });
+  }
+  boltLands(sh, gun, n, p) {
+    const kit = this.kit, k = this.g.shipScale;
+    if (sh.right) {
+      kit.flash(p, sh.col, 0.3 * k, 1.0 * k, 0.1, 0.8);
+      kit.sparks(p, sh.col, { n: 5, speed: 6 * k, life: 0.22, len: 0.5 * k, w: 0.05 * k });
+      if (gun === 0) Sound.sfx("impact_metal", sh.side * 0.5, { vol: 0.4, rate: 1.1 + n * 0.1 }); // (each pair is heard to land on the drone's shell)
+      if (!sh.beams) sh.beams = [0, 1].map((q) => kit.beam(this.muzzle(q, this._v), sh.at, sh.col, { dur: 0, width: 0.13 * k, grow: 0.03, k: 2.2 })); // the two beams that hold on the drone until the answer lands
+    } else if (gun === 0) { // it does not bite: each pair dies on the drone in a dull red fizzle
+      kit.fizzle(p, { size: 0.5 * k + 0.12 * n });
+      Sound.sfx("impact_reject", sh.side * 0.5, { vol: 0.5, rate: 1.1 - n * 0.08 });
+    }
+  }
+  // ---- a right answer lands (the rule: resolve) --------------------------------------------------------------
+  right(i) {
+    const g = this.g, kit = this.kit, t = g.targets[i], col = SLOT_COLORS[i], e = g.enemy;
+    if (this.shot) this.shot.until = this.shot.time; // (the cannons' beams let go as the lance goes in)
+    if (!t) return;
+    const p = t.position.clone(), s0 = t.scale.x;
+    // the drone was a link in the demon's shield: it bursts ...
+    const ds = clamp(s0 / 0.4, 0.8, 1.5); // (a small hot heart, sparks, a ring, its shell in pieces: no ball of light where it stood)
+    kit.flash(p, 0xffffff, 0.2 * ds, 0.8 * ds, 0.09, 1, 3);
+    kit.flash(p, col, 0.4 * ds, 1.25 * ds, 0.16, 0.6, 2.2);
+    kit.sparks(p, col, { n: 18, speed: 9 * ds, spread: 1.4, life: 0.4, len: 0.55 * ds, w: 0.05 * ds });
+    kit.sparks(p, 0xffffff, { n: 6, speed: 13 * ds, life: 0.2, len: 0.7 * ds, w: 0.04 * ds, k: 2.2 });
+    kit.embers(p, col, { n: 6, radius: 0.3 * ds, life: 0.9 });
+    kit.ring(p, col, { size: 2.6 * ds, dur: 0.36 });
+    kit.light(p, col, 2, 0.18, 8);
+    kit.debris(p, { n: 7, size: 0.42 * ds, speed: 7, color: 0x8a93a8, life: 0.9, gravity: 0 });
+    g.show.wait(0.05, () => { GFX.ab = Math.min(GFX.ab, 0.6); }); // (the colours split for three frames, no longer: the picture is sharp while the blow is read)
+    t.userData.gone = true;
+    g.show.add(0.13, (q) => t.scale.setScalar(s0 * (1 + 0.5 * q)), () => { t.visible = false; });
+    // ... and the shot goes on through it into the demon's core
+    if (e && e.alive) kit.beam(p, e.aimPoint(this._v), col, { dur: 0.17, width: 0.3 * (e.S / 6), grow: 0.03, k: 2.8 });
+    Sound.sfx("impact_good", g.panAt || 0);
+    HudFX.reward(g.el, this.screen(p), "[data-score]", { n: 4, kind: "spark", color: col, clear: ".qpanel" }); // (round the question, never across it)
+  }
+  // ---- a wrong answer lands (the rule: resolve), or none in time (timeout): a shield is owed ------------------
+  wrong(i) {
+    const g = this.g, t = g.targets[i];
+    this.owe();
+    if (!t) return;
+    this.kit.fizzle(t.position, { size: 1.15 * clamp(t.scale.x / 0.4, 0.8, 1.5) });
+    t.userData.rejected = true; // (it locks out: its lamps go a dull red and it shrinks back. See the game's update.)
+    Sound.sfx("impact_reject", g.panAt || 0, { vol: 0.9, rate: 0.85 });
+  }
+  timeout() { this.owe(); }
+  owe() { this.debts.push({ t: 0 }); this.misses++; }
+
+  // ---- the demon winds up and strikes -----------------------------------------------------------------------
+  // (att: the overlord's own record of the strike: its kind, how far in it is, whether it has been let go)
+  demonAttack(e, att) {
+    const g = this.g, kit = this.kit, k = g.shipScale, kind = att.kind, ship = (v) => this.shipPos(v);
+    this.endAttack();
+    const a = (this.atk = { e, att, kind, marks: [], released: false, n: 0, hit: false, acc: 0, beam: null, sd: e.twist > 0 ? 1 : -1, sweep: 0 });
+    const COL = [0xc850ff, 0xff2a3c, 0xa070ff, 0xff1a30, 0xffa030][kind];
+    a.col = COL;
+    if (kind === 0) a.marks.push(kit.mark("lock", ship(this._v), COL, { size: 1.9 * k, dur: 1.2, follow: ship }));
+    else if (kind === 1) a.marks.push(kit.mark("bang", ship(this._v), COL, { size: 1.5 * k, dur: 1.2, follow: (v) => ship(v).add(this._w.set(0, 1.25 * k, 0)) }));
+    else if (kind === 2) a.marks.push(kit.mark("ring", ship(this._v), COL, { size: 2.3 * k, dur: 1.2, follow: ship }));
+    else if (kind === 3) { // a thin line of sight from its core, laid where the beam will start its sweep
+      a.marks.push(kit.mark("lock", ship(this._v), COL, { size: 1.8 * k, dur: 1.2, follow: ship }));
+      a.beam = kit.beam(e.aimPoint(this._v), this.sweepAt(a, 0, this._w), COL, { dur: 0, width: 0.07, k: 0.9, grow: 0.25 });
+    } else for (let j = 0; j < 2; j++) a.marks.push(kit.mark("lock", ship(this._v), COL, { size: (1.5 + j * 0.7) * k, dur: 1.2, spin: j ? -2.4 : 2.4, follow: ship }));
+    // heard for exactly as long as it winds up: a hum that rises (runAttack) and is cut as the strike is let go;
+    // over it, the first breath of the charge. (Without the recordings: the synth's charge, once.)
+    this.charge = Sound.loop("blaster-charge", "charge_hum", { vol: 0.3, rate: 0.9, fade: 0.06 });
+    Sound.sfx(this.charge ? "charge_up" : kind === 2 || kind === 3 ? "charge_long" : "charge_up", 0, { vol: this.charge ? 0.6 : 0.8, rate: [1, 0.92, 0.8, 1.25, 1.1][kind] });
+    if (kind === 1) Sound.sfx("warning", 0, { vol: 0.6 });
+    if (kind === 0 || kind === 4) [0.05, 0.2, 0.35].forEach((dl) => Sound.sfx("lock_on", 0, { vol: 0.55, delay: dl, rate: 1 + dl }));
+  }
+  // where the beam points as it sweeps across the fighter (u: 0 to 1)
+  sweepAt(a, u, out) { const k = this.g.shipScale; return this.shipPos(out).add(this._u.set(a.sd * lerp(-2.6, 2.6, u) * k, 0.1 * k, 0)); }
+  endAttack() {
+    const a = this.atk;
+    if (!a) return;
+    a.marks.forEach((m) => { m.t = Math.min(m.t, 0.05); });
+    if (a.beam) a.beam.stop();
+    this.atk = null;
+    if (this.charge) { Sound.stopLoop("blaster-charge", 0.06); this.charge = false; }
+  }
+  // its wind-up was broken by the fighter's shot (it had begun as the clock ran out, and the answer was right)
+  demonFoiled(e) {
+    const a = this.atk;
+    if (a) [0, 1].forEach((i) => this.kit.sparks(e.claw(i, this._v), a.col, { n: 8, speed: 5, life: 0.4, gravity: 3 }));
+    this.endAttack();
+  }
+  runAttack(d) {
+    const a = this.atk;
+    if (!a) return;
+    const g = this.g, kit = this.kit, e = a.e, A = a.att, GO = LORD.GO, k = g.shipScale, k6 = e.S / 6, quiet = REDUCED_MOTION || GFX.calm;
+    if (e.att !== A) { this.endAttack(); return; } // (over, or broken off)
+    const T = A.time;
+    if (T < GO) { // winding up: what it gathers is drawn in to where it gathers
+      a.acc += d;
+      if (a.acc > 0.045 && !quiet) {
+        a.acc = 0;
+        const src = a.kind === 0 ? e.claw(Math.random() < 0.5 ? 0 : 1, this._v) : a.kind === 2 ? e.mouth(this._v) : a.kind === 3 ? e.aimPoint(this._v) : a.kind === 4 ? e.wingTip(Math.random() < 0.5 ? 0 : 1, this._v) : e.claw(a.sd > 0 ? 0 : 1, this._v);
+        const off = this._w.set(rand(-1, 1), rand(-1, 1), rand(-0.4, 0.8)).normalize().multiplyScalar(1.3 * k6);
+        kit.sparks(this._u.copy(src).add(off), a.col, { n: 1, speed: 1.3 * k6 / 0.24, dir: off.clone().multiplyScalar(-1).normalize(), spread: 0.08, life: 0.24, len: 0.5 * k6, w: 0.05 * k6, drag: 1 });
+      }
+      if (a.beam) a.beam.set(e.aimPoint(this._v), this.sweepAt(a, 0, this._w));
+      if (this.charge) Sound.loopSet("blaster-charge", { rate: 0.9 + 0.9 * (T / GO), vol: 0.3 + 0.4 * (T / GO) });
+      return;
+    }
+    const u = T - GO;
+    if (!a.released) { // it lets go: the markers close, and the moment is held
+      a.released = true;
+      if (this.charge) { Sound.stopLoop("blaster-charge", 0.05); this.charge = false; }
+      a.marks.forEach((m) => { m.t = Math.min(m.t, 0.08); });
+      VFX.slowMo(0.3, 0.25, 0.08);
+      if (a.kind === 1) Sound.sfx("whoosh", 0, { vol: 0.8 });
+      if (a.kind === 2) { Sound.sfx("boss_roar", 0, { vol: 0.9, rate: 1.1 }); Sound.sfx("wave_fire", 0, { delay: 0.04 }); const m = e.mouth(new THREE.Vector3()), to = this.shipPos(new THREE.Vector3()); a.reach = 0.42 * (m.distanceTo(to) / (m.distanceTo(to) + 3.2)); to.z += 3.2; for (let j = 0; j < 3; j++) this.wave(m, to, 0.42, 0.9 * k6, (4.4 - j * 0.5) * k, j * 0.075, a.col); kit.flash(m, a.col, 0.3 * k6, 1.1 * k6, 0.14, 0.9, 2.4); kit.sparks(m, a.col, { n: quiet ? 6 : 18, speed: 15 * k6, dir: this._w.subVectors(to, m).normalize(), spread: 0.4, life: 0.32, len: 0.9 * k6, w: 0.06 * k6 }); } // (the rings run on past the fighter, toward the lens: reach is when the first one is on it)
+      if (a.kind === 3) { Sound.sfx("beam_fire"); if (a.beam) a.beam.stop(); a.beam = kit.beam(e.aimPoint(this._v), this.sweepAt(a, 0, this._w), 0xff1030, { dur: 0, width: 0.44 * k, k: 1.7, grow: 0.06 }); }
+      if (a.kind === 4) { Sound.sfx("missile_fire", -0.4); Sound.sfx("missile_fire", 0.4, { delay: 0.09, rate: 1.08 }); this.missiles.forEach((ms, j) => this.launch(ms, e, j, a)); }
+    }
+    if (a.kind === 0) { // a burst of plasma bolts, one claw then the other
+      while (a.n < (quiet ? 2 : 5) && u >= a.n * 0.06) {
+        const i = a.n % 2, n = a.n++, from = e.claw(i, new THREE.Vector3()), to = this.shipPos(new THREE.Vector3()).add(this._v.set(rand(-0.9, 0.9), rand(-0.1, 0.5), rand(-0.6, 0.6)).multiplyScalar(k * (n ? 1 : 0.2)));
+        kit.flash(from, a.col, 0.14 * k6, 0.55 * k6, 0.1, 0.9); // (its claw already burns: a flick of light as each bolt leaves it)
+        kit.sparks(from, a.col, { n: 4, speed: 8 * k6, dir: this._w.subVectors(to, from).normalize(), spread: 0.4, life: 0.16, len: 0.5 * k6, w: 0.05 * k6 });
+        kit.bolt(from, to, a.col, { dur: 0.2, width: 0.13 * k6, len: 3.6, k: 2.8, light: n < 2, onHit: (p) => { if (n === 0) this.strikeLands(a, from); else { kit.flash(p, a.col, 0.2 * k, 0.75 * k, 0.1, 0.75); kit.sparks(p, a.col, { n: 9, speed: 7 * k, life: 0.3, len: 0.5 * k, w: 0.05 * k }); Sound.sfx("impact_shield", this.pan(p), { vol: 0.45 }); } } });
+        e.recoil[i] = 1;
+        Sound.sfx("plasma_fire", i ? -0.5 : 0.5, { vol: 0.7, rate: 1 + n * 0.03 });
+      }
+    } else if (a.kind === 1) { // the lunge: three claws raked across the fighter
+      if (a.n === 0 && u >= 0.07) {
+        a.n = 1;
+        const c = this.shipPos(new THREE.Vector3());
+        for (let j = -1; j <= 1; j++) this.streak(c.clone().add(this._v.set(a.sd * 2.5 * k, (1.45 + j * 0.4) * k, 0.2)), c.clone().add(this._w.set(-a.sd * 2.3 * k, (-1.0 + j * 0.4) * k, 0.5)), a.col, 0.1, 0.34 * k);
+        kit.light(c, a.col, 3, 0.2, 9);
+        a.from = c.clone().add(this._v.set(a.sd * 2.5 * k, 1.4 * k, 0));
+      }
+      if (a.n === 1 && u >= 0.12) { // the claws go through
+        a.n = 2;
+        this.strikeLands(a, a.from);
+        Sound.sfx("slam", 0, { vol: 0.9 });
+      }
+    } else if (a.kind === 2) { // the ring of force arrives
+      if (!a.hit && u >= (a.reach || 0.32)) { this.strikeLands(a, e.mouth(this._v)); kit.sparks(this.shipPos(this._v), a.col, { n: 14, speed: 9 * k, life: 0.4, len: 0.6 * k }); }
+    } else if (a.kind === 3) { // the beam sweeps across the fighter, and bites as it crosses
+      const su = clamp(u / 0.42, 0, 1), end = this.sweepAt(a, su, new THREE.Vector3());
+      if (a.beam) { if (u < 0.46) a.beam.set(e.aimPoint(this._v), end); else { a.beam.stop(); a.beam = null; } }
+      if (u < 0.44 && (a.acc += d) > 0.03) { a.acc = 0; kit.sparks(end, 0xff5a3a, { n: 2, speed: 6, life: 0.3, gravity: 0, len: 0.4, w: 0.05 }); }
+      if (!a.hit && su >= 0.5) { this.strikeLands(a, e.aimPoint(this._v)); kit.hull(end, 0xff3a3a, { size: 1.2 * k, gravity: 0 }); }
+    }
+  }
+  // a streak of light drawn fast from one place to another: a point, a tail thinning to nothing, no ball of light
+  // at its head (a claw raked across the fighter)
+  streak(from, to, col, dur, w, k = 1.8) {
+    const d = this.kit._dart(), v = this._u.subVectors(to, from), len = v.length();
+    d.p.copy(from); d.v.copy(v).multiplyScalar(1 / dur); d.life = d.t = dur * 1.6; d.w = w; d.len = len * 0.75; d.stretch = 0; d.g = 0; d.drag = 1; d.fade = 1.5; d.col = fxRGB(col, k); d.bolt = null;
+  }
+  // a ring of force that travels (the roar)
+  wave(from, to, dur, s0, s1, delay, col) {
+    const w = this.waves.find((x) => !x.live) || this.waves[0];
+    w.from.copy(from); w.to.copy(to); w.dur = dur; w.t = -1e-4 - delay; w.s0 = s0; w.s1 = s1; w.live = true;
+    w.m.material.uniforms.uColor.value.copy(neon(col, 2.2));
+  }
+  // a seeker leaves a wing tip, swings wide and comes in on the fighter
+  launch(ms, e, j, a) {
+    const g = this.g, k = g.shipScale, sd = j % 2 ? -1 : 1;
+    e.at(e.lost[j % 2 ? "wingR" : "wingL"] ? [-sd * 0.14, 0.16, -0.02] : [sd * (0.4 - (j >> 1) * 0.1), 0.02 + (j >> 1) * 0.16, 0.0], ms.a); // (from the outer blades of its wings; a wing shot away: from its shoulder)
+    this.shipPos(ms.c).add(this._v.set(rand(-0.7, 0.7), rand(-0.1, 0.4), rand(-0.4, 0.6)).multiplyScalar(k));
+    ms.b.copy(ms.a).lerp(ms.c, 0.5).add(this._v.set(sd * (2.6 + (j >> 1) * 1.3), 0.9 - (j >> 1) * 1.9, 1.5)); // (it swings out to its own side, high or low)
+    ms.t = -(j >> 1) * 0.08 - 1e-4; ms.dur = 0.5; ms.first = j === 0; ms.atk = a;
+    ms.sp.visible = false;
+    ms.tail.pts = []; ms.tail.width = 0.085 * k; ms.tail.mesh.visible = false; ms.out = 0; ms.acc = 0;
+  }
+  // the strike reaches the fighter: now the shield is seen to go
+  strikeLands(a, from) {
+    if (a.hit) return;
+    a.hit = true;
+    this.playerHit(from, a.kind);
+  }
+  // ---- the fighter is hit: the shield that the rules took is seen to go --------------------------------------
+  playerHit(from, kind) {
+    const g = this.g, kit = this.kit, k = g.shipScale, p = this.shipPos(new THREE.Vector3()), quiet = REDUCED_MOTION || GFX.calm;
+    if (this.debts.length) this.debts.shift();
+    const left = g.shields + this.debts.length, hard = clamp((3 - left) / 3, 0.34, 1), sd = from ? (from.x < p.x ? -1 : 1) : Math.random() < 0.5 ? -1 : 1;
+    if (g.jet.shieldLost) g.jet.shieldLost({ x: -sd });
+    // the HUD: the shield that went breaks, the bar flickers and cracks, the ship cannot be hit again for a moment
+    g.lives(left, 3);
+    HudFX.lifeLost(g.el);
+    HudFX.hurt(g.el, hard);
+    HudFX.blink(g.el, 900);
+    // the picture: a red flash at its edges, the colours split, a shake by how much is left
+    // (all of it hard and short: the tear, the colour split and the shake are let go after four frames, so the answers'
+    // drones are never unreadable for longer than that)
+    GFX.hitFlash("hit");
+    GFX.glitch(0.3 + 0.4 * hard, 0.08);
+    GFX.pulse(2.2 + 2.8 * hard, 0);
+    g.shake(0.14 + 0.24 * hard);
+    g.show.wait(0.05, () => { GFX.ab = Math.min(GFX.ab, 0.9); GFX.punch = Math.min(GFX.punch, 0.002); g.shakeAmt = Math.min(g.shakeAmt, 0.04 + 0.04 * hard); });
+    VFX.hitStop(2);
+    Haptics.buzz([60, 40, 90]);
+    // the ship: sparks off the hull where it landed, shards of the shield, smoke
+    const at = p.clone().add(this._v.set(sd * 0.7 * k, 0.35 * k, -0.2 * k));
+    kit.hull(at, kind === 3 || kind === 1 ? 0xff4a4a : kind === 4 ? 0xffa030 : 0xd060ff, { size: 0.62 * k, gravity: 0 });
+    kit.debris(at, { n: quiet ? 4 : 9, size: 0.3 * k, speed: 7 * k, color: 0x1c7a90, hot: 0x8feaff, gravity: 0, life: 1.0 });
+    if (!quiet) for (let i = 0; i < 2; i++) kit.smoke(at.clone().add(this._v.set(rand(-0.5, 0.5), rand(0, 0.4), rand(-0.3, 0.3)).multiplyScalar(k)), { size: 0.5 * k, life: 0.8, a: 0.42, cold: true, vel: this._w.set(0, 0.4, 3) });
+    Sound.sfx("player_hit", sd * 0.3);
+    Sound.sfx("shield_down", 0, { delay: 0.09, vol: 0.9 });
+    if (left === 2) Sound.say("SHIELD DOWN"); else if (left === 1) Sound.say("LAST SHIELD"); else if (left <= 0) Sound.say("CRITICAL");
+    this.setLow(left <= 0 ? 2 : left === 1 ? 1 : 0);
+  }
+  // ---- one shield left -------------------------------------------------------------------------------------
+  // on: 0 (or false) no; 1 (or true) one shield left: the red frame beats, the alarm sounds, the hurt engine trails
+  // smoke and fire; 2 none left: the frame holds, the alarm has gone quiet with everything else, the fire is worse
+  setLow(on) {
+    const g = this.g;
+    on = on === true ? 1 : on || 0;
+    if (on === this.low) return;
+    this.low = on;
+    GFX.setDanger(on === 2 ? 1 : on ? 0.72 : 0);
+    HudFX.low(g.el, !!on);
+    if (this.trail) { this.trail.on = false; this.trail = null; }
+    if (on === 1) { this.alarmOn(); this.lowT = 0; } else { Sound.stopLoop("blaster-alarm", 0.3); this.alarm = false; }
+    if (on && !(REDUCED_MOTION || GFX.calm)) this.trail = this.kit.trailer((v) => this.exhaust(1, v), { smoke: 0.7, fire: on === 2 ? 0.9 : 0.55, sparks: 0.5, rate: on === 2 ? 26 : 18, size: 0.34 * g.shipScale, vel: new THREE.Vector3(0, 0.3, 2.2), life: 0.6, a: 0.4 });
+  }
+
+  // ---- the demon is hurt ---------------------------------------------------------------------------------------
+  demonArrive(e) { this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0; }
+  // the lance lands on its core (the rule: resolve, a right answer)
+  demonHit(e, p, color, staggered) {
+    const g = this.g, kit = this.kit, k6 = e.S / 6;
+    // (a small hot heart and a wide ring: the blow is bright where it lands, and the demon is seen taking it)
+    kit.flash(p, 0xffffff, 0.3 * k6, 1.0 * k6, 0.1, 1, 3);
+    kit.flash(p, color, 0.6 * k6, 1.9 * k6, 0.26, 0.8, 2.2);
+    kit.sparks(p, color, { n: 26, speed: 13 * k6, spread: 1.4, life: 0.45, len: 0.9 * k6, w: 0.07 * k6 });
+    kit.sparks(p, 0xffffff, { n: 10, speed: 18 * k6, life: 0.22, len: 1.1 * k6, w: 0.05 * k6, k: 2.2 });
+    kit.embers(p, color, { n: 8, radius: 0.5 * k6, life: 1.1 });
+    kit.ring(p, color, { size: 6.5 * k6, dur: 0.45 });
+    kit.light(p, color, 1.6 * k6, 0.22, 14 * k6);
+    GFX.bloomPulse(0.4);
+    g.shake(0.13 * k6);
+    kit.debris(p, { n: staggered ? 9 : 4, size: 0.5 * k6, speed: 8 * k6, color: 0x2a2836, dir: this._v.set(0, 0.2, 1), spread: 1.2, gravity: 0 });
+    VFX.hitStop(3);
+    Sound.sfx("impact_big", 0, { vol: 0.85 });
+    Sound.sfx(staggered ? "boss_stagger" : "boss_hurt", 0, { vol: 0.75, delay: 0.05 });
+  }
+  // a wound opens in its armour: a small blast where the plate goes, and from now on that place leaks
+  demonWound(e, i) {
+    const kit = this.kit, k6 = e.S / 6, W = LORD.WOUNDS[i], p = e.at(W, new THREE.Vector3());
+    kit.flash(p, 0xffffff, 0.14 * k6, 0.5 * k6, 0.08, 1, 2.6);
+    kit.flash(p, 0xff5a8a, 0.3 * k6, 0.9 * k6, 0.14, 0.6, 2);
+    kit.sparks(p, 0xffb8a0, { n: 14, speed: 9 * k6, life: 0.4, len: 0.6 * k6, w: 0.05 * k6 });
+    kit.debris(p, { n: 6, size: 0.42 * k6, speed: 7 * k6, color: 0x2a2836, gravity: 0 });
+    Sound.sfx("boss_break", this.pan(p), { vol: 0.7, delay: 0.04 });
+    if (!(REDUCED_MOTION || GFX.calm)) this.leaks.push(kit.trailer((v) => (e.root.visible && !e.blown ? e.at(W, v) : null), { smoke: 0.3, fire: 0.12, sparks: 0.8, rate: 7, size: 0.26 * k6, vel: new THREE.Vector3(0, 0.5, 0.8), life: 0.55, color: 0xff6a8a, a: 0.3 })); // (sparks and a thread of smoke: it is seen through them)
+  }
+  // a part of it is shot away (its tail, a wing)
+  demonShed(e, p, name) {
+    const g = this.g, kit = this.kit, k6 = e.S / 6, at = p.clone();
+    // (a beat after the blow that did it, and small enough that the demon is still seen behind it)
+    g.show.wait(0.08, () => {
+      if (g.unmounted) return;
+      this.burst(at, 0.9 * k6, 0xff4a7a, { debris: 10 });
+      g.shake(0.2);
+      Sound.sfx("explosion_small", this.pan(at));
+      Sound.sfx("boss_break", this.pan(at), { vol: 0.8, delay: 0.06 });
+    });
+    // the stump burns: sparks, a lick of fire, a thread of smoke
+    const stump = name === "tail" ? [0, -0.09, 0.05] : [name === "wingL" ? 0.06 : -0.06, 0.1, -0.03];
+    if (!(REDUCED_MOTION || GFX.calm)) this.leaks.push(kit.trailer((v) => (e.root.visible && !e.blown ? e.at(stump, v) : null), { smoke: 0.45, fire: 0.4, sparks: 0.7, rate: 10, size: 0.34 * k6, vel: new THREE.Vector3(0, 0.5, 1.0), life: 0.6, a: 0.35 }));
+  }
+  // A blast on the demon's own body (a part shot away, a link of the chain that takes it apart): a small hot heart,
+  // a few tongues of fire, long sparks, a ring, wreckage. Its size is in what it throws, not in a ball of light.
+  burst(p, s, col, o = {}) {
+    const kit = this.kit;
+    kit.flash(p, 0xffffff, 0.2 * s, 0.8 * s, 0.09, 1, 2.6);
+    kit.flash(p, col, 0.4 * s, 1.5 * s, 0.2, 0.5, 2);
+    for (let i = 0; i < (o.fire === undefined ? 4 : o.fire); i++) { const v = this._w.set(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize().multiplyScalar(rand(1.5, 4) * s); kit.fire(this._v.copy(p).addScaledVector(v, 0.08), { size: rand(0.5, 0.9) * s, life: rand(0.28, 0.5), vel: v, color: i % 2 ? 0xff6a14 : col, k: 1.2 }); }
+    kit.sparks(p, 0xffe2b0, { n: o.sparks || 22, speed: 15 * s, life: 0.5, len: 1.1 * s, w: 0.06 * s, k: 2.4 });
+    kit.sparks(p, col, { n: 12, speed: 8 * s, life: 0.75, len: 0.6 * s, w: 0.06 * s });
+    kit.embers(p, 0xffa040, { n: 8, radius: 0.6 * s, life: 1.6, speed: 2 });
+    if (o.ring !== false) kit.ring(p, col, { size: 4.2 * s, dur: 0.5 });
+    if (o.smoke) for (let i = 0; i < 2; i++) kit.smoke(this._v.set(rand(-0.3, 0.3), rand(-0.2, 0.3), rand(-0.2, 0.2)).multiplyScalar(s).add(p), { size: 0.9 * s, life: 1.0, a: 0.4 });
+    kit.debris(p, { n: o.debris || 8, size: 0.6 * s, speed: 9 * s, color: 0x2a2836, gravity: 0 });
+    kit.light(p, col, 2.5 * s, 0.22, 12 * s);
+    GFX.bloomPulse(0.25);
+  }
+  // something shorts in one of its wounds
+  demonLeak(e, p) { this.kit.sparks(p, 0xff7a4a, { n: 10, speed: 5 * (e.S / 6), life: 0.45, len: 0.5, gravity: 2 }); }
+  // it arrives: wings wide, and roars
+  demonRoar(e) {
+    const m = e.mouth(new THREE.Vector3());
+    Sound.sfx("boss_roar", 0, { vol: 0.9 });
+    if (!(REDUCED_MOTION || GFX.calm)) { this.kit.ring(m, 0xd050ff, { size: 5 * (e.S / 6), dur: 0.8 }); this.g.shake(0.14); }
+  }
+  // the wave's last three questions: it rages
+  demonRage(e) {
+    const g = this.g, quiet = REDUCED_MOTION || GFX.calm;
+    Sound.sfx("boss_roar", 0, { vol: 0.9, rate: 0.9 });
+    Sound.sfx("warning", 0, { vol: 0.7, delay: 0.25 });
+    Sound.say("WARNING");
+    this.kit.ring(e.aimPoint(this._v), 0xff2a40, { size: 9 * (e.S / 6), dur: 0.7 });
+    this.kit.sparks(e.aimPoint(this._v), 0xff3a5a, { n: quiet ? 8 : 26, speed: 6, life: 0.9, gravity: 1.2 });
+    if (!quiet) g.shake(0.2);
+  }
+  demonGloat(e) { Sound.sfx("boss_roar", 0, { vol: 0.9, rate: 0.8 }); }
+  // ---- the demon dies (the rule: after, the wave's last question) -------------------------------------------
+  // The fighter's last burst goes into its core, and that is what ends it: the moment slows as the first bolts land,
+  // then the chain of blasts runs faster and faster to the last one.
+  demonDeath(e) {
+    const g = this.g, kit = this.kit, k = g.shipScale, k6 = e.S / 6, col = 0xffe2a0, quiet = REDUCED_MOTION || GFX.calm;
+    this.endAttack();
+    this.aimQ.setFromRotationMatrix(this._m.lookAt(g.ship.position, e.aimPoint(this._v), this._up)).slerp(this._q.set(0, 0, 0, 1), 0.45);
+    this.aimT = 0.5;
+    for (let n = 0; n < 3; n++) g.show.wait(n * 0.055, () => {
+      if (g.unmounted) return;
+      for (let gun = 0; gun < 2; gun++) {
+        const from = this.muzzle(gun, new THREE.Vector3()), to = e.aimPoint(new THREE.Vector3()).add(this._v.set((gun ? 0.1 : -0.1) * (1 + n), rand(-0.1, 0.1), 0.25 * k6)), dir = this._w.subVectors(to, from).normalize();
+        kit.muzzle(from, dir, col, 0.4 * k);
+        kit.shells(from, this._v.set(gun ? 1 : -1, 0.5, 0.6).normalize());
+        kit.bolt(from, to, col, { dur: 0.09, width: 0.2 * k, len: 3.6 * k, onHit: (p) => {
+          kit.flash(p, 0xffffff, 0.25 * k6, 0.9 * k6, 0.09, 1, 2.6);
+          kit.sparks(p, col, { n: quiet ? 5 : 12, speed: 11 * k6, life: 0.35, len: 0.8 * k6, w: 0.06 * k6 });
+          if (gun === 0) Sound.sfx("impact_big", 0, { vol: 0.6, rate: 1.05 + n * 0.08 });
+          if (n === 0 && gun === 0) { VFX.slowMo(0.3, 0.45, 0.25); Sound.sfx("slowmo_in", 0, { vol: 0.5 }); Sound.sfx("boss_death", 0, { vol: 0.9 }); e.flash = 0.6; e.flashCol.setRGB(1, 0.9, 0.7); }
+        } });
+        if (g.jet.fire) g.jet.fire(col, true, g.jet.model ? gun : undefined);
+      }
+      Sound.sfx("laser_fire", 0, { vol: 0.8, rate: 1 + n * 0.06 });
+    });
+  }
+  // one of the chain of blasts that take it apart (a part has just come away at p)
+  demonChain(e, p, i) {
+    const g = this.g, kit = this.kit, k6 = e.S / 6;
+    if (REDUCED_MOTION || GFX.calm) { kit.sparks(p, 0xffd8a8, { n: 14, speed: 10 * k6, life: 0.5, len: 0.7 * k6 }); kit.debris(p, { n: 5, size: 0.6 * k6, speed: 8 * k6, color: 0x2a2836, gravity: 0 }); } // (with Reduced effects: sparks and wreckage, no run of flashes)
+    else this.burst(p, (0.85 + 0.08 * i) * k6, i % 2 ? 0xff7a2a : g.waveCol.getHex(), { ring: i % 2 === 0, smoke: i % 2 === 0, sparks: 26 });
+    g.shake(0.14 + 0.03 * i);
+    Sound.sfx("explosion_small", this.pan(p), { rate: 0.95 + i * 0.06 });
+  }
+  // the last blast
+  demonBlast(e, p) {
+    const g = this.g, kit = this.kit, k6 = e.S / 6, col = g.waveCol.getHex(), quiet = REDUCED_MOTION || GFX.calm;
+    this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0;
+    kit.explosion(p, { size: 1.05 * k6, color: col, shake: false });
+    kit.sparks(p, 0xffffff, { n: quiet ? 12 : 40, speed: 30 * k6, life: 0.6, len: 1.8 * k6, w: 0.07 * k6, k: 2.6 }); // (long white streaks thrown clear: the blast's size is in these, its ring and its debris)
+    kit.ring(p, 0xffffff, { size: 15 * k6, dur: 0.85 });
+    g.show.wait(0.1, () => { if (!g.unmounted) kit.ring(p, col, { size: 22 * k6, dur: 1.1 }); }); // (a second, wider and slower, in the wave's colour)
+    GFX.ripple(g.camera, p, 1, 0.7); // the picture itself bends as the shock passes
+    GFX.bloomPulse(0.6);
+    Sound.setIntensity(3);
+    kit.debris(p, { n: quiet ? 10 : 26, size: 0.95 * k6, speed: 15 * k6, color: 0x2a2836, gravity: 0, life: 1.6 });
+    kit.embers(p, 0xff5a8a, { n: 16, radius: 2.2 * k6, life: 2.4, speed: 3 });
+    VFX.hitStop(3);
+    GFX.pulse(4, 0.1);
+    g.shake(0.5);
+    Sound.sfx("explosion_huge");
+    Sound.sfx("debris", 0, { delay: 0.35, vol: 0.8 });
+    // the reward: stars and coins fly from the blast to the score
+    const from = this.screen(p), perfect = this.misses === 0, high = e.finale;
+    g.show.wait(0.2, () => {
+      if (g.unmounted) return;
+      HudFX.reward(g.el, from, "[data-score]", { n: 12, kind: "star", color: COLORS.yellow, clear: ".qpanel" }); // (round the question, up the margin beside it: the next one may already be up)
+      HudFX.reward(g.el, from, "[data-score]", { n: 7, kind: "coin", color: COLORS.gold, clear: ".qpanel" });
+      Sound.sfx("reward", 0, { vol: 0.9 });
+    });
+    if (high || perfect) g.show.wait(1.1, () => { if (!g.unmounted && g.state !== "over") Sound.say(high ? "NEW HIGH SCORE" : "PERFECT"); });
+    this.misses = 0;
+  }
+  // ---- between waves: the warp, held back until the demon has gone up (look only) -----------------------------
+  // region: the part of space the next wave starts in (it comes up with the warp)
+  waveEnd(region) { const e = this.g.enemy; this.region = region; this.warpAt = e && e.dieT >= 0 ? (e.finale ? 1.07 : 0.87) : 0.02; }
+  // ---- the run ends: the last shield has gone, and the ship with it ---------------------------------------------
+  over() {
+    const g = this.g, kit = this.kit, k = g.shipScale, p = this.shipPos(new THREE.Vector3());
+    this.debts.length = 0;
+    g.lives(g.shields, 3);
+    this.endAttack();
+    this.setLow(0);
+    this.loops(false);
+    kit.explosion(p, { size: 0.95 * k, color: 0xff8a2a }); // (close to the lens: a blast of this size, and the ship is still seen to come apart behind it)
+    kit.debris(p, { n: 14, size: 0.5 * k, speed: 9 * k, color: 0x23232e, gravity: 0, life: 1.5 });
+    Sound.sfx("explosion_big");
+    g.show.wait(0.42, () => { if (g.unmounted) return; const q = p.clone().add(this._v.set(rand(-0.8, 0.8) * k, 0.2 * k, 0.6 * k)); kit.explosion(q, { size: 0.6 * k, color: 0x6fd0ff, ring: false }); Sound.sfx("explosion_small", 0, { rate: 0.9 }); }); // a tank goes, a moment after the rest
+  }
+
+  update(dt, sp, w) {
+    const g = this.g, d = VFX.dt, kit = this.kit, ship = g.ship, k = g.shipScale;
+    kit.drift.set(0, 0, Math.min(sp * 0.3, 3.5)); // (what is left behind falls behind: slowly enough that a blast stays where it was struck)
+    // ---- the fighter's aim: toward its target for a moment after it fires, back to its hover otherwise
+    this.aimT = Math.max(0, this.aimT - d);
+    this.idleQ.setFromEuler(this._e.set(Math.sin(VFX.t) * 0.05, 0, Math.sin(VFX.t * 0.9) * 0.12));
+    if (g.state !== "over") ship.quaternion.slerp(this.aimT > 0 ? this.aimQ : this.idleQ, 1 - Math.exp(-d * (this.aimT > 0 ? 26 : 7)));
+    // ---- the burst: three volleys, then the beams hold until the answer has landed
+    const sh = this.shot;
+    if (sh) {
+      sh.time += d;
+      while (sh.n < (REDUCED_MOTION || GFX.calm ? 1 : 3) && sh.time >= sh.n * 0.065) { this.volley(sh); sh.n++; } // (with Reduced effects: one volley, not three in a row)
+      if (sh.beams) sh.beams.forEach((b, q) => b.set(this.muzzle(q, this._v), sh.at));
+      if (sh.time > sh.until || sh.time > 0.9) { if (sh.beams) sh.beams.forEach((b) => b.stop()); this.shot = null; }
+    }
+    this.runAttack(d);
+    // ---- the roar's rings and the seekers in flight
+    for (const wv of this.waves) {
+      if (!wv.live) continue;
+      wv.t = wv.t < 0 ? Math.min(0, wv.t + d) : wv.t + d;
+      if (wv.t < 0) { wv.m.visible = false; continue; }
+      const u = Math.min(1, wv.t / wv.dur);
+      wv.m.visible = u < 1;
+      if (u >= 1) { wv.live = false; wv.t = -1; continue; }
+      wv.m.position.lerpVectors(wv.from, wv.to, u);
+      wv.m.quaternion.copy(g.camera.quaternion);
+      wv.m.scale.setScalar(lerp(wv.s0, wv.s1, Math.pow(u, 0.8)));
+      wv.m.material.uniforms.uK.value = Math.min(1, u * 8) * (1 - smoothstep(0.9, 1, u));
+      wv.m.material.uniforms.uT.value = VFX.t;
+    }
+    for (const ms of this.missiles) {
+      if (ms.t === -1) continue;
+      ms.t = ms.t < 0 ? Math.min(0, ms.t + d) : ms.t + d;
+      if (ms.t < 0) continue;
+      const u = Math.min(1, ms.t / ms.dur), v = 1 - u;
+      ms.p.set(v * v * ms.a.x + 2 * v * u * ms.b.x + u * u * ms.c.x, v * v * ms.a.y + 2 * v * u * ms.b.y + u * u * ms.c.y, v * v * ms.a.z + 2 * v * u * ms.b.z + u * u * ms.c.z);
+      ms.sp.visible = true;
+      ms.sp.position.copy(ms.p);
+      ms.sp.scale.setScalar(0.34 * k * (0.9 + 0.1 * Math.sin(VFX.t * 40)));
+      if (d > 0) { ms.tail.mesh.visible = true; ms.tail.push(ms.p); } // a ribbon of fire behind it, and sparks shed along the way
+      if ((ms.acc += d) > 0.035) { ms.acc = 0; kit.sparks(ms.p, 0xffc070, { n: 1, speed: 1.6, life: 0.3, len: 0.3 * k, w: 0.04 * k, gravity: 0 }); }
+      if (u >= 1) {
+        ms.t = -1; ms.sp.visible = false; ms.out = 0.3;
+        kit.explosion(ms.p, { size: 0.3 * k, color: 0xffa030, ring: false, shake: false, debris: false, smoke: false });
+        Sound.sfx("missile_hit", this.pan(ms.p), { vol: 0.8 });
+        if (ms.atk && !ms.atk.hit) this.strikeLands(ms.atk, ms.a);
+      }
+    }
+    for (const ms of this.missiles) if (ms.t === -1 && ms.out > 0) { ms.out -= d; if (d > 0) ms.tail.push(ms.p); if (ms.out <= 0) ms.tail.mesh.visible = false; } // (its ribbon runs in to where it struck, and is gone)
+    // ---- a shield owed is always seen to go: if no strike lands for it, it goes on its own
+    for (let i = this.debts.length - 1; i >= 0; i--) if ((this.debts[i].t += d) > 1.7) { this.debts.splice(i, 1); this.debts.unshift({ t: 0 }); this.playerHit(null, -1); break; }
+    // ---- the warp between waves, when the demon's blast has passed
+    if (this.warpAt >= 0 && (this.warpAt -= d) < 0) {
+      this.warpAt = -1;
+      g.warp = g.warpDur = 1.0;
+      if (this.region !== undefined) g.space.setRegion(this.region, 1.8);
+      if (g.jet.warp) g.jet.warp();
+      if (g.jet.shieldUp) g.jet.shieldUp();
+      Sound.sfx("warp", 0, { vol: 0.8 });
+      this.setLow(g.shields + this.debts.length === 1 ? 1 : 0);
+    }
+    // ---- one shield left: the red frame round the band. It swells with each tone of the alarm (two to its loop),
+    // or stands still with Reduced effects; with no shield left it holds.
+    this.lowK += ((this.low && g.state !== "over" ? 1 : 0) - this.lowK) * Math.min(1, d * 5);
+    if (this.lowK > 0.01) {
+      const cam = g.camera, b = g.bandSize(6), calm = REDUCED_MOTION || GFX.calm;
+      const ph = (this.alarm && Sound.ctx ? Sound.ctx.currentTime - this.alarmAt : VFX.t) / 1.125;
+      const beat = calm || this.low === 2 ? 0.7 : 0.5 - 0.5 * Math.cos(ph * Math.PI * 2);
+      this.frame.visible = true;
+      this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
+      this.frame.quaternion.copy(cam.quaternion);
+      this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
+      this.frameU.uK.value = this.lowK * (0.42 + 0.58 * beat);
+    } else this.frame.visible = false;
+    // ---- sound that follows the game: the engines with the streak and the warp; without a recording, the alarm as a pip
+    const heat = g.jet.heat || 0;
+    const sput = this.low ? 0.93 + 0.05 * Math.sin(VFX.t * 9) * Math.sin(VFX.t * 2.3) : 1; // (an engine is hurt: the note sags and wavers)
+    if (this.engine) Sound.loopSet("blaster-engine", { rate: (0.85 + heat * 0.3 + w * 0.5) * sput, vol: 0.26 + heat * 0.1 + w * 0.22 }); else Sound.rev((0.5 + heat * 0.45 + w * 0.5) * sput);
+    if (this.low === 1 && !this.alarm && (this.lowT -= d) <= 0) { this.lowT = 1.125; Sound.sfx("alarm", 0, { vol: 0.6 }); }
+    if (this.low && g.state === "over") this.setLow(0);
+    // the music holds its upper layers through the wave's last three questions (its rage), whatever the streak
+    if (g.enemy.rageOn && g.state !== "over" && Sound.intensity < 2) Sound.setIntensity(2);
+  }
+  dispose() {
+    this.loops(false);
+    this.frame.material.dispose(); this.frame.geometry.dispose();
+    GFX.setDanger(0);
+    HudFX.low(this.g.el, false);
+    this.kit.dispose();
+    this.waves.forEach((w) => { w.m.material.dispose(); });
+    this.waves[0].m.geometry.dispose();
+    this.missiles.forEach((m) => { m.sp.material.dispose(); m.tail.mesh.geometry.dispose(); m.tail.mesh.material.dispose(); });
+  }
+}
 
 /* ---- 21-racer.js ---- */
 // NEST EGG RUN — a neon lane racer through a 40-year career (age 25 to 65, one
