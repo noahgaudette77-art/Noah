@@ -36,7 +36,10 @@ const BLASTER_SKIES = {
 // Where the lamps stand (toward each, from anything they light). The fighter is seen from behind and above and the
 // demon from the front, so between them these put a highlight on both: the key on what faces the lens, the rims on
 // the edges that turn away, the top light on the fighter's back and the demon's shoulders and horns.
-const BLASTER_LAMPS = { key: [-0.5, 0.58, 0.64], rimA: [-0.9, 0.16, -0.4], rimB: [0.9, 0.2, -0.38], top: [0.3, 0.84, -0.45] };
+const BLASTER_LAMPS = { key: [-0.5, 0.58, 0.64], rimA: [-0.9, 0.16, -0.4], rimB: [0.9, 0.2, -0.38], top: [0.3, 0.84, -0.45], kick: [0, 0.42, -0.9] };
+// (kick: a cold backlight, behind the fight and a little above it. Every edge that turns away from the lens mirrors it:
+// that thin line of cyan-white is what cuts the demon and the fighter out of a sky of their own colours.)
+const BLASTER_KICK = [0xbfe8ff, 1.0];
 
 class BlasterSky {
   // (built by the game before anything that mirrors it; first: the region the run starts in)
@@ -61,7 +64,7 @@ class BlasterSky {
     this.amb = s.children.find((o) => o.isAmbientLight) || null;
     this.key = g.keyLight || null;
     const lamp = (dir) => { const l = new THREE.DirectionalLight(0xffffff, 0); l.position.fromArray(dir).multiplyScalar(40); s.add(l); return l; };
-    this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = lamp(BLASTER_LAMPS.top);
+    this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = lamp(BLASTER_LAMPS.top); this.kick = lamp(BLASTER_LAMPS.kick);
     if (this.key) this.key.position.fromArray(BLASTER_LAMPS.key).multiplyScalar(40);
     this.envs = {}; // what chrome mirrors, one map to a region, made when the region is first entered
     this.users = []; // materials that mirror it (the fighter's, the demon's): see mirror
@@ -117,10 +120,11 @@ class BlasterSky {
         };
         card([0.3, 0.1, 1], r.top[0], 0.5, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
         card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
-        card(BLASTER_LAMPS.key, r.key[0], 3.2 * r.key[1], 52, 36);
+        card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
         card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
         card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
         card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
+        card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
         const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
         disposeTree(sc);
         rt.texture.dispose = () => rt.dispose(); // (see makeEnvMap: the target owns the texture)
@@ -181,6 +185,7 @@ class BlasterSky {
     set(this.rimB, A.rimB, B.rimB);
     set(this.top, A.top, B.top, 0.22); // (as a lamp it is faint: a flat chrome back facing a hard light is a slab of white. Its soft card in the mirror map does the work.)
     set(this.amb, A.amb, B.amb);
+    set(this.kick, A.kick || BLASTER_KICK, B.kick || BLASTER_KICK, 0.55);
     // what chrome mirrors is turned down through the change, so the new map never pops in
     this.envK = 1 - 0.6 * Math.sin(Math.PI * (this.next ? this.k : 0));
     for (const u of this.users) u.mat.envMapIntensity = u.k * this.envK;

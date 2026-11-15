@@ -36,15 +36,18 @@ function blasterDropMaps(mats) {
 // What the game teaches a loaded model's material (one recipe for the fighter and the demon):
 //   uSkGlow     its own light (the neon in its emissive map): a colour times a strength
 //   uSkRimA/B   a thin rim on the edges that turn away from the lens: one colour from the left, one from the right
+//   uSkKick     a cold kicker from above and behind: every upper edge is drawn in light, so the shape stands clear of the sky
 //   uSkHit      a flash along its edges (it has just been struck)
 //   uSkGone     0 to 1: it is eaten away from a noise, the edge of every hole burning (uSkBurn); uSkGoneF: how fine the noise
 //   uSkHot      heat: all of it glows (a wreck, cooling)
+//   uSkSpec     the most a lamp's own highlight may add (a flat chrome plate that turns to face a hard lamp would
+//               otherwise be a slab of white: its sheen comes from the soft cards in what it mirrors instead)
 // Chrome sparkles where its normal map is finer than a pixel: there it is made a little rougher (uSkAA), so a
 // highlight slides over a plate instead of crawling across it.
 // o.pars, o.cut, o.albedo, o.emissive: more GLSL for one model (declarations; before its texture is read; after; with the light it gives off).
 const blasterSkinUniforms = () => ({
   uSkGlow: { value: new THREE.Color(1, 1, 1) }, uSkRimA: { value: new THREE.Color(0, 0, 0) }, uSkRimB: { value: new THREE.Color(0, 0, 0) }, uSkHit: { value: new THREE.Color(0, 0, 0) },
-  uSkGone: { value: 0 }, uSkGoneF: { value: 14 }, uSkBurn: { value: new THREE.Color(5, 1.6, 0.5) }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkAA: { value: 1.4 },
+  uSkGone: { value: 0 }, uSkGoneF: { value: 14 }, uSkBurn: { value: new THREE.Color(5, 1.6, 0.5) }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkAA: { value: 1.4 }, uSkKick: { value: new THREE.Color(0, 0, 0) }, uSkSpec: { value: 1.4 },
 });
 function blasterSkin(mat, U, o = {}) {
   mat.onBeforeCompile = (sh) => {
@@ -55,7 +58,7 @@ function blasterSkin(mat, U, o = {}) {
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vRest;
-        uniform vec3 uSkGlow; uniform vec3 uSkRimA; uniform vec3 uSkRimB; uniform vec3 uSkHit; uniform float uSkGone; uniform float uSkGoneF; uniform vec3 uSkBurn; uniform vec3 uSkHot; uniform float uSkAA;
+        uniform vec3 uSkGlow; uniform vec3 uSkRimA; uniform vec3 uSkRimB; uniform vec3 uSkHit; uniform float uSkGone; uniform float uSkGoneF; uniform vec3 uSkBurn; uniform vec3 uSkHot; uniform float uSkAA; uniform vec3 uSkKick; uniform float uSkSpec;
         float skH(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
         float skN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
           return mix(mix(mix(skH(i), skH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(skH(i + vec3(0.0, 1.0, 0.0)), skH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
@@ -75,7 +78,8 @@ function blasterSkin(mat, U, o = {}) {
         float skNV = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), skF = 1.0 - skNV;
         totalEmissiveRadiance *= uSkGlow;
         ${o.emissive || ""}
-        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g);`);
+        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, normal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g);`);
+    sh.fragmentShader = sh.fragmentShader.replace("reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance", "min(reflectedLight.directSpecular, vec3(uSkSpec)) + reflectedLight.indirectSpecular + totalEmissiveRadiance");
   };
   mat.customProgramCacheKey = () => "blaster-skin-" + (o.key || "");
   mat.needsUpdate = true;
@@ -157,9 +161,10 @@ class BlasterStarfighter {
     const at = (p, out) => (out || new THREE.Vector3()).set(-p[0] * S, p[1] * S, -p[2] * S);
 
     // ---- its chrome: what it mirrors (the region's sky and lamps), how its neon burns, and what the game adds
-    tuneModel(M, { glow: 2.3, metal: 0.92, rough: 1.0, normal: 0.85 });
+    tuneModel(M, { glow: 2.3, metal: 0.92, rough: 1.4, normal: 0.85 }); // (a satin chrome: a flat wing that turns to face a lamp takes a sheen, not a slab of white)
     this.U = blasterSkinUniforms();
     this.U.uSkAA.value = 1.6;
+    this.U.uSkSpec.value = 0.55;
     this.UE = Object.assign({}, this.U, { uSkGlow: { value: new THREE.Color(1, 1, 1) } }); // the engines' own light: it follows the thrust
     const EM = `vec3 stE = vec3(max(abs(vRest.x) - 0.17, 0.0), vRest.y - 0.01, (vRest.z + 0.46) * 0.8);
         totalEmissiveRadiance += uStHeat * exp(-dot(stE, stE) * 110.0) * (0.3 + 0.7 * diffuseColor.g);
@@ -175,7 +180,8 @@ class BlasterStarfighter {
     this.glassMat.roughness = 0.55;
     if (M.mesh.canopy) M.mesh.canopy.material = this.glassMat;
     this.mats = [this.mat, this.engMat, this.glassMat];
-    g.chrome(this.mat, 1.25); g.chrome(this.engMat, 1.25); g.chrome(this.glassMat, 1.9);
+    this.mats.forEach((m) => m.color.setScalar(0.82)); // (black chrome: a shade darker than it was made, so its neon and its engines are the bright things on it)
+    g.chrome(this.mat, 1.05); g.chrome(this.engMat, 1.05); g.chrome(this.glassMat, 1.7);
 
     // ---- engines: five nozzles, each with a flame and a glow
     const noz = STAR.ENGINES.map((n) => at(M.info.anchors[n]));
@@ -338,7 +344,7 @@ class BlasterStarfighter {
     rig.rotation.y += ((-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov + jj * this.joltX * 0.25 - rig.rotation.y) * Math.min(1, d * 2.5);
     this.recoil *= Math.pow(0.004, d);
     this.gun *= Math.pow(0.02, d);
-    this.struck = Math.max(0, this.struck - d * 2.4);
+    this.struck = Math.max(0, this.struck - d * 3.5);
     rig.position.set(jj * this.joltX * 0.5, -inK * 1.6 + bob - jj * 0.22, this.recoil * 0.1 + inK * 12.5 - (quiet ? 0 : w * 0.5) - lunge * 0.85); // (it surges forward into the warp, and after a clean hit)
     // ---- its parts: the wings flex with the roll (the one it rolls toward lags) and breathe; the cannons slide back in
     // their mounts when they fire; the fins answer the roll; the engines point a little against a turn
@@ -357,19 +363,19 @@ class BlasterStarfighter {
     const turn = Math.min(0.5, Math.abs(this.rollV) * 0.3);
     this.hurt += ((g.shields <= 1 && g.state !== "over" ? 1 : 0) - this.hurt) * Math.min(1, d * 3);
     FU.uTime.value = t;
-    FU.uLen.value.set(0.75 + heat * 0.6 + burn * 1.7, 0.7 + heat * 0.4 + burn * 1.2 + turn);
-    FU.uPow.value.set(0.5 + heat * 0.4 + burn * 0.8, 0.42 + heat * 0.3 + burn * 0.6 + turn);
+    FU.uLen.value.set(0.75 + heat * 0.5 + burn * 1.2, 0.7 + heat * 0.35 + burn * 0.9 + turn);
+    FU.uPow.value.set(0.5 + heat * 0.3 + burn * 0.45, 0.42 + heat * 0.25 + burn * 0.35 + turn * 0.6);
     FU.uHurt.value = this.hurt;
     FU.uCool.value.setRGB(lerp(0.3, 0.8, heat), lerp(1.5, 1.9, heat), 3.0);
     const flick = 1 + (quiet ? 0 : Math.sin(t * 23) * 0.05 + Math.sin(t * 9.3) * 0.04);
     this.engineGlow.forEach((s, j) => {
       const hurt = j === 1 ? 1 - this.hurt * (0.5 + 0.4 * Math.sin(t * 11) * Math.sin(t * 4.3)) : 1, pw = (j < 3 ? FU.uPow.value.x : FU.uPow.value.y) * hurt;
-      s.scale.setScalar((j < 3 ? 0.46 : 0.38) * (0.75 + 0.5 * pw) * flick);
-      s.material.opacity = Math.min(1, 0.45 + 0.4 * pw);
+      s.scale.setScalar((j < 3 ? 0.42 : 0.34) * (0.8 + 0.3 * pw) * flick);
+      s.material.opacity = Math.min(0.85, 0.4 + 0.3 * pw);
     });
     this.UE.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(this.pow * (0.7 + 0.5 * FU.uPow.value.x) * flick); // the nozzles' own light follows the thrust
     U.uStHeat.value.setRGB(0.25, 1.0, 2.2).multiplyScalar(this.pow * (0.12 + heat * 0.35 + Math.min(1, burn) * 0.6));
-    if (g.engineLight && this.ship.visible) { g.engineLight.intensity = (0.9 + 0.8 * Math.min(1, burn) + 0.4 * heat) * this.pow * flick; g.engineLight.color.setRGB(0.45, 0.8, 1.0); g.engineLight.distance = 6 * k + 2; }
+    if (g.engineLight && this.ship.visible) { g.engineLight.intensity = (0.8 + 0.4 * Math.min(1, burn) + 0.3 * heat) * this.pow * flick; g.engineLight.color.setRGB(0.45, 0.8, 1.0); g.engineLight.distance = 6 * k + 2; }
     // ---- the barrels cool; its neon comes on as it arrives, burns brighter with the streak and the thrust, dims on its last shield
     this.barrelHot = Math.max(0, this.barrelHot - d * 0.9);
     U.uStGun.value.copy(this.gunCol).multiplyScalar(this.gun * 2.2).add(this._c.setRGB(2.6, 0.75, 0.16).multiplyScalar(Math.min(1, this.barrelHot)));
@@ -379,7 +385,8 @@ class BlasterStarfighter {
     U.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(this.pow * (0.85 + 0.35 * heat + 0.4 * lunge) * (1 - 0.3 * this.hurt * (0.5 + 0.5 * Math.sin(t * 5.0))));
     const rimK = 0.5 + 0.25 * heat + 0.3 * lunge, pano = g.pano;
     if (pano) { U.uSkRimA.value.copy(pano.rimA.color).multiplyScalar(rimK * 0.8); U.uSkRimB.value.copy(pano.rimB.color).multiplyScalar(rimK * 0.8); } else { U.uSkRimA.value.setRGB(0.55, 0.3, 1.5).multiplyScalar(rimK); U.uSkRimB.value.setRGB(0.16, 0.9, 1.5).multiplyScalar(rimK); }
-    U.uSkHit.value.setRGB(0.5, 1.4, 2.0).multiplyScalar(bl * 0.9).add(this._c.setRGB(2.4, 0.5, 0.4).multiplyScalar(this.struck * this.struck));
+    U.uSkKick.value.setRGB(0.55, 0.9, 1.15).multiplyScalar(1.1 * this.pow); // (cyan-white along its upper edges: its back stands clear of whatever is behind it)
+    U.uSkHit.value.setRGB(0.5, 1.4, 2.0).multiplyScalar(bl * 0.6).add(this._c.setRGB(2.4, 0.5, 0.4).multiplyScalar(this.struck * this.struck * 0.5)); // (struck: a red rim for a moment. Its shield's lattice and the sparks off its hull say the rest; the hull itself is never washed out.)
     // lights: the beacon on its back (a soft pulse, well under 1 Hz), the wing tips
     this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * this.pow;
     this.navLights.forEach((s, j) => { s.material.opacity = (0.55 + 0.45 * Math.sin(t * 2.2 + j * Math.PI)) * this.pow; });

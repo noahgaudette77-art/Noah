@@ -174,7 +174,19 @@ const Sound = {
     const t0 = c.currentTime + (o.delay || 0);
     src.start(t0, q.at, q.dur);
     if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    const live = this.live || (this.live = new Set()), e = { src, g }; // (kept until it ends, so hush can cut it short)
+    live.add(e);
+    src.onended = () => live.delete(e);
     return src;
+  },
+  // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
+  // this when it is paused or left, so nothing rings on behind a menu. (Loops have stopLoop; music has stopMusic.)
+  hush(fade = 0.12) {
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
+    if (!this.ctx || !this.live) return;
+    const t = this.ctx.currentTime;
+    this.live.forEach((e) => { try { e.g.gain.cancelScheduledValues(t); e.g.gain.setTargetAtTime(0.0001, t, fade / 3); e.src.stop(t + fade + 0.05); } catch (err) { /* ended */ } });
+    this.live.clear();
   },
   // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
   // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false

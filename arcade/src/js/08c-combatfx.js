@@ -17,13 +17,13 @@
 //   fx.explosion(pos, { size, color, smoke, ring, ground })      a layered blast
 //   fx.sparks(pos, color, { n, speed, dir, spread, gravity, life, len })
 //   fx.embers(pos, color, { n, rise, life })                     slow, drifting
-//   fx.fire(pos, { size, life, vel }) / fx.smoke(pos, { size, life, vel, dark })
+//   fx.fire(pos, { size, life, vel }) / fx.smoke(pos, { size, life, vel, dark, cold })   (cold: smoke with no fire under it)
 //   fx.debris(pos, { n, size, speed, color, hot, gravity })      tumbling chunks (armour, glass)
 //   fx.light(pos, color, intensity, dur, range)                  a real light for a moment (it lights lit materials)
 //   fx.ring(pos, color, { size, dur, flat })                     a shock ring (flat: lying on the ground)
 //   fx.mark(kind, pos, color, { size, dur, flat })               a warning marker before an attack: "ring" | "lock" | "bang"
 //   fx.scorch(pos, { size, life, kind })                         a mark left on the ground: "scorch" | "skid"
-//   fx.trailer(fn, { smoke, fire, sparks, rate })                smoke or fire trailing from a moving point (a handle: .on)
+//   fx.trailer(fn, { smoke, fire, sparks, rate, a })             smoke or fire trailing from a moving point (a handle: .on; a: how thick its smoke)
 //   fx.drift                                                     the world's scroll (units/s) carried by every particle
 const fxRGB = (c, k = 1) => { const q = c && c.isColor ? c : new THREE.Color(c); return [q.r * k, q.g * k, q.b * k]; };
 
@@ -79,7 +79,7 @@ function fxPuffMaterial(fire) {
              col = mix(col, vec3(1.0, 0.9, 0.7) * 1.7, smoothstep(0.74, 1.0, heat));
              gl_FragColor = vec4(col * body * vCol.a * (1.0 - age * age), 1.0);`
           : `float a = body * vCol.a * (1.0 - smoothstep(0.45, 1.0, age)) * smoothstep(0.0, 0.08, age);
-             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9;
+             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
              gl_FragColor = vec4(col, a);`}
       }`,
   });
@@ -269,13 +269,13 @@ class CombatFX {
     q.age = 0; q.life = o.life; q.s0 = o.s0 * u; q.s1 = o.s1 * u; q.spin = rand(-1, 1) * (o.spin === undefined ? 0.8 : o.spin); q.rise = (o.rise || 0) * u; q.drag = o.drag === undefined ? 0.35 : o.drag;
     q.v.copy(o.vel || this._d.set(0, 0, 0));
     P.pos[i * 3] = pos.x; P.pos[i * 3 + 1] = pos.y; P.pos[i * 3 + 2] = pos.z;
-    P.data[i * 4] = q.s0; P.data[i * 4 + 1] = rand(6.283); P.data[i * 4 + 2] = 0; P.data[i * 4 + 3] = Math.random();
+    P.data[i * 4] = q.s0; P.data[i * 4 + 1] = rand(6.283); P.data[i * 4 + 2] = 0; P.data[i * 4 + 3] = Math.random() + (o.cold ? 2 : 0);
     P.col[i * 4] = o.col[0]; P.col[i * 4 + 1] = o.col[1]; P.col[i * 4 + 2] = o.col[2]; P.col[i * 4 + 3] = o.a === undefined ? 1 : o.a;
     P.aCol.needsUpdate = true;
     P.live = true; P.mesh.visible = true;
   }
   fire(pos, o = {}) { const s = o.size || 1; this._puff(this.fireP, pos, { life: o.life || 0.5, s0: s * 0.45, s1: s * 1.25, vel: o.vel, rise: o.rise === undefined ? 0.8 : o.rise, col: fxRGB(o.color === undefined ? 0xff6a14 : o.color, o.k || 1.5), a: o.a, spin: o.spin, drag: o.drag }); }
-  smoke(pos, o = {}) { const s = o.size || 1, d = o.dark === undefined ? 0.12 : o.dark; this._puff(this.smokeP, pos, { life: o.life || 1.4, s0: s * 0.5, s1: s * 1.9, vel: o.vel, rise: o.rise === undefined ? 0.6 : o.rise, col: o.color !== undefined ? fxRGB(o.color) : [d * 1.05, d * 0.9, d * 1.25], a: o.a === undefined ? 0.7 : o.a, spin: 0.5, drag: o.drag }); }
+  smoke(pos, o = {}) { const s = o.size || 1, d = o.dark === undefined ? 0.12 : o.dark; this._puff(this.smokeP, pos, { life: o.life || 1.4, s0: s * 0.5, s1: s * 1.9, vel: o.vel, rise: o.rise === undefined ? 0.6 : o.rise, col: o.color !== undefined ? fxRGB(o.color) : [d * 1.05, d * 0.9, d * 1.25], a: o.a === undefined ? 0.7 : o.a, spin: 0.5, drag: o.drag, cold: o.cold }); }
   debris(pos, o = {}) {
     const n = o.n || 8, col = fxRGB(o.color === undefined ? 0x23232e : o.color, o.k || 1), hot = o.hot === false ? [0, 0, 0] : fxRGB(o.hot === undefined || o.hot === true ? 0xff7a1e : o.hot, 1.1), u = this.unit;
     let k = 0;
@@ -328,11 +328,24 @@ class CombatFX {
     b.m.material.uniforms.uColor.value.setRGB(b.col[0], b.col[1], b.col[2]);
     b.m.visible = b.a.visible = b.b.visible = true;
     b.a.material.color.setRGB(b.col[0], b.col[1], b.col[2]); b.b.material.color.copy(b.a.material.color);
-    return { set: (a, c) => { b.from.copy(a); b.to.copy(c); }, stop: () => { b.dur = Math.min(b.dur, b.t + 0.08); }, live: () => b.on };
+    return { set: (a, c) => { b.from.copy(a); b.to.copy(c); }, stop: () => { b.dur = b.dur > 0 ? Math.min(b.dur, b.t + 0.08) : b.t + 0.08; }, live: () => b.on };
   }
+  // A small hot heart, a tongue of flame down the line of fire and four short spikes round it: a star, not a ball.
   muzzle(pos, dir, color, size = 1) {
-    this.flash(pos, 0xffffff, 0.5 * size, 1.5 * size, 0.09, 1, 2.6);
-    this.flash(pos, color, 0.9 * size, 2.6 * size, 0.16, 0.8, 2.4);
+    const u = this.unit, col = fxRGB(color, 2.6), hot = [2.6, 2.6, 2.6];
+    this.flash(pos, 0xffffff, 0.2 * size, 0.62 * size, 0.07, 1, 2.6);
+    this.flash(pos, color, 0.36 * size, 1.0 * size, 0.1, 0.5, 2.2);
+    const side = new THREE.Vector3().crossVectors(dir, Math.abs(dir.y) > 0.9 ? this._d.set(1, 0, 0) : this._d.set(0, 1, 0)).normalize(), up = new THREE.Vector3().crossVectors(side, dir).normalize();
+    const spike = (x, y, f, len, w, c, life) => {
+      const q = this._dart();
+      q.v.set(0, 0, 0).addScaledVector(side, x).addScaledVector(up, y).addScaledVector(dir, f).normalize();
+      q.p.copy(pos).addScaledVector(q.v, len * u * 0.5);
+      q.v.multiplyScalar((len * u * 0.5) / life);
+      q.life = q.t = life; q.w = w * u; q.len = len * u; q.stretch = 0; q.g = 0; q.drag = 0.1; q.fade = 1.3; q.col = c; q.bolt = null;
+    };
+    spike(0, 0, 1, 1.7 * size, 0.24 * size, hot, 0.07);
+    spike(0, 0, 1, 2.3 * size, 0.36 * size, col, 0.09);
+    for (const [x, y] of [[1, 0.3], [-1, -0.3], [0.3, -1], [-0.3, 1]]) spike(x, y, 0.55, 0.95 * size, 0.15 * size, col, 0.08);
     this.sparks(pos, color, { n: 5, speed: 9 * size, dir, spread: 0.45, life: 0.16, len: 0.6 * size, w: 0.05 * size });
     this.light(pos, color, 3.2 * size, 0.12, 9 * size);
   }
@@ -343,8 +356,8 @@ class CombatFX {
   // A right answer landing.
   impact(pos, color, o = {}) {
     const s = o.size || 1;
-    this.flash(pos, 0xffffff, 0.7 * s, 2.8 * s, 0.12, 1, 3);
-    this.flash(pos, color, 1.4 * s, 5.5 * s, 0.3, 0.85, 2.2);
+    this.flash(pos, 0xffffff, 0.5 * s, 2.0 * s, 0.11, 1, 3);
+    this.flash(pos, color, 1.0 * s, 3.4 * s, 0.24, 0.7, 2.2);
     this.sparks(pos, color, { n: Math.round(20 * Math.min(2, s)), speed: 13 * s, dir: o.dir, spread: 1.4, life: 0.45, len: 0.9 * s, w: 0.075 * s });
     this.sparks(pos, 0xffffff, { n: Math.round(8 * Math.min(2, s)), speed: 18 * s, dir: o.dir, spread: 1.6, life: 0.22, len: 1.2 * s, w: 0.05 * s, k: 2.2 });
     this.embers(pos, color, { n: 8, radius: 0.5 * s, life: 1.1 });
@@ -366,12 +379,12 @@ class CombatFX {
       d.p.copy(pos).addScaledVector(v, 0.55 * s * u); d.v.copy(v).multiplyScalar(0.6 * s * u);
       d.life = d.t = 0.26; d.w = 0.16 * s * u; d.len = 0.8 * s * u; d.stretch = 0; d.g = 0; d.drag = 0.2; d.fade = 1.4; d.col = fxRGB(0xc81e30, 1.5);
     }
-    for (let i = 0; i < 4; i++) this.smoke(new THREE.Vector3(rand(-0.4, 0.4) * s * u, rand(-0.25, 0.35) * s * u, 0).add(pos), { size: 1.25 * s, life: 0.8, rise: 0.5, a: 0.72, dark: 0.05 });
+    for (let i = 0; i < 4; i++) this.smoke(new THREE.Vector3(rand(-0.4, 0.4) * s * u, rand(-0.25, 0.35) * s * u, 0).add(pos), { size: 1.25 * s, life: 0.8, rise: 0.5, a: 0.72, dark: 0.05, cold: true }); // (cold: no glow of fire in it. A reject is a dud.)
   }
   // A blow on plate or hull: sparks off the surface, a little smoke.
   hull(pos, color, o = {}) {
     const s = o.size || 1;
-    this.flash(pos, color, 0.6 * s, 2.4 * s, 0.14, 0.9, 2.2);
+    this.flash(pos, color, 0.4 * s, 1.6 * s, 0.12, 0.9, 2.2);
     this.sparks(pos, 0xffd9a0, { n: 14, speed: 10 * s, dir: o.dir, spread: 1.1, life: 0.4, len: 0.7 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity, k: 2 });
     this.sparks(pos, color, { n: 8, speed: 7 * s, dir: o.dir, spread: 1.4, life: 0.5, len: 0.5 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity });
     this.smoke(pos, { size: 1.1 * s, life: 0.9, a: 0.5 });
@@ -380,8 +393,8 @@ class CombatFX {
   // A layered blast.
   explosion(pos, o = {}) {
     const s = o.size || 1, col = o.color === undefined ? 0xff8a2a : o.color, u = this.unit, d = this._d;
-    this.flash(pos, 0xffffff, 0.9 * s, 3.4 * s, 0.1, 1, 2.4);
-    this.flash(pos, col, 1.6 * s, 6.5 * s, 0.4, 0.55, 1.5);
+    this.flash(pos, 0xffffff, 0.6 * s, 2.2 * s, 0.1, 1, 2.4);
+    this.flash(pos, col, 1.0 * s, 4.2 * s, 0.36, 0.42, 1.5); // (its light is a heart, not the whole of it: fire, sparks, ring and debris give it its size)
     const nf = Math.round(6 + 3 * Math.min(2, s));
     for (let i = 0; i < nf; i++) {
       const v = new THREE.Vector3(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize().multiplyScalar(rand(1, 4) * s * u);
@@ -425,7 +438,7 @@ class CombatFX {
   }
   // Smoke, fire or sparks trailing from a point that moves (a damaged engine, a burning wreck). Set .on = false to stop.
   trailer(at, o = {}) {
-    const t = { at, on: true, acc: 0, rate: o.rate || 14, smoke: o.smoke === undefined ? 1 : o.smoke, fire: o.fire || 0, sparks: o.sparks || 0, size: o.size || 1, vel: o.vel || null, life: o.life || 1.2, color: o.color };
+    const t = { at, on: true, acc: 0, rate: o.rate || 14, smoke: o.smoke === undefined ? 1 : o.smoke, fire: o.fire || 0, sparks: o.sparks || 0, size: o.size || 1, vel: o.vel || null, life: o.life || 1.2, color: o.color, a: o.a === undefined ? 0.5 : o.a };
     this.trailers.push(t);
     return t;
   }
@@ -444,7 +457,7 @@ class CombatFX {
         const p = t.at(d);
         if (!p) break;
         const jit = new THREE.Vector3(rand(-0.15, 0.15), rand(-0.1, 0.15), rand(-0.15, 0.15)).multiplyScalar(t.size * this.unit).add(p);
-        if (t.smoke && Math.random() < t.smoke) this.smoke(jit, { size: 0.7 * t.size, life: t.life, vel: t.vel, a: 0.5 });
+        if (t.smoke && Math.random() < t.smoke) this.smoke(jit, { size: 0.7 * t.size, life: t.life, vel: t.vel, a: t.a });
         if (t.fire && Math.random() < t.fire) this.fire(jit, { size: 0.6 * t.size, life: 0.35, vel: t.vel, color: t.color });
         if (t.sparks && Math.random() < t.sparks) this.sparks(jit, t.color === undefined ? 0xffb060 : t.color, { n: 1, speed: 4 * t.size, life: 0.4, len: 0.3 * t.size, w: 0.05 * t.size, gravity: this.ground === null ? 0 : 6 });
       }
@@ -460,7 +473,7 @@ class CombatFX {
         d.subVectors(b.to, b.from).normalize();
         dart.p.copy(b.p).addScaledVector(d, -len * 0.5); dart.len = len; dart.w = b.w; dart.dirv = d.clone(); dart.life = Math.max(dart.life, 0.03);
       }
-      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 5); b.sp.material.opacity = 0.85;
+      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 2.6); b.sp.material.opacity = 0.6; // (a glow that hugs its head: the bolt is its dart, not a ball of light)
       if (b.lit) this.lights.length && this.lights[0].t <= 0.02 && (this.lights[0].l.position.copy(b.p), this.lights[0].l.color.setRGB(Math.min(1, b.col[0]), Math.min(1, b.col[1]), Math.min(1, b.col[2])), (this.lights[0].i = 2.2), (this.lights[0].t = this.lights[0].dur = 0.05));
       if (k >= 1) { b.on = false; b.sp.visible = false; if (dart && dart.bolt === b) { dart.life = 0; dart.bolt = null; } const f = b.onHit; b.onHit = null; if (f) f(b.to); }
     }
@@ -555,8 +568,8 @@ class CombatFX {
       b.m.quaternion.setFromUnitVectors(z, d);
       b.m.scale.set(b.w, b.w, Math.max(0.001, len));
       const U = b.m.material.uniforms; U.uFade.value = fade; U.uTime.value = this.t; U.uLen.value = len / this.unit;
-      b.a.position.copy(b.from); b.a.scale.setScalar(b.w * 4.2); b.a.material.opacity = 0.9 * fade;
-      b.b.position.copy(b.from).addScaledVector(d, len); b.b.scale.setScalar(b.w * 5.5 * (0.9 + 0.1 * Math.sin(this.t * 40))); b.b.material.opacity = fade;
+      b.a.position.copy(b.from); b.a.scale.setScalar(b.w * 2.4); b.a.material.opacity = 0.7 * fade;
+      b.b.position.copy(b.from).addScaledVector(d, len); b.b.scale.setScalar(b.w * 3.0 * (0.9 + 0.1 * Math.sin(this.t * 40))); b.b.material.opacity = 0.8 * fade;
     }
     // warning markers
     for (const k of this.marks) {
