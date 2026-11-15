@@ -144,7 +144,7 @@ function drawBossBust(canvas, key, color) {
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
   const pal = { K: "#1b1730", S: "#69708c", B: "#e2dac6", C: color, W: "#ffffff", D: "#07040f", G: "#ffc93d", R: "#ff4769", "0": "#0c0326" };
-  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#86ff5e", 0.4] };
+  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#4dffa6", 0.4] };
   x.fillStyle = "#0c0326";
   x.fillRect(0, 0, 24, 24);
   x.globalAlpha = 0.16; // its own light behind it

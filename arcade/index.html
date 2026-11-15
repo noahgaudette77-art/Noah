@@ -24,7 +24,7 @@
   --cyan: #35efff;
   --magenta: #ff3ad4;
   --yellow: #ffe14f;
-  --lime: #86ff5e;
+  --lime: #4dffa6;
   --orange: #ff9b3d;
   --red: #ff4769;
   --violet: #a65fff;
@@ -65,10 +65,10 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #ui { position: fixed; inset: 0; z-index: 10; }
 #gl.post { image-rendering: auto; }
 #flash { position: fixed; inset: 0; pointer-events: none; z-index: 55; opacity: 0; }
-#fps { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 70; pointer-events: none; padding: 5px 7px; background: rgba(5, 1, 20, 0.93); border: 1px solid rgba(134, 255, 94, 0.5); font: 7px/1.7 var(--font-display); color: var(--lime); white-space: nowrap; text-align: right; }
+#fps { position: fixed; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 70; pointer-events: none; padding: 5px 7px; background: rgba(5, 1, 20, 0.93); border: 1px solid rgba(77, 255, 166, 0.5); font: 7px/1.7 var(--font-display); color: var(--lime); white-space: nowrap; text-align: right; }
 #fps[hidden] { display: none; }
 #flash.hit { animation: hitflash 0.45s ease-out; background: radial-gradient(circle, rgba(255, 71, 105, 0.15) 30%, rgba(255, 71, 105, 0.6) 100%); }
-#flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(134, 255, 94, 0.05) 40%, rgba(134, 255, 94, 0.35) 100%); }
+#flash.good { animation: hitflash 0.35s ease-out; background: radial-gradient(circle, rgba(77, 255, 166, 0.05) 40%, rgba(77, 255, 166, 0.35) 100%); }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
 #flash.cover { opacity: 1; background: #000; }
@@ -284,7 +284,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .ans:hover { background: var(--panel-2); }
 .ans:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 .ans.sel { background: var(--panel-2); box-shadow: 0 0 0 2px var(--c), 0 0 18px -2px var(--c); }
-.ans.good { border-color: var(--lime); background: rgba(70, 160, 40, 0.42); }
+.ans.good { border-color: var(--lime); background: rgba(24, 150, 104, 0.42); }
 .ans.good .k { background: var(--lime); }
 .ans.bad { border-color: var(--red); background: rgba(160, 20, 50, 0.45); }
 .ans.bad .k { background: var(--red); }
@@ -374,7 +374,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .charge > i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, var(--orange), var(--red)); }
 
 /* racer readout */
-.egg { font: clamp(12px, 3.4vw, 16px)/1.2 var(--font-display); color: var(--lime); text-shadow: 0 0 10px rgba(134, 255, 94, 0.7); }
+.egg { font: clamp(12px, 3.4vw, 16px)/1.2 var(--font-display); color: var(--lime); text-shadow: 0 0 10px rgba(77, 255, 166, 0.7); }
 .egg small { display: block; font-size: 8px; color: var(--dim); text-shadow: none; white-space: nowrap; }
 .goalbar { height: 6px; }
 
@@ -1475,9 +1475,9 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
 /* the way forward lights the bar it stands on */
-.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
+.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
 .actions.pinned .wrap.one { grid-template-columns: 1fr; }
-.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(134, 255, 94, 0.17), rgba(134, 255, 94, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
 
 /* ---- a focus ring is the keyboard's (see UI.init): none until a key has been used ---- */
 html:not([data-input="keys"]) :focus-visible { outline: none !important; }
@@ -1541,7 +1541,7 @@ html:not([data-input="keys"]) :focus-visible { outline: none !important; }
 .pl-bar { position: relative; height: 14px; background: #05020f; border: 2px solid #3d2f92; box-shadow: inset 0 0 0 1px #000, inset 0 3px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.12); }
 .pl-bar i { position: absolute; left: 1px; top: 1px; bottom: 1px; width: calc(var(--v) * 1% - 2px); min-width: 0; background: linear-gradient(90deg, #ffb13a, var(--yellow)); box-shadow: 0 0 10px -2px var(--yellow); }
 .pl-bar b { position: absolute; left: 60%; top: -6px; bottom: -6px; width: 2px; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
-.pl-v { color: var(--lime); text-shadow: 0 0 8px rgba(134, 255, 94, 0.5); }
+.pl-v { color: var(--lime); text-shadow: 0 0 8px rgba(77, 255, 166, 0.5); }
 
 /* ---- loading: stars over the horizon, a warm light where the egg will rise, a track you can see ---- */
 .boot-logo::before { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 54vh; z-index: -1; pointer-events: none;
@@ -1939,7 +1939,7 @@ const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BA
 const tileIcon = (k) => (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
 
 const COLORS = {
-  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",
+  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#4dffa6",
   orange: "#ff9b3d", red: "#ff4769", violet: "#a65fff", gold: "#ffc93d", ink: "#f4efff",
 };
 // Answer slots share a colour in 3D and in the HUD: A cyan, B magenta, C yellow, D orange. (D was lime: green is
@@ -7684,7 +7684,7 @@ function carpetTexture() {
   const x = c.getContext("2d");
   x.fillStyle = "#0d0626";
   x.fillRect(0, 0, 256, 256);
-  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#a65fff"];
+  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#a65fff"];
   x.lineWidth = 3;
   for (let i = 0; i < 60; i++) {
     const col = pick(cols);
@@ -9013,7 +9013,7 @@ function drawBossBust(canvas, key, color) {
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
   const pal = { K: "#1b1730", S: "#69708c", B: "#e2dac6", C: color, W: "#ffffff", D: "#07040f", G: "#ffc93d", R: "#ff4769", "0": "#0c0326" };
-  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#86ff5e", 0.4] };
+  const veil = { c: [color, 0.42], w: ["#ffffff", 0.3], k: ["#000000", 0.2], r: ["#ff4769", 0.4], l: ["#4dffa6", 0.4] };
   x.fillStyle = "#0c0326";
   x.fillRect(0, 0, 24, 24);
   x.globalAlpha = 0.16; // its own light behind it
@@ -12160,12 +12160,12 @@ const HUB_NG = 16;
 const HUB_SIDE = [[-0.72, 0], [0.7, 0], [0.7, 1.1], [0.98, 1.2], [1, 1.36], [0.46, 1.56], [0.24, 3.08], [0.54, 3.2], [0.58, 3.98], [-0.48, 4.08], [-0.72, 3.72]];
 const HUB_BODY = [[-0.7, 0], [0.655, 0], [0.655, 1.11], [0.935, 1.205], [0.955, 1.335], [0.43, 1.53], [0.2, 3.07], [0.5, 3.19], [0.535, 3.95], [-0.47, 4.05], [-0.7, 3.71]];
 const HUB_MINI = [[-0.55, 0], [0.5, 0], [0.5, 1], [0.78, 1.1], [0.8, 1.22], [0.36, 1.38], [0.18, 2.68], [0.42, 2.78], [0.45, 3.32], [-0.45, 3.4], [-0.55, 3.1]];
-const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#ff9b3d", "#a65fff", "#ff4769"];
+const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#ff9b3d", "#a65fff", "#ff4769"];
 const HUB_TITLES = ["COMET SKIRMISH", "NOVA SORTIE", "REDLINE RALLY", "SKYLIGHT SLALOM", "TIN TUSSLE", "NEON HAIRPIN", "LASER LATTICE", "PIXEL PILGRIM", "REGOLITH RUSH", "GALE GLIDER", "LANTERN MAZE", "RIFT SKIPPER", "BUMPER BLITZ", "WYVERN DUEL", "STACKWORKS", "STRATO ACE"]; // (made-up titles for the machines in the background; each was searched for and is no real game's name)
 const HUB_RINGS = [[3.62, "#35efff"], [4.72, "#ff3ad4"], [4.92, "#ff3ad4"]]; // wall neon: height, colour (the pink pair passes behind every marquee, well under each cabinet's top edge)
 const HUB_EYE = 2.5; // the camera's height on the floor
 // Neon signs on the wall: text, colour, angle, width (their atlas row is the index).
-const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#86ff5e", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
+const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#4dffa6", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
 // The room is rebuilt every time the player comes back from a game, so its
 // static geometry and artwork are kept for the session (once the pixel font
 // has loaded, so nothing is frozen in a fallback font).
@@ -12927,7 +12927,7 @@ function hubWallAtlas() {
     x.textAlign = "left";
   });
   const r = rankOf(xpTotal());
-  x.fillStyle = "#86ff5e";
+  x.fillStyle = "#4dffa6";
   x.fillText(`LV${r.level} ${r.name}`, 28, 252);
   x.textAlign = "right";
   x.fillText(`MASTERY ${overallMastery()}%`, 484, 252);
@@ -13000,7 +13000,7 @@ class HubScene extends Scene3D {
         { pos: [-16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [-12, 1.6, 12], w: 7, h: 2.4, color: 0xffe14f, k: 1.4 },
-        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x86ff5e, k: 1.3 },
+        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x4dffa6, k: 1.3 },
         { pos: [0, 2, 17], w: 10, h: 3, color: 0xa65fff, k: 1.6 },
       ],
     });
@@ -13078,7 +13078,7 @@ class HubScene extends Scene3D {
     s.add(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
-    this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
+    this.lasers = [0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff].map((col, i) => {
       const beam = makeBeam(col, 1.25);
       const az = (i / 8) * Math.PI * 2 + 0.2;
       beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
@@ -14042,7 +14042,7 @@ function hubCabinetStyle(id, o) {
     lit("cyl", cyl, onPanel(-0.05, 0.7, 0.04).multiply(new THREE.Matrix4().makeRotationZ(1.2)), [0.03, 0.56, 0.03], 0xffd23d, GLOSS);
   } else if (id === "guide") {
     // a library kiosk: books stacked on top, an open book on the desk, a reading lamp
-    [[0.1, 4.12, 0.95, 0.16, 0.66, 0x35efff, 0.1], [-0.05, 4.28, 0.85, 0.15, 0.6, 0xff3ad4, -0.12], [0.08, 4.43, 0.9, 0.14, 0.62, 0xffd23d, 0.2], [-0.02, 4.57, 0.7, 0.13, 0.52, 0x86ff5e, -0.05]]
+    [[0.1, 4.12, 0.95, 0.16, 0.66, 0x35efff, 0.1], [-0.05, 4.28, 0.85, 0.15, 0.6, 0xff3ad4, -0.12], [0.08, 4.43, 0.9, 0.14, 0.62, 0xffd23d, 0.2], [-0.02, 4.57, 0.7, 0.13, 0.52, 0x4dffa6, -0.05]]
       .forEach(([x, y, w, h, d, c, r]) => { box(w, h, d, at(x, y, 0.05, 0, r), c, GLOSS, 0.5); box(w - 0.04, h - 0.04, 0.02, at(x + Math.sin(r) * d * 0.5, y, 0.05 + Math.cos(r) * d * 0.5, 0, r), 0xf2efe6, { aux: [0, 0.8] }); });
     [[-0.78, 0xff9b3d, 0.14], [-0.6, 0xa65fff, 0.1], [-0.94, 0xff4769, 0.18]].forEach(([x, c, w]) => box(w, 0.62, 0.46, at(x, 4.38, 0.02, 0, 0, x < -0.8 ? 0.1 : 0), c, GLOSS, 0.5));
     [-1, 1].forEach((sx) => { K.quad(B.lit, 0.34, 0.44, onPanel(0.42 + sx * 0.175, 0.5, 0.03).multiply(new THREE.Matrix4().makeRotationX(-H)).multiply(new THREE.Matrix4().makeRotationY(sx * 0.22)), 0xf2efe6, { aux: [0, 0.8] }); for (let i = 0; i < 5; i++) K.box(B.glow, 0.24, 0.004, 0.016, onPanel(0.42 + sx * 0.175, 0.34 + i * 0.08, 0.045), col, { k: 1.2, g }); });
@@ -14114,7 +14114,7 @@ class HubExtras {
       rod(F, 0, 2.5, 0, 0.65, 0.8, 0x7c32a4, 1, Math.PI / 2);
       put(F, 0, 0.09, 0.02, 1.4, 0.18, 0.86, 0x231a52);
       lamp(F, 0, 0, 2.5, 0.42, 1.1, 0.06, 0.04, 0xff3ad4, 2.2); [-0.6, 0.6].forEach((x) => lamp(F, 0, x, 1.3, 0.42, 0.05, 2.0, 0.04, 0x35efff, 2));
-      for (let i = 0; i < 7; i++) lamp(F, 1 + (i % 4), -0.42 + i * 0.14, 1.5, 0.42, 0.1, 0.5, 0.03, [0x86ff5e, 0xffe14f, 0xff9b3d, 0xff3ad4][i % 4], 2.2);
+      for (let i = 0; i < 7; i++) lamp(F, 1 + (i % 4), -0.42 + i * 0.14, 1.5, 0.42, 0.1, 0.5, 0.03, [0x4dffa6, 0xffe14f, 0xff9b3d, 0xff3ad4][i % 4], 2.2);
       put(F, 0, 0.75, 0.42, 0.9, 0.5, 0.04, INSET); for (let i = 0; i < 6; i++) put(F, -0.36 + i * 0.145, 0.75, 0.45, 0.1, 0.4, 0.02, [0xff4769, 0x35efff, 0xffe14f][i % 3], 0.9); }
     // -- a claw machine (beside cabinet 1): the claw itself is a mover, built below
     { const F = (this.clawF = frame(gap(1), R));
@@ -14122,17 +14122,17 @@ class HubExtras {
       lamp(F, 5, 0, 0.1, 0.66, 1.5, 0.04, 0.03, 0x35efff, 1.6);
       [[-0.72, -0.62], [0.72, -0.62], [-0.72, 0.62], [0.72, 0.62]].forEach(([x, z]) => put(F, x, 2.0, z, 0.07, 1.6, 0.07, EDGE));
       put(F, 0, 1.28, 0, 1.4, 0.16, 1.2, 0x2f2470);
-      for (let i = 0; i < 14; i++) st.add(BOX, F.clone().multiply(racerM(-0.5 + (i % 5) * 0.25 + (i % 2) * 0.05, 1.42 + Math.floor(i / 5) * 0.14, -0.3 + ((i * 7) % 5) * 0.16, 0.2, 0.2, 0.2, i, i * 2, i * 3)), [0xff4769, 0x35efff, 0xffe14f, 0x86ff5e, 0xff9b3d, 0xa65fff][i % 6], 0.75);
+      for (let i = 0; i < 14; i++) st.add(BOX, F.clone().multiply(racerM(-0.5 + (i % 5) * 0.25 + (i % 2) * 0.05, 1.42 + Math.floor(i / 5) * 0.14, -0.3 + ((i * 7) % 5) * 0.16, 0.2, 0.2, 0.2, i, i * 2, i * 3)), [0xff4769, 0x35efff, 0xffe14f, 0x4dffa6, 0xff9b3d, 0xa65fff][i % 6], 0.75);
       lamp(F, 5, 0, 3.0, 0.72, 1.3, 0.16, 0.03, 0xffe14f, 2.4); lamp(F, 0, 0, 2.76, 0, 1.3, 0.04, 1.1, 0xf2f6ff, 1.4);
       put(F, 0.45, 1.22, 0.68, 0.34, 0.1, 0.16, INSET); rod(F, 0.45, 1.36, 0.68, 0.02, 0.2, 0xd2d0e4); lamp(F, 6, 0.3, 1.3, 0.7, 0.07, 0.04, 0.07, 0xff2346, 2.6); }
     // -- a dance machine: a screen of bars and four arrow pads that light in turn (beside cabinet 2)
     { const F = frame(gap(2), R);
       put(F, 0, 1.5, -0.3, 1.5, 3.0, 0.5, CASE); put(F, 0, 0.09, 0.7, 1.7, 0.18, 1.5, 0x2f2470);
       [-0.42, 0.42].forEach((x, i) => { st.add(CYL, F.clone().multiply(racerM(x, 1.02, -0.045, 0.3, 0.02, 0.3, Math.PI / 2)), 0x120c2a); ring(F, 1 + i * 2, x, 1.02, -0.03, 0.3, i ? 0xff3ad4 : 0x35efff, 1.7); ring(F, 2 + i * 2, x, 1.02, -0.03, 0.13, 0xffe14f, 1.5); });
-      put(F, 0, 0.42, -0.04, 1.2, 0.3, 0.02, INSET); [-0.42, -0.14, 0.14, 0.42].forEach((x, i) => lamp(F, 7 + i, x, 0.42, -0.02, 0.16, 0.16, 0.02, [0xff3ad4, 0x35efff, 0x86ff5e, 0xffe14f][i], 1.5));
+      put(F, 0, 0.42, -0.04, 1.2, 0.3, 0.02, INSET); [-0.42, -0.14, 0.14, 0.42].forEach((x, i) => lamp(F, 7 + i, x, 0.42, -0.02, 0.16, 0.16, 0.02, [0xff3ad4, 0x35efff, 0x4dffa6, 0xffe14f][i], 1.5));
       lamp(F, 0, 0, 0.17, 1.46, 1.7, 0.03, 0.03, 0xff3ad4, 2); [-0.86, 0.86].forEach((x) => lamp(F, 0, x, 0.17, 0.7, 0.03, 0.03, 1.5, 0x35efff, 1.7));
-      for (let i = 0; i < 9; i++) lamp(F, 1 + (i % 4), -0.52 + i * 0.13, 2.1, -0.04, 0.09, 0.9, 0.03, [0x35efff, 0xff3ad4, 0xffe14f, 0x86ff5e][i % 4], 2);
-      [[-0.42, 0.42, 7], [0.42, 0.42, 8], [-0.42, 1.05, 9], [0.42, 1.05, 10]].forEach(([x, z, ch], i) => { lamp(F, ch, x, 0.19, z, 0.56, 0.02, 0.5, [0xff3ad4, 0x35efff, 0x86ff5e, 0xffe14f][i], 2.2); });
+      for (let i = 0; i < 9; i++) lamp(F, 1 + (i % 4), -0.52 + i * 0.13, 2.1, -0.04, 0.09, 0.9, 0.03, [0x35efff, 0xff3ad4, 0xffe14f, 0x4dffa6][i % 4], 2);
+      [[-0.42, 0.42, 7], [0.42, 0.42, 8], [-0.42, 1.05, 9], [0.42, 1.05, 10]].forEach(([x, z, ch], i) => { lamp(F, ch, x, 0.19, z, 0.56, 0.02, 0.5, [0xff3ad4, 0x35efff, 0x4dffa6, 0xffe14f][i], 2.2); });
       [-0.78, 0.78].forEach((x) => { rod(F, x, 0.8, 1.4, 0.03, 1.4, 0xd2d0e4); }); rod(F, 0, 1.5, 1.4, 0.03, 1.6, 0xd2d0e4, 1, 0, Math.PI / 2);
       lamp(F, 0, 0, 3.05, -0.04, 1.4, 0.07, 0.03, 0xff3ad4, 2.4); }
     // -- a ticket printer (beside cabinet 3): its strip is a mover
@@ -14157,8 +14157,8 @@ class HubExtras {
     { const F = frame(gap(5, -1), R);
       put(F, 0, 1.15, 0, 1.2, 2.3, 0.8, 0x2a3e86); lamp(F, 13, 0, 1.45, 0.41, 0.9, 1.3, 0.03, 0x9fe8ff, 0.9);
       lamp(F, 0, 0, 2.24, 0.41, 1.1, 0.04, 0.02, 0x35efff, 1.7);
-      for (let i = 0; i < 12; i++) put(F, -0.3 + (i % 4) * 0.2, 1.0 + Math.floor(i / 4) * 0.42, 0.43, 0.13, 0.3, 0.03, [0xff4769, 0x86ff5e, 0xffe14f, 0x35efff][i % 4], 0.36);
-      put(F, 0, 0.3, 0.42, 0.7, 0.24, 0.03, 0x05060a); lamp(F, 6, 0.48, 1.0, 0.42, 0.08, 0.3, 0.03, 0x86ff5e, 2.2);
+      for (let i = 0; i < 12; i++) put(F, -0.3 + (i % 4) * 0.2, 1.0 + Math.floor(i / 4) * 0.42, 0.43, 0.13, 0.3, 0.03, [0xff4769, 0x4dffa6, 0xffe14f, 0x35efff][i % 4], 0.36);
+      put(F, 0, 0.3, 0.42, 0.7, 0.24, 0.03, 0x05060a); lamp(F, 6, 0.48, 1.0, 0.42, 0.08, 0.3, 0.03, 0x4dffa6, 2.2);
       this.steamAt = new THREE.Vector3(0.95, 0.1, 0.6).applyMatrix4(F); put(F, 0.95, 0.03, 0.6, 0.7, 0.04, 0.5, 0x05060a); }
     const stMesh = new THREE.Mesh(st.build("color"), dark), lMesh = new THREE.Mesh(L.build(), this.lampMat);
     s.add(stMesh, lMesh);
@@ -14194,7 +14194,7 @@ class HubExtras {
       b.add(BOX, racerM(-0.22, 0.8, 0, 0.07, 0.54, 0.07), 0x8a93b8); // mast
       b.add(BOX, racerM(-0.16, 1.16, 0, 0.3, 0.27, 0.42), 0x20244a); // its head: a small tube monitor
       b.add(BOX, racerM(-0.004, 1.16, 0, 0.02, 0.19, 0.33), 0x0a0c1c); // the screen
-      b.add(BOX, racerM(0.01, 1.17, 0, 0.02, 0.05, 0.24), 0x86ff5e, 2.6); // one wide eye: a strip of lime
+      b.add(BOX, racerM(0.01, 1.17, 0, 0.02, 0.05, 0.24), 0x4dffa6, 2.6); // one wide eye: a strip of lime
       b.add(BOX, racerM(-0.2, 1.36, 0.14, 0.025, 0.14, 0.025), 0xd2d0e4, 0.8); b.add(BOX, racerM(-0.2, 1.45, 0.14, 0.07, 0.06, 0.07), 0xffa53d, 2.6); // aerial and beacon
       b.add(BOX, racerM(0.6, 0.07, 0, 0.1, 0.09, 0.9), 0x35efff, 2.2); // the brush bar's light
       [-0.4, 0.4].forEach((z) => b.add(CYL, racerM(0.45, 0.05, z, 0.2, 0.05, 0.2), 0xc9d2e0, 0.7));

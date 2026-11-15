@@ -18,12 +18,12 @@ const HUB_NG = 16;
 const HUB_SIDE = [[-0.72, 0], [0.7, 0], [0.7, 1.1], [0.98, 1.2], [1, 1.36], [0.46, 1.56], [0.24, 3.08], [0.54, 3.2], [0.58, 3.98], [-0.48, 4.08], [-0.72, 3.72]];
 const HUB_BODY = [[-0.7, 0], [0.655, 0], [0.655, 1.11], [0.935, 1.205], [0.955, 1.335], [0.43, 1.53], [0.2, 3.07], [0.5, 3.19], [0.535, 3.95], [-0.47, 4.05], [-0.7, 3.71]];
 const HUB_MINI = [[-0.55, 0], [0.5, 0], [0.5, 1], [0.78, 1.1], [0.8, 1.22], [0.36, 1.38], [0.18, 2.68], [0.42, 2.78], [0.45, 3.32], [-0.45, 3.4], [-0.55, 3.1]];
-const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#ff9b3d", "#a65fff", "#ff4769"];
+const HUB_PALETTE = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#ff9b3d", "#a65fff", "#ff4769"];
 const HUB_TITLES = ["COMET SKIRMISH", "NOVA SORTIE", "REDLINE RALLY", "SKYLIGHT SLALOM", "TIN TUSSLE", "NEON HAIRPIN", "LASER LATTICE", "PIXEL PILGRIM", "REGOLITH RUSH", "GALE GLIDER", "LANTERN MAZE", "RIFT SKIPPER", "BUMPER BLITZ", "WYVERN DUEL", "STACKWORKS", "STRATO ACE"]; // (made-up titles for the machines in the background; each was searched for and is no real game's name)
 const HUB_RINGS = [[3.62, "#35efff"], [4.72, "#ff3ad4"], [4.92, "#ff3ad4"]]; // wall neon: height, colour (the pink pair passes behind every marquee, well under each cabinet's top edge)
 const HUB_EYE = 2.5; // the camera's height on the floor
 // Neon signs on the wall: text, colour, angle, width (their atlas row is the index).
-const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#86ff5e", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
+const HUB_SIGNS = [["GAME ON", "#35efff", -0.84, 3.6], ["INSERT COIN", "#ff3ad4", 0.84, 4], ["PLAYER 1", "#4dffa6", 1.5, 3.6], ["TOKENS", "#ff9b3d", -2.12, 3.3], ["HIGH SCORE", "#ffe14f", 2.08, 3.7]];
 // The room is rebuilt every time the player comes back from a game, so its
 // static geometry and artwork are kept for the session (once the pixel font
 // has loaded, so nothing is frozen in a fallback font).
@@ -785,7 +785,7 @@ function hubWallAtlas() {
     x.textAlign = "left";
   });
   const r = rankOf(xpTotal());
-  x.fillStyle = "#86ff5e";
+  x.fillStyle = "#4dffa6";
   x.fillText(`LV${r.level} ${r.name}`, 28, 252);
   x.textAlign = "right";
   x.fillText(`MASTERY ${overallMastery()}%`, 484, 252);
@@ -858,7 +858,7 @@ class HubScene extends Scene3D {
         { pos: [-16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [16, 6.2, -8], w: 10, h: 0.5, color: 0xff3ad4, k: 2.4 },
         { pos: [-12, 1.6, 12], w: 7, h: 2.4, color: 0xffe14f, k: 1.4 },
-        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x86ff5e, k: 1.3 },
+        { pos: [12, 1.6, 12], w: 7, h: 2.4, color: 0x4dffa6, k: 1.3 },
         { pos: [0, 2, 17], w: 10, h: 3, color: 0xa65fff, k: 1.6 },
       ],
     });
@@ -936,7 +936,7 @@ class HubScene extends Scene3D {
     s.add(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
-    this.lasers = [0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff, 0x35efff, 0xff3ad4, 0x86ff5e, 0xa65fff].map((col, i) => {
+    this.lasers = [0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff].map((col, i) => {
       const beam = makeBeam(col, 1.25);
       const az = (i / 8) * Math.PI * 2 + 0.2;
       beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };

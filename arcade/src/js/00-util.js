@@ -130,7 +130,7 @@ const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BA
 const tileIcon = (k) => (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
 
 const COLORS = {
-  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#86ff5e",
+  cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#4dffa6",
   orange: "#ff9b3d", red: "#ff4769", violet: "#a65fff", gold: "#ffc93d", ink: "#f4efff",
 };
 // Answer slots share a colour in 3D and in the HUD: A cyan, B magenta, C yellow, D orange. (D was lime: green is

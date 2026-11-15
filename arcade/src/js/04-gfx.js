@@ -819,7 +819,7 @@ function carpetTexture() {
   const x = c.getContext("2d");
   x.fillStyle = "#0d0626";
   x.fillRect(0, 0, 256, 256);
-  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#86ff5e", "#a65fff"];
+  const cols = ["#35efff", "#ff3ad4", "#ffe14f", "#4dffa6", "#a65fff"];
   x.lineWidth = 3;
   for (let i = 0; i < 60; i++) {
     const col = pick(cols);
