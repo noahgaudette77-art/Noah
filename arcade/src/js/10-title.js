@@ -55,7 +55,7 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.22 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
+    this.scene.userData.post.exposure = 1.12 + 0.1 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
     { // and the logo with it: its face takes the flash too (written only when it changes)
       const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
       if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }

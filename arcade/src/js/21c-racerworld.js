@@ -422,7 +422,7 @@ class RacerWorld {
       put(b, BOX, x, y / 2, z, 0.45, y, 0.45, 0x3a3f48, aZ);
       put(b, BOX, x, y + h / 2, z + 0.2, w + 0.5, h + 0.5, 0.25, 0x15171c, aZ);
       for (let i = 0; i < 4; i++) put(b, BOX, x - w / 2 + (i + 0.5) * (w / 4), y + h + 0.45, z - 0.5, 0.5, 0.12, 0.3, 0xfff0d2, aZ, 2, 2.2);
-      ads.push([x, y + h / 2, z + 0.05, w, h, sd * -0.0, aZ]);
+      ads.push([x, y + h / 2, z + 0.34, w, h, sd * -0.0, aZ]); // (on the front of its frame: at z + 0.05 it was behind the frame's face, and every billboard on a post was a blank black board)
     };
     const guard = (b, x, color = 0x9aa7b5) => { for (let i = 0; i < 16; i++) { const z = -i * 16, aZ = z - 16; put(b, BOX, x, 0.66, z - 8, 0.1, 0.14, 16, color, aZ); for (let k = 0; k < 4; k++) put(b, BOX, x, 0.36, z - 2 - k * 4, 0.13, 0.72, 0.13, 0x6a7480, aZ); } };
     this.sets = {};

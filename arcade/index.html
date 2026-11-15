@@ -1740,6 +1740,17 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* the mission strip is a strip, not a second PLAY button: its glow is turned down */
 .mission { box-shadow: 0 3px 0 #000, 0 0 12px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
 
+/* ---- Nest Egg Run, closing fixes after its fourth independent review ---- */
+.scr-racer .barrow > b { font-size: 9px; }
+.scr-racer .hud .combo { text-shadow: 0 1px 0 #000, 0 0 4px var(--magenta); }
+
+/* ---- Title, closing fixes after its fourth independent review ---- */
+/* the button is the brightest thing in the lower half: a wider halo, and its light lies on the shade under it */
+.insert-coin { animation-name: coin-pulse-y2; }
+@keyframes coin-pulse-y2 { 0%, 100% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 22px -2px rgba(255, 225, 79, 0.62), 0 26px 30px -14px rgba(255, 225, 79, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+  50% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
+@media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }
+
 </style>
 </head>
 <body>
@@ -6357,7 +6368,7 @@ class TitleScene extends Scene3D {
     this.skyFlash = Math.max(0, this.skyFlash - dt * 3);
     this.sky.material.uniforms.uGlow.value = 0.75 + this.skyFlash * 2.2;
     this.scene.fog.far = 560 + Math.sin(this.t * 0.13) * 60; // banks of haze drift through
-    this.scene.userData.post.exposure = 1.12 + 0.22 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
+    this.scene.userData.post.exposure = 1.12 + 0.1 * (this.life.flash || 0); // lightning lifts the picture a little for a moment (not a wash over the street)
     { // and the logo with it: its face takes the flash too (written only when it changes)
       const f = Math.round(Math.min(1, this.life.flash || 0) * 20) / 20;
       if (f !== this.logoFlash) { this.logoFlash = f; document.documentElement.style.setProperty("--bolt", f); }
@@ -6709,7 +6720,13 @@ class TitleLife {
       ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
       this.blades = new THREE.Mesh(ge, new THREE.MeshBasicMaterial({ map: RacerGame.signTex, fog: false, side: THREE.DoubleSide }));
       this.blades.frustumCulled = false;
-      s.add(this.blades); }
+      s.add(this.blades);
+      blades.forEach(([x, y, z, w, h, i]) => { // each lights the wall beside it
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.42), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        sp.position.set(x + (x < 0 ? -3.2 : 3.2), y + h / 2, z + 1.2);
+        sp.layers.set(1);
+        s.add(sp);
+      }); }
 
     // ---- 2. the avenue: lamp posts that slide past with the street, and strings of lanterns across it
     { const b = new RacerBatch();
@@ -6722,7 +6739,7 @@ class TitleLife {
         const m = new THREE.InstancedMesh(ge, this.hullMat, 13);
         m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(m);
-        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(0.95), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
+        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(1.3), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
         pools.frustumCulled = false; pools.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(pools);
         return { m, pools, sd: k ? 1 : -1 };
@@ -6791,7 +6808,7 @@ class TitleLife {
     this.ferries = [ferry(1.15), ferry(0.72)];
 
     // ---- 5. two helicopters with searchlights
-    const heli = (scale) => {
+    const heli = (scale, beamCol) => {
       const b = new RacerBatch(), grp = new THREE.Group(), NAVY = 0x27325e;
       put(b, -3.9, 0.35, 0, 5.2, 0.56, 0.5, NAVY); put(b, -6.3, 1.15, 0, 0.9, 2.0, 0.22, NAVY); put(b, -6.3, 0.45, 0, 1.4, 0.14, 1.7, NAVY); // boom, fin, stabiliser
       put(b, 0, 0, 0, 3.5, 1.7, 1.9, NAVY); put(b, -2.1, 0.2, 0, 1.3, 1.1, 1.3, NAVY); put(b, 2.0, -0.3, 0, 1.0, 1.1, 1.5, NAVY); // cabin, tail root, chin
@@ -6806,7 +6823,7 @@ class TitleLife {
       rotor.rotation.x = -Math.PI / 2; rotor.position.y = 1.5;
       const bl = new RacerBatch(); [0, Math.PI / 2].forEach((a) => bl.add(BOX, racerM(0, 1.52, 0, 9.8, 0.05, 0.3, 0, a), 0x15171c)); put(bl, 0, 1.3, 0, 0.3, 0.5, 0.3, 0x15171c);
       const bladesM = new THREE.Mesh(bl.build("color"), this.hullMat);
-      const beam = racerShaft(0xfff0d2, 0.3, 3.4, 80, 18); beam.position.set(2.2, -0.8, 0);
+      const beam = racerShaft(beamCol, 0.3, 3.4, 80, 18); beam.position.set(2.2, -0.8, 0);
       grp.add(body, rotor, bladesM, beam);
       grp.userData = { blades: bladesM, beam };
       grp.scale.setScalar(scale);
@@ -6814,7 +6831,7 @@ class TitleLife {
       s.add(grp);
       return grp;
     };
-    this.helis = [heli(0.9), heli(0.68)];
+    this.helis = [heli(0.9, 0x8fecff), heli(0.68, 0xff9fe6)]; // (one works a cyan light, the other a pink one)
 
     // ---- 6. a ribbon of drones, sixty lights following each other through the sky
     { const N = 34, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
@@ -6932,7 +6949,7 @@ class TitleLife {
     this.streams.material.uniforms.uTime.value = t;
     this.blades.material.color.setScalar(1.3 + 0.15 * Math.sin(t * 0.8));
     // lamp posts ride the street toward us and come round again at the far end
-    { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(9, 9, 1)), d = g.dist, L = 13 * 28;
+    { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(12, 12, 1)), d = g.dist, L = 13 * 28;
       for (const P of this.posts) {
         for (let i = 0; i < 13; i++) {
           const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L);
@@ -7826,7 +7843,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.4, threshold: 1.3, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
+    s.userData.post = { exposure: 1.06, bloom: 0.33, threshold: 1.38, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
     this.screenY = 2.3;
     this.texs = [];
@@ -8341,7 +8358,7 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.4; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    lv[G.bg] *= 0.34; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -8352,7 +8369,7 @@ class HubScene extends Scene3D {
     this.screenLight.color.copy(this.lightCol);
     this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
-    this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
+    this.topLight.intensity = 1.55 * lv[G.cab + this.sel]; // (the cabinet in front is a lit object, not an outline: its lamp is the brightest light in the hall)
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
     this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
     this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
@@ -8378,7 +8395,7 @@ class HubScene extends Scene3D {
     fu.uRoom.value = room;
     fu.uBg.value = lv[G.bg];
     this.cabs.forEach((c, i) => {
-      fu.uPoolCol.value[i].copy(c.color).multiplyScalar(0.5 * c.scr.power * lv[G.cab + i]);
+      fu.uPoolCol.value[i].copy(c.color).multiplyScalar(0.36 * c.scr.power * lv[G.cab + i]); // (a tighter wash: yellow and orange at full strength over the violet floor went olive)
       fu.uConeCol.value[i].copy(c.coneCol).multiplyScalar(0.3 * lv[G.cab + i]);
     });
     const wu = this.wallMat.uniforms;
@@ -8848,10 +8865,10 @@ function hubCabinetStyle(id, o) {
   } else if (id === "exam") {
     // an examination desk: a clock over it, laurels, an answer sheet and a pencil
     lit("cyl", cyl, at(0, 4.62, 0.2, H), [0.56, 0.1, 0.56], 0x1a1724, METAL);
-    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x9a94c4, { aux: [0, 0.6] }, 0.62); // (a lilac dial: paper white, it outshone the marquee under it)
+    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x241f48, { aux: [0, 0.6] }, 0.8); // (a dark dial with lit hands and ticks: paper white it outshone the marquee, lilac it was a flat grey plate)
     glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 1.6);
-    box(0.07, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), DARK); box(0.07, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), DARK);
-    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; box(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), DARK); }
+    gbox(0.06, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), 0xffffff, 1.5); gbox(0.06, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), 0xffffff, 1.5);
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; gbox(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), col, i % 3 ? 1.0 : 1.5); }
     box(0.1, 0.5, 0.1, at(0, 4.14, 0.15), 0x1a1724, METAL);
     [-1, 1].forEach((sx) => { for (let i = 0; i < 6; i++) { const a = 0.5 + i * 0.36; lit("ball", ball, at(sx * (0.36 + Math.sin(a) * 0.7), 4.12 + (1 - Math.cos(a)) * 0.56, 0.2, 0, 0, sx * -(a + 0.5)), [0.07, 0.21, 0.04], 0xe9b84a, { aux: [0.8, 0.3] }); } });
     K.quad(B.lit, 0.62, 0.42, onPanel(0.5, 0.52, 0.004).multiply(new THREE.Matrix4().makeRotationX(-H)), 0xf2efe6, { aux: [0, 0.7] });
@@ -13578,7 +13595,7 @@ function racerGroundMaterial(mirror, shared) {
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
-      uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
+      uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -14553,7 +14570,7 @@ class RacerGame extends QuizGame {
     this.tagMats = {};
     ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
       const tf = label.length > 1;
-      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerWashTexture(SLOT_COLORS[tf ? i - 4 : i]), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerWashTexture([SLOT_COLORS[0], SLOT_COLORS[1], "#f6f43a", "#ff5a1c"][tf ? i - 4 : i]), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
       this.owned.push(this.tagMats[label].map, this.tagMats[label]);
     });
     // the bar the badges hang from: a slim truss with a strip of light along it and a hover pod at each end
@@ -14583,7 +14600,7 @@ class RacerGame extends QuizGame {
     this.badgeMats = {};
     this.badgeGlowMats = {};
     this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
-    this.badgeBackGeo = new THREE.CircleGeometry(0.585, 30);
+    this.badgeBackGeo = new THREE.CircleGeometry(0.508, 30); // (a thin dark ring round the badge: wider, each board ran into the next)
     this.badgeBackMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0, depthWrite: false, fog: false });
     this.owned.push(this.badgeBackGeo, this.badgeBackMat);
     this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
@@ -14591,7 +14608,7 @@ class RacerGame extends QuizGame {
     this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
     ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
       const tf = label.length > 1, col = SLOT_COLORS[tf ? i - 4 : i];
-      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(0.94, 0.94, 0.94), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(1.1, 1.1, 1.1), transparent: true, opacity: 0, depthWrite: false, fog: false });
       this.badgeGlowMats[label] = new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(col, 1), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
       this.owned.push(this.badgeMats[label].map, this.badgeMats[label], this.badgeGlowMats[label]);
     });
@@ -15351,7 +15368,7 @@ class RacerCar {
       P(0.25, 0.14, 0.17, x, 1.485, -0.1, C.DARK, 0, 0, 0, 0.03, true);
       Pf(0.27, 0.02, 0.2, x, 1.565, -0.1, C.PLATE, 0, 0, 0, 0.012); // cowl
       lamp(2, 0.19, 0.088, 0.02, x, 1.485, -0.19, 0xdff4ff, 3.4); // the lamps face forward
-      lamp(3 + i, 0.12, 0.05, 0.02, x, 1.485, -0.01, 0xffa53d, 1.45); // amber markers face the driver behind (lit, not blazing: four of them side by side bloomed into one blob over the roof)
+      lamp(3 + i, 0.12, 0.05, 0.02, x, 1.485, -0.01, 0xffa53d, 1.15); // amber markers face the driver behind (lit, not blazing: four of them side by side bloomed into one blob over the roof)
     });
     // --- flanks: door armour in two layers, skirts, flares, flaps ------------
     [-1, 1].forEach((sx) => {
@@ -16102,7 +16119,7 @@ class RacerWorld {
       put(b, BOX, x, y / 2, z, 0.45, y, 0.45, 0x3a3f48, aZ);
       put(b, BOX, x, y + h / 2, z + 0.2, w + 0.5, h + 0.5, 0.25, 0x15171c, aZ);
       for (let i = 0; i < 4; i++) put(b, BOX, x - w / 2 + (i + 0.5) * (w / 4), y + h + 0.45, z - 0.5, 0.5, 0.12, 0.3, 0xfff0d2, aZ, 2, 2.2);
-      ads.push([x, y + h / 2, z + 0.05, w, h, sd * -0.0, aZ]);
+      ads.push([x, y + h / 2, z + 0.34, w, h, sd * -0.0, aZ]); // (on the front of its frame: at z + 0.05 it was behind the frame's face, and every billboard on a post was a blank black board)
     };
     const guard = (b, x, color = 0x9aa7b5) => { for (let i = 0; i < 16; i++) { const z = -i * 16, aZ = z - 16; put(b, BOX, x, 0.66, z - 8, 0.1, 0.14, 16, color, aZ); for (let k = 0; k < 4; k++) put(b, BOX, x, 0.36, z - 2 - k * 4, 0.13, 0.72, 0.13, 0x6a7480, aZ); } };
     this.sets = {};

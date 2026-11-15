@@ -821,7 +821,7 @@ class HubScene extends Scene3D {
     if (!this.has3D) return;
     const s = this.scene;
     s.background = new THREE.Color(0x07021a);
-    s.userData.post = { exposure: 1.06, bloom: 0.4, threshold: 1.3, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
+    s.userData.post = { exposure: 1.06, bloom: 0.33, threshold: 1.38, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
     this.screenY = 2.3;
     this.texs = [];
@@ -1336,7 +1336,7 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.4; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    lv[G.bg] *= 0.34; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -1347,7 +1347,7 @@ class HubScene extends Scene3D {
     this.screenLight.color.copy(this.lightCol);
     this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
-    this.topLight.intensity = 1.1 * lv[G.cab + this.sel];
+    this.topLight.intensity = 1.55 * lv[G.cab + this.sel]; // (the cabinet in front is a lit object, not an outline: its lamp is the brightest light in the hall)
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
     this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
     this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
@@ -1373,7 +1373,7 @@ class HubScene extends Scene3D {
     fu.uRoom.value = room;
     fu.uBg.value = lv[G.bg];
     this.cabs.forEach((c, i) => {
-      fu.uPoolCol.value[i].copy(c.color).multiplyScalar(0.5 * c.scr.power * lv[G.cab + i]);
+      fu.uPoolCol.value[i].copy(c.color).multiplyScalar(0.36 * c.scr.power * lv[G.cab + i]); // (a tighter wash: yellow and orange at full strength over the violet floor went olive)
       fu.uConeCol.value[i].copy(c.coneCol).multiplyScalar(0.3 * lv[G.cab + i]);
     });
     const wu = this.wallMat.uniforms;

@@ -240,7 +240,7 @@ class RacerCar {
       P(0.25, 0.14, 0.17, x, 1.485, -0.1, C.DARK, 0, 0, 0, 0.03, true);
       Pf(0.27, 0.02, 0.2, x, 1.565, -0.1, C.PLATE, 0, 0, 0, 0.012); // cowl
       lamp(2, 0.19, 0.088, 0.02, x, 1.485, -0.19, 0xdff4ff, 3.4); // the lamps face forward
-      lamp(3 + i, 0.12, 0.05, 0.02, x, 1.485, -0.01, 0xffa53d, 1.45); // amber markers face the driver behind (lit, not blazing: four of them side by side bloomed into one blob over the roof)
+      lamp(3 + i, 0.12, 0.05, 0.02, x, 1.485, -0.01, 0xffa53d, 1.15); // amber markers face the driver behind (lit, not blazing: four of them side by side bloomed into one blob over the roof)
     });
     // --- flanks: door armour in two layers, skirts, flares, flaps ------------
     [-1, 1].forEach((sx) => {

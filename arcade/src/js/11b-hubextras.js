@@ -84,10 +84,10 @@ function hubCabinetStyle(id, o) {
   } else if (id === "exam") {
     // an examination desk: a clock over it, laurels, an answer sheet and a pencil
     lit("cyl", cyl, at(0, 4.62, 0.2, H), [0.56, 0.1, 0.56], 0x1a1724, METAL);
-    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x9a94c4, { aux: [0, 0.6] }, 0.62); // (a lilac dial: paper white, it outshone the marquee under it)
+    lit("cyl", cyl, at(0, 4.62, 0.26, H), [0.49, 0.02, 0.49], 0x241f48, { aux: [0, 0.6] }, 0.8); // (a dark dial with lit hands and ticks: paper white it outshone the marquee, lilac it was a flat grey plate)
     glow("tor", tor, at(0, 4.62, 0.26), [0.53, 0.53, 0.26], col, 1.6);
-    box(0.07, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), DARK); box(0.07, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), DARK);
-    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; box(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), DARK); }
+    gbox(0.06, 0.34, 0.02, at(0.0, 4.74, 0.29, 0, 0, -0.5), 0xffffff, 1.5); gbox(0.06, 0.24, 0.02, at(0.08, 4.64, 0.29, 0, 0, -1.9), 0xffffff, 1.5);
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; gbox(i % 3 ? 0.025 : 0.045, 0.07, 0.01, at(Math.sin(a) * 0.42, 4.62 + Math.cos(a) * 0.42, 0.275, 0, 0, -a), col, i % 3 ? 1.0 : 1.5); }
     box(0.1, 0.5, 0.1, at(0, 4.14, 0.15), 0x1a1724, METAL);
     [-1, 1].forEach((sx) => { for (let i = 0; i < 6; i++) { const a = 0.5 + i * 0.36; lit("ball", ball, at(sx * (0.36 + Math.sin(a) * 0.7), 4.12 + (1 - Math.cos(a)) * 0.56, 0.2, 0, 0, sx * -(a + 0.5)), [0.07, 0.21, 0.04], 0xe9b84a, { aux: [0.8, 0.3] }); } });
     K.quad(B.lit, 0.62, 0.42, onPanel(0.5, 0.52, 0.004).multiply(new THREE.Matrix4().makeRotationX(-H)), 0xf2efe6, { aux: [0, 0.7] });

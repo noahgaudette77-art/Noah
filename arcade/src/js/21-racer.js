@@ -225,7 +225,7 @@ function racerGroundMaterial(mirror, shared) {
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
-      uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(SLOT_COLORS[2], 1) }, uSlot3: { value: neon(SLOT_COLORS[3], 1) },
+      uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -1200,7 +1200,7 @@ class RacerGame extends QuizGame {
     this.tagMats = {};
     ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
       const tf = label.length > 1;
-      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerWashTexture(SLOT_COLORS[tf ? i - 4 : i]), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+      this.tagMats[label] = new THREE.MeshBasicMaterial({ map: racerWashTexture([SLOT_COLORS[0], SLOT_COLORS[1], "#f6f43a", "#ff5a1c"][tf ? i - 4 : i]), color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
       this.owned.push(this.tagMats[label].map, this.tagMats[label]);
     });
     // the bar the badges hang from: a slim truss with a strip of light along it and a hover pod at each end
@@ -1230,7 +1230,7 @@ class RacerGame extends QuizGame {
     this.badgeMats = {};
     this.badgeGlowMats = {};
     this.badgeGeo = { 0: new THREE.PlaneGeometry(1, 1), 1: new THREE.PlaneGeometry(2, 1) };
-    this.badgeBackGeo = new THREE.CircleGeometry(0.585, 30);
+    this.badgeBackGeo = new THREE.CircleGeometry(0.508, 30); // (a thin dark ring round the badge: wider, each board ran into the next)
     this.badgeBackMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0, depthWrite: false, fog: false });
     this.owned.push(this.badgeBackGeo, this.badgeBackMat);
     this.badgeStemGeo = new THREE.PlaneGeometry(1, 1);
@@ -1238,7 +1238,7 @@ class RacerGame extends QuizGame {
     this.owned.push(this.badgeGeo[0], this.badgeGeo[1], this.badgeStemGeo);
     ["A", "B", "C", "D", "TRUE", "FALSE"].forEach((label, i) => {
       const tf = label.length > 1, col = SLOT_COLORS[tf ? i - 4 : i];
-      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(0.94, 0.94, 0.94), transparent: true, opacity: 0, depthWrite: false, fog: false });
+      this.badgeMats[label] = new THREE.MeshBasicMaterial({ map: answerBadgeTexture(label, col, tf), color: new THREE.Color(1.1, 1.1, 1.1), transparent: true, opacity: 0, depthWrite: false, fog: false });
       this.badgeGlowMats[label] = new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(col, 1), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
       this.owned.push(this.badgeMats[label].map, this.badgeMats[label], this.badgeGlowMats[label]);
     });

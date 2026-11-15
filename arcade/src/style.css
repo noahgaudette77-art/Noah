@@ -1726,3 +1726,14 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* ---- Arcade Hub, pass 8 ---- */
 /* the mission strip is a strip, not a second PLAY button: its glow is turned down */
 .mission { box-shadow: 0 3px 0 #000, 0 0 12px -6px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+
+/* ---- Nest Egg Run, closing fixes after its fourth independent review ---- */
+.scr-racer .barrow > b { font-size: 9px; }
+.scr-racer .hud .combo { text-shadow: 0 1px 0 #000, 0 0 4px var(--magenta); }
+
+/* ---- Title, closing fixes after its fourth independent review ---- */
+/* the button is the brightest thing in the lower half: a wider halo, and its light lies on the shade under it */
+.insert-coin { animation-name: coin-pulse-y2; }
+@keyframes coin-pulse-y2 { 0%, 100% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 22px -2px rgba(255, 225, 79, 0.62), 0 26px 30px -14px rgba(255, 225, 79, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+  50% { box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
+@media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }

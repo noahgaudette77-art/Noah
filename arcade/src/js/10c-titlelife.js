@@ -49,7 +49,13 @@ class TitleLife {
       ge.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); ge.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
       this.blades = new THREE.Mesh(ge, new THREE.MeshBasicMaterial({ map: RacerGame.signTex, fog: false, side: THREE.DoubleSide }));
       this.blades.frustumCulled = false;
-      s.add(this.blades); }
+      s.add(this.blades);
+      blades.forEach(([x, y, z, w, h, i]) => { // each lights the wall beside it
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.42), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        sp.position.set(x + (x < 0 ? -3.2 : 3.2), y + h / 2, z + 1.2);
+        sp.layers.set(1);
+        s.add(sp);
+      }); }
 
     // ---- 2. the avenue: lamp posts that slide past with the street, and strings of lanterns across it
     { const b = new RacerBatch();
@@ -62,7 +68,7 @@ class TitleLife {
         const m = new THREE.InstancedMesh(ge, this.hullMat, 13);
         m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(m);
-        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(0.95), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
+        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(1.3), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
         pools.frustumCulled = false; pools.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(pools);
         return { m, pools, sd: k ? 1 : -1 };
@@ -131,7 +137,7 @@ class TitleLife {
     this.ferries = [ferry(1.15), ferry(0.72)];
 
     // ---- 5. two helicopters with searchlights
-    const heli = (scale) => {
+    const heli = (scale, beamCol) => {
       const b = new RacerBatch(), grp = new THREE.Group(), NAVY = 0x27325e;
       put(b, -3.9, 0.35, 0, 5.2, 0.56, 0.5, NAVY); put(b, -6.3, 1.15, 0, 0.9, 2.0, 0.22, NAVY); put(b, -6.3, 0.45, 0, 1.4, 0.14, 1.7, NAVY); // boom, fin, stabiliser
       put(b, 0, 0, 0, 3.5, 1.7, 1.9, NAVY); put(b, -2.1, 0.2, 0, 1.3, 1.1, 1.3, NAVY); put(b, 2.0, -0.3, 0, 1.0, 1.1, 1.5, NAVY); // cabin, tail root, chin
@@ -146,7 +152,7 @@ class TitleLife {
       rotor.rotation.x = -Math.PI / 2; rotor.position.y = 1.5;
       const bl = new RacerBatch(); [0, Math.PI / 2].forEach((a) => bl.add(BOX, racerM(0, 1.52, 0, 9.8, 0.05, 0.3, 0, a), 0x15171c)); put(bl, 0, 1.3, 0, 0.3, 0.5, 0.3, 0x15171c);
       const bladesM = new THREE.Mesh(bl.build("color"), this.hullMat);
-      const beam = racerShaft(0xfff0d2, 0.3, 3.4, 80, 18); beam.position.set(2.2, -0.8, 0);
+      const beam = racerShaft(beamCol, 0.3, 3.4, 80, 18); beam.position.set(2.2, -0.8, 0);
       grp.add(body, rotor, bladesM, beam);
       grp.userData = { blades: bladesM, beam };
       grp.scale.setScalar(scale);
@@ -154,7 +160,7 @@ class TitleLife {
       s.add(grp);
       return grp;
     };
-    this.helis = [heli(0.9), heli(0.68)];
+    this.helis = [heli(0.9, 0x8fecff), heli(0.68, 0xff9fe6)]; // (one works a cyan light, the other a pink one)
 
     // ---- 6. a ribbon of drones, sixty lights following each other through the sky
     { const N = 34, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
@@ -272,7 +278,7 @@ class TitleLife {
     this.streams.material.uniforms.uTime.value = t;
     this.blades.material.color.setScalar(1.3 + 0.15 * Math.sin(t * 0.8));
     // lamp posts ride the street toward us and come round again at the far end
-    { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(9, 9, 1)), d = g.dist, L = 13 * 28;
+    { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(12, 12, 1)), d = g.dist, L = 13 * 28;
       for (const P of this.posts) {
         for (let i = 0; i < 13; i++) {
           const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L);

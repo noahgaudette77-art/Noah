@@ -2155,3 +2155,80 @@ attack bar fills in segments like the health bar. Not done: the salesman's case 
 case hangs from his hand along his forearm, so raising it pointed it at the lens end-on: he keeps his pose, with a
 larger hand and case); the right answer's badge keeping its own colour (green is "right" everywhere in the arcade).
 
+### Nest Egg Run, passes 7 and 8 (its last)
+
+**Pass 7.** The answer badges hang from one bar across the road (a truss on two pods with clamps and hangers), in
+the wet road's mirror; under each badge its lane's colour lies on the road as a wash of light, not a lettered tile.
+The boost is hard speed lines and a short pulse, not a smear; a crash tears the picture for a moment. Lorries have
+roofs, rear doors and a livery band; the car's paint is wetter (clearcoat, more of the street in it); the egg is lit
+from inside with a bright edge. In the HUD the labels are larger, STREAK is a tab on the question panel, and a chosen
+answer has a thin double border in place of a fat white ring.
+
+Third independent review: **3.5, 3.5, 3, 4, 3.5, 3.5, 4 (3.6)**; the one before was 3.7.
+
+**Pass 8, from that review.** The wet road mirrors what is lit right up to the car (it was a mirror only far off,
+where the angle is shallow: signs, lamps and tail-lights now lie in it near the car; the dark sky does not). Each
+lane's colour runs from its badge to the car's nose, brightest in the lane taken. The lane dividers are pale lilac
+(magenta dashes and cyan edges were answers B and A in every lane). The badges are a fifth larger, each on a dark
+board. Blacks hold: less bloom, a higher threshold, a touch more contrast. The desert's arch is an arch (its stones
+were set end-on and stood round the sun like rays). A poster's ground is lit indigo, not black. The question's topic
+line is in the reading face, so it wraps less.
+
+Fourth independent review: **3.5, 3.5, 3, 3.5, 3.5, 3.5, 4 (3.5)**. Closing fixes after it: the board behind a
+badge is the badge's own size, a thin dark ring (wider, each ran into the next), and the badge is a lit sign that
+blooms a hair; the light lanes C and D throw on the road is greener and redder than their badges (after the grade
+the two were one amber wedge); the roof's amber markers are lower; the HUD's labels are a size up and the rate's
+glow is halved. **A fault found:** every billboard on a post was a blank black board, in every district: its poster
+was set behind the face of its own frame. It hangs on the front now. Not done: a reframed crash with the whole car
+above the panel (the panel's height is the explanation's length), puddles broken by roughness, ships and water for
+the harbour, strata on the tunnel's cliff, square sparks (the same particles are the steam, which must stay soft).
+
+### Title, passes 7 and 8 (its last)
+
+**Pass 7.** The helicopters are built of boxes like everything else in the street (one had a smooth hull); one holds
+station under the wordmark, working its light. INSERT COIN is the one yellow button on the page. Lamp pools on the
+road, heavier bridge stays that stop short of the sun, searchlights with shape, and the lightning lifts the picture a
+little, not into a wash.
+
+Third independent review: **4, 3.5, 3.5, 4, 4, 4, 4 (3.9)**, the same as the one before.
+
+**Pass 8, from that review.** The sun's bands show above the bridge (they began below its middle, behind the city: what
+showed was a plain disc). The bolt strikes in the open sky between the towers, in front of the sun, four pixels wide
+and forked (it struck behind the towers, a hair wide, and its forks were never drawn). The street has a middle and
+edges: pale dashes between its lanes that slide past with the lamps, a line of cyan along each kerb, and a grid at 60%.
+Sky traffic keeps to two far lanes in its lanes' own colours (red streaks overhead read as embers and ran behind the
+wordmark); the helicopter that crosses does it under the wordmark; blade signs hang on the further towers only (the
+nearest stood behind the wordmark, cut by its letters). Signs light the walls they hang on. The wordmark has a dark
+keyline round every letter and ARCADE starts pale cyan. Far windows are their average light, not a sparkle of crosses,
+and the picture is sharpened less. The tip's panel is cut at the corners like the plates on every other page; the
+prompt stands clear of the button's lip; the totals are a quiet line.
+
+Fourth independent review: **4, 3.5, 3.5, 4, 4, 4, 4 (3.9)**, the same again. Closing fixes after it: the towers'
+blade signs light the wall beside them; a lamp's pool on the road is wider and stronger; one helicopter works a
+cyan light and the other a pink one (warm white, they were grey columns); lightning lifts the sky and the roofs and
+barely the picture (it flattened everything to lavender); INSERT COIN has a wider halo and its light lies on the
+shade under it. Not done: shopfronts at street level, a train on the bridge, raised kerbs, a beacon at the vanishing
+point, violet lorries.
+
+### Arcade Hub, passes 7 and 8 (its last)
+
+**Pass 7.** What stands on each cabinet is larger and clearer (a dish with a lit rim, a wing with a line of light,
+horns with burning tips, a clock, laurels); a cool light from behind gives it a lit top and an edge; the tube has an
+edge shadow and a glare; the wall's signs are turned down; the card's ground is indigo.
+
+Fourth independent review: **4, 3.5, 3, 4, 4, 4, 4 (3.8)**, the same as the one before. It also said, at low
+confidence, that the small robot on the floor (a dome on a drum) read as a well-known film droid.
+
+**Pass 8, from that review.** The floor robot is redesigned: a sled with hazard bars, a mast, and a small tube
+monitor for a face with one wide eye; nothing round is left on it but its brushes. The cabinet in front is sharp
+from its topper to its base and the hall behind goes soft sooner; less bloom; the room and its signs fall back
+further; the vignette is eased so the neighbours' marquees show at the edges. Toppers are lit less than the marquee
+under them (the clock's dial is lilac, not paper white). PRESS START on a cabinet's screen has a full plate under it.
+The guide's record shows its figure as the value, like every other card; the mission strip's glow is turned down.
+
+Fifth independent review: **4, 3.5, 3, 4, 4, 4, 4 (3.8)**, the same again; it named no likeness. Closing fixes
+after it: less bloom still; the lamp over the cabinet in front is the brightest light in the hall (the cabinet read
+as an outline); the room falls back a little more; the wash a cabinet throws on the floor is tighter (yellow and
+orange at full strength over violet went olive); the clock is a dark dial with lit hands and ticks. Not done: a
+different marquee backdrop and lower panel for each cabinet, glass on the tubes, the wall's bands lifted above the
+toppers, the neighbours shown a fifth of the way in.
