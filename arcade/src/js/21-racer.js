@@ -226,6 +226,7 @@ function racerGroundMaterial(mirror, shared) {
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
+      uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -237,6 +238,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
+      uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       float rh(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }
       // value noise that tiles along the road, so the scroll can wrap without a seam
@@ -286,6 +288,7 @@ function racerGroundMaterial(mirror, shared) {
         dash = mix(dash, 0.5, smoothstep(0.1, 0.35, dw));
         float dline = (1.0 - smoothstep(0.055, 0.055 + fx * 1.5, abs(lx))) * step(ax, 3.6) * dash;
         dline *= 1.0 - uPad.z * (1.0 - smoothstep(uPad.y - 0.2, uPad.y + 0.2, abs(z - uPad.x))); // (a wide answer tile lies here: the dashes stop under it)
+        dline *= (0.62 + 0.38 * rill) * (1.0 - 0.6 * puddle); // (paint on wet asphalt: worn where the water runs, gone under a puddle's mirror)
         float ed = abs(ax - 4.78);
         float eline = 1.0 - smoothstep(0.07, 0.07 + fx * 1.5, ed);
         vec3 asphalt = uAsphalt * (0.8 + 0.45 * wet) * (1.0 - 0.45 * puddle);
@@ -315,6 +318,12 @@ function racerGroundMaterial(mirror, shared) {
         float dzl = mod(z - uScroll + ${RACER_P / 2}.0, ${RACER_P}.0) - ${RACER_P / 2}.0;
         float dzr = mod(z - uScroll, ${RACER_P}.0) - ${RACER_P / 2}.0;
         vec3 lt = (uLampL * pool(vec2(x + 4.75, dzl), vec2(2.6, 3.8)) + uLampR * pool(vec2(x - 4.75, dzr), vec2(2.6, 3.8))) * uLampI;
+        { // under each lamp a hot core, and its image drawn out down the wet road toward the camera
+          float kl = (cameraPosition.x + 4.75) / max(cameraPosition.z - (z - dzl), 6.0), kr = (cameraPosition.x - 4.75) / max(cameraPosition.z - (z - dzr), 6.0);
+          float cl = pool(vec2(x + 4.75, dzl), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x + 4.75 - kl * dzl, dzl - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
+          float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
+          lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
+        }
         float ah = ${racerF(RACER_CAR_Z - 2.2)} - z; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
         float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
@@ -329,6 +338,19 @@ function racerGroundMaterial(mirror, shared) {
           else lt += gk * (uSlot0 * exp(-pow((x + 2.5) * 0.55, 2.0)) + uSlot1 * exp(-pow((x - 2.5) * 0.55, 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
+        float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
+        if (sk > 0.002) {
+          // the egg sun lies down the far road: rippled bars of its own light (in the distance only: the lanes by the
+          // car stay clean for the answers' colours)
+          float dzs = max(cameraPosition.z - z, 0.5);
+          float u = log2(dzs) * 6.0 - uTime * 0.16;
+          float id = floor(u), fb = fract(u), fu = fwidth(u);
+          float q1 = fract(sin(id * 12.9898) * 43758.5453), q2 = fract(sin(id * 78.233) * 12543.123);
+          float hw2 = min(0.05 * dzs, 4.2) * (0.5 + 0.5 * q1);
+          float bar = smoothstep(0.0, 0.06 + fu, fb) * (1.0 - smoothstep(0.52, 0.58 + fu, fb));
+          bar = mix(bar, 0.5, smoothstep(0.25, 0.7, fu)) * (1.0 - smoothstep(hw2 - fx * 1.5, hw2 + fx * 1.5, abs(x - (q2 - 0.5) * hw2 * 0.6)));
+          col += mix(uSunB, uSunA, 0.6) * bar * sk;
+        }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -397,10 +419,15 @@ function racerCityMaterial(shared, P) {
             float pier = storey * step(fract(g.x / 3.0 + vSeed), 0.1);
             col *= 1.0 + 0.2 * pier * fine;
             float win = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.8) * storey * (1.0 - pier);
-            float on = step(r, 0.2 + 0.32 * uCity); // more windows light as night falls
+            // lit in clusters (blocks four bays wide, three floors high): four in ten are dark, the rest busier, and each
+            // has its own light: amber, cyan or magenta
+            vec2 blk = floor(cell / vec2(4.0, 3.0));
+            float b1 = h21(blk + vSeed * 23.0 + 7.7), b2 = h21(blk * 1.3 + vSeed * 31.0 + 2.9);
+            float on = step(r, (0.2 + 0.32 * uCity) * (b1 < 0.4 ? 0.0 : 1.7)); // more windows light as night falls
             float r2 = h21(cell * 1.7 + vSeed * 5.0 + 3.1);
             float hot = 0.28 + 0.7 * r2 * r2 + 1.0 * step(0.9, r2); // most are low, a few blaze
-            vec3 wc = r < 0.07 ? vec3(0.3, 0.95, 1.0) : (r < 0.12 ? vec3(1.0, 0.3, 0.8) : vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2)));
+            vec3 amber = vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2));
+            vec3 wc = r2 > 0.84 ? amber : (b2 < 0.5 ? amber : (b2 < 0.77 ? vec3(0.3, 0.95, 1.0) : vec3(1.0, 0.3, 0.8)));
             float bars = max(step(abs(f.x - 0.5), 0.028), step(abs(f.y - 0.535), 0.022)) * fine; // glazing bars
             float blind = step(0.5, r2) * step(0.5 + 0.22 * r, f.y) * fine;                            // a blind part-way down
             col = mix(col, col * 0.45, win * (1.0 - on));
@@ -1576,6 +1603,7 @@ class RacerGame extends QuizGame {
     g.uGrid.value.copy(sky.grid).multiplyScalar(1.5);
     g.uBase.value.copy(sky.bg).multiplyScalar(0.18);
     g.uAsphalt.value.copy(sky.bg).multiplyScalar(0.28);
+    g.uSunA.value.copy(sky.sunTop); g.uSunB.value.copy(sky.sunBot); g.uSunK.value = 0.6 * sky.sunI * (0.35 + 0.65 * Math.min(1, sky.wet || 0));
     this.shared.uLampI.value = sky.lamps;
     const pu = this.props.material.uniforms;
     pu.uKey.value.copy(sky.light).multiplyScalar(0.9);

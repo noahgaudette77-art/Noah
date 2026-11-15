@@ -63,7 +63,7 @@ class TitleCity {
     s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
     spills.forEach(([x, y, z, w, h, c]) => { // a sign's light on the wall beside it
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.95), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
       m.position.set(x, y, z);
       m.layers.set(1);
       s.add(m);
@@ -137,7 +137,7 @@ class TitleCity {
       s.add(this.traffic); }
 
     // ---- searchlights turning over the skyline
-    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.6, 4, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
+    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.6, 4, 240, 24); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
 
     // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
     const U = { uKey: { value: new THREE.Color(0.62, 0.42, 0.72) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.3, 0.19, 0.48) } };
@@ -219,7 +219,7 @@ class TitleCity {
     // windows twinkle and signs flicker, slowly: nothing here changes faster than 3 Hz
     this.blink[0].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.9));
     this.blink[1].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.6 + 2));
-    this.signs.forEach((m, i) => { const f = Math.sin(t * (1.1 + i * 0.7) + i * 2.1), dip = Math.sin(t * (5.3 + i) + i) > 0.93 ? 0.45 : 1; m.material.color.setScalar((1.25 + 0.2 * f) * dip); });
+    this.signs.forEach((m, i) => { const f = Math.sin(t * (1.1 + i * 0.7) + i * 2.1), dip = Math.sin(t * (5.3 + i) + i) > 0.93 ? 0.45 : 1; m.material.color.setScalar((1.75 + 0.2 * f) * dip); });
     this.lights.forEach((l, i) => { l.rotation.set(-0.25 + Math.sin(t * 0.21 + i * 2) * 0.2, 0, Math.sin(t * 0.33 + i * 1.9) * 0.75); l.material.uniforms.uI.value = GFX.opt.beams ? 0.3 : 0; });
   }
 }

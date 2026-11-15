@@ -121,8 +121,8 @@ function blasterShotMaterial() {
       void main(){
         vec3 v = normalize(vV);
         float x = clamp(abs(dot(normalize(vN), v)) / max(length(cross(v, normalize(vAx))), 0.03), 0.0, 1.0); // 1 along its middle, 0 at its edges, from any angle
-        float core = smoothstep(0.84, 0.93, x);
-        gl_FragColor = vec4(mix(uColor * (0.45 + 0.55 * x), vec3(1.7), core) * uFade, 1.0);
+        float core = smoothstep(0.58, 0.64, x); // a hard white heart, a thin sheath of the answer's colour
+        gl_FragColor = vec4(mix(uColor * (0.55 + 0.45 * x), vec3(1.7), core) * uFade, 1.0);
       }`,
   });
 }
@@ -326,10 +326,10 @@ class BlasterGame extends QuizGame {
     this.boomT = 1;
     this.boomSize = size;
     this.flashSprite.position.copy(pos);
-    this.flashSprite.material.color.copy(neon(color, 2.4));
+    this.flashSprite.material.color.copy(neon(color, this.boomFast ? 1.15 : 2.4)); // (round the demon the flash is small and coloured: it does not bleach the demon)
     this.boomLight.position.copy(pos);
     this.boomLight.color.set(color);
-    this.space.flash(pos, color); // its light on the dust and on whatever is near
+    this.space.flash(pos, color, this.boomFast ? 0.45 : 1); // its light on the dust and on whatever is near
   }
 
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
@@ -442,13 +442,25 @@ class BlasterGame extends QuizGame {
       const halo = new THREE.Sprite(M.halo);
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
-      if (this.enemy) { // a dark plate behind it: the planet, the nebula and the demon's wings do not show through its collar
-        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.6, 28)), this.dronePlateMat || (this.dronePlateMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0.88, depthWrite: false })));
+      if (this.enemy) { // dark glass behind it: nothing shows through its collar or its ring. (It writes depth and is drawn before the demon's ring of light, so that ring passes behind the station.)
+        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)), this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
+          transparent: true, depthWrite: true,
+          vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+          fragmentShader: `varying vec2 vP;
+            void main(){
+              float r = length(vP) / 1.74;
+              float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
+              vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
+              gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
+            }`,
+        })));
         plate.position.z = -0.62;
         frame.add(plate);
+        g.userData.plate = plate;
       }
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.setScalar(this.enemy ? 1.36 : 1.12); // (round the demon the letter is the drone's face, inside its collar: the armour round it shows)
+      label.scale.setScalar(this.enemy ? 2.04 : 1.12); // (round the demon the letter is the drone's face: it fills the collar)
+      g.userData.label = label; g.userData.halo = halo;
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -483,7 +495,7 @@ class BlasterGame extends QuizGame {
     const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
     const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
     if (opens) Sound.sfx("laser", this.panAt);
-    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i]);
+    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
     if (this.enemy && !right) this.enemy.attack();
     if (at) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
@@ -494,17 +506,17 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, this.enemy ? 0.03 + 0.036 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.7 : 2.6));
+        aimBeam(fx.beam, from, at, this.enemy ? 0.02 + 0.024 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.5 : 2.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
         fx.flash.position.copy(from);
         fx.flash.scale.setScalar((this.enemy ? 0.8 : 1.3) * this.shipScale);
         fx.flash.visible = true;
-        this.tw.add(0.3, (k) => {
+        this.tw.add(this.enemy ? 0.56 : 0.3, (k) => { // (round the demon the two beams hold until the lance has gone in, then let go: look only)
           if (fx.tok !== tok) return;
-          fx.beam.material.uniforms.uFade.value = 1 - k;
+          fx.beam.material.uniforms.uFade.value = this.enemy ? 1 - clamp((k - 0.62) / 0.38, 0, 1) : 1 - k;
           fx.flash.material.opacity = 1 - k;
           fx.flash.scale.setScalar(((this.enemy ? 0.8 : 1.3) + k * 0.8) * this.shipScale);
         }, () => { if (fx.tok === tok) { fx.beam.visible = false; fx.flash.visible = false; } });
@@ -536,7 +548,7 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
-        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 2.2, c.g * 2.2, c.b * 2.2], 0.085); this.explode(t, SLOT_COLORS[i], 0.45); }
+        if (t) { this.space.fx.lance(t.position, this.enemy.aimPoint(new THREE.Vector3()), 0.34, [c.r * 2.1 + 0.06, c.g * 2.1 + 0.06, c.b * 2.1 + 0.06], 0.5 * t.scale.x); this.explode(t, SLOT_COLORS[i], 0.45); }
         this.enemy.hit(SLOT_COLORS[i]);
       } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
@@ -622,11 +634,12 @@ class BlasterGame extends QuizGame {
     // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
     { const tight = !!this.enemy && !full, sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
       // (round the demon a drone's flash is small and gone in a few frames: the demon is seen taking the hit, not whited out)
-      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.34 : 0.7), sz * (tight ? 1.2 : 3), tight ? 0.12 : 0.2);
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.24 : 0.7), sz * (tight ? 0.8 : 3), tight ? 0.1 : 0.2);
       this.boomFast = tight;
-      for (let i = 0; i < (tight ? 4 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
+      for (let i = 0; i < (tight ? 2 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar((tight ? 1.4 : 2.4) * sz), sz * (tight ? 0.3 : 0.45), sz * (tight ? 1.0 : 1.6), rand(0.32, 0.6), 0.4);
       for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
-      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
+      // sparks: darts in the answer's colour, each with a point and a tail (they were white bars)
+      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.dart(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.26, 0.5), [c.r * 2.3 + 0.1, c.g * 2.3 + 0.1, c.b * 2.3 + 0.1], rand(1.2, 1.9) * df * this.ts, rand(0.2, 0.3) * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(pos, color, (7 * this.ts + 3) * df * flash * (this.enemy && !full ? 0.38 : 1));
@@ -732,7 +745,7 @@ class BlasterGame extends QuizGame {
       this.flashSprite.visible = k > 0;
       this.flashSprite.scale.setScalar(this.boomSize * (1.4 - k * 0.6));
       this.flashSprite.material.opacity = k * k;
-      this.boomLight.intensity = k * k * 8;
+      this.boomLight.intensity = k * k * (this.boomFast ? 2.2 : 8);
     }
     this.shards.update(dt);
     this.blastPuffs.update(dt, this.camera, this.t);
@@ -747,9 +760,17 @@ class BlasterGame extends QuizGame {
       const u = t.userData;
       if (this.enemy) {
         // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
-        const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
+        // (well in front of it: its wing tips and its ring pass behind the stations, never across them)
+        const dz = Math.max(this.enemy.root.position.z + 6.2, -DEMON_FAR + 5), b = this.bandSize(-dz);
         u.s = clamp(Math.min(b.h * 0.06, b.w * 0.054), 0.2, 1.3); // (a fifth smaller, and out in the corners: clear of its wings and claws)
         t.position.set(u.sx * b.w * 0.37 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
+        // the letter, the glass and the halo sit on the line of sight through the station's middle (out in the corners
+        // of the view, a letter set straight in front of its drone stood off-centre in it)
+        const ld = this._ld || (this._ld = new THREE.Vector3());
+        ld.copy(this.camera.position).sub(t.position).normalize();
+        u.label.position.copy(ld).multiplyScalar(1.35);
+        u.halo.position.copy(ld).multiplyScalar(-0.9);
+        if (u.plate) u.plate.position.copy(ld).multiplyScalar(-0.62);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);

@@ -3987,6 +3987,7 @@ function makePipeline(renderer, hdr) {
   const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
   white.needsUpdate = true;
   const W = [0.26, 0.2, 0.15, 0.11, 0.08, 0.06, 0.05]; // each bloom level's share: tight glow first, then the haze
+  const TIGHT = [0, 0, 0.3, 0.6, 0.82, 0.92, 0.96]; // how much of each level a scene's bloomTight takes away
   let sw = 2, sh = 2;
   return {
     hdr,
@@ -4091,7 +4092,7 @@ function makePipeline(renderer, hdr) {
         const b = bright.uniforms;
         b.tDiffuse.value = litRT.texture;
         b.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
-        b.uKnee.value = 0.45;
+        b.uKnee.value = p.knee !== undefined ? p.knee : 0.45;
         b.uPx.value.set(1 / sw, 1 / sh);
         pass(bright, down[0].t);
         for (let i = 1; i < LEVELS; i++) {
@@ -4105,8 +4106,9 @@ function makePipeline(renderer, hdr) {
             const u = ups.uniforms;
             u.tLow.value = low; u.tHere.value = down[i].t.texture;
             u.uPx.value.set(1 / lw, 1 / lh);
-            u.uW.value = W[i];
-            u.uLowK.value = i === LEVELS - 2 ? W[LEVELS - 1] : 1; // (the deepest level arrives unweighted)
+            const tk = p.bloomTight || 0; // (0: the full chain; 1: the wide levels almost off, so the glow is about half as wide)
+            u.uW.value = W[i] * (1 - tk * TIGHT[i]);
+            u.uLowK.value = i === LEVELS - 2 ? W[LEVELS - 1] * (1 - tk * TIGHT[LEVELS - 1]) : 1; // (the deepest level arrives unweighted)
             pass(ups, up[i]);
             low = up[i].texture; lw = down[i].w; lh = down[i].h;
           }
@@ -5164,13 +5166,19 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null } = {}) {
+  // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
+  // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
+  // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
   const uniforms = Object.assign(fogUniforms(), {
     uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
     tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
     uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
     uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha }, uPulse: { value: pulse },
     uFall: { value: fall ? new THREE.Vector2(fall[0], fall[1]) : new THREE.Vector2(0, 0) }, // [z where it starts to thin, how fast]
+    uRoad: { value: new THREE.Vector2(road, roadGrid) },
+    uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
+    uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
   });
   const mat = new THREE.ShaderMaterial({
     uniforms, extensions: { derivatives: true },
@@ -5179,18 +5187,51 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
       uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse; uniform vec2 uFall;
+      uniform vec2 uRoad; uniform vec4 uSunCol; uniform vec3 uSunA; uniform vec3 uSunB;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){
         vec3 col = uBase;
+        float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;
         if (uReflect > 0.0) {
           vec2 ruv = vRefl.xy / vRefl.w;
           vec2 rip = vec2(sin(vWorld.z * 2.3 + uTime * 0.9) * 0.6 + sin(vWorld.x * 1.1 - uTime * 0.5) * 0.4, cos(vWorld.x * 1.7 + vWorld.z * 0.4 + uTime * 0.6)) * uRipple;
-          vec3 r = texture2D(tReflect, ruv + rip).rgb * 0.36;
-          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak)).rgb * 0.22;
-          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
-          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
-          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          vec3 r;
+          if (onRoad > 0.5) {
+            // wet asphalt: every light above it lies down the road as a long streak (nine taps, each pixel's set shifted a
+            // little so the streak is a streak and not nine copies), over a clear mirror image
+            float st = uStreak * 1.15, jit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5;
+            r = texture2D(tReflect, ruv + rip).rgb * 0.3;
+            for (int i = 1; i <= 4; i++) {
+              float o = (float(i) + jit * 0.9) * st, wgt = 0.21 - 0.037 * float(i);
+              r += (texture2D(tReflect, ruv + rip + vec2(0.0, o)).rgb + texture2D(tReflect, ruv + rip - vec2(0.0, o)).rgb) * wgt;
+            }
+            r *= 1.22;
+          } else {
+            r = texture2D(tReflect, ruv + rip).rgb * 0.36;
+            r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak)).rgb * 0.22;
+            r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
+            r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+            r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          }
           col += r * uReflect * mix(1.0, exp(-max(vWorld.z - uFall.x, 0.0) * uFall.y), step(1e-6, uFall.y));
+        }
+        if (uSunCol.y > 0.0) {
+          // the striped sun, lying down the road: bars as wide as the sun where they start, each its own width and a
+          // little off the line (water is never still), gold nearest us and rose under the skyline, drifting slowly
+          float dz = max(cameraPosition.z - vWorld.z, 0.5);
+          float u = log2(dz) * uSunCol.w - uTime * 0.16;
+          float id = floor(u), fb = fract(u);
+          float h1 = fract(sin(id * 12.9898) * 43758.5453), h2 = fract(sin(id * 78.233) * 12543.123);
+          float hw = min(uSunCol.x * dz, uRoad.x > 0.0 ? uRoad.x - 0.6 : 1e5) * (0.5 + 0.5 * h1);
+          float cx = (h2 - 0.5) * hw * 0.6 + sin(uTime * 0.8 + id * 1.7) * hw * 0.1;
+          float ax = abs(vWorld.x - cx), aw = fwidth(vWorld.x) * 1.5, fu = fwidth(u);
+          float e = clamp(ax / max(hw, 1e-3), 0.0, 1.0);
+          float th = 0.26 * sqrt(1.0 - e * e) * (0.65 + 0.35 * h2);        // each bar a lens: thick in its middle, pointed at its ends
+          float wv = sin(vWorld.x * 1.7 + id * 2.4 + uTime * 0.9) * 0.035; // and never quite level
+          float bar = (1.0 - smoothstep(th - fu, th + fu, abs(fb - 0.5 + wv))) * step(e, 0.999);
+          bar = mix(bar, 0.4 * (1.0 - smoothstep(hw - aw, hw + aw, ax)), smoothstep(0.25, 0.7, fu));
+          float along = clamp((vWorld.z - uSunCol.z) / max(cameraPosition.z - uSunCol.z, 1.0), 0.0, 1.0); // 0 under the sun, 1 at our feet
+          col += mix(uSunB, uSunA, smoothstep(0.55, 0.98, along)) * bar * uSunCol.y * mix(1.0, 0.5, smoothstep(0.9, 1.0, along));
         }
         vec2 g; vec2 fw;
         if (uPolar > 0.5) {
@@ -5208,12 +5249,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         float ln = 1.0 - min(min(aa.x, aa.y), 1.0);
         float halo = exp(-min(aa.x, aa.y) * 0.45);
         float fade = 1.0 - smoothstep(0.18, 0.55, max(fw.x, fw.y));
-        col += uLine * (ln + halo * uGlow * 0.2) * fade * uGrid;
+        float gk = uGrid * mix(1.0, uRoad.y, onRoad); // (on the carriageway the grid steps back: the wet road is a mirror first)
+        col += uLine * (ln + halo * uGlow * 0.2) * fade * gk;
         if (uPulse > 0.0) {
           // packets of light running along the lines: toward us down the long ones, sideways on the cross ones
           float pz = pow(0.5 + 0.5 * sin(g.y * 0.55 + uTime * 2.3 + floor(g.x - 0.5) * 1.7), 14.0);
           float px = pow(0.5 + 0.5 * sin(g.x * 0.7 - uTime * 1.6 + floor(g.y - 0.5) * 2.3), 18.0);
-          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2;
+          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2 * mix(1.0, uRoad.y, onRoad);
         }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
@@ -5535,7 +5577,7 @@ function makeShootingStar() {
 // unlit glass mirroring the sky, light from the street climbing the lower storeys.
 // Bright boxes (trim, lamps, signs) pass through as light. Where the windows would be
 // smaller than a pixel or two they melt into an even glow instead of shimmering.
-function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
+function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uWin: { value: neon(win, 2.3) }, uCool: { value: neon(cool, 1.8) }, uHot: { value: neon(hot, 1.9) },
       uSky: { value: new THREE.Color(sky) }, uSkyB: { value: new THREE.Color(skyB) }, uZen: { value: new THREE.Color(zenith) }, uStreet: { value: neon(street, 0.4) }, uLit: { value: lit }, uCell: { value: new THREE.Vector2(cell[0], cell[1]) }, uK: { value: k },
@@ -5556,22 +5598,32 @@ function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, s
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
           col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
           if (abs(n.y) < 0.5) {
-            float along = abs(n.z) > abs(n.x) ? vW.x : vW.z;
-            vec2 q = vec2(along / uCell.x, vW.y / uCell.y), id = floor(q), f = fract(q);
-            float fine = 1.0 - smoothstep(0.22, 0.6, max(fwidth(q.x), fwidth(q.y)));
+            bool side = abs(n.x) > abs(n.z); // a wall along the avenue: seen at a glance
+            float along = side ? vW.z : vW.x;
+            // panes twice the size on the storeys nearest the road (shopfronts, lobbies), and wider on the walls seen at a
+            // glancing angle (a fine lattice there is all shimmer)
+            vec2 cs = uCell * (vW.y < uCell.y * 8.0 ? 2.0 : 1.0) * vec2(side ? 1.5 : 1.0, 1.0);
+            vec2 q = vec2(along, vW.y) / cs, id = floor(q), f = fract(q);
+            vec2 fq = fwidth(vec2(along, vW.y)) / cs;
+            float fine = 1.0 - smoothstep(0.22, 0.6, max(fq.x, fq.y));
             float h1 = hash13(vec3(id, 1.0)), h2 = hash13(vec3(id, 5.0)), h3 = hash13(vec3(id, 9.0));
-            float busy = step(0.6, hash13(vec3(id.y, floor(along / 17.0), 3.0)));
-            float on = step(h1, uLit * (0.25 + 1.6 * busy));
+            // lit in clusters: blocks five bays wide and four floors high. Four in ten are dark; the rest are busy to
+            // different degrees, and each has its own light: amber, cyan or magenta
+            vec2 bid = floor(id / vec2(5.0, 4.0));
+            float b1 = hash13(vec3(bid, 21.0)), b2 = hash13(vec3(bid, 27.0)), b3 = hash13(vec3(bid, 33.0));
+            float dens = step(0.4, b1) * mix(0.34, 0.96, b2) * min(uLit * 2.2, 1.15);
+            float on = step(h1, dens);
+            vec3 bc = b3 < 0.44 ? uWin : (b3 < 0.72 ? uCool : uHot);
             // structure: a pier every sixth bay, a spandrel under every window, two sashes to a bay
             float pier = step(0.5, mod(id.x, 6.0));
             float pane = smoothstep(0.1, 0.16, f.x) * smoothstep(0.9, 0.84, f.x) * smoothstep(0.22, 0.28, f.y) * smoothstep(0.9, 0.84, f.y) * pier;
             pane *= 0.3 + 0.7 * smoothstep(0.0, 0.04, abs(f.x - 0.5));
-            vec3 wc = h2 < 0.5 ? uWin : (h2 < 0.72 ? uWin * vec3(1.0, 0.8, 0.55) : (h2 < 0.9 ? uCool : uHot));
-            float level = 0.22 + 0.78 * h3 * h3; // most rooms dim, a few bright
+            vec3 wc = h2 < 0.76 ? bc : (h2 < 0.86 ? uWin : (h2 < 0.93 ? uCool : uHot)); // (a few rooms keep their own colour)
+            float level = 0.42 + 0.58 * h3 * h3; // most rooms dim, a few bright (none so dim its amber goes khaki)
             float room = 0.4 + 0.6 * smoothstep(0.22, 0.9, f.y); // brighter toward the ceiling lights
             float tw = 0.85 + 0.15 * sin(uTime * (0.3 + h2 * 0.9) + h1 * 40.0);
             vec3 glass = skyc * (0.06 + 0.34 * fres);
-            vec3 near = mix(glass, wc * level * room * tw, on), far = glass + uWin * (uLit * 0.16);
+            vec3 near = mix(glass, wc * level * room * tw, on), far = glass + bc * (dens * 0.3);
             float gl = mix(0.55, pane, fine);
             col = mix(col, mix(far, near, fine), gl);
             // the low sun glancing off the panes, and lightning: a cold glint on the same glass, for a moment
@@ -6353,7 +6405,8 @@ class TitleScene extends Scene3D {
     this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
     this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.5, ripple: 0.0016, streak: 0.009, pulse: 1,
+      road: 7.7, roadGrid: 0.2, sun: { top: 0xffc640, bottom: 0xff2a86, spread: 0.078, k: 0.56, z: -360, bars: 5.5 } }); // (the carriageway is a wet mirror first and a grid second; the sun lies down it)
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
@@ -6520,7 +6573,7 @@ class TitleCity {
     s.add(this.towers);
     this.blink = [blinkA, blinkB].map((b) => { const m = new THREE.Mesh(b.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true })); s.add(m); return m; });
     spills.forEach(([x, y, z, w, h, c]) => { // a sign's light on the wall beside it
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(c, 0.95), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // (a sign lights the wall it hangs on)
       m.position.set(x, y, z);
       m.layers.set(1);
       s.add(m);
@@ -6594,7 +6647,7 @@ class TitleCity {
       s.add(this.traffic); }
 
     // ---- searchlights turning over the skyline
-    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.6, 4, 240, 8); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
+    this.lights = [[-0.7, 0x35efff], [0.75, 0xff3ad4], [-0.2, 0xfff0d2]].map(([f, c]) => { const l = racerShaft(c, 0.6, 4, 240, 24); l.position.set(f * hw(-230), 30, -230); s.add(l); return l; });
 
     // ---- a few real vehicles for the close passes: hover cars and one patrol cruiser
     const U = { uKey: { value: new THREE.Color(0.62, 0.42, 0.72) }, uKeyDir: { value: new THREE.Vector3(0.2, 0.5, -0.8).normalize() }, uAmb: { value: new THREE.Color(0.3, 0.19, 0.48) } };
@@ -6676,7 +6729,7 @@ class TitleCity {
     // windows twinkle and signs flicker, slowly: nothing here changes faster than 3 Hz
     this.blink[0].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.9));
     this.blink[1].material.color.setScalar(0.55 + 0.45 * Math.sin(t * 0.6 + 2));
-    this.signs.forEach((m, i) => { const f = Math.sin(t * (1.1 + i * 0.7) + i * 2.1), dip = Math.sin(t * (5.3 + i) + i) > 0.93 ? 0.45 : 1; m.material.color.setScalar((1.25 + 0.2 * f) * dip); });
+    this.signs.forEach((m, i) => { const f = Math.sin(t * (1.1 + i * 0.7) + i * 2.1), dip = Math.sin(t * (5.3 + i) + i) > 0.93 ? 0.45 : 1; m.material.color.setScalar((1.75 + 0.2 * f) * dip); });
     this.lights.forEach((l, i) => { l.rotation.set(-0.25 + Math.sin(t * 0.21 + i * 2) * 0.2, 0, Math.sin(t * 0.33 + i * 1.9) * 0.75); l.material.uniforms.uI.value = GFX.opt.beams ? 0.3 : 0; });
   }
 }
@@ -6735,10 +6788,14 @@ class TitleLife {
       this.blades.frustumCulled = false;
       s.add(this.blades);
       blades.forEach(([x, y, z, w, h, i]) => { // each lights the wall beside it
-        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.42), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.8), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
         sp.position.set(x + (x < 0 ? -3.2 : 3.2), y + h / 2, z + 1.2);
         sp.layers.set(1);
         s.add(sp);
+        const halo = new THREE.Mesh(new THREE.PlaneGeometry(w * 3.4, h * 1.5), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // and each has a halo in the wet air
+        halo.position.set(x, y + h / 2, z - 0.4);
+        halo.layers.set(1);
+        s.add(halo);
       }); }
 
     // ---- 2. the avenue: lamp posts that slide past with the street, and strings of lanterns across it
@@ -6748,11 +6805,15 @@ class TitleLife {
       const post = b.build("color");
       this.posts = [0x35efff, 0xff3ad4].map((c, k) => {
         const ge = post.clone(), col = ge.attributes.color, tint = new THREE.Color(c);
-        for (let i = 0; i < col.count; i++) if (col.getX(i) > 1) col.setXYZ(i, tint.r * 3.2, tint.g * 3.2, tint.b * 3.2);
+        for (let i = 0; i < col.count; i++) if (col.getX(i) > 1) col.setXYZ(i, tint.r * 5 + 0.6, tint.g * 5 + 0.6, tint.b * 5 + 0.6);
         const m = new THREE.InstancedMesh(ge, this.hullMat, 13);
         m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(m);
-        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(1.3), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
+        // four patches of light to a lamp, in one mesh: its pool on the pavement and kerb, a hot core under the tube, a
+        // streak down the wet road toward us, and a halo round the tube itself
+        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 52);
+        { const lc = new THREE.Color(), hot = tint.clone().lerp(new THREE.Color(1, 1, 1), 0.45);
+          for (let i = 0; i < 13; i++) { pools.setColorAt(i * 4, lc.copy(tint).multiplyScalar(1.5)); pools.setColorAt(i * 4 + 1, lc.copy(hot).multiplyScalar(2.1)); pools.setColorAt(i * 4 + 2, lc.copy(hot).multiplyScalar(0.95)); pools.setColorAt(i * 4 + 3, lc.copy(tint).multiplyScalar(1.25)); } }
         pools.frustumCulled = false; pools.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(pools);
         return { m, pools, sd: k ? 1 : -1 };
@@ -6960,14 +7021,21 @@ class TitleLife {
     const loop = (t0, span, T) => ((t0 % T) / T) * span * 2 - span;
     this.facade.material.uniforms.uTime.value = t;
     this.streams.material.uniforms.uTime.value = t;
-    this.blades.material.color.setScalar(1.3 + 0.15 * Math.sin(t * 0.8));
+    this.blades.material.color.setScalar(1.8 + 0.15 * Math.sin(t * 0.8));
     // lamp posts ride the street toward us and come round again at the far end
     { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(12, 12, 1)), d = g.dist, L = 13 * 28;
+      const M2 = this._m2 || (this._m2 = new THREE.Matrix4()), cx = g.camera.position.x, cz = g.camera.position.z;
       for (const P of this.posts) {
         for (let i = 0; i < 13; i++) {
-          const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L);
+          const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L), lx = P.sd * 9.05;
           P.m.setMatrixAt(i, M.makeRotationY(P.sd > 0 ? Math.PI : 0).setPosition(P.sd * 10.5, 0, z));
-          P.pools.setMatrixAt(i, M.makeRotationX(-Math.PI / 2).scale(V).setPosition(P.sd * 9.0, 0.06, z));
+          P.pools.setMatrixAt(i * 4, M.makeRotationX(-Math.PI / 2).scale(V.set(12, 12, 1)).setPosition(P.sd * 9.0, 0.06, z));
+          P.pools.setMatrixAt(i * 4 + 1, M.makeRotationX(-Math.PI / 2).scale(V.set(3.6, 3.6, 1)).setPosition(lx, 0.07, z));
+          // the streak: from under the lamp toward the camera's feet (where a light's image lies on wet ground)
+          const dx = cx - lx, dzc = cz - z, dl = Math.hypot(dx, dzc) || 1, near = clamp(1.3 - dl / 105, 0, 1), len = Math.min(17, dl * 0.7) * near;
+          M.makeRotationY(Math.atan2(-dx / dl, -dzc / dl)).multiply(M2.makeRotationX(-Math.PI / 2)).scale(V.set(1.15 * near, len, 1)).setPosition(lx + (dx / dl) * (len * 0.5 + 0.6), 0.075, z + (dzc / dl) * (len * 0.5 + 0.6));
+          P.pools.setMatrixAt(i * 4 + 2, M);
+          P.pools.setMatrixAt(i * 4 + 3, M.makeScale(2.3, 2.3, 1).setPosition(lx, 7.36, z + 0.2));
         }
         P.m.instanceMatrix.needsUpdate = true; P.pools.instanceMatrix.needsUpdate = true;
       }
@@ -7220,16 +7288,25 @@ class HubKit {
 // ---- hub materials -----------------------------------------------------------
 // Glossy paint, chrome and plastic in one material: colour, metalness and
 // roughness come per vertex; the env map supplies the neon reflections.
+// The cabinet in front has one cool rim light: where it stands (in view space) and that light's colour.
+const HUB_RIM = { uHubHero: { value: new THREE.Vector3(0, 0, -100) }, uHubRim: { value: new THREE.Color(0, 0, 0) } };
 function hubLitMaterial(env, map = null) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4, map });
   m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, HUB_RIM);
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute vec2 aMR;\nvarying vec2 vMR;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nvMR = aMR;");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec2 vMR;")
+      .replace("#include <common>", "#include <common>\nvarying vec2 vMR;\nuniform vec3 uHubHero; uniform vec3 uHubRim;")
       .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vMR.y;")
-      .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;");
+      .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;")
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        { // the rim light: from behind the cabinet in front, above it and to one side
+          vec3 hubD = -vViewPosition - uHubHero;
+          float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
+          totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1);
+        }`);
   };
   // every painted, plastic and chrome surface in the room gets a grain, hair scratches and smudges
   return surfaceDetail(m, { scale: 1.25, height: 0.0007, scratch: 0.8, smudge: 0.45 });
@@ -7351,6 +7428,12 @@ function hubScreenMaterial(tex, color) {
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.8;
         // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
         crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.11 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.07);
+        { // and one curved highlight across its upper corner (the glass is a bulge, not a flat pane): a thin bright arc, a soft one inside it
+          vec2 ha = q - vec2(0.42, -0.62);
+          float hr = length(ha), hp = atan(ha.y, ha.x);
+          float span = smoothstep(1.84, 2.04, hp) * (1.0 - smoothstep(2.5, 2.72, hp));
+          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * (smoothstep(0.03, 0.0, abs(hr - 1.25)) * 0.72 + smoothstep(0.2, 0.0, abs(hr - 1.15)) * 0.17);
+        }
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
         gl_FragColor = vec4(col, 1.0);
@@ -7439,21 +7522,22 @@ function hubFloorMaterial(mirror, carpet) {
           float dd = dot(d, d);
           ao *= 1.0 - 0.55 * exp(-dd * 0.85);
           vec2 e = p - uPoolPos[i];
-          light += uPoolCol[i] * exp(-dot(e, e) * 0.75) + uConeCol[i] * exp(-dd * 0.3);
+          float ee = dot(e, e);
+          light += uPoolCol[i] * (exp(-ee * 1.9) * 0.9 + exp(-ee * 10.0) * 1.7) + uConeCol[i] * exp(-dd * 0.5) * 0.55; // (a tight pool with a hot core: it was a wide wash)
         }
         float ang = atan(p.x, -p.y);
         vec3 hue = 0.5 + 0.5 * cos(6.2831853 * (vec3(0.0, 0.33, 0.67) + ang * 0.8));
         light += hue * uBg * 0.12 * exp(-(r - 15.2) * (r - 15.2) * 0.8) * (0.7 + 0.3 * sin(ang * 50.0));
-        col = col * ao + light * mix(cp * 1.8 + 0.06, vec3(0.5), tiles) * ao;
+        col = col * ao + light * mix(cp * 1.8 + 0.06, vec3(0.5) * mix(0.4, 1.0, grout), tiles) * ao; // (the joints between the tiles stay dark in the light)
         if (uReflect > 0.0) {
           vec3 V = normalize(cameraPosition - vWorld);
           float fres = 0.32 + 0.68 * pow(1.0 - clamp(V.y, 0.0, 1.0), 3.0);
-          vec2 ruv = vRefl.xy / vRefl.w + vec2(sin(p.y * 3.1 + p.x * 0.7), cos(p.x * 2.7 - p.y * 0.5)) * 0.0012;
-          float s = 0.006;
+          vec2 ruv = vRefl.xy / vRefl.w + vec2(sin(p.y * 3.1 + p.x * 0.7), cos(p.x * 2.7 - p.y * 0.5)) * 0.0005;
+          float s = 0.0022; // (a polished floor: the image in it is nearly as sharp as the thing)
           vec3 rc = texture2D(tReflect, ruv).rgb * 0.4
             + (texture2D(tReflect, ruv + vec2(0.0, s)).rgb + texture2D(tReflect, ruv - vec2(0.0, s)).rgb) * 0.2
             + (texture2D(tReflect, ruv + vec2(0.0, s * 2.4)).rgb + texture2D(tReflect, ruv - vec2(0.0, s * 2.4)).rgb) * 0.1;
-          col += rc * mix(0.06, mix(0.25, 0.6, grout), tiles) * fres * uReflect;
+          col += rc * mix(0.06, mix(0.22, 0.68, grout), tiles) * fres * uReflect;
         }
         float dr = abs(r - ${TR});
         float wr = max(0.03, fr * 1.2);
@@ -7847,7 +7931,7 @@ function hubWallAtlas() {
 
 class HubScene extends Scene3D {
   constructor() {
-    super({ fov: 58, fog: [0x0b0424, 13, 46] });
+    super({ fov: 58, fog: [0x0b0424, 15, 80] }); // (half the fog it had: the floor's mirror and the far machines keep their edges)
     this.sel = Hub.index;
     this.angle = this.cabAngle(this.sel);
     this.restDolly = 1.2;
@@ -7895,9 +7979,20 @@ class HubScene extends Scene3D {
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight, this.backLight, this.deskLight);
     // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
     this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
-    this.heroPool = makeLightPool({ color: 0xffffff, radius: 3.4, intensity: 1 });
+    this.heroPool = makeLightPool({ color: 0xffffff, radius: 2.0, intensity: 1 });
+    this.heroCore = makeLightPool({ color: 0xffffff, radius: 0.8, intensity: 1 }); // its hot core
+    // the screen's light on the control panel of the cabinet in front: brightest under the glass, gone by the lip, never quite steady
+    this.heroSpill = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(0, 0, 0) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(vUv.y, 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
+    }));
+    this.heroSpill.matrixAutoUpdate = false;
+    this.heroSpill.frustumCulled = false;
+    this.heroSpill.renderOrder = 3;
     this.heroMotes = makeMotes({ count: 80, box: [4.4, 6.4, 4.4], center: [0, 3.5, 0], color: 0xffe9f6, size: 0.06, k: 1.0 });
-    [this.heroCone, this.heroPool, this.heroMotes].forEach((o) => { o.layers.set(1); s.add(o); });
+    [this.heroCone, this.heroPool, this.heroCore, this.heroMotes, this.heroSpill].forEach((o) => { o.layers.set(1); s.add(o); });
     this._white = new THREE.Color(1, 1, 1);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
@@ -8072,7 +8167,7 @@ class HubScene extends Scene3D {
     const TM = 0.034;
     for (let k = 1; k < 9; k++) {
       const f = hubFace(HUB_SIDE[k], HUB_SIDE[k + 1], 0.5, TM / 2 - 0.008);
-      [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), col, { k: 2.1, g }));
+      [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), cab.id === "exam" ? 0xdcc8ff : col, { k: cab.id === "exam" ? 2.7 : 2.1, g }));
     }
     // kick plate, coin door with lit slots, stripes either side
     const zf = HUB_BODY[1][0];
@@ -8091,6 +8186,7 @@ class HubScene extends Scene3D {
     K.box(B.lit, IW, top.len, 0.012, at(0, top.y, top.z, top.rx), col, { k: 0.42, aux: [0.15, 0.3] });
     // the printed overlay on the control panel, and the plate on the coin door
     const art = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.0135);
+    { const sf2 = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.021); (this.panelMs = this.panelMs || [])[i] = at(0, sf2.y, sf2.z, sf2.rx).multiply(new THREE.Matrix4().makeScale(IW - 0.03, sf2.len - 0.012, 1)); }
     K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
     K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
     const onPanel = (x, s, h) => {
@@ -8371,7 +8467,14 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.34; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    lv[G.bg] *= 0.28; lv[G.signs] *= 0.34; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    // (with the Final Exam in front the hall behind it goes darker and cooler, toward teal: violet on violet had no outline)
+    if (this.examIx === undefined) { this.examIx = CABINETS.findIndex((c) => c.id === "exam"); this._teal = new THREE.Color(0x12a4ac); this._fog0 = new THREE.Color(0x0b0424); this._fog1 = new THREE.Color(0x03141b); this._sky0 = new THREE.Color(0x8c6cff); this._sky1 = new THREE.Color(0x2f93a0); }
+    const ek = this.examIx >= 0 ? this.cabs[this.examIx].focus : 0;
+    lv[G.bg] *= 1 - 0.45 * ek; lv[G.signs] *= 1 - 0.4 * ek; lv[G.sign] *= 1 - 0.4 * ek; lv[G.signC] *= 1 - 0.4 * ek;
+    this.scene.fog.color.copy(this._fog0).lerp(this._fog1, ek);
+    this.scene.background.copy(this._bg0 || (this._bg0 = this.scene.background.clone())).lerp(this._fog1, ek);
+    this.hemi.color.copy(this._sky0).lerp(this._sky1, ek);
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -8394,10 +8497,21 @@ class HubScene extends Scene3D {
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
       this.heroCone.position.set(hx, 7.4, hz);
-      this.heroCone.material.uniforms.uI.value = 0.075 * hk;
+      this.heroCone.material.uniforms.uI.value = 0.036 * hk; // (half the haze: the shaft is a hint of light, not a fog of the game's colour)
       this.heroCone.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.45);
       this.heroPool.position.set(Math.sin(a) * (HUB_R - 1.7), 0.03, -Math.cos(a) * (HUB_R - 1.7));
-      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.26 * hk);
+      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.3 * hk);
+      this.heroCore.position.set(Math.sin(a) * (HUB_R - 1.55), 0.034, -Math.cos(a) * (HUB_R - 1.55));
+      this.heroCore.material.color.copy(this.lightCol).lerp(this._white, 0.5).multiplyScalar(0.34 * hk);
+      // the screen's light on its control panel (a slow waver, well under three flashes a second), and its one cool rim light
+      if (this.panelMs && this.panelMs[this.sel]) {
+        const fl = REDUCED_MOTION ? 1 : 0.86 + 0.09 * Math.sin(this.t * 7.3) + 0.05 * Math.sin(this.t * 3.1);
+        this.heroSpill.matrix.copy(this.panelMs[this.sel]);
+        this.heroSpill.matrixWorldNeedsUpdate = true;
+        this.heroSpill.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.12).multiplyScalar(0.7 * sc.scr.power * sc.focus * hk * fl);
+      }
+      HUB_RIM.uHubHero.value.set(Math.sin(a) * HUB_R, 2.3, -Math.cos(a) * HUB_R).applyMatrix4(this.camera.matrixWorldInverse);
+      HUB_RIM.uHubRim.value.setRGB(0.46, 0.72, 1.0).multiplyScalar(1.25 * hk);
       this.heroMotes.position.set(hx, 0, hz);
       this.heroMotes.userData.drift(this.t);
     }
@@ -8412,10 +8526,10 @@ class HubScene extends Scene3D {
       fu.uConeCol.value[i].copy(c.coneCol).multiplyScalar(0.3 * lv[G.cab + i]);
     });
     const wu = this.wallMat.uniforms;
-    this.ringCols.forEach((c, k) => wu.uRingCol.value[k].copy(c).multiplyScalar(lv[G.ring + k]));
+    this.ringCols.forEach((c, k) => wu.uRingCol.value[k].copy(c).lerp(this._teal, 0.75 * ek).multiplyScalar(lv[G.ring + k] * (1 - 0.4 * ek)));
     wu.uRoom.value = room;
-    this.wallGlows.forEach((w, k) => wu.uGlowCol.value[k].copy(w.c).multiplyScalar(lv[w.g]));
-    this.ceilMat.uniforms.uGlow.value.copy(this.tubeTint).multiplyScalar(lv[G.tube]);
+    this.wallGlows.forEach((w, k) => wu.uGlowCol.value[k].copy(w.c).lerp(this._teal, 0.6 * ek).multiplyScalar(lv[w.g] * (1 - 0.35 * ek)));
+    this.ceilMat.uniforms.uGlow.value.copy(this.tubeTint).lerp(this._teal, 0.7 * ek).multiplyScalar(lv[G.tube] * (1 - 0.3 * ek));
     this.ceilMat.uniforms.uStars.value = room;
     this.marqMat.uniforms.uSel.value = G.cab + this.sel;
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;
@@ -9563,8 +9677,8 @@ function blasterShotMaterial() {
       void main(){
         vec3 v = normalize(vV);
         float x = clamp(abs(dot(normalize(vN), v)) / max(length(cross(v, normalize(vAx))), 0.03), 0.0, 1.0); // 1 along its middle, 0 at its edges, from any angle
-        float core = smoothstep(0.84, 0.93, x);
-        gl_FragColor = vec4(mix(uColor * (0.45 + 0.55 * x), vec3(1.7), core) * uFade, 1.0);
+        float core = smoothstep(0.58, 0.64, x); // a hard white heart, a thin sheath of the answer's colour
+        gl_FragColor = vec4(mix(uColor * (0.55 + 0.45 * x), vec3(1.7), core) * uFade, 1.0);
       }`,
   });
 }
@@ -9768,10 +9882,10 @@ class BlasterGame extends QuizGame {
     this.boomT = 1;
     this.boomSize = size;
     this.flashSprite.position.copy(pos);
-    this.flashSprite.material.color.copy(neon(color, 2.4));
+    this.flashSprite.material.color.copy(neon(color, this.boomFast ? 1.15 : 2.4)); // (round the demon the flash is small and coloured: it does not bleach the demon)
     this.boomLight.position.copy(pos);
     this.boomLight.color.set(color);
-    this.space.flash(pos, color); // its light on the dust and on whatever is near
+    this.space.flash(pos, color, this.boomFast ? 0.45 : 1); // its light on the dust and on whatever is near
   }
 
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
@@ -9884,13 +9998,25 @@ class BlasterGame extends QuizGame {
       const halo = new THREE.Sprite(M.halo);
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
-      if (this.enemy) { // a dark plate behind it: the planet, the nebula and the demon's wings do not show through its collar
-        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.6, 28)), this.dronePlateMat || (this.dronePlateMat = new THREE.MeshBasicMaterial({ color: 0x07031c, transparent: true, opacity: 0.88, depthWrite: false })));
+      if (this.enemy) { // dark glass behind it: nothing shows through its collar or its ring. (It writes depth and is drawn before the demon's ring of light, so that ring passes behind the station.)
+        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)), this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
+          transparent: true, depthWrite: true,
+          vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+          fragmentShader: `varying vec2 vP;
+            void main(){
+              float r = length(vP) / 1.74;
+              float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
+              vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
+              gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
+            }`,
+        })));
         plate.position.z = -0.62;
         frame.add(plate);
+        g.userData.plate = plate;
       }
       const label = new THREE.Sprite(this.badge(this.round.labels[i], i));
-      label.scale.setScalar(this.enemy ? 1.36 : 1.12); // (round the demon the letter is the drone's face, inside its collar: the armour round it shows)
+      label.scale.setScalar(this.enemy ? 2.04 : 1.12); // (round the demon the letter is the drone's face: it fills the collar)
+      g.userData.label = label; g.userData.halo = halo;
       label.position.z = 1.35;
       label.renderOrder = 10;
       g.add(halo, frame, rot, label);
@@ -9925,7 +10051,7 @@ class BlasterGame extends QuizGame {
     const right = i === this.round.correct, opens = true; // (the guns are laid on the answer's own drone, right or wrong)
     const at = !this.has3D ? null : t ? t.position : this.enemy && right ? this.enemy.aimPoint(new THREE.Vector3()) : null;
     if (opens) Sound.sfx("laser", this.panAt);
-    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i]);
+    if (opens && this.has3D) this.jet.fire(SLOT_COLORS[i], !!this.enemy); // (round the demon the wing pods fire: two beams that meet on the answer's drone)
     if (this.enemy && !right) this.enemy.attack();
     if (at) {
       // lookAt aims +Z; the ship's nose is -Z, so aim at the mirrored point.
@@ -9936,17 +10062,17 @@ class BlasterGame extends QuizGame {
         const fx = this.shotFX[gun];
         const tok = ++fx.tok;
         const from = this.jet.rig.localToWorld(m.clone());
-        aimBeam(fx.beam, from, at, this.enemy ? 0.03 + 0.036 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
-        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.7 : 2.6));
+        aimBeam(fx.beam, from, at, this.enemy ? 0.02 + 0.024 * this.shipScale : 0.06 + 0.07 * this.shipScale); // (a thin shot in the answer's colour, white only at its heart)
+        fx.beam.material.uniforms.uColor.value.copy(neon(col, this.enemy ? 1.5 : 2.6));
         fx.beam.material.uniforms.uFade.value = 1;
         fx.flash.material.color.copy(neon(col, 2.6));
         fx.flash.material.opacity = 1;
         fx.flash.position.copy(from);
         fx.flash.scale.setScalar((this.enemy ? 0.8 : 1.3) * this.shipScale);
         fx.flash.visible = true;
-        this.tw.add(0.3, (k) => {
+        this.tw.add(this.enemy ? 0.56 : 0.3, (k) => { // (round the demon the two beams hold until the lance has gone in, then let go: look only)
           if (fx.tok !== tok) return;
-          fx.beam.material.uniforms.uFade.value = 1 - k;
+          fx.beam.material.uniforms.uFade.value = this.enemy ? 1 - clamp((k - 0.62) / 0.38, 0, 1) : 1 - k;
           fx.flash.material.opacity = 1 - k;
           fx.flash.scale.setScalar(((this.enemy ? 0.8 : 1.3) + k * 0.8) * this.shipScale);
         }, () => { if (fx.tok === tok) { fx.beam.visible = false; fx.flash.visible = false; } });
@@ -9978,7 +10104,7 @@ class BlasterGame extends QuizGame {
       if (this.enemy) {
         // the drone was a link in the demon's shield: it bursts, and the shot goes through it into the demon
         const t = this.targets[i], c = new THREE.Color(SLOT_COLORS[i]);
-        if (t) { this.space.fx.beam(t.position.clone(), this.enemy.aimPoint(new THREE.Vector3()), 0.32, [c.r * 2.2, c.g * 2.2, c.b * 2.2], 0.085); this.explode(t, SLOT_COLORS[i], 0.45); }
+        if (t) { this.space.fx.lance(t.position, this.enemy.aimPoint(new THREE.Vector3()), 0.34, [c.r * 2.1 + 0.06, c.g * 2.1 + 0.06, c.b * 2.1 + 0.06], 0.5 * t.scale.x); this.explode(t, SLOT_COLORS[i], 0.45); }
         this.enemy.hit(SLOT_COLORS[i]);
       } else this.explode(this.targets[i], SLOT_COLORS[i]);
       if (this.combo >= 4) UI.floater("x" + this.combo + " COMBO", p.x - 20, p.y + 30, COLORS.magenta);
@@ -10064,11 +10190,12 @@ class BlasterGame extends QuizGame {
     // the blast has a body: a flash, fire rolling outward, smoke left hanging; and streaks of burning debris thrown clear
     { const tight = !!this.enemy && !full, sz = (this.enemy ? 0.8 : 1.3) * df * this.ts * (0.7 + 0.5 * flash) * 2.2, V = this._bv || (this._bv = new THREE.Vector3()), c = new THREE.Color(color);
       // (round the demon a drone's flash is small and gone in a few frames: the demon is seen taking the hit, not whited out)
-      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.34 : 0.7), sz * (tight ? 1.2 : 3), tight ? 0.12 : 0.2);
+      this.blastPuffs.emit(2, pos, V.set(0, 0, 0), sz * (tight ? 0.24 : 0.7), sz * (tight ? 0.8 : 3), tight ? 0.1 : 0.2);
       this.boomFast = tight;
-      for (let i = 0; i < (tight ? 4 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar(2.4 * sz), sz * 0.45, sz * 1.6, rand(0.32, 0.6), 0.4);
+      for (let i = 0; i < (tight ? 2 : 6); i++) this.blastPuffs.emit(0, pos, V.set(rand(-1, 1), rand(-1, 1), rand(-0.6, 0.6)).multiplyScalar((tight ? 1.4 : 2.4) * sz), sz * (tight ? 0.3 : 0.45), sz * (tight ? 1.0 : 1.6), rand(0.32, 0.6), 0.4);
       for (let i = 0; i < 4; i++) this.blastPuffs.emit(1, pos, V.set(rand(-1, 1), rand(-0.5, 1), rand(-0.6, 0.6)).multiplyScalar(1.5 * sz), sz * 0.6, sz * 2.4, rand(0.9, 1.5), 0.3);
-      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.bolt(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.25, 0.5), [1.4 + c.r * 2, 1.2 + c.g * 2, 1.0 + c.b * 2], 0.9 * df * this.ts, 0.07 * df * this.ts); } }
+      // sparks: darts in the answer's colour, each with a point and a tail (they were white bars)
+      for (let i = 0; i < 9; i++) { const a = rand(Math.PI * 2), sp = rand(10, 22) * df * this.ts; this.space.fx.dart(pos, V.set(Math.cos(a) * sp, Math.sin(a) * sp, rand(-4, 4)), rand(0.26, 0.5), [c.r * 2.3 + 0.1, c.g * 2.3 + 0.1, c.b * 2.3 + 0.1], rand(1.2, 1.9) * df * this.ts, rand(0.2, 0.3) * df * this.ts); } }
     const at = pos.clone();
     if (full) this.tw.wait(0.12, () => { if (!this.unmounted) this.shockwave(at, neon(0xffffff, 1.4), (6 * this.ts + 3) * df, 0.7); });
     this.boom(pos, color, (7 * this.ts + 3) * df * flash * (this.enemy && !full ? 0.38 : 1));
@@ -10174,7 +10301,7 @@ class BlasterGame extends QuizGame {
       this.flashSprite.visible = k > 0;
       this.flashSprite.scale.setScalar(this.boomSize * (1.4 - k * 0.6));
       this.flashSprite.material.opacity = k * k;
-      this.boomLight.intensity = k * k * 8;
+      this.boomLight.intensity = k * k * (this.boomFast ? 2.2 : 8);
     }
     this.shards.update(dt);
     this.blastPuffs.update(dt, this.camera, this.t);
@@ -10189,9 +10316,17 @@ class BlasterGame extends QuizGame {
       const u = t.userData;
       if (this.enemy) {
         // escort drones: on station just in front of the demon, at the corners of the view, sized to stay readable
-        const dz = Math.max(this.enemy.root.position.z + 2.6, -DEMON_FAR + 1.4), b = this.bandSize(-dz);
+        // (well in front of it: its wing tips and its ring pass behind the stations, never across them)
+        const dz = Math.max(this.enemy.root.position.z + 6.2, -DEMON_FAR + 5), b = this.bandSize(-dz);
         u.s = clamp(Math.min(b.h * 0.06, b.w * 0.054), 0.2, 1.3); // (a fifth smaller, and out in the corners: clear of its wings and claws)
         t.position.set(u.sx * b.w * 0.37 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
+        // the letter, the glass and the halo sit on the line of sight through the station's middle (out in the corners
+        // of the view, a letter set straight in front of its drone stood off-centre in it)
+        const ld = this._ld || (this._ld = new THREE.Vector3());
+        ld.copy(this.camera.position).sub(t.position).normalize();
+        u.label.position.copy(ld).multiplyScalar(1.35);
+        u.halo.position.copy(ld).multiplyScalar(-0.9);
+        if (u.plate) u.plate.position.copy(ld).multiplyScalar(-0.62);
         if (!u.gone && !u.hot) t.scale.setScalar(u.s);
       } else {
         if (k !== null) t.position.z = lerp(-95, -12, k);
@@ -11238,9 +11373,9 @@ class BlasterFighter {
     if (this.inT < 1) Sound.sfx("whoosh");
   }
   // the guns fire: a kick back, their flash on the hull. The nose cannons and the wing cannons take turns.
-  fire(col) {
+  fire(col, pods) {
     this.recoil = 1; this.gun = 1;
-    this.barrel ^= 1;
+    if (pods) this.barrel = 1; else this.barrel ^= 1; // (pods: the wing cannons, every time)
     this.muzzles.forEach((m, i) => m.copy(this.guns[this.barrel][i]));
     this.U.uGunAt.value.set(Math.abs(this.muzzles[0].x), this.muzzles[0].y, this.muzzles[0].z);
     if (col !== undefined) this.gunCol.set(col);
@@ -11416,10 +11551,10 @@ else setTimeout(() => FighterModel.preload(), 2500);
 // are placed in the frame round it.
 const SPACE_REGIONS = [
   { id: "nebula", name: "NEBULA", base: 0x030418, a: 0x2334d8, b: 0x2aa8ff, c: 0x7a5cff, gold: 0xffc46a, neb: 1.25, stars: 1.1, fog: 0x050826, amb: 0x5e6ed0, key: 0xdce6ff,
-    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
+    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [11.6, 3.2, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
     streak: 0xd9c8ff, traffic: { freighter: 2, tanker: 1, cruiser: 0, fighter: 3, drone: 2, shuttle: 2 } },
   { id: "belt", name: "ASTEROID BELT", base: 0x0a0406, a: 0x8a3a12, b: 0xff9a2a, c: 0xffd870, gold: 0xfff0c0, neb: 0.8, stars: 0.9, fog: 0x140806, amb: 0x9a7058, key: 0xffe6c0,
-    sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11, 8.5, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
+    sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11.9, 3.2, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
     streak: 0xffd9a8, traffic: { freighter: 3, tanker: 3, cruiser: 0, fighter: 0, drone: 3, shuttle: 1 } },
   { id: "orbit", name: "PLANET ORBIT", base: 0x020714, a: 0x12389a, b: 0x2ad0e8, c: 0x8a5cff, gold: 0xffe9a8, neb: 0.55, stars: 1.15, fog: 0x04081c, amb: 0x5a78c8, key: 0xdcecff,
     sun: [-10.5, 8], sunCol: 0xfff4dc, sunK: 0.9, planet: [16.5, 13, 760, 205], clouds: 0.15, cloudA: 0x2a6ad0, cloudB: 0x35efff, rocks: 0.3, rockTint: 0x9ab0c8,
@@ -11428,7 +11563,7 @@ const SPACE_REGIONS = [
     sun: [10, 9.5], sunCol: 0xffffff, sunK: 0.8, planet: [-11.5, -8, 1800, 72], clouds: 0.2, cloudA: 0x3a4ad8, cloudB: 0xff7ad0, rocks: 0.05, rockTint: 0x7a80a0,
     station: 1, streak: 0xcfe0ff, traffic: { freighter: 3, tanker: 2, cruiser: 1, fighter: 3, drone: 3, shuttle: 5 } },
   { id: "graveyard", name: "SHIP GRAVEYARD", base: 0x020a0a, a: 0x0a5a50, b: 0x3adf9a, c: 0xc8ff6a, gold: 0xffd27a, neb: 0.75, stars: 0.8, fog: 0x04120e, amb: 0x4a9080, key: 0xd0ffe6,
-    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-10.5, 9, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
+    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
     wrecks: 1, streak: 0xb8ffd8, traffic: { freighter: 0, tanker: 0, cruiser: 0, fighter: 2, drone: 4, shuttle: 1 } },
   { id: "gate", name: "WORMHOLE GATE", base: 0x0a0318, a: 0x8a3aff, b: 0xffe14f, c: 0xff3ad4, gold: 0xffffff, neb: 1.05, stars: 1.1, fog: 0x10052a, amb: 0x8a62d8, key: 0xf2e4ff,
     sun: [10.5, 8], sunCol: 0xffe0f8, sunK: 0.7, planet: [-11, -7.5, 1700, 64], clouds: 0.7, cloudA: 0xa65fff, cloudB: 0xffe14f, rocks: 0.08, rockTint: 0x8a70b0,
@@ -11995,8 +12130,8 @@ class BlasterSpace {
   }
 
   // The light of a blast on the dust and on every hull near it (the game calls this where the tunnel's walls used to light up).
-  flash(pos, color) {
-    this.flashK = 1;
+  flash(pos, color, k = 1) {
+    this.flashK = k;
     this.flashCol = this.flashCol || new THREE.Color();
     this.flashCol.set(color);
     this.shared.uFlashPos.value.copy(pos);
@@ -12444,6 +12579,32 @@ class SpaceTraffic {
   dispose() { this.trails.material.dispose(); }
 }
 
+// A dart: two crossed blades, shaped where they are drawn: a short pointed head, the swell just behind it, a long tail
+// thinning to nothing. A hard edge and a white heart, in whatever colour it is given.
+function spaceDartMaterial() {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
+    vertexShader: "varying vec3 vC; varying vec2 vUv; void main(){ vUv = uv; vC = vec3(1.0);\n#ifdef USE_INSTANCING_COLOR\nvC = instanceColor;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }",
+    fragmentShader: `varying vec3 vC; varying vec2 vUv;
+      void main(){
+        float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;                        // along it (0 its tail, 1 its head); across it (0 on its axis, 1 at its edge)
+        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
+        float aa = fwidth(x) * 1.2 + 1e-4;
+        float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.34 - aa, w * 0.34, x);
+        if (body < 0.004) discard;
+        gl_FragColor = vec4(mix(vC * (0.55 + 0.45 * t), vC * 0.6 + vec3(1.25), core) * body, 1.0);
+      }`,
+  });
+}
+function spaceDartGeo() {
+  const g = new THREE.BufferGeometry(), pos = [], uv = [];
+  for (const [ax, ay] of [[1, 0], [0, 1]]) // two blades: one lying flat, one standing
+    [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].forEach(([a, z]) => { pos.push(a * ax, a * ay, z); uv.push(a + 0.5, z + 0.5); });
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  return g;
+}
+
 // Bolts and flashes for whatever happens: a pool of each, made once.
 class SpaceFX {
   constructor(space) {
@@ -12453,6 +12614,11 @@ class SpaceFX {
     this._zero = new THREE.Matrix4().makeScale(0, 0, 0);
     this.pool = Array.from({ length: 48 }, (_, i) => { this.bolts.setMatrixAt(i, this._zero); this.bolts.setColorAt(i, new THREE.Color(0, 0, 0)); return { i, life: 0, t: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), len: 1, w: 1, col: new THREE.Color(), q: new THREE.Quaternion() }; });
     g.scene.add(this.bolts);
+    this.darts = new THREE.InstancedMesh(spaceDartGeo(), spaceDartMaterial(), 28);
+    this.darts.frustumCulled = false;
+    this.darts.renderOrder = 9;
+    this.dpool = Array.from({ length: 28 }, (_, i) => { this.darts.setMatrixAt(i, this._zero); this.darts.setColorAt(i, new THREE.Color(0, 0, 0)); return { i, life: 0, t: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), len: 1, w: 1, col: new THREE.Color(), q: new THREE.Quaternion() }; });
+    g.scene.add(this.darts);
     this.flashes = Array.from({ length: 6 }, () => { const sp = glowSprite(0xffffff, 1, 0); sp.visible = false; g.scene.add(sp); return { sp, t: 0, dur: 0, a: 0, s0: 1, s1: 1 }; });
     this._m = new THREE.Matrix4(); this._s = new THREE.Vector3(); this._c = new THREE.Color(); this._z = new THREE.Vector3(0, 0, 1); this._d = new THREE.Vector3();
   }
@@ -12469,6 +12635,20 @@ class SpaceFX {
     if (!b) return;
     b.p.copy(a).add(c).multiplyScalar(0.5); b.v.set(0, 0, 0); b.life = b.t = life; b.len = a.distanceTo(c); b.w = w; b.col.setRGB(col[0], col[1], col[2]);
     b.q.setFromUnitVectors(this._z, this._d.copy(c).sub(a).normalize());
+  }
+  // a spark thrown from p at v: a dart, its point leading
+  dart(p, v, life, col, len, w) {
+    const b = this.dpool.find((x) => x.life <= 0);
+    if (!b) return;
+    b.p.copy(p); b.v.copy(v); b.life = b.t = life; b.len = len; b.w = w; b.col.setRGB(col[0], col[1], col[2]);
+    b.q.setFromUnitVectors(this._z, this._d.copy(v).normalize());
+  }
+  // a still lance from a into c: widest where it leaves a, a needle where it enters c
+  lance(a, c, life, col, w) {
+    const b = this.dpool.find((x) => x.life <= 0);
+    if (!b) return;
+    b.p.copy(a).add(c).multiplyScalar(0.5); b.v.set(0, 0, 0); b.life = b.t = life; b.len = a.distanceTo(c); b.w = w; b.col.setRGB(col[0], col[1], col[2]);
+    b.q.setFromUnitVectors(this._z, this._d.copy(a).sub(c).normalize());
   }
   // a glow that swells and fades once (never a flicker): from size s0 to s1 over dur
   flash(p, col, s0, s1, dur, a = 1) {
@@ -12491,6 +12671,20 @@ class SpaceFX {
     this.bolts.visible = hi > 0;
     this.bolts.instanceMatrix.needsUpdate = true;
     if (this.bolts.instanceColor) this.bolts.instanceColor.needsUpdate = true;
+    let dh = 0;
+    this.dpool.forEach((b) => {
+      if (b.life <= 0) return;
+      dh = b.i + 1;
+      b.life -= dt;
+      if (b.life <= 0) { this.darts.setMatrixAt(b.i, this._zero); return; }
+      b.p.addScaledVector(b.v, dt); b.p.z += sp * dt;
+      this.darts.setMatrixAt(b.i, this._m.compose(b.p, b.q, this._s.set(b.w, b.w, b.len)));
+      this.darts.setColorAt(b.i, this._c.copy(b.col).multiplyScalar(Math.min(1, (b.life / b.t) * 2.5)));
+    });
+    this.darts.count = dh;
+    this.darts.visible = dh > 0;
+    this.darts.instanceMatrix.needsUpdate = true;
+    if (this.darts.instanceColor) this.darts.instanceColor.needsUpdate = true;
     this.flashes.forEach((f) => {
       if (f.t <= 0) return;
       f.t -= dt;
@@ -12875,7 +13069,7 @@ function demonSkin(env, U) {
         ${DEMON_NOISE}
         varying vec3 vDmP; varying vec3 vDmN; varying vec4 vDmZ;
         uniform float uDmKick; uniform vec3 uDmCoreCol; uniform vec3 uDmHaze;
-        uniform float uDmHit; uniform float uDmGone; uniform float uDmCrack; uniform float uDmPow; uniform float uDmDim; uniform float uDmRage; uniform float uDmBeat; uniform float uDmSweep;
+        uniform float uDmHit; uniform vec3 uDmHitCol; uniform float uDmGone; uniform float uDmCrack; uniform float uDmPow; uniform float uDmDim; uniform float uDmRage; uniform float uDmBeat; uniform float uDmSweep;
         uniform float uDmMouth; uniform float uDmClaw; uniform float uDmExpose; uniform float uDmBoomHot; uniform float uDmRimK; uniform vec3 uDmEye; uniform vec3 uDmRim;`)
       .replace("#include <map_fragment>", `#include <map_fragment>
         float dmL = dot(texelColor.rgb, vec3(0.3, 0.59, 0.11)), dmZone = floor(vDmZ.x + 0.5), dmTip = vDmZ.y, dmCut = 1.0, dmBurn = 0.0;
@@ -12944,7 +13138,7 @@ function demonSkin(env, U) {
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -12956,7 +13150,7 @@ class BlasterDemon {
   constructor(game) {
     const g = (this.g = game), geo = DemonModel.geometry();
     this.U = {
-      uDmBoom: { value: 0 }, uDmBoomK: { value: 1 }, uDmShedA: { value: 0 }, uDmShedB: { value: 0 }, uDmFall: { value: 0 }, uDmHit: { value: 0 }, uDmGone: { value: 0 }, uDmCrack: { value: 0 }, uDmPow: { value: 0 }, uDmDim: { value: 1 },
+      uDmBoom: { value: 0 }, uDmBoomK: { value: 1 }, uDmShedA: { value: 0 }, uDmShedB: { value: 0 }, uDmFall: { value: 0 }, uDmHit: { value: 0 }, uDmHitCol: { value: new THREE.Color(0.9, 0.78, 0.86) }, uDmGone: { value: 0 }, uDmCrack: { value: 0 }, uDmPow: { value: 0 }, uDmDim: { value: 1 },
       uDmRage: { value: 0 }, uDmBeat: { value: 0 }, uDmSweep: { value: 9 }, uDmMouth: { value: 0 }, uDmClaw: { value: 0 }, uDmExpose: { value: 0 }, uDmBoomHot: { value: 0 }, uDmRimK: { value: 0.4 }, uDmKick: { value: 0.45 },
       uDmEye: { value: new THREE.Color(0, 0, 0) }, uDmRim: { value: new THREE.Color(0, 0, 0) }, uDmCoreCol: { value: new THREE.Color(0, 0, 0) }, uDmHaze: { value: new THREE.Color(0, 0, 0) },
     };
@@ -13067,6 +13261,7 @@ class BlasterDemon {
     const g = this.g, U = this.U, k6 = this.S / 6, p = this.aimPoint(this._a);
     g.blastAt(p, color, 0.42);
     U.uDmHit.value = 1;
+    U.uDmHitCol.value.set(color).lerp(this._w || (this._w = new THREE.Color(1, 1, 1)), 0.22).multiplyScalar(1.05); // (its edges take the answer's colour for a moment)
     this.kickTo = 1;
     this.twist = -this.twist;
     this.hits++;
@@ -13609,6 +13804,7 @@ function racerGroundMaterial(mirror, shared) {
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
+      uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -13620,6 +13816,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
+      uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       float rh(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }
       // value noise that tiles along the road, so the scroll can wrap without a seam
@@ -13669,6 +13866,7 @@ function racerGroundMaterial(mirror, shared) {
         dash = mix(dash, 0.5, smoothstep(0.1, 0.35, dw));
         float dline = (1.0 - smoothstep(0.055, 0.055 + fx * 1.5, abs(lx))) * step(ax, 3.6) * dash;
         dline *= 1.0 - uPad.z * (1.0 - smoothstep(uPad.y - 0.2, uPad.y + 0.2, abs(z - uPad.x))); // (a wide answer tile lies here: the dashes stop under it)
+        dline *= (0.62 + 0.38 * rill) * (1.0 - 0.6 * puddle); // (paint on wet asphalt: worn where the water runs, gone under a puddle's mirror)
         float ed = abs(ax - 4.78);
         float eline = 1.0 - smoothstep(0.07, 0.07 + fx * 1.5, ed);
         vec3 asphalt = uAsphalt * (0.8 + 0.45 * wet) * (1.0 - 0.45 * puddle);
@@ -13698,6 +13896,12 @@ function racerGroundMaterial(mirror, shared) {
         float dzl = mod(z - uScroll + ${RACER_P / 2}.0, ${RACER_P}.0) - ${RACER_P / 2}.0;
         float dzr = mod(z - uScroll, ${RACER_P}.0) - ${RACER_P / 2}.0;
         vec3 lt = (uLampL * pool(vec2(x + 4.75, dzl), vec2(2.6, 3.8)) + uLampR * pool(vec2(x - 4.75, dzr), vec2(2.6, 3.8))) * uLampI;
+        { // under each lamp a hot core, and its image drawn out down the wet road toward the camera
+          float kl = (cameraPosition.x + 4.75) / max(cameraPosition.z - (z - dzl), 6.0), kr = (cameraPosition.x - 4.75) / max(cameraPosition.z - (z - dzr), 6.0);
+          float cl = pool(vec2(x + 4.75, dzl), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x + 4.75 - kl * dzl, dzl - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
+          float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
+          lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
+        }
         float ah = ${racerF(RACER_CAR_Z - 2.2)} - z; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
         float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
@@ -13712,6 +13916,19 @@ function racerGroundMaterial(mirror, shared) {
           else lt += gk * (uSlot0 * exp(-pow((x + 2.5) * 0.55, 2.0)) + uSlot1 * exp(-pow((x - 2.5) * 0.55, 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
+        float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
+        if (sk > 0.002) {
+          // the egg sun lies down the far road: rippled bars of its own light (in the distance only: the lanes by the
+          // car stay clean for the answers' colours)
+          float dzs = max(cameraPosition.z - z, 0.5);
+          float u = log2(dzs) * 6.0 - uTime * 0.16;
+          float id = floor(u), fb = fract(u), fu = fwidth(u);
+          float q1 = fract(sin(id * 12.9898) * 43758.5453), q2 = fract(sin(id * 78.233) * 12543.123);
+          float hw2 = min(0.05 * dzs, 4.2) * (0.5 + 0.5 * q1);
+          float bar = smoothstep(0.0, 0.06 + fu, fb) * (1.0 - smoothstep(0.52, 0.58 + fu, fb));
+          bar = mix(bar, 0.5, smoothstep(0.25, 0.7, fu)) * (1.0 - smoothstep(hw2 - fx * 1.5, hw2 + fx * 1.5, abs(x - (q2 - 0.5) * hw2 * 0.6)));
+          col += mix(uSunB, uSunA, 0.6) * bar * sk;
+        }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -13780,10 +13997,15 @@ function racerCityMaterial(shared, P) {
             float pier = storey * step(fract(g.x / 3.0 + vSeed), 0.1);
             col *= 1.0 + 0.2 * pier * fine;
             float win = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.8) * storey * (1.0 - pier);
-            float on = step(r, 0.2 + 0.32 * uCity); // more windows light as night falls
+            // lit in clusters (blocks four bays wide, three floors high): four in ten are dark, the rest busier, and each
+            // has its own light: amber, cyan or magenta
+            vec2 blk = floor(cell / vec2(4.0, 3.0));
+            float b1 = h21(blk + vSeed * 23.0 + 7.7), b2 = h21(blk * 1.3 + vSeed * 31.0 + 2.9);
+            float on = step(r, (0.2 + 0.32 * uCity) * (b1 < 0.4 ? 0.0 : 1.7)); // more windows light as night falls
             float r2 = h21(cell * 1.7 + vSeed * 5.0 + 3.1);
             float hot = 0.28 + 0.7 * r2 * r2 + 1.0 * step(0.9, r2); // most are low, a few blaze
-            vec3 wc = r < 0.07 ? vec3(0.3, 0.95, 1.0) : (r < 0.12 ? vec3(1.0, 0.3, 0.8) : vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2)));
+            vec3 amber = vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2));
+            vec3 wc = r2 > 0.84 ? amber : (b2 < 0.5 ? amber : (b2 < 0.77 ? vec3(0.3, 0.95, 1.0) : vec3(1.0, 0.3, 0.8)));
             float bars = max(step(abs(f.x - 0.5), 0.028), step(abs(f.y - 0.535), 0.022)) * fine; // glazing bars
             float blind = step(0.5, r2) * step(0.5 + 0.22 * r, f.y) * fine;                            // a blind part-way down
             col = mix(col, col * 0.45, win * (1.0 - on));
@@ -14959,6 +15181,7 @@ class RacerGame extends QuizGame {
     g.uGrid.value.copy(sky.grid).multiplyScalar(1.5);
     g.uBase.value.copy(sky.bg).multiplyScalar(0.18);
     g.uAsphalt.value.copy(sky.bg).multiplyScalar(0.28);
+    g.uSunA.value.copy(sky.sunTop); g.uSunB.value.copy(sky.sunBot); g.uSunK.value = 0.6 * sky.sunI * (0.35 + 0.65 * Math.min(1, sky.wet || 0));
     this.shared.uLampI.value = sky.lamps;
     const pu = this.props.material.uniforms;
     pu.uKey.value.copy(sky.light).multiplyScalar(0.9);
@@ -15650,7 +15873,7 @@ class RacerCar {
     if (sky && this.glassU) { this.glassU.uGlassSky.value.copy(sky.horizon).multiplyScalar(0.62); this.glassU.uGlassSky2.value.copy(sky.top).multiplyScalar(0.7); }
     ch[0] = 0.85 + 0.15 * Math.sin(t * 2.1) + this.flame * 0.5; // mint trim breathes
     ch[1] = 0.56 + 0.8 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking (lit, not a haze over the whole tail)
-    ch[2] = 0.75 + 0.35 * lamps + this.flame * 0.9; // roof lamps
+    ch[2] = 0.55 + 0.25 * lamps + this.flame * 0.6; // roof lamps (lit, not burning a hole in the roof)
     const chase = (t * (0.6 + 0.5 * this.flame)) % 1; // a chase across the four markers, well under 3 Hz
     for (let i = 0; i < 4; i++) {
       const d = Math.abs(((chase - i / 4 + 1.5) % 1) - 0.5);
@@ -16649,7 +16872,8 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
-    s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
+    s.userData.post = { exposure: 1.1, bloom: 0.55, threshold: 1.5, knee: 0.22, bloomTight: 1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.18, streak: 0.3, // (only its lamps, the ring and a blow bloom, and tightly: plate and paper used to clip to white)
+     
       dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
@@ -16668,7 +16892,7 @@ class BossGame extends QuizGame {
         { color: 0x35efff, pos: [16, 4, 4], w: 10, h: 3, k: 2.2 },
         { color: 0xff3ad4, pos: [-16, 5, 2], w: 10, h: 3, k: 2.2 },
         { color: 0x6a5aff, pos: [-6, -12, 10], w: 14, h: 4, k: 1.6 },
-        { color: 0xd4c8ff, pos: [4, 14, 10], w: 6, h: 1.5, k: 2.2 }, // (lilac, and lower: at white 3.2 a plate that faced it blew out)
+        { color: 0xd4c8ff, pos: [4, 14, 10], w: 6, h: 1.5, k: 1.6 }, // (lilac, and lower: at white 3.2 a plate that faced it blew out)
       ],
     });
     this.ambient = new THREE.AmbientLight(0x7566c4, 0.38);
@@ -16758,11 +16982,14 @@ class BossGame extends QuizGame {
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), seg = atan(p.y, p.x) * 1.2732, id = floor(seg + 0.5), w = abs(seg - id); // eight points
           float len = mod(id, 2.0) < 0.5 ? 1.0 : 0.56;
           float thin = 0.35 + 0.65 * uK; // (it closes as it goes: its points thin to nothing, they do not fade)
-          float spike = step(w, 0.27 * thin * (1.0 - r / len)) * step(r, len); // hard edges: a cut-out star, not a glow
-          float edge = step(w, 0.27 * thin * (1.0 - r / len) + 0.03) * step(r, len + 0.04) * (1.0 - spike); // its dark keyline
-          float core = step(r, 0.11 * thin);
-          vec3 c = mix(uColor, vec3(1.12), core);
-          gl_FragColor = vec4(c * (spike + core > 0.5 ? 1.0 : 0.0), max(max(spike, core), edge * 0.8) * step(0.03, uK));
+          float t0 = 0.27 * thin * (1.0 - r / len);
+          float spike = step(w, t0) * step(r, len); // hard edges: a cut-out star, not a glow
+          float heart = max(step(w, t0 * 0.46 - 0.02) * step(r, len * 0.66), step(r, 0.15 * thin)); // a white star inside it: the blow itself
+          float d = (w - t0) * max(r, 0.2) * 0.785; // (how far outside the star's edge, as a length)
+          float edge = step(d, 0.034) * step(r, len + 0.05) * (1.0 - spike); // its outline, dark indigo: it reads on a boss of its own colour
+          vec3 c = mix(uColor, vec3(1.6, 1.56, 1.5), heart);
+          c = mix(vec3(0.016, 0.006, 0.062), c, spike);
+          gl_FragColor = vec4(c, max(spike, edge) * step(0.03, uK));
         }`,
     }));
     this.hitStar.layers.set(1);
@@ -16778,26 +17005,32 @@ class BossGame extends QuizGame {
     const atk = { beam: makeBeam(col.getHex(), 3.6), glow: makeBeam(col.getHex(), 0.9), muzzle: glowSprite(0xffffff, 3, 1), tok: 0 };
     atk.muzzle.renderOrder = 7;
     atk.muzzle.visible = false;
-    // (the beam is a flat blade turned to the lens: white core, red, dark red, in hard steps, hottest at the eye.
-    // Two soft additive tubes were a pink wedge of fog, brightest at the floor)
+    // (its blow is a wedge of light from its lens to the bottom edge of the picture: a point at the lens, half the
+    // picture wide where it reaches you, a white core in a red rim. It is drawn in the picture's own plane, so it is
+    // a clean wedge at any depth: a ribbon in the arena read as stripes painted down its chest)
     atk.beam.geometry.dispose();
-    atk.beam.geometry = new THREE.PlaneGeometry(1, 1);
+    atk.beam.geometry = new THREE.BufferGeometry();
+    atk.beam.geometry.setAttribute("position", new THREE.Float32BufferAttribute([-1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 1, 0, -1, 1, 0], 3)); // x: across; y: 0 at its lens, 1 at the bottom edge
     atk.beam.material.dispose();
     atk.beam.material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(1, 0, 0) }, uFade: { value: 1 }, uTime: { value: 0 } },
-      transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 uColor; uniform float uFade; varying vec2 vUv;
+      uniforms: { uColor: { value: new THREE.Color(1, 0, 0) }, uFade: { value: 1 }, uTime: { value: 0 }, uA: { value: new THREE.Vector2() }, uB: { value: new THREE.Vector2(0, -1) }, uHalf: { value: 0.5 }, uGrow: { value: 0 } },
+      transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false,
+      vertexShader: `uniform vec2 uA; uniform vec2 uB; uniform float uHalf; varying vec2 vP;
+        void main(){ vec2 c = mix(uA, uB, position.y); gl_Position = vec4(c.x + position.x * uHalf * mix(0.03, 1.0, position.y), c.y, 0.0, 1.0); vP = vec2(gl_Position.x, position.y); }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uFade; uniform float uGrow; uniform vec2 uA; uniform vec2 uB; uniform float uHalf; varying vec2 vP;
         void main(){
-          float x = abs(vUv.x * 2.0 - 1.0), y = vUv.y;            // across it; along it from the eye (0) to the lens (1)
-          float taper = mix(1.0, 0.3, y) * (0.3 + 0.7 * uFade);     // (it narrows toward the lens, which perspective widens again; and it closes as it dies)
-          float core = step(x, 0.2 * taper), mid = step(x, 0.56 * taper), rim = step(x, taper);
-          float heat = mix(1.0, 0.5, smoothstep(0.0, 0.7, y));
-          vec3 c = mix(uColor * 0.07, uColor * 0.3, mid);
-          c = mix(c, vec3(1.5, 1.32, 1.24), core) * heat;
-          gl_FragColor = vec4(c, rim * mix(0.6, 1.0, mid) * step(0.02, uFade));
+          float y = vP.y;                                     // along it, from its lens (0) to the bottom edge (1)
+          float x = abs(vP.x - mix(uA.x, uB.x, y)) / (uHalf * mix(0.03, 1.0, y)); // across it, from its own centre line (a tapered quad's two triangles would skew it)
+          if (y > uGrow || x > 1.0) discard;                  // (it shoots out from the lens: it is not there all at once)
+          float core = 1.0 - smoothstep(0.24, 0.3, x), rim = step(x, 0.86); // a white core, a red rim, a thin dark edge
+          vec3 c = mix(uColor * 0.1, uColor * mix(1.0, 0.62, smoothstep(0.3, 0.86, x)), rim);
+          c = mix(c, vec3(1.7, 1.62, 1.55), core) * mix(1.0, 0.82, y); // hottest at its lens
+          gl_FragColor = vec4(c, mix(0.86, 1.0, rim) * step(0.02, uFade));
         }`,
     });
+    atk.beam.layers.set(1); // (drawn once, in the picture: not in the floor's mirror)
+    atk.beam.frustumCulled = false;
+    atk.beam.renderOrder = 8;
     s.add(atk.beam, atk.glow, atk.muzzle);
     this.atk = atk;
     const fr = new THREE.RingGeometry(0.85, 1, 64);
@@ -17228,10 +17461,11 @@ class BossGame extends QuizGame {
         if (!GFX.calm && !REDUCED_MOTION) { // a hard-edged star where the bolt lands, in the answer's colour
           const st = this.hitStar;
           st.position.copy(at); st.material.uniforms.uColor.value.copy(neon(hitCol, 1.0)); st.visible = true; this.hitStarT = 0;
+          this.hitLine = (this.hitLine || new THREE.Color()).copy(neon(hitCol, 1.5)); this.hitTint = 1; // (the arena takes the blow's colour for a moment: the floor's lines run in it)
+          // and the boss is a dark shape for that moment, so the star is the brightest thing in the picture whatever the boss's colour
+          const sil = this.rig && this.rig.mat.userData.uSil;
+          if (sil) this.tw.add(0.34, (k) => { sil.value = k < 0.42 ? 1 : 1 - (k - 0.42) / 0.58; }, () => { sil.value = 0; });
         }
-        const em = b.userData.core.userData.mat.emissive;
-        const base = em.clone();
-        this.tw.add(0.2, (k) => { em.setRGB(lerp(0.09, base.r, k), lerp(0.09, base.g, k), lerp(0.09, base.b, k)); }); // (it flares for a few frames and keeps its shape: at full white it was a blob)
         this.tw.add(0.35, (k) => { b.position.z = -Math.sin(k * Math.PI) * 1.2; });
         this.shockwave(b.position.clone(), neon(hitCol, 1.5), 6); // (the ring is the answer's colour too)
       }
@@ -17300,32 +17534,29 @@ class BossGame extends QuizGame {
       const col = COLORS.red; // (its blow is red whatever colour it is: red is "you were hurt" everywhere in the arcade)
       const { beam, glow, muzzle } = this.atk;
       const tok = ++this.atk.tok;
-      { // the blade, from the eye to the lens, turned about its length to face the lens
-        const y = new THREE.Vector3().subVectors(to, eye), len = y.length(), mid = new THREE.Vector3().addVectors(eye, to).multiplyScalar(0.5);
-        y.multiplyScalar(1 / len);
-        const z = new THREE.Vector3().subVectors(this.camBase, mid);
-        z.addScaledVector(y, -z.dot(y)).normalize();
-        beam.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(y, z), y, z));
-        beam.position.copy(mid);
-        beam.scale.set(r * 5, len, 1);
-        beam.visible = true;
-      }
-      beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
-      glow.material.uniforms.uColor.value.copy(neon(col, 0.9));
-      beam.material.uniforms.uFade.value = 1;
-      glow.material.uniforms.uFade.value = 1;
+      // First a flash at its lens; then the wedge shoots from the lens to the bottom edge of the picture, holds, and
+      // closes. (Look only: the blow itself lands at the same moment as it always did.)
+      const bu = beam.material.uniforms, ndc = this._v, half = this.band ? this.band.h / GFX.h : 1;
+      const aim = () => { this.boss.userData.eye.getWorldPosition(ndc).project(this.camera); bu.uA.value.set(ndc.x, ndc.y); bu.uB.value.set(ndc.x * 0.35, -half - 0.04); };
+      aim();
+      bu.uColor.value.setRGB(1.25, 0.03, 0.075); // (red, not the pink a lit neon red goes to)
+      bu.uFade.value = 1; bu.uGrow.value = 0; bu.uHalf.value = 0.4;
+      beam.visible = true;
       muzzle.material.color.copy(neon(col, 3));
       muzzle.material.opacity = 1;
-      muzzle.scale.setScalar(1.9 * this.bossScale);
+      muzzle.scale.setScalar(2.8 * this.bossScale);
       muzzle.position.copy(eye);
       muzzle.visible = true;
       this.flashAt(eye, col, 0.34, 2 * this.bossScale + 1); // (a flare at its eye, not a white blob over the whole figure)
       this.tw.add(0.5, (k) => {
         if (this.atk.tok !== tok) return;
-        beam.material.uniforms.uFade.value = 1 - k;
-        glow.material.uniforms.uFade.value = (1 - k) * (1 - k);
+        const t = k * 0.5, fade = 1 - clamp((t - 0.27) / 0.23, 0, 1);
+        aim();
+        bu.uGrow.value = clamp((t - 0.045) / 0.085, 0, 1);
+        bu.uFade.value = fade;
+        bu.uHalf.value = 0.4 * (0.3 + 0.7 * fade);
         muzzle.material.opacity = 1 - k;
-        muzzle.scale.setScalar((1.9 + k * 1.6) * this.bossScale);
+        muzzle.scale.setScalar((2.8 - 1.5 * Math.min(1, t / 0.12) + k * 0.6) * this.bossScale);
       }, () => { if (this.atk.tok === tok) beam.visible = glow.visible = muzzle.visible = false; });
       this.tw.wait(0.12, hit);
     } else hit();
@@ -17548,7 +17779,7 @@ class BossGame extends QuizGame {
     if (this.hitStar.visible) { // the star a bolt leaves: it opens fast and is gone in a quarter of a second
       const k = Math.min(1, (this.hitStarT += dt / 0.34)), e = 1 - (1 - k) * (1 - k);
       this.hitStar.quaternion.copy(this.camera.quaternion);
-      this.hitStar.scale.setScalar((2.6 + 4.4 * e) * this.bossScale);
+      this.hitStar.scale.setScalar((3.4 + 4.6 * e) * this.bossScale);
       this.hitStar.material.uniforms.uK.value = 1 - k * k;
       this.hitStar.visible = k < 1;
     }
@@ -17571,6 +17802,11 @@ class BossGame extends QuizGame {
       if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
     }
     this.floor.material.uniforms.uReflect.value = 0.55;
+    { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
+      const fl = this.floor.material.uniforms.uLine.value, ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
+      fl.copy(this.lineBase).lerp(this.rageLine, rk).multiplyScalar(0.52 + 0.48 * ch);
+      if (this.hitTint > 0.002) { this.hitTint = Math.max(0, this.hitTint - dt * 4); fl.lerp(this.hitLine, Math.min(1, this.hitTint * 1.25)); }
+    }
     // a slow cinematic drift, with a touch of pointer parallax
     const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
@@ -17618,17 +17854,19 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.34, envI: 1.05, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
+  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.38, envI: 0.86, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
   m.vertexColors = true;
-  const uL = { value: new Float32Array(8).fill(1) };
+  const uL = { value: new Float32Array(8).fill(1) }, uSil = { value: 0 };
   m.userData.uL = uL;
+  m.userData.uSil = uSil; // 1: the whole figure is a dark shape for a moment (a blow has landed on it)
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uL = uL;
+    sh.uniforms.uSil = uSil;
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute float aGlow; uniform float uL[8]; varying float vGlow; varying vec3 vObjP;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlow = aGlow > 0.5 ? uL[int(aGlow + 0.5)] : -1.0; vObjP = position;");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying float vGlow; varying vec3 vObjP;\nfloat cyH(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }")
+      .replace("#include <common>", "#include <common>\nvarying float vGlow; varying vec3 vObjP; uniform float uSil;\nfloat cyH(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float cyLum = dot(vColor, vec3(0.3333));
         float cyBone = smoothstep(0.62, 0.72, cyLum);
@@ -17641,6 +17879,7 @@ function cyborgArmor(env, hex) {
         vec3 cyLn = (1.0 - smoothstep(vec3(0.0), cyW, cyG)) * step(cyOn, vec3(0.7));
         float cySeam = max(cyLn.x, max(cyLn.y, cyLn.z)) * step(0.3, cyH(floor(cyQ + 0.5) + 3.0));
         diffuseColor.rgb *= 1.0 - (0.62 - 0.3 * cyBone) * cySeam;
+        diffuseColor.rgb *= 1.0 - 0.34 * cyBone; // (paper and bone are off-white: at their full paleness the arena's lamps clipped them to white)
         if (vGlow > -0.5) {
           if (vGlow < 0.004) discard; // a lamp that is off (a crack not yet opened) is not there at all
           diffuseColor.rgb = vec3(0.0);
@@ -17650,9 +17889,26 @@ function cyborgArmor(env, hex) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
-        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(geometryNormal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
+        else {
+          vec3 cyV = normalize(vViewPosition);
+          float cyNV = max(dot(geometryNormal, cyV), 0.0);
+          totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - cyNV, 3.0); // a rim of its own colour along every edge that turns away
+          // a cool rim from above and behind on the plate: black armour keeps an edge against a dark crowd
+          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(1.0 - cyNV, 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
+          // one hard, stepped highlight from the key lamp: lacquer on the plate, brighter on steel (a flat face catches it whole, as a toy's does). Paper takes none.
+          float cyS = dot(reflect(-cyV, geometryNormal), normalize(vec3(-0.32, 0.62, 0.72)));
+          float cyHi = smoothstep(0.93, 0.945, cyS) * 0.55 + smoothstep(0.985, 0.992, cyS) * 0.45;
+          totalEmissiveRadiance += (emissive * 12.0 + vec3(0.2, 0.2, 0.24)) * cyHi * mix(0.55, 1.0, cySteel) * (1.0 - cyBone);
+        }`)
+      .replace("#include <tonemapping_fragment>", `
+        if (vGlow < -0.5) { // plate and paper are matt and never clip: lit, they top out at off-white (pure white is for its lamps and for a blow)
+          float cyTop = max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b));
+          if (cyTop > 0.6) gl_FragColor.rgb *= (0.6 + (cyTop - 0.6) / (1.0 + (cyTop - 0.6) * 2.6)) / cyTop;
+        }
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.012, 0.007, 0.034), uSil * (vGlow < -0.5 ? 1.0 : 0.88));
+        #include <tonemapping_fragment>`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor-4";
+  m.customProgramCacheKey = () => "cyborg-armor-6";
   return surfaceDetail(m, { scale: 0.8, height: 0.0011, grain: 0.6, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
@@ -17897,16 +18153,20 @@ const CY_HEAD = {
     K.add("head", cyLoft([[2.3, 0.5, 0.5, 0.14], [2.75, 0.66, 0.6, 0.18], [3.15, 0.6, 0.55, 0.18]]), racerM(0, 0, 0), CY.ARMOR);
     K.fplate("head", 1.06, 0.92, 0.14, 0, 2.76, 0.58, CY.PLATE, 0.12);
     K.cyl("head", 0.1, 0.1, 0.08, -0.27, 2.9, 0.66, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 8);
-    K.eye(-0.27, 2.9, 0.72, 0.26);
+    K.eye(-0.27, 2.9, 0.72, 0.36);
     K.cyl("head", 0.28, 0.34, 0.4, 0.24, 2.88, 0.82, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 10); // the loupe's barrel
     K.add("head", new THREE.TorusGeometry(0.31, 0.05, 6, 16), racerM(0.24, 2.9, 1.03, 1, 1, 1, 0.12), CY.BONE); // its rim
     K.glowCyl("head", 3, 0.25, 0.03, 0.24, 2.9, 1.035, 2.3, Math.PI / 2 + 0.12); // the lens, lit in its own colour (not an eye)
     K.cyl("head", 0.08, 0.08, 0.04, 0.24, 2.9, 1.05, CY.DARK, Math.PI / 2 + 0.12, 0, 0, 8);
     K.glow("head", 3, 0.1, 0.045, 0.02, 0.34, 3.03, 1.07, 3.4, 0.12, 0, -0.7, 0xffffff); // one hard glint on the glass
     K.tube("head", [0.44, 2.98, 0.72], [0.62, 3.12, 0.3], 0.025, CY.STEEL); // its arm, back to the temple
-    [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.028 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.2)); // the fine print
+    [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.034 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.8)); // the fine print
     K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
-    K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap
+    K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap: a ledger's board
+    K.plate("head", 1.04, 0.03, 0.98, 0, 3.262, 0.046, CY.PLATE, 0.1, 0, 0, 0.02); // its raised panel
+    K.plate("head", 0.07, 0.035, 1.14, 0, 3.287, 0.043, CY.STEEL, 0.1); // its spine
+    K.sym((sd) => { [-0.34, -0.17, 0, 0.17, 0.34].forEach((dz) => K.plate("head", 0.32, 0.016, 0.03, sd * 0.28, 3.283 - dz * 0.1, 0.046 + dz, CY.BONE, 0.1)); // ruled lines
+      [-0.52, 0.52].forEach((dz) => K.cyl("head", 0.035, 0.035, 0.03, sd * 0.57, 3.262 - dz * 0.1, 0.048 + dz, CY.STEEL, 0.1, 0, 0, 6)); }); // a stud at each corner
     K.cone("head", [0.45, 3.25, -0.2], [0.75, 4.0, -0.5], 0.04, 0.01, CY.BONE); // a quill behind the ear
   },
   // a low dome sunk between the shoulders, one slit of light
@@ -18618,11 +18878,11 @@ class CyborgRig {
     G.chest.scale.set(1 + 0.012 * br * sw, 1 + 0.018 * br * sw, 1 + 0.04 * br * sw);
     const sag = stage >= 2 && stage < 4 ? 0.1 : 0;
     G.chest.position.y = -0.5 + 0.045 * br * sw - sag - crouch * 0.25 - this.dead * 0.25;
-    G.chest.rotation.x = crouch * 0.4 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.16 - brink * 0.1 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
+    G.chest.rotation.x = crouch * 0.3 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.16 - brink * 0.1 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
     G.chest.rotation.z = (stage >= 2 ? 0.05 : 0) + this.hit * 0.06 + (brink * Math.sin(t * 17) * 0.012) * calm;
     // ---- head: looks about, glares down as it charges, snaps back when hit
     G.head.rotation.y = Math.sin(t * 0.37 * D.sway) * 0.22 * land + Pointer.x * 0.25 + twOf(0) * 1.6;
-    G.head.rotation.x = crouch * 0.6 + tele * 0.2 - this.hit * 0.5 + lg * 0.25 + Math.sin(t * 0.23) * 0.04 + Math.min(1, this.dead * 1.4) * 0.7;
+    G.head.rotation.x = crouch * -0.16 + tele * 0.2 - this.hit * 0.5 + lg * 0.25 + Math.sin(t * 0.23) * 0.04 + Math.min(1, this.dead * 1.4) * 0.7;
     G.head.rotation.z = (stage >= 2 ? -0.12 : 0) + twOf(1) * 1.5 + Math.sin(t * 0.31) * 0.03;
     // ---- arms
     for (const [s, sd, i] of [["L", -1, 2], ["R", 1, 3]]) {
@@ -18639,7 +18899,7 @@ class CyborgRig {
     // ---- lamps
     const P = this.power;
     uL[1] = P * (1 + 0.7 * tele + 0.6 * rage);
-    uL[2] = P * (0.75 + 0.25 * br + tele * (0.9 + 0.7 * Math.sin(t * (7 + 8 * tele))) + rage * 0.9 + Math.max(0, this.hit) * 3);
+    uL[2] = P * (0.75 + 0.25 * br + tele * (0.9 + 0.7 * Math.sin(t * (7 + 8 * tele))) + rage * 0.9 + Math.max(0, this.hit) * 0.8);
     uL[3] = smoothstep(0.25, 0.9, P) * (0.85 + 0.15 * Math.sin(t * 1.3) + rage * (0.5 + 0.5 * Math.sin(t * 7.5)) + brink * 0.8);
     uL[4] = P * (0.5 + 0.5 * Math.sin(t * 11) * Math.sin(t * 3.7)) * 1.3; // circuitry flickers softly
     for (let i = 0; i < 3; i++) {

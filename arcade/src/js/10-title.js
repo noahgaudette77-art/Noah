@@ -27,7 +27,8 @@ class TitleScene extends Scene3D {
     this.skyKit = new AmbientSky({ host: this, director: this.director, win: () => ({ w: Math.min(150, 0.6 * A * 262 * 0.8), y0: 100, y1: 150, z: -250, s: 1 }), flash: (k) => { this.skyFlash = Math.max(this.skyFlash, k); } });
     this.city.events(this.director);
     this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.45, ripple: 0.0016, streak: 0.009, pulse: 1 });
+    this.floor = makeNeonFloor({ size: 1600, cell: 7, line: 0xff3ad4, lineK: 1.0, base: 0x05011a, mirror: this.mirror, reflect: 0.5, ripple: 0.0016, streak: 0.009, pulse: 1,
+      road: 7.7, roadGrid: 0.2, sun: { top: 0xffc640, bottom: 0xff2a86, spread: 0.078, k: 0.56, z: -360, bars: 5.5 } }); // (the carriageway is a wet mirror first and a grid second; the sun lies down it)
     s.add(this.floor);
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();

@@ -282,13 +282,19 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null } = {}) {
+  // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
+  // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
+  // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
   const uniforms = Object.assign(fogUniforms(), {
     uLine: { value: neon(line, lineK) }, uBase: { value: new THREE.Color(base) }, uCell: { value: cell }, uScroll: { value: 0 },
     tReflect: { value: mirror ? mirror.texture : null }, uMirror: { value: mirror ? mirror.matrix : new THREE.Matrix4() },
     uReflect: { value: mirror ? reflect : 0 }, uTime: { value: 0 }, uGlow: { value: glow }, uPolar: { value: polar ? 1 : 0 },
     uSpokes: { value: spokes }, uRipple: { value: ripple }, uStreak: { value: streak }, uGrid: { value: gridAlpha }, uPulse: { value: pulse },
     uFall: { value: fall ? new THREE.Vector2(fall[0], fall[1]) : new THREE.Vector2(0, 0) }, // [z where it starts to thin, how fast]
+    uRoad: { value: new THREE.Vector2(road, roadGrid) },
+    uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
+    uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
   });
   const mat = new THREE.ShaderMaterial({
     uniforms, extensions: { derivatives: true },
@@ -297,18 +303,51 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uLine; uniform vec3 uBase; uniform float uCell; uniform float uScroll; uniform sampler2D tReflect; uniform float uReflect;
       uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse; uniform vec2 uFall;
+      uniform vec2 uRoad; uniform vec4 uSunCol; uniform vec3 uSunA; uniform vec3 uSunB;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){
         vec3 col = uBase;
+        float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;
         if (uReflect > 0.0) {
           vec2 ruv = vRefl.xy / vRefl.w;
           vec2 rip = vec2(sin(vWorld.z * 2.3 + uTime * 0.9) * 0.6 + sin(vWorld.x * 1.1 - uTime * 0.5) * 0.4, cos(vWorld.x * 1.7 + vWorld.z * 0.4 + uTime * 0.6)) * uRipple;
-          vec3 r = texture2D(tReflect, ruv + rip).rgb * 0.36;
-          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak)).rgb * 0.22;
-          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
-          r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
-          r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          vec3 r;
+          if (onRoad > 0.5) {
+            // wet asphalt: every light above it lies down the road as a long streak (nine taps, each pixel's set shifted a
+            // little so the streak is a streak and not nine copies), over a clear mirror image
+            float st = uStreak * 1.15, jit = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5;
+            r = texture2D(tReflect, ruv + rip).rgb * 0.3;
+            for (int i = 1; i <= 4; i++) {
+              float o = (float(i) + jit * 0.9) * st, wgt = 0.21 - 0.037 * float(i);
+              r += (texture2D(tReflect, ruv + rip + vec2(0.0, o)).rgb + texture2D(tReflect, ruv + rip - vec2(0.0, o)).rgb) * wgt;
+            }
+            r *= 1.22;
+          } else {
+            r = texture2D(tReflect, ruv + rip).rgb * 0.36;
+            r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak)).rgb * 0.22;
+            r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak)).rgb * 0.22;
+            r += texture2D(tReflect, ruv + rip + vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+            r += texture2D(tReflect, ruv + rip - vec2(0.0, uStreak * 2.2)).rgb * 0.1;
+          }
           col += r * uReflect * mix(1.0, exp(-max(vWorld.z - uFall.x, 0.0) * uFall.y), step(1e-6, uFall.y));
+        }
+        if (uSunCol.y > 0.0) {
+          // the striped sun, lying down the road: bars as wide as the sun where they start, each its own width and a
+          // little off the line (water is never still), gold nearest us and rose under the skyline, drifting slowly
+          float dz = max(cameraPosition.z - vWorld.z, 0.5);
+          float u = log2(dz) * uSunCol.w - uTime * 0.16;
+          float id = floor(u), fb = fract(u);
+          float h1 = fract(sin(id * 12.9898) * 43758.5453), h2 = fract(sin(id * 78.233) * 12543.123);
+          float hw = min(uSunCol.x * dz, uRoad.x > 0.0 ? uRoad.x - 0.6 : 1e5) * (0.5 + 0.5 * h1);
+          float cx = (h2 - 0.5) * hw * 0.6 + sin(uTime * 0.8 + id * 1.7) * hw * 0.1;
+          float ax = abs(vWorld.x - cx), aw = fwidth(vWorld.x) * 1.5, fu = fwidth(u);
+          float e = clamp(ax / max(hw, 1e-3), 0.0, 1.0);
+          float th = 0.26 * sqrt(1.0 - e * e) * (0.65 + 0.35 * h2);        // each bar a lens: thick in its middle, pointed at its ends
+          float wv = sin(vWorld.x * 1.7 + id * 2.4 + uTime * 0.9) * 0.035; // and never quite level
+          float bar = (1.0 - smoothstep(th - fu, th + fu, abs(fb - 0.5 + wv))) * step(e, 0.999);
+          bar = mix(bar, 0.4 * (1.0 - smoothstep(hw - aw, hw + aw, ax)), smoothstep(0.25, 0.7, fu));
+          float along = clamp((vWorld.z - uSunCol.z) / max(cameraPosition.z - uSunCol.z, 1.0), 0.0, 1.0); // 0 under the sun, 1 at our feet
+          col += mix(uSunB, uSunA, smoothstep(0.55, 0.98, along)) * bar * uSunCol.y * mix(1.0, 0.5, smoothstep(0.9, 1.0, along));
         }
         vec2 g; vec2 fw;
         if (uPolar > 0.5) {
@@ -326,12 +365,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         float ln = 1.0 - min(min(aa.x, aa.y), 1.0);
         float halo = exp(-min(aa.x, aa.y) * 0.45);
         float fade = 1.0 - smoothstep(0.18, 0.55, max(fw.x, fw.y));
-        col += uLine * (ln + halo * uGlow * 0.2) * fade * uGrid;
+        float gk = uGrid * mix(1.0, uRoad.y, onRoad); // (on the carriageway the grid steps back: the wet road is a mirror first)
+        col += uLine * (ln + halo * uGlow * 0.2) * fade * gk;
         if (uPulse > 0.0) {
           // packets of light running along the lines: toward us down the long ones, sideways on the cross ones
           float pz = pow(0.5 + 0.5 * sin(g.y * 0.55 + uTime * 2.3 + floor(g.x - 0.5) * 1.7), 14.0);
           float px = pow(0.5 + 0.5 * sin(g.x * 0.7 - uTime * 1.6 + floor(g.y - 0.5) * 2.3), 18.0);
-          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2;
+          col += (uLine + vec3(0.6)) * uPulse * fade * ((1.0 - min(aa.x, 1.0)) * pz + (1.0 - min(aa.y, 1.0)) * px * 0.7) * 2.2 * mix(1.0, uRoad.y, onRoad);
         }
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
@@ -653,7 +693,7 @@ function makeShootingStar() {
 // unlit glass mirroring the sky, light from the street climbing the lower storeys.
 // Bright boxes (trim, lamps, signs) pass through as light. Where the windows would be
 // smaller than a pixel or two they melt into an even glow instead of shimmering.
-function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
+function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, sky = 0xff3ad4, skyB = 0x2ad8ff, zenith = 0x120836, street = 0xff3ad4, lit = 0.4, cell = [1.3, 1.75], k = 1 } = {}) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uWin: { value: neon(win, 2.3) }, uCool: { value: neon(cool, 1.8) }, uHot: { value: neon(hot, 1.9) },
       uSky: { value: new THREE.Color(sky) }, uSkyB: { value: new THREE.Color(skyB) }, uZen: { value: new THREE.Color(zenith) }, uStreet: { value: neon(street, 0.4) }, uLit: { value: lit }, uCell: { value: new THREE.Vector2(cell[0], cell[1]) }, uK: { value: k },
@@ -674,22 +714,32 @@ function cityFacadeMaterial({ win = 0xffd9a0, cool = 0x9fe8ff, hot = 0xff8fd0, s
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
           col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
           if (abs(n.y) < 0.5) {
-            float along = abs(n.z) > abs(n.x) ? vW.x : vW.z;
-            vec2 q = vec2(along / uCell.x, vW.y / uCell.y), id = floor(q), f = fract(q);
-            float fine = 1.0 - smoothstep(0.22, 0.6, max(fwidth(q.x), fwidth(q.y)));
+            bool side = abs(n.x) > abs(n.z); // a wall along the avenue: seen at a glance
+            float along = side ? vW.z : vW.x;
+            // panes twice the size on the storeys nearest the road (shopfronts, lobbies), and wider on the walls seen at a
+            // glancing angle (a fine lattice there is all shimmer)
+            vec2 cs = uCell * (vW.y < uCell.y * 8.0 ? 2.0 : 1.0) * vec2(side ? 1.5 : 1.0, 1.0);
+            vec2 q = vec2(along, vW.y) / cs, id = floor(q), f = fract(q);
+            vec2 fq = fwidth(vec2(along, vW.y)) / cs;
+            float fine = 1.0 - smoothstep(0.22, 0.6, max(fq.x, fq.y));
             float h1 = hash13(vec3(id, 1.0)), h2 = hash13(vec3(id, 5.0)), h3 = hash13(vec3(id, 9.0));
-            float busy = step(0.6, hash13(vec3(id.y, floor(along / 17.0), 3.0)));
-            float on = step(h1, uLit * (0.25 + 1.6 * busy));
+            // lit in clusters: blocks five bays wide and four floors high. Four in ten are dark; the rest are busy to
+            // different degrees, and each has its own light: amber, cyan or magenta
+            vec2 bid = floor(id / vec2(5.0, 4.0));
+            float b1 = hash13(vec3(bid, 21.0)), b2 = hash13(vec3(bid, 27.0)), b3 = hash13(vec3(bid, 33.0));
+            float dens = step(0.4, b1) * mix(0.34, 0.96, b2) * min(uLit * 2.2, 1.15);
+            float on = step(h1, dens);
+            vec3 bc = b3 < 0.44 ? uWin : (b3 < 0.72 ? uCool : uHot);
             // structure: a pier every sixth bay, a spandrel under every window, two sashes to a bay
             float pier = step(0.5, mod(id.x, 6.0));
             float pane = smoothstep(0.1, 0.16, f.x) * smoothstep(0.9, 0.84, f.x) * smoothstep(0.22, 0.28, f.y) * smoothstep(0.9, 0.84, f.y) * pier;
             pane *= 0.3 + 0.7 * smoothstep(0.0, 0.04, abs(f.x - 0.5));
-            vec3 wc = h2 < 0.5 ? uWin : (h2 < 0.72 ? uWin * vec3(1.0, 0.8, 0.55) : (h2 < 0.9 ? uCool : uHot));
-            float level = 0.22 + 0.78 * h3 * h3; // most rooms dim, a few bright
+            vec3 wc = h2 < 0.76 ? bc : (h2 < 0.86 ? uWin : (h2 < 0.93 ? uCool : uHot)); // (a few rooms keep their own colour)
+            float level = 0.42 + 0.58 * h3 * h3; // most rooms dim, a few bright (none so dim its amber goes khaki)
             float room = 0.4 + 0.6 * smoothstep(0.22, 0.9, f.y); // brighter toward the ceiling lights
             float tw = 0.85 + 0.15 * sin(uTime * (0.3 + h2 * 0.9) + h1 * 40.0);
             vec3 glass = skyc * (0.06 + 0.34 * fres);
-            vec3 near = mix(glass, wc * level * room * tw, on), far = glass + uWin * (uLit * 0.16);
+            vec3 near = mix(glass, wc * level * room * tw, on), far = glass + bc * (dens * 0.3);
             float gl = mix(0.55, pane, fine);
             col = mix(col, mix(far, near, fine), gl);
             // the low sun glancing off the panes, and lightning: a cold glint on the same glass, for a moment

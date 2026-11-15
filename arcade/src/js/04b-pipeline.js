@@ -486,6 +486,7 @@ function makePipeline(renderer, hdr) {
   const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat);
   white.needsUpdate = true;
   const W = [0.26, 0.2, 0.15, 0.11, 0.08, 0.06, 0.05]; // each bloom level's share: tight glow first, then the haze
+  const TIGHT = [0, 0, 0.3, 0.6, 0.82, 0.92, 0.96]; // how much of each level a scene's bloomTight takes away
   let sw = 2, sh = 2;
   return {
     hdr,
@@ -590,7 +591,7 @@ function makePipeline(renderer, hdr) {
         const b = bright.uniforms;
         b.tDiffuse.value = litRT.texture;
         b.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
-        b.uKnee.value = 0.45;
+        b.uKnee.value = p.knee !== undefined ? p.knee : 0.45;
         b.uPx.value.set(1 / sw, 1 / sh);
         pass(bright, down[0].t);
         for (let i = 1; i < LEVELS; i++) {
@@ -604,8 +605,9 @@ function makePipeline(renderer, hdr) {
             const u = ups.uniforms;
             u.tLow.value = low; u.tHere.value = down[i].t.texture;
             u.uPx.value.set(1 / lw, 1 / lh);
-            u.uW.value = W[i];
-            u.uLowK.value = i === LEVELS - 2 ? W[LEVELS - 1] : 1; // (the deepest level arrives unweighted)
+            const tk = p.bloomTight || 0; // (0: the full chain; 1: the wide levels almost off, so the glow is about half as wide)
+            u.uW.value = W[i] * (1 - tk * TIGHT[i]);
+            u.uLowK.value = i === LEVELS - 2 ? W[LEVELS - 1] * (1 - tk * TIGHT[LEVELS - 1]) : 1; // (the deepest level arrives unweighted)
             pass(ups, up[i]);
             low = up[i].texture; lw = down[i].w; lh = down[i].h;
           }

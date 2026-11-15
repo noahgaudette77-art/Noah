@@ -264,6 +264,32 @@ class SpaceTraffic {
   dispose() { this.trails.material.dispose(); }
 }
 
+// A dart: two crossed blades, shaped where they are drawn: a short pointed head, the swell just behind it, a long tail
+// thinning to nothing. A hard edge and a white heart, in whatever colour it is given.
+function spaceDartMaterial() {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
+    vertexShader: "varying vec3 vC; varying vec2 vUv; void main(){ vUv = uv; vC = vec3(1.0);\n#ifdef USE_INSTANCING_COLOR\nvC = instanceColor;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }",
+    fragmentShader: `varying vec3 vC; varying vec2 vUv;
+      void main(){
+        float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;                        // along it (0 its tail, 1 its head); across it (0 on its axis, 1 at its edge)
+        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
+        float aa = fwidth(x) * 1.2 + 1e-4;
+        float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.34 - aa, w * 0.34, x);
+        if (body < 0.004) discard;
+        gl_FragColor = vec4(mix(vC * (0.55 + 0.45 * t), vC * 0.6 + vec3(1.25), core) * body, 1.0);
+      }`,
+  });
+}
+function spaceDartGeo() {
+  const g = new THREE.BufferGeometry(), pos = [], uv = [];
+  for (const [ax, ay] of [[1, 0], [0, 1]]) // two blades: one lying flat, one standing
+    [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].forEach(([a, z]) => { pos.push(a * ax, a * ay, z); uv.push(a + 0.5, z + 0.5); });
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  return g;
+}
+
 // Bolts and flashes for whatever happens: a pool of each, made once.
 class SpaceFX {
   constructor(space) {
@@ -273,6 +299,11 @@ class SpaceFX {
     this._zero = new THREE.Matrix4().makeScale(0, 0, 0);
     this.pool = Array.from({ length: 48 }, (_, i) => { this.bolts.setMatrixAt(i, this._zero); this.bolts.setColorAt(i, new THREE.Color(0, 0, 0)); return { i, life: 0, t: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), len: 1, w: 1, col: new THREE.Color(), q: new THREE.Quaternion() }; });
     g.scene.add(this.bolts);
+    this.darts = new THREE.InstancedMesh(spaceDartGeo(), spaceDartMaterial(), 28);
+    this.darts.frustumCulled = false;
+    this.darts.renderOrder = 9;
+    this.dpool = Array.from({ length: 28 }, (_, i) => { this.darts.setMatrixAt(i, this._zero); this.darts.setColorAt(i, new THREE.Color(0, 0, 0)); return { i, life: 0, t: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), len: 1, w: 1, col: new THREE.Color(), q: new THREE.Quaternion() }; });
+    g.scene.add(this.darts);
     this.flashes = Array.from({ length: 6 }, () => { const sp = glowSprite(0xffffff, 1, 0); sp.visible = false; g.scene.add(sp); return { sp, t: 0, dur: 0, a: 0, s0: 1, s1: 1 }; });
     this._m = new THREE.Matrix4(); this._s = new THREE.Vector3(); this._c = new THREE.Color(); this._z = new THREE.Vector3(0, 0, 1); this._d = new THREE.Vector3();
   }
@@ -289,6 +320,20 @@ class SpaceFX {
     if (!b) return;
     b.p.copy(a).add(c).multiplyScalar(0.5); b.v.set(0, 0, 0); b.life = b.t = life; b.len = a.distanceTo(c); b.w = w; b.col.setRGB(col[0], col[1], col[2]);
     b.q.setFromUnitVectors(this._z, this._d.copy(c).sub(a).normalize());
+  }
+  // a spark thrown from p at v: a dart, its point leading
+  dart(p, v, life, col, len, w) {
+    const b = this.dpool.find((x) => x.life <= 0);
+    if (!b) return;
+    b.p.copy(p); b.v.copy(v); b.life = b.t = life; b.len = len; b.w = w; b.col.setRGB(col[0], col[1], col[2]);
+    b.q.setFromUnitVectors(this._z, this._d.copy(v).normalize());
+  }
+  // a still lance from a into c: widest where it leaves a, a needle where it enters c
+  lance(a, c, life, col, w) {
+    const b = this.dpool.find((x) => x.life <= 0);
+    if (!b) return;
+    b.p.copy(a).add(c).multiplyScalar(0.5); b.v.set(0, 0, 0); b.life = b.t = life; b.len = a.distanceTo(c); b.w = w; b.col.setRGB(col[0], col[1], col[2]);
+    b.q.setFromUnitVectors(this._z, this._d.copy(a).sub(c).normalize());
   }
   // a glow that swells and fades once (never a flicker): from size s0 to s1 over dur
   flash(p, col, s0, s1, dur, a = 1) {
@@ -311,6 +356,20 @@ class SpaceFX {
     this.bolts.visible = hi > 0;
     this.bolts.instanceMatrix.needsUpdate = true;
     if (this.bolts.instanceColor) this.bolts.instanceColor.needsUpdate = true;
+    let dh = 0;
+    this.dpool.forEach((b) => {
+      if (b.life <= 0) return;
+      dh = b.i + 1;
+      b.life -= dt;
+      if (b.life <= 0) { this.darts.setMatrixAt(b.i, this._zero); return; }
+      b.p.addScaledVector(b.v, dt); b.p.z += sp * dt;
+      this.darts.setMatrixAt(b.i, this._m.compose(b.p, b.q, this._s.set(b.w, b.w, b.len)));
+      this.darts.setColorAt(b.i, this._c.copy(b.col).multiplyScalar(Math.min(1, (b.life / b.t) * 2.5)));
+    });
+    this.darts.count = dh;
+    this.darts.visible = dh > 0;
+    this.darts.instanceMatrix.needsUpdate = true;
+    if (this.darts.instanceColor) this.darts.instanceColor.needsUpdate = true;
     this.flashes.forEach((f) => {
       if (f.t <= 0) return;
       f.t -= dt;

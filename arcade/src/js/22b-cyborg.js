@@ -9,17 +9,19 @@ const cyHash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; retu
 // Armor: lit metal whose "glow" vertices are light sources on numbered channels
 // (eyes, core, trim, circuitry, cracks), so one mesh carries plating and lamps.
 function cyborgArmor(env, hex) {
-  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.34, envI: 1.05, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
+  const m = glossy(0xffffff, { env, metal: 0.9, rough: 0.38, envI: 0.86, emissive: hex, emissiveK: 0.03 }); // (polished plate: the arena's lamps and its own colour show in it)
   m.vertexColors = true;
-  const uL = { value: new Float32Array(8).fill(1) };
+  const uL = { value: new Float32Array(8).fill(1) }, uSil = { value: 0 };
   m.userData.uL = uL;
+  m.userData.uSil = uSil; // 1: the whole figure is a dark shape for a moment (a blow has landed on it)
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uL = uL;
+    sh.uniforms.uSil = uSil;
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute float aGlow; uniform float uL[8]; varying float vGlow; varying vec3 vObjP;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlow = aGlow > 0.5 ? uL[int(aGlow + 0.5)] : -1.0; vObjP = position;");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying float vGlow; varying vec3 vObjP;\nfloat cyH(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }")
+      .replace("#include <common>", "#include <common>\nvarying float vGlow; varying vec3 vObjP; uniform float uSil;\nfloat cyH(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float cyLum = dot(vColor, vec3(0.3333));
         float cyBone = smoothstep(0.62, 0.72, cyLum);
@@ -32,6 +34,7 @@ function cyborgArmor(env, hex) {
         vec3 cyLn = (1.0 - smoothstep(vec3(0.0), cyW, cyG)) * step(cyOn, vec3(0.7));
         float cySeam = max(cyLn.x, max(cyLn.y, cyLn.z)) * step(0.3, cyH(floor(cyQ + 0.5) + 3.0));
         diffuseColor.rgb *= 1.0 - (0.62 - 0.3 * cyBone) * cySeam;
+        diffuseColor.rgb *= 1.0 - 0.34 * cyBone; // (paper and bone are off-white: at their full paleness the arena's lamps clipped them to white)
         if (vGlow > -0.5) {
           if (vGlow < 0.004) discard; // a lamp that is off (a crack not yet opened) is not there at all
           diffuseColor.rgb = vec3(0.0);
@@ -41,9 +44,26 @@ function cyborgArmor(env, hex) {
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= 1.0 - 0.85 * cyBone;")
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         if (vGlow > -0.5) totalEmissiveRadiance = vColor * vGlow;
-        else totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - max(dot(geometryNormal, normalize(vViewPosition)), 0.0), 3.0); // a rim of its own colour along every edge that turns away`);
+        else {
+          vec3 cyV = normalize(vViewPosition);
+          float cyNV = max(dot(geometryNormal, cyV), 0.0);
+          totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - cyNV, 3.0); // a rim of its own colour along every edge that turns away
+          // a cool rim from above and behind on the plate: black armour keeps an edge against a dark crowd
+          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(1.0 - cyNV, 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
+          // one hard, stepped highlight from the key lamp: lacquer on the plate, brighter on steel (a flat face catches it whole, as a toy's does). Paper takes none.
+          float cyS = dot(reflect(-cyV, geometryNormal), normalize(vec3(-0.32, 0.62, 0.72)));
+          float cyHi = smoothstep(0.93, 0.945, cyS) * 0.55 + smoothstep(0.985, 0.992, cyS) * 0.45;
+          totalEmissiveRadiance += (emissive * 12.0 + vec3(0.2, 0.2, 0.24)) * cyHi * mix(0.55, 1.0, cySteel) * (1.0 - cyBone);
+        }`)
+      .replace("#include <tonemapping_fragment>", `
+        if (vGlow < -0.5) { // plate and paper are matt and never clip: lit, they top out at off-white (pure white is for its lamps and for a blow)
+          float cyTop = max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b));
+          if (cyTop > 0.6) gl_FragColor.rgb *= (0.6 + (cyTop - 0.6) / (1.0 + (cyTop - 0.6) * 2.6)) / cyTop;
+        }
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.012, 0.007, 0.034), uSil * (vGlow < -0.5 ? 1.0 : 0.88));
+        #include <tonemapping_fragment>`);
   };
-  m.customProgramCacheKey = () => "cyborg-armor-4";
+  m.customProgramCacheKey = () => "cyborg-armor-6";
   return surfaceDetail(m, { scale: 0.8, height: 0.0011, grain: 0.6, scratch: 1.4, smudge: 0.45 }); // (cast plate: a soft hammered relief, hair scratches; fine grain only up close)
 }
 
@@ -288,16 +308,20 @@ const CY_HEAD = {
     K.add("head", cyLoft([[2.3, 0.5, 0.5, 0.14], [2.75, 0.66, 0.6, 0.18], [3.15, 0.6, 0.55, 0.18]]), racerM(0, 0, 0), CY.ARMOR);
     K.fplate("head", 1.06, 0.92, 0.14, 0, 2.76, 0.58, CY.PLATE, 0.12);
     K.cyl("head", 0.1, 0.1, 0.08, -0.27, 2.9, 0.66, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 8);
-    K.eye(-0.27, 2.9, 0.72, 0.26);
+    K.eye(-0.27, 2.9, 0.72, 0.36);
     K.cyl("head", 0.28, 0.34, 0.4, 0.24, 2.88, 0.82, CY.STEEL, Math.PI / 2 + 0.12, 0, 0, 10); // the loupe's barrel
     K.add("head", new THREE.TorusGeometry(0.31, 0.05, 6, 16), racerM(0.24, 2.9, 1.03, 1, 1, 1, 0.12), CY.BONE); // its rim
     K.glowCyl("head", 3, 0.25, 0.03, 0.24, 2.9, 1.035, 2.3, Math.PI / 2 + 0.12); // the lens, lit in its own colour (not an eye)
     K.cyl("head", 0.08, 0.08, 0.04, 0.24, 2.9, 1.05, CY.DARK, Math.PI / 2 + 0.12, 0, 0, 8);
     K.glow("head", 3, 0.1, 0.045, 0.02, 0.34, 3.03, 1.07, 3.4, 0.12, 0, -0.7, 0xffffff); // one hard glint on the glass
     K.tube("head", [0.44, 2.98, 0.72], [0.62, 3.12, 0.3], 0.025, CY.STEEL); // its arm, back to the temple
-    [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.028 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.2)); // the fine print
+    [0.46, 0.34, 0.24, 0.16].forEach((w, i) => K.glow("head", 3, w, 0.034 - i * 0.004, 0.04, -0.04, 2.56 - i * 0.07, 0.69 + i * 0.008, 2.8)); // the fine print
     K.sym((sd) => { K.cone("head", [sd * 0.3, 2.4, 0.5], [sd * 0.12, 1.98, 0.95], 0.08, 0.01, CY.STEEL); K.breakaway("head", 0.5, 0.5, 0.1, sd * 0.68, 2.8, 0.05, CY.DARK, 0, sd * Math.PI / 2, 0, sd < 0 ? 3 : 9); });
-    K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap
+    K.plate("head", 1.3, 0.07, 1.25, 0, 3.22, 0.05, CY.DARK, 0.1, 0, 0, 0.03); // a flat cap: a ledger's board
+    K.plate("head", 1.04, 0.03, 0.98, 0, 3.262, 0.046, CY.PLATE, 0.1, 0, 0, 0.02); // its raised panel
+    K.plate("head", 0.07, 0.035, 1.14, 0, 3.287, 0.043, CY.STEEL, 0.1); // its spine
+    K.sym((sd) => { [-0.34, -0.17, 0, 0.17, 0.34].forEach((dz) => K.plate("head", 0.32, 0.016, 0.03, sd * 0.28, 3.283 - dz * 0.1, 0.046 + dz, CY.BONE, 0.1)); // ruled lines
+      [-0.52, 0.52].forEach((dz) => K.cyl("head", 0.035, 0.035, 0.03, sd * 0.57, 3.262 - dz * 0.1, 0.048 + dz, CY.STEEL, 0.1, 0, 0, 6)); }); // a stud at each corner
     K.cone("head", [0.45, 3.25, -0.2], [0.75, 4.0, -0.5], 0.04, 0.01, CY.BONE); // a quill behind the ear
   },
   // a low dome sunk between the shoulders, one slit of light
@@ -1009,11 +1033,11 @@ class CyborgRig {
     G.chest.scale.set(1 + 0.012 * br * sw, 1 + 0.018 * br * sw, 1 + 0.04 * br * sw);
     const sag = stage >= 2 && stage < 4 ? 0.1 : 0;
     G.chest.position.y = -0.5 + 0.045 * br * sw - sag - crouch * 0.25 - this.dead * 0.25;
-    G.chest.rotation.x = crouch * 0.4 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.16 - brink * 0.1 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
+    G.chest.rotation.x = crouch * 0.3 + sag * 0.6 - this.hit * 0.22 + lg * 0.3 + tele * 0.16 - brink * 0.1 + Math.min(1, this.dead) * 0.5 + twOf(4) * 0.5;
     G.chest.rotation.z = (stage >= 2 ? 0.05 : 0) + this.hit * 0.06 + (brink * Math.sin(t * 17) * 0.012) * calm;
     // ---- head: looks about, glares down as it charges, snaps back when hit
     G.head.rotation.y = Math.sin(t * 0.37 * D.sway) * 0.22 * land + Pointer.x * 0.25 + twOf(0) * 1.6;
-    G.head.rotation.x = crouch * 0.6 + tele * 0.2 - this.hit * 0.5 + lg * 0.25 + Math.sin(t * 0.23) * 0.04 + Math.min(1, this.dead * 1.4) * 0.7;
+    G.head.rotation.x = crouch * -0.16 + tele * 0.2 - this.hit * 0.5 + lg * 0.25 + Math.sin(t * 0.23) * 0.04 + Math.min(1, this.dead * 1.4) * 0.7;
     G.head.rotation.z = (stage >= 2 ? -0.12 : 0) + twOf(1) * 1.5 + Math.sin(t * 0.31) * 0.03;
     // ---- arms
     for (const [s, sd, i] of [["L", -1, 2], ["R", 1, 3]]) {
@@ -1030,7 +1054,7 @@ class CyborgRig {
     // ---- lamps
     const P = this.power;
     uL[1] = P * (1 + 0.7 * tele + 0.6 * rage);
-    uL[2] = P * (0.75 + 0.25 * br + tele * (0.9 + 0.7 * Math.sin(t * (7 + 8 * tele))) + rage * 0.9 + Math.max(0, this.hit) * 3);
+    uL[2] = P * (0.75 + 0.25 * br + tele * (0.9 + 0.7 * Math.sin(t * (7 + 8 * tele))) + rage * 0.9 + Math.max(0, this.hit) * 0.8);
     uL[3] = smoothstep(0.25, 0.9, P) * (0.85 + 0.15 * Math.sin(t * 1.3) + rage * (0.5 + 0.5 * Math.sin(t * 7.5)) + brink * 0.8);
     uL[4] = P * (0.5 + 0.5 * Math.sin(t * 11) * Math.sin(t * 3.7)) * 1.3; // circuitry flickers softly
     for (let i = 0; i < 3; i++) {

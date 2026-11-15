@@ -13,10 +13,10 @@
 // are placed in the frame round it.
 const SPACE_REGIONS = [
   { id: "nebula", name: "NEBULA", base: 0x030418, a: 0x2334d8, b: 0x2aa8ff, c: 0x7a5cff, gold: 0xffc46a, neb: 1.25, stars: 1.1, fog: 0x050826, amb: 0x5e6ed0, key: 0xdce6ff,
-    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [10.5, 9, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
+    sun: [-9.5, 9.5], sunCol: 0xffe6c0, sunK: 0.75, planet: [11.6, 3.2, 1500, 62], clouds: 1, cloudA: 0x2a3fff, cloudB: 0x35c8ff, rocks: 0.1, rockTint: 0x5a6a9a,
     streak: 0xd9c8ff, traffic: { freighter: 2, tanker: 1, cruiser: 0, fighter: 3, drone: 2, shuttle: 2 } },
   { id: "belt", name: "ASTEROID BELT", base: 0x0a0406, a: 0x8a3a12, b: 0xff9a2a, c: 0xffd870, gold: 0xfff0c0, neb: 0.8, stars: 0.9, fog: 0x140806, amb: 0x9a7058, key: 0xffe6c0,
-    sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11, 8.5, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
+    sun: [9.5, 9], sunCol: 0xffc070, sunK: 1.05, planet: [-11.9, 3.2, 1700, 80], clouds: 0.55, cloudA: 0x8a4a1e, cloudB: 0xffb357, rocks: 1, rockTint: 0x8a6a52,
     streak: 0xffd9a8, traffic: { freighter: 3, tanker: 3, cruiser: 0, fighter: 0, drone: 3, shuttle: 1 } },
   { id: "orbit", name: "PLANET ORBIT", base: 0x020714, a: 0x12389a, b: 0x2ad0e8, c: 0x8a5cff, gold: 0xffe9a8, neb: 0.55, stars: 1.15, fog: 0x04081c, amb: 0x5a78c8, key: 0xdcecff,
     sun: [-10.5, 8], sunCol: 0xfff4dc, sunK: 0.9, planet: [16.5, 13, 760, 205], clouds: 0.15, cloudA: 0x2a6ad0, cloudB: 0x35efff, rocks: 0.3, rockTint: 0x9ab0c8,
@@ -25,7 +25,7 @@ const SPACE_REGIONS = [
     sun: [10, 9.5], sunCol: 0xffffff, sunK: 0.8, planet: [-11.5, -8, 1800, 72], clouds: 0.2, cloudA: 0x3a4ad8, cloudB: 0xff7ad0, rocks: 0.05, rockTint: 0x7a80a0,
     station: 1, streak: 0xcfe0ff, traffic: { freighter: 3, tanker: 2, cruiser: 1, fighter: 3, drone: 3, shuttle: 5 } },
   { id: "graveyard", name: "SHIP GRAVEYARD", base: 0x020a0a, a: 0x0a5a50, b: 0x3adf9a, c: 0xc8ff6a, gold: 0xffd27a, neb: 0.75, stars: 0.8, fog: 0x04120e, amb: 0x4a9080, key: 0xd0ffe6,
-    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-10.5, 9, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
+    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
     wrecks: 1, streak: 0xb8ffd8, traffic: { freighter: 0, tanker: 0, cruiser: 0, fighter: 2, drone: 4, shuttle: 1 } },
   { id: "gate", name: "WORMHOLE GATE", base: 0x0a0318, a: 0x8a3aff, b: 0xffe14f, c: 0xff3ad4, gold: 0xffffff, neb: 1.05, stars: 1.1, fog: 0x10052a, amb: 0x8a62d8, key: 0xf2e4ff,
     sun: [10.5, 8], sunCol: 0xffe0f8, sunK: 0.7, planet: [-11, -7.5, 1700, 64], clouds: 0.7, cloudA: 0xa65fff, cloudB: 0xffe14f, rocks: 0.08, rockTint: 0x8a70b0,
@@ -592,8 +592,8 @@ class BlasterSpace {
   }
 
   // The light of a blast on the dust and on every hull near it (the game calls this where the tunnel's walls used to light up).
-  flash(pos, color) {
-    this.flashK = 1;
+  flash(pos, color, k = 1) {
+    this.flashK = k;
     this.flashCol = this.flashCol || new THREE.Color();
     this.flashCol.set(color);
     this.shared.uFlashPos.value.copy(pos);

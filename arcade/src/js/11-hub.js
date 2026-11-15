@@ -185,16 +185,25 @@ class HubKit {
 // ---- hub materials -----------------------------------------------------------
 // Glossy paint, chrome and plastic in one material: colour, metalness and
 // roughness come per vertex; the env map supplies the neon reflections.
+// The cabinet in front has one cool rim light: where it stands (in view space) and that light's colour.
+const HUB_RIM = { uHubHero: { value: new THREE.Vector3(0, 0, -100) }, uHubRim: { value: new THREE.Color(0, 0, 0) } };
 function hubLitMaterial(env, map = null) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env, envMapIntensity: 1.4, map });
   m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, HUB_RIM);
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute vec2 aMR;\nvarying vec2 vMR;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nvMR = aMR;");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec2 vMR;")
+      .replace("#include <common>", "#include <common>\nvarying vec2 vMR;\nuniform vec3 uHubHero; uniform vec3 uHubRim;")
       .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vMR.y;")
-      .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;");
+      .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vMR.x;")
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        { // the rim light: from behind the cabinet in front, above it and to one side
+          vec3 hubD = -vViewPosition - uHubHero;
+          float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
+          totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1);
+        }`);
   };
   // every painted, plastic and chrome surface in the room gets a grain, hair scratches and smudges
   return surfaceDetail(m, { scale: 1.25, height: 0.0007, scratch: 0.8, smudge: 0.45 });
@@ -316,6 +325,12 @@ function hubScreenMaterial(tex, color) {
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.8;
         // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
         crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.11 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.07);
+        { // and one curved highlight across its upper corner (the glass is a bulge, not a flat pane): a thin bright arc, a soft one inside it
+          vec2 ha = q - vec2(0.42, -0.62);
+          float hr = length(ha), hp = atan(ha.y, ha.x);
+          float span = smoothstep(1.84, 2.04, hp) * (1.0 - smoothstep(2.5, 2.72, hp));
+          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * (smoothstep(0.03, 0.0, abs(hr - 1.25)) * 0.72 + smoothstep(0.2, 0.0, abs(hr - 1.15)) * 0.17);
+        }
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
         gl_FragColor = vec4(col, 1.0);
@@ -404,21 +419,22 @@ function hubFloorMaterial(mirror, carpet) {
           float dd = dot(d, d);
           ao *= 1.0 - 0.55 * exp(-dd * 0.85);
           vec2 e = p - uPoolPos[i];
-          light += uPoolCol[i] * exp(-dot(e, e) * 0.75) + uConeCol[i] * exp(-dd * 0.3);
+          float ee = dot(e, e);
+          light += uPoolCol[i] * (exp(-ee * 1.9) * 0.9 + exp(-ee * 10.0) * 1.7) + uConeCol[i] * exp(-dd * 0.5) * 0.55; // (a tight pool with a hot core: it was a wide wash)
         }
         float ang = atan(p.x, -p.y);
         vec3 hue = 0.5 + 0.5 * cos(6.2831853 * (vec3(0.0, 0.33, 0.67) + ang * 0.8));
         light += hue * uBg * 0.12 * exp(-(r - 15.2) * (r - 15.2) * 0.8) * (0.7 + 0.3 * sin(ang * 50.0));
-        col = col * ao + light * mix(cp * 1.8 + 0.06, vec3(0.5), tiles) * ao;
+        col = col * ao + light * mix(cp * 1.8 + 0.06, vec3(0.5) * mix(0.4, 1.0, grout), tiles) * ao; // (the joints between the tiles stay dark in the light)
         if (uReflect > 0.0) {
           vec3 V = normalize(cameraPosition - vWorld);
           float fres = 0.32 + 0.68 * pow(1.0 - clamp(V.y, 0.0, 1.0), 3.0);
-          vec2 ruv = vRefl.xy / vRefl.w + vec2(sin(p.y * 3.1 + p.x * 0.7), cos(p.x * 2.7 - p.y * 0.5)) * 0.0012;
-          float s = 0.006;
+          vec2 ruv = vRefl.xy / vRefl.w + vec2(sin(p.y * 3.1 + p.x * 0.7), cos(p.x * 2.7 - p.y * 0.5)) * 0.0005;
+          float s = 0.0022; // (a polished floor: the image in it is nearly as sharp as the thing)
           vec3 rc = texture2D(tReflect, ruv).rgb * 0.4
             + (texture2D(tReflect, ruv + vec2(0.0, s)).rgb + texture2D(tReflect, ruv - vec2(0.0, s)).rgb) * 0.2
             + (texture2D(tReflect, ruv + vec2(0.0, s * 2.4)).rgb + texture2D(tReflect, ruv - vec2(0.0, s * 2.4)).rgb) * 0.1;
-          col += rc * mix(0.06, mix(0.25, 0.6, grout), tiles) * fres * uReflect;
+          col += rc * mix(0.06, mix(0.22, 0.68, grout), tiles) * fres * uReflect;
         }
         float dr = abs(r - ${TR});
         float wr = max(0.03, fr * 1.2);
@@ -812,7 +828,7 @@ function hubWallAtlas() {
 
 class HubScene extends Scene3D {
   constructor() {
-    super({ fov: 58, fog: [0x0b0424, 13, 46] });
+    super({ fov: 58, fog: [0x0b0424, 15, 80] }); // (half the fog it had: the floor's mirror and the far machines keep their edges)
     this.sel = Hub.index;
     this.angle = this.cabAngle(this.sel);
     this.restDolly = 1.2;
@@ -860,9 +876,20 @@ class HubScene extends Scene3D {
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight, this.backLight, this.deskLight);
     // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
     this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
-    this.heroPool = makeLightPool({ color: 0xffffff, radius: 3.4, intensity: 1 });
+    this.heroPool = makeLightPool({ color: 0xffffff, radius: 2.0, intensity: 1 });
+    this.heroCore = makeLightPool({ color: 0xffffff, radius: 0.8, intensity: 1 }); // its hot core
+    // the screen's light on the control panel of the cabinet in front: brightest under the glass, gone by the lip, never quite steady
+    this.heroSpill = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color(0, 0, 0) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(vUv.y, 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
+    }));
+    this.heroSpill.matrixAutoUpdate = false;
+    this.heroSpill.frustumCulled = false;
+    this.heroSpill.renderOrder = 3;
     this.heroMotes = makeMotes({ count: 80, box: [4.4, 6.4, 4.4], center: [0, 3.5, 0], color: 0xffe9f6, size: 0.06, k: 1.0 });
-    [this.heroCone, this.heroPool, this.heroMotes].forEach((o) => { o.layers.set(1); s.add(o); });
+    [this.heroCone, this.heroPool, this.heroCore, this.heroMotes, this.heroSpill].forEach((o) => { o.layers.set(1); s.add(o); });
     this._white = new THREE.Color(1, 1, 1);
     const atlas = hubWallAtlas();
     const wallTex = this.canvasTex(atlas.canvas);
@@ -1037,7 +1064,7 @@ class HubScene extends Scene3D {
     const TM = 0.034;
     for (let k = 1; k < 9; k++) {
       const f = hubFace(HUB_SIDE[k], HUB_SIDE[k + 1], 0.5, TM / 2 - 0.008);
-      [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), col, { k: 2.1, g }));
+      [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), cab.id === "exam" ? 0xdcc8ff : col, { k: cab.id === "exam" ? 2.7 : 2.1, g }));
     }
     // kick plate, coin door with lit slots, stripes either side
     const zf = HUB_BODY[1][0];
@@ -1056,6 +1083,7 @@ class HubScene extends Scene3D {
     K.box(B.lit, IW, top.len, 0.012, at(0, top.y, top.z, top.rx), col, { k: 0.42, aux: [0.15, 0.3] });
     // the printed overlay on the control panel, and the plate on the coin door
     const art = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.0135);
+    { const sf2 = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.021); (this.panelMs = this.panelMs || [])[i] = at(0, sf2.y, sf2.z, sf2.rx).multiply(new THREE.Matrix4().makeScale(IW - 0.03, sf2.len - 0.012, 1)); }
     K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
     K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
     const onPanel = (x, s, h) => {
@@ -1336,7 +1364,14 @@ class HubScene extends Scene3D {
       lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
-    lv[G.bg] *= 0.34; lv[G.signs] *= 0.36; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    lv[G.bg] *= 0.28; lv[G.signs] *= 0.34; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
+    // (with the Final Exam in front the hall behind it goes darker and cooler, toward teal: violet on violet had no outline)
+    if (this.examIx === undefined) { this.examIx = CABINETS.findIndex((c) => c.id === "exam"); this._teal = new THREE.Color(0x12a4ac); this._fog0 = new THREE.Color(0x0b0424); this._fog1 = new THREE.Color(0x03141b); this._sky0 = new THREE.Color(0x8c6cff); this._sky1 = new THREE.Color(0x2f93a0); }
+    const ek = this.examIx >= 0 ? this.cabs[this.examIx].focus : 0;
+    lv[G.bg] *= 1 - 0.45 * ek; lv[G.signs] *= 1 - 0.4 * ek; lv[G.sign] *= 1 - 0.4 * ek; lv[G.signC] *= 1 - 0.4 * ek;
+    this.scene.fog.color.copy(this._fog0).lerp(this._fog1, ek);
+    this.scene.background.copy(this._bg0 || (this._bg0 = this.scene.background.clone())).lerp(this._fog1, ek);
+    this.hemi.color.copy(this._sky0).lerp(this._sky1, ek);
     const goal = 0.18 + 0.32 * on[G.tube] + (0.2 * (on[G.ring] + on[G.ring + 1] + on[G.ring + 2])) / 3 + (0.3 * cabsOn) / this.cabs.length;
     this.room += (goal - this.room) * Math.min(1, dt * 3);
     const room = this.room;
@@ -1359,10 +1394,21 @@ class HubScene extends Scene3D {
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
       this.heroCone.position.set(hx, 7.4, hz);
-      this.heroCone.material.uniforms.uI.value = 0.075 * hk;
+      this.heroCone.material.uniforms.uI.value = 0.036 * hk; // (half the haze: the shaft is a hint of light, not a fog of the game's colour)
       this.heroCone.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.45);
       this.heroPool.position.set(Math.sin(a) * (HUB_R - 1.7), 0.03, -Math.cos(a) * (HUB_R - 1.7));
-      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.26 * hk);
+      this.heroPool.material.color.copy(this.lightCol).multiplyScalar(0.3 * hk);
+      this.heroCore.position.set(Math.sin(a) * (HUB_R - 1.55), 0.034, -Math.cos(a) * (HUB_R - 1.55));
+      this.heroCore.material.color.copy(this.lightCol).lerp(this._white, 0.5).multiplyScalar(0.34 * hk);
+      // the screen's light on its control panel (a slow waver, well under three flashes a second), and its one cool rim light
+      if (this.panelMs && this.panelMs[this.sel]) {
+        const fl = REDUCED_MOTION ? 1 : 0.86 + 0.09 * Math.sin(this.t * 7.3) + 0.05 * Math.sin(this.t * 3.1);
+        this.heroSpill.matrix.copy(this.panelMs[this.sel]);
+        this.heroSpill.matrixWorldNeedsUpdate = true;
+        this.heroSpill.material.uniforms.uColor.value.copy(this.lightCol).lerp(this._white, 0.12).multiplyScalar(0.7 * sc.scr.power * sc.focus * hk * fl);
+      }
+      HUB_RIM.uHubHero.value.set(Math.sin(a) * HUB_R, 2.3, -Math.cos(a) * HUB_R).applyMatrix4(this.camera.matrixWorldInverse);
+      HUB_RIM.uHubRim.value.setRGB(0.46, 0.72, 1.0).multiplyScalar(1.25 * hk);
       this.heroMotes.position.set(hx, 0, hz);
       this.heroMotes.userData.drift(this.t);
     }
@@ -1377,10 +1423,10 @@ class HubScene extends Scene3D {
       fu.uConeCol.value[i].copy(c.coneCol).multiplyScalar(0.3 * lv[G.cab + i]);
     });
     const wu = this.wallMat.uniforms;
-    this.ringCols.forEach((c, k) => wu.uRingCol.value[k].copy(c).multiplyScalar(lv[G.ring + k]));
+    this.ringCols.forEach((c, k) => wu.uRingCol.value[k].copy(c).lerp(this._teal, 0.75 * ek).multiplyScalar(lv[G.ring + k] * (1 - 0.4 * ek)));
     wu.uRoom.value = room;
-    this.wallGlows.forEach((w, k) => wu.uGlowCol.value[k].copy(w.c).multiplyScalar(lv[w.g]));
-    this.ceilMat.uniforms.uGlow.value.copy(this.tubeTint).multiplyScalar(lv[G.tube]);
+    this.wallGlows.forEach((w, k) => wu.uGlowCol.value[k].copy(w.c).lerp(this._teal, 0.6 * ek).multiplyScalar(lv[w.g] * (1 - 0.35 * ek)));
+    this.ceilMat.uniforms.uGlow.value.copy(this.tubeTint).lerp(this._teal, 0.7 * ek).multiplyScalar(lv[G.tube] * (1 - 0.3 * ek));
     this.ceilMat.uniforms.uStars.value = room;
     this.marqMat.uniforms.uSel.value = G.cab + this.sel;
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;

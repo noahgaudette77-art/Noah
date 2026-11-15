@@ -190,7 +190,7 @@ function demonSkin(env, U) {
         ${DEMON_NOISE}
         varying vec3 vDmP; varying vec3 vDmN; varying vec4 vDmZ;
         uniform float uDmKick; uniform vec3 uDmCoreCol; uniform vec3 uDmHaze;
-        uniform float uDmHit; uniform float uDmGone; uniform float uDmCrack; uniform float uDmPow; uniform float uDmDim; uniform float uDmRage; uniform float uDmBeat; uniform float uDmSweep;
+        uniform float uDmHit; uniform vec3 uDmHitCol; uniform float uDmGone; uniform float uDmCrack; uniform float uDmPow; uniform float uDmDim; uniform float uDmRage; uniform float uDmBeat; uniform float uDmSweep;
         uniform float uDmMouth; uniform float uDmClaw; uniform float uDmExpose; uniform float uDmBoomHot; uniform float uDmRimK; uniform vec3 uDmEye; uniform vec3 uDmRim;`)
       .replace("#include <map_fragment>", `#include <map_fragment>
         float dmL = dot(texelColor.rgb, vec3(0.3, 0.59, 0.11)), dmZone = floor(vDmZ.x + 0.5), dmTip = vDmZ.y, dmCut = 1.0, dmBurn = 0.0;
@@ -259,7 +259,7 @@ function demonSkin(env, U) {
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += vec3(1.05, 0.9, 1.0) * uDmHit * (0.16 + 1.25 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.0)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -271,7 +271,7 @@ class BlasterDemon {
   constructor(game) {
     const g = (this.g = game), geo = DemonModel.geometry();
     this.U = {
-      uDmBoom: { value: 0 }, uDmBoomK: { value: 1 }, uDmShedA: { value: 0 }, uDmShedB: { value: 0 }, uDmFall: { value: 0 }, uDmHit: { value: 0 }, uDmGone: { value: 0 }, uDmCrack: { value: 0 }, uDmPow: { value: 0 }, uDmDim: { value: 1 },
+      uDmBoom: { value: 0 }, uDmBoomK: { value: 1 }, uDmShedA: { value: 0 }, uDmShedB: { value: 0 }, uDmFall: { value: 0 }, uDmHit: { value: 0 }, uDmHitCol: { value: new THREE.Color(0.9, 0.78, 0.86) }, uDmGone: { value: 0 }, uDmCrack: { value: 0 }, uDmPow: { value: 0 }, uDmDim: { value: 1 },
       uDmRage: { value: 0 }, uDmBeat: { value: 0 }, uDmSweep: { value: 9 }, uDmMouth: { value: 0 }, uDmClaw: { value: 0 }, uDmExpose: { value: 0 }, uDmBoomHot: { value: 0 }, uDmRimK: { value: 0.4 }, uDmKick: { value: 0.45 },
       uDmEye: { value: new THREE.Color(0, 0, 0) }, uDmRim: { value: new THREE.Color(0, 0, 0) }, uDmCoreCol: { value: new THREE.Color(0, 0, 0) }, uDmHaze: { value: new THREE.Color(0, 0, 0) },
     };
@@ -382,6 +382,7 @@ class BlasterDemon {
     const g = this.g, U = this.U, k6 = this.S / 6, p = this.aimPoint(this._a);
     g.blastAt(p, color, 0.42);
     U.uDmHit.value = 1;
+    U.uDmHitCol.value.set(color).lerp(this._w || (this._w = new THREE.Color(1, 1, 1)), 0.22).multiplyScalar(1.05); // (its edges take the answer's colour for a moment)
     this.kickTo = 1;
     this.twist = -this.twist;
     this.hits++;

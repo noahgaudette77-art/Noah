@@ -415,9 +415,9 @@ class BlasterFighter {
     if (this.inT < 1) Sound.sfx("whoosh");
   }
   // the guns fire: a kick back, their flash on the hull. The nose cannons and the wing cannons take turns.
-  fire(col) {
+  fire(col, pods) {
     this.recoil = 1; this.gun = 1;
-    this.barrel ^= 1;
+    if (pods) this.barrel = 1; else this.barrel ^= 1; // (pods: the wing cannons, every time)
     this.muzzles.forEach((m, i) => m.copy(this.guns[this.barrel][i]));
     this.U.uGunAt.value.set(Math.abs(this.muzzles[0].x), this.muzzles[0].y, this.muzzles[0].z);
     if (col !== undefined) this.gunCol.set(col);

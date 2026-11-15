@@ -51,10 +51,14 @@ class TitleLife {
       this.blades.frustumCulled = false;
       s.add(this.blades);
       blades.forEach(([x, y, z, w, h, i]) => { // each lights the wall beside it
-        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.42), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(11, 20), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.8), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
         sp.position.set(x + (x < 0 ? -3.2 : 3.2), y + h / 2, z + 1.2);
         sp.layers.set(1);
         s.add(sp);
+        const halo = new THREE.Mesh(new THREE.PlaneGeometry(w * 3.4, h * 1.5), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(NEON[i % 4], 0.5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); // and each has a halo in the wet air
+        halo.position.set(x, y + h / 2, z - 0.4);
+        halo.layers.set(1);
+        s.add(halo);
       }); }
 
     // ---- 2. the avenue: lamp posts that slide past with the street, and strings of lanterns across it
@@ -64,11 +68,15 @@ class TitleLife {
       const post = b.build("color");
       this.posts = [0x35efff, 0xff3ad4].map((c, k) => {
         const ge = post.clone(), col = ge.attributes.color, tint = new THREE.Color(c);
-        for (let i = 0; i < col.count; i++) if (col.getX(i) > 1) col.setXYZ(i, tint.r * 3.2, tint.g * 3.2, tint.b * 3.2);
+        for (let i = 0; i < col.count; i++) if (col.getX(i) > 1) col.setXYZ(i, tint.r * 5 + 0.6, tint.g * 5 + 0.6, tint.b * 5 + 0.6);
         const m = new THREE.InstancedMesh(ge, this.hullMat, 13);
         m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(m);
-        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: tint.clone().multiplyScalar(1.3), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 13);
+        // four patches of light to a lamp, in one mesh: its pool on the pavement and kerb, a hot core under the tube, a
+        // streak down the wet road toward us, and a halo round the tube itself
+        const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 52);
+        { const lc = new THREE.Color(), hot = tint.clone().lerp(new THREE.Color(1, 1, 1), 0.45);
+          for (let i = 0; i < 13; i++) { pools.setColorAt(i * 4, lc.copy(tint).multiplyScalar(1.5)); pools.setColorAt(i * 4 + 1, lc.copy(hot).multiplyScalar(2.1)); pools.setColorAt(i * 4 + 2, lc.copy(hot).multiplyScalar(0.95)); pools.setColorAt(i * 4 + 3, lc.copy(tint).multiplyScalar(1.25)); } }
         pools.frustumCulled = false; pools.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         s.add(pools);
         return { m, pools, sd: k ? 1 : -1 };
@@ -276,14 +284,21 @@ class TitleLife {
     const loop = (t0, span, T) => ((t0 % T) / T) * span * 2 - span;
     this.facade.material.uniforms.uTime.value = t;
     this.streams.material.uniforms.uTime.value = t;
-    this.blades.material.color.setScalar(1.3 + 0.15 * Math.sin(t * 0.8));
+    this.blades.material.color.setScalar(1.8 + 0.15 * Math.sin(t * 0.8));
     // lamp posts ride the street toward us and come round again at the far end
     { const M = this._m || (this._m = new THREE.Matrix4()), V = this._v || (this._v = new THREE.Vector3(12, 12, 1)), d = g.dist, L = 13 * 28;
+      const M2 = this._m2 || (this._m2 = new THREE.Matrix4()), cx = g.camera.position.x, cz = g.camera.position.z;
       for (const P of this.posts) {
         for (let i = 0; i < 13; i++) {
-          const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L);
+          const z = -L + 14 + ((i * 28 + d + (P.sd > 0 ? 14 : 0)) % L), lx = P.sd * 9.05;
           P.m.setMatrixAt(i, M.makeRotationY(P.sd > 0 ? Math.PI : 0).setPosition(P.sd * 10.5, 0, z));
-          P.pools.setMatrixAt(i, M.makeRotationX(-Math.PI / 2).scale(V).setPosition(P.sd * 9.0, 0.06, z));
+          P.pools.setMatrixAt(i * 4, M.makeRotationX(-Math.PI / 2).scale(V.set(12, 12, 1)).setPosition(P.sd * 9.0, 0.06, z));
+          P.pools.setMatrixAt(i * 4 + 1, M.makeRotationX(-Math.PI / 2).scale(V.set(3.6, 3.6, 1)).setPosition(lx, 0.07, z));
+          // the streak: from under the lamp toward the camera's feet (where a light's image lies on wet ground)
+          const dx = cx - lx, dzc = cz - z, dl = Math.hypot(dx, dzc) || 1, near = clamp(1.3 - dl / 105, 0, 1), len = Math.min(17, dl * 0.7) * near;
+          M.makeRotationY(Math.atan2(-dx / dl, -dzc / dl)).multiply(M2.makeRotationX(-Math.PI / 2)).scale(V.set(1.15 * near, len, 1)).setPosition(lx + (dx / dl) * (len * 0.5 + 0.6), 0.075, z + (dzc / dl) * (len * 0.5 + 0.6));
+          P.pools.setMatrixAt(i * 4 + 2, M);
+          P.pools.setMatrixAt(i * 4 + 3, M.makeScale(2.3, 2.3, 1).setPosition(lx, 7.36, z + 0.2));
         }
         P.m.instanceMatrix.needsUpdate = true; P.pools.instanceMatrix.needsUpdate = true;
       }

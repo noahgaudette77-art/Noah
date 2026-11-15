@@ -509,7 +509,7 @@ class RacerCar {
     if (sky && this.glassU) { this.glassU.uGlassSky.value.copy(sky.horizon).multiplyScalar(0.62); this.glassU.uGlassSky2.value.copy(sky.top).multiplyScalar(0.7); }
     ch[0] = 0.85 + 0.15 * Math.sin(t * 2.1) + this.flame * 0.5; // mint trim breathes
     ch[1] = 0.56 + 0.8 * smoothstep(0, 0.25, this.brake); // tail lamps, brighter under braking (lit, not a haze over the whole tail)
-    ch[2] = 0.75 + 0.35 * lamps + this.flame * 0.9; // roof lamps
+    ch[2] = 0.55 + 0.25 * lamps + this.flame * 0.6; // roof lamps (lit, not burning a hole in the roof)
     const chase = (t * (0.6 + 0.5 * this.flame)) % 1; // a chase across the four markers, well under 3 Hz
     for (let i = 0; i < 4; i++) {
       const d = Math.abs(((chase - i / 4 + 1.5) % 1) - 0.5);

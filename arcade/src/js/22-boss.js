@@ -108,7 +108,8 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
-    s.userData.post = { exposure: 1.1, bloom: 0.78, threshold: 1.1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.45,
+    s.userData.post = { exposure: 1.1, bloom: 0.55, threshold: 1.5, knee: 0.22, bloomTight: 1, saturation: 1.16, contrast: 1.14, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.18, streak: 0.3, // (only its lamps, the ring and a blow bloom, and tightly: plate and paper used to clip to white)
+     
       dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
     this.fogBase = s.fog.color.clone().lerp(col, 0.1);
     s.fog.color.copy(this.fogBase);
@@ -127,7 +128,7 @@ class BossGame extends QuizGame {
         { color: 0x35efff, pos: [16, 4, 4], w: 10, h: 3, k: 2.2 },
         { color: 0xff3ad4, pos: [-16, 5, 2], w: 10, h: 3, k: 2.2 },
         { color: 0x6a5aff, pos: [-6, -12, 10], w: 14, h: 4, k: 1.6 },
-        { color: 0xd4c8ff, pos: [4, 14, 10], w: 6, h: 1.5, k: 2.2 }, // (lilac, and lower: at white 3.2 a plate that faced it blew out)
+        { color: 0xd4c8ff, pos: [4, 14, 10], w: 6, h: 1.5, k: 1.6 }, // (lilac, and lower: at white 3.2 a plate that faced it blew out)
       ],
     });
     this.ambient = new THREE.AmbientLight(0x7566c4, 0.38);
@@ -217,11 +218,14 @@ class BossGame extends QuizGame {
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), seg = atan(p.y, p.x) * 1.2732, id = floor(seg + 0.5), w = abs(seg - id); // eight points
           float len = mod(id, 2.0) < 0.5 ? 1.0 : 0.56;
           float thin = 0.35 + 0.65 * uK; // (it closes as it goes: its points thin to nothing, they do not fade)
-          float spike = step(w, 0.27 * thin * (1.0 - r / len)) * step(r, len); // hard edges: a cut-out star, not a glow
-          float edge = step(w, 0.27 * thin * (1.0 - r / len) + 0.03) * step(r, len + 0.04) * (1.0 - spike); // its dark keyline
-          float core = step(r, 0.11 * thin);
-          vec3 c = mix(uColor, vec3(1.12), core);
-          gl_FragColor = vec4(c * (spike + core > 0.5 ? 1.0 : 0.0), max(max(spike, core), edge * 0.8) * step(0.03, uK));
+          float t0 = 0.27 * thin * (1.0 - r / len);
+          float spike = step(w, t0) * step(r, len); // hard edges: a cut-out star, not a glow
+          float heart = max(step(w, t0 * 0.46 - 0.02) * step(r, len * 0.66), step(r, 0.15 * thin)); // a white star inside it: the blow itself
+          float d = (w - t0) * max(r, 0.2) * 0.785; // (how far outside the star's edge, as a length)
+          float edge = step(d, 0.034) * step(r, len + 0.05) * (1.0 - spike); // its outline, dark indigo: it reads on a boss of its own colour
+          vec3 c = mix(uColor, vec3(1.6, 1.56, 1.5), heart);
+          c = mix(vec3(0.016, 0.006, 0.062), c, spike);
+          gl_FragColor = vec4(c, max(spike, edge) * step(0.03, uK));
         }`,
     }));
     this.hitStar.layers.set(1);
@@ -237,26 +241,32 @@ class BossGame extends QuizGame {
     const atk = { beam: makeBeam(col.getHex(), 3.6), glow: makeBeam(col.getHex(), 0.9), muzzle: glowSprite(0xffffff, 3, 1), tok: 0 };
     atk.muzzle.renderOrder = 7;
     atk.muzzle.visible = false;
-    // (the beam is a flat blade turned to the lens: white core, red, dark red, in hard steps, hottest at the eye.
-    // Two soft additive tubes were a pink wedge of fog, brightest at the floor)
+    // (its blow is a wedge of light from its lens to the bottom edge of the picture: a point at the lens, half the
+    // picture wide where it reaches you, a white core in a red rim. It is drawn in the picture's own plane, so it is
+    // a clean wedge at any depth: a ribbon in the arena read as stripes painted down its chest)
     atk.beam.geometry.dispose();
-    atk.beam.geometry = new THREE.PlaneGeometry(1, 1);
+    atk.beam.geometry = new THREE.BufferGeometry();
+    atk.beam.geometry.setAttribute("position", new THREE.Float32BufferAttribute([-1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 1, 0, -1, 1, 0], 3)); // x: across; y: 0 at its lens, 1 at the bottom edge
     atk.beam.material.dispose();
     atk.beam.material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(1, 0, 0) }, uFade: { value: 1 }, uTime: { value: 0 } },
-      transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 uColor; uniform float uFade; varying vec2 vUv;
+      uniforms: { uColor: { value: new THREE.Color(1, 0, 0) }, uFade: { value: 1 }, uTime: { value: 0 }, uA: { value: new THREE.Vector2() }, uB: { value: new THREE.Vector2(0, -1) }, uHalf: { value: 0.5 }, uGrow: { value: 0 } },
+      transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false,
+      vertexShader: `uniform vec2 uA; uniform vec2 uB; uniform float uHalf; varying vec2 vP;
+        void main(){ vec2 c = mix(uA, uB, position.y); gl_Position = vec4(c.x + position.x * uHalf * mix(0.03, 1.0, position.y), c.y, 0.0, 1.0); vP = vec2(gl_Position.x, position.y); }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uFade; uniform float uGrow; uniform vec2 uA; uniform vec2 uB; uniform float uHalf; varying vec2 vP;
         void main(){
-          float x = abs(vUv.x * 2.0 - 1.0), y = vUv.y;            // across it; along it from the eye (0) to the lens (1)
-          float taper = mix(1.0, 0.3, y) * (0.3 + 0.7 * uFade);     // (it narrows toward the lens, which perspective widens again; and it closes as it dies)
-          float core = step(x, 0.2 * taper), mid = step(x, 0.56 * taper), rim = step(x, taper);
-          float heat = mix(1.0, 0.5, smoothstep(0.0, 0.7, y));
-          vec3 c = mix(uColor * 0.07, uColor * 0.3, mid);
-          c = mix(c, vec3(1.5, 1.32, 1.24), core) * heat;
-          gl_FragColor = vec4(c, rim * mix(0.6, 1.0, mid) * step(0.02, uFade));
+          float y = vP.y;                                     // along it, from its lens (0) to the bottom edge (1)
+          float x = abs(vP.x - mix(uA.x, uB.x, y)) / (uHalf * mix(0.03, 1.0, y)); // across it, from its own centre line (a tapered quad's two triangles would skew it)
+          if (y > uGrow || x > 1.0) discard;                  // (it shoots out from the lens: it is not there all at once)
+          float core = 1.0 - smoothstep(0.24, 0.3, x), rim = step(x, 0.86); // a white core, a red rim, a thin dark edge
+          vec3 c = mix(uColor * 0.1, uColor * mix(1.0, 0.62, smoothstep(0.3, 0.86, x)), rim);
+          c = mix(c, vec3(1.7, 1.62, 1.55), core) * mix(1.0, 0.82, y); // hottest at its lens
+          gl_FragColor = vec4(c, mix(0.86, 1.0, rim) * step(0.02, uFade));
         }`,
     });
+    atk.beam.layers.set(1); // (drawn once, in the picture: not in the floor's mirror)
+    atk.beam.frustumCulled = false;
+    atk.beam.renderOrder = 8;
     s.add(atk.beam, atk.glow, atk.muzzle);
     this.atk = atk;
     const fr = new THREE.RingGeometry(0.85, 1, 64);
@@ -687,10 +697,11 @@ class BossGame extends QuizGame {
         if (!GFX.calm && !REDUCED_MOTION) { // a hard-edged star where the bolt lands, in the answer's colour
           const st = this.hitStar;
           st.position.copy(at); st.material.uniforms.uColor.value.copy(neon(hitCol, 1.0)); st.visible = true; this.hitStarT = 0;
+          this.hitLine = (this.hitLine || new THREE.Color()).copy(neon(hitCol, 1.5)); this.hitTint = 1; // (the arena takes the blow's colour for a moment: the floor's lines run in it)
+          // and the boss is a dark shape for that moment, so the star is the brightest thing in the picture whatever the boss's colour
+          const sil = this.rig && this.rig.mat.userData.uSil;
+          if (sil) this.tw.add(0.34, (k) => { sil.value = k < 0.42 ? 1 : 1 - (k - 0.42) / 0.58; }, () => { sil.value = 0; });
         }
-        const em = b.userData.core.userData.mat.emissive;
-        const base = em.clone();
-        this.tw.add(0.2, (k) => { em.setRGB(lerp(0.09, base.r, k), lerp(0.09, base.g, k), lerp(0.09, base.b, k)); }); // (it flares for a few frames and keeps its shape: at full white it was a blob)
         this.tw.add(0.35, (k) => { b.position.z = -Math.sin(k * Math.PI) * 1.2; });
         this.shockwave(b.position.clone(), neon(hitCol, 1.5), 6); // (the ring is the answer's colour too)
       }
@@ -759,32 +770,29 @@ class BossGame extends QuizGame {
       const col = COLORS.red; // (its blow is red whatever colour it is: red is "you were hurt" everywhere in the arcade)
       const { beam, glow, muzzle } = this.atk;
       const tok = ++this.atk.tok;
-      { // the blade, from the eye to the lens, turned about its length to face the lens
-        const y = new THREE.Vector3().subVectors(to, eye), len = y.length(), mid = new THREE.Vector3().addVectors(eye, to).multiplyScalar(0.5);
-        y.multiplyScalar(1 / len);
-        const z = new THREE.Vector3().subVectors(this.camBase, mid);
-        z.addScaledVector(y, -z.dot(y)).normalize();
-        beam.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(y, z), y, z));
-        beam.position.copy(mid);
-        beam.scale.set(r * 5, len, 1);
-        beam.visible = true;
-      }
-      beam.material.uniforms.uColor.value.copy(neon(col, 3.6));
-      glow.material.uniforms.uColor.value.copy(neon(col, 0.9));
-      beam.material.uniforms.uFade.value = 1;
-      glow.material.uniforms.uFade.value = 1;
+      // First a flash at its lens; then the wedge shoots from the lens to the bottom edge of the picture, holds, and
+      // closes. (Look only: the blow itself lands at the same moment as it always did.)
+      const bu = beam.material.uniforms, ndc = this._v, half = this.band ? this.band.h / GFX.h : 1;
+      const aim = () => { this.boss.userData.eye.getWorldPosition(ndc).project(this.camera); bu.uA.value.set(ndc.x, ndc.y); bu.uB.value.set(ndc.x * 0.35, -half - 0.04); };
+      aim();
+      bu.uColor.value.setRGB(1.25, 0.03, 0.075); // (red, not the pink a lit neon red goes to)
+      bu.uFade.value = 1; bu.uGrow.value = 0; bu.uHalf.value = 0.4;
+      beam.visible = true;
       muzzle.material.color.copy(neon(col, 3));
       muzzle.material.opacity = 1;
-      muzzle.scale.setScalar(1.9 * this.bossScale);
+      muzzle.scale.setScalar(2.8 * this.bossScale);
       muzzle.position.copy(eye);
       muzzle.visible = true;
       this.flashAt(eye, col, 0.34, 2 * this.bossScale + 1); // (a flare at its eye, not a white blob over the whole figure)
       this.tw.add(0.5, (k) => {
         if (this.atk.tok !== tok) return;
-        beam.material.uniforms.uFade.value = 1 - k;
-        glow.material.uniforms.uFade.value = (1 - k) * (1 - k);
+        const t = k * 0.5, fade = 1 - clamp((t - 0.27) / 0.23, 0, 1);
+        aim();
+        bu.uGrow.value = clamp((t - 0.045) / 0.085, 0, 1);
+        bu.uFade.value = fade;
+        bu.uHalf.value = 0.4 * (0.3 + 0.7 * fade);
         muzzle.material.opacity = 1 - k;
-        muzzle.scale.setScalar((1.9 + k * 1.6) * this.bossScale);
+        muzzle.scale.setScalar((2.8 - 1.5 * Math.min(1, t / 0.12) + k * 0.6) * this.bossScale);
       }, () => { if (this.atk.tok === tok) beam.visible = glow.visible = muzzle.visible = false; });
       this.tw.wait(0.12, hit);
     } else hit();
@@ -1007,7 +1015,7 @@ class BossGame extends QuizGame {
     if (this.hitStar.visible) { // the star a bolt leaves: it opens fast and is gone in a quarter of a second
       const k = Math.min(1, (this.hitStarT += dt / 0.34)), e = 1 - (1 - k) * (1 - k);
       this.hitStar.quaternion.copy(this.camera.quaternion);
-      this.hitStar.scale.setScalar((2.6 + 4.4 * e) * this.bossScale);
+      this.hitStar.scale.setScalar((3.4 + 4.6 * e) * this.bossScale);
       this.hitStar.material.uniforms.uK.value = 1 - k * k;
       this.hitStar.visible = k < 1;
     }
@@ -1030,6 +1038,11 @@ class BossGame extends QuizGame {
       if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
     }
     this.floor.material.uniforms.uReflect.value = 0.55;
+    { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
+      const fl = this.floor.material.uniforms.uLine.value, ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
+      fl.copy(this.lineBase).lerp(this.rageLine, rk).multiplyScalar(0.52 + 0.48 * ch);
+      if (this.hitTint > 0.002) { this.hitTint = Math.max(0, this.hitTint - dt * 4); fl.lerp(this.hitLine, Math.min(1, this.hitTint * 1.25)); }
+    }
     // a slow cinematic drift, with a touch of pointer parallax
     const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
