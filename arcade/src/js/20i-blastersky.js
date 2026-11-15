@@ -17,8 +17,8 @@ const BLASTER_SKIES = {
   nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xdfe6ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xbfd0ff, 0.8], amb: [0x5a4aa0, 0.5],
     space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70] } },
-  belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.95, lift: 1.3,
-    key: [0xffe2c8, 1.0], rimA: [0xff4a2a, 1.6], rimB: [0xffb060, 1.2], top: [0xffd6c0, 0.7], amb: [0x6a4458, 0.5],
+  belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.72, lift: 1.2, envGain: 0.9,
+    key: [0xd8ecff, 1.0], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xcfe0ff, 0.7], amb: [0x5a4a6a, 0.5],
     space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80] } },
   orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xe6ecff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0xc8dcff, 0.8], amb: [0x4a5aa8, 0.5],
@@ -36,12 +36,12 @@ const BLASTER_SKIES = {
 // Where the lamps stand (toward each, from anything they light). The fighter is seen from behind and above and the
 // demon from the front, so between them these put a highlight on both: the key on what faces the lens, the rims on
 // the edges that turn away, the top light on the fighter's back and the demon's shoulders and horns.
-const BLASTER_LAMPS = { key: [-0.5, 0.58, 0.64], rimA: [-0.9, 0.16, -0.4], rimB: [0.9, 0.2, -0.38], top: [0.05, 0.8, -0.6] };
+const BLASTER_LAMPS = { key: [-0.5, 0.58, 0.64], rimA: [-0.9, 0.16, -0.4], rimB: [0.9, 0.2, -0.38], top: [0.3, 0.84, -0.45] };
 
 class BlasterSky {
-  constructor(space, skies) {
-    const g = (this.g = space.g), s = g.scene;
-    this.space = space;
+  // (built by the game before anything that mirrors it; first: the region the run starts in)
+  constructor(game, skies, first) {
+    const g = (this.g = game), s = g.scene;
     this.skies = skies;
     this.main = skies["blaster-deep-1"];
     this.root = new THREE.Group(); // (it keeps the camera's place: see follow)
@@ -67,7 +67,7 @@ class BlasterSky {
     this.users = []; // materials that mirror it (the fighter's, the demon's): see mirror
     this.envK = 1; this.age = 0; this.flashK = 0; this.aimY = 0.085; // (aimY: how far above the way ahead the demon rides, as a slope)
     this._c = new THREE.Color(); this._c2 = new THREE.Color();
-    this.cur = this.conf(space.to.id);
+    this.cur = this.conf(first);
     this.next = null; this.k = 0;
     this.show(this.layers[0], this.cur, 1);
     this.env = this.envFor(this.cur);
@@ -98,21 +98,29 @@ class BlasterSky {
     let tex = null;
     if (GFX.ok) {
       try {
-        const sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: 2.6, lift: 2.2, rot: c.yaw });
+        const r = c.r, sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 1.5 : r.envGain, lift: 0.7, rot: c.yaw });
         dome.rotation.set(-c.pitch, 0, c.roll);
         sc.add(dome);
-        const card = (dir, col, k, w, h) => {
-          const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: neon(col, k), side: THREE.DoubleSide }));
-          m.position.fromArray(dir).normalize().multiplyScalar(40);
-          m.lookAt(0, 0, 0);
-          sc.add(m);
+        // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
+        // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
+        // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
+        // lies over what.)
+        const card = (dir, col, k, w, h, order = 0) => {
+          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
+            const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
+            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+            m.lookAt(0, 0, 0);
+            m.scale.set(w * s, h * s, 1);
+            m.renderOrder = order + i * 0.1;
+            sc.add(m);
+          });
         };
-        const r = c.r;
-        card(BLASTER_LAMPS.key, r.key[0], 4.2 * r.key[1], 26, 16);
-        card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 9, 44);
-        card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 9, 44);
-        card(BLASTER_LAMPS.top, r.top[0], 2.6 * r.top[1], 54, 30);
-        card([0, -1, 0.15], r.amb[0], 0.5, 70, 70); // a floor of dim light, so a belly is never a hole
+        card([0.3, 0.1, 1], r.top[0], 0.5, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
+        card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
+        card(BLASTER_LAMPS.key, r.key[0], 3.2 * r.key[1], 52, 36);
+        card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
+        card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
+        card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
         const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
         disposeTree(sc);
         rt.texture.dispose = () => rt.dispose(); // (see makeEnvMap: the target owns the texture)
@@ -171,7 +179,7 @@ class BlasterSky {
     set(this.key, A.key, B.key);
     set(this.rimA, A.rimA, B.rimA);
     set(this.rimB, A.rimB, B.rimB);
-    set(this.top, A.top, B.top);
+    set(this.top, A.top, B.top, 0.22); // (as a lamp it is faint: a flat chrome back facing a hard light is a slab of white. Its soft card in the mirror map does the work.)
     set(this.amb, A.amb, B.amb);
     // what chrome mirrors is turned down through the change, so the new map never pops in
     this.envK = 1 - 0.6 * Math.sin(Math.PI * (this.next ? this.k : 0));

@@ -99,7 +99,7 @@ function tuneModel(model, o = {}) {
       if (m.emissiveMap) { m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = o.glow === undefined ? 2.4 : o.glow; }
       if (o.rough !== undefined) m.roughness = o.rough;
       if (o.metal !== undefined) m.metalness = o.metal;
-      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal, o.normal);
+      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal * (m.normalScale.x < 0 ? -1 : 1), o.normal * (m.normalScale.y < 0 ? -1 : 1)); // (the loader turns one axis over for a model without tangents: that is kept)
       m.needsUpdate = true;
     });
   });

@@ -195,7 +195,7 @@ class BlasterSpace {
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._c = new THREE.Color();
     // With a panorama for a sky (when the page could fetch one: see 20i-blastersky.js) each region takes its fog, its
     // hulls' light and its clouds from that picture. Without one, everything here is as it always was.
-    const skies = (g.gen && g.gen.skies) || {}, pano = !!skies["blaster-deep-1"] && typeof BlasterSky !== "undefined";
+    const pano = !!g.pano;
     const regs = pano ? SPACE_REGIONS.map((r) => Object.assign({}, r, (BLASTER_SKIES[r.id] || {}).space)) : SPACE_REGIONS;
     this.regions = regs.map((r) => this.parse(r));
     this.cur = this.parse(regs[0]);
@@ -442,11 +442,8 @@ class BlasterSpace {
     // The panorama, when there is one: it is the backdrop and the light. What was drawn here in its place is put away
     // (the nebula, the galaxies, the star and its ghosts in the lens); the stars at depth, the clouds, the rocks, the
     // giant, the landmarks and the traffic stay, since they are what moves past.
-    this.pano = null;
-    if (pano) {
-      try { this.pano = new BlasterSky(this, skies); } catch (e) { this.pano = null; }
-      if (this.pano) { this.sky.visible = false; this.sun.visible = false; this.galaxies.forEach((sp) => { sp.visible = false; }); }
-    }
+    this.pano = g.pano || null;
+    if (this.pano) { this.sky.visible = false; this.sun.visible = false; this.galaxies.forEach((sp) => { sp.visible = false; }); }
   }
 
   // a region as numbers and colours that can be blended
@@ -783,7 +780,6 @@ class BlasterSpace {
   // keep the far things where the camera is
   follow(camera) { this.far.position.copy(camera.position); if (this.pano) this.pano.follow(camera); }
   dispose() {
-    if (this.pano) this.pano.dispose();
     if (this.nebTex.rt) this.nebTex.rt.dispose(); else this.nebTex.dispose();
     this.galaxyTex.dispose();
     if (this.traffic) this.traffic.dispose();

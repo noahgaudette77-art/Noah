@@ -108,8 +108,12 @@ function inPage() {
       await page.evaluate(() => { window.__cap.skipDialogs = true; });
       // the game's asset files first (real time: the virtual clock does not move a download), then the game
       await page.evaluate(async ([g, s]) => { const A = window.__arcade; A.Sound.init(); const sel = A.makeSelection(s); const p = A.Assets.need(g, window.__arcade.gameAssets ? window.__arcade.gameAssets(g, sel) : []); if (p) await p; }, [game, stage]);
-      await page.evaluate(([g, s]) => window.__arcade.go(g, s), [game, stage]);
-      await cap.fast(8);
+      const before = await page.evaluate(([g, s]) => { const was = window.__arcade.Scenes.cur; window.__was = was; window.__arcade.go(g, s); return !!was; }, [game, stage]);
+      // (the game is built a few frames on, behind the briefing and the cover. Those frames are drawn for real: what a
+      // scene renders to a texture while it is built, its reflection maps above all, would otherwise come out empty
+      // in every capture.)
+      for (let i = 0; i < 8; i++) { await page.evaluate(() => window.__tick(1, true)); if (await page.evaluate(() => window.__arcade.Scenes.cur !== window.__was)) break; }
+      await cap.fast(before ? 4 : 6);
     },
     ask: (max) => cap.until(() => { const s = window.__arcade.Scenes.cur; return !!(s && s.state === "ask" && s.round && !(s.quiz && s.quiz.sheet)); }, max),
     answer: (k) => page.evaluate((kind) => { const s = window.__arcade.Scenes.cur, r = s.round; s.pick(kind === "R" ? r.correct : kind === "W" ? (r.correct + 1) % r.n : kind); }, k),

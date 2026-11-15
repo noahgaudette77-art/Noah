@@ -207,6 +207,9 @@ class BlasterGame extends QuizGame {
     s.add(this.boomLight);
     this.engineLight = new THREE.PointLight(COLORS.orange, 1.4, 5, 2);
     s.add(this.engineLight);
+    // the panoramas, when they arrived: the sky, the lamps and what chrome mirrors (20i-blastersky.js)
+    this.pano = null;
+    if (this.gen.skies["blaster-deep-1"]) { try { this.pano = new BlasterSky(this, this.gen.skies, SPACE_REGIONS[0].id); } catch (e) { this.pano = null; } }
     this.waveCol = neon(WAVE_COLORS[0], 1);
     this.waveTarget = this.waveCol.clone();
     this.makeStreaks();
@@ -230,6 +233,7 @@ class BlasterGame extends QuizGame {
     s.add(this.ship);
     this.trails = [0, 1].map(() => new Trail({ length: 12, width: 0.07, color: 0xff7a3d, intensity: 2 }));
     this.trails.forEach((t) => s.add(t.mesh));
+    if (this.jet.model) this.trails.forEach((t) => { t.mesh.visible = false; }); // (the starfighter burns its own five flames)
     this.flashSprite = glowSprite(0xffffff, 1, 0);
     this.flashSprite.visible = false;
     this.flashSprite.renderOrder = 8;
@@ -288,7 +292,8 @@ class BlasterGame extends QuizGame {
     // and which strikes back when it is wrong. In a build without that model (or if it will not decode) every
     // answer is a target to shoot instead: a crystal form in a holo-drone, built from this kit.
     this.enemy = null;
-    if (DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
+    if (this.gen.demon) { try { this.enemy = new BlasterOverlord(this, this.gen.demon); } catch (e) { console.warn("demon: " + e.message); this.enemy = null; } } // (the overlord, when its model arrived: 20k)
+    if (!this.enemy && DemonModel.ok()) { try { this.enemy = new BlasterDemon(this); } catch (e) { this.enemy = null; } }
     // With the demon, the answers still have targets: four holo-drones that hold station round it, one to
     // an answer, in the answer's colour and carrying its letter. The fighter fires on the one you tap.
     this.dronePaint = racerCarPaint(this.env, false);
@@ -340,11 +345,21 @@ class BlasterGame extends QuizGame {
     this.space.flash(pos, color, this.boomFast ? 0.45 : 1); // its light on the dust and on whatever is near
   }
 
+  // What a loaded model's chrome mirrors: the region's sky and its lamps (BlasterSky.mirror), or, without a panorama,
+  // the map the built-in fighter wears. k: how strongly.
+  chrome(mat, k = 1) {
+    if (this.pano) return this.pano.mirror(mat, k);
+    mat.envMap = this.shipEnv || this.env;
+    mat.envMapIntensity = k * 0.6;
+    mat.needsUpdate = true;
+    return mat;
+  }
   // The fighter: the player's own model (20d-blasterfighter.js), or the built-in jet
   // (20b-blasterjet.js) if the build has no model. The game still owns where it is and where it aims.
   makeShip() {
     let jet = null;
-    if (FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
+    if (this.gen.fighter) { try { jet = new BlasterStarfighter(this, this.gen.fighter); } catch (e) { console.warn("starfighter: " + e.message); jet = null; } } // (the starfighter, when its model arrived: 20j)
+    if (!jet && FighterModel.ok()) { try { jet = new BlasterFighter(this); } catch (e) { jet = null; } } // (a model that will not decode: the built-in jet flies instead)
     if (!jet) jet = new BlasterJet(this);
     this.jet = jet;
     this.nozzles = jet.nozzles;
@@ -852,6 +867,7 @@ class BlasterGame extends QuizGame {
     this.clearTargets();
     if (this.shipEnv) this.shipEnv.dispose();
     if (this.enemy) this.enemy.dispose();
+    if (this.jet && this.jet.dispose) this.jet.dispose();
     if (this.has3D) { // (the answers' target kit)
       this.tgeo.concat(this.tedge).forEach((g) => g.dispose());
       this.slotMats.forEach((M) => [M.core, M.body, M.edge, M.rim, M.halo, M.lamp].forEach((m) => m.dispose()));
@@ -860,6 +876,7 @@ class BlasterGame extends QuizGame {
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
     if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
+    if (this.pano) this.pano.dispose();
     super.dispose();
   }
 }
