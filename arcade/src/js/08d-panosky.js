@@ -29,7 +29,7 @@ function makePanoSky(sky, o = {}) {
         if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
-        gl_FragColor = vec4(c * uTint, 1.0);
+        gl_FragColor = linearToOutputTexel(vec4(c * uTint, 1.0)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
@@ -47,6 +47,45 @@ function applySkyEnv(scene, sky) {
   if (sky && sky.env) scene.environment = sky.env;
   return !!(sky && sky.env);
 }
+// A loaded model made ready to move. In the file a part is a mesh that carries its own packing transform, so it does
+// not turn where it hinges, and the anchors are only listed (model.info.anchors: places in the model's own frame).
+//   rigModel(model, { ride: { muzzleL: "cannonL" }, tree: { head: "body" } });
+//   model.parts[name]     now a node at the part's hinge (model.info.parts[name].pivot) holding the part: turn or move this
+//   model.mesh[name]      the part's mesh
+//   model.anchors[name]   an empty node at the anchor. ride hangs it on a part, so it moves with that part
+//   model.rest[name]      where the hinge is at rest, in the model's own frame
+// tree hangs one part on another (an arm on a body, wings on a back): the model stands as it stood, and now moves as one.
+function rigModel(model, o = {}) {
+  if (model.rigged) return model;
+  const info = model.info || {}, P = info.parts || {}, A = info.anchors || {}, root = model.scene, ride = o.ride || {}, tree = o.tree || {}, v = new THREE.Vector3();
+  root.updateMatrixWorld(true);
+  model.mesh = {}; model.anchors = {}; model.rest = {};
+  for (const name in P) {
+    const node = model.parts[name];
+    if (!node) continue;
+    const pivot = (model.rest[name] = new THREE.Vector3().fromArray(P[name].pivot));
+    if (!node.isMesh) { model.mesh[name] = node.children.find((c) => c.isMesh) || null; continue; } // (a joint that already stands at its hinge, its mesh under it)
+    const hinge = new THREE.Group(), parent = node.parent;
+    hinge.name = name;
+    node.name = name + "_mesh";
+    hinge.position.copy(parent.worldToLocal(v.copy(pivot)));
+    parent.add(hinge);
+    hinge.attach(node);
+    model.parts[name] = hinge;
+    model.mesh[name] = node;
+  }
+  for (const name in tree) if (model.parts[name] && model.parts[tree[name]]) model.parts[tree[name]].attach(model.parts[name]);
+  for (const name in A) {
+    const a = new THREE.Object3D(), host = (ride[name] && model.parts[ride[name]]) || root;
+    a.name = "anchor_" + name;
+    host.updateWorldMatrix(true, false);
+    a.position.copy(host.worldToLocal(v.fromArray(A[name])));
+    host.add(a);
+    model.anchors[name] = model.parts[a.name] = a;
+  }
+  model.rigged = true;
+  return model;
+}
 // A loaded model's materials set for this renderer: how strongly they mirror the sky, how brightly their light
 // strips burn (past white, so they bloom), and nothing drawn twice for nothing.
 function tuneModel(model, o = {}) {
@@ -60,7 +99,7 @@ function tuneModel(model, o = {}) {
       if (m.emissiveMap) { m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = o.glow === undefined ? 2.4 : o.glow; }
       if (o.rough !== undefined) m.roughness = o.rough;
       if (o.metal !== undefined) m.metalness = o.metal;
-      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal, o.normal);
+      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal * (m.normalScale.x < 0 ? -1 : 1), o.normal * (m.normalScale.y < 0 ? -1 : 1)); // (the loader turns one axis over for a model without tangents: that is kept)
       m.needsUpdate = true;
     });
   });

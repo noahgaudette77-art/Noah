@@ -174,7 +174,24 @@ const Sound = {
     const t0 = c.currentTime + (o.delay || 0);
     src.start(t0, q.at, q.dur);
     if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    const live = this.live || (this.live = new Set()), e = { src, g, born: c.currentTime, end: t0 + q.dur / src.playbackRate.value + 0.2 }; // (kept until it ends, so hush can cut it short)
+    if (live.size > 48) live.forEach((x) => { if (x.end < c.currentTime) live.delete(x); }); // (should an end go unreported)
+    live.add(e);
+    src.onended = () => live.delete(e);
     return src;
+  },
+  // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
+  // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
+  // was started in this same moment is left alone: the menu's own blip.
+  hush(fade = 0.12) {
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
+    if (!this.ctx || !this.live) return;
+    const t = this.ctx.currentTime;
+    this.live.forEach((e) => {
+      if (e.born >= t) return;
+      try { e.g.gain.cancelScheduledValues(t); e.g.gain.setTargetAtTime(0.0001, t, fade / 3); e.src.stop(t + fade + 0.05); } catch (err) { /* ended */ }
+      this.live.delete(e);
+    });
   },
   // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
   // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false

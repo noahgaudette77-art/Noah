@@ -193,8 +193,12 @@ class BlasterSpace {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._s = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._c = new THREE.Color();
-    this.regions = SPACE_REGIONS.map((r) => this.parse(r));
-    this.cur = this.parse(SPACE_REGIONS[0]);
+    // With a panorama for a sky (when the page could fetch one: see 20i-blastersky.js) each region takes its fog, its
+    // hulls' light and its clouds from that picture. Without one, everything here is as it always was.
+    const pano = !!g.pano;
+    const regs = pano ? SPACE_REGIONS.map((r) => Object.assign({}, r, (BLASTER_SKIES[r.id] || {}).space)) : SPACE_REGIONS;
+    this.regions = regs.map((r) => this.parse(r));
+    this.cur = this.parse(regs[0]);
     this.from = this.regions[0]; this.to = this.regions[0]; this.ri = 0; this.blend = 1; this.blendDur = 1;
     this.travel = 0; this.zoom = 0; this.flashK = 0;
     this.sunDir = new THREE.Vector3(-0.17, 0.17, -1).normalize();
@@ -417,13 +421,13 @@ class BlasterSpace {
     this.buildGate();
 
     // ---- a halo behind the enemy: the picture is dimmed there and ringed with the wave's colour, so what must be read stands clear
-    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 } };
+    this.haloU = { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 1 }, uDim: { value: 0.66 } };
     this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
       uniforms: this.haloU, transparent: true, depthWrite: false,
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 uColor; uniform float uK; varying vec2 vP;
+      fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uDim; varying vec2 vP;
         void main(){
-          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * 0.66, aura = exp(-r * r * 2.6) * 0.05;
+          float r = length(vP), dim = (1.0 - smoothstep(0.3, 1.0, r)) * uDim, aura = exp(-r * r * 2.6) * 0.05;
           vec3 back = vec3(0.34, 0.5, 1.0) * (exp(-r * r * 1.5) * 0.07); // a cold backlight (no ring: it read as a pale hoop behind the demon)
           gl_FragColor = vec4((uColor * aura + back) * uK, dim * uK); // (premultiplied: it darkens what is behind it and adds its own soft light)
         }`,
@@ -435,6 +439,18 @@ class BlasterSpace {
     this.traffic = new SpaceTraffic(this); // ships on their way (20g-blastertraffic.js)
     this.director = spaceEvents(this); // and what happens out there
     this.apply(1);
+    // The panorama, when there is one: it is the backdrop and the light. What was drawn here in its place is put away
+    // (the nebula, the galaxies, the star and its ghosts in the lens); the stars at depth, the clouds, the rocks, the
+    // giant, the landmarks and the traffic stay, since they are what moves past.
+    this.pano = g.pano || null;
+    if (this.pano) {
+      this.sky.visible = false; this.sun.visible = false; this.galaxies.forEach((sp) => { sp.visible = false; });
+      // Against a painted sky a rock is a dark shape with one lit side and a bright edge: it stands in front of the
+      // nebula instead of fading into it. (Its own light, apart from the hulls'.)
+      const ru = this.rockMat.uniforms;
+      ru.uAmb = { value: new THREE.Color() }; ru.uSunCol = { value: new THREE.Color() }; ru.uRimCol = { value: new THREE.Color() };
+      this.haloU.uDim.value = 0.72; // (and the sky behind the fight is taken down a little further, over a wider patch: see update)
+    }
   }
 
   // a region as numbers and colours that can be blended
@@ -456,6 +472,7 @@ class BlasterSpace {
     this.ri = ((i % n) + n) % n;
     this.blend = 0;
     this.blendDur = Math.max(0.01, dur);
+    if (this.pano) this.pano.go(to.id, this.blendDur);
   }
   snapshot() {
     const c = this.cur, o = {};
@@ -597,6 +614,7 @@ class BlasterSpace {
     this.flashCol = this.flashCol || new THREE.Color();
     this.flashCol.set(color);
     this.shared.uFlashPos.value.copy(pos);
+    if (this.pano) this.pano.flash(k);
   }
 
   update(dt, sp, w) {
@@ -633,10 +651,17 @@ class BlasterSpace {
     S.uAmb.value.copy(c.amb).multiplyScalar(0.42);
     S.uRimCol.value.copy(c.b).lerp(c.c, 0.4).multiplyScalar(1.1);
     this.rockMat.uniforms.uTint.value.copy(c.rockTint).lerp(this._rockInk || (this._rockInk = new THREE.Color(0x2c2470)), 0.5).multiplyScalar(0.8);
+    if (this.pano) {
+      const ru = this.rockMat.uniforms, P = this.pano;
+      ru.uTint.value.multiplyScalar(0.55);
+      ru.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
+      if (P.key) ru.uSunCol.value.copy(P.key.color).multiplyScalar(1.5);
+      ru.uRimCol.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(1.5);
+    }
     const sv = this._v.copy(this.sunDir).multiplyScalar(950).add(g.camera.position).project(g.camera), on = sv.z < 1 && Math.abs(sv.x) < 1.25 && Math.abs(sv.y) < 1.25 && !calm;
     const fade = on ? clamp(1.35 - Math.max(Math.abs(sv.x), Math.abs(sv.y)), 0, 1) * sunK : 0;
     this.ghosts.forEach((gh) => {
-      gh.visible = fade > 0.02;
+      gh.visible = fade > 0.02 && !this.pano;
       if (!gh.visible) return;
       const a = this._w.set(sv.x * gh.userData.k, sv.y * gh.userData.k, -1).unproject(g.camera), b = this._s.set(sv.x * gh.userData.k, sv.y * gh.userData.k, 1).unproject(g.camera);
       gh.position.copy(g.camera.position).add(b.sub(a).normalize().multiplyScalar(60));
@@ -735,7 +760,7 @@ class BlasterSpace {
     }
     // the halo behind the enemy (or the answers' targets)
     const fr = g.enemy && g.enemy.root.visible ? g.enemy : null, H = this.halo;
-    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
+    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); if (this.pano) H.scale.set(fr.S * 1.75, fr.S * 1.4, 1); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
     H.quaternion.copy(g.camera.quaternion);
     this.haloU.uColor.value.copy(g.waveCol).multiplyScalar(0.55);
     this.haloU.uK.value += ((g.state === "over" ? 0 : 1) - this.haloU.uK.value) * Math.min(1, dt * 3);
@@ -743,6 +768,7 @@ class BlasterSpace {
     if (g.scene.fog) g.scene.fog.color.copy(c.fog);
     if (this.ambLight) this.ambLight.color.copy(this.amb0).lerp(c.amb, 0.4);
     if (g.keyLight) g.keyLight.color.copy(this.key0).lerp(c.key, 0.4);
+    if (this.pano) this.pano.update(dt, w); // (the panorama's own lamps, over those two)
     if (this.traffic) this.traffic.update(dt, sp, w);
     if (this.fx) this.fx.update(dt, sp);
     if (this.director) this.director.update(dt, g.state === "ask" || g.state === "explain");
@@ -766,7 +792,7 @@ class BlasterSpace {
     }
   }
   // keep the far things where the camera is
-  follow(camera) { this.far.position.copy(camera.position); }
+  follow(camera) { this.far.position.copy(camera.position); if (this.pano) this.pano.follow(camera); }
   dispose() {
     if (this.nebTex.rt) this.nebTex.rt.dispose(); else this.nebTex.dispose();
     this.galaxyTex.dispose();

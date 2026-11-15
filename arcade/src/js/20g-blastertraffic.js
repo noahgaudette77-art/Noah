@@ -388,6 +388,10 @@ function spaceEvents(space) {
   const g = space.g, T = space.traffic, FX = (space.fx = new SpaceFX(space)), D = new EventDirector(g, { min: 3, max: 6 });
   const side = () => (Math.random() < 0.5 ? -1 : 1), quiet = () => g.state === "ask" || g.state === "explain", R = Math.PI / 180;
   const frame = (ax, ay, d, out) => (out || new THREE.Vector3()).set(d * Math.tan(ax * R), d * Math.tan(ay * R), -d); // a place in the window: degrees right, degrees up, how far
+  // (With the painted sky and the staged fight, the window's upper corners are where the answers' drones stand, and
+  // with four answers its sides as well: what was set in a corner is set at the window's edge instead, in the gap
+  // between the upper drones and the lower ones.)
+  const corner = (ax, ay, d, out) => (space.pano ? frame(ax * 1.3, lerp(1.4, 3.8, clamp((Math.abs(ay) - 7) / 3, 0, 1)), d, out) : frame(ax, ay, d, out));
   const inReg = (...ids) => () => ids.includes(space.cur.id), alive = (run) => run.ships.some((s) => s.alive);
   const v = new THREE.Vector3(), w = new THREE.Vector3();
 
@@ -433,7 +437,7 @@ function spaceEvents(space) {
   // 6. a dogfight in the distance: one chases the other round, firing (a shot every 0.45 s); they break off
   D.add({ id: "dogfight", dur: 8,
     start: (run) => {
-      const sd = side(), c = frame(sd * 10.5, 9, 175), ph = rand(6.283);
+      const sd = side(), c = corner(sd * 10.5, 9, 175), ph = rand(6.283);
       const path = (lag) => (s, t) => { const a = (t - lag) * 1.5 + ph; if (t < 5.4) s.p.set(c.x + Math.cos(a) * 14, c.y + Math.sin(a * 2) * 5, c.z + Math.sin(a) * 16); else { s.script = null; s.v.set(sd * (lag ? 46 : -38), lag ? 12 : -8, -T.sp0 - 30); } };
       run.ships = [T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0), s: 1.25 }), T.spawn("fighter", { p: [c.x + 14, c.y, c.z], ev: true, life: 8, script: path(0.5), s: 1.25 })].filter(Boolean);
       run.shot = 0.8;
@@ -446,7 +450,7 @@ function spaceEvents(space) {
     } });
   // 7. far off, a ship blows up: one flash, a ring, debris
   D.add({ id: "explosion", dur: 3, flashy: true, can: () => space.cur.id !== "station",
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 12), (Math.random() < 0.6 ? 1 : -1) * rand(7, 10), rand(260, 360)); run.ship = T.spawn("freighter", { p: [run.p.x, run.p.y, run.p.z], v: [0, 0, -T.sp0], ev: true, life: 3 }); run.done = false; return !!run.ship; },
     update: (dt, t, run) => {
       if (!run.done && t > 0.7) {
         run.done = true;
@@ -493,7 +497,7 @@ function spaceEvents(space) {
   hole.visible = false;
   g.scene.add(hole);
   D.add({ id: "wormhole", dur: 5,
-    start: (run) => { run.sd = side(); run.p = frame(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
+    start: (run) => { run.sd = side(); run.p = corner(run.sd * rand(9.5, 11.5), (Math.random() < 0.65 ? 1 : -1) * rand(7.5, 9.5), 300); run.out = false; hole.visible = true; hole.scale.setScalar(0.01); hole.material.uniforms.uColA.value.copy(space.cur.a).multiplyScalar(1.5); hole.material.uniforms.uColB.value.copy(space.cur.c).multiplyScalar(1.3); },
     update: (dt, t, run) => {
       run.p.z += space.sp * 0.2 * dt;
       hole.position.copy(run.p);
@@ -516,7 +520,7 @@ function spaceEvents(space) {
     end: () => { whale.visible = false; } });
   // 13. an ion storm: three slow pulses of light in the clouds, a fork of lightning with each (1.5 a second at most)
   D.add({ id: "ionstorm", dur: 2.6, flashy: true, can: inReg("nebula", "orbit", "graveyard", "gate"),
-    start: (run) => { run.p = frame(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
+    start: (run) => { run.p = corner(side() * rand(9, 11.5), rand(7.5, 10), 520); run.n = 0; },
     update: (dt, t, run) => {
       if (run.n < 3 && t > 0.2 + run.n * 0.66) {
         run.n++;
