@@ -387,7 +387,7 @@ class CombatFX {
     this.flash(pos, color, 0.4 * s, 1.6 * s, 0.12, 0.9, 2.2);
     this.sparks(pos, 0xffd9a0, { n: 14, speed: 10 * s, dir: o.dir, spread: 1.1, life: 0.4, len: 0.7 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity, k: 2 });
     this.sparks(pos, color, { n: 8, speed: 7 * s, dir: o.dir, spread: 1.4, life: 0.5, len: 0.5 * s, w: 0.06 * s, gravity: o.gravity === undefined ? 5 : o.gravity });
-    this.smoke(pos, { size: 1.1 * s, life: 0.9, a: 0.5 });
+    this.smoke(pos, { size: 0.9 * s, life: 0.8, a: 0.45, cold: true }); // (cold: a struck plate smokes, it does not burn)
     this.light(pos, color, 3.5 * s, 0.18, 12 * s);
   }
   // A layered blast.

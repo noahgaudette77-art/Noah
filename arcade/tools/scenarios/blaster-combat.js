@@ -100,7 +100,7 @@ module.exports = async (cap) => {
     await cap.next();
     // (from the top of the screen to the foot of the band: the stars and coins fly from the last blast up to the score)
     const b = await cap.band(0);
-    await strip("17-demon-death", 20, 5, { band: false, clip: { x: 0, y: 0, width: b.width, height: b.y + b.height }, cols: 10, thumb: 186 });
+    await strip("17-demon-death", 24, 5, { band: false, clip: { x: 0, y: 0, width: b.width, height: b.y + b.height }, cols: 12, thumb: 155 });
     await cap.ask(1500);
     await cap.until(() => { const e = window.__arcade.Scenes.cur.enemy; return e.alive && e.inT > 0.02; }, 600);
     await strip("05-demon-entrance", 18, 7, { cols: 6 });

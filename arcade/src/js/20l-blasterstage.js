@@ -25,7 +25,7 @@ class BlasterStage {
     this.debts = []; // shields the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.lowK = 0; this.alarmAt = 0; this.trail = null; this.misses = 0; this.leaks = []; this.warpAt = -1; // (low: 1 with one shield left, 2 with none)
     this.aimQ = new THREE.Quaternion(); this.idleQ = new THREE.Quaternion(); this.aimT = 0;
-    this.engine = false; this.alarm = false;
+    this.engine = false; this.alarm = false; this.charge = false; // (which of its running sounds are recordings that are playing)
     // the wave of force its roar throws: rings that travel from its mouth to the fighter
     const wg = new THREE.PlaneGeometry(2, 2);
     this.waves = [0, 1, 2].map(() => {
@@ -98,10 +98,11 @@ class BlasterStage {
       this.engine = Sound.loop("blaster-engine", "engine_ship", { vol: 0.3, rate: 0.9, fade: 0.6 });
       if (!this.engine) Sound.engine(true); // (no recording: the synth's hum, as before)
       if (this.low === 1) this.alarmOn();
+      if (this.atk && !this.atk.released) this.charge = Sound.loop("blaster-charge", "charge_hum", { vol: 0.5, rate: 1.2, fade: 0.08 }); // (paused in the middle of a wind-up: its charge is heard again)
     } else {
-      Sound.stopLoop("blaster-engine", 0.2); Sound.stopLoop("blaster-alarm", 0.1); Sound.stopLoop("blaster-hum", 0.1);
+      Sound.stopLoop("blaster-engine", 0.2); Sound.stopLoop("blaster-alarm", 0.1); Sound.stopLoop("blaster-charge", 0.05);
       Sound.engine(false);
-      this.engine = this.alarm = false;
+      this.engine = this.alarm = this.charge = false;
     }
   }
   alarmOn() { this.alarm = Sound.loop("blaster-alarm", "alarm", { vol: 0.34 }); this.alarmAt = Sound.ctx ? Sound.ctx.currentTime : 0; } // (alarmAt: when its first tone began. The red frame swells with each one.)
@@ -137,6 +138,7 @@ class BlasterStage {
     if (sh.right) {
       kit.flash(p, sh.col, 0.3 * k, 1.0 * k, 0.1, 0.8);
       kit.sparks(p, sh.col, { n: 5, speed: 6 * k, life: 0.22, len: 0.5 * k, w: 0.05 * k });
+      if (gun === 0) Sound.sfx("impact_metal", sh.side * 0.5, { vol: 0.4, rate: 1.1 + n * 0.1 }); // (each pair is heard to land on the drone's shell)
       if (!sh.beams) sh.beams = [0, 1].map((q) => kit.beam(this.muzzle(q, this._v), sh.at, sh.col, { dur: 0, width: 0.13 * k, grow: 0.03, k: 2.2 })); // the two beams that hold on the drone until the answer lands
     } else if (gun === 0) { // it does not bite: each pair dies on the drone in a dull red fizzle
       kit.fizzle(p, { size: 0.5 * k + 0.12 * n });
@@ -194,7 +196,10 @@ class BlasterStage {
       a.marks.push(kit.mark("lock", ship(this._v), COL, { size: 1.8 * k, dur: 1.2, follow: ship }));
       a.beam = kit.beam(e.aimPoint(this._v), this.sweepAt(a, 0, this._w), COL, { dur: 0, width: 0.07, k: 0.9, grow: 0.25 });
     } else for (let j = 0; j < 2; j++) a.marks.push(kit.mark("lock", ship(this._v), COL, { size: (1.5 + j * 0.7) * k, dur: 1.2, spin: j ? -2.4 : 2.4, follow: ship }));
-    Sound.sfx(kind === 2 || kind === 3 ? "charge_long" : "charge_up", 0, { vol: 0.8, rate: kind === 2 ? 1.5 : kind === 3 ? 1.7 : 1 });
+    // heard for exactly as long as it winds up: a hum that rises (runAttack) and is cut as the strike is let go;
+    // over it, the first breath of the charge. (Without the recordings: the synth's charge, once.)
+    this.charge = Sound.loop("blaster-charge", "charge_hum", { vol: 0.3, rate: 0.9, fade: 0.06 });
+    Sound.sfx(this.charge ? "charge_up" : kind === 2 || kind === 3 ? "charge_long" : "charge_up", 0, { vol: this.charge ? 0.6 : 0.8, rate: [1, 0.92, 0.8, 1.25, 1.1][kind] });
     if (kind === 1) Sound.sfx("warning", 0, { vol: 0.6 });
     if (kind === 0 || kind === 4) [0.05, 0.2, 0.35].forEach((dl) => Sound.sfx("lock_on", 0, { vol: 0.55, delay: dl, rate: 1 + dl }));
   }
@@ -206,6 +211,7 @@ class BlasterStage {
     a.marks.forEach((m) => { m.t = Math.min(m.t, 0.05); });
     if (a.beam) a.beam.stop();
     this.atk = null;
+    if (this.charge) { Sound.stopLoop("blaster-charge", 0.06); this.charge = false; }
   }
   // its wind-up was broken by the fighter's shot (it had begun as the clock ran out, and the answer was right)
   demonFoiled(e) {
@@ -228,11 +234,13 @@ class BlasterStage {
         kit.sparks(this._u.copy(src).add(off), a.col, { n: 1, speed: 1.3 * k6 / 0.24, dir: off.clone().multiplyScalar(-1).normalize(), spread: 0.08, life: 0.24, len: 0.5 * k6, w: 0.05 * k6, drag: 1 });
       }
       if (a.beam) a.beam.set(e.aimPoint(this._v), this.sweepAt(a, 0, this._w));
+      if (this.charge) Sound.loopSet("blaster-charge", { rate: 0.9 + 0.9 * (T / GO), vol: 0.3 + 0.4 * (T / GO) });
       return;
     }
     const u = T - GO;
     if (!a.released) { // it lets go: the markers close, and the moment is held
       a.released = true;
+      if (this.charge) { Sound.stopLoop("blaster-charge", 0.05); this.charge = false; }
       a.marks.forEach((m) => { m.t = Math.min(m.t, 0.08); });
       VFX.slowMo(0.3, 0.25, 0.08);
       if (a.kind === 1) Sound.sfx("whoosh", 0, { vol: 0.8 });
@@ -241,7 +249,7 @@ class BlasterStage {
       if (a.kind === 4) { Sound.sfx("missile_fire", -0.4); Sound.sfx("missile_fire", 0.4, { delay: 0.09, rate: 1.08 }); this.missiles.forEach((ms, j) => this.launch(ms, e, j, a)); }
     }
     if (a.kind === 0) { // a burst of plasma bolts, one claw then the other
-      while (a.n < 5 && u >= a.n * 0.06) {
+      while (a.n < (quiet ? 2 : 5) && u >= a.n * 0.06) {
         const i = a.n % 2, n = a.n++, from = e.claw(i, new THREE.Vector3()), to = this.shipPos(new THREE.Vector3()).add(this._v.set(rand(-0.9, 0.9), rand(-0.1, 0.5), rand(-0.6, 0.6)).multiplyScalar(k * (n ? 1 : 0.2)));
         kit.flash(from, a.col, 0.14 * k6, 0.55 * k6, 0.1, 0.9); // (its claw already burns: a flick of light as each bolt leaves it)
         kit.sparks(from, a.col, { n: 4, speed: 8 * k6, dir: this._w.subVectors(to, from).normalize(), spread: 0.4, life: 0.16, len: 0.5 * k6, w: 0.05 * k6 });
@@ -279,7 +287,7 @@ class BlasterStage {
   }
   // a ring of force that travels (the roar)
   wave(from, to, dur, s0, s1, delay, col) {
-    const w = this.waves.find((x) => x.t < 0) || this.waves[0];
+    const w = this.waves.find((x) => !x.live) || this.waves[0];
     w.from.copy(from); w.to.copy(to); w.dur = dur; w.t = -1e-4 - delay; w.s0 = s0; w.s1 = s1; w.live = true;
     w.m.material.uniforms.uColor.value.copy(neon(col, 2.2));
   }
@@ -324,7 +332,7 @@ class BlasterStage {
     const at = p.clone().add(this._v.set(sd * 0.7 * k, 0.35 * k, -0.2 * k));
     kit.hull(at, kind === 3 || kind === 1 ? 0xff4a4a : kind === 4 ? 0xffa030 : 0xd060ff, { size: 0.62 * k, gravity: 0 });
     kit.debris(at, { n: quiet ? 4 : 9, size: 0.3 * k, speed: 7 * k, color: 0x1c7a90, hot: 0x8feaff, gravity: 0, life: 1.0 });
-    if (!quiet) for (let i = 0; i < 2; i++) kit.smoke(at.clone().add(this._v.set(rand(-0.5, 0.5), rand(0, 0.4), rand(-0.3, 0.3)).multiplyScalar(k)), { size: 0.6 * k, life: 1.0, a: 0.5, vel: this._w.set(0, 0.4, 5) });
+    if (!quiet) for (let i = 0; i < 2; i++) kit.smoke(at.clone().add(this._v.set(rand(-0.5, 0.5), rand(0, 0.4), rand(-0.3, 0.3)).multiplyScalar(k)), { size: 0.5 * k, life: 0.8, a: 0.42, cold: true, vel: this._w.set(0, 0.4, 3) });
     Sound.sfx("player_hit", sd * 0.3);
     Sound.sfx("shield_down", 0, { delay: 0.09, vol: 0.9 });
     if (left === 2) Sound.say("SHIELD DOWN"); else if (left === 1) Sound.say("LAST SHIELD"); else if (left <= 0) Sound.say("CRITICAL");
@@ -444,7 +452,8 @@ class BlasterStage {
   // one of the chain of blasts that take it apart (a part has just come away at p)
   demonChain(e, p, i) {
     const g = this.g, kit = this.kit, k6 = e.S / 6;
-    kit.explosion(p, { size: 0.5 * k6, color: i % 2 ? 0xff7a2a : g.waveCol.getHex(), shake: false, smoke: i % 2 === 0 });
+    if (REDUCED_MOTION || GFX.calm) { kit.sparks(p, 0xffd8a8, { n: 14, speed: 10 * k6, life: 0.5, len: 0.7 * k6 }); kit.debris(p, { n: 5, size: 0.6 * k6, speed: 8 * k6, color: 0x2a2836, gravity: 0 }); } // (with Reduced effects: sparks and wreckage, no run of flashes)
+    else kit.explosion(p, { size: 0.5 * k6, color: i % 2 ? 0xff7a2a : g.waveCol.getHex(), shake: false, smoke: i % 2 === 0 });
     g.shake(0.14 + 0.03 * i);
     Sound.sfx("explosion_small", this.pan(p), { rate: 0.95 + i * 0.06 });
   }
@@ -479,7 +488,7 @@ class BlasterStage {
   }
   // ---- between waves: the warp, held back until the demon has gone up (look only) -----------------------------
   // region: the part of space the next wave starts in (it comes up with the warp)
-  waveEnd(region) { const e = this.g.enemy; this.region = region; this.warpAt = e && e.dieT >= 0 ? (e.finale ? 1.22 : 0.87) : 0.02; }
+  waveEnd(region) { const e = this.g.enemy; this.region = region; this.warpAt = e && e.dieT >= 0 ? (e.finale ? 1.07 : 0.87) : 0.02; }
   // ---- the run ends: the last shield has gone, and the ship with it ---------------------------------------------
   over() {
     const g = this.g, kit = this.kit, k = g.shipScale, p = this.shipPos(new THREE.Vector3());
@@ -505,7 +514,7 @@ class BlasterStage {
     const sh = this.shot;
     if (sh) {
       sh.time += d;
-      while (sh.n < 3 && sh.time >= sh.n * 0.065) { this.volley(sh); sh.n++; }
+      while (sh.n < (REDUCED_MOTION || GFX.calm ? 1 : 3) && sh.time >= sh.n * 0.065) { this.volley(sh); sh.n++; } // (with Reduced effects: one volley, not three in a row)
       if (sh.beams) sh.beams.forEach((b, q) => b.set(this.muzzle(q, this._v), sh.at));
       if (sh.time > sh.until || sh.time > 0.9) { if (sh.beams) sh.beams.forEach((b) => b.stop()); this.shot = null; }
     }
@@ -570,7 +579,8 @@ class BlasterStage {
     } else this.frame.visible = false;
     // ---- sound that follows the game: the engines with the streak and the warp; without a recording, the alarm as a pip
     const heat = g.jet.heat || 0;
-    if (this.engine) Sound.loopSet("blaster-engine", { rate: 0.85 + heat * 0.3 + w * 0.5, vol: 0.26 + heat * 0.1 + w * 0.22 }); else Sound.rev(0.5 + heat * 0.45 + w * 0.5);
+    const sput = this.low ? 0.93 + 0.05 * Math.sin(VFX.t * 9) * Math.sin(VFX.t * 2.3) : 1; // (an engine is hurt: the note sags and wavers)
+    if (this.engine) Sound.loopSet("blaster-engine", { rate: (0.85 + heat * 0.3 + w * 0.5) * sput, vol: 0.26 + heat * 0.1 + w * 0.22 }); else Sound.rev((0.5 + heat * 0.45 + w * 0.5) * sput);
     if (this.low === 1 && !this.alarm && (this.lowT -= d) <= 0) { this.lowT = 1.125; Sound.sfx("alarm", 0, { vol: 0.6 }); }
     if (this.low && g.state === "over") this.setLow(0);
     // the music holds its upper layers through the wave's last three questions (its rage), whatever the streak
@@ -578,7 +588,6 @@ class BlasterStage {
   }
   dispose() {
     this.loops(false);
-    Sound.hush();
     this.frame.material.dispose(); this.frame.geometry.dispose();
     GFX.setDanger(0);
     HudFX.low(this.g.el, false);

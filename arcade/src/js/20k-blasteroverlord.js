@@ -302,13 +302,13 @@ class BlasterOverlord {
     // dying: it sags and reels; in its last stand it rears back and roars first
     this.critK += ((this.crit && this.alive ? 1 : 0) - this.critK) * Math.min(1, d * 2.5);
     const crit = this.critK;
-    const blowAt = this.finale ? 1.15 : 0.8, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(0.4, 0.62, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
+    const blowAt = this.finale ? 1.0 : 0.8, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(0.36, 0.56, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
     const over = dying && !this.blown ? smoothstep(0.1, blowAt, this.dieT) : 0; // its core running away, toward the blast
     const raise = Math.min(1.2, tV + 0.75 * sV + 0.8 * roar + 0.7 * gloat + 0.5 * onset + 0.7 * flare); // (arms up and out, claws open at the player)
     // wings: a slow beat, faster in a rage and as it flies in. Each down-beat is heard, quietly.
     this.flap += d * (2.6 + 3.2 * rage + 7 * Math.min(1, inK * 4) + 2.2 * tele + 3 * gloat) * (quiet ? 0.6 : 1);
     const ph = this.flap, beat = Math.pow(0.5 + 0.5 * sin(t * (5.4 + 3 * rage + 9 * over)), 6), beatN = Math.floor((ph - 1.5708) / 6.2832);
-    if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying) Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6), { vol: 0.5 }); }
+    if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying && g.state !== "over") Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6), { vol: 0.5 }); } // (not once the run is over: it is seen to gloat, and after its roar nothing more is heard)
     // ---- where it is: as far ahead as the time left says, further when a hit has thrown it back, flying up when it is new
     if (dying) this.adv += (0.9 - this.adv) * Math.min(1, d * 2.6); // (dying, it falls in toward the fighter: its end is seen close)
     else if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, d * 5);
@@ -363,8 +363,8 @@ class BlasterOverlord {
     U.uSkGlow.value.setRGB(lerp(1, 1.5, rg), lerp(1, 0.3, rg), lerp(1, 0.24, rg)).multiplyScalar(pw); // its neon: magenta, crimson in a rage
     U.uLdCoreK.value = 0.5 + 1.6 * beat + 0.9 * (this.wounds >= 4 ? 1 : 0) + 3.0 * tB + 2.0 * sB + 2.5 * over + 1.2 * crit;
     U.uLdEyeK.value = 0.8 + 1.4 * tele + 1.0 * strike + 0.8 * rage + onset + gloat;
-    this.flash = Math.max(0, this.flash - d * 5);
-    U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 1.15); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
+    this.flash = Math.max(0, this.flash - d * 6.5);
+    U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 0.9); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
     U.uLdCrack.value += ((dying ? 0.9 : Math.max(hurt * 0.6, 0.8 * crit)) - U.uLdCrack.value) * Math.min(1, d * 3);
     U.uLdCrackCol.value.setRGB(2.6, 0.5, 0.7).multiplyScalar(0.5 + 0.5 * beat + 0.7 * over); // (thin bright veins: it is still seen as what it is, breaking)
     U.uLdWound.value.forEach((w) => { if (w.w > 0 && w.grow) w.w = Math.min(w.grow, w.w + d * w.grow * 5); }); // a wound opens in a fifth of a second
