@@ -17,7 +17,7 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 | 3D candidates | `tools/gen/candidates.js` | the same concept through Tripo H3.1 (Ultra geometry, HD texture v3.5, PBR) and Hyper3D Rodin Gen-2.5 Extreme-High (HighPack 4K, HD texture, PBR) |
 | Review sheets | `tools/gen/render.js` | every candidate from front, three-quarter, side, rear, rear three-quarter and top |
 | Split parts, rig | `tools/gen/tripo-post.js` | Tripo segmentation v2, rig check, auto rig, animation retarget |
-| Game model | `tools/gen/process-model.mjs` + `tools/gen/assets/<name>.json` | orientation (+Y up, +Z forward), scale, origin; parts as nodes with pivots; simplification (meshopt, borders locked); 2K base colour, metal/roughness and normal maps as WebP; an emissive map derived from the base colour's neon; anchor nodes for effects; quantised, meshopt-compressed `.glb` |
+| Game model | `tools/gen/process-model.mjs` + `tools/gen/assets/<name>.json` | orientation (+Y up, +Z forward), scale, origin; parts as nodes with pivots; simplification (meshopt, borders locked); base colour (4K for the hero models), metal/roughness and normal maps (2K) as WebP; surface rules by part (`paint`: roughness, metalness, glow or colour for the texels of named parts, optionally only where the base colour is in a range); a glow map from the base colour's neon, cleaned with a median; anchor points for effects; quantised, meshopt-compressed `.glb` |
 | Skies | `tools/gen/skies.js`, `sky-build.js` | Blockade Labs Model 3 panoramas (8K), checked for seams and stretching, packed at 4096x2048 WebP |
 | Sound | `tools/gen/sounds.js`, `audio-build.js` | ElevenLabs effects (several takes each), loops, announcer lines, music; trimmed, levelled and packed into sprites |
 | Manifest | `tools/manifest.js` | writes `src/js/03a-files.js`: the files, the cues in each sprite, the music, what each screen needs |
@@ -26,11 +26,16 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 
 | File | Used for | Source | Settings | Result | Cost |
 |---|---|---|---|---|---|
-| `starfighter.glb` | Risk Blaster: the player's fighter | Tripo `image-to-model`, model `v3.1-20260211`, from concept `starfighter-b-sd-0` (Seedream 5.5; prompt `starfighter-b` in `concepts.js`); parts from Tripo `mesh/segment` v2 | `geometry_quality: detailed`, `texture_quality: detailed`, `texture_version: v3.5-20260815`, PBR, 300K faces | 97K triangles in 13 parts (hull, canopy, 2 wings, 2 cannons, 5 engines, 2 fins), 11 anchors, 2K maps, 2.0 MB | 60 + 40 Tripo credits (model, segmentation); concept $0.06 |
-| `demon.glb` | Risk Blaster: the wave's enemy | Tripo `image-to-model` `v3.1-20260211` from concept `demon-c-sd-0` (prompt `demon-c`); parts from Tripo `mesh/segment` v2 | as above | 120K triangles in 11 parts (body, head, tail, 2 wings, 2 shoulders, 2 elbows, 2 hands), 9 anchors, 2K maps, 1.9 MB | 60 + 40 Tripo credits; concept $0.06 |
+| `starfighter.glb` | Risk Blaster: the player's fighter | Tripo `image-to-model`, model `v3.1-20260211`, from concept `starfighter-b-sd-0` (Seedream 5.5; prompt `starfighter-b` in `concepts.js`); parts from Tripo `mesh/segment` v2 | `geometry_quality: detailed`, `texture_quality: detailed`, `texture_version: v3.5-20260815`, PBR, 300K faces | 119K triangles in 13 parts (hull, canopy, 2 wings, 2 cannons, 5 engines, 2 fins), 11 anchors, 4K base colour, 2K metal/roughness, normal and glow maps, 3.3 MB. Surfaces by part: mirror-glass canopy, heat-tinted nozzles, gunmetal cannons | 60 + 40 Tripo credits (model, segmentation); concept $0.06 |
+| `demon.glb` | Risk Blaster: the wave's enemy (second version) | Tripo `image-to-model` `v3.1-20260211` from concept `demon-d-nb-0` (Nano Banana Pro; prompt `demon-d`); parts from Tripo `mesh/segment` v2 (`balanced`), the two horns lifted out of a second split (`detailed`) | as above | 142K triangles in 13 parts (body, head, 2 horns, tail, 2 wings, 2 shoulders, 2 elbows, 2 hands), 9 anchors, 4K base colour, 2K maps, 3.4 MB. Surfaces by part: matte ridged horns, chrome armour with cyan seam lights, softly glowing wing membranes, a glowing rift in the chest | 60 + 40 + 40 Tripo credits; concept $0.15 |
 | `warrig.glb` | Nest Egg Run: the vehicle | Hyper3D Rodin `fal-ai/hyper3d/rodin/v2.5`, tier `Gen-2.5-Extreme-High`, from concept `wartruck-c-sd-0` (prompt `wartruck-c`); parts from Tripo `mesh/segment` v2 of the uploaded mesh | `500K Triangle`, PBR, `hd_texture`, `texture_delight`, HighPack (4K) | 191K triangles in 9 parts (body, 6 wheels, 2 exhausts), 9 anchors, 2K maps, 3.6 MB | $1.20 fal + 40 Tripo credits; concept $0.06 |
 
 Each model has a `<name>.json` beside it (parts, pivots, anchors, triangle count) written by the processing tool.
+
+The demon was made twice. The first (`tools/gen/assets/demon-v1.json`, concept `demon-c-sd-0`) was replaced after the
+first independent review: its round chest core was too close to a known film armour, its face did not read and its
+wings were noisy. The second round was nine concept images (three new prompts, `demon-d/e/f`), three Tripo and two
+Rodin candidates; the pick is above. The first demon's cost stays in the spend log.
 
 ## Skies (`assets/sky/`)
 
@@ -67,11 +72,16 @@ each (the game plays the takes of a sound in turn). Loops: the same model with `
 
 ## Spend log
 
-As of the end of Phase 0 (2026-11-15). Failed calls are not charged by any of the four.
+As of 2026-11-15 20:45 UTC (Phase 1 under review). Balances are read live from each provider; failed calls are not
+charged by any of the four. Every paid call is a line of `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits | 1,495 | 2,970 | 21 image-to-3D (60 each), 1 text-to-3D (50), 4 segmentations (40 each), 1 auto rig (25), 13 rig checks (free) |
-| fal.ai | $49.90 | $19.89 | $30.01 | 22 Rodin Gen-2.5 runs ($16.80: 10 with HighPack at $1.20, 12 at $0.40), 44 Seedream 5.5 concept images, 9 Nano Banana Pro concept images |
+| Tripo | 4,465 credits | 1,755 | 2,710 | 24 image-to-3D (60 each), 1 text-to-3D (50), 6 segmentations (40 each), 1 auto rig (25), 13 rig checks (free) |
+| fal.ai | $49.90 | $24.14 | $25.76 | 24 Rodin Gen-2.5 runs, 53 Seedream 5.5 concept images, 16 Nano Banana Pro concept images |
 | ElevenLabs | 131,000 credits | 10,040 | 120,960 | 448 sound effects and loops (11 credits a second), 57 announcer lines, 3 music runs |
 | Blockade Labs | plan credits | 24 | not reported by the API | 24 skies (Model 3, 1 credit each) |
+
+One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
+redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now
+done with `node --check`, which does not run the script.
