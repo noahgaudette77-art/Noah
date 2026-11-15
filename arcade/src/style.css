@@ -1746,3 +1746,7 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 .scr-racer .hud .lives { gap: 1px; }
 @media (max-width: 374px) { .scr-racer .hud { gap: 4px; } .scr-racer .hud .lives svg { width: 15px; height: 15px; } .scr-racer .hud .combo { font-size: 8px; } }
 @media (max-width: 339px) { .scr-racer .hud .lives svg { width: 12px; height: 12px; } .scr-racer .hud .combo { font-size: 7px; letter-spacing: -0.02em; } .scr-racer .hud .egg small { font-size: 6px; } .scr-racer .hud .iconbtn { width: 32px; height: 32px; } }
+
+/* The floor's horizon behind a menu page is a glow, not a line: as a bright 2 px line it ran through any words on the
+   page's own ground that sat at its height (the caption under the stats tiles had a line through it). */
+.screen[style*="background:rgba(9,3,32"]::after { background: radial-gradient(64% 50% at 50% 50%, rgba(255, 58, 212, 0.2), rgba(120, 70, 255, 0.1) 46%, rgba(0, 0, 0, 0) 72%), linear-gradient(90deg, rgba(53, 239, 255, 0), rgba(53, 239, 255, 0.09) 30%, rgba(255, 58, 212, 0.09) 70%, rgba(255, 58, 212, 0)) 0 50% / 100% 2px no-repeat; }

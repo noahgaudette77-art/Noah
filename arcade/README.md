@@ -381,16 +381,22 @@ what was done about every point, the originality audit and what was left undone.
 `docs/polish-pass/` holds that pass's before-and-after contact sheets, one per
 screen (before on top, after below).
 
-The last round of that pass had a fresh reviewer (an agent that had not seen the
-work) score every screen again, some of them three or four times, with a fix pass
-after each. Their averages ended between 3.4 and 3.9 out of 5; none gave a screen
-4.5. What each asked for, what was done and what was left is under "Round M" in
-`PROGRESS.md`. Two things from that round worth knowing when you change the look:
+The last two rounds of that pass (M and N in `PROGRESS.md`) had fresh reviewers
+(agents that had not seen the work) score every screen again and again, with a fix
+pass after each, until every screen had used eight passes; then each screen was
+reviewed once more on the final build. Those final averages run from 3.3 (Boss
+Rush) to 3.9 (title, hub, Risk Blaster, Nest Egg Run) out of 5. The target was 4.5
+and no reviewer gave a screen that. What each asked for, what was done, what they
+said resembled other work and what was left are in `PROGRESS.md`. Three things from
+those rounds worth knowing when you change the look:
 a scene can name its subject each frame (`GFX.keepAt`), and the speed streak and
 the colour split of a blow then leave an ellipse round it sharp (Nest Egg Run's car
-uses it); and a still for review must be drawn from a held scene (the capture
+uses it); a still for review must be drawn from a held scene (the capture
 tools step the game with almost no time passing while they shoot), or the camera's
-motion blur smears the frame in a way no player sees.
+motion blur smears the frame in a way no player sees; and a beam that runs away
+from the lens must be shaded across its width, not by the angle of its surface
+(seen end-on, the shared beam material goes dim: Risk Blaster's shot and Boss
+Rush's blade have their own).
 
 Three models the player supplied live in `arcade/assets/`: the Final Exam's boss
 (`boss/`), Risk Blaster's fighter (`fighter/`) and its demon (`demon/`), each a

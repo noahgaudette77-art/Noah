@@ -2118,8 +2118,10 @@ the fighter stays in view above it. The sky's nebula and clouds are turned down;
 line.
 
 Third independent review: **3.5, 3, 3, 3, 3.5, 3.5, 3.5 (3.3)**, below the 3.5 of the one before it: a new reader,
-and a harder one on the firing and wind-up frames. (It read frames 10 and 11, the fighter's own loss, as the demon's
-defeat: the caption did not say whose.) Closing fixes after it: a disc of light inside the ring, so the demon is a
+and a harder one on the firing and wind-up frames. (Its two "defeat" frames are the demon's destruction, which the
+capture tool forces in the middle of a question: the drones and live answers still on screen in them are not what a
+player sees, since the wave's last question has been answered by then. Its point that the blast covers the fighter
+for a moment stands, and is not fixed.) Closing fixes after it: a disc of light inside the ring, so the demon is a
 dark shape on lighter ground, and the ring swells over its shoulders and has three slow breaks in it; the shot has a
 white heart in a sheath of the answer's colour and is as bright seen from behind as from the side (shaded by the
 angle of its surface it was a pale hair), and the shot through the drone is the same width, so it reads fighter to
@@ -2232,3 +2234,114 @@ as an outline); the room falls back a little more; the wash a cabinet throws on 
 orange at full strength over violet went olive); the clock is a dark dial with lit hands and ticks. Not done: a
 different marquee backdrop and lower panel for each cabinet, glass on the tubes, the wall's bands lifted above the
 toppers, the neighbours shown a fifth of the way in.
+
+### The last look: every screen once more, on the final build
+
+When every screen had used its eight passes, all nine were captured again from the final build and each was given
+to one more fresh reviewer, with the same brief and the same scale as before (5 ship as is in a top commercial
+game, 4.5 one or two nits, 4 good with visible weaknesses, 3 competent but plain; "be strict and do not round up").
+These are the scores this work ends on. The frames are from commit 6b31543 (the vault, the guide and Risk Blaster
+from d2afb48, which differs from it only in the racer, the title and the hub). Two small fixes followed these
+reviews and are noted under the table; nothing else changed after them.
+
+| Screen | Passes used | Independent averages on the way (rounds M and N) | Final review: detail, lighting, materials, depth, motion, cohesion, legibility | Final average |
+|---|---|---|---|---|
+| Title | 8 of 8 | 4.1, 3.9, 3.9, 3.9 | 4, 3.5, 3.5, 4, 4, 4, 4 | 3.9 |
+| Arcade Hub | 8 of 8 | 3.9, 3.5, 3.8, 3.8, 3.8 | 4, 3.5, 3.5, 4, 4, 4, 4 | 3.9 |
+| Risk Blaster | 8 of 8 | 3.5, 3.5, 3.3 | 4, 3.5, 3.5, 4, 4, 4, 4 | 3.9 |
+| Nest Egg Run | 8 of 8 | 3.9, 3.7, 3.6, 3.5 | 4, 3.5, 3.5, 4, 4, 4, 4.5 | 3.9 |
+| Memory Bank | 8 of 8 | 3.4, 3.7, 3.9, 3.6 | 4, 3.5, 3.5, 3.5, 3.5, 4, 4 | 3.7 |
+| Strategy Guide | 8 of 8 | 3.5, 3.4, 3.9, 4.0, 3.6 | 3.5, 3.5, 3, 3.5, 3.5, 4, 4 | 3.6 |
+| Interface | 8 of 8 | 3.6, 3.4, 3.6 | 3.5, 3.5, 3.5, 3.5, 3.5, 4, 3.5 | 3.6 |
+| Final Exam | 8 of 8 | 3.7, 3.4, 3.5 | 3.5, 3, 3, 3.5, 3.5, 3.5, 4 | 3.4 |
+| Boss Rush | 8 of 8 | 3.7, 3.7, 3.6, 3.5 | 3.5, 3, 2.5, 3.5, 3.5, 3.5, 3.5 | 3.3 |
+
+**The target was 4.5 on every screen. It is not met on any.** The final averages run from 3.3 to 3.9. One axis on
+one screen reached 4.5 (legibility, Nest Egg Run); the lowest single score is 2.5 (materials, Boss Rush). Over
+rounds M and N the nine screens had 44 independent reviews. The averages do not climb with the work: each new
+reviewer, shown a screen on which the last one's points had been fixed, found a new list and scored it within about
+half a point of where it began. Lighting and materials are the lowest axes on every screen at the end, and every
+final review's "biggest change" is a relighting or re-materialling of the whole scene, which is more than a fix
+pass. Those lists are kept beside the working files and summarised below under "Not done".
+
+- **Risk Blaster was reviewed twice at the end.** My captions on the first sheet called its two end frames the
+  player's fighter breaking up; they are the demon's destruction. That review scored 4, 3.5, 3.5, 3.5, 4, 4, 3.5
+  (3.7) and two of its points followed from the wrong caption. The one in the table had the captions right.
+- **Two fixes after the last look.** Nest Egg Run's reviewer saw the pause button 6 px past the margin: pass 7 had
+  made the nest egg's label and the rate a size larger, and with two shields and three hearts showing the top row no
+  longer fitted (24 px over at 360 wide). They are back at the sizes the row was fitted with, the icons close up on
+  narrow phones, and the row was measured at 390, 360 and 320 wide; the other games' rows were measured too and
+  fit. The Interface's reviewer saw the lit floor's horizon, a bright 2 px line behind every menu page, run through
+  the caption under the stats tiles: it is a glow now. Both were mine, from this round.
+- **The exam.** Its last reviewer found no direct tell before submit ("the chosen plate is plain violet, with no
+  tick, cross, score, streak or boss bar") and named one risk: the boss goes from dark to lit seconds after the first
+  tap. Checked in the code: it wakes when the exam starts, not at an answer; it gives the same small start at every
+  pick, right or wrong; its glow follows how far along the exam is, never which answers were right.
+
+### Faults found in round N
+
+- **The exam's front page showed only the middle of its introduction.** The hub card's four-line box (hub pass 5)
+  applied to every element of that class, and the brief on this page is one. Scoped to the hub card.
+- **Every billboard on a post in Nest Egg Run was a blank black board.** Its poster was set behind the face of its
+  own frame, in every district. It hangs on the front now.
+- **The title's lightning was never seen as a bolt.** It struck behind the towers at the edges of the picture, a
+  hair wide, and the test that gave it forks compared its width with a number it never reached. It strikes in the
+  open sky now, four pixels wide, forked.
+- **The desert's arch of rock was not an arch.** Its stones were turned end-on to the curve and stood round the sun
+  like rays.
+- **Nest Egg Run's top row overflowed** with two shields showing, and **a line ran through the stats caption** (both
+  above; both introduced and both fixed in this round).
+- **A build that would not start, caught before it was committed.** A comment added after a statement in the
+  middle of a line swallowed the rest of the line; each source file still passed its own syntax check. The page's
+  inline scripts are now parsed after every build as well.
+- **Capture tools.** The exam's pass run could begin before the first question existed and record a fail; it waits
+  for the question now. Two of the capture chains were lost when the shell that started them returned; the final set
+  was shot again.
+
+### Resemblance: what this round's reviewers named, and what was done
+
+Every reviewer was asked to name anything that looked like a specific existing game, film, brand, logo or
+character. None named a copy. What they did name:
+
+| Named | Where | Outcome |
+|---|---|---|
+| A film robot's helmet (crest between two ear antennae, stacks behind the shoulders), by two reviewers independently | The exam's boss (the owner's model) | Changed in how it is shown: the antennae end at the helmet's line and it wears the proctor's square cap. The model file is untouched. Later reviewers: "no direct lift". **Flagged for the owner**, since it alters a supplied model's look |
+| "Reads R2-D2", at low confidence | The hub's floor robot (a dome on a drum) | Redesigned: a sled, a mast and a tube monitor for a face. The next two reviewers named nothing for it |
+| Mystery Science Theater 3000's front-row silhouettes | Boss Rush's front row | Changed: only the tops of heads crest the bottom edge now, each with a hairline of the arena's light |
+| TRON (circuit lines on black armour); Clash Royale's P.E.K.K.A (dark hulk with a magenta glow); LEGO and Minecraft block figures | THE PROCTOR in Boss Rush; all bosses | Kept. "Faint, not actionable" in the reviewer's words; block-built figures are the arcade's form |
+| Bender (Futurama), faintly | Product Pusher's visor-and-grille face | Kept: a visor and a grille on a robot. Noted by two reviewers, both "faintly" |
+| A hockey mask (Friday the 13th), faintly | The masks on the Boss Rush cabinet's kick panel | Kept: they are theatre masks at a few pixels |
+| Bumblebee's Camaro, faintly ("low risk"); earlier, a DeLorean's tail bar | Nest Egg Run's car | Kept: a gold-shelled rally car under gunmetal armour with a roof lamp bar and a mint emblem; the last reviewer called it "a generic 1980s wedge; no real marque" |
+| "Drifts toward the Decepticon insignia" (mild) | The demon's head seen front-on (the owner's model) | Kept as supplied. **Flagged for the owner** |
+| Bumblebee under the warm light; the Terminator's chrome skull; Warhammer 40,000 Terminator armour | The exam's boss (the owner's model) | Kept as supplied: "generic, not copied; the mortarboard keeps it its own". **Flagged for the owner** with the row above |
+| OutRun, Blood Dragon and Kung Fury key art, Kavinsky's cover, Blade Runner, Cloudpunk; "the red wedge car recalls OutRun" | Title; Nest Egg Run | Kept: the banded sun, the grid, rain and blade signs are the genre, and every reviewer who named them said so. Nest Egg Run's sun is an egg |
+| Star Fox and Space Harrier (the view from behind the ship); Guitar Hero (a row of coloured discs over coloured lanes) | Risk Blaster; Nest Egg Run | Kept: conventions of the form |
+| Trinity College's Long Room; a prize wheel or a dartboard | The Strategy Guide's hall and rose window | Kept: "real-world archetypes, nobody's property" |
+
+### Not done, and why (round N)
+
+Each screen's section above lists what its last pass left. What the final reviews still ask for, by size:
+
+- **A relight of each 3D scene** (Boss Rush, the exam, the hub, the title, the guide's hall): darker grounds behind
+  the subject, a hard rim in one colour, bloom on emissives only, light that lands as pools and spill. Parts of this
+  were done in every pass; no reviewer has yet called a scene lit. It is the largest single thing left.
+- **Materials**: stepped speculars on the bosses' plate and gold, glass on the hub's tubes, a truss with bevelled
+  housings for Nest Egg Run's gate, wet breakup on the road, cut faces on a broken boss.
+- **New geometry**: an end wall for the guide's hall, shopfronts and a train for the title, ships and water for the
+  harbour, a body change for each enraged boss, different faces for the stage rows, a second silhouette for the
+  demon's rage (its pose is the model's own rig).
+- **Things that cannot change**: a score that counts up on the results page (the test harness reads that page's
+  text as it appears), the right answer's badge keeping its own colour (green is "right" everywhere in the arcade),
+  the crash framed whole above its panel (the panel's height is the explanation's length), the exam boss's armour
+  (it is the owner's model).
+- **Not verified on a real phone.** Every frame is from a software renderer at twice a phone's density. Frame rate
+  on a device is unknown; the per-effect switches in Setup are the lever if it is low.
+
+### Where it ends
+
+- Final build: regression identical to the baseline (153 answers in 8 games, every saved byte), no console errors,
+  50 exam questions with no hint before submit, and the 13-step walkthrough passes.
+- All nine screens have used eight passes. Each was reviewed by fresh agents four to six times in rounds M and N,
+  44 reviews in all, the last of them on the final build.
+- `docs/polish-pass/` holds the before-and-after sheets, rebuilt from the final build.
+
