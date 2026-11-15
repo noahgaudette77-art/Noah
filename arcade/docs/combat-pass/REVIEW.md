@@ -1,7 +1,11 @@
 # How a mode is reviewed
 
-Every mode is scored by a reviewer who did not build it and is given only this page and a folder of captures.
-A mode is done when every axis is at 4.5 or more, or when the builder has run out of real options and says so.
+Each phase of the work gets one independent review, at its end, by a reviewer who did not build it and is given only
+this page and a folder of captures. There is no score target and no second round: the review exists to catch what
+matters (anything broken, ugly, confusing, or too close to a famous character), and those are fixed before the phase
+is closed. Minor polish is noted and left. A phase is done when it works, looks good and consistent, its tests pass
+and no major defect is left. (Risk Blaster's first review, kept in `blaster/review-r1.md`, was written under an
+earlier rule that asked for 4.5 on every axis and repeated rounds.)
 
 ## What the reviewer is given
 
@@ -33,13 +37,14 @@ must stay readable through every effect.
 
 ## What the reviewer writes
 
-1. A table: the seven scores, one line of evidence each (file, tile number).
+1. A table: the seven scores, one line of evidence each (file, tile number). The scores describe; they are not a gate.
 2. The requirement checklist for the mode (given with the request): each item `met`, `weak` or `missing`, with the
    file that shows it.
-3. Defects, most damaging first, at most twelve. Each one: where it shows (file, tile), what is wrong, what would
-   fix it. Concrete only: "the left wing tip clips through pod B in tile 4", not "improve polish".
-4. Originality: anything that resembles a known character, robot, ship, vehicle or logo.
-5. One line: the lowest score and what would raise it.
+3. Major defects only, most damaging first, at most ten: something broken, ugly, confusing, unreadable, or too close
+   to a known character, robot, ship, vehicle or logo. Each one: where it shows (file, tile), what is wrong, what
+   would fix it. Concrete only: "the left wing tip clips through pod B in tile 4", not "improve polish".
+4. Minor notes, one line each, at most ten. These may be left unfixed.
+5. Originality: anything that resembles a known character, robot, ship, vehicle or logo.
 
-The reviewer does not soften scores to be kind and does not raise them because a previous round was lower. A 4.5 means
-a commercial arcade game would ship it as it is.
+The reviewer does not soften a finding to be kind. To keep a review quick: look at every image once, then crop and
+enlarge at most thirty tiles where a closer look is needed.
