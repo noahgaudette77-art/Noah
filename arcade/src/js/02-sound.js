@@ -157,6 +157,7 @@ const Sound = {
     player_hit: "hit", heart_lost: "shatter", shield_down: "shield", low_health: "buzz",
     crash: "hit", crash_glass: "shatter", skid: "swoosh", near_miss: "whoosh", boost: "warp", boost_flame: "whoosh",
     reward: "coin", slowmo_in: "whoosh", ui_click: "blip", ui_select: "select", ui_back: "back",
+    volley_fire: "shot", sting_correct: "correct", sting_wrong: "wrong",
   },
   // A recorded effect. Takes of one sound are played in turn, each a touch different in pitch and level.
   _cue(name, pan, o = {}) {
