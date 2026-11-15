@@ -1,0 +1,18 @@
+{
+  "name": "demon",
+  "about": "Risk Blaster's enemy. Tripo H3.1 from the ram-horned overlord concept (demon-c-sd-0), parts from Tripo segmentation v2. L and R are the demon's own left and right (it faces +Z, so its left is +X).",
+  "src": "cand/demon/demon-c-sd-0.tripo.glb", "seg": "post/demon-seg2.glb",
+  "forward": "+x", "size": { "axis": "max", "value": 1 }, "origin": "center", "tris": 110000, "tex": 2048,
+  "groups": { "wingL": [0], "wingR": [1], "head": [3], "tail": [4], "handR": [5], "handL": [6], "shoulderR": [8], "shoulderL": [9], "elbowR": [10], "elbowL": [11] },
+  "tree": { "elbowL": "shoulderL", "handL": "elbowL", "elbowR": "shoulderR", "handR": "elbowR" },
+  "pivots": { "wingL": ["min", 0.1, -0.03], "wingR": ["max", 0.1, -0.03], "head": ["c", "min", 0.06], "tail": [0, "max", "c"], "shoulderL": ["min", "c", "c"], "shoulderR": ["max", "c", "c"], "elbowL": ["c", "max", "c"], "elbowR": ["c", "max", "c"], "handL": ["c", "max", "c"], "handR": ["c", "max", "c"] },
+  "keep": { "head": 1.6, "body": 1.3 },
+  "anchors": {
+    "core": [0, 0.065, 0.19], "mouth": { "of": "head", "at": ["c", 0.19, "max"], "ride": "head" }, "eyes": { "of": "head", "at": ["c", 0.265, "max"], "ride": "head" },
+    "clawL": { "of": "handL", "at": ["c", "min", "max"], "ride": "handL" }, "clawR": { "of": "handR", "at": ["c", "min", "max"], "ride": "handR" },
+    "wingTipL": { "of": "wingL", "at": ["max", "max", "c"], "ride": "wingL" }, "wingTipR": { "of": "wingR", "at": ["min", "max", "c"], "ride": "wingR" },
+    "tailTip": { "of": "tail", "at": ["max", "min", "c"], "ride": "tail" }, "thrusters": [0, -0.26, 0.07]
+  },
+  "emissive": { "hues": [[165, 352]], "sat": [0.45, 0.7], "val": [0.42, 0.75], "gain": 1 },
+  "surface": { "roughMin": 0.16 }
+}

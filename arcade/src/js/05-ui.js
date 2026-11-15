@@ -164,6 +164,7 @@ function toggleMute() {
   Store.settings.music = !on;
   Store.save();
   Sound.refreshMusic();
+  if (on) Sound.stopLoops(); // (an engine or an alarm that was running goes quiet with everything else)
   UI.toast(on ? "SOUND OFF" : "SOUND ON");
   return !on;
 }
@@ -315,10 +316,12 @@ function pauseMenu(game) {
     <h2>PAUSED</h2>
     <button class="btn" data-act="resume" style="--c:${COLORS.lime}">${icon("play")} RESUME</button>
     <button class="btn ghost" data-act="restart">RESTART</button>
+    <button class="btn ghost" data-act="mute">${icon(Store.settings.sfx || Store.settings.music ? "note" : "mute")} <span>${Store.settings.sfx || Store.settings.music ? "SOUND ON" : "SOUND OFF"}</span></button>
     <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button></div></div>`);
   UI.openModal({
     el,
-    on: (a) => {
+    on: (a, t) => {
+      if (a === "mute") { const now = toggleMute(); t.innerHTML = `${icon(now ? "note" : "mute")} <span>${now ? "SOUND ON" : "SOUND OFF"}</span>`; return; } // (the menu stays up: sound is a switch, not a way out)
       UI.closeModal();
       if (a === "resume") game.resume();
       if (a === "restart") game.restart();

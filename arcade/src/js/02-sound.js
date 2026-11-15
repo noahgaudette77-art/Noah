@@ -214,13 +214,21 @@ const Sound = {
   },
   // ---- recorded sound, loaded by Assets --------------------------------------------------
   _decode(buf) { return new Promise((res, rej) => { try { const p = this.ctx.decodeAudioData(buf.slice(0), res, rej); if (p && p.catch) p.catch(rej); } catch (e) { rej(e); } }); },
+  // Every sound file starts with a click exactly a quarter of a second in. Decoders differ in what they do with an
+  // encoder's padding, so where the click turns up says how far this one has shifted everything after it.
+  _clickAt(buf) {
+    const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7));
+    for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25;
+    return 0;
+  },
   // One file of effects and the list of where each lies: Assets.files.sprites[name] = { file, cues: { cue: [[at, dur, vol, duck]...] } }
   loadSprite(name) {
     const sp = Assets.files.sprites[name];
     if (!sp || !this.ctx) return Promise.resolve(null);
     return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
       this.sprites[name] = buf;
-      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
+      const off = this._clickAt(buf);
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
       return buf;
     }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
   },
@@ -231,7 +239,8 @@ const Sound = {
     if (!m || !this.ctx) return Promise.resolve(null);
     if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
     const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
-      this.tracks[name] = { buf, loop: m.loop || [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
+      const off = this._clickAt(buf);
+      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
       if (this.trackName === name && Store.settings.music) { this.trackName = null; this.play(name); }
       return buf;
     }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });

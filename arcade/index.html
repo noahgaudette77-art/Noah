@@ -6232,13 +6232,21 @@ const Sound = {
   },
   // ---- recorded sound, loaded by Assets --------------------------------------------------
   _decode(buf) { return new Promise((res, rej) => { try { const p = this.ctx.decodeAudioData(buf.slice(0), res, rej); if (p && p.catch) p.catch(rej); } catch (e) { rej(e); } }); },
+  // Every sound file starts with a click exactly a quarter of a second in. Decoders differ in what they do with an
+  // encoder's padding, so where the click turns up says how far this one has shifted everything after it.
+  _clickAt(buf) {
+    const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7));
+    for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25;
+    return 0;
+  },
   // One file of effects and the list of where each lies: Assets.files.sprites[name] = { file, cues: { cue: [[at, dur, vol, duck]...] } }
   loadSprite(name) {
     const sp = Assets.files.sprites[name];
     if (!sp || !this.ctx) return Promise.resolve(null);
     return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
       this.sprites[name] = buf;
-      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
+      const off = this._clickAt(buf);
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
       return buf;
     }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
   },
@@ -6249,7 +6257,8 @@ const Sound = {
     if (!m || !this.ctx) return Promise.resolve(null);
     if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
     const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
-      this.tracks[name] = { buf, loop: m.loop || [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
+      const off = this._clickAt(buf);
+      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
       if (this.trackName === name && Store.settings.music) { this.trackName = null; this.play(name); }
       return buf;
     }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
@@ -6716,9 +6725,9 @@ function readTime(round, mult = 1) {
 }
 
 /* ---- 03a-files.js ---- */
-// Written by tools/manifest.js: every file under arcade/assets the page may fetch, the cues inside each sound
-// sprite, the music, and what each screen needs. (Empty until the first assets are processed.)
-const INR_FILES = { files: {}, sprites: {}, music: {}, sets: {} };
+// Written by tools/manifest.js: every file under arcade/assets the page may fetch (and its size), the cues inside each
+// sound sprite ([start, length, level, how far the music ducks]), the music and its loop points, and what each screen needs.
+const INR_FILES = {"files":{"audio/sfx-combat.mp3":1142535,"audio/sfx-core.mp3":1755473,"audio/sfx-hub.mp3":124387,"audio/sfx-racer.mp3":477301,"audio/voice.mp3":845785,"models/demon.glb":2034144,"models/starfighter.glb":2086412,"models/warrig.glb":3760928,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,0.9,0],[1.37,0.8,0.9,0],[2.2401,0.4288,0.9,0],[2.7389,0.8,0.9,0]],"impact_big":[[3.6089,1.28,1,0.7],[4.959,0.8623,1,0.7],[5.8913,1.28,1,0.7],[7.2413,1.28,1,0.7]],"impact_reject":[[8.5914,0.5025,0.8,0],[9.1639,0.5686,0.8,0],[9.8025,0.6,0.8,0],[10.4726,0.5451,0.8,0]],"impact_hull":[[11.0877,0.88,0.9,0],[12.0378,0.88,0.9,0],[12.9878,0.88,0.9,0],[13.9378,0.88,0.9,0]],"impact_shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,0.8,0],[16.788,0.5621,0.8,0],[17.42,0.88,0.8,0]],"impact_metal":[[18.3701,0.48,0.7,0],[18.9201,0.48,0.7,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.7,0]],"explosion_small":[[20.5703,1.2,0.85,0],[21.8403,1.2,0.85,0],[23.1104,1.2,0.85,0],[24.3804,1.2,0.85,0]],"explosion_big":[[25.6505,2.2,1,0.6],[27.9205,2.2,1,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,1,0.6]],"explosion_huge":[[34.5952,3.56,1,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1,0.45]],"debris":[[45.4853,0.7887,0.6,0],[46.344,1.1321,0.6,0],[47.5461,1.48,0.6,0],[49.0961,1.48,0.6,0]],"charge_up":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.6,0],[52.0589,0.6803,0.6,0],[52.8092,0.6803,0.6,0]],"charge_long":[[53.5595,1.6,0.65,0],[55.2295,1.6,0.65,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.65,0]],"warning":[[60.2397,0.6,0.6,0],[60.9097,0.6,0.6,0],[61.5798,0.6,0.6,0]],"lock_on":[[62.2498,0.48,0.5,0],[62.7999,0.48,0.5,0],[63.3499,0.48,0.5,0]],"slowmo_in":[[63.9,1.08,0.7,0],[65.05,1.08,0.7,0],[66.2,1.08,0.7,0]],"player_hit":[[67.3501,0.88,0.9,0],[68.3001,0.88,0.9,0],[69.2502,0.88,0.9,0],[70.2002,0.88,0.9,0]],"heart_lost":[[71.1503,0.8,0.7,0],[72.0203,0.8,0.7,0],[72.8904,0.8,0.7,0]],"shield_down":[[73.7604,0.7352,0.75,0],[74.5656,1,0.75,0],[75.6356,0.9544,0.75,0]],"reward":[[76.66,1.2,0.7,0],[77.9301,1.2,0.7,0],[79.2001,1.2,0.7,0],[80.4702,1.2,0.7,0]],"sting_correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.6,0],[83.4803,0.8,0.6,0],[84.3504,0.8,0.6,0]],"sting_wrong":[[85.2204,0.6247,0.6,0],[85.9151,0.6803,0.6,0],[86.6654,0.4344,0.6,0],[87.1698,0.6803,0.6,0]],"ui_click":[[87.9201,0.48,0.4,0],[88.4701,0.121,0.4,0],[88.6612,0.48,0.4,0],[89.2112,0.2016,0.4,0]],"ui_select":[[89.4829,0.48,0.5,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.5,0]],"ui_back":[[91.133,0.3879,0.45,0],[91.5909,0.48,0.45,0],[92.141,0.48,0.45,0]],"coin_insert":[[92.691,1,0.7,0],[93.761,0.7125,0.7,0],[94.5436,1,0.7,0]],"powerup":[[95.6136,1,0.6,0],[96.6837,1,0.6,0],[97.7537,1,0.6,0]],"fanfare":[[98.8238,2,0.7,0],[100.8938,1.3249,0.7,0],[102.2888,2,0.7,0]],"gameover":[[104.3588,2.2,0.7,0],[106.6288,2.2,0.7,0],[108.8989,2.2,0.7,0]],"crowd_cheer":[[111.1689,2,0.55,0],[113.239,2,0.55,0],[115.309,2,0.55,0],[117.3791,2,0.55,0]],"alarm":[[119.5691,2.25,0.4,0]],"charge_hum":[[122.1291,3,0.4,0]],"boom":[[20.5703,1.2,0.85,0],[21.8403,1.2,0.85,0],[23.1104,1.2,0.85,0],[24.3804,1.2,0.85,0]],"bigboom":[[25.6505,2.2,1,0.6],[27.9205,2.2,1,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,1,0.6]],"hit":[[67.3501,0.88,0.9,0],[68.3001,0.88,0.9,0],[69.2502,0.88,0.9,0],[70.2002,0.88,0.9,0]],"correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.6,0],[83.4803,0.8,0.6,0],[84.3504,0.8,0.6,0]],"wrong":[[85.2204,0.6247,0.6,0],[85.9151,0.6803,0.6,0],[86.6654,0.4344,0.6,0],[87.1698,0.6803,0.6,0]],"coin":[[92.691,1,0.7,0],[93.761,0.7125,0.7,0],[94.5436,1,0.7,0]],"blip":[[87.9201,0.48,0.4,0],[88.4701,0.121,0.4,0],[88.6612,0.48,0.4,0],[89.2112,0.2016,0.4,0]],"select":[[89.4829,0.48,0.5,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.5,0]],"back":[[91.133,0.3879,0.45,0],[91.5909,0.48,0.45,0],[92.141,0.48,0.45,0]],"shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,0.8,0],[16.788,0.5621,0.8,0],[17.42,0.88,0.8,0]],"win":[[98.8238,2,0.7,0],[100.8938,1.3249,0.7,0],[102.2888,2,0.7,0]],"demonboom":[[25.6505,2.2,1,0.6],[27.9205,2.2,1,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,1,0.6]],"demonfinale":[[34.5952,3.56,1,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1,0.45]],"demoncharge":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.6,0],[52.0589,0.6803,0.6,0],[52.8092,0.6803,0.6,0]],"bossblast":[[34.5952,3.56,1,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1,0.45]],"bosscharge":[[53.5595,1.6,0.65,0],[55.2295,1.6,0.65,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.65,0]],"shatter":[[71.1503,0.8,0.7,0],[72.0203,0.8,0.7,0],[72.8904,0.8,0.7,0]],"clunk":[[18.3701,0.48,0.7,0],[18.9201,0.48,0.7,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.7,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.7,0],[1.2503,0.6803,0.7,0],[2.0006,0.6803,0.7,0],[2.7509,0.6803,0.7,0]],"laser_heavy":[[3.5012,0.3983,0.85,0],[3.9695,1.2,0.85,0],[5.2396,1.2,0.85,0],[6.5096,1.2,0.85,0]],"plasma_fire":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.75,0],[9.1165,0.3136,0.75,0],[9.5001,0.8,0.75,0]],"shell":[[10.3702,0.3562,0.3,0],[10.7964,0.48,0.3,0],[11.3464,0.3549,0.3,0],[11.7714,0.4354,0.3,0]],"beam_fire":[[12.2768,1.6,0.8,0],[13.9468,1.6,0.8,0],[15.6169,1.6,0.8,0],[17.2869,1.6,0.8,0]],"missile_fire":[[18.957,1,0.7,0],[20.027,1,0.7,0],[21.0971,1,0.7,0],[22.1671,1,0.7,0]],"missile_hit":[[23.2371,1,0.8,0],[24.3072,1,0.8,0],[25.3772,0.5664,0.8,0],[26.0137,1,0.8,0]],"volley_fire":[[27.0837,1,0.75,0],[28.1538,1,0.75,0],[29.2238,1,0.75,0],[30.2939,1,0.75,0]],"wave_fire":[[31.3639,1.48,0.85,0],[32.9139,1.48,0.85,0],[34.464,1.2503,0.85,0],[35.7843,1.091,0.85,0]],"slam":[[36.9454,1.28,1,0],[38.2954,1.28,1,0],[39.6454,1.28,1,0],[40.9955,0.7954,1,0]],"boss_roar":[[41.8609,2.2,0.95,0.6],[44.131,2.2,0.95,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.95,0.6]],"boss_hurt":[[50.9411,0.88,0.8,0],[51.8912,0.88,0.8,0],[52.8412,0.88,0.8,0],[53.7912,0.7878,0.8,0]],"boss_stagger":[[54.6491,0.8735,0.8,0],[55.5926,1.3102,0.8,0],[56.9727,1.1637,0.8,0],[58.2065,0.9167,0.8,0]],"boss_break":[[59.1932,1,0.8,0],[60.2633,0.5817,0.8,0],[60.915,1,0.8,0],[61.985,0.7122,0.8,0]],"boss_death":[[62.7673,3.2,1,0.5],[66.0373,3.2,1,0.5],[69.3074,3.2,1,0.5]],"warp":[[72.5774,1.6395,0.7,0],[74.2869,1.5159,0.7,0],[75.8727,1.2935,0.7,0]],"engine_ship":[[77.3563,4,0.35,0]],"laser":[[0.5,0.6803,0.7,0],[1.2503,0.6803,0.7,0],[2.0006,0.6803,0.7,0],[2.7509,0.6803,0.7,0]],"shot":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.75,0],[9.1165,0.3136,0.75,0],[9.5001,0.8,0.75,0]],"demonroar":[[41.8609,2.2,0.95,0.6],[44.131,2.2,0.95,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.95,0.6]],"demonhit":[[50.9411,0.88,0.8,0],[51.8912,0.88,0.8,0],[52.8412,0.88,0.8,0],[53.7912,0.7878,0.8,0]],"demonshed":[[59.1932,1,0.8,0],[60.2633,0.5817,0.8,0],[60.915,1,0.8,0],[61.985,0.7122,0.8,0]],"demonbreak":[[59.1932,1,0.8,0],[60.2633,0.5817,0.8,0],[60.915,1,0.8,0],[61.985,0.7122,0.8,0]],"bossroar":[[41.8609,2.2,0.95,0.6],[44.131,2.2,0.95,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.95,0.6]],"bosssmash":[[36.9454,1.28,1,0],[38.2954,1.28,1,0],[39.6454,1.28,1,0],[40.9955,0.7954,1,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,1,0],[1.77,1.2,1,0],[3.0401,1.2,1,0],[4.3101,1.2,1,0]],"crash_glass":[[5.5802,0.88,0.8,0],[6.5302,0.5965,0.8,0],[7.1968,0.88,0.8,0],[8.1468,0.88,0.8,0]],"skid":[[9.0968,1.2,0.7,0],[10.3669,1.2,0.7,0],[11.6369,1.2,0.7,0],[12.907,1.2,0.7,0]],"near_miss":[[14.177,0.6132,0.6,0],[14.8602,0.5831,0.6,0],[15.5134,0.6803,0.6,0],[16.2637,0.584,0.6,0]],"boost":[[16.9177,1.48,0.85,0],[18.4677,1.48,0.85,0],[20.0178,1.48,0.85,0],[21.5678,1.3965,0.85,0]],"gate_pass":[[23.0343,0.8,0.6,0],[23.9044,0.8,0.6,0],[24.7744,0.8,0.6,0],[25.6444,0.6858,0.6,0]],"engine_car":[[26.5202,4,0.4,0]],"boost_flame":[[30.8302,3,0.6,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:bull run":[[16.538,0.9604,1,0]],"vo:compounding":[[17.5684,1.193,1,0]],"vo:critical":[[18.8314,1.117,1,0]],"vo:deck cleared":[[20.0184,1.39,1,0]],"vo:defeated":[[21.4785,1.1138,1,0]],"vo:enraged":[[22.6623,1.4505,1,0]],"vo:exam passed":[[24.1827,1.3676,1,0]],"vo:final boss":[[25.6203,1.318,1,0]],"vo:final boss destroyed":[[27.0083,2.75,1,0]],"vo:final wave":[[29.8283,1.5771,1,0]],"vo:forced retirement":[[31.4754,1.4642,1,0]],"vo:game over":[[33.0096,1.4106,1,0]],"vo:happy retirement":[[34.4902,1.6602,1,0]],"vo:insert coin":[[36.2204,1.128,1,0]],"vo:last shield":[[37.4184,1.5958,1,0]],"vo:lightning":[[39.0842,1.15,1,0]],"vo:millionaire":[[40.3042,1.6842,1,0]],"vo:new high score":[[42.0584,1.7269,1,0]],"vo:not yet":[[43.8553,0.933,1,0]],"vo:passed":[[44.8583,0.8735,1,0]],"vo:perfect":[[45.8018,0.9316,1,0]],"vo:quick draw":[[46.8034,1.2579,1,0]],"vo:rank up":[[48.1313,1.07,1,0]],"vo:retired a millionaire":[[49.2713,2.1487,1,0]],"vo:shield down":[[51.49,1.2631,1,0]],"vo:stage clear":[[52.8231,1.3893,1,0]],"vo:trophy unlocked":[[54.2824,1.2972,1,0]],"vo:warning":[[55.6496,0.65,1,0]],"vo:wave 1":[[56.3696,1.63,1,0]],"vo:wave 10":[[58.0696,1.1341,1,0]],"vo:wave 2":[[59.2738,0.9793,1,0]],"vo:wave 3":[[60.3231,1.47,1,0]],"vo:wave 4":[[61.8632,1.2106,1,0]],"vo:wave 5":[[63.1438,1.3478,1,0]],"vo:wave 6":[[64.5615,1.4679,1,0]],"vo:wave 7":[[66.0994,1.1244,1,0]],"vo:wave 8":[[67.2939,1.55,1,0]],"vo:wave 9":[[68.9139,1.4247,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}}},"music":{},"sets":{"blaster":["model:starfighter","model:demon","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice"],"racer":["model:warrig","sfx:core","sfx:racer","sfx:voice"],"boss":["sfx:core","sfx:combat","sfx:voice"],"hub":["sfx:core","sfx:hub","sfx:voice"],"title":["sfx:core","sfx:voice"],"memory":["sfx:core","sfx:voice"],"exam":["sfx:core","sfx:combat","sfx:voice"],"guide":["sfx:core"]}};
 
 /* ---- 03b-assets.js ---- */
 // Asset files: the generated models, skies and sound live beside the page in arcade/assets/ and are fetched when
@@ -8554,6 +8563,7 @@ function toggleMute() {
   Store.settings.music = !on;
   Store.save();
   Sound.refreshMusic();
+  if (on) Sound.stopLoops(); // (an engine or an alarm that was running goes quiet with everything else)
   UI.toast(on ? "SOUND OFF" : "SOUND ON");
   return !on;
 }
@@ -8705,10 +8715,12 @@ function pauseMenu(game) {
     <h2>PAUSED</h2>
     <button class="btn" data-act="resume" style="--c:${COLORS.lime}">${icon("play")} RESUME</button>
     <button class="btn ghost" data-act="restart">RESTART</button>
+    <button class="btn ghost" data-act="mute">${icon(Store.settings.sfx || Store.settings.music ? "note" : "mute")} <span>${Store.settings.sfx || Store.settings.music ? "SOUND ON" : "SOUND OFF"}</span></button>
     <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button></div></div>`);
   UI.openModal({
     el,
-    on: (a) => {
+    on: (a, t) => {
+      if (a === "mute") { const now = toggleMute(); t.innerHTML = `${icon(now ? "note" : "mute")} <span>${now ? "SOUND ON" : "SOUND OFF"}</span>`; return; } // (the menu stays up: sound is a switch, not a way out)
       UI.closeModal();
       if (a === "resume") game.resume();
       if (a === "restart") game.restart();
@@ -10677,6 +10689,76 @@ class CombatFX {
     for (const t of Object.values(this.scorchTex)) t.dispose();
     this.trailers.length = 0;
   }
+}
+
+/* ---- 08d-panosky.js ---- */
+// A generated panorama (see Assets.loadSky) as a scene's sky, and as the light every glossy surface reflects.
+//   const sky = Assets.sky("blaster-deep-1");            // null when it is not loaded: keep the scene's own sky
+//   const dome = makePanoSky(sky, { gain: 1.1, lift: 1.6, rot: 0.3 });   scene.add(dome);
+//   dome.userData.follow(camera);                         // every frame: the dome stays centred on the lens
+//   dome.userData.blend(otherSky, k);                     // cross-fade toward another panorama (0..1)
+//   applySkyEnv(scene, sky);                              // reflections and ambient light for lit (PBR) materials
+// The picture is looked up by direction, exactly as the reflection map is, so what a chrome hull mirrors is what
+// stands behind it. gain scales the whole sky; lift pushes only its brightest parts past white, so stars and the
+// hearts of nebulae bloom; tint multiplies it (a boss's colour, a mood); rot turns it about the vertical (radians).
+function makePanoSky(sky, o = {}) {
+  const noMip = (t) => { if (t.minFilter !== THREE.LinearFilter) { t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; } return t; };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
+      uGain: { value: o.gain === undefined ? 1 : o.gain }, uLift: { value: o.lift === undefined ? 1 : o.lift }, uTint: { value: new THREE.Color(o.tint === undefined ? 0xffffff : o.tint) },
+      uRot: { value: (o.rot || 0) / (Math.PI * 2) }, uRotB: { value: 0 }, uDim: { value: new THREE.Vector4(0, 0, 1, 0) },
+    },
+    side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false,
+    vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; varying vec3 vDir;
+      vec3 look(sampler2D t, vec3 d, float rot){
+        vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+        vec3 c = texture2D(t, uv).rgb;
+        return c * c * (c * 0.305 + 0.695); // sRGB to linear, near enough
+      }
+      void main(){
+        vec3 d = normalize(vDir);
+        vec3 c = look(tA, d, uRot);
+        if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
+        float m = max(max(c.r, c.g), c.b);
+        c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
+        gl_FragColor = vec4(c * uTint, 1.0);
+      }`,
+  });
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
+  dome.frustumCulled = false;
+  dome.renderOrder = -20;
+  dome.userData.sky = sky;
+  dome.userData.follow = (camera) => dome.position.copy(camera.position);
+  dome.userData.blend = (other, k, rot) => { const u = mat.uniforms; if (other && other.map) { u.tB.value = noMip(other.map); u.uRotB.value = (rot || 0) / (Math.PI * 2); u.uMix.value = clamp(k, 0, 1); } else u.uMix.value = 0; };
+  dome.userData.set = (p) => { const u = mat.uniforms; if (p.gain !== undefined) u.uGain.value = p.gain; if (p.lift !== undefined) u.uLift.value = p.lift; if (p.tint !== undefined) u.uTint.value.set(p.tint); if (p.rot !== undefined) u.uRot.value = p.rot / (Math.PI * 2); };
+  return dome;
+}
+// The sky's reflection on every lit material in a scene (and, through them, most of its ambient light). A model's
+// materials can be given their own strength with tuneModel.
+function applySkyEnv(scene, sky) {
+  if (sky && sky.env) scene.environment = sky.env;
+  return !!(sky && sky.env);
+}
+// A loaded model's materials set for this renderer: how strongly they mirror the sky, how brightly their light
+// strips burn (past white, so they bloom), and nothing drawn twice for nothing.
+function tuneModel(model, o = {}) {
+  const seen = new Set();
+  model.scene.traverse((n) => {
+    if (!n.isMesh) return;
+    (Array.isArray(n.material) ? n.material : [n.material]).forEach((m) => {
+      if (seen.has(m)) return;
+      seen.add(m);
+      if (o.env !== undefined) m.envMapIntensity = o.env;
+      if (m.emissiveMap) { m.emissive.setRGB(1, 1, 1); m.emissiveIntensity = o.glow === undefined ? 2.4 : o.glow; }
+      if (o.rough !== undefined) m.roughness = o.rough;
+      if (o.metal !== undefined) m.metalness = o.metal;
+      if (o.normal !== undefined && m.normalScale) m.normalScale.set(o.normal, o.normal);
+      m.needsUpdate = true;
+    });
+  });
+  return [...seen];
 }
 
 /* ---- 08m-model.js ---- */

@@ -2543,21 +2543,51 @@ textures and props. Study logic, questions, answers, scoring and content never c
   asset files at all (a browser refuses them there) and plays with what is built in. `tools/regress-http.js`
   runs the same test with the page served over HTTP and every asset loaded: both must be IDENTICAL.
 
-## Checkpoints (thirteenth pass)
+## Order of work (the owner's instruction, to be followed exactly)
 
-| # | Checkpoint | Status |
+Phases run strictly one after another: a phase is not started until the one before it is committed, pushed and
+reviewed. If a balance runs low, what is left goes to the war rig, the Boss Rush bosses, then sound.
+
+| Phase | What | Status |
 |---|---|---|
-| A0 | Toolkit, provider checks, `.gitignore` | done |
-| A1 | Concept round: reference images for 3 hero assets (3 designs each) and 12 bosses | done |
-| A2 | 3D candidate round on Tripo and Rodin, turnaround sheets, picks | heroes picked; bosses generating |
-| A3 | Picks processed: orientation, scale, pivots, PBR and emissive maps, parts, compression | |
-| A4 | Runtime: asset loader, glTF models in the pipeline, environment maps | |
-| A5 | Skyboxes: one per mode plus variants, seam checks, sky and reflections | |
-| A6 | Sound: effects, announcer, music; mixing, ducking, mute | |
-| A7 | Combat and impact effects pass: Risk Blaster, Boss Rush, Nest Egg Run | |
-| A8 | Models and animation integrated in each game | |
-| A9 | Regression, captures (stills and frame sequences), independent reviews, fixes | |
-| A10 | `ASSETS.md`, README, final report | |
+| 0 | Setup: keys tested, asset folders, glTF loader with compression, audio manager (mixing, ducking, mute, autoplay rules), sky loader that drives environment light and reflections, `ASSETS.md` with the spend log, `.env` ignored, regression green, commit | done |
+| 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes to 4.5, commit and push | in progress |
+| 2 | Nest Egg Run: sunset sky, war rig, vehicle animation, crash and near-miss effects, engine and crash sound, music, review to 4.5 | |
+| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, review per boss, commit after each | |
+| 4 | Hub, Title and the other modes: skies, props from free CC0 sources, ambient and menu sound, announcer; Memory Bank, Final Exam, Strategy Guide where assets help | |
+| 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | |
+| 6 | Final independent reviews, one fresh reviewer per mode on new captures; fixes; final commit, push, record and summary | |
+
+Work done before this order arrived that belongs to later phases, kept as it is and not taken further until its
+phase: concept images and 3D candidates for the war rig and all twelve bosses (all twelve picked from Tripo; one
+boss rigged as a test), skies generated for every mode, sound effects and announcer lines generated for every mode,
+the war rig processed into `assets/models/warrig.glb`.
+
+## Phase 0: what is in place
+
+- **Keys.** All four answered a free read-only call (Tripo balance, fal balance, ElevenLabs subscription, Blockade
+  styles). `.env` is in `arcade/.gitignore`; no key is printed, logged or written anywhere (`lib.js` masks them).
+- **Asset files** live in `arcade/assets/` (`models/`, `sky/`, `audio/`) and are fetched when a screen needs them
+  (`src/js/03b-assets.js`). `tools/manifest.js` writes the list (`src/js/03a-files.js`). A page opened from disk
+  cannot fetch, so there every game plays with what is built in, exactly as before; the same for any file that is
+  missing or fails. A game's set loads behind a loading line before the game is built (`Assets.with` in
+  `startGame`), so the game's own clock starts as it always did.
+- **Models**: glTF (`vendor/GLTFLoader.js`, three r128's own, built into the page as `00v-gltfloader.js`),
+  geometry compressed with meshopt (decoder 1.3 in `00w-meshopt.js`), maps as WebP. `Assets.model(name)` hands a
+  scene a fresh copy with its named parts and anchors; `tuneModel` sets reflection and glow strength.
+- **Skies**: `Assets.loadSky` makes the panorama a texture and a prefiltered reflection map; `makePanoSky` draws it
+  (gain, highlight lift so stars and nebula cores bloom, tint, rotation, cross-fade between two skies) and
+  `applySkyEnv` makes it the scene's environment light (`src/js/08d-panosky.js`).
+- **Sound** (`src/js/02-sound.js`): a recording plays when its sprite is loaded and the old synth otherwise, so
+  nothing is ever silent. Takes of one effect are played in turn with a little variation; loops (`Sound.loop`);
+  recorded music with loop points, a filter that opens as the streak grows, and ducking under the announcer and the
+  biggest blasts; a limiter on the way out; announcer lines by name (`Sound.say`), falling back to the browser's
+  voice. Audio starts only after the first tap. Mute: the arcade floor's button, and now a SOUND switch in every
+  game's pause menu; muting also stops any running loop.
+- **KTX2** is not used: three r128 ships a KTX2 loader only as a module, and the page is built from classic scripts.
+  Maps are 2K WebP instead (a model's four maps are about 1.2 MB to download). Noted as a possible later step.
+- **Tests.** `npm run arcade:regress` (from disk, built-in assets) and `node arcade/tools/regress-http.js` (served,
+  every asset loaded) both IDENTICAL to the baseline; the sequence test passes.
 
 ## A1/A2: what was generated and what was picked
 

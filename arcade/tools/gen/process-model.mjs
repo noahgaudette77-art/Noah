@@ -1,0 +1,247 @@
+#!/usr/bin/env node
+/**
+ * Turn a picked candidate into the model the game loads.
+ *
+ *   GEN_OUT=<dir> node tools/gen/process-model.mjs tools/gen/assets/<name>.json [--report]
+ *
+ * What it does, from the asset's config:
+ *   - reads the source .glb (one dense mesh, 4K PBR maps) and, when there is one, its segmented twin (the same
+ *     triangles split into parts by Tripo): every source triangle takes the part of the matching segmented
+ *     triangle, so the parts keep the source's own UVs and full-resolution maps
+ *   - turns it to the arcade's frame (+Y up, +Z forward), scales it, sets its origin
+ *   - gathers parts into named groups (wheels, wings, cannons ...), each a node with its pivot where it hinges
+ *   - simplifies each group (meshopt, borders locked so no cracks open between parts)
+ *   - writes base colour, metal/roughness and normal maps at the game's size as WebP, and derives an emissive map
+ *     from the base colour (the neon strips: saturated, bright, in the asset's light colours)
+ *   - adds named anchor nodes (muzzles, exhausts, the core) for effects to attach to
+ *   - packs it: quantised, meshopt-compressed .glb in arcade/assets/models/<name>.glb
+ * With --report it only prints what it found (parts, their boxes, sizes) and writes nothing.
+ */
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import sharp from "sharp";
+import { NodeIO, Document } from "@gltf-transform/core";
+import { ALL_EXTENSIONS, EXTTextureWebP } from "@gltf-transform/extensions";
+import { meshopt, prune, dedup } from "@gltf-transform/functions";
+import { MeshoptDecoder, MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ARCADE = path.join(HERE, "..", "..");
+const OUT = process.env.GEN_OUT || path.join(HERE, "out");
+const args = process.argv.slice(2), REPORT = args.includes("--report");
+const cfgFile = args.find((a) => a.endsWith(".json"));
+if (!cfgFile) { console.error("usage: process-model.mjs <asset.json> [--report]"); process.exit(2); }
+const cfg = JSON.parse(fs.readFileSync(cfgFile, "utf8"));
+await MeshoptDecoder.ready; await MeshoptEncoder.ready; await MeshoptSimplifier.ready;
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ "meshopt.decoder": MeshoptDecoder, "meshopt.encoder": MeshoptEncoder });
+
+// ---- small matrix helpers (column-major 4x4, as glTF)
+const mulPoint = (m, x, y, z) => [m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]];
+const mulDir = (m, x, y, z) => [m[0] * x + m[4] * y + m[8] * z, m[1] * x + m[5] * y + m[9] * z, m[2] * x + m[6] * y + m[10] * z];
+
+// Every triangle of a document in world space: positions, normals, uvs, and which node (part) it came from.
+function flatten(doc) {
+  const P = [], N = [], T = [], I = [], part = [];
+  let base = 0, material = null;
+  const nodes = doc.getRoot().listNodes().filter((n) => n.getMesh());
+  nodes.forEach((node, ni) => {
+    const m = node.getWorldMatrix();
+    for (const prim of node.getMesh().listPrimitives()) {
+      const pos = prim.getAttribute("POSITION"), nor = prim.getAttribute("NORMAL"), uv = prim.getAttribute("TEXCOORD_0"), idx = prim.getIndices();
+      material = material || prim.getMaterial();
+      const n = pos.getCount(), v = [0, 0, 0], w = [0, 0];
+      for (let i = 0; i < n; i++) {
+        pos.getElement(i, v); const p = mulPoint(m, v[0], v[1], v[2]); P.push(p[0], p[1], p[2]);
+        if (nor) { nor.getElement(i, v); const q = mulDir(m, v[0], v[1], v[2]), l = Math.hypot(q[0], q[1], q[2]) || 1; N.push(q[0] / l, q[1] / l, q[2] / l); } else N.push(0, 1, 0);
+        if (uv) { uv.getElement(i, w); T.push(w[0], w[1]); } else T.push(0, 0);
+      }
+      const cnt = idx ? idx.getCount() : n;
+      for (let i = 0; i < cnt; i += 3) { I.push(base + (idx ? idx.getScalar(i) : i), base + (idx ? idx.getScalar(i + 1) : i + 1), base + (idx ? idx.getScalar(i + 2) : i + 2)); part.push(ni); }
+      base += n;
+    }
+  });
+  return { P: new Float32Array(P), N: new Float32Array(N), T: new Float32Array(T), I: new Uint32Array(I), part: new Int32Array(part), names: nodes.map((n) => n.getName()), material };
+}
+function bounds(P, I, filter) {
+  const min = [1e9, 1e9, 1e9], max = [-1e9, -1e9, -1e9];
+  const add = (i) => { for (let k = 0; k < 3; k++) { const v = P[i * 3 + k]; if (v < min[k]) min[k] = v; if (v > max[k]) max[k] = v; } };
+  if (I) for (let t = 0; t < I.length / 3; t++) { if (filter && !filter(t)) continue; add(I[t * 3]); add(I[t * 3 + 1]); add(I[t * 3 + 2]); }
+  else for (let i = 0; i < P.length / 3; i++) add(i);
+  return { min, max, size: max.map((v, k) => v - min[k]), center: max.map((v, k) => (v + min[k]) / 2) };
+}
+const centroid = (P, I, t) => { const a = I[t * 3] * 3, b = I[t * 3 + 1] * 3, c = I[t * 3 + 2] * 3; return [(P[a] + P[b] + P[c]) / 3, (P[a + 1] + P[b + 1] + P[c + 1]) / 3, (P[a + 2] + P[b + 2] + P[c + 2]) / 3]; };
+
+// ---- 1. the source, and its parts
+const srcDoc = await io.read(path.resolve(OUT, cfg.src));
+const S = flatten(srcDoc);
+const sb = bounds(S.P);
+let label = new Int32Array(S.I.length / 3).fill(0), partNames = ["0"];
+if (cfg.seg) {
+  const G = flatten(await io.read(path.resolve(OUT, cfg.seg)));
+  const gb = bounds(G.P);
+  // the segmented twin may have been normalised on upload: fit it back onto the source by their boxes
+  const k = sb.size.map((v, i) => v / gb.size[i]), sc = (k[0] + k[1] + k[2]) / 3;
+  if (Math.max(...k) / Math.min(...k) > 1.03) console.warn("warning: the segmented model's box is not a scaled copy of the source's", k);
+  const cell = Math.max(...sb.size) / 400, key = (x, y, z) => Math.round(x / cell) + "," + Math.round(y / cell) + "," + Math.round(z / cell), grid = new Map();
+  for (let t = 0; t < G.I.length / 3; t++) {
+    const c = centroid(G.P, G.I, t).map((v, i) => (v - gb.center[i]) * sc + sb.center[i]);
+    const kk = key(c[0], c[1], c[2]);
+    let arr = grid.get(kk); if (!arr) grid.set(kk, (arr = []));
+    arr.push(c[0], c[1], c[2], G.part[t]);
+  }
+  let exact = 0, far = 0;
+  for (let t = 0; t < S.I.length / 3; t++) {
+    const c = centroid(S.P, S.I, t), cx = Math.round(c[0] / cell), cy = Math.round(c[1] / cell), cz = Math.round(c[2] / cell);
+    let best = 1e9, bp = -1;
+    for (let r = 1; r <= 3 && bp < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) {
+      const arr = grid.get(cx + dx + "," + (cy + dy) + "," + (cz + dz));
+      if (!arr) continue;
+      for (let j = 0; j < arr.length; j += 4) { const d = (arr[j] - c[0]) ** 2 + (arr[j + 1] - c[1]) ** 2 + (arr[j + 2] - c[2]) ** 2; if (d < best) { best = d; bp = arr[j + 3]; } }
+    }
+    if (bp < 0) { far++; bp = 0; } else if (best < (cell * 0.05) ** 2) exact++;
+    label[t] = bp;
+  }
+  partNames = G.names;
+  console.log(`parts: ${G.names.length}; triangles matched exactly ${(100 * exact / label.length).toFixed(1)}%, unmatched ${far}`);
+}
+
+// ---- 2. the arcade's frame: +Y up, +Z forward
+const fwd = cfg.forward || "+z";
+const rot = { "+z": [1, 0, 0, 1], "-z": [-1, 0, 0, -1], "+x": [0, 0, -1, 1, 0, 0], "-x": [0, 0, 1, -1, 0, 0] };
+// (x, z) -> (x', z'): forward maps to +Z, keeping the model right-handed
+const R = fwd === "+x" ? (x, z) => [-z, x] : fwd === "-x" ? (x, z) => [z, -x] : fwd === "-z" ? (x, z) => [-x, -z] : (x, z) => [x, z];
+for (let i = 0; i < S.P.length; i += 3) { const [x, z] = R(S.P[i], S.P[i + 2]); S.P[i] = x; S.P[i + 2] = z; const [nx, nz] = R(S.N[i], S.N[i + 2]); S.N[i] = nx; S.N[i + 2] = nz; }
+let b = bounds(S.P);
+const sz = cfg.size || { axis: "max", value: 1 };
+const scale = sz.value / (sz.axis === "max" ? Math.max(...b.size) : b.size["xyz".indexOf(sz.axis)]);
+const origin = cfg.origin === "ground" ? [b.center[0], b.min[1], b.center[2]] : b.center;
+for (let i = 0; i < S.P.length; i += 3) { S.P[i] = (S.P[i] - origin[0]) * scale; S.P[i + 1] = (S.P[i + 1] - origin[1]) * scale; S.P[i + 2] = (S.P[i + 2] - origin[2]) * scale; }
+b = bounds(S.P);
+console.log(`${cfg.name}: ${S.I.length / 3} triangles, size ${b.size.map((v) => v.toFixed(3)).join(" x ")} (x right, y up, z forward)`);
+
+// ---- 3. parts: where each lies
+const nParts = partNames.length, pb = [];
+for (let p = 0; p < nParts; p++) { let n = 0; const bb = bounds(S.P, S.I, (t) => label[t] === p && ++n); pb.push(Object.assign(bb, { tris: n })); }
+if (REPORT || cfg.verbose) pb.forEach((q, p) => q.tris && console.log(`  part ${String(p).padStart(2)}  ${String(q.tris).padStart(7)} tris  centre ${q.center.map((v) => v.toFixed(2).padStart(6)).join(" ")}  size ${q.size.map((v) => v.toFixed(2)).join(" x ")}  x[${q.min[0].toFixed(2)},${q.max[0].toFixed(2)}] y[${q.min[1].toFixed(2)},${q.max[1].toFixed(2)}] z[${q.min[2].toFixed(2)},${q.max[2].toFixed(2)}]`));
+if (REPORT) process.exit(0);
+
+// ---- 4. groups. cfg.groups: { name: [part ids] | { where: "expression over c (centre), s (size), min, max" } }
+const groupOf = new Array(nParts).fill("body"), groupNames = ["body"];
+for (const [g, spec] of Object.entries(cfg.groups || {})) {
+  groupNames.push(g);
+  if (Array.isArray(spec)) spec.forEach((p) => (groupOf[p] = g));
+  else { const f = new Function("c", "s", "min", "max", "tris", "return (" + spec.where + ");"); pb.forEach((q, p) => { if (q.tris && groupOf[p] === "body" && f(q.center, q.size, q.min, q.max, q.tris)) groupOf[p] = g; }); }
+}
+const groups = {};
+for (const g of groupNames) groups[g] = { tris: [] };
+for (let t = 0; t < label.length; t++) groups[groupOf[label[t]]].tris.push(t);
+const totalTris = label.length, target = cfg.tris || 80000;
+
+// ---- 5. the document
+const doc = new Document();
+doc.createBuffer();
+const scene = doc.createScene(cfg.name), root = doc.createNode(cfg.name);
+scene.addChild(root);
+
+// textures
+const texSize = cfg.tex || 2048, srcMat = S.material;
+const img = async (tex) => (tex ? sharp(Buffer.from(tex.getImage())) : null);
+const baseTex = srcMat.getBaseColorTexture(), mrTex = srcMat.getMetallicRoughnessTexture(), nrmTex = srcMat.getNormalTexture();
+const mat = doc.createMaterial(cfg.name).setDoubleSided(cfg.doubleSided !== false).setRoughnessFactor(1).setMetallicFactor(1);
+const addTex = async (name, buf, set) => { const t = doc.createTexture(name).setImage(buf).setMimeType("image/webp"); set(t); return buf.length; };
+const sizes = {};
+const base = await (await img(baseTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+// base colour, with the asset's colour tweaks
+const E = Object.assign({ hues: [[150, 350]], sat: [0.45, 0.7], val: [0.45, 0.75], gain: 1, size: Math.min(1024, texSize) }, cfg.emissive || {});
+const px = base.data, npx = base.info.width * base.info.height, em = Buffer.alloc(npx * 3);
+let lit = 0;
+for (let i = 0; i < npx; i++) {
+  const r = px[i * 3] / 255, g = px[i * 3 + 1] / 255, bl = px[i * 3 + 2] / 255, mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), d = mx - mn;
+  const s = mx ? d / mx : 0;
+  let h = 0;
+  if (d > 1e-5) { h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  let hk = 0;
+  for (const [a, c] of E.hues) { const inside = a <= c ? h >= a && h <= c : h >= a || h <= c; if (inside) { hk = 1; break; } const dd = Math.min(Math.abs(h - a), Math.abs(h - c), 360 - Math.abs(h - a), 360 - Math.abs(h - c)); hk = Math.max(hk, 1 - dd / 12); }
+  const k = Math.max(0, hk) * Math.min(1, Math.max(0, (s - E.sat[0]) / (E.sat[1] - E.sat[0]))) * Math.min(1, Math.max(0, (mx - E.val[0]) / (E.val[1] - E.val[0]))) * E.gain;
+  if (k > 0.02) { lit++; em[i * 3] = Math.min(255, px[i * 3] * k); em[i * 3 + 1] = Math.min(255, px[i * 3 + 1] * k); em[i * 3 + 2] = Math.min(255, px[i * 3 + 2] * k); }
+}
+console.log(`emissive: ${(100 * lit / npx).toFixed(2)}% of the map glows`);
+sizes.base = await addTex("baseColor", await sharp(px, { raw: base.info }).webp({ quality: cfg.q || 92, effort: 5 }).toBuffer(), (t) => mat.setBaseColorTexture(t));
+sizes.emissive = await addTex("emissive", await sharp(em, { raw: base.info }).resize(E.size, E.size).blur(0.6).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setEmissiveTexture(t).setEmissiveFactor([1, 1, 1]));
+if (mrTex) {
+  // metal and roughness, with the asset's floor and ceiling (a mirror with no roughness at all sparkles in motion)
+  const M = Object.assign({ roughMin: 0, roughMax: 1, roughMul: 1, metalMul: 1 }, cfg.surface || {});
+  const mr = await (await img(mrTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < npx; i++) { mr.data[i * 3] = 255; mr.data[i * 3 + 1] = Math.round(255 * Math.min(M.roughMax, Math.max(M.roughMin, (mr.data[i * 3 + 1] / 255) * M.roughMul))); mr.data[i * 3 + 2] = Math.round(Math.min(255, mr.data[i * 3 + 2] * M.metalMul)); }
+  sizes.mr = await addTex("metalRough", await sharp(mr.data, { raw: mr.info }).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setMetallicRoughnessTexture(t));
+}
+if (nrmTex) sizes.normal = await addTex("normal", await (await img(nrmTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().webp({ quality: 95, effort: 5 }).toBuffer(), (t) => mat.setNormalTexture(t).setNormalScale(cfg.normalScale || 1));
+const buffer = doc.getRoot().listBuffers()[0];
+
+// geometry, group by group
+const info = { parts: {}, anchors: {}, size: b.size, source: cfg.src };
+let outTris = 0;
+for (const g of groupNames) {
+  const tl = groups[g].tris;
+  if (!tl.length) continue;
+  // this group's own vertices
+  const remap = new Map(), P = [], N = [], T = [], I = new Uint32Array(tl.length * 3);
+  tl.forEach((t, k) => { for (let j = 0; j < 3; j++) { const v = S.I[t * 3 + j]; let nv = remap.get(v); if (nv === undefined) { nv = P.length / 3; remap.set(v, nv); P.push(S.P[v * 3], S.P[v * 3 + 1], S.P[v * 3 + 2]); N.push(S.N[v * 3], S.N[v * 3 + 1], S.N[v * 3 + 2]); T.push(S.T[v * 2], S.T[v * 2 + 1]); } I[k * 3 + j] = nv; } });
+  const gp = new Float32Array(P), gn = new Float32Array(N), gt = new Float32Array(T), gb = bounds(gp);
+  // simplify: its share of the triangle budget (small parts keep more of themselves)
+  const share = Math.max(Math.min(tl.length, cfg.minPart || 600), Math.round((tl.length / totalTris) * target * ((cfg.keep || {})[g] || 1)));
+  let idx = I;
+  if (share < tl.length) {
+    const attrs = new Float32Array((gp.length / 3) * 5);
+    for (let i = 0; i < gp.length / 3; i++) { attrs[i * 5] = gn[i * 3]; attrs[i * 5 + 1] = gn[i * 3 + 1]; attrs[i * 5 + 2] = gn[i * 3 + 2]; attrs[i * 5 + 3] = gt[i * 2]; attrs[i * 5 + 4] = gt[i * 2 + 1]; }
+    const [res] = MeshoptSimplifier.simplifyWithAttributes(I, gp, 3, attrs, 5, [0.5, 0.5, 0.5, 1.5, 1.5], null, share * 3, cfg.error || 0.02, ["LockBorder"]);
+    idx = res;
+  }
+  // drop the vertices nothing uses any more
+  const used = new Map(), P2 = [], N2 = [], T2 = [], I2 = new Uint32Array(idx.length);
+  for (let i = 0; i < idx.length; i++) { const v = idx[i]; let nv = used.get(v); if (nv === undefined) { nv = P2.length / 3; used.set(v, nv); P2.push(gp[v * 3], gp[v * 3 + 1], gp[v * 3 + 2]); N2.push(gn[v * 3], gn[v * 3 + 1], gn[v * 3 + 2]); T2.push(gt[v * 2], gt[v * 2 + 1]); } I2[i] = nv; }
+  // pivot: where the part hinges. "c" centre, "min"/"max" an edge of its box, or a number, per axis
+  const pv = ((cfg.pivots || {})[g] || ["c", "c", "c"]).map((s, k) => (s === "c" ? gb.center[k] : s === "min" ? gb.min[k] : s === "max" ? gb.max[k] : +s));
+  for (let i = 0; i < P2.length; i += 3) { P2[i] -= pv[0]; P2[i + 1] -= pv[1]; P2[i + 2] -= pv[2]; }
+  const prim = doc.createPrimitive().setMaterial(mat)
+    .setAttribute("POSITION", doc.createAccessor().setType("VEC3").setArray(new Float32Array(P2)).setBuffer(buffer))
+    .setAttribute("NORMAL", doc.createAccessor().setType("VEC3").setArray(new Float32Array(N2)).setBuffer(buffer))
+    .setAttribute("TEXCOORD_0", doc.createAccessor().setType("VEC2").setArray(new Float32Array(T2)).setBuffer(buffer))
+    .setIndices(doc.createAccessor().setType("SCALAR").setArray(P2.length / 3 > 65535 ? I2 : new Uint16Array(I2)).setBuffer(buffer));
+  const node = doc.createNode(g).setMesh(doc.createMesh(g).addPrimitive(prim)).setTranslation(pv);
+  info.parts[g] = { pivot: pv.map((v) => +v.toFixed(4)), min: gb.min.map((v) => +v.toFixed(4)), max: gb.max.map((v) => +v.toFixed(4)), tris: I2.length / 3 };
+  groups[g].node = node; groups[g].box = gb;
+  outTris += I2.length / 3;
+}
+// the tree: cfg.tree = { child: parent } (a hand hangs from a forearm); everything else hangs from the root
+for (const g of groupNames) {
+  if (!groups[g].node) continue;
+  const parent = (cfg.tree || {})[g];
+  if (parent && groups[parent] && groups[parent].node) {
+    const pp = info.parts[parent].pivot, cp = info.parts[g].pivot;
+    groups[g].node.setTranslation([cp[0] - pp[0], cp[1] - pp[1], cp[2] - pp[2]]);
+    groups[parent].node.addChild(groups[g].node);
+  } else root.addChild(groups[g].node);
+}
+// anchors: named points for effects. { name: { of: group, at: ["c" | "min" | "max" | number, ...], d: [dx, dy, dz] } } or { name: [x, y, z] }
+for (const [name, a] of Object.entries(cfg.anchors || {})) {
+  let p;
+  if (Array.isArray(a)) p = a;
+  else { const gb = a.of ? groups[a.of].box : b; p = a.at.map((s, k) => (s === "c" ? gb.center[k] : s === "min" ? gb.min[k] : s === "max" ? gb.max[k] : +s)); if (a.d) p = p.map((v, k) => v + a.d[k]); }
+  const parent = !Array.isArray(a) && a.ride && groups[a.ride] && groups[a.ride].node;
+  const node = doc.createNode("anchor_" + name);
+  if (parent) { let q = info.parts[a.ride].pivot; node.setTranslation([p[0] - q[0], p[1] - q[1], p[2] - q[2]]); parent.addChild(node); } else { node.setTranslation(p); root.addChild(node); }
+  info.anchors[name] = p.map((v) => +v.toFixed(4));
+}
+root.setExtras({ inr: info });
+
+// ---- 6. pack and write
+doc.createExtension(EXTTextureWebP).setRequired(true);
+await doc.transform(dedup(), prune(), meshopt({ encoder: MeshoptEncoder, level: "high" }));
+const outFile = path.join(ARCADE, "assets", "models", cfg.name + ".glb");
+fs.mkdirSync(path.dirname(outFile), { recursive: true });
+await io.write(outFile, doc);
+const kb = (n) => (n / 1024).toFixed(0) + " KB";
+console.log(`wrote ${path.relative(ARCADE, outFile)}: ${kb(fs.statSync(outFile).size)}; ${outTris} triangles in ${Object.keys(info.parts).length} parts; maps ${texSize}px: base ${kb(sizes.base)}, metal/rough ${kb(sizes.mr || 0)}, normal ${kb(sizes.normal || 0)}, emissive ${kb(sizes.emissive)}`);
+fs.writeFileSync(outFile.replace(/\.glb$/, ".json"), JSON.stringify(Object.assign({ name: cfg.name, triangles: outTris, bytes: fs.statSync(outFile).size, tex: texSize }, info), null, 1));
