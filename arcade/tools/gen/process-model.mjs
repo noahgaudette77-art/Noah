@@ -76,9 +76,10 @@ const centroid = (P, I, t) => { const a = I[t * 3] * 3, b = I[t * 3 + 1] * 3, c 
 const srcDoc = await io.read(path.resolve(OUT, cfg.src));
 const S = flatten(srcDoc);
 const sb = bounds(S.P);
-let label = new Int32Array(S.I.length / 3).fill(0), partNames = ["0"];
-if (cfg.seg) {
-  const G = flatten(await io.read(path.resolve(OUT, cfg.seg)));
+// The part of every source triangle, taken from a segmented twin of the source (the same triangles, split into nodes).
+async function transfer(segFile) {
+  const out = new Int32Array(S.I.length / 3).fill(0);
+  const G = flatten(await io.read(path.resolve(OUT, segFile)));
   const gb = bounds(G.P);
   // the segmented twin may have been normalised on upload: fit it back onto the source by their boxes
   const k = sb.size.map((v, i) => v / gb.size[i]), sc = (k[0] + k[1] + k[2]) / 3;
@@ -100,11 +101,15 @@ if (cfg.seg) {
       for (let j = 0; j < arr.length; j += 4) { const d = (arr[j] - c[0]) ** 2 + (arr[j + 1] - c[1]) ** 2 + (arr[j + 2] - c[2]) ** 2; if (d < best) { best = d; bp = arr[j + 3]; } }
     }
     if (bp < 0) { far++; bp = 0; } else if (best < (cell * 0.05) ** 2) exact++;
-    label[t] = bp;
+    out[t] = bp;
   }
-  partNames = G.names;
-  console.log(`parts: ${G.names.length}; triangles matched exactly ${(100 * exact / label.length).toFixed(1)}%, unmatched ${far}`);
+  console.log(`${segFile}: ${G.names.length} parts; triangles matched exactly ${(100 * exact / out.length).toFixed(1)}%, unmatched ${far}`);
+  return { label: out, names: G.names };
 }
+let label = new Int32Array(S.I.length / 3).fill(0), partNames = ["0"];
+if (cfg.seg) { const r = await transfer(cfg.seg); label = r.label; partNames = r.names; }
+// a second, finer split of the same model: some of its parts are lifted out as groups of their own (cfg.lift)
+const label2 = cfg.seg2 ? (await transfer(cfg.seg2)).label : null;
 
 // ---- 2. the arcade's frame: +Y up, +Z forward
 const fwd = cfg.forward || "+z";
@@ -133,9 +138,12 @@ for (const [g, spec] of Object.entries(cfg.groups || {})) {
   if (Array.isArray(spec)) spec.forEach((p) => (groupOf[p] = g));
   else { const f = new Function("c", "s", "min", "max", "tris", "return (" + spec.where + ");"); pb.forEach((q, p) => { if (q.tris && groupOf[p] === "body" && f(q.center, q.size, q.min, q.max, q.tris)) groupOf[p] = g; }); }
 }
+const triGroup = new Array(label.length);
+for (let t = 0; t < label.length; t++) triGroup[t] = groupOf[label[t]];
+if (label2 && cfg.lift) for (const [g, ids] of Object.entries(cfg.lift)) { if (!groupNames.includes(g)) groupNames.push(g); const set = new Set(ids); for (let t = 0; t < label.length; t++) if (set.has(label2[t])) triGroup[t] = g; }
 const groups = {};
 for (const g of groupNames) groups[g] = { tris: [] };
-for (let t = 0; t < label.length; t++) groups[groupOf[label[t]]].tris.push(t);
+for (let t = 0; t < label.length; t++) groups[triGroup[t]].tris.push(t);
 const totalTris = label.length, target = cfg.tris || 80000;
 
 // ---- 5. the document
@@ -145,35 +153,108 @@ const scene = doc.createScene(cfg.name), root = doc.createNode(cfg.name);
 scene.addChild(root);
 
 // textures
-const texSize = cfg.tex || 2048, srcMat = S.material;
+const texSize = cfg.tex || 2048, baseSize = cfg.texBase || texSize, srcMat = S.material;
 const img = async (tex) => (tex ? sharp(Buffer.from(tex.getImage())) : null);
 const baseTex = srcMat.getBaseColorTexture(), mrTex = srcMat.getMetallicRoughnessTexture(), nrmTex = srcMat.getNormalTexture();
 const mat = doc.createMaterial(cfg.name).setDoubleSided(cfg.doubleSided !== false).setRoughnessFactor(1).setMetallicFactor(1);
 const addTex = async (name, buf, set) => { const t = doc.createTexture(name).setImage(buf).setMimeType("image/webp"); set(t); return buf.length; };
 const sizes = {};
-const base = await (await img(baseTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-// base colour, with the asset's colour tweaks
-const E = Object.assign({ hues: [[150, 350]], sat: [0.45, 0.7], val: [0.45, 0.75], gain: 1, size: Math.min(1024, texSize) }, cfg.emissive || {});
-const px = base.data, npx = base.info.width * base.info.height, em = Buffer.alloc(npx * 3);
-let lit = 0;
-for (let i = 0; i < npx; i++) {
+const base = await (await img(baseTex)).resize(baseSize, baseSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+const px = base.data, npx = baseSize * baseSize;
+const hsv = (i) => {
   const r = px[i * 3] / 255, g = px[i * 3 + 1] / 255, bl = px[i * 3 + 2] / 255, mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), d = mx - mn;
-  const s = mx ? d / mx : 0;
   let h = 0;
   if (d > 1e-5) { h = mx === r ? ((g - bl) / d) % 6 : mx === g ? (bl - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, mx ? d / mx : 0, mx];
+};
+// how far inside a range a value is, 0..1, with soft edges (hue ranges may wrap past 360)
+const soft = (x, lo, hi, edge) => Math.min(1, Math.max(0, (x - lo) / edge + 1)) * Math.min(1, Math.max(0, (hi - x) / edge + 1));
+const hueIn = (h, a, c, edge = 12) => { if (a <= c) return soft(h, a, c, edge); return Math.max(soft(h, a, 360 + edge, edge), soft(h, -edge, c, edge)); };
+
+// ---- surface rules by part ("paint"): which group every texel belongs to (the triangles drawn into the map by
+// their UVs), then per rule a roughness, a metalness, a glow or a colour change for the texels of some groups,
+// optionally only where the base colour is in a range. This is how one generated map gets horn, chrome and membrane.
+const fields = { rough: null, metal: null, glow: null };
+if (cfg.paint) {
+  const lab = new Uint8Array(npx), gid = new Map(groupNames.map((g, i) => [g, i + 1])), W = baseSize;
+  for (let t = 0; t < label.length; t++) {
+    const id = gid.get(triGroup[t]), ia = S.I[t * 3] * 2, ib = S.I[t * 3 + 1] * 2, ic = S.I[t * 3 + 2] * 2;
+    const fu = Math.floor(Math.min(S.T[ia], S.T[ib], S.T[ic])), fv = Math.floor(Math.min(S.T[ia + 1], S.T[ib + 1], S.T[ic + 1]));
+    const x0 = (S.T[ia] - fu) * W, y0 = (S.T[ia + 1] - fv) * W, x1 = (S.T[ib] - fu) * W, y1 = (S.T[ib + 1] - fv) * W, x2 = (S.T[ic] - fu) * W, y2 = (S.T[ic + 1] - fv) * W;
+    const area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0), sg = area < 0 ? -1 : 1;
+    const l0 = Math.hypot(x2 - x1, y2 - y1) || 1, l1 = Math.hypot(x0 - x2, y0 - y2) || 1, l2 = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const xa = Math.max(0, Math.floor(Math.min(x0, x1, x2) - 1)), xb = Math.min(W - 1, Math.ceil(Math.max(x0, x1, x2) + 1)), ya = Math.max(0, Math.floor(Math.min(y0, y1, y2) - 1)), yb = Math.min(W - 1, Math.ceil(Math.max(y0, y1, y2) + 1));
+    for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+      const cx = x + 0.5, cy = y + 0.5;
+      const d0 = sg * ((x2 - x1) * (cy - y1) - (y2 - y1) * (cx - x1)) / l0, d1 = sg * ((x0 - x2) * (cy - y2) - (y0 - y2) * (cx - x2)) / l1, d2 = sg * ((x1 - x0) * (cy - y0) - (y1 - y0) * (cx - x0)) / l2;
+      if (d0 >= -0.6 && d1 >= -0.6 && d2 >= -0.6) lab[y * W + x] = id;
+    }
+  }
+  for (let pass = 0; pass < 4; pass++) { // grow into the gutters, so filtering at an island's edge finds the same surface
+    const src = lab.slice();
+    for (let y = 1; y < W - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; if (!src[i]) lab[i] = src[i - 1] || src[i + 1] || src[i - W] || src[i + W]; }
+  }
+  // (a rule's value and how much of it: the map keeps the rest)
+  const rv = new Float32Array(npx), rw = new Float32Array(npx), mv = new Float32Array(npx), mw = new Float32Array(npx), glow = (fields.glow = new Float32Array(npx));
+  fields.rough = { v: rv, w: rw }; fields.metal = { v: mv, w: mw };
+  const rules = cfg.paint.map((r) => Object.assign({}, r, { ids: new Set((r.groups || groupNames).map((g) => gid.get(g))) }));
+  const counts = rules.map(() => 0);
+  for (let i = 0; i < npx; i++) {
+    const id = lab[i];
+    if (!id) continue;
+    let c = null;
+    rules.forEach((r, ri) => {
+      if (!r.ids.has(id)) return;
+      let w = r.blend === undefined ? 1 : r.blend;
+      if (r.where) { c = hsv(i); if (r.where.h) w *= hueIn(c[0], r.where.h[0], r.where.h[1]); if (r.where.s) w *= soft(c[1], r.where.s[0], r.where.s[1], 0.06); if (r.where.v) w *= soft(c[2], r.where.v[0], r.where.v[1], 0.06); }
+      if (w <= 0.003) return;
+      counts[ri]++;
+      if (r.rough !== undefined) { rv[i] = rv[i] * (1 - w) + r.rough * w; rw[i] = rw[i] * (1 - w) + w; }
+      if (r.metal !== undefined) { mv[i] = mv[i] * (1 - w) + r.metal * w; mw[i] = mw[i] * (1 - w) + w; }
+      if (r.glow) glow[i] = Math.max(glow[i], r.glow * w);
+      if (r.color || r.sat !== undefined || r.val !== undefined) {
+        let R = px[i * 3], G = px[i * 3 + 1], B = px[i * 3 + 2];
+        const k = r.color || [1, 1, 1], gray = 0.299 * R + 0.587 * G + 0.114 * B, sa = r.sat === undefined ? 1 : r.sat, va = r.val === undefined ? 1 : r.val;
+        const nr = Math.min(255, (gray + (R - gray) * sa) * va * k[0]), ng = Math.min(255, (gray + (G - gray) * sa) * va * k[1]), nb = Math.min(255, (gray + (B - gray) * sa) * va * k[2]);
+        px[i * 3] = R + (nr - R) * w; px[i * 3 + 1] = G + (ng - G) * w; px[i * 3 + 2] = B + (nb - B) * w;
+      }
+    });
+  }
+  rules.forEach((r, ri) => console.log(`paint ${ri} (${(r.groups || ["all"]).join(",")}${r.where ? " where " + JSON.stringify(r.where) : ""}): ${(100 * counts[ri] / npx).toFixed(2)}% of the map`));
+}
+
+// the glow map: the neon in the base colour (saturated, bright, in the asset's light colours), plus what the rules ask for
+const E = Object.assign({ hues: [[150, 350]], sat: [0.45, 0.7], val: [0.45, 0.75], gain: 1, size: Math.min(2048, baseSize), median: 3 }, cfg.emissive || {});
+const em = Buffer.alloc(npx * 3);
+let lit = 0;
+for (let i = 0; i < npx; i++) {
+  const [h, s, mx] = hsv(i);
   let hk = 0;
-  for (const [a, c] of E.hues) { const inside = a <= c ? h >= a && h <= c : h >= a || h <= c; if (inside) { hk = 1; break; } const dd = Math.min(Math.abs(h - a), Math.abs(h - c), 360 - Math.abs(h - a), 360 - Math.abs(h - c)); hk = Math.max(hk, 1 - dd / 12); }
-  const k = Math.max(0, hk) * Math.min(1, Math.max(0, (s - E.sat[0]) / (E.sat[1] - E.sat[0]))) * Math.min(1, Math.max(0, (mx - E.val[0]) / (E.val[1] - E.val[0]))) * E.gain;
+  for (const [a, c] of E.hues) hk = Math.max(hk, hueIn(h, a, c));
+  let k = hk * Math.min(1, Math.max(0, (s - E.sat[0]) / (E.sat[1] - E.sat[0]))) * Math.min(1, Math.max(0, (mx - E.val[0]) / (E.val[1] - E.val[0]))) * E.gain;
+  if (fields.glow) k = Math.max(k, fields.glow[i]);
   if (k > 0.02) { lit++; em[i * 3] = Math.min(255, px[i * 3] * k); em[i * 3 + 1] = Math.min(255, px[i * 3 + 1] * k); em[i * 3 + 2] = Math.min(255, px[i * 3 + 2] * k); }
 }
 console.log(`emissive: ${(100 * lit / npx).toFixed(2)}% of the map glows`);
 sizes.base = await addTex("baseColor", await sharp(px, { raw: base.info }).webp({ quality: cfg.q || 92, effort: 5 }).toBuffer(), (t) => mat.setBaseColorTexture(t));
-sizes.emissive = await addTex("emissive", await sharp(em, { raw: base.info }).resize(E.size, E.size).blur(0.6).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setEmissiveTexture(t).setEmissiveFactor([1, 1, 1]));
+// (a median first: single lit texels at an island's edge are noise, and on the model they are a dotted line of light)
+let emImg = sharp(em, { raw: base.info });
+if (E.median > 1) emImg = sharp(await emImg.median(E.median).raw().toBuffer(), { raw: base.info });
+sizes.emissive = await addTex("emissive", await emImg.resize(E.size, E.size).blur(0.5).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setEmissiveTexture(t).setEmissiveFactor([1, 1, 1]));
 if (mrTex) {
   // metal and roughness, with the asset's floor and ceiling (a mirror with no roughness at all sparkles in motion)
   const M = Object.assign({ roughMin: 0, roughMax: 1, roughMul: 1, metalMul: 1 }, cfg.surface || {});
   const mr = await (await img(mrTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  for (let i = 0; i < npx; i++) { mr.data[i * 3] = 255; mr.data[i * 3 + 1] = Math.round(255 * Math.min(M.roughMax, Math.max(M.roughMin, (mr.data[i * 3 + 1] / 255) * M.roughMul))); mr.data[i * 3 + 2] = Math.round(Math.min(255, mr.data[i * 3 + 2] * M.metalMul)); }
+  const kq = baseSize / texSize;
+  for (let i = 0; i < texSize * texSize; i++) {
+    let ro = Math.min(M.roughMax, Math.max(M.roughMin, (mr.data[i * 3 + 1] / 255) * M.roughMul)), me = Math.min(1, (mr.data[i * 3 + 2] / 255) * M.metalMul);
+    if (fields.rough) {
+      const x = i % texSize, y = (i / texSize) | 0, j = Math.min(baseSize - 1, Math.floor((y + 0.5) * kq)) * baseSize + Math.min(baseSize - 1, Math.floor((x + 0.5) * kq));
+      ro = ro * (1 - fields.rough.w[j]) + fields.rough.v[j];
+      me = me * (1 - fields.metal.w[j]) + fields.metal.v[j];
+    }
+    mr.data[i * 3] = 255; mr.data[i * 3 + 1] = Math.round(255 * ro); mr.data[i * 3 + 2] = Math.round(255 * me);
+  }
   sizes.mr = await addTex("metalRough", await sharp(mr.data, { raw: mr.info }).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setMetallicRoughnessTexture(t));
 }
 if (nrmTex) sizes.normal = await addTex("normal", await (await img(nrmTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().webp({ quality: 95, effort: 5 }).toBuffer(), (t) => mat.setNormalTexture(t).setNormalScale(cfg.normalScale || 1));
