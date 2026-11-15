@@ -15,7 +15,19 @@ module.exports = async (cap) => {
   const want = process.env.PARTS || "all", has = (n) => want === "all" || want.split(",").includes(n);
   const jpg = (png, q = 88) => { const out = png.replace(/\.png$/, ".jpg"); execFileSync("convert", [png, "-quality", String(q), out]); fs.unlinkSync(png); return out; };
   const still = async (name, o = {}) => jpg(await cap.shot(name, o), o.q);
-  const strip = async (name, n, every, o = {}) => { const f = await cap.seq(name, n, every, Object.assign({ band: true, cols: 6, thumb: 300 }, o, process.env.THUMB ? { thumb: +process.env.THUMB } : {})); const out = path.join(cap.out, name + ".jpg"); fs.renameSync(f, out); return out; };
+  // a strip of frames as one JPG, kept under about 450 KB (the frames are set side by side here, at the quality that fits)
+  const strip = async (name, n, every, o = {}) => {
+    o = Object.assign({ band: true, cols: 6, thumb: 300 }, o, process.env.THUMB ? { thumb: +process.env.THUMB } : {});
+    const made = await cap.seq(name, n, every, Object.assign({}, o, { keep: true })), out = path.join(cap.out, name + ".jpg");
+    const files = Array.from({ length: n }, (_, i) => path.join(cap.out, `${name}-${String(i).padStart(2, "0")}.png`));
+    for (let q = 88; q >= 52; q -= 6) {
+      execFileSync("montage", [...files, "-tile", o.cols + "x", "-geometry", `${o.thumb}x+3+3`, "-background", "#101018", "-quality", String(q), out]);
+      if (fs.statSync(out).size <= 440 * 1024) break;
+    }
+    files.forEach((f) => fs.unlinkSync(f));
+    fs.unlinkSync(made);
+    return out;
+  };
   const page = (fn, arg) => cap.eval(fn, arg);
   // a question up, the demon at the distance it has when `left` of the clock remains, `wait` frames of idling behind it
   const ready = async (wait = 40, left = 0.62) => { await cap.next(); await cap.ask(1500); await cap.fast(wait); await page((k) => { const s = window.__arcade.Scenes.cur; s.tLeft = s.T * k; }, left); await cap.fast(24); };

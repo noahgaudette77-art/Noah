@@ -716,7 +716,7 @@ class BlasterGame extends QuizGame {
         this.tw.wait(1.2, () => { if (!this.unmounted) { this.carrier.arrive(this.wave); if (this.enemy) this.enemy.arrive(); } });
       }
       if (!this.stage) this.warp = 1.4;
-      GFX.pulse(6, 0.2);
+      GFX.pulse(this.stage ? 2 : 6, 0.2); // (staged: the demon's death starts here, and is seen sharp)
       UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED");
       this.hud();
       this.state = "intro";

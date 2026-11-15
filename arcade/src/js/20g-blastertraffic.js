@@ -388,9 +388,10 @@ function spaceEvents(space) {
   const g = space.g, T = space.traffic, FX = (space.fx = new SpaceFX(space)), D = new EventDirector(g, { min: 3, max: 6 });
   const side = () => (Math.random() < 0.5 ? -1 : 1), quiet = () => g.state === "ask" || g.state === "explain", R = Math.PI / 180;
   const frame = (ax, ay, d, out) => (out || new THREE.Vector3()).set(d * Math.tan(ax * R), d * Math.tan(ay * R), -d); // a place in the window: degrees right, degrees up, how far
-  // (With the painted sky and the staged fight, the window's upper corners are where the answers' drones stand: what
-  // was set in a corner is set at the window's side instead, between the drones above and the fighter's wings below.)
-  const corner = (ax, ay, d, out) => (space.pano ? frame(ax * 1.22, lerp(-3.6, 1.6, clamp((Math.abs(ay) - 7) / 3, 0, 1)), d, out) : frame(ax, ay, d, out));
+  // (With the painted sky and the staged fight, the window's upper corners are where the answers' drones stand, and
+  // with four answers its sides as well: what was set in a corner is set at the window's edge instead, in the gap
+  // between the upper drones and the lower ones.)
+  const corner = (ax, ay, d, out) => (space.pano ? frame(ax * 1.3, lerp(1.4, 3.8, clamp((Math.abs(ay) - 7) / 3, 0, 1)), d, out) : frame(ax, ay, d, out));
   const inReg = (...ids) => () => ids.includes(space.cur.id), alive = (run) => run.ships.some((s) => s.alive);
   const v = new THREE.Vector3(), w = new THREE.Vector3();
 

@@ -449,7 +449,7 @@ class BlasterSpace {
       // nebula instead of fading into it. (Its own light, apart from the hulls'.)
       const ru = this.rockMat.uniforms;
       ru.uAmb = { value: new THREE.Color() }; ru.uSunCol = { value: new THREE.Color() }; ru.uRimCol = { value: new THREE.Color() };
-      this.haloU.uDim.value = 0.8; // (and the sky behind the fight is taken down further, over a wider patch: see update)
+      this.haloU.uDim.value = 0.72; // (and the sky behind the fight is taken down a little further, over a wider patch: see update)
     }
   }
 
@@ -760,7 +760,7 @@ class BlasterSpace {
     }
     // the halo behind the enemy (or the answers' targets)
     const fr = g.enemy && g.enemy.root.visible ? g.enemy : null, H = this.halo;
-    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); if (this.pano) H.scale.set(fr.S * 1.95, fr.S * 1.5, 1); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
+    if (fr) { H.position.copy(fr.root.position); H.position.z -= 9; H.position.y += fr.S * 0.02; H.scale.setScalar(fr.S * 1.25); if (this.pano) H.scale.set(fr.S * 1.75, fr.S * 1.4, 1); } else { H.position.set(0, 0.4, -98); H.scale.setScalar(13 + g.fx * 2.2); }
     H.quaternion.copy(g.camera.quaternion);
     this.haloU.uColor.value.copy(g.waveCol).multiplyScalar(0.55);
     this.haloU.uK.value += ((g.state === "over" ? 0 : 1) - this.haloU.uK.value) * Math.min(1, dt * 3);

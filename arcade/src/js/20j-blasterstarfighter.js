@@ -78,7 +78,7 @@ function blasterSkin(mat, U, o = {}) {
         float skNV = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), skF = 1.0 - skNV;
         totalEmissiveRadiance *= uSkGlow;
         ${o.emissive || ""}
-        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, normal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g);`);
+        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, normal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g) * (0.12 + 0.88 * smoothstep(0.3, 0.72, skN(vRest * 26.0) * 0.65 + skN(vRest * 61.0) * 0.35)); // (heat glows in patches, like embers, dark between them: never a coat of orange)`);
     sh.fragmentShader = sh.fragmentShader.replace("reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance", "min(reflectedLight.directSpecular, vec3(uSkSpec)) + reflectedLight.indirectSpecular + totalEmissiveRadiance");
   };
   mat.customProgramCacheKey = () => "blaster-skin-" + (o.key || "");
@@ -194,7 +194,7 @@ class BlasterStarfighter {
     this.engineGlow = noz.map((p, i) => { const s = glowSprite(new THREE.Color(0.7, 1.7, 2.6), 0.5, 0.8); s.position.copy(p).setZ(p.z + 0.05); s.renderOrder = 5; rig.add(s); return s; });
     // ---- lights it carries: one at each wing tip (magenta to port, cyan to starboard), a beacon on its back
     this.navLights = [["tipR", 0xff3ad4], ["tipL", 0x35efff]].map(([n, c]) => { const s = glowSprite(neon(c, 2.4), 0.3, 1); M.anchors[n].add(s); s.scale.setScalar(0.3 / S); return s; });
-    this.beacon = glowSprite(neon(0xff3a2a, 2.8), 0.3, 0);
+    this.beacon = glowSprite(neon(0xff3a2a, 3.2), 0.15, 0); // (a lamp: a point of light, not a patch of red on the canopy)
     at([0, 0.125, -0.2], this.beacon.position);
     rig.add(this.beacon);
     // ---- at warp: a bow wave of light off the nose

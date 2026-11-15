@@ -167,7 +167,7 @@ class BlasterStage {
     // ... and the shot goes on through it into the demon's core
     if (e && e.alive) kit.beam(p, e.aimPoint(this._v), col, { dur: 0.17, width: 0.3 * (e.S / 6), grow: 0.03, k: 2.8 });
     Sound.sfx("impact_good", g.panAt || 0);
-    HudFX.reward(g.el, this.screen(p), "[data-score]", { n: 4, kind: "spark", color: col });
+    HudFX.reward(g.el, this.screen(p), "[data-score]", { n: 4, kind: "spark", color: col, clear: ".qpanel" }); // (round the question, never across it)
   }
   // ---- a wrong answer lands (the rule: resolve), or none in time (timeout): a shield is owed ------------------
   wrong(i) {
@@ -389,21 +389,30 @@ class BlasterStage {
     // (a beat after the blow that did it, and small enough that the demon is still seen behind it)
     g.show.wait(0.08, () => {
       if (g.unmounted) return;
-      kit.flash(at, 0xffffff, 0.2 * k6, 0.75 * k6, 0.09, 1, 2.6);
-      kit.flash(at, 0xff4a7a, 0.4 * k6, 1.3 * k6, 0.18, 0.6, 2);
-      kit.sparks(at, 0xffd8a8, { n: 22, speed: 12 * k6, life: 0.45, len: 0.8 * k6, w: 0.06 * k6, k: 2.4 });
-      kit.sparks(at, 0xff4a7a, { n: 12, speed: 7 * k6, life: 0.7, len: 0.5 * k6, w: 0.06 * k6 });
-      for (let i = 0; i < 3; i++) kit.fire(this._v.set(rand(-0.3, 0.3), rand(-0.3, 0.3), rand(-0.2, 0.2)).multiplyScalar(k6).add(at), { size: 0.5 * k6, life: 0.3, vel: this._w.set(rand(-1.5, 1.5), rand(-1, 1.5), rand(-1, 1)) });
-      kit.ring(at, 0xff4a7a, { size: 3.5 * k6, dur: 0.45 });
-      kit.light(at, 0xff4a7a, 2.5 * k6, 0.2, 12 * k6);
+      this.burst(at, 0.9 * k6, 0xff4a7a, { debris: 10 });
       g.shake(0.2);
-      kit.debris(at, { n: 10, size: 0.6 * k6, speed: 9 * k6, color: 0x2a2836, gravity: 0 });
       Sound.sfx("explosion_small", this.pan(at));
       Sound.sfx("boss_break", this.pan(at), { vol: 0.8, delay: 0.06 });
     });
     // the stump burns: sparks, a lick of fire, a thread of smoke
     const stump = name === "tail" ? [0, -0.09, 0.05] : [name === "wingL" ? 0.06 : -0.06, 0.1, -0.03];
     if (!(REDUCED_MOTION || GFX.calm)) this.leaks.push(kit.trailer((v) => (e.root.visible && !e.blown ? e.at(stump, v) : null), { smoke: 0.45, fire: 0.4, sparks: 0.7, rate: 10, size: 0.34 * k6, vel: new THREE.Vector3(0, 0.5, 1.0), life: 0.6, a: 0.35 }));
+  }
+  // A blast on the demon's own body (a part shot away, a link of the chain that takes it apart): a small hot heart,
+  // a few tongues of fire, long sparks, a ring, wreckage. Its size is in what it throws, not in a ball of light.
+  burst(p, s, col, o = {}) {
+    const kit = this.kit;
+    kit.flash(p, 0xffffff, 0.2 * s, 0.8 * s, 0.09, 1, 2.6);
+    kit.flash(p, col, 0.4 * s, 1.5 * s, 0.2, 0.5, 2);
+    for (let i = 0; i < (o.fire === undefined ? 4 : o.fire); i++) { const v = this._w.set(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize().multiplyScalar(rand(1.5, 4) * s); kit.fire(this._v.copy(p).addScaledVector(v, 0.08), { size: rand(0.5, 0.9) * s, life: rand(0.28, 0.5), vel: v, color: i % 2 ? 0xff6a14 : col, k: 1.2 }); }
+    kit.sparks(p, 0xffe2b0, { n: o.sparks || 22, speed: 15 * s, life: 0.5, len: 1.1 * s, w: 0.06 * s, k: 2.4 });
+    kit.sparks(p, col, { n: 12, speed: 8 * s, life: 0.75, len: 0.6 * s, w: 0.06 * s });
+    kit.embers(p, 0xffa040, { n: 8, radius: 0.6 * s, life: 1.6, speed: 2 });
+    if (o.ring !== false) kit.ring(p, col, { size: 4.2 * s, dur: 0.5 });
+    if (o.smoke) for (let i = 0; i < 2; i++) kit.smoke(this._v.set(rand(-0.3, 0.3), rand(-0.2, 0.3), rand(-0.2, 0.2)).multiplyScalar(s).add(p), { size: 0.9 * s, life: 1.0, a: 0.4 });
+    kit.debris(p, { n: o.debris || 8, size: 0.6 * s, speed: 9 * s, color: 0x2a2836, gravity: 0 });
+    kit.light(p, col, 2.5 * s, 0.22, 12 * s);
+    GFX.bloomPulse(0.25);
   }
   // something shorts in one of its wounds
   demonLeak(e, p) { this.kit.sparks(p, 0xff7a4a, { n: 10, speed: 5 * (e.S / 6), life: 0.45, len: 0.5, gravity: 2 }); }
@@ -453,7 +462,7 @@ class BlasterStage {
   demonChain(e, p, i) {
     const g = this.g, kit = this.kit, k6 = e.S / 6;
     if (REDUCED_MOTION || GFX.calm) { kit.sparks(p, 0xffd8a8, { n: 14, speed: 10 * k6, life: 0.5, len: 0.7 * k6 }); kit.debris(p, { n: 5, size: 0.6 * k6, speed: 8 * k6, color: 0x2a2836, gravity: 0 }); } // (with Reduced effects: sparks and wreckage, no run of flashes)
-    else kit.explosion(p, { size: 0.5 * k6, color: i % 2 ? 0xff7a2a : g.waveCol.getHex(), shake: false, smoke: i % 2 === 0 });
+    else this.burst(p, (0.85 + 0.08 * i) * k6, i % 2 ? 0xff7a2a : g.waveCol.getHex(), { ring: i % 2 === 0, smoke: i % 2 === 0, sparks: 26 });
     g.shake(0.14 + 0.03 * i);
     Sound.sfx("explosion_small", this.pan(p), { rate: 0.95 + i * 0.06 });
   }
@@ -461,12 +470,12 @@ class BlasterStage {
   demonBlast(e, p) {
     const g = this.g, kit = this.kit, k6 = e.S / 6, col = g.waveCol.getHex(), quiet = REDUCED_MOTION || GFX.calm;
     this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0;
-    kit.explosion(p, { size: 1.3 * k6, color: col, shake: false });
+    kit.explosion(p, { size: 1.05 * k6, color: col, shake: false });
     kit.sparks(p, 0xffffff, { n: quiet ? 12 : 40, speed: 30 * k6, life: 0.6, len: 1.8 * k6, w: 0.07 * k6, k: 2.6 }); // (long white streaks thrown clear: the blast's size is in these, its ring and its debris)
     kit.ring(p, 0xffffff, { size: 15 * k6, dur: 0.85 });
     g.show.wait(0.1, () => { if (!g.unmounted) kit.ring(p, col, { size: 22 * k6, dur: 1.1 }); }); // (a second, wider and slower, in the wave's colour)
     GFX.ripple(g.camera, p, 1, 0.7); // the picture itself bends as the shock passes
-    GFX.bloomPulse(0.9);
+    GFX.bloomPulse(0.6);
     Sound.setIntensity(3);
     kit.debris(p, { n: quiet ? 10 : 26, size: 0.95 * k6, speed: 15 * k6, color: 0x2a2836, gravity: 0, life: 1.6 });
     kit.embers(p, 0xff5a8a, { n: 16, radius: 2.2 * k6, life: 2.4, speed: 3 });
@@ -479,8 +488,8 @@ class BlasterStage {
     const from = this.screen(p), perfect = this.misses === 0, high = e.finale;
     g.show.wait(0.2, () => {
       if (g.unmounted) return;
-      HudFX.reward(g.el, from, "[data-score]", { n: 12, kind: "star", color: COLORS.yellow });
-      HudFX.reward(g.el, from, "[data-score]", { n: 7, kind: "coin", color: COLORS.gold });
+      HudFX.reward(g.el, from, "[data-score]", { n: 12, kind: "star", color: COLORS.yellow, clear: ".qpanel" }); // (round the question, up the margin beside it: the next one may already be up)
+      HudFX.reward(g.el, from, "[data-score]", { n: 7, kind: "coin", color: COLORS.gold, clear: ".qpanel" });
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
     if (high || perfect) g.show.wait(1.1, () => { if (!g.unmounted && g.state !== "over") Sound.say(high ? "NEW HIGH SCORE" : "PERFECT"); });
@@ -497,10 +506,10 @@ class BlasterStage {
     this.endAttack();
     this.setLow(0);
     this.loops(false);
-    kit.explosion(p, { size: 1.5 * k, color: 0xff8a2a });
+    kit.explosion(p, { size: 0.95 * k, color: 0xff8a2a }); // (close to the lens: a blast of this size, and the ship is still seen to come apart behind it)
     kit.debris(p, { n: 14, size: 0.5 * k, speed: 9 * k, color: 0x23232e, gravity: 0, life: 1.5 });
     Sound.sfx("explosion_big");
-    g.show.wait(0.42, () => { if (g.unmounted) return; const q = p.clone().add(this._v.set(rand(-0.8, 0.8) * k, 0.2 * k, 0.6 * k)); kit.explosion(q, { size: 0.9 * k, color: 0x6fd0ff, ring: false }); Sound.sfx("explosion_small", 0, { rate: 0.9 }); }); // a tank goes, a moment after the rest
+    g.show.wait(0.42, () => { if (g.unmounted) return; const q = p.clone().add(this._v.set(rand(-0.8, 0.8) * k, 0.2 * k, 0.6 * k)); kit.explosion(q, { size: 0.6 * k, color: 0x6fd0ff, ring: false }); Sound.sfx("explosion_small", 0, { rate: 0.9 }); }); // a tank goes, a moment after the rest
   }
 
   update(dt, sp, w) {
