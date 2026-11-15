@@ -35,15 +35,17 @@ const Assets = {
     if (this.fresh["model:" + name]) return Promise.resolve(this.fresh["model:" + name]);
     return this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
       const parts = {};
+      let inr = gltf.scene.userData && gltf.scene.userData.inr; // (the processing tool's notes: parts, pivots, anchors. They ride the file's root node.)
       gltf.scene.traverse((o) => {
         if (o.name) parts[o.name] = o;
+        if (!inr && o.userData && o.userData.inr) inr = o.userData.inr;
         if (o.isMesh) {
           o.frustumCulled = !o.isSkinnedMesh; // (a skinned mesh's bounds are those of its rest pose)
           const ms = Array.isArray(o.material) ? o.material : [o.material];
           ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) m[k].anisotropy = Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()); });
         }
       });
-      const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: (gltf.scene.userData && gltf.scene.userData.inr) || (gltf.asset && gltf.asset.extras) || {} };
+      const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
       this.fresh["model:" + name] = m;
       return m;
     }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; });

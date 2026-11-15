@@ -138,6 +138,14 @@ class BlasterGame extends QuizGame {
     this.speed = 26;
     this.targets = [];
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the three skies, the starfighter, the demon. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, fighter: null, demon: null };
+    if (this.has3D && GFX.ok) {
+      for (const n of ["blaster-deep-1", "blaster-deep-4", "blaster-deep-5"]) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.fighter = Assets.model("starfighter");
+      this.gen.demon = Assets.model("demon");
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-blaster">
       <div class="hud">
