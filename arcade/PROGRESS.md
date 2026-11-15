@@ -2346,3 +2346,173 @@ Each screen's section above lists what its last pass left. What the final review
   44 reviews in all, the last of them on the final build.
 - `docs/polish-pass/` holds the before-and-after sheets, rebuilt from the final build.
 
+## Round P: one fix round on four areas, then stop
+
+The owner read the last reviews and asked for one more fix round on the areas that scored under 4.5, in this order:
+Boss Rush, the road, Risk Blaster, the hub; then the tests, one more independent review of those areas on fresh
+frames, and a stop ("do not start a third round"). Nothing in the question bank, the answer checking, scoring,
+timers, spaced repetition, progression, saved progress or any text was touched. Look only.
+
+**A note on the second item.** The instruction labels it "Nest Egg Run (road)", but its three points (a full-width
+magenta grid fighting the wet road, lamps and signs that light nothing, one khaki lattice of tower windows) are the
+title screen's last review, word for word; Nest Egg Run's road has no grid on its carriageway. They were applied to
+the title, and the parts that carry over (lamp light on the wet road, the sun lying down the road, windows lit in
+clusters) were applied to Nest Egg Run as well. Both screens were reviewed.
+
+### Boss Rush
+
+- **Bloom.** The scene's bloom starts higher (threshold 1.5, 1.1 before; a short knee) and is tight: the pipeline
+  has two new per-scene settings, `knee` and `bloomTight`, and with `bloomTight: 1` the wide levels of the bloom
+  give up most of their share, so the halo round a lamp is about half as wide. Strength down to 0.55 (0.78 before).
+- **Paper and heads are matte off-white.** Paper and bone lose a third of their paleness (they were rough and
+  unmirrored already) and the plate mirrors the arena a little less; plate and paper are held under white where
+  they are drawn (a soft knee above 0.6), so only the lamps (eyes, lenses, cracks) and the star of a blow reach
+  pure white. No part of a head or a page is emissive.
+- **The entrance.** A boss landed bowed so far that the blank top of its skull faced the player: the "blank grey
+  slab". It now lands crouched with its head up. The scribe's flat cap is a ledger's board (a raised panel, a spine,
+  ruled lines, a stud at each corner) and not a plain plate.
+- **The attack.** A tapered wedge from the lens to the bottom edge of the band, drawn in screen space: a white
+  heart, a red rim, a thin dark edge. First a flash at the lens; the wedge shoots out in under a tenth of a second,
+  holds, narrows and is gone in half a second. (The blow lands when it always did.)
+- **The hit.** Every star has a white heart and a dark indigo outline, and the boss is a dark silhouette for that
+  moment (about a seventh of a second, fading over a fifth): a cyan star on the cyan boss is the player's blow, not
+  the boss's glow.
+- **Beyond the list** (from the same review): plate is lacquer and not one matt plastic (a cool rim from above and
+  behind, one hard stepped highlight from the key lamp; paper takes none); the floor's lines idle at half strength
+  and run to full as the attack bar fills; a blow runs through them in the answer's colour for a quarter of a second.
+
+### The road, the lamps, the windows (title; carried to Nest Egg Run)
+
+- **Road.** `makeNeonFloor` has three new options. `road`: inside the kerbs the grid steps back to a fifth of itself
+  (pavements, kerbs and dashes as before) and every light above the road lies in it as a long vertical streak (nine
+  taps, shifted a little from pixel to pixel so a streak is a streak and not nine copies). `sun`: the striped sun
+  lies down the road as a column of lens-shaped bars, rose under the skyline and gold at the player's feet, each bar
+  its own width and a little off the line, drifting slowly.
+- **Lamps and signs.** Lamp tubes are over half as bright again. Each lamp has four patches of light, all in one
+  instanced mesh: its pool, a hot core under the tube, a streak down the wet road toward the camera (far ones fade
+  out), a halo round the tube. Blade and wall signs are brighter, each blade has a halo in the wet air, and the
+  light they throw on the wall beside them is nearly doubled.
+- **Windows** (`cityFacadeMaterial`). Lit in clusters five bays wide and four floors high: four clusters in ten are
+  dark, the rest are busy to different degrees, and each has its own light, amber, cyan or magenta (deeper hues,
+  and no room so dim that its amber goes khaki). Panes are twice the size on the eight storeys nearest the road and
+  half as wide again on walls that run along the avenue, where a fine lattice was all shimmer.
+- **Searchlights** are round beams (24 sides; eight flat sides read as flat strips).
+- **Nest Egg Run.** Under each street lamp a hot core, and the lamp's image drawn out down the wet road toward the
+  camera. The egg sun lies down the far road as bars of its own light, beyond the answer lanes only (the lanes by
+  the car stay clean for the answers' colours) and in proportion to how wet the district is. The city's windows are
+  lit in clusters, four in ten dark, each cluster amber, cyan or magenta. Lane paint is worn where water runs and
+  gone under a puddle. The roof light bar no longer burns a hole in the roof.
+
+### Risk Blaster
+
+- **The shot.** Round the demon the wing pods fire every time: two thin beams (a third thinner, a hard white
+  heart in a sheath of the answer's colour) that meet on the answer's drone and hold until the answer lands. A right
+  answer sends one lance on from the drone into the demon's core: widest where it leaves the drone, a needle where
+  it goes in, and it ends there (the old through-shot was a fat bar that ran on past both). Sparks are darts in the
+  answer's colour, each with a point and a tail (they were white bars). The lance and the darts are a new shape in
+  the effects pool (`SpaceFX.dart`, `SpaceFX.lance`: two crossed blades shaped where they are drawn).
+- **The demon keeps its shape.** The flash where a drone bursts is smaller and shorter, there is less fire, the
+  blast's light on the demon is a quarter of what it was, and the demon takes the hit as a rim of the answer's
+  colour along its edges (it was a pale sheet over the whole body: "a ghost").
+- **Stations.** Each drone stands on a disc of dark glass that writes depth and is drawn before the demon's ring of
+  light, and the drones hold station 6.2 in front of the demon (2.6 before): wing tips and ring pass behind them.
+  The letter is half as big again and sits on the line of sight through the station's middle (out in the corners
+  of the view, a letter set straight in front of its drone stood off-centre in it). The ringed planets of three
+  regions left the stations' corners for the edge of the view, between the two rows of stations.
+
+### Arcade Hub
+
+- **Air and floor.** Half the fog (it starts at 15 and is full at 80; 13 and 46 before) and half the haze in the
+  lamp's shaft. The light under each cabinet is a tight pool with a hot core (the floor's shader; the hero's own
+  pool has a radius of 2.0, 3.4 before, and a core). The joints between the tiles stay dark inside the light, and the
+  floor's mirror is nearly as sharp as the thing it mirrors (its smear and ripple cut to under half).
+- **The cabinet in front.** Its screen's colour lies on its control panel, brightest under the glass and gone by
+  the lip, wavering by a tenth about once a second (steady with Reduced motion). Every tube has one curved
+  highlight across its upper corner. One cool rim light, from behind and above and to one side, drawn in the lit
+  material so that it falls only on the cabinet in front.
+- **Final Exam.** Its trim is lavender and brighter. While it is in front the hall behind it darkens and cools
+  toward teal (fog, wall rings, wall glows, ceiling, room light; the machines and signs along the wall turn down
+  further), and warms back as the camera moves on.
+
+### Tests (round P)
+
+On the round's build (commit `18b1466`), run once before it was committed and again at the end of the round: the
+regression is identical to the baseline (153 answers in 8 games, every saved byte), there are no console errors,
+the exam shows 50 questions with no hint before submit, and the 13-step sequence passes. Every scene that changed
+was also loaded on its own to catch a shader that would not compile, and the page's inline scripts were parsed after
+every build.
+
+### The review, and where the round stopped
+
+Fresh frames of all five areas were captured from that build. Two independent reviews (fresh agents, the same
+brief and scale as before) had come back when the owner closed the round: no further reviews, no new fixes. So
+two areas have new scores and three do not. In the order detail, lighting, materials, depth, motion, cohesion,
+legibility:
+
+| Area | Before this round | After this round |
+|---|---|---|
+| Title | 4, 3.5, 3.5, 4, 4, 4, 4 (3.9) | 4, 3.5, 3.5, 4, 3.5, 4, 4 (3.8) |
+| Arcade Hub | 4, 3.5, 3.5, 4, 4, 4, 4 (3.9) | 4, 3.5, 3.5, 3.5, 4, 4, 4 (3.8) |
+| Risk Blaster | 4, 3.5, 3.5, 4, 4, 4, 4 (3.9) | not reviewed again |
+| Nest Egg Run | 4, 3.5, 3.5, 4, 4, 4, 4.5 (3.9) | not reviewed again |
+| Boss Rush | 3.5, 3, 2.5, 3.5, 3.5, 3.5, 3.5 (3.3) | not reviewed again |
+
+**The round's aim, 4 or more on lighting and materials, was not reached on either area that was scored.** Both
+stayed at 3.5 and 3.5, and each lost half a point on another axis (the title on motion, the hub on depth), as a
+new reviewer's list has done in every round. The other four screens (Memory Bank 3.7, Strategy Guide 3.6,
+Interface 3.6, Final Exam 3.4) were not part of this round and keep their last scores. Both reviews are kept
+verbatim in `docs/polish-pass/round-p-reviews.md`, with a sheet of the final frames for each of the five areas
+beside them (`round-p-*.jpg`).
+
+What the two reviewers said of the things this round set out to fix:
+
+- **Title.** The road was not named as a fault any more, except for one new one (below). But "emissives light
+  nothing" is still the first point: the lamps read as "blurry orbs without pavement pools", the signs throw "no
+  spill on walls", headlights throw no cones in the rain. The windows are still "uniform LED-matrix".
+- **Hub.** The fog and the floor's mirror were not named any more. The cabinet in front still "reads as a glowing
+  sticker" (fat bloomed trim, a side panel blown to a white sliver, dark faces unshaded); the pools under the
+  cabinets are "flat, oversaturated glow puddles" with no contact shadow; for the Final Exam, "the teal hall does
+  not read".
+
+### Known weak spots (what is left, as of this build)
+
+Two faults, found by this round's reviews and left as they are (the round was closed before they could be looked
+into):
+
+- **Title: the sun's bars on the road drift off the sun.** When the camera sways, the column of bars sits up to
+  about 100 px to one side of the sun. It is anchored to the middle of the road; it should lie on the line from
+  the camera to the sun's image.
+- **Hub: a bright smear at control-panel height** crosses the right edge of the cabinet in front in three frames
+  (2, 4, 6). The cause was not established: the new panel light, or the bloom of what stands behind. Something
+  like it was in the last review's frame 6 too.
+
+The rest, by area:
+
+- **Title** (reviewed): lamps, signs and headlights still do not light the street enough to read as light; the
+  helicopters and hover cars crowd the wordmark and the towers; no shopfronts or doors at street level; the
+  planes of the city do not separate (heavy vignette, no haze between them); the bridge's deck cuts the sun at its
+  middle; lightning is a fat, even tube and its flash a flat lift; lorries and hover cars are off-palette boxes;
+  the rain is thin; the sign glyphs are soft; the button and tip panel are plain.
+- **Arcade Hub** (reviewed): the cabinet in front is drawn by its neon and not by light on its surfaces; the hall
+  behind it is one even blur and the neighbours are dark slivers; the Final Exam cabinet is still the weakest of
+  the six; no contact shadows; the toppers (horns, spoiler) are pale matt shapes; the hall's sign never reads;
+  marquee sub-lines are about 5 px; the light beams are hard-edged strips; passers-by are black cut-outs; the empty
+  rank bar is dark on dark.
+- **Boss Rush** (not reviewed; from the frames): the plates still read closer to khaki than to gold under the
+  arena's yellow light; the arena is one kit re-tinted per boss, and the cyan boss still stands on a cyan arena;
+  an enraged boss is a change of the arena's colour and not of the boss; the break-up of a beaten boss is dark
+  pieces on a dark crowd.
+- **Risk Blaster** (not reviewed; from the frames): the lance is soft where it leaves the drone and the flash at
+  the demon's chest is still large; the hull's and the armour's fine grain is unchanged; the strike, the rage and
+  the demon's destruction are as they were (the last review's points on each stand).
+- **Nest Egg Run** (not reviewed; from the frames): this round's changes are small here (a streak and a hot core
+  under each lamp, the far sun on the road, clustered windows); the gate's badges, the boost and the crash are as
+  they were, and the last review's points on each stand.
+- **Everything**: no reviewer has yet called a scene lit; lighting and materials are the lowest axes on every
+  screen. Not verified on a real phone: every frame is from a software renderer at twice a phone's density.
+
+### Where it ends (round P)
+
+- The fix round is one commit (`18b1466`); the record, the two reviews and the five sheets are the commit after it.
+- The pull request's description and the published artifact still describe the build before this round: the
+  owner asked for the work to stop with the push.
