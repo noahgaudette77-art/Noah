@@ -20,27 +20,23 @@ const LORD = {
   //   wave      wings wide, head thrown back: it roars a ring of force down the way
   //   beam      arms drawn in round its core, which burns white: a beam swept across the fighter
   //   missiles  wings raised high: seekers leave its wing tips and curve in
-  ATTACKS: ["volley", "swipe", "wave", "beam", "missiles"], GO: 0.5,
-  // The wounds a wave's hits open in it, in order: a place on the model at rest and how wide (its own units).
-  // Armour is eaten away there to a burning edge; what is behind shows through.
-  WOUNDS: [
-    [0.072, 0.105, 0.16, 0.034], // the plate over its left breast
-    [-0.33, 0.1, -0.05, 0.075], // a hole through its right wing
-    [-0.135, 0.275, 0.07, 0.046], // the curl of its right horn
-    [-0.07, 0.02, 0.15, 0.034], // the plate under its right breast
-    [0.31, 0.24, -0.05, 0.085], // a hole through its left wing
-    [0.175, 0.125, 0.06, 0.042], // its left shoulder
-  ],
+  ATTACKS: ["volley", "swipe", "wave", "beam", "missiles"], GO: 0.3,
+  // how long each strike is in flight once it is let go (seconds, on the show clock). A wrong answer's strike has
+  // landed before the explanation sheet comes up; a strike wound up as the clock runs down (from PRE seconds left)
+  // is let go that long before it runs out, and lands as it does.
+  PRE: 0.62, FLY: [0.2, 0.1, 0.26, 0.15, 0.25],
+  BREAK: ["handL", "hornR", "wingR", "handR", "tail", "hornL", "wingL"], // the order it comes apart in when it is done for
+  TAIL: -0.5, // its tail is carried back a little, clear of the fighter's nose when it has come close
 };
 
 const lordUniforms = () => Object.assign(blasterSkinUniforms(), {
-  uLdWound: { value: LORD.WOUNDS.map(() => new THREE.Vector4(0, 0, 0, 0)) }, uLdCoreK: { value: 0 }, uLdEyeK: { value: 0 }, uLdSweep: { value: 9 }, uLdCrack: { value: 0 },
+  uLdWound: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector4(0, 0, 0, 0)) }, uLdCoreP: { value: new THREE.Vector3() }, uLdCoreS: { value: new THREE.Vector3(1.7, 0.42, 1) }, uLdEyeP: { value: new THREE.Vector3() }, uLdMouthP: { value: new THREE.Vector3() }, uLdClawP: { value: new THREE.Vector3() }, uLdTipP: { value: new THREE.Vector3() }, uLdCoreK: { value: 0 }, uLdEyeK: { value: 0 }, uLdSweep: { value: 9 }, uLdCrack: { value: 0 },
   uLdCrackCol: { value: new THREE.Color(2.6, 0.5, 0.7) }, uLdClaw: { value: new THREE.Color(0, 0, 0) }, uLdMouth: { value: new THREE.Color(0, 0, 0) }, uLdTip: { value: new THREE.Color(0, 0, 0) },
   uDmRage: { value: 0 }, // (how red its mood is: the built-in fighter's back takes its colour from this)
 });
 const LORD_GLSL = {
   key: "lord",
-  pars: "uniform vec4 uLdWound[6]; uniform float uLdCoreK; uniform float uLdEyeK; uniform float uLdSweep; uniform float uLdCrack; uniform vec3 uLdCrackCol; uniform vec3 uLdClaw; uniform vec3 uLdMouth; uniform vec3 uLdTip;",
+  pars: "uniform vec4 uLdWound[6]; uniform float uLdCoreK; uniform float uLdEyeK; uniform float uLdSweep; uniform float uLdCrack; uniform vec3 uLdCrackCol; uniform vec3 uLdClaw; uniform vec3 uLdMouth; uniform vec3 uLdTip; uniform vec3 uLdCoreP; uniform vec3 uLdCoreS; uniform vec3 uLdEyeP; uniform vec3 uLdMouthP; uniform vec3 uLdClawP; uniform vec3 uLdTipP;",
   // its wounds: armour eaten away from each (a ragged edge, from a noise), burning where it ends, scorched round that
   cut: `float ldW = 9.0;
         for (int i = 0; i < 6; i++) { if (uLdWound[i].w > 0.0) ldW = min(ldW, length(vRest - uLdWound[i].xyz) / uLdWound[i].w); }
@@ -48,13 +44,14 @@ const LORD_GLSL = {
         if (ldCut < 0.8) discard;
         float ldEdge = 1.0 - smoothstep(0.8, 1.04, ldCut), ldScorch = 1.0 - smoothstep(0.95, 2.0, ldCut);`,
   albedo: "diffuseColor.rgb *= 1.0 - 0.8 * ldScorch;",
-  emissive: `totalEmissiveRadiance *= 1.0 - smoothstep(uLdSweep - 0.08, uLdSweep, vRest.y); // its lights come on from the bottom up as it arrives
-        vec3 ldC = vRest - vec3(0.0, 0.065, 0.17), ldE = (vRest - vec3(0.0, 0.262, 0.16)) * vec3(1.0, 2.0, 1.0);
-        totalEmissiveRadiance *= 1.0 + uLdCoreK * exp(-dot(ldC, ldC) * 520.0) + uLdEyeK * exp(-dot(ldE, ldE) * 800.0); // its core and its eyes burn brighter than its strips
+  emissive: `vec3 ldC = (vRest - uLdCoreP) * uLdCoreS, ldE = (vRest - uLdEyeP) * vec3(1.0, 2.0, 1.0); // (its core is a rift down its chest: taller than it is wide)
+        float ldCore = exp(-dot(ldC, ldC) * 520.0), ldEye = exp(-dot(ldE, ldE) * 800.0);
+        totalEmissiveRadiance *= max(1.0 - smoothstep(uLdSweep - 0.08, uLdSweep, vRest.y), min(1.0, ldCore + ldEye)); // its lights come on from the bottom up as it arrives; its core and its eyes burn from the first frame
+        totalEmissiveRadiance *= 1.0 + uLdCoreK * ldCore + uLdEyeK * ldEye; // and brighter than its strips
         float ldV = abs(skN(vRest * 31.0) - 0.5) * 2.0; // cracks: thin veins that spread from patch to patch as it is hurt
         totalEmissiveRadiance += uLdCrackCol * ((1.0 - smoothstep(0.0, 0.06, ldV)) * smoothstep(1.0 - uLdCrack, 1.3 - uLdCrack, skN(vRest * 6.5 + 3.1)) * step(0.001, uLdCrack));
         totalEmissiveRadiance += vec3(5.5, 1.7, 0.5) * ldEdge * (0.55 + 0.45 * ldN) + vec3(1.0, 0.16, 0.3) * ldScorch * 0.2;
-        vec3 ldH = vec3(abs(vRest.x) - 0.285, vRest.y + 0.24, vRest.z - 0.15), ldM = vRest - vec3(0.0, 0.195, 0.15), ldT = vec3(abs(vRest.x) - 0.44, (vRest.y - 0.4) * 0.6, vRest.z + 0.05);
+        vec3 ldA = vec3(abs(vRest.x), vRest.y, vRest.z), ldH = ldA - uLdClawP, ldM = vRest - uLdMouthP, ldT = (ldA - uLdTipP) * vec3(1.0, 0.6, 1.0);
         totalEmissiveRadiance += uLdClaw * exp(-dot(ldH * vec3(1.0, 0.7, 1.0), ldH * vec3(1.0, 0.7, 1.0)) * 300.0) * (0.2 + 0.8 * skF) + uLdMouth * exp(-dot(ldM, ldM) * 1500.0) + uLdTip * exp(-dot(ldT, ldT) * 60.0) * (0.2 + 0.8 * skF); // energy in its claws, light in its mouth, a charge along its wing blades`,
 };
 
@@ -78,11 +75,30 @@ class BlasterOverlord {
     tuneModel(M, { glow: 2.2, metal: 0.93, rough: 1.0, normal: 0.9 });
     this.U = lordUniforms();
     this.U.uSkSpec.value = 1.5;
+    this.U.uSkBurn.value.setRGB(5, 0.9, 2.6); // (where it is eaten away it burns magenta: its own colour, not a fire's)
+    // where its lights and its wounds are, from the model's own anchors and pivots (so they follow the model that arrived)
+    const AN = M.info.anchors || {}, piv = (n) => ((M.info.parts || {})[n] || {}).pivot || [0, 0, 0], an = (n) => AN[n] || [0, 0, 0], mix3 = (p, q, k, o = [0, 0, 0]) => [p[0] + (q[0] - p[0]) * k + o[0], p[1] + (q[1] - p[1]) * k + o[1], p[2] + (q[2] - p[2]) * k + o[2]];
+    const core = an("core");
+    this.home = {};
+    Object.keys(J).forEach((n) => { this.home[n] = piv(n); });
+    this.U.uLdCoreP.value.fromArray(core); this.U.uLdEyeP.value.fromArray(an("eyes")); this.U.uLdMouthP.value.fromArray(an("mouth"));
+    this.U.uLdClawP.value.fromArray(mix3(piv("handL"), an("clawL"), 0.6)); this.U.uLdTipP.value.fromArray(mix3(piv("wingL"), an("wingTipL"), 0.85));
+    // The wounds a wave's hits open in it, in order: a place on the model at rest and how wide (its own units).
+    // Armour is eaten away there to a burning edge; what is behind shows through.
+    this.wounds3 = [
+      [core[0] + 0.075, core[1] + 0.03, core[2] - 0.03, 0.036], // the plate over its left breast
+      mix3(piv("wingR"), an("wingTipR"), 0.5, [0, -0.05, 0]).concat(0.07), // a hole through its right wing
+      [core[0] - 0.07, core[1] - 0.06, core[2] - 0.03, 0.034], // the plate under its right breast
+      mix3(piv("wingL"), an("wingTipL"), 0.42, [0, -0.04, 0]).concat(0.08), // a hole through its left wing
+      [piv("shoulderL")[0] + 0.06, piv("shoulderL")[1] + 0.01, piv("shoulderL")[2] + 0.02, 0.042], // its left shoulder
+      [core[0] + 0.02, core[1] - 0.15, core[2] - 0.04, 0.036], // its belly
+    ];
     this.mat = blasterSkin(M.mesh.body.material, this.U, LORD_GLSL);
     this.mat.color.setScalar(1.3); // (black chrome mirrors little: a shade lighter, and its plates show what stands round it)
     g.chrome(this.mat, 1.7);
     // a part that has come away burns up on its own: it wears a copy of the skin with its own heat and its own dissolve
-    this.scrapU = [0, 1, 2, 3].map(() => Object.assign({}, this.U, { uSkGone: { value: 0 }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkGlow: { value: new THREE.Color(1, 1, 1) } }));
+    this.scrapN = 0;
+    this.scrapU = [0, 1, 2, 3, 4, 5, 6, 7].map(() => Object.assign({}, this.U, { uSkGone: { value: 0 }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkGlow: { value: new THREE.Color(1, 1, 1) } }));
     this.scrapMat = this.scrapU.map((U) => g.chrome(blasterSkin(this.mat.clone(), U, LORD_GLSL), 1.7));
     this.scrap = []; // parts in flight: { j, v, w, t, slot }
 
@@ -122,7 +138,7 @@ class BlasterOverlord {
     this.rageOn = false; this.rageT = 9; this.gloatT = -1; this.beatN = 0;
     this.flap = 0; this.rage = 0; this.pow = 0; this.flick = 1; this.dim = 1; this.flickT = 0; this.emberT = 0; this.sparkT = 3; this.heat = 0; this.roared = false; this.seed = 7741; this.wounds = 0; this.lost = {};
     this.flash = 0; this.flashCol = new THREE.Color(1, 1, 1);
-    this.crit = false; this.critK = 0; // the wave's last blow has landed: it hangs there breaking up until the wave is closed (look only)
+    this.crit = false; this.critK = 0; this.critT = 0; this.critN = 0; this.blowAt = 0.5; // the wave's last blow has landed: it hangs there breaking up until the wave is closed (look only)
     this._a = new THREE.Vector3(); this._b = new THREE.Vector3(); this._d = new THREE.Vector3(); this._c = new THREE.Color(); this._c2 = new THREE.Color();
   }
   lcg() { return (this.seed = (this.seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
@@ -130,7 +146,7 @@ class BlasterOverlord {
   // question starts it is two thirds of that.
   fit(band) {
     this.fitS = clamp(Math.min((band.h * 0.98) / LORD.height, (band.w * 0.9) / LORD.width), 1.5, 14);
-    this.fitY = (band.h * 0.15) / DEMON_NEAR;
+    this.fitY = (band.h * 0.17) / DEMON_NEAR;
     if (!this.root.visible) { this.S = this.fitS; this.yK = this.fitY; }
   }
   // ---- where things are on it, in the world (each fills `out` and returns it) --------------------------------
@@ -144,11 +160,19 @@ class BlasterOverlord {
   // a point on the model at rest (its own units), where it is now in the world
   at(p, out) { this.pose.updateWorldMatrix(true, false); return this.pose.localToWorld(out.set(p[0], p[1], p[2])); }
 
+  // where a part that was shot away used to hang
+  stump(name, out) { return this.at(this.home[name] || [0, 0, 0], out); }
+  // a place along a wing, toward its tip (j: 0 to 3, two to a wing; a wing shot away: its shoulder)
+  wingBlade(j, out) {
+    const sd = j % 2 ? "R" : "L", w = this.J["wing" + sd];
+    if (this.lost["wing" + sd] || !w) return this.J["shoulder" + sd].getWorldPosition(out);
+    return w.getWorldPosition(out).lerp(this.A["wingTip" + sd].getWorldPosition(this._b), 0.55 + (j >> 1) * 0.3);
+  }
   // A wave starts: the next demon flies up out of the distance. (If the last one is still breaking up, it waits for that.)
   arrive() {
     if (this.dieT >= 0) { this.pending = true; return; }
     const U = this.U;
-    this.alive = true; this.att = null; this.hits = 0; this.adv = 0; this.kick = this.kickTo = 0; this.rage = 0; this.pow = 0; this.roared = false; this.pending = false; this.blown = false; this.stagger = 0; this.chain = 0;
+    this.alive = true; this.att = null; this.hits = 0; this.adv = 0; this.kick = this.kickTo = 0; this.rage = 0; this.pow = 0.6; this.roared = false; this.pending = false; this.blown = false; this.stagger = 0; this.chain = 0;
     this.finale = false; this.rageOn = false; this.rageT = 9; this.wounds = 0; this.lost = {}; this.crit = false; this.critK = 0;
     this.inT = REDUCED_MOTION ? 1 : 0;
     U.uSkGone.value = 0; U.uSkHot.value.setRGB(0, 0, 0); U.uLdCrack.value = 0;
@@ -169,7 +193,8 @@ class BlasterOverlord {
     this.kickTo = 1;
     this.twist = -this.twist;
     this.hits++;
-    if (this.att && !this.att.go) { this.att = null; if (g.stage) g.stage.demonFoiled(this); } // (struck as it wound up for the clock running out: the blow breaks its strike)
+    if (this.att && (!this.att.go || (this.att.early && !this.att.counted))) { this.att = null; if (g.stage) g.stage.demonFoiled(this); } // (struck as it wound up for the clock running out, or just as it let go: the blow breaks its strike)
+    if (g.inWave >= WAVE_LEN - 1) { this.critT = 0; this.critN = 0; }
     if (this.hits % 3 === 0) this.stagger = 1; // every third blow staggers it
     if (g.inWave >= WAVE_LEN - 1) { this.crit = true; this.stagger = 1; } // the wave's last question, answered right: this blow is the one it does not get up from
     if (g.stage) g.stage.demonHit(this, p, color, this.stagger > 0); else { g.blastAt(p, color, 0.42); Sound.sfx("demonhit"); }
@@ -178,35 +203,39 @@ class BlasterOverlord {
   // What a wave's hits do to it, in order: wounds open (2nd, 3rd, 5th, 6th, 7th, 9th hit), its tail is shot away
   // (4th), a wing is torn off (8th).
   damage() {
-    const h = this.hits, g = this.g;
-    const open = { 2: 0, 3: 1, 5: 2, 6: 3, 7: 4, 9: 5 }[h];
+    const h = this.hits, g = this.g, J = this.J;
+    const open = { 2: 0, 5: 1, 6: 2, 7: 3, 9: 4 }[h];
     if (open !== undefined) {
-      const W = LORD.WOUNDS[open], u = this.U.uLdWound.value[open];
+      const W = this.wounds3[open], u = this.U.uLdWound.value[open];
       u.set(W[0], W[1], W[2], 0.001);
       u.grow = W[3];
       this.wounds = Math.max(this.wounds, open + 1);
       if (g.stage) g.stage.demonWound(this, open); else Sound.sfx("demonshed");
     }
-    if (h === 4) this.shed("tail");
-    if (h === 8) this.shed(this.twist > 0 ? "wingL" : "wingR");
+    const part = { 3: this.twist > 0 ? "hornL" : "hornR", 4: "tail", 6: this.lost.hornL ? "hornR" : "hornL", 8: this.twist > 0 ? "wingL" : "wingR" }[h];
+    if (part && J[part]) this.shed(part);
   }
   // A part comes away: it is cut loose from its joint, thrown clear, and burns up as it falls behind.
   // quiet: no blast of its own (the death's chain stages those).
   shed(name, quiet) {
     const j = this.J[name], g = this.g;
     if (!j || this.lost[name] || !j.visible) return null;
-    const slot = this.scrap.length % this.scrapMat.length, U = this.scrapU[slot], p = j.getWorldPosition(new THREE.Vector3());
+    const slot = this.scrapN++ % this.scrapMat.length, U = this.scrapU[slot], p = j.getWorldPosition(new THREE.Vector3());
     this.lost[name] = true;
     g.scene.attach(j); // (it keeps its place, size and turn in the world)
     j.traverse((o) => { if (o.isMesh) o.material = this.scrapMat[slot]; });
-    U.uSkGone.value = 0; U.uSkHot.value.setRGB(2.4, 0.7, 0.3); U.uSkGlow.value.setRGB(1, 1, 1);
+    U.uSkGone.value = 0; U.uSkHot.value.setRGB(2.4, 0.5, 1.0); U.uSkGlow.value.setRGB(1, 1, 1);
     const out = this._d.copy(p).sub(this.root.position);
     out.z = 0;
     if (out.lengthSq() < 0.01) out.set(0, -1, 0);
     out.normalize();
-    const s = { j, name, slot, t: 0, life: quiet ? 1.3 : 1.9, v: new THREE.Vector3(out.x * rand(3, 5.5), out.y * rand(2, 4) + 1.2, rand(3, 6)), w: new THREE.Vector3(rand(-3, 3), rand(-3, 3), rand(-4, 4)) };
+    // thrown clear on the frame of the blow, spinning: its tail down and toward the lens, a horn up and out, a wing
+    // or a hand out to its own side
+    const sgn = () => (Math.random() < 0.5 ? -1 : 1), tail = name === "tail";
+    const v = tail ? new THREE.Vector3(sgn() * rand(2.5, 4), -3.5, 8) : name.startsWith("horn") ? new THREE.Vector3(out.x * 5 + rand(-1, 1), 5, 6) : new THREE.Vector3(out.x * rand(4, 6), out.y * rand(2, 4) + 1.2, rand(3, 6));
+    const s = { j, name, slot, t: 0, life: quiet ? 0.8 : 0.6, v, w: new THREE.Vector3(sgn() * rand(5, 9), sgn() * rand(2, 5), sgn() * rand(7, 11)) }; // (it always spins)
     this.scrap.push(s);
-    if (g.stage && !quiet) g.stage.demonShed(this, p, name);
+    if (g.stage && !quiet) g.stage.demonShed(this, p, name, s);
     return s;
   }
   // A wrong answer, or none in time: it winds up, then strikes. If the clock ran out, it has been winding up for the
@@ -214,6 +243,7 @@ class BlasterOverlord {
   attack() {
     const g = this.g;
     if (this.att && !this.att.go) { this.att.go = true; this.atkN++; return; }
+    if (this.att && this.att.early && !this.att.counted) { this.att.counted = true; this.atkN++; return; } // (let go already as the clock ran down: this is the shield it was for)
     if (this.att) return;
     if (!this.alive) { g.jet.shieldLost(); if (g.stage) g.stage.playerHit(null, -1); return; } // (between demons: the shield still shows the hit)
     this.att = { time: 0, kind: this.atkN++ % LORD.ATTACKS.length, go: true, pre: false };
@@ -230,8 +260,10 @@ class BlasterOverlord {
     this.blown = false; this.chain = 0;
     this.finale = !this.finaleDone && typeof Store !== "undefined" && g.score > Store.best("blaster");
     if (this.finale) this.finaleDone = true;
-    // the order it comes apart in: a claw, a wing, the other claw, its tail, the other wing; then the blast takes the rest
-    this.order = ["handL", "wingR", "handR", "tail", "wingL"].filter((n) => !this.lost[n]);
+    // what is still on it comes away in a quick chain (a claw, a horn, a wing ...), then the blast takes the rest: all
+    // of it over well before the next question comes up
+    this.order = LORD.BREAK.filter((n) => this.J[n] && !this.lost[n]);
+    this.blowAt = Math.max(0.32, 0.22 + this.order.length * 0.07);
     if (g.stage) g.stage.demonDeath(this); else Sound.sfx(this.finale ? "demonroarlong" : "demonroar");
   }
   // the blast that ends it: every part still on it is thrown clear, and its torso burns away where it stood
@@ -240,7 +272,7 @@ class BlasterOverlord {
     this.blown = true;
     this.flash = 1; this.flashCol.setRGB(1, 0.9, 0.95);
     for (const n of this.names) if (n !== "body" && !this.lost[n]) this.shed(n, true);
-    this.U.uSkHot.value.setRGB(2.6, 0.8, 0.5);
+    this.U.uSkHot.value.setRGB(2.6, 0.5, 1.3);
     if (g.stage) g.stage.demonBlast(this, p); else { g.blastAt(p, g.waveCol.getHex(), 1); Sound.sfx("demonboom"); }
   }
   // advance: how much of the question's time has gone (0 to 1), or null between questions
@@ -257,7 +289,7 @@ class BlasterOverlord {
       s.j.position.addScaledVector(s.v, d);
       s.v.multiplyScalar(Math.pow(0.5, d)); s.v.y -= 1.6 * d;
       s.j.rotation.x += s.w.x * d; s.j.rotation.y += s.w.y * d; s.j.rotation.z += s.w.z * d;
-      Us.uSkGone.value = clamp((u - 0.2) / 0.8, 0, 1);
+      Us.uSkGone.value = clamp((u - 0.5) / 0.5, 0, 1);
       Us.uSkHot.value.multiplyScalar(Math.pow(0.12, d));
       Us.uSkGlow.value.multiplyScalar(Math.pow(0.05, d));
       if (u >= 1) { s.j.visible = false; this.scrap.splice(i, 1); }
@@ -271,11 +303,15 @@ class BlasterOverlord {
     if (this.inT < 1) this.inT = Math.min(1, this.inT + d / 2.0);
     // As the clock runs out it starts to wind up, half a second early: if the time does run out, its strike is let go
     // at once (attack); if an answer lands first, the wind-up is broken (hit) or becomes the strike (a wrong answer).
-    if (this.alive && !this.att && this.inT >= 1 && g.state === "ask" && g.tLeft > 0 && g.tLeft < LORD.GO) {
+    if (this.alive && !this.att && this.inT >= 1 && g.state === "ask" && g.tLeft > 0 && g.tLeft < LORD.PRE) {
       this.att = { time: 0, kind: this.atkN % LORD.ATTACKS.length, go: false, pre: true };
       if (g.stage) g.stage.demonAttack(this, this.att);
     }
     const A = this.att;
+    // Wound up for the clock running out, it lets go a moment early, so that its strike reaches the fighter as the
+    // clock does run out (the stage lands it once the rule has taken the shield). If the answer comes first and is
+    // right, the strike is broken (hit).
+    if (A && A.pre && !A.go && g.stage && g.state === "ask" && g.tLeft > 0 && g.tLeft < LORD.FLY[A.kind] - 0.03 && A.time >= LORD.GO - 0.05) { A.go = A.early = true; A.time = LORD.GO; }
     if (A) A.time = A.go ? A.time + d : Math.min(LORD.GO - 0.04, A.time + d); // (wound up and held until it is let go)
     const inK = Math.pow(1 - this.inT, 3), flare = smoothstep(0.6, 0.78, this.inT) * (1 - smoothstep(0.86, 1, this.inT)); // (its wings thrown wide as it arrives)
     // rage: the wave's last three questions. As it begins it throws its wings wide and roars, once.
@@ -286,13 +322,13 @@ class BlasterOverlord {
     this.rage += ((rageNow ? 1 : 0) - this.rage) * Math.min(1, d * 1.5);
     const rage = this.rage, hurt = clamp((this.hits - 1) / 7, 0, 1), onset = smoothstep(0, 0.25, this.rageT) * (1 - smoothstep(0.55, 1.3, this.rageT));
     // the run is over: it has won, and roars over the wreck with its wings spread
-    if (g.state === "over" && this.alive && this.gloatT < 0) { this.gloatT = 0; if (g.stage) g.stage.demonGloat(this); else Sound.sfx("demonroarlong"); }
+    if (g.state === "over" && this.alive && this.gloatT < 0 && (this.overT = (this.overT || 0) + d) > (g.stage ? 0.75 : 0)) { this.gloatT = 0; if (g.stage) g.stage.demonGloat(this); else Sound.sfx("demonroarlong"); }
     if (this.gloatT >= 0) this.gloatT += d;
     const gloat = this.gloatT >= 0 ? smoothstep(0, 0.35, this.gloatT) * (1 - smoothstep(1.7, 2.6, this.gloatT)) : 0;
     // a strike: tele is the wind-up (the warning), strike what follows the moment it lets go; one of each per kind
     const kind = A ? A.kind : -1, GO = LORD.GO;
     const tele = A ? smoothstep(0, GO - 0.12, A.time) * (1 - smoothstep(GO - 0.02, GO + 0.1, A.time)) : 0;
-    const strike = A ? smoothstep(GO - 0.02, GO + 0.1, A.time) * (1 - smoothstep(GO + 0.4, GO + 0.95, A.time)) : 0;
+    const strike = A ? smoothstep(GO - 0.02, GO + 0.1, A.time) * (1 - smoothstep(GO + 0.24, GO + 0.7, A.time)) : 0;
     const tV = kind === 0 ? tele : 0, tS = kind === 1 ? tele : 0, tW = kind === 2 ? tele : 0, tB = kind === 3 ? tele : 0, tM = kind === 4 ? tele : 0;
     const sV = kind === 0 ? strike : 0, sS = kind === 1 ? strike : 0, sW = kind === 2 ? strike : 0, sB = kind === 3 ? strike : 0, sM = kind === 4 ? strike : 0;
     this.kickTo *= Math.pow(0.03, d);
@@ -302,7 +338,7 @@ class BlasterOverlord {
     // dying: it sags and reels; in its last stand it rears back and roars first
     this.critK += ((this.crit && this.alive ? 1 : 0) - this.critK) * Math.min(1, d * 2.5);
     const crit = this.critK;
-    const blowAt = this.finale ? 1.0 : 0.8, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(0.36, 0.56, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
+    const blowAt = this.blowAt, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(blowAt * 0.45, blowAt * 0.75, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
     const over = dying && !this.blown ? smoothstep(0.1, blowAt, this.dieT) : 0; // its core running away, toward the blast
     const raise = Math.min(1.2, tV + 0.75 * sV + 0.8 * roar + 0.7 * gloat + 0.5 * onset + 0.7 * flare); // (arms up and out, claws open at the player)
     // wings: a slow beat, faster in a rage and as it flies in. Each down-beat is heard, quietly.
@@ -313,7 +349,7 @@ class BlasterOverlord {
     if (dying) this.adv += (0.9 - this.adv) * Math.min(1, d * 2.6); // (dying, it falls in toward the fighter: its end is seen close)
     else if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, d * 5);
     else if (!A) this.adv += ((this.crit ? 0.45 : 0) - this.adv) * Math.min(1, d * 1.1);
-    const lunge = (sS * 6.5 + sW * 1.4 + sB * 0.9 + sV * 0.5 - tS * 2.4 - (tele - tS) * 0.5) * (REDUCED_MOTION ? 0.3 : 1);
+    const lunge = (sS * 3.2 + sW * 1.4 + sB * 0.9 + sV * 0.5 - tS * 2.4 - (tele - tS) * 0.5) * (REDUCED_MOTION ? 0.3 : 1);
     const z = -lerp(DEMON_FAR, DEMON_NEAR, this.adv) - kick * (REDUCED_MOTION ? 3 : 7) - inK * 130 + lunge - stag * 0.6 + gloat * 3;
     const bob = quiet ? 0 : -sin(ph + 0.4) * 0.014 * S * (1 + 0.5 * rage);
     const lost = (this.lost.wingL ? 1 : 0) - (this.lost.wingR ? 1 : 0); // (a wing gone: it lists toward the side that still flies)
@@ -336,7 +372,7 @@ class BlasterOverlord {
     // body and tail: breathing, and a sway that runs down it
     J.body.rotation.set(0.03 * breath + 0.02 * sin(ph + 1.2) * amp, (quiet ? 0 : sin(t * 0.5) * 0.05) + (sS - tS) * this.twist * 0.2, 0);
     J.body.scale.setScalar(1 + 0.012 * breath + 0.03 * tW);
-    if (J.tail) J.tail.rotation.set(0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway);
+    if (J.tail) J.tail.rotation.set(LORD.TAIL + 0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway);
     // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
     this.look += ((quiet ? 0 : 0.14 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.3) * (1 - strike) - this.look) * Math.min(1, d * 7);
     this.nod += ((0.2 - clamp(Pointer.y, -1, 1) * 0.1) - 0.14 * tV - 0.1 * tS - 0.62 * tW + 0.14 * tB + 0.26 * tM + 0.36 * sS + 0.5 * sW + 0.1 * sB - 0.5 * kick - 0.4 * roar - 0.32 * gloat - 0.3 * onset - 0.4 * flare - this.nod) * Math.min(1, d * 9);
@@ -355,7 +391,7 @@ class BlasterOverlord {
 
     // ---- its light
     const lit = this.inT > 0.55 && !dying;
-    this.pow += ((lit ? 1 : 0) - this.pow) * Math.min(1, d * (dying ? 6 : 2.5));
+    this.pow += ((lit ? 1 : dying ? 0 : 0.6) - this.pow) * Math.min(1, d * (dying ? 6 : 2.5)); // (its core, its eyes and its rims burn from the first frame of its fly-in: it is never a dark shape on dark space)
     U.uLdSweep.value = this.inT < 1 ? -0.55 + smoothstep(0.55, 1, this.inT) * 1.2 : 9;
     if ((this.hits >= 6 || dying || this.crit) && !quiet) { if ((this.flickT -= d) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.45 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
     this.dim += (this.flick - this.dim) * Math.min(1, d * 12);
@@ -364,7 +400,7 @@ class BlasterOverlord {
     U.uLdCoreK.value = 0.5 + 1.6 * beat + 0.9 * (this.wounds >= 4 ? 1 : 0) + 3.0 * tB + 2.0 * sB + 2.5 * over + 1.2 * crit;
     U.uLdEyeK.value = 0.8 + 1.4 * tele + 1.0 * strike + 0.8 * rage + onset + gloat;
     this.flash = Math.max(0, this.flash - d * 6.5);
-    U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 0.9); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
+    U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 0.45); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
     U.uLdCrack.value += ((dying ? 0.9 : Math.max(hurt * 0.6, 0.8 * crit)) - U.uLdCrack.value) * Math.min(1, d * 3);
     U.uLdCrackCol.value.setRGB(2.6, 0.5, 0.7).multiplyScalar(0.5 + 0.5 * beat + 0.7 * over); // (thin bright veins: it is still seen as what it is, breaking)
     U.uLdWound.value.forEach((w) => { if (w.w > 0 && w.grow) w.w = Math.min(w.grow, w.w + d * w.grow * 5); }); // a wound opens in a fifth of a second
@@ -380,7 +416,7 @@ class BlasterOverlord {
     this._c.setRGB(2.4, 0.25, 1.4).lerp(this._c2.setRGB(3.0, 0.25, 0.4), rg).lerp(this._c2.setRGB(3.0, 2.6, 2.4), Math.max(0.7 * tB, 0.8 * over)); // the core's colour: magenta, crimson in a rage, white as it charges or runs away
     this.coreGlow.material.color.copy(this._c);
     this.coreGlow.material.opacity = Math.min(1, pw * (0.16 + 0.22 * beat + 0.25 * (this.wounds >= 4 ? 1 : 0) + 0.2 * rage + 0.6 * tB + 0.35 * over));
-    this.coreGlow.scale.setScalar(0.2 + 0.06 * beat + 0.1 * (this.wounds >= 4 ? 1 : 0) + 0.1 * tB + 0.1 * over);
+    { const cs = 0.2 + 0.06 * beat + 0.1 * (this.wounds >= 4 ? 1 : 0) + 0.1 * tB + 0.1 * over; this.coreGlow.scale.set(cs * 0.55, cs * 1.5, 1); } // (the glow of a rift: taller than it is wide)
     this.eyeGlow.material.opacity = Math.min(1, pw * (0.2 + 0.5 * tele + 0.4 * strike + 0.3 * rage + 0.5 * onset + 0.5 * gloat));
     this.eyeGlow.scale.setScalar(0.1 + 0.06 * Math.min(1, tele + strike + rage));
     this.eyeDots.forEach((s) => { s.material.opacity = Math.min(1, pw * 0.9); s.scale.setScalar(0.028 + 0.012 * Math.min(1, tele + strike + rage)); });
@@ -433,15 +469,21 @@ class BlasterOverlord {
       }
       if (this.wounds > 0 && !quiet && (this.sparkT -= d) <= 0) {
         this.sparkT = rand(1.2, 2.6) / (1 + hurt + 3 * crit);
-        const W = LORD.WOUNDS[Math.floor(this.lcg() * this.wounds)];
+        const W = this.wounds3[Math.floor(this.lcg() * this.wounds)];
         if (g.stage) g.stage.demonLeak(this, this.at(W, this._a)); else g.bursts.burst(this.at(W, this._a), 0xff7a4a, { n: 12, speed: 4 * k6, size: 0.13 * k6, life: 0.45 });
       }
+    }
+    // ---- done for (the wave's last blow has landed, its explanation is up): it comes apart a piece at a time
+    if (this.crit && this.alive && g.stage && g.state === "explain" && (this.critT += d) > 0.6 + this.critN * 0.45) {
+      const name = LORD.BREAK.find((n) => J[n] && !this.lost[n]);
+      this.critN++;
+      const sc = name && this.shed(name, true);
+      if (sc) g.stage.demonChain(this, sc.j.getWorldPosition(this._a), this.critN);
     }
     // ---- dying: it reels (or, in its last stand, roars first), a chain of blasts takes it apart, then the last one
     // throws what is left of it clear and its torso burns away where it stood
     if (dying) {
-      const first = blowAt - 0.1 - this.order.length * 0.11;
-      while (!this.blown && this.chain < this.order.length && this.dieT > first + this.chain * 0.11) {
+      while (!this.blown && this.chain < this.order.length && this.dieT > 0.12 + this.chain * 0.07) {
         const s = this.shed(this.order[this.chain], true);
         if (s && g.stage) g.stage.demonChain(this, s.j.getWorldPosition(this._a), this.chain);
         this.chain++;
@@ -454,7 +496,7 @@ class BlasterOverlord {
         [this.coreGlow, this.eyeGlow, this.maw, this.glow].concat(this.claws, this.eyeDots, this.tips).forEach((s) => { s.material.opacity = 0; });
         this.coreLight.intensity *= Math.max(0, 1 - b);
       }
-      if (this.dieT > blowAt + 1.4 && !this.scrap.length) { this.dieT = -1; this.root.visible = false; if (this.pending) this.arrive(); }
+      if (this.dieT > blowAt + 0.9 && !this.scrap.length) { this.dieT = -1; this.root.visible = false; if (this.pending) this.arrive(); }
     }
   }
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns

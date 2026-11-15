@@ -40,6 +40,7 @@ function blasterDropMaps(mats) {
 //   uSkHit      a flash along its edges (it has just been struck)
 //   uSkGone     0 to 1: it is eaten away from a noise, the edge of every hole burning (uSkBurn); uSkGoneF: how fine the noise
 //   uSkHot      heat: all of it glows (a wreck, cooling)
+//   uSkFill     a fill of its own: it is never a black shape on black space
 //   uSkSpec     the most a lamp's own highlight may add (a flat chrome plate that turns to face a hard lamp would
 //               otherwise be a slab of white: its sheen comes from the soft cards in what it mirrors instead)
 // Chrome sparkles where its normal map is finer than a pixel: there it is made a little rougher (uSkAA), so a
@@ -47,7 +48,7 @@ function blasterDropMaps(mats) {
 // o.pars, o.cut, o.albedo, o.emissive: more GLSL for one model (declarations; before its texture is read; after; with the light it gives off).
 const blasterSkinUniforms = () => ({
   uSkGlow: { value: new THREE.Color(1, 1, 1) }, uSkRimA: { value: new THREE.Color(0, 0, 0) }, uSkRimB: { value: new THREE.Color(0, 0, 0) }, uSkHit: { value: new THREE.Color(0, 0, 0) },
-  uSkGone: { value: 0 }, uSkGoneF: { value: 14 }, uSkBurn: { value: new THREE.Color(5, 1.6, 0.5) }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkAA: { value: 1.4 }, uSkKick: { value: new THREE.Color(0, 0, 0) }, uSkSpec: { value: 1.4 },
+  uSkGone: { value: 0 }, uSkGoneF: { value: 14 }, uSkBurn: { value: new THREE.Color(5, 1.6, 0.5) }, uSkHot: { value: new THREE.Color(0, 0, 0) }, uSkAA: { value: 1.4 }, uSkKick: { value: new THREE.Color(0, 0, 0) }, uSkSpec: { value: 1.4 }, uSkFill: { value: new THREE.Color(0, 0, 0) },
 });
 function blasterSkin(mat, U, o = {}) {
   mat.onBeforeCompile = (sh) => {
@@ -58,7 +59,7 @@ function blasterSkin(mat, U, o = {}) {
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vRest;
-        uniform vec3 uSkGlow; uniform vec3 uSkRimA; uniform vec3 uSkRimB; uniform vec3 uSkHit; uniform float uSkGone; uniform float uSkGoneF; uniform vec3 uSkBurn; uniform vec3 uSkHot; uniform float uSkAA; uniform vec3 uSkKick; uniform float uSkSpec;
+        uniform vec3 uSkGlow; uniform vec3 uSkRimA; uniform vec3 uSkRimB; uniform vec3 uSkHit; uniform float uSkGone; uniform float uSkGoneF; uniform vec3 uSkBurn; uniform vec3 uSkHot; uniform float uSkAA; uniform vec3 uSkKick; uniform float uSkSpec; uniform vec3 uSkFill;
         float skH(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
         float skN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
           return mix(mix(mix(skH(i), skH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(skH(i + vec3(0.0, 1.0, 0.0)), skH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
@@ -75,10 +76,10 @@ function blasterSkin(mat, U, o = {}) {
         ${o.albedo || ""}`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         { vec3 skD = max(abs(dFdx(normal)), abs(dFdy(normal))); roughnessFactor = min(1.0, roughnessFactor + max(max(skD.x, skD.y), skD.z) * uSkAA); }
-        float skNV = clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), skF = 1.0 - skNV;
+        float skNV = clamp(dot(geometryNormal, normalize(vViewPosition)), 0.0, 1.0), skF = 1.0 - skNV; // (off the shape itself, not its bumps: a rim taken from a bumped normal is a dotted line)
         totalEmissiveRadiance *= uSkGlow;
         ${o.emissive || ""}
-        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, normal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, normal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g) * (0.12 + 0.88 * smoothstep(0.3, 0.72, skN(vRest * 26.0) * 0.65 + skN(vRest * 61.0) * 0.35)); // (heat glows in patches, like embers, dark between them: never a coat of orange)`);
+        totalEmissiveRadiance += mix(uSkRimA, uSkRimB, smoothstep(-0.4, 0.4, geometryNormal.x)) * (skF * skF * skF * skF) + uSkKick * (skF * skF * skF * smoothstep(-0.2, 0.75, geometryNormal.y)) + uSkHit * (0.03 + skF * skF * skF) + uSkFill * (0.45 + 0.55 * diffuseColor.g) + uSkBurn * skBurn + uSkHot * (0.35 + 0.65 * diffuseColor.g) * (0.12 + 0.88 * smoothstep(0.3, 0.72, skN(vRest * 26.0) * 0.65 + skN(vRest * 61.0) * 0.35)); // (heat glows in patches, like embers, dark between them: never a coat of orange)`);
     sh.fragmentShader = sh.fragmentShader.replace("reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance", "min(reflectedLight.directSpecular, vec3(uSkSpec)) + reflectedLight.indirectSpecular + totalEmissiveRadiance");
   };
   mat.customProgramCacheKey = () => "blaster-skin-" + (o.key || "");
@@ -145,6 +146,30 @@ function starPlumeMaterial(U) {
   });
 }
 
+// The fighter's shield, seen when something lands on it: a shell of force that is brightest at its edge and clear at
+// its middle, so the hull inside keeps its own colours; a hexagon lattice shows for a moment where the blow fell.
+// It never reaches white. uK: how brightly its edge burns (the fighter pulses it); uHit, uHitP: the blow.
+function starShellMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.28, 0.88, 1.0) }, uK: { value: 0 }, uHit: { value: 0 }, uHitP: { value: new THREE.Vector3(0, 0.6, -0.8) } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uK; uniform float uHit; uniform vec3 uHitP; varying vec3 vP; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0);
+        const vec2 s = vec2(1.0, 1.7320508);
+        vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
+        vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+        vec4 h = vec4(q - hc.xy * s, q - (hc.zw + 0.5) * s);
+        vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
+        float line = 1.0 - smoothstep(0.0, 0.06, 0.5 - max(dot(a, s * 0.5), a.x));
+        float near = exp(-distance(vP, uHitP) * 2.4);
+        float k = fres * (0.25 + 0.75 * uK) * uK + line * (fres * 0.3 * uK + near * 0.3 * uHit);
+        gl_FragColor = vec4(min(uColor * k, vec3(0.85)), 1.0);
+      }`,
+  });
+}
+
 class BlasterStarfighter {
   constructor(game, model) {
     const g = (this.g = game), S = STAR.S;
@@ -161,27 +186,32 @@ class BlasterStarfighter {
     const at = (p, out) => (out || new THREE.Vector3()).set(-p[0] * S, p[1] * S, -p[2] * S);
 
     // ---- its chrome: what it mirrors (the region's sky and lamps), how its neon burns, and what the game adds
-    tuneModel(M, { glow: 2.3, metal: 0.92, rough: 1.4, normal: 0.85 }); // (a satin chrome: a flat wing that turns to face a lamp takes a sheen, not a slab of white)
+    tuneModel(M, { glow: 2.3, metal: 1.0, rough: 1.0, normal: 0.9 }); // (its finishes are in its own maps, part by part: satin plates, a mirror-glass canopy, heat-tinted nozzles, gunmetal cannons. They are left as they were made.)
     this.U = blasterSkinUniforms();
-    this.U.uSkAA.value = 1.6;
-    this.U.uSkSpec.value = 0.55;
+    this.U.uSkAA.value = 1.2;
+    this.U.uSkBurn.value.setRGB(1.6, 3.8, 5);
+    this.U.uSkSpec.value = 0.7;
     this.UE = Object.assign({}, this.U, { uSkGlow: { value: new THREE.Color(1, 1, 1) } }); // the engines' own light: it follows the thrust
+    this.UG = Object.assign({}, this.U, { uSkSpec: { value: 6 }, uSkAA: { value: 0 }, uSkFill: { value: new THREE.Color(0, 0, 0) } }); // the canopy: glass takes a lamp's own glint, sharp, and is not lifted by the fill
+    const PARS = "uniform vec3 uStHeat; uniform vec3 uStGun; uniform vec3 uStFlash;";
     const EM = `vec3 stE = vec3(max(abs(vRest.x) - 0.17, 0.0), vRest.y - 0.01, (vRest.z + 0.46) * 0.8);
         totalEmissiveRadiance += uStHeat * exp(-dot(stE, stE) * 110.0) * (0.3 + 0.7 * diffuseColor.g);
         vec3 stG = vec3(abs(vRest.x) - 0.4535, vRest.y + 0.0134, vRest.z - 0.2);
-        totalEmissiveRadiance += uStGun * exp(-dot(stG * vec3(1.0, 1.0, 0.45), stG * vec3(1.0, 1.0, 0.45)) * 420.0);`;
-    this.U.uStHeat = this.UE.uStHeat = { value: new THREE.Color(0, 0, 0) }; // metal glowing round the nozzles
-    this.U.uStGun = this.UE.uStGun = { value: new THREE.Color(0, 0, 0) }; // the barrels, hot from firing
+        totalEmissiveRadiance += uStGun * exp(-dot(stG * vec3(1.0, 1.0, 0.45), stG * vec3(1.0, 1.0, 0.45)) * 420.0);
+        vec3 stF = vec3(abs(vRest.x) - 0.4535, (vRest.y + 0.0134) * 1.6, (vRest.z - 0.1) * 0.55);
+        totalEmissiveRadiance += uStFlash * exp(-dot(stF, stF) * 24.0) * (0.25 + 1.5 * diffuseColor.rgb); // the light of a shot on the plates beside the gun`;
+    this.U.uStHeat = this.UE.uStHeat = this.UG.uStHeat = { value: new THREE.Color(0, 0, 0) }; // metal glowing round the nozzles
+    this.U.uStGun = this.UE.uStGun = this.UG.uStGun = { value: new THREE.Color(0, 0, 0) }; // the barrels, hot from firing
+    this.U.uStFlash = this.UE.uStFlash = this.UG.uStFlash = { value: new THREE.Color(0, 0, 0) }; // a shot's light on the hull
     const base = M.mesh.body.material;
-    this.mat = blasterSkin(base, this.U, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM });
-    this.engMat = blasterSkin(base.clone(), this.UE, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM });
+    this.mat = blasterSkin(base, this.U, { key: "star", pars: PARS, emissive: EM });
+    this.engMat = blasterSkin(base.clone(), this.UE, { key: "star", pars: PARS, emissive: EM });
     STAR.ENGINES.forEach((n) => { const m = M.mesh[n.replace("exhaust", "engine")]; if (m) m.material = this.engMat; });
-    this.glassMat = blasterSkin(base.clone(), this.U, { key: "star", pars: "uniform vec3 uStHeat; uniform vec3 uStGun;", emissive: EM }); // the canopy: glass over the cockpit
-    this.glassMat.roughness = 0.55;
+    this.glassMat = blasterSkin(base.clone(), this.UG, { key: "star", pars: PARS, emissive: EM }); // the canopy: dark mirror glass (the finish is in the maps; this copy gives it its own glint and a stronger mirror)
     if (M.mesh.canopy) M.mesh.canopy.material = this.glassMat;
     this.mats = [this.mat, this.engMat, this.glassMat];
-    this.mats.forEach((m) => m.color.setScalar(0.82)); // (black chrome: a shade darker than it was made, so its neon and its engines are the bright things on it)
-    g.chrome(this.mat, 1.05); g.chrome(this.engMat, 1.05); g.chrome(this.glassMat, 1.7);
+    g.chrome(this.mat, 1.2); g.chrome(this.engMat, 1.2); g.chrome(this.glassMat, 2.6); // (the canopy mirrors the region's sky more strongly than the plates: the sky is seen in it)
+    ["finL", "finR"].forEach((n) => { if (M.mesh[n]) M.mesh[n].visible = false; }); // (the two flat plates under the engines read as one dark quad from behind: the engine block stands without them)
 
     // ---- engines: five nozzles, each with a flame and a glow
     const noz = STAR.ENGINES.map((n) => at(M.info.anchors[n]));
@@ -207,8 +237,8 @@ class BlasterStarfighter {
     this.bow.renderOrder = 6;
     this.bow.visible = false;
     rig.add(this.bow);
-    // ---- the shield: a hexagon lattice on a bubble of force, unseen until something lands on it
-    this.shieldMat = fighterShieldMaterial();
+    // ---- the shield: a shell of force, unseen until something lands on it (see starShellMaterial)
+    this.shieldMat = starShellMaterial();
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), this.shieldMat);
     this.shield.scale.set(2.25, 1.0, 2.1);
     this.shield.position.set(0, 0.1, 0);
@@ -226,6 +256,7 @@ class BlasterStarfighter {
     this.wingLights = [];
     this.extras = [this.flames, this.bow, this.shield, this.beacon, ...this.engineGlow, ...this.navLights];
 
+    this.shellT = 9; this.shellA = 0; this.shoveK = 0; this.litK = 0; this.litCol = new THREE.Color(); this.flashK = 0;
     this.heat = 0; this.heatTo = 0; this.rollV = 0; this.recoil = 0; this.gun = 0; this.kick = [0, 0]; this.waggle = 0; this.spinT = 0; this.spinDir = 1; this.acc = 0; this.shieldOn = 1;
     this.inT = REDUCED_MOTION ? 1 : 0; this.launched = false; this.hold = 0; // the fly-in
     this.hurt = 0; this.boom = -1; this.boost = 0; this.jolt = 0; this.joltX = 0; this.pow = 0; this.blink = 0; this.struck = 0; this.barrelHot = 0;
@@ -256,7 +287,7 @@ class BlasterStarfighter {
   }
   // the guns fire: a kick back, the cannons slide in their mounts, the barrels heat. (gun: 0 port, 1 starboard, or both.)
   fire(col, pods, gun) {
-    this.recoil = 1; this.gun = 1;
+    this.recoil = 1; this.gun = 1; this.flashK = 1;
     if (gun === undefined) this.kick[0] = this.kick[1] = 1; else this.kick[gun] = 1;
     this.barrelHot = Math.min(1.6, this.barrelHot + 0.45);
     if (col !== undefined) this.gunCol.set(col);
@@ -265,23 +296,24 @@ class BlasterStarfighter {
   hit() { if (!REDUCED_MOTION && !GFX.calm) { this.waggle = 1; this.boost = 1; } }
   // a streak heats the engines: longer, whiter flames
   setCombo(c) { this.heatTo = clamp((c - 1) / 7, 0, 1); }
-  // a shield is lost: the lattice flares red from the point of impact, and the ship is knocked aside
-  shieldLost(from) {
+  // a shield is lost: its shell flares cyan at its edge three times (45 frames in all; the hull keeps its own
+  // colours inside it), its lattice shows where the blow landed, and the ship is knocked aside (the roar pushes it
+  // back instead: see shove)
+  shieldLost(from, kind) {
     const u = this.shieldMat.uniforms;
     u.uHit.value = 1;
     u.uHitP.value.set(from ? clamp(-from.x, -0.6, 0.6) : rand(-0.4, 0.4), 0.55, -0.7).normalize();
-    u.uColor.value.setRGB(1.0, 0.28, 0.2);
+    this.shellT = 0; this.shellA = 1;
     this.struck = 1;
-    if (!REDUCED_MOTION && !GFX.calm && this.boom < 0 && this.inT >= 1) { const sd = u.uHitP.value.x < 0 ? -1 : 1; this.jolt = 1; this.joltX = -sd; this.rollV += sd * 4.5; }
+    if (!REDUCED_MOTION && !GFX.calm && this.boom < 0 && this.inT >= 1 && kind !== 2) { const sd = u.uHitP.value.x < 0 ? -1 : 1; this.jolt = 1; this.joltX = -sd; this.rollV += sd * 4.5; }
   }
-  // a shield comes back: the lattice sweeps on from the nose
-  shieldUp() {
-    const u = this.shieldMat.uniforms;
-    u.uHit.value = 0.9;
-    u.uHitP.value.set(0, 0.1, -1);
-    u.uColor.value.setRGB(0.6, 1.0, 1.0);
-  }
-  // through the warp between waves: one full roll
+  // a shield comes back: one soft swell of the shell
+  shieldUp() { this.shellT = 0.5; this.shellA = 0.7; }
+  // the roar pushes it back
+  shove(k = 1) { if (!REDUCED_MOTION && !GFX.calm) this.shoveK = k; }
+  // a coloured light falls on its hull for a moment (the demon's beam crossing it)
+  lit(col, k = 1) { this.litCol.set(col); this.litK = Math.max(this.litK, k); }
+  // through the warp between waves: it banks one way and back (never edge-on: its shape is kept)
   warp() { if (!REDUCED_MOTION && !GFX.calm) { this.spinT = 1; this.spinDir = Math.random() < 0.5 ? -1 : 1; } }
   // the last shield is gone: it comes apart into its own thirteen parts, each thrown its own way, burning
   down() {
@@ -310,7 +342,7 @@ class BlasterStarfighter {
         q.h.position.z -= d * 0.22 * b; // (it falls behind: toward the lens)
         q.h.rotation.x += q.w.x * d; q.h.rotation.y += q.w.y * d; q.h.rotation.z += q.w.z * d;
       }
-      U.uSkHot.value.setRGB(2.6, 0.9, 0.22).multiplyScalar(Math.exp(-b * 2.0));
+      U.uSkHot.value.setRGB(0.5, 1.7, 2.6).multiplyScalar(Math.exp(-b * 2.0)); // (its wreck glows the cyan of its own lights, white-hot at first: nothing here burns orange)
       U.uSkGone.value = this.UE.uSkGone.value = clamp((b - 0.25) / 1.9, 0, 1);
       U.uSkGlow.value.multiplyScalar(Math.pow(0.004, d)); this.UE.uSkGlow.value.multiplyScalar(Math.pow(0.004, d)); // its lights die with it
       if (b > 2.4) this.model.scene.visible = false;
@@ -334,18 +366,18 @@ class BlasterStarfighter {
     if (this.waggle > 0) { this.waggle = Math.max(0, this.waggle - d * 1.5); roll += Math.sin((1 - this.waggle) * Math.PI * 2) * 0.5 * this.waggle; }
     if (this.spinT > 0) {
       this.spinT = Math.max(0, this.spinT - d / 1.2);
-      roll += this.spinDir * Math.PI * 2 * smoothstep(0, 1, 1 - this.spinT);
-      if (this.spinT === 0) rig.rotation.z -= this.spinDir * Math.PI * 2; // a whole turn is no turn: nothing to unwind
+      roll += this.spinDir * 0.6 * Math.sin((1 - this.spinT) * Math.PI * 2);
     }
-    const jj = this.jolt * this.jolt;
+    this.shoveK = Math.max(0, this.shoveK - d * 2.4);
+    const jj = this.jolt * this.jolt, sh = Math.sin(Math.min(1, this.shoveK * 1.4) * Math.PI * 0.5) * this.shoveK; // (pushed back by the roar: out fast, back slowly)
     this.rollV += ((roll - rig.rotation.z) * 60 - this.rollV * 11) * h;
     rig.rotation.z += this.rollV * h;
-    rig.rotation.x += (STAR.TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.035 - Math.min(1, inK * 2) * 0.3 + Math.sin(t * 1.9 + 0.9) * 0.016 * hov - lunge * 0.06 + jj * 0.09 - rig.rotation.x) * Math.min(1, d * 6);
+    rig.rotation.x += (STAR.TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.075 - sh * 0.1 - Math.min(1, inK * 2) * 0.3 + Math.sin(t * 1.9 + 0.9) * 0.016 * hov - lunge * 0.06 + jj * 0.09 - rig.rotation.x) * Math.min(1, d * 6);
     rig.rotation.y += ((-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov + jj * this.joltX * 0.25 - rig.rotation.y) * Math.min(1, d * 2.5);
     this.recoil *= Math.pow(0.004, d);
     this.gun *= Math.pow(0.02, d);
     this.struck = Math.max(0, this.struck - d * 3.5);
-    rig.position.set(jj * this.joltX * 0.5, -inK * 1.6 + bob - jj * 0.22, this.recoil * 0.1 + inK * 12.5 - (quiet ? 0 : w * 0.5) - lunge * 0.85); // (it surges forward into the warp, and after a clean hit)
+    rig.position.set(jj * this.joltX * 0.5, -inK * 1.6 + bob - jj * 0.22 - this.recoil * 0.12 - sh * 0.16, this.recoil * 0.18 + sh * 0.6 + inK * 12.5 - (quiet ? 0 : w * 0.5) - lunge * 0.85); // (it surges forward into the warp, and after a clean hit)
     // ---- its parts: the wings flex with the roll (the one it rolls toward lags) and breathe; the cannons slide back in
     // their mounts when they fire; the fins answer the roll; the engines point a little against a turn
     const rate = clamp(this.rollV, -6, 6), flap = (quiet ? 0 : Math.sin(t * 1.9 + 0.5) * 0.022 + lunge * 0.05 - Math.min(1, inK * 2) * 0.12) + heat * 0.01;
@@ -354,7 +386,7 @@ class BlasterStarfighter {
     for (let i = 0; i < 2; i++) {
       this.kick[i] *= Math.pow(0.0015, d);
       const c = P[i ? "cannonL" : "cannonR"];
-      if (c) c.position.z = c.userData.rest.z - this.kick[i] * 0.03;
+      if (c) c.position.z = c.userData.rest.z - this.kick[i] * 0.05;
     }
     if (P.finL) P.finL.rotation.z = clamp(-rate * 0.12, -0.45, 0.45);
     if (P.finR) P.finR.rotation.z = clamp(-rate * 0.12, -0.45, 0.45);
@@ -386,7 +418,10 @@ class BlasterStarfighter {
     const rimK = 0.5 + 0.25 * heat + 0.3 * lunge, pano = g.pano;
     if (pano) { U.uSkRimA.value.copy(pano.rimA.color).multiplyScalar(rimK * 0.8); U.uSkRimB.value.copy(pano.rimB.color).multiplyScalar(rimK * 0.8); } else { U.uSkRimA.value.setRGB(0.55, 0.3, 1.5).multiplyScalar(rimK); U.uSkRimB.value.setRGB(0.16, 0.9, 1.5).multiplyScalar(rimK); }
     U.uSkKick.value.setRGB(0.55, 0.9, 1.15).multiplyScalar(1.1 * this.pow); // (cyan-white along its upper edges: its back stands clear of whatever is behind it)
-    U.uSkHit.value.setRGB(0.5, 1.4, 2.0).multiplyScalar(bl * 0.6).add(this._c.setRGB(2.4, 0.5, 0.4).multiplyScalar(this.struck * this.struck * 0.5)); // (struck: a red rim for a moment. Its shield's lattice and the sparks off its hull say the rest; the hull itself is never washed out.)
+    this.litK = Math.max(0, this.litK - d * 6); this.flashK = Math.max(0, this.flashK - d * 18);
+    U.uSkHit.value.copy(this.litCol).multiplyScalar(this.litK * 0.9).add(this._c.setRGB(2.0, 0.4, 0.4).multiplyScalar(this.struck * this.struck * 0.3)); // (struck: a red rim for a moment. Its shell and the sparks off it say the rest; the hull itself keeps its colours.)
+    U.uStFlash.value.copy(this.gunCol).multiplyScalar(this.flashK * 1.6); // (three frames of a shot's light on the plates beside the gun)
+    U.uSkFill.value.copy(pano && pano.amb ? pano.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).multiplyScalar(0.26 * this.pow); // (a fill in the region's own colour: its hull never falls into black)
     // lights: the beacon on its back (a soft pulse, well under 1 Hz), the wing tips
     this.beacon.material.opacity = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * this.pow;
     this.navLights.forEach((s, j) => { s.material.opacity = (0.55 + 0.45 * Math.sin(t * 2.2 + j * Math.PI)) * this.pow; });
@@ -395,13 +430,12 @@ class BlasterStarfighter {
     this.bowMat.uniforms.uTime.value = t;
     // shield: fades with the shields left, glows with the streak, settles back to blue after a hit
     const su = this.shieldMat.uniforms;
-    this.shieldOn += (clamp(g.shields / 3, 0, 1) - this.shieldOn) * Math.min(1, d * 4);
+    this.shellT += d;
+    const swell = this.shellT >= 0.75 ? 0 : quiet ? 0.6 * (1 - this.shellT / 0.75) : (0.5 - 0.5 * Math.cos((this.shellT / 0.25) * Math.PI * 2)) * (1 - 0.3 * Math.floor(this.shellT / 0.25)); // three swells, each fainter (with Reduced effects: one glow that fades)
     su.uTime.value = t;
-    su.uOn.value = this.shieldOn;
-    su.uGlow.value = heat * 0.6;
-    su.uHit.value = Math.max(0, su.uHit.value - d * 1.3);
-    if (su.uHit.value === 0) su.uColor.value.lerp(this._c.setRGB(lerp(0.25, 1.0, heat * heat), 0.85, lerp(1.0, 0.45, heat * heat)), Math.min(1, d * 4));
-    this.shield.visible = su.uHit.value > 0;
+    su.uK.value = swell * this.shellA;
+    su.uHit.value = Math.max(0, su.uHit.value - d * 1.6);
+    this.shield.visible = su.uK.value > 0.004 || su.uHit.value > 0.004;
     rig.updateMatrixWorld(true);
     // (what the game reads, in the rig's frame: the cannons' mouths as they are now, flexed and slid)
     for (let i = 0; i < 2; i++) rig.worldToLocal(this.muzzle(i, this.muzzles[i]));

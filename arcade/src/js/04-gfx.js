@@ -64,11 +64,20 @@ const GFX = {
   look: "hd",
   // The scene is drawn at the screen's own pixels (its full device pixel ratio), limited
   // only by the largest texture the graphics chip can make.
+  // A scene may ask to be drawn larger than that and brought down in the final pass (its post.ssaa, up to 2): thin
+  // bright edges and seams of light come out as smooth lines that do not shimmer. (As large as asked, within what a
+  // graphics chip can be trusted to hold.) No scene that does not ask is drawn any differently.
   scenePR() {
+    const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8, out = this.outPR();
+    const post = Scenes.cur && Scenes.cur.scene && Scenes.cur.scene.userData.post, want = post && post.ssaa > 1 ? Math.min(2, post.ssaa) : 1;
+    if (want <= 1) return out;
+    return Math.min(lim, out * Math.max(1, Math.min(want, Math.sqrt(9e6 / Math.max(1, this.w * this.h * out * out)))));
+  },
+  outPR() {
     const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
     return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim));
   },
-  outPR() { return this.scenePR(); },
+  ss: 1, // how many times larger than the screen the scene is drawn (1 unless the scene asked: see scenePR)
   resize() {
     this.w = window.innerWidth;
     this.h = window.innerHeight;
@@ -76,6 +85,7 @@ const GFX = {
       this.renderer.setPixelRatio(this.outPR());
       this.renderer.setSize(this.w, this.h, false);
       const pr = (this._pr = this.scenePR());
+      this.ss = pr / this.outPR();
       this.pipe.resize(Math.max(2, Math.round(this.w * pr)), Math.max(2, Math.round(this.h * pr)));
       $("#gl").classList.add("post");
     }
@@ -125,6 +135,7 @@ const GFX = {
       look: this.look,
       post: scene.userData.post || {},
     });
+    if (scene.userData.overlay) scene.userData.overlay(this.renderer); // (a scene's own last word, over the finished picture: what must stay sharp through every effect)
     this.heat.a = 0; // a scene asks for its heat haze again every frame
     this.keep.a = 0; // and names its subject again
   },

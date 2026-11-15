@@ -4,7 +4,8 @@
 //   HudFX.low(root, on)          low health: the lives beat red and the HUD's edge turns red until it is switched off
 //   HudFX.lifeLost(root)         the life that has just gone breaks into shards
 //   HudFX.blink(root, ms)        the short invulnerability blink after a hit (a class the scene can read: root.dataset.blink)
-//   HudFX.reward(root, from, to, { n, kind, color, clear })   stars, coins or sparks fly from a point to a place in the HUD
+//   HudFX.reward(root, from, to, { n, kind, color, clear, dur, gap })   stars, coins or sparks fly from a point to a place in the HUD
+//                                (dur: a bit's flight in ms; gap: ms between one bit and the next)
 //                                (clear: an element, or a selector inside root, that they must not cross: the question.
 //                                They go round it, up the margin at its side.)
 const HudFX = {
@@ -67,7 +68,7 @@ const HudFX = {
       if (round) { // out to the margin at the side the target is on, up it past the panel, and in
         const p = UI.el(`<i class="reward-bit ${kind}" style="left:0;top:0;--c:${color}">${kind === "spark" ? "" : icon(kind === "coin" ? "coin" : "star", color)}</i>`);
         UI.root.appendChild(p);
-        const left = tx < innerWidth / 2, ex = clamp(left ? cr.left - 9 + rand(-2, 2) : cr.right + 9 + rand(-2, 2), 7, innerWidth - 7), dur = 640 + i * 38 + rand(0, 120);
+        const left = tx < innerWidth / 2, ex = clamp(left ? cr.left - 9 + rand(-2, 2) : cr.right + 9 + rand(-2, 2), 7, innerWidth - 7), gap = o.gap === undefined ? 34 : o.gap, dur = (o.dur || 640) + i * gap * 1.1 + rand(0, 0.2 * (o.dur || 640));
         if (p.animate) {
           p.animate([
             { transform: `translate(${sx}px,${sy}px) scale(0.3) rotate(0deg)`, opacity: 0 },
@@ -75,9 +76,9 @@ const HudFX = {
             { transform: `translate(${ex}px,${cr.bottom + rand(14, 46)}px) scale(0.9) rotate(150deg)`, opacity: 1, offset: 0.42 },
             { transform: `translate(${ex}px,${cr.top - rand(2, 8)}px) scale(0.8) rotate(260deg)`, opacity: 1, offset: 0.76 },
             { transform: `translate(${tx}px,${ty}px) scale(0.45) rotate(360deg)`, opacity: 0.9 },
-          ], { duration: dur, delay: i * 34, easing: "cubic-bezier(0.3, 0, 0.3, 1)", fill: "both" });
+          ], { duration: dur, delay: i * gap, easing: "cubic-bezier(0.3, 0, 0.3, 1)", fill: "both" });
         }
-        setTimeout(() => p.remove(), dur + i * 34 + 60);
+        setTimeout(() => p.remove(), dur + i * gap + 60);
         continue;
       }
       const p = UI.el(`<i class="reward-bit ${kind}" style="left:0;top:0;--c:${color}">${kind === "spark" ? "" : icon(kind === "coin" ? "coin" : "star", color)}</i>`);
