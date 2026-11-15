@@ -2516,3 +2516,67 @@ The rest, by area:
 - The fix round is one commit (`18b1466`); the record, the two reviews and the five sheets are the commit after it.
 - The pull request's description and the published artifact still describe the build before this round: the
   owner asked for the work to stop with the push.
+
+# Generated assets and combat effects (thirteenth pass): progress log
+
+The request: replace weak procedural visuals and audio with real generated assets (a starfighter and a flying
+demon boss for Risk Blaster, an armoured war rig for Nest Egg Run, new bosses for Boss Rush, a sky for every
+mode, a full sound design), integrate them at the highest quality, and give Risk Blaster, Boss Rush and Nest
+Egg Run a full combat and impact effects pass (weapons, telegraphs, attack types, hit reactions, low-health
+state, boss reactions and deaths, crashes, boost, layered explosions, synced audio, hit-stop). Providers:
+Tripo, fal.ai (Hyper3D Rodin V2.5 and image models), ElevenLabs, Blockade Labs; free CC0 sources first for
+textures and props. Study logic, questions, answers, scoring and content never change. Only `arcade/` is touched.
+
+## How to resume
+
+- Branch `claude/quirky-ride-9frte0`. Keys come from the environment (`TRIPO_API_KEY`, `FAL_KEY`,
+  `ELEVENLABS_API_KEY`, `BLOCKADE_API_KEY`); they are never printed or written anywhere, and `.env` is ignored.
+- `tools/gen/` is the generation toolkit: `lib.js` (the four providers, one ledger line per paid call in
+  `ledger.jsonl`), `concepts.js` (reference images), `candidates.js` (the same concept through Tripo and Rodin),
+  `tripo-post.js` (segmentation, completion, rig, retarget, texture), `render.js` (turnaround sheets of any
+  `.glb`). Raw candidates live in the session's scratch directory (`GEN_OUT`), not in the repo; only picks are kept.
+- `ASSETS.md` lists every kept asset and the spend per provider.
+- The rules of the games run on the scene's own clock, and the regression test compares every frame number with
+  the baseline. So nothing in this pass may change when a rule fires: all new motion (hit-stop, slow motion,
+  telegraphs, deaths) runs on a separate show clock that the rules never read.
+- The regression (`npm run arcade:regress`) opens the page from `file://`, where the page does not fetch its
+  asset files at all (a browser refuses them there) and plays with what is built in. `tools/regress-http.js`
+  runs the same test with the page served over HTTP and every asset loaded: both must be IDENTICAL.
+
+## Checkpoints (thirteenth pass)
+
+| # | Checkpoint | Status |
+|---|---|---|
+| A0 | Toolkit, provider checks, `.gitignore` | done |
+| A1 | Concept round: reference images for 3 hero assets (3 designs each) and 12 bosses | done |
+| A2 | 3D candidate round on Tripo and Rodin, turnaround sheets, picks | heroes picked; bosses generating |
+| A3 | Picks processed: orientation, scale, pivots, PBR and emissive maps, parts, compression | |
+| A4 | Runtime: asset loader, glTF models in the pipeline, environment maps | |
+| A5 | Skyboxes: one per mode plus variants, seam checks, sky and reflections | |
+| A6 | Sound: effects, announcer, music; mixing, ducking, mute | |
+| A7 | Combat and impact effects pass: Risk Blaster, Boss Rush, Nest Egg Run | |
+| A8 | Models and animation integrated in each game | |
+| A9 | Regression, captures (stills and frame sequences), independent reviews, fixes | |
+| A10 | `ASSETS.md`, README, final report | |
+
+## A1/A2: what was generated and what was picked
+
+Concepts (fal.ai): every asset drawn as one object on a plain studio ground from one strong prompt (in
+`tools/gen/concepts.js`); two takes on Seedream 5.5 for everything, one more on Nano Banana Pro for each hero
+design. 54 images.
+
+3D candidates: the picked concept images through Tripo H3.1 (Ultra geometry, HD texture v3.5, PBR, 300K faces)
+and Rodin Gen-2.5 Extreme-High (500K triangles, PBR, HD texture, HighPack 4K), each rendered from six views.
+
+- **Starfighter**: three designs (arrowhead, manta wing, twin-nacelle gunship), each on both providers.
+  Picked: the manta wing from Tripo (`starfighter-b-sd-0.tripo`): the most original outline, three main engines
+  in a row (the view the player has is from behind), wing-tip twin cannons, chrome and black with cyan leading
+  edges and magenta engine rings. Rodin's version of the same concept is cleaner but reads as matte primer.
+- **Demon**: four designs. Picked: the ram-horned overlord with wings of armour blades from Tripo
+  (`demon-c-sd-0.tripo`): rigid blade wings suit split-part animation, a large reactor core gives the player's
+  shot a target, and chrome separates it from a dark nebula. Runner-up: the serpent-tailed biomech
+  (`demon-a-sd-0.tripo`). Rodin's wings came out as thick slabs on this design.
+- **War rig**: three designs (armoured coupe, lifted war truck, six-wheeled rig). Picked: the six-wheeler from
+  Rodin (`wartruck-c-sd-0.rodin`): gold body, black armour, cyan and magenta strips, a wing between two fins and
+  two exhaust cannons, by far the clearest from behind and above, which is where the game's camera sits. Its
+  surface is matte as delivered; it gets lacquer and metal in processing.

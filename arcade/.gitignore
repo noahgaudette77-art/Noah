@@ -1,0 +1,5 @@
+# secrets and scratch output never go in the repo
+.env
+.env.*
+tools/gen/out/
+.work/

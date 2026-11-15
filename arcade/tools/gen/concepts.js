@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+/**
+ * Concept round: reference images for every model that will be generated in 3D.
+ *
+ *   GEN_OUT=<dir> node tools/gen/concepts.js [key-prefix ...]
+ *
+ * One strong prompt per asset, several designs per hero asset, drawn as a single
+ * object on a plain studio ground (what image-to-3D models read best: no glow
+ * haze, no flames, no shadows, nothing cropped). Images land in OUT/concepts and
+ * are indexed in OUT/concepts/index.json (name -> url), which the 3D round reads.
+ */
+const fs = require("fs");
+const path = require("path");
+const L = require("./lib.js");
+
+// What every picture shares: one world (black chrome, gunmetal, neon), and a sheet a 3D model can be read from.
+const WORLD = "Retro 1980s synthwave arcade game art direction: glossy black-chrome and dark gunmetal with crisp panel lines, bevelled plates, bolts and vents, wet-look reflections, thin sharp neon light strips.";
+const SHEET = "Single subject only, whole subject in frame with a margin, centered, plain flat light grey studio background, soft even diffuse studio lighting, no cast shadow, no glow bloom, no haze, no lens flare, no smoke, no flames, no text, no letters, no logo, no watermark. Highly detailed 3D game asset render, physically based materials, sharp focus. Original design, not based on any existing character, vehicle or brand.";
+
+const boss = (accent, body) => `Full-body concept render of an original villain robot boss for a retro arcade boss-fight game. ${body} ${WORLD} Its light strips, eyes and glowing details are ${accent}. Standing upright in a symmetrical A-pose with the arms held a little away from the body and the feet apart, facing the camera, straight front view from chest height. ${SHEET}`;
+
+const ASSETS = {
+  // ---- Risk Blaster: the player's starfighter (seen from behind and above in the game)
+  "starfighter-a": `Concept render of an original retro-futuristic starfighter spacecraft for a 1980s arcade rail shooter. Arrowhead fuselage with a long needle nose, small canards, a teardrop tinted canopy set far back, wide cranked delta wings with upturned winglets, a long-barrel laser cannon pod slung under each wing, two big round main engine nozzles side by side at the tail, two outward-canted tail fins. ${WORLD} Neon magenta and cyan strips along the wing edges and panel seams, violet accents. Engines off. Three-quarter front view from slightly above. ${SHEET}`,
+  "starfighter-b": `Concept render of an original retro-futuristic starfighter spacecraft for a 1980s arcade rail shooter. A low, wide flying-wing interceptor: a broad blended manta-shaped hull, a faceted cockpit canopy on the centreline, forward-swept wing tips that each end in a twin-barrel laser cannon, three hexagonal engine nozzles in a row across the tail with afterburner petals, two short canted stabiliser fins, intake scoops on the shoulders. ${WORLD} Neon cyan strips along the leading edges, magenta strips around the engines, violet accents. Engines off. Three-quarter front view from slightly above. ${SHEET}`,
+  "starfighter-c": `Concept render of an original retro-futuristic starfighter spacecraft for a 1980s arcade rail shooter. A heavy gunship fighter: a wedge-shaped armoured central hull with a raised bubble canopy, two long engine nacelles carried on short stub wings either side, each nacelle with a large round thruster nozzle at the back and a heavy laser cannon at the front, a split forked nose with a sensor array between the prongs, a single tall dorsal fin, ventral fins. ${WORLD} Neon magenta strips down the nacelles, cyan strips on the hull, violet accents. Engines off. Three-quarter front view from slightly above. ${SHEET}`,
+
+  // ---- Risk Blaster: the flying demon boss (faces the player, hovering)
+  "demon-a": `Full-body concept render of an original biomechanical void demon boss for a 1980s arcade rail shooter. A towering armoured demon with a horned skull-like helm (four long swept-back horns), three glowing eyes, a jaw of metal fangs, a broad chest with a glowing reactor core behind cracked armour plates, long clawed arms, and instead of legs a long segmented armoured tail that tapers to a blade. Two huge mechanical bat wings made of dark blade-like ribs and thin membrane panels, fully spread wide to both sides. Obsidian black and gunmetal armour with bright worn edges, veins of neon magenta and violet light, cyan rim details, crimson eyes. ${WORLD} Hovering, symmetrical pose with the arms held out and down to the sides, facing the camera, straight front view. ${SHEET}`,
+  "demon-b": `Full-body concept render of an original winged gargoyle demon boss for a 1980s arcade rail shooter. A lean, muscular obsidian-skinned demon with armour plates fused to its body, a crown of six short horns, a narrow fanged face with two burning magenta eyes, clawed hands, digitigrade legs ending in talons, a whip tail. Four wings: two large upper wings with torn membranes veined in glowing violet, two smaller lower wings, all spread wide. A glowing magenta core in the sternum, cyan light in the seams of its armour. ${WORLD} Hovering, symmetrical pose with the arms held out and down to the sides, wings fully spread, facing the camera, straight front view. ${SHEET}`,
+  "demon-c": `Full-body concept render of an original void demon overlord for a 1980s arcade rail shooter. A massive horned machine-demon torso: a wide armoured chest and shoulders with spiked pauldrons, a helm with two great curled ram horns and a single vertical violet eye-slit, a grille of glowing fangs, heavy clawed gauntlets, and a waist that ends in a cluster of engine thrusters and a barbed tail instead of legs. Two enormous angular wings built from overlapping black armour blades with neon magenta edges, fully spread. A cracked reactor core glowing magenta in the chest. ${WORLD} Hovering, symmetrical pose with the arms held out and down to the sides, facing the camera, straight front view. ${SHEET}`,
+
+  // ---- Nest Egg Run: the armoured war truck / muscle car (seen from behind and above in the game)
+  "wartruck-a": `Concept render of an original armoured muscle car for a 1980s arcade road racer. A low, wide two-door fastback coupe with bolted armour plating over the doors and fenders, a heavy bull bar with a winch, an exposed chrome supercharger with a scoop through the hood, armoured louvres over the rear window, a ducktail spoiler, one full-width tail light blade, twin side exhaust pipes, wide rear tyres on five-spoke rims, a roof light bar. Champagne-gold lacquer body under gunmetal armour plates, chrome trim, thin neon cyan and magenta light strips along the sills. No badges, no licence plate text. Three-quarter front view from slightly above. ${WORLD} ${SHEET}`,
+  "wartruck-b": `Concept render of an original armoured war truck for a 1980s arcade road racer. A lifted heavy pickup with a muscle-car nose: a long hood with a chrome supercharger and scoop, a slab-sided armoured cab with slit windows, a short bed carrying two upright chrome exhaust stacks and a spare wheel, a plough-shaped bull bar, four huge knobbly off-road tyres on beadlock rims, a roll bar with a row of spotlights, tow hooks, side steps. Champagne-gold lacquer body under gunmetal armour plates, chrome trim, thin neon cyan and magenta light strips. No badges, no licence plate text. Three-quarter front view from slightly above. ${WORLD} ${SHEET}`,
+  "wartruck-c": `Concept render of an original six-wheeled armoured war rig for a 1980s arcade road racer. A muscle-car front end (long hood, chrome supercharger, quad headlights behind a mesh grille, ram bar) joined to a twin-rear-axle armoured body with a sloping fastback roof, fender flares, six fat tyres, a rear wing between two tail fins, a full-width tail light blade, rear jet-style exhaust outlets, riveted armour skirts. Champagne-gold lacquer body under gunmetal armour plates, chrome trim, thin neon cyan and magenta light strips. No badges, no licence plate text. Three-quarter front view from slightly above. ${WORLD} ${SHEET}`,
+
+  // ---- Boss Rush: one machine per chapter, and the final boss
+  "boss01-pusher": boss("neon cyan", "THE PRODUCT PUSHER, a slick salesman cyborg: a broad-shouldered humanoid robot wearing an armour-plated business suit with wide lapels and a necktie made of light, a chrome face with a huge toothy grin and a visor for eyes, a swept-back fin of chrome hair, a big armoured briefcase held in its right hand."),
+  "boss02-perilmonger": boss("neon red", "THE PERILMONGER, a hulking horned brute cyborg: enormous shoulders and forearms, a small snarling head with two long bull horns, a furnace grille in its chest glowing like embers, hazard-striped armour plates, fists like wrecking balls, thick short legs."),
+  "boss03-specter": boss("neon violet", "THE SOLVENCY SPECTER, a hooded one-eyed wraith machine: a tall figure in a tattered armoured cloak with a deep hood, one large round glowing eye in the darkness of the hood, long skeletal metal hands, and an open round bank-vault door in its chest showing an empty dark vault inside. Its cloak ends in ragged strips above the ground with no legs showing."),
+  "boss04-fineprint": boss("neon yellow", "THE FINE PRINT, a tall thin scribe robot: a body built from stacked bound contract pages and rolled scrolls held in a metal frame, a narrow head wearing a flat ledger-board cap, a brass jeweller's loupe lens over one eye, and long thin arms that end in giant fountain-pen nibs instead of hands. The pages are matte off-white with rows of tiny illegible ruled lines."),
+  "boss05-golem": boss("neon orange", "THE GROUP GOLEM, a massive slab golem: a body assembled from heavy rectangular stone-like slabs and blocks stacked like filing cabinets, held together by glowing seams, a small flat head sunk between huge square shoulders, enormous block forearms and fists, short thick legs."),
+  "boss06-titan": boss("molten gold", "THE INFLATION TITAN, a steam-boiler titan robot: a huge riveted round pressure-tank body with a large pressure gauge dial on its chest with the needle in the red zone, two smokestacks rising from its shoulders, brass pipes and valve wheels, a small domed head with a grille, heavy piston arms, short stout legs."),
+  "boss07-lich": boss("neon lime green", "THE LONGEVITY LICH, a crowned skeleton king cyborg: a metal skull wearing a tall spiked crown, an open ribcage holding a large glowing hourglass where the heart would be, a high-collared tattered royal mantle over armoured shoulders, long bony clawed hands, skeletal armoured legs."),
+  "boss08-intestate": boss("neon magenta", "LORD INTESTATE, a robot judge: a tall imposing figure in heavy black judicial robes with an armoured collar and shoulder plates, a long judge's wig made of chrome curls, a stern metal face with narrow glowing eyes, holding a giant gavel hammer in its right hand."),
+  "boss09-influencer": boss("neon cyan", "THE UNDUE INFLUENCER, a masked puppeteer robot: a slender tall figure in a long high-collared coat, a smooth theatrical mask with a sly thin smile and narrow eye slits, long thin fingers, each hand holding a cross-shaped puppeteer's control bar with glowing strings hanging from it."),
+  "boss10-tollgate": boss("neon orange", "THE PROBATE TOLLGATE, a toll-booth robot: a boxy toll booth for a body with a window showing one big glowing eye, a striped barrier arm for its right arm and a claw for its left, a coin-slot mouth, a fee meter with dials on its chest, two amber warning beacons on its roof, and tank tracks instead of legs."),
+  "boss11-phantom": boss("neon violet", "THE PATRIMONY PHANTOM, a phantom split down the middle: its left half is a bone-white skeleton, its right half is dark steel armour, one glowing eye on each side, a torn cape from its shoulders, holding a giant cleaver in its right hand."),
+  "boss12-proctor": boss("neon red", "THE PROCTOR, a hulking exam-proctor robot and final boss: a massive armoured figure wearing a square academic mortarboard cap with a glowing tassel, a monocle on a chain over one glowing eye, a mouth made of a row of round answer-sheet bubbles, a heavy armoured academic gown with a hood over huge shoulders, a giant sharpened pencil held like a staff in its right hand."),
+};
+
+(async () => {
+  const dir = path.join(L.OUT, "concepts");
+  fs.mkdirSync(dir, { recursive: true });
+  const idxFile = path.join(dir, "index.json");
+  const index = fs.existsSync(idxFile) ? JSON.parse(fs.readFileSync(idxFile, "utf8")) : {};
+  const only = process.argv.slice(2);
+  const jobs = [];
+  for (const [key, prompt] of Object.entries(ASSETS)) {
+    if (only.length && !only.some((p) => key.startsWith(p))) continue;
+    const hero = !/^boss/.test(key);
+    // Seedream 5.5: two takes of every prompt
+    jobs.push(async () => {
+      if (index[key + "-sd-0"]) return;
+      const out = await L.falRun("bytedance/seedream/v5.5/text-to-image", { prompt, image_size: "square_hd", num_images: 2, output_format: "png" }, { name: "concept " + key });
+      for (let i = 0; i < out.images.length; i++) { const n = `${key}-sd-${i}`; await L.download(out.images[i].url, path.join(dir, n + ".png")); index[n] = { url: out.images[i].url, prompt, model: "bytedance/seedream/v5.5/text-to-image" }; }
+      fs.writeFileSync(idxFile, JSON.stringify(index, null, 1));
+      L.log("done", key, "seedream");
+    });
+    // Nano Banana Pro: one take of each hero design, to compare
+    if (hero) jobs.push(async () => {
+      if (index[key + "-nb-0"]) return;
+      const out = await L.falRun("fal-ai/nano-banana-pro", { prompt, aspect_ratio: "1:1", resolution: "2K", num_images: 1, output_format: "png" }, { name: "concept " + key });
+      for (let i = 0; i < out.images.length; i++) { const n = `${key}-nb-${i}`; await L.download(out.images[i].url, path.join(dir, n + ".png")); index[n] = { url: out.images[i].url, prompt, model: "fal-ai/nano-banana-pro" }; }
+      fs.writeFileSync(idxFile, JSON.stringify(index, null, 1));
+      L.log("done", key, "nano-banana-pro");
+    });
+  }
+  const res = await L.pool(jobs, 6);
+  L.log("concepts:", res.filter((r) => r.ok).length, "ok,", res.filter((r) => !r.ok).length, "failed; fal balance", await L.falBalance());
+})().catch((e) => { console.error("FAILED", L.scrub(e.message)); process.exit(1); });
+
+module.exports = { ASSETS };
