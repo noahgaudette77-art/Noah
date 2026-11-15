@@ -2262,7 +2262,8 @@ rounds M and N the nine screens had 44 independent reviews. The averages do not 
 reviewer, shown a screen on which the last one's points had been fixed, found a new list and scored it within about
 half a point of where it began. Lighting and materials are the lowest axes on every screen at the end, and every
 final review's "biggest change" is a relighting or re-materialling of the whole scene, which is more than a fix
-pass. Those lists are kept beside the working files and summarised below under "Not done".
+pass. The nine final reviews are in `docs/polish-pass/final-reviews.md` as written, and what they still ask for
+is summarised below under "Not done".
 
 - **Risk Blaster was reviewed twice at the end.** My captions on the first sheet called its two end frames the
   player's fighter breaking up; they are the demon's destruction. That review scored 4, 3.5, 3.5, 3.5, 4, 4, 3.5

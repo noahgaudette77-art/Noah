@@ -379,7 +379,8 @@ playing state or anything throws. Run both after every change. `PROGRESS.md` log
 upgrades' checkpoints, and for the polish pass the audit, each reviewer's scores,
 what was done about every point, the originality audit and what was left undone.
 `docs/polish-pass/` holds that pass's before-and-after contact sheets, one per
-screen (before on top, after below).
+screen (before on top, after below), and the nine final reviews as they were
+written (`final-reviews.md`).
 
 The last two rounds of that pass (M and N in `PROGRESS.md`) had fresh reviewers
 (agents that had not seen the work) score every screen again and again, with a fix
