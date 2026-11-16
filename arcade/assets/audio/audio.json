@@ -2343,6 +2343,15 @@
   }
  },
  "music": {
+  "racer": {
+   "file": "audio/music-racer.mp3",
+   "loop": [
+    0.7,
+    48.101
+   ],
+   "vol": 1,
+   "take": 0
+  },
   "blaster": {
    "file": "audio/music-blaster.mp3",
    "loop": [
@@ -2378,6 +2387,11 @@
    "file": "audio/voice.mp3",
    "bytes": 845785,
    "seconds": 70.41
+  },
+  "music-racer": {
+   "file": "audio/music-racer.mp3",
+   "bytes": 968665,
+   "seconds": 48.37
   },
   "music-blaster": {
    "file": "audio/music-blaster.mp3",
