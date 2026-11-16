@@ -1,0 +1,42 @@
+{
+ "name": "boss-2",
+ "about": "Boss Rush: Perilmonger (a horned brute with a furnace grille in its chest and hazard stripes). Tripo H3.1 from concept boss02-perilmonger-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss02-animA.glb",
+ "more": [
+  "post/boss02-animB.glb"
+ ],
+ "seg": "post/boss02-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 100000,
+ "tex": 2048,
+ "texBase": 4096,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    345,
+    22
+   ]
+  ],
+  "sat": [
+   0.6,
+   0.85
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ }
+}

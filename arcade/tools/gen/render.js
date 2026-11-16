@@ -15,6 +15,7 @@ const { chromium } = require("playwright");
 
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf("--" + k); if (i < 0) return d; const v = args[i + 1]; args.splice(i, 2); return v; };
+const anim = +flag("anim", 0), animView = flag("animview", "q");
 const out = flag("out", "sheet.jpg"), size = +flag("size", 420), statsFile = flag("stats", null), views = flag("views", null), exposure = +flag("exposure", 1), emissiveBoost = +flag("emissive", 0), zoom = +flag("zoom", 0.6), envI = flag("envi", undefined) === undefined ? undefined : +flag("envi", 1), bg = flag("bg", undefined) === undefined ? undefined : parseInt(flag("bg", "0"), 16), norot = flag("norot", null) !== null;
 const files = args.map((f) => path.resolve(f));
 const ARCADE = path.join(__dirname, "..", "..");
@@ -36,7 +37,7 @@ function serve() {
 (async () => {
   const srv = await serve(), base = "http://127.0.0.1:" + srv.address().port;
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
-  const n = views ? views.split(",").length : 6;
+  const n = anim ? anim : views ? views.split(",").length : 6;
   const page = await (await browser.newContext({ viewport: { width: size * n, height: size }, deviceScaleFactor: 1 })).newPage();
   page.on("pageerror", (e) => console.error("page error:", e.message));
   await page.goto(base + "/tools/gen/render.html");
@@ -45,7 +46,21 @@ function serve() {
   for (const f of files) {
     const name = path.basename(f).replace(/\.glb$/, "");
     try {
-      const st = await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, Object.assign({ size, exposure, emissiveBoost, zoom, envI, bg, rotY: /\.tripo/.test(name) && !norot ? -Math.PI / 2 : 0 }, views ? { views: views.split(",") } : {})]);
+      const st = await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, Object.assign({ size, exposure, emissiveBoost, zoom, envI, bg, rotY: /\.tripo/.test(name) && !norot ? -Math.PI / 2 : 0 }, anim ? { views: new Array(anim).fill(animView) } : views ? { views: views.split(",") } : {})]);
+      if (anim) {
+        // --anim N: one row per clip, N tiles sampled across it
+        for (let ci = 0; ci < (st.animations || []).length; ci++) {
+          const info = await page.evaluate(([i, fr, v]) => window.animRow(i, fr, v), [ci, anim, animView]);
+          await page.waitForTimeout(120);
+          const png = path.join(tmp, `${name}.${ci}.png`), row = path.join(tmp, `${name}.${ci}.row.png`);
+          await page.locator("#c").screenshot({ path: png });
+          execFileSync("convert", [png, "-background", "#101018", "-fill", "#e8e4ff", "-pointsize", "17", "-gravity", "NorthWest", "-splice", "0x26", "-annotate", "+8+4", `${name}   clip ${ci}: ${info.name}   ${info.duration} s   ${info.tracks} tracks   ${(st.tris / 1000).toFixed(0)}K tris`, row]);
+          rows.push(row);
+          console.log(name, "clip", ci, info.name, info.duration + " s");
+        }
+        all[name] = st;
+        continue;
+      }
       await page.waitForTimeout(150);
       const png = path.join(tmp, name + ".png");
       await page.locator("#c").screenshot({ path: png });

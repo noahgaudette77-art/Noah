@@ -1,0 +1,42 @@
+{
+ "name": "boss-9",
+ "about": "Boss Rush: Undue Influencer (a masked puppeteer with marionette crosses on strings). Tripo H3.1 from concept boss09-influencer-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss09-animA.glb",
+ "more": [
+  "post/boss09-animB.glb"
+ ],
+ "seg": "post/boss09-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 100000,
+ "tex": 2048,
+ "texBase": 4096,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    160,
+    215
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.45,
+   0.75
+  ]
+ }
+}

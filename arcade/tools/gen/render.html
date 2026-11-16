@@ -69,8 +69,25 @@ async function show(url, o = {}) {
     renderer.setViewport(i * size, 0, size, size); renderer.setScissor(i * size, 0, size, size);
     renderer.render(scene, cm);
   });
-  window.__scene = scene; window.__gltf = gltf;
+  window.__scene = scene; window.__gltf = gltf; window.__cam = { cam, c, dist, size, n: names.length };
   return stats;
 }
 window.show = show;
+// One row of a clip: `frames` tiles sampled evenly across clip `index`, all from the view `name` (after show()).
+window.animRow = (index, frames, name) => {
+  const gltf = window.__gltf, { cam, c, dist, size } = window.__cam, clip = gltf.animations[index];
+  const mixer = new THREE.AnimationMixer(gltf.scene), act = mixer.clipAction(clip);
+  act.play();
+  const [az, el] = VIEWS[name || "q"], a = THREE.MathUtils.degToRad(az), e = THREE.MathUtils.degToRad(el);
+  cam.position.set(c.x + dist * Math.sin(a) * Math.cos(e), c.y + dist * Math.sin(e), c.z + dist * Math.cos(a) * Math.cos(e));
+  cam.up.set(0, 1, 0); cam.lookAt(c);
+  for (let i = 0; i < frames; i++) {
+    mixer.setTime(clip.duration * (i / frames));
+    gltf.scene.updateMatrixWorld(true);
+    renderer.setViewport(i * size, 0, size, size); renderer.setScissor(i * size, 0, size, size);
+    renderer.render(window.__scene, cam);
+  }
+  mixer.stopAllAction(); mixer.uncacheRoot(gltf.scene);
+  return { name: clip.name, duration: +clip.duration.toFixed(2), tracks: clip.tracks.length };
+};
 </script></body></html>

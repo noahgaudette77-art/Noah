@@ -12,7 +12,7 @@ const ARCADE = path.join(__dirname, ".."), A = path.join(ARCADE, "assets");
 const SETS = {
   blaster: ["model:starfighter", "model:demon", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster"],
   racer: ["model:warrig", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer"],
-  boss: ["sky:boss-storm", "sfx:core", "sfx:combat", "sfx:voice", "music:boss"],
+  boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss"],
   hub: ["sky:hub-hall", "sfx:core", "sfx:hub", "sfx:voice", "music:hub"],
   title: ["sky:title-dusk", "sfx:core", "sfx:voice", "music:title"],
   memory: ["sky:vault-gold", "sfx:core", "sfx:voice", "music:calm"],

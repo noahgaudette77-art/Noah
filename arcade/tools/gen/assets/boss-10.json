@@ -1,0 +1,21 @@
+{
+  "name": "boss-10",
+  "about": "Boss Rush: Probate Tollgate (a toll booth on tank tracks with a barrier arm and a claw). Tripo H3.1 from concept boss10-tollgate-sd-0. It is not a biped, so it has no skeleton and no motion-capture clips: its parts (from Tripo segmentation) are nodes with pivots, animated by the game. L and R are its own left and right (it faces +Z, so its left is +X): the claw is its left arm, the barrier its right.",
+  "src": "cand/boss10/boss10-tollgate-sd-0.tripo.glb", "seg": "post/boss10-seg.glb",
+  "forward": "+x", "size": { "axis": "y", "value": 1 }, "origin": "ground", "tris": 100000, "tex": 2048, "texBase": 4096,
+  "groups": { "trackL": [1], "trackR": [2], "shoulderL": [4], "forearmL": [6], "shoulderR": [5], "forearmR": [3] },
+  "tree": { "forearmL": "shoulderL", "forearmR": "shoulderR" },
+  "pivots": { "shoulderL": ["min", 0.78, "c"], "shoulderR": ["max", 0.78, "c"], "forearmL": [0.3, 0.55, "c"], "forearmR": [-0.36, 0.55, -0.08], "trackL": ["c", "c", "c"], "trackR": ["c", "c", "c"] },
+  "keep": { "body": 1.1 },
+  "anchors": {
+    "eye": [-0.03, 0.83, 0.13], "top": [-0.03, 1.0, -0.1], "console": [-0.03, 0.5, 0.13],
+    "clawL": { "of": "forearmL", "at": ["c", "min", "max"], "ride": "forearmL" }, "barrierTip": { "of": "forearmR", "at": ["c", "min", "max"], "ride": "forearmR" },
+    "trackL": { "of": "trackL", "at": ["c", "min", "c"] }, "trackR": { "of": "trackR", "at": ["c", "min", "c"] }
+  },
+  "emissive": { "gain": 0 },
+  "paint": [
+    { "where": { "s": [0, 0.3] }, "val": 0.5 },
+    { "where": { "h": [8, 46], "s": [0.6, 1], "v": [0.55, 1] }, "glow": 1 }
+  ],
+  "surface": { "roughMin": 0.16 }
+}

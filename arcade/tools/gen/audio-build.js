@@ -35,6 +35,8 @@ const SETS = {
   // weapons and bosses: Risk Blaster and Boss Rush both load this
   combat: { laser_fire: 0.7, laser_heavy: 0.85, plasma_fire: 0.75, shell: 0.3, beam_fire: 0.8, missile_fire: 0.7, missile_hit: 0.8, volley_fire: 0.75, wave_fire: 0.85, slam: 1, boss_roar: 0.95, boss_hurt: 0.8, boss_stagger: 0.8, boss_break: 0.8, boss_death: 1, warp: 0.7 },
   racer: { crash: 1, crash_glass: 0.8, skid: 0.7, near_miss: 0.6, boost: 0.85, gate_pass: 0.6 },
+  // Boss Rush: each boss's own roar, and what a giant machine sounds like landing, moving and powering up
+  bosses: { roar_1: 0.95, roar_2: 0.95, roar_3: 0.95, roar_4: 0.95, roar_5: 0.95, roar_6: 0.95, roar_7: 0.95, roar_8: 0.95, roar_9: 0.95, roar_10: 0.95, roar_11: 0.95, roar_all: 1, boss_land: 1, boss_servo: 0.45, boss_power: 0.7 },
 };
 const LOOP_SET = { alarm: "core", charge_hum: "core", engine_ship: "combat", engine_car: "racer", boost_flame: "racer", hub_hum: "hub" };
 const LOOP_VOL = { alarm: 0.4, charge_hum: 0.4, engine_ship: 0.35, engine_car: 0.4, boost_flame: 0.6, hub_hum: 0.5 };
