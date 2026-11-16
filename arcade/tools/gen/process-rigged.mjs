@@ -164,18 +164,28 @@ function cut(tl, own) {
   }
   return lab;
 }
+// a cape (cfg.cape: [part ids]) hangs from the chest even where it lies over the arms: a sleeve follows its arm, a cape does not
+const capeOwner = trunkOwner.map((o) => (/_(Upperarm|Forearm|Hand)$/.test(jname[o]) && J("Spine02") >= 0 ? J("Spine02") : o)), capes = new Set((cfg.cape || []).map(Number));
 const WHOLE = cfg.whole === undefined ? 0.66 : cfg.whole, ROBE = cfg.robe === undefined ? 0.6 : cfg.robe, modes = {};
 for (let p = 0; p < nP; p++) {
   if (!partTris[p]) continue;
   const acc = partAcc[p], tot = acc.reduce((a, b) => a + b, 0) || 1, order = [...acc.keys()].sort((a, b) => acc[b] - acc[a]), top = acc[order[0]] / tot;
   let trunk = 0; for (const k of TRUNK) trunk += acc[k] / tot;
   const tall = (partBox[p].max[1] - partBox[p].min[1]) / wb.size[1], forced = (cfg.bones || {})[p];
-  let mode = (cfg.mode || {})[p] || (forced !== undefined || top >= WHOLE ? "whole" : trunk >= 0.25 ? (tall > ROBE ? "bands" : "trunk") : "limb"), bone = order[0];
+  // (a part that both sides of the body share, a pelvis plate on both thighs, a yoke on both arms, is the trunk's)
+  let left = 0, right = 0; for (let j = 0; j < acc.length; j++) { if (/^L_/.test(jname[j])) left += acc[j] / tot; else if (/^R_/.test(jname[j])) right += acc[j] / tot; }
+  let mode = (cfg.mode || {})[p] || (forced !== undefined || top >= WHOLE ? "whole" : tall > ROBE ? "bands" : trunk >= 0.25 || Math.min(left, right) >= 0.2 ? "trunk" : "limb"), bone = order[0];
   if (forced !== undefined) { bone = J(forced); if (bone < 0) { console.error("no such bone: " + forced); process.exit(1); } }
-  else if (mode === "trunk") { const ta = new Float64Array(joints.length); for (let j = 0; j < acc.length; j++) ta[trunkOwner[j]] += acc[j]; bone = -1; for (const k of TRUNK) if (bone < 0 || ta[k] > ta[bone]) bone = k; }
+  else if (mode === "trunk") {
+    // the highest trunk bone with a real share of it: what must not come apart is where the arms and the head meet the chest
+    const ta = new Float64Array(joints.length); for (let j = 0; j < acc.length; j++) ta[trunkOwner[j]] += acc[j] / tot;
+    const sh = (n) => (J(n) < 0 ? 0 : ta[J(n)]);
+    bone = J(sh("Head") >= 0.5 ? "Head" : sh("Spine02") >= 0.15 ? "Spine02" : sh("Spine01") >= 0.15 ? "Spine01" : "Hip");
+    if (bone < 0) bone = order[0];
+  }
   let how = jname[bone];
   if (mode === "whole" || mode === "trunk") for (const t of partList[p]) triBone[t] = bone;
-  else { const lab = cut(partList[p], mode === "bands" ? trunkOwner : owner), n = new Map(); partList[p].forEach((t, i) => { triBone[t] = lab[i]; n.set(lab[i], (n.get(lab[i]) || 0) + 1); }); how = [...n].sort((a, b) => b[1] - a[1]).map(([l, c]) => jname[l] + " " + Math.round(100 * c / lab.length) + "%").join(", "); }
+  else { const lab = cut(partList[p], mode === "bands" ? (capes.has(p) ? capeOwner : trunkOwner) : owner), n = new Map(); partList[p].forEach((t, i) => { triBone[t] = lab[i]; n.set(lab[i], (n.get(lab[i]) || 0) + 1); }); how = [...n].sort((a, b) => b[1] - a[1]).map(([l, c]) => jname[l] + " " + Math.round(100 * c / lab.length) + "%").join(", "); }
   modes[p] = mode;
   if (REPORT || cfg.verbose) console.log(`  part ${String(p).padStart(2)}  ${String(partTris[p]).padStart(6)} tris  y[${partBox[p].min[1].toFixed(2)},${partBox[p].max[1].toFixed(2)}] x[${partBox[p].min[0].toFixed(2)},${partBox[p].max[0].toFixed(2)}] z[${partBox[p].min[2].toFixed(2)},${partBox[p].max[2].toFixed(2)}]  ${mode.padEnd(5)} -> ${how}   (owners: ${order.slice(0, 3).map((j) => jname[j] + " " + (100 * acc[j] / tot).toFixed(0) + "%").join(", ")}; trunk ${(100 * trunk).toFixed(0)}%)`);
 }

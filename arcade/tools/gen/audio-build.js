@@ -74,16 +74,20 @@ for (const set of allSets) {
   const put = (cue, a, vol, duck, pre = 0) => { parts.push(a); (cues[cue] = cues[cue] || []).push([+((at + pre) / SR).toFixed(4), +((a.length - pre * 2) / SR).toFixed(4), vol, duck || 0]); at += a.length + GAP; };
   for (const [cue, vol] of Object.entries(SETS[set] || {})) {
     const takes = Object.values(idx).filter((e) => e.kind === "sfx" && e.name === cue).sort((a, b) => a.take - b.take);
-    let kept = 0;
+    const good = [];
     for (const t of takes) {
-      if (kept >= MAX_TAKES) break;
+      if (good.length >= MAX_TAKES) break;
       let a;
       try { a = pcm(path.join(OUT, t.file), TRIM); } catch (e) { continue; }
       if (a.length < 0.1 * SR || peak(a) < 0.05) continue; // a take that came back silent or cut short
-      put(cue, level(fade(a)), vol, DUCK[cue]);
-      kept++;
+      good.push(level(fade(a)));
     }
-    if (!kept) console.warn("no usable take of " + cue);
+    // the takes of one sound are heard in turn: each is played at the volume that makes it as loud as the middle one
+    // (its loudest tenth of a second), so no take jumps out or drops away
+    const loud = good.map((a) => { const w = Math.round(0.1 * SR); let best = 0; for (let i = 0; i + w <= a.length; i += w >> 2) { let q = 0; for (let j = i; j < i + w; j++) q += a[j] * a[j]; best = Math.max(best, q / w); } return Math.sqrt(best) || 1e-4; });
+    const mid = [...loud].sort((x, y) => x - y)[loud.length >> 1];
+    good.forEach((a, i) => put(cue, a, +(vol * Math.min(1.6, Math.max(0.5, mid / loud[i]))).toFixed(3), DUCK[cue]));
+    if (!good.length) console.warn("no usable take of " + cue);
   }
   for (const [cue, s] of Object.entries(LOOP_SET)) {
     if (s !== set) continue;
