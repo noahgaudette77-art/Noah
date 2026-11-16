@@ -1,8 +1,8 @@
 // Risk Blaster's combat, for review: stills of the idle scene in each of the three skies, and a strip of frames for
-// each moment (the ship's entrance, the demon's entrance, firing, a right hit, a wrong hit, each of the demon's five
-// strikes with its telegraph, taking damage, the low-health state, armour breakage, the demon's death), plus
-// full-screen stills of a question and of an explanation sheet, and one clean still of the scene. Saved as JPGs in
-// the --out folder.
+// each moment (the ship's entrance, the demon's entrance, firing, a right hit and its hit-stop, a wrong hit, each of
+// the demon's five strikes from its telegraph to its landing, taking damage with the HUD, the low-health state, the
+// tail shot away, the demon done for and its death, the fighter's own death), plus full-screen stills of a question
+// and of an explanation sheet, and one clean still of the scene. Saved as JPGs in the --out folder.
 //
 //   node arcade/tools/capture.js arcade/tools/scenarios/blaster-combat.js --out arcade/docs/combat-pass/blaster --dpr 2
 //
@@ -20,7 +20,7 @@ module.exports = async (cap) => {
     o = Object.assign({ band: true, cols: 6, thumb: 300 }, o, process.env.THUMB ? { thumb: +process.env.THUMB } : {});
     const made = await cap.seq(name, n, every, Object.assign({}, o, { keep: true })), out = path.join(cap.out, name + ".jpg");
     const files = Array.from({ length: n }, (_, i) => path.join(cap.out, `${name}-${String(i).padStart(2, "0")}.png`));
-    for (let q = 88; q >= 52; q -= 6) {
+    for (let q = 88; q >= 46; q -= 6) {
       execFileSync("montage", [...files, "-tile", o.cols + "x", "-geometry", `${o.thumb}x+3+3`, "-background", "#101018", "-quality", String(q), out]);
       if (fs.statSync(out).size <= 440 * 1024) break;
     }
@@ -31,8 +31,20 @@ module.exports = async (cap) => {
   const page = (fn, arg) => cap.eval(fn, arg);
   // a question up, the demon at the distance it has when `left` of the clock remains, `wait` frames of idling behind it
   const ready = async (wait = 40, left = 0.62) => { await cap.next(); await cap.ask(1500); await cap.fast(wait); await page((k) => { const s = window.__arcade.Scenes.cur; s.tLeft = s.T * k; }, left); await cap.fast(24); };
-  const heal = () => page(() => { const s = window.__arcade.Scenes.cur; s.shields = 3; s.hud(); if (s.stage) s.stage.setLow(false); });
+  const heal = () => page(() => { const s = window.__arcade.Scenes.cur; s.shields = 3; s.hud(); if (s.stage) s.stage.setLow(0); });
   const region = async (i) => { await page((k) => { const s = window.__arcade.Scenes.cur; s.space.setRegion(k, 0.05); }, i); await cap.fast(36); };
+  // the whole screen down to the foot of the band (the HUD, the question, the picture)
+  const upper = async () => { const b = await cap.band(0); return { x: 0, y: 0, width: b.width, height: b.y + b.height }; };
+  // (The stars and coins that fly to the score, and the HUD's own cracks, are page animations, which run on the real
+  // clock: a capture steps a virtual one. For the capture they are stepped with the frames instead.)
+  const stepAnimations = () => page(() => {
+    if (window.__stepped) return;
+    window.__stepped = true;
+    const animate = Element.prototype.animate, live = [];
+    Element.prototype.animate = function (frames, o) { const a = animate.call(this, frames, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
+    const step = () => { const now = performance.now(); for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } } requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
 
   await cap.go("blaster", process.env.STAGE || "3");
   // ---- the ship's entrance (the question is not up yet: the whole screen is the picture)
@@ -65,18 +77,43 @@ module.exports = async (cap) => {
     await cap.fast(20);
     await still("19-explanation-full", { q: 86 });
     await ready();
+    // the hit-stop: every frame from one before the blow lands (the demon holds still for three while the burst runs)
+    await cap.answer("R");
+    await cap.fast(10);
+    await strip("07b-hit-stop", 12, 1);
+    await cap.fast(40);
+    await ready();
   }
-  // ---- a wrong hit: the shot dies on the drone; then each of the demon's strikes, from its telegraph to its landing
+  // ---- a wrong hit: each pair of bolts dies on the drone in a dull red fizzle, and the drone locks out
+  if (has("wrong")) {
+    await heal();
+    await page(() => { window.__arcade.Scenes.cur.enemy.atkN = 0; });
+    await cap.answer("W");
+    await strip("08-wrong-hit", 12, 2);
+    await cap.fast(60);
+    await ready();
+  }
+  // ---- each of the demon's strikes, from its telegraph to its landing (all of it before the sheet comes up)
   const NAMES = ["volley", "swipe", "wave", "beam", "missiles"];
   for (let k = 0; k < 5; k++) {
-    if (!has("attacks") && !has(NAMES[k]) && !(k === 0 && (has("wrong") || has("damage")))) continue;
+    if (!has("attacks") && !has(NAMES[k])) continue;
     await heal();
     await page((n) => { window.__arcade.Scenes.cur.enemy.atkN = n; }, k);
     await cap.answer("W");
-    if (k === 0 && (has("wrong") || want === "all")) await strip("08-wrong-hit", 12, 2); else await cap.fast(8);
-    await strip(String(9 + k).padStart(2, "0") + "-attack-" + NAMES[k], 24, 3, { cols: 8, thumb: 240 });
-    if (k === 0 && (has("damage") || want === "all")) { await heal(); await page(() => { const s = window.__arcade.Scenes.cur; s.enemy.atkN = 1; s.stage.owe(); s.enemy.att = null; s.enemy.attack(); }); await cap.fast(34); await strip("14-taking-damage", 12, 2); }
-    await cap.fast(30);
+    await cap.fast(2);
+    await strip(String(9 + k).padStart(2, "0") + "-attack-" + NAMES[k], 24, 2, { cols: 8, thumb: 240 });
+    await cap.fast(40);
+    await ready();
+  }
+  // ---- taking damage: the claws land; the shield goes, the HUD cracks and the lost shield breaks (the screen down to the band's foot)
+  if (has("damage")) {
+    await heal();
+    await stepAnimations();
+    await page(() => { window.__arcade.Scenes.cur.enemy.atkN = 1; });
+    await cap.answer("W");
+    await cap.fast(20);
+    await strip("14-taking-damage", 12, 2, { band: false, clip: await upper(), cols: 6, thumb: 300 });
+    await cap.fast(40);
     await ready();
   }
   // ---- one shield left
@@ -89,7 +126,7 @@ module.exports = async (cap) => {
     await heal();
     await ready();
   }
-  // ---- breakage: the wave's fourth hit shoots its tail away; by the eighth a wing has gone
+  // ---- breakage: the wave's fourth hit shoots its tail away (from the frame before the blow); by the eighth a wing has gone
   if (has("break")) {
     await heal();
     await page(() => { const s = window.__arcade.Scenes.cur; s.inWave = 0; });
@@ -104,25 +141,26 @@ module.exports = async (cap) => {
   // ---- the demon's death, and the next one's entrance
   if (has("death")) {
     await heal();
+    await stepAnimations();
     await page(() => { const s = window.__arcade.Scenes.cur; s.inWave = 9; });
     await cap.answer("R");
     await cap.until(() => !!window.__arcade.Scenes.cur.quiz.sheet, 200);
-    await cap.fast(50);
-    await still("17a-demon-critical", { band: true }); // (the wave's last blow has landed: it hangs there, breaking up, until the wave is closed)
-    // (The stars and coins that fly to the score are page animations, which run on the real clock: a capture steps a
-    // virtual one, and would show them already landed. For the capture they are stepped with the frames instead.)
-    await page(() => {
-      const animate = Element.prototype.animate, live = [];
-      Element.prototype.animate = function (frames, o) { const a = animate.call(this, frames, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
-      const step = () => { const now = performance.now(); for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } } requestAnimationFrame(step); };
-      requestAnimationFrame(step);
-    });
+    await strip("17a-demon-critical", 12, 10); // (the wave's last blow has landed, its explanation is up: it comes apart a piece at a time)
     await cap.next();
-    // (from the top of the screen to the foot of the band: the stars and coins fly from the last blast up to the score)
-    const b = await cap.band(0);
-    await strip("17-demon-death", 24, 5, { band: false, clip: { x: 0, y: 0, width: b.width, height: b.y + b.height }, cols: 12, thumb: 155 });
+    // (from the top of the screen to the foot of the band: the stars and coins go round the question to the score)
+    await strip("17-demon-death", 24, 4, { band: false, clip: await upper(), cols: 12, thumb: 155 });
     await cap.ask(1500);
     await cap.until(() => { const e = window.__arcade.Scenes.cur.enemy; return e.alive && e.inT > 0.02; }, 600);
     await strip("05-demon-entrance", 18, 7, { cols: 6 });
+  }
+  // ---- the run ends: the last shield goes, and the fighter with it
+  if (has("over")) {
+    await ready(60);
+    await page(() => { const s = window.__arcade.Scenes.cur; s.shields = 1; s.hud(); s.stage.setLow(1); s.enemy.atkN = 2; });
+    await cap.answer("W");
+    await cap.until(() => !!window.__arcade.Scenes.cur.quiz.sheet, 200);
+    await cap.fast(60);
+    await cap.next();
+    await strip("21-game-over", 12, 5);
   }
 };

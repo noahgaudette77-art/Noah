@@ -25,7 +25,7 @@ const SPACE_REGIONS = [
     sun: [10, 9.5], sunCol: 0xffffff, sunK: 0.8, planet: [-11.5, -8, 1800, 72], clouds: 0.2, cloudA: 0x3a4ad8, cloudB: 0xff7ad0, rocks: 0.05, rockTint: 0x7a80a0,
     station: 1, streak: 0xcfe0ff, traffic: { freighter: 3, tanker: 2, cruiser: 1, fighter: 3, drone: 3, shuttle: 5 } },
   { id: "graveyard", name: "SHIP GRAVEYARD", base: 0x020a0a, a: 0x0a5a50, b: 0x3adf9a, c: 0xc8ff6a, gold: 0xffd27a, neb: 0.75, stars: 0.8, fog: 0x04120e, amb: 0x4a9080, key: 0xd0ffe6,
-    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x86ff5e, rocks: 0.45, rockTint: 0x5a6a70,
+    sun: [8.5, 10], sunCol: 0xff7a4a, sunK: 0.6, planet: [-11.6, 3.2, 1900, 60], clouds: 0.6, cloudA: 0x0f7a60, cloudB: 0x4dffa6, rocks: 0.45, rockTint: 0x5a6a70,
     wrecks: 1, streak: 0xb8ffd8, traffic: { freighter: 0, tanker: 0, cruiser: 0, fighter: 2, drone: 4, shuttle: 1 } },
   { id: "gate", name: "WORMHOLE GATE", base: 0x0a0318, a: 0x8a3aff, b: 0xffe14f, c: 0xff3ad4, gold: 0xffffff, neb: 1.05, stars: 1.1, fog: 0x10052a, amb: 0x8a62d8, key: 0xf2e4ff,
     sun: [10.5, 8], sunCol: 0xffe0f8, sunK: 0.7, planet: [-11, -7.5, 1700, 64], clouds: 0.7, cloudA: 0xa65fff, cloudB: 0xffe14f, rocks: 0.08, rockTint: 0x8a70b0,
@@ -103,7 +103,7 @@ function spaceGalaxyTexture() {
 function spaceHullMaterial(shared, o = {}) {
   return new THREE.ShaderMaterial({
     defines: o.swim ? { SPACE_SWIM: 1 } : {},
-    uniforms: Object.assign(fogUniforms(), shared, { uTime: { value: 0 }, uFogK: { value: o.fog === undefined ? 0.85 : o.fog }, uDim: { value: 1 }, uTint: { value: new THREE.Color(1, 1, 1) } }),
+    uniforms: Object.assign(fogUniforms(), shared, { uTime: { value: 0 }, uFogK: { value: o.fog === undefined ? 0.85 : o.fog }, uDim: { value: 1 }, uTint: { value: new THREE.Color(1, 1, 1) }, uLampTint: { value: new THREE.Color(1, 1, 1) } }),
     vertexShader: `attribute vec3 aCol; attribute float aGlow; attribute float aPanel;
       #ifdef USE_INSTANCING
       attribute float aSeed;
@@ -126,7 +126,7 @@ function spaceHullMaterial(shared, o = {}) {
         vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uAmb; uniform vec3 uRimCol; uniform vec3 uFlashPos; uniform vec3 uFlashCol; uniform vec3 uTint; uniform float uTime; uniform float uFogK; uniform float uDim;
+      uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uAmb; uniform vec3 uRimCol; uniform vec3 uFlashPos; uniform vec3 uFlashCol; uniform vec3 uTint; uniform float uTime; uniform float uFogK; uniform float uDim; uniform vec3 uLampTint;
       varying vec3 vC; varying vec3 vN; varying vec3 vNo; varying vec3 vL; varying vec3 vW; varying float vGlow; varying float vDepth; varying float vSeed; varying float vPanel;
       float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       void main(){
@@ -149,6 +149,7 @@ function spaceHullMaterial(shared, o = {}) {
             float win = step(0.4, r) * step(0.18, wf.x) * step(wf.x, 0.82) * step(0.28, wf.y) * step(wf.y, 0.74);
             col = mix(col, mix(vec3(1.7, 1.2, 0.62), vec3(0.5, 1.3, 1.8), step(0.84, r)) * (0.7 + 0.6 * r), win);
           } else col = vC * 1.8;
+          col *= uLampTint;
         }
         gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * uFogK) * uDim, 1.0);
       }`,
@@ -449,6 +450,11 @@ class BlasterSpace {
       // nebula instead of fading into it. (Its own light, apart from the hulls'.)
       const ru = this.rockMat.uniforms;
       ru.uAmb = { value: new THREE.Color() }; ru.uSunCol = { value: new THREE.Color() }; ru.uRimCol = { value: new THREE.Color() };
+      // The traffic, the station and the wrecks are background: dark gunmetal hulls held by an edge of light, their
+      // lamps cool, dimmed and hazed with distance. They are shapes behind the fight, never objects beside it.
+      const hu = this.hull.uniforms;
+      hu.uAmb = { value: new THREE.Color() }; hu.uSunCol = { value: new THREE.Color() }; hu.uRimCol = { value: new THREE.Color() };
+      hu.uTint.value.setRGB(0.16, 0.18, 0.26); hu.uDim.value = 0.7; hu.uFogK.value = 0.95; hu.uLampTint.value.setRGB(0.45, 1.0, 1.25);
       this.haloU.uDim.value = 0.72; // (and the sky behind the fight is taken down a little further, over a wider patch: see update)
     }
   }
@@ -652,6 +658,10 @@ class BlasterSpace {
     S.uRimCol.value.copy(c.b).lerp(c.c, 0.4).multiplyScalar(1.1);
     this.rockMat.uniforms.uTint.value.copy(c.rockTint).lerp(this._rockInk || (this._rockInk = new THREE.Color(0x2c2470)), 0.5).multiplyScalar(0.8);
     if (this.pano) {
+      const hu = this.hull.uniforms;
+      hu.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
+      hu.uSunCol.value.copy(S.uSunCol.value).multiplyScalar(0.35);
+      hu.uRimCol.value.copy(this.pano.rimB.color).lerp(this.pano.rimA.color, 0.35).multiplyScalar(1.3);
       const ru = this.rockMat.uniforms, P = this.pano;
       ru.uTint.value.multiplyScalar(0.55);
       ru.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
@@ -671,7 +681,7 @@ class BlasterSpace {
     this.starU.uTravel.value = this.travel;
     this.starU.uTime.value = t;
     this.starU.uStarK.value = c.stars * (1 + w * 0.8);
-    this.starU.uPx.value = GFX.ok ? GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y / 800 : 1;
+    this.starU.uPx.value = GFX.ok ? (GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y * GFX.ss) / 800 : 1; // (in the scene's own pixels)
     this.galaxies.forEach((sp) => { sp.material.opacity = 0.5 * c.stars; });
     // the giant: where this region has it in the sky; it turns slowly, its moon goes round
     const pl = this.planet, P = c.planet;
