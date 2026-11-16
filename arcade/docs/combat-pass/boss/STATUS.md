@@ -29,27 +29,20 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
-| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress: bosses 1 to 5 captured and committed; 7, 8, 9, 10 and all running, then the cue log. Bosses 6 and 11 are being remade by the lead (see below): their captures wait for the new models. The captures run one boss at a time (at dpr 2 two or three side by side overload the machine and Playwright's screenshots time out). Full regression both ways and the sequence test passed at commit 12eff36 (to be run again after the remakes) |
-
-## Remakes under way (the lead)
-
-INFLATION TITAN (6: a valve handwheel on a pipe for a head) and PATRIMONY PHANTOM (11: a deep hood modelled over the
-whole head, two eye slits, half bone-white, half dark steel) are being remade, same rig, clips and file names. When
-they land on `claude/quirky-ride-9frte0`: merge, look at both (idle and fight at dpr 1), drop the Titan's `dress`
-(the new head is the valve) and the Phantom's `shade`, fix what is broken, capture their three files at dpr 2,
-update the README and the lookalikes below, run the cue log, the full regression both ways and the sequence test.
+| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress: bosses 1 to 5 and 7 captured and committed; 8, 9, 10 and all running (each tried again until its three files are made), then 6 and 11 (remade, merged at bfbabca, looked at, rows retuned), then the cue log, the full regression both ways and the sequence test. The captures run one boss at a time: at dpr 2 two or three side by side, or the lead's model renders on the same machine, overload it and Playwright's screenshots time out |
 
 ## Lookalikes, for the lead
 
 - PROBATE TOLLGATE (10): its one round lamp read as an eye: now a lane signal (housing, a lens of small lamps,
   amber turning red as it charges, hood, guard bars). Resolved in code.
-- INFLATION TITAN (6): the domed head with two round amber lights read as a diving helmet with portholes: the lights
-  are out, a bronze valve wheel stands on the dome, the light comes from the gauge and the pipes. A thin bright ring
-  round its neck (the body's own material) still reads as a collar under the dome. A head remake (valve bonnet or
-  smokestack) would settle it.
-- PATRIMONY PHANTOM (11): the strongest one left. Its bare chrome skull with glowing eyes over a metal ribcage can
-  be read as a famous film robot's endoskeleton. The skull is shaded dark and its eyes are violet, but the shape
-  is unchanged. Recommended: remake it with the hood modelled up over the skull (its brief says "hooded cloak").
+- INFLATION TITAN (6): resolved by the lead's remake (merged at bfbabca). The old domed head with two round amber
+  lights read as a diving helmet with portholes; the new Titan is a headless boiler with a brass valve handwheel on
+  a short pipe for a head. Looked at (idle, fight): no lookalike. Its row keeps only the smokestacks' dress (hot
+  mouths, steam, a jet as its wave goes); the old head's darkening and the handwheel made in code are gone.
+- PATRIMONY PHANTOM (11): resolved by the lead's remake (merged at bfbabca). The old bare chrome skull with glowing
+  eyes could be read as a famous film robot's endoskeleton; the new Phantom wears a deep hood over the whole head,
+  two violet eye slits in its shadow, half bone-white and half dark steel. Looked at (idle, fight): no lookalike;
+  the skull's shading made in code is gone.
 - SOLVENCY SPECTER (3) and LONGEVITY LICH (7): mild. A hooded chrome mask, a crowned undead king: common types,
   kept their own by the brow eye and vault, and the hourglass heart.
 - The others (1, 2, 4, 5, 8, 9, all): no resemblance found.
@@ -81,8 +74,9 @@ update the README and the lookalikes below, run the cue log, the full regression
   model; the Tollgate's with its barrier raised), and the lens stands back and looks high enough to hold that (a
   slam's band a little higher: its fists come up toward the lens). Checked on all twelve with a measuring scenario
   (the top of each boss 1 to 35 px inside the band at the height of its wind-up).
-- Boss 6 (TITAN): a boiler with its gauge in the red and brass pipes; its wave reads. Lookalike fixed as far as
-  can be without a new model: its small domed head carried two round amber lights over a lit grille, on a hulking
+- Boss 6 (TITAN), remade since (see Lookalikes: the head dressing below was for the old model and is gone; the
+  stacks' glow and steam stay). The old model: a boiler with its gauge in the red and brass pipes; its wave reads.
+  Lookalike fixed as far as could be without a new model: its small domed head carried two round amber lights over a lit grille, on a hulking
   body: a diving helmet with porthole lights. Its dress (22d, `BOSS_DRESS.boiler`, the row's `dress`): the head's
   lights go out (they are painted into its colour as well as lit: the head's material is darkened and its own light
   burns at 3%), a bronze handwheel (a ring with a cross) stands on the dome facing the lens, so it reads as a valve
@@ -114,7 +108,9 @@ update the README and the lookalikes below, run the cue log, the full regression
   two fists, not for one weapon). The actor now finds once, in its own clip at the blow, the lowest point of what
   its right hand holds and the point between its two fists (`slamPt`); the floor marker and the landing stand
   there (the row's `slam: "weapon"` for a one-handed weapon; else between the fists: the Golem, the Perilmonger).
-- Boss 11 (PHANTOM): half bone, half steel in a cloak, a cleaver in its right hand; its wind-up holds it. Fixed: in
+- Boss 11 (PHANTOM), remade since (see Lookalikes: the skull shading below was for the old model and is gone; the
+  beam with the thrust and the bubble fix stay). The old model: half bone, half steel in a cloak, a cleaver in its
+  right hand; its wind-up holds it. Fixed: in
   the overhead smash it bent over until its hood and cloak faced the lens and hid it through the whole beam: its
   beam is wound up and fired with the thrust (`clip: { 3: "attackB" }`), the cleaver pointed at the lens. Fixed (for
   every boss): its words still covered its face when the band had moved since they began; the lens now asks room

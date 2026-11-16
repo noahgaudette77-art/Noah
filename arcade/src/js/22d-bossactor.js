@@ -55,35 +55,19 @@ function bossPin(part, grp, at) {
   grp.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
   return grp;
 }
-// A boss dressed for what it is (its row's `dress`), where its model alone could be read as something it is not. Each
-// takes the actor (standing in its idle, unscaled) and returns { update(d, o), vent(), dispose() }.
+// What a boss's model is dressed with for what it is (its row's `dress`). Each takes the actor (standing in its idle,
+// unscaled) and returns { update(d, o), vent(), dispose() }.
 const BOSS_DRESS = {
-  // INFLATION TITAN, a boiler. Its small domed head is a valve cap, not a helmet: the head's lights go out (they are
-  // painted on as well as lit) and a bronze handwheel stands on it. Its light comes from its gauge and from its two
-  // pipes, hot at their mouths, which let off steam (more as it charges; a jet from each as its blast goes).
-  boiler(a) {
-    const P = a.P, made = [], geos = [], v = new THREE.Vector3(), quiet = () => REDUCED_MOTION || GFX.calm;
-    const brass = new THREE.MeshStandardMaterial({ color: 0x8a6634, metalness: 1, roughness: 0.42, envMapIntensity: 1.4 }); // (dark bronze: shining, it read as a halo)
-    made.push(brass);
-    const mesh = (geo, mat) => { geos.push(geo); return new THREE.Mesh(geo, mat); }, pin = bossPin;
-    const head = P.part_Head;
-    if (head) {
-      // (its lights are painted on as well as lit: the cap is darkened, and its own light burns low)
-      head.traverse((o) => { if (o.isMesh && o.material && o.material.emissiveMap) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.3); o.material.userData.glowK = 0.03; a.mats.push(o.material); made.push(o.material); } });
-      bossPeak(head, v);
-      const w = new THREE.Group(), R = 0.036;
-      w.add(mesh(new THREE.TorusGeometry(R, 0.0068, 8, 30).rotateX(Math.PI / 2), brass)); // (the rim, level)
-      for (let i = 0; i < 2; i++) { const sp = mesh(new THREE.BoxGeometry(R * 2, 0.0075, 0.0075), brass); sp.rotation.y = (i * Math.PI) / 2; w.add(sp); } // four spokes: a cross in a ring
-      w.add(mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.012, 14), brass)); // the hub
-      const stem = mesh(new THREE.CylinderGeometry(0.006, 0.007, 0.022, 10), brass); stem.position.y = -0.012; w.add(stem);
-      pin(head, w, v.add(new THREE.Vector3(0, 0.022, 0))).rotateX(1.0); // (turned toward the lens: the cross of its spokes is seen against the sky)
-    }
-    // the mouths of its pipes (the tops of the parts on its collarbones): hot inside
+  // INFLATION TITAN, a boiler: its light comes from its gauge (the model's own) and from its two smokestacks, hot at
+  // their mouths, which let off steam (more as it charges; a jet from each as its blast goes)
+  stacks(a) {
+    const P = a.P, made = [], v = new THREE.Vector3(), quiet = () => REDUCED_MOTION || GFX.calm, pin = bossPin;
+    // the mouths of its stacks (the tops of the parts on its collarbones): hot inside
     const pipes = [];
     for (const sd of ["L", "R"]) {
       const c = P["part_" + sd + "_Clavicle"];
       if (!c) continue;
-      bossPeak(c, v, 0.04); // (the middle of its mouth: the pipe leans back, and its highest point is the far edge of its rim)
+      bossPeak(c, v, 0.04); // (the middle of its mouth: a stack that leans back has its highest point at the far edge of its rim)
       const at = pin(c, new THREE.Group(), v), glow = glowSprite(0xffffff, 0.06, 0);
       glow.position.y = 0.01; // (the hot breath at its mouth: inside, the pipe's own walls would hide it from the lens below)
       at.add(glow); made.push(glow.material);
@@ -106,17 +90,8 @@ const BOSS_DRESS = {
         }
       },
       vent() { if (a.g.kit && !a.dead) for (const pp of pipes) for (let i = 0; i < (quiet() ? 2 : 5); i++) puff(pp, rand(0.6, 1)); },
-      dispose() { made.forEach((m) => m.dispose()); geos.forEach((g) => g.dispose()); },
+      dispose() { made.forEach((m) => m.dispose()); },
     };
-  },
-  // PATRIMONY PHANTOM: half bone, half steel. Its bare polished chrome skull with glowing eyes over a metal ribcage could
-  // be read as a famous film robot's endoskeleton: the skull is shaded dark (a reaper's skull in shadow, not polished
-  // chrome) and its eyes burn in its own violet. (A hood made here could not be fitted: its head is turned in its
-  // stance, and the model's own hood hangs down its back. A remake with the hood over the skull is the real fix.)
-  shade(a) {
-    const head = a.P.part_Head, made = [];
-    if (head) head.traverse((o) => { if (o.isMesh && o.material && o.material.emissiveMap) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.4); o.material.envMapIntensity *= 0.45; a.mats.push(o.material); made.push(o.material); } });
-    return { update() {}, vent() {}, dispose() { made.forEach((m) => m.dispose()); } };
   },
 };
 class BossActor {
@@ -322,7 +297,7 @@ class BossActor {
     this.body.rotation.set(-this.kick * 0.12 + this.lean * 0.06, this.yaw, 0);
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
-    for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl * (m.userData.glowK === undefined ? 1 : m.userData.glowK); // (glowK: a part whose own lights burn lower: its dress)
+    for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
     if (this.dress) this.dress.update(d, o);
     // ---- what has been torn off: thrown, falling, turning, coming to rest on the floor, and gone
     for (let i = this.scraps.length - 1; i >= 0; i--) {

@@ -50,10 +50,10 @@ the work stands, and what was looked at and fixed boss by boss, is in `STATUS.md
 | `03-specter` | SOLVENCY SPECTER | void | a wave of energy out of the vault in its chest (`attackB`) |
 | `04-fineprint` | THE FINE PRINT | violet storm | a beam swept across the foot of the picture, drawn from its quill (thrust: `attackB`) |
 | `05-golem` | GROUP GOLEM | teal industrial storm | a ground slam with both fists (`attackA`) |
-| `06-titan` | INFLATION TITAN | teal industrial storm | a wave from its gauge, its pipes venting steam (`attackB`) |
+| `06-titan` | INFLATION TITAN (remade: a headless boiler, a valve handwheel for a head) | teal industrial storm | a wave from its gauge, its smokestacks venting steam (`attackB`) |
 | `07-lich` | LONGEVITY LICH | void | seekers that swing out and come in on the player (`attackB`) |
 | `08-intestate` | LORD INTESTATE | void | a ground slam with its gavel (`attackA`) |
 | `09-influencer` | UNDUE INFLUENCER | violet storm | seekers on strings of light (`attackB`) |
 | `10-tollgate` | PROBATE TOLLGATE | teal industrial storm | a volley of tickets from the booth, its signal turning red (it slams its barrier on alternate questions) |
-| `11-phantom` | PATRIMONY PHANTOM | void | a beam swept from its cleaver (thrust: `attackB`) |
+| `11-phantom` | PATRIMONY PHANTOM (remade: a deep hood over the whole head) | void | a beam swept from its cleaver (thrust: `attackB`) |
 | `12-proctor` | THE PROCTOR | void | a volley of exam cards from its pencil (it uses all five kinds in turn) |
