@@ -380,6 +380,7 @@ class BossStage {
       const to = this.lens(0, -0.15, 1.2), bw = 2.4 * Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * (GFX.w / GFX.h);
       Sound.sfx("wave_fire", 0, { vol: 1 });
       for (let j = 0; j < 3; j++) kit.wave(src, to, this.hex, { dur: BOSS_ATK.FLY[2] + 0.1, s0: 0.7 * k, s1: bw * (1.5 - j * 0.22), delay: j * 0.045, w: 0.075 });
+      if (a.vent) a.vent(); // (and what its dress lets off: the Titan's pipes)
       kit.sparks(src, this.hex, { n: quiet ? 6 : 18, speed: 16 * k, dir: this._w.subVectors(to, src).normalize(), spread: 0.45, life: 0.3, len: 0.9 * k, w: 0.06 * k });
       g.shake(0.1);
     } else if (s.kind === 3) { // the beam: a white core in a wide halo, swept across the foot of the picture

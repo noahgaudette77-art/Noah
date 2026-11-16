@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2 done; next: 6 (TITAN) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6 done; next: 3 (SPECTER) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -58,6 +58,16 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   model; the Tollgate's with its barrier raised), and the lens stands back and looks high enough to hold that (a
   slam's band a little higher: its fists come up toward the lens). Checked on all twelve with a measuring scenario
   (the top of each boss 1 to 35 px inside the band at the height of its wind-up).
+- Boss 6 (TITAN): a boiler with its gauge in the red and brass pipes; its wave reads. Lookalike fixed as far as
+  can be without a new model: its small domed head carried two round amber lights over a lit grille, on a hulking
+  body: a diving helmet with porthole lights. Its dress (22d, `BOSS_DRESS.boiler`, the row's `dress`): the head's
+  lights go out (they are painted into its colour as well as lit: the head's material is darkened and its own light
+  burns at 3%), a bronze handwheel (a ring with a cross) stands on the dome facing the lens, so it reads as a valve
+  cap; its light comes from the gauge (the brightest thing on it) and from its two pipes, hot at their mouths, which
+  let off steam (more as it charges, a jet from each as its wave goes: the stage asks the actor to `vent`).
+  For the lead: a thin bright ring round its neck (part of the body's own material, which cannot be dimmed alone)
+  still reads as a collar under the dome. If the dome on a collar still reads as a diving helmet, a remake of the
+  head (a valve bonnet, or a smokestack) is the fix.
 
 ## Tests at the last commit
 

@@ -28,18 +28,86 @@ const BOSS_CLIP = {
   enter: { from: 1.82, land: 2.27, end: 3.5 }, // a jump down: in the air until 2.27, a deep landing, risen by 3.5
   death: { fall: 1.25, down: 1.78, end: 3.0 }, // staggers, goes over backward from 1.25, flat on its back at 1.78
 };
-// The highest point of a model as it stands posed now, from its own surface (a box round turned parts would say more).
-function bossTop(scene) {
-  let m = -1e9;
-  scene.updateMatrixWorld(true);
-  scene.traverse((o) => {
+// The highest point of a model (or of one part of it) as it stands posed now, from its own surface (a box round turned
+// parts would say more). out: where it is, the middle of what lies within `band` of the top (a pipe's mouth, not one
+// point of its rim).
+function bossPeak(node, out, band = 0.012) {
+  let m = -1e9, n = 0;
+  node.updateMatrixWorld(true);
+  const each = (fn) => node.traverse((o) => {
     if (!o.isMesh) return;
     const p = o.geometry.attributes.position, A = p.array, e = o.matrixWorld.elements;
     const q = p.normalized ? 1 / (A instanceof Int16Array ? 32767 : A instanceof Uint16Array ? 65535 : A instanceof Int8Array ? 127 : A instanceof Uint8Array ? 255 : 1) : 1; // (a quantized model's positions are whole numbers, scaled when drawn)
-    for (let i = 0; i < p.count; i += 3) { const y = (e[1] * p.getX(i) + e[5] * p.getY(i) + e[9] * p.getZ(i)) * q + e[13]; if (y > m) m = y; }
+    for (let i = 0; i < p.count; i += 3) { const x = p.getX(i) * q, y = p.getY(i) * q, z = p.getZ(i) * q; fn(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
   });
+  each((x, y) => { if (y > m) m = y; });
+  if (out) { out.set(0, 0, 0); each((x, y, z) => { if (y >= m - band) { out.x += x; out.y += y; out.z += z; n++; } }); out.multiplyScalar(1 / Math.max(1, n)); }
   return m;
 }
+const bossTop = (node) => bossPeak(node);
+// A boss dressed for what it is (its row's `dress`), where its model alone could be read as something it is not. Each
+// takes the actor (standing in its idle, unscaled) and returns { update(d, o), vent(), dispose() }.
+const BOSS_DRESS = {
+  // INFLATION TITAN, a boiler. Its small domed head is a valve cap, not a helmet: the head's lights go out (they are
+  // painted on as well as lit) and a bronze handwheel stands on it. Its light comes from its gauge and from its two
+  // pipes, hot at their mouths, which let off steam (more as it charges; a jet from each as its blast goes).
+  boiler(a) {
+    const P = a.P, made = [], geos = [], v = new THREE.Vector3(), quiet = () => REDUCED_MOTION || GFX.calm;
+    const brass = new THREE.MeshStandardMaterial({ color: 0x8a6634, metalness: 1, roughness: 0.42, envMapIntensity: 1.4 }); // (dark bronze: shining, it read as a halo)
+    made.push(brass);
+    const mesh = (geo, mat) => { geos.push(geo); return new THREE.Mesh(geo, mat); };
+    // set a group on a part at a place in the world, level with the world, at the model's own size
+    const pin = (part, grp, at) => {
+      part.add(grp);
+      grp.position.copy(part.worldToLocal(at.clone()));
+      grp.quaternion.copy(part.getWorldQuaternion(new THREE.Quaternion()).invert());
+      const ws = part.getWorldScale(new THREE.Vector3()); grp.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
+      return grp;
+    };
+    const head = P.part_Head;
+    if (head) {
+      // (its lights are painted on as well as lit: the cap is darkened, and its own light burns low)
+      head.traverse((o) => { if (o.isMesh && o.material && o.material.emissiveMap) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.3); o.material.userData.glowK = 0.03; a.mats.push(o.material); made.push(o.material); } });
+      bossPeak(head, v);
+      const w = new THREE.Group(), R = 0.036;
+      w.add(mesh(new THREE.TorusGeometry(R, 0.0068, 8, 30).rotateX(Math.PI / 2), brass)); // (the rim, level)
+      for (let i = 0; i < 2; i++) { const sp = mesh(new THREE.BoxGeometry(R * 2, 0.0075, 0.0075), brass); sp.rotation.y = (i * Math.PI) / 2; w.add(sp); } // four spokes: a cross in a ring
+      w.add(mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.012, 14), brass)); // the hub
+      const stem = mesh(new THREE.CylinderGeometry(0.006, 0.007, 0.022, 10), brass); stem.position.y = -0.012; w.add(stem);
+      pin(head, w, v.add(new THREE.Vector3(0, 0.022, 0))).rotateX(1.0); // (turned toward the lens: the cross of its spokes is seen against the sky)
+    }
+    // the mouths of its pipes (the tops of the parts on its collarbones): hot inside
+    const pipes = [];
+    for (const sd of ["L", "R"]) {
+      const c = P["part_" + sd + "_Clavicle"];
+      if (!c) continue;
+      bossPeak(c, v, 0.04); // (the middle of its mouth: the pipe leans back, and its highest point is the far edge of its rim)
+      const at = pin(c, new THREE.Group(), v), glow = glowSprite(0xffffff, 0.06, 0);
+      glow.position.y = 0.01; // (the hot breath at its mouth: inside, the pipe's own walls would hide it from the lens below)
+      at.add(glow); made.push(glow.material);
+      pipes.push({ at, glow, acc: rand(0, 0.3), sd: sd === "L" ? 1 : -1 });
+    }
+    const hot = new THREE.Color(1, 0.42, 0.07), STEAM = 0x8c84aa;
+    const puff = (pp, k) => {
+      const S = a.root.scale.x, u = S / 7.4;
+      pp.at.getWorldPosition(v);
+      a.g.kit.smoke(v, { size: (0.5 + 0.3 * k) * u, life: rand(0.9, 1.3), vel: new THREE.Vector3(pp.sd * rand(0.1, 0.5), rand(1.4, 2.2) + 5 * k, rand(-0.2, 0.3)).multiplyScalar(u), rise: 0.7, a: 0.28 + 0.12 * k, cold: true, color: STEAM, drag: 0.7 });
+    };
+    return {
+      update(d, o) {
+        const ch = o.charge || 0, lit = a.power * (o.flick === undefined ? 1 : o.flick);
+        for (const pp of pipes) {
+          pp.glow.material.color.copy(hot).multiplyScalar(1.6 + 0.8 * ch);
+          pp.glow.material.opacity = (0.85 + 0.15 * ch) * lit;
+          if (!a.g.kit || a.dead || lit < 0.5 || d <= 0) continue;
+          if ((pp.acc -= d) <= 0) { pp.acc = (ch > 0.3 ? 0.07 : 0.26) * rand(0.7, 1.3) * (quiet() ? 2.5 : 1); puff(pp, 0); }
+        }
+      },
+      vent() { if (a.g.kit && !a.dead) for (const pp of pipes) for (let i = 0; i < (quiet() ? 2 : 5); i++) puff(pp, rand(0.6, 1)); },
+      dispose() { made.forEach((m) => m.dispose()); geos.forEach((g) => g.dispose()); },
+    };
+  },
+};
 class BossActor {
   constructor(game, model, row) {
     const g = (this.g = game), P = (this.P = model.parts), J = model.info.joints || {};
@@ -87,6 +155,9 @@ class BossActor {
       this.joint.handR.worldToLocal(hm.localToWorld(c));
       this.tip.copy(c).multiplyScalar(row.tip === undefined ? 1.7 : row.tip); // (through the part's middle and out the far side)
     }
+    // ---- dressed for what it is (its row's dress), standing in its idle
+    if (this.act.idle) poseAt("idle", 0);
+    this.dress = row.dress && BOSS_DRESS[row.dress] ? BOSS_DRESS[row.dress](this) : null;
     for (const n in this.act) this.act[n].setEffectiveWeight(0);
     // ---- what moves on top of the clips
     this.look = new THREE.Vector2(); this.lookQ = new THREE.Quaternion(); this._e = new THREE.Euler(); this._q = new THREE.Quaternion(); this._q2 = new THREE.Quaternion(); this._d = new THREE.Vector3(); this._y = new THREE.Vector3(0, 1, 0);
@@ -232,7 +303,8 @@ class BossActor {
     this.body.rotation.set(-this.kick * 0.12 + this.lean * 0.06, this.yaw, 0);
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
-    for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl * (m.userData.glowK === undefined ? 1 : m.userData.glowK); // (glowK: a part whose own lights burn lower: its dress)
+    if (this.dress) this.dress.update(d, o);
     // ---- what has been torn off: thrown, falling, turning, coming to rest on the floor, and gone
     for (let i = this.scraps.length - 1; i >= 0; i--) {
       const sc = this.scraps[i], gp = sc.grp;
@@ -250,5 +322,7 @@ class BossActor {
   }
   // a wind-up broken off: back to its stance without the blow
   cancel() { const a = this.atk; if (a.clip && !a.rec) { a.rec = "drop"; a.to = 0; } }
-  dispose() { this.mixer.stopAllAction(); }
+  // its blast goes: what its dress lets off (the Titan's pipes vent)
+  vent() { if (this.dress) this.dress.vent(); }
+  dispose() { this.mixer.stopAllAction(); if (this.dress) this.dress.dispose(); }
 }

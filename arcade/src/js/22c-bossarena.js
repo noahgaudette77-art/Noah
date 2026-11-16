@@ -29,6 +29,7 @@ const BOSS_SKY = {
 //          the bones below it along; "wound": a hole burnt in its chest). limp: the arm that hangs once it is hurt
 //   last   the parts that go one by one in its death, before the last blast takes the rest
 //   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
+//   dress  what it is dressed with where its model alone could be read as something it is not (22d, BOSS_DRESS)
 const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.6, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
@@ -36,7 +37,7 @@ const BOSS_ROW = {
   3: { sky: "boss-void", atk: [2], src: "chest" }, // SOLVENCY SPECTER: a wave of energy out of the empty vault in its chest
   4: { sky: "boss-storm", atk: [3], clip: { 3: "attackB" } }, // THE FINE PRINT: a line of light drawn by its quill and swept across (thrust at the lens: in the overhead smash it bends over and its flat hat hides it)
   5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
-  6: { sky: "boss-storm-b", atk: [2], src: "chest" }, // INFLATION TITAN: a blast of steam from its boiler
+  6: { sky: "boss-storm-b", atk: [2], src: "chest", dress: "boiler" }, // INFLATION TITAN: a blast of steam from its boiler (its head a valve cap, its light from its gauge and its pipes)
   7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
   8: { sky: "boss-void", atk: [1] }, // LORD INTESTATE: its gavel down on the floor
   9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
