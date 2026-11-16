@@ -28,6 +28,18 @@ const BOSS_CLIP = {
   enter: { from: 1.82, land: 2.27, end: 3.5 }, // a jump down: in the air until 2.27, a deep landing, risen by 3.5
   death: { fall: 1.25, down: 1.78, end: 3.0 }, // staggers, goes over backward from 1.25, flat on its back at 1.78
 };
+// The highest point of a model as it stands posed now, from its own surface (a box round turned parts would say more).
+function bossTop(scene) {
+  let m = -1e9;
+  scene.updateMatrixWorld(true);
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const p = o.geometry.attributes.position, A = p.array, e = o.matrixWorld.elements;
+    const q = p.normalized ? 1 / (A instanceof Int16Array ? 32767 : A instanceof Uint16Array ? 65535 : A instanceof Int8Array ? 127 : A instanceof Uint8Array ? 255 : 1) : 1; // (a quantized model's positions are whole numbers, scaled when drawn)
+    for (let i = 0; i < p.count; i += 3) { const y = (e[1] * p.getX(i) + e[5] * p.getY(i) + e[9] * p.getZ(i)) * q + e[13]; if (y > m) m = y; }
+  });
+  return m;
+}
 class BossActor {
   constructor(game, model, row) {
     const g = (this.g = game), P = (this.P = model.parts), J = model.info.joints || {};
@@ -60,6 +72,10 @@ class BossActor {
     let base = 0;
     if (this.act.idle) { poseAt("idle", 0); base = feet(); }
     for (const n in this.act) { poseAt(n, n === "enter" ? this.dur[n] - 0.05 : 0); this.ground[n] = feet() - base; this.joint.hips.getWorldPosition(v); this.cx[n] = v.x; this.cz[n] = v.z; }
+    // ---- how high it reaches at the top of each attack's wind-up, over the floor, in its own heights (the lens keeps
+    // all of it in the picture while it winds up: what it raises over its head too)
+    this.reach = {};
+    for (const n of ["attackA", "attackB"]) if (this.act[n]) { poseAt(n, BOSS_CLIP[n].top); this.reach[n] = bossTop(model.scene) - this.ground[n]; }
     this.size = model.info.size || [0.6, 1, 0.3];
     // ---- the weapon's far end, in its hand's frame (a projectile leaves from there, a beam is drawn from there)
     const hp = P["part_" + (J.handR || "R_Hand")], hm = hp && (hp.isMesh ? hp : hp.children.find((c) => c.isMesh));

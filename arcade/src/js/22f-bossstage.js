@@ -677,18 +677,26 @@ class BossStage {
     this.punch = Math.max(0, this.punch - d * 4.5);
     const k = this.wide * this.wide * (3 - 2 * this.wide), wd = row.wide || this.a.size[0] + 0.14;
     this.overK = (this.overK || 0) + ((g.state === "over" ? 1 : 0) - (this.overK || 0)) * Math.min(1, d * 3);
-    // (an overhead blow, a slam or a sweep, is wound up with what strikes raised over its head: the lens stands farther
-    // back and looks higher, so its head and what it raises stay in the picture, and the floor the blow will cross)
-    const up = this.phase === "fight" && this.tele && this.tele.clip === "attackA" ? 1 : 0;
     // close: as near as holds `show` of its height in the band, and its width across it. (When the fight is over the
     // question and the answers have gone and the whole screen is the picture: the band counts for more.)
     const near = Math.max((S * row.show) / 0.94 / (2 * t * bh * (1 + 0.75 * this.overK)), (S * wd) / 0.94 / (2 * t * (GFX.w / GFX.h)));
-    const to = near * lerp(1, 1.36 + 0.26 * up, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
+    // drawn back: the floor is seen (from higher for a slam). While it winds up a blow all of it stays in the picture,
+    // what it raises over its head too (how high it reaches is measured once for each clip: the actor's reach), and
+    // for a slam the floor in front of it that the blow will cross
+    const low = this.camLow, R = this.phase === "fight" && this.tele && this.a.reach ? this.a.reach[this.tele.clip] || 0 : 0;
+    let wideD = near * 1.36, wideY = S * (0.47 - 0.14 * Math.max(0, low));
+    if (R > 0) {
+      const slam = this.tele.kind === 1, top = R * S * 1.04 + (slam ? 0.08 * S : 0), bot = -S * (slam ? 0.16 : 0.1); // (a slam's fists come up toward the lens: they stand higher in the picture than their height says)
+      wideD = Math.max(wideD, (top - bot) / (2 * 0.94 * t * bh));
+      const h = wideD * t * bh * 0.94;
+      wideY = clamp(wideY, top - h, bot + h);
+    }
+    const to = lerp(near, wideD, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
     this.dist += (to - this.dist) * Math.min(1, d * 5);
-    const Hb = 2 * this.dist * t * bh, low = this.camLow;
+    const Hb = 2 * this.dist * t * bh;
     this.roomT = Math.max(0, (this.roomT || 0) - d);
     this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
-    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, S * (0.47 - 0.14 * Math.max(0, low) + 0.13 * up), k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
+    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);

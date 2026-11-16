@@ -32,6 +32,11 @@ class BossTollgate {
     this.t = rand(0, 5);
     this._v = new THREE.Vector3(); this._x = new THREE.Vector3(1, 0, 0);
     this.rest = {}; for (const n of ["shoulderL", "shoulderR", "forearmL", "forearmR", "body", "trackL", "trackR"]) if (P[n]) this.rest[n] = P[n].rotation.clone();
+    // how high it reaches, in its own heights: its booth, and its barrier raised over it (the lens keeps all of it in
+    // the picture while it winds up)
+    const sR = P.shoulderR, fR = P.forearmR;
+    this.reach = { attackB: bossTop(model.scene) };
+    if (sR && fR) { sR.rotation.x = this.rest.shoulderR.x - 2.15; fR.rotation.x = this.rest.forearmR.x - 0.35; this.reach.attackA = bossTop(model.scene); sR.rotation.copy(this.rest.shoulderR); fR.rotation.copy(this.rest.forearmR); }
   }
   // The round lamp in the booth's window is its lane signal, not an eye: a housing over it, a lens of small lamps that
   // burns amber and turns red as the boss charges, a hood over the lens with a neon edge, two guard bars across it.

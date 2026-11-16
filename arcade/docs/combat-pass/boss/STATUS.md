@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4 done; next: 2 (PERILMONGER) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2 done; next: 6 (TITAN) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -38,7 +38,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 - Boss 5 (GOLEM): its rebuilt slam seen again: it lands on the floor (fists down, a fountain of sparks, blades of
   light running at the lens). Fixed: through the wind-up of an overhead blow (`attackA`: a slam or a sweep) the
   lens stood back and looked down at the floor and the head and raised fists left the top of the picture; it now
-  stands farther back and looks higher while such a blow is wound up (the stage's `frame`, `up`).
+  stands farther back and looks higher while such a blow is wound up (see boss 2: now measured per boss).
 - Boss 10 (TOLLGATE): fight (the volley and the barrier's slam) and death seen: good (it rolls in, the barrier
   comes down on the floor, it tips over backward, its tracks fly in the last blast). Lookalike fixed: its one round
   lamp in the booth's window, over the ticket slot, read as an eye over a mouth. It is now a lane signal (22e,
@@ -51,6 +51,13 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   the picture yellow: its far end was 3.4 from the lens, where its width and the glow at its end were taller than
   the band. It is now drawn 4.5 out, 0.7 wide, at a gain that is lower for a bright colour (`beamK`): a white-cored
   line drawn from the nib across the foot of the picture.
+- Boss 2 (PERILMONGER): idle good (horned brute, the furnace grille glowing in its chest, hazard stripes: a generic
+  horned brute, no lookalike); its slam lands on the floor. Fixed: its fists rise higher than the Golem's and its
+  head still left the picture in the wind-up. The wind-up's framing is now measured, not guessed: the actor finds
+  once how high each boss reaches at the top of each attack's wind-up (`reach`, from the vertices of its posed
+  model; the Tollgate's with its barrier raised), and the lens stands back and looks high enough to hold that (a
+  slam's band a little higher: its fists come up toward the lens). Checked on all twelve with a measuring scenario
+  (the top of each boss 1 to 35 px inside the band at the height of its wind-up).
 
 ## Tests at the last commit
 
