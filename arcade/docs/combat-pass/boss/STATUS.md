@@ -46,8 +46,9 @@ Major defects, by the review's numbers:
    the game's timers (DEFEATED on its 1.2 s mark, the results on theirs). Every boss's fall now takes the same
    time, so its last blast leaves BOSS DEFEATED! up for 1.6 s; the Proctor's death is bigger, not longer. (The old
    banner was a CSS animation that faded after 1.4 s.) DEFEATED stands low in the screen, clear of the boss's face.
-3. Strikes stopped short. A slam's shock (a white-hot front, its colour behind, three blades of light) runs along
-   the floor to the foot of the picture, where its ring and a jolt land; a wave comes on at the player in rings
+3. Strikes stopped short. A slam's shock (a deep band of its colour behind a white-hot edge: seen along the floor a
+   thin ring all but vanishes; sparks thrown up all along its front; three blades of light) runs along the floor
+   to the foot of the picture, where its ring and a jolt land; a wave comes on at the player in rings
    that grow until they fill the band; the volley's first card, the seekers and the beam end in a flash at the
    player; then the player's hit as before. The kit's pool of ten rings is no longer used up by one strike (that
    was why fronts vanished half way). The HUD's crack was there all along: the capture scenario now steps the
