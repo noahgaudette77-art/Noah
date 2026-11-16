@@ -1,0 +1,33 @@
+{
+ "name": "prop-trophy",
+ "triangles": 12000,
+ "bytes": 410228,
+ "tex": 1024,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.3169,
+    0,
+    -0.2411
+   ],
+   "max": [
+    0.3169,
+    1,
+    0.2411
+   ],
+   "tris": 12000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.6337303519248962,
+  1,
+  0.48225387930870056
+ ],
+ "source": "cand/props/prop-trophy-sd-0.tripo.glb"
+}

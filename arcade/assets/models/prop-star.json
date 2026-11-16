@@ -1,0 +1,33 @@
+{
+ "name": "prop-star",
+ "triangles": 7999,
+ "bytes": 525236,
+ "tex": 1024,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4751,
+    0,
+    -0.4304
+   ],
+   "max": [
+    0.4751,
+    1,
+    0.4304
+   ],
+   "tris": 7999
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9501166939735413,
+  1,
+  0.8608798384666443
+ ],
+ "source": "cand/props/prop-star-sd-0.tripo.glb"
+}

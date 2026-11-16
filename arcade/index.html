@@ -6141,21 +6141,32 @@ const Sound = {
     return p;
   },
   // The announcer: the browser's own speech voice, pitched down, for the big moments.
+  // It speaks one line at a time. A line asked for while the one before it is still being spoken waits its turn
+  // (0.8 s or more after that one began, by its length); a line that would start more than 2.5 s late is not
+  // spoken at all (a stale call-out is worse than none). Returns how long the line waits, in seconds (-1: not spoken).
+  sayAt: 0, sayGen: 0,
   say(text) {
-    if (!Store.settings.sfx || !Store.settings.voice) return;
+    if (!Store.settings.sfx || !Store.settings.voice) return 0;
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
     // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
-    const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim();
-    if (this.ctx && this.bank[key]) { this.duck(0.4, 1.1, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0 }); return; }
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    try {
-      const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
-      u.lang = "en-US";
-      u.rate = 1.05;
-      u.pitch = 0.5;
-      u.volume = 0.9;
-      if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
-      speechSynthesis.speak(u);
-    } catch (e) { /* speech isn't allowed here */ }
+    const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes ? takes[0].dur + 0.1 : 0.5 + String(text).length * 0.05));
+    if (takes) { this.duck(0.4, 1.1 + wait, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait }); return wait; }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return wait;
+    const speak = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
+        u.lang = "en-US";
+        u.rate = 1.05;
+        u.pitch = 0.5;
+        u.volume = 0.9;
+        if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
+        speechSynthesis.speak(u);
+      } catch (e) { /* speech isn't allowed here */ }
+    };
+    if (wait > 0.02) { const gen = this.sayGen; setTimeout(() => { if (gen === this.sayGen) speak(); }, wait * 1000); } else speak();
+    return wait;
   },
   // Play an effect. o: { vol, rate, delay } scale a recorded take; the synth ignores them.
   sfx(name, pan = 0, o) {
@@ -6202,6 +6213,7 @@ const Sound = {
   // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
   // was started in this same moment is left alone: the menu's own blip.
   hush(fade = 0.12) {
+    this.sayGen++; this.sayAt = 0; // (a line still waiting its turn is not spoken either)
     try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
     if (!this.ctx || !this.live) return;
     const t = this.ctx.currentTime;
@@ -21206,12 +21218,12 @@ function racerSignMaterial(shared, P, tex) {
 }
 // A brass gear: a toothed rim on spokes around a hub. It faces down the street, so
 // the driver sees it turn (its axle runs along z). spin: radians per second.
-function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
+function racerGear(b, x, y, z, R, teeth, spin, aZ, seed, neo = 0) {
   const v = { aZ, aKind: 4, aCy: y, aCz: x, aSp: spin, aSeed: seed };
   // (it used to be a thin ring with boxes for teeth: flat, and the colour of the windows behind it. Now it is a
   // wheel a quarter of its radius thick: a dark bronze face, five windows cut between its spokes, bright flanks
   // on every tooth and window wall, and a lit ring standing proud of the face.)
-  const FACE = 0x4a3116, FLANK = 0xdfa64c, thick = R * 0.25, spokes = 5;
+  const FACE = neo ? 0x14121c : 0x4a3116, FLANK = neo ? 0x2b2737 : 0xdfa64c, thick = R * 0.25, spokes = 5; // (neo: with the panorama up the works are dark bodies with rims of light in one of the road's colours)
   const shape = new THREE.Shape(), n = teeth * 4;
   for (let i = 0; i < n; i++) {
     const a = ((i - 0.5) / n) * Math.PI * 2, rr = i % 4 < 2 ? R * 1.05 : R * 0.84, px = Math.cos(a) * rr, py = Math.sin(a) * rr;
@@ -21241,9 +21253,10 @@ function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
   b.add(hub, racerM(x, y, z, 1, 1, 1, Math.PI / 2), FLANK, 1.05, v);
   hub.dispose();
   // the lit ring: a neon tube let into the face (it is round, so it need not turn with the wheel)
-  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * 0.028), 4, 32);
-  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), 0xffb24a, 1.0, { aZ, aKind: 1, aSeed: seed });
+  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * (neo ? 0.04 : 0.028)), 4, 32);
+  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), neo || 0xffb24a, neo ? 1.5 : 1.0, { aZ, aKind: 1, aSeed: seed });
   ring.dispose();
+  if (neo) { const rim = new THREE.TorusGeometry(R * 0.99, Math.max(0.04, R * 0.03), 4, 40); b.add(rim, racerM(x, y, z + thick / 2 + 0.03), neo, 1.1, { aZ, aKind: 1, aSeed: seed }); rim.dispose(); }
 }
 function racerLamp(b, box, side, z, color) {
   const x = side * 6.4, hx = side * 4.75;
@@ -21686,7 +21699,10 @@ class RacerGame extends QuizGame {
     const box = new THREE.BoxGeometry(1, 1, 1);
     const pipe = new THREE.CylinderGeometry(1, 1, 1, 8);
     const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
-    const BRASS = 0xb8823c, COPPER = 0x8a5a34;
+    // (with the panorama up the works are of the neon city: dark bodies with rims of light, set back against the walls,
+    // so the middle of the street is open to the egg at its end and to the sky above it)
+    const NEO = !!this.pano, NEON = [0x35efff, 0xff3ad4, 0xffc93d];
+    const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
     let seed = 0.11;
@@ -21707,10 +21723,10 @@ class RacerGame extends QuizGame {
         [z - 0.8, z - L + 0.8].forEach((fz) => detail.add(pipe, racerM(px, py, fz, 0.5, 0.3, 0.5, Math.PI / 2), COPPER, 1, bv));
         // every other block: a pair of meshing gears on the wall
         if (n % 2 === 0) {
-          const R = rand(2.0, 2.9), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
+          const R = rand(2.0, 2.9) * (NEO ? 0.72 : 1), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
           const sp = rand(0.3, 0.55) * (Math.random() < 0.5 ? -1 : 1);
-          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd);
-          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd);
+          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd, NEO ? NEON[n % 3] : 0);
+          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd, NEO ? NEON[(n + 1) % 3] : 0);
           detail.add(box, racerM(side * (front - 0.3 - R / 2), gy, gz + 0.5, R + 0.8, 0.3, 0.3), COPPER, 1, bv); // its bracket
         }
         // a neon blade sign on a bracket, facing the driver
@@ -21731,18 +21747,21 @@ class RacerGame extends QuizGame {
     // pipes cross over the street on three runs
     [-52, -134, -214].forEach((gz, i) => {
       const bv = { aZ: gz, aKind: 3, aSeed: i * 0.31 };
-      detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
-      detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
-      [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      if (!NEO) {
+        detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
+        detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
+        [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      }
       // a great wheel and its pinion hang from the run, turning over one kerb or the other: the middle of the
       // street stays open, so the egg at the end of it is never behind the works
       const gs = i % 2 ? 1 : -1;
       // (lower and larger than they were: the great wheel now hangs inside the picture, a third of the street wide
       // as it comes up, on a hanger from the run; its pinion meshes above it, toward the middle)
-      const GR = 4.5, gr = 2.0, gy = 12.4 + i * 0.7, gx = gs * 6.0, off = (GR + gr) * 0.97;
-      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31);
-      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31);
-      detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
+      // (neo: no run crosses the street; the wheel is smaller and turns on the wall, its pinion beside it)
+      const GR = NEO ? 3.1 : 4.5, gr = NEO ? 1.4 : 2.0, gy = 12.4 + i * 0.7, gx = gs * (NEO ? 8.4 : 6.0), off = (GR + gr) * 0.97;
+      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31, NEO ? NEON[i % 3] : 0);
+      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31, NEO ? NEON[(i + 1) % 3] : 0);
+      if (!NEO) detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
       detail.add(pipe, racerM(gx, gy, gz + 0.4, 0.5, 1.3, 0.5, Math.PI / 2), COPPER, 1, bv);
     });
     box.dispose();
@@ -22423,6 +22442,7 @@ class RacerGame extends QuizGame {
     const scroll = this.dist % RACER_WRAP;
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
+    if (this.laneTags && this.stage && this.state === "over") this.dropTags(); // (staged: an ending plays on a clear road, its lane letters gone at once)
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
       // (staged: once the gate is reached the answer is shown on the road for a moment: the right lane's badge stands lit, the others step back)
       const vd = this.stage && this.state !== "ask" && this.stage.verdict && this.stage.verdict.t < 1.3 ? this.stage.verdict : null;
@@ -22524,6 +22544,7 @@ class RacerGame extends QuizGame {
     if (rk) { // the rig's own: where it stands and how it is turned (its shadow goes with it), a cyan under-glow that warms as its stacks burn
       g.uCarX.value = this.carX + rk.off.x; g.uCarZ.value = rk.off.z; g.uCarRot.value.set(Math.cos(rk.yaw), Math.sin(rk.yaw));
       g.uUnder.value.set(0x35d8ff).multiplyScalar(0.42 + 0.14 * Math.sin(VFX.t * 2.6)).lerp(this._uc || (this._uc = new THREE.Color(1.5, 0.6, 0.15)), 0.75 * this.flame);
+      g.uHead.value *= 1 - smoothstep(2.5, 7, rk.off.z); // (as it drives in from behind the lens its headlights are not thrown down the road ahead of it: the road is not a pale smear before the rig is in the picture)
     }
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
@@ -23233,7 +23254,7 @@ function racerAdMaterial(shared, tex, holo, loop) {
 // Light channels: 1 headlamps, 2 tail lamps, 3 windows, 4 hazards, 5 glow strips,
 // 6/7 a patrol light bar, 8 steady markers, 9 a stripe in the body colour. aPaint marks panels in the body colour.
 const RACER_PAINTS = [0xc0392b, 0x2e86c1, 0xf1c40f, 0x27ae60, 0x8e44ad, 0xe67e22, 0xecf0f1, 0x4a5a6e, 0x16a085, 0xd35400, 0x8f9aa3, 0xff6fb5];
-function racerVehicleGeo(type) {
+function racerVehicleGeo(type, neo) {
   const b = new RacerBatch(["aCh", "aPaint"]);
   const box = new THREE.BoxGeometry(1, 1, 1), cyl = new THREE.CylinderGeometry(1, 1, 1, 10);
   const GL = 0x0c141b, DK = 0x14161b, WH = 0xffffff;
@@ -23254,6 +23275,7 @@ function racerVehicleGeo(type) {
     [-1, 1].forEach((s) => { L(3, 0.03, 0.24, 1.7, s * 0.79, 1.12, 0.25, 0xffe2a8, 1.1); wheel(s * 0.88, 0.34, -1.4, 0.34, 0.24); wheel(s * 0.88, 0.34, 1.4, 0.34, 0.24); });
     lamps(0.62, 0.66, -2.2, 2.2);
     L(2, 1.3, 0.05, 0.06, 0, 0.84, 2.2, 0xff1030, 1.6);
+    if (neo) { [-1, 1].forEach((s) => L(10, 0.03, 0.05, 3.7, s * 0.93, 0.42, 0, WH, 1)); L(1, 1.3, 0.04, 0.06, 0, 0.86, -2.2, 0xfff2d8, 3); }
   } else if (type === "truck") {
     P(2.3, 1.6, 1.8, 0, 1.3, -3.0, WH, 1, 0, 0.14);
     P(2.1, 0.62, 0.1, 0, 1.62, -3.9, GL);
@@ -23264,6 +23286,7 @@ function racerVehicleGeo(type) {
     [-1, 1].forEach((s) => { L(9, 0.03, 0.34, 5.0, s * 1.265, 2.5, 0.9, WH, 1); b.add(box, racerM(s * 1.262, 1.75, 0.9, 0.03, 1.15, 5.0), WH, 1, { aCh: 0, aPaint: 1 }); [-2.9, 1.7, 2.8].forEach((z) => wheel(s * 1.08, 0.46, z, 0.46, 0.3)); });
     [-0.9, -0.3, 0.3, 0.9].forEach((x) => L(8, 0.12, 0.07, 0.06, x, 3.44, -1.9, 0xffa53d, 2.6));
     lamps(0.82, 0.86, -3.92, 3.72, 0.4);
+    if (neo) { [-1, 1].forEach((s) => { L(10, 0.03, 0.06, 5.5, s * 1.27, 0.76, 0.9, WH, 1); L(10, 0.06, 2.5, 0.05, s * 1.2, 2.05, 3.77, WH, 1); }); L(10, 2.46, 0.06, 0.05, 0, 3.36, 3.77, WH, 1); }
   } else if (type === "bus") {
     P(2.56, 2.7, 9.8, 0, 1.85, 0, WH, 1, 0, 0.16);
     P(2.3, 1.1, 0.1, 0, 2.2, -4.9, GL);
@@ -23275,6 +23298,7 @@ function racerVehicleGeo(type) {
     });
     L(8, 1.7, 0.26, 0.06, 0, 2.95, -4.92, 0xffb000, 2.2);
     lamps(0.9, 0.8, -4.92, 4.92, 0.44);
+    if (neo) { [-1, 1].forEach((s) => { L(10, 0.03, 0.06, 9.4, s * 1.3, 0.62, 0, WH, 1); L(10, 0.06, 2.4, 0.05, s * 1.24, 1.9, 4.93, WH, 1); }); L(10, 2.54, 0.06, 0.05, 0, 3.14, 4.93, WH, 1); }
   } else if (type === "bike") {
     P(0.34, 0.5, 1.5, 0, 0.66, 0, WH, 1, 0, 0.12);
     [-0.72, 0.72].forEach((z) => { b.add(cyl, racerM(0, 0.34, z, 0.34, 0.14, 0.34, 0, 0, Math.PI / 2), 0x0a0b0e, 1, { aCh: 0, aPaint: 0 }); b.add(cyl, racerM(0, 0.34, z, 0.18, 0.16, 0.18, 0, 0, Math.PI / 2), 0x9aa3ab, 1, { aCh: 0, aPaint: 0 }); });
@@ -23283,6 +23307,7 @@ function racerVehicleGeo(type) {
     P(0.62, 0.05, 0.08, 0, 1.05, -0.5, DK);
     L(1, 0.18, 0.18, 0.06, 0, 0.84, -0.84, 0xfff2d8, 6);
     L(2, 0.16, 0.09, 0.06, 0, 0.84, 0.8, 0xff1030, 3.5);
+    if (neo) [-1, 1].forEach((s) => L(10, 0.03, 0.05, 1.3, s * 0.185, 0.6, 0, WH, 1));
   } else if (type === "hover" || type === "police") {
     const pol = type === "police";
     P(1.95, 0.46, 4.5, 0, 0, 0, WH, 1, 0, 0.18);
@@ -23325,7 +23350,7 @@ function racerTrafficMaterial(P, sky) {
       #endif
       void main(){
         #ifdef SKY
-        vGloss = max(aPaint * 0.55, step(0.045, aCol.b - aCol.r) * step(aCol.b, 0.2)); // lacquer mirrors it a little, glass more, rubber and trim not at all
+        vGloss = max(max(aPaint * 0.9, 0.28 * step(aCh, 0.5)), step(0.045, aCol.b - aCol.r) * step(aCol.b, 0.2)); // dark lacquer mirrors it, glass too, trim a little
         #endif
         #ifdef USE_INSTANCING
           mat4 m = modelMatrix * instanceMatrix;
@@ -23335,6 +23360,12 @@ function racerTrafficMaterial(P, sky) {
         vec4 w = m * vec4(position, 1.0);
         vN = mat3(m) * normal; vW = w.xyz;
         vec3 c = aCol * mix(vec3(1.0), aTint, aPaint);
+        #ifdef SKY
+        // (with the panorama up: dark gloss bodies that mirror the sky, with light bars, lit windows and a line of neon
+        // in one of the road's own colours. Traffic that belongs beside the rig, not blocks of flat paint.)
+        vec3 neonC = aL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (aL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
+        if (aCh < 0.5) c = mix(aCol * 0.5, aTint * 0.09 + vec3(0.014, 0.016, 0.028), aPaint);
+        #endif
         vLit = 0.0;
         if (aCh > 0.5) {
           float k = 1.0;
@@ -23346,7 +23377,13 @@ function racerTrafficMaterial(P, sky) {
           else if (aCh < 5.5) k = 0.8 + 0.2 * sin(uTime * 3.0 + aL.w * 9.0);
           else if (aCh < 6.5) k = smoothstep(-0.2, 0.6, sin(uTime * 7.8));
           else if (aCh < 7.5) k = smoothstep(-0.2, 0.6, -sin(uTime * 7.8));
-          else if (aCh > 8.5) c = aTint * 1.3; // a livery stripe that glows in the body colour
+          else if (aCh > 8.5) {
+            #ifdef SKY
+            c = neonC * (aCh > 9.5 ? 2.6 : 1.6);
+            #else
+            c = aTint * 1.3; // a livery stripe that glows in the body colour
+            #endif
+          }
           c *= k * uDim;
         }
         vCol = c;
@@ -23459,7 +23496,7 @@ class RacerWorld {
     this.fleet = {};
     this.cars = [];
     for (const type in RACER_FLEET) {
-      const n = RACER_FLEET[type], geo = racerVehicleGeo(type);
+      const n = RACER_FLEET[type], geo = racerVehicleGeo(type, !!g.pano);
       const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
       tint.setUsage(THREE.DynamicDrawUsage); lights.setUsage(THREE.DynamicDrawUsage);
       geo.setAttribute("aTint", tint);
@@ -23830,6 +23867,10 @@ class RacerWorld {
         }
         put(b, BOX, 0, 8.75, z, 20.4, 0.5, 16, 0x202226, aZ);
         put(b, BOX, 0, 8.3, z - 7.7, 20, 0.6, 0.6, 0x3a3d44, aZ);
+        if (g.pano) { // (with the panorama up each rib carries an arch of light: the bore is read by what passes)
+          for (const sd of [-1, 1]) put(b, BOX, sd * 9.1, 4.3, z - 7.7, 0.1, 8.4, 0.16, sd < 0 ? 0x35efff : 0xff3ad4, aZ, 1, 1.5);
+          put(b, BOX, 0, 7.95, z - 7.7, 18.2, 0.1, 0.16, 0xffd9a0, aZ, 1, 1.3);
+        }
         if (i % 3 === 1) [-3.4, 3.4].forEach((x) => { put(b, CYL, x, 7.5, z, 0.75, 3.2, 0.75, 0x4a4f58, aZ, 0, 1, Math.PI / 2); put(b, CYL, x, 7.5, z + 1.62, 0.6, 0.06, 0.6, 0x35efff, aZ, 1, 1.4, Math.PI / 2); });
         if (i % 4 === 2) { put(b, BOX, 9.6, 1.3, z, 0.1, 2.4, 1.3, 0x2c6a44, aZ); put(b, BOX, 9.56, 2.9, z, 0.08, 0.5, 1.5, 0x5dffb0, aZ, 2, 2.4); put(b, BOX, -9.6, 1.5, z + 3, 0.2, 0.8, 0.6, 0xff7a2a, aZ, 1, 1.5); }
       }
@@ -23848,6 +23889,51 @@ class RacerWorld {
     this.curtain.visible = false;
     this.curtain.layers.set(1);
     g.scene.add(this.curtain);
+    // (with the panorama up) the mouth of a tunnel, driven through: the way out, seen from inside as an opening bright
+    // with the sky beyond it that grows; the way in, a dark mouth with a rim of light in a wall across the road. The
+    // landscape is changed as the rig passes through it, not behind a bank of darkness: an open road is never drawn
+    // under a black sky.
+    if (g.pano) {
+      const pg = new THREE.Group(), flat = (w, h, col) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, fog: false, transparent: true }));
+      const wall = flat(90, 17, 0x08080e), mouth = flat(20.4, 8.8, 0xffffff), mouthIn = flat(20.4, 8.8, 0xffffff);
+      // (the way in is not a black board: the bore is seen in it, its arches of light and its two lines of lamps running away)
+      { const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+        const x = c.getContext("2d"), vx = 128, vy = 76; // (where the lines meet: the height of the lens in the mouth)
+        x.fillStyle = "#020206"; x.fillRect(0, 0, 256, 128);
+        for (let k = 0; k < 9; k++) {
+          const q = 30 / (38 + 16 * k), a = Math.min(1, 0.25 + q), l = vx - vx * q, r = vx + (256 - vx) * q, t = vy - vy * q, b = vy + (128 - vy) * q;
+          x.lineWidth = Math.max(1, 3.4 * q); x.globalAlpha = a;
+          x.strokeStyle = "#35efff"; x.beginPath(); x.moveTo(l, b); x.lineTo(l, t); x.stroke();
+          x.strokeStyle = "#ff3ad4"; x.beginPath(); x.moveTo(r, b); x.lineTo(r, t); x.stroke();
+          x.strokeStyle = "#ffd9a0"; x.beginPath(); x.moveTo(l, t); x.lineTo(r, t); x.stroke();
+        }
+        x.globalAlpha = 0.85; x.lineWidth = 2; x.strokeStyle = "#ffd9a0";
+        for (const sd of [-1, 1]) { x.beginPath(); x.moveTo(vx + sd * 78, 0); x.lineTo(vx + sd * 5, vy - 4); x.stroke(); }
+        mouthIn.material.map = new THREE.CanvasTexture(c); mouthIn.material.color.setRGB(1.7, 1.7, 1.7); }
+      mouthIn.position.set(0, 4.4, 0.05);
+      const rims = [flat(0.3, 8.8, neon(0x35efff, 2.2)), flat(0.3, 8.8, neon(0xff3ad4, 2.2)), flat(20.7, 0.3, neon(0xffd9a0, 2.4))];
+      wall.position.set(0, 8.5, 0); mouth.position.set(0, 4.4, 0.05);
+      rims[0].position.set(-10.2, 4.4, 0.1); rims[1].position.set(10.2, 4.4, 0.1); rims[2].position.set(0, 8.8, 0.1);
+      pg.add(wall, mouth, mouthIn, ...rims);
+      pg.traverse((o) => { o.frustumCulled = false; o.renderOrder = 3; });
+      pg.visible = false;
+      g.scene.add(pg);
+      this.portal = { g: pg, wall, mouth, mouthIn, rims };
+    }
+  }
+  // the mouth as it comes up the road: the way out, bright with the sky beyond; the way in, dark in its wall
+  mouthAt(s, sp) {
+    const P = this.portal, g = this.g, out = s.to !== "tunnel";
+    P.g.visible = s.t < 1.2;
+    if (!s.col) s.col = new THREE.Color((RACER_SKIES[racerSkyId(out ? s.to : this.biome, g.year)] || RACER_SKIES.dawn).haze[0]); // the light of the sky beyond it (out), or of the sky it stands under (in)
+    if (!P.g.visible) return;
+    const k = smoothstep(0, 0.25, s.t);
+    P.g.position.set(0, 0, -3.2 - Math.max(sp, 62) * (1.2 - s.t)); // (it is at the rig's nose as the change is made: the rig is never cut by it)
+    P.wall.visible = !out;
+    P.wall.material.color.copy(s.col).multiplyScalar(0.05).add(this._c.set(0x08080e)); P.wall.material.opacity = k;
+    P.rims.forEach((m) => { m.visible = !out; m.material.opacity = k; });
+    P.mouth.visible = out; P.mouthIn.visible = !out;
+    P.mouth.material.color.copy(s.col).multiplyScalar(1.5); P.mouth.material.opacity = P.mouthIn.material.opacity = k;
   }
   setBiome(name) {
     const g = this.g;
@@ -23969,14 +24055,17 @@ class RacerWorld {
     if (want !== this.biome && !this.swap && g.state !== "over") this.swap = { to: want, t: 0, done: false, dark: want === "tunnel" || this.biome === "tunnel" };
     let fogK = 0;
     if (this.swap) {
-      const s = this.swap;
+      const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
-      fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, 3.2, s.t);
-      if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); }
+      if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
+      else if (s.done && s.to !== "tunnel") fogK = 1 - smoothstep(1.2, 1.9, s.t); // out into the light: its glare clears at once
+      if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
+      if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
     }
     // ---- palette: ease toward this biome's, then lay it over the career sky
-    const T = P[this.biome], k = Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
+    const T = P[this.biome], k = this.palSnap ? 1 : Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
+    this.palSnap = false;
     for (const n of ["fogMix", "horMix", "gridMix", "baseMix", "rain", "wet", "dust", "far", "lamps"]) pal[n] += (T[n] - pal[n]) * k;
     for (const n of ["topMix", "midMix"]) pal[n] += ((T[n] || 0) - pal[n]) * k;
     for (const n in this.palC) if (T[n + "Mix"] > 0) this.palC[n].lerp(this._c.set(T[n]), k);
@@ -23993,7 +24082,11 @@ class RacerWorld {
     gu.uReflect.value *= GFX.opt.wet ? pal.wet : 0;
     if (gu.uRain) gu.uRain.value = GFX.opt.wet ? clamp(pal.rain * (0.45 + this.gust * 0.9), 0, 1.4) : 0;
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
-    const curtainCol = this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
+    const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
+    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(1.5) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
+    if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;
     this.curtain.material.opacity = fogK;
     this.curtain.material.color.copy(curtainCol);
@@ -24198,6 +24291,8 @@ class RacerSky {
     if (!this.swapped) this.swap();
     if (old.map && old.map !== this.cur.map) old.map.dispose(); // (its picture leaves the graphics chip: one sky is held there at a time)
   }
+  // the change is made at once (through a tunnel's mouth: the sky is whole on the first frame of the open road)
+  snap() { if (this.next) { this.mips(this.next.map); this.finish(); } this.settle(this.cur.r, 1); this.show(); }
   swap() {
     this.swapped = true;
     const to = this.next || this.cur;
@@ -24256,7 +24351,17 @@ class RacerSky {
     g.groundMat.uniforms.uReflect.value *= N.wet;
     // the lens, and the egg's halo (on a painted sky it is a glow round the egg, not a second sun)
     g.post.exposure *= N.exp; g.post.bloom *= N.bloom;
-    g.sun.userData.glow.material.color.multiplyScalar(N.halo);
+    // the egg at the end of the road is the scene's jewel under every sky: gold at its crown to magenta at its foot, lit
+    // from inside, in a halo of its own colours, with one glint on its shoulder
+    const su = g.sun.userData.disc.material.uniforms;
+    su.uTop.value.setRGB(1.0, 0.74, 0.14); su.uBottom.value.setRGB(1.0, 0.1, 0.46); su.uTint.value.setRGB(1, 1, 1);
+    su.uI.value = 0.74 * (1 + 0.05 * Math.sin(VFX.t * 1.1)); // (below white: its colours hold through the lens's bloom)
+    g.sun.userData.glow.material.color.setRGB(1.0, 0.46, 0.32).multiplyScalar(1.25 * N.halo);
+    if (!this.glint) {
+      this.glint = [glowSprite(new THREE.Color(1.5, 1.2, 0.9), 24, 0.7), glowSprite(new THREE.Color(2.2, 2.0, 1.7), 7, 0.9)];
+      this.glint.forEach((q, i) => { q.position.set(-16, 25, 1 + i * 0.2); q.layers.set(1); g.sun.add(q); });
+    }
+    this.glint[0].material.opacity = 0.55 + 0.15 * Math.sin(VFX.t * 0.9);
   }
   follow(camera) { this.root.position.copy(camera.position); }
   // what the traffic's paint needs to mirror the sky (see racerTrafficMaterial)
@@ -24304,6 +24409,51 @@ const RIG = {
   HUBS: [[0.2092, 0.1054, 0.2345], [-0.2092, 0.1054, 0.2345], [0.2125, 0.107, -0.2955], [-0.2125, 0.107, -0.2955]],
   FLAME: [0xffb040, 0xff5a20], // what its stacks burn: gold at the root, orange-red at the tip (the sparks and the flash at the stack mouths take the gold)
 };
+
+// A tongue of fire: narrow at the mouth it comes from, fullest a fifth of the way along, drawn out to a point. It
+// licks from side to side toward its tip and flickers in length. It is drawn as itself, not added to what is behind
+// it: gold in its heart, orange, red at its tip and along its edge, so it keeps the colour of fire against a lit road
+// and never reaches white. The mesh lies along +z, one unit long (uLen stretches it); its radius is the mesh's scale.
+function rigFlameGeo() {
+  const R = 14, M = 10, pos = [], nor = [], at = [], idx = [];
+  for (let i = 0; i < R; i++) {
+    const u = i / (R - 1), rr = (0.55 + 0.45 * smoothstep(0, 0.22, u)) * Math.pow(1 - u, 0.75);
+    for (let j = 0; j < M; j++) { const a = (j / M) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a); pos.push(c * rr, sn * rr, u); nor.push(c, sn, 0.3); at.push(u); }
+  }
+  for (let i = 0; i < R - 1; i++) for (let j = 0; j < M; j++) { const a = i * M + j, b = i * M + ((j + 1) % M); idx.push(a, b, a + M, b, b + M, a + M); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("aT", new THREE.Float32BufferAttribute(at, 1));
+  g.setIndex(idx);
+  return g;
+}
+function rigFlameMat(ph) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uLen: { value: 1 }, uPow: { value: 0 }, uPh: { value: ph }, uWob: { value: 1 } },
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `attribute float aT; uniform float uTime; uniform float uLen; uniform float uPh; uniform float uWob; varying float vT; varying vec3 vN; varying vec3 vV;
+      void main(){
+        vT = aT;
+        vec3 p = position;
+        float w = aT * aT * uWob;
+        p.x += w * (0.55 * sin(uTime * 17.0 + aT * 7.0 + uPh) + 0.3 * sin(uTime * 41.0 + aT * 13.0 + uPh * 2.3));
+        p.y += w * (0.45 * cos(uTime * 13.0 + aT * 6.0 + uPh * 1.7) + 0.25 * sin(uTime * 37.0 + aT * 11.0 + uPh));
+        p.xy *= 1.0 + 0.12 * uWob * sin(uTime * 23.0 + aT * 9.0 + uPh * 3.1);
+        p.z *= uLen * (0.88 + 0.08 * sin(uTime * 29.0 + uPh * 5.0) + 0.04 * sin(uTime * 53.0 + uPh));
+        vec4 mv = modelViewMatrix * vec4(p, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform float uTime; uniform float uPow; uniform float uPh; varying float vT; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float f = abs(dot(normalize(vN), normalize(vV)));                     // 1 down the middle of the tongue as it is seen, 0 at its edge
+        float lick = 0.82 + 0.18 * sin(vT * 15.0 - uTime * 21.0 + uPh * 3.0); // brighter bands that run down it
+        float heat = clamp((1.0 - vT) * (0.2 + 0.8 * f * f) * lick * 1.55, 0.0, 1.0);
+        vec3 c = heat > 0.5 ? mix(vec3(1.25, 0.5, 0.07), vec3(1.3, 1.0, 0.5), (heat - 0.5) * 2.0) : mix(vec3(0.85, 0.08, 0.03), vec3(1.25, 0.5, 0.07), heat * 2.0);
+        float a = smoothstep(0.0, 0.22, heat) * smoothstep(0.0, 0.4, f) * (1.0 - smoothstep(0.82, 1.0, vT));
+        gl_FragColor = vec4(c, a * clamp(uPow, 0.0, 1.0));
+      }`,
+  });
+}
 
 class RacerRig {
   constructor(game, model) {
@@ -24389,21 +24539,32 @@ class RacerRig {
       }));
       this.beams.layers.set(1);
       fx.add(this.beams); }
-    // flames from both stacks (see starPlumes, in 20j): each in a holder that stands on its stack's mouth and leans back with the wind
-    this.FU = { uTime: { value: 0 }, uLen: { value: new THREE.Vector2(1, 1) }, uPow: { value: new THREE.Vector2(0, 0) }, uHurt: { value: 0 },
-      uHot: { value: new THREE.Color(3.2, 3.0, 2.5) }, uCool: { value: new THREE.Color(3.2, 1.5, 0.3) }, uTail: { value: new THREE.Color(2.6, 0.55, 0.16) } }; // (white-hot at the mouth, gold, orange-red at the tip: against a road lit cyan and magenta, fire is the one warm thing)
-    this.plumeMat = starPlumeMaterial(this.FU);
-    this.plumes = [0, 1].map((i) => {
-      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.3, len: 1.0, kind: 0, ph: i * 2 }]), this.plumeMat);
-      m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
-      const glow = glowSprite(new THREE.Color(2.4, 1.2, 0.35), 0.5, 0);
-      glow.renderOrder = 5; glow.position.z = 0.35; // (a little way down the flame: clear of the egg, which stands between the stacks and the lens)
-      hold.add(m, glow);
-      hold.position.copy(mouth[i]);
+    // fire (see rigFlameGeo): two tongues that trail straight back from each stack's mouth when it floors it; one pair
+    // that licks up from the left stack on the last life; three that stand on the hood once the engine has gone
+    this.flameGeo = rigFlameGeo();
+    const fire = (list, at) => {
+      const hold = new THREE.Group(), ms = list.map(([r, ph, x, y, k]) => {
+        const m = new THREE.Mesh(this.flameGeo, rigFlameMat(ph));
+        m.scale.set(r, r, 1); m.position.set(x || 0, y || 0, 0); m.userData.k = k || 1;
+        m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
+        hold.add(m);
+        return m;
+      });
+      if (at) hold.position.copy(at);
       hold.visible = false;
       fx.add(hold);
-      return { hold, m, glow };
+      return { hold, ms };
+    };
+    this.plumes = [0, 1].map((i) => {
+      const p = fire([[0.27, i * 2.1], [0.16, 3.3 + i * 1.7, (i ? -1 : 1) * 0.1, 0.11, 0.62]], mouth[i]);
+      p.glow = glowSprite(new THREE.Color(1.0, 0.42, 0.08), 0.5, 0); // (a small warm glow at the mouth: the tongue itself is the fire)
+      p.glow.renderOrder = 5; p.glow.position.z = 0.3;
+      p.hold.add(p.glow);
+      return p;
     });
+    this.burnF = fire([[0.36, 5.1], [0.21, 7.7, 0.18, 0, 0.62]], mouth[0]);
+    this.wreckF = fire([[0.46, 1.3], [0.36, 4.2, 0.55, 0, 0.8], [0.3, 8.8, -0.5, 0, 0.66]], null);
+    this.fireK = 0; this.ablaze = false; this.flare = 0; this.smokeT = 0; this.emberT = 0;
     // the light the flames throw: on the road behind it (a pool that flickers), and on its own deck and egg
     this.roadGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.roadGlow.rotation.x = -H; this.roadGlow.position.set(0, 0.07, 2.6); this.roadGlow.scale.set(6.4, 8.6, 1); this.roadGlow.renderOrder = 2; this.roadGlow.layers.set(1); this.roadGlow.visible = false;
@@ -24453,6 +24614,8 @@ class RacerRig {
     // two rims of real light, one from each side (their colours are the sky's: see RacerSky)
     this.rimA = new THREE.DirectionalLight(0xff3ad4, 0); this.rimA.position.set(-9, 2.4, -3.5);
     this.rimB = new THREE.DirectionalLight(0x35efff, 0); this.rimB.position.set(9, 2.4, -3.5);
+    // and a warm one from the lens's side: whatever of the rig faces the lens keeps its shape (a half-spin, the turn at the end, night)
+    this.lensLight = new THREE.DirectionalLight(0xffd2a8, 0); this.lensLight.position.set(0, 4.5, 14);
 
     // ---- springs and the show's own motion (look only)
     this.heave = { x: 0, v: 0 }; this.roll = { x: 0, v: 0 }; this.pitch = { x: 0, v: 0 };
@@ -24468,7 +24631,7 @@ class RacerRig {
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._c = new THREE.Color();
     // (the ribbons and the two rim lights stand in the scene itself: added last, so a model that fails leaves nothing behind)
     this.trails.forEach((tr) => g.scene.add(tr.t.mesh));
-    g.scene.add(this.rimA, this.rimB);
+    g.scene.add(this.rimA, this.rimB, this.lensLight);
   }
   // ---- where things are on it, in the world (each fills `out` and returns it) -----------------------------------
   // the mouth of an exhaust stack (0: its left, the left of the screen; 1: its right)
@@ -24527,7 +24690,7 @@ class RacerRig {
     const g = this.g, d = VFX.dt, t = VFX.t, h = Math.min(d, 1 / 30), U = this.U, UE = this.UE, P = this.P, S = RIG.S, rig = this.rig;
     const quiet = REDUCED_MOTION || GFX.calm, calm = quiet ? 0.45 : 1, n = g.round ? g.round.n : 4;
     // (the game holds its boost until the next question. A rig that has just been knocked, or has just had a claim paid, is not flooring it: its stacks go out)
-    const boost = g.boostRate && !(g.stage && g.state !== "ask" && g.stage.verdict && !g.stage.verdict.ok) ? 1 : 0;
+    const boost = g.boostRate && !(g.stage && g.state !== "ask" && g.stage.verdict && !g.stage.verdict.ok) && !(g.state !== "ask" && g.quiz && g.quiz.sheet) ? 1 : 0; // (nor once the explanation is up: the surge is the gate's, the reading is quiet)
     const steer = clamp((g.lane === null ? 0 : laneX(g.lane, n)) - g.carX, -2.5, 2.5);
     // (the game lays a bob and a bank on the whole car each frame: the suspension below replaces them)
     this.car.position.y = 0; this.car.rotation.z = 0;
@@ -24692,7 +24855,12 @@ class RacerRig {
     // struck: a red rim for a moment; and for a moment after it cannot be struck again: its edges pulse (under three times a second)
     this.blink = g.el && g.el.dataset.blink ? Math.min(1, this.blink + d * 8) : Math.max(0, this.blink - d * 5);
     const bl = this.blink * (quiet ? 0.5 : 0.5 + 0.5 * Math.sin(t * 2.6 * Math.PI * 2));
-    U.uSkHit.value.setRGB(1.7, 0.14, 0.24).multiplyScalar(this.struck * this.struck * 0.34).add(this._c.setRGB(0.8, 0.95, 1.1).multiplyScalar(bl * 0.42)); // (rims only, and never white: its lacquer keeps its colours under them)
+    U.uSkHit.value.setRGB(1.7, 0.14, 0.24).multiplyScalar(this.struck * this.struck * 0.34).add(this._c.setRGB(0.8, 0.95, 1.1).multiplyScalar(bl * 0.6)); // (rims only, and never white: its lacquer keeps its colours under them)
+    // what faces the lens is never left black: a warm light from the lens's side as it turns (a half-spin, the turn at
+    // the end), a little of it always; the blink after a blow lifts the whole rig (it brightens, it never darkens)
+    const faced = 0.5 - 0.5 * Math.cos(this.yaw);
+    this.lensLight.intensity = 0.14 + 0.85 * faced + 0.35 * bl;
+    U.uSkFill.value.add(this._c.setRGB(1.0, 0.76, 0.54).multiplyScalar(0.05 + 0.18 * faced + 0.22 * bl));
     // the egg's own light
     const eg = this.pow * dead * (1 - 0.6 * flick), gl = 0.85 + 0.75 * this.eggK + 1.3 * pulse;
     UE.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(eg * gl);
@@ -24701,24 +24869,40 @@ class RacerRig {
     UE.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(0.5);
     this.eggLight.intensity = eg * (0.5 + 0.9 * this.eggK + 2.4 * pulse);
     // ---- flames from both stacks, leaning back with the wind; their light on the road and on the deck
-    const fl = this.flame * (quiet ? 1 : 0.86 + 0.14 * Math.sin(t * 16)), FU = this.FU;
-    FU.uTime.value = t;
-    FU.uLen.value.set(0.6 + 1.25 * fl, 1);
-    FU.uPow.value.set(fl * 3.0, 0); // (bright enough to stand on a road that is itself lit: it is seen from behind against the lanes' own colours)
+    const fl = this.flame * (quiet ? 1 : 0.9 + 0.1 * Math.sin(t * 16));
+    const seen = 1 - smoothstep(3, 6.5, this.off.z); // (as it drives in from behind the lens, its fire's light is not thrown over the picture)
     this.car.updateMatrixWorld(true);
+    const tongues = (p, len, pow, wob) => { for (const m of p.ms) { const u = m.material.uniforms; u.uTime.value = t; u.uLen.value = len * m.userData.k; u.uPow.value = pow; u.uWob.value = wob; } };
     this.plumes.forEach((p, i) => {
       p.hold.visible = this.flame > 0.02;
       if (!p.hold.visible) return;
       this.fx.worldToLocal(this.stack(i, p.hold.position));
-      // each flame is blown out to its own side, back and a little down with the wind: from behind, two swept wings of
-      // fire from the stack mouths, against the road. (Straight up they would cross the lane badges; straight back they
-      // would point at the lens and be a dot.)
-      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.78, -0.2 + (quiet ? 0 : 0.06 * Math.sin(t * 7 + i * 2)), 0.6).normalize());
-      p.glow.scale.setScalar(0.7 + 0.6 * fl); p.glow.material.opacity = 0.75 * fl;
+      // each trails back from its stack's mouth with the wind, rising a little as fire does (dead level it would point
+      // at the lens behind and above it, and be seen end on)
+      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.1, 0.36 + (quiet ? 0 : 0.04 * Math.sin(t * 7 + i * 2)), 1).normalize());
+      tongues(p, 1.2 + 2.6 * fl, Math.min(1, fl * 1.6), quiet ? 0.4 : 1);
+      p.glow.scale.setScalar(0.45 + 0.3 * fl); p.glow.material.opacity = 0.3 * fl * seen;
     });
+    // the last life: the left stack burns, a tongue that licks up and back
+    this.burnF.hold.visible = this.hurt > 0.03 && this.wreckT < 0.3;
+    if (this.burnF.hold.visible) {
+      this.fx.worldToLocal(this.stack(0, this.burnF.hold.position));
+      this.burnF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(-0.2, 0.5 + (quiet ? 0 : 0.06 * Math.sin(t * 5.3)), 0.85).normalize());
+      tongues(this.burnF, (1.25 + (quiet ? 0 : 0.15 * Math.sin(t * 9.1))) * (0.5 + 0.5 * this.hurt), Math.min(1, this.hurt * 1.5), quiet ? 0.5 : 1.4);
+    }
+    // the wreck: fire stands on its hood (it leaps as the engine goes, then burns steadily)
+    this.fireK += ((this.ablaze ? 1 : 0) - this.fireK) * Math.min(1, d * 6);
+    this.flare = Math.max(0, this.flare - d * 2.0);
+    this.wreckF.hold.visible = this.fireK > 0.03;
+    if (this.wreckF.hold.visible) {
+      this.fx.worldToLocal(this.hoodAt(this.wreckF.hold.position));
+      this.wreckF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(0.1 * this.wreckSd, 1, 0.14).normalize());
+      this.wreckF.hold.scale.setScalar(1 + 0.7 * this.flare);
+      tongues(this.wreckF, (1.9 + (quiet ? 0 : 0.25 * Math.sin(t * 6.7))) * this.fireK * (1 + 0.9 * this.flare), Math.min(1, this.fireK * 1.4), quiet ? 0.5 : 1.3);
+    }
     this.roadGlow.visible = this.flame > 0.02;
-    this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl);
-    this.flameLight.intensity = 2.6 * fl;
+    this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl * seen);
+    this.flameLight.intensity = 2.6 * fl * seen + 1.6 * this.hurt * (this.wreckT < 0.3 ? 1 : 0) + 3.2 * this.fireK;
     this.eggLight.position.copy(this.fx.worldToLocal(this.eggAt(this._v)));
     this.eggHalo.position.copy(this.eggLight.position);
     this.eggHalo.material.opacity = Math.min(0.6, eg * (0.16 + 0.12 * this.eggK + 0.4 * pulse));
@@ -24737,11 +24921,29 @@ class RacerRig {
       if ((this.puffT -= d) <= 0) {
         this.puffT = this.flame > 0.3 ? 0.05 : 0.14;
         const i = Math.random() < 0.5 ? 0 : 1, p = this.stack(i, this._v);
-        kit.smoke(p, { size: 0.3 + 0.25 * this.flame, life: 0.55, a: 0.22 + 0.2 * this.hurt, cold: this.flame < 0.3, color: 0x2c2244, rise: 1.4, vel: this._w.set(rand(-0.3, 0.3), 1.2, 3.5 + sp * 0.06) });
+        kit.smoke(p, { size: 0.3 + 0.25 * this.flame, life: 0.55, a: 0.2, cold: this.flame < 0.3, color: 0x5a5478, rise: 1.4, vel: this._w.set(rand(-0.3, 0.3), 1.2, 3.5 + sp * 0.06) });
+      }
+      // the last life's stack, and the wreck: dark smoke that streams back along the road, lit from under by its fire
+      // while it is young (it leaves upward and to the side: it never lies over the rig); embers
+      const burning = this.fireK > 0.4 ? 2 : this.hurt > 0.4 && this.wreckT < 0.3 ? 1 : 0;
+      if (burning && (this.smokeT -= d) <= 0) {
+        this.smokeT = burning === 2 ? 0.09 : 0.065;
+        if (burning === 1) { // (low and to the left, over the road: it is seen against the lanes' light, and it never lies over the rig)
+          const p = this.stack(0, this._v); p.x -= 0.35; p.y += 0.45; p.z += 0.5;
+          kit.smoke(p, { size: 0.9, life: 1.0, a: 0.55, color: 0x3a3552, rise: 0.3, vel: this._w.set(rand(-3.2, -2.0), rand(0.2, 0.7), 2 + sp * 0.03) });
+        } else {
+          const p = this.hoodAt(this._v); p.y += 1.6;
+          kit.smoke(p, { size: 1.0, life: 1.3, a: 0.5, color: 0x4a4466, rise: 2.0, vel: this._w.set(rand(-0.5, 0.5) + 0.5 * this.wreckSd, rand(1.2, 2.0), rand(0.8, 1.8)) });
+        }
+      }
+      if (burning && (this.emberT -= d) <= 0) {
+        this.emberT = 0.09;
+        const p = burning === 1 ? this.stack(0, this._v) : this.hoodAt(this._v); p.y += 0.5;
+        kit.embers(p, 0xff8a3a, { n: 2, radius: burning === 2 ? 0.5 : 0.2, life: 1.1, speed: 2.6, rise: 1.6 });
       }
       if (boost && this.flame < 0.6 && (this.sparkT -= d) <= 0) { this.sparkT = 0.05; kit.sparks(this.stack(Math.random() < 0.5 ? 0 : 1, this._v), RIG.FLAME[0], { n: 3, speed: 5, dir: this._w.set(0, 0.8, 0.6), spread: 0.6, life: 0.35, len: 0.4, w: 0.05, gravity: 6 }); }
     }
-    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 2.25, 1.0)), 0.75, 0.3 + 0.7 * Math.max(this.heat, this.flame));
+    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 3.05, 1.7)), 0.85, 0.3 + 1.25 * Math.max(this.heat * 0.5, this.flame, this.hurt * 0.6)); // (the air over and behind the tongues swims, strongly enough to be seen; the rig under it is left as it is)
     // ---- ribbons ride the rear frames and hubs through lane changes and slides
     const tI = 0.62 * (0.8 + 0.5 * smoothstep(0, 0.3, this.brake)) * this.pow * dead; // (ribbons of light, not jets: they do not brighten with speed)
     for (const tr of this.trails) {
@@ -24753,6 +24955,8 @@ class RacerRig {
   dispose() {
     blasterDropMaps(this.mats);
     this.mats.forEach((m) => m.dispose());
+    [...this.plumes, this.burnF, this.wreckF].forEach((p) => p.ms.forEach((m) => m.material.dispose()));
+    this.flameGeo.dispose();
     this.trails.forEach((tr) => { this.g.scene.remove(tr.t.mesh); tr.t.mesh.geometry.dispose(); tr.t.mesh.material.dispose(); });
   }
 }
@@ -24780,7 +24984,7 @@ class RacerRig {
 //                       nest egg, fireworks, and away down the road toward the golden egg on the horizon
 // Nothing here is read by a rule. Light has a shape: a blast is a small hot core, lobes of fire in its own colour,
 // a ring, streaks and smoke; smoke and wreckage stay in the palette (violet-grey, magenta and cyan glints).
-const RSTAGE = { SMOKE: 0x2c2244, WRECK: 0x241c38, MINT: 0x4dffa6, GLASS: 0x5a1026, REJECT: 0xff4a5e, GOLD: 0xffc93d };
+const RSTAGE = { SMOKE: 0x5c5678, WRECK: 0x241c38, MINT: 0x4dffa6, GLASS: 0x5a1026, REJECT: 0xff4a5e, GOLD: 0xffc93d };
 class RacerStage {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
@@ -24822,13 +25026,14 @@ class RacerStage {
       return { m, t: 0, dur: 1, col: [1, 1, 1], k: 1 };
     });
     // skid marks: short strokes laid under the locked tyres. Each burns for a moment and is then a dark stroke that the road carries away
-    { const N = (this.MN = 40), zero = new THREE.Matrix4().makeScale(0, 0, 0), mg = new THREE.PlaneGeometry(1, 1);
+    { const N = (this.MN = 72), zero = new THREE.Matrix4().makeScale(0, 0, 0), mg = new THREE.PlaneGeometry(1, 1);
       mg.rotateX(-H);
       const mk = (mat, order) => { const m = new THREE.InstancedMesh(mg, mat, N); m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.renderOrder = order; m.layers.set(1); for (let i = 0; i < N; i++) { m.setMatrixAt(i, zero); m.setColorAt(i, new THREE.Color(0, 0, 0)); } s.add(m); return m; };
-      this.markDark = mk(new THREE.MeshBasicMaterial({ color: 0x030108, transparent: true, opacity: 0.8, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 1);
+      this.markDark = mk(new THREE.MeshBasicMaterial({ color: 0x020106, transparent: true, opacity: 0.72, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 1);
       this.markHot = mk(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 2);
+      this.markHot.visible = false; // (rubber, not paint: the strokes are dark from the first frame)
       this.marks = Array.from({ length: N }, (_, i) => ({ i, on: false, x: 0, z: 0, a: 0, len: 1, age: 0 }));
-      this.markI = 0; this._zero = zero; }
+      this.markI = 0; this._zero = zero; this.markAt = [null, null, null, null]; }
     // the wrong lane's light, hard: a red pane with a star of cracks, seen for a few frames as it breaks
     { const c = document.createElement("canvas");
       c.width = c.height = 256;
@@ -24899,6 +25104,12 @@ class RacerStage {
   }
   // a score popup, outlined in black so it reads on whatever is behind it
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 7px #000"; }
+  // (and it holds at full strength for most of its second, then goes: the stock floater fades from its first frame)
+  hold(el) { if (!el || !el.animate) return; el.style.animation = "none"; el.animate([{ transform: "translateY(0)", opacity: 1 }, { transform: "translateY(-16px)", opacity: 1, offset: 0.74 }, { transform: "translateY(-34px)", opacity: 0 }], { duration: 990, easing: "linear", fill: "forwards" }); }
+  // (the kit's own smoke for a reject or a struck plate is heavy and dark, and the road carries it back over the rig,
+  // which it blacks out: here those are thrown without it. The crash has its own thin violet-grey smoke, which leaves
+  // to the side.)
+  dry(fn) { const kit = this.kit; kit.smoke = () => {}; try { fn(); } finally { delete kit.smoke; } }
   // how fast the road runs, as a share of what the game asks for (a blow costs the rig its speed for a moment)
   speedTo(k, rate) { this.speedGo = k; this.speedRate = rate; }
   // (the game holds its boost until the next question: a rig that has taken a blow goes on at its cruising speed, not the boost's)
@@ -24939,6 +25150,16 @@ class RacerStage {
     this.overK = 1;
     if (how === "right") this.right(o.right, o.gain); else if (how === "insured") this.insured(o.picked); else this.crash(o.picked);
     if (o.policy) g.show.wait(0.3, () => { if (!g.unmounted) this.policy(); }); // a fifth answer in a row: a policy is issued
+    // the shared call-out of a quick answer, or of a streak lost, stands beside the rig (over the amount), outlined: not
+    // across the gantry's boards as they go over the lens
+    const at = this.screen(this.rig.centre(this._v)), room = at.x < GFX.w / 2 ? 1 : -1;
+    UI.root.querySelectorAll(".floater:not(.big)").forEach((el) => {
+      if (el.dataset.staged || !/LIGHTNING|QUICK DRAW|STREAK LOST/.test(el.textContent)) return;
+      el.dataset.staged = "1";
+      el.style.left = Math.round(clamp(at.x + (room > 0 ? 56 : -56 - 118), 8, Math.max(8, GFX.w - 126))) + "px";
+      el.style.top = Math.round(at.y - 20) + "px";
+      this.outline(el); this.hold(el);
+    });
   }
   // a right gate: the lane's light breaks over the rig, clean and bright, and the deposit goes to the nest egg
   right(slot, gain) {
@@ -24975,7 +25196,7 @@ class RacerStage {
     // the amount stands beside the rig, on the side with more room: clear of the burst over its nose and of the lane badges above it
     const at = this.screen(rig.centre(this._v)), room = at.x < GFX.w / 2 ? 1 : -1;
     UI.floater("+" + money(gain), clamp(at.x + (room > 0 ? 52 : -52 - 150), 8, Math.max(8, GFX.w - 158)), at.y + 4, COLORS.lime, true);
-    this.outline(UI.root.lastElementChild);
+    this.outline(UI.root.lastElementChild); this.hold(UI.root.lastElementChild);
   }
   // a fifth right answer in a row: the policy is issued. A soft swell of the shield, and its light goes to the HUD
   policy() {
@@ -24996,13 +25217,13 @@ class RacerStage {
     const p = rig.nose(new THREE.Vector3()).setY(1.15), back = this._v.set(-sd * 0.15, 0.5, 1).normalize().clone();
     if (glass) { // the lane's light is hard: it shatters over the nose and the pieces go back over the rig
       this.breakPane(p);
-      kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 6 : 18, size: 0.78, speed: 12, color: RSTAGE.GLASS, hot: RSTAGE.REJECT, dir: back, spread: 1.1, gravity: 13, life: 1.0, radius: 1.3, k: 1.4 });
+      kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 3 : 7, size: 0.4, speed: 13, color: 0x1c1830, hot: 0xffdce8, dir: back, spread: 1.0, gravity: 14, life: 0.7, radius: 1.1 }); // (a few dark splinters that glint as they turn: glass, not confetti)
       kit.sparks(p, RSTAGE.REJECT, { n: quiet ? 8 : 16, speed: 13, dir: back, spread: 1.2, life: 0.45, len: 0.8, w: 0.07, gravity: 9, k: 1.5 });
-      kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.25 });
+      this.dry(() => kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.25 }));
     } else { // no lane at all: it runs onto the bollard between two lanes (metal, not glass)
-      kit.hull(p, 0xff7a4a, { size: 1.7, dir: back });
+      this.dry(() => kit.hull(p, 0xff7a4a, { size: 1.7, dir: back }));
       kit.debris(p, { n: quiet ? 5 : 12, size: 0.66, speed: 11, color: RSTAGE.WRECK, hot: 0xff5a8a, dir: back, spread: 1.0, gravity: 13, life: 0.9, radius: 0.5 });
-      kit.fizzle(this._w.copy(p).setY(1.9), { size: 1.2 });
+      this.dry(() => kit.fizzle(this._w.copy(p).setY(1.9), { size: 1.2 }));
     }
     // three frames on: a small dark blast low on its nose (fire, smoke, embers), and its light on the road
     g.show.wait(0.05, () => {
@@ -25010,7 +25231,7 @@ class RacerStage {
       // (dark: lobes of deep red fire with no white heart, heavy smoke, embers. A reject is not a firework.)
       const q = rig.nose(this._w).setY(0.8).clone(), sz = 0.6 + 0.3 * hard;
       for (let i = 0; i < (quiet ? 2 : 4); i++) { const a = rand(6.283), v = new THREE.Vector3(Math.cos(a) * 1.6, rand(0.6, 1.8), Math.sin(a) * 0.8 + 1.2).multiplyScalar(sz); kit.fire(this._u.copy(q).addScaledVector(v, 0.15), { size: rand(0.6, 0.9) * sz, life: rand(0.3, 0.45), vel: v, rise: 0.4, color: 0xc02428, k: 0.8 }); }
-      for (let i = 0; i < (quiet ? 2 : 3); i++) kit.smoke(this._u.set(rand(-0.7, 0.7), rand(0.3, 1.0), rand(-0.6, 0.2)).add(q), { size: rand(0.7, 1.0) * sz, life: rand(0.6, 0.9), rise: 1.2, a: 0.42, cold: true, color: RSTAGE.SMOKE, vel: this._v.set(rand(-1, 1), 1.6, 4.5) }); // (thin enough that the rig is seen through it, and gone back over the road)
+      for (let i = 0; i < 2; i++) kit.smoke(this._u.set(rand(-0.5, 0.5) - sd * 0.9, rand(0.5, 1.1), rand(-0.6, 0.1)).add(q), { size: rand(0.6, 0.85) * sz, life: rand(0.55, 0.8), rise: 1.9, a: 0.26, color: RSTAGE.SMOKE, vel: this._v.set(-sd * rand(1.6, 3.0), 2.2, 2.6) }); // (violet-grey, lit from under by the blast, thin, and gone up and to the side: the rig is never under it)
       kit.embers(q, 0xff5a4a, { n: 8, radius: 0.6, life: 1.0 });
       kit.light(q, 0xff2a30, 2.2, 0.3, 12);
       this.glow(q, 0xd02024, 6.5, 0.45, 0.5);
@@ -25117,10 +25338,7 @@ class RacerStage {
     HudFX.low(g.el, !!on);
     if (on === 1) { this.alarmOn(); this.lowT = 0; } else { Sound.stopLoop("racer-alarm", 0.3); this.alarm = false; }
     if (this.burn) { this.burn.on = false; this.burn = null; }
-    if (on && !(REDUCED_MOTION || GFX.calm)) { // its left stack burns: flame at the mouth, dark smoke trailing up and back, clear of the egg
-      const hot = on === 2 ? 1.5 : 1;
-      this.burn = this.kit.trailer((v) => rig.stack(0, v), { smoke: 0.9, fire: 0.75, sparks: 0.4, rate: 18 * hot, size: 0.85 * hot, vel: new THREE.Vector3(-1.1, 1.7, 3.6), life: 0.8, color: 0xff6a3a, a: 0.5 });
-    }
+    // (from here its left stack burns: a tongue of fire, dark smoke streaming back, embers. The rig's own: see RacerRig.update)
   }
 
   // ---- the run ends (the rule: gameOver). full: the whole career was driven; rich: with a million ------------------
@@ -25172,17 +25390,18 @@ class RacerStage {
         Sound.sfx("crash_glass", pan, { delay: 0.05, vol: 0.7 });
         Sound.sfx("debris", pan, { delay: 0.3, vol: 0.8 });
         // it burns where it stands: fire over the hood, smoke going straight up now that the road has stopped
-        if (!quiet) this.fire = kit.trailer((v) => rig.hoodAt(v), { smoke: 0.9, fire: 0.9, sparks: 0.35, rate: 24, size: 0.95, vel: new THREE.Vector3(0.3 * sd, 2.6, 0.6), life: 0.95, color: 0xff6a2a, a: 0.5 });
+        rig.ablaze = true; rig.flare = 1; // (tongues of fire leap from the hood with the blast and stand there: see RacerRig.update)
       });
       g.show.wait(0.78, () => { // a tank goes, a moment after the engine
         if (g.unmounted) return;
         const q = rig.centre(new THREE.Vector3()).add(this._v.set(-sd * 0.9, -0.2, 0.9));
-        kit.explosion(q, { size: 0.6, color: 0xff3a8a, ring: false, smokeColor: RSTAGE.SMOKE });
-        this.glow(q, 0xff3a8a, 8, 0.5, 0.8);
+        kit.explosion(q, { size: 0.6, color: 0xff6a20, ring: false, smokeColor: RSTAGE.SMOKE });
+        this.glow(q, 0xff5a20, 8, 0.5, 0.8);
+        rig.flare = Math.max(rig.flare, 0.7);
         g.shake(0.1);
         Sound.sfx("explosion_small", pan, { rate: 0.9 });
       });
-      g.show.wait(1.1, () => { if (!g.unmounted) Sound.sfx("gameover"); });
+      g.show.wait(0.1, () => { if (!g.unmounted) Sound.sfx("gameover", 0, { vol: 0.85 }); }); // (with the skid, as the game always had it: it has rung out before the results and their trophy)
       g.show.wait(1.75, () => this.loops(false));
     }
   }
@@ -25205,6 +25424,7 @@ class RacerStage {
     if (this.snap > 0 && --this.snap === 0) { GFX.ab = Math.min(GFX.ab, 0.6); GFX.punch = Math.min(GFX.punch, 0.002); } // (the colours split and the picture jumps for three frames, no longer: it is sharp while the blow is read)
     if (this.verdict) this.verdict.t += d;
     if (g.state === "ask") { this.verdict = null; if (this.speedGo < 1 && this.overT < 0) this.speedTo(1, 1.5); } // a new question: the road is the game's again
+    if (g.state !== "ask" && g.state !== "over" && g.quiz && g.quiz.sheet && this.verdict && this.verdict.ok && this.speedGo === 1 && g.boostRate) this.speedTo(this.cruise(), 1.3); // (the explanation is up: the road settles to its cruise, and the lens's streak and its split colours with it)
     this.speedK += (this.speedGo - this.speedK) * Math.min(1, d * this.speedRate * 3);
     this.jolt = Math.max(0, this.jolt - d * 2.6);
     this.camX *= Math.pow(0.02, d);
@@ -25236,8 +25456,8 @@ class RacerStage {
     if (this.skidT > 0 || (rig.cheerT >= 0 && rig.locked)) {
       this.skidT = Math.max(0, this.skidT - d);
       if ((this.markT -= d) <= 0 && d > 0) {
-        this.markT = 0.028;
-        for (const i of [0, 1, 2, 3]) this.mark(rig.contact(i, this._v), rig.yaw);
+        this.markT = 0.04;
+        for (const i of [0, 1, 2, 3]) this.mark(i, rig.contact(i, this._v));
         if (!quiet) {
           const i = Math.floor(Math.random() * 4), p = rig.contact(i, this._v);
           kit.smoke(p, { size: 0.6, life: 0.65, a: 0.34, cold: true, color: 0x6a6790, rise: 0.9, vel: this._w.set(rand(-1, 1), 0.4, 2.5) }); // (pale violet-grey: rubber smoke that is seen against a dark road)
@@ -25245,24 +25465,20 @@ class RacerStage {
         }
       }
     }
-    // marks: the road carries them back; each burns for a moment, then it is a dark stroke
+    // marks: dark strokes of rubber that the road carries back
     { let any = false;
+      for (const at of this.markAt) if (at) { at.z += step; at.age += d; }
       for (const mk of this.marks) {
         if (!mk.on) continue;
         mk.z += step; mk.age += d;
-        if (mk.z > 14 || mk.age > 2.2) { mk.on = false; this.markDark.setMatrixAt(mk.i, this._zero); this.markHot.setMatrixAt(mk.i, this._zero); continue; }
+        if (mk.z > 14 || mk.age > 2.4) { mk.on = false; this.markDark.setMatrixAt(mk.i, this._zero); continue; }
         any = true;
-        this._m.compose(this._v.set(mk.x, 0.05, mk.z), this._q.setFromEuler(this._e.set(0, mk.a, 0)), this._s.set(0.34, 1, mk.len));
+        this._m.compose(this._v.set(mk.x, 0.05, mk.z), this._q.setFromEuler(this._e.set(0, mk.a, 0)), this._s.set(0.24, 1, mk.len));
         this.markDark.setMatrixAt(mk.i, this._m);
-        const hot = Math.max(0, 1 - mk.age / 0.36);
-        this._m.compose(this._v.set(mk.x, 0.06, mk.z), this._q, this._s.set(0.16, 1, mk.len));
-        this.markHot.setMatrixAt(mk.i, hot > 0 ? this._m : this._zero);
-        this.markHot.setColorAt(mk.i, this._c.setRGB(1.6 * hot, 0.55 * hot, 0.16 * hot));
       }
-      this.markDark.visible = this.markHot.visible = any || this.marksLive;
+      this.markDark.visible = any || this.marksLive;
       this.marksLive = any;
-      this.markDark.instanceMatrix.needsUpdate = this.markHot.instanceMatrix.needsUpdate = true;
-      if (this.markHot.instanceColor) this.markHot.instanceColor.needsUpdate = true; }
+      this.markDark.instanceMatrix.needsUpdate = true; }
     // ---- the pane, the shield's shell, the rings, the pools of light
     if (this.paneT > 0) { this.paneT -= d; const k = clamp(this.paneT / 0.14, 0, 1); this.pane.material.opacity = k * 0.66; this.pane.scale.setScalar(1 + (1 - k) * 0.16); this.pane.visible = this.paneT > 0; }
     { const su = this.shellMat.uniforms;
@@ -25316,10 +25532,14 @@ class RacerStage {
     if (this.engine && !(g.state === "over" && !this.full)) Sound.loopSet("racer-engine", { rate: (0.72 + 0.42 * rev + 0.14 * rig.flame) * sput, vol: 0.18 + 0.1 * rev + 0.08 * rig.flame });
     if (this.low === 1 && !this.alarm && g.state !== "over" && (this.lowT -= d) <= 0) { this.lowT = 1.125; Sound.sfx("alarm", 0, { vol: 0.6 }); }
   }
-  // a stroke of rubber under a tyre (a: how the rig is turned, so the stroke lies along its slide)
-  mark(p, a) {
-    const mk = this.marks[this.markI++ % this.MN];
-    mk.on = true; mk.x = p.x; mk.z = p.z + 0.2; mk.a = a * 0.5; mk.len = 0.95; mk.age = 0;
+  // a stroke of rubber under tyre i: from where it last touched the road (carried back since) to where it touches now
+  mark(i, p) {
+    const was = this.markAt[i], x = p.x, z = p.z + 0.2;
+    if (was && was.age < 0.12) {
+      const dx = x - was.x, dz = z - was.z, mk = this.marks[this.markI++ % this.MN];
+      mk.on = true; mk.x = (x + was.x) / 2; mk.z = (z + was.z) / 2; mk.a = Math.atan2(dx, dz); mk.len = Math.hypot(dx, dz) + 0.3; mk.age = 0;
+    }
+    this.markAt[i] = { x, z, age: 0 };
   }
   dispose() {
     this.loops(false);

@@ -1,0 +1,33 @@
+{
+ "name": "prop-vault",
+ "triangles": 19997,
+ "bytes": 818056,
+ "tex": 1024,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.5013,
+    0,
+    -0.1935
+   ],
+   "max": [
+    0.5013,
+    1,
+    0.1935
+   ],
+   "tris": 19997
+  }
+ },
+ "anchors": {},
+ "size": [
+  1.0025882720947266,
+  1,
+  0.3870103359222412
+ ],
+ "source": "cand/props/prop-vault-sd-0.tripo.glb"
+}

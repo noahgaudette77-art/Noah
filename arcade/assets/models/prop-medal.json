@@ -1,0 +1,33 @@
+{
+ "name": "prop-medal",
+ "triangles": 10000,
+ "bytes": 471124,
+ "tex": 1024,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.3037,
+    0,
+    -0.2218
+   ],
+   "max": [
+    0.3037,
+    1,
+    0.2218
+   ],
+   "tris": 10000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.6074689626693726,
+  1,
+  0.4436890780925751
+ ],
+ "source": "cand/props/prop-medal-sd-0.tripo.glb"
+}

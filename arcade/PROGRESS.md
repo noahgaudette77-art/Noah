@@ -2559,7 +2559,7 @@ Before Phase 3 the owner gets a short projected spend for fal and Tripo, per bos
 |---|---|---|
 | 0 | Setup: keys tested, asset folders, glTF loader with compression, audio manager (mixing, ducking, mute, autoplay rules), sky loader that drives environment light and reflections, `ASSETS.md` with the spend log, `.env` ignored, regression green, commit | done |
 | 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes, commit and push | done (see "Phase 1" below) |
-| 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | |
+| 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | done (see "Phase 2" below) |
 | 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | |
 | 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo or Rodin models, one attempt each, shared across screens, light enough for a phone; free CC0 models or simple shapes if a balance runs low | |
 | 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | |
@@ -2675,4 +2675,55 @@ every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
 - Silhouette edges are not anti-aliased beyond the capture's 2x scale; the rim light makes the steps visible up close.
 - The reduced-effects path is coded but was not captured.
 - Background traffic and rocks are still the procedural ones, restyled, not generated models.
+
+## Phase 2: Nest Egg Run (done)
+
+**What was built** (code in `src/js/21-racer.js`, `21d-racersky.js`, `21e-racerrig.js`, `21f-racerstage.js`, with
+`21b-racercar.js` and `21c-racerworld.js`; the old car and sky stay as the fallback when the page is opened from
+disk).
+
+1. Sky and light: five panoramas across the career (dawn at 25, day, golden hour, dusk, stars at 65), cross-fading
+   as the landscapes change, as the sky, the scene's light and what the wet road and the lacquer mirror. The game's
+   own golden-egg sun stays, now gold to magenta with a halo and a glint.
+2. The war rig in place of the car: an armoured hauler carrying the nest egg, remade to the owner's rules (one
+   straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights; checked in
+   flat top, side, front and rear views: `docs/combat-pass/racer/warrig-check-flat.jpg`).
+3. Animation: the body on springs (heave, roll in a lane change, squat under boost, dive under braking), wheels
+   that spin and steer, stacks that shudder, the egg rocking in its claws, a drive-in at the start, a half-spin on
+   locked wheels in a crash, a victory turn at retirement.
+4. Impact and feel, on the show clock (the rules' frames are untouched): a right gate (a clean burst in the
+   answer's colour, rings on the road, coins to the nest egg, a surge), a wrong gate (the pane breaks red, splinters,
+   red sparks, a dark blast, skid marks, tyre smoke), taking damage (flash, colour split, shake, the HUD cracks, the
+   life breaks), an insured crash (a shell of mint light takes it), near misses (streaks of air, the rig rocks
+   away), boost (a tongue of fire from each stack, heat haze, light on the road), the last life (a red frame in step
+   with the alarm, a burning stack with smoke streaming back), early retirement and retirement at 65 each staged.
+5. Sound on the frame of its picture (`docs/combat-pass/racer/sound-cues.md`): the engine loop following speed and
+   boost, skids, crashes, near misses, boost, gates, the alarm, the announcer, the music loop.
+
+**The one independent review** (`docs/combat-pass/racer/review.md`): reads at a glance, the rig is good and original
+and keeps the owner's rules, right and wrong cannot be confused; about 4.0 on every axis, cohesion 3.5; eight major
+defects. All eight were fixed in one round:
+
+- A black sky after the tunnel: the tunnel now has arches of light and lamps, its mouth shows the sky beyond, and
+  the open road is under a whole sky from its first frame.
+- Boost flames that read as flat orange wings: narrow tongues trailing back from each stack, gold heart to red tip.
+- The rig going black after a crash and at night: smoke leaves to the side, the blink is a brightening, a warm rim
+  holds its shape at night. (The kit's heavy smoke is not thrown on a reject here.)
+- Shapeless fire and smoke: the same tongues of fire, dark smoke that streams back, embers.
+- Announcer lines colliding: `Sound.say` now speaks one line at a time (a shared change: a late line waits its
+  turn, a stale one is dropped).
+- A flat beige egg sun: gold to magenta, a halo, a glint.
+- Brass gears downtown: dark bodies with rims of neon, the middle of the street open to the egg sun.
+- Placeholder traffic: dark gloss bodies with light bars, lit windows and a line of neon.
+
+**Tests on the final build**: regression from disk IDENTICAL, regression over HTTP with every asset loaded
+IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Traffic is restyled, not remodelled: the cars are still simple shapes beside the rig.
+- The tunnel's mouth is a flat pale rectangle of sky colour until the road opens.
+- The world's buildings and scenery are one matte material; only the rig, the road and the traffic are glossy.
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
+- The skid marks and the wreck's fire are simple; the reduced-effects path was not captured.
 
