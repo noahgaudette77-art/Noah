@@ -390,6 +390,9 @@ const Sound = {
   // Arcade-floor ambience: a low crowd murmur plus distant cabinets beeping.
   ambience(on) {
     if (!this.ctx) return;
+    // (the hall's own recording when it has loaded: a loop under the music, in place of the synth's murmur)
+    if (on && this.bank.hub_hum && Store.settings.sfx) { if (this._amb) this.ambience(false); this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 }); return; }
+    if (!on) this.stopLoop("ambience", 0.6);
     if (on && !this._amb && Store.settings.sfx) {
       const c = this.ctx;
       const src = c.createBufferSource();
@@ -522,6 +525,7 @@ const Sound = {
     get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
     get finalboss() { return this.boss; }, // (the last boss has its own recording; without it, the boss tune)
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
+    get memory() { return this.calm; }, get exam() { return this.calm; }, // (Memory Bank and the Final Exam have their own recordings; without them, the calm tune as before)
   },
   play(name) {
     if (this.trackName === name && (this.timer || this._now)) return;
@@ -581,7 +585,7 @@ const Sound = {
       if (lvl >= 2 && s % 4 === 0) this._tone(this.musicBus, hz(chord[(s / 4 + bar) % 4] + 24), stepDur * 3.5, { type: "square", vol: 0.06, at });
       if (lvl >= 3 && s % 2 === 1) this._tone(this.musicBus, hz(chord[tr.arp[((s - 1) / 2) % tr.arp.length]] + 24), stepDur * 0.9, { type: "triangle", vol: 0.08, at });
       if (s % 8 === 0) this._tone(this.musicBus, 120, 0.14, { type: "sine", slide: -80, vol: 0.55, at });
-      if (s % 8 === 4 && this.trackName !== "calm") this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
+      if (s % 8 === 4 && tr !== this.TRACKS.calm) this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
       this.nextTime += stepDur;
       this.step++;
     }

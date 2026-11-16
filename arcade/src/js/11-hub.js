@@ -836,6 +836,10 @@ class HubScene extends Scene3D {
     this.cabs = [];
     if (!this.has3D) return;
     const s = this.scene;
+    // the generated cabinets, toppers and trophies, when they are in hand (see 11c-hubgen.js); otherwise the hall's own
+    this.gen = hubGenTake();
+    this.hg = this.gen ? new HubGen(this, this.gen) : null;
+    if (this.gen && this.gen.sky && this.gen.sky.env) s.environment = this.gen.sky.env; // (the models mirror the hall's panorama and are lit by it)
     s.background = new THREE.Color(0x07021a);
     s.userData.post = { exposure: 1.06, bloom: 0.33, threshold: 1.38, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
@@ -872,7 +876,7 @@ class HubScene extends Scene3D {
     this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.backLight = new THREE.PointLight(0xa9c6ff, 0, 13, 1.3);
     this.deskLight = new THREE.PointLight(0xffd29a, 0, 3.4, 1.6);
-    this.lightCol = new THREE.Color(CABINETS[this.sel].color);
+    this.lightCol = new THREE.Color((CABINETS[this.sel] || { color: COLORS.gold }).color); // (the seventh stop, in the generated hall, is the trophy stand)
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight, this.backLight, this.deskLight);
     // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
     this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
@@ -900,13 +904,18 @@ class HubScene extends Scene3D {
     this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
     const artTex = this.canvasTex(hubArtAtlas());
-    const B = { lit: new HubBatch("lit", 0.6), art: new HubBatch("art"), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
+    const v = this.gen ? "-gen" : ""; // (the generated hall's batches are cached apart from the hall's own)
+    const B = { lit: new HubBatch("lit" + v, 0.6), art: new HubBatch("art" + v), glow: new HubBatch("glow" + v), marq: new HubBatch("marq" + v), panels: new HubBatch("panels" + v), signs: new HubBatch("signs" + v), screens: new HubBatch("screens" + v), cones: new HubBatch("cones" + v) };
     this.dustPts = { p: [], x: [], g: [] };
     const K = new HubKit();
     this.addRoom(B, K);
     this.addWall(B, K, atlas);
     CABINETS.forEach((cab, i) => this.cabs.push(this.makeCabinet(cab, i, B, K)));
     this.addMachines(B, K);
+    if (this.hg) this.hg.stand(B, K);
+    // the trophy stand is a seventh stop along the row: lit and framed like a cabinet when you walk to it
+    this.stops = CABINETS.length + (this.hg && this.hg.items.length ? 1 : 0);
+    if (this.stops > CABINETS.length) this.standCab = { scr: { power: 1, target: 1 }, color: new THREE.Color(COLORS.gold), focus: this.sel === CABINETS.length ? 1 : 0 };
     K.dispose();
     const lv = this.lv;
     s.add(B.lit.mesh(hubLitMaterial(this.env), "color"));
@@ -1052,6 +1061,9 @@ class HubScene extends Scene3D {
     const at = (...args) => base.clone().multiply(hubM(...args));
     const g = HUB_G.cab + i;
     const col = new THREE.Color(cab.color);
+    const G = this.hg ? this.hg.cabinet(cab, i, B, K, g, col) : null; // (the generated cabinet: the model, its neon, marquee and topper)
+    let zf = HUB_BODY[1][0], onPanel = null;
+    if (!G) { // the hall's own cabinet
     const W = 2.2, T = 0.07, IW = W - 2 * T;
     const GLOSS = [0.25, 0.24], SATIN = [0.3, 0.36], METAL = [1, 0.2], CHROME = 0xd2d0e4;
     [W / 2, -W / 2 + T].forEach((xo) => B.lit.add(K.get("side", () => hubPrism(HUB_SIDE, T)), at(xo, 0, 0, 0, -Math.PI / 2), col, { k: 0.44, aux: GLOSS }));
@@ -1067,7 +1079,6 @@ class HubScene extends Scene3D {
       [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), cab.id === "exam" ? 0xdcc8ff : col, { k: cab.id === "exam" ? 2.7 : 2.1, g }));
     }
     // kick plate, coin door with lit slots, stripes either side
-    const zf = HUB_BODY[1][0];
     K.box(B.lit, IW, 0.16, 0.03, at(0, 0.08, zf + 0.015), CHROME, { aux: METAL });
     K.box(B.lit, 0.7, 0.68, 0.02, at(0, 0.62, zf + 0.01), CHROME, { aux: METAL });
     K.box(B.lit, 0.62, 0.6, 0.03, at(0, 0.62, zf + 0.018), 0x23212c, { aux: [0.85, 0.32] });
@@ -1086,7 +1097,7 @@ class HubScene extends Scene3D {
     { const sf2 = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.021); (this.panelMs = this.panelMs || [])[i] = at(0, sf2.y, sf2.z, sf2.rx).multiply(new THREE.Matrix4().makeScale(IW - 0.03, sf2.len - 0.012, 1)); }
     K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
     K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
-    const onPanel = (x, s, h) => {
+    onPanel = (x, s, h) => {
       const f = hubFace(HUB_BODY[4], HUB_BODY[5], s, 0.012 + h / 2);
       return at(x, f.y, f.z, f.rx).multiply(hubM(0, 0, 0, Math.PI / 2));
     };
@@ -1103,6 +1114,7 @@ class HubScene extends Scene3D {
     K.quad(B.marq, IW - 0.04, 0.67, at(0, mf.y, mf.z, mf.rx), 0xffffff, { k: 1.02, g, uv: hubUV(0, i * 170, 512, 170) });
     const sp = hubFace(HUB_BODY[6], HUB_BODY[7], 0.62, 0.004);
     K.quad(B.glow, IW - 0.12, sp.len * 0.3, at(0, sp.y, sp.z, sp.rx), col, { k: 0.9, g });
+    } else (this.panelMs = this.panelMs || [])[i] = G.panelM;
     // the CRT
     const canvas = document.createElement("canvas");
     canvas.width = 320; // drawn in 160 x 120 units at 2x, so the attract text is legible
@@ -1114,11 +1126,11 @@ class HubScene extends Scene3D {
     this.texs.push(tex);
     const mat = hubScreenMaterial(tex, cab.color);
     const sf = hubFace(HUB_BODY[5], HUB_BODY[6], 0.5, 0.005);
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.96, 1.5), mat);
-    screen.applyMatrix4(at(0, sf.y, sf.z, sf.rx));
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(G ? G.sw : 1.96, G ? G.sh : 1.5), mat);
+    screen.applyMatrix4(G ? G.screenM : at(0, sf.y, sf.z, sf.rx));
     this.scene.add(screen);
     // what makes this cabinet unlike the other five (see 11b-hubextras.js)
-    hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
+    if (!G) hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
     const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(baseL);
     const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(baseL);
@@ -1140,7 +1152,7 @@ class HubScene extends Scene3D {
       D.x.push(Math.random(), rr);
       D.g.push(g);
     }
-    if (cab.id === "guide") { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
+    if (cab.id === "guide" && !G) { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
     const demo = { canvas, ctx: canvas.getContext("2d"), tex, t: Math.random() * 10, cab };
     drawDemo(demo, 0);
     return { demo, mat, scr: { power: 1, target: 1 }, color: col, coneCol, focus: i === this.sel ? 1 : 0 };
@@ -1237,6 +1249,7 @@ class HubScene extends Scene3D {
     this.dolly = this.restDolly;
   }
   focus(i) { this.sel = i; }
+  choose(i) { if (this.cabs[i]) this.cabs[i].chosen = 1; }
   // Each cabinet is framed for its own height in the strip above the card: what stands on it (horns, a clock, a
   // dish) sits just under the strip's top edge, clear of the mission banner, and its foot stands well above the
   // card, so the floor in front of it and its reflection show. A tall cabinet is seen from further back.
@@ -1247,14 +1260,16 @@ class HubScene extends Scene3D {
     const f = h / (2 * tanH); // the lens, in px
     const mT = 26, mB = clamp(bandH * 0.13, 22, 58);
     const tt = Math.atan((bandH / 2 - mT) / f), tf = Math.atan((bandH / 2 - mB) / f);
-    this.fits = CABINETS.map((cab) => {
-      const SH = HUB_SHAPE[cab.id] || [1, 1], top = HUB_TOP[cab.id] || 4.6;
+    this.fits = CABINETS.map((cab, i) => {
+      const SH = (this.hg ? [0.92, HUBGEN.SCREEN.y * HUBGEN.S / 2.3] : HUB_SHAPE[cab.id]) || [1, 1], top = (this.hg && this.hg.cabTop[i]) || HUB_TOP[cab.id] || 4.6; // (a generated cabinet: its own roof and topper; its screen where the model's glass is)
       let lo = 3.5, hi = 40;
       for (let k = 0; k < 24; k++) { const d = (lo + hi) / 2; if (Math.atan((top - HUB_EYE) / d) + Math.atan(HUB_EYE / (d - 0.96)) > tt + tf) lo = d; else hi = d; }
       const d = clamp(Math.max(hi, (3.5 * SH[0] * f) / (0.94 * w) + 0.6), HUB_R - 1.6, HUB_R + 9); // (and its fins, tyres or shoulders inside the width)
       return { dolly: HUB_R - d, look: HUB_EYE - d * Math.tan(tt - Math.atan((top - HUB_EYE) / d)), screen: 2.3 * SH[1] };
     });
-    const F = this.fits[this.sel];
+    // the trophy stand: low and wide, seen from close by and a little above, its three steps filling the strip
+    if (this.stops > CABINETS.length) { const d = clamp((2.9 * f) / (0.94 * w) + 0.4, 4.6, 9); this.fits.push({ dolly: HUB_R - d, look: 0.95, screen: 1.4 }); }
+    const F = this.fits[this.sel] || this.fits[0];
     this.restDolly = F.dolly; this.restLook = F.look; this.screenY = F.screen;
     if (!this.zooming) this.dolly = this.restDolly;
     if (this.dust) this.dust.material.uniforms.uScale.value = (h * GFX.scenePR()) / (2 * tanH);
@@ -1344,6 +1359,7 @@ class HubScene extends Scene3D {
       }
     });
     this.extras.update(dt);
+    if (this.hg) this.hg.update(dt);
     FX.sync(this.scene, this.t);
   }
   // Turn lamp states into light: neon levels, the room's real lights, and the
@@ -1361,7 +1377,8 @@ class HubScene extends Scene3D {
     this.cabs.forEach((c, i) => {
       c.focus += ((i === this.sel ? 1 : 0) - c.focus) * Math.min(1, dt * 4);
       cabsOn += on[G.cab + i];
-      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
+      if (c.chosen) c.chosen = Math.max(0, c.chosen - dt * 1.4); // (only ever set in the generated hall: see choose)
+      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0) + 0.45 * (c.chosen || 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
     lv[G.bg] *= 0.28; lv[G.signs] *= 0.34; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
@@ -1377,20 +1394,22 @@ class HubScene extends Scene3D {
     const room = this.room;
     this.hemi.intensity = 0.8 * room;
     this.key.intensity = 0.62 * room;
-    const sc = this.cabs[this.sel];
+    if (this.standCab) { const st = this.standCab, gs = G.cab + CABINETS.length; st.focus += ((this.sel === CABINETS.length ? 1 : 0) - st.focus) * Math.min(1, dt * 4); lv[gs] = on[gs] * (0.78 + 0.3 * st.focus); }
+    const sc = this.cabs[this.sel] || this.standCab;
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);
     this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.55 * lv[G.cab + this.sel]; // (the cabinet in front is a lit object, not an outline: its lamp is the brightest light in the hall)
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
-    this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
+    this.rimLight.color.set(HUB_ACCENT[(CABINETS[this.sel] || {}).id] || 0xffffff);
     this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     // a cool light behind and above it, from the other side: what stands on the cabinet gets a lit top and a bright edge
     this.backLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.backLight.position.set(Math.sin(a - 0.17) * (HUB_R + 2.1), 7.1, -Math.cos(a - 0.17) * (HUB_R + 2.1));
     if (this.deskAt) { this.deskLight.position.copy(this.deskAt); this.deskLight.intensity = 1.5 * lv[G.cab + this.deskCab]; }
+    else if (this.hg && this.hg.lampFor(this.sel, this.deskLight.position)) { this.deskLight.color.setHex(0xfff2e6); this.deskLight.distance = 4.6; this.deskLight.intensity = 2.4 * lv[G.cab + this.sel]; } // (the generated hall: a lamp on what stands on the cabinet in front, or on the trophies)
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
       this.heroCone.position.set(hx, 7.4, hz);
@@ -1432,6 +1451,7 @@ class HubScene extends Scene3D {
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;
   }
   refreshWall() {
+    if (this.hg) this.hg.refresh(); // (the trophies on the stand)
     const sig = hubWallSig();
     if (!this.wallTex || sig === this.wallSig) return;
     this.wallSig = sig;
@@ -1664,6 +1684,19 @@ function hubScene() {
 }
 
 function showHub() {
+  // The first time, when the page can fetch them, the hall is built with its models: at once if they are in hand (the
+  // title asks for them while it is up), else behind the loading line. After that it is kept (see hubScene), and
+  // from disk there is nothing to wait for. Its sound is asked for too, but never waited for.
+  if (Assets.on && !(Scenes.cur instanceof HubScene) && !(Hub.scene && !Hub.scene.disposed)) {
+    Assets.need("hubsound");
+    const p = Assets.need("hub");
+    if (p) {
+      UI.loading(true);
+      Assets.onProgress = (d, n) => UI.loading(true, d / n);
+      p.then(() => { Assets.onProgress = null; UI.loading(false); UI.cover(showHub); }); // (built behind black, then the screen comes on)
+      return;
+    }
+  }
   Sound.play("hub");
   Sound.setIntensity(0);
   const fresh = !(Scenes.cur instanceof HubScene);
@@ -1673,6 +1706,7 @@ function showHub() {
     scene.powerOn();
     Hub.booting = true;
     setTimeout(() => Sound.ambience(true), 2600);
+    if (Assets.on) setTimeout(() => { Sound.say("WELCOME"); Sound.say("SELECT YOUR GAME"); }, 2300); // (the first visit of a session, as the room comes on)
   } else {
     scene.zoomOut();
     Sound.ambience(true);
@@ -1708,8 +1742,10 @@ function showHub() {
   };
   window.addEventListener("resize", fitDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (el.isConnected) fitDesc(); });
+  const stops = scene.stops || CABINETS.length; // (the generated hall has a seventh stop: the trophy stand)
+  if (Hub.index >= stops) Hub.index = 0;
   const render = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     card.style.setProperty("--c", cab.color);
     const best = Store.best(cab.id);
     const meta = {
@@ -1719,31 +1755,36 @@ function showHub() {
       memory: `CARDS BANKED <b>${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</b>`,
       exam: `BEST EXAM <b>${Store.state.stats.bestExam || 0}%</b>`,
       guide: `<b>${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)}</b> NOTE PAGES`,
+      stand: `TROPHIES <b>${Trophies.count()}/${TROPHIES.length}</b>`,
     }[cab.id];
+    const dots = CABINETS.map((c) => c.color).concat(stops > CABINETS.length ? [COLORS.gold] : []);
     card.innerHTML = `<div class="hub-nav">
         <button class="iconbtn" data-act="prev" aria-label="Previous cabinet">${icon("left")}</button>
         <div><div class="hub-name">${esc(cab.name)}</div><div class="hub-tag">${esc(cab.tag)}</div></div>
         <button class="iconbtn" data-act="next" aria-label="Next cabinet">${icon("right")}</button>
       </div>
       <p class="hub-desc"><span>${esc(cab.desc)}</span></p>
-      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${CABINETS.length}">${CABINETS.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c.color}"></i>`).join("")}</span></div>
-      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : "PLAY"} ${icon("play")}</button>`;
+      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${dots.length}">${dots.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c}"></i>`).join("")}</span></div>
+      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : cab.id === "stand" ? "SEE THEM ALL" : "PLAY"} ${icon("play")}</button>`;
     fitDesc();
     scene.focus(Hub.index);
     requestAnimationFrame(() => scene.setBand($(".spacer", el)));
   };
   const move = (d) => {
-    Hub.index = (Hub.index + d + CABINETS.length) % CABINETS.length;
-    Sound.sfx("move", d * 0.7);
+    Hub.index = (Hub.index + d + stops) % stops;
+    Sound.sfx(Sound.bank.ui_click ? "ui_click" : "move", d * 0.7); // (the recorded click when it has loaded)
     render();
   };
   const play = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     Sound.sfx("select");
+    if (Assets.on && cab.id !== "stand") { if (Sound.bank.coin_insert) Sound.sfx("coin_insert", 0, { vol: 0.7 }); Sound.say(cab.name); } // (the coin drops and the announcer calls the game)
+    if (scene.hg) scene.choose(Hub.index); // (its topper spins up, its neon flares)
     scene.zoomIn();
     setTimeout(() => {
       UI.flash("crt-on");
-      if (cab.id === "guide") showGuide();
+      if (cab.id === "stand") showStats();
+      else if (cab.id === "guide") showGuide();
       else if (cab.id === "exam") showExamSetup();
       else showSelect(cab.id);
     }, 520);

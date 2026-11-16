@@ -343,7 +343,7 @@ class HubExtras {
   }
   // Selecting a cabinet wakes it: a flare off its marquee, sparks, a rising tone.
   powerUp(i) {
-    const hub = this.hub, a = hub.cabAngle(i), col = CABINETS[i].color;
+    const hub = this.hub, a = hub.cabAngle(i), col = (CABINETS[i] || { color: COLORS.gold }).color; // (the seventh stop is the trophy stand)
     Sound.sfx("powerup", clamp(Math.sin(a - hub.angle) * 2, -0.8, 0.8));
     this.surge = 1; this.surgeI = i;
     this.flare.position.set(Math.sin(a) * (HUB_R - 0.6), 3.6, -Math.cos(a) * (HUB_R - 0.6));

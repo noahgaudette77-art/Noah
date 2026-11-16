@@ -33,7 +33,7 @@ const Assets = {
     const path = "models/" + name + ".glb";
     if (!this.has(path) || !window.THREE || !THREE.GLTFLoader) return Promise.resolve(null);
     if (this.fresh["model:" + name]) return Promise.resolve(this.fresh["model:" + name]);
-    return this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
+    return this._once("model:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
       const parts = {};
       let inr = gltf.scene.userData && gltf.scene.userData.inr; // (the processing tool's notes: parts, pivots, anchors. They ride the file's root node.)
       gltf.scene.traverse((o) => {
@@ -48,7 +48,16 @@ const Assets = {
       const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
       this.fresh["model:" + name] = m;
       return m;
-    }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; });
+    }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; }));
+  },
+  // One load at a time per file: a second ask while the first is on its way shares it (the title asks for the
+  // hall's set in the background, and the hall may ask again before it has arrived).
+  _once(key, make) {
+    const busy = this.busy || (this.busy = {});
+    if (busy[key]) return busy[key];
+    const p = (busy[key] = make());
+    p.then(() => { delete busy[key]; });
+    return p;
   },
   // A model for a scene that is being built (null when it is not loaded: the caller builds what it always built).
   // Each one is handed out once; the next scene gets a new copy parsed from the same bytes.
@@ -63,7 +72,7 @@ const Assets = {
     const path = this.files.files["sky/" + name + ".webp"] !== undefined ? "sky/" + name + ".webp" : "sky/" + name + ".jpg";
     if (!this.has(path) || !window.THREE) return Promise.resolve(null);
     if (this.kept["sky:" + name]) return Promise.resolve(this.kept["sky:" + name]);
-    return this.buffer(path).then((buf) => new Promise((res, rej) => {
+    return this._once("sky:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
       const url = URL.createObjectURL(new Blob([buf], { type: /webp$/.test(path) ? "image/webp" : "image/jpeg" })), img = new Image();
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
@@ -80,7 +89,7 @@ const Assets = {
       if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
       this.kept["sky:" + name] = sky;
       return sky;
-    }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; });
+    }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
   // ---- pictures for the page itself (assets/ui: icon and portrait strips drawn from the models). ui(name) is the
@@ -89,13 +98,13 @@ const Assets = {
     const path = "ui/" + name + ".webp";
     if (!this.has(path)) return Promise.resolve(null);
     if (this.kept["ui:" + name]) return Promise.resolve(this.kept["ui:" + name]);
-    return this.buffer(path).then((buf) => new Promise((res, rej) => {
+    return this._once("ui:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => res(img);
       img.onerror = () => rej(new Error("cannot decode " + path));
       img.src = URL.createObjectURL(new Blob([buf], { type: "image/webp" })); // (kept: CSS draws from this address too)
     })).then((img) => { this.kept["ui:" + name] = img; if (this.onImage) this.onImage(name, img); return img; })
-      .catch((e) => { console.warn("picture " + name + " did not load: " + e.message); return null; });
+      .catch((e) => { console.warn("picture " + name + " did not load: " + e.message); return null; }));
   },
   ui(name) { return this.kept["ui:" + name] || null; },
   // The files of a set fetched ahead (not parsed or decoded), so that when the set is asked for it is ready sooner:
