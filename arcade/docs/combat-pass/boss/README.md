@@ -47,7 +47,7 @@ the work stands, and what was looked at and fixed boss by boss, is in `STATUS.md
 |---|---|---|
 | `NN-name-idle.jpg` | Its idle in the band, under its sky | still |
 | `NN-name-fight.jpg` | Its entrance (it lands), its attack with the telegraph (the wind-up as the bar fills, its marker), the strike, its own projectile and its landing at the player, then taking a right answer's hit | 4 every 14 (the part of the screen it lands in), 3 every 30, 9 every 3, 4 every 8 |
-| `NN-name-death.jpg` | The finishing blow, then its death: the fall, the chain of blasts, parts thrown down and out (a cape, a robe or a torso burns where it falls), the last blast, BOSS DEFEATED! | 3 every 12, then 12 every 12 |
+| `NN-name-death.jpg` | The finishing blow, then its death: the fall, the chain of blasts, parts thrown down and out (a cape, a robe or a torso burns where it falls), the last blast, stars and coins to the score, BOSS DEFEATED! | 3 every 12, then 12 every 12, whole screen (once the fight is over the whole screen is the picture) |
 
 | NN-name | Boss | Sky | The attack its fight strip shows: its own projectile, trail and impact |
 |---|---|---|---|

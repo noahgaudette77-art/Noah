@@ -164,12 +164,14 @@ module.exports = async (cap) => {
     await ready(40);
     await cap.answer("R");
     await cap.fast(18);
-    const a = await frames(tag + "-fin", full ? 6 : 3, full ? 8 : 12);
+    // (the short set's strip is the whole screen: once the fight is over the question and the answers have gone and the
+    // whole screen is the picture, and the fallen boss and its last blast lie below the band)
+    const a = await frames(tag + "-fin", full ? 6 : 3, full ? 8 : 12, full ? {} : { band: false });
     await cap.fast(20);
     await cap.next();
-    const b = await frames(tag + "-die", full ? 18 : 12, full ? 8 : 12, full ? { band: false } : {});
+    const b = await frames(tag + "-die", full ? 18 : 12, full ? 8 : 12, { band: false });
     if (full) { sheet("09a-finishing-blow", a, { cols: 6 }); sheet("09-death", b, { cols: 6, thumb: 250 }); }
-    else sheet(tag + "-death", [...a, ...b], { cols: 5, thumb: 300 });
+    else sheet(tag + "-death", [...a, ...b], { cols: 5, thumb: 250 });
   }
   // ---- the player's defeat (a second run of the same fight: the last heart goes, the boss has the last word)
   if (full && has("defeat")) {
