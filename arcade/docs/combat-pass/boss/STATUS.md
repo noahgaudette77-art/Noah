@@ -29,7 +29,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
-| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress: bosses 1 to 5 and 7 captured and committed; 8, 9, 10 and all running (each tried again until its three files are made), then 6 and 11 (remade, merged at bfbabca, looked at, rows retuned), then the cue log, the full regression both ways and the sequence test. The captures run one boss at a time: at dpr 2 two or three side by side, or the lead's model renders on the same machine, overload it and Playwright's screenshots time out |
+| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | done: 47 JPGs (boss 1's fourteen, three for each other boss, the remade 6 and 11 included), each under 450 KB; `sound-cues.md` written again; full regression both ways IDENTICAL, sequence test passed. (Run the dpr-2 captures one boss at a time: two or three side by side, or other renders on the same machine, overload it and Playwright's screenshots time out; `final-captures.sh` in the session's scratchpad retried each boss until its three files were made) |
 
 ## Lookalikes, for the lead
 
@@ -131,5 +131,6 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 
 ## Tests at the last commit
 
-`node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json --only boss`: IDENTICAL, no
-console errors. `node arcade/tools/regress-http.js --only boss`: IDENTICAL, no console errors.
+`node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json`: IDENTICAL (153 answers in 8
+games), no console errors. `node arcade/tools/regress-http.js`: IDENTICAL (153 answers in 8 games), no console
+errors. `node scripts/arcade-sequence.js`: all 13 steps OK, no errors. The page's scripts parse.
