@@ -7,8 +7,13 @@
 // The picture is looked up by direction, exactly as the reflection map is, so what a chrome hull mirrors is what
 // stands behind it. gain scales the whole sky; lift pushes only its brightest parts past white, so stars and the
 // hearts of nebulae bloom; tint multiplies it (a boss's colour, a mood); rot turns it about the vertical (radians).
+// window: { u, v, at, zoom, min } shows one part of the picture large, as a long lens would (Boss Rush's arena: only a
+// narrow strip of sky stands above its tiers): the picture's place (u, v; v up) that stands straight ahead (-Z) at
+// `at` degrees above the horizon, magnified `zoom` times; nothing below the picture's v = min is ever shown. A sky
+// made without it is drawn exactly as before.
 function makePanoSky(sky, o = {}) {
   const noMip = (t) => { if (t.minFilter !== THREE.LinearFilter) { t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; } return t; };
+  const win = o.window || null;
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
@@ -17,9 +22,11 @@ function makePanoSky(sky, o = {}) {
     },
     side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false,
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
-    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; varying vec3 vDir;
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
       vec3 look(sampler2D t, vec3 d, float rot){
-        vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+        ${win
+          ? "vec2 uv = vec2(uWin.x + (fract(atan(d.z, d.x) * 0.15915494 + 0.75) - 0.5) * uWin.w, clamp(uWin.y + (asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 - uWin.z) * uWin.w, uWinMin, 0.998));"
+          : "vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);"}
         vec3 c = texture2D(t, uv).rgb;
         return c * c * (c * 0.305 + 0.695); // sRGB to linear, near enough
       }
@@ -32,6 +39,7 @@ function makePanoSky(sky, o = {}) {
         gl_FragColor = linearToOutputTexel(vec4(c * uTint, 1.0)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
+  if (win) { mat.uniforms.uWin = { value: new THREE.Vector4(win.u, win.v, 0.5 + (win.at || 0) / 180, win.zoom || 1) }; mat.uniforms.uWinMin = { value: win.min === undefined ? 0.5 : win.min }; }
   const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
   dome.frustumCulled = false;
   dome.renderOrder = -20;

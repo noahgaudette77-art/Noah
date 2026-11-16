@@ -83,6 +83,12 @@ class BossGame extends QuizGame {
     this.camY = 1.25;
     this.camZ = 16;
     this.picker = new QuestionPicker(selectionQids(sel), { preferHard: true });
+    // What has loaded for this fight (nothing, when the page is opened from disk: then all of it is as it always was):
+    // the arena's sky, and the boss's model. (Look only: the rules never ask which.)
+    this.row = bossRow(this.bossKey);
+    this.gen = { sky: this.has3D ? Assets.sky(this.row.sky) : null, model: this.has3D ? Assets.model("boss-" + this.bossKey) : null };
+    if (this.gen.sky && !this.gen.sky.map) this.gen.sky = null;
+    this.pano = !!this.gen.sky;
     if (this.has3D) this.build3D();
     const c = this.cfg.color;
     this.mountUI(`<section class="screen scr-game">
@@ -164,6 +170,7 @@ class BossGame extends QuizGame {
     const ridge = makeRidge({ z: -62, width: 360, height: 15, n: 40, top: new THREE.Color(0x1c0838).lerp(col, 0.12), bottom: 0x07021a, line: hex, lineK: 1.5, wire: false });
     ridge.traverse((o) => o.layers.set(1));
     s.add(ridge);
+    this.ridge = ridge;
     // the reflective polar-grid floor
     this.mirror = new Mirror(0);
     this.lineBase = neon(hex, 1.35);
@@ -283,6 +290,7 @@ class BossGame extends QuizGame {
     this.floorRingI = 0;
     this.flashT = 0;
     this.flashSize = 8;
+    if (this.pano) this.arena = new BossArena(this, this.gen.sky, this.row); // (the storm sky, its light and its lightning: 22c)
     this.camBase.set(0, this.camY, this.camZ);
     this.lookAt.set(0, this.bossY, 0);
   }
@@ -427,12 +435,12 @@ class BossGame extends QuizGame {
   makeCrowd() {
     const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [], people = [], pSeed = [];
     const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xd9d0ff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xb9a8ff)]; // (lilac, not tan: the stands keep to the arena's palette)
-    for (let k = 0; k < 4; k++) {
-      const Rk = 27 + k * 6, y = 2.2 + k * 4.1, N = 44, tk = 0.66 - 0.12 * k; // (each tier darker than the one below: the boss is the brightest thing in the building)
+    for (let k = 0; k < (this.pano ? 2 : 4); k++) { // (under the storm sky: two tiers, lower and darker, and the sky above them)
+      const Rk = 27 + k * 6, y = this.pano ? 1.4 + k * 3.3 : 2.2 + k * 4.1, N = 44, tk = this.pano ? 0.42 - 0.1 * k : 0.66 - 0.12 * k; // (each tier darker than the one below: the boss is the brightest thing in the building)
       for (let i = 0; i < N; i++) {
         const a0 = (-118 + (236 * i) / N) * (Math.PI / 180), a1 = (-118 + (236 * (i + 1)) / N) * (Math.PI / 180), am = (a0 + a1) / 2;
         const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
-        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: new THREE.Color(k % 2 ? 0x0b0918 : 0x0f0c20).multiplyScalar(1 - 0.17 * k) });
+        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: new THREE.Color(k % 2 ? 0x0b0918 : 0x0f0c20).multiplyScalar((1 - 0.17 * k) * (this.pano ? 0.4 : 1)) });
         rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
         // the people: two rows on every tier, shoulder to shoulder, some with their arms up
         const per = Math.max(2, Math.floor(w / 1.15));
@@ -1050,6 +1058,7 @@ class BossGame extends QuizGame {
     if (this.contact) { const cs = 9.2 * this.showScale; this.contact.scale.set(cs, cs, 1); this.contact.position.x = this.boss.position.x; this.contact.position.z = this.boss.position.z; this.contact.material.opacity = 0.9 * clamp(1.6 - this.boss.position.y / (this.showY + 0.001) * 0.6, 0, 1); this.contactCore.scale.set(cs * 0.5, cs * 0.36, 1); this.contactCore.position.x = this.contact.position.x; this.contactCore.position.z = this.contact.position.z; this.contactCore.material.opacity = this.contact.material.opacity; }
     this.placeCamera();
     followSky(this.sky, this.camera);
+    if (this.arena) this.arena.update(VFX.dt);
     if (this.frontRow) { // the front row keeps to the bottom edge of the strip, whatever the strip's height (and sinks out of the picture when the boss falls)
       const fr = this.frontRow, half = (this.band ? this.band.h : GFX.h) / 2, m = (half * 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / GFX.h;
       const th = Math.atan2(this.lookAt.y - this.camBase.y, this.camZ), D = (this.camZ - 7.55) / (Math.cos(th) - m * Math.sin(th));
@@ -1071,6 +1080,7 @@ class BossGame extends QuizGame {
   }
   dispose() {
     if (this.has3D) {
+      if (this.arena) this.arena.dispose();
       this.shards.dispose();
       if (this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
     }
