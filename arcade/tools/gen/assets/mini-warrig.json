@@ -1,0 +1,78 @@
+{
+ "name": "mini-warrig",
+ "about": "A small, light copy of Nest Egg Run's rig for menus and cabinet toppers (one mesh, mirrored, 512 px maps).",
+ "src": "cand/warrig/warrig-b-sd-1.tripo-mv.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ },
+ "tris": 10000,
+ "tex": 512,
+ "texBase": 1024,
+ "emissive": {
+  "gain": 0
+ },
+ "paint": [
+  {
+   "where": {
+    "h": [
+     165,
+     205
+    ],
+    "s": [
+     0.45,
+     1
+    ],
+    "v": [
+     0.5,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "where": {
+    "h": [
+     285,
+     350
+    ],
+    "s": [
+     0.45,
+     1
+    ],
+    "v": [
+     0.45,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "where": {
+    "h": [
+     28,
+     58
+    ],
+    "s": [
+     0.18,
+     0.75
+    ],
+    "v": [
+     0.42,
+     1
+    ]
+   },
+   "rough": 0.22,
+   "metal": 0.85
+  }
+ ],
+ "surface": {
+  "roughMin": 0.12
+ }
+}

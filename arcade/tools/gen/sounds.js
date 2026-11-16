@@ -107,6 +107,8 @@ const VOICE = {
   "game over": "Game over!", "stage clear": "Stage clear!", "boss incoming": "Boss incoming!", "stand by": "Boss incoming!",
   "product pusher": "Product Pusher!", "perilmonger": "Perilmonger!", "solvency specter": "Solvency Specter!", "the fine print": "The Fine Print!", "group golem": "Group Golem!", "inflation titan": "Inflation Titan!",
   "longevity lich": "Longevity Lich!", "lord intestate": "Lord Intestate!", "undue influencer": "Undue Influencer!", "probate tollgate": "Probate Tollgate!", "patrimony phantom": "Patrimony Phantom!", "the proctor": "The Proctor!",
+  "risk blaster": "Risk Blaster!", "nest egg run": "Nest Egg Run!", "boss rush": "Boss Rush!", "memory bank": "Memory Bank.", "final exam": "Final Exam!", "strategy guide": "Strategy Guide.",
+  "welcome": "Welcome to the arcade!", "select your game": "Select your game!", "ready": "Ready?", "go": "Go!", "chapter complete": "Chapter complete!",
   "enraged": "Enraged!", "boss defeated": "Boss defeated!", "defeated": "Defeated.", "final boss": "Final boss!", "begin": "Begin!",
   "exam passed": "Exam passed!", "not yet": "Not yet.", "final boss destroyed": "Final boss, destroyed!", "rank up": "Rank up!",
   "compounding": "Compounding!", "bull run": "Bull run!", "blue chip": "Blue chip!", "trophy unlocked": "Trophy unlocked!", "announcer on": "Announcer on.",

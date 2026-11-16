@@ -1,0 +1,33 @@
+{
+ "name": "mini-starfighter",
+ "triangles": 9000,
+ "bytes": 471348,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.5,
+    -0.1194,
+    -0.4616
+   ],
+   "max": [
+    0.5,
+    0.1194,
+    0.4616
+   ],
+   "tris": 9000
+  }
+ },
+ "anchors": {},
+ "size": [
+  1,
+  0.2387002408504486,
+  0.9231579899787903
+ ],
+ "source": "cand/starfighter/starfighter-b-sd-0.tripo.glb"
+}

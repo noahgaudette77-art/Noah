@@ -1,0 +1,41 @@
+{
+ "name": "mini-warrig",
+ "triangles": 14286,
+ "bytes": 492988,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.2222,
+    0
+   ],
+   "min": [
+    -0.2789,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.2789,
+    0.4444,
+    0.4999
+   ],
+   "tris": 14286
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.55782550573349,
+  0.4444316029548645,
+  1
+ ],
+ "source": "cand/warrig/warrig-b-sd-1.tripo-mv.glb",
+ "symmetry": {
+  "delivered": 0.589,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.589,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

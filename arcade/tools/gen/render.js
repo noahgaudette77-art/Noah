@@ -16,6 +16,9 @@ const { chromium } = require("playwright");
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf("--" + k); if (i < 0) return d; const v = args[i + 1]; args.splice(i, 2); return v; };
 const anim = +flag("anim", 0), animView = flag("animview", "q");
+// --sprites out.webp: every model alone on a clear ground, one cell each, in one row (for UI icons and portraits);
+// --cell size, --view name, --focus x,y,z (shares of the model's box), --frame share, --names a,b,c (for the list beside it)
+const sprites = flag("sprites", null), cell = +flag("cell", 160), spriteView = flag("view", "hero"), focus = flag("focus", null), frame = +flag("frame", 1), spriteNames = flag("names", null);
 const out = flag("out", "sheet.jpg"), size = +flag("size", 420), statsFile = flag("stats", null), views = flag("views", null), exposure = +flag("exposure", 1), emissiveBoost = +flag("emissive", 0), zoom = +flag("zoom", 0.6), envI = flag("envi", undefined) === undefined ? undefined : +flag("envi", 1), bg = flag("bg", undefined) === undefined ? undefined : parseInt(flag("bg", "0"), 16), norot = flag("norot", null) !== null;
 const files = args.map((f) => path.resolve(f));
 const ARCADE = path.join(__dirname, "..", "..");
@@ -43,6 +46,24 @@ function serve() {
   await page.goto(base + "/tools/gen/render.html");
   const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "turn-"));
   const rows = [], all = {};
+  if (sprites) {
+    await page.setViewportSize({ width: cell * 2, height: cell * 2 });
+    const cells = [], names = spriteNames ? spriteNames.split(",") : files.map((f) => path.basename(f).replace(/\.glb$/, ""));
+    for (const f of files) {
+      // (drawn at twice the cell and brought down: smooth edges on a clear ground)
+      await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, { size: cell * 2, views: [spriteView], alpha: true, exposure, emissiveBoost, zoom, envI, focus: focus ? focus.split(",").map(Number) : null, frame, rotY: /\.tripo/.test(f) && !norot ? -Math.PI / 2 : 0 }]);
+      await page.waitForTimeout(150);
+      const png = path.join(tmp, cells.length + ".png");
+      await page.locator("#c").screenshot({ path: png, omitBackground: true });
+      execFileSync("convert", [png, "-resize", cell + "x" + cell, png]);
+      cells.push(png);
+    }
+    await browser.close(); srv.close();
+    execFileSync("convert", [...cells, "-background", "none", "+append", "-define", "webp:lossless=false", "-quality", "92", sprites]);
+    fs.writeFileSync(sprites.replace(/\.[a-z]+$/, ".json"), JSON.stringify({ cell, names }, null, 1));
+    console.log("wrote", sprites, names.length, "cells of", cell);
+    return;
+  }
   for (const f of files) {
     const name = path.basename(f).replace(/\.glb$/, "");
     try {

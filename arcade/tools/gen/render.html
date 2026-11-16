@@ -14,7 +14,7 @@ async function show(url, o = {}) {
   const size = o.size || 420, names = o.views || ["front", "q", "side", "rear", "rq", "top"];
   const canvas = document.getElementById("c");
   if (!renderer) {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: true });
     renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     pmrem = new THREE.PMREMGenerator(renderer);
@@ -25,7 +25,7 @@ async function show(url, o = {}) {
   renderer.setSize(size * names.length, size, false);
   canvas.style.width = size * names.length + "px"; canvas.style.height = size + "px";
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(o.bg === undefined ? 0x2a2733 : o.bg);
+  if (o.alpha) { scene.background = null; renderer.setClearColor(0x000000, 0); document.body.style.background = document.documentElement.style.background = "transparent"; } else scene.background = new THREE.Color(o.bg === undefined ? 0x2a2733 : o.bg);
   scene.environment = env;
   const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(3, 5, 4); scene.add(key);
   const rim = new THREE.DirectionalLight(0x88aaff, 0.6); rim.position.set(-4, 3, -5); scene.add(rim);
@@ -54,7 +54,9 @@ async function show(url, o = {}) {
     }
   });
   stats.tris = Math.round(stats.tris);
-  const R = 0.5 * Math.sqrt(s.x * s.x + s.y * s.y + s.z * s.z);
+  // o.focus: where to look, as a share of the model's box (0.5, 0.5, 0.5 is its middle); o.frame: how much of it to frame
+  if (o.focus) c.set(box.min.x + s.x * o.focus[0], box.min.y + s.y * o.focus[1], box.min.z + s.z * o.focus[2]);
+  const R = 0.5 * Math.sqrt(s.x * s.x + s.y * s.y + s.z * s.z) * (o.frame || 1);
   const cam = new THREE.PerspectiveCamera(30, 1, R * 0.05, R * 30);
   const dist = (R / Math.sin(THREE.MathUtils.degToRad(15))) * (o.zoom || 0.92);
   renderer.setScissorTest(true);
