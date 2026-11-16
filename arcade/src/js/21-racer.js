@@ -224,6 +224,7 @@ function racerGroundMaterial(mirror, shared) {
       uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
+      uCarW: { value: 1.02 }, uCarZ: { value: 0 }, uCarRot: { value: new THREE.Vector2(1, 0) }, uTailC: { value: new THREE.Color(2.2, 0.06, 0.16) }, // (the war rig is wider, slides and turns, and its rear frames are magenta: see RacerRig)
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
       uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
@@ -236,6 +237,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform vec3 uAsphalt; uniform vec3 uBase; uniform vec3 uGrid; uniform vec3 uEdge; uniform vec3 uDash;
       uniform vec3 uLampL; uniform vec3 uLampR; uniform float uLampI;
       uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
+      uniform float uCarW; uniform float uCarZ; uniform vec2 uCarRot; uniform vec3 uTailC;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
@@ -311,7 +313,10 @@ function racerGroundMaterial(mirror, shared) {
           col += (refl * 1.4 + vec3(0.1, 0.14, 0.18)) * ring * min(uRain, 1.0) * (1.0 - smoothstep(0.12, 0.45, max(fwidth(rc.x), fwidth(rc.y))));
         }
         // the car's shadow: tight and dark under the body, softer as the springs lift it
-        vec2 sq = vec2(x - uCarX, z - ${racerF(RACER_CAR_Z)}) / vec2(1.02 + uCarY * 1.5, 2.28);
+        float zc = z - uCarZ;
+        vec2 sd = vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z)});
+        sd = vec2(uCarRot.x * sd.x - uCarRot.y * sd.y, uCarRot.y * sd.x + uCarRot.x * sd.y);
+        vec2 sq = sd / vec2(uCarW + uCarY * 1.5, 2.28);
         float shade = 1.0 - smoothstep(0.55, 1.12, dot(sq * sq, sq * sq));
         col *= 1.0 - uShade * 0.78 * shade;
         // light falling on it
@@ -324,12 +329,12 @@ function racerGroundMaterial(mirror, shared) {
           float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
           lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
         }
-        float ah = ${racerF(RACER_CAR_Z - 2.2)} - z; // distance ahead of the front bumper
+        float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
         float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
         lt += vec3(1.0, 0.9, 0.78) * uHead * smoothstep(0.0, 1.5, ah) * exp(-ah * 0.07) * min(beams, 1.3);
-        lt += uUnder * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
-        lt += vec3(2.2, 0.06, 0.16) * uTail * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
+        lt += uUnder * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
+        lt += uTailC * uTail * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
         float gz = z - uGateZ;
         float gk = exp(-gz * gz * 0.16) * uGateI;
         if (gk > 0.003) {
@@ -807,9 +812,12 @@ class RacerGame extends QuizGame {
     this.gp = 0;
     this.nextMilestone = 0;
     // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
-    // disk has none): the five skies. Whatever is missing is drawn with what is built in.
-    this.gen = { skies: {} };
-    if (this.has3D && GFX.ok) for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+    // disk has none): the five skies and the war rig. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, rig: null };
+    if (this.has3D && GFX.ok) {
+      for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.rig = Assets.model("warrig");
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-racer">
       <div class="hud">
@@ -904,7 +912,7 @@ class RacerGame extends QuizGame {
     s.add(this.car);
     this.world = new RacerWorld(this); // traffic, biomes and ambient events (look only)
     this.buildGateKit();
-    if (this.pano) [[this.paint, 1.55], [this.trim, 1.55], [this.glass, 1.9], [this.gateFrameMat, 1.2]].forEach(([m, k]) => { if (m) this.pano.mirror(m, k); }); // lacquer, glass and the gantries' metal mirror the sky
+    if (this.pano) (this.rigKit ? [[this.gateFrameMat, 1.2]] : [[this.paint, 1.55], [this.trim, 1.55], [this.glass, 1.9], [this.gateFrameMat, 1.2]]).forEach(([m, k]) => { if (m) this.pano.mirror(m, k); }); // lacquer, glass and the gantries' metal mirror the sky (the war rig has seen to its own)
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
     const k4 = this.gateKit[4], wg = new THREE.Group();
@@ -915,6 +923,11 @@ class RacerGame extends QuizGame {
     this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
+    if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint
+      this.post.ssaa = 2;
+      const gu = this.groundMat.uniforms;
+      gu.uCarW.value = 1.26; gu.uTailC.value.setRGB(0.8, 0.04, 0.5);
+    }
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
     this.lookAt.set(0, 0.7, -18);
     this.applySky(sky0);
@@ -1172,7 +1185,10 @@ class RacerGame extends QuizGame {
   // a full-width tail-light bar, neon light bars and ribbon trails.
   // The car is its own module (RacerCar): model, lamps, springs, spray.
   makeCar() {
-    const kit = (this.carKit = new RacerCar(this));
+    // (the war rig when its model arrived: see 21e-racerrig.js. It answers to everything the car's kit answers to.)
+    this.rigKit = null;
+    if (this.gen.rig) { try { this.rigKit = new RacerRig(this, this.gen.rig); } catch (e) { this.rigKit = null; console.warn("the war rig could not be built: " + e.message); } }
+    const kit = (this.carKit = this.rigKit || new RacerCar(this));
     this.carRig = kit.rig;
     this.paint = kit.paint;
     this.glass = kit.glass;
@@ -1373,6 +1389,7 @@ class RacerGame extends QuizGame {
   start() {
     Sound.play("racer");
     Sound.engine(true);
+    if (this.rigKit) this.rigKit.launch(); // (the war rig drives in from behind the lens: look only)
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -1720,7 +1737,9 @@ class RacerGame extends QuizGame {
     this.carKit.update(dt, sp, step, sky);
     this.flame = this.carKit.flame;
     // the car is the subject of the shot: a boost streaks the street past it, a blow parts the colours round it
-    GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
+    const rk = this.rigKit; // (the war rig stands taller, and the show may have moved it off its mark)
+    if (rk) GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX + rk.off.x, 1.05, RACER_CAR_Z + rk.off.z), 1.9, 1.6, 0.92);
+    else GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
     if (this.skids) {
       this.skidK = Math.max(0, this.skidK - dt * 0.85);
       this.skids.visible = this.skidK > 0.01;
@@ -1748,6 +1767,10 @@ class RacerGame extends QuizGame {
     g.uReflect.value = sky.wet; // the road dries out around midday
     g.uHead.value = 0.45 + 0.75 * sky.lamps;
     g.uUnder.value.set(0x5dffb0).multiplyScalar(0.5 + 0.2 * Math.sin(this.t * 2.6) + 0.7 * this.flame); // mint under-glow
+    if (rk) { // the rig's own: where it stands and how it is turned (its shadow goes with it), a cyan under-glow that warms as its stacks burn
+      g.uCarX.value = this.carX + rk.off.x; g.uCarZ.value = rk.off.z; g.uCarRot.value.set(Math.cos(rk.yaw), Math.sin(rk.yaw));
+      g.uUnder.value.set(0x35d8ff).multiplyScalar(0.42 + 0.14 * Math.sin(VFX.t * 2.6)).lerp(this._uc || (this._uc = new THREE.Color(1.5, 0.6, 0.15)), 0.75 * this.flame);
+    }
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
     g.uCarY.value = this.carKit.heave.x;
@@ -1787,6 +1810,7 @@ class RacerGame extends QuizGame {
     if (this.has3D) {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
+      if (this.rigKit) this.rigKit.dispose();
       if (this.pano) this.pano.dispose();
       this.env = null;
     }

@@ -107,9 +107,20 @@ class RacerSky {
           dome.rotation.x = -(r.pitch || 0);
           st.scale.z = r.zoom;
           st.add(dome); sc.add(st);
+          // under the horizon the road: wet, so at a shallow angle it holds the sky upside down (two bands of it, the
+          // lower one dimmer), and steeper than that it is dark. (Nothing can be blended into this map: its light is
+          // stored with an exponent. Each piece is drawn whole.)
+          [[0, 0.3, 0.5], [0.3, 0.75, 0.22]].forEach(([a0, a1, k]) => {
+            const wet = makePanoSky(sky, { radius: 59, gain: r.envGain * k, lift: 0, rot: (r.at - 0.25) * Math.PI * 2 }), ws = new THREE.Group();
+            wet.geometry.dispose();
+            wet.geometry = new THREE.SphereGeometry(59, 32, 6, 0, Math.PI * 2, Math.PI / 2 - a1, a1 - a0);
+            wet.renderOrder = -15;
+            ws.scale.set(1, -1, r.zoom);
+            ws.add(wet); sc.add(ws);
+          });
         } else basic(new THREE.SphereGeometry(60, 24, 12), new THREE.Color(r.ground).multiplyScalar(1.6), -20);
         // (the map is drawn without a depth buffer: `order` says what lies over what)
-        basic(new THREE.SphereGeometry(58, 32, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), r.ground, -10); // the ground: everything under the horizon
+        { const a = sky ? 0.75 : 0; basic(new THREE.SphereGeometry(58, 32, 8, 0, Math.PI * 2, Math.PI / 2 + a, Math.PI / 2 - a), r.ground, -10); } // the ground under it
         const card = (dir, col, k, w, h, order = 0) => { // a soft box: brightest at its middle, nothing at its edge
           [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([q, b], i) => {
             const m = basic(new THREE.CircleGeometry(0.5, 40), neon(col, k * b), order + i * 0.1);
@@ -119,7 +130,7 @@ class RacerSky {
           });
         };
         const strip = (x, y, z, w, h, col, k) => { const m = basic(new THREE.PlaneGeometry(w, h), neon(col, k), 2); m.position.set(x, y, z); m.lookAt(0, 0, 0); };
-        card([0, 0.2, 1], r.wall, 0.75, 150, 110, -5);
+        card([0, 0.3, 1], r.wall, 1.15, 150, 120, -5);
         card([-0.42, 0.74, 0.52], r.key[0], 2.0 * r.key[1], 50, 34);
         card([0, 0.085, -1], r.sun[0], 3.2 * r.sun[1], 15, 15); // the egg, low and dead ahead
         if (id === "tunnel") { // the bore's two lines of lamps overhead, the cyan and magenta lines along its walls
