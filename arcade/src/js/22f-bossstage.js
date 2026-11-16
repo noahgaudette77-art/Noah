@@ -444,9 +444,11 @@ class BossStage {
       kit.debris(f0, { n: quiet ? 5 : 12, size: 0.6 * k, speed: 9 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 1.0, radius: 0.8 * k });
       for (let i = 0; i < (quiet ? 3 : 8); i++) { const an = (i / 8) * Math.PI * 2 + rand(0.3); kit.smoke(this._v.set(Math.cos(an) * 1.2 * k, 0.35, Math.sin(an) * 1.2 * k).add(f0), { size: rand(1.1, 1.6) * k, life: rand(0.7, 0.95), vel: this._w.set(Math.cos(an), 0.12, Math.sin(an)).multiplyScalar(rand(4, 6.5) * k), rise: 0.25, a: 0.5, cold: true, color: BOSS_ATK.SMOKE, drag: 0.08 }); } // a ring of dust along the floor
       kit.scorch(f0, { size: 5.5 * k, life: 7, a: 0.6 });
-      // the shock runs out across the floor to the foot of the picture, where the player stands: a white-hot front, its colour behind it
-      kit.wave(f0, null, 0xffffff, { flat: true, dur: BOSS_ATK.FLY[1] + 0.04, s0: 1 * k, s1: 1.05 * reach, w: 0.45, k: 1 });
-      kit.wave(f0, null, this.hex, { flat: true, dur: BOSS_ATK.FLY[1] + 0.1, s0: 0.8 * k, s1: 0.95 * reach, w: 0.7, delay: 0.03, k: 1 });
+      // the shock runs out across the floor to the foot of the picture, where the player stands: a deep band of its colour
+      // behind a white-hot edge (seen along the floor a ring must be deep to show), sparks thrown up all along it (runStrike)
+      s.reach = reach;
+      kit.wave(f0, null, this.hex, { flat: true, dur: BOSS_ATK.FLY[1] + 0.08, s0: 0.8 * k, s1: 0.98 * reach, w: 1.6, k: 1 });
+      kit.wave(f0, null, 0xffffff, { flat: true, dur: BOSS_ATK.FLY[1] + 0.04, s0: 1 * k, s1: 1.05 * reach, w: 0.55, k: 1 });
       g.shake(0.3); GFX.bloomPulse(0.35);
     } else if (s.kind === 2) { // the wave: thin rings of force from where it gathered; it comes on at the player until it fills the picture (runStrike)
       const to = this.lens(0, -0.15, 1.2);
@@ -502,14 +504,15 @@ class BossStage {
         Sound.sfx("volley_fire", this.pan(from), { vol: 0.75, rate: 1 + n * 0.04 });
         a.kickV -= 1.5;
       }
-    } else if (s.kind === 1) { // the shock runs along the floor from where the blow fell to the foot of the picture, where the player is: the floor jumps as it passes
-      const to = s.foot || this.floorFoot(this._w), q = Math.min(1, u / FLY);
+    } else if (s.kind === 1) { // the shock runs along the floor from where the blow fell to the foot of the picture, where the player is: the floor jumps all along its front as it passes
+      const q = Math.min(1, u / (FLY + 0.04)), r = lerp(1 * k, 1.05 * (s.reach || 1), Math.pow(q, 0.8)); // (where the white edge is: the ring's own growth)
       if ((s.acc += d) > 0.018 && q < 1) {
         s.acc = 0;
-        const p = this._v.lerpVectors(s.f0, to, q).clone(); p.x += rand(-0.5, 0.5);
-        kit.sparks(p, this.hex, { n: 3, speed: 7 * k, dir: this._u.set(0, 1, 0.3).normalize(), spread: 0.6, life: 0.3, len: 0.6 * k, w: 0.06 * k, gravity: 12 });
-        kit.debris(p, { n: 1, size: 0.4 * k, speed: 5 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 0.6, dir: this._u.set(0, 1, 0.2), spread: 0.5 });
-        kit.flash(p, this.hex, 0.3 * k, 1.1 * k, 0.1, 0.7, 1.4);
+        for (let i = 0; i < (quiet ? 1 : 3); i++) {
+          const an = i ? rand(-0.6, 0.6) : rand(-0.12, 0.12), p = this._v.set(s.f0.x + Math.sin(an) * r, 0.1, s.f0.z + Math.cos(an) * r);
+          kit.sparks(p, this.hex, { n: 3, speed: 7 * k, dir: this._u.set(0, 1, 0.3).normalize(), spread: 0.6, life: 0.3, len: 0.6 * k, w: 0.06 * k, gravity: 12 });
+          if (i === 0) { kit.debris(p, { n: 1, size: 0.4 * k, speed: 5 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 0.6, dir: this._u.set(0, 1, 0.2), spread: 0.5 }); kit.flash(p, this.hex, 0.3 * k, 1.1 * k, 0.1, 0.7, 1.4); }
+        }
       }
       if (!s.landed && u >= FLY) this.land(s, s.f0);
     } else if (s.kind === 2) { // the wave comes on at the player, growing as it comes, until it fills the picture
