@@ -173,12 +173,16 @@ module.exports = async (cap) => {
   }
   // ---- the player's defeat (a second run of the same fight: the last heart goes, the boss has the last word)
   if (full && has("defeat")) {
+    // (a trophy won by the fight before, in the same page, would still be dropping in over the HUD: cleared)
+    const noTrophy = () => page(() => { const T = window.__arcade.Trophies; if (T && T.queue) T.queue.length = 0; document.querySelectorAll(".trophy").forEach((e) => e.remove()); });
+    await noTrophy();
     await cap.go("boss", key);
     await ready(120);
     await set({ hearts: 1 });
     await cap.answer("W");
     await cap.fast(70);
     await cap.next();
+    await noTrophy();
     await strip("10-player-defeat", 12, 12, { cols: 6, band: false, thumb: 250 });
   }
 };
