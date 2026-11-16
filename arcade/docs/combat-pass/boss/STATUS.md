@@ -184,6 +184,7 @@ template, the Phantom's and Intestate's dark faces.
 
 ## Tests at the last commit
 
-`node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json`: IDENTICAL (153 answers in 8
-games), no console errors. `node arcade/tools/regress-http.js`: IDENTICAL (153 answers in 8 games), no console
-errors. `node scripts/arcade-sequence.js`: all 13 steps OK, no errors. The page's scripts parse.
+After the review's fix round (with the remade Pusher and Lich): the boss regression both ways IDENTICAL (20
+answers); `node scripts/arcade-regression.js --compare arcade/backup/regression-baseline.json`: IDENTICAL (153
+answers in 8 games), no console errors; `node arcade/tools/regress-http.js`: IDENTICAL (153 answers in 8 games), no
+console errors; `node scripts/arcade-sequence.js`: all 13 steps OK, no errors. The page's scripts parse.
