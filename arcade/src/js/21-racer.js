@@ -1802,7 +1802,7 @@ class RacerGame extends QuizGame {
     this.flame = this.carKit.flame;
     // the car is the subject of the shot: a boost streaks the street past it, a blow parts the colours round it
     const rk = this.rigKit; // (the war rig stands taller, and the show may have moved it off its mark)
-    if (rk) GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX + rk.off.x, 1.05, RACER_CAR_Z + rk.off.z), 1.9, 1.6, 0.92);
+    if (rk) GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX + rk.off.x, 1.05, RACER_CAR_Z + rk.off.z), 1.9 + 1.0 * rk.flame, 1.6, 0.92); // (wider while its stacks burn: the flames are not streaked away)
     else GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
     if (this.skids) {
       this.skidK = Math.max(0, this.skidK - dt * 0.85);

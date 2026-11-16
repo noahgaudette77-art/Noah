@@ -477,10 +477,10 @@ class RacerStage {
       this.skidT = Math.max(0, this.skidT - d);
       if ((this.markT -= d) <= 0 && d > 0) {
         this.markT = 0.028;
-        for (const i of [2, 3]) this.mark(rig.contact(i, this._v), rig.yaw);
+        for (const i of [0, 1, 2, 3]) this.mark(rig.contact(i, this._v), rig.yaw);
         if (!quiet) {
           const i = Math.floor(Math.random() * 4), p = rig.contact(i, this._v);
-          kit.smoke(p, { size: 0.55, life: 0.6, a: 0.36, cold: true, color: RSTAGE.SMOKE, rise: 0.9, vel: this._w.set(rand(-1, 1), 0.4, 2.5) });
+          kit.smoke(p, { size: 0.6, life: 0.65, a: 0.34, cold: true, color: 0x6a6790, rise: 0.9, vel: this._w.set(rand(-1, 1), 0.4, 2.5) }); // (pale violet-grey: rubber smoke that is seen against a dark road)
           if (Math.random() < 0.6) kit.sparks(p, 0xffc890, { n: 2, speed: 6, dir: this._w.set(0, 0.5, 1), spread: 0.8, life: 0.3, len: 0.4, w: 0.045, gravity: 9, k: 1.7 });
         }
       }
@@ -494,7 +494,7 @@ class RacerStage {
         any = true;
         this._m.compose(this._v.set(mk.x, 0.05, mk.z), this._q.setFromEuler(this._e.set(0, mk.a, 0)), this._s.set(0.34, 1, mk.len));
         this.markDark.setMatrixAt(mk.i, this._m);
-        const hot = Math.max(0, 1 - mk.age / 0.22);
+        const hot = Math.max(0, 1 - mk.age / 0.36);
         this._m.compose(this._v.set(mk.x, 0.06, mk.z), this._q, this._s.set(0.16, 1, mk.len));
         this.markHot.setMatrixAt(mk.i, hot > 0 ? this._m : this._zero);
         this.markHot.setColorAt(mk.i, this._c.setRGB(1.6 * hot, 0.55 * hot, 0.16 * hot));
@@ -504,7 +504,7 @@ class RacerStage {
       this.markDark.instanceMatrix.needsUpdate = this.markHot.instanceMatrix.needsUpdate = true;
       if (this.markHot.instanceColor) this.markHot.instanceColor.needsUpdate = true; }
     // ---- the pane, the shield's shell, the rings, the pools of light
-    if (this.paneT > 0) { this.paneT -= d; const k = clamp(this.paneT / 0.14, 0, 1); this.pane.material.opacity = k * 0.9; this.pane.scale.setScalar(1 + (1 - k) * 0.16); this.pane.visible = this.paneT > 0; }
+    if (this.paneT > 0) { this.paneT -= d; const k = clamp(this.paneT / 0.14, 0, 1); this.pane.material.opacity = k * 0.66; this.pane.scale.setScalar(1 + (1 - k) * 0.16); this.pane.visible = this.paneT > 0; }
     { const su = this.shellMat.uniforms;
       this.shellT += d;
       const swell = this.shellT >= 0.75 ? 0 : quiet ? 0.6 * (1 - this.shellT / 0.75) : (0.5 - 0.5 * Math.cos((this.shellT / 0.25) * Math.PI * 2)) * (1 - 0.3 * Math.floor(this.shellT / 0.25)); // three swells, each fainter

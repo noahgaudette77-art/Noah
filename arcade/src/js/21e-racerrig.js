@@ -111,13 +111,13 @@ class RacerRig {
       fx.add(this.beams); }
     // flames from both stacks (see starPlumes, in 20j): each in a holder that stands on its stack's mouth and leans back with the wind
     this.FU = { uTime: { value: 0 }, uLen: { value: new THREE.Vector2(1, 1) }, uPow: { value: new THREE.Vector2(0, 0) }, uHurt: { value: 0 },
-      uHot: { value: new THREE.Color(3.2, 3.0, 2.5) }, uCool: { value: new THREE.Color(3.0, 1.35, 0.3) }, uTail: { value: new THREE.Color(2.2, 0.3, 1.5) } };
+      uHot: { value: new THREE.Color(3.2, 3.0, 2.5) }, uCool: { value: new THREE.Color(3.2, 1.5, 0.3) }, uTail: { value: new THREE.Color(2.6, 0.55, 0.16) } }; // (white-hot at the mouth, gold, orange-red at the tip: against a road lit cyan and magenta, fire is the one warm thing)
     this.plumeMat = starPlumeMaterial(this.FU);
     this.plumes = [0, 1].map((i) => {
-      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.17, len: 1.25, kind: 0, ph: i * 2 }]), this.plumeMat);
+      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.3, len: 1.0, kind: 0, ph: i * 2 }]), this.plumeMat);
       m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
       const glow = glowSprite(new THREE.Color(2.4, 1.2, 0.35), 0.5, 0);
-      glow.renderOrder = 5;
+      glow.renderOrder = 5; glow.position.z = 0.35; // (a little way down the flame: clear of the egg, which stands between the stacks and the lens)
       hold.add(m, glow);
       hold.position.copy(mouth[i]);
       hold.visible = false;
@@ -375,7 +375,7 @@ class RacerRig {
       if (!e) continue;
       let fall = 0;
       if (this.wreckT >= 0 && (this.wreckSd > 0 ? i === 0 : i === 1)) { const u = clamp((this.wreckT - 0.4) / 0.5, 0, 1); fall = 1.25 * (1 - Math.pow(1 - u, 2)) - 0.12 * Math.sin(Math.PI * clamp((this.wreckT - 0.9) / 0.3, 0, 1)); }
-      e.rotation.set(-(this.whip.x + Math.sin(t * 33 + i * 2.1) * 0.011 * eng), 0, (i ? -1 : 1) * fall - this.roll.x * 0.6 + Math.sin(t * 27 + i * 1.3) * 0.009 * eng);
+      e.rotation.set(-(this.whip.x + Math.sin(t * 33 + i * 2.1) * 0.02 * eng), 0, (i ? -1 : 1) * fall - this.roll.x * 0.6 + Math.sin(t * 27 + i * 1.3) * 0.016 * eng);
     }
     // ---- the egg: it rocks, it grows gently with the nest egg, it swells for a moment as a deposit lands, and it glows
     this.eggPulse = Math.max(0, this.eggPulse - d * 1.5);
@@ -423,17 +423,18 @@ class RacerRig {
     // ---- flames from both stacks, leaning back with the wind; their light on the road and on the deck
     const fl = this.flame * (quiet ? 1 : 0.86 + 0.14 * Math.sin(t * 16)), FU = this.FU;
     FU.uTime.value = t;
-    FU.uLen.value.set(0.55 + 1.15 * fl, 1);
-    FU.uPow.value.set(fl * 1.15, 0);
+    FU.uLen.value.set(0.6 + 1.25 * fl, 1);
+    FU.uPow.value.set(fl * 3.0, 0); // (bright enough to stand on a road that is itself lit: it is seen from behind against the lanes' own colours)
     this.car.updateMatrixWorld(true);
     this.plumes.forEach((p, i) => {
       p.hold.visible = this.flame > 0.02;
       if (!p.hold.visible) return;
       this.fx.worldToLocal(this.stack(i, p.hold.position));
-      // each flame leans out to its own side and back with the wind: from behind, two wings of fire that stand clear of
-      // the egg. (Straight up they would cross the lane badges; straight back they would point at the lens and be a dot.)
-      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.74, 0.26 + (quiet ? 0 : 0.05 * Math.sin(t * 7 + i * 2)), 0.6).normalize());
-      p.glow.scale.setScalar(0.55 + 0.5 * fl); p.glow.material.opacity = 0.7 * fl;
+      // each flame is blown out to its own side, back and a little down with the wind: from behind, two swept wings of
+      // fire from the stack mouths, against the road. (Straight up they would cross the lane badges; straight back they
+      // would point at the lens and be a dot.)
+      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.78, -0.2 + (quiet ? 0 : 0.06 * Math.sin(t * 7 + i * 2)), 0.6).normalize());
+      p.glow.scale.setScalar(0.7 + 0.6 * fl); p.glow.material.opacity = 0.75 * fl;
     });
     this.roadGlow.visible = this.flame > 0.02;
     this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl);
@@ -462,7 +463,7 @@ class RacerRig {
     }
     if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 2.25, 1.0)), 0.75, 0.3 + 0.7 * Math.max(this.heat, this.flame));
     // ---- ribbons ride the rear frames and hubs through lane changes and slides
-    const tI = (0.75 + 0.25 * clamp((sp - 30) / 45, 0, 1)) * (0.8 + 0.5 * smoothstep(0, 0.3, this.brake)) * this.pow * dead;
+    const tI = 0.62 * (0.8 + 0.5 * smoothstep(0, 0.3, this.brake)) * this.pow * dead; // (ribbons of light, not jets: they do not brighten with speed)
     for (const tr of this.trails) {
       if (tr.a) tr.a.getWorldPosition(this._v); else this.hub(tr.w, this._v);
       tr.t.follow(this._v, run, tr.step);

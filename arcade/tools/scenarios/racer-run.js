@@ -86,13 +86,14 @@ module.exports = async (cap) => {
     await page(() => {
       const s = window.__arcade.Scenes.cur;
       s.__place = s.placeCamera; s.__fov = s.camera.fov;
+      if (s.laneTags) s.laneTags.visible = false; // (the lane badges are drawn from the game's own lens: they have no place in a test camera's picture)
       s.placeCamera = () => { s.camera.position.set(s.carX - 3.1, 2.5, 4.3); s.camera.lookAt(s.carX + 0.1, 0.95, -0.9); };
       s.camera.fov = 46; s.camera.updateProjectionMatrix();
       s.gp = 0.2;
     });
     await cap.fast(10);
     await still("19-beauty", { band: true, q: 93 });
-    await page(() => { const s = window.__arcade.Scenes.cur; s.placeCamera = s.__place; s.camera.fov = s.__fov; s.camera.updateProjectionMatrix(); });
+    await page(() => { const s = window.__arcade.Scenes.cur; s.placeCamera = s.__place; s.camera.fov = s.__fov; s.camera.updateProjectionMatrix(); if (s.laneTags) s.laneTags.visible = true; });
     await year(0);
   }
   // ---- a lane change: the body rolls, the front wheels steer, the egg rocks and settles
