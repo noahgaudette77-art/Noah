@@ -151,20 +151,21 @@ ten tracks came within 0.06 BPM of what was asked), starting where the levels at
 
 ## Spend log
 
-As of 2026-11-16 15:30 UTC (Phase 3 under way; the assets for Phases 4 and 5 are made). Balances are read live from
+As of 2026-11-16 17:05 UTC (Phase 3 closing; the assets for Phases 4 and 5 are made). Balances are read live from
 each provider; failed calls are not charged by any of the four. Every paid call is a line of
 `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits | 4,320 | 145 | 26 image-to-3D at the highest settings (60 each), 20 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 20 segmentations (40 each), 12 auto rigs (25 each), 23 retarget requests (95 clips at 10 each), 13 rig checks (free) |
+| Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 4,320 | 5,145 (checked live after the top-up) | 26 image-to-3D at the highest settings (60 each), 20 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 20 segmentations (40 each), 12 auto rigs (25 each), 23 retarget requests (95 clips at 10 each), 13 rig checks (free) |
 | fal.ai | $49.90 | $27.44 | $22.46 | 25 Rodin Gen-2.5 runs, 80 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
 | ElevenLabs | 131,000 credits | about 25,800 | about 105,200 | 495 sound effects and loops (11 credits a second), 80 announcer lines, 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
 The bosses cost more Tripo credits than first projected (about 1,700 against about 1,000 to 1,450): building them as
-rigid parts needs a part segmentation of each (40), and each got eight clips (80), not six. Tripo's last 145 credits
-are kept as a reserve for one remake.
+rigid parts needs a part segmentation of each (40), and each got eight clips (80), not six. Tripo was then down to 145
+credits; the owner topped it up by 5,000 on 2026-11-16 and asked that Tripo be used for the menu props and for
+remaking any boss or asset that looks weak in a review, rather than falling back to Rodin or procedural shapes.
 
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
 redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now
