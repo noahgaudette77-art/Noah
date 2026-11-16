@@ -114,7 +114,7 @@ class RacerRig {
       uHot: { value: new THREE.Color(3.2, 3.0, 2.5) }, uCool: { value: new THREE.Color(3.0, 1.35, 0.3) }, uTail: { value: new THREE.Color(2.2, 0.3, 1.5) } };
     this.plumeMat = starPlumeMaterial(this.FU);
     this.plumes = [0, 1].map((i) => {
-      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.15, len: 1.25, kind: 0, ph: i * 2 }]), this.plumeMat);
+      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.17, len: 1.25, kind: 0, ph: i * 2 }]), this.plumeMat);
       m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
       const glow = glowSprite(new THREE.Color(2.4, 1.2, 0.35), 0.5, 0);
       glow.renderOrder = 5;
@@ -245,7 +245,9 @@ class RacerRig {
   // dt: the game's frame time; sp: road speed; step: metres travelled this frame; sky: the career's colours now
   update(dt, sp, step, sky) {
     const g = this.g, d = VFX.dt, t = VFX.t, h = Math.min(d, 1 / 30), U = this.U, UE = this.UE, P = this.P, S = RIG.S, rig = this.rig;
-    const quiet = REDUCED_MOTION || GFX.calm, calm = quiet ? 0.45 : 1, boost = g.boostRate ? 1 : 0, n = g.round ? g.round.n : 4;
+    const quiet = REDUCED_MOTION || GFX.calm, calm = quiet ? 0.45 : 1, n = g.round ? g.round.n : 4;
+    // (the game holds its boost until the next question. A rig that has just been knocked, or has just had a claim paid, is not flooring it: its stacks go out)
+    const boost = g.boostRate && !(g.stage && g.state !== "ask" && g.stage.verdict && !g.stage.verdict.ok) ? 1 : 0;
     const steer = clamp((g.lane === null ? 0 : laneX(g.lane, n)) - g.carX, -2.5, 2.5);
     // (the game lays a bob and a bank on the whole car each frame: the suspension below replaces them)
     this.car.position.y = 0; this.car.rotation.z = 0;
@@ -419,7 +421,7 @@ class RacerRig {
     UE.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(0.5);
     this.eggLight.intensity = eg * (0.5 + 0.9 * this.eggK + 2.4 * pulse);
     // ---- flames from both stacks, leaning back with the wind; their light on the road and on the deck
-    const fl = this.flame * (quiet ? 1 : 0.86 + 0.14 * Math.sin(t * 16)), FU = this.FU, lean = clamp(0.5 + sp * 0.006, 0.5, 1.15);
+    const fl = this.flame * (quiet ? 1 : 0.86 + 0.14 * Math.sin(t * 16)), FU = this.FU;
     FU.uTime.value = t;
     FU.uLen.value.set(0.55 + 1.15 * fl, 1);
     FU.uPow.value.set(fl * 1.15, 0);
@@ -428,7 +430,9 @@ class RacerRig {
       p.hold.visible = this.flame > 0.02;
       if (!p.hold.visible) return;
       this.fx.worldToLocal(this.stack(i, p.hold.position));
-      p.hold.rotation.set(-(Math.PI / 2 - lean), 0, 0);
+      // each flame leans out to its own side and back with the wind: from behind, two wings of fire that stand clear of
+      // the egg. (Straight up they would cross the lane badges; straight back they would point at the lens and be a dot.)
+      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.74, 0.26 + (quiet ? 0 : 0.05 * Math.sin(t * 7 + i * 2)), 0.6).normalize());
       p.glow.scale.setScalar(0.55 + 0.5 * fl); p.glow.material.opacity = 0.7 * fl;
     });
     this.roadGlow.visible = this.flame > 0.02;

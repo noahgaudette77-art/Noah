@@ -916,7 +916,7 @@ class RacerGame extends QuizGame {
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
     const k4 = this.gateKit[4], wg = new THREE.Group();
-    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
+    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.posts, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
@@ -1243,9 +1243,10 @@ class RacerGame extends QuizGame {
         cones.add(c, racerM(x, 1.71, 0.25), col, 0.5);
         c.dispose();
       });
-      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => glow.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
-      const k = { frame: frame.build("color"), glow: glow.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
-      this.owned.push(k.frame, k.glow, k.cones, k.sign);
+      const posts = new RacerBatch(); // (the red bollards between the lanes: a mesh of their own, so a gantry that lifts as it leaves can leave them on the road)
+      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => posts.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
+      const k = { frame: frame.build("color"), glow: glow.build("color"), posts: posts.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
+      this.owned.push(k.frame, k.glow, k.posts, k.cones, k.sign);
       return k;
     };
     this.gateKit = { 2: kit(2), 4: kit(4) };
@@ -1314,6 +1315,8 @@ class RacerGame extends QuizGame {
     const n = r.n === 2 ? 2 : 4;
     const k = this.gateKit[n];
     g.add(new THREE.Mesh(k.frame, this.gateFrameMat), new THREE.Mesh(k.glow, this.gateGlowMat));
+    g.userData.posts = new THREE.Mesh(k.posts, this.gateGlowMat);
+    g.add(g.userData.posts);
     const cones = new THREE.Mesh(k.cones, this.gateConeMat);
     cones.layers.set(1);
     g.add(cones);
@@ -1569,7 +1572,7 @@ class RacerGame extends QuizGame {
     this.gate = null;
     if (gate) {
       this.leaving = gate;
-      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); if (st) gate.position.y = 2.7 * Math.min(1, k * 2.1); }, () => this.dropGate(gate)); // (staged: it lifts as it goes by, over the lens, not through it: what happens at the gate is seen)
+      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); if (st) { gate.position.y = 2.7 * Math.min(1, k * 2.1); gate.userData.posts.position.y = -gate.position.y; } }, () => this.dropGate(gate)); // (staged: it lifts as it goes by, over the lens, not through it: what happens at the gate is seen)
     }
     this.tw.wait(0.45, () => {
       if (this.unmounted) return;

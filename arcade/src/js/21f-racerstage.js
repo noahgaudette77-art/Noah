@@ -73,8 +73,9 @@ class RacerStage {
     { const c = document.createElement("canvas");
       c.width = c.height = 256;
       const x = c.getContext("2d");
-      x.fillStyle = "rgba(255,40,70,0.34)"; x.fillRect(0, 0, 256, 256);
-      x.strokeStyle = "rgba(255,120,140,1)"; x.lineWidth = 6; x.strokeRect(5, 5, 246, 246);
+      const gr = x.createRadialGradient(128, 150, 20, 128, 150, 150); // (soft at its edge: a sheet of light, not a board)
+      gr.addColorStop(0, "rgba(255,40,70,0.42)"); gr.addColorStop(0.7, "rgba(255,40,70,0.3)"); gr.addColorStop(1, "rgba(255,40,70,0)");
+      x.fillStyle = gr; x.fillRect(0, 0, 256, 256);
       x.strokeStyle = "rgba(255,230,236,1)"; x.lineJoin = "bevel";
       let sd = 11;
       const r = () => (sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -140,6 +141,8 @@ class RacerStage {
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 7px #000"; }
   // how fast the road runs, as a share of what the game asks for (a blow costs the rig its speed for a moment)
   speedTo(k, rate) { this.speedGo = k; this.speedRate = rate; }
+  // (the game holds its boost until the next question: a rig that has taken a blow goes on at its cruising speed, not the boost's)
+  cruise() { return this.g.boostRate ? 0.42 : 1; }
 
   // ---- sound that runs on: the engine, the stacks' flame, the alarm -------------------------------------------------
   start() {
@@ -209,8 +212,9 @@ class RacerStage {
       if (g.run.streak >= 3 && !quiet) HudFX.reward(g.el, from, "[data-egg]", { n: 3, kind: "star", color: COLORS.yellow, clear: ".qpanel" });
       Sound.sfx("reward", 0, { vol: 0.7 });
     });
-    const at = g.carPoint(150);
-    UI.floater("+" + money(gain), at.x, at.y, COLORS.lime, true);
+    // the amount stands beside the rig, on the side with more room: clear of the burst over its nose and of the lane badges above it
+    const at = this.screen(rig.centre(this._v)), room = at.x < GFX.w / 2 ? 1 : -1;
+    UI.floater("+" + money(gain), clamp(at.x + (room > 0 ? 52 : -52 - 150), 8, Math.max(8, GFX.w - 158)), at.y + 4, COLORS.lime, true);
     this.outline(UI.root.lastElementChild);
   }
   // a fifth right answer in a row: the policy is issued. A soft swell of the shield, and its light goes to the HUD
@@ -234,7 +238,7 @@ class RacerStage {
       this.breakPane(p);
       kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 6 : 18, size: 0.78, speed: 12, color: RSTAGE.GLASS, hot: RSTAGE.REJECT, dir: back, spread: 1.1, gravity: 13, life: 1.0, radius: 1.3, k: 1.4 });
       kit.sparks(p, RSTAGE.REJECT, { n: quiet ? 8 : 16, speed: 13, dir: back, spread: 1.2, life: 0.45, len: 0.8, w: 0.07, gravity: 9, k: 1.5 });
-      kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.5 });
+      kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.25 });
     } else { // no lane at all: it runs onto the bollard between two lanes (metal, not glass)
       kit.hull(p, 0xff7a4a, { size: 1.7, dir: back });
       kit.debris(p, { n: quiet ? 5 : 12, size: 0.66, speed: 11, color: RSTAGE.WRECK, hot: 0xff5a8a, dir: back, spread: 1.0, gravity: 13, life: 0.9, radius: 0.5 });
@@ -246,16 +250,16 @@ class RacerStage {
       // (dark: lobes of deep red fire with no white heart, heavy smoke, embers. A reject is not a firework.)
       const q = rig.nose(this._w).setY(0.8).clone(), sz = 0.6 + 0.3 * hard;
       for (let i = 0; i < (quiet ? 2 : 4); i++) { const a = rand(6.283), v = new THREE.Vector3(Math.cos(a) * 1.6, rand(0.6, 1.8), Math.sin(a) * 0.8 + 1.2).multiplyScalar(sz); kit.fire(this._u.copy(q).addScaledVector(v, 0.15), { size: rand(0.6, 0.9) * sz, life: rand(0.3, 0.45), vel: v, rise: 0.4, color: 0xc02428, k: 0.8 }); }
-      for (let i = 0; i < (quiet ? 2 : 5); i++) kit.smoke(this._u.set(rand(-0.8, 0.8), rand(0.2, 1.2), rand(-0.4, 0.6)).add(q), { size: rand(1.0, 1.5) * sz, life: rand(0.7, 1.1), rise: 0.8, a: 0.62, cold: true, color: RSTAGE.SMOKE, vel: this._v.set(rand(-1, 1), 1.2, 2.5) });
+      for (let i = 0; i < (quiet ? 2 : 3); i++) kit.smoke(this._u.set(rand(-0.7, 0.7), rand(0.3, 1.0), rand(-0.6, 0.2)).add(q), { size: rand(0.7, 1.0) * sz, life: rand(0.6, 0.9), rise: 1.2, a: 0.42, cold: true, color: RSTAGE.SMOKE, vel: this._v.set(rand(-1, 1), 1.6, 4.5) }); // (thin enough that the rig is seen through it, and gone back over the road)
       kit.embers(q, 0xff5a4a, { n: 8, radius: 0.6, life: 1.0 });
-      kit.light(q, 0xff2a30, 3.5, 0.3, 12);
+      kit.light(q, 0xff2a30, 2.2, 0.3, 12);
       this.glow(q, 0xd02024, 6.5, 0.45, 0.5);
       Sound.sfx("explosion_small", pan, { vol: 0.7, rate: 0.9 });
     });
     // the rig: knocked into a half-spin on locked wheels; the road slows under it
     rig.knock(sd, 0.82 + 0.18 * hard);
     this.skidT = quiet ? 0.2 : 0.66;
-    this.speedTo(0.42, 4); g.show.wait(0.7, () => this.speedTo(1, 0.9));
+    this.speedTo(0.36, 4); g.show.wait(0.7, () => { if (g.state !== "over") this.speedTo(this.cruise(), 0.9); });
     // the lens: a lurch, a shake, the band's edge red, the colours split for three frames
     this.jolt = 1; this.joltSd = sd; this.hitK = 1;
     g.shake(0.1 + 0.1 * hard);
@@ -306,7 +310,7 @@ class RacerStage {
     GFX.pulse(1.2, 0);
     this.snap = 3;
     VFX.hitStop(2);
-    this.speedTo(0.8, 4); g.show.wait(0.5, () => this.speedTo(1, 1.2));
+    this.speedTo(0.7, 4); g.show.wait(0.5, () => { if (g.state !== "over") this.speedTo(this.cruise(), 1.2); });
     this.policyGone();
     Sound.sfx("impact_reject", pan, { vol: 0.55, rate: 0.9 });
     Sound.sfx("impact_shield", pan);
@@ -333,10 +337,10 @@ class RacerStage {
     this.nearCool = 1.2; this.nearK = 1; this.camX = -side * (quiet ? 0.06 : 0.24);
     Sound.sfx("near_miss", side * 0.7);
     if (quiet) return;
-    for (let i = 0; i < 12; i++) { // speed lines: long thin streaks in the gap, torn backward
+    for (let i = 0; i < 16; i++) { // speed lines: long thin streaks in the gap, torn backward
       const d = kit._dart();
       d.p.set(lerp(x0, c.x, rand(0.35, 0.95)), rand(0.35, 2.1), rand(-7, 1.5));
-      d.v.set(0, 0, rand(34, 52)); d.life = d.t = rand(0.16, 0.26); d.w = rand(0.03, 0.055); d.len = rand(2.6, 4.6); d.stretch = 0; d.g = 0; d.drag = 1; d.fade = 1.6; d.col = fxRGB(0xbff6ff, 1.5); d.bolt = null;
+      d.v.set(0, 0, rand(34, 52)); d.life = d.t = rand(0.16, 0.26); d.w = rand(0.03, 0.055); d.len = rand(2.6, 4.6); d.stretch = 0; d.g = 0; d.drag = 1; d.fade = 1.6; d.col = fxRGB(0xbff6ff, 1.9); d.bolt = null;
     }
     rig.roll.v -= side * 1.0; rig.eggR.v -= side * 1.6; rig.heave.v += 0.25;
     g.shake(0.045);
@@ -349,13 +353,13 @@ class RacerStage {
     on = on || 0;
     if (on === this.low) return;
     this.low = on;
-    GFX.setDanger(on === 2 ? 0.9 : on ? 0.62 : 0);
+    GFX.setDanger(on === 2 ? 0.6 : on ? 0.55 : 0);
     HudFX.low(g.el, !!on);
     if (on === 1) { this.alarmOn(); this.lowT = 0; } else { Sound.stopLoop("racer-alarm", 0.3); this.alarm = false; }
     if (this.burn) { this.burn.on = false; this.burn = null; }
     if (on && !(REDUCED_MOTION || GFX.calm)) { // its left stack burns: flame at the mouth, dark smoke trailing up and back, clear of the egg
       const hot = on === 2 ? 1.5 : 1;
-      this.burn = this.kit.trailer((v) => rig.stack(0, v), { smoke: 0.9, fire: 0.55 * hot, sparks: 0.3, rate: 15 * hot, size: 0.62 * hot, vel: new THREE.Vector3(-0.6, 2.0, 4.2), life: 0.75, color: 0xff6a3a, a: 0.46 });
+      this.burn = this.kit.trailer((v) => rig.stack(0, v), { smoke: 0.9, fire: 0.75, sparks: 0.4, rate: 18 * hot, size: 0.85 * hot, vel: new THREE.Vector3(-1.1, 1.7, 3.6), life: 0.8, color: 0xff6a3a, a: 0.5 });
     }
   }
 
@@ -440,6 +444,7 @@ class RacerStage {
     kit.drift.set(0, 0, Math.min(sp * 0.3, 11)); // (what is thrown off falls behind, slowly enough that a blast is seen where it was struck)
     if (this.snap > 0 && --this.snap === 0) { GFX.ab = Math.min(GFX.ab, 0.6); GFX.punch = Math.min(GFX.punch, 0.002); } // (the colours split and the picture jumps for three frames, no longer: it is sharp while the blow is read)
     if (this.verdict) this.verdict.t += d;
+    if (g.state === "ask") { this.verdict = null; if (this.speedGo < 1 && this.overT < 0) this.speedTo(1, 1.5); } // a new question: the road is the game's again
     this.speedK += (this.speedGo - this.speedK) * Math.min(1, d * this.speedRate * 3);
     this.jolt = Math.max(0, this.jolt - d * 2.6);
     this.camX *= Math.pow(0.02, d);
@@ -448,6 +453,9 @@ class RacerStage {
     this.gateFlare = Math.max(0, this.gateFlare - d * 3.2);
     this.overK = Math.max(0, this.overK - d * 1.1);
     g.gateConeMat.uniforms.uI.value = (1 + 2.4 * this.gateFlare) * (g.leaving ? 1 - clamp(g.leaving.position.z / 5, 0, 1) : 1); // (the lane's cone flares as a right gate is taken, and fades as the gantry goes over the lens)
+    // ---- the lens follows the rig across the road without smearing it (the rig is what a lane change is read by: its
+    // roll, its steered wheels), and a picture that a blow is shaking stays sharp
+    { const post = g.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur === undefined ? 1 : post.mblur; post.mblur = g.shakeAmt > 0.012 || this.jolt > 0.05 ? 0 : this.mblur0 * (1 - 0.85 * clamp(Math.abs(rig.pvx) / 5, 0, 1)); }
     // ---- a boost: the lens falls back while the stacks burn, the flame is heard for as long as it is seen
     const boosting = g.boostRate && g.state === "ask" ? 1 : 0;
     this.pull += (Math.max(boosting, rig.surgeT > 0.45 ? 0.7 : 0) - this.pull) * Math.min(1, d * 3.5);
@@ -535,7 +543,7 @@ class RacerStage {
     if (this.lowK > 0.01 || fk > 0.01) {
       const cam = g.camera, b = g.bandSize(6);
       const at = this.alarm && Sound.ctx ? Sound.ctx.currentTime - this.alarmAt : this.alarmGame, ph = (Math.abs(at - this.alarmGame) < 0.2 ? at : this.alarmGame) / 1.125;
-      const beat = quiet || this.low === 2 ? 0.7 : 0.5 - 0.5 * Math.cos(ph * Math.PI * 2);
+      const beat = quiet ? 0.7 : this.low === 2 ? 0.5 : 0.5 - 0.5 * Math.cos(ph * Math.PI * 2);
       this.frame.visible = true;
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
