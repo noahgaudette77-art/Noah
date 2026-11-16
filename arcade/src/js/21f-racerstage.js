@@ -142,6 +142,10 @@ class RacerStage {
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 7px #000"; }
   // (and it holds at full strength for most of its second, then goes: the stock floater fades from its first frame)
   hold(el) { if (!el || !el.animate) return; el.style.animation = "none"; el.animate([{ transform: "translateY(0)", opacity: 1 }, { transform: "translateY(-16px)", opacity: 1, offset: 0.74 }, { transform: "translateY(-34px)", opacity: 0 }], { duration: 990, easing: "linear", fill: "forwards" }); }
+  // (the kit's own smoke for a reject or a struck plate is heavy and dark, and the road carries it back over the rig,
+  // which it blacks out: here those are thrown without it. The crash has its own thin violet-grey smoke, which leaves
+  // to the side.)
+  dry(fn) { const kit = this.kit; kit.smoke = () => {}; try { fn(); } finally { delete kit.smoke; } }
   // how fast the road runs, as a share of what the game asks for (a blow costs the rig its speed for a moment)
   speedTo(k, rate) { this.speedGo = k; this.speedRate = rate; }
   // (the game holds its boost until the next question: a rig that has taken a blow goes on at its cruising speed, not the boost's)
@@ -251,11 +255,11 @@ class RacerStage {
       this.breakPane(p);
       kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 3 : 7, size: 0.4, speed: 13, color: 0x1c1830, hot: 0xffdce8, dir: back, spread: 1.0, gravity: 14, life: 0.7, radius: 1.1 }); // (a few dark splinters that glint as they turn: glass, not confetti)
       kit.sparks(p, RSTAGE.REJECT, { n: quiet ? 8 : 16, speed: 13, dir: back, spread: 1.2, life: 0.45, len: 0.8, w: 0.07, gravity: 9, k: 1.5 });
-      kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.25 });
+      this.dry(() => kit.fizzle(this._w.copy(p).setY(2.0), { size: 1.25 }));
     } else { // no lane at all: it runs onto the bollard between two lanes (metal, not glass)
-      kit.hull(p, 0xff7a4a, { size: 1.7, dir: back });
+      this.dry(() => kit.hull(p, 0xff7a4a, { size: 1.7, dir: back }));
       kit.debris(p, { n: quiet ? 5 : 12, size: 0.66, speed: 11, color: RSTAGE.WRECK, hot: 0xff5a8a, dir: back, spread: 1.0, gravity: 13, life: 0.9, radius: 0.5 });
-      kit.fizzle(this._w.copy(p).setY(1.9), { size: 1.2 });
+      this.dry(() => kit.fizzle(this._w.copy(p).setY(1.9), { size: 1.2 }));
     }
     // three frames on: a small dark blast low on its nose (fire, smoke, embers), and its light on the road
     g.show.wait(0.05, () => {
