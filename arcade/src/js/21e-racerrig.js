@@ -410,7 +410,7 @@ class RacerRig {
     // struck: a red rim for a moment; and for a moment after it cannot be struck again: its edges pulse (under three times a second)
     this.blink = g.el && g.el.dataset.blink ? Math.min(1, this.blink + d * 8) : Math.max(0, this.blink - d * 5);
     const bl = this.blink * (quiet ? 0.5 : 0.5 + 0.5 * Math.sin(t * 2.6 * Math.PI * 2));
-    U.uSkHit.value.setRGB(2.0, 0.3, 0.45).multiplyScalar(this.struck * this.struck * 0.55).add(this._c.setRGB(0.9, 1.0, 1.1).multiplyScalar(bl * 0.75));
+    U.uSkHit.value.setRGB(1.7, 0.14, 0.24).multiplyScalar(this.struck * this.struck * 0.34).add(this._c.setRGB(0.8, 0.95, 1.1).multiplyScalar(bl * 0.42)); // (rims only, and never white: its lacquer keeps its colours under them)
     // the egg's own light
     const eg = this.pow * dead * (1 - 0.6 * flick), gl = 0.85 + 0.75 * this.eggK + 1.3 * pulse;
     UE.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(eg * gl);

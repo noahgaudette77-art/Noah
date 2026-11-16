@@ -926,7 +926,19 @@ class RacerGame extends QuizGame {
     if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint
       this.post.ssaa = 2;
       const gu = this.groundMat.uniforms;
-      gu.uCarW.value = 1.26; gu.uTailC.value.setRGB(0.8, 0.04, 0.5);
+      gu.uCarW.value = 1.26; gu.uTailC.value.setRGB(0.5, 0.03, 0.32);
+    }
+    // The run as it is staged round the war rig (21f-racerstage.js): its own effects kit (this.kit) and a set of
+    // show-only timers (this.show). With the built-in car there is none, and everything is shown as it always was.
+    this.stage = null;
+    if (this.rigKit) { try { this.stage = new RacerStage(this); } catch (e) { this.stage = null; console.warn("the run could not be staged: " + e.message); } }
+    if (this.stage) { // the lane badges (and, while a blow is on the screen, the gantry's letters) are drawn last, over the finished picture, from the unshaken lens: no flash, colour split, tear, tint or shake touches them
+      this.over = { cam: this.camera.clone() };
+      this.over.cam.layers.set(2);
+      Object.values(this.badgeMats).concat([this.badgeBackMat]).forEach((m) => { m.depthTest = false; });
+      this.signOverMats = {};
+      for (const label in this.signMats) { const m = (this.signOverMats[label] = new THREE.MeshBasicMaterial({ map: this.signMats[label].map, color: new THREE.Color(1.3, 1.3, 1.3), transparent: true, opacity: 0, depthTest: false, depthWrite: false, fog: false })); this.owned.push(m); }
+      s.userData.overlay = (r) => this.drawOver(r);
     }
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
     this.lookAt.set(0, 0.7, -18);
@@ -1311,6 +1323,12 @@ class RacerGame extends QuizGame {
       sign.position.set(laneX(i, r.n), 4.2, 0.02);
       sign.userData.slot = i;
       g.add(sign);
+      if (this.stage) { // (staged) the same letter once more, drawn over the finished picture while a blow is on the screen
+        const so = new THREE.Mesh(k.sign, this.signOverMats[label]);
+        so.position.set(sign.position.x, sign.position.y, sign.position.z + 0.01);
+        so.layers.set(2); so.renderOrder = 2;
+        g.add(so);
+      }
     }
     // lane letters on the road: they fade in with the question and go when the gate is passed
     this.dropTags();
@@ -1347,11 +1365,11 @@ class RacerGame extends QuizGame {
         const back = new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat);
         back.scale.setScalar(2.42);
         back.position.set(0, 1.62, -0.03);
-        back.layers.set(1);
+        back.layers.set(this.stage ? 2 : 1);
         back.renderOrder = 3;
         post.add(back);
       }
-      badge.layers.set(1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's)
+      badge.layers.set(this.stage ? 2 : 1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's) (staged: drawn over the finished picture. See drawOver.)
       badge.renderOrder = 4;
       post.add(glow, stem, badge);
       lane.add(tag, post);
@@ -1388,8 +1406,8 @@ class RacerGame extends QuizGame {
 
   start() {
     Sound.play("racer");
-    Sound.engine(true);
-    if (this.rigKit) this.rigKit.launch(); // (the war rig drives in from behind the lens: look only)
+    if (this.stage) this.stage.start(); // (staged: the engine's own recording, and the war rig drives in from behind the lens)
+    else { Sound.engine(true); if (this.rigKit) this.rigKit.launch(); }
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -1435,6 +1453,7 @@ class RacerGame extends QuizGame {
     if (this.boostRate || this.state !== "ask" || this.lane === null) return;
     this.timeFrac = 1 - this.gp;
     this.boostRate = Math.max(1 / this.T, (1 - this.gp) / 0.7);
+    if (this.stage) return this.stage.boost(); // (staged: the roar, and a flash at each stack as they light)
     Sound.sfx("swoosh");
     GFX.pulse(0.9, 0); // (flooring it streaks the street; the colours part on a crash only)
   }
@@ -1453,8 +1472,12 @@ class RacerGame extends QuizGame {
     const ok = this.run.record(r, picked, this.boostRate ? this.timeFrac : undefined);
     this.quiz.reveal(picked);
     this.state = "explain";
-    let title;
+    // (staged, round the war rig: what is seen and heard of the answer is the stage's, told once the rules below have
+    // run. The rules are the same either way, line for line.)
+    const st = this.stage;
+    let title, how = "crash", gain = 0, policy = false;
     if (ok) {
+      how = "right";
       const tf = this.boostRate ? this.timeFrac : 0;
       const contrib = 2500 + 250 * Math.min(this.run.streak, 10) + Math.round(1500 * tf);
       const rate = this.rate();
@@ -1463,25 +1486,33 @@ class RacerGame extends QuizGame {
       this.peak = Math.max(this.peak, this.egg);
       if (this.run.streak > 0 && this.run.streak % 5 === 0 && this.insurance < 2) {
         this.insurance++;
+        policy = true;
         UI.toast("STREAK " + this.run.streak + "! INSURANCE POLICY ISSUED");
       }
       title = `+${money(this.egg - before)} · ${Math.round(rate * 100)}% RETURN`;
-      Sound.sfx("correct");
-      Sound.sfx("deposit");
-      UI.flash("good");
-      GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      gain = this.egg - before;
+      if (!st) {
+        Sound.sfx("correct");
+        Sound.sfx("deposit");
+        UI.flash("good");
+        GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      }
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       this.speedKick();
       if (this.has3D) {
-        const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
-        this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        if (!st) {
+          const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
+          this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        }
         this.signFlash(r.correct);
       }
-      const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
-      UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      if (!st) {
+        const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
+        UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      }
       while (this.nextMilestone < EGG_MILESTONES.length && this.egg >= EGG_MILESTONES[this.nextMilestone]) {
         const m = EGG_MILESTONES[this.nextMilestone++];
         this.tw.wait(0.4, () => {
@@ -1490,45 +1521,55 @@ class RacerGame extends QuizGame {
         });
       }
     } else if (this.insurance > 0) {
+      how = "insured";
       this.insurance--;
       title = picked < 0 ? "NO LANE! INSURANCE PAID THE CLAIM" : "WRONG LANE! INSURANCE PAID THE CLAIM";
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.25);
-      GFX.pulse(6, 0);
+      if (!st) {
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.25);
+        GFX.pulse(6, 0);
+      }
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      }
     } else {
       this.crashes++;
       const loss = this.egg * 0.15;
       this.egg -= loss;
       title = (picked < 0 ? "NO LANE CHOSEN! " : "WRONG LANE! ") + "MARKET CRASH −" + money(loss);
-      Sound.sfx("hit");
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.5);
-      GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
-      GFX.glitch(0.6, 0.34);
+      if (!st) {
+        Sound.sfx("hit");
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.5);
+        GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
+        GFX.glitch(0.6, 0.34);
+      }
       GFX.hitStop(120);
       Haptics.buzz([70, 40, 110]);
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) {
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
-        this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) {
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
+          this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+        }
       }
     }
     this.hud();
+    if (st) { try { st.arrive(how, { right: r.correct, picked, gain, policy }); } catch (e) { console.error(e); } } // (after the HUD has drawn what the rules decided: the life that went is seen to break)
     const gate = this.gate;
     this.gate = null;
     if (gate) {
       this.leaving = gate;
-      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); }, () => this.dropGate(gate));
+      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); if (st) gate.position.y = 2.7 * Math.min(1, k * 2.1); }, () => this.dropGate(gate)); // (staged: it lifts as it goes by, over the lens, not through it: what happens at the gate is seen)
     }
     this.tw.wait(0.45, () => {
       if (this.unmounted) return;
@@ -1577,16 +1618,17 @@ class RacerGame extends QuizGame {
   gameOver(fullCareer) {
     this.state = "over";
     Sound.stopMusic();
-    Sound.engine(false);
+    if (!this.stage) Sound.engine(false); // (staged: the engine is heard to die, or to pull away: see the stage's over)
     const rich = this.egg >= EGG_GOAL;
     const age = START_AGE + this.year;
     if (fullCareer) {
       Sound.sfx(rich ? "win" : "levelup");
       UI.banner(rich ? "RETIRED A MILLIONAIRE" : "HAPPY RETIREMENT", rich ? COLORS.lime : COLORS.yellow, "Age 65 · " + money(this.egg));
     } else {
-      Sound.sfx("gameover");
+      if (!this.stage) Sound.sfx("gameover"); // (staged: the blast first, then the jingle)
       UI.banner("FORCED RETIREMENT", COLORS.red, "Three market crashes at age " + age);
     }
+    if (this.stage) { try { this.stage.over(fullCareer, rich); } catch (e) { console.error(e); } } // (each ending is staged, inside the 1.9 s the rule gives it)
     this.tw.wait(1.9, () => {
       if (this.unmounted) return;
       showResults({
@@ -1653,6 +1695,7 @@ class RacerGame extends QuizGame {
   }
   update(dt) {
     super.update(dt);
+    if (this.stage) this.shakeAmt = Math.min(this.shakeAmt, 0.2); // (staged: a shake never carries the rig or the lane badges out of the band)
     if (this.paused) return;
     if (this.state === "ask") {
       if (this.lane !== null && !this.boostRate && this.lockT > 0) {
@@ -1664,7 +1707,7 @@ class RacerGame extends QuizGame {
       if (this.gp >= 1) { this.gp = 1; this.arrive(); }
     }
     if (!this.has3D) return;
-    const sp = this.speed + (this.boostRate ? 45 : 0);
+    const sp = (this.speed + (this.boostRate ? 45 : 0)) * (this.stage ? this.stage.speedK : 1); // (staged: a blow costs the rig its speed for a moment. Look only: the road's scroll)
     GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.15) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view (lightly: the lines beside the road carry the speed)
     this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
@@ -1688,7 +1731,9 @@ class RacerGame extends QuizGame {
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
-      const on = this.state === "ask" ? 1 : 0;
+      // (staged: once the gate is reached the answer is shown on the road for a moment: the right lane's badge stands lit, the others step back)
+      const vd = this.stage && this.state !== "ask" && this.stage.verdict && this.stage.verdict.t < 1.3 ? this.stage.verdict : null;
+      const on = this.state === "ask" || vd ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
       this.badgeBackMat.opacity = 0.82 * Math.min(1, k * 1.25);
@@ -1710,6 +1755,15 @@ class RacerGame extends QuizGame {
         u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
         u.post.position.y = 0.05 * Math.sin(this.t * 1.7) + 0.04 * u.k; // (it rides with the bar)
         u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
+        if (vd) { // the right lane's badge beats; a wrong lane that was taken goes red; the rest are dimmed
+          const right = u.slot === vd.right, wrong = !vd.ok && u.slot === vd.picked, beat = 0.5 + 0.5 * Math.sin(vd.t * 9);
+          u.badge.material.opacity = Math.min(1, k * 1.25) * (right ? 1 : wrong ? 0.85 : 0.28);
+          u.badge.material.color.setRGB(1.1, 1.1, 1.1).multiplyScalar(right ? 1.05 + 0.12 * beat : 0.8);
+          if (wrong) u.badge.material.color.setRGB(1.05, 0.34, 0.42);
+          u.post.scale.setScalar(pop * (right ? 1.14 + 0.05 * beat : 0.9));
+          u.tag.material.opacity *= right ? 1 : 0.2;
+          u.glow.material.opacity = k * (right ? 0.34 + 0.2 * beat : 0.04);
+        } else u.badge.material.color.setRGB(1.1, 1.1, 1.1);
       });
       if (!on && this.tagK < 0.02) this.dropTags();
     }
@@ -1721,12 +1775,19 @@ class RacerGame extends QuizGame {
     this.car.position.y = Math.sin(this.t * 18) * 0.02;
     this.car.rotation.z = clamp((prev - this.carX) * 2.5, -0.25, 0.25);
     this.updateLook(dt, sp, step, scroll, sky);
+    if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
+      this.show.update(VFX.dt);
+      try { this.stage.update(dt, sp, step, sky); } catch (e) { console.error(e); }
+      this.kit.update(VFX.dt);
+    }
     if (this.pano) this.pano.update(VFX.dt); // (the panorama has the last word on the light, the far haze and the lens)
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
     this.camBase.x = this.carX * follow + Pointer.x * 0.35;
     this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
+    if (this.stage) this.stage.camera(); // (the lens answers a blow, a boost, a near miss)
     this.placeCamera();
+    if (this.stage) this.stage.lens();
     followSky(this.sky, this.camera);
     if (this.pano) this.pano.follow(this.camera);
     FX.sync(this.scene, this.t);
@@ -1797,16 +1858,33 @@ class RacerGame extends QuizGame {
     this.lampLight.color.set(RACER_LAMP[left ? 0 : 1]);
     this.lampLight.intensity = 2.4 * sky.lamps * Math.exp(-(lz * lz) / 40);
   }
+  // (staged) The lane badges, drawn over the finished picture from where the camera stands unshaken and unrolled:
+  // whatever a blow does to the picture (flash, colour split, tear, tint, shake), they are not touched by it. They
+  // and the gantry's letters live on a layer of their own that the picture's camera does not see.
+  drawOver(r) {
+    const o = this.over, s = this.scene;
+    if (!GFX.ok || !o || !(this.laneTags || this.gate || this.leaving)) return;
+    const c = o.cam, cam = this.camera;
+    for (const label in this.signOverMats) this.signOverMats[label].opacity = Math.min(1, this.stage.overK * 2.5);
+    c.projectionMatrix.copy(cam.projectionMatrix); c.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
+    c.position.copy(this.camBase); c.lookAt(this.lookAt);
+    c.updateMatrixWorld(true);
+    const ac = r.autoClear, bg = s.background;
+    r.autoClear = false; s.background = null; // (nothing is cleared: this goes over what is there)
+    try { r.setRenderTarget(null); r.render(s, c); } catch (e) { /* the picture stands without them */ }
+    s.background = bg; r.autoClear = ac;
+  }
   pause() {
     super.pause();
-    if (this.paused) Sound.engine(false);
+    if (this.paused) { if (this.stage) this.stage.pause(); else Sound.engine(false); } // (nothing keeps sounding behind the menu)
   }
   resume() {
     super.resume();
-    if (this.state !== "over") Sound.engine(true);
+    if (this.state !== "over") { if (this.stage) this.stage.resume(); else Sound.engine(true); }
   }
   dispose() {
     Sound.engine(false);
+    if (this.stage) this.stage.dispose();
     if (this.has3D) {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
