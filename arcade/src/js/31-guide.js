@@ -1,6 +1,16 @@
 // STRATEGY GUIDE — condensed notes per chapter, plus search across every
 // flashcard and note in the book.
 function showGuide(chapterN) {
+  // Served, the archive is built with its generated light and book: behind the loading line if they have not arrived.
+  if (Assets.on && !(Scenes.cur instanceof LibraryScene)) {
+    const p = Assets.need("guide");
+    if (p) {
+      UI.loading(true);
+      Assets.onProgress = (d, n) => UI.loading(true, d / n);
+      p.then(() => { Assets.onProgress = null; UI.loading(false); UI.cover(() => showGuide(chapterN)); });
+      return;
+    }
+  }
   Sound.play("calm");
   Sound.ambience(false);
   if (chapterN) return showGuideChapter(chapterN);

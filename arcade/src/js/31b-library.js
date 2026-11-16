@@ -428,6 +428,7 @@ class LibraryScene extends Scene3D {
     this.camBase.set(0, LIB_EYE, 6);
     this.lookAt.set(0, LIB_EYE - 1.3, -30);
     this.lt = 0;
+    this.gen = libraryGen(this); // (served: the generated archive round the nave, the great book on show: 31c-librarygen.js)
   }
   // Where a loose page starts (or starts again, once it has risen out of sight).
   placePage(p, anywhere) {
@@ -456,6 +457,7 @@ class LibraryScene extends Scene3D {
     post.contrast = 1.14 + 0.24 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
+    libraryGenUpdate(this, dt, lt);
     this.motes.userData.drift(lt);
     this.shaftMotes.userData.drift(lt * 0.8);
     this.shafts.forEach((sh, i) => { sh.material.uniforms.uI.value = 0.55 * (0.72 + 0.28 * Math.sin(lt * 1.05 + i * 1.9)); }); // each shaft swells and thins on its own time (about six seconds)

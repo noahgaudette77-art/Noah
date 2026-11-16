@@ -336,7 +336,7 @@ class ExamGame extends QuizGame {
     s.add(this.rimB);
 
     // the hall: a starry night through arched windows, pilasters and a colonnade
-    const night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial());
+    const night = (this.night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial()));
     night.position.set(0, 26, EXAM_WALL_Z - 12);
     s.add(night);
     // a big, dim surface: per-vertex lighting is plenty here and cheap on phones
@@ -398,8 +398,11 @@ class ExamGame extends QuizGame {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(BOSS_DAIS_R + 0.75, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
     ring.position.y = 0.04;
     s.add(ring);
+    // served: the moonlit night through the windows, the examiner's lectern (24d-examgen.js)
+    this.gen = examGen(this);
+    const moon = this.gen && this.gen.sky && this.gen.sky.env; // (then the boss's armour mirrors the moonlit night)
     // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
-    try { this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null; } catch (e) { this.boss = null; }
+    try { this.boss = BossModel.ok() ? new ExamBoss(this, moon || (this.bossEnvRT ? this.bossEnvRT.texture : env)) : null; } catch (e) { this.boss = null; }
     if (!this.boss) {
       // no boss model in this build, or it would not decode: the hall's old centrepiece stands in (24b-examhero.js)
       this.monument = new ExamMonument(this, gold, env);
@@ -416,6 +419,7 @@ class ExamGame extends QuizGame {
       this.backShade.position.set(0, BOSS_DAIS + BOSS_S * 0.62, -BOSS_S * 0.5);
       this.backShade.scale.set(BOSS_S * 2.3, BOSS_S * 2.3, 1);
       this.backShade.layers.set(1); // (it sorts by depth with the hall's other veils: over the shaft of light behind it, under the halo's ring)
+      if (this.gen && this.gen.dome) this.backShade.material.opacity = 0.42; // (served: the moon behind its head shows through)
       s.add(this.backShade);
     }
     // while the questions are up the camera is under the boss's chin and the floor is out of
@@ -509,7 +513,7 @@ class ExamGame extends QuizGame {
     c.needsUpdate = true;
   }
   start() {
-    Sound.play("calm");
+    Sound.play("exam"); // (its own recording when served; else the calm tune, as before)
     if (!this.rounds.length) { UI.toast("NO QUESTIONS YET"); return this.quit(); }
     UI.banner(this.boss ? "FINAL BOSS" : "BEGIN", COLORS.violet, this.rounds.length + " QUESTIONS" + (this.limit ? " · " + Math.round(this.limit / 60) + " MIN" : "") + (this.boss ? " · 60% BRINGS IT DOWN" : ""));
     this.state = "ask";
@@ -664,6 +668,7 @@ class ExamGame extends QuizGame {
     }
     if (!this.has3D) return;
     const t = this.t;
+    if (this.gen && this.gen.dome) this.gen.dome.userData.follow(this.camera);
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
     const B = this.boss;
     if (B) {

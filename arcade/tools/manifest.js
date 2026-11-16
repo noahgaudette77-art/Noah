@@ -19,7 +19,7 @@ const SETS = {
   hub: ["model:prop-cabinet", "model:mini-starfighter", "model:mini-warrig", "model:mini-proctor", "model:prop-deck", "model:prop-podium", "model:prop-tome", "model:prop-trophy", "model:prop-medal", "model:prop-coin", "model:prop-stand", "sky:hub-hall", "ui:bosses", "ui:icons"],
   hubsound: ["sfx:core", "sfx:hub", "sfx:voice", "music:hub"],
   title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title"],
-  memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "model:prop-vault", "sfx:core", "sfx:voice", "music:memory"],
+  memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory"], // (the vault's own door stays: it moves as the deck is banked)
   exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam"],
   guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm"],
 };

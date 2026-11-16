@@ -330,7 +330,8 @@ class MemoryGame extends QuizGame {
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [17, 21, 10] },
       ],
     });
-    const env = this.envRT ? this.envRT.texture : null;
+    this.gen = memoryGen(this); // (served: the vault's gold mirrors a gold vault, the coins and the deck are models: 23c-memorygen.js)
+    const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
@@ -557,6 +558,10 @@ class MemoryGame extends QuizGame {
     this.coinTex = memoryCoinTexture();
     this.coinGeo = memoryCoinGeometry();
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
+    if (this.gen && this.gen.coin) { // the generated token in place of the turned one, flying and in the piles
+      this.coinTex.dispose(); this.coinGeo.dispose(); this.coinMat.dispose();
+      this.coinTex = null; this.coinGeo = this.gen.coin.geo; this.coinMat = this.gen.coin.mat;
+    }
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
     this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
@@ -595,7 +600,7 @@ class MemoryGame extends QuizGame {
     this.bolts.instanceMatrix.needsUpdate = true;
   }
   start() {
-    Sound.play("calm");
+    Sound.play("memory"); // (its own recording when served; else the calm tune, as before)
     if (!this.total) {
       UI.toast("NO CARDS HERE YET");
       return this.quit();
@@ -609,6 +614,7 @@ class MemoryGame extends QuizGame {
     const f = this.card;
     if (!f) return this.finish();
     this.flipped = false;
+    if (this.gen) this.gen.dealK = 1; // (the deck gives up a card: look only)
     const card = $("[data-card]", this.el);
     // Snap back to the front without animating, or the next card's answer flashes by. The fly-away of the card
     // before it is cut off first: it has a frame or two left to run, turned to its answer side.
@@ -934,6 +940,7 @@ class MemoryGame extends QuizGame {
     this.motes.userData.drift(t);
     this.works.update(dt, t);
     this.sparks.update(dt, this.camera);
+    memoryGenUpdate(this, dt);
     FX.sync(this.scene, t);
   }
   // Free what the scene graph walk misses: the env target, the textures that are not
