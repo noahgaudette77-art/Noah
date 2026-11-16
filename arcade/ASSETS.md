@@ -18,6 +18,8 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 | Review sheets | `tools/gen/render.js` | every candidate from front, three-quarter, side, rear, rear three-quarter and top |
 | Split parts, rig | `tools/gen/tripo-post.js` | Tripo segmentation v2, rig check, auto rig, animation retarget |
 | Game model | `tools/gen/process-model.mjs` + `tools/gen/assets/<name>.json` | orientation (+Y up, +Z forward), scale, origin; parts as nodes with pivots; simplification (meshopt, borders locked); base colour (4K for the hero models), metal/roughness and normal maps (2K) as WebP; surface rules by part (`paint`: roughness, metalness, glow or colour for the texels of named parts, optionally only where the base colour is in a range); a glow map from the base colour's neon, cleaned with a median; anchor points for effects; quantised, meshopt-compressed `.glb` |
+| Elevation views | `tools/gen/views.js` | a picked concept redrawn flat from the front, the side, behind and above (Nano Banana Pro, edit), for multi-view image-to-3D |
+| Rigged model | `tools/gen/process-rigged.mjs` + `tools/gen/assets/boss-<n>.json` | a Tripo-rigged model with retargeted clips turned into rigid armour parts on its skeleton (see below); clips renamed, still tracks dropped, resampled; `render.js --anim` draws a contact sheet of the clips |
 | Skies | `tools/gen/skies.js`, `sky-build.js` | Blockade Labs Model 3 panoramas (8K), checked for seams and stretching, packed at 4096x2048 WebP |
 | Sound | `tools/gen/sounds.js`, `audio-build.js` | ElevenLabs effects (several takes each), loops, announcer lines, music; trimmed, levelled and packed into sprites |
 | Manifest | `tools/manifest.js` | writes `src/js/03a-files.js`: the files, the cues in each sprite, the music, what each screen needs |
@@ -30,7 +32,29 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 | `demon.glb` | Risk Blaster: the wave's enemy (second version) | Tripo `image-to-model` `v3.1-20260211` from concept `demon-d-nb-0` (Nano Banana Pro; prompt `demon-d`); parts from Tripo `mesh/segment` v2 (`balanced`), the two horns lifted out of a second split (`detailed`) | as above | 142K triangles in 13 parts (body, head, 2 horns, tail, 2 wings, 2 shoulders, 2 elbows, 2 hands), 9 anchors, 4K base colour, 2K maps, 3.4 MB. Surfaces by part: matte ridged horns, chrome armour with cyan seam lights, softly glowing wing membranes, a glowing rift in the chest | 60 + 40 + 40 Tripo credits; concept $0.15 |
 | `warrig.glb` | Nest Egg Run: the vehicle (second version: an armoured hauler carrying the nest egg) | Tripo `multiview-to-model`, model `v3.1-20260211`, from four elevations (front, left, back, right) of concept `warrig-b-sd-1` (Seedream 5.5, prompt `warrig-b`); the elevations drawn by Nano Banana Pro (edit) with `tools/gen/views.js`; parts from Tripo `mesh/segment` v2; the plane of symmetry found and one half reflected by `process-model.mjs` (`mirror`) | `geometry_quality: detailed`, `texture_quality: detailed`, `texture_version: v3.5-20260815`, PBR, 300K faces | 115K triangles in 8 parts (body, egg, 4 wheels, 2 exhaust stacks), 9 anchors, exactly symmetrical about its centreline, 4K base colour, 2K maps, 3.0 MB. Checked in flat top, side, front and rear views (`docs/combat-pass/racer/warrig-check-flat.jpg`) | 60 + 40 + 40 Tripo credits (model, two segmentations); concept and four views $0.76 |
 
+| `boss-1.glb` | Boss Rush: Product Pusher | Tripo `image-to-model` `v3.1-20260211` from concept `boss01-pusher-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: defeat, hurt, idle, enter, attackA, rage, attackB, death, stagger, win; 3.0 MB. | 60 + 25 + 40 + 100 Tripo credits (model, rig, segmentation, 10 clips) and 75 on tests of the method (a second rig, five clips on it); concept $0.06 |
+| `boss-2.glb` | Boss Rush: Perilmonger | Tripo `image-to-model` `v3.1-20260211` from concept `boss02-perilmonger-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 15 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.4 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-3.glb` | Boss Rush: Solvency Specter | Tripo `image-to-model` `v3.1-20260211` from concept `boss03-specter-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 16 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.4 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-4.glb` | Boss Rush: The Fine Print | Tripo `image-to-model` `v3.1-20260211` from concept `boss04-fineprint-sd-1`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.2 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-5.glb` | Boss Rush: Group Golem | Tripo `image-to-model` `v3.1-20260211` from concept `boss05-golem-sd-1`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.0 MB. Base colour darkened to gunmetal. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-6.glb` | Boss Rush: Inflation Titan | Tripo `image-to-model` `v3.1-20260211` from concept `boss06-titan-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 16 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.1 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-7.glb` | Boss Rush: Longevity Lich | Tripo `image-to-model` `v3.1-20260211` from concept `boss07-lich-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.2 MB. Its lime light turned to the game's mint. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-8.glb` | Boss Rush: Lord Intestate | Tripo `image-to-model` `v3.1-20260211` from concept `boss08-intestate-sd-1`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 15 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 2.7 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-9.glb` | Boss Rush: Undue Influencer | Tripo `image-to-model` `v3.1-20260211` from concept `boss09-influencer-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 17 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.0 MB. The two control bars are pinned to its forearms. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-10.glb` | Boss Rush: Probate Tollgate | Tripo `image-to-model` `v3.1-20260211` from concept `boss10-tollgate-sd-0`; parts from Tripo `mesh/segment` v2 | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 104K triangles in 7 parts with pivots (body, 2 tracks, claw arm, barrier arm), 7 anchors, no skeleton (it is not a biped: the game animates it), body darkened to gunmetal, 3.6 MB. | 60 + 40 Tripo credits (model, segmentation); concept $0.06 |
+| `boss-11.glb` | Boss Rush: Patrimony Phantom | Tripo `image-to-model` `v3.1-20260211` from concept `boss11-phantom-sd-1`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.0 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+| `boss-all.glb` | Boss Rush: The Proctor | Tripo `image-to-model` `v3.1-20260211` from concept `boss12-proctor-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 16 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 2.5 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
+
 Each model has a `<name>.json` beside it (parts, pivots, anchors, triangle count) written by the processing tool.
+
+The eleven biped bosses are built a third way (`tools/gen/process-rigged.mjs`). Tripo's auto-rig binds one soft skin
+to a skeleton, and on these machines that stretched plates, cases and robes like rubber. So the skeleton and its
+retargeted motion-capture clips are kept and the soft skin is thrown away: every part of the segmented model goes,
+whole, to the bone that owns it (a briefcase to the hand); a limb that came as one part is cut where its bones meet;
+a robe or cloak is cut into bands (hood on the head, mantle on the chest, skirt on the hips); every cut end is closed
+with a dark dome that reads as a joint. The result needs no skinning at run time and any part can be torn off.
+The first rig test (Tripo rig v3.0, 25 credits, and five clips on it, 50 credits) was not used: rig v1.0 has the
+larger library of clips.
 
 The war rig was made twice too. The first (`tools/gen/assets/warrig-v1.json`, a six-wheeler from Rodin) did not meet
 the owner's rules (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or
@@ -58,6 +82,9 @@ Blockade Labs Skybox AI, Model 3 (8K equirectangular, 1 credit each), packed at 
 | `racer-sunset.webp` | Nest Egg Run: golden hour (a great orange and pink lenticular cloud over a yellow horizon) | M3 Sky Dome | seam clean |
 | `racer-sunset-b.webp` | Nest Egg Run: dusk (purple clouds rimmed in orange, painted mountain ranges, a sun disc on the horizon) | M3 Digital Painting | seam runs through a mountain without a join |
 | `racer-night.webp` | Nest Egg Run: age 65 (stars and a violet milky way over a cyan and magenta horizon glow) | M3 Sky Dome | seam clean |
+| `boss-storm.webp` | Boss Rush: the arena's sky (a violet storm vortex with magenta lightning) | M3 Advanced (artistic) | upper half only is used; the join is turned behind the camera |
+| `boss-storm-b.webp` | Boss Rush: the industrial bosses' sky (dark teal storm over a far refinery, an orange fire pillar on the horizon) | M3 (style 146) | seam runs through the fire pillar without a join |
+| `boss-void.webp` | Boss Rush: the undead bosses' and the Proctor's sky (a black spiral storm with violet lightning over red lava light and far spires) | M3 Scifi Concept Art | seam clean |
 
 Rejected and deleted (2026-11-15; they were never committed and no code loads them): `blaster-nebula`,
 `blaster-nebula-b`, `blaster-belt`, `blaster-graveyard`, `blaster-gate` (the first prompts came back as alien
@@ -69,7 +96,7 @@ are added to this table as each mode's phase picks them.
 ## Sound (`assets/audio/`)
 
 ElevenLabs. Effects: `eleven_text_to_sound_v2`, `prompt_influence` 0.45, a fixed duration per effect, 3 to 6 takes
-each (the game plays the takes of a sound in turn). Loops: the same model with `loop: true`. Announcer: voice
+each (the game plays the takes of a sound in turn, each at the volume that makes it as loud as the middle take). Loops: the same model with `loop: true`. Announcer: voice
 "Harry" (`SOYHLrjzK2X1ezoPC6cr`), model `eleven_v3`, with a touch of echo and compression added in the build.
 `audio.json` lists every cue's place in its sprite.
 
@@ -79,21 +106,27 @@ each (the game plays the takes of a sound in turn). Loops: the same model with `
 | `sfx-combat.mp3` | laser, heavy laser, plasma bolt, spent cell, beam, missile launch and hit, volley, energy wave, ground slam, boss roar, hurt, stagger, armour breaking, death, warp; loop: starfighter engine | 1.1 MB, 82 s |
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.5 MB, 34 s |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.1 MB, 9 s |
-| `voice.mp3` | 55 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", streak names, milestones ...) | 0.8 MB, 70 s |
+| `voice.mp3` | 67 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, streak names, milestones ...) | 1.1 MB, 92 s |
 | `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
 | `music-racer.mp3` | Nest Egg Run's track: ElevenLabs `music_v2_5`, prompt `racer` in `sounds.js` (outrun synthwave, 118 BPM), take 0 of 2, cut to a loop from 0.7 s to 48.1 s | 0.9 MB, 48 s |
+| `sfx-bosses.mp3` | Boss Rush: each boss's own roar (`roar_1` .. `roar_11`, `roar_all`, 3 takes each), a giant machine landing, a limb servo, powering up | 1.4 MB, 98 s |
+| `music-boss.mp3` | Boss Rush's track: ElevenLabs `music_v2_5`, prompt `boss` (dark aggressive synthwave, 140 BPM), take 0 of 2, a loop from 0.7 s to 57.5 s | 1.1 MB, 58 s |
+| `music-finalboss.mp3` | The Proctor's track: prompt `finalboss` (epic dark synthwave, 150 BPM), take 0 of 2, a loop from 0.7 s to 63.1 s | 1.2 MB, 63 s |
 
 ## Spend log
 
-As of 2026-11-16 00:30 UTC (Phase 2 under way). Balances are read live from each provider; failed calls are not
-charged by any of the four. Every paid call is a line of `tools/gen/ledger.jsonl`.
+As of 2026-11-16 06:30 UTC (Phase 2 closing, Phase 3's assets made). Balances are read live from each provider;
+failed calls are not charged by any of the four. Every paid call is a line of `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits | 2,015 | 2,450 | 26 image-to-3D (60 each), 1 multi-view-to-3D (60), 1 text-to-3D (50), 8 segmentations (40 each), 1 auto rig (25), 13 rig checks (free) |
+| Tripo | 4,465 credits | 3,720 | 745 | 26 image-to-3D (60 each), 1 multi-view-to-3D (60), 1 text-to-3D (50), 20 segmentations (40 each), 12 auto rigs (25 each), 23 retarget requests (95 clips at 10 each), 13 rig checks (free) |
 | fal.ai | $49.90 | $26.63 | $23.27 | 25 Rodin Gen-2.5 runs, 60 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
-| ElevenLabs | 131,000 credits | 11,800 | 119,200 | 448 sound effects and loops (11 credits a second), 57 announcer lines, 5 music runs (about 880 credits each) |
+| ElevenLabs | 131,000 credits | 16,708 | 114,292 | 495 sound effects and loops (11 credits a second), 69 announcer lines, 9 music runs (about 880 credits each) |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
+
+The bosses cost more Tripo credits than first projected (about 1,700 against about 1,000 to 1,450): building them as
+rigid parts needs a part segmentation of each (40), and each got eight clips (80), not six.
 
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
 redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now
