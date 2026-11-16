@@ -516,12 +516,12 @@ function racerSignMaterial(shared, P, tex) {
 }
 // A brass gear: a toothed rim on spokes around a hub. It faces down the street, so
 // the driver sees it turn (its axle runs along z). spin: radians per second.
-function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
+function racerGear(b, x, y, z, R, teeth, spin, aZ, seed, neo = 0) {
   const v = { aZ, aKind: 4, aCy: y, aCz: x, aSp: spin, aSeed: seed };
   // (it used to be a thin ring with boxes for teeth: flat, and the colour of the windows behind it. Now it is a
   // wheel a quarter of its radius thick: a dark bronze face, five windows cut between its spokes, bright flanks
   // on every tooth and window wall, and a lit ring standing proud of the face.)
-  const FACE = 0x4a3116, FLANK = 0xdfa64c, thick = R * 0.25, spokes = 5;
+  const FACE = neo ? 0x14121c : 0x4a3116, FLANK = neo ? 0x2b2737 : 0xdfa64c, thick = R * 0.25, spokes = 5; // (neo: with the panorama up the works are dark bodies with rims of light in one of the road's colours)
   const shape = new THREE.Shape(), n = teeth * 4;
   for (let i = 0; i < n; i++) {
     const a = ((i - 0.5) / n) * Math.PI * 2, rr = i % 4 < 2 ? R * 1.05 : R * 0.84, px = Math.cos(a) * rr, py = Math.sin(a) * rr;
@@ -551,9 +551,10 @@ function racerGear(b, x, y, z, R, teeth, spin, aZ, seed) {
   b.add(hub, racerM(x, y, z, 1, 1, 1, Math.PI / 2), FLANK, 1.05, v);
   hub.dispose();
   // the lit ring: a neon tube let into the face (it is round, so it need not turn with the wheel)
-  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * 0.028), 4, 32);
-  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), 0xffb24a, 1.0, { aZ, aKind: 1, aSeed: seed });
+  const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * (neo ? 0.04 : 0.028)), 4, 32);
+  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), neo || 0xffb24a, neo ? 1.5 : 1.0, { aZ, aKind: 1, aSeed: seed });
   ring.dispose();
+  if (neo) { const rim = new THREE.TorusGeometry(R * 0.99, Math.max(0.04, R * 0.03), 4, 40); b.add(rim, racerM(x, y, z + thick / 2 + 0.03), neo, 1.1, { aZ, aKind: 1, aSeed: seed }); rim.dispose(); }
 }
 function racerLamp(b, box, side, z, color) {
   const x = side * 6.4, hx = side * 4.75;
@@ -996,7 +997,10 @@ class RacerGame extends QuizGame {
     const box = new THREE.BoxGeometry(1, 1, 1);
     const pipe = new THREE.CylinderGeometry(1, 1, 1, 8);
     const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
-    const BRASS = 0xb8823c, COPPER = 0x8a5a34;
+    // (with the panorama up the works are of the neon city: dark bodies with rims of light, set back against the walls,
+    // so the middle of the street is open to the egg at its end and to the sky above it)
+    const NEO = !!this.pano, NEON = [0x35efff, 0xff3ad4, 0xffc93d];
+    const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
     let seed = 0.11;
@@ -1017,10 +1021,10 @@ class RacerGame extends QuizGame {
         [z - 0.8, z - L + 0.8].forEach((fz) => detail.add(pipe, racerM(px, py, fz, 0.5, 0.3, 0.5, Math.PI / 2), COPPER, 1, bv));
         // every other block: a pair of meshing gears on the wall
         if (n % 2 === 0) {
-          const R = rand(2.0, 2.9), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
+          const R = rand(2.0, 2.9) * (NEO ? 0.72 : 1), r2 = R * 0.56, gy = rand(12.5, 17), gx = side * (front - 0.6 - R), gz = z - rand(3, L - 3);
           const sp = rand(0.3, 0.55) * (Math.random() < 0.5 ? -1 : 1);
-          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd);
-          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd);
+          racerGear(detail, gx, gy, gz, R, 14, sp, aZ, sd, NEO ? NEON[n % 3] : 0);
+          racerGear(detail, gx + side * (R + r2) * 0.62, gy + (R + r2) * 0.78, gz, r2, 8, -sp * (14 / 8), aZ, sd, NEO ? NEON[(n + 1) % 3] : 0);
           detail.add(box, racerM(side * (front - 0.3 - R / 2), gy, gz + 0.5, R + 0.8, 0.3, 0.3), COPPER, 1, bv); // its bracket
         }
         // a neon blade sign on a bracket, facing the driver
@@ -1041,18 +1045,21 @@ class RacerGame extends QuizGame {
     // pipes cross over the street on three runs
     [-52, -134, -214].forEach((gz, i) => {
       const bv = { aZ: gz, aKind: 3, aSeed: i * 0.31 };
-      detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
-      detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
-      [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      if (!NEO) {
+        detail.add(pipe, racerM(0, 17 + i, gz, 0.55, 22, 0.55, 0, 0, Math.PI / 2), BRASS, 1, bv);
+        detail.add(pipe, racerM(0, 18.4 + i, gz - 1.1, 0.3, 22, 0.3, 0, 0, Math.PI / 2), COPPER, 1, bv);
+        [-8, -3, 3, 8].forEach((fx) => detail.add(pipe, racerM(fx, 17 + i, gz, 0.78, 0.4, 0.78, 0, 0, Math.PI / 2), COPPER, 1, bv));
+      }
       // a great wheel and its pinion hang from the run, turning over one kerb or the other: the middle of the
       // street stays open, so the egg at the end of it is never behind the works
       const gs = i % 2 ? 1 : -1;
       // (lower and larger than they were: the great wheel now hangs inside the picture, a third of the street wide
       // as it comes up, on a hanger from the run; its pinion meshes above it, toward the middle)
-      const GR = 4.5, gr = 2.0, gy = 12.4 + i * 0.7, gx = gs * 6.0, off = (GR + gr) * 0.97;
-      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31);
-      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31);
-      detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
+      // (neo: no run crosses the street; the wheel is smaller and turns on the wall, its pinion beside it)
+      const GR = NEO ? 3.1 : 4.5, gr = NEO ? 1.4 : 2.0, gy = 12.4 + i * 0.7, gx = gs * (NEO ? 8.4 : 6.0), off = (GR + gr) * 0.97;
+      racerGear(detail, gx, gy, gz + 0.9, GR, 20, 0.26 * gs, gz, i * 0.31, NEO ? NEON[i % 3] : 0);
+      racerGear(detail, gx - gs * off * 0.58, gy + off * 0.815, gz + 0.9, gr, 9, -0.26 * gs * (20 / 9), gz, i * 0.31, NEO ? NEON[(i + 1) % 3] : 0);
+      if (!NEO) detail.add(box, racerM(gx, (gy + 17 + i) / 2, gz + 0.45, 0.34, 17 + i - gy, 0.34), COPPER, 1, bv);
       detail.add(pipe, racerM(gx, gy, gz + 0.4, 0.5, 1.3, 0.5, Math.PI / 2), COPPER, 1, bv);
     });
     box.dispose();
@@ -1733,6 +1740,7 @@ class RacerGame extends QuizGame {
     const scroll = this.dist % RACER_WRAP;
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
+    if (this.laneTags && this.stage && this.state === "over") this.dropTags(); // (staged: an ending plays on a clear road, its lane letters gone at once)
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
       // (staged: once the gate is reached the answer is shown on the road for a moment: the right lane's badge stands lit, the others step back)
       const vd = this.stage && this.state !== "ask" && this.stage.verdict && this.stage.verdict.t < 1.3 ? this.stage.verdict : null;

@@ -25,6 +25,51 @@ const RIG = {
   FLAME: [0xffb040, 0xff5a20], // what its stacks burn: gold at the root, orange-red at the tip (the sparks and the flash at the stack mouths take the gold)
 };
 
+// A tongue of fire: narrow at the mouth it comes from, fullest a fifth of the way along, drawn out to a point. It
+// licks from side to side toward its tip and flickers in length. It is drawn as itself, not added to what is behind
+// it: gold in its heart, orange, red at its tip and along its edge, so it keeps the colour of fire against a lit road
+// and never reaches white. The mesh lies along +z, one unit long (uLen stretches it); its radius is the mesh's scale.
+function rigFlameGeo() {
+  const R = 14, M = 10, pos = [], nor = [], at = [], idx = [];
+  for (let i = 0; i < R; i++) {
+    const u = i / (R - 1), rr = (0.55 + 0.45 * smoothstep(0, 0.22, u)) * Math.pow(1 - u, 0.75);
+    for (let j = 0; j < M; j++) { const a = (j / M) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a); pos.push(c * rr, sn * rr, u); nor.push(c, sn, 0.3); at.push(u); }
+  }
+  for (let i = 0; i < R - 1; i++) for (let j = 0; j < M; j++) { const a = i * M + j, b = i * M + ((j + 1) % M); idx.push(a, b, a + M, b, b + M, a + M); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("aT", new THREE.Float32BufferAttribute(at, 1));
+  g.setIndex(idx);
+  return g;
+}
+function rigFlameMat(ph) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uLen: { value: 1 }, uPow: { value: 0 }, uPh: { value: ph }, uWob: { value: 1 } },
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `attribute float aT; uniform float uTime; uniform float uLen; uniform float uPh; uniform float uWob; varying float vT; varying vec3 vN; varying vec3 vV;
+      void main(){
+        vT = aT;
+        vec3 p = position;
+        float w = aT * aT * uWob;
+        p.x += w * (0.55 * sin(uTime * 17.0 + aT * 7.0 + uPh) + 0.3 * sin(uTime * 41.0 + aT * 13.0 + uPh * 2.3));
+        p.y += w * (0.45 * cos(uTime * 13.0 + aT * 6.0 + uPh * 1.7) + 0.25 * sin(uTime * 37.0 + aT * 11.0 + uPh));
+        p.xy *= 1.0 + 0.12 * uWob * sin(uTime * 23.0 + aT * 9.0 + uPh * 3.1);
+        p.z *= uLen * (0.88 + 0.08 * sin(uTime * 29.0 + uPh * 5.0) + 0.04 * sin(uTime * 53.0 + uPh));
+        vec4 mv = modelViewMatrix * vec4(p, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform float uTime; uniform float uPow; uniform float uPh; varying float vT; varying vec3 vN; varying vec3 vV;
+      void main(){
+        float f = abs(dot(normalize(vN), normalize(vV)));                     // 1 down the middle of the tongue as it is seen, 0 at its edge
+        float lick = 0.82 + 0.18 * sin(vT * 15.0 - uTime * 21.0 + uPh * 3.0); // brighter bands that run down it
+        float heat = clamp((1.0 - vT) * (0.2 + 0.8 * f * f) * lick * 1.3, 0.0, 1.0);
+        vec3 c = heat > 0.5 ? mix(vec3(1.25, 0.5, 0.07), vec3(1.3, 1.0, 0.5), (heat - 0.5) * 2.0) : mix(vec3(0.85, 0.08, 0.03), vec3(1.25, 0.5, 0.07), heat * 2.0);
+        float a = smoothstep(0.0, 0.22, heat) * smoothstep(0.0, 0.4, f) * (1.0 - smoothstep(0.82, 1.0, vT));
+        gl_FragColor = vec4(c, a * clamp(uPow, 0.0, 1.0));
+      }`,
+  });
+}
+
 class RacerRig {
   constructor(game, model) {
     const g = (this.g = game), S = RIG.S, v = new THREE.Vector3();
@@ -109,21 +154,32 @@ class RacerRig {
       }));
       this.beams.layers.set(1);
       fx.add(this.beams); }
-    // flames from both stacks (see starPlumes, in 20j): each in a holder that stands on its stack's mouth and leans back with the wind
-    this.FU = { uTime: { value: 0 }, uLen: { value: new THREE.Vector2(1, 1) }, uPow: { value: new THREE.Vector2(0, 0) }, uHurt: { value: 0 },
-      uHot: { value: new THREE.Color(3.2, 3.0, 2.5) }, uCool: { value: new THREE.Color(3.2, 1.5, 0.3) }, uTail: { value: new THREE.Color(2.6, 0.55, 0.16) } }; // (white-hot at the mouth, gold, orange-red at the tip: against a road lit cyan and magenta, fire is the one warm thing)
-    this.plumeMat = starPlumeMaterial(this.FU);
-    this.plumes = [0, 1].map((i) => {
-      const hold = new THREE.Group(), m = new THREE.Mesh(starPlumes([{ p: new THREE.Vector3(0, 0, 0), r: 0.3, len: 1.0, kind: 0, ph: i * 2 }]), this.plumeMat);
-      m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
-      const glow = glowSprite(new THREE.Color(2.4, 1.2, 0.35), 0.5, 0);
-      glow.renderOrder = 5; glow.position.z = 0.35; // (a little way down the flame: clear of the egg, which stands between the stacks and the lens)
-      hold.add(m, glow);
-      hold.position.copy(mouth[i]);
+    // fire (see rigFlameGeo): two tongues that trail straight back from each stack's mouth when it floors it; one pair
+    // that licks up from the left stack on the last life; three that stand on the hood once the engine has gone
+    this.flameGeo = rigFlameGeo();
+    const fire = (list, at) => {
+      const hold = new THREE.Group(), ms = list.map(([r, ph, x, y, k]) => {
+        const m = new THREE.Mesh(this.flameGeo, rigFlameMat(ph));
+        m.scale.set(r, r, 1); m.position.set(x || 0, y || 0, 0); m.userData.k = k || 1;
+        m.frustumCulled = false; m.renderOrder = 5; m.layers.set(1);
+        hold.add(m);
+        return m;
+      });
+      if (at) hold.position.copy(at);
       hold.visible = false;
       fx.add(hold);
-      return { hold, m, glow };
+      return { hold, ms };
+    };
+    this.plumes = [0, 1].map((i) => {
+      const p = fire([[0.17, i * 2.1], [0.1, 3.3 + i * 1.7, (i ? -1 : 1) * 0.07, 0.08, 0.62]], mouth[i]);
+      p.glow = glowSprite(new THREE.Color(1.0, 0.42, 0.08), 0.5, 0); // (a small warm glow at the mouth: the tongue itself is the fire)
+      p.glow.renderOrder = 5; p.glow.position.z = 0.3;
+      p.hold.add(p.glow);
+      return p;
     });
+    this.burnF = fire([[0.21, 5.1], [0.13, 7.7, 0.11, 0, 0.6]], mouth[0]);
+    this.wreckF = fire([[0.46, 1.3], [0.36, 4.2, 0.55, 0, 0.8], [0.3, 8.8, -0.5, 0, 0.66]], null);
+    this.fireK = 0; this.ablaze = false; this.flare = 0; this.smokeT = 0; this.emberT = 0;
     // the light the flames throw: on the road behind it (a pool that flickers), and on its own deck and egg
     this.roadGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.roadGlow.rotation.x = -H; this.roadGlow.position.set(0, 0.07, 2.6); this.roadGlow.scale.set(6.4, 8.6, 1); this.roadGlow.renderOrder = 2; this.roadGlow.layers.set(1); this.roadGlow.visible = false;
@@ -173,6 +229,8 @@ class RacerRig {
     // two rims of real light, one from each side (their colours are the sky's: see RacerSky)
     this.rimA = new THREE.DirectionalLight(0xff3ad4, 0); this.rimA.position.set(-9, 2.4, -3.5);
     this.rimB = new THREE.DirectionalLight(0x35efff, 0); this.rimB.position.set(9, 2.4, -3.5);
+    // and a warm one from the lens's side: whatever of the rig faces the lens keeps its shape (a half-spin, the turn at the end, night)
+    this.lensLight = new THREE.DirectionalLight(0xffd2a8, 0); this.lensLight.position.set(0, 4.5, 14);
 
     // ---- springs and the show's own motion (look only)
     this.heave = { x: 0, v: 0 }; this.roll = { x: 0, v: 0 }; this.pitch = { x: 0, v: 0 };
@@ -188,7 +246,7 @@ class RacerRig {
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._c = new THREE.Color();
     // (the ribbons and the two rim lights stand in the scene itself: added last, so a model that fails leaves nothing behind)
     this.trails.forEach((tr) => g.scene.add(tr.t.mesh));
-    g.scene.add(this.rimA, this.rimB);
+    g.scene.add(this.rimA, this.rimB, this.lensLight);
   }
   // ---- where things are on it, in the world (each fills `out` and returns it) -----------------------------------
   // the mouth of an exhaust stack (0: its left, the left of the screen; 1: its right)
@@ -247,7 +305,7 @@ class RacerRig {
     const g = this.g, d = VFX.dt, t = VFX.t, h = Math.min(d, 1 / 30), U = this.U, UE = this.UE, P = this.P, S = RIG.S, rig = this.rig;
     const quiet = REDUCED_MOTION || GFX.calm, calm = quiet ? 0.45 : 1, n = g.round ? g.round.n : 4;
     // (the game holds its boost until the next question. A rig that has just been knocked, or has just had a claim paid, is not flooring it: its stacks go out)
-    const boost = g.boostRate && !(g.stage && g.state !== "ask" && g.stage.verdict && !g.stage.verdict.ok) ? 1 : 0;
+    const boost = g.boostRate && !(g.stage && g.state !== "ask" && g.stage.verdict && !g.stage.verdict.ok) && !(g.state !== "ask" && g.quiz && g.quiz.sheet) ? 1 : 0; // (nor once the explanation is up: the surge is the gate's, the reading is quiet)
     const steer = clamp((g.lane === null ? 0 : laneX(g.lane, n)) - g.carX, -2.5, 2.5);
     // (the game lays a bob and a bank on the whole car each frame: the suspension below replaces them)
     this.car.position.y = 0; this.car.rotation.z = 0;
@@ -412,7 +470,12 @@ class RacerRig {
     // struck: a red rim for a moment; and for a moment after it cannot be struck again: its edges pulse (under three times a second)
     this.blink = g.el && g.el.dataset.blink ? Math.min(1, this.blink + d * 8) : Math.max(0, this.blink - d * 5);
     const bl = this.blink * (quiet ? 0.5 : 0.5 + 0.5 * Math.sin(t * 2.6 * Math.PI * 2));
-    U.uSkHit.value.setRGB(1.7, 0.14, 0.24).multiplyScalar(this.struck * this.struck * 0.34).add(this._c.setRGB(0.8, 0.95, 1.1).multiplyScalar(bl * 0.42)); // (rims only, and never white: its lacquer keeps its colours under them)
+    U.uSkHit.value.setRGB(1.7, 0.14, 0.24).multiplyScalar(this.struck * this.struck * 0.34).add(this._c.setRGB(0.8, 0.95, 1.1).multiplyScalar(bl * 0.6)); // (rims only, and never white: its lacquer keeps its colours under them)
+    // what faces the lens is never left black: a warm light from the lens's side as it turns (a half-spin, the turn at
+    // the end), a little of it always; the blink after a blow lifts the whole rig (it brightens, it never darkens)
+    const faced = 0.5 - 0.5 * Math.cos(this.yaw);
+    this.lensLight.intensity = 0.14 + 0.85 * faced + 0.35 * bl;
+    U.uSkFill.value.add(this._c.setRGB(1.0, 0.76, 0.54).multiplyScalar(0.05 + 0.18 * faced + 0.22 * bl));
     // the egg's own light
     const eg = this.pow * dead * (1 - 0.6 * flick), gl = 0.85 + 0.75 * this.eggK + 1.3 * pulse;
     UE.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(eg * gl);
@@ -421,24 +484,39 @@ class RacerRig {
     UE.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(0.5);
     this.eggLight.intensity = eg * (0.5 + 0.9 * this.eggK + 2.4 * pulse);
     // ---- flames from both stacks, leaning back with the wind; their light on the road and on the deck
-    const fl = this.flame * (quiet ? 1 : 0.86 + 0.14 * Math.sin(t * 16)), FU = this.FU;
-    FU.uTime.value = t;
-    FU.uLen.value.set(0.6 + 1.25 * fl, 1);
-    FU.uPow.value.set(fl * 3.0, 0); // (bright enough to stand on a road that is itself lit: it is seen from behind against the lanes' own colours)
+    const fl = this.flame * (quiet ? 1 : 0.9 + 0.1 * Math.sin(t * 16));
+    const seen = 1 - smoothstep(3, 6.5, this.off.z); // (as it drives in from behind the lens, its fire's light is not thrown over the picture)
     this.car.updateMatrixWorld(true);
+    const tongues = (p, len, pow, wob) => { for (const m of p.ms) { const u = m.material.uniforms; u.uTime.value = t; u.uLen.value = len * m.userData.k; u.uPow.value = pow; u.uWob.value = wob; } };
     this.plumes.forEach((p, i) => {
       p.hold.visible = this.flame > 0.02;
       if (!p.hold.visible) return;
       this.fx.worldToLocal(this.stack(i, p.hold.position));
-      // each flame is blown out to its own side, back and a little down with the wind: from behind, two swept wings of
-      // fire from the stack mouths, against the road. (Straight up they would cross the lane badges; straight back they
-      // would point at the lens and be a dot.)
-      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.78, -0.2 + (quiet ? 0 : 0.06 * Math.sin(t * 7 + i * 2)), 0.6).normalize());
-      p.glow.scale.setScalar(0.7 + 0.6 * fl); p.glow.material.opacity = 0.75 * fl;
+      // each trails straight back from its stack's mouth, over the deck beside the egg: a touch outward and down with the wind
+      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.07, -0.08 + (quiet ? 0 : 0.03 * Math.sin(t * 7 + i * 2)), 1).normalize());
+      tongues(p, 0.9 + 1.8 * fl, Math.min(1, fl * 1.6), quiet ? 0.4 : 1);
+      p.glow.scale.setScalar(0.45 + 0.3 * fl); p.glow.material.opacity = 0.3 * fl * seen;
     });
+    // the last life: the left stack burns, a tongue that licks up and back
+    this.burnF.hold.visible = this.hurt > 0.03 && this.wreckT < 0.3;
+    if (this.burnF.hold.visible) {
+      this.fx.worldToLocal(this.stack(0, this.burnF.hold.position));
+      this.burnF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(-0.22, 0.72 + (quiet ? 0 : 0.06 * Math.sin(t * 5.3)), 0.66).normalize());
+      tongues(this.burnF, (1.2 + (quiet ? 0 : 0.2 * Math.sin(t * 9.1))) * (0.5 + 0.5 * this.hurt), Math.min(1, this.hurt * 1.5), quiet ? 0.5 : 1.5);
+    }
+    // the wreck: fire stands on its hood (it leaps as the engine goes, then burns steadily)
+    this.fireK += ((this.ablaze ? 1 : 0) - this.fireK) * Math.min(1, d * 6);
+    this.flare = Math.max(0, this.flare - d * 2.0);
+    this.wreckF.hold.visible = this.fireK > 0.03;
+    if (this.wreckF.hold.visible) {
+      this.fx.worldToLocal(this.hoodAt(this.wreckF.hold.position));
+      this.wreckF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(0.1 * this.wreckSd, 1, 0.14).normalize());
+      this.wreckF.hold.scale.setScalar(1 + 0.7 * this.flare);
+      tongues(this.wreckF, (1.55 + (quiet ? 0 : 0.25 * Math.sin(t * 6.7))) * this.fireK * (1 + 0.9 * this.flare), Math.min(1, this.fireK * 1.4), quiet ? 0.5 : 1.3);
+    }
     this.roadGlow.visible = this.flame > 0.02;
-    this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl);
-    this.flameLight.intensity = 2.6 * fl;
+    this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl * seen);
+    this.flameLight.intensity = 2.6 * fl * seen + 1.6 * this.hurt * (this.wreckT < 0.3 ? 1 : 0) + 3.2 * this.fireK;
     this.eggLight.position.copy(this.fx.worldToLocal(this.eggAt(this._v)));
     this.eggHalo.position.copy(this.eggLight.position);
     this.eggHalo.material.opacity = Math.min(0.6, eg * (0.16 + 0.12 * this.eggK + 0.4 * pulse));
@@ -457,11 +535,29 @@ class RacerRig {
       if ((this.puffT -= d) <= 0) {
         this.puffT = this.flame > 0.3 ? 0.05 : 0.14;
         const i = Math.random() < 0.5 ? 0 : 1, p = this.stack(i, this._v);
-        kit.smoke(p, { size: 0.3 + 0.25 * this.flame, life: 0.55, a: 0.22 + 0.2 * this.hurt, cold: this.flame < 0.3, color: 0x2c2244, rise: 1.4, vel: this._w.set(rand(-0.3, 0.3), 1.2, 3.5 + sp * 0.06) });
+        kit.smoke(p, { size: 0.3 + 0.25 * this.flame, life: 0.55, a: 0.2, cold: this.flame < 0.3, color: 0x5a5478, rise: 1.4, vel: this._w.set(rand(-0.3, 0.3), 1.2, 3.5 + sp * 0.06) });
+      }
+      // the last life's stack, and the wreck: dark smoke that streams back along the road, lit from under by its fire
+      // while it is young (it leaves upward and to the side: it never lies over the rig); embers
+      const burning = this.fireK > 0.4 ? 2 : this.hurt > 0.4 && this.wreckT < 0.3 ? 1 : 0;
+      if (burning && (this.smokeT -= d) <= 0) {
+        this.smokeT = burning === 2 ? 0.1 : 0.075;
+        if (burning === 1) {
+          const p = this.stack(0, this._v); p.x -= 0.25; p.y += 0.95; p.z += 0.7;
+          kit.smoke(p, { size: 0.55, life: 0.85, a: 0.36, color: 0x3d3654, rise: 0.9, vel: this._w.set(rand(-1.3, -0.5), rand(0.9, 1.6), 4.5 + sp * 0.07) });
+        } else {
+          const p = this.hoodAt(this._v); p.y += 1.5;
+          kit.smoke(p, { size: 0.9, life: 1.25, a: 0.4, color: 0x3d3654, rise: 2.0, vel: this._w.set(rand(-0.5, 0.5) + 0.5 * this.wreckSd, rand(1.2, 2.0), rand(0.8, 1.8)) });
+        }
+      }
+      if (burning && (this.emberT -= d) <= 0) {
+        this.emberT = 0.09;
+        const p = burning === 1 ? this.stack(0, this._v) : this.hoodAt(this._v); p.y += 0.5;
+        kit.embers(p, 0xff8a3a, { n: burning === 2 ? 2 : 1, radius: burning === 2 ? 0.5 : 0.18, life: 0.9, speed: 2.4, rise: 1.6 });
       }
       if (boost && this.flame < 0.6 && (this.sparkT -= d) <= 0) { this.sparkT = 0.05; kit.sparks(this.stack(Math.random() < 0.5 ? 0 : 1, this._v), RIG.FLAME[0], { n: 3, speed: 5, dir: this._w.set(0, 0.8, 0.6), spread: 0.6, life: 0.35, len: 0.4, w: 0.05, gravity: 6 }); }
     }
-    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 2.25, 1.0)), 0.75, 0.3 + 0.7 * Math.max(this.heat, this.flame));
+    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 2.0, 2.3)), 1.3, 0.35 + 2.1 * Math.max(this.heat * 0.5, this.flame, this.hurt * 0.6)); // (strong enough to be seen: the air behind the tongues swims)
     // ---- ribbons ride the rear frames and hubs through lane changes and slides
     const tI = 0.62 * (0.8 + 0.5 * smoothstep(0, 0.3, this.brake)) * this.pow * dead; // (ribbons of light, not jets: they do not brighten with speed)
     for (const tr of this.trails) {
@@ -473,6 +569,8 @@ class RacerRig {
   dispose() {
     blasterDropMaps(this.mats);
     this.mats.forEach((m) => m.dispose());
+    [...this.plumes, this.burnF, this.wreckF].forEach((p) => p.ms.forEach((m) => m.material.dispose()));
+    this.flameGeo.dispose();
     this.trails.forEach((tr) => { this.g.scene.remove(tr.t.mesh); tr.t.mesh.geometry.dispose(); tr.t.mesh.material.dispose(); });
   }
 }
