@@ -83,6 +83,31 @@ const Assets = {
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; });
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // ---- pictures for the page itself (assets/ui: icon and portrait strips drawn from the models). ui(name) is the
+  // decoded image, or null: the page then draws what it always drew.
+  loadImage(name) {
+    const path = "ui/" + name + ".webp";
+    if (!this.has(path)) return Promise.resolve(null);
+    if (this.kept["ui:" + name]) return Promise.resolve(this.kept["ui:" + name]);
+    return this.buffer(path).then((buf) => new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error("cannot decode " + path));
+      img.src = URL.createObjectURL(new Blob([buf], { type: "image/webp" })); // (kept: CSS draws from this address too)
+    })).then((img) => { this.kept["ui:" + name] = img; if (this.onImage) this.onImage(name, img); return img; })
+      .catch((e) => { console.warn("picture " + name + " did not load: " + e.message); return null; });
+  },
+  ui(name) { return this.kept["ui:" + name] || null; },
+  // The files of a set fetched ahead (not parsed or decoded), so that when the set is asked for it is ready sooner:
+  // the title asks for the hall's while it is up. Sound is fetched too, though it can only be decoded after a tap.
+  prefetch(set) {
+    if (!this.on) return;
+    for (const n of this.files.sets[set] || []) {
+      const [kind, name] = n.split(":");
+      const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
+      if (path && this.has(path)) this.buffer(path).catch(() => null);
+    }
+  },
   // ---- sets: what a screen needs. need(set) is null when there is nothing to wait for (assets off, or all of it
   // already in hand), otherwise a promise that settles when everything has loaded or failed. It never rejects.
   need(set, extra) {
@@ -95,6 +120,7 @@ const Assets = {
       else if (kind === "sky" && !this.kept[n]) { if (this.has("sky/" + name + ".webp") || this.has("sky/" + name + ".jpg")) jobs.push(() => this.loadSky(name)); }
       else if (kind === "sfx" && !Sound.sprites[name]) { if (this.files.sprites[name]) jobs.push(() => Sound.loadSprite(name)); }
       else if (kind === "music" && !Sound.tracks[name]) { if (this.files.music[name]) Sound.loadTrack(name); } // (music is not waited for: it comes in when it has arrived)
+      else if (kind === "ui" && !this.kept[n]) { if (this.has("ui/" + name + ".webp")) jobs.push(() => this.loadImage(name)); }
     }
     if (!jobs.length) return null;
     let done = 0;
