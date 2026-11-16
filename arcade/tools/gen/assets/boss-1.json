@@ -1,14 +1,19 @@
 {
  "name": "boss-1",
- "about": "Boss Rush: Product Pusher (a salesman robot in a plated suit with a briefcase). Tripo H3.1 from concept boss01-pusher-sd-0; rigged by Tripo (rig v1.0, biped); ten clips retargeted from Tripo's presets; parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
- "src": "post/boss01-anim1.glb",
- "seg": "post/boss01-seg.glb",
+ "about": "Boss Rush: Product Pusher, second version (2026-11-16): a salesman robot in a plated chrome suit with a glowing cyan tie and a briefcase; an angular chrome head with slick moulded hair, a faceplate with cyan eye slits and a fixed cyan grin line. The first version (boss-1-v1.json) had a grinning chrome skull in dark glasses that read as a famous film robot in sunglasses; a second draft with a round chrome helmet and a black visor screen was not used (it would read as a famous duo's helmets). Tripo H3.1 from concept boss01c-pusher-sd-0; rigged by Tripo (rig v1.0, biped); ten clips retargeted from Tripo's presets (three requests); parts from Tripo segmentation, each bound whole to the bone that owns it.",
+ "src": "post/boss01c-animA.glb",
+ "more": [
+  "post/boss01c-animB.glb",
+  "post/boss01c-animC.glb"
+ ],
+ "seg": "post/boss01c-seg.glb",
  "size": {
   "axis": "y",
   "value": 1
  },
  "tris": 100000,
  "tex": 2048,
+ "texBase": 4096,
  "clips": {
   "idle": "idle",
   "jump_down": "enter",
@@ -18,8 +23,8 @@
   "hit_to_head": "stagger",
   "angry_01": "rage",
   "fall": "death",
-  "defeat_02": "defeat",
-  "victory_celebration": "win"
+  "victory_celebration": "win",
+  "defeat_02": "defeat"
  },
  "emissive": {
   "hues": [
@@ -36,9 +41,5 @@
    0.45,
    0.75
   ]
- },
- "more": [
-  "post/boss01-anim1b.glb"
- ],
- "texBase": 4096
+ }
 }

@@ -1,0 +1,54 @@
+{
+ "name": "boss-7",
+ "about": "Boss Rush: Longevity Lich (a crowned skeleton with an hourglass heart). Tripo H3.1 from concept boss07-lich-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss07-animA.glb",
+ "more": [
+  "post/boss07-animB.glb"
+ ],
+ "seg": "post/boss07-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 100000,
+ "tex": 2048,
+ "texBase": 4096,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    130,
+    175
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.45,
+   0.75
+  ]
+ },
+ "hue": [
+  {
+   "from": [
+    62,
+    128
+   ],
+   "to": 152
+  }
+ ],
+ "cape": [
+  0
+ ]
+}

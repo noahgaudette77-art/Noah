@@ -1,84 +1,92 @@
 {
  "name": "boss-1",
- "triangles": 99994,
- "bytes": 3118368,
+ "triangles": 100060,
+ "bytes": 3140792,
  "tex": 2048,
  "bones": {
   "R_Hand": {
-   "tris": 17293,
-   "caps": 21
+   "tris": 15715,
+   "caps": 18
   },
   "R_Forearm": {
-   "tris": 5204,
-   "caps": 12
+   "tris": 2837,
+   "caps": 9
   },
   "R_Upperarm": {
-   "tris": 5491,
+   "tris": 5539,
    "caps": 11
   },
   "R_Foot": {
-   "tris": 3430,
-   "caps": 5
-  },
-  "R_Calf": {
-   "tris": 4904,
-   "caps": 13
-  },
-  "R_Thigh": {
-   "tris": 6407,
-   "caps": 16
+   "tris": 4315,
+   "caps": 6
   },
   "Spine02": {
-   "tris": 25894,
-   "caps": 44
+   "tris": 23582,
+   "caps": 62
+  },
+  "R_Calf": {
+   "tris": 5020,
+   "caps": 11
+  },
+  "R_Clavicle": {
+   "tris": 105,
+   "caps": 0
+  },
+  "R_Thigh": {
+   "tris": 6186,
+   "caps": 20
+  },
+  "Hip": {
+   "tris": 2842,
+   "caps": 10
   },
   "Head": {
-   "tris": 5508,
-   "caps": 9
-  },
-  "L_Thigh": {
-   "tris": 6379,
-   "caps": 16
-  },
-  "L_Calf": {
-   "tris": 5078,
+   "tris": 6464,
    "caps": 8
   },
+  "L_Thigh": {
+   "tris": 6059,
+   "caps": 12
+  },
+  "L_Calf": {
+   "tris": 5063,
+   "caps": 10
+  },
   "L_Foot": {
-   "tris": 2993,
-   "caps": 3
+   "tris": 4515,
+   "caps": 7
   },
   "L_Upperarm": {
-   "tris": 6174,
+   "tris": 5768,
    "caps": 7
   },
   "L_Forearm": {
-   "tris": 2578,
-   "caps": 7
+   "tris": 2902,
+   "caps": 11
   },
   "L_Hand": {
-   "tris": 2661,
-   "caps": 4
+   "tris": 3148,
+   "caps": 7
   }
  },
  "clips": {
-  "defeat": 8.467,
-  "hurt": 1.3,
+  "attackB": 5.4,
+  "death": 3.033,
   "idle": 15.367,
   "enter": 3.733,
   "attackA": 6.6,
   "rage": 3.533,
-  "attackB": 5.4,
-  "death": 3.033,
+  "hurt": 1.3,
   "stagger": 1.867,
+  "defeat": 8.467,
   "win": 5.7
  },
  "size": [
-  0.6039,
+  0.5921,
   1,
-  0.2573
+  0.2494
  ],
- "source": "post/boss01-anim1.glb",
+ "source": "post/boss01c-animA.glb",
  "joints": {
   "head": "Head",
   "chest": "Spine02",
