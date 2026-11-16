@@ -613,7 +613,7 @@ class BossGame extends QuizGame {
     if (this.stage) this.stage.talk(1900 + String(text).length * 20); // (staged: the lens makes room for its words above its head)
   }
   start() {
-    Sound.play("boss");
+    Sound.play(this.stage && this.bossKey === "all" ? "finalboss" : "boss"); // (staged: the last boss has its own track; until it has loaded, and from disk, the boss tune)
     Sound.sfx("charge");
     UI.banner("STAND BY", COLORS.red, this.cfg.name + " ENTERS", "low");
     this.layoutBand();

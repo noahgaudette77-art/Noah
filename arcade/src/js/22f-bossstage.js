@@ -279,15 +279,17 @@ class BossStage {
   }
   // armour torn off a bone and thrown clear on the frame of the blow, turning, sparks trailing from it; a small blast
   // where it was torn off, three frames on; the stump leaks from now on
-  breakOff(bone, leak) {
+  breakOff(bone, leak, quietly) { // (quietly: as a link of its death's chain, whose own blast it is thrown by)
     const g = this.g, kit = this.kit, a = this.a, S = this.S, b = a.P[bone];
     if (!b) return null;
     const sd = /^R_/.test(bone) ? -1 : /^L_/.test(bone) ? 1 : rand(-1, 1) < 0 ? -1 : 1, p = b.getWorldPosition(new THREE.Vector3());
     const sc = a.tear(bone, new THREE.Vector3(sd * rand(4, 7), rand(6, 9), rand(1.5, 4.5)));
     if (!sc) return null;
     kit.sparks(p, 0xffffff, { n: 8, speed: 9, life: 0.3, len: 0.7, w: 0.05, k: 1.7 });
-    Sound.sfx("boss_break", this.pan(p), { vol: 0.85 });
-    g.show.wait(0.05, () => { if (g.unmounted) return; kit.explosion(p, { size: 0.42, color: this.hex, shake: false, smoke: false, ground: false, debrisLife: 0.6 }); g.shake(0.1); Sound.sfx("explosion_small", this.pan(p), { vol: 0.8 }); });
+    if (!quietly) {
+      Sound.sfx("boss_break", this.pan(p), { vol: 0.85 });
+      g.show.wait(0.05, () => { if (g.unmounted) return; kit.explosion(p, { size: 0.42, color: this.hex, shake: false, smoke: false, ground: false, debrisLife: 0.6 }); g.shake(0.1); Sound.sfx("explosion_small", this.pan(p), { vol: 0.8 }); });
+    }
     const tr = kit.trailer((v) => (sc.rest || sc.t > sc.life - 0.4 ? null : v.copy(sc.grp.position)), { smoke: 0.25, fire: 0, sparks: 1, rate: 36, size: 0.3, life: 0.35, color: this.hex, a: 0.3 });
     g.show.wait(sc.life, () => { tr.on = false; });
     if (/^[LR]_/.test(bone) && /arm|Hand/.test(bone) && this.row.limp === bone[0]) a.limp(bone[0], 1);
@@ -491,7 +493,7 @@ class BossStage {
     if (g.unmounted) return;
     const p = a.at(names[i % names.length], new THREE.Vector3());
     p.z += 0.06 * this.S;
-    if (tearIt) { const bone = this.row.last[i]; if (bone) this.breakOff(bone, false); }
+    if (tearIt) { let any = false; for (const bone of [this.row.last[i * 2], this.row.last[i * 2 + 1]]) if (bone && this.breakOff(bone, false, true)) any = true; if (any) Sound.sfx("boss_break", this.pan(p), { vol: 0.85 }); } // (each blast of its death throws two parts of it clear)
     if (REDUCED_MOTION || GFX.calm) { kit.sparks(p, this.hex, { n: 12, speed: 9, life: 0.5, len: 0.7 }); kit.debris(p, { n: 4, size: 0.6, speed: 8, color: BOSS_ATK.WRECK, life: 0.7 }); }
     else kit.explosion(p, { size: 0.55 + 0.05 * i, color: i % 2 ? 0xff4a9a : this.hex, shake: false, ring: i % 2 === 0, smoke: false, ground: false, debrisLife: 0.6 });
     g.shake(0.08 + 0.015 * i);
@@ -499,7 +501,7 @@ class BossStage {
   }
   // banner: the rule's own "BOSS DEFEATED!" banner, shown when the last blast has gone
   death(banner) {
-    const g = this.g, a = this.a, big = g.bossKey === "all", rate = big ? 1.0 : 1.3, T = BOSS_CLIP.death.down / rate, n = big ? 7 : 5;
+    const g = this.g, a = this.a, big = g.bossKey === "all", rate = big ? 1.0 : 1.3, T = BOSS_CLIP.death.down / rate, n = big ? 4 : 3; // (the blasts of the chain come a third of a second apart, never faster)
     this.endAttack(); this.setLow(0);
     this.dying = null; this.phase = "death";
     VFX.slowMo(0.3, 0.3, 0.1);
