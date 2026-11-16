@@ -50,6 +50,7 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 | `prop-deck.glb` | Memory Bank: a stack of study cards in a chrome holder | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-deck-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 12K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
 | `prop-podium.glb` | Final Exam: an examiner's lectern with a book and a bell | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-podium-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 14K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
 | `prop-tome.glb` | Strategy Guide: a great book with chrome corners | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-tome-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 12K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-stand.glb` | Hub: a wide three-step trophy stand (trophies, medals and coins are placed on its steps by code) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-stand-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 10K triangles, one mesh, 0.3 MB; 2.3 wide, 1 tall, 2.0 deep (its steps are deep) | 30 Tripo credits; concept $0.04 |
 | `prop-coin.glb` | Icons: a gold token with an egg on its face | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-coin-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 6K triangles, one mesh, 0.3 MB | 30 Tripo credits; concept $0.03 |
 | `prop-star.glb` | Icons: a gold star | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-star-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
 | `prop-heart.glb` | Icons: a crystal heart (lives) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-heart-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
@@ -167,14 +168,14 @@ ten tracks came within 0.06 BPM of what was asked), starting where the levels at
 
 ## Spend log
 
-As of 2026-11-16 21:40 UTC (Phase 3 closing, four bosses remade; the assets for Phases 4 and 5 are made). Balances are read live from
+As of 2026-11-16 23:35 UTC (Phase 3 closed; Phase 4 under way, one prop made for it on request). Balances are read live from
 each provider; failed calls are not charged by any of the four. Every paid call is a line of
 `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 5,400 | 4,065 (checked live) | 34 image-to-3D at the highest settings (60 each), 20 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 32 retarget requests (129 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265) |
-| fal.ai | $49.90 | $27.85 | $22.05 | 25 Rodin Gen-2.5 runs, 90 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
+| Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 5,430 | 4,035 (checked live) | 34 image-to-3D at the highest settings (60 each), 21 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 32 retarget requests (129 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265) |
+| fal.ai | $49.90 | $27.89 | $22.01 | 25 Rodin Gen-2.5 runs, 91 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
 | ElevenLabs | 131,000 credits | about 25,750 | about 105,250 | 495 sound effects and loops (11 credits a second), 80 announcer lines, 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
