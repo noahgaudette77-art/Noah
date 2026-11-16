@@ -859,7 +859,7 @@ class BlasterGame extends QuizGame {
       if (u.rejected && !u.gone) { // (staged) the wrong one took the shot and locked out: it shrinks back, its lamps a dull red
         u.rej = Math.min(1, (u.rej || 0) + VFX.dt * 5);
         t.scale.setScalar(u.s * (1 - 0.2 * u.rej));
-        u.M.edge.color.setRGB(0.7, 0.07, 0.1); u.M.lamp.color.setRGB(0.6, 0.06, 0.09); u.M.halo.color.setRGB(0.35, 0.03, 0.05);
+        u.M.edge.color.setRGB(0.7, 0.07, 0.1); u.M.lamp.color.setRGB(1.5, 0.14, 0.22); u.M.halo.color.setRGB(0.35, 0.03, 0.05); // (its ring stays lit, a clear red: the housing is seen to be locked, not gone)
         u.M.rim.uniforms.uColor.value.setRGB(0.5, 0.05, 0.08);
       }
     });

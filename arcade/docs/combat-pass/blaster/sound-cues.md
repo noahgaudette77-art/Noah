@@ -24,37 +24,37 @@ Frame 0: the answer is picked. The rule checks it 13 frames on (0.22 s), as it a
 |---:|---|---|
 | 0 | the fighter turns toward the answer's drone; a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_metal` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_metal` |
-| +12 | a pair of bolts lands on the drone | `impact_metal` |
-| +13 | the drone bursts and the lance goes through it into the demon's core; sparks leave for the score; the blow lands on its core (flash, sparks, ring, hit-stop) | `correct` · `impact_good` · `impact_big` · `boss_hurt` (sounds 3 frames on) |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `boom` · `impact_metal` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +13 | the drone shatters and the lance goes through it into the demon's core; sparks leave for the score; the blow lands on its core (a slit of light, sparks, ring, hit-stop) | `correct` · `impact_good` · `impact_big` · `boss_hurt` (sounds 3 frames on) |
 
 Loops running at the end of it: `engine_ship`.
 
 ## A wrong hit, the plasma volley, taking damage
 
-Frame 0: the answer is picked. The demon starts to wind up on the same frame; the shield is seen to go when its strike lands.
+Frame 0: the answer is picked. The demon starts to wind up on the same frame; the shield is seen to go when its strike lands, which is before the explanation sheet comes up (about frame 46).
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (plasma volley): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 3 frames on) · `lock_on` (sounds 12 frames on) · `lock_on` (sounds 21 frames on) · `laser_fire` |
+| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (plasma volley): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 2 frames on) · `lock_on` (sounds 10 frames on) · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +30 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `plasma_fire` |
-| +39 |  | `plasma_fire` |
-| +45 |  | `plasma_fire` |
-| +49 |  | `plasma_fire` |
-| +50 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
-| +55 |  | `plasma_fire` |
-| +56 |  | `impact_shield` |
-| +60 |  | `impact_shield` |
-| +64 |  | `impact_shield` |
-| +67 |  | `impact_shield` |
+| +18 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `plasma_fire` |
+| +23 |  | `plasma_fire` |
+| +26 |  | `plasma_fire` |
+| +29 |  | `plasma_fire` |
+| +32 |  | `plasma_fire` |
+| +33 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks); something pops on the fighter's shell | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
+| +39 | something pops on the fighter's shell | `impact_shield` |
+| +41 | something pops on the fighter's shell | `impact_shield` |
+| +44 | something pops on the fighter's shell | `impact_shield` |
+| +47 | something pops on the fighter's shell | `impact_shield` |
 | +115 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
@@ -67,14 +67,14 @@ Frame 0: a wrong answer is picked.
 |---:|---|---|
 | 0 | the fighter turns toward the answer's drone; the demon starts to wind up (claw swipe): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `warning` · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +30 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `whoosh` |
-| +45 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" · `slam` |
-| +103 |  | `demonflap` |
+| +18 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `whoosh` |
+| +27 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" · `slam` |
+| +104 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
@@ -84,16 +84,16 @@ Frame 0: a wrong answer is picked.
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (roared wave): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `laser_fire` |
+| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (roared wave): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `warning` · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +30 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `boss_roar` · `wave_fire` (sounds 2 frames on) |
-| +58 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
-| +90 |  | `demonflap` |
+| +18 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `boss_roar` · `wave_fire` (sounds 2 frames on) |
+| +34 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
+| +92 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
@@ -103,16 +103,16 @@ Frame 0: a wrong answer is picked.
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (swept beam): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `laser_fire` |
+| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (swept beam): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `warning` · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +29 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `beam_fire` |
-| +50 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
-| +77 |  | `demonflap` |
+| +17 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `beam_fire` |
+| +30 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks) | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
+| +80 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
@@ -122,17 +122,18 @@ Frame 0: a wrong answer is picked.
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (seekers): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 3 frames on) · `lock_on` (sounds 12 frames on) · `lock_on` (sounds 21 frames on) · `laser_fire` |
+| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (seekers): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 2 frames on) · `lock_on` (sounds 10 frames on) · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +29 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `missile_fire` · `missile_fire` (sounds 5 frames on) |
-| +63 |  | `demonflap` |
-| +68 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks) | `missile_hit` · `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
-| +74 |  | `missile_hit` |
+| +17 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `missile_fire` · `missile_fire` (sounds 3 frames on) |
+| +36 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks) | `missile_hit` · `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "SHIELD DOWN" |
+| +42 |  | `missile_hit` |
+| +43 |  | `missile_hit` |
+| +67 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
@@ -142,23 +143,23 @@ Frame 0: a wrong answer is picked with two shields left. The alarm is a loop of 
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (plasma volley): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 3 frames on) · `lock_on` (sounds 12 frames on) · `lock_on` (sounds 21 frames on) · `laser_fire` |
+| 0 | the fighter turns toward the answer's drone; the demon starts to wind up (plasma volley): its glow gathers, the marker appears on the fighter; a volley leaves both cannons (bolts, muzzle flashes, recoil) | loop starts: `charge_hum` · `charge_up` · `lock_on` (sounds 2 frames on) · `lock_on` (sounds 10 frames on) · `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_reject` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_reject` |
-| +12 | a pair of bolts lands on the drone | `impact_reject` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_reject` |
 | +13 | the shot is rejected: the drone locks out | `impact_reject` · `wrong` |
-| +29 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `plasma_fire` |
-| +40 |  | `plasma_fire` |
-| +45 |  | `plasma_fire` |
-| +49 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks); one shield left: the red frame and the engine fire start | `plasma_fire` · `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "LAST SHIELD" · loop starts: `alarm` |
-| +52 |  | `demonflap` |
-| +54 |  | `plasma_fire` |
-| +55 |  | `impact_shield` |
-| +59 |  | `impact_shield` |
-| +62 |  | `impact_shield` |
-| +65 |  | `impact_shield` |
+| +17 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `plasma_fire` |
+| +23 |  | `plasma_fire` |
+| +27 |  | `plasma_fire` |
+| +29 |  | `plasma_fire` |
+| +32 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks); one shield left: the red frame and the engine fire start; something pops on the fighter's shell | `plasma_fire` · `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "LAST SHIELD" · loop starts: `alarm` |
+| +37 | something pops on the fighter's shell | `impact_shield` |
+| +41 | something pops on the fighter's shell | `impact_shield` |
+| +42 | something pops on the fighter's shell | `impact_shield` |
+| +45 | something pops on the fighter's shell | `impact_shield` |
+| +55 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`, `alarm`.
 
@@ -190,63 +191,88 @@ Frame 0: the answer is picked.
 |---:|---|---|
 | 0 | the fighter turns toward the answer's drone; a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
 | +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +5 | a pair of bolts lands on the drone | `impact_metal` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
 | +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
-| +8 | a pair of bolts lands on the drone | `impact_metal` |
-| +12 | a pair of bolts lands on the drone | `impact_metal` |
-| +13 | the drone bursts and the lance goes through it into the demon's core; sparks leave for the score; the blow lands on its core (flash, sparks, ring, hit-stop); a wound opens in its armour | `zip` · `combo` · `correct` · `impact_good` · `impact_big` · `boss_hurt` (sounds 3 frames on) · `boss_break` (sounds 2 frames on) |
-| +38 |  | `demonflap` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +13 | the drone shatters and the lance goes through it into the demon's core; sparks leave for the score; the blow lands on its core (a slit of light, sparks, ring, hit-stop); a wound opens in its armour | `zip` · `combo` · `correct` · `impact_good` · `impact_big` · `boss_hurt` (sounds 3 frames on) · `boss_break` (sounds 2 frames on) |
+| +41 |  | `demonflap` |
+
+Loops running at the end of it: `engine_ship`.
+
+## The wave's last right answer: the demon is done for
+
+Frame 0: the answer is picked. While its explanation is up the demon comes apart, a piece at a time.
+
+| frame | seen | heard |
+|---:|---|---|
+| 0 | the fighter turns toward the answer's drone; its rage begins; a volley leaves both cannons (bolts, muzzle flashes, recoil) | `boss_roar` · `warning` (sounds 15 frames on) · announcer: "WARNING" · `laser_fire` · music intensity 2 |
+| +3 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
+| +5 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +7 | a volley leaves both cannons (bolts, muzzle flashes, recoil) | `laser_fire` |
+| +8 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +12 | a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle) | `impact_metal` |
+| +13 | the drone shatters and the lance goes through it into the demon's core; sparks leave for the score; the blow lands on its core (a slit of light, sparks, ring, hit-stop); a wound opens in its armour; its horn is thrown off, spinning (a small blast where it tore, 3 frames on) | `zip` · `trophy` · announcer: "Trophy unlocked" · `combo` · `correct` · `impact_good` · `impact_big` · `boss_stagger` (sounds 3 frames on) · `boss_break` (sounds 2 frames on) · `boss_break` |
+| +20 |  | `explosion_small` |
+| +53 | a part of it comes away in a blast | `explosion_small` |
+| +54 |  | `demonflap` |
+| +80 | a part of it comes away in a blast | `explosion_small` |
+| +107 | a part of it comes away in a blast | `explosion_small` |
+| +124 |  | `demonflap` |
+| +134 | a part of it comes away in a blast | `explosion_small` |
+| +190 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
 ## The demon's death, the warp, the next demon
 
-Frame 0: the explanation of the wave's last question is closed (the rule closes the wave here; the next question comes up 90 frames on, as it always did). In a first run the wave that passes the best score is the demon's last stand, which this is: its last blast comes 12 frames later than in other waves.
+Frame 0: the explanation of the wave's last question is closed (the rule closes the wave here; the next question comes up 90 frames on, as it always did). The last blast, the stars and the announcer's call of the wave are all over before it.
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the wave is closed: the fighter's last burst leaves its cannons | `levelup` · announcer: "WAVE 2" · `laser_fire` |
-| +3 |  | `laser_fire` |
-| +5 |  | `impact_big` · `slowmo_in` · `boss_death` |
-| +8 |  | `laser_fire` |
-| +14 |  | `impact_big` |
-| +25 |  | `impact_big` |
-| +47 | a part of it comes away in a blast | `explosion_small` |
-| +53 | a part of it comes away in a blast | `explosion_small` |
-| +60 | a part of it comes away in a blast | `explosion_small` |
-| +67 | a part of it comes away in a blast | `explosion_small` |
-| +79 | the last blast | music intensity 3 · `explosion_huge` · `debris` (sounds 21 frames on) |
-| +87 | the warp starts | `warp` |
-| +95 | stars leave for the score; coins leave for the score | `reward` |
-| +149 |  | announcer: "NEW HIGH SCORE" |
-| +167 | the next demon starts to fly in |  |
-| +224 |  | `demonflap` |
-| +249 | it throws its wings wide and roars | `boss_roar` |
+| 0 | the wave is closed: the fighter's last burst leaves its cannons | `levelup` · `laser_fire` |
+| +2 |  | `laser_fire` |
+| +4 |  | `impact_big` · `slowmo_in` · `boss_death` |
+| +6 |  | `laser_fire` |
+| +9 |  | `impact_big` |
+| +15 |  | `impact_big` |
+| +25 | the last blast | music intensity 3 · `explosion_huge` · `debris` (sounds 18 frames on) |
+| +32 | stars leave for the score; coins leave for the score | `reward` |
+| +33 | the warp starts | `warp` |
+| +53 |  | announcer: "WAVE 2" |
+| +83 | the next demon starts to fly in |  |
+| +125 |  | `demonflap` |
+| +161 |  | announcer: "NEW HIGH SCORE" |
+| +165 | it throws its wings wide and roars | `boss_roar` |
+| +213 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
 ## Time runs out on the last shield
 
-Frame 0: 45 frames of the clock are left. The demon starts to wind up when 30 are left, and lets go as the clock runs out.
+Frame 0: 45 frames of the clock are left. The demon starts to wind up when 37 are left and lets go a moment before the clock runs out, so that its strike is on the fighter as it does.
 
 | frame | seen | heard |
 |---:|---|---|
-| +15 | the demon starts to wind up (claw swipe): its glow gathers, the marker appears on the fighter | loop starts: `charge_hum` · `charge_up` · `warning` |
+| +7 | the demon starts to wind up (claw swipe): its glow gathers, the marker appears on the fighter | loop starts: `charge_hum` · `charge_up` · `warning` |
+| +40 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `whoosh` |
 | +45 | time is up | `shatter` · music intensity 0 |
-| +47 | it lets the strike go (the markers close, a beat of slow motion) | loop stops: `charge_hum` · `whoosh` |
-| +62 | the strike reaches the fighter; the shield is seen to go (flash, colour split, shake, the HUD cracks); no shield left: the red frame holds | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "CRITICAL" · loop stops: `alarm` · `slam` |
-| +70 |  | `demonflap` |
+| +46 | the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks); no shield left: the red frame holds | `player_hit` · `shield_down` (sounds 5 frames on) · announcer: "CRITICAL" · loop stops: `alarm` · `slam` |
+| +71 |  | `demonflap` |
 
 Loops running at the end of it: `engine_ship`.
 
 ## Game over
 
-Frame 0: the explanation is closed with no shield left.
+Frame 0: the explanation is closed with no shield left. The blast, the announcer, the demon's roar and the jingle come one after another, each with its picture.
 
 | frame | seen | heard |
 |---:|---|---|
-| 0 | the fighter blows up; low health ends | music stops · `gameover` · announcer: "GAME OVER" · loop stops: `engine_ship` · `explosion_big` · `boss_roar` |
+| 0 | the fighter blows up; low health ends | music stops · loop stops: `engine_ship` · `explosion_big` |
+| +21 |  | announcer: "GAME OVER" |
 | +25 |  | `explosion_small` |
+| +45 |  | `boss_roar` |
+| +72 |  | `gameover` |
 | +96 |  | `trophy` · announcer: "Trophy unlocked" · `levelup` |
 
 Loops running at the end of it: none.

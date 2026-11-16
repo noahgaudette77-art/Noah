@@ -7,7 +7,9 @@
 //   HudFX.reward(root, from, to, { n, kind, color, clear, dur, gap })   stars, coins or sparks fly from a point to a place in the HUD
 //                                (dur: a bit's flight in ms; gap: ms between one bit and the next)
 //                                (clear: an element, or a selector inside root, that they must not cross: the question.
-//                                They go round it, up the margin at its side.)
+//                                They go round it: up the middle of the picture to its foot, along its foot to the
+//                                margin at its side, and up that. Whatever stands in the picture's upper corners is
+//                                left clear too.)
 const HudFX = {
   CRACKS: [
     "M0 0 L14 9 L22 6 L37 19 L46 17 L61 31 M14 9 L11 24 L19 33 M37 19 L33 34 M22 6 L30 0",
@@ -73,8 +75,9 @@ const HudFX = {
           p.animate([
             { transform: `translate(${sx}px,${sy}px) scale(0.3) rotate(0deg)`, opacity: 0 },
             { transform: `translate(${sx}px,${sy}px) scale(1.25) rotate(40deg)`, opacity: 1, offset: 0.1 },
-            { transform: `translate(${ex}px,${cr.bottom + rand(14, 46)}px) scale(0.9) rotate(150deg)`, opacity: 1, offset: 0.42 },
-            { transform: `translate(${ex}px,${cr.top - rand(2, 8)}px) scale(0.8) rotate(260deg)`, opacity: 1, offset: 0.76 },
+            { transform: `translate(${clamp(sx, innerWidth * 0.38, innerWidth * 0.62) + rand(-8, 8)}px,${cr.bottom + rand(9, 13)}px) scale(0.9) rotate(110deg)`, opacity: 1, offset: 0.34 },
+            { transform: `translate(${ex}px,${cr.bottom + rand(7, 11)}px) scale(0.85) rotate(190deg)`, opacity: 1, offset: 0.58 },
+            { transform: `translate(${ex}px,${cr.top - rand(2, 8)}px) scale(0.8) rotate(270deg)`, opacity: 1, offset: 0.82 },
             { transform: `translate(${tx}px,${ty}px) scale(0.45) rotate(360deg)`, opacity: 0.9 },
           ], { duration: dur, delay: i * gap, easing: "cubic-bezier(0.3, 0, 0.3, 1)", fill: "both" });
         }

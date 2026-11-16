@@ -86,7 +86,7 @@ class BlasterStage {
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
     // the hurt engine burns: a ribbon of flame that trails down the screen
-    this.flame = new Trail({ length: 16, width: 0.09, color: 0xff8a2a, intensity: 1.5, up: new THREE.Vector3(0, 0, 1) });
+    this.flame = new Trail({ length: 16, width: 0.09, color: 0xff8a2a, intensity: 2.0, up: new THREE.Vector3(0, 0, 1) });
     this.flame.mesh.visible = false; this.flame.mesh.renderOrder = 6;
     s.add(this.flame.mesh);
     // a crack in a drone's housing: a jagged line across its ring (a ribbon: lines are a pixel wide whatever is asked)
@@ -320,7 +320,7 @@ class BlasterStage {
         for (let j = 0; j < 3; j++) this.wave(m, to, LORD.FLY[2], 0.6 * k6, (4.2 - j * 0.6) * k, j * 0.05, a.col, 0.075, 0.95);
         kit.sparks(m, a.col, { n: quiet ? 6 : 16, speed: 15 * k6, dir: this._w.subVectors(to, m).normalize(), spread: 0.4, life: 0.3, len: 0.9 * k6, w: 0.06 * k6 });
       }
-      if (a.kind === 3) { Sound.sfx("beam_fire"); if (a.beam) a.beam.stop(); a.beam = kit.beam(e.aimPoint(this._v), this.sweepAt(a, 0, this._w), 0xff1030, { dur: 0, width: 0.95 * k, k: 1.5, grow: 0.05 }); } // (a beam with a body: a white core a dozen pixels across in a wide red halo)
+      if (a.kind === 3) { Sound.sfx("beam_fire"); if (a.beam) a.beam.stop(); a.beam = kit.beam(e.aimPoint(this._v), this.sweepAt(a, 0, this._w), 0xff1030, { dur: 0, width: 1.25 * k, k: 1.5, grow: 0.05 }); } // (a beam with a body: a white core a dozen pixels across in a wide red halo)
       if (a.kind === 4) { Sound.sfx("missile_fire", -0.4); Sound.sfx("missile_fire", 0.4, { delay: 0.05, rate: 1.08 }); this.missiles.forEach((ms, j) => this.launch(ms, e, j, a)); }
     }
     if (a.kind === 0) { // a burst of plasma orbs, one claw then the other: each pops on the fighter's shell where it lands
@@ -641,7 +641,7 @@ class BlasterStage {
     // ---- the warp between waves, when the demon's blast has passed
     if (this.warpAt >= 0 && (this.warpAt -= d) < 0) {
       this.warpAt = -1;
-      g.warp = g.warpDur = 1.0;
+      g.warp = g.warpDur = 0.9; // (over before the next question comes up)
       if (this.region !== undefined) g.space.setRegion(this.region, 1.8);
       if (g.jet.warp) g.jet.warp();
       if (g.jet.shieldUp) g.jet.shieldUp();
@@ -669,9 +669,10 @@ class BlasterStage {
     // ---- the hurt engine burns: a ribbon of flame and puffs of dark smoke that trail down the screen
     if (this.low && g.state !== "over" && !quiet) {
       const n = this.exhaust(1, this._v), fl = this.flame, hot = this.low === 2 ? 1.5 : 1;
-      fl.mesh.visible = true; fl.width = 0.15 * k * hot;
+      fl.mesh.visible = true; fl.width = 0.22 * k * hot;
       if (d > 0) { fl.shift(Math.sin(VFX.t * 17) * 0.006 * k, -0.075 * k * hot, 0.06 * k); fl.push(this._w.copy(n).add(this._u.set(Math.sin(VFX.t * 31) * 0.03 * k, 0, 0))); }
-      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.08, 0.08) * k, -0.35 * k, 0.25 * k)), { size: 0.5 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: -1.3, vel: this._u.set(rand(-0.15, 0.15), -0.6, 1.4) }); kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, -0.6, 1), spread: 0.5, k: 1.5 }); }
+      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.08, 0.08) * k, -0.35 * k, 0.25 * k)), { size: 0.5 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: -1.3, vel: this._u.set(rand(0.3, 0.9), -0.6, 1.4) }); /* (it drifts clear of the plumes: seen against the sky beside them) */
+        kit.fire(this._w.copy(n).add(this._u.set(rand(-0.07, 0.07) * k, 0.1 * k, -0.14 * k)), { size: 0.3 * k * hot, life: 0.3, rise: 0.7, k: 1.1 }); /* flames lick over its cowl */ kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, -0.6, 1), spread: 0.5, k: 1.5 }); }
     } else this.flame.mesh.visible = false;
     // ---- sound that follows the game: the engines with the streak and the warp (wavering when one is hurt);
     // without a recording, the alarm as a pip

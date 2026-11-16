@@ -486,7 +486,7 @@ class CombatFX {
         d.subVectors(b.to, b.from).normalize();
         dart.p.copy(b.p).addScaledVector(d, -len * 0.5); dart.len = len; dart.w = b.w; dart.dirv = d.clone(); dart.life = Math.max(dart.life, 0.03);
       }
-      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 2.6); b.sp.material.opacity = 0.6; // (a glow that hugs its head: the bolt is its dart, not a ball of light)
+      b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 1.7); b.sp.material.opacity = 0.45; // (a glow that hugs its head: the bolt is its dart, not a ball of light)
       if (b.lit) this.lights.length && this.lights[0].t <= 0.02 && (this.lights[0].l.position.copy(b.p), this.lights[0].l.color.setRGB(Math.min(1, b.col[0]), Math.min(1, b.col[1]), Math.min(1, b.col[2])), (this.lights[0].i = 2.2), (this.lights[0].t = this.lights[0].dur = 0.05));
       if (k >= 1) { b.on = false; b.sp.visible = false; if (dart && dart.bolt === b) { dart.life = 0; dart.bolt = null; } const f = b.onHit; b.onHit = null; if (f) f(b.to); }
     }

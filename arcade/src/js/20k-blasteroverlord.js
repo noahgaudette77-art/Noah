@@ -232,8 +232,8 @@ class BlasterOverlord {
     // thrown clear on the frame of the blow, spinning: its tail down and toward the lens, a horn up and out, a wing
     // or a hand out to its own side
     const sgn = () => (Math.random() < 0.5 ? -1 : 1), tail = name === "tail";
-    const v = tail ? new THREE.Vector3(sgn() * rand(2.5, 4), -3.5, 8) : name.startsWith("horn") ? new THREE.Vector3(out.x * 5 + rand(-1, 1), 5, 6) : new THREE.Vector3(out.x * rand(4, 6), out.y * rand(2, 4) + 1.2, rand(3, 6));
-    const s = { j, name, slot, t: 0, life: quiet ? 0.8 : 0.6, v, w: new THREE.Vector3(sgn() * rand(5, 9), sgn() * rand(2, 5), sgn() * rand(7, 11)) }; // (it always spins)
+    const v = tail ? new THREE.Vector3(sgn() * rand(5, 7), -2.5, 6) : name.startsWith("horn") ? new THREE.Vector3(out.x * 5 + rand(-1, 1), 5, 6) : new THREE.Vector3(out.x * rand(4, 6), out.y * rand(2, 4) + 1.2, rand(3, 6));
+    const s = { j, name, slot, t: 0, life: quiet ? 0.8 : 0.6, v, w: new THREE.Vector3(sgn() * rand(4, 7), sgn() * rand(2, 5), sgn() * rand(11, 15)) }; // (it always spins)
     this.scrap.push(s);
     if (g.stage && !quiet) g.stage.demonShed(this, p, name, s);
     return s;
@@ -491,7 +491,7 @@ class BlasterOverlord {
       if (!this.blown && this.dieT > blowAt) this.blow();
       if (this.blown) {
         const b = this.dieT - blowAt;
-        U.uSkGone.value = clamp(b / 1.1, 0, 1);
+        U.uSkGone.value = clamp(b / 0.75, 0, 1); // (gone well before the next question)
         U.uSkHot.value.multiplyScalar(Math.pow(0.1, d));
         [this.coreGlow, this.eyeGlow, this.maw, this.glow].concat(this.claws, this.eyeDots, this.tips).forEach((s) => { s.material.opacity = 0; });
         this.coreLight.intensity *= Math.max(0, 1 - b);

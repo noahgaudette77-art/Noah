@@ -360,7 +360,7 @@ class BlasterStarfighter {
     const inK = this.inT < 1 ? Math.pow(1 - this.inT, 3) : 0, burn = Math.max(w, Math.min(1.2, inK * 3), lunge * 0.85) + clamp((sp / 26 - 1) / 0.6, 0, 1) * 0.12;
     // hovering: a slow bob on two beats, the nose leading it a little, and a yaw that trails the bank
     const hov = quiet ? 0 : 1 - Math.min(1, inK * 3);
-    const bob = (Math.sin(t * 1.9) * 0.05 + Math.sin(t * 3.1 + 1.3) * 0.018) * hov;
+    const bob = (Math.sin(t * 1.9) * 0.085 + Math.sin(t * 3.1 + 1.3) * 0.028) * hov;
     // bank into the drift and the pointer; waggle after a hit; one full roll through the warp
     let roll = (quiet ? 0 : -Pointer.x * 0.5) - Math.cos(t * 0.9) * 0.12 * hov - Math.min(1, inK * 2.5) * 1.3;
     if (this.waggle > 0) { this.waggle = Math.max(0, this.waggle - d * 1.5); roll += Math.sin((1 - this.waggle) * Math.PI * 2) * 0.5 * this.waggle; }

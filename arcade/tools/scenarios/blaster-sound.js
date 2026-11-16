@@ -31,12 +31,12 @@ module.exports = async (cap) => {
   await page(() => {
     const A = window.__arcade, s = A.Scenes.cur, st = s.stage, log = window.__log, seen = (text) => log.push([window.__f, "seen", text]);
     const SHOW = {
-      fire: () => "the fighter turns toward the answer's drone", volley: () => "a volley leaves both cannons (bolts, muzzle flashes, recoil)", boltLands: () => "a pair of bolts lands on the drone",
-      right: () => "the drone bursts and the lance goes through it into the demon's core", demonHit: () => "the blow lands on its core (flash, sparks, ring, hit-stop)",
+      fire: () => "the fighter turns toward the answer's drone", volley: () => "a volley leaves both cannons (bolts, muzzle flashes, recoil)", boltLands: () => "a pair of bolts lands on the drone (its housing cracks, or the pair dies in a red fizzle)",
+      right: () => "the drone shatters and the lance goes through it into the demon's core", demonHit: () => "the blow lands on its core (a slit of light, sparks, ring, hit-stop)", pop: () => "something pops on the fighter's shell",
       wrong: () => "the shot is rejected: the drone locks out", timeout: () => "time is up", demonAttack: (e, att) => "the demon starts to wind up (" + ["plasma volley", "claw swipe", "roared wave", "swept beam", "seekers"][att.kind] + "): its glow gathers, the marker appears on the fighter",
-      strikeLands: () => "the strike reaches the fighter", playerHit: () => "the shield is seen to go (flash, colour split, shake, the HUD cracks)",
+      playerHit: () => "the strike is on the fighter: the shield is seen to go (the shell flares, the band's edge flashes red, shake, the HUD cracks)",
       setLow: (on) => (on === true || on === 1 ? "one shield left: the red frame and the engine fire start" : on === 2 ? "no shield left: the red frame holds" : s.stage.low ? "low health ends" : ""),
-      demonWound: () => "a wound opens in its armour", demonShed: (e, p, name) => "its " + (name === "tail" ? "tail" : "wing") + " is shot away (the blast shows 5 frames on)", demonRoar: () => "it throws its wings wide and roars",
+      demonWound: () => "a wound opens in its armour", demonShed: (e, p, name) => "its " + (name === "tail" ? "tail" : name.startsWith("horn") ? "horn" : "wing") + " is thrown off, spinning (a small blast where it tore, 3 frames on)", demonRoar: () => "it throws its wings wide and roars",
       demonRage: () => "its rage begins", demonDeath: () => "the wave is closed: the fighter's last burst leaves its cannons", demonChain: () => "a part of it comes away in a blast", demonBlast: () => "the last blast",
       over: () => "the fighter blows up", pause: () => "the game is paused", resume: () => "the game goes on",
     };
@@ -84,7 +84,7 @@ module.exports = async (cap) => {
 
   await ready(); await set(() => { window.__arcade.Scenes.cur.enemy.atkN = 0; });
   await mark(); await cap.answer("W"); await cap.fast(120);
-  await dump("A wrong hit, the plasma volley, taking damage", "Frame 0: the answer is picked. The demon starts to wind up on the same frame; the shield is seen to go when its strike lands.");
+  await dump("A wrong hit, the plasma volley, taking damage", "Frame 0: the answer is picked. The demon starts to wind up on the same frame; the shield is seen to go when its strike lands, which is before the explanation sheet comes up (about frame 46).");
 
   const NAMES = ["", "The claw swipe", "The roared wave", "The swept beam", "The seekers"];
   for (let k = 1; k < 5; k++) {
@@ -108,17 +108,18 @@ module.exports = async (cap) => {
   await dump("Armour breakage: the wave's fourth hit shoots its tail away", "Frame 0: the answer is picked.");
 
   await ready(); await set(() => { window.__arcade.Scenes.cur.inWave = 9; });
-  await cap.answer("R"); await cap.until(() => !!window.__arcade.Scenes.cur.quiz.sheet, 200); await cap.fast(30);
+  await mark(); await cap.answer("R"); await cap.fast(200);
+  await dump("The wave's last right answer: the demon is done for", "Frame 0: the answer is picked. While its explanation is up the demon comes apart, a piece at a time.");
   await mark(); await cap.next(); await cap.fast(330);
-  await dump("The demon's death, the warp, the next demon", "Frame 0: the explanation of the wave's last question is closed (the rule closes the wave here; the next question comes up 90 frames on, as it always did). In a first run the wave that passes the best score is the demon's last stand, which this is: its last blast comes 12 frames later than in other waves.");
+  await dump("The demon's death, the warp, the next demon", "Frame 0: the explanation of the wave's last question is closed (the rule closes the wave here; the next question comes up 90 frames on, as it always did). The last blast, the stars and the announcer's call of the wave are all over before it.");
 
   await cap.ask(1500); await cap.fast(60);
   await set(() => { const s = window.__arcade.Scenes.cur; s.shields = 1; s.hud(); s.stage.setLow(1); });
   await cap.fast(20);
   await mark(); await set(() => { const s = window.__arcade.Scenes.cur; s.tLeft = 0.75; }); await cap.fast(150);
-  await dump("Time runs out on the last shield", "Frame 0: 45 frames of the clock are left. The demon starts to wind up when 30 are left, and lets go as the clock runs out.");
+  await dump("Time runs out on the last shield", "Frame 0: 45 frames of the clock are left. The demon starts to wind up when 37 are left and lets go a moment before the clock runs out, so that its strike is on the fighter as it does.");
   await mark(); await cap.next(); await cap.fast(150);
-  await dump("Game over", "Frame 0: the explanation is closed with no shield left.");
+  await dump("Game over", "Frame 0: the explanation is closed with no shield left. The blast, the announcer, the demon's roar and the jingle come one after another, each with its picture.");
 
   fs.writeFileSync(path.join(cap.out, "sound-cues.md"), out.join("\n") + "\n");
   console.log("wrote sound-cues.md (" + out.length + " lines)");
