@@ -34,6 +34,11 @@ async function show(url, o = {}) {
   const gltf = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
   const root = gltf.scene;
   if (o.rotY) root.rotation.y = o.rotY;
+  // o.addon: a script that defines window.addon(root), loaded once, run on the model before it is framed
+  if (o.addon) {
+    if (!window.addon) await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = o.addon; sc.onload = res; sc.onerror = () => rej(new Error("addon did not load: " + o.addon)); document.head.appendChild(sc); });
+    await window.addon(root);
+  }
   scene.add(root);
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());

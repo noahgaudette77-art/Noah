@@ -19,6 +19,8 @@ const anim = +flag("anim", 0), animView = flag("animview", "q");
 // --sprites out.webp: every model alone on a clear ground, one cell each, in one row (for UI icons and portraits);
 // --cell size, --view name, --focus x,y,z (shares of the model's box), --frame share, --names a,b,c (for the list beside it)
 const sprites = flag("sprites", null), cell = +flag("cell", 160), spriteView = flag("view", "hero"), focus = flag("focus", null), frame = +flag("frame", 1), spriteNames = flag("names", null);
+// --addon file.js: a script (under arcade/) that defines window.addon(root), run on each model before it is drawn
+const addonFile = flag("addon", null), addon = addonFile ? "/" + path.relative(path.join(__dirname, "..", ".."), path.resolve(addonFile)).split(path.sep).join("/") : undefined;
 const out = flag("out", "sheet.jpg"), size = +flag("size", 420), statsFile = flag("stats", null), views = flag("views", null), exposure = +flag("exposure", 1), emissiveBoost = +flag("emissive", 0), zoom = +flag("zoom", 0.6), envI = flag("envi", undefined) === undefined ? undefined : +flag("envi", 1), bg = flag("bg", undefined) === undefined ? undefined : parseInt(flag("bg", "0"), 16), norot = flag("norot", null) !== null;
 const files = args.map((f) => path.resolve(f));
 const ARCADE = path.join(__dirname, "..", "..");
@@ -51,7 +53,7 @@ function serve() {
     const cells = [], names = spriteNames ? spriteNames.split(",") : files.map((f) => path.basename(f).replace(/\.glb$/, ""));
     for (const f of files) {
       // (drawn at twice the cell and brought down: smooth edges on a clear ground)
-      await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, { size: cell * 2, views: [spriteView], alpha: true, exposure, emissiveBoost, zoom, envI, focus: focus ? focus.split(",").map(Number) : null, frame, rotY: /\.tripo/.test(f) && !norot ? -Math.PI / 2 : 0 }]);
+      await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, { size: cell * 2, views: [spriteView], alpha: true, addon, exposure, emissiveBoost, zoom, envI, focus: focus ? focus.split(",").map(Number) : null, frame, rotY: /\.tripo/.test(f) && !norot ? -Math.PI / 2 : 0 }]);
       await page.waitForTimeout(150);
       const png = path.join(tmp, cells.length + ".png");
       await page.locator("#c").screenshot({ path: png, omitBackground: true });
@@ -67,7 +69,7 @@ function serve() {
   for (const f of files) {
     const name = path.basename(f).replace(/\.glb$/, "");
     try {
-      const st = await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, Object.assign({ size, exposure, emissiveBoost, zoom, envI, bg, rotY: /\.tripo/.test(name) && !norot ? -Math.PI / 2 : 0 }, anim ? { views: new Array(anim).fill(animView) } : views ? { views: views.split(",") } : {})]);
+      const st = await page.evaluate(([u, o]) => window.show(u, o), [base + "/abs" + f, Object.assign({ size, exposure, emissiveBoost, zoom, envI, bg, addon, rotY: /\.tripo/.test(name) && !norot ? -Math.PI / 2 : 0 }, anim ? { views: new Array(anim).fill(animView) } : views ? { views: views.split(",") } : {})]);
       if (anim) {
         // --anim N: one row per clip, N tiles sampled across it
         for (let ci = 0; ci < (st.animations || []).length; ci++) {
