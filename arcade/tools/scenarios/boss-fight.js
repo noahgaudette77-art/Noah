@@ -175,8 +175,9 @@ module.exports = async (cap) => {
   }
   // ---- the player's defeat (a second run of the same fight: the last heart goes, the boss has the last word)
   if (full && has("defeat")) {
-    // (a trophy won by the fight before, in the same page, would still be dropping in over the HUD: cleared)
-    const noTrophy = () => page(() => { const T = window.__arcade.Trophies; if (T && T.queue) T.queue.length = 0; document.querySelectorAll(".trophy").forEach((e) => e.remove()); });
+    // (the fight before, in the same page, was won but left before its results, where its trophy would have been
+    // given: given now, and its card cleared, so it does not drop in over this defeat as if this run had earned it)
+    const noTrophy = () => page(() => { const T = window.__arcade.Trophies; if (T) { try { T.check(); } catch (e) {} if (T.queue) T.queue.length = 0; T.showing = false; } document.querySelectorAll(".trophy").forEach((e) => e.remove()); });
     await noTrophy();
     await cap.go("boss", key);
     await ready(120);

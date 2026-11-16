@@ -2560,7 +2560,7 @@ Before Phase 3 the owner gets a short projected spend for fal and Tripo, per bos
 | 0 | Setup: keys tested, asset folders, glTF loader with compression, audio manager (mixing, ducking, mute, autoplay rules), sky loader that drives environment light and reflections, `ASSETS.md` with the spend log, `.env` ignored, regression green, commit | done |
 | 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes, commit and push | done (see "Phase 1" below) |
 | 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | done (see "Phase 2" below) |
-| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | in progress |
+| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | done (see "Phase 3" below) |
 | 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | |
 | 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | |
 | 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one summary with screenshots, spend and balances | |
@@ -2727,3 +2727,61 @@ IDENTICAL, sequence test 13 of 13, no console errors.
 - Nobody has heard the sound: it was checked by cue log and measured loudness only.
 - The skid marks and the wreck's fire are simple; the reduced-effects path was not captured.
 
+## Phase 3: Boss Rush (done)
+
+**What was built** (code in `src/js/22-boss.js`, `22c-bossarena.js`, `22d-bossactor.js`, `22e-bosstollgate.js`,
+`22f-bossstage.js`, `22g-bossflavor.js`; the old procedural boss and sky stay as the fallback when the page is opened
+from disk).
+
+1. Twelve generated bosses (`assets/models/boss-1` to `boss-11`, `boss-all`), each a Tripo model with a part
+   split. Eleven are bipeds rigged by Tripo with eight to ten retargeted motion-capture clips, rebuilt as rigid parts
+   on the skeleton (`tools/gen/process-rigged.mjs`: armour does not stretch, a robe hangs in bands, any part can be
+   torn off). The Probate Tollgate is a toll booth on tracks, split into hinged parts and animated by code, its round
+   lamp made a hooded lane signal so it does not read as an eye.
+2. Four bosses were remade for originality: the Inflation Titan and the Patrimony Phantom in the look-and-fix pass,
+   the Product Pusher and the Longevity Lich after the review (see "Models" in `ASSETS.md`).
+3. Arena: three storm and void panoramas seen through a long lens as the backdrop, the scene's light and what the
+   chrome reflects, with lightning; the stands and the gate pillars restyled; one row of settings per boss
+   (`BOSS_ROW`: sky, framing, glow, attacks).
+4. The fight, on the show clock (the rules' frames are untouched): an entrance; a living idle; five telegraphed
+   attack kinds (volley, slam, wave, beam, seekers), each boss with its own projectile, trail and impact (contract
+   cards, toll tickets, exam papers, molten cracks, drawers, a gavel ring, coins and keys, steam, sand, strings of
+   light, a beam of script, a bone arc); strikes that reach the player (a floor shock to the bottom edge, waves that
+   fill the band, a hit flash, the HUD crack); hit reactions, rage, wounds that glow and smoke, parts torn off; a
+   staged death in slow motion with burning debris, BOSS DEFEATED! with its stars, coins that count the score up; the
+   player's defeat (GAME OVER, DEFEATED) held until the results arrive on the rule's frame; the last heart as a
+   saturated red frame beating with the alarm.
+5. Sound on the frame of its picture (`docs/combat-pass/boss/sound-cues.md`): each boss's roar and hits, the
+   strikes, the alarm, the announcer, the boss music and the Proctor's own track.
+
+**The one independent review** (`docs/combat-pass/boss/review.md`): detail 4, lighting 4, materials 4, depth 4,
+motion 3.5, cohesion 4, legibility 3, with ten major defects. What was done about them, in one round:
+
+- The boss's words are a one- or two-line caption on a dark plate at the band's top edge, hidden while the
+  explanation sheet is up and from the start of a death or a defeat.
+- BOSS DEFEATED!, GAME OVER and DEFEATED stand on the top layer until the results arrive (same words, same timers).
+- Strikes reach the player: a slam's shock runs along the floor to the band's bottom edge, a wave grows to fill
+  the band, volleys, seekers and beams land in the band with a flash.
+- Each boss has its own projectile, trail and impact (`22g-bossflavor.js`); the markers stay per attack kind.
+- The last heart: a saturated red frame that beats about once a second with the alarm.
+- Lookalikes: the Pusher (a chrome face in dark glasses) and the Lich (a crowned skeleton, like the other undead)
+  remade with Tripo; the Specter, the Lich and the Phantom now have three different skies.
+- Lasting damage reads: a shallower recoil keeps the boss above the front row, wounds glow at their edges and
+  smoke, rage turns the rims red with steam.
+- Capes, robes, torsos and the Tollgate's booth burn away where they fall instead of standing upright.
+- The "blocky sky" was a downscaled strip: a full-size still is smooth, so it was left.
+- Minor ones done: the stale "Nooo!" line, the floor's warning easing off, coins that count the score up, the front
+  row lit enough to read as heads. Left as minor: the shared entrance drop and death template.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. 47 captures in `docs/combat-pass/boss/`
+with a list in its README.
+
+**Still weak, plainly**
+
+- Eleven entrances are the same drop and the deaths follow one template (the review called it minor).
+- At band size the Fine Print's script and the Lich's falling sand are subtle, and the Specter's coins read as a
+  gold clump before they spread.
+- The Phantom's and Lord Intestate's faces are dark at band size.
+- The remade Lich's robe can show a tiny sliver for a frame in a few clips.
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
