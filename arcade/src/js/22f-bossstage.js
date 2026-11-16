@@ -23,8 +23,9 @@
 const BOSS_ATK = {
   MARK: ["lock", "bang", "ring", "arc", "seek"], // each kind's marker
   CLIP: ["attackB", "attackA", "attackB", "attackA", "attackB"], // and the clip it is played with: a thrust, or an overhead smash
-  FLY: [0.13, 0.12, 0.16, 0.11, 0.2], // how long it takes to reach the player once it is let go (show seconds)
+  FLY: [0.13, 0.22, 0.24, 0.11, 0.2], // how long it takes to reach the player once it is let go (show seconds): a slam's shock runs along the floor to the foot of the picture, a wave comes on until it fills it
   SMOKE: 0x2c2244, WRECK: 0x241c38, // smoke and wreckage stay in the palette
+  RAGE: new THREE.Color(1, 0.1, 0.16), // the rims of a raging boss
 };
 class BossStage {
   constructor(game, actor) {
@@ -44,23 +45,21 @@ class BossStage {
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
     this.tele = null; this.strike = null; this.shot = null; this.kindN = 0; this.dying = null; this.phase = "wait";
     this.hum = false; this.alarm = false; this.rageOn = false; this.flick = 1; this.windK = 0;
+    this.embers = []; // glowing edges round a hole burnt in it and round its stumps: { sp, at, size, t }
     // what it gathers as it winds up: a glow where the attack will leave it
     this.orb = glowSprite(neon(this.hex, 2.2), 0.1, 1);
     this.orb.visible = false; this.orb.renderOrder = 7;
     s.add(this.orb);
-    // its volley: cards (contracts, tickets, papers): a white sheet with lines of print and a neon edge in its colour
-    const cc = document.createElement("canvas");
-    cc.width = 64; cc.height = 88;
-    { const x = cc.getContext("2d"), c = "#" + this.col.getHexString();
-      x.fillStyle = c; x.fillRect(0, 0, 64, 88);
-      x.fillStyle = "#f6fbff"; x.fillRect(7, 7, 50, 74);
-      x.fillStyle = c; for (let i = 0; i < 5; i++) x.fillRect(14, 18 + i * 12, i === 4 ? 20 : 36, 4); }
-    this.cardTex = new THREE.CanvasTexture(cc);
-    const cg = new THREE.PlaneGeometry(0.72, 1);
-    this.cards = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ map: this.cardTex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false })); m.material.color.setScalar(1.35); m.visible = false; m.renderOrder = 9; s.add(m); return { m, bolt: null, spin: 0, turn: 0 }; });
-    // its seekers: a hot head each, a ribbon behind it
+    // what flies from it, what it trails and what it leaves where it lands: its own (22g)
+    this.fl = new BossFlavor(this);
+    // its volley: pictures (contracts, tickets and coins, exam papers and pencils) riding streaks of its colour
+    const cg = new THREE.PlaneGeometry(1, 1);
+    this.cards = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false })); m.material.color.setScalar(1.35); m.visible = false; m.renderOrder = 9; s.add(m); return { m, bolt: null, spin: 0, turn: 0, aspect: 0.72 }; });
+    this.cardGeo = cg;
+    // its seekers: a hot head each, a ribbon behind it (the Lich's are sand)
+    const seekCol = this.fl.fx.seek === "sand" ? 0xf2d48a : this.hex;
     this.seekers = [0, 1, 2, 3].map(() => {
-      const sp = glowSprite(neon(this.hex, 2.6), 0.5, 1), tail = new Trail({ length: 16, width: 0.12, color: this.hex, intensity: 1.9, up: new THREE.Vector3(0, 0, 1) });
+      const sp = glowSprite(neon(seekCol, 2.6), 0.5, 1), tail = new Trail({ length: 16, width: 0.12, color: seekCol, intensity: 1.9, up: new THREE.Vector3(0, 0, 1) });
       sp.visible = tail.mesh.visible = false; sp.renderOrder = 9; tail.mesh.renderOrder = 8;
       s.add(sp, tail.mesh);
       return { sp, tail, t: -1, dur: 1, out: 0, acc: 0, a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), p: new THREE.Vector3(), hit: null };
@@ -80,6 +79,9 @@ class BossStage {
     this.kicker.position.set(0, 7, -12);
     s.add(this.kicker);
     if (g.pillarMat) g.pillarMat.color.multiplyScalar(0.5); // (the pillars stand back: beside armour that mirrors the sky they were the brightest things in the picture)
+    // the front row of the crowd: dark shapes, but lit enough to read as heads, not black humps
+    if (g.frontRow && g.frontRow.children[1]) { g.frontRow.children[1].material.color.setRGB(3.2, 2.6, 3.6); if (g.frontRimMat) g.frontRimMat.color.multiplyScalar(1.7); }
+    this.rimBase = [L ? L.rimA.color.clone() : null, L ? L.rimB.color.clone() : null, this.kicker.color.clone()]; // (rage turns them red)
     // everything that used to throw a burst of square dots throws sparks while the fight is staged
     g.bursts.burst = (pos, color, o = {}) => this.kit.sparks(pos, color, { n: Math.min(40, Math.ceil((o.n || 60) * 0.5)), speed: (o.speed || 10) * 1.1, life: (o.life || 1.1) * 0.7, len: (o.size || 0.3) * 2.4, w: (o.size || 0.3) * 0.3, gravity: 3 });
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._n = new THREE.Vector3();
@@ -117,7 +119,26 @@ class BossStage {
     const g = this.g, b = g.el && g.el.querySelector(".bubble"), sp = b && b.querySelector("span");
     this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2);
     this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); // (a guess, for when there is no bubble to measure)
+    this.capStyle(b);
     if (sp && text) { const was = sp.textContent; sp.textContent = text; this.bubble = { el: b, h: b.offsetHeight }; sp.textContent = was; }
+    this.caption();
+  }
+  // The boss's words (the rule's own bubble, the same words) are a caption along the top edge of the band: one or two
+  // lines on a dark plate, the boss's name before them. Hidden while the explanation sheet is up, and from the moment
+  // its death or the player's defeat begins. (Only where and when they show is changed.)
+  capStyle(b) {
+    if (!b || b.dataset.cap) return;
+    b.dataset.cap = "1";
+    Object.assign(b.style, { width: "calc(100% - 20px)", maxWidth: "560px", padding: "3px 10px 5px", boxSizing: "border-box", fontSize: "clamp(13px, 3.7vw, 17px)", lineHeight: "1.2", overflow: "hidden", background: "rgba(7, 3, 24, 0.9)", borderWidth: "2px", boxShadow: "0 2px 0 #000" }); // (overflow: the pointer under a bubble is cut off)
+    const nm = b.querySelector("b");
+    if (nm) Object.assign(nm.style, { display: "inline", marginRight: "0.6em", verticalAlign: "0.15em" });
+  }
+  caption() {
+    const g = this.g, b = g.el && g.el.querySelector(".bubble");
+    if (!b) return;
+    this.capStyle(b);
+    if (g.band) b.style.top = Math.round(g.band.top + 3) + "px";
+    b.style.visibility = this.phase === "death" || this.phase === "won" || g.el.querySelector(".sheet") ? "hidden" : "";
   }
   // (head: how far down the band the foot of its head stands, with no room made)
   bubbleRoom(head) {
@@ -189,7 +210,8 @@ class BossStage {
 
   // ---- a question is up (the rule: nextQuestion): which strike it will wind up -------------------------------
   ask() {
-    const kinds = this.row.atk, kind = kinds[this.kindN++ % kinds.length];
+    const kinds = this.row.atk, kind = kinds[this.kindN++ % kinds.length], old = this.g.el && this.g.el.querySelector(".bubble");
+    if (old) old.remove(); // (a line left from the last answer does not stay up over the next question)
     this.endTele();
     this.camLow = 0;
     this.tele = { kind, clip: (this.row.clip && this.row.clip[kind]) || BOSS_ATK.CLIP[kind], mark: [], servo: false, hum: false, acc: 0, line: null };
@@ -281,8 +303,8 @@ class BossStage {
     VFX.hitStop(big ? 3 : 2);
     g.hitLine = (g.hitLine || new THREE.Color()).copy(neon(col, 1.5)); g.hitTint = 1; // (the floor's lines run in the answer's colour for a moment)
     g.cheer = 1;
-    a.kickV += big ? 9 : 5;
-    if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32 });
+    a.kickV += big ? 5.5 : 3.2; // (a shallow recoil: it never drops behind the heads of the front row)
+    if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32, k: big ? 0.5 : 0.62 });
     this.wideTo = 0; this.punch = big ? 1 : 0.6;
     Sound.sfx(big ? "impact_big" : "impact_good", 0, { vol: 0.9 });
     Sound.sfx(big ? "boss_stagger" : "boss_hurt", 0, { vol: 0.8, delay: 0.05 });
@@ -312,7 +334,22 @@ class BossStage {
     kit.sparks(p, this.hex, { n: 14, speed: 9, life: 0.4, len: 0.7, w: 0.05 });
     kit.debris(p, { n: 6, size: 0.45, speed: 7, color: BOSS_ATK.WRECK, hot: this.hex, life: 0.8 });
     Sound.sfx("boss_break", this.pan(p), { vol: 0.7, delay: 0.04 });
-    this.leak(at, { smoke: 0.35, fire: 0, sparks: 0.8, rate: 6, size: 0.05 * S, vel: new THREE.Vector3(0, 0.6, 0.5), life: 0.6, color: this.hex, a: 0.3 });
+    this.leak(at, { smoke: 0.6, fire: 0.2, sparks: 0.8, rate: 7, size: 0.05 * S, vel: new THREE.Vector3(0, 0.6, 0.5), life: 0.7, color: this.hex, a: 0.35 });
+    this.ember(at, 0.12 * S);
+  }
+  // a glowing edge round a hole burnt in it, or round a stump: a ring of embers that smoulders (at: where it is now, or null)
+  ember(at, size) {
+    if (!this.emberTex) {
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      const x = c.getContext("2d"), gr = x.createRadialGradient(32, 32, 4, 32, 32, 31);
+      gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(0.36, "rgba(255,80,16,0.08)"); gr.addColorStop(0.52, "rgba(255,186,90,1)"); gr.addColorStop(0.68, "rgba(255,72,18,0.85)"); gr.addColorStop(1, "rgba(110,8,0,0)");
+      x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+      this.emberTex = new THREE.CanvasTexture(c);
+    }
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.emberTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false }));
+    sp.renderOrder = 7; sp.visible = false;
+    this.g.scene.add(sp);
+    this.embers.push({ sp, at, size, t: rand(6.28) });
   }
   // armour torn off a bone and thrown clear on the frame of the blow, turning, sparks trailing from it; a small blast
   // where it was torn off, three frames on; the stump leaks from now on
@@ -330,7 +367,11 @@ class BossStage {
     const tr = kit.trailer((v) => (sc.rest || sc.t > sc.life - 0.4 ? null : v.copy(sc.grp.position)), { smoke: 0.25, fire: 0, sparks: 1, rate: 36, size: 0.3, life: 0.35, color: this.hex, a: 0.3 });
     g.show.wait(sc.life, () => { tr.on = false; });
     if (/^[LR]_/.test(bone) && /arm|Hand/.test(bone) && this.row.limp === bone[0]) a.limp(bone[0], 1);
-    if (leak) this.leak((v) => (a.root.visible && !this.blown ? b.getWorldPosition(v) : null), { smoke: 0.45, fire: 0.35, sparks: 0.7, rate: 9, size: 0.055 * S, vel: new THREE.Vector3(0, 0.7, 0.6), life: 0.6, a: 0.35, color: this.hex });
+    if (leak) {
+      const stump = (v) => (a.root.visible && !this.blown ? b.getWorldPosition(v) : null);
+      this.leak(stump, { smoke: 0.6, fire: 0.35, sparks: 0.7, rate: 9, size: 0.055 * S, vel: new THREE.Vector3(0, 0.7, 0.6), life: 0.7, a: 0.38, color: this.hex });
+      this.ember(stump, 0.1 * S);
+    }
     return sc;
   }
   // under 35%: it rages (the rule's banner and the announcer's line come with it)
@@ -368,6 +409,7 @@ class BossStage {
     const s = this.strike;
     this.endTele();
     if (s && s.beam) s.beam.stop();
+    this.fl.end(s);
     this.strike = null;
   }
   // where a slam comes down on the floor: under its weapon's head (the row's slam: "weapon") or between its fists, as
@@ -395,19 +437,22 @@ class BossStage {
       kit.wave(f0, null, this.hex, { flat: true, dur: 0.55, s0: 0.8 * k, s1: 13 * k, w: 0.24 });
       kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 });
       kit.wave(f0, null, this.hex, { flat: true, dur: 0.7, s0: 0.5 * k, s1: 18 * k, w: 0.16, delay: 0.1 });
-      // three blades of light run out along the floor from where it fell, at the lens
-      const cam = g.camera.position;
-      for (const an of quiet ? [0] : [-0.22, 0, 0.22]) kit.bolt(this._v.copy(f0).setY(0.16), this._w.set(cam.x + Math.sin(an) * 9, 0.16, cam.z - 2.5), this.hex, { dur: BOSS_ATK.FLY[1], width: 0.42 * k, len: 7 * k, light: an === 0 });
+      // three blades of light run out along the floor from where it fell, to the foot of the picture where the player is
+      const foot = (s.foot = this.floorFoot(new THREE.Vector3())), reach = f0.distanceTo(foot);
+      for (const an of quiet ? [0] : [-0.24, 0, 0.24]) kit.bolt(this._v.copy(f0).setY(0.16), this._w.set(foot.x + Math.sin(an) * reach, 0.16, foot.z), this.hex, { dur: BOSS_ATK.FLY[1], width: 0.5 * k, len: 9 * k, light: an === 0 });
       kit.sparks(f0, this.hex, { n: quiet ? 10 : 28, speed: 15 * k, dir: this._v.set(0, 1, 0.25).normalize(), spread: 0.9, life: 0.6, len: 1.1 * k, w: 0.07 * k, gravity: 16 }); // a fountain of sparks where it fell
       kit.sparks(f0, 0xffffff, { n: 8, speed: 16 * k, dir: this._v.set(0, 0.6, 0.6).normalize(), spread: 1.3, life: 0.3, len: 1.1 * k, w: 0.05 * k, k: 1.8, gravity: 10 });
       kit.debris(f0, { n: quiet ? 5 : 12, size: 0.6 * k, speed: 9 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 1.0, radius: 0.8 * k });
       for (let i = 0; i < (quiet ? 3 : 8); i++) { const an = (i / 8) * Math.PI * 2 + rand(0.3); kit.smoke(this._v.set(Math.cos(an) * 1.2 * k, 0.35, Math.sin(an) * 1.2 * k).add(f0), { size: rand(1.1, 1.6) * k, life: rand(0.7, 0.95), vel: this._w.set(Math.cos(an), 0.12, Math.sin(an)).multiplyScalar(rand(4, 6.5) * k), rise: 0.25, a: 0.5, cold: true, color: BOSS_ATK.SMOKE, drag: 0.08 }); } // a ring of dust along the floor
       kit.scorch(f0, { size: 5.5 * k, life: 7, a: 0.6 });
+      // the shock runs out across the floor to the foot of the picture, where the player stands: a white-hot front, its colour behind it
+      kit.wave(f0, null, 0xffffff, { flat: true, dur: BOSS_ATK.FLY[1] + 0.04, s0: 1 * k, s1: 1.05 * reach, w: 0.45, k: 1 });
+      kit.wave(f0, null, this.hex, { flat: true, dur: BOSS_ATK.FLY[1] + 0.1, s0: 0.8 * k, s1: 0.95 * reach, w: 0.7, delay: 0.03, k: 1 });
       g.shake(0.3); GFX.bloomPulse(0.35);
-    } else if (s.kind === 2) { // the wave: three thin rings of force from where it gathered, out over the player and past
-      const to = this.lens(0, -0.15, 1.2), bw = 2.4 * Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * (GFX.w / GFX.h);
+    } else if (s.kind === 2) { // the wave: thin rings of force from where it gathered; it comes on at the player until it fills the picture (runStrike)
+      const to = this.lens(0, -0.15, 1.2);
       Sound.sfx("wave_fire", 0, { vol: 1 });
-      for (let j = 0; j < 3; j++) kit.wave(src, to, this.hex, { dur: BOSS_ATK.FLY[2] + 0.1, s0: 0.7 * k, s1: bw * (1.5 - j * 0.22), delay: j * 0.045, w: 0.075 });
+      for (let j = 0; j < 2; j++) kit.wave(src, null, this.hex, { dur: 0.3, s0: 0.7 * k, s1: (3.4 + j) * k, delay: j * 0.05, w: 0.075 });
       if (a.vent) a.vent(); // (and what its dress lets off: the Titan's pipes)
       kit.sparks(src, this.hex, { n: quiet ? 6 : 18, speed: 16 * k, dir: this._w.subVectors(to, src).normalize(), spread: 0.45, life: 0.3, len: 0.9 * k, w: 0.06 * k });
       g.shake(0.1);
@@ -418,11 +463,19 @@ class BossStage {
       Sound.sfx("missile_fire", -0.4, { vol: 0.9 }); Sound.sfx("missile_fire", 0.4, { vol: 0.9, delay: 0.05, rate: 1.08 });
       this.seekers.forEach((ms, j) => this.launch(ms, j, s));
     }
+    this.fl.release(s, src, s.f0 || null); // (and what is its own: 22g)
+  }
+  // where the floor meets the foot of the picture: a shock along the floor reaches the player there
+  floorFoot(out) {
+    const cam = this.g.camera.position, p = this.lens(0, -1.04, 1, out), dy = p.y - cam.y;
+    if (dy > -1e-3) return out.set(cam.x, 0.07, cam.z - 2.5);
+    const q = (0.07 - cam.y) / dy;
+    return out.set(cam.x + (p.x - cam.x) * q, 0.07, cam.z + (p.z - cam.z) * q);
   }
   launch(ms, j, s) {
     const a = this.a, S = this.S, sd = j % 2 ? -1 : 1, hi = j >> 1;
     a.at(j % 2 ? "handL" : this.row.src === "chest" ? "handR" : this.row.src, ms.a);
-    this.lens(sd * (0.3 + hi * 0.42), -1.12, 2.6, ms.c);
+    this.lens(sd * (0.26 + hi * 0.36), -0.8, 2.6, ms.c); // (each lands inside the foot of the picture, where it is seen to hit)
     ms.b.copy(ms.a).lerp(ms.c, 0.45).add(this._v.set(sd * (3.2 + hi * 1.6), 2.4 - hi * 2.6, 1.2));
     ms.t = -hi * 0.045 - j * 0.012 - 1e-4; ms.dur = BOSS_ATK.FLY[4]; ms.s = s; ms.j = j;
     ms.sp.visible = false; ms.tail.pts = []; ms.tail.width = 0.014 * S; ms.tail.mesh.visible = false; ms.out = 0; ms.acc = 0;
@@ -440,17 +493,18 @@ class BossStage {
     const u = s.u, FLY = BOSS_ATK.FLY[s.kind];
     if (s.kind === 0) { // a volley: five bolts, one after another, each to its own place under the foot of the picture
       while (s.n < (quiet ? 2 : 5) && u >= s.n * 0.036) {
-        const n = s.n++, from = this.src(new THREE.Vector3()), to = this.lens(n ? [0, -0.7, 0.75, -0.35, 0.4][n] + rand(-0.08, 0.08) : rand(-0.12, 0.12), -1.14, 2.7), dir = this._w.subVectors(to, from).normalize();
+        const n = s.n++, from = this.src(new THREE.Vector3()), to = this.lens(n ? [0, -0.7, 0.75, -0.35, 0.4][n] + rand(-0.08, 0.08) : rand(-0.12, 0.12), -0.84, 2.7), dir = this._w.subVectors(to, from).normalize(); // (each lands inside the foot of the picture, where it is seen to hit)
         kit.muzzle(from, dir, this.hex, 0.5 * k);
-        // each is a card, turning as it flies, on a thin streak of its colour (it grows as it comes at the lens)
-        const card = this.cards[n % this.cards.length];
+        // each is one of its own pictures (22g), turning as it flies, on a thin streak of its colour (it grows as it comes at the lens)
+        const card = this.cards[n % this.cards.length], tx = this.fl.card(n);
+        card.m.material.map = tx; card.m.material.needsUpdate = true; card.aspect = (tx.userData && tx.userData.aspect) || 0.72;
         card.bolt = kit.bolt(from, to, this.hex, { dur: FLY, width: 0.12 * k, len: 2.6 * k, light: n === 0, onHit: (p) => { card.m.visible = false; card.bolt = null; if (n === 0) this.land(s, from); else this.pop(p); } });
         card.spin = rand(6.28); card.turn = rand(-1, 1) < 0 ? -17 : 17;
         Sound.sfx("volley_fire", this.pan(from), { vol: 0.75, rate: 1 + n * 0.04 });
         a.kickV -= 1.5;
       }
-    } else if (s.kind === 1) { // the shock runs along the floor from where the blow fell to the lens: the floor jumps as it passes
-      const cam = this.g.camera.position, to = this._w.set(cam.x, 0.07, cam.z - 2.5), q = Math.min(1, u / FLY);
+    } else if (s.kind === 1) { // the shock runs along the floor from where the blow fell to the foot of the picture, where the player is: the floor jumps as it passes
+      const to = s.foot || this.floorFoot(this._w), q = Math.min(1, u / FLY);
       if ((s.acc += d) > 0.018 && q < 1) {
         s.acc = 0;
         const p = this._v.lerpVectors(s.f0, to, q).clone(); p.x += rand(-0.5, 0.5);
@@ -458,8 +512,15 @@ class BossStage {
         kit.debris(p, { n: 1, size: 0.4 * k, speed: 5 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 0.6, dir: this._u.set(0, 1, 0.2), spread: 0.5 });
         kit.flash(p, this.hex, 0.3 * k, 1.1 * k, 0.1, 0.7, 1.4);
       }
+      if ((s.acc3 = (s.acc3 || 0) + d) > 0.045 && q < 1) { s.acc3 = 0; kit.wave(this._v.lerpVectors(s.f0, to, q).setY(0.08), null, this.hex, { flat: true, dur: 0.2, s0: 0.6 * k, s1: (1.8 + 4 * q) * k, w: 0.14 }); } // (the floor's ring jumping, wider as it comes)
       if (!s.landed && u >= FLY) this.land(s, s.f0);
-    } else if (s.kind === 2) {
+    } else if (s.kind === 2) { // the wave comes on at the player, growing as it comes, until it fills the picture
+      const q = Math.min(1, u / FLY);
+      if ((s.acc += d) > 0.034 && q < 1) {
+        s.acc = 0;
+        const p = this._v.lerpVectors(this.src(this._u), this.lens(0, -0.1, 2.0, this._w), q * q), r = p.distanceTo(this.g.camera.position) * this.tb() * (0.3 + 1.05 * q);
+        kit.wave(p, null, this.hex, { dur: 0.15, s0: r * 0.75, s1: r, w: 0.07, k: 0.9 });
+      }
       if (!s.landed && u >= FLY) this.land(s, this.src(this._v));
     } else if (s.kind === 3) { // the beam sweeps, scorching what it crosses, and bites as it passes the middle
       const su = clamp(u / 0.22, 0, 1), from = this.src(new THREE.Vector3()), end = this.sweepAt(s.sd, su, new THREE.Vector3());
@@ -472,14 +533,18 @@ class BossStage {
       }
       if (!s.landed && su >= 0.5) this.land(s, from);
     }
+    this.fl.fly(s, u, d); // (its own: the Fine Print's script, the Phantom's bone-white edge)
     // a strike must be seen to land before the sheet comes up: whatever is still on its way lands now
     if (!s.landed && s.age > 0.12 + 0.3) this.land(s, null);
-    if (s.landed && u > FLY + 0.35) { this.strike = null; if (s.beam) s.beam.stop(); }
+    if (s.landed && u > FLY + 0.35) { this.strike = null; if (s.beam) s.beam.stop(); this.fl.end(s); }
   }
+  // the band's half-height for each unit away from the lens
+  tb() { const g = this.g; return Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * ((g.band ? g.band.h : GFX.h) / GFX.h); }
   // a bolt of the volley that is not the first: a small burst where it leaves the picture
   pop(p) {
     this.kit.flash(p, this.hex, 0.06, 0.26, 0.08, 0.9, 1.4);
     this.kit.sparks(p, 0xffffff, { n: 5, speed: 2.6, dir: this._u.set(0, 1, -0.4).normalize(), spread: 0.9, life: 0.22, len: 0.16, w: 0.016, k: 1.8, stretch: 0.02 });
+    this.fl.pop(p);
     Sound.sfx("impact_hull", this.pan(p), { vol: 0.5 });
   }
   land(s, from) {
@@ -512,13 +577,24 @@ class BossStage {
     // (small: a unit here is a third of the picture's width. A short burst of sparks up from the foot of the picture.)
     kit.sparks(at, 0xffffff, { n: quiet ? 5 : 10, speed: 3.2, dir: this._u.set(0, 1, -0.5).normalize(), spread: 1.3, life: 0.26, len: 0.2, w: 0.018, k: 1.8, stretch: 0.02 });
     kit.sparks(at, 0xff3050, { n: quiet ? 4 : 9, speed: 2.2, dir: this._u.set(0, 1, -0.3).normalize(), spread: 1.5, life: 0.4, len: 0.16, w: 0.022, gravity: 3, k: 1.5, stretch: 0.02 });
-    if (kind === 1) { g.shake(0.3); for (let i = 0; i < (quiet ? 1 : 3); i++) kit.smoke(this.lens(rand(-0.8, 0.8), -1.05, 3.4), { size: 0.32, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.8, 0), a: 0.4, cold: true, color: BOSS_ATK.SMOKE }); } // the floor's jolt arrives: dust thrown up along the foot of the picture
-    else if (kind === 2) { GFX.ripple(g.camera, at, 1, 0.5); for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.5, 3), null, 0xffffff, { dur: 0.3, s0: 0.3, s1: 2.6 + j * 0.7, delay: j * 0.08, w: 0.04, k: 0.8 }); }
-    else if (kind === 3) { // the beam: a line burnt across the foot of the picture, molten drips falling from it
-      const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92);
+    const tb = this.tb();
+    if (kind === 1) { // the floor's jolt arrives under the player: the shock's ring across the foot of the picture, dust thrown up along it
+      g.shake(0.34);
+      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.2, 1.3, 0.12, 0.85, 1.5); }
+      for (let i = 0; i < (quiet ? 1 : 4); i++) kit.smoke(this.lens(rand(-0.85, 0.85), -1.0, 3.4), { size: 0.36, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.9, 0), a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
+    } else if (kind === 2) { // the wave breaks over the player: a ring that fills the picture, and the picture ripples
+      GFX.ripple(g.camera, at, 1, 0.5);
+      kit.wave(this.lens(0, -0.05, 1.6), null, this.hex, { dur: 0.24, s0: 1.6 * tb * 0.95, s1: 1.6 * tb * 1.6, w: 0.05, k: 0.9 });
+      for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.3, 3), null, 0xffffff, { dur: 0.3, s0: 3 * tb * 0.4, s1: 3 * tb * (1.1 + j * 0.25), delay: j * 0.08, w: 0.04, k: 0.8 });
+    } else if (kind === 3) { // the beam: a hit where it crosses the player, then a line burnt across the foot of the picture, molten drips falling from it
+      const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92), hit = this.lens(0, -0.74, 2.6);
+      kit.flash(hit, this.beamCol, 0.25, 1.2, 0.12, 0.9, 1.6);
+      kit.sparks(hit, 0xffffff, { n: quiet ? 5 : 12, speed: 2.4, spread: 1.4, life: 0.3, len: 0.14, w: 0.016, k: 1.8, gravity: 2, stretch: 0.02 });
       kit.gash(b0, b1, 0xffb070, 0.5, 0.045, 1.5);
+      if (this.fl.fx.beam === "cleave") kit.gash(this.sweepAt(s.sd, 0.12).add(this._u.set(0, 0.05, 0)), this.sweepAt(s.sd, 0.88).add(this._u.set(0, 0.05, 0)), this.hex, 0.5, 0.04, 1.5); // (half violet: the arc's second edge)
       for (let j = 0; j < 3; j++) g.show.wait(j * 0.08, () => { if (!g.unmounted) kit.sparks(this._v.lerpVectors(b0, b1, rand(0.1, 0.9)), 0xffa050, { n: 4, speed: 0.6, life: 0.5, len: 0.12, w: 0.02, gravity: 2.5, k: 1.6, stretch: 0.02 }); });
-    } else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
+    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.2, 1.0, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
+    else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });
     if (left === 1) Sound.say("CRITICAL");
@@ -531,6 +607,10 @@ class BossStage {
     this.low = on;
     GFX.setDanger(on === 2 ? 1 : on ? 0.72 : 0);
     HudFX.low(g.el, !!on);
+    // and a saturated red frame round the picture (the band only: never over the question or the answers), beating
+    // about once a second with the alarm (update); with no heart left it holds
+    if (on && !this.redFrame && g.el) { const e = (this.redFrame = document.createElement("div")); e.style.cssText = "position:absolute;left:0;right:0;z-index:5;pointer-events:none;"; g.el.appendChild(e); this.redT = 0; }
+    if (!on && this.redFrame) { this.redFrame.remove(); this.redFrame = null; }
     if (on === 1) { this.alarmOn(); this.lowT = 0; } else { Sound.stopLoop("boss-alarm", 0.3); this.alarm = false; }
   }
 
@@ -539,7 +619,7 @@ class BossStage {
   critical() {
     const a = this.a;
     this.setLow(0);
-    a.react("stagger", { rate: 0.85, in: 0.06, out: 0.5 });
+    a.react("stagger", { rate: 0.85, in: 0.06, out: 0.5, k: 0.65 });
     a.limp("L", 1); a.limp("R", 0.85); a.lean = 1.6; a.idleRate = 0.45;
     this.dying = { t: 0.5, n: 0 };
     this.wideTo = 0.35;
@@ -556,8 +636,11 @@ class BossStage {
     Sound.sfx("explosion_small", this.pan(p), { rate: 0.95 + i * 0.05, vol: 0.9 });
   }
   // banner: the rule's own "BOSS DEFEATED!" banner, shown when the last blast has gone
+  // (Every boss's fall takes the same time: its last blast comes early enough that "BOSS DEFEATED!" is up for 1.5 s
+  // before the results come at the rule's own frame; the final boss's death is bigger, not longer. The blasts of the
+  // chain come a third of a second apart, never faster.)
   death(banner) {
-    const g = this.g, a = this.a, big = g.bossKey === "all", rate = big ? 1.0 : 1.3, T = BOSS_CLIP.death.down / rate, n = big ? 4 : 3; // (the blasts of the chain come a third of a second apart, never faster)
+    const g = this.g, a = this.a, rate = 1.3, T = BOSS_CLIP.death.down / rate, n = 3;
     this.endAttack(); this.setLow(0);
     this.dying = null; this.phase = "death";
     VFX.slowMo(0.3, 0.3, 0.1);
@@ -576,7 +659,12 @@ class BossStage {
     p.y = Math.max(p.y, 0.7);
     this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0;
     this.blown = true;
-    a.shatter(p, 13).forEach((sc, i) => { if (i % 3 === 0 && !quiet) { const tr = kit.trailer((v) => (sc.rest || sc.t > sc.life - 0.3 ? null : v.copy(sc.grp.position)), { smoke: 0.3, fire: 0, sparks: 1, rate: 30, size: 0.3, life: 0.3, color: this.hex, a: 0.3 }); g.show.wait(sc.life, () => { tr.on = false; }); } });
+    a.shatter(p, 13).forEach((sc, i) => {
+      if (sc.burn) { // a cape, a robe, a torso burns away where it lies: tongues of fire and smoke over it as it shrinks
+        const tr = kit.trailer((v) => (sc.t > sc.life - 0.05 ? null : v.copy(sc.grp.position)), { smoke: quiet ? 0.4 : 0.8, fire: quiet ? 0.5 : 1, sparks: 0.6, rate: quiet ? 12 : 34, size: 0.9, life: 0.55, color: 0xff7a2a, a: 0.45, vel: new THREE.Vector3(0, 2.2, 0) });
+        g.show.wait(sc.life, () => { tr.on = false; });
+      } else if (i % 3 === 0 && !quiet) { const tr = kit.trailer((v) => (sc.rest || sc.t > sc.life - 0.3 ? null : v.copy(sc.grp.position)), { smoke: 0.3, fire: 0, sparks: 1, rate: 30, size: 0.3, life: 0.3, color: this.hex, a: 0.3 }); g.show.wait(sc.life, () => { tr.on = false; }); }
+    });
     kit.explosion(p, { size: big ? 1.9 : 1.5, color: this.hex, shake: false, debrisLife: 0.8 });
     kit.sparks(p, 0xffffff, { n: quiet ? 8 : 16, speed: 30, life: 0.5, len: 2.0, w: 0.07, k: 1.9, gravity: 6 }); // (long white streaks thrown clear: the blast's size is in these, its rings and its wreckage)
     kit.debris(p, { n: quiet ? 6 : 16, size: 0.8, speed: 15, color: BOSS_ATK.WRECK, hot: this.hex, life: 1.0 });
@@ -592,18 +680,21 @@ class BossStage {
     g.cheer = 1;
     Sound.sfx("explosion_huge", 0, { vol: 1 });
     Sound.sfx("debris", 0, { delay: 0.3, vol: 0.8 });
-    // the reward: stars and coins fly from the blast, round the question, to the score
+    // the reward: stars and coins fly from the blast, round the question, to just beside the score, which counts up as they land
     const from = this.screen(p);
     g.show.wait(0.06, () => {
       if (g.unmounted) return;
-      HudFX.reward(g.el, from, "[data-score]", { n: 8, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 400, gap: 12 });
-      HudFX.reward(g.el, from, "[data-score]", { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
+      const sc = $("[data-score]", g.el), r = sc && sc.getBoundingClientRect(), to = r && r.width ? { x: r.left - 12, y: r.top + r.height / 2 } : "[data-score]";
+      HudFX.reward(g.el, from, to, { n: 8, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 400, gap: 12 });
+      HudFX.reward(g.el, from, to, { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
+      if (sc) this.count = { el: sc, a: parseInt(sc.textContent.replace(/\D/g, ""), 10) || 0, b: g.score, t: -0.42, dur: 0.8 }; // (a value already decided, shown as it arrives)
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
-    g.show.wait(0.12, () => {
+    g.show.wait(0.05, () => {
       if (g.unmounted || !banner) return;
       if (!big) return banner();
-      Sound.say("FINAL BOSS DESTROYED"); // (the final boss has its own line: the banner is shown without the usual one)
+      Sound.say("FINAL BOSS DESTROYED"); // (the final boss has its own line, over its banner; the banner is shown without the usual one)
+      this.resultPre = "FINAL BOSS DESTROYED";
       const say = Sound.say; Sound.say = () => 0; try { banner(); } finally { Sound.say = say; }
     });
     g.show.wait(0.5, () => { if (!g.unmounted) Sound.sfx("win"); });
@@ -618,7 +709,21 @@ class BossStage {
     this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 7, w: 0.04 });
     if (g.arena) g.arena.strike(1);
     this.wideTo = 0.15; this.camLow = -0.6;
-    g.show.wait(0.4, () => { if (!g.unmounted) Sound.say("GAME OVER"); });
+    g.show.wait(0.4, () => { if (g.unmounted) return; Sound.say("GAME OVER"); this.showResult("GAME OVER", COLORS.red, "", { say: false }); });
+  }
+  // A result the player must read (the rule's own words): a plate on the top layer over the middle of the picture,
+  // in at once and held until the next screen comes (it is never taken down: the results replace the whole screen at
+  // the rule's frame). o: { say: false (its line is spoken elsewhere), pre: a line above it }
+  showResult(title, color, sub, o = {}) {
+    const g = this.g;
+    if (!g.el) return;
+    if (o.say !== false) Sound.say(title);
+    const pre = o.pre || this.resultPre;
+    let el = this.result;
+    if (!el) { el = this.result = document.createElement("div"); g.el.appendChild(el); this.resT = 0; }
+    el.style.cssText = "position:absolute;left:0;right:0;z-index:45;pointer-events:none;text-align:center;padding:14px 8px 12px;background:linear-gradient(90deg,rgba(5,2,18,0),rgba(5,2,18,0.9) 15%,rgba(5,2,18,0.9) 85%,rgba(5,2,18,0));" +
+      `font:clamp(26px,8.6vw,50px)/1.08 var(--font-display);color:${color};text-shadow:0 0 14px ${color},0 4px 0 #000;opacity:${el.style.opacity || 0};`;
+    el.innerHTML = (pre ? `<div style="font-size:0.46em;margin-bottom:10px">${esc(pre)}</div>` : "") + esc(title) + (sub ? `<small style="display:block;font-size:0.34em;color:var(--ink);margin-top:10px;text-shadow:0 2px 0 #000">${esc(sub)}</small>` : "");
   }
 
   update(dt) {
@@ -640,10 +745,12 @@ class BossStage {
       ms.sp.visible = true; ms.sp.position.copy(ms.p); ms.sp.scale.setScalar(0.55 * k * (0.9 + 0.1 * Math.sin(VFX.t * 40)));
       if (d > 0) { ms.tail.mesh.visible = true; ms.tail.push(ms.p); }
       if ((ms.acc += d) > 0.03) { ms.acc = 0; kit.sparks(ms.p, this.hex, { n: 1, speed: 1.6, life: 0.3, len: 0.35 * k, w: 0.045 * k }); }
+      this.fl.seekFly(ms, d); // (its own: sand falling from the Lich's, the Influencer's strings)
       if (u >= 1) { // each lands at its own place at the foot of the picture, a few frames after the last: a small shaped blast
         ms.t = -1; ms.sp.visible = false; ms.out = 0.2;
-        kit.explosion(ms.p, { size: 0.16, color: this.hex, ring: false, shake: false, debris: false, smoke: false, ground: false });
-        kit.wave(ms.p, null, this.hex, { dur: 0.22, s0: 0.06, s1: 0.5, w: 0.02, k: 0.85 });
+        kit.explosion(ms.p, { size: 0.26, color: this.hex, ring: false, shake: false, debris: false, smoke: false, ground: false });
+        kit.wave(ms.p, null, this.hex, { dur: 0.24, s0: 0.08, s1: 0.75, w: 0.02, k: 0.85 });
+        this.fl.seekLand(ms);
         Sound.sfx("missile_hit", this.pan(ms.p), { vol: 0.8 });
         if (ms.s) this.land(ms.s, ms.a);
       }
@@ -657,7 +764,8 @@ class BossStage {
       c.m.visible = true;
       c.m.position.copy(b.p);
       c.m.quaternion.copy(g.camera.quaternion); c.m.rotateZ(c.spin); c.m.rotateX(0.5 * Math.sin(c.spin * 0.7));
-      c.m.scale.setScalar(lerp(1.5, 0.3, u) * k);
+      const sz = lerp(1.5, 0.3, u) * k * 0.85, ar = Math.sqrt(c.aspect || 0.72); // (each picture its own shape: a card, a ticket, a coin, a pencil)
+      c.m.scale.set(sz * ar, sz / ar, 1);
     }
     // ---- a heart owed is always seen to go: if no strike lands for it, it goes on its own
     for (let i = this.debts.length - 1; i >= 0; i--) if ((this.debts[i].t += d) > 1.2) { this.debts.splice(i, 1); this.debts.unshift({ t: 0 }); this.playerHit(null); break; }
@@ -666,8 +774,9 @@ class BossStage {
     // ---- done for: small blasts along it until the sheet is closed (under two a second)
     if (this.dying && g.state !== "over" && (this.dying.t -= d) <= 0) { this.dying.t = rand(0.6, 0.85); this.chain(this.dying.n++ % 5, false); }
     this.flick = this.dying ? 0.45 + 0.55 * Math.abs(Math.sin(VFX.t * 9) * Math.sin(VFX.t * 2.3)) : 1;
-    // ---- the boss itself
-    a.root.position.set(rage && !quiet && this.phase === "fight" ? rand(-1, 1) * 0.03 * (g.rageK || 0) : 0, 0, 0);
+    // ---- the boss itself (raging, it shakes)
+    const shk = rage && !quiet && this.phase === "fight" ? 0.055 * (g.rageK || 0) : 0;
+    a.root.position.set(rand(-1, 1) * shk, rand(-1, 1) * shk * 0.4, 0);
     this.windEase = (this.windEase || 0) + ((g.state === "ask" ? this.windK : this.strike && !this.strike.landed ? 1 : 0) - (this.windEase || 0)) * Math.min(1, d * 8);
     a.lean = this.dying ? 1.6 : this.windEase * 0.8;
     a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick, charge: this.windEase });
@@ -679,6 +788,19 @@ class BossStage {
     const L = g.lamps;
     if (L && this.rim0) { L.rimA.intensity = this.rim0[0] * (0.25 + 0.75 * a.power); L.rimB.intensity = this.rim0[1] * (0.25 + 0.75 * a.power); }
     this.kicker.intensity = 1.5 * (0.4 + 0.6 * a.power);
+    // raging, its rims burn red and steam leaks from its back and shoulders
+    this.rageGlow = (this.rageGlow || 0) + ((rage ? 1 : 0) - (this.rageGlow || 0)) * Math.min(1, d * 2.5);
+    if (this.rageGlow > 0.002 || this.rageWas) {
+      const R = BOSS_ATK.RAGE, rg = this.rageGlow;
+      if (L && this.rimBase[0]) { L.rimA.color.copy(this.rimBase[0]).lerp(R, rg * 0.85); L.rimB.color.copy(this.rimBase[1]).lerp(R, rg * 0.85); }
+      this.kicker.color.copy(this.rimBase[2]).lerp(R, rg * 0.75);
+      this.rageWas = rg > 0.002;
+    }
+    if (rage && this.phase === "fight" && a.root.visible && !this.blown && (this.steamT = (this.steamT || 0) - d) <= 0) {
+      this.steamT = quiet ? 0.45 : 0.13;
+      const p = a.at(Math.random() < 0.6 ? "chest" : "head", this._u); p.x += rand(-0.22, 0.22) * S; p.z -= 0.06 * S;
+      kit.smoke(p, { size: 0.9 * k, life: 0.9, vel: this._w.set(rand(-0.6, 0.6), 2.4, rand(-0.4, 0.1)).multiplyScalar(k), rise: 0.9, a: 0.3, cold: true, color: 0xc0b0dc, drag: 0.5 });
+    }
     this.src(g.eyeLight.position); g.eyeLight.position.z += 0.4;
     g.eyeLight.intensity = a.power * (0.6 + 3.2 * this.windEase);
     // ---- its shadow on the floor: under its hips, wider as it comes down
@@ -693,6 +815,32 @@ class BossStage {
     // ---- one heart left: the alarm (as a pip when there is no recording)
     if (this.low === 1 && !this.alarm && g.state !== "over" && (this.lowT -= d) <= 0) { this.lowT = 1.125; Sound.sfx("alarm", 0, { vol: 0.6 }); }
     if (rage && g.state !== "over" && Sound.intensity < 2) Sound.setIntensity(2);
+    // ---- one heart left: the red frame beats about once a second, with the alarm (steady with none left, or with reduced effects)
+    if (this.redFrame && g.band) {
+      const e = this.redFrame, beat = this.low === 2 || quiet ? 0.8 : Math.pow(0.5 + 0.5 * Math.cos((this.redT += d) * Math.PI * 2 / 1.125), 2);
+      e.style.top = g.band.top + "px"; e.style.height = g.band.h + "px";
+      e.style.boxShadow = `inset 0 0 ${Math.round(46 + 34 * beat)}px ${Math.round(12 + 20 * beat)}px rgba(255, 18, 46, ${(0.42 + 0.5 * beat).toFixed(2)})`;
+    }
+    // ---- the hole burnt in it and its stumps smoulder at their edges
+    for (const e of this.embers) {
+      const p = e.at(this._u);
+      e.sp.visible = !!p;
+      if (!p) continue;
+      e.t += d;
+      e.sp.position.copy(p);
+      e.sp.scale.setScalar(e.size * (0.94 + 0.06 * Math.sin(e.t * 5.1)));
+      e.sp.material.opacity = (0.72 + 0.2 * Math.sin(e.t * 3.7) * Math.sin(e.t * 1.3)) * this.flick; // (a slow smoulder: under three beats a second)
+    }
+    // ---- its words: a caption along the top of the picture; a result plate; the score counting up as the reward lands
+    this.caption();
+    if (this.result && g.band) {
+      const e = this.result, q = Math.min(1, (this.resT = (this.resT || 0) + d) / 0.18);
+      e.style.opacity = q.toFixed(2);
+      e.style.transform = `scale(${(1 + 0.45 * (1 - q) * (1 - q)).toFixed(3)})`;
+      e.style.top = Math.round(g.band.top + g.band.h * 0.5 - e.offsetHeight / 2) + "px";
+    }
+    if (this.count && (this.count.t += d) >= 0) { const c = this.count, q = Math.min(1, c.t / c.dur); c.el.textContent = fmtScore(Math.round(lerp(c.a, c.b, q * (2 - q)))); if (q >= 1) this.count = null; }
+    this.fl.update(d);
     this.frame(d, f);
     kit.update(d);
   }
@@ -748,6 +896,10 @@ class BossStage {
     this.a.dispose();
     this.seekers.forEach((m) => { m.sp.material.dispose(); m.tail.mesh.geometry.dispose(); m.tail.mesh.material.dispose(); });
     this.orb.material.dispose();
-    this.cardTex.dispose(); this.cards.forEach((c) => c.m.material.dispose()); this.cards[0].m.geometry.dispose();
+    this.cards.forEach((c) => c.m.material.dispose()); this.cardGeo.dispose();
+    this.fl.dispose();
+    for (const n of ["result", "redFrame"]) if (this[n]) { this[n].remove(); this[n] = null; }
+    this.embers.forEach((e) => e.sp.material.dispose());
+    if (this.emberTex) this.emberTex.dispose();
   }
 }

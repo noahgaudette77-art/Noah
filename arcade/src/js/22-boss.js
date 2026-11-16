@@ -877,7 +877,7 @@ class BossGame extends QuizGame {
       this.floorRing(this.cfg.color, 26, 1.4);
       this.flashAt(this.boss.position, 0xffffff, 0.75, 7 * this.bossScale + 2);
     }
-    const banner = () => UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS"));
+    const sub = stars + (stars === 1 ? " STAR" : " STARS"), banner = () => (this.stage ? this.stage.showResult("BOSS DEFEATED!", COLORS.lime, sub) : UI.banner("BOSS DEFEATED!", COLORS.lime, sub)); // (staged: on the top layer, held until the results)
     // (staged: slow motion, it goes over backward as blasts run along it, the last blast, the reward. The banner and
     // the jingle come with the last blast instead of on their old marks: look and sound only.)
     if (this.stage) this.stage.death(banner); else this.tw.wait(0.9, banner);
@@ -943,7 +943,7 @@ class BossGame extends QuizGame {
     Sound.stopMusic();
     Sound.sfx("gameover");
     if (this.stage) this.stage.defeat(); // (staged: the boss has the last word)
-    this.tw.wait(1.2, () => UI.banner("DEFEATED", COLORS.red, "Read the notes, then come back"));
+    this.tw.wait(1.2, () => (this.stage ? this.stage.showResult("DEFEATED", COLORS.red, "Read the notes, then come back", { pre: "GAME OVER" }) : UI.banner("DEFEATED", COLORS.red, "Read the notes, then come back"))); // (staged: on the top layer, held until the results)
     this.tw.wait(2.8, () => {
       if (this.unmounted) return;
       showResults({
@@ -1028,7 +1028,9 @@ class BossGame extends QuizGame {
     }
     this.floor.material.uniforms.uReflect.value = 0.55;
     { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
-      const fl = this.floor.material.uniforms.uLine.value, ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
+      const fl = this.floor.material.uniforms.uLine.value;
+      let ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
+      if (this.stage) { this.chEase = ch >= (this.chEase || 0) ? ch : this.chEase + (ch - this.chEase) * Math.min(1, VFX.dt * 4); ch = this.chEase; } // (staged: the warning in the floor eases off over a few frames; it does not snap)
       fl.copy(this.lineBase).lerp(this.rageLine, rk).multiplyScalar(0.52 + 0.48 * ch);
       if (this.hitTint > 0.002) { this.hitTint = Math.max(0, this.hitTint - dt * 4); fl.lerp(this.hitLine, Math.min(1, this.hitTint * 1.25)); }
     }

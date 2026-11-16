@@ -125,12 +125,14 @@ class BossTollgate {
   shatter(centre, speed) {
     const out = [];
     for (const n of ["forearmL", "forearmR", "shoulderL", "shoulderR", "trackL", "trackR", "body"]) {
-      const b = this.P[n];
+      const b = this.P[n], big = n === "body"; // (the booth burns where it falls; thrown up, it stood in the air like the boss again)
       if (!b || b.userData.torn) continue;
       b.getWorldPosition(this._v);
-      const v = this._v.clone().sub(centre); v.y = Math.abs(v.y) + 0.4; v.normalize().multiplyScalar(speed * rand(0.6, 1.1)); v.y += rand(3, 7);
-      const sc = this.tear(n, v, { life: rand(1.5, 2.2) });
-      if (sc) out.push(sc);
+      const v = this._v.clone().sub(centre); v.y = 0;
+      if (v.lengthSq() < 1e-4) v.set(rand(-1, 1), 0, rand(-1, 1));
+      v.normalize().multiplyScalar(speed * (big ? 0.1 : rand(0.6, 1.1))); v.y = big ? rand(-1, 0.4) : rand(0.8, 2.6);
+      const sc = this.tear(n, v, { life: big ? rand(0.55, 0.7) : rand(1.3, 1.9) });
+      if (sc) { sc.burn = big; if (big) sc.w.multiplyScalar(0.12); out.push(sc); }
     }
     return out;
   }
