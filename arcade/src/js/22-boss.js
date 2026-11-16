@@ -610,7 +610,7 @@ class BossGame extends QuizGame {
   // The boss talks: a speech bubble just above the 3D strip.
   taunt(text) {
     Dialog.say(this.el, text, { top: this.band ? this.band.top + 8 : 140, color: this.cfg.color, voice: 150, name: this.cfg.name, ms: 1900 });
-    if (this.stage) this.stage.talk(1900 + String(text).length * 20, String(text).length); // (staged: the lens makes room for its words above its head)
+    if (this.stage) this.stage.talk(1900 + String(text).length * 20, String(text).length, String(text)); // (staged: the lens makes room for its words above its head)
   }
   start() {
     Sound.play(this.stage && this.bossKey === "all" ? "finalboss" : "boss"); // (staged: the last boss has its own track; until it has loaded, and from disk, the boss tune)

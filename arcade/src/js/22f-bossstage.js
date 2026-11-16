@@ -109,7 +109,25 @@ class BossStage {
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
   // there, so its face stands under its words, not behind them.
-  talk(ms, len) { this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2); this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); } // (more room for more lines)
+  // How tall its words stand once all typed is measured on the bubble itself, the whole line set in it for an instant
+  // and taken out again (nothing is drawn between). While the bubble is up, the room is worked out every frame against
+  // the band as it is then (roomK, of the band's height: see bubbleRoom): the bubble's size is fixed on the screen, the
+  // band's height is not (a long question leaves a short band), and the band moves when the next question comes.
+  talk(ms, len, text) {
+    const g = this.g, b = g.el && g.el.querySelector(".bubble"), sp = b && b.querySelector("span");
+    this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2);
+    this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); // (a guess, for when there is no bubble to measure)
+    if (sp && text) { const was = sp.textContent; sp.textContent = text; this.bubble = { el: b, h: b.offsetHeight }; sp.textContent = was; }
+  }
+  bubbleRoom() {
+    const g = this.g, bb = this.bubble;
+    if (!bb) return;
+    if (!bb.el.isConnected) { this.bubble = null; this.roomT = 0; return; }
+    if (!g.band || !(g.band.h > 0)) return;
+    const top = bb.el.offsetTop; // (lower than its head reaches, it is not over its head: the band has moved up since it was placed, or it sits over an explanation sheet)
+    this.roomK = top > g.band.top + 0.2 * g.band.h ? 0 : clamp((top + bb.h + 6 - g.band.top) / g.band.h, 0, 0.75);
+    this.roomT = Math.max(this.roomT || 0, 0.1);
+  }
   // ---- sound that runs on ---------------------------------------------------------------------------------------
   loops(on) {
     if (on) {
@@ -695,9 +713,13 @@ class BossStage {
     const to = lerp(near, wideD, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
     this.dist += (to - this.dist) * Math.min(1, d * 5);
     const Hb = 2 * this.dist * t * bh;
+    this.bubbleRoom();
     this.roomT = Math.max(0, (this.roomT || 0) - d);
     this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
-    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
+    // (close: its head under the top of the band; while it talks, under its words: as much higher as they reach down the
+    // band, less the sky there already is over its head)
+    const lookBase = Math.max(S * 1.05 - Hb / 2, Hb * 0.36), over = lookBase + Hb / 2 - S * 1.01;
+    const lookNear = lookBase + this.room * Math.max(0, (this.roomK || 0.15) * Hb - over) * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);

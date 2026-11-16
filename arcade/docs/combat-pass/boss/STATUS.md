@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3 done; next: 9 (INFLUENCER) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9 done; next: 7 (LICH) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -72,6 +72,14 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   the violet rings out of the vault in its chest, the hit). Lookalike: mild. A hood over a chrome mask is a common
   type (it is in the family of a well-known masked comic-book villain's hooded mask); its third eye on the brow,
   the fanged slits and the empty vault in its chest keep it its own.
+- Boss 9 (INFLUENCER): a tall masked puppeteer in a long coat with marionette crosses on strings of light; its
+  seekers fly; no lookalike. Fixed (for every boss): its three-line words covered its head as it took a hit. The
+  room the lens makes for the boss's words was a guess from the line's length, and was kept for a guessed time,
+  against the band as it was when the words began. Now the bubble's full height is measured when it opens (the
+  whole line set in it for an instant), and every frame while it is on the page the lens raises the boss just
+  enough to bring its head under it, against the band as it is then (the band moves when the next question comes;
+  a bubble that has ended up lower than the head reaches, over its chest or over a sheet, asks for no room). The
+  game passes the line's words to the stage for this (`taunt`: look only).
 
 ## Tests at the last commit
 
