@@ -107,7 +107,7 @@ class BossStage {
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
   // there, so its face stands under its words, not behind them.
-  talk(ms) { this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2); }
+  talk(ms, len) { this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2); this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); } // (more room for more lines)
   // ---- sound that runs on ---------------------------------------------------------------------------------------
   loops(on) {
     if (on) {
@@ -682,7 +682,7 @@ class BossStage {
     const Hb = 2 * this.dist * t * bh, low = this.camLow;
     this.roomT = Math.max(0, (this.roomT || 0) - d);
     this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
-    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * 0.15 * Hb * (1 - this.overK), look = lerp(lookNear, S * (0.47 - 0.14 * Math.max(0, low)), k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
+    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, S * (0.47 - 0.14 * Math.max(0, low)), k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);

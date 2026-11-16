@@ -8,7 +8,8 @@
 // hit, a wrong answer with the boss's strike landing and the whole screen, the last heart, damage states, rage, death,
 // the player's defeat, and whole-screen stills of a question and of an explanation sheet. Every other boss gets
 // three files (SET=short, their default): NN-name-idle.jpg, NN-name-fight.jpg (its entrance, its attack with the
-// telegraph, taking a hit) and NN-name-death.jpg. PARTS=idle,death,... keeps only some of them.
+// telegraph, taking a hit) and NN-name-death.jpg. PARTS=idle,death,... keeps only some of them; KIND=0..4 makes the
+// attack shown a given kind (for a boss that has more than one: 0 volley, 1 slam, 2 wave, 3 beam, 4 seekers).
 // The scenario sets state in the page to reach a moment quickly (how far the attack bar has filled, how much HP and
 // how many hearts are left): test only. Nothing here is part of the game.
 const fs = require("fs"), path = require("path");
@@ -81,6 +82,7 @@ module.exports = async (cap) => {
   let atk = null;
   if (has("attack") || has("fight")) {
     await ready(30, 0.6);
+    if (process.env.KIND !== undefined) await page((k) => { const s = window.__arcade.Scenes.cur; if (s.stage) { s.stage.kindN = +k; s.stage.ask(); } }, process.env.KIND);
     await charge(-2.4);
     await cap.fast(34);
     if (full) { // the telegraph, coarsely; then the strike and its landing, every other frame
@@ -90,7 +92,7 @@ module.exports = async (cap) => {
     } else {
       atk = await frames(tag + "-atk", 3, 30);
       await charge(-0.12);
-      atk = atk.concat(await frames(tag + "-atk2", 8, 3));
+      atk = atk.concat(await frames(tag + "-atk2", 9, 3));
     }
     await cap.fast(40);
     await set({ hearts: 3 });
@@ -100,11 +102,11 @@ module.exports = async (cap) => {
   if (has("hit") || has("fight")) {
     await ready(40);
     await cap.answer("R");
-    hit = await frames(tag + "-hit", full ? 18 : 5, full ? 3 : 7);
+    hit = await frames(tag + "-hit", full ? 18 : 4, full ? 3 : 8);
     if (full) { sheet("04-right-hit", hit, { cols: 6, thumb: 300 }); hit = null; }
     await cap.fast(30);
   }
-  if (!full && enter && atk && hit) sheet(tag + "-fight", [...enter, ...atk, ...hit], { cols: 5, thumb: 300 });
+  if (!full) { const got = [enter, atk, hit].filter(Boolean); if (got.length) sheet(tag + (got.length === 3 ? "-fight" : "-part"), [].concat(...got), { cols: 5, thumb: process.env.THUMB ? +process.env.THUMB : 300 }); }
   if (full) {
     // ---- a wrong answer: the shot dies on its armour, its strike comes and lands; then the whole screen
     if (has("wrong")) {
