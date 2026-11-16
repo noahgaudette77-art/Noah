@@ -146,13 +146,24 @@ function racerVehicleGeo(type) {
   box.dispose(); cyl.dispose();
   return b.build();
 }
-function racerTrafficMaterial(P) {
+// (sky: the panorama is up. Paint and glass then mirror it: the picture itself, looked up where each panel faces,
+// through its small soft copies. Without it the material is exactly what it was.)
+function racerTrafficMaterial(P, sky) {
   return new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uTime: { value: 0 }, uSkyC: { value: new THREE.Color(0x35406a) }, uDim: { value: 1 } }),
+    uniforms: Object.assign(fogUniforms(), { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uTime: { value: 0 }, uSkyC: { value: new THREE.Color(0x35406a) }, uDim: { value: 1 } },
+      sky ? { tSkyA: { value: null }, tSkyB: { value: null }, uSky: { value: new THREE.Vector4(0, 0, 0, 0) }, uSkyZoom: { value: 1 }, uSkyTint: { value: new THREE.Color(1, 1, 1) } } : {}),
+    defines: sky ? { SKY: "" } : {},
+    extensions: sky ? { shaderTextureLOD: true } : {},
     vertexShader: `attribute vec3 aCol; attribute float aCh; attribute float aPaint; attribute vec3 aTint; attribute vec4 aL;
       uniform float uTime; uniform float uDim;
       varying vec3 vCol; varying vec3 vN; varying vec3 vW; varying float vLit; varying float vDepth;
+      #ifdef SKY
+      varying float vGloss;
+      #endif
       void main(){
+        #ifdef SKY
+        vGloss = max(aPaint * 0.55, step(0.045, aCol.b - aCol.r) * step(aCol.b, 0.2)); // lacquer mirrors it a little, glass more, rubber and trim not at all
+        #endif
         #ifdef USE_INSTANCING
           mat4 m = modelMatrix * instanceMatrix;
         #else
@@ -183,12 +194,33 @@ function racerTrafficMaterial(P) {
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform vec3 uSkyC;
       varying vec3 vCol; varying vec3 vN; varying vec3 vW; varying float vLit; varying float vDepth;
+      #ifdef SKY
+      uniform sampler2D tSkyA; uniform sampler2D tSkyB; uniform vec4 uSky; uniform float uSkyZoom; uniform vec3 uSkyTint; varying float vGloss;
+      vec3 skyTex(sampler2D t, vec2 uv){
+        #ifdef TEXTURE_LOD_EXT
+        vec3 c = texture2DLodEXT(t, uv, 5.0).rgb;
+        #else
+        vec3 c = texture2D(t, uv, 5.0).rgb;
+        #endif
+        return c * c * (c * 0.305 + 0.695);
+      }
+      vec3 skyAt(vec3 r){
+        vec3 d = normalize(vec3(r.x, max(r.y, 0.0), r.z / uSkyZoom)); // (the dome is stretched along the road: see RacerSky)
+        vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+        vec3 c = skyTex(tSkyA, uv + vec2(uSky.x, 0.0));
+        if (uSky.z > 0.001) c = mix(c, skyTex(tSkyB, uv + vec2(uSky.y, 0.0)), uSky.z);
+        return c * uSkyTint * (uSky.w * smoothstep(-0.3, 0.08, r.y)); // (what a panel sees under the horizon is the dark road)
+      }
+      #endif
       void main(){
         vec3 col = vCol;
         if (vLit < 0.5) {
           vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vW);
           float fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
           col = vCol * (uAmb + uKey * max(dot(n, uKeyDir), 0.0)) + uSkyC * fr * 0.3 * (0.3 + 0.7 * max(n.y, 0.0));
+          #ifdef SKY
+          col += skyAt(reflect(-v, n)) * ((0.08 + 0.62 * fr) * vGloss);
+          #endif
         }
         gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
       }`,
@@ -260,7 +292,7 @@ class RacerWorld {
   // ===== traffic =================================================================
   buildTraffic() {
     const g = this.g;
-    this.trafficMat = racerTrafficMaterial(g.props.material.uniforms);
+    this.trafficMat = racerTrafficMaterial(g.props.material.uniforms, g.pano);
     this.fleet = {};
     this.cars = [];
     for (const type in RACER_FLEET) {
@@ -387,6 +419,7 @@ class RacerWorld {
     const u = this.trafficMat.uniforms;
     u.uDim.value = 1 - 0.25 * this.calmK;
     if (sky) u.uSkyC.value.copy(sky.horizon).lerp(sky.light, 0.4);
+    if (g.pano && u.tSkyA) g.pano.feed(u);
   }
 
   // ===== biomes ==================================================================
@@ -664,6 +697,7 @@ class RacerWorld {
     [g.props, g.halos, g.cones, g.sun, g.ridgeFar, g.ridgeNear].forEach((o) => { if (o) o.visible = open; });
     const ry = RACER_BIOME_PAL[name].ridge || 1;
     g.ridgeFar.scale.y = ry; g.ridgeNear.scale.y = ry;
+    if (g.pano) g.pano.go(racerSkyId(name, g.year)); // (each landscape has its own sky: it changes with the landscape, behind the same bank of fog)
   }
 
   // ===== events ====================================================================

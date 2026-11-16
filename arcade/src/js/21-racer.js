@@ -224,6 +224,7 @@ function racerGroundMaterial(mirror, shared) {
       uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
+      uCarW: { value: 1.02 }, uCarZ: { value: 0 }, uCarRot: { value: new THREE.Vector2(1, 0) }, uTailC: { value: new THREE.Color(2.2, 0.06, 0.16) }, // (the war rig is wider, slides and turns, and its rear frames are magenta: see RacerRig)
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
       uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
@@ -236,6 +237,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform vec3 uAsphalt; uniform vec3 uBase; uniform vec3 uGrid; uniform vec3 uEdge; uniform vec3 uDash;
       uniform vec3 uLampL; uniform vec3 uLampR; uniform float uLampI;
       uniform float uCarX; uniform vec3 uUnder; uniform float uHead; uniform float uTail; uniform float uShade; uniform float uCarY; uniform float uRain;
+      uniform float uCarW; uniform float uCarZ; uniform vec2 uCarRot; uniform vec3 uTailC;
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
@@ -311,7 +313,10 @@ function racerGroundMaterial(mirror, shared) {
           col += (refl * 1.4 + vec3(0.1, 0.14, 0.18)) * ring * min(uRain, 1.0) * (1.0 - smoothstep(0.12, 0.45, max(fwidth(rc.x), fwidth(rc.y))));
         }
         // the car's shadow: tight and dark under the body, softer as the springs lift it
-        vec2 sq = vec2(x - uCarX, z - ${racerF(RACER_CAR_Z)}) / vec2(1.02 + uCarY * 1.5, 2.28);
+        float zc = z - uCarZ;
+        vec2 sd = vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z)});
+        sd = vec2(uCarRot.x * sd.x - uCarRot.y * sd.y, uCarRot.y * sd.x + uCarRot.x * sd.y);
+        vec2 sq = sd / vec2(uCarW + uCarY * 1.5, 2.28);
         float shade = 1.0 - smoothstep(0.55, 1.12, dot(sq * sq, sq * sq));
         col *= 1.0 - uShade * 0.78 * shade;
         // light falling on it
@@ -324,12 +329,12 @@ function racerGroundMaterial(mirror, shared) {
           float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
           lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
         }
-        float ah = ${racerF(RACER_CAR_Z - 2.2)} - z; // distance ahead of the front bumper
+        float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
         float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
         lt += vec3(1.0, 0.9, 0.78) * uHead * smoothstep(0.0, 1.5, ah) * exp(-ah * 0.07) * min(beams, 1.3);
-        lt += uUnder * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
-        lt += vec3(2.2, 0.06, 0.16) * uTail * pool(vec2(x - uCarX, z - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
+        lt += uUnder * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
+        lt += uTailC * uTail * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
         float gz = z - uGateZ;
         float gk = exp(-gz * gz * 0.16) * uGateI;
         if (gk > 0.003) {
@@ -806,6 +811,13 @@ class RacerGame extends QuizGame {
     this.gate = null;
     this.gp = 0;
     this.nextMilestone = 0;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the five skies and the war rig. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {}, rig: null };
+    if (this.has3D && GFX.ok) {
+      for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
+      this.gen.rig = Assets.model("warrig");
+    }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-racer">
       <div class="hud">
@@ -845,7 +857,11 @@ class RacerGame extends QuizGame {
     this.sunLight = new THREE.DirectionalLight(0xffffff, 0);
     this.sunLight.position.set(0, 2.6, -10);
     s.add(this.amb, this.keyLight, this.gateLight, this.lampLight, this.sunLight);
-    if (GFX.ok) {
+    // the panoramas, when they arrived: the sky, the light on what is lit, and what lacquer mirrors (21d-racersky.js)
+    this.pano = null;
+    if (GFX.ok && this.gen.skies["racer-dawn"]) { try { this.pano = new RacerSky(this, this.gen.skies); } catch (e) { this.pano = null; } }
+    if (this.pano) this.env = this.pano.env;
+    else if (GFX.ok) {
       // The car's reflections follow the career sky. Rendering an environment map
       // costs a dropped frame or two, so the whole career's maps are baked now,
       // while the scene loads behind the screen transition, and play just
@@ -858,6 +874,7 @@ class RacerGame extends QuizGame {
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
     s.add(this.sky);
+    if (this.pano) { this.sky.visible = false; this.sky.userData.sky = false; } // (the panorama is the sky; this one still holds the colours the world mixes)
     // the sun of this road is a golden egg on the horizon, and it grows as the nest egg does (look only)
     this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo, egg: true, stripes: false });
     this.sunK = 0.8;
@@ -895,16 +912,34 @@ class RacerGame extends QuizGame {
     s.add(this.car);
     this.world = new RacerWorld(this); // traffic, biomes and ambient events (look only)
     this.buildGateKit();
+    if (this.pano) (this.rigKit ? [[this.gateFrameMat, 1.2]] : [[this.paint, 1.55], [this.trim, 1.55], [this.glass, 1.9], [this.gateFrameMat, 1.2]]).forEach(([m, k]) => { if (m) this.pano.mirror(m, k); }); // lacquer, glass and the gantries' metal mirror the sky (the war rig has seen to its own)
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
     const k4 = this.gateKit[4], wg = new THREE.Group();
-    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
+    wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.posts, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
     wg.position.z = -60;
     this.warmExtra = [wg];
     this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
+    if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint
+      this.post.ssaa = 2;
+      const gu = this.groundMat.uniforms;
+      gu.uCarW.value = 1.26; gu.uTailC.value.setRGB(0.5, 0.03, 0.32);
+    }
+    // The run as it is staged round the war rig (21f-racerstage.js): its own effects kit (this.kit) and a set of
+    // show-only timers (this.show). With the built-in car there is none, and everything is shown as it always was.
+    this.stage = null;
+    if (this.rigKit) { try { this.stage = new RacerStage(this); } catch (e) { this.stage = null; console.warn("the run could not be staged: " + e.message); } }
+    if (this.stage) { // the lane badges (and, while a blow is on the screen, the gantry's letters) are drawn last, over the finished picture, from the unshaken lens: no flash, colour split, tear, tint or shake touches them
+      this.over = { cam: this.camera.clone() };
+      this.over.cam.layers.set(2);
+      Object.values(this.badgeMats).concat([this.badgeBackMat]).forEach((m) => { m.depthTest = false; });
+      this.signOverMats = {};
+      for (const label in this.signMats) { const m = (this.signOverMats[label] = new THREE.MeshBasicMaterial({ map: this.signMats[label].map, color: new THREE.Color(1.3, 1.3, 1.3), transparent: true, opacity: 0, depthTest: false, depthWrite: false, fog: false })); this.owned.push(m); }
+      s.userData.overlay = (r) => this.drawOver(r);
+    }
     this.camBase.set(0, 3.5, 8.5); // (higher and further back, aimed lower: there is road under the car's tail, and the car is clear of the answers)
     this.lookAt.set(0, 0.7, -18);
     this.applySky(sky0);
@@ -1162,7 +1197,10 @@ class RacerGame extends QuizGame {
   // a full-width tail-light bar, neon light bars and ribbon trails.
   // The car is its own module (RacerCar): model, lamps, springs, spray.
   makeCar() {
-    const kit = (this.carKit = new RacerCar(this));
+    // (the war rig when its model arrived: see 21e-racerrig.js. It answers to everything the car's kit answers to.)
+    this.rigKit = null;
+    if (this.gen.rig) { try { this.rigKit = new RacerRig(this, this.gen.rig); } catch (e) { this.rigKit = null; console.warn("the war rig could not be built: " + e.message); } }
+    const kit = (this.carKit = this.rigKit || new RacerCar(this));
     this.carRig = kit.rig;
     this.paint = kit.paint;
     this.glass = kit.glass;
@@ -1205,9 +1243,10 @@ class RacerGame extends QuizGame {
         cones.add(c, racerM(x, 1.71, 0.25), col, 0.5);
         c.dispose();
       });
-      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => glow.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
-      const k = { frame: frame.build("color"), glow: glow.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
-      this.owned.push(k.frame, k.glow, k.cones, k.sign);
+      const posts = new RacerBatch(); // (the red bollards between the lanes: a mesh of their own, so a gantry that lifts as it leaves can leave them on the road)
+      (n === 2 ? [0] : [-2.5, 0, 2.5]).forEach((x) => posts.add(box, racerM(x, 0.65, 0, 0.16, 1.3, 0.16), COLORS.red, 2.4));
+      const k = { frame: frame.build("color"), glow: glow.build("color"), posts: posts.build("color"), cones: cones.build(), sign: new THREE.PlaneGeometry(w, 1.4) };
+      this.owned.push(k.frame, k.glow, k.posts, k.cones, k.sign);
       return k;
     };
     this.gateKit = { 2: kit(2), 4: kit(4) };
@@ -1276,6 +1315,8 @@ class RacerGame extends QuizGame {
     const n = r.n === 2 ? 2 : 4;
     const k = this.gateKit[n];
     g.add(new THREE.Mesh(k.frame, this.gateFrameMat), new THREE.Mesh(k.glow, this.gateGlowMat));
+    g.userData.posts = new THREE.Mesh(k.posts, this.gateGlowMat);
+    g.add(g.userData.posts);
     const cones = new THREE.Mesh(k.cones, this.gateConeMat);
     cones.layers.set(1);
     g.add(cones);
@@ -1285,6 +1326,12 @@ class RacerGame extends QuizGame {
       sign.position.set(laneX(i, r.n), 4.2, 0.02);
       sign.userData.slot = i;
       g.add(sign);
+      if (this.stage) { // (staged) the same letter once more, drawn over the finished picture while a blow is on the screen
+        const so = new THREE.Mesh(k.sign, this.signOverMats[label]);
+        so.position.set(sign.position.x, sign.position.y, sign.position.z + 0.01);
+        so.layers.set(2); so.renderOrder = 2;
+        g.add(so);
+      }
     }
     // lane letters on the road: they fade in with the question and go when the gate is passed
     this.dropTags();
@@ -1321,11 +1368,11 @@ class RacerGame extends QuizGame {
         const back = new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat);
         back.scale.setScalar(2.42);
         back.position.set(0, 1.62, -0.03);
-        back.layers.set(1);
+        back.layers.set(this.stage ? 2 : 1);
         back.renderOrder = 3;
         post.add(back);
       }
-      badge.layers.set(1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's)
+      badge.layers.set(this.stage ? 2 : 1); // (kept out of the wet road's mirror: a puddle showed one lane's badge and not another's) (staged: drawn over the finished picture. See drawOver.)
       badge.renderOrder = 4;
       post.add(glow, stem, badge);
       lane.add(tag, post);
@@ -1362,7 +1409,8 @@ class RacerGame extends QuizGame {
 
   start() {
     Sound.play("racer");
-    Sound.engine(true);
+    if (this.stage) this.stage.start(); // (staged: the engine's own recording, and the war rig drives in from behind the lens)
+    else { Sound.engine(true); if (this.rigKit) this.rigKit.launch(); }
     UI.banner("AGE 25. GO!", COLORS.yellow, "Grow " + money(EGG_START) + " into " + money(EGG_GOAL) + " by 65");
     this.tw.wait(1.3, () => this.nextQuestion());
   }
@@ -1408,6 +1456,7 @@ class RacerGame extends QuizGame {
     if (this.boostRate || this.state !== "ask" || this.lane === null) return;
     this.timeFrac = 1 - this.gp;
     this.boostRate = Math.max(1 / this.T, (1 - this.gp) / 0.7);
+    if (this.stage) return this.stage.boost(); // (staged: the roar, and a flash at each stack as they light)
     Sound.sfx("swoosh");
     GFX.pulse(0.9, 0); // (flooring it streaks the street; the colours part on a crash only)
   }
@@ -1426,8 +1475,12 @@ class RacerGame extends QuizGame {
     const ok = this.run.record(r, picked, this.boostRate ? this.timeFrac : undefined);
     this.quiz.reveal(picked);
     this.state = "explain";
-    let title;
+    // (staged, round the war rig: what is seen and heard of the answer is the stage's, told once the rules below have
+    // run. The rules are the same either way, line for line.)
+    const st = this.stage;
+    let title, how = "crash", gain = 0, policy = false;
     if (ok) {
+      how = "right";
       const tf = this.boostRate ? this.timeFrac : 0;
       const contrib = 2500 + 250 * Math.min(this.run.streak, 10) + Math.round(1500 * tf);
       const rate = this.rate();
@@ -1436,25 +1489,33 @@ class RacerGame extends QuizGame {
       this.peak = Math.max(this.peak, this.egg);
       if (this.run.streak > 0 && this.run.streak % 5 === 0 && this.insurance < 2) {
         this.insurance++;
+        policy = true;
         UI.toast("STREAK " + this.run.streak + "! INSURANCE POLICY ISSUED");
       }
       title = `+${money(this.egg - before)} · ${Math.round(rate * 100)}% RETURN`;
-      Sound.sfx("correct");
-      Sound.sfx("deposit");
-      UI.flash("good");
-      GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      gain = this.egg - before;
+      if (!st) {
+        Sound.sfx("correct");
+        Sound.sfx("deposit");
+        UI.flash("good");
+        GFX.pulse(0.45, 0.08); // (the colours part on a crash, not on a win)
+      }
       Haptics.buzz(25);
       Sound.setIntensity(Sound.intensityFor(this.run.streak));
       this.speedKick();
       if (this.has3D) {
-        const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
-        this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        if (!st) {
+          const laneCol = SLOT_COLORS[clamp(r.correct, 0, SLOT_COLORS.length - 1)];
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.3, -0.7), laneCol, { n: 46, speed: 7.5, size: 0.3, life: 1.0, gravity: -6 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 1.6, -1), COLORS.gold, { n: 30, speed: 5, size: 0.24, life: 1.2, gravity: -9 });
+          this.shockwave(new THREE.Vector3(this.carX, 1.1, -0.6), neon(laneCol, 1.8), 5, 0.5);
+        }
         this.signFlash(r.correct);
       }
-      const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
-      UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      if (!st) {
+        const p = this.has3D ? this.carPoint(150) : this.bandPoint(0.4);
+        UI.floater("+" + money(this.egg - before), p.x, p.y, COLORS.lime, true);
+      }
       while (this.nextMilestone < EGG_MILESTONES.length && this.egg >= EGG_MILESTONES[this.nextMilestone]) {
         const m = EGG_MILESTONES[this.nextMilestone++];
         this.tw.wait(0.4, () => {
@@ -1463,45 +1524,55 @@ class RacerGame extends QuizGame {
         });
       }
     } else if (this.insurance > 0) {
+      how = "insured";
       this.insurance--;
       title = picked < 0 ? "NO LANE! INSURANCE PAID THE CLAIM" : "WRONG LANE! INSURANCE PAID THE CLAIM";
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.25);
-      GFX.pulse(6, 0);
+      if (!st) {
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.25);
+        GFX.pulse(6, 0);
+      }
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.lime, 2), 4, 0.5);
+      }
     } else {
       this.crashes++;
       const loss = this.egg * 0.15;
       this.egg -= loss;
       title = (picked < 0 ? "NO LANE CHOSEN! " : "WRONG LANE! ") + "MARKET CRASH −" + money(loss);
-      Sound.sfx("hit");
-      Sound.sfx("wrong");
-      UI.flash("hit");
-      this.shake(0.5);
-      GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
-      GFX.glitch(0.6, 0.34);
+      if (!st) {
+        Sound.sfx("hit");
+        Sound.sfx("wrong");
+        UI.flash("hit");
+        this.shake(0.5);
+        GFX.pulse(4.5, 0); // a crash is not a boost: the picture tears in bands and goes red, it does not streak
+        GFX.glitch(0.6, 0.34);
+      }
       GFX.hitStop(120);
       Haptics.buzz([70, 40, 110]);
       Sound.setIntensity(0);
-      this.spin();
-      this.skid();
-      if (this.has3D) {
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
-        this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
-        this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+      if (!st) {
+        this.spin();
+        this.skid();
+        if (this.has3D) {
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.8, -0.5), COLORS.red, { n: 60, speed: 8, size: 0.28, life: 0.9 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.4, 1.2), COLORS.orange, { n: 40, speed: 11, size: 0.16, life: 0.6, gravity: -14 });
+          this.bursts.burst(new THREE.Vector3(this.carX, 0.3, 0.6), 0xffe6b8, { n: 80, speed: 14, size: 0.13, life: 0.8, gravity: -17 }); // a fan of white-hot sparks off the road
+          this.shockwave(new THREE.Vector3(this.carX, 0.9, -0.4), neon(COLORS.red, 2.4), 5, 0.55);
+        }
       }
     }
     this.hud();
+    if (st) { try { st.arrive(how, { right: r.correct, picked, gain, policy }); } catch (e) { console.error(e); } } // (after the HUD has drawn what the rules decided: the life that went is seen to break)
     const gate = this.gate;
     this.gate = null;
     if (gate) {
       this.leaving = gate;
-      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); }, () => this.dropGate(gate));
+      this.tw.add(0.6, (k) => { gate.position.z = lerp(0, 16, k); if (st) { gate.position.y = 2.7 * Math.min(1, k * 2.1); gate.userData.posts.position.y = -gate.position.y; } }, () => this.dropGate(gate)); // (staged: it lifts as it goes by, over the lens, not through it: what happens at the gate is seen)
     }
     this.tw.wait(0.45, () => {
       if (this.unmounted) return;
@@ -1550,16 +1621,17 @@ class RacerGame extends QuizGame {
   gameOver(fullCareer) {
     this.state = "over";
     Sound.stopMusic();
-    Sound.engine(false);
+    if (!this.stage) Sound.engine(false); // (staged: the engine is heard to die, or to pull away: see the stage's over)
     const rich = this.egg >= EGG_GOAL;
     const age = START_AGE + this.year;
     if (fullCareer) {
       Sound.sfx(rich ? "win" : "levelup");
       UI.banner(rich ? "RETIRED A MILLIONAIRE" : "HAPPY RETIREMENT", rich ? COLORS.lime : COLORS.yellow, "Age 65 · " + money(this.egg));
     } else {
-      Sound.sfx("gameover");
+      if (!this.stage) Sound.sfx("gameover"); // (staged: the blast first, then the jingle)
       UI.banner("FORCED RETIREMENT", COLORS.red, "Three market crashes at age " + age);
     }
+    if (this.stage) { try { this.stage.over(fullCareer, rich); } catch (e) { console.error(e); } } // (each ending is staged, inside the 1.9 s the rule gives it)
     this.tw.wait(1.9, () => {
       if (this.unmounted) return;
       showResults({
@@ -1626,6 +1698,7 @@ class RacerGame extends QuizGame {
   }
   update(dt) {
     super.update(dt);
+    if (this.stage) this.shakeAmt = Math.min(this.shakeAmt, 0.2); // (staged: a shake never carries the rig or the lane badges out of the band)
     if (this.paused) return;
     if (this.state === "ask") {
       if (this.lane !== null && !this.boostRate && this.lockT > 0) {
@@ -1637,7 +1710,7 @@ class RacerGame extends QuizGame {
       if (this.gp >= 1) { this.gp = 1; this.arrive(); }
     }
     if (!this.has3D) return;
-    const sp = this.speed + (this.boostRate ? 45 : 0);
+    const sp = (this.speed + (this.boostRate ? 45 : 0)) * (this.stage ? this.stage.speedK : 1); // (staged: a blow costs the rig its speed for a moment. Look only: the road's scroll)
     GFX.speedBlur += (clamp((sp - 30) / 60, 0, 0.15) - GFX.speedBlur) * Math.min(1, dt * 4); // flooring it streaks the view (lightly: the lines beside the road carry the speed)
     this.rain.material.uniforms.uLean.value = 0.2 + sp * 0.014; // the rain leans back as you speed up
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
@@ -1661,7 +1734,9 @@ class RacerGame extends QuizGame {
     this.shared.uScroll.value = scroll;
     if (this.gate && this.state === "ask") this.gate.position.z = lerp(-170, 0, this.gp);
     if (this.laneTags) { // lane letters: up while the question is, breathing a little, gone once it is answered
-      const on = this.state === "ask" ? 1 : 0;
+      // (staged: once the gate is reached the answer is shown on the road for a moment: the right lane's badge stands lit, the others step back)
+      const vd = this.stage && this.state !== "ask" && this.stage.verdict && this.stage.verdict.t < 1.3 ? this.stage.verdict : null;
+      const on = this.state === "ask" || vd ? 1 : 0;
       this.tagK += (on - this.tagK) * Math.min(1, dt * 5);
       const k = this.tagK, breathe = 0.9 + 0.1 * Math.sin(this.t * 2.2);
       this.badgeBackMat.opacity = 0.82 * Math.min(1, k * 1.25);
@@ -1683,6 +1758,15 @@ class RacerGame extends QuizGame {
         u.post.scale.setScalar(pop * (1 + 0.16 * u.k));
         u.post.position.y = 0.05 * Math.sin(this.t * 1.7) + 0.04 * u.k; // (it rides with the bar)
         u.badge.rotation.z = 0.03 * Math.sin(this.t * 1.3 + u.slot * 2.1);
+        if (vd) { // the right lane's badge beats; a wrong lane that was taken goes red; the rest are dimmed
+          const right = u.slot === vd.right, wrong = !vd.ok && u.slot === vd.picked, beat = 0.5 + 0.5 * Math.sin(vd.t * 9);
+          u.badge.material.opacity = Math.min(1, k * 1.25) * (right ? 1 : wrong ? 0.85 : 0.28);
+          u.badge.material.color.setRGB(1.1, 1.1, 1.1).multiplyScalar(right ? 1.05 + 0.12 * beat : 0.8);
+          if (wrong) u.badge.material.color.setRGB(1.05, 0.34, 0.42);
+          u.post.scale.setScalar(pop * (right ? 1.14 + 0.05 * beat : 0.9));
+          u.tag.material.opacity *= right ? 1 : 0.2;
+          u.glow.material.opacity = k * (right ? 0.34 + 0.2 * beat : 0.04);
+        } else u.badge.material.color.setRGB(1.1, 1.1, 1.1);
       });
       if (!on && this.tagK < 0.02) this.dropTags();
     }
@@ -1694,12 +1778,21 @@ class RacerGame extends QuizGame {
     this.car.position.y = Math.sin(this.t * 18) * 0.02;
     this.car.rotation.z = clamp((prev - this.carX) * 2.5, -0.25, 0.25);
     this.updateLook(dt, sp, step, scroll, sky);
+    if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
+      this.show.update(VFX.dt);
+      try { this.stage.update(dt, sp, step, sky); } catch (e) { console.error(e); }
+      this.kit.update(VFX.dt);
+    }
+    if (this.pano) this.pano.update(VFX.dt); // (the panorama has the last word on the light, the far haze and the lens)
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
     this.camBase.x = this.carX * follow + Pointer.x * 0.35;
     this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
+    if (this.stage) this.stage.camera(); // (the lens answers a blow, a boost, a near miss)
     this.placeCamera();
+    if (this.stage) this.stage.lens();
     followSky(this.sky, this.camera);
+    if (this.pano) this.pano.follow(this.camera);
     FX.sync(this.scene, this.t);
     this.city.material.uniforms.uFogFar.value = this.world.cityFog; // the city stays crisp through the haze, but not through a fog bank
   }
@@ -1708,7 +1801,9 @@ class RacerGame extends QuizGame {
     this.carKit.update(dt, sp, step, sky);
     this.flame = this.carKit.flame;
     // the car is the subject of the shot: a boost streaks the street past it, a blow parts the colours round it
-    GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
+    const rk = this.rigKit; // (the war rig stands taller, and the show may have moved it off its mark)
+    if (rk) GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX + rk.off.x, 1.05, RACER_CAR_Z + rk.off.z), 1.9 + 1.0 * rk.flame, 1.6, 0.92); // (wider while its stacks burn: the flames are not streaked away)
+    else GFX.keepAt(this.camera, (this._kp || (this._kp = new THREE.Vector3())).set(this.carX, 0.85, RACER_CAR_Z), 1.75, 1.35, 0.92);
     if (this.skids) {
       this.skidK = Math.max(0, this.skidK - dt * 0.85);
       this.skids.visible = this.skidK > 0.01;
@@ -1736,6 +1831,10 @@ class RacerGame extends QuizGame {
     g.uReflect.value = sky.wet; // the road dries out around midday
     g.uHead.value = 0.45 + 0.75 * sky.lamps;
     g.uUnder.value.set(0x5dffb0).multiplyScalar(0.5 + 0.2 * Math.sin(this.t * 2.6) + 0.7 * this.flame); // mint under-glow
+    if (rk) { // the rig's own: where it stands and how it is turned (its shadow goes with it), a cyan under-glow that warms as its stacks burn
+      g.uCarX.value = this.carX + rk.off.x; g.uCarZ.value = rk.off.z; g.uCarRot.value.set(Math.cos(rk.yaw), Math.sin(rk.yaw));
+      g.uUnder.value.set(0x35d8ff).multiplyScalar(0.42 + 0.14 * Math.sin(VFX.t * 2.6)).lerp(this._uc || (this._uc = new THREE.Color(1.5, 0.6, 0.15)), 0.75 * this.flame);
+    }
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
     g.uCarY.value = this.carKit.heave.x;
@@ -1762,19 +1861,38 @@ class RacerGame extends QuizGame {
     this.lampLight.color.set(RACER_LAMP[left ? 0 : 1]);
     this.lampLight.intensity = 2.4 * sky.lamps * Math.exp(-(lz * lz) / 40);
   }
+  // (staged) The lane badges, drawn over the finished picture from where the camera stands unshaken and unrolled:
+  // whatever a blow does to the picture (flash, colour split, tear, tint, shake), they are not touched by it. They
+  // and the gantry's letters live on a layer of their own that the picture's camera does not see.
+  drawOver(r) {
+    const o = this.over, s = this.scene;
+    if (!GFX.ok || !o || !(this.laneTags || this.gate || this.leaving)) return;
+    const c = o.cam, cam = this.camera;
+    for (const label in this.signOverMats) this.signOverMats[label].opacity = Math.min(1, this.stage.overK * 2.5);
+    c.projectionMatrix.copy(cam.projectionMatrix); c.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
+    c.position.copy(this.camBase); c.lookAt(this.lookAt);
+    c.updateMatrixWorld(true);
+    const ac = r.autoClear, bg = s.background;
+    r.autoClear = false; s.background = null; // (nothing is cleared: this goes over what is there)
+    try { r.setRenderTarget(null); r.render(s, c); } catch (e) { /* the picture stands without them */ }
+    s.background = bg; r.autoClear = ac;
+  }
   pause() {
     super.pause();
-    if (this.paused) Sound.engine(false);
+    if (this.paused) { if (this.stage) this.stage.pause(); else Sound.engine(false); } // (nothing keeps sounding behind the menu)
   }
   resume() {
     super.resume();
-    if (this.state !== "over") Sound.engine(true);
+    if (this.state !== "over") { if (this.stage) this.stage.resume(); else Sound.engine(true); }
   }
   dispose() {
     Sound.engine(false);
+    if (this.stage) this.stage.dispose();
     if (this.has3D) {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
+      if (this.rigKit) this.rigKit.dispose();
+      if (this.pano) this.pano.dispose();
       this.env = null;
     }
     super.dispose();
