@@ -1,4 +1,5 @@
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
+const TITLE_PANO_ROT = { "title-dusk": 1.9, "title-dusk-b": 2.92 }; // (the painted dusk turned so its sun sets behind the striped one; the bright one turned so its sun is hidden by the towers on the left and its red streaks cross the avenue)
 class TitleScene extends Scene3D {
   constructor() {
     super({ fov: 62, far: 900, fog: [0x2a0a44, 105, 560] });
@@ -41,10 +42,47 @@ class TitleScene extends Scene3D {
   boost() {
     this.tw.add(1.1, (k) => { this.speed = 14 + k * 160; }, null, Ease.inCubic);
   }
+  // The generated dusk, served, once it has arrived (the title never waits for it): a panorama behind the city in
+  // place of the drawn sky, faded in over it, then drifting slowly from one dusk to the other. Each is turned so its
+  // own sun stands behind the striped one. The haze the city stands in takes the colour of its horizon, and the wet
+  // road mirrors it.
+  takeSky() {
+    const a = Assets.sky("title-dusk-b"), b = Assets.sky("title-dusk"), first = a || b; // (the painted dusk first: storm cloud rimmed in magenta)
+    if (!first || !first.map) return;
+    this.pano = makePanoSky(first, { gain: 0.8, lift: 0.5, rot: TITLE_PANO_ROT[first.name] || 0, alpha: 0 });
+    this.pano.renderOrder = -19;
+    this.sky.renderOrder = -21; // (the drawn sky first; the panorama fades in over it)
+    this.scene.add(this.pano);
+    this.panoA = first; this.panoB = null; this.panoIn = 0;
+    // the haze: the colour of the panorama's horizon in front, darkened, half way from the drawn one
+    try {
+      const c = document.createElement("canvas"), x = c.getContext("2d"), img = first.map.image;
+      c.width = 64; c.height = 32;
+      x.drawImage(img, 0, 0, 64, 32);
+      const u0 = Math.round(((((TITLE_PANO_ROT[first.name] || 0) / (Math.PI * 2) + 0.25) % 1) * 64)), d = x.getImageData(0, 14, 64, 4).data;
+      let r = 0, g = 0, bb = 0, n = 0;
+      for (let row = 0; row < 4; row++) for (let k = -10; k <= 10; k++) { const i = (row * 64 + ((u0 + k + 64) % 64)) * 4; r += d[i]; g += d[i + 1]; bb += d[i + 2]; n++; }
+      this.hazeTo = new THREE.Color(r / n / 255, g / n / 255, bb / n / 255).multiplyScalar(0.3);
+      this.hazeFrom = this.scene.fog.color.clone();
+    } catch (e) { this.hazeTo = null; }
+  }
   update(dt) {
     super.update(dt);
     this.dist += this.speed * dt;
     if (!this.has3D) return;
+    if (Assets.on && !this.pano && (Assets.sky("title-dusk") || Assets.sky("title-dusk-b"))) this.takeSky();
+    if (this.pano) {
+      const P = this.pano.userData;
+      this.panoIn = Math.min(1, this.panoIn + dt / 1.6);
+      if (!this.panoB) { const o = Assets.sky(this.panoA.name === "title-dusk" ? "title-dusk-b" : "title-dusk"); if (o && o.map) this.panoB = o; }
+      const k = this.panoB ? 0.5 - 0.5 * Math.cos((this.t * Math.PI * 2) / 48) : 0; // (one dusk to the other and back, every 48 seconds)
+      if (this.panoB) P.blend(this.panoB, k, TITLE_PANO_ROT[this.panoB.name] || 0);
+      const bright = (n) => (n === "title-dusk" ? 0.6 : 0.8); // (the bright dusk is held down: its sky must not wash out the striped sun or the logo)
+      P.set({ alpha: smoothstep(0, 1, this.panoIn), gain: lerp(bright(this.panoA.name), this.panoB ? bright(this.panoB.name) : 0.8, k) * (1 + this.skyFlash * 1.1) });
+      this.sky.visible = this.panoIn < 1;
+      if (this.hazeTo) this.scene.fog.color.copy(this.hazeFrom).lerp(this.hazeTo, 0.4 * this.panoIn);
+      P.follow(this.camera);
+    }
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
     this.sun.position.y = 30 + Math.sin(this.t * 0.4) * 0.8;
@@ -108,23 +146,43 @@ function showTitle() {
     tipEl.innerHTML = `<span><b>STAGE ${tip.ch}${lead ? " · " + esc(lead[1]) : ""}</b><i>${esc(lead ? lead[2] : tip.t)}</i></span>`;
   };
   showTip();
-  let started = false;
+  let started = false, woke = false;
+  // Served: the title's dusk and the hall's models are asked for while the title is up, and the sound's bytes are
+  // fetched (it can only be decoded after a tap). The title shows at once and takes each in as it arrives.
+  if (Assets.on) {
+    Assets.need("title");
+    Assets.prefetch("title");
+    Assets.need("hub");
+    Assets.prefetch("hubsound");
+  }
+  // The first tap or key: the sound comes on, the title's music plays and the announcer calls for a coin.
+  const wake = () => {
+    if (woke || !Assets.on) return;
+    woke = true;
+    Sound.init();
+    Sound.play("title");
+    const t0 = performance.now(), p = Assets.need("title");
+    Assets.need("hubsound");
+    (p || Promise.resolve()).then(() => { if (performance.now() - t0 < 2500) Sound.say("INSERT COIN"); }); // (a call that would come late is not made)
+  };
   document.body.classList.add("on-title"); // the sync toast sits below the top row here
   const timer = setInterval(showTip, 6500);
   const start = () => {
     if (started) return;
     started = true;
+    wake();
     Sound.init();
-    Sound.sfx("coin");
+    Sound.sfx(Sound.bank.coin_insert ? "coin_insert" : "coin");
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();
     setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };
+  el.addEventListener("pointerdown", wake);
   UI.show({
     el,
     on: (a) => { if (a === "start") start(); },
-    key: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
+    key: (e) => { wake(); if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
     destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); },
   });
 }

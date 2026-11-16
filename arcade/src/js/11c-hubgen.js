@@ -196,9 +196,9 @@ class HubGen {
       });
     }
     // what sits on each step: cups on the top one, medals in the middle, coins on edge at the front
-    const row = (model, ids, tier, s, spread, lift = 0) => {
+    const row = (model, ids, tier, s, spread, env = 1.3) => {
       if (!model) return;
-      hubGenSkin(model, { env: 1.2, glow: 2 });
+      hubGenSkin(model, { env, glow: 2.2 });
       const dim = { scene: model.scene.clone(true) };
       hubGenDim(dim);
       ids.forEach((id, k) => {
@@ -206,7 +206,7 @@ class HubGen {
         const lit = model.scene.clone(), dark = dim.scene.clone();
         [lit, dark].forEach((o) => {
           o.scale.setScalar(s);
-          o.position.set(x, y + lift, z).applyMatrix4(F);
+          o.position.set(x, y, z).applyMatrix4(F);
           o.rotation.y = -St.ang;
           o.layers.set(1);
           o.traverse((n) => n.layers.set(1));
@@ -219,7 +219,7 @@ class HubGen {
         this.items.push({ id, lit, dark, pool, ry: -St.ang, ph: k * 0.9 + tier });
       });
     };
-    row(gen.cup, H.CUPS, 2, 0.64, 0.7);
+    row(gen.cup, H.CUPS, 2, 0.64, 0.7, 2.2); // (chrome cups: they need the hall in them to read)
     row(gen.medal, H.MEDALS, 1, 0.48, 0.44);
     row(gen.coin, H.COINS, 0, 0.27, 0.27);
     this.refresh();

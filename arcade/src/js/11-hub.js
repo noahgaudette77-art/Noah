@@ -381,12 +381,14 @@ function hubMachineScreenMaterial(levels) {
 // The floor: polished dark tiles that mirror the room, a blacklight carpet
 // beyond them, an LED inlay ring between the two, soft contact shadows under
 // the machines and pools of coloured light thrown by the cabinets.
-function hubFloorMaterial(mirror, carpet) {
+function hubFloorMaterial(mirror, carpet, pano = null) {
   const v2 = () => CABINETS.map(() => new THREE.Vector2());
   const v3 = () => CABINETS.map(() => new THREE.Color(0));
   const N = CABINETS.length, TR = HUB_TILE_R.toFixed(2), BR = HUB_BG_R.toFixed(2);
   return new THREE.ShaderMaterial({
+    defines: pano ? { HUB_PANO: "" } : {}, // (the generated hall: the polished tiles also take a soft sheen of its panorama)
     uniforms: Object.assign(fogUniforms(), {
+      tPano: { value: pano },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 }, tCarpet: { value: carpet },
       uBlack: { value: 1 }, uInlay: { value: 1 }, uInlayCol: { value: neon(0xff3ad4, 2.2) }, uBg: { value: 1 }, uRoom: { value: 1 },
       uCab: { value: v2() }, uPoolPos: { value: v2() }, uPoolCol: { value: v3() }, uConeCol: { value: v3() },
@@ -395,7 +397,7 @@ function hubFloorMaterial(mirror, carpet) {
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect;
+      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect; uniform sampler2D tPano;
       uniform float uBlack; uniform float uInlay; uniform vec3 uInlayCol; uniform float uBg; uniform float uRoom;
       uniform vec2 uCab[${N}]; uniform vec2 uPoolPos[${N}]; uniform vec3 uPoolCol[${N}]; uniform vec3 uConeCol[${N}];
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -435,6 +437,11 @@ function hubFloorMaterial(mirror, carpet) {
             + (texture2D(tReflect, ruv + vec2(0.0, s)).rgb + texture2D(tReflect, ruv - vec2(0.0, s)).rgb) * 0.2
             + (texture2D(tReflect, ruv + vec2(0.0, s * 2.4)).rgb + texture2D(tReflect, ruv - vec2(0.0, s * 2.4)).rgb) * 0.1;
           col += rc * mix(0.06, mix(0.22, 0.68, grout), tiles) * fres * uReflect;
+          #ifdef HUB_PANO
+          { vec3 d = vec3(-V.x, V.y, -V.z); // (the reflected ray, looked up in the panorama as a sky is: blurred, faint, on the tiles)
+            vec3 pc = texture2D(tPano, vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5), 3.5).rgb;
+            col += pc * pc * mix(0.025, 0.15 * grout, tiles) * fres * uReflect; }
+          #endif
         }
         float dr = abs(r - ${TR});
         float wr = max(0.03, fr * 1.2);
@@ -980,7 +987,7 @@ class HubScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     const carpet = carpetTexture();
     this.texs.push(carpet);
-    this.floorMat = hubFloorMaterial(this.mirror, carpet);
+    this.floorMat = hubFloorMaterial(this.mirror, carpet, this.gen && this.gen.sky ? this.gen.sky.map : null);
     CABINETS.forEach((_, i) => {
       const a = this.cabAngle(i);
       this.floorMat.uniforms.uCab.value[i].set(Math.sin(a) * HUB_R, -Math.cos(a) * HUB_R);

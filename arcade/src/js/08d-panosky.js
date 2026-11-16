@@ -18,11 +18,11 @@ function makePanoSky(sky, o = {}) {
     uniforms: {
       tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
       uGain: { value: o.gain === undefined ? 1 : o.gain }, uLift: { value: o.lift === undefined ? 1 : o.lift }, uTint: { value: new THREE.Color(o.tint === undefined ? 0xffffff : o.tint) },
-      uRot: { value: (o.rot || 0) / (Math.PI * 2) }, uRotB: { value: 0 }, uDim: { value: new THREE.Vector4(0, 0, 1, 0) },
+      uRot: { value: (o.rot || 0) / (Math.PI * 2) }, uRotB: { value: 0 }, uDim: { value: new THREE.Vector4(0, 0, 1, 0) }, uAlpha: { value: o.alpha === undefined ? 1 : o.alpha },
     },
-    side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false,
+    side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false, transparent: o.alpha !== undefined, // (alpha: a sky that fades in over the one it replaces)
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
-    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
       vec3 look(sampler2D t, vec3 d, float rot){
         ${win
           ? "vec2 uv = vec2(uWin.x + (fract(atan(d.z, d.x) * 0.15915494 + 0.75) - 0.5) * uWin.w, clamp(uWin.y + (asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 - uWin.z) * uWin.w, uWinMin, 0.998));"
@@ -36,7 +36,7 @@ function makePanoSky(sky, o = {}) {
         if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
-        gl_FragColor = linearToOutputTexel(vec4(c * uTint, 1.0)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
+        gl_FragColor = linearToOutputTexel(vec4(c * uTint, uAlpha)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   if (win) { mat.uniforms.uWin = { value: new THREE.Vector4(win.u, win.v, 0.5 + (win.at || 0) / 180, win.zoom || 1) }; mat.uniforms.uWinMin = { value: win.min === undefined ? 0.5 : win.min }; }
@@ -46,7 +46,7 @@ function makePanoSky(sky, o = {}) {
   dome.userData.sky = sky;
   dome.userData.follow = (camera) => dome.position.copy(camera.position);
   dome.userData.blend = (other, k, rot) => { const u = mat.uniforms; if (other && other.map) { u.tB.value = noMip(other.map); u.uRotB.value = (rot || 0) / (Math.PI * 2); u.uMix.value = clamp(k, 0, 1); } else u.uMix.value = 0; };
-  dome.userData.set = (p) => { const u = mat.uniforms; if (p.gain !== undefined) u.uGain.value = p.gain; if (p.lift !== undefined) u.uLift.value = p.lift; if (p.tint !== undefined) u.uTint.value.set(p.tint); if (p.rot !== undefined) u.uRot.value = p.rot / (Math.PI * 2); };
+  dome.userData.set = (p) => { const u = mat.uniforms; if (p.alpha !== undefined) u.uAlpha.value = p.alpha; if (p.gain !== undefined) u.uGain.value = p.gain; if (p.lift !== undefined) u.uLift.value = p.lift; if (p.tint !== undefined) u.uTint.value.set(p.tint); if (p.rot !== undefined) u.uRot.value = p.rot / (Math.PI * 2); };
   return dome;
 }
 // The sky's reflection on every lit material in a scene (and, through them, most of its ambient light). A model's
