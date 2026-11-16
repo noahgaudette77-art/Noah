@@ -29,7 +29,22 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
-| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
+| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress (the README is written; the captures run one boss at a time: at dpr 2 two or three side by side overload the machine and Playwright's screenshots time out) |
+
+## Lookalikes, for the lead
+
+- PROBATE TOLLGATE (10): its one round lamp read as an eye: now a lane signal (housing, a lens of small lamps,
+  amber turning red as it charges, hood, guard bars). Resolved in code.
+- INFLATION TITAN (6): the domed head with two round amber lights read as a diving helmet with portholes: the lights
+  are out, a bronze valve wheel stands on the dome, the light comes from the gauge and the pipes. A thin bright ring
+  round its neck (the body's own material) still reads as a collar under the dome. A head remake (valve bonnet or
+  smokestack) would settle it.
+- PATRIMONY PHANTOM (11): the strongest one left. Its bare chrome skull with glowing eyes over a metal ribcage can
+  be read as a famous film robot's endoskeleton. The skull is shaded dark and its eyes are violet, but the shape
+  is unchanged. Recommended: remake it with the hood modelled up over the skull (its brief says "hooded cloak").
+- SOLVENCY SPECTER (3) and LONGEVITY LICH (7): mild. A hooded chrome mask, a crowned undead king: common types,
+  kept their own by the brow eye and vault, and the hourglass heart.
+- The others (1, 2, 4, 5, 8, 9, all): no resemblance found.
 
 ## Looked at so far
 
