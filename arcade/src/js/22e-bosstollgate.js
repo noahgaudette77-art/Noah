@@ -1,0 +1,162 @@
+// PROBATE TOLLGATE: a toll booth on tank tracks with a striped barrier arm and a claw. It is not a biped and has no
+// skeleton or clips: its model comes as split parts with hinges (body, two tracks, a shoulder and a forearm each
+// side: the claw on its left, the barrier on its right) and it is animated here, by code, as Risk Blaster's demon is.
+// It answers the stage exactly as the rigged bosses' actor does (22d-bossactor.js): the same calls, the same places.
+//   it rolls in on its tracks and brakes hard; it rocks on its tracks and its eye follows the player; its claw snaps;
+//   attackA: the barrier arm rises with the charge and SLAMS down on the rule's frame; attackB: it rears back and
+//   fires from its booth; a blow rocks it back on its tracks; it dies tipping over backward, tracks in the air.
+class BossTollgate {
+  constructor(game, model, row) {
+    const g = (this.g = game);
+    this.model = model; this.row = row;
+    rigModel(model, { tree: { forearmL: "shoulderL", forearmR: "shoulderR", shoulderL: "body", shoulderR: "body" }, ride: { eye: "body", top: "body", console: "body", clawL: "forearmL", barrierTip: "forearmR" } });
+    const P = (this.P = model.parts), A = model.anchors;
+    this.root = new THREE.Group();
+    this.body = new THREE.Group(); // (the whole machine on its suspension: it rocks, yaws and tips about its tracks)
+    this.root.add(this.body);
+    this.body.add(model.scene);
+    this.mats = tuneModel(model, { env: row.env === undefined ? 2.2 : row.env, glow: 0 });
+    this.glow = row.glow === undefined ? 2.3 : row.glow;
+    this.power = 0;
+    this.joint = { head: A.eye, chest: A.console, hips: P.body, handL: A.clawL, handR: A.barrierTip, footL: A.trackL, footR: A.trackR };
+    this.size = model.info.size || [1, 1, 0.66];
+    // what it is doing: the barrier's lift (0 at rest, 1 raised over its head), its swing, the booth's rear and lurch
+    this.lift = 0; this.liftTo = 0; this.slam = 0; this.rear = 0; this.rearTo = 0; this.lurch = 0;
+    this.atkClip = null; this.swinging = false; this.sw0 = 0; this.rec = false;
+    this.kick = 0; this.kickV = 0; this.lean = 0; this.idleRate = 1; this.wob = 0; this.wobT = 0;
+    this.rageT = 0; this.deathT = -1; this.deathRate = 1; this.dead = false;
+    this.rollT = -1; this.landed = false; this.justLanded = false; this.dustT = 0; this.play = null;
+    this.snapT = 2; this.snap = 0; this.look = 0;
+    this.scraps = []; this.torn = {};
+    this.t = rand(0, 5);
+    this._v = new THREE.Vector3(); this._x = new THREE.Vector3(1, 0, 0);
+    this.rest = {}; for (const n of ["shoulderL", "shoulderR", "forearmL", "forearmR", "body", "trackL", "trackR"]) if (P[n]) this.rest[n] = P[n].rotation.clone();
+  }
+  has(name) { return name === "rage" || name === "death" || name === "hurt" || name === "stagger"; }
+  at(name, out) {
+    const j = name === "weapon" ? this.joint.handR : this.joint[name] || this.P[name] || this.joint.chest;
+    return j.getWorldPosition(out);
+  }
+  // ---- the attack: attackA is the barrier's slam, attackB the booth's volley
+  wind(clip, k) { if (this.dead) return; this.atkClip = clip; this.rec = false; this.swinging = false; if (clip === "attackA") this.liftTo = k; else this.rearTo = k; }
+  swing(clip, u) {
+    if (this.dead) return;
+    if (!this.swinging) { this.swinging = true; this.sw0 = clip === "attackA" ? this.lift : this.rear; this.atkClip = clip; this.rec = false; }
+    if (clip === "attackA") { // up (the rest of the way, fast), then down hard
+      const top = Math.max(this.sw0, 0.75);
+      if (u < 0.4) { this.lift = this.liftTo = lerp(this.sw0, top, u / 0.4); this.slam = 0; }
+      else { const q = (u - 0.4) / 0.6; this.lift = this.liftTo = top; this.slam = q * q; }
+    } else { this.rear = this.rearTo = lerp(this.sw0, 1, Math.min(1, u * 2.5)) * (1 - u * u); this.lurch = u * u; }
+  }
+  recover() { this.rec = true; this.swinging = false; }
+  cancel() { this.rec = true; this.swinging = false; }
+  get windT() { return 0; }
+  // ---- reactions (the stage asks for them by the rigged bosses' clip names)
+  react(name, o = {}) {
+    if (name === "hurt") { this.wob = 0.5; this.wobT = 0; return 0.8; }
+    if (name === "stagger") { this.wob = 1; this.wobT = 0; return 1.3; }
+    if (name === "rage" || name === "win") { this.rageT = 2.3; return 2.3; }
+    if (name === "death") { this.deathT = 0; this.deathRate = o.rate || 1; return BOSS_CLIP.death.end / this.deathRate; }
+    return 0;
+  }
+  // it rolls in from the back of the arena and brakes hard
+  enter() { this.rollT = 0; this.landed = false; }
+  limp() { /* its arms are hinged, not hung: nothing to do */ }
+  // a part comes off at its hinge (with what hangs from it) and is thrown
+  tear(bone, vel, o = {}) {
+    const b = this.P[bone];
+    if (!b || this.torn[bone] || b.userData.torn) return null;
+    this.root.updateMatrixWorld(true);
+    const grp = new THREE.Group();
+    b.getWorldPosition(grp.position);
+    this.g.scene.add(grp);
+    grp.updateMatrixWorld(true);
+    b.traverse((n) => { n.userData.torn = true; });
+    grp.attach(b);
+    this.torn[bone] = true;
+    const S = this.root.scale.x, sc = { grp, bone, v: vel.clone(), w: new THREE.Vector3(rand(-6, 6), rand(-4, 4), rand(-6, 6)), t: 0, life: o.life || 2.6, r: (o.r || 0.08) * S, rest: false };
+    this.scraps.push(sc);
+    return sc;
+  }
+  shatter(centre, speed) {
+    const out = [];
+    for (const n of ["forearmL", "forearmR", "shoulderL", "shoulderR", "trackL", "trackR", "body"]) {
+      const b = this.P[n];
+      if (!b || b.userData.torn) continue;
+      b.getWorldPosition(this._v);
+      const v = this._v.clone().sub(centre); v.y = Math.abs(v.y) + 0.4; v.normalize().multiplyScalar(speed * rand(0.6, 1.1)); v.y += rand(3, 7);
+      const sc = this.tear(n, v, { life: rand(1.5, 2.2) });
+      if (sc) out.push(sc);
+    }
+    return out;
+  }
+  update(d, o = {}) {
+    const g = this.g, P = this.P, R = this.rest, rage = o.rage || 0, S = this.root.scale.x, quiet = REDUCED_MOTION || GFX.calm;
+    this.t += d * this.idleRate * (rage ? 1.7 : 1);
+    const t = this.t;
+    // ---- the entrance: in from the back on its tracks, a hard stop that pitches it onto its nose, and down
+    let roll = 0, brake = 0;
+    if (this.rollT >= 0) {
+      this.rollT += d;
+      const u = Math.min(1, this.rollT / 0.72);
+      roll = -17 * (1 - u) * (1 - u);
+      if (u < 1 && (this.dustT -= d) <= 0 && g.kit && !quiet) { this.dustT = 0.05; for (const n of ["trackL", "trackR"]) g.kit.smoke(this.at(n === "trackL" ? "footL" : "footR", this._v).setY(0.3), { size: 0.9, life: 0.6, a: 0.4, cold: true, color: BOSS_ATK.SMOKE, vel: new THREE.Vector3(0, 0.6, -2), rise: 0.3 }); }
+      const b = clamp((this.rollT - 0.6) / 0.24, 0, 1);
+      brake = Math.sin(b * Math.PI) * 0.2;
+      if (!this.landed && this.rollT >= 0.84) { this.landed = true; this.justLanded = true; }
+      if (this.rollT > 1.1) this.rollT = -1;
+    }
+    // ---- the barrier and the booth
+    if (this.rec) { this.liftTo = 0; this.rearTo = 0; this.slam = Math.max(0, this.slam - d * 2.2); this.lurch = Math.max(0, this.lurch - d * 3); if (this.slam <= 0 && this.lift < 0.02 && this.rear < 0.02) { this.rec = false; this.atkClip = null; } }
+    if (!this.swinging) { this.lift += (this.liftTo - this.lift) * Math.min(1, d * (this.rec ? 2.6 : 8)); this.rear += (this.rearTo - this.rear) * Math.min(1, d * (this.rec ? 4 : 8)); }
+    // ---- a blow rocks it back on its tracks; a heavy one sets it wobbling
+    this.kickV += (-this.kick * 110 - this.kickV * 11) * d;
+    this.kick += this.kickV * d;
+    this.wobT += d; this.wob = Math.max(0, this.wob - d * 0.9);
+    const wob = this.wob * Math.sin(this.wobT * 13) * 0.12;
+    this.rageT = Math.max(0, this.rageT - d);
+    const fury = Math.min(1, this.rageT * 2), shake = (fury * 0.03 + (rage ? 0.008 : 0)) * (quiet ? 0.2 : 1);
+    // ---- its death: it shudders, then goes over backward about the back of its tracks
+    let tip = 0;
+    if (this.deathT >= 0) {
+      this.deathT += d * this.deathRate;
+      const C = BOSS_CLIP.death, q = clamp((this.deathT - C.fall * 0.7) / (C.down - C.fall * 0.7), 0, 1);
+      tip = q * q * 1.5 + Math.sin(Math.min(1, this.deathT / (C.fall * 0.7)) * Math.PI * 3) * 0.07 * (1 - q);
+    }
+    // the eye follows the player: the whole booth turns a little toward the lens
+    const lookTo = this.dead ? 0 : clamp(Pointer.x * 0.3 + Math.sin(t * 0.31) * 0.08 + (g.camBase ? g.camBase.x * 0.04 : 0), -0.4, 0.4);
+    this.look += (lookTo - this.look) * Math.min(1, d * 3);
+    const pitch = -this.kick * 0.1 - this.rear * 0.16 + this.lurch * 0.2 + brake + this.slam * 0.12 + this.lean * 0.05 + Math.sin(t * 0.9) * 0.014 + wob - tip;
+    const B = this.body, zp = pitch >= 0 ? 0.185 : -0.3; // (it tips about the back of its tracks, and noses down about their front)
+    B.rotation.set(pitch, this.look + rand(-1, 1) * shake, Math.sin(t * 0.7) * 0.012 + wob * 0.5 + rand(-1, 1) * shake);
+    this._v.set(0, 0, zp).applyAxisAngle(this._x, pitch);
+    B.position.set(0, Math.sin(t * 1.7) * 0.005 + 0.012 * this.lift - this._v.y, roll / S + zp - this._v.z - this.kick * 0.12);
+    // ---- its arms: the barrier rises with the charge and comes down; the claw reaches, and snaps
+    const sR = P.shoulderR, sL = P.shoulderL, fR = P.forearmR, fL = P.forearmL, flop = Math.min(1, tip * 1.2);
+    if (sR && !sR.userData.torn) sR.rotation.x = R.shoulderR.x - 2.15 * this.lift + (2.15 * this.lift + 0.25) * this.slam + Math.sin(t * 0.8 + 1) * 0.03 - fury * (0.9 + 0.25 * Math.sin(t * 14)) - flop * 0.9;
+    if (fR && !fR.userData.torn) fR.rotation.x = R.forearmR.x - 0.35 * this.lift * (1 - this.slam) + fury * 0.2 * Math.sin(t * 17);
+    if ((this.snapT -= d) <= 0) { this.snapT = rand(1.6, 3.6) / (rage ? 2 : 1); this.snap = 1; }
+    this.snap = Math.max(0, this.snap - d * 3.2);
+    const bite = Math.abs(Math.sin(this.snap * Math.PI * 2)) * 0.32; // (two quick snaps)
+    if (sL && !sL.userData.torn) sL.rotation.x = R.shoulderL.x - 0.5 * this.rear - 0.25 * this.lift + Math.sin(t * 1.1) * 0.06 - fury * (1.1 + 0.25 * Math.sin(t * 15 + 1)) - flop * 0.9 - this.kick * 0.25;
+    if (fL && !fL.userData.torn) { fL.rotation.x = R.forearmL.x - bite - 0.3 * this.rear + fury * 0.3 * Math.sin(t * 19); fL.rotation.z = R.forearmL.z + bite * 0.5; }
+    // ---- its lights
+    const br = 0.86 + 0.14 * Math.sin(t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
+    for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    // ---- what has come off it
+    for (let i = this.scraps.length - 1; i >= 0; i--) {
+      const sc = this.scraps[i], gp = sc.grp;
+      sc.t += d;
+      if (!sc.rest) {
+        sc.v.y -= 20 * d;
+        gp.position.addScaledVector(sc.v, d);
+        gp.rotation.x += sc.w.x * d; gp.rotation.y += sc.w.y * d; gp.rotation.z += sc.w.z * d;
+        if (gp.position.y < sc.r && sc.v.y < 0) { gp.position.y = sc.r; if (Math.abs(sc.v.y) < 2.2) sc.rest = true; else { sc.v.y *= -0.34; sc.v.x *= 0.6; sc.v.z *= 0.6; sc.w.multiplyScalar(0.5); } }
+      }
+      const k = 1 - smoothstep(sc.life - 0.35, sc.life, sc.t);
+      if (k < 1) gp.scale.setScalar(Math.max(0.001, k));
+      if (sc.t >= sc.life) { gp.visible = false; this.scraps.splice(i, 1); }
+    }
+  }
+  dispose() { /* its parts are released with the scene */ }
+}

@@ -520,6 +520,7 @@ const Sound = {
     game: { bpm: 128, prog: [[45, 57, 60, 64], [45, 57, 60, 64], [41, 53, 57, 60], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 1, 2, 3, 2], lead: null },
     boss: { bpm: 140, prog: [[40, 52, 55, 59], [40, 52, 55, 59], [41, 53, 56, 60], [38, 50, 53, 57]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: null },
     get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
+    get finalboss() { return this.boss; }, // (the last boss has its own recording; without it, the boss tune)
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
   },
   play(name) {

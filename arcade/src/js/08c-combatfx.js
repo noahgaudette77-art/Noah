@@ -432,6 +432,47 @@ class CombatFX {
     if (o.shake !== false) this.host.shake(0.2 * s);
   }
 
+  // ---- thin shapes of light (after Risk Blaster's stage; built the first time one is asked for) -------------
+  // A thin ring: a hard-edged line, clear inside, never brighter than its own colour, as thick on the screen at
+  // every size. It opens where it is, or travels from one place to another as it grows (a wave of force); flat: it
+  // lies on the ground (a shock running out across a floor). o: { dur, s0, s1, delay, w, k, flat }
+  wave(from, to, color, o = {}) {
+    if (!this.waves) {
+      const wg = new THREE.PlaneGeometry(2, 2);
+      this.waves = Array.from({ length: 10 }, () => {
+        const m = new THREE.Mesh(wg, new THREE.ShaderMaterial({
+          uniforms: { uColor: { value: new THREE.Color(1, 1, 1) }, uK: { value: 0 }, uW: { value: 0.05 } },
+          transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, extensions: { derivatives: true },
+          vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+          fragmentShader: `uniform vec3 uColor; uniform float uK; uniform float uW; varying vec2 vP;
+            void main(){
+              float r = length(vP), e = fwidth(r) * 1.5, band = smoothstep(1.0 - uW - e, 1.0 - uW, r) * (1.0 - smoothstep(1.0 - e, 1.0, r));
+              if (band < 0.01) discard;
+              gl_FragColor = vec4(uColor, band * uK);
+            }`,
+        }));
+        m.visible = false; m.renderOrder = 6; m.frustumCulled = false;
+        this.scene.add(m);
+        return { m, t: -1, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), s0: 1, s1: 1, w: 0.055, live: false, flat: false };
+      });
+    }
+    const r = this.waves.find((x) => !x.live) || this.waves[0];
+    r.from.copy(from); r.to.copy(to || from); r.dur = o.dur || 0.4; r.t = -1e-4 - (o.delay || 0); r.s0 = (o.s0 === undefined ? 0.4 : o.s0) * this.unit; r.s1 = (o.s1 === undefined ? 4 : o.s1) * this.unit; r.w = (o.w || 0.055) * this.unit; r.live = true; r.flat = !!o.flat;
+    r.m.material.depthTest = r.flat; // (a ring on the floor is hidden by what stands on it)
+    r.m.material.uniforms.uColor.value.set(color).multiplyScalar(o.k === undefined ? 0.95 : o.k);
+    return r;
+  }
+  // a streak of light drawn fast from one place to another: a point, a tail thinning to nothing
+  streak(from, to, color, dur, w, k = 1.5) {
+    const d = this._dart(), v = this._d.subVectors(to, from), len = v.length();
+    d.p.copy(from); d.v.copy(v).multiplyScalar(1 / dur); d.life = d.t = dur * 1.6; d.w = w * this.unit; d.len = len * 0.75; d.stretch = 0; d.g = 0; d.drag = 1; d.fade = 1.5; d.col = fxRGB(color, k); d.bolt = null;
+  }
+  // a line that stays where it was cut for a moment (a gash, the line a beam burns)
+  gash(from, to, color, life, w, k = 1.4) {
+    const d = this._dart(), v = this._d.subVectors(to, from), len = v.length();
+    d.p.copy(from).addScaledVector(v, 0.5); d.v.copy(v).multiplyScalar(0.02 / Math.max(len, 1e-3)); d.life = d.t = life; d.w = w * this.unit; d.len = len; d.stretch = 0; d.g = 0; d.drag = 1; d.fade = 1.3; d.col = fxRGB(color, k); d.bolt = null;
+  }
+
   // ---- telegraphs --------------------------------------------------------------------------
   // A warning marker: it closes in on its place, blinks under three times a second and is gone when its time is up.
   // follow: a function returning where it should be now (a marker that tracks its target).
@@ -584,6 +625,21 @@ class CombatFX {
       b.a.position.copy(b.from); b.a.scale.setScalar(b.w * 2.4); b.a.material.opacity = 0.7 * fade;
       b.b.position.copy(b.from).addScaledVector(d, len); b.b.scale.setScalar(b.w * 3.0 * (0.9 + 0.1 * Math.sin(this.t * 40))); b.b.material.opacity = 0.8 * fade;
     }
+    // thin rings
+    if (this.waves) for (const wv of this.waves) {
+      if (!wv.live) continue;
+      wv.t = wv.t < 0 ? Math.min(0, wv.t + dt) : wv.t + dt;
+      if (wv.t < 0) { wv.m.visible = false; continue; }
+      const u = Math.min(1, wv.t / wv.dur);
+      wv.m.visible = u < 1;
+      if (u >= 1) { wv.live = false; wv.t = -1; continue; }
+      const sc = lerp(wv.s0, wv.s1, Math.pow(u, 0.8));
+      wv.m.position.lerpVectors(wv.from, wv.to, u);
+      if (wv.flat) wv.m.rotation.set(-Math.PI / 2, 0, 0); else wv.m.quaternion.copy(cam.quaternion);
+      wv.m.scale.setScalar(sc);
+      wv.m.material.uniforms.uW.value = clamp(wv.w / sc, 0.006, 0.4); // (as thick on the screen at every size: a line, not a band)
+      wv.m.material.uniforms.uK.value = Math.min(1, u * 10) * (1 - smoothstep(0.7, 1, u));
+    }
     // warning markers
     for (const k of this.marks) {
       if (k.t <= 0) continue;
@@ -609,6 +665,7 @@ class CombatFX {
   dispose() {
     for (const t of Object.values(this.markTex)) t.dispose();
     for (const t of Object.values(this.scorchTex)) t.dispose();
+    if (this.waves) { this.waves.forEach((w) => w.m.material.dispose()); this.waves[0].m.geometry.dispose(); }
     this.trailers.length = 0;
   }
 }
