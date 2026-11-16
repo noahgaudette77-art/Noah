@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9 done; next: 7 (LICH) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9, 7 done; next: 8 (INTESTATE) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -80,6 +80,10 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   enough to bring its head under it, against the band as it is then (the band moves when the next question comes;
   a bubble that has ended up lower than the head reaches, over its chest or over a sheet, asks for no room). The
   game passes the line's words to the stage for this (`taunt`: look only).
+- Boss 7 (LICH): idle, wind-up, seekers and hit seen: good, nothing to fix (a crowned chrome skeleton in a dark
+  cloak, its hourglass heart glowing mint; its seekers swing out wide and come in). Lookalike: mild. A crowned
+  undead king in a cloak is a fantasy type (games have well-known ones); the hourglass heart and the chrome keep
+  it its own.
 
 ## Tests at the last commit
 
