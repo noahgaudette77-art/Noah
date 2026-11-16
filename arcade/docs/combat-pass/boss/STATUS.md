@@ -29,7 +29,15 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
-| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress (the README is written; the captures run one boss at a time: at dpr 2 two or three side by side overload the machine and Playwright's screenshots time out) |
+| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | in progress: bosses 1 to 5 captured and committed; 7, 8, 9, 10 and all running, then the cue log. Bosses 6 and 11 are being remade by the lead (see below): their captures wait for the new models. The captures run one boss at a time (at dpr 2 two or three side by side overload the machine and Playwright's screenshots time out). Full regression both ways and the sequence test passed at commit 12eff36 (to be run again after the remakes) |
+
+## Remakes under way (the lead)
+
+INFLATION TITAN (6: a valve handwheel on a pipe for a head) and PATRIMONY PHANTOM (11: a deep hood modelled over the
+whole head, two eye slits, half bone-white, half dark steel) are being remade, same rig, clips and file names. When
+they land on `claude/quirky-ride-9frte0`: merge, look at both (idle and fight at dpr 1), drop the Titan's `dress`
+(the new head is the valve) and the Phantom's `shade`, fix what is broken, capture their three files at dpr 2,
+update the README and the lookalikes below, run the cue log, the full regression both ways and the sequence test.
 
 ## Lookalikes, for the lead
 
