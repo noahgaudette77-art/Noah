@@ -1,11 +1,11 @@
 {
  "name": "boss-6",
- "about": "Boss Rush: Inflation Titan (a boiler with its gauge in the red). Tripo H3.1 from concept boss06-titan-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
- "src": "post/boss06-animA.glb",
+ "about": "Boss Rush: Inflation Titan, second version (2026-11-16): a headless steam-boiler titan whose 'head' is a brass valve handwheel on a short pipe, a pressure gauge in its chest with the needle in the red, two smokestacks, piston arms. The first version (boss-6-v1.json) had a small domed head with two round lights that read as a diving helmet with portholes. Tripo H3.1 from concept boss06b-titan-sd-0; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it.",
+ "src": "post/boss06b-animA.glb",
  "more": [
-  "post/boss06-animB.glb"
+  "post/boss06b-animB.glb"
  ],
- "seg": "post/boss06-seg.glb",
+ "seg": "post/boss06b-seg.glb",
  "size": {
   "axis": "y",
   "value": 1
@@ -27,7 +27,7 @@
   "hues": [
    [
     350,
-    28
+    24
    ]
   ],
   "sat": [
@@ -38,5 +38,8 @@
    0.5,
    0.8
   ]
+ },
+ "bones": {
+  "0": "Spine01"
  }
 }

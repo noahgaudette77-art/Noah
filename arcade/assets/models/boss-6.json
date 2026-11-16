@@ -1,72 +1,68 @@
 {
  "name": "boss-6",
- "triangles": 99992,
- "bytes": 3290500,
+ "triangles": 99994,
+ "bytes": 3595196,
  "tex": 2048,
  "bones": {
   "R_Forearm": {
-   "tris": 5520,
-   "caps": 15
+   "tris": 5666,
+   "caps": 17
   },
   "R_Hand": {
-   "tris": 4021,
-   "caps": 9
+   "tris": 4611,
+   "caps": 7
   },
   "R_Upperarm": {
-   "tris": 7807,
+   "tris": 7650,
    "caps": 25
   },
   "R_Foot": {
-   "tris": 4075,
-   "caps": 6
-  },
-  "R_Calf": {
-   "tris": 7752,
-   "caps": 15
-  },
-  "Spine02": {
-   "tris": 27143,
-   "caps": 68
-  },
-  "R_Clavicle": {
-   "tris": 1466,
+   "tris": 2848,
    "caps": 7
   },
-  "R_Thigh": {
-   "tris": 5058,
+  "R_Calf": {
+   "tris": 5196,
    "caps": 15
   },
-  "Head": {
-   "tris": 2312,
-   "caps": 5
+  "R_Clavicle": {
+   "tris": 1856,
+   "caps": 3
+  },
+  "Spine01": {
+   "tris": 32588,
+   "caps": 104
+  },
+  "R_Thigh": {
+   "tris": 6064,
+   "caps": 12
   },
   "L_Thigh": {
-   "tris": 5001,
-   "caps": 13
+   "tris": 5881,
+   "caps": 17
   },
   "L_Calf": {
-   "tris": 7278,
-   "caps": 22
-  },
-  "L_Clavicle": {
-   "tris": 1504,
-   "caps": 6
+   "tris": 4967,
+   "caps": 23
   },
   "L_Foot": {
-   "tris": 3552,
-   "caps": 6
-  },
-  "L_Upperarm": {
-   "tris": 7731,
-   "caps": 19
-  },
-  "L_Forearm": {
-   "tris": 5864,
+   "tris": 3198,
    "caps": 14
   },
-  "L_Hand": {
-   "tris": 3908,
+  "L_Clavicle": {
+   "tris": 1591,
+   "caps": 5
+  },
+  "L_Upperarm": {
+   "tris": 7464,
+   "caps": 23
+  },
+  "L_Forearm": {
+   "tris": 5963,
    "caps": 11
+  },
+  "L_Hand": {
+   "tris": 4451,
+   "caps": 12
   }
  },
  "clips": {
@@ -80,11 +76,11 @@
   "stagger": 1.867
  },
  "size": [
-  0.8804,
+  0.889,
   1,
-  0.3747
+  0.4206
  ],
- "source": "post/boss06-animA.glb",
+ "source": "post/boss06b-animA.glb",
  "joints": {
   "head": "Head",
   "chest": "Spine02",
