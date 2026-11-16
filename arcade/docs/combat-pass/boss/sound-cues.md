@@ -178,9 +178,9 @@ Frame 0: the answer is picked. While its explanation is up the boss stands there
 | +17 | the lance lands on its body (a white heart, sparks in the answer's colour, a thin ring, a hit-stop); it is finished; done for: it sways, arms hanging, lights failing | `correct` · `impact_big` · `boss_stagger` (sounds 3 frames on) |
 | +50 | the explanation sheet comes up |  |
 | +59 | a small blast on its body | `explosion_small` |
-| +106 | a small blast on its body | `explosion_small` |
-| +155 | a small blast on its body | `explosion_small` |
-| +197 | a small blast on its body | `explosion_small` |
+| +107 | a small blast on its body | `explosion_small` |
+| +149 | a small blast on its body | `explosion_small` |
+| +199 | a small blast on its body | `explosion_small` |
 
 Loops running at the end of it: none.
 
@@ -195,8 +195,7 @@ Frame 0: the explanation is closed (the rule shows the results 192 frames on, as
 | +37 | a blast on its body as it falls; its r forearm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its l calf is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
 | +58 | a blast on its body as it falls; its head is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its r upperarm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
 | +92 | the last blast as it hits the floor: every part thrown clear, rings, wreckage | `explosion_huge` · `debris` (sounds 18 frames on) |
-| +100 | stars leave for the score; coins leave for the score | `reward` |
-| +104 | banner: BOSS DEFEATED! | announcer: "BOSS DEFEATED!" |
+| +100 | stars leave for the score; coins leave for the score | announcer: "BOSS DEFEATED!" · `reward` |
 | +127 |  | `win` |
 | +192 |  | `trophy` · announcer: "Trophy unlocked" · `levelup` |
 
@@ -232,7 +231,7 @@ Frame 0: the explanation is closed with no heart left (the rule shows the result
 |---:|---|---|
 | 0 | the boss has the last word: it roars and gloats | music stops · `gameover` · `roar_1` |
 | +24 |  | announcer: "GAME OVER" |
-| +72 | banner: DEFEATED | announcer: "DEFEATED" |
+| +72 |  | announcer: "DEFEATED" |
 
 Loops running at the end of it: none.
 
@@ -284,7 +283,7 @@ Frame 0: a second and a half of the bar is left.
 |---:|---|---|
 | +88 | the boss strikes (the bar has run out): its blow begins | loop stops: `charge_hum` |
 | +96 | the rule fires: the blow is at its end; it lets the strike go (a ground slam): the markers close, a beat of slow motion | `slam` |
-| +105 | the strike lands on the player: the heart is seen to go (red flash, colours split, shake, the HUD cracks, the hearts blink) | `player_hit` · `heart_lost` (sounds 5 frames on) |
+| +111 | the strike lands on the player: the heart is seen to go (red flash, colours split, shake, the HUD cracks, the hearts blink) | `player_hit` · `heart_lost` (sounds 5 frames on) |
 | +121 | the explanation sheet comes up |  |
 
 Loops running at the end of it: none.
@@ -297,7 +296,7 @@ Frame 0: a second and a half of the bar is left.
 |---:|---|---|
 | +88 | the boss strikes (the bar has run out): its blow begins | loop stops: `charge_hum` |
 | +96 | the rule fires: the blow is at its end; it lets the strike go (a wave of energy): the markers close, a beat of slow motion | `wave_fire` |
-| +108 | the strike lands on the player: the heart is seen to go (red flash, colours split, shake, the HUD cracks, the hearts blink) | `player_hit` · `heart_lost` (sounds 5 frames on) |
+| +113 | the strike lands on the player: the heart is seen to go (red flash, colours split, shake, the HUD cracks, the hearts blink) | `player_hit` · `heart_lost` (sounds 5 frames on) |
 | +121 | the explanation sheet comes up |  |
 
 Loops running at the end of it: none.
@@ -338,14 +337,13 @@ Frame 0: the explanation of the finishing blow is closed.
 |---:|---|---|
 | 0 | its death begins: slow motion, it goes over backward | music stops · `slowmo_in` · `boss_death` |
 | +15 | a blast on its body as it falls; its l upperarm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its r hand is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
-| +38 | a blast on its body as it falls; its r forearm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its l calf is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
-| +60 | a blast on its body as it falls; its head is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its r upperarm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
-| +82 | a blast on its body as it falls; its r calf is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
-| +116 | the last blast as it hits the floor: every part thrown clear, rings, wreckage | `explosion_huge` · `debris` (sounds 18 frames on) |
-| +123 | stars leave for the score; coins leave for the score | `reward` |
-| +127 | banner: BOSS DEFEATED! | announcer: "FINAL BOSS DESTROYED" |
-| +129 |  | `explosion_big` |
-| +149 |  | `win` |
+| +37 | a blast on its body as it falls; its r forearm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its l calf is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
+| +58 | a blast on its body as it falls; its head is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on); its r upperarm is torn off and thrown, turning, sparks trailing (a small blast where it tore, 3 frames on) | `boss_break` · `explosion_small` |
+| +92 | the last blast as it hits the floor: every part thrown clear, rings, wreckage | `explosion_huge` · `debris` (sounds 18 frames on) |
+| +98 |  | announcer: "FINAL BOSS DESTROYED" |
+| +99 | stars leave for the score; coins leave for the score | `reward` |
+| +105 |  | `explosion_big` |
+| +125 |  | `win` |
 | +191 |  | `levelup` |
 
 Loops running at the end of it: none.
