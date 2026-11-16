@@ -21,6 +21,7 @@ const BOSS_SKY = {
 //          3 a swept beam, 4 seekers that lock on (each has its own marker, flight and landing: see the stage)
 //   clip   which clip each kind is played with, when it is not the usual one (BOSS_ATK.clip)
 //   src    where the attack leaves it: "weapon" (the far end of what its right hand holds), "chest", "handR", "head"
+//          (srcs: the same, for each kind of a boss that has more than one)
 //   size   how tall it stands in the arena (world units); show: how much of that height the picture holds when the
 //          lens is close (0.82: head to knees); wide: how wide it is, in its own heights (for fitting the picture)
 //   env, glow   how strongly its armour mirrors the sky, how brightly its light strips burn
@@ -28,20 +29,20 @@ const BOSS_SKY = {
 //          the bones below it along; "wound": a hole burnt in its chest). limp: the arm that hangs once it is hurt
 //   last   the parts that go one by one in its death, before the last blast takes the rest
 //   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
-const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.2, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
+const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.6, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
-  2: { sky: "boss-storm", atk: [1] },
-  3: { sky: "boss-void", atk: [2], src: "chest" },
-  4: { sky: "boss-storm", atk: [3] },
-  5: { sky: "boss-storm-b", atk: [1] },
-  6: { sky: "boss-storm-b", atk: [2], src: "chest" },
-  7: { sky: "boss-void", atk: [4], src: "handR" },
-  8: { sky: "boss-void", atk: [1] },
-  9: { sky: "boss-storm", atk: [4], src: "handR" },
-  10: { sky: "boss-storm-b", atk: [0, 1] },
-  11: { sky: "boss-void", atk: [3] },
-  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4] },
+  2: { sky: "boss-storm", atk: [1] }, // PERILMONGER: its huge fists down on the floor
+  3: { sky: "boss-void", atk: [2], src: "chest" }, // SOLVENCY SPECTER: a wave of energy out of the empty vault in its chest
+  4: { sky: "boss-storm", atk: [3] }, // THE FINE PRINT: a line of light drawn by its quill and swept across
+  5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
+  6: { sky: "boss-storm-b", atk: [2], src: "chest" }, // INFLATION TITAN: a blast of steam from its boiler
+  7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
+  8: { sky: "boss-void", atk: [1] }, // LORD INTESTATE: its gavel down on the floor
+  9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
+  10: { sky: "boss-storm-b", atk: [0, 1], srcs: { 0: "chest", 1: "weapon" }, env: 2.8, size: 6.8, tear: [[0.78, "wound"], [0.56, "forearmL"], [0.34, "shoulderL"]], last: ["forearmR", "shoulderR", "trackL", "trackR"] }, // PROBATE TOLLGATE: a volley from the booth, then the barrier's slam
+  11: { sky: "boss-void", atk: [3] }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver
+  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" } }, // THE PROCTOR: all five, in turn
 };
 const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);
 

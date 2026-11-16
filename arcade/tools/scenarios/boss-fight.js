@@ -66,7 +66,8 @@ module.exports = async (cap) => {
   let enter = null;
   if (has("enter") || has("fight")) {
     await cap.fast(14);
-    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 8 : 20, { band: false });
+    // (the short set keeps the part of the screen it lands in, the size of the fight's own picture)
+    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 8 : 20, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
   }
   await page(() => { window.__cap.skipDialogs = true; });
   if (full && enter) sheet("01-entrance", enter, { cols: 6, thumb: 250 });
@@ -87,9 +88,9 @@ module.exports = async (cap) => {
       await charge(-0.2);
       sheet("03-telegraph-strike", a.concat(await frames(tag + "-atk", 18, 2)), { cols: 6, thumb: 300 });
     } else {
-      atk = await frames(tag + "-atk", 5, 18);
-      await charge(-0.17);
-      atk = atk.concat(await frames(tag + "-atk2", 5, 4));
+      atk = await frames(tag + "-atk", 3, 30);
+      await charge(-0.12);
+      atk = atk.concat(await frames(tag + "-atk2", 8, 3));
     }
     await cap.fast(40);
     await set({ hearts: 3 });
@@ -99,7 +100,7 @@ module.exports = async (cap) => {
   if (has("hit") || has("fight")) {
     await ready(40);
     await cap.answer("R");
-    hit = await frames(tag + "-hit", full ? 18 : 6, full ? 3 : 7);
+    hit = await frames(tag + "-hit", full ? 18 : 5, full ? 3 : 7);
     if (full) { sheet("04-right-hit", hit, { cols: 6, thumb: 300 }); hit = null; }
     await cap.fast(30);
   }

@@ -46,6 +46,16 @@ class BossStage {
     this.orb = glowSprite(neon(this.hex, 2.2), 0.1, 1);
     this.orb.visible = false; this.orb.renderOrder = 7;
     s.add(this.orb);
+    // its volley: cards (contracts, tickets, papers): a white sheet with lines of print and a neon edge in its colour
+    const cc = document.createElement("canvas");
+    cc.width = 64; cc.height = 88;
+    { const x = cc.getContext("2d"), c = "#" + this.col.getHexString();
+      x.fillStyle = c; x.fillRect(0, 0, 64, 88);
+      x.fillStyle = "#f6fbff"; x.fillRect(7, 7, 50, 74);
+      x.fillStyle = c; for (let i = 0; i < 5; i++) x.fillRect(14, 18 + i * 12, i === 4 ? 20 : 36, 4); }
+    this.cardTex = new THREE.CanvasTexture(cc);
+    const cg = new THREE.PlaneGeometry(0.72, 1);
+    this.cards = Array.from({ length: 5 }, () => { const m = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ map: this.cardTex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false })); m.material.color.setScalar(1.35); m.visible = false; m.renderOrder = 9; s.add(m); return { m, bolt: null, spin: 0, turn: 0 }; });
     // its seekers: a hot head each, a ribbon behind it
     this.seekers = [0, 1, 2, 3].map(() => {
       const sp = glowSprite(neon(this.hex, 2.6), 0.5, 1), tail = new Trail({ length: 16, width: 0.12, color: this.hex, intensity: 1.9, up: new THREE.Vector3(0, 0, 1) });
@@ -57,12 +67,16 @@ class BossStage {
     const L = g.lamps;
     if (L) {
       L.rimB.color.copy(this.col).lerp(new THREE.Color(0xffffff), 0.2);
-      this.rim0 = [L.rimA.intensity * 1.25, 3.4]; // (their full strength: they come up as it powers up)
-      L.edge.color.set(0xcfeaff); L.edge.intensity = 1.5;
-      L.key.intensity = 1.9;
-      L.fill.intensity = 1.5; L.fill.distance = 60;
-      L.under.intensity *= 1.3;
+      this.rim0 = [L.rimA.intensity * 1.7, 4.8]; // (their full strength: they come up as it powers up)
+      L.edge.color.set(0xcfeaff); L.edge.intensity = 1.7;
+      L.key.intensity = 2.0;
+      L.fill.intensity = 2.1; L.fill.distance = 60;
+      L.under.intensity *= 1.5;
     }
+    // a kicker behind and above it, in its own colour (paled a little): the line of its head and shoulders always holds
+    this.kicker = new THREE.DirectionalLight(this.col.clone().lerp(new THREE.Color(0xffffff), 0.3), 0);
+    this.kicker.position.set(0, 7, -12);
+    s.add(this.kicker);
     if (g.pillarMat) g.pillarMat.color.multiplyScalar(0.5); // (the pillars stand back: beside armour that mirrors the sky they were the brightest things in the picture)
     // everything that used to throw a burst of square dots throws sparks while the fight is staged
     g.bursts.burst = (pos, color, o = {}) => this.kit.sparks(pos, color, { n: Math.min(40, Math.ceil((o.n || 60) * 0.5)), speed: (o.speed || 10) * 1.1, life: (o.life || 1.1) * 0.7, len: (o.size || 0.3) * 2.4, w: (o.size || 0.3) * 0.3, gravity: 3 });
@@ -81,7 +95,7 @@ class BossStage {
     return this.lens(r ? (((r.left + r.width / 2) / GFX.w) * 2 - 1) * 0.92 : -0.8, -1.1, 3.4, out);
   }
   // where the boss's attack leaves it
-  src(out) { const p = this.a.at(this.row.src, out); if (this.row.src === "chest") p.z += 0.13 * this.S; return p; }
+  src(out) { const kind = this.strike ? this.strike.kind : this.tele ? this.tele.kind : -1, name = (this.row.srcs && this.row.srcs[kind]) || this.row.src, p = this.a.at(name, out); if (name === "chest") p.z += 0.13 * this.S; return p; }
   screen(p) { const v = this._n.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
   pan(p) { return clamp(p.x / 6, -1, 1) * 0.6; }
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 6px #000"; }
@@ -156,6 +170,7 @@ class BossStage {
   ask() {
     const kinds = this.row.atk, kind = kinds[this.kindN++ % kinds.length];
     this.endTele();
+    this.camLow = 0;
     this.tele = { kind, clip: (this.row.clip && this.row.clip[kind]) || BOSS_ATK.CLIP[kind], mark: [], servo: false, hum: false, acc: 0, line: null };
   }
   endTele() {
@@ -182,6 +197,7 @@ class BossStage {
     this.windK = wind;
     if (wind > 0) a.wind(t.clip, wind);
     if (f >= 0.45 && !t.servo) { t.servo = true; Sound.sfx("boss_servo", 0, { vol: 0.7 }); }
+    if (t.kind === 1) this.camLow = 0.8 * smoothstep(0.5, 0.85, f);
     if (f >= 0.72) {
       this.marks(t, (1 - f) * g.T + 0.5);
       if (!t.hum) { t.hum = true; this.hum = Sound.loop("boss-charge", "charge_hum", { vol: 0.25, rate: 0.9, fade: 0.1 }); Sound.sfx("charge_up", 0, { vol: 0.6 }); }
@@ -282,7 +298,7 @@ class BossStage {
   breakOff(bone, leak, quietly) { // (quietly: as a link of its death's chain, whose own blast it is thrown by)
     const g = this.g, kit = this.kit, a = this.a, S = this.S, b = a.P[bone];
     if (!b) return null;
-    const sd = /^R_/.test(bone) ? -1 : /^L_/.test(bone) ? 1 : rand(-1, 1) < 0 ? -1 : 1, p = b.getWorldPosition(new THREE.Vector3());
+    const sd = /^R_|R$/.test(bone) ? -1 : /^L_|L$/.test(bone) ? 1 : rand(-1, 1) < 0 ? -1 : 1, p = b.getWorldPosition(new THREE.Vector3()); // (its right is the lens's left)
     const sc = a.tear(bone, new THREE.Vector3(sd * rand(4, 7), rand(6, 9), rand(1.5, 4.5)));
     if (!sc) return null;
     kit.sparks(p, 0xffffff, { n: 8, speed: 9, life: 0.3, len: 0.7, w: 0.05, k: 1.7 });
@@ -320,6 +336,7 @@ class BossStage {
     if (!t.hum) Sound.sfx("charge_up", 0, { vol: 0.7, rate: 1.3 }); // (a wrong answer before it had wound up: a short breath of charge, and the blow)
     // the blow is at its end on the frame the rule fires: from wherever its wind-up has reached (or, with none, from
     // a third of a second short of the blow), through to its end in the rule's own 0.12 s
+    if (t.kind === 1) this.camLow = 0.8; // (a ground slam is seen from higher: the floor between it and the player shows)
     this.strike = { kind: t.kind, clip: t.clip, age: 0, from: this.windK > 0.5 ? this.a.windT : C.hit - 0.38, go: false, released: false, landed: false, u: 0, n: 0, acc: 0, beam: null, sd: Math.random() < 0.5 ? -1 : 1, slow };
     this.wideTo = 1;
     void g;
@@ -344,12 +361,16 @@ class BossStage {
     if (s.kind === 1) { // the ground slam: where the blow falls, the floor breaks and a shock runs out to the lens
       const f0 = (s.f0 = new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
       Sound.sfx("slam", 0, { vol: 1 });
-      kit.wave(f0, null, this.hex, { flat: true, dur: 0.5, s0: 0.8 * k, s1: 12 * k, w: 0.1 });
-      kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.4, s0: 0.6 * k, s1: 8 * k, w: 0.05, delay: 0.03, k: 0.8 });
-      kit.sparks(f0, this.hex, { n: quiet ? 8 : 20, speed: 11 * k, dir: this._v.set(0, 0.7, 0.5).normalize(), spread: 1.5, life: 0.5, len: 0.8 * k, w: 0.06 * k, gravity: 14 });
+      kit.wave(f0, null, this.hex, { flat: true, dur: 0.55, s0: 0.8 * k, s1: 13 * k, w: 0.24 });
+      kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 });
+      kit.wave(f0, null, this.hex, { flat: true, dur: 0.7, s0: 0.5 * k, s1: 18 * k, w: 0.16, delay: 0.1 });
+      // three blades of light run out along the floor from where it fell, at the lens
+      const cam = g.camera.position;
+      for (const an of quiet ? [0] : [-0.22, 0, 0.22]) kit.bolt(this._v.copy(f0).setY(0.16), this._w.set(cam.x + Math.sin(an) * 9, 0.16, cam.z - 2.5), this.hex, { dur: BOSS_ATK.FLY[1], width: 0.42 * k, len: 7 * k, light: an === 0 });
+      kit.sparks(f0, this.hex, { n: quiet ? 10 : 28, speed: 15 * k, dir: this._v.set(0, 1, 0.25).normalize(), spread: 0.9, life: 0.6, len: 1.1 * k, w: 0.07 * k, gravity: 16 }); // a fountain of sparks where it fell
       kit.sparks(f0, 0xffffff, { n: 8, speed: 16 * k, dir: this._v.set(0, 0.6, 0.6).normalize(), spread: 1.3, life: 0.3, len: 1.1 * k, w: 0.05 * k, k: 1.8, gravity: 10 });
       kit.debris(f0, { n: quiet ? 5 : 12, size: 0.6 * k, speed: 9 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 1.0, radius: 0.8 * k });
-      for (let i = 0; i < (quiet ? 2 : 5); i++) kit.smoke(this._v.set(rand(-1.4, 1.4) * k, 0.3, rand(-0.4, 0.8) * k).add(f0), { size: rand(1.0, 1.5) * k, life: 0.8, vel: this._w.set(rand(-3, 3), 0.4, rand(0, 3)), rise: 0.3, a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
+      for (let i = 0; i < (quiet ? 3 : 8); i++) { const an = (i / 8) * Math.PI * 2 + rand(0.3); kit.smoke(this._v.set(Math.cos(an) * 1.2 * k, 0.35, Math.sin(an) * 1.2 * k).add(f0), { size: rand(1.1, 1.6) * k, life: rand(0.7, 0.95), vel: this._w.set(Math.cos(an), 0.12, Math.sin(an)).multiplyScalar(rand(4, 6.5) * k), rise: 0.25, a: 0.5, cold: true, color: BOSS_ATK.SMOKE, drag: 0.08 }); } // a ring of dust along the floor
       kit.scorch(f0, { size: 5.5 * k, life: 7, a: 0.6 });
       g.shake(0.3); GFX.bloomPulse(0.35);
     } else if (s.kind === 2) { // the wave: three thin rings of force from where it gathered, out over the player and past
@@ -389,7 +410,10 @@ class BossStage {
       while (s.n < (quiet ? 2 : 5) && u >= s.n * 0.036) {
         const n = s.n++, from = this.src(new THREE.Vector3()), to = this.lens(n ? [0, -0.7, 0.75, -0.35, 0.4][n] + rand(-0.08, 0.08) : rand(-0.12, 0.12), -1.14, 2.7), dir = this._w.subVectors(to, from).normalize();
         kit.muzzle(from, dir, this.hex, 0.5 * k);
-        kit.bolt(from, to, this.hex, { dur: FLY, width: 0.15 * k, len: 2.6 * k, light: n === 0, onHit: (p) => { if (n === 0) this.land(s, from); else this.pop(p); } }); // (slight where it leaves: it grows as it comes at the lens)
+        // each is a card, turning as it flies, on a thin streak of its colour (it grows as it comes at the lens)
+        const card = this.cards[n % this.cards.length];
+        card.bolt = kit.bolt(from, to, this.hex, { dur: FLY, width: 0.12 * k, len: 2.6 * k, light: n === 0, onHit: (p) => { card.m.visible = false; card.bolt = null; if (n === 0) this.land(s, from); else this.pop(p); } });
+        card.spin = rand(6.28); card.turn = rand(-1, 1) < 0 ? -17 : 17;
         Sound.sfx("volley_fire", this.pan(from), { vol: 0.75, rate: 1 + n * 0.04 });
         a.kickV -= 1.5;
       }
@@ -495,7 +519,7 @@ class BossStage {
     p.z += 0.06 * this.S;
     if (tearIt) { let any = false; for (const bone of [this.row.last[i * 2], this.row.last[i * 2 + 1]]) if (bone && this.breakOff(bone, false, true)) any = true; if (any) Sound.sfx("boss_break", this.pan(p), { vol: 0.85 }); } // (each blast of its death throws two parts of it clear)
     if (REDUCED_MOTION || GFX.calm) { kit.sparks(p, this.hex, { n: 12, speed: 9, life: 0.5, len: 0.7 }); kit.debris(p, { n: 4, size: 0.6, speed: 8, color: BOSS_ATK.WRECK, life: 0.7 }); }
-    else kit.explosion(p, { size: 0.55 + 0.05 * i, color: i % 2 ? 0xff4a9a : this.hex, shake: false, ring: i % 2 === 0, smoke: false, ground: false, debrisLife: 0.6 });
+    else { kit.explosion(p, { size: 0.55 + 0.05 * i, color: i % 2 ? 0xff4a9a : this.hex, shake: false, ring: i % 2 === 0, smoke: false, ground: false, debrisLife: 0.6 }); kit.sparks(p, 0xffffff, { n: 8, speed: 17, life: 0.3, len: 1.3, w: 0.05, k: 1.8, gravity: 6 }); } // (long streaks thrown clear: a blast has a shape)
     g.shake(0.08 + 0.015 * i);
     Sound.sfx("explosion_small", this.pan(p), { rate: 0.95 + i * 0.05, vol: 0.9 });
   }
@@ -592,6 +616,17 @@ class BossStage {
         if (ms.s) this.land(ms.s, ms.a);
       }
     }
+    // ---- the volley's cards ride their streaks, turning
+    for (const c of this.cards) {
+      const b = c.bolt;
+      if (!b || !b.on) { c.m.visible = false; c.bolt = null; continue; }
+      const u = Math.min(1, b.t / b.dur);
+      c.spin += c.turn * d;
+      c.m.visible = true;
+      c.m.position.copy(b.p);
+      c.m.quaternion.copy(g.camera.quaternion); c.m.rotateZ(c.spin); c.m.rotateX(0.5 * Math.sin(c.spin * 0.7));
+      c.m.scale.setScalar(lerp(1.5, 0.3, u) * k);
+    }
     // ---- a heart owed is always seen to go: if no strike lands for it, it goes on its own
     for (let i = this.debts.length - 1; i >= 0; i--) if ((this.debts[i].t += d) > 1.2) { this.debts.splice(i, 1); this.debts.unshift({ t: 0 }); this.playerHit(null); break; }
     // ---- the entrance: the frame its feet touch
@@ -611,6 +646,7 @@ class BossStage {
     // ---- its lamps: the rims come up as it powers up; the lens light sits where it gathers
     const L = g.lamps;
     if (L && this.rim0) { L.rimA.intensity = this.rim0[0] * (0.25 + 0.75 * a.power); L.rimB.intensity = this.rim0[1] * (0.25 + 0.75 * a.power); }
+    this.kicker.intensity = 1.5 * (0.4 + 0.6 * a.power);
     this.src(g.eyeLight.position); g.eyeLight.position.z += 0.4;
     g.eyeLight.intensity = a.power * (0.6 + 3.2 * this.windEase);
     // ---- its shadow on the floor: under its hips, wider as it comes down
@@ -665,5 +701,6 @@ class BossStage {
     this.a.dispose();
     this.seekers.forEach((m) => { m.sp.material.dispose(); m.tail.mesh.geometry.dispose(); m.tail.mesh.material.dispose(); });
     this.orb.material.dispose();
+    this.cardTex.dispose(); this.cards.forEach((c) => c.m.material.dispose()); this.cards[0].m.geometry.dispose();
   }
 }
