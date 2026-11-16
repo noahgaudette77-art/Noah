@@ -31,7 +31,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | done before the review; done again after the review's fix round (below) |
-| R1 | The review's one fix round (`review/boss-r1/review.md`, the lead's rulings) | done: see below |
+| R1 | The review's one fix round (`review/boss-r1/review.md`, the lead's rulings) | done: see below. All 47 captures made again after it (every boss's strike, death and words changed; the Pusher and the Lich remade), the short set's death strips now whole-screen; the cue log written again |
 
 ## The review's fix round (r1)
 
