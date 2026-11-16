@@ -99,6 +99,8 @@ module.exports = async (cap) => {
   // ---- a lane change: the body rolls, the front wheels steer, the egg rocks and settles
   if (has("lane")) {
     await ready(30, 0.25);
+    // (a question with four lanes, for a change right across the road: any with fewer are answered on the way to it)
+    for (let i = 0; i < 5 && (await page(() => window.__arcade.Scenes.cur.round.n)) < 4; i++) { await cap.answer("R"); await sheet(); await cap.fast(20); await ready(30, 0.25); }
     await cap.answer(0);
     await cap.fast(50);
     await page(() => { const s = window.__arcade.Scenes.cur; s.lockT = 0; s.gp = Math.min(s.gp, 0.3); });
@@ -123,6 +125,7 @@ module.exports = async (cap) => {
   // ---- a right gate: the clean burst, the rings, coins to the nest egg; then the explanation, whole screen
   if (has("right")) {
     await ready(30, 0.3);
+    await page(() => { window.__arcade.Scenes.cur.run.streak = 0; }); // (a plain right gate: not the fifth in a row, which also issues a policy)
     await drive("R", 5);
     await strip("08-right-gate", 12, 2);
     await sheet();
