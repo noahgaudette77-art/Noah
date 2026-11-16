@@ -45,6 +45,30 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 | `boss-11.glb` | Boss Rush: Patrimony Phantom | Tripo `image-to-model` `v3.1-20260211` from concept `boss11-phantom-sd-1`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 14 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 3.0 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
 | `boss-all.glb` | Boss Rush: The Proctor | Tripo `image-to-model` `v3.1-20260211` from concept `boss12-proctor-sd-0`; Tripo `animations/rig` (`v1.0-20240301`, biped) and `animations/retarget` (presets); parts from Tripo `mesh/segment` v2, bound to bones by `process-rigged.mjs` | `geometry_quality: detailed`, `texture_quality: detailed`, PBR, 300K faces | 100K triangles as rigid parts on 16 bones of a 41-joint skeleton, clips: attackB, death, idle, enter, attackA, rage, hurt, stagger; 2.5 MB. | 60 + 25 + 40 + 80 Tripo credits (model, rig, segmentation, 8 clips); concept $0.06 |
 
+| `prop-cabinet.glb` | Hub: the arcade cabinet (one model for all six games; its screen and marquee are blank for the game's own picture and name) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-cabinet-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 24K triangles, one mesh, 0.6 MB | 30 Tripo credits; concept $0.03 |
+| `prop-trophy.glb` | Rewards: a chrome cup with neon rings | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-trophy-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 12K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-medal.glb` | Rewards: a gold star medal on a ribbon | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-medal-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 10K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-vault.glb` | Memory Bank: a round vault door in its frame | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-vault-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 20K triangles, one mesh, 0.8 MB | 30 Tripo credits; concept $0.03 |
+| `prop-deck.glb` | Memory Bank: a stack of study cards in a chrome holder | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-deck-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 12K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
+| `prop-podium.glb` | Final Exam: an examiner's lectern with a book and a bell | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-podium-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 14K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
+| `prop-tome.glb` | Strategy Guide: a great book with chrome corners | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-tome-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 12K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-coin.glb` | Icons: a gold token with an egg on its face | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-coin-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 6K triangles, one mesh, 0.3 MB | 30 Tripo credits; concept $0.03 |
+| `prop-star.glb` | Icons: a gold star | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-star-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.5 MB | 30 Tripo credits; concept $0.03 |
+| `prop-heart.glb` | Icons: a crystal heart (lives) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-heart-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-shield.glb` | Icons: a shield | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-shield-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-bolt.glb` | Icons: a lightning bolt (streaks) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-bolt-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-car.glb` | Nest Egg Run traffic: a compact car (mirrored to exact symmetry) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-car-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 9K triangles, one mesh, 0.3 MB | 30 Tripo credits; concept $0.03 |
+| `prop-van.glb` | Nest Egg Run traffic: a box van (mirrored) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-van-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 9K triangles, one mesh, 0.3 MB | 30 Tripo credits; concept $0.03 |
+| `prop-bus.glb` | Nest Egg Run traffic: a transit bus (mirrored) | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-bus-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 11K triangles, one mesh, 0.3 MB | 30 Tripo credits; concept $0.03 |
+| `prop-rock.glb` | Risk Blaster: an asteroid with violet crystals | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-rock-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 7K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-rock2.glb` | Risk Blaster: an asteroid shard with cyan ore | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-rock2-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 7K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-ship-a.glb` | Risk Blaster traffic: a freighter with cargo pods | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-ship-a-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 9K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-ship-b.glb` | Risk Blaster traffic: a blade-shaped cruiser | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-ship-b-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 9K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `prop-ship-c.glb` | Risk Blaster traffic: a tug drone | Tripo `image-to-model` `v3.1-20260211` at its standard settings, from concept `prop-ship-c-sd-0` (Seedream 5.5), one attempt | standard geometry and texture, PBR, 60K faces | 8K triangles, one mesh, 0.4 MB | 30 Tripo credits; concept $0.03 |
+| `mini-starfighter.glb` | Menus and Risk Blaster's cabinet topper: a small copy of the starfighter | the starfighter's source model, simplified by `process-model.mjs` | 512 px maps | 9K triangles, one mesh, 0.4 MB | none |
+| `mini-warrig.glb` | Menus and Nest Egg Run's cabinet topper: a small copy of the rig | the rig's source model, simplified by `process-model.mjs` | 512 px maps | 14K triangles, one mesh, 0.5 MB | none |
+| `mini-proctor.glb` | Menus and Boss Rush's cabinet topper: a small, still copy of the Proctor | the Proctor's source model, simplified by `process-model.mjs` | 512 px maps | 10K triangles, one mesh, 0.3 MB | none |
+
 Each model has a `<name>.json` beside it (parts, pivots, anchors, triangle count) written by the processing tool.
 
 The eleven biped bosses are built a third way (`tools/gen/process-rigged.mjs`). Tripo's auto-rig binds one soft skin
@@ -82,6 +106,11 @@ Blockade Labs Skybox AI, Model 3 (8K equirectangular, 1 credit each), packed at 
 | `racer-sunset.webp` | Nest Egg Run: golden hour (a great orange and pink lenticular cloud over a yellow horizon) | M3 Sky Dome | seam clean |
 | `racer-sunset-b.webp` | Nest Egg Run: dusk (purple clouds rimmed in orange, painted mountain ranges, a sun disc on the horizon) | M3 Digital Painting | seam runs through a mountain without a join |
 | `racer-night.webp` | Nest Egg Run: age 65 (stars and a violet milky way over a cyan and magenta horizon glow) | M3 Sky Dome | seam clean |
+| `hub-hall.webp`, `hub-hall-b.webp` | Hub: two arcade halls, for reflections and light only (they carry made-up marquee lettering, so they are never shown as a backdrop) | M3 Concept Render; M3 Advanced (artistic) | seams clean |
+| `title-dusk.webp`, `title-dusk-b.webp` | Title: a red and blue dusk over a mirror-flat plain; a painted dusk over mountains | M3 Sky Dome; M3 Digital Painting | seams clean |
+| `exam-moon.webp` | Final Exam: a full moon in storm cloud over a paved court and a golden arch | M3 Advanced (artistic) | seam clean |
+| `vault-gold.webp` | Memory Bank: the inside of a gold and steel vault | M3 Concept Render | seam clean |
+| `guide-archive.webp` | Strategy Guide: a vaulted library with lamps and stained glass | M3 Concept Render | seam clean |
 | `boss-storm.webp` | Boss Rush: the arena's sky (a violet storm vortex with magenta lightning) | M3 Advanced (artistic) | upper half only is used; the join is turned behind the camera |
 | `boss-storm-b.webp` | Boss Rush: the industrial bosses' sky (dark teal storm over a far refinery, an orange fire pillar on the horizon) | M3 (style 146) | seam runs through the fire pillar without a join |
 | `boss-void.webp` | Boss Rush: the undead bosses' and the Proctor's sky (a black spiral storm with violet lightning over red lava light and far spires) | M3 Scifi Concept Art | seam clean |
@@ -93,12 +122,19 @@ the seam), `blaster-deep-3` (a visible join through its bright star). Their seve
 A second day sky (`racer-day-b`) had a visible join and was not kept. Skies for the other modes are generated and
 are added to this table as each mode's phase picks them.
 
+## Sprites drawn from the models (`assets/ui/`)
+
+`tools/gen/render.js --sprites` draws each model alone on a clear ground into one strip, for the page's own (DOM)
+interface. `icons.webp`: coin, star, heart, shield, bolt, medal, trophy (160 px cells, 27 KB). `bosses.webp`: a
+head-and-shoulders portrait of each of the twelve bosses (192 px cells, 86 KB). A `.json` beside each gives the order.
+
 ## Sound (`assets/audio/`)
 
 ElevenLabs. Effects: `eleven_text_to_sound_v2`, `prompt_influence` 0.45, a fixed duration per effect, 3 to 6 takes
 each (the game plays the takes of a sound in turn, each at the volume that makes it as loud as the middle take). Loops: the same model with `loop: true`. Announcer: voice
 "Harry" (`SOYHLrjzK2X1ezoPC6cr`), model `eleven_v3`, with a touch of echo and compression added in the build.
-`audio.json` lists every cue's place in its sprite.
+`audio.json` lists every cue's place in its sprite. Music is cut to a loop of whole four-bar phrases at the take's own measured tempo (all
+ten tracks came within 0.06 BPM of what was asked), starting where the levels at both ends of the loop match.
 
 | File | Holds | Size |
 |---|---|---|
@@ -106,27 +142,31 @@ each (the game plays the takes of a sound in turn, each at the volume that makes
 | `sfx-combat.mp3` | laser, heavy laser, plasma bolt, spent cell, beam, missile launch and hit, volley, energy wave, ground slam, boss roar, hurt, stagger, armour breaking, death, warp; loop: starfighter engine | 1.1 MB, 82 s |
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.5 MB, 34 s |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.1 MB, 9 s |
-| `voice.mp3` | 67 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, streak names, milestones ...) | 1.1 MB, 92 s |
+| `voice.mp3` | 72 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, every game's name, "Welcome to the arcade", streak names, milestones ...) | 1.3 MB, 107 s |
 | `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
 | `music-racer.mp3` | Nest Egg Run's track: ElevenLabs `music_v2_5`, prompt `racer` in `sounds.js` (outrun synthwave, 118 BPM), take 0 of 2, cut to a loop from 0.7 s to 48.1 s | 0.9 MB, 48 s |
 | `sfx-bosses.mp3` | Boss Rush: each boss's own roar (`roar_1` .. `roar_11`, `roar_all`, 3 takes each), a giant machine landing, a limb servo, powering up | 1.4 MB, 98 s |
 | `music-boss.mp3` | Boss Rush's track: ElevenLabs `music_v2_5`, prompt `boss` (dark aggressive synthwave, 140 BPM), take 0 of 2, a loop from 0.7 s to 57.5 s | 1.1 MB, 58 s |
 | `music-finalboss.mp3` | The Proctor's track: prompt `finalboss` (epic dark synthwave, 150 BPM), take 0 of 2, a loop from 0.7 s to 63.1 s | 1.2 MB, 63 s |
+| `music-title.mp3`, `music-hub.mp3` | The title's theme (100 BPM) and the arcade hall's laid-back track (92 BPM): prompts `title`, `hub`, take 0 of 2 each | 1.0 MB each, about 50 s |
+| `music-exam.mp3`, `music-memory.mp3`, `music-calm.mp3` | Final Exam (tense, solemn, 96 BPM), Memory Bank (mellow, 84 BPM), Strategy Guide (calm, 80 BPM): prompts `exam`, `memory` (take 1 of 2), `calm` (take 0 of 2) | about 1.0 MB each, about 50 s |
 
 ## Spend log
 
-As of 2026-11-16 06:30 UTC (Phase 2 closing, Phase 3's assets made). Balances are read live from each provider;
-failed calls are not charged by any of the four. Every paid call is a line of `tools/gen/ledger.jsonl`.
+As of 2026-11-16 15:30 UTC (Phase 3 under way; the assets for Phases 4 and 5 are made). Balances are read live from
+each provider; failed calls are not charged by any of the four. Every paid call is a line of
+`tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits | 3,720 | 745 | 26 image-to-3D (60 each), 1 multi-view-to-3D (60), 1 text-to-3D (50), 20 segmentations (40 each), 12 auto rigs (25 each), 23 retarget requests (95 clips at 10 each), 13 rig checks (free) |
-| fal.ai | $49.90 | $26.63 | $23.27 | 25 Rodin Gen-2.5 runs, 60 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
-| ElevenLabs | 131,000 credits | 16,708 | 114,292 | 495 sound effects and loops (11 credits a second), 69 announcer lines, 9 music runs (about 880 credits each) |
+| Tripo | 4,465 credits | 4,320 | 145 | 26 image-to-3D at the highest settings (60 each), 20 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 20 segmentations (40 each), 12 auto rigs (25 each), 23 retarget requests (95 clips at 10 each), 13 rig checks (free) |
+| fal.ai | $49.90 | $27.44 | $22.46 | 25 Rodin Gen-2.5 runs, 80 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
+| ElevenLabs | 131,000 credits | about 25,800 | about 105,200 | 495 sound effects and loops (11 credits a second), 80 announcer lines, 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
 The bosses cost more Tripo credits than first projected (about 1,700 against about 1,000 to 1,450): building them as
-rigid parts needs a part segmentation of each (40), and each got eight clips (80), not six.
+rigid parts needs a part segmentation of each (40), and each got eight clips (80), not six. Tripo's last 145 credits
+are kept as a reserve for one remake.
 
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
 redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now

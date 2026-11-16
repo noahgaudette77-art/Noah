@@ -1,0 +1,33 @@
+{
+ "name": "prop-ship-b",
+ "triangles": 8998,
+ "bytes": 393252,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.3851,
+    -0.1623,
+    -0.5
+   ],
+   "max": [
+    0.3851,
+    0.1623,
+    0.5
+   ],
+   "tris": 8998
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.770180881023407,
+  0.3246794641017914,
+  1
+ ],
+ "source": "cand/props/prop-ship-b-sd-0.tripo.glb"
+}

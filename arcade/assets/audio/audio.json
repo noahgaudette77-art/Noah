@@ -2844,6 +2844,24 @@
   }
  },
  "music": {
+  "exam": {
+   "file": "audio/music-exam.mp3",
+   "loop": [
+    0.7,
+    50.7104
+   ],
+   "vol": 1,
+   "take": 1
+  },
+  "memory": {
+   "file": "audio/music-memory.mp3",
+   "loop": [
+    0.7,
+    57.8497
+   ],
+   "vol": 1,
+   "take": 1
+  },
   "title": {
    "file": "audio/music-title.mp3",
    "loop": [
@@ -2938,6 +2956,16 @@
    "file": "audio/voice.mp3",
    "bytes": 1283075,
    "seconds": 106.85
+  },
+  "music-exam": {
+   "file": "audio/music-exam.mp3",
+   "bytes": 1020910,
+   "seconds": 50.98
+  },
+  "music-memory": {
+   "file": "audio/music-memory.mp3",
+   "bytes": 1163538,
+   "seconds": 58.12
   },
   "music-title": {
    "file": "audio/music-title.mp3",

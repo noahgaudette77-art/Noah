@@ -15,8 +15,8 @@ const SETS = {
   boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss"],
   hub: ["sky:hub-hall", "sky:hub-hall-b", "sfx:core", "sfx:hub", "sfx:voice", "music:hub"],
   title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title"],
-  memory: ["sky:vault-gold", "sfx:core", "sfx:voice", "music:calm"],
-  exam: ["sky:exam-moon", "sfx:core", "sfx:combat", "sfx:voice", "music:calm"],
+  memory: ["sky:vault-gold", "sfx:core", "sfx:voice", "music:memory"],
+  exam: ["sky:exam-moon", "sfx:core", "sfx:combat", "sfx:voice", "music:exam"],
   guide: ["sky:guide-archive", "sfx:core", "music:calm"],
 };
 const files = {};
