@@ -29,20 +29,22 @@ const BOSS_SKY = {
 //          the bones below it along; "wound": a hole burnt in its chest). limp: the arm that hangs once it is hurt
 //   last   the parts that go one by one in its death, before the last blast takes the rest
 //   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
+//   dress  what its model is dressed with (22d, BOSS_DRESS: the Titan's smokestacks, hot and venting steam)
+//   slam   where its ground slam lands: "weapon" (under the head of what its right hand holds); else between its fists
 const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.6, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
   2: { sky: "boss-storm", atk: [1] }, // PERILMONGER: its huge fists down on the floor
   3: { sky: "boss-void", atk: [2], src: "chest" }, // SOLVENCY SPECTER: a wave of energy out of the empty vault in its chest
-  4: { sky: "boss-storm", atk: [3] }, // THE FINE PRINT: a line of light drawn by its quill and swept across
+  4: { sky: "boss-storm", atk: [3], clip: { 3: "attackB" } }, // THE FINE PRINT: a line of light drawn by its quill and swept across (thrust at the lens: in the overhead smash it bends over and its flat hat hides it)
   5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
-  6: { sky: "boss-storm-b", atk: [2], src: "chest" }, // INFLATION TITAN: a blast of steam from its boiler
+  6: { sky: "boss-storm-b", atk: [2], src: "chest", dress: "stacks" }, // INFLATION TITAN: a blast of steam from its boiler (its light from its gauge and its smokestacks)
   7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
-  8: { sky: "boss-void", atk: [1] }, // LORD INTESTATE: its gavel down on the floor
+  8: { sky: "boss-void", atk: [1], slam: "weapon" }, // LORD INTESTATE: its gavel down on the floor
   9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
   10: { sky: "boss-storm-b", atk: [0, 1], srcs: { 0: "chest", 1: "weapon" }, env: 2.8, size: 6.8, tear: [[0.78, "wound"], [0.56, "forearmL"], [0.34, "shoulderL"]], last: ["forearmR", "forearmL", "shoulderR", "shoulderL"] }, // PROBATE TOLLGATE: a volley from the booth, then the barrier's slam
-  11: { sky: "boss-void", atk: [3] }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver
-  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" } }, // THE PROCTOR: all five, in turn
+  11: { sky: "boss-void", atk: [3], clip: { 3: "attackB" } }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver (thrust at the lens: in the overhead smash it bends over and its cloak hides it)
+  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" }, clip: { 3: "attackB" }, slam: "weapon" }, // THE PROCTOR: all five, in turn (its sweep thrust at the lens: in the overhead smash its cap and coat hide it; its slam lands under its pencil)
 };
 const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);
 

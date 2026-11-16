@@ -37,6 +37,8 @@ class BossStage {
     this.col = new THREE.Color(g.cfg.color); this.hex = this.col.getHex();
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
+    const bc = new THREE.Color(this.beamCol);
+    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
@@ -107,7 +109,26 @@ class BossStage {
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
   // there, so its face stands under its words, not behind them.
-  talk(ms, len) { this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2); this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); } // (more room for more lines)
+  // How tall its words stand once all typed is measured on the bubble itself, the whole line set in it for an instant
+  // and taken out again (nothing is drawn between). While the bubble is up, the room is worked out every frame against
+  // the band as it is then (roomK, of the band's height: see bubbleRoom): the bubble's size is fixed on the screen, the
+  // band's height is not (a long question leaves a short band), and the band moves when the next question comes.
+  talk(ms, len, text) {
+    const g = this.g, b = g.el && g.el.querySelector(".bubble"), sp = b && b.querySelector("span");
+    this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2);
+    this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); // (a guess, for when there is no bubble to measure)
+    if (sp && text) { const was = sp.textContent; sp.textContent = text; this.bubble = { el: b, h: b.offsetHeight }; sp.textContent = was; }
+  }
+  // (head: how far down the band the foot of its head stands, with no room made)
+  bubbleRoom(head) {
+    const g = this.g, bb = this.bubble;
+    if (!bb) return;
+    if (!bb.el.isConnected) { this.bubble = null; this.roomT = 0; return; }
+    if (!g.band || !(g.band.h > 0)) return;
+    const top = bb.el.offsetTop; // (below the foot of its head, it is not over its head: the band has moved up since it was placed, or it sits over an explanation sheet)
+    this.roomK = (top - g.band.top) / g.band.h >= head ? 0 : clamp((top + bb.h + 6 - g.band.top) / g.band.h, 0, 0.75);
+    this.roomT = Math.max(this.roomT || 0, 0.1);
+  }
   // ---- sound that runs on ---------------------------------------------------------------------------------------
   loops(on) {
     if (on) {
@@ -186,7 +207,7 @@ class BossStage {
     if (t.mark.length) return;
     const at = (v) => this.lens(0, -0.7, 5.2, v); // (at the foot of the picture: the player's side)
     t.mark.push(kit.mark(BOSS_ATK.MARK[kind], at(this._v), this.hex, { size: kind === 3 ? 1.5 : kind === 1 ? 0.9 : 1.05, dur, follow: at, spin: kind === 3 || kind === 1 ? 0 : kind === 4 ? 2.4 : 1.6 }));
-    if (kind === 1) t.mark.push(kit.mark("ring", this._v.set(0, 0.08, 2.4 * k), this.hex, { size: 6.5 * k, dur, flat: true })); // (and on the floor, where the blow will fall)
+    if (kind === 1) t.mark.push(kit.mark("ring", this.slamSpot(this._v) || this._v.set(0, 0.08, 2.4 * k), this.hex, { size: 6.5 * k, dur, flat: true })); // (and on the floor, where the blow will fall)
     Sound.sfx(kind === 0 || kind === 4 ? "lock_on" : "warning", 0, { vol: 0.6, rate: [1, 0.92, 0.85, 1.2, 1.1][kind] });
   }
   // the wind-up follows the charge bar (f: how full it is)
@@ -349,8 +370,18 @@ class BossStage {
     if (s && s.beam) s.beam.stop();
     this.strike = null;
   }
-  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1)
-  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 3.4, out); }
+  // where a slam comes down on the floor: under its weapon's head (the row's slam: "weapon") or between its fists, as
+  // its clip puts them at the blow (the actor's slamPt); null for the Tollgate, whose barrier's tip says it
+  slamSpot(out) {
+    const a = this.a, pt = a.slamPt && a.slamPt[this.row.slam === "weapon" ? "weapon" : "fists"];
+    if (!pt) return null;
+    a.model.scene.localToWorld(out.copy(pt));
+    out.y = 0.07;
+    return out;
+  }
+  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1). (Not too near the lens: the beam's
+  // width and the glow at its end are drawn in the world, and nearer they would fill the picture.)
+  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 4.5, out); }
   release(s) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, src = this.src(new THREE.Vector3());
     s.released = true;
@@ -359,7 +390,7 @@ class BossStage {
     kit.flash(src, this.hex, 0.25 * k, 0.9 * k, 0.09, 0.8, 1.4);
     kit.light(src, this.hex, 6, 0.2, 22);
     if (s.kind === 1) { // the ground slam: where the blow falls, the floor breaks and a shock runs out to the lens
-      const f0 = (s.f0 = new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
+      const f0 = (s.f0 = this.slamSpot(new THREE.Vector3()) || new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
       Sound.sfx("slam", 0, { vol: 1 });
       kit.wave(f0, null, this.hex, { flat: true, dur: 0.55, s0: 0.8 * k, s1: 13 * k, w: 0.24 });
       kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 });
@@ -377,11 +408,12 @@ class BossStage {
       const to = this.lens(0, -0.15, 1.2), bw = 2.4 * Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * (GFX.w / GFX.h);
       Sound.sfx("wave_fire", 0, { vol: 1 });
       for (let j = 0; j < 3; j++) kit.wave(src, to, this.hex, { dur: BOSS_ATK.FLY[2] + 0.1, s0: 0.7 * k, s1: bw * (1.5 - j * 0.22), delay: j * 0.045, w: 0.075 });
+      if (a.vent) a.vent(); // (and what its dress lets off: the Titan's pipes)
       kit.sparks(src, this.hex, { n: quiet ? 6 : 18, speed: 16 * k, dir: this._w.subVectors(to, src).normalize(), spread: 0.45, life: 0.3, len: 0.9 * k, w: 0.06 * k });
       g.shake(0.1);
     } else if (s.kind === 3) { // the beam: a white core in a wide halo, swept across the foot of the picture
       Sound.sfx("beam_fire", 0, { vol: 1 });
-      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 1.15, k: 1.5, grow: 0.04 });
+      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 0.7, k: this.beamK, grow: 0.04 });
     } else if (s.kind === 4) { // seekers: each swings out wide on its own side and comes in on the player
       Sound.sfx("missile_fire", -0.4, { vol: 0.9 }); Sound.sfx("missile_fire", 0.4, { vol: 0.9, delay: 0.05, rate: 1.08 });
       this.seekers.forEach((ms, j) => this.launch(ms, j, s));
@@ -638,7 +670,7 @@ class BossStage {
     a.root.position.set(rage && !quiet && this.phase === "fight" ? rand(-1, 1) * 0.03 * (g.rageK || 0) : 0, 0, 0);
     this.windEase = (this.windEase || 0) + ((g.state === "ask" ? this.windK : this.strike && !this.strike.landed ? 1 : 0) - (this.windEase || 0)) * Math.min(1, d * 8);
     a.lean = this.dying ? 1.6 : this.windEase * 0.8;
-    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick });
+    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick, charge: this.windEase });
     // what it gathers glows where the attack will leave it
     const ok = this.windEase > 0.03 && a.root.visible && !this.blown;
     this.orb.visible = ok;
@@ -677,12 +709,27 @@ class BossStage {
     // close: as near as holds `show` of its height in the band, and its width across it. (When the fight is over the
     // question and the answers have gone and the whole screen is the picture: the band counts for more.)
     const near = Math.max((S * row.show) / 0.94 / (2 * t * bh * (1 + 0.75 * this.overK)), (S * wd) / 0.94 / (2 * t * (GFX.w / GFX.h)));
-    const to = near * lerp(1, 1.36, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
+    // drawn back: the floor is seen (from higher for a slam). While it winds up a blow all of it stays in the picture,
+    // what it raises over its head too (how high it reaches is measured once for each clip: the actor's reach), and
+    // for a slam the floor in front of it that the blow will cross
+    const low = this.camLow, R = this.phase === "fight" && this.tele && this.a.reach ? this.a.reach[this.tele.clip] || 0 : 0;
+    let wideD = near * 1.36, wideY = S * (0.47 - 0.14 * Math.max(0, low));
+    if (R > 0) {
+      const slam = this.tele.kind === 1, top = R * S * 1.04 + (slam ? 0.08 * S : 0), bot = -S * (slam ? 0.16 : 0.1); // (a slam's fists come up toward the lens: they stand higher in the picture than their height says)
+      wideD = Math.max(wideD, (top - bot) / (2 * 0.94 * t * bh));
+      const h = wideD * t * bh * 0.94;
+      wideY = clamp(wideY, top - h, bot + h);
+    }
+    const to = lerp(near, wideD, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
     this.dist += (to - this.dist) * Math.min(1, d * 5);
-    const Hb = 2 * this.dist * t * bh, low = this.camLow;
+    const Hb = 2 * this.dist * t * bh;
+    // (close: its head under the top of the band; while it talks, under its words: as much higher as they reach down the
+    // band, less the sky there already is over its head)
+    const lookBase = Math.max(S * 1.05 - Hb / 2, Hb * 0.36), over = lookBase + Hb / 2 - S * 1.01;
+    this.bubbleRoom((lookBase + Hb / 2 - this.a.at("head", this._u).y) / Hb);
     this.roomT = Math.max(0, (this.roomT || 0) - d);
     this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
-    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, S * (0.47 - 0.14 * Math.max(0, low)), k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
+    const lookNear = lookBase + this.room * Math.max(0, (this.roomK || 0.15) * Hb - over) * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);

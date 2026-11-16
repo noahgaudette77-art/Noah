@@ -19,6 +19,7 @@ class BossTollgate {
     this.glow = row.glow === undefined ? 2.3 : row.glow;
     this.power = 0;
     this.joint = { head: A.eye, chest: A.console, hips: P.body, handL: A.clawL, handR: A.barrierTip, footL: A.trackL, footR: A.trackR };
+    this.signal = this.makeSignal(A.eye, row.env === undefined ? 2.2 : row.env, game.cfg.color);
     this.size = model.info.size || [1, 1, 0.66];
     // what it is doing: the barrier's lift (0 at rest, 1 raised over its head), its swing, the booth's rear and lurch
     this.lift = 0; this.liftTo = 0; this.slam = 0; this.rear = 0; this.rearTo = 0; this.lurch = 0;
@@ -31,6 +32,49 @@ class BossTollgate {
     this.t = rand(0, 5);
     this._v = new THREE.Vector3(); this._x = new THREE.Vector3(1, 0, 0);
     this.rest = {}; for (const n of ["shoulderL", "shoulderR", "forearmL", "forearmR", "body", "trackL", "trackR"]) if (P[n]) this.rest[n] = P[n].rotation.clone();
+    // how high it reaches, in its own heights: its booth, and its barrier raised over it (the lens keeps all of it in
+    // the picture while it winds up)
+    const sR = P.shoulderR, fR = P.forearmR;
+    this.reach = { attackB: bossTop(model.scene) };
+    if (sR && fR) { sR.rotation.x = this.rest.shoulderR.x - 2.15; fR.rotation.x = this.rest.forearmR.x - 0.35; this.reach.attackA = bossTop(model.scene); sR.rotation.copy(this.rest.shoulderR); fR.rotation.copy(this.rest.forearmR); }
+  }
+  // The round lamp in the booth's window is its lane signal, not an eye: a housing over it, a lens of small lamps that
+  // burns amber and turns red as the boss charges, a hood over the lens with a neon edge, two guard bars across it.
+  // (In the model's own units, set on the lamp's place: the housing covers the lamp the model was made with.)
+  makeSignal(at, env, hex) {
+    const grp = new THREE.Group(), R = 0.088, r = 0.064, z0 = -0.011; // (the lamp's place stands just in front of the booth's face; the lamp reaches about 0.066 from its middle)
+    const metal = new THREE.MeshStandardMaterial({ color: 0x17131f, metalness: 0.85, roughness: 0.34, envMapIntensity: env, side: THREE.DoubleSide });
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.014, 40).rotateX(Math.PI / 2), metal);
+    plate.position.z = z0 + 0.007;
+    // the lens: rows of small lamps, as a lane signal has
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const x = c.getContext("2d");
+    x.fillStyle = "#2a1406"; x.fillRect(0, 0, 64, 64);
+    x.fillStyle = "#ffffff";
+    for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const px = 32 + i * 6.6 + (j & 1 ? 3.3 : 0), py = 32 + j * 5.8; if (Math.hypot(px - 32, py - 32) < 27.5) { x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); } }
+    this.lensTex = new THREE.CanvasTexture(c);
+    this.lensMat = new THREE.MeshBasicMaterial({ map: this.lensTex, color: 0x000000 });
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(r, 36), this.lensMat);
+    lens.position.z = z0 + 0.016;
+    // the hood: a shell over the top and sides of the lens, standing out from the housing, its front edge lit
+    const hl = 0.075, hr = r * 1.18, arc = Math.PI * 1.3, a0 = Math.PI - arc / 2;
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(hr, hr, hl, 30, 1, true, a0, arc).rotateX(Math.PI / 2), metal);
+    hood.position.z = z0 + 0.014 + hl / 2;
+    this.rimMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    this.rimCol = new THREE.Color(hex);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(hr, 0.0045, 6, 30, arc).rotateZ(a0 - Math.PI / 2), this.rimMat); // (the same arc as the hood's, over the top)
+    rim.position.z = z0 + 0.014 + hl;
+    // two guard bars across the lens
+    const bars = [-0.3, 0.3].map((f) => { const b = new THREE.Mesh(new THREE.BoxGeometry(r * 2.15, 0.011, 0.012), metal); b.position.set(0, f * r, z0 + 0.024); return b; });
+    // a soft halo in front of it (it blooms as a lamp does)
+    this.halo = glowSprite(0xffffff, 0.3, 0);
+    this.halo.position.z = z0 + 0.03;
+    grp.add(plate, lens, hood, rim, ...bars, this.halo);
+    at.add(grp);
+    this.sigMetal = metal;
+    this.sigCol = new THREE.Color(); this.sigAmber = new THREE.Color(1, 0.52, 0.07); this.sigRed = new THREE.Color(1, 0.05, 0.025);
+    return grp;
   }
   has(name) { return name === "rage" || name === "death" || name === "hurt" || name === "stagger"; }
   at(name, out) {
@@ -143,6 +187,14 @@ class BossTollgate {
     // ---- its lights
     const br = 0.86 + 0.14 * Math.sin(t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    // its signal: amber, turning red as it charges (a deep red at a low gain: a lit neon red goes pink), dark until it
+    // powers up, failing as it dies
+    const q = smoothstep(0.1, 0.8, o.charge || 0), lit = this.power * (o.flick === undefined ? 1 : o.flick);
+    this.sigCol.copy(this.sigAmber).lerp(this.sigRed, q);
+    this.lensMat.color.copy(this.sigCol).multiplyScalar(lerp(2.1, 1.3, q) * lit);
+    this.rimMat.color.copy(this.rimCol).multiplyScalar(1.5 * lit);
+    this.halo.material.color.copy(this.sigCol);
+    this.halo.material.opacity = (0.3 + 0.2 * q) * lit;
     // ---- what has come off it
     for (let i = this.scraps.length - 1; i >= 0; i--) {
       const sc = this.scraps[i], gp = sc.grp;
@@ -158,5 +210,9 @@ class BossTollgate {
       if (sc.t >= sc.life) { gp.visible = false; this.scraps.splice(i, 1); }
     }
   }
-  dispose() { /* its parts are released with the scene */ }
+  dispose() { // (its parts are released with the scene; what was made here for its signal is released here)
+    this.signal.traverse((n) => { if (n.geometry) n.geometry.dispose(); });
+    [this.lensMat, this.rimMat, this.sigMetal, this.halo.material].forEach((m) => m.dispose());
+    this.lensTex.dispose();
+  }
 }
