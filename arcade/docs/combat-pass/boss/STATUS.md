@@ -11,6 +11,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   from its clips; parts torn off; a limp arm; the head following the lens).
 - `src/js/22e-bosstollgate.js`: `BossTollgate` (boss 10, split parts animated by code; the same calls as the actor).
 - `src/js/22f-bossstage.js`: `BOSS_ATK`, `BossStage` (everything seen and heard of the fight, on the show clock).
+- `src/js/22g-bossflavor.js`: `BOSS_FX`, `BOSS_ART`, `BossFlavor` (each boss's own projectile, trail and impact).
 - `src/js/22-boss.js`: the game. `this.pano` (a sky has loaded), `this.stage` (the boss's model has loaded: the
   fight is staged). From disk both are off and everything is as it was (`cyborgFrame`, `cyborgCamera`).
 - Shared files touched: `08d-panosky.js` (`makePanoSky(sky, { window })`: a long-lens view of one part of a
@@ -29,10 +30,62 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
 | 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
-| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | done: 47 JPGs (boss 1's fourteen, three for each other boss, the remade 6 and 11 included), each under 450 KB; `sound-cues.md` written again; full regression both ways IDENTICAL, sequence test passed. (Run the dpr-2 captures one boss at a time: two or three side by side, or other renders on the same machine, overload it and Playwright's screenshots time out; `final-captures.sh` in the session's scratchpad retried each boss until its three files were made) |
+| 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | done before the review; done again after the review's fix round (below) |
+| R1 | The review's one fix round (`review/boss-r1/review.md`, the lead's rulings) | done: see below |
+
+## The review's fix round (r1)
+
+Major defects, by the review's numbers:
+
+1. The boss's words hid it. They are now a caption of one or two lines along the top edge of the band on a dark
+   plate, the boss's name first (the rule's own bubble restyled and placed by the stage: `caption`, `capStyle`),
+   hidden while the explanation sheet is up and from the moment a death or a defeat starts; a line left from the
+   last answer is taken down when the next question comes (the stale "Nooo!"). Same words: only where and when.
+2. Win and loss went unshown. BOSS DEFEATED! (with its stars), GAME OVER, then DEFEATED under it, stand on a plate
+   on the top layer until the results replace the screen at the rule's own frame (`showResult`): the game's words,
+   the game's timers (DEFEATED on its 1.2 s mark, the results on theirs). Every boss's fall now takes the same
+   time, so its last blast leaves BOSS DEFEATED! up for 1.6 s; the Proctor's death is bigger, not longer. (The old
+   banner was a CSS animation that faded after 1.4 s.) DEFEATED stands low in the screen, clear of the boss's face.
+3. Strikes stopped short. A slam's shock (a white-hot front, its colour behind, three blades of light) runs along
+   the floor to the foot of the picture, where its ring and a jolt land; a wave comes on at the player in rings
+   that grow until they fill the band; the volley's first card, the seekers and the beam end in a flash at the
+   player; then the player's hit as before. The kit's pool of ten rings is no longer used up by one strike (that
+   was why fronts vanished half way). The HUD's crack was there all along: the capture scenario now steps the
+   page's CSS animations with the frames, so strips show the cracks, the sheet coming in and the power-on as a
+   player sees them (05b is taken once the sheet is in).
+4. Attacks repeated. Each boss has its own projectile, trail and impact (`22g-bossflavor.js`, `BOSS_FX`): contract
+   cards with a cyan edge (Pusher); toll tickets and coins (Tollgate); exam papers and pencils, graphite and torn
+   papers in its slam (Proctor); molten cracks with white-hot cores (Perilmonger); filing drawers and papers thrown
+   up (Golem); the gavel's white crack and rings of sound (Intestate); coins and keys poured from the vault
+   (Specter); scalding steam in many small puffs (Titan); sand bolts dropping grains (Lich); strings of light from
+   the hands to each bolt (Influencer); tiny glowing script running out along the beam (Fine Print); a cleaving arc
+   with a bone-white edge behind the violet one (Phantom). Markers stay per kind.
+5. The last heart could not be seen. A saturated red frame round the band (never over the question, the answers or
+   the sheet) beats about once a second with the alarm; steady with no heart left, or with reduced effects; it
+   fades once the fight is over. The shared `GFX.setDanger` vignette stays as it was.
+6, 7. Lookalikes: the lead remade the Pusher and the Lich (merged at 2d8a0be); looked at, framing and glow right
+   (cyan, mint), rows unchanged. The three undead-looking bosses each have their own sky: the Specter the violet
+   storm, the Lich the teal storm tinted mint, the Phantom the red void.
+8. Lasting damage could not be read. The recoil is shallower (a reaction can now be blended with the stance: the
+   actor's `react(..., { k })`), so the boss stays above the front row; the hole in its chest and its stumps glow
+   at their edges (smouldering rings) and smoke more; raging, its rims and kicker burn red, steam rises off its
+   shoulders and it shakes harder.
+9. Debris stood up like a boss. In the last blast a big part (a cape, a robe, a torso, the Tollgate's booth)
+   burns away where it lies, sinking and shrinking under tongues of fire and smoke; the rest are thrown down and
+   out on low arcs.
+10. Blocky sky: looked at full size (the entrance's upward view at dpr 2): smooth. The blocks were the strips'
+   downscaling. Not changed.
+
+Minor, done: the stale line (1); the floor's warning eases off over a few frames instead of snapping (staged
+only); stars and coins fly to just beside the score, which counts up as they land (a value already decided); the
+front row of the crowd lit enough to read as heads. Skipped, as ruled: the same drop for every entrance, one death
+template, the Phantom's and Intestate's dark faces.
 
 ## Lookalikes, for the lead
 
+- PRODUCT PUSHER (1) and LONGEVITY LICH (7): remade by the lead after the review (merged at 2d8a0be): a faceplate
+  with cyan eye slits and a grin line under slick chrome hair; a clockwork lich with a porcelain mask, a crown of
+  clock hands and an hourglass chest. Looked at: no lookalike.
 - PROBATE TOLLGATE (10): its one round lamp read as an eye: now a lane signal (housing, a lens of small lamps,
   amber turning red as it charges, hood, guard bars). Resolved in code.
 - INFLATION TITAN (6): resolved by the lead's remake (merged at bfbabca). The old domed head with two round amber
@@ -43,9 +96,8 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   eyes could be read as a famous film robot's endoskeleton; the new Phantom wears a deep hood over the whole head,
   two violet eye slits in its shadow, half bone-white and half dark steel. Looked at (idle, fight): no lookalike;
   the skull's shading made in code is gone.
-- SOLVENCY SPECTER (3) and LONGEVITY LICH (7): mild. A hooded chrome mask, a crowned undead king: common types,
-  kept their own by the brow eye and vault, and the hourglass heart.
-- The others (1, 2, 4, 5, 8, 9, all): no resemblance found.
+- SOLVENCY SPECTER (3): mild. A hooded chrome mask: a common type, kept its own by the brow eye and the vault.
+- The others (2, 4, 5, 8, 9, all): no resemblance found.
 
 ## Looked at so far
 
