@@ -19,7 +19,8 @@ module.exports = async (cap) => {
     const heard = (text) => log.push([window.__f, "heard", text]);
     const wrap = (k, say) => { const f = S[k].bind(S); S[k] = (...a) => { const t = say(...a); if (t) heard(t); return f(...a); }; };
     wrap("sfx", (name, pan, o) => "`" + name + "`" + (o && o.delay ? " (sounds " + Math.round(o.delay * 60) + " frames on)" : ""));
-    wrap("say", (text) => "announcer: \"" + text + "\"");
+    A.Store.settings.sfx = true; A.Store.settings.voice = true; // (the announcer's queue is only kept while it is on)
+    { const f = S.say.bind(S); S.say = (text) => { const w = f(text); heard("announcer: \"" + text + "\"" + (w > 0.02 ? " (waits its turn: spoken " + Math.round(w * 60) + " frames on)" : w < 0 ? " (not spoken: it would have been more than 2.5 s late)" : "")); return w; }; }
     wrap("loop", (id, name) => (S.loops[id] || !S.bank[name] ? "" : "loop starts: `" + name + "`"));
     wrap("stopLoop", (id) => (S.loops[id] ? "loop stops: `" + S.loops[id].name + "`" : ""));
     wrap("hush", () => "whatever is still ringing is faded out");
@@ -71,7 +72,7 @@ module.exports = async (cap) => {
   });
   // ---- one moment: what was logged since `from`, as a table (frames counted from the row that starts with `zero`)
   const out = ["# Nest Egg Run: which sound is called on which frame", "",
-    "Taken from the running game by `arcade/tools/scenarios/racer-sound.js`: every call to `Sound.sfx`, `Sound.loop`, `Sound.stopLoop`, `Sound.say`, `Sound.play`, `Sound.stopMusic`, `Sound.setIntensity` and `Sound.hush` is noted with the frame it was made on, beside what the stage shows on that frame. Frames are 1/60 s; each table counts from the moment named in its heading (frame 0). A cue marked \"sounds N frames on\" was given a delay and is heard N frames after its row. The loops that follow the game every frame (`Sound.loopSet`: the engine's note with the road's speed, the flame's level) are not listed. A sound and its picture are fired from the same place in the code, so they share a row. The announcer speaks with each banner (`UI.banner` calls `Sound.say`).", ""];
+    "Taken from the running game by `arcade/tools/scenarios/racer-sound.js`: every call to `Sound.sfx`, `Sound.loop`, `Sound.stopLoop`, `Sound.say`, `Sound.play`, `Sound.stopMusic`, `Sound.setIntensity` and `Sound.hush` is noted with the frame it was made on, beside what the stage shows on that frame. Frames are 1/60 s; each table counts from the moment named in its heading (frame 0). A cue marked \"sounds N frames on\" was given a delay and is heard N frames after its row. The loops that follow the game every frame (`Sound.loopSet`: the engine's note with the road's speed, the flame's level) are not listed. A sound and its picture are fired from the same place in the code, so they share a row. The announcer speaks with each banner (`UI.banner` calls `Sound.say`), one line at a time: a line asked for while the one before it is still being spoken waits its turn (its row says how long), and a line that would be more than 2.5 s late is not spoken.", ""];
   const mark = () => page(() => { window.__f0 = window.__f; window.__log.length = 0; });
   const dump = async (title, note, zero) => {
     const r = await page((z) => { const S = window.__arcade.Sound, log = window.__log.splice(0); let f0 = window.__f0; if (z) { const hit = log.find((x) => x[2].startsWith(z)); if (hit) f0 = hit[0]; } return { f0, log, loops: Object.keys(S.loops).map((id) => S.loops[id].name) }; }, zero || "");
@@ -137,7 +138,7 @@ module.exports = async (cap) => {
   await mark(); await cap.answer("W"); await cap.fast(220);
   await dump("The third crash", "Frame 0: the gate is reached with one life left.", GATE);
   await mark(); await cap.next(); await cap.fast(125);
-  await dump("Forced retirement", "Frame 0: the explanation is closed with no life left. The results come up 114 frames on (1.9 s, the rule): the skid, the blast, the second blast and the jingle are all inside it, and every loop has stopped before it.", "THE RUN ENDS");
+  await dump("Forced retirement", "Frame 0: the explanation is closed with no life left. The results come up 114 frames on (1.9 s, the rule): the jingle starts with the skid (as the game always had it) and has all but rung out by then; the blast and the second blast are inside it, and every loop has stopped before it.", "THE RUN ENDS");
 
   // retirement at 65: a new run, taken to its last gate
   await cap.go("racer", STAGE);

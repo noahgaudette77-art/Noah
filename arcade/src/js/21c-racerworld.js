@@ -70,7 +70,7 @@ function racerAdMaterial(shared, tex, holo, loop) {
 // Light channels: 1 headlamps, 2 tail lamps, 3 windows, 4 hazards, 5 glow strips,
 // 6/7 a patrol light bar, 8 steady markers, 9 a stripe in the body colour. aPaint marks panels in the body colour.
 const RACER_PAINTS = [0xc0392b, 0x2e86c1, 0xf1c40f, 0x27ae60, 0x8e44ad, 0xe67e22, 0xecf0f1, 0x4a5a6e, 0x16a085, 0xd35400, 0x8f9aa3, 0xff6fb5];
-function racerVehicleGeo(type) {
+function racerVehicleGeo(type, neo) {
   const b = new RacerBatch(["aCh", "aPaint"]);
   const box = new THREE.BoxGeometry(1, 1, 1), cyl = new THREE.CylinderGeometry(1, 1, 1, 10);
   const GL = 0x0c141b, DK = 0x14161b, WH = 0xffffff;
@@ -91,6 +91,7 @@ function racerVehicleGeo(type) {
     [-1, 1].forEach((s) => { L(3, 0.03, 0.24, 1.7, s * 0.79, 1.12, 0.25, 0xffe2a8, 1.1); wheel(s * 0.88, 0.34, -1.4, 0.34, 0.24); wheel(s * 0.88, 0.34, 1.4, 0.34, 0.24); });
     lamps(0.62, 0.66, -2.2, 2.2);
     L(2, 1.3, 0.05, 0.06, 0, 0.84, 2.2, 0xff1030, 1.6);
+    if (neo) { [-1, 1].forEach((s) => L(10, 0.03, 0.05, 3.7, s * 0.93, 0.42, 0, WH, 1)); L(1, 1.3, 0.04, 0.06, 0, 0.86, -2.2, 0xfff2d8, 3); }
   } else if (type === "truck") {
     P(2.3, 1.6, 1.8, 0, 1.3, -3.0, WH, 1, 0, 0.14);
     P(2.1, 0.62, 0.1, 0, 1.62, -3.9, GL);
@@ -101,6 +102,7 @@ function racerVehicleGeo(type) {
     [-1, 1].forEach((s) => { L(9, 0.03, 0.34, 5.0, s * 1.265, 2.5, 0.9, WH, 1); b.add(box, racerM(s * 1.262, 1.75, 0.9, 0.03, 1.15, 5.0), WH, 1, { aCh: 0, aPaint: 1 }); [-2.9, 1.7, 2.8].forEach((z) => wheel(s * 1.08, 0.46, z, 0.46, 0.3)); });
     [-0.9, -0.3, 0.3, 0.9].forEach((x) => L(8, 0.12, 0.07, 0.06, x, 3.44, -1.9, 0xffa53d, 2.6));
     lamps(0.82, 0.86, -3.92, 3.72, 0.4);
+    if (neo) { [-1, 1].forEach((s) => { L(10, 0.03, 0.06, 5.5, s * 1.27, 0.76, 0.9, WH, 1); L(10, 0.06, 2.5, 0.05, s * 1.2, 2.05, 3.77, WH, 1); }); L(10, 2.46, 0.06, 0.05, 0, 3.36, 3.77, WH, 1); }
   } else if (type === "bus") {
     P(2.56, 2.7, 9.8, 0, 1.85, 0, WH, 1, 0, 0.16);
     P(2.3, 1.1, 0.1, 0, 2.2, -4.9, GL);
@@ -112,6 +114,7 @@ function racerVehicleGeo(type) {
     });
     L(8, 1.7, 0.26, 0.06, 0, 2.95, -4.92, 0xffb000, 2.2);
     lamps(0.9, 0.8, -4.92, 4.92, 0.44);
+    if (neo) { [-1, 1].forEach((s) => { L(10, 0.03, 0.06, 9.4, s * 1.3, 0.62, 0, WH, 1); L(10, 0.06, 2.4, 0.05, s * 1.24, 1.9, 4.93, WH, 1); }); L(10, 2.54, 0.06, 0.05, 0, 3.14, 4.93, WH, 1); }
   } else if (type === "bike") {
     P(0.34, 0.5, 1.5, 0, 0.66, 0, WH, 1, 0, 0.12);
     [-0.72, 0.72].forEach((z) => { b.add(cyl, racerM(0, 0.34, z, 0.34, 0.14, 0.34, 0, 0, Math.PI / 2), 0x0a0b0e, 1, { aCh: 0, aPaint: 0 }); b.add(cyl, racerM(0, 0.34, z, 0.18, 0.16, 0.18, 0, 0, Math.PI / 2), 0x9aa3ab, 1, { aCh: 0, aPaint: 0 }); });
@@ -120,6 +123,7 @@ function racerVehicleGeo(type) {
     P(0.62, 0.05, 0.08, 0, 1.05, -0.5, DK);
     L(1, 0.18, 0.18, 0.06, 0, 0.84, -0.84, 0xfff2d8, 6);
     L(2, 0.16, 0.09, 0.06, 0, 0.84, 0.8, 0xff1030, 3.5);
+    if (neo) [-1, 1].forEach((s) => L(10, 0.03, 0.05, 1.3, s * 0.185, 0.6, 0, WH, 1));
   } else if (type === "hover" || type === "police") {
     const pol = type === "police";
     P(1.95, 0.46, 4.5, 0, 0, 0, WH, 1, 0, 0.18);
@@ -162,7 +166,7 @@ function racerTrafficMaterial(P, sky) {
       #endif
       void main(){
         #ifdef SKY
-        vGloss = max(aPaint * 0.55, step(0.045, aCol.b - aCol.r) * step(aCol.b, 0.2)); // lacquer mirrors it a little, glass more, rubber and trim not at all
+        vGloss = max(max(aPaint * 0.9, 0.28 * step(aCh, 0.5)), step(0.045, aCol.b - aCol.r) * step(aCol.b, 0.2)); // dark lacquer mirrors it, glass too, trim a little
         #endif
         #ifdef USE_INSTANCING
           mat4 m = modelMatrix * instanceMatrix;
@@ -172,6 +176,12 @@ function racerTrafficMaterial(P, sky) {
         vec4 w = m * vec4(position, 1.0);
         vN = mat3(m) * normal; vW = w.xyz;
         vec3 c = aCol * mix(vec3(1.0), aTint, aPaint);
+        #ifdef SKY
+        // (with the panorama up: dark gloss bodies that mirror the sky, with light bars, lit windows and a line of neon
+        // in one of the road's own colours. Traffic that belongs beside the rig, not blocks of flat paint.)
+        vec3 neonC = aL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (aL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
+        if (aCh < 0.5) c = mix(aCol * 0.5, aTint * 0.09 + vec3(0.014, 0.016, 0.028), aPaint);
+        #endif
         vLit = 0.0;
         if (aCh > 0.5) {
           float k = 1.0;
@@ -183,7 +193,13 @@ function racerTrafficMaterial(P, sky) {
           else if (aCh < 5.5) k = 0.8 + 0.2 * sin(uTime * 3.0 + aL.w * 9.0);
           else if (aCh < 6.5) k = smoothstep(-0.2, 0.6, sin(uTime * 7.8));
           else if (aCh < 7.5) k = smoothstep(-0.2, 0.6, -sin(uTime * 7.8));
-          else if (aCh > 8.5) c = aTint * 1.3; // a livery stripe that glows in the body colour
+          else if (aCh > 8.5) {
+            #ifdef SKY
+            c = neonC * (aCh > 9.5 ? 2.6 : 1.6);
+            #else
+            c = aTint * 1.3; // a livery stripe that glows in the body colour
+            #endif
+          }
           c *= k * uDim;
         }
         vCol = c;
@@ -296,7 +312,7 @@ class RacerWorld {
     this.fleet = {};
     this.cars = [];
     for (const type in RACER_FLEET) {
-      const n = RACER_FLEET[type], geo = racerVehicleGeo(type);
+      const n = RACER_FLEET[type], geo = racerVehicleGeo(type, !!g.pano);
       const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
       tint.setUsage(THREE.DynamicDrawUsage); lights.setUsage(THREE.DynamicDrawUsage);
       geo.setAttribute("aTint", tint);
@@ -667,6 +683,10 @@ class RacerWorld {
         }
         put(b, BOX, 0, 8.75, z, 20.4, 0.5, 16, 0x202226, aZ);
         put(b, BOX, 0, 8.3, z - 7.7, 20, 0.6, 0.6, 0x3a3d44, aZ);
+        if (g.pano) { // (with the panorama up each rib carries an arch of light: the bore is read by what passes)
+          for (const sd of [-1, 1]) put(b, BOX, sd * 9.1, 4.3, z - 7.7, 0.1, 8.4, 0.16, sd < 0 ? 0x35efff : 0xff3ad4, aZ, 1, 1.5);
+          put(b, BOX, 0, 7.95, z - 7.7, 18.2, 0.1, 0.16, 0xffd9a0, aZ, 1, 1.3);
+        }
         if (i % 3 === 1) [-3.4, 3.4].forEach((x) => { put(b, CYL, x, 7.5, z, 0.75, 3.2, 0.75, 0x4a4f58, aZ, 0, 1, Math.PI / 2); put(b, CYL, x, 7.5, z + 1.62, 0.6, 0.06, 0.6, 0x35efff, aZ, 1, 1.4, Math.PI / 2); });
         if (i % 4 === 2) { put(b, BOX, 9.6, 1.3, z, 0.1, 2.4, 1.3, 0x2c6a44, aZ); put(b, BOX, 9.56, 2.9, z, 0.08, 0.5, 1.5, 0x5dffb0, aZ, 2, 2.4); put(b, BOX, -9.6, 1.5, z + 3, 0.2, 0.8, 0.6, 0xff7a2a, aZ, 1, 1.5); }
       }
@@ -685,6 +705,51 @@ class RacerWorld {
     this.curtain.visible = false;
     this.curtain.layers.set(1);
     g.scene.add(this.curtain);
+    // (with the panorama up) the mouth of a tunnel, driven through: the way out, seen from inside as an opening bright
+    // with the sky beyond it that grows; the way in, a dark mouth with a rim of light in a wall across the road. The
+    // landscape is changed as the rig passes through it, not behind a bank of darkness: an open road is never drawn
+    // under a black sky.
+    if (g.pano) {
+      const pg = new THREE.Group(), flat = (w, h, col) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, fog: false, transparent: true }));
+      const wall = flat(90, 17, 0x08080e), mouth = flat(20.4, 8.8, 0xffffff), mouthIn = flat(20.4, 8.8, 0xffffff);
+      // (the way in is not a black board: the bore is seen in it, its arches of light and its two lines of lamps running away)
+      { const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+        const x = c.getContext("2d"), vx = 128, vy = 76; // (where the lines meet: the height of the lens in the mouth)
+        x.fillStyle = "#020206"; x.fillRect(0, 0, 256, 128);
+        for (let k = 0; k < 9; k++) {
+          const q = 30 / (38 + 16 * k), a = Math.min(1, 0.25 + q), l = vx - vx * q, r = vx + (256 - vx) * q, t = vy - vy * q, b = vy + (128 - vy) * q;
+          x.lineWidth = Math.max(1, 3.4 * q); x.globalAlpha = a;
+          x.strokeStyle = "#35efff"; x.beginPath(); x.moveTo(l, b); x.lineTo(l, t); x.stroke();
+          x.strokeStyle = "#ff3ad4"; x.beginPath(); x.moveTo(r, b); x.lineTo(r, t); x.stroke();
+          x.strokeStyle = "#ffd9a0"; x.beginPath(); x.moveTo(l, t); x.lineTo(r, t); x.stroke();
+        }
+        x.globalAlpha = 0.85; x.lineWidth = 2; x.strokeStyle = "#ffd9a0";
+        for (const sd of [-1, 1]) { x.beginPath(); x.moveTo(vx + sd * 78, 0); x.lineTo(vx + sd * 5, vy - 4); x.stroke(); }
+        mouthIn.material.map = new THREE.CanvasTexture(c); mouthIn.material.color.setRGB(1.7, 1.7, 1.7); }
+      mouthIn.position.set(0, 4.4, 0.05);
+      const rims = [flat(0.3, 8.8, neon(0x35efff, 2.2)), flat(0.3, 8.8, neon(0xff3ad4, 2.2)), flat(20.7, 0.3, neon(0xffd9a0, 2.4))];
+      wall.position.set(0, 8.5, 0); mouth.position.set(0, 4.4, 0.05);
+      rims[0].position.set(-10.2, 4.4, 0.1); rims[1].position.set(10.2, 4.4, 0.1); rims[2].position.set(0, 8.8, 0.1);
+      pg.add(wall, mouth, mouthIn, ...rims);
+      pg.traverse((o) => { o.frustumCulled = false; o.renderOrder = 3; });
+      pg.visible = false;
+      g.scene.add(pg);
+      this.portal = { g: pg, wall, mouth, mouthIn, rims };
+    }
+  }
+  // the mouth as it comes up the road: the way out, bright with the sky beyond; the way in, dark in its wall
+  mouthAt(s, sp) {
+    const P = this.portal, g = this.g, out = s.to !== "tunnel";
+    P.g.visible = s.t < 1.2;
+    if (!s.col) s.col = new THREE.Color((RACER_SKIES[racerSkyId(out ? s.to : this.biome, g.year)] || RACER_SKIES.dawn).haze[0]); // the light of the sky beyond it (out), or of the sky it stands under (in)
+    if (!P.g.visible) return;
+    const k = smoothstep(0, 0.25, s.t);
+    P.g.position.set(0, 0, -3.2 - Math.max(sp, 62) * (1.2 - s.t)); // (it is at the rig's nose as the change is made: the rig is never cut by it)
+    P.wall.visible = !out;
+    P.wall.material.color.copy(s.col).multiplyScalar(0.05).add(this._c.set(0x08080e)); P.wall.material.opacity = k;
+    P.rims.forEach((m) => { m.visible = !out; m.material.opacity = k; });
+    P.mouth.visible = out; P.mouthIn.visible = !out;
+    P.mouth.material.color.copy(s.col).multiplyScalar(1.5); P.mouth.material.opacity = P.mouthIn.material.opacity = k;
   }
   setBiome(name) {
     const g = this.g;
@@ -806,14 +871,17 @@ class RacerWorld {
     if (want !== this.biome && !this.swap && g.state !== "over") this.swap = { to: want, t: 0, done: false, dark: want === "tunnel" || this.biome === "tunnel" };
     let fogK = 0;
     if (this.swap) {
-      const s = this.swap;
+      const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
-      fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, 3.2, s.t);
-      if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); }
+      if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
+      else if (s.done && s.to !== "tunnel") fogK = 1 - smoothstep(1.2, 1.9, s.t); // out into the light: its glare clears at once
+      if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
+      if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
     }
     // ---- palette: ease toward this biome's, then lay it over the career sky
-    const T = P[this.biome], k = Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
+    const T = P[this.biome], k = this.palSnap ? 1 : Math.min(1, dt * (this.swap ? 6 : 1.5)), pal = this.pal;
+    this.palSnap = false;
     for (const n of ["fogMix", "horMix", "gridMix", "baseMix", "rain", "wet", "dust", "far", "lamps"]) pal[n] += (T[n] - pal[n]) * k;
     for (const n of ["topMix", "midMix"]) pal[n] += ((T[n] || 0) - pal[n]) * k;
     for (const n in this.palC) if (T[n + "Mix"] > 0) this.palC[n].lerp(this._c.set(T[n]), k);
@@ -830,7 +898,11 @@ class RacerWorld {
     gu.uReflect.value *= GFX.opt.wet ? pal.wet : 0;
     if (gu.uRain) gu.uRain.value = GFX.opt.wet ? clamp(pal.rain * (0.45 + this.gust * 0.9), 0, 1.4) : 0;
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
-    const curtainCol = this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
+    const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
+    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(1.5) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
+    if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;
     this.curtain.material.opacity = fogK;
     this.curtain.material.color.copy(curtainCol);

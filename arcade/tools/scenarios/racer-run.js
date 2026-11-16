@@ -5,6 +5,8 @@
 //
 //   node arcade/tools/capture.js arcade/tools/scenarios/racer-run.js --out arcade/docs/combat-pass/racer --dpr 2
 //
+// (parts: start, question, skies, beauty, tunnel, lane, boost, right, explain, wrong, damage, insured, near, low, finish, early)
+//
 // PARTS=skies,right,... keeps only some of them (see `has` below); STAGE picks the questions (default 2).
 // The scenario sets state in the page to reach a moment quickly (which year of the career, how many crashes, a
 // policy in hand, where the gate is): test only. Nothing here is part of the game.
@@ -96,6 +98,24 @@ module.exports = async (cap) => {
     await page(() => { const s = window.__arcade.Scenes.cur; s.placeCamera = s.__place; s.camera.fov = s.__fov; s.camera.updateProjectionMatrix(); if (s.laneTags) s.laneTags.visible = true; });
     await year(0);
   }
+  // ---- a tunnel, driven through: its mouth comes up the road (dark, in its wall, a rim of light round it); then the
+  // way out (an opening bright with the sky beyond, growing) and the open road under a whole sky. And one change
+  // from an open landscape into the next, with no tunnel between them: a bank of mist in the sky's own colour.
+  if (has("tunnel")) {
+    const to = (y) => page((yr) => { const s = window.__arcade.Scenes.cur; s.year = yr; s.skyP = yr / 40; s.hud(); }, y);
+    const settle = async () => { for (let i = 0; i < 4; i++) { await cap.fast(50); await hold(0.3); } };
+    await year(6);
+    await to(7);
+    await strip("20-into-the-tunnel", 12, 9);
+    await settle();
+    await to(8);
+    await strip("21-out-of-the-tunnel", 12, 9);
+    await settle();
+    await year(15);
+    await to(16);
+    await strip("22-coast-to-desert", 12, 14);
+    await year(0);
+  }
   // ---- a lane change: the body rolls, the front wheels steer, the egg rocks and settles
   if (has("lane")) {
     await ready(30, 0.25);
@@ -181,6 +201,7 @@ module.exports = async (cap) => {
     await sheet();
     await cap.fast(40);
     await ready(40, 0.3);
+    await year(3); // (in the open, downtown: the fire and its smoke are seen against the street)
     await strip("13-last-life", 12, 6);
   }
   // ---- retirement at 65: the last gate of the career, taken right

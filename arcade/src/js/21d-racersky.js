@@ -170,6 +170,8 @@ class RacerSky {
     if (!this.swapped) this.swap();
     if (old.map && old.map !== this.cur.map) old.map.dispose(); // (its picture leaves the graphics chip: one sky is held there at a time)
   }
+  // the change is made at once (through a tunnel's mouth: the sky is whole on the first frame of the open road)
+  snap() { if (this.next) { this.mips(this.next.map); this.finish(); } this.settle(this.cur.r, 1); this.show(); }
   swap() {
     this.swapped = true;
     const to = this.next || this.cur;
@@ -228,7 +230,17 @@ class RacerSky {
     g.groundMat.uniforms.uReflect.value *= N.wet;
     // the lens, and the egg's halo (on a painted sky it is a glow round the egg, not a second sun)
     g.post.exposure *= N.exp; g.post.bloom *= N.bloom;
-    g.sun.userData.glow.material.color.multiplyScalar(N.halo);
+    // the egg at the end of the road is the scene's jewel under every sky: gold at its crown to magenta at its foot, lit
+    // from inside, in a halo of its own colours, with one glint on its shoulder
+    const su = g.sun.userData.disc.material.uniforms;
+    su.uTop.value.setRGB(1.0, 0.74, 0.14); su.uBottom.value.setRGB(1.0, 0.1, 0.46); su.uTint.value.setRGB(1, 1, 1);
+    su.uI.value = 0.74 * (1 + 0.05 * Math.sin(VFX.t * 1.1)); // (below white: its colours hold through the lens's bloom)
+    g.sun.userData.glow.material.color.setRGB(1.0, 0.46, 0.32).multiplyScalar(1.25 * N.halo);
+    if (!this.glint) {
+      this.glint = [glowSprite(new THREE.Color(1.5, 1.2, 0.9), 24, 0.7), glowSprite(new THREE.Color(2.2, 2.0, 1.7), 7, 0.9)];
+      this.glint.forEach((q, i) => { q.position.set(-16, 25, 1 + i * 0.2); q.layers.set(1); g.sun.add(q); });
+    }
+    this.glint[0].material.opacity = 0.55 + 0.15 * Math.sin(VFX.t * 0.9);
   }
   follow(camera) { this.root.position.copy(camera.position); }
   // what the traffic's paint needs to mirror the sky (see racerTrafficMaterial)
