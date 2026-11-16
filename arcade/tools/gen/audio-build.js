@@ -136,10 +136,39 @@ for (const a of args.filter((x) => /^[a-z]+=\d+$/.test(x))) {
   // drop a fading tail: the loop ends where the level last stood near the track's own
   const win = Math.round(0.4 * SR), whole = rms(s);
   while (n > win * 4) { const seg = s.subarray((n - win) * 2, n * 2); if (rms(seg) > whole * 0.5) break; n -= Math.round(win / 2); }
-  const X = Math.round(1.6 * SR), L = n - X, out = new Float32Array(L * 2);
+  // The loop must be a whole number of bars long, or the beat stumbles every time it comes round. The tempo is
+  // measured (the prompt's own figure is only where to look): the beat's period is the one at which the track's
+  // onsets repeat best over 1, 2, 4 ... 32 beats. Then the loop's start is moved bar by bar past a quiet opening
+  // until what follows it is as loud as what leads up to its end.
+  const hint = +((e.prompt.match(/(\d+)\s*BPM/) || [])[1] || 0);
+  let S = 0, X = Math.round(1.6 * SR), L = n - X, how = "whole track (no tempo given)";
+  if (hint) {
+    const hop = 512, nf = Math.floor(n / hop) - 1, env = new Float32Array(nf), fps = SR / hop;
+    let prev = 0;
+    for (let i = 0; i < nf; i++) { let q = 0; for (let j = 0; j < hop; j++) { const v = s[(i * hop + j) * 2] + s[(i * hop + j) * 2 + 1]; q += v * v; } q = Math.log(1e-7 + q); env[i] = i ? Math.max(0, q - prev) : 0; prev = q; }
+    const maxLag = Math.min(nf - 2, Math.ceil(33 * 60 / (hint * 0.94) * fps)), ac = new Float32Array(maxLag + 2);
+    for (let lag = 1; lag <= maxLag + 1; lag++) { let q = 0; for (let i = 0; i + lag < nf; i++) q += env[i] * env[i + lag]; ac[lag] = q / (nf - lag); }
+    const at = (x) => { const i = Math.floor(x), f = x - i; return i + 1 > maxLag + 1 ? 0 : ac[i] * (1 - f) + ac[i + 1] * f; };
+    let best = { q: -1, bpm: hint }, mean = 0, cnt = 0;
+    for (let bpm = hint * 0.94; bpm <= hint * 1.06; bpm += 0.01) { const per = 60 / bpm * fps; let q = 0; for (const k of [1, 2, 4, 8, 16, 32]) q += at(k * per); mean += q; cnt++; if (q > best.q) best = { q, bpm }; }
+    const sure = best.q / (mean / cnt), beat = 60 / best.bpm * SR, bar = beat * 4;
+    X = Math.round(beat * 2);
+    const lev = (from, len) => { const a0 = Math.max(0, Math.round(from)), b0 = Math.min(n, Math.round(from + len)); return 20 * Math.log10(rms(s.subarray(a0 * 2, b0 * 2)) || 1e-6); };
+    let pick = null;
+    for (let k = 0; k <= 8; k++) {
+      const st = Math.round(k * bar), bars = Math.floor((n - X - st) / bar / 4) * 4; // phrases of four bars
+      if (bars < 12) break;
+      const len = Math.round(bars * bar), step = lev(st, 2 * SR) - lev(st + len - 2 * SR, 2 * SR), cost = Math.abs(step) + k * 0.4;
+      if (!pick || cost < pick.cost) pick = { st, len, bars, step, cost, k };
+    }
+    if (pick && sure > 1.15) { S = pick.st; L = pick.len; how = `${best.bpm.toFixed(2)} BPM (asked ${hint}, sureness ${sure.toFixed(2)}), ${pick.bars} bars from bar ${pick.k + 1}, level step ${pick.step.toFixed(1)} dB`; }
+    else how = `whole track (tempo not found: sureness ${sure.toFixed(2)})`;
+  }
+  console.log(`music ${name}#${take}: ${how}`);
+  const out = new Float32Array(L * 2);
   for (let i = 0; i < L; i++) for (let c = 0; c < 2; c++) {
-    let v = s[i * 2 + c];
-    if (i < X) { const t = i / X, a0 = Math.sin(t * Math.PI / 2), a1 = Math.cos(t * Math.PI / 2); v = v * a0 + s[(L + i) * 2 + c] * a1; } // the tail fades out under the head fading in
+    let v = s[(S + i) * 2 + c];
+    if (i < X) { const t = i / X, a0 = Math.sin(t * Math.PI / 2), a1 = Math.cos(t * Math.PI / 2); v = v * a0 + s[(S + L + i) * 2 + c] * a1; } // what follows the loop's end fades out under its start fading in
     out[i * 2 + c] = v;
   }
   level(out, 0.84);
