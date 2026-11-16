@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9, 7, 8, 11 done; next: all (PROCTOR) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | done |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -102,6 +102,13 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   chrome) and its eyes burn in its own violet (`dress: "shade"`). A hood made in code was tried and could not be
   fitted (its head is turned in its stance, the model's own hood hangs down its back). Recommended remake: the
   hood modelled up over the skull, as its brief describes ("hooded cloak").
+- THE PROCTOR (all): a hulking examiner in a mortarboard with a red tassel, a heavy coat and a giant red pencil (its
+  own design, no lookalike); its volley of exam cards leaves the pencil; its wind-ups hold all of it. Seen: idle,
+  the volley, the slam, the sweep. Fixed: its sweep, in the overhead smash, bent it over until its cap and coat
+  faced the lens and the beam ran half hidden along the floor: it is fired with the thrust (`clip: { 3: "attackB" }`).
+  Its slam lands under its pencil (`slam: "weapon"`: the marker and the landing agree). Its wave and seekers use the
+  thrust and the places the Specter, the Titan, the Lich and the Influencer were seen with, and were not captured
+  on their own. Its death is seen in the final captures.
 
 ## Tests at the last commit
 
