@@ -70,7 +70,8 @@ class RacerSky {
     // what lacquer mirrors under each sky, made now, behind the screen's cover (a map made in the middle of a run
     // would drop a frame or two). Only the sky on show keeps its picture on the graphics chip afterwards.
     this.cur = this.conf(racerSkyId(racerBiomeAt(g.year), g.year), this.main);
-    for (const id in RACER_SKIES) this.envFor(id);
+    // (each panorama leaves the chip again as soon as its map is made: five of them are never held there at once)
+    for (const id in RACER_SKIES) { this.envFor(id); const sk = RACER_SKIES[id].sky && skies[RACER_SKIES[id].sky]; if (sk && sk.map && sk.map !== this.cur.map) sk.map.dispose(); }
     for (const n in skies) if (skies[n] && skies[n].map && skies[n].map !== this.cur.map) skies[n].map.dispose();
     this.mips(this.cur.map);
     this.next = null; this.k = 0; this.dur = 0.6; this.swapped = false;

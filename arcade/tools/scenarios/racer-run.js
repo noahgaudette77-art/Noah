@@ -78,7 +78,7 @@ module.exports = async (cap) => {
       await cap.fast(8);
       await still(name, { band: true, q: 90 });
     }
-    await year(0);
+    await year(10); await year(0); // (a sky is chosen as its landscape is entered: back into the city by way of the coast, for its dawn)
   }
   // ---- one clean still of the rig: from behind and a little to one side, close, under the day sky
   if (has("beauty")) {
@@ -87,8 +87,8 @@ module.exports = async (cap) => {
       const s = window.__arcade.Scenes.cur;
       s.__place = s.placeCamera; s.__fov = s.camera.fov;
       if (s.laneTags) s.laneTags.visible = false; // (the lane badges are drawn from the game's own lens: they have no place in a test camera's picture)
-      s.placeCamera = () => { s.camera.position.set(s.carX - 3.1, 2.5, 4.3); s.camera.lookAt(s.carX + 0.1, 0.95, -0.9); };
-      s.camera.fov = 46; s.camera.updateProjectionMatrix();
+      s.placeCamera = () => { s.camera.position.set(s.carX - 5.2, 3.5, 7.0); s.camera.lookAt(s.carX + 0.1, 0.95, -0.5); };
+      s.camera.fov = 64; s.camera.updateProjectionMatrix();
       s.gp = 0.2;
     });
     await cap.fast(10);
@@ -102,8 +102,7 @@ module.exports = async (cap) => {
     await cap.answer(0);
     await cap.fast(50);
     await page(() => { const s = window.__arcade.Scenes.cur; s.lockT = 0; s.gp = Math.min(s.gp, 0.3); });
-    await cap.answer(3);
-    await page(() => { window.__arcade.Scenes.cur.lockT = 9; });
+    await page(() => { const s = window.__arcade.Scenes.cur; s.pick(s.round.n - 1); s.lockT = 9; }); // (to the far lane: a question has two to four)
     await strip("07-lane-change", 12, 3);
     await page(() => { const s = window.__arcade.Scenes.cur; s.lockT = 0.01; });
     await sheet();
@@ -184,7 +183,7 @@ module.exports = async (cap) => {
   // ---- retirement at 65: the last gate of the career, taken right
   if (has("finish")) {
     await begin();
-    await year(39);
+    await year(28); await year(39); // (the last city is entered from the mountains, as in a career: its sky is the night's)
     await set({ crashes: 0, insurance: 0, egg: 1180000, peak: 1180000 });
     await ready(30, 0.3);
     await drive("R", 2);

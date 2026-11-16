@@ -22,7 +22,7 @@ const RIG = {
   AT: { exhaustL: [0.1458, 0.3926, 0.0315], exhaustR: [-0.1458, 0.3926, 0.0315], tailL: [0.165, 0.145, -0.495], tailR: [-0.165, 0.145, -0.495],
     headL: [0.115, 0.105, 0.45], headR: [-0.115, 0.105, 0.45], roof: [0, 0.37, 0.08], hood: [0, 0.21, 0.33], egg: [0, 0.3425, -0.2089] },
   HUBS: [[0.2092, 0.1054, 0.2345], [-0.2092, 0.1054, 0.2345], [0.2125, 0.107, -0.2955], [-0.2125, 0.107, -0.2955]],
-  FLAME: [0xffb040, 0xff3ad4], // what its stacks burn: gold at the root, magenta at the tip
+  FLAME: [0xffb040, 0xff5a20], // what its stacks burn: gold at the root, orange-red at the tip (the sparks and the flash at the stack mouths take the gold)
 };
 
 class RacerRig {
