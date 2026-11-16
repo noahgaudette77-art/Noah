@@ -15,14 +15,35 @@ const BOSS_SKY = {
   "boss-storm-b": { u: 0.895, v: 0.5, zoom: 2.3, min: 0.5, gain: 1.5, lift: 1.3, fog: 0x08151a, bolt: 0xbfe8ff },
   "boss-void": { u: 0.79, v: 0.43, zoom: 3.1, min: 0.415, gain: 0.95, lift: 1.5, fog: 0x0c0516, bolt: 0xd8a0ff },
 };
-// One row per boss. sky: which panorama. Everything else about how a boss is shown (its size in the picture, its
-// attack, what is torn off it and when) is added to these rows by the files that use it (22d, 22f).
+// The table: one row per boss, read by the actor (22d, 22e) and the stage (22f). What a row may say:
+//   sky    which panorama stands over the arena
+//   atk    its attack: the kinds it uses in turn. 0 a volley of projectiles, 1 a ground slam, 2 a wave of energy,
+//          3 a swept beam, 4 seekers that lock on (each has its own marker, flight and landing: see the stage)
+//   clip   which clip each kind is played with, when it is not the usual one (BOSS_ATK.clip)
+//   src    where the attack leaves it: "weapon" (the far end of what its right hand holds), "chest", "handR", "head"
+//   size   how tall it stands in the arena (world units); show: how much of that height the picture holds when the
+//          lens is close (0.82: head to knees); wide: how wide it is, in its own heights (for fitting the picture)
+//   env, glow   how strongly its armour mirrors the sky, how brightly its light strips burn
+//   tear   what is torn off it as its HP falls: [fraction of HP left, bone] (a bone's armour takes the armour of
+//          the bones below it along; "wound": a hole burnt in its chest). limp: the arm that hangs once it is hurt
+//   last   the parts that go one by one in its death, before the last blast takes the rest
+//   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
+const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.2, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
-  1: { sky: "boss-storm" }, 2: { sky: "boss-storm" }, 3: { sky: "boss-void" }, 4: { sky: "boss-storm" },
-  5: { sky: "boss-storm-b" }, 6: { sky: "boss-storm-b" }, 7: { sky: "boss-void" }, 8: { sky: "boss-void" },
-  9: { sky: "boss-storm" }, 10: { sky: "boss-storm-b" }, 11: { sky: "boss-void" }, all: { sky: "boss-void" },
+  1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
+  2: { sky: "boss-storm", atk: [1] },
+  3: { sky: "boss-void", atk: [2], src: "chest" },
+  4: { sky: "boss-storm", atk: [3] },
+  5: { sky: "boss-storm-b", atk: [1] },
+  6: { sky: "boss-storm-b", atk: [2], src: "chest" },
+  7: { sky: "boss-void", atk: [4], src: "handR" },
+  8: { sky: "boss-void", atk: [1] },
+  9: { sky: "boss-storm", atk: [4], src: "handR" },
+  10: { sky: "boss-storm-b", atk: [0, 1] },
+  11: { sky: "boss-void", atk: [3] },
+  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4] },
 };
-const bossRow = (key) => BOSS_ROW[key] || BOSS_ROW[1];
+const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);
 
 class BossArena {
   constructor(game, sky, row) {

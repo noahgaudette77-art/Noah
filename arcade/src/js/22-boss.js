@@ -147,7 +147,7 @@ class BossGame extends QuizGame {
     // white), edge it against the dark stands; a third at its feet in front lights it from below.
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
     // (the complement is an edge, not a second key: at full strength it turned black armour pale)
-    [[-11, col.getHex(), 4.6 * big], [11, col.clone().offsetHSL(0.5, 0, 0).lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].forEach(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); });
+    const rims = [[-11, col.getHex(), 4.6 * big], [11, col.clone().offsetHSL(0.5, 0, 0).lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
     const under = new THREE.PointLight(col.getHex(), 0.85 * big, 24, 1.8);
     const edge = new THREE.DirectionalLight(0xffffff, 0.95); // a pale edge along its head and shoulders, whatever colour the arena is
     edge.position.set(0, 10, -9);
@@ -157,6 +157,7 @@ class BossGame extends QuizGame {
     s.add(fill);
     under.position.set(0, 0.7, 6.5);
     s.add(under);
+    this.lamps = { key, rimA: rims[0], rimB: rims[1], edge, fill, under }; // (the staged fight sets them for a model that mirrors the sky: 22f)
     this.eyeLight = new THREE.PointLight(hex, 0.6, 26, 2);
     s.add(this.eyeLight);
     this.hitLight = new THREE.PointLight(0xffffff, 0, 30, 2);
@@ -199,7 +200,7 @@ class BossGame extends QuizGame {
     this.motes.layers.set(1);
     s.add(this.motes);
     this.boss = this.makeBoss();
-    this.boss.position.set(0, 14, 0);
+    if (!this.actor) this.boss.position.set(0, 14, 0);
     s.add(this.boss);
     this.shards = new BlasterShards(s, 90);
     this.shards.mesh.layers.set(1);
@@ -291,6 +292,7 @@ class BossGame extends QuizGame {
     this.flashT = 0;
     this.flashSize = 8;
     if (this.pano) this.arena = new BossArena(this, this.gen.sky, this.row); // (the storm sky, its light and its lightning: 22c)
+    if (this.actor) this.stage = new BossStage(this, this.actor); // (the boss's model has loaded: the fight is staged, on the show clock: 22f)
     this.camBase.set(0, this.camY, this.camZ);
     this.lookAt.set(0, this.bossY, 0);
   }
@@ -347,6 +349,7 @@ class BossGame extends QuizGame {
     coneNI.dispose();
     const pillarMat = Object.assign(glossy(0xffffff, { env: this.env, metal: 0.85, rough: 0.3, envI: 1.3 }), { vertexColors: true });
     s.add(new THREE.Mesh(blasterMerge(body), pillarMat));
+    this.pillarMat = pillarMat;
     const eg = new THREE.BufferGeometry();
     eg.setAttribute("position", new THREE.Float32BufferAttribute(edges, 3));
     this.pillarEdgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 1.8) });
@@ -526,6 +529,10 @@ class BossGame extends QuizGame {
   }
   makeBoss() {
     const hex = this.cfg.color;
+    if (this.gen.model) { // the boss's own model, played by an actor (22d; the Tollgate, which has no skeleton, by its own: 22e)
+      this.actor = this.gen.model.animations.length ? new BossActor(this, this.gen.model, this.row) : typeof BossTollgate !== "undefined" ? new BossTollgate(this, this.gen.model, this.row) : null;
+      if (this.actor) { this._v = new THREE.Vector3(); this._s = new THREE.Vector3(); return this.actor.root; }
+    }
     const rig = (this.rig = new CyborgRig(this, this.bossKey));
     const grp = rig.grp, body = rig.G.body, eye = rig.eye;
     this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(hex), vertexColors: true });
@@ -570,6 +577,7 @@ class BossGame extends QuizGame {
   }
   onLayout() {
     if (!this.has3D) return;
+    if (this.stage) { this.laidOut = true; return; } // (staged: the boss keeps its size and the lens finds its distance: 22f)
     const bs = this.bandSize(16);
     if (!this.fit) { // its measure, once: the rig at rest (not its rings, sparks or aura)
       const box = new THREE.Box3(), tmp = new THREE.Box3(), inv = new THREE.Matrix4();
@@ -602,13 +610,15 @@ class BossGame extends QuizGame {
   // The boss talks: a speech bubble just above the 3D strip.
   taunt(text) {
     Dialog.say(this.el, text, { top: this.band ? this.band.top + 8 : 140, color: this.cfg.color, voice: 150, name: this.cfg.name, ms: 1900 });
+    if (this.stage) this.stage.talk(1900 + String(text).length * 20); // (staged: the lens makes room for its words above its head)
   }
   start() {
     Sound.play("boss");
     Sound.sfx("charge");
     UI.banner("STAND BY", COLORS.red, this.cfg.name + " ENTERS", "low");
     this.layoutBand();
-    if (this.has3D) {
+    if (this.stage) this.stage.enter(); // (staged: it drops in, lands, powers up and roars, on the show clock)
+    else if (this.has3D) {
       this.tw.add(1.4, (k) => { this.boss.position.y = lerp(this.bossY + 7.5, this.bossY, k); }, () => {
         this.shockwave(new THREE.Vector3(0, 0.2, 0), neon(this.cfg.color, 2), 9, 0.8);
         this.floorRing(this.cfg.color, 18, 1);
@@ -637,7 +647,7 @@ class BossGame extends QuizGame {
     UI.text($("[data-score]", this.el), fmtScore(this.score));
     UI.text($("[data-hp]", this.el), Math.max(0, this.hp) + "/" + this.maxHp);
     UI.meter($("[data-hpbar]", this.el), this.hp / this.maxHp);
-    this.lives(this.hearts, 3, "heart", COLORS.red);
+    this.lives(this.hearts + (this.stage ? this.stage.owed : 0), 3, "heart", COLORS.red); // (staged: a heart is seen to go when the boss's blow lands, a moment after the rule took it)
     const plate = $(".bossbar", this.el);
     if (plate) plate.classList.toggle("rage", this.enraged && this.hp > 0);
   }
@@ -653,6 +663,7 @@ class BossGame extends QuizGame {
     this.el.classList.remove("threat");
     this.layoutBand();
     this.state = "ask";
+    if (this.stage) this.stage.ask(); // (which strike it will wind up as the bar fills: look only)
   }
   pick(i) {
     if (this.state !== "ask" || this.paused) return;
@@ -660,6 +671,7 @@ class BossGame extends QuizGame {
     const frac = this.charge / this.T;
     const ok = this.run.record(this.round, i, 1 - frac);
     this.quiz.reveal(i);
+    if (this.stage) this.stage.fire(i, ok); // (staged: the player's burst leaves from the answer's side; a wrong one dies on its armour)
     if (ok) this.playerHit(frac, i);
     else this.bossAttack(false);
   }
@@ -672,15 +684,15 @@ class BossGame extends QuizGame {
   playerHit(frac, slot) {
     const dmg = 10 + Math.round(10 * (1 - frac)) + Math.min(8, (this.run.streak - 1) * 2);
     const hitCol = slot >= 0 && SLOT_COLORS[slot] ? SLOT_COLORS[slot] : COLORS.cyan; // (the look of the blow: the answer's own colour)
-    Sound.sfx("shot");
+    if (!this.stage) Sound.sfx("shot"); // (staged: the burst has its own sounds)
     const land = () => {
       const wasCalm = !this.enraged;
       this.hp -= dmg;
       this.score += dmg * 10;
-      Sound.sfx("boom");
+      if (!this.stage) Sound.sfx("boom"); // (staged: the blow has its own sounds, where it lands)
       Sound.sfx("correct");
       UI.flash("good");
-      GFX.pulse(3, 0.06);
+      GFX.pulse(this.stage ? 1.6 : 3, this.stage ? 0.03 : 0.06); // (staged: the blow has its own flash where it lands; the whole picture is not lifted to white over it)
       GFX.hitStop(this.hp <= 0 ? 260 : 80);
       Haptics.buzz(30);
       Sound.setIntensity(this.enraged ? 3 : Sound.intensityFor(this.run.streak));
@@ -690,12 +702,16 @@ class BossGame extends QuizGame {
         if (this.has3D) this.scene.fog.color.setHex(0x2a0614);
       }
       const p = this.bandPoint(0.25);
-      if (this.has3D) { // the figure lands on the boss itself, large
+      if (this.stage) Object.assign(p, this.stage.floatAt()); // (staged: over its head, above the burst)
+      else if (this.has3D) { // the figure lands on the boss itself, large
         const v = this._v.copy(this.boss.position).project(this.camera);
         p.x = clamp((v.x * 0.5 + 0.5) * GFX.w, 60, GFX.w - 60); p.y = (0.5 - v.y * 0.5) * GFX.h - 10;
       }
       UI.floater("-" + dmg + " HP", p.x, p.y, hitCol, true);
-      if (this.has3D) {
+      if (this.stage) { // (staged: a lance lands on its body; it recoils, staggers on a heavy blow, loses armour as its HP falls)
+        this.stage.outline(UI.root.lastElementChild);
+        this.stage.bossHit(dmg, { slot, col: hitCol, now: Math.max(0, this.hp) / this.maxHp, enraged: wasCalm && this.enraged && this.hp > 0, dead: this.hp <= 0 });
+      } else if (this.has3D) {
         const b = this.boss;
         const at = b.position.clone().add(new THREE.Vector3(0, 0, 2 * this.bossScale));
         // (sparks leave from round the point of the blow, not all from one spot: piled on one another they were a white ball)
@@ -720,7 +736,8 @@ class BossGame extends QuizGame {
         this.quiz.feedback({ ok: true, title, auto: this.explainAuto(true), onNext: () => this.after() });
       });
     };
-    if (this.has3D) {
+    if (this.stage) this.tw.wait(0.3, land); // (staged: the rule's own 0.3 s; the burst that fills it and the lance that ends it are the stage's)
+    else if (this.has3D) {
       // a plasma bolt with a ribbon tail
       const { shot, tail } = this.bolt;
       const tok = ++this.bolt.tok;
@@ -752,14 +769,10 @@ class BossGame extends QuizGame {
   bossAttack(slow) {
     this.hearts--;
     this.atkK = REDUCED_MOTION || GFX.calm ? 0.45 : 1;
-    Sound.sfx("charge");
+    if (!this.stage) Sound.sfx("charge");
     const hit = () => {
-      Sound.sfx("hit");
-      UI.flash("hit");
-      this.shake(0.55);
-      GFX.pulse(7, 0);
-      this.slash();
-      Haptics.buzz([60, 40, 90]);
+      if (this.stage) this.stage.strikeNow(); // (staged: the blow is let go on this frame; the flash, the shake and the heart come as it lands)
+      else { Sound.sfx("hit"); UI.flash("hit"); this.shake(0.55); GFX.pulse(7, 0); this.slash(); Haptics.buzz([60, 40, 90]); }
       Sound.setIntensity(this.enraged ? 3 : 0);
       this.taunt(this.hearts > 0 ? pick(this.lines.miss) : this.lines.win);
       this.hud();
@@ -769,7 +782,8 @@ class BossGame extends QuizGame {
         this.quiz.feedback({ ok: false, title, onNext: () => this.after() });
       });
     };
-    if (this.has3D) {
+    if (this.stage) { this.stage.attack(slow); this.tw.wait(0.12, hit); } // (staged: one of five strikes, its blow at its end on the rule's frame)
+    else if (this.has3D) {
       // an energy beam from the eye, with a hot core, an outer glow and a muzzle flare
       const eye = new THREE.Vector3();
       this.boss.userData.eye.getWorldPosition(eye);
@@ -854,17 +868,20 @@ class BossGame extends QuizGame {
     Store.state.boss[this.bossKey] = Math.max(Store.state.boss[this.bossKey] || 0, stars);
     Store.save();
     Sound.stopMusic();
-    Sound.sfx("bigboom");
+    if (!this.stage) Sound.sfx("bigboom");
     this.taunt(this.lines.defeat);
-    GFX.pulse(12, 0.45);
+    GFX.pulse(this.stage ? 2 : 12, this.stage ? 0 : 0.45); // (staged: the death is seen sharp)
     Haptics.buzz([100, 50, 200]);
-    if (this.has3D) {
+    if (this.has3D && !this.stage) {
       this.shockwave(this.boss.position.clone(), neon(0xfff4e0, 0.9), 12, 1.1); // (a ring, not a white band across the strip)
       this.floorRing(this.cfg.color, 26, 1.4);
       this.flashAt(this.boss.position, 0xffffff, 0.75, 7 * this.bossScale + 2);
     }
-    this.tw.wait(0.9, () => UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS")));
-    if (this.has3D) {
+    const banner = () => UI.banner("BOSS DEFEATED!", COLORS.lime, stars + (stars === 1 ? " STAR" : " STARS"));
+    // (staged: slow motion, it goes over backward as blasts run along it, the last blast, the reward. The banner and
+    // the jingle come with the last blast instead of on their old marks: look and sound only.)
+    if (this.stage) this.stage.death(banner); else this.tw.wait(0.9, banner);
+    if (this.has3D && !this.stage) {
       for (let i = 0; i < 6; i++) {
         this.tw.wait(i * 0.18, () => {
           const bs = this.bossScale;
@@ -908,7 +925,7 @@ class BossGame extends QuizGame {
         });
       }, Ease.inCubic);
     }
-    this.tw.wait(1.4, () => Sound.sfx("win"));
+    if (!this.stage) this.tw.wait(1.4, () => Sound.sfx("win"));
     this.tw.wait(3.2, () => {
       if (this.unmounted) return;
       showResults({
@@ -925,6 +942,7 @@ class BossGame extends QuizGame {
     this.el.classList.add("finale");
     Sound.stopMusic();
     Sound.sfx("gameover");
+    if (this.stage) this.stage.defeat(); // (staged: the boss has the last word)
     this.tw.wait(1.2, () => UI.banner("DEFEATED", COLORS.red, "Read the notes, then come back"));
     this.tw.wait(2.8, () => {
       if (this.unmounted) return;
@@ -953,7 +971,7 @@ class BossGame extends QuizGame {
       if (f >= 1) this.timeout();
     }
     if (!this.has3D) return;
-    const u = this.boss.userData;
+    const st = this.stage; // (staged: the model's actor and the staged fight take the cyborg's place)
     const f = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
     const rage = this.enraged ? 1.8 : 1;
     const ease = Math.min(1, dt * 3);
@@ -961,13 +979,69 @@ class BossGame extends QuizGame {
     const wind = smoothstep(0.45, 1, f); // the wind-up, as the attack charges
     this.atkK = Math.max(0, (this.atkK || 0) - dt * 3.4); // the lunge of an attack, decaying
     const lungeK = Math.sin(Math.min(1, this.atkK) * Math.PI);
-    if (this.state !== "over") {
+    if (this.state !== "over" && !st) {
       this.showScale += (this.bossScale - this.showScale) * ease;
       this.boss.scale.setScalar(this.showScale * (1 + 0.12 * wind + 0.2 * lungeK));
       if (this.state !== "resolve" || lungeK > 0) this.boss.position.z = (1.6 * wind + 2.4 * lungeK) * this.showScale;
     }
     this.rune.scale.setScalar(0.45 + this.showScale * 0.75);
     this.pool.scale.setScalar(0.5 + this.showScale * 0.6);
+    if (st) st.update(dt); // (the actor, the strike in hand, what is in flight, the lens: 22f)
+    else this.cyborgFrame(dt, f, rage, wind);
+    const hotK = smoothstep(0.55, 0.95, f);
+    this.pool.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.2 + f * 0.4);
+    this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
+    this.rune.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.45 + f * 0.75);
+    if (this.flashT > 0) {
+      this.flashT = Math.max(0, this.flashT - dt * 2.4);
+      const k = Math.min(1, this.flashT);
+      this.flash.visible = k > 0;
+      this.flash.scale.setScalar(this.flashSize * (1.4 - k * 0.5));
+      this.flash.material.opacity = 0.6 * k * k; // (a burst on the boss, not a veil over the picture)
+      this.hitLight.intensity = this.flashT * this.flashT * 6;
+    }
+    this.shards.update(dt);
+    if (this.hitStar.visible) { // the star a bolt leaves: it opens fast and is gone in a quarter of a second
+      const k = Math.min(1, (this.hitStarT += dt / 0.34)), e = 1 - (1 - k) * (1 - k);
+      this.hitStar.quaternion.copy(this.camera.quaternion);
+      this.hitStar.scale.setScalar((3.4 + 4.6 * e) * this.bossScale);
+      this.hitStar.material.uniforms.uK.value = 1 - k * k;
+      this.hitStar.visible = k < 1;
+    }
+    this.motes.userData.drift(this.t);
+    // enraged: the arena bleeds red
+    this.rageK += ((this.enraged && this.hp > 0 ? 1 : 0) - this.rageK) * Math.min(1, dt * 1.5);
+    const rk = this.rageK;
+    if (rk > 0.001 || this.rageOn) {
+      this.rageOn = rk > 0.001;
+      const su = this.sky.material.uniforms;
+      su.uHorizon.value.copy(this.skyHorizon).lerp(this.rageCol, rk * 0.75);
+      su.uMid.value.copy(this.skyMid).lerp(this.rageMid, rk * 0.6);
+      this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
+      this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
+      this.beamMat.uniforms.uColor.value.copy(this.bossCol).lerp(this.rageCol, rk);
+      this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
+      const tint = this.scene.userData.post.tint;
+      tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
+      if (!st) this.boss.userData.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
+      if (!st && this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
+    }
+    this.floor.material.uniforms.uReflect.value = 0.55;
+    { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
+      const fl = this.floor.material.uniforms.uLine.value, ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
+      fl.copy(this.lineBase).lerp(this.rageLine, rk).multiplyScalar(0.52 + 0.48 * ch);
+      if (this.hitTint > 0.002) { this.hitTint = Math.max(0, this.hitTint - dt * 4); fl.lerp(this.hitLine, Math.min(1, this.hitTint * 1.25)); }
+    }
+    // a slow cinematic drift, with a touch of pointer parallax
+    if (!st) this.cyborgCamera();
+    this.placeCamera();
+    followSky(this.sky, this.camera);
+    if (this.arena) this.arena.update(VFX.dt);
+    this.arenaFrame(dt);
+  }
+  // the built-in cyborg: its hover, its halo and gems, the charge it gathers, its eye's light
+  cyborgFrame(dt, f, rage, wind) {
+    const u = this.boss.userData;
     if (this.state !== "intro") this.boss.position.y = this.showY + Math.sin(this.t * 1.5 * rage) * 0.35 * this.showScale;
     u.core.rotation.y += dt * 0.5 * rage;
     u.core.rotation.x += dt * 0.15 * rage;
@@ -1007,58 +1081,16 @@ class BossGame extends QuizGame {
     // light: the eye lights the arena as the attack charges; flashes decay
     u.eye.getWorldPosition(this.eyeLight.position);
     this.eyeLight.intensity = 0.5 + f * 3.5 + (f > 0.8 ? Math.sin(this.t * 17) * 0.6 : 0);
-    const hotK = smoothstep(0.55, 0.95, f);
-    this.pool.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.2 + f * 0.4);
-    this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
-    this.rune.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.45 + f * 0.75);
-    if (this.flashT > 0) {
-      this.flashT = Math.max(0, this.flashT - dt * 2.4);
-      const k = Math.min(1, this.flashT);
-      this.flash.visible = k > 0;
-      this.flash.scale.setScalar(this.flashSize * (1.4 - k * 0.5));
-      this.flash.material.opacity = 0.6 * k * k; // (a burst on the boss, not a veil over the picture)
-      this.hitLight.intensity = this.flashT * this.flashT * 6;
-    }
-    this.shards.update(dt);
-    if (this.hitStar.visible) { // the star a bolt leaves: it opens fast and is gone in a quarter of a second
-      const k = Math.min(1, (this.hitStarT += dt / 0.34)), e = 1 - (1 - k) * (1 - k);
-      this.hitStar.quaternion.copy(this.camera.quaternion);
-      this.hitStar.scale.setScalar((3.4 + 4.6 * e) * this.bossScale);
-      this.hitStar.material.uniforms.uK.value = 1 - k * k;
-      this.hitStar.visible = k < 1;
-    }
-    this.motes.userData.drift(this.t);
-    // enraged: the arena bleeds red
-    this.rageK += ((this.enraged && this.hp > 0 ? 1 : 0) - this.rageK) * Math.min(1, dt * 1.5);
-    const rk = this.rageK;
-    if (rk > 0.001 || this.rageOn) {
-      this.rageOn = rk > 0.001;
-      const su = this.sky.material.uniforms;
-      su.uHorizon.value.copy(this.skyHorizon).lerp(this.rageCol, rk * 0.75);
-      su.uMid.value.copy(this.skyMid).lerp(this.rageMid, rk * 0.6);
-      this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
-      this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
-      this.beamMat.uniforms.uColor.value.copy(this.bossCol).lerp(this.rageCol, rk);
-      this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
-      const tint = this.scene.userData.post.tint;
-      tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
-      u.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
-      if (this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
-    }
-    this.floor.material.uniforms.uReflect.value = 0.55;
-    { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
-      const fl = this.floor.material.uniforms.uLine.value, ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
-      fl.copy(this.lineBase).lerp(this.rageLine, rk).multiplyScalar(0.52 + 0.48 * ch);
-      if (this.hitTint > 0.002) { this.hitTint = Math.max(0, this.hitTint - dt * 4); fl.lerp(this.hitLine, Math.min(1, this.hitTint * 1.25)); }
-    }
-    // a slow cinematic drift, with a touch of pointer parallax
+  }
+  // the lens on the cyborg: a slow cinematic drift, with a touch of pointer parallax; and its shadow on the floor
+  cyborgCamera() {
     const sway = REDUCED_MOTION || GFX.calm ? 0.2 : 1;
     this.camBase.set((Math.sin(this.t * 0.23) * 0.7 + Pointer.x * 0.6) * sway, this.camY + (Math.sin(this.t * 0.37) * 0.12 - Pointer.y * 0.2) * sway, this.camZ);
     this.lookAt.set(0, this.showY - 0.42 * this.showScale, 0); // (aimed below its middle: it stands higher in the strip, with floor under its feet)
     if (this.contact) { const cs = 9.2 * this.showScale; this.contact.scale.set(cs, cs, 1); this.contact.position.x = this.boss.position.x; this.contact.position.z = this.boss.position.z; this.contact.material.opacity = 0.9 * clamp(1.6 - this.boss.position.y / (this.showY + 0.001) * 0.6, 0, 1); this.contactCore.scale.set(cs * 0.5, cs * 0.36, 1); this.contactCore.position.x = this.contact.position.x; this.contactCore.position.z = this.contact.position.z; this.contactCore.material.opacity = this.contact.material.opacity; }
-    this.placeCamera();
-    followSky(this.sky, this.camera);
-    if (this.arena) this.arena.update(VFX.dt);
+  }
+  // the front row, the crowd and the mist (they follow the lens, so they are set once it has been placed)
+  arenaFrame(dt) {
     if (this.frontRow) { // the front row keeps to the bottom edge of the strip, whatever the strip's height (and sinks out of the picture when the boss falls)
       const fr = this.frontRow, half = (this.band ? this.band.h : GFX.h) / 2, m = (half * 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2))) / GFX.h;
       const th = Math.atan2(this.lookAt.y - this.camBase.y, this.camZ), D = (this.camZ - 7.55) / (Math.cos(th) - m * Math.sin(th));
@@ -1078,11 +1110,14 @@ class BossGame extends QuizGame {
     }
     FX.sync(this.scene, this.t);
   }
+  pause() { super.pause(); if (this.paused && this.stage) this.stage.pause(); } // (staged: nothing keeps sounding behind the menu)
+  resume() { super.resume(); if (this.stage) this.stage.resume(); }
   dispose() {
     if (this.has3D) {
+      if (this.stage) this.stage.dispose();
       if (this.arena) this.arena.dispose();
       this.shards.dispose();
-      if (this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
+      if (this.boss.userData.orbs && this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
     }
     super.dispose();
   }
