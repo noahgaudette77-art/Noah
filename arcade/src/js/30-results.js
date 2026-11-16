@@ -3,7 +3,9 @@
 function showResults(o) {
   Store.state.stats.games++;
   Store.save();
+  const had = Object.assign({}, Store.state.ach || {});
   Trophies.check(o);
+  o.won = TROPHIES.filter((t) => (Store.state.ach || {})[t.id] && !had[t.id]).map((t) => t.id); // (the trophies this game earned: they arrive in the reward moment)
   const go = (rank) => renderResults(o, rank);
   if (o.score > 0 && o.game !== "memory" && Store.qualifies(o.game, o.score)) askInitials(o, go);
   else go(-1);
@@ -83,12 +85,26 @@ function renderResults(o, rank) {
   const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
   const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
   const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  // The reward moment (served, with the icons drawn from the models): after the stars, what this game earned arrives
+  // one by one, each with its sound: a coin for every 40 XP (up to five), a medal for a run without a miss, a cup for a
+  // new best score, and each trophy unlocked as it stands in the hall. Pictures only: the screen's words are as before.
+  const rw = [];
+  if (genIconReady()) {
+    const coins = xp1 > xp0 ? clamp(Math.round((xp1 - xp0) / 40), 1, 5) : 0;
+    for (let k = 0; k < coins; k++) rw.push({ kind: "coin", cls: "coin", sfx: "coin", gap: 0.09 });
+    if (run.answered && !run.missed.length && o.game !== "memory") rw.push({ kind: "medal", sfx: "powerup", gap: 0.3 });
+    if (rank === 0) rw.push({ kind: "trophy", cls: "big", sfx: "fanfare", gap: 0.35 });
+    (o.won || []).forEach((id) => rw.push({ kind: trophyKind(id), cls: "big", sfx: "reward", gap: 0.35 }));
+    let at = o.stars !== undefined ? 0.55 : 0.25;
+    rw.forEach((r) => { r.at = at; at += r.gap; });
+  }
   const el = UI.el(`<section class="screen scr-results" style="background:rgba(9,3,32,.86)">
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
         <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
+        ${rw.length ? `<div class="res-rewards" aria-hidden="true">${rw.map((r) => `<span class="rw ${r.cls || ""}" style="--d:${r.at.toFixed(2)}s">${genIcon(r.kind)}</span>`).join("")}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
@@ -136,6 +152,12 @@ function renderResults(o, rank) {
       if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
       const bust = $(".res-hero canvas", el);
       if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
+      if (genIconReady()) { // the reward moment's sounds, each on the beat its picture lands (see rw above), and the announcer
+        for (let k = 0; k < (o.stars || 0); k++) setTimeout(() => { if (el.isConnected) Sound.sfx("reward", (k - 1) * 0.4); }, 120 + k * 140);
+        rw.forEach((r, k) => setTimeout(() => { if (el.isConnected) Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000 + 180));
+        const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : "";
+        if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
+      }
       if (r1.i > r0.i) {
         setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
       }

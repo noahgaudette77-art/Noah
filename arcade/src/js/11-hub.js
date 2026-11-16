@@ -813,8 +813,15 @@ function hubWallAtlas() {
     x.lineWidth = 4;
     x.strokeRect(2, 2, 92, 140);
     const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#6a5aa6", k);
-    x.imageSmoothingEnabled = false;
-    x.drawImage(face, 18, 14, 60, 60);
+    if (face.classList.contains("gen")) { // (the bust drawn from its model: larger, smooth, and grey until the boss is beaten)
+      x.imageSmoothingEnabled = true;
+      if (!stars) x.filter = "grayscale(0.75) brightness(0.62)";
+      x.drawImage(face, 8, 6, 80, 80);
+      x.filter = "none";
+    } else {
+      x.imageSmoothingEnabled = false;
+      x.drawImage(face, 18, 14, 60, 60);
+    }
     x.textAlign = "center";
     x.textBaseline = "alphabetic";
     x.font = '8px "Press Start 2P", monospace';

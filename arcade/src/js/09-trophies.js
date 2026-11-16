@@ -19,6 +19,12 @@ const TROPHIES = [
   { id: "reader", name: "BOOKWORM", how: "Open the notes of all 11 stages", test: (s) => Object.keys(s.read).length >= 11 },
 ];
 
+// How each one stands in the hall's trophy stand, and is drawn when the icons drawn from the models are in hand: a
+// cup for the great feats, a medal for the hard ones, a coin for every milestone.
+const TROPHY_SHELF = { trophy: ["boss12", "exam60", "million"], medal: ["boss1", "flawless", "exam90", "streak10", "wave5"], coin: ["first", "streak5", "streak20", "ans100", "ans500", "cards50", "boss6", "reader"] };
+const trophyKind = (id) => (TROPHY_SHELF.trophy.indexOf(id) >= 0 || !id ? "trophy" : TROPHY_SHELF.medal.indexOf(id) >= 0 ? "medal" : "coin");
+const trophyIcon = (id, on) => (genIconReady() ? genIcon(trophyKind(id), !on) : icon(PIXELS["t_" + id] ? "t_" + id : "star", on ? COLORS.yellow : "#8d82c8"));
+
 const Trophies = {
   queue: [],
   showing: false,
@@ -45,7 +51,7 @@ const Trophies = {
     if (this.showing || !this.queue.length) return;
     const t = this.queue.shift();
     this.showing = true;
-    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", COLORS.yellow)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
+    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${trophyIcon(t.id, true)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
     Sound.sfx("trophy");
     Sound.say("Trophy unlocked");
     Haptics.buzz([20, 30, 20, 30, 70]);
@@ -56,7 +62,7 @@ const Trophies = {
     return `<div class="trophies">${TROPHIES.map((t) => {
       const on = this.has(t.id);
       const hue = /^streak/.test(t.id) ? COLORS.orange : /^ans|^wave/.test(t.id) ? COLORS.cyan : /^cards|^reader/.test(t.id) ? COLORS.lime : /^boss|^flawless/.test(t.id) ? COLORS.magenta : /^exam/.test(t.id) ? COLORS.violet : COLORS.yellow;
-      return `<div class="tr${on ? " on" : ""}" style="--t:${hue}"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", on ? COLORS.yellow : "#8d82c8")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
+      return `<div class="tr${on ? " on" : ""}" style="--t:${hue}"><span class="ic">${trophyIcon(t.id, on)}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
     }).join("")}</div>`;
   },
 };

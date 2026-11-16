@@ -33,9 +33,7 @@ const HUBGEN = {
   // the trophy stand: where it stands in the hall (angle, radius), and how the sixteen trophies are shown on it
   STAND: { r: HUB_R + 0.25, w: 2.4 },
   TREADS: [[0.429, 0.69], [0.702, 0.13], [0.94, -0.5]], // the stand model's three steps, front to back: [height of the tread, its depth centre]
-  CUPS: ["boss12", "exam60", "million"],
-  MEDALS: ["boss1", "flawless", "exam90", "streak10", "wave5"],
-  COINS: ["first", "streak5", "streak20", "ans100", "ans500", "cards50", "boss6", "reader"],
+  CUPS: TROPHY_SHELF.trophy, MEDALS: TROPHY_SHELF.medal, COINS: TROPHY_SHELF.coin, // (see 09-trophies.js)
 };
 
 // The trophy stand's card on the hall's screen, as a cabinet's is (see showHub).

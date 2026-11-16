@@ -165,6 +165,7 @@ function drawBossBust(canvas, key, color) {
 
 // A boss portrait: its own bust when the boss is known (by its key), else a plain horned block in its colour.
 function drawBossPortrait(canvas, color, key) {
+  if (key !== undefined && key !== null && genBossPortrait(canvas, color, key)) return canvas; // (its bust drawn from its 3D model, when that strip has loaded)
   if (key !== undefined && key !== null && BUSTS[key]) return drawBossBust(canvas, key, color);
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
