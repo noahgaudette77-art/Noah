@@ -26234,7 +26234,7 @@ class BossGame extends QuizGame {
   // The boss talks: a speech bubble just above the 3D strip.
   taunt(text) {
     Dialog.say(this.el, text, { top: this.band ? this.band.top + 8 : 140, color: this.cfg.color, voice: 150, name: this.cfg.name, ms: 1900 });
-    if (this.stage) this.stage.talk(1900 + String(text).length * 20, String(text).length); // (staged: the lens makes room for its words above its head)
+    if (this.stage) this.stage.talk(1900 + String(text).length * 20, String(text).length, String(text)); // (staged: the lens makes room for its words above its head)
   }
   start() {
     Sound.play(this.stage && this.bossKey === "all" ? "finalboss" : "boss"); // (staged: the last boss has its own track; until it has loaded, and from disk, the boss tune)
@@ -27897,20 +27897,22 @@ const BOSS_SKY = {
 //          the bones below it along; "wound": a hole burnt in its chest). limp: the arm that hangs once it is hurt
 //   last   the parts that go one by one in its death, before the last blast takes the rest
 //   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
+//   dress  what its model is dressed with (22d, BOSS_DRESS: the Titan's smokestacks, hot and venting steam)
+//   slam   where its ground slam lands: "weapon" (under the head of what its right hand holds); else between its fists
 const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.6, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
   2: { sky: "boss-storm", atk: [1] }, // PERILMONGER: its huge fists down on the floor
   3: { sky: "boss-void", atk: [2], src: "chest" }, // SOLVENCY SPECTER: a wave of energy out of the empty vault in its chest
-  4: { sky: "boss-storm", atk: [3] }, // THE FINE PRINT: a line of light drawn by its quill and swept across
+  4: { sky: "boss-storm", atk: [3], clip: { 3: "attackB" } }, // THE FINE PRINT: a line of light drawn by its quill and swept across (thrust at the lens: in the overhead smash it bends over and its flat hat hides it)
   5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
-  6: { sky: "boss-storm-b", atk: [2], src: "chest" }, // INFLATION TITAN: a blast of steam from its boiler
+  6: { sky: "boss-storm-b", atk: [2], src: "chest", dress: "stacks" }, // INFLATION TITAN: a blast of steam from its boiler (its light from its gauge and its smokestacks)
   7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
-  8: { sky: "boss-void", atk: [1] }, // LORD INTESTATE: its gavel down on the floor
+  8: { sky: "boss-void", atk: [1], slam: "weapon" }, // LORD INTESTATE: its gavel down on the floor
   9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
   10: { sky: "boss-storm-b", atk: [0, 1], srcs: { 0: "chest", 1: "weapon" }, env: 2.8, size: 6.8, tear: [[0.78, "wound"], [0.56, "forearmL"], [0.34, "shoulderL"]], last: ["forearmR", "forearmL", "shoulderR", "shoulderL"] }, // PROBATE TOLLGATE: a volley from the booth, then the barrier's slam
-  11: { sky: "boss-void", atk: [3] }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver
-  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" } }, // THE PROCTOR: all five, in turn
+  11: { sky: "boss-void", atk: [3], clip: { 3: "attackB" } }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver (thrust at the lens: in the overhead smash it bends over and its cloak hides it)
+  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" }, clip: { 3: "attackB" }, slam: "weapon" }, // THE PROCTOR: all five, in turn (its sweep thrust at the lens: in the overhead smash its cap and coat hide it; its slam lands under its pencil)
 };
 const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);
 
@@ -27989,6 +27991,72 @@ const BOSS_CLIP = {
   enter: { from: 1.82, land: 2.27, end: 3.5 }, // a jump down: in the air until 2.27, a deep landing, risen by 3.5
   death: { fall: 1.25, down: 1.78, end: 3.0 }, // staggers, goes over backward from 1.25, flat on its back at 1.78
 };
+// The highest point of a model (or of one part of it) as it stands posed now, from its own surface (a box round turned
+// parts would say more). out: where it is, the middle of what lies within `band` of the top (a pipe's mouth, not one
+// point of its rim). low: the lowest point instead.
+function bossPeak(node, out, band = 0.012, low = false) {
+  const s = low ? -1 : 1;
+  let m = -1e9, n = 0;
+  node.updateMatrixWorld(true);
+  const each = (fn) => node.traverse((o) => {
+    if (!o.isMesh) return;
+    const p = o.geometry.attributes.position, A = p.array, e = o.matrixWorld.elements;
+    const q = p.normalized ? 1 / (A instanceof Int16Array ? 32767 : A instanceof Uint16Array ? 65535 : A instanceof Int8Array ? 127 : A instanceof Uint8Array ? 255 : 1) : 1; // (a quantized model's positions are whole numbers, scaled when drawn)
+    for (let i = 0; i < p.count; i += 3) { const x = p.getX(i) * q, y = p.getY(i) * q, z = p.getZ(i) * q; fn(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
+  });
+  each((x, y) => { if (s * y > m) m = s * y; });
+  if (out) { out.set(0, 0, 0); each((x, y, z) => { if (s * y >= m - band) { out.x += x; out.y += y; out.z += z; n++; } }); out.multiplyScalar(1 / Math.max(1, n)); }
+  return s * m;
+}
+const bossTop = (node) => bossPeak(node);
+// A group set on a part of a model at a place in the world, level with the world, at the model's own size.
+function bossPin(part, grp, at) {
+  part.add(grp);
+  grp.position.copy(part.worldToLocal(at.clone()));
+  grp.quaternion.copy(part.getWorldQuaternion(new THREE.Quaternion()).invert());
+  const ws = part.getWorldScale(new THREE.Vector3());
+  grp.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
+  return grp;
+}
+// What a boss's model is dressed with for what it is (its row's `dress`). Each takes the actor (standing in its idle,
+// unscaled) and returns { update(d, o), vent(), dispose() }.
+const BOSS_DRESS = {
+  // INFLATION TITAN, a boiler: its light comes from its gauge (the model's own) and from its two smokestacks, hot at
+  // their mouths, which let off steam (more as it charges; a jet from each as its blast goes)
+  stacks(a) {
+    const P = a.P, made = [], v = new THREE.Vector3(), quiet = () => REDUCED_MOTION || GFX.calm, pin = bossPin;
+    // the mouths of its stacks (the tops of the parts on its collarbones): hot inside
+    const pipes = [];
+    for (const sd of ["L", "R"]) {
+      const c = P["part_" + sd + "_Clavicle"];
+      if (!c) continue;
+      bossPeak(c, v, 0.04); // (the middle of its mouth: a stack that leans back has its highest point at the far edge of its rim)
+      const at = pin(c, new THREE.Group(), v), glow = glowSprite(0xffffff, 0.06, 0);
+      glow.position.y = 0.01; // (the hot breath at its mouth: inside, the pipe's own walls would hide it from the lens below)
+      at.add(glow); made.push(glow.material);
+      pipes.push({ at, glow, acc: rand(0, 0.3), sd: sd === "L" ? 1 : -1 });
+    }
+    const hot = new THREE.Color(1, 0.42, 0.07), STEAM = 0x8c84aa;
+    const puff = (pp, k) => {
+      const S = a.root.scale.x, u = S / 7.4;
+      pp.at.getWorldPosition(v);
+      a.g.kit.smoke(v, { size: (0.5 + 0.3 * k) * u, life: rand(0.9, 1.3), vel: new THREE.Vector3(pp.sd * rand(0.1, 0.5), rand(1.4, 2.2) + 5 * k, rand(-0.2, 0.3)).multiplyScalar(u), rise: 0.7, a: 0.28 + 0.12 * k, cold: true, color: STEAM, drag: 0.7 });
+    };
+    return {
+      update(d, o) {
+        const ch = o.charge || 0, lit = a.power * (o.flick === undefined ? 1 : o.flick);
+        for (const pp of pipes) {
+          pp.glow.material.color.copy(hot).multiplyScalar(1.6 + 0.8 * ch);
+          pp.glow.material.opacity = (0.85 + 0.15 * ch) * lit;
+          if (!a.g.kit || a.dead || lit < 0.5 || d <= 0) continue;
+          if ((pp.acc -= d) <= 0) { pp.acc = (ch > 0.3 ? 0.07 : 0.26) * rand(0.7, 1.3) * (quiet() ? 2.5 : 1); puff(pp, 0); }
+        }
+      },
+      vent() { if (a.g.kit && !a.dead) for (const pp of pipes) for (let i = 0; i < (quiet() ? 2 : 5); i++) puff(pp, rand(0.6, 1)); },
+      dispose() { made.forEach((m) => m.dispose()); },
+    };
+  },
+};
 class BossActor {
   constructor(game, model, row) {
     const g = (this.g = game), P = (this.P = model.parts), J = model.info.joints || {};
@@ -28021,6 +28089,18 @@ class BossActor {
     let base = 0;
     if (this.act.idle) { poseAt("idle", 0); base = feet(); }
     for (const n in this.act) { poseAt(n, n === "enter" ? this.dur[n] - 0.05 : 0); this.ground[n] = feet() - base; this.joint.hips.getWorldPosition(v); this.cx[n] = v.x; this.cz[n] = v.z; }
+    // ---- how high it reaches at the top of each attack's wind-up, over the floor, in its own heights (the lens keeps
+    // all of it in the picture while it winds up: what it raises over its head too)
+    this.reach = {};
+    for (const n of ["attackA", "attackB"]) if (this.act[n]) { poseAt(n, BOSS_CLIP[n].top); this.reach[n] = bossTop(model.scene) - this.ground[n]; }
+    // ---- where its overhead blow comes down, in its own frame: under its weapon's head (the lowest point of what its
+    // right hand holds), or between its fists (a slam's mark on the floor and its landing stand there)
+    if (this.act.attackA) {
+      poseAt("attackA", BOSS_CLIP.attackA.hit);
+      const lo = (bone) => { const p = bone && P["part_" + bone.name]; if (!p) return null; const q = new THREE.Vector3(); bossPeak(p, q, 0.01, true); return model.scene.worldToLocal(q); };
+      const r = lo(this.joint.handR), l = lo(this.joint.handL);
+      if (r || l) this.slamPt = { weapon: r || l, fists: r && l ? r.clone().add(l).multiplyScalar(0.5) : r || l };
+    }
     this.size = model.info.size || [0.6, 1, 0.3];
     // ---- the weapon's far end, in its hand's frame (a projectile leaves from there, a beam is drawn from there)
     const hp = P["part_" + (J.handR || "R_Hand")], hm = hp && (hp.isMesh ? hp : hp.children.find((c) => c.isMesh));
@@ -28032,6 +28112,9 @@ class BossActor {
       this.joint.handR.worldToLocal(hm.localToWorld(c));
       this.tip.copy(c).multiplyScalar(row.tip === undefined ? 1.7 : row.tip); // (through the part's middle and out the far side)
     }
+    // ---- dressed for what it is (its row's dress), standing in its idle
+    if (this.act.idle) poseAt("idle", 0);
+    this.dress = row.dress && BOSS_DRESS[row.dress] ? BOSS_DRESS[row.dress](this) : null;
     for (const n in this.act) this.act[n].setEffectiveWeight(0);
     // ---- what moves on top of the clips
     this.look = new THREE.Vector2(); this.lookQ = new THREE.Quaternion(); this._e = new THREE.Euler(); this._q = new THREE.Quaternion(); this._q2 = new THREE.Quaternion(); this._d = new THREE.Vector3(); this._y = new THREE.Vector3(0, 1, 0);
@@ -28178,6 +28261,7 @@ class BossActor {
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    if (this.dress) this.dress.update(d, o);
     // ---- what has been torn off: thrown, falling, turning, coming to rest on the floor, and gone
     for (let i = this.scraps.length - 1; i >= 0; i--) {
       const sc = this.scraps[i], gp = sc.grp;
@@ -28195,7 +28279,9 @@ class BossActor {
   }
   // a wind-up broken off: back to its stance without the blow
   cancel() { const a = this.atk; if (a.clip && !a.rec) { a.rec = "drop"; a.to = 0; } }
-  dispose() { this.mixer.stopAllAction(); }
+  // its blast goes: what its dress lets off (the Titan's pipes vent)
+  vent() { if (this.dress) this.dress.vent(); }
+  dispose() { this.mixer.stopAllAction(); if (this.dress) this.dress.dispose(); }
 }
 
 /* ---- 22e-bosstollgate.js ---- */
@@ -28220,6 +28306,7 @@ class BossTollgate {
     this.glow = row.glow === undefined ? 2.3 : row.glow;
     this.power = 0;
     this.joint = { head: A.eye, chest: A.console, hips: P.body, handL: A.clawL, handR: A.barrierTip, footL: A.trackL, footR: A.trackR };
+    this.signal = this.makeSignal(A.eye, row.env === undefined ? 2.2 : row.env, game.cfg.color);
     this.size = model.info.size || [1, 1, 0.66];
     // what it is doing: the barrier's lift (0 at rest, 1 raised over its head), its swing, the booth's rear and lurch
     this.lift = 0; this.liftTo = 0; this.slam = 0; this.rear = 0; this.rearTo = 0; this.lurch = 0;
@@ -28232,6 +28319,49 @@ class BossTollgate {
     this.t = rand(0, 5);
     this._v = new THREE.Vector3(); this._x = new THREE.Vector3(1, 0, 0);
     this.rest = {}; for (const n of ["shoulderL", "shoulderR", "forearmL", "forearmR", "body", "trackL", "trackR"]) if (P[n]) this.rest[n] = P[n].rotation.clone();
+    // how high it reaches, in its own heights: its booth, and its barrier raised over it (the lens keeps all of it in
+    // the picture while it winds up)
+    const sR = P.shoulderR, fR = P.forearmR;
+    this.reach = { attackB: bossTop(model.scene) };
+    if (sR && fR) { sR.rotation.x = this.rest.shoulderR.x - 2.15; fR.rotation.x = this.rest.forearmR.x - 0.35; this.reach.attackA = bossTop(model.scene); sR.rotation.copy(this.rest.shoulderR); fR.rotation.copy(this.rest.forearmR); }
+  }
+  // The round lamp in the booth's window is its lane signal, not an eye: a housing over it, a lens of small lamps that
+  // burns amber and turns red as the boss charges, a hood over the lens with a neon edge, two guard bars across it.
+  // (In the model's own units, set on the lamp's place: the housing covers the lamp the model was made with.)
+  makeSignal(at, env, hex) {
+    const grp = new THREE.Group(), R = 0.088, r = 0.064, z0 = -0.011; // (the lamp's place stands just in front of the booth's face; the lamp reaches about 0.066 from its middle)
+    const metal = new THREE.MeshStandardMaterial({ color: 0x17131f, metalness: 0.85, roughness: 0.34, envMapIntensity: env, side: THREE.DoubleSide });
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.014, 40).rotateX(Math.PI / 2), metal);
+    plate.position.z = z0 + 0.007;
+    // the lens: rows of small lamps, as a lane signal has
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const x = c.getContext("2d");
+    x.fillStyle = "#2a1406"; x.fillRect(0, 0, 64, 64);
+    x.fillStyle = "#ffffff";
+    for (let j = -4; j <= 4; j++) for (let i = -5; i <= 5; i++) { const px = 32 + i * 6.6 + (j & 1 ? 3.3 : 0), py = 32 + j * 5.8; if (Math.hypot(px - 32, py - 32) < 27.5) { x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill(); } }
+    this.lensTex = new THREE.CanvasTexture(c);
+    this.lensMat = new THREE.MeshBasicMaterial({ map: this.lensTex, color: 0x000000 });
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(r, 36), this.lensMat);
+    lens.position.z = z0 + 0.016;
+    // the hood: a shell over the top and sides of the lens, standing out from the housing, its front edge lit
+    const hl = 0.075, hr = r * 1.18, arc = Math.PI * 1.3, a0 = Math.PI - arc / 2;
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(hr, hr, hl, 30, 1, true, a0, arc).rotateX(Math.PI / 2), metal);
+    hood.position.z = z0 + 0.014 + hl / 2;
+    this.rimMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    this.rimCol = new THREE.Color(hex);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(hr, 0.0045, 6, 30, arc).rotateZ(a0 - Math.PI / 2), this.rimMat); // (the same arc as the hood's, over the top)
+    rim.position.z = z0 + 0.014 + hl;
+    // two guard bars across the lens
+    const bars = [-0.3, 0.3].map((f) => { const b = new THREE.Mesh(new THREE.BoxGeometry(r * 2.15, 0.011, 0.012), metal); b.position.set(0, f * r, z0 + 0.024); return b; });
+    // a soft halo in front of it (it blooms as a lamp does)
+    this.halo = glowSprite(0xffffff, 0.3, 0);
+    this.halo.position.z = z0 + 0.03;
+    grp.add(plate, lens, hood, rim, ...bars, this.halo);
+    at.add(grp);
+    this.sigMetal = metal;
+    this.sigCol = new THREE.Color(); this.sigAmber = new THREE.Color(1, 0.52, 0.07); this.sigRed = new THREE.Color(1, 0.05, 0.025);
+    return grp;
   }
   has(name) { return name === "rage" || name === "death" || name === "hurt" || name === "stagger"; }
   at(name, out) {
@@ -28344,6 +28474,14 @@ class BossTollgate {
     // ---- its lights
     const br = 0.86 + 0.14 * Math.sin(t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    // its signal: amber, turning red as it charges (a deep red at a low gain: a lit neon red goes pink), dark until it
+    // powers up, failing as it dies
+    const q = smoothstep(0.1, 0.8, o.charge || 0), lit = this.power * (o.flick === undefined ? 1 : o.flick);
+    this.sigCol.copy(this.sigAmber).lerp(this.sigRed, q);
+    this.lensMat.color.copy(this.sigCol).multiplyScalar(lerp(2.1, 1.3, q) * lit);
+    this.rimMat.color.copy(this.rimCol).multiplyScalar(1.5 * lit);
+    this.halo.material.color.copy(this.sigCol);
+    this.halo.material.opacity = (0.3 + 0.2 * q) * lit;
     // ---- what has come off it
     for (let i = this.scraps.length - 1; i >= 0; i--) {
       const sc = this.scraps[i], gp = sc.grp;
@@ -28359,7 +28497,11 @@ class BossTollgate {
       if (sc.t >= sc.life) { gp.visible = false; this.scraps.splice(i, 1); }
     }
   }
-  dispose() { /* its parts are released with the scene */ }
+  dispose() { // (its parts are released with the scene; what was made here for its signal is released here)
+    this.signal.traverse((n) => { if (n.geometry) n.geometry.dispose(); });
+    [this.lensMat, this.rimMat, this.sigMetal, this.halo.material].forEach((m) => m.dispose());
+    this.lensTex.dispose();
+  }
 }
 
 /* ---- 22f-bossstage.js ---- */
@@ -28402,6 +28544,8 @@ class BossStage {
     this.col = new THREE.Color(g.cfg.color); this.hex = this.col.getHex();
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
+    const bc = new THREE.Color(this.beamCol);
+    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
@@ -28472,7 +28616,26 @@ class BossStage {
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
   // there, so its face stands under its words, not behind them.
-  talk(ms, len) { this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2); this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); } // (more room for more lines)
+  // How tall its words stand once all typed is measured on the bubble itself, the whole line set in it for an instant
+  // and taken out again (nothing is drawn between). While the bubble is up, the room is worked out every frame against
+  // the band as it is then (roomK, of the band's height: see bubbleRoom): the bubble's size is fixed on the screen, the
+  // band's height is not (a long question leaves a short band), and the band moves when the next question comes.
+  talk(ms, len, text) {
+    const g = this.g, b = g.el && g.el.querySelector(".bubble"), sp = b && b.querySelector("span");
+    this.roomT = Math.max(this.roomT || 0, ms / 1000 + 0.2);
+    this.roomK = clamp(0.1 + 0.042 * Math.ceil((len || 20) / 19), 0.14, 0.3); // (a guess, for when there is no bubble to measure)
+    if (sp && text) { const was = sp.textContent; sp.textContent = text; this.bubble = { el: b, h: b.offsetHeight }; sp.textContent = was; }
+  }
+  // (head: how far down the band the foot of its head stands, with no room made)
+  bubbleRoom(head) {
+    const g = this.g, bb = this.bubble;
+    if (!bb) return;
+    if (!bb.el.isConnected) { this.bubble = null; this.roomT = 0; return; }
+    if (!g.band || !(g.band.h > 0)) return;
+    const top = bb.el.offsetTop; // (below the foot of its head, it is not over its head: the band has moved up since it was placed, or it sits over an explanation sheet)
+    this.roomK = (top - g.band.top) / g.band.h >= head ? 0 : clamp((top + bb.h + 6 - g.band.top) / g.band.h, 0, 0.75);
+    this.roomT = Math.max(this.roomT || 0, 0.1);
+  }
   // ---- sound that runs on ---------------------------------------------------------------------------------------
   loops(on) {
     if (on) {
@@ -28551,7 +28714,7 @@ class BossStage {
     if (t.mark.length) return;
     const at = (v) => this.lens(0, -0.7, 5.2, v); // (at the foot of the picture: the player's side)
     t.mark.push(kit.mark(BOSS_ATK.MARK[kind], at(this._v), this.hex, { size: kind === 3 ? 1.5 : kind === 1 ? 0.9 : 1.05, dur, follow: at, spin: kind === 3 || kind === 1 ? 0 : kind === 4 ? 2.4 : 1.6 }));
-    if (kind === 1) t.mark.push(kit.mark("ring", this._v.set(0, 0.08, 2.4 * k), this.hex, { size: 6.5 * k, dur, flat: true })); // (and on the floor, where the blow will fall)
+    if (kind === 1) t.mark.push(kit.mark("ring", this.slamSpot(this._v) || this._v.set(0, 0.08, 2.4 * k), this.hex, { size: 6.5 * k, dur, flat: true })); // (and on the floor, where the blow will fall)
     Sound.sfx(kind === 0 || kind === 4 ? "lock_on" : "warning", 0, { vol: 0.6, rate: [1, 0.92, 0.85, 1.2, 1.1][kind] });
   }
   // the wind-up follows the charge bar (f: how full it is)
@@ -28714,8 +28877,18 @@ class BossStage {
     if (s && s.beam) s.beam.stop();
     this.strike = null;
   }
-  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1)
-  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 3.4, out); }
+  // where a slam comes down on the floor: under its weapon's head (the row's slam: "weapon") or between its fists, as
+  // its clip puts them at the blow (the actor's slamPt); null for the Tollgate, whose barrier's tip says it
+  slamSpot(out) {
+    const a = this.a, pt = a.slamPt && a.slamPt[this.row.slam === "weapon" ? "weapon" : "fists"];
+    if (!pt) return null;
+    a.model.scene.localToWorld(out.copy(pt));
+    out.y = 0.07;
+    return out;
+  }
+  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1). (Not too near the lens: the beam's
+  // width and the glow at its end are drawn in the world, and nearer they would fill the picture.)
+  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 4.5, out); }
   release(s) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, src = this.src(new THREE.Vector3());
     s.released = true;
@@ -28724,7 +28897,7 @@ class BossStage {
     kit.flash(src, this.hex, 0.25 * k, 0.9 * k, 0.09, 0.8, 1.4);
     kit.light(src, this.hex, 6, 0.2, 22);
     if (s.kind === 1) { // the ground slam: where the blow falls, the floor breaks and a shock runs out to the lens
-      const f0 = (s.f0 = new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
+      const f0 = (s.f0 = this.slamSpot(new THREE.Vector3()) || new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
       Sound.sfx("slam", 0, { vol: 1 });
       kit.wave(f0, null, this.hex, { flat: true, dur: 0.55, s0: 0.8 * k, s1: 13 * k, w: 0.24 });
       kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 });
@@ -28742,11 +28915,12 @@ class BossStage {
       const to = this.lens(0, -0.15, 1.2), bw = 2.4 * Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)) * (GFX.w / GFX.h);
       Sound.sfx("wave_fire", 0, { vol: 1 });
       for (let j = 0; j < 3; j++) kit.wave(src, to, this.hex, { dur: BOSS_ATK.FLY[2] + 0.1, s0: 0.7 * k, s1: bw * (1.5 - j * 0.22), delay: j * 0.045, w: 0.075 });
+      if (a.vent) a.vent(); // (and what its dress lets off: the Titan's pipes)
       kit.sparks(src, this.hex, { n: quiet ? 6 : 18, speed: 16 * k, dir: this._w.subVectors(to, src).normalize(), spread: 0.45, life: 0.3, len: 0.9 * k, w: 0.06 * k });
       g.shake(0.1);
     } else if (s.kind === 3) { // the beam: a white core in a wide halo, swept across the foot of the picture
       Sound.sfx("beam_fire", 0, { vol: 1 });
-      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 1.15, k: 1.5, grow: 0.04 });
+      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 0.7, k: this.beamK, grow: 0.04 });
     } else if (s.kind === 4) { // seekers: each swings out wide on its own side and comes in on the player
       Sound.sfx("missile_fire", -0.4, { vol: 0.9 }); Sound.sfx("missile_fire", 0.4, { vol: 0.9, delay: 0.05, rate: 1.08 });
       this.seekers.forEach((ms, j) => this.launch(ms, j, s));
@@ -29003,7 +29177,7 @@ class BossStage {
     a.root.position.set(rage && !quiet && this.phase === "fight" ? rand(-1, 1) * 0.03 * (g.rageK || 0) : 0, 0, 0);
     this.windEase = (this.windEase || 0) + ((g.state === "ask" ? this.windK : this.strike && !this.strike.landed ? 1 : 0) - (this.windEase || 0)) * Math.min(1, d * 8);
     a.lean = this.dying ? 1.6 : this.windEase * 0.8;
-    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick });
+    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick, charge: this.windEase });
     // what it gathers glows where the attack will leave it
     const ok = this.windEase > 0.03 && a.root.visible && !this.blown;
     this.orb.visible = ok;
@@ -29042,12 +29216,27 @@ class BossStage {
     // close: as near as holds `show` of its height in the band, and its width across it. (When the fight is over the
     // question and the answers have gone and the whole screen is the picture: the band counts for more.)
     const near = Math.max((S * row.show) / 0.94 / (2 * t * bh * (1 + 0.75 * this.overK)), (S * wd) / 0.94 / (2 * t * (GFX.w / GFX.h)));
-    const to = near * lerp(1, 1.36, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
+    // drawn back: the floor is seen (from higher for a slam). While it winds up a blow all of it stays in the picture,
+    // what it raises over its head too (how high it reaches is measured once for each clip: the actor's reach), and
+    // for a slam the floor in front of it that the blow will cross
+    const low = this.camLow, R = this.phase === "fight" && this.tele && this.a.reach ? this.a.reach[this.tele.clip] || 0 : 0;
+    let wideD = near * 1.36, wideY = S * (0.47 - 0.14 * Math.max(0, low));
+    if (R > 0) {
+      const slam = this.tele.kind === 1, top = R * S * 1.04 + (slam ? 0.08 * S : 0), bot = -S * (slam ? 0.16 : 0.1); // (a slam's fists come up toward the lens: they stand higher in the picture than their height says)
+      wideD = Math.max(wideD, (top - bot) / (2 * 0.94 * t * bh));
+      const h = wideD * t * bh * 0.94;
+      wideY = clamp(wideY, top - h, bot + h);
+    }
+    const to = lerp(near, wideD, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
     this.dist += (to - this.dist) * Math.min(1, d * 5);
-    const Hb = 2 * this.dist * t * bh, low = this.camLow;
+    const Hb = 2 * this.dist * t * bh;
+    // (close: its head under the top of the band; while it talks, under its words: as much higher as they reach down the
+    // band, less the sky there already is over its head)
+    const lookBase = Math.max(S * 1.05 - Hb / 2, Hb * 0.36), over = lookBase + Hb / 2 - S * 1.01;
+    this.bubbleRoom((lookBase + Hb / 2 - this.a.at("head", this._u).y) / Hb);
     this.roomT = Math.max(0, (this.roomT || 0) - d);
     this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
-    const lookNear = Math.max(S * 1.05 - Hb / 2, Hb * 0.36) + this.room * (this.roomK || 0.15) * Hb * (1 - this.overK), look = lerp(lookNear, S * (0.47 - 0.14 * Math.max(0, low)), k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
+    const lookNear = lookBase + this.room * Math.max(0, (this.roomK || 0.15) * Hb - over) * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);
