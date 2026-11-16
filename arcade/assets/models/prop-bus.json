@@ -1,0 +1,41 @@
+{
+ "name": "prop-bus",
+ "triangles": 11000,
+ "bytes": 329436,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.1673,
+    0
+   ],
+   "min": [
+    -0.183,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.183,
+    0.3346,
+    0.4999
+   ],
+   "tris": 11000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.36605510115623474,
+  0.33456531167030334,
+  1
+ ],
+ "source": "cand/props/prop-bus-sd-0.tripo.glb",
+ "symmetry": {
+  "delivered": 0.589,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.589,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

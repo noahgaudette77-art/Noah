@@ -1,0 +1,41 @@
+{
+ "name": "prop-car",
+ "triangles": 9000,
+ "bytes": 283672,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.1448,
+    0
+   ],
+   "min": [
+    -0.2121,
+    0.0001,
+    -0.5
+   ],
+   "max": [
+    0.2121,
+    0.2896,
+    0.5
+   ],
+   "tris": 9000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.42676085233688354,
+  0.28959083557128906,
+  1
+ ],
+ "source": "cand/props/prop-car-sd-0.tripo.glb",
+ "symmetry": {
+  "delivered": 0.561,
+  "turned_deg": 0,
+  "shifted": 0.003,
+  "aligned": 0.653,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}
