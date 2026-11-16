@@ -124,16 +124,16 @@ const Sound = {
   },
   // The announcer: the browser's own speech voice, pitched down, for the big moments.
   // It speaks one line at a time. A line asked for while the one before it is still being spoken waits its turn
-  // (0.8 s or more after that one began, by its length); a line that would start more than two seconds late is not
+  // (0.8 s or more after that one began, by its length); a line that would start more than 2.5 s late is not
   // spoken at all (a stale call-out is worse than none). Returns how long the line waits, in seconds (-1: not spoken).
   sayAt: 0, sayGen: 0,
   say(text) {
     if (!Store.settings.sfx || !Store.settings.voice) return 0;
     const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
-    if (wait > 2) return -1;
+    if (wait > 2.5) return -1;
     // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
     const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
-    this.sayAt = now + wait + Math.max(0.8, Math.min(1.7, takes ? takes[0].dur + 0.1 : 0.5 + String(text).length * 0.05));
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes ? takes[0].dur + 0.1 : 0.5 + String(text).length * 0.05));
     if (takes) { this.duck(0.4, 1.1 + wait, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait }); return wait; }
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return wait;
     const speak = () => {
