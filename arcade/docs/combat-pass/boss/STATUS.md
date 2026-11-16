@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6 done; next: 3 (SPECTER) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3 done; next: 9 (INFLUENCER) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -68,6 +68,10 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   For the lead: a thin bright ring round its neck (part of the body's own material, which cannot be dimmed alone)
   still reads as a collar under the dome. If the dome on a collar still reads as a diving helmet, a remake of the
   head (a valve bonnet, or a smokestack) is the fix.
+- Boss 3 (SPECTER): idle, wind-up and wave seen: good, nothing to fix (the whole of it held through the wind-up,
+  the violet rings out of the vault in its chest, the hit). Lookalike: mild. A hood over a chrome mask is a common
+  type (it is in the family of a well-known masked comic-book villain's hooded mask); its third eye on the brow,
+  the fanged slits and the empty vault in its chest keep it its own.
 
 ## Tests at the last commit
 
