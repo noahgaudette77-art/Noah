@@ -806,6 +806,10 @@ class RacerGame extends QuizGame {
     this.gate = null;
     this.gp = 0;
     this.nextMilestone = 0;
+    // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
+    // disk has none): the five skies. Whatever is missing is drawn with what is built in.
+    this.gen = { skies: {} };
+    if (this.has3D && GFX.ok) for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-racer">
       <div class="hud">
@@ -845,7 +849,11 @@ class RacerGame extends QuizGame {
     this.sunLight = new THREE.DirectionalLight(0xffffff, 0);
     this.sunLight.position.set(0, 2.6, -10);
     s.add(this.amb, this.keyLight, this.gateLight, this.lampLight, this.sunLight);
-    if (GFX.ok) {
+    // the panoramas, when they arrived: the sky, the light on what is lit, and what lacquer mirrors (21d-racersky.js)
+    this.pano = null;
+    if (GFX.ok && this.gen.skies["racer-dawn"]) { try { this.pano = new RacerSky(this, this.gen.skies); } catch (e) { this.pano = null; } }
+    if (this.pano) this.env = this.pano.env;
+    else if (GFX.ok) {
       // The car's reflections follow the career sky. Rendering an environment map
       // costs a dropped frame or two, so the whole career's maps are baked now,
       // while the scene loads behind the screen transition, and play just
@@ -858,6 +866,7 @@ class RacerGame extends QuizGame {
     // sky, sun and horizon
     this.sky = makeSky({ top: sky0.top, mid: sky0.mid, horizon: sky0.horizon, bottom: sky0.bg, glow: sky0.glow, stars: sky0.stars, clouds: sky0.clouds, radius: 860 }); // beyond the far mountains
     s.add(this.sky);
+    if (this.pano) { this.sky.visible = false; this.sky.userData.sky = false; } // (the panorama is the sky; this one still holds the colours the world mixes)
     // the sun of this road is a golden egg on the horizon, and it grows as the nest egg does (look only)
     this.sun = makeNeonSun({ radius: 58, top: sky0.sunTop, bottom: sky0.sunBot, intensity: 1.8, halo: sky0.halo, egg: true, stripes: false });
     this.sunK = 0.8;
@@ -895,6 +904,7 @@ class RacerGame extends QuizGame {
     s.add(this.car);
     this.world = new RacerWorld(this); // traffic, biomes and ambient events (look only)
     this.buildGateKit();
+    if (this.pano) [[this.paint, 1.55], [this.trim, 1.55], [this.glass, 1.9], [this.gateFrameMat, 1.2]].forEach(([m, k]) => { if (m) this.pano.mirror(m, k); }); // lacquer, glass and the gantries' metal mirror the sky
     // a stand-in gantry with every sign, drawn once off-screen as the scene starts
     // (see GFX.warm), so the first real gate doesn't stall building its shaders
     const k4 = this.gateKit[4], wg = new THREE.Group();
@@ -1694,12 +1704,14 @@ class RacerGame extends QuizGame {
     this.car.position.y = Math.sin(this.t * 18) * 0.02;
     this.car.rotation.z = clamp((prev - this.carX) * 2.5, -0.25, 0.25);
     this.updateLook(dt, sp, step, scroll, sky);
+    if (this.pano) this.pano.update(VFX.dt); // (the panorama has the last word on the light, the far haze and the lens)
     // On narrow screens the camera tracks the car closely so outer lanes stay in shot.
     const follow = GFX.w / GFX.h < 0.8 ? 0.85 : 0.35;
     this.camBase.x = this.carX * follow + Pointer.x * 0.35;
     this.lookAt.x = this.carX * follow * 0.6 + Pointer.x * 1.2;
     this.placeCamera();
     followSky(this.sky, this.camera);
+    if (this.pano) this.pano.follow(this.camera);
     FX.sync(this.scene, this.t);
     this.city.material.uniforms.uFogFar.value = this.world.cityFog; // the city stays crisp through the haze, but not through a fog bank
   }
@@ -1775,6 +1787,7 @@ class RacerGame extends QuizGame {
     if (this.has3D) {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
+      if (this.pano) this.pano.dispose();
       this.env = null;
     }
     super.dispose();
