@@ -44,14 +44,25 @@ module.exports = async (cap) => {
   const ready = async (wait = 50, at = 0.05) => { await cap.next(); await cap.ask(2400); await page((k) => { const s = window.__arcade.Scenes.cur; s.charge = s.T * k; }, at); await cap.fast(wait); };
   const charge = (k) => page((q) => { const s = window.__arcade.Scenes.cur; s.charge = q >= 0 ? s.T * q : s.T + q; }, k); // (a negative k: that many seconds before the bar is full)
   const set = (o) => page((v) => { const s = window.__arcade.Scenes.cur; if (v.hp !== undefined) s.hp = Math.round(s.maxHp * v.hp); if (v.hearts !== undefined) { s.hearts = v.hearts; if (s.stage) { s.stage.debts.length = 0; s.stage.setLow(v.hearts === 1 ? 1 : 0); } } s.hud(); }, o);
-  // (The stars and coins that fly to the score, and the HUD's own cracks, are page animations, which run on the real
-  // clock: a capture steps a virtual one. For the capture they are stepped with the frames instead.)
+  // (The stars and coins that fly to the score, the HUD's own cracks and banners are page animations, scripted or in
+  // CSS, which run on the real clock: a capture steps a virtual one. For the capture they are stepped with the frames
+  // instead, so a strip shows what a player sees.)
   const stepAnimations = () => page(() => {
     if (window.__stepped) return;
     window.__stepped = true;
-    const animate = Element.prototype.animate, live = [];
+    const animate = Element.prototype.animate, live = [], css = new WeakMap();
     Element.prototype.animate = function (fr, o) { const a = animate.call(this, fr, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
-    const step = () => { const now = performance.now(); for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } } requestAnimationFrame(step); };
+    const step = () => {
+      const now = performance.now();
+      for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } }
+      if (document.getAnimations) for (const an of document.getAnimations()) {
+        if (!/^CSS(Animation|Transition)$/.test(an.constructor && an.constructor.name)) continue;
+        let t0 = css.get(an);
+        if (t0 === undefined) { t0 = now; css.set(an, t0); an.pause(); }
+        try { an.currentTime = now - t0; } catch (e) { /* gone */ }
+      }
+      requestAnimationFrame(step);
+    };
     requestAnimationFrame(step);
   });
 
@@ -66,9 +77,9 @@ module.exports = async (cap) => {
   // dialog over the foot of it, closed here once it has landed)
   let enter = null;
   if (has("enter") || has("fight")) {
-    await cap.fast(14);
+    await cap.fast(34); // (after the screen's power-on, 0.55 s: the boss is high in the air, about to come down)
     // (the short set keeps the part of the screen it lands in, the size of the fight's own picture)
-    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 8 : 20, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
+    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 7 : 14, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
   }
   await page(() => { window.__cap.skipDialogs = true; });
   if (full && enter) sheet("01-entrance", enter, { cols: 6, thumb: 250 });
@@ -114,8 +125,9 @@ module.exports = async (cap) => {
       await ready(40, 0.2);
       await cap.answer("W");
       await strip("05-wrong-strike", 18, 2, { cols: 6 });
+      await cap.fast(14); // (the explanation sheet has finished coming in; the HUD's cracks are still on it)
       await still("05b-wrong-full", { q: 86 });
-      await cap.fast(50);
+      await cap.fast(36);
       await still("12-explanation-full", { q: 86 });
     }
     // ---- the last heart: the red frame and the alarm
@@ -152,21 +164,27 @@ module.exports = async (cap) => {
     await ready(40);
     await cap.answer("R");
     await cap.fast(18);
-    const a = await frames(tag + "-fin", full ? 6 : 3, full ? 8 : 12);
+    // (the short set's strip is the whole screen: once the fight is over the question and the answers have gone and the
+    // whole screen is the picture, and the fallen boss and its last blast lie below the band)
+    const a = await frames(tag + "-fin", full ? 6 : 3, full ? 8 : 12, full ? {} : { band: false });
     await cap.fast(20);
     await cap.next();
-    const b = await frames(tag + "-die", full ? 18 : 12, full ? 8 : 12, full ? { band: false } : {});
+    const b = await frames(tag + "-die", full ? 18 : 12, full ? 8 : 12, { band: false });
     if (full) { sheet("09a-finishing-blow", a, { cols: 6 }); sheet("09-death", b, { cols: 6, thumb: 250 }); }
-    else sheet(tag + "-death", [...a, ...b], { cols: 5, thumb: 300 });
+    else sheet(tag + "-death", [...a, ...b], { cols: 5, thumb: 250 });
   }
   // ---- the player's defeat (a second run of the same fight: the last heart goes, the boss has the last word)
   if (full && has("defeat")) {
+    // (a trophy won by the fight before, in the same page, would still be dropping in over the HUD: cleared)
+    const noTrophy = () => page(() => { const T = window.__arcade.Trophies; if (T && T.queue) T.queue.length = 0; document.querySelectorAll(".trophy").forEach((e) => e.remove()); });
+    await noTrophy();
     await cap.go("boss", key);
     await ready(120);
     await set({ hearts: 1 });
     await cap.answer("W");
     await cap.fast(70);
     await cap.next();
+    await noTrophy();
     await strip("10-player-defeat", 12, 12, { cols: 6, band: false, thumb: 250 });
   }
 };

@@ -174,20 +174,26 @@ class BossActor {
     bone.quaternion.copy(o.base);
     return o;
   }
-  // Every part still on the skeleton becomes a piece of its own, thrown outward from a point (the last blast).
+  // Every part still on the skeleton becomes a piece of its own (the last blast). A big one (a cape, a robe, a torso)
+  // burns away where it lies, sinking and shrinking (thrown up, it stood in the air like the boss again); the rest are
+  // thrown down and out from a point, on low arcs. (burn: the stage sets them alight.)
   shatter(centre, speed) {
-    const list = [], out = [], S = this.root.scale.x;
-    this.model.scene.traverse((n) => { if (/^part_/.test(n.name) && !n.userData.torn) list.push(n); });
+    const list = [], out = [], S = this.root.scale.x, box = new THREE.Box3(), sz = new THREE.Vector3();
+    this.model.scene.traverse((n) => { if (/^part_/.test(n.name) && !n.userData.torn && !(n.parent && /^part_/.test(n.parent.name))) list.push(n); }); // (a part's own pieces go with it)
     this.root.updateMatrixWorld(true);
     for (const n of list) {
+      const big = box.setFromObject(n).getSize(sz).length() / S > 0.45;
       const grp = new THREE.Group();
       n.getWorldPosition(grp.position);
       this.g.scene.add(grp);
       grp.updateMatrixWorld(true);
-      n.userData.torn = true;
+      n.traverse((q) => { q.userData.torn = true; });
       grp.attach(n);
-      const v = grp.position.clone().sub(centre); v.y = Math.abs(v.y) + 0.4; v.normalize().multiplyScalar(speed * rand(0.6, 1.2)); v.y += rand(3, 7);
-      const sc = { grp, v, w: new THREE.Vector3(rand(-8, 8), rand(-6, 6), rand(-8, 8)), t: 0, life: rand(1.5, 2.2), r: 0.05 * S, rest: false };
+      const v = grp.position.clone().sub(centre); v.y = 0;
+      if (v.lengthSq() < 1e-4) v.set(rand(-1, 1), 0, rand(-1, 1));
+      v.normalize().multiplyScalar(speed * (big ? 0.1 : rand(0.6, 1.1)));
+      v.y = big ? rand(-1.2, 0.4) : rand(0.8, 2.6);
+      const sc = { grp, v, w: big ? new THREE.Vector3(rand(-0.8, 0.8), rand(-0.8, 0.8), rand(-0.8, 0.8)) : new THREE.Vector3(rand(-8, 8), rand(-6, 6), rand(-8, 8)), t: 0, life: big ? rand(0.5, 0.7) : rand(1.3, 1.9), r: 0.05 * S, rest: false, burn: big };
       this.scraps.push(sc); out.push(sc);
     }
     return out;
@@ -207,7 +213,7 @@ class BossActor {
   react(name, o = {}) {
     if (!this.act[name]) return 0;
     const end = o.to === undefined ? this.dur[name] - 0.02 : o.to, t = o.from || 0;
-    this.play = { name, t, end, rate: o.rate || 1, w: this.play && this.play.name === name ? this.play.w : 0, in: o.in === undefined ? 0.08 : o.in, out: o.out === undefined ? 0.3 : o.out, hold: !!o.hold };
+    this.play = { name, t, end, rate: o.rate || 1, w: this.play && this.play.name === name ? this.play.w : 0, in: o.in === undefined ? 0.08 : o.in, out: o.out === undefined ? 0.3 : o.out, hold: !!o.hold, k: o.k === undefined ? 1 : o.k }; // (k: how much of it counts at most: a recoil blended with its stance)
     return (end - t) / this.play.rate;
   }
   enter() { this.landed = false; this.entering = true; const C = BOSS_CLIP.enter; this.react("enter", { from: C.from, to: C.end, rate: 0.74, in: 0.001, out: 0.4 }); this.play.w = 1; this.drop = 1; }
@@ -241,7 +247,7 @@ class BossActor {
       pl.t = Math.min(pl.end, pl.t + d * pl.rate);
       const left = (pl.end - pl.t) / pl.rate;
       pl.w = Math.min(1, pl.w + d / Math.max(1e-3, pl.in));
-      p = pl.hold ? pl.w : Math.min(pl.w, left / Math.max(1e-3, pl.out));
+      p = Math.min(pl.k, pl.hold ? pl.w : Math.min(pl.w, left / Math.max(1e-3, pl.out)));
       act[pl.name].time = pl.t;
       w[pl.name] = p;
       if (pl.name === "enter") {
