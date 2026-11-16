@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5 and 10 done; next: 4 (FINE PRINT) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4 done; next: 2 (PERILMONGER) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -45,6 +45,12 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   `makeSignal`): a housing over the old lamp, a lens of small amber lamps that turns a deep red as the barrier is
   raised or the volley charged (the stage passes the charge to the actor), a hood with a lit edge over it and two
   guard bars across it.
+- Boss 4 (FINE PRINT): idle good (the flat hat, the paper clauses, the quill-nib hands; no lookalike). Fixed: in
+  the overhead smash it bent over until its flat hat faced the lens and hid it through the whole beam: its beam is
+  now wound up and fired with the thrust (`clip: { 3: "attackB" }`), the quill pointed at the lens. The beam washed
+  the picture yellow: its far end was 3.4 from the lens, where its width and the glow at its end were taller than
+  the band. It is now drawn 4.5 out, 0.7 wide, at a gain that is lower for a bright colour (`beamK`): a white-cored
+  line drawn from the nib across the foot of the picture.
 
 ## Tests at the last commit
 

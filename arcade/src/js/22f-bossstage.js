@@ -37,6 +37,8 @@ class BossStage {
     this.col = new THREE.Color(g.cfg.color); this.hex = this.col.getHex();
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
+    const bc = new THREE.Color(this.beamCol);
+    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
@@ -349,8 +351,9 @@ class BossStage {
     if (s && s.beam) s.beam.stop();
     this.strike = null;
   }
-  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1)
-  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 3.4, out); }
+  // where a beam points as it sweeps across the foot of the picture (u: 0 to 1). (Not too near the lens: the beam's
+  // width and the glow at its end are drawn in the world, and nearer they would fill the picture.)
+  sweepAt(sd, u, out) { return this.lens(sd * lerp(-1.25, 1.25, u), -0.78 + 0.12 * Math.sin(u * Math.PI), 4.5, out); }
   release(s) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, src = this.src(new THREE.Vector3());
     s.released = true;
@@ -381,7 +384,7 @@ class BossStage {
       g.shake(0.1);
     } else if (s.kind === 3) { // the beam: a white core in a wide halo, swept across the foot of the picture
       Sound.sfx("beam_fire", 0, { vol: 1 });
-      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 1.15, k: 1.5, grow: 0.04 });
+      s.beam = kit.beam(src, this.sweepAt(s.sd, 0, this._w), this.beamCol, { dur: 0, width: 0.7, k: this.beamK, grow: 0.04 });
     } else if (s.kind === 4) { // seekers: each swings out wide on its own side and comes in on the player
       Sound.sfx("missile_fire", -0.4, { vol: 0.9 }); Sound.sfx("missile_fire", 0.4, { vol: 0.9, delay: 0.05, rate: 1.08 });
       this.seekers.forEach((ms, j) => this.launch(ms, j, s));

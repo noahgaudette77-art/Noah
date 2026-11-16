@@ -34,7 +34,7 @@ const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
   2: { sky: "boss-storm", atk: [1] }, // PERILMONGER: its huge fists down on the floor
   3: { sky: "boss-void", atk: [2], src: "chest" }, // SOLVENCY SPECTER: a wave of energy out of the empty vault in its chest
-  4: { sky: "boss-storm", atk: [3] }, // THE FINE PRINT: a line of light drawn by its quill and swept across
+  4: { sky: "boss-storm", atk: [3], clip: { 3: "attackB" } }, // THE FINE PRINT: a line of light drawn by its quill and swept across (thrust at the lens: in the overhead smash it bends over and its flat hat hides it)
   5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
   6: { sky: "boss-storm-b", atk: [2], src: "chest" }, // INFLATION TITAN: a blast of steam from its boiler
   7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
