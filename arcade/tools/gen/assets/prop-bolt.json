@@ -1,0 +1,33 @@
+{
+ "name": "prop-bolt",
+ "about": "A gold lightning bolt on a neon base: streaks and power. Tripo v3.1 at its standard (low-credit) settings from concept prop-bolt-sd-0, one attempt.",
+ "src": "cand/props/prop-bolt-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 8000,
+ "tex": 1024,
+ "texBase": 1024,
+ "emissive": {
+  "hues": [
+   [
+    160,
+    215
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ }
+}

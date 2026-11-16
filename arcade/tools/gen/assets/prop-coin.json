@@ -1,0 +1,20 @@
+{
+ "name": "prop-coin",
+ "about": "A gold token with an egg on its face: coins and score rewards. Tripo v3.1 at its standard (low-credit) settings from concept prop-coin-sd-0, one attempt.",
+ "src": "cand/props/prop-coin-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 6000,
+ "tex": 1024,
+ "texBase": 1024,
+ "emissive": {
+  "gain": 0
+ },
+ "surface": {
+  "roughMin": 0.12
+ }
+}

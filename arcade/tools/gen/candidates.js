@@ -16,7 +16,7 @@ const L = require("./lib.js");
 
 const args = process.argv.slice(2);
 const flag = (k) => { const i = args.indexOf("--" + k); if (i < 0) return null; const v = args[i + 1] && !args[i + 1].startsWith("--") ? args.splice(i + 1, 1)[0] : true; args.splice(i, 1); return v; };
-const withText = !!flag("text"), multi = !!flag("multiview"), only = flag("only"), faces = +flag("faces") || 300000, tier = flag("tier") || "Gen-2.5-Extreme-High", noHighPack = !!flag("no-highpack");
+const withText = !!flag("text"), multi = !!flag("multiview"), cheap = !!flag("cheap"), only = flag("only"), faces = +flag("faces") || 300000, tier = flag("tier") || "Gen-2.5-Extreme-High", noHighPack = !!flag("no-highpack");
 const [asset, ...names] = args;
 if (!asset || !names.length) { console.error("usage: candidates.js <asset> <concept-name>... [--text] [--only tripo|rodin]"); process.exit(2); }
 
@@ -28,7 +28,9 @@ const loadIdx = () => (fs.existsSync(idxFile) ? JSON.parse(fs.readFileSync(idxFi
 const saveIdx = (k, v) => { const idx = loadIdx(); idx[k] = v; fs.writeFileSync(idxFile, JSON.stringify(idx, null, 1)); };
 
 // Tripo H3.1, Ultra geometry, HD texture from the newest texture model, PBR maps.
-const TRIPO = { model: "v3.1-20260211", geometry_quality: "detailed", texture: true, pbr: true, texture_quality: "detailed", texture_version: "v3.5-20260815", face_limit: faces };
+const TRIPO = cheap
+  ? { model: "v3.1-20260211", texture: true, pbr: true, texture_quality: "standard", face_limit: Math.min(faces, 60000) } // (--cheap: small props: standard geometry and texture)
+  : { model: "v3.1-20260211", geometry_quality: "detailed", texture: true, pbr: true, texture_quality: "detailed", texture_version: "v3.5-20260815", face_limit: faces };
 // Rodin Gen-2.5 at its top tier, raw triangles (decimated here later), PBR, HD texture, HighPack (4K maps).
 const RODIN = Object.assign({ tier, quality_mesh_option: "500K Triangle", material: "PBR", geometry_file_format: "glb", hd_texture: true, texture_delight: true }, noHighPack ? {} : { addons: { high_pack: true } });
 
