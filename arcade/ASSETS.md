@@ -28,9 +28,15 @@ its glTF loader (MIT, `vendor/three.LICENSE`), meshoptimizer decoder (MIT, `vend
 |---|---|---|---|---|---|
 | `starfighter.glb` | Risk Blaster: the player's fighter | Tripo `image-to-model`, model `v3.1-20260211`, from concept `starfighter-b-sd-0` (Seedream 5.5; prompt `starfighter-b` in `concepts.js`); parts from Tripo `mesh/segment` v2 | `geometry_quality: detailed`, `texture_quality: detailed`, `texture_version: v3.5-20260815`, PBR, 300K faces | 119K triangles in 13 parts (hull, canopy, 2 wings, 2 cannons, 5 engines, 2 fins), 11 anchors, 4K base colour, 2K metal/roughness, normal and glow maps, 3.3 MB. Surfaces by part: mirror-glass canopy, heat-tinted nozzles, gunmetal cannons | 60 + 40 Tripo credits (model, segmentation); concept $0.06 |
 | `demon.glb` | Risk Blaster: the wave's enemy (second version) | Tripo `image-to-model` `v3.1-20260211` from concept `demon-d-nb-0` (Nano Banana Pro; prompt `demon-d`); parts from Tripo `mesh/segment` v2 (`balanced`), the two horns lifted out of a second split (`detailed`) | as above | 142K triangles in 13 parts (body, head, 2 horns, tail, 2 wings, 2 shoulders, 2 elbows, 2 hands), 9 anchors, 4K base colour, 2K maps, 3.4 MB. Surfaces by part: matte ridged horns, chrome armour with cyan seam lights, softly glowing wing membranes, a glowing rift in the chest | 60 + 40 + 40 Tripo credits; concept $0.15 |
-| `warrig.glb` | Nest Egg Run: the vehicle | Hyper3D Rodin `fal-ai/hyper3d/rodin/v2.5`, tier `Gen-2.5-Extreme-High`, from concept `wartruck-c-sd-0` (prompt `wartruck-c`); parts from Tripo `mesh/segment` v2 of the uploaded mesh | `500K Triangle`, PBR, `hd_texture`, `texture_delight`, HighPack (4K) | 191K triangles in 9 parts (body, 6 wheels, 2 exhausts), 9 anchors, 2K maps, 3.6 MB | $1.20 fal + 40 Tripo credits; concept $0.06 |
+| `warrig.glb` | Nest Egg Run: the vehicle (second version: an armoured hauler carrying the nest egg) | Tripo `multiview-to-model`, model `v3.1-20260211`, from four elevations (front, left, back, right) of concept `warrig-b-sd-1` (Seedream 5.5, prompt `warrig-b`); the elevations drawn by Nano Banana Pro (edit) with `tools/gen/views.js`; parts from Tripo `mesh/segment` v2; the plane of symmetry found and one half reflected by `process-model.mjs` (`mirror`) | `geometry_quality: detailed`, `texture_quality: detailed`, `texture_version: v3.5-20260815`, PBR, 300K faces | 115K triangles in 8 parts (body, egg, 4 wheels, 2 exhaust stacks), 9 anchors, exactly symmetrical about its centreline, 4K base colour, 2K maps, 3.0 MB. Checked in flat top, side, front and rear views (`docs/combat-pass/racer/warrig-check-flat.jpg`) | 60 + 40 + 40 Tripo credits (model, two segmentations); concept and four views $0.76 |
 
 Each model has a `<name>.json` beside it (parts, pivots, anchors, triangle count) written by the processing tool.
+
+The war rig was made twice too. The first (`tools/gen/assets/warrig-v1.json`, a six-wheeler from Rodin) did not meet
+the owner's rules (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or
+lights) and neither did any other first-round candidate (coupes and pickups with real-car faces). The second round
+was nine concepts from three new prompts (`warrig-a/b/c`), then Tripo multi-view, Tripo single-image and Rodin
+multi-view candidates of the picked design, and one Tripo candidate of a second design.
 
 The demon was made twice. The first (`tools/gen/assets/demon-v1.json`, concept `demon-c-sd-0`) was replaced after the
 first independent review: its round chest core was too close to a known film armour, its face did not read and its
@@ -47,12 +53,18 @@ Blockade Labs Skybox AI, Model 3 (8K equirectangular, 1 credit each), packed at 
 | `blaster-deep-1.webp` | Risk Blaster: the main sky (magenta and cyan nebula, open space in every direction) | M3 Advanced (artistic) | seam, zenith and nadir clean |
 | `blaster-deep-4.webp` | Risk Blaster: the ominous regions (crimson nebula on a dense star field) | M3 Advanced (photo/render) | seam runs through the red nebula without a join |
 | `blaster-deep-5.webp` | Risk Blaster: the wormhole gate region (cyan and magenta vortices) | M3 Advanced (artistic) | seam clean |
+| `racer-dawn.webp` | Nest Egg Run: age 25 (rose and teal dawn, stars above) | M3 Sky Dome | seam clean; a bright spot on the horizon (turned behind the game's own sun) |
+| `racer-day.webp` | Nest Egg Run: the middle years (turquoise day, hot-pink cirrus) | M3 Sky Dome | seam clean, no sun disc |
+| `racer-sunset.webp` | Nest Egg Run: golden hour (a great orange and pink lenticular cloud over a yellow horizon) | M3 Sky Dome | seam clean |
+| `racer-sunset-b.webp` | Nest Egg Run: dusk (purple clouds rimmed in orange, painted mountain ranges, a sun disc on the horizon) | M3 Digital Painting | seam runs through a mountain without a join |
+| `racer-night.webp` | Nest Egg Run: age 65 (stars and a violet milky way over a cyan and magenta horizon glow) | M3 Sky Dome | seam clean |
 
 Rejected and deleted (2026-11-15; they were never committed and no code loads them): `blaster-nebula`,
 `blaster-nebula-b`, `blaster-belt`, `blaster-graveyard`, `blaster-gate` (the first prompts came back as alien
 landscapes with ground, ships and structures: not open space), `blaster-deep-2` (a band of different texture down
 the seam), `blaster-deep-3` (a visible join through its bright star). Their seven credits stay in the spend log.
-Skies for the other modes are generated and are added to this table as each mode's phase picks them.
+A second day sky (`racer-day-b`) had a visible join and was not kept. Skies for the other modes are generated and
+are added to this table as each mode's phase picks them.
 
 ## Sound (`assets/audio/`)
 
@@ -69,18 +81,19 @@ each (the game plays the takes of a sound in turn). Loops: the same model with `
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.1 MB, 9 s |
 | `voice.mp3` | 55 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", streak names, milestones ...) | 0.8 MB, 70 s |
 | `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
+| `music-racer.mp3` | Nest Egg Run's track: ElevenLabs `music_v2_5`, prompt `racer` in `sounds.js` (outrun synthwave, 118 BPM), take 0 of 2, cut to a loop from 0.7 s to 48.1 s | 0.9 MB, 48 s |
 
 ## Spend log
 
-As of 2026-11-15 20:45 UTC (Phase 1 under review). Balances are read live from each provider; failed calls are not
+As of 2026-11-16 00:30 UTC (Phase 2 under way). Balances are read live from each provider; failed calls are not
 charged by any of the four. Every paid call is a line of `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits | 1,755 | 2,710 | 24 image-to-3D (60 each), 1 text-to-3D (50), 6 segmentations (40 each), 1 auto rig (25), 13 rig checks (free) |
-| fal.ai | $49.90 | $24.14 | $25.76 | 24 Rodin Gen-2.5 runs, 53 Seedream 5.5 concept images, 16 Nano Banana Pro concept images |
-| ElevenLabs | 131,000 credits | 10,040 | 120,960 | 448 sound effects and loops (11 credits a second), 57 announcer lines, 3 music runs |
-| Blockade Labs | plan credits | 24 | not reported by the API | 24 skies (Model 3, 1 credit each) |
+| Tripo | 4,465 credits | 2,015 | 2,450 | 26 image-to-3D (60 each), 1 multi-view-to-3D (60), 1 text-to-3D (50), 8 segmentations (40 each), 1 auto rig (25), 13 rig checks (free) |
+| fal.ai | $49.90 | $26.63 | $23.27 | 25 Rodin Gen-2.5 runs, 60 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
+| ElevenLabs | 131,000 credits | 11,800 | 119,200 | 448 sound effects and loops (11 credits a second), 57 announcer lines, 5 music runs (about 880 credits each) |
+| Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
 redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now
