@@ -62,7 +62,7 @@ function rigFlameMat(ph) {
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));                     // 1 down the middle of the tongue as it is seen, 0 at its edge
         float lick = 0.82 + 0.18 * sin(vT * 15.0 - uTime * 21.0 + uPh * 3.0); // brighter bands that run down it
-        float heat = clamp((1.0 - vT) * (0.2 + 0.8 * f * f) * lick * 1.3, 0.0, 1.0);
+        float heat = clamp((1.0 - vT) * (0.2 + 0.8 * f * f) * lick * 1.55, 0.0, 1.0);
         vec3 c = heat > 0.5 ? mix(vec3(1.25, 0.5, 0.07), vec3(1.3, 1.0, 0.5), (heat - 0.5) * 2.0) : mix(vec3(0.85, 0.08, 0.03), vec3(1.25, 0.5, 0.07), heat * 2.0);
         float a = smoothstep(0.0, 0.22, heat) * smoothstep(0.0, 0.4, f) * (1.0 - smoothstep(0.82, 1.0, vT));
         gl_FragColor = vec4(c, a * clamp(uPow, 0.0, 1.0));
@@ -171,13 +171,13 @@ class RacerRig {
       return { hold, ms };
     };
     this.plumes = [0, 1].map((i) => {
-      const p = fire([[0.17, i * 2.1], [0.1, 3.3 + i * 1.7, (i ? -1 : 1) * 0.07, 0.08, 0.62]], mouth[i]);
+      const p = fire([[0.27, i * 2.1], [0.16, 3.3 + i * 1.7, (i ? -1 : 1) * 0.1, 0.11, 0.62]], mouth[i]);
       p.glow = glowSprite(new THREE.Color(1.0, 0.42, 0.08), 0.5, 0); // (a small warm glow at the mouth: the tongue itself is the fire)
       p.glow.renderOrder = 5; p.glow.position.z = 0.3;
       p.hold.add(p.glow);
       return p;
     });
-    this.burnF = fire([[0.21, 5.1], [0.13, 7.7, 0.11, 0, 0.6]], mouth[0]);
+    this.burnF = fire([[0.36, 5.1], [0.21, 7.7, 0.18, 0, 0.62]], mouth[0]);
     this.wreckF = fire([[0.46, 1.3], [0.36, 4.2, 0.55, 0, 0.8], [0.3, 8.8, -0.5, 0, 0.66]], null);
     this.fireK = 0; this.ablaze = false; this.flare = 0; this.smokeT = 0; this.emberT = 0;
     // the light the flames throw: on the road behind it (a pool that flickers), and on its own deck and egg
@@ -492,17 +492,18 @@ class RacerRig {
       p.hold.visible = this.flame > 0.02;
       if (!p.hold.visible) return;
       this.fx.worldToLocal(this.stack(i, p.hold.position));
-      // each trails straight back from its stack's mouth, over the deck beside the egg: a touch outward and down with the wind
-      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.07, -0.08 + (quiet ? 0 : 0.03 * Math.sin(t * 7 + i * 2)), 1).normalize());
-      tongues(p, 0.9 + 1.8 * fl, Math.min(1, fl * 1.6), quiet ? 0.4 : 1);
+      // each trails back from its stack's mouth with the wind, rising a little as fire does (dead level it would point
+      // at the lens behind and above it, and be seen end on)
+      p.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set((i ? 1 : -1) * 0.1, 0.36 + (quiet ? 0 : 0.04 * Math.sin(t * 7 + i * 2)), 1).normalize());
+      tongues(p, 1.2 + 2.6 * fl, Math.min(1, fl * 1.6), quiet ? 0.4 : 1);
       p.glow.scale.setScalar(0.45 + 0.3 * fl); p.glow.material.opacity = 0.3 * fl * seen;
     });
     // the last life: the left stack burns, a tongue that licks up and back
     this.burnF.hold.visible = this.hurt > 0.03 && this.wreckT < 0.3;
     if (this.burnF.hold.visible) {
       this.fx.worldToLocal(this.stack(0, this.burnF.hold.position));
-      this.burnF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(-0.22, 0.72 + (quiet ? 0 : 0.06 * Math.sin(t * 5.3)), 0.66).normalize());
-      tongues(this.burnF, (1.2 + (quiet ? 0 : 0.2 * Math.sin(t * 9.1))) * (0.5 + 0.5 * this.hurt), Math.min(1, this.hurt * 1.5), quiet ? 0.5 : 1.5);
+      this.burnF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(-0.2, 0.5 + (quiet ? 0 : 0.06 * Math.sin(t * 5.3)), 0.85).normalize());
+      tongues(this.burnF, (1.25 + (quiet ? 0 : 0.15 * Math.sin(t * 9.1))) * (0.5 + 0.5 * this.hurt), Math.min(1, this.hurt * 1.5), quiet ? 0.5 : 1.4);
     }
     // the wreck: fire stands on its hood (it leaps as the engine goes, then burns steadily)
     this.fireK += ((this.ablaze ? 1 : 0) - this.fireK) * Math.min(1, d * 6);
@@ -512,7 +513,7 @@ class RacerRig {
       this.fx.worldToLocal(this.hoodAt(this.wreckF.hold.position));
       this.wreckF.hold.quaternion.setFromUnitVectors(this._w.set(0, 0, 1), this._v.set(0.1 * this.wreckSd, 1, 0.14).normalize());
       this.wreckF.hold.scale.setScalar(1 + 0.7 * this.flare);
-      tongues(this.wreckF, (1.55 + (quiet ? 0 : 0.25 * Math.sin(t * 6.7))) * this.fireK * (1 + 0.9 * this.flare), Math.min(1, this.fireK * 1.4), quiet ? 0.5 : 1.3);
+      tongues(this.wreckF, (1.9 + (quiet ? 0 : 0.25 * Math.sin(t * 6.7))) * this.fireK * (1 + 0.9 * this.flare), Math.min(1, this.fireK * 1.4), quiet ? 0.5 : 1.3);
     }
     this.roadGlow.visible = this.flame > 0.02;
     this.roadGlow.material.color.setRGB(1.0, 0.42, 0.1).multiplyScalar(0.5 * fl * seen);
@@ -541,23 +542,23 @@ class RacerRig {
       // while it is young (it leaves upward and to the side: it never lies over the rig); embers
       const burning = this.fireK > 0.4 ? 2 : this.hurt > 0.4 && this.wreckT < 0.3 ? 1 : 0;
       if (burning && (this.smokeT -= d) <= 0) {
-        this.smokeT = burning === 2 ? 0.1 : 0.075;
-        if (burning === 1) {
-          const p = this.stack(0, this._v); p.x -= 0.25; p.y += 0.95; p.z += 0.7;
-          kit.smoke(p, { size: 0.55, life: 0.85, a: 0.36, color: 0x3d3654, rise: 0.9, vel: this._w.set(rand(-1.3, -0.5), rand(0.9, 1.6), 4.5 + sp * 0.07) });
+        this.smokeT = burning === 2 ? 0.09 : 0.065;
+        if (burning === 1) { // (low and to the left, over the road: it is seen against the lanes' light, and it never lies over the rig)
+          const p = this.stack(0, this._v); p.x -= 0.35; p.y += 0.45; p.z += 0.5;
+          kit.smoke(p, { size: 0.9, life: 1.0, a: 0.55, color: 0x3a3552, rise: 0.3, vel: this._w.set(rand(-3.2, -2.0), rand(0.2, 0.7), 2 + sp * 0.03) });
         } else {
-          const p = this.hoodAt(this._v); p.y += 1.5;
-          kit.smoke(p, { size: 0.9, life: 1.25, a: 0.4, color: 0x3d3654, rise: 2.0, vel: this._w.set(rand(-0.5, 0.5) + 0.5 * this.wreckSd, rand(1.2, 2.0), rand(0.8, 1.8)) });
+          const p = this.hoodAt(this._v); p.y += 1.6;
+          kit.smoke(p, { size: 1.0, life: 1.3, a: 0.5, color: 0x4a4466, rise: 2.0, vel: this._w.set(rand(-0.5, 0.5) + 0.5 * this.wreckSd, rand(1.2, 2.0), rand(0.8, 1.8)) });
         }
       }
       if (burning && (this.emberT -= d) <= 0) {
         this.emberT = 0.09;
         const p = burning === 1 ? this.stack(0, this._v) : this.hoodAt(this._v); p.y += 0.5;
-        kit.embers(p, 0xff8a3a, { n: burning === 2 ? 2 : 1, radius: burning === 2 ? 0.5 : 0.18, life: 0.9, speed: 2.4, rise: 1.6 });
+        kit.embers(p, 0xff8a3a, { n: 2, radius: burning === 2 ? 0.5 : 0.2, life: 1.1, speed: 2.6, rise: 1.6 });
       }
       if (boost && this.flame < 0.6 && (this.sparkT -= d) <= 0) { this.sparkT = 0.05; kit.sparks(this.stack(Math.random() < 0.5 ? 0 : 1, this._v), RIG.FLAME[0], { n: 3, speed: 5, dir: this._w.set(0, 0.8, 0.6), spread: 0.6, life: 0.35, len: 0.4, w: 0.05, gravity: 6 }); }
     }
-    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 2.0, 2.3)), 1.3, 0.35 + 2.1 * Math.max(this.heat * 0.5, this.flame, this.hurt * 0.6)); // (strong enough to be seen: the air behind the tongues swims)
+    if (GFX.opt.shimmer && !quiet && this.inT > 0.6) GFX.heatAt(g.camera, this.fx.localToWorld(this._v.set(0, 3.05, 1.7)), 0.85, 0.3 + 1.25 * Math.max(this.heat * 0.5, this.flame, this.hurt * 0.6)); // (the air over and behind the tongues swims, strongly enough to be seen; the rig under it is left as it is)
     // ---- ribbons ride the rear frames and hubs through lane changes and slides
     const tI = 0.62 * (0.8 + 0.5 * smoothstep(0, 0.3, this.brake)) * this.pow * dead; // (ribbons of light, not jets: they do not brighten with speed)
     for (const tr of this.trails) {

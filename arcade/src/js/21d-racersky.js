@@ -233,8 +233,8 @@ class RacerSky {
     // the egg at the end of the road is the scene's jewel under every sky: gold at its crown to magenta at its foot, lit
     // from inside, in a halo of its own colours, with one glint on its shoulder
     const su = g.sun.userData.disc.material.uniforms;
-    su.uTop.value.setRGB(1.0, 0.8, 0.22); su.uBottom.value.setRGB(1.0, 0.12, 0.5); su.uTint.value.setRGB(1, 1, 1);
-    su.uI.value = 0.9 * (1 + 0.05 * Math.sin(VFX.t * 1.1));
+    su.uTop.value.setRGB(1.0, 0.74, 0.14); su.uBottom.value.setRGB(1.0, 0.1, 0.46); su.uTint.value.setRGB(1, 1, 1);
+    su.uI.value = 0.74 * (1 + 0.05 * Math.sin(VFX.t * 1.1)); // (below white: its colours hold through the lens's bloom)
     g.sun.userData.glow.material.color.setRGB(1.0, 0.46, 0.32).multiplyScalar(1.25 * N.halo);
     if (!this.glint) {
       this.glint = [glowSprite(new THREE.Color(1.5, 1.2, 0.9), 24, 0.7), glowSprite(new THREE.Color(2.2, 2.0, 1.7), 7, 0.9)];

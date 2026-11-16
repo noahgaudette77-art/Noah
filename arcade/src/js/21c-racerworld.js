@@ -180,7 +180,7 @@ function racerTrafficMaterial(P, sky) {
         // (with the panorama up: dark gloss bodies that mirror the sky, with light bars, lit windows and a line of neon
         // in one of the road's own colours. Traffic that belongs beside the rig, not blocks of flat paint.)
         vec3 neonC = aL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (aL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
-        if (aCh < 0.5) c = mix(aCol * 0.42, aTint * 0.06 + vec3(0.012, 0.014, 0.024), aPaint);
+        if (aCh < 0.5) c = mix(aCol * 0.5, aTint * 0.09 + vec3(0.014, 0.016, 0.028), aPaint);
         #endif
         vLit = 0.0;
         if (aCh > 0.5) {
@@ -195,7 +195,7 @@ function racerTrafficMaterial(P, sky) {
           else if (aCh < 7.5) k = smoothstep(-0.2, 0.6, -sin(uTime * 7.8));
           else if (aCh > 8.5) {
             #ifdef SKY
-            c = neonC * (aCh > 9.5 ? 2.1 : 1.5);
+            c = neonC * (aCh > 9.5 ? 2.6 : 1.6);
             #else
             c = aTint * 1.3; // a livery stripe that glows in the body colour
             #endif
@@ -711,15 +711,30 @@ class RacerWorld {
     // under a black sky.
     if (g.pano) {
       const pg = new THREE.Group(), flat = (w, h, col) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, fog: false, transparent: true }));
-      const wall = flat(90, 17, 0x08080e), mouth = flat(20.4, 8.8, 0x000000);
+      const wall = flat(90, 17, 0x08080e), mouth = flat(20.4, 8.8, 0xffffff), mouthIn = flat(20.4, 8.8, 0xffffff);
+      // (the way in is not a black board: the bore is seen in it, its arches of light and its two lines of lamps running away)
+      { const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+        const x = c.getContext("2d"), vx = 128, vy = 76; // (where the lines meet: the height of the lens in the mouth)
+        x.fillStyle = "#020206"; x.fillRect(0, 0, 256, 128);
+        for (let k = 0; k < 9; k++) {
+          const q = 30 / (38 + 16 * k), a = Math.min(1, 0.25 + q), l = vx - vx * q, r = vx + (256 - vx) * q, t = vy - vy * q, b = vy + (128 - vy) * q;
+          x.lineWidth = Math.max(1, 3.4 * q); x.globalAlpha = a;
+          x.strokeStyle = "#35efff"; x.beginPath(); x.moveTo(l, b); x.lineTo(l, t); x.stroke();
+          x.strokeStyle = "#ff3ad4"; x.beginPath(); x.moveTo(r, b); x.lineTo(r, t); x.stroke();
+          x.strokeStyle = "#ffd9a0"; x.beginPath(); x.moveTo(l, t); x.lineTo(r, t); x.stroke();
+        }
+        x.globalAlpha = 0.85; x.lineWidth = 2; x.strokeStyle = "#ffd9a0";
+        for (const sd of [-1, 1]) { x.beginPath(); x.moveTo(vx + sd * 78, 0); x.lineTo(vx + sd * 5, vy - 4); x.stroke(); }
+        mouthIn.material.map = new THREE.CanvasTexture(c); mouthIn.material.color.setRGB(1.7, 1.7, 1.7); }
+      mouthIn.position.set(0, 4.4, 0.05);
       const rims = [flat(0.3, 8.8, neon(0x35efff, 2.2)), flat(0.3, 8.8, neon(0xff3ad4, 2.2)), flat(20.7, 0.3, neon(0xffd9a0, 2.4))];
       wall.position.set(0, 8.5, 0); mouth.position.set(0, 4.4, 0.05);
       rims[0].position.set(-10.2, 4.4, 0.1); rims[1].position.set(10.2, 4.4, 0.1); rims[2].position.set(0, 8.8, 0.1);
-      pg.add(wall, mouth, ...rims);
+      pg.add(wall, mouth, mouthIn, ...rims);
       pg.traverse((o) => { o.frustumCulled = false; o.renderOrder = 3; });
       pg.visible = false;
       g.scene.add(pg);
-      this.portal = { g: pg, wall, mouth, rims };
+      this.portal = { g: pg, wall, mouth, mouthIn, rims };
     }
   }
   // the mouth as it comes up the road: the way out, bright with the sky beyond; the way in, dark in its wall
@@ -729,11 +744,12 @@ class RacerWorld {
     if (!s.col) s.col = new THREE.Color((RACER_SKIES[racerSkyId(out ? s.to : this.biome, g.year)] || RACER_SKIES.dawn).haze[0]); // the light of the sky beyond it (out), or of the sky it stands under (in)
     if (!P.g.visible) return;
     const k = smoothstep(0, 0.25, s.t);
-    P.g.position.set(0, 0, g.camera.position.z - Math.max(sp, 62) * (1.2 - s.t));
+    P.g.position.set(0, 0, -3.2 - Math.max(sp, 62) * (1.2 - s.t)); // (it is at the rig's nose as the change is made: the rig is never cut by it)
     P.wall.visible = !out;
     P.wall.material.color.copy(s.col).multiplyScalar(0.05).add(this._c.set(0x08080e)); P.wall.material.opacity = k;
     P.rims.forEach((m) => { m.visible = !out; m.material.opacity = k; });
-    P.mouth.material.color.copy(s.col).multiplyScalar(out ? 1.5 : 0); P.mouth.material.opacity = k;
+    P.mouth.visible = out; P.mouthIn.visible = !out;
+    P.mouth.material.color.copy(s.col).multiplyScalar(1.5); P.mouth.material.opacity = P.mouthIn.material.opacity = k;
   }
   setBiome(name) {
     const g = this.g;

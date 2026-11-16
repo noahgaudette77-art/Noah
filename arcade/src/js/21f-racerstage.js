@@ -65,7 +65,7 @@ class RacerStage {
     { const N = (this.MN = 72), zero = new THREE.Matrix4().makeScale(0, 0, 0), mg = new THREE.PlaneGeometry(1, 1);
       mg.rotateX(-H);
       const mk = (mat, order) => { const m = new THREE.InstancedMesh(mg, mat, N); m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.renderOrder = order; m.layers.set(1); for (let i = 0; i < N; i++) { m.setMatrixAt(i, zero); m.setColorAt(i, new THREE.Color(0, 0, 0)); } s.add(m); return m; };
-      this.markDark = mk(new THREE.MeshBasicMaterial({ color: 0x020106, transparent: true, opacity: 0.88, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 1);
+      this.markDark = mk(new THREE.MeshBasicMaterial({ color: 0x020106, transparent: true, opacity: 0.72, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 1);
       this.markHot = mk(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), 2);
       this.markHot.visible = false; // (rubber, not paint: the strokes are dark from the first frame)
       this.marks = Array.from({ length: N }, (_, i) => ({ i, on: false, x: 0, z: 0, a: 0, len: 1, age: 0 }));
@@ -505,7 +505,7 @@ class RacerStage {
         mk.z += step; mk.age += d;
         if (mk.z > 14 || mk.age > 2.4) { mk.on = false; this.markDark.setMatrixAt(mk.i, this._zero); continue; }
         any = true;
-        this._m.compose(this._v.set(mk.x, 0.05, mk.z), this._q.setFromEuler(this._e.set(0, mk.a, 0)), this._s.set(0.36, 1, mk.len));
+        this._m.compose(this._v.set(mk.x, 0.05, mk.z), this._q.setFromEuler(this._e.set(0, mk.a, 0)), this._s.set(0.24, 1, mk.len));
         this.markDark.setMatrixAt(mk.i, this._m);
       }
       this.markDark.visible = any || this.marksLive;
