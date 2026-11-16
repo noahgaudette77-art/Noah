@@ -435,8 +435,7 @@ class BossStage {
       const f0 = (s.f0 = this.slamSpot(new THREE.Vector3()) || new THREE.Vector3(src.x * 0.5, 0.07, Math.max(src.z, 0.9 * k) + 0.5 * k));
       Sound.sfx("slam", 0, { vol: 1 });
       kit.wave(f0, null, this.hex, { flat: true, dur: 0.55, s0: 0.8 * k, s1: 13 * k, w: 0.24 });
-      kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 });
-      kit.wave(f0, null, this.hex, { flat: true, dur: 0.7, s0: 0.5 * k, s1: 18 * k, w: 0.16, delay: 0.1 });
+      kit.wave(f0, null, 0xffffff, { flat: true, dur: 0.42, s0: 0.6 * k, s1: 9 * k, w: 0.1, delay: 0.03, k: 0.8 }); // (the kit has ten rings: a strike spends few, so none is taken back while it runs)
       // three blades of light run out along the floor from where it fell, to the foot of the picture where the player is
       const foot = (s.foot = this.floorFoot(new THREE.Vector3())), reach = f0.distanceTo(foot);
       for (const an of quiet ? [0] : [-0.24, 0, 0.24]) kit.bolt(this._v.copy(f0).setY(0.16), this._w.set(foot.x + Math.sin(an) * reach, 0.16, foot.z), this.hex, { dur: BOSS_ATK.FLY[1], width: 0.5 * k, len: 9 * k, light: an === 0 });
@@ -512,11 +511,10 @@ class BossStage {
         kit.debris(p, { n: 1, size: 0.4 * k, speed: 5 * k, color: BOSS_ATK.WRECK, hot: this.hex, life: 0.6, dir: this._u.set(0, 1, 0.2), spread: 0.5 });
         kit.flash(p, this.hex, 0.3 * k, 1.1 * k, 0.1, 0.7, 1.4);
       }
-      if ((s.acc3 = (s.acc3 || 0) + d) > 0.045 && q < 1) { s.acc3 = 0; kit.wave(this._v.lerpVectors(s.f0, to, q).setY(0.08), null, this.hex, { flat: true, dur: 0.2, s0: 0.6 * k, s1: (1.8 + 4 * q) * k, w: 0.14 }); } // (the floor's ring jumping, wider as it comes)
       if (!s.landed && u >= FLY) this.land(s, s.f0);
     } else if (s.kind === 2) { // the wave comes on at the player, growing as it comes, until it fills the picture
       const q = Math.min(1, u / FLY);
-      if ((s.acc += d) > 0.034 && q < 1) {
+      if ((s.acc += d) > 0.05 && q < 1) {
         s.acc = 0;
         const p = this._v.lerpVectors(this.src(this._u), this.lens(0, -0.1, 2.0, this._w), q * q), r = p.distanceTo(this.g.camera.position) * this.tb() * (0.3 + 1.05 * q);
         kit.wave(p, null, this.hex, { dur: 0.15, s0: r * 0.75, s1: r, w: 0.07, k: 0.9 });
@@ -580,7 +578,7 @@ class BossStage {
     const tb = this.tb();
     if (kind === 1) { // the floor's jolt arrives under the player: the shock's ring across the foot of the picture, dust thrown up along it
       g.shake(0.34);
-      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.2, 1.3, 0.12, 0.85, 1.5); }
+      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
       for (let i = 0; i < (quiet ? 1 : 4); i++) kit.smoke(this.lens(rand(-0.85, 0.85), -1.0, 3.4), { size: 0.36, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.9, 0), a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
     } else if (kind === 2) { // the wave breaks over the player: a ring that fills the picture, and the picture ripples
       GFX.ripple(g.camera, at, 1, 0.5);
@@ -588,12 +586,12 @@ class BossStage {
       for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.3, 3), null, 0xffffff, { dur: 0.3, s0: 3 * tb * 0.4, s1: 3 * tb * (1.1 + j * 0.25), delay: j * 0.08, w: 0.04, k: 0.8 });
     } else if (kind === 3) { // the beam: a hit where it crosses the player, then a line burnt across the foot of the picture, molten drips falling from it
       const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92), hit = this.lens(0, -0.74, 2.6);
-      kit.flash(hit, this.beamCol, 0.25, 1.2, 0.12, 0.9, 1.6);
+      kit.flash(hit, this.beamCol, 0.08, 0.42, 0.12, 0.9, 1.6);
       kit.sparks(hit, 0xffffff, { n: quiet ? 5 : 12, speed: 2.4, spread: 1.4, life: 0.3, len: 0.14, w: 0.016, k: 1.8, gravity: 2, stretch: 0.02 });
       kit.gash(b0, b1, 0xffb070, 0.5, 0.045, 1.5);
       if (this.fl.fx.beam === "cleave") kit.gash(this.sweepAt(s.sd, 0.12).add(this._u.set(0, 0.05, 0)), this.sweepAt(s.sd, 0.88).add(this._u.set(0, 0.05, 0)), this.hex, 0.5, 0.04, 1.5); // (half violet: the arc's second edge)
       for (let j = 0; j < 3; j++) g.show.wait(j * 0.08, () => { if (!g.unmounted) kit.sparks(this._v.lerpVectors(b0, b1, rand(0.1, 0.9)), 0xffa050, { n: 4, speed: 0.6, life: 0.5, len: 0.12, w: 0.02, gravity: 2.5, k: 1.6, stretch: 0.02 }); });
-    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.2, 1.0, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
+    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
     else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });
@@ -797,9 +795,9 @@ class BossStage {
       this.rageWas = rg > 0.002;
     }
     if (rage && this.phase === "fight" && a.root.visible && !this.blown && (this.steamT = (this.steamT || 0) - d) <= 0) {
-      this.steamT = quiet ? 0.45 : 0.13;
-      const p = a.at(Math.random() < 0.6 ? "chest" : "head", this._u); p.x += rand(-0.22, 0.22) * S; p.z -= 0.06 * S;
-      kit.smoke(p, { size: 0.9 * k, life: 0.9, vel: this._w.set(rand(-0.6, 0.6), 2.4, rand(-0.4, 0.1)).multiplyScalar(k), rise: 0.9, a: 0.3, cold: true, color: 0xc0b0dc, drag: 0.5 });
+      this.steamT = quiet ? 0.4 : 0.09;
+      const p = a.at(Math.random() < 0.6 ? "chest" : "head", this._u); p.x += rand(-0.26, 0.26) * S; p.y += 0.08 * S; p.z -= 0.04 * S;
+      kit.smoke(p, { size: 1.3 * k, life: 1.0, vel: this._w.set(rand(-0.8, 0.8), 3, rand(-0.4, 0.1)).multiplyScalar(k), rise: 1, a: 0.48, cold: true, color: 0xd8c8f0, drag: 0.5 });
     }
     this.src(g.eyeLight.position); g.eyeLight.position.z += 0.4;
     g.eyeLight.intensity = a.power * (0.6 + 3.2 * this.windEase);
@@ -817,9 +815,11 @@ class BossStage {
     if (rage && g.state !== "over" && Sound.intensity < 2) Sound.setIntensity(2);
     // ---- one heart left: the red frame beats about once a second, with the alarm (steady with none left, or with reduced effects)
     if (this.redFrame && g.band) {
-      const e = this.redFrame, beat = this.low === 2 || quiet ? 0.8 : Math.pow(0.5 + 0.5 * Math.cos((this.redT += d) * Math.PI * 2 / 1.125), 2);
+      // (once the fight is over the band is no longer the picture: the frame goes, and the arena's own red vignette stays)
+      const e = this.redFrame, beat = this.low === 2 || quiet ? 0.8 : Math.pow(0.5 + 0.5 * Math.cos((this.redT += d) * Math.PI * 2 / 1.125), 2), out = (this.redOut = g.state === "over" ? Math.min(1, (this.redOut || 0) + d / 0.3) : 0);
       e.style.top = g.band.top + "px"; e.style.height = g.band.h + "px";
-      e.style.boxShadow = `inset 0 0 ${Math.round(46 + 34 * beat)}px ${Math.round(12 + 20 * beat)}px rgba(255, 18, 46, ${(0.42 + 0.5 * beat).toFixed(2)})`;
+      e.style.boxShadow = `inset 0 0 ${Math.round(46 + 34 * beat)}px ${Math.round(12 + 20 * beat)}px rgba(255, 18, 46, ${((0.42 + 0.5 * beat) * (1 - out)).toFixed(2)})`;
+      if (out >= 1) { e.remove(); this.redFrame = null; }
     }
     // ---- the hole burnt in it and its stumps smoulder at their edges
     for (const e of this.embers) {
@@ -833,11 +833,11 @@ class BossStage {
     }
     // ---- its words: a caption along the top of the picture; a result plate; the score counting up as the reward lands
     this.caption();
-    if (this.result && g.band) {
+    if (this.result && g.el && g.band) { // (its defeat: low in the screen, over the boss's legs, its head and chest clear as it has the last word; its own death: in the middle of the picture, where it was)
       const e = this.result, q = Math.min(1, (this.resT = (this.resT || 0) + d) / 0.18);
       e.style.opacity = q.toFixed(2);
       e.style.transform = `scale(${(1 + 0.45 * (1 - q) * (1 - q)).toFixed(3)})`;
-      e.style.top = Math.round(g.band.top + g.band.h * 0.5 - e.offsetHeight / 2) + "px";
+      e.style.top = Math.round((this.phase === "won" ? g.el.clientHeight * 0.7 : g.band.top + g.band.h * 0.5) - e.offsetHeight / 2) + "px";
     }
     if (this.count && (this.count.t += d) >= 0) { const c = this.count, q = Math.min(1, c.t / c.dur); c.el.textContent = fmtScore(Math.round(lerp(c.a, c.b, q * (2 - q)))); if (q >= 1) this.count = null; }
     this.fl.update(d);

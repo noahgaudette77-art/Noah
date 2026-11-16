@@ -77,9 +77,9 @@ module.exports = async (cap) => {
   // dialog over the foot of it, closed here once it has landed)
   let enter = null;
   if (has("enter") || has("fight")) {
-    await cap.fast(14);
+    await cap.fast(34); // (after the screen's power-on, 0.55 s: the boss is high in the air, about to come down)
     // (the short set keeps the part of the screen it lands in, the size of the fight's own picture)
-    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 8 : 20, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
+    enter = await frames(tag + "-enter", full ? 12 : 4, full ? 7 : 14, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
   }
   await page(() => { window.__cap.skipDialogs = true; });
   if (full && enter) sheet("01-entrance", enter, { cols: 6, thumb: 250 });
@@ -125,8 +125,9 @@ module.exports = async (cap) => {
       await ready(40, 0.2);
       await cap.answer("W");
       await strip("05-wrong-strike", 18, 2, { cols: 6 });
+      await cap.fast(14); // (the explanation sheet has finished coming in; the HUD's cracks are still on it)
       await still("05b-wrong-full", { q: 86 });
-      await cap.fast(50);
+      await cap.fast(36);
       await still("12-explanation-full", { q: 86 });
     }
     // ---- the last heart: the red frame and the alarm

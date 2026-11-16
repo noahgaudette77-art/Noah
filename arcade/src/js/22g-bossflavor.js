@@ -85,7 +85,7 @@ class BossFlavor {
       } else if (fx.slam === "gavel") { // the crack of the gavel on its block: a hard white split in the floor, and rings of sound in the air
         for (const sd of [-1, 1]) kit.gash(this._v.copy(f0).setY(0.09), this._w.set(f0.x + sd * rand(1.6, 2.6) * k, 0.09, f0.z + rand(-0.6, 0.6) * k), 0xffffff, 0.9, 0.05 * k, 2.2);
         kit.flash(this._v.copy(f0).setY(0.5 * k), 0xffffff, 0.3 * k, 1.8 * k, 0.07, 1, 2.2);
-        for (let j = 0; j < 4; j++) kit.wave(this._v.copy(f0).setY(0.9 * k), null, j % 2 ? 0xffffff : st.hex, { dur: 0.5, s0: 0.6 * k, s1: (5 + j * 2.4) * k, delay: j * 0.09, w: 0.035, k: 0.9 });
+        for (let j = 0; j < 3; j++) kit.wave(this._v.copy(f0).setY(0.9 * k), null, j % 2 ? 0xffffff : st.hex, { dur: 0.5, s0: 0.6 * k, s1: (5 + j * 2.6) * k, delay: j * 0.1, w: 0.035, k: 0.9 });
       } else if (fx.slam === "graphite") { // the pencil's point breaks on the floor: grey graphite and torn exam papers
         for (let i = 0; i < (quiet ? 2 : 5); i++) { const an = rand(6.28), l = rand(1.6, 3) * k; kit.gash(this._v.copy(f0).setY(0.09), this._w.set(f0.x + Math.cos(an) * l, 0.09, f0.z + Math.sin(an) * l), 0x9aa0c0, 1.2, 0.05 * k, 1.4); }
         for (let i = 0; i < (quiet ? 3 : 8); i++) this.toss("sheet", this._v.copy(f0).add(this._w.set(rand(-1, 1) * k, rand(0.5, 1.5) * k, 0)), this._w.set(rand(-5, 5) * k, rand(4, 8) * k, rand(1, 5) * k), { size: rand(0.45, 0.6) * k, life: 1.3, g: 5 * k, drag: 1.4, spin: 5 });
@@ -94,7 +94,7 @@ class BossFlavor {
       if (fx.wave === "vault") { // its vault pours out: coins and keys, thrown at the lens with the wave
         for (let i = 0; i < (quiet ? 5 : 14); i++) { const key = i % 4 === 3; this.toss(key ? "key" : "coin", this._v.copy(src).add(this._w.set(rand(-0.4, 0.4) * k, rand(-0.3, 0.3) * k, 0.2 * k)), this.toward(src, rand(-0.9, 0.9), rand(-0.6, 0.5), rand(40, 52)), { size: (key ? 0.75 : 0.42) * k * rand(0.85, 1.15), life: 0.55, g: 2, spin: key ? 7 : 12, glow: 1.4 }); } // (fast enough to reach the player)
       } else if (fx.wave === "steam") { // scalding steam: big hot puffs rolled at the lens
-        for (let i = 0; i < (quiet ? 3 : 8); i++) kit.smoke(this._v.copy(src).add(this._w.set(rand(-0.5, 0.5) * k, rand(-0.4, 0.4) * k, 0.3 * k)), { size: rand(1.4, 2.2) * k, life: rand(0.55, 0.7), vel: this.toward(src, rand(-0.5, 0.5), rand(-0.4, 0.3), rand(28, 36)), rise: 0.2, a: 0.55, cold: true, color: 0xc8c0e0, drag: 0.2 });
+        for (let i = 0; i < (quiet ? 4 : 13); i++) kit.smoke(this._v.copy(src).add(this._w.set(rand(-0.6, 0.6) * k, rand(-0.5, 0.5) * k, 0.3 * k)), { size: rand(0.7, 1.2) * k, life: rand(0.5, 0.7), vel: this.toward(src, rand(-0.8, 0.8), rand(-0.6, 0.4), rand(26, 38)), rise: 0.3, a: 0.34, cold: true, color: 0xc8c0e0, drag: 0.25 }); // (many small puffs: a rolling, lobed cloud, not one blob)
       }
     } else if (s.kind === 3 && fx.beam === "cleave") { // its other half: a bone-white edge sweeps a beat behind the violet one
       s.beam2 = kit.beam(src, st.sweepAt(s.sd, 0, this._w), 0xf4efe6, { dur: 0, width: 0.32, k: 1.1, grow: 0.04 });
