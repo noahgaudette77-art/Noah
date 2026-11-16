@@ -28,16 +28,23 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | next: 5 (GOLEM) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5 and 10 done; next: 4 (FINE PRINT) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
 
 - Boss 1 (PRODUCT PUSHER): entrance, idle, telegraph and strike (cards from the briefcase), right hit, wrong
   answer, last heart, damage states, death, the player's defeat. Good.
-- Boss 5 (GOLEM): idle and fight seen once; its slam was weak on the floor and has been rebuilt (blades of light
-  along the floor, a fountain of sparks, a ring of dust, a higher lens): to be looked at again.
-- Boss 10 (TOLLGATE): idle seen (reads well). Its fight and death not looked at yet.
+- Boss 5 (GOLEM): its rebuilt slam seen again: it lands on the floor (fists down, a fountain of sparks, blades of
+  light running at the lens). Fixed: through the wind-up of an overhead blow (`attackA`: a slam or a sweep) the
+  lens stood back and looked down at the floor and the head and raised fists left the top of the picture; it now
+  stands farther back and looks higher while such a blow is wound up (the stage's `frame`, `up`).
+- Boss 10 (TOLLGATE): fight (the volley and the barrier's slam) and death seen: good (it rolls in, the barrier
+  comes down on the floor, it tips over backward, its tracks fly in the last blast). Lookalike fixed: its one round
+  lamp in the booth's window, over the ticket slot, read as an eye over a mouth. It is now a lane signal (22e,
+  `makeSignal`): a housing over the old lamp, a lens of small amber lamps that turns a deep red as the barrier is
+  raised or the volley charged (the stage passes the charge to the actor), a hood with a lit edge over it and two
+  guard bars across it.
 
 ## Tests at the last commit
 
