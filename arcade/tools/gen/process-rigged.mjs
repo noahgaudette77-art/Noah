@@ -189,6 +189,62 @@ for (let p = 0; p < nP; p++) {
   modes[p] = mode;
   if (REPORT || cfg.verbose) console.log(`  part ${String(p).padStart(2)}  ${String(partTris[p]).padStart(6)} tris  y[${partBox[p].min[1].toFixed(2)},${partBox[p].max[1].toFixed(2)}] x[${partBox[p].min[0].toFixed(2)},${partBox[p].max[0].toFixed(2)}] z[${partBox[p].min[2].toFixed(2)},${partBox[p].max[2].toFixed(2)}]  ${mode.padEnd(5)} -> ${how}   (owners: ${order.slice(0, 3).map((j) => jname[j] + " " + (100 * acc[j] / tot).toFixed(0) + "%").join(", ")}; trunk ${(100 * trunk).toFixed(0)}%)`);
 }
+// cfg.limbRadius: a robe's lining or sleeve that was taken for a limb (where the part split matched the model poorly)
+// would go with the limb and come away from the robe. A triangle on a thigh or shin bone that lies farther than
+// limbRadius from the leg's line (hip, knee, ankle) is not leg: it goes to the hips with the rest of the robe. With
+// cfg.armRadius the same for the arms (shoulder, elbow, wrist, fingertips): what lies farther goes to the chest.
+// (the feet are left alone: a boot's heel and toe lie far from the ankle, and a robe's lining never reaches them)
+const segDist = (p, a, b) => { const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]], l2 = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2] || 1e-9, t = Math.max(0, Math.min(1, (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) / l2)); return Math.hypot(ap[0] - ab[0] * t, ap[1] - ab[1] * t, ap[2] - ab[2] * t); };
+const jointAt = (k) => { const m = joints[k].getWorldMatrix(); return [m[12], m[13], m[14]]; };
+function keepNear(R, names, lineOf, to, what, wide = new Map()) {
+  const bones = new Set(), lines = [];
+  for (const side of ["L", "R"]) {
+    for (const n of names) if (J(side + "_" + n) >= 0) bones.add(J(side + "_" + n));
+    lines.push(lineOf(side).filter(Boolean));
+  }
+  const dist = [], moved = [];
+  // and the other way: a bit of the limb (a claw's tip) that a trunk part took (the part split matched it to the robe
+  // beside it) goes back to its limb bone, if its skin is nearly all that bone's and it lies on the limb's line
+  let back = 0;
+  if (cfg.limbBack !== false && (what === "arms" || cfg.limbBack === "all")) for (let t = 0; t < nT; t++) {
+    if (!TRUNK.has(triBone[t])) continue;
+    const acc = new Map();
+    for (let k = 0; k < 3; k++) { const v = I[t * 3 + k]; for (let q = 0; q < 4; q++) { const o = owner[VJ[v * 4 + q]]; acc.set(o, (acc.get(o) || 0) + VW[v * 4 + q] / 3); } }
+    let b = -1, w = 0; for (const [o, x] of acc) if (x > w) { b = o; w = x; }
+    if (w < 0.85 || !bones.has(b)) continue;
+    const c = centroid(PW, t);
+    let d = 1e9;
+    for (const L of lines) for (let i = 0; i + 1 < L.length; i++) d = Math.min(d, segDist(c, L[i], L[i + 1]));
+    if (d <= R) { triBone[t] = b; back++; }
+  }
+  if (back) console.log(`${what}: ${back} triangles a trunk part had taken went back to their ${what}`);
+  for (let t = 0; t < nT; t++) {
+    if (!bones.has(triBone[t])) continue;
+    const c = centroid(PW, t);
+    let d = 1e9;
+    for (const L of lines) for (let i = 0; i + 1 < L.length; i++) d = Math.min(d, segDist(c, L[i], L[i + 1]));
+    dist.push(d);
+    if (d > (wide.get(triBone[t]) || R)) { triBone[t] = typeof to === "function" ? to(c) : to; moved.push(t); }
+  }
+  dist.sort((a, b) => a - b);
+  const q = (f) => (dist.length ? dist[Math.min(dist.length - 1, Math.floor(f * dist.length))].toFixed(3) : "-");
+  const where = new Map(); for (const t of moved) where.set(jname[triBone[t]], (where.get(jname[triBone[t]]) || 0) + 1);
+  console.log(`${what} radius ${R}: ${moved.length} of ${dist.length} triangles moved to ${[...where].map(([n, c]) => n + " " + c).join(", ")} (their distance from the line: median ${q(0.5)}, 90% ${q(0.9)}, 99% ${q(0.99)})`);
+}
+if (cfg.limbRadius) {
+  const at = (n) => (J(n) >= 0 ? jointAt(J(n)) : null);
+  keepNear(cfg.limbRadius, ["Thigh", "Calf"], (s) => [at(s + "_Thigh"), at(s + "_Calf"), at(s + "_Foot")], J("Hip"), "legs");
+}
+if (cfg.armRadius) {
+  const at = (n) => (J(n) >= 0 ? jointAt(J(n)) : null);
+  const tip = (s) => { const h = at(s + "_Hand"), f = at(s + "_Forearm"); return h && f ? h.map((v, i) => v + (v - f[i]) * (cfg.handReach || 0.6)) : null; };
+  // (a sleeve goes to the chest; a robe's panel that lay by a hanging hand goes to the trunk bone at its own height)
+  const trunk = ["Hip", "Spine01", "Spine02"].map(J).filter((k) => k >= 0), ty = trunk.map((k) => jointAt(k)[1]);
+  const byHeight = (c) => { let b = 0; for (let i = 1; i < trunk.length; i++) if (Math.abs(c[1] - ty[i]) < Math.abs(c[1] - ty[b])) b = i; return trunk[b]; };
+  // (a hand's spread claws and thumb lie farther from the wrist's line than an arm's armour does from the arm's)
+  const wide = new Map(["L_Hand", "R_Hand"].filter((n) => J(n) >= 0).map((n) => [J(n), cfg.handRadius || cfg.armRadius * 1.6]));
+  keepNear(cfg.armRadius, ["Upperarm", "Forearm", "Hand"], (s) => [at(s + "_Clavicle"), at(s + "_Upperarm"), at(s + "_Forearm"), at(s + "_Hand"), tip(s)], byHeight, "arms", wide);
+}
 if (REPORT) process.exit(0);
 
 // ---- 4. the arcade's frame: one root over the armature, turned to face +Z, scaled, feet on the ground
