@@ -30,6 +30,7 @@ const BOSS_SKY = {
 //   last   the parts that go one by one in its death, before the last blast takes the rest
 //   tip    how far past the middle of its right hand's part the weapon's end lies (1.7: the far end of a case)
 //   dress  what it is dressed with where its model alone could be read as something it is not (22d, BOSS_DRESS)
+//   slam   where its ground slam lands: "weapon" (under the head of what its right hand holds); else between its fists
 const BOSS_BASE = { atk: [0], src: "weapon", size: 7.4, show: 0.82, env: 2.6, glow: 2.3, tear: [[0.78, "wound"], [0.56, "L_Hand"], [0.34, "L_Forearm"]], limp: "L", last: ["L_Upperarm", "R_Hand", "R_Forearm", "L_Calf", "Head", "R_Upperarm", "R_Calf"] };
 const BOSS_ROW = {
   1: { sky: "boss-storm", atk: [0], tip: 1 }, // PRODUCT PUSHER: contracts flung from the middle of its briefcase
@@ -39,10 +40,10 @@ const BOSS_ROW = {
   5: { sky: "boss-storm-b", atk: [1], env: 2.8 }, // GROUP GOLEM: both fists down on the floor
   6: { sky: "boss-storm-b", atk: [2], src: "chest", dress: "boiler" }, // INFLATION TITAN: a blast of steam from its boiler (its head a valve cap, its light from its gauge and its pipes)
   7: { sky: "boss-void", atk: [4], src: "handR" }, // LONGEVITY LICH: seeking bolts of sand from its hands
-  8: { sky: "boss-void", atk: [1] }, // LORD INTESTATE: its gavel down on the floor
+  8: { sky: "boss-void", atk: [1], slam: "weapon" }, // LORD INTESTATE: its gavel down on the floor
   9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
   10: { sky: "boss-storm-b", atk: [0, 1], srcs: { 0: "chest", 1: "weapon" }, env: 2.8, size: 6.8, tear: [[0.78, "wound"], [0.56, "forearmL"], [0.34, "shoulderL"]], last: ["forearmR", "forearmL", "shoulderR", "shoulderL"] }, // PROBATE TOLLGATE: a volley from the booth, then the barrier's slam
-  11: { sky: "boss-void", atk: [3] }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver
+  11: { sky: "boss-void", atk: [3], clip: { 3: "attackB" }, dress: "shade" }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver (thrust at the lens: in the overhead smash it bends over and its cloak hides it)
   all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" } }, // THE PROCTOR: all five, in turn
 };
 const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);

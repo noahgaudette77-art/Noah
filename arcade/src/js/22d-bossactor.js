@@ -30,8 +30,9 @@ const BOSS_CLIP = {
 };
 // The highest point of a model (or of one part of it) as it stands posed now, from its own surface (a box round turned
 // parts would say more). out: where it is, the middle of what lies within `band` of the top (a pipe's mouth, not one
-// point of its rim).
-function bossPeak(node, out, band = 0.012) {
+// point of its rim). low: the lowest point instead.
+function bossPeak(node, out, band = 0.012, low = false) {
+  const s = low ? -1 : 1;
   let m = -1e9, n = 0;
   node.updateMatrixWorld(true);
   const each = (fn) => node.traverse((o) => {
@@ -40,11 +41,20 @@ function bossPeak(node, out, band = 0.012) {
     const q = p.normalized ? 1 / (A instanceof Int16Array ? 32767 : A instanceof Uint16Array ? 65535 : A instanceof Int8Array ? 127 : A instanceof Uint8Array ? 255 : 1) : 1; // (a quantized model's positions are whole numbers, scaled when drawn)
     for (let i = 0; i < p.count; i += 3) { const x = p.getX(i) * q, y = p.getY(i) * q, z = p.getZ(i) * q; fn(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
   });
-  each((x, y) => { if (y > m) m = y; });
-  if (out) { out.set(0, 0, 0); each((x, y, z) => { if (y >= m - band) { out.x += x; out.y += y; out.z += z; n++; } }); out.multiplyScalar(1 / Math.max(1, n)); }
-  return m;
+  each((x, y) => { if (s * y > m) m = s * y; });
+  if (out) { out.set(0, 0, 0); each((x, y, z) => { if (s * y >= m - band) { out.x += x; out.y += y; out.z += z; n++; } }); out.multiplyScalar(1 / Math.max(1, n)); }
+  return s * m;
 }
 const bossTop = (node) => bossPeak(node);
+// A group set on a part of a model at a place in the world, level with the world, at the model's own size.
+function bossPin(part, grp, at) {
+  part.add(grp);
+  grp.position.copy(part.worldToLocal(at.clone()));
+  grp.quaternion.copy(part.getWorldQuaternion(new THREE.Quaternion()).invert());
+  const ws = part.getWorldScale(new THREE.Vector3());
+  grp.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
+  return grp;
+}
 // A boss dressed for what it is (its row's `dress`), where its model alone could be read as something it is not. Each
 // takes the actor (standing in its idle, unscaled) and returns { update(d, o), vent(), dispose() }.
 const BOSS_DRESS = {
@@ -55,15 +65,7 @@ const BOSS_DRESS = {
     const P = a.P, made = [], geos = [], v = new THREE.Vector3(), quiet = () => REDUCED_MOTION || GFX.calm;
     const brass = new THREE.MeshStandardMaterial({ color: 0x8a6634, metalness: 1, roughness: 0.42, envMapIntensity: 1.4 }); // (dark bronze: shining, it read as a halo)
     made.push(brass);
-    const mesh = (geo, mat) => { geos.push(geo); return new THREE.Mesh(geo, mat); };
-    // set a group on a part at a place in the world, level with the world, at the model's own size
-    const pin = (part, grp, at) => {
-      part.add(grp);
-      grp.position.copy(part.worldToLocal(at.clone()));
-      grp.quaternion.copy(part.getWorldQuaternion(new THREE.Quaternion()).invert());
-      const ws = part.getWorldScale(new THREE.Vector3()); grp.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
-      return grp;
-    };
+    const mesh = (geo, mat) => { geos.push(geo); return new THREE.Mesh(geo, mat); }, pin = bossPin;
     const head = P.part_Head;
     if (head) {
       // (its lights are painted on as well as lit: the cap is darkened, and its own light burns low)
@@ -107,6 +109,15 @@ const BOSS_DRESS = {
       dispose() { made.forEach((m) => m.dispose()); geos.forEach((g) => g.dispose()); },
     };
   },
+  // PATRIMONY PHANTOM: half bone, half steel. Its bare polished chrome skull with glowing eyes over a metal ribcage could
+  // be read as a famous film robot's endoskeleton: the skull is shaded dark (a reaper's skull in shadow, not polished
+  // chrome) and its eyes burn in its own violet. (A hood made here could not be fitted: its head is turned in its
+  // stance, and the model's own hood hangs down its back. A remake with the hood over the skull is the real fix.)
+  shade(a) {
+    const head = a.P.part_Head, made = [];
+    if (head) head.traverse((o) => { if (o.isMesh && o.material && o.material.emissiveMap) { o.material = o.material.clone(); o.material.color.multiplyScalar(0.4); o.material.envMapIntensity *= 0.45; a.mats.push(o.material); made.push(o.material); } });
+    return { update() {}, vent() {}, dispose() { made.forEach((m) => m.dispose()); } };
+  },
 };
 class BossActor {
   constructor(game, model, row) {
@@ -144,6 +155,14 @@ class BossActor {
     // all of it in the picture while it winds up: what it raises over its head too)
     this.reach = {};
     for (const n of ["attackA", "attackB"]) if (this.act[n]) { poseAt(n, BOSS_CLIP[n].top); this.reach[n] = bossTop(model.scene) - this.ground[n]; }
+    // ---- where its overhead blow comes down, in its own frame: under its weapon's head (the lowest point of what its
+    // right hand holds), or between its fists (a slam's mark on the floor and its landing stand there)
+    if (this.act.attackA) {
+      poseAt("attackA", BOSS_CLIP.attackA.hit);
+      const lo = (bone) => { const p = bone && P["part_" + bone.name]; if (!p) return null; const q = new THREE.Vector3(); bossPeak(p, q, 0.01, true); return model.scene.worldToLocal(q); };
+      const r = lo(this.joint.handR), l = lo(this.joint.handL);
+      if (r || l) this.slamPt = { weapon: r || l, fists: r && l ? r.clone().add(l).multiplyScalar(0.5) : r || l };
+    }
     this.size = model.info.size || [0.6, 1, 0.3];
     // ---- the weapon's far end, in its hand's frame (a projectile leaves from there, a beam is drawn from there)
     const hp = P["part_" + (J.handR || "R_Hand")], hm = hp && (hp.isMesh ? hp : hp.children.find((c) => c.isMesh));

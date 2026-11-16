@@ -28,7 +28,7 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
 | 3 | The attack stage, hits, damage, death | done (five kinds; boss 1 looked at in strips) |
 | 4 | Sound and the cue log | done (the log is written by `boss-sound.js`; run it again at the end) |
 | 5a | All twelve bosses load and play with the table's defaults | done: each driven once (entrance, a right answer, a strike by timeout, a wrong answer, the finishing blow, the death) with no console errors |
-| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9, 7 done; next: 8 (INTESTATE) |
+| 5b | Look-and-fix, one boss per commit: 5, 10, 4, 2, 6, 3, 9, 7, 8, 11, all | 5, 10, 4, 2, 6, 3, 9, 7, 8, 11 done; next: all (PROCTOR) |
 | 6 | Final captures (`docs/combat-pass/boss/*.jpg` and its README), the cue log, full regression both ways, the sequence test | |
 
 ## Looked at so far
@@ -84,6 +84,24 @@ plan (`arcade/PROGRESS.md`, "Order of work"); the contract is `arcade/docs/comba
   cloak, its hourglass heart glowing mint; its seekers swing out wide and come in). Lookalike: mild. A crowned
   undead king in a cloak is a fantasy type (games have well-known ones); the hourglass heart and the chrome keep
   it its own.
+- Boss 8 (INTESTATE): a judge in robe and curled wig with a great gavel (a type, no lookalike); its wind-up holds
+  the gavel raised over it. Fixed (for every slam): the blow did not land where it was seen. The gavel's head came
+  down on the floor at the lens's left while the sparks, rings and blades started between its feet and the floor
+  marker stood at the middle (a slam's landing was put halfway between its middle and its right hand: right for
+  two fists, not for one weapon). The actor now finds once, in its own clip at the blow, the lowest point of what
+  its right hand holds and the point between its two fists (`slamPt`); the floor marker and the landing stand
+  there (the row's `slam: "weapon"` for a one-handed weapon; else between the fists: the Golem, the Perilmonger).
+- Boss 11 (PHANTOM): half bone, half steel in a cloak, a cleaver in its right hand; its wind-up holds it. Fixed: in
+  the overhead smash it bent over until its hood and cloak faced the lens and hid it through the whole beam: its
+  beam is wound up and fired with the thrust (`clip: { 3: "attackB" }`), the cleaver pointed at the lens. Fixed (for
+  every boss): its words still covered its face when the band had moved since they began; the lens now asks room
+  only when the bubble's top is above the foot of the boss's head (where its head stands in the band is worked out
+  for the close framing, with no room made). LOOKALIKE, for the lead: its steel half has a bare chrome skull with
+  two glowing eyes over a metal ribcage, which can be read as a famous film robot's endoskeleton. Done without a new
+  model: the skull is shaded dark (its colour and its mirror dimmed: a reaper's skull in shadow, not polished
+  chrome) and its eyes burn in its own violet (`dress: "shade"`). A hood made in code was tried and could not be
+  fitted (its head is turned in its stance, the model's own hood hangs down its back). Recommended remake: the
+  hood modelled up over the skull, as its brief describes ("hooded cloak").
 
 ## Tests at the last commit
 
