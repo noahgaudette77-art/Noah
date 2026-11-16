@@ -64,6 +64,16 @@ async function falBalance() {
   const r = await http("https://rest.alpha.fal.ai/billing/user_balance", { headers: { Authorization: "Key " + need("FAL_KEY") } });
   return Number(await r.text());
 }
+// A local file on fal's storage, as a URL both providers can read (for a view that was made here, not generated).
+async function falUpload(file) {
+  const H = { Authorization: "Key " + need("FAL_KEY"), "Content-Type": "application/json" };
+  const type = { ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".glb": "model/gltf-binary" }[path.extname(file).toLowerCase()] || "application/octet-stream";
+  const init = await (await http("https://rest.alpha.fal.ai/storage/upload/initiate", { method: "POST", headers: H, body: JSON.stringify({ file_name: path.basename(file), content_type: type }) })).json();
+  if (!init.upload_url || !init.file_url) throw new Error("fal upload failed: " + scrub(JSON.stringify(init).slice(0, 300)));
+  const put = await http(init.upload_url, { method: "PUT", headers: { "Content-Type": type }, body: fs.readFileSync(file), timeout: 600000 });
+  if (!put.ok) throw new Error("fal upload failed: HTTP " + put.status);
+  return init.file_url;
+}
 async function falRun(endpoint, input, meta = {}) {
   const H = { Authorization: "Key " + need("FAL_KEY"), "Content-Type": "application/json" };
   const sub = await (await http("https://queue.fal.run/" + endpoint, { method: "POST", headers: H, body: JSON.stringify(input) })).json();
@@ -205,4 +215,4 @@ async function pool(jobs, n) {
   return out;
 }
 
-module.exports = { OUT, LEDGER, sleep, log, scrub, ledger, readLedger, http, download, pool, falRun, falBalance, tripoTask, tripoQuery, tripoUpload, tripoBalance, elevenUsage, elevenSfx, elevenTts, elevenMusic, elevenPost, skybox };
+module.exports = { OUT, LEDGER, sleep, log, scrub, ledger, readLedger, http, download, pool, falRun, falUpload, falBalance, tripoTask, tripoQuery, tripoUpload, tripoBalance, elevenUsage, elevenSfx, elevenTts, elevenMusic, elevenPost, skybox };

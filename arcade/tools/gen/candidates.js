@@ -16,7 +16,7 @@ const L = require("./lib.js");
 
 const args = process.argv.slice(2);
 const flag = (k) => { const i = args.indexOf("--" + k); if (i < 0) return null; const v = args[i + 1] && !args[i + 1].startsWith("--") ? args.splice(i + 1, 1)[0] : true; args.splice(i, 1); return v; };
-const withText = !!flag("text"), only = flag("only"), faces = +flag("faces") || 300000, tier = flag("tier") || "Gen-2.5-Extreme-High", noHighPack = !!flag("no-highpack");
+const withText = !!flag("text"), multi = !!flag("multiview"), only = flag("only"), faces = +flag("faces") || 300000, tier = flag("tier") || "Gen-2.5-Extreme-High", noHighPack = !!flag("no-highpack");
 const [asset, ...names] = args;
 if (!asset || !names.length) { console.error("usage: candidates.js <asset> <concept-name>... [--text] [--only tripo|rodin]"); process.exit(2); }
 
@@ -55,11 +55,45 @@ async function rodin(name, c, text) {
   L.log("done", key, (bytes / 1e6).toFixed(1) + " MB");
 }
 
+// Multi-view: the concept's elevation views (tools/gen/views.js: <concept>@front, @left, @back, @right) instead of
+// one picture. Tripo takes exactly four (front, left, back, right); Rodin takes the hero picture and the views as
+// pictures of one object ("concat").
+async function viewUrls(name) {
+  const dirC = path.join(L.OUT, "concepts"), idx = JSON.parse(fs.readFileSync(path.join(dirC, "index.json"), "utf8")), out = {};
+  for (const v of ["front", "left", "back", "right"]) {
+    const k = `${name}@${v}`;
+    if (!idx[k] || !idx[k].url) { const f = path.join(dirC, k + ".png"); if (!fs.existsSync(f)) throw new Error("no view " + k); idx[k] = Object.assign(idx[k] || {}, { url: await L.falUpload(f), of: name, view: v }); fs.writeFileSync(path.join(dirC, "index.json"), JSON.stringify(idx, null, 1)); }
+    out[v] = idx[k].url;
+  }
+  return out;
+}
+async function tripoMulti(name) {
+  const key = `${asset}/${name}.tripo-mv`, file = path.join(dir, `${name}.tripo-mv.glb`);
+  if (loadIdx()[key]) return;
+  const v = await viewUrls(name);
+  const body = Object.assign({ inputs: [v.front, v.left, v.back, v.right] }, TRIPO);
+  const out = await L.tripoTask("/generation/multiview-to-model", body, { name: key });
+  const bytes = await L.download(out.pbr_model_url || out.model_url || out.base_model_url, file);
+  saveIdx(key, { provider: "tripo", task_id: out.task_id, credits: out.credits, file: path.relative(L.OUT, file), bytes, settings: body, concept: name });
+  L.log("done", key, (bytes / 1e6).toFixed(1) + " MB", out.credits, "credits");
+}
+async function rodinMulti(name, c) {
+  const key = `${asset}/${name}.rodin-mv`, file = path.join(dir, `${name}.rodin-mv.glb`);
+  if (loadIdx()[key]) return;
+  const v = await viewUrls(name);
+  const input = Object.assign({ image_urls: [c.url, v.front, v.left, v.back, v.right], condition_mode: "concat", prompt: "" }, RODIN);
+  const out = await L.falRun("fal-ai/hyper3d/rodin/v2.5", input, { name: key, poll: 8000 });
+  const bytes = await L.download(out.model_mesh.url, file);
+  saveIdx(key, { provider: "rodin", seed: out.seed, usd: 0.4 + (noHighPack ? 0 : 0.8), file: path.relative(L.OUT, file), bytes, settings: input, concept: name });
+  L.log("done", key, (bytes / 1e6).toFixed(1) + " MB");
+}
+
 (async () => {
   const tj = [], rj = [];
   for (const name of names) {
     const c = concepts[name];
     if (!c) { console.error("no such concept: " + name); continue; }
+    if (multi) { if (only !== "rodin") tj.push(() => tripoMulti(name)); if (only !== "tripo") rj.push(() => rodinMulti(name, c)); continue; }
     if (only !== "rodin") tj.push(() => tripo(name, c, false));
     if (only !== "tripo") rj.push(() => rodin(name, c, false));
   }

@@ -109,7 +109,7 @@ async function transfer(segFile) {
 let label = new Int32Array(S.I.length / 3).fill(0), partNames = ["0"];
 if (cfg.seg) { const r = await transfer(cfg.seg); label = r.label; partNames = r.names; }
 // a second, finer split of the same model: some of its parts are lifted out as groups of their own (cfg.lift)
-const label2 = cfg.seg2 ? (await transfer(cfg.seg2)).label : null;
+let label2 = cfg.seg2 ? (await transfer(cfg.seg2)).label : null;
 
 // ---- 2. the arcade's frame: +Y up, +Z forward
 const fwd = cfg.forward || "+z";
@@ -125,9 +125,88 @@ for (let i = 0; i < S.P.length; i += 3) { S.P[i] = (S.P[i] - origin[0]) * scale;
 b = bounds(S.P);
 console.log(`${cfg.name}: ${S.I.length / 3} triangles, size ${b.size.map((v) => v.toFixed(3)).join(" x ")} (x right, y up, z forward)`);
 
+// ---- 2b. symmetry (cfg.mirror): find the model's own plane of symmetry (a small turn about the upright axis and a
+// shift sideways), put it on x = 0, then keep one half and reflect it. The result is exactly symmetrical about one
+// straight centreline, whatever the generator delivered. Parts named ...L / ...R swap sides in the reflection.
+let mir = null; // per triangle: 1 when it is a reflected copy
+const symmetry = {};
+if (cfg.mirror) {
+  const M = Object.assign({ keep: "+x", align: true }, cfg.mirror === true ? {} : cfg.mirror);
+  if (M.align) {
+    const nV = S.P.length / 3, stepV = Math.max(1, Math.floor(nV / 30000)), pts = [];
+    for (let i = 0; i < nV; i += stepV) pts.push(S.P[i * 3], S.P[i * 3 + 1], S.P[i * 3 + 2]);
+    const cell = Math.max(...b.size) / 160, H = (x, y, z) => (Math.round(x / cell) * 73856093) ^ (Math.round(y / cell) * 19349663) ^ (Math.round(z / cell) * 83492791);
+    // a candidate plane's score: the share of sampled points whose reflection lands in an occupied cell
+    const score = (th, cx) => {
+      const co = Math.cos(th), si = Math.sin(th), set = new Set(), q = new Float32Array(pts.length);
+      for (let i = 0; i < pts.length; i += 3) { q[i] = pts[i] * co + pts[i + 2] * si - cx; q[i + 1] = pts[i + 1]; q[i + 2] = -pts[i] * si + pts[i + 2] * co; set.add(H(q[i], q[i + 1], q[i + 2])); }
+      let hit = 0;
+      for (let i = 0; i < q.length; i += 3) if (set.has(H(-q[i], q[i + 1], q[i + 2]))) hit++;
+      return hit / (q.length / 3);
+    };
+    let best = { s: -1, th: 0, cx: 0 };
+    const w = b.size[0], D = Math.PI / 180;
+    const search = (t0, t1, dt, c0, c1, dc) => { for (let th = t0; th <= t1 + 1e-9; th += dt) for (let cx = c0; cx <= c1 + 1e-9; cx += dc) { const sc = score(th, cx); if (sc > best.s) best = { s: sc, th, cx }; } };
+    const s0 = score(0, 0);
+    search(-4 * D, 4 * D, 0.5 * D, -0.03 * w, 0.03 * w, 0.006 * w);
+    search(best.th - 0.5 * D, best.th + 0.5 * D, 0.1 * D, best.cx - 0.006 * w, best.cx + 0.006 * w, 0.0015 * w);
+    const co = Math.cos(best.th), si = Math.sin(best.th);
+    for (let i = 0; i < S.P.length; i += 3) {
+      const x = S.P[i], z = S.P[i + 2]; S.P[i] = x * co + z * si - best.cx; S.P[i + 2] = -x * si + z * co;
+      const nx = S.N[i], nz = S.N[i + 2]; S.N[i] = nx * co + nz * si; S.N[i + 2] = -nx * si + nz * co;
+    }
+    Object.assign(symmetry, { delivered: +s0.toFixed(3), turned_deg: +(best.th / D).toFixed(2), shifted: +(best.cx / w).toFixed(4), aligned: +best.s.toFixed(3) });
+    console.log(`symmetry: as delivered ${(100 * s0).toFixed(1)}% of points have a mirror twin; best plane is turned ${(best.th / D).toFixed(2)} deg and shifted ${(100 * best.cx / w).toFixed(2)}% of the width: ${(100 * best.s).toFixed(1)}%`);
+  }
+  const sg = M.keep === "-x" ? -1 : 1, eps = Math.max(...b.size) * 2e-5;
+  const P = Array.from(S.P), N = Array.from(S.N), T = Array.from(S.T), I2 = [], L1 = [], L2 = label2 ? [] : null, cut = new Map();
+  const side = (i) => { const x = P[i * 3] * sg; return x > eps ? 1 : x < -eps ? -1 : 0; };
+  const mid = (i, j) => { // where the edge i-j crosses the plane (one new vertex per edge, shared by its two triangles)
+    const k = i < j ? i + ":" + j : j + ":" + i;
+    let v = cut.get(k);
+    if (v === undefined) {
+      const xi = P[i * 3], xj = P[j * 3], t = xi / (xi - xj), lerp = (A, n, c) => A[i * n + c] + (A[j * n + c] - A[i * n + c]) * t;
+      v = P.length / 3;
+      P.push(0, lerp(P, 3, 1), lerp(P, 3, 2));
+      const ny = lerp(N, 3, 1), nz = lerp(N, 3, 2), l = Math.hypot(ny, nz) || 1;
+      N.push(0, ny / l, nz / l);
+      T.push(lerp(T, 2, 0), lerp(T, 2, 1));
+      cut.set(k, v);
+    }
+    return v;
+  };
+  const keepTri = (a, bb, c, t) => { I2.push(a, bb, c); L1.push(label[t]); if (L2) L2.push(label2[t]); };
+  for (let t = 0; t < S.I.length / 3; t++) {
+    const v = [S.I[t * 3], S.I[t * 3 + 1], S.I[t * 3 + 2]], sd = v.map(side);
+    if (sd[0] >= 0 && sd[1] >= 0 && sd[2] >= 0) { if (sd[0] + sd[1] + sd[2] > 0) keepTri(v[0], v[1], v[2], t); continue; }
+    if (sd[0] <= 0 && sd[1] <= 0 && sd[2] <= 0) continue;
+    const poly = [];
+    for (let k = 0; k < 3; k++) { const i = v[k], j = v[(k + 1) % 3], a = sd[k], c = sd[(k + 1) % 3]; if (a >= 0) poly.push(i); if ((a > 0 && c < 0) || (a < 0 && c > 0)) poly.push(mid(i, j)); }
+    for (let k = 1; k + 1 < poly.length; k++) keepTri(poly[0], poly[k], poly[k + 1], t);
+  }
+  const twin = new Map();
+  const reflect = (i) => {
+    let v = twin.get(i);
+    if (v !== undefined) return v;
+    if (Math.abs(P[i * 3]) <= eps) { P[i * 3] = 0; const l = Math.hypot(N[i * 3 + 1], N[i * 3 + 2]) || 1; N[i * 3] = 0; N[i * 3 + 1] /= l; N[i * 3 + 2] /= l; v = i; } // on the plane: shared by both halves
+    else { v = P.length / 3; P.push(-P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); N.push(-N[i * 3], N[i * 3 + 1], N[i * 3 + 2]); T.push(T[i * 2], T[i * 2 + 1]); }
+    twin.set(i, v);
+    return v;
+  };
+  const kept = I2.length / 3, flags = new Uint8Array(kept * 2);
+  for (let t = 0; t < kept; t++) { const a = I2[t * 3], bb = I2[t * 3 + 1], c = I2[t * 3 + 2]; I2.push(reflect(a), reflect(c), reflect(bb)); L1.push(L1[t]); if (L2) L2.push(L2[t]); flags[kept + t] = 1; }
+  S.P = new Float32Array(P); S.N = new Float32Array(N); S.T = new Float32Array(T); S.I = new Uint32Array(I2);
+  label = Int32Array.from(L1); if (L2) label2 = Int32Array.from(L2);
+  mir = flags;
+  b = bounds(S.P);
+  Object.assign(symmetry, { mirrored: true, kept: M.keep });
+  console.log(`mirrored: kept the ${M.keep} half (${kept} triangles), reflected it; size now ${b.size.map((v) => v.toFixed(3)).join(" x ")}`);
+}
+const mirrorName = (g) => (cfg.mirror && cfg.mirror.pairs && cfg.mirror.pairs[g]) || (/L$/.test(g) ? g.slice(0, -1) + "R" : /R$/.test(g) ? g.slice(0, -1) + "L" : g);
+
 // ---- 3. parts: where each lies
 const nParts = partNames.length, pb = [];
-for (let p = 0; p < nParts; p++) { let n = 0; const bb = bounds(S.P, S.I, (t) => label[t] === p && ++n); pb.push(Object.assign(bb, { tris: n })); }
+for (let p = 0; p < nParts; p++) { let n = 0; const bb = bounds(S.P, S.I, (t) => label[t] === p && !(mir && mir[t]) && ++n); pb.push(Object.assign(bb, { tris: n })); }
 if (REPORT || cfg.verbose) pb.forEach((q, p) => q.tris && console.log(`  part ${String(p).padStart(2)}  ${String(q.tris).padStart(7)} tris  centre ${q.center.map((v) => v.toFixed(2).padStart(6)).join(" ")}  size ${q.size.map((v) => v.toFixed(2)).join(" x ")}  x[${q.min[0].toFixed(2)},${q.max[0].toFixed(2)}] y[${q.min[1].toFixed(2)},${q.max[1].toFixed(2)}] z[${q.min[2].toFixed(2)},${q.max[2].toFixed(2)}]`));
 if (REPORT) process.exit(0);
 
@@ -141,6 +220,7 @@ for (const [g, spec] of Object.entries(cfg.groups || {})) {
 const triGroup = new Array(label.length);
 for (let t = 0; t < label.length; t++) triGroup[t] = groupOf[label[t]];
 if (label2 && cfg.lift) for (const [g, ids] of Object.entries(cfg.lift)) { if (!groupNames.includes(g)) groupNames.push(g); const set = new Set(ids); for (let t = 0; t < label.length; t++) if (set.has(label2[t])) triGroup[t] = g; }
+if (mir) for (let t = 0; t < label.length; t++) if (mir[t]) { const g = mirrorName(triGroup[t]); triGroup[t] = g; if (!groupNames.includes(g)) groupNames.push(g); }
 const groups = {};
 for (const g of groupNames) groups[g] = { tris: [] };
 for (let t = 0; t < label.length; t++) groups[triGroup[t]].tris.push(t);
@@ -262,6 +342,7 @@ const buffer = doc.getRoot().listBuffers()[0];
 
 // geometry, group by group
 const info = { parts: {}, anchors: {}, size: b.size, source: cfg.src };
+if (cfg.mirror) info.symmetry = symmetry;
 let outTris = 0;
 for (const g of groupNames) {
   const tl = groups[g].tris;
