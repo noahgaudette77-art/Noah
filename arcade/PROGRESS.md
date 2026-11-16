@@ -2545,23 +2545,31 @@ textures and props. Study logic, questions, answers, scoring and content never c
 
 ## Order of work (the owner's instruction, to be followed exactly)
 
-Phases run strictly one after another: a phase is not started until the one before it is committed, pushed and
-reviewed. If a balance runs low, what is left goes to the war rig, the Boss Rush bosses, then sound.
+Phases run strictly one after another: a phase is not started until the one before it is committed and pushed. If a
+balance runs low, what is left goes to the war rig, the Boss Rush bosses, then sound.
+
+**How a phase is closed (the owner's change of 2026-11-15).** No score target and no repeated review rounds. Each
+phase gets at most one independent review, at its end, by one reviewer; what it finds that matters (anything
+broken, ugly, confusing, or too close to a famous character) is fixed, minor polish is left, and the phase is done
+when it works, looks good and consistent, its tests pass and no major defect is left. Then commit, push, next
+phase. Asset quality, animation, lighting and combat effects matter as before; only the reviewing is lighter.
+Before Phase 3 the owner gets a short projected spend for fal and Tripo, per boss.
 
 | Phase | What | Status |
 |---|---|---|
 | 0 | Setup: keys tested, asset folders, glTF loader with compression, audio manager (mixing, ducking, mute, autoplay rules), sky loader that drives environment light and reflections, `ASSETS.md` with the spend log, `.env` ignored, regression green, commit | done |
-| 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes to 4.5, commit and push | in progress |
-| 2 | Nest Egg Run: sunset sky, war rig, vehicle animation, crash and near-miss effects, engine and crash sound, music, review to 4.5 | |
-| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, review per boss, commit after each | |
-| 4 | Hub, Title and the other modes: skies, props from free CC0 sources, ambient and menu sound, announcer; Memory Bank, Final Exam, Strategy Guide where assets help | |
+| 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes, commit and push | done (see "Phase 1" below) |
+| 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | |
+| 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | |
+| 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo or Rodin models, one attempt each, shared across screens, light enough for a phone; free CC0 models or simple shapes if a balance runs low | |
 | 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | |
-| 6 | Final independent reviews, one fresh reviewer per mode on new captures; fixes; final commit, push, record and summary | |
+| 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one summary with screenshots, spend and balances | |
 
 Work done before this order arrived that belongs to later phases, kept as it is and not taken further until its
 phase: concept images and 3D candidates for the war rig and all twelve bosses (all twelve picked from Tripo; one
 boss rigged as a test), skies generated for every mode, sound effects and announcer lines generated for every mode,
-the war rig processed into `assets/models/warrig.glb`.
+the war rig processed into `assets/models/warrig.glb` (a six-wheeler: it does not meet the owner's rule and is
+remade in Phase 2).
 
 ## Phase 0: what is in place
 
@@ -2610,3 +2618,61 @@ and Rodin Gen-2.5 Extreme-High (500K triangles, PBR, HD texture, HighPack 4K), e
   Rodin (`wartruck-c-sd-0.rodin`): gold body, black armour, cyan and magenta strips, a wing between two fins and
   two exhaust cannons, by far the clearest from behind and above, which is where the game's camera sits. Its
   surface is matte as delivered; it gets lacquer and metal in processing.
+
+## Phase 1: Risk Blaster (done)
+
+**What was built** (code in `src/js/20-blaster.js`, `20i-blastersky.js`, `20j-blasterstarfighter.js`,
+`20k-blasteroverlord.js`, `20l-blasterstage.js`; the old fighter, demon and sky stay as the fallback when the page
+is opened from disk).
+
+1. Sky and light: three deep-space panoramas, cross-fading by region, each with its own key, rims and backlight;
+   the region's sky colours the models and shows in their chrome. The sky is dimmed behind the fight.
+2. Models: the starfighter and the demon overlord in place of the built-in ones, through named anchor functions.
+3. Animation. Ship: hover, five flickering plumes, banking with wing flex, cannon recoil, fly-in, surge, knock
+   aside, break-up. Demon: fly-in and roar, a living idle, five wind-ups, hit reactions and staggers, rage, wounds,
+   the tail and a wing shot away, a critical state, death in parts.
+4. Combat, all on the show clock (the rules' frames are untouched): volleys with star muzzle flashes, spent cells
+   and barrel heat; a lance through the drone into the demon on a right answer, a red fizzle on a wrong one; five
+   telegraphed strikes (plasma volley, claw swipe, roared wave, swept beam, seekers), each with its own marker,
+   colour and landing, each landing before the explanation sheet rises; the shield seen to go with the blow; HUD
+   crack and heart loss; low health (a red frame pulsing with the alarm, the hurt engine burning); a staged death
+   (slow motion, a chain of shaped blasts, the last blast, rewards flying round the question to the score) that is
+   over before the next question's drones appear; game over.
+5. Sound: every cue fired from the same code as its picture (`docs/combat-pass/blaster/sound-cues.md` lists cue and
+   frame for every moment); a charge loop cut at release; the alarm in step with the red frame; the engine loop
+   following streak and warp; the music loop with its intensity filter. Pause and game over silence the loops.
+
+**The one independent review** (`docs/combat-pass/blaster/review-r1.md`, made under the earlier 4.5 rule) scored
+detail 3.5, lighting 3.5, materials 3.5, depth 4.0, motion 4.0, cohesion 4.0, legibility 3.5, with twelve defects.
+What was done about them:
+
+- Legibility: additive white is capped, rings are thin and hard-edged, the four drone letter discs are exempt from
+  flash, colour split, glitch and shake, score popups sit above the burst with a dark outline.
+- The death no longer collides with the next question; "WAVE n" is announced after the last blast.
+- Blasts are built from a hot core, a lobed fireball, a ring, streaked sparks and smoke; smoke and debris are in
+  the palette.
+- The beam is a thick core with a halo and its own sweep-arc marker; the plasma volley is orbs; the fighter keeps
+  its hull colours under a cyan shield shell.
+- The tail is thrown off on the hit frame; a drone's housing cracks and shatters over several frames.
+- A new demon (`assets/models/demon.glb`, second version): the reviewer found the first one's round chest core too
+  close to a known film armour, its face unreadable and its wings noisy. The new one has a chrome skull face with
+  eye slits, matte ram horns, a glowing rift in the chest and clean violet wing membranes.
+- The fighter re-processed: 4K base colour, a mirror-glass canopy, heat-tinted nozzles, gunmetal cannons.
+- The shared "correct" colour is a neon mint instead of lime (explanation sheet, NEXT button, hub).
+- Mid-ground props are dark hulls with running lights instead of tan boxes.
+
+By the owner's change of process there was no second review; the final captures were checked by hand
+(`docs/combat-pass/blaster/`, 24 files with a list in its README).
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Nobody has heard the sound: it was checked by cue log and by measured loudness (`tools/audio-levels.py`) only.
+- When the demon is at its closest its tail crosses the fighter's canopy.
+- The five strikes land differently but all end in the same shield shell.
+- Silhouette edges are not anti-aliased beyond the capture's 2x scale; the rim light makes the steps visible up close.
+- The reduced-effects path is coded but was not captured.
+- Background traffic and rocks are still the procedural ones, restyled, not generated models.
+
