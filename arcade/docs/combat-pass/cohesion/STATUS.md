@@ -19,9 +19,16 @@ leftovers if time allows. Commit after each step.
   exam exposure 0.97, saturation 1.14, vignette 1.25 (+ its dread), split 0.2; Guide vignette 0.9, saturation 1.2. No
   shared-file edit. Regressions memory and exam IDENTICAL; sequence 13/13.
 
+- **C**: measured in EBU R128 loudness with `python3 arcade/tools/audio-levels.py --mix` (added: music integrated over
+  its loop; effects and announcer lines by their loudest 400 ms; every level taken through the cue's volume, the mix
+  table and its bus; then each screen's worst moment through a model of the limiter). Fixed with `Sound.MIX` in
+  `02-sound.js` (shared-file edit: a table, applied where sprites and tracks are loaded): per-track gains (Memory Bank
+  +4.3 dB, Risk Blaster -0.8, the exam -0.6, the rest within 0.5 dB), per-set gains (Nest Egg Run's effects -1.7 dB,
+  Boss Rush's roars -1.9 dB). No file re-encoded. The one bad file, the "Boss Rush!" line cut off at 0.21 s at its
+  source, was retaken by the lead (merged at 6064d6c): it now measures -8.8, inside the announcer's range.
+
 ## Next
 
-- C: sound levels by measurement (`tools/audio-levels.py`).
 - D: sizes; the hall's toppers and icon props at 512 px maps; GPU memory when leaving the hall for a game.
 - E: the calm path, one still per game and the hall.
 
@@ -39,3 +46,12 @@ leftovers if time allows. Commit after each step.
 | Memory Bank | 0.005 | 0.004 | 0.104 | 0.089 | 0.807 | 0.799 | 0.646 | 0.659 |
 | Final Exam | 0.004 | 0.004 | 0.161 | 0.136 | 0.816 | 0.812 | 0.581 | 0.622 |
 | Strategy Guide | 0.004 | 0.004 | 0.072 | 0.070 | 0.788 | 0.787 | 0.596 | 0.591 |
+
+### C, the mix (LUFS at the mix, before the master gain and the limiter; music on the calm bus, +2.3 dB at a full streak)
+
+| layer | before | after |
+|---|---|---|
+| music, each track's integrated loudness | -20.7 (Risk Blaster) to -25.8 (Memory Bank): 5.1 dB apart | -21.4 to -21.5 for all nine |
+| effects, each set's main events (75th percentile of its cues' loudest 400 ms) | core -14.7, combat -15.5, Nest Egg Run -12.8, Boss Rush's roars -12.7: +6.0 to +8.8 dB over the music | -14.7, -15.5, -14.5, -14.7: +6.0 to +7.0 dB over the music |
+| announcer, its lines' loudest 400 ms | median -9.6, "Boss Rush!" -20.4 (cut off) | median -9.5 (-12.6 to -7.3), "Boss Rush!" -8.8: about 12 dB over the music, 5 over the effects |
+| worst moment on a screen (its loudest blast, the loudest line and its music ducked to 0.4 under the line, all peaks in phase) | +1.1 dBFS into the limiter, -1.5 dBFS out | +1.0 to +1.6 dBFS into the limiter, -1.5 to -1.6 dBFS out: nothing clips |

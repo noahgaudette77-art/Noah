@@ -25,7 +25,7 @@ SR = 22050
 if "--mix" in sys.argv:
     SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "js", "02-sound.js")
     m = re.search(r"^\s*MIX: (\{.*\}),", open(SRC).read(), re.M)
-    MIX = json.loads(m.group(1)) if m else {"music": {}, "sets": {}, "voice": 1}
+    MIX = json.loads(m.group(1)) if m and not os.environ.get("MIX_FLAT") else {"music": {}, "sets": {}, "voice": 1}  # (MIX_FLAT=1: as built, before the mix table)
     BUS = {"music": (0.40, 0.52), "sfx": 0.55, "voice": 0.95, "master": 0.7}
     man = json.load(open(os.path.join(ROOT, "audio", "audio.json")))
     dB = lambda g: 20 * math.log10(max(g, 1e-9))
@@ -80,28 +80,55 @@ if "--mix" in sys.argv:
                     if not best or pk > best[0]:
                         best = (pk, name, cue, s, g, t[3] if len(t) > 3 else 0)
         return best
-    fx = loudest([n for n in man["sprites"] if n != "voice"], lambda n: MIX["sets"].get(n, 1) * BUS["sfx"])
-    vo = loudest(["voice"], lambda n: MIX["voice"] * BUS["voice"])
-    mus = None
-    for name, mu in man["music"].items():
-        a, b = mu["loop"]
-        s = pcm(os.path.join(ROOT, mu["file"]), a, b - a)
-        g = mu.get("vol", 1) * MIX["music"].get(name, 1) * BUS["music"][1]
-        i = max(range(len(s)), key=lambda k: abs(s[k]))
-        seg = s[max(0, i - SR // 2): i + SR // 2]
-        if not mus or max(abs(v) for v in seg) * g > mus[0]:
-            mus = (max(abs(v) for v in seg) * g, name, seg, g)
-    duck = min(0.4, fx[5] or 1)  # (the announcer ducks the music to 0.4; a big blast to its own depth)
-    n = max(len(fx[3]), len(vo[3]), len(mus[2]))
-    pf, pv, pm = max(range(len(fx[3])), key=lambda k: abs(fx[3][k])), max(range(len(vo[3])), key=lambda k: abs(vo[3][k])), max(range(len(mus[2])), key=lambda k: abs(mus[2][k]))
-    worst = 0.0
-    for sign in (1, -1):
-        for k in range(-SR // 20, SR // 20):  # the three peaks within 50 ms of one another, in phase or not
-            v = (fx[3][pf] * fx[4] + sign * vo[3][min(len(vo[3]) - 1, max(0, pv + k))] * vo[4] + sign * mus[2][min(len(mus[2]) - 1, max(0, pm + k))] * mus[3] * duck) * BUS["master"]
-            worst = max(worst, abs(v))
-    print("worst moment: %s/%s (peak %.1f dB at the bus) + announcer %s (%.1f dB) + music %s ducked to %.2f (%.1f dB): %.1f dBFS at the limiter's input%s" % (
-        fx[1], fx[2], dB(fx[0]), vo[2], dB(vo[0]), mus[1], duck, dB(mus[0] * duck), dB(worst), "  (no clipping)" if worst <= 1 else "  <-- over full scale"))
-    out["worst"] = {"blast": fx[1] + "/" + fx[2], "announcer": vo[2], "music": mus[1], "duck": duck, "dbfs": dB(worst)}
+    # The limiter on the way out (Sound.init: WebAudio's DynamicsCompressor, threshold -9 dB, knee 10, ratio 8), as
+    # Chromium computes its static curve, with the make-up gain it adds by itself: what comes out for a given peak in.
+    TH, KN, RA = -9.0, 10.0, 8.0
+    lin = lambda d: 10 ** (d / 20)
+    lt = lin(TH)
+    knee = lambda x, k: x if x < lt else lt + (1 - math.exp(-k * (x - lt))) / k
+    def slope(x, k):
+        if x < lt:
+            return 1
+        x2 = x * 1.001
+        return (dB(knee(x2, k)) - dB(knee(x, k))) / (dB(x2) - dB(x))
+    lo_k, hi_k, K = 0.1, 10000.0, 5.0
+    for _ in range(15):
+        if slope(lin(TH + KN), K) < 1 / RA: hi_k = K
+        else: lo_k = K
+        K = math.sqrt(lo_k * hi_k)
+    kt = lin(TH + KN); ykt = dB(knee(kt, K))
+    sat = lambda x: knee(x, K) if x < kt else lin(ykt + (dB(x) - (TH + KN)) / RA)
+    makeup = (1 / sat(1.0)) ** 0.6
+    limited = lambda x: sat(x) * makeup  # (a peak x in, at the limiter's input, comes out as this)
+    # every screen's own set: its louder blast, the louder announcer line, its music ducked under the line; the three
+    # peaks taken as landing on the same sample, in phase (the worst that can happen)
+    js = open(os.path.join(os.path.dirname(SRC), "03a-files.js")).read()
+    SETS = json.loads(js[js.index("{"): js.rindex("}") + 1])["sets"]
+    peaks = {}
+    def peak_of(kind, name):
+        if (kind, name) not in peaks:
+            if kind == "music":
+                mu = man["music"][name]; a, b = mu["loop"]
+                s = pcm(os.path.join(ROOT, mu["file"]), a, b - a)
+                peaks[(kind, name)] = (max(abs(v) for v in s) * mu.get("vol", 1) * MIX["music"].get(name, 1) * BUS["music"][1], name)
+            else:
+                best = loudest([name], lambda n: (MIX["voice"] * BUS["voice"]) if n == "voice" else MIX["sets"].get(n, 1) * BUS["sfx"])
+                peaks[(kind, name)] = (best[0], name + "/" + best[2])
+        return peaks[(kind, name)]
+    out["worst"] = {}
+    print("worst moment on each screen (peaks in phase): at the limiter's input -> out of it")
+    for scr, items in SETS.items():
+        mus = [i.split(":")[1] for i in items if i.startswith("music:")]
+        fxs = [i.split(":")[1] for i in items if i.startswith("sfx:") and i != "sfx:voice"]
+        if not mus or not fxs:
+            continue
+        m = max((peak_of("music", n) for n in mus), key=lambda p: p[0])
+        f = max((peak_of("sfx", n) for n in fxs), key=lambda p: p[0])
+        v = peak_of("sfx", "voice") if "sfx:voice" in items else (0.0, "none")
+        x = (f[0] + v[0] + m[0] * 0.4) * BUS["master"]  # (the announcer ducks the music to 0.4)
+        y = limited(x)
+        out["worst"][scr] = {"blast": f[1], "announcer": v[1], "music": m[1], "in": dB(x), "out": dB(y)}
+        print("  %-9s %-28s + %-22s + %-9s: %5.1f dBFS -> %5.1f dBFS%s" % (scr, f[1], v[1], m[1], dB(x), dB(y), "" if y < 1 else "  <-- clips"))
     if "--json" in sys.argv:
         json.dump(out, open(sys.argv[sys.argv.index("--json") + 1], "w"), indent=1)
     sys.exit(0)
