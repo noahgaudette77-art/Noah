@@ -188,7 +188,8 @@ head-and-shoulders portrait of each of the twelve bosses (192 px cells, 86 KB). 
 ## Sound (`assets/audio/`)
 
 In play (2026-11-17, after the owner found the sound tiring): each layer has its own level in Setup, OFF, LOW, MID or
-HIGH (music, effects, announcer; `Sound.LEVELS`), and the music starts LOW (0.4 of its old level, about 8 dB down).
+HIGH (music, effects, announcer; `Sound.LEVELS`); the music starts LOW (0.4 of its old level, about 8 dB down) and so do
+the effects (0.45); the announcer starts HIGH.
 The loops play at a share of what their callers ask (`Sound.LOOP_SOFT`): the engines at half, the alarm at 0.45 and
 then, after three beats, a faint beat at a third of that while the red frame keeps warning; the hall's hum sets the
 room as it comes on and settles away after 14 s; the boost flames at 0.7, the charge hum at 0.8. Every sound can be

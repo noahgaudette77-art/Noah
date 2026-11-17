@@ -27,9 +27,9 @@ const Sound = {
   MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.03, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.19, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
 
   // The player's own levels (Setup): each layer OFF, LOW, MID or HIGH (OFF is the layer's on/off switch). The music
-  // starts LOW, quiet under study; effects and the announcer start HIGH, as they always played.
+  // and the effects start LOW, quiet under study (the owner, 2026-11-17); the announcer starts HIGH, clear over both.
   LEVELS: { music: { low: 0.4, mid: 0.7, high: 1 }, sfx: { low: 0.45, mid: 0.72, high: 1 }, voice: { low: 0.5, mid: 0.75, high: 1 } },
-  level(kind) { const v = Store.settings[kind + "Vol"] || (kind === "music" ? "low" : "high"); return this.LEVELS[kind][v] || 1; },
+  level(kind) { const v = Store.settings[kind + "Vol"] || (kind === "voice" ? "high" : "low"); return this.LEVELS[kind][v] || 1; },
   applyVolumes() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime, set = (node, v) => { if (node) { node.gain.cancelScheduledValues(t); node.gain.setTargetAtTime(v, t, 0.05); } };

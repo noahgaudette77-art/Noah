@@ -2964,3 +2964,26 @@ No Tripo remake was needed: nothing generated is below the bar in play.
 spend.
 
 **Waiting on the owner.** Real frame rates from the phone (Setup > FPS counter): this machine draws in software.
+
+## The owner's budget order (2026-11-17, second message)
+
+The owner wants the leftover models and sounds in the game, in this order and inside a performance budget: the
+shared render cost first, then the additions within a stated budget per scene (models, draw calls, lights), one
+look, quiet sound by default. Pass: a steady 60 fps on an iPhone 17 Pro Max. This machine cannot measure that, so
+each scene has a budget of work per frame measured here (`tools/perf-report.js`, which marks a scene over its
+budget), and AUTO takes what does not hold 60 on the phone to LOW, where every addition is off.
+
+1. **Shared render cost, on a phone**: no floor mirror at any tier; multisampling at most 2x (none at MEDIUM, FXAA
+   instead); MEDIUM with four bloom levels, no god rays, no contact shadows; HIGH with no lens streaks; the full-size
+   lit pass skipped when it adds nothing; AUTO stops at MEDIUM; a light budget per screen (3 to 5 lights; the
+   strongest of a screen's own lights drawn, a key always kept). At MEDIUM: 8.3-10 million pixels a frame to 4.9 on
+   every screen, 15-20 passes to 10, 3-11 lights to 3-5. Commit e7b5f4f.
+2. **The additions inside each budget**: lower-detail builds for the brood (about 2.2K triangles) and the effect
+   props that fly in numbers; the allies and the brood culled out of the picture; no empty traffic draws; none adds
+   a light; all off at LOW. At their fullest moment every scene stays inside its budget (Risk Blaster 63 of 80 draw
+   calls, 236K of 260K triangles). Commit df04e02.
+3. **One look**: every added model at the bar's texture tier, the game's one grade, its scene's own lights.
+4. **Sound**: the music and the effects start LOW, the announcer HIGH; every take still played in turn; levels in
+   Setup; the sound test page.
+
+What a phone gives up: the floor and road reflections, and at MEDIUM the god rays and contact shadows.
