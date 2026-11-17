@@ -251,9 +251,12 @@ const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1
 // a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
 // mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
 // panorama to light them) every kind is drawn as before. [model, length in game units]
-const RACER_GEN_FLEET = { sedan: ["prop-car", 4.5], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+const RACER_GEN_FLEET = { sedan: ["prop-car", 3.6], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+// (the car is a compact city car, taller and shorter than the coupe it replaced: the room it takes in its lane, its
+// soft shadow and the box that is checked against the lane badges are its own, not the coupe's)
+const RACER_GEN_DIM = { sedan: { sh: [3.4, 5.3], box: [1.0, 1.7, 1.8] } };
 // Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
-const RACER_GEN_TRIM = { sedan: { tail: 0.47, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+const RACER_GEN_TRIM = { sedan: { tail: 0.58, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
 // Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
 // the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
 function racerGenTrim(type, geo) {
@@ -268,13 +271,16 @@ function racerGenTrim(type, geo) {
     return { z, w };
   };
   const side = (y, band) => { let w = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i + 2]) < len * 0.3) w = Math.max(w, Math.abs(P[i])); return w; };
+  // (and how far it reaches there round one x: a lamp at the corner of a rounded nose or tail stands on its skin, not
+  // inside it, where the shape's farthest point at the middle would bury it)
+  const at = (sgn, y, band, x, hw, z0) => { let z = sgn > 0 ? -1e9 : 1e9; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i] - x) < hw) { const zz = P[i + 2]; if (sgn > 0 ? zz > z : zz < z) z = zz; } return Math.abs(z) < 1e8 ? z : z0; };
   const yt = bb.min.y + H * T.tail, yh = bb.min.y + H * T.head, ys = bb.min.y + H * T.sill;
-  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05);
+  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05), nw = Math.max(nose.w, sw * 0.8); // (a rounded nose is narrow at its tip: its lamps go out toward its corners)
   L(2, rear.w * 1.5, 0.075, 0.05, 0, yt, rear.z + 0.03, 0xff1030, 2.4); // the tail bar (brightens under braking)
   [-1, 1].forEach((s) => {
-    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, rear.z + 0.02, 0xffa53d, 3); // indicators, tail corners
-    L(4, 0.16, 0.1, 0.05, s * (nose.w * 0.86), yh + 0.1, nose.z - 0.02, 0xffa53d, 3); // and nose corners
-    L(1, nose.w * 0.42, 0.07, 0.05, s * nose.w * 0.4, yh, nose.z - 0.03, 0xfff2d8, 4.5); // the nose lamps
+    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, at(1, yt + 0.12, H * 0.06, s * rear.w * 0.82, 0.1, rear.z) + 0.02, 0xffa53d, 3); // indicators, tail corners
+    L(4, 0.16, 0.1, 0.05, s * (nw * 0.86), yh + 0.1, at(-1, yh + 0.1, H * 0.06, s * nw * 0.86, 0.1, nose.z) - 0.02, 0xffa53d, 3); // and nose corners
+    L(1, nw * 0.42, 0.07, 0.05, s * nw * 0.4, yh, at(-1, yh, H * 0.06, s * nw * 0.4, nw * 0.21, nose.z) - 0.03, 0xfff2d8, 4.5); // the nose lamps
     L(10, 0.03, 0.05, len * 0.62, s * (sw + 0.025), ys, 0, 0xffffff, 1); // a line of neon along the sill
   });
   if (T.roof) { const top = face(-1, bb.max.y - H * 0.06, H * 0.05); [-0.6, -0.2, 0.2, 0.6].forEach((x) => L(8, 0.14, 0.06, 0.05, x * top.w, bb.max.y - H * 0.05, top.z - 0.02, 0xffa53d, 2.6)); }
@@ -424,6 +430,7 @@ class RacerWorld {
   // scaled to its length, set on its wheels; its material; its lamps. (Shared by every copy of the kind.)
   genKind(type, model) {
     const [, len] = RACER_GEN_FLEET[type];
+    if (RACER_GEN_DIM[type]) (this.genDim = this.genDim || {})[type] = RACER_GEN_DIM[type];
     tuneModel(model, { glow: 2.0, metal: 1.0, rough: 1.0, normal: 0.85 });
     const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
     if (!made) return null;
@@ -460,7 +467,7 @@ class RacerWorld {
   }
   underBadge(c, rings) {
     // the car's box on the screen (its eight corners), against each badge's circle
-    const cam = this.g.camera, D = { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
+    const cam = this.g.camera, D = (this.genDim && this.genDim[c.type] && this.genDim[c.type].box) || { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (let i = 0; i < 8; i++) {
       v.set(c.x + (i & 1 ? D[0] : -D[0]), c.y + (i & 2 ? D[1] : 0), c.z + (i & 4 ? D[2] : -D[2])).project(cam);
@@ -512,6 +519,7 @@ class RacerWorld {
     const dirty = new Set();
     let k = 0;
     const SH = { sedan: [3.4, 6.6], truck: [4.2, 11], bus: [4.4, 13], bike: [1.4, 3.2], rival: [3.4, 6.6] };
+    if (this.genDim) for (const t in this.genDim) SH[t] = this.genDim[t].sh;
     for (const c of this.cars) {
       if (!c.on) continue;
       c.age += dt;
