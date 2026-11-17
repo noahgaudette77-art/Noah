@@ -1799,7 +1799,7 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 /* the label over the vault's 3D window stands on its own dark plate (served) */
 .assets-on .vault-window > span { background: rgba(14, 8, 2, 0.9); padding: 5px 8px 4px; box-shadow: 0 0 0 2px #000; left: 8px; top: 7px; }
 /* a banner on its own dark plate, inside the screen's edges (RANK UP! after a reward moment: it must not cross the score) */
-.banner.plated { left: 16px; right: 16px; top: 34%; padding: 14px 12px 12px; background: rgba(6, 2, 22, 0.92); border: 2px solid var(--c, var(--yellow)); box-shadow: 0 0 22px -6px var(--c, var(--yellow)), 0 4px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
+.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: rgba(6, 2, 22, 0.92); border: 2px solid var(--c, var(--yellow)); box-shadow: 0 0 22px -6px var(--c, var(--yellow)), 0 4px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
 .banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
 .banner.plated { animation: banner-plate 1.4s ease-out forwards; } /* (it never grows past the screen's edges) */
 @keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 12% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }

@@ -68,8 +68,8 @@ module.exports = async (cap) => {
     A.show.results({ game: "boss", sel: A.makeSelection("4"), run: { correct: 6, answered: 6, bestStreak: 6, missed: [], xp0: -230, start: {} }, stars: 3, score: 18450,
       title: "STAGE CLEAR", headline: "18,450", sub: "The Fine Print falls", color: "#ff3ad4", won: ["boss6", "streak20"] }, 0);
   });
-  await strip("08-results-reward", 10, 14, { thumb: 230, cols: 10 });
-  await cap.fast(60);
+  await strip("08-results-reward", 12, 16, { thumb: 200, cols: 12 }); // (and RANK UP! once the last reward has landed)
+  await cap.fast(150);
   await still("09-results");
   // ---- stats: rank, tiles, the trophies
   await cap.eval(() => window.__arcade.show.stats());
