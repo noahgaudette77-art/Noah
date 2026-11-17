@@ -2561,7 +2561,7 @@ Before Phase 3 the owner gets a short projected spend for fal and Tripo, per bos
 | 1 | **Risk Blaster**, the vertical slice that sets the standard: (1) deep-space sky for sky and lighting, (2) starfighter and demon integrated, (3) animation, (4) combat and impact effects, (5) sound, (6) frame sequences, independent review, fixes, commit and push | done (see "Phase 1" below) |
 | 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | done (see "Phase 2" below) |
 | 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | done (see "Phase 3" below) |
-| 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | in progress |
+| 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | done (see "Phase 4" below) |
 | 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | |
 | 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one summary with screenshots, spend and balances | |
 
@@ -2785,3 +2785,59 @@ with a list in its README.
 - The Phantom's and Lord Intestate's faces are dark at band size.
 - The remade Lich's robe can show a tiny sliver for a frame in a few clips.
 - Nobody has heard the sound: it was checked by cue log and measured loudness only.
+
+## Phase 4: Hub, title, menus and the quieter rooms (done)
+
+**What was built** (code in `src/js/11c-hubgen.js`, `05c-genicons.js`, `23c-memorygen.js`, `24d-examgen.js`,
+`31c-librarygen.js` and small changes to the screens' own files; from disk every screen is as it was).
+
+1. The hub: six real cabinets from one generated model (`prop-cabinet`), each with the game's live screen, its name
+   lit on the marquee, neon edges and stripes in its colour, and its topper turning on a lit turntable (the
+   starfighter, the war rig, the Proctor, the deck, the lectern, the book). The cabinet in focus lifts and spins its
+   topper and gets a lamp of its own. A trophy stand (`prop-stand`, made on request) is a seventh stop, with all
+   sixteen trophies as cups, medals and coins, bright when earned. The vault door (`prop-vault`) stands in the bay
+   beside Memory Bank. The two generated halls light and mirror the hall and are never shown. Recorded clicks, the
+   hall's hum, the announcer, and the boss posters drawn from the portraits.
+2. The title: the two generated dusks fade in behind the city as they arrive and cross-fade slowly; the title's music
+   and INSERT COIN on the first tap; the hub's set loads while the title is up, and nothing delays the first frame.
+3. The menus: stars, coins, lives, shields, streaks, medals and trophies drawn from the 3D models; the bosses as the
+   same 3D busts in chapter select and results; a reward moment on the results screen (stars, coins, a medal, a cup,
+   new trophies landing one by one with sound).
+4. Memory Bank: the vault lit and mirrored by the gold vault panorama, the deck the cards are dealt from, the banked
+   card seen rising into the vault's slot, the generated coin. Final Exam: the moonlit night in the arches and on the
+   examiner's armour, the lectern, the exam's music. Strategy Guide: the archive's panorama as its light and
+   backdrop, the open tome lit under the rose window.
+
+**The one independent review** (`docs/combat-pass/menus/review.md`): detail 3.5, lighting 3.5, materials 4, depth 4,
+motion 3.5, cohesion 3.5, legibility 4; nothing resembles a known cabinet, game, character or logo; nine major
+defects, all fixed in one round:
+
+- RANK UP! no longer prints over the reward: it waits for the last reward and sits on its own plate.
+- A banked card rises into the vault and the next is dealt off the deck (pictures over the page; the rule's timer is
+  untouched).
+- The deck, the lectern and the book were black on the hall's black, and the Guide's book an unlit slab: all three
+  remade brighter with Tripo (white-faced cards, an open lit book on the lectern, an open gold-cornered tome), each
+  with a key light; the tome now sits lit under the rose window.
+- One face per boss and one set of icons: chapter select uses the 3D busts too, earned stars are gold, each results
+  tile shows a model icon at 24 px or none.
+- Earned trophies are bright and lit, locked ones dark silhouettes.
+- The untextured block beside Memory Bank (an old cleaning robot) gave way to the generated vault door.
+- The examiner's smeared chest is smooth gunmetal with a faint reactor glow (a material change in code; the owner's
+  model files are untouched and both frame-exact hit-stops are byte-identical).
+- Also from the checklist: the moon and the night in the exam's arches, THE VAULT on a dark plate, the pass burst
+  capped below white, and the second hall panorama put to use at the trophy stand.
+
+The Final Exam keeps the owner's own examiner model: the brief's idea of putting the generated Proctor in its place
+was dropped, since the present examiner is a real model and its finale is frame-exact.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. Captures in `docs/combat-pass/menus/` with a
+list in its README.
+
+**Still weak, plainly**
+
+- The hub's set is about 6 MB, over the 4 MB aimed at (Phase 5 trims it).
+- The exam's lectern topper is small and dark on its cabinet.
+- The moon shows only when the exam's camera draws back at the end; the library's panorama barely shows.
+- The Memory Bank coin is small in flight.
+- Nobody has heard the sound; the reduced-effects path was not captured.
