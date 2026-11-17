@@ -237,6 +237,7 @@ class CombatFX {
     // warning markers
     this.markTex = { ring: fxMarkTexture("ring"), lock: fxMarkTexture("lock"), bang: fxMarkTexture("bang"), arc: fxMarkTexture("arc"), seek: fxMarkTexture("seek") };
     (host.warmTextures || (host.warmTextures = [])).push(...Object.values(this.markTex)); // (each marker's picture goes to the graphics chip at start: GFX.warm)
+    this.makeWaves(); // (the rings too, so the first one compiles nothing mid-fight)
     const pg = new THREE.PlaneGeometry(1, 1);
     this.marks = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: this.markTex.ring, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false })); m.visible = false; m.renderOrder = 10; scene.add(m); return { m, t: 0, dur: 0, size: 1, flat: false, kind: "ring", col: [1, 1, 1], follow: null }; });
     // marks left on the ground
@@ -434,12 +435,12 @@ class CombatFX {
     if (o.shake !== false) this.host.shake(0.2 * s);
   }
 
-  // ---- thin shapes of light (after Risk Blaster's stage; built the first time one is asked for) -------------
+  // ---- thin shapes of light (after Risk Blaster's stage; built with the kit, so the warm-up compiles them) ------
   // A thin ring: a hard-edged line, clear inside, never brighter than its own colour, as thick on the screen at
   // every size. It opens where it is, or travels from one place to another as it grows (a wave of force); flat: it
   // lies on the ground (a shock running out across a floor). o: { dur, s0, s1, delay, w, k, flat }
-  wave(from, to, color, o = {}) {
-    if (!this.waves) {
+  makeWaves() {
+    {
       const wg = new THREE.PlaneGeometry(2, 2);
       this.waves = Array.from({ length: 10 }, () => {
         const m = new THREE.Mesh(wg, new THREE.ShaderMaterial({
@@ -458,6 +459,9 @@ class CombatFX {
         return { m, t: -1, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), s0: 1, s1: 1, w: 0.055, live: false, flat: false };
       });
     }
+  }
+  wave(from, to, color, o = {}) {
+    if (!this.waves) this.makeWaves();
     const r = this.waves.find((x) => !x.live) || this.waves[0];
     r.from.copy(from); r.to.copy(to || from); r.dur = o.dur || 0.4; r.t = -1e-4 - (o.delay || 0); r.s0 = (o.s0 === undefined ? 0.4 : o.s0) * this.unit; r.s1 = (o.s1 === undefined ? 4 : o.s1) * this.unit; r.w = (o.w || 0.055) * this.unit; r.live = true; r.flat = !!o.flat;
     r.m.material.depthTest = r.flat; // (a ring on the floor is hidden by what stands on it)

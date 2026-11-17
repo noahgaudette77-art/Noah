@@ -93,3 +93,14 @@ Nest Egg Run at MEDIUM, a phone's window (before, after):
 
 Left as they are: three drawing surfaces made the first time they are used, as the race starts (the road's mirror and
 two half-size passes): memory, not a compile, and once.
+
+## Step 4: Boss Rush
+
+| Change | Effect |
+|---|---|
+| The combat kit's thin rings (waves of force, shocks on the floor) are built with the kit, not the first time one is asked for | the first ring of a fight no longer compiles mid-fight (in all three games) |
+| One blast light, not three | the boss's own rig (key, two rims, an edge, a fill, the light from under it, its eyes) is left whole: lights 12 to 10 in a fight |
+
+Boss Rush at MEDIUM, a phone's window: 9.9 million pixels a frame, 19 passes, 81 draw calls; a minute and a half of
+play compiles 0 shaders (was 1). Still sent mid-fight: two small pictures (an ember, 64 px; a sign, 64 x 88), too small
+to matter.

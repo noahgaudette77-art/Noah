@@ -37,7 +37,7 @@ class BossStage {
   constructor(game, actor) {
     const g = (this.g = game), s = g.scene, row = (this.row = g.row);
     g.show = new TweenSet(); // show-only timing: nothing in it is a rule
-    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: 0, sparks: 420, chunks: 96, firePuffs: 120, smokePuffs: 120, lights: 3 });
+    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: 0, sparks: 420, chunks: 96, firePuffs: 120, smokePuffs: 120, lights: 1 }); // (one blast light, as in the other two games: the boss's own rig already lights it from seven sides)
     this.a = actor;
     this.S = row.size;
     actor.root.scale.setScalar(this.S);
