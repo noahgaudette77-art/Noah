@@ -751,9 +751,12 @@ class BossStage {
       HudFX.reward(g.el, from, to, { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
       if (sc) this.count = { el: sc, a: parseInt(sc.textContent.replace(/\D/g, ""), 10) || 0, b: g.score, t: -0.42, dur: 0.8 }; // (a value already decided, shown as it arrives)
       if (g.iconFX) { // gold stars and egg coins thrown out of the blast toward the player, with the HUD's own
-        const dir = this._u.copy(g.camera.position).sub(p).normalize().add(this._w.set(0, 0.6, 0)).normalize();
-        g.iconFX.burst("star", p, { n: 7, size: big ? 0.8 : 0.65, speed: 10, dir, life: 1.0, gravity: 5, gap: 0.03 });
-        g.iconFX.burst("coin", p, { n: 6, size: big ? 0.7 : 0.58, speed: 9, dir, life: 1.0, gravity: 6, gap: 0.035 });
+        // (from over the fallen boss, not its hips: lying there they are below the picture, behind the answers. Mostly
+        // toward the player: they grow as they come, under the result's plate)
+        const at = p.clone(); at.y += 2.4;
+        const dir = this._u.copy(g.camera.position).sub(at).normalize().add(this._w.set(0, 0.2, 0)).normalize();
+        g.iconFX.burst("star", at, { n: 7, size: big ? 1.6 : 1.35, speed: 7, dir, life: 1.25, gravity: 3, gap: 0.03 });
+        g.iconFX.burst("coin", at, { n: 6, size: big ? 1.4 : 1.2, speed: 6.5, dir, life: 1.25, gravity: 3.5, gap: 0.035 });
       }
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
