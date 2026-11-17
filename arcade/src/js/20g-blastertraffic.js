@@ -145,8 +145,36 @@ function spaceGlowMaterial(trail) {
 // the shuttles. The tankers (three spheres on a truss), the hulks and the whale keep their built-in designs.
 const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
 const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2"];
+// Running lights for a generated ship (Phase 5 fix: the wings of fighters read as enemy fire): magenta to port, cyan to
+// starboard at its widest, white at its tail, each a small diamond of light; they blink slowly (under once a second).
+function spaceRunningLights(geo) {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], col = [], ph = [];
+  let wx = 0, wz = 0, wy = 0;
+  for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i]) > wx) { wx = Math.abs(P[i]); wy = P[i + 1]; wz = P[i + 2]; }
+  const r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) * 0.022;
+  const lamp = (x, y, z, c, p) => {
+    const o = new THREE.OctahedronGeometry(r, 0).toNonIndexed(), a = o.attributes.position.array;
+    for (let i = 0; i < a.length; i += 3) { pos.push(a[i] + x, a[i + 1] + y, a[i + 2] + z); col.push(c[0], c[1], c[2]); ph.push(p); }
+    o.dispose();
+  };
+  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute("aPh", new THREE.Float32BufferAttribute(ph, 1));
+  return g;
+}
+function spaceRunningLightMat() {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: "attribute vec3 aCol; attribute float aPh; uniform float uTime; varying vec3 vC; void main(){ vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0); float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453); vC = aCol * (0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh))); gl_Position = projectionMatrix * viewMatrix * w; }",
+    fragmentShader: "varying vec3 vC; void main(){ gl_FragColor = vec4(vC, 1.0); }",
+  });
+}
+
 const SPACE_TYPES = { // how many of each at most, where its engines are (behind its middle), its trail's colour and width, how big it is drawn
-  freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [2.4, 0.7, 1.2], 0.55, 1.8],
+  freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [1.25, 1.65, 2.2], 0.4, 1.8], // (Phase 5 fix: a short cyan-white engine glow, not the long magenta of the demon's fire)
   drone: [8, 1.0, [0.4, 1.3, 2.2], 0.4, 1.7], shuttle: [8, 4.4, [2.4, 1.4, 0.5], 1.5, 1.5], hulk: [2, 0, null, 0, 1],
 };
 class SpaceTraffic {
@@ -166,6 +194,12 @@ class SpaceTraffic {
         gs = geos[name].boundingBox.max.z - geos[name].boundingBox.min.z;
         mesh = new THREE.InstancedMesh(kit.geo, kit.mat, cap);
         mesh.frustumCulled = false;
+        const lamps = new THREE.InstancedMesh(spaceRunningLights(kit.geo), spaceRunningLightMat(), cap); // (drawn with the hulls: the same places)
+        lamps.instanceMatrix = mesh.instanceMatrix;
+        Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
+        Object.defineProperty(lamps, "visible", { get: () => mesh.visible, set: () => {} });
+        lamps.frustumCulled = false;
+        g.scene.add(lamps);
       } else mesh = spaceInstanced(geos[name], space.hull, cap);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < cap; i++) mesh.setMatrixAt(i, zero);
@@ -263,7 +297,7 @@ class SpaceTraffic {
       dirty[s.type] = 1;
       hi[s.type] = Math.max(hi[s.type] || 0, s.slot + 1);
       if (s.T.col) {
-        const speed = s.script ? 40 : s.v.length(), len = clamp(speed * 0.32, 3, 30) * (1 + w * 2) * (s.type === "cruiser" ? 2.2 : 1), tw = s.T.tw * k;
+        const speed = s.script ? 40 : s.v.length(), len = clamp(speed * 0.32, 3, 30) * (1 + w * 2) * (s.type === "cruiser" ? 2.2 : s.type === "fighter" ? 0.4 : 1), tw = s.T.tw * k;
         p.add(this._h.set(0, 0, s.T.rear * k).applyQuaternion(q));
         this.trails.setMatrixAt(s.T.base + s.slot, m.compose(p, q, this._s.set(tw, tw, len)));
         this.trails.setColorAt(s.T.base + s.slot, this._c.setRGB(s.T.col[0], s.T.col[1], s.T.col[2]).multiplyScalar(0.55));

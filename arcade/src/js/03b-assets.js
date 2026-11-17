@@ -42,7 +42,7 @@ const Assets = {
         if (o.isMesh) {
           o.frustumCulled = !o.isSkinnedMesh; // (a skinned mesh's bounds are those of its rest pose)
           const ms = Array.isArray(o.material) ? o.material : [o.material];
-          ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) m[k].anisotropy = Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()); });
+          ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) { m[k].anisotropy = Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()); this.capTexture(m[k]); } });
         }
       });
       const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
@@ -58,6 +58,27 @@ const Assets = {
     const p = (busy[key] = make());
     p.then(() => { delete busy[key]; });
     return p;
+  },
+  // (Phase 5) A phone holds less on its graphics chip: Risk Blaster alone held about 435 MB of pictures, which can end an
+  // older phone's tab. On a phone (a coarse pointer and a small screen, or 4 GB of memory or less; #phone in the address
+  // forces it, for tests) no model's or sky's picture larger than 2048 px goes to the chip: it is drawn down to 2048
+  // first. Desktop, and a page opened from disk (which loads none of these), are unchanged.
+  phone: typeof window !== "undefined" && (/phone/.test(location.hash) || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && Math.min(screen.width || 9999, screen.height || 9999) < 700) || (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 4)),
+  CAP: 2048,
+  capImage(img) {
+    const w = img && img.width, h = img && img.height;
+    if (!this.phone || !w || Math.max(w, h) <= this.CAP || typeof document === "undefined") return img;
+    const k = this.CAP / Math.max(w, h), c = document.createElement("canvas");
+    c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    if (img.close) img.close(); // (an ImageBitmap's own pixels go at once)
+    return c;
+  },
+  capTexture(t) {
+    if (!this.phone || !t || !t.image || t.userData.capped) return;
+    const img = this.capImage(t.image);
+    t.userData.capped = true;
+    if (img !== t.image) { t.image = img; t.needsUpdate = true; }
   },
   // A model for a scene that is being built (null when it is not loaded: the caller builds what it always built).
   // Each one is handed out once; the next scene gets a new copy parsed from the same bytes.
@@ -77,8 +98,8 @@ const Assets = {
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
       img.src = url;
-    })).then((img) => {
-      const map = new THREE.Texture(img);
+    })).then((pic) => {
+      const img = this.capImage(pic), map = new THREE.Texture(img); // (on a phone: no larger than 2048 across)
       map.encoding = THREE.sRGBEncoding;
       map.mapping = THREE.EquirectangularReflectionMapping;
       map.wrapS = THREE.RepeatWrapping;

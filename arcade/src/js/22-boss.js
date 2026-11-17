@@ -65,6 +65,39 @@ function bossRuneTexture() {
   return new THREE.CanvasTexture(c);
 }
 
+// The crowd's figures (Phase 5): one card each, its picture one of four silhouettes in a strip (heads and shoulders, arms
+// up, a cap, a pair close together), dark with a rim of light along its top edge, which the card's colour tints.
+let _crowdTex = null;
+function bossCrowdTexture() {
+  if (_crowdTex) return _crowdTex;
+  const c = document.createElement("canvas"), W = 128;
+  c.width = W * 4; c.height = W;
+  const x = c.getContext("2d");
+  const figure = (k, ox, dy, fill) => {
+    x.fillStyle = fill;
+    const cx = k * W + W / 2 + ox;
+    const head = (hx, hy, r) => { x.beginPath(); x.arc(hx, hy + dy, r, 0, Math.PI * 2); x.fill(); };
+    const body = (bx, w) => { x.beginPath(); x.moveTo(bx - w, W); x.quadraticCurveTo(bx - w, 70 + dy, bx - w * 0.55, 66 + dy); x.lineTo(bx + w * 0.55, 66 + dy); x.quadraticCurveTo(bx + w, 70 + dy, bx + w, W); x.closePath(); x.fill(); };
+    if (k === 3) { body(cx - 20, 22); head(cx - 20, 48, 15); body(cx + 22, 20); head(cx + 22, 52, 14); return; }
+    body(cx, 34); head(cx, 44, 18);
+    x.fillRect(cx - 7, 52 + dy, 14, 16);
+    if (k === 1) { x.lineWidth = 11; x.lineCap = "round"; x.strokeStyle = fill; x.beginPath(); x.moveTo(cx - 26, 74 + dy); x.lineTo(cx - 38, 22 + dy); x.moveTo(cx + 26, 74 + dy); x.lineTo(cx + 36, 18 + dy); x.stroke(); }
+    if (k === 2) { x.beginPath(); x.ellipse(cx, 32 + dy, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30 + dy, 32, 5); }
+  };
+  for (let k = 0; k < 4; k++) { figure(k, 0, -3, "rgba(255,255,255,1)"); figure(k, 0, 1, "rgba(5,4,10,1)"); } // (a lit edge along the top, the figure dark below it)
+  _crowdTex = new THREE.CanvasTexture(c);
+  _crowdTex.minFilter = THREE.LinearMipmapLinearFilter;
+  _crowdTex.dispose = () => {}; // (shared: every fight's crowd)
+  return _crowdTex;
+}
+// One figure's card: a quad facing the floor, standing on the spot it is placed at (k: which of the four silhouettes).
+function bossFigure(k, sc) {
+  const g = new THREE.PlaneGeometry(1.25 * sc, 1.25 * sc), uv = g.attributes.uv;
+  g.translate(0, 0.62 * sc, 0);
+  for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / 4);
+  return g;
+}
+
 class BossGame extends QuizGame {
   constructor(sel) {
     super(sel, "boss", { fov: 60, fog: [0x0a0322, 24, 86], bg: 0x0a0322 }); // (the stands fall back into haze; the boss, 16 away, stays clear)
@@ -450,10 +483,10 @@ class BossGame extends QuizGame {
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
           const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
           const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
-          const cloth = new THREE.Color().setHSL(0.72 + (Math.random() - 0.5) * 0.3, 0.26 + Math.random() * 0.2, 0.05 + Math.random() * 0.05).multiplyScalar(tk), skin = new THREE.Color().setHSL(0.7 + Math.random() * 0.08, 0.32, 0.12 + Math.random() * 0.08).multiplyScalar(tk);
-          people.push({ geo: new THREE.BoxGeometry(0.6 * sc, 0.82 * sc, 0.32), matrix: at(0, 0.45, 0), color: cloth }); pSeed.push(sd, 36);
-          people.push({ geo: new THREE.IcosahedronGeometry(0.19 * sc, 0), matrix: at(0, 1.04, 0), color: skin }); pSeed.push(sd, 60);
-          if (Math.random() < 0.3) for (const sx of [-1, 1]) { people.push({ geo: new THREE.BoxGeometry(0.11, 0.62 * sc, 0.11), matrix: at(sx * 0.36 * sc, 1.02, 0, sx * -0.28), color: cloth }); pSeed.push(sd, 36); }
+          // (Phase 5 fix: a figure cut out against the stands' light, heads and shoulders, some with their arms up, its
+          // edge lit from behind in the house colour, where the boxes and stick arms read as a blockout)
+          const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 1.6);
+          people.push({ geo: bossFigure(Math.floor(Math.random() * 4), sc), matrix: at(0, 0, 0), color: rim }); pSeed.push(sd, 6);
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
         for (let j = 0; j < 2; j++) {
@@ -474,7 +507,7 @@ class BossGame extends QuizGame {
     const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
     for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); v += pSeed[i + 1]; }
     pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
-    const pm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0, envMap: this.env, envMapIntensity: 0.35 });
+    const pm = new THREE.MeshBasicMaterial({ vertexColors: true, map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide });
     pm.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer;
       sh.vertexShader = sh.vertexShader

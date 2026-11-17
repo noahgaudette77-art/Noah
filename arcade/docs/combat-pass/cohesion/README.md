@@ -13,14 +13,35 @@ All captures are of the page served over HTTP (every asset loaded), on a 390 x 8
 | `03-look-changed.jpg` | the four screens whose grade changed, before and after, side by side (the hall, Memory Bank, Final Exam, Strategy Guide) |
 | `04-traffic-day.jpg` | Nest Egg Run by day: the generated car, van and bus in the traffic, lit by the sky and mirrored in the road |
 | `05-traffic-night.jpg` | the same at night: tail bars, nose lamps, sill lines, the copies' own paint and neon |
-| `06-traffic-near-miss.jpg` | a near miss: a generated car passing the rig, frame by frame |
+| `06-traffic-near-miss.jpg` | a near miss: a generated car passing the rig; 12 frames, 3 frames apart (1/20 s) |
 | `07-ships-open-space.jpg` | Risk Blaster as a run begins, before the demon has come: the freighter, the tug, a wing of fighters, the cruiser far off, the asteroid belt |
-| `08-ships-open-space-strip.jpg` | the same, frame by frame |
+| `08-ships-open-space-strip.jpg` | the same; 6 frames, 7 frames apart (0.12 s) |
 | `09-ships-mid-fight.jpg` | mid-fight: the ships and rocks behind the demon, the answers and the fighter |
 | `10-hub-after-D.jpg` | the hall after its set was cut to 3.55 MB: the row of cabinets, a topper close, the trophy stand |
 | `11-calm-blaster.jpg`, `12-calm-racer.jpg`, `13-calm-boss.jpg`, `14-calm-hub.jpg` | the calm path (Setup > Reduced effects on, the browser asking for reduced motion): each game with a question up, and the hall |
 | `15-tail-close.jpg`, `16-tail-closest.jpg` | F: the demon come close and at its closest over the fighter, its tail carried back and aside, clear of the canopy |
-| `17-tunnel-way-out.jpg` | F: out of the tunnel, frame by frame: through its mouth the sky beyond and the road under it |
+| `17-tunnel-way-out.jpg` | F: out of the tunnel: through its mouth the sky beyond and the road under it; 12 frames, 9 frames apart (0.15 s) |
+
+All other files are stills or sheets of stills. The frames of a strip run left to right, then row by row.
+
+## What each screen downloads (MB, from `src/js/03a-files.js`)
+
+Sound is fetched once a session and shared: the title brings the core effects, the announcer and its music; the hall
+its own. "New" is what a screen still has to fetch when it is reached from the hall.
+
+| screen | whole set | of it, models, skies and pictures | new, reached from the hall |
+|---|---|---|---|
+| title | 4.50 | 0.65 (it waits for none of it) | 4.50 (and the hall's 4.68 more, fetched while it is up) |
+| hall | 3.55 (sound 4.05 more, never waited for) | 3.55 | 0 (fetched during the title) |
+| Memory Bank | 5.11 | 1.09 | 1.79 |
+| Final Exam | 5.91 | 0.93 | 2.75 |
+| Strategy Guide | 3.56 | 0.95 | 1.66 |
+| Risk Blaster | 15.04 | 10.02 | 12.13 |
+| Nest Egg Run | 9.18 | 5.01 | 6.26 |
+| Boss Rush | 9.00, and its boss 2.48 to 4.03 | 1.51, and the boss | 6.09, and the boss |
+
+The page itself: 6.28 MB, 3.06 MB with gzip. The menus (chapter select, results, stats, setup) are drawn by the page
+and download nothing.
 
 ## The sound, measured (nobody can listen here)
 

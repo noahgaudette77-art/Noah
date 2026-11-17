@@ -29,11 +29,13 @@ function showGuide(chapterN) {
     <div class="stages">${s.chapters.map((n) => {
       const c = CH(n), mm = chapterMastery(c), m = (mm * 100).toFixed(1), pic = !!client(n);
       return `<button class="stage" data-act="ch" data-n="${n}" style="--c:${c.color}">
-        <span class="n${pic ? " pic" : ""}">${pic ? `<canvas data-pt="${n}" aria-hidden="true"></canvas><b>${n}</b>` : n}</span><span class="t">${esc(c.title)}</span>
+        <span class="n${pic ? " pic" : ""}">${pic ? `<canvas data-pt="${n}" data-boss-key="${n}" data-boss-color="${c.color}" aria-hidden="true"></canvas><b>${n}</b>` : n}</span><span class="t">${esc(c.title)}</span>
         <span class="meter" style="--c:${c.color}"><i style="width:${m}%"></i></span>
         <span class="meta"><span>${c.guide.length} NOTES · ${c.flashcards.length} CARDS</span><span>${mpct(mm)}%</span></span></button>`;
     }).join("")}</div>`).join("");
-  const portraits = () => $$("canvas[data-pt]", body).forEach((cv) => { const cl = client(cv.dataset.pt); if (cl) drawPortrait(cv, Object.assign({ age: cl.age }, cl.look)); });
+  // (Phase 5 fix: each chapter's row shows its boss as the same 3D bust Select Stage shows, when the strip is in hand;
+  // from disk, the client's drawn face as before. A strip that arrives late redraws them: see Assets.onImage.)
+  const portraits = () => $$("canvas[data-pt]", body).forEach((cv) => { if (genBossPortrait(cv, cv.dataset.bossColor, cv.dataset.bossKey)) return; const cl = client(cv.dataset.pt); if (cl) drawPortrait(cv, Object.assign({ age: cl.age }, cl.look)); });
   const search = (q) => {
     const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
     if (el.classList.contains("searching") !== words.length > 0) { // the archive's window folds down to a strip while there are results to read

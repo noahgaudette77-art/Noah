@@ -39,7 +39,7 @@ module.exports = async (cap) => {
       // (three on the main road ahead, keeping pace with the rig, so the band shows them whole; the rest on the service lanes)
       const pace = (type, x, z, dir) => { const c = w.spawn(type, "M", { special: "show", dir, x, tx: x, z, speed: 0, y: 0 }); if (c) c.plan = (cc, dt, sp) => { cc.speed = dir > 0 ? sp : -sp; }; };
       // (the answers' discs stand over the road from about 15 ahead of the rig: these keep below them)
-      pace("sedan", -3.6, -9, 1); pace("truck", 3.9, -11.5, 1); pace("bus", -6.9, -20, -1);
+      pace("sedan", -3.75, -4, 1); pace("truck", 4.4, -6, 1); pace("bus", -7.4, -8.5, -1); // (below the lane badges: what comes under them slips away while a gate is up)
       put("sedan", "R", 6.6, -40, 14); put("truck", "R", 8.0, -75, 13);
       put("sedan", "L", -6.6, -60, 20); put("bus", "L", -8.0, -90, 18);
       w.spawnT = { R: 99, L: 99, H: 0.3 };

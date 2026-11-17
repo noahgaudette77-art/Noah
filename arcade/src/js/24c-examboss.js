@@ -152,7 +152,8 @@ function bossSkin(env, side, o, U) {
           ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = mix(vec3(0.03, 0.03, 0.04), vec3(0.5, 0.455, 0.4), bossL) * (0.74 + 0.5 * bossT.r) * (1.0 - 0.6 * exp(-dot(bossS, bossS) * 150.0));"
           : "diffuseColor.rgb = mix(neonMetal(bossL, vec3(mix(0.5, bossT.r, 0.5), bossT.gb)) * 0.82, vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}
         ${Assets.on ? `// (served: the hollow in its chest, round the reactor, and what shows of the frame behind it, is smooth dark gunmetal: the painting there is coarse and read as a smear)
-        float bossCoreM = (1.0 - smoothstep(0.058, 0.088, length((vBossW - uBossCoreW).xy) * ${(1 / BOSS_S).toFixed(5)})) * step(-0.05, (vBossW.z - uBossCoreW.z) * ${(1 / BOSS_S).toFixed(5)}); // (measured across the chest, not into it: the hollow lies in front of the core)
+        vec2 bossCq = (vBossW - uBossCoreW).xy * ${(1 / BOSS_S).toFixed(5)}; bossCq.y *= bossCq.y < 0.0 ? 0.5 : 1.0; // (Phase 5 fix: the hollow runs on down below the reactor: the mask reaches as far)
+        float bossCoreM = (1.0 - smoothstep(0.066, 0.1, length(bossCq))) * step(-0.05, (vBossW.z - uBossCoreW.z) * ${(1 / BOSS_S).toFixed(5)}); // (measured across the chest, not into it: the hollow lies in front of the core)
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.065, 0.09), bossCoreM);` : ""}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
         roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};

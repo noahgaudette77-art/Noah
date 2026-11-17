@@ -369,7 +369,7 @@ function racerGroundMaterial(mirror, shared) {
 // career sky lights both.
 function racerCityMaterial(shared, P) {
   return new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 } }),
+    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 }, tWin: { value: windowGridTexture() } }),
     extensions: { derivatives: true },
     vertexShader: `${RACER_WRAP_GLSL}
       attribute vec3 aCol; attribute float aZ; attribute float aKind; attribute float aCy; attribute float aCz; attribute float aSp; attribute float aSeed;
@@ -402,7 +402,7 @@ function racerCityMaterial(shared, P) {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity;
+      uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity; uniform sampler2D tWin;
       varying vec3 vCol; varying vec3 vN; varying vec3 vL; varying vec3 vW; varying float vKind; varying float vDepth; varying float vFar; varying float vSeed;
       float h21(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.y); }
       void main(){
@@ -423,7 +423,8 @@ function racerCityMaterial(shared, P) {
             col *= 1.0 + storey * fine * (0.55 * step(f.y, 0.085) - 0.4 * step(0.085, f.y) * step(f.y, 0.17));
             float pier = storey * step(fract(g.x / 3.0 + vSeed), 0.1);
             col *= 1.0 + 0.2 * pier * fine;
-            float win = step(0.2, f.x) * step(f.x, 0.8) * step(0.25, f.y) * step(f.y, 0.8) * storey * (1.0 - pier);
+            float win = storey * (1.0 - pier); // (Phase 5 fix: the windows are a picture now, with smaller copies of itself: far off they are their own average light, never a crawl of noise)
+            vec4 tw = texture2D(tWin, (g + vec2(floor(vSeed * 8.0) * 3.0, floor(fract(vSeed * 13.0) * 8.0) * 2.0)) / 8.0);
             // lit in clusters (blocks four bays wide, three floors high): four in ten are dark, the rest busier, and each
             // has its own light: amber, cyan or magenta
             vec2 blk = floor(cell / vec2(4.0, 3.0));
@@ -433,11 +434,8 @@ function racerCityMaterial(shared, P) {
             float hot = 0.28 + 0.7 * r2 * r2 + 1.0 * step(0.9, r2); // most are low, a few blaze
             vec3 amber = vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2));
             vec3 wc = r2 > 0.84 ? amber : (b2 < 0.5 ? amber : (b2 < 0.77 ? vec3(0.3, 0.95, 1.0) : vec3(1.0, 0.3, 0.8)));
-            float bars = max(step(abs(f.x - 0.5), 0.028), step(abs(f.y - 0.535), 0.022)) * fine; // glazing bars
-            float blind = step(0.5, r2) * step(0.5 + 0.22 * r, f.y) * fine;                            // a blind part-way down
-            col = mix(col, col * 0.45, win * (1.0 - on));
-            col += vec3(0.1, 0.14, 0.24) * win * (1.0 - on) * smoothstep(0.8, 0.3, f.y) * 0.5 * fine;     // a dark pane still holds a little sky
-            col += wc * win * on * hot * (1.0 - 0.8 * bars) * (1.0 - 0.5 * blind) * (0.45 + 1.25 * uCity);
+            col = mix(col, col * 0.45 + vec3(0.012, 0.017, 0.03), win * tw.a);                         // the panes, a dark pane still holding a little sky
+            col += tw.rgb * win * (0.45 + 1.25 * uCity);                         // lit in clusters, amber, cyan or magenta (drawn in the picture)
             // a shopfront glows at street level, in the block's own colour
             float sk = fract(vSeed * 7.31);
             vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
@@ -887,7 +885,7 @@ class RacerGame extends QuizGame {
     this.ridgeNear = makeRidge({ z: -350, width: 1000, height: 34, n: 48, top: 0xc8c8d8, bottom: 0x24243a, line: 0xff3ad4, lineK: 2.2 });
     for (const r of [this.ridgeFar, this.ridgeNear]) r.children.forEach((c) => { c.material.fog = false; });
     s.add(this.ridgeFar, this.ridgeNear);
-    this.city = makeSkyline({ z: -315, width: 330, count: 80, minH: 6, maxH: 44, lit: 0.35 });
+    this.city = makeSkyline({ z: -315, width: 330, count: 80, minH: 6, maxH: 44, lit: 0.35, grid: true });
     s.add(this.city);
     // the wet ground: road and grid floor share one mirror
     this.mirror = new Mirror(0);

@@ -30,7 +30,7 @@ const { chromium } = require("playwright");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf("--" + k); if (i < 0) return d; const v = args[i + 1] && !args[i + 1].startsWith("--") ? args.splice(i + 1, 1)[0] : true; args.splice(i, 1); return v; };
-const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html"))), REDUCED = !!flag("reduced", false);
+const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html"))), REDUCED = !!flag("reduced", false), PHONE = !!flag("phone", false);
 const scenario = args[0] && path.resolve(args[0]);
 if (!scenario) { console.error("usage: capture.js <scenario.js> [--out dir] [--size WxH] [--dpr n] [--file]"); process.exit(2); }
 
@@ -85,7 +85,7 @@ function inPage() {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = FILE ? null : await serve(path.dirname(BUILD));
-  const url = (FILE ? "file://" + BUILD : "http://127.0.0.1:" + srv.address().port + "/" + path.basename(BUILD)) + "#debug";
+  const url = (FILE ? "file://" + BUILD : "http://127.0.0.1:" + srv.address().port + "/" + path.basename(BUILD)) + "#debug" + (PHONE ? ",phone" : ""); // (--phone: the page takes itself for a phone: see Assets.phone)
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, reducedMotion: REDUCED ? "reduce" : "no-preference" });
   const page = await ctx.newPage();

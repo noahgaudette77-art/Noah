@@ -384,7 +384,37 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
 }
 
 // A distant city: merged boxes with lit windows and a glowing roofline.
-function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff, winK = 2.2 } = {}) {
+// A grid of windows as a picture (Phase 5): 8 x 8 bays, each pane lit or dark, amber, cyan or magenta, with glazing bars;
+// alpha is the pane. It is drawn with its smaller copies, so a far wall shows its windows' average light, never a crawl
+// of noise. One for the page, shared.
+let _winTex = null;
+function windowGridTexture() {
+  if (_winTex) return _winTex;
+  const N = 8, S = 64, c = document.createElement("canvas");
+  c.width = c.height = N * S;
+  const x = c.getContext("2d");
+  x.clearRect(0, 0, c.width, c.height);
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const blk = ((Math.floor(i / 4) * 7 + Math.floor(j / 3) * 13) % 10) / 10, lit = rnd() < (blk < 0.4 ? 0.12 : 0.62), r2 = rnd();
+    const px = i * S + S * 0.2, py = j * S + S * 0.2, w = S * 0.6, h = S * 0.55;
+    if (lit) {
+      const hot = 0.3 + 0.7 * r2 * r2 + (r2 > 0.9 ? 0.4 : 0), col = r2 > 0.84 || blk < 0.6 ? [255, 170 + 50 * r2, 80 + 50 * r2] : blk < 0.8 ? [80, 240, 255] : [255, 80, 205];
+      x.fillStyle = `rgba(${Math.round(col[0] * Math.min(1, hot))},${Math.round(col[1] * Math.min(1, hot))},${Math.round(col[2] * Math.min(1, hot))},1)`;
+      x.fillRect(px, py, w, h);
+      x.fillStyle = "rgba(0,0,0,0.85)"; x.fillRect(px + w * 0.47, py, w * 0.06, h); x.fillRect(px, py + h * 0.5, w, h * 0.05); // glazing bars
+      if (r2 > 0.5) { x.fillStyle = "rgba(0,0,0,0.5)"; x.fillRect(px, py, w, h * (0.25 + 0.3 * rnd())); } // a blind part-way down
+    } else { x.fillStyle = "rgba(6,9,18,1)"; x.fillRect(px, py, w, h); }
+  }
+  _winTex = new THREE.CanvasTexture(c);
+  _winTex.wrapS = _winTex.wrapT = THREE.RepeatWrapping;
+  _winTex.minFilter = THREE.LinearMipmapLinearFilter;
+  _winTex.generateMipmaps = true;
+  _winTex.dispose = () => {}; // (shared by every scene that has a city: it stays)
+  return _winTex;
+}
+function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, depth = 16, base = 0x0c0424, window = 0xffcf7a, lit = 0.3, edge = 0x35efff, winK = 2.2, grid = false } = {}) {
   const pos = [], nor = [], seed = [];
   let x = -width / 2;
   for (let i = 0; i < count && x < width / 2; i++) {
@@ -402,14 +432,26 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
   geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
   geo.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
   const mat = new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, winK) }, uLit: { value: lit }, uTime: { value: 0 } }),
+    uniforms: Object.assign(fogUniforms(), { uBase: { value: new THREE.Color(base) }, uWin: { value: neon(window, winK) }, uLit: { value: lit }, uTime: { value: 0 } }, grid ? { tWin: { value: windowGridTexture() } } : {}),
+    defines: grid ? { WIN_GRID: "" } : {},
     extensions: { derivatives: true },
     vertexShader: `attribute float aSeed; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vN = normal; vSeed = aSeed; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
       uniform vec3 uBase; uniform vec3 uWin; uniform float uLit; uniform float uTime; varying vec3 vWorld; varying vec3 vN; varying float vSeed; varying float vDepth;
+      #ifdef WIN_GRID
+      uniform sampler2D tWin;
+      #endif
       void main(){
         vec3 col = uBase * (0.6 + 0.4 * max(vN.z, 0.0)) * (0.7 + 0.5 * smoothstep(0.0, 30.0, vWorld.y));
+        #ifdef WIN_GRID
+        if (abs(vN.z) > 0.5 || abs(vN.x) > 0.5) { // (the windows as a picture: far off, their average light)
+          vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
+          vec4 tw = texture2D(tWin, (q + vec2(floor(vSeed * 8.0) * 3.0, floor(fract(vSeed * 13.0) * 8.0) * 2.0)) / 8.0);
+          col = mix(col, col * 0.5, tw.a);
+          col += tw.rgb * (0.4 + 1.8 * uLit) * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
+        }
+        #else
         if (abs(vN.z) > 0.5 || abs(vN.x) > 0.5) {
           vec2 q = vec2((abs(vN.z) > 0.5 ? vWorld.x : vWorld.z) / 1.7, vWorld.y / 1.45);
           vec2 cell = floor(q); vec2 f = fract(q);
@@ -421,6 +463,7 @@ function makeSkyline({ count = 70, width = 380, z = -185, minH = 6, maxH = 34, d
           vec3 wc = mix(uWin, uWin.bgr * 0.8, step(0.8, hash13(vec3(cell, 9.0))));
           col += wc * win * on * flick * (abs(vN.z) > 0.5 ? 1.0 : 0.5);
         }
+        #endif
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,

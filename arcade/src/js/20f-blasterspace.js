@@ -410,14 +410,19 @@ class BlasterSpace {
     // (the near ones are the two generated asteroids when they arrived, taking turns: see genKit. The far ones, specks
     // at that distance, stay the built-in rock.)
     this.genMats = [];
-    const rockA = this.genKit("prop-rock", true), rockB = this.genKit("prop-rock2", true) || null, near = (k) => { const m = new THREE.InstancedMesh(k.geo, k.mat, 16); m.frustumCulled = false; return m; };
+    const rockA = this.genKit("prop-rock", true), rockB = this.genKit("prop-rock2", true) || null, near = (k) => {
+      const m = new THREE.InstancedMesh(k.geo, k.mat, 16), tone = new Float32Array(48), T = [[1, 0.93, 0.86], [0.82, 0.9, 1.05], [0.62, 0.62, 0.68], [1.15, 1.1, 1.04], [0.95, 0.85, 0.95]];
+      for (let i = 0; i < 16; i++) tone.set(T[Math.floor(Math.random() * T.length)].map((v) => v * rand(0.85, 1.15)), i * 3); // (each rock its own stone: warm, slate, basalt, pale)
+      k.geo.setAttribute("aTone", new THREE.InstancedBufferAttribute(tone, 3));
+      m.frustumCulled = false; return m;
+    };
     this.rockNear = rockA || rockB ? near(rockA || rockB) : spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
     this.rockNear2 = rockA && rockB ? near(rockB) : null;
     if (this.rockNear2) s.add(this.rockNear2);
     this.rockFar = spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
     this.rocks = [];
     for (let i = 0; i < 112; i++) {
-      const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(0.1, 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
+      const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(near ? 0.05 : 0.1, near ? 0.9 : 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
       this.resetRock(r, rand(-640, 0));
       this.rocks.push(r);
     }
@@ -614,7 +619,7 @@ class BlasterSpace {
     this.cloudData.set([i % 4, Math.random(), rand(0.5, 1), Math.random()], i * 4);
   }
   resetRock(r, z) {
-    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.4, 4.2) : rand(1.2, 6.5) * (Math.random() < 0.1 ? 2.2 : 1);
+    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.0, 5.2) : rand(1.2, 6.5) * (Math.random() < 0.1 ? 2.2 : 1);
     r.p.set(Math.cos(a) * rr * 1.1, Math.sin(a) * rr * 0.9, z);
     if (Math.abs(r.p.x) < SPACE_CALM_R + s && Math.abs(r.p.y) < SPACE_CALM_R + s) r.p.x += (r.p.x < 0 ? -1 : 1) * (SPACE_CALM_R + s);
     r.sc.set(s * rand(0.8, 1.3), s * rand(0.7, 1.1), s * rand(0.8, 1.25));
@@ -669,9 +674,9 @@ class BlasterSpace {
       hu.uSunCol.value.copy(S.uSunCol.value).multiplyScalar(0.35);
       hu.uRimCol.value.copy(this.pano.rimB.color).lerp(this.pano.rimA.color, 0.35).multiplyScalar(1.3);
       const ru = this.rockMat.uniforms, P = this.pano;
-      ru.uTint.value.multiplyScalar(0.55);
+      ru.uTint.value.lerp(this._c.setRGB(0.42, 0.41, 0.46), 0.5).multiplyScalar(0.75); // (Phase 5 fix: eased toward a neutral stone, not the region's flat maroon)
       ru.uAmb.value.copy(S.uAmb.value).multiplyScalar(0.3);
-      if (P.key) ru.uSunCol.value.copy(P.key.color).multiplyScalar(1.5);
+      if (P.key) ru.uSunCol.value.copy(P.key.color).lerp(this._c.setRGB(1, 0.95, 0.9), 0.45).multiplyScalar(1.6);
       ru.uRimCol.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(1.5);
     }
     const sv = this._v.copy(this.sunDir).multiplyScalar(950).add(g.camera.position).project(g.camera), on = sv.z < 1 && Math.abs(sv.x) < 1.25 && Math.abs(sv.y) < 1.25 && !calm;
@@ -741,9 +746,10 @@ class BlasterSpace {
     // the generated ships and rocks take the region's rims, a cold kicker along their upper edges and a fill of its colour
     if (this.genU && this.pano) {
       const U = this.genU, P = this.pano;
-      U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.55); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.55);
-      U.uSkKick.value.setRGB(0.5, 0.86, 1.15).multiplyScalar(0.3);
-      U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).multiplyScalar(0.12);
+      U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.85); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.85);
+      U.uSkKick.value.setRGB(0.55, 0.88, 1.2).multiplyScalar(0.8); // (a cool rim from above and behind: every upper edge drawn in light)
+      U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).lerp(this._coolFill || (this._coolFill = new THREE.Color(0.5, 0.56, 0.72)), 0.5).multiplyScalar(0.4); // (the region's light, eased toward a cool grey)
+      if (this.genUR) { const R = this.genUR; R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1); }
     }
     // the station, off to port: it is there in its region, far ahead before, left behind after
     const place = (obj, k, home, near) => {
@@ -836,7 +842,7 @@ class BlasterSpace {
     const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
     let kit = null;
     if (model && g.pano) {
-      tuneModel(model, rock ? { glow: 2.2, metal: 0.65, rough: 1.0, normal: 1.0 } : { glow: 2.6, metal: 1.0, rough: 1.0, normal: 0.85 });
+      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 3.0, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow)
       const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
       if (made) {
         const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
@@ -844,11 +850,15 @@ class BlasterSpace {
         made.geo.scale(s, s, s);
         made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
         const U = (this.genU = this.genU || blasterSkinUniforms());
-        U.uSkAA.value = 1.2; U.uSkSpec.value = 0.18;
+        U.uSkAA.value = 1.2; U.uSkSpec.value = 0.4;
         // (background: a hull is dark gunmetal and a rock darker stone, so the region's hard lamps draw their edges and
         // their own neon carries them; at full albedo they stood as pale shapes beside the fight)
-        const mat = blasterSkin(made.mat, U, { key: rock ? "space-rock" : "space-ship", albedo: `diffuseColor.rgb *= ${rock ? "0.42" : "0.45"};` });
-        g.pano.mirror(mat, rock ? 0.3 : 0.42); // (background: dark gunmetal held by its edges and its own neon, never a pale shape beside the fight)
+        // (Phase 5 fix: lit as objects in the region's light, not silhouettes: open space was near black. A rock takes a
+        // stone of its own, aTone, over the region's colour.)
+        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 } })) : U;
+        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        if (rock) { const skin = mat.onBeforeCompile; mat.onBeforeCompile = (sh) => { skin(sh); sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;"); }; }
+        g.pano.mirror(mat, rock ? 0.55 : 0.8);
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
         kit = { geo: made.geo, mat };

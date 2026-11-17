@@ -189,7 +189,7 @@ function racerTrafficMaterial(P, sky) {
           if (aCh < 1.5) k = aL.x;
           else if (aCh < 2.5) k = aL.y;
           else if (aCh < 3.5) k = 0.25 + 0.75 * step(0.45, fract(aL.w * 7.3 + floor(position.z * 0.7) * 0.37));
-          else if (aCh < 4.5) k = aL.z * smoothstep(-0.1, 0.5, sin(uTime * 8.8 + aL.w * 20.0));
+          else if (aCh < 4.5) k = 0.16 + 0.84 * aL.z * smoothstep(-0.1, 0.5, sin(uTime * 8.8 + aL.w * 20.0)); // (Phase 5 fix: a dim amber marker when it is not blinking, never a black block)
           else if (aCh < 5.5) k = 0.8 + 0.2 * sin(uTime * 3.0 + aL.w * 9.0);
           else if (aCh < 6.5) k = smoothstep(-0.2, 0.6, sin(uTime * 7.8));
           else if (aCh < 7.5) k = smoothstep(-0.2, 0.6, -sin(uTime * 7.8));
@@ -440,6 +440,33 @@ class RacerWorld {
     return { geo, mat, trim: racerGenTrim(type, geo) };
   }
   free(type) { return this.cars.find((c) => !c.on && c.type === type); }
+  // Where the lane badges stand on the screen while a gate is up (circles in the lens's own units), and whether a car
+  // comes under one of them.
+  badgeRings() {
+    const g = this.g, out = this._rings || (this._rings = []), v = this._p, cam = g.camera;
+    out.length = 0;
+    if (!g.laneTags || !g.laneTags.visible || g.state !== "ask") return out;
+    const right = this._right || (this._right = new THREE.Vector3());
+    right.setFromMatrixColumn(cam.matrixWorld, 0);
+    for (const lane of g.laneTags.children) {
+      const b = lane.userData && lane.userData.badge;
+      if (!b || !b.visible) continue;
+      const r = new THREE.Vector3().setFromMatrixScale(b.matrixWorld).x * 0.55, c = v.setFromMatrixPosition(b.matrixWorld);
+      const e = c.clone().addScaledVector(right, r).project(cam);
+      c.project(cam);
+      out.push({ x: c.x * cam.aspect, y: c.y, r: Math.hypot((e.x - c.x) * cam.aspect, e.y - c.y) });
+    }
+    return out;
+  }
+  underBadge(c, rings) {
+    const cam = this.g.camera, half = c.type === "bus" ? 4.2 : c.type === "truck" ? 3.0 : c.type === "bike" ? 0.9 : 2.2, v = this._s;
+    v.set(c.x, c.y + 1.3, c.z).project(cam);
+    if (v.z > 1) return false;
+    const e = this._q2 || (this._q2 = new THREE.Vector3());
+    e.set(c.x, c.y + 1.3 + half * 0.7, c.z).project(cam);
+    const rc = Math.abs(e.y - v.y) * 1.2;
+    return rings.some((b) => Math.hypot(v.x * cam.aspect - b.x, v.y - b.y) < b.r + rc);
+  }
   // lane: "R" the right service lane (our way), "L" the left one (oncoming), "H" a hover lane, "M" the main road (events)
   spawn(type, lane, o = {}) {
     const c = this.free(type);
@@ -479,7 +506,7 @@ class RacerWorld {
     // a right answer: everything pulls aside for the boost
     this.partT -= dt;
     this.part += ((this.partT > 0 ? 1 : 0) - this.part) * Math.min(1, dt * 4);
-    const head = (0.3 + 0.7 * (sky ? sky.lamps : 1)) * (1 - 0.3 * this.calmK);
+    const head = (0.3 + 0.7 * (sky ? sky.lamps : 1)) * (1 - 0.3 * this.calmK), badges = this.badgeRings();
     const dirty = new Set();
     let k = 0;
     const SH = { sedan: [3.4, 6.6], truck: [4.2, 11], bus: [4.4, 13], bike: [1.4, 3.2], rival: [3.4, 6.6] };
@@ -522,11 +549,15 @@ class RacerWorld {
       c.ind = Math.max(0, c.ind - dt);
       c.yaw += (clamp((c.x - px) / Math.max(dt, 1e-3) * -0.05 * c.dir, -0.25, 0.25) - c.yaw) * Math.min(1, dt * 6);
       const ground = c.lane !== "H";
-      const ox = ground && c.lane !== "M" ? Math.sign(c.x) * this.part * 0.9 : 0, oy = ground ? 0 : this.part * 2.2 + Math.sin(this.t * 1.3 + c.seed * 9) * 0.25;
+      // (Phase 5 fix: while a gate is up nothing on the road stands behind its answers. The lane badges are drawn over
+      // everything, so a car that comes under one on the screen slips away, and comes back once it is clear of them.
+      // Look only: the car is still there for the traffic.)
+      c.hide = Math.max(0, Math.min(1, (c.hide || 0) + (ground && badges.length && this.underBadge(c, badges) ? dt * 4 : -dt * 2)));
+      const ox = ground && c.lane !== "M" ? Math.sign(c.x) * this.part * 0.9 : 0, oy = ground ? 0 : this.part * 2.2 + Math.sin(this.t * 1.3 + c.seed * 9) * 0.25, vis = c.s * (1 - c.hide * c.hide * (3 - 2 * c.hide));
       this._e.set(0, (c.dir < 0 ? Math.PI : 0) + c.yaw, ground ? 0 : c.yaw * -1.2);
-      this._m.compose(this._p.set(c.x + ox, c.y + oy, c.z), this._q.setFromEuler(this._e), this._s.set(c.s, c.s, c.s));
+      this._m.compose(this._p.set(c.x + ox, c.y + oy, c.z), this._q.setFromEuler(this._e), this._s.set(vis, vis, vis));
       c.mesh.setMatrixAt(c.i, this._m);
-      if (ground && SH[c.type]) this.shadows.setMatrixAt(k++, this._m.compose(this._p.set(c.x + ox, 0.05, c.z), this._q.set(0, 0, 0, 1), this._s.set(SH[c.type][0], 1, SH[c.type][1])));
+      if (ground && SH[c.type]) this.shadows.setMatrixAt(k++, this._m.compose(this._p.set(c.x + ox, 0.05, c.z), this._q.set(0, 0, 0, 1), this._s.set(SH[c.type][0] * vis / c.s, 1, SH[c.type][1] * vis / c.s)));
       c.lights.setXYZW(c.i, head, 0.7 + (c.brake > 0 || this.part > 0.3 ? 1.1 : 0), c.hazard || c.ind > 0 ? 1 : 0, c.seed);
       dirty.add(c.mesh);
     }
@@ -839,14 +870,26 @@ class RacerWorld {
               s = s * s * (s * 0.305 + 0.695);
               c = s * uGain * (1.0 + uLift * smoothstep(0.42, 0.95, max(max(s.r, s.g), s.b)));
             }
-            if (d.y < 0.0) { // the road beyond: dark, its dashed lanes and its two neon edges, into the haze
-              float t = cameraPosition.y / max(-d.y, 1e-3);
-              vec2 gp = cameraPosition.xz + d.xz * t;
-              float dash = step(0.45, fract(gp.y * 0.09)), w = 0.05 + t * 0.0025, lane = 0.0;
+            float tg = d.y < 0.0 ? cameraPosition.y / max(-d.y, 1e-3) : 1e6;
+            if (d.y < 0.0) { // the road beyond: dark, its dashed lanes and its two neon edges, running on into the haze far off
+              vec2 gp = cameraPosition.xz + d.xz * tg;
+              float dash = step(0.45, fract(gp.y * 0.09)), w = 0.05 + tg * 0.0025, lane = 0.0;
               for (int i = -1; i <= 1; i++) lane = max(lane, 1.0 - smoothstep(w, w * 2.0, abs(gp.x - float(i) * 2.5)));
               vec3 road = uGround * 1.6 + vec3(0.85, 0.85, 0.9) * lane * dash;
               road += vec3(0.21, 0.94, 1.0) * 1.6 * (1.0 - smoothstep(w, w * 2.5, abs(gp.x + 5.1))) + vec3(1.0, 0.23, 0.83) * 1.6 * (1.0 - smoothstep(w, w * 2.5, abs(gp.x - 5.1)));
-              c = mix(road, uHaze * 1.1, smoothstep(25.0, 240.0, t));
+              c = mix(road, uHaze * 0.8, smoothstep(70.0, 460.0, tg));
+            }
+            for (int i = 0; i < 2; i++) { // at each side a rail of light and a lamp post every 32, going on with the road
+              float sd = i == 0 ? -1.0 : 1.0, tx = (sd * 6.4 - cameraPosition.x) / (abs(d.x) > 1e-4 ? d.x : 1e-4);
+              if (tx > 0.0 && tx < tg) {
+                vec3 h = cameraPosition + d * tx;
+                float fade = 1.0 - smoothstep(60.0, 460.0, tx), wy = 0.05 + tx * 0.0022;
+                vec3 rc = i == 0 ? vec3(0.21, 0.94, 1.0) : vec3(1.0, 0.23, 0.83);
+                c = mix(c, rc * 1.7, (1.0 - smoothstep(wy, wy * 2.0, abs(h.y - 0.9))) * step(0.0, h.y) * fade);
+                float pz = abs(fract(h.z / 32.0 + 0.5) - 0.5) * 32.0, pw = 0.12 + tx * 0.003;
+                c = mix(c, vec3(0.02, 0.02, 0.035), (1.0 - smoothstep(pw, pw * 1.6, pz)) * step(0.0, h.y) * step(h.y, 7.4) * fade);
+                c += vec3(1.0, 0.85, 0.6) * 2.0 * (1.0 - smoothstep(pw * 1.5, pw * 4.0, pz)) * (1.0 - smoothstep(0.2, 0.5 + tx * 0.004, abs(h.y - 7.5))) * fade;
+              }
             }
             gl_FragColor = vec4(c, uK);
           }`,
@@ -1019,7 +1062,7 @@ class RacerWorld {
       const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
       if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
-      else if (s.done && s.to !== "tunnel") fogK = 1 - smoothstep(1.2, 1.9, s.t); // out into the light: its glare clears at once
+      else if (s.to !== "tunnel") fogK = 0.6 * (s.t < 1.2 ? smoothstep(0.55, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
       if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
       if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
