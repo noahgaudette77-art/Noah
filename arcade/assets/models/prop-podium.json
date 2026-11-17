@@ -1,8 +1,8 @@
 {
  "name": "prop-podium",
  "triangles": 14000,
- "bytes": 462504,
- "tex": 1024,
+ "bytes": 259308,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

@@ -1,8 +1,8 @@
 {
  "name": "prop-stand",
  "triangles": 10000,
- "bytes": 345300,
- "tex": 1024,
+ "bytes": 196180,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

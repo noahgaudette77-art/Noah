@@ -105,6 +105,7 @@ function startGame(id, sel) {
       g.start();
     }));
   };
+  Assets.prefetch(id, gameAssets(id, sel)); // (its files, the boss it fights among them, are on their way during the briefing)
   if (id === "exam") go();
   else withBriefing(sel, go);
 }

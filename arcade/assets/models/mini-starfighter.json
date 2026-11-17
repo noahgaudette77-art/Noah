@@ -1,7 +1,7 @@
 {
  "name": "mini-starfighter",
  "triangles": 9000,
- "bytes": 471348,
+ "bytes": 299432,
  "tex": 512,
  "parts": {
   "body": {

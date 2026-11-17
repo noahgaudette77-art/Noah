@@ -9,8 +9,8 @@
  },
  "origin": "ground",
  "tris": 20000,
- "tex": 1024,
- "texBase": 2048,
+ "tex": 512,
+ "texBase": 1024,
  "emissive": {
   "hues": [
    [

@@ -1,8 +1,8 @@
 {
  "name": "prop-coin",
  "triangles": 6000,
- "bytes": 301832,
- "tex": 1024,
+ "bytes": 130000,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

@@ -27,9 +27,22 @@ leftovers if time allows. Commit after each step.
   Boss Rush's roars -1.9 dB). No file re-encoded. The one bad file, the "Boss Rush!" line cut off at 0.21 s at its
   source, was retaken by the lead (merged at 6064d6c): it now measures -8.8, inside the announcer's range.
 
+- **D**: the hall's set 6.93 MB -> 3.55 MB: its six toppers and the cup, medal, coin and stand re-processed with 512 px
+  maps (the vault 512 px with a 1024 px colour map; the cabinet, seen large, kept); its two panoramas, used only for
+  light and the floor's softest reflection (sampled 3.5 levels down), made 1024 x 512 (0.75 -> 0.08 MB each). Checked
+  in the hall: no visible change. A session (title, hall, every game and room, the Guide) fetches 59 files, 41.8 MB,
+  none of them twice. A game's files now start on their way at its stage select (and the boss of a Boss Rush stage at
+  its briefing): `Assets.prefetch(set, extra)` (03b-assets.js), called in `showSelect`, `showExamSetup` (12-select.js)
+  and `startGame` (19-quizgame.js); nothing waits for them there. GPU memory: the hall is still kept while you play
+  (coming back is instant), but now lets its textures and buffers go from the chip while away (`GFX.rest`, called by
+  `Scenes.set`, 04-gfx.js; sent back by the warm-up behind the change of screen): about 182 MB of textures held under a
+  game before, 7.7 MB now (its render targets and programs). And `disposeTree` (04-gfx.js) now lets a model's glow,
+  relief and finish maps go with its scene, not only its colour map: Boss Rush's boss left about 60 MB on the chip at
+  every visit; the renderer's count no longer grows visit by visit. Full regression IDENTICAL from disk and over
+  HTTP; sequence 13/13.
+
 ## Next
 
-- D: sizes; the hall's toppers and icon props at 512 px maps; GPU memory when leaving the hall for a game.
 - E: the calm path, one still per game and the hall.
 
 ## Measurements
@@ -55,3 +68,27 @@ leftovers if time allows. Commit after each step.
 | effects, each set's main events (75th percentile of its cues' loudest 400 ms) | core -14.7, combat -15.5, Nest Egg Run -12.8, Boss Rush's roars -12.7: +6.0 to +8.8 dB over the music | -14.7, -15.5, -14.5, -14.7: +6.0 to +7.0 dB over the music |
 | announcer, its lines' loudest 400 ms | median -9.6, "Boss Rush!" -20.4 (cut off) | median -9.5 (-12.6 to -7.3), "Boss Rush!" -8.8: about 12 dB over the music, 5 over the effects |
 | worst moment on a screen (its loudest blast, the loudest line and its music ducked to 0.4 under the line, all peaks in phase) | +1.1 dBFS into the limiter, -1.5 dBFS out | +1.0 to +1.6 dBFS into the limiter, -1.5 to -1.6 dBFS out: nothing clips |
+
+### D, what a phone downloads
+
+The page: `index.html` 6.28 MB, 3.06 MB with gzip (2.74 MB with brotli). Of it: the built-in fallback models and
+pictures for a page opened from disk 3.30 MB (2.17 MB gzipped), the code 2.01 MB (0.62), the course 0.81 MB (0.22),
+the style 0.16 MB. (three.js r128 comes from the CDN.) Each screen's set (`03a-files.js`; sound is shared and fetched
+once a session):
+
+| set | before | after | of which models, skies, pictures (what the screen waits for) |
+|---|---|---|---|
+| title | 4.50 MB | 4.50 MB | 0.65 MB (the title waits for nothing) |
+| hall | 6.93 MB | **3.55 MB** | 3.55 MB (fetched while the title is up) |
+| hall's sound | 4.05 MB | 4.05 MB | never waited for |
+| Memory Bank | 5.55 MB | 5.11 MB | 1.09 MB |
+| Final Exam | 6.10 MB | 5.91 MB | 0.93 MB |
+| Strategy Guide | 3.76 MB | 3.56 MB | 0.95 MB |
+| Risk Blaster | 13.79 MB | 15.72 MB | 10.70 MB (+1.9 MB: the five generated ships and rocks) |
+| Nest Egg Run | 8.57 MB | 9.43 MB | 5.27 MB (+0.9 MB: the car, the van, the bus) |
+| Boss Rush | 9.00 MB + its boss (2.6 to 4.2 MB) | same | 1.51 MB + the boss |
+
+A whole session, title to Guide through every game: 41.8 MB in 59 fetches, nothing fetched twice
+(`tools/scenarios/loads.js`). Textures on the graphics chip (`tools/scenarios/gpu-mem.js`, estimated with their smaller
+copies): the hall 182 MB while it is up; under a game it held all of it before, 7.7 MB now. Risk Blaster's own is
+about 435 MB (its three 4K skies and the 2K maps of the fighter and the demon), Boss Rush about 204 MB.

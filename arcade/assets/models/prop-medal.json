@@ -1,8 +1,8 @@
 {
  "name": "prop-medal",
  "triangles": 10000,
- "bytes": 471124,
- "tex": 1024,
+ "bytes": 239160,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

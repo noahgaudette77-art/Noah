@@ -1,8 +1,8 @@
 {
  "name": "prop-trophy",
  "triangles": 12000,
- "bytes": 410228,
- "tex": 1024,
+ "bytes": 216240,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

@@ -269,6 +269,22 @@ const GFX = {
     P[name].forEach((m) => m.dispose());
     delete P[name];
   },
+  // A scene that is kept while you play (the arcade hall: see hubScene) lets go of its pictures and its shapes on the
+  // graphics chip while you are away: every texture drawn from a picture, a canvas or data, every geometry's buffers.
+  // It keeps them in memory, and its programs and the pictures it rendered (reflections, the screens' own) on the chip,
+  // so coming back is still no rebuild and no shader compile: warm() sends them back behind the change of screen.
+  rest(old) {
+    if (!old.scene) return;
+    const up = (img) => img && ((typeof HTMLImageElement !== "undefined" && img instanceof HTMLImageElement) || (typeof HTMLCanvasElement !== "undefined" && img instanceof HTMLCanvasElement) || (typeof ImageBitmap !== "undefined" && img instanceof ImageBitmap) || (img.data && img.width > 0));
+    const done = new Set(), tex = (t) => { if (t && t.isTexture && !done.has(t) && t !== _glowTex && up(t.image)) { done.add(t); t.dispose(); } };
+    old.scene.traverse((o) => {
+      if (o.geometry && !done.has(o.geometry)) { done.add(o.geometry); o.geometry.dispose(); }
+      (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => {
+        for (const k of DISPOSE_MAPS) tex(m[k]);
+        if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) tex(v); }
+      });
+    });
+  },
   // Draw a new scene once, tiny and off-screen, with everything that starts hidden
   // (pooled effects, speed lines, and the pieces a scene lists in warmExtra) showing.
   // Every shader and GPU pipeline state it will need is built now, behind the screen
@@ -345,6 +361,7 @@ const Scenes = {
     const old = this.cur;
     this.cur = s;
     if (old && old !== s && !old.keepAlive) { if (GFX.ok) GFX.park(old); else old.dispose(); } // the hub stays built (see hubScene)
+    else if (old && old !== s && GFX.ok) GFX.rest(old); // (and lets its pictures and shapes go from the graphics chip while you are away)
     if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); }
     if (s) s.resize(GFX.w, GFX.h);
     if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
@@ -524,12 +541,16 @@ class Scene3D {
   }
 }
 
+// (Phase 5: a loaded model's other maps go too, its glow, relief, finish and shade: a model is handed to one scene
+// only, and they stayed on the graphics chip after it, some 60 MB a visit for a Boss Rush boss. A texture that is
+// shown again is sent to the chip again, from the picture it keeps. Reflection maps are shared and stay.)
+const DISPOSE_MAPS = ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "alphaMap", "bumpMap"];
 function disposeTree(root) {
   root.traverse((o) => {
     if (o.geometry) o.geometry.dispose();
     if (o.material) {
       (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
-        if (m.map && m.map !== _glowTex) m.map.dispose();
+        for (const k of DISPOSE_MAPS) if (m[k] && m[k].isTexture && m[k] !== _glowTex) m[k].dispose();
         m.dispose();
       });
     }

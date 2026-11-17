@@ -8,8 +8,8 @@
   "value": 1
  },
  "origin": "ground",
- "tex": 1024,
- "texBase": 1024,
+ "tex": 512,
+ "texBase": 512,
  "surface": {
   "roughMin": 0.12
  },

@@ -1,8 +1,8 @@
 {
  "name": "prop-deck",
  "triangles": 11999,
- "bytes": 583348,
- "tex": 1024,
+ "bytes": 299912,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

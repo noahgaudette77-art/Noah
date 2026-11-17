@@ -1,8 +1,8 @@
 {
  "name": "prop-tome",
  "triangles": 11999,
- "bytes": 443420,
- "tex": 1024,
+ "bytes": 232544,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

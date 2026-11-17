@@ -109,9 +109,10 @@ const Assets = {
   ui(name) { return this.kept["ui:" + name] || null; },
   // The files of a set fetched ahead (not parsed or decoded), so that when the set is asked for it is ready sooner:
   // the title asks for the hall's while it is up. Sound is fetched too, though it can only be decoded after a tap.
-  prefetch(set) {
+  // (extra: more entries to fetch with it, as need takes them: the boss a Boss Rush stage fights)
+  prefetch(set, extra) {
     if (!this.on) return;
-    for (const n of this.files.sets[set] || []) {
+    for (const n of (this.files.sets[set] || []).concat(extra || [])) {
       const [kind, name] = n.split(":");
       const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
       if (path && this.has(path)) this.buffer(path).catch(() => null);

@@ -14,7 +14,7 @@
  },
  "tris": 10000,
  "tex": 512,
- "texBase": 1024,
+ "texBase": 512,
  "emissive": {
   "gain": 0
  },
