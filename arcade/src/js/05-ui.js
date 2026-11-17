@@ -111,7 +111,7 @@ const UI = {
     Sound.say(text);
     const b = this.el(`<div class="banner${cls ? " " + cls : ""}" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
-    setTimeout(() => b.remove(), 1400);
+    setTimeout(() => b.remove(), cls.indexOf("plated") >= 0 ? 2200 : 1400); // (a plated banner, RANK UP!, stands a little longer: see style.css)
   },
   floater(text, x, y, color = COLORS.yellow, big = false) {
     const f = this.el(`<div class="floater${big ? " big" : ""}" style="--c:${color};left:${x}px;top:${y}px">${esc(text)}</div>`);

@@ -8,7 +8,7 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 | 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | done (racer capture with the racer batch) |
 | 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | done |
 | 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | to do |
-| 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | to do |
+| 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | done |
 | 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | done |
 | - | Cheap ones: crash bloom cap, wash-outs capped, bonus line inside the screen, cracks off the text, lane D props, Memory Bank blob | to do |
 | T | The lead's remade car and bus (cbf7de1) merged; traffic retuned | done |
@@ -58,3 +58,10 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   and the ending's length are as they were. `style.css`: the two classes. Regression exam IDENTICAL both ways.
   Re-captured menus 13-exam, 14-exam-passed (t1 the question alone; then the banner alone; then the bar and SKIP
   alone; no card during the ending).
+- **Ruling 5 (RANK UP!).** Served only by nature (the plated banner needs the generated icons). `style.css`: the
+  plate opaque (#080322), a 3 px border in its colour with a black keyline, 2.2 s with a longer hold; `.rank-scrim`
+  (rgba 3,1,12,0.8) over the tiles under it, same timing. `05-ui.js` UI.banner: a plated banner stays 2.2 s (others
+  1.4 s as before). `30-results.js`: the scrim with the plated RANK UP!. `tools/scenarios/menus.js`: PART=results
+  makes only 08, and from the results on the page's animations are stepped with the frames (as boss-fight.js does):
+  unstepped, the plate was caught half faded in, which is what the review saw. Re-captured menus 08-results-reward.
+  Full regression from disk IDENTICAL.
