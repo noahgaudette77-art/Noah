@@ -1,7 +1,7 @@
 {
  "name": "decor-podium",
- "triangles": 14000,
- "bytes": 283160,
+ "triangles": 7998,
+ "bytes": 238264,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.3295
    ],
-   "tris": 14000
+   "tris": 7998
   }
  },
  "anchors": {},

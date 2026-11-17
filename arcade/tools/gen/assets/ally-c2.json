@@ -8,7 +8,7 @@
   "value": 1
  },
  "origin": "center",
- "tris": 15000,
+ "tris": 9000,
  "tex": 512,
  "texBase": 512,
  "emissive": {
@@ -30,5 +30,6 @@
  "surface": {
   "roughMin": 0.12
  },
- "sloppy": true
+ "sloppy": true,
+ "bar": "the game's one quality bar (2026-11-17): a figure or prop seen small, far off or in the background: about 7K to 10K triangles, 512 px maps"
 }

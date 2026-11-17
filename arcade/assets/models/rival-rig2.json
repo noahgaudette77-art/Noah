@@ -1,7 +1,7 @@
 {
  "name": "rival-rig2",
- "triangles": 16925,
- "bytes": 196668,
+ "triangles": 9499,
+ "bytes": 155256,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     0.4021,
     0.4997
    ],
-   "tris": 16925
+   "tris": 9499
   }
  },
  "anchors": {},

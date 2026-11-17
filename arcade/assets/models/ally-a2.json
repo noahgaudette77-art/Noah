@@ -1,7 +1,7 @@
 {
  "name": "ally-a2",
- "triangles": 14533,
- "bytes": 160924,
+ "triangles": 8584,
+ "bytes": 126532,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     0.1313,
     0.5
    ],
-   "tris": 14533
+   "tris": 8584
   }
  },
  "anchors": {},

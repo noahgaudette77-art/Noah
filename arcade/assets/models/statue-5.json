@@ -1,7 +1,7 @@
 {
  "name": "statue-5",
- "triangles": 22564,
- "bytes": 201740,
+ "triangles": 6566,
+ "bytes": 109764,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.2234
    ],
-   "tris": 22564
+   "tris": 6566
   }
  },
  "anchors": {},

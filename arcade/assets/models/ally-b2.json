@@ -1,7 +1,7 @@
 {
  "name": "ally-b2",
- "triangles": 14177,
- "bytes": 165232,
+ "triangles": 8605,
+ "bytes": 133520,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     0.1044,
     0.5
    ],
-   "tris": 14177
+   "tris": 8605
   }
  },
  "anchors": {},

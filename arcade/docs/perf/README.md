@@ -104,3 +104,23 @@ two half-size passes): memory, not a compile, and once.
 Boss Rush at MEDIUM, a phone's window: 9.9 million pixels a frame, 19 passes, 81 draw calls; a minute and a half of
 play compiles 0 shaders (was 1). Still sent mid-fight: two small pictures (an ember, 64 px; a sign, 64 x 88), too small
 to matter.
+
+## Step 5: the menus and the rooms
+
+The title, the hall, Memory Bank, the Final Exam and the Strategy Guide at MEDIUM, a phone's window, 30 frames: none
+compiles a shader or sends a picture in play (the hall waits for its models before it is built, so the warm-up holds
+them all), and their main thread is 1 to 4 ms a frame on this machine.
+
+| Screen | Million pixels a frame | Passes | Draw calls (world) | Triangles | Lights |
+|---|---|---|---|---|---|
+| Title | 8.7 | 17 | 129 (114) | 0.06 million | 0 |
+| Hall | 9.9 | 19 | 70 (53) | 0.17 million | 6 |
+| Memory Bank | 9.9 | 19 | 86 (69) | 0.33 million (the floor's mirror draws the room twice) | 6 |
+| Final Exam | 9.5 | 18 | 91 (74) | 0.04 million in the questions | 8 |
+| Strategy Guide | 9.6 | 19 | 59 (41) | 0.04 million | 3 |
+
+The heaviest piece was in the Final Exam's ending: twelve bronze statues of the fallen bosses, 12K to 24K triangles
+each (232K in all, drawn twice for the floor's reflection), seen small behind the wreck. They were rebuilt at the bar
+for a figure seen small, about 7K each (90K in all); the shapes hold (one dark bronze material covers them in the
+game). The other figures over that bar were lowered with them: the far lectern (14K to 8K), the three second-build
+allies (15K to 9K each) and the second rival rig (17K to 9.5K).
