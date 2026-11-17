@@ -113,6 +113,10 @@ class RacerStage {
     }));
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
+    // (Phase 6: on the last life, the frame is Boss Rush's, drawn over the finished picture and under the lane badges:
+    // inside the picture it was faint. The flash as a life goes stays in the picture.)
+    this.edge = new BandEdge();
+    s.userData.edge = (r) => this.edge.draw(r, g.band);
     // Everything that used to throw a burst of soft round dots here throws shaped light instead while the run is
     // staged: steam is smoke in the palette, everything else sparks (darts with a point, a tail and a hot heart).
     g.bursts.burst = (pos, color, o = {}) => {
@@ -560,8 +564,9 @@ class RacerStage {
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
       this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
-      this.frameU.uK.value = Math.max(this.lowK * (0.3 + 0.7 * beat), fk);
-    } else this.frame.visible = false;
+      this.frameU.uK.value = fk;
+      this.edge.set(this.lowK, beat);
+    } else { this.frame.visible = false; this.edge.set(0, 0); }
     // ---- sound that follows the game: the engine with the road's speed and the stacks (it wavers on the last life);
     // without a recording, the alarm as a pip
     const rev = clamp(sp / 80, 0, 1.4), sput = this.low === 1 ? 0.93 + 0.05 * Math.sin(t * 9) * Math.sin(t * 2.3) : 1;
@@ -588,5 +593,6 @@ class RacerStage {
     this.glows[0].m.geometry.dispose();
     [this.markDark, this.markHot, this.pane, this.frame, this.shell].forEach((m) => { m.material.dispose(); m.geometry.dispose(); });
     this.paneTex.dispose();
+    this.edge.dispose();
   }
 }

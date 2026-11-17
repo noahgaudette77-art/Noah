@@ -135,6 +135,7 @@ const GFX = {
       look: this.look,
       post: scene.userData.post || {},
     });
+    if (scene.userData.edge) scene.userData.edge(this.renderer); // (a red frame round the band, over the finished picture: see BandEdge)
     if (scene.userData.overlay) scene.userData.overlay(this.renderer); // (a scene's own last word, over the finished picture: what must stay sharp through every effect)
     this.heat.a = 0; // a scene asks for its heat haze again every frame
     this.keep.a = 0; // and names its subject again

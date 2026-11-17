@@ -5,7 +5,7 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 | # | Ruling | State |
 |---|---|---|
 | 1 | Boss Rush: damage popups in their own lane, caption held where they would meet; "LIGHTNING!" not clipped | done |
-| 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | to do |
+| 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | done (racer capture with the racer batch) |
 | 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | to do |
 | 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | to do |
 | 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | to do |
@@ -30,3 +30,12 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   clock (0.9 s). `capMeets()`: the caption is hidden while a figure stands where it would meet it (only on a very short
   band). Checked by numbers and a still: caption 271-292, figure 334-356, call-out 384-397, answers from 532.
   Re-captured boss 04-right-hit, 12-proctor-death. Regression boss IDENTICAL both ways.
+- **Ruling 2 (low health).** Both games drew their frame inside the picture, where the post's vignette blacked it out.
+  New shared `BandEdge` (end of `08c-combatfx.js`): Boss Rush's frame (inset 46+34 beat px, edge 12+20 beat px, alpha
+  0.42+0.5 beat, rgb 255,18,46) drawn in screen space over the finished picture through a new hook in `GFX.render`
+  (`scene.userData.edge`, called just before the overlay), so the answers' letters (Risk Blaster) and the lane badges
+  (Nest Egg Run) drawn in the overlay stand over it untouched. Beat: each game's own alarm clock, as before. The old
+  in-picture frame keeps only the flash as a shield or life goes. Risk Blaster: `hurt()` finds a breach on the hull's
+  back beside the canopy (raycast once onto the model's skin; from disk, or without the model, the old engine point);
+  the flame ribbon, fire, sparks and smoke stay on the skin and stream back toward the lens. Re-captured blaster
+  15-low-health. Regression blaster, racer IDENTICAL both ways.

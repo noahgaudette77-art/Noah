@@ -85,6 +85,10 @@ class BlasterStage {
     }));
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
+    // (Phase 6: with one shield left, the frame is Boss Rush's, drawn over the finished picture and under the four
+    // letters: inside the picture the post's vignette blacked it out. The flash as a shield goes stays in the picture.)
+    this.edge = new BandEdge();
+    s.userData.edge = (r) => this.edge.draw(r, g.band);
     // the hurt engine burns: a ribbon of flame that trails down the screen
     this.flame = new Trail({ length: 16, width: 0.09, color: 0xff8a2a, intensity: 2.0, up: new THREE.Vector3(0, 0, 1) });
     this.flame.mesh.visible = false; this.flame.mesh.renderOrder = 6;
@@ -107,6 +111,23 @@ class BlasterStage {
   shipPos(out) { const j = this.g.jet; return j.centre ? j.centre(out) : out.copy(this.g.ship.position); }
   muzzle(i, out) { const j = this.g.jet; return j.muzzle ? j.muzzle(i, out) : j.rig.localToWorld(out.copy(j.muzzles[i % j.muzzles.length])); }
   exhaust(i, out) { const j = this.g.jet; return j.exhaust ? j.exhaust(i, out) : j.rig.localToWorld(out.copy(j.nozzles[i % j.nozzles.length])); }
+  // where it burns with one shield left (Phase 6): on its back beside the canopy, to port, where the lens sees it (the
+  // engine it used to burn at sits under the foot of the band). Found once on the model's own skin: straight down
+  // onto the hull from above a point a fifth of the way from the cockpit to the tail, out by a nozzle's spacing.
+  hurt(out) {
+    const j = this.g.jet;
+    if (!j.model || !j.cockpit || !j.exhaust) return this.exhaust(1, out);
+    if (!this.hurtL) {
+      j.rig.updateMatrixWorld(true);
+      const c = j.cockpit(new THREE.Vector3()), t0 = j.exhaust(0, new THREE.Vector3()), t1 = j.exhaust(1, new THREE.Vector3());
+      const side = t1.clone().sub(t0), up = new THREE.Vector3(0, 1, 0).transformDirection(j.rig.matrixWorld);
+      const p = c.clone().lerp(t0, 0.22).addScaledVector(side, 1.15), from = p.clone().addScaledVector(up, 5);
+      const meshes = Object.values(j.model.mesh || {}).filter((m) => m && m.isMesh && m.visible);
+      const hit = meshes.length ? new THREE.Raycaster(from, up.clone().negate(), 0, 10).intersectObjects(meshes, false)[0] : null;
+      this.hurtL = j.rig.worldToLocal((hit ? hit.point : p).clone().addScaledVector(up, 0.02));
+    }
+    return j.rig.localToWorld(out.copy(this.hurtL));
+  }
   // a place in the world, as a place on the screen (pixels)
   screen(p) { const v = this._u.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
   pan(p) { return clamp(p.x / 4, -1, 1) * 0.7; }
@@ -664,15 +685,18 @@ class BlasterStage {
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
       this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
-      this.frameU.uK.value = Math.max(this.lowK * (0.3 + 0.7 * beat), fk);
-    } else this.frame.visible = false;
-    // ---- the hurt engine burns: a ribbon of flame and puffs of dark smoke that trail down the screen
+      this.frameU.uK.value = fk;
+      this.edge.set(this.lowK, beat);
+    } else { this.frame.visible = false; this.edge.set(0, 0); }
+    // ---- the hurt hull burns: a ribbon of flame and puffs of dark smoke that trail down the screen
     if (this.low && g.state !== "over" && !quiet) {
-      const n = this.exhaust(1, this._v), fl = this.flame, hot = this.low === 2 ? 1.5 : 1;
+      const n = this.hurt(this._v), fl = this.flame, hot = this.low === 2 ? 1.5 : 1;
       fl.mesh.visible = true; fl.width = 0.22 * k * hot;
-      if (d > 0) { fl.shift(Math.sin(VFX.t * 17) * 0.006 * k, -0.075 * k * hot, 0.06 * k); fl.push(this._w.copy(n).add(this._u.set(Math.sin(VFX.t * 31) * 0.03 * k, 0, 0))); }
-      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.08, 0.08) * k, -0.35 * k, 0.25 * k)), { size: 0.5 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: -1.3, vel: this._u.set(rand(0.3, 0.9), -0.6, 1.4) }); /* (it drifts clear of the plumes: seen against the sky beside them) */
-        kit.fire(this._w.copy(n).add(this._u.set(rand(-0.07, 0.07) * k, 0.1 * k, -0.14 * k)), { size: 0.3 * k * hot, life: 0.3, rise: 0.7, k: 1.1 }); /* flames lick over its cowl */ kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, -0.6, 1), spread: 0.5, k: 1.5 }); }
+      // (Phase 6: from a breach on its back that the lens sees, see hurt(); the flame, the fire and the smoke stay on the
+      // skin and stream back along it toward the lens, where they used to be thrown down into the hull and hidden)
+      if (d > 0) { fl.shift(Math.sin(VFX.t * 17) * 0.006 * k, 0.004 * k * hot, 0.07 * k); fl.push(this._w.copy(n).add(this._u.set(Math.sin(VFX.t * 31) * 0.02 * k, 0.02 * k, 0))); }
+      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.06, 0.06) * k, 0.07 * k, 0.1 * k)), { size: 0.42 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: 0.25, vel: this._u.set(rand(-0.25, 0.25), 0.2, 1.5) }); /* (dark against the lit plates) */
+        kit.fire(this._w.copy(n).add(this._u.set(rand(-0.05, 0.05) * k, 0.03 * k, 0.03 * k)), { size: 0.32 * k * hot, life: 0.3, rise: 0.35, k: 1.1 }); /* flames lick over the breach */ kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, 0.5, 1), spread: 0.5, k: 1.5 }); }
     } else this.flame.mesh.visible = false;
     // ---- sound that follows the game: the engines with the streak and the warp (wavering when one is hurt);
     // without a recording, the alarm as a pip
@@ -688,6 +712,7 @@ class BlasterStage {
     GFX.setDanger(0);
     HudFX.low(this.g.el, false);
     this.kit.dispose();
+    this.edge.dispose();
     this.waves.forEach((w) => { w.m.material.dispose(); });
     this.waves[0].m.geometry.dispose();
     this.missiles.forEach((m) => { m.sp.material.dispose(); m.tail.mesh.geometry.dispose(); m.tail.mesh.material.dispose(); });
