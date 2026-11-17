@@ -372,7 +372,10 @@ class BlasterOverlord {
     // body and tail: breathing, and a sway that runs down it
     J.body.rotation.set(0.03 * breath + 0.02 * sin(ph + 1.2) * amp, (quiet ? 0 : sin(t * 0.5) * 0.05) + (sS - tS) * this.twist * 0.2, 0);
     J.body.scale.setScalar(1 + 0.012 * breath + 0.03 * tW);
-    if (J.tail) J.tail.rotation.set(LORD.TAIL + 0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway);
+    // (Phase 5: as it comes close it carries its tail further back and a little aside, so the tail never crosses the
+    // fighter's canopy below it)
+    const tailNear = smoothstep(0.35, 0.9, this.adv);
+    if (J.tail) J.tail.rotation.set(LORD.TAIL - 0.75 * tailNear + 0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike * (1 - 0.6 * tailNear) + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway + 0.3 * tailNear);
     // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
     this.look += ((quiet ? 0 : 0.14 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.3) * (1 - strike) - this.look) * Math.min(1, d * 7);
     this.nod += ((0.2 - clamp(Pointer.y, -1, 1) * 0.1) - 0.14 * tV - 0.1 * tS - 0.62 * tW + 0.14 * tB + 0.26 * tM + 0.36 * sS + 0.5 * sW + 0.1 * sB - 0.5 * kick - 0.4 * roar - 0.32 * gloat - 0.3 * onset - 0.4 * flare - this.nod) * Math.min(1, d * 9);

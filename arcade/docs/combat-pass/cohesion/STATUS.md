@@ -43,7 +43,10 @@ leftovers if time allows. Commit after each step.
 
 ## Next
 
-- E: the calm path, one still per game and the hall.
+- E: the calm path, one still per game and the hall, flashes counted (`tools/scenarios/cohesion-calm.js`; the capture
+  tool takes `--reduced` now, so the page's REDUCED_MOTION is on as well as Setup > Reduced effects).
+- F (in progress): the demon's tail carried back and aside as it comes close (20k-blasteroverlord.js); the tunnel's way
+  out shows the sky beyond and the road under it instead of a flat pale board (21c-racerworld.js). To be captured.
 
 ## Measurements
 

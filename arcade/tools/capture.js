@@ -18,7 +18,8 @@
  *   cap.shot(name, {band})       one still (band: only the strip the 3D view shows in)
  *   cap.seq(name, n, every, {band, cols, thumb})   n stills `every` frames apart, and a strip of them side by side
  *   cap.eval(fn, arg)            run something in the page
- * Served over HTTP by default, so the asset files load; --file opens it from disk, as the regression does.
+ * Served over HTTP by default, so the asset files load; --file opens it from disk, as the regression does. --reduced:
+ * the browser asks for reduced motion (REDUCED_MOTION in the page; a scenario sets Setup > Reduced effects itself).
  */
 const fs = require("fs");
 const path = require("path");
@@ -29,7 +30,7 @@ const { chromium } = require("playwright");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf("--" + k); if (i < 0) return d; const v = args[i + 1] && !args[i + 1].startsWith("--") ? args.splice(i + 1, 1)[0] : true; args.splice(i, 1); return v; };
-const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html")));
+const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html"))), REDUCED = !!flag("reduced", false);
 const scenario = args[0] && path.resolve(args[0]);
 if (!scenario) { console.error("usage: capture.js <scenario.js> [--out dir] [--size WxH] [--dpr n] [--file]"); process.exit(2); }
 
@@ -86,7 +87,7 @@ function inPage() {
   const srv = FILE ? null : await serve(path.dirname(BUILD));
   const url = (FILE ? "file://" + BUILD : "http://127.0.0.1:" + srv.address().port + "/" + path.basename(BUILD)) + "#debug";
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, reducedMotion: REDUCED ? "reduce" : "no-preference" });
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push("pageerror: " + e.message));

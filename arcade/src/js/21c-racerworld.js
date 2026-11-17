@@ -822,6 +822,35 @@ class RacerWorld {
     if (g.pano) {
       const pg = new THREE.Group(), flat = (w, h, col) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, fog: false, transparent: true }));
       const wall = flat(90, 17, 0x08080e), mouth = flat(20.4, 8.8, 0xffffff), mouthIn = flat(20.4, 8.8, 0xffffff);
+      // (Phase 5: the way out is not a flat board of the sky's colour either: through it the sky beyond is seen, the
+      // very picture the dome will show, and the road running on under it into its haze, its lanes and its edges lit)
+      mouth.material = new THREE.ShaderMaterial({
+        uniforms: { tSky: { value: null }, uHas: { value: 0 }, uRot: { value: 0 }, uZoom: { value: 1 }, uPitch: { value: 0 }, uGain: { value: 1 }, uLift: { value: 0 }, uHaze: { value: new THREE.Color() }, uGround: { value: new THREE.Color() }, uK: { value: 0 } },
+        transparent: true, depthWrite: false, fog: false,
+        vertexShader: "varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
+        fragmentShader: `uniform sampler2D tSky; uniform float uHas; uniform float uRot; uniform float uZoom; uniform float uPitch; uniform float uGain; uniform float uLift; uniform vec3 uHaze; uniform vec3 uGround; uniform float uK; varying vec3 vW;
+          void main(){
+            vec3 d = normalize(vW - cameraPosition), c = uHaze * 1.5;
+            if (uHas > 0.5) { // the dome's own look-up (see RacerSky: stretched along the road by zoom, pitched down by pitch)
+              vec3 q = normalize(vec3(d.x, d.y, d.z / uZoom));
+              float cp = cos(uPitch), sp = sin(uPitch);
+              q = vec3(q.x, q.y * cp - q.z * sp, q.y * sp + q.z * cp);
+              vec3 s = texture2D(tSky, vec2(atan(q.z, q.x) * 0.15915494 + 0.5 + uRot, asin(clamp(q.y, -1.0, 1.0)) * 0.31830989 + 0.5)).rgb;
+              s = s * s * (s * 0.305 + 0.695);
+              c = s * uGain * (1.0 + uLift * smoothstep(0.42, 0.95, max(max(s.r, s.g), s.b)));
+            }
+            if (d.y < 0.0) { // the road beyond: dark, its dashed lanes and its two neon edges, into the haze
+              float t = cameraPosition.y / max(-d.y, 1e-3);
+              vec2 gp = cameraPosition.xz + d.xz * t;
+              float dash = step(0.45, fract(gp.y * 0.09)), w = 0.05 + t * 0.0025, lane = 0.0;
+              for (int i = -1; i <= 1; i++) lane = max(lane, 1.0 - smoothstep(w, w * 2.0, abs(gp.x - float(i) * 2.5)));
+              vec3 road = uGround * 1.6 + vec3(0.85, 0.85, 0.9) * lane * dash;
+              road += vec3(0.21, 0.94, 1.0) * 1.6 * (1.0 - smoothstep(w, w * 2.5, abs(gp.x + 5.1))) + vec3(1.0, 0.23, 0.83) * 1.6 * (1.0 - smoothstep(w, w * 2.5, abs(gp.x - 5.1)));
+              c = mix(road, uHaze * 1.1, smoothstep(25.0, 240.0, t));
+            }
+            gl_FragColor = vec4(c, uK);
+          }`,
+      });
       // (the way in is not a black board: the bore is seen in it, its arches of light and its two lines of lamps running away)
       { const c = document.createElement("canvas"); c.width = 256; c.height = 128;
         const x = c.getContext("2d"), vx = 128, vy = 76; // (where the lines meet: the height of the lens in the mouth)
@@ -851,7 +880,13 @@ class RacerWorld {
   mouthAt(s, sp) {
     const P = this.portal, g = this.g, out = s.to !== "tunnel";
     P.g.visible = s.t < 1.2;
-    if (!s.col) s.col = new THREE.Color((RACER_SKIES[racerSkyId(out ? s.to : this.biome, g.year)] || RACER_SKIES.dawn).haze[0]); // the light of the sky beyond it (out), or of the sky it stands under (in)
+    if (!s.col) {
+      const r = RACER_SKIES[racerSkyId(out ? s.to : this.biome, g.year)] || RACER_SKIES.dawn, sky = r.sky && g.pano.skies[r.sky], u = P.mouth.material.uniforms;
+      s.col = new THREE.Color(r.haze[0]); // the light of the sky beyond it (out), or of the sky it stands under (in)
+      u.uHas.value = sky && sky.map ? 1 : 0; u.tSky.value = sky ? sky.map : null; // (the sky beyond the way out, as its dome will show it)
+      u.uRot.value = r.at - 0.25; u.uZoom.value = r.zoom; u.uPitch.value = r.pitch; u.uGain.value = r.gain; u.uLift.value = r.lift;
+      u.uHaze.value.copy(s.col); u.uGround.value.set(r.ground);
+    }
     if (!P.g.visible) return;
     const k = smoothstep(0, 0.25, s.t);
     P.g.position.set(0, 0, -3.2 - Math.max(sp, 62) * (1.2 - s.t)); // (it is at the rig's nose as the change is made: the rig is never cut by it)
@@ -859,7 +894,7 @@ class RacerWorld {
     P.wall.material.color.copy(s.col).multiplyScalar(0.05).add(this._c.set(0x08080e)); P.wall.material.opacity = k;
     P.rims.forEach((m) => { m.visible = !out; m.material.opacity = k; });
     P.mouth.visible = out; P.mouthIn.visible = !out;
-    P.mouth.material.color.copy(s.col).multiplyScalar(1.5); P.mouth.material.opacity = P.mouthIn.material.opacity = k;
+    P.mouth.material.uniforms.uK.value = P.mouthIn.material.opacity = k;
   }
   setBiome(name) {
     const g = this.g;
