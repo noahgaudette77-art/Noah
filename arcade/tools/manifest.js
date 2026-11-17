@@ -18,7 +18,13 @@ const SETS = {
   // with it but is not waited for: see showHub.)
   hub: ["model:prop-cabinet", "model:mini-starfighter", "model:mini-warrig", "model:mini-proctor", "model:prop-deck", "model:prop-podium", "model:prop-tome", "model:prop-trophy", "model:prop-medal", "model:prop-coin", "model:prop-stand", "model:prop-vault", "sky:hub-hall", "sky:hub-hall-b", "ui:bosses", "ui:icons"],
   hubsound: ["sfx:core", "sfx:hub", "sfx:voice", "music:hub", "music:hub-b"],
-  title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title", "music:title-b"],
+  // The title (served): the containment hall. Its painted vault, the six worlds' windows, the stasis pod, the end of the
+  // hall (vault door, cabinets, trophy stand), then the twelve captured bosses, nearest the door first. (Its sound is
+  // titlesound, asked for after the first tap; the bosses' distant growls, titleroar, after that.)
+  title: ["sky:title-hall", "ui:win-blaster", "ui:win-racer", "ui:win-boss", "ui:win-memory", "ui:win-exam", "ui:win-guide", "model:prop-pod", "model:prop-vault", "model:prop-cabinet", "model:prop-stand", "model:prop-trophy",
+    "model:boss-1-t", "model:boss-2-t", "model:boss-3-t", "model:boss-4-t", "model:boss-5-t", "model:boss-6-t", "model:boss-7-t", "model:boss-8-t", "model:boss-9-t", "model:boss-10-t", "model:boss-11-t", "model:boss-all-t"],
+  titlesound: ["sfx:core", "sfx:voice", "music:title", "music:title-b"],
+  titleroar: ["sfx:bosses"],
   memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked)
   exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam", "model:statue-1", "model:statue-2", "model:statue-3", "model:statue-4", "model:statue-5", "model:statue-6", "model:statue-7", "model:statue-8", "model:statue-9", "model:statue-10", "model:statue-11", "model:statue-all", "model:decor-podium", "music:exam-b"],
   guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm", "model:decor-tome", "music:calm-b"],

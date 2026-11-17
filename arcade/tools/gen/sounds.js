@@ -15,6 +15,7 @@ const L = require("./lib.js");
 const STYLE = " Retro 1980s arcade game sound effect, clean, punchy, no music, no voice.";
 // name: [seconds, takes, prompt]
 const SFX = {
+  coin_soft: [1.2, 3, "A soft, warm arcade coin dropping into a coin slot: a gentle muted metallic clink, then a quiet, warm rising two-note chime. Pleasant and calm, no harsh high frequencies, no noise."],
   // the player's weapons
   laser_fire: [0.7, 6, "A starfighter laser cannon shot: a tight bright 'pew' zap with a punchy low thump under it and a very short sizzling tail. Analog synth."],
   laser_heavy: [1.2, 4, "A heavy plasma cannon blast: a deep charged thump, then a bright searing energy bolt and a short reverberant tail. Powerful."],
@@ -119,6 +120,8 @@ const VOICE = {
 const VOICES = { harry: "SOYHLrjzK2X1ezoPC6cr", adam: "pNInz6obpgDQGcFmaJgB", charlie: "IKne3meq5aSn9XLyUdCD", brian: "nPczCjzI2devNBz1zQrb" };
 // one looping synthwave track per mode: [milliseconds, prompt]
 const MUSIC = {
+  // (2026-11-17) the title's containment hall: calm, atmospheric, under the soft light of the pods
+  hall: [96000, "Instrumental dark ambient synth soundscape for the title screen of a retro arcade game: a vast quiet containment vault where defeated robot bosses sleep in glowing stasis pods. 66 BPM, D minor. Slow evolving warm analog pads, a soft deep drone, sparse gentle glassy bell notes that echo, a distant soft pulse like a heartbeat, no drums. Calm and mysterious but warm and inviting. Two sections: a sparse opening, then a slightly fuller second half where a soft, slow melody drifts in. Soft, warm mix that stays easy on the ears, no harsh or piercing high frequencies, no sudden loud hits, no hiss, no noise, no vinyl crackle."],
   // (2026-11-17: the owner found the first tracks annoying over a study session. Calmer, more varied second versions:
   // slower, softer timbres, two contrasting sections each, longer loops, so the same bars come round less often)
   title2: [96000, "Instrumental warm, nostalgic dreamwave title theme for a retro arcade, 92 BPM, A minor. Soft analog pads, a gentle lead melody on a mellow polysynth, a smooth rounded bassline, a soft brushed drum machine, light shimmering arpeggios. Two contrasting sections: a quiet, sparse A section and a fuller B section with new chords, then back. Relaxed and inviting, a neon city at dusk. Soft, warm mix that stays easy on the ears for long study sessions: no harsh or piercing high frequencies, no sudden loud hits, no lead that repeats insistently. Built as a seamless loop: the ending leads straight back into the beginning."],

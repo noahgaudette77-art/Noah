@@ -14,6 +14,8 @@ const L = require("./lib.js");
 const NEG = "text, letters, words, numbers, watermark, logo, signature, people, characters, faces, frame, border, vignette";
 // style ids: 82 Advanced (artistic), 93 Scifi Concept Art, 87 Digital Painting, 114 Sky Dome, 153 Dark Anime Glow, 148 Concept Render
 const SKIES = {
+  // (2026-11-17) the title's containment hall, painted: what lies beyond the modelled gallery
+  "title-hall": [148, "Inside a vast dark retro-futuristic containment vault at night, seen from the middle of a long gallery: rows of tall empty glowing glass stasis pods along both walls fading far into the distance, a polished dark floor, heavy gunmetal pillars and ceiling beams, thin neon magenta and cyan light strips along the walls, a cold blue haze far away, quiet and grand. No people, no creatures, no figures inside the pods, no text, no signs."],
   // ---- Risk Blaster: deep space, one per pair of regions
   "blaster-nebula": [93, "Deep outer space in every direction, no ground and no horizon line. A vast luminous nebula in neon magenta, violet and electric cyan with dark dust lanes, thousands of sharp stars, bright star clusters, one small distant ringed gas giant. Retro synthwave palette, high contrast, mostly black space with glowing clouds, crisp detail."],
   "blaster-belt": [93, "Deep outer space in every direction, no ground and no horizon line. Cold teal and cyan nebula veils with violet edges, a faint band of far-off drifting asteroids, dense fields of sharp stars, a pale blue star flaring in the distance. Retro synthwave palette, high contrast, mostly black space, crisp detail."],

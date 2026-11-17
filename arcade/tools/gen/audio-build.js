@@ -31,7 +31,7 @@ function level(a, to = 0.89) { const p = peak(a); if (p > 1e-4) { const k = to /
 
 // which set each effect belongs to, and how loud it sits in the mix (1 = full)
 const SETS = {
-  core: { impact_good: 0.9, impact_big: 1, impact_reject: 0.8, impact_hull: 0.9, impact_shield: 0.8, impact_metal: 0.7, explosion_small: 0.85, explosion_big: 1, explosion_huge: 1, debris: 0.6, charge_up: 0.6, charge_long: 0.65, warning: 0.6, lock_on: 0.5, slowmo_in: 0.7, player_hit: 0.9, heart_lost: 0.7, shield_down: 0.75, reward: 0.7, sting_correct: 0.6, sting_wrong: 0.6, ui_click: 0.4, ui_select: 0.5, ui_back: 0.45, coin_insert: 0.7, powerup: 0.6, fanfare: 0.7, gameover: 0.7, crowd_cheer: 0.55 },
+  core: { impact_good: 0.9, impact_big: 1, impact_reject: 0.8, impact_hull: 0.9, impact_shield: 0.8, impact_metal: 0.7, explosion_small: 0.85, explosion_big: 1, explosion_huge: 1, debris: 0.6, charge_up: 0.6, charge_long: 0.65, warning: 0.6, lock_on: 0.5, slowmo_in: 0.7, player_hit: 0.9, heart_lost: 0.7, shield_down: 0.75, reward: 0.7, sting_correct: 0.6, sting_wrong: 0.6, ui_click: 0.4, ui_select: 0.5, ui_back: 0.45, coin_insert: 0.7, coin_soft: 0.6, powerup: 0.6, fanfare: 0.7, gameover: 0.7, crowd_cheer: 0.55 },
   // weapons and bosses: Risk Blaster and Boss Rush both load this
   combat: { laser_fire: 0.7, laser_heavy: 0.85, plasma_fire: 0.75, shell: 0.3, beam_fire: 0.8, missile_fire: 0.7, missile_hit: 0.8, volley_fire: 0.75, wave_fire: 0.85, slam: 1, boss_roar: 0.95, boss_hurt: 0.8, boss_stagger: 0.8, boss_break: 0.8, boss_death: 1, warp: 0.7 },
   racer: { crash: 1, crash_glass: 0.8, skid: 0.7, near_miss: 0.6, boost: 0.85, gate_pass: 0.6 },

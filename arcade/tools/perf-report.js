@@ -22,7 +22,7 @@ const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("t
 // At HIGH (on a phone only by choice, in Setup) the pixels may be 2.2 times these and the passes 21. A row over its
 // budget is marked OVER.
 const BUDGET = {
-  title: { mpx: 5, passes: 10, draws: 90, tris: 120000, lights: 0, models: 0 },
+  title: { mpx: 5, passes: 10, draws: 60, tris: 300000, lights: 4, models: 17 }, // (the containment hall: twelve bosses, the pod, the vault door, a cabinet, the stand and its cup; one key and three of its seven lamps)
   hub: { mpx: 5, passes: 10, draws: 70, tris: 200000, lights: 4, models: 12 },
   blaster: { mpx: 5, passes: 10, draws: 80, tris: 260000, lights: 5, models: 24 },
   racer: { mpx: 5, passes: 10, draws: 80, tris: 200000, lights: 5, models: 11 },
@@ -33,6 +33,11 @@ const BUDGET = {
 };
 // --peak: each game's additions brought on at once before measuring (the brood gathering, the allies flying in, a
 // full burst of the effect props, a rival on the road), so the budget is checked at its fullest moment
+// a screen whose generated pieces come in while it is up is measured once they are all in (the title's hall), and at
+// each of its poses (the hall: the lens at the door, a third and two thirds down its glide, at its end); each pose is
+// a row, and each row is held to the budget
+const READY = { title: () => { const s = window.__arcade.Scenes.cur; return !s || !s.cells || (s.cells.every((c) => c.boss) && !!s.vault && !!s.cabs && !!s.cup && !!s.podMesh && !!s.sky); } };
+const POSES = { title: [0, 0.35, 0.7, 1] };
 const PEAK_RUN = {
   blaster: () => { const A = window.__arcade, s = A.Scenes.cur, st = s.stage, p = s.camera.position.clone().add(new THREE.Vector3(0, 0, -9)); if (st && st.escort) { st.escort.gather(); st.escort.entrance(); } if (s.iconFX) { s.iconFX.burst("star", p, { n: 12 }); s.iconFX.spin("bolt", p.clone().add(new THREE.Vector3(1, 0, 0))); s.iconFX.shatter("shield", p.clone().add(new THREE.Vector3(-1, 0, 0))); } },
   racer: () => { const A = window.__arcade, s = A.Scenes.cur, p = s.camera.position.clone().add(new THREE.Vector3(0, -1, -9)); if (s.world && s.world.director) s.world.director.force("rival"); if (s.iconFX) { s.iconFX.burst("star", p, { n: 12 }); s.iconFX.spin("heart", p.clone().add(new THREE.Vector3(1, 0, 0))); } },
@@ -89,8 +94,15 @@ const SCREENS = [
     await page.evaluate(`window.__arcade.${go}`);
     // wait for the screen's files and its first frames
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
+    if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 240000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
+    // (the title makes the arcade floor's set ready once its glide arrives, a load and not a frame's cost: it is had
+    // first, so the hall's own frames are what is measured)
+    if (name === "title") await page.evaluate(() => window.__arcade.Assets.need("hub")).catch(() => null);
     await page.waitForTimeout(WAIT); // (--wait: a game's full set of lights and events is out a few seconds in)
     if (PEAK && PEAK_RUN[name]) { await page.evaluate(PEAK_RUN[name]).catch((e) => errors.push("peak: " + e.message)); await page.waitForTimeout(900); }
+    const poses = POSES[name] && (await page.evaluate(() => { const s = window.__arcade.Scenes.cur; return !!(s && s.cells); })) ? POSES[name] : [null]; // (the avenue, opened before the hall, has one view)
+    for (const pose of poses) {
+    if (pose !== null) { await page.evaluate((u) => { window.__arcade.Scenes.cur.pose = u; }, pose); await page.waitForTimeout(700); }
     const r = await page.evaluate(async (frames) => {
       const A = window.__arcade, G = A.GFX, R = G.renderer, gl = R.getContext();
       // every draw into a target counts that target's pixels (times its samples): what the chip shades and stores
@@ -136,14 +148,15 @@ const SCREENS = [
         up: `${(GL.tex / frames / 1024).toFixed(0)}K tex (${(GL.texN / frames).toFixed(1)}), ${(GL.buf / frames / 1024).toFixed(0)}K buf (${(GL.bufN / frames).toFixed(1)}), ${(GL.sync / frames).toFixed(1)} waits, ${GL.compile + GL.programs} compiles`,
       };
     }, FRAMES).catch((e) => ({ error: e.message.slice(0, 160) }));
-    rows.push([name, r, errors.slice(0, 2)]);
+    rows.push([pose === null ? name : name + "@" + pose, r, errors.slice(0, 2), name]);
+    }
     await ctx.close();
   }
   await browser.close(); srv.close();
   console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws (world)  tris     lights (point/spot/dir)  textures  programs  cpu ms (worst)  uploads per frame  budget");
-  for (const [n, r, errs] of rows) {
+  for (const [n, r, errs, key] of rows) {
     if (r.error) { console.log(n.padEnd(9), "ERROR", r.error); continue; }
-    const B = BUDGET[n], k = r.tier === "HIGH" ? 2.2 : 1, over = B ? [["mpx", r.mpx, B.mpx * k], ["passes", r.passes, k > 1 ? 21 : B.passes], ["draws", r.draws, B.draws], ["tris", r.tris, B.tris], ["lights", r.lights, B.lights]].filter(([, v, b]) => v > b).map(([q, v, b]) => `${q} ${v} > ${b}`) : [];
+    const B = BUDGET[key], k = r.tier === "HIGH" ? 2.2 : 1, over = B ? [["mpx", r.mpx, B.mpx * k], ["passes", r.passes, k > 1 ? 21 : B.passes], ["draws", r.draws, B.draws], ["tris", r.tris, B.tris], ["lights", r.lights, B.lights]].filter(([, v, b]) => v > b).map(([q, v, b]) => `${q} ${v} > ${b}`) : [];
     r.budget = !B ? "" : over.length ? "OVER: " + over.join(", ") : "within budget";
     console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${(r.draws + " (" + r.sceneDraws + ")").padEnd(13)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${String(r.programs).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(15)} ${r.up}  ${r.budget}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
   }

@@ -2987,3 +2987,47 @@ budget), and AUTO takes what does not hold 60 on the phone to LOW, where every a
    Setup; the sound test page.
 
 What a phone gives up: the floor and road reflections, and at MEDIUM the god rays and contact shadows.
+
+## The static hiss and the title hall (2026-11-17, third message)
+
+The owner: remove the constant "shhhh" heard on opening the game (find the exact source first), then rebuild the title
+screen as a dark containment hall where the captured bosses stand in glowing pods, each world in its own mood, the
+vault door, the trophy stand and the cabinets in view, a slow glide ending on the logo and INSERT COIN. Study logic
+unchanged, one independent review at the end, a steady 60 fps on an iPhone 17 Pro Max the pass.
+
+**The hiss** (commit 0c1abed, pushed first): the arcade hall's fallback ambience was a looped white-noise buffer
+through a wide band-pass, started whenever the hall's recorded hum had not loaded yet (usual on a phone) and never
+stopped: a steady -57 dBFS of broadband noise. Gone; the hum is low-passed; the exam drone breathes in tone. Every
+music track and loop measured clean, no clicks at any loop point. See ASSETS.md (Sound).
+
+**The title hall** (`src/js/10d-titlehall.js`; served only: from disk the old avenue stays the offline title). A long
+dark gallery: six worlds down its aisle, two pods each (the bosses in chapter order, the Proctor last by the vault),
+each world with its lamp, its glass, its pillar strips, two windows and a skylight onto its own sky (Risk Blaster's
+nebula, Nest Egg Run's dusk, Boss Rush's storm, Memory Bank's vault, Strategy Guide's archive, Final Exam's moonlit
+hall); at the end the vault door in a gold frame, two cabinets showing worlds on their screens, the trophy stand with
+its cup in a shaft of light. The bosses idle (their own clips), turn their heads after the lens, and now and then
+rattle their pods (a clip, their lights flare, glass and lamp flicker, a growl far off). The lens glides from the door
+in 34 s and stops where the end of the hall fills the picture (further back on a phone held upright, short of the
+last pods on a wide screen); the logo and INSERT COIN come up as it arrives; a tap hurries it; INSERT COIN rushes the
+vault and opens onto the arcade floor. The glide is the first title of a visit; reduced effects: a still view of the
+end, the logo up at once. Nothing of the old title is drawn when served.
+
+New assets: the stasis pod (Tripo, 5.2K triangles), the hall's painted vault (Blockade; reflections and light only),
+the twelve bosses rebuilt lighter from their own sources (no cost), six small copies of the worlds' skies (no cost),
+the title music (two takes of a dark ambient prompt) and a soft coin (ElevenLabs). Each checked for lookalikes:
+none.
+
+**Budget** (perf-report, the title measured with the whole hall in, at four places down the glide, phone screen):
+at MEDIUM 4.9 million pixels a frame, 10 passes, 31-39 draws, 167-223K triangles, 4 lights (key + 3 of the seven
+lamps), under 1 ms of main-thread time, nothing uploaded or compiled per frame; at HIGH 39-47 draws, 18 passes. The
+old avenue at MEDIUM: 77 draws, 33K triangles, no lights. Instanced pods, glass, struts and floor glows; each boss two
+draws; far bosses lose their joint caps (22 m) and move ten times a second; past 50 m or out of the picture neither
+drawn nor moved; the end of the hall not drawn while the haze hides it. LOW: fewer bosses drawn, only near ones move,
+no rattles.
+
+**A finding on the way**: the seeded regression dealt Memory Bank and the exam differently with the hall as the
+title. Not a logic change: each new three.js picture draws a random identity, and the old title had made three shared
+pictures (glow, lit windows, billboards) as the page started; without them the first game made them in the middle of
+its own dealing. The hall makes them at the same moment; the served regression is IDENTICAL again.
+
+Captures: `docs/title-hall/` (phone stills of the glide and the end, landscape stills, a 38 s film of the glide).

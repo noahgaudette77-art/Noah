@@ -24,7 +24,7 @@ const Sound = {
   // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
   // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
   // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
-  MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.03, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.19, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
+  MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.79, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.15, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
 
   // The player's own levels (Setup): each layer OFF, LOW, MID or HIGH (OFF is the layer's on/off switch). The music
   // and the effects start LOW, quiet under study (the owner, 2026-11-17); the announcer starts HIGH, clear over both.
@@ -190,7 +190,8 @@ const Sound = {
     this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait });
     return wait;
   },
-  // Play an effect. o: { vol, rate, delay } scale a recorded take; the synth ignores them.
+  // Play an effect. o: { vol, rate, delay } scale a recorded take, lp (Hz) muffles it as a sound far off does (the
+  // title hall's distant growls); the synth ignores them.
   sfx(name, pan = 0, o) {
     if (!this.ctx || !Store.settings.sfx) return;
     if (this.bank[name]) { this._cue(name, pan, o); return; }
@@ -221,6 +222,7 @@ const Sound = {
     g.gain.value = (o.vol === undefined ? 1 : o.vol) * q.vol * (1 - Math.random() * 0.12 * vary);
     let out = o.bus || this.sfxBus;
     if (pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(out); out = p; }
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; f.Q.value = 0.5; f.connect(out); out = f; }
     src.connect(g).connect(out);
     const t0 = c.currentTime + (o.delay || 0);
     src.start(t0, q.at, q.dur);

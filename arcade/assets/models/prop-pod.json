@@ -1,0 +1,33 @@
+{
+ "name": "prop-pod",
+ "triangles": 5199,
+ "bytes": 322212,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.5287,
+    0,
+    -0.4407
+   ],
+   "max": [
+    0.5287,
+    1,
+    0.4407
+   ],
+   "tris": 5199
+  }
+ },
+ "anchors": {},
+ "size": [
+  1.0573465824127197,
+  1,
+  0.8813202381134033
+ ],
+ "source": "cand/prop-pod/prop-pod-sd-0.tripo.glb"
+}

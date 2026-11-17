@@ -1839,3 +1839,13 @@ body.lite .hub-card { background-color: rgba(13, 6, 40, 0.92); }
 body.lite .chip, body.lite .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.93), rgba(10, 5, 34, 0.95)); }
 body.lite .screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.95), rgba(6, 2, 22, 0.98)) !important; }
 body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
+
+/* The containment hall (the title, served: 10d-titlehall.js). While the lens glides down the hall the logo and the
+   dock wait, and a quiet line invites a tap; they come up together when the glide arrives (a tap hurries it). */
+.scr-title .logo, .scr-title .title-dock { transition: opacity 1.1s ease, transform 1.1s ease; }
+.scr-title.gliding .logo { opacity: 0; transform: translateY(-16px); pointer-events: none; }
+.scr-title.gliding .title-dock { opacity: 0; transform: translateY(16px); pointer-events: none; }
+.title-enter { position: absolute; left: 0; right: 0; bottom: calc(var(--gut-b) + 30px); text-align: center; font: clamp(8px, 2.3vw, 10px)/1.6 var(--font-display); letter-spacing: 0.16em; color: #efeaff; text-shadow: 0 1px 0 #05010f, 0 0 8px #05010f, 0 0 16px rgba(53, 239, 255, 0.5); opacity: 0; transition: opacity 0.9s ease; pointer-events: none; }
+.scr-title.gliding .title-enter { opacity: 0.85; animation: enter-breathe 2.6s ease-in-out 1.5s infinite; }
+@keyframes enter-breathe { 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.4s ease; transform: none; } .scr-title.gliding .title-enter { animation: none; } }

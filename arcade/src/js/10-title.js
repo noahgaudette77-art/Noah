@@ -1,4 +1,6 @@
-// Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
+// Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt. (Since 2026-11-17 this avenue is the
+// title only when the page is opened from disk, or cannot draw the hall: served, the title is the containment hall of
+// 10d-titlehall.js. showTitle below serves both.)
 const TITLE_PANO_ROT = { "title-dusk": 1.9, "title-dusk-b": 2.92 }; // (the painted dusk turned so its sun sets behind the striped one; the bright one turned so its sun is hidden by the towers on the left and its red streaks cross the avenue)
 class TitleScene extends Scene3D {
   constructor() {
@@ -117,11 +119,14 @@ class TitleScene extends Scene3D {
 function showTitle() {
   Sound.play("title");
   Sound.ambience(false);
-  const scene = Scenes.cur instanceof TitleScene ? Scenes.cur : Scenes.set(new TitleScene());
+  // Served (and drawn), the title is the containment hall (10d-titlehall.js); opened from disk it is this avenue.
+  const Kind = Assets.on && GFX.ok && Assets.has("sky/title-hall.webp") ? HallScene : TitleScene;
+  const scene = Scenes.cur instanceof Kind ? Scenes.cur : Scenes.set(new Kind());
+  const hall = scene instanceof HallScene;
   const best = Math.max(Store.best("blaster"), 0);
   const all = ALL_QIDS.concat(ALL_FIDS);
   const m = mpct(Store.masteryOf(all));
-  const el = UI.el(`<section class="screen scr-title">
+  const el = UI.el(`<section class="screen scr-title${hall && !scene.arrived ? " gliding" : ""}">
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
@@ -133,6 +138,7 @@ function showTitle() {
       <p class="attract" data-tip></p>
       <div class="logo-sub">11 STAGES · ${ALL_QIDS.length} QUESTIONS · ${ALL_FIDS.length} CARDS</div>
     </div>
+    ${hall ? `<div class="title-enter">TAP TO ENTER</div>` : ""}
   </section>`);
   $(".logo", el).addEventListener("pointerdown", () => Perf.tap()); // three taps on the title: the frame-rate readout, for this visit
   const tipEl = $("[data-tip]", el);
@@ -146,25 +152,44 @@ function showTitle() {
     tipEl.innerHTML = `<span><b>STAGE ${tip.ch}${lead ? " · " + esc(lead[1]) : ""}</b><i>${esc(lead ? lead[2] : tip.t)}</i></span>`;
   };
   showTip();
-  let started = false, woke = false;
-  // Served: the title's dusk and the hall's models are asked for while the title is up, and the sound's bytes are
-  // fetched (it can only be decoded after a tap). The title shows at once and takes each in as it arrives.
+  let started = false, woke = false, call = false;
+  // Served: the hall's pieces are asked for while the title is up, and its sound's bytes are fetched (it can only be
+  // decoded after a tap). The title shows at once and takes each in as it arrives. The arcade floor's files are fetched
+  // once the hall's own are in, and made ready once the glide has arrived (not during it: making a dozen models ready
+  // at once would cost the glide its frames).
   if (Assets.on) {
     Assets.loadImage("icons"); Assets.loadImage("bosses"); // (first: the menus' icons and busts are small, and every menu wants them)
-    Assets.need("title");
-    Assets.prefetch("title");
-    Assets.need("hub");
-    Assets.prefetch("hubsound");
+    Assets.prefetch("titlesound");
+    if (hall) { const p = Assets.need("title"); (p || Promise.resolve()).then(() => { Assets.prefetch("hub"); Assets.prefetch("hubsound"); }); }
+    else { Assets.need("hub"); Assets.prefetch("hubsound"); }
   }
+  // The hall's glide has arrived (or there was none): the logo and the dock come up, and the floor's models and skies
+  // are made ready, one at a time with a breath between (each is a few frames' work on a phone: all at once they would
+  // stall the picture). INSERT COIN before they are all in: the floor asks for the rest itself.
+  const arrive = () => {
+    el.classList.remove("gliding");
+    if (call && !started) { call = false; Sound.say("INSERT COIN"); }
+    if (Assets.on && !arrive.hub) {
+      arrive.hub = true;
+      const left = (Assets.files.sets.hub || []).slice(), next = () => { if (started || !left.length) return; const p = Assets.need("-", [left.shift()]); (p || Promise.resolve()).then(() => setTimeout(next, 150)); };
+      setTimeout(next, 1500);
+    }
+  };
+  if (hall) { if (scene.arrived) arrive(); else scene.onArrive = arrive; }
   // The first tap or key: the sound comes on, the title's music plays and the announcer calls for a coin.
   const wake = () => {
     if (woke || !Assets.on) return;
     woke = true;
     Sound.init();
     Sound.play("title");
-    const t0 = performance.now(), p = Assets.need("title");
-    Assets.need("hubsound");
-    (p || Promise.resolve()).then(() => { if (performance.now() - t0 < 2500) Sound.say("INSERT COIN"); }); // (a call that would come late is not made)
+    const t0 = performance.now(), p = Assets.need("titlesound");
+    // the call for a coin (in the hall, when INSERT COIN has come up); a call that would come late is not made. Then
+    // the hall's bosses' distant growls, then the floor's sound.
+    (p || Promise.resolve()).then(() => {
+      if (performance.now() - t0 < 2500 && !started) { if (!hall || scene.arrived) Sound.say("INSERT COIN"); else call = true; }
+      if (hall) Assets.need("titleroar");
+      Assets.need("hubsound");
+    });
   };
   document.body.classList.add("on-title"); // the sync toast sits below the top row here
   const timer = setInterval(showTip, 6500);
@@ -173,17 +198,19 @@ function showTitle() {
     started = true;
     wake();
     Sound.init();
-    Sound.sfx(Sound.bank.coin_insert ? "coin_insert" : "coin");
+    Sound.sfx(hall && Sound.bank.coin_soft ? "coin_soft" : Sound.bank.coin_insert ? "coin_insert" : "coin"); // (the hall's coin is the soft one)
+    el.classList.remove("gliding");
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();
     setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };
-  el.addEventListener("pointerdown", wake);
+  // a tap during the hall's glide wakes the sound and hurries the glide to its end (INSERT COIN comes up with it)
+  el.addEventListener("pointerdown", () => { wake(); if (hall && !scene.arrived) scene.hurry(); });
   UI.show({
     el,
     on: (a) => { if (a === "start") start(); },
-    key: (e) => { wake(); if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
-    destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); },
+    key: (e) => { wake(); if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } else if (hall && !scene.arrived) scene.hurry(); },
+    destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); if (hall && scene.onArrive === arrive) scene.onArrive = null; },
   });
 }
