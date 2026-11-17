@@ -1,40 +1,40 @@
 {
  "name": "prop-bus",
  "triangles": 11000,
- "bytes": 230192,
+ "bytes": 223360,
  "tex": 512,
  "parts": {
   "body": {
    "pivot": [
     0,
-    0.1673,
-    0
+    0.1509,
+    0.0001
    ],
    "min": [
-    -0.183,
+    -0.1636,
     0,
-    -0.5
+    -0.4998
    ],
    "max": [
-    0.183,
-    0.3346,
-    0.4999
+    0.1636,
+    0.3019,
+    0.5
    ],
    "tris": 11000
   }
  },
  "anchors": {},
  "size": [
-  0.36605510115623474,
-  0.33456531167030334,
+  0.3271501064300537,
+  0.30195608735084534,
   1
  ],
- "source": "cand/props/prop-bus-sd-0.tripo.glb",
+ "source": "cand/props/traffic-bus-b-sd-0.tripo.glb",
  "symmetry": {
-  "delivered": 0.589,
+  "delivered": 0.647,
   "turned_deg": 0,
   "shifted": 0,
-  "aligned": 0.589,
+  "aligned": 0.647,
   "mirrored": true,
   "kept": "+x"
  }

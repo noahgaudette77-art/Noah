@@ -1,7 +1,7 @@
 {
  "name": "prop-car",
- "about": "An original compact road car for Nest Egg Run's traffic: gloss black, a cyan light bar across the nose, a magenta one across the tail. Tripo v3.1 at its standard (low-credit) settings from concept prop-car-sd-0, one attempt.",
- "src": "cand/props/prop-car-sd-0.tripo.glb",
+ "about": "Nest Egg Run's car (second version, after the final review found the first one's buttressed tail too close to a famous Italian coupe): a compact future city car with a wraparound dark canopy, a flat rear hatch with a magenta light bar and a cyan bar across the nose. Tripo v3.1 at its standard (low-credit) settings from concept traffic-car-b-sd-0, one attempt; mirrored to exact symmetry.",
+ "src": "cand/props/traffic-car-b-sd-0.tripo.glb",
  "forward": "+x",
  "size": {
   "axis": "z",

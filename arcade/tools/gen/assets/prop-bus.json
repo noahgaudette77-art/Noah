@@ -1,7 +1,7 @@
 {
  "name": "prop-bus",
- "about": "An original transit bus for Nest Egg Run's traffic: gloss black and chrome, windows lit magenta from inside. Tripo v3.1 at its standard (low-credit) settings from concept prop-bus-sd-0, one attempt.",
- "src": "cand/props/prop-bus-sd-0.tripo.glb",
+ "about": "Nest Egg Run's bus (second version, after the final review found the first one's round roof and window band too close to a famous German microbus): a long flat-sided coach with a raked wedge front, a flush band of windows lit magenta, six wheels. Tripo v3.1 at its standard (low-credit) settings from concept traffic-bus-b-sd-0, one attempt; mirrored to exact symmetry.",
+ "src": "cand/props/traffic-bus-b-sd-0.tripo.glb",
  "forward": "+x",
  "size": {
   "axis": "z",
