@@ -78,6 +78,7 @@ function showSettings() {
       ${row("speaker", "Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
       ${row("note", "Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
       ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
+      ${row("note", "Sound test", "Every sound in the game with a play button and a label, to say which one to change", `<div class="seg" role="group" style="--c:${COLORS.cyan}"><button data-act="soundtest">OPEN</button></div>`)}
       ${row("tube", "CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("moon", "Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl"><span class="si" aria-hidden="true">${icon("spark")}</span>Effects<small>Switch any of them off</small></div>
@@ -103,6 +104,7 @@ function showSettings() {
     el,
     on: (a, t) => {
       if (a === "back") { Sound.sfx("back"); showHub(); return; }
+      if (a === "soundtest") { Store.save(); location.href = "sound-test.html"; return; } // (a page of its own, beside the arcade)
       if (a === "fx") {
         const k = t.dataset.k, fx = Store.settings.fx || (Store.settings.fx = {});
         fx[k] = fx[k] === false;
