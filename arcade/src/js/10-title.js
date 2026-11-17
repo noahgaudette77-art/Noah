@@ -153,15 +153,31 @@ function showTitle() {
   };
   showTip();
   let started = false, woke = false, call = false;
-  // Served: the hall's pieces are asked for while the title is up, and its sound's bytes are fetched (it can only be
-  // decoded after a tap). The title shows at once and takes each in as it arrives. The arcade floor's files are fetched
-  // once the hall's own are in, and made ready once the glide has arrived (not during it: making a dozen models ready
-  // at once would cost the glide its frames).
+  // Served: the hall's pieces are asked for while the title is up, four at a time in the set's order (its painted
+  // vault, the windows, the pod, the end of the hall, the bosses nearest the door first), and the title takes each in
+  // as it arrives. INSERT COIN stops the rest and lets go of what lands after it (the floor's own models excepted): the
+  // floor's files then have the line, and no unused model stays in memory. The floor's and the sound's bytes are
+  // fetched alongside from the start (the sound can only be decoded after a tap; the floor's models are made ready
+  // once the glide has arrived: not during it, where making a dozen models ready would cost the glide its frames).
+  const hubWants = new Set((Assets.files.sets && Assets.files.sets.hub) || []);
+  const letGo = (n) => { if (!n.startsWith("model:") || hubWants.has(n)) return; const m = Assets.fresh[n]; if (m) { delete Assets.fresh[n]; hallRelease(m); } };
+  const titleLeft = hall ? ((Assets.files.sets && Assets.files.sets.title) || []).slice() : [];
+  let titleBusy = 0;
+  const titleNext = () => {
+    while (!started && titleBusy < 4 && titleLeft.length) {
+      const n = titleLeft.shift(), [kind, name] = n.split(":");
+      const p = kind === "model" ? (Assets.fresh[n] ? null : Assets.loadModel(name)) : kind === "sky" ? (Assets.kept[n] ? null : Assets.loadSky(name)) : kind === "ui" ? (Assets.kept[n] ? null : Assets.loadImage(name)) : null;
+      if (!p) continue;
+      titleBusy++;
+      p.then(() => { titleBusy--; if (started) letGo(n); titleNext(); }, () => { titleBusy--; titleNext(); });
+    }
+  };
   if (Assets.on) {
     Assets.loadImage("icons"); Assets.loadImage("bosses"); // (first: the menus' icons and busts are small, and every menu wants them)
     Assets.prefetch("titlesound");
-    if (hall) { const p = Assets.need("title"); (p || Promise.resolve()).then(() => { Assets.prefetch("hub"); Assets.prefetch("hubsound"); }); }
-    else { Assets.need("hub"); Assets.prefetch("hubsound"); }
+    Assets.prefetch("hub");
+    Assets.prefetch("hubsound");
+    if (hall) titleNext(); else Assets.need("hub");
   }
   // The hall's glide has arrived (or there was none): the logo and the dock come up, and the floor's models and skies
   // are made ready, one at a time with a breath between (each is a few frames' work on a phone: all at once they would
@@ -169,7 +185,7 @@ function showTitle() {
   const arrive = () => {
     el.classList.remove("gliding");
     if (call && !started) { call = false; Sound.say("INSERT COIN"); }
-    if (Assets.on && !arrive.hub) {
+    if (Assets.on && !arrive.hub && !(Hub.scene && !Hub.scene.disposed)) { // (not when the floor is still built: coming back to the title)
       arrive.hub = true;
       const left = (Assets.files.sets.hub || []).slice(), next = () => { if (started || !left.length) return; const p = Assets.need("-", [left.shift()]); (p || Promise.resolve()).then(() => setTimeout(next, 150)); };
       setTimeout(next, 1500);
@@ -187,7 +203,7 @@ function showTitle() {
     // the hall's bosses' distant growls, then the floor's sound.
     (p || Promise.resolve()).then(() => {
       if (performance.now() - t0 < 2500 && !started) { if (!hall || scene.arrived) Sound.say("INSERT COIN"); else call = true; }
-      if (hall) Assets.need("titleroar");
+      if (hall && !started) Assets.need("titleroar");
       Assets.need("hubsound");
     });
   };
@@ -200,6 +216,7 @@ function showTitle() {
     Sound.init();
     Sound.sfx(hall && Sound.bank.coin_soft ? "coin_soft" : Sound.bank.coin_insert ? "coin_insert" : "coin"); // (the hall's coin is the soft one)
     el.classList.remove("gliding");
+    if (hall) for (const n of (Assets.files.sets && Assets.files.sets.title) || []) letGo(n); // (the hall's pieces it will not take now)
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();

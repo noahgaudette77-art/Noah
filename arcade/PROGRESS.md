@@ -3030,4 +3030,27 @@ title. Not a logic change: each new three.js picture draws a random identity, an
 pictures (glow, lit windows, billboards) as the page started; without them the first game made them in the middle of
 its own dealing. The hall makes them at the same moment; the served regression is IDENTICAL again.
 
+**The independent review** (a fresh reviewer, the code and the owner's brief, no conclusions handed over) found no
+crash and no logic change, and ten things to fix, all fixed:
+1. INSERT COIN early on a slow line waited behind the hall's whole 13 MB (20.5 s to the floor at 10 Mbps, against
+   10.4 s with the old title), and the hall's pieces still landing were kept unused (about 130 MB decoded). Now the
+   hall's pieces are asked for four at a time and INSERT COIN stops the rest; what lands after is let go of; the
+   floor's bytes come alongside from the start. Measured: 10.4 s at 10 Mbps, 9.3 MB fetched, nothing left unused.
+2. The closed hall's materials, parked for their shaders, held 158 MB of decoded pictures for the rest of the visit.
+   Now the hall lets go of its models' pictures when it closes: 0.3 MB parked.
+3. Two of the soft coin's three takes were piercing tones (8.9 and 12.6 kHz); the first coin of a visit was always
+   one of them. Only the soft take is kept.
+4. The windows' bars were the wrong way round (the panes drawn at a fifth of their light, the bars bright), and a
+   view across a panorama's join showed a seam. Fixed (and every smoothstep's edges put in order).
+5. A piece arriving cost a long frame (a boss's skin, the whole hall drawn again: up to 296 ms here). Now a piece
+   comes in a step a frame (a skin a material at a time, a picture a frame, only the new piece drawn once
+   off-screen), and the hall carries a stand-in reflection from the start, so its painted vault's arrival remakes
+   no shader. Measured here, the glide's first 30 s: worst frame 16.5 ms (was 296); the first boss's arrival still
+   makes the bosses' one shader, once a visit.
+6. Tapping again slowed the hurried glide: the fastest asked for now holds.
+7. Reduced effects: INSERT COIN's push is a short step, not a 9 m rush.
+8. The painted sky dome was drawn every frame behind a closed hall: not drawn now (its light and reflections kept).
+9. Coming back to the title re-made the floor's models though the floor was still built: not any more.
+10. The Inflation Titan has no head bone and never turned: it turns at the top of its spine, half as far.
+
 Captures: `docs/title-hall/` (phone stills of the glide and the end, landscape stills, a 38 s film of the glide).

@@ -12531,15 +12531,31 @@ function showTitle() {
   };
   showTip();
   let started = false, woke = false, call = false;
-  // Served: the hall's pieces are asked for while the title is up, and its sound's bytes are fetched (it can only be
-  // decoded after a tap). The title shows at once and takes each in as it arrives. The arcade floor's files are fetched
-  // once the hall's own are in, and made ready once the glide has arrived (not during it: making a dozen models ready
-  // at once would cost the glide its frames).
+  // Served: the hall's pieces are asked for while the title is up, four at a time in the set's order (its painted
+  // vault, the windows, the pod, the end of the hall, the bosses nearest the door first), and the title takes each in
+  // as it arrives. INSERT COIN stops the rest and lets go of what lands after it (the floor's own models excepted): the
+  // floor's files then have the line, and no unused model stays in memory. The floor's and the sound's bytes are
+  // fetched alongside from the start (the sound can only be decoded after a tap; the floor's models are made ready
+  // once the glide has arrived: not during it, where making a dozen models ready would cost the glide its frames).
+  const hubWants = new Set((Assets.files.sets && Assets.files.sets.hub) || []);
+  const letGo = (n) => { if (!n.startsWith("model:") || hubWants.has(n)) return; const m = Assets.fresh[n]; if (m) { delete Assets.fresh[n]; hallRelease(m); } };
+  const titleLeft = hall ? ((Assets.files.sets && Assets.files.sets.title) || []).slice() : [];
+  let titleBusy = 0;
+  const titleNext = () => {
+    while (!started && titleBusy < 4 && titleLeft.length) {
+      const n = titleLeft.shift(), [kind, name] = n.split(":");
+      const p = kind === "model" ? (Assets.fresh[n] ? null : Assets.loadModel(name)) : kind === "sky" ? (Assets.kept[n] ? null : Assets.loadSky(name)) : kind === "ui" ? (Assets.kept[n] ? null : Assets.loadImage(name)) : null;
+      if (!p) continue;
+      titleBusy++;
+      p.then(() => { titleBusy--; if (started) letGo(n); titleNext(); }, () => { titleBusy--; titleNext(); });
+    }
+  };
   if (Assets.on) {
     Assets.loadImage("icons"); Assets.loadImage("bosses"); // (first: the menus' icons and busts are small, and every menu wants them)
     Assets.prefetch("titlesound");
-    if (hall) { const p = Assets.need("title"); (p || Promise.resolve()).then(() => { Assets.prefetch("hub"); Assets.prefetch("hubsound"); }); }
-    else { Assets.need("hub"); Assets.prefetch("hubsound"); }
+    Assets.prefetch("hub");
+    Assets.prefetch("hubsound");
+    if (hall) titleNext(); else Assets.need("hub");
   }
   // The hall's glide has arrived (or there was none): the logo and the dock come up, and the floor's models and skies
   // are made ready, one at a time with a breath between (each is a few frames' work on a phone: all at once they would
@@ -12547,7 +12563,7 @@ function showTitle() {
   const arrive = () => {
     el.classList.remove("gliding");
     if (call && !started) { call = false; Sound.say("INSERT COIN"); }
-    if (Assets.on && !arrive.hub) {
+    if (Assets.on && !arrive.hub && !(Hub.scene && !Hub.scene.disposed)) { // (not when the floor is still built: coming back to the title)
       arrive.hub = true;
       const left = (Assets.files.sets.hub || []).slice(), next = () => { if (started || !left.length) return; const p = Assets.need("-", [left.shift()]); (p || Promise.resolve()).then(() => setTimeout(next, 150)); };
       setTimeout(next, 1500);
@@ -12565,7 +12581,7 @@ function showTitle() {
     // the hall's bosses' distant growls, then the floor's sound.
     (p || Promise.resolve()).then(() => {
       if (performance.now() - t0 < 2500 && !started) { if (!hall || scene.arrived) Sound.say("INSERT COIN"); else call = true; }
-      if (hall) Assets.need("titleroar");
+      if (hall && !started) Assets.need("titleroar");
       Assets.need("hubsound");
     });
   };
@@ -12578,6 +12594,7 @@ function showTitle() {
     Sound.init();
     Sound.sfx(hall && Sound.bank.coin_soft ? "coin_soft" : Sound.bank.coin_insert ? "coin_insert" : "coin"); // (the hall's coin is the soft one)
     el.classList.remove("gliding");
+    if (hall) for (const n of (Assets.files.sets && Assets.files.sets.title) || []) letGo(n); // (the hall's pieces it will not take now)
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();
@@ -13196,7 +13213,7 @@ class TitleLife {
 // rushes the vault and opens onto the arcade floor. The bosses breathe in their idle and turn their heads after the
 // lens; now and then one rattles its pod: a short fit, its lights flare, its glass and lamp flicker, a growl far off.
 // Everything generated comes in as it arrives: the hall is built at once and each boss steps into its pod (the pod
-// flares) when its file has come. Opened from disk, with nothing generated, the title is the old avenue (10-title.js).
+// flares) when its file has come; one piece at a time, each over a few frames (see takeArrivals). Opened from disk, with nothing generated, the title is the old avenue (10-title.js).
 // Budget (stated in perf-report.js): one key light and three point lights drawn (LightPool picks the three strongest
 // of the worlds' seven lamps, each as bright as it is near the lens); no shadows, no floor mirror; the pods, their
 // glass, struts and floor glows instanced (four draws for all twelve); each boss one skinned mesh per material (its
@@ -13228,8 +13245,9 @@ const HALL = { z0: -6, step: 12, podX: 4.4, wallX: 7.8, endZ: -78, podR: 1.15, p
 
 // A boss built as rigid parts on a moving skeleton (process-rigged: a mesh a part, each hung on its bone) made one
 // skinned mesh per material: every corner of a part rides its bone with full weight. The bones and the clips are
-// untouched, and the boss draws in two calls, not thirty. Returns { meshes, head } or null (nothing to merge).
-function hallSkin(model) {
+// untouched, and the boss draws in two calls, not thirty. A step a material (it yields between them, so the work is
+// spread over frames). Returns { meshes, head, headK } or null (nothing to merge).
+function* hallSkinSteps(model) {
   const root = model.scene;
   root.updateMatrixWorld(true);
   const prims = [];
@@ -13272,6 +13290,7 @@ function hallSkin(model) {
     geo.boundingSphere.radius *= 1.6; // (an arm flung out in a rattle reaches past the rest pose)
     mat.skinning = true;
     made.push({ geo, mat, caps: /_2$/.test(list[0].name) });
+    yield;
   }
   // the parts go (their own geometry with them), then the part nodes they hung from; the skinned meshes ride the
   // model's root, bound as it stands now
@@ -13281,9 +13300,34 @@ function hallSkin(model) {
   for (const o of empty) if (o.parent) o.parent.remove(o);
   const skeleton = new THREE.Skeleton(bones);
   const meshes = made.map(({ geo, mat, caps }) => { const s = new THREE.SkinnedMesh(geo, mat); s.name = caps ? "hall-caps" : "hall-skin"; root.add(s); s.bind(skeleton, new THREE.Matrix4()); return s; });
-  let head = null;
-  root.traverse((o) => { if (!head && o.name === "Head") head = o; });
-  return { meshes, head };
+  // the bone its head turns on: the head, or (a model built without one, the Inflation Titan) the top of its spine,
+  // turning half as far
+  const find = (n) => { let f = null; root.traverse((o) => { if (!f && o.name === n) f = o; }); return f; };
+  let head = find("Head"), headK = 1;
+  if (!head) { head = find("NeckTwist") || find("Neck") || find("Spine02"); headK = 0.5; }
+  return { meshes, head, headK };
+}
+
+// A model's geometry and pictures let go of (the graphics chip's copies and the decoded pictures themselves) and its
+// materials left bare: the title hall's models are not drawn again (the title takes fresh copies when it comes back).
+// Decoded, the hall's pictures are some 150 MB; the closing scene's materials, kept a while for their shaders
+// (GFX.park), would otherwise hold them for the rest of the visit.
+function hallRelease(model) {
+  const seen = new Set();
+  model.scene.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
+      if (!m || seen.has(m)) continue;
+      seen.add(m);
+      for (const k of DISPOSE_MAPS) {
+        const t = m[k];
+        if (!t || !t.isTexture) continue;
+        t.dispose();
+        if (t.image && typeof t.image.close === "function") { try { t.image.close(); } catch (e) { /* already closed */ } }
+        m[k] = null;
+      }
+    }
+  });
 }
 
 class HallScene extends Scene3D {
@@ -13305,6 +13349,8 @@ class HallScene extends Scene3D {
     this.push = 0;
     this.power = 0.35; // the hall's lamps: dim until its painted vault (and the light it gives) has come, then up
     this.leaving = false;
+    this.taken = []; // (the generated models it has taken: let go of when it closes)
+    this.job = null; // (the piece coming in, a step a frame)
     if (!this.has3D) return;
     // The shared pictures the old title made as the page started (the glow, the city's lit windows, the billboards'
     // atlas) are made here too, at the same moment. Each new picture draws an identity from the random numbers; made
@@ -13312,6 +13358,20 @@ class HallScene extends Scene3D {
     // seeded regression would deal differently with this title than with the old one. Nothing else depends on it.
     glowTexture(); windowGridTexture(); adTexture();
     const s = this.scene;
+    // a stand-in reflection (black) until the painted vault has come: every lit surface's shaders are made with a
+    // reflection from the start, so its coming changes no shader (making them all again at once, as the vault arrived,
+    // was the glide's one long frame)
+    // (made from a black panorama in the same encoding as the painted one, as Assets.loadSky makes its reflection: a
+    // reflection made another way is kept in another encoding, and its shaders differ)
+    if (GFX.ok) {
+      try {
+        const black = new THREE.DataTexture(new Uint8Array(8 * 4 * 4), 8, 4, THREE.RGBAFormat);
+        black.encoding = THREE.sRGBEncoding; black.mapping = THREE.EquirectangularReflectionMapping; black.needsUpdate = true;
+        this.envRT = GFX.pmrem().fromEquirectangular(black);
+        black.dispose();
+        s.environment = this.envRT.texture;
+      } catch (e) { this.envRT = null; }
+    }
     s.userData.lightBudget = { dir: 1, point: 3 }; // (see LightPool: the key, and the three strongest of the worlds' seven lamps)
     s.userData.post = { exposure: 1.16, bloom: 0.75, threshold: 1.05, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.12, split: 0.15,
       ao: 0.75, shadow: 0, dirt: 0.25, mblur: 0.45, sharpen: 0.3, fringe: 0.15 };
@@ -13324,7 +13384,6 @@ class HallScene extends Scene3D {
     this.buildEnd();
     this.makePath();
     this.place();
-    this.takeArrivals();
   }
   onResize() { if (this.has3D && this.cells.length) { this.makePath(); this.place(); } }
   // ---- the room: floor, walls, pillars, beams, a ribbed ceiling, window frames and their strips, a ring lamp over
@@ -13415,7 +13474,7 @@ class HallScene extends Scene3D {
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
           float rim = pow(f, 2.6) * 0.75;
           float col = 0.025 + 0.16 * pow(1.0 - vY, 3.2) + 0.1 * pow(vY, 9.0);
-          float band = smoothstep(0.06, 0.0, abs(fract(vY * 0.7 - uT * 0.045) - 0.5)) * 0.05;
+          float band = (1.0 - smoothstep(0.0, 0.06, abs(fract(vY * 0.7 - uT * 0.045) - 0.5))) * 0.05;
           float haze = 1.0 - 0.8 * smoothstep(uFogNear, uFogFar * 1.25, vDepth);
           gl_FragColor = vec4(vCol * (rim + col + band) * uK * (1.0 + vFlick) * haze, 1.0);
         }`,
@@ -13518,12 +13577,12 @@ class HallScene extends Scene3D {
           vec3 d = normalize(vW - cameraPosition);
           vec2 par = clamp(vec2(dot(d, vS), dot(d, vT)) / max(-dot(d, vN), 0.08), -2.5, 2.5) * vec2(0.035, 0.04); // (the depth: the far land shifts as the lens passes)
           vec2 uv = vAt + (vUv - 0.5) * vSpan.xy + par;
-          vec3 c = texture2D(tSky, vec2(fract(uv.x), clamp(uv.y, 0.02, 0.98))).rgb;
+          vec3 c = texture2D(tSky, vec2(uv.x, clamp(uv.y, 0.02, 0.98))).rgb;
           c = c * c * (c * 0.305 + 0.695);
-          vec3 col = mix(uTint * 0.03, c * 1.45 * uK, uOn);
-          float bars = (1.0 - vSpan.z) * max(smoothstep(0.012, 0.004, abs(fract(vUv.x * 3.0) - 0.5) - 0.484), smoothstep(0.01, 0.003, abs(vUv.y - 0.62) - 0.003)); // (a window's three panes across and its transom)
+          vec3 col = mix(uTint * 0.03, c * mix(1.0, 1.45, vSpan.z) * uK, uOn); // (a window; a skylight a little brighter)
+          float bars = (1.0 - vSpan.z) * max(smoothstep(0.004, 0.012, abs(fract(vUv.x * 3.0) - 0.5) - 0.484), 1.0 - smoothstep(0.003, 0.01, abs(vUv.y - 0.62) - 0.003)); // (a window's three panes across and its transom)
           col *= 1.0 - 0.8 * bars;
-          col += uTint * 0.06 * (1.0 - vSpan.z) * smoothstep(0.35, 0.0, abs(vUv.x - vUv.y * 0.6 - 0.2)); // (a sheen across a window's glass)
+          col += uTint * 0.06 * (1.0 - vSpan.z) * (1.0 - smoothstep(0.0, 0.35, abs(vUv.x - vUv.y * 0.6 - 0.2))); // (a sheen across a window's glass)
           col *= 1.0 - 0.35 * vSpan.z * (1.0 - smoothstep(0.0, 0.08, min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y)))); // (a skylight darkens toward its frame)
           gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
         }`,
@@ -13570,7 +13629,7 @@ class HallScene extends Scene3D {
     this.camBase.copy(p);
     const atEnd = smoothstep(0.8, 1, u);
     if (this.state !== "glide") { this.camBase.x += Math.sin(t * 0.12) * 0.45 * mv; this.camBase.y += Math.sin(t * 0.2) * 0.06 * mv; }
-    this.camBase.z -= this.push * 9;
+    this.camBase.z -= this.push * (this.calm ? 2 : 9); // (reduced effects: a short step, not a rush)
     const ahead = this.path.getPointAt(Math.min(1, u + 0.1)), si = (HALL.z0 + 7 - p.z) / HALL.step, i = Math.floor(si), f = si - i;
     const side = i % 2 ? -1 : 1, sweep = i >= 0 && i < HALL_WORLDS.length ? (Math.sin(f * Math.PI) * side * 3.0 * mv) / Math.max(1, this.mult * 0.5) : 0;
     this.lookAt.set(ahead.x + sweep, 3.3, ahead.z - 6);
@@ -13579,51 +13638,107 @@ class HallScene extends Scene3D {
     this.lookAt.y -= Pointer.y * 0.4;
     this.placeCamera();
   }
-  // ---- the generated pieces, each put in its place once it has come (at most one boss at a time, so no frame carries
-  // more than one boss's making); the hall is then drawn once off-screen, so nothing new is made ready the first time
-  // the lens meets it
+  // ---- the generated pieces come in one at a time, each over a few frames, one step a frame: a boss's skin made a
+  // material at a time, each of its pictures sent to the graphics chip in a frame of its own, then it alone drawn once
+  // off-screen (its shaders made ready), then it steps into its pod. No frame of the glide carries more than one step.
+  // (The hall's painted vault changes how every lit surface is shaded: for it the whole hall is drawn once.)
   takeArrivals() {
-    if (!Assets.on || this.leaving) return;
-    let got = false;
-    if (!this.sky) {
-      const sky = Assets.sky("title-hall");
-      if (sky && sky.map) { this.sky = makePanoSky(sky, { gain: 0.42, lift: 0.6 }); this.scene.add(this.sky); applySkyEnv(this.scene, sky); got = true; }
-    }
-    if (!this.podMesh) { const m = Assets.model("prop-pod"); if (m) { this.podParts(m); got = true; } }
-    for (const W of HALL_WORLDS) if (!W._win.uniforms.tSky.value) {
-      const img = Assets.ui(W.win);
-      if (img) { const t = new THREE.Texture(img); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.needsUpdate = true; W._win.uniforms.tSky.value = t; W._win.uniforms.uOn.value = 1; (this.texs || (this.texs = [])).push(t); got = true; }
-    }
+    if (!Assets.on || this.leaving || this.job) return;
+    let piece = null;
+    if (!this.sky) { const sky = Assets.sky("title-hall"); if (sky && sky.map) piece = this.skyPiece(sky); }
+    if (!piece && !this.podMesh) { const m = this.take("prop-pod"); if (m) piece = this.podPiece(m); }
+    if (!piece) for (const W of HALL_WORLDS) if (!W._win.uniforms.tSky.value) { const img = Assets.ui(W.win); if (img) { piece = this.windowPiece(W, img); break; } }
     // (the vault door, the cabinets, the stand and its cup are the arcade floor's models too: the floor's own copies are
     // made ready when it asks for its set, once the glide has arrived: see showTitle)
-    if (!this.vault) { const m = Assets.model("prop-vault"); if (m) { this.vault = this.prop(m, 6.0, 0, 0.05, HALL.endZ + 1.2, 0, { env: 1.6, glow: 1.6 }); got = true; } }
-    if (!this.cabs) { const m = Assets.model("prop-cabinet"); if (m) { this.cabinets(m); got = true; } }
-    if (!this.stand) { const m = Assets.model("prop-stand"); if (m) { this.stand = this.prop(m, 1.13, 0, 0, HALL.endZ + 7, 0, { env: 1.6, glow: 1.4 }); got = true; } }
-    if (!this.cup && this.stand) { const m = Assets.model("prop-trophy"); if (m) { this.cup = this.prop(m, 0.95, 0, 1.06, HALL.endZ + 7 - 0.57, 0, { env: 3.2, glow: 2.4 }); got = true; } }
-    for (const c of this.cells) if (!c.boss) { const m = Assets.model(c.name); if (m) { this.seat(c, m); got = true; break; } }
-    if (got && this.shown) { const cur = Assets.cur; Assets.cur = null; GFX.warm(this); Assets.cur = cur; } // (another screen's warm list is left as it was)
+    if (!piece && !this.vault) { const m = this.take("prop-vault"); if (m) piece = this.propPiece("vault", m, 6.0, 0, 0.05, HALL.endZ + 1.2, { env: 1.6, glow: 1.6 }); }
+    if (!piece && !this.cabs) { const m = this.take("prop-cabinet"); if (m) piece = this.cabPiece(m); }
+    if (!piece && !this.stand) { const m = this.take("prop-stand"); if (m) piece = this.propPiece("stand", m, 1.13, 0, 0, HALL.endZ + 7, { env: 1.6, glow: 1.4 }); }
+    if (!piece && !this.cup && this.stand) { const m = this.take("prop-trophy"); if (m) piece = this.propPiece("cup", m, 0.95, 0, 1.06, HALL.endZ + 7 - 0.57, { env: 3.2, glow: 2.4 }); }
+    if (!piece) for (const c of this.cells) if (!c.boss && !c.coming) { const m = this.take(c.name); if (m) { c.coming = true; piece = this.bossPiece(c, m); break; } }
+    this.job = piece;
   }
-  // a prop of the end of the hall: its height in metres, where it stands, its turn
-  prop(m, h, x, y, z, ry, tune) {
+  // a model taken from the loaded files (let go of when the hall closes: see dispose)
+  take(name) { const m = Assets.model(name); if (m) this.taken.push(m); return m; }
+  // each of a model's pictures sent to the graphics chip, one a frame
+  *upload(m) {
+    const r = GFX.ok && GFX.renderer, seen = new Set(), maps = [];
+    if (!r || !r.initTexture) return;
+    m.scene.traverse((o) => { if (o.isMesh) for (const mt of Array.isArray(o.material) ? o.material : [o.material]) for (const k of DISPOSE_MAPS) { const t = mt && mt[k]; if (t && !seen.has(t)) { seen.add(t); maps.push(t); } } });
+    for (const t of maps) { try { r.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ } yield; }
+  }
+  // a new piece drawn once off-screen and alone (its shaders made, anything left of it sent), under the hall's own
+  // lights, so that the lens meeting it costs nothing
+  warmNew(objs) {
+    if (!GFX.ok || !GFX._warmRT) return;
+    const r = GFX.renderer, s = this.scene, keep = new Set(objs), off = [], on = [];
+    for (const c of s.children) if (!c.isLight && !keep.has(c) && c.visible) { off.push(c); c.visible = false; }
+    for (const o of objs) o.traverse((x) => { on.push(x, x.visible, x.frustumCulled); x.visible = true; x.frustumCulled = false; });
+    const mask = this.camera.layers.mask;
+    this.camera.layers.mask = ~(1 << LIGHT_LAYER); // (as GFX.warm draws: every layer but the hidden lights')
+    try { r.setRenderTarget(GFX._warmRT); r.render(s, this.camera); } catch (e) { /* best effort */ }
+    r.setRenderTarget(null);
+    this.camera.layers.mask = mask;
+    for (const c of off) c.visible = true;
+    for (let i = 0; i < on.length; i += 3) { on[i].visible = on[i + 1]; on[i].frustumCulled = on[i + 2]; }
+  }
+  // the hall's painted vault: its light and reflections only (the hall is closed: the painting itself is never seen).
+  // It takes the stand-in's place: the same kind of reflection, so no shader is made again.
+  *skyPiece(sky) {
+    applySkyEnv(this.scene, sky);
+    this.sky = sky;
+    if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+    yield;
+  }
+  // a world's picture, for its windows, its skylight and a cabinet's screen
+  *windowPiece(W, img) {
+    const t = new THREE.Texture(img);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.wrapS = THREE.RepeatWrapping; t.needsUpdate = true; // (it wraps round: a view across the panorama's join shows no seam)
+    (this.texs || (this.texs = [])).push(t);
+    try { if (GFX.ok && GFX.renderer.initTexture) GFX.renderer.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ }
+    yield;
+    W._win.uniforms.tSky.value = t; W._win.uniforms.uOn.value = 1;
+  }
+  // a prop of the end of the hall: its height in metres, where it stands
+  *propPiece(key, m, h, x, y, z, tune) {
     tuneModel(m, tune);
     const o = m.scene;
     o.scale.setScalar(h);
     o.position.set(x, y, z);
-    o.rotation.y = ry;
+    yield* this.upload(m);
     this.endGroup.add(o);
-    return o;
+    this.warmNew([this.endGroup]);
+    this[key] = o;
+  }
+  *cabPiece(m) {
+    const objs = this.cabinets(m);
+    if (!objs) return;
+    yield;
+    yield* this.upload(m);
+    for (const o of objs) this.endGroup.add(o);
+    this.warmNew([this.endGroup]);
+    this.cabs = objs[0];
+  }
+  *podPiece(m) {
+    const frame = this.podBuild(m);
+    if (!frame) return;
+    yield;
+    yield* this.upload(m);
+    this.scene.add(this.podMesh);
+    this.warmNew([this.podMesh]);
+    const was = this.baseTop;
+    this.podFrame(frame[0], frame[1]); // (the glass and struts between its base and cap)
+    for (const c of this.cells) if (c.boss) c.boss.position.y += this.baseTop - was; // (a boss already in stands on the base as it really is)
   }
   // the two cabinets either side of the vault, one model drawn twice in one call; on each screen, a world's sky
   cabinets(m) {
     const made = modelGeometry(m);
-    if (!made) return;
+    if (!made) return null;
     tuneModel(m, { env: 1.4, glow: 1.8 });
     made.geo.deleteAttribute("aRest");
-    this.cabs = new THREE.InstancedMesh(made.geo, made.mat, 2);
-    this.cabs.frustumCulled = false;
+    const cabs = new THREE.InstancedMesh(made.geo, made.mat, 2), objs = [cabs];
+    cabs.frustumCulled = false;
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), S = new THREE.Vector3(2.6 * 1.15, 2.6, 2.6), Z = HALL.endZ, up = new THREE.Vector3(0, 1, 0);
-    this.cabAt = [-1, 1].map((sd, i) => { const at = { x: sd * 4.15, z: Z + 4.2, ry: -sd * 0.5 }; this.cabs.setMatrixAt(i, M.compose(new THREE.Vector3(at.x, 0, at.z), q.setFromAxisAngle(up, at.ry), S)); return at; });
-    this.endGroup.add(this.cabs);
+    this.cabAt = [-1, 1].map((sd, i) => { const at = { x: sd * 4.15, z: Z + 4.2, ry: -sd * 0.5 }; cabs.setMatrixAt(i, M.compose(new THREE.Vector3(at.x, 0, at.z), q.setFromAxisAngle(up, at.ry), S)); return at; });
     // their screens (HUBGEN.SCREEN: where the glass is on the model), each showing a world through its glass
     const SC = HUBGEN.SCREEN;
     this.screens = [];
@@ -13633,10 +13748,10 @@ class HallScene extends Scene3D {
         vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
         fragmentShader: `uniform sampler2D tSky; uniform float uOn; uniform vec2 uAt; uniform float uT; varying vec2 vUv;
           void main(){
-            vec3 c = texture2D(tSky, vec2(fract(uAt.x - 0.12 + vUv.x * 0.24 + uT * 0.004), uAt.y - 0.1 + vUv.y * 0.2)).rgb;
+            vec3 c = texture2D(tSky, vec2(uAt.x - 0.12 + vUv.x * 0.24 + uT * 0.004, uAt.y - 0.1 + vUv.y * 0.2)).rgb;
             c = c * c * (c * 0.305 + 0.695) * 1.6;
             float scan = 0.82 + 0.18 * sin(vUv.y * 180.0);
-            float edge = smoothstep(0.0, 0.06, vUv.x) * smoothstep(1.0, 0.94, vUv.x) * smoothstep(0.0, 0.08, vUv.y) * smoothstep(1.0, 0.92, vUv.y);
+            float edge = smoothstep(0.0, 0.06, vUv.x) * (1.0 - smoothstep(0.94, 1.0, vUv.x)) * smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
             gl_FragColor = vec4(mix(vec3(0.02, 0.04, 0.08), c, uOn) * scan * edge, 1.0);
           }`,
       });
@@ -13646,16 +13761,17 @@ class HallScene extends Scene3D {
       scr.position.set(0, SC.y * S.y, SC.z * S.z + 0.012);
       scr.rotation.x = -SC.tilt;
       g.add(scr);
-      this.endGroup.add(g);
+      objs.push(g);
       this.screens.push(mat);
     });
+    return objs;
   }
   // the pod's own base and cap from its model (one geometry, drawn twelve times in one call); its middle, the glass
   // and struts, is the hall's own. The model is set to the pod's glass radius and its cap lifted to the pod's height,
   // so a tall pod keeps its base and cap's own proportions.
-  podParts(m) {
+  podBuild(m) {
     const made = modelGeometry(m);
-    if (!made) return;
+    if (!made) return null;
     const g = made.geo, P = g.attributes.position, I = g.index, bb = made.box, h = bb.max.y - bb.min.y, cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
     const lo = 0.25, hi = 0.78; // (the model's base and cap, as a fraction of its height: its middle is the glass and struts)
     const cy = (t) => (P.getY(I.getX(t)) + P.getY(I.getX(t + 1)) + P.getY(I.getX(t + 2))) / 3;
@@ -13685,28 +13801,24 @@ class HallScene extends Scene3D {
     const q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
     for (const c of this.cells) c.podM = new THREE.Matrix4().compose(c.anchor.position, q.setFromAxisAngle(up, c.anchor.rotation.y), one);
     this.podSeen = "";
-    this.scene.add(this.podMesh);
-    const was = this.baseTop;
-    this.podFrame(lo * h * s, hi * h * s + lift); // (the glass and struts between them)
-    for (const c of this.cells) if (c.boss) c.boss.position.y += this.baseTop - was; // (a boss already in stands on the base as it really is)
+    return [lo * h * s, hi * h * s + lift];
   }
   // a boss into its pod: made one skinned mesh, sized to stand in the glass, its idle started from its own moment;
   // the pod flares as it comes in. (The Probate Tollgate has no skeleton: its hinged parts sway by code.)
-  seat(c, m) {
+  *bossPiece(c, m) {
     const root = m.scene;
     let skin = null;
-    if (m.animations && m.animations.length) { try { skin = hallSkin(m); } catch (e) { skin = null; } }
+    if (m.animations && m.animations.length) { try { skin = yield* hallSkinSteps(m); } catch (e) { skin = null; } }
     else { rigModel(m, { tree: { forearmL: "shoulderL", forearmR: "shoulderR", shoulderL: "body", shoulderR: "body" } }); c.rig = m.parts; c.rest = {}; for (const n of ["body", "shoulderL", "shoulderR", "forearmL", "forearmR"]) if (m.parts[n]) c.rest[n] = m.parts[n].rotation.clone(); }
+    yield;
     c.mats = tuneModel(m, { env: 1.8, glow: 1.1 });
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
     const k = Math.min(HALL.bossH / Math.max(1e-3, size.y), HALL.bossW / Math.max(1e-3, size.x, size.z));
     root.scale.setScalar(k);
     root.position.set((-(box.min.x + box.max.x) / 2) * k, this.baseTop - box.min.y * k, (-(box.min.z + box.max.z) / 2) * k);
-    c.anchor.add(root);
-    c.boss = root;
-    c.flick = 1.6; // (its pod flares: the boss is in)
-    if (skin) { c.head = skin.head; c.caps = skin.meshes.filter((x) => x.name === "hall-caps"); if (c.head) c.headRest = c.head.quaternion.clone(); }
+    yield* this.upload(m);
+    if (skin) { c.head = skin.head; c.headK = skin.headK; c.caps = skin.meshes.filter((x) => x.name === "hall-caps"); if (c.head) c.headRest = c.head.quaternion.clone(); }
     const clips = m.animations || [];
     if (clips.length) {
       c.mixer = new THREE.AnimationMixer(root);
@@ -13715,15 +13827,20 @@ class HallScene extends Scene3D {
       c.idle.play();
       c.idle.time = Math.random() * c.idle.getClip().duration;
       c.idle.timeScale = (this.calm ? 0.55 : 0.85) + Math.random() * 0.2;
-      c.headAnim = clips.some((cl) => cl.tracks.some((t) => t.name === "Head.quaternion"));
+      c.headAnim = !!c.head && clips.some((cl) => cl.tracks.some((t) => t.name === c.head.name + ".quaternion"));
       c.mixer.update(0);
     }
     c.phase = Math.random() * 10;
+    c.anchor.add(root);
+    c.boss = root;
+    this.warmNew([c.anchor]);
+    c.ready = true;
+    c.flick = 1.6; // (its pod flares: the boss is in)
   }
   // a tap during the glide: it hurries to the end (the logo and INSERT COIN arrive with it)
   // (fast enough to cover what is left of it in about two seconds, set at the tap: the glide eases in to its end)
   hurry() {
-    if (this.state === "glide") { this.hurrying = true; this.hurryRate = Math.max(1, (this.GLIDE - this.gt) / 1.9); }
+    if (this.state === "glide") { this.hurrying = true; this.hurryRate = Math.max(this.hurryRate || 1, (this.GLIDE - this.gt) / 1.9); }
     else if (this.state === "back" || this.state === "fwd") { if (this.state === "back") { this.state = "fwd"; this.bt = 22 - this.bt; } this.hurrying = true; }
   }
   // INSERT COIN: the lens rushes the vault, the pods and the vault's lamp surge
@@ -13736,7 +13853,11 @@ class HallScene extends Scene3D {
     super.update(dt);
     if (!this.has3D) return;
     this.shown = true;
-    if (Assets.on && !this.leaving && (this.pollT = (this.pollT || 0) - dt) <= 0) { this.pollT = 0.25; this.takeArrivals(); }
+    // the generated pieces: one step of the one coming in, each frame; a look for the next every fifth of a second
+    if (!this.leaving) {
+      if (this.job) { try { if (this.job.next().done) this.job = null; } catch (e) { this.job = null; } }
+      else if (Assets.on && (this.pollT = (this.pollT || 0) - dt) <= 0) { this.pollT = 0.2; this.takeArrivals(); }
+    }
     this.power += ((this.sky ? 1 : 0.35) - this.power) * Math.min(1, dt * 1.2); // (the hall powers up when its painted vault has come)
     // the glide from the door, at its own pace (or hurried); the rest at its end; after a long rest a slow pull back
     // and in again
@@ -13779,7 +13900,7 @@ class HallScene extends Scene3D {
       const fl = this.calm ? 0 : c.flick * (Math.sin(this.t * 33 + c.x * 3) > 0 ? 1.1 : -0.45);
       c.flick = Math.max(0, c.flick - dt * 1.6);
       if (Math.abs(this.gFlick.array[c.i] - fl) > 1e-3) { this.gFlick.array[c.i] = fl; flicked = true; }
-      if (!c.boss) continue;
+      if (!c.boss || !c.ready) continue;
       const d = Math.hypot(c.x - cam.x, c.z - cam.z);
       sph.center.set(c.x, 2.2, c.z); sph.radius = 2.6;
       const show = d < far && f.intersectsSphere(sph);
@@ -13804,7 +13925,7 @@ class HallScene extends Scene3D {
           c.boss.getWorldPosition(v);
           let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y;
           want = Math.atan2(Math.sin(want), Math.cos(want));
-          c.yaw += (clamp(want, -0.6, 0.6) - c.yaw) * Math.min(1, step * 2.2);
+          c.yaw += (clamp(want, -0.6, 0.6) * (c.headK || 1) - c.yaw) * Math.min(1, step * 2.2);
           c.head.parent.getWorldQuaternion(q).invert();
           axis.set(0, 1, 0).applyQuaternion(q).normalize();
           c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
@@ -13826,7 +13947,6 @@ class HallScene extends Scene3D {
       const near = this.cells.filter((c) => c.boss && c.boss.visible && Math.hypot(c.x - cam.x, c.z - cam.z) < HALL.near + 4);
       if (near.length) this.rattle(near[Math.floor(Math.random() * near.length)]);
     }
-    if (this.sky) this.sky.userData.follow(this.camera);
     FX.sync(this.scene, this.t);
   }
   // the Probate Tollgate in stasis: it rocks a little on its tracks, its arms sway; in a rattle it jolts and its
@@ -13859,7 +13979,9 @@ class HallScene extends Scene3D {
     if (Sound.bank && Sound.bank[r]) Sound.sfx(r, c.sd * 0.55, { vol: 0.3, lp: 1100, rate: 0.92, vary: 0.5 }); // (about 9 dB under the music: heard, far off, on a phone's speaker too)
   }
   dispose() {
+    if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
     for (const t of this.texs || []) t.dispose();
+    for (const m of this.taken || []) hallRelease(m); // (before the scene's own dispose: see hallRelease)
     super.dispose();
   }
 }

@@ -225,7 +225,7 @@ track came within 0.06 BPM of what was asked), starting where the levels at both
 
 | File | Holds | Size |
 |---|---|---|
-| `sfx-core.mp3` | hits (right, big, reject, hull, shield, metal), blasts (small, big, huge), debris, charge-ups, warning, lock-on, slow-motion, player hit, life lost, shield down, reward, right/wrong stings, menu sounds, coin, the title's soft coin (`coin_soft`, 2026-11-17: a muted clink and a warm two-note chime), power-up, fanfare, game-over jingle, crowd; loops: alarm, charge hum | 1.9 MB, 145 s (every take generated; loops: every take) |
+| `sfx-core.mp3` | hits (right, big, reject, hull, shield, metal), blasts (small, big, huge), debris, charge-ups, warning, lock-on, slow-motion, player hit, life lost, shield down, reward, right/wrong stings, menu sounds, coin, the title's soft coin (`coin_soft`, 2026-11-17: a muted clink and a warm chime; of its three takes only the first is kept: the other two came back as a sustained 8.9 kHz and 12.6 kHz tone, piercing where soft was asked, and `audio-build.js` leaves them out, `SKIP_TAKES`), power-up, fanfare, game-over jingle, crowd; loops: alarm, charge hum | 1.9 MB, 145 s (every take generated; loops: every take) |
 | `sfx-combat.mp3` | laser, heavy laser, plasma bolt, spent cell, beam, missile launch and hit, volley, energy wave, ground slam, boss roar, hurt, stagger, armour breaking, death, warp; loop: starfighter engine | 1.3 MB, 99 s (every take generated; loops: every take) |
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.7 MB, 51 s (every take generated; loops: every take) |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.3 MB, 25 s (every take generated; loops: every take) |

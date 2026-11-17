@@ -44,6 +44,10 @@ const LOOP_VOL = { alarm: 0.4, charge_hum: 0.4, engine_ship: 0.35, engine_car: 0
 const DUCK = { explosion_huge: 0.45, explosion_big: 0.6, boss_death: 0.5, boss_roar: 0.6, impact_big: 0.7 };
 const ALSO = { boom: "explosion_small", bigboom: "explosion_big", laser: "laser_fire", shot: "plasma_fire", hit: "player_hit", correct: "sting_correct", wrong: "sting_wrong", coin: "coin_insert", blip: "ui_click", select: "ui_select", back: "ui_back", shield: "impact_shield", win: "fanfare", gameover: "gameover", demonroar: "boss_roar", demonhit: "boss_hurt", demonboom: "explosion_big", demonfinale: "explosion_huge", demonshed: "boss_break", demonbreak: "boss_break", demoncharge: "charge_up", bossroar: "boss_roar", bossblast: "explosion_huge", bosssmash: "slam", bosscharge: "charge_long", shatter: "heart_lost", powerup: "powerup", warp: "warp", clunk: "impact_metal" };
 const MAX_TAKES = 99; // (every usable take: the game plays them in turn; an earlier cap of four left paid-for takes unheard)
+// takes that came back as something other than what was asked, left out: the title's soft coin #1 and #2 are a
+// sustained 8.9 kHz and 12.6 kHz tone (71 and 84 % of their energy above 8 kHz), piercing where the prompt asked for
+// soft and warm; #0 is the soft clink and chime (its energy centred near 2.3 kHz)
+const SKIP_TAKES = { coin_soft: [1, 2] };
 
 const idx = JSON.parse(fs.readFileSync(path.join(OUT, "audio", "index.json"), "utf8"));
 const outDir = path.join(ARCADE, "assets", "audio");
@@ -77,6 +81,7 @@ for (const set of allSets) {
     const good = [];
     for (const t of takes) {
       if (good.length >= MAX_TAKES) break;
+      if ((SKIP_TAKES[cue] || []).indexOf(t.take) >= 0) continue;
       let a;
       try { a = pcm(path.join(OUT, t.file), TRIM); } catch (e) { continue; }
       if (a.length < 0.1 * SR || peak(a) < 0.05) continue; // a take that came back silent or cut short
