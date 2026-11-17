@@ -3136,101 +3136,74 @@
   }
  },
  "music": {
-  "exam-b": {
-   "file": "audio/music-exam-b.mp3",
+  "blaster": {
+   "file": "audio/music-blaster.mp3",
    "loop": [
     0.7,
-    50.7104
+    87.1086
    ],
    "vol": 1,
    "take": 0
-  },
-  "memory-b": {
-   "file": "audio/music-memory-b.mp3",
-   "loop": [
-    0.7,
-    57.8497
-   ],
-   "vol": 1,
-   "take": 0
-  },
-  "title-b": {
-   "file": "audio/music-title-b.mp3",
-   "loop": [
-    0.7,
-    48.7048
-   ],
-   "vol": 1,
-   "take": 1
-  },
-  "hub-b": {
-   "file": "audio/music-hub-b.mp3",
-   "loop": [
-    0.7,
-    52.8853
-   ],
-   "vol": 1,
-   "take": 1
-  },
-  "calm-b": {
-   "file": "audio/music-calm-b.mp3",
-   "loop": [
-    0.7,
-    48.7
-   ],
-   "vol": 1,
-   "take": 1
-  },
-  "boss-b": {
-   "file": "audio/music-boss-b.mp3",
-   "loop": [
-    0.7,
-    55.5454
-   ],
-   "vol": 1,
-   "take": 1
-  },
-  "finalboss-b": {
-   "file": "audio/music-finalboss-b.mp3",
-   "loop": [
-    0.7,
-    58.3769
-   ],
-   "vol": 1,
-   "take": 1
-  },
-  "racer-b": {
-   "file": "audio/music-racer-b.mp3",
-   "loop": [
-    0.7,
-    57.6685
-   ],
-   "vol": 1,
-   "take": 1
   },
   "blaster-b": {
    "file": "audio/music-blaster-b.mp3",
    "loop": [
     0.7,
-    53.2
+    87.1086
    ],
    "vol": 1,
    "take": 1
   },
-  "exam": {
-   "file": "audio/music-exam.mp3",
+  "racer": {
+   "file": "audio/music-racer.mp3",
    "loop": [
     0.7,
-    50.7104
+    83.7689
+   ],
+   "vol": 1,
+   "take": 0
+  },
+  "racer-b": {
+   "file": "audio/music-racer-b.mp3",
+   "loop": [
+    0.7,
+    83.7689
    ],
    "vol": 1,
    "take": 1
   },
-  "memory": {
-   "file": "audio/music-memory.mp3",
+  "boss": {
+   "file": "audio/music-boss.mp3",
    "loop": [
     0.7,
-    57.8497
+    89.5807
+   ],
+   "vol": 1,
+   "take": 0
+  },
+  "boss-b": {
+   "file": "audio/music-boss-b.mp3",
+   "loop": [
+    0.7,
+    80.6926
+   ],
+   "vol": 1,
+   "take": 1
+  },
+  "finalboss": {
+   "file": "audio/music-finalboss.mp3",
+   "loop": [
+    0.7,
+    86.3837
+   ],
+   "vol": 1,
+   "take": 0
+  },
+  "finalboss-b": {
+   "file": "audio/music-finalboss-b.mp3",
+   "loop": [
+    0.7,
+    94.9521
    ],
    "vol": 1,
    "take": 1
@@ -3239,64 +3212,91 @@
    "file": "audio/music-title.mp3",
    "loop": [
     0.7,
-    48.7048
+    73.7594
    ],
    "vol": 1,
    "take": 0
+  },
+  "title-b": {
+   "file": "audio/music-title-b.mp3",
+   "loop": [
+    0.7,
+    84.1964
+   ],
+   "vol": 1,
+   "take": 1
   },
   "hub": {
    "file": "audio/music-hub.mp3",
    "loop": [
     0.7,
-    52.8853
+    80.7095
    ],
    "vol": 1,
    "take": 0
+  },
+  "hub-b": {
+   "file": "audio/music-hub-b.mp3",
+   "loop": [
+    0.7,
+    80.7095
+   ],
+   "vol": 1,
+   "take": 1
+  },
+  "exam": {
+   "file": "audio/music-exam.mp3",
+   "loop": [
+    0.7,
+    89.121
+   ],
+   "vol": 1,
+   "take": 0
+  },
+  "exam-b": {
+   "file": "audio/music-exam-b.mp3",
+   "loop": [
+    0.7,
+    76.4895
+   ],
+   "vol": 1,
+   "take": 1
+  },
+  "memory": {
+   "file": "audio/music-memory.mp3",
+   "loop": [
+    0.7,
+    84.7
+   ],
+   "vol": 1,
+   "take": 0
+  },
+  "memory-b": {
+   "file": "audio/music-memory-b.mp3",
+   "loop": [
+    0.7,
+    84.6895
+   ],
+   "vol": 1,
+   "take": 1
   },
   "calm": {
    "file": "audio/music-calm.mp3",
    "loop": [
     0.7,
-    48.718
+    82.974
    ],
    "vol": 1,
    "take": 0
   },
-  "boss": {
-   "file": "audio/music-boss.mp3",
+  "calm-b": {
+   "file": "audio/music-calm-b.mp3",
    "loop": [
     0.7,
-    55.5493
+    82.974
    ],
    "vol": 1,
-   "take": 0
-  },
-  "finalboss": {
-   "file": "audio/music-finalboss.mp3",
-   "loop": [
-    0.7,
-    58.277
-   ],
-   "vol": 1,
-   "take": 0
-  },
-  "racer": {
-   "file": "audio/music-racer.mp3",
-   "loop": [
-    0.7,
-    41.3918
-   ],
-   "vol": 1,
-   "take": 0
-  },
-  "blaster": {
-   "file": "audio/music-blaster.mp3",
-   "loop": [
-    0.7,
-    53.2
-   ],
-   "vol": 1,
-   "take": 0
+   "take": 1
   }
  },
  "built": {
@@ -3330,95 +3330,95 @@
    "bytes": 1436675,
    "seconds": 119.66
   },
-  "music-exam-b": {
-   "file": "audio/music-exam-b.mp3",
-   "bytes": 1020910,
-   "seconds": 50.98
-  },
-  "music-memory-b": {
-   "file": "audio/music-memory-b.mp3",
-   "bytes": 1163538,
-   "seconds": 58.12
-  },
-  "music-title-b": {
-   "file": "audio/music-title-b.mp3",
-   "bytes": 980681,
-   "seconds": 48.97
-  },
-  "music-hub-b": {
-   "file": "audio/music-hub-b.mp3",
-   "bytes": 1064273,
-   "seconds": 53.16
-  },
-  "music-calm-b": {
-   "file": "audio/music-calm-b.mp3",
-   "bytes": 980681,
-   "seconds": 48.97
-  },
-  "music-boss-b": {
-   "file": "audio/music-boss-b.mp3",
-   "bytes": 1117563,
-   "seconds": 55.82
-  },
-  "music-finalboss-b": {
-   "file": "audio/music-finalboss-b.mp3",
-   "bytes": 1174510,
-   "seconds": 58.65
-  },
-  "music-racer-b": {
-   "file": "audio/music-racer-b.mp3",
-   "bytes": 1159881,
-   "seconds": 57.94
+  "music-blaster": {
+   "file": "audio/music-blaster.mp3",
+   "bytes": 1224090,
+   "seconds": 87.38
   },
   "music-blaster-b": {
    "file": "audio/music-blaster-b.mp3",
-   "bytes": 1070543,
-   "seconds": 53.47
-  },
-  "music-exam": {
-   "file": "audio/music-exam.mp3",
-   "bytes": 1020910,
-   "seconds": 50.98
-  },
-  "music-memory": {
-   "file": "audio/music-memory.mp3",
-   "bytes": 1163538,
-   "seconds": 58.12
-  },
-  "music-title": {
-   "file": "audio/music-title.mp3",
-   "bytes": 980681,
-   "seconds": 48.97
-  },
-  "music-hub": {
-   "file": "audio/music-hub.mp3",
-   "bytes": 1064273,
-   "seconds": 53.16
-  },
-  "music-calm": {
-   "file": "audio/music-calm.mp3",
-   "bytes": 981204,
-   "seconds": 48.99
-  },
-  "music-boss": {
-   "file": "audio/music-boss.mp3",
-   "bytes": 1117563,
-   "seconds": 55.82
-  },
-  "music-finalboss": {
-   "file": "audio/music-finalboss.mp3",
-   "bytes": 1172420,
-   "seconds": 58.55
+   "bytes": 1224090,
+   "seconds": 87.38
   },
   "music-racer": {
    "file": "audio/music-racer.mp3",
-   "bytes": 834396,
-   "seconds": 41.66
+   "bytes": 1177644,
+   "seconds": 84.04
   },
-  "music-blaster": {
-   "file": "audio/music-blaster.mp3",
-   "bytes": 1070543,
-   "seconds": 53.47
+  "music-racer-b": {
+   "file": "audio/music-racer-b.mp3",
+   "bytes": 1177644,
+   "seconds": 84.04
+  },
+  "music-boss": {
+   "file": "audio/music-boss.mp3",
+   "bytes": 1258833,
+   "seconds": 89.85
+  },
+  "music-boss-b": {
+   "file": "audio/music-boss-b.mp3",
+   "bytes": 1134490,
+   "seconds": 80.96
+  },
+  "music-finalboss": {
+   "file": "audio/music-finalboss.mp3",
+   "bytes": 1214215,
+   "seconds": 86.65
+  },
+  "music-finalboss-b": {
+   "file": "audio/music-finalboss-b.mp3",
+   "bytes": 1334170,
+   "seconds": 95.22
+  },
+  "music-title": {
+   "file": "audio/music-title.mp3",
+   "bytes": 1037210,
+   "seconds": 74.03
+  },
+  "music-title-b": {
+   "file": "audio/music-title-b.mp3",
+   "bytes": 1183495,
+   "seconds": 84.47
+  },
+  "music-hub": {
+   "file": "audio/music-hub.mp3",
+   "bytes": 1134490,
+   "seconds": 80.98
+  },
+  "music-hub-b": {
+   "file": "audio/music-hub-b.mp3",
+   "bytes": 1134490,
+   "seconds": 80.98
+  },
+  "music-exam": {
+   "file": "audio/music-exam.mp3",
+   "bytes": 1252615,
+   "seconds": 89.39
+  },
+  "music-exam-b": {
+   "file": "audio/music-exam-b.mp3",
+   "bytes": 1075610,
+   "seconds": 76.76
+  },
+  "music-memory": {
+   "file": "audio/music-memory.mp3",
+   "bytes": 1190444,
+   "seconds": 84.97
+  },
+  "music-memory-b": {
+   "file": "audio/music-memory-b.mp3",
+   "bytes": 1190444,
+   "seconds": 84.96
+  },
+  "music-calm": {
+   "file": "audio/music-calm.mp3",
+   "bytes": 1166307,
+   "seconds": 83.24
+  },
+  "music-calm-b": {
+   "file": "audio/music-calm-b.mp3",
+   "bytes": 1166307,
+   "seconds": 83.24
   }
  }
 }

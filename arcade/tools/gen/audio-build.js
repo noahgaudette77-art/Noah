@@ -138,8 +138,11 @@ for (const set of allSets) {
 }
 
 // ---- music: --music name=take picks the take; cut to a whole loop, the last beats folded over the first
-for (const a of args.filter((x) => /^[a-z]+(-b)?=\d+$/.test(x))) {
-  const [name, take] = a.split("="), e = idx[`music/${name.replace(/-b$/, "")}#${take}`]; // ("blaster-b=1": the other take of a track, as a track of its own)
+for (const a of args.filter((x) => /^[a-z]+(-b)?=([a-z0-9]+:)?\d+$/.test(x))) {
+  // "blaster=0": take 0 of the prompt of that name; "blaster-b=1": its other take, as a track of its own;
+  // "blaster=blaster2:0": take 0 of another prompt (blaster2), built as the game's track "blaster"
+  const [name, rest] = a.split("="), [src, take] = rest.includes(":") ? rest.split(":") : [name.replace(/-b$/, ""), rest];
+  const e = idx[`music/${src}#${take}`];
   if (!e) { console.warn("no such music take: " + a); continue; }
   const s = pcm(path.join(OUT, e.file), "silenceremove=start_periods=1:start_threshold=-50dB", 2); // interleaved stereo
   let n = s.length / 2;
@@ -184,7 +187,7 @@ for (const a of args.filter((x) => /^[a-z]+(-b)?=\d+$/.test(x))) {
   level(out, 0.84);
   const pre = Math.round(0.2 * SR), b = new Float32Array((L + pre * 2) * 2);
   b.set(out.subarray((L - pre) * 2), 0); b.set(out, pre * 2); b.set(out.subarray(0, pre * 2), (pre + L) * 2);
-  writeSprite("music-" + name, [b], {}, true, 160);
+  writeSprite("music-" + name, [b], {}, true, 112); // (112 kbps stereo: soft synth music loses nothing audible, and a phone downloads less)
   const at = (LEAD * 2 + pre) / SR;
   result.music[name] = { file: "audio/music-" + name + ".mp3", loop: [+at.toFixed(4), +(at + L / SR).toFixed(4)], vol: 1, take: +take };
 }

@@ -190,8 +190,8 @@ head-and-shoulders portrait of each of the twelve bosses (192 px cells, 86 KB). 
 ElevenLabs. Effects: `eleven_text_to_sound_v2`, `prompt_influence` 0.45, a fixed duration per effect, 3 to 6 takes
 each (the game plays the takes of a sound in turn, each at the volume that makes it as loud as the middle take). Loops: the same model with `loop: true`. Announcer: voice
 "Harry" (`SOYHLrjzK2X1ezoPC6cr`), model `eleven_v3`, with a touch of echo and compression added in the build.
-`audio.json` lists every cue's place in its sprite. Music is cut to a loop of whole four-bar phrases at the take's own measured tempo (all
-ten tracks came within 0.06 BPM of what was asked), starting where the levels at both ends of the loop match.
+`audio.json` lists every cue's place in its sprite. Music is cut to a loop of whole four-bar phrases at the take's own measured tempo (every
+track came within 0.06 BPM of what was asked), starting where the levels at both ends of the loop match.
 
 | File | Holds | Size |
 |---|---|---|
@@ -200,14 +200,8 @@ ten tracks came within 0.06 BPM of what was asked), starting where the levels at
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.7 MB, 51 s (every take generated; loops: every take) |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.3 MB, 25 s (every take generated; loops: every take) |
 | `voice.mp3` | 72 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, every game's name, "Welcome to the arcade", streak names, milestones ...; "Boss Rush!" retaken on 2026-11-17, its first take cut off by the provider); plus the five lines first recorded in three other voices to choose the announcer ("Game over!" by adam, brian and charlie; "Boss incoming!" by adam and brian), kept as voices of their own for the bosses' last word and the hall's cabinets, and three takes of "Boss Rush!" | 1.4 MB, 120 s |
-| `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
-| `music-racer.mp3` | Nest Egg Run's track: ElevenLabs `music_v2_5`, prompt `racer` in `sounds.js` (outrun synthwave, 118 BPM), take 0 of 2, cut to a loop from 0.7 s to 48.1 s | 0.9 MB, 48 s |
 | `sfx-bosses.mp3` | Boss Rush: each boss's own roar (`roar_1` .. `roar_11`, `roar_all`, 3 takes each), a giant machine landing, a limb servo, powering up | 1.3 MB, 98 s (every take generated; loops: every take) |
-| `music-boss.mp3` | Boss Rush's track: ElevenLabs `music_v2_5`, prompt `boss` (dark aggressive synthwave, 140 BPM), take 0 of 2, a loop from 0.7 s to 57.5 s | 1.1 MB, 58 s |
-| `music-finalboss.mp3` | The Proctor's track: prompt `finalboss` (epic dark synthwave, 150 BPM), take 0 of 2, a loop from 0.7 s to 63.1 s | 1.2 MB, 63 s |
-| `music-title.mp3`, `music-hub.mp3` | The title's theme (100 BPM) and the arcade hall's laid-back track (92 BPM): prompts `title`, `hub`, take 0 of 2 each | 1.0 MB each, about 50 s |
-| `music-exam.mp3`, `music-memory.mp3`, `music-calm.mp3` | Final Exam (tense, solemn, 96 BPM), Memory Bank (mellow, 84 BPM), Strategy Guide (calm, 80 BPM): prompts `exam`, `memory` (take 1 of 2), `calm` (take 0 of 2) | about 1.0 MB each, about 50 s |
-| `music-<name>-b.mp3` (nine) | The second take of each track (`blaster`, `racer`, `boss`, `finalboss`, `title`, `hub`, `exam`, `memory`, `calm`), each cut to its own whole-bar loop and levelled in the mix like the first: a screen plays one of its two tracks, alternating visit by visit | 1.0 to 1.1 MB each |
+| `music-<name>.mp3`, `music-<name>-b.mp3` (eighteen) | The calmer music of 2026-11-17, made when the owner found the first music tiring in study sessions: ElevenLabs `music_v2_5`, 96 s asked for, prompts in `sounds.js`: `title2` (dreamwave, 92 BPM), `hub2` (chillwave lounge, 84), `blaster2` (spacey synthwave, 100), `racer2` (sunset dreamwave, 104), `boss2` (dark but restrained, 108), `finalboss2` (epic but measured, 112), `exam2` (minimal and focused, 76), `memory2` (mellow lo-fi, 80), `calm2` (ambient, 70); each asks for a soft, warm mix with no harsh highs, no sudden hits, no insistent lead, and two contrasting sections. Take 0 of each is the track (`blaster`, `racer`, `boss`, `finalboss`, `title`, `hub`, `exam`, `memory`, `calm`), take 1 its `-b`. Each is cut to its own loop of whole four-bar phrases (24 to 44 bars, 74 to 95 s; every tempo measured within 0.04 BPM of the one asked) and levelled in the mix (`Sound.MIX`) to the same loudness as the others; a screen plays one of its two, alternating visit by visit. 112 kbps stereo. Compared with the first music (kept in the history): about 85 s before a track repeats instead of about 50, the energy above 4 kHz down to 0.0 to 0.9 % of the whole from up to 4.1 % (Risk Blaster's from 4.1 % to 0.06 %), and fewer notes struck a second on most tracks (the title 6.4 to 3.9, Risk Blaster 7.3 to 6.6, the Proctor's second 9.2 to 6.7) | 1.0 to 1.3 MB each |
 
 ## Spend log
 
@@ -219,7 +213,7 @@ each provider; failed calls are not charged by any of the four. Every paid call 
 |---|---|---|---|---|
 | Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 5,610 | 3,855 (checked live) | 34 image-to-3D at the highest settings (60 each), 27 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 32 retarget requests (129 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265) |
 | fal.ai | $49.90 | $28.70 | $21.20 | 25 Rodin Gen-2.5 runs, 100 Seedream 5.5 concept images, 22 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
-| ElevenLabs | 131,000 credits | 25,822 (checked live) | 105,178 | 495 sound effects and loops (11 credits a second), 84 announcer lines (four of them retakes of "Boss Rush!", whose first take the provider had cut off at 0.21 s; four speech-to-text checks of them), 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
+| ElevenLabs | 131,000 credits | 44,302 (checked live, 2026-11-17 15:00 UTC) | 86,698 | 495 sound effects and loops (11 credits a second), 84 announcer lines (four of them retakes of "Boss Rush!", whose first take the provider had cut off at 0.21 s; four speech-to-text checks of them), 19 music runs for the first music (about 880 credits each) and 18 for the calmer music (96 s each, 18,480 credits in all); the provider's own counter lags by some minutes |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
 The bosses cost more Tripo credits than first projected (about 1,700 against about 1,000 to 1,450): building them as
