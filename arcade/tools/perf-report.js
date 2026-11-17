@@ -94,7 +94,9 @@ const SCREENS = [
     await page.evaluate(`window.__arcade.${go}`);
     // wait for the screen's files and its first frames
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
-    if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 240000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
+    // (the hall takes its pieces in a step a frame, and this machine draws a phone's screen at HIGH at well under one
+    // frame a second: it is given up to 15 minutes)
+    if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 900000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
     // (the title makes the arcade floor's set ready once its glide arrives, a load and not a frame's cost: it is had
     // first, so the hall's own frames are what is measured)
     if (name === "title") await page.evaluate(() => window.__arcade.Assets.need("hub")).catch(() => null);
