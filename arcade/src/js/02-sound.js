@@ -40,6 +40,8 @@ const Sound = {
   // (the owner, 2026-11-17: the engines and the alarm much subtler, the hall's hum and the boost flames a little;
   // a loop is played at this share of what its caller asks)
   LOOP_SOFT: { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 },
+  // (and some through a low-pass, in Hz: the hall's hum keeps its tone and loses any air or hiss above it)
+  LOOP_TONE: { hub_hum: 1400 },
 
   init() {
     if (this.ctx) return this.resume();
@@ -256,7 +258,8 @@ const Sound = {
     g.gain.value = 0.0001;
     g.gain.setTargetAtTime(to, c.currentTime, o.fade || 0.25);
     if (name === "alarm") g.gain.setTargetAtTime(to * 0.35, c.currentTime + 3.4, 0.9); // (three beats to say it, then a faint beat under the play: the red frame keeps saying it)
-    src.connect(g).connect(this.sfxBus);
+    if (this.LOOP_TONE[name]) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = this.LOOP_TONE[name]; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
+    g.connect(this.sfxBus);
     src.start(c.currentTime, q.at);
     this.loops[id] = { name, src, g, vol: lv };
     return true;
@@ -439,20 +442,12 @@ const Sound = {
       return;
     }
     if (!on) this.stopLoop("ambience", 0.6);
+    // Without the recording: the distant cabinets' soft blips, and nothing under them. (Until 2026-11-17 a loop of
+    // white noise through a wide band-pass lay under them as a "crowd murmur": on a phone, where the hall's recording
+    // is often still on its way 2.6 s after the room comes on, that started instead and never stopped, a steady
+    // hiss at about -57 dBFS that was the only sound above 2 kHz under the soft new music. It is gone.)
     if (on && !this._amb && Store.settings.sfx) {
       const c = this.ctx;
-      const src = c.createBufferSource();
-      src.buffer = this.noiseBuf;
-      src.loop = true;
-      const f = c.createBiquadFilter();
-      f.type = "bandpass";
-      f.frequency.value = 420;
-      f.Q.value = 0.7;
-      const g = c.createGain();
-      g.gain.value = 0.0001;
-      g.gain.setTargetAtTime(0.05, c.currentTime, 1.2);
-      src.connect(f).connect(g).connect(this.sfxBus);
-      src.start();
       const blip = () => {
         if (!this._amb) return;
         const at = c.currentTime;
@@ -472,12 +467,11 @@ const Sound = {
         o.stop(at + 0.2);
         this._amb.t = setTimeout(blip, rand(500, 2200));
       };
-      this._amb = { src, g, t: setTimeout(blip, 600) };
+      this._amb = { t: setTimeout(blip, 600) };
     } else if (!on && this._amb) {
       const a = this._amb;
       this._amb = null;
       clearTimeout(a.t);
-      try { a.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.2); a.src.stop(this.ctx.currentTime + 0.8); } catch (e) { /* already stopped */ }
     }
   },
 
@@ -498,10 +492,13 @@ const Sound = {
       f.connect(g).connect(this.sfxBus);
       o1.start();
       o2.start();
+      // its breath, in tone: the drone's filter opens and it swells a little (in), then settles slower (out). (It
+      // breathed in bursts of band-passed noise, a hiss every 4.8 s all through the exam.)
       const breathe = () => {
         if (!this._dread) return;
-        this.noise(1.1, { vol: 0.035, freq: 620, type: "bandpass", q: 0.9 }); // in
-        this.noise(1.7, { delay: 1.5, vol: 0.06, freq: 380, type: "bandpass", q: 0.8 }); // out
+        const t = c.currentTime;
+        f.frequency.cancelScheduledValues(t); f.frequency.setTargetAtTime(640, t, 0.45); f.frequency.setTargetAtTime(380, t + 1.4, 0.75);
+        g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.064, t, 0.45); g.gain.setTargetAtTime(0.05, t + 1.4, 0.75);
         this._dread.t = setTimeout(breathe, 4800);
       };
       this._dread = { o1, o2, g, t: setTimeout(breathe, 1200) };
@@ -608,11 +605,17 @@ const Sound = {
       return;
     }
     const coming = Assets.on && !!Assets.files.music[take];
-    if (coming) this.loadTrack(take); // (it takes over when it arrives; the synth plays meanwhile, from a moment on: a recording that comes quickly is never preceded by it)
+    // (a recording on its way is waited for in silence and fades in when it arrives: the synth's chiptune, with its
+    // noise hi-hats, no longer stands in for a few seconds first. It plays only when there is no recording: opened
+    // from disk, or the file would not load.)
+    if (coming) { this.loadTrack(take).then((buf) => { if (!buf && this.trackName === name && !this._now && !this.timer && Store.settings.music) this._synth(name); }); return; }
+    this._synth(name);
+  },
+  _synth(name) {
     if (!this.TRACKS[name]) return;
     this.track = this.TRACKS[name];
     this.step = 0;
-    this.nextTime = this.ctx.currentTime + (coming ? 0.7 : 0.08);
+    this.nextTime = this.ctx.currentTime + 0.08;
     this.timer = setInterval(() => this._schedule(), 30);
   },
   stopMusic() {

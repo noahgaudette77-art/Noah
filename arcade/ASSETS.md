@@ -195,6 +195,17 @@ then, after three beats, a faint beat at a third of that while the red frame kee
 room as it comes on and settles away after 14 s; the boost flames at 0.7, the charge hum at 0.8. Every sound can be
 heard on its own, with its name, on the sound test page (`sound-test.html`, Setup > Sound test).
 
+The hiss (fixed 2026-11-17): a constant "shhhh" heard on the phone was the arcade hall's fallback ambience, a looped
+white-noise buffer through a wide band-pass that the sound layer started 2.6 s after the hall came on whenever the
+hall's recorded hum had not finished loading (on a phone over the network it usually had not) and that nothing ever
+stopped: a steady -57 dBFS of broadband noise (spectral flatness 0.26 from 100 Hz to 8 kHz), the only sound above
+2 kHz under the soft new music. Found by recording each bus of the live mix on every screen (`tools/audio-tap.js`,
+with `--slow` to hold a file back as a slow network does) and measuring each recording's floor
+(`tools/noise-floor.py`); no music file, loop or recorded effect carries a noise bed. The noise is gone (the hall
+keeps only its soft tonal cabinet blips while its hum loads); the hum is heard through a 1.4 kHz low-pass; the
+Final Exam's drone breathes in tone, not in bursts of noise; and a recording on its way is waited for in silence, not
+covered by the synth's chiptune and its noise hi-hats.
+
 ElevenLabs. Effects: `eleven_text_to_sound_v2`, `prompt_influence` 0.45, a fixed duration per effect, 3 to 6 takes
 each (the game plays the takes of a sound in turn, each at the volume that makes it as loud as the middle take). Loops: the same model with `loop: true`. Announcer: voice
 "Harry" (`SOYHLrjzK2X1ezoPC6cr`), model `eleven_v3`, with a touch of echo and compression added in the build.

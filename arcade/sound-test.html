@@ -55,6 +55,8 @@
   };
   // the loops as the game now plays them: the engines and the alarm much quieter (Sound.LOOP_SOFT in 02-sound.js)
   const SOFT = { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 };
+  // (and heard through a low-pass, as the game plays it: Sound.LOOP_TONE)
+  const TONE = { hub_hum: 1400 };
   const MUSIC = { blaster: "Risk Blaster", racer: "Nest Egg Run", boss: "Boss Rush", finalboss: "Boss Rush: the final boss", title: "Title", hub: "Arcade hall", exam: "Final Exam", memory: "Memory Bank", calm: "Strategy Guide" };
   let ctx = null, data = null;
   const bufs = {}, live = new Set();
@@ -62,8 +64,8 @@
   const status = (t) => { $("#status").textContent = t; };
   const clickAt = (buf) => { const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7)); for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25; return 0; };
   const load = (file) => bufs[file] || (bufs[file] = fetch("assets/" + file.replace(/^assets\//, "")).then((r) => { if (!r.ok) throw new Error(file + ": " + r.status); return r.arrayBuffer(); }).then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej))).then((buf) => ({ buf, off: clickAt(buf) })));
-  const stopAll = () => { live.forEach((x) => { try { x.src.stop(); } catch (e) {} x.btn && x.btn.classList.remove("playing"); }); live.clear(); };
-  const play = async (file, at, dur, vol, btn, loop) => {
+  const stopAll = () => { live.forEach((x) => { try { x.stop ? x.stop() : x.src.stop(); } catch (e) {} x.btn && x.btn.classList.remove("playing"); }); live.clear(); };
+  const play = async (file, at, dur, vol, btn, loop, tone) => {
     if (!ctx) { status("Tap “Tap to start sound” first."); return; }
     if (ctx.state === "suspended") await ctx.resume();
     if (loop) { for (const x of live) if (x.btn === btn) { try { x.src.stop(); } catch (e) {} btn.classList.remove("playing"); live.delete(x); return; } }
@@ -71,7 +73,8 @@
     const { buf, off } = await load(file);
     const src = ctx.createBufferSource(), g = ctx.createGain();
     src.buffer = buf; g.gain.value = vol;
-    src.connect(g).connect(ctx.destination);
+    if (tone) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = tone; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
+    g.connect(ctx.destination);
     const x = { src, btn };
     live.add(x); btn.classList.add("playing");
     src.onended = () => { live.delete(x); btn.classList.remove("playing"); };
@@ -80,6 +83,46 @@
     status("Playing " + btn.dataset.label);
   };
   const el = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
+  // ---- the game's own synthesized sounds, made as 02-sound.js makes them (a level for the page's speakers)
+  const made = (make, btn) => {
+    if (!ctx) { status("Tap “Tap to start sound” first."); return; }
+    for (const x of live) if (x.btn === btn) { x.stop(); live.delete(x); btn.classList.remove("playing"); return; }
+    const x = make(); x.btn = btn; live.add(x); btn.classList.add("playing"); status("Playing " + btn.dataset.label);
+  };
+  function madeBlips() {
+    let on = true, t = 0;
+    const blip = () => {
+      if (!on) return;
+      const at = ctx.currentTime, o = ctx.createOscillator(), og = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      o.type = Math.random() < 0.5 ? "square" : "triangle";
+      const base = [330, 392, 440, 523, 587, 659, 784, 880][Math.floor(Math.random() * 8)];
+      o.frequency.setValueAtTime(base, at);
+      if (Math.random() < 0.5) o.frequency.setValueAtTime(base * 1.5, at + 0.07);
+      og.gain.setValueAtTime(0.0001, at); og.gain.exponentialRampToValueAtTime(0.06, at + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      o.connect(og);
+      if (pan) { pan.pan.value = Math.random() * 1.8 - 0.9; og.connect(pan).connect(ctx.destination); } else og.connect(ctx.destination);
+      o.start(at); o.stop(at + 0.2);
+      t = setTimeout(blip, 500 + Math.random() * 1700);
+    };
+    t = setTimeout(blip, 100);
+    return { src: { stop() {} }, stop() { on = false; clearTimeout(t); } };
+  }
+  function madeDread() {
+    const f = ctx.createBiquadFilter(), g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    f.type = "lowpass"; f.frequency.value = 380;
+    g.gain.value = 0.0001; g.gain.setTargetAtTime(0.18, ctx.currentTime, 1.0);
+    o1.type = o2.type = "sawtooth"; o1.frequency.value = 55; o2.frequency.value = 55.7;
+    o1.connect(f); o2.connect(f); f.connect(g).connect(ctx.destination); o1.start(); o2.start();
+    let t = 0;
+    const breathe = () => {
+      const at = ctx.currentTime;
+      f.frequency.cancelScheduledValues(at); f.frequency.setTargetAtTime(640, at, 0.45); f.frequency.setTargetAtTime(380, at + 1.4, 0.75);
+      g.gain.cancelScheduledValues(at); g.gain.setTargetAtTime(0.23, at, 0.45); g.gain.setTargetAtTime(0.18, at + 1.4, 0.75);
+      t = setTimeout(breathe, 4800);
+    };
+    t = setTimeout(breathe, 1200);
+    return { src: { stop() {} }, stop() { clearTimeout(t); try { g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.2); o1.stop(ctx.currentTime + 0.8); o2.stop(ctx.currentTime + 0.8); } catch (e) {} } };
+  }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   fetch("assets/audio/audio.json").then((r) => r.json()).then((j) => {
     data = j;
@@ -106,17 +149,30 @@
         const pretty = name.replace(/^vo@(\w+):/, "the $1 voice: ").replace(/^vo:/, "“").replace(/^(“.*)$/, "$1”");
         const also = names.filter((n) => n !== name);
         const row = el(`<div class="row" data-find="${esc((names.join(" ") + " " + (ABOUT[name] || "") + " " + (SETS[set] || "")).toLowerCase())}"><div class="lbl">${esc(pretty)}${isLoop ? '<span class="tag loop">loop</span>' : ""}${takes.length > 1 ? `<span class="tag">${takes.length} takes</span>` : ""}<small>${esc((SETS[set] || set) + " · " + name + (ABOUT[name] ? " · " + ABOUT[name] : "") + (also.length ? " · also played as: " + also.join(", ") : ""))}</small></div><div class="takes"></div></div>`);
-        const soft = SOFT[names.find((n) => SOFT[n]) || ""] || 1; // (a loop at the share of its level the game plays it at)
+        const soft = SOFT[names.find((n) => SOFT[n]) || ""] || 1, tone = TONE[names.find((n) => TONE[n]) || ""] || 0; // (a loop at the share of its level the game plays it at, and through its low-pass)
         takes.forEach((t, i) => {
           const lbl = `${SETS[set] || set} · ${name} · take ${i + 1}`;
           const b = el(`<button data-label="${esc(lbl)}" aria-label="${esc(lbl)}">${takes.length > 1 ? i + 1 : "▶ play"}</button>`);
-          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, true) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
+          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, true, tone) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
           row.querySelector(".takes").appendChild(b);
         });
         list.appendChild(row);
       }
     }
-    status(Object.values(j.sprites).reduce((n, s) => n + Object.keys(s.cues).length, 0) + " sounds and " + Object.keys(j.music).length + " tracks. Tap “Tap to start sound”.");
+    // the sounds the game makes itself, not recordings: each made here exactly as the game makes it
+    list.appendChild(el(`<h2>Made by the game itself</h2>`));
+    const MADE = [
+      ["The hall's distant cabinets", "Arcade hall · cabinet blips · soft tonal beeps under the music while the hall's hum loads (no noise under them since 2026-11-17)", madeBlips],
+      ["The examiner's drone and its breath", "Final Exam · examiner drone · two low tones beating slowly, breathing in tone (it breathed in noise until 2026-11-17)", madeDread],
+    ];
+    for (const [title, sub, make] of MADE) {
+      const row = el(`<div class="row" data-find="${esc((title + " " + sub).toLowerCase())}"><div class="lbl">${esc(title)}<span class="tag loop">loop</span><small>${esc(sub)}</small></div><div class="takes"></div></div>`);
+      const b = el(`<button data-label="${esc(sub.split(" · ").slice(0, 2).join(" · "))}">▶ play / stop</button>`);
+      b.onclick = () => made(make, b);
+      row.querySelector(".takes").appendChild(b);
+      list.appendChild(row);
+    }
+    status(Object.values(j.sprites).reduce((n, s) => n + Object.keys(s.cues).length, 0) + " sounds, " + Object.keys(j.music).length + " tracks and " + MADE.length + " made by the game. Tap “Tap to start sound”.");
   }).catch((e) => status("The sound list could not be loaded (" + e.message + "). Open this page from the same place as the arcade, not from a file."));
   $("#start").onclick = () => { if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); } ctx.resume(); $("#start").textContent = "Sound is on"; status("Sound is on. Tap any number to play."); };
   $("#stopAll").onclick = stopAll;
