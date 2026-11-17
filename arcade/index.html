@@ -6673,6 +6673,9 @@ const Sound = {
       delete this.tracks[o];
       if (this._trackLoad) delete this._trackLoad[o];
     }
+    // A decoded track is about 30 MB (some 85 s of stereo): only the one this visit plays is kept. Another screen's is
+    // let go when its own visit ends; going back decodes it again from the file, which stays downloaded.
+    if (this.trackName !== name) { const keep = this.takes[name] || name; for (const k in this.tracks) if (k !== keep) { delete this.tracks[k]; if (this._trackLoad) delete this._trackLoad[k]; } }
     this.trackName = name;
     this.stopMusic();
     if (!this.ctx || !Store.settings.music) return;
@@ -35469,14 +35472,14 @@ function showGuideChapter(n) {
 const LIB_GLSL = "float libH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }";
 const LIB_EYE = 7.0; // the height the archive is seen from
 // The rose window's glass at q (the unit disc is the glass; outside it the answer is black): pieces of glass set
-// in dark leads. A gold eye; eight lancets, ruby and sapphire by turns, broad at the foot and drawn to a point;
-// green quarries between them, a lead down each gap; a band of amber cut into short pieces; sixteen round-headed
+// in dark leads. A gold eye; eight lancets, magenta and electric blue by turns, broad at the foot and drawn to a point;
+// violet quarries between them, a lead down each gap; a band of amber cut into short pieces; sixteen round-headed
 // lights in six colours. Every piece is deeper at its rim and no two are quite alike (glass = 1); the same
 // function with glass = 0 is the light the window throws, with no grain in it. t makes the panes breathe.
 const LIB_ROSE = `
   vec3 libJewel(float i){
     i = mod(i, 6.0);
-    return i < 0.5 ? vec3(1.0, 0.1, 0.55) : i < 1.5 ? vec3(0.08, 0.7, 1.0) : i < 2.5 ? vec3(1.0, 0.68, 0.12) : i < 3.5 ? vec3(0.45, 0.16, 1.0) : i < 4.5 ? vec3(0.1, 0.95, 0.5) : vec3(1.0, 0.26, 0.16);
+    return i < 0.5 ? vec3(1.0, 0.16, 0.72) : i < 1.5 ? vec3(0.12, 0.85, 1.0) : i < 2.5 ? vec3(1.0, 0.72, 0.18) : i < 3.5 ? vec3(0.6, 0.3, 1.0) : i < 4.5 ? vec3(0.25, 1.0, 0.62) : vec3(1.0, 0.35, 0.75); // (the arcade's own: magenta, cyan, gold, violet, mint, rose)
   }
   vec3 libRose(vec2 q, float t, float glass){
     const float LEAD = 0.017, E = 0.009;
@@ -35491,11 +35494,11 @@ const LIB_ROSE = `
     float zone = smoothstep(0.142, 0.142 + E, r) * (1.0 - smoothstep(0.6 - E, 0.6, r));
     float W = min(0.3927 * r - LEAD, 0.34 * (0.61 - r)) - LEAD;
     float leaf = (1.0 - smoothstep(W - E, W, d8)) * zone * step(0.0, W);
-    vec3 leafCol = mod(i8, 2.0) < 0.5 ? vec3(1.0, 0.09, 0.2) : vec3(0.1, 0.34, 1.0);
+    vec3 leafCol = mod(i8, 2.0) < 0.5 ? vec3(1.0, 0.12, 0.62) : vec3(0.12, 0.5, 1.0); // (magenta and electric blue by turns: the arcade's neon, not church ruby and sapphire)
     float breathe8 = 0.8 + 0.2 * sin(t * 0.55 + i8 * 1.3), breathe16 = 0.8 + 0.2 * sin(t * 0.47 + i16 * 0.9);
     col += leafCol * 1.55 * leaf * breathe8 * (1.0 - 0.55 * glass * pow(clamp(d8 / max(W, 1e-3), 0.0, 1.0), 2.0)) * mott;
     float quarry = zone * smoothstep(W + 2.0 * LEAD, W + 2.0 * LEAD + E, d8) * smoothstep(LEAD * 0.6, LEAD * 0.6 + E, (0.5 - abs(f8)) * arc8);
-    col += vec3(0.05, 0.42, 0.3) * 0.55 * quarry * mott;
+    col += vec3(0.22, 0.1, 0.42) * 0.55 * quarry * mott; // (violet quarries between them)
     // the band
     float band = smoothstep(0.627, 0.627 + E, r) * (1.0 - smoothstep(0.672 - E, 0.672, r));
     float piece = smoothstep(0.007, 0.007 + E, (0.5 - abs(fract(a * 32.0) - 0.5)) * 0.19635 * r);

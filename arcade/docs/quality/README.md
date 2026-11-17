@@ -115,5 +115,5 @@ same concept would only repeat those. The final review's weak spots were dealt w
 boxes (no longer built when the game is served). No Tripo credits were spent; if the owner sees one that still looks
 weak on the phone, a remake is one attempt away.
 
-Two small things remain that are not models: the rose window's glass in the Strategy Guide is off the palette, and
-the Memory Bank's deck holder is dark apart from its edges.
+One small thing remains that is not a model (the rose window's glass in the Strategy Guide is now on the palette:
+magenta and electric blue, violet between): the Memory Bank's deck holder is dark apart from its edges.

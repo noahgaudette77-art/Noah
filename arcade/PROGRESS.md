@@ -2925,5 +2925,42 @@ content unchanged.
 - Every boss's hit reaction is the same move, and the recoil is shallow.
 - Risk Blaster's far cruiser is still a soft silhouette; open space is mostly black.
 - From disk (no assets) the examiner keeps its old chest; its new look is served-only, like every generated asset.
-- The deck holder is dark apart from its edges; the rose window's glass is off the palette.
+- The deck holder is dark apart from its edges. (The rose window's glass was brought onto the palette on 2026-11-17.)
 - Nobody has heard the sound: it was checked by cue log and measured loudness only.
+
+## After the owner's iPhone test (2026-11-17)
+
+The owner played on an iPhone 17 Pro Max: laggy on every screen, menus included; the sound annoying and boring;
+quality uneven. Worked in their order, one game at a time, a commit after each; study logic unchanged. The leftover
+generated assets were also placed (two workers: the three games, the rooms; their records are in
+`docs/combat-pass/unused/`). Measurements: `docs/perf/README.md`; the quality audit: `docs/quality/README.md`.
+
+**Lag.** The shared cause first (step 1): the picture was drawn at the phone's full 3x density with 4x multisampling,
+the three games asked to be drawn twice as large again (about 9 million pixels, every frame), the whole
+post-processing chain ran at that size, and frosted-glass panels blurred the live picture. Now: at most 2x, no
+supersampling on a dense screen, four quality tiers chosen by the frame rate (Setup > Graphics: AUTO by default),
+no glass blur below HIGH: the pixels shaded per frame fell from 30-72 million to 8-13 million at MEDIUM (where a phone
+starts). Then per game: the stalls, which a fast phone feels most. A screen's warm-up now readies every shader and
+picture it will use, including models that appear later, every sky region and every post-processing pass, and
+shaders are no longer checked for errors outside tests (each check made the page wait for the graphics chip): a
+minute of Risk Blaster went from 11 shader compiles and 16 pictures sent mid-fight to 0 or 1; Nest Egg Run and Boss
+Rush to none. One blast light instead of three in each game; textures filtered 4x at a slant on a phone, not 16x;
+the heroes at about 55K triangles (were 100K-142K), the exam's statues and other background figures at about 7K-10K.
+Decoded music is let go when its screen's visit ends (about 30 MB a track). The FPS counter (Setup) shows the frame
+rate, the slowest frame, the main thread's time, triangles, draw calls, the size drawn, the tier and the lights.
+
+**Sound.** Eighteen new music tracks, calmer and slower (70-112 BPM, soft, two contrasting sections each, about
+85 s before a track repeats, its energy above 4 kHz a fraction of the old); Setup has OFF/LOW/MID/HIGH for the music,
+the effects and the announcer, the music LOW to begin with; the engines at half, the alarm at under half and then a
+faint beat after three; the hall's hum settles away after 14 s. The sound test page (Setup > Sound test) plays every
+sound with its label.
+
+**Quality.** One bar (hero 2048/1024 px and about 55K triangles; near props 1024/512; small props and figures
+512 px and up to about 10K; specks 256 px), every model audited against it: 70 of 71 at the bar (39 lowered), one a
+little over (the mirrored menu copy of the war rig). One colour grade (the same saturation and contrast everywhere).
+No Tripo remake was needed: nothing generated is below the bar in play.
+
+**Spend.** ElevenLabs 18,480 credits for the calmer music (44,302 of 131,000 used). No Tripo, fal.ai or Blockade
+spend.
+
+**Waiting on the owner.** Real frame rates from the phone (Setup > FPS counter): this machine draws in software.

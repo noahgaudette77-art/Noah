@@ -589,6 +589,9 @@ const Sound = {
       delete this.tracks[o];
       if (this._trackLoad) delete this._trackLoad[o];
     }
+    // A decoded track is about 30 MB (some 85 s of stereo): only the one this visit plays is kept. Another screen's is
+    // let go when its own visit ends; going back decodes it again from the file, which stays downloaded.
+    if (this.trackName !== name) { const keep = this.takes[name] || name; for (const k in this.tracks) if (k !== keep) { delete this.tracks[k]; if (this._trackLoad) delete this._trackLoad[k]; } }
     this.trackName = name;
     this.stopMusic();
     if (!this.ctx || !Store.settings.music) return;

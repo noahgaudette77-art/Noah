@@ -7,6 +7,17 @@ million pixels shaded across every render pass (the scene with its multisampling
 post-processing pass), the draw calls, the triangles and the lights. Real frame rates come from the phone: Setup > FPS
 counter (it also shows the graphics tier and the lights).
 
+## The checks the owner named, one by one
+
+| Check | What it was | What it is now | Effect |
+|---|---|---|---|
+| Supersampling for edge smoothing | the three games drew at twice the screen's size: on a 3x phone, 2035 x 4422 (9 million pixels) with 4x multisampling | only at HIGH, only on screens under 1.5x density, within 4 million pixels: never on a phone | the largest single cost: the games' pixels per frame fell from about 70 million to under 15 at HIGH |
+| Phone pixel ratio | the phone's own 3x: 1320 x 2868 | at most 2x (880 x 1912); 1.5x at LOW, 1.25x at LOWEST | 3.8 to 1.7 million pixels in every pass of every screen, menus included |
+| Dynamic lights | 12 in each game, 6 to 8 in the rooms, most of them dark most of the time but still reckoned by every lit pixel | 9 to 10 in the games (one blast light instead of three, a faint lamp left to the sky's reflection); the rooms unchanged | small on this phone's graphics chip (a few per cent of a frame), but every lit shader is shorter and compiles faster |
+| Shadow maps | none (shade is screen-space ambient occlusion and contact shadows) | ambient occlusion only at HIGH | none to remove |
+| Glow and post-processing layers | 23 to 31 passes a frame at full density (bloom of seven levels, lens streaks, rays, depth of field, motion blur, ambient occlusion, film grade) | 15 to 20 at MEDIUM, where a phone starts (no ambient occlusion, depth of field, motion blur or lens streaks, six bloom levels); fewer again at LOW and LOWEST; every pass compiled once at start | with the two above: 30 to 72 million pixels a frame down to 8 to 13 |
+| (found on the way) Stalls | shaders compiled and pictures sent to the chip the first time a thing appeared in play | all of it done behind the loading curtain | a minute of Risk Blaster: 11 compiles and 16 uploads mid-fight to 0 or 1 |
+
 ## Step 1: the shared cause (every screen)
 
 | Change | Why it mattered |
