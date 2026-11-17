@@ -134,7 +134,7 @@ const Assets = {
   // (extra: more entries to fetch with it, as need takes them: the boss a Boss Rush stage fights)
   prefetch(set, extra) {
     if (!this.on) return;
-    for (const n of (this.files.sets[set] || []).concat(extra || [])) {
+    for (const n of this.wants(set, extra)) {
       const [kind, name] = n.split(":");
       const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
       if (path && this.has(path)) this.buffer(path).catch(() => null);
@@ -142,9 +142,11 @@ const Assets = {
   },
   // ---- sets: what a screen needs. need(set) is null when there is nothing to wait for (assets off, or all of it
   // already in hand), otherwise a promise that settles when everything has loaded or failed. It never rejects.
+  // (a set's entries, each once: of a track's two recordings, only the one its screen's visit plays: see Sound.take)
+  wants(set, extra) { return (this.files.sets[set] || []).concat(extra || []).map((n) => (n.startsWith("music:") ? "music:" + Sound.take(n.slice(6)) : n)).filter((n, i, a) => a.indexOf(n) === i); },
   need(set, extra) {
     if (!this.on) return null;
-    const want = (this.files.sets[set] || []).concat(extra || []).filter((n, i, a) => a.indexOf(n) === i);
+    const want = this.wants(set, extra);
     const jobs = [];
     for (const n of want) {
       const [kind, name] = n.split(":");
