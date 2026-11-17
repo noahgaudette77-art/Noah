@@ -5,11 +5,14 @@
 //   the lamp's light, with a warm glow under it.
 // (the book: an open tome on a chrome stand, under the rose window and above the reading desk's lamp, its pages
 // tipped toward the lens; it sways a little instead of turning its back)
-const LIB_GEN = { TOME: { s: 1.35, y: 4.95, z: -23.6, rx: 0.5, swing: 0.28 }, SKY: { gain: 1.15, lift: 1.1, rot: 1.6 } };
+// (with the decor, GFX.extras: the first, darker tome, closed, lies on a third stand deeper in the nave, where the left
+// pair of lamps lets its light down; the stand is built with the archive's joinery: see LibraryScene)
+const LIB_GEN = { TOME: { s: 1.35, y: 4.95, z: -23.6, rx: 0.5, swing: 0.28 }, SKY: { gain: 1.15, lift: 1.1, rot: 1.6 },
+  STAND: [-3.0, -45.4], OLD: { s: 1.25, rx: -1.07, y: 2.266, dz: 0.56 } }; // (the book lies on the stand's slanted top, its foot on the brass ledge)
 function libraryGen(lib) {
   if (!Assets.on || !lib.has3D) return null;
-  const sky = Assets.sky("guide-archive"), tome = Assets.model("prop-tome");
-  if (!(sky && sky.map) && !tome) return null;
+  const sky = Assets.sky("guide-archive"), tome = Assets.model("prop-tome"), old = lib.tomeStand ? Assets.model("decor-tome") : null;
+  if (!(sky && sky.map) && !tome && !old) return null;
   const s = lib.scene, G = { t: 0 };
   if (sky && sky.map) {
     G.dome = makePanoSky(sky, LIB_GEN.SKY);
@@ -33,12 +36,22 @@ function libraryGen(lib) {
     G.glow.layers.set(1);
     s.add(G.glow);
   }
+  if (old) {
+    const [x, z] = LIB_GEN.STAND, O = LIB_GEN.OLD;
+    tuneModel(old, { env: 2.2, glow: 2 });
+    old.scene.scale.setScalar(O.s);
+    old.scene.rotation.x = O.rx;
+    old.scene.position.set(x, O.y, z + O.dz);
+    s.add(old.scene);
+    G.old = old;
+  }
   return G;
 }
 function libraryGenUpdate(lib, dt, lt) {
   const G = lib.gen;
   if (!G) return;
   if (G.dome) G.dome.userData.follow(lib.camera);
+  if (G.old) G.old.scene.visible = GFX.extras !== false;
   if (G.tome) {
     G.tome.rotation.y = Math.sin(lt * 0.3) * LIB_GEN.TOME.swing;
     G.tome.position.y = LIB_GEN.TOME.y + Math.sin(lt * 0.7) * 0.06;

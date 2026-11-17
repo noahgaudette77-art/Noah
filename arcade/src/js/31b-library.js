@@ -241,6 +241,17 @@ class LibraryScene extends Scene3D {
         ledgerPages.push(pg);
       });
     }
+    // served, with the decor: a third stand deeper in the nave, where the left pair of lamps lets its light down, for the
+    // first tome (decor-tome, closed: libraryGen lays it on the stand). Part of the joinery: no draw of its own.
+    if (Assets.on && GFX.extras !== false && Assets.fresh["model:decor-tome"]) {
+      const [x, z] = LIB_GEN.STAND;
+      put(racerPlate(0.9, 0.16, 0.9, 0.05, true), racerM(x, 0.08, z), DARK);
+      put(new THREE.CylinderGeometry(0.11, 0.2, 2.0, 6), racerM(x, 1.1, z), WOOD);
+      put(racerPlate(1.5, 0.1, 1.0, 0.04, true), racerM(x, 2.18, z, 1, 1, 1, 0.5), WOOD);
+      B.add(box, racerM(x, 2.03, z + 0.46, 1.5, 0.08, 0.05, 0.5), BRASS);
+      put(new THREE.TorusGeometry(0.62, 0.02, 4, 24), racerM(x, 0.18, z, 1, 1, 1, Math.PI / 2), 0x5fd8ff, G, 1.4);
+      this.tomeStand = true;
+    }
     this.joinery = new THREE.Mesh(B.build("color"), new THREE.MeshLambertMaterial({ vertexColors: true }));
     this.lights = new THREE.Mesh(G.build("color"), new THREE.MeshBasicMaterial({ vertexColors: true }));
     s.add(this.joinery, this.lights);
