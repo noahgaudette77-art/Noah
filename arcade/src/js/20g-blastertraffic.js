@@ -146,32 +146,60 @@ function spaceGlowMaterial(trail) {
 const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
 const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2"];
 // Running lights for a generated ship (Phase 5 fix: the wings of fighters read as enemy fire): magenta to port, cyan to
-// starboard at its widest, white at its tail, each a small diamond of light; they blink slowly (under once a second).
+// starboard at its widest, white at its tail; they blink slowly (under once a second).
+// (Phase 6: at the distance they are seen at, the ships read as lumps. Each lamp is a point of light now, as big as it
+// is in the world near to, never under a pixel or two across far off, so it stays crisp; and a row of lit ports runs
+// along each flank, steady warm points, so a hull far off reads as a ship: points of light on a dark shape.)
 function spaceRunningLights(geo) {
   geo.computeBoundingBox();
-  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], col = [], ph = [];
+  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], cor = [], col = [], ph = [], ix = [];
   let wx = 0, wz = 0, wy = 0;
   for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i]) > wx) { wx = Math.abs(P[i]); wy = P[i + 1]; wz = P[i + 2]; }
-  const r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) * 0.022;
-  const lamp = (x, y, z, c, p) => {
-    const o = new THREE.OctahedronGeometry(r, 0).toNonIndexed(), a = o.attributes.position.array;
-    for (let i = 0; i < a.length; i += 3) { pos.push(a[i] + x, a[i + 1] + y, a[i + 2] + z); col.push(c[0], c[1], c[2]); ph.push(p); }
-    o.dispose();
+  const L = bb.max.z - bb.min.z, H = bb.max.y - bb.min.y, r = Math.max(bb.max.x - bb.min.x, L) * 0.022;
+  // a lamp: a quad about its centre that the shader turns to the lens (k: its least radius, in pixels; p < 0: steady)
+  const lamp = (x, y, z, c, p, k, rr = r) => {
+    const b = pos.length / 3;
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([u, v]) => { pos.push(x, y, z); cor.push(u, v, k, rr); col.push(c[0], c[1], c[2]); ph.push(p); });
+    ix.push(b, b + 1, b + 2, b, b + 2, b + 3);
   };
-  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5);
+  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0, 2.0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0, 2.0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5, 1.8);
+  // the ports: along each flank at its middle height, where the hull is widest at each of five stations
+  const yc = (bb.min.y + bb.max.y) / 2 + H * 0.08;
+  for (let n = 0; n < 5; n++) {
+    const zs = bb.min.z + L * (0.26 + n * 0.12);
+    let w = 0;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 2] - zs) < L * 0.035 && Math.abs(P[i + 1] - yc) < H * 0.14) w = Math.max(w, Math.abs(P[i]));
+    if (w > 0) [-1, 1].forEach((sd) => lamp(sd * (w + r * 0.3), yc, zs, [2.2, 1.9, 1.45], -1, 1.25, r * 0.5));
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aCor", new THREE.Float32BufferAttribute(cor, 4));
   g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
   g.setAttribute("aPh", new THREE.Float32BufferAttribute(ph, 1));
+  g.setIndex(ix);
   return g;
 }
+const SPACE_LAMP_U = { uTime: { value: 0 }, uPx: { value: 0.0024 } }; // (shared: the show's time, and one CSS pixel in the lens's height)
 function spaceRunningLightMat() {
   return new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    vertexShader: "attribute vec3 aCol; attribute float aPh; uniform float uTime; varying vec3 vC; void main(){ vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0); float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453); vC = aCol * (0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh))); gl_Position = projectionMatrix * viewMatrix * w; }",
-    fragmentShader: "varying vec3 vC; void main(){ gl_FragColor = vec4(vC, 1.0); }",
+    uniforms: SPACE_LAMP_U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute vec4 aCor; attribute vec3 aCol; attribute float aPh; uniform float uTime; uniform float uPx; varying vec3 vC; varying vec2 vUv;
+      void main(){
+        vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0);
+        vec4 mv = viewMatrix * w, c0 = projectionMatrix * mv;
+        float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+        vC = aCol * (aPh < 0.0 ? 1.0 : 0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh)));
+        float ry = max(aCor.w * length(instanceMatrix[0].xyz) * projectionMatrix[1][1], aCor.z * uPx * c0.w);
+        mv.xyz -= normalize(mv.xyz) * (2.0 * ry / projectionMatrix[1][1]); // (toward the lens by its own size: its hull never swallows it)
+        vec4 c = projectionMatrix * mv;
+        c.xy += aCor.xy * vec2(ry * projectionMatrix[0][0] / projectionMatrix[1][1], ry) * (c.w / c0.w);
+        vUv = aCor.xy;
+        gl_Position = c;
+      }`,
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(1.0 - (d - 0.45) / 0.55, 2.0)), 1.0); }",
   });
 }
+
 
 const SPACE_TYPES = { // how many of each at most, where its engines are (behind its middle), its trail's colour and width, how big it is drawn
   freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [1.25, 1.65, 2.2], 0.4, 1.8], // (Phase 5 fix: a short cyan-white engine glow, not the long magenta of the demon's fire)
@@ -199,12 +227,16 @@ class SpaceTraffic {
         Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
         Object.defineProperty(lamps, "visible", { get: () => mesh.visible, set: () => {} });
         lamps.frustumCulled = false;
+        lamps.renderOrder = 3; // (over the hull it sits on, and over the trail behind it)
         g.scene.add(lamps);
       } else mesh = spaceInstanced(geos[name], space.hull, cap);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < cap; i++) mesh.setMatrixAt(i, zero);
       g.scene.add(mesh);
-      this.types[name] = { mesh, cap, rear, col, tw, size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
+      // (Phase 6: a generated hauler, tug or cruiser is drawn smaller than its built-in design: at their distance the
+      // big ones filled the picture's edges as lumps. The wings of fighters keep their size.)
+      // (the cruiser, far off in the haze, most of all: a long dark blade with its lamps, not a hazy blot)
+      this.types[name] = { mesh, cap, rear, col, tw, size: kit && name !== "fighter" ? size * (name === "cruiser" ? 0.55 : 0.78) : size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
       total += cap;
     }
     // one streak of engine light per ship
@@ -262,6 +294,7 @@ class SpaceTraffic {
   update(dt, sp, w) {
     const g = this.g, tr = this.space.cur.traffic, m = this._m, q = this._q, p = this._p;
     if (w < 0.02) this.sp0 = sp;
+    SPACE_LAMP_U.uTime.value = VFX.t; SPACE_LAMP_U.uPx.value = 2 / Math.max(1, GFX.h); // (the lens spans the screen's height: the band is a window into it)
     // keep the region's traffic up
     if ((this.cool -= dt) <= 0 && w < 0.05) {
       this.cool = rand(0.5, 1.3);

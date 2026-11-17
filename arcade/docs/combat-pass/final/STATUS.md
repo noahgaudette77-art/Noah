@@ -7,7 +7,7 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 | 1 | Boss Rush: damage popups in their own lane, caption held where they would meet; "LIGHTNING!" not clipped | done |
 | 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | done (racer capture with the racer batch) |
 | 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | done |
-| 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | to do |
+| 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | done |
 | 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | done |
 | 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | done |
 | - | Cheap ones: crash bloom cap, wash-outs capped, bonus line inside the screen, cracks off the text, lane D props, Memory Bank blob | to do |
@@ -65,3 +65,12 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   makes only 08, and from the results on the page's animations are stepped with the frames (as boss-fight.js does):
   unstepped, the plate was caught half faded in, which is what the review saw. Re-captured menus 08-results-reward.
   Full regression from disk IDENTICAL.
+- **Ruling 4 (ambient ships).** Served only (the generated ships). `20g-blastertraffic.js`: each running light is a
+  point now, a lens-facing quad as large as it is in the world near to and never under 2 CSS px radius (nav lights)
+  or 1.8 (tail) far off, lifted toward the lens by its own size so its hull never swallows it; a row of steady warm
+  ports (1.25 px) along each flank at five stations, placed on the hull's widest point there; one shared material
+  (`SPACE_LAMP_U`), its time on the show clock (it was never advanced, so nothing blinked). Hulls drawn 0.78 of their
+  size (the cruiser 0.55: a small far silhouette). `20f-blasterspace.js` genKit: a ship's neon at 1.3, not 3 (it
+  bloomed into smears), its mirror of the region 0.35, not 0.8, and its lighting 65% stripped of the region's colour
+  (rocks unchanged). Checked by a probe (13 lamps per freighter, tug and shuttle, 11 on the cruiser; which are
+  hidden by their own hull from the lens). Re-captured cohesion 07, 08. Regression blaster IDENTICAL both ways.
