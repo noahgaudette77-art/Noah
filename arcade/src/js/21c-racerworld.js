@@ -632,6 +632,8 @@ class RacerWorld {
     {
       const b = mk(), ads = [], holos = [];
       // road works on the right-hand shoulder: barriers, cones, an arrow board, a digger
+      // (Phase 6: served, beside the textured city, these flat boxes stood out as untextured blocks: the works go)
+      if (!g.pano) {
       for (let i = 0; i < 9; i++) { const z = -74 - i * 3.4, aZ = -106; put(b, BOX, 9.05, 0.55, z, 0.3, 1.0, 2.8, i % 2 ? 0xffa53d : 0xf2f2f2, aZ, i % 2 ? 1 : 0, i % 2 ? 1.5 : 1); put(b, BOX, 9.05, 1.25, z, 0.14, 0.14, 0.14, 0xffa53d, aZ, 2, 2.6); }
       for (let i = 0; i < 6; i++) { put(b, CONE, 5.6, 0.4, -70 - i * 6, 0.24, 0.8, 0.24, 0xff7a2a, -106, 0, 1); put(b, BOX, 5.6, 0.52, -70 - i * 6, 0.3, 0.1, 0.3, 0xffffff, -106, 1, 1.2); }
       put(b, BOX, 8.9, 3.4, -68, 0.2, 2.2, 3.2, 0x15171c, -106);
@@ -640,6 +642,7 @@ class RacerWorld {
       put(b, BOX, 8.6, 1.3, -96, 1.2, 1.6, 3.6, 0xf1c40f, -106); put(b, BOX, 8.6, 2.5, -96.6, 1.0, 1.0, 1.4, 0x20242a, -106);
       strut(b, [8.6, 2.6, -95], [8.4, 5.4, -91], 0.36, 0xf1c40f, -106); strut(b, [8.4, 5.4, -91], [8.2, 2.4, -88.6], 0.3, 0xf1c40f, -106);
       put(b, BOX, 8.2, 2.0, -88.4, 0.9, 0.7, 0.7, 0x3a3f48, -106);
+      }
       // camera gantries over the service lanes only (the main road's gantries are the questions)
       [[-1, -36], [1, -164]].forEach(([sd, z]) => { put(b, BOX, sd * 9.05, 3.6, z, 0.28, 7.2, 0.28, 0x3a3f48, z - 1); put(b, BOX, sd * 7.3, 7.1, z, 3.8, 0.24, 0.24, 0x3a3f48, z - 1); [6.6, 8.0].forEach((x) => { put(b, BOX, sd * x, 6.8, z, 0.5, 0.36, 0.4, 0x15171c, z - 1); put(b, BOX, sd * x, 6.8, z + 0.22, 0.2, 0.1, 0.05, 0xff3030, z - 1, 2, 2.4); }); });
       // rooftop and wall ads, and holograms that hang over the pavements
@@ -1074,7 +1077,7 @@ class RacerWorld {
       const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
       if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
-      else if (s.to !== "tunnel") fogK = 0.62 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
+      else if (s.to !== "tunnel") fogK = 0.42 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // (Phase 6: 0.42, not 0.62: at its height the picture washed out to flat pink) // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
       if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
       if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
@@ -1100,7 +1103,7 @@ class RacerWorld {
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
     if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
     const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
-    const curtainCol = glare ? this._c.copy(this.swap.col) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(0.8) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color); // (the glare a shade under the sky's own colour: never near white)
     if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
     if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;

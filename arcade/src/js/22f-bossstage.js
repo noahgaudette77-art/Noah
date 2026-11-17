@@ -42,7 +42,8 @@ class BossStage {
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
     const bc = new THREE.Color(this.beamCol);
-    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
+    this.beamK = Math.min(1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1), 1.25 / Math.max(bc.r, bc.g, bc.b)); // (a bright colour's beam burns at a lower gain: it never washes the picture out. Phase 6: nor a saturated one past 1.25 in any channel: the Phantom's violet swept the picture near white)
+    this.lensCol = new THREE.Color(this.hex).multiplyScalar(0.8); this.lensBeam = new THREE.Color(this.beamCol).multiplyScalar(0.8); // (the flash where a blow meets the lens, a shade down: it washed the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
@@ -636,7 +637,7 @@ class BossStage {
     const tb = this.tb();
     if (kind === 1) { // the floor's jolt arrives under the player: the shock's ring across the foot of the picture, dust thrown up along it
       g.shake(0.34);
-      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
+      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.lensCol, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
       for (let i = 0; i < (quiet ? 1 : 4); i++) kit.smoke(this.lens(rand(-0.85, 0.85), -1.0, 3.4), { size: 0.36, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.9, 0), a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
     } else if (kind === 2) { // the wave breaks over the player: a ring that fills the picture, and the picture ripples
       GFX.ripple(g.camera, at, 1, 0.5);
@@ -644,12 +645,12 @@ class BossStage {
       for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.3, 3), null, 0xffffff, { dur: 0.3, s0: 3 * tb * 0.4, s1: 3 * tb * (1.1 + j * 0.25), delay: j * 0.08, w: 0.04, k: 0.8 });
     } else if (kind === 3) { // the beam: a hit where it crosses the player, then a line burnt across the foot of the picture, molten drips falling from it
       const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92), hit = this.lens(0, -0.74, 2.6);
-      kit.flash(hit, this.beamCol, 0.08, 0.42, 0.12, 0.9, 1.6);
+      kit.flash(hit, this.lensBeam, 0.08, 0.42, 0.12, 0.9, 1.6);
       kit.sparks(hit, 0xffffff, { n: quiet ? 5 : 12, speed: 2.4, spread: 1.4, life: 0.3, len: 0.14, w: 0.016, k: 1.8, gravity: 2, stretch: 0.02 });
       kit.gash(b0, b1, 0xffb070, 0.5, 0.045, 1.5);
       if (this.fl.fx.beam === "cleave") kit.gash(this.sweepAt(s.sd, 0.12).add(this._u.set(0, 0.05, 0)), this.sweepAt(s.sd, 0.88).add(this._u.set(0, 0.05, 0)), this.hex, 0.5, 0.04, 1.5); // (half violet: the arc's second edge)
       for (let j = 0; j < 3; j++) g.show.wait(j * 0.08, () => { if (!g.unmounted) kit.sparks(this._v.lerpVectors(b0, b1, rand(0.1, 0.9)), 0xffa050, { n: 4, speed: 0.6, life: 0.5, len: 0.12, w: 0.02, gravity: 2.5, k: 1.6, stretch: 0.02 }); });
-    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
+    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.lensCol, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
     else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });

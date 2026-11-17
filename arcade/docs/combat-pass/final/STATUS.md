@@ -10,7 +10,7 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 | 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | done |
 | 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | done |
 | 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | done |
-| - | Cheap ones: crash bloom cap, wash-outs capped, bonus line inside the screen, cracks off the text, lane D props, Memory Bank blob | to do |
+| - | Cheap ones: crash bloom cap, wash-outs capped, bonus line inside the screen, cracks off the text, lane D props, Memory Bank blob | done |
 | T | The lead's remade car and bus (cbf7de1) merged; traffic retuned | done |
 
 ## Notes
@@ -74,3 +74,28 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   bloomed into smears), its mirror of the region 0.35, not 0.8, and its lighting 65% stripped of the region's colour
   (rocks unchanged). Checked by a probe (13 lamps per freighter, tug and shuttle, 11 on the cruiser; which are
   hidden by their own hull from the lens). Re-captured cohesion 07, 08. Regression blaster IDENTICAL both ways.
+- **Cheap ones (served only, all of them).** Crash (ne-09): the picture's bloom held 60% down for 0.55 s from the
+  blow (`capT`, after the game sets its bloom each frame), and the breaking pane a red-pink crack (1.0, 0.5, 0.62),
+  not a white sheet. Out of the tunnel (ne-21): the glare's height 0.42, not 0.62, and its colour 0.8 of the sky's.
+  Boss Rush wash-out (br-11-phantom): a sweep beam never past 1.25 in any channel (violet, magenta and red bosses:
+  1.5 -> 1.25; the others unchanged), and the three flashes where a blow meets the lens at 0.8 of the colour. Wave
+  banner (rb-17): `fit` class, in from 1.1x (not 2.2x), its line wrapping inside 14 px margins. Cracks over the
+  sheet's title (rb-09): the explanation sheet slides in on its plate from its first frame (`.assets-on .sheet`, no
+  fade), so nothing behind it crosses its title. Lane D's road works (ne-17): left out when served (barriers, cones,
+  arrow board, digger: flat untextured boxes beside the textured city). Memory Bank's deck: one short warm lamp on
+  the lens's side of it, so its black chrome holder shows its panels and edges.
+  `tools/scenarios/blaster-combat.js`: its animation stepping now steps CSS animations too (as boss-fight.js does):
+  the wave's banner ran on the real clock and never showed in the strip. Re-captured: racer 01-05 (skies), 09, 11,
+  13 (ruling 2's frame), 17, 20, 21, 22; blaster 05, 09, 17, 17a; boss 11-phantom-fight; menus 11, 12.
+
+## Tests at the end
+
+Full regression IDENTICAL from disk and served; `node scripts/arcade-sequence.js`: ALL 13 STEPS OK, no errors.
+
+## Still weak
+
+- The traffic car (the lead's remake) reads as a compact SUV with a floating roof; its nose lamps are thin strips.
+- Far off, the cruiser is a small hazy silhouette with a few lamps, not a crisp ship.
+- Memory Bank's deck holder is still a dark object, lit at its panels and edges only.
+- Not re-captured: Boss Rush's other fight sheets and 07-damage-states (the same lane code as 04 and the Phantom's),
+  and cohesion 02-look-after (the examiner's chest there).

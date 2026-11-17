@@ -1805,6 +1805,15 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
    under it while it is up, so nothing of them shows through or beside its words) */
 .banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: #080322; border: 3px solid var(--c, var(--yellow)); box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--yellow)), 0 5px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
 .banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
+/* (a banner whose small line nearly fills the screen comes in from just over its size, and its line wraps inside the
+   screen's edges: from 2.2 times its size it ran off both. Served, Phase 6) */
+.banner.fit { animation: banner-fit 1.3s ease-out forwards; }
+.banner.fit small { padding: 0 14px; white-space: normal; text-wrap: balance; }
+@keyframes banner-fit { 0% { transform: scale(1.1); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* (served, Phase 6: the explanation sheet slides in on its plate from its first frame, not fading in: half faded, what
+   flashed behind it, a shield's cracks, crossed its title) */
+.assets-on .sheet { animation-name: sheetslide; }
+@keyframes sheetslide { from { transform: translateY(24px); } to { transform: none; } }
 .banner.plated { animation: banner-plate 2.2s ease-out forwards; } /* (it never grows past the screen's edges) */
 @keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 8% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; } }
 .rank-scrim { position: fixed; inset: 0; z-index: 29; pointer-events: none; background: rgba(3, 1, 12, 0.8); animation: rank-scrim 2.2s ease-out forwards; }

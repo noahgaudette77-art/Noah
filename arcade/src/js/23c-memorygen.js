@@ -46,6 +46,12 @@ function memoryGen(game) {
     deck.scene.position.set(D.x, 0, D.z);
     deck.scene.rotation.y = D.ry;
     game.scene.add(deck.scene);
+    // (Phase 6: its chrome holder mirrored the dark floor and read as a black blob under the cards. One warm lamp in
+    // front of it, short-reaching: the holder shows its panels and bright edges. One lamp only: each costs every lit
+    // pixel of the room on a phone)
+    const key = new THREE.PointLight(0xffdca0, 5, D.s * 4.5, 2);
+    key.position.set(D.x - D.s * 0.2, D.s * 0.42, D.z + D.s * 2.1); // (on the lens's side, a little above the holder: its glossy faces catch it whole)
+    game.scene.add(key);
     G.deck = deck;
     G.deckY = 0;
   }
