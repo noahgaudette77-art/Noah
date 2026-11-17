@@ -1303,6 +1303,7 @@ class HubScene extends Scene3D {
   }
   update(dt) {
     super.update(dt);
+    hubCall(this, dt); // (served: Boss Rush's cabinet, in front for a few seconds, calls out once: 11d-hubcall.js)
     if (!this.has3D) return;
     const target = this.cabAngle(this.sel);
     // A dolly move between cabinets: a damped spring eases out and in, and the camera

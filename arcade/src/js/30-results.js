@@ -157,7 +157,10 @@ function renderResults(o, rank) {
         for (let k = 0; k < (o.stars || 0); k++) setTimeout(() => { if (el.isConnected) Sound.sfx("reward", (k - 1) * 0.4); }, 120 + k * 140);
         const items = $$(".res-rewards .rw", el); // (each lands on its own beat: a timer, so it keeps the page's clock)
         rw.forEach((r, k) => setTimeout(() => { if (!el.isConnected) return; if (items[k]) items[k].classList.add("in"); Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000));
-        const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : "";
+        // (a chapter won, a boss beaten or a full career run on one stage, with nothing else to say, not even RANK UP!:
+        // the announcer's own CHAPTER COMPLETE. Risk Blaster's runs are not won: they end at GAME OVER)
+        const won = !(r1.i > r0.i) && o.sel && o.sel.chapters && o.sel.chapters.length === 1 && !o.sel.weak && ((o.game === "boss" && o.title === "STAGE CLEAR") || (o.game === "racer" && /^RETIRED (RICH|AT 65)$/.test(o.title)));
+        const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : won ? "CHAPTER COMPLETE" : "";
         if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
       }
       if (r1.i > r0.i) {

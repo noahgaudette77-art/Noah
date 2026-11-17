@@ -400,7 +400,8 @@ class ExamGame extends QuizGame {
     s.add(ring);
     // served: the moonlit night through the windows, the examiner's lectern (24d-examgen.js)
     this.gen = examGen(this);
-    const moon = this.gen && this.gen.sky && this.gen.sky.env; // (then the boss's armour mirrors the moonlit night)
+    this.hall = examHall(this); // (served: the fallen bosses' statues behind the dais and the examiner's first desk, seen in the ending: 24e-examhall.js)
+    const moon =this.gen && this.gen.sky && this.gen.sky.env; // (then the boss's armour mirrors the moonlit night)
     // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
     try { this.boss = BossModel.ok() ? new ExamBoss(this, moon || (this.bossEnvRT ? this.bossEnvRT.texture : env)) : null; } catch (e) { this.boss = null; }
     if (!this.boss) {
@@ -672,6 +673,7 @@ class ExamGame extends QuizGame {
     if (!this.has3D) return;
     const t = this.t;
     examGenUpdate(this, dt); // (served: the moonlit sky round the lens; the lectern sinks away for the ending)
+    examHallUpdate(this, VFX.dt); // (and the light comes up on the gallery)
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
     const B = this.boss;
     if (B) {
