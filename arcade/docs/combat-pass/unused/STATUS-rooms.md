@@ -10,7 +10,7 @@ on until the quality system switches it off); 04-gfx.js and 04b-pipeline.js are 
 | # | Item | State |
 |---|---|---|
 | 1 | Final Exam: the twelve statues and decor-podium | done: `24e-examhall.js`; exam regression IDENTICAL both ways; menus 13, 14, 14b |
-| 2 | Memory Bank: decor-deck, the pile missed cards go back to | to do |
+| 2 | Memory Bank: decor-deck, the pile missed cards go back to | code done (memory regression IDENTICAL both ways); capture 11, 12, 12b to come |
 | 3 | Strategy Guide: decor-tome in the archive's background | to do |
 | 4 | Hub: Boss Rush's cabinet calls "Boss incoming!" (two voices) | to do |
 | 5 | Results: the announcer's "CHAPTER COMPLETE" | to do |

@@ -113,6 +113,12 @@ module.exports = async (cap) => {
   await cap.fast(30);
   await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.grade("good"); });
   await strip("12-memory-banked", 10, 9, { thumb: 220, cols: 10 });
+  // a card missed: seen going back onto the dark pile, across the plinth from the deck
+  await cap.fast(60);
+  await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.flip(); });
+  await cap.fast(30);
+  await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.grade("again"); });
+  await strip("12b-memory-missed", 10, 5, { thumb: 220, cols: 10 });
   }
 
   // ---- Final Exam: the examiner at its lectern under the moon, then its fall when the exam is passed
