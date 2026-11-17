@@ -251,14 +251,21 @@ const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1
 // a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
 // mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
 // panorama to light them) every kind is drawn as before. [model, length in game units]
-const RACER_GEN_FLEET = { sedan: ["prop-car", 3.4], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+const RACER_GEN_FLEET = { sedan: ["prop-car", 3.4], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4], rival: ["rival-rig", 4.6], rival2: ["rival-rig2", 4.6], chaser: ["chaser", 4.4] };
+// (the rival haulers, in the "rival" event, are other builds of the rig's own design, taking turns; the chaser, in the
+// "chase" event, its second design, a low racer on big wheels. Each is repainted where the model is warm (its gold and
+// cream) in a violet lacquer over its chrome, and the rivals' eggs in silver, so none is ever taken for the player's
+// gold rig: see racerGenSkin's repaint. rival2 and the chaser are only drawn when their models arrived.)
+const RACER_RIVAL_PAINT = 0x6a34e0;
 // (the car is a small armoured runabout, stockier than the coupe it replaced, and smaller every way than the rig (4.7
 // long, 2.6 wide, 2.1 tall): 3.4 long, 2.3 wide, 1.7 tall. The room it takes in its lane, its soft shadow and the box
 // that is checked against the lane badges are its own; and its paint is never one of the gold or orange ones, so it
 // is never taken for the rig)
-const RACER_GEN_DIM = { sedan: { sh: [3.9, 5.0], box: [1.15, 1.75, 1.7], paints: [0xc0392b, 0x2e86c1, 0x27ae60, 0x8e44ad, 0xecf0f1, 0x4a5a6e, 0x16a085, 0x8f9aa3, 0xff6fb5] } };
+const RACER_GEN_DIM = { sedan: { sh: [3.9, 5.0], box: [1.15, 1.75, 1.7], paints: [0xc0392b, 0x2e86c1, 0x27ae60, 0x8e44ad, 0xecf0f1, 0x4a5a6e, 0x16a085, 0x8f9aa3, 0xff6fb5] },
+  rival: { sh: [4.2, 7.0], box: [1.3, 2.0, 2.3] }, rival2: { sh: [4.2, 7.0], box: [1.3, 2.0, 2.3] }, chaser: { sh: [4.0, 6.6], box: [1.3, 1.6, 2.2] } };
 // Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
-const RACER_GEN_TRIM = { sedan: { tail: 0.66, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+const RACER_GEN_TRIM = { sedan: { tail: 0.66, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 },
+  rival: { tail: 0.42, head: 0.4, sill: 0.2 }, rival2: { tail: 0.42, head: 0.4, sill: 0.2 }, chaser: { tail: 0.48, head: 0.36, sill: 0.22 } };
 // Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
 // the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
 function racerGenTrim(type, geo) {
@@ -294,15 +301,21 @@ function racerGenTrim(type, geo) {
 // lacquer of the copy's own paint (aTint) laid over its dark unsaturated body only (glass, chrome and neon keep theirs),
 // and its strips recoloured: the copy's neon down its flanks, warm white at its nose and red at its tail, each as bright
 // as the game's lamps for that copy say (aL: nose lamps, tail lamps, -, seed).
-function racerGenSkin(base, U, half) {
+// repaint (the rivals and the chaser): what is warm in the model (gold, cream, tan: red well over blue) is laid over in
+// violet, and where aRvEgg says (the rivals' eggs) in silver; chrome, glass and neon keep theirs.
+function racerGenSkin(base, U, half, repaint) {
   U.uTfDim = U.uTfDim || { value: 1 };
   const m = blasterSkin(base, U, {
     key: "traffic",
-    pars: "varying vec3 vTfTint; varying vec4 vTfL; uniform float uTfDim;",
+    pars: "varying vec3 vTfTint; varying vec4 vTfL; uniform float uTfDim;" + (repaint ? " varying float vRvEgg;" : ""),
     cut: "float tfPaint = 0.0;",
     albedo: `{ float tfL = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)), tfS = max(max(diffuseColor.r, diffuseColor.g), diffuseColor.b) - min(min(diffuseColor.r, diffuseColor.g), diffuseColor.b);
         tfPaint = (1.0 - smoothstep(0.06, 0.22, tfL)) * (1.0 - smoothstep(0.03, 0.1, tfS));
-        diffuseColor.rgb = mix(diffuseColor.rgb, pow(vTfTint, vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }`, // (a deep candy lacquer over the black: what it mirrors takes its colour)
+        diffuseColor.rgb = mix(diffuseColor.rgb, pow(vTfTint, vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }` // (a deep candy lacquer over the black: what it mirrors takes its colour)
+      + (repaint ? `
+      { vec3 rvC = diffuseColor.rgb; float rvL = dot(rvC, vec3(0.3, 0.59, 0.11)), rvW = smoothstep(0.03, 0.12, rvC.r - rvC.b) * smoothstep(0.05, 0.16, rvL);
+        vec3 rvV = vec3(0.3, 0.11, 0.68) * (0.22 + 1.4 * rvL), rvS = vec3(0.74, 0.77, 0.84) * (0.3 + 0.75 * rvL);
+        diffuseColor.rgb = mix(rvC, mix(rvV, rvS, vRvEgg), max(rvW, vRvEgg * 0.85)); }` : ""),
     emissive: `{
         float tfE = max(max(totalEmissiveRadiance.r, totalEmissiveRadiance.g), totalEmissiveRadiance.b);
         vec3 tfN = vTfL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (vTfL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
@@ -317,9 +330,9 @@ function racerGenSkin(base, U, half) {
   m.onBeforeCompile = (sh) => {
     skin(sh);
     sh.uniforms.uTfDim = U.uTfDim;
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTint; attribute vec4 aL; varying vec3 vTfTint; varying vec4 vTfL;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTfTint = aTint; vTfL = aL;");
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTint; attribute vec4 aL; varying vec3 vTfTint; varying vec4 vTfL;" + (repaint ? " attribute float aRvEgg; varying float vRvEgg;" : "")).replace("#include <begin_vertex>", "#include <begin_vertex>\nvTfTint = aTint; vTfL = aL;" + (repaint ? " vRvEgg = aRvEgg;" : ""));
   };
-  m.customProgramCacheKey = () => "traffic-skin-" + half.toFixed(3);
+  m.customProgramCacheKey = () => "traffic-skin-" + half.toFixed(3) + (repaint ? "-rv" : "");
   m.needsUpdate = true;
   return m;
 }
@@ -393,8 +406,9 @@ class RacerWorld {
     this.cars = [];
     this.genMats = [];
     const gen = g.pano && g.gen && g.gen.traffic ? g.gen.traffic : {};
-    for (const type in RACER_FLEET) {
-      const n = RACER_FLEET[type], kit = gen[type] ? this.genKind(type, gen[type]) : null, geo = kit ? kit.geo : racerVehicleGeo(type, !!g.pano);
+    const fleet = Object.assign({}, RACER_FLEET, gen.rival2 ? { rival2: 1 } : {}, gen.chaser ? { chaser: 1 } : {}); // (the second rival rig and the chaser only come with their models)
+    for (const type in fleet) {
+      const n = fleet[type], kit = gen[type] ? this.genKind(type, gen[type]) : null, geo = kit ? kit.geo : racerVehicleGeo(type, !!g.pano);
       const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
       tint.setUsage(THREE.DynamicDrawUsage); lights.setUsage(THREE.DynamicDrawUsage);
       geo.setAttribute("aTint", tint);
@@ -403,7 +417,7 @@ class RacerWorld {
       mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
-      for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, zero); this.cars.push({ type, i, on: false, mesh, tint, lights }); }
+      for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, zero); this.cars.push({ type, i, on: false, mesh, tint, lights, extra: !!kit && /^rival|^chaser$/.test(type) }); } // (extra: a generated rival or the chaser, taken off the road while GFX.extras is off)
       g.scene.add(mesh);
       this.fleet[type] = mesh;
       if (kit) {
@@ -442,7 +456,18 @@ class RacerWorld {
     geo.computeBoundingBox(); geo.computeBoundingSphere();
     const U = (this.genU = this.genU || Object.assign(blasterSkinUniforms(), { uTfDim: { value: 1 } }));
     U.uSkAA.value = 1.3; U.uSkSpec.value = 0.75;
-    const mat = racerGenSkin(made.mat, U, len / 2);
+    const repaint = /^rival|^chaser$/.test(type);
+    if (repaint) { // (a rival's egg: round the highest point of the model, toward its tail. The chaser carries none)
+      const P = geo.attributes.position, n = P.count, egg = new Float32Array(n);
+      if (type !== "chaser") {
+        let top = 0;
+        for (let i = 1; i < n; i++) if (P.getY(i) > P.getY(top)) top = i;
+        const r = len * 0.135, cy = P.getY(top) - r * 1.05, cz = P.getZ(top);
+        for (let i = 0; i < n; i++) { const dx = P.getX(i) / r, dy = (P.getY(i) - cy) / (r * 1.1), dz = (P.getZ(i) - cz) / r; egg[i] = 1 - smoothstep(0.85, 1.15, dx * dx + dy * dy + dz * dz); }
+      }
+      geo.setAttribute("aRvEgg", new THREE.BufferAttribute(egg, 1));
+    }
+    const mat = racerGenSkin(made.mat, U, len / 2, repaint);
     this.g.pano.mirror(mat, 1.0);
     this.genMats.push(mat);
     model.scene.traverse((o) => { if (o.isMesh && o.geometry !== geo) o.geometry.dispose(); }); // (its packed form is not drawn)
@@ -528,7 +553,7 @@ class RacerWorld {
       c.age += dt;
       const rel = c.dir > 0 ? sp - c.speed : sp + c.speed;
       c.z += rel * dt;
-      if (c.z > (c.special ? 46 : 20) || c.z < -250 || (c.lane === "H" && tunnel)) { c.on = false; c.mesh.setMatrixAt(c.i, this._m.makeScale(0, 0, 0)); dirty.add(c.mesh); if (c.done) c.done(c); continue; }
+      if (c.z > (c.special ? 46 : 20) || c.z < -250 || (c.lane === "H" && tunnel) || (c.extra && !GFX.extras)) { c.on = false; c.mesh.setMatrixAt(c.i, this._m.makeScale(0, 0, 0)); dirty.add(c.mesh); if (c.done) c.done(c); continue; }
       // lane changes on the service lanes, indicator blinking; a stalled car is given room
       if ((c.lane === "R" || c.lane === "L") && !c.special) {
         c.laneT -= dt;
@@ -1023,14 +1048,24 @@ class RacerWorld {
       update: (dt, t, r) => r.c.on && r.c.special === "pass" });
     D.add({ id: "rival", big: true, dur: 12,
       start: (r) => {
-        const sd = g.carX > 0 ? -1 : 1;
-        r.c = this.spawn("rival", "M", { special: "rival", dir: 1, x: sd * 3.75, tx: sd * 3.75, z: 15, speed: g.speed + 10, y: 0, color: [0xff3ad4, 0xffd23d, 0x35efff][Math.floor(Math.random() * 3)] });
+        const sd = g.carX > 0 ? -1 : 1, kind = this.fleet.rival2 && (this.rivalN = (this.rivalN || 0) + 1) % 2 === 0 ? "rival2" : "rival", made = this.genDim && this.genDim[kind]; // (served: the two rival rigs take turns, in violet)
+        if (made && !GFX.extras) return false; // (a generated rival is a background addition: none while the extras are off)
+        r.c = this.spawn(kind, "M", { special: "rival", dir: 1, x: sd * 3.75, tx: sd * 3.75, z: 15, speed: g.speed + 10, y: 0, color: made ? RACER_RIVAL_PAINT : [0xff3ad4, 0xffd23d, 0x35efff][Math.floor(Math.random() * 3)] });
         if (!r.c) return false;
         r.c.plan = (c, dt, sp) => { c.speed = sp + (c.z > -16 ? 10 : c.z > -40 ? 5 : 30); if (c.z < -18 && c.z > -40) c.tx = sd * 1.25; c.brake = c.z < -16 && c.z > -40 ? 1 : 0; };
       },
       update: (dt, t, r) => r.c.on && r.c.special === "rival" });
     D.add({ id: "chase", dur: 9, can: open,
       start: (r) => {
+        if (this.fleet.chaser && GFX.extras) { // (served: the chaser, low on its big wheels, runs a runabout down on the far side of the road, past the rig; with the extras off, the chase in the air as before)
+          const sd = g.carX > 0 ? -1 : 1, cx = sd * 3.75;
+          r.a = this.spawn("sedan", "M", { special: "run", dir: 1, x: cx, tx: cx, z: 16, speed: g.speed + 24, y: 0 });
+          r.b = this.spawn("chaser", "M", { special: "cop", dir: 1, x: cx, tx: cx, z: 34, speed: g.speed + 27, y: 0, color: RACER_RIVAL_PAINT });
+          if (!r.a || !r.b) { if (r.a) r.a.on = false; if (r.b) r.b.on = false; return false; }
+          r.a.plan = (c, dt, sp) => { c.speed = sp + 24; c.tx = cx + Math.sin(c.age * 1.7) * 0.9; };
+          r.b.plan = (c, dt, sp) => { c.speed = sp + (c.z > r.a.z + 9 ? 27 : 24); c.tx = cx + Math.sin(c.age * 1.7 - 0.8) * 0.9; };
+          return;
+        }
         const x = rand(-4, 4), y = rand(10.5, 13);
         r.a = this.spawn("hover", "H", { special: "run", dir: 1, x, tx: x, y, z: 18, speed: g.speed + 34 });
         r.b = this.spawn("police", "H", { special: "cop", dir: 1, x: x + 0.6, tx: x + 0.6, y: y + 0.4, z: 36, speed: g.speed + 34, color: 0xf2f2f2 });

@@ -158,6 +158,16 @@ module.exports = async (cap) => {
       await strip("08-rage", 12, 9, { cols: 6 });
     }
   }
+  // ---- the streak reaches a new tier: the bolt spins up on the player's side
+  if (has("tier")) {
+    await set({ hearts: 3, hp: 1 });
+    await ready(40);
+    await page(() => { const A = window.__arcade, s = A.Scenes.cur; s.run.streak = 2; A.Hype.level = 0; });
+    await cap.answer("R");
+    await cap.fast(12);
+    await strip("13-streak-tier", 8, 7, { cols: 4 });
+    await cap.fast(30);
+  }
   // ---- death: the finishing blow, done for, then the fall, the chain, the last blast, the reward
   if (has("death")) {
     await set({ hp: 0.04, hearts: 3 });

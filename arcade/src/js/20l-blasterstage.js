@@ -106,6 +106,8 @@ class BlasterStage {
       this.kit.sparks(pos, color, { n: Math.min(46, Math.ceil(n * 0.55)), speed: (o.speed || 10) * 1.15, life: life * 0.7, len: size * 2.6, w: size * 0.3, gravity: o.gravity === undefined ? 2.5 : -o.gravity * 0.5, drag: 0.35 });
     };
     this._n = new THREE.Vector3(); this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._up = new THREE.Vector3(0, 1, 0); this._e = new THREE.Euler();
+    this.escort = new BlasterEscort(g); // the allies on the fighter's wings and between waves, the overlord's brood far off (20m)
+    this.incoming = false; // ("BOSS INCOMING" is called once a run, as the first overlord comes)
   }
   // ---- where things are (the starfighter and the built-in fighter both answer) -----------------------------
   shipPos(out) { const j = this.g.jet; return j.centre ? j.centre(out) : out.copy(this.g.ship.position); }
@@ -137,7 +139,7 @@ class BlasterStage {
   get owed() { return this.debts.length; }
 
   // ---- sound that runs on: the engines, the alarm, a charge -------------------------------------------------
-  start() { this.loops(true); }
+  start() { this.loops(true); this.escort.entrance(); } // (two allies fly in on its wings)
   loops(on) {
     if (on) {
       this.engine = Sound.loop("blaster-engine", "engine_ship", { vol: 0.3, rate: 0.9, fade: 0.6 });
@@ -209,6 +211,7 @@ class BlasterStage {
       if (g.jet.fire) g.jet.fire(sh.col, true, g.jet.model ? gun : undefined);
     }
     Sound.sfx("laser_fire", sh.side * 0.5, { vol: 0.8, rate: 1 + n * 0.06 });
+    Sound.sfx("shell", n % 2 ? 0.55 : -0.55, { vol: 0.3, delay: 0.04 }); // (the spent cells thrown clear: quietly, under the shot)
   }
   boltLands(sh, gun, n, p) {
     const g = this.g, kit = this.kit, k = g.shipScale, t = sh.t, ds = t ? clamp(t.scale.x / 0.4, 0.8, 1.5) : 1, front = this.near(p, 1.5 * (t ? t.scale.x : 0.4), this._v);
@@ -253,7 +256,7 @@ class BlasterStage {
     kit.light(p, col, 2, 0.18, 8);
     g.show.add(0.12, (q) => { u.shat = Math.max(0.001, q); t.scale.setScalar(s0 * (1 + 0.3 * q)); u.frame.rotation.z += 0.09; }, () => { t.visible = false; });
     // ... and the shot goes on through it into the demon's core
-    if (e && e.alive) kit.beam(p, e.aimPoint(this._v), col, { dur: 0.17, width: 0.3 * (e.S / 6), grow: 0.03, k: 2.2 });
+    if (e && e.alive) { kit.beam(p, e.aimPoint(this._v), col, { dur: 0.17, width: 0.3 * (e.S / 6), grow: 0.03, k: 2.2 }); Sound.sfx("laser_heavy", g.panAt || 0, { vol: 0.7 }); } // (the lance: its own heavy crack)
     Sound.sfx("impact_good", g.panAt || 0);
     HudFX.reward(g.el, this.screen(p), "[data-score]", { n: 4, kind: "spark", color: col, clear: ".qpanel" }); // (round the question, never across it)
     g.show.wait(0.05, () => { GFX.ab = Math.min(GFX.ab, 0.6); }); // (the colours split for three frames, no longer: the picture is sharp while the blow is read)
@@ -417,6 +420,9 @@ class BlasterStage {
     Haptics.buzz([60, 40, 90]);
     // where it landed on the shell: sparks, shards of the shield, a breath of dark smoke; then what this strike leaves
     const at = this.near(p.clone().add(this._v.set(sd * 0.7 * k, 0.35 * k, 0)), 0.8 * k);
+    // the shield itself comes up before the fighter on the side the blow fell, cracks, and breaks apart (its sound is
+    // the shield_down below)
+    if (g.iconFX) g.iconFX.shatter("shield", this.near(p.clone().add(this._v.set(sd * 0.5 * k, 0.62 * k, 0)), 1.4 * k), { size: 0.9 * k, face: g.camera, turn: -sd * 0.35, hold: 0.06, crack: 0.06, onBreak: (q) => kit.sparks(q, 0x8feaff, { n: quiet ? 6 : 14, speed: 7 * k, life: 0.4, len: 0.45 * k, w: 0.045 * k, k: 1.7 }) });
     kit.sparks(at, 0xffffff, { n: 12, speed: 9 * k, life: 0.35, len: 0.7 * k, w: 0.05 * k, k: 1.8 });
     kit.debris(at, { n: quiet ? 4 : 9, size: 0.28 * k, speed: 7 * k, color: 0x1c7a90, hot: 0x8feaff, gravity: 0, life: 0.8 });
     if (!quiet) for (let i = 0; i < 2; i++) kit.smoke(this._w.set(rand(-0.5, 0.5), rand(0, 0.4), 0).multiplyScalar(k).add(at), { size: 0.45 * k, life: 0.7, a: 0.45, cold: true, color: STAGE.SMOKE, vel: this._u.set(0, -0.3, 2.5) });
@@ -450,7 +456,14 @@ class BlasterStage {
   }
 
   // ---- the demon is hurt ---------------------------------------------------------------------------------------
-  demonArrive(e) { this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0; }
+  demonArrive(e) {
+    this.leaks.forEach((t) => { t.on = false; }); this.leaks.length = 0;
+    this.escort.gather(); // its brood gather far off as it comes up out of the distance
+    if (!this.incoming) { // the first, once a run: called after the wave (one line at a time: see Sound.say)
+      this.incoming = true;
+      this.g.show.wait(0.05, () => { if (!this.g.unmounted && this.g.state !== "over") Sound.say("BOSS INCOMING"); });
+    }
+  }
   // the lance lands on its core (the rule: resolve, a right answer): a small hot heart, tongues of fire in the
   // answer's colour, long streaks, a ring; the demon is seen taking it
   demonHit(e, p, color, staggered) {
@@ -562,6 +575,8 @@ class BlasterStage {
     Sound.setIntensity(3);
     Sound.sfx("explosion_huge");
     Sound.sfx("debris", 0, { delay: 0.3, vol: 0.8 });
+    this.escort.scatter(); // its brood scatter into the nebula; a moment later allies cross the band
+    this.escort.pass();
     // the reward: stars and coins fly from the blast, round the question, to the score. They have landed before the
     // next question's drones appear.
     const from = this.screen(p), perfect = this.misses === 0, high = e.finale, wave = this.sayWave;
@@ -569,6 +584,7 @@ class BlasterStage {
       if (g.unmounted) return;
       HudFX.reward(g.el, from, "[data-score]", { n: 8, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 400, gap: 12 });
       HudFX.reward(g.el, from, "[data-score]", { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
+      if (g.iconFX) g.iconFX.burst("star", p, { n: 7, size: 0.75 * k6, speed: 11 * k6, dir: this._v.copy(g.camera.position).sub(p).normalize().add(this._w.set(0, 0.55, 0)).normalize(), life: 1.0, gravity: 4 * k6, gap: 0.03 }); // (gold stars thrown out of the blast with the coins)
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
     if (wave) g.show.wait(0.4, () => { if (!g.unmounted && g.state !== "over") Sound.say(wave); }); // (the next wave is called once this one's demon has gone)
@@ -578,7 +594,12 @@ class BlasterStage {
   // ---- between waves: the warp, held back until the demon has gone up (look only) -----------------------------
   // region: the part of space the next wave starts in (it comes up with the warp); call: what the announcer says
   // once the demon has gone
-  waveEnd(region, call) { const e = this.g.enemy; this.region = region; this.sayWave = call || null; this.warpAt = e && e.dieT >= 0 ? e.blowAt + 0.07 : 0.02; if (!(e && e.dieT >= 0) && call) { Sound.say(call); this.sayWave = null; } }
+  // (the wave that takes the run to the wormhole gate, the journey's last region before the warp back, is called
+  // "FINAL WAVE" in place of its number)
+  waveEnd(region, call) {
+    const nr = this.g.space && this.g.space.regions ? this.g.space.regions.length : 6;
+    if (call && (region + 1) % nr === nr - 1) call = "FINAL WAVE";
+    const e = this.g.enemy; this.region = region; this.sayWave = call || null; this.warpAt = e && e.dieT >= 0 ? e.blowAt + 0.07 : 0.02; if (!(e && e.dieT >= 0) && call) { Sound.say(call); this.sayWave = null; } }
   // ---- the run ends: the last shield has gone, and the ship with it ---------------------------------------------
   // (the sounds of it one after another, each with its picture: the blast now, the call, the demon's roar as it
   // spreads its wings over the wreck, the jingle)
@@ -599,6 +620,7 @@ class BlasterStage {
   update(dt, sp, w) {
     const g = this.g, d = VFX.dt, kit = this.kit, ship = g.ship, k = g.shipScale, quiet = REDUCED_MOTION || GFX.calm;
     kit.drift.set(0, 0, Math.min(sp * 0.3, 3.5)); // (what is left behind falls behind: slowly enough that a blast stays where it was struck)
+    this.escort.update(d);
     // ---- the fighter's aim: toward its target for a moment after it fires, back to its hover otherwise
     this.aimT = Math.max(0, this.aimT - d);
     this.idleQ.setFromEuler(this._e.set(Math.sin(VFX.t) * 0.05, 0, Math.sin(VFX.t * 0.9) * 0.12));

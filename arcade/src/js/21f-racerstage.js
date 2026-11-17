@@ -303,6 +303,9 @@ class RacerStage {
     Sound.sfx("heart_lost", 0, { delay: 0.13, vol: 0.9 });
     Sound.sfx("debris", pan, { delay: 0.32, vol: 0.7 });
     if (left === 1) g.show.wait(0.55, () => { if (!g.unmounted && g.state !== "over") Sound.say("WARNING"); });
+    // a crystal heart comes up by the rig, on the side away from the blow, cracks and shatters as the life goes (heard
+    // as the heart_lost above)
+    if (g.iconFX) g.iconFX.shatter("heart", rig.centre(new THREE.Vector3()).add(this._u.set(-sd * 2.3, 2.1, 0.4)), { size: 1.2, face: g.camera, turn: sd * 0.25, hold: 0.05, crack: 0.08, onBreak: (q) => kit.sparks(q, 0xff4fd8, { n: quiet ? 6 : 14, speed: 8, life: 0.45, len: 0.5, w: 0.05, gravity: 6, k: 1.6 }) });
     this.setLow(left <= 0 ? 2 : left === 1 ? 1 : 0);
   }
   // a wrong lane with a policy in hand: the policy takes the blow, and is seen to
@@ -334,12 +337,19 @@ class RacerStage {
     VFX.hitStop(2);
     this.speedTo(0.7, 4); g.show.wait(0.5, () => { if (g.state !== "over") this.speedTo(this.cruise(), 1.2); });
     this.policyGone();
+    // the policy's shield comes up on the rig's side and breaks as the shell takes the blow (heard as the shield_down below)
+    if (g.iconFX) g.iconFX.shatter("shield", this._u.copy(c).add(this._w.set(sd * 2.0, 1.6, -0.3)), { size: 1.3, face: g.camera, turn: -sd * 0.3, hold: 0.04, crack: 0.06, onBreak: (q) => kit.sparks(q, RSTAGE.MINT, { n: quiet ? 6 : 14, speed: 9, life: 0.4, len: 0.6, w: 0.05, gravity: 4, k: 1.6 }) });
     Sound.sfx("impact_reject", pan, { vol: 0.55, rate: 0.9 });
     Sound.sfx("impact_shield", pan);
     Sound.sfx("crash_glass", pan, { delay: 0.03, vol: 0.6 });
     Sound.sfx("wrong", 0, { vol: 0.5 });
     Sound.sfx("skid", pan, { delay: 0.06, vol: 0.4, rate: 1.2 });
     Sound.sfx("shield_down", 0, { delay: 0.16, vol: 0.9 });
+  }
+  // the nest egg passes a milestone ($100,000 and on): gold stars thrown up off the egg with the gate's coins
+  milestone() {
+    const g = this.g;
+    if (g.iconFX) g.show.wait(0.12, () => { if (!g.unmounted) g.iconFX.burst("star", this.rig.eggAt(new THREE.Vector3()), { n: 6, size: 0.6, speed: 8, dir: this._u.set(0, 1, 0.45).normalize(), life: 1.1, gravity: 6, gap: 0.04 }); });
   }
   // the policy that paid leaves the HUD: where its badge stood, it breaks into mint shards
   policyGone() {
@@ -398,6 +408,7 @@ class RacerStage {
       const from = this.screen(e);
       HudFX.reward(g.el, from, "[data-egg]", { n: quiet ? 5 : 10, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 520, gap: 26 });
       if (!quiet) HudFX.reward(g.el, from, "[data-egg]", { n: 6, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 560, gap: 30 });
+      if (g.iconFX) g.iconFX.burst("star", e, { n: 9, size: 0.75, speed: 9, dir: this._u.set(0, 1, 0.5).normalize(), life: 1.3, gravity: 6, gap: 0.04 }); // (gold stars thrown up off the egg with the coins)
       Sound.sfx("boost", 0, { vol: 0.8 });
       Sound.sfx("reward", 0, { vol: 0.9, delay: 0.1 });
       if (rich) Sound.sfx("crowd_cheer", 0, { vol: 0.8, delay: 0.25 });

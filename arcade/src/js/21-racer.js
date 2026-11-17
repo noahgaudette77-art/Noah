@@ -1421,6 +1421,13 @@ class RacerGame extends QuizGame {
     this.tw.wait(1.3, () => this.nextQuestion());
   }
   rate() { return 0.03 + 0.005 * Math.min(this.run.streak, 10); }
+  // where a bolt spins up when the streak reaches a new tier (QuizGame.propTier): over the rig, above its egg (staged only)
+  tierAt() {
+    if (!this.stage) return null;
+    const p = this.stage.rig.centre(new THREE.Vector3());
+    p.y += 3.2;
+    return { p, size: 1.3 };
+  }
   hud() {
     if (!this.el) return;
     UI.text($("[data-egg]", this.el), money(this.egg));
@@ -1524,6 +1531,7 @@ class RacerGame extends QuizGame {
       }
       while (this.nextMilestone < EGG_MILESTONES.length && this.egg >= EGG_MILESTONES[this.nextMilestone]) {
         const m = EGG_MILESTONES[this.nextMilestone++];
+        if (this.stage) this.stage.milestone(); // (look only: gold stars off the egg, on the show clock)
         this.tw.wait(0.4, () => {
           Sound.sfx("levelup");
           UI.banner(m === EGG_GOAL ? "MILLIONAIRE!" : money(m) + "!", COLORS.lime, m === EGG_GOAL ? "Retire rich if you keep it" : "Milestone at age " + (START_AGE + this.year));

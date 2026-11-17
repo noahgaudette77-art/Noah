@@ -15,6 +15,11 @@ const Sound = {
   sprites: {}, // name -> AudioBuffer: one file holding many effects end to end
   bank: {}, // cue name -> [{ buf, at, dur, vol }]: where each recorded effect lies (several takes of one sound are picked in turn)
   tracks: {}, // name -> { buf, loop: [from, to], vol }: recorded music
+  // Each track has a second recording, "<name>-b". A visit to a screen plays one of the two and its next visit the
+  // other (which one comes first is drawn when the page opens; nothing of it is saved). Only the one a visit plays is
+  // loaded (Assets.need and prefetch ask take()), and the other is let go when the visit starts.
+  takes: {}, // name -> the recording this visit of its screen plays
+  nextTake: {}, // name -> the one its next visit will play
   loops: {}, // id -> a looping effect that is playing (see loop)
   // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
   // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
@@ -154,6 +159,18 @@ const Sound = {
     if (wait > 0.02) { const gen = this.sayGen; setTimeout(() => { if (gen === this.sayGen) speak(); }, wait * 1000); } else speak();
     return wait;
   },
+  // A line in someone's own recorded voice ("vo@adam:game over": a boss's last word), on the announcer's bus and in
+  // its queue (one line at a time). Without that recording, the announcer says it.
+  sayAs(who, text) {
+    const key = "vo@" + who + ":" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    if (!takes || !Store.settings.sfx || !Store.settings.voice) return this.say(text);
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes[0].dur + 0.1));
+    this.duck(0.4, 1.1 + wait, 0.7);
+    this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait });
+    return wait;
+  },
   // Play an effect. o: { vol, rate, delay } scale a recorded take; the synth ignores them.
   sfx(name, pan = 0, o) {
     if (!this.ctx || !Store.settings.sfx) return;
@@ -274,7 +291,7 @@ const Sound = {
     const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
       const off = this._clickAt(buf);
       this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: (m.vol === undefined ? 1 : m.vol) * (this.MIX.music[name] || 1) }; // (the track's level in the mix)
-      if (this.trackName === name && Store.settings.music) { this.trackName = null; this.play(name); }
+      if (this.trackName && (this.takes[this.trackName] || this.trackName) === name && Store.settings.music) this.play(this.trackName, true);
       return buf;
     }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
     (this._trackLoad || (this._trackLoad = {}))[name] = p;
@@ -531,12 +548,26 @@ const Sound = {
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
     get memory() { return this.calm; }, get exam() { return this.calm; }, // (Memory Bank and the Final Exam have their own recordings; without them, the calm tune as before)
   },
-  play(name) {
-    if (this.trackName === name && (this.timer || this._now)) return;
+  // The recording to load or play for a track: during its screen's visit the one that visit plays, between visits the
+  // one the next visit will play (a track with one recording: itself).
+  take(name) {
+    const base = String(name).replace(/-b$/, ""), b = base + "-b", files = Assets.files.music;
+    if (!Assets.on || !files[base] || !files[b]) return name; // (from disk: one tune per track, as before)
+    if (this.trackName === base && this.takes[base]) return this.takes[base];
+    return this.nextTake[base] || (this.nextTake[base] = Math.random() < 0.5 ? base : b);
+  },
+  // again: the same visit, started over (its recording has arrived, the music was switched back on)
+  play(name, again) {
+    if (!again && this.trackName === name && (this.timer || this._now)) return;
+    if (this.trackName !== name && Assets.on && Assets.files.music[name + "-b"]) { // a new visit: the recording lined up for it, and the other one next time
+      const t = (this.takes[name] = this.take(name)), o = (this.nextTake[name] = t === name ? name + "-b" : name);
+      delete this.tracks[o];
+      if (this._trackLoad) delete this._trackLoad[o];
+    }
     this.trackName = name;
     this.stopMusic();
     if (!this.ctx || !Store.settings.music) return;
-    const rec = this.tracks[name];
+    const take = this.takes[name] || name, rec = this.tracks[take];
     if (rec) { // the recording: looped between its loop points, faded in
       const c = this.ctx, src = c.createBufferSource(), g = c.createGain();
       src.buffer = rec.buf; src.loop = true; src.loopStart = rec.loop[0]; src.loopEnd = rec.loop[1];
@@ -548,11 +579,12 @@ const Sound = {
       this.setIntensity(this.intensity);
       return;
     }
-    if (Assets.on && Assets.files.music[name]) this.loadTrack(name); // (it takes over when it arrives; the synth plays meanwhile)
+    const coming = Assets.on && !!Assets.files.music[take];
+    if (coming) this.loadTrack(take); // (it takes over when it arrives; the synth plays meanwhile, from a moment on: a recording that comes quickly is never preceded by it)
     if (!this.TRACKS[name]) return;
     this.track = this.TRACKS[name];
     this.step = 0;
-    this.nextTime = this.ctx.currentTime + 0.08;
+    this.nextTime = this.ctx.currentTime + (coming ? 0.7 : 0.08);
     this.timer = setInterval(() => this._schedule(), 30);
   },
   stopMusic() {
@@ -566,9 +598,8 @@ const Sound = {
   },
   refreshMusic() {
     const n = this.trackName;
-    this.trackName = null;
-    if (Store.settings.music && n) this.play(n);
-    else this.stopMusic();
+    if (Store.settings.music && n) this.play(n, true);
+    else { this.trackName = null; this.stopMusic(); }
   },
   _schedule() {
     const c = this.ctx;

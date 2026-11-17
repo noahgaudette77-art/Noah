@@ -140,12 +140,14 @@ class BlasterGame extends QuizGame {
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
     // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
     // disk has none): the three skies, the starfighter, the demon. Whatever is missing is drawn with what is built in.
-    this.gen = { skies: {}, fighter: null, demon: null, props: {} };
+    this.gen = { skies: {}, fighter: null, demon: null, props: {}, brood: {} };
     if (this.has3D && GFX.ok) {
       for (const n of ["blaster-deep-1", "blaster-deep-4", "blaster-deep-5"]) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
       this.gen.fighter = Assets.model("starfighter");
       this.gen.demon = Assets.model("demon");
       for (const n of SPACE_GEN_PROPS) { const m = Assets.model(n); if (m) this.gen.props[n] = m; } // (passing ships and drifting rocks: see BlasterSpace.genKit)
+      for (const n of BLASTER_ESCORT.NEAR.concat(BLASTER_ESCORT.FAR)) { const m = Assets.model(n); if (m) this.gen.props[n] = m; } // (the allies, made ready the same way: see BlasterEscort)
+      for (const n of BLASTER_ESCORT.BROOD) { const m = Assets.model(n); if (m) this.gen.brood[n] = m; } // (the overlord's brood: only their shapes are drawn)
     }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-blaster">
@@ -401,6 +403,13 @@ class BlasterGame extends QuizGame {
     this.el.querySelectorAll("[data-meter] i").forEach((pip, i) => pip.classList.toggle("on", i < this.combo - 1));
     if (this.combo > (this.comboShown || 1)) { cb.classList.remove("pop"); void cb.offsetWidth; cb.classList.add("pop"); }
     this.comboShown = this.combo;
+  }
+  // where a bolt spins up when the streak reaches a new tier (QuizGame.propTier): over the fighter (staged fights only)
+  tierAt() {
+    if (!this.stage) return null;
+    const p = this.stage.shipPos(new THREE.Vector3());
+    p.y += 1.25 * this.shipScale;
+    return { p, size: 0.8 * this.shipScale };
   }
   onLayout() {
     if (!this.has3D) return;

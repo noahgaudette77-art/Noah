@@ -5,7 +5,7 @@
 //
 //   node arcade/tools/capture.js arcade/tools/scenarios/racer-run.js --out arcade/docs/combat-pass/racer --dpr 2
 //
-// (parts: start, question, skies, beauty, tunnel, lane, boost, right, explain, wrong, damage, insured, near, low, finish, early)
+// (parts: start, question, skies, beauty, tunnel, lane, boost, right, explain, wrong, damage, insured, near, low, rivals, finish, early)
 //
 // PARTS=skies,right,... keeps only some of them (see `has` below); STAGE picks the questions (default 2).
 // The scenario sets state in the page to reach a moment quickly (which year of the career, how many crashes, a
@@ -203,6 +203,35 @@ module.exports = async (cap) => {
     await ready(40, 0.3);
     await year(3); // (in the open, downtown: the fire and its smoke are seen against the street)
     await strip("13-last-life", 12, 6);
+  }
+  // ---- the rival rigs and the chaser (violet, chrome, a silver egg), a streak tier's bolt, a milestone's stars
+  if (has("rivals")) {
+    await set({ crashes: 0, insurance: 0 });
+    const event = async (id, name, wait, every) => {
+      await ready(30, 0.2);
+      await cap.answer(1);
+      await page(() => { window.__arcade.Scenes.cur.lockT = 9; });
+      await cap.fast(10);
+      await page((e) => { const s = window.__arcade.Scenes.cur; s.gp = Math.min(s.gp, 0.2); s.world.director.force(e); }, id);
+      await cap.fast(wait);
+      await strip(name, 6, every);
+      await page(() => { const s = window.__arcade.Scenes.cur; s.lockT = 0.01; });
+      await sheet();
+      await cap.fast(30);
+    };
+    await event("rival", "19-rival-rig", 70, 40);
+    await event("rival", "19b-rival-rig2", 70, 40);
+    await event("chase", "20-chase", 36, 18);
+    await ready(30, 0.3);
+    await page(() => { const A = window.__arcade, s = A.Scenes.cur; s.run.streak = 2; A.Hype.level = 0; });
+    await drive("R", 2);
+    await strip("21-streak-tier", 8, 7);
+    await sheet(); await cap.fast(30);
+    await set({ egg: 99000 });
+    await ready(30, 0.3);
+    await drive("R", 2);
+    await strip("22-milestone", 8, 6);
+    await sheet(); await cap.fast(30);
   }
   // ---- retirement at 65: the last gate of the career, taken right
   if (has("finish")) {
