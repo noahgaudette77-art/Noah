@@ -1,7 +1,7 @@
 {
  "name": "prop-tome",
  "triangles": 11999,
- "bytes": 464684,
+ "bytes": 443420,
  "tex": 1024,
  "parts": {
   "body": {
@@ -11,23 +11,23 @@
     0
    ],
    "min": [
-    -0.4133,
+    -0.7108,
     0,
-    -0.2355
+    -0.7058
    ],
    "max": [
-    0.4133,
+    0.7108,
     1,
-    0.2355
+    0.7058
    ],
    "tris": 11999
   }
  },
  "anchors": {},
  "size": [
-  0.8265824317932129,
+  1.4215420484542847,
   1,
-  0.47104889154434204
+  1.411524772644043
  ],
- "source": "cand/props/prop-tome-sd-0.tripo.glb"
+ "source": "cand/props/prop-tome-b-sd-0.tripo.glb"
 }
