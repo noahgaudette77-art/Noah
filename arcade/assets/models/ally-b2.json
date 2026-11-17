@@ -1,0 +1,33 @@
+{
+ "name": "ally-b2",
+ "triangles": 14177,
+ "bytes": 165232,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.4964,
+    -0.1044,
+    -0.5
+   ],
+   "max": [
+    0.4964,
+    0.1044,
+    0.5
+   ],
+   "tris": 14177
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9928969740867615,
+  0.20874865353107452,
+  1
+ ],
+ "source": "cand/starfighter/starfighter-b-sd-0.rodin.glb"
+}

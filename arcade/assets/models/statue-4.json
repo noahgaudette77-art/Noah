@@ -1,0 +1,33 @@
+{
+ "name": "statue-4",
+ "triangles": 23288,
+ "bytes": 235868,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4912,
+    0,
+    -0.2075
+   ],
+   "max": [
+    0.4912,
+    1,
+    0.2075
+   ],
+   "tris": 23288
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9824828505516052,
+  1,
+  0.41498345136642456
+ ],
+ "source": "cand/boss04/boss04-fineprint-sd-1.rodin.glb"
+}

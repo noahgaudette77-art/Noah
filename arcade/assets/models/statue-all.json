@@ -1,0 +1,33 @@
+{
+ "name": "statue-all",
+ "triangles": 22895,
+ "bytes": 198752,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4895,
+    0,
+    -0.2414
+   ],
+   "max": [
+    0.4895,
+    1,
+    0.2414
+   ],
+   "tris": 22895
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9790000319480896,
+  1,
+  0.4828128218650818
+ ],
+ "source": "cand/boss12/boss12-proctor-sd-0.rodin.glb"
+}

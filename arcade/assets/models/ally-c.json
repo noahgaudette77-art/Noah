@@ -1,0 +1,33 @@
+{
+ "name": "ally-c",
+ "triangles": 9499,
+ "bytes": 265876,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.4573,
+    -0.2275,
+    -0.5
+   ],
+   "max": [
+    0.4573,
+    0.2275,
+    0.5
+   ],
+   "tris": 9499
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9146955013275146,
+  0.4550495743751526,
+  1
+ ],
+ "source": "cand/starfighter/starfighter-c-sd-1.tripo.glb"
+}

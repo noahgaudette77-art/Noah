@@ -1,8 +1,8 @@
 {
  "name": "prop-shield",
  "triangles": 8000,
- "bytes": 445308,
- "tex": 1024,
+ "bytes": 218504,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

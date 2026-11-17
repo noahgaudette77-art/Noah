@@ -1,0 +1,37 @@
+{
+ "name": "chaser",
+ "about": "Nest Egg Run: a chaser, the second war-rig design (a low racer on big wheels, Tripo); an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/warrig/warrig-a-nb-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 10000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ }
+}

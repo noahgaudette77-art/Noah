@@ -1,0 +1,33 @@
+{
+ "name": "decor-deck",
+ "triangles": 11997,
+ "bytes": 292932,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.5636,
+    0,
+    -0.5056
+   ],
+   "max": [
+    0.5636,
+    1,
+    0.5056
+   ],
+   "tris": 11997
+  }
+ },
+ "anchors": {},
+ "size": [
+  1.1271289587020874,
+  1,
+  1.0112226009368896
+ ],
+ "source": "cand/props/prop-deck-sd-0.tripo.glb"
+}

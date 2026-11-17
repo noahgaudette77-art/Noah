@@ -1,0 +1,41 @@
+{
+ "name": "rival-rig2",
+ "triangles": 16925,
+ "bytes": 196668,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.2011,
+    -0.0001
+   ],
+   "min": [
+    -0.248,
+    0.0001,
+    -0.5
+   ],
+   "max": [
+    0.248,
+    0.4021,
+    0.4997
+   ],
+   "tris": 16925
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.4959583282470703,
+  0.4021163880825043,
+  1
+ ],
+ "source": "cand/warrig/warrig-b-sd-1.rodin-mv.glb",
+ "symmetry": {
+  "delivered": 0.731,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.731,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

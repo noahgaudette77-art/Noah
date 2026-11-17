@@ -1,0 +1,33 @@
+{
+ "name": "statue-2",
+ "triangles": 22466,
+ "bytes": 222920,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4958,
+    0,
+    -0.1715
+   ],
+   "max": [
+    0.4958,
+    1,
+    0.1715
+   ],
+   "tris": 22466
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9916229248046875,
+  1,
+  0.34307610988616943
+ ],
+ "source": "cand/boss02/boss02-perilmonger-sd-0.rodin.glb"
+}

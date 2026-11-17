@@ -1,0 +1,33 @@
+{
+ "name": "statue-8",
+ "triangles": 22811,
+ "bytes": 187264,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.3701,
+    0,
+    -0.3019
+   ],
+   "max": [
+    0.3701,
+    1,
+    0.3019
+   ],
+   "tris": 22811
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.7401762008666992,
+  1,
+  0.6038879752159119
+ ],
+ "source": "cand/boss08/boss08-intestate-sd-1.rodin.glb"
+}

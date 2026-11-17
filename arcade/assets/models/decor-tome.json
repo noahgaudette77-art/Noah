@@ -1,0 +1,33 @@
+{
+ "name": "decor-tome",
+ "triangles": 11999,
+ "bytes": 252452,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4133,
+    0,
+    -0.2355
+   ],
+   "max": [
+    0.4133,
+    1,
+    0.2355
+   ],
+   "tris": 11999
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.8265824317932129,
+  1,
+  0.47104889154434204
+ ],
+ "source": "cand/props/prop-tome-sd-0.tripo.glb"
+}

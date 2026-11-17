@@ -1,8 +1,8 @@
 {
  "name": "prop-star",
  "triangles": 7999,
- "bytes": 525236,
- "tex": 1024,
+ "bytes": 244564,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

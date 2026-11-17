@@ -1,0 +1,33 @@
+{
+ "name": "brood-d",
+ "about": "Risk Blaster: one of the overlord's brood, seen far off; a sibling of the overlord's own design (Tripo); an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/demon2/demon-d-sd-1.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 6000,
+ "tex": 256,
+ "texBase": 256,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ }
+}

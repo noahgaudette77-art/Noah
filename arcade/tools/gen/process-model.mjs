@@ -350,14 +350,35 @@ for (const g of groupNames) {
   // this group's own vertices
   const remap = new Map(), P = [], N = [], T = [], I = new Uint32Array(tl.length * 3);
   tl.forEach((t, k) => { for (let j = 0; j < 3; j++) { const v = S.I[t * 3 + j]; let nv = remap.get(v); if (nv === undefined) { nv = P.length / 3; remap.set(v, nv); P.push(S.P[v * 3], S.P[v * 3 + 1], S.P[v * 3 + 2]); N.push(S.N[v * 3], S.N[v * 3 + 1], S.N[v * 3 + 2]); T.push(S.T[v * 2], S.T[v * 2 + 1]); } I[k * 3 + j] = nv; } });
-  const gp = new Float32Array(P), gn = new Float32Array(N), gt = new Float32Array(T), gb = bounds(gp);
+  let gp = new Float32Array(P), gn = new Float32Array(N), gt = new Float32Array(T);
+  // cfg.weld: a mesh delivered as loose triangles (Rodin's) is welded first, where position and texture coordinate
+  // agree (a texture seam stays a seam), its normals averaged: then the careful simplifier can work on it
+  if (cfg.weld) {
+    const key = new Map(), q = 1e5, qt = 1e5, P3 = [], N3 = [], T3 = [], cnt = [];
+    const re = new Uint32Array(gp.length / 3);
+    for (let v = 0; v < gp.length / 3; v++) {
+      const k = Math.round(gp[v * 3] * q) + "," + Math.round(gp[v * 3 + 1] * q) + "," + Math.round(gp[v * 3 + 2] * q) + "|" + Math.round(gt[v * 2] * qt) + "," + Math.round(gt[v * 2 + 1] * qt);
+      let n = key.get(k);
+      if (n === undefined) { n = P3.length / 3; key.set(k, n); P3.push(gp[v * 3], gp[v * 3 + 1], gp[v * 3 + 2]); N3.push(0, 0, 0); T3.push(gt[v * 2], gt[v * 2 + 1]); }
+      N3[n * 3] += gn[v * 3]; N3[n * 3 + 1] += gn[v * 3 + 1]; N3[n * 3 + 2] += gn[v * 3 + 2];
+      re[v] = n;
+    }
+    for (let n = 0; n < N3.length / 3; n++) { const l = Math.hypot(N3[n * 3], N3[n * 3 + 1], N3[n * 3 + 2]) || 1; N3[n * 3] /= l; N3[n * 3 + 1] /= l; N3[n * 3 + 2] /= l; }
+    for (let i = 0; i < I.length; i++) I[i] = re[I[i]];
+    if (g === groupNames[0]) console.log(`weld: ${gp.length / 3} vertices to ${P3.length / 3}`);
+    gp = new Float32Array(P3); gn = new Float32Array(N3); gt = new Float32Array(T3);
+  }
+  const gb = bounds(gp);
   // simplify: its share of the triangle budget (small parts keep more of themselves)
   const share = Math.max(Math.min(tl.length, cfg.minPart || 600), Math.round((tl.length / totalTris) * target * ((cfg.keep || {})[g] || 1)));
   let idx = I;
   if (share < tl.length) {
     const attrs = new Float32Array((gp.length / 3) * 5);
     for (let i = 0; i < gp.length / 3; i++) { attrs[i * 5] = gn[i * 3]; attrs[i * 5 + 1] = gn[i * 3 + 1]; attrs[i * 5 + 2] = gn[i * 3 + 2]; attrs[i * 5 + 3] = gt[i * 2]; attrs[i * 5 + 4] = gt[i * 2 + 1]; }
-    const [res] = MeshoptSimplifier.simplifyWithAttributes(I, gp, 3, attrs, 5, [0.5, 0.5, 0.5, 1.5, 1.5], null, share * 3, cfg.error || 0.02, ["LockBorder"]);
+    let [res] = MeshoptSimplifier.simplifyWithAttributes(I, gp, 3, attrs, 5, [0.5, 0.5, 0.5, 1.5, 1.5], null, share * 3, cfg.error || 0.02, ["LockBorder"]);
+    // cfg.sloppy: a mesh delivered as loose triangles (Rodin's) is nearly all border, so the careful simplifier can hardly
+    // take anything away; for a model seen small or far off, cluster its vertices instead (its UVs stay its own)
+    if (cfg.sloppy && res.length > share * 3 * 1.5) [res] = MeshoptSimplifier.simplifySloppy(I, gp, 3, null, share * 3, 1);
     idx = res;
   }
   // drop the vertices nothing uses any more

@@ -1,0 +1,33 @@
+{
+ "name": "statue-10",
+ "triangles": 22204,
+ "bytes": 231976,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.5064,
+    0,
+    -0.3986
+   ],
+   "max": [
+    0.5064,
+    1,
+    0.3986
+   ],
+   "tris": 22204
+  }
+ },
+ "anchors": {},
+ "size": [
+  1.0128507614135742,
+  1,
+  0.7971810102462769
+ ],
+ "source": "cand/boss10/boss10-tollgate-sd-0.rodin.glb"
+}

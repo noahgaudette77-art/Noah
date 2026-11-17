@@ -1,8 +1,8 @@
 {
  "name": "prop-bolt",
  "triangles": 8000,
- "bytes": 432196,
- "tex": 1024,
+ "bytes": 213184,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

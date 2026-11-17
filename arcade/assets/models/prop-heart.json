@@ -1,8 +1,8 @@
 {
  "name": "prop-heart",
  "triangles": 8000,
- "bytes": 460084,
- "tex": 1024,
+ "bytes": 220464,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

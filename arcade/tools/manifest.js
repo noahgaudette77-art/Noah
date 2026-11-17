@@ -10,18 +10,18 @@ const fs = require("fs"), path = require("path");
 const ARCADE = path.join(__dirname, ".."), A = path.join(ARCADE, "assets");
 // What each screen needs. Entries whose files are not there are left out, so a screen never waits for nothing.
 const SETS = {
-  blaster: ["model:starfighter", "model:demon", "model:prop-ship-a", "model:prop-ship-b", "model:prop-ship-c", "model:prop-rock", "model:prop-rock2", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster"],
-  racer: ["model:warrig", "model:prop-car", "model:prop-van", "model:prop-bus", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer"],
-  boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss"],
+  blaster: ["model:starfighter", "model:demon", "model:prop-ship-a", "model:prop-ship-b", "model:prop-ship-c", "model:prop-rock", "model:prop-rock2", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster", "model:ally-a", "model:ally-c", "model:ally-a2", "model:ally-b2", "model:ally-c2", "model:brood-a", "model:brood-a1", "model:brood-a2", "model:brood-a3", "model:brood-b", "model:brood-d", "model:brood-d2", "model:brood-f", "model:brood-f2", "model:prop-shield", "model:prop-bolt", "model:prop-star", "music:blaster-b"],
+  racer: ["model:warrig", "model:prop-car", "model:prop-van", "model:prop-bus", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer", "model:rival-rig", "model:rival-rig2", "model:chaser", "model:prop-shield", "model:prop-heart", "model:prop-bolt", "model:prop-star", "music:racer-b"],
+  boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss", "model:prop-heart", "model:prop-star", "model:prop-coin", "model:prop-bolt", "music:boss-b", "music:finalboss-b"],
   // The arcade hall: one cabinet model for all six games, their toppers, the trophy case's cup, medal and coins, one
   // hall panorama for its reflections and light (never shown), the boss portraits for its posters. (Its sound comes
   // with it but is not waited for: see showHub.)
   hub: ["model:prop-cabinet", "model:mini-starfighter", "model:mini-warrig", "model:mini-proctor", "model:prop-deck", "model:prop-podium", "model:prop-tome", "model:prop-trophy", "model:prop-medal", "model:prop-coin", "model:prop-stand", "model:prop-vault", "sky:hub-hall", "sky:hub-hall-b", "ui:bosses", "ui:icons"],
-  hubsound: ["sfx:core", "sfx:hub", "sfx:voice", "music:hub"],
-  title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title"],
-  memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory"], // (the vault's own door stays: it moves as the deck is banked)
-  exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam"],
-  guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm"],
+  hubsound: ["sfx:core", "sfx:hub", "sfx:voice", "music:hub", "music:hub-b"],
+  title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title", "music:title-b"],
+  memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked)
+  exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam", "model:statue-1", "model:statue-2", "model:statue-3", "model:statue-4", "model:statue-5", "model:statue-6", "model:statue-7", "model:statue-8", "model:statue-9", "model:statue-10", "model:statue-11", "model:statue-all", "model:decor-podium", "music:exam-b"],
+  guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm", "model:decor-tome", "music:calm-b"],
 };
 const files = {};
 const walk = (d) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f), st = fs.statSync(p); if (st.isDirectory()) walk(p); else if (/\.(glb|webp|jpg|mp3)$/.test(f)) files[path.relative(A, p).split(path.sep).join("/")] = st.size; } };

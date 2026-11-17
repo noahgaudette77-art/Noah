@@ -1,0 +1,33 @@
+{
+ "name": "ally-a",
+ "triangles": 7999,
+ "bytes": 262944,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.4289,
+    -0.1426,
+    -0.5
+   ],
+   "max": [
+    0.4289,
+    0.1426,
+    0.5
+   ],
+   "tris": 7999
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.8577614426612854,
+  0.28521767258644104,
+  1
+ ],
+ "source": "cand/starfighter/starfighter-a-sd-0.tripo.glb"
+}
