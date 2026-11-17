@@ -619,7 +619,7 @@ class BlasterSpace {
     this.cloudData.set([i % 4, Math.random(), rand(0.5, 1), Math.random()], i * 4);
   }
   resetRock(r, z) {
-    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.0, 5.2) : rand(1.2, 6.5) * (Math.random() < 0.1 ? 2.2 : 1);
+    const a = rand(6.283), rr = r.near ? rand(30, 62) : rand(22, 125), s = r.near ? rand(1.0, 5.2) : rand(0.8, 3.4); // (the big rocks are the generated ones; the built-in ones only fill the distance)
     r.p.set(Math.cos(a) * rr * 1.1, Math.sin(a) * rr * 0.9, z);
     if (Math.abs(r.p.x) < SPACE_CALM_R + s && Math.abs(r.p.y) < SPACE_CALM_R + s) r.p.x += (r.p.x < 0 ? -1 : 1) * (SPACE_CALM_R + s);
     r.sc.set(s * rand(0.8, 1.3), s * rand(0.7, 1.1), s * rand(0.8, 1.25));

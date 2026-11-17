@@ -75,9 +75,10 @@ const Assets = {
     return c;
   },
   capTexture(t) {
-    if (!this.phone || !t || !t.image || t.userData.capped) return;
+    const done = this._capped || (this._capped = new WeakSet()); // (r128's textures have no userData)
+    if (!this.phone || !t || !t.image || done.has(t)) return;
+    done.add(t);
     const img = this.capImage(t.image);
-    t.userData.capped = true;
     if (img !== t.image) { t.image = img; t.needsUpdate = true; }
   },
   // A model for a scene that is being built (null when it is not loaded: the caller builds what it always built).

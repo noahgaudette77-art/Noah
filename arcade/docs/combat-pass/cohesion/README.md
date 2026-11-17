@@ -9,7 +9,7 @@ All captures are of the page served over HTTP (every asset loaded), on a 390 x 8
 | file | what it shows |
 |---|---|
 | `01-look-before.jpg` | every screen before the look was matched (B): Risk Blaster, Nest Egg Run and Boss Rush with a question up, the title, the hall; chapter select, results, Memory Bank, Final Exam, Strategy Guide |
-| `02-look-after.jpg` | the same ten screens after |
+| `02-look-after.jpg` | the same ten screens after (made again after the review's fix round: the Guide's rows with the bosses' busts, the examiner's chest, Boss Rush's crowd) |
 | `03-look-changed.jpg` | the four screens whose grade changed, before and after, side by side (the hall, Memory Bank, Final Exam, Strategy Guide) |
 | `04-traffic-day.jpg` | Nest Egg Run by day: the generated car, van and bus in the traffic, lit by the sky and mirrored in the road |
 | `05-traffic-night.jpg` | the same at night: tail bars, nose lamps, sill lines, the copies' own paint and neon |
@@ -20,9 +20,10 @@ All captures are of the page served over HTTP (every asset loaded), on a 390 x 8
 | `10-hub-after-D.jpg` | the hall after its set was cut to 3.55 MB: the row of cabinets, a topper close, the trophy stand |
 | `11-calm-blaster.jpg`, `12-calm-racer.jpg`, `13-calm-boss.jpg`, `14-calm-hub.jpg` | the calm path (Setup > Reduced effects on, the browser asking for reduced motion): each game with a question up, and the hall |
 | `15-tail-close.jpg`, `16-tail-closest.jpg` | F: the demon come close and at its closest over the fighter, its tail carried back and aside, clear of the canopy |
-| `17-tunnel-way-out.jpg` | F: out of the tunnel: through its mouth the sky beyond and the road under it; 12 frames, 9 frames apart (0.15 s) |
+| `17-tunnel-way-out.jpg` | F: out of the tunnel: through its mouth the sky beyond and the road, its rails and lamp posts under it; the glare grows over 0.7 s, lies over the mouth too and clears after it (frame means 43 to 120 of 255, no step over 24); 12 frames, 9 frames apart (0.15 s) |
+| `18-boss-crowd.jpg` | fix round: Boss Rush with a question up, its crowd as lit cut-out figures at the foot of the band |
 
-All other files are stills or sheets of stills. The frames of a strip run left to right, then row by row.
+The review's fix round made 02, 04 to 09, 13, 17 and 18 again. All other files are stills or sheets of stills. The frames of a strip run left to right, then row by row.
 
 ## What each screen downloads (MB, from `src/js/03a-files.js`)
 
@@ -62,15 +63,27 @@ Nest Egg Run x0.82, Boss Rush's roars x0.80, core and combat x1; announcer x1. N
 
 ## Still weak, plainly
 
-- Risk Blaster's passing ships and rocks are background by design: mid-fight they sit dark and soft (the lens holds the
-  demon) in the gaps between the answers; they read best as a run begins (07, 08). The far rocks are still the
-  built-in ones (96 of them would be too heavy as models).
-- Risk Blaster's own set is the heaviest download (15.7 MB, 10.7 MB of it models and skies) and holds about 435 MB of
-  textures on the graphics chip (three 4K skies, the fighter's and the demon's 2K maps): untouched here.
+- Open space is still mostly black between the stars: lit, the ships and rocks read as objects, but the frame's mean
+  brightness rose only from 11.6 to 16.2 of 255 (mid-fight 42.7 -> 53.5). The far rocks are still the built-in ones,
+  now small (96 as models would be too heavy).
+- Risk Blaster remains the heaviest: 15.0 MB to download and, on a desktop, about 435 MB of textures on the graphics
+  chip (235 MB on a phone with the cap).
 - The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback models and pictures for a page opened
   from disk; the build script that inlines them is outside this pass.
 - Nobody has listened: the mix is measured, not heard.
-- Out of the tunnel the glare that clears over the new landscape is kept (it hides the change of scenery).
+- Out of the tunnel the glare washes the lens for about a second and a half (at most 0.62 of the haze), growing and
+  clearing gradually. The mouth shows the road, its rails and lamp posts beyond, not the bridge's towers: those come
+  out of the haze just after.
+
+## Graphics memory (textures held on the chip, `tools/scenarios/gpu-mem.js`)
+
+| | desktop | phone (`--phone`: no picture over 2048 px) |
+|---|---|---|
+| the hall, on screen | 182 MB | 182 MB |
+| the hall, kept while a game runs | 7.7 MB (was 182) | 7.7 MB |
+| Risk Blaster | 435 MB | 235 MB |
+| Boss Rush | 204 MB | 116 MB |
+| Memory Bank | 14 MB | 14 MB |
 
 ## How they are made
 

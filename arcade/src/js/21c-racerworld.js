@@ -459,13 +459,15 @@ class RacerWorld {
     return out;
   }
   underBadge(c, rings) {
-    const cam = this.g.camera, half = c.type === "bus" ? 4.2 : c.type === "truck" ? 3.0 : c.type === "bike" ? 0.9 : 2.2, v = this._s;
-    v.set(c.x, c.y + 1.3, c.z).project(cam);
-    if (v.z > 1) return false;
-    const e = this._q2 || (this._q2 = new THREE.Vector3());
-    e.set(c.x, c.y + 1.3 + half * 0.7, c.z).project(cam);
-    const rc = Math.abs(e.y - v.y) * 1.2;
-    return rings.some((b) => Math.hypot(v.x * cam.aspect - b.x, v.y - b.y) < b.r + rc);
+    // the car's box on the screen (its eight corners), against each badge's circle
+    const cam = this.g.camera, D = { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let i = 0; i < 8; i++) {
+      v.set(c.x + (i & 1 ? D[0] : -D[0]), c.y + (i & 2 ? D[1] : 0), c.z + (i & 4 ? D[2] : -D[2])).project(cam);
+      if (v.z > 1) return false; // (a corner behind the lens: it is passing, not under a badge)
+      x0 = Math.min(x0, v.x * cam.aspect); x1 = Math.max(x1, v.x * cam.aspect); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+    }
+    return rings.some((b) => { const dx = Math.max(x0 - b.x, 0, b.x - x1), dy = Math.max(y0 - b.y, 0, b.y - y1); return dx * dx + dy * dy < b.r * b.r * 0.8; });
   }
   // lane: "R" the right service lane (our way), "L" the left one (oncoming), "H" a hover lane, "M" the main road (events)
   spawn(type, lane, o = {}) {
@@ -845,7 +847,9 @@ class RacerWorld {
     this.curtain.renderOrder = 4;
     this.curtain.visible = false;
     this.curtain.layers.set(1);
-    g.scene.add(this.curtain);
+    this.curtainG = new THREE.Group(); // (a group of its own: three.js sorts by a group's order before an object's, and the tunnel's mouth is a group of order 3; out of a tunnel the glare must come after it)
+    this.curtainG.add(this.curtain);
+    g.scene.add(this.curtainG);
     // (with the panorama up) the mouth of a tunnel, driven through: the way out, seen from inside as an opening bright
     // with the sky beyond it that grows; the way in, a dark mouth with a rim of light in a wall across the road. The
     // landscape is changed as the rig passes through it, not behind a bank of darkness: an open road is never drawn
@@ -1062,7 +1066,7 @@ class RacerWorld {
       const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
       if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
-      else if (s.to !== "tunnel") fogK = 0.6 * (s.t < 1.2 ? smoothstep(0.55, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
+      else if (s.to !== "tunnel") fogK = 0.62 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
       if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
       if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
@@ -1088,13 +1092,15 @@ class RacerWorld {
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
     if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
     const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
-    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(1.5) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    const curtainCol = glare ? this._c.copy(this.swap.col) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
     if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
     if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;
     this.curtain.material.opacity = fogK;
     this.curtain.material.color.copy(curtainCol);
     this.curtain.position.x = g.camera.position.x;
+    this.curtain.position.z = glare ? -8 : -36; // (out of a tunnel the glare is the light of the way out filling the lens: over everything, the rig too, growing in the bore and clearing on the open road)
+    this.curtain.material.depthTest = !glare; this.curtainG.renderOrder = glare ? 50 : 0; // (out of a tunnel: after the mouth's group, so the way out is in the glare too, not a sharp picture in a pale frame)
     fog.near = lerp(30, 5, fogK);
     fog.far = lerp(pal.far, 40, fogK);
     this.cityFog = lerp(900, 60, fogK);

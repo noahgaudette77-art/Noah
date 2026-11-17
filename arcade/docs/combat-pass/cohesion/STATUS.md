@@ -56,9 +56,39 @@ leftovers if time allows. Commit after each step.
 - **Final** (on the last build): full regression from disk IDENTICAL, full regression over HTTP with every asset loaded
   IDENTICAL, sequence 13 of 13, no console errors in any capture. Captures 01 to 17 and their list in `README.md`.
 
-## Next
+## The review's fix round
 
-- Nothing: the pass is done. What is still weak is listed in `README.md`.
+1. Open space: the generated ships and rocks are lit as objects (the region's rims at 0.85, a cool rim from above and
+   behind, a fill of the region's light eased toward a cool grey, brighter albedo and mirror); the rocks' crystals and
+   veins glow (3.6), each near rock has a stone of its own (warm, slate, basalt, pale) and more varied size and spin;
+   the built-in far rocks are eased from the region's maroon toward a neutral stone and kept small; the belt's sky is
+   brighter (gain 0.72 -> 0.9).
+2. The tunnel's way out: the glare grows over the 0.7 s before the mouth and clears over 0.9 s after it (it masks
+   the change of scene: no one-step jump), at most 0.62 of the next sky's haze colour, not white. It now lies over the
+   mouth too: it had been sorted under the mouth's group (three.js orders by group first), so the way out showed as a
+   sharp picture in a pale frame. Through the mouth the road runs on with its rails and lamp posts under the next sky.
+   The strip's frame means, 0.15 s apart: 43, 48, 50, 47, 54, 79, 103, 114, 120, 118, 108, 97 of 255 (the review
+   measured 59 -> 119 in one step); the largest step is 24.
+3. The lane badges: a car that comes under one on the screen while a gate is up slips away (0.25 s) and comes back
+   when clear (look only; the badges are unchanged).
+4. The fighters' trails are short and cyan-white; every generated ship carries running lights (magenta to port, cyan
+   to starboard, white aft, blinking under once a second).
+5. Nest Egg Run's city: its windows are a picture made in code (`windowGridTexture`, 08-fx.js), drawn with its
+   smaller copies, so far walls show their windows' average light instead of noise; the skyline uses it too.
+6. Boss Rush's crowd: lit cut-out figures (heads and shoulders, arms up, a cap, a pair) in place of boxes and stick
+   arms, rimmed in the house colour, still bobbing and jumping at a blow.
+- Minor: the Guide's rows show the bosses' 3D busts; the examiner's chest mask reaches the whole hollow; the tail bar's
+  corner markers glow dim amber, never black; every strip's frame spacing is in the README.
+- Phones: a texture cap (Assets.phone, 03b-assets.js): on a phone no model or sky picture larger than 2048 px reaches
+  the graphics chip (`#phone` in the address, or the capture tool's `--phone`, forces it for tests). Measured with
+  `gpu-mem.js --phone`: Risk Blaster 435 -> 235 MB of textures, Boss Rush 204 -> 116 MB; desktop and disk unchanged.
+  (A first version failed every model on a phone: r128's textures have no userData. Caught by the phone check, fixed.)
+  The five space props and three traffic props re-processed at 512 px (3.0 -> 1.9 MB). Every screen's set measured
+  (README).
+- Measured after the round: open space (07) mean brightness 11.6 -> 16.2 of 255, mid-fight (09) 42.7 -> 53.5.
+- Captures made again, one at a time: 02, 04 to 09, 13, 17 and a new 18 (the crowd).
+- **Final, after the round** (on the last build): full regression from disk IDENTICAL, over HTTP with every asset
+  loaded IDENTICAL and no console errors, sequence 13 of 13.
 
 ## Measurements
 

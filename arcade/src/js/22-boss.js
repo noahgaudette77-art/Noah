@@ -485,7 +485,7 @@ class BossGame extends QuizGame {
           const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
           // (Phase 5 fix: a figure cut out against the stands' light, heads and shoulders, some with their arms up, its
           // edge lit from behind in the house colour, where the boxes and stick arms read as a blockout)
-          const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 1.6);
+          const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 3.2);
           people.push({ geo: bossFigure(Math.floor(Math.random() * 4), sc), matrix: at(0, 0, 0), color: rim }); pSeed.push(sd, 6);
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
