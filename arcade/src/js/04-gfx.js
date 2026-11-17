@@ -41,6 +41,16 @@ const GFX = {
     { name: "LOW", pr: 1.5, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fx: 0.6 },
     { name: "LOWEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fx: 0.45 },
   ],
+  // On a phone (Assets.phone) each tier is lighter still (the owner, 2026-11-17: the shared render cost first): no
+  // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at HIGH no
+  // lens streaks, six bloom levels), and at MEDIUM, where a phone starts, no multisampling at all (the final pass's
+  // edge smoothing, FXAA, is one cheap pass), no god rays, no contact shadows, four bloom levels.
+  PHONE: [
+    { samples: 2, mirror: 0, lens: false, levels: 6 },
+    { samples: 0, mirror: 0, rays: false, shadows: false, levels: 4 },
+    { mirror: 0, shadows: false },
+    { mirror: 0, shadows: false },
+  ],
   tier: 0,
   auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
   extras: true, // background figures and decorative extras (the tier's; scenes check it)
@@ -48,13 +58,13 @@ const GFX = {
   // the effects as drawn: the player's own switches, less what the tier leaves out
   eopt() {
     const T = this.TIERS[this.tier], o = this.opt;
-    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen });
+    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen, shadows: o.shadows !== false && T.shadows !== false });
   },
   // how many lights the current scene has on (for the readout: each one is reckoned for every lit pixel)
   lightCount() {
     const sc = Scenes.cur && Scenes.cur.scene;
     if (!sc) return 0;
-    let n = 0; sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight) n++; });
+    let n = 0; sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight && o.layers.mask !== (1 << LIGHT_LAYER)) n++; }); // (the lights drawn: a screen's own lights under a budget are not)
     return n;
   },
   setTier(n, why) {
@@ -95,7 +105,7 @@ const GFX = {
     if (p90 < 17.4) {
       if (!P.okSince) P.okSince = now;
       const up = this.tier - 1;
-      if (up >= 0 && now - P.okSince > 12000 * (1 + 2 * (P.failed[up] || 0)) && (P.failed[up] || 0) < 3) {
+      if (up >= (Assets.phone ? 1 : 0) && now - P.okSince > 12000 * (1 + 2 * (P.failed[up] || 0)) && (P.failed[up] || 0) < 3) { // (a phone climbs no higher than MEDIUM by itself: a steady frame rate over a richer one. HIGH is there in Setup.)
         P.n = 0; P.okSince = 0; P.upAt = now;
         this.setTier(up, "steady frames");
       }
@@ -132,6 +142,7 @@ const GFX = {
     const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
+    if (Assets.phone) this.TIERS = this.TIERS.map((T, i) => Object.assign({}, T, this.PHONE[i] || {})); // (a phone's lighter tiers: see PHONE)
     // the first tier: Setup's choice, or (auto) HIGH on a desktop and MEDIUM on a phone, from where the frame rate leads
     const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
     this.auto = fixed === undefined;
@@ -181,6 +192,7 @@ const GFX = {
   refit() { if (this.ok && Math.abs(this.scenePR() - (this._pr || 0)) > 1e-3) this.resize(); },
   setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
+    if (scene.userData.lightBudget) this.lightsFor(scene); // (the strongest of the screen's lights into its budget: see LightPool)
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
     this.flashAmt *= Math.pow(0.003, dt);
@@ -381,6 +393,14 @@ const GFX = {
   // appears in play (on a phone each of those was a stall of a frame or more). With it: what the screen keeps aside
   // for later (warmExtra), every model its files brought that it has not put in the scene yet (allies, props, the
   // pieces of an event), and every sky it may fly into.
+  // the screen's light budget: made the first time its scene is drawn (see LightPool), then kept up each frame
+  lightsFor(scene) {
+    const b = scene && scene.userData.lightBudget;
+    if (!b) return null;
+    const p = scene.userData.lightPool || (scene.userData.lightPool = new LightPool(scene, b));
+    p.update();
+    return p;
+  },
   warm(s) {
     if (!this.ok || !s.scene || !s.camera) return;
     const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
@@ -395,8 +415,9 @@ const GFX = {
       });
     }
     if (this.pipe && this.pipe.compileAll) this.pipe.compileAll(); // (and every post-processing pass, the first time)
+    this.lightsFor(scene); // (the screen's light budget in place, so its shaders are compiled for the lights it will draw)
     const layers = s.camera.layers.mask;
-    s.camera.layers.mask = 0xffffffff | 0; // (what a screen keeps on layers of its own, the mirror's or the overlay's, is readied too)
+    s.camera.layers.mask = ~(1 << LIGHT_LAYER); // (what a screen keeps on layers of its own, the mirror's or the overlay's, is readied too; not the hidden lights)
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
@@ -462,6 +483,68 @@ const snapHz = (dt) => [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) =>
 // same saturation and contrast. What still differs from screen to screen is only how bright a room is lit (exposure)
 // and how much its lights bloom: a moonlit exam hall is not a sunlit avenue.
 const GRADE = { saturation: 1.16, contrast: 1.15 };
+// ---- the light budget (the owner, 2026-11-17: a small budget of lights per screen). A screen states how many
+// lights of each kind it may draw: scene.userData.lightBudget = { dir, point, spot }. Its own lights stay where its
+// code keeps them (moved, faded, coloured, switched by `visible` as before) but are never drawn themselves (they live
+// on layer 31, which no lens sees); each frame the strongest of each kind is copied into the few lights that are
+// drawn. The number of lights the shaders see never changes, so nothing recompiles when a flash comes and goes, and
+// every lit pixel reckons with a handful of lights, not a dozen. A spot light the budget has no room for competes for
+// a point light's place, drawn as a point light. A light marked userData.keep (a key light) always keeps its place.
+const LIGHT_LAYER = 31;
+class LightPool {
+  constructor(scene, budget) {
+    this.scene = scene;
+    this.slots = { dir: [], point: [], spot: [] };
+    const make = { dir: () => new THREE.DirectionalLight(0xffffff, 0), point: () => new THREE.PointLight(0xffffff, 0, 0, 2), spot: () => new THREE.SpotLight(0xffffff, 0) };
+    for (const k of ["dir", "point", "spot"]) for (let i = 0; i < (budget[k] || 0); i++) {
+      const l = make[k]();
+      l.userData.slot = true; l.name = "budget-" + k + i;
+      scene.add(l);
+      if (l.target) { l.target.userData.slot = true; scene.add(l.target); }
+      this.slots[k].push({ l, src: null });
+    }
+    this.lists = { dir: [], point: [], spot: [] };
+    this._p = new THREE.Vector3();
+  }
+  // every light of the screen's own: found each frame (a scene adds lights as it builds things), moved out of sight
+  collect() {
+    const L = this.lists; L.dir.length = L.point.length = L.spot.length = 0;
+    this.scene.traverse((o) => {
+      if (!o.isLight || o.userData.slot || o.isAmbientLight || o.isHemisphereLight) return;
+      if (o.layers.mask !== (1 << LIGHT_LAYER)) o.layers.set(LIGHT_LAYER);
+      (o.isDirectionalLight ? L.dir : o.isSpotLight ? (this.slots.spot.length ? L.spot : L.point) : o.isPointLight ? L.point : L.dir).push(o);
+    });
+  }
+  // is it on, as its screen means it: lit, and it and everything it hangs on shown
+  shown(o) { for (let p = o; p; p = p.parent) if (p.visible === false) return false; return o.intensity > 0; }
+  score(o, held) {
+    const reach = o.isDirectionalLight ? 1 : Math.min(o.distance > 0 ? o.distance : 40, 60) / 20;
+    return o.intensity * reach * (held ? 1.25 : 1) * (o.userData.keep ? 1000 : 1); // (a light that holds a place keeps it against a near equal: no flicker between two)
+  }
+  update() {
+    this.collect();
+    for (const k of ["dir", "point", "spot"]) {
+      const slots = this.slots[k];
+      if (!slots.length) continue;
+      const held = new Set(slots.map((s) => s.src));
+      const lit = this.lists[k].filter((o) => this.shown(o)).sort((a, b) => this.score(b, held.has(b)) - this.score(a, held.has(a))).slice(0, slots.length);
+      // a light that keeps its place keeps its slot (no jump in which slot draws what)
+      const free = slots.filter((s) => !s.src || lit.indexOf(s.src) < 0);
+      for (const s of free) s.src = null;
+      for (const o of lit) if (!slots.some((s) => s.src === o)) { const s = slots.find((x) => !x.src); if (s) s.src = o; }
+      for (const s of slots) this.copy(s.l, s.src);
+    }
+  }
+  copy(l, o) {
+    if (!o) { l.intensity = 0; return; }
+    l.color.copy(o.color); l.intensity = o.intensity;
+    l.position.setFromMatrixPosition(o.matrixWorld);
+    if (l.isPointLight || l.isSpotLight) { l.distance = o.distance; l.decay = o.decay; }
+    if (l.isSpotLight) { l.angle = o.angle; l.penumbra = o.penumbra; }
+    if (l.target && o.target) l.target.position.setFromMatrixPosition(o.target.matrixWorld);
+  }
+}
+
 const Scenes = {
   cur: null,
   set(s) {

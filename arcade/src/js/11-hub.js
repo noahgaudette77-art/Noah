@@ -856,6 +856,7 @@ class HubScene extends Scene3D {
     this.hg = this.gen ? new HubGen(this, this.gen) : null;
     if (this.gen && this.gen.sky && this.gen.sky.env) s.environment = this.gen.sky.env; // (the models mirror the hall's panorama and are lit by it)
     s.background = new THREE.Color(0x07021a);
+    s.userData.lightBudget = { dir: 1, point: 3 }; // (the lights this screen draws: the hall: its key, and the cabinet in front's own three lamps. See LightPool in 04-gfx.js)
     s.userData.post = { exposure: 1.22, bloom: 0.55, threshold: 1.16, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 0.95, // (Phase 5: brought to the games' grade: it was the darkest screen, with the least glow)
       fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)

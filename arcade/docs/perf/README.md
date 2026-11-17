@@ -135,3 +135,55 @@ each (232K in all, drawn twice for the floor's reflection), seen small behind th
 for a figure seen small, about 7K each (90K in all); the shapes hold (one dark bronze material covers them in the
 game). The other figures over that bar were lowered with them: the far lectern (14K to 8K), the three second-build
 allies (15K to 9K each) and the second rival rig (17K to 9.5K).
+
+## Step 6: the owner's budget order (2026-11-17, second message)
+
+The owner wants the leftover models and sounds in the game, in this order and inside a budget: first the shared
+render cost, then the additions within a stated budget per scene, one look, quiet sound by default. The pass
+condition is a steady 60 fps on the owner's iPhone 17 Pro Max; this machine cannot measure that (it draws in
+software), so each scene has a budget of work per frame, measured here, and the frame-rate tiers (AUTO) take what
+does not hold 60 on the phone down to a lighter tier, where the additions are off.
+
+### The shared render cost, on a phone
+
+| Item | Before | Now |
+|---|---|---|
+| Pixel ratio | capped at 2 (step 1) | capped at 2; 1.5 at LOW, 1.25 at LOWEST |
+| Supersampling | only at HIGH, under 1.5x density, within 4 million pixels (step 1) | the same: adaptive to the screen and the frame rate (leaving HIGH ends it); never on a phone |
+| Multisampling | 4x at HIGH, 2x at MEDIUM | phone: 2x at HIGH; none at MEDIUM and below (the final pass's FXAA, one pass, smooths the edges) |
+| The tier a phone reaches by itself | AUTO could climb to HIGH after 12 s of steady frames | AUTO stops at MEDIUM on a phone: a steady frame rate over a richer one (HIGH can be chosen in Setup > Graphics) |
+| Post-processing passes | 23 to 26 at HIGH, 15 to 20 at MEDIUM | phone at MEDIUM: 10 (four bloom levels, no god rays, no contact shadows, and the full-size "lit" pass skipped whenever it has nothing to add); at HIGH 18 to 21 (no lens streaks, six bloom levels) |
+| Mirror reflection | a second drawing of the whole scene on four screens (0.45 of the size at MEDIUM) | off on a phone at every tier |
+| Dynamic lights | 3 to 11 per screen, most dark most of the time but reckoned by every lit pixel | a stated budget per screen, 3 to 5 (below); the strongest of a screen's lights are drawn |
+
+Light budgets (directional + point): hall 1 + 3, Risk Blaster 3 + 2, Nest Egg Run 3 + 2, Boss Rush 2 + 3, Memory Bank
+2 + 2, Final Exam 1 + 4, Strategy Guide 1 + 2, title none. A key light always keeps its place; a flash takes the
+place of the weakest light while it lasts. The number of lights the shaders see never changes, so nothing
+recompiles when a flash comes and goes.
+
+Measured in a phone's window (440 x 956 at 3x), 6 s into each screen, 20 frames; before is the build before this step:
+
+| Screen (MEDIUM, a phone) | Million pixels a frame | Passes | Multisampling | Draw calls (world) | Triangles | Lights |
+|---|---|---|---|---|---|---|
+| Title | 8.7 → 4.9 | 17 → 10 | 2x → none (FXAA) | 129 (114) → 77 (68) | 60K → 33K | 0 → 0 |
+| Hall | 9.9 → 4.9 | 19 → 10 | 2x → none (FXAA) | 71 (54) → 45 (36) | 172K → 100K | 6 → 4 |
+| Risk Blaster | 8.3 → 4.9 | 15 → 10 | 2x → none (FXAA) | 65 (51) → 60 (51) | 215K → 218K | 9 → 5 |
+| Nest Egg Run | 10 → 4.9 | 20 → 10 | 2x → none (FXAA) | 101 (83) → 62 (53) | 225K → 110K | 10 → 5 |
+| Boss Rush | 9.9 → 4.9 | 19 → 10 | 2x → none (FXAA) | 81 (64) → 56 (47) | 81K → 57K | 11 → 5 |
+| Memory Bank | 9.9 → 4.9 | 19 → 10 | 2x → none (FXAA) | 86 (69) → 54 (45) | 323K → 168K | 6 → 4 |
+| Final Exam | 9.5 → 4.9 | 18 → 10 | 2x → none (FXAA) | 92 (75) → 83 (74) | 37K → 36K | 8 → 5 |
+| Strategy Guide | 9.6 → 4.9 | 19 → 10 | 2x → none (FXAA) | 59 (41) → 50 (41) | 32K → 32K | 3 → 3 |
+
+| Screen (HIGH, a phone) | Million pixels a frame | Passes | Multisampling | Draw calls (world) | Triangles | Lights |
+|---|---|---|---|---|---|---|
+| Title | 13.7 → 9.6 | 24 → 19 | 4x → 2x | 136 (114) → 86 (68) | 60K → 32K | 0 → 0 |
+| Hall | 14.4 → 10.4 | 25 → 20 | 4x → 2x | 77 (54) → 55 (36) | 172K → 100K | 6 → 4 |
+| Risk Blaster | 13.8 → 10.4 | 24 → 20 | 4x → 2x | 74 (51) → 69 (50) | 215K → 227K | 9 → 5 |
+| Nest Egg Run | 14.5 → 10.5 | 26 → 21 | 4x → 2x | 107 (83) → 73 (53) | 219K → 110K | 10 → 5 |
+| Boss Rush | 14.4 → 10.4 | 25 → 20 | 4x → 2x | 87 (64) → 64 (45) | 81K → 54K | 11 → 5 |
+| Memory Bank | 13.6 → 9.5 | 23 → 18 | 4x → 2x | 90 (69) → 62 (45) | 323K → 168K | 6 → 4 |
+| Final Exam | 13.8 → 10.4 | 24 → 20 | 4x → 2x | 98 (75) → 90 (71) | 37K → 35K | 8 → 5 |
+| Strategy Guide | 13.9 → 10.5 | 25 → 21 | 4x → 2x | 65 (41) → 61 (41) | 32K → 32K | 3 → 3 |
+
+What a phone gives up: the floor and road reflections (the wet avenue, the arena's and the hall's polished floors) and,
+at MEDIUM, the god rays and the contact shadows under the rig and the boss. A desktop keeps them all.

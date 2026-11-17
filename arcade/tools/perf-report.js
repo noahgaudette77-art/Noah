@@ -5,7 +5,7 @@
  * the draw calls, the lights each lit pixel reckons with, the textures held, and the main thread's own time per frame
  * (the game's code and its drawing calls: a fair guide to a fast phone's processor, unlike this machine's frame rate).
  *
- *   node arcade/tools/perf-report.js [--html index.html] [--only blaster,hub] [--tier 0..3] [--frames 12]
+ *   node arcade/tools/perf-report.js [--html index.html] [--only blaster,hub] [--tier 0..3] [--frames 12] [--wait 2500]
  *
  * The page is served over HTTP (every asset loaded) in a phone-sized window: 440 x 956 at 3 device pixels per page
  * pixel, touch, as an iPhone 17 Pro Max. This machine draws in software, so its frame rates mean nothing: the pixel
@@ -15,7 +15,22 @@ const fs = require("fs"), path = require("path"), http = require("http");
 const { chromium } = require("playwright");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
-const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", null), FRAMES = +flag("frames", 12);
+const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", null), FRAMES = +flag("frames", 12), WAIT = +flag("wait", 2500);
+// Each screen's stated budget, as a phone draws it at MEDIUM (where it starts): million pixels shaded a frame, render
+// passes, draw calls, triangles, lights (the owner, 2026-11-17: every scene a stated budget for models, draw calls and
+// lights; a steady 60 fps on an iPhone 17 Pro Max is the pass). Models: the generated models its files bring.
+// At HIGH (on a phone only by choice, in Setup) the pixels may be 2.2 times these and the passes 21. A row over its
+// budget is marked OVER.
+const BUDGET = {
+  title: { mpx: 5, passes: 10, draws: 90, tris: 120000, lights: 0, models: 0 },
+  hub: { mpx: 5, passes: 10, draws: 70, tris: 200000, lights: 4, models: 12 },
+  blaster: { mpx: 5, passes: 10, draws: 80, tris: 260000, lights: 5, models: 24 },
+  racer: { mpx: 5, passes: 10, draws: 80, tris: 200000, lights: 5, models: 11 },
+  boss: { mpx: 5, passes: 10, draws: 70, tris: 150000, lights: 5, models: 5 },
+  memory: { mpx: 5, passes: 10, draws: 70, tris: 200000, lights: 4, models: 3 },
+  exam: { mpx: 5, passes: 10, draws: 100, tris: 200000, lights: 5, models: 14 },
+  guide: { mpx: 5, passes: 10, draws: 60, tris: 60000, lights: 3, models: 2 },
+};
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".glb": "model/gltf-binary", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".json": "application/json" };
 const SCREENS = [
   ["title", "go('title')"], ["hub", "go('hub')"], ["blaster", "go('blaster','3')"], ["racer", "go('racer','2')"],
@@ -67,7 +82,7 @@ const SCREENS = [
     await page.evaluate(`window.__arcade.${go}`);
     // wait for the screen's files and its first frames
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(WAIT); // (--wait: a game's full set of lights and events is out a few seconds in)
     const r = await page.evaluate(async (frames) => {
       const A = window.__arcade, G = A.GFX, R = G.renderer, gl = R.getContext();
       // every draw into a target counts that target's pixels (times its samples): what the chip shades and stores
@@ -95,7 +110,8 @@ const SCREENS = [
       R.render = realRender; R.info.autoReset = true;
       const sc = A.Scenes.cur && A.Scenes.cur.scene;
       let lights = 0, point = 0, spot = 0, dir = 0;
-      if (sc) sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight) { lights++; if (o.isPointLight) point++; else if (o.isSpotLight) spot++; else if (o.isDirectionalLight) dir++; } });
+      const lens = A.Scenes.cur && A.Scenes.cur.camera; // (the lights drawn: a light the lens's layers leave out, a screen's own light under a light budget, is not)
+      if (sc) sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight && (!lens || o.layers.test(lens.layers))) { lights++; if (o.isPointLight) point++; else if (o.isSpotLight) spot++; else if (o.isDirectionalLight) dir++; } });
       const pr = G.scenePR ? G.scenePR() : 1;
       return {
         tier: G.TIERS ? G.TIERS[G.tier].name : "(none)",
@@ -116,9 +132,11 @@ const SCREENS = [
     await ctx.close();
   }
   await browser.close(); srv.close();
-  console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws (world)  tris     lights (point/spot/dir)  textures  programs  cpu ms (worst)  uploads per frame");
+  console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws (world)  tris     lights (point/spot/dir)  textures  programs  cpu ms (worst)  uploads per frame  budget");
   for (const [n, r, errs] of rows) {
     if (r.error) { console.log(n.padEnd(9), "ERROR", r.error); continue; }
-    console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${(r.draws + " (" + r.sceneDraws + ")").padEnd(13)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${String(r.programs).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(15)} ${r.up}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
+    const B = BUDGET[n], k = r.tier === "HIGH" ? 2.2 : 1, over = B ? [["mpx", r.mpx, B.mpx * k], ["passes", r.passes, k > 1 ? 21 : B.passes], ["draws", r.draws, B.draws], ["tris", r.tris, B.tris], ["lights", r.lights, B.lights]].filter(([, v, b]) => v > b).map(([q, v, b]) => `${q} ${v} > ${b}`) : [];
+    r.budget = !B ? "" : over.length ? "OVER: " + over.join(", ") : "within budget";
+    console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${(r.draws + " (" + r.sceneDraws + ")").padEnd(13)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${String(r.programs).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(15)} ${r.up}  ${r.budget}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
   }
 })().catch((e) => { console.error("FAILED", e); process.exit(1); });

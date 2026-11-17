@@ -464,6 +464,7 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
+    s.userData.lightBudget = { dir: 1, point: 4 }; // (the lights this screen draws: the cold key; the lamp over the examiner, its two rims and one fill. See LightPool in 04-gfx.js)
     s.userData.post = { exposure: 0.97, bloom: 0.55, threshold: 1.2, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.25, split: 0.2, // (Phase 5: brought to the games' grade: the bronze in the neon world's light, violet in its shadows; a lighter frame of dark)
       sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)

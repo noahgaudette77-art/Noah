@@ -147,6 +147,7 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
+    s.userData.lightBudget = { dir: 2, point: 3 }; // (the lights this screen draws: the key and the pale edge; the two rims and the strongest of fill, under-light, eyes and blast. See LightPool in 04-gfx.js)
     s.userData.post = { exposure: 1.1, bloom: 0.55, threshold: 1.5, knee: 0.22, bloomTight: 1, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.18, streak: 0.3, // (only its lamps, the ring and a blow bloom, and tightly: plate and paper used to clip to white)
      
       dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)

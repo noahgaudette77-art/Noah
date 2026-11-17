@@ -63,6 +63,7 @@ class BlasterSky {
     // the lamps: the game's own ambient and key, re-aimed, and three more
     this.amb = s.children.find((o) => o.isAmbientLight) || null;
     this.key = g.keyLight || null;
+    if (this.key) this.key.userData.keep = true; // (under the light budget the key is always drawn: the rims are brighter but narrower)
     const lamp = (dir) => { const l = new THREE.DirectionalLight(0xffffff, 0); l.position.fromArray(dir).multiplyScalar(40); s.add(l); return l; };
     this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = null; this.kick = lamp(BLASTER_LAMPS.kick); // (the top lamp, a fifth of its strength as a lamp, is left to its soft card in the mirror map: one light fewer for every lit pixel)
     if (this.key) this.key.position.fromArray(BLASTER_LAMPS.key).multiplyScalar(40);

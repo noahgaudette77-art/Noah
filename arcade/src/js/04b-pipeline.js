@@ -606,6 +606,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         if (GFX.probe) GFX.probe("dof");
       }
       // ---- the lit picture: shade, camera motion blur, depth of field
+      let litTex = null;
       {
         const u = lit.uniforms;
         u.tScene.value = sceneRT.texture; u.tDepth.value = depth; u.uDepthOn.value = depth ? 1 : 0;
@@ -621,7 +622,9 @@ function makePipeline(renderer, hdr, wantSamples) {
         }
         u.uMBlur.value = mb;
         prevVP.copy(curVP); prevCam = camera;
-        pass(lit, litRT);
+        // (nothing to add, no shade, no blur, no depth of field: the picture goes on as it was drawn, a full-size
+        // pass the fewer. At MEDIUM and below that is every frame.)
+        litTex = aoK > 0 || shK > 0 || mb > 0 || D ? (pass(lit, litRT), litRT.texture) : sceneRT.texture;
         if (GFX.probe) GFX.probe("lit");
       }
 
@@ -629,7 +632,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       const noBloom = !opt.bloom, wantRays = !!(p.rays && p.rays.pos && opt.beams);
       if (!noBloom || wantRays) {
         const b = bright.uniforms;
-        b.tDiffuse.value = litRT.texture;
+        b.tDiffuse.value = litTex;
         b.uThreshold.value = p.threshold !== undefined ? p.threshold : hdr ? 1.0 : 0.62;
         b.uKnee.value = p.knee !== undefined ? p.knee : 0.45;
         b.uPx.value.set(1 / sw, 1 / sh);
@@ -701,7 +704,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         u.tGlow.value = glowRT.texture;
         u.uGlowK.value = 1;
       }
-      u.tScene.value = litRT.texture;
+      u.tScene.value = litTex;
       u.uSplit.value = p.split !== undefined ? p.split : 0.12;
       const cw = renderer.domElement.width, ch = renderer.domElement.height;
       u.uRes.value.set(cw, ch);

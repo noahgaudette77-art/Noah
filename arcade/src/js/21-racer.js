@@ -850,6 +850,7 @@ class RacerGame extends QuizGame {
     // light: key from behind the camera, a gantry light and one that rides the nearest lamp
     this.amb = new THREE.AmbientLight(0x6a5aa8, 0.55);
     this.keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    this.keyLight.userData.keep = true; // (under the light budget the key is always drawn)
     this.keyLight.position.set(-3, 6, 6);
     this.gateLight = new THREE.PointLight(0xc9b8ff, 0, 16, 2);
     this.lampLight = new THREE.PointLight(0x35efff, 0, 12, 2);
@@ -930,6 +931,7 @@ class RacerGame extends QuizGame {
     this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
+    s.userData.lightBudget = { dir: 3, point: 2 }; // (the lights this race draws: the key, and the strongest two of the sun, the rims and the light on the lens; the strongest two of the gate's, the lamps', the flame's, the egg's and a blast. See LightPool in 04-gfx.js)
     if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint
       this.post.ssaa = 2;
       const gu = this.groundMat.uniforms;
