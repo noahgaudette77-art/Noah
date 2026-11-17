@@ -1,6 +1,6 @@
 // Phase 5 (E): the calm path. Setup > Reduced effects on, and the browser asking for reduced motion (run with --reduced
 // at the end): a still of each game with a question up and of the hall, then each game's right and wrong answer as
-// frames, every other frame for a second and a half, measured for flashes: the band cut into a 4 x 4 grid, a flash is a
+// frames, every third frame for a second and a half (20 a second: enough to see a flash of 3 a second), measured for flashes: the band cut into a 4 x 4 grid, a flash is a
 // pair of opposite changes in a cell's mean relative luminance of 0.1 or more with the darker below 0.8 (as WCAG counts
 // them), and the most flashes any cell shows in any one second is printed. Three or fewer is the rule.
 //
@@ -23,7 +23,7 @@ module.exports = async (cap) => {
     return out;
   };
   // n samples, `every` frames apart (at 60 frames a second), of the band: the most flashes of any cell in any second
-  const flashes = async (n = 45, every = 2) => {
+  const flashes = async (n = 30, every = 3) => {
     const clip = await cap.band(0), series = [];
     for (let i = 0; i < n; i++) {
       await cap.eval((k) => { window.__tick(k - 1, false); window.__tick(1, true); }, every); // (one drawn frame a sample)

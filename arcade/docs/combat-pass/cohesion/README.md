@@ -19,6 +19,8 @@ All captures are of the page served over HTTP (every asset loaded), on a 390 x 8
 | `09-ships-mid-fight.jpg` | mid-fight: the ships and rocks behind the demon, the answers and the fighter |
 | `10-hub-after-D.jpg` | the hall after its set was cut to 3.55 MB: the row of cabinets, a topper close, the trophy stand |
 | `11-calm-blaster.jpg`, `12-calm-racer.jpg`, `13-calm-boss.jpg`, `14-calm-hub.jpg` | the calm path (Setup > Reduced effects on, the browser asking for reduced motion): each game with a question up, and the hall |
+| `15-tail-close.jpg`, `16-tail-closest.jpg` | F: the demon come close and at its closest over the fighter, its tail carried back and aside, clear of the canopy |
+| `17-tunnel-way-out.jpg` | F: out of the tunnel, frame by frame: through its mouth the sky beyond and the road under it |
 
 ## The sound, measured (nobody can listen here)
 
