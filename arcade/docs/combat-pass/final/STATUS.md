@@ -94,8 +94,20 @@ Full regression IDENTICAL from disk and served; `node scripts/arcade-sequence.js
 
 ## Still weak
 
-- The traffic car (the lead's remake) reads as a compact SUV with a floating roof; its nose lamps are thin strips.
 - Far off, the cruiser is a small hazy silhouette with a few lamps, not a crisp ship.
 - Memory Bank's deck holder is still a dark object, lit at its panels and edges only.
 - Not re-captured: Boss Rush's other fight sheets and 07-damage-states (the same lane code as 04 and the Phantom's),
   and cohesion 02-look-after (the examiner's chest there).
+
+## The third car (90de035)
+
+The lead's armoured runabout merged; the manifest re-made for its size. Length 3.4 (2.3 wide, 1.7 tall: smaller every
+way than the rig's 4.7 x 2.6 x 2.1); its own lane room, shadow (3.9 x 5.0) and badge box (1.15, 1.75, 1.7); its paint
+from the traffic's colours less the gold, yellow and orange ones, so it is never taken for the rig (`RACER_GEN_DIM`
+paints, served only). Its red tail bar raised onto the model's own bar (0.66 of its height); nose lamps on its skin
+(checked by numbers: body at -1.70, lamps from -1.705). Looked at by night and by day, tail on and nose on.
+`cohesion-traffic.js`: wide and tall, beside the rig it ran off the band's edge and ahead of it it came under a badge
+(probed: hide 1 from 4 ahead in the left lane), so it comes the other way in the left service lane 20 ahead, whole.
+Re-captured cohesion 04, 05, 06 and the racer files the car is in: 01-05, 09, 11, 21, 22 (often small and far;
+13, 17 and 20 came out the same within a few pixels, and were kept). Regression racer and full IDENTICAL from disk
+and served; sequence ALL 13 STEPS OK.

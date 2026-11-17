@@ -251,12 +251,14 @@ const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1
 // a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
 // mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
 // panorama to light them) every kind is drawn as before. [model, length in game units]
-const RACER_GEN_FLEET = { sedan: ["prop-car", 3.6], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
-// (the car is a compact city car, taller and shorter than the coupe it replaced: the room it takes in its lane, its
-// soft shadow and the box that is checked against the lane badges are its own, not the coupe's)
-const RACER_GEN_DIM = { sedan: { sh: [3.4, 5.3], box: [1.0, 1.7, 1.8] } };
+const RACER_GEN_FLEET = { sedan: ["prop-car", 3.4], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+// (the car is a small armoured runabout, stockier than the coupe it replaced, and smaller every way than the rig (4.7
+// long, 2.6 wide, 2.1 tall): 3.4 long, 2.3 wide, 1.7 tall. The room it takes in its lane, its soft shadow and the box
+// that is checked against the lane badges are its own; and its paint is never one of the gold or orange ones, so it
+// is never taken for the rig)
+const RACER_GEN_DIM = { sedan: { sh: [3.9, 5.0], box: [1.15, 1.75, 1.7], paints: [0xc0392b, 0x2e86c1, 0x27ae60, 0x8e44ad, 0xecf0f1, 0x4a5a6e, 0x16a085, 0x8f9aa3, 0xff6fb5] } };
 // Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
-const RACER_GEN_TRIM = { sedan: { tail: 0.58, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+const RACER_GEN_TRIM = { sedan: { tail: 0.66, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
 // Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
 // the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
 function racerGenTrim(type, geo) {
@@ -487,7 +489,8 @@ class RacerWorld {
     else if (lane === "H") { const hl = Math.floor(Math.random() * 3); c.dir = hl === 1 ? -1 : 1; c.y = 10 + hl * 3 + rand(-0.6, 0.6); c.x = c.tx = rand(-5.6, 5.6); c.speed = c.dir > 0 ? rand(36, 46) + hl * 6 : rand(22, 32); c.z = c.dir > 0 && c.speed > sp + 4 ? 18 : -244; }
     Object.assign(c, o);
     c.tint.setXYZ(c.i, 1, 1, 1);
-    const col = this._c.set(o.color !== undefined ? o.color : RACER_PAINTS[Math.floor(Math.random() * RACER_PAINTS.length)]);
+    const pal = (this.genDim && this.genDim[type] && this.genDim[type].paints) || RACER_PAINTS; // (served: the runabout's own paints, none of them gold)
+    const col = this._c.set(o.color !== undefined ? o.color : pal[Math.floor(Math.random() * pal.length)]);
     if (o.color === undefined) col.offsetHSL(rand(-0.03, 0.03), 0, rand(-0.06, 0.06));
     c.tint.setXYZ(c.i, col.r, col.g, col.b);
     c.tint.needsUpdate = true;
