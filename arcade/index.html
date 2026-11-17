@@ -573,6 +573,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* The Final Exam's ending: the exam's panels fade away, cinema bars close in, and the
    boss has the whole screen. One button skips to the results. */
 .scr-game.cine > :not(.exam-cine) { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.scr-game.cine.cine-now > :not(.exam-cine) { transition-duration: 0.2s; } /* (served: the exam's panels go first, and are gone before the ending's banner and SKIP come) */
+.scr-game.cine.cine-gone > :not(.exam-cine) { visibility: hidden; }
 .exam-cine { position: absolute; inset: 0; pointer-events: none; }
 .exam-cine .bar { position: absolute; left: 0; right: 0; height: 8vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease-out; }
 .exam-cine .bar.top { top: 0; transform-origin: top; }
@@ -1812,10 +1814,23 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 /* the label over the vault's 3D window stands on its own dark plate (served) */
 .assets-on .vault-window > span { background: rgba(14, 8, 2, 0.9); padding: 5px 8px 4px; box-shadow: 0 0 0 2px #000; left: 8px; top: 7px; }
 /* a banner on its own dark plate, inside the screen's edges (RANK UP! after a reward moment: it must not cross the score) */
-.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: rgba(6, 2, 22, 0.92); border: 2px solid var(--c, var(--yellow)); box-shadow: 0 0 22px -6px var(--c, var(--yellow)), 0 4px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
+/* (Phase 6: the plate is opaque, with a heavier border, and stands a little longer; a dark scrim lies over the tiles
+   under it while it is up, so nothing of them shows through or beside its words) */
+.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: #080322; border: 3px solid var(--c, var(--yellow)); box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--yellow)), 0 5px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
 .banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
-.banner.plated { animation: banner-plate 1.4s ease-out forwards; } /* (it never grows past the screen's edges) */
-@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 12% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
+/* (a banner whose small line nearly fills the screen comes in from just over its size, and its line wraps inside the
+   screen's edges: from 2.2 times its size it ran off both. Served, Phase 6) */
+.banner.fit { animation: banner-fit 1.3s ease-out forwards; }
+.banner.fit small { padding: 0 14px; white-space: normal; text-wrap: balance; }
+@keyframes banner-fit { 0% { transform: scale(1.1); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* (served, Phase 6: the explanation sheet slides in on its plate from its first frame, not fading in: half faded, what
+   flashed behind it, a shield's cracks, crossed its title) */
+.assets-on .sheet { animation-name: sheetslide; }
+@keyframes sheetslide { from { transform: translateY(24px); } to { transform: none; } }
+.banner.plated { animation: banner-plate 2.2s ease-out forwards; } /* (it never grows past the screen's edges) */
+@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 8% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; } }
+.rank-scrim { position: fixed; inset: 0; z-index: 29; pointer-events: none; background: rgba(3, 1, 12, 0.8); animation: rank-scrim 2.2s ease-out forwards; }
+@keyframes rank-scrim { 0% { opacity: 0; } 8% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
 .res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
 .res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
 .res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
@@ -6803,7 +6818,7 @@ function readTime(round, mult = 1) {
 /* ---- 03a-files.js ---- */
 // Written by tools/manifest.js: every file under arcade/assets the page may fetch (and its size), the cues inside each
 // sound sprite ([start, length, level, how far the music ducks]), the music and its loop points, and what each screen needs.
-const INR_FILES = {"files":{"audio/music-blaster.mp3":1070543,"audio/music-boss.mp3":1117563,"audio/music-calm.mp3":981204,"audio/music-exam.mp3":1020910,"audio/music-finalboss.mp3":1172420,"audio/music-hub.mp3":1064273,"audio/music-memory.mp3":1163538,"audio/music-racer.mp3":834396,"audio/music-title.mp3":980681,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1142535,"audio/sfx-core.mp3":1755473,"audio/sfx-hub.mp3":124387,"audio/sfx-racer.mp3":477301,"audio/voice.mp3":1300002,"models/boss-1.glb":3140792,"models/boss-10.glb":3796976,"models/boss-11.glb":3509160,"models/boss-2.glb":3566072,"models/boss-3.glb":3595764,"models/boss-4.glb":3348936,"models/boss-5.glb":3189180,"models/boss-6.glb":3595196,"models/boss-7.glb":4230104,"models/boss-8.glb":2816424,"models/boss-9.glb":3108684,"models/boss-all.glb":2599980,"models/demon.glb":3372816,"models/mini-proctor.glb":209468,"models/mini-starfighter.glb":299432,"models/mini-warrig.glb":342752,"models/prop-bus.glb":230192,"models/prop-cabinet.glb":593040,"models/prop-car.glb":207412,"models/prop-coin.glb":130000,"models/prop-deck.glb":299912,"models/prop-medal.glb":239160,"models/prop-podium.glb":259308,"models/prop-rock.glb":271552,"models/prop-rock2.glb":239280,"models/prop-ship-a.glb":282888,"models/prop-ship-b.glb":252920,"models/prop-ship-c.glb":258308,"models/prop-stand.glb":196180,"models/prop-tome.glb":232544,"models/prop-trophy.glb":216240,"models/prop-van.glb":200544,"models/prop-vault.glb":426808,"models/starfighter.glb":3274568,"models/warrig.glb":3043684,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall-b.webp":84256,"sky/hub-hall.webp":82552,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-dusk-b.webp":461748,"sky/title-dusk.webp":216594,"sky/vault-gold.webp":710390,"ui/bosses.webp":84156,"ui/icons.webp":27040},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.188,0],[1.37,0.8,0.9,0],[2.2401,0.4288,0.961,0],[2.7389,0.8,0.867,0]],"impact_big":[[3.6089,1.28,1.129,0.7],[4.959,0.8623,1.212,0.7],[5.8913,1.28,0.991,0.7],[7.2413,1.28,1,0.7]],"impact_reject":[[8.5914,0.5025,0.8,0],[9.1639,0.5686,0.631,0],[9.8025,0.6,1.05,0],[10.4726,0.5451,1.25,0]],"impact_hull":[[11.0877,0.88,1.053,0],[12.0378,0.88,0.841,0],[12.9878,0.88,0.9,0],[13.9378,0.88,1.083,0]],"impact_shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"impact_metal":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]],"explosion_small":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"explosion_big":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"explosion_huge":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"debris":[[45.4853,0.7887,0.6,0],[46.344,1.1321,0.698,0],[47.5461,1.48,0.591,0],[49.0961,1.48,0.96,0]],"charge_up":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"charge_long":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"warning":[[60.2397,0.6,0.576,0],[60.9097,0.6,0.877,0],[61.5798,0.6,0.6,0]],"lock_on":[[62.2498,0.48,0.567,0],[62.7999,0.48,0.497,0],[63.3499,0.48,0.5,0]],"slowmo_in":[[63.9,1.08,0.7,0],[65.05,1.08,0.889,0],[66.2,1.08,0.652,0]],"player_hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"heart_lost":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"shield_down":[[73.7604,0.7352,1.022,0],[74.5656,1,0.54,0],[75.6356,0.9544,0.75,0]],"reward":[[76.66,1.2,0.563,0],[77.9301,1.2,0.789,0],[79.2001,1.2,0.772,0],[80.4702,1.2,0.7,0]],"sting_correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"sting_wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"ui_click":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"ui_select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"ui_back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"coin_insert":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"powerup":[[95.6136,1,0.717,0],[96.6837,1,0.485,0],[97.7537,1,0.6,0]],"fanfare":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"gameover":[[104.3588,2.2,0.7,0],[106.6288,2.2,0.654,0],[108.8989,2.2,0.911,0]],"crowd_cheer":[[111.1689,2,0.522,0],[113.239,2,0.555,0],[115.309,2,0.55,0],[117.3791,2,0.641,0]],"alarm":[[119.5691,2.25,0.4,0]],"charge_hum":[[122.1291,3,0.4,0]],"boom":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"bigboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"coin":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"blip":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"win":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"demonboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"demonfinale":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"demoncharge":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"bossblast":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"bosscharge":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"shatter":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"clunk":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"laser_heavy":[[3.5012,0.3983,1.235,0],[3.9695,1.2,0.85,0],[5.2396,1.2,1.134,0],[6.5096,1.2,0.587,0]],"plasma_fire":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"shell":[[10.3702,0.3562,0.24,0],[10.7964,0.48,0.3,0],[11.3464,0.3549,0.32,0],[11.7714,0.4354,0.314,0]],"beam_fire":[[12.2768,1.6,0.996,0],[13.9468,1.6,0.878,0],[15.6169,1.6,0.632,0],[17.2869,1.6,0.8,0]],"missile_fire":[[18.957,1,0.89,0],[20.027,1,0.702,0],[21.0971,1,0.496,0],[22.1671,1,0.7,0]],"missile_hit":[[23.2371,1,0.602,0],[24.3072,1,0.828,0],[25.3772,0.5664,0.8,0],[26.0137,1,0.931,0]],"volley_fire":[[27.0837,1,0.89,0],[28.1538,1,1.066,0],[29.2238,1,0.75,0],[30.2939,1,0.591,0]],"wave_fire":[[31.3639,1.48,0.977,0],[32.9139,1.48,0.744,0],[34.464,1.2503,0.85,0],[35.7843,1.091,1.05,0]],"slam":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]],"boss_roar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"boss_hurt":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"boss_stagger":[[54.6491,0.8735,0.548,0],[55.5926,1.3102,0.82,0],[56.9727,1.1637,0.8,0],[58.2065,0.9167,0.888,0]],"boss_break":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"boss_death":[[62.7673,3.2,1.016,0.5],[66.0373,3.2,1,0.5],[69.3074,3.2,0.919,0.5]],"warp":[[72.5774,1.6395,0.695,0],[74.2869,1.5159,0.7,0],[75.8727,1.2935,0.857,0]],"engine_ship":[[77.3563,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"shot":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"demonroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"demonhit":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"demonshed":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"demonbreak":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"bossroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"bosssmash":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.971,0],[1.77,1.2,1.085,0],[3.0401,1.2,1,0],[4.3101,1.2,1.126,0]],"crash_glass":[[5.5802,0.88,1.04,0],[6.5302,0.5965,0.944,0],[7.1968,0.88,0.702,0],[8.1468,0.88,0.8,0]],"skid":[[9.0968,1.2,0.74,0],[10.3669,1.2,0.698,0],[11.6369,1.2,0.721,0],[12.907,1.2,0.7,0]],"near_miss":[[14.177,0.6132,0.624,0],[14.8602,0.5831,0.6,0],[15.5134,0.6803,0.617,0],[16.2637,0.584,0.598,0]],"boost":[[16.9177,1.48,0.655,0],[18.4677,1.48,0.85,0],[20.0178,1.48,1.179,0],[21.5678,1.3965,1.349,0]],"gate_pass":[[23.0343,0.8,0.6,0],[23.9044,0.8,0.672,0],[24.7744,0.8,0.58,0],[25.6444,0.6858,0.817,0]],"engine_car":[[26.5202,4,0.4,0]],"boost_flame":[[30.8302,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,1.6046,1,0]],"vo:bull run":[[18.2126,0.9604,1,0]],"vo:chapter complete":[[19.243,1.106,1,0]],"vo:compounding":[[20.419,1.193,1,0]],"vo:critical":[[21.682,1.117,1,0]],"vo:deck cleared":[[22.869,1.39,1,0]],"vo:defeated":[[24.3291,1.1138,1,0]],"vo:enraged":[[25.5129,1.4505,1,0]],"vo:exam passed":[[27.0333,1.3676,1,0]],"vo:final boss":[[28.4709,1.318,1,0]],"vo:final boss destroyed":[[29.8589,2.75,1,0]],"vo:final exam":[[32.6789,1.8518,1,0]],"vo:final wave":[[34.6007,1.5771,1,0]],"vo:forced retirement":[[36.2478,1.4642,1,0]],"vo:game over":[[37.782,1.4106,1,0]],"vo:go":[[39.2626,0.6599,1,0]],"vo:group golem":[[39.9924,1.791,1,0]],"vo:happy retirement":[[41.8535,1.6602,1,0]],"vo:inflation titan":[[43.5837,2.43,1,0]],"vo:insert coin":[[46.0837,1.128,1,0]],"vo:last shield":[[47.2817,1.5958,1,0]],"vo:lightning":[[48.9475,1.15,1,0]],"vo:longevity lich":[[50.1676,1.5484,1,0]],"vo:lord intestate":[[51.786,1.7993,1,0]],"vo:memory bank":[[53.6553,1.1962,1,0]],"vo:millionaire":[[54.9215,1.6842,1,0]],"vo:nest egg run":[[56.6756,1.6205,1,0]],"vo:new high score":[[58.3661,1.7269,1,0]],"vo:not yet":[[60.163,0.933,1,0]],"vo:passed":[[61.1661,0.8735,1,0]],"vo:patrimony phantom":[[62.1095,1.8513,1,0]],"vo:perfect":[[64.0308,0.9316,1,0]],"vo:perilmonger":[[65.0324,1.47,1,0]],"vo:probate tollgate":[[66.5724,1.6925,1,0]],"vo:product pusher":[[68.3349,1.6875,1,0]],"vo:quick draw":[[70.0924,1.2579,1,0]],"vo:rank up":[[71.4204,1.07,1,0]],"vo:ready":[[72.5604,0.567,1,0]],"vo:retired a millionaire":[[73.1974,2.1487,1,0]],"vo:risk blaster":[[75.4161,1.8748,1,0]],"vo:select your game":[[77.3608,1.2985,1,0]],"vo:shield down":[[78.7294,1.2631,1,0]],"vo:solvency specter":[[80.0625,1.996,1,0]],"vo:stage clear":[[82.1285,1.3893,1,0]],"vo:strategy guide":[[83.5878,1.3867,1,0]],"vo:the fine print":[[85.0444,1.3475,1,0]],"vo:the proctor":[[86.4619,1.1939,1,0]],"vo:trophy unlocked":[[87.7258,1.2972,1,0]],"vo:undue influencer":[[89.093,2.3957,1,0]],"vo:warning":[[91.5587,0.65,1,0]],"vo:wave 1":[[92.2786,1.63,1,0]],"vo:wave 10":[[93.9787,1.1341,1,0]],"vo:wave 2":[[95.1828,0.9793,1,0]],"vo:wave 3":[[96.2322,1.47,1,0]],"vo:wave 4":[[97.7722,1.2106,1,0]],"vo:wave 5":[[99.0528,1.3478,1,0]],"vo:wave 6":[[100.4706,1.4679,1,0]],"vo:wave 7":[[102.0085,1.1244,1,0]],"vo:wave 8":[[103.2029,1.55,1,0]],"vo:wave 9":[[104.823,1.4247,1,0]],"vo:welcome":[[106.3176,1.87,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}}},"music":{"exam":{"file":"audio/music-exam.mp3","loop":[0.7,50.7104],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,57.8497],"vol":1},"title":{"file":"audio/music-title.mp3","loop":[0.7,48.7048],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,52.8853],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,48.718],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,55.5493],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,58.277],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,41.3918],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,53.2],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","model:prop-ship-a","model:prop-ship-b","model:prop-ship-c","model:prop-rock","model:prop-rock2","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster"],"racer":["model:warrig","model:prop-car","model:prop-van","model:prop-bus","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss"],"hub":["model:prop-cabinet","model:mini-starfighter","model:mini-warrig","model:mini-proctor","model:prop-deck","model:prop-podium","model:prop-tome","model:prop-trophy","model:prop-medal","model:prop-coin","model:prop-stand","model:prop-vault","sky:hub-hall","sky:hub-hall-b","ui:bosses","ui:icons"],"hubsound":["sfx:core","sfx:hub","sfx:voice","music:hub"],"title":["sky:title-dusk","sky:title-dusk-b","sfx:core","sfx:voice","music:title"],"memory":["sky:vault-gold","model:prop-deck","model:prop-coin","sfx:core","sfx:voice","music:memory"],"exam":["sky:exam-moon","model:prop-podium","sfx:core","sfx:combat","sfx:voice","music:exam"],"guide":["sky:guide-archive","model:prop-tome","sfx:core","music:calm"]}};
+const INR_FILES = {"files":{"audio/music-blaster.mp3":1070543,"audio/music-boss.mp3":1117563,"audio/music-calm.mp3":981204,"audio/music-exam.mp3":1020910,"audio/music-finalboss.mp3":1172420,"audio/music-hub.mp3":1064273,"audio/music-memory.mp3":1163538,"audio/music-racer.mp3":834396,"audio/music-title.mp3":980681,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1142535,"audio/sfx-core.mp3":1755473,"audio/sfx-hub.mp3":124387,"audio/sfx-racer.mp3":477301,"audio/voice.mp3":1300002,"models/boss-1.glb":3140792,"models/boss-10.glb":3796976,"models/boss-11.glb":3509160,"models/boss-2.glb":3566072,"models/boss-3.glb":3595764,"models/boss-4.glb":3348936,"models/boss-5.glb":3189180,"models/boss-6.glb":3595196,"models/boss-7.glb":4230104,"models/boss-8.glb":2816424,"models/boss-9.glb":3108684,"models/boss-all.glb":2599980,"models/demon.glb":3372816,"models/mini-proctor.glb":209468,"models/mini-starfighter.glb":299432,"models/mini-warrig.glb":342752,"models/prop-bus.glb":223360,"models/prop-cabinet.glb":593040,"models/prop-car.glb":199868,"models/prop-coin.glb":130000,"models/prop-deck.glb":299912,"models/prop-medal.glb":239160,"models/prop-podium.glb":259308,"models/prop-rock.glb":271552,"models/prop-rock2.glb":239280,"models/prop-ship-a.glb":282888,"models/prop-ship-b.glb":252920,"models/prop-ship-c.glb":258308,"models/prop-stand.glb":196180,"models/prop-tome.glb":232544,"models/prop-trophy.glb":216240,"models/prop-van.glb":200544,"models/prop-vault.glb":426808,"models/starfighter.glb":3274568,"models/warrig.glb":3043684,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall-b.webp":84256,"sky/hub-hall.webp":82552,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-dusk-b.webp":461748,"sky/title-dusk.webp":216594,"sky/vault-gold.webp":710390,"ui/bosses.webp":84156,"ui/icons.webp":27040},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.188,0],[1.37,0.8,0.9,0],[2.2401,0.4288,0.961,0],[2.7389,0.8,0.867,0]],"impact_big":[[3.6089,1.28,1.129,0.7],[4.959,0.8623,1.212,0.7],[5.8913,1.28,0.991,0.7],[7.2413,1.28,1,0.7]],"impact_reject":[[8.5914,0.5025,0.8,0],[9.1639,0.5686,0.631,0],[9.8025,0.6,1.05,0],[10.4726,0.5451,1.25,0]],"impact_hull":[[11.0877,0.88,1.053,0],[12.0378,0.88,0.841,0],[12.9878,0.88,0.9,0],[13.9378,0.88,1.083,0]],"impact_shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"impact_metal":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]],"explosion_small":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"explosion_big":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"explosion_huge":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"debris":[[45.4853,0.7887,0.6,0],[46.344,1.1321,0.698,0],[47.5461,1.48,0.591,0],[49.0961,1.48,0.96,0]],"charge_up":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"charge_long":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"warning":[[60.2397,0.6,0.576,0],[60.9097,0.6,0.877,0],[61.5798,0.6,0.6,0]],"lock_on":[[62.2498,0.48,0.567,0],[62.7999,0.48,0.497,0],[63.3499,0.48,0.5,0]],"slowmo_in":[[63.9,1.08,0.7,0],[65.05,1.08,0.889,0],[66.2,1.08,0.652,0]],"player_hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"heart_lost":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"shield_down":[[73.7604,0.7352,1.022,0],[74.5656,1,0.54,0],[75.6356,0.9544,0.75,0]],"reward":[[76.66,1.2,0.563,0],[77.9301,1.2,0.789,0],[79.2001,1.2,0.772,0],[80.4702,1.2,0.7,0]],"sting_correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"sting_wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"ui_click":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"ui_select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"ui_back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"coin_insert":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"powerup":[[95.6136,1,0.717,0],[96.6837,1,0.485,0],[97.7537,1,0.6,0]],"fanfare":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"gameover":[[104.3588,2.2,0.7,0],[106.6288,2.2,0.654,0],[108.8989,2.2,0.911,0]],"crowd_cheer":[[111.1689,2,0.522,0],[113.239,2,0.555,0],[115.309,2,0.55,0],[117.3791,2,0.641,0]],"alarm":[[119.5691,2.25,0.4,0]],"charge_hum":[[122.1291,3,0.4,0]],"boom":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"bigboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"coin":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"blip":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"win":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"demonboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"demonfinale":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"demoncharge":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"bossblast":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"bosscharge":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"shatter":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"clunk":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"laser_heavy":[[3.5012,0.3983,1.235,0],[3.9695,1.2,0.85,0],[5.2396,1.2,1.134,0],[6.5096,1.2,0.587,0]],"plasma_fire":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"shell":[[10.3702,0.3562,0.24,0],[10.7964,0.48,0.3,0],[11.3464,0.3549,0.32,0],[11.7714,0.4354,0.314,0]],"beam_fire":[[12.2768,1.6,0.996,0],[13.9468,1.6,0.878,0],[15.6169,1.6,0.632,0],[17.2869,1.6,0.8,0]],"missile_fire":[[18.957,1,0.89,0],[20.027,1,0.702,0],[21.0971,1,0.496,0],[22.1671,1,0.7,0]],"missile_hit":[[23.2371,1,0.602,0],[24.3072,1,0.828,0],[25.3772,0.5664,0.8,0],[26.0137,1,0.931,0]],"volley_fire":[[27.0837,1,0.89,0],[28.1538,1,1.066,0],[29.2238,1,0.75,0],[30.2939,1,0.591,0]],"wave_fire":[[31.3639,1.48,0.977,0],[32.9139,1.48,0.744,0],[34.464,1.2503,0.85,0],[35.7843,1.091,1.05,0]],"slam":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]],"boss_roar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"boss_hurt":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"boss_stagger":[[54.6491,0.8735,0.548,0],[55.5926,1.3102,0.82,0],[56.9727,1.1637,0.8,0],[58.2065,0.9167,0.888,0]],"boss_break":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"boss_death":[[62.7673,3.2,1.016,0.5],[66.0373,3.2,1,0.5],[69.3074,3.2,0.919,0.5]],"warp":[[72.5774,1.6395,0.695,0],[74.2869,1.5159,0.7,0],[75.8727,1.2935,0.857,0]],"engine_ship":[[77.3563,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"shot":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"demonroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"demonhit":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"demonshed":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"demonbreak":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"bossroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"bosssmash":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.971,0],[1.77,1.2,1.085,0],[3.0401,1.2,1,0],[4.3101,1.2,1.126,0]],"crash_glass":[[5.5802,0.88,1.04,0],[6.5302,0.5965,0.944,0],[7.1968,0.88,0.702,0],[8.1468,0.88,0.8,0]],"skid":[[9.0968,1.2,0.74,0],[10.3669,1.2,0.698,0],[11.6369,1.2,0.721,0],[12.907,1.2,0.7,0]],"near_miss":[[14.177,0.6132,0.624,0],[14.8602,0.5831,0.6,0],[15.5134,0.6803,0.617,0],[16.2637,0.584,0.598,0]],"boost":[[16.9177,1.48,0.655,0],[18.4677,1.48,0.85,0],[20.0178,1.48,1.179,0],[21.5678,1.3965,1.349,0]],"gate_pass":[[23.0343,0.8,0.6,0],[23.9044,0.8,0.672,0],[24.7744,0.8,0.58,0],[25.6444,0.6858,0.817,0]],"engine_car":[[26.5202,4,0.4,0]],"boost_flame":[[30.8302,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,1.6046,1,0]],"vo:bull run":[[18.2126,0.9604,1,0]],"vo:chapter complete":[[19.243,1.106,1,0]],"vo:compounding":[[20.419,1.193,1,0]],"vo:critical":[[21.682,1.117,1,0]],"vo:deck cleared":[[22.869,1.39,1,0]],"vo:defeated":[[24.3291,1.1138,1,0]],"vo:enraged":[[25.5129,1.4505,1,0]],"vo:exam passed":[[27.0333,1.3676,1,0]],"vo:final boss":[[28.4709,1.318,1,0]],"vo:final boss destroyed":[[29.8589,2.75,1,0]],"vo:final exam":[[32.6789,1.8518,1,0]],"vo:final wave":[[34.6007,1.5771,1,0]],"vo:forced retirement":[[36.2478,1.4642,1,0]],"vo:game over":[[37.782,1.4106,1,0]],"vo:go":[[39.2626,0.6599,1,0]],"vo:group golem":[[39.9924,1.791,1,0]],"vo:happy retirement":[[41.8535,1.6602,1,0]],"vo:inflation titan":[[43.5837,2.43,1,0]],"vo:insert coin":[[46.0837,1.128,1,0]],"vo:last shield":[[47.2817,1.5958,1,0]],"vo:lightning":[[48.9475,1.15,1,0]],"vo:longevity lich":[[50.1676,1.5484,1,0]],"vo:lord intestate":[[51.786,1.7993,1,0]],"vo:memory bank":[[53.6553,1.1962,1,0]],"vo:millionaire":[[54.9215,1.6842,1,0]],"vo:nest egg run":[[56.6756,1.6205,1,0]],"vo:new high score":[[58.3661,1.7269,1,0]],"vo:not yet":[[60.163,0.933,1,0]],"vo:passed":[[61.1661,0.8735,1,0]],"vo:patrimony phantom":[[62.1095,1.8513,1,0]],"vo:perfect":[[64.0308,0.9316,1,0]],"vo:perilmonger":[[65.0324,1.47,1,0]],"vo:probate tollgate":[[66.5724,1.6925,1,0]],"vo:product pusher":[[68.3349,1.6875,1,0]],"vo:quick draw":[[70.0924,1.2579,1,0]],"vo:rank up":[[71.4204,1.07,1,0]],"vo:ready":[[72.5604,0.567,1,0]],"vo:retired a millionaire":[[73.1974,2.1487,1,0]],"vo:risk blaster":[[75.4161,1.8748,1,0]],"vo:select your game":[[77.3608,1.2985,1,0]],"vo:shield down":[[78.7294,1.2631,1,0]],"vo:solvency specter":[[80.0625,1.996,1,0]],"vo:stage clear":[[82.1285,1.3893,1,0]],"vo:strategy guide":[[83.5878,1.3867,1,0]],"vo:the fine print":[[85.0444,1.3475,1,0]],"vo:the proctor":[[86.4619,1.1939,1,0]],"vo:trophy unlocked":[[87.7258,1.2972,1,0]],"vo:undue influencer":[[89.093,2.3957,1,0]],"vo:warning":[[91.5587,0.65,1,0]],"vo:wave 1":[[92.2786,1.63,1,0]],"vo:wave 10":[[93.9787,1.1341,1,0]],"vo:wave 2":[[95.1828,0.9793,1,0]],"vo:wave 3":[[96.2322,1.47,1,0]],"vo:wave 4":[[97.7722,1.2106,1,0]],"vo:wave 5":[[99.0528,1.3478,1,0]],"vo:wave 6":[[100.4706,1.4679,1,0]],"vo:wave 7":[[102.0085,1.1244,1,0]],"vo:wave 8":[[103.2029,1.55,1,0]],"vo:wave 9":[[104.823,1.4247,1,0]],"vo:welcome":[[106.3176,1.87,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}}},"music":{"exam":{"file":"audio/music-exam.mp3","loop":[0.7,50.7104],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,57.8497],"vol":1},"title":{"file":"audio/music-title.mp3","loop":[0.7,48.7048],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,52.8853],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,48.718],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,55.5493],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,58.277],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,41.3918],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,53.2],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","model:prop-ship-a","model:prop-ship-b","model:prop-ship-c","model:prop-rock","model:prop-rock2","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster"],"racer":["model:warrig","model:prop-car","model:prop-van","model:prop-bus","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss"],"hub":["model:prop-cabinet","model:mini-starfighter","model:mini-warrig","model:mini-proctor","model:prop-deck","model:prop-podium","model:prop-tome","model:prop-trophy","model:prop-medal","model:prop-coin","model:prop-stand","model:prop-vault","sky:hub-hall","sky:hub-hall-b","ui:bosses","ui:icons"],"hubsound":["sfx:core","sfx:hub","sfx:voice","music:hub"],"title":["sky:title-dusk","sky:title-dusk-b","sfx:core","sfx:voice","music:title"],"memory":["sky:vault-gold","model:prop-deck","model:prop-coin","sfx:core","sfx:voice","music:memory"],"exam":["sky:exam-moon","model:prop-podium","sfx:core","sfx:combat","sfx:voice","music:exam"],"guide":["sky:guide-archive","model:prop-tome","sfx:core","music:calm"]}};
 
 /* ---- 03b-assets.js ---- */
 // Asset files: the generated models, skies and sound live beside the page in arcade/assets/ and are fetched when
@@ -7117,6 +7132,7 @@ const GFX = {
       look: this.look,
       post: scene.userData.post || {},
     });
+    if (scene.userData.edge) scene.userData.edge(this.renderer); // (a red frame round the band, over the finished picture: see BandEdge)
     if (scene.userData.overlay) scene.userData.overlay(this.renderer); // (a scene's own last word, over the finished picture: what must stay sharp through every effect)
     this.heat.a = 0; // a scene asks for its heat haze again every frame
     this.keep.a = 0; // and names its subject again
@@ -8684,7 +8700,7 @@ const UI = {
     Sound.say(text);
     const b = this.el(`<div class="banner${cls ? " " + cls : ""}" style="--c:${color}">${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`);
     this.root.appendChild(b);
-    setTimeout(() => b.remove(), 1400);
+    setTimeout(() => b.remove(), cls.indexOf("plated") >= 0 ? 2200 : 1400); // (a plated banner, RANK UP!, stands a little longer: see style.css)
   },
   floater(text, x, y, color = COLORS.yellow, big = false) {
     const f = this.el(`<div class="floater${big ? " big" : ""}" style="--c:${color};left:${x}px;top:${y}px">${esc(text)}</div>`);
@@ -10436,6 +10452,7 @@ function answerBadgeTexture(label, color, wide) {
 //   fx.scorch(pos, { size, life, kind })                         a mark left on the ground: "scorch" | "skid"
 //   fx.trailer(fn, { smoke, fire, sparks, rate, a })             smoke or fire trailing from a moving point (a handle: .on; a: how thick its smoke)
 //   fx.drift                                                     the world's scroll (units/s) carried by every particle
+//   new BandEdge() / .set(k, beat) / .draw(renderer, band)       low health: a red frame round the band (see the class)
 const fxRGB = (c, k = 1) => { const q = c && c.isColor ? c : new THREE.Color(c); return [q.r * k, q.g * k, q.b * k]; };
 
 // Sparks and bolts: two crossed blades shaped where they are drawn (a pointed head, a tail thinning to nothing),
@@ -11080,6 +11097,51 @@ class CombatFX {
   }
 }
 
+// Low health: a saturated red frame round the band (the picture between the question and the answers), beating with
+// the alarm, as Boss Rush's last heart draws it in the page (an inset glow 46 + 34 beat px deep, its solid edge
+// 12 + 20 beat px, at 0.42 + 0.5 beat). It is drawn over the finished picture (GFX.render calls scene.userData.edge),
+// so the post's vignette, bloom and tone curve leave its red alone (inside the picture they blacked it out), and
+// before a scene's overlay, so the answers' letters and badges drawn there stand over it untouched.
+class BandEdge {
+  constructor() {
+    this.U = { uRect: { value: new THREE.Vector4() }, uA: { value: 0 }, uS: { value: 0 }, uB: { value: 0 } };
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: this.U, transparent: true, depthTest: false, depthWrite: false,
+      vertexShader: "void main(){ gl_Position = vec4(position.xy * 2.0, 0.0, 1.0); }",
+      fragmentShader: `uniform vec4 uRect; uniform float uA; uniform float uS; uniform float uB;
+        void main(){
+          vec2 p = gl_FragCoord.xy;
+          float d = min(min(p.x - uRect.x, uRect.z - p.x), min(p.y - uRect.y, uRect.w - p.y));
+          if (d < 0.0) discard;
+          float a = uA * pow(1.0 - clamp((d - uS * 0.35) / (uS * 0.65 + uB), 0.0, 1.0), 2.0);
+          gl_FragColor = vec4(1.0, 0.07, 0.18, a);
+        }`,
+    });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.mat);
+    this.mesh.frustumCulled = false;
+    this.scene = new THREE.Scene();
+    this.scene.add(this.mesh);
+    this.cam = new THREE.Camera();
+    this.k = 0; this.beat = 0;
+    this._v = new THREE.Vector2();
+  }
+  // k: how much of it shows (0: none); beat: 0..1, where the alarm's swell is
+  set(k, beat) { this.k = k; this.beat = beat; }
+  draw(r, band) {
+    if (!(this.k > 0.004) || !band || !(band.h > 0)) return;
+    const buf = r.getDrawingBufferSize(this._v), sx = buf.x / GFX.w, sy = buf.y / GFX.h, b = this.beat;
+    this.U.uRect.value.set(0, (GFX.h - band.bottom) * sy, buf.x, (GFX.h - band.top) * sy);
+    this.U.uA.value = (0.42 + 0.5 * b) * this.k;
+    this.U.uS.value = (12 + 20 * b) * sx;
+    this.U.uB.value = (46 + 34 * b) * sx;
+    const ac = r.autoClear;
+    r.autoClear = false;
+    try { r.setRenderTarget(null); r.render(this.scene, this.cam); } catch (e) { /* the picture stands without it */ }
+    r.autoClear = ac;
+  }
+  dispose() { this.mesh.geometry.dispose(); this.mat.dispose(); }
+}
+
 /* ---- 08d-panosky.js ---- */
 // A generated panorama (see Assets.loadSky) as a scene's sky, and as the light every glossy surface reflects.
 //   const sky = Assets.sky("blaster-deep-1");            // null when it is not loaded: keep the scene's own sky
@@ -11506,6 +11568,9 @@ const trophyIcon = (id, on) => (genIconReady() ? genIcon(trophyKind(id), !on) : 
 const Trophies = {
   queue: [],
   showing: false,
+  held: false,
+  // (an ending can hold the cards back until it is over: they wait in the queue, then come in turn)
+  hold(on) { this.held = !!on; if (!on) this.pump(); },
   has(id) { return !!(Store.state.ach || {})[id]; },
   count() { return TROPHIES.filter((t) => this.has(t.id)).length; },
   // o: the results of the game that just ended, when there is one.
@@ -11526,7 +11591,7 @@ const Trophies = {
     this.pump();
   },
   pump() {
-    if (this.showing || !this.queue.length) return;
+    if (this.showing || this.held || !this.queue.length) return;
     const t = this.queue.shift();
     this.showing = true;
     const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${trophyIcon(t.id, true)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
@@ -16106,7 +16171,7 @@ class BlasterGame extends QuizGame {
       }
       if (!this.stage) this.warp = 1.4;
       GFX.pulse(this.stage ? 2 : 6, 0.2); // (staged: the demon's death starts here, and is seen sharp)
-      this.quietly(() => UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED"));
+      this.quietly(() => UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED", Assets.on ? "fit" : "")); // (served, Phase 6: it comes in from just over its size, inside the screen's edges: from 2.2 times its size its line ran off both)
       this.hud();
       this.state = "intro";
       this.tw.wait(1.5, () => this.nextQuestion());
@@ -18319,7 +18384,7 @@ class BlasterSpace {
     const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
     let kit = null;
     if (model && g.pano) {
-      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 3.0, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow)
+      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 1.3, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow. Phase 6: a ship's neon at 1.3, not 3: at 3 it bloomed into a smear; its lamps and ports carry it now)
       const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
       if (made) {
         const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
@@ -18334,8 +18399,12 @@ class BlasterSpace {
         // stone of its own, aTone, over the region's colour.)
         const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 } })) : U;
         const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        if (!rock) { // (Phase 6: a ship's hull takes the region's light but little of its colour: in a red region it read as a pink lump. Its lamps and ports are its colour)
+          const skin = mat.onBeforeCompile;
+          mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65); }"); };
+        }
         if (rock) { const skin = mat.onBeforeCompile; mat.onBeforeCompile = (sh) => { skin(sh); sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;"); }; }
-        g.pano.mirror(mat, rock ? 0.55 : 0.8);
+        g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
         kit = { geo: made.geo, mat };
@@ -18494,32 +18563,60 @@ function spaceGlowMaterial(trail) {
 const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
 const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2"];
 // Running lights for a generated ship (Phase 5 fix: the wings of fighters read as enemy fire): magenta to port, cyan to
-// starboard at its widest, white at its tail, each a small diamond of light; they blink slowly (under once a second).
+// starboard at its widest, white at its tail; they blink slowly (under once a second).
+// (Phase 6: at the distance they are seen at, the ships read as lumps. Each lamp is a point of light now, as big as it
+// is in the world near to, never under a pixel or two across far off, so it stays crisp; and a row of lit ports runs
+// along each flank, steady warm points, so a hull far off reads as a ship: points of light on a dark shape.)
 function spaceRunningLights(geo) {
   geo.computeBoundingBox();
-  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], col = [], ph = [];
+  const bb = geo.boundingBox, P = geo.attributes.position.array, pos = [], cor = [], col = [], ph = [], ix = [];
   let wx = 0, wz = 0, wy = 0;
   for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i]) > wx) { wx = Math.abs(P[i]); wy = P[i + 1]; wz = P[i + 2]; }
-  const r = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) * 0.022;
-  const lamp = (x, y, z, c, p) => {
-    const o = new THREE.OctahedronGeometry(r, 0).toNonIndexed(), a = o.attributes.position.array;
-    for (let i = 0; i < a.length; i += 3) { pos.push(a[i] + x, a[i + 1] + y, a[i + 2] + z); col.push(c[0], c[1], c[2]); ph.push(p); }
-    o.dispose();
+  const L = bb.max.z - bb.min.z, H = bb.max.y - bb.min.y, r = Math.max(bb.max.x - bb.min.x, L) * 0.022;
+  // a lamp: a quad about its centre that the shader turns to the lens (k: its least radius, in pixels; p < 0: steady)
+  const lamp = (x, y, z, c, p, k, rr = r) => {
+    const b = pos.length / 3;
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([u, v]) => { pos.push(x, y, z); cor.push(u, v, k, rr); col.push(c[0], c[1], c[2]); ph.push(p); });
+    ix.push(b, b + 1, b + 2, b, b + 2, b + 3);
   };
-  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5);
+  lamp(-wx - r, wy, wz, [2.6, 0.5, 2.0], 0, 2.0); lamp(wx + r, wy, wz, [0.4, 2.2, 2.8], 0, 2.0); lamp(0, bb.max.y * 0.6, bb.max.z + r, [2.4, 2.4, 2.4], 0.5, 1.8);
+  // the ports: along each flank at its middle height, where the hull is widest at each of five stations
+  const yc = (bb.min.y + bb.max.y) / 2 + H * 0.08;
+  for (let n = 0; n < 5; n++) {
+    const zs = bb.min.z + L * (0.26 + n * 0.12);
+    let w = 0;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 2] - zs) < L * 0.035 && Math.abs(P[i + 1] - yc) < H * 0.14) w = Math.max(w, Math.abs(P[i]));
+    if (w > 0) [-1, 1].forEach((sd) => lamp(sd * (w + r * 0.3), yc, zs, [2.2, 1.9, 1.45], -1, 1.25, r * 0.5));
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aCor", new THREE.Float32BufferAttribute(cor, 4));
   g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
   g.setAttribute("aPh", new THREE.Float32BufferAttribute(ph, 1));
+  g.setIndex(ix);
   return g;
 }
+const SPACE_LAMP_U = { uTime: { value: 0 }, uPx: { value: 0.0024 } }; // (shared: the show's time, and one CSS pixel in the lens's height)
 function spaceRunningLightMat() {
   return new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    vertexShader: "attribute vec3 aCol; attribute float aPh; uniform float uTime; varying vec3 vC; void main(){ vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0); float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453); vC = aCol * (0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh))); gl_Position = projectionMatrix * viewMatrix * w; }",
-    fragmentShader: "varying vec3 vC; void main(){ gl_FragColor = vec4(vC, 1.0); }",
+    uniforms: SPACE_LAMP_U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute vec4 aCor; attribute vec3 aCol; attribute float aPh; uniform float uTime; uniform float uPx; varying vec3 vC; varying vec2 vUv;
+      void main(){
+        vec4 w = modelMatrix * instanceMatrix * vec4(position, 1.0);
+        vec4 mv = viewMatrix * w, c0 = projectionMatrix * mv;
+        float seed = fract(sin(dot(instanceMatrix[3].xyz, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+        vC = aCol * (aPh < 0.0 ? 1.0 : 0.25 + 0.75 * step(0.55, fract(uTime * 0.8 + seed + aPh)));
+        float ry = max(aCor.w * length(instanceMatrix[0].xyz) * projectionMatrix[1][1], aCor.z * uPx * c0.w);
+        mv.xyz -= normalize(mv.xyz) * (2.0 * ry / projectionMatrix[1][1]); // (toward the lens by its own size: its hull never swallows it)
+        vec4 c = projectionMatrix * mv;
+        c.xy += aCor.xy * vec2(ry * projectionMatrix[0][0] / projectionMatrix[1][1], ry) * (c.w / c0.w);
+        vUv = aCor.xy;
+        gl_Position = c;
+      }`,
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(1.0 - (d - 0.45) / 0.55, 2.0)), 1.0); }",
   });
 }
+
 
 const SPACE_TYPES = { // how many of each at most, where its engines are (behind its middle), its trail's colour and width, how big it is drawn
   freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [1.25, 1.65, 2.2], 0.4, 1.8], // (Phase 5 fix: a short cyan-white engine glow, not the long magenta of the demon's fire)
@@ -18547,12 +18644,16 @@ class SpaceTraffic {
         Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
         Object.defineProperty(lamps, "visible", { get: () => mesh.visible, set: () => {} });
         lamps.frustumCulled = false;
+        lamps.renderOrder = 3; // (over the hull it sits on, and over the trail behind it)
         g.scene.add(lamps);
       } else mesh = spaceInstanced(geos[name], space.hull, cap);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < cap; i++) mesh.setMatrixAt(i, zero);
       g.scene.add(mesh);
-      this.types[name] = { mesh, cap, rear, col, tw, size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
+      // (Phase 6: a generated hauler, tug or cruiser is drawn smaller than its built-in design: at their distance the
+      // big ones filled the picture's edges as lumps. The wings of fighters keep their size.)
+      // (the cruiser, far off in the haze, most of all: a long dark blade with its lamps, not a hazy blot)
+      this.types[name] = { mesh, cap, rear, col, tw, size: kit && name !== "fighter" ? size * (name === "cruiser" ? 0.55 : 0.78) : size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
       total += cap;
     }
     // one streak of engine light per ship
@@ -18610,6 +18711,7 @@ class SpaceTraffic {
   update(dt, sp, w) {
     const g = this.g, tr = this.space.cur.traffic, m = this._m, q = this._q, p = this._p;
     if (w < 0.02) this.sp0 = sp;
+    SPACE_LAMP_U.uTime.value = VFX.t; SPACE_LAMP_U.uPx.value = 2 / Math.max(1, GFX.h); // (the lens spans the screen's height: the band is a window into it)
     // keep the region's traffic up
     if ((this.cool -= dt) <= 0 && w < 0.05) {
       this.cool = rand(0.5, 1.3);
@@ -20927,6 +21029,10 @@ class BlasterStage {
     }));
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
+    // (Phase 6: with one shield left, the frame is Boss Rush's, drawn over the finished picture and under the four
+    // letters: inside the picture the post's vignette blacked it out. The flash as a shield goes stays in the picture.)
+    this.edge = new BandEdge();
+    s.userData.edge = (r) => this.edge.draw(r, g.band);
     // the hurt engine burns: a ribbon of flame that trails down the screen
     this.flame = new Trail({ length: 16, width: 0.09, color: 0xff8a2a, intensity: 2.0, up: new THREE.Vector3(0, 0, 1) });
     this.flame.mesh.visible = false; this.flame.mesh.renderOrder = 6;
@@ -20949,6 +21055,23 @@ class BlasterStage {
   shipPos(out) { const j = this.g.jet; return j.centre ? j.centre(out) : out.copy(this.g.ship.position); }
   muzzle(i, out) { const j = this.g.jet; return j.muzzle ? j.muzzle(i, out) : j.rig.localToWorld(out.copy(j.muzzles[i % j.muzzles.length])); }
   exhaust(i, out) { const j = this.g.jet; return j.exhaust ? j.exhaust(i, out) : j.rig.localToWorld(out.copy(j.nozzles[i % j.nozzles.length])); }
+  // where it burns with one shield left (Phase 6): on its back beside the canopy, to port, where the lens sees it (the
+  // engine it used to burn at sits under the foot of the band). Found once on the model's own skin: straight down
+  // onto the hull from above a point a fifth of the way from the cockpit to the tail, out by a nozzle's spacing.
+  hurt(out) {
+    const j = this.g.jet;
+    if (!j.model || !j.cockpit || !j.exhaust) return this.exhaust(1, out);
+    if (!this.hurtL) {
+      j.rig.updateMatrixWorld(true);
+      const c = j.cockpit(new THREE.Vector3()), t0 = j.exhaust(0, new THREE.Vector3()), t1 = j.exhaust(1, new THREE.Vector3());
+      const side = t1.clone().sub(t0), up = new THREE.Vector3(0, 1, 0).transformDirection(j.rig.matrixWorld);
+      const p = c.clone().lerp(t0, 0.22).addScaledVector(side, 1.15), from = p.clone().addScaledVector(up, 5);
+      const meshes = Object.values(j.model.mesh || {}).filter((m) => m && m.isMesh && m.visible);
+      const hit = meshes.length ? new THREE.Raycaster(from, up.clone().negate(), 0, 10).intersectObjects(meshes, false)[0] : null;
+      this.hurtL = j.rig.worldToLocal((hit ? hit.point : p).clone().addScaledVector(up, 0.02));
+    }
+    return j.rig.localToWorld(out.copy(this.hurtL));
+  }
   // a place in the world, as a place on the screen (pixels)
   screen(p) { const v = this._u.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
   pan(p) { return clamp(p.x / 4, -1, 1) * 0.7; }
@@ -21506,15 +21629,18 @@ class BlasterStage {
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
       this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
-      this.frameU.uK.value = Math.max(this.lowK * (0.3 + 0.7 * beat), fk);
-    } else this.frame.visible = false;
-    // ---- the hurt engine burns: a ribbon of flame and puffs of dark smoke that trail down the screen
+      this.frameU.uK.value = fk;
+      this.edge.set(this.lowK, beat);
+    } else { this.frame.visible = false; this.edge.set(0, 0); }
+    // ---- the hurt hull burns: a ribbon of flame and puffs of dark smoke that trail down the screen
     if (this.low && g.state !== "over" && !quiet) {
-      const n = this.exhaust(1, this._v), fl = this.flame, hot = this.low === 2 ? 1.5 : 1;
+      const n = this.hurt(this._v), fl = this.flame, hot = this.low === 2 ? 1.5 : 1;
       fl.mesh.visible = true; fl.width = 0.22 * k * hot;
-      if (d > 0) { fl.shift(Math.sin(VFX.t * 17) * 0.006 * k, -0.075 * k * hot, 0.06 * k); fl.push(this._w.copy(n).add(this._u.set(Math.sin(VFX.t * 31) * 0.03 * k, 0, 0))); }
-      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.08, 0.08) * k, -0.35 * k, 0.25 * k)), { size: 0.5 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: -1.3, vel: this._u.set(rand(0.3, 0.9), -0.6, 1.4) }); /* (it drifts clear of the plumes: seen against the sky beside them) */
-        kit.fire(this._w.copy(n).add(this._u.set(rand(-0.07, 0.07) * k, 0.1 * k, -0.14 * k)), { size: 0.3 * k * hot, life: 0.3, rise: 0.7, k: 1.1 }); /* flames lick over its cowl */ kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, -0.6, 1), spread: 0.5, k: 1.5 }); }
+      // (Phase 6: from a breach on its back that the lens sees, see hurt(); the flame, the fire and the smoke stay on the
+      // skin and stream back along it toward the lens, where they used to be thrown down into the hull and hidden)
+      if (d > 0) { fl.shift(Math.sin(VFX.t * 17) * 0.006 * k, 0.004 * k * hot, 0.07 * k); fl.push(this._w.copy(n).add(this._u.set(Math.sin(VFX.t * 31) * 0.02 * k, 0.02 * k, 0))); }
+      if ((this.smokeT -= d) <= 0) { this.smokeT = 0.09 / hot; kit.smoke(this._w.copy(n).add(this._u.set(rand(-0.06, 0.06) * k, 0.07 * k, 0.1 * k)), { size: 0.42 * k * hot, life: 0.8, a: 0.75, cold: true, color: 0x140f1c, rise: 0.25, vel: this._u.set(rand(-0.25, 0.25), 0.2, 1.5) }); /* (dark against the lit plates) */
+        kit.fire(this._w.copy(n).add(this._u.set(rand(-0.05, 0.05) * k, 0.03 * k, 0.03 * k)), { size: 0.32 * k * hot, life: 0.3, rise: 0.35, k: 1.1 }); /* flames lick over the breach */ kit.sparks(n, 0xffb060, { n: 1, speed: 2.5, life: 0.35, len: 0.25 * k, w: 0.04 * k, gravity: 5, dir: this._u.set(0, 0.5, 1), spread: 0.5, k: 1.5 }); }
     } else this.flame.mesh.visible = false;
     // ---- sound that follows the game: the engines with the streak and the warp (wavering when one is hurt);
     // without a recording, the alarm as a pip
@@ -21530,6 +21656,7 @@ class BlasterStage {
     GFX.setDanger(0);
     HudFX.low(this.g.el, false);
     this.kit.dispose();
+    this.edge.dispose();
     this.waves.forEach((w) => { w.m.material.dispose(); });
     this.waves[0].m.geometry.dispose();
     this.missiles.forEach((m) => { m.sp.material.dispose(); m.tail.mesh.geometry.dispose(); m.tail.mesh.material.dispose(); });
@@ -24276,9 +24403,12 @@ const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1
 // a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
 // mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
 // panorama to light them) every kind is drawn as before. [model, length in game units]
-const RACER_GEN_FLEET = { sedan: ["prop-car", 4.5], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+const RACER_GEN_FLEET = { sedan: ["prop-car", 3.6], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+// (the car is a compact city car, taller and shorter than the coupe it replaced: the room it takes in its lane, its
+// soft shadow and the box that is checked against the lane badges are its own, not the coupe's)
+const RACER_GEN_DIM = { sedan: { sh: [3.4, 5.3], box: [1.0, 1.7, 1.8] } };
 // Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
-const RACER_GEN_TRIM = { sedan: { tail: 0.47, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+const RACER_GEN_TRIM = { sedan: { tail: 0.58, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
 // Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
 // the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
 function racerGenTrim(type, geo) {
@@ -24293,13 +24423,16 @@ function racerGenTrim(type, geo) {
     return { z, w };
   };
   const side = (y, band) => { let w = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i + 2]) < len * 0.3) w = Math.max(w, Math.abs(P[i])); return w; };
+  // (and how far it reaches there round one x: a lamp at the corner of a rounded nose or tail stands on its skin, not
+  // inside it, where the shape's farthest point at the middle would bury it)
+  const at = (sgn, y, band, x, hw, z0) => { let z = sgn > 0 ? -1e9 : 1e9; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i] - x) < hw) { const zz = P[i + 2]; if (sgn > 0 ? zz > z : zz < z) z = zz; } return Math.abs(z) < 1e8 ? z : z0; };
   const yt = bb.min.y + H * T.tail, yh = bb.min.y + H * T.head, ys = bb.min.y + H * T.sill;
-  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05);
+  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05), nw = Math.max(nose.w, sw * 0.8); // (a rounded nose is narrow at its tip: its lamps go out toward its corners)
   L(2, rear.w * 1.5, 0.075, 0.05, 0, yt, rear.z + 0.03, 0xff1030, 2.4); // the tail bar (brightens under braking)
   [-1, 1].forEach((s) => {
-    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, rear.z + 0.02, 0xffa53d, 3); // indicators, tail corners
-    L(4, 0.16, 0.1, 0.05, s * (nose.w * 0.86), yh + 0.1, nose.z - 0.02, 0xffa53d, 3); // and nose corners
-    L(1, nose.w * 0.42, 0.07, 0.05, s * nose.w * 0.4, yh, nose.z - 0.03, 0xfff2d8, 4.5); // the nose lamps
+    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, at(1, yt + 0.12, H * 0.06, s * rear.w * 0.82, 0.1, rear.z) + 0.02, 0xffa53d, 3); // indicators, tail corners
+    L(4, 0.16, 0.1, 0.05, s * (nw * 0.86), yh + 0.1, at(-1, yh + 0.1, H * 0.06, s * nw * 0.86, 0.1, nose.z) - 0.02, 0xffa53d, 3); // and nose corners
+    L(1, nw * 0.42, 0.07, 0.05, s * nw * 0.4, yh, at(-1, yh, H * 0.06, s * nw * 0.4, nw * 0.21, nose.z) - 0.03, 0xfff2d8, 4.5); // the nose lamps
     L(10, 0.03, 0.05, len * 0.62, s * (sw + 0.025), ys, 0, 0xffffff, 1); // a line of neon along the sill
   });
   if (T.roof) { const top = face(-1, bb.max.y - H * 0.06, H * 0.05); [-0.6, -0.2, 0.2, 0.6].forEach((x) => L(8, 0.14, 0.06, 0.05, x * top.w, bb.max.y - H * 0.05, top.z - 0.02, 0xffa53d, 2.6)); }
@@ -24449,6 +24582,7 @@ class RacerWorld {
   // scaled to its length, set on its wheels; its material; its lamps. (Shared by every copy of the kind.)
   genKind(type, model) {
     const [, len] = RACER_GEN_FLEET[type];
+    if (RACER_GEN_DIM[type]) (this.genDim = this.genDim || {})[type] = RACER_GEN_DIM[type];
     tuneModel(model, { glow: 2.0, metal: 1.0, rough: 1.0, normal: 0.85 });
     const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
     if (!made) return null;
@@ -24485,7 +24619,7 @@ class RacerWorld {
   }
   underBadge(c, rings) {
     // the car's box on the screen (its eight corners), against each badge's circle
-    const cam = this.g.camera, D = { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
+    const cam = this.g.camera, D = (this.genDim && this.genDim[c.type] && this.genDim[c.type].box) || { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (let i = 0; i < 8; i++) {
       v.set(c.x + (i & 1 ? D[0] : -D[0]), c.y + (i & 2 ? D[1] : 0), c.z + (i & 4 ? D[2] : -D[2])).project(cam);
@@ -24537,6 +24671,7 @@ class RacerWorld {
     const dirty = new Set();
     let k = 0;
     const SH = { sedan: [3.4, 6.6], truck: [4.2, 11], bus: [4.4, 13], bike: [1.4, 3.2], rival: [3.4, 6.6] };
+    if (this.genDim) for (const t in this.genDim) SH[t] = this.genDim[t].sh;
     for (const c of this.cars) {
       if (!c.on) continue;
       c.age += dt;
@@ -24649,6 +24784,8 @@ class RacerWorld {
     {
       const b = mk(), ads = [], holos = [];
       // road works on the right-hand shoulder: barriers, cones, an arrow board, a digger
+      // (Phase 6: served, beside the textured city, these flat boxes stood out as untextured blocks: the works go)
+      if (!g.pano) {
       for (let i = 0; i < 9; i++) { const z = -74 - i * 3.4, aZ = -106; put(b, BOX, 9.05, 0.55, z, 0.3, 1.0, 2.8, i % 2 ? 0xffa53d : 0xf2f2f2, aZ, i % 2 ? 1 : 0, i % 2 ? 1.5 : 1); put(b, BOX, 9.05, 1.25, z, 0.14, 0.14, 0.14, 0xffa53d, aZ, 2, 2.6); }
       for (let i = 0; i < 6; i++) { put(b, CONE, 5.6, 0.4, -70 - i * 6, 0.24, 0.8, 0.24, 0xff7a2a, -106, 0, 1); put(b, BOX, 5.6, 0.52, -70 - i * 6, 0.3, 0.1, 0.3, 0xffffff, -106, 1, 1.2); }
       put(b, BOX, 8.9, 3.4, -68, 0.2, 2.2, 3.2, 0x15171c, -106);
@@ -24657,6 +24794,7 @@ class RacerWorld {
       put(b, BOX, 8.6, 1.3, -96, 1.2, 1.6, 3.6, 0xf1c40f, -106); put(b, BOX, 8.6, 2.5, -96.6, 1.0, 1.0, 1.4, 0x20242a, -106);
       strut(b, [8.6, 2.6, -95], [8.4, 5.4, -91], 0.36, 0xf1c40f, -106); strut(b, [8.4, 5.4, -91], [8.2, 2.4, -88.6], 0.3, 0xf1c40f, -106);
       put(b, BOX, 8.2, 2.0, -88.4, 0.9, 0.7, 0.7, 0x3a3f48, -106);
+      }
       // camera gantries over the service lanes only (the main road's gantries are the questions)
       [[-1, -36], [1, -164]].forEach(([sd, z]) => { put(b, BOX, sd * 9.05, 3.6, z, 0.28, 7.2, 0.28, 0x3a3f48, z - 1); put(b, BOX, sd * 7.3, 7.1, z, 3.8, 0.24, 0.24, 0x3a3f48, z - 1); [6.6, 8.0].forEach((x) => { put(b, BOX, sd * x, 6.8, z, 0.5, 0.36, 0.4, 0x15171c, z - 1); put(b, BOX, sd * x, 6.8, z + 0.22, 0.2, 0.1, 0.05, 0xff3030, z - 1, 2, 2.4); }); });
       // rooftop and wall ads, and holograms that hang over the pavements
@@ -25091,7 +25229,7 @@ class RacerWorld {
       const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
       if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
-      else if (s.to !== "tunnel") fogK = 0.62 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
+      else if (s.to !== "tunnel") fogK = 0.42 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // (Phase 6: 0.42, not 0.62: at its height the picture washed out to flat pink) // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
       if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
       if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
@@ -25117,7 +25255,7 @@ class RacerWorld {
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
     if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
     const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
-    const curtainCol = glare ? this._c.copy(this.swap.col) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(0.8) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color); // (the glare a shade under the sky's own colour: never near white)
     if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
     if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;
@@ -26085,7 +26223,7 @@ class RacerStage {
         x.lineWidth = 1.5; x.beginPath(); x.moveTo(kx, ky); x.lineTo(kx + Math.cos(a - 0.9) * l * 0.35, ky + Math.sin(a - 0.9) * l * 0.35); x.stroke();
       }
       this.paneTex = new THREE.CanvasTexture(c);
-      this.pane = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.5), new THREE.MeshBasicMaterial({ map: this.paneTex, color: new THREE.Color(1.15, 0.8, 0.9), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending }));
+      this.pane = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.5), new THREE.MeshBasicMaterial({ map: this.paneTex, color: new THREE.Color(1.0, 0.5, 0.62), transparent: true, opacity: 0, /* (Phase 6: a red-pink crack, not a white sheet: it bloomed the crash out) */ depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending }));
       this.pane.visible = false; this.pane.renderOrder = 7; this.paneT = 0;
       s.add(this.pane); }
     // the policy's shield: a shell of mint light round the rig, clear at its middle (see starShellMaterial, in 20j)
@@ -26112,6 +26250,10 @@ class RacerStage {
     }));
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
+    // (Phase 6: on the last life, the frame is Boss Rush's, drawn over the finished picture and under the lane badges:
+    // inside the picture it was faint. The flash as a life goes stays in the picture.)
+    this.edge = new BandEdge();
+    s.userData.edge = (r) => this.edge.draw(r, g.band);
     // Everything that used to throw a burst of soft round dots here throws shaped light instead while the run is
     // staged: steam is smoke in the palette, everything else sparks (darts with a point, a tail and a hot heart).
     g.bursts.burst = (pos, color, o = {}) => {
@@ -26250,6 +26392,7 @@ class RacerStage {
     const g = this.g, kit = this.kit, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, glass = picked >= 0;
     const left = 3 - g.crashes, hard = clamp(g.crashes / 3, 0.34, 1), sd = g.carX > 0.4 ? -1 : g.carX < -0.4 ? 1 : Math.random() < 0.5 ? -1 : 1, pan = this.pan(g.carX);
     const p = rig.nose(new THREE.Vector3()).setY(1.15), back = this._v.set(-sd * 0.15, 0.5, 1).normalize().clone();
+    this.capT = 0.55; // (Phase 6: the picture's glow is held down while it happens, so the glass, the sparks and the rubber read: see update)
     if (glass) { // the lane's light is hard: it shatters over the nose and the pieces go back over the rig
       this.breakPane(p);
       kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 3 : 7, size: 0.4, speed: 13, color: 0x1c1830, hot: 0xffdce8, dir: back, spread: 1.0, gravity: 14, life: 0.7, radius: 1.1 }); // (a few dark splinters that glint as they turn: glass, not confetti)
@@ -26514,6 +26657,8 @@ class RacerStage {
       this.markDark.visible = any || this.marksLive;
       this.marksLive = any;
       this.markDark.instanceMatrix.needsUpdate = true; }
+    // ---- the crash: the glow held down while it happens (the game sets its bloom each frame, before this)
+    if (this.capT > 0 && g.post) { this.capT = Math.max(0, this.capT - d); g.post.bloom *= 1 - 0.6 * smoothstep(0, 0.2, this.capT); }
     // ---- the pane, the shield's shell, the rings, the pools of light
     if (this.paneT > 0) { this.paneT -= d; const k = clamp(this.paneT / 0.14, 0, 1); this.pane.material.opacity = k * 0.66; this.pane.scale.setScalar(1 + (1 - k) * 0.16); this.pane.visible = this.paneT > 0; }
     { const su = this.shellMat.uniforms;
@@ -26559,8 +26704,9 @@ class RacerStage {
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
       this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
-      this.frameU.uK.value = Math.max(this.lowK * (0.3 + 0.7 * beat), fk);
-    } else this.frame.visible = false;
+      this.frameU.uK.value = fk;
+      this.edge.set(this.lowK, beat);
+    } else { this.frame.visible = false; this.edge.set(0, 0); }
     // ---- sound that follows the game: the engine with the road's speed and the stacks (it wavers on the last life);
     // without a recording, the alarm as a pip
     const rev = clamp(sp / 80, 0, 1.4), sput = this.low === 1 ? 0.93 + 0.05 * Math.sin(t * 9) * Math.sin(t * 2.3) : 1;
@@ -26587,6 +26733,7 @@ class RacerStage {
     this.glows[0].m.geometry.dispose();
     [this.markDark, this.markHot, this.pane, this.frame, this.shell].forEach((m) => { m.material.dispose(); m.geometry.dispose(); });
     this.paneTex.dispose();
+    this.edge.dispose();
   }
 }
 
@@ -29546,6 +29693,9 @@ const BOSS_ATK = {
   SMOKE: 0x2c2244, WRECK: 0x241c38, // smoke and wreckage stay in the palette
   RAGE: new THREE.Color(1, 0.1, 0.16), // the rims of a raging boss
 };
+// the figures' lane (see BossStage.figure): how far one lifts as it goes, and how long it stands (show seconds; the
+// rule's own floater is taken away a second after it was made, on the page clock)
+const FIG_LIFT = 14, FIG_LIFE = 0.9;
 class BossStage {
   constructor(game, actor) {
     const g = (this.g = game), s = g.scene, row = (this.row = g.row);
@@ -29558,13 +29708,15 @@ class BossStage {
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
     const bc = new THREE.Color(this.beamCol);
-    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
+    this.beamK = Math.min(1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1), 1.25 / Math.max(bc.r, bc.g, bc.b)); // (a bright colour's beam burns at a lower gain: it never washes the picture out. Phase 6: nor a saturated one past 1.25 in any channel: the Phantom's violet swept the picture near white)
+    this.lensCol = new THREE.Color(this.hex).multiplyScalar(0.8); this.lensBeam = new THREE.Color(this.beamCol).multiplyScalar(0.8); // (the flash where a blow meets the lens, a shade down: it washed the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
     this.tele = null; this.strike = null; this.shot = null; this.kindN = 0; this.dying = null; this.phase = "wait";
     this.hum = false; this.alarm = false; this.rageOn = false; this.flick = 1; this.windK = 0;
     this.embers = []; // glowing edges round a hole burnt in it and round its stumps: { sp, at, size, t }
+    this.figs = []; // the figures standing in their lane (see figure): { el, t, y, h }
     // what it gathers as it winds up: a glow where the attack will leave it
     this.orb = glowSprite(neon(this.hex, 2.2), 0.1, 1);
     this.orb.visible = false; this.orb.renderOrder = 7;
@@ -29622,10 +29774,57 @@ class BossStage {
   screen(p) { const v = this._n.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
   pan(p) { return clamp(p.x / 6, -1, 1) * 0.6; }
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 6px #000"; }
-  // where a figure of damage stands: over its head, inside the picture
+  // where a figure of damage is made: over its head, inside the picture (bossHit moves it into its lane the same frame)
   floatAt() {
     const g = this.g, p = this.screen(this._v.set(0, this.S * 1.03, 0)), top = g.band ? g.band.top + 34 : 60;
     return { x: clamp(p.x, 60, GFX.w - 60), y: Math.max(top, p.y - 10) };
+  }
+  // ---- the figures in the picture: a blow's damage, and the call-out of a quick answer or of a streak lost ----------
+  // They have a lane of their own (Phase 6: they used to rise across its caption and into the question): beside the
+  // point the blow lands on, on the side away from the lance (it comes from the answers' letters, on the left), under
+  // the caption plate (room is kept for two lines of it) and above the answers. Row 0 is the damage, beside the point;
+  // row 1 is the call-out, under it. Each holds still at full strength, then lifts a little as it fades, on the show
+  // clock. Where the picture is too short for them and the caption both, the caption waits until they have gone.
+  figure(el, at, row) {
+    const g = this.g, b = g.band;
+    if (!el || !b || el.dataset.lane) return;
+    el.dataset.lane = "1";
+    el.style.animation = "none";
+    el.style.whiteSpace = "nowrap";
+    if (!el.classList.contains("big")) el.style.fontSize = "13px";
+    this.outline(el);
+    const w = el.offsetWidth, h = el.offsetHeight, big = clamp(GFX.w * 0.056, 18, 24) + 2;
+    const cap = Math.max(2.4 * clamp(GFX.w * 0.037, 13, 17) + 12, this.bubble && this.bubble.el.isConnected ? this.bubble.h : 0); // (the caption plate: two lines of it, or the one up if taller)
+    const lo = b.top + 3 + cap + 6 + FIG_LIFT + row * (big + 8), hi = b.top + b.h - h - 6;
+    let x = at.x + 30;
+    if (x + w > GFX.w - 8 && at.x - 30 - w >= 8) x = at.x - 30 - w; // (no room on its right: on its left)
+    x = clamp(x, 8, Math.max(8, GFX.w - w - 8));
+    const y = Math.round(Math.max(Math.min(row ? at.y + big / 2 + 16 : at.y - h / 2, hi), Math.min(lo, hi)));
+    el.style.left = Math.round(x) + "px";
+    el.style.top = y + "px";
+    this.figs.push({ el, t: 0, y, h });
+  }
+  // the call-outs the shared hype made as the rule marked the answer (the floaters made then, not yet in a lane)
+  callouts() {
+    const at = this.screen(this.a.at("chest", this._u));
+    UI.root.querySelectorAll(".floater:not(.big):not([data-lane])").forEach((el) => { if (/LIGHTNING|QUICK DRAW|STREAK LOST/.test(el.textContent)) this.figure(el, at, 1); });
+  }
+  // (each frame: hold, then lift and fade)
+  figures(d) {
+    for (let i = this.figs.length - 1; i >= 0; i--) {
+      const f = this.figs[i];
+      f.t += d;
+      const k = f.t / FIG_LIFE, u = clamp((k - 0.72) / 0.28, 0, 1);
+      if (!f.el.isConnected || k >= 1) { f.el.style.opacity = "0"; this.figs.splice(i, 1); continue; }
+      f.el.style.transform = "translateY(" + (-(Math.min(k, 0.72) / 0.72) * 3 - u * (FIG_LIFT - 3)).toFixed(1) + "px)";
+      f.el.style.opacity = (1 - u * u).toFixed(2);
+    }
+  }
+  // whether the caption would meet a figure where it stands
+  capMeets(b) {
+    if (!this.figs.length) return false;
+    const top = b.offsetTop, bot = top + Math.max(b.offsetHeight, this.bubble && this.bubble.el === b ? this.bubble.h : 0) + 2;
+    return this.figs.some((f) => f.el.isConnected && f.y - FIG_LIFT < bot && f.y + f.h > top);
   }
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
@@ -29657,7 +29856,7 @@ class BossStage {
     if (!b) return;
     this.capStyle(b);
     if (g.band) b.style.top = Math.round(g.band.top + 3) + "px";
-    b.style.visibility = this.phase === "death" || this.phase === "won" || g.el.querySelector(".sheet") ? "hidden" : "";
+    b.style.visibility = this.phase === "death" || this.phase === "won" || g.el.querySelector(".sheet") || this.capMeets(b) ? "hidden" : "";
   }
   // (head: how far down the band the foot of its head stands, with no room made)
   bubbleRoom(head) {
@@ -29781,6 +29980,7 @@ class BossStage {
   // right: whether the answer is the right one (look only: the rule has checked it itself)
   fire(slot, right) {
     this.shot = { slot, right, col: SLOT_COLORS[slot] || COLORS.cyan, n: 0, time: 0 };
+    this.callouts();
   }
   volley(sh) {
     const kit = this.kit, a = this.a, S = this.S, n = sh.n, from = this.muzzle(sh.slot, new THREE.Vector3());
@@ -29809,6 +30009,8 @@ class BossStage {
     const tearing = this.tears.some((t) => !t.done && o.now <= t.at), big = dmg >= 20 || o.dead || o.enraged || tearing;
     const p = a.at(big ? "head" : "chest", new THREE.Vector3()), from = this.muzzle(o.slot, new THREE.Vector3());
     p.z += (big ? 0.07 : 0.12) * S; p.y -= big ? 0.02 * S : 0;
+    const made = UI.root.querySelectorAll(".floater.big:not([data-lane])");
+    this.figure(made[made.length - 1], this.screen(p), 0); // (the rule's figure, made this frame)
     this.foil();
     if (this.shot) this.shot.n = 9; // (its bolts are spent)
     // the lance: from the answer's side to where it lands, held for a few frames
@@ -29910,6 +30112,7 @@ class BossStage {
   attack(slow) {
     const g = this.g, t = this.tele || { kind: this.row.atk[0], clip: BOSS_ATK.CLIP[this.row.atk[0]], mark: [], acc: 0 }, C = BOSS_CLIP[t.clip];
     this.tele = t;
+    this.callouts(); // (a timeout's "STREAK LOST": a wrong answer's went into the lane as it was fired)
     this.debts.push({ t: 0 });
     this.marks(t, 0.6);
     if (t.line) { t.line.stop(); t.line = null; }
@@ -30100,7 +30303,7 @@ class BossStage {
     const tb = this.tb();
     if (kind === 1) { // the floor's jolt arrives under the player: the shock's ring across the foot of the picture, dust thrown up along it
       g.shake(0.34);
-      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
+      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.lensCol, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
       for (let i = 0; i < (quiet ? 1 : 4); i++) kit.smoke(this.lens(rand(-0.85, 0.85), -1.0, 3.4), { size: 0.36, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.9, 0), a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
     } else if (kind === 2) { // the wave breaks over the player: a ring that fills the picture, and the picture ripples
       GFX.ripple(g.camera, at, 1, 0.5);
@@ -30108,12 +30311,12 @@ class BossStage {
       for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.3, 3), null, 0xffffff, { dur: 0.3, s0: 3 * tb * 0.4, s1: 3 * tb * (1.1 + j * 0.25), delay: j * 0.08, w: 0.04, k: 0.8 });
     } else if (kind === 3) { // the beam: a hit where it crosses the player, then a line burnt across the foot of the picture, molten drips falling from it
       const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92), hit = this.lens(0, -0.74, 2.6);
-      kit.flash(hit, this.beamCol, 0.08, 0.42, 0.12, 0.9, 1.6);
+      kit.flash(hit, this.lensBeam, 0.08, 0.42, 0.12, 0.9, 1.6);
       kit.sparks(hit, 0xffffff, { n: quiet ? 5 : 12, speed: 2.4, spread: 1.4, life: 0.3, len: 0.14, w: 0.016, k: 1.8, gravity: 2, stretch: 0.02 });
       kit.gash(b0, b1, 0xffb070, 0.5, 0.045, 1.5);
       if (this.fl.fx.beam === "cleave") kit.gash(this.sweepAt(s.sd, 0.12).add(this._u.set(0, 0.05, 0)), this.sweepAt(s.sd, 0.88).add(this._u.set(0, 0.05, 0)), this.hex, 0.5, 0.04, 1.5); // (half violet: the arc's second edge)
       for (let j = 0; j < 3; j++) g.show.wait(j * 0.08, () => { if (!g.unmounted) kit.sparks(this._v.lerpVectors(b0, b1, rand(0.1, 0.9)), 0xffa050, { n: 4, speed: 0.6, life: 0.5, len: 0.12, w: 0.02, gravity: 2.5, k: 1.6, stretch: 0.02 }); });
-    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
+    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.lensCol, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
     else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });
@@ -30249,6 +30452,7 @@ class BossStage {
   update(dt) {
     const g = this.g, d = VFX.dt, a = this.a, kit = this.kit, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm;
     g.show.update(d);
+    this.figures(d);
     const f = g.state === "ask" ? clamp(g.charge / g.T, 0, 1) : 0, rage = g.enraged && g.hp > 0 ? 1 : 0;
     // ---- the telegraph, the strike, the player's burst
     if (g.state === "ask" && this.tele && !this.strike) this.telegraph(f, d);
@@ -31812,6 +32016,12 @@ function memoryGen(game) {
     deck.scene.position.set(D.x, 0, D.z);
     deck.scene.rotation.y = D.ry;
     game.scene.add(deck.scene);
+    // (Phase 6: its chrome holder mirrored the dark floor and read as a black blob under the cards. One warm lamp in
+    // front of it, short-reaching: the holder shows its panels and bright edges. One lamp only: each costs every lit
+    // pixel of the room on a phone)
+    const key = new THREE.PointLight(0xffdca0, 5, D.s * 4.5, 2);
+    key.position.set(D.x - D.s * 0.2, D.s * 0.42, D.z + D.s * 2.1); // (on the lens's side, a little above the holder: its glossy faces catch it whole)
+    game.scene.add(key);
     G.deck = deck;
     G.deckY = 0;
   }
@@ -32207,7 +32417,7 @@ class ExamGame extends QuizGame {
     this.fillLow = new THREE.PointLight(0x7c84c4, 0.85, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
-    this.rimB = new THREE.PointLight(0xffc474, 2.7, 34, 1.5);
+    this.rimB = new THREE.PointLight(Assets.on ? 0xff5ccf : 0xffc474, 2.7, 34, 1.5); // (served, Phase 6: the examiner's rim is the arcade's magenta, not gold)
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -32372,6 +32582,7 @@ class ExamGame extends QuizGame {
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
     Sound.dread(false);
+    Trophies.hold(false);
     if (this.envRT) this.envRT.dispose();
     if (this.bossEnvRT) this.bossEnvRT.dispose();
     if (this.monument) this.monument.dispose();
@@ -32489,6 +32700,7 @@ class ExamGame extends QuizGame {
   submit() {
     if (this.state === "over") return;
     this.state = "over";
+    if (Assets.on && this.has3D && this.boss) Trophies.hold(true); // (served, Phase 6: a trophy the answers win waits for the ending to be over; ExamBoss.finish lets it go. Only when it is shown changes)
     const by = {};
     let correct = 0;
     const review = [];
@@ -32963,6 +33175,9 @@ function bossJointGeometry(parts, pivot) {
 // magenta and cyan. The skull (o.bone) stays pale and bare. U is one set of uniforms for
 // all of it: how bright the seams are and what colour, how far up the body they are lit
 // (the reveal), the cracks and the stutter of its destruction, the red rim of its dread.
+// (served, Phase 6) What the examiner's metal mirrors of the hall, mostly stripped of its colour and cooled: the hall's
+// warm lamps painted its plates orange, and it read as clay. Its brightness stays: the plates still mirror the room.
+const EXAM_COOL = "{ vec3 xs = reflectedLight.indirectSpecular; reflectedLight.indirectSpecular = mix(xs, dot(xs, vec3(0.3, 0.59, 0.11)) * vec3(0.82, 0.9, 1.12), 0.65); }";
 function bossSkin(env, side, o, U) {
   const bone = !!o.bone;
   const m = new THREE.MeshStandardMaterial({ map: BossModel.texture(), metalness: 1, roughness: 1, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 });
@@ -33003,7 +33218,11 @@ function bossSkin(env, side, o, U) {
         // (its rim is violet from one side and gold from the other: not the arcade's magenta and cyan, which on this figure read as red and blue)
         // (and it is one-sided: gold along the edges that face away from the key light, next to nothing on the lit side, so the
         // outline is a lit plane on one hand and a bright edge on the other, not one pale fringe all the way round)
-        totalEmissiveRadiance += mix(vec3(0.8, 0.42, 1.6) * 0.14, vec3(1.5, 1.0, 0.36) * 1.3, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
+        totalEmissiveRadiance += mix(${Assets.on ? "vec3(0.3, 0.62, 1.5) * 0.3, vec3(1.7, 0.22, 1.2) * 1.2" : "vec3(0.8, 0.42, 1.6) * 0.14, vec3(1.5, 1.0, 0.36) * 1.3"}, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
+        ${Assets.on ? `// (served, Phase 6: the arcade's light on it, not orange clay. A cool key from high on its left: a sheen on the
+        // plates that face it and a little light in their colour; the edges away from it take the magenta rim above.)
+        vec3 bossK = normalize((viewMatrix * vec4(-0.5, 0.68, 0.55, 0.0)).xyz);
+        totalEmissiveRadiance += vec3(0.5, 0.72, 1.2) * diffuseColor.rgb * (pow(max(dot(normal, normalize(bossK + bossV)), 0.0), 14.0) * ${bone ? "0.5" : "1.6"} + max(dot(normal, bossK), 0.0) * 0.28) * uBossRimK;` : ""}
         totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
         ${Assets.on ? "totalEmissiveRadiance += vec3(0.42, 0.22, 0.95) * 0.22 * bossCoreM * uBossPower * uBossDim; // (the reactor idling in its hollow: a faint violet)" : ""}
         ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
@@ -33020,7 +33239,11 @@ function bossSkin(env, side, o, U) {
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin-7-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
+  if (Assets.on) { // (served, Phase 6: what it mirrors of the hall is cooled, so the warm lamps do not paint it orange)
+    const own = m.onBeforeCompile;
+    m.onBeforeCompile = (sh) => { own(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); };
+  }
+  m.customProgramCacheKey = () => "exam-boss-skin-8-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
   return m;
 }
 
@@ -33224,6 +33447,7 @@ class ExamBoss {
     this.coreGlow.position.set(BOSS_CORE[0] - this.J.chest.pivot[0], BOSS_CORE[1] - this.J.chest.pivot[1], 0.2);
     this.coreGlow.layers.set(1);
     this.J.chest.grp.add(this.coreGlow);
+    if (Assets.on) this.housing(env);
     this.firePos = new THREE.Vector3(); // where its fires burn: in the ending the light under it becomes their light
     // the wreck: every fragment of armour in one mesh, thrown and landed in the vertex shader
     this.blastMat = new THREE.ShaderMaterial({
@@ -33345,6 +33569,41 @@ class ExamBoss {
     this.lightK = still ? 1 : 0.1; this.lightTo = this.lightK;
     this.settle(0);
   }
+  // (served, Phase 6) The reactor's housing, set into the hollow in its chest: a hard-edged octagon of polished
+  // gunmetal with a bevelled lip, a slatted vent across its foot and the core glowing magenta at its heart, ringed. The
+  // painting there is coarse and read as a black smear, and no change of material made it read as anything else.
+  // It rides the chest (it moves with it, and goes with it when the chest is blown apart). Model units: the hollow is
+  // about 0.1 across round (0.006, 0.69), its floor at z 0.16, the armour round it at 0.17 to 0.19.
+  housing(env) {
+    const pv = this.J.chest.pivot, R = 0.064, z0 = 0.15, zf = 0.187, zi = zf - 0.012, ri = R - 0.021;
+    const metal = new THREE.MeshStandardMaterial({ color: 0x33374a, metalness: 1, roughness: 0.34, envMap: env, envMapIntensity: 0.85, flatShading: true, side: THREE.DoubleSide });
+    metal.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }; // (cooled, as its armour is)
+    const dark = new THREE.MeshStandardMaterial({ color: 0x0e0c18, metalness: 0.6, roughness: 0.55, envMap: env, envMapIntensity: 0.45, flatShading: true });
+    const grp = new THREE.Group();
+    grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
+    grp.scale.set(1, 1.18, 1); // (a little taller than wide: the hollow runs on down below the reactor)
+    const lathe = (pts, mat) => { const geo = new THREE.LatheGeometry(pts.map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8); geo.rotateX(Math.PI / 2); const m = new THREE.Mesh(geo, mat); grp.add(m); return m; };
+    lathe([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]], metal); // the rim and its bevel
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(ri + 0.001, 8, Math.PI / 8), dark);
+    floor.position.z = zi - 0.001;
+    grp.add(floor);
+    for (let i = 0; i < 4; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.008, 0.0042, 0.006), metal); v.position.set(0, -0.019 - i * 0.0072, zi + 0.002); grp.add(v); } // the vent's slats
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0185, 0.003, 6, 8), metal); // the core's collar
+    ring.rotation.z = Math.PI / 8; ring.position.set(0, 0.008, zi + 0.004);
+    grp.add(ring);
+    this.coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 0.3, 2.1) });
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 16, 10), this.coreMat);
+    core.scale.z = 0.55; core.position.set(0, 0.008, zi + 0.003);
+    grp.add(core);
+    this.coreLamp = glowSprite(new THREE.Color(1.1, 0.25, 1.6), 0.07, 0);
+    this.coreLamp.position.set(0, 0.008, zi + 0.012);
+    this.coreLamp.layers.set(1);
+    grp.add(this.coreLamp);
+    this.coreCol = new THREE.Color(1.5, 0.3, 2.1);
+    this.coreEmber = new THREE.Color(0.85, 0.16, 1.15); // (the ember that beats in its chest is this core's light now, not an orange glow as wide as its chest)
+    this.J.chest.grp.add(grp);
+    this.hous = grp;
+  }
   // world position of a point given in model units on a joint
   at(joint, x, y, z, out) {
     const j = this.J[joint];
@@ -33445,16 +33704,24 @@ class ExamBoss {
         <div class="bossbar"><b>FINAL BOSS</b><span><i data-hp></i></span></div>
         <button class="btn ghost skip" data-act="skipcine">SKIP ${icon("right")}</button></div>`);
       g.el.appendChild(this.ui);
-      requestAnimationFrame(() => { if (this.ui) this.ui.classList.add("on"); });
+      if (!Assets.on) requestAnimationFrame(() => { if (this.ui) this.ui.classList.add("on"); });
+    }
+    // (served, Phase 6: the question, the answers and NEXT go first, quickly, and are gone; the banner, the bars, the
+    // FINAL BOSS label and SKIP come a third of a second on, on the show clock, so nothing is laid over them. Only when
+    // they are seen changes: the mark was given and saved before this, and the ending runs as long as it did.)
+    const banner = passed ? ["EXAM PASSED", COLORS.lime, "THE FINAL BOSS IS FAILING"] : ["NOT YET", COLORS.red, "IT STILL STANDS · 60% BRINGS IT DOWN"];
+    if (Assets.on && this.ui) {
+      g.el.classList.add("cine-now");
+      this.cue = { t: 0, go: () => { if (g.el) g.el.classList.add("cine-gone"); if (this.ui) this.ui.classList.add("on"); UI.banner(...banner); } };
     }
     if (passed) {
-      UI.banner("EXAM PASSED", COLORS.lime, "THE FINAL BOSS IS FAILING");
+      if (!this.cue) UI.banner(...banner);
       Sound.sfx("bossdown");
       this.pose = this.quick ? BOSS_POSE.down : BOSS_POSE.struck;
       this.hp(this.quick ? 0 : 88);
       if (!this.soft) { g.shake(0.25); GFX.pulse(2.5, 0.05); }
     } else {
-      UI.banner("NOT YET", COLORS.red, "IT STILL STANDS · 60% BRINGS IT DOWN");
+      if (!this.cue) UI.banner(...banner);
       this.pose = this.quick ? BOSS_POSE.glare : BOSS_POSE.roar;
       this.eyeTo = 2.6;
       this.hp(100 - Math.round(clamp(score / 60, 0, 1) * 85)); // what the answers took off it: not enough
@@ -33472,6 +33739,7 @@ class ExamBoss {
     if (this.passed && !this.blown) this.detonate(true); // skipped before the blast: the wreck is still there behind the results
     if (this.passed && !this.cheered) { this.cheered = true; Sound.sfx("win"); }
     if (this.done) this.done();
+    Trophies.hold(false); // (served: a trophy won by the answers is shown now, over the results; see ExamGame.submit)
   }
   // one joint fails: a burst of sparks, a gout of fire, and from then on it smokes
   pop(joint, sever) {
@@ -33648,6 +33916,7 @@ class ExamBoss {
     }
     this.eyeK += (this.eyeTo - this.eyeK) * Math.min(1, dt * 3);
     let eye = this.eyeK * (0.85 + 0.15 * Math.sin(t * 1.1)) * (1 + 0.35 * this.dread + 0.4 * this.menace + 0.5 * this.noticeK);
+    if (this.cue && (this.cue.t += VFX.dt) >= 0.3) { const c = this.cue; this.cue = null; c.go(); }
     if (this.mode === "die" && !this.quick) this.dying(dt, t);
     else if (this.mode === "rage" && !this.quick) this.raging(dt);
     else if (this.mode === "die" || this.mode === "rage") {
@@ -33678,13 +33947,13 @@ class ExamBoss {
       // an ember in its chest, beating with that light
       if (this.mode !== "die") {
         const k = live ? (0.3 + 0.12 * Math.sin(t * 3.1) + 0.06 * this.dread + 0.12 * this.menace) * this.lightK : 0;
-        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = Math.min(1, k * 1.5); this.coreGlow.scale.setScalar(0.34 + 0.3 * k);
+        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = Math.min(1, k * 1.5); this.coreGlow.scale.setScalar((0.34 + 0.3 * k) * (this.hous ? 0.42 : 1)); // (served: the housing's core, in its magenta and its size)
       }
       if (this.mode !== "die") {
         this.under.color.copy(this.underCold).lerp(this.underHot, this.mode === "rage" ? 1 : clamp(0.08 + 0.3 * this.dread + 0.22 * this.menace, 0, 0.6));
         this.under.intensity = (live ? (0.62 + 0.14 * this.dread + 0.2 * this.menace) * (0.88 + 0.12 * Math.sin(t * 3.1)) : 0.3) * this.lightK * (this.mode === "rage" ? 3 : 1);
       }
-      this.rim.value.setRGB(0.55, 0.26, 0.03).multiplyScalar((0.1 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
+      this.rim.value.setRGB(...(Assets.on ? [0.5, 0.05, 0.38] : [0.55, 0.26, 0.03])).multiplyScalar((0.1 + 0.18 * this.dread + 0.3 * this.menace + (this.mode === "rage" ? 0.9 : 0)) * this.lightK);
       // Its seams and small lights. Off until it wakes, then lit from the feet up; violet at first,
       // rose-gold as the exam goes on (how far along it is, never which answers were right), bright gold in a rage.
       const U = this.U, rage = this.mode === "rage" ? 1 : 0, dying = this.mode === "die";
@@ -33699,6 +33968,7 @@ class ExamBoss {
         if ((this.flickT -= dt) <= 0) { this.flickT = 0.38; this.flick = this.lcg() < 0.55 ? 0.35 : 1; }
       } else this.flick = 1;
       U.uBossDim.value += (this.flick - U.uBossDim.value) * Math.min(1, dt * 14);
+      if (this.hous) { const on = clamp(U.uBossPower.value, 0, 1) * U.uBossDim.value; this.coreMat.color.copy(this.coreCol).multiplyScalar(0.08 + 0.92 * on); this.coreLamp.material.opacity = 0.75 * on; }
       U.uBossCrack.value += ((dying ? clamp(this.popI / 5, 0, 1) * 0.45 + this.heat * 0.9 : 0) - U.uBossCrack.value) * Math.min(1, dt * 4);
       // vapour vents off its back, more of it as the end comes nearer
       this.vapT -= dt;
@@ -34104,7 +34374,12 @@ function renderResults(o, rank) {
       if (r1.i > r0.i) {
         // (with a reward moment it waits until the last reward has landed, and stands on its own plate inside the screen's edges)
         const settle = rw.length ? (rw[rw.length - 1].at + 0.75) * 1000 : 500;
-        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : ""); GFX.pulse(6, 0.25); }, settle);
+        setTimeout(() => {
+          Sound.sfx("rankup");
+          if (rw.length) { const sc = UI.root.appendChild(UI.el('<div class="rank-scrim"></div>')); setTimeout(() => sc.remove(), 2200); } // (Phase 6: the tiles go dark under its plate while it is up)
+          UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : "");
+          GFX.pulse(6, 0.25);
+        }, settle);
       }
     },
   });
