@@ -43,7 +43,7 @@ const LOOP_VOL = { alarm: 0.4, charge_hum: 0.4, engine_ship: 0.35, engine_car: 0
 // big sounds duck the music; the game's old names are heard as the new recordings
 const DUCK = { explosion_huge: 0.45, explosion_big: 0.6, boss_death: 0.5, boss_roar: 0.6, impact_big: 0.7 };
 const ALSO = { boom: "explosion_small", bigboom: "explosion_big", laser: "laser_fire", shot: "plasma_fire", hit: "player_hit", correct: "sting_correct", wrong: "sting_wrong", coin: "coin_insert", blip: "ui_click", select: "ui_select", back: "ui_back", shield: "impact_shield", win: "fanfare", gameover: "gameover", demonroar: "boss_roar", demonhit: "boss_hurt", demonboom: "explosion_big", demonfinale: "explosion_huge", demonshed: "boss_break", demonbreak: "boss_break", demoncharge: "charge_up", bossroar: "boss_roar", bossblast: "explosion_huge", bosssmash: "slam", bosscharge: "charge_long", shatter: "heart_lost", powerup: "powerup", warp: "warp", clunk: "impact_metal" };
-const MAX_TAKES = 4;
+const MAX_TAKES = 99; // (every usable take: the game plays them in turn; an earlier cap of four left paid-for takes unheard)
 
 const idx = JSON.parse(fs.readFileSync(path.join(OUT, "audio", "index.json"), "utf8"));
 const outDir = path.join(ARCADE, "assets", "audio");
@@ -100,8 +100,7 @@ for (const set of allSets) {
       // a little of its end before it and of its start after it, so both loop points lie inside continuous sound
       const pre = Math.round(0.12 * SR), b = new Float32Array(a.length + pre * 2);
       b.set(a.subarray(a.length - pre), 0); b.set(a, pre); b.set(a.subarray(0, pre), pre + a.length);
-      put(cue, b, LOOP_VOL[cue] || 0.5, 0, pre);
-      break; // one take of a loop is enough
+      put(cue, b, LOOP_VOL[cue] || 0.5, 0, pre); // (every take: the game starts the next one each time the loop starts)
     }
   }
   if (!parts.length) continue;
@@ -120,7 +119,18 @@ for (const set of allSets) {
     if (a.length < 0.15 * SR) continue;
     level(fade(a, 0.003, 0.06), 0.9);
     parts.push(a);
-    cues["vo:" + e.name] = [[+(at / SR).toFixed(4), +(a.length / SR).toFixed(4), 1, 0]];
+    (cues["vo:" + e.name] = cues["vo:" + e.name] || []).push([+(at / SR).toFixed(4), +(a.length / SR).toFixed(4), 1, 0]); // (a line with more than one take: each is heard in turn)
+    at += a.length + GAP;
+  }
+  // the lines first recorded in other voices, to choose the announcer: kept as voices of their own ("vo@adam:game over"),
+  // for the bosses' last word and the hall's cabinets
+  for (const e of Object.values(idx).filter((x) => x.kind === "voice" && x.voice !== VOICE).sort((a, b) => (a.voice + a.name).localeCompare(b.voice + b.name))) {
+    let a;
+    try { a = pcm(path.join(OUT, e.file), TRIM + ",acompressor=threshold=-18dB:ratio=4:attack=4:release=120:makeup=4,aecho=0.8:0.5:55|110:0.22|0.1,highpass=f=90"); } catch (err) { console.warn("voice line unusable: " + e.voice + " " + e.name); continue; }
+    if (a.length < 0.15 * SR) continue;
+    level(fade(a, 0.003, 0.06), 0.9);
+    parts.push(a);
+    cues["vo@" + e.voice + ":" + e.name] = [[+(at / SR).toFixed(4), +(a.length / SR).toFixed(4), 1, 0]];
     at += a.length + GAP;
   }
   if (cues["vo:boss incoming"] && !cues["vo:stand by"]) cues["vo:stand by"] = cues["vo:boss incoming"]; // (Boss Rush's STAND BY banner is called as "Boss incoming!")
@@ -128,8 +138,8 @@ for (const set of allSets) {
 }
 
 // ---- music: --music name=take picks the take; cut to a whole loop, the last beats folded over the first
-for (const a of args.filter((x) => /^[a-z]+=\d+$/.test(x))) {
-  const [name, take] = a.split("="), e = idx[`music/${name}#${take}`];
+for (const a of args.filter((x) => /^[a-z]+(-b)?=\d+$/.test(x))) {
+  const [name, take] = a.split("="), e = idx[`music/${name.replace(/-b$/, "")}#${take}`]; // ("blaster-b=1": the other take of a track, as a track of its own)
   if (!e) { console.warn("no such music take: " + a); continue; }
   const s = pcm(path.join(OUT, e.file), "silenceremove=start_periods=1:start_threshold=-50dB", 2); // interleaved stereo
   let n = s.length / 2;

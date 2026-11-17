@@ -19,7 +19,7 @@ const Sound = {
   // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
   // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
   // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
-  MIX: {"music": {"exam": 0.93, "memory": 1.64, "title": 0.97, "hub": 1.06, "calm": 1.02, "boss": 1.02, "finalboss": 1, "racer": 1.04, "blaster": 0.91}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
+  MIX: {"music": {"exam": 0.93, "memory": 1.64, "title": 0.97, "hub": 1.06, "calm": 1.02, "boss": 1.02, "finalboss": 1, "racer": 1.04, "blaster": 0.91, "exam-b": 1.08, "memory-b": 1.23, "title-b": 1.12, "hub-b": 1.16, "calm-b": 1.57, "boss-b": 0.86, "finalboss-b": 1.05, "racer-b": 1, "blaster-b": 0.98}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
 
   init() {
     if (this.ctx) return this.resume();
@@ -215,7 +215,7 @@ const Sound = {
   loop(id, name, o = {}) {
     if (!this.ctx || !Store.settings.sfx || !this.bank[name]) return false;
     if (this.loops[id]) { if (this.loops[id].name === name) return true; this.stopLoop(id, 0.05); }
-    const c = this.ctx, q = this.bank[name][0], src = c.createBufferSource(), g = c.createGain();
+    const takes = this.bank[name], c = this.ctx, q = takes[(takes.li = ((takes.li === undefined ? -1 : takes.li) + 1) % takes.length)], src = c.createBufferSource(), g = c.createGain(); // (a loop recorded more than once: each start takes the next take)
     src.buffer = q.buf; src.loop = true; src.loopStart = q.at; src.loopEnd = q.at + q.dur;
     src.playbackRate.value = o.rate || 1;
     g.gain.value = 0.0001;
