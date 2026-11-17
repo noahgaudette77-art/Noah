@@ -22,6 +22,7 @@ show. Everything but the title was made again after the review's fix round.
 | `11-memory.jpg` | Memory Bank: the vault door's gold mirroring the generated gold vault, the deck of white study cards at its foot, THE VAULT on its plate. |
 | `12-memory-banked.jpg` | A card banked (one frame every 0.15 s): the banked card goes up into the vault's slot, the next is dealt off the deck into its place, the generated coin flies to the slot. |
 | `13-exam.jpg` | The Final Exam: the examiner, its armour mirroring the moonlit night and its chest's hollow smooth gunmetal, at its lectern (the open book and the bell at the foot of the frame). |
-| `14-exam-passed.jpg` | The exam passed (one frame every 0.7 s): the lectern sinks away, the examiner falls, the camera draws back into the hall with the full moon and the night in its left arch; the burst stays short of white. |
+| `14-exam-passed.jpg` | The exam passed (one frame every 0.7 s): the lectern sinks away, the examiner falls, the camera draws back into the hall with the full moon and the night in its left arch; the burst stays short of white. As the ending begins the light comes up on the gallery behind the dais: the eleven chapter bosses and the Proctor as bronze statues on two tiers of plinths, and the examiner's first desk on the centre line. |
+| `14b-exam-gallery.jpg` | After the blast: the gallery of statues and the first desk behind the wreck. |
 | `15-guide.jpg` | The Strategy Guide: the archive with the great book open on its stand under the rose window, its pages to the lens, lit by its own lamp and the archive's light. |
 | `16-guide-open-chapter.jpg` | A chapter opened (one frame every 0.13 s): the archive's view turns from the nave to the shelves behind the chapter's banner. |

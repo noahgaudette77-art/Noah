@@ -123,6 +123,8 @@ module.exports = async (cap) => {
   await still("13-exam");
   await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.answers = s.rounds.map((r) => r.correct); s.submit(); });
   await strip("14-exam-passed", 10, 42, { thumb: 220, cols: 10 });
+  await cap.fast(90);
+  await still("14b-exam-gallery"); // (the fallen bosses' statues behind the wreck, the light up on them)
   }
 
   // ---- Strategy Guide: the archive, then a chapter opened (the camera turns to the shelves)
