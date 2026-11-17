@@ -6,10 +6,10 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 |---|---|---|
 | 1 | Boss Rush: damage popups in their own lane, caption held where they would meet; "LIGHTNING!" not clipped | done |
 | 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | done (racer capture with the racer batch) |
-| 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | done (docs capture with ruling 6) |
+| 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | done |
 | 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | to do |
 | 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | to do |
-| 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | to do |
+| 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | done |
 | - | Cheap ones: crash bloom cap, wash-outs capped, bonus line inside the screen, cracks off the text, lane D props, Memory Bank blob | to do |
 | T | The lead's remade car and bus (cbf7de1) merged; traffic retuned | done |
 
@@ -50,3 +50,11 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   as the chest): now the core's magenta at 0.42 of the size. `24-exam.js`: the gold rim lamp behind it is magenta
   when served. Both `GFX.hitStop` lines untouched (checked: the diff has no line with hitStop). Regression exam
   IDENTICAL both ways.
+- **Ruling 6 (exam passed).** Served only (the ending plays from disk too, unchanged there). `24c-examboss.js`
+  finale(): the exam's panels fade in 0.2 s (`cine-now`) and are hidden outright (`cine-gone`) when, 0.3 s on the show
+  clock, the banner, the bars, the FINAL BOSS label and SKIP come (`this.cue`). `09-trophies.js`: `Trophies.hold(on)`
+  (cards wait in the queue). `24-exam.js` submit() holds them when the ending will play, after the mark is given;
+  ExamBoss.finish() lets them go after the results are up; ExamGame.dispose() always lets go. The mark, the saving
+  and the ending's length are as they were. `style.css`: the two classes. Regression exam IDENTICAL both ways.
+  Re-captured menus 13-exam, 14-exam-passed (t1 the question alone; then the banner alone; then the bar and SKIP
+  alone; no card during the ending).

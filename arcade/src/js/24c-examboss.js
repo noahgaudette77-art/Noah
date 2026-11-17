@@ -656,16 +656,24 @@ class ExamBoss {
         <div class="bossbar"><b>FINAL BOSS</b><span><i data-hp></i></span></div>
         <button class="btn ghost skip" data-act="skipcine">SKIP ${icon("right")}</button></div>`);
       g.el.appendChild(this.ui);
-      requestAnimationFrame(() => { if (this.ui) this.ui.classList.add("on"); });
+      if (!Assets.on) requestAnimationFrame(() => { if (this.ui) this.ui.classList.add("on"); });
+    }
+    // (served, Phase 6: the question, the answers and NEXT go first, quickly, and are gone; the banner, the bars, the
+    // FINAL BOSS label and SKIP come a third of a second on, on the show clock, so nothing is laid over them. Only when
+    // they are seen changes: the mark was given and saved before this, and the ending runs as long as it did.)
+    const banner = passed ? ["EXAM PASSED", COLORS.lime, "THE FINAL BOSS IS FAILING"] : ["NOT YET", COLORS.red, "IT STILL STANDS · 60% BRINGS IT DOWN"];
+    if (Assets.on && this.ui) {
+      g.el.classList.add("cine-now");
+      this.cue = { t: 0, go: () => { if (g.el) g.el.classList.add("cine-gone"); if (this.ui) this.ui.classList.add("on"); UI.banner(...banner); } };
     }
     if (passed) {
-      UI.banner("EXAM PASSED", COLORS.lime, "THE FINAL BOSS IS FAILING");
+      if (!this.cue) UI.banner(...banner);
       Sound.sfx("bossdown");
       this.pose = this.quick ? BOSS_POSE.down : BOSS_POSE.struck;
       this.hp(this.quick ? 0 : 88);
       if (!this.soft) { g.shake(0.25); GFX.pulse(2.5, 0.05); }
     } else {
-      UI.banner("NOT YET", COLORS.red, "IT STILL STANDS · 60% BRINGS IT DOWN");
+      if (!this.cue) UI.banner(...banner);
       this.pose = this.quick ? BOSS_POSE.glare : BOSS_POSE.roar;
       this.eyeTo = 2.6;
       this.hp(100 - Math.round(clamp(score / 60, 0, 1) * 85)); // what the answers took off it: not enough
@@ -683,6 +691,7 @@ class ExamBoss {
     if (this.passed && !this.blown) this.detonate(true); // skipped before the blast: the wreck is still there behind the results
     if (this.passed && !this.cheered) { this.cheered = true; Sound.sfx("win"); }
     if (this.done) this.done();
+    Trophies.hold(false); // (served: a trophy won by the answers is shown now, over the results; see ExamGame.submit)
   }
   // one joint fails: a burst of sparks, a gout of fire, and from then on it smokes
   pop(joint, sever) {
@@ -859,6 +868,7 @@ class ExamBoss {
     }
     this.eyeK += (this.eyeTo - this.eyeK) * Math.min(1, dt * 3);
     let eye = this.eyeK * (0.85 + 0.15 * Math.sin(t * 1.1)) * (1 + 0.35 * this.dread + 0.4 * this.menace + 0.5 * this.noticeK);
+    if (this.cue && (this.cue.t += VFX.dt) >= 0.3) { const c = this.cue; this.cue = null; c.go(); }
     if (this.mode === "die" && !this.quick) this.dying(dt, t);
     else if (this.mode === "rage" && !this.quick) this.raging(dt);
     else if (this.mode === "die" || this.mode === "rage") {

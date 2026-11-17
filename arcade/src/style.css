@@ -560,6 +560,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* The Final Exam's ending: the exam's panels fade away, cinema bars close in, and the
    boss has the whole screen. One button skips to the results. */
 .scr-game.cine > :not(.exam-cine) { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.scr-game.cine.cine-now > :not(.exam-cine) { transition-duration: 0.2s; } /* (served: the exam's panels go first, and are gone before the ending's banner and SKIP come) */
+.scr-game.cine.cine-gone > :not(.exam-cine) { visibility: hidden; }
 .exam-cine { position: absolute; inset: 0; pointer-events: none; }
 .exam-cine .bar { position: absolute; left: 0; right: 0; height: 8vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease-out; }
 .exam-cine .bar.top { top: 0; transform-origin: top; }

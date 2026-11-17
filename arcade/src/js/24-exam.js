@@ -496,6 +496,7 @@ class ExamGame extends QuizGame {
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
     Sound.dread(false);
+    Trophies.hold(false);
     if (this.envRT) this.envRT.dispose();
     if (this.bossEnvRT) this.bossEnvRT.dispose();
     if (this.monument) this.monument.dispose();
@@ -613,6 +614,7 @@ class ExamGame extends QuizGame {
   submit() {
     if (this.state === "over") return;
     this.state = "over";
+    if (Assets.on && this.has3D && this.boss) Trophies.hold(true); // (served, Phase 6: a trophy the answers win waits for the ending to be over; ExamBoss.finish lets it go. Only when it is shown changes)
     const by = {};
     let correct = 0;
     const review = [];
