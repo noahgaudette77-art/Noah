@@ -15,7 +15,7 @@ function boot() {
   // the triangles and draw calls of the scene itself, and the size it is drawn at.
   const fpsEl = $("#fps");
   fpsEl.hidden = !(Store.settings.fps || /fps/.test(location.hash));
-  let fpsN = 0, fpsT = performance.now(), fpsWorst = 0;
+  let fpsN = 0, fpsT = performance.now(), fpsWorst = 0, fpsCpu = 0, cpuLast = 0;
   let last = performance.now();
   const loop = (now) => {
     const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
@@ -23,12 +23,14 @@ function boot() {
     if (!fpsEl.hidden) {
       fpsN++;
       fpsWorst = Math.max(fpsWorst, now - last);
+      fpsCpu += cpuLast; // (the main thread's own time last frame: the game and the drawing calls; what is left of a frame's time is the graphics chip's)
       if (now - fpsT >= 500) {
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
-        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · WORST ${Math.round(fpsWorst)} MS<br>${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}${GFX.ok && GFX.pipe && GFX.pipe.samples ? " · MSAA " + GFX.pipe.samples : ""}<br>${GFX.ok ? GFX.TIERS[GFX.tier].name + (GFX.auto ? " (AUTO)" : "") + " · LIGHTS " + GFX.lightCount() + (GFX.perf.why ? " · " + GFX.perf.why.toUpperCase() : "") : "NO WEBGL"}`;
+        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · WORST ${Math.round(fpsWorst)} MS · CPU ${(fpsCpu / fpsN).toFixed(1)} MS<br>${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}${GFX.ok && GFX.pipe && GFX.pipe.samples ? " · MSAA " + GFX.pipe.samples : ""}<br>${GFX.ok ? GFX.TIERS[GFX.tier].name + (GFX.auto ? " (AUTO)" : "") + " · LIGHTS " + GFX.lightCount() + (GFX.perf.why ? " · " + GFX.perf.why.toUpperCase() : "") : "NO WEBGL"}`;
         fpsN = 0;
         fpsT = now;
         fpsWorst = 0;
+        fpsCpu = 0;
       }
     }
     last = now;
@@ -36,6 +38,7 @@ function boot() {
     // hit-stop: a beat of slow motion on big hits. The world never fully stops, so
     // an impact reads as weight, not as a stutter.
     if (GFX.freeze > 0) { GFX.freeze -= real; dt = real * 0.3; }
+    const t0 = performance.now();
     try {
       Pointer.update(real);
       VFX.frame(dt, real);
@@ -43,6 +46,7 @@ function boot() {
     } catch (e) {
       console.error(e);
     }
+    cpuLast = performance.now() - t0;
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

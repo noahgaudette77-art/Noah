@@ -917,7 +917,7 @@ function surfaceDetail(m, { scale = 3, height = 0.0016, grain = 1, scratch = 1, 
 // colour, rimmed dark and then pale, its letter dark with a pale edge. It stands in the answer's lane in Nest Egg
 // Run and is the face of the answer's drone in Risk Blaster: one badge, wherever an answer is shown.
 function answerBadgeTexture(label, color, wide) {
-  const c = document.createElement("canvas"), K = 3, W = wide ? 512 : 256, H = 256;
+  const c = document.createElement("canvas"), K = 2, W = wide ? 512 : 256, H = 256; // (twice finer than drawn: 512 px across, crisp at any size it is shown)
   c.width = W * K;
   c.height = H * K;
   const x = c.getContext("2d");
@@ -969,6 +969,6 @@ function answerBadgeTexture(label, color, wide) {
   x.fillStyle = "#12052e";
   x.fillText(label, W / 2 + (wide ? 4 : 7), H / 2 + (wide ? 6 : 10));
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY;
   return t;
 }

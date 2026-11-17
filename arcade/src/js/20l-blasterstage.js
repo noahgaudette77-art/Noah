@@ -27,7 +27,7 @@ class BlasterStage {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
     g.show = new TweenSet(); // show-only timing: nothing in it is a rule
-    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: null, sparks: 420, chunks: 96, firePuffs: 120, smokePuffs: 120, lights: 3 });
+    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: null, sparks: 420, chunks: 96, firePuffs: 120, smokePuffs: 120, lights: 1 }); // (one blast light: every lit pixel reckons with each light the scene holds, lit or not; the flashes still mark every blast)
     this.shot = null; // the burst being fired
     this.atk = null; // the demon's strike being staged
     this.debts = []; // shields the rules have taken that have not been seen to go yet

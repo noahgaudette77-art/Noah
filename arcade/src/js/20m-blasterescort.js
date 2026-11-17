@@ -28,6 +28,9 @@ class BlasterEscort {
     this.kits = {};
     for (const n of BLASTER_ESCORT.NEAR.concat(BLASTER_ESCORT.FAR)) { const k = g.space && g.space.genKit(n); if (k) this.kits[n] = k; }
     const any = Object.values(this.kits)[0];
+    // (each ship flies as one ally after another: every ally's shape and paint is readied at start with the rest,
+    // or its pictures would go to the graphics chip the first time it flew, mid-fight: see GFX.warm)
+    if (g.warmExtra) for (const n in this.kits) { const w = new THREE.Mesh(this.kits[n].geo, this.kits[n].mat); w.position.z = -40; g.warmExtra.push(w); }
     this.ships = any ? [0, 1].map(() => { const m = new THREE.Mesh(any.geo, any.mat); m.visible = false; m.frustumCulled = false; s.add(m); return { m, mode: "", t: 0, side: 1, a: new THREE.Vector3(), b: new THREE.Vector3(), v: new THREE.Vector3(), size: 1, dur: 1, delay: 0, roll: 0 }; }) : [];
     // their running lights: two to a ship, one draw for all of them
     if (this.ships.length) {
@@ -146,12 +149,12 @@ class BlasterEscort {
       if (sh.mode === "escort") { // on the fighter's wing; then away
         const c = g.stage.shipPos(this._v), k = g.shipScale;
         if (q < 1) {
-          m.position.copy(c).add(this._w.set(sh.side * 2.3 * k, 0.32 * k + Math.sin(t * 2.3 + sh.side) * 0.06 * k, 1.2 * k));
+          m.position.copy(c).add(this._w.set(sh.side * 1.45 * k, 0.55 * k + Math.sin(t * 2.3 + sh.side) * 0.06 * k, -2.6 * k)); // (ahead of the fighter and above it: inside a phone's frame in portrait)
           sh.roll = -sh.side * 0.12 + Math.sin(t * 1.7) * 0.05;
           this._e.set(0.04, 0, sh.roll);
         } else { // peel away: a hard bank outward, and off into the distance
           const p = q - 1, e = p * p;
-          m.position.copy(c).add(this._w.set(sh.side * (2.3 + 9 * e + 3 * p) * k, (0.32 + 2.4 * e) * k, (1.2 - 70 * e - 6 * p) * k));
+          m.position.copy(c).add(this._w.set(sh.side * (1.45 + 9 * e + 3 * p) * k, (0.55 + 2.4 * e) * k, (-2.6 - 70 * e - 6 * p) * k));
           sh.roll = -sh.side * (0.12 + 1.1 * smoothstep(0, 0.35, p));
           this._e.set(0.04 - 0.25 * smoothstep(0, 0.5, p), -sh.side * 0.35 * smoothstep(0, 0.5, p), sh.roll);
           if (p > 1.3) { sh.mode = ""; m.visible = false; continue; }
@@ -183,7 +186,7 @@ class BlasterEscort {
     // the brood
     if (this.brood.length) {
       const U = this.broodU;
-      if (P && P.rimA) U.uRim.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(0.9); // (the region's own light)
+      if (P && P.rimA) U.uRim.value.copy(P.rimA.color).lerp(P.rimB.color, 0.5).multiplyScalar(0.45); // (the region's own light, faint: the brood are dark shapes against the sky)
       for (const b of this.brood) {
         if (!b.on) continue;
         b.t += d;

@@ -64,7 +64,7 @@ class BlasterSky {
     this.amb = s.children.find((o) => o.isAmbientLight) || null;
     this.key = g.keyLight || null;
     const lamp = (dir) => { const l = new THREE.DirectionalLight(0xffffff, 0); l.position.fromArray(dir).multiplyScalar(40); s.add(l); return l; };
-    this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = lamp(BLASTER_LAMPS.top); this.kick = lamp(BLASTER_LAMPS.kick);
+    this.rimA = lamp(BLASTER_LAMPS.rimA); this.rimB = lamp(BLASTER_LAMPS.rimB); this.top = null; this.kick = lamp(BLASTER_LAMPS.kick); // (the top lamp, a fifth of its strength as a lamp, is left to its soft card in the mirror map: one light fewer for every lit pixel)
     if (this.key) this.key.position.fromArray(BLASTER_LAMPS.key).multiplyScalar(40);
     this.envs = {}; // what chrome mirrors, one map to a region, made when the region is first entered
     this.users = []; // materials that mirror it (the fighter's, the demon's): see mirror
@@ -74,6 +74,7 @@ class BlasterSky {
     this.next = null; this.k = 0;
     this.show(this.layers[0], this.cur, 1);
     this.env = this.envFor(this.cur);
+    for (const id in BLASTER_SKIES) if (id !== this.cur.id) this.envFor(this.conf(id)); // (every region's, now: see envFor)
   }
   // a region's sky as numbers (its own panorama if it arrived, else the main one)
   conf(id) {

@@ -122,7 +122,13 @@ const GFX = {
     }
     const r = this.renderer;
     // every texture is filtered as finely as the graphics chip can, so signs, floors and walls stay sharp at a slant
-    try { THREE.Texture.DEFAULT_ANISOTROPY = Math.max(1, Math.min(16, r.capabilities.getMaxAnisotropy())); } catch (e) { /* default */ }
+    // (on a phone 4 times over, not 16: a floor or a road seen low cost up to four times the reads at 16, for a
+    // difference a phone's screen does not show)
+    try { THREE.Texture.DEFAULT_ANISOTROPY = Math.max(1, Math.min(Assets.phone ? 4 : 16, r.capabilities.getMaxAnisotropy())); } catch (e) { /* default */ }
+    // A new shader is checked for errors only when the page is opened for tests (#debug). Each check makes the page
+    // wait for the graphics chip to finish compiling (Safari asks its graphics process and waits for the answer), so
+    // every new material stalled a frame twice over; a shader that will not compile is no more drawn with the check.
+    if (!/debug/.test(location.hash)) r.debug.checkShaderErrors = false;
     const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
@@ -370,9 +376,16 @@ const GFX = {
   // (pooled effects, speed lines, and the pieces a scene lists in warmExtra) showing.
   // Every shader and GPU pipeline state it will need is built now, behind the screen
   // transition, instead of stalling the frame where a hit first happens.
+  // A new screen is drawn once, off-screen and tiny, with everything in it shown: every shader it will use is
+  // compiled and every picture sent to the graphics chip now, behind the curtain, and not the first time a thing
+  // appears in play (on a phone each of those was a stall of a frame or more). With it: what the screen keeps aside
+  // for later (warmExtra), every model its files brought that it has not put in the scene yet (allies, props, the
+  // pieces of an event), and every sky it may fly into.
   warm(s) {
     if (!this.ok || !s.scene || !s.camera) return;
-    const r = this.renderer, scene = s.scene, extra = s.warmExtra || [];
+    const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
+    Assets.cur = null;
+    for (const n of want) { const m = n.startsWith("model:") && Assets.fresh[n]; if (m && m.scene && !m.scene.parent) extra.push(m.scene); }
     extra.forEach((o) => scene.add(o));
     const saved = [];
     scene.traverse((o) => { saved.push(o, o.visible, o.frustumCulled); o.visible = true; o.frustumCulled = false; });
@@ -389,6 +402,11 @@ const GFX = {
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));
     s.warmExtra = null;
+    if (r.initTexture) {
+      for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
+      for (const t of s.warmTextures || []) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
+    }
+    s.warmTextures = null;
   },
   sceneChanged() {
     this.speedBlur = this.punch = 0;

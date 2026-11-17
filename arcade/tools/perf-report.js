@@ -2,7 +2,8 @@
 /**
  * What each screen costs to draw, on a phone's screen: the size the picture is drawn at, the multisampling, how many
  * million pixels every frame shades across all its passes (the scene, the reflections, every post-processing pass),
- * the draw calls, the lights each lit pixel reckons with, and the textures held.
+ * the draw calls, the lights each lit pixel reckons with, the textures held, and the main thread's own time per frame
+ * (the game's code and its drawing calls: a fair guide to a fast phone's processor, unlike this machine's frame rate).
  *
  *   node arcade/tools/perf-report.js [--html index.html] [--only blaster,hub] [--tier 0..3] [--frames 12]
  *
@@ -35,6 +36,29 @@ const SCREENS = [
   for (const [name, go] of SCREENS) {
     const ctx = await browser.newContext({ viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
+    // the main thread's own time in each frame (the game's code and the drawing calls it makes; the drawing itself
+    // runs elsewhere): unlike this machine's frame rate, this is about what a fast phone's processor spends too
+    await page.addInitScript(() => {
+      const raf = window.requestAnimationFrame.bind(window);
+      window.__cpu = { sum: 0, n: 0, max: 0 };
+      window.requestAnimationFrame = (cb) => raf((t) => { const t0 = performance.now(); cb(t); const d = performance.now() - t0; const c = window.__cpu; c.sum += d; c.n++; if (d > c.max) c.max = d; });
+      // what goes to the graphics chip besides drawing: texture and buffer uploads (bytes), calls that make the page
+      // wait for the chip (reads back), and shader compiles; a steady screen should upload little and wait for nothing
+      const gl = (window.__gl = { tex: 0, texN: 0, buf: 0, bufN: 0, sync: 0, compile: 0, programs: 0 });
+      const wrap = (P) => {
+        const w = (name, fn) => { const o = P[name]; if (!o) return; P[name] = function () { fn.apply(this, arguments); return o.apply(this, arguments); }; };
+        const bytes = (a) => (a && a.byteLength) || 0, texBytes = (args) => { const last = args[args.length - 1]; if (last && last.byteLength !== undefined) return last.byteLength; if (last && (last.width || last.videoWidth)) return (last.videoWidth || last.width) * (last.videoHeight || last.height) * 4; const w = args[3], h = args[4]; return typeof w === "number" && typeof h === "number" ? w * h * 4 : 0; };
+        w("texImage2D", function () { gl.tex += texBytes(arguments); gl.texN++; });
+        w("texSubImage2D", function () { gl.tex += texBytes(arguments); gl.texN++; });
+        w("bufferData", function (t, d) { gl.buf += typeof d === "number" ? d : bytes(d); gl.bufN++; });
+        w("bufferSubData", function (t, o, d) { gl.buf += bytes(d); gl.bufN++; });
+        ["readPixels", "getError", "finish", "getProgramParameter", "getShaderParameter", "checkFramebufferStatus", "getParameter"].forEach((n) => w(n, function () { gl.sync++; }));
+        w("compileShader", function () { gl.compile++; });
+        w("linkProgram", function () { gl.programs++; });
+      };
+      if (window.WebGL2RenderingContext) wrap(WebGL2RenderingContext.prototype);
+      if (window.WebGLRenderingContext) wrap(WebGLRenderingContext.prototype);
+    });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base + "/" + HTML + "#debug");
@@ -47,22 +71,27 @@ const SCREENS = [
     const r = await page.evaluate(async (frames) => {
       const A = window.__arcade, G = A.GFX, R = G.renderer, gl = R.getContext();
       // every draw into a target counts that target's pixels (times its samples): what the chip shades and stores
-      let px = 0, draws = 0, passes = 0;
-      const realRender = R.render.bind(R);
+      let px = 0, draws = 0, passes = 0, tris = 0, sceneDraws = 0;
+      const realRender = R.render.bind(R), world = A.Scenes.cur && A.Scenes.cur.scene;
       R.render = function (scene, camera) {
         const t = R.getRenderTarget();
         const w = t ? t.width : R.domElement.width, h = t ? t.height : R.domElement.height, s = t && t.samples ? t.samples : 1;
         px += w * h * s; passes++;
-        const before = R.info.render.calls;
+        const before = R.info.render.calls, tb = R.info.render.triangles;
         const out = realRender(scene, camera);
         draws += R.info.render.calls - before;
+        // the triangles of the screen's own world, in every pass that draws it (the picture and its reflection)
+        if (scene === world) { tris += R.info.render.triangles - tb; sceneDraws += R.info.render.calls - before; }
         return out;
       };
       R.info.autoReset = false;
       const wait = () => new Promise((res) => requestAnimationFrame(() => res()));
       for (let i = 0; i < 3; i++) await wait();
-      px = 0; draws = 0; passes = 0;
+      px = 0; draws = 0; passes = 0; tris = 0; sceneDraws = 0;
+      const C = window.__cpu; C.sum = 0; C.n = 0; C.max = 0;
+      const GL = window.__gl; for (const k in GL) GL[k] = 0;
       for (let i = 0; i < frames; i++) await wait();
+      const cpu = C.n ? C.sum / C.n : 0, cpuMax = C.max;
       R.render = realRender; R.info.autoReset = true;
       const sc = A.Scenes.cur && A.Scenes.cur.scene;
       let lights = 0, point = 0, spot = 0, dir = 0;
@@ -76,18 +105,20 @@ const SCREENS = [
         mpx: +(px / frames / 1e6).toFixed(1),
         passes: +(passes / frames).toFixed(1),
         draws: Math.round(draws / frames),
-        tris: G.pipe ? G.pipe.lastTris : 0,
+        tris: Math.round(tris / frames), sceneDraws: Math.round(sceneDraws / frames),
         lights, point, spot, dir,
         textures: R.info.memory.textures, geometries: R.info.memory.geometries, programs: (R.info.programs || []).length,
+        cpu: +cpu.toFixed(1), cpuMax: +cpuMax.toFixed(1),
+        up: `${(GL.tex / frames / 1024).toFixed(0)}K tex (${(GL.texN / frames).toFixed(1)}), ${(GL.buf / frames / 1024).toFixed(0)}K buf (${(GL.bufN / frames).toFixed(1)}), ${(GL.sync / frames).toFixed(1)} waits, ${GL.compile + GL.programs} compiles`,
       };
     }, FRAMES).catch((e) => ({ error: e.message.slice(0, 160) }));
     rows.push([name, r, errors.slice(0, 2)]);
     await ctx.close();
   }
   await browser.close(); srv.close();
-  console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws  tris     lights (point/spot/dir)  textures  programs");
+  console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws (world)  tris     lights (point/spot/dir)  textures  programs  cpu ms (worst)  uploads per frame");
   for (const [n, r, errs] of rows) {
     if (r.error) { console.log(n.padEnd(9), "ERROR", r.error); continue; }
-    console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${String(r.draws).padEnd(6)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${r.programs}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
+    console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${(r.draws + " (" + r.sceneDraws + ")").padEnd(13)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${String(r.programs).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(15)} ${r.up}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
   }
 })().catch((e) => { console.error("FAILED", e); process.exit(1); });

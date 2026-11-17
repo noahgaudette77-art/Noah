@@ -236,6 +236,7 @@ class CombatFX {
     this.bolts = Array.from({ length: 10 }, () => { const sp = glowSprite(0xffffff, 1, 0); sp.visible = false; sp.renderOrder = 9; scene.add(sp); return { sp, on: false, t: 0, dur: 1, from: new THREE.Vector3(), to: new THREE.Vector3(), p: new THREE.Vector3(), col: [1, 1, 1], w: 1, len: 1, onHit: null, dart: null }; });
     // warning markers
     this.markTex = { ring: fxMarkTexture("ring"), lock: fxMarkTexture("lock"), bang: fxMarkTexture("bang"), arc: fxMarkTexture("arc"), seek: fxMarkTexture("seek") };
+    (host.warmTextures || (host.warmTextures = [])).push(...Object.values(this.markTex)); // (each marker's picture goes to the graphics chip at start: GFX.warm)
     const pg = new THREE.PlaneGeometry(1, 1);
     this.marks = Array.from({ length: 6 }, () => { const m = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({ color: 0xffffff, map: this.markTex.ring, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, side: THREE.DoubleSide, fog: false })); m.visible = false; m.renderOrder = 10; scene.add(m); return { m, t: 0, dur: 0, size: 1, flat: false, kind: "ring", col: [1, 1, 1], follow: null }; });
     // marks left on the ground

@@ -31,5 +31,41 @@ Million pixels shaded per frame, per screen (before; after at HIGH; after at MED
 | Final Exam | 31.0 | 13.8 | 9.5 |
 | Strategy Guide | 31.3 | 13.9 | 9.6 |
 
-Render passes per frame fell from 23-31 to 15-24 at MEDIUM. Still heavy, for the per-game steps: 2 to 3 million
-triangles on the hub, Risk Blaster, Nest Egg Run and Memory Bank, and 8 to 12 lights on the games and the exam.
+Render passes per frame fell from 23-31 to 15-24 at MEDIUM. (The triangle counts first written here, 2 to 3 million,
+were wrong: the report read the renderer's running total across frames. It now counts each frame's own: Risk Blaster
+draws about 0.24 million a frame, its reflection passes included.)
+
+## Step 2: Risk Blaster (and the shared warm-up it needed)
+
+On a fast phone the frame's steady work was no longer the worst of it: stalls were. `tools/perf-report.js` now also
+counts what goes to the graphics chip besides drawing (texture and buffer uploads, calls that make the page wait,
+shader compiles) and the main thread's own time per frame; `tools/scene-census.js` lists a screen's meshes and lights;
+`tools/cpu-profile.js` samples the main thread. A minute of Risk Blaster's play compiled 11 shaders and sent 16
+pictures to the chip as things first appeared (the first drones, a letter badge, an ally, a marker, a region's sky
+and its mirror map): on a phone each is a stall of one frame or several.
+
+| Change | Effect |
+|---|---|
+| The start-up warm-up (`GFX.warm`) now also readies every model the screen's files brought that it has not placed yet, every sky it may fly into, and pictures a screen swaps in later (`warmTextures`) | everything is compiled and sent behind the curtain |
+| Risk Blaster readies its answer drones, all six letter badges and the dark glass round the demon at start (it did so only without the demon); every ally's model; each region's mirror map (it was made, a scene drawn six times, the first time a wave flew into the region) | a minute of play: shader compiles 11 to 1, pictures sent 16 to 0 or 1 |
+| Shaders are checked for errors only on test pages (`#debug`) | each check made the page wait for the graphics chip, twice per new shader |
+| Phones filter textures 4 times at a slant, not 16 | floors and roads seen low cost up to four times the reads |
+| The letter badges are drawn twice their size on screen, not three times | 512 px, not 768: less to draw and send |
+| One blast light, not three; the faint top lamp left to its card in the mirror map | lights 12 to 9 (every lit pixel reckons with each light the scene holds, lit or not) |
+| The allies fly ahead of and above the fighter | they were outside a portrait phone's frame |
+
+Risk Blaster at MEDIUM, a phone's window, 30 frames (before, after):
+
+| | Before | After |
+|---|---|---|
+| Million pixels shaded per frame | 8.7 | 8.7 |
+| Draw calls (the world's own) | 83 (68) | 83 (68) |
+| Triangles | 0.24 million | 0.24 million |
+| Lights (point / spot / directional) | 12 (6/1/5) | 9 (4/1/4) |
+| Shader compiles in those frames | 24 | 0 |
+| Pictures sent to the chip per frame | 341 KB | 0 |
+| Waits on the chip per frame | 0.8 | 0 |
+| Main thread per frame (this machine), worst frame | 11.3 ms, 543 ms | 2.5 ms, 25 ms |
+
+The lights' own cost is small on this phone's graphics chip (a few per cent of a frame at this size); they were cut
+as much for the size of every lit shader (its compile time) as for the frame.

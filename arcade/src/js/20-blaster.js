@@ -223,11 +223,16 @@ class BlasterGame extends QuizGame {
     this.director = this.space.director || { force() { return null; }, update() {}, log: [] };
     // the wave's carrier, far ahead (when the demon is the wave's enemy, there is none)
     this.carrier = this.enemy ? { update() {}, arrive() {}, destroy() {}, volley() {} } : new BlasterCarrier(this);
-    // a stand-in of every target material, drawn once off-screen at start (GFX.warm)
-    this.warmExtra = this.enemy ? [] : this.slotMats.map((M, i) => {
+    // a stand-in of every target material, drawn once off-screen at start (GFX.warm): the drones, their letters (every
+    // badge an answer can carry: A to D, T and F) and, round the demon, the dark glass behind each, so the first
+    // question compiles and uploads nothing (on a phone that was a stall as the first drones flew in)
+    this.warmExtra = this.slotMats.map((M, i) => {
       const g = new THREE.Group();
       g.add(new THREE.Mesh(this.tgeo[0], M.core), new THREE.Mesh(this.tgeo[0], M.body), new THREE.LineSegments(this.tedge[0], M.edge), new THREE.Mesh(this.tgeo[0], M.rim), new THREE.Sprite(M.halo));
       g.add(new THREE.Mesh(this.drones[i].body, this.dronePaint), new THREE.Mesh(this.drones[i].lamps, M.lamp));
+      g.add(new THREE.Sprite(this.badge(SLOT_KEYS[i], i)));
+      if (i < 2) g.add(new THREE.Sprite(this.badge(["T", "F"][i], i)));
+      if (this.enemy && i === 0) g.add(new THREE.Mesh(this.platesGeo(), this.platesMat()));
       g.position.z = -40;
       return g;
     });
@@ -334,6 +339,21 @@ class BlasterGame extends QuizGame {
       };
       return M;
     });
+  }
+  // the dark glass behind a drone round the demon (one shape and one material for all four)
+  platesGeo() { return this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)); }
+  platesMat() {
+    return this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: true,
+      vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `varying vec2 vP;
+        void main(){
+          float r = length(vP) / 1.74;
+          float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
+          vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
+          gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
+        }`,
+    }));
   }
   badge(text, i) {
     const key = text + i;
@@ -487,17 +507,7 @@ class BlasterGame extends QuizGame {
       halo.scale.setScalar(this.enemy ? 2.7 : 3.8);
       halo.position.z = -0.9;
       if (this.enemy) { // dark glass behind it: nothing shows through its collar or its ring. (It writes depth and is drawn before the demon's ring of light, so that ring passes behind the station.)
-        const plate = new THREE.Mesh(this.dronePlate || (this.dronePlate = new THREE.CircleGeometry(1.74, 40)), this.dronePlateMat || (this.dronePlateMat = new THREE.ShaderMaterial({
-          transparent: true, depthWrite: true,
-          vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-          fragmentShader: `varying vec2 vP;
-            void main(){
-              float r = length(vP) / 1.74;
-              float sheen = (1.0 - smoothstep(0.0, 0.5, abs(vP.x * 0.55 + vP.y - 0.75))) * (1.0 - r * r); // one soft band of light across the glass
-              vec3 col = vec3(0.012, 0.007, 0.044) + vec3(0.1, 0.13, 0.26) * sheen * 0.42 + vec3(0.05, 0.04, 0.12) * smoothstep(0.82, 1.0, r);
-              gl_FragColor = vec4(col, 0.95 * (1.0 - smoothstep(0.97, 1.0, r)));
-            }`,
-        })));
+        const plate = new THREE.Mesh(this.platesGeo(), this.platesMat());
         plate.position.z = -0.62;
         frame.add(plate);
         g.userData.plate = plate;
