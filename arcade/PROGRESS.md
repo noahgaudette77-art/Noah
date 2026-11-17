@@ -2563,7 +2563,7 @@ Before Phase 3 the owner gets a short projected spend for fal and Tripo, per bos
 | 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | done (see "Phase 3" below) |
 | 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | done (see "Phase 4" below) |
 | 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | done (see "Phase 5" below) |
-| 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one final report to the owner, sent only when everything is committed and pushed: what was built per game and screen (visuals, animation, combat effects, sound), the best final capture of each and one short combat or boss-fight sequence, the final review and known flaws (and any lookalike left), both full regressions, the sequence test and console errors with numbers, spend and start/end balances per provider, token usage by model (measured from the session logs, estimates marked; exact figures under Settings > Usage), what is left and the one thing to improve next, the PR link, and that the study logic is unchanged | in progress |
+| 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one final report to the owner, sent only when everything is committed and pushed: what was built per game and screen (visuals, animation, combat effects, sound), the best final capture of each and one short combat or boss-fight sequence, the final review and known flaws (and any lookalike left), both full regressions, the sequence test and console errors with numbers, spend and start/end balances per provider, token usage by model (measured from the session logs, estimates marked; exact figures under Settings > Usage), what is left and the one thing to improve next, the PR link, and that the study logic is unchanged | done (see "Phase 6" below) |
 
 Work done before this order arrived that belongs to later phases, kept as it is and not taken further until its
 phase: concept images and 3D candidates for the war rig and all twelve bosses (all twelve picked from Tripo; one
@@ -2888,3 +2888,42 @@ every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
 - Risk Blaster is the heaviest screen: a 15 MB download, 235 MB of textures on a phone.
 - The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback assets for opening it from disk.
 - Nobody has heard the mix: it is measured, not heard.
+
+## Phase 6: final captures, the final review, the last fixes (done)
+
+**Final captures.** Every mode was captured again on the finished build, one capture at a time, over the docs
+folders: Risk Blaster (24 files), Nest Egg Run (24), the title, hub, menus and three rooms (22), Boss Rush's Product
+Pusher in full and the other eleven bosses' idle, fight and death (47), and the cohesion pass's sheets (18).
+
+**The final independent review** (`docs/combat-pass/final/review.md`, against an 18-item checklist drawn from the
+owner's original brief, `docs/combat-pass/final/REQUIREMENTS.md`, on 49 captures): detail 4, lighting 4.5, materials 4,
+depth 4.5, motion 4, cohesion 4.5, legibility 4; ten requirements met, eight weak, none missing. Seven major defects,
+all fixed in one round:
+
+- The traffic copied real makes (a bus read as a famous German microbus, a coupe as a famous Italian one): the bus
+  and the car remade with Tripo; the remade car then read as a famous British compact SUV, so it was made a third
+  time as an armoured runabout from the game's own road-combat world, painted so it is never taken for the rig.
+- Boss Rush printed text over text on every hit: the damage figures have a lane of their own under the caption.
+- Risk Blaster's low-health state could not be seen: Boss Rush's beating red frame round the band in both, fire and
+  smoke on the fighter's visible hull, Nest Egg Run's last-life frame strengthened.
+- The examiner's chest was a black smear: a bevelled octagonal housing with vents and a magenta core sits on its chest
+  joint, and the examiner is lit by the arcade's cool key and magenta rim (its model files untouched, its two
+  frame-exact hit-stops byte-identical).
+- Risk Blaster's ambient ships read as lumps: crisp navigation lights and lit ports, less tint and bloom, smaller.
+- RANK UP! could not be read: an opaque plate with a border over a dark scrim.
+- The exam-passed screen piled up: the question and NEXT go before the banner and SKIP; trophy cards wait for the
+  results.
+- Also: the crash's bloom held down so its glass and sparks read, wash-outs capped, the wave banner kept inside the
+  screen, the explanation sheet's title kept clear of the cracks, the untextured road works removed, the deck lit.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors. Study logic, questions, answers, scoring and
+content unchanged.
+
+**Still weak, plainly** (the owner's final report lists the whole game's)
+
+- Every boss's hit reaction is the same move, and the recoil is shallow.
+- Risk Blaster's far cruiser is still a soft silhouette; open space is mostly black.
+- From disk (no assets) the examiner keeps its old chest; its new look is served-only, like every generated asset.
+- The deck holder is dark apart from its edges; the rose window's glass is off the palette.
+- Nobody has heard the sound: it was checked by cue log and measured loudness only.
