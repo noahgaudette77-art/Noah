@@ -138,7 +138,8 @@ class LibraryScene extends Scene3D {
     this.readK = 0; // 0 in the list's window, 1 behind a chapter's banner
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2, LAMP_X = 4.0, LAMP_Y = 12.5, ROSE_Y = 11.5;
-    s.userData.post = { exposure: 1.18, bloom: 0.62, threshold: 1.1, saturation: 1.22, contrast: 1.14, vignette: 0.6, ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.15, sharpen: 0.5, fringe: 0.15,
+    s.userData.post = { exposure: 1.18, bloom: 0.62, threshold: 1.1, saturation: 1.2, contrast: 1.15, vignette: 0.9, // (Phase 5: the frame of dark the other screens have)
+      ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.15, sharpen: 0.5, fringe: 0.15,
       // the rose window's light lies on the floor below it; the lens holds the whole nave and lets only what hangs by it go soft
       rays: { pos: new THREE.Vector3(0, ROSE_Y, Z0 - L + 1), strength: 0.16, radius: 0.45 },
       dof: { focus: 9.5, near: 12, far: 1600, max: 0.0065, k: 0.75 } };
@@ -452,9 +453,9 @@ class LibraryScene extends Scene3D {
     this.lookAt.set(Math.sin(lt * 0.04) * 0.4 - 8.6 * rk, LIB_EYE - 1.3 + 4.3 * rk, -30);
     if (Math.abs(this.camera.fov - (58 + 30 * rk)) > 0.01) { this.camera.fov = 58 + 30 * rk; this.camera.updateProjectionMatrix(); }
     const post = this.scene.userData.post;
-    post.saturation = 1.22 - 1.1 * rk;
+    post.saturation = 1.2 - 1.08 * rk;
     post.tint = [1 - 0.22 * rk, 1 - 0.46 * rk, 1 + 0.6 * rk];
-    post.contrast = 1.14 + 0.24 * rk;
+    post.contrast = 1.15 + 0.23 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
     libraryGenUpdate(this, dt, lt);

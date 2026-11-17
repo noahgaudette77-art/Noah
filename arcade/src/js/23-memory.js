@@ -569,7 +569,8 @@ class MemoryGame extends QuizGame {
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
     this.dist = 22;
-    s.userData.post = { exposure: 1.2, bloom: 0.58, threshold: 1.2, saturation: 1.14, contrast: 1.14, vignette: 1.1, ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.18, sharpen: 0.45, fringe: 0.2 };
+    s.userData.post = { exposure: 1.12, bloom: 0.6, threshold: 1.18, saturation: 1.16, contrast: 1.15, vignette: 1.05, split: 0.2, // (Phase 5: the gold vault under the neon world's light: its shadows lean violet, its gold less hot)
+      ao: 0.85, shadow: 0.6, shadowLen: 0.1, sun: [0.2, 1, 0.6], dirt: 0.18, sharpen: 0.45, fringe: 0.2 };
     this.camBase.set(0, MEMORY_EYE_Y, this.dist);
     this.lookAt.set(0, MEMORY_EYE_Y, 0);
   }

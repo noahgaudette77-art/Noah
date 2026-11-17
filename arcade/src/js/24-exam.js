@@ -463,7 +463,8 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.post = { exposure: 1.06, bloom: 0.5, threshold: 1.24, saturation: 1.06, contrast: 1.14, vignette: 1.45, sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+    s.userData.post = { exposure: 0.97, bloom: 0.55, threshold: 1.2, saturation: 1.14, contrast: 1.15, vignette: 1.25, split: 0.2, // (Phase 5: brought to the games' grade: the bronze in the neon world's light, violet in its shadows; a lighter frame of dark)
+      sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
@@ -690,7 +691,7 @@ class ExamGame extends QuizGame {
       this.rimB.intensity = 2.7 * B.lightK;
       this.fillLow.intensity = 0.85 * B.lightK;
       // and the dark closes in round it
-      if (this.state === "ask") this.scene.userData.post.vignette = 1.45 + 0.3 * B.dread + 0.2 * B.menace;
+      if (this.state === "ask") this.scene.userData.post.vignette = 1.25 + 0.3 * B.dread + 0.2 * B.menace;
     }
     this.ambience.update(dt, t);
     if (this.halo) { // the halo turns at one slow pace all exam long; it goes out with the boss
