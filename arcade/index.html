@@ -1789,6 +1789,25 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 @keyframes reward-pop { 0% { transform: scale(1); } 35% { transform: scale(1.32); filter: brightness(1.8) drop-shadow(0 0 10px #ffe14f); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .scr-game.hud-hurt .hud, .scr-game.hud-hurt .timer, .scr-game.hud-hurt .bossbar, .scr-game.hud-low .lives span:not(.lost) svg { animation: none; } }
 
+/* ---- icons and boss busts drawn from the 3D models (served, once their strips have loaded: see 05c-genicons.js) ---- */
+canvas.gen { image-rendering: auto !important; filter: none !important; }
+.gico { overflow: hidden; }
+.gico.off { filter: grayscale(1) brightness(0.5) !important; opacity: 0.75; }
+.trophies .tr .ic .gico, .trophy .ic .gico { width: 32px; height: 32px; }
+.tile .k .gico { width: 15px; height: 15px; margin-top: -2px; filter: none; }
+.world.wbar i .gico { width: 20px; height: 20px; }
+/* the results' reward moment: what was earned arrives one by one under the headline */
+.res-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 10px; margin: 6px 12px 2px; min-height: 44px; }
+.res-rewards .rw.coin + .rw.coin { margin-left: -24px; } /* (the coins land in a little pile) */
+.res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
+.res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
+.res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
+.res-rewards .rw.big .gico { width: 50px; height: 50px; }
+.res-rewards .rw.coin .gico { width: 32px; height: 32px; }
+@keyframes rw-in { 0% { opacity: 0; transform: translateY(-26px) scale(0.4); } 60% { opacity: 1; transform: translateY(3px) scale(1.12); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .res-rewards .rw.in { animation: rw-fade 0.4s ease-out backwards; } }
+@keyframes rw-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+
 </style>
 </head>
 <body>
@@ -1920,6 +1939,8 @@ const PIXELS = {
   t_reader: ["XXXX.XXXX", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "X.X.X.X.X", "X..XXX..X", "XXXXXXXXX", "...XXX...", "........."],
 };
 function icon(name, color = "currentColor") {
+  const gen = icon.gen && icon.gen(name, color); // (a coin, a star, a life or a shield drawn from its 3D model, when that strip has loaded: see 05c-genicons.js)
+  if (gen) return gen;
   const rows = PIXELS[name];
   if (!rows) return "";
   const w = rows[0].length, h = rows.length;
@@ -1936,7 +1957,7 @@ const starsHTML = (n, max = 3) =>
 const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BANKED": "t_cards50", ACCURACY: "t_boss6", ANSWERED: "t_exam60", "BEST STREAK": "t_streak5",
   "BOSS STARS": "star", STARS: "star", "BEST EXAM": "t_exam90", "BEST SCORE": "t_exam90", SCORE: "t_exam90", "EXAMS TAKEN": "t_exam60", "QUESTION BANK": "book", CORRECT: "check",
   TIME: "clock", "HIGH SCORE RANK": "t_boss12", "XP EARNED": "up", WAVE: "t_wave5", "RETIRED AT": "flag", PEAK: "t_million", "BOSS HP LEFT": "heart", REMEMBERED: "t_cards50", "STILL DUE": "clock" };
-const tileIcon = (k) => (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
+const tileIcon = (k) => (icon.tile && icon.tile(k)) || (TILE_ICONS[k] ? icon(TILE_ICONS[k]) : "");
 
 const COLORS = {
   cyan: "#35efff", magenta: "#ff3ad4", yellow: "#ffe14f", lime: "#4dffa6",
@@ -6408,6 +6429,9 @@ const Sound = {
   // Arcade-floor ambience: a low crowd murmur plus distant cabinets beeping.
   ambience(on) {
     if (!this.ctx) return;
+    // (the hall's own recording when it has loaded: a loop under the music, in place of the synth's murmur)
+    if (on && this.bank.hub_hum && Store.settings.sfx) { if (this._amb) this.ambience(false); this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 }); return; }
+    if (!on) this.stopLoop("ambience", 0.6);
     if (on && !this._amb && Store.settings.sfx) {
       const c = this.ctx;
       const src = c.createBufferSource();
@@ -6540,6 +6564,7 @@ const Sound = {
     get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
     get finalboss() { return this.boss; }, // (the last boss has its own recording; without it, the boss tune)
     calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
+    get memory() { return this.calm; }, get exam() { return this.calm; }, // (Memory Bank and the Final Exam have their own recordings; without them, the calm tune as before)
   },
   play(name) {
     if (this.trackName === name && (this.timer || this._now)) return;
@@ -6599,7 +6624,7 @@ const Sound = {
       if (lvl >= 2 && s % 4 === 0) this._tone(this.musicBus, hz(chord[(s / 4 + bar) % 4] + 24), stepDur * 3.5, { type: "square", vol: 0.06, at });
       if (lvl >= 3 && s % 2 === 1) this._tone(this.musicBus, hz(chord[tr.arp[((s - 1) / 2) % tr.arp.length]] + 24), stepDur * 0.9, { type: "triangle", vol: 0.08, at });
       if (s % 8 === 0) this._tone(this.musicBus, 120, 0.14, { type: "sine", slide: -80, vol: 0.55, at });
-      if (s % 8 === 4 && this.trackName !== "calm") this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
+      if (s % 8 === 4 && tr !== this.TRACKS.calm) this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
       this.nextTime += stepDur;
       this.step++;
     }
@@ -6757,7 +6782,7 @@ function readTime(round, mult = 1) {
 /* ---- 03a-files.js ---- */
 // Written by tools/manifest.js: every file under arcade/assets the page may fetch (and its size), the cues inside each
 // sound sprite ([start, length, level, how far the music ducks]), the music and its loop points, and what each screen needs.
-const INR_FILES = {"files":{"audio/music-blaster.mp3":1070543,"audio/music-boss.mp3":1117563,"audio/music-calm.mp3":981204,"audio/music-exam.mp3":1020910,"audio/music-finalboss.mp3":1172420,"audio/music-hub.mp3":1064273,"audio/music-memory.mp3":1163538,"audio/music-racer.mp3":834396,"audio/music-title.mp3":980681,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1142535,"audio/sfx-core.mp3":1755473,"audio/sfx-hub.mp3":124387,"audio/sfx-racer.mp3":477301,"audio/voice.mp3":1283075,"models/boss-1.glb":3140792,"models/boss-10.glb":3796976,"models/boss-11.glb":3509160,"models/boss-2.glb":3566072,"models/boss-3.glb":3595764,"models/boss-4.glb":3348936,"models/boss-5.glb":3189180,"models/boss-6.glb":3595196,"models/boss-7.glb":4230104,"models/boss-8.glb":2816424,"models/boss-9.glb":3108684,"models/boss-all.glb":2599980,"models/demon.glb":3372816,"models/starfighter.glb":3274568,"models/warrig.glb":3043684,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall-b.webp":696470,"sky/hub-hall.webp":749410,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-dusk-b.webp":461748,"sky/title-dusk.webp":216594,"sky/vault-gold.webp":710390},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.188,0],[1.37,0.8,0.9,0],[2.2401,0.4288,0.961,0],[2.7389,0.8,0.867,0]],"impact_big":[[3.6089,1.28,1.129,0.7],[4.959,0.8623,1.212,0.7],[5.8913,1.28,0.991,0.7],[7.2413,1.28,1,0.7]],"impact_reject":[[8.5914,0.5025,0.8,0],[9.1639,0.5686,0.631,0],[9.8025,0.6,1.05,0],[10.4726,0.5451,1.25,0]],"impact_hull":[[11.0877,0.88,1.053,0],[12.0378,0.88,0.841,0],[12.9878,0.88,0.9,0],[13.9378,0.88,1.083,0]],"impact_shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"impact_metal":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]],"explosion_small":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"explosion_big":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"explosion_huge":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"debris":[[45.4853,0.7887,0.6,0],[46.344,1.1321,0.698,0],[47.5461,1.48,0.591,0],[49.0961,1.48,0.96,0]],"charge_up":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"charge_long":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"warning":[[60.2397,0.6,0.576,0],[60.9097,0.6,0.877,0],[61.5798,0.6,0.6,0]],"lock_on":[[62.2498,0.48,0.567,0],[62.7999,0.48,0.497,0],[63.3499,0.48,0.5,0]],"slowmo_in":[[63.9,1.08,0.7,0],[65.05,1.08,0.889,0],[66.2,1.08,0.652,0]],"player_hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"heart_lost":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"shield_down":[[73.7604,0.7352,1.022,0],[74.5656,1,0.54,0],[75.6356,0.9544,0.75,0]],"reward":[[76.66,1.2,0.563,0],[77.9301,1.2,0.789,0],[79.2001,1.2,0.772,0],[80.4702,1.2,0.7,0]],"sting_correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"sting_wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"ui_click":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"ui_select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"ui_back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"coin_insert":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"powerup":[[95.6136,1,0.717,0],[96.6837,1,0.485,0],[97.7537,1,0.6,0]],"fanfare":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"gameover":[[104.3588,2.2,0.7,0],[106.6288,2.2,0.654,0],[108.8989,2.2,0.911,0]],"crowd_cheer":[[111.1689,2,0.522,0],[113.239,2,0.555,0],[115.309,2,0.55,0],[117.3791,2,0.641,0]],"alarm":[[119.5691,2.25,0.4,0]],"charge_hum":[[122.1291,3,0.4,0]],"boom":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"bigboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"coin":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"blip":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"win":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"demonboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"demonfinale":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"demoncharge":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"bossblast":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"bosscharge":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"shatter":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"clunk":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"laser_heavy":[[3.5012,0.3983,1.235,0],[3.9695,1.2,0.85,0],[5.2396,1.2,1.134,0],[6.5096,1.2,0.587,0]],"plasma_fire":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"shell":[[10.3702,0.3562,0.24,0],[10.7964,0.48,0.3,0],[11.3464,0.3549,0.32,0],[11.7714,0.4354,0.314,0]],"beam_fire":[[12.2768,1.6,0.996,0],[13.9468,1.6,0.878,0],[15.6169,1.6,0.632,0],[17.2869,1.6,0.8,0]],"missile_fire":[[18.957,1,0.89,0],[20.027,1,0.702,0],[21.0971,1,0.496,0],[22.1671,1,0.7,0]],"missile_hit":[[23.2371,1,0.602,0],[24.3072,1,0.828,0],[25.3772,0.5664,0.8,0],[26.0137,1,0.931,0]],"volley_fire":[[27.0837,1,0.89,0],[28.1538,1,1.066,0],[29.2238,1,0.75,0],[30.2939,1,0.591,0]],"wave_fire":[[31.3639,1.48,0.977,0],[32.9139,1.48,0.744,0],[34.464,1.2503,0.85,0],[35.7843,1.091,1.05,0]],"slam":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]],"boss_roar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"boss_hurt":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"boss_stagger":[[54.6491,0.8735,0.548,0],[55.5926,1.3102,0.82,0],[56.9727,1.1637,0.8,0],[58.2065,0.9167,0.888,0]],"boss_break":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"boss_death":[[62.7673,3.2,1.016,0.5],[66.0373,3.2,1,0.5],[69.3074,3.2,0.919,0.5]],"warp":[[72.5774,1.6395,0.695,0],[74.2869,1.5159,0.7,0],[75.8727,1.2935,0.857,0]],"engine_ship":[[77.3563,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"shot":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"demonroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"demonhit":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"demonshed":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"demonbreak":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"bossroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"bosssmash":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.971,0],[1.77,1.2,1.085,0],[3.0401,1.2,1,0],[4.3101,1.2,1.126,0]],"crash_glass":[[5.5802,0.88,1.04,0],[6.5302,0.5965,0.944,0],[7.1968,0.88,0.702,0],[8.1468,0.88,0.8,0]],"skid":[[9.0968,1.2,0.74,0],[10.3669,1.2,0.698,0],[11.6369,1.2,0.721,0],[12.907,1.2,0.7,0]],"near_miss":[[14.177,0.6132,0.624,0],[14.8602,0.5831,0.6,0],[15.5134,0.6803,0.617,0],[16.2637,0.584,0.598,0]],"boost":[[16.9177,1.48,0.655,0],[18.4677,1.48,0.85,0],[20.0178,1.48,1.179,0],[21.5678,1.3965,1.349,0]],"gate_pass":[[23.0343,0.8,0.6,0],[23.9044,0.8,0.672,0],[24.7744,0.8,0.58,0],[25.6444,0.6858,0.817,0]],"engine_car":[[26.5202,4,0.4,0]],"boost_flame":[[30.8302,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,0.2008,1,0]],"vo:bull run":[[16.8088,0.9604,1,0]],"vo:chapter complete":[[17.8392,1.106,1,0]],"vo:compounding":[[19.0152,1.193,1,0]],"vo:critical":[[20.2782,1.117,1,0]],"vo:deck cleared":[[21.4652,1.39,1,0]],"vo:defeated":[[22.9253,1.1138,1,0]],"vo:enraged":[[24.1091,1.4505,1,0]],"vo:exam passed":[[25.6295,1.3676,1,0]],"vo:final boss":[[27.0671,1.318,1,0]],"vo:final boss destroyed":[[28.4551,2.75,1,0]],"vo:final exam":[[31.2751,1.8518,1,0]],"vo:final wave":[[33.1969,1.5771,1,0]],"vo:forced retirement":[[34.844,1.4642,1,0]],"vo:game over":[[36.3782,1.4106,1,0]],"vo:go":[[37.8588,0.6599,1,0]],"vo:group golem":[[38.5886,1.791,1,0]],"vo:happy retirement":[[40.4497,1.6602,1,0]],"vo:inflation titan":[[42.1799,2.43,1,0]],"vo:insert coin":[[44.6799,1.128,1,0]],"vo:last shield":[[45.8779,1.5958,1,0]],"vo:lightning":[[47.5437,1.15,1,0]],"vo:longevity lich":[[48.7638,1.5484,1,0]],"vo:lord intestate":[[50.3822,1.7993,1,0]],"vo:memory bank":[[52.2515,1.1962,1,0]],"vo:millionaire":[[53.5177,1.6842,1,0]],"vo:nest egg run":[[55.2718,1.6205,1,0]],"vo:new high score":[[56.9623,1.7269,1,0]],"vo:not yet":[[58.7592,0.933,1,0]],"vo:passed":[[59.7622,0.8735,1,0]],"vo:patrimony phantom":[[60.7057,1.8513,1,0]],"vo:perfect":[[62.627,0.9316,1,0]],"vo:perilmonger":[[63.6286,1.47,1,0]],"vo:probate tollgate":[[65.1686,1.6925,1,0]],"vo:product pusher":[[66.9311,1.6875,1,0]],"vo:quick draw":[[68.6886,1.2579,1,0]],"vo:rank up":[[70.0166,1.07,1,0]],"vo:ready":[[71.1566,0.567,1,0]],"vo:retired a millionaire":[[71.7936,2.1487,1,0]],"vo:risk blaster":[[74.0123,1.8748,1,0]],"vo:select your game":[[75.957,1.2985,1,0]],"vo:shield down":[[77.3256,1.2631,1,0]],"vo:solvency specter":[[78.6587,1.996,1,0]],"vo:stage clear":[[80.7247,1.3893,1,0]],"vo:strategy guide":[[82.1839,1.3867,1,0]],"vo:the fine print":[[83.6406,1.3475,1,0]],"vo:the proctor":[[85.0581,1.1939,1,0]],"vo:trophy unlocked":[[86.322,1.2972,1,0]],"vo:undue influencer":[[87.6892,2.3957,1,0]],"vo:warning":[[90.1549,0.65,1,0]],"vo:wave 1":[[90.8748,1.63,1,0]],"vo:wave 10":[[92.5749,1.1341,1,0]],"vo:wave 2":[[93.779,0.9793,1,0]],"vo:wave 3":[[94.8284,1.47,1,0]],"vo:wave 4":[[96.3684,1.2106,1,0]],"vo:wave 5":[[97.649,1.3478,1,0]],"vo:wave 6":[[99.0668,1.4679,1,0]],"vo:wave 7":[[100.6047,1.1244,1,0]],"vo:wave 8":[[101.7991,1.55,1,0]],"vo:wave 9":[[103.4192,1.4247,1,0]],"vo:welcome":[[104.9138,1.87,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}}},"music":{"exam":{"file":"audio/music-exam.mp3","loop":[0.7,50.7104],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,57.8497],"vol":1},"title":{"file":"audio/music-title.mp3","loop":[0.7,48.7048],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,52.8853],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,48.718],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,55.5493],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,58.277],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,41.3918],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,53.2],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster"],"racer":["model:warrig","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss"],"hub":["sky:hub-hall","sky:hub-hall-b","sfx:core","sfx:hub","sfx:voice","music:hub"],"title":["sky:title-dusk","sky:title-dusk-b","sfx:core","sfx:voice","music:title"],"memory":["sky:vault-gold","sfx:core","sfx:voice","music:memory"],"exam":["sky:exam-moon","sfx:core","sfx:combat","sfx:voice","music:exam"],"guide":["sky:guide-archive","sfx:core","music:calm"]}};
+const INR_FILES = {"files":{"audio/music-blaster.mp3":1070543,"audio/music-boss.mp3":1117563,"audio/music-calm.mp3":981204,"audio/music-exam.mp3":1020910,"audio/music-finalboss.mp3":1172420,"audio/music-hub.mp3":1064273,"audio/music-memory.mp3":1163538,"audio/music-racer.mp3":834396,"audio/music-title.mp3":980681,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1142535,"audio/sfx-core.mp3":1755473,"audio/sfx-hub.mp3":124387,"audio/sfx-racer.mp3":477301,"audio/voice.mp3":1283075,"models/boss-1.glb":3140792,"models/boss-10.glb":3796976,"models/boss-11.glb":3509160,"models/boss-2.glb":3566072,"models/boss-3.glb":3595764,"models/boss-4.glb":3348936,"models/boss-5.glb":3189180,"models/boss-6.glb":3595196,"models/boss-7.glb":4230104,"models/boss-8.glb":2816424,"models/boss-9.glb":3108684,"models/boss-all.glb":2599980,"models/demon.glb":3372816,"models/mini-proctor.glb":311524,"models/mini-starfighter.glb":471348,"models/mini-warrig.glb":492988,"models/prop-cabinet.glb":593040,"models/prop-coin.glb":301832,"models/prop-deck.glb":554572,"models/prop-medal.glb":471124,"models/prop-podium.glb":519904,"models/prop-stand.glb":345300,"models/prop-tome.glb":464684,"models/prop-trophy.glb":410228,"models/starfighter.glb":3274568,"models/warrig.glb":3043684,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall.webp":749410,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-dusk-b.webp":461748,"sky/title-dusk.webp":216594,"sky/vault-gold.webp":710390,"ui/bosses.webp":84156,"ui/icons.webp":27040},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.188,0],[1.37,0.8,0.9,0],[2.2401,0.4288,0.961,0],[2.7389,0.8,0.867,0]],"impact_big":[[3.6089,1.28,1.129,0.7],[4.959,0.8623,1.212,0.7],[5.8913,1.28,0.991,0.7],[7.2413,1.28,1,0.7]],"impact_reject":[[8.5914,0.5025,0.8,0],[9.1639,0.5686,0.631,0],[9.8025,0.6,1.05,0],[10.4726,0.5451,1.25,0]],"impact_hull":[[11.0877,0.88,1.053,0],[12.0378,0.88,0.841,0],[12.9878,0.88,0.9,0],[13.9378,0.88,1.083,0]],"impact_shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"impact_metal":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]],"explosion_small":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"explosion_big":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"explosion_huge":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"debris":[[45.4853,0.7887,0.6,0],[46.344,1.1321,0.698,0],[47.5461,1.48,0.591,0],[49.0961,1.48,0.96,0]],"charge_up":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"charge_long":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"warning":[[60.2397,0.6,0.576,0],[60.9097,0.6,0.877,0],[61.5798,0.6,0.6,0]],"lock_on":[[62.2498,0.48,0.567,0],[62.7999,0.48,0.497,0],[63.3499,0.48,0.5,0]],"slowmo_in":[[63.9,1.08,0.7,0],[65.05,1.08,0.889,0],[66.2,1.08,0.652,0]],"player_hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"heart_lost":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"shield_down":[[73.7604,0.7352,1.022,0],[74.5656,1,0.54,0],[75.6356,0.9544,0.75,0]],"reward":[[76.66,1.2,0.563,0],[77.9301,1.2,0.789,0],[79.2001,1.2,0.772,0],[80.4702,1.2,0.7,0]],"sting_correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"sting_wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"ui_click":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"ui_select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"ui_back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"coin_insert":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"powerup":[[95.6136,1,0.717,0],[96.6837,1,0.485,0],[97.7537,1,0.6,0]],"fanfare":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"gameover":[[104.3588,2.2,0.7,0],[106.6288,2.2,0.654,0],[108.8989,2.2,0.911,0]],"crowd_cheer":[[111.1689,2,0.522,0],[113.239,2,0.555,0],[115.309,2,0.55,0],[117.3791,2,0.641,0]],"alarm":[[119.5691,2.25,0.4,0]],"charge_hum":[[122.1291,3,0.4,0]],"boom":[[20.5703,1.2,1.318,0],[21.8403,1.2,0.85,0],[23.1104,1.2,1,0],[24.3804,1.2,0.81,0]],"bigboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"hit":[[67.3501,0.88,1.002,0],[68.3001,0.88,0.9,0],[69.2502,0.88,1.039,0],[70.2002,0.88,0.655,0]],"correct":[[81.7402,0.8,0.6,0],[82.6103,0.8,0.467,0],[83.4803,0.8,0.758,0],[84.3504,0.8,0.65,0]],"wrong":[[85.2204,0.6247,0.747,0],[85.9151,0.6803,0.444,0],[86.6654,0.4344,0.649,0],[87.1698,0.6803,0.6,0]],"coin":[[92.691,1,0.7,0],[93.761,0.7125,0.904,0],[94.5436,1,0.656,0]],"blip":[[87.9201,0.48,0.64,0],[88.4701,0.121,0.413,0],[88.6612,0.48,0.283,0],[89.2112,0.2016,0.4,0]],"select":[[89.4829,0.48,0.519,0],[90.0329,0.48,0.5,0],[90.5829,0.48,0.419,0]],"back":[[91.133,0.3879,0.382,0],[91.5909,0.48,0.619,0],[92.141,0.48,0.45,0]],"shield":[[14.8879,0.88,0.8,0],[15.8379,0.88,1.151,0],[16.788,0.5621,0.769,0],[17.42,0.88,0.841,0]],"win":[[98.8238,2,0.7,0],[100.8938,1.3249,0.888,0],[102.2888,2,0.58,0]],"demonboom":[[25.6505,2.2,1.351,0.6],[27.9205,2.2,1.245,0.6],[30.1905,2.0646,1,0.6],[32.3251,2.2,0.989,0.6]],"demonfinale":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"demoncharge":[[50.6462,0.5924,0.6,0],[51.3086,0.6803,0.743,0],[52.0589,0.6803,0.737,0],[52.8092,0.6803,0.576,0]],"bossblast":[[34.5952,3.56,0.908,0.45],[38.2252,3.56,1,0.45],[41.8553,3.56,1.081,0.45]],"bosscharge":[[53.5595,1.6,0.664,0],[55.2295,1.6,0.566,0],[56.8996,1.6,0.65,0],[58.5696,1.6,0.738,0]],"shatter":[[71.1503,0.8,0.802,0],[72.0203,0.8,0.55,0],[72.8904,0.8,0.7,0]],"clunk":[[18.3701,0.48,0.856,0],[18.9201,0.48,0.657,0],[19.4702,0.48,0.7,0],[20.0202,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"laser_heavy":[[3.5012,0.3983,1.235,0],[3.9695,1.2,0.85,0],[5.2396,1.2,1.134,0],[6.5096,1.2,0.587,0]],"plasma_fire":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"shell":[[10.3702,0.3562,0.24,0],[10.7964,0.48,0.3,0],[11.3464,0.3549,0.32,0],[11.7714,0.4354,0.314,0]],"beam_fire":[[12.2768,1.6,0.996,0],[13.9468,1.6,0.878,0],[15.6169,1.6,0.632,0],[17.2869,1.6,0.8,0]],"missile_fire":[[18.957,1,0.89,0],[20.027,1,0.702,0],[21.0971,1,0.496,0],[22.1671,1,0.7,0]],"missile_hit":[[23.2371,1,0.602,0],[24.3072,1,0.828,0],[25.3772,0.5664,0.8,0],[26.0137,1,0.931,0]],"volley_fire":[[27.0837,1,0.89,0],[28.1538,1,1.066,0],[29.2238,1,0.75,0],[30.2939,1,0.591,0]],"wave_fire":[[31.3639,1.48,0.977,0],[32.9139,1.48,0.744,0],[34.464,1.2503,0.85,0],[35.7843,1.091,1.05,0]],"slam":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]],"boss_roar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"boss_hurt":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"boss_stagger":[[54.6491,0.8735,0.548,0],[55.5926,1.3102,0.82,0],[56.9727,1.1637,0.8,0],[58.2065,0.9167,0.888,0]],"boss_break":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"boss_death":[[62.7673,3.2,1.016,0.5],[66.0373,3.2,1,0.5],[69.3074,3.2,0.919,0.5]],"warp":[[72.5774,1.6395,0.695,0],[74.2869,1.5159,0.7,0],[75.8727,1.2935,0.857,0]],"engine_ship":[[77.3563,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0]],"shot":[[7.7797,0.3968,0.75,0],[8.2465,0.8,0.701,0],[9.1165,0.3136,1.074,0],[9.5001,0.8,0.926,0]],"demonroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"demonhit":[[50.9411,0.88,0.846,0],[51.8912,0.88,0.919,0],[52.8412,0.88,0.693,0],[53.7912,0.7878,0.8,0]],"demonshed":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"demonbreak":[[59.1932,1,0.74,0],[60.2633,0.5817,1.257,0],[60.915,1,1.004,0],[61.985,0.7122,0.8,0]],"bossroar":[[41.8609,2.2,1.066,0.6],[44.131,2.2,1.06,0.6],[46.401,2.2,0.95,0.6],[48.6711,2.2,0.846,0.6]],"bosssmash":[[36.9454,1.28,0.803,0],[38.2954,1.28,1,0],[39.6454,1.28,1.03,0],[40.9955,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.971,0],[1.77,1.2,1.085,0],[3.0401,1.2,1,0],[4.3101,1.2,1.126,0]],"crash_glass":[[5.5802,0.88,1.04,0],[6.5302,0.5965,0.944,0],[7.1968,0.88,0.702,0],[8.1468,0.88,0.8,0]],"skid":[[9.0968,1.2,0.74,0],[10.3669,1.2,0.698,0],[11.6369,1.2,0.721,0],[12.907,1.2,0.7,0]],"near_miss":[[14.177,0.6132,0.624,0],[14.8602,0.5831,0.6,0],[15.5134,0.6803,0.617,0],[16.2637,0.584,0.598,0]],"boost":[[16.9177,1.48,0.655,0],[18.4677,1.48,0.85,0],[20.0178,1.48,1.179,0],[21.5678,1.3965,1.349,0]],"gate_pass":[[23.0343,0.8,0.6,0],[23.9044,0.8,0.672,0],[24.7744,0.8,0.58,0],[25.6444,0.6858,0.817,0]],"engine_car":[[26.5202,4,0.4,0]],"boost_flame":[[30.8302,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,0.2008,1,0]],"vo:bull run":[[16.8088,0.9604,1,0]],"vo:chapter complete":[[17.8392,1.106,1,0]],"vo:compounding":[[19.0152,1.193,1,0]],"vo:critical":[[20.2782,1.117,1,0]],"vo:deck cleared":[[21.4652,1.39,1,0]],"vo:defeated":[[22.9253,1.1138,1,0]],"vo:enraged":[[24.1091,1.4505,1,0]],"vo:exam passed":[[25.6295,1.3676,1,0]],"vo:final boss":[[27.0671,1.318,1,0]],"vo:final boss destroyed":[[28.4551,2.75,1,0]],"vo:final exam":[[31.2751,1.8518,1,0]],"vo:final wave":[[33.1969,1.5771,1,0]],"vo:forced retirement":[[34.844,1.4642,1,0]],"vo:game over":[[36.3782,1.4106,1,0]],"vo:go":[[37.8588,0.6599,1,0]],"vo:group golem":[[38.5886,1.791,1,0]],"vo:happy retirement":[[40.4497,1.6602,1,0]],"vo:inflation titan":[[42.1799,2.43,1,0]],"vo:insert coin":[[44.6799,1.128,1,0]],"vo:last shield":[[45.8779,1.5958,1,0]],"vo:lightning":[[47.5437,1.15,1,0]],"vo:longevity lich":[[48.7638,1.5484,1,0]],"vo:lord intestate":[[50.3822,1.7993,1,0]],"vo:memory bank":[[52.2515,1.1962,1,0]],"vo:millionaire":[[53.5177,1.6842,1,0]],"vo:nest egg run":[[55.2718,1.6205,1,0]],"vo:new high score":[[56.9623,1.7269,1,0]],"vo:not yet":[[58.7592,0.933,1,0]],"vo:passed":[[59.7622,0.8735,1,0]],"vo:patrimony phantom":[[60.7057,1.8513,1,0]],"vo:perfect":[[62.627,0.9316,1,0]],"vo:perilmonger":[[63.6286,1.47,1,0]],"vo:probate tollgate":[[65.1686,1.6925,1,0]],"vo:product pusher":[[66.9311,1.6875,1,0]],"vo:quick draw":[[68.6886,1.2579,1,0]],"vo:rank up":[[70.0166,1.07,1,0]],"vo:ready":[[71.1566,0.567,1,0]],"vo:retired a millionaire":[[71.7936,2.1487,1,0]],"vo:risk blaster":[[74.0123,1.8748,1,0]],"vo:select your game":[[75.957,1.2985,1,0]],"vo:shield down":[[77.3256,1.2631,1,0]],"vo:solvency specter":[[78.6587,1.996,1,0]],"vo:stage clear":[[80.7247,1.3893,1,0]],"vo:strategy guide":[[82.1839,1.3867,1,0]],"vo:the fine print":[[83.6406,1.3475,1,0]],"vo:the proctor":[[85.0581,1.1939,1,0]],"vo:trophy unlocked":[[86.322,1.2972,1,0]],"vo:undue influencer":[[87.6892,2.3957,1,0]],"vo:warning":[[90.1549,0.65,1,0]],"vo:wave 1":[[90.8748,1.63,1,0]],"vo:wave 10":[[92.5749,1.1341,1,0]],"vo:wave 2":[[93.779,0.9793,1,0]],"vo:wave 3":[[94.8284,1.47,1,0]],"vo:wave 4":[[96.3684,1.2106,1,0]],"vo:wave 5":[[97.649,1.3478,1,0]],"vo:wave 6":[[99.0668,1.4679,1,0]],"vo:wave 7":[[100.6047,1.1244,1,0]],"vo:wave 8":[[101.7991,1.55,1,0]],"vo:wave 9":[[103.4192,1.4247,1,0]],"vo:welcome":[[104.9138,1.87,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}}},"music":{"exam":{"file":"audio/music-exam.mp3","loop":[0.7,50.7104],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,57.8497],"vol":1},"title":{"file":"audio/music-title.mp3","loop":[0.7,48.7048],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,52.8853],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,48.718],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,55.5493],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,58.277],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,41.3918],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,53.2],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster"],"racer":["model:warrig","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss"],"hub":["model:prop-cabinet","model:mini-starfighter","model:mini-warrig","model:mini-proctor","model:prop-deck","model:prop-podium","model:prop-tome","model:prop-trophy","model:prop-medal","model:prop-coin","model:prop-stand","sky:hub-hall","ui:bosses","ui:icons"],"hubsound":["sfx:core","sfx:hub","sfx:voice","music:hub"],"title":["sky:title-dusk","sky:title-dusk-b","sfx:core","sfx:voice","music:title"],"memory":["sky:vault-gold","model:prop-deck","model:prop-coin","sfx:core","sfx:voice","music:memory"],"exam":["sky:exam-moon","model:prop-podium","sfx:core","sfx:combat","sfx:voice","music:exam"],"guide":["sky:guide-archive","model:prop-tome","sfx:core","music:calm"]}};
 
 /* ---- 03b-assets.js ---- */
 // Asset files: the generated models, skies and sound live beside the page in arcade/assets/ and are fetched when
@@ -6795,7 +6820,7 @@ const Assets = {
     const path = "models/" + name + ".glb";
     if (!this.has(path) || !window.THREE || !THREE.GLTFLoader) return Promise.resolve(null);
     if (this.fresh["model:" + name]) return Promise.resolve(this.fresh["model:" + name]);
-    return this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
+    return this._once("model:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
       const parts = {};
       let inr = gltf.scene.userData && gltf.scene.userData.inr; // (the processing tool's notes: parts, pivots, anchors. They ride the file's root node.)
       gltf.scene.traverse((o) => {
@@ -6810,7 +6835,16 @@ const Assets = {
       const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
       this.fresh["model:" + name] = m;
       return m;
-    }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; });
+    }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; }));
+  },
+  // One load at a time per file: a second ask while the first is on its way shares it (the title asks for the
+  // hall's set in the background, and the hall may ask again before it has arrived).
+  _once(key, make) {
+    const busy = this.busy || (this.busy = {});
+    if (busy[key]) return busy[key];
+    const p = (busy[key] = make());
+    p.then(() => { delete busy[key]; });
+    return p;
   },
   // A model for a scene that is being built (null when it is not loaded: the caller builds what it always built).
   // Each one is handed out once; the next scene gets a new copy parsed from the same bytes.
@@ -6825,7 +6859,7 @@ const Assets = {
     const path = this.files.files["sky/" + name + ".webp"] !== undefined ? "sky/" + name + ".webp" : "sky/" + name + ".jpg";
     if (!this.has(path) || !window.THREE) return Promise.resolve(null);
     if (this.kept["sky:" + name]) return Promise.resolve(this.kept["sky:" + name]);
-    return this.buffer(path).then((buf) => new Promise((res, rej) => {
+    return this._once("sky:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
       const url = URL.createObjectURL(new Blob([buf], { type: /webp$/.test(path) ? "image/webp" : "image/jpeg" })), img = new Image();
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
@@ -6842,9 +6876,34 @@ const Assets = {
       if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
       this.kept["sky:" + name] = sky;
       return sky;
-    }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; });
+    }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // ---- pictures for the page itself (assets/ui: icon and portrait strips drawn from the models). ui(name) is the
+  // decoded image, or null: the page then draws what it always drew.
+  loadImage(name) {
+    const path = "ui/" + name + ".webp";
+    if (!this.has(path)) return Promise.resolve(null);
+    if (this.kept["ui:" + name]) return Promise.resolve(this.kept["ui:" + name]);
+    return this._once("ui:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error("cannot decode " + path));
+      img.src = URL.createObjectURL(new Blob([buf], { type: "image/webp" })); // (kept: CSS draws from this address too)
+    })).then((img) => { this.kept["ui:" + name] = img; if (this.onImage) this.onImage(name, img); return img; })
+      .catch((e) => { console.warn("picture " + name + " did not load: " + e.message); return null; }));
+  },
+  ui(name) { return this.kept["ui:" + name] || null; },
+  // The files of a set fetched ahead (not parsed or decoded), so that when the set is asked for it is ready sooner:
+  // the title asks for the hall's while it is up. Sound is fetched too, though it can only be decoded after a tap.
+  prefetch(set) {
+    if (!this.on) return;
+    for (const n of this.files.sets[set] || []) {
+      const [kind, name] = n.split(":");
+      const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
+      if (path && this.has(path)) this.buffer(path).catch(() => null);
+    }
+  },
   // ---- sets: what a screen needs. need(set) is null when there is nothing to wait for (assets off, or all of it
   // already in hand), otherwise a promise that settles when everything has loaded or failed. It never rejects.
   need(set, extra) {
@@ -6857,6 +6916,7 @@ const Assets = {
       else if (kind === "sky" && !this.kept[n]) { if (this.has("sky/" + name + ".webp") || this.has("sky/" + name + ".jpg")) jobs.push(() => this.loadSky(name)); }
       else if (kind === "sfx" && !Sound.sprites[name]) { if (this.files.sprites[name]) jobs.push(() => Sound.loadSprite(name)); }
       else if (kind === "music" && !Sound.tracks[name]) { if (this.files.music[name]) Sound.loadTrack(name); } // (music is not waited for: it comes in when it has arrived)
+      else if (kind === "ui" && !this.kept[n]) { if (this.has("ui/" + name + ".webp")) jobs.push(() => this.loadImage(name)); }
     }
     if (!jobs.length) return null;
     let done = 0;
@@ -8900,6 +8960,54 @@ const HudFX = {
   },
 };
 
+/* ---- 05c-genicons.js ---- */
+// Icons and portraits drawn from the 3D models (assets/ui: one strip of seven icons, one of twelve boss busts), for
+// the page itself. Served, once a strip has loaded, it stands in for the pixel icon or the drawn bust wherever the
+// page shows a coin, a star, a life, a shield, a streak, a medal, a trophy or a boss; from disk, or before it has
+// arrived, the page draws exactly what it always drew. Each icon is an <svg> showing one cell of the strip, so every
+// rule that sizes, shadows or animates an icon applies to it unchanged.
+const GEN_ICONS = ["coin", "star", "heart", "shield", "bolt", "medal", "trophy"]; // (the order of assets/ui/icons.webp)
+const GEN_BOSSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "all"]; // (assets/ui/bosses.webp)
+// the colours that mean "not earned" or "spent" where the page asks for an icon
+const GEN_ICON_OFF = ["#7868cc", "#8d82c8", "#3d2c80"];
+function genIconReady() { return Assets.on && !!Assets.ui("icons"); }
+// One icon from the strip: kind is one of GEN_ICONS; off draws it dark (a star not earned, a trophy still to win).
+function genIcon(kind, off = false) {
+  const img = Assets.ui("icons"), i = GEN_ICONS.indexOf(kind);
+  if (!img || i < 0) return "";
+  return `<svg class="gico${off ? " off" : ""}" viewBox="${i * 160} 0 160 160" aria-hidden="true"><image href="${img.src}" width="1120" height="160"/></svg>`;
+}
+// The page's own icons that have a model: icon("star") and the rest come from the strip once it has loaded.
+icon.gen = (name, color) => (GEN_ICONS.indexOf(name) >= 0 && genIconReady() ? genIcon(name, GEN_ICON_OFF.indexOf(String(color).toLowerCase()) >= 0) : "");
+// and the stat tiles whose emblem is one of the seven (a streak is a bolt, a rank on the board a trophy, a peak a coin)
+const GEN_TILES = { "BEST STREAK": "bolt", "HIGH SCORE RANK": "trophy", PEAK: "coin", "BOSS STARS": "star", STARS: "star", "BOSS HP LEFT": "heart", MASTERY: "shield" };
+icon.tile = (k) => (GEN_TILES[k] && genIconReady() ? genIcon(GEN_TILES[k]) : "");
+// A boss bust from its strip, drawn into a canvas over a field of the boss's colour (see drawBossPortrait). Returns
+// false when the strip is not in hand.
+function genBossPortrait(canvas, color, key) {
+  const img = Assets.on && Assets.ui("bosses"), i = GEN_BOSSES.indexOf(String(key));
+  if (!img || i < 0) return false;
+  const S = 128;
+  canvas.width = canvas.height = S;
+  const x = canvas.getContext("2d");
+  const g = x.createRadialGradient(S / 2, S * 0.42, S * 0.05, S / 2, S * 0.5, S * 0.72);
+  g.addColorStop(0, color);
+  g.addColorStop(0.55, "#1a0d46");
+  g.addColorStop(1, "#07021a");
+  x.fillStyle = g;
+  x.globalAlpha = 1;
+  x.fillRect(0, 0, S, S);
+  x.globalAlpha = 0.55; // (the field is the boss's light, not a flat card behind it)
+  x.fillStyle = "#07021a";
+  x.fillRect(0, 0, S, S);
+  x.globalAlpha = 1;
+  x.imageSmoothingEnabled = true;
+  x.imageSmoothingQuality = "high";
+  x.drawImage(img, i * 192, 0, 192, 192, -4, 0, S + 8, S + 8);
+  canvas.classList.add("gen");
+  return true;
+}
+
 /* ---- 06-dialog.js ---- */
 // Dialogue: client briefings and boss speech, typed out letter by letter with a
 // voice blip, next to a pixel-art portrait drawn on the fly.
@@ -9068,6 +9176,7 @@ function drawBossBust(canvas, key, color) {
 
 // A boss portrait: its own bust when the boss is known (by its key), else a plain horned block in its colour.
 function drawBossPortrait(canvas, color, key) {
+  if (key !== undefined && key !== null && genBossPortrait(canvas, color, key)) return canvas; // (its bust drawn from its 3D model, when that strip has loaded)
   if (key !== undefined && key !== null && BUSTS[key]) return drawBossBust(canvas, key, color);
   canvas.width = canvas.height = 24;
   const x = canvas.getContext("2d");
@@ -10869,11 +10978,11 @@ function makePanoSky(sky, o = {}) {
     uniforms: {
       tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
       uGain: { value: o.gain === undefined ? 1 : o.gain }, uLift: { value: o.lift === undefined ? 1 : o.lift }, uTint: { value: new THREE.Color(o.tint === undefined ? 0xffffff : o.tint) },
-      uRot: { value: (o.rot || 0) / (Math.PI * 2) }, uRotB: { value: 0 }, uDim: { value: new THREE.Vector4(0, 0, 1, 0) },
+      uRot: { value: (o.rot || 0) / (Math.PI * 2) }, uRotB: { value: 0 }, uDim: { value: new THREE.Vector4(0, 0, 1, 0) }, uAlpha: { value: o.alpha === undefined ? 1 : o.alpha },
     },
-    side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false,
+    side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false, transparent: o.alpha !== undefined, // (alpha: a sky that fades in over the one it replaces)
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
-    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
       vec3 look(sampler2D t, vec3 d, float rot){
         ${win
           ? "vec2 uv = vec2(uWin.x + (fract(atan(d.z, d.x) * 0.15915494 + 0.75) - 0.5) * uWin.w, clamp(uWin.y + (asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 - uWin.z) * uWin.w, uWinMin, 0.998));"
@@ -10887,7 +10996,7 @@ function makePanoSky(sky, o = {}) {
         if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
-        gl_FragColor = linearToOutputTexel(vec4(c * uTint, 1.0)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
+        gl_FragColor = linearToOutputTexel(vec4(c * uTint, uAlpha)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   if (win) { mat.uniforms.uWin = { value: new THREE.Vector4(win.u, win.v, 0.5 + (win.at || 0) / 180, win.zoom || 1) }; mat.uniforms.uWinMin = { value: win.min === undefined ? 0.5 : win.min }; }
@@ -10897,7 +11006,7 @@ function makePanoSky(sky, o = {}) {
   dome.userData.sky = sky;
   dome.userData.follow = (camera) => dome.position.copy(camera.position);
   dome.userData.blend = (other, k, rot) => { const u = mat.uniforms; if (other && other.map) { u.tB.value = noMip(other.map); u.uRotB.value = (rot || 0) / (Math.PI * 2); u.uMix.value = clamp(k, 0, 1); } else u.uMix.value = 0; };
-  dome.userData.set = (p) => { const u = mat.uniforms; if (p.gain !== undefined) u.uGain.value = p.gain; if (p.lift !== undefined) u.uLift.value = p.lift; if (p.tint !== undefined) u.uTint.value.set(p.tint); if (p.rot !== undefined) u.uRot.value = p.rot / (Math.PI * 2); };
+  dome.userData.set = (p) => { const u = mat.uniforms; if (p.alpha !== undefined) u.uAlpha.value = p.alpha; if (p.gain !== undefined) u.uGain.value = p.gain; if (p.lift !== undefined) u.uLift.value = p.lift; if (p.tint !== undefined) u.uTint.value.set(p.tint); if (p.rot !== undefined) u.uRot.value = p.rot / (Math.PI * 2); };
   return dome;
 }
 // The sky's reflection on every lit material in a scene (and, through them, most of its ambient light). A model's
@@ -11238,6 +11347,12 @@ const TROPHIES = [
   { id: "reader", name: "BOOKWORM", how: "Open the notes of all 11 stages", test: (s) => Object.keys(s.read).length >= 11 },
 ];
 
+// How each one stands in the hall's trophy stand, and is drawn when the icons drawn from the models are in hand: a
+// cup for the great feats, a medal for the hard ones, a coin for every milestone.
+const TROPHY_SHELF = { trophy: ["boss12", "exam60", "million"], medal: ["boss1", "flawless", "exam90", "streak10", "wave5"], coin: ["first", "streak5", "streak20", "ans100", "ans500", "cards50", "boss6", "reader"] };
+const trophyKind = (id) => (TROPHY_SHELF.trophy.indexOf(id) >= 0 || !id ? "trophy" : TROPHY_SHELF.medal.indexOf(id) >= 0 ? "medal" : "coin");
+const trophyIcon = (id, on) => (genIconReady() ? genIcon(trophyKind(id), !on) : icon(PIXELS["t_" + id] ? "t_" + id : "star", on ? COLORS.yellow : "#8d82c8"));
+
 const Trophies = {
   queue: [],
   showing: false,
@@ -11264,7 +11379,7 @@ const Trophies = {
     if (this.showing || !this.queue.length) return;
     const t = this.queue.shift();
     this.showing = true;
-    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", COLORS.yellow)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
+    const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${trophyIcon(t.id, true)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));
     Sound.sfx("trophy");
     Sound.say("Trophy unlocked");
     Haptics.buzz([20, 30, 20, 30, 70]);
@@ -11275,7 +11390,7 @@ const Trophies = {
     return `<div class="trophies">${TROPHIES.map((t) => {
       const on = this.has(t.id);
       const hue = /^streak/.test(t.id) ? COLORS.orange : /^ans|^wave/.test(t.id) ? COLORS.cyan : /^cards|^reader/.test(t.id) ? COLORS.lime : /^boss|^flawless/.test(t.id) ? COLORS.magenta : /^exam/.test(t.id) ? COLORS.violet : COLORS.yellow;
-      return `<div class="tr${on ? " on" : ""}" style="--t:${hue}"><span class="ic">${icon(PIXELS["t_" + t.id] ? "t_" + t.id : "star", on ? COLORS.yellow : "#8d82c8")}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
+      return `<div class="tr${on ? " on" : ""}" style="--t:${hue}"><span class="ic">${trophyIcon(t.id, on)}</span><span><b>${esc(t.name)}</b><small>${esc(t.how)}</small></span>${on ? "" : `<span class="lk">${icon("lock", "#8d82c8")}</span>`}</div>`;
     }).join("")}</div>`;
   },
 };
@@ -11528,6 +11643,7 @@ class AmbientSky {
 
 /* ---- 10-title.js ---- */
 // Attract mode: a synthwave horizon with a striped sun, and the INSERT COIN prompt.
+const TITLE_PANO_ROT = { "title-dusk": 1.9, "title-dusk-b": 2.92 }; // (the painted dusk turned so its sun sets behind the striped one; the bright one turned so its sun is hidden by the towers on the left and its red streaks cross the avenue)
 class TitleScene extends Scene3D {
   constructor() {
     super({ fov: 62, far: 900, fog: [0x2a0a44, 105, 560] });
@@ -11570,10 +11686,47 @@ class TitleScene extends Scene3D {
   boost() {
     this.tw.add(1.1, (k) => { this.speed = 14 + k * 160; }, null, Ease.inCubic);
   }
+  // The generated dusk, served, once it has arrived (the title never waits for it): a panorama behind the city in
+  // place of the drawn sky, faded in over it, then drifting slowly from one dusk to the other. Each is turned so its
+  // own sun stands behind the striped one. The haze the city stands in takes the colour of its horizon, and the wet
+  // road mirrors it.
+  takeSky() {
+    const a = Assets.sky("title-dusk-b"), b = Assets.sky("title-dusk"), first = a || b; // (the painted dusk first: storm cloud rimmed in magenta)
+    if (!first || !first.map) return;
+    this.pano = makePanoSky(first, { gain: 0.8, lift: 0.5, rot: TITLE_PANO_ROT[first.name] || 0, alpha: 0 });
+    this.pano.renderOrder = -19;
+    this.sky.renderOrder = -21; // (the drawn sky first; the panorama fades in over it)
+    this.scene.add(this.pano);
+    this.panoA = first; this.panoB = null; this.panoIn = 0;
+    // the haze: the colour of the panorama's horizon in front, darkened, half way from the drawn one
+    try {
+      const c = document.createElement("canvas"), x = c.getContext("2d"), img = first.map.image;
+      c.width = 64; c.height = 32;
+      x.drawImage(img, 0, 0, 64, 32);
+      const u0 = Math.round(((((TITLE_PANO_ROT[first.name] || 0) / (Math.PI * 2) + 0.25) % 1) * 64)), d = x.getImageData(0, 14, 64, 4).data;
+      let r = 0, g = 0, bb = 0, n = 0;
+      for (let row = 0; row < 4; row++) for (let k = -10; k <= 10; k++) { const i = (row * 64 + ((u0 + k + 64) % 64)) * 4; r += d[i]; g += d[i + 1]; bb += d[i + 2]; n++; }
+      this.hazeTo = new THREE.Color(r / n / 255, g / n / 255, bb / n / 255).multiplyScalar(0.3);
+      this.hazeFrom = this.scene.fog.color.clone();
+    } catch (e) { this.hazeTo = null; }
+  }
   update(dt) {
     super.update(dt);
     this.dist += this.speed * dt;
     if (!this.has3D) return;
+    if (Assets.on && !this.pano && (Assets.sky("title-dusk") || Assets.sky("title-dusk-b"))) this.takeSky();
+    if (this.pano) {
+      const P = this.pano.userData;
+      this.panoIn = Math.min(1, this.panoIn + dt / 1.6);
+      if (!this.panoB) { const o = Assets.sky(this.panoA.name === "title-dusk" ? "title-dusk-b" : "title-dusk"); if (o && o.map) this.panoB = o; }
+      const k = this.panoB ? 0.5 - 0.5 * Math.cos((this.t * Math.PI * 2) / 48) : 0; // (one dusk to the other and back, every 48 seconds)
+      if (this.panoB) P.blend(this.panoB, k, TITLE_PANO_ROT[this.panoB.name] || 0);
+      const bright = (n) => (n === "title-dusk" ? 0.6 : 0.8); // (the bright dusk is held down: its sky must not wash out the striped sun or the logo)
+      P.set({ alpha: smoothstep(0, 1, this.panoIn), gain: lerp(bright(this.panoA.name), this.panoB ? bright(this.panoB.name) : 0.8, k) * (1 + this.skyFlash * 1.1) });
+      this.sky.visible = this.panoIn < 1;
+      if (this.hazeTo) this.scene.fog.color.copy(this.hazeFrom).lerp(this.hazeTo, 0.4 * this.panoIn);
+      P.follow(this.camera);
+    }
     this.floor.material.uniforms.uScroll.value = -this.dist;
     this.shooting.userData.tick(dt);
     this.sun.position.y = 30 + Math.sin(this.t * 0.4) * 0.8;
@@ -11637,23 +11790,43 @@ function showTitle() {
     tipEl.innerHTML = `<span><b>STAGE ${tip.ch}${lead ? " · " + esc(lead[1]) : ""}</b><i>${esc(lead ? lead[2] : tip.t)}</i></span>`;
   };
   showTip();
-  let started = false;
+  let started = false, woke = false;
+  // Served: the title's dusk and the hall's models are asked for while the title is up, and the sound's bytes are
+  // fetched (it can only be decoded after a tap). The title shows at once and takes each in as it arrives.
+  if (Assets.on) {
+    Assets.need("title");
+    Assets.prefetch("title");
+    Assets.need("hub");
+    Assets.prefetch("hubsound");
+  }
+  // The first tap or key: the sound comes on, the title's music plays and the announcer calls for a coin.
+  const wake = () => {
+    if (woke || !Assets.on) return;
+    woke = true;
+    Sound.init();
+    Sound.play("title");
+    const t0 = performance.now(), p = Assets.need("title");
+    Assets.need("hubsound");
+    (p || Promise.resolve()).then(() => { if (performance.now() - t0 < 2500) Sound.say("INSERT COIN"); }); // (a call that would come late is not made)
+  };
   document.body.classList.add("on-title"); // the sync toast sits below the top row here
   const timer = setInterval(showTip, 6500);
   const start = () => {
     if (started) return;
     started = true;
+    wake();
     Sound.init();
-    Sound.sfx("coin");
+    Sound.sfx(Sound.bank.coin_insert ? "coin_insert" : "coin");
     $("[data-credit]", el).textContent = "01";
     $(".insert-coin", el).textContent = "GET READY!";
     scene.boost();
     setTimeout(() => UI.cover(showHub), 900); // the first arcade-floor build happens behind black
   };
+  el.addEventListener("pointerdown", wake);
   UI.show({
     el,
     on: (a) => { if (a === "start") start(); },
-    key: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
+    key: (e) => { wake(); if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } },
     destroy: () => { clearInterval(timer); document.body.classList.remove("on-title"); },
   });
 }
@@ -12635,12 +12808,14 @@ function hubMachineScreenMaterial(levels) {
 // The floor: polished dark tiles that mirror the room, a blacklight carpet
 // beyond them, an LED inlay ring between the two, soft contact shadows under
 // the machines and pools of coloured light thrown by the cabinets.
-function hubFloorMaterial(mirror, carpet) {
+function hubFloorMaterial(mirror, carpet, pano = null) {
   const v2 = () => CABINETS.map(() => new THREE.Vector2());
   const v3 = () => CABINETS.map(() => new THREE.Color(0));
   const N = CABINETS.length, TR = HUB_TILE_R.toFixed(2), BR = HUB_BG_R.toFixed(2);
   return new THREE.ShaderMaterial({
+    defines: pano ? { HUB_PANO: "" } : {}, // (the generated hall: the polished tiles also take a soft sheen of its panorama)
     uniforms: Object.assign(fogUniforms(), {
+      tPano: { value: pano },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 }, tCarpet: { value: carpet },
       uBlack: { value: 1 }, uInlay: { value: 1 }, uInlayCol: { value: neon(0xff3ad4, 2.2) }, uBg: { value: 1 }, uRoom: { value: 1 },
       uCab: { value: v2() }, uPoolPos: { value: v2() }, uPoolCol: { value: v3() }, uConeCol: { value: v3() },
@@ -12649,7 +12824,7 @@ function hubFloorMaterial(mirror, carpet) {
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
-      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect;
+      uniform sampler2D tReflect; uniform sampler2D tCarpet; uniform float uReflect; uniform sampler2D tPano;
       uniform float uBlack; uniform float uInlay; uniform vec3 uInlayCol; uniform float uBg; uniform float uRoom;
       uniform vec2 uCab[${N}]; uniform vec2 uPoolPos[${N}]; uniform vec3 uPoolCol[${N}]; uniform vec3 uConeCol[${N}];
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -12689,6 +12864,11 @@ function hubFloorMaterial(mirror, carpet) {
             + (texture2D(tReflect, ruv + vec2(0.0, s)).rgb + texture2D(tReflect, ruv - vec2(0.0, s)).rgb) * 0.2
             + (texture2D(tReflect, ruv + vec2(0.0, s * 2.4)).rgb + texture2D(tReflect, ruv - vec2(0.0, s * 2.4)).rgb) * 0.1;
           col += rc * mix(0.06, mix(0.22, 0.68, grout), tiles) * fres * uReflect;
+          #ifdef HUB_PANO
+          { vec3 d = vec3(-V.x, V.y, -V.z); // (the reflected ray, looked up in the panorama as a sky is: blurred, faint, on the tiles)
+            vec3 pc = texture2D(tPano, vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5), 3.5).rgb;
+            col += pc * pc * mix(0.025, 0.15 * grout, tiles) * fres * uReflect; }
+          #endif
         }
         float dr = abs(r - ${TR});
         float wr = max(0.03, fr * 1.2);
@@ -13060,8 +13240,15 @@ function hubWallAtlas() {
     x.lineWidth = 4;
     x.strokeRect(2, 2, 92, 140);
     const face = drawBossPortrait(document.createElement("canvas"), stars ? cfg.color : "#6a5aa6", k);
-    x.imageSmoothingEnabled = false;
-    x.drawImage(face, 18, 14, 60, 60);
+    if (face.classList.contains("gen")) { // (the bust drawn from its model: larger, smooth, and grey until the boss is beaten)
+      x.imageSmoothingEnabled = true;
+      if (!stars) x.filter = "grayscale(0.75) brightness(0.62)";
+      x.drawImage(face, 8, 6, 80, 80);
+      x.filter = "none";
+    } else {
+      x.imageSmoothingEnabled = false;
+      x.drawImage(face, 18, 14, 60, 60);
+    }
     x.textAlign = "center";
     x.textBaseline = "alphabetic";
     x.font = '8px "Press Start 2P", monospace';
@@ -13090,6 +13277,10 @@ class HubScene extends Scene3D {
     this.cabs = [];
     if (!this.has3D) return;
     const s = this.scene;
+    // the generated cabinets, toppers and trophies, when they are in hand (see 11c-hubgen.js); otherwise the hall's own
+    this.gen = hubGenTake();
+    this.hg = this.gen ? new HubGen(this, this.gen) : null;
+    if (this.gen && this.gen.sky && this.gen.sky.env) s.environment = this.gen.sky.env; // (the models mirror the hall's panorama and are lit by it)
     s.background = new THREE.Color(0x07021a);
     s.userData.post = { exposure: 1.06, bloom: 0.33, threshold: 1.38, saturation: 1.14, contrast: 1.12, vignette: 0.82, fringe: 0.1, sharpen: 0.45, ao: 1, shadow: 0.9, shadowLen: 0.12, sun: [0.15, 1, 0.5], dirt: 0.3, mblur: 0.22 };
     this.restLook = 1.9; // where the camera aims on the cabinet in front (set with restDolly by the fit in onResize)
@@ -13126,7 +13317,7 @@ class HubScene extends Scene3D {
     this.rimLight = new THREE.PointLight(0xffffff, 0, 11, 1.5);
     this.backLight = new THREE.PointLight(0xa9c6ff, 0, 13, 1.3);
     this.deskLight = new THREE.PointLight(0xffd29a, 0, 3.4, 1.6);
-    this.lightCol = new THREE.Color(CABINETS[this.sel].color);
+    this.lightCol = new THREE.Color((CABINETS[this.sel] || { color: COLORS.gold }).color); // (the seventh stop, in the generated hall, is the trophy stand)
     s.add(this.hemi, this.key, this.screenLight, this.topLight, this.rimLight, this.backLight, this.deskLight);
     // the lamp over the cabinet in front: a shaft of its light you can see, dust turning in it, a pool of it on the floor
     this.heroCone = makeLightCone({ color: 0xffffff, top: 0.2, bottom: 2.4, height: 7.4, intensity: 0 });
@@ -13154,13 +13345,18 @@ class HubScene extends Scene3D {
     this.wallSig = hubWallSig();
     const marqTex = this.canvasTex(hubMarqueeAtlas());
     const artTex = this.canvasTex(hubArtAtlas());
-    const B = { lit: new HubBatch("lit", 0.6), art: new HubBatch("art"), glow: new HubBatch("glow"), marq: new HubBatch("marq"), panels: new HubBatch("panels"), signs: new HubBatch("signs"), screens: new HubBatch("screens"), cones: new HubBatch("cones") };
+    const v = this.gen ? "-gen" : ""; // (the generated hall's batches are cached apart from the hall's own)
+    const B = { lit: new HubBatch("lit" + v, 0.6), art: new HubBatch("art" + v), glow: new HubBatch("glow" + v), marq: new HubBatch("marq" + v), panels: new HubBatch("panels" + v), signs: new HubBatch("signs" + v), screens: new HubBatch("screens" + v), cones: new HubBatch("cones" + v) };
     this.dustPts = { p: [], x: [], g: [] };
     const K = new HubKit();
     this.addRoom(B, K);
     this.addWall(B, K, atlas);
     CABINETS.forEach((cab, i) => this.cabs.push(this.makeCabinet(cab, i, B, K)));
     this.addMachines(B, K);
+    if (this.hg) this.hg.stand(B, K);
+    // the trophy stand is a seventh stop along the row: lit and framed like a cabinet when you walk to it
+    this.stops = CABINETS.length + (this.hg && this.hg.items.length ? 1 : 0);
+    if (this.stops > CABINETS.length) this.standCab = { scr: { power: 1, target: 1 }, color: new THREE.Color(COLORS.gold), focus: this.sel === CABINETS.length ? 1 : 0 };
     K.dispose();
     const lv = this.lv;
     s.add(B.lit.mesh(hubLitMaterial(this.env), "color"));
@@ -13225,7 +13421,7 @@ class HubScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     const carpet = carpetTexture();
     this.texs.push(carpet);
-    this.floorMat = hubFloorMaterial(this.mirror, carpet);
+    this.floorMat = hubFloorMaterial(this.mirror, carpet, this.gen && this.gen.sky ? this.gen.sky.map : null);
     CABINETS.forEach((_, i) => {
       const a = this.cabAngle(i);
       this.floorMat.uniforms.uCab.value[i].set(Math.sin(a) * HUB_R, -Math.cos(a) * HUB_R);
@@ -13306,6 +13502,9 @@ class HubScene extends Scene3D {
     const at = (...args) => base.clone().multiply(hubM(...args));
     const g = HUB_G.cab + i;
     const col = new THREE.Color(cab.color);
+    const G = this.hg ? this.hg.cabinet(cab, i, B, K, g, col) : null; // (the generated cabinet: the model, its neon, marquee and topper)
+    let zf = HUB_BODY[1][0], onPanel = null;
+    if (!G) { // the hall's own cabinet
     const W = 2.2, T = 0.07, IW = W - 2 * T;
     const GLOSS = [0.25, 0.24], SATIN = [0.3, 0.36], METAL = [1, 0.2], CHROME = 0xd2d0e4;
     [W / 2, -W / 2 + T].forEach((xo) => B.lit.add(K.get("side", () => hubPrism(HUB_SIDE, T)), at(xo, 0, 0, 0, -Math.PI / 2), col, { k: 0.44, aux: GLOSS }));
@@ -13321,7 +13520,6 @@ class HubScene extends Scene3D {
       [-1, 1].forEach((sx) => K.box(B.glow, 0.044, f.len + TM, TM, at(sx * (W / 2 - T / 2), f.y, f.z, f.rx), cab.id === "exam" ? 0xdcc8ff : col, { k: cab.id === "exam" ? 2.7 : 2.1, g }));
     }
     // kick plate, coin door with lit slots, stripes either side
-    const zf = HUB_BODY[1][0];
     K.box(B.lit, IW, 0.16, 0.03, at(0, 0.08, zf + 0.015), CHROME, { aux: METAL });
     K.box(B.lit, 0.7, 0.68, 0.02, at(0, 0.62, zf + 0.01), CHROME, { aux: METAL });
     K.box(B.lit, 0.62, 0.6, 0.03, at(0, 0.62, zf + 0.018), 0x23212c, { aux: [0.85, 0.32] });
@@ -13340,7 +13538,7 @@ class HubScene extends Scene3D {
     { const sf2 = hubFace(HUB_BODY[4], HUB_BODY[5], 0.5, 0.021); (this.panelMs = this.panelMs || [])[i] = at(0, sf2.y, sf2.z, sf2.rx).multiply(new THREE.Matrix4().makeScale(IW - 0.03, sf2.len - 0.012, 1)); }
     K.quad(B.art, IW - 0.02, art.len - 0.012, at(0, art.y, art.z, art.rx), 0xffffff, { aux: [0.1, 0.3], uv: hubUV((i % 2) * 512, Math.floor(i / 2) * 138, 512, 138) });
     K.quad(B.art, 0.6, 0.58, at(0, 0.62, zf + 0.0345), 0xffffff, { aux: [0.9, 0.34], uv: hubUV(0, 420, 128, 128) });
-    const onPanel = (x, s, h) => {
+    onPanel = (x, s, h) => {
       const f = hubFace(HUB_BODY[4], HUB_BODY[5], s, 0.012 + h / 2);
       return at(x, f.y, f.z, f.rx).multiply(hubM(0, 0, 0, Math.PI / 2));
     };
@@ -13357,6 +13555,7 @@ class HubScene extends Scene3D {
     K.quad(B.marq, IW - 0.04, 0.67, at(0, mf.y, mf.z, mf.rx), 0xffffff, { k: 1.02, g, uv: hubUV(0, i * 170, 512, 170) });
     const sp = hubFace(HUB_BODY[6], HUB_BODY[7], 0.62, 0.004);
     K.quad(B.glow, IW - 0.12, sp.len * 0.3, at(0, sp.y, sp.z, sp.rx), col, { k: 0.9, g });
+    } else (this.panelMs = this.panelMs || [])[i] = G.panelM;
     // the CRT
     const canvas = document.createElement("canvas");
     canvas.width = 320; // drawn in 160 x 120 units at 2x, so the attract text is legible
@@ -13368,11 +13567,11 @@ class HubScene extends Scene3D {
     this.texs.push(tex);
     const mat = hubScreenMaterial(tex, cab.color);
     const sf = hubFace(HUB_BODY[5], HUB_BODY[6], 0.5, 0.005);
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.96, 1.5), mat);
-    screen.applyMatrix4(at(0, sf.y, sf.z, sf.rx));
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(G ? G.sw : 1.96, G ? G.sh : 1.5), mat);
+    screen.applyMatrix4(G ? G.screenM : at(0, sf.y, sf.z, sf.rx));
     this.scene.add(screen);
     // what makes this cabinet unlike the other five (see 11b-hubextras.js)
-    hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
+    if (!G) hubCabinetStyle(cab.id, { K, B, at, onPanel, g, col, zf });
     // the ceiling lamp, its beam, and the dust drifting in it
     const lamp = new THREE.Vector3(0, HUB_CEIL - 0.32, 1.15).applyMatrix4(baseL);
     const foot = new THREE.Vector3(0, 0, 0.5).applyMatrix4(baseL);
@@ -13394,7 +13593,7 @@ class HubScene extends Scene3D {
       D.x.push(Math.random(), rr);
       D.g.push(g);
     }
-    if (cab.id === "guide") { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
+    if (cab.id === "guide" && !G) { this.deskAt = new THREE.Vector3(0.9, 3.3, 1.22).applyMatrix4(base); this.deskCab = i; }
     const demo = { canvas, ctx: canvas.getContext("2d"), tex, t: Math.random() * 10, cab };
     drawDemo(demo, 0);
     return { demo, mat, scr: { power: 1, target: 1 }, color: col, coneCol, focus: i === this.sel ? 1 : 0 };
@@ -13491,6 +13690,7 @@ class HubScene extends Scene3D {
     this.dolly = this.restDolly;
   }
   focus(i) { this.sel = i; }
+  choose(i) { if (this.cabs[i]) this.cabs[i].chosen = 1; }
   // Each cabinet is framed for its own height in the strip above the card: what stands on it (horns, a clock, a
   // dish) sits just under the strip's top edge, clear of the mission banner, and its foot stands well above the
   // card, so the floor in front of it and its reflection show. A tall cabinet is seen from further back.
@@ -13501,14 +13701,16 @@ class HubScene extends Scene3D {
     const f = h / (2 * tanH); // the lens, in px
     const mT = 26, mB = clamp(bandH * 0.13, 22, 58);
     const tt = Math.atan((bandH / 2 - mT) / f), tf = Math.atan((bandH / 2 - mB) / f);
-    this.fits = CABINETS.map((cab) => {
-      const SH = HUB_SHAPE[cab.id] || [1, 1], top = HUB_TOP[cab.id] || 4.6;
+    this.fits = CABINETS.map((cab, i) => {
+      const SH = (this.hg ? [0.92, HUBGEN.SCREEN.y * HUBGEN.S / 2.3] : HUB_SHAPE[cab.id]) || [1, 1], top = (this.hg && this.hg.cabTop[i]) || HUB_TOP[cab.id] || 4.6; // (a generated cabinet: its own roof and topper; its screen where the model's glass is)
       let lo = 3.5, hi = 40;
       for (let k = 0; k < 24; k++) { const d = (lo + hi) / 2; if (Math.atan((top - HUB_EYE) / d) + Math.atan(HUB_EYE / (d - 0.96)) > tt + tf) lo = d; else hi = d; }
       const d = clamp(Math.max(hi, (3.5 * SH[0] * f) / (0.94 * w) + 0.6), HUB_R - 1.6, HUB_R + 9); // (and its fins, tyres or shoulders inside the width)
       return { dolly: HUB_R - d, look: HUB_EYE - d * Math.tan(tt - Math.atan((top - HUB_EYE) / d)), screen: 2.3 * SH[1] };
     });
-    const F = this.fits[this.sel];
+    // the trophy stand: low and wide, seen from close by and a little above, its three steps filling the strip
+    if (this.stops > CABINETS.length) { const d = clamp((2.9 * f) / (0.94 * w) + 0.4, 4.6, 9); this.fits.push({ dolly: HUB_R - d, look: 0.95, screen: 1.4 }); }
+    const F = this.fits[this.sel] || this.fits[0];
     this.restDolly = F.dolly; this.restLook = F.look; this.screenY = F.screen;
     if (!this.zooming) this.dolly = this.restDolly;
     if (this.dust) this.dust.material.uniforms.uScale.value = (h * GFX.scenePR()) / (2 * tanH);
@@ -13598,6 +13800,7 @@ class HubScene extends Scene3D {
       }
     });
     this.extras.update(dt);
+    if (this.hg) this.hg.update(dt);
     FX.sync(this.scene, this.t);
   }
   // Turn lamp states into light: neon levels, the room's real lights, and the
@@ -13615,7 +13818,8 @@ class HubScene extends Scene3D {
     this.cabs.forEach((c, i) => {
       c.focus += ((i === this.sel ? 1 : 0) - c.focus) * Math.min(1, dt * 4);
       cabsOn += on[G.cab + i];
-      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0));
+      if (c.chosen) c.chosen = Math.max(0, c.chosen - dt * 1.4); // (only ever set in the generated hall: see choose)
+      lv[G.cab + i] = on[G.cab + i] * (0.78 + 0.3 * c.focus + (i === this.sel ? 0.05 * Math.sin(this.t * 3.2) : 0) + 0.45 * (c.chosen || 0));
     });
     // (what stands along the wall and hangs on it is turned down: it is the room, not the subject)
     lv[G.bg] *= 0.28; lv[G.signs] *= 0.34; lv[G.sign] *= 0.44; lv[G.signC] *= 0.44; lv[G.board] *= 0.56;
@@ -13631,20 +13835,22 @@ class HubScene extends Scene3D {
     const room = this.room;
     this.hemi.intensity = 0.8 * room;
     this.key.intensity = 0.62 * room;
-    const sc = this.cabs[this.sel];
+    if (this.standCab) { const st = this.standCab, gs = G.cab + CABINETS.length; st.focus += ((this.sel === CABINETS.length ? 1 : 0) - st.focus) * Math.min(1, dt * 4); lv[gs] = on[gs] * (0.78 + 0.3 * st.focus); }
+    const sc = this.cabs[this.sel] || this.standCab;
     this.lightCol.lerp(sc.color, Math.min(1, dt * 5));
     this.screenLight.color.copy(this.lightCol);
     this.screenLight.intensity = 1.8 * sc.scr.power * (0.93 + 0.07 * Math.sin(this.t * 15));
     this.screenLight.position.set(Math.sin(a) * (HUB_R - 1.45), 2.4, -Math.cos(a) * (HUB_R - 1.45));
     this.topLight.intensity = 1.55 * lv[G.cab + this.sel]; // (the cabinet in front is a lit object, not an outline: its lamp is the brightest light in the hall)
     this.topLight.position.set(Math.sin(a) * (HUB_R - 2.3), 6.6, -Math.cos(a) * (HUB_R - 2.3));
-    this.rimLight.color.set(HUB_ACCENT[CABINETS[this.sel].id] || 0xffffff);
+    this.rimLight.color.set(HUB_ACCENT[(CABINETS[this.sel] || {}).id] || 0xffffff);
     this.rimLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.rimLight.position.set(Math.sin(a + 0.2) * (HUB_R + 1.5), 3.3, -Math.cos(a + 0.2) * (HUB_R + 1.5));
     // a cool light behind and above it, from the other side: what stands on the cabinet gets a lit top and a bright edge
     this.backLight.intensity = 3.0 * lv[G.cab + this.sel];
     this.backLight.position.set(Math.sin(a - 0.17) * (HUB_R + 2.1), 7.1, -Math.cos(a - 0.17) * (HUB_R + 2.1));
     if (this.deskAt) { this.deskLight.position.copy(this.deskAt); this.deskLight.intensity = 1.5 * lv[G.cab + this.deskCab]; }
+    else if (this.hg && this.hg.lampFor(this.sel, this.deskLight.position)) { this.deskLight.color.setHex(0xfff2e6); this.deskLight.distance = 4.6; this.deskLight.intensity = 2.4 * lv[G.cab + this.sel]; } // (the generated hall: a lamp on what stands on the cabinet in front, or on the trophies)
     { // its lamp's shaft, pool and dust follow the selection and come up with the cabinet's power
       const hk = lv[G.cab + this.sel], hx = Math.sin(a) * (HUB_R - 0.5), hz = -Math.cos(a) * (HUB_R - 0.5);
       this.heroCone.position.set(hx, 7.4, hz);
@@ -13686,6 +13892,7 @@ class HubScene extends Scene3D {
     this.marqMat.uniforms.uSelV.value = 1 - ((this.sel + 0.5) * 170) / 1024;
   }
   refreshWall() {
+    if (this.hg) this.hg.refresh(); // (the trophies on the stand)
     const sig = hubWallSig();
     if (!this.wallTex || sig === this.wallSig) return;
     this.wallSig = sig;
@@ -13918,6 +14125,19 @@ function hubScene() {
 }
 
 function showHub() {
+  // The first time, when the page can fetch them, the hall is built with its models: at once if they are in hand (the
+  // title asks for them while it is up), else behind the loading line. After that it is kept (see hubScene), and
+  // from disk there is nothing to wait for. Its sound is asked for too, but never waited for.
+  if (Assets.on && !(Scenes.cur instanceof HubScene) && !(Hub.scene && !Hub.scene.disposed)) {
+    Assets.need("hubsound");
+    const p = Assets.need("hub");
+    if (p) {
+      UI.loading(true);
+      Assets.onProgress = (d, n) => UI.loading(true, d / n);
+      p.then(() => { Assets.onProgress = null; UI.loading(false); UI.cover(showHub); }); // (built behind black, then the screen comes on)
+      return;
+    }
+  }
   Sound.play("hub");
   Sound.setIntensity(0);
   const fresh = !(Scenes.cur instanceof HubScene);
@@ -13927,6 +14147,7 @@ function showHub() {
     scene.powerOn();
     Hub.booting = true;
     setTimeout(() => Sound.ambience(true), 2600);
+    if (Assets.on) setTimeout(() => { Sound.say("WELCOME"); Sound.say("SELECT YOUR GAME"); }, 2300); // (the first visit of a session, as the room comes on)
   } else {
     scene.zoomOut();
     Sound.ambience(true);
@@ -13962,8 +14183,10 @@ function showHub() {
   };
   window.addEventListener("resize", fitDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (el.isConnected) fitDesc(); });
+  const stops = scene.stops || CABINETS.length; // (the generated hall has a seventh stop: the trophy stand)
+  if (Hub.index >= stops) Hub.index = 0;
   const render = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     card.style.setProperty("--c", cab.color);
     const best = Store.best(cab.id);
     const meta = {
@@ -13973,31 +14196,36 @@ function showHub() {
       memory: `CARDS BANKED <b>${Store.countMastered(ALL_FIDS)}/${ALL_FIDS.length}</b>`,
       exam: `BEST EXAM <b>${Store.state.stats.bestExam || 0}%</b>`,
       guide: `<b>${CHAPTERS.reduce((s, c) => s + c.guide.length, 0)}</b> NOTE PAGES`,
+      stand: `TROPHIES <b>${Trophies.count()}/${TROPHIES.length}</b>`,
     }[cab.id];
+    const dots = CABINETS.map((c) => c.color).concat(stops > CABINETS.length ? [COLORS.gold] : []);
     card.innerHTML = `<div class="hub-nav">
         <button class="iconbtn" data-act="prev" aria-label="Previous cabinet">${icon("left")}</button>
         <div><div class="hub-name">${esc(cab.name)}</div><div class="hub-tag">${esc(cab.tag)}</div></div>
         <button class="iconbtn" data-act="next" aria-label="Next cabinet">${icon("right")}</button>
       </div>
       <p class="hub-desc"><span>${esc(cab.desc)}</span></p>
-      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${CABINETS.length}">${CABINETS.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c.color}"></i>`).join("")}</span></div>
-      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : "PLAY"} ${icon("play")}</button>`;
+      <div class="hub-meta"><span>${meta}</span><span class="dots" role="img" aria-label="Cabinet ${Hub.index + 1} of ${dots.length}">${dots.map((c, i) => `<i class="${i === Hub.index ? "on" : ""}" style="--d:${c}"></i>`).join("")}</span></div>
+      <button class="btn" data-act="play">${cab.id === "guide" ? "OPEN GUIDE" : cab.id === "stand" ? "SEE THEM ALL" : "PLAY"} ${icon("play")}</button>`;
     fitDesc();
     scene.focus(Hub.index);
     requestAnimationFrame(() => scene.setBand($(".spacer", el)));
   };
   const move = (d) => {
-    Hub.index = (Hub.index + d + CABINETS.length) % CABINETS.length;
-    Sound.sfx("move", d * 0.7);
+    Hub.index = (Hub.index + d + stops) % stops;
+    Sound.sfx(Sound.bank.ui_click ? "ui_click" : "move", d * 0.7); // (the recorded click when it has loaded)
     render();
   };
   const play = () => {
-    const cab = CABINETS[Hub.index];
+    const cab = CABINETS[Hub.index] || hubStandStop();
     Sound.sfx("select");
+    if (Assets.on && cab.id !== "stand") { if (Sound.bank.coin_insert) Sound.sfx("coin_insert", 0, { vol: 0.7 }); Sound.say(cab.name); } // (the coin drops and the announcer calls the game)
+    if (scene.hg) scene.choose(Hub.index); // (its topper spins up, its neon flares)
     scene.zoomIn();
     setTimeout(() => {
       UI.flash("crt-on");
-      if (cab.id === "guide") showGuide();
+      if (cab.id === "stand") showStats();
+      else if (cab.id === "guide") showGuide();
       else if (cab.id === "exam") showExamSetup();
       else showSelect(cab.id);
     }, 520);
@@ -14402,7 +14630,7 @@ class HubExtras {
   }
   // Selecting a cabinet wakes it: a flare off its marquee, sparks, a rising tone.
   powerUp(i) {
-    const hub = this.hub, a = hub.cabAngle(i), col = CABINETS[i].color;
+    const hub = this.hub, a = hub.cabAngle(i), col = (CABINETS[i] || { color: COLORS.gold }).color; // (the seventh stop is the trophy stand)
     Sound.sfx("powerup", clamp(Math.sin(a - hub.angle) * 2, -0.8, 0.8));
     this.surge = 1; this.surgeI = i;
     this.flare.position.set(Math.sin(a) * (HUB_R - 0.6), 3.6, -Math.cos(a) * (HUB_R - 0.6));
@@ -14459,6 +14687,269 @@ class HubExtras {
     this.steam.material.uniforms.uTime.value = t;
     this.steam.material.uniforms.uH.value = GFX.h * GFX.scenePR();
     this.windows.material.uniforms.uTime.value = t;
+  }
+}
+
+/* ---- 11c-hubgen.js ---- */
+// The arcade hall with its generated models, when they arrived (the page served over HTTP and the hall's set in
+// hand: see showHub). Opened from disk, the hall builds its own six cabinets exactly as before.
+//
+// One cabinet model (prop-cabinet: gloss black, chrome trim, a stick and buttons, a coin door) stands for all six
+// games, and is told apart by what is put on it: the game's own attract screen behind its glass, its name lit on the
+// marquee, a neon moulding along both side panels and painted stripes in the game's colour, a line of light at its
+// foot, and on its roof, on a lit turntable, a small copy of what the game is about (the starfighter, the war rig,
+// the Proctor, a deck of study cards in its holder, the examiner's lectern, the great book). The cabinet in front
+// comes alive: its turntable lifts and spins up and its ring burns brighter (the hall's lamp, pool and rim lights
+// already follow it). At the end of the row, a stand shows the sixteen trophies as real objects: a cup, a medal or a
+// coin for each, lit and turning when earned, dark until then.
+// The hall's panorama (hub-hall: made-up marquee lettering, so it is never shown) is what the gloss black, the
+// chrome and the floor reflect, and the light the models are lit by.
+const HUBGEN = {
+  S: 4.15, // the cabinet's height in the hall (each model is one unit tall)
+  SX: 1.2, // and a little wider than the model: about as wide as the hall's own cabinets
+  // places on the cabinet model, in its own frame (+y up, +z toward the player), measured from its geometry
+  SCREEN: { y: 0.68, z: -0.012, tilt: 0.29, w: 0.244, h: 0.22 }, // the glass runs from 0.56 to 0.80 high and leans back
+  MARQ: { y: 0.911, z: 0.072, tilt: 0.21, w: 0.37, h: 0.112 },
+  ROOF: { y: 0.995, z: -0.085 },
+  PANEL: { y: 0.505, z: 0.19, tilt: -0.5, w: 0.34, d: 0.085 },
+  EDGE: [[0.02, 0.16], [0.35, 0.162], [0.4, 0.222], [0.47, 0.231], [0.5, 0.22], [0.53, 0.115], [0.56, 0.088], [0.8, 0.006], [0.83, 0.03], [0.86, 0.085], [0.89, 0.084], [0.97, 0.066]], // the side panel's front edge, [y, z]
+  HALF: 0.199, // half the model's width
+  // what turns on each roof: the model, its size, how high it rides over the turntable, a pitch, a turn to start from
+  TOPPERS: {
+    blaster: { name: "mini-starfighter", s: 1.9, y: 0.42, rx: -0.14, ry: 0.6, bob: 0.07 },
+    racer: { name: "mini-warrig", s: 1.75, y: 0, ry: 0.7 },
+    boss: { name: "mini-proctor", s: 1.28, y: 0, ry: 0.3 },
+    memory: { name: "prop-deck", s: 0.95, y: 0, ry: 0.5 },
+    exam: { name: "prop-podium", s: 1.1, y: 0, ry: 0.4 },
+    guide: { name: "prop-tome", s: 1.12, y: 0, ry: 0.4 },
+  },
+  // the trophy stand: where it stands in the hall (angle, radius), and how the sixteen trophies are shown on it
+  STAND: { r: HUB_R + 0.25, w: 2.4 },
+  TREADS: [[0.429, 0.69], [0.702, 0.13], [0.94, -0.5]], // the stand model's three steps, front to back: [height of the tread, its depth centre]
+  CUPS: TROPHY_SHELF.trophy, MEDALS: TROPHY_SHELF.medal, COINS: TROPHY_SHELF.coin, // (see 09-trophies.js)
+};
+
+// The trophy stand's card on the hall's screen, as a cabinet's is (see showHub).
+function hubStandStop() {
+  const got = Trophies.count(), next = TROPHIES.find((t) => !Trophies.has(t.id));
+  return { id: "stand", name: "TROPHY STAND", tag: `${got} of ${TROPHIES.length} earned`, color: COLORS.gold,
+    desc: "Cups for the great feats, medals for the hard ones, a coin for every milestone." + (next ? ` Next: ${next.name}. ${next.how}.` : " Every one of them is yours.") };
+}
+
+// The models the hall needs, taken from Assets (null when the cabinet is not in hand: the hall then builds its own).
+function hubGenTake() {
+  if (!Assets.on || !window.THREE) return null;
+  const cab = Assets.model("prop-cabinet");
+  if (!cab) return null;
+  const g = { cab, sky: Assets.sky("hub-hall"), tops: {}, cup: Assets.model("prop-trophy"), medal: Assets.model("prop-medal"), coin: Assets.model("prop-coin"), stand: Assets.model("prop-stand") };
+  for (const id in HUBGEN.TOPPERS) g.tops[id] = Assets.model(HUBGEN.TOPPERS[id].name);
+  return g;
+}
+
+// A model's materials as the hall's own: they mirror the hall, burn their neon, and take the rim light of the
+// cabinet in front (as the hall's painted surfaces do: see hubLitMaterial).
+function hubGenSkin(model, o = {}) {
+  const ms = tuneModel(model, { env: o.env === undefined ? 1 : o.env, glow: o.glow === undefined ? 1.8 : o.glow });
+  ms.forEach((m) => {
+    if (o.rough !== undefined) m.roughness = o.rough;
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, HUB_RIM);
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform vec3 uHubHero; uniform vec3 uHubRim;")
+        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+          { vec3 hubD = -vViewPosition - uHubHero;
+            float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
+            totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1); }`);
+    };
+    m.customProgramCacheKey = () => "hub-gen";
+    m.needsUpdate = true;
+  });
+  return ms;
+}
+// A dark copy of a model's materials: a trophy not yet earned stands in the stand as a shadow of itself.
+function hubGenDim(model) {
+  const dim = new Map();
+  model.scene.traverse((n) => {
+    if (!n.isMesh) return;
+    const m = n.material;
+    if (!dim.has(m)) {
+      const d = m.clone();
+      d.color = new THREE.Color(0.16, 0.13, 0.24);
+      d.emissive = new THREE.Color(0, 0, 0);
+      d.emissiveMap = null;
+      d.envMapIntensity = 0.35;
+      d.roughness = Math.max(0.45, m.roughness);
+      dim.set(m, d);
+    }
+    n.material = dim.get(m);
+  });
+}
+
+class HubGen {
+  constructor(hub, gen) {
+    this.hub = hub;
+    this.gen = gen;
+    this.tops = [];
+    this.cabTop = []; // the height of each cabinet's topper, for the camera's framing
+    this.t = 0;
+    this.items = [];
+    hubGenSkin(gen.cab, { env: 1.1, glow: 1.5 });
+    for (const id in gen.tops) if (gen.tops[id]) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2 });
+  }
+  // a cabinet's frame in the hall (x across, y up, z toward the room's centre), in world units
+  frame(i) {
+    const a = this.hub.cabAngle(i);
+    return hubM(Math.sin(a) * HUB_R, 0, -Math.cos(a) * HUB_R, 0, -a);
+  }
+  // Cabinet i: the model itself, and its neon, marquee and turntable added to the hall's batches. Returns where its
+  // screen goes and the plane over its control panel.
+  cabinet(cab, i, B, K, g, col) {
+    const H = HUBGEN, S = H.S, SXS = S * H.SX, base = this.frame(i);
+    const at = (x, y, z, rx = 0, ry = 0, rz = 0) => base.clone().multiply(hubM(x, y, z, rx, ry, rz));
+    // the model (each cabinet a copy that shares the first one's geometry and materials)
+    const tpl = this.gen.cab.scene, body = i === CABINETS.length - 1 ? tpl : tpl.clone(); // (the model itself goes last: until then it is the untouched template)
+    body.position.set(0, 0, 0);
+    body.quaternion.identity();
+    body.scale.set(SXS, S, S);
+    body.updateMatrix();
+    body.applyMatrix4(base);
+    this.hub.scene.add(body);
+    // a neon moulding along each side panel's front edge, just behind the chrome
+    const E = H.EDGE.map(([y, z]) => [z * S, y * S]);
+    for (let k = 0; k < E.length - 1; k++) {
+      const f = hubFace(E[k], E[k + 1], 0.5, -0.05);
+      [-1, 1].forEach((sx) => K.box(B.glow, 0.035, f.len + 0.03, 0.034, at(sx * (H.HALF * SXS + 0.012), f.y, f.z, f.rx), col, { k: 2.2, g }));
+    }
+    // painted stripes in the game's colour across each side panel (gloss, lit by the room: livery, not neon)
+    const a0 = [-0.2 * S, 0.17 * S], a1 = [0.13 * S, 0.45 * S];
+    [[-0.13, 0.15, col, 0.85], [0.03, 0.06, 0xf4efff, 0.75], [0.13, 0.05, col, 0.85]].forEach(([o, w, c, kk]) => {
+      const f = hubFace(a0, a1, 0.5, o);
+      [-1, 1].forEach((sx) => K.box(B.lit, 0.006, f.len, w, at(sx * (H.HALF * SXS + 0.004), f.y, f.z, f.rx), c, { k: kk, aux: [0.25, 0.24] }));
+    });
+    // a line of light at its foot
+    K.box(B.glow, H.HALF * SXS * 1.9, 0.028, 0.028, at(0, 0.045, 0.165 * S + 0.03), col, { k: 1.7, g });
+    // the marquee: the game's name, lit, in the model's dark lightbox
+    const M = H.MARQ, mz = M.z * S + 0.02;
+    K.quad(B.marq, M.w * SXS, M.h * S, at(0, M.y * S, mz, -M.tilt), 0xffffff, { k: 1.05, g, uv: hubUV(4, i * 170 + 8, 504, 154) });
+    // the turntable on its roof: a chrome disc and a ring of light in the game's colour
+    const R = H.ROOF, ry = R.y * S, rz = R.z * S;
+    B.lit.add(K.get("ttDisc", () => new THREE.CylinderGeometry(0.44, 0.5, 0.1, 32)), at(0, ry + 0.05, rz), 0xd2d0e4, { aux: [1, 0.18] });
+    B.lit.add(K.get("ttTop", () => new THREE.CylinderGeometry(0.4, 0.4, 0.012, 32)), at(0, ry + 0.106, rz), 0x0c0816, { aux: [0.3, 0.2] });
+    B.glow.add(K.get("ttRing", () => new THREE.TorusGeometry(0.47, 0.022, 5, 40)), at(0, ry + 0.07, rz, Math.PI / 2), col, { k: 2.6, g });
+    // what turns on it
+    const T = H.TOPPERS[cab.id], m = this.gen.tops[cab.id];
+    let topH = 0.6;
+    if (T && m) {
+      const pivot = new THREE.Group(), obj = m.scene;
+      obj.scale.setScalar(T.s);
+      obj.rotation.x = T.rx || 0;
+      pivot.add(obj);
+      pivot.position.set(0, ry + 0.112 + (T.y || 0), rz).applyMatrix4(base);
+      pivot.rotation.y = -this.hub.cabAngle(i) + (T.ry || 0);
+      this.hub.scene.add(pivot);
+      const box = new THREE.Box3().setFromObject(obj);
+      topH = (T.y || 0) + (box.max.y - box.min.y);
+      this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3 };
+    }
+    this.cabTop[i] = ry + 0.112 + topH + 0.12;
+    // where its screen goes, and the plane over its control panel (the screen's light falls there)
+    const C = H.SCREEN, P = H.PANEL;
+    return {
+      screenM: at(0, C.y * S, C.z * S, -C.tilt), sw: C.w * SXS, sh: C.h * S,
+      panelM: at(0, P.y * S + 0.03, P.z * S, P.tilt - Math.PI / 2).multiply(new THREE.Matrix4().makeScale(P.w * SXS, P.d * S * 1.6, 1)),
+      screenY: C.y * S,
+    };
+  }
+  // The trophy stand at the end of the row, and the sixteen trophies on it.
+  stand(B, K) {
+    const H = HUBGEN, gen = this.gen;
+    if (!gen.cup && !gen.medal && !gen.coin) return;
+    const St = Object.assign({}, H.STAND, { ang: this.hub.cabAngle(CABINETS.length) }); // (a seventh stop along the row, past the last cabinet)
+    const F = hubM(Math.sin(St.ang) * St.r, 0, -Math.cos(St.ang) * St.r, 0, -St.ang);
+    const at = (x, y, z, rx = 0, ry = 0, rz = 0) => F.clone().multiply(hubM(x, y, z, rx, ry, rz));
+    // three steps; each is [height of its top, its depth centre]
+    let tiers;
+    if (gen.stand) {
+      // (the model is 2.3 wide, 1 tall and 2 deep: its treads are made shallower here, its risers a little taller)
+      const m = gen.stand, k = St.w / 2.3, sy = k * 1.1, sz = k * 0.72;
+      hubGenSkin(m, { env: 1.0, glow: 1.7 });
+      m.scene.scale.set(k, sy, sz);
+      m.scene.applyMatrix4(F);
+      this.hub.scene.add(m.scene);
+      tiers = H.TREADS.map(([y, z]) => [y * sy, z * sz]);
+    } else {
+      // (until the stand model is in hand: three plain gloss steps with a chrome lip and a line of light)
+      tiers = [[0.34, 0.42], [0.68, 0], [1.02, -0.42]];
+      tiers.forEach(([y, z], k) => {
+        K.box(B.lit, St.w - k * 0.3, y, 0.42, at(0, y / 2, z), 0x0c0816, { aux: [0.3, 0.2] });
+        K.box(B.lit, St.w - k * 0.3 + 0.02, 0.03, 0.03, at(0, y - 0.01, z + 0.215), 0xd2d0e4, { aux: [1, 0.18] });
+        K.box(B.glow, St.w - k * 0.3, 0.02, 0.012, at(0, y - 0.06, z + 0.216), k % 2 ? 0x35efff : 0xff3ad4, { k: 2, g: HUB_G.tube });
+      });
+    }
+    // what sits on each step: cups on the top one, medals in the middle, coins on edge at the front
+    const row = (model, ids, tier, s, spread, env = 1.3) => {
+      if (!model) return;
+      hubGenSkin(model, { env, glow: 2.2 });
+      const dim = { scene: model.scene.clone(true) };
+      hubGenDim(dim);
+      ids.forEach((id, k) => {
+        const x = (k - (ids.length - 1) / 2) * spread, [y, z] = tiers[tier];
+        const lit = model.scene.clone(), dark = dim.scene.clone();
+        [lit, dark].forEach((o) => {
+          o.scale.setScalar(s);
+          o.position.set(x, y, z).applyMatrix4(F);
+          o.rotation.y = -St.ang;
+          o.layers.set(1);
+          o.traverse((n) => n.layers.set(1));
+          this.hub.scene.add(o);
+        });
+        const pool = makeLightPool({ color: 0xffe2a8, radius: s * 0.9, intensity: 0.7 });
+        pool.position.set(x, y + 0.012, z).applyMatrix4(F);
+        pool.layers.set(1);
+        this.hub.scene.add(pool);
+        this.items.push({ id, lit, dark, pool, ry: -St.ang, ph: k * 0.9 + tier });
+      });
+    };
+    row(gen.cup, H.CUPS, 2, 0.64, 0.7, 2.2); // (chrome cups: they need the hall in them to read)
+    row(gen.medal, H.MEDALS, 1, 0.48, 0.44);
+    row(gen.coin, H.COINS, 0, 0.27, 0.27);
+    this.refresh();
+  }
+  // Where the little lamp on what stands in front goes (the hall's desk lamp, which a generated cabinet has no use
+  // for): over and in front of the topper, or over the middle of the trophy stand.
+  lampFor(i, out) {
+    const a = this.hub.cabAngle(i), fx = -Math.sin(a), fz = Math.cos(a);
+    const tp = this.tops[i];
+    if (tp) return out.set(tp.pivot.position.x + fx * 1.15, tp.pivot.position.y + 1.0, tp.pivot.position.z + fz * 1.15);
+    if (i === CABINETS.length && this.items.length) { const r = HUBGEN.STAND.r - 1.4; return out.set(Math.sin(a) * r, 2.5, -Math.cos(a) * r); }
+    return null;
+  }
+  // which trophies are lit (on arrival, and whenever the player comes back to the hall)
+  refresh() {
+    this.items.forEach((it) => {
+      const on = Trophies.has(it.id);
+      it.lit.visible = on;
+      it.dark.visible = !on;
+      it.pool.visible = on;
+    });
+  }
+  update(dt) {
+    const hub = this.hub, t = (this.t += dt), calm = REDUCED_MOTION || GFX.calm;
+    this.tops.forEach((tp, i) => {
+      if (!tp) return;
+      const c = hub.cabs[i], f = c ? c.focus : 0;
+      // the one in front lifts and spins up; the others turn slowly where they stand
+      const spin = (calm ? 0.12 : 0.3) + f * (calm ? 0.3 : 1.25) + (c && c.chosen ? (calm ? 0.6 : 4) * c.chosen : 0);
+      tp.spin += spin * dt;
+      tp.lift += ((calm ? 0.08 : 0.24) * f - tp.lift) * Math.min(1, dt * 4);
+      tp.pivot.rotation.y = tp.spin;
+      tp.pivot.position.y = tp.y0 + tp.lift + (calm ? 0 : tp.bob * Math.sin(t * 1.6 + tp.ph));
+    });
+    this.items.forEach((it) => {
+      if (!it.lit.visible) return;
+      it.lit.rotation.y = it.ry + (calm ? 0 : Math.sin(t * 0.5 + it.ph) * 0.6);
+      it.pool.material.opacity = 0.75 + 0.25 * Math.sin(t * 1.3 + it.ph);
+    });
   }
 }
 
@@ -29924,7 +30415,8 @@ class MemoryGame extends QuizGame {
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [17, 21, 10] },
       ],
     });
-    const env = this.envRT ? this.envRT.texture : null;
+    this.gen = memoryGen(this); // (served: the vault's gold mirrors a gold vault, the coins and the deck are models: 23c-memorygen.js)
+    const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
     // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
@@ -30151,6 +30643,10 @@ class MemoryGame extends QuizGame {
     this.coinTex = memoryCoinTexture();
     this.coinGeo = memoryCoinGeometry();
     this.coinMat = new THREE.MeshStandardMaterial({ color: 0xffc85c, metalness: 1, roughness: 0.2, envMap: env, envMapIntensity: 1.8, emissive: 0x4f2e00, bumpMap: this.coinTex, bumpScale: 0.02 });
+    if (this.gen && this.gen.coin) { // the generated token in place of the turned one, flying and in the piles
+      this.coinTex.dispose(); this.coinGeo.dispose(); this.coinMat.dispose();
+      this.coinTex = null; this.coinGeo = this.gen.coin.geo; this.coinMat = this.gen.coin.mat;
+    }
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
 
     this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
@@ -30189,7 +30685,7 @@ class MemoryGame extends QuizGame {
     this.bolts.instanceMatrix.needsUpdate = true;
   }
   start() {
-    Sound.play("calm");
+    Sound.play("memory"); // (its own recording when served; else the calm tune, as before)
     if (!this.total) {
       UI.toast("NO CARDS HERE YET");
       return this.quit();
@@ -30203,6 +30699,7 @@ class MemoryGame extends QuizGame {
     const f = this.card;
     if (!f) return this.finish();
     this.flipped = false;
+    if (this.gen) this.gen.dealK = 1; // (the deck gives up a card: look only)
     const card = $("[data-card]", this.el);
     // Snap back to the front without animating, or the next card's answer flashes by. The fly-away of the card
     // before it is cut off first: it has a frame or two left to run, turned to its answer side.
@@ -30528,6 +31025,7 @@ class MemoryGame extends QuizGame {
     this.motes.userData.drift(t);
     this.works.update(dt, t);
     this.sparks.update(dt, this.camera);
+    memoryGenUpdate(this, dt);
     FX.sync(this.scene, t);
   }
   // Free what the scene graph walk misses: the env target, the textures that are not
@@ -30750,6 +31248,70 @@ class MemoryWorks {
     // (the coin stacks share the game's coin geometry and material: the game frees those)
     [this.planets, this.pins, ...this.coins].forEach((m) => m.dispose());
   }
+}
+
+/* ---- 23c-memorygen.js ---- */
+// Memory Bank's generated light and props, served (opened from disk the vault is exactly as it was):
+//   every metal in the vault (the door's spun gold, the bars, the bolts, the dial, the coins) mirrors the inside of a
+//   gold vault (vault-gold) instead of the few light strips it was given, and is lit by it;
+//   the coins that fly up into the slot and lie in the piles are the gold token with the egg on its face (prop-coin);
+//   the deck the cards are dealt from (prop-deck: a stack of study cards in a chrome holder) stands at the door's foot,
+//   and gives a little lift and a glint as each card is dealt.
+// The door itself and its mechanism stay: they move as the deck is banked, which a single model could not.
+// Look only: nothing here knows a card, a grade or a box.
+const MEMORY_GEN = { DECK: { s: 4.6, x: 0, z: 5.2, ry: 0.35 }, COIN: 1.1 };
+// A model's first mesh as plain geometry, its packed (quantised) attributes opened out and its node's transform
+// applied, so it can be drawn as many times as the scene needs (instanced, or one mesh per flying coin).
+function bakeModelGeometry(model) {
+  let mesh = null;
+  model.scene.updateMatrixWorld(true);
+  model.scene.traverse((o) => { if (!mesh && o.isMesh) mesh = o; });
+  if (!mesh) return null;
+  const src = mesh.geometry, out = new THREE.BufferGeometry();
+  const open = (a) => {
+    const arr = a.isInterleavedBufferAttribute ? a.data.array : a.array;
+    const k = !a.normalized ? 1 : arr instanceof Int16Array ? 1 / 32767 : arr instanceof Uint16Array ? 1 / 65535 : arr instanceof Int8Array ? 1 / 127 : arr instanceof Uint8Array ? 1 / 255 : 1;
+    const n = a.itemSize, f = new Float32Array(a.count * n);
+    for (let i = 0; i < a.count; i++) { f[i * n] = a.getX(i) * k; if (n > 1) f[i * n + 1] = a.getY(i) * k; if (n > 2) f[i * n + 2] = a.getZ(i) * k; }
+    return new THREE.BufferAttribute(f, n);
+  };
+  for (const name of ["position", "normal", "uv"]) if (src.attributes[name]) out.setAttribute(name, open(src.attributes[name]));
+  if (src.index) out.setIndex(new THREE.BufferAttribute(src.index.array.slice(0), 1));
+  out.applyMatrix4(mesh.matrixWorld);
+  if (out.attributes.normal) out.normalizeNormals();
+  return { geo: out, mat: mesh.material };
+}
+function memoryGen(game) {
+  if (!Assets.on || !game.has3D) return null;
+  const sky = Assets.sky("vault-gold"), deck = Assets.model("prop-deck"), coin = Assets.model("prop-coin");
+  const G = { env: sky && sky.env ? sky.env : null, deck: null, coin: null, dealK: 0 };
+  if (!G.env && !deck && !coin) return null;
+  if (coin) {
+    tuneModel(coin, { env: 1.6, glow: 1 });
+    const b = bakeModelGeometry(coin);
+    if (b) { b.geo.translate(0, -0.5, 0); b.geo.scale(MEMORY_GEN.COIN, MEMORY_GEN.COIN, MEMORY_GEN.COIN); if (G.env) b.mat.envMap = G.env; G.coin = b; }
+  }
+  if (deck) {
+    const D = MEMORY_GEN.DECK;
+    tuneModel(deck, { env: 2, glow: 2 });
+    deck.scene.traverse((o) => { if (o.isMesh && G.env) o.material.envMap = G.env; });
+    deck.scene.scale.setScalar(D.s);
+    deck.scene.position.set(D.x, 0, D.z);
+    deck.scene.rotation.y = D.ry;
+    game.scene.add(deck.scene);
+    G.deck = deck;
+    G.deckY = 0;
+  }
+  return G;
+}
+// each frame: a card dealt lifts the deck a hand's breadth and lets it fall back
+function memoryGenUpdate(game, dt) {
+  const G = game.gen;
+  if (!G || !G.deck) return;
+  G.dealK = Math.max(0, G.dealK - dt * 2.2);
+  const k = G.dealK, lift = REDUCED_MOTION || GFX.calm ? 0.05 : 0.22;
+  G.deck.scene.position.y = Math.sin(k * Math.PI) * lift;
+  G.deck.scene.rotation.y = MEMORY_GEN.DECK.ry + Math.sin(k * Math.PI) * 0.06;
 }
 
 /* ---- 24-exam.js ---- */
@@ -31091,7 +31653,7 @@ class ExamGame extends QuizGame {
     s.add(this.rimB);
 
     // the hall: a starry night through arched windows, pilasters and a colonnade
-    const night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial());
+    const night = (this.night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial()));
     night.position.set(0, 26, EXAM_WALL_Z - 12);
     s.add(night);
     // a big, dim surface: per-vertex lighting is plenty here and cheap on phones
@@ -31153,8 +31715,11 @@ class ExamGame extends QuizGame {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(BOSS_DAIS_R + 0.75, 0.03, 6, 120).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: neon(0xa65fff, 1.6) }));
     ring.position.y = 0.04;
     s.add(ring);
+    // served: the moonlit night through the windows, the examiner's lectern (24d-examgen.js)
+    this.gen = examGen(this);
+    const moon = this.gen && this.gen.sky && this.gen.sky.env; // (then the boss's armour mirrors the moonlit night)
     // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
-    try { this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null; } catch (e) { this.boss = null; }
+    try { this.boss = BossModel.ok() ? new ExamBoss(this, moon || (this.bossEnvRT ? this.bossEnvRT.texture : env)) : null; } catch (e) { this.boss = null; }
     if (!this.boss) {
       // no boss model in this build, or it would not decode: the hall's old centrepiece stands in (24b-examhero.js)
       this.monument = new ExamMonument(this, gold, env);
@@ -31171,6 +31736,7 @@ class ExamGame extends QuizGame {
       this.backShade.position.set(0, BOSS_DAIS + BOSS_S * 0.62, -BOSS_S * 0.5);
       this.backShade.scale.set(BOSS_S * 2.3, BOSS_S * 2.3, 1);
       this.backShade.layers.set(1); // (it sorts by depth with the hall's other veils: over the shaft of light behind it, under the halo's ring)
+      if (this.gen && this.gen.dome) this.backShade.material.opacity = 0.42; // (served: the moon behind its head shows through)
       s.add(this.backShade);
     }
     // while the questions are up the camera is under the boss's chin and the floor is out of
@@ -31264,7 +31830,7 @@ class ExamGame extends QuizGame {
     c.needsUpdate = true;
   }
   start() {
-    Sound.play("calm");
+    Sound.play("exam"); // (its own recording when served; else the calm tune, as before)
     if (!this.rounds.length) { UI.toast("NO QUESTIONS YET"); return this.quit(); }
     UI.banner(this.boss ? "FINAL BOSS" : "BEGIN", COLORS.violet, this.rounds.length + " QUESTIONS" + (this.limit ? " · " + Math.round(this.limit / 60) + " MIN" : "") + (this.boss ? " · 60% BRINGS IT DOWN" : ""));
     this.state = "ask";
@@ -31419,6 +31985,7 @@ class ExamGame extends QuizGame {
     }
     if (!this.has3D) return;
     const t = this.t;
+    examGenUpdate(this, dt); // (served: the moonlit sky round the lens; the lectern sinks away for the ending)
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
     const B = this.boss;
     if (B) {
@@ -32752,13 +33319,65 @@ class ExamBoss {
 if (typeof requestIdleCallback === "function") requestIdleCallback(() => BossModel.preload(), { timeout: 5000 });
 else setTimeout(() => BossModel.preload(), 2500);
 
+/* ---- 24d-examgen.js ---- */
+// The Final Exam's generated sky and prop, served (opened from disk the hall is exactly as it was):
+//   the night beyond the windows is the moonlit panorama (exam-moon: a full moon in storm cloud over a paved court and
+//   a golden arch), shown through a long lens so the moon stands in the high windows beside the examiner's head;
+//   the examiner's armour mirrors that night instead of the dark it was given, so it is lit by the moon;
+//   the examiner's lectern (prop-podium: a book and a bell on it) stands before it, its top at the foot of the frame,
+//   lit by the same night and the hall's lamps.
+// Look only: nothing here knows a question, an answer or a clock.
+const EXAM_GEN = {
+  SKY: { u: 0.728, v: 0.655, at: 15, zoom: 0.85, min: 0.43 }, // (the moon's place in the picture, put straight behind the examiner's head, in its halo)
+  PODIUM: { s: 5.2, z: BOSS_S * 0.6, ry: 0 },
+};
+function examGen(game) {
+  if (!Assets.on || !game.has3D) return null;
+  const sky = Assets.sky("exam-moon"), podium = Assets.model("prop-podium");
+  if (!(sky && sky.map) && !podium) return null;
+  const s = game.scene, G = { sky: sky && sky.map ? sky : null };
+  if (G.sky) {
+    G.dome = makePanoSky(G.sky, { gain: 0.95, lift: 1.4, window: EXAM_GEN.SKY });
+    s.add(G.dome);
+    if (game.night) game.night.visible = false;
+    applySkyEnv(s, G.sky); // (what a model in the hall mirrors and is lit by)
+  }
+  if (podium) {
+    const P = EXAM_GEN.PODIUM;
+    tuneModel(podium, { env: 2, glow: 1.8 });
+    podium.scene.scale.setScalar(P.s);
+    podium.scene.position.set(0, BOSS_DAIS, P.z);
+    podium.scene.rotation.y = P.ry;
+    s.add(podium.scene);
+    G.podium = podium;
+    G.sink = 0;
+  }
+  return G;
+}
+// Each frame: the sky stays round the lens, and when the ending begins (the examiner falls, or makes its last stand)
+// the lectern sinks into the dais, so the camera that draws back for the ending sees the examiner, not the lectern.
+function examGenUpdate(game, dt) {
+  const G = game.gen;
+  if (!G) return;
+  if (G.dome) G.dome.userData.follow(game.camera);
+  if (G.podium) {
+    const B = game.boss, end = !!(B && (B.mode === "die" || B.mode === "rage"));
+    G.sink = clamp(G.sink + (end ? dt / 0.8 : -dt / 0.8), 0, 1);
+    const k = G.sink * G.sink * (3 - 2 * G.sink);
+    G.podium.scene.position.y = BOSS_DAIS - k * EXAM_GEN.PODIUM.s * 1.05;
+    G.podium.scene.visible = k < 0.999;
+  }
+}
+
 /* ---- 30-results.js ---- */
 // Results: score, accuracy, mastery gained, a review of every miss with its
 // book page, and classic three-letter initials for the high-score table.
 function showResults(o) {
   Store.state.stats.games++;
   Store.save();
+  const had = Object.assign({}, Store.state.ach || {});
   Trophies.check(o);
+  o.won = TROPHIES.filter((t) => (Store.state.ach || {})[t.id] && !had[t.id]).map((t) => t.id); // (the trophies this game earned: they arrive in the reward moment)
   const go = (rank) => renderResults(o, rank);
   if (o.score > 0 && o.game !== "memory" && Store.qualifies(o.game, o.score)) askInitials(o, go);
   else go(-1);
@@ -32838,12 +33457,26 @@ function renderResults(o, rank) {
   const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
   const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
   const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  // The reward moment (served, with the icons drawn from the models): after the stars, what this game earned arrives
+  // one by one, each with its sound: a coin for every 40 XP (up to five), a medal for a run without a miss, a cup for a
+  // new best score, and each trophy unlocked as it stands in the hall. Pictures only: the screen's words are as before.
+  const rw = [];
+  if (genIconReady()) {
+    const coins = xp1 > xp0 ? clamp(Math.round((xp1 - xp0) / 40), 1, 5) : 0;
+    for (let k = 0; k < coins; k++) rw.push({ kind: "coin", cls: "coin", sfx: "coin", gap: 0.09 });
+    if (run.answered && !run.missed.length && o.game !== "memory") rw.push({ kind: "medal", sfx: "powerup", gap: 0.3 });
+    if (rank === 0) rw.push({ kind: "trophy", cls: "big", sfx: "fanfare", gap: 0.35 });
+    (o.won || []).forEach((id) => rw.push({ kind: trophyKind(id), cls: "big", sfx: "reward", gap: 0.35 }));
+    let at = o.stars !== undefined ? 0.55 : 0.25;
+    rw.forEach((r) => { r.at = at; at += r.gap; });
+  }
   const el = UI.el(`<section class="screen scr-results" style="background:rgba(9,3,32,.86)">
     <div class="scroll"><div class="wrap">
       <div class="res-head" style="--c:${o.color || COLORS.yellow}">
         <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
+        ${rw.length ? `<div class="res-rewards" aria-hidden="true">${rw.map((r) => `<span class="rw ${r.cls || ""}">${genIcon(r.kind)}</span>`).join("")}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
@@ -32891,6 +33524,13 @@ function renderResults(o, rank) {
       if (face && cl) drawPortrait(face, Object.assign({ age: cl.age }, cl.look));
       const bust = $(".res-hero canvas", el);
       if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
+      if (genIconReady()) { // the reward moment's sounds, each on the beat its picture lands (see rw above), and the announcer
+        for (let k = 0; k < (o.stars || 0); k++) setTimeout(() => { if (el.isConnected) Sound.sfx("reward", (k - 1) * 0.4); }, 120 + k * 140);
+        const items = $$(".res-rewards .rw", el); // (each lands on its own beat: a timer, so it keeps the page's clock)
+        rw.forEach((r, k) => setTimeout(() => { if (!el.isConnected) return; if (items[k]) items[k].classList.add("in"); Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000));
+        const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : "";
+        if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
+      }
       if (r1.i > r0.i) {
         setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
       }
@@ -32902,6 +33542,16 @@ function renderResults(o, rank) {
 // STRATEGY GUIDE — condensed notes per chapter, plus search across every
 // flashcard and note in the book.
 function showGuide(chapterN) {
+  // Served, the archive is built with its generated light and book: behind the loading line if they have not arrived.
+  if (Assets.on && !(Scenes.cur instanceof LibraryScene)) {
+    const p = Assets.need("guide");
+    if (p) {
+      UI.loading(true);
+      Assets.onProgress = (d, n) => UI.loading(true, d / n);
+      p.then(() => { Assets.onProgress = null; UI.loading(false); UI.cover(() => showGuide(chapterN)); });
+      return;
+    }
+  }
   Sound.play("calm");
   Sound.ambience(false);
   if (chapterN) return showGuideChapter(chapterN);
@@ -33474,6 +34124,7 @@ class LibraryScene extends Scene3D {
     this.camBase.set(0, LIB_EYE, 6);
     this.lookAt.set(0, LIB_EYE - 1.3, -30);
     this.lt = 0;
+    this.gen = libraryGen(this); // (served: the generated archive round the nave, the great book on show: 31c-librarygen.js)
   }
   // Where a loose page starts (or starts again, once it has risen out of sight).
   placePage(p, anywhere) {
@@ -33502,6 +34153,7 @@ class LibraryScene extends Scene3D {
     post.contrast = 1.14 + 0.24 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
+    libraryGenUpdate(this, dt, lt);
     this.motes.userData.drift(lt);
     this.shaftMotes.userData.drift(lt * 0.8);
     this.shafts.forEach((sh, i) => { sh.material.uniforms.uI.value = 0.55 * (0.72 + 0.28 * Math.sin(lt * 1.05 + i * 1.9)); }); // each shaft swells and thins on its own time (about six seconds)
@@ -33510,6 +34162,52 @@ class LibraryScene extends Scene3D {
   dispose() {
     if (this.pageMesh) { this.pageMesh.dispose(); this.pageMesh.geometry.dispose(); this.pageMat.dispose(); }
     super.dispose();
+  }
+}
+
+/* ---- 31c-librarygen.js ---- */
+// The Strategy Guide's generated light and prop, served (opened from disk the archive is exactly as it was):
+//   the generated archive (guide-archive: a vaulted library of lamp-lit shelves and stained glass) stands round the
+//   nave as its backdrop, seen above the shelves and in the vault overhead, and is the light the book is lit by;
+//   the great book (prop-tome: chrome corners on violet boards) is on show over the reading desk, turning slowly in
+//   the lamp's light, with a warm glow under it.
+const LIB_GEN = { TOME: { s: 2.3, y: 7.3, z: -24.2 }, SKY: { gain: 1.15, lift: 1.1, rot: 1.6 } };
+function libraryGen(lib) {
+  if (!Assets.on || !lib.has3D) return null;
+  const sky = Assets.sky("guide-archive"), tome = Assets.model("prop-tome");
+  if (!(sky && sky.map) && !tome) return null;
+  const s = lib.scene, G = { t: 0 };
+  if (sky && sky.map) {
+    G.dome = makePanoSky(sky, LIB_GEN.SKY);
+    s.add(G.dome);
+    applySkyEnv(s, sky);
+  }
+  if (tome) {
+    const T = LIB_GEN.TOME;
+    tuneModel(tome, { env: 1.5, glow: 1.8 });
+    G.tome = new THREE.Group();
+    tome.scene.scale.setScalar(T.s);
+    tome.scene.position.y = -0.5 * T.s; // (it turns about its middle)
+    G.tome.add(tome.scene);
+    G.tome.position.set(0, T.y, T.z);
+    s.add(G.tome);
+    G.light = new THREE.PointLight(0xffd6a0, 2.2, 9, 1.6); // (a warm lamp in front of it: its boards and corners read against the rose window)
+    G.light.position.set(0.6, T.y + 0.4, T.z + 3.2);
+    s.add(G.light);
+    G.glow = glowSprite(neon(0xffc27a, 1), 3.4, 0.32);
+    G.glow.position.set(0, T.y - 0.2, T.z - 0.4);
+    G.glow.layers.set(1);
+    s.add(G.glow);
+  }
+  return G;
+}
+function libraryGenUpdate(lib, dt, lt) {
+  const G = lib.gen;
+  if (!G) return;
+  if (G.dome) G.dome.userData.follow(lib.camera);
+  if (G.tome) {
+    G.tome.rotation.y = lt * 0.32;
+    G.tome.position.y = LIB_GEN.TOME.y + Math.sin(lt * 0.7) * 0.12;
   }
 }
 
