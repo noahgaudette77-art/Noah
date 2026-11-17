@@ -157,7 +157,7 @@ ten tracks came within 0.06 BPM of what was asked), starting where the levels at
 | `sfx-combat.mp3` | laser, heavy laser, plasma bolt, spent cell, beam, missile launch and hit, volley, energy wave, ground slam, boss roar, hurt, stagger, armour breaking, death, warp; loop: starfighter engine | 1.1 MB, 82 s |
 | `sfx-racer.mp3` | crash, glass, skid, near miss, boost, gate pass; loops: engine, boost flames | 0.5 MB, 34 s |
 | `sfx-hub.mp3` | loop: the arcade hall's ambience | 0.1 MB, 9 s |
-| `voice.mp3` | 72 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, every game's name, "Welcome to the arcade", streak names, milestones ...) | 1.3 MB, 107 s |
+| `voice.mp3` | 72 announcer lines ("Wave one" to "Wave ten", "Game over", "Stage clear", "Boss incoming", every boss's name, every game's name, "Welcome to the arcade", streak names, milestones ...; "Boss Rush!" retaken on 2026-11-17, its first take cut off by the provider) | 1.3 MB, 109 s |
 | `music-blaster.mp3` | Risk Blaster's track: ElevenLabs `music_v2_5`, prompt `blaster` in `sounds.js` (driving 1980s synthwave, 64 s asked for), take 0 of 2, cut to a loop from 0.7 s to 59.9 s (the loop points are in `audio.json`) | 1.2 MB, 60 s |
 | `music-racer.mp3` | Nest Egg Run's track: ElevenLabs `music_v2_5`, prompt `racer` in `sounds.js` (outrun synthwave, 118 BPM), take 0 of 2, cut to a loop from 0.7 s to 48.1 s | 0.9 MB, 48 s |
 | `sfx-bosses.mp3` | Boss Rush: each boss's own roar (`roar_1` .. `roar_11`, `roar_all`, 3 takes each), a giant machine landing, a limb servo, powering up | 1.4 MB, 98 s |
@@ -176,7 +176,7 @@ each provider; failed calls are not charged by any of the four. Every paid call 
 |---|---|---|---|---|
 | Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 5,520 | 3,945 (checked live) | 34 image-to-3D at the highest settings (60 each), 24 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 32 retarget requests (129 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265) |
 | fal.ai | $49.90 | $28.01 | $21.89 | 25 Rodin Gen-2.5 runs, 94 Seedream 5.5 concept images, 19 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views) |
-| ElevenLabs | 131,000 credits | about 25,750 | about 105,250 | 495 sound effects and loops (11 credits a second), 80 announcer lines, 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
+| ElevenLabs | 131,000 credits | 25,822 (checked live) | 105,178 | 495 sound effects and loops (11 credits a second), 84 announcer lines (four of them retakes of "Boss Rush!", whose first take the provider had cut off at 0.21 s; four speech-to-text checks of them), 19 music runs (about 880 credits each); the provider's own counter lags by some minutes |
 | Blockade Labs | plan credits | 26 | not reported by the API | 26 skies (Model 3, 1 credit each) |
 
 The bosses cost more Tripo credits than first projected (about 1,700 against about 1,000 to 1,450): building them as
