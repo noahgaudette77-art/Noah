@@ -44,7 +44,8 @@ function makePipeline(renderer, hdr, wantSamples) {
   quadScene.updateMatrixWorld();
   const HP = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n#define HP highp\n#else\n#define HP mediump\n#endif\n";
   const VS = "varying highp vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
-  const mat = (uniforms, fs) => new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "highp" });
+  const made = []; // (every pass's material: compileAll readies them all at once)
+  const mat = (uniforms, fs) => { const m = new THREE.ShaderMaterial({ uniforms, vertexShader: VS, fragmentShader: HP + fs, depthTest: false, depthWrite: false, precision: "highp" }); made.push(m); return m; };
   const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, cam); };
 
   // ---- multisampling, checked once: a quad at a known depth must come back out of the resolve
@@ -503,6 +504,15 @@ function makePipeline(renderer, hdr, wantSamples) {
     hdr,
     samples,
     mirrorSize: { w: 2, h: 2 },
+    // Every pass's shader compiled now (GFX.warm, once): a pass a screen turns on later (the road's contact shadows
+    // when a race starts, a tier's effects) never compiles mid-play.
+    compileAll() {
+      if (this.compiled) return;
+      this.compiled = true;
+      const keep = quad.material;
+      for (const m of made) { quad.material = m; try { renderer.compile(quadScene, cam); } catch (e) { /* best effort */ } }
+      quad.material = keep;
+    },
     resize(w, h) {
       sw = w; sh = h;
       sceneRT.setSize(w, h);

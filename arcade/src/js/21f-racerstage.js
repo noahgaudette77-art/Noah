@@ -25,7 +25,7 @@ class RacerStage {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
     g.show = new TweenSet(); // show-only timing: nothing in it is a rule
-    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: 0, sparks: 360, chunks: 80, firePuffs: 96, smokePuffs: 120, lights: 3 });
+    this.kit = g.kit = new CombatFX(g, { unit: 1, ground: 0, sparks: 360, chunks: 80, firePuffs: 96, smokePuffs: 120, lights: 1 }); // (one blast light, as in Risk Blaster: each light the scene holds costs every lit pixel, lit or not)
     this.rig = g.rigKit;
     this.low = 0; this.lowK = 0; this.hitK = 0; this.alarmAt = 0; this.alarmGame = 0; this.lowT = 0; // (low: 1 on the last life, 2 when it has gone)
     this.jolt = 0; this.joltSd = 1; this.pull = 0; this.camX = 0; this.nearK = 0; this.nearCool = 0; this.gateFlare = 0; this.overK = 0;

@@ -394,10 +394,14 @@ const GFX = {
         type: this.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false,
       });
     }
+    if (this.pipe && this.pipe.compileAll) this.pipe.compileAll(); // (and every post-processing pass, the first time)
+    const layers = s.camera.layers.mask;
+    s.camera.layers.mask = 0xffffffff | 0; // (what a screen keeps on layers of its own, the mirror's or the overlay's, is readied too)
     try {
       r.setRenderTarget(this._warmRT);
       r.render(scene, s.camera);
     } catch (e) { /* best effort */ }
+    s.camera.layers.mask = layers;
     r.setRenderTarget(null);
     for (let i = 0; i < saved.length; i += 3) { saved[i].visible = saved[i + 1]; saved[i].frustumCulled = saved[i + 2]; }
     extra.forEach((o) => scene.remove(o));

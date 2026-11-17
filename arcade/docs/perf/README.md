@@ -69,3 +69,27 @@ Risk Blaster at MEDIUM, a phone's window, 30 frames (before, after):
 
 The lights' own cost is small on this phone's graphics chip (a few per cent of a frame at this size); they were cut
 as much for the size of every lit shader (its compile time) as for the frame.
+
+## Step 3: Nest Egg Run
+
+| Change | Effect |
+|---|---|
+| Everything a gate builds is readied at start: the letters on the road, each answer's badge with its glow and stem, the dark ring behind it, the bar they hang from (only the gantry and its signs were) | the first gate no longer compiles and sends its pictures |
+| The warm-up draws every layer a screen keeps (the overlay's and the mirror's), and compiles every post-processing pass once (`pipe.compileAll`) | the road's contact shadows, turned on as the race starts, no longer compile then |
+| One blast light, not three | lights 12 to 10 in a race |
+| The road's textures filter at a slant as every other texture does (4 times on a phone, 16 on a desktop): they asked for 16 everywhere | the road seen low was the costliest surface to filter |
+
+Nest Egg Run at MEDIUM, a phone's window (before, after):
+
+| | Before | After |
+|---|---|---|
+| Million pixels shaded per frame | 10 | 10 |
+| Draw calls (the world's own) | 115 (97) | 115 (97) |
+| Triangles | 0.14 million | 0.13 million |
+| Lights in a race | 12 | 10 |
+| Shaders compiled in a minute and a half of play | 2 | 0 |
+| Pictures sent to the chip per frame | 154 KB | 0 |
+| Main thread per frame (this machine, which was busy), worst frame | 3.3 ms, 20 ms | 3.3 ms, 18 ms |
+
+Left as they are: three drawing surfaces made the first time they are used, as the race starts (the road's mirror and
+two half-size passes): memory, not a compile, and once.

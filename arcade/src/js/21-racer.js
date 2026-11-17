@@ -744,7 +744,7 @@ function racerSignTexture(label, color, wide) {
   x.fillStyle = "rgba(255,255,255,0.35)";
   x.fillText(label, W / 2, H / 2 + 5);
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (16 on a desktop, 4 on a phone: see GFX.init)
   return t;
 }
 
@@ -790,7 +790,7 @@ function racerTagTexture(label, color, wide) {
   x.fillStyle = "#0b0426";
   x.fillText(label, W / 2 + (wide ? 3 : 4), H / 2 + 6);
   const t = new THREE.CanvasTexture(c);
-  t.anisotropy = 16;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (16 on a desktop, 4 on a phone: see GFX.init)
   return t;
 }
 
@@ -918,6 +918,13 @@ class RacerGame extends QuizGame {
     const k4 = this.gateKit[4], wg = new THREE.Group();
     wg.add(new THREE.Mesh(k4.frame, this.gateFrameMat), new THREE.Mesh(k4.glow, this.gateGlowMat), new THREE.Mesh(k4.posts, this.gateGlowMat), new THREE.Mesh(k4.cones, this.gateConeMat));
     Object.values(this.signMats).forEach((m) => wg.add(new THREE.Mesh(k4.sign, m)));
+    // (and everything else a gate builds: the letters on the road, each answer's badge with its glow and stem, the
+    // dark ring behind it, the bar they hang from. They were compiled and sent the first time a gate came.)
+    for (const label in this.badgeMats) {
+      const tf = label.length > 1;
+      wg.add(new THREE.Mesh(k4.sign, this.tagMats[label]), new THREE.Mesh(this.badgeGeo[tf ? 1 : 0], this.badgeMats[label]), new THREE.Mesh(this.badgeGeo[0], this.badgeGlowMats[label]), new THREE.Mesh(this.badgeStemGeo, this.badgeGlowMats[label]));
+    }
+    wg.add(new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat), new THREE.Mesh(this.barKit[4].frame, this.gateFrameMat), new THREE.Mesh(this.barKit[4].glow, this.gateGlowMat));
     wg.position.z = -60;
     this.warmExtra = [wg];
     this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
