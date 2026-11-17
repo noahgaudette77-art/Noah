@@ -74,6 +74,7 @@ module.exports = async (cap) => {
     await cap.fast(300);
     await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.skipIntro) s.skipIntro(); });
     await cap.fast(200);
+    await cap.page.waitForTimeout(1500); // (its card and mission fade in by a CSS transition, on the real clock: let it finish)
     await cap.shot("calm-hub");
     jpg("calm-hub");
   }

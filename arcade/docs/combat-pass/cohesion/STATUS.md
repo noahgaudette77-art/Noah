@@ -41,12 +41,24 @@ leftovers if time allows. Commit after each step.
   every visit; the renderer's count no longer grows visit by visit. Full regression IDENTICAL from disk and over
   HTTP; sequence 13/13.
 
+- **E**: the calm path captured with Setup > Reduced effects on and the browser asking for reduced motion (the capture
+  tool takes `--reduced` now, so the page's REDUCED_MOTION is on too): each game with a question up and the hall. All
+  finished, every text readable, nothing missing. Flashes counted on a right and on a wrong answer in each game
+  (`tools/scenarios/cohesion-calm.js`: the band in a 4 x 4 grid, sampled 20 times a second for a second and a half; a
+  flash is a pair of opposite changes of 0.1 or more in a cell's relative luminance, the darker under 0.8, as WCAG
+  counts them): the most in any second, in any cell: Risk Blaster 0 and 0, Nest Egg Run 0 and 2, Boss Rush 1 and 1.
+  Nothing over three; nothing needed fixing.
+- **F**: Risk Blaster: as the demon comes close it carries its tail further back and a little aside, so it no longer
+  crosses the fighter's canopy (20k-blasteroverlord.js, the tail's pose only). Nest Egg Run: the tunnel's way out shows,
+  through its mouth, the very sky the dome will show beyond it and the road running on under it (dark, its lanes and
+  neon edges lit, into the haze), where it was a flat pale board of the sky's colour (21c-racerworld.js).
+
+- **Final** (on the last build): full regression from disk IDENTICAL, full regression over HTTP with every asset loaded
+  IDENTICAL, sequence 13 of 13, no console errors in any capture. Captures 01 to 17 and their list in `README.md`.
+
 ## Next
 
-- E: the calm path, one still per game and the hall, flashes counted (`tools/scenarios/cohesion-calm.js`; the capture
-  tool takes `--reduced` now, so the page's REDUCED_MOTION is on as well as Setup > Reduced effects).
-- F (in progress): the demon's tail carried back and aside as it comes close (20k-blasteroverlord.js); the tunnel's way
-  out shows the sky beyond and the road under it instead of a flat pale board (21c-racerworld.js). To be captured.
+- Nothing: the pass is done. What is still weak is listed in `README.md`.
 
 ## Measurements
 

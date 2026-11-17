@@ -826,7 +826,7 @@ class RacerWorld {
       // very picture the dome will show, and the road running on under it into its haze, its lanes and its edges lit)
       mouth.material = new THREE.ShaderMaterial({
         uniforms: { tSky: { value: null }, uHas: { value: 0 }, uRot: { value: 0 }, uZoom: { value: 1 }, uPitch: { value: 0 }, uGain: { value: 1 }, uLift: { value: 0 }, uHaze: { value: new THREE.Color() }, uGround: { value: new THREE.Color() }, uK: { value: 0 } },
-        transparent: true, depthWrite: false, fog: false,
+        transparent: true, fog: false, // (it writes depth, as the board did: the bore's lamps beyond it stay behind it)
         vertexShader: "varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
         fragmentShader: `uniform sampler2D tSky; uniform float uHas; uniform float uRot; uniform float uZoom; uniform float uPitch; uniform float uGain; uniform float uLift; uniform vec3 uHaze; uniform vec3 uGround; uniform float uK; varying vec3 vW;
           void main(){

@@ -39,6 +39,18 @@ The gains: music Memory Bank x1.64, Risk Blaster x0.91, Final Exam x0.93, the re
 Nest Egg Run x0.82, Boss Rush's roars x0.80, core and combat x1; announcer x1. No file was re-encoded; the one bad file
 (the cut-off "Boss Rush!") was retaken.
 
+## Still weak, plainly
+
+- Risk Blaster's passing ships and rocks are background by design: mid-fight they sit dark and soft (the lens holds the
+  demon) in the gaps between the answers; they read best as a run begins (07, 08). The far rocks are still the
+  built-in ones (96 of them would be too heavy as models).
+- Risk Blaster's own set is the heaviest download (15.7 MB, 10.7 MB of it models and skies) and holds about 435 MB of
+  textures on the graphics chip (three 4K skies, the fighter's and the demon's 2K maps): untouched here.
+- The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback models and pictures for a page opened
+  from disk; the build script that inlines them is outside this pass.
+- Nobody has listened: the mix is measured, not heard.
+- Out of the tunnel the glare that clears over the new landscape is kept (it hides the change of scenery).
+
 ## How they are made
 
 ```bash
