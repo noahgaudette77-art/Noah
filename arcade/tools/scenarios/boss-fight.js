@@ -168,6 +168,25 @@ module.exports = async (cap) => {
     await strip("13-streak-tier", 8, 7, { cols: 4 });
     await cap.fast(30);
   }
+  // ---- a heart lost, close: the crystal heart comes up on the player's side and shatters (the band only)
+  if (has("heart")) {
+    await set({ hearts: 3, hp: 1 });
+    await ready(40, 0.2);
+    await cap.answer("W");
+    await cap.until(() => { const s = window.__arcade.Scenes.cur; return !!(s.iconFX && s.iconFX.k.heart && s.iconFX.k.heart.mesh.visible); }, 400);
+    await strip("14-heart-lost", 8, 3, { cols: 4 });
+    await cap.fast(60);
+  }
+  // ---- the last blast's reward in the band only: gold stars and egg coins thrown out toward the player
+  if (has("reward")) {
+    await set({ hp: 0.04, hearts: 3 });
+    await ready(40);
+    await cap.answer("R");
+    await cap.fast(18);
+    await cap.next();
+    await cap.until(() => { const s = window.__arcade.Scenes.cur; return !!(s.iconFX && s.iconFX.k.star && s.iconFX.k.star.mesh.visible); }, 900);
+    await strip("15-death-reward", 8, 5, { cols: 4 });
+  }
   // ---- death: the finishing blow, done for, then the fall, the chain, the last blast, the reward
   if (has("death")) {
     await set({ hp: 0.04, hearts: 3 });

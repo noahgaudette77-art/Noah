@@ -207,21 +207,20 @@ module.exports = async (cap) => {
   // ---- the rival rigs and the chaser (violet, chrome, a silver egg), a streak tier's bolt, a milestone's stars
   if (has("rivals")) {
     await set({ crashes: 0, insurance: 0 });
+    // (each forced just after a gate, its explanation held up: while a question is up the road's cars slip away from
+    // under the lane badges, and on a phone a car in the far lane is off the picture until it draws level)
     const event = async (id, name, wait, every) => {
-      await ready(30, 0.2);
-      await cap.answer(1);
-      await page(() => { window.__arcade.Scenes.cur.lockT = 9; });
-      await cap.fast(10);
-      await page((e) => { const s = window.__arcade.Scenes.cur; s.gp = Math.min(s.gp, 0.2); s.world.director.force(e); }, id);
+      await ready(30, 0.3);
+      await drive("R", 2);
+      await sheet();
+      await page((e) => { const s = window.__arcade.Scenes.cur; if (s.quiz.holdAuto) s.quiz.holdAuto(); s.world.director.force(e); }, id);
       await cap.fast(wait);
       await strip(name, 6, every);
-      await page(() => { const s = window.__arcade.Scenes.cur; s.lockT = 0.01; });
-      await sheet();
-      await cap.fast(30);
+      await cap.fast(20);
     };
-    await event("rival", "19-rival-rig", 70, 40);
-    await event("rival", "19b-rival-rig2", 70, 40);
-    await event("chase", "20-chase", 36, 18);
+    await event("rival", "19-rival-rig", 80, 30);
+    await event("rival", "19b-rival-rig2", 80, 30);
+    await event("chase", "20-chase", 30, 15);
     await ready(30, 0.3);
     await page(() => { const A = window.__arcade, s = A.Scenes.cur; s.run.streak = 2; A.Hype.level = 0; });
     await drive("R", 2);

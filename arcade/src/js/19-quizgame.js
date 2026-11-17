@@ -32,6 +32,9 @@ class QuizGame extends Scene3D {
     this.quiz = new QuizPanel(this.el);
     this.bandEl = $(".band", this.el);
     if (this.run.hype) Hype.bind(this.el);
+    // (the icon props mirror the sky as the game's own models do: Risk Blaster hands its panorama's reflection to each
+    // material (pano.mirror) rather than to the whole scene. Done here, with the scene built and before its warm-up.)
+    if (this.iconFX && this.pano && this.pano.mirror && this.scene && !this.scene.environment) this.iconFX.mirror((m) => this.pano.mirror(m, 1.3));
   }
   on(a, t) {
     if (a === "pause") this.pause();

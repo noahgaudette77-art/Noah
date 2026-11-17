@@ -150,6 +150,16 @@ module.exports = async (cap) => {
     await ready(60);
     await still("16b-battered", { band: true });
   }
+  // ---- a shield lost, close: the shield comes up before the fighter and breaks apart (the band only)
+  if (has("shield")) {
+    await heal();
+    await page(() => { window.__arcade.Scenes.cur.enemy.atkN = 0; });
+    await cap.answer("W");
+    await cap.until(() => { const s = window.__arcade.Scenes.cur; return !!(s.iconFX && s.iconFX.k.shield && s.iconFX.k.shield.mesh.visible); }, 300);
+    await strip("23-shield-lost", 12, 2);
+    await cap.fast(40);
+    await ready();
+  }
   // ---- the streak reaches a new tier: the bolt spins up over the fighter
   if (has("tier")) {
     await heal();
@@ -159,6 +169,20 @@ module.exports = async (cap) => {
     await strip("22-streak-tier", 12, 5);
     await cap.fast(30);
     await ready();
+  }
+  // ---- the demon's death in the band only (the stars thrown out of the last blast, its brood scattering, allies
+  // crossing between the waves), then the next one's entrance with its brood gathering: a lighter strip than "death"'s
+  // whole screen, for a busy machine
+  if (has("deathband")) {
+    await heal();
+    await page(() => { const s = window.__arcade.Scenes.cur; s.inWave = 9; });
+    await cap.answer("R");
+    await cap.until(() => !!window.__arcade.Scenes.cur.quiz.sheet, 200);
+    await cap.next();
+    await strip("17c-death-band", 18, 8, { cols: 6 });
+    await cap.ask(1500);
+    await cap.until(() => { const e = window.__arcade.Scenes.cur.enemy; return e.alive && e.inT > 0.02; }, 600);
+    await strip("05-demon-entrance", 18, 7, { cols: 6 });
   }
   // ---- the demon's death, and the next one's entrance
   if (has("death")) {
