@@ -331,7 +331,7 @@ class ExamGame extends QuizGame {
     this.fillLow = new THREE.PointLight(0x7c84c4, 0.85, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
-    this.rimB = new THREE.PointLight(0xffc474, 2.7, 34, 1.5);
+    this.rimB = new THREE.PointLight(Assets.on ? 0xff5ccf : 0xffc474, 2.7, 34, 1.5); // (served, Phase 6: the examiner's rim is the arcade's magenta, not gold)
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 

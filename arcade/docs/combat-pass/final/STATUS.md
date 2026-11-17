@@ -6,7 +6,7 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
 |---|---|---|
 | 1 | Boss Rush: damage popups in their own lane, caption held where they would meet; "LIGHTNING!" not clipped | done |
 | 2 | Risk Blaster low health: beating red frame round the band, smoke and flame on the visible hull; Nest Egg Run's last-life frame stronger | done (racer capture with the racer batch) |
-| 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | to do |
+| 3 | Final Exam examiner: a hard-edged chest core over the smear, cool key and magenta rim (hitStop calls untouched) | done (docs capture with ruling 6) |
 | 4 | Risk Blaster's ambient ships read as ships (lights as points, less tint and bloom, further into the haze) | to do |
 | 5 | RANK UP! on an opaque bordered plate, a dark scrim over the tiles | to do |
 | 6 | Exam passed: question UI and NEXT cleared before the banner and SKIP; toast held until the cinematic ends | to do |
@@ -39,3 +39,14 @@ Brief: the lead's rulings on the final review (r1). One commit per fix; regressi
   back beside the canopy (raycast once onto the model's skin; from disk, or without the model, the old engine point);
   the flame ribbon, fire, sparks and smoke stay on the skin and stream back toward the lens. Re-captured blaster
   15-low-health. Regression blaster, racer IDENTICAL both ways.
+- **Ruling 3 (the examiner).** Served only, as the Phase 5 chest change was (the examiner is embedded and shows from
+  disk too, where nothing changes). `24c-examboss.js`: `housing()` sets a hard-edged octagon into the chest's hollow
+  on the chest joint (lathe-turned bevelled lip of polished gunmetal, flat-shaded; dark floor; four vent slats; a
+  magenta core in a collar, with a glow), sized from a depth probe of the chest (hollow about 0.1 across round
+  (0.006, 0.69), floor z 0.16, armour 0.17-0.19); it hides with the chest when it is blown apart; the core follows the
+  lights' power (dark until it wakes, stuttering as it dies). The skin: a cool key (sheen and a little light from high
+  left, in view space), the rim magenta on the far side and cool on the near, what the metal mirrors desaturated 65%
+  and cooled (`EXAM_COOL`), the fresnel rim magenta. The orange came mostly from the old ember sprite (orange, as wide
+  as the chest): now the core's magenta at 0.42 of the size. `24-exam.js`: the gold rim lamp behind it is magenta
+  when served. Both `GFX.hitStop` lines untouched (checked: the diff has no line with hitStop). Regression exam
+  IDENTICAL both ways.
