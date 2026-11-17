@@ -14,12 +14,14 @@
 //   o: { size (world units tall), face (a camera: the prop faces it), turn (radians about its upright), hold, crack,
 //        onBreak (called on the frame it breaks: the caller's sparks and sound), dir, speed, n, life, up }
 if (GFX.extras === undefined) GFX.extras = true; // the background additions and effect props: a quality scaler may switch them off on slow frames
+// (the gold ones are made half metal: in dark space a mirror of gold has little to mirror and reads black, while gold
+// that takes the scene's own lamps reads gold anywhere)
 const PROP_KINDS = {
   shield: { model: "prop-shield", cut: 0, shards: 9, env: 1.1, glow: 2.2 },
   heart: { model: "prop-heart", cut: 0.3, shards: 11, env: 1.3, glow: 2.4 },
-  bolt: { model: "prop-bolt", cut: 0.36, env: 1.2, glow: 2.6 },
-  star: { model: "prop-star", cut: 0.19, many: 12, env: 1.3, glow: 2.2 },
-  coin: { model: "prop-coin", cut: 0, many: 10, env: 1.3, glow: 2 },
+  bolt: { model: "prop-bolt", cut: 0.36, env: 1.4, glow: 2.6, metal: 0.5, rough: 0.4 },
+  star: { model: "prop-star", cut: 0.19, many: 12, env: 1.5, glow: 2.4, metal: 0.45, rough: 0.42 },
+  coin: { model: "prop-coin", cut: 0, many: 10, env: 1.5, glow: 2, metal: 0.5, rough: 0.42 },
 };
 // A model's mesh as a centred geometry one unit tall, without what stands below `cut` (a share of its height, from its
 // foot). With shards, each triangle gets its own corners and the number of the shard it belongs to (nearest of a few
@@ -82,7 +84,7 @@ class PropFX {
     for (const kind of kinds) {
       const P = PROP_KINDS[kind], model = Assets.model(P.model);
       if (!model) continue;
-      tuneModel(model, { env: P.env, glow: P.glow });
+      tuneModel(model, { env: P.env, glow: P.glow, metal: P.metal, rough: P.rough });
       const g = propGeometry(model, P.cut, P.shards);
       if (!g) continue;
       let mesh, e;
