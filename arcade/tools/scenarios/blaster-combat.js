@@ -150,6 +150,16 @@ module.exports = async (cap) => {
     await ready(60);
     await still("16b-battered", { band: true });
   }
+  // ---- the streak reaches a new tier: the bolt spins up over the fighter
+  if (has("tier")) {
+    await heal();
+    await page(() => { const A = window.__arcade, s = A.Scenes.cur; s.run.streak = 2; A.Hype.level = 0; });
+    await cap.answer("R");
+    await cap.fast(10);
+    await strip("22-streak-tier", 12, 5);
+    await cap.fast(30);
+    await ready();
+  }
   // ---- the demon's death, and the next one's entrance
   if (has("death")) {
     await heal();
