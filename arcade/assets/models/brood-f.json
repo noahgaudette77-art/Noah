@@ -1,7 +1,7 @@
 {
  "name": "brood-f",
- "triangles": 7482,
- "bytes": 136504,
+ "triangles": 2295,
+ "bytes": 75524,
  "tex": 256,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     0.4519,
     0.2022
    ],
-   "tris": 7482
+   "tris": 2295
   }
  },
  "anchors": {},

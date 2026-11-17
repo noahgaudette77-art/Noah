@@ -31,7 +31,7 @@ class BlasterEscort {
     // (each ship flies as one ally after another: every ally's shape and paint is readied at start with the rest,
     // or its pictures would go to the graphics chip the first time it flew, mid-fight: see GFX.warm)
     if (g.warmExtra) for (const n in this.kits) { const w = new THREE.Mesh(this.kits[n].geo, this.kits[n].mat); w.position.z = -40; g.warmExtra.push(w); }
-    this.ships = any ? [0, 1].map(() => { const m = new THREE.Mesh(any.geo, any.mat); m.visible = false; m.frustumCulled = false; s.add(m); return { m, mode: "", t: 0, side: 1, a: new THREE.Vector3(), b: new THREE.Vector3(), v: new THREE.Vector3(), size: 1, dur: 1, delay: 0, roll: 0 }; }) : [];
+    this.ships = any ? [0, 1].map(() => { const m = new THREE.Mesh(any.geo, any.mat); m.visible = false; s.add(m); /* (the lens's own culling: a ship out of the picture is not drawn) */ return { m, mode: "", t: 0, side: 1, a: new THREE.Vector3(), b: new THREE.Vector3(), v: new THREE.Vector3(), size: 1, dur: 1, delay: 0, roll: 0 }; }) : [];
     // their running lights: two to a ship, one draw for all of them
     if (this.ships.length) {
       this.lightGeo = new THREE.BufferGeometry();
@@ -62,7 +62,7 @@ class BlasterEscort {
         // (a dark shape; a rim of the region's light round its edges, a little more from above)
         fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(f, 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
       });
-      this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.frustumCulled = false; m.renderOrder = -5; s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
+      this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.renderOrder = -5; /* (the lens's own culling: one out of the picture is not drawn) */ s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
     } else this.brood = [];
     this.broodI = Math.floor(Math.random() * 3) * 3;
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(0, 0, 0, "YXZ"); this._m = new THREE.Matrix4();

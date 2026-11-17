@@ -1,7 +1,7 @@
 {
  "name": "brood-d2",
- "triangles": 5614,
- "bytes": 88456,
+ "triangles": 2031,
+ "bytes": 70532,
  "tex": 256,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     0.4423,
     0.1803
    ],
-   "tris": 5614
+   "tris": 2031
   }
  },
  "anchors": {},

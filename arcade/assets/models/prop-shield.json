@@ -1,7 +1,7 @@
 {
  "name": "prop-shield",
- "triangles": 8000,
- "bytes": 218504,
+ "triangles": 4000,
+ "bytes": 188212,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.1251
    ],
-   "tris": 8000
+   "tris": 4000
   }
  },
  "anchors": {},

@@ -8,7 +8,7 @@
   "value": 1
  },
  "origin": "center",
- "tris": 6000,
+ "tris": 2500,
  "tex": 256,
  "texBase": 256,
  "emissive": {
@@ -29,5 +29,7 @@
  },
  "surface": {
   "roughMin": 0.12
- }
+ },
+ "sloppy": true,
+ "bar": "the game's one quality bar (2026-11-17): a speck far off, drawn as a dark shape: about 2.5K triangles (a lower-detail version: it is never seen near), 256 px maps"
 }

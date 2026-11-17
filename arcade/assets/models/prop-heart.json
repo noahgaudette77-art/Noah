@@ -1,7 +1,7 @@
 {
  "name": "prop-heart",
- "triangles": 8000,
- "bytes": 220464,
+ "triangles": 5204,
+ "bytes": 199368,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.3527
    ],
-   "tris": 8000
+   "tris": 5204
   }
  },
  "anchors": {},

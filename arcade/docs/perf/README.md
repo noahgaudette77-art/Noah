@@ -187,3 +187,41 @@ Measured in a phone's window (440 x 956 at 3x), 6 s into each screen, 20 frames;
 
 What a phone gives up: the floor and road reflections (the wet avenue, the arena's and the hall's polished floors) and,
 at MEDIUM, the god rays and the contact shadows under the rig and the boss. A desktop keeps them all.
+
+## Step 7: the additions, inside each scene's budget
+
+The owner wants the leftover models and sounds in the game, inside a budget per scene, with no new dynamic lights and
+one look. They were placed by the two workers (records in `docs/combat-pass/unused/`); this step holds each to its
+scene's budget.
+
+| Addition | Where | How it is drawn | At once | Triangles each | Lights | Off at |
+|---|---|---|---|---|---|---|
+| The overlord's brood (nine builds) | Risk Blaster, far off | one dark material rimmed in the region's light, a mesh each; the lens culls one out of the picture | 3 | about 2.2K (a lower-detail build: was 5.3K to 8.6K) | none | LOW |
+| Allied fighters (five) | Risk Blaster | two meshes that fly as one ally after another, their running lights one draw; the lens culls one out of the picture | 2 | 8K to 9K | none | LOW |
+| Star, coin, heart, bolt, shield | the three games | instanced per kind: only the live copies are drawn, none when none is live | up to 12 stars, 10 coins | 2.5K to 5.5K (lower-detail builds: were 6K to 8K) | none | LOW |
+| Rival rigs (two) and the chaser | Nest Egg Run | copies in the traffic's instanced fleet: only the cars on the road are drawn, and a kind with none on the road is not drawn at all | 1 each | 9.5K to 10K | none | LOW |
+| The fallen bosses' statues (twelve) | Final Exam, the ending | one merged mesh, one material: one draw for all twelve | 12 | about 7K (90K in all) | none | LOW |
+| The far lectern, the dark deck, the dark tome | Final Exam, Memory Bank, Strategy Guide | one mesh each (the tome inside the joinery's own draw) | 1 | 8K to 10K | none | LOW |
+| Sound: every take, the bosses' own last words, the hall's call, CHAPTER COMPLETE | everywhere | played in turn from the sprites already loaded | | | | |
+
+Every model added keeps the one look: the bar's texture tier (512 px, 256 px for the brood), the game's one grade, and
+its scene's own lights (it adds none: each scene's light budget is unchanged by them).
+
+Each scene's stated budget, as a phone draws it at MEDIUM, and what it measured at its fullest moment (`perf-report.js --peak`: the brood gathering, the allies flying in, a burst of twelve stars and ten coins, a heart, a bolt and a shield, a rival on the road). Every scene: at most 5 million pixels a frame and 10 passes (it measured 4.9 and 10 on each).
+
+| Scene | Generated models it loads | Draw calls: budget / peak | Triangles: budget / peak | Lights: budget / drawn |
+|---|---|---|---|---|
+| Title | 0 | 90 / 77 | 120K / 33K | 0 / 0 |
+| Hall | 12 | 70 / 45 | 200K / 100K | 4 / 4 |
+| Risk Blaster | 24 | 80 / 63 | 260K / 236K | 5 / 5 |
+| Nest Egg Run | 11 | 80 / 67 | 200K / 157K | 5 / 5 |
+| Boss Rush | 5 | 70 / 62 | 150K / 111K | 5 / 5 |
+| Memory Bank | 3 | 70 / 54 | 200K / 98K | 4 / 4 |
+| Final Exam | 14 | 100 / 83 | 200K / 37K | 5 / 5 |
+| Strategy Guide | 2 | 60 / 50 | 60K / 32K | 3 / 3 |
+
+(The Final Exam's statues stand only in its ending: about 90K triangles more there, drawn once on a phone, inside its 200K.)
+
+If a scene does not hold 60 fps on the phone at MEDIUM, AUTO steps down to LOW: every addition above goes (they are
+all behind `GFX.extras`), with the drawing size at 1.5x and five bloom levels. The FPS counter shows the tier and the
+reason it changed.

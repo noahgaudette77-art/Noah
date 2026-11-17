@@ -427,6 +427,7 @@ class RacerWorld {
         const lamps = new THREE.InstancedMesh(kit.trim, this.trafficMat, n);
         lamps.instanceMatrix = mesh.instanceMatrix;
         Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
+        Object.defineProperty(lamps, "visible", { get: () => mesh.visible, set: () => {} });
         lamps.frustumCulled = false;
         g.scene.add(lamps);
       }
@@ -601,7 +602,7 @@ class RacerWorld {
     }
     for (const m of dirty) { m.instanceMatrix.needsUpdate = true; m.geometry.attributes.aL.needsUpdate = true; }
     // draw only as many of each kind as are on the road (slots fill from the front)
-    for (const type in this.fleet) { let n = 0; for (const c of this.cars) if (c.type === type && c.on) n = Math.max(n, c.i + 1); this.fleet[type].count = n; }
+    for (const type in this.fleet) { let n = 0; for (const c of this.cars) if (c.type === type && c.on) n = Math.max(n, c.i + 1); this.fleet[type].count = n; this.fleet[type].visible = n > 0; } // (a kind with none on the road is not drawn at all: no empty draw call)
     this.shadows.count = GFX.opt.shadows ? k : 0;
     this.shadows.instanceMatrix.needsUpdate = true;
     const u = this.trafficMat.uniforms;

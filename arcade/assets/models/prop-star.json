@@ -1,7 +1,7 @@
 {
  "name": "prop-star",
- "triangles": 7999,
- "bytes": 244564,
+ "triangles": 5519,
+ "bytes": 225828,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.4304
    ],
-   "tris": 7999
+   "tris": 5519
   }
  },
  "anchors": {},

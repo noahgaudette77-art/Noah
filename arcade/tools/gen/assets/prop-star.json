@@ -8,7 +8,7 @@
   "value": 1
  },
  "origin": "ground",
- "tris": 8000,
+ "tris": 3000,
  "tex": 512,
  "texBase": 512,
  "emissive": {
@@ -29,5 +29,6 @@
  },
  "surface": {
   "roughMin": 0.12
- }
+ },
+ "bar": "the game's one quality bar (2026-11-17): an effect prop that flies in numbers (up to 12 at once): a lower-detail version of a simple shape, 512 px maps"
 }

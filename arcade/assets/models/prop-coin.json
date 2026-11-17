@@ -1,7 +1,7 @@
 {
  "name": "prop-coin",
- "triangles": 6000,
- "bytes": 130000,
+ "triangles": 2500,
+ "bytes": 102176,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.129
    ],
-   "tris": 6000
+   "tris": 2500
   }
  },
  "anchors": {},

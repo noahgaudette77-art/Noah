@@ -5,7 +5,7 @@
  * the draw calls, the lights each lit pixel reckons with, the textures held, and the main thread's own time per frame
  * (the game's code and its drawing calls: a fair guide to a fast phone's processor, unlike this machine's frame rate).
  *
- *   node arcade/tools/perf-report.js [--html index.html] [--only blaster,hub] [--tier 0..3] [--frames 12] [--wait 2500]
+ *   node arcade/tools/perf-report.js [--html index.html] [--only blaster,hub] [--tier 0..3] [--frames 12] [--wait 2500] [--peak]
  *
  * The page is served over HTTP (every asset loaded) in a phone-sized window: 440 x 956 at 3 device pixels per page
  * pixel, touch, as an iPhone 17 Pro Max. This machine draws in software, so its frame rates mean nothing: the pixel
@@ -15,7 +15,7 @@ const fs = require("fs"), path = require("path"), http = require("http");
 const { chromium } = require("playwright");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
-const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", null), FRAMES = +flag("frames", 12), WAIT = +flag("wait", 2500);
+const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", null), FRAMES = +flag("frames", 12), WAIT = +flag("wait", 2500), PEAK = args.includes("--peak");
 // Each screen's stated budget, as a phone draws it at MEDIUM (where it starts): million pixels shaded a frame, render
 // passes, draw calls, triangles, lights (the owner, 2026-11-17: every scene a stated budget for models, draw calls and
 // lights; a steady 60 fps on an iPhone 17 Pro Max is the pass). Models: the generated models its files bring.
@@ -30,6 +30,13 @@ const BUDGET = {
   memory: { mpx: 5, passes: 10, draws: 70, tris: 200000, lights: 4, models: 3 },
   exam: { mpx: 5, passes: 10, draws: 100, tris: 200000, lights: 5, models: 14 },
   guide: { mpx: 5, passes: 10, draws: 60, tris: 60000, lights: 3, models: 2 },
+};
+// --peak: each game's additions brought on at once before measuring (the brood gathering, the allies flying in, a
+// full burst of the effect props, a rival on the road), so the budget is checked at its fullest moment
+const PEAK_RUN = {
+  blaster: () => { const A = window.__arcade, s = A.Scenes.cur, st = s.stage, p = s.camera.position.clone().add(new THREE.Vector3(0, 0, -9)); if (st && st.escort) { st.escort.gather(); st.escort.entrance(); } if (s.iconFX) { s.iconFX.burst("star", p, { n: 12 }); s.iconFX.spin("bolt", p.clone().add(new THREE.Vector3(1, 0, 0))); s.iconFX.shatter("shield", p.clone().add(new THREE.Vector3(-1, 0, 0))); } },
+  racer: () => { const A = window.__arcade, s = A.Scenes.cur, p = s.camera.position.clone().add(new THREE.Vector3(0, -1, -9)); if (s.world && s.world.director) s.world.director.force("rival"); if (s.iconFX) { s.iconFX.burst("star", p, { n: 12 }); s.iconFX.spin("heart", p.clone().add(new THREE.Vector3(1, 0, 0))); } },
+  boss: () => { const A = window.__arcade, s = A.Scenes.cur, p = s.camera.position.clone().add(new THREE.Vector3(0, 0, -7)); if (s.iconFX) { s.iconFX.burst("star", p, { n: 12 }); s.iconFX.burst("coin", p, { n: 10 }); s.iconFX.spin("heart", p.clone().add(new THREE.Vector3(1, 0, 0))); s.iconFX.spin("bolt", p.clone().add(new THREE.Vector3(-1, 0, 0))); } },
 };
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".glb": "model/gltf-binary", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".json": "application/json" };
 const SCREENS = [
@@ -83,6 +90,7 @@ const SCREENS = [
     // wait for the screen's files and its first frames
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
     await page.waitForTimeout(WAIT); // (--wait: a game's full set of lights and events is out a few seconds in)
+    if (PEAK && PEAK_RUN[name]) { await page.evaluate(PEAK_RUN[name]).catch((e) => errors.push("peak: " + e.message)); await page.waitForTimeout(900); }
     const r = await page.evaluate(async (frames) => {
       const A = window.__arcade, G = A.GFX, R = G.renderer, gl = R.getContext();
       // every draw into a target counts that target's pixels (times its samples): what the chip shades and stores
