@@ -32,6 +32,75 @@ const GFX = {
     this.opt = s.fx;
     this.calm = !!s.calm;
   },
+  // ---- quality tiers. HIGH draws everything; each tier down drops the costliest layers first. The drawing size is
+  // never more than twice the page's own pixels (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip can),
+  // and drawing larger than the screen to smooth edges happens only on a low-density desktop screen, within a budget.
+  TIERS: [
+    { name: "HIGH", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fx: 1 },
+    { name: "MEDIUM", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fx: 0.8 },
+    { name: "LOW", pr: 1.5, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fx: 0.6 },
+    { name: "LOWEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fx: 0.45 },
+  ],
+  tier: 0,
+  auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
+  extras: true, // background figures and decorative extras (the tier's; scenes check it)
+  fxScale: 1, // how many particles an effect throws (the tier's; effects may scale by it)
+  // the effects as drawn: the player's own switches, less what the tier leaves out
+  eopt() {
+    const T = this.TIERS[this.tier], o = this.opt;
+    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen });
+  },
+  // how many lights the current scene has on (for the readout: each one is reckoned for every lit pixel)
+  lightCount() {
+    const sc = Scenes.cur && Scenes.cur.scene;
+    if (!sc) return 0;
+    let n = 0; sc.traverseVisible((o) => { if (o.isLight && !o.isAmbientLight && !o.isHemisphereLight) n++; });
+    return n;
+  },
+  setTier(n, why) {
+    n = Math.max(0, Math.min(this.TIERS.length - 1, n | 0));
+    if (n === this.tier && this._tierSet) return;
+    this._tierSet = true;
+    const T = this.TIERS[n];
+    this.tier = n; this.extras = T.extras; this.fxScale = T.fx;
+    document.body.classList.toggle("lite", n >= 1); // (no frosted glass over the live picture below HIGH: see style.css, body.lite)
+    if (this.ok && this.pipe) { this.pipe.setSamples(T.samples); this.pipe.setMirror(T.mirror); this.resize(); }
+    this.perf.changedAt = performance.now(); this.perf.why = why || "";
+    if (window.Scenes && Scenes.cur && Scenes.cur.onTier) { try { Scenes.cur.onTier(n); } catch (e) { /* a scene's own response to the tier */ } }
+  },
+  // Setup > Graphics: "auto" lets the frame rate choose; a fixed tier stays put
+  setQuality(q) {
+    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
+    this.auto = fixed === undefined;
+    this.setTier(fixed === undefined ? (this.small ? 1 : 0) : fixed, "setup");
+  },
+  // ---- the frame rate, watched: a tier down when frames run late, a careful try back up when they hold steady.
+  // (Automated browsers keep the tier they start with: their frames say nothing about a player's screen.)
+  perf: { ring: new Float32Array(120), n: 0, i: 0, changedAt: 0, okSince: 0, failed: [0, 0, 0, 0], upAt: 0, why: "", fps: 0 },
+  perfTick(ms) {
+    const P = this.perf, now = performance.now();
+    if (!this.auto || navigator.webdriver || document.hidden || ms <= 0 || ms > 250 || now - P.changedAt < 1500 || now - (this.sceneAt || 0) < 1500) return;
+    P.ring[P.i] = ms; P.i = (P.i + 1) % P.ring.length; P.n = Math.min(P.ring.length, P.n + 1);
+    if (P.n < 60 || P.i % 30) return;
+    const a = Array.from(P.ring.subarray(0, P.n)).sort((x, y) => x - y), q = (f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
+    const p75 = q(0.75), p90 = q(0.9);
+    P.fps = 1000 / q(0.5);
+    if (p75 > 18.2 && this.tier < this.TIERS.length - 1) {
+      // frames are running late: one tier down (a tier just tried and dropped again is not tried again soon)
+      if (now - P.upAt < 6000) P.failed[this.tier] = (P.failed[this.tier] || 0) + 1;
+      P.n = 0; P.okSince = 0;
+      this.setTier(this.tier + 1, "slow frames (" + Math.round(1000 / q(0.5)) + " fps)");
+      return;
+    }
+    if (p90 < 17.4) {
+      if (!P.okSince) P.okSince = now;
+      const up = this.tier - 1;
+      if (up >= 0 && now - P.okSince > 12000 * (1 + 2 * (P.failed[up] || 0)) && (P.failed[up] || 0) < 3) {
+        P.n = 0; P.okSince = 0; P.upAt = now;
+        this.setTier(up, "steady frames");
+      }
+    } else P.okSince = 0;
+  },
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
   init() {
@@ -57,7 +126,15 @@ const GFX = {
     const ext = (n) => { try { return !!r.extensions.has(n); } catch (e) { return false; } };
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
-    this.pipe = makePipeline(r, this.hdr);
+    // the first tier: Setup's choice, or (auto) HIGH on a desktop and MEDIUM on a phone, from where the frame rate leads
+    const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
+    this.auto = fixed === undefined;
+    const t0 = fixed !== undefined ? fixed : navigator.webdriver ? 0 : this.small ? 1 : 0;
+    this.tier = t0; this.extras = this.TIERS[t0].extras; this.fxScale = this.TIERS[t0].fx;
+    document.body.classList.toggle("lite", t0 >= 1);
+    this.pipe = makePipeline(r, this.hdr, this.TIERS[t0].samples);
+    this.pipe.setMirror(this.TIERS[t0].mirror);
+    this._tierSet = true;
     this.resize();
     window.addEventListener("resize", () => this.resize());
   },
@@ -70,12 +147,15 @@ const GFX = {
   scenePR() {
     const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8, out = this.outPR();
     const post = Scenes.cur && Scenes.cur.scene && Scenes.cur.scene.userData.post, want = post && post.ssaa > 1 ? Math.min(2, post.ssaa) : 1;
-    if (want <= 1) return out;
-    return Math.min(lim, out * Math.max(1, Math.min(want, Math.sqrt(9e6 / Math.max(1, this.w * this.h * out * out)))));
+    // drawing larger than the screen smooths thin edges, but its cost multiplies: only at the HIGH tier, only on a
+    // screen of less than 1.5 device pixels per page pixel (a high-density screen is smooth already), and never past
+    // four million pixels
+    if (want <= 1 || this.tier > 0 || out >= 1.5) return out;
+    return Math.min(lim, out * Math.max(1, Math.min(want, Math.sqrt(4e6 / Math.max(1, this.w * this.h * out * out)))));
   },
   outPR() {
     const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
-    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim));
+    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim, this.TIERS[this.tier].pr));
   },
   ss: 1, // how many times larger than the screen the scene is drawn (1 unless the scene asked: see scenePR)
   resize() {
@@ -111,7 +191,7 @@ const GFX = {
     scene.autoUpdate = false;
     const mirrors = scene.userData.mirrors;
     if (this.probe) this.probe("start");
-    if (mirrors) for (const m of mirrors) { if (!this.opt.wet || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
+    if (mirrors) for (const m of mirrors) { if (!this.opt.wet || !(this.TIERS[this.tier].mirror > 0) || scene.userData.mirrorOff) m.blank(this.renderer); else m.render(this.renderer, scene, camera, this.pipe.mirrorSize); }
     if (this.probe && mirrors) this.probe("mirror");
     this.pipe.render(scene, camera, {
       t: this.t,
@@ -125,7 +205,7 @@ const GFX = {
       rip: rp, ripR: rk * 0.62, ripAmp: rk < 1 ? rp.amp * (1 - rk) * (1 - rk) : 0,
       punch: this.punch < 0.0006 || this.calm ? 0 : this.punch,
       zoomBlur: !this.opt.blur || this.calm ? 0 : Math.min(0.72, this.speedBlur + this.punch * 9), // (streaks, not a smear: the subject stays readable through a boost or a blow)
-      opt: this.opt, calm: this.calm,
+      opt: this.eopt(), calm: this.calm, levels: this.TIERS[this.tier].levels,
       heat: this.heat,
       keep: this.keep,
       glitch: gk < 1 ? this.gl.a * (1 - gk) : 0,
@@ -363,7 +443,7 @@ const Scenes = {
     this.cur = s;
     if (old && old !== s && !old.keepAlive) { if (GFX.ok) GFX.park(old); else old.dispose(); } // the hub stays built (see hubScene)
     else if (old && old !== s && GFX.ok) GFX.rest(old); // (and lets its pictures and shapes go from the graphics chip while you are away)
-    if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); }
+    if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); GFX.sceneAt = performance.now(); } // (the frame-rate watch skips a new screen's first moments: building it is not drawing it)
     if (s) s.resize(GFX.w, GFX.h);
     if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
     return s;

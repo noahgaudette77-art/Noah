@@ -1826,3 +1826,16 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 @keyframes rw-in { 0% { opacity: 0; transform: translateY(-26px) scale(0.4); } 60% { opacity: 1; transform: translateY(3px) scale(1.12); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .res-rewards .rw.in { animation: rw-fade 0.4s ease-out backwards; } }
 @keyframes rw-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+/* The lite page (body.lite: the MEDIUM graphics tier and below, which is where every phone starts). A frosted panel
+   over the live 3D picture is blurred again on every frame, at the screen's full density: on a phone that is a dozen
+   full-screen blurs a frame. So no glass here: the panels are made a shade more solid instead, which reads the same. */
+body.lite .qpanel, body.lite .answers .ans, body.lite .hub-card, body.lite .mission, body.lite .chip, body.lite .iconbtn, body.lite .sheet,
+body.lite .dlg, body.lite .trophy, body.lite #toast, body.lite .attract, body.lite .exam-nav, body.lite .grade, body.lite .logo-kicker,
+body.lite .insert-coin, body.lite .modal, body.lite .rank, body.lite .screen { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body.lite .qpanel { background: linear-gradient(180deg, rgba(40, 18, 100, 0.94), rgba(12, 5, 38, 0.97)); }
+body.lite .answers .ans { background: linear-gradient(180deg, rgba(32, 15, 84, 0.95), rgba(10, 4, 34, 0.97)); }
+body.lite .hub-card { background-color: rgba(13, 6, 40, 0.92); }
+body.lite .chip, body.lite .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.93), rgba(10, 5, 34, 0.95)); }
+body.lite .screen[style*="background:rgba(9,3,32"] { background: linear-gradient(180deg, rgba(16, 7, 50, 0.95), rgba(6, 2, 22, 0.98)) !important; }
+body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }

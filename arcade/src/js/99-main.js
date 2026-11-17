@@ -19,12 +19,13 @@ function boot() {
   let last = performance.now();
   const loop = (now) => {
     const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    GFX.perfTick(now - last); // (the quality tier follows the frame rate: see GFX.perfTick)
     if (!fpsEl.hidden) {
       fpsN++;
       fpsWorst = Math.max(fpsWorst, now - last);
       if (now - fpsT >= 500) {
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
-        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · WORST ${Math.round(fpsWorst)} MS<br>${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}${GFX.ok && GFX.pipe && GFX.pipe.samples ? " · MSAA " + GFX.pipe.samples : ""}`;
+        fpsEl.innerHTML = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · WORST ${Math.round(fpsWorst)} MS<br>${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS · ${GFX.ok && GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)}${GFX.ok && GFX.pipe && GFX.pipe.samples ? " · MSAA " + GFX.pipe.samples : ""}<br>${GFX.ok ? GFX.TIERS[GFX.tier].name + (GFX.auto ? " (AUTO)" : "") + " · LIGHTS " + GFX.lightCount() + (GFX.perf.why ? " · " + GFX.perf.why.toUpperCase() : "") : "NO WEBGL"}`;
         fpsN = 0;
         fpsT = now;
         fpsWorst = 0;

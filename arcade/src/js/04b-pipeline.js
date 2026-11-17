@@ -1,4 +1,6 @@
-// The render pipeline. One mode: maximum. Frame rate is not a goal here.
+// The render pipeline. Its costliest layers follow the quality tier GFX picks (GFX.TIERS: the drawing size, the
+// multisampling, ambient shade, depth of field, motion blur, lens streaks, rays, how deep the bloom goes, the
+// reflections): a phone's frame rate decides, not a fixed "maximum".
 //
 //   scene  -> multisampled HDR target (colour + 24-bit depth), at the screen's own pixels
 //   depth  -> ambient occlusion and contact shadows (half size, depth-aware blur)
@@ -18,7 +20,7 @@
 //   sun: [x, y, z] world direction toward the key light, shadow: 0..1, shadowLen
 //   dof: { focus, near, far, max, sky }           distances in world units along the view
 //   mblur: 0..1                                   camera motion blur
-function makePipeline(renderer, hdr) {
+function makePipeline(renderer, hdr, wantSamples) {
   const gl = renderer.getContext(), gl2 = renderer.capabilities.isWebGL2;
   const type = hdr ? THREE.HalfFloatType : THREE.UnsignedByteType;
   const opts = (depth, t) => ({ minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, type: t || type, depthBuffer: depth, stencilBuffer: false });
@@ -72,9 +74,10 @@ function makePipeline(renderer, hdr) {
       return gl.getError() === 0 && px[0] > 20 && px[1] > 60 && Math.abs(px[2] - 128) < 12;
     } catch (e) { return false; }
   };
-  let samples = gl2 ? Math.min(gl.getParameter(gl.MAX_SAMPLES) || 0, (window.devicePixelRatio || 1) >= 2.5 ? 4 : 8) : 0;
+  const maxSamples = gl2 ? gl.getParameter(gl.MAX_SAMPLES) || 0 : 0;
+  let samples = Math.min(maxSamples, wantSamples === undefined ? 4 : wantSamples), msaaOK = true;
   let sceneRT = makeScene(samples);
-  if (samples > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = 0; sceneRT = makeScene(0); }
+  if (samples > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = 0; msaaOK = false; sceneRT = makeScene(0); }
   let depthOK = samples > 0 || resolves(sceneRT); // (no usable depth texture: the depth passes are skipped)
 
   const litRT = rt(); // the scene with shade, motion blur and depth of field
@@ -87,7 +90,7 @@ function makePipeline(renderer, hdr) {
   const glowRT = rt(); // half res: bloom, rays, streaks, ghosts and lens dirt in one texture
   const streakA = rt(), streakB = rt(); // eighth res
   const lightV = new THREE.Vector3(), sunV = new THREE.Vector3();
-  const MIRROR = 0.6; // reflections render at this fraction of the scene size
+  let MIRROR = 0.6; // reflections render at this fraction of the scene size (the tier's: see setMirror)
   const prevVP = new THREE.Matrix4(), curVP = new THREE.Matrix4(), tmpM = new THREE.Matrix4();
   let prevCam = null;
 
@@ -524,6 +527,18 @@ function makePipeline(renderer, hdr) {
       prevCam = null;
     },
     lastCalls: 0, lastTris: 0,
+    // the tier's multisampling: the scene's target is made again (rarely: only when the tier changes)
+    setSamples(n) {
+      n = msaaOK ? Math.min(maxSamples, Math.max(0, n | 0)) : 0;
+      if (n === samples) return;
+      sceneRT.dispose();
+      samples = n; this.samples = n;
+      sceneRT = makeScene(n);
+      if (n > 0 && !resolves(sceneRT)) { sceneRT.dispose(); samples = this.samples = 0; msaaOK = false; sceneRT = makeScene(0); }
+      depthOK = samples > 0 || resolves(sceneRT);
+      sceneRT.setSize(sw, sh);
+    },
+    setMirror(k) { MIRROR = k; this.mirrorSize.w = Math.max(2, Math.round(sw * Math.max(0.1, k))); this.mirrorSize.h = Math.max(2, Math.round(sh * Math.max(0.1, k))); },
     render(scene, camera, o) {
       renderer.setRenderTarget(sceneRT);
       renderer.render(scene, camera);
@@ -535,7 +550,9 @@ function makePipeline(renderer, hdr) {
       // pixels below is stretched to match, so the picture is the same picture, only smoother. Both are 1 and 0 for
       // every scene that did not ask.)
       const ss = Math.max(1, sw / Math.max(1, renderer.domElement.width)), st = ss > 1.01 ? Math.min(1, Math.log2(ss)) : 0;
-      const Wk = (i) => (st > 0 ? lerp(W[i], i > 0 ? W[i - 1] : 0, st) + (i === LEVELS - 1 ? W[i] * st : 0) : W[i]); // each bloom level's share, a level down
+      const NL = Math.max(4, Math.min(LEVELS, o.levels || LEVELS)); // (how deep the bloom chain goes: the tier's)
+      let cut = 0; for (let i = NL; i < LEVELS; i++) cut += W[i]; // (the levels left out give their share to the deepest one kept)
+      const Wk = (i) => (st > 0 ? lerp(W[i], i > 0 ? W[i - 1] : 0, st) + (i === LEVELS - 1 ? W[i] * st : 0) : W[i]) + (i === NL - 1 ? cut : 0); // each bloom level's share, a level down
       const depth = depthOK ? sceneRT.depthTexture : null;
       const P = camera.projectionMatrix, PI = camera.projectionMatrixInverse;
 
@@ -588,7 +605,7 @@ function makePipeline(renderer, hdr) {
         // camera motion blur: a 1/40 s shutter, whatever the frame rate
         curVP.multiplyMatrices(P, camera.matrixWorldInverse);
         let mb = 0;
-        if (depth && opt.blur && !o.calm && prevCam === camera && o.dt > 0) {
+        if (depth && opt.blur && opt.mblur !== false && !o.calm && prevCam === camera && o.dt > 0) {
           mb = (p.mblur !== undefined ? p.mblur : 1) * Math.min(1, 0.025 / o.dt);
           u.uReproj.value.multiplyMatrices(prevVP, tmpM.copy(curVP).invert());
         }
@@ -607,20 +624,20 @@ function makePipeline(renderer, hdr) {
         b.uKnee.value = p.knee !== undefined ? p.knee : 0.45;
         b.uPx.value.set(1 / sw, 1 / sh);
         pass(bright, down[0].t);
-        for (let i = 1; i < LEVELS; i++) {
+        for (let i = 1; i < NL; i++) {
           downs.uniforms.tDiffuse.value = down[i - 1].t.texture;
           downs.uniforms.uPx.value.set(1 / down[i - 1].w, 1 / down[i - 1].h);
           pass(downs, down[i].t);
         }
         if (!noBloom) {
-          let low = down[LEVELS - 1].t.texture, lw = down[LEVELS - 1].w, lh = down[LEVELS - 1].h;
-          for (let i = LEVELS - 2; i >= 0; i--) {
+          let low = down[NL - 1].t.texture, lw = down[NL - 1].w, lh = down[NL - 1].h;
+          for (let i = NL - 2; i >= 0; i--) {
             const u = ups.uniforms;
             u.tLow.value = low; u.tHere.value = down[i].t.texture;
             u.uPx.value.set(1 / lw, 1 / lh);
             const tk = p.bloomTight || 0; // (0: the full chain; 1: the wide levels almost off, so the glow is about half as wide)
             u.uW.value = Wk(i) * (1 - tk * TIGHT[i]);
-            u.uLowK.value = i === LEVELS - 2 ? Wk(LEVELS - 1) * (1 - tk * TIGHT[LEVELS - 1]) : 1; // (the deepest level arrives unweighted)
+            u.uLowK.value = i === NL - 2 ? Wk(NL - 1) * (1 - tk * TIGHT[NL - 1]) : 1; // (the deepest level arrives unweighted)
             pass(ups, up[i]);
             low = up[i].texture; lw = down[i].w; lh = down[i].h;
           }
@@ -659,7 +676,7 @@ function makePipeline(renderer, hdr) {
       } else {
         const g = glow.uniforms;
         g.tBloom.value = noBloom ? black : up[0].texture;
-        g.tWide.value = noBloom ? black : up[st > 0.5 ? 4 : 3].texture;
+        g.tWide.value = noBloom ? black : up[Math.min(st > 0.5 ? 4 : 3, NL - 2)].texture;
         g.tRays.value = raysRT.texture;
         g.uRays.value = raysOn;
         g.uBloom.value = bloomK;
@@ -683,7 +700,7 @@ function makePipeline(renderer, hdr) {
       u.uGrain.value = opt.grain ? 1 : 0;
       u.uAberr.value = o.ab;
       u.uEdge.value = opt.ca ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
-      u.uSharp.value = p.sharpen !== undefined ? p.sharpen : 0.3;
+      u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uSS.value = ss;
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
