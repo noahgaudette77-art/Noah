@@ -84,7 +84,8 @@ function renderResults(o, rank) {
   // the picture over the headline: the boss that was fought, or the game's own emblem, on a medal with turning rays
   const heroBoss = o.game === "boss" ? (o.sel.chapters.length === 1 ? o.sel.chapters[0] : "all") : null;
   const heroIcon = { blaster: "t_wave5", racer: "t_million", memory: "t_cards50", exam: "t_exam60" }[o.game];
-  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : icon(PIXELS[heroIcon] ? heroIcon : "star");
+  const heroGen = genIconReady() ? genIcon({ blaster: "star", racer: "coin", memory: "coin", exam: "trophy" }[o.game] || "star", false, "hero") : ""; // (served: the game's emblem drawn from a model, like every other icon)
+  const hero = heroBoss !== null ? `<canvas aria-hidden="true"></canvas>` : heroGen || icon(PIXELS[heroIcon] ? heroIcon : "star");
   // The reward moment (served, with the icons drawn from the models): after the stars, what this game earned arrives
   // one by one, each with its sound: a coin for every 40 XP (up to five), a medal for a run without a miss, a cup for a
   // new best score, and each trophy unlocked as it stands in the hall. Pictures only: the screen's words are as before.
@@ -160,7 +161,9 @@ function renderResults(o, rank) {
         if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
       }
       if (r1.i > r0.i) {
-        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name); GFX.pulse(6, 0.25); }, 500);
+        // (with a reward moment it waits until the last reward has landed, and stands on its own plate inside the screen's edges)
+        const settle = rw.length ? (rw[rw.length - 1].at + 0.75) * 1000 : 500;
+        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : ""); GFX.pulse(6, 0.25); }, settle);
       }
     },
   });

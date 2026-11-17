@@ -9,16 +9,30 @@ const GEN_BOSSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "al
 const GEN_ICON_OFF = ["#7868cc", "#8d82c8", "#3d2c80"];
 function genIconReady() { return Assets.on && !!Assets.ui("icons"); }
 // One icon from the strip: kind is one of GEN_ICONS; off draws it dark (a star not earned, a trophy still to win).
-function genIcon(kind, off = false) {
+function genIcon(kind, off = false, cls = "") {
   const img = Assets.ui("icons"), i = GEN_ICONS.indexOf(kind);
   if (!img || i < 0) return "";
-  return `<svg class="gico${off ? " off" : ""}" viewBox="${i * 160} 0 160 160" aria-hidden="true"><image href="${img.src}" width="1120" height="160"/></svg>`;
+  return `<svg class="gico${off ? " off" : ""}${cls ? " " + cls : ""}" viewBox="${i * 160} 0 160 160" aria-hidden="true"><image href="${img.src}" width="1120" height="160"/></svg>`;
 }
-// The page's own icons that have a model: icon("star") and the rest come from the strip once it has loaded.
-icon.gen = (name, color) => (GEN_ICONS.indexOf(name) >= 0 && genIconReady() ? genIcon(name, GEN_ICON_OFF.indexOf(String(color).toLowerCase()) >= 0) : "");
-// and the stat tiles whose emblem is one of the seven (a streak is a bolt, a rank on the board a trophy, a peak a coin)
-const GEN_TILES = { "BEST STREAK": "bolt", "HIGH SCORE RANK": "trophy", PEAK: "coin", "BOSS STARS": "star", STARS: "star", "BOSS HP LEFT": "heart", MASTERY: "shield" };
-icon.tile = (k) => (GEN_TILES[k] && genIconReady() ? genIcon(GEN_TILES[k]) : "");
+// The page's own icons that have a model: icon("star") and the rest come from the strip once it has loaded. An earned
+// star is burnished gold (the strip's star is gold and chrome, which at a few pixels read as bronze).
+icon.gen = (name, color) => {
+  if (GEN_ICONS.indexOf(name) < 0 || !genIconReady()) return "";
+  const off = GEN_ICON_OFF.indexOf(String(color).toLowerCase()) >= 0;
+  return genIcon(name, off, name === "star" && !off ? "gold" : "");
+};
+// The stat tiles: one style throughout. With the strip in hand a tile shows one of the seven, large enough to read (a
+// streak is a bolt, a rank on the board or a best mark a trophy, XP and a peak are coins), or no emblem at all: never
+// a pixel glyph beside a model's picture.
+const GEN_TILES = { "BEST STREAK": "bolt", "HIGH SCORE RANK": "trophy", PEAK: "coin", "BOSS STARS": "star", STARS: "star", "BOSS HP LEFT": "heart", MASTERY: "shield",
+  ACCURACY: "medal", "QUESTIONS MASTERED": "medal", "CARDS BANKED": "coin", "XP EARNED": "coin", "BEST EXAM": "trophy", "BEST SCORE": "trophy", SCORE: "trophy", CORRECT: "star", WAVE: "bolt", REMEMBERED: "coin" };
+icon.tile = (k) => (!genIconReady() ? "" : GEN_TILES[k] ? genIcon(GEN_TILES[k], false, GEN_TILES[k] === "star" ? "gold" : "") : `<i class="tk0" aria-hidden="true"></i>`);
+if (Assets.on && typeof document !== "undefined") document.documentElement.classList.add("assets-on"); // (what is styled only when served)
+// A screen drawn before the portrait strip arrived gets its busts when it does.
+Assets.onImage = (name) => {
+  if (name !== "bosses") return;
+  document.querySelectorAll("canvas[data-boss-key]").forEach((cv) => genBossPortrait(cv, cv.dataset.bossColor, cv.dataset.bossKey));
+};
 // A boss bust from its strip, drawn into a canvas over a field of the boss's colour (see drawBossPortrait). Returns
 // false when the strip is not in hand.
 function genBossPortrait(canvas, color, key) {

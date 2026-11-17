@@ -614,7 +614,7 @@ class MemoryGame extends QuizGame {
     const f = this.card;
     if (!f) return this.finish();
     this.flipped = false;
-    if (this.gen) this.gen.dealK = 1; // (the deck gives up a card: look only)
+    if (this.gen) { this.gen.dealK = 1; memoryGenFly(this, "deal"); } // (the deck gives up a card, seen flying into place: look only)
     const card = $("[data-card]", this.el);
     // Snap back to the front without animating, or the next card's answer flashes by. The fly-away of the card
     // before it is cut off first: it has a frame or two left to run, turned to its answer side.
@@ -723,6 +723,7 @@ class MemoryGame extends QuizGame {
     // say what just happened, where the card was (the coin and the vault's answer follow in the scene)
     const cr = card.getBoundingClientRect();
     UI.floater(kind === "again" ? "BACK IN THE DECK" : "BANKED", cr.left + cr.width / 2 - (kind === "again" ? 96 : 36), cr.top + cr.height * (kind === "again" ? 0.72 : 0.16), kind === "again" ? COLORS.red : COLORS.yellow);
+    memoryGenFly(this, kind === "again" ? "again" : "bank"); // (served: the card seen going into the vault, or back onto the deck: look only)
     if (card.animate && !REDUCED_MOTION) {
       // Slide the card but fade its faces: opacity on the 3D card itself would flatten
       // it, and the hidden front face would show through mirrored.

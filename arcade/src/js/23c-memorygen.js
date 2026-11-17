@@ -51,12 +51,58 @@ function memoryGen(game) {
   }
   return G;
 }
-// each frame: a card dealt lifts the deck a hand's breadth and lets it fall back
+// The card's journey, seen: a banked card goes up into the vault's slot, a missed one back down onto the deck, and the
+// next one is dealt off the deck into its place. These are pictures laid over the page and moved by the scene's own
+// clock; the game has already moved on (the next card is in place under them), so they change nothing it decides.
+function memoryGenFly(game, kind) {
+  const G = game.gen;
+  if (!G || !game.has3D || !game.el || REDUCED_MOTION || GFX.calm) return;
+  if (kind === "deal") { (G.fly || (G.fly = [])).push({ pending: true }); return; } // (measured on the next frame, once the new card stands in its place)
+  memoryGenMake(game, kind);
+}
+function memoryGenMake(game, kind) {
+  const G = game.gen, card = $("[data-card]", game.el);
+  if (!card) return;
+  const r = card.getBoundingClientRect(), to = kind === "deal" || kind === "again" ? memoryGenScreen(game, "deck") : memoryGenScreen(game, "slot");
+  if (!to || r.width < 10) return;
+  const el = UI.el(`<div class="mem-fly ${kind}" aria-hidden="true">${kind === "deal" ? "<i></i>" : kind === "again" ? "<b>BACK IN THE DECK</b>" : "<b>BANKED</b>"}</div>`);
+  el.style.width = r.width + "px"; el.style.height = r.height + "px";
+  game.el.appendChild(el);
+  const card0 = { x: r.left + r.width / 2, y: r.top + r.height / 2 }, small = 34 / r.width; // (a card in the vault's window is about a thumb across)
+  (G.fly || (G.fly = [])).push(kind === "deal"
+    ? { el, t: 0, dur: 0.5, from: to, to: card0, s0: small, s1: 1, w: r.width, h: r.height, fadeIn: true }
+    : { el, t: 0, dur: kind === "again" ? 0.5 : 0.6, from: card0, to, s0: 0.92, s1: small * (kind === "again" ? 1 : 0.5), w: r.width, h: r.height });
+}
+// where the slot or the top of the deck is on the screen
+function memoryGenScreen(game, what) {
+  const v = (game._flyV || (game._flyV = new THREE.Vector3()));
+  if (what === "slot" && game.slotWorld) v.copy(game.slotWorld);
+  else if (what === "deck" && game.gen.deck) v.copy(game.gen.deck.scene.position).add(game._flyD || (game._flyD = new THREE.Vector3(0, MEMORY_GEN.DECK.s * 0.85, 0)));
+  else return null;
+  game.camera.updateMatrixWorld();
+  v.project(game.camera);
+  return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h };
+}
+// each frame: a card dealt lifts the deck a hand's breadth and lets it fall back; the cards in flight move on
 function memoryGenUpdate(game, dt) {
   const G = game.gen;
-  if (!G || !G.deck) return;
-  G.dealK = Math.max(0, G.dealK - dt * 2.2);
-  const k = G.dealK, lift = REDUCED_MOTION || GFX.calm ? 0.05 : 0.22;
-  G.deck.scene.position.y = Math.sin(k * Math.PI) * lift;
-  G.deck.scene.rotation.y = MEMORY_GEN.DECK.ry + Math.sin(k * Math.PI) * 0.06;
+  if (!G) return;
+  if (G.deck) {
+    G.dealK = Math.max(0, G.dealK - dt * 2.2);
+    const k = G.dealK, lift = REDUCED_MOTION || GFX.calm ? 0.05 : 0.22;
+    G.deck.scene.position.y = Math.sin(k * Math.PI) * lift;
+    G.deck.scene.rotation.y = MEMORY_GEN.DECK.ry + Math.sin(k * Math.PI) * 0.06;
+  }
+  if (G.fly && G.fly.length) {
+    if (G.fly.some((f) => f.pending)) { G.fly = G.fly.filter((f) => !f.pending); memoryGenMake(game, "deal"); }
+    G.fly = G.fly.filter((f) => {
+      f.t += dt;
+      const k = clamp(f.t / f.dur, 0, 1), e = k * k * (3 - 2 * k);
+      const x = lerp(f.from.x, f.to.x, e), y = lerp(f.from.y, f.to.y, e) - Math.sin(k * Math.PI) * 40 * (f.fadeIn ? 0.5 : 1), s = lerp(f.s0, f.s1, f.fadeIn ? Math.sqrt(e) : e * e);
+      f.el.style.transform = `translate(${(x - f.w / 2).toFixed(1)}px, ${(y - f.h / 2).toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${((f.fadeIn ? 1 - e : e) * (f.fadeIn ? -8 : 10)).toFixed(1)}deg)`;
+      f.el.style.opacity = (f.fadeIn ? (k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25) : k < 0.8 ? 1 : 1 - (k - 0.8) / 0.2).toFixed(3);
+      if (k >= 1) { f.el.remove(); return false; }
+      return true;
+    });
+  }
 }

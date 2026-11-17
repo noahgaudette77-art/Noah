@@ -1781,11 +1781,28 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 .gico { overflow: hidden; }
 .gico.off { filter: grayscale(1) brightness(0.5) !important; opacity: 0.75; }
 .trophies .tr .ic .gico, .trophy .ic .gico { width: 32px; height: 32px; }
-.tile .k .gico { width: 15px; height: 15px; margin-top: -2px; filter: none; }
+.tile .k .gico { width: 24px; height: 24px; margin: -7px 0 -5px -2px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.tile .k .tk0 { display: none; }
+.gico.gold { filter: brightness(1.3) saturate(1.6) drop-shadow(0 0 5px rgba(255, 208, 70, 0.6)) !important; }
+.res-hero > .gico { width: 64px; height: 64px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
 .world.wbar i .gico { width: 20px; height: 20px; }
 /* the results' reward moment: what was earned arrives one by one under the headline */
 .res-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 10px; margin: 6px 12px 2px; min-height: 44px; }
 .res-rewards .rw.coin + .rw.coin { margin-left: -24px; } /* (the coins land in a little pile) */
+/* Memory Bank, served: the card seen flying into the vault, back onto the deck, or dealt off it (see 23c-memorygen.js) */
+.mem-fly { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; transform-origin: 50% 50%; border-radius: 12px; border: 3px solid #35efff; background: linear-gradient(160deg, #3b2392, #160a3e 70%); box-shadow: 0 0 22px -4px #35efff, 0 6px 0 rgba(0, 0, 0, 0.5); display: grid; place-items: center; will-change: transform, opacity; }
+.mem-fly.bank { border-color: #ffd36a; box-shadow: 0 0 26px -2px #ffc93d; }
+.mem-fly.again { border-color: #ff4769; box-shadow: 0 0 22px -4px #ff4769; }
+.mem-fly b { font: 400 clamp(14px, 5vw, 24px)/1.2 var(--font-display); color: #ffe9b0; text-shadow: 0 0 12px #ffc93d, 0 3px 0 #000; }
+.mem-fly.again b { color: #ffd0da; text-shadow: 0 0 12px #ff4769, 0 3px 0 #000; font-size: clamp(11px, 3.6vw, 18px); }
+.mem-fly i { width: 46%; aspect-ratio: 1; transform: rotate(45deg); border: 3px solid #ff3ad4; box-shadow: 0 0 18px #ff3ad4, inset 0 0 18px rgba(255, 58, 212, 0.5); }
+/* the label over the vault's 3D window stands on its own dark plate (served) */
+.assets-on .vault-window > span { background: rgba(14, 8, 2, 0.9); padding: 5px 8px 4px; box-shadow: 0 0 0 2px #000; left: 8px; top: 7px; }
+/* a banner on its own dark plate, inside the screen's edges (RANK UP! after a reward moment: it must not cross the score) */
+.banner.plated { left: 16px; right: 16px; top: 34%; padding: 14px 12px 12px; background: rgba(6, 2, 22, 0.92); border: 2px solid var(--c, var(--yellow)); box-shadow: 0 0 22px -6px var(--c, var(--yellow)), 0 4px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
+.banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
+.banner.plated { animation: banner-plate 1.4s ease-out forwards; } /* (it never grows past the screen's edges) */
+@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 12% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
 .res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
 .res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
 .res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }

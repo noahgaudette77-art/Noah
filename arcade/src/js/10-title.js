@@ -150,6 +150,7 @@ function showTitle() {
   // Served: the title's dusk and the hall's models are asked for while the title is up, and the sound's bytes are
   // fetched (it can only be decoded after a tap). The title shows at once and takes each in as it arrives.
   if (Assets.on) {
+    Assets.loadImage("icons"); Assets.loadImage("bosses"); // (first: the menus' icons and busts are small, and every menu wants them)
     Assets.need("title");
     Assets.prefetch("title");
     Assets.need("hub");
