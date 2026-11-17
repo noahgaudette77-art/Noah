@@ -142,4 +142,56 @@ module.exports = async (cap) => {
   await cap.eval(() => document.querySelector("[data-act=ch]").click());
   await strip("16-guide-open-chapter", 8, 8, { thumb: 240 });
   }
+
+  // ---- two calls, checked without ears (nothing is drawn): the hall's attract call from Boss Rush's cabinet, and the
+  // results' CHAPTER COMPLETE. Every recorded line and announcer call is noted with its frame, in calls.md.
+  if (part("calls")) {
+    await cap.eval(() => {
+      const S = window.__arcade.Sound, log = (window.__calls = []);
+      window.__f = 0;
+      const count = () => { window.__f++; requestAnimationFrame(count); };
+      requestAnimationFrame(count);
+      const cue = S._cue.bind(S), say = S.say.bind(S);
+      S._cue = (name, ...a) => { if (/^vo/.test(name)) log.push([window.__f, "heard: the recorded line `" + name + "`"]); return cue(name, ...a); };
+      S.say = (text) => { const w = say(text); log.push([window.__f, "announcer asked for \"" + text + "\"" + (w < 0 ? " (not spoken: too late)" : "")]); return w; };
+    });
+    const note = (t) => cap.eval((t) => window.__calls.push([window.__f, "*" + t + "*"]), t);
+    const at = () => cap.eval(() => [...document.querySelectorAll(".dots i")].findIndex((e) => e.classList.contains("on")));
+    const goTo = async (i) => { while ((await at()) !== i) { await cap.eval((i) => { const n = document.querySelectorAll(".dots i").length, d = (i - [...document.querySelectorAll(".dots i")].findIndex((e) => e.classList.contains("on")) + n) % n; document.querySelector(d <= n / 2 ? "[data-act=next]" : "[data-act=prev]").click(); }, i); await cap.fast(8); } };
+    await cap.eval(() => window.__arcade.go("hub"));
+    await waitReal(() => !!document.querySelector(".hub-name"));
+    await waitReal(() => { const b = window.__arcade.Sound.bank; return !!(b["vo@adam:boss incoming"] && b["vo:chapter complete"]); }); // (the voice set, fetched behind the hall)
+    await cap.fast(60);
+    await goTo(1);
+    await note("Nest Egg Run in front, 2 s");
+    await cap.fast(120);
+    await note("Boss Rush in front, left there 5 s");
+    await goTo(2);
+    await cap.fast(300);
+    await note("on to Memory Bank and back after 1 s; Boss Rush left in front 5 s more (too soon after its call)");
+    await goTo(3); await cap.fast(60); await goTo(2);
+    await cap.fast(300);
+    await note("on to Memory Bank for 10 s, then Boss Rush in front again, 5 s");
+    await goTo(3); await cap.fast(600); await goTo(2);
+    await cap.fast(300);
+    await note("on to Memory Bank for 15 s, then Boss Rush chosen 1 s after it comes round (PLAY)");
+    await goTo(3); await cap.fast(900); await goTo(2); await cap.fast(60);
+    await cap.eval(() => document.querySelector("[data-act=play]").click());
+    await cap.fast(240);
+    const res = (o) => cap.eval((o) => { const A = window.__arcade, run = { correct: 6, answered: 6, bestStreak: 6, missed: [], start: {} }; if (o.xp0 !== undefined) run.xp0 = o.xp0; A.show.results(Object.assign({ game: "boss", sel: A.makeSelection(o.stage || "4"), run, score: 1200, color: "#ff3ad4", won: [] }, o), -1); }, o);
+    await note("results: Boss Rush stage 4 cleared, no new high score, no rank up");
+    await res({ stars: 2, title: "STAGE CLEAR", headline: "1,200", sub: "The Fine Print falls" });
+    await cap.fast(180);
+    await note("results: Boss Rush stage 4 lost");
+    await res({ title: "DEFEATED", headline: "1,200", sub: "The Fine Print stands" });
+    await cap.fast(180);
+    await note("results: Nest Egg Run, a full career on stage 2, no new high score, no rank up");
+    await res({ game: "racer", stage: "2", title: "RETIRED AT 65", headline: "$412,000", sub: "Retired at age 65" });
+    await cap.fast(180);
+    await note("results: Boss Rush stage 4 cleared with a rank up (RANK UP! is the line there)");
+    await res({ stars: 3, title: "STAGE CLEAR", headline: "1,200", sub: "The Fine Print falls", xp0: 0 });
+    await cap.fast(180);
+    const log = await cap.eval(() => window.__calls);
+    fs.writeFileSync(path.join(cap.out, "calls.md"), "# Two calls, checked without ears\n\nWritten by `tools/scenarios/menus.js` (PART=calls): every recorded announcer line and announcer call, with the frame it was made on (60 to the second), and *what the scenario did* between them.\n\n" + log.map(([f, t]) => "- frame " + f + " (" + (f / 60).toFixed(1) + " s): " + t).join("\n") + "\n");
+  }
 };
