@@ -92,10 +92,11 @@ class BlasterEscort {
     this.ships.forEach((sh, i) => {
       if (i && !two) return;
       const name = far[this.farI++ % far.length];
-      this.fly(sh, name, "pass", { side, size: 1.5, dur: REDUCED_MOTION || GFX.calm ? 2.6 : 1.9, delay: 0.55 + i * 0.28 });
-      // from beyond one edge of the band to beyond the other, high in it and a little deeper as it goes
-      this.bandAt(side < 0 ? -0.18 : 1.18, 0.26 + i * 0.07, d + i * 4, sh.a);
-      this.bandAt(side < 0 ? 1.2 : -0.2, 0.2 + i * 0.07, d + 10 + i * 4, sh.b);
+      this.fly(sh, name, "pass", { side, size: 1.5, dur: REDUCED_MOTION || GFX.calm ? 2.6 : 1.9, delay: 0.45 + i * 0.28 });
+      // from beyond one edge of the band to beyond the other, through the open corridor between the drones' two rows
+      // (where the next question's drones will stand), climbing a little and a little deeper as it goes
+      this.bandAt(side < 0 ? -0.18 : 1.18, 0.4 + i * 0.045, d + i * 4, sh.a);
+      this.bandAt(side < 0 ? 1.2 : -0.2, 0.35 + i * 0.045, d + 10 + i * 4, sh.b);
     });
   }
   fly(sh, name, mode, o) {

@@ -20,6 +20,9 @@
 //                        blast as it hits the floor; stars and coins to the score
 // Nothing here is read by a rule. A heart lost is shown when the blow lands (a moment after the rule took it), so the
 // game's HUD asks this file how many are still owed (owed) before it draws its hearts.
+// Whose recorded voice a boss has its last word in when the player is defeated ("game over"): the first four one deep
+// voice, the next four another, the last three and the Proctor a third.
+const BOSS_LAST_WORD = (key) => (key === "all" || key >= 9 ? "charlie" : key >= 5 ? "brian" : "adam");
 const BOSS_ATK = {
   MARK: ["lock", "bang", "ring", "arc", "seek"], // each kind's marker
   CLIP: ["attackB", "attackA", "attackB", "attackA", "attackB"], // and the clip it is played with: a thrust, or an overhead smash
@@ -655,6 +658,8 @@ class BossStage {
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });
     if (left === 1) Sound.say("CRITICAL");
+    // the heart itself comes up low on the player's side of the picture, cracks and shatters (heard as the heart_lost above)
+    if (g.iconFX) g.iconFX.shatter("heart", this.lens(-0.52, -0.5, 3.0), { size: 0.42, face: g.camera, turn: 0.3, hold: 0.05, crack: 0.07, onBreak: (q) => kit.sparks(q, 0xff4fd8, { n: quiet ? 5 : 12, speed: 2.6, life: 0.4, len: 0.16, w: 0.02, gravity: 3, k: 1.6, stretch: 0.02 }) });
     this.setLow(left <= 0 ? 2 : left === 1 ? 1 : 0);
   }
   // one heart left: a red frame that beats and the alarm; none: the frame holds
@@ -745,6 +750,11 @@ class BossStage {
       HudFX.reward(g.el, from, to, { n: 8, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 400, gap: 12 });
       HudFX.reward(g.el, from, to, { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
       if (sc) this.count = { el: sc, a: parseInt(sc.textContent.replace(/\D/g, ""), 10) || 0, b: g.score, t: -0.42, dur: 0.8 }; // (a value already decided, shown as it arrives)
+      if (g.iconFX) { // gold stars and egg coins thrown out of the blast toward the player, with the HUD's own
+        const dir = this._u.copy(g.camera.position).sub(p).normalize().add(this._w.set(0, 0.6, 0)).normalize();
+        g.iconFX.burst("star", p, { n: 7, size: big ? 0.8 : 0.65, speed: 10, dir, life: 1.0, gravity: 5, gap: 0.03 });
+        g.iconFX.burst("coin", p, { n: 6, size: big ? 0.7 : 0.58, speed: 9, dir, life: 1.0, gravity: 6, gap: 0.035 });
+      }
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
     g.show.wait(0.05, () => {
@@ -766,7 +776,8 @@ class BossStage {
     this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 7, w: 0.04 });
     if (g.arena) g.arena.strike(1);
     this.wideTo = 0.15; this.camLow = -0.6;
-    g.show.wait(0.4, () => { if (g.unmounted) return; Sound.say("GAME OVER"); this.showResult("GAME OVER", COLORS.red, "", { say: false }); });
+    // (its last word is its own: "game over" in the boss's recorded voice, in place of the announcer's)
+    g.show.wait(0.4, () => { if (g.unmounted) return; Sound.sayAs(BOSS_LAST_WORD(g.bossKey), "GAME OVER"); this.showResult("GAME OVER", COLORS.red, "", { say: false }); });
   }
   // A result the player must read (the rule's own words): a plate on the top layer over the middle of the picture,
   // in at once and held until the next screen comes (it is never taken down: the results replace the whole screen at

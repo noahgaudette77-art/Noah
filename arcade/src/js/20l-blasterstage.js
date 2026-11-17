@@ -422,7 +422,7 @@ class BlasterStage {
     const at = this.near(p.clone().add(this._v.set(sd * 0.7 * k, 0.35 * k, 0)), 0.8 * k);
     // the shield itself comes up before the fighter on the side the blow fell, cracks, and breaks apart (its sound is
     // the shield_down below)
-    if (g.props) g.props.shatter("shield", this.near(p.clone().add(this._v.set(sd * 0.5 * k, 0.62 * k, 0)), 1.4 * k), { size: 0.9 * k, face: g.camera, turn: -sd * 0.35, hold: 0.06, crack: 0.06, onBreak: (q) => kit.sparks(q, 0x8feaff, { n: quiet ? 6 : 14, speed: 7 * k, life: 0.4, len: 0.45 * k, w: 0.045 * k, k: 1.7 }) });
+    if (g.iconFX) g.iconFX.shatter("shield", this.near(p.clone().add(this._v.set(sd * 0.5 * k, 0.62 * k, 0)), 1.4 * k), { size: 0.9 * k, face: g.camera, turn: -sd * 0.35, hold: 0.06, crack: 0.06, onBreak: (q) => kit.sparks(q, 0x8feaff, { n: quiet ? 6 : 14, speed: 7 * k, life: 0.4, len: 0.45 * k, w: 0.045 * k, k: 1.7 }) });
     kit.sparks(at, 0xffffff, { n: 12, speed: 9 * k, life: 0.35, len: 0.7 * k, w: 0.05 * k, k: 1.8 });
     kit.debris(at, { n: quiet ? 4 : 9, size: 0.28 * k, speed: 7 * k, color: 0x1c7a90, hot: 0x8feaff, gravity: 0, life: 0.8 });
     if (!quiet) for (let i = 0; i < 2; i++) kit.smoke(this._w.set(rand(-0.5, 0.5), rand(0, 0.4), 0).multiplyScalar(k).add(at), { size: 0.45 * k, life: 0.7, a: 0.45, cold: true, color: STAGE.SMOKE, vel: this._u.set(0, -0.3, 2.5) });
@@ -584,7 +584,7 @@ class BlasterStage {
       if (g.unmounted) return;
       HudFX.reward(g.el, from, "[data-score]", { n: 8, kind: "star", color: COLORS.yellow, clear: ".qpanel", dur: 400, gap: 12 });
       HudFX.reward(g.el, from, "[data-score]", { n: 5, kind: "coin", color: COLORS.gold, clear: ".qpanel", dur: 430, gap: 12 });
-      if (g.props) g.props.burst("star", p, { n: 7, size: 0.75 * k6, speed: 11 * k6, dir: this._v.copy(g.camera.position).sub(p).normalize().add(this._w.set(0, 0.55, 0)).normalize(), life: 1.0, gravity: 4 * k6, gap: 0.03 }); // (gold stars thrown out of the blast with the coins)
+      if (g.iconFX) g.iconFX.burst("star", p, { n: 7, size: 0.75 * k6, speed: 11 * k6, dir: this._v.copy(g.camera.position).sub(p).normalize().add(this._w.set(0, 0.55, 0)).normalize(), life: 1.0, gravity: 4 * k6, gap: 0.03 }); // (gold stars thrown out of the blast with the coins)
       Sound.sfx("reward", 0, { vol: 0.9 });
     });
     if (wave) g.show.wait(0.4, () => { if (!g.unmounted && g.state !== "over") Sound.say(wave); }); // (the next wave is called once this one's demon has gone)

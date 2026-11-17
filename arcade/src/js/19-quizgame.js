@@ -13,13 +13,13 @@ class QuizGame extends Scene3D {
     this.bursts = this.has3D ? new Bursts(this.scene) : null;
     // the generated icon props (a shield, a heart, a bolt, stars, coins: see PropFX), when they were served
     const pk = { blaster: ["shield", "bolt", "star"], racer: ["shield", "heart", "bolt", "star"], boss: ["heart", "bolt", "star", "coin"] }[gameId];
-    this.props = pk && this.has3D && GFX.ok && Assets.on ? new PropFX(this.scene, pk) : null;
+    this.iconFX = pk && this.has3D && GFX.ok && Assets.on ? new PropFX(this.scene, pk) : null;
   }
   // The streak has reached a new tier (see Hype): a bolt spins up where the game says (tierAt: { p, size }: over the
   // fighter, over the rig, on the player's side of the arena).
   propTier(lv, col) {
-    const at = this.props && this.tierAt ? this.tierAt() : null;
-    if (at) this.props.spin("bolt", at.p, { size: at.size, face: this.camera, col });
+    const at = this.iconFX && this.tierAt ? this.tierAt() : null;
+    if (at) this.iconFX.spin("bolt", at.p, { size: at.size, face: this.camera, col });
   }
   mountUI(html) {
     this.el = UI.el(html);
@@ -87,7 +87,7 @@ class QuizGame extends Scene3D {
     if (this.paused) return;
     super.update(dt);
     if (this.bursts) this.bursts.update(dt);
-    if (this.props) this.props.update(VFX.dt);
+    if (this.iconFX) this.iconFX.update(VFX.dt);
   }
   dispose() {
     this.unmounted = true;

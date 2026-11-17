@@ -9,8 +9,8 @@
 // the stars and the coins are instanced (one draw each). No lights, no shadows. Everything is pooled with the scene
 // like the combat kit (nothing is made when an event fires, and the warm-up compiles it), hidden when its moment is
 // over, and freed with the scene. Nothing shows while GFX.extras is off. Everything runs on the show clock.
-//   this.props = new PropFX(this.scene, ["shield", "bolt", "star"]);   // with the scene (QuizGame.takeProps)
-//   this.props.update(VFX.dt);                                          // every frame (QuizGame.update does it)
+//   this.iconFX = new PropFX(this.scene, ["shield", "bolt", "star"]);   // with the scene (QuizGame does it)
+//   this.iconFX.update(VFX.dt);                                          // every frame (QuizGame.update does it)
 //   o: { size (world units tall), face (a camera: the prop faces it), turn (radians about its upright), hold, crack,
 //        onBreak (called on the frame it breaks: the caller's sparks and sound), dir, speed, n, life, up }
 if (GFX.extras === undefined) GFX.extras = true; // the background additions and effect props: a quality scaler may switch them off on slow frames

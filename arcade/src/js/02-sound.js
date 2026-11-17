@@ -159,6 +159,18 @@ const Sound = {
     if (wait > 0.02) { const gen = this.sayGen; setTimeout(() => { if (gen === this.sayGen) speak(); }, wait * 1000); } else speak();
     return wait;
   },
+  // A line in someone's own recorded voice ("vo@adam:game over": a boss's last word), on the announcer's bus and in
+  // its queue (one line at a time). Without that recording, the announcer says it.
+  sayAs(who, text) {
+    const key = "vo@" + who + ":" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    if (!takes || !Store.settings.sfx || !Store.settings.voice) return this.say(text);
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes[0].dur + 0.1));
+    this.duck(0.4, 1.1 + wait, 0.7);
+    this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait });
+    return wait;
+  },
   // Play an effect. o: { vol, rate, delay } scale a recorded take; the synth ignores them.
   sfx(name, pan = 0, o) {
     if (!this.ctx || !Store.settings.sfx) return;

@@ -675,6 +675,9 @@ class BossGame extends QuizGame {
       });
     });
   }
+  // where a bolt spins up when the streak reaches a new tier (QuizGame.propTier): low on the player's side of the
+  // picture, clear of the boss (staged fights only)
+  tierAt() { return this.stage ? { p: this.stage.lens(0.56, -0.42, 3.2), size: 0.42 } : null; }
   hud() {
     if (!this.el) return;
     UI.text($("[data-score]", this.el), fmtScore(this.score));
