@@ -331,7 +331,7 @@ class ExamGame extends QuizGame {
     this.fillLow = new THREE.PointLight(0x7c84c4, 0.85, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
-    this.rimB = new THREE.PointLight(0xffc474, 2.7, 34, 1.5);
+    this.rimB = new THREE.PointLight(Assets.on ? 0xff5ccf : 0xffc474, 2.7, 34, 1.5); // (served, Phase 6: the examiner's rim is the arcade's magenta, not gold)
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -496,6 +496,7 @@ class ExamGame extends QuizGame {
   // Free what the scene graph walk misses: the env target and instance buffers.
   dispose() {
     Sound.dread(false);
+    Trophies.hold(false);
     if (this.envRT) this.envRT.dispose();
     if (this.bossEnvRT) this.bossEnvRT.dispose();
     if (this.monument) this.monument.dispose();
@@ -613,6 +614,7 @@ class ExamGame extends QuizGame {
   submit() {
     if (this.state === "over") return;
     this.state = "over";
+    if (Assets.on && this.has3D && this.boss) Trophies.hold(true); // (served, Phase 6: a trophy the answers win waits for the ending to be over; ExamBoss.finish lets it go. Only when it is shown changes)
     const by = {};
     let correct = 0;
     const review = [];

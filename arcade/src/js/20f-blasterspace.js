@@ -842,7 +842,7 @@ class BlasterSpace {
     const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
     let kit = null;
     if (model && g.pano) {
-      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 3.0, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow)
+      tuneModel(model, rock ? { glow: 3.6, metal: 0.5, rough: 1.0, normal: 1.0 } : { glow: 1.3, metal: 1.0, rough: 1.0, normal: 0.85 }); // (the rocks' crystals and veins, the ships' neon: they glow. Phase 6: a ship's neon at 1.3, not 3: at 3 it bloomed into a smear; its lamps and ports carry it now)
       const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
       if (made) {
         const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
@@ -857,8 +857,12 @@ class BlasterSpace {
         // stone of its own, aTone, over the region's colour.)
         const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 } })) : U;
         const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        if (!rock) { // (Phase 6: a ship's hull takes the region's light but little of its colour: in a red region it read as a pink lump. Its lamps and ports are its colour)
+          const skin = mat.onBeforeCompile;
+          mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65); }"); };
+        }
         if (rock) { const skin = mat.onBeforeCompile; mat.onBeforeCompile = (sh) => { skin(sh); sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;"); }; }
-        g.pano.mirror(mat, rock ? 0.55 : 0.8);
+        g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
         kit = { geo: made.geo, mat };

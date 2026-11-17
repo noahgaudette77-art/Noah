@@ -251,9 +251,12 @@ const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1
 // a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
 // mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
 // panorama to light them) every kind is drawn as before. [model, length in game units]
-const RACER_GEN_FLEET = { sedan: ["prop-car", 4.5], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+const RACER_GEN_FLEET = { sedan: ["prop-car", 3.6], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+// (the car is a compact city car, taller and shorter than the coupe it replaced: the room it takes in its lane, its
+// soft shadow and the box that is checked against the lane badges are its own, not the coupe's)
+const RACER_GEN_DIM = { sedan: { sh: [3.4, 5.3], box: [1.0, 1.7, 1.8] } };
 // Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
-const RACER_GEN_TRIM = { sedan: { tail: 0.47, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+const RACER_GEN_TRIM = { sedan: { tail: 0.58, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
 // Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
 // the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
 function racerGenTrim(type, geo) {
@@ -268,13 +271,16 @@ function racerGenTrim(type, geo) {
     return { z, w };
   };
   const side = (y, band) => { let w = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i + 2]) < len * 0.3) w = Math.max(w, Math.abs(P[i])); return w; };
+  // (and how far it reaches there round one x: a lamp at the corner of a rounded nose or tail stands on its skin, not
+  // inside it, where the shape's farthest point at the middle would bury it)
+  const at = (sgn, y, band, x, hw, z0) => { let z = sgn > 0 ? -1e9 : 1e9; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i] - x) < hw) { const zz = P[i + 2]; if (sgn > 0 ? zz > z : zz < z) z = zz; } return Math.abs(z) < 1e8 ? z : z0; };
   const yt = bb.min.y + H * T.tail, yh = bb.min.y + H * T.head, ys = bb.min.y + H * T.sill;
-  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05);
+  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05), nw = Math.max(nose.w, sw * 0.8); // (a rounded nose is narrow at its tip: its lamps go out toward its corners)
   L(2, rear.w * 1.5, 0.075, 0.05, 0, yt, rear.z + 0.03, 0xff1030, 2.4); // the tail bar (brightens under braking)
   [-1, 1].forEach((s) => {
-    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, rear.z + 0.02, 0xffa53d, 3); // indicators, tail corners
-    L(4, 0.16, 0.1, 0.05, s * (nose.w * 0.86), yh + 0.1, nose.z - 0.02, 0xffa53d, 3); // and nose corners
-    L(1, nose.w * 0.42, 0.07, 0.05, s * nose.w * 0.4, yh, nose.z - 0.03, 0xfff2d8, 4.5); // the nose lamps
+    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, at(1, yt + 0.12, H * 0.06, s * rear.w * 0.82, 0.1, rear.z) + 0.02, 0xffa53d, 3); // indicators, tail corners
+    L(4, 0.16, 0.1, 0.05, s * (nw * 0.86), yh + 0.1, at(-1, yh + 0.1, H * 0.06, s * nw * 0.86, 0.1, nose.z) - 0.02, 0xffa53d, 3); // and nose corners
+    L(1, nw * 0.42, 0.07, 0.05, s * nw * 0.4, yh, at(-1, yh, H * 0.06, s * nw * 0.4, nw * 0.21, nose.z) - 0.03, 0xfff2d8, 4.5); // the nose lamps
     L(10, 0.03, 0.05, len * 0.62, s * (sw + 0.025), ys, 0, 0xffffff, 1); // a line of neon along the sill
   });
   if (T.roof) { const top = face(-1, bb.max.y - H * 0.06, H * 0.05); [-0.6, -0.2, 0.2, 0.6].forEach((x) => L(8, 0.14, 0.06, 0.05, x * top.w, bb.max.y - H * 0.05, top.z - 0.02, 0xffa53d, 2.6)); }
@@ -424,6 +430,7 @@ class RacerWorld {
   // scaled to its length, set on its wheels; its material; its lamps. (Shared by every copy of the kind.)
   genKind(type, model) {
     const [, len] = RACER_GEN_FLEET[type];
+    if (RACER_GEN_DIM[type]) (this.genDim = this.genDim || {})[type] = RACER_GEN_DIM[type];
     tuneModel(model, { glow: 2.0, metal: 1.0, rough: 1.0, normal: 0.85 });
     const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
     if (!made) return null;
@@ -460,7 +467,7 @@ class RacerWorld {
   }
   underBadge(c, rings) {
     // the car's box on the screen (its eight corners), against each badge's circle
-    const cam = this.g.camera, D = { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
+    const cam = this.g.camera, D = (this.genDim && this.genDim[c.type] && this.genDim[c.type].box) || { bus: [1.6, 2.9, 4.2], truck: [1.3, 3.0, 3.0], bike: [0.3, 1.6, 0.8], sedan: [1.0, 1.4, 2.3] }[c.type] || [1.0, 1.4, 2.3], v = this._s;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (let i = 0; i < 8; i++) {
       v.set(c.x + (i & 1 ? D[0] : -D[0]), c.y + (i & 2 ? D[1] : 0), c.z + (i & 4 ? D[2] : -D[2])).project(cam);
@@ -512,6 +519,7 @@ class RacerWorld {
     const dirty = new Set();
     let k = 0;
     const SH = { sedan: [3.4, 6.6], truck: [4.2, 11], bus: [4.4, 13], bike: [1.4, 3.2], rival: [3.4, 6.6] };
+    if (this.genDim) for (const t in this.genDim) SH[t] = this.genDim[t].sh;
     for (const c of this.cars) {
       if (!c.on) continue;
       c.age += dt;
@@ -624,6 +632,8 @@ class RacerWorld {
     {
       const b = mk(), ads = [], holos = [];
       // road works on the right-hand shoulder: barriers, cones, an arrow board, a digger
+      // (Phase 6: served, beside the textured city, these flat boxes stood out as untextured blocks: the works go)
+      if (!g.pano) {
       for (let i = 0; i < 9; i++) { const z = -74 - i * 3.4, aZ = -106; put(b, BOX, 9.05, 0.55, z, 0.3, 1.0, 2.8, i % 2 ? 0xffa53d : 0xf2f2f2, aZ, i % 2 ? 1 : 0, i % 2 ? 1.5 : 1); put(b, BOX, 9.05, 1.25, z, 0.14, 0.14, 0.14, 0xffa53d, aZ, 2, 2.6); }
       for (let i = 0; i < 6; i++) { put(b, CONE, 5.6, 0.4, -70 - i * 6, 0.24, 0.8, 0.24, 0xff7a2a, -106, 0, 1); put(b, BOX, 5.6, 0.52, -70 - i * 6, 0.3, 0.1, 0.3, 0xffffff, -106, 1, 1.2); }
       put(b, BOX, 8.9, 3.4, -68, 0.2, 2.2, 3.2, 0x15171c, -106);
@@ -632,6 +642,7 @@ class RacerWorld {
       put(b, BOX, 8.6, 1.3, -96, 1.2, 1.6, 3.6, 0xf1c40f, -106); put(b, BOX, 8.6, 2.5, -96.6, 1.0, 1.0, 1.4, 0x20242a, -106);
       strut(b, [8.6, 2.6, -95], [8.4, 5.4, -91], 0.36, 0xf1c40f, -106); strut(b, [8.4, 5.4, -91], [8.2, 2.4, -88.6], 0.3, 0xf1c40f, -106);
       put(b, BOX, 8.2, 2.0, -88.4, 0.9, 0.7, 0.7, 0x3a3f48, -106);
+      }
       // camera gantries over the service lanes only (the main road's gantries are the questions)
       [[-1, -36], [1, -164]].forEach(([sd, z]) => { put(b, BOX, sd * 9.05, 3.6, z, 0.28, 7.2, 0.28, 0x3a3f48, z - 1); put(b, BOX, sd * 7.3, 7.1, z, 3.8, 0.24, 0.24, 0x3a3f48, z - 1); [6.6, 8.0].forEach((x) => { put(b, BOX, sd * x, 6.8, z, 0.5, 0.36, 0.4, 0x15171c, z - 1); put(b, BOX, sd * x, 6.8, z + 0.22, 0.2, 0.1, 0.05, 0xff3030, z - 1, 2, 2.4); }); });
       // rooftop and wall ads, and holograms that hang over the pavements
@@ -1066,7 +1077,7 @@ class RacerWorld {
       const s = this.swap, mouth = g.pano && s.dark ? this.portal : null; // (with the panorama up a tunnel's mouth is driven through: see the portal)
       s.t += dt;
       if (!mouth) fogK = s.t < 1.2 ? smoothstep(0, 1.1, s.t) : 1 - smoothstep(1.5, g.pano ? 2.5 : 3.2, s.t);
-      else if (s.to !== "tunnel") fogK = 0.62 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
+      else if (s.to !== "tunnel") fogK = 0.42 * (s.t < 1.2 ? smoothstep(0.5, 1.2, s.t) : 1 - smoothstep(1.2, 2.1, s.t)); // (Phase 6: 0.42, not 0.62: at its height the picture washed out to flat pink) // out into the light: its glare grows as the mouth nears and clears after it, never a step (Phase 5 fix: a jump of the whole frame from dark to pale read as a flash)
       if (s.t >= 1.2 && !s.done) { s.done = true; this.setBiome(s.to); if (mouth) { g.pano.snap(); this.palSnap = true; } } // (through a mouth the sky and the light are whole on the first frame beyond it)
       if (mouth) this.mouthAt(s, sp);
       if (s.t > 3.2) this.swap = null;
@@ -1092,7 +1103,7 @@ class RacerWorld {
     g.shared.uLampI.value *= lerp(1, pal.lamps, 1);
     if (g.pano && this.biome === "tunnel") g.shared.uLampI.value = 1.15; // (with the panorama up the bore's own lamps are lit, whatever the hour: lines of them overhead, their pools passing on the road)
     const glare = g.pano && this.swap && this.swap.dark && this.swap.col && this.swap.to !== "tunnel"; // out of a tunnel: the haze of the sky beyond, bright
-    const curtainCol = glare ? this._c.copy(this.swap.col) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color);
+    const curtainCol = glare ? this._c.copy(this.swap.col).multiplyScalar(0.8) : this.swap && this.swap.dark ? this._c.set(0x04040a) : this._c.copy(fog.color); // (the glare a shade under the sky's own colour: never near white)
     if (g.pano && !(this.swap && this.swap.dark)) curtainCol.lerp(g.pano.L.haze, 0.6); // (between two open landscapes: a bank of mist in the sky's own colour, not a dark wall)
     if (glare) fog.color.lerp(curtainCol, fogK);
     this.curtain.visible = fogK > 0.01;

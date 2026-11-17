@@ -726,7 +726,7 @@ class BlasterGame extends QuizGame {
       }
       if (!this.stage) this.warp = 1.4;
       GFX.pulse(this.stage ? 2 : 6, 0.2); // (staged: the demon's death starts here, and is seen sharp)
-      this.quietly(() => UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED"));
+      this.quietly(() => UI.banner("WAVE " + this.wave, COLORS.yellow, "CLEAR BONUS +" + bonus + " · SHIELD RESTORED", Assets.on ? "fit" : "")); // (served, Phase 6: it comes in from just over its size, inside the screen's edges: from 2.2 times its size its line ran off both)
       this.hud();
       this.state = "intro";
       this.tw.wait(1.5, () => this.nextQuestion());

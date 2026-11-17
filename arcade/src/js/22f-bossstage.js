@@ -27,6 +27,9 @@ const BOSS_ATK = {
   SMOKE: 0x2c2244, WRECK: 0x241c38, // smoke and wreckage stay in the palette
   RAGE: new THREE.Color(1, 0.1, 0.16), // the rims of a raging boss
 };
+// the figures' lane (see BossStage.figure): how far one lifts as it goes, and how long it stands (show seconds; the
+// rule's own floater is taken away a second after it was made, on the page clock)
+const FIG_LIFT = 14, FIG_LIFE = 0.9;
 class BossStage {
   constructor(game, actor) {
     const g = (this.g = game), s = g.scene, row = (this.row = g.row);
@@ -39,13 +42,15 @@ class BossStage {
     const hsl = this.col.getHSL({ h: 0, s: 0, l: 0 });
     this.beamCol = hsl.h < 0.04 || hsl.h > 0.94 ? 0xff1030 : this.hex; // (a lit neon red goes pink: a red boss's beam is a deep red at low gain)
     const bc = new THREE.Color(this.beamCol);
-    this.beamK = 1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1); // (a bright colour's beam burns at a lower gain: it never washes the picture out)
+    this.beamK = Math.min(1.5 * clamp(0.5 / (0.2126 * bc.r + 0.7152 * bc.g + 0.0722 * bc.b), 0.55, 1), 1.25 / Math.max(bc.r, bc.g, bc.b)); // (a bright colour's beam burns at a lower gain: it never washes the picture out. Phase 6: nor a saturated one past 1.25 in any channel: the Phantom's violet swept the picture near white)
+    this.lensCol = new THREE.Color(this.hex).multiplyScalar(0.8); this.lensBeam = new THREE.Color(this.beamCol).multiplyScalar(0.8); // (the flash where a blow meets the lens, a shade down: it washed the picture out)
     this.debts = []; // hearts the rules have taken that have not been seen to go yet
     this.low = 0; this.lowT = 0; this.leaks = []; this.tears = row.tear.map(([at, bone]) => ({ at, bone, done: false }));
     this.wide = 1; this.wideTo = 1; this.dist = 16; this.punch = 0; this.camLow = 0;
     this.tele = null; this.strike = null; this.shot = null; this.kindN = 0; this.dying = null; this.phase = "wait";
     this.hum = false; this.alarm = false; this.rageOn = false; this.flick = 1; this.windK = 0;
     this.embers = []; // glowing edges round a hole burnt in it and round its stumps: { sp, at, size, t }
+    this.figs = []; // the figures standing in their lane (see figure): { el, t, y, h }
     // what it gathers as it winds up: a glow where the attack will leave it
     this.orb = glowSprite(neon(this.hex, 2.2), 0.1, 1);
     this.orb.visible = false; this.orb.renderOrder = 7;
@@ -103,10 +108,57 @@ class BossStage {
   screen(p) { const v = this._n.copy(p).project(this.g.camera); return { x: (v.x * 0.5 + 0.5) * GFX.w, y: (0.5 - v.y * 0.5) * GFX.h }; }
   pan(p) { return clamp(p.x / 6, -1, 1) * 0.6; }
   outline(el) { if (el && el.classList.contains("floater")) el.style.textShadow = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000, 0 0 6px #000"; }
-  // where a figure of damage stands: over its head, inside the picture
+  // where a figure of damage is made: over its head, inside the picture (bossHit moves it into its lane the same frame)
   floatAt() {
     const g = this.g, p = this.screen(this._v.set(0, this.S * 1.03, 0)), top = g.band ? g.band.top + 34 : 60;
     return { x: clamp(p.x, 60, GFX.w - 60), y: Math.max(top, p.y - 10) };
+  }
+  // ---- the figures in the picture: a blow's damage, and the call-out of a quick answer or of a streak lost ----------
+  // They have a lane of their own (Phase 6: they used to rise across its caption and into the question): beside the
+  // point the blow lands on, on the side away from the lance (it comes from the answers' letters, on the left), under
+  // the caption plate (room is kept for two lines of it) and above the answers. Row 0 is the damage, beside the point;
+  // row 1 is the call-out, under it. Each holds still at full strength, then lifts a little as it fades, on the show
+  // clock. Where the picture is too short for them and the caption both, the caption waits until they have gone.
+  figure(el, at, row) {
+    const g = this.g, b = g.band;
+    if (!el || !b || el.dataset.lane) return;
+    el.dataset.lane = "1";
+    el.style.animation = "none";
+    el.style.whiteSpace = "nowrap";
+    if (!el.classList.contains("big")) el.style.fontSize = "13px";
+    this.outline(el);
+    const w = el.offsetWidth, h = el.offsetHeight, big = clamp(GFX.w * 0.056, 18, 24) + 2;
+    const cap = Math.max(2.4 * clamp(GFX.w * 0.037, 13, 17) + 12, this.bubble && this.bubble.el.isConnected ? this.bubble.h : 0); // (the caption plate: two lines of it, or the one up if taller)
+    const lo = b.top + 3 + cap + 6 + FIG_LIFT + row * (big + 8), hi = b.top + b.h - h - 6;
+    let x = at.x + 30;
+    if (x + w > GFX.w - 8 && at.x - 30 - w >= 8) x = at.x - 30 - w; // (no room on its right: on its left)
+    x = clamp(x, 8, Math.max(8, GFX.w - w - 8));
+    const y = Math.round(Math.max(Math.min(row ? at.y + big / 2 + 16 : at.y - h / 2, hi), Math.min(lo, hi)));
+    el.style.left = Math.round(x) + "px";
+    el.style.top = y + "px";
+    this.figs.push({ el, t: 0, y, h });
+  }
+  // the call-outs the shared hype made as the rule marked the answer (the floaters made then, not yet in a lane)
+  callouts() {
+    const at = this.screen(this.a.at("chest", this._u));
+    UI.root.querySelectorAll(".floater:not(.big):not([data-lane])").forEach((el) => { if (/LIGHTNING|QUICK DRAW|STREAK LOST/.test(el.textContent)) this.figure(el, at, 1); });
+  }
+  // (each frame: hold, then lift and fade)
+  figures(d) {
+    for (let i = this.figs.length - 1; i >= 0; i--) {
+      const f = this.figs[i];
+      f.t += d;
+      const k = f.t / FIG_LIFE, u = clamp((k - 0.72) / 0.28, 0, 1);
+      if (!f.el.isConnected || k >= 1) { f.el.style.opacity = "0"; this.figs.splice(i, 1); continue; }
+      f.el.style.transform = "translateY(" + (-(Math.min(k, 0.72) / 0.72) * 3 - u * (FIG_LIFT - 3)).toFixed(1) + "px)";
+      f.el.style.opacity = (1 - u * u).toFixed(2);
+    }
+  }
+  // whether the caption would meet a figure where it stands
+  capMeets(b) {
+    if (!this.figs.length) return false;
+    const top = b.offsetTop, bot = top + Math.max(b.offsetHeight, this.bubble && this.bubble.el === b ? this.bubble.h : 0) + 2;
+    return this.figs.some((f) => f.el.isConnected && f.y - FIG_LIFT < bot && f.y + f.h > top);
   }
 
   // The boss speaks (the rule's own speech bubble, at the head of the picture): the lens tips up for as long as it is
@@ -138,7 +190,7 @@ class BossStage {
     if (!b) return;
     this.capStyle(b);
     if (g.band) b.style.top = Math.round(g.band.top + 3) + "px";
-    b.style.visibility = this.phase === "death" || this.phase === "won" || g.el.querySelector(".sheet") ? "hidden" : "";
+    b.style.visibility = this.phase === "death" || this.phase === "won" || g.el.querySelector(".sheet") || this.capMeets(b) ? "hidden" : "";
   }
   // (head: how far down the band the foot of its head stands, with no room made)
   bubbleRoom(head) {
@@ -262,6 +314,7 @@ class BossStage {
   // right: whether the answer is the right one (look only: the rule has checked it itself)
   fire(slot, right) {
     this.shot = { slot, right, col: SLOT_COLORS[slot] || COLORS.cyan, n: 0, time: 0 };
+    this.callouts();
   }
   volley(sh) {
     const kit = this.kit, a = this.a, S = this.S, n = sh.n, from = this.muzzle(sh.slot, new THREE.Vector3());
@@ -290,6 +343,8 @@ class BossStage {
     const tearing = this.tears.some((t) => !t.done && o.now <= t.at), big = dmg >= 20 || o.dead || o.enraged || tearing;
     const p = a.at(big ? "head" : "chest", new THREE.Vector3()), from = this.muzzle(o.slot, new THREE.Vector3());
     p.z += (big ? 0.07 : 0.12) * S; p.y -= big ? 0.02 * S : 0;
+    const made = UI.root.querySelectorAll(".floater.big:not([data-lane])");
+    this.figure(made[made.length - 1], this.screen(p), 0); // (the rule's figure, made this frame)
     this.foil();
     if (this.shot) this.shot.n = 9; // (its bolts are spent)
     // the lance: from the answer's side to where it lands, held for a few frames
@@ -391,6 +446,7 @@ class BossStage {
   attack(slow) {
     const g = this.g, t = this.tele || { kind: this.row.atk[0], clip: BOSS_ATK.CLIP[this.row.atk[0]], mark: [], acc: 0 }, C = BOSS_CLIP[t.clip];
     this.tele = t;
+    this.callouts(); // (a timeout's "STREAK LOST": a wrong answer's went into the lane as it was fired)
     this.debts.push({ t: 0 });
     this.marks(t, 0.6);
     if (t.line) { t.line.stop(); t.line = null; }
@@ -581,7 +637,7 @@ class BossStage {
     const tb = this.tb();
     if (kind === 1) { // the floor's jolt arrives under the player: the shock's ring across the foot of the picture, dust thrown up along it
       g.shake(0.34);
-      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.hex, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
+      if (s && s.foot) { kit.wave(s.foot, null, this.hex, { flat: true, dur: 0.3, s0: 2, s1: 9, w: 0.16 }); kit.flash(this.lens(0, -0.86, 3), this.lensCol, 0.08, 0.45, 0.12, 0.85, 1.5); } // (small: near the lens a unit is a third of the picture)
       for (let i = 0; i < (quiet ? 1 : 4); i++) kit.smoke(this.lens(rand(-0.85, 0.85), -1.0, 3.4), { size: 0.36, life: 0.6, vel: this._w.set(rand(-0.3, 0.3), 0.9, 0), a: 0.45, cold: true, color: BOSS_ATK.SMOKE });
     } else if (kind === 2) { // the wave breaks over the player: a ring that fills the picture, and the picture ripples
       GFX.ripple(g.camera, at, 1, 0.5);
@@ -589,12 +645,12 @@ class BossStage {
       for (let j = 0; j < 2; j++) kit.wave(this.lens(0, -0.3, 3), null, 0xffffff, { dur: 0.3, s0: 3 * tb * 0.4, s1: 3 * tb * (1.1 + j * 0.25), delay: j * 0.08, w: 0.04, k: 0.8 });
     } else if (kind === 3) { // the beam: a hit where it crosses the player, then a line burnt across the foot of the picture, molten drips falling from it
       const b0 = this.sweepAt(s.sd, 0.08), b1 = this.sweepAt(s.sd, 0.92), hit = this.lens(0, -0.74, 2.6);
-      kit.flash(hit, this.beamCol, 0.08, 0.42, 0.12, 0.9, 1.6);
+      kit.flash(hit, this.lensBeam, 0.08, 0.42, 0.12, 0.9, 1.6);
       kit.sparks(hit, 0xffffff, { n: quiet ? 5 : 12, speed: 2.4, spread: 1.4, life: 0.3, len: 0.14, w: 0.016, k: 1.8, gravity: 2, stretch: 0.02 });
       kit.gash(b0, b1, 0xffb070, 0.5, 0.045, 1.5);
       if (this.fl.fx.beam === "cleave") kit.gash(this.sweepAt(s.sd, 0.12).add(this._u.set(0, 0.05, 0)), this.sweepAt(s.sd, 0.88).add(this._u.set(0, 0.05, 0)), this.hex, 0.5, 0.04, 1.5); // (half violet: the arc's second edge)
       for (let j = 0; j < 3; j++) g.show.wait(j * 0.08, () => { if (!g.unmounted) kit.sparks(this._v.lerpVectors(b0, b1, rand(0.1, 0.9)), 0xffa050, { n: 4, speed: 0.6, life: 0.5, len: 0.12, w: 0.02, gravity: 2.5, k: 1.6, stretch: 0.02 }); });
-    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.hex, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
+    } else if (kind === 4 || kind === 0) kit.flash(this.lens(0, kind ? -0.7 : -0.8, 2.6), this.lensCol, 0.08, 0.4, 0.12, 0.8, 1.5); // (the seekers, or the volley's first, have struck: a flash where they met the player)
     else if (kind < 0) kit.flash(at, 0xff3050, 0.12, 0.5, 0.12, 0.8, 1.3);
     Sound.sfx("player_hit", from ? this.pan(from) * 0.5 : 0);
     Sound.sfx("heart_lost", 0, { delay: 0.09, vol: 0.9 });
@@ -730,6 +786,7 @@ class BossStage {
   update(dt) {
     const g = this.g, d = VFX.dt, a = this.a, kit = this.kit, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm;
     g.show.update(d);
+    this.figures(d);
     const f = g.state === "ask" ? clamp(g.charge / g.T, 0, 1) : 0, rage = g.enraged && g.hp > 0 ? 1 : 0;
     // ---- the telegraph, the strike, the player's burst
     if (g.state === "ask" && this.tele && !this.strike) this.telegraph(f, d);

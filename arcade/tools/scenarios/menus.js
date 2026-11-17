@@ -56,19 +56,43 @@ module.exports = async (cap) => {
   await strip("06b-hub-chosen", 6, 6, { thumb: 260 });
   await cap.fast(60);
   }
-  if (part("menus")) {
+  if (part("menus") || part("results")) { // (PART=results: only the reward moment, 08)
 
   // ---- chapter select (Boss Rush: the bosses' busts, stars drawn from the model)
+  if (part("menus")) {
   await cap.eval(() => window.__arcade.show.select("boss"));
   await cap.fast(120);
   await still("07-chapter-select");
+  }
   // ---- a results screen and its reward moment: stars, coins, a medal, a cup for the new best, two new trophies
+  // (Phase 6: from here the page's own animations, in CSS and scripted, are stepped with the frames, as Boss Rush's
+  // scenario steps them: they run on the real clock and a capture steps a virtual one, so RANK UP!'s plate was caught
+  // half faded in. Now a strip shows what a player sees.)
+  await cap.eval(() => {
+    if (window.__stepped) return;
+    window.__stepped = true;
+    const animate = Element.prototype.animate, live = [], css = new WeakMap();
+    Element.prototype.animate = function (fr, o) { const a = animate.call(this, fr, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
+    const step = () => {
+      const now = performance.now();
+      for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } }
+      if (document.getAnimations) for (const an of document.getAnimations()) {
+        if (!/^CSS(Animation|Transition)$/.test(an.constructor && an.constructor.name)) continue;
+        let t0 = css.get(an);
+        if (t0 === undefined) { t0 = now; css.set(an, t0); an.pause(); }
+        try { an.currentTime = now - t0; } catch (e) { /* gone */ }
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
   await cap.eval(() => {
     const A = window.__arcade;
     A.show.results({ game: "boss", sel: A.makeSelection("4"), run: { correct: 6, answered: 6, bestStreak: 6, missed: [], xp0: -230, start: {} }, stars: 3, score: 18450,
       title: "STAGE CLEAR", headline: "18,450", sub: "The Fine Print falls", color: "#ff3ad4", won: ["boss6", "streak20"] }, 0);
   });
   await strip("08-results-reward", 12, 16, { thumb: 200, cols: 12 }); // (and RANK UP! once the last reward has landed)
+  if (part("menus")) {
   await cap.fast(150);
   await still("09-results");
   // ---- stats: rank, tiles, the trophies
@@ -77,6 +101,7 @@ module.exports = async (cap) => {
   await cap.eval(() => { const t = document.querySelector(".trophies"); if (t) t.scrollIntoView({ block: "center" }); });
   await cap.fast(10);
   await still("10-stats");
+  }
   }
 
   // ---- Memory Bank: the vault, then a card banked (the coin flies up into the slot)

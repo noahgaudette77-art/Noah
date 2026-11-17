@@ -163,7 +163,12 @@ function renderResults(o, rank) {
       if (r1.i > r0.i) {
         // (with a reward moment it waits until the last reward has landed, and stands on its own plate inside the screen's edges)
         const settle = rw.length ? (rw[rw.length - 1].at + 0.75) * 1000 : 500;
-        setTimeout(() => { Sound.sfx("rankup"); UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : ""); GFX.pulse(6, 0.25); }, settle);
+        setTimeout(() => {
+          Sound.sfx("rankup");
+          if (rw.length) { const sc = UI.root.appendChild(UI.el('<div class="rank-scrim"></div>')); setTimeout(() => sc.remove(), 2200); } // (Phase 6: the tiles go dark under its plate while it is up)
+          UI.banner("RANK UP!", COLORS.yellow, "You are now " + r1.name, rw.length ? "plated" : "");
+          GFX.pulse(6, 0.25);
+        }, settle);
       }
     },
   });

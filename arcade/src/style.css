@@ -560,6 +560,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* The Final Exam's ending: the exam's panels fade away, cinema bars close in, and the
    boss has the whole screen. One button skips to the results. */
 .scr-game.cine > :not(.exam-cine) { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+.scr-game.cine.cine-now > :not(.exam-cine) { transition-duration: 0.2s; } /* (served: the exam's panels go first, and are gone before the ending's banner and SKIP come) */
+.scr-game.cine.cine-gone > :not(.exam-cine) { visibility: hidden; }
 .exam-cine { position: absolute; inset: 0; pointer-events: none; }
 .exam-cine .bar { position: absolute; left: 0; right: 0; height: 8vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease-out; }
 .exam-cine .bar.top { top: 0; transform-origin: top; }
@@ -1799,10 +1801,23 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 /* the label over the vault's 3D window stands on its own dark plate (served) */
 .assets-on .vault-window > span { background: rgba(14, 8, 2, 0.9); padding: 5px 8px 4px; box-shadow: 0 0 0 2px #000; left: 8px; top: 7px; }
 /* a banner on its own dark plate, inside the screen's edges (RANK UP! after a reward moment: it must not cross the score) */
-.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: rgba(6, 2, 22, 0.92); border: 2px solid var(--c, var(--yellow)); box-shadow: 0 0 22px -6px var(--c, var(--yellow)), 0 4px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
+/* (Phase 6: the plate is opaque, with a heavier border, and stands a little longer; a dark scrim lies over the tiles
+   under it while it is up, so nothing of them shows through or beside its words) */
+.banner.plated { left: 16px; right: 16px; top: 52%; padding: 14px 12px 12px; background: #080322; border: 3px solid var(--c, var(--yellow)); box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--yellow)), 0 5px 0 #000; font-size: clamp(20px, 6.4vw, 40px); }
 .banner.plated small { font-size: 9px; line-height: 1.5; margin-top: 8px; white-space: normal; overflow-wrap: anywhere; }
-.banner.plated { animation: banner-plate 1.4s ease-out forwards; } /* (it never grows past the screen's edges) */
-@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 12% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
+/* (a banner whose small line nearly fills the screen comes in from just over its size, and its line wraps inside the
+   screen's edges: from 2.2 times its size it ran off both. Served, Phase 6) */
+.banner.fit { animation: banner-fit 1.3s ease-out forwards; }
+.banner.fit small { padding: 0 14px; white-space: normal; text-wrap: balance; }
+@keyframes banner-fit { 0% { transform: scale(1.1); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+/* (served, Phase 6: the explanation sheet slides in on its plate from its first frame, not fading in: half faded, what
+   flashed behind it, a shield's cracks, crossed its title) */
+.assets-on .sheet { animation-name: sheetslide; }
+@keyframes sheetslide { from { transform: translateY(24px); } to { transform: none; } }
+.banner.plated { animation: banner-plate 2.2s ease-out forwards; } /* (it never grows past the screen's edges) */
+@keyframes banner-plate { 0% { opacity: 0; transform: scale(1.06); } 8% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; } }
+.rank-scrim { position: fixed; inset: 0; z-index: 29; pointer-events: none; background: rgba(3, 1, 12, 0.8); animation: rank-scrim 2.2s ease-out forwards; }
+@keyframes rank-scrim { 0% { opacity: 0; } 8% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
 .res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
 .res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
 .res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }

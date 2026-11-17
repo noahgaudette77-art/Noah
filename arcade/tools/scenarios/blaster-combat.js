@@ -40,9 +40,21 @@ module.exports = async (cap) => {
   const stepAnimations = () => page(() => {
     if (window.__stepped) return;
     window.__stepped = true;
-    const animate = Element.prototype.animate, live = [];
+    const animate = Element.prototype.animate, live = [], css = new WeakMap();
     Element.prototype.animate = function (frames, o) { const a = animate.call(this, frames, o); a.pause(); live.push({ a, t0: performance.now() }); return a; };
-    const step = () => { const now = performance.now(); for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } } requestAnimationFrame(step); };
+    // (Phase 6: and the page's CSS animations and transitions too, as boss-fight.js steps them: unstepped, a banner's
+    // entrance ran on the real clock and was over before the strip's second frame, so the wave's banner never showed)
+    const step = () => {
+      const now = performance.now();
+      for (const x of live) { try { x.a.currentTime = now - x.t0; } catch (e) { /* gone */ } }
+      if (document.getAnimations) for (const an of document.getAnimations()) {
+        if (!/^CSS(Animation|Transition)$/.test(an.constructor && an.constructor.name)) continue;
+        let t0 = css.get(an);
+        if (t0 === undefined) { t0 = now; css.set(an, t0); an.pause(); }
+        try { an.currentTime = now - t0; } catch (e) { /* gone */ }
+      }
+      requestAnimationFrame(step);
+    };
     requestAnimationFrame(step);
   });
 

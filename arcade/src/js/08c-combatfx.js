@@ -26,6 +26,7 @@
 //   fx.scorch(pos, { size, life, kind })                         a mark left on the ground: "scorch" | "skid"
 //   fx.trailer(fn, { smoke, fire, sparks, rate, a })             smoke or fire trailing from a moving point (a handle: .on; a: how thick its smoke)
 //   fx.drift                                                     the world's scroll (units/s) carried by every particle
+//   new BandEdge() / .set(k, beat) / .draw(renderer, band)       low health: a red frame round the band (see the class)
 const fxRGB = (c, k = 1) => { const q = c && c.isColor ? c : new THREE.Color(c); return [q.r * k, q.g * k, q.b * k]; };
 
 // Sparks and bolts: two crossed blades shaped where they are drawn (a pointed head, a tail thinning to nothing),
@@ -668,4 +669,49 @@ class CombatFX {
     if (this.waves) { this.waves.forEach((w) => w.m.material.dispose()); this.waves[0].m.geometry.dispose(); }
     this.trailers.length = 0;
   }
+}
+
+// Low health: a saturated red frame round the band (the picture between the question and the answers), beating with
+// the alarm, as Boss Rush's last heart draws it in the page (an inset glow 46 + 34 beat px deep, its solid edge
+// 12 + 20 beat px, at 0.42 + 0.5 beat). It is drawn over the finished picture (GFX.render calls scene.userData.edge),
+// so the post's vignette, bloom and tone curve leave its red alone (inside the picture they blacked it out), and
+// before a scene's overlay, so the answers' letters and badges drawn there stand over it untouched.
+class BandEdge {
+  constructor() {
+    this.U = { uRect: { value: new THREE.Vector4() }, uA: { value: 0 }, uS: { value: 0 }, uB: { value: 0 } };
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: this.U, transparent: true, depthTest: false, depthWrite: false,
+      vertexShader: "void main(){ gl_Position = vec4(position.xy * 2.0, 0.0, 1.0); }",
+      fragmentShader: `uniform vec4 uRect; uniform float uA; uniform float uS; uniform float uB;
+        void main(){
+          vec2 p = gl_FragCoord.xy;
+          float d = min(min(p.x - uRect.x, uRect.z - p.x), min(p.y - uRect.y, uRect.w - p.y));
+          if (d < 0.0) discard;
+          float a = uA * pow(1.0 - clamp((d - uS * 0.35) / (uS * 0.65 + uB), 0.0, 1.0), 2.0);
+          gl_FragColor = vec4(1.0, 0.07, 0.18, a);
+        }`,
+    });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.mat);
+    this.mesh.frustumCulled = false;
+    this.scene = new THREE.Scene();
+    this.scene.add(this.mesh);
+    this.cam = new THREE.Camera();
+    this.k = 0; this.beat = 0;
+    this._v = new THREE.Vector2();
+  }
+  // k: how much of it shows (0: none); beat: 0..1, where the alarm's swell is
+  set(k, beat) { this.k = k; this.beat = beat; }
+  draw(r, band) {
+    if (!(this.k > 0.004) || !band || !(band.h > 0)) return;
+    const buf = r.getDrawingBufferSize(this._v), sx = buf.x / GFX.w, sy = buf.y / GFX.h, b = this.beat;
+    this.U.uRect.value.set(0, (GFX.h - band.bottom) * sy, buf.x, (GFX.h - band.top) * sy);
+    this.U.uA.value = (0.42 + 0.5 * b) * this.k;
+    this.U.uS.value = (12 + 20 * b) * sx;
+    this.U.uB.value = (46 + 34 * b) * sx;
+    const ac = r.autoClear;
+    r.autoClear = false;
+    try { r.setRenderTarget(null); r.render(this.scene, this.cam); } catch (e) { /* the picture stands without it */ }
+    r.autoClear = ac;
+  }
+  dispose() { this.mesh.geometry.dispose(); this.mat.dispose(); }
 }

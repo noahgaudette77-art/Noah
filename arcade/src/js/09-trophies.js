@@ -28,6 +28,9 @@ const trophyIcon = (id, on) => (genIconReady() ? genIcon(trophyKind(id), !on) : 
 const Trophies = {
   queue: [],
   showing: false,
+  held: false,
+  // (an ending can hold the cards back until it is over: they wait in the queue, then come in turn)
+  hold(on) { this.held = !!on; if (!on) this.pump(); },
   has(id) { return !!(Store.state.ach || {})[id]; },
   count() { return TROPHIES.filter((t) => this.has(t.id)).length; },
   // o: the results of the game that just ended, when there is one.
@@ -48,7 +51,7 @@ const Trophies = {
     this.pump();
   },
   pump() {
-    if (this.showing || !this.queue.length) return;
+    if (this.showing || this.held || !this.queue.length) return;
     const t = this.queue.shift();
     this.showing = true;
     const el = document.body.appendChild(UI.el(`<div class="trophy" role="status"><span class="ic">${trophyIcon(t.id, true)}</span><span class="tx"><small>TROPHY UNLOCKED</small><b>${esc(t.name)}</b><i>${esc(t.how)}</i></span></div>`));

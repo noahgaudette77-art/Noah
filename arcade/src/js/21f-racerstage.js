@@ -86,7 +86,7 @@ class RacerStage {
         x.lineWidth = 1.5; x.beginPath(); x.moveTo(kx, ky); x.lineTo(kx + Math.cos(a - 0.9) * l * 0.35, ky + Math.sin(a - 0.9) * l * 0.35); x.stroke();
       }
       this.paneTex = new THREE.CanvasTexture(c);
-      this.pane = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.5), new THREE.MeshBasicMaterial({ map: this.paneTex, color: new THREE.Color(1.15, 0.8, 0.9), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending }));
+      this.pane = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.5), new THREE.MeshBasicMaterial({ map: this.paneTex, color: new THREE.Color(1.0, 0.5, 0.62), transparent: true, opacity: 0, /* (Phase 6: a red-pink crack, not a white sheet: it bloomed the crash out) */ depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending }));
       this.pane.visible = false; this.pane.renderOrder = 7; this.paneT = 0;
       s.add(this.pane); }
     // the policy's shield: a shell of mint light round the rig, clear at its middle (see starShellMaterial, in 20j)
@@ -113,6 +113,10 @@ class RacerStage {
     }));
     this.frame.renderOrder = 54; this.frame.frustumCulled = false; this.frame.visible = false;
     s.add(this.frame);
+    // (Phase 6: on the last life, the frame is Boss Rush's, drawn over the finished picture and under the lane badges:
+    // inside the picture it was faint. The flash as a life goes stays in the picture.)
+    this.edge = new BandEdge();
+    s.userData.edge = (r) => this.edge.draw(r, g.band);
     // Everything that used to throw a burst of soft round dots here throws shaped light instead while the run is
     // staged: steam is smoke in the palette, everything else sparks (darts with a point, a tail and a hot heart).
     g.bursts.burst = (pos, color, o = {}) => {
@@ -251,6 +255,7 @@ class RacerStage {
     const g = this.g, kit = this.kit, rig = this.rig, quiet = REDUCED_MOTION || GFX.calm, glass = picked >= 0;
     const left = 3 - g.crashes, hard = clamp(g.crashes / 3, 0.34, 1), sd = g.carX > 0.4 ? -1 : g.carX < -0.4 ? 1 : Math.random() < 0.5 ? -1 : 1, pan = this.pan(g.carX);
     const p = rig.nose(new THREE.Vector3()).setY(1.15), back = this._v.set(-sd * 0.15, 0.5, 1).normalize().clone();
+    this.capT = 0.55; // (Phase 6: the picture's glow is held down while it happens, so the glass, the sparks and the rubber read: see update)
     if (glass) { // the lane's light is hard: it shatters over the nose and the pieces go back over the rig
       this.breakPane(p);
       kit.debris(this._w.copy(p).setY(1.7), { n: quiet ? 3 : 7, size: 0.4, speed: 13, color: 0x1c1830, hot: 0xffdce8, dir: back, spread: 1.0, gravity: 14, life: 0.7, radius: 1.1 }); // (a few dark splinters that glint as they turn: glass, not confetti)
@@ -515,6 +520,8 @@ class RacerStage {
       this.markDark.visible = any || this.marksLive;
       this.marksLive = any;
       this.markDark.instanceMatrix.needsUpdate = true; }
+    // ---- the crash: the glow held down while it happens (the game sets its bloom each frame, before this)
+    if (this.capT > 0 && g.post) { this.capT = Math.max(0, this.capT - d); g.post.bloom *= 1 - 0.6 * smoothstep(0, 0.2, this.capT); }
     // ---- the pane, the shield's shell, the rings, the pools of light
     if (this.paneT > 0) { this.paneT -= d; const k = clamp(this.paneT / 0.14, 0, 1); this.pane.material.opacity = k * 0.66; this.pane.scale.setScalar(1 + (1 - k) * 0.16); this.pane.visible = this.paneT > 0; }
     { const su = this.shellMat.uniforms;
@@ -560,8 +567,9 @@ class RacerStage {
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
       this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
-      this.frameU.uK.value = Math.max(this.lowK * (0.3 + 0.7 * beat), fk);
-    } else this.frame.visible = false;
+      this.frameU.uK.value = fk;
+      this.edge.set(this.lowK, beat);
+    } else { this.frame.visible = false; this.edge.set(0, 0); }
     // ---- sound that follows the game: the engine with the road's speed and the stacks (it wavers on the last life);
     // without a recording, the alarm as a pip
     const rev = clamp(sp / 80, 0, 1.4), sput = this.low === 1 ? 0.93 + 0.05 * Math.sin(t * 9) * Math.sin(t * 2.3) : 1;
@@ -588,5 +596,6 @@ class RacerStage {
     this.glows[0].m.geometry.dispose();
     [this.markDark, this.markHot, this.pane, this.frame, this.shell].forEach((m) => { m.material.dispose(); m.geometry.dispose(); });
     this.paneTex.dispose();
+    this.edge.dispose();
   }
 }
