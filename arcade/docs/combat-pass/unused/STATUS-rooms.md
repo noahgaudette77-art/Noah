@@ -28,4 +28,5 @@ on until the quality system switches it off); 04-gfx.js and 04b-pipeline.js are 
   the next line wait for it; off while the cabinet is chosen (zooming), with sound or voice off, or from disk.
 - 5: only on a single stage won (Boss Rush STAGE CLEAR, Nest Egg Run RETIRED AT 65 or RICH), when the results have no
   line of their own and no RANK UP! follows. Risk Blaster's runs always end at GAME OVER, so it has no won chapter.
-- Last: full regression both ways and the sequence test.
+- Tests (after the last change): full regression IDENTICAL from disk and served (153 answers in 8 games, no console
+  errors); arcade-sequence ALL 13 STEPS OK, no errors.
