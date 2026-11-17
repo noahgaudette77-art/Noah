@@ -16,6 +16,10 @@ const Sound = {
   bank: {}, // cue name -> [{ buf, at, dur, vol }]: where each recorded effect lies (several takes of one sound are picked in turn)
   tracks: {}, // name -> { buf, loop: [from, to], vol }: recorded music
   loops: {}, // id -> a looping effect that is playing (see loop)
+  // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
+  // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
+  // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
+  MIX: {"music": {"exam": 0.93, "memory": 1.64, "title": 0.97, "hub": 1.06, "calm": 1.02, "boss": 1.02, "finalboss": 1, "racer": 1.04, "blaster": 0.91}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
 
   init() {
     if (this.ctx) return this.resume();
@@ -256,8 +260,8 @@ const Sound = {
     if (!sp || !this.ctx) return Promise.resolve(null);
     return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
       this.sprites[name] = buf;
-      const off = this._clickAt(buf);
-      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: vol === undefined ? 1 : vol, duck: duck || 0 }));
+      const off = this._clickAt(buf), mix = name === "voice" ? this.MIX.voice : this.MIX.sets[name] || 1; // (the set's level in the mix)
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: (vol === undefined ? 1 : vol) * mix, duck: duck || 0 }));
       return buf;
     }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
   },
@@ -269,7 +273,7 @@ const Sound = {
     if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
     const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
       const off = this._clickAt(buf);
-      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: m.vol === undefined ? 1 : m.vol };
+      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: (m.vol === undefined ? 1 : m.vol) * (this.MIX.music[name] || 1) }; // (the track's level in the mix)
       if (this.trackName === name && Store.settings.music) { this.trackName = null; this.play(name); }
       return buf;
     }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
