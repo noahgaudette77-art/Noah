@@ -150,9 +150,13 @@ function bossSkin(env, side, o, U) {
         ${bone ? "if (abs(vBossP.x) > 0.044 && vBossP.y > 0.14) discard; // (the antennae end at the helmet's own line)" : ""}
         ${bone
           ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = mix(vec3(0.03, 0.03, 0.04), vec3(0.5, 0.455, 0.4), bossL) * (0.74 + 0.5 * bossT.r) * (1.0 - 0.6 * exp(-dot(bossS, bossS) * 150.0));"
-          : "diffuseColor.rgb = mix(neonMetal(bossL, vec3(mix(0.5, bossT.r, 0.5), bossT.gb)) * 0.82, vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}`)
+          : "diffuseColor.rgb = mix(neonMetal(bossL, vec3(mix(0.5, bossT.r, 0.5), bossT.gb)) * 0.82, vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}
+        ${Assets.on ? `// (served: the hollow in its chest, round the reactor, and what shows of the frame behind it, is smooth dark gunmetal: the painting there is coarse and read as a smear)
+        float bossCoreM = (1.0 - smoothstep(0.058, 0.088, length((vBossW - uBossCoreW).xy) * ${(1 / BOSS_S).toFixed(5)})) * step(-0.05, (vBossW.z - uBossCoreW.z) * ${(1 / BOSS_S).toFixed(5)}); // (measured across the chest, not into it: the hollow lies in front of the core)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.065, 0.09), bossCoreM);` : ""}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
-        roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};`)
+        roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};
+        ${Assets.on ? "roughnessFactor = mix(roughnessFactor, 0.3, bossCoreM);" : ""}`)
       .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.38" : "0.92"};`)
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         float bossH = ${bone ? "bossT.r" : "neonHeight(bossT)"};
@@ -164,6 +168,7 @@ function bossSkin(env, side, o, U) {
         // outline is a lit plane on one hand and a bright edge on the other, not one pale fringe all the way round)
         totalEmissiveRadiance += mix(vec3(0.8, 0.42, 1.6) * 0.14, vec3(1.5, 1.0, 0.36) * 1.3, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
         totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
+        ${Assets.on ? "totalEmissiveRadiance += vec3(0.42, 0.22, 0.95) * 0.22 * bossCoreM * uBossPower * uBossDim; // (the reactor idling in its hollow: a faint violet)" : ""}
         ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
         float bossOn = uBossPower * uBossDim * (1.0 - smoothstep(uBossSweep - 1.2, uBossSweep, vBossY));
         totalEmissiveRadiance += neonGlow(bossT, vBossP * 2.6, uBossSeam) * bossOn;
@@ -178,7 +183,7 @@ function bossSkin(env, side, o, U) {
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  m.customProgramCacheKey = () => "exam-boss-skin-6-" + (bone ? 1 : 0);
+  m.customProgramCacheKey = () => "exam-boss-skin-7-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
   return m;
 }
 
@@ -232,7 +237,7 @@ class ExamPuffs {
             rgb = (mix(vec3(0.02, 0.018, 0.028), vec3(0.085, 0.075, 0.1), n) + vec3(1.2, 0.45, 0.1) * uGlow * (1.0 - vUv.y) * 0.32) * a;
           } else if (vQ.z < 2.5) {
             a = 0.0;
-            rgb = vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(1.0 - age, 2.0);
+            rgb = min(vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(1.0 - age, 2.0), vec3(1.1, 0.92, 0.68)); // (a flash, capped: never a white screen)
           } else {
             // vapour off its back: thin, and red where the light under it catches it
             a = shape * smoothstep(0.0, 0.2, age) * pow(1.0 - age, 1.5) * 0.14;
@@ -475,7 +480,7 @@ class ExamBoss {
           float len = 0.3 + 0.7 * sH(id + 3.0), thick = 0.05 + 0.09 * sH(id);
           float spike = smoothstep(thick, 0.0, w) * smoothstep(len, len * 0.25, r) * smoothstep(0.03, 0.14, r);
           float core = pow(max(1.0 - r * 2.4, 0.0), 3.0);
-          gl_FragColor = vec4(vec3(3.8, 2.7, 1.5) * (spike * 1.3 + core * 2.2) * uK, 1.0);
+          gl_FragColor = vec4(min(vec3(3.8, 2.7, 1.5) * (spike * 1.3 + core * 2.2) * uK, vec3(1.25, 0.9, 0.5)), 1.0); // (capped: additive white must never wash the screen out)
         }`,
     }));
     this.star.layers.set(1);
@@ -752,7 +757,7 @@ class ExamBoss {
     g.bursts.burst(at, 0xffffff, { n: Math.round(110 * k), speed: 34 * K, size: 0.4 * K, life: 0.8, gravity: -6 * K });
     g.bursts.burst(at, COLORS.orange, { n: Math.round(170 * k), speed: 20 * K, size: 0.42 * K, life: 1.6, gravity: -14 * K });
     g.bursts.burst(at, COLORS.yellow, { n: Math.round(70 * k), speed: 6 * K, size: 0.3 * K, life: 2.6, gravity: 1.5 * K });
-    this.puffs.emit(2, at, v.set(0, 0, 0), 3 * K, 10 * K, 0.24);
+    this.puffs.emit(2, at, v.set(0, 0, 0), 3 * K, 7 * K, 0.24);
     // (a fireball with a shape: billows a third the size they were, up and gone in a second, not a wash of orange over the hall)
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * 6.283 + rand(0.5), r = i < 3 ? 0 : 1;
@@ -820,7 +825,7 @@ class ExamBoss {
     if (this.star.visible) {
       const k = Math.min(1, (this.starT += dt / 0.42)), e = 1 - (1 - k) * (1 - k);
       this.star.quaternion.copy(g.camera.quaternion);
-      this.star.scale.setScalar((7 + 31 * e) * K);
+      this.star.scale.setScalar((6 + 18 * e) * K);
       this.star.material.uniforms.uK.value = Math.pow(1 - k, 1.5);
       this.star.visible = k < 1;
     }

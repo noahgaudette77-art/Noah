@@ -6,7 +6,7 @@
 //   and gives a little lift and a glint as each card is dealt.
 // The door itself and its mechanism stay: they move as the deck is banked, which a single model could not.
 // Look only: nothing here knows a card, a grade or a box.
-const MEMORY_GEN = { DECK: { s: 4.6, x: 0, z: 5.2, ry: 0.35 }, COIN: 1.1 };
+const MEMORY_GEN = { DECK: { s: 3.3, x: 0, z: 5.6, ry: 0.3 }, COIN: 1.1 };
 // A model's first mesh as plain geometry, its packed (quantised) attributes opened out and its node's transform
 // applied, so it can be drawn as many times as the scene needs (instanced, or one mesh per flying coin).
 function bakeModelGeometry(model) {

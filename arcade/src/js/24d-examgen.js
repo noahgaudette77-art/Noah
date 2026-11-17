@@ -6,8 +6,10 @@
 //   lit by the same night and the hall's lamps.
 // Look only: nothing here knows a question, an answer or a clock.
 const EXAM_GEN = {
-  SKY: { u: 0.728, v: 0.655, at: 15, zoom: 0.85, min: 0.43 }, // (the moon's place in the picture, put straight behind the examiner's head, in its halo)
-  PODIUM: { s: 5.2, z: BOSS_S * 0.6, ry: 0 },
+  // (the moon's place in the picture, put in the arch to the left of the examiner, low: it shows in the arches as the
+  // camera draws back for the ending; the picture's blue day-lit cloud is darkened to a night under it)
+  SKY: { u: 0.752, v: 0.655, at: 6, zoom: 0.85, min: 0.43 }, TINT: 0x5a68b8, GAIN: 0.5,
+  PODIUM: { s: 4.7, z: BOSS_S * 0.62, ry: 0, rx: 0.24 }, // (leaned a little toward the lens, so the open book on it shows from below)
 };
 function examGen(game) {
   if (!Assets.on || !game.has3D) return null;
@@ -15,7 +17,7 @@ function examGen(game) {
   if (!(sky && sky.map) && !podium) return null;
   const s = game.scene, G = { sky: sky && sky.map ? sky : null };
   if (G.sky) {
-    G.dome = makePanoSky(G.sky, { gain: 0.95, lift: 1.4, window: EXAM_GEN.SKY });
+    G.dome = makePanoSky(G.sky, { gain: EXAM_GEN.GAIN, lift: 2.2, tint: EXAM_GEN.TINT, window: EXAM_GEN.SKY });
     s.add(G.dome);
     if (game.night) game.night.visible = false;
     applySkyEnv(s, G.sky); // (what a model in the hall mirrors and is lit by)
@@ -26,6 +28,7 @@ function examGen(game) {
     podium.scene.scale.setScalar(P.s);
     podium.scene.position.set(0, BOSS_DAIS, P.z);
     podium.scene.rotation.y = P.ry;
+    podium.scene.rotation.x = P.rx;
     s.add(podium.scene);
     G.podium = podium;
     G.sink = 0;

@@ -188,8 +188,9 @@ class HubExtras {
       [[-0.42, 0.42, 7], [0.42, 0.42, 8], [-0.42, 1.05, 9], [0.42, 1.05, 10]].forEach(([x, z, ch], i) => { lamp(F, ch, x, 0.19, z, 0.56, 0.02, 0.5, [0xff3ad4, 0x35efff, 0x4dffa6, 0xffe14f][i], 2.2); });
       [-0.78, 0.78].forEach((x) => { rod(F, x, 0.8, 1.4, 0.03, 1.4, 0xd2d0e4); }); rod(F, 0, 1.5, 1.4, 0.03, 1.6, 0xd2d0e4, 1, 0, Math.PI / 2);
       lamp(F, 0, 0, 3.05, -0.04, 1.4, 0.07, 0.03, 0xff3ad4, 2.4); }
-    // -- a ticket printer (beside cabinet 3): its strip is a mover
-    { const F = (this.tickF = frame(gap(3), R));
+    // -- a ticket printer (beside cabinet 3): its strip is a mover (the generated hall stands a vault door there instead)
+    const printer = !(hub.gen && hub.gen.vault);
+    if (printer) { const F = (this.tickF = frame(gap(3), R));
       put(F, 0, 0.75, 0, 0.9, 1.5, 0.7, 0x256e8c); put(F, 0, 1.56, 0, 1.0, 0.14, 0.8, 0x34a0c4);
       put(F, 0, 0.5, 0.355, 0.62, 0.62, 0.02, INSET); lamp(F, 11, 0, 0.5, 0.37, 0.4, 0.05, 0.02, 0xffe14f, 1.6); lamp(F, 11, 0, 0.5, 0.37, 0.05, 0.4, 0.02, 0xffe14f, 1.6); lamp(F, 0, 0, 0.06, 0.36, 0.9, 0.03, 0.03, 0x35efff, 1.5);
       put(F, 0, 1.12, 0.36, 0.6, 0.06, 0.04, 0x05060a);
@@ -232,6 +233,7 @@ class HubExtras {
       for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; b.add(BOX, racerM(Math.cos(a) * 0.09, -0.62, Math.sin(a) * 0.09, 0.03, 0.22, 0.03, Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5), 0xd2d0e4, 0.7); }
       this.claw = basic(b); }
     // the ticket strip
+    if (printer)
     { const b = new RacerBatch();
       for (let i = 0; i < 6; i++) { b.add(BOX, racerM(0, -0.09 - i * 0.18, 0, 0.5, 0.17, 0.008), i % 2 ? 0xffe14f : 0xffb13a, 1.0); }
       this.tickets = basic(b); }
@@ -254,7 +256,8 @@ class HubExtras {
       this.robot = basic(b);
       const blob = new THREE.Mesh(new THREE.CircleGeometry(1.15, 24), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.8, depthWrite: false }));
       blob.rotation.x = -Math.PI / 2; blob.position.y = 0.012; blob.renderOrder = 1;
-      this.robot.add(blob); }
+      this.robot.add(blob);
+      if (hub.gen && hub.gen.vault) this.robot.visible = false; } // (the generated hall: plain boxes beside its models read as unfinished; the vault door stands in that bay)
     // people walking by in silhouette: one instanced mesh, legs and arms swinging in the shader
     { const b = new RacerBatch(["aSw", "aPv"]);
       const part = (geo, m, c, k, sw = 0, pv = 0) => b.add(geo, m, c, k, { aSw: sw, aPv: pv });
@@ -379,7 +382,7 @@ class HubExtras {
       this.place(this.claw, this.clawF, x, 2.72 - drop * 0.62, Math.cos(k * Math.PI * 2) * 0.22); }
     // tickets feed out, then tear off
     { const k = (t % 5) / 5, out = smoothstep(0, 0.7, k);
-      this.place(this.tickets, this.tickF, 0, 1.12, 0.39 + out * 0.02); this.tickets.scale.set(1, 0.15 + out * 0.85, 1); }
+      if (this.tickets) { this.place(this.tickets, this.tickF, 0, 1.12, 0.39 + out * 0.02); this.tickets.scale.set(1, 0.15 + out * 0.85, 1); } }
     // the ball arcs up and through the ring
     { const k = (t % 2.6) / 2.6, u = Math.min(1, k / 0.62);
       const y = u < 1 ? 1.2 + u * 3.3 - u * u * 2.2 : 2.3 - (k - 0.62) * 4.2, z = u < 1 ? 1.1 - u * 1.4 : -0.3;

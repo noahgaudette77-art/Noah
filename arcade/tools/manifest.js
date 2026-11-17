@@ -16,7 +16,7 @@ const SETS = {
   // The arcade hall: one cabinet model for all six games, their toppers, the trophy case's cup, medal and coins, one
   // hall panorama for its reflections and light (never shown), the boss portraits for its posters. (Its sound comes
   // with it but is not waited for: see showHub.)
-  hub: ["model:prop-cabinet", "model:mini-starfighter", "model:mini-warrig", "model:mini-proctor", "model:prop-deck", "model:prop-podium", "model:prop-tome", "model:prop-trophy", "model:prop-medal", "model:prop-coin", "model:prop-stand", "sky:hub-hall", "ui:bosses", "ui:icons"],
+  hub: ["model:prop-cabinet", "model:mini-starfighter", "model:mini-warrig", "model:mini-proctor", "model:prop-deck", "model:prop-podium", "model:prop-tome", "model:prop-trophy", "model:prop-medal", "model:prop-coin", "model:prop-stand", "model:prop-vault", "sky:hub-hall", "sky:hub-hall-b", "ui:bosses", "ui:icons"],
   hubsound: ["sfx:core", "sfx:hub", "sfx:voice", "music:hub"],
   title: ["sky:title-dusk", "sky:title-dusk-b", "sfx:core", "sfx:voice", "music:title"],
   memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory"], // (the vault's own door stays: it moves as the deck is banked)

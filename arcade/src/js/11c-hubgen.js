@@ -26,9 +26,11 @@ const HUBGEN = {
     blaster: { name: "mini-starfighter", s: 1.9, y: 0.42, rx: -0.14, ry: 0.6, bob: 0.07 },
     racer: { name: "mini-warrig", s: 1.75, y: 0, ry: 0.7 },
     boss: { name: "mini-proctor", s: 1.28, y: 0, ry: 0.3 },
-    memory: { name: "prop-deck", s: 0.95, y: 0, ry: 0.5 },
-    exam: { name: "prop-podium", s: 1.1, y: 0, ry: 0.4 },
-    guide: { name: "prop-tome", s: 1.12, y: 0, ry: 0.4 },
+    // (these three sway to and fro instead of turning round, their faces to the lens: the cards, the open book on
+    // the lectern and the open book on its stand, each tipped a little toward the camera)
+    memory: { name: "prop-deck", s: 0.76, y: 0, ry: 0, swing: 0.75 },
+    exam: { name: "prop-podium", s: 1.05, y: 0, ry: 0, rx: 0.3, swing: 0.6 },
+    guide: { name: "prop-tome", s: 0.82, y: 0, ry: 0, rx: 0.34, swing: 0.6 },
   },
   // the trophy stand: where it stands in the hall (angle, radius), and how the sixteen trophies are shown on it
   STAND: { r: HUB_R + 0.25, w: 2.4 },
@@ -48,7 +50,7 @@ function hubGenTake() {
   if (!Assets.on || !window.THREE) return null;
   const cab = Assets.model("prop-cabinet");
   if (!cab) return null;
-  const g = { cab, sky: Assets.sky("hub-hall"), tops: {}, cup: Assets.model("prop-trophy"), medal: Assets.model("prop-medal"), coin: Assets.model("prop-coin"), stand: Assets.model("prop-stand") };
+  const g = { cab, sky: Assets.sky("hub-hall"), skyB: Assets.sky("hub-hall-b"), tops: {}, cup: Assets.model("prop-trophy"), medal: Assets.model("prop-medal"), coin: Assets.model("prop-coin"), stand: Assets.model("prop-stand"), vault: Assets.model("prop-vault") };
   for (const id in HUBGEN.TOPPERS) g.tops[id] = Assets.model(HUBGEN.TOPPERS[id].name);
   return g;
 }
@@ -59,6 +61,7 @@ function hubGenSkin(model, o = {}) {
   const ms = tuneModel(model, { env: o.env === undefined ? 1 : o.env, glow: o.glow === undefined ? 1.8 : o.glow });
   ms.forEach((m) => {
     if (o.rough !== undefined) m.roughness = o.rough;
+    if (o.envMap) m.envMap = o.envMap; // (the trophy stand mirrors the second hall)
     m.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, HUB_RIM);
       sh.fragmentShader = sh.fragmentShader
@@ -66,9 +69,10 @@ function hubGenSkin(model, o = {}) {
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           { vec3 hubD = -vViewPosition - uHubHero;
             float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
-            totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1); }`);
+            totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1); }
+          ${o.key ? `totalEmissiveRadiance += diffuseColor.rgb * ${o.key.toFixed(2)} * max(dot(normal, normalize(vec3(-0.35, 0.7, 0.62))), 0.0); // (a key light of its own, high and to the left of the lens: it reads against the dark hall)` : ""}`);
     };
-    m.customProgramCacheKey = () => "hub-gen";
+    m.customProgramCacheKey = () => "hub-gen-" + (o.key || 0);
     m.needsUpdate = true;
   });
   return ms;
@@ -101,7 +105,7 @@ class HubGen {
     this.t = 0;
     this.items = [];
     hubGenSkin(gen.cab, { env: 1.1, glow: 1.5 });
-    for (const id in gen.tops) if (gen.tops[id]) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2 });
+    for (const id in gen.tops) if (gen.tops[id]) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 0.9 });
   }
   // a cabinet's frame in the hall (x across, y up, z toward the room's centre), in world units
   frame(i) {
@@ -156,7 +160,7 @@ class HubGen {
       this.hub.scene.add(pivot);
       const box = new THREE.Box3().setFromObject(obj);
       topH = (T.y || 0) + (box.max.y - box.min.y);
-      this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3 };
+      this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, base: pivot.rotation.y, swing: T.swing || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3 };
     }
     this.cabTop[i] = ry + 0.112 + topH + 0.12;
     // where its screen goes, and the plane over its control panel (the screen's light falls there)
@@ -179,7 +183,7 @@ class HubGen {
     if (gen.stand) {
       // (the model is 2.3 wide, 1 tall and 2 deep: its treads are made shallower here, its risers a little taller)
       const m = gen.stand, k = St.w / 2.3, sy = k * 1.1, sz = k * 0.72;
-      hubGenSkin(m, { env: 1.0, glow: 1.7 });
+      hubGenSkin(m, { env: 1.1, glow: 1.9, envMap: gen.skyB && gen.skyB.env });
       m.scene.scale.set(k, sy, sz);
       m.scene.applyMatrix4(F);
       this.hub.scene.add(m.scene);
@@ -196,7 +200,7 @@ class HubGen {
     // what sits on each step: cups on the top one, medals in the middle, coins on edge at the front
     const row = (model, ids, tier, s, spread, env = 1.3) => {
       if (!model) return;
-      hubGenSkin(model, { env, glow: 2.2 });
+      hubGenSkin(model, { env, glow: 2.8, key: 1.1, envMap: gen.skyB && gen.skyB.env }); // (earned: bright, lit from the front, its star and rings burning; the dark copies below stay silhouettes)
       const dim = { scene: model.scene.clone(true) };
       hubGenDim(dim);
       ids.forEach((id, k) => {
@@ -217,10 +221,22 @@ class HubGen {
         this.items.push({ id, lit, dark, pool, ry: -St.ang, ph: k * 0.9 + tier });
       });
     };
-    row(gen.cup, H.CUPS, 2, 0.64, 0.7, 2.2); // (chrome cups: they need the hall in them to read)
+    row(gen.cup, H.CUPS, 2, 0.64, 0.7, 3.0); // (chrome cups: they need the hall in them to read)
     row(gen.medal, H.MEDALS, 1, 0.48, 0.44);
     row(gen.coin, H.COINS, 0, 0.27, 0.27);
     this.refresh();
+  }
+  // A round vault door in its frame (prop-vault), standing in the bay beside Memory Bank's cabinet where the hall's own
+  // ticket printer stood (that was simple boxes: it is not built in the generated hall).
+  vaultProp() {
+    const m = this.gen.vault;
+    if (!m) return;
+    const a = this.hub.cabAngle(CABINETS.findIndex((c) => c.id === "memory")) + 0.208, R = 13.3, s = 2.9;
+    hubGenSkin(m, { env: 1.3, glow: 2.2, key: 0.6 });
+    m.scene.scale.setScalar(s);
+    m.scene.position.set(Math.sin(a) * R, 0, -Math.cos(a) * R);
+    m.scene.rotation.y = -a;
+    this.hub.scene.add(m.scene);
   }
   // Where the little lamp on what stands in front goes (the hall's desk lamp, which a generated cabinet has no use
   // for): over and in front of the topper, or over the middle of the trophy stand.
@@ -247,9 +263,9 @@ class HubGen {
       const c = hub.cabs[i], f = c ? c.focus : 0;
       // the one in front lifts and spins up; the others turn slowly where they stand
       const spin = (calm ? 0.12 : 0.3) + f * (calm ? 0.3 : 1.25) + (c && c.chosen ? (calm ? 0.6 : 4) * c.chosen : 0);
-      tp.spin += spin * dt;
+      tp.spin += spin * dt * (tp.swing ? 0.55 : 1);
       tp.lift += ((calm ? 0.08 : 0.24) * f - tp.lift) * Math.min(1, dt * 4);
-      tp.pivot.rotation.y = tp.spin;
+      tp.pivot.rotation.y = tp.swing ? tp.base + Math.sin(tp.spin) * tp.swing : tp.spin;
       tp.pivot.position.y = tp.y0 + tp.lift + (calm ? 0 : tp.bob * Math.sin(t * 1.6 + tp.ph));
     });
     this.items.forEach((it) => {
