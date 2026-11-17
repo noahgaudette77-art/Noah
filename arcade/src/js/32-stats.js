@@ -70,14 +70,16 @@ function showStats() {
 function showSettings() {
   const s = Store.settings;
   const seg = (key, opts) => `<div class="seg" role="group" style="--c:${COLORS.cyan}">${opts.map(([v, label]) => `<button data-act="set" data-k="${key}" data-v="${v}" aria-pressed="${String(s[key]) === String(v)}">${label}</button>`).join("")}</div>`;
+  // a sound layer's level: OFF (the layer's own switch) or LOW, MID, HIGH (see Sound.LEVELS)
+  const vol = (key) => { const on = s[key] !== false, lv = s[key + "Vol"] || (key === "music" ? "low" : "high"); return `<div class="seg" role="group" style="--c:${COLORS.cyan}">${[["off", "OFF"], ["low", "LOW"], ["mid", "MID"], ["high", "HIGH"]].map(([v, label]) => `<button data-act="vol" data-k="${key}" data-v="${v}" aria-pressed="${(on ? lv : "off") === v}">${label}</button>`).join("")}</div>`; };
   const row = (ic, label, sub, control) => `<div class="setting"><span class="si" aria-hidden="true">${icon(ic)}</span><div class="sl">${label}<small>${sub}</small></div>${control}</div>`;
   const synced = !!Store.remote;
   const el = UI.el(`<section class="screen" style="background:rgba(9,3,32,.95)">
     ${topbar("SETUP")}
     <div class="scroll"><div class="wrap">
-      ${row("speaker", "Sound effects", "Blips, lasers and explosions", seg("sfx", [[true, "ON"], [false, "OFF"]]))}
-      ${row("note", "Music", "Chiptune soundtrack", seg("music", [[true, "ON"], [false, "OFF"]]))}
-      ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", seg("voice", [[true, "ON"], [false, "OFF"]]))}
+      ${row("speaker", "Sound effects", "Blips, lasers, engines and explosions", vol("sfx"))}
+      ${row("note", "Music", "The soundtrack (LOW to begin with: quiet under study)", vol("music"))}
+      ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", vol("voice"))}
       ${row("note", "Sound test", "Every sound in the game with a play button and a label, to say which one to change", `<div class="seg" role="group" style="--c:${COLORS.cyan}"><button data-act="soundtest">OPEN</button></div>`)}
       ${row("tube", "CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("moon", "Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
@@ -111,6 +113,18 @@ function showSettings() {
         Store.save();
         t.setAttribute("aria-pressed", String(fx[k]));
         GFX.applySettings();
+        Sound.sfx("blip");
+        return;
+      }
+      if (a === "vol") { // a sound layer: OFF switches it off; LOW, MID and HIGH switch it on at that level
+        const k = t.dataset.k, v = t.dataset.v, was = Store.settings[k] !== false;
+        Store.settings[k] = v !== "off";
+        if (v !== "off") Store.settings[k + "Vol"] = v;
+        Store.save();
+        el.querySelectorAll(`[data-act=vol][data-k=${k}]`).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+        Sound.applyVolumes();
+        if (k === "music" && was !== (v !== "off")) Sound.refreshMusic();
+        if (k === "voice" && v !== "off") Sound.say("Announcer on");
         Sound.sfx("blip");
         return;
       }

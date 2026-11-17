@@ -53,6 +53,8 @@
     sting_correct: "right-answer sting", sting_wrong: "wrong-answer sting", coin_insert: "coin drops", heart_lost: "a heart lost", warning: "attack warning",
     crash: "a crash", skid: "tyres skid", near_miss: "a near miss", boost: "boost", gate: "a gate passed",
   };
+  // the loops as the game now plays them: the engines and the alarm much quieter (Sound.LOOP_SOFT in 02-sound.js)
+  const SOFT = { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 };
   const MUSIC = { blaster: "Risk Blaster", racer: "Nest Egg Run", boss: "Boss Rush", finalboss: "Boss Rush: the final boss", title: "Title", hub: "Arcade hall", exam: "Final Exam", memory: "Memory Bank", calm: "Strategy Guide" };
   let ctx = null, data = null;
   const bufs = {}, live = new Set();
@@ -104,10 +106,11 @@
         const pretty = name.replace(/^vo@(\w+):/, "the $1 voice: ").replace(/^vo:/, "“").replace(/^(“.*)$/, "$1”");
         const also = names.filter((n) => n !== name);
         const row = el(`<div class="row" data-find="${esc((names.join(" ") + " " + (ABOUT[name] || "") + " " + (SETS[set] || "")).toLowerCase())}"><div class="lbl">${esc(pretty)}${isLoop ? '<span class="tag loop">loop</span>' : ""}${takes.length > 1 ? `<span class="tag">${takes.length} takes</span>` : ""}<small>${esc((SETS[set] || set) + " · " + name + (ABOUT[name] ? " · " + ABOUT[name] : "") + (also.length ? " · also played as: " + also.join(", ") : ""))}</small></div><div class="takes"></div></div>`);
+        const soft = SOFT[names.find((n) => SOFT[n]) || ""] || 1; // (a loop at the share of its level the game plays it at)
         takes.forEach((t, i) => {
           const lbl = `${SETS[set] || set} · ${name} · take ${i + 1}`;
           const b = el(`<button data-label="${esc(lbl)}" aria-label="${esc(lbl)}">${takes.length > 1 ? i + 1 : "▶ play"}</button>`);
-          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, t[2] || 1, b, true) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
+          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, true) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
           row.querySelector(".takes").appendChild(b);
         });
         list.appendChild(row);

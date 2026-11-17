@@ -26,7 +26,7 @@ if "--mix" in sys.argv:
     SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "js", "02-sound.js")
     m = re.search(r"^\s*MIX: (\{.*\}),", open(SRC).read(), re.M)
     MIX = json.loads(m.group(1)) if m and not os.environ.get("MIX_FLAT") else {"music": {}, "sets": {}, "voice": 1}  # (MIX_FLAT=1: as built, before the mix table)
-    BUS = {"music": (0.40, 0.52), "sfx": 0.55, "voice": 0.95, "master": 0.7}
+    BUS = {"music": (0.40 * 0.4, 0.52 * 0.4), "sfx": 0.55, "voice": 0.95, "master": 0.7}  # (music at the player's default level, LOW: Sound.LEVELS)
     man = json.load(open(os.path.join(ROOT, "audio", "audio.json")))
     dB = lambda g: 20 * math.log10(max(g, 1e-9))
     def ebur(path, start, dur, pad=False):

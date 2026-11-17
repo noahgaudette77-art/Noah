@@ -26,6 +26,21 @@ const Sound = {
   // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
   MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.03, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.19, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
 
+  // The player's own levels (Setup): each layer OFF, LOW, MID or HIGH (OFF is the layer's on/off switch). The music
+  // starts LOW, quiet under study; effects and the announcer start HIGH, as they always played.
+  LEVELS: { music: { low: 0.4, mid: 0.7, high: 1 }, sfx: { low: 0.45, mid: 0.72, high: 1 }, voice: { low: 0.5, mid: 0.75, high: 1 } },
+  level(kind) { const v = Store.settings[kind + "Vol"] || (kind === "music" ? "low" : "high"); return this.LEVELS[kind][v] || 1; },
+  applyVolumes() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, set = (node, v) => { if (node) { node.gain.cancelScheduledValues(t); node.gain.setTargetAtTime(v, t, 0.05); } };
+    set(this.musicLevel, this.level("music"));
+    set(this.sfxBus, 0.55 * this.level("sfx"));
+    set(this.voiceBus, 0.95 * this.level("voice"));
+  },
+  // (the owner, 2026-11-17: the engines and the alarm much subtler, the hall's hum and the boost flames a little;
+  // a loop is played at this share of what its caller asks)
+  LOOP_SOFT: { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 },
+
   init() {
     if (this.ctx) return this.resume();
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -43,7 +58,7 @@ const Sound = {
       this.master.connect(lim).connect(c.destination);
     } catch (e) { this.master.connect(c.destination); }
     this.sfxBus = c.createGain();
-    this.sfxBus.gain.value = 0.55;
+    this.sfxBus.gain.value = 0.55 * this.level("sfx");
     this.sfxBus.connect(this.master);
     // the arcade hall: every effect also feeds a short reverb (the music stays dry)
     try {
@@ -59,9 +74,11 @@ const Sound = {
     } catch (e) { /* no convolver: effects stay dry */ }
     this.musicBus = c.createGain();
     this.musicBus.gain.value = 0.22;
-    // the music ducks under the announcer and the biggest blasts (see duck)
+    // the music ducks under the announcer and the biggest blasts (see duck), then the player's own music level
     this.duckGain = c.createGain();
-    this.musicBus.connect(this.duckGain).connect(this.master);
+    this.musicLevel = c.createGain();
+    this.musicLevel.gain.value = this.level("music");
+    this.musicBus.connect(this.duckGain).connect(this.musicLevel).connect(this.master);
     // recorded music has its own way in: a filter that opens as the streak grows, then the same duck
     this.trackBus = c.createGain();
     this.trackBus.gain.value = 0.5;
@@ -72,7 +89,7 @@ const Sound = {
     this.trackBus.connect(this.trackTone).connect(this.duckGain);
     // the announcer: dry, over everything
     this.voiceBus = c.createGain();
-    this.voiceBus.gain.value = 0.95;
+    this.voiceBus.gain.value = 0.95 * this.level("voice");
     this.voiceBus.connect(this.master);
     const len = c.sampleRate * 1;
     this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
@@ -235,11 +252,13 @@ const Sound = {
     const takes = this.bank[name], c = this.ctx, q = takes[(takes.li = ((takes.li === undefined ? -1 : takes.li) + 1) % takes.length)], src = c.createBufferSource(), g = c.createGain(); // (a loop recorded more than once: each start takes the next take)
     src.buffer = q.buf; src.loop = true; src.loopStart = q.at; src.loopEnd = q.at + q.dur;
     src.playbackRate.value = o.rate || 1;
+    const lv = q.vol * (this.LOOP_SOFT[name] || 1), to = (o.vol === undefined ? 1 : o.vol) * lv;
     g.gain.value = 0.0001;
-    g.gain.setTargetAtTime((o.vol === undefined ? 1 : o.vol) * q.vol, c.currentTime, o.fade || 0.25);
+    g.gain.setTargetAtTime(to, c.currentTime, o.fade || 0.25);
+    if (name === "alarm") g.gain.setTargetAtTime(to * 0.35, c.currentTime + 3.4, 0.9); // (three beats to say it, then a faint beat under the play: the red frame keeps saying it)
     src.connect(g).connect(this.sfxBus);
     src.start(c.currentTime, q.at);
-    this.loops[id] = { name, src, g, vol: q.vol };
+    this.loops[id] = { name, src, g, vol: lv };
     return true;
   },
   loopSet(id, o) {
@@ -412,7 +431,13 @@ const Sound = {
   ambience(on) {
     if (!this.ctx) return;
     // (the hall's own recording when it has loaded: a loop under the music, in place of the synth's murmur)
-    if (on && this.bank.hub_hum && Store.settings.sfx) { if (this._amb) this.ambience(false); this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 }); return; }
+    clearTimeout(this._ambEnd);
+    if (on && this.bank.hub_hum && Store.settings.sfx) {
+      if (this._amb) this.ambience(false);
+      this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 });
+      this._ambEnd = setTimeout(() => this.stopLoop("ambience", 4), 14000); // (it sets the room as it comes on, then settles away: not a loop under every minute in the hall)
+      return;
+    }
     if (!on) this.stopLoop("ambience", 0.6);
     if (on && !this._amb && Store.settings.sfx) {
       const c = this.ctx;

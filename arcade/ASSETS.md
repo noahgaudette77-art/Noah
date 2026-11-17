@@ -187,6 +187,13 @@ head-and-shoulders portrait of each of the twelve bosses (192 px cells, 86 KB). 
 
 ## Sound (`assets/audio/`)
 
+In play (2026-11-17, after the owner found the sound tiring): each layer has its own level in Setup, OFF, LOW, MID or
+HIGH (music, effects, announcer; `Sound.LEVELS`), and the music starts LOW (0.4 of its old level, about 8 dB down).
+The loops play at a share of what their callers ask (`Sound.LOOP_SOFT`): the engines at half, the alarm at 0.45 and
+then, after three beats, a faint beat at a third of that while the red frame keeps warning; the hall's hum sets the
+room as it comes on and settles away after 14 s; the boost flames at 0.7, the charge hum at 0.8. Every sound can be
+heard on its own, with its name, on the sound test page (`sound-test.html`, Setup > Sound test).
+
 ElevenLabs. Effects: `eleven_text_to_sound_v2`, `prompt_influence` 0.45, a fixed duration per effect, 3 to 6 takes
 each (the game plays the takes of a sound in turn, each at the volume that makes it as loud as the middle take). Loops: the same model with `loop: true`. Announcer: voice
 "Harry" (`SOYHLrjzK2X1ezoPC6cr`), model `eleven_v3`, with a touch of echo and compression added in the build.
