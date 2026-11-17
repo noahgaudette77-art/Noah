@@ -407,7 +407,13 @@ class BlasterSpace {
 
     // ---- rocks: a handful of big detailed ones near the ship's path, many small ones filling the distance
     this.rockMat = spaceHullMaterial(this.shared);
-    this.rockNear = spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
+    // (the near ones are the two generated asteroids when they arrived, taking turns: see genKit. The far ones, specks
+    // at that distance, stay the built-in rock.)
+    this.genMats = [];
+    const rockA = this.genKit("prop-rock", true), rockB = this.genKit("prop-rock2", true) || null, near = (k) => { const m = new THREE.InstancedMesh(k.geo, k.mat, 16); m.frustumCulled = false; return m; };
+    this.rockNear = rockA || rockB ? near(rockA || rockB) : spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
+    this.rockNear2 = rockA && rockB ? near(rockB) : null;
+    if (this.rockNear2) s.add(this.rockNear2);
     this.rockFar = spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
     this.rocks = [];
     for (let i = 0; i < 112; i++) {
@@ -716,8 +722,10 @@ class BlasterSpace {
     // rocks: as many as the region has, tumbling past
     // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
     const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
-    this.rockNear.count = nearN; this.rockFar.count = farN;
-    this.rockNear.visible = nearN > 0; this.rockFar.visible = farN > 0;
+    const two = this.rockNear2, nearA = two ? Math.ceil(nearN / 2) : nearN; // (two asteroids: the even rocks are the first, the odd ones the second)
+    this.rockNear.count = nearA; this.rockFar.count = farN;
+    this.rockNear.visible = nearA > 0; this.rockFar.visible = farN > 0;
+    if (two) { two.count = nearN - nearA; two.visible = two.count > 0; }
     if (nearN + farN > 0) {
       this.rocks.forEach((r) => {
         if (r.i >= (r.near ? nearN : farN)) return;
@@ -725,9 +733,17 @@ class BlasterSpace {
         r.ph += r.w * dt;
         if (r.p.z > 30) this.resetRock(r, -660);
         const grow = smoothstep(-660, -560, r.p.z) * (1 - smoothstep(-45, 12, r.p.z)); // they come out of the distance rather than popping in, and shrink away as they pass
-        (r.near ? this.rockNear : this.rockFar).setMatrixAt(r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
+        (r.near ? (two && r.i & 1 ? two : this.rockNear) : this.rockFar).setMatrixAt(r.near && two ? r.i >> 1 : r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
       });
       this.rockNear.instanceMatrix.needsUpdate = this.rockFar.instanceMatrix.needsUpdate = true;
+      if (two) two.instanceMatrix.needsUpdate = true;
+    }
+    // the generated ships and rocks take the region's rims, a cold kicker along their upper edges and a fill of its colour
+    if (this.genU && this.pano) {
+      const U = this.genU, P = this.pano;
+      U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.55); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.55);
+      U.uSkKick.value.setRGB(0.5, 0.86, 1.15).multiplyScalar(0.3);
+      U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).multiplyScalar(0.12);
     }
     // the station, off to port: it is there in its region, far ahead before, left behind after
     const place = (obj, k, home, near) => {
@@ -807,5 +823,37 @@ class BlasterSpace {
     if (this.nebTex.rt) this.nebTex.rt.dispose(); else this.nebTex.dispose();
     this.galaxyTex.dispose();
     if (this.traffic) this.traffic.dispose();
+    if (this.genMats.length) blasterDropMaps(this.genMats); // (the generated ships' and rocks' maps; their colour maps go in the scene's sweep)
+  }
+  // A generated model (SPACE_GEN_PROPS) made ready to be drawn many times over: turned to fly down -z (its nose is +z),
+  // centred, one unit from nose to tail (a rock: two across, as the built-in rocks are), in its own material taught
+  // blasterSkin's rims, lit by the region's lamps and mirroring its sky, as the fighter and the demon are. One geometry
+  // and one material per model, shared by every kind drawn with it. null when it did not arrive (or there is no
+  // panorama to light it): the kind is drawn as before.
+  genKit(name, rock) {
+    const kits = this.genKits || (this.genKits = {});
+    if (kits[name] !== undefined) return kits[name];
+    const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
+    let kit = null;
+    if (model && g.pano) {
+      tuneModel(model, rock ? { glow: 2.2, metal: 0.65, rough: 1.0, normal: 1.0 } : { glow: 2.6, metal: 1.0, rough: 1.0, normal: 0.85 });
+      const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
+      if (made) {
+        const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
+        made.geo.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -(bb.min.z + bb.max.z) / 2);
+        made.geo.scale(s, s, s);
+        made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
+        const U = (this.genU = this.genU || blasterSkinUniforms());
+        U.uSkAA.value = 1.2; U.uSkSpec.value = 0.18;
+        // (background: a hull is dark gunmetal and a rock darker stone, so the region's hard lamps draw their edges and
+        // their own neon carries them; at full albedo they stood as pale shapes beside the fight)
+        const mat = blasterSkin(made.mat, U, { key: rock ? "space-rock" : "space-ship", albedo: `diffuseColor.rgb *= ${rock ? "0.42" : "0.45"};` });
+        g.pano.mirror(mat, rock ? 0.3 : 0.42); // (background: dark gunmetal held by its edges and its own neon, never a pale shape beside the fight)
+        this.genMats.push(mat);
+        model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
+        kit = { geo: made.geo, mat };
+      }
+    }
+    return (kits[name] = kit);
   }
 }

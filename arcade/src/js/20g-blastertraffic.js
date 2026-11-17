@@ -140,6 +140,11 @@ function spaceGlowMaterial(trail) {
   });
 }
 
+// The generated ships, when they arrived (see BlasterSpace.genKit): the freighter with its cargo pods for the freighters,
+// the blade-shaped cruiser for the cruisers and, smaller, the fighters' wings of three, the round tug for the drones and
+// the shuttles. The tankers (three spheres on a truss), the hulks and the whale keep their built-in designs.
+const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
+const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2"];
 const SPACE_TYPES = { // how many of each at most, where its engines are (behind its middle), its trail's colour and width, how big it is drawn
   freighter: [6, 14.6, [2.4, 1.0, 0.35], 2.6, 1.4], tanker: [5, 16.8, [0.45, 1.2, 2.4], 3.4, 1.3], cruiser: [2, 62, [0.5, 1.3, 2.6], 15, 1], fighter: [22, 2.1, [2.4, 0.7, 1.2], 0.55, 1.8],
   drone: [8, 1.0, [0.4, 1.3, 2.2], 0.4, 1.7], shuttle: [8, 4.4, [2.4, 1.4, 0.5], 1.5, 1.5], hulk: [2, 0, null, 0, 1],
@@ -153,11 +158,19 @@ class SpaceTraffic {
     this.types = {};
     let total = 0;
     for (const name in SPACE_TYPES) {
-      const [cap, rear, col, tw, size] = SPACE_TYPES[name], mesh = spaceInstanced(geos[name], space.hull, cap);
+      // (a kind drawn with a generated model is drawn as long as its built-in design, nose to tail: gs)
+      const [cap, rear, col, tw, size] = SPACE_TYPES[name], kit = SPACE_GEN[name] ? space.genKit(SPACE_GEN[name]) : null;
+      let mesh, gs = 1;
+      if (kit) {
+        geos[name].computeBoundingBox();
+        gs = geos[name].boundingBox.max.z - geos[name].boundingBox.min.z;
+        mesh = new THREE.InstancedMesh(kit.geo, kit.mat, cap);
+        mesh.frustumCulled = false;
+      } else mesh = spaceInstanced(geos[name], space.hull, cap);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < cap; i++) mesh.setMatrixAt(i, zero);
       g.scene.add(mesh);
-      this.types[name] = { mesh, cap, rear, col, tw, size, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
+      this.types[name] = { mesh, cap, rear, col, tw, size, gs, free: Array.from({ length: cap }, (_, i) => cap - 1 - i), base: total };
       total += cap;
     }
     // one streak of engine light per ship
@@ -246,7 +259,7 @@ class SpaceTraffic {
         q.setFromUnitVectors(this._fwd, s.head).multiply(this._r.setFromAxisAngle(this._z, roll));
       }
       const k = s.s * smoothstep(0, 0.7, s.t) * (s.life - s.t < 0.5 ? Math.max(0, (s.life - s.t) / 0.5) : 1);
-      s.T.mesh.setMatrixAt(s.slot, m.compose(p, q, this._s.setScalar(k)));
+      s.T.mesh.setMatrixAt(s.slot, m.compose(p, q, this._s.setScalar(k * s.T.gs)));
       dirty[s.type] = 1;
       hi[s.type] = Math.max(hi[s.type] || 0, s.slot + 1);
       if (s.T.col) {

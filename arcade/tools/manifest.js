@@ -10,8 +10,8 @@ const fs = require("fs"), path = require("path");
 const ARCADE = path.join(__dirname, ".."), A = path.join(ARCADE, "assets");
 // What each screen needs. Entries whose files are not there are left out, so a screen never waits for nothing.
 const SETS = {
-  blaster: ["model:starfighter", "model:demon", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster"],
-  racer: ["model:warrig", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer"],
+  blaster: ["model:starfighter", "model:demon", "model:prop-ship-a", "model:prop-ship-b", "model:prop-ship-c", "model:prop-rock", "model:prop-rock2", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster"],
+  racer: ["model:warrig", "model:prop-car", "model:prop-van", "model:prop-bus", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer"],
   boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss"],
   // The arcade hall: one cabinet model for all six games, their toppers, the trophy case's cup, medal and coins, one
   // hall panorama for its reflections and light (never shown), the boss portraits for its posters. (Its sound comes

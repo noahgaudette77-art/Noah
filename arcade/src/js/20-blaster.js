@@ -140,11 +140,12 @@ class BlasterGame extends QuizGame {
     this.fx = 3; this.fy = 1.6; this.ts = 1; this.shipY = -2.2; this.shipScale = 1;
     // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
     // disk has none): the three skies, the starfighter, the demon. Whatever is missing is drawn with what is built in.
-    this.gen = { skies: {}, fighter: null, demon: null };
+    this.gen = { skies: {}, fighter: null, demon: null, props: {} };
     if (this.has3D && GFX.ok) {
       for (const n of ["blaster-deep-1", "blaster-deep-4", "blaster-deep-5"]) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
       this.gen.fighter = Assets.model("starfighter");
       this.gen.demon = Assets.model("demon");
+      for (const n of SPACE_GEN_PROPS) { const m = Assets.model(n); if (m) this.gen.props[n] = m; } // (passing ships and drifting rocks: see BlasterSpace.genKit)
     }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-blaster">
@@ -955,7 +956,7 @@ class BlasterGame extends QuizGame {
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
     }
-    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); }
+    if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); } // (the space's dispose lets the passing ships' and rocks' maps go)
     if (this.pano) this.pano.dispose();
     super.dispose();
   }

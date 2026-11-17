@@ -113,3 +113,30 @@ function tuneModel(model, o = {}) {
   });
   return [...seen];
 }
+// A loaded one-mesh model as a geometry to be drawn many times over by an InstancedMesh (Nest Egg Run's traffic, Risk
+// Blaster's passing ships and drifting rocks): its mesh's packing undone (positions, normals and uvs in plain floats,
+// in the model's own frame), then moved by m (turned and scaled into the game's units). One geometry and the model's
+// own material serve every copy: nothing is parsed or textured twice. aRest is the position itself (what blasterSkin
+// reads to place light on the shape). Returns { geo, mat, box } or null.
+function modelGeometry(model, m) {
+  let mesh = null;
+  model.scene.updateMatrixWorld(true);
+  model.scene.traverse((o) => { if (o.isMesh && !mesh) mesh = o; });
+  if (!mesh) return null;
+  const src = mesh.geometry, M = new THREE.Matrix4().multiplyMatrices(m || new THREE.Matrix4(), mesh.matrixWorld), N = new THREE.Matrix3().getNormalMatrix(M), v = new THREE.Vector3();
+  const unit = (a) => { const r = a.array; return !a.normalized ? 1 : r instanceof Int8Array ? 1 / 127 : r instanceof Uint8Array ? 1 / 255 : r instanceof Int16Array ? 1 / 32767 : r instanceof Uint16Array ? 1 / 65535 : 1; };
+  const P = src.attributes.position, NO = src.attributes.normal, UV = src.attributes.uv, n = P.count;
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+  let k = unit(P);
+  for (let i = 0; i < n; i++) { v.set(P.getX(i) * k, P.getY(i) * k, P.getZ(i) * k).applyMatrix4(M); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; }
+  if (NO) { k = unit(NO); for (let i = 0; i < n; i++) { v.set(NO.getX(i) * k, NO.getY(i) * k, NO.getZ(i) * k).applyMatrix3(N).normalize(); nor[i * 3] = v.x; nor[i * 3 + 1] = v.y; nor[i * 3 + 2] = v.z; } }
+  if (UV) { k = unit(UV); for (let i = 0; i < n; i++) { uv[i * 2] = UV.getX(i) * k; uv[i * 2 + 1] = UV.getY(i) * k; } }
+  const geo = new THREE.BufferGeometry(), at = new THREE.BufferAttribute(pos, 3);
+  geo.setAttribute("position", at);
+  geo.setAttribute("aRest", at);
+  if (NO) geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); else geo.computeVertexNormals();
+  if (UV) geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  if (src.index) { const I = src.index; geo.setIndex(new THREE.BufferAttribute(n > 65535 ? Uint32Array.from({ length: I.count }, (_, i) => I.getX(i)) : Uint16Array.from({ length: I.count }, (_, i) => I.getX(i)), 1)); }
+  geo.computeBoundingBox(); geo.computeBoundingSphere();
+  return { geo, mat: Array.isArray(mesh.material) ? mesh.material[0] : mesh.material, box: geo.boundingBox.clone() };
+}

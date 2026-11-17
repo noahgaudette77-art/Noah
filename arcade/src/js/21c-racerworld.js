@@ -243,6 +243,78 @@ function racerTrafficMaterial(P, sky) {
   });
 }
 const RACER_FLEET = { sedan: 14, truck: 6, bus: 4, bike: 8, hover: 14, police: 1, rival: 1 };
+// ---- the generated vehicles, when they arrived with the race's set (RacerGame takes them from Assets with its skies):
+// the car for the sedans, the van for the trucks, the bus for the buses, each one model drawn as often as its kind has
+// places (one geometry, one material, its maps shared). As made they are gloss black with neon strips and no maker's
+// face; here each copy takes a lacquer in the paint the game picked for it, its strips in one of the road's three neons
+// (the colour its seed gives its sill line), and lamps that work: its own nose and tail strips burn warm white and red,
+// a red bar across its tail brightens when it brakes, amber corners blink, a line of neon runs along each sill. They
+// mirror the sky and take its rims of light as the rig does. Without them (from disk, or a file that failed, or no
+// panorama to light them) every kind is drawn as before. [model, length in game units]
+const RACER_GEN_FLEET = { sedan: ["prop-car", 4.5], truck: ["prop-van", 6.0], bus: ["prop-bus", 8.4] };
+// Where its lamps go, as shares of the model's own height: tail bar, nose lamps, sill line; and its extra lamps.
+const RACER_GEN_TRIM = { sedan: { tail: 0.47, head: 0.4, sill: 0.2 }, truck: { tail: 0.3, head: 0.3, sill: 0.17, roof: 1 }, bus: { tail: 0.28, head: 0.26, sill: 0.15, sign: 1 } };
+// Lamps for a generated vehicle (drawn with racerTrafficMaterial's light channels, over the model): each one placed on
+// the model's own surface, found from its vertices (the rear face at the tail bar's height, and so on).
+function racerGenTrim(type, geo) {
+  const T = RACER_GEN_TRIM[type], P = geo.attributes.position.array, bb = geo.boundingBox, H = bb.max.y - bb.min.y, len = bb.max.z - bb.min.z;
+  const b = new RacerBatch(["aCh", "aPaint"]), box = new THREE.BoxGeometry(1, 1, 1);
+  const L = (ch, w, h, d, x, y, z, color, k) => b.add(box, racerM(x, y, z, w, h, d), color, k, { aCh: ch, aPaint: 0 });
+  // the farthest the shape reaches toward an end (sgn -1: the nose, +1: the tail) in a band of height, and how wide it is there
+  const face = (sgn, y, band) => {
+    let z = sgn > 0 ? -1e9 : 1e9, w = 0;
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band) { const zz = P[i + 2]; if (sgn > 0 ? zz > z : zz < z) z = zz; }
+    for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i + 2] - z) < len * 0.06) w = Math.max(w, Math.abs(P[i]));
+    return { z, w };
+  };
+  const side = (y, band) => { let w = 0; for (let i = 0; i < P.length; i += 3) if (Math.abs(P[i + 1] - y) < band && Math.abs(P[i + 2]) < len * 0.3) w = Math.max(w, Math.abs(P[i])); return w; };
+  const yt = bb.min.y + H * T.tail, yh = bb.min.y + H * T.head, ys = bb.min.y + H * T.sill;
+  const rear = face(1, yt, H * 0.06), nose = face(-1, yh, H * 0.06), sw = side(ys, H * 0.05);
+  L(2, rear.w * 1.5, 0.075, 0.05, 0, yt, rear.z + 0.03, 0xff1030, 2.4); // the tail bar (brightens under braking)
+  [-1, 1].forEach((s) => {
+    L(4, 0.16, 0.12, 0.05, s * (rear.w * 0.82), yt + 0.12, rear.z + 0.02, 0xffa53d, 3); // indicators, tail corners
+    L(4, 0.16, 0.1, 0.05, s * (nose.w * 0.86), yh + 0.1, nose.z - 0.02, 0xffa53d, 3); // and nose corners
+    L(1, nose.w * 0.42, 0.07, 0.05, s * nose.w * 0.4, yh, nose.z - 0.03, 0xfff2d8, 4.5); // the nose lamps
+    L(10, 0.03, 0.05, len * 0.62, s * (sw + 0.025), ys, 0, 0xffffff, 1); // a line of neon along the sill
+  });
+  if (T.roof) { const top = face(-1, bb.max.y - H * 0.06, H * 0.05); [-0.6, -0.2, 0.2, 0.6].forEach((x) => L(8, 0.14, 0.06, 0.05, x * top.w, bb.max.y - H * 0.05, top.z - 0.02, 0xffa53d, 2.6)); }
+  if (T.sign) { const top = face(-1, bb.max.y - H * 0.12, H * 0.05); L(8, top.w * 1.3, 0.22, 0.05, 0, bb.max.y - H * 0.12, top.z - 0.03, 0xffb000, 2.0); } // the bus's destination sign
+  box.dispose();
+  return b.build();
+}
+// The material of a generated vehicle: the model's own (its maps), taught blasterSkin's rims and lit by the sky, with a
+// lacquer of the copy's own paint (aTint) laid over its dark unsaturated body only (glass, chrome and neon keep theirs),
+// and its strips recoloured: the copy's neon down its flanks, warm white at its nose and red at its tail, each as bright
+// as the game's lamps for that copy say (aL: nose lamps, tail lamps, -, seed).
+function racerGenSkin(base, U, half) {
+  U.uTfDim = U.uTfDim || { value: 1 };
+  const m = blasterSkin(base, U, {
+    key: "traffic",
+    pars: "varying vec3 vTfTint; varying vec4 vTfL; uniform float uTfDim;",
+    cut: "float tfPaint = 0.0;",
+    albedo: `{ float tfL = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)), tfS = max(max(diffuseColor.r, diffuseColor.g), diffuseColor.b) - min(min(diffuseColor.r, diffuseColor.g), diffuseColor.b);
+        tfPaint = (1.0 - smoothstep(0.06, 0.22, tfL)) * (1.0 - smoothstep(0.03, 0.1, tfS));
+        diffuseColor.rgb = mix(diffuseColor.rgb, pow(vTfTint, vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }`, // (a deep candy lacquer over the black: what it mirrors takes its colour)
+    emissive: `{
+        float tfE = max(max(totalEmissiveRadiance.r, totalEmissiveRadiance.g), totalEmissiveRadiance.b);
+        vec3 tfN = vTfL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (vTfL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
+        float tfZ = vRest.z / ${half.toFixed(3)}, tfHead = smoothstep(-0.74, -0.88, tfZ), tfTail = smoothstep(0.74, 0.88, tfZ);
+        vec3 tfC = tfN * tfE;
+        tfC = mix(tfC, vec3(1.0, 0.84, 0.62) * tfE * (0.45 + 0.8 * vTfL.x), tfHead);
+        tfC = mix(tfC, vec3(1.0, 0.06, 0.12) * tfE * (0.4 + 0.8 * vTfL.y), tfTail);
+        totalEmissiveRadiance = tfC * uTfDim;
+      }`,
+  });
+  const skin = m.onBeforeCompile;
+  m.onBeforeCompile = (sh) => {
+    skin(sh);
+    sh.uniforms.uTfDim = U.uTfDim;
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTint; attribute vec4 aL; varying vec3 vTfTint; varying vec4 vTfL;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTfTint = aTint; vTfL = aL;");
+  };
+  m.customProgramCacheKey = () => "traffic-skin-" + half.toFixed(3);
+  m.needsUpdate = true;
+  return m;
+}
 
 // A cone of light in the air (searchlights, tractor beams, lasers): bright at its
 // source, fading along its length and toward its edges.
@@ -311,19 +383,31 @@ class RacerWorld {
     this.trafficMat = racerTrafficMaterial(g.props.material.uniforms, g.pano);
     this.fleet = {};
     this.cars = [];
+    this.genMats = [];
+    const gen = g.pano && g.gen && g.gen.traffic ? g.gen.traffic : {};
     for (const type in RACER_FLEET) {
-      const n = RACER_FLEET[type], geo = racerVehicleGeo(type, !!g.pano);
+      const n = RACER_FLEET[type], kit = gen[type] ? this.genKind(type, gen[type]) : null, geo = kit ? kit.geo : racerVehicleGeo(type, !!g.pano);
       const tint = new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(1), 3), lights = new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(1), 4);
       tint.setUsage(THREE.DynamicDrawUsage); lights.setUsage(THREE.DynamicDrawUsage);
       geo.setAttribute("aTint", tint);
       geo.setAttribute("aL", lights);
-      const mesh = new THREE.InstancedMesh(geo, this.trafficMat, n);
+      const mesh = new THREE.InstancedMesh(geo, kit ? kit.mat : this.trafficMat, n);
       mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, zero); this.cars.push({ type, i, on: false, mesh, tint, lights }); }
       g.scene.add(mesh);
       this.fleet[type] = mesh;
+      if (kit) {
+        // its lamps: a second draw of the same copies (the same places, paint and lamp states: the buffers are shared)
+        kit.trim.setAttribute("aTint", tint);
+        kit.trim.setAttribute("aL", lights);
+        const lamps = new THREE.InstancedMesh(kit.trim, this.trafficMat, n);
+        lamps.instanceMatrix = mesh.instanceMatrix;
+        Object.defineProperty(lamps, "count", { get: () => mesh.count, set: () => {} });
+        lamps.frustumCulled = false;
+        g.scene.add(lamps);
+      }
     }
     this.spawnT = { R: 0.5, L: 1.2, H: 0.8 };
     // a soft shadow under each one (one instanced draw for the lot)
@@ -335,6 +419,25 @@ class RacerWorld {
     this.shadows.layers.set(1);
     this.shadows.renderOrder = 1;
     g.scene.add(this.shadows);
+  }
+  // One generated kind made ready: its model turned to drive down the road (its nose is +z; the road's way is -z),
+  // scaled to its length, set on its wheels; its material; its lamps. (Shared by every copy of the kind.)
+  genKind(type, model) {
+    const [, len] = RACER_GEN_FLEET[type];
+    tuneModel(model, { glow: 2.0, metal: 1.0, rough: 1.0, normal: 0.85 });
+    const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
+    if (!made) return null;
+    const geo = made.geo, bb = made.box, s = len / Math.max(1e-3, bb.max.z - bb.min.z);
+    geo.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
+    geo.scale(s, s, s);
+    geo.computeBoundingBox(); geo.computeBoundingSphere();
+    const U = (this.genU = this.genU || Object.assign(blasterSkinUniforms(), { uTfDim: { value: 1 } }));
+    U.uSkAA.value = 1.3; U.uSkSpec.value = 0.75;
+    const mat = racerGenSkin(made.mat, U, len / 2);
+    this.g.pano.mirror(mat, 1.0);
+    this.genMats.push(mat);
+    model.scene.traverse((o) => { if (o.isMesh && o.geometry !== geo) o.geometry.dispose(); }); // (its packed form is not drawn)
+    return { geo, mat, trim: racerGenTrim(type, geo) };
   }
   free(type) { return this.cars.find((c) => !c.on && c.type === type); }
   // lane: "R" the right service lane (our way), "L" the left one (oncoming), "H" a hover lane, "M" the main road (events)
@@ -436,6 +539,13 @@ class RacerWorld {
     u.uDim.value = 1 - 0.25 * this.calmK;
     if (sky) u.uSkyC.value.copy(sky.horizon).lerp(sky.light, 0.4);
     if (g.pano && u.tSkyA) g.pano.feed(u);
+    // the generated vehicles take the sky's rims, its kicker and its fill, as the rig does (a little less: they are not the subject)
+    if (this.genU && g.pano) {
+      const U = this.genU, P = g.pano;
+      U.uTfDim.value = u.uDim.value;
+      U.uSkRimA.value.copy(P.L.rimL).multiplyScalar(0.4 * P.N.rimL); U.uSkRimB.value.copy(P.L.rimR).multiplyScalar(0.4 * P.N.rimR);
+      U.uSkKick.value.copy(P.L.kick).multiplyScalar(0.55 * P.N.kick); U.uSkFill.value.copy(P.L.fill).multiplyScalar(0.3 * P.N.fill);
+    }
   }
 
   // ===== biomes ==================================================================

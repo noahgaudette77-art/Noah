@@ -814,10 +814,11 @@ class RacerGame extends QuizGame {
     this.nextMilestone = 0;
     // The generated assets, when the page could fetch them before the game was built (see Assets; a page opened from
     // disk has none): the five skies and the war rig. Whatever is missing is drawn with what is built in.
-    this.gen = { skies: {}, rig: null };
+    this.gen = { skies: {}, rig: null, traffic: {} };
     if (this.has3D && GFX.ok) {
       for (const n of RACER_PANOS) { const sky = Assets.sky(n); if (sky && sky.map) this.gen.skies[n] = sky; }
       this.gen.rig = Assets.model("warrig");
+      for (const k in RACER_GEN_FLEET) { const m = Assets.model(RACER_GEN_FLEET[k][0]); if (m) this.gen.traffic[k] = m; } // (the traffic: see RacerWorld.genKind)
     }
     if (this.has3D) this.build3D();
     this.mountUI(`<section class="screen scr-game scr-racer">
@@ -1901,6 +1902,7 @@ class RacerGame extends QuizGame {
       if (this.owned) this.owned.forEach((r) => r.dispose());
       if (this.envKit) this.envKit.dispose();
       if (this.rigKit) this.rigKit.dispose();
+      if (this.world && this.world.genMats.length) blasterDropMaps(this.world.genMats); // (the traffic models' maps; their colour maps go in the scene's sweep)
       if (this.pano) this.pano.dispose();
       this.env = null;
     }
