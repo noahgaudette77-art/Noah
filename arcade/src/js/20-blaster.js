@@ -181,7 +181,7 @@ class BlasterGame extends QuizGame {
 
   build3D() {
     const s = this.scene;
-    s.userData.post = { exposure: 1.03, bloom: 0.7, threshold: 1.1, saturation: 1.18, contrast: 1.16, vignette: 1.0, fringe: 0.2, sharpen: 0.3, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.28,
+    s.userData.post = { exposure: 1.03, bloom: 0.7, threshold: 1.1, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.0, fringe: 0.2, sharpen: 0.3, ao: 0.9, shadow: 0, mblur: 0.6, dirt: 0.28,
       dof: { focus: 18, near: 400, far: 70, max: 0.007, sky: 0, k: 0.8 } }; // (the lens holds the demon and the fighter in front of it; what drifts far behind goes soft; the sky itself stays sharp)
     this.env = makeEnvMap({
       top: 0x12052e, horizon: 0xff3ad4, bottom: 0x04010c, glow: 1.1,

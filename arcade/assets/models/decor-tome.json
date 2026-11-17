@@ -1,7 +1,7 @@
 {
  "name": "decor-tome",
- "triangles": 11999,
- "bytes": 252452,
+ "triangles": 9999,
+ "bytes": 237300,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.2355
    ],
-   "tris": 11999
+   "tris": 9999
   }
  },
  "anchors": {},

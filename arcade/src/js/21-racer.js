@@ -927,7 +927,7 @@ class RacerGame extends QuizGame {
     wg.add(new THREE.Mesh(this.badgeBackGeo, this.badgeBackMat), new THREE.Mesh(this.barKit[4].frame, this.gateFrameMat), new THREE.Mesh(this.barKit[4].glow, this.gateGlowMat));
     wg.position.z = -60;
     this.warmExtra = [wg];
-    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: 1.16, contrast: 1.15, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
+    this.post = { exposure: 1.1, bloom: 0.84, threshold: 1.14, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1, rays: { pos: this.sun.position, strength: 0.8, radius: 0.4 }, ao: 0.9, shadow: 0.6, shadowLen: 0.1, sun: [-0.3, 1, 0.4], mblur: 1, dirt: 0.5,
       dof: { focus: 9, near: 400, far: 300, max: 0.0028, sky: 0, k: 0.6 } }; // (the lens holds the car and the road ahead; the far end of the avenue goes a little soft)
     s.userData.post = this.post;
     if (this.rigKit) { // the war rig: the scene is drawn at twice the screen's size and brought down (lacquer edges, rims and strips of light are smooth lines); the road is told its footprint

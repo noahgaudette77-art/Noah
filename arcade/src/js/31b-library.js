@@ -138,7 +138,7 @@ class LibraryScene extends Scene3D {
     this.readK = 0; // 0 in the list's window, 1 behind a chapter's banner
     if (!this.has3D) return;
     const s = this.scene, L = 84, Z0 = 10, zc = Z0 - L / 2, LAMP_X = 4.0, LAMP_Y = 12.5, ROSE_Y = 11.5;
-    s.userData.post = { exposure: 1.18, bloom: 0.62, threshold: 1.1, saturation: 1.2, contrast: 1.15, vignette: 0.9, // (Phase 5: the frame of dark the other screens have)
+    s.userData.post = { exposure: 1.18, bloom: 0.62, threshold: 1.1, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 0.9, // (Phase 5: the frame of dark the other screens have)
       ao: 1, shadow: 0.8, shadowLen: 0.12, sun: [0.2, 1, 0.5], dirt: 0.15, sharpen: 0.5, fringe: 0.15,
       // the rose window's light lies on the floor below it; the lens holds the whole nave and lets only what hangs by it go soft
       rays: { pos: new THREE.Vector3(0, ROSE_Y, Z0 - L + 1), strength: 0.16, radius: 0.45 },

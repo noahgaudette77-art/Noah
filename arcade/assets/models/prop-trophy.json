@@ -1,7 +1,7 @@
 {
  "name": "prop-trophy",
- "triangles": 12000,
- "bytes": 216240,
+ "triangles": 10000,
+ "bytes": 202512,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.2411
    ],
-   "tris": 12000
+   "tris": 10000
   }
  },
  "anchors": {},

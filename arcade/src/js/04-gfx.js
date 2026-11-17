@@ -458,6 +458,10 @@ const VFX = {
 // The standard refresh rate nearest a frame interval (seconds).
 const snapHz = (dt) => [240, 165, 144, 120, 90, 75, 60, 50, 30].reduce((b, r) => (Math.abs(1 / r - dt) < Math.abs(1 / b - dt) ? r : b), 60);
 
+// The game's one colour grade (the owner, 2026-11-17: one shared look): every screen's picture is finished with the
+// same saturation and contrast. What still differs from screen to screen is only how bright a room is lit (exposure)
+// and how much its lights bloom: a moonlit exam hall is not a sunlit avenue.
+const GRADE = { saturation: 1.16, contrast: 1.15 };
 const Scenes = {
   cur: null,
   set(s) {

@@ -1,7 +1,7 @@
 {
  "name": "prop-podium",
- "triangles": 14000,
- "bytes": 259308,
+ "triangles": 10000,
+ "bytes": 230936,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.3408
    ],
-   "tris": 14000
+   "tris": 10000
   }
  },
  "anchors": {},

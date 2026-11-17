@@ -1,7 +1,7 @@
 {
  "name": "prop-tome",
- "triangles": 11999,
- "bytes": 232544,
+ "triangles": 9999,
+ "bytes": 218040,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.7058
    ],
-   "tris": 11999
+   "tris": 9999
   }
  },
  "anchors": {},

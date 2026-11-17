@@ -1,7 +1,7 @@
 {
  "name": "decor-deck",
- "triangles": 11997,
- "bytes": 292932,
+ "triangles": 9999,
+ "bytes": 277664,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.5056
    ],
-   "tris": 11997
+   "tris": 9999
   }
  },
  "anchors": {},

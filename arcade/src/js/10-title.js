@@ -34,7 +34,7 @@ class TitleScene extends Scene3D {
     s.userData.mirrors = [this.mirror];
     this.shooting = makeShootingStar();
     s.add(this.shooting);
-    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: 1.12, saturation: 1.18, fringe: 0.25, sharpen: 0.1, // (little sharpening: it turned the far windows into crosses)
+    s.userData.post = { exposure: 1.12, bloom: 0.85, threshold: 1.12, contrast: GRADE.contrast, saturation: GRADE.saturation, fringe: 0.25, sharpen: 0.1, // (little sharpening: it turned the far windows into crosses)
       rays: { pos: this.sun.position, strength: 0.6, radius: 0.42 }, ao: 0.8, aoRadius: 0.035, shadow: 0, dirt: 0.6, mblur: 1 };
     this.camBase.set(0, 3.4, 12);
     this.lookAt.set(0, 9, -120);

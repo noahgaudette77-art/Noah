@@ -1,7 +1,7 @@
 {
  "name": "prop-deck",
- "triangles": 11999,
- "bytes": 299912,
+ "triangles": 9999,
+ "bytes": 284156,
  "tex": 512,
  "parts": {
   "body": {
@@ -20,7 +20,7 @@
     1,
     0.6312
    ],
-   "tris": 11999
+   "tris": 9999
   }
  },
  "anchors": {},

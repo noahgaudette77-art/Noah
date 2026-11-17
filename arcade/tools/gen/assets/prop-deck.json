@@ -13,7 +13,7 @@
  "surface": {
   "roughMin": 0.12
  },
- "tris": 12000,
+ "tris": 10000,
  "emissive": {
   "hues": [
    [
@@ -45,5 +45,6 @@
    "glow": 0.35,
    "rough": 0.3
   }
- ]
+ ],
+ "bar": "the game's one quality bar (2026-11-17): a prop or figure seen small: up to about 10K triangles, 512 px maps"
 }
