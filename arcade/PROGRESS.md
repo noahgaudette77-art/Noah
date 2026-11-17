@@ -2562,7 +2562,7 @@ Before Phase 3 the owner gets a short projected spend for fal and Tripo, per bos
 | 2 | Nest Egg Run: sunset sky, war rig (one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights: checked in flat top and side views before use), vehicle animation, crash and near-miss effects, engine and crash sound, music, one review | done (see "Phase 2" below) |
 | 3 | Boss Rush: each of the 12 bosses in order of how weak it looks now (model, entrance, tells, hit reactions, death), darker sky, boss sounds and music, commit after each, one review | done (see "Phase 3" below) |
 | 4 | Hub, Title and the other modes: skies, ambient and menu sound, announcer; real 3D models and props for the hub, the title, the menus, Memory Bank, Final Exam and Strategy Guide (a cabinet or portal for each game, trophies and medals, a vault or card deck, an exam gate or podium, a guide book or terminal, small icon models for buttons and rewards): small, cheap Tripo models, one attempt each (regenerated only if clearly broken), shared across screens, light enough for a phone (Tripo was topped up on 2026-11-16: it is also used to remake any boss or asset a review finds weak, rather than falling back to Rodin or procedural shapes) | done (see "Phase 4" below) |
-| 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | in progress |
+| 5 | Cohesion pass: lighting, grade, bloom and sound levels as one game; full regression; load time and file size | done (see "Phase 5" below) |
 | 6 | Final independent reviews, one reviewer at a time, on new captures; fixes that matter; final commit, push, record and one final report to the owner, sent only when everything is committed and pushed: what was built per game and screen (visuals, animation, combat effects, sound), the best final capture of each and one short combat or boss-fight sequence, the final review and known flaws (and any lookalike left), both full regressions, the sequence test and console errors with numbers, spend and start/end balances per provider, token usage by model (measured from the session logs, estimates marked; exact figures under Settings > Usage), what is left and the one thing to improve next, the PR link, and that the study logic is unchanged | |
 
 Work done before this order arrived that belongs to later phases, kept as it is and not taken further until its
@@ -2841,3 +2841,50 @@ list in its README.
 - The moon shows only when the exam's camera draws back at the end; the library's panorama barely shows.
 - The Memory Bank coin is small in flight.
 - Nobody has heard the sound; the reduced-effects path was not captured.
+
+## Phase 5: the cohesion pass (done)
+
+**What was done** (shared edits in `02-sound.js`, `03b-assets.js`, `04-gfx.js`, `08-fx.js`, `08d-panosky.js`,
+`12-select.js`, `19-quizgame.js`; the games' own files for the traffic, the ships and the look; from disk every screen
+is as it was).
+
+1. The last generated models put to use: Nest Egg Run's traffic is the generated car, van and bus (one model drawn
+   many times, each copy its own paint and neon, working lamps, the rig's lighting); Risk Blaster's passing freighters,
+   cruisers, fighters and drones are the three generated ships, its near asteroids the two generated rocks.
+2. One look: every screen measured against Risk Blaster; the grade brought into line on the four that were out (the
+   hall, Memory Bank, Final Exam, Strategy Guide).
+3. One sound, by measurement: a mix table (`Sound.MIX`); all nine music tracks within 0.1 dB of each other (-21.5
+   LUFS), the effects 6 to 7 dB over the music, the announcer about 12 dB over it, nothing clipping at the worst moment
+   (-1.5 dBFS out of the limiter). The cut-off "Boss Rush!" call-out was retaken.
+4. For phones: the hall's set cut from 6.9 to 3.6 MB (its toppers and props at 512 px maps, its light-only panoramas at
+   1024 x 512); the traffic, ships and rocks at 512 px maps; a game's files start downloading at its stage select; the
+   hall lets its textures go while a game runs (182 MB to 7.7 MB); Boss Rush's boss no longer leaves 60 MB on the
+   graphics chip at every visit; on phones every texture is capped at 2048 px (Risk Blaster 435 to 235 MB, Boss Rush
+   204 to 116 MB; desktop unchanged). Every screen's download is listed in `docs/combat-pass/cohesion/README.md`.
+5. The reduced-effects path captured on every game and the hall: finished and readable, at most two flashes a second.
+6. From earlier "still weak" lists: the demon's tail no longer crosses the fighter's canopy; the tunnel's way out shows
+   the road and the next sky.
+
+**The one independent review** (`docs/combat-pass/cohesion/review.md`): detail 3.5, lighting 3.5, materials 4,
+depth 3.5, motion 3.5, cohesion 3.5, legibility 4; no lookalikes; seven major defects, all dealt with in one round:
+
+- Open space was muddy: ships and rocks now lit by the region's rims and a cool fill, the rocks' crystals glowing,
+  their stone and size varied, the belt's sky brighter (still a dark scene, as space is, but the ships read).
+- The tunnel exit flashed in one frame: the glare now builds over 0.7 s and clears over 0.9 s (largest step between
+  frames 24 of 255, where it was 60), and the road, rails and lamps show through the mouth.
+- The answer badges hid the traffic: a car that comes under a badge while a question is up slips away (look only).
+- The passing fighters read as enemy fire: shorter cyan-white trails and running lights.
+- The city's buildings showed static: a window-grid texture made in code, lit at night.
+- Boss Rush's crowd was blockout: backlit cut-out figures that still cheer.
+- Minor ones: the Strategy Guide shows the 3D boss busts too, the examiner's chest is clean, the cars' tail bars end
+  in amber.
+
+**Tests on the final build**: regression from disk IDENTICAL (153 answers in 8 games), regression over HTTP with
+every asset loaded IDENTICAL, sequence test 13 of 13, no console errors.
+
+**Still weak, plainly**
+
+- Open space is still mostly black between the lit ships (mean brightness about 16 of 255 as a run begins).
+- Risk Blaster is the heaviest screen: a 15 MB download, 235 MB of textures on a phone.
+- The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback assets for opening it from disk.
+- Nobody has heard the mix: it is measured, not heard.
