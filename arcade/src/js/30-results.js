@@ -104,7 +104,7 @@ function renderResults(o, rank) {
         <div class="res-hero" aria-hidden="true">${hero}</div>
         <h1>${esc(o.title)}</h1>
         ${o.stars !== undefined ? `<div class="res-stars">${starsHTML(o.stars)}</div>` : ""}
-        ${rw.length ? `<div class="res-rewards" aria-hidden="true">${rw.map((r) => `<span class="rw ${r.cls || ""}" style="--d:${r.at.toFixed(2)}s">${genIcon(r.kind)}</span>`).join("")}</div>` : ""}
+        ${rw.length ? `<div class="res-rewards" aria-hidden="true">${rw.map((r) => `<span class="rw ${r.cls || ""}">${genIcon(r.kind)}</span>`).join("")}</div>` : ""}
         <div class="big">${esc(o.headline)}</div>
         ${o.sub ? `<p>${esc(o.sub)}</p>` : ""}
       </div>
@@ -154,7 +154,8 @@ function renderResults(o, rank) {
       if (bust) drawBossPortrait(bust, BOSSES[heroBoss].color, heroBoss);
       if (genIconReady()) { // the reward moment's sounds, each on the beat its picture lands (see rw above), and the announcer
         for (let k = 0; k < (o.stars || 0); k++) setTimeout(() => { if (el.isConnected) Sound.sfx("reward", (k - 1) * 0.4); }, 120 + k * 140);
-        rw.forEach((r, k) => setTimeout(() => { if (el.isConnected) Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000 + 180));
+        const items = $$(".res-rewards .rw", el); // (each lands on its own beat: a timer, so it keeps the page's clock)
+        rw.forEach((r, k) => setTimeout(() => { if (!el.isConnected) return; if (items[k]) items[k].classList.add("in"); Sound.sfx(r.sfx, ((k % 5) - 2) * 0.15, { vol: r.kind === "coin" ? 0.6 : 1 }); }, r.at * 1000));
         const line = o.game === "exam" ? (o.score >= 60 ? "EXAM PASSED" : "NOT YET") : o.game === "memory" ? "DECK CLEARED" : rank === 0 && o.game !== "blaster" ? "NEW HIGH SCORE" : "";
         if (line) setTimeout(() => { if (el.isConnected) Sound.say(line); }, 600);
       }

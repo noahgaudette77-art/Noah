@@ -28,6 +28,21 @@ function examGen(game) {
     podium.scene.rotation.y = P.ry;
     s.add(podium.scene);
     G.podium = podium;
+    G.sink = 0;
   }
   return G;
+}
+// Each frame: the sky stays round the lens, and when the ending begins (the examiner falls, or makes its last stand)
+// the lectern sinks into the dais, so the camera that draws back for the ending sees the examiner, not the lectern.
+function examGenUpdate(game, dt) {
+  const G = game.gen;
+  if (!G) return;
+  if (G.dome) G.dome.userData.follow(game.camera);
+  if (G.podium) {
+    const B = game.boss, end = !!(B && (B.mode === "die" || B.mode === "rage"));
+    G.sink = clamp(G.sink + (end ? dt / 0.8 : -dt / 0.8), 0, 1);
+    const k = G.sink * G.sink * (3 - 2 * G.sink);
+    G.podium.scene.position.y = BOSS_DAIS - k * EXAM_GEN.PODIUM.s * 1.05;
+    G.podium.scene.visible = k < 0.999;
+  }
 }

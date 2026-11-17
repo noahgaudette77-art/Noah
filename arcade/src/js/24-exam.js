@@ -668,7 +668,7 @@ class ExamGame extends QuizGame {
     }
     if (!this.has3D) return;
     const t = this.t;
-    if (this.gen && this.gen.dome) this.gen.dome.userData.follow(this.camera);
+    examGenUpdate(this, dt); // (served: the moonlit sky round the lens; the lectern sinks away for the ending)
     this.dist += (this.distT - this.dist) * Math.min(1, dt * 2.5);
     const B = this.boss;
     if (B) {
