@@ -102,6 +102,8 @@ class PropFX {
     }
   }
   has(kind) { return !!this.k[kind]; }
+  // each kind's material handed to fn (a scene that lights its models with its own sky's reflection, not the scene's)
+  mirror(fn) { for (const kind in this.k) fn(this.k[kind].mesh.material); }
   // ---- one at a time: the shield, the heart (shatter) and the bolt (spin) ---------------------------------------
   _one(kind, pos, o, type) {
     const e = this.k[kind];

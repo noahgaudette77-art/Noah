@@ -12,11 +12,15 @@ number; BOSS INCOMING once a run).
 | Item | State |
 |---|---|
 | 4. Music variants (Sound.take, play(name, again), Assets.wants) | done, committed; checked served (alternates, one file per visit) |
-| Shared 3D props kit (`08e-propfx.js`), QuizGame.props/propTier, Hype hook | done, committed |
+| Shared 3D props kit (`08e-propfx.js`), QuizGame.iconFX/propTier, Hype hook | done, committed |
 | 1. Risk Blaster: laser_heavy, shell, FINAL WAVE, BOSS INCOMING | done, committed |
-| 1. Risk Blaster: shield, bolt, star props; allies; brood (`20m-blasterescort.js`) | done, committed; capture pending (timed out once on a busy machine) |
-| 2. Nest Egg Run: shield (insured), heart (crash), bolt (tier), stars (milestone, retirement) | code done |
-| 2. Nest Egg Run: rival-rig, rival-rig2 (rival event, taking turns), chaser (chase event, on the road) repainted violet/silver | code done |
-| 3. Boss Rush: heart (heart lost), stars + coins (death), bolt (tier) | code done |
-| 3. Boss Rush: the boss's own "game over" (Sound.sayAs; 1-4 adam, 5-8 brian, 9-11 and the Proctor charlie) in place of the announcer's | code done |
-| Captures, full tests | todo |
+| 1. Risk Blaster: shield, bolt, star props; allies; brood (`20m-blasterescort.js`) | done, committed; capture running |
+| 2. Nest Egg Run: shield (insured), heart (crash), bolt (tier), stars (milestone, retirement) | done, committed |
+| 2. Nest Egg Run: rival-rig, rival-rig2 (rival event, in turn), chaser (chase event, on the road), violet/silver repaint | done, committed |
+| 3. Boss Rush: heart (heart lost), stars + coins (death), bolt (tier) | done, committed |
+| 3. Boss Rush: the boss's own "game over" (Sound.sayAs; 1-4 adam, 5-8 brian, 9-11 and the Proctor charlie) | done, committed |
+| Regressions from disk (blaster, racer, boss) | IDENTICAL; served blaster IDENTICAL; served smoke test of all three clean |
+| Captures (blaster, racer, boss), full regression both ways, sequence | todo |
+
+Fixed on the way: the props field was first called `props`, which is Nest Egg Run's own roadside mesh: the racer then called
+`update` on a mesh every frame (an error a frame, from disk too) until it was renamed `iconFX` (commit 7c522a3).
