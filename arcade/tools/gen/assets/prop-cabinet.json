@@ -9,8 +9,8 @@
  },
  "origin": "ground",
  "tris": 24000,
- "tex": 1024,
- "texBase": 2048,
+ "tex": 512,
+ "texBase": 1024,
  "emissive": {
   "hues": [
    [
@@ -29,5 +29,6 @@
  },
  "surface": {
   "roughMin": 0.12
- }
+ },
+ "bar": "the bar for a mid-sized prop: 1024 px colour, 512 px other maps"
 }

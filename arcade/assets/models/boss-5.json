@@ -1,64 +1,64 @@
 {
  "name": "boss-5",
- "triangles": 99988,
- "bytes": 3189180,
- "tex": 2048,
+ "triangles": 52512,
+ "bytes": 1776284,
+ "tex": 1024,
  "bones": {
   "R_Forearm": {
-   "tris": 6691,
-   "caps": 20
+   "tris": 3345,
+   "caps": 17
   },
   "R_Hand": {
-   "tris": 4138,
+   "tris": 2886,
    "caps": 15
   },
   "R_Upperarm": {
-   "tris": 11570,
-   "caps": 30
+   "tris": 5784,
+   "caps": 28
   },
   "R_Foot": {
-   "tris": 1314,
-   "caps": 5
+   "tris": 754,
+   "caps": 4
   },
   "R_Calf": {
-   "tris": 7119,
-   "caps": 16
-  },
-  "R_Thigh": {
-   "tris": 3906,
-   "caps": 9
-  },
-  "Spine02": {
-   "tris": 27437,
-   "caps": 136
-  },
-  "Head": {
-   "tris": 2222,
+   "tris": 3559,
    "caps": 14
   },
+  "R_Thigh": {
+   "tris": 1984,
+   "caps": 8
+  },
+  "Spine02": {
+   "tris": 13719,
+   "caps": 139
+  },
+  "Head": {
+   "tris": 1918,
+   "caps": 15
+  },
   "L_Thigh": {
-   "tris": 4029,
-   "caps": 9
+   "tris": 2015,
+   "caps": 10
   },
   "L_Calf": {
-   "tris": 6582,
-   "caps": 11
+   "tris": 3292,
+   "caps": 12
   },
   "L_Foot": {
-   "tris": 1807,
-   "caps": 3
+   "tris": 903,
+   "caps": 4
   },
   "L_Upperarm": {
-   "tris": 11860,
-   "caps": 29
+   "tris": 5930,
+   "caps": 31
   },
   "L_Forearm": {
-   "tris": 6556,
-   "caps": 17
+   "tris": 3278,
+   "caps": 19
   },
   "L_Hand": {
-   "tris": 4757,
-   "caps": 12
+   "tris": 3145,
+   "caps": 11
   }
  },
  "clips": {

@@ -1,8 +1,8 @@
 {
  "name": "prop-cabinet",
  "triangles": 24000,
- "bytes": 593040,
- "tex": 1024,
+ "bytes": 355356,
+ "tex": 512,
  "parts": {
   "body": {
    "pivot": [

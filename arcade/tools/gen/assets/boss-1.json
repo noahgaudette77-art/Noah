@@ -11,9 +11,9 @@
   "axis": "y",
   "value": 1
  },
- "tris": 100000,
- "tex": 2048,
- "texBase": 4096,
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
  "clips": {
   "idle": "idle",
   "jump_down": "enter",
@@ -41,5 +41,6 @@
    0.45,
    0.75
   ]
- }
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
 }

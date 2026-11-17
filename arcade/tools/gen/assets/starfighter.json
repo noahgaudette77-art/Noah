@@ -9,8 +9,8 @@
   "value": 1
  },
  "origin": "center",
- "tris": 110000,
- "tex": 2048,
+ "tris": 55000,
+ "tex": 1024,
  "groups": {
   "cannonL": [
    5
@@ -170,7 +170,7 @@
  "surface": {
   "roughMin": 0.14
  },
- "texBase": 4096,
+ "texBase": 2048,
  "paint": [
   {
    "groups": [
@@ -237,5 +237,6 @@
    "val": 0.8,
    "rough": 0.3
   }
- ]
+ ],
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
 }
