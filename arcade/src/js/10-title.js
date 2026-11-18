@@ -126,8 +126,13 @@ function showTitle() {
   const best = Math.max(Store.best("blaster"), 0);
   const all = ALL_QIDS.concat(ALL_FIDS);
   const m = mpct(Store.masteryOf(all));
+  // which version this is, in small print under the top row (the owner, 2026-11-17: opened as a file on a phone, the
+  // title is the offline fallback, and it should say so): served over the web, with the hall and every generated
+  // file; served but unable to draw the hall (no WebGL); or opened from disk, the built-in pictures and sound only
+  const mode = Assets.on ? (hall ? ["served", "SERVED"] : ["served", "SERVED · SIMPLE TITLE (NO 3D)"]) : ["offline", "OFFLINE FALLBACK · OPENED AS A FILE"];
   const el = UI.el(`<section class="screen scr-title${hall && !scene.arrived ? " gliding" : ""}">
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
+    <div class="title-mode ${mode[0]}" data-mode="${mode[0]}">${mode[1]}</div>
     <div class="logo">
       <div class="logo-kicker">INSURANCE &amp; RETIREMENT · QUEBEC</div>
       <h1 class="logo-main"><span class="logo-depth" aria-hidden="true">INR<br>ARCADE</span><span class="logo-face">INR<br>ARCADE</span><span class="logo-glint" aria-hidden="true"><span>INR<br>ARCADE</span></span></h1>

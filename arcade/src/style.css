@@ -1849,3 +1849,7 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 .scr-title.gliding .title-enter { opacity: 0.85; animation: enter-breathe 2.6s ease-in-out 1.5s infinite; }
 @keyframes enter-breathe { 50% { opacity: 0.4; } }
 @media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.4s ease; transform: none; } .scr-title.gliding .title-enter { animation: none; } }
+/* which version this is, in small print under the top row: served (cyan) or the offline fallback (amber) */
+.title-mode { width: 100%; text-align: center; font: 7px/1.4 var(--font-display); letter-spacing: 0.18em; margin-top: -2px; text-shadow: 0 1px 0 #05010f, 0 0 6px #05010f; pointer-events: none; }
+.title-mode.served { color: var(--cyan); opacity: 0.7; }
+.title-mode.offline { color: #ffb86a; opacity: 0.95; }
