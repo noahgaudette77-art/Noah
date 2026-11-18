@@ -3069,3 +3069,40 @@ shows a one-time notice page with an "Open the page" link first). Checked over t
 containment hall with every piece arriving (12 bosses, vault, cabinets, cup), the title's recorded music after a tap
 (the mix recorded for 8 s: nothing above 4 kHz, -108.6 dB; flatness 0.00), and Setup > FPS counter switching on the
 readout. No errors, no failed requests.
+
+Hosting, as it was then set up: GitHub Pages did not offer the branch to the owner, so the game is on Cloudflare
+Pages, connected to this repository (project `noah`, production branch `claude/quirky-ride-9frte0`, build command
+`sh arcade/tools/pages-site.sh`, output folder `arcade/site`). The build copies only what the page loads (the page,
+the sound test, `vendor/`, `assets/`: no course sources) and adds a header asking search engines not to index it.
+Every push to the branch is live a minute or two later at https://noah-2ci.pages.dev: anyone with the link can open
+it, nothing lists it. The repository itself is public: the owner was told how to make it private, and Cloudflare
+Pages builds a private repository just the same.
+
+## Memory Bank's card on iPhone Safari (2026-11-18)
+
+On an iPhone 17 Pro Max in Safari the owner saw the question drawn mirrored over the answer once a card was turned.
+
+Cause: the card turns in 3D (`.card3d`, `transform-style: preserve-3d`) and each face hid its back by backface
+culling alone (`backface-visibility: hidden`, both spellings, was in place). WebKit culls each drawing layer on its
+own, and a face holds boxes the browser draws on layers of their own: the answer's scrolling box, and since
+2026-11-14 (`20c5f4e`) the question face's masked dial ring with the question raised over it. Those kept being drawn
+when their face turned away. Not the performance work: the build just before it (`9e6be7d^`) shows the same in
+WebKit, and the build before `20c5f4e` had a clean answer side (though WebKit drew its answer over the question).
+
+Fix (the end of `src/style.css`): the face turned away is hidden outright (`visibility: hidden`), switched when the
+card stands edge-on (90 ms into its 0.68 s turn, by its curve), so nothing pops; culling stays as a second guard. With
+reduced motion the card and its faces switch at once. Each deal builds the next card's faces new, so they start in the
+right state. The answer's face has a plain opaque ground (the front's faint rings are not on it). Nothing inside a
+face sets `visibility: visible`, so a hidden face hides all of it.
+
+Other flips: none. The Final Exam, the Strategy Guide, the results and the menu cards have no two-faced turn; the only
+other 3D tilts (the boot screen's and the menus' floor grids) are single flat layers.
+
+Check: `tools/card-faces.js`, in WebKit (as Safari; installed into a folder of its own, see the file's head) and in
+Chromium. For each of several cards, question up and then answer up, the face turned away must be hidden, and a
+picture of the card must match a picture of it with that face taken out. On the page without the fix, in WebKit, 8 of
+8 checks failed (with the question up, 5.4 to 8.8 % of the card drawn from the answer's face; with the answer up, 1.0
+to 3.1 % from the question's, mirrored). With the fix: 12 of 12 pass in WebKit and 6 of 6 in Chromium, 0.00 % on
+every card. `--url https://noah-2ci.pages.dev/` runs the same check on the live site (before this deploy, in WebKit:
+4 of 4 failed). The study logic is unchanged: the regression is IDENTICAL from disk and served, and the sequence test
+runs ALL 13 STEPS OK.

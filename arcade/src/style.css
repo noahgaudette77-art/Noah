@@ -1853,3 +1853,19 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 .title-mode { width: 100%; text-align: center; font: 7px/1.4 var(--font-display); letter-spacing: 0.18em; margin-top: -2px; text-shadow: 0 1px 0 #05010f, 0 0 6px #05010f; pointer-events: none; }
 .title-mode.served { color: var(--cyan); opacity: 0.7; }
 .title-mode.offline { color: #ffb86a; opacity: 0.95; }
+
+/* Memory Bank's card shows one face at a time (the owner, 2026-11-18). Turned in 3D, each face hid its back by
+   backface culling alone, and on iPhone Safari that was not enough: a box inside a face that the browser draws on a
+   layer of its own (the term's scrolling box, the dial's masked ring behind it) kept being drawn when its face turned
+   away, and the face turned away showed through the answer, mirrored. Now the face turned away is hidden outright,
+   switched at the moment the card stands edge-on (90 ms into the 0.68 s turn, by its curve), so nothing pops; the
+   culling stays as a second guard. (tools/card-faces.js checks it, in WebKit and Chromium.) The answer's face is
+   plain: one opaque ground under its text, without the front's faint rings. */
+.card3d .face { transition: visibility 0s linear 90ms; }
+.card3d .face.back { visibility: hidden; }
+.card3d.flipped .face.back { visibility: visible; }
+.card3d.flipped .face.front { visibility: hidden; }
+.face.back { background: radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.07), transparent 62%), linear-gradient(180deg, #26135e, #150a3c); }
+/* (reduced motion: the card turns at once, and its faces with it; the turn's own rule above came after the first
+   reduced-motion rule and had undone it) */
+@media (prefers-reduced-motion: reduce) { .card3d, .card3d .face { transition: none; } }
