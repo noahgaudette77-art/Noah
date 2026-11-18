@@ -1,0 +1,15 @@
+{
+ "name": "blaster-deep-5",
+ "source": "blaster-deep-5",
+ "blockade": {
+  "id": 15930907,
+  "style": "M3 Advanced (artistic)",
+  "seed": 700475015,
+  "prompt": "Equirectangular 360 panorama of open outer space: only stars and glowing gas in every direction, above and below, no surface anywhere. A far-off spiral vortex of cyan and magenta plasma like a wormhole, small in the distance, violet nebula haze around it, dense sharp stars, the band of a galaxy crossing the view. Mostly deep black. Retro synthwave palette, high contrast."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 758694,
+ "lightAt": 15,
+ "mean": 0.179
+}

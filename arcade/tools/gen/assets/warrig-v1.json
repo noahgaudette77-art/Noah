@@ -1,0 +1,23 @@
+{
+  "name": "warrig",
+  "about": "Nest Egg Run's vehicle. Rodin Gen-2.5 Extreme-High from the six-wheeled war rig concept (wartruck-c-sd-0), parts from Tripo segmentation v2 of the uploaded mesh.",
+  "src": "cand/wartruck/wartruck-c-sd-0.rodin.glb", "seg": "post/wartruck-seg2.glb",
+  "forward": "+z", "size": { "axis": "z", "value": 1 }, "origin": "ground", "tris": 95000, "tex": 2048,
+  "groups": {
+    "wheelFR": { "where": "c[1] < 0.125 && c[0] > 0.11 && c[2] > 0.19 && c[2] < 0.36" }, "wheelFL": { "where": "c[1] < 0.125 && c[0] < -0.11 && c[2] > 0.19 && c[2] < 0.36" },
+    "wheelMR": { "where": "c[1] < 0.125 && c[0] > 0.11 && c[2] > -0.28 && c[2] < -0.13" }, "wheelML": { "where": "c[1] < 0.125 && c[0] < -0.11 && c[2] > -0.28 && c[2] < -0.13" },
+    "wheelRR": { "where": "c[1] < 0.125 && c[0] > 0.11 && c[2] > -0.44 && c[2] < -0.28" }, "wheelRL": { "where": "c[1] < 0.125 && c[0] < -0.11 && c[2] > -0.44 && c[2] < -0.28" },
+    "exhaustL": [21], "exhaustR": [22]
+  },
+  "tree": { "exhaustL": "body", "exhaustR": "body" },
+  "pivots": { "wheelFR": [0.185, 0.085, 0.27], "wheelFL": [-0.185, 0.085, 0.27], "wheelMR": [0.195, 0.085, -0.205], "wheelML": [-0.195, 0.085, -0.205], "wheelRR": [0.195, 0.085, -0.35], "wheelRL": [-0.195, 0.085, -0.35], "body": [0, 0.085, 0] },
+  "keep": { "wheelFR": 0.5, "wheelFL": 0.5, "wheelMR": 0.5, "wheelML": 0.5, "wheelRR": 0.5, "wheelRL": 0.5 },
+  "anchors": {
+    "exhaustL": { "of": "exhaustL", "at": ["c", "c", "min"], "ride": "body" }, "exhaustR": { "of": "exhaustR", "at": ["c", "c", "min"], "ride": "body" },
+    "headL": { "at": [-0.14, 0.135, 0.47], "ride": "body" }, "headR": { "at": [0.14, 0.135, 0.47], "ride": "body" },
+    "tailL": { "at": [-0.15, 0.2, -0.5], "ride": "body" }, "tailR": { "at": [0.15, 0.2, -0.5], "ride": "body" },
+    "roof": { "at": [0, 0.33, 0], "ride": "body" }, "hood": { "at": [0, 0.3, 0.3], "ride": "body" }, "wing": { "at": [0, 0.38, -0.4], "ride": "body" }
+  },
+  "emissive": { "hues": [[172, 215], [292, 359]], "sat": [0.5, 0.72], "val": [0.45, 0.7], "gain": 1 },
+  "surface": { "roughMul": 0.55, "roughMin": 0.16 }
+}

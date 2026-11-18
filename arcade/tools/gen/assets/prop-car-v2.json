@@ -1,0 +1,37 @@
+{
+ "name": "prop-car",
+ "about": "Nest Egg Run's car (second version, after the final review found the first one's buttressed tail too close to a famous Italian coupe): a compact future city car with a wraparound dark canopy, a flat rear hatch with a magenta light bar and a cyan bar across the nose. Tripo v3.1 at its standard (low-credit) settings from concept traffic-car-b-sd-0, one attempt; mirrored to exact symmetry.",
+ "src": "cand/props/traffic-car-b-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 9000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ }
+}

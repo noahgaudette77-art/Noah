@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INR Arcade · Sound test</title>
+<style>
+  :root { --bg: #0b0420; --panel: #170a3a; --line: #3a2470; --ink: #f4efff; --dim: #a99be0; --cyan: #35efff; --magenta: #ff3ad4; --yellow: #ffe14f; --mint: #4dffa6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 -apple-system, system-ui, "Segoe UI", sans-serif; padding: 16px 16px 60px; }
+  h1 { font-size: 20px; margin: 4px 0 6px; color: var(--yellow); letter-spacing: 0.04em; }
+  p.note { color: var(--dim); margin: 0 0 14px; font-size: 13px; }
+  .bar { position: sticky; top: 0; z-index: 2; background: rgba(11, 4, 32, 0.96); padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 40px; min-width: 40px; cursor: pointer; }
+  button:active { transform: translateY(1px); }
+  button.go { border-color: var(--cyan); color: var(--cyan); }
+  button.stop { border-color: var(--magenta); color: var(--magenta); }
+  button.playing { background: #2b1170; border-color: var(--yellow); color: var(--yellow); }
+  input[type=search] { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 40px; flex: 1 1 180px; }
+  h2 { font-size: 16px; color: var(--cyan); margin: 22px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .row { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 9px 0; border-bottom: 1px solid rgba(58, 36, 112, 0.55); }
+  .row .lbl { font-weight: 600; }
+  .row .lbl small { display: block; font-weight: 400; color: var(--dim); font-size: 12px; }
+  .row .takes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-block; font-size: 11px; color: var(--bg); background: var(--dim); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
+  .tag.loop { background: var(--magenta); }
+  .tag.music { background: var(--mint); }
+  #status { color: var(--dim); font-size: 13px; }
+  .hidden { display: none; }
+  a { color: var(--cyan); }
+</style>
+</head>
+<body>
+<h1>Sound test</h1>
+<p class="note">Every sound in the game, as the game plays it (each take at its own level). Tap a number to hear that take. To ask for a change, quote the label, for example <b>Combat · laser_fire · take 3</b>. Sounds play only after the first tap, as browsers require. <a href="index.html">Back to the arcade</a></p>
+<div class="bar">
+  <button class="go" id="start">Tap to start sound</button>
+  <button class="stop" id="stopAll">Stop all</button>
+  <input type="search" id="find" placeholder="Find a sound (e.g. engine, alarm, wave)">
+  <span id="status">Loading the list…</span>
+</div>
+<div id="list"></div>
+<script>
+(() => {
+  // The sets as the game names them, in plain words, and what each sound is for (the cue names are the game's own)
+  const SETS = { core: "General", combat: "Combat", racer: "Nest Egg Run", bosses: "Boss Rush", hub: "Arcade hall", voice: "Announcer" };
+  const ABOUT = {
+    engine_ship: "the fighter's engine (a loop)", engine_car: "the war rig's engine (a loop)", alarm: "the low-health alarm (a loop)",
+    charge_hum: "a charging hum (a loop)", boost_flame: "the boost flames (a loop)", hub_hum: "the arcade hall's ambience (a loop)",
+    laser_fire: "the fighter's cannons", laser_heavy: "the heavy lance", plasma_fire: "plasma bolts", shell: "spent energy cells",
+    impact_good: "a right answer's hit", impact_reject: "a wrong answer's fizzle", impact_hull: "the player is hit", impact_shield: "a shield takes a hit",
+    explosion_small: "small blast", explosion_big: "big blast", explosion_huge: "huge blast", ui_click: "menu click", ui_select: "menu choose", ui_back: "menu back",
+    sting_correct: "right-answer sting", sting_wrong: "wrong-answer sting", coin_insert: "coin drops", coin_soft: "the title's coin: a soft clink and a warm two-note chime (the containment hall)", heart_lost: "a heart lost", warning: "attack warning",
+    crash: "a crash", skid: "tyres skid", near_miss: "a near miss", boost: "boost", gate: "a gate passed",
+  };
+  // the loops as the game now plays them: the engines and the alarm much quieter (Sound.LOOP_SOFT in 02-sound.js)
+  const SOFT = { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 };
+  // (and heard through a low-pass, as the game plays it: Sound.LOOP_TONE)
+  const TONE = { hub_hum: 1400 };
+  const MUSIC = { blaster: "Risk Blaster", racer: "Nest Egg Run", boss: "Boss Rush", finalboss: "Boss Rush: the final boss", title: "Title: the containment hall (calm dark ambient)", hub: "Arcade hall", exam: "Final Exam", memory: "Memory Bank", calm: "Strategy Guide" };
+  let ctx = null, data = null;
+  const bufs = {}, live = new Set();
+  const $ = (s) => document.querySelector(s);
+  const status = (t) => { $("#status").textContent = t; };
+  const clickAt = (buf) => { const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7)); for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25; return 0; };
+  const load = (file) => bufs[file] || (bufs[file] = fetch("assets/" + file.replace(/^assets\//, "")).then((r) => { if (!r.ok) throw new Error(file + ": " + r.status); return r.arrayBuffer(); }).then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej))).then((buf) => ({ buf, off: clickAt(buf) })));
+  const stopAll = () => { live.forEach((x) => { try { x.stop ? x.stop() : x.src.stop(); } catch (e) {} x.btn && x.btn.classList.remove("playing"); }); live.clear(); };
+  const play = async (file, at, dur, vol, btn, loop, tone) => {
+    if (!ctx) { status("Tap “Tap to start sound” first."); return; }
+    if (ctx.state === "suspended") await ctx.resume();
+    if (loop) { for (const x of live) if (x.btn === btn) { try { x.src.stop(); } catch (e) {} btn.classList.remove("playing"); live.delete(x); return; } }
+    status("Loading " + file + "…");
+    const { buf, off } = await load(file);
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf; g.gain.value = vol;
+    if (tone) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = tone; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
+    g.connect(ctx.destination);
+    const x = { src, btn };
+    live.add(x); btn.classList.add("playing");
+    src.onended = () => { live.delete(x); btn.classList.remove("playing"); };
+    if (loop) { src.loop = true; src.loopStart = off + at[0]; src.loopEnd = off + at[1]; src.start(0, off + at[0]); }
+    else src.start(0, off + at, dur);
+    status("Playing " + btn.dataset.label);
+  };
+  const el = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
+  // ---- the game's own synthesized sounds, made as 02-sound.js makes them (a level for the page's speakers)
+  const made = (make, btn) => {
+    if (!ctx) { status("Tap “Tap to start sound” first."); return; }
+    for (const x of live) if (x.btn === btn) { x.stop(); live.delete(x); btn.classList.remove("playing"); return; }
+    const x = make(); x.btn = btn; live.add(x); btn.classList.add("playing"); status("Playing " + btn.dataset.label);
+  };
+  function madeBlips() {
+    let on = true, t = 0;
+    const blip = () => {
+      if (!on) return;
+      const at = ctx.currentTime, o = ctx.createOscillator(), og = ctx.createGain(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      o.type = Math.random() < 0.5 ? "square" : "triangle";
+      const base = [330, 392, 440, 523, 587, 659, 784, 880][Math.floor(Math.random() * 8)];
+      o.frequency.setValueAtTime(base, at);
+      if (Math.random() < 0.5) o.frequency.setValueAtTime(base * 1.5, at + 0.07);
+      og.gain.setValueAtTime(0.0001, at); og.gain.exponentialRampToValueAtTime(0.06, at + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      o.connect(og);
+      if (pan) { pan.pan.value = Math.random() * 1.8 - 0.9; og.connect(pan).connect(ctx.destination); } else og.connect(ctx.destination);
+      o.start(at); o.stop(at + 0.2);
+      t = setTimeout(blip, 500 + Math.random() * 1700);
+    };
+    t = setTimeout(blip, 100);
+    return { src: { stop() {} }, stop() { on = false; clearTimeout(t); } };
+  }
+  // a captured boss's growl far down the title's hall: its own roar from Boss Rush's set, a little slower, at 0.3 of
+  // its level, through a low-pass at 1100 Hz, from one side (the game: every 7 to 14 s, from a boss near the lens)
+  function madeGrowl() {
+    let on = true, t = 0;
+    const sp = data.sprites.bosses, names = Object.keys(sp.cues).filter((n) => /^roar_/.test(n));
+    const one = async () => {
+      if (!on) return;
+      const { buf, off } = await load(sp.file);
+      if (!on) return;
+      const takes = sp.cues[names[Math.floor(Math.random() * names.length)]], q = takes[Math.floor(Math.random() * takes.length)];
+      const src = ctx.createBufferSource(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      src.buffer = buf; src.playbackRate.value = 0.92; g.gain.value = 0.3 * (q[2] || 1);
+      lp.type = "lowpass"; lp.frequency.value = 1100; lp.Q.value = 0.5;
+      src.connect(g).connect(lp);
+      if (pan) { pan.pan.value = Math.random() < 0.5 ? -0.55 : 0.55; lp.connect(pan).connect(ctx.destination); } else lp.connect(ctx.destination);
+      src.start(0, off + q[0], q[1]);
+      t = setTimeout(one, 4000 + Math.random() * 3000);
+    };
+    one();
+    return { src: { stop() {} }, stop() { on = false; clearTimeout(t); } };
+  }
+  function madeDread() {
+    const f = ctx.createBiquadFilter(), g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    f.type = "lowpass"; f.frequency.value = 380;
+    g.gain.value = 0.0001; g.gain.setTargetAtTime(0.18, ctx.currentTime, 1.0);
+    o1.type = o2.type = "sawtooth"; o1.frequency.value = 55; o2.frequency.value = 55.7;
+    o1.connect(f); o2.connect(f); f.connect(g).connect(ctx.destination); o1.start(); o2.start();
+    let t = 0;
+    const breathe = () => {
+      const at = ctx.currentTime;
+      f.frequency.cancelScheduledValues(at); f.frequency.setTargetAtTime(640, at, 0.45); f.frequency.setTargetAtTime(380, at + 1.4, 0.75);
+      g.gain.cancelScheduledValues(at); g.gain.setTargetAtTime(0.23, at, 0.45); g.gain.setTargetAtTime(0.18, at + 1.4, 0.75);
+      t = setTimeout(breathe, 4800);
+    };
+    t = setTimeout(breathe, 1200);
+    return { src: { stop() {} }, stop() { clearTimeout(t); try { g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.2); o1.stop(ctx.currentTime + 0.8); o2.stop(ctx.currentTime + 0.8); } catch (e) {} } };
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  fetch("assets/audio/audio.json").then((r) => r.json()).then((j) => {
+    data = j;
+    const list = $("#list");
+    // music first: the tracks, each a loop that plays until tapped again
+    list.appendChild(el(`<h2>Music <span class="tag music">loops</span></h2>`));
+    for (const [name, m] of Object.entries(j.music).sort()) {
+      const base = name.replace(/-b$/, ""), lbl = `Music · ${name}`;
+      const row = el(`<div class="row" data-find="${esc((name + " " + (MUSIC[base] || "")).toLowerCase())}"><div class="lbl">${esc(MUSIC[base] || name)}${name.endsWith("-b") ? " (second track)" : ""}<small>${esc(lbl)}</small></div><div class="takes"></div></div>`);
+      const b = el(`<button data-label="${esc(lbl)}">▶ play / stop</button>`);
+      b.onclick = () => play(m.file, m.loop, 0, (m.vol || 1) * 0.8, b, true);
+      row.querySelector(".takes").appendChild(b);
+      list.appendChild(row);
+    }
+    for (const [set, sp] of Object.entries(j.sprites)) {
+      list.appendChild(el(`<h2>${esc(SETS[set] || set)}</h2>`));
+      // a cue the game also knows by an older name lies at the same place: shown once, with both names
+      const byPlace = new Map();
+      for (const [cue, takes] of Object.entries(sp.cues)) { const k = JSON.stringify(takes); if (!byPlace.has(k)) byPlace.set(k, { names: [], takes }); byPlace.get(k).names.push(cue); }
+      const entries = [...byPlace.values()].sort((a, b) => a.names[0].localeCompare(b.names[0]));
+      for (const { names, takes } of entries) {
+        const name = names.find((n) => ABOUT[n]) || names.sort((a, b) => b.length - a.length)[0];
+        const isLoop = /^(engine_|alarm|charge_hum|boost_flame|hub_hum)/.test(name);
+        const pretty = name.replace(/^vo@(\w+):/, "the $1 voice: ").replace(/^vo:/, "“").replace(/^(“.*)$/, "$1”");
+        const also = names.filter((n) => n !== name);
+        const row = el(`<div class="row" data-find="${esc((names.join(" ") + " " + (ABOUT[name] || "") + " " + (SETS[set] || "")).toLowerCase())}"><div class="lbl">${esc(pretty)}${isLoop ? '<span class="tag loop">loop</span>' : ""}${takes.length > 1 ? `<span class="tag">${takes.length} takes</span>` : ""}<small>${esc((SETS[set] || set) + " · " + name + (ABOUT[name] ? " · " + ABOUT[name] : "") + (also.length ? " · also played as: " + also.join(", ") : ""))}</small></div><div class="takes"></div></div>`);
+        const soft = SOFT[names.find((n) => SOFT[n]) || ""] || 1, tone = TONE[names.find((n) => TONE[n]) || ""] || 0; // (a loop at the share of its level the game plays it at, and through its low-pass)
+        takes.forEach((t, i) => {
+          const lbl = `${SETS[set] || set} · ${name} · take ${i + 1}`;
+          const b = el(`<button data-label="${esc(lbl)}" aria-label="${esc(lbl)}">${takes.length > 1 ? i + 1 : "▶ play"}</button>`);
+          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, true, tone) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
+          row.querySelector(".takes").appendChild(b);
+        });
+        list.appendChild(row);
+      }
+    }
+    // the sounds the game makes itself, not recordings: each made here exactly as the game makes it
+    list.appendChild(el(`<h2>Made by the game itself</h2>`));
+    const MADE = [
+      ["The hall's distant cabinets", "Arcade hall · cabinet blips · soft tonal beeps under the music while the hall's hum loads (no noise under them since 2026-11-17)", madeBlips],
+      ["The examiner's drone and its breath", "Final Exam · examiner drone · two low tones beating slowly, breathing in tone (it breathed in noise until 2026-11-17)", madeDread],
+      ["The captured bosses' distant growls", "Title · containment hall · a boss's own growl, quiet, from its side of the hall, muffled by the distance (a low-pass at 1100 Hz) when it rattles its pod; here every few seconds", madeGrowl],
+    ];
+    for (const [title, sub, make] of MADE) {
+      const row = el(`<div class="row" data-find="${esc((title + " " + sub).toLowerCase())}"><div class="lbl">${esc(title)}<span class="tag loop">loop</span><small>${esc(sub)}</small></div><div class="takes"></div></div>`);
+      const b = el(`<button data-label="${esc(sub.split(" · ").slice(0, 2).join(" · "))}">▶ play / stop</button>`);
+      b.onclick = () => made(make, b);
+      row.querySelector(".takes").appendChild(b);
+      list.appendChild(row);
+    }
+    status(Object.values(j.sprites).reduce((n, s) => n + Object.keys(s.cues).length, 0) + " sounds, " + Object.keys(j.music).length + " tracks and " + MADE.length + " made by the game. Tap “Tap to start sound”.");
+  }).catch((e) => status("The sound list could not be loaded (" + e.message + "). Open this page from the same place as the arcade, not from a file."));
+  $("#start").onclick = () => { if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); } ctx.resume(); $("#start").textContent = "Sound is on"; status("Sound is on. Tap any number to play."); };
+  $("#stopAll").onclick = stopAll;
+  $("#find").oninput = (e) => { const q = e.target.value.trim().toLowerCase(); document.querySelectorAll(".row").forEach((r) => r.classList.toggle("hidden", !!q && !r.dataset.find.includes(q))); };
+})();
+</script>
+</body>
+</html>

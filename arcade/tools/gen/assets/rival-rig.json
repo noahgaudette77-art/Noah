@@ -1,0 +1,37 @@
+{
+ "name": "rival-rig",
+ "about": "Nest Egg Run: a rival hauler, the other single-image build of the war rig's own design (Tripo); an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/warrig/warrig-b-sd-1.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 10000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ }
+}

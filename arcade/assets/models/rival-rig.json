@@ -1,0 +1,41 @@
+{
+ "name": "rival-rig",
+ "triangles": 10178,
+ "bytes": 302888,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.2047,
+    -0.0002
+   ],
+   "min": [
+    -0.2738,
+    0,
+    -0.5002
+   ],
+   "max": [
+    0.2738,
+    0.4094,
+    0.4999
+   ],
+   "tris": 10178
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.5475378632545471,
+  0.40940773487091064,
+  1.0003203749656677
+ ],
+ "source": "cand/warrig/warrig-b-sd-1.tripo.glb",
+ "symmetry": {
+  "delivered": 0.53,
+  "turned_deg": 0.1,
+  "shifted": 0,
+  "aligned": 0.532,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

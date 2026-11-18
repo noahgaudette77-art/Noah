@@ -1,0 +1,33 @@
+{
+ "name": "prop-podium",
+ "triangles": 10000,
+ "bytes": 230936,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4479,
+    0,
+    -0.3408
+   ],
+   "max": [
+    0.4479,
+    1,
+    0.3408
+   ],
+   "tris": 10000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.8958794474601746,
+  1,
+  0.6815782189369202
+ ],
+ "source": "cand/props/prop-podium-b-sd-0.tripo.glb"
+}

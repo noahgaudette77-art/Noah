@@ -1,0 +1,15 @@
+{
+ "name": "title-hall",
+ "source": "title-hall",
+ "blockade": {
+  "id": 15934826,
+  "style": "M3 Concept Render",
+  "seed": 1527996086,
+  "prompt": "Inside a vast dark retro-futuristic containment vault at night, seen from the middle of a long gallery: rows of tall empty glowing glass stasis pods along both walls fading far into the distance, a polished dark floor, heavy gunmetal pillars and ceiling beams, thin neon magenta and cyan light strips along the walls, a cold blue haze far away, quiet and grand. No people, no creatures, no figures inside the pods, no text, no signs."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 435050,
+ "lightAt": 165,
+ "mean": 0.176
+}

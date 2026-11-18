@@ -1,0 +1,33 @@
+{
+ "name": "statue-3",
+ "triangles": 6515,
+ "bytes": 115344,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.381,
+    0,
+    -0.2481
+   ],
+   "max": [
+    0.381,
+    1,
+    0.2481
+   ],
+   "tris": 6515
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.7620916962623596,
+  1,
+  0.4962139129638672
+ ],
+ "source": "cand/boss03/boss03-specter-sd-0.rodin.glb"
+}

@@ -1,0 +1,33 @@
+{
+ "name": "prop-bolt",
+ "triangles": 4282,
+ "bytes": 185808,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.367,
+    0,
+    -0.3626
+   ],
+   "max": [
+    0.367,
+    1,
+    0.3626
+   ],
+   "tris": 4282
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.7340707778930664,
+  1,
+  0.7251312136650085
+ ],
+ "source": "cand/props/prop-bolt-sd-0.tripo.glb"
+}

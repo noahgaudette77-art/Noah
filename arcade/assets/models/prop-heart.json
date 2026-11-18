@@ -1,0 +1,33 @@
+{
+ "name": "prop-heart",
+ "triangles": 5204,
+ "bytes": 199368,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.445,
+    0,
+    -0.3527
+   ],
+   "max": [
+    0.445,
+    1,
+    0.3527
+   ],
+   "tris": 5204
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.8900142908096313,
+  1,
+  0.7053358554840088
+ ],
+ "source": "cand/props/prop-heart-sd-0.tripo.glb"
+}

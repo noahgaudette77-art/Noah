@@ -1,0 +1,13 @@
+{
+  "name": "inr-arcade-tools",
+  "private": true,
+  "description": "Build-time tools for INR Arcade's generated assets (model processing, audio sprites, captures). Not needed to run the game.",
+  "type": "commonjs",
+  "dependencies": {
+    "@gltf-transform/core": "^4.2.1",
+    "@gltf-transform/extensions": "^4.2.1",
+    "@gltf-transform/functions": "^4.2.1",
+    "meshoptimizer": "^1.3.0",
+    "sharp": "^0.34.4"
+  }
+}

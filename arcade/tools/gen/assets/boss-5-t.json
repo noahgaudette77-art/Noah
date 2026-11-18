@@ -1,0 +1,48 @@
+{
+ "name": "boss-5-t",
+ "about": "The title's containment hall: a lighter build of boss-5 (the same source, rig and clips), for a boss seen at the middle distance in its stasis pod. Boss Rush: Group Golem (a slab golem built of filing cabinets). Tripo H3.1 from concept boss05-golem-sd-1; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests)",
+ "src": "post/boss05-animA.glb",
+ "more": [
+  "post/boss05-animB.glb"
+ ],
+ "seg": "post/boss05-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 16000,
+ "tex": 512,
+ "texBase": 1024,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    14,
+    44
+   ]
+  ],
+  "sat": [
+   0.6,
+   0.85
+  ],
+  "val": [
+   0.55,
+   0.85
+  ]
+ },
+ "color": {
+  "val": 0.5,
+  "sat": 1.1
+ },
+ "bar": "the game's one quality bar (2026-11-17): a figure seen at middle distance (the title's pods): 1024 px colour, 512 px other maps, about 20K triangles",
+ "error": 0.06
+}

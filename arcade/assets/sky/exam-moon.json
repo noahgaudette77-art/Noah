@@ -1,0 +1,15 @@
+{
+ "name": "exam-moon",
+ "source": "exam-moon",
+ "blockade": {
+  "id": 15930883,
+  "style": "M3 Advanced (artistic)",
+  "seed": 874053163,
+  "prompt": "Night sky seen through the broken vault of a vast dark stone hall: a huge pale moon behind drifting clouds, cold blue-violet moonlight, tall dark arches and columns receding into shadow all around, faint gold motes in the air. Solemn, ominous, high contrast."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 716746,
+ "lightAt": 126,
+ "mean": 0.295
+}

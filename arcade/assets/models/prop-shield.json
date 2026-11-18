@@ -1,0 +1,33 @@
+{
+ "name": "prop-shield",
+ "triangles": 4000,
+ "bytes": 188212,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4558,
+    0,
+    -0.1251
+   ],
+   "max": [
+    0.4558,
+    1,
+    0.1251
+   ],
+   "tris": 4000
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9116831421852112,
+  1,
+  0.2502174377441406
+ ],
+ "source": "cand/props/prop-shield-sd-0.tripo.glb"
+}

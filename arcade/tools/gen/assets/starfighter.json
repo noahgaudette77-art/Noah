@@ -1,0 +1,242 @@
+{
+ "name": "starfighter",
+ "about": "Risk Blaster's fighter. Tripo H3.1 from the manta-wing concept (starfighter-b-sd-0), parts from Tripo segmentation v2. Surfaces by part: dark mirror glass for the canopy, heat-tinted nozzles, dark gunmetal cannons.",
+ "src": "cand/starfighter/starfighter-b-sd-0.tripo.glb",
+ "seg": "post/starfighter-seg2.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 55000,
+ "tex": 1024,
+ "groups": {
+  "cannonL": [
+   5
+  ],
+  "cannonR": [
+   6
+  ],
+  "wingL": [
+   3
+  ],
+  "wingR": [
+   2
+  ],
+  "engineC": [
+   10
+  ],
+  "engineL": [
+   4,
+   11
+  ],
+  "engineR": [
+   1
+  ],
+  "engineLL": [
+   13
+  ],
+  "engineLR": [
+   12
+  ],
+  "canopy": [
+   8
+  ],
+  "finL": [
+   18
+  ],
+  "finR": [
+   17
+  ]
+ },
+ "pivots": {
+  "wingL": [
+   "max",
+   "c",
+   "c"
+  ],
+  "wingR": [
+   "min",
+   "c",
+   "c"
+  ]
+ },
+ "keep": {
+  "cannonL": 1.4,
+  "cannonR": 1.4,
+  "canopy": 1.5
+ },
+ "anchors": {
+  "muzzleL": {
+   "of": "cannonL",
+   "at": [
+    "c",
+    "c",
+    "max"
+   ],
+   "ride": "cannonL"
+  },
+  "muzzleR": {
+   "of": "cannonR",
+   "at": [
+    "c",
+    "c",
+    "max"
+   ],
+   "ride": "cannonR"
+  },
+  "exhaustC": {
+   "of": "engineC",
+   "at": [
+    "c",
+    "c",
+    "min"
+   ]
+  },
+  "exhaustL": {
+   "of": "engineL",
+   "at": [
+    -0.14,
+    "c",
+    "min"
+   ]
+  },
+  "exhaustR": {
+   "of": "engineR",
+   "at": [
+    0.14,
+    "c",
+    "min"
+   ]
+  },
+  "exhaustLL": {
+   "of": "engineLL",
+   "at": [
+    "c",
+    "c",
+    "min"
+   ]
+  },
+  "exhaustLR": {
+   "of": "engineLR",
+   "at": [
+    "c",
+    "c",
+    "min"
+   ]
+  },
+  "cockpit": {
+   "of": "canopy",
+   "at": [
+    "c",
+    "c",
+    "c"
+   ]
+  },
+  "nose": [
+   0,
+   0,
+   0.46
+  ],
+  "tipL": [
+   -0.5,
+   0,
+   0
+  ],
+  "tipR": [
+   0.5,
+   0,
+   0
+  ]
+ },
+ "emissive": {
+  "hues": [
+   [
+    160,
+    348
+   ]
+  ],
+  "sat": [
+   0.42,
+   0.68
+  ],
+  "val": [
+   0.45,
+   0.78
+  ],
+  "gain": 1
+ },
+ "surface": {
+  "roughMin": 0.14
+ },
+ "texBase": 2048,
+ "paint": [
+  {
+   "groups": [
+    "canopy"
+   ],
+   "rough": 0.05,
+   "metal": 1,
+   "val": 0.42,
+   "color": [
+    0.75,
+    0.92,
+    1.0
+   ],
+   "sat": 0.6
+  },
+  {
+   "groups": [
+    "engineC",
+    "engineL",
+    "engineR",
+    "engineLL",
+    "engineLR"
+   ],
+   "where": {
+    "s": [
+     0,
+     0.4
+    ]
+   },
+   "color": [
+    1.0,
+    0.8,
+    0.62
+   ],
+   "rough": 0.34,
+   "metal": 1
+  },
+  {
+   "groups": [
+    "cannonL",
+    "cannonR"
+   ],
+   "where": {
+    "s": [
+     0,
+     0.4
+    ]
+   },
+   "val": 0.72,
+   "rough": 0.42,
+   "metal": 1
+  },
+  {
+   "groups": [
+    "finL",
+    "finR"
+   ],
+   "where": {
+    "s": [
+     0,
+     0.4
+    ]
+   },
+   "val": 0.8,
+   "rough": 0.3
+  }
+ ],
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

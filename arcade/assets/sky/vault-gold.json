@@ -1,0 +1,15 @@
+{
+ "name": "vault-gold",
+ "source": "vault-gold",
+ "blockade": {
+  "id": 15930884,
+  "style": "M3 Concept Render",
+  "seed": 1224046047,
+  "prompt": "Inside a vast round bank vault of polished gold and dark steel: curved riveted walls with rows of safe-deposit doors, warm golden light from ring lamps overhead, a mirror-polished dark floor, soft haze. No people. Rich reflections, art deco, warm gold with violet shadows."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 710390,
+ "lightAt": 317,
+ "mean": 0.259
+}

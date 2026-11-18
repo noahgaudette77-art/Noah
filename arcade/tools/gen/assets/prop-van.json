@@ -1,0 +1,37 @@
+{
+ "name": "prop-van",
+ "about": "An original box van for Nest Egg Run's traffic: gloss gunmetal, a cyan light bar across the nose, a magenta stripe round the box. Tripo v3.1 at its standard (low-credit) settings from concept prop-van-sd-0, one attempt.",
+ "src": "cand/props/prop-van-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 9000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ }
+}

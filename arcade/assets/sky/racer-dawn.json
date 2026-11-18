@@ -1,0 +1,15 @@
+{
+ "name": "racer-dawn",
+ "source": "racer-dawn",
+ "blockade": {
+  "id": 15930868,
+  "style": "M3 Sky Dome",
+  "seed": 1205322993,
+  "prompt": "Synthwave dawn sky before sunrise, no sun disc: a soft band of rose and peach along a flat far horizon, rising through teal to deep indigo at the zenith, a few thin high clouds catching pink light, fading stars, low dark mountain silhouettes far away, dark wet flat plain below. 1980s retro outrun aesthetic, clean gradients."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 150958,
+ "lightAt": 82,
+ "mean": 0.34
+}

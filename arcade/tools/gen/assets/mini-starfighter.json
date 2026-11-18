@@ -1,0 +1,33 @@
+{
+ "name": "mini-starfighter",
+ "about": "A small, light copy of Risk Blaster's starfighter for menus and cabinet toppers (one mesh, 512 px maps).",
+ "src": "cand/starfighter/starfighter-b-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 9000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    160,
+    348
+   ]
+  ],
+  "sat": [
+   0.42,
+   0.68
+  ],
+  "val": [
+   0.45,
+   0.78
+  ]
+ },
+ "surface": {
+  "roughMin": 0.14
+ }
+}

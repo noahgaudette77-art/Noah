@@ -1,0 +1,33 @@
+{
+ "name": "prop-coin",
+ "triangles": 2500,
+ "bytes": 102176,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.4989,
+    0,
+    -0.129
+   ],
+   "max": [
+    0.4989,
+    1,
+    0.129
+   ],
+   "tris": 2500
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9978772401809692,
+  1,
+  0.25808343291282654
+ ],
+ "source": "cand/props/prop-coin-sd-0.tripo.glb"
+}

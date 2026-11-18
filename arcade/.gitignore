@@ -1,0 +1,9 @@
+# secrets and scratch output never go in the repo
+.env
+.env.*
+tools/gen/out/
+.work/
+# a capture's frames while a strip is being made (the tool joins them into one JPG and deletes them)
+docs/**/*-[0-9][0-9].png
+# the site a web host publishes, made by tools/pages-site.sh on the host itself
+site/
