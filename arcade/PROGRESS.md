@@ -3054,3 +3054,18 @@ crash and no logic change, and ten things to fix, all fixed:
 10. The Inflation Titan has no head bone and never turned: it turns at the top of its spine, half as far.
 
 Captures: `docs/title-hall/` (phone stills of the glide and the end, landscape stills, a 38 s film of the glide).
+
+## Playing the served game on a phone (2026-11-18)
+
+The owner opened the game on an iPhone as a plain file and saw the old title: from a file the page fetches nothing
+and shows its offline fallback. The title now says which version is showing, in small print under its top row:
+SERVED (cyan) or OFFLINE FALLBACK · OPENED AS A FILE (amber).
+
+Hosting: the repository is public and already carries a `.nojekyll` file at its root, so GitHub Pages can serve this
+branch exactly as it is (214 MB of tracked files, under Pages' 1 GB). Pages is switched on in the repository's
+Settings (Pages > Deploy from a branch > `claude/quirky-ride-9frte0`, `/ (root)`), which only the owner can do; the
+game is then at https://noahgaudette77-art.github.io/Noah/arcade/. Until then raw.githack.com serves the branch (it
+shows a one-time notice page with an "Open the page" link first). Checked over the internet through it: SERVED, the
+containment hall with every piece arriving (12 bosses, vault, cabinets, cup), the title's recorded music after a tap
+(the mix recorded for 8 s: nothing above 4 kHz, -108.6 dB; flatness 0.00), and Setup > FPS counter switching on the
+readout. No errors, no failed requests.
