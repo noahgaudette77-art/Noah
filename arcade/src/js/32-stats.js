@@ -87,7 +87,7 @@ function showSettings() {
         <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("gauge", "Graphics", "AUTO lowers the detail by itself when frames run late, and raises it again when they hold steady", seg("quality", [["auto", "AUTO"], ["high", "HIGH"], ["medium", "MEDIUM"], ["low", "LOW"]]))}
+      ${row("gauge", "Graphics", "AUTO puts a steady frame rate first: on a phone it draws a little softer (SMOOTH); when frames run late it draws smaller, then drops effects, then lights, and sharpens again when they hold steady", seg("quality", [["auto", "AUTO"], ["high", "HIGH"], ["medium", "MEDIUM"], ["low", "LOW"]]))}
       ${row("gauge", "FPS counter", "Frame rate, slowest frame, triangles, draw calls, the size the picture is drawn at, the graphics tier and the lights", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}

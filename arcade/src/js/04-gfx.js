@@ -81,36 +81,108 @@ const GFX = {
   },
   // Setup > Graphics: "auto" lets the frame rate choose; a fixed tier stays put
   setQuality(q) {
-    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
+    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
     this.auto = fixed === undefined;
-    this.setTier(fixed === undefined ? (this.small ? 1 : 0) : fixed, "setup");
+    P.failed = {}; P.capped = false; P.lockFrom = -1; P.okSince = 0;
+    if (this.auto && P.ladder) { P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
+    const lights = this.lightCap !== 99;
+    this.scale = 1; this.lightCap = 99;
+    if (lights) this.lightsReset();
+    if (fixed === this.tier) this.resize();
+    this.setTier(fixed, "setup");
   },
-  // ---- the frame rate, watched: a tier down when frames run late, a careful try back up when they hold steady.
-  // (Automated browsers keep the tier they start with: their frames say nothing about a player's screen.)
-  perf: { ring: new Float32Array(120), n: 0, i: 0, changedAt: 0, okSince: 0, failed: [0, 0, 0, 0], upAt: 0, why: "", fps: 0 },
+  // ---- the frame rate, watched (Setup > Graphics: AUTO) by a governor (the owner, 2026-11-22: a steady 60 FPS on
+  // their phone comes before any one effect). It moves the picture along a ladder of steps, sharpest first: the size
+  // the scene is drawn at goes first (on a high-density screen 2x, 1.75x, 1.5x the page's pixels: the page's own text
+  // stays sharp), then the effects (a tier down: MEDIUM, LOW, LOWEST), then the lights (the screen's point lights cut
+  // to two, then one: the one step that costs a moment, its shaders made again). A phone's ladder starts at SMOOTH
+  // (MEDIUM drawn at 1.75x: a quarter fewer pixels than 2x, which the eye cannot find on a 3x screen and the chip and
+  // the battery can) and AUTO never climbs above it there (MEDIUM and HIGH are in Setup).
+  // A step down when frames have run under 55 a second (or kept catching: a tenth of them over 25 ms) through a second
+  // of its looks, each look the last two seconds; a step up after steady seconds: five back toward where AUTO started,
+  // ten past it (a step that runs late again at once is tried less often, then not at all). What a moment's work costs
+  // is not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving),
+  // and the one after it, are left out, and so are the first seconds of a new screen or a new step.
+  // A frame rate held at exactly 30 that two steps down do not change is the device's own cap (Low Power Mode, or a
+  // phone grown hot): it is named in the readout, and the picture goes back to where AUTO started until it lifts.
+  // Setup's fixed tiers stay put; Reduced effects is its own switch. (Automated browsers keep where they start.)
+  scale: 1, // the drawing size, a share of the tier's (see outPR)
+  lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
+  perf: { ring: new Float32Array(300), busy: new Uint8Array(300), n: 0, i: 0, skip: 0, wp: -1, wt: -1, changedAt: 0, okSince: 0, slowSince: 0, failed: {}, upAt: 0, why: "", fps: 0, rung: 0, start: 0, ladder: null, evalAt: 0, lockFrom: -1, capped: false, off: false },
+  // the steps, sharpest first: { tier, scale, lights }
+  makeLadder() {
+    const L = [], last = this.TIERS.length - 1, phone = Assets.phone, first = phone ? 1 : 0, hi = (window.devicePixelRatio || 1) >= 1.5;
+    for (let t = first; t <= last; t++) {
+      const scales = t === first && hi ? (phone ? [0.875, 0.75] : [1, 0.875, 0.75]) : t === last ? [1, 0.85] : [1];
+      for (const sc of scales) L.push({ tier: t, scale: sc, lights: 99 });
+    }
+    L.push({ tier: last, scale: 0.85, lights: 2 }, { tier: last, scale: 0.85, lights: 1 });
+    return L;
+  },
+  // the step AUTO starts from: a phone's first (SMOOTH); on a small screen MEDIUM; else HIGH
+  startRung() {
+    if (Assets.phone) return 0;
+    return Math.max(0, this.perf.ladder.findIndex((r) => r.tier === (this.small ? 1 : 0)));
+  },
+  setRung(i, why) {
+    const P = this.perf, L = P.ladder;
+    if (!L) return;
+    i = Math.max(0, Math.min(L.length - 1, i));
+    const R = L[i], lights = R.lights !== this.lightCap;
+    P.rung = i; this.scale = R.scale; this.lightCap = R.lights; P.slowSince = 0; P.okSince = 0;
+    if (lights) this.lightsReset();
+    if (R.tier !== this.tier) this.setTier(R.tier, why); else { this.resize(); P.changedAt = performance.now(); P.why = why || ""; }
+  },
+  // the frames of the last span (ms), their times sorted (a moment's work left out, unless all)
+  recent(span, all) {
+    const P = this.perf, out = [], N = P.ring.length;
+    let t = 0;
+    for (let k = 1; k <= P.n && t < span; k++) { const j = (P.i - k + N) % N, v = P.ring[j]; t += v; if (all || !P.busy[j]) out.push(v); }
+    return out.sort((a, b) => a - b);
+  },
   perfTick(ms) {
     const P = this.perf, now = performance.now();
-    if (!this.auto || navigator.webdriver || document.hidden || ms <= 0 || ms > 250 || now - P.changedAt < 1500 || now - (this.sceneAt || 0) < 1500) return;
-    P.ring[P.i] = ms; P.i = (P.i + 1) % P.ring.length; P.n = Math.min(P.ring.length, P.n + 1);
-    if (P.n < 60 || P.i % 30) return;
-    const a = Array.from(P.ring.subarray(0, P.n)).sort((x, y) => x - y), q = (f) => a[Math.min(a.length - 1, Math.floor(f * a.length))];
-    const p75 = q(0.75), p90 = q(0.9);
-    P.fps = 1000 / q(0.5);
-    if (p75 > 18.2 && this.tier < this.TIERS.length - 1) {
-      // frames are running late: one tier down (a tier just tried and dropped again is not tried again soon)
-      if (now - P.upAt < 6000) P.failed[this.tier] = (P.failed[this.tier] || 0) + 1;
-      P.n = 0; P.okSince = 0;
-      this.setTier(this.tier + 1, "slow frames (" + Math.round(1000 / q(0.5)) + " fps)");
+    // a frame that made shaders or sent new pictures to the chip: its time is the moment's (and the next frame's too)
+    if (this.ok) { const I = this.renderer.info, wp = I.programs ? I.programs.length : 0, wt = I.memory.textures; if (wp !== P.wp || wt !== P.wt) { if (P.wp >= 0) P.skip = 2; P.wp = wp; P.wt = wt; } }
+    if (ms > 0 && ms < 1000) { P.ring[P.i] = ms; P.busy[P.i] = P.skip > 0 ? 1 : 0; P.i = (P.i + 1) % P.ring.length; P.n = Math.min(P.ring.length, P.n + 1); } // (every frame, whatever the setting: the readout reads them too)
+    if (P.skip > 0) P.skip--;
+    if (!this.auto || P.off || !P.ladder || navigator.webdriver || document.hidden || now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.evalAt < 500) return;
+    P.evalAt = now;
+    const w = this.recent(2000);
+    if (w.length < 24) return;
+    const F = this.screenMs || 16.67; // (a frame of the screen's: 60 Hz, unless it was measured at 50)
+    const q = (f) => w[Math.min(w.length - 1, Math.floor(f * w.length))], med = q(0.5), p10 = q(0.1), p90 = q(0.9), long = w.filter((x) => x > F * 1.5).length / w.length;
+    P.fps = 1000 / med;
+    // held at exactly 30: the device's own cap (Low Power Mode), or a load just over a frame. Two steps down tell them
+    // apart: a load lifts off 30 with them; a cap does not, and the picture goes back to where AUTO started.
+    const locked = med > 31 && med < 36 && p10 > 29 && p90 < 38;
+    if (!locked) {
+      P.lockFrom = -1;
+      if (P.capped) { P.capped = false; P.changedAt = now; P.why = "the 30 fps cap lifted"; return; } // (its first seconds at the new rate are looked at afresh)
+    } else if (P.capped) return;
+    else { if (P.lockFrom < 0) P.lockFrom = P.rung; if (P.rung - P.lockFrom >= 2) { P.capped = true; this.setRung(P.start, "held at 30 fps: the device's cap (low power mode?)"); return; } }
+    const slow = med > F * 1.09 || long > 0.1;
+    if (slow) {
+      P.okSince = 0;
+      if (!P.slowSince) P.slowSince = now;
+      if (now - P.slowSince < 1000 || P.rung >= P.ladder.length - 1) return; // (late through a second of looks, not one)
+      if (now - P.upAt < 8000) P.failed[P.rung] = (P.failed[P.rung] || 0) + 1; // (a step just climbed to, dropped again)
+      this.setRung(P.rung + 1, (long > 0.1 && med <= F * 1.09 ? "frames catching" : "slow frames") + " (" + Math.round(1000 / med) + " fps)");
       return;
     }
-    if (p90 < 17.4) {
+    P.slowSince = 0;
+    if (p90 < F * 1.044 && w[w.length - 1] < F * 2.04) {
       if (!P.okSince) P.okSince = now;
-      const up = this.tier - 1;
-      if (up >= (Assets.phone ? 1 : 0) && now - P.okSince > 12000 * (1 + 2 * (P.failed[up] || 0)) && (P.failed[up] || 0) < 3) { // (a phone climbs no higher than MEDIUM by itself: a steady frame rate over a richer one. HIGH is there in Setup.)
-        P.n = 0; P.okSince = 0; P.upAt = now;
-        this.setTier(up, "steady frames");
-      }
+      const up = P.rung - 1, f = P.failed[up] || 0;
+      if (up >= 0 && f < 3 && now - P.okSince > (up >= P.start ? 5000 : 10000) * (1 + 2 * f)) { P.upAt = now; this.setRung(up, "steady frames"); }
     } else P.okSince = 0;
+  },
+  // the governor's state, for the readout
+  govLabel() {
+    const P = this.perf, R = P.ladder && P.ladder[P.rung];
+    if (!this.auto) return "FIXED (SETUP)";
+    if (P.capped) return "HELD AT 30 FPS: LOW POWER MODE?";
+    return "AUTO" + (R ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length + (Assets.phone && P.rung === 0 ? " SMOOTH" : "") : "");
   },
   freeze: 0, // hit-stop seconds remaining
   probe: null, // debug: called after each render pass (see the perf tools)
@@ -147,7 +219,9 @@ const GFX = {
     // the first tier: Setup's choice, or (auto) HIGH on a desktop and MEDIUM on a phone, from where the frame rate leads
     const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
     this.auto = fixed === undefined;
-    const t0 = fixed !== undefined ? fixed : navigator.webdriver ? 0 : this.small ? 1 : 0;
+    this.perf.ladder = this.makeLadder();
+    let t0 = fixed !== undefined ? fixed : navigator.webdriver ? 0 : this.small ? 1 : 0;
+    if (this.auto && !navigator.webdriver) { const P = this.perf, R = P.ladder[(P.rung = P.start = this.startRung())]; t0 = R.tier; this.scale = R.scale; this.lightCap = R.lights; } // (AUTO: from its first step; on a phone, SMOOTH)
     this.tier = t0; this.extras = this.TIERS[t0].extras; this.fxScale = this.TIERS[t0].fx;
     document.body.classList.toggle("lite", t0 >= 1);
     this.pipe = makePipeline(r, this.hdr, this.TIERS[t0].samples);
@@ -168,12 +242,12 @@ const GFX = {
     // drawing larger than the screen smooths thin edges, but its cost multiplies: only at the HIGH tier, only on a
     // screen of less than 1.5 device pixels per page pixel (a high-density screen is smooth already), and never past
     // four million pixels
-    if (want <= 1 || this.tier > 0 || out >= 1.5) return out;
+    if (want <= 1 || this.tier > 0 || out >= 1.5 || this.scale < 1) return out; // (nor while AUTO is drawing smaller)
     return Math.min(lim, out * Math.max(1, Math.min(want, Math.sqrt(4e6 / Math.max(1, this.w * this.h * out * out)))));
   },
   outPR() {
     const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8;
-    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim, this.TIERS[this.tier].pr));
+    return Math.max(0.35, Math.min(window.devicePixelRatio || 1, lim, this.TIERS[this.tier].pr) * (this.scale || 1)); // (AUTO's scale: a share of what the tier would draw, on any screen)
   },
   ss: 1, // how many times larger than the screen the scene is drawn (1 unless the scene asked: see scenePR)
   resize() {
@@ -327,6 +401,7 @@ const GFX = {
         over = true;
         const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
         this.screenProbe = d; // for the FPS tools
+        if (d.length >= 6 && d[d.length >> 1] > 18.5 && d[d.length >> 1] < 22) this.screenMs = d[d.length >> 1]; // (a 50 Hz screen: its own frame is the governor's mark, not 60's)
         if (d.length >= 6) {
           const hz = snapHz(d[d.length >> 1] / 1000); // the median interval
           if (hz > 60) this.vsync = Math.min(this.vsync, 1 / Math.min(hz, 120));
@@ -398,10 +473,14 @@ const GFX = {
   lightsFor(scene) {
     const b = scene && scene.userData.lightBudget;
     if (!b) return null;
-    const p = scene.userData.lightPool || (scene.userData.lightPool = new LightPool(scene, b));
+    let p = scene.userData.lightPool;
+    if (p && p.cap !== this.lightCap) { p.dispose(); p = null; } // (the governor's last steps cut the point lights: the screen's shaders are made again, once)
+    if (!p) { p = scene.userData.lightPool = new LightPool(scene, Object.assign({}, b, { point: Math.min(b.point || 0, this.lightCap) })); p.cap = this.lightCap; }
     p.update();
     return p;
   },
+  // the current screen's light budget made again at the governor's cap (see lightsFor)
+  lightsReset() { const sc = window.Scenes && Scenes.cur && Scenes.cur.scene; if (sc && sc.userData.lightPool) { sc.userData.lightPool.dispose(); sc.userData.lightPool = null; } },
   warm(s) {
     if (!this.ok || !s.scene || !s.camera) return;
     const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
@@ -507,6 +586,8 @@ class LightPool {
     this.lists = { dir: [], point: [], spot: [] };
     this._p = new THREE.Vector3();
   }
+  // its lights taken out of the scene (a pool with fewer is made in its place)
+  dispose() { for (const k of ["dir", "point", "spot"]) for (const s of this.slots[k]) { this.scene.remove(s.l); if (s.l.target) this.scene.remove(s.l.target); } }
   // every light of the screen's own: found each frame (a scene adds lights as it builds things), moved out of sight
   collect() {
     const L = this.lists; L.dir.length = L.point.length = L.spot.length = 0;
