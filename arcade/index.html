@@ -13280,14 +13280,15 @@ const HALL_WORLDS = [
   // the left wall's and the right's (the nebula's two clouds; the dusk's low sun and its high clouds; the storm's
   // lightning and its white squall; the vault's gold and its wheel; the archive's shelves and its stained glass; the
   // exam hall's arch and its moon); col, col2: its two colours; its two bosses (the chapters in order down the hall,
-  // the Proctor last, by the vault); sky: the place its skylight shows (the nebula; the dusk's great arc of cloud; the
-  // storm's lightning; the vault's gold-rimmed ceiling; the archive's lit arches; the exam hall's moon)
-  { id: "blaster", win: "win-blaster", sky: [0.15, 0.7], at: [[0.15, 0.5], [0.8, 0.52]], col: 0x35efff, col2: 0xa65fff, bosses: ["boss-1-t", "boss-2-t"], roar: ["roar_1", "roar_2"] },
-  { id: "racer", win: "win-racer", sky: [0.3, 0.72], at: [[0.3, 0.55], [0.94, 0.62]], col: 0xff8a3d, col2: 0xff3ad4, bosses: ["boss-3-t", "boss-4-t"], roar: ["roar_3", "roar_4"] },
-  { id: "boss", win: "win-boss", sky: [0.66, 0.75], at: [[0.66, 0.6], [0.37, 0.55]], col: 0xa66bff, col2: 0x35efff, bosses: ["boss-5-t", "boss-6-t"], roar: ["roar_5", "roar_6"] },
-  { id: "memory", win: "win-memory", sky: [0.6, 0.85], at: [[0.83, 0.47], [0.6, 0.5]], col: 0xffc04a, col2: 0xff8a3d, bosses: ["boss-7-t", "boss-8-t"], roar: ["roar_7", "roar_8"] },
-  { id: "guide", win: "win-guide", sky: [0.5, 0.85], at: [[0.5, 0.47], [0.93, 0.5]], col: 0xffb86a, col2: 0x4dffa6, bosses: ["boss-9-t", "boss-10-t"], roar: ["roar_9", "roar_10"] },
-  { id: "exam", win: "win-exam", sky: [0.72, 0.66], at: [[0.45, 0.55], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
+  // the Proctor last, by the vault); sky: the place its skylight shows (the nebula; the dusk's clouds; the storm; the
+  // vault's gold; the archive's lit arches; the exam hall's moon), held in the band of the panorama between its horizon
+  // and its stretched top (the owner, 2026-11-22: the skylights showed the top's smears, and rows past its edge)
+  { id: "blaster", win: "win-blaster", sky: [0.15, 0.65], at: [[0.15, 0.5], [0.8, 0.52]], col: 0x35efff, col2: 0xa65fff, bosses: ["boss-1-t", "boss-2-t"], roar: ["roar_1", "roar_2"] },
+  { id: "racer", win: "win-racer", sky: [0.8, 0.66], at: [[0.3, 0.55], [0.94, 0.62]], col: 0xff8a3d, col2: 0xff3ad4, bosses: ["boss-3-t", "boss-4-t"], roar: ["roar_3", "roar_4"] },
+  { id: "boss", win: "win-boss", sky: [0.66, 0.66], at: [[0.66, 0.6], [0.37, 0.55]], col: 0xa66bff, col2: 0x35efff, bosses: ["boss-5-t", "boss-6-t"], roar: ["roar_5", "roar_6"] },
+  { id: "memory", win: "win-memory", sky: [0.6, 0.68], at: [[0.83, 0.47], [0.6, 0.5]], col: 0xffc04a, col2: 0xff8a3d, bosses: ["boss-7-t", "boss-8-t"], roar: ["roar_7", "roar_8"] },
+  { id: "guide", win: "win-guide", sky: [0.5, 0.68], at: [[0.5, 0.47], [0.93, 0.5]], col: 0xffb86a, col2: 0x4dffa6, bosses: ["boss-9-t", "boss-10-t"], roar: ["roar_9", "roar_10"] },
+  { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.45, 0.55], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
 ];
 // the hall in metres: the first world's middle (z0) and the step between worlds, the pods' distance from the aisle's
 // middle, the walls, the end wall, the pod (glass radius, height), the most a boss may stand in one, how far each
@@ -13608,7 +13609,7 @@ class HallScene extends Scene3D {
     };
     // (each pane: its middle, its right and its up as one facing it sees them, its normal toward the one facing it)
     for (const sd of [-1, 1]) pane([sd * (HALL.wallX - 0.12), 3.5, z], [0, 0, sd < 0 ? -1 : 1], [0, 1, 0], [-sd, 0, 0], 4.4, 5.2, W.at[sd < 0 ? 0 : 1], [0.26, 0.5, 0]);
-    pane([0, 8.76, z], [1, 0, 0], [0, 0, -1], [0, -1, 0], 8.6, 9.2, W.sky, [0.3, 0.36, 1]);
+    pane([0, 8.76, z], [1, 0, 0], [0, 0, -1], [0, -1, 0], 8.6, 9.2, W.sky, [0.3, 0.22, 1]);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute("aN", new THREE.Float32BufferAttribute(nrm, 3));
@@ -13626,9 +13627,9 @@ class HallScene extends Scene3D {
       fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tSky; uniform float uOn; uniform vec3 uTint; uniform float uK; varying vec3 vW; varying vec3 vN; varying vec3 vS; varying vec3 vT; varying vec2 vUv; varying vec2 vAt; varying vec3 vSpan; varying float vDepth;
         void main(){
           vec3 d = normalize(vW - cameraPosition);
-          vec2 par = clamp(vec2(dot(d, vS), dot(d, vT)) / max(-dot(d, vN), 0.08), -2.5, 2.5) * vec2(0.035, 0.04); // (the depth: the far land shifts as the lens passes)
+          vec2 par = clamp(vec2(dot(d, vS), dot(d, vT)) / max(-dot(d, vN), 0.08), -2.5, 2.5) * vec2(0.035, 0.04) * mix(1.0, 0.35, vSpan.z); // (the depth: the far land shifts as the lens passes; a skylight, seen edge on, only a little)
           vec2 uv = vAt + (vUv - 0.5) * vSpan.xy + par;
-          vec3 c = texture2D(tSky, vec2(uv.x, clamp(uv.y, 0.02, 0.98))).rgb;
+          vec3 c = texture2D(tSky, vec2(uv.x, clamp(uv.y, mix(0.02, 0.3, vSpan.z), mix(0.98, 0.84, vSpan.z)))).rgb;
           c = c * c * (c * 0.305 + 0.695);
           vec3 col = mix(uTint * 0.03, c * mix(1.0, 1.45, vSpan.z) * uK, uOn); // (a window; a skylight a little brighter)
           float bars = (1.0 - vSpan.z) * max(smoothstep(0.004, 0.012, abs(fract(vUv.x * 3.0) - 0.5) - 0.484), 1.0 - smoothstep(0.003, 0.01, abs(vUv.y - 0.62) - 0.003)); // (a window's three panes across and its transom)
