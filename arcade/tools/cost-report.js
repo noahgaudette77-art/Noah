@@ -4,7 +4,7 @@
  * lags on their iPhone 17 Pro Max; every screen measured, its top five costs found, before and after each fix).
  *
  *   node arcade/tools/cost-report.js [--html index.html] [--only title,hub] [--tier 1] [--frames 6] [--engine chromium|webkit]
- *                                    [--poses 0.35,1] [--parts] [--json out.json] [--scale 0.875]
+ *                                    [--poses 0.35,1] [--parts] [--json out.json] [--scale 0.875] [--paint]
  *
  * For each screen (the page served, every asset loaded, 440 x 956 at 3x, touch: a phone, so the phone's tiers):
  *   the drawing size and pixel ratio; draw calls, triangles, lights (point/spot/directional) and shadow casters;
@@ -14,13 +14,15 @@
  *   CSS animations); and the frame's drawing time on this machine.
  * This machine draws in software: its milliseconds are not a phone's. What costs more here costs more there, roughly
  * in proportion: the parts are compared with each other and a build with the one before it, not with 16.7 ms.
+ * --paint (Chromium): the game held still for three seconds, what the page's own animations cost the browser while it
+ * stands (its CSS: style, layout, paint and raster, in ms a second, read from a trace), and how many paints a second.
  * --parts: the frame drawn again without each part of the scene (each of its top-level pieces, by name) and each layer
  * of the post-processing, one at a time, the game held still: what each one costs, the top five listed.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
-const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", "1"), FRAMES = +flag("frames", 6), ENGINE = flag("engine", "chromium"), PARTS = args.includes("--parts"), JSON_OUT = flag("json", ""), POSES_ARG = flag("poses", "0.35,1"), SCALE = +flag("scale", 0);
+const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", "1"), FRAMES = +flag("frames", 6), ENGINE = flag("engine", "chromium"), PARTS = args.includes("--parts"), PAINT = args.includes("--paint") && ENGINE === "chromium", JSON_OUT = flag("json", ""), POSES_ARG = flag("poses", "0.35,1"), SCALE = +flag("scale", 0);
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".glb": "model/gltf-binary", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".json": "application/json" };
 const SCREENS = [
   ["title", "go('title')"], ["hub", "go('hub')"], ["blaster", "go('blaster','3')"], ["racer", "go('racer','2')"],
@@ -114,6 +116,19 @@ function launch(engine) {
       const C1 = cdp ? Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value])) : null;
       const per = (k) => (C0 && C1 && cpu.n ? ((C1[k] - C0[k]) * 1000) / cpu.n : null);
       const main = cdp ? { style: per("RecalcStyleDuration"), layout: per("LayoutDuration"), script: per("ScriptDuration"), task: per("TaskDuration") } : null;
+      // (--paint) the game held still for three seconds: what the page's own animations cost while it stands
+      let paint = null;
+      if (PAINT) {
+        await page.evaluate(() => { window.__hold = true; });
+        await page.waitForTimeout(300);
+        await browser.startTracing(page, { categories: ["devtools.timeline", "disabled-by-default-devtools.timeline"] });
+        await page.waitForTimeout(3000);
+        const ev = JSON.parse((await browser.stopTracing()).toString()).traceEvents || [];
+        const sum = (names) => ev.filter((e) => names.includes(e.name) && e.ph === "X").reduce((a, e) => a + (e.dur || 0), 0) / 1000 / 3;
+        paint = { style: +sum(["UpdateLayoutTree", "RecalcStyle"]).toFixed(2), layout: +sum(["Layout"]).toFixed(2), paint: +sum(["Paint", "PaintImage"]).toFixed(2), raster: +sum(["RasterTask"]).toFixed(2), paints: +(ev.filter((e) => e.name === "Paint" && e.ph === "X").length / 3).toFixed(1) };
+        await page.evaluate(() => { window.__hold = false; const q = window.__queued; window.__queued = []; q.forEach((cb) => requestAnimationFrame(cb)); });
+        await page.waitForTimeout(300);
+      }
       // the game held still; a frame drawn alone and timed to its end, then the parts
       const r = await page.evaluate(async ([frames, parts]) => {
         window.__hold = true;
@@ -160,6 +175,7 @@ function launch(engine) {
       }, [FRAMES, PARTS]).catch((e) => ({ error: e.message.slice(0, 200) }));
       r.cpu = +cpu.ms.toFixed(2); r.cpuMax = +cpu.max.toFixed(1);
       if (main) { r.style = main.style === null ? null : +main.style.toFixed(2); r.layout = main.layout === null ? null : +main.layout.toFixed(2); r.task = main.task === null ? null : +main.task.toFixed(2); }
+      if (paint) r.paint = paint;
       r.errors = errors.slice(0, 2);
       out.push([pose === null ? name : name + "@" + pose, r]);
       console.error("measured", pose === null ? name : name + "@" + pose);
@@ -172,6 +188,7 @@ function launch(engine) {
   for (const [n, r] of out) {
     if (r.error) { console.log(n.padEnd(11), "ERROR", r.error); continue; }
     console.log(`${n.padEnd(11)} ${String(r.tier).padEnd(7)} ${String(r.pr).padEnd(5)} ${String(r.size).padEnd(10)} ${String(r.passes).padEnd(7)} ${String(r.mpx).padEnd(6)} ${String(r.draws).padEnd(6)} ${String(r.tris).padEnd(8)} ${(r.lights + " (" + r.point + "/" + r.spot + "/" + r.dir + ")").padEnd(13)} ${(r.shadows ? r.casters + " casters" : "off").padEnd(7)} ${String(r.texMB).padEnd(7)} ${String(r.rtMB).padEnd(6)} ${String(r.bufMB).padEnd(7)} ${String(r.ms).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(13)} ${r.style === undefined || r.style === null ? "-".padEnd(16) : ((r.style + r.layout).toFixed(2)).padEnd(16)} ${r.sizes}`);
+    if (r.paint) console.log(`            the page standing still (its CSS), a second: style ${r.paint.style} ms · layout ${r.paint.layout} ms · paint ${r.paint.paint} ms · raster ${r.paint.raster} ms · ${r.paint.paints} paints`);
     if (r.parts) console.log("            top costs: " + r.parts.slice(0, 5).map(([k, v]) => `${k} ${v} ms`).join(" · "));
     if (r.errors && r.errors.length) console.log("            errors: " + r.errors.join(" | "));
   }
