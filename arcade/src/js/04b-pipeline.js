@@ -686,6 +686,11 @@ function makePipeline(renderer, hdr, wantSamples) {
       if (noBloom && !raysOn) {
         u.tGlow.value = black;
         u.uGlowK.value = 0;
+      } else if (!raysOn && !opt.lens) {
+        // the glow is the bloom alone (no rays, no lens: no dirt, streaks or flare): the final pass reads the bloom where
+        // it is, and a half-size pass that only copied it is saved. (On a phone, where the lens is off, every frame.)
+        u.tGlow.value = up[0].texture;
+        u.uGlowK.value = bloomK;
       } else {
         const g = glow.uniforms;
         g.tBloom.value = noBloom ? black : up[0].texture;
