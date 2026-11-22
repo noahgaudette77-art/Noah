@@ -186,6 +186,7 @@ class HallScene extends Scene3D {
   buildRoom() {
     const s = this.scene, box = new THREE.BoxGeometry(1, 1, 1), W = HALL.wallX, Z1 = 9, Z2 = HALL.endZ, len = Z1 - Z2, zc = (Z1 + Z2) / 2, H = 8.8;
     this.floor = makeNeonFloor({ size: 240, cell: 3, line: 0x35efff, lineK: 0.5, base: 0x040110, glow: 0.3, gridAlpha: 0.5, pulse: this.calm ? 0 : 0.35, ripple: 0, streak: 0 });
+    this.floor.name = "floor";
     s.add(this.floor);
     const metal = new RacerBatch(), glow = new RacerBatch();
     for (const sd of [-1, 1]) {
@@ -231,6 +232,7 @@ class HallScene extends Scene3D {
           gl_FragColor = vec4(vCol * f * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)), 1.0); }`,
     }));
     this.rings.frustumCulled = false;
+    this.rings.name = "ring-lamps";
     s.add(this.rings);
     // each window's frame, and a thin line of its world's light round it
     HALL_WORLDS.forEach((Wd, wi) => {
@@ -248,7 +250,9 @@ class HallScene extends Scene3D {
     for (const sd of [-1, 1]) { metal.add(box, racerM(sd * 3.75, 3.35, Z + 0.35, 0.7, 6.7, 0.7), 0x161029); glow.add(box, racerM(sd * 3.38, 3.35, Z + 0.72, 0.05, 6.2, 0.05), 0xffc04a, 1.8); }
     this.metalMat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.75, roughness: 0.42 });
     this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
-    s.add(new THREE.Mesh(metal.build("color"), this.metalMat), new THREE.Mesh(glow.build("color"), this.glowMat));
+    const metalMesh = new THREE.Mesh(metal.build("color"), this.metalMat), glowMesh = new THREE.Mesh(glow.build("color"), this.glowMat);
+    metalMesh.name = "room-steel"; glowMesh.name = "room-lights"; // (named for tools/cost-report.js)
+    s.add(metalMesh, glowMesh);
     box.dispose();
   }
   // ---- each world: two pods (instanced down the hall), a window onto its sky behind each, its lamp
@@ -303,6 +307,7 @@ class HallScene extends Scene3D {
     }), n);
     this.glass.frustumCulled = false; // (an instanced mesh is culled by its first copy's bounds: the twelve span the hall)
     this.glass.renderOrder = 4;
+    this.glass.name = "cells-glass";
     // a pool of each boss's light on the floor round its cell (one draw)
     const pGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     this.pCol = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
@@ -323,6 +328,7 @@ class HallScene extends Scene3D {
         void main(){ float r = length(vUv - 0.5) * 2.0; float g = pow(max(0.0, 1.0 - r), 2.2); gl_FragColor = vec4(vCol * g * 0.5 * uK * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)), 1.0); }`,
     }), n);
     this.pools.frustumCulled = false;
+    this.pools.name = "cells-floor-glow";
     s.add(this.glass, this.pools);
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
     HALL_WORLDS.forEach((W, wi) => {
@@ -339,6 +345,7 @@ class HallScene extends Scene3D {
         const anchor = new THREE.Group();
         anchor.position.set(x, 0, z);
         anchor.rotation.y = -sd * (Math.PI / 2 - HALL.turn);
+        anchor.name = "bosses";
         s.add(anchor);
         const turner = new THREE.Group(); // (its boss stands on this: a slow turn, a twitch, over the anchor's facing)
         anchor.add(turner);
@@ -418,12 +425,14 @@ class HallScene extends Scene3D {
           gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
         }`,
     });
-    this.scene.add(new THREE.Mesh(geo, mat));
+    const win = new THREE.Mesh(geo, mat);
+    win.name = "windows+skylights";
+    this.scene.add(win);
     W._win = mat; // (its picture is put in when it has come: see takeArrivals)
   }
   // ---- the end of the hall: a warm lamp over it (the vault door, the cabinets and the trophy stand come as they arrive)
   buildEnd() {
-    this.endGroup = new THREE.Group(); // (the vault door, the cabinets, the stand and its cup, the shaft of light: not drawn while the haze hides them)
+    this.endGroup = new THREE.Group(); this.endGroup.name = "vault+cabinets+stand"; // (the vault door, the cabinets, the stand and its cup, the shaft of light: not drawn while the haze hides them)
     this.scene.add(this.endGroup);
     const lamp = new THREE.PointLight(0xffc77a, 0, 20, 2), Z = HALL.endZ;
     lamp.position.set(0, 6.2, Z + 9);

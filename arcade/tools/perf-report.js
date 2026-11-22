@@ -90,7 +90,7 @@ const SCREENS = [
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base + "/" + HTML + "#debug");
     await page.waitForFunction(() => window.__arcade && window.__arcade.GFX, null, { timeout: 60000 });
-    if (TIER !== null) await page.evaluate((t) => { const G = window.__arcade.GFX; if (G.setTier) { G.auto = false; G.setTier(+t, "report"); } }, TIER);
+    if (TIER !== null) await page.evaluate((t) => { const G = window.__arcade.GFX; if (G.setQuality) G.setQuality(["high", "medium", "low", "lowest"][+t]); else if (G.setTier) { G.auto = false; G.setTier(+t, "report"); } }, TIER); // (as Setup fixes it: the tier's full drawing size)
     await page.evaluate(`window.__arcade.${go}`);
     // wait for the screen's files and its first frames
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});

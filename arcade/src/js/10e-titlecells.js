@@ -412,6 +412,7 @@ function buildCellKit(hall) {
   kit.detailPer = one.detail.pos.length / 3;
   kit.detail = new THREE.Mesh(kitGeometry([copies.detail]), kit.steelMat);
   kit.detail.geometry.setDrawRange(0, 0);
+  [kit.steel.name, kit.glow.name, kit.screens.name, kit.detail.name, kit.laser.name] = ["cells-steel", "cells-lights", "cells-screens+plates", "cells-bolts+clamps", "lasers"]; // (named for tools/cost-report.js)
   for (const m of [kit.steel, kit.glow, kit.screens, kit.detail, kit.laser]) { m.frustumCulled = false; s.add(m); kit.meshes.push(m); }
   // ---- the cameras on the pillars, panning slowly (instanced: their bodies one draw, their lamps and lenses another)
   kit.placeCams = (t) => {
@@ -436,6 +437,7 @@ function buildCellKit(hall) {
     kit.camLamp = new THREE.InstancedMesh(kitGeometry([lamp.arrays()]), cellGlowMaterial(calm), n);
     kit.cams = [];
     for (let i = 0; i <= HALL_WORLDS.length; i++) for (const sx of [-1, 1]) kit.cams.push({ x: sx * (HALL.wallX - 1.02), y: 5.0, z: HALL.z0 + HALL.step / 2 - i * HALL.step + 0.28 * sx, ry: sx < 0 ? Math.PI / 2 : -Math.PI / 2, ph: (i * 1.7 + (sx > 0 ? 0.8 : 0)) % 6.283 });
+    kit.camBody.name = "cameras"; kit.camLamp.name = "cameras-lamps";
     for (const m of [kit.camBody, kit.camLamp]) { m.frustumCulled = false; s.add(m); kit.meshes.push(m); }
     // (each lamp blinks at its own moment)
     const ph = new Float32Array(n * 4);
@@ -458,13 +460,13 @@ function buildCellKit(hall) {
         vertexShader: "attribute vec4 aOff; uniform float uTime; varying vec2 vUv; varying float vA; varying float vDepth; void main(){ float k = fract(uTime * 0.28 + aOff.w); vec3 p = aOff.xyz + vec3(sin(aOff.w * 40.0 + uTime) * 0.15 * k, k * 2.1, 0.0); vec4 mv = viewMatrix * vec4(p, 1.0); mv.xy += position.xy * (0.35 + k * 1.1); vUv = uv; vA = smoothstep(0.0, 0.15, k) * (1.0 - k); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
         fragmentShader: `${GLSL_FOG_PARS} uniform float uK; varying vec2 vUv; varying float vA; varying float vDepth; void main(){ float r = length(vUv - 0.5) * 2.0; float a = pow(max(0.0, 1.0 - r), 1.8) * vA * 0.22 * uK * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)); gl_FragColor = vec4(vec3(0.72, 0.78, 0.86), a); }`,
       }));
-      kit.steam.frustumCulled = false; kit.steam.renderOrder = 6;
+      kit.steam.frustumCulled = false; kit.steam.renderOrder = 6; kit.steam.name = "steam";
       kit.steam.visible = !calm && GFX.extras !== false;
       s.add(kit.steam); kit.meshes.push(kit.steam);
     }
   }
   // ---- an electric arc now and then on a near cell
-  kit.arc = cellArc(); s.add(kit.arc); kit.meshes.push(kit.arc);
+  kit.arc = cellArc(); kit.arc.name = "arc"; s.add(kit.arc); kit.meshes.push(kit.arc);
   kit.arcT = 0;
   box.dispose(); plane.dispose(); torus.dispose(); dome.dispose(); bolt.dispose();
   // ---- each frame: the lights follow the hall's power (and INSERT COIN's surge); the near cells' small parts drawn
