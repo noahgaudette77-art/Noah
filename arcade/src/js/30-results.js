@@ -124,7 +124,7 @@ function renderResults(o, rank) {
           <div class="ra">${o.game === "memory" ? "" : "ANSWER: "}${esc(r.a)}</div>
           ${r.e ? `<div class="re">${esc(r.e)}</div>` : ""}
           <div class="rr">${esc(r.r)}</div></li>`).join("")}</ol>`
-        : run.answered ? `<h2 class="section-h" style="color:${COLORS.lime}">NO MISSES. FLAWLESS.</h2>` : ""}
+        : run.answered ? `<h2 class="section-h flawless">NO MISSES. FLAWLESS.</h2>` : ""}
       ${o.game !== "memory" && o.sel.chapters.length === 1 ? `<div class="actions">
         <button class="btn ghost" data-act="guide" style="--c:${COLORS.orange}">${icon("book")} READ STAGE ${o.sel.chapters[0]} NOTES</button>
       </div>` : ""}
