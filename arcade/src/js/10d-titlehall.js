@@ -246,12 +246,17 @@ class HallScene extends Scene3D {
     this.gCol = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
     this.gFlick = new THREE.InstancedBufferAttribute(new Float32Array(n), 1);
     this.gFlick.setUsage(THREE.DynamicDrawUsage);
+    this.gState = new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4); // (alarm, cracked, beaten, phase: see 10e-titlecells.js)
+    this.gFront = new THREE.InstancedBufferAttribute(new Float32Array(n), 1); // (the way its cell faces, toward the aisle: its crack is there)
     gGeo.setAttribute("aCol", this.gCol);
     gGeo.setAttribute("aFlick", this.gFlick);
-    this.glassU = Object.assign(fogUniforms(), { uK: { value: 1 }, uT: { value: 0 } });
+    gGeo.setAttribute("aState", this.gState);
+    gGeo.setAttribute("aFront", this.gFront);
+    this.crackTex = crackTexture();
+    this.glassU = Object.assign(fogUniforms(), { uK: { value: 1 }, uT: { value: 0 }, tCrack: { value: this.crackTex }, uCalm: { value: this.calm ? 1 : 0 } });
     this.glass = new THREE.InstancedMesh(gGeo, new THREE.ShaderMaterial({
       uniforms: this.glassU, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute vec3 aCol; attribute float aFlick; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth;
+      vertexShader: `attribute vec3 aCol; attribute float aFlick; attribute vec4 aState; attribute float aFront; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
         void main(){
           #ifdef USE_INSTANCING
           mat4 m = modelMatrix * instanceMatrix;
@@ -259,26 +264,33 @@ class HallScene extends Scene3D {
           mat4 m = modelMatrix;
           #endif
           vec4 w = m * vec4(position, 1.0);
-          vN = normalize(mat3(m) * normal); vV = cameraPosition - w.xyz; vY = position.y + 0.5; vCol = aCol; vFlick = aFlick;
+          vN = normalize(mat3(m) * normal); vV = cameraPosition - w.xyz; vY = position.y + 0.5; vCol = aCol; vFlick = aFlick; vState = aState; vFront = aFront; vXZ = position.xz;
           vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv;
         }`,
-      // (clear glass: a rim of its world's light where it turns from the lens, a column of light rising from its base,
-      // a slow band climbing it; a flicker when its boss stirs; fading into the hall's haze far off)
-      fragmentShader: `${GLSL_FOG_PARS} uniform float uK; uniform float uT; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth;
+      // (clear glass: a rim of its boss's light where it turns from the lens, a column of light rising from its base, a
+      // slow band climbing it, wisps of energy drifting up it, all breathing with the cell's pulse; a flicker when its
+      // boss stirs; in an alarm its light pulses red; a beaten boss's glass is a quieter green; a cracked pane's crack, toward the
+      // aisle, catches the light; fading into the hall's haze far off)
+      fragmentShader: `${GLSL_FOG_PARS} uniform float uK; uniform float uT; uniform float uCalm; uniform sampler2D tCrack; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
         void main(){
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
+          float ang = atan(vXZ.y, vXZ.x), ph = vState.w * 6.2832, t = uT * (1.0 - 0.7 * uCalm);
           float rim = pow(f, 2.6) * 0.75;
           float col = 0.025 + 0.16 * pow(1.0 - vY, 3.2) + 0.1 * pow(vY, 9.0);
           float band = (1.0 - smoothstep(0.0, 0.06, abs(fract(vY * 0.7 - uT * 0.045) - 0.5))) * 0.05;
+          float wisp = smoothstep(0.5, 1.0, sin(ang * 3.0 + vY * 9.0 - t * 1.1 + ph) * sin(ang * 5.0 - vY * 13.0 + t * 0.7)) * 0.11 * (1.0 - 0.6 * vY);
+          float pulse = 0.86 + 0.14 * sin(t * 1.3 + ph);
+          vec3 c = mix(mix(vCol, vec3(1.0, 0.1, 0.14), vState.x * (1.0 - uCalm) * (0.45 + 0.45 * sin(t * 6.5 + ph))), vec3(0.3, 1.0, 0.55), vState.z * 0.85) * mix(1.0, 0.72, vState.z);
+          float da = atan(sin(ang - vFront), cos(ang - vFront));
+          vec2 cu = vec2(da / 1.1 + 0.5, (vY - 0.5) / 0.6 + 0.5);
+          float crack = vState.y * step(0.0, cu.x) * step(cu.x, 1.0) * step(0.0, cu.y) * step(cu.y, 1.0) * texture2D(tCrack, cu).r;
           float haze = 1.0 - 0.8 * smoothstep(uFogNear, uFogFar * 1.25, vDepth);
-          gl_FragColor = vec4(vCol * (rim + col + band) * uK * (1.0 + vFlick) * haze, 1.0);
+          gl_FragColor = vec4((c * (rim + col + band + wisp) * pulse * (1.0 + vFlick) + mix(vec3(0.9, 0.97, 1.0), c, 0.35) * crack * 0.85) * uK * haze, 1.0);
         }`,
     }), n);
     this.glass.frustumCulled = false; // (an instanced mesh is culled by its first copy's bounds: the twelve span the hall)
     this.glass.renderOrder = 4;
-    // the chrome struts round each pod (four a pod: one draw), and a pool of each world's light on the floor (one draw)
-    this.struts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 8, 1), new THREE.MeshStandardMaterial({ color: 0x9aa3b8, metalness: 1, roughness: 0.25, envMapIntensity: 1.6 }), n * 4);
-    this.struts.frustumCulled = false;
+    // a pool of each boss's light on the floor round its cell (one draw)
     const pGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     this.pCol = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
     pGeo.setAttribute("aCol", this.pCol);
@@ -298,7 +310,7 @@ class HallScene extends Scene3D {
         void main(){ float r = length(vUv - 0.5) * 2.0; float g = pow(max(0.0, 1.0 - r), 2.2); gl_FragColor = vec4(vCol * g * 0.5 * uK * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)), 1.0); }`,
     }), n);
     this.pools.frustumCulled = false;
-    s.add(this.glass, this.struts, this.pools);
+    s.add(this.glass, this.pools);
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
     HALL_WORLDS.forEach((W, wi) => {
       const z = HALL.z0 - wi * HALL.step;
@@ -315,26 +327,37 @@ class HallScene extends Scene3D {
         anchor.position.set(x, 0, z);
         anchor.rotation.y = -sd * (Math.PI / 2 - HALL.turn);
         s.add(anchor);
+        const turner = new THREE.Group(); // (its boss stands on this: a slow turn, a twitch, over the anchor's facing)
+        anchor.add(turner);
         c.set(W.col).toArray(this.gCol.array, i * 3);
         c.set(W.col).lerp(new THREE.Color(W.col2), 0.25).toArray(this.pCol.array, i * 3);
         this.pools.setMatrixAt(i, M.compose(p.set(x, 0.02, z), q.identity(), sc.set(6.4, 1, 6.4)));
-        this.cells.push({ world: W, wi, name, sd, x, z, i, anchor, boss: null, mixer: null, head: null, acts: {}, yaw: 0, accum: 0, flick: 0, glowK: 1, mats: null, caps: [] });
+        this.cells.push({ world: W, wi, name, sd, x, z, i, anchor, turner, boss: null, mixer: null, head: null, acts: {}, yaw: 0, accum: 0, flick: 0, glowK: 1, mats: null, caps: [], twitch: 0, twitchIn: 3 + i * 0.7 });
       });
     });
     this.pools.instanceMatrix.needsUpdate = true;
-    this.podFrame(0.82, 4.25); // (the glass and struts stand on a guess at the pod's base and cap until its model has come)
+    // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
+    // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
+    this.kit = buildCellKit(this);
+    this.podMesh = this.kit.steel; // (what the tools wait for: the cells are in)
+    this.kit.states.forEach((st, i) => {
+      const cl = this.cells[i], ry = cl.anchor.rotation.y;
+      st.col.toArray(this.gCol.array, i * 3);
+      const lit = st.beaten ? st.col.clone().lerp(new THREE.Color(0x4dffa6), 0.85) : st.col; // (a beaten boss's cell is lit a neutralized green)
+      c.copy(lit).multiplyScalar(0.85).toArray(this.pCol.array, i * 3);
+      this.gState.array.set([st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], i * 4);
+      this.gFront.array[i] = Math.atan2(Math.cos(ry), Math.sin(ry));
+      cl.rimU = { col: { value: lit.clone() }, k: { value: 0 } }; // (its boss's rim and under-light: see cellRim)
+      cl.rimPh = st.phase * Math.PI * 2;
+      cl.state = st;
+    });
+    this.podFrame(CELL.baseTop, CELL.capY);
   }
-  // the glass and the struts of every pod, between the top of its base and the foot of its cap
+  // the glass of every cell, between the top of its plinth and the foot of its cap
   podFrame(y0, y1) {
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), R = HALL.podR;
-    for (const c of this.cells) {
-      this.glass.setMatrixAt(c.i, M.compose(p.set(c.x, (y0 + y1) / 2, c.z), q.identity(), sc.set(R, y1 - y0 + 0.1, R)));
-      for (let k = 0; k < 4; k++) {
-        const a = Math.PI / 4 + (k * Math.PI) / 2 + c.anchor.rotation.y;
-        this.struts.setMatrixAt(c.i * 4 + k, M.compose(p.set(c.x + Math.sin(a) * R * 1.03, (y0 + y1) / 2, c.z + Math.cos(a) * R * 1.03), q.identity(), sc.set(1, y1 - y0 + 0.1, 1)));
-      }
-    }
-    this.glass.instanceMatrix.needsUpdate = this.struts.instanceMatrix.needsUpdate = true;
+    for (const c of this.cells) this.glass.setMatrixAt(c.i, M.compose(p.set(c.x, (y0 + y1) / 2, c.z), q.identity(), sc.set(R, y1 - y0 + 0.1, R)));
+    this.glass.instanceMatrix.needsUpdate = true;
     this.baseTop = y0;
   }
   // a world's windows onto its sky, one draw: two in the walls behind its pods and a skylight over its aisle (on a
@@ -441,7 +464,6 @@ class HallScene extends Scene3D {
     if (!Assets.on || this.leaving || this.job) return;
     let piece = null;
     if (!this.sky) { const sky = Assets.sky("title-hall"); if (sky && sky.map) piece = this.skyPiece(sky); }
-    if (!piece && !this.podMesh) { const m = this.take("prop-pod"); if (m) piece = this.podPiece(m); }
     if (!piece) for (const W of HALL_WORLDS) if (!W._win.uniforms.tSky.value) { const img = Assets.ui(W.win); if (img) { piece = this.windowPiece(W, img); break; } }
     // (the vault door, the cabinets, the stand and its cup are the arcade floor's models too: the floor's own copies are
     // made ready when it asks for its set, once the glide has arrived: see showTitle)
@@ -513,17 +535,6 @@ class HallScene extends Scene3D {
     this.warmNew([this.endGroup]);
     this.cabs = objs[0];
   }
-  *podPiece(m) {
-    const frame = this.podBuild(m);
-    if (!frame) return;
-    yield;
-    yield* this.upload(m);
-    this.scene.add(this.podMesh);
-    this.warmNew([this.podMesh]);
-    const was = this.baseTop;
-    this.podFrame(frame[0], frame[1]); // (the glass and struts between its base and cap)
-    for (const c of this.cells) if (c.boss) c.boss.position.y += this.baseTop - was; // (a boss already in stands on the base as it really is)
-  }
   // the two cabinets either side of the vault, one model drawn twice in one call; on each screen, a world's sky
   cabinets(m) {
     const made = modelGeometry(m);
@@ -561,43 +572,6 @@ class HallScene extends Scene3D {
     });
     return objs;
   }
-  // the pod's own base and cap from its model (one geometry, drawn twelve times in one call); its middle, the glass
-  // and struts, is the hall's own. The model is set to the pod's glass radius and its cap lifted to the pod's height,
-  // so a tall pod keeps its base and cap's own proportions.
-  podBuild(m) {
-    const made = modelGeometry(m);
-    if (!made) return null;
-    const g = made.geo, P = g.attributes.position, I = g.index, bb = made.box, h = bb.max.y - bb.min.y, cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
-    const lo = 0.25, hi = 0.78; // (the model's base and cap, as a fraction of its height: its middle is the glass and struts)
-    const cy = (t) => (P.getY(I.getX(t)) + P.getY(I.getX(t + 1)) + P.getY(I.getX(t + 2))) / 3;
-    let rMid = 0;
-    for (let t = 0; t < I.count; t += 3) { const y = (cy(t) - bb.min.y) / h; if (y > 0.3 && y < 0.7) for (let j = 0; j < 3; j++) { const k = I.getX(t + j); rMid = Math.max(rMid, Math.hypot(P.getX(k) - cx, P.getZ(k) - cz)); } }
-    const s = HALL.podR / Math.max(0.05 * h, rMid || 0.33 * h), lift = HALL.podH - h * s; // (metres a model unit; how far the cap is raised)
-    const NO = g.attributes.normal, UV = g.attributes.uv, pos = [], nor = [], uv = [];
-    for (let t = 0; t < I.count; t += 3) {
-      const y = (cy(t) - bb.min.y) / h;
-      if (y >= lo && y <= hi) continue;
-      for (let j = 0; j < 3; j++) {
-        const k = I.getX(t + j);
-        pos.push((P.getX(k) - cx) * s, (P.getY(k) - bb.min.y) * s + (y > hi ? lift : 0), (P.getZ(k) - cz) * s);
-        nor.push(NO.getX(k), NO.getY(k), NO.getZ(k));
-        if (UV) uv.push(UV.getX(k), UV.getY(k));
-      }
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-    if (uv.length) geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-    geo.computeBoundingSphere();
-    g.dispose();
-    tuneModel(m, { env: 1.5, glow: 2.0 });
-    this.podMesh = new THREE.InstancedMesh(geo, made.mat, this.cells.length);
-    this.podMesh.frustumCulled = false;
-    const q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
-    for (const c of this.cells) c.podM = new THREE.Matrix4().compose(c.anchor.position, q.setFromAxisAngle(up, c.anchor.rotation.y), one);
-    this.podSeen = "";
-    return [lo * h * s, hi * h * s + lift];
-  }
   // a boss into its pod: made one skinned mesh, sized to stand in the glass, its idle started from its own moment;
   // the pod flares as it comes in. (The Probate Tollgate has no skeleton: its hinged parts sway by code.)
   *bossPiece(c, m) {
@@ -607,6 +581,7 @@ class HallScene extends Scene3D {
     else { rigModel(m, { tree: { forearmL: "shoulderL", forearmR: "shoulderR", shoulderL: "body", shoulderR: "body" } }); c.rig = m.parts; c.rest = {}; for (const n of ["body", "shoulderL", "shoulderR", "forearmL", "forearmR"]) if (m.parts[n]) c.rest[n] = m.parts[n].rotation.clone(); }
     yield;
     c.mats = tuneModel(m, { env: 1.8, glow: 1.1 });
+    cellRim(c.mats, c.rimU); // (lit from inside its cell: its rim and its underside in its own colour)
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
     const k = Math.min(HALL.bossH / Math.max(1e-3, size.y), HALL.bossW / Math.max(1e-3, size.x, size.z));
@@ -626,7 +601,7 @@ class HallScene extends Scene3D {
       c.mixer.update(0);
     }
     c.phase = Math.random() * 10;
-    c.anchor.add(root);
+    c.turner.add(root);
     c.boss = root;
     this.warmNew([c.anchor]);
     c.ready = true;
@@ -683,6 +658,7 @@ class HallScene extends Scene3D {
     }
     this.glassU.uT.value = this.t;
     if (!this.leaving) this.glassU.uK.value = 0.45 + 0.55 * this.power;
+    this.kit.update(this, dt, this.camera.position);
     if (this.screens) for (const m of this.screens) m.uniforms.uT.value = this.t;
     if (this.cup) this.cup.rotation.y += dt * 0.35 * (this.calm ? 0.4 : 1);
     this.shaftU.uK.value = this.power * (1 + this.endLamp.boost * 1.5);
@@ -703,9 +679,17 @@ class HallScene extends Scene3D {
       if (!show) continue;
       const near = d < HALL.near;
       for (const x of c.caps) x.visible = near; // (past 22 m the joint caps are not drawn)
-      // its lights: dim in stasis, flaring as it stirs
+      // its lights: dim in stasis, flaring as it stirs; lit from inside its cell in its own colour, breathing with the
+      // cell's pulse (quieter for a beaten boss), flaring as it stirs
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
+      c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
+      // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
+      if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
+      c.twitch = Math.max(0, c.twitch - dt * 3.5);
+      c.turner.rotation.y = Math.sin(this.t * 0.15 + c.rimPh) * (this.calm ? 0.04 : 0.13);
+      c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 38) * 0.05;
+      c.turner.position.x = c.twitch * Math.sin(c.twitch * 51) * 0.04;
       if (!near && !extras) continue; // (at LOW a far boss holds its pose)
       c.accum += dt;
       if (!near && c.accum < 0.1) continue;
@@ -718,7 +702,7 @@ class HallScene extends Scene3D {
           if (!c.headAnim && c.headRest) c.head.quaternion.copy(c.headRest);
           const v = this._v || (this._v = new THREE.Vector3()), q = this._q || (this._q = new THREE.Quaternion()), axis = this._ax || (this._ax = new THREE.Vector3());
           c.boss.getWorldPosition(v);
-          let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y;
+          let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
           want = Math.atan2(Math.sin(want), Math.cos(want));
           c.yaw += (clamp(want, -0.6, 0.6) * (c.headK || 1) - c.yaw) * Math.min(1, step * 2.2);
           c.head.parent.getWorldQuaternion(q).invert();
@@ -728,12 +712,6 @@ class HallScene extends Scene3D {
       } else if (c.rig) this.sway(c, this.t);
     }
     if (flicked) this.gFlick.needsUpdate = true;
-    // the pods' bases and caps: only those near enough and in the picture go into their draw
-    if (this.podMesh) {
-      let seen = "", k = 0;
-      for (const c of this.cells) { sph.center.set(c.x, 2.5, c.z); sph.radius = 3.2; c.podIn = Math.hypot(c.x - cam.x, c.z - cam.z) < 64 && f.intersectsSphere(sph); seen += c.podIn ? "1" : "0"; }
-      if (seen !== this.podSeen) { this.podSeen = seen; for (const c of this.cells) if (c.podIn) this.podMesh.setMatrixAt(k++, c.podM); this.podMesh.count = k; this.podMesh.instanceMatrix.needsUpdate = true; }
-    }
     // the end of the hall: drawn once the haze gives it up
     this.endGroup.visible = cam.z - HALL.endZ < 62;
     // now and then a boss near the lens rattles its pod (not at LOW, not with reduced effects)
@@ -775,6 +753,8 @@ class HallScene extends Scene3D {
   }
   dispose() {
     if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+    if (this.kit) this.kit.atlas.dispose();
+    if (this.crackTex) this.crackTex.dispose();
     for (const t of this.texs || []) t.dispose();
     for (const m of this.taken || []) hallRelease(m); // (before the scene's own dispose: see hallRelease)
     super.dispose();

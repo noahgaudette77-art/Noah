@@ -21,7 +21,7 @@ const SETS = {
   // The title (served): the containment hall. Its painted vault, the six worlds' windows, the stasis pod, the end of the
   // hall (vault door, cabinets, trophy stand), then the twelve captured bosses, nearest the door first. (Its sound is
   // titlesound, asked for after the first tap; the bosses' distant growls, titleroar, after that.)
-  title: ["sky:title-hall", "ui:win-blaster", "ui:win-racer", "ui:win-boss", "ui:win-memory", "ui:win-exam", "ui:win-guide", "model:prop-pod", "model:prop-vault", "model:prop-cabinet", "model:prop-stand", "model:prop-trophy",
+  title: ["sky:title-hall", "ui:win-blaster", "ui:win-racer", "ui:win-boss", "ui:win-memory", "ui:win-exam", "ui:win-guide", "model:prop-vault", "model:prop-cabinet", "model:prop-stand", "model:prop-trophy",
     "model:boss-1-t", "model:boss-2-t", "model:boss-3-t", "model:boss-4-t", "model:boss-5-t", "model:boss-6-t", "model:boss-7-t", "model:boss-8-t", "model:boss-9-t", "model:boss-10-t", "model:boss-11-t", "model:boss-all-t"],
   titlesound: ["sfx:core", "sfx:voice", "music:title", "music:title-b"],
   titleroar: ["sfx:bosses"],
