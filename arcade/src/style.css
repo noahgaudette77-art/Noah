@@ -1912,3 +1912,9 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 @media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease; transform: none; } }
 html.calm .insert-coin { animation: none; }
 @media (max-width: 340px) { .logo-kicker { white-space: normal; } }
+
+/* ---- The FPS readout, to be read on a phone and sent as a picture (the owner, 2026-11-22): the body face, larger, its
+   lines free to wrap, a graph of the last two seconds of frames between them (see 99-main.js) */
+#fps { font: 13px/1.2 var(--font-body); letter-spacing: 0.03em; white-space: normal; text-align: left; max-width: min(340px, calc(100vw - 20px)); padding: 6px 8px; background: rgba(5, 1, 20, 0.97); }
+#fps .fg { display: block; width: 180px; height: 48px; margin: 4px 0; }
+#fps .f3 { color: #ffe14f; }
