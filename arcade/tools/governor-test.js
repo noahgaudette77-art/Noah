@@ -13,7 +13,8 @@
  *   slow      frames of 40 ms: a step every 3.5 s, the drawing size first, then the effects, then the lights, to the last
  *   recover   steady 60 fps from the last step: a step back up every 7.5 s, to SMOOTH and no higher
  *   lowpower  frames held at exactly 30 fps: two steps down change nothing, so it is the device's cap; back to SMOOTH,
- *             named in the readout, and held there; at 60 again the cap lifts without a step down
+ *             named in the readout, and held there, through a screen's loading too; at 60 again the cap lifts without a
+ *             step down. Under a cap with a load too much even for 30: down until 30 holds, and held at that step
  *   catching  60 fps with one frame in eight at 50 ms: a step down (the frames catch)
  *   busy      the same hitches on frames that sent a new picture to the chip (a model arriving): no step
  *   relapse   a step up that runs late within 8 s is tried again only after 15 steady seconds, not 5
@@ -43,6 +44,18 @@ function inPage() {
     while (t < secs * 1000) {
       const sp = every && ++k % every === 0, m = sp ? spike : ms + (j ? (Math.random() * 2 - 1) * j : 0);
       if (sp && busy) G.renderer.info.memory.textures++; // (as if that frame had sent a new picture to the chip)
+      window.__T += m; t += m;
+      G.perfTick(m);
+      if (G.perf.rung !== lastRung) { path.push({ at: +(t / 1000).toFixed(1), rung: G.perf.rung }); lastRung = G.perf.rung; }
+    }
+    return path;
+  };
+  // frames whose time depends on the step the governor is on (byRung[rung], else ms): a load that lighter steps lift
+  window.__feedBy = (byRung, ms, secs, j = 0) => {
+    const G = window.__arcade.GFX, path = [];
+    let t = 0, lastRung = G.perf.rung;
+    while (t < secs * 1000) {
+      const m = (byRung[G.perf.rung] !== undefined ? byRung[G.perf.rung] : ms) + (j ? (Math.random() * 2 - 1) * j : 0);
       window.__T += m; t += m;
       G.perfTick(m);
       if (G.perf.rung !== lastRung) { path.push({ at: +(t / 1000).toFixed(1), rung: G.perf.rung }); lastRung = G.perf.rung; }
@@ -125,9 +138,17 @@ function inPage() {
   ok(/LOW POWER/.test(s.label), "lowpower: the readout names it", s.label);
   p = await feed(33.33, 20, 0.2);
   ok(p.length === 0, "lowpower: held, no more steps while it lasts", p);
+  p = await feed(33.33, 8, 0.2, 6, 70);
+  s = await st();
+  ok(s.capped && p.length === 0, "lowpower: held through a screen's loading (a frame in six at 70 ms)", { capped: s.capped, path: p });
   p = await feed(16.67, 12, 0.3);
   s = await st();
   ok(!s.capped && s.rung === 0 && p.length === 0 && !/LOW POWER/.test(s.label), "lowpower: off again (60 fps): the cap lifts, no step down", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  // lowpower, heavy: under the cap, the first two steps too much even for 30 (45 ms a frame), the rest holding 30
+  await reset();
+  p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 22, 0.3));
+  s = await st();
+  ok(s.capped && s.rung === 2 && p.length === 5 && p[4].rung === 2, "lowpower, heavy: down until 30 holds, two more, then back to the sharpest step that held it", { rung: s.rung, capped: s.capped, path: p });
   // catching
   await reset();
   p = await feed(16.67, 6, 0.3, 8, 50);

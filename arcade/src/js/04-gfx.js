@@ -106,7 +106,8 @@ const GFX = {
   // is not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving),
   // and the one after it, are left out, and so are the first seconds of a new screen or a new step.
   // A frame rate held at exactly 30 that two steps down do not change is the device's own cap (Low Power Mode, or a
-  // phone grown hot): it is named in the readout, and the picture goes back to where AUTO started until it lifts.
+  // phone grown hot): it is named in the readout, and the picture goes back to the sharpest step that held 30 (on a
+  // phone, SMOOTH) and stays there, a new screen's loading and all, until the cap lifts.
   // Setup's fixed tiers stay put; Reduced effects is its own switch. (Automated browsers keep where they start.)
   scale: 1, // the drawing size, a share of the tier's (see outPR)
   lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
@@ -156,13 +157,16 @@ const GFX = {
     const q = (f) => w[Math.min(w.length - 1, Math.floor(f * w.length))], med = q(0.5), p10 = q(0.1), p90 = q(0.9), long = w.filter((x) => x > F * 1.5).length / w.length;
     P.fps = 1000 / med;
     // held at exactly 30: the device's own cap (Low Power Mode), or a load just over a frame. Two steps down tell them
-    // apart: a load lifts off 30 with them; a cap does not, and the picture goes back to where AUTO started.
+    // apart: a load lifts off 30 with them; a cap does not, and the picture goes back to the sharpest step that held 30.
+    // Held, it stays held through a new screen's loading: only frames well under 30's (the cap lifted) or well over it
+    // (a load too much even for 30) let go of it.
     const locked = med > 31 && med < 36 && p10 > 29 && p90 < 38;
-    if (!locked) {
-      P.lockFrom = -1;
-      if (P.capped) { P.capped = false; P.changedAt = now; P.why = "the 30 fps cap lifted"; return; } // (its first seconds at the new rate are looked at afresh)
-    } else if (P.capped) return;
-    else { if (P.lockFrom < 0) P.lockFrom = P.rung; if (P.rung - P.lockFrom >= 2) { P.capped = true; this.setRung(P.start, "held at 30 fps: the device's cap (low power mode?)"); return; } }
+    if (P.capped) {
+      if (med < F * 1.5) { P.capped = false; P.lockFrom = -1; P.changedAt = now; P.why = "the 30 fps cap lifted"; return; } // (its first seconds at the new rate are looked at afresh)
+      if (med <= 36) return;
+      P.capped = false; P.lockFrom = -1; // (slower than the cap itself: slow frames, as below)
+    } else if (!locked) P.lockFrom = -1;
+    else { if (P.lockFrom < 0) P.lockFrom = P.rung; if (P.rung - P.lockFrom >= 2) { P.capped = true; this.setRung(P.lockFrom, "held at 30 fps: the device's cap (low power mode?)"); return; } }
     const slow = med > F * 1.09 || long > 0.1;
     if (slow) {
       P.okSince = 0;
