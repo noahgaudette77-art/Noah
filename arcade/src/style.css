@@ -1901,3 +1901,6 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 /* Results: a flawless run's line reads at once: bright, on a plate of its own over the floor's grid */
 .section-h.flawless { display: inline-block; color: #8dffc8; padding: 8px 12px 7px; background: rgba(4, 22, 14, 0.9); border: 1px solid rgba(77, 255, 166, 0.5); box-shadow: 0 0 14px -4px rgba(77, 255, 166, 0.6); text-shadow: 0 0 8px rgba(77, 255, 166, 0.55), 0 1px 0 #000; }
 .section-h.flawless::after { display: none; }
+/* the lives in every game's HUD: the hearts and shields drawn from their models were dark at their size: lifted */
+.lives .gico { filter: brightness(1.35) saturate(1.2) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)); }
+.lives .lost .gico { filter: grayscale(1) brightness(0.7); }
