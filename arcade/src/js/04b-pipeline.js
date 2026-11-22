@@ -717,7 +717,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uFlicker.value = o.calm || !opt.scan ? 1 : 0.99 + 0.01 * Math.sin(o.t * 12); // a slow breath, well under 3 Hz
       u.uGrain.value = opt.grain ? 1 : 0;
       u.uAberr.value = o.ab;
-      u.uEdge.value = opt.ca ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
+      u.uEdge.value = opt.ca && opt.fringe !== false ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
       u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uSS.value = ss;
       u.uFlash.value = o.flash;

@@ -46,11 +46,13 @@ const GFX = {
   // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at HIGH no
   // lens streaks, six bloom levels), and at MEDIUM, where a phone starts, no multisampling at all (the final pass's
   // edge smoothing, FXAA, is one cheap pass), no god rays, no contact shadows, four bloom levels.
+  // (2026-11-22, smoothness first: nor the lens's resting fringe, a pixel's split in the far corners of a 3x screen
+  // that the eye cannot find there, two more reads of the picture for nearly every pixel. A hit still parts the colours.)
   PHONE: [
-    { samples: 2, mirror: 0, lens: false, levels: 6 },
-    { samples: 0, mirror: 0, rays: false, shadows: false, levels: 4 },
-    { mirror: 0, shadows: false },
-    { mirror: 0, shadows: false },
+    { samples: 2, mirror: 0, lens: false, levels: 6, fringe: false },
+    { samples: 0, mirror: 0, rays: false, shadows: false, levels: 4, fringe: false },
+    { mirror: 0, shadows: false, fringe: false },
+    { mirror: 0, shadows: false, fringe: false },
   ],
   tier: 0,
   auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
@@ -59,7 +61,7 @@ const GFX = {
   // the effects as drawn: the player's own switches, less what the tier leaves out
   eopt() {
     const T = this.TIERS[this.tier], o = this.opt;
-    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen, shadows: o.shadows !== false && T.shadows !== false });
+    return Object.assign({}, o, { ao: o.ao !== false && T.ao, dof: o.dof !== false && T.dof, mblur: T.mblur, lens: o.lens && T.lens, beams: o.beams && T.rays, wet: o.wet && T.mirror > 0, sharpen: T.sharpen, shadows: o.shadows !== false && T.shadows !== false, fringe: T.fringe !== false });
   },
   // how many lights the current scene has on (for the readout: each one is reckoned for every lit pixel)
   lightCount() {
