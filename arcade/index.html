@@ -13943,7 +13943,7 @@ class HallScene extends Scene3D {
     if (!this.leaving) this.glassU.uK.value = 0.45 + 0.55 * this.power;
     this.kit.update(this, dt, this.camera.position);
     // (the rings fade under the top row: where its read-outs end, in the picture's height from -1 to 1)
-    const top = this._topEl || (this._topEl = document.querySelector(".scr-title .title-top"));
+    const top = this._topEl && this._topEl.isConnected ? this._topEl : (this._topEl = document.querySelector(".scr-title .title-top")); // (found again if the title's page was made again)
     if (top && top.isConnected && (this._topT = (this._topT || 0) - dt) <= 0) { this._topT = 0.5; const b = top.getBoundingClientRect().bottom; this.ringU.uTop.value = 1 - (2 * (b + 8)) / Math.max(1, window.innerHeight); }
     if (this.screens) for (const m of this.screens) m.uniforms.uT.value = this.t;
     if (this.cup) this.cup.rotation.y += dt * 0.35 * (this.calm ? 0.4 : 1);
@@ -14039,8 +14039,9 @@ class HallScene extends Scene3D {
   }
   dispose() {
     if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
-    if (this.kit) this.kit.atlas.dispose();
-    if (this.crackTex) this.crackTex.dispose();
+    // (the cells' pictures let go of, and the materials kept a while for their shaders no longer holding them)
+    if (this.kit) { this.kit.atlas.dispose(); this.kit.screens.material.uniforms.tAtlas.value = null; }
+    if (this.crackTex) { this.crackTex.dispose(); this.glassU.tCrack.value = null; }
     for (const t of this.texs || []) t.dispose();
     for (const m of this.taken || []) hallRelease(m); // (before the scene's own dispose: see hallRelease)
     super.dispose();
@@ -14086,15 +14087,47 @@ class KitBatch {
     g.dispose();
     return this;
   }
-  build() {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(this.pos, 3));
-    g.setAttribute("normal", new THREE.Float32BufferAttribute(this.nor, 3));
-    g.setAttribute("uvM", new THREE.Float32BufferAttribute(this.uvm, 2));
-    for (const k in this.attrs) g.setAttribute(k, new THREE.Float32BufferAttribute(this.x[k], this.attrs[k]));
-    g.computeBoundingSphere();
-    return g;
+  // its pieces as typed arrays, by attribute (with each attribute's size)
+  arrays() {
+    const a = { position: [new Float32Array(this.pos), 3], normal: [new Float32Array(this.nor), 3], uvM: [new Float32Array(this.uvm), 2] };
+    for (const k in this.attrs) a[k] = [new Float32Array(this.x[k]), this.attrs[k]];
+    return a;
   }
+}
+// One cell's pieces (made once, in the cell's own place) copied to every cell: moved and turned to it (mats), with its
+// own values where per(i) gives them (its light, its state, its row of pictures). The made geometry is the costly part
+// of building the cells: it is done for one, and the rest are copies into arrays made once at their full size.
+function kitCopies(tpl, mats, per) {
+  const src = tpl.arrays(), n = src.position[0].length / 3, N = n * mats.length, out = {};
+  for (const k in src) out[k] = [new Float32Array(N * src[k][1]), src[k][1]];
+  const P = src.position[0], No = src.normal[0], OP = out.position[0], ON = out.normal[0];
+  mats.forEach((m, ci) => {
+    const e = m.elements, base = ci * n, ov = per ? per(ci) : {};
+    for (let i = 0; i < n; i++) {
+      const j = i * 3, o = (base + i) * 3, x = P[j], y = P[j + 1], z = P[j + 2], nx = No[j], ny = No[j + 1], nz = No[j + 2];
+      OP[o] = e[0] * x + e[4] * y + e[8] * z + e[12]; OP[o + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; OP[o + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+      ON[o] = e[0] * nx + e[4] * ny + e[8] * nz; ON[o + 1] = e[1] * nx + e[5] * ny + e[9] * nz; ON[o + 2] = e[2] * nx + e[6] * ny + e[10] * nz; // (turned only: no scale)
+    }
+    for (const k in src) {
+      if (k === "position" || k === "normal") continue;
+      const [arr, sz] = out[k], v = ov[k];
+      if (v === undefined) arr.set(src[k][0], base * sz);
+      else for (let i = 0; i < n; i++) for (let c = 0; c < sz; c++) arr[(base + i) * sz + c] = sz > 1 ? v[c] : v;
+    }
+  });
+  return out;
+}
+// arrays (from kitCopies or KitBatch.arrays) made one geometry, in order
+function kitGeometry(list) {
+  const g = new THREE.BufferGeometry();
+  for (const k in list[0]) {
+    const sz = list[0][k][1], all = new Float32Array(list.reduce((t, a) => t + a[k][0].length, 0));
+    let o = 0;
+    for (const a of list) { all.set(a[k][0], o); o += a[k][0].length; }
+    g.setAttribute(k, new THREE.BufferAttribute(all, sz));
+  }
+  g.computeBoundingSphere();
+  return g;
 }
 
 // The cells' steel: a lit, reflecting metal (the hall's painted vault in it) with patterns drawn on it by the piece's
@@ -14112,14 +14145,14 @@ function cellSteelMaterial() {
         vec3 haz = mix(vec3(0.95, 0.66, 0.05), vec3(0.03, 0.028, 0.035), st);
         float sl = fract(vUvM.y * 26.0);
         vec3 gri = mix(vec3(0.015, 0.016, 0.02), vec3(0.5, 0.53, 0.6), smoothstep(0.6, 0.72, sl) * (1.0 - smoothstep(0.84, 0.96, sl)));
-        float seam = 1.0 - 0.5 * (1.0 - smoothstep(0.004, 0.016, abs(fract(vUvM.x * 0.7 + 0.25) - 0.5) - 0.49));
+        float seam = 1.0 - 0.5 * smoothstep(0.0, 0.008, abs(fract(vUvM.x * 0.7 + 0.25) - 0.5) - 0.49);
         diffuseColor.rgb = mix(diffuseColor.rgb * seam, haz, pHaz);
         diffuseColor.rgb = mix(diffuseColor.rgb, gri, pGri);
         diffuseColor.rgb *= 1.0 - 0.78 * pRec;`)
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);");
   };
-  m.customProgramCacheKey = () => "cell-steel-1";
+  m.customProgramCacheKey = () => "cell-steel-2";
   return m;
 }
 
@@ -14203,7 +14236,8 @@ function cellAtlas(states) {
     tex.needsUpdate = true;
   };
   draw();
-  if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('18px "Press Start 2P"')]).then(draw, () => {});
+  const F = '18px "Press Start 2P"';
+  if (document.fonts && document.fonts.load && !(document.fonts.check && document.fonts.check(F))) document.fonts.load(F).then(draw, () => {});
   return tex;
 }
 
@@ -14266,10 +14300,10 @@ function cellRimCompile(sh) {
 
 // An electric arc: a jagged line of light (two crossed ribbons along it), remade where it strikes
 function cellArc() {
-  const N = 12, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 4 * 3 * 3 * 2), across = new Float32Array(N * 4 * 3 * 2);
+  const N = 12, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 2 * 6 * 3), across = new Float32Array(N * 2 * 6); // (each jag: two ribbons, six corners each)
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute("aAcross", new THREE.BufferAttribute(across, 1));
-  for (let i = 0; i < across.length; i += 6) across.set([-1, 1, 1, -1, 1, -1], i);
+  for (let i = 0; i < across.length; i += 6) across.set([-1, 1, 1, -1, -1, 1], i); // (a0 b1 a1, a0 b0 b1: the sides they lie on)
   const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
     uniforms: { uK: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "attribute float aAcross; varying float vA; void main(){ vA = aAcross; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
@@ -14308,17 +14342,19 @@ function buildCellKit(hall) {
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
   const at = (x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) => M.compose(V.set(x, y, z), Q.setFromEuler(new THREE.Euler(rx, ry, rz, "YXZ")), new THREE.Vector3(sx, sy, sz)).clone(); // (laid by rx, then turned by ry)
   const oct = (r0, r1, h) => new THREE.CylinderGeometry(r1, r0, h, 8, 1, false, Math.PI / 8); // (a flat face toward the front)
-  const steel = new KitBatch({ color: 3, aPat: 1 }), detail = new KitBatch({ color: 3, aPat: 1 }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens = new KitBatch({ aRow: 1, aState: 4 });
-  const GUN = [0.17, 0.185, 0.22], DARK = [0.09, 0.1, 0.12], BAR = [0.26, 0.28, 0.33], BRIGHT = [0.55, 0.58, 0.66], PIPE = [0.3, 0.31, 0.36], WHITE = [1, 1, 1];
+  const steel = new KitBatch({ color: 3, aPat: 1 }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }); // (the hall's own pieces)
+  const one = { steel: new KitBatch({ color: 3, aPat: 1 }), detail: new KitBatch({ color: 3, aPat: 1 }), glow: new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens: new KitBatch({ aRow: 1, aState: 4 }) }; // (one cell's)
+  const GUN = [0.105, 0.115, 0.135], DARK = [0.055, 0.06, 0.072], BAR = [0.16, 0.17, 0.2], BRIGHT = [0.33, 0.35, 0.4], PIPE = [0.18, 0.19, 0.22], WHITE = [1, 1, 1];
   const box = new THREE.BoxGeometry(1, 1, 1), plane = new THREE.PlaneGeometry(1, 1);
   const torus = new THREE.TorusGeometry(1.24, 0.032, 6, 40).rotateX(Math.PI / 2), dome = new THREE.SphereGeometry(0.1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2);
   const bolt = new THREE.CylinderGeometry(0.045, 0.05, 0.06, 6), pipe = (r) => new THREE.CylinderGeometry(r, r, 1, 8, 1, true);
-  // ---- one cell, in its own place (its front, +z, toward the aisle and the door): its steel and its small parts
-  const cellParts = (c, st, W) => {
-    const toW = new THREE.Matrix4().compose(c.anchor.position, Q.setFromAxisAngle(up, c.anchor.rotation.y), S1).clone();
-    const put = (b, geo, local, v, su, sv, smooth) => b.add(geo, new THREE.Matrix4().multiplyMatrices(toW, local), v, su, sv, smooth);
+  // ---- one cell, in its own place (its front, +z, toward the aisle and the door): its steel, its small parts, its
+  // lights, its plate and its screen. Made once: every cell is a copy of it (see kitCopies)
+  {
+    const { steel, detail, glow, screens } = one;
+    const put = (b, geo, local, v, su, sv, smooth) => b.add(geo, local, v, su, sv, smooth);
     const g = (pat, col) => ({ color: col || GUN, aPat: pat });
-    const L = { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase] };
+    const L = { aCol: [0, 0, 0], aState: [0, 0, 0, 0] }; // (each cell's own, put in as it is copied)
     const apo = (r) => r * Math.cos(Math.PI / 8); // (an octagon's flat faces stand this far out)
     // the plinth: a floor plate, the body (a kick plate of hazard paint round its foot), a chamfer up to the glass
     put(steel, oct(1.75, 1.72, CELL.floor), at(0, CELL.floor / 2, 0), g(0, DARK), 11, 0.1);
@@ -14328,7 +14364,7 @@ function buildCellKit(hall) {
     put(steel, new THREE.CylinderGeometry(1.22, 1.22, 0.14, 24, 1, true), at(0, CELL.baseTop + 0.05, 0), g(0, BRIGHT), 7.7, 0.14);
     // its vent grilles (sides and back) and the bezel of its status screen (front)
     for (const a of [Math.PI / 2, Math.PI, -Math.PI / 2]) put(steel, box, at(Math.sin(a) * (apo(1.52) + 0.012), 0.47, Math.cos(a) * (apo(1.52) + 0.012), 0.62, 0.3, 0.03, a), g(2, WHITE), 0.62, 0.3);
-    put(steel, box, at(0, 0.5, apo(1.52) + 0.02, 0.98, 0.44, 0.05), g(3, BAR), 1, 0.44);
+    put(steel, box, at(0, 0.5, apo(1.52) + 0.02, 1.0, 0.37, 0.05), g(3, BAR), 1, 0.37);
     // the bars round the glass, and the cap: a chamfer, its body (the plate on its front), a lip of hazard paint, the lid
     for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + (k * Math.PI) / 2; put(steel, box, at(Math.sin(a) * 1.27, (CELL.baseTop + CELL.capY) / 2, Math.cos(a) * 1.27, 0.15, CELL.capY - CELL.baseTop, 0.22, a), g(0, BAR), 0.4, 3.4); }
     put(steel, new THREE.CylinderGeometry(1.22, 1.22, 0.14, 24, 1, true), at(0, CELL.capY - 0.05, 0), g(0, BRIGHT), 7.7, 0.14);
@@ -14337,34 +14373,35 @@ function buildCellKit(hall) {
     put(steel, oct(1.535, 1.535, 0.1), at(0, CELL.capY + 0.63, 0), g(1, WHITE), 9.6, 0.1);
     put(steel, oct(1.52, 1.25, 0.1), at(0, CELL.capTop - 0.05, 0), g(0, BAR), 8.5, 0.1);
     put(steel, box, at(0, CELL.capY + 0.37, apo(1.52) + 0.02, 1.16, 0.38, 0.05), g(3, BAR), 1.16, 0.38);
-    // pipes and cables from the lid up to the rail overhead (8.36 m), their flanges
+    // pipes and cables from the lid up into the ceiling (8.8 m), their flanges
     for (const [px, pz, r] of [[0, -0.85, 0.1], [0.62, -0.62, 0.075], [-0.62, -0.62, 0.075]]) {
-      put(steel, pipe(r), at(px, (CELL.capTop + 8.36) / 2, pz, 1, 8.36 - CELL.capTop, 1), g(0, PIPE), 2 * Math.PI * r, 3.3);
+      put(steel, pipe(r), at(px, (CELL.capTop + 8.8) / 2, pz, 1, 8.8 - CELL.capTop, 1), g(0, PIPE), 2 * Math.PI * r, 3.7);
       for (const fy of [CELL.capTop + 0.12, 6.4, 8.2]) put(steel, new THREE.CylinderGeometry(r + 0.045, r + 0.045, 0.07, 8), at(px, fy, pz), g(0, BRIGHT), 1, 0.07);
     }
-    for (const sx of [-1, 1]) put(steel, pipe(0.025), at(sx * 1.0, 6.7, -0.25, 1, 3.3, 1, 0, 0, sx * 0.08), g(0, DARK), 0.15, 3.3);
+    for (const sx of [-1, 1]) put(steel, pipe(0.025), at(sx * 1.0, 6.93, -0.25, 1, 3.75, 1, 0, 0, sx * 0.08), g(0, DARK), 0.15, 3.75);
     // the small parts (near cells only): bolts round the lid and the plinth's top, clamps on the bars, the lamps' housings
     for (let k = 0; k < 16; k++) { const a = ((k + 0.5) / 16) * Math.PI * 2; put(detail, bolt, at(Math.sin(a) * 1.36, CELL.capTop + 0.02, Math.cos(a) * 1.36), g(0, BRIGHT), 0.3, 0.06); }
     for (let k = 0; k < 8; k++) { const fa = (k * Math.PI) / 4; for (const dt of [-0.36, 0.36]) { if (k === 0) continue; put(detail, bolt, at(Math.sin(fa) * (apo(1.52) + 0.02) + Math.cos(fa) * dt, 0.62, Math.cos(fa) * (apo(1.52) + 0.02) - Math.sin(fa) * dt, 1, 1, 1, fa, Math.PI / 2), g(0, BRIGHT), 0.3, 0.06); } }
     for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + (k * Math.PI) / 2; for (const cy of [1.4, 2.62, 3.85]) put(detail, box, at(Math.sin(a) * 1.29, cy, Math.cos(a) * 1.29, 0.32, 0.15, 0.3, a), g(0, BRIGHT), 0.3, 0.15); }
     for (const sx of [-1, 1]) put(detail, new THREE.CylinderGeometry(0.14, 0.16, 0.07, 10), at(sx * 0.62, CELL.capTop + 0.035, 0.62), g(0, DARK), 0.5, 0.07);
-    for (const [bx, by] of [[-0.44, 0.69], [0.44, 0.69], [-0.44, 0.31], [0.44, 0.31]]) put(detail, bolt, at(bx, by, apo(1.52) + 0.05, 0.6, 0.6, 0.6, 0, Math.PI / 2, 0), g(0, BRIGHT), 0.2, 0.04);
+    for (const [bx, by] of [[-0.44, 0.655], [0.44, 0.655], [-0.44, 0.345], [0.44, 0.345]]) put(detail, bolt, at(bx, by, apo(1.52) + 0.05, 0.6, 0.6, 0.6, 0, Math.PI / 2, 0), g(0, BRIGHT), 0.2, 0.04);
     // its lights: two containment bands, a strip round the plinth, two hazard lamps on the lid, lights round its ring
     for (const ry of [1.95, 3.3]) put(glow, torus, at(0, ry, 0), Object.assign({ aKind: 0 }, L), 1, 1, true);
     put(glow, new THREE.CylinderGeometry(1.545, 1.545, 0.035, 8, 1, true, Math.PI / 8), at(0, 0.72, 0), Object.assign({ aKind: 0 }, L));
     for (const sx of [-1, 1]) put(glow, dome, at(sx * 0.62, CELL.capTop + 0.07, 0.62), Object.assign({ aKind: 1 }, L), 1, 1, true);
     for (let k = 0; k < 8; k++) { const a = ((k + 0.5) / 8) * Math.PI * 2; put(glow, plane, at(Math.sin(a) * 1.93, 0.016, Math.cos(a) * 1.93, 0.16, 0.16, 1, a, -Math.PI / 2), Object.assign({ aKind: 2 }, L)); }
-    // its plate and its screen (their pictures: a row of the atlas each)
-    const row = cells.length - 1 - c.i, sv = { aRow: row, aState: L.aState };
-    put(screens, plane, at(0, CELL.capY + 0.37, apo(1.52) + 0.048, 1.08, 0.3, 1), sv, 0.5, 1);
-    put(screens, plane, at(0, 0.5, apo(1.52) + 0.048, 0.88, 0.34, 1), sv, 0.5, 1);
+    // its plate and its screen (their pictures: its row of the atlas, the plate its left half, the screen its right)
+    const sv = { aRow: 0, aState: L.aState };
+    put(screens, plane, at(0, CELL.capY + 0.37, apo(1.52) + 0.048, 1.08, 0.29, 1), sv, 0.5, 1);
+    put(screens, plane, at(0, 0.5, apo(1.52) + 0.048, 0.9, 0.27, 1), sv, 0.5, 1);
+    for (let i = 6; i < 12; i++) screens.uvm[i * 2] += 0.5;
     // the caution ring on the floor round it
     put(steel, new THREE.RingGeometry(1.8, 2.04, 40, 1), at(0, 0.012, 0, 1, 1, 1, 0, -Math.PI / 2), g(1, WHITE), 4.08, 4.08); // (its uv is planar: in metres, the stripes run straight across it)
-  };
-  cells.forEach((c, i) => cellParts(c, states[i], c.world));
-  // the screens' uv: the plate takes the atlas's left half, the screen its right (uvM: 0..0.5 across, 0..1 up)
-  const sg = screens.build(), su = sg.attributes.uvM;
-  for (let i = 0; i < su.count; i += 6) { const right = (i / 6) % 2 === 1; for (let j = 0; j < 6; j++) su.setX(i + j, su.getX(i + j) + (right ? 0.5 : 0)); }
+  }
+  // ---- every cell: the one copied, moved and turned to its place, in its own light and state, its own row of pictures
+  const mats = cells.map((c) => new THREE.Matrix4().compose(c.anchor.position, Q.setFromAxisAngle(up, c.anchor.rotation.y), S1));
+  const per = (i) => { const st = states[i]; return { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], aRow: cells.length - 1 - i }; };
+  const copies = { steel: kitCopies(one.steel, mats), detail: kitCopies(one.detail, mats), glow: kitCopies(one.glow, mats, per), screens: kitCopies(one.screens, mats, per) };
   // ---- the hall, watched: hazard strips and floor lights along the aisle, tripwires across it between the worlds
   // (their emitters), rails overhead (their hangers), cameras on the pillars
   const Z1 = 6, Z2 = HALL.endZ + 9;
@@ -14404,29 +14441,27 @@ function buildCellKit(hall) {
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uK: { value: 1 }, uCalm: { value: calm ? 1 : 0 } }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "attribute float aAcross; attribute float aPh; varying float vA; varying float vPh; varying float vDepth; void main(){ vA = aAcross; vPh = aPh; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
       fragmentShader: `${GLSL_FOG_PARS} uniform float uTime; uniform float uK; uniform float uCalm; varying float vA; varying float vPh; varying float vDepth;
-        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(a, 4.0) * 1.8 + a * a * 0.28) * drop * (0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0));
+        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(a, 4.0) * 1.8 + a * a * 0.28) * drop * mix(0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0), 1.0, uCalm);
           gl_FragColor = vec4(vec3(1.0, 0.09, 0.12) * k * uK * (1.0 - smoothstep(uFogNear, uFogFar * 1.1, vDepth)), 1.0); }`,
     }));
     kit.laser.frustumCulled = false; kit.laser.renderOrder = 5;
   }
   // ---- built: the steel (one draw), its small parts for the near cells (instanced: one draw), the lights (one), the
   // plates and screens (one, one picture), the lasers (one)
-  kit.steel = new THREE.Mesh(steel.build(), kit.steelMat);
-  kit.glow = new THREE.Mesh(glow.build(), kit.glowMat);
+  kit.steel = new THREE.Mesh(kitGeometry([copies.steel, steel.arrays()]), kit.steelMat);
+  kit.glow = new THREE.Mesh(kitGeometry([copies.glow, glow.arrays()]), kit.glowMat);
   kit.atlas = cellAtlas(states);
-  kit.screens = new THREE.Mesh(sg, new THREE.ShaderMaterial({
+  kit.screens = new THREE.Mesh(kitGeometry([copies.screens]), new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { tAtlas: { value: kit.atlas }, uTime: { value: 0 }, uK: { value: 1 }, uRows: { value: cells.length }, uCalm: { value: calm ? 1 : 0 } }),
     vertexShader: "attribute vec2 uvM; attribute float aRow; attribute vec4 aState; uniform float uRows; varying vec2 vUv; varying vec4 vState; varying float vDepth; void main(){ vUv = vec2(uvM.x, (aRow + uvM.y) / uRows); vState = aState; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tAtlas; uniform float uTime; uniform float uK; uniform float uCalm; varying vec2 vUv; varying vec4 vState; varying float vDepth;
-      void main(){ vec3 c = texture2D(tAtlas, vUv).rgb; float screen = step(0.5, vUv.x); float blink = 1.0 - screen * vState.x * (1.0 - vState.z) * (1.0 - uCalm) * 0.55 * step(0.5, fract(uTime * 1.6 + vState.w));
-        float scan = 1.0 - screen * 0.12 * step(0.5, fract(gl_FragCoord.y * 0.5)); c *= mix(1.05, 1.9, screen) * blink * scan * uK;
+      void main(){ vec3 c = texture2D(tAtlas, vUv).rgb; c = c * c * (c * 0.305 + 0.695); float screen = step(0.5, vUv.x); float blink = 1.0 - screen * vState.x * (1.0 - vState.z) * (1.0 - uCalm) * 0.55 * step(0.5, fract(uTime * 1.6 + vState.w));
+        float scan = 1.0 - screen * 0.12 * step(0.5, fract(gl_FragCoord.y * 0.5)); c *= mix(1.35, 2.1, screen) * blink * scan * uK;
         gl_FragColor = vec4(mix(c, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0); }`,
   }));
-  const dg = detail.build();
-  // (the small parts were made at each cell's own place: drawn as one piece, its cells' matrices not needed; the
-  // detail is instead one geometry per cell, so that only the near cells' are drawn: split it by cell)
-  kit.detailPer = dg.attributes.position.count / cells.length;
-  kit.detail = new THREE.Mesh(dg, kit.steelMat);
+  // (the small parts: every cell's, one after another in the cells' order, so the near cells' are one range of them)
+  kit.detailPer = one.detail.pos.length / 3;
+  kit.detail = new THREE.Mesh(kitGeometry([copies.detail]), kit.steelMat);
   kit.detail.geometry.setDrawRange(0, 0);
   for (const m of [kit.steel, kit.glow, kit.screens, kit.detail, kit.laser]) { m.frustumCulled = false; s.add(m); kit.meshes.push(m); }
   // ---- the cameras on the pillars, panning slowly (instanced: their bodies one draw, their lamps and lenses another)
@@ -14442,14 +14477,14 @@ function buildCellKit(hall) {
   {
     const body = new KitBatch({ color: 3, aPat: 1 }), lamp = new KitBatch({ aCol: 3, aState: 4, aKind: 1 });
     body.add(box, at(0, 0, 0.28, 0.08, 0.08, 0.56), { color: BAR, aPat: 0 });
-    body.add(box, at(0, 0, 0.62, 0.22, 0.2, 0.38), { color: [0.75, 0.77, 0.82], aPat: 0 });
+    body.add(box, at(0, 0, 0.62, 0.22, 0.2, 0.38), { color: [0.45, 0.46, 0.49], aPat: 0 });
     body.add(box, at(0, 0.12, 0.66, 0.28, 0.04, 0.48), { color: DARK, aPat: 0 });
     body.add(box, at(0, -0.06, 0.62, 0.23, 0.05, 0.3), { color: WHITE, aPat: 1 }, 0.3, 0.05);
     lamp.add(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 12).rotateX(Math.PI / 2), at(0, 0, 0.83), { aCol: [0, 0, 0], aState: [0, 0, 0, 0], aKind: 4 });
     lamp.add(new THREE.SphereGeometry(0.025, 6, 4), at(0.07, 0.07, 0.82), { aCol: [0, 0, 0], aState: [0, 0, 0, 0], aKind: 3 }, 1, 1, true);
     const n = (HALL_WORLDS.length + 1) * 2;
-    kit.camBody = new THREE.InstancedMesh(body.build(), kit.steelMat, n);
-    kit.camLamp = new THREE.InstancedMesh(lamp.build(), cellGlowMaterial(calm), n);
+    kit.camBody = new THREE.InstancedMesh(kitGeometry([body.arrays()]), kit.steelMat, n);
+    kit.camLamp = new THREE.InstancedMesh(kitGeometry([lamp.arrays()]), cellGlowMaterial(calm), n);
     kit.cams = [];
     for (let i = 0; i <= HALL_WORLDS.length; i++) for (const sx of [-1, 1]) kit.cams.push({ x: sx * (HALL.wallX - 1.02), y: 5.0, z: HALL.z0 + HALL.step / 2 - i * HALL.step + 0.28 * sx, ry: sx < 0 ? Math.PI / 2 : -Math.PI / 2, ph: (i * 1.7 + (sx > 0 ? 0.8 : 0)) % 6.283 });
     for (const m of [kit.camBody, kit.camLamp]) { m.frustumCulled = false; s.add(m); kit.meshes.push(m); }
@@ -14471,8 +14506,8 @@ function buildCellKit(hall) {
       qg.instanceCount = n;
       kit.steam = new THREE.Mesh(qg, new THREE.ShaderMaterial({
         uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uK: { value: 1 } }), transparent: true, depthWrite: false,
-        vertexShader: "attribute vec4 aOff; uniform float uTime; varying vec2 vUv; varying float vA; void main(){ float k = fract(uTime * 0.28 + aOff.w); vec3 p = aOff.xyz + vec3(sin(aOff.w * 40.0 + uTime) * 0.15 * k, k * 2.1, 0.0); vec4 mv = viewMatrix * vec4(p, 1.0); mv.xy += position.xy * (0.35 + k * 1.1); vUv = uv; vA = smoothstep(0.0, 0.15, k) * (1.0 - k); gl_Position = projectionMatrix * mv; }",
-        fragmentShader: "uniform float uK; varying vec2 vUv; varying float vA; void main(){ float r = length(vUv - 0.5) * 2.0; float a = pow(max(0.0, 1.0 - r), 1.8) * vA * 0.22 * uK; gl_FragColor = vec4(vec3(0.72, 0.78, 0.86), a); }",
+        vertexShader: "attribute vec4 aOff; uniform float uTime; varying vec2 vUv; varying float vA; varying float vDepth; void main(){ float k = fract(uTime * 0.28 + aOff.w); vec3 p = aOff.xyz + vec3(sin(aOff.w * 40.0 + uTime) * 0.15 * k, k * 2.1, 0.0); vec4 mv = viewMatrix * vec4(p, 1.0); mv.xy += position.xy * (0.35 + k * 1.1); vUv = uv; vA = smoothstep(0.0, 0.15, k) * (1.0 - k); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
+        fragmentShader: `${GLSL_FOG_PARS} uniform float uK; varying vec2 vUv; varying float vA; varying float vDepth; void main(){ float r = length(vUv - 0.5) * 2.0; float a = pow(max(0.0, 1.0 - r), 1.8) * vA * 0.22 * uK * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)); gl_FragColor = vec4(vec3(0.72, 0.78, 0.86), a); }`,
       }));
       kit.steam.frustumCulled = false; kit.steam.renderOrder = 6;
       kit.steam.visible = !calm && GFX.extras !== false;

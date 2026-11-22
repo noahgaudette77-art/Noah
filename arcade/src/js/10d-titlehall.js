@@ -675,7 +675,7 @@ class HallScene extends Scene3D {
     if (!this.leaving) this.glassU.uK.value = 0.45 + 0.55 * this.power;
     this.kit.update(this, dt, this.camera.position);
     // (the rings fade under the top row: where its read-outs end, in the picture's height from -1 to 1)
-    const top = this._topEl || (this._topEl = document.querySelector(".scr-title .title-top"));
+    const top = this._topEl && this._topEl.isConnected ? this._topEl : (this._topEl = document.querySelector(".scr-title .title-top")); // (found again if the title's page was made again)
     if (top && top.isConnected && (this._topT = (this._topT || 0) - dt) <= 0) { this._topT = 0.5; const b = top.getBoundingClientRect().bottom; this.ringU.uTop.value = 1 - (2 * (b + 8)) / Math.max(1, window.innerHeight); }
     if (this.screens) for (const m of this.screens) m.uniforms.uT.value = this.t;
     if (this.cup) this.cup.rotation.y += dt * 0.35 * (this.calm ? 0.4 : 1);
@@ -771,8 +771,9 @@ class HallScene extends Scene3D {
   }
   dispose() {
     if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
-    if (this.kit) this.kit.atlas.dispose();
-    if (this.crackTex) this.crackTex.dispose();
+    // (the cells' pictures let go of, and the materials kept a while for their shaders no longer holding them)
+    if (this.kit) { this.kit.atlas.dispose(); this.kit.screens.material.uniforms.tAtlas.value = null; }
+    if (this.crackTex) { this.crackTex.dispose(); this.glassU.tCrack.value = null; }
     for (const t of this.texs || []) t.dispose();
     for (const m of this.taken || []) hallRelease(m); // (before the scene's own dispose: see hallRelease)
     super.dispose();
