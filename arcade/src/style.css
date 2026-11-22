@@ -1906,3 +1906,9 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 .lives .lost .gico { filter: grayscale(1) brightness(0.7); }
 /* Setup's switches (and the exam's length and every segmented choice) answer a press, as every other button does */
 .seg button:active { transform: translateY(1px); filter: brightness(1.25); }
+/* (after its independent review) the title's quick entrance keeps to reduced motion (it came after the rule for it),
+   and INSERT COIN keeps still with Setup's Reduced effects as with the device's setting; on a screen narrower than a
+   phone's the line above the logo may wrap again */
+@media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease; transform: none; } }
+html.calm .insert-coin { animation: none; }
+@media (max-width: 340px) { .logo-kicker { white-space: normal; } }

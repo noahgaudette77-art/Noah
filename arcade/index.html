@@ -1919,6 +1919,12 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 .lives .lost .gico { filter: grayscale(1) brightness(0.7); }
 /* Setup's switches (and the exam's length and every segmented choice) answer a press, as every other button does */
 .seg button:active { transform: translateY(1px); filter: brightness(1.25); }
+/* (after its independent review) the title's quick entrance keeps to reduced motion (it came after the rule for it),
+   and INSERT COIN keeps still with Setup's Reduced effects as with the device's setting; on a screen narrower than a
+   phone's the line above the logo may wrap again */
+@media (prefers-reduced-motion: reduce) { .scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease; transform: none; } }
+html.calm .insert-coin { animation: none; }
+@media (max-width: 340px) { .logo-kicker { white-space: normal; } }
 
 </style>
 </head>
@@ -7175,6 +7181,7 @@ const GFX = {
     s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
     this.opt = s.fx;
     this.calm = !!s.calm;
+    if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
   },
   // ---- quality tiers. HIGH draws everything; each tier down drops the costliest layers first. The drawing size is
   // never more than twice the page's own pixels (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip can),
@@ -37605,7 +37612,7 @@ function showSettings() {
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
-      <p class="label">VERSION: ${Assets.on ? "SERVED (EVERY 3D MODEL, SKY AND SOUND)" : "OFFLINE FALLBACK (OPENED AS A FILE: BUILT-IN PICTURES AND SOUND ONLY)"}</p>
+      <p class="label">VERSION: ${!Assets.on ? "OFFLINE FALLBACK (OPENED AS A FILE: BUILT-IN PICTURES AND SOUND ONLY)" : GFX.ok ? "SERVED (EVERY 3D MODEL, SKY AND SOUND)" : "SERVED · SIMPLE TITLE (NO 3D ON THIS DEVICE)"}</p>
       <h2 class="section-h">HOW IT WORKS</h2>
       <div class="howto">
         <p><b>Stages</b> are the book's 11 chapters, grouped into its 4 sections (worlds).</p>

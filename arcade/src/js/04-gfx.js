@@ -31,6 +31,7 @@ const GFX = {
     s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
     this.opt = s.fx;
     this.calm = !!s.calm;
+    if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
   },
   // ---- quality tiers. HIGH draws everything; each tier down drops the costliest layers first. The drawing size is
   // never more than twice the page's own pixels (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip can),
