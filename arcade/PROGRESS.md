@@ -3106,3 +3106,76 @@ to 3.1 % from the question's, mirrored). With the fix: 12 of 12 pass in WebKit a
 every card. `--url https://noah-2ci.pages.dev/` runs the same check on the live site (before this deploy, in WebKit:
 4 of 4 failed). The study logic is unchanged: the regression is IDENTICAL from disk and served, and the sequence test
 runs ALL 13 STEPS OK.
+
+## The detail polish pass (2026-11-22)
+
+The owner's order, from their iPhone 17 Pro Max pictures of the served title: a polish pass only, every screen, the
+title first; no change to the study logic, the questions and answers, the scoring, the rules, the flow or anything in
+`content/` or `scripts/`; no feature added or taken away; inside each scene's budget; small commits; WebKit as well as
+Chromium; the served link kept working.
+
+**Audit** (before any change: a still of every screen on a phone's screen, 440 x 956 with its safe areas, in both
+engines: `tools/scenarios/polish.js`). Nearly every visible fault was on the title:
+1. The logo and its line washed out against the moonlit skylight; the owner's picture caught the 1.1 s fade-in, when the
+   logo and the dock were half see-through and the floor's lines crossed their words.
+2. The pods were glass tubes with jagged shards on top (the generated pod model) and dark bosses: not a prison.
+3. Streaky ceiling panels: the skylights read their panoramas' stretched top rows, and rows past the edge.
+4. TAP TO ENTER lingering faint behind the tip; the tip's panel 84 % opaque; INSERT COIN dim while it faded in.
+5. At the glide's end the last two pods half cut off by the screen's edges; the cabinets small and dim; the vault flat.
+6. The ring lamps cut off behind the top row as the lens passed under them.
+7. SERVED on the player's screen.
+Elsewhere the screens had been through several reviews; their weakest details: the game's map of the core sound sprite
+(stale since 2026-11-17: the power-up, the win fanfare, game over, the cheer, the alarm and the charge hum played from
+the wrong places in their file), a stage's long title in five short lines in the Strategy Guide, a flawless run's line
+dim on the results screen, the lives drawn from their models dark at their size, Setup's switches without a press.
+
+**Done** (a commit each, in this order): the sound map (`a59fc35`); the logo, its line, the dock and INSERT COIN, SERVED
+moved to Setup (`1f12dcb`); the skylights (`ff58bbd`); the containment cells (`58f2adf`); the end framed for a phone,
+the vault and cabinets, the rings' fade (`afa54fb`); the Strategy Guide's stage title (`c813103`); the results' flawless
+line (`740a867`); the lives (`1290343`); the tools (`aa96d5c`); Setup's switches (`4ef14bb`); then the independent
+review's fixes (`547fcdf`, `6bd7030`) and the cameras' pan sent by the frame (`ea60275`).
+
+The cells (`10e-titlecells.js`, built in code, nothing to load): a heavy steel plinth and cap in hazard paint, vent
+grilles, bars clamped round the glass, two containment bands in the boss's own light, hazard lamps on the lid, pipes and
+cables into the ceiling, a caution ring on the floor, a status screen on the plinth and a prisoner's plate on the cap
+(its number and name, as Boss Rush names it). Each boss lit from inside in Boss Rush's colour for it (a rim and an
+under-light in its own shading: no light added), breathing with its cell's pulse, wisps of energy up the glass; slow
+turns and twitches, now and then an arc; a few cells worse off (cracked glass, steam, a red BREACH ALERT); a beaten
+boss's cell calm and green, its screen DEFEATED (read from the saved progress; the Proctor's when an exam is passed).
+The hall watched: laser tripwires across the aisle between the worlds, hazard strips and floor lights along it, cameras
+on the pillars, rails overhead. The cells are one cell made once and copied (20-80 ms to build here).
+
+**Measured** (`tools/perf-report.js`, a phone's screen, every asset loaded), at MEDIUM, where a phone draws (this machine draws in
+software: its own frame rates mean nothing; the counts are what to compare, and the phone's Setup > FPS counter gives
+its real frame rate):
+
+| screen | draws (budget) | triangles (budget) | lights | main thread, ms a frame | uploads a frame |
+|---|---|---|---|---|---|
+| title, before | 30-38 (60) | 165-221K (300K) | 4 | 0.8-1.2 | 0 |
+| title, after | 34-40 (60) | 146-221K (300K) | 4 | 0.9-1.3 | 0.3 (1.8 KB: the cameras' pan) |
+| hub, before / after | 45 / 45 (70) | 100K / 100K | 4 | 1.5 / 1.4 | the same |
+| Memory Bank, before / after | 54 / 54 (70) | 98K / 98K | 4 | 1.1 / 1.1 | the same |
+| Strategy Guide, before / after | 50 / 50 (60) | 32K / 32K | 3 | 0.9 / 0.8 | the same |
+
+No compiles during the glide. At HIGH the title is 42-48 draws (38-46 before).
+
+**Checked**: the regression IDENTICAL from disk and served (153 answers in 8 games); the sequence test ALL 13 STEPS OK;
+the card faces one at a time in WebKit and Chromium; nothing under `content/` or `scripts/` changed, nothing outside
+`arcade/`. An independent review found no crash, no logic change and nothing over budget. Its must-fix points were fixed
+(the steel's seams drawn inverted, an arc's core across its ribbons, the lasers' shimmer with reduced effects; the
+fourth, a build, was already done), and of its smaller ones: the cells built as one copied (5 to 10 times faster), the
+nameplates sent once and read in their own colours, the steam into the haze, the pipes into the ceiling, the cells'
+pictures let go of with the hall, reduced motion kept by the title's entrance and INSERT COIN, Setup's line for a page
+without 3D, the line above the logo free to wrap on a very narrow screen. Left as everywhere in the game: an instanced
+mesh's matrix buffer is let go of with its scene. The results' flawless line, brighter on its plate, still sits at the
+fold under the button bar's shade when the page is not scrolled (moving it would rearrange the page).
+
+**Left alone**: the game screens' layouts and their models (they were at the bar: the last quality audit), the music
+(already at one loudness, no clicks, fades between screens), the Strategy Guide's library (61 draws at HIGH, within its
+budget at MEDIUM where a phone draws it: see the table). **Still weak**: the windows' and skylights' pictures are small
+copies of the panoramas (1024 x 512): soft when the lens is close; WebKit on this machine draws additive glows harder
+than a phone's Safari (its pictures are for comparison, not for the look).
+
+**Spend**: nothing (no Tripo, fal.ai, ElevenLabs or Blockade call: everything was built in code or fixed in place).
+
+Captures: the before and after stills (both engines) were made with `tools/scenarios/polish.js`; the owner has them.
