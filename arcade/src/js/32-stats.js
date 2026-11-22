@@ -92,6 +92,7 @@ function showSettings() {
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
+      <p class="label">VERSION: ${Assets.on ? "SERVED (EVERY 3D MODEL, SKY AND SOUND)" : "OFFLINE FALLBACK (OPENED AS A FILE: BUILT-IN PICTURES AND SOUND ONLY)"}</p>
       <h2 class="section-h">HOW IT WORKS</h2>
       <div class="howto">
         <p><b>Stages</b> are the book's 11 chapters, grouped into its 4 sections (worlds).</p>

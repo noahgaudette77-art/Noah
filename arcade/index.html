@@ -1883,6 +1883,32 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
    reduced-motion rule and had undone it) */
 @media (prefers-reduced-motion: reduce) { .card3d, .card3d .face { transition: none; } }
 
+/* ---- Title, the detail polish pass (the owner, 2026-11-22, from their phone's pictures) ----
+   The wordmark is bright and solid, a clean neon line round each letter, on a dark backing the sky behind it cannot
+   wash out; the line above it reads clearly on an opaque plate. When the glide arrives the logo and the dock come up
+   quickly (a fade of 1.1 s left them half see-through for a moment, the floor's lines across their words), and TAP TO
+   ENTER goes at once (fading, it lingered faint behind the tip). The tip and INSERT COIN stand on opaque plates, the
+   dock's shade is solid under its words, and INSERT COIN is lit and breathes. SERVED is not on the title any more
+   (Setup says which version this is; opened from disk, the amber OFFLINE FALLBACK line stays: it is the wrong one). */
+.logo::before { left: -12%; right: -12%; top: -4%; bottom: -12%; background: radial-gradient(ellipse 58% 54% at 50% 58%, rgba(5, 1, 18, 0.9) 0, rgba(5, 1, 18, 0.8) 52%, rgba(5, 1, 18, 0) 100%); }
+.logo-kicker { white-space: nowrap; letter-spacing: 0.1em; font-size: clamp(9px, 2.35vw, 12px); color: #c9fbff; text-shadow: 0 0 8px rgba(53, 239, 255, 0.85), 0 1px 0 #05010f; background: #0a0424; border-color: rgba(53, 239, 255, 0.62); box-shadow: 0 0 0 2px #05020f, 0 0 16px rgba(53, 239, 255, 0.22); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.logo-face { background-image: linear-gradient(180deg, #ffffff 0%, #e2fbff 36%, #b8efff 50%, #7fa2ff 57%, #ff5ae0 74%, #fff07a 100%);
+  -webkit-text-stroke: 1.5px rgba(226, 253, 255, 0.96);
+  filter: brightness(calc(1 + var(--bolt, 0) * 0.1)) drop-shadow(0 0 2px #170a44) drop-shadow(0 0 9px rgba(53, 239, 255, 0.7)); }
+.scr-title .logo, .scr-title .title-dock { transition: opacity 0.3s ease-out, transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+.title-enter, .scr-title .title-enter { transition: none; visibility: hidden; }
+.scr-title.gliding .title-enter { visibility: visible; }
+.title-dock::before { background: linear-gradient(180deg, rgba(5, 1, 20, 0) 0%, rgba(5, 1, 20, 0.9) 14%, rgba(5, 1, 20, 0.97) 30%, #050114 100%); }
+.attract { background: linear-gradient(180deg, #13073a, #080322); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.insert-coin { color: #fff5c4; border-color: #ffe766; background: linear-gradient(180deg, #3b2577, #1b0e46);
+  text-shadow: 0 0 9px rgba(255, 225, 79, 0.9), 0 0 2px rgba(255, 255, 255, 0.6), 0 2px 0 #12052e;
+  animation: coin-pulse-y2 1.8s ease-in-out infinite, coin-breathe 1.8s ease-in-out infinite; }
+@keyframes coin-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@media (prefers-reduced-motion: reduce) { .insert-coin { animation: none; } }
+.insert-coin:active { filter: brightness(1.4); } /* (pressed: it flashes; its breathing owns its transform) */
+.title-mode.served { display: none; }
+
+
 </style>
 </head>
 <body>
@@ -37064,6 +37090,7 @@ function showSettings() {
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
       <p class="label" style="margin-top:14px">${synced ? "PROGRESS SYNCS TO YOUR CLAUDE ACCOUNT" : "PROGRESS IS SAVED ON THIS DEVICE"}</p>
+      <p class="label">VERSION: ${Assets.on ? "SERVED (EVERY 3D MODEL, SKY AND SOUND)" : "OFFLINE FALLBACK (OPENED AS A FILE: BUILT-IN PICTURES AND SOUND ONLY)"}</p>
       <h2 class="section-h">HOW IT WORKS</h2>
       <div class="howto">
         <p><b>Stages</b> are the book's 11 chapters, grouped into its 4 sections (worlds).</p>
