@@ -20,6 +20,9 @@
  *   cap.eval(fn, arg)            run something in the page
  * Served over HTTP by default, so the asset files load; --file opens it from disk, as the regression does. --reduced:
  * the browser asks for reduced motion (REDUCED_MOTION in the page; a scenario sets Setup > Reduced effects itself).
+ * --engine webkit: in WebKit (Safari's engine) instead of Chromium, from WEBKIT_BROWSERS_PATH (see card-faces.js).
+ * --insets 62,34: the screen's safe areas at the top and the foot, in page pixels, as an iPhone 17 Pro Max held
+ * upright has them (a browser here has none: the page's gutters, --gut-t and --gut-b, are set to them instead).
  */
 const fs = require("fs");
 const path = require("path");
@@ -30,7 +33,7 @@ const { chromium } = require("playwright");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2);
 const flag = (k, d) => { const i = args.indexOf("--" + k); if (i < 0) return d; const v = args[i + 1] && !args[i + 1].startsWith("--") ? args.splice(i + 1, 1)[0] : true; args.splice(i, 1); return v; };
-const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html"))), REDUCED = !!flag("reduced", false), PHONE = !!flag("phone", false);
+const OUT = path.resolve(flag("out", "captures")), [W, H] = String(flag("size", "390x844")).split("x").map(Number), DPR = +flag("dpr", 2), FILE = !!flag("file", false), BUILD = path.resolve(flag("build", path.join(ARCADE, "index.html"))), REDUCED = !!flag("reduced", false), PHONE = !!flag("phone", false), ENGINE = String(flag("engine", "chromium")), INSETS = String(flag("insets", "") || "");
 const scenario = args[0] && path.resolve(args[0]);
 if (!scenario) { console.error("usage: capture.js <scenario.js> [--out dir] [--size WxH] [--dpr n] [--file]"); process.exit(2); }
 
@@ -57,6 +60,7 @@ function inPage() {
   window.clearTimeout = (id) => { timers.delete(id); };
   window.setInterval = (fn, ms, ...a) => { const id = tid++; timers.set(id, { t: now + (+ms || 0), fn, a, every: Math.max(1, +ms || 0) }); return id; };
   window.clearInterval = window.clearTimeout;
+  window.__realRAF = window.requestAnimationFrame.bind(window); // (kept: a picture waits for a real frame, see shot)
   window.requestAnimationFrame = (fn) => { const id = rid++; rafs.push({ id, fn }); return id; };
   window.cancelAnimationFrame = (id) => { rafs = rafs.filter((r) => r.id !== id); };
   let seed = 12345;
@@ -86,7 +90,11 @@ function inPage() {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = FILE ? null : await serve(path.dirname(BUILD));
   const url = (FILE ? "file://" + BUILD : "http://127.0.0.1:" + srv.address().port + "/" + path.basename(BUILD)) + "#debug" + (PHONE ? ",phone" : ""); // (--phone: the page takes itself for a phone: see Assets.phone)
-  const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
+  let browser;
+  if (ENGINE === "webkit") {
+    const dir = process.env.WEBKIT_BROWSERS_PATH, wk = dir && fs.existsSync(dir) && fs.readdirSync(dir).find((d) => /^webkit-\d+$/.test(d));
+    browser = await require("playwright").webkit.launch(wk ? { executablePath: path.join(dir, wk, "pw_run.sh") } : {});
+  } else browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, reducedMotion: REDUCED ? "reduce" : "no-preference" });
   const page = await ctx.newPage();
   const errors = [];
@@ -94,12 +102,22 @@ function inPage() {
   page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 300)); });
   await page.route("https://cdnjs.cloudflare.com/**", (r) => r.fulfill({ path: path.join(ARCADE, "vendor/three.min.js"), contentType: "application/javascript" }));
   await page.addInitScript(inPage);
+  if (INSETS) { // (the phone's safe areas: the page's gutters set to them, as the page itself would from env())
+    const [t, b] = INSETS.split(",").map(Number);
+    await page.addInitScript(([t, b]) => { document.addEventListener("DOMContentLoaded", () => { const s = document.createElement("style"); s.textContent = `:root { --gut-t: ${Math.max(10, t)}px !important; --gut-b: ${Math.max(14, b)}px !important; }`; document.head.appendChild(s); }); }, [t || 0, b || 0]);
+  }
   await page.goto(url);
   for (let i = 0; i < 300; i++) {
     await page.evaluate(() => window.__tick(10, false));
     if (await page.evaluate(() => !!(window.__arcade && window.__arcade.Scenes.cur))) break;
     await page.waitForTimeout(20);
   }
+  // The two frames drawn for a picture (the one kept and the one before it). WebKit shows a canvas's frame only once
+  // the next one has been handed over (its pictures showed the frame before): there the kept frame is drawn in a real
+  // frame of its own and one more after it, so the picture shows the kept frame. Chromium draws both at once, as always.
+  const drawTwo = () => ENGINE === "webkit"
+    ? page.evaluate(() => { window.__tick(1, true); return new Promise((r) => window.__realRAF(() => { window.__tick(1, true); window.__realRAF(() => { window.__tick(1, true); window.__realRAF(() => window.__realRAF(r)); }); })); })
+    : page.evaluate(() => window.__tick(2, true));
   const cap = {
     page, out: OUT, errors,
     eval: (fn, arg) => page.evaluate(fn, arg),
@@ -120,7 +138,7 @@ function inPage() {
     answer: (k) => page.evaluate((kind) => { const s = window.__arcade.Scenes.cur, r = s.round; s.pick(kind === "R" ? r.correct : kind === "W" ? (r.correct + 1) % r.n : kind); }, k),
     next: () => page.evaluate(() => { const s = window.__arcade.Scenes.cur; if (s && s.quiz && s.quiz.sheet) s.quiz.next(); }),
     async shot(name, o = {}) {
-      await page.evaluate(() => window.__tick(2, true));
+      await drawTwo();
       const f = path.join(OUT, name + ".png");
       const clip = o.band ? await cap.band(o.pad || 0) : o.clip;
       await page.screenshot(clip ? { path: f, clip } : { path: f });
@@ -134,7 +152,7 @@ function inPage() {
       if (o.band) { const b = await cap.band(o.pad === undefined ? 0 : o.pad); if (b) o = Object.assign({}, o, { clip: b }); }
       for (let i = 0; i < n; i++) {
         if (i > 0 && every > 2) await page.evaluate((k) => window.__tick(k, false), every - 2);
-        await page.evaluate((k) => window.__tick(k, true), i === 0 ? 2 : Math.min(2, every));
+        if (i === 0 || every >= 2) await drawTwo(); else await page.evaluate((k) => window.__tick(k, true), 1);
         const f = path.join(OUT, `${name}-${String(i).padStart(2, "0")}.png`);
         await page.screenshot(o.clip ? { path: f, clip: o.clip } : { path: f });
         files.push(f);
