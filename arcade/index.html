@@ -1917,6 +1917,8 @@ body.lite .modal { background-color: rgba(6, 2, 22, 0.86); }
 /* the lives in every game's HUD: the hearts and shields drawn from their models were dark at their size: lifted */
 .lives .gico { filter: brightness(1.35) saturate(1.2) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)); }
 .lives .lost .gico { filter: grayscale(1) brightness(0.7); }
+/* Setup's switches (and the exam's length and every segmented choice) answer a press, as every other button does */
+.seg button:active { transform: translateY(1px); filter: brightness(1.25); }
 
 </style>
 </head>
