@@ -478,7 +478,7 @@ function buildCellKit(hall) {
     let a = -1, b = -1;
     for (const c of cells) if (Math.hypot(c.x - cam.x, c.z - cam.z) < 24 && c.z < cam.z + 2.5) { if (a < 0) a = c.i; b = c.i; }
     kit.detail.geometry.setDrawRange(a < 0 ? 0 : a * kit.detailPer, a < 0 ? 0 : (b - a + 1) * kit.detailPer);
-    if (!calm && (kit.camT = (kit.camT || 0) - dt) <= 0) { kit.camT = 0.1; kit.placeCams(hall.t); } // (ten times a second: the pan is slow, and nothing is sent to the graphics chip on the frames between)
+    if (!calm && (kit.camN = (kit.camN || 0) + 1) % 6 === 0) kit.placeCams(hall.t); // (every sixth frame, ten times a second on a phone: the pan is slow, and nothing is sent to the graphics chip on the frames between)
     const arc = kit.arc, au = arc.material.uniforms.uK;
     if (kit.arcT > 0) {
       kit.arcT -= dt;
