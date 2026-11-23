@@ -283,10 +283,11 @@ class Mirror {
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
   glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null, probe = null, plates = null } = {}) {
-  // probe (the master overhaul, Phase 2, 2026-11-23: the floors reflect, on every tier): { map, min, max, at, k, rough }:
+  // probe (the master overhaul, Phase 2, 2026-11-23: the floors reflect, on every tier): { map, min, max, at, k, rough, f0 }:
   // the room drawn once from inside it into a cube (map, mipmapped; see roomProbe), the room's box (min, max: Vector3)
   // and where it was drawn from (at); the floor gives the room back where the reflected ray meets the box's walls (so a
-  // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel).
+  // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel:
+  // f0 of it looking straight down, 0.3 unless given).
   // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
@@ -302,7 +303,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     uRoad: { value: new THREE.Vector2(road, roadGrid) },
     uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
     uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
-    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, 0) },
+    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
     uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
   });
@@ -339,7 +340,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);
           vec3 dir = vWorld + R * min(min(tf.x, tf.y), tf.z) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn)
           float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
-          col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(0.3, 1.0, fres);
+          col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
         }
         #endif
         float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;

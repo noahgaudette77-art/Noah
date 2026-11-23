@@ -196,10 +196,11 @@ class BossGame extends QuizGame {
     this.mirror = new Mirror(0);
     this.lineBase = neon(P.b, 1.05);
     this.probe = roomProbe(new THREE.Vector3(0, 3, 0), { size: Assets.phone ? 128 : 256 });
+    if (GFX.ok) { try { GFX.pmrem().compileCubemapShader(); } catch (e) { /* made at the first capture instead */ } } // (the steel's filtered copy of it: its shader made now, behind the cover, not as the boss drops in)
     this.plates = cellFlatTexture();
     this.floor = makeNeonFloor({
       size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
-      probe: { map: this.probe.map, min: new THREE.Vector3(-25, 0, -29), max: new THREE.Vector3(25, 16, 24), at: this.probe.at, k: 1, rough: 0.16 },
+      probe: { map: this.probe.map, min: new THREE.Vector3(-25, 0, -29), max: new THREE.Vector3(25, 16, 24), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
       plates: { map: this.plates, size: 2.4, k: 0.8 },
     });
     // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
@@ -207,8 +208,10 @@ class BossGame extends QuizGame {
     this.floor.userData.arena = true;
     this.probe.swap = [this.floor.material.uniforms.tProbe];
     s.add(this.floor);
-    // where it stands: a wide pool of its own light on the floor, and its shadow in the middle of the pool
-    const pool = makeLightPool({ color: hex, radius: 11, intensity: 0.4 });
+    // where it stands: a pool of the arena's light on the floor, and its shadow in the middle of the pool (the arena's
+    // second colour, smaller and fainter than it was: a wash of its own colour over the deck stood it on that colour,
+    // and hid the deck)
+    const pool = makeLightPool({ color: P.b, radius: 8.5, intensity: 0.22 });
     pool.layers.set(1);
     s.add(pool);
     this.contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x000000, transparent: true, opacity: 0.92, depthWrite: false }));
@@ -340,8 +343,9 @@ class BossGame extends QuizGame {
     this.probe.capture();
   }
   // The arena drawn into the deck's cube, a face a frame (or all six now): everything but the arena itself (marked
-  // userData.arena) is left out, the lights kept. Not before the screen's light budget is in place (its shaders are the
-  // ones the screen draws with), nor while a stroke of lightning lights the sky.
+  // userData.arena) is left out, the lights kept; the storm at half its strength (the deck carries the neon's
+  // reflections: the sky in it washed the deck pale). Not before the screen's light budget is in place (its shaders
+  // are the ones the screen draws with), nor while a stroke of lightning lights the sky.
   probeStep(all) {
     const P = this.probe, s = this.scene;
     if (!P || !P.left || !s.userData.lightPool || (!all && this.arena && this.arena.boltK > 0.03)) return;
@@ -349,7 +353,10 @@ class BossGame extends QuizGame {
     const hide = [];
     for (const o of s.children) if (o.visible && !o.isLight && !o.userData.arena && !o.userData.slot) hide.push(o);
     P.hide = hide;
+    const gu = this.arena && this.arena.dome.material.uniforms.uGain, g0 = gu ? gu.value : 0;
+    if (gu) gu.value = g0 * 0.5;
     for (let i = 0; i < (all ? 6 : 1) && P.left; i++) P.step(s, this.camera.layers.mask);
+    if (gu) gu.value = g0;
     this.probeTaken();
   }
   // the reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps, so a
@@ -429,7 +436,7 @@ class BossGame extends QuizGame {
       s.add(fr);
       this.frontRow = fr; // (update() keeps it at the bottom edge of the strip: only heads crest it)
     }
-    this.themeCol = neon(hex, 2.6); // the boss's colour at full strength: the circle and the pool of light under it take theirs from it
+    this.runeCol = neon(P.b, 2.6); // the circle it stands in and the pool of light under it are the arena's (the boss never stands on its own colour)
     const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(P.b, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); // (each lamp's light at its pillar's foot)
     poolMesh.layers.set(1);
     poolMesh.userData.arena = true;
@@ -471,12 +478,12 @@ class BossGame extends QuizGame {
     beams.userData.arena = true;
     s.add(beams);
     // the summoning circle and a pool of light under the boss
-    this.rune = new THREE.Mesh(new THREE.PlaneGeometry(13.5, 13.5), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 2.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.rune = new THREE.Mesh(new THREE.PlaneGeometry(13.5, 13.5), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(P.b, 2.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.rune.rotation.x = -Math.PI / 2;
     this.rune.position.y = 0.05;
     this.rune.layers.set(1);
     s.add(this.rune);
-    this.pool = makeLightPool({ color: hex, radius: 7, intensity: 0.2 });
+    this.pool = makeLightPool({ color: P.b, radius: 7, intensity: 0.2 });
     this.pool.layers.set(1);
     s.add(this.pool);
   }
@@ -1063,9 +1070,9 @@ class BossGame extends QuizGame {
     if (st) st.update(dt); // (the actor, the strike in hand, what is in flight, the lens: 22f)
     else this.cyborgFrame(dt, f, rage, wind);
     const hotK = smoothstep(0.55, 0.95, f);
-    this.pool.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.2 + f * 0.4);
+    this.pool.material.color.copy(this.runeCol).lerp(this.hotCol, hotK).multiplyScalar(0.2 + f * 0.4);
     this.rune.rotation.z += dt * (0.15 + f * 1.2) * rage;
-    this.rune.material.color.copy(this.themeCol).lerp(this.hotCol, hotK).multiplyScalar(0.45 + f * 0.75);
+    this.rune.material.color.copy(this.runeCol).lerp(this.hotCol, hotK).multiplyScalar(0.45 + f * 0.75);
     if (this.flashT > 0) {
       this.flashT = Math.max(0, this.flashT - dt * 2.4);
       const k = Math.min(1, this.flashT);
@@ -1104,7 +1111,7 @@ class BossGame extends QuizGame {
     this.floor.material.uniforms.uReflect.value = 0.55;
     // (the deck's capture of the arena gives back less where the tier draws the floor's mirror, the Mac's: the mirror
     // has the arena exactly, the boss with it; the capture adds the crowd, which the mirror leaves out)
-    this.floor.material.uniforms.uProbe.value.x = GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.4 : 1;
+    this.floor.material.uniforms.uProbe.value.x = this.probeK * (GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.45 : 1);
     { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
       const fl = this.floor.material.uniforms.uLine.value;
       let ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
