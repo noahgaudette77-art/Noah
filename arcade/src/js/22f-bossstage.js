@@ -74,10 +74,12 @@ class BossStage {
       s.add(sp, tail.mesh);
       return { sp, tail, t: -1, dur: 1, out: 0, acc: 0, a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), p: new THREE.Vector3(), hit: null };
     });
-    // the arena's lamps, set for armour that mirrors the sky: two rims in its colour, a cold edge, a key, a fill
+    // the arena's lamps, set for armour that mirrors the sky: two rims, its colour and the arena's second (the master
+    // overhaul, Phase 2: both were its colour, and lit the stands behind it in it: the cyan boss stood in cyan), a cold
+    // edge, a key, a fill
     const L = g.lamps;
     if (L) {
-      L.rimB.color.copy(this.col).lerp(new THREE.Color(0xffffff), 0.2);
+      L.rimB.color.copy(g.pair ? g.pair.b : this.col).lerp(new THREE.Color(0xffffff), 0.2);
       this.rim0 = [L.rimA.intensity * 1.7, 4.8]; // (their full strength: they come up as it powers up)
       L.edge.color.set(0xcfeaff); L.edge.intensity = 1.7;
       L.key.intensity = 2.0;
@@ -88,7 +90,6 @@ class BossStage {
     this.kicker = new THREE.DirectionalLight(this.col.clone().lerp(new THREE.Color(0xffffff), 0.3), 0);
     this.kicker.position.set(0, 7, -12);
     s.add(this.kicker);
-    if (g.pillarMat) g.pillarMat.color.multiplyScalar(0.5); // (the pillars stand back: beside armour that mirrors the sky they were the brightest things in the picture)
     // the front row of the crowd: dark shapes, but lit enough to read as heads, not black humps
     if (g.frontRow && g.frontRow.children[1]) { g.frontRow.children[1].material.color.setRGB(3.2, 2.6, 3.6); if (g.frontRimMat) g.frontRimMat.color.multiplyScalar(1.7); }
     this.rimBase = [L ? L.rimA.color.clone() : null, L ? L.rimB.color.clone() : null, this.kicker.color.clone()]; // (rage turns them red)

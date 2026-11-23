@@ -1094,12 +1094,12 @@ class CyborgRig {
         g.bursts.burst(at, Math.random() < 0.5 ? 0xffffff : g.cfg.color, { n: 6, speed: 4, size: 0.1 * g.bossScale + 0.04, life: 0.4, gravity: -8 });
       }
     }
-    // ---- the arena answers a hit: its lights surge, the sky flares, and settle
-    if (g.capMat) {
-      if (!this.capBase) { this.capBase = g.capMat.color.clone(); this.skyGlow = g.sky.material.uniforms.uGlow.value; }
+    // ---- the arena answers a hit: its lamps surge, the sky flares, and settle
+    if (g.glowMat && g.glowMat.uniforms.uSurge) {
+      if (this.skyGlow === undefined) this.skyGlow = g.sky.material.uniforms.uGlow.value;
       this.env = Math.max(0, (this.env || 0) - dt * 1.6);
       const e = this.env * this.env * calm;
-      g.capMat.color.copy(this.capBase).multiplyScalar(1 + 1.6 * e);
+      g.glowMat.uniforms.uSurge.value = 1.6 * e; // (the pillars' lamps: see arenaGlowMaterial)
       g.sky.material.uniforms.uGlow.value = this.skyGlow * (1 + 0.9 * e);
     }
     // ---- shadow

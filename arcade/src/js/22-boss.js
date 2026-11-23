@@ -65,36 +65,12 @@ function bossRuneTexture() {
   return new THREE.CanvasTexture(c);
 }
 
-// The crowd's figures (Phase 5): one card each, its picture one of four silhouettes in a strip (heads and shoulders, arms
-// up, a cap, a pair close together), dark with a rim of light along its top edge, which the card's colour tints.
-let _crowdTex = null;
-function bossCrowdTexture() {
-  if (_crowdTex) return _crowdTex;
-  const c = document.createElement("canvas"), W = 128;
-  c.width = W * 4; c.height = W;
-  const x = c.getContext("2d");
-  const figure = (k, ox, dy, fill) => {
-    x.fillStyle = fill;
-    const cx = k * W + W / 2 + ox;
-    const head = (hx, hy, r) => { x.beginPath(); x.arc(hx, hy + dy, r, 0, Math.PI * 2); x.fill(); };
-    const body = (bx, w) => { x.beginPath(); x.moveTo(bx - w, W); x.quadraticCurveTo(bx - w, 70 + dy, bx - w * 0.55, 66 + dy); x.lineTo(bx + w * 0.55, 66 + dy); x.quadraticCurveTo(bx + w, 70 + dy, bx + w, W); x.closePath(); x.fill(); };
-    if (k === 3) { body(cx - 20, 22); head(cx - 20, 48, 15); body(cx + 22, 20); head(cx + 22, 52, 14); return; }
-    body(cx, 34); head(cx, 44, 18);
-    x.fillRect(cx - 7, 52 + dy, 14, 16);
-    if (k === 1) { x.lineWidth = 11; x.lineCap = "round"; x.strokeStyle = fill; x.beginPath(); x.moveTo(cx - 26, 74 + dy); x.lineTo(cx - 38, 22 + dy); x.moveTo(cx + 26, 74 + dy); x.lineTo(cx + 36, 18 + dy); x.stroke(); }
-    if (k === 2) { x.beginPath(); x.ellipse(cx, 32 + dy, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30 + dy, 32, 5); }
-  };
-  for (let k = 0; k < 4; k++) { figure(k, 0, -3, "rgba(255,255,255,1)"); figure(k, 0, 1, "rgba(5,4,10,1)"); } // (a lit edge along the top, the figure dark below it)
-  _crowdTex = new THREE.CanvasTexture(c);
-  _crowdTex.minFilter = THREE.LinearMipmapLinearFilter;
-  _crowdTex.dispose = () => {}; // (shared: every fight's crowd)
-  return _crowdTex;
-}
-// One figure's card: a quad facing the floor, standing on the spot it is placed at (k: which of the four silhouettes).
+// One figure of the crowd: a card facing the floor, standing on the spot it is placed at (k: which of the figures in
+// the crowd's picture, bossCrowdTexture in 22c).
 function bossFigure(k, sc) {
   const g = new THREE.PlaneGeometry(1.25 * sc, 1.25 * sc), uv = g.attributes.uv;
   g.translate(0, 0.62 * sc, 0);
-  for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / 4);
+  for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / BOSS_CROWD_N);
   return g;
 }
 
@@ -147,11 +123,12 @@ class BossGame extends QuizGame {
     const s = this.scene;
     const hex = this.cfg.color;
     const col = new THREE.Color(hex);
+    const P = (this.pair = bossArenaPair(hex)); // the arena's own neon: violet and cyan, never the boss's colour (22c)
     s.userData.lightBudget = { dir: 2, point: 3 }; // (the lights this screen draws: the key and the pale edge; the two rims and the strongest of fill, under-light, eyes and blast. See LightPool in 04-gfx.js)
     s.userData.post = { exposure: 1.1, bloom: 0.55, threshold: 1.5, knee: 0.22, bloomTight: 1, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.15, tint: [1, 1, 1], ao: 1, shadow: 0.85, shadowLen: 0.11, sun: [0.2, 1, 0.55], mblur: 0.7, dirt: 0.18, streak: 0.3, // (only its lamps, the ring and a blow bloom, and tightly: plate and paper used to clip to white)
      
       dof: { focus: 16, near: 200, far: 90, max: 0.0036, sky: 0.5, k: 0.7 } }; // (the lens holds the boss; the tiers and the ridge behind it go a little soft)
-    this.fogBase = s.fog.color.clone().lerp(col, 0.1);
+    this.fogBase = s.fog.color.clone().lerp(P.a, 0.08); // (the shared violet-black, leaning to the arena's own light: it leaned to the boss's, and a cyan boss's stands went royal blue)
     s.fog.color.copy(this.fogBase);
     this.rageCol = new THREE.Color(COLORS.red);
     this.hotCol = neon(0xff5a3c, 2.4); // what the floor's ring and pool turn to as an attack comes due
@@ -159,7 +136,7 @@ class BossGame extends QuizGame {
     this.rageFog = new THREE.Color(0x2a0614);
     this.rageLine = neon(COLORS.red, 1.6);
     this.rageAmb = new THREE.Color(0xc03050);
-    this.bossCol = col.clone();
+    this.beamCol = P.b.clone(); // (the searchlights are the arena's)
     this.rageK = 0;
     this.env = makeEnvMap({
       top: 0x0b0424, horizon: col.clone().multiplyScalar(0.45), bottom: 0x05010f, glow: 0.6,
@@ -177,11 +154,12 @@ class BossGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xe6deff, 1.4);
     key.position.set(3, 8, 10);
     s.add(key);
-    // Lit in its own colour: two lamps behind it, either side (one its colour, one that colour paled toward
-    // white), edge it against the dark stands; a third at its feet in front lights it from below.
+    // Two lamps behind it, either side, edge it against the dark stands: one in its own colour, one in the arena's
+    // second (the art bible: the rim in the world's second colour; it was the boss's colour too, or its complement,
+    // and lit the stands behind it in its own colour); a third at its feet in front lights it from below.
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
-    // (the complement is an edge, not a second key: at full strength it turned black armour pale)
-    const rims = [[-11, col.getHex(), 4.6 * big], [11, col.clone().offsetHSL(0.5, 0, 0).lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
+    // (the second is an edge, not a second key: at full strength it turned black armour pale)
+    const rims = [[-11, col.getHex(), 4.6 * big], [11, P.b.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
     const under = new THREE.PointLight(col.getHex(), 0.85 * big, 24, 1.8);
     const edge = new THREE.DirectionalLight(0xffffff, 0.95); // a pale edge along its head and shoulders, whatever colour the arena is
     edge.position.set(0, 10, -9);
@@ -196,20 +174,38 @@ class BossGame extends QuizGame {
     s.add(this.eyeLight);
     this.hitLight = new THREE.PointLight(0xffffff, 0, 30, 2);
     s.add(this.hitLight);
-    // sky with a horizon in the boss's colour
-    this.skyHorizon = col.clone().multiplyScalar(0.3);
+    // sky with a horizon in the arena's light, leaning to the boss's colour (from disk: served, the storm stands there)
+    this.skyHorizon = P.a.clone().lerp(col, 0.35).multiplyScalar(0.3);
     this.skyMid = new THREE.Color(0x10042a).lerp(col, 0.05);
     this.sky = makeSky({ top: 0x030009, mid: this.skyMid, horizon: this.skyHorizon, bottom: 0x05010f, glow: 1.7, stars: 1, clouds: 0.3 });
+    this.sky.userData.arena = true;
     s.add(this.sky);
     // a distant ridge for a layered horizon (not reflected: the mirror pass stays cheap)
-    const ridge = makeRidge({ z: -62, width: 360, height: 15, n: 40, top: new THREE.Color(0x1c0838).lerp(col, 0.12), bottom: 0x07021a, line: hex, lineK: 1.5, wire: false });
+    const ridge = makeRidge({ z: -62, width: 360, height: 15, n: 40, top: new THREE.Color(0x1c0838).lerp(P.a, 0.12), bottom: 0x07021a, line: P.a, lineK: 1.5, wire: false });
     ridge.traverse((o) => o.layers.set(1));
+    ridge.userData.arena = true;
     s.add(ridge);
     this.ridge = ridge;
-    // the reflective polar-grid floor
+    // The floor: a polished dark deck that gives the arena back (the master overhaul, Phase 2, 2026-11-23: it was dark
+    // and empty, with thin lines). The arena is drawn once into a cube from over the middle of the ring (roomProbe: a
+    // face a frame; again once the boss has powered up: see probeStep) and looked up where each reflected ray meets the
+    // arena's walls; the deck's plates and wear are a CC0 material's (Poly Haven's metal_plate_02, as the title hall's:
+    // assets/ui/mat-deck.webp, a level plate until it arrives), its colour the shared violet-black; its lines are the
+    // arena's second colour. One look-up a pixel on every tier and no second drawing of the scene; where the tier draws
+    // the floor's mirror (the Mac), the capture gives back less (arenaFrame).
     this.mirror = new Mirror(0);
-    this.lineBase = neon(hex, 1.35);
-    this.floor = makeNeonFloor({ size: 600, cell: 3, line: hex, lineK: 1.35, base: 0x05010f, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.17, ripple: 0.0018, streak: 0.01 });
+    this.lineBase = neon(P.b, 1.05);
+    this.probe = roomProbe(new THREE.Vector3(0, 3, 0), { size: Assets.phone ? 128 : 256 });
+    this.plates = cellFlatTexture();
+    this.floor = makeNeonFloor({
+      size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
+      probe: { map: this.probe.map, min: new THREE.Vector3(-25, 0, -29), max: new THREE.Vector3(25, 16, 24), at: this.probe.at, k: 1, rough: 0.16 },
+      plates: { map: this.plates, size: 2.4, k: 0.8 },
+    });
+    // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
+    // horizon is the deck and its lines, where it was the sky's last row stretched into bright streaks)
+    this.floor.userData.arena = true;
+    this.probe.swap = [this.floor.material.uniforms.tProbe];
     s.add(this.floor);
     // where it stands: a wide pool of its own light on the floor, and its shadow in the middle of the pool
     const pool = makeLightPool({ color: hex, radius: 11, intensity: 0.4 });
@@ -228,8 +224,17 @@ class BossGame extends QuizGame {
     this.contactCore.layers.set(1);
     s.add(this.contactCore);
     s.userData.mirrors = [this.mirror];
-    this.makeArena();
-    this.makeCrowd();
+    // the arena's steel (its pillars, its stands' panels, its banners) and its neon: a draw each (22c)
+    const steel = new RacerBatch(["aMetal", "aRough", "aKind"]), glow = new RacerBatch(["aRole"]);
+    this.makeArena(steel, glow);
+    this.makeCrowd(steel, glow);
+    this.steelMat = arenaSteelMaterial(this.env); // (its reflection: the arena itself once it has been drawn: probeTaken)
+    this.glowMat = arenaGlowMaterial();
+    const sm = new THREE.Mesh(steel.build("color"), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat);
+    sm.name = "arena-steel"; gm.name = "arena-neon"; // (named for tools/cost-report.js)
+    sm.userData.arena = gm.userData.arena = true;
+    s.add(sm, gm);
+    this.texIn();
     this.motes = makeMotes({ count: 110, box: [46, 16, 20], center: [0, 7, -14], color: hex, size: 0.13, k: 1.4 });
     this.motes.layers.set(1);
     s.add(this.motes);
@@ -329,48 +334,71 @@ class BossGame extends QuizGame {
     if (this.actor) this.stage = new BossStage(this, this.actor); // (the boss's model has loaded: the fight is staged, on the show clock: 22f)
     this.camBase.set(0, this.camY, this.camZ);
     this.lookAt.set(0, this.bossY, 0);
+    // the deck's reflection: the arena as it stands (only what is marked arena: not the boss, the duellist, the floor,
+    // what flies; see probeStep), now, and once more when the boss has powered up and its lamps are full (staged)
+    this.probeFull = !this.stage;
+    this.probe.capture();
   }
-  // Pillars ringing the arena (glossy metal, neon edges, glowing caps), each
-  // throwing a sweeping searchlight into the sky. Merged: a few draw calls total.
-  makeArena() {
-    const s = this.scene, hex = this.cfg.color;
+  // The arena drawn into the deck's cube, a face a frame (or all six now): everything but the arena itself (marked
+  // userData.arena) is left out, the lights kept. Not before the screen's light budget is in place (its shaders are the
+  // ones the screen draws with), nor while a stroke of lightning lights the sky.
+  probeStep(all) {
+    const P = this.probe, s = this.scene;
+    if (!P || !P.left || !s.userData.lightPool || (!all && this.arena && this.arena.boltK > 0.03)) return;
+    GFX.lightsFor(s); // (a light added since the last frame is taken into the budget first)
+    const hide = [];
+    for (const o of s.children) if (o.visible && !o.isLight && !o.userData.arena && !o.userData.slot) hide.push(o);
+    P.hide = hide;
+    for (let i = 0; i < (all ? 6 : 1) && P.left; i++) P.step(s, this.camera.layers.mask);
+    this.probeTaken();
+  }
+  // the reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps, so a
+  // face a frame would never be drawn there; the game itself draws every frame. See HallScene.probeNow)
+  probeNow() {
+    if (!this.probe || !GFX.ok) return;
+    if (this.stage) this.probeFull = true;
+    this.probe.capture();
+    this.probeStep(true);
+  }
+  // a capture whole: the steel takes it too, filtered for its roughness (its own copy, made once a capture: what reads
+  // it is never drawn into what it reads)
+  probeTaken() {
+    const P = this.probe;
+    if (!P || P.left || P.done === P.made) return;
+    P.done = P.made;
+    if (this.steelMat && GFX.ok) {
+      try {
+        const pm = GFX.pmrem().fromCubemap(P.map);
+        if (this.steelEnv) this.steelEnv.dispose();
+        this.steelEnv = pm; this.steelMat.envMap = pm.texture;
+      } catch (e) { /* the steel keeps the panels' reflection */ }
+    }
+  }
+  // the deck's plates and the steel's brushing (assets/ui): taken as they arrive (a level plate until then; from disk, always)
+  texIn() {
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
+    if (this.steelMat && !this.brushIn) { const img = Assets.ui("mat-steel"), t = this.steelMat.userData.tBrush.value; if (img) { t.image = img; t.needsUpdate = true; this.brushIn = true; } }
+  }
+  // Pillars ringing the arena (steel, neon up their faces, a lamp on each: bossPillar in 22c, into the arena's steel and
+  // its neon), each throwing a sweeping searchlight into the sky. Merged: a few draw calls in all.
+  makeArena(steel, glow) {
+    const s = this.scene, hex = this.cfg.color, P = this.pair;
     const R = 17, H = 44;
     const angles = [18, 44, 70, 98].flatMap((d) => [d, -d]).map((d) => (d * Math.PI) / 180);
-    const shaft = new THREE.CylinderGeometry(0.5, 0.72, 9, 4, 1);
-    shaft.rotateY(Math.PI / 4);
-    shaft.translate(0, 5, 0);
-    const shaftEdges = new THREE.EdgesGeometry(shaft, 1).attributes.position.array;
     const cone = new THREE.CylinderGeometry(3.4, 0.32, H, 14, 1, true);
     cone.translate(0, H / 2, 0);
     const coneNI = cone.toNonIndexed();
     cone.dispose();
     const cp = coneNI.attributes.position.array, cn = coneNI.attributes.normal.array, cv = cp.length / 3;
-    const body = [], caps = [], pools = [], edges = [], banners = [], penCol = new THREE.Color(hex).multiplyScalar(0.24).getHex();
-    const penShape = new THREE.Shape([[-0.42, 0], [0.42, 0], [0.42, -2.9], [0, -2.45], [-0.42, -2.9]].map(([x, y]) => new THREE.Vector2(x, y)));
+    const pools = [];
     const bp = [], bn = [], bb = [], bph = [], bt = [];
-    const v = new THREE.Vector3();
     angles.forEach((a, i) => {
       const x = Math.sin(a) * R, z = -Math.cos(a) * R;
-      const at = (y) => new THREE.Matrix4().makeRotationY(-a).setPosition(x, y, z);
-      body.push({ geo: new THREE.BoxGeometry(2, 0.5, 2), matrix: at(0.25), color: 0x2a2244 });
-      body.push({ geo: shaft.clone(), matrix: at(0), color: 0x3a3266 });
-      body.push({ geo: new THREE.BoxGeometry(1.4, 0.35, 1.4), matrix: at(9.6), color: 0x2a2244 });
-      caps.push({ geo: new THREE.OctahedronGeometry(0.36, 0), matrix: at(10.2) });
-      [2.4, 5.2, 8.0].forEach((y) => caps.push({ geo: new THREE.BoxGeometry(1.02 - y * 0.02, 0.09, 1.02 - y * 0.02), matrix: at(y) })); // three lit bands round the shaft
-      // a pennant on the ring's side of it: the boss's colour, a dark bar, a swallow tail
-      const hang = (geo, y, c, dz) => banners.push({ geo, matrix: at(y).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.82 + dz)), color: c }); // (local +z is toward the ring's centre)
-      hang(new THREE.ShapeGeometry(penShape), 8.3, penCol, 0); // the cloth: a swallow tail
-      hang(new THREE.PlaneGeometry(1.0, 0.1), 8.34, 0x2a2244, 0.012); // its rod
-      hang(new THREE.PlaneGeometry(0.62, 0.09), 7.72, 0x0a0618, 0.012); hang(new THREE.PlaneGeometry(0.62, 0.09), 7.5, 0x0a0618, 0.012); // two dark bars
-      { const d = new THREE.PlaneGeometry(0.34, 0.34); d.rotateZ(Math.PI / 4); hang(d, 6.72, 0x0a0618, 0.012); } // a lozenge
+      const at = (y) => new THREE.Matrix4().makeRotationY(-a).setPosition(x, y, z); // (local +z is toward the ring's centre)
+      bossPillar(steel, glow, at(0), P.a, P.b, hex);
       const pool = new THREE.PlaneGeometry(7, 7);
       pool.rotateX(-Math.PI / 2);
       pools.push({ geo: pool, matrix: at(0.04) });
-      const m = at(0);
-      for (let k = 0; k < shaftEdges.length; k += 3) {
-        v.set(shaftEdges[k], shaftEdges[k + 1], shaftEdges[k + 2]).applyMatrix4(m);
-        edges.push(v.x, v.y, v.z);
-      }
       for (let k = 0; k < cv; k++) {
         bp.push(cp[k * 3], cp[k * 3 + 1], cp[k * 3 + 2]);
         bn.push(cn[k * 3], cn[k * 3 + 1], cn[k * 3 + 2]);
@@ -379,16 +407,8 @@ class BossGame extends QuizGame {
         bt.push(cp[k * 3 + 1] / H);
       }
     });
-    shaft.dispose();
     coneNI.dispose();
-    const pillarMat = Object.assign(glossy(0xffffff, { env: this.env, metal: 0.85, rough: 0.3, envI: 1.3 }), { vertexColors: true });
-    s.add(new THREE.Mesh(blasterMerge(body), pillarMat));
-    this.pillarMat = pillarMat;
-    const eg = new THREE.BufferGeometry();
-    eg.setAttribute("position", new THREE.Float32BufferAttribute(edges, 3));
-    this.pillarEdgeMat = new THREE.LineBasicMaterial({ color: neon(hex, 1.8) });
-    s.add(new THREE.LineSegments(eg, this.pillarEdgeMat));
-    s.add(new THREE.Mesh(blasterMerge(banners), new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })));
+    this.arenaCol = neon(P.a, 2.6); // the arena's own light at full strength: the front row's rims and the mist take theirs from it
     { // the front row: heads and shoulders in the dark between the lens and the ring (the arena had no foreground)
       const row = [], rim = [];
       for (let i = 0; i < 15; i++) {
@@ -400,7 +420,7 @@ class BossGame extends QuizGame {
         rim.push({ geo: new THREE.BoxGeometry(0.62, 0.03, 0.2), matrix: new THREE.Matrix4().makeTranslation(x, h + 0.168, z - 0.07) });
       }
       const fr = new THREE.Group(), dark = new THREE.Mesh(blasterMerge(row), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
-      this.frontRimMat = new THREE.MeshBasicMaterial({ color: neon(hex, 0.5), fog: false });
+      this.frontRimMat = new THREE.MeshBasicMaterial({ color: neon(P.a, 0.5), fog: false });
       const lit = new THREE.Mesh(blasterMerge(rim), this.frontRimMat);
       dark.layers.set(1); // (not in the floor's mirror)
       lit.layers.set(1);
@@ -409,11 +429,10 @@ class BossGame extends QuizGame {
       s.add(fr);
       this.frontRow = fr; // (update() keeps it at the bottom edge of the strip: only heads crest it)
     }
-    this.capMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.7) }); // (the lamps on the pillars: lit, not blazing)
-    this.themeCol = neon(hex, 2.6); // the arena's colour at full strength: its floor ring, pool, rails and mist take theirs from it
-    s.add(new THREE.Mesh(blasterMerge(caps), this.capMat));
-    const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(hex, 0.7), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.themeCol = neon(hex, 2.6); // the boss's colour at full strength: the circle and the pool of light under it take theirs from it
+    const poolMesh = new THREE.Mesh(blasterMerge(pools), new THREE.MeshBasicMaterial({ map: glowTexture(), color: neon(P.b, 0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); // (each lamp's light at its pillar's foot)
     poolMesh.layers.set(1);
+    poolMesh.userData.arena = true;
     s.add(poolMesh);
     const bg = new THREE.BufferGeometry();
     bg.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
@@ -422,7 +441,7 @@ class BossGame extends QuizGame {
     bg.setAttribute("aPhase", new THREE.Float32BufferAttribute(bph, 1));
     bg.setAttribute("aT", new THREE.Float32BufferAttribute(bt, 1));
     this.beamMat = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: neon(hex, 1) }, uI: { value: 0.44 }, uTime: { value: 0 } },
+      uniforms: { uColor: { value: neon(P.b, 1) }, uI: { value: 0.44 }, uTime: { value: 0 } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: `attribute vec3 aBase; attribute float aPhase; attribute float aT; uniform float uTime;
         varying float vT; varying vec3 vN; varying vec3 vV;
@@ -449,6 +468,7 @@ class BossGame extends QuizGame {
     const beams = new THREE.Mesh(bg, this.beamMat);
     beams.frustumCulled = false;
     beams.renderOrder = 4;
+    beams.userData.arena = true;
     s.add(beams);
     // the summoning circle and a pool of light under the boss
     this.rune = new THREE.Mesh(new THREE.PlaneGeometry(13.5, 13.5), new THREE.MeshBasicMaterial({ map: bossRuneTexture(), color: neon(hex, 2.1), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -467,27 +487,36 @@ class BossGame extends QuizGame {
   // sparks), so the fight's animation drives it unchanged.
   // Every boss is a cyborg from the kit in 22b-cyborg.js. This wraps one in what the
   // fight expects: an eye that aims the beam, a halo, orbiting gems, the charge orb.
-  // Behind the ring: four tiers of an amphitheatre curving round the back, each with a rail of the boss's colour
-  // and a crowd of lights along it (they sway, and surge when a blow lands).
-  makeCrowd() {
-    const s = this.scene, hex = this.cfg.color, parts = [], rails = [], pos = [], col = [], seed = [], people = [], pSeed = [];
-    const c0 = new THREE.Color(hex), tints = [c0, new THREE.Color(0xd9d0ff), c0.clone().lerp(new THREE.Color(0xffffff), 0.5), new THREE.Color(0xb9a8ff)]; // (lilac, not tan: the stands keep to the arena's palette)
+  // Behind the ring: four tiers of an amphitheatre curving round the back (two under the storm sky), their faces painted
+  // panels (the arena's steel: 22c) under a rail of the arena's lead colour and a line of its second, a crowd on each,
+  // lit, and lights held up along it (they sway, and surge when a blow lands).
+  makeCrowd(steel, glow) {
+    const s = this.scene, hex = this.cfg.color, P = this.pair, pos = [], col = [], seed = [], people = [], pSeed = [], rims = [];
+    const lilac = new THREE.Color(0xd9d0ff), tints = [P.a, P.b, lilac, new THREE.Color(hex)]; // (the arena's light, lilac, and the boss's own fans)
+    // what the crowd wears: dark, each a little different, never black (lit by the arena's lamps, it reads as people;
+    // the lamps are strong, the boss's own: what they fall on is dark)
+    const wear = [[0.05, 0.022, 0.06], [0.024, 0.026, 0.06], [0.07, 0.018, 0.04], [0.016, 0.034, 0.042], [0.04, 0.03, 0.05], [0.075, 0.014, 0.024], [0.03, 0.022, 0.034], [0.05, 0.03, 0.075]].map(([r, g, b]) => new THREE.Color(r, g, b)); // (violet, indigo, plum, teal, grey, wine, charcoal, lilac)
+    const panel = { aMetal: 0.35, aRough: 0.52, aKind: 1 }, arena = { aRole: 1 };
+    let n = 0;
     for (let k = 0; k < (this.pano ? 2 : 4); k++) { // (under the storm sky: two tiers, lower and darker, and the sky above them)
       const Rk = 27 + k * 6, y = this.pano ? 1.4 + k * 3.3 : 2.2 + k * 4.1, N = 44, tk = this.pano ? 0.42 - 0.1 * k : 0.66 - 0.12 * k; // (each tier darker than the one below: the boss is the brightest thing in the building)
+      const face = new THREE.Color(0.016, 0.005, 0.022).multiplyScalar(1 - 0.16 * k), box = new THREE.BoxGeometry(1, 1, 1); // (deep violet paint: the shared ground, under strong lamps)
       for (let i = 0; i < N; i++) {
         const a0 = (-118 + (236 * i) / N) * (Math.PI / 180), a1 = (-118 + (236 * (i + 1)) / N) * (Math.PI / 180), am = (a0 + a1) / 2;
-        const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, m = new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * Rk, y, -Math.cos(am) * Rk);
-        parts.push({ geo: new THREE.BoxGeometry(w, 3.6, 0.9), matrix: m, color: new THREE.Color(k % 2 ? 0x0b0918 : 0x0f0c20).multiplyScalar((1 - 0.17 * k) * (this.pano ? 0.4 : 1)) });
-        rails.push({ geo: new THREE.BoxGeometry(w, 0.12, 0.12), matrix: new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * (Rk - 0.5), y + 1.9, -Math.cos(am) * (Rk - 0.5)) });
+        const w = 2 * Rk * Math.sin((a1 - a0) / 2) + 0.06, on = (r, h) => new THREE.Matrix4().makeRotationY(-am).setPosition(Math.sin(am) * r, h, -Math.cos(am) * r);
+        steel.add(box, on(Rk, y).multiply(new THREE.Matrix4().makeScale(w, 3.6, 0.9)), face.clone().multiplyScalar(0.9 + 0.2 * (((i * 37 + k * 11) % 7) / 6)), 1, panel); // its face: painted panels
+        glow.add(box, on(Rk - 0.5, y + 1.9).multiply(new THREE.Matrix4().makeScale(w, 0.12, 0.12)), P.a, 1.15 - 0.2 * k, arena); // the rail along its top
+        glow.add(box, on(Rk - 0.47, y + 1.42).multiply(new THREE.Matrix4().makeScale(w, 0.045, 0.04)), P.b, 0.8 - 0.15 * k, arena); // and a line of the second colour under it
         // the people: two rows on every tier, shoulder to shoulder, some with their arms up
         const per = Math.max(2, Math.floor(w / 1.15));
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
           const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
           const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
-          // (Phase 5 fix: a figure cut out against the stands' light, heads and shoulders, some with their arms up, its
-          // edge lit from behind in the house colour, where the boxes and stick arms read as a blockout)
-          const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 3.2);
-          people.push({ geo: bossFigure(Math.floor(Math.random() * 4), sc), matrix: at(0, 0, 0), color: rim }); pSeed.push(sd, 6);
+          // (the master overhaul, Phase 2: lit figures, where they were black cut-outs: what they wear takes the arena's
+          // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
+          const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
+          people.push({ geo: bossFigure(Math.floor(Math.random() * BOSS_CROWD_N), sc), matrix: at(0, 0, 0), color: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) }); pSeed.push(sd, 6); rims.push(rim);
+          n++;
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
         for (let j = 0; j < 2; j++) {
@@ -495,38 +524,43 @@ class BossGame extends QuizGame {
           pos.push(Math.sin(a) * r, y + 3.15 + Math.random() * 0.7, -Math.cos(a) * r); col.push(t.r * b, t.g * b, t.b * b); seed.push(Math.random());
         }
         // aisle lights down the face of the tier, every fourth bay
-        if (i % 4 === 0) for (let q = 0; q < 5; q++) rails.push({ geo: new THREE.BoxGeometry(0.16, 0.09, 0.06), matrix: new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)) });
+        if (i % 4 === 0) for (let q = 0; q < 5; q++) glow.add(box, new THREE.Matrix4().makeRotationY(-a0).setPosition(Math.sin(a0) * (Rk - 0.47), y - 1.3 + q * 0.62, -Math.cos(a0) * (Rk - 0.47)).multiply(new THREE.Matrix4().makeScale(0.16, 0.09, 0.06)), P.a, 1.0, arena);
       }
+      box.dispose();
     }
     // footlights round the edge of the floor, at the foot of the stands
+    const foot = new THREE.BoxGeometry(0.5, 0.14, 0.2);
     for (let i = 0; i < 64; i++) {
       const a = (-118 + (236 * (i + 0.5)) / 64) * (Math.PI / 180);
-      rails.push({ geo: new THREE.BoxGeometry(0.5, 0.14, 0.2), matrix: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6) });
+      glow.add(foot, new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6), P.b, 1.1, arena);
     }
-    // The crowd itself: unlit by its own lamps, lit by the arena's, bobbing on the spot and jumping at a blow.
-    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 } };
-    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count);
-    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); v += pSeed[i + 1]; }
+    foot.dispose();
+    // The crowd itself: lit by the arena's lamps (each corner's light reckoned once: a card is small), bobbing on the
+    // spot and jumping at a blow; its rims and what it holds up glow of their own (aRim), red as the boss rages.
+    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 } };
+    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count), pr = new Float32Array(pg.attributes.position.count * 3);
+    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); for (let q = v; q < v + pSeed[i + 1]; q++) rims[i / 2].toArray(pr, q * 3); v += pSeed[i + 1]; }
     pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
-    const pm = new THREE.MeshBasicMaterial({ vertexColors: true, map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide });
+    pg.setAttribute("aRim", new THREE.BufferAttribute(pr, 3));
+    const pm = new THREE.MeshLambertMaterial({ vertexColors: true, map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide });
     pm.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer;
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer; sh.uniforms.uRage = U.uRage;
       sh.vertexShader = sh.vertexShader
-        .replace("#include <common>", "#include <common>\nattribute float aSeed; uniform float uTime; uniform float uCheer;")
-        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);");
+        .replace("#include <common>", "#include <common>\nattribute float aSeed; attribute vec3 aRim; uniform float uTime; uniform float uCheer; varying vec3 vRim;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);\nvRim = aRim;");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; uniform float uRage;")
+        .replace("#include <map_fragment>", "vec4 fig = texture2D(map, vUv); diffuseColor.rgb *= 0.22 + 0.78 * fig.r; diffuseColor.a *= fig.a;") // (red: lit from above; alpha: the figure)
+        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+          vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
+          totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
     };
-    pm.customProgramCacheKey = () => "boss-crowd";
+    pm.customProgramCacheKey = () => "boss-crowd-lit";
     const folk = new THREE.Mesh(pg, pm);
     folk.layers.set(1);
     folk.frustumCulled = false;
+    folk.userData.arena = true;
     s.add(folk);
-    const wall = new THREE.Mesh(blasterMerge(parts), Object.assign(glossy(0xffffff, { env: this.env, metal: 0.5, rough: 0.62, envI: 0.3 }), { vertexColors: true }));
-    wall.layers.set(1); // (not in the floor's reflection)
-    s.add(wall);
-    this.railMat = new THREE.MeshBasicMaterial({ color: neon(hex, 1.5) });
-    const rail = new THREE.Mesh(blasterMerge(rails), this.railMat);
-    rail.layers.set(1);
-    s.add(rail);
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
     this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
@@ -543,16 +577,19 @@ class BossGame extends QuizGame {
     }));
     this.crowd.frustumCulled = false;
     this.crowd.layers.set(1);
+    this.crowd.userData.arena = true;
     s.add(this.crowd);
     this.cheer = 0;
-    // mist between the fight and the stands, in the boss's colour: two curtains of it that drift past each other
+    // mist between the fight and the stands, in the arena's own light (it was the boss's: a boss stood in a mist of its
+    // own colour), the far one deep violet (it was royal blue): two curtains of it that drift past each other
     const hazeTex = bossHazeTexture();
     this.haze = [[-12, 90, 13, 1.6, 0.09], [-21, 150, 19, 2.6, 0.15]].map(([z, w, h, rep, k]) => {
       const map = hazeTex.clone();
       map.needsUpdate = true;
       map.repeat.set(rep, 1);
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(z < -15 ? 0x2a2f9c : hex, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: neon(z < -15 ? 0x3d2c80 : P.a, k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
       m.userData.far = z < -15;
+      m.userData.arena = true;
       m.position.set(0, h / 2 - 0.2, z);
       m.layers.set(1);
       m.renderOrder = 1;
@@ -1056,7 +1093,8 @@ class BossGame extends QuizGame {
       su.uMid.value.copy(this.skyMid).lerp(this.rageMid, rk * 0.6);
       this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
       this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
-      this.beamMat.uniforms.uColor.value.copy(this.bossCol).lerp(this.rageCol, rk);
+      this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
+      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
@@ -1064,6 +1102,9 @@ class BossGame extends QuizGame {
       if (!st && this.state !== "over" && this.state !== "intro") this.boss.position.x = rand(-1, 1) * 0.04 * rk * this.bossScale * (REDUCED_MOTION || GFX.calm ? 0.25 : 1);
     }
     this.floor.material.uniforms.uReflect.value = 0.55;
+    // (the deck's capture of the arena gives back less where the tier draws the floor's mirror, the Mac's: the mirror
+    // has the arena exactly, the boss with it; the capture adds the crowd, which the mirror leaves out)
+    this.floor.material.uniforms.uProbe.value.x = GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.4 : 1;
     { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
       const fl = this.floor.material.uniforms.uLine.value;
       let ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
@@ -1076,6 +1117,12 @@ class BossGame extends QuizGame {
     this.placeCamera();
     followSky(this.sky, this.camera);
     if (this.arena) this.arena.update(VFX.dt);
+    // the deck's reflection, a face a frame: drawn again once the boss has powered up and its lamps are full (staged)
+    if (this.probe) {
+      if (!this.probeFull && st && st.phase === "fight" && st.a.power >= 0.999) { this.probeFull = true; this.probe.capture(); }
+      this.probeStep();
+    }
+    if (!this.platesIn || !this.brushIn) this.texIn();
     this.arenaFrame(dt);
   }
   // the built-in cyborg: its hover, its halo and gems, the charge it gathers, its eye's light
@@ -1138,14 +1185,13 @@ class BossGame extends QuizGame {
       fr.position.y = this.frontSet ? fr.position.y + (to - fr.position.y) * (1 - Math.pow(0.004, dt)) : to;
       this.frontSet = true;
       fr.visible = fr.position.y + fr.userData.top > 0.05;
-      this.frontRimMat.color.copy(this.themeCol).multiplyScalar(0.16);
+      this.frontRimMat.color.copy(this.arenaCol).multiplyScalar(0.16);
     }
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
-      this.railMat.color.copy(this.themeCol).multiplyScalar(0.27);
       const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
-      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; if (!m.userData.far) m.material.color.copy(this.themeCol).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
+      this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; if (!m.userData.far) m.material.color.copy(this.arenaCol).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
   }
@@ -1157,6 +1203,11 @@ class BossGame extends QuizGame {
       if (this.arena) this.arena.dispose();
       this.shards.dispose();
       if (this.boss.userData.orbs && this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
+      // (the deck's capture, the steel's filtered copy of it, the deck's and the steel's pictures: no scene holds them)
+      if (this.probe) this.probe.dispose();
+      if (this.steelEnv) this.steelEnv.dispose();
+      if (this.plates) this.plates.dispose();
+      if (this.steelMat) this.steelMat.userData.tBrush.value.dispose();
     }
     super.dispose();
   }
