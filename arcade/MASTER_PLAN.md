@@ -294,8 +294,14 @@ Exam's draws on the phone.
   frame; no page changes.
 - *The hub* (1500 frames): no shader made; the cabinet's attract-mode screen (a 320 x 240 canvas) sent about every
   other frame; garbage 5 KB a frame; no page changes.
-- *Garbage is not a cause of stutter here:* 5-12 KB a frame once the code is warm (title, hub); Chromium's young
-  generation takes megabytes, so a sweep comes every minute or so and costs about a millisecond.
+- *The games* (900-1500 frames each, played with right and wrong answers): Risk Blaster made one shader mid-fight, the
+  crack a bolt leaves across a drone (now readied with the rest: none); Nest Egg Run, Boss Rush, Memory Bank and the
+  Final Exam made none and sent no pictures in play beyond the skinned characters' bone tables (the wizard's, 16 KB a
+  frame). Garbage once warm: Boss Rush 49 KB a frame, Risk Blaster and Nest Egg Run 61, the exam 10, Memory Bank 4
+  (CombatFX's update, the traffic and the drones' first). The page's elements change 0-1.4 times a frame (speech
+  bubbles, score floaters, a timer bar).
+- *Garbage is not a cause of stutter here:* at 4-61 KB a frame the collector sweeps every few seconds for about a
+  millisecond; Chromium boxes fractional numbers Safari stores in place, so Safari makes less.
 
 ## Hand-over notes
 
