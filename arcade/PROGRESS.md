@@ -3663,3 +3663,169 @@ engines; `git diff c94c926..HEAD -- arcade/content scripts` empty.
   means the Air warmed and AUTO took a tenth off the size. Drag the window to another screen and back, resize it: the
   picture stays sharp, line two's size follows. P or Esc in a game: the keys are listed. Hover the buttons and Setup.
 - Setup > Effects: SCREEN CURVE and DEPTH OF FIELD start off now; either can be switched back on.
+
+## The animation pass (2026-11-23)
+
+The owner's order: every character and boss to move fluidly, not robotically (stiff poses, hard cuts, constant
+speeds, no weight, no follow-through): alive and weighty within the performance budget. Better base animations (an
+audit of every rig; full clip sets: idle with breath and weight shifts, attack variations, hit reactions varied by
+direction, victory and defeat; sources in order: Tripo or Rodin, retargeted libraries, clips authored by hand);
+blending and state (crossfades of 0.1 to 0.25 s, layers, additive reactions that can interrupt and recover, no snap,
+slide or jitter); the twelve principles (anticipation, follow-through, overlap, subtle squash and stretch, arcs,
+slow-in and slow-out, secondary motion, timing; fast strikes held on impact, heavy wind-ups; slight randomness);
+procedural life (springs on loose parts and the wand tip, cloth only near, noise sway, breathing, head tracking,
+lean, foot placement where it helps, everything damped); a personality for each of the twelve bosses and a
+dramatic phase change; the same speed at 60, 90 and 120 Hz; captures and frame times before and after. No change to
+study logic, content, scoring or boss rules: everything is driven by the events the game already sends.
+
+**What was robotic, found first** (the audit):
+- Every boss played the same eight Tripo clips (idle, an entrance, two attacks, hurt, stagger, rage, a fall) the same
+  way, its idle at one pace; between clips only the clip moved. Its head turned to the pointer, not the wizard. A
+  blow's recoil was a spring stepped once a frame; raging, it shook to a new random place every frame; its eases
+  closed a fixed share of the gap each frame (more at 60 Hz than at 120).
+- The rigs: each boss is rigid armour on a Tripo biped of 22 to 25 bones (rig v1.0): no skinning, so no collapsing
+  joints or stretching (the joints are plates meeting, capped); a unit tall, scaled to 7.4 m. The Inflation Titan has
+  no head bone, the Fine Print and Lord Intestate no foot bones (handled). The wizard is soft-skinned on 78 joints
+  with twist bones (no candy-wrap at the forearms), its cape bound to the trunk; 2.05 m. Nothing to re-rig.
+- The wizard: its clips cut in and out over straight ramps; between them it held its pose; its cape fluttered on a
+  clock, not with its moves; its wand was rigid in its hand.
+- The Probate Tollgate (animated by code): a new random shake every frame, fixed-share eases.
+- Elsewhere (Risk Blaster's overlord, demon and starfighter, the racer's rig, the Final Exam's Proctor and hall):
+  already moved by rich code of their own; 44 of their eases were frame-rate dependent.
+
+**Done** (a commit each, in this order):
+1. `9a0f6ee` **new clips from Tripo** on the rigs the models were made from (390 credits, `tools/gen/merge-clips.mjs`,
+   meshes and old clips checked unchanged): a side and a gut reaction for every boss and the wizard, a victory for the
+   ten bosses that had none, a second idle of its own for five (the Pusher and the Influencer swagger, the Fine Print
+   looks around, Lord Intestate folds its arms, the Proctor waits).
+2. `48da92c` **the motion core** (`src/js/07b-motion.js`): exact easing (`damp`, `dampTo` for a target that moves every
+   frame), springs and trailing points stepped at a fixed 240 Hz whatever the frame rate, smooth noise, variation fixed
+   per character and per event (the same every run and at every rate), bone turns over a mixer (`Turns`: each bone
+   about its own axes, never turned twice on a still frame), reactions as additive upper-body layers (`overlay`).
+3. `f9fe2a1` **the twelve bosses**: each its own way of moving (below), alive between its moves, its gaze on the wizard,
+   a wind-up that coils and strains, a strike thrown and held, a blow's give from where it came (one of three
+   reactions, a layer over whatever it is doing), a dramatic turn to rage (it rears up and swells, a beat of slow
+   motion), its own fall; every clip eased in and out.
+4. `518ce6b` **the wizard**: breathing, braced as the bar fills, its gaze up at the boss, a cast thrown with its weight
+   (each its own), a wand that trails and whips, a cape that trails its moves (a sprung hem, in the vertex shader),
+   flinches that do not stop a cast, a hop when it wins, a slump when it loses.
+5. `3b03c70` **the Probate Tollgate** on servos that overshoot and settle, its booth turned to the wizard, a blow's push
+   from where it came, its shudder smooth.
+6. `3a5e90e` **the title hall**: each caged boss idles at its own pace; the Specter and the Lich hover in their cells.
+7. `dc3d340` **every other character eased exactly**: 44 eases in Risk Blaster's overlord, demon and starfighter, the
+   racer's rig, the Final Exam's Proctor and hall (the Proctor's two hit-stops untouched).
+8. `27771c2`, `e3308ca` **tools**: `motion-hz.js` (the same performance at 30, 60, 90 and 120 Hz against 240; `--pops`),
+   `scenarios/motion.js` (the strips below).
+9. `4d500b4`, `cff0fe9`, `4241c4d`, `5ee5544`, `46e3720` **the review's fixes** (below).
+
+**The twelve** (BOSS_MOVE in 22d; each also strains, lunges, gives and holds by its own figures):
+
+| boss | moves like | its own |
+|---|---|---|
+| Product Pusher | a salesman, slick | quick idle, a bounce in its stance, a swagger idle (new clip), quick to recover |
+| Perilmonger | a brute | slow, heaving breath, stooped, its blows from far back, held long |
+| Solvency Specter | a ghost | hovering, legs hanging, drifting; a blow sends it swaying away; it sinks as it dies, turning |
+| The Fine Print | a fussy clerk | quick, tics (its head cocks, a shoulder jerks), snap glances, looks around (new idle), jerks as it falls |
+| Group Golem | a weight | the slowest, every blow landing heavily, held longest; barely moved by a hit |
+| Inflation Titan | a machine | piston breaths, servo pulses, a machine's shudder; its power fails as it falls, in stutters |
+| Longevity Lich | regal | hovering, slow, barely deigning to move; sinks as it dies |
+| Lord Intestate | a judge | upright, stately, folded arms (new idle), its gavel with all its weight |
+| Undue Influencer | a showman on strings | big sways, sudden jerks, swagger (new idle), jerks as it falls |
+| Probate Tollgate | a machine on tracks | servos that overshoot and settle, its booth turned to the wizard |
+| Patrimony Phantom | a predator | low, weaving, eyes never off the wizard, the longest lunge; folds forward as it falls |
+| The Proctor | an invigilator | few moves, each exact; waits (new idle) |
+
+**The same at any frame rate** (`tools/motion-hz.js`: a boss and the wizard put through one performance at each rate,
+every event on a 30th of a second; their heads, hands, chests, feet, the wand's tip and the body against a 240 Hz run;
+Group Golem):
+
+| frame rate | before the pass: mean / largest (cm) | after: mean / largest (cm) |
+|---|---|---|
+| 30 Hz | 1.43 / 35.1 | 0.55 / 17.3 |
+| 60 Hz | 0.60 / 15.1 | 0.33 / 9.5 |
+| 90 Hz | 0.34 / 8.4 | 0.09 / 3.4 |
+| 120 Hz | 0.23 / 5.0 | 0.09 / 3.1 |
+
+Twice to four times closer, with far more moving (every spring and layer above). The largest gaps left are an event's
+own frame (a blow lands on the first frame after its moment: at 60 Hz up to 1/60 s late, at 120 Hz 1/120), not
+the movement. The Probate Tollgate: 0.16 cm mean at 60 Hz. `--pops` (each place's largest move in one frame against
+the frames round it, at 60 Hz): before, a blow's reaction cut in (the Golem's hand 1.4 m in one frame, 23 times its
+neighbours'); after, the largest are the strike itself and the roar coming on, under 3 times their neighbours' (fast,
+not cut).
+
+**What it costs a frame** (scratch benches; this machine runs script slowly and draws in software: compare the two
+builds, do not read the figures as a device's):
+
+- **The animation itself** (the boss and the wizard alone: their updates and their skeletons' matrices, the same 4.4 s
+  performance at 60 Hz as the frame-rate test, the two builds alternated, median of five): Chromium 0.11 → 0.19 ms a
+  frame, WebKit 0.14 → 0.19 ms: **+0.05 to +0.08 ms a frame**, under half a percent of a 60 Hz frame here (the phone
+  and the Mac run script several times faster than this machine).
+- **The whole game** (the screen's own update a frame with drawing stubbed, and one whole frame drawn and synced; the
+  two builds side by side in one browser, alternated, three rounds; this machine's script timings vary by 20-40% round
+  to round and its software frames by about 7%):
+
+| screen | WebKit, PHONE tier: script ms / whole frame ms | WebKit, MAC tier | Chromium, PHONE tier |
+|---|---|---|---|
+| Boss Rush, Group Golem | 0.68 → 1.06 / 977 → 1001 | 0.83 → 0.85 / 2793 → 2786 | 0.56 → 0.68 / 4065 → 4088 |
+| Boss Rush, Solvency Specter | 0.69 → 0.95 / 1028 → 1098 | 1.24 → 1.02 / 2346 → 2433 | 0.52 → 0.87 / 3764 → 4096 |
+| the title hall | 0.52 → 0.55 / 884 → 950 | 0.73 → 0.72 / 2725 → 2548 | 0.36 → 0.55 / 3746 → 3761 |
+| Risk Blaster | 1.75 → 1.80 / 1370 → 1379 | 2.46 → 1.94 / 2658 → 2465 | (the run's time ran out) |
+| the Final Exam | 0.82 → 0.94 / 1172 → 1070 | 1.17 → 0.74 / 2150 → 2164 | |
+
+  Nothing drawn was added (no mesh, light or pass: the cape's swing is a few lines of its vertex shader), so draw
+  calls, triangles, lights and graphics memory are as they were; the frames move within this machine's noise. The
+  download: a fight's two models 0.13 to 0.34 MB larger (the new clips).
+
+**Pictures** (`docs/animation/`, before above after, the same moments on the capture tool's clock: Group Golem and the
+Solvency Specter, with the wizard): ten pictures (`05-golem-*`, `03-specter-*`: idle, strike, cast and hit, fall, defeat);
+the other games' characters changed only in how exactly they ease (no picture would show it).
+
+**Not done, and why:**
+- Foot placement by IK: while a fight is played the boss is framed head to knees and the wizard from the hips up
+  (their feet are under the answers); the reactions are upper-body layers, so a blow never slides a foot. The feet
+  show only in the wide shots (an entrance, a fall), where the clips' own feet are used.
+- Cloth simulation: the wizard's cape is part of its one skinned mesh; it swings by a sprung hem and flutters in the
+  vertex shader (no bones or particles to simulate). The bosses' armour is rigid plates (loose plates swinging on their
+  own would open gaps at the joints): their follow-through is in the spine and head.
+- Eye tracking: the wizard's eye bones face away from the lens (it is seen from behind); the bosses have no eyes to
+  turn. Their heads track.
+- Fixed-timestep rules with interpolated drawing: the rules run on each frame's own time step, as the regression tests
+  play them (changing that would move when rules fire). The look is made rate-independent instead: exact easing,
+  springs on a fixed 240 Hz step read a step behind, every event timed in seconds.
+- Walk, run and dodge: the fights stand in place, and a wrong answer's blow always lands (the rule took the heart: the
+  ward takes it, the wizard flinches); no step is ever taken.
+- New attack clips: the two attacks are timed to the rule's frames by their key moments (wind-up, top, blow, hold);
+  each strike's lunge, give, hold and pace vary instead.
+- Mixamo or other libraries: they need an account and a manual download; Tripo's presets on the same rigs gave what
+  was missing (no download needed from the owner). Rodin: no rigging needed.
+- The far bosses in the title hall still step at ten frames a second (and hold their pose at LOW), as the
+  performance pass left them.
+
+**Independent review** (Opus; it built and ran its own scripted fights on all twelve bosses and the wizard): no
+crash, no NaN, the rules unchanged (it ran both regressions), the bone turns steady through hit-stops, the additive
+layers right in three.js r128, the twelve models' every node, picture, skin and old clip unchanged by the merge. Its
+points, all fixed: the wizard's cape had stopped fluttering (a lost three lines, `518ce6b`); every strike ended with a
+one-frame pop (the attack clip dropped while it still counted a quarter: a hand moved up to 1.6 m in that frame; now
+held until it has faded); a reaction or clip cut short by another was cut (now handed over: `Motion.Layers`, two copies
+of each, and a fifth of a second's fade for a clip played through); the lance's cast restarted the answer's cast in one
+clip (now a twin takes over); new shudders and jerks shown with reduced effects (now off); the lighter bosses' recoil
+deeper than tuned (capped); timers restarting from the frame instead of carrying the overshoot, a machine's stop-go
+pace stepped at frame starts (now integrated exactly); one approximate ease left; the test tool unable to build the
+Tollgate, and its runs not repeatable from page to page (now each rate in a new page). Two more found in checking:
+a dying boss's reaction cut as it fell, and the Tollgate's fury snapped on in a frame (both eased).
+
+**Tests on the final build:** the regression from disk IDENTICAL (153 answers in 8 games) and served IDENTICAL, no
+console errors; the sequence ALL 13 STEPS OK; the card faces one face at a time in WebKit and Chromium; the governor's
+checks in both engines; every boss's fight (all twelve) through idle, wind-up, strike, a hit, rage, a ward and death,
+no error and no value not a number; `git diff b6ee1eb..HEAD -- arcade/content scripts` empty.
+
+**For the owner** (Boss Rush, any boss, on the iPhone and the Mac):
+- With a question up: the boss breathes and sways, its head turned to the wizard; the wizard breathes, looks up at
+  it, its wand's tip swaying a little. As the attack bar fills the boss rears back and strains; the strike throws it
+  forward and it holds the blow a beat.
+- A right answer: the wizard throws itself into the cast, its wand whipping; the boss gives, turned away from the
+  wizard's side, a different reaction each time (body, gut, side). Under 35%: it rears up and swells as it roars,
+  in a beat of slow motion, and from then on moves quicker and lower.
+- A wrong answer mid-cast: the wizard flinches without dropping its cast. Out of hearts: the boss celebrates.
+- Compare the Golem (slow, heavy), the Specter (floating), the Fine Print (twitchy), the Titan (a machine), the
+  Phantom (low, predatory). The FPS counter's CPU figure on line one should read as before.
