@@ -152,6 +152,28 @@ first independent review: its round chest core was too close to a known film arm
 wings were noisy. The second round was nine concept images (three new prompts, `demon-d/e/f`), three Tripo and two
 Rodin candidates; the pick is above. The first demon's cost stays in the spend log.
 
+### Clips added by the animation pass (2026-11-23)
+
+Every boss played the same eight clips; the owner asked for full clip sets (hit reactions varied by direction, victory,
+an idle of its own). Retargeted by Tripo (`animations/retarget`, `animate_in_place`, skeleton only) onto the rig each
+model was made from (the rig task in `tools/gen/ledger.jsonl`), and merged into the models by bone name with
+`tools/gen/merge-clips.mjs` (meshes, pictures, parts and old clips checked unchanged after writing; a looping clip's
+last 0.35 s eased into its first pose):
+
+| model | clips added (Tripo preset → the game's name) | size (MB) |
+|---|---|---|
+| `boss-1.glb` Product Pusher | `swagger` → idle2, `hit_to_side` → hurtS, `hit_to_stomach` → hurtG (it had a victory) | 1.75 → 1.83 |
+| `boss-2.glb`, `-3`, `-5`, `-6`, `-7`, `-11` | `victory_celebration` → win, `hit_to_side` → hurtS, `hit_to_stomach` → hurtG | +0.08 to +0.09 each |
+| `boss-4.glb` The Fine Print | `look_around` → idle2, and the three above | 1.76 → 1.93 |
+| `boss-8.glb` Lord Intestate | `fold_arms` → idle2, and the three above | 1.57 → 1.85 |
+| `boss-9.glb` Undue Influencer | `swagger` → idle2, and the three above | 1.69 → 1.82 |
+| `boss-all.glb` The Proctor | `wait` → idle2, and the three above | 1.50 → 1.61 |
+| `wizard.glb` | `hit_to_side` → hurtS, `hit_to_stomach` → hurtG | 1.33 → 1.39 |
+
+In all, 1.3 MB more over the twelve models; a Boss Rush fight loads one boss and the wizard: 0.13 to 0.34 MB more.
+Cost: 390 Tripo credits (39 clips at 10). The title hall's `-t` models are unchanged (they idle in stasis). How they
+are played: `PROGRESS.md`, "The animation pass".
+
 ## Skies (`assets/sky/`)
 
 Blockade Labs Skybox AI, Model 3 (8K equirectangular, 1 credit each), packed at 4096x2048 WebP. Each has a
@@ -256,13 +278,13 @@ from its side of the hall, about 6 to 17 dB under the music. The sound test page
 
 ## Spend log
 
-As of 2026-11-23, after Boss Rush's wizard (its model, rig and clips, its wand, three spell textures, its sound set). Balances are read live from
+As of 2026-11-23, after the animation pass (39 clips for the bosses and the wizard; before it, Boss Rush's wizard: its model, rig and clips, its wand, three spell textures, its sound set). Balances are read live from
 each provider; failed calls are not charged by any of the four. Every paid call is a line of
 `tools/gen/ledger.jsonl`.
 
 | Provider | Start | Spent | Left | On what |
 |---|---|---|---|---|
-| Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 5,865 | 3,600 (checked live) | 34 image-to-3D at the highest settings (60 each), 27 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 32 retarget requests (129 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265); the title hall's pod 60; the wizard 195 (its model 60, its wand 30, its rig 25, eight clips 80) |
+| Tripo | 4,465 credits, plus a 5,000-credit top-up on 2026-11-16 (9,465 in all) | 6,255 | 3,210 (checked live) | 34 image-to-3D at the highest settings (60 each), 27 at the standard settings (30 each: menu props, traffic, rocks, ships), 1 multi-view-to-3D (60), 1 text-to-3D (50), 24 segmentations (40 each), 16 auto rigs (25 each), 44 retarget requests (168 clips at 10 each), 17 rig checks (free); the four boss remakes cost 1,080 (Titan and Phantom 530, Pusher 285, Lich 265); the title hall's pod 60; the wizard 195 (its model 60, its wand 30, its rig 25, eight clips 80); the animation pass 390 (39 clips in 12 requests, below) |
 | fal.ai | $49.90 | $31.04 | $18.859 (checked live) | 26 Rodin Gen-2.5 runs, 107 Seedream 5.5 images (the last: three spell textures for the wizard, $0.03 each), 25 Nano Banana Pro concept images, 4 Nano Banana Pro edits (elevation views); the wizard $2.30 by the balance ($1.94 by the ledger's price list, which is kept by hand from the providers' published prices; the $0.36 between them was not traced to a call: three Nano Banana Pro concepts $0.45, two Seedream wand concepts $0.06, one Rodin candidate $1.20, three textures $0.09, and the accident below $0.14) |
 | ElevenLabs | 131,000 credits | 52,733 (checked live, after the wizard) | 78,267 | 495 sound effects and loops (11 credits a second), 84 announcer lines (four of them retakes of "Boss Rush!", whose first take the provider had cut off at 0.21 s; four speech-to-text checks of them), 19 music runs for the first music (about 880 credits each) and 18 for the calmer music (96 s each, 18,480 credits in all); for the title hall, 2 music runs (96 s each) and 3 takes of the soft coin (39 credits); for the wizard, 38 takes of 11 sounds (472 credits). The provider's own counter lags: it read 44,302 before the hall's five calls and 52,261 after them, more than the five cost at the rates above (about 2,100), so part of that rise is the counter catching up |
 | Blockade Labs | plan credits | 27 | not reported by the API | 27 skies (Model 3, 1 credit each; the last, the title hall's painted vault) |
