@@ -106,6 +106,12 @@ function launch(engine) {
     await page.waitForFunction(() => window.__arcade && window.__arcade.GFX, null, { timeout: 60000 });
     // the tier fixed as Setup fixes it (its full drawing size); --scale: a share of it, as AUTO draws it (0.875: a phone's SMOOTH)
     await page.evaluate(([t, sc]) => { const G = window.__arcade.GFX; if (t === "auto") { /* AUTO's own first step, held */ } else if (G.setQuality) G.setQuality(["high", "medium", "low", "lowest"][+t]); else if (G.setTier) { G.auto = false; G.setTier(+t, "report"); } if (G.perf) G.perf.off = true; if (sc) { G.scale = sc; G.resize(); } }, [TIER, SCALE]);
+    // every file the screen asks for in hand before it opens (on a loaded machine the game's own 40 s wait for its files
+    // can run out, and the screen opens without its models: measured, it is not the screen)
+    await page.evaluate(async (k) => {
+      const A = window.__arcade, P = { blaster: "3", racer: "2", boss: "1", memory: "2", exam: "all" }, extra = P[k] && A.gameAssets ? A.gameAssets(k, A.makeSelection(P[k])) : undefined;
+      for (let i = 0; i < 400; i++) { const p = A.Assets.need(k, extra); if (!p) return; await p; }
+    }, name).catch(() => {});
     await page.evaluate(`window.__arcade.${go}`);
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
     if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 900000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
