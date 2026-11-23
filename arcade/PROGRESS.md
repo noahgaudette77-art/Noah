@@ -3338,3 +3338,145 @@ inside what a phone draws at 60. No shadow maps or mirror on a phone already. Th
 move ten times a second and stop being drawn past 50 m; their joint caps past 22 m.
 
 **Spend**: nothing.
+
+## Boss Rush's wizard (2026-11-23)
+
+The owner's order: a cape-wearing wizard with a wand who duels the bosses, original (no known character, name, scar,
+logo or crest), made with the linked services: the character (rigged: idle, cast, big cast, hit, victory, defeat; its
+cape and robe moving), a wand of its own with a tip that glows and charges, three or four spells each with its own
+colour, trail, impact and screen feedback, the effects of a duel, its own sounds levelled with the game's, and staging
+that reads on a phone held upright without covering the answers or the boss. A visual and audio layer only, driven by
+the events the rules already decide: nothing about study logic, questions, answers, scoring, boss health, `content/` or
+`scripts/` changed, nor how any event is decided. Inside the performance budget (if it costs frames, simplify the
+effects, not the frame rate); small commits; WebKit as well as Chromium.
+
+**The events, mapped first** (22-boss.js decides; 22f-bossstage.js stages; the wizard, `22h-wizard.js`, is told):
+
+| rule | stage | the wizard |
+|---|---|---|
+| start | `enter` | it drops in, in a column of cyan sparks and a rune circle, as the boss drops in; it lands and rises (`enter`: Tripo's jump-down, its hips' path moved so it lands where the idle stands) |
+| a question up | `ask` | it holds its wand out at the boss (a held copy of `cast`), higher as the attack bar fills; its tip gathers light; a low hum as it starts |
+| pick (right or wrong) | `fire`, then `volley` x3 (x1 when wrong) | it casts (`cast`, played from just before its release); ARC BOLTS, cyan, leave the wand's tip from 0.05 s on (its arm out by then), 0.065 s apart, a star and a rune circle at the tip; a wrong answer: one dim violet bolt, a sputter of sparks and smoke at the wand, the old red fizzle on the armour |
+| the right answer lands | `bossHit` | the NOVA LANCE, magenta, from the wand to the boss (the stage's own lance, impact, wave, debris, hit-stop and recoil, in its colour; the lance's root kept at the tip); a heavy blow (20+, enraging, tearing or finishing) is its lunging big cast (`bigcast`), with a bigger rune circle and more sparks |
+| the boss's strike lands | `playerHit` | the AEGIS WARD: a round wall of green hexagons across the foot of the picture, flaring where the blow struck, a ripple running out from it, breaking up a cell at a time nearest the blow first, as the heart goes (the rule took it); it reels (`hurt`; `stagger` on the last heart) |
+| victory | `death`, `lastBlast` | STARFALL: it points its wand at the boss (`cast`, held) as a golden sigil turns over the boss and a column of gold light comes down through it, a wave and white sparks; at the last blast it raises its wand (`win`) and its own victory sting plays in place of the old one |
+| defeat | `defeat` | it sinks a little (`defeat`), its wand's light going out and its neon dimming |
+
+Everything is on the stage's show clock (slowed in the death's slow motion), and nothing in it is read by a rule. Every
+call from the stage goes through `wizCall`: without the wizard's files (the page opened from disk) the fight is as it
+was, and should a call fail, the wizard goes and the fight goes on as it was. Each clip as made held the hips somewhere
+of its own (the big cast its root turned too): each is moved to stand where the idle stands, so going from one to
+another does not slide the body (the feet, under the answers, take the difference).
+
+**Made** (the spend is in `ASSETS.md`): the wizard (Tripo, from a Nano Banana Pro concept; a Rodin candidate from the
+same concept was made and not used: a pale face and hands, a smeared cape), rigged by Tripo (78 joints) with eight clips
+from its presets; kept soft-skinned (`tools/gen/process-skinned.mjs`, new: a coat and a cape should bend), its cape
+re-bound from the arms and legs to the trunk (a raised arm had lifted it over its head), a flutter mask baked in for
+the cape and the coat's skirts, its cloth made matte (the generator had made it half metal: dark under coloured lamps),
+32K triangles, 1.27 MB. The wand (Tripo, from a Seedream concept), 3K triangles, held along the line of the right hand,
+its tip an anchor. Three spell textures (Seedream: a rune circle of geometric marks, a hexagonal ward, a star flare;
+white on black, tinted in the game). Eleven sounds, 38 takes (ElevenLabs).
+
+**Staging.** While the answers are up it stands low on the left, seen from the hips up at their top edge (the answers
+hide the rest), 4.8 m from the lens, its back three-quarters to the lens and its right side (the wand's) toward it, so
+its arm reaches into the picture toward the boss as it casts. It holds its place in the picture as the lens moves (it is
+placed from where the lens looks from and at before its shake, so a shake moves it with the world). When the whole
+screen is the picture (before the first question, after the last) it stands on the arena's floor 6.5 m off (never more
+than half the way to the boss, nor with its hips under the foot of the screen), and moves between the two over half a
+second. It covers the boss's lower left corner (a hand, a knee) and nothing of the answers, the question or the HUD; on
+a very wide screen (over about 1730 px, where the answers stand in a 1040 px column) it keeps within their width, so its
+legs never show beside them. While it is there, the crowd's front row (the dark heads along the foot of the picture,
+22-boss.js: the arena's foreground until now) sinks out of the picture: the wizard is the foreground. As the lens comes
+in at the start of a question the wizard stands among those heads, its wand hand a metre past them, and on a wide screen
+behind them. A cold lilac rim holds its edge against every arena; checked against all twelve
+(`tools/scenarios/wizard-arenas.js`).
+
+**Effects and their limits.** Its glow is drawn (a glow sprite and a star at the tip, two pooled rune circles, three
+floating runes, one ward, one sigil, one flare: all made once with the fight); it has no light of its own (the stage's
+lights are spent) and does not take the kit's one blast light from the boss. The cape flutters in the vertex shader,
+more as it casts or is struck. Its shake (0.12, Starfall only) and lift of light (`GFX.pulse`, capped at three a second)
+are the game's own. Reduced effects (or reduced motion): no flutter, no floating runes, fewer sparks, no turning sigils,
+a dimmer ward. Below MEDIUM (no extras): no floating runes. It is never in the floor's mirror (it stands by the lens:
+its reflection would be off the picture, and it would be a second skinned draw).
+
+**Sound.** `sfx-wizard.mp3` (11 cues, 38 takes, 0.6 MB), a set of its own in the boss set, played through the effects
+bus (the effects volume). Levelled by `audio-build.js` and checked with `tools/audio-levels.py`: its cues' loudest 400 ms
+at the mix sit at -28 to -22 dB (median -25.4; the other sets' medians -25 to -22); the bolt 2.7 dB under the laser it
+replaces, the victory sting within 1.2 dB of the old one; nothing clips. No hiss: the file's floor (its quietest tenth) is -87 dBFS, -98 dB above 4 kHz, flatness 0.20 (`tools/noise-floor.py` flags a floor flatter than 0.3 above 4 kHz and louder than -60 dBFS). Where its set has not loaded, each cue
+falls back to one of the game's own (the laser, the old sting) or to nothing. A blow's strike is one sound: the
+wizard's for an ordinary blow (in place of the stage's), the stage's own big one for a heavy blow. The sound test names
+them.
+
+**Performance** (measured before the review's fixes, which add no draw: a held pose and a placement). Measured with `tools/cost-report.js` (the fight held still, a phone's screen, MEDIUM at
+1.75x: the phone's SMOOTH) on the live build (e0ebaa8) and this one. This machine draws in software: compare, do not
+read as a phone's milliseconds. WebKit (Safari's engine), whose numbers hold steady run to run: a fight's frame 144 ms
+before, 150 after (+4%); 68 → 74 draws, 74K → 109K triangles, the same 5 lights (3 point, 2 directional), pictures
+164 → 203 MB. Chromium's whole frames swing too much between runs to compare (463 → 504 ms in one pair, 621 → 528 in
+another, the frames' content differing), so the wizard's own cost was measured directly: one held frame drawn nine times
+each way, shown and hidden, interleaved. First as made: 177-229 ms of a frame in Chromium and 26.5 ms in WebKit, nearly
+none of it its geometry or skinning (drawn with a flat material it cost 3 ms) and nothing measurable for the rim or the
+flutter: its pixels. Each surface was drawn on both sides (the generator's default; the mesh is closed, so the back
+faces are hidden, but each was still shaded) and read a normal map. Drawn one-sided and without its normal map (compared
+close up at 3x: the same picture), it costs 91 ms in Chromium (12% of that frame) and 11 ms in WebKit (7%): half.
+
+What was simplified for the frame rate: one-sided and no normal map (above); 32K triangles (a hero's bar is 55K: it is
+seen from behind and half of it is under the answers); its glow map at 1024 px; no light of its own; never in the
+floor's mirror; its effects drawn, pooled and made once with the fight (two rune circles, three runes, one ward, one
+sigil, one flare, the tip's glow and star) on top of the kit's own pools; its floating runes only where the tier keeps
+extras and never with reduced effects; the cape's flutter in the vertex shader (no cloth to simulate), off with reduced
+effects. Not simplified: its 2048 px colour map (it is the only thing on screen that close to the lens). The quality
+governor (the performance pass) keeps 60 by drawing fewer pixels first, should a phone need it.
+
+**Checked** (on the last build): the regression IDENTICAL from disk and served (153 answers in 8 games, no
+console errors); the sequence test ALL 13 STEPS OK; and on the build before the review's fixes (which touched only Boss
+Rush's stage and wizard), the card faces one at a time in WebKit and Chromium and `governor-test.js` in both engines; nothing under `content/` or `scripts/` changed since the live build, nor `22-boss.js` or
+`19-quizgame.js` (the rules), nothing outside `arcade/`; no `GFX.hitStop` added, the exam boss's two untouched. Every
+part of the fight captured on a phone held upright in Chromium and WebKit, at 1440 x 900 in Chromium, and against all
+twelve arenas (`docs/wizard/`).
+
+**The independent review** (Opus: it read all of it, ran the class on the real model in Node, and probed the fight in
+both engines on a phone's screen, at 1440 x 900 and 1024 x 768, served and from disk). No blocker: no wizard code
+writes a rule's state (HP, hearts, score, charge, state, the rules' own timers) and the rules' timers are unchanged;
+the protected files untouched; no shader compiled late (72 programs from the mount to the end); nothing leaked over
+three visits; no allocation in a frame (0.03 ms a frame); reduced effects and the tiers respected; every missing piece
+(the wand, the textures, the sound set, WebP) falls back; from disk, no wizard and no error. What it found, and what
+was done:
+- each clip as made held the hips at an offset of its own (and the big cast its root turned 10 degrees), so going
+  from one to another slid the body sideways, up to 36 cm (31-34 px on a phone in four frames): every clip now stands
+  where the idle stands (the feet, under the answers, take the difference);
+- the first bolt and the cast's rune circle left from the pose of the frame before (the circle from the wand at rest,
+  under the answers): the wizard's pose is now set before the stage's shots leave, and the circle (or a wrong answer's
+  sputter) goes with the first bolt, from the tip;
+- the entrance faded in over the idle, so it rose before it dropped: its jump starts at once;
+- on a wide screen (a desktop, a tablet) it stood behind the crowd's front row during a question, and at the end of the
+  fight level with the boss, off the picture: on the floor it now stands at most half the way to the boss and never
+  with its hips under the foot of the screen, and the front row sinks out of the picture while it is there (it was the
+  arena's only foreground: the wizard is now);
+- the wand's charge was behind the answers for the whole question: while a question is read it now holds its wand out
+  at the boss (a held copy of its cast, more as the attack bar fills), its glowing tip in the picture;
+- and the smaller points: the cape's wave read the packed vertex (now the skinned one, in metres); the casts' key
+  moments are found as the fight is built, from a fresh matrix (a few milliseconds at the first answer before); the
+  volley's lead and spacing (0.05 s, 0.065 s) land the last bolt a frame or more before the lance, at 30 frames a
+  second too; every call from the stage to the wizard goes through a guard (should one fail, the wizard goes and the
+  fight goes on as before); the lance's root stays at the wand's tip while it is drawn; one strike sound for a blow
+  (the wizard's for an ordinary one, the stage's own big one for a heavy one, never both); the old sting at its old
+  level where the wizard's sounds have not loaded; the asset log's wand maps; the temporary build removed.
+
+A re-check of those fixes (the same reviewer) confirmed each one, measured: the hips move at most 1 cm as a clip comes in
+(24-36 cm before), the entrance's first frame is already in the air, the first bolt leaves within 1 mm of the tip, the
+last lands by 0.267 s (the lance comes at 0.3), the held wand crosses the answers' edge at half the bar, the wave's
+height is the true height, and on a 1440 x 900 screen the wizard is in the picture at a victory and a defeat. Nothing
+blocking; its four small points, fixed: on a phone the front row had sunk and risen again once a question (the lens comes
+in and draws back with the bar), and at the start of a question a head could hide the wand hand (now the row stays down
+while the wizard is there); over about 1730 px wide the wizard stood beside the answers' column, its legs showing (now it
+keeps within their width); a wizard dropped after a failure now puts the row back and frees its pictures; and the
+lance's root follows the wand only for the lance's own life (the kit's beams are pooled).
+
+**For the owner, on the phone**: Setup > FPS counter ON (Low Power Mode off for the test), a Boss Rush fight twenty
+seconds in, then a right answer, a wrong one and a finishing blow. Line one should still read about 60 FPS and the
+graph's bars sit green on the white line; line three AUTO · STEP 1/7 SMOOTH. If it reads a higher step during a fight,
+AUTO gave up drawing size to keep 60: send that screenshot.
+
+**Spend**: Tripo 195 credits (the wizard 60, the wand 30, the rig 25, eight clips 80); fal.ai $2.30 by the balance
+($1.94 by the ledger: three Nano Banana Pro concepts, two Seedream wand concepts, one Rodin candidate $1.20, three
+textures, and $0.14 lost to a generator script run by mistake: see `ASSETS.md`); ElevenLabs 472 credits (38 takes).
