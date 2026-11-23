@@ -176,7 +176,8 @@ class BossTollgate {
     this.wobT += d; this.wob = Math.max(0, this.wob - d * 0.9);
     const wob = this.wob * Math.sin(this.wobT * 13) * 0.12;
     this.rageT = Math.max(0, this.rageT - d);
-    const fury = Math.min(1, this.rageT * 2), shake = (fury * 0.03 + (rage ? 0.008 : 0)) * (quiet ? 0.2 : 1);
+    // (its fury comes on over 0.15 s: its arms thrown up, not snapped)
+    const fury = Math.min(1, this.rageT * 2) * smoothstep(0, 0.15, 2.3 - this.rageT), shake = (fury * 0.03 + (rage ? 0.008 : 0)) * (quiet ? 0.2 : 1);
     // ---- its death: it shudders, then goes over backward about the back of its tracks
     let tip = 0;
     if (this.deathT >= 0) {
