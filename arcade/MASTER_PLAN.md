@@ -66,7 +66,7 @@ far; what to test on the iPhone and the Mac); keep going without waiting unless 
 | provider | balance at the start | cap (60%) | spent in the overhaul | left within the cap |
 |---|---|---|---|---|
 | Tripo | 3,210 credits | 1,926 credits | 0 | 1,926 |
-| fal.ai | $18.859 | $11.31 | $0.30 (the art bible's sheet) | $11.01 |
+| fal.ai | $18.859 | $11.31 | $0.36 (the art bible's sheet $0.30, two skylights $0.06) | $10.95 |
 | ElevenLabs | 78,267 credits left (52,733 of 131,000 used) | 46,960 credits | 0 | 46,960 |
 | Blockade | plan credits (no balance in its API) | at most 6 skies | 0 | 6 skies |
 

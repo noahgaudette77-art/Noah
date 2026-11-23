@@ -298,6 +298,7 @@ remaking any boss or asset that looks weak in a review, rather than falling back
 
 | when | provider | what | cost |
 |---|---|---|---|
+| 2026-11-23 | fal.ai | the title hall's skylights for its two interior worlds (`assets/ui/top-memory.webp`, `top-guide.webp`): a night sky in each world's pair (gold and orange; amber and lime) in place of a crop of the vault's and the archive's interiors, which read overhead as smears; Seedream 5.5, 2 pictures at $0.03, cut to 1024 x 512 | $0.06 |
 | 2026-11-23 | fal.ai | the art bible's reference sheet (`tools/gen/artbible.js`, `docs/art/`): eight Seedream 5.5 pictures of the look (the hall, a cell, the floor, the arena, the vault, the exam hall, the street, the interface), then the vault's and the interface's again without existing games' characters on their cabinets' screens: 10 pictures at $0.03 | $0.30 |
 
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and

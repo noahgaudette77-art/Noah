@@ -19,8 +19,9 @@ WORLDS = [
     ("blaster", "blaster-deep-1", 0.15, 0.65),
     ("racer", "racer-sunset", 0.80, 0.66),
     ("boss", "boss-storm", 0.66, 0.66),
-    ("memory", "vault-gold", 0.60, 0.68),
-    ("guide", "guide-archive", 0.50, 0.68),
+    # (memory and guide: their panoramas are interiors, a vault and an archive, and a crop of them read as a smear
+    # overhead: their skylights are night skies in each world's pair, made apart (the master overhaul, 2026-11-23:
+    # Seedream 5.5, ASSETS.md); left out here so a run does not put the interiors back)
     ("exam", "exam-moon", 0.72, 0.64),
 ]
 

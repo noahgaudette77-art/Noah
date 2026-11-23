@@ -468,7 +468,8 @@ class HallScene extends Scene3D {
           vec3 c = texture2D(tSky, su).rgb;
           if (uTopOn > 0.5) c = mix(c, texture2D(tTop, vec2(fract(su.x - uTop.x) / uTop.z, (su.y - uTop.y) / uTop.w)).rgb, step(0.5, vSpan.z)); // (a skylight: its own sharper picture, once it has come)
           c = c * c * (c * 0.305 + 0.695);
-          vec3 col = mix(uTint * 0.03, c * mix(1.0, 1.45, vSpan.z) * uK, uOn); // (a window; a skylight a little brighter)
+          c = mix(vec3(dot(c, vec3(0.299, 0.587, 0.114))), c, mix(0.82, 1.0, vSpan.z)); // (a side window a little less saturated: the master overhaul, 2026-11-23)
+          vec3 col = mix(uTint * 0.03, c * mix(0.62, 1.45, vSpan.z) * uK, uOn); // (a window dimmer than the cells it stands behind, so the bosses lead the frame (it outshone them); a skylight a little brighter)
           float bars = (1.0 - vSpan.z) * max(smoothstep(0.004, 0.012, abs(fract(vUv.x * 3.0) - 0.5) - 0.484), 1.0 - smoothstep(0.003, 0.01, abs(vUv.y - 0.62) - 0.003)); // (a window's three panes across and its transom)
           col *= 1.0 - 0.8 * bars;
           col += uTint * 0.06 * (1.0 - vSpan.z) * (1.0 - smoothstep(0.0, 0.35, abs(vUv.x - vUv.y * 0.6 - 0.2))); // (a sheen across a window's glass)
