@@ -89,9 +89,14 @@ if (ONLY.includes("stills")) {
 if (ONLY.includes("costs")) {
   log("== costs");
   for (const dev of DEVICES) {
-    const json = path.join(OUT, `costs-${dev}.json`), r = run("node", ["arcade/tools/cost-report.js", "--device", dev, "--engine", ENGINE, "--json", json, ...(SCREENS ? ["--only", SCREENS] : [])], { min: 120 });
+    // (the script's time measured with the drawing left out, a screen's files given 8 s more to arrive: many frames, not
+    // the two or three this machine draws in three seconds; the counts and the memory with the drawing in, as always)
+    const json = path.join(OUT, `costs-${dev}.json`), r = run("node", ["arcade/tools/cost-report.js", "--device", dev, "--engine", ENGINE, "--json", json, "--stub", "--settle", "8", ...(SCREENS ? ["--only", SCREENS] : [])], { min: 150 });
     if (!fs.existsSync(json)) { fault(`costs (${dev}): no report: ` + r.out.trim().split("\n").slice(-2).join(" | ")); continue; }
     const rows = JSON.parse(fs.readFileSync(json, "utf8")), basePath = path.join(BASE_DIR, `costs-${dev}.json`), base = fs.existsSync(basePath) ? Object.fromEntries(JSON.parse(fs.readFileSync(basePath, "utf8"))) : {};
+    // the baseline's script time measured the same way (drawing left out: docs/master/baseline/script-<dev>.json); the
+    // first baseline's own figures were two or three frames each and are not compared
+    const scriptPath = path.join(BASE_DIR, `script-${dev}.json`), baseScript = fs.existsSync(scriptPath) ? Object.fromEntries(JSON.parse(fs.readFileSync(scriptPath, "utf8"))) : {};
     const B = BUDGET[dev], out = [];
     for (const [name, m] of rows) {
       if (m.error) { fault(`${dev} ${name}: ${m.error}`); continue; }
@@ -103,10 +108,11 @@ if (ONLY.includes("costs")) {
       if (over.length) fault(`${dev} ${name}: over budget: ${over.join(", ")}`);
       if (b) {
         const up = (k, v, w, tol) => { if (w > 0 && v > w * (1 + tol)) look(`${dev} ${name}: ${k} ${w} → ${v} (+${Math.round((v / w - 1) * 100)}%)`); };
-        up("draws", m.draws, b.draws, 0.1); up("triangles", m.tris, b.tris, 0.1); up("memory MB", mem, +(b.texMB + b.rtMB).toFixed(1), 0.1); up("script ms", m.cpu, b.cpu, 0.3);
+        up("draws", m.draws, b.draws, 0.1); up("triangles", m.tris, b.tris, 0.1); up("memory MB", mem, +(b.texMB + b.rtMB).toFixed(1), 0.1);
+        if (baseScript[name]) up("script ms (drawing left out)", m.cpu, baseScript[name].cpu, 0.3);
       }
       if (m.errors && m.errors.length) fault(`${dev} ${name}: page errors: ${m.errors.join(" | ").slice(0, 200)}`);
-      out.push({ name, tier: m.tier, size: m.size, draws: m.draws, tris: m.tris, lights: m.lights, mpx: m.mpx, passes: m.passes, texMB: m.texMB, rtMB: m.rtMB, cpu: m.cpu, ms: m.ms, base: b ? { draws: b.draws, tris: b.tris, mem: +(b.texMB + b.rtMB).toFixed(1), cpu: b.cpu, ms: b.ms } : null });
+      out.push({ name, tier: m.tier, size: m.size, draws: m.draws, tris: m.tris, lights: m.lights, mpx: m.mpx, passes: m.passes, texMB: m.texMB, rtMB: m.rtMB, cpu: m.cpu, ms: m.ms, base: b ? { draws: b.draws, tris: b.tris, mem: +(b.texMB + b.rtMB).toFixed(1), cpu: baseScript[name] ? baseScript[name].cpu : "-", ms: b.ms } : null });
     }
     report.costs[dev] = { secs: r.secs, rows: out };
     log(`  ${dev}: ${out.length} screens measured (${r.secs} s)`);
