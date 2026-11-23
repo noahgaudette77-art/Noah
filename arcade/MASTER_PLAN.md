@@ -161,6 +161,64 @@ pushed; the served link checked.
 
 (none yet)
 
+## The audit (Phase 0, 2026-11-23): the weakest first, by the owner's order of goals
+
+Sources: the baseline run (`docs/master/baseline/`: stills, costs, report), the Phase 1 census tools
+(`tools/scenarios/hitches.js`, `texmem.js`, `cycles.js`), `tools/audio-levels.py`, and an independent reviewer's look at
+all 42 stills (full notes, with places in each picture: `docs/master/visual-audit.md`).
+
+**1. Smoothness (performance).** Every screen is inside the phone's budget (draws, triangles, lights): see
+Measurements. What is left to win:
+1. **Graphics memory on the phone.** Risk Blaster holds about 371 MB in all (306 MB of textures), the title hall 346
+   (284), Nest Egg Run 314 (245), Boss Rush 254 (209). Under the 400 MB line, but with little room for the moment a
+   new screen's pictures arrive before the old one's go. Find the largest pictures (`texmem.js`) and shrink what is
+   bigger than it is ever shown.
+2. **Stalls in play.** Risk Blaster still makes one shader in mid-fight (a MeshBasicMaterial not in its scene); the
+   other games to be counted (`hitches.js`).
+3. **Garbage a frame.** Risk Blaster leaves about 78 KB a frame in Chromium before its code is warm (CombatFX's and
+   the game's own update first); to be counted warm in every game, and the clear per-frame allocations removed (they
+   cost Safari too).
+4. **The main thread a frame** (this machine, script only): Memory Bank 4.4 ms (8.5 at worst), Risk Blaster 4.05, Boss
+   Rush 3.75, the guide 3.42 (8.4 at worst), the exam 3.4. Inside a 16.7 ms frame; the worst moments to be found.
+5. **Draw calls:** the Final Exam draws 83 a frame on the phone, the most of any screen (budget 100).
+6. **Memory over a long session:** round after round of every screen (`cycles.js`), nothing should pile up.
+
+**2. Sharpness.** MSAA on every tier but the governor's last step, which draws with FXAA (one cheap pass, soft) at
+exactly the moment a struggling phone needs it least: give it 2x multisampling (Phase 2). The menus' icons (stars,
+medals, coins, trophies) are drawn 10-16 px and read as smudges (Phase 2).
+
+**3. Movement.** The animation pass made the bosses and the wizard; still stiff: Boss Rush's crowd (flat cut-outs that
+never move), the Final Exam's Proctor (dark, hard to read), the other games' characters to be looked at in motion
+(Phase 3).
+
+**4. Looks** (the reviewer's ranking, worst first; the full 25 in `docs/master/visual-audit.md`):
+1. Boss Rush's arena: the crowd is unlit black cut-outs on flat blue stands, the pillars untextured boxes, the floor empty.
+2. The title hall's floor: a black void with a thin cyan grid filling 25-40% of the frame, reflecting nothing; flat walls.
+3. The title hall's cells: the glass reads as flat tinted plastic; caps, brackets and base tops are untextured boxes.
+4. The Final Exam: the Proctor too dark and lost in an all-violet hall; its mortarboard a plain slab.
+5. The Strategy Guide: the shelves in the middle distance fall back to a flat beige that reads as empty.
+6. Nest Egg Run (the Mac above all): the near buildings are untextured boxes; the road's edges pure black.
+7. Risk Blaster's explanation sheet (Mac): laid over the answer cards, which show cut off mid-word.
+8. Memory Bank (Mac): the vault squeezed into a 305 px strip; 60% of the window empty.
+9. Results: the button bar covers the FLAWLESS badge, half the mastery panel and the "read the notes" button.
+10. The title's end (Mac): the logo and INSERT COIN cover the vault door, where the glide was going.
+11. The Proctor has three different designs (its cell, the exam, the chapter-select picture).
+12-25: the exam's flat columns; Memory Bank's flat wall and wireframe floor; the menus' murky frosted backdrop; Risk
+Blaster's hard band edges (Mac); the menus' tiny icons; the wizard's matte "toy" look beside the chrome bosses; the
+title's small cells on the phone; a smeared skylight; MASTERY printed over a name plate; scribbles over the Proctor and
+a red alert with no red light; the hub's hairline lasers and black cabinet bases; clutter at the racer's far end; text
+touching card edges on the Mac; flat grey asteroids.
+Across screens: every screen draws its floor its own way; Memory Bank (green-black) and the Boss Rush arena (royal
+blue) leave the violet-black the rest share; the Mac's layouts are weaker than the phone's on nearly every screen.
+Keep: the hub, the demon and the ship, the vault door, the bosses in their cells, the phone's layouts of the title's
+end, Risk Blaster and the hub.
+
+**5. Sound** (`tools/audio-levels.py --mix`): the music is matched (every track -29.5 to -27.2 LUFS at the mix); the
+effects' loudest moments sit at a median of -22 to -25 dB and the announcer's at -9.6, so the voice stands well forward;
+two cues reach full scale before the limiter (impact_good, impact_big); some cues' takes differ by up to 3.7 dB
+(reward, ui_click); the hub has one effect of its own. Nothing clips at the limiter (the loudest moment on any screen
+comes out at -1.8 dBFS).
+
 ## Measurements (current; the baseline first)
 
 (the baseline run fills this)
