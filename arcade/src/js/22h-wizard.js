@@ -193,6 +193,10 @@ class Wizard {
       a.play(); a.setEffectiveWeight(0); this.act[c.name] = a;
     }
     if (this.act.idle) { this.act.idle.setEffectiveWeight(1); this.act.idle.time = rand(0, 4); }
+    // (a twin of each clip that can come again while it still plays, the lance's cast after the answer's: the twin starts
+    // from its own moment while the first fades out under it, never a jump back in one clip)
+    this.twin = {};
+    for (const n of ["cast", "bigcast", "hurt", "stagger"]) { const a = this.act[n]; if (!a) continue; const c = a.getClip().clone(); c.name = n + "~"; const t = this.mixer.clipAction(c); t.setLoop(THREE.LoopOnce); t.clampWhenFinished = true; t.play(); t.setEffectiveWeight(0); this.twin[n] = t; }
     this.one = null; // the clip over the idle: { a, to, w, in, outDur, hold, out, name }
     this.going = []; // clips cut short, fading out under it: { a, w, dur }
     this.readyW = 0;
@@ -261,10 +265,11 @@ class Wizard {
     }
     const Sp = Motion.Spring;
     this.S = { pitch: new Sp(2.2, 0.4), yaw: new Sp(2.0, 0.42), roll: new Sp(2.5, 0.4), head: new Sp(3.2, 0.34), lunge: new Sp(1.7, 0.45), lookY: new Sp(1.2, 0.92), lookX: new Sp(1.2, 0.92), hop: new Sp(2.4, 0.32) };
-    // (its flinches: a blow to the body, to the gut, from the side; one of them each time, its own way)
-    this.flinches = ["hurt", "hurtG", "hurtS"].map((n) => (this.act[n] ? Motion.overlay(this.mixer, this.act[n].getClip(), B.waist, n + "+") : null)).filter(Boolean);
-    this.flinch = this.flinches[0] || null;
-    this.fl = null; // the flinch playing: { act, t, end, rate, w, k }
+    // (its flinches: a blow to the body, to the gut, from the side; one of them each time, its own way; a second blow
+    // takes over from the first)
+    const fc = {};
+    for (const n of ["hurt", "hurtG", "hurtS"]) if (this.act[n]) fc[n] = this.act[n].getClip();
+    this.flinch = new Motion.Layers(this.mixer, fc, B.waist);
     this.seed = 4243; this.nCast = 0; this.nHit = 0; this.exert = 0; this.brace = 0; this.lostT = 0; this.lt = 0;
     this.invQ = new THREE.Quaternion(); this._t1 = new THREE.Vector3(); this._t2 = new THREE.Vector3(); this._t3 = new THREE.Vector3(); this._q2 = new THREE.Quaternion(); this._q3 = new THREE.Quaternion();
     // the wand's tip as the hand holds it (in the hand's frame): it trails the hand on a spring and whips past it when the
@@ -286,8 +291,10 @@ class Wizard {
   // a clip played through over the idle: from `from` to `to` (seconds into it), at `rate`; `in` its fade in (0: at
   // once), `out` its fade out; `hold` keeps its end
   play(name, o = {}) {
-    const a = this.act[name];
+    let a = this.act[name];
     if (!a) return;
+    const tw = this.twin && this.twin[name];
+    if (tw && ((this.one && this.one.a === a) || this.going.some((q) => q.a === a))) a = tw; // (it still plays: its twin takes over)
     const old = this.one, clip = a.getClip(), fadeIn = o.in === undefined ? 0.12 : o.in;
     if (old && old.a !== a && old.w > 0) { this.going = this.going.filter((q) => q.a !== old.a); this.going.push({ a: old.a, w: old.w, dur: 0.18 }); }
     this.going = this.going.filter((q) => { if (q.a === a) { a.setEffectiveWeight(0); return false; } return true; });
@@ -321,7 +328,7 @@ class Wizard {
   // the player answers: right or wrong, it casts (the bolts are the stage's volley, from this wand: bolt)
   cast(right) {
     const k = this.keys.cast, n = ++this.nCast, sd = this.seed;
-    this.play("cast", { from: k.release - 0.1, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.06, out: 0.35 }); // (its arm is out as the first bolt leaves: the stage holds the volley back; each cast a little its own)
+    this.play("cast", { from: k.release - 0.04, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.09, out: 0.35 }); // (its arm is out as the first bolt leaves, from about where the held cast has it: no snap back; each cast a little its own)
     this.S.lunge.hit(0.035 * Motion.vary(sd, n + 5, 0.8, 1.2)); this.S.yaw.hit(Motion.vary(sd, n + 7, -0.04, 0.04)); // (it throws itself into it)
     this.whip = Math.max(this.whip, 0.7); this.charge = 0;
     this.flare0 = Math.max(this.flare0, right ? 0.6 : 0.2);
@@ -373,12 +380,9 @@ class Wizard {
     // it flinches: a layer over whatever it is doing (a blow mid-cast does not stop the cast), its spine giving back,
     // turned and tipped a little its own way each time, its head snapping back; on its last heart it staggers
     const n = ++this.nHit, sd = this.seed, side = Motion.vary(sd, n + 3, 0, 1) < 0.5 ? -1 : 1, k = left <= 1 ? 1.3 : Motion.vary(sd, n, 0.8, 1.15);
-    if (left <= 1 || !this.flinch) this.play(left <= 1 ? "stagger" : "hurt", { from: 0.12, rate: 1.4, out: 0.35 });
-    else {
-      const act = this.flinches[Math.floor(Motion.vary(sd, n + 21, 0, this.flinches.length - 1e-6))] || this.flinch, was = this.fl;
-      if (was && was.act !== act) was.act.setEffectiveWeight(0);
-      this.fl = { act, t: 0.08, end: act.getClip().duration - 0.05, rate: 1.35 * Motion.vary(sd, n + 9, 0.9, 1.12), w: was && was.act === act ? was.w : 0, k: 0.95 };
-    }
+    const kinds = this.flinch.names();
+    if (left <= 1 || !kinds.length) this.play(left <= 1 ? "stagger" : "hurt", { from: 0.12, rate: 1.4, out: 0.35 });
+    else this.flinch.play(kinds[Math.floor(Motion.vary(sd, n + 21, 0, kinds.length - 1e-6))], { from: 0.08, rate: 1.35 * Motion.vary(sd, n + 9, 0.9, 1.12), in: 0.06, out: 0.3, k: 0.95 });
     this.S.pitch.hit(-0.09 * k); this.S.yaw.hit(0.08 * k * side); this.S.roll.hit(0.05 * k * side); this.S.head.hit(-0.13 * k);
     this.whip = 1; this.flare0 = Math.max(this.flare0, 0.5);
     wizSfx("wiz_ward", null, -0.2, { vol: 0.8 });
@@ -511,13 +515,7 @@ class Wizard {
     if (this.readyAct) { this.readyAct.setEffectiveWeight(this.readyW); over += this.readyW; }
     if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - over));
     // its flinch, a layer over all of it
-    const F = this.fl;
-    if (F) {
-      F.t = Math.min(F.end, F.t + d * F.rate); F.w = Math.min(1, F.w + d / 0.06);
-      F.act.time = F.t;
-      F.act.setEffectiveWeight(F.k * Motion.ease.smooth(Math.min(F.w, clamp((F.end - F.t) / F.rate / 0.3, 0, 1))));
-      if (F.t >= F.end) { F.act.setEffectiveWeight(0); this.fl = null; }
-    }
+    if (this.flinch) this.flinch.update(d);
     this.mixer.update(d);
     this.live(d, f);
   }
@@ -580,8 +578,12 @@ class Wizard {
       this.mesh.getWorldQuaternion(this._q2).invert().multiply(R.getWorldQuaternion(this._q3));
       this.flut.swing.value.copy(lag).applyQuaternion(this._q2).multiplyScalar(this.flut.amp.value * (quiet ? 0.5 : 1));
     }
+    // the cape: a breeze, more as it casts or is struck (none with reduced effects)
+    this.whip = Math.max(0, this.whip - d * 1.4);
+    this.flut.t.value += d * (1 + this.whip * 1.5);
+    this.flut.k.value = quiet ? 0 : 0.28 + 0.72 * this.whip;
     // the wand's tip: gathers light while the question is read, flares as it casts; dies when it has lost
-    this.charge += ((g.state === "ask" ? 0.25 + 0.75 * f : 0.2) - this.charge) * Math.min(1, d * 3);
+    this.charge = Motion.damp(this.charge, g.state === "ask" ? 0.25 + 0.75 * f : 0.2, 3, d);
     this.flare0 = Math.max(0, this.flare0 - d * 3.2);
     this.sink = this.lost ? Math.min(0.12, this.sink + d * 0.25) : 0;
     if (this.lost && (this.dim || 0) < 1) { this.dim = Math.min(1, (this.dim || 0) + d * 0.6); for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = WIZ.GLOW * (1 - 0.75 * this.dim); this.rim.k.value = WIZ.RIM_K * (1 - 0.5 * this.dim); }
