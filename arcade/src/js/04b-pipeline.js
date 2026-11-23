@@ -352,7 +352,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() }, uDanger: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
-    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 },
+    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 }, uFxaa: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -363,7 +363,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever; uniform HP vec2 uDanger;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
-    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS;
+    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS; uniform float uFxaa;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ return texture2D(tScene, uv).rgb; }
     float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
@@ -387,7 +387,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
       HP vec2 uv = vUv;
-      if (uGlass > 0.5) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; }
+      if (uGlass > 0.5 && uCurve > 0.0) { HP vec2 c = uv - 0.5; c *= 1.0 + uCurve * dot(c, c); uv = c + 0.5; } // (the glass's bend: Setup > Effects, SCREEN CURVE)
       if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(0.0118, 0.0078, 0.0235, 1.0); return; }
       // Where the picture is read from: an impact zooms it toward you for a moment,
       // and a shockwave bends it in a ring that spreads from the blast.
@@ -411,7 +411,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         HP float hm = exp(-dot(hd, hd)) * uHeat.w;
         suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
-      vec3 col = fxaa(suv);
+      vec3 col = uFxaa > 0.5 ? fxaa(suv) : tex(suv); // (edges smoothed by multisampling are left as they are: FXAA only where there is none)
       if (uSharp > 0.0) {
         // whatever a pixel has over its four neighbours is laid back on top of it
         HP vec2 sp = uSS / uSceneRes; // (a screen pixel, however much larger the scene was drawn)
@@ -722,6 +722,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uEdge.value = opt.ca && opt.fringe !== false ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
       u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uSS.value = ss;
+      u.uFxaa.value = samples > 0 ? 0 : 1; // (2026-11-23, the owner: no visible blur. FXAA softened every edge a second time over the multisampled picture)
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
@@ -741,7 +742,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
       u.uGlass.value = o.glass;
       u.uScan.value = opt.scan ? (p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)
-      u.uCurve.value = 0.06;
+      u.uCurve.value = opt.curve ? 0.06 : 0; // (the bend resamples every pixel, a soft picture: off unless switched on)
       const cssW = Math.max(1, GFX.w), cssH = Math.max(1, GFX.h), pr = cw / cssW;
       u.uPr.value = pr;
       u.uBezel.value.set(clamp(0.034 * Math.min(cssW, cssH), 16, 40) * pr, pr);

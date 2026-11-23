@@ -28,7 +28,10 @@ const GFX = {
   // Setup: the effect switches and Reduced effects.
   applySettings() {
     const s = Store.settings;
-    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: true, ao: true }, s.fx || {});
+    s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: false, ao: true, curve: false }, s.fx || {});
+    // (2026-11-23, the owner: as crisp as it can be, no visible blur. Depth of field, which softens what is behind the
+    // subject on purpose, starts off, once, for a save made before; it and the glass's bend are Setup > Effects switches.)
+    if (!s.sharp) { s.sharp = 1; s.fx.dof = false; }
     this.opt = s.fx;
     this.calm = !!s.calm;
     if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)

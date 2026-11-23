@@ -81,10 +81,10 @@ function showSettings() {
       ${row("note", "Music", "The soundtrack (LOW to begin with: quiet under study)", vol("music"))}
       ${row("mic", "Announcer", "A voice calls out streaks, waves and trophies", vol("voice"))}
       ${row("note", "Sound test", "Every sound in the game with a play button and a label, to say which one to change", `<div class="seg" role="group" style="--c:${COLORS.cyan}"><button data-act="soundtest">OPEN</button></div>`)}
-      ${row("tube", "CRT glass", "Curved screen, scanlines and bezel", seg("crt", [[true, "ON"], [false, "OFF"]]))}
+      ${row("tube", "CRT glass", "Scanlines, bezel and glare (its bend: SCREEN CURVE, under Effects)", seg("crt", [[true, "ON"], [false, "OFF"]]))}
       ${row("moon", "Reduced effects", "Less shake, flash and motion, and fewer background events", seg("calm", [[true, "ON"], [false, "OFF"]]))}
       <div class="setting fxset"><div class="sl"><span class="si" aria-hidden="true">${icon("spark")}</span>Effects<small>Switch any of them off</small></div>
-        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"]]
+        <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"], ["curve", "SCREEN CURVE"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
       ${row("gauge", "Graphics", "AUTO puts a steady frame rate first: on a phone it draws a little softer (SMOOTH); when frames run late it draws smaller, then drops effects, then lights, and sharpens again when they hold steady", seg("quality", [["auto", "AUTO"], ["high", "HIGH"], ["medium", "MEDIUM"], ["low", "LOW"]]))}
