@@ -911,8 +911,10 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .scr-results .scroll .actions { grid-template-columns: 1fr; padding-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .res-hero::before, .ans.good .k::after, .ans.bad .k::after { animation: none !important; } }
 /* Title: the logo sits inside the frame with air either side (it ran edge to edge), and takes the light of a
-   lightning strike with the rest of the street. */
-.logo-main { font-size: clamp(40px, 13vw, 128px); }
+   lightning strike with the rest of the street. On a wide window it is held to a quarter of the window's height
+   (Phase 2: on a MacBook's 1470 x 830 it was 128 px a line, its lower line over the vault door the glide ends on,
+   only a slice of the door in sight); a phone held upright is held by its width, as it was. */
+.logo-main { font-size: clamp(40px, min(13vw, 12vh), 128px); }
 @media (max-height: 560px) and (orientation: landscape) { .logo-main { font-size: clamp(30px, 9vh, 60px); } }
 .logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.55)); }
 /* Stats opens on the player's rank: a medal with the level on it, the rank's name, and the way to the next. */
