@@ -42,7 +42,7 @@ const Assets = {
         if (o.isMesh) {
           o.frustumCulled = !o.isSkinnedMesh; // (a skinned mesh's bounds are those of its rest pose)
           const ms = Array.isArray(o.material) ? o.material : [o.material];
-          ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) { m[k].anisotropy = Math.min(this.phone ? 4 : 8, GFX.renderer.capabilities.getMaxAnisotropy()); this.capTexture(m[k]); } });
+          ms.forEach((m) => { for (const k of ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap"]) if (m[k] && GFX.ok) { m[k].anisotropy = Math.min(this.phone ? 4 : 16, GFX.renderer.capabilities.getMaxAnisotropy()); this.capTexture(m[k]); } });
         }
       });
       const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };

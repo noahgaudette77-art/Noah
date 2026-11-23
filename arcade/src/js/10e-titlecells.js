@@ -148,10 +148,10 @@ function cellGlowMaterial(calm) {
 // Each cell's two pictures, in one: its prisoner's plate (its number, its name) and its status screen (CONTAINED,
 // a red BREACH ALERT, or DEFEATED for a beaten boss), a row each. Drawn again when the page's fonts have come.
 function cellAtlas(states) {
-  const W = 1024, RH = 128, K = 0.75, cv = document.createElement("canvas"), x = cv.getContext("2d"); // (drawn at three quarters: plenty for a plate a metre across)
+  const W = 1024, RH = 128, K = Assets.phone ? 0.75 : 1, cv = document.createElement("canvas"), x = cv.getContext("2d"); // (drawn at three quarters on a phone: plenty for a plate a metre across; at full size on a computer's larger Retina picture)
   cv.width = W * K; cv.height = RH * states.length * K;
   const tex = new THREE.CanvasTexture(cv);
-  tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.encoding = THREE.sRGBEncoding; tex.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; tex.minFilter = THREE.LinearMipmapLinearFilter; // (the plates are read at a slant down the aisle: filtered as finely as the tier allows)
   const css = (n) => "#" + new THREE.Color(n).getHexString();
   const draw = () => {
     x.setTransform(K, 0, 0, K, 0, 0);
