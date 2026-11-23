@@ -447,7 +447,7 @@ function racerCityMaterial(shared, P) {
             col += sc * shop * (0.1 + 0.22 * uCity) * sl * (1.0 - 0.8 * sm);
             col += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
           }
-        } else if (vKind < 1.5) col = vCol * uNeonI;
+        } else if (vKind < 1.5) col = vCol * uNeonI * (1.0 - smoothstep(48.0, 105.0, vDepth)); // (a gear's lit rings go out with distance: near wheels keep their light, the far ones are dark cogs, not a cluster of rings round the gantry at the end of the street)
         else {
           // brass: warm metal with a highlight and a soft rim
           vec3 v = normalize(cameraPosition - vW);
@@ -1146,16 +1146,21 @@ class RacerGame extends QuizGame {
       { geo: new THREE.BoxGeometry(w * 0.08, w * 0.3, 0.2), matrix: T(x - w * 0.08, h + w * 0.56, z + w * 0.66, 0, 0.9), color: C(0.02, 0.02, 0.03) },
     ];
     this.towers = new THREE.Mesh(blasterMerge([...tower(-86, -318, 64, 9), ...tower(60, -326, 80, 10)]), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
-    // ...and an armillary sphere of light turning over the vanishing point
+    // ...and an armillary sphere turning high over the skyline. (Phase 2: it hung dead over the vanishing point, a
+    // big ring with a slanted ellipse and a gold dot right behind the gantry's answers, its meaning unclear. With the
+    // panorama up there is none: the egg at the end of the street has that sky to itself. Without it, it is a third
+    // of the size, below the glow of the lens, and high over the left of the skyline, clear of the gantry.)
     this.orrery = new THREE.Group();
-    const ringMat = new THREE.MeshBasicMaterial({ color: neon(0x6fe8ff, 1.45), fog: false });
-    [17, 14.5, 12].forEach((r, i) => {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.2, 4, 48), ringMat);
-      ring.rotation.set(i * 1.1, i * 0.7, 0);
-      this.orrery.add(ring);
-    });
-    this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.2, 1), new THREE.MeshBasicMaterial({ color: C(0.5, 0.34, 0.14), fog: false })));
-    this.orrery.position.set(0, 76, -332);
+    if (!NEO) {
+      const ringMat = new THREE.MeshBasicMaterial({ color: neon(0x6fe8ff, 0.55), fog: false });
+      [17, 14.5, 12].forEach((r, i) => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 0.36, 0.12, 4, 40), ringMat);
+        ring.rotation.set(i * 1.1, i * 0.7, 0);
+        this.orrery.add(ring);
+      });
+      this.orrery.add(new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 1), new THREE.MeshBasicMaterial({ color: C(0.32, 0.22, 0.09), fog: false })));
+      this.orrery.position.set(-15, 104, -332);
+    }
     this.scene.add(this.towers, this.orrery);
   }
   // Streaks of light that rush past when you floor it.
