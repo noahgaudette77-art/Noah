@@ -5,7 +5,10 @@
 // A great ledger lies open on the desk in the middle; holo-books stand over the lecterns;
 // loose pages and dust drift in the light. It is calm on purpose: everything drifts,
 // nothing darts, and while a chapter is being read it all but stops. Look only.
-const LIB_GLSL = "float libH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }";
+const LIB_GLSL = "float libH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }" +
+  // (four numbers at once with no sine: Dave Hoskins' hash. For the shelves' runs and bays, which the book hash above
+  // would cost four sines a pixel to draw)
+  " vec4 libH4(vec2 p){ vec4 p4 = fract(p.xyxy * vec4(0.1031, 0.103, 0.0973, 0.1099)); p4 += dot(p4, p4.wzxy + 33.33); return fract((p4.xxyz + p4.yzzw) * p4.zywx); }";
 const LIB_EYE = 7.0; // the height the archive is seen from
 // The rose window's glass at q (the unit disc is the glass; outside it the answer is black): pieces of glass set
 // in dark leads. A gold eye; eight lancets, magenta and electric blue by turns, broad at the foot and drawn to a point;
@@ -53,42 +56,86 @@ const LIB_ROSE = `
 // A wall of books, drawn in the shader: bays and shelves, spines of every width, height
 // and leather, gilt title bands, and here and there a holo-book glowing on the shelf. A warm
 // pool of light lies on it by each hanging lamp; between the lamps it stands in the violet of
-// the window. Far down the nave, where one spine is thinner than a pixel, the books run
-// together into the tone of a shelf (no shimmer).
+// the window. The books stand in runs of six: a run is a set bound alike (one leather or cloth,
+// one height, its gilt bands in a line, a second band low down for the volume's number) or six
+// strays. Where one spine is thinner than a pixel the shelf shows each run's own average (a set
+// as a block of its colour at its height, strays as their mix leaning to one binding), so the
+// middle distance still reads as books (Phase 2: it was one flat pale tone, an empty back panel);
+// further still, where a run is thinner than a pixel, the average of all the books at that
+// height, each shelf of each bay a little its own (no shimmer either way). The averages were
+// measured from these books (tools of the overhaul: 2026-11-23), not guessed.
+const LIB_BOOK = `
+  // book si on shelf row, in a run drawn as (set, hs, hc): its binding (before the light across its spine), its top,
+  // whether it is on the shelf, its own draw h2 and whether it is bound in cloth
+  vec3 libBook(float si, float row, float set, float hs, float hc, out float top, out float there, out float h2, out float cloth){
+    h2 = libH(vec2(si + 17.0, row + 3.0));
+    float h1 = mix(libH(vec2(si, row)), hs, set);
+    top = 0.12 + 0.86 * (0.55 + 0.42 * h1);
+    there = step(mix(0.08, 0.04, set), h2);
+    cloth = mix(step(0.82, h2), step(0.72, hc), set); // (a stray in bright cloth about one time in six, a set more often)
+    vec3 leather = h1 < 0.25 ? vec3(0.46, 0.12, 0.16) : (h1 < 0.5 ? vec3(0.12, 0.2, 0.5) : (h1 < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
+    vec3 cl = h1 < 0.34 ? vec3(0.1, 0.62, 0.78) : (h1 < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
+    return mix(leather * mix(0.55 + 0.45 * h2, 0.8 + 0.2 * h2, set), cl, cloth);
+  }`;
 function libraryShelfMaterial(len, tall, lampY) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uSize: { value: new THREE.Vector2(len, tall) } }),
     extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; varying float vDepth; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
-    fragmentShader: `${GLSL_FOG_PARS} ${LIB_GLSL}
+    fragmentShader: `${GLSL_FOG_PARS} ${LIB_GLSL} ${LIB_BOOK}
       uniform float uTime; uniform vec2 uSize; varying vec2 vUv; varying float vDepth; varying vec3 vW;
       void main(){
         vec2 p = vUv * uSize;
         float bx = fract(p.x / 4.0), row = floor(p.y / 1.25), ry = fract(p.y / 1.25);
         float sx = p.x / 0.115, si = floor(sx), sf = fract(sx);
-        float aa = fwidth(sx), detail = 1.0 - smoothstep(0.45, 1.5, aa);
-        float h1 = libH(vec2(si, row)), h2 = libH(vec2(si + 17.0, row + 3.0));
-        float top = 0.12 + 0.86 * (0.55 + 0.42 * h1);
+        float aa = fwidth(sx), ay = fwidth(ry) * 0.5 + 1e-4;
+        float detail = 1.0 - smoothstep(0.45, 1.5, aa), far = smoothstep(2.4, 7.2, aa); // (a spine, then a run of six, thinner than a pixel)
+        // the run this spine stands in (the runs start at another place on every shelf)
+        float off = floor(libH4(vec2(row, 5.0)).x * 6.0), ri = floor((si + off) / 6.0);
+        vec4 rh = libH4(vec2(ri + 0.5, row + 11.5)); // (the run's draws: whether a set, its binding and height, cloth or leather, the strays' lean)
+        float set = step(rh.x, 0.4), hs = rh.y, hc = rh.z;
+        const vec3 GAP = vec3(0.012, 0.01, 0.022), GILT = vec3(0.9, 0.62, 0.22);
+        float top, there, h2, cloth;
+        vec3 bind = libBook(si, row, set, hs, hc, top, there, h2, cloth);
         float sides = smoothstep(0.04, 0.04 + aa, sf) * (1.0 - smoothstep(0.96 - aa, 0.96, sf));
-        float book = step(0.12, ry) * step(ry, top) * sides * step(0.08, h2);
-        vec3 leather = h1 < 0.25 ? vec3(0.46, 0.12, 0.16) : (h1 < 0.5 ? vec3(0.12, 0.2, 0.5) : (h1 < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
-        vec3 one = mix(vec3(0.012, 0.01, 0.022), leather * (0.5 + 0.5 * sin(sf * 3.1416)) * (0.55 + 0.45 * h2), book);
-        // one book in six or so is bound in a bright cloth: cyan, magenta or amber runs along every shelf
-        float gay = step(0.82, h2) * book;
-        vec3 cloth = h1 < 0.34 ? vec3(0.1, 0.62, 0.78) : (h1 < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
-        one = mix(one, cloth * (0.55 + 0.45 * sin(sf * 3.1416)), gay);
-        float gilt = book * step(abs(ry - (0.12 + (top - 0.12) * 0.72)), 0.035);
-        one += vec3(0.9, 0.62, 0.22) * gilt * 0.7;
-        vec3 many = vec3(0.2, 0.165, 0.19) * step(0.12, ry) * (1.0 - smoothstep(0.59, 0.95, ry)); // the same shelf, its books run together
-        vec3 col = mix(many, one, detail);
+        float book = step(0.12, ry) * step(ry, top) * sides * there;
+        float arch = sin(sf * 3.1416);
+        vec3 one = mix(GAP, bind * mix(0.5 + 0.5 * arch, 0.55 + 0.45 * arch, cloth), book);
+        float gilt = step(abs(ry - (0.12 + (top - 0.12) * 0.72)), 0.035) + set * step(abs(ry - (0.12 + (top - 0.12) * 0.2)), 0.02);
+        one += GILT * book * gilt * 0.7;
+        vec3 col = one;
+        if (detail < 1.0) {
+          // the run's own average at this height. A set is its binding edge to edge at its one height, its gilt in a
+          // line (exact: only a book's wear and a volume out differ along it); six strays are the mix of every binding
+          // (measured, below), leaning a little to one of them and lighter or darker run by run
+          float lo = smoothstep(0.12 - ay, 0.12 + ay, ry), fall = 1.0 - smoothstep(0.6, 1.0, ry), bump = smoothstep(0.43, 0.52, ry) * (1.0 - smoothstep(0.6, 0.77, ry));
+          vec3 sLeather = hs < 0.25 ? vec3(0.46, 0.12, 0.16) : (hs < 0.5 ? vec3(0.12, 0.2, 0.5) : (hs < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
+          vec3 sCloth = hs < 0.34 ? vec3(0.1, 0.62, 0.78) : (hs < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
+          float sTop = 0.12 + 0.86 * (0.55 + 0.42 * hs);
+          float sOn = lo * (1.0 - smoothstep(sTop - ay, sTop + ay, ry));
+          float sGilt = 1.0 - smoothstep(0.035 - ay, 0.035 + ay, abs(ry - (0.12 + (sTop - 0.12) * 0.72)));
+          sGilt += 1.0 - smoothstep(0.02 - ay, 0.02 + ay, abs(ry - (0.12 + (sTop - 0.12) * 0.2)));
+          vec3 runSet = mix(GAP, (mix(sLeather * 0.736, sCloth * 0.836, step(0.72, hc)) + GILT * 0.7 * sGilt) * 0.883 + GAP * 0.117, sOn);
+          float hl = rh.w;
+          vec3 lean = hl < 0.25 ? vec3(1.56, 0.41, 0.54) : (hl < 0.5 ? vec3(0.41, 0.68, 1.7) : (hl < 0.75 ? vec3(0.44, 1.16, 0.88) : vec3(1.56, 1.02, 0.41)));
+          vec3 runStray = mix(GAP, vec3(0.204, 0.165, 0.182) * fall + vec3(0.145, 0.099, 0.035) * bump, lo) * mix(vec3(1.0), lean, 0.3) * (0.84 + 0.32 * fract(rh.x * 7.31 + rh.w * 3.17));
+          vec3 run = mix(runStray, runSet, set);
+          // all the books at this height (measured: sets and strays together), each shelf of each bay a little its own
+          vec3 every = mix(GAP, vec3(0.225, 0.181, 0.201) * fall + vec3(0.147, 0.1, 0.036) * bump, lo);
+          vec4 bh = libH4(vec2(floor(p.x / 4.0) + 0.5, row + 0.5));
+          vec3 tint = bh.x < 0.34 ? vec3(1.14, 0.96, 0.86) : (bh.x < 0.67 ? vec3(0.86, 0.96, 1.18) : vec3(0.92, 1.1, 0.96));
+          every *= mix(vec3(1.0), tint * (0.82 + 0.36 * bh.y), 1.0 - smoothstep(12.0, 30.0, aa));
+          col = mix(mix(run, every, far), one, detail);
+        }
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
         float lampK = exp(-dz * dz * 0.075) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.085, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
         vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
         col *= light;
-        float holo = book * step(0.972, h2) * detail;
-        vec3 hc = h1 < 0.33 ? vec3(0.2, 0.95, 1.0) : (h1 < 0.66 ? vec3(1.0, 0.25, 0.85) : vec3(1.0, 0.85, 0.3));
-        col += hc * holo * (1.0 + 0.45 * sin(uTime * 0.8 + si * 1.7)) * (0.55 + 0.45 * step(0.5, fract(ry * 9.0)));
+        float holo = book * step(0.972, h2) * (1.0 - set) * detail;
+        float hh = fract(h2 * 31.7);
+        vec3 holoCol = hh < 0.33 ? vec3(0.2, 0.95, 1.0) : (hh < 0.66 ? vec3(1.0, 0.25, 0.85) : vec3(1.0, 0.85, 0.3));
+        col += holoCol * holo * (1.0 + 0.45 * sin(uTime * 0.8 + si * 1.7)) * (0.55 + 0.45 * step(0.5, fract(ry * 9.0)));
         // the case itself: uprights between bays, a board under every shelf, a brass lip
         float wood = max(step(bx, 0.028) + step(0.972, bx), step(ry, 0.09));
         col = mix(col, (vec3(0.07, 0.05, 0.09) + vec3(0.4, 0.28, 0.12) * step(0.07, ry) * step(ry, 0.09)) * light, clamp(wood, 0.0, 1.0));
