@@ -31,10 +31,16 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   phone draws 69 to 65, triangles 108K to 111K, memory 254 to 265 MB; rules IDENTICAL, sequence ALL 13 STEPS OK, WebKit
   clean; its sheet `docs/master/phase2/boss-arena-before-after.jpg`). `ASSETS.md` now lists the CC0 materials
   (`e81801b`).
-- **Doing:** two agents in worktrees: the Final Exam (hall, columns, the Proctor's light), Nest Egg Run's street
-  (facades, shoulders, the far end's clutter); to be reviewed (their before/after sheets in `docs/master/phase2/`),
-  merged by cherry-pick (only the built files conflict: take ours, then `node arcade/tools/manifest.js` and the build),
-  WebKit checked.
+- **Also merged:** the Final Exam (the exam agent's five commits, `c0e84e5`..`53e5f42`: the Proctor lit and readable,
+  a key on its face and chest that always keeps its light, rims in the hall's pair, its armour's blocky static gone
+  (three causes: a blurred atlas of greys, a tile looked up with jumping slopes, relief from 2x2 pixel blocks), a real
+  mortarboard in 2 draws (it was 9); fluted marble columns with violet neon, a painted wall with depth, a reflective
+  dark marble floor from a room capture (the mirror gone: the ending no longer draws the hall twice); the framing on
+  both devices; ambientCG Marble012 (CC0). Phone draws 85 to 79, triangles 37K to 57K, memory 150 to 156 MB; rules
+  IDENTICAL, sequence ALL 13 STEPS OK, WebKit clean; its sheet `docs/master/phase2/exam-before-after.jpg`).
+- **Doing:** one agent in a worktree: Nest Egg Run's street (facades, shoulders, the far end's clutter), then merged by
+  cherry-pick (only the built files conflict: take ours, then `node arcade/tools/manifest.js` and the build), WebKit
+  checked.
 - **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
   `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
   the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
