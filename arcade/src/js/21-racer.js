@@ -366,10 +366,17 @@ function racerGroundMaterial(mirror, shared) {
 // The city: walls with rows of windows and a lit shopfront, brass pipes and gears
 // (kind 3; gears turn about their own axle in the vertex shader), all looping down
 // the avenue like the lamps do. P: the lamp material's uniforms, shared, so the
-// career sky lights both.
-function racerCityMaterial(shared, P) {
+// career sky lights both. maps: the facade's concrete (facade) and the street's shops (street: racerStreetTexture).
+//
+// (Phase 2: the walls read as untextured boxes, dark navy with flat panes. Now they are stained concrete, each block
+// its own part of a CC0 picture with the rain's streaks in it, in panels; every window has a frame, a sill that
+// catches the light and shades the wall under it, and dark glass that gives back the far side of the street and the
+// sky; the street's lamps light the walls near them, each side in its own colour; the shops are lit from the street's
+// record of them (the road reads it too) and those shut have their roller shutters down.)
+function racerCityMaterial(shared, P, maps) {
   return new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 }, tWin: { value: windowGridTexture() } }),
+    uniforms: Object.assign(fogUniforms(), shared, { uKey: P.uKey, uKeyDir: P.uKeyDir, uAmb: P.uAmb, uNeonI: P.uNeonI, uTime: { value: 0 }, uCity: { value: 1 }, tWin: { value: windowGridTexture() },
+      tFacade: { value: maps.facade }, tStreet: { value: maps.street }, uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) } }),
     extensions: { derivatives: true },
     vertexShader: `${RACER_WRAP_GLSL}
       attribute vec3 aCol; attribute float aZ; attribute float aKind; attribute float aCy; attribute float aCz; attribute float aSp; attribute float aSeed;
@@ -403,50 +410,91 @@ function racerCityMaterial(shared, P) {
       }`,
     fragmentShader: `${GLSL_FOG_PARS}
       uniform vec3 uKey; uniform vec3 uKeyDir; uniform vec3 uAmb; uniform float uNeonI; uniform float uCity; uniform sampler2D tWin;
+      uniform sampler2D tFacade; uniform sampler2D tStreet; uniform float uScroll; uniform float uLampI; uniform vec3 uLampL; uniform vec3 uLampR;
       varying vec3 vCol; varying vec3 vN; varying vec3 vL; varying vec3 vW; varying float vKind; varying float vDepth; varying float vFar; varying float vSeed;
       float h21(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.y); }
+      // a rectangle from lo to hi with edges a pixel soft (w: a pixel, in its units)
+      float rbox(vec2 p, vec2 lo, vec2 hi, vec2 w){ vec2 a = smoothstep(lo - w, lo + w, p) * (1.0 - smoothstep(hi - w, hi + w, p)); return a.x * a.y; }
+      // the street's lamps on a surface at p facing n: the nearest lamp on each side, its light falling off with distance
+      // (softly: the lamp's glow carries in the rain)
+      vec3 lampsOn(vec3 p, vec3 n){
+        float dzl = mod(p.z - uScroll + ${RACER_P / 2}.0, ${RACER_P}.0) - ${RACER_P / 2}.0, dzr = mod(p.z - uScroll, ${RACER_P}.0) - ${RACER_P / 2}.0;
+        vec3 a = vec3(-4.75 - p.x, ${RACER_HEAD} - p.y, -dzl), b = vec3(4.75 - p.x, ${RACER_HEAD} - p.y, -dzr);
+        float da = dot(a, a), db = dot(b, b);
+        return (uLampL * (max(dot(n, a), 0.0) * inversesqrt(da) / (1.0 + da / 70.0)) + uLampR * (max(dot(n, b), 0.0) * inversesqrt(db) / (1.0 + db / 70.0))) * uLampI * 0.55;
+      }
       void main(){
         vec3 n = normalize(vN);
         float lit = max(dot(n, uKeyDir), 0.0);
         vec3 col;
         if (vKind < 0.5) {
-          col = vCol * (uAmb + uKey * lit);
+          vec3 base = vCol, light = uAmb + uKey * lit, emit = vec3(0.0), glass = vec3(0.0);
+          float glassK = 0.0;
           if (abs(n.y) < 0.5) {
-            vec2 q = abs(n.x) > 0.5 ? vec2(vL.z, vL.y) : vec2(vL.x, vL.y);
+            float front = step(0.5, abs(n.x)); // (the face toward the road; the others are a block's ends, on the alleys)
+            vec2 q = front > 0.5 ? vec2(vL.z, vL.y) : vec2(vL.x, vL.y);
             vec2 g = vec2(q.x / 1.9, q.y / 2.4);
             vec2 cell = floor(g); vec2 f = fract(g);
-            float r = h21(cell + vSeed * 17.0);
+            vec2 aw = max(fwidth(q), vec2(1e-4)); // a pixel, in metres on the wall
             // how fine the wall's detail may be drawn here: none of it is left to shimmer in the distance
             float fine = 1.0 - smoothstep(0.035, 0.11, fwidth(g.x) + fwidth(g.y));
-            float storey = step(4.8, q.y);
+            float storey = step(4.8, q.y), sideV = vL.x < 0.0 ? 0.25 : 0.75;
+            // the concrete: stains and the rain's streaks (CC0: assets/ui/mat-facade.webp), each block its own part of it;
+            // darker and wetter down by the street
+            base *= mix(1.0, texture2D(tFacade, q / 4.4 + vec2(vSeed * 5.3, vSeed * 2.9)).r * 2.0, 0.85);
+            base *= 0.72 + 0.28 * smoothstep(0.0, 2.5, q.y);
+            // lit by the street, not by the sky alone: the key wrapped round (a wall turned from it is not black), the
+            // lit street's violet bounce strongest low down, and the street's lamps (the near side's strongest: cyan on
+            // the left, magenta on the right)
+            light = uAmb * 1.15 + uKey * (0.22 + 0.6 * lit) + vec3(0.07, 0.045, 0.13) * (1.0 - smoothstep(2.0, 18.0, q.y)) + lampsOn(vW, n);
             // every floor stands on a ledge (a lit lip, its shadow under it), and every third bay is a pier
-            col *= 1.0 + storey * fine * (0.55 * step(f.y, 0.085) - 0.4 * step(0.085, f.y) * step(f.y, 0.17));
+            base *= 1.0 + storey * fine * (0.55 * step(f.y, 0.085) - 0.4 * step(0.085, f.y) * step(f.y, 0.17));
             float pier = storey * step(fract(g.x / 3.0 + vSeed), 0.1);
-            col *= 1.0 + 0.2 * pier * fine;
+            base *= 1.0 + 0.2 * pier * fine;
+            // cast in panels: a joint at every bay above the shops
+            base *= 1.0 - 0.4 * storey * fine * (1.0 - smoothstep(0.0, aw.x * 1.5 + 0.015, min(f.x, 1.0 - f.x) * 1.9));
             float win = storey * (1.0 - pier); // (Phase 5 fix: the windows are a picture now, with smaller copies of itself: far off they are their own average light, never a crawl of noise)
             vec4 tw = texture2D(tWin, (g + vec2(floor(vSeed * 8.0) * 3.0, floor(fract(vSeed * 13.0) * 8.0) * 2.0)) / 8.0);
-            // lit in clusters (blocks four bays wide, three floors high): four in ten are dark, the rest busier, and each
-            // has its own light: amber, cyan or magenta
-            vec2 blk = floor(cell / vec2(4.0, 3.0));
-            float b1 = h21(blk + vSeed * 23.0 + 7.7), b2 = h21(blk * 1.3 + vSeed * 31.0 + 2.9);
-            float on = step(r, (0.2 + 0.32 * uCity) * (b1 < 0.4 ? 0.0 : 1.7)); // more windows light as night falls
-            float r2 = h21(cell * 1.7 + vSeed * 5.0 + 3.1);
-            float hot = 0.28 + 0.7 * r2 * r2 + 1.0 * step(0.9, r2); // most are low, a few blaze
-            vec3 amber = vec3(1.0, mix(0.62, 0.8, r2), mix(0.28, 0.5, r2));
-            vec3 wc = r2 > 0.84 ? amber : (b2 < 0.5 ? amber : (b2 < 0.77 ? vec3(0.3, 0.95, 1.0) : vec3(1.0, 0.3, 0.8)));
-            col = mix(col, col * 0.45 + vec3(0.012, 0.017, 0.03), win * tw.a);                         // the panes, a dark pane still holding a little sky
-            col += tw.rgb * win * (0.45 + 1.25 * uCity);                         // lit in clusters, amber, cyan or magenta (drawn in the picture)
-            // a shopfront glows at street level, in the block's own colour
+            // each window (its pane where the picture has it): a frame, a sill that catches the light with the wall
+            // shaded under it, and the rain run down from the ends of the sill above
+            vec2 lp = f * vec2(1.9, 2.4);
+            float pane = rbox(lp, vec2(0.38, 0.6), vec2(1.52, 1.92), aw);
+            float frame = (rbox(lp, vec2(0.31, 0.53), vec2(1.59, 1.99), aw) - pane) * win * fine;
+            float sill = rbox(lp, vec2(0.25, 0.46), vec2(1.65, 0.53), aw) * win * fine;
+            float under = rbox(lp, vec2(0.25, 0.41), vec2(1.65, 0.46), aw) * win * fine;
+            float run = (exp(-pow((lp.x - 0.29) / 0.08, 2.0)) + exp(-pow((lp.x - 1.61) / 0.08, 2.0))) * smoothstep(1.99, 2.4, lp.y) * win * fine;
+            base = mix(base, vec3(0.045, 0.047, 0.056), frame);
+            base *= (1.0 + 0.9 * sill) * (1.0 - 0.45 * under) * (1.0 - 0.3 * run);
+            // the pane: dark glass that gives back the far side of the street low down and the sky higher up (more of
+            // it the more the wall is seen edge on), or a room lit in clusters, amber, cyan or magenta (in the picture),
+            // brighter under its ceiling and shaded under the lintel
+            vec3 V = normalize(cameraPosition - vW);
+            float fr = 0.04 + 0.96 * pow(1.0 - abs(dot(n, V)), 5.0);
+            vec3 env = mix((vL.x < 0.0 ? uLampR : uLampL) * (0.12 * uLampI) + uFogColor * 0.2, uFogColor * 0.6 + vec3(0.01, 0.012, 0.03), smoothstep(5.0, 22.0, q.y));
+            vec3 room = tw.rgb * (0.45 + 1.25 * uCity) * (0.8 + 0.35 * smoothstep(0.7, 1.8, lp.y)) * (1.0 - 0.45 * smoothstep(1.7, 1.92, lp.y) * fine);
+            glass = vec3(0.004, 0.006, 0.012) + env * fr + room;
+            glassK = win * mix(tw.a, pane, fine);
+            // a shopfront in each bay at street level, in the block's colour, lit as the street's record has it (the
+            // road reads the same: tStreet); where it is shut its roller shutter is down
             float sk = fract(vSeed * 7.31);
             vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
-            float open = step(0.45, h21(vec2(cell.x, vSeed * 3.0))); // some are shuttered
-            float shop = step(0.7, q.y) * step(q.y, 3.9) * step(0.14, f.x) * step(f.x, 0.86) * open;
-            // a shop window: two mullions, a transom, a dark stall-riser, brighter under its ceiling; each shop lit to its own level
-            float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
-            float sl = (0.45 + 0.9 * h21(vec2(cell.x * 3.7, vSeed * 11.0))) * mix(0.35, 1.0, smoothstep(0.7, 1.35, q.y)) * (0.55 + 0.45 * smoothstep(0.7, 3.9, q.y));
-            col += sc * shop * (0.1 + 0.22 * uCity) * sl * (1.0 - 0.8 * sm);
-            col += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
+            if (q.y < 4.8) {
+              float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
+              float openK = mix(0.55, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
+              float bay = rbox(vec2(f.x, q.y), vec2(0.14, 0.7), vec2(0.86, 3.9), vec2(aw.x / 1.9, aw.y)) * front;
+              // the window: two mullions, a transom, brighter under its ceiling, the counter and the goods dark against the light
+              float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
+              float iy = (q.y - 0.7) / 3.2;
+              float goods = (1.0 - smoothstep(0.0, 0.05, iy - 0.2 - 0.16 * h21(vec2(cell.x * 1.7, vSeed * 7.0)))) * fine;
+              emit += sc * levK * (0.24 + 0.5 * uCity) * (0.45 + 0.75 * smoothstep(0.1, 0.95, iy)) * (1.0 - 0.8 * sm) * (1.0 - 0.6 * goods) * bay * openK;
+              emit += env * fr * 0.6 * bay * openK;
+              base = mix(base, vec3(0.15, 0.155, 0.17) * mix(0.9, 0.78 + 0.22 * smoothstep(0.25, 0.75, abs(fract(q.y / 0.09) - 0.5) * 2.0), fine), bay * (1.0 - openK)); // (the shutter, ribbed)
+              base *= 1.0 - 0.4 * front * (1.0 - step(0.7, q.y)) * step(0.14, f.x) * step(f.x, 0.86); // (the stall riser under it)
+              light += sc * levK * openK * 0.3 * (1.0 - bay) * front; // (its light on the piers either side and on the sign over it)
+            }
+            emit += sc * (step(4.25, q.y) * step(q.y, 4.45)) * (0.35 + 0.75 * uCity); // its neon fascia
           }
+          col = mix(base * light, glass, glassK) + emit;
         } else if (vKind < 1.5) col = vCol * uNeonI * (1.0 - smoothstep(48.0, 105.0, vDepth)); // (a gear's lit rings go out with distance: near wheels keep their light, the far ones are dark cogs, not a cluster of rings round the gantry at the end of the street)
         else {
           // brass: warm metal with a highlight and a soft rim
@@ -459,6 +507,47 @@ function racerCityMaterial(shared, P) {
         gl_FragColor = vec4(mix(col, uFogColor, fg), 1.0);
       }`,
   });
+}
+// The street's shops, as the walls and the wet road both read them (Phase 2): a row for each side of the street, four
+// texels a metre along the 256 m the city loops over. In colour, the block's neon where a wall stands (black in an
+// alley); in alpha, the light of the shop in that bay (0: its shutter is down). The walls draw their shopfronts from
+// it and the road the light those shops throw on the pavement and lay in its water, so the two always agree.
+// blocks: [{ side, z (its near end), L, sd (its seed) }], in the coordinates the city is built in.
+const racerHash = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
+const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [0.15, 0.95, 0.82] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
+function racerStreetTexture(blocks) {
+  const W = RACER_LEN * 4, d = new Uint8Array(W * 2 * 4);
+  for (const b of blocks) {
+    const row = b.side > 0 ? 1 : 0, c = racerShopColor(b.sd), z0 = b.z - b.L;
+    for (let i = Math.ceil(z0 * 4 - 0.5); (i + 0.5) / 4 < b.z; i++) {
+      const zc = (i + 0.5) / 4, bay = Math.floor(zc / 1.9), bc = (bay + 0.5) * 1.9;
+      // (a bay is the block's if its middle is: the wall draws a bay's shop from there)
+      const lev = bc >= z0 && bc < b.z && racerHash(bay, b.sd * 3) > 0.45 ? (0.45 + 0.9 * racerHash(bay * 3.7, b.sd * 11)) / 1.35 : 0;
+      const o = (row * W + (((i % W) + W) % W)) * 4;
+      d[o] = Math.round(c[0] * 255); d[o + 1] = Math.round(c[1] * 255); d[o + 2] = Math.round(c[2] * 255); d[o + 3] = Math.round(lev * 255);
+    }
+  }
+  const t = new THREE.DataTexture(d, W, 2, THREE.RGBAFormat);
+  t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping;
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
+  t.needsUpdate = true;
+  return t;
+}
+// The facade's concrete (assets/ui/mat-facade.webp, from Poly Haven's concrete_wall_006, CC0: its stains and rain
+// streaks as one grey, 0.5 on average), or, opened from disk or before it came, an even grey (the walls then plain).
+function racerFacadeTexture() {
+  const img = Assets.ui("mat-facade");
+  let t;
+  if (img) {
+    t = new THREE.Texture(img);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; // (the walls are seen nearly edge on)
+  } else {
+    t = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, THREE.RGBAFormat);
+    t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+  }
+  t.needsUpdate = true;
+  return t;
 }
 // Neon blade signs hang off the buildings facing the driver. Their words are the
 // course's own: one canvas holds them all, upright, in three neon colours.
@@ -1011,15 +1100,20 @@ class RacerGame extends QuizGame {
     const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
+    const blocks = []; // (each block, for the street's record of its shops: racerStreetTexture)
     let seed = 0.11;
     for (const side of [-1, 1]) {
-      let z = side > 0 ? -6 : 4, n = 0; // the two sides are staggered
+      const z1 = side > 0 ? -6 : 4;
+      let z = z1, n = 0; // the two sides are staggered
       while (z > -RACER_LEN + 8) {
-        const L = rand(13, 21), H = rand(18, 30) + (n % 3 === 0 ? rand(18, 34) : 0), D = 13;
+        // (the last block ends a metre short of where the first one starts on its next time round: the two never stand
+        // in the same place at once)
+        const L = Math.min(rand(13, 21), z - (z1 - RACER_LEN) - 1), H = rand(18, 30) + (n % 3 === 0 ? rand(18, 34) : 0), D = 13;
         const front = 9.2 + rand(0, 1.6), zc = z - L / 2;
         const aZ = z - L; // a block loops as one, once its far end is behind the camera
         const sd = (seed = (seed + 0.137) % 1);
         const wv = { aZ, aKind: 0, aSeed: sd }, bv = { aZ, aKind: 3, aSeed: sd };
+        blocks.push({ side, z, L, sd });
         walls.add(box, racerM(side * (front + D / 2), H / 2, zc, D, H, L), WALLS[n % WALLS.length], 1, wv);
         if (H > 40) walls.add(box, racerM(side * (front + D / 2 + 1.5), H + 4, zc, D - 3, 8, L - 4), WALLS[(n + 2) % WALLS.length], 1, wv);
         // a pipe along the wall with a flange at each end, and a drop to the street
@@ -1072,7 +1166,10 @@ class RacerGame extends QuizGame {
     });
     box.dispose();
     pipe.dispose();
-    this.cityMat = racerCityMaterial(this.shared, P);
+    this.streetTex = racerStreetTexture(blocks);
+    this.facadeTex = racerFacadeTexture();
+    this.owned.push(this.streetTex, this.facadeTex);
+    this.cityMat = racerCityMaterial(this.shared, P, { facade: this.facadeTex, street: this.streetTex });
     this.walls = new THREE.Mesh(walls.build(), this.cityMat);
     this.cityDetail = new THREE.Mesh(detail.build(), this.cityMat);
     const sg = new THREE.BufferGeometry();

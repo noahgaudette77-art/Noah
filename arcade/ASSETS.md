@@ -323,3 +323,10 @@ script to read its list ran it (a generator script runs when it is loaded) befor
 wizard's and the wand's concepts (the ones used), but also the hall pod's concept again ($0.03, not used), and two wizard
 concepts were lost in flight, charged and never returned ($0.1125, a manual line in the ledger). The generator scripts are now only ever run with a name filter, never
 loaded.
+
+**CC0 materials in the master overhaul** (free: no key, no charge; each picture made from its source as described,
+licence CC0 1.0, public domain):
+
+| file | from | what was done | size |
+|---|---|---|---|
+| `assets/ui/mat-facade.webp` (Nest Egg Run's city walls, set `racer`) | Poly Haven, Concrete Wall 006 (photography Charlotte Baglioni, processing Dario Barresi): https://polyhaven.com/a/concrete_wall_006, its 1k colour map https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_diff_1k.jpg; licence https://polyhaven.com/license (CC0) | its grey only (stains, the rain's streaks, tie holes), the finest grain softened a little, brought to 0.5 on average (spread 0.14), 512 x 512 (laid 4.4 m square on the walls, about 1:1 with the nearest wall on a MacBook), WebP at quality 80 | 45 KB |
