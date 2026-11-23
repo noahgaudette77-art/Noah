@@ -38513,7 +38513,8 @@ function boot() {
   //   graph:  the last two seconds of frames, a bar each as tall as it took (the top is 50 ms); the bright line is
   //           60 fps, the dim one 30. Green bars met 60, amber missed it by a frame, red caught (over two frames);
   //           blue ones were a moment's work (a model arriving: shaders made, pictures sent), which AUTO leaves out
-  //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), the lights, draw calls, triangles
+  //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), how its edges are smoothed (MSAA
+  //           and its samples, or FXAA where the device has none: 2026-11-23), the lights, draw calls, triangles
   //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS when the device
   //           itself holds the page at 30: LOW POWER MODE?, or the main thread's time when that is what fills a frame
   //           (see GFX.perfTick)
@@ -38553,7 +38554,7 @@ function boot() {
         while (hitches.length && now - hitches[0] > 10000) hitches.shift();
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
         fpsL1.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${(fpsSum / fpsN).toFixed(1)} MS · WORST ${Math.round(fpsWorst)} MS · HITCHES ${hitches.length} /10 S · CPU ${(fpsCpu / fpsN).toFixed(1)} MS`;
-        fpsL2.textContent = GFX.ok ? `${GFX.TIERS[GFX.tier].name} · ${pr.toFixed(2)}X${GFX.scale < 1 ? " (" + Math.round(GFX.scale * 100) + "%)" : ""} ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)} · LIGHTS ${GFX.lightCount()} · ${GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS` : "NO WEBGL";
+        fpsL2.textContent = GFX.ok ? `${GFX.TIERS[GFX.tier].name} · ${pr.toFixed(2)}X${GFX.scale < 1 ? " (" + Math.round(GFX.scale * 100) + "%)" : ""} ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)} · ${GFX.pipe && GFX.pipe.samples ? "MSAA " + GFX.pipe.samples + "X" : "FXAA"} · LIGHTS ${GFX.lightCount()} · ${GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS` : "NO WEBGL";
         fpsL3.textContent = GFX.ok ? GFX.govLabel() + (GFX.auto && GFX.perf.why && !GFX.perf.capped ? " · " + GFX.perf.why.toUpperCase() : "") : "";
         drawGraph();
         fpsN = 0;
