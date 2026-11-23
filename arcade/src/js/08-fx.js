@@ -282,7 +282,14 @@ class Mirror {
 // A glossy floor with a glowing anti-aliased grid (square or polar) and an
 // optional mirror reflection with a gentle wet ripple.
 function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, base = 0x07021a, mirror = null, reflect = 0.5, polar = false, spokes = 16,
-  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null } = {}) {
+  glow = 0.45, ripple = 0.004, streak = 0.012, gridAlpha = 1, pulse = 0, fall = null, road = 0, roadGrid = 0.2, sun = null, probe = null, plates = null } = {}) {
+  // probe (the master overhaul, Phase 2, 2026-11-23: the floors reflect, on every tier): { map, min, max, at, k, rough }:
+  // the room drawn once from inside it into a cube (map, mipmapped; see roomProbe), the room's box (min, max: Vector3)
+  // and where it was drawn from (at); the floor gives the room back where the reflected ray meets the box's walls (so a
+  // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel).
+  // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
+  // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
+  // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -295,9 +302,15 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     uRoad: { value: new THREE.Vector2(road, roadGrid) },
     uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
     uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
+    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, 0) },
+    uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
+    tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
   });
+  const defines = {};
+  if (probe) defines.PROBE = "";
+  if (probe && plates) defines.PLATES = "";
   const mat = new THREE.ShaderMaterial({
-    uniforms, extensions: { derivatives: true },
+    uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vRefl = uMirror * w; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_FOG_PARS}
@@ -305,8 +318,30 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       uniform float uTime; uniform float uGlow; uniform float uPolar; uniform float uSpokes; uniform float uRipple; uniform float uStreak; uniform float uGrid; uniform float uPulse; uniform vec2 uFall;
       uniform vec2 uRoad; uniform vec4 uSunCol; uniform vec3 uSunA; uniform vec3 uSunB;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
+      #ifdef PROBE
+      uniform samplerCube tProbe; uniform vec4 uProbe; uniform vec3 uBoxMin; uniform vec3 uBoxMax; uniform vec3 uProbeAt;
+      #endif
+      #ifdef PLATES
+      uniform sampler2D tPlates; uniform vec2 uPlates;
+      #endif
       void main(){
         vec3 col = uBase;
+        #ifdef PROBE
+        {
+          vec3 nrm = vec3(0.0, 1.0, 0.0); float rough = uProbe.y;
+          #ifdef PLATES
+          vec3 pm = texture2D(tPlates, vWorld.xz / uPlates.x).rgb;
+          vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
+          nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
+          rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
+          #endif
+          vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
+          vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);
+          vec3 dir = vWorld + R * min(min(tf.x, tf.y), tf.z) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn)
+          float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
+          col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(0.3, 1.0, fres);
+        }
+        #endif
         float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;
         if (uReflect > 0.0) {
           vec2 ruv = vRefl.xy / vRefl.w;
@@ -381,6 +416,45 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   floor.rotation.x = -Math.PI / 2;
   if (mirror) mirror.receivers.push(floor);
   return floor;
+}
+
+// A room drawn once from inside it into a cube, for its floor and glass to give back (makeNeonFloor's probe): the
+// master overhaul, Phase 2, 2026-11-23. size: each face's pixels (a reflection is blurred by its surface: 128 on a
+// phone, 256 on a desktop); hide: what is left out while it is drawn (the floor, so the floor never reflects itself).
+// capture() asks for all six faces again; step() draws the next one, a face a frame (the room's draws six times over,
+// spread out), and returns true while any is left. The cube's smaller copies are made after each face.
+// swap: uniforms that read this cube ({ value }), pointed at a blank cube while it is drawn, so what reads it can still
+// be drawn into it (the hall's glass: its own light is the cells' colour in the floor).
+let _blankCube = null;
+function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = [] } = {}) {
+  const rt = new THREE.WebGLCubeRenderTarget(size, {
+    format: THREE.RGBAFormat, type: GFX.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType,
+    generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
+  });
+  const cam = new THREE.CubeCamera(near, far, rt);
+  cam.position.copy(at);
+  cam.updateMatrixWorld(true);
+  return {
+    rt, map: rt.texture, at: at.clone(), cam, left: 0, hide, swap,
+    made: 0, done: 0, // (captures finished, and the last one a user has taken up)
+    capture() { this.left = 6; },
+    step(scene, layers) {
+      if (!this.left || !GFX.ok) return null; // (nothing to draw: null, as against false, the frame the last face was drawn)
+      const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
+      this.hide.forEach((o) => { o.visible = false; });
+      if (!_blankCube) _blankCube = new THREE.WebGLCubeRenderTarget(1).texture;
+      this.swap.forEach((u) => { u.value = _blankCube; });
+      face.layers.mask = layers;
+      try { r.setRenderTarget(rt, i); r.render(scene, face); } catch (e) { /* a reflection missed this time */ }
+      r.setRenderTarget(was);
+      this.swap.forEach((u) => { u.value = rt.texture; });
+      this.hide.forEach((o, k) => { o.visible = vis[k]; });
+      this.left--;
+      if (!this.left) this.made++;
+      return this.left > 0;
+    },
+    dispose() { rt.dispose(); },
+  };
 }
 
 // A distant city: merged boxes with lit windows and a glowing roofline.

@@ -13,3 +13,4 @@ docs/master/runs/*
 !docs/master/runs/baseline/
 # the overhaul's baseline build, put back for a measurement against it (never committed)
 index.baseline.html
+index.phase2.html

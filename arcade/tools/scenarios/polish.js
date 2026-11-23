@@ -75,6 +75,7 @@ module.exports = async (cap) => {
   }
   if (part("title") || part("cell")) { // (each boss's idle from a fixed moment, whenever its files arrived)
     await reseed("hall");
+    await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.probeNow) s.probeNow(); }); // (its floor's and glass's reflection drawn now: see HallScene.probeNow)
     await cap.eval(() => { const s = window.__arcade.Scenes.cur; (s.cells || []).forEach((c, i) => { if (c.idle) c.idle.time = (i * 0.37) % Math.max(0.01, c.idle.getClip().duration); c.phase = i * 1.3; if (c.mixer) c.mixer.update(0); }); });
   }
   if (part("title")) {

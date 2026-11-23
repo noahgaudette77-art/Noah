@@ -82,12 +82,29 @@ function kitGeometry(list) {
 // The cells' steel: a lit, reflecting metal (the hall's painted vault in it) with patterns drawn on it by the piece's
 // pattern: 0 steel (a seam now and then), 1 hazard paint (yellow and black at 45 degrees), 2 a vent grille (dark
 // slots, their lips catching the light), 3 a dark recess. One material for every steel piece of the hall's dressing.
+// (the master overhaul, Phase 2, 2026-11-23: two CC0 materials in the steel: the plinths' tops a tread plate
+// (ambientCG DiamondPlate008C), the rest brushed (ambientCG Metal009), each read from its normal's y (the tread's
+// relief) and its roughness (the brushing's streaks); they and the hall's reflection (HallScene.probeTaken) make the
+// cells steel, where they read as flat grey boxes. Both pictures in assets/ui (normal x, y in red and green, roughness
+// in blue): a level plate until they arrive.)
+function cellFlatTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1;
+  const x = c.getContext("2d");
+  x.fillStyle = "rgb(128, 128, 128)"; x.fillRect(0, 0, 1, 1);
+  const t = new THREE.Texture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; t.needsUpdate = true;
+  return t;
+}
 function cellSteelMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.8, roughness: 0.38, envMapIntensity: 1.3 });
+  m.userData.tTread = { value: cellFlatTexture() }; m.userData.tBrush = { value: cellFlatTexture() };
   m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat;")
-      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;");
-    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat;")
+    sh.uniforms.tTread = m.userData.tTread; sh.uniforms.tBrush = m.userData.tBrush;
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN;")
+      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tTread; uniform sampler2D tBrush;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float pHaz = step(0.5, vPat) * step(vPat, 1.5), pGri = step(1.5, vPat) * step(vPat, 2.5), pRec = step(2.5, vPat);
         float st = smoothstep(0.47, 0.53, abs(fract((vUvM.x + vUvM.y) * 2.6) - 0.5) * 2.0);
@@ -97,11 +114,14 @@ function cellSteelMaterial() {
         float seam = 1.0 - 0.5 * smoothstep(0.0, 0.008, abs(fract(vUvM.x * 0.7 + 0.25) - 0.5) - 0.49);
         diffuseColor.rgb = mix(diffuseColor.rgb * seam, haz, pHaz);
         diffuseColor.rgb = mix(diffuseColor.rgb, gri, pGri);
-        diffuseColor.rgb *= 1.0 - 0.78 * pRec;`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);")
+        diffuseColor.rgb *= 1.0 - 0.78 * pRec;
+        float plain = (1.0 - pHaz) * (1.0 - pGri) * (1.0 - pRec), up = plain * smoothstep(0.8, 0.95, vWN.y);
+        vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
+        diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);");
   };
-  m.customProgramCacheKey = () => "cell-steel-2";
+  m.customProgramCacheKey = () => "cell-steel-3";
   return m;
 }
 

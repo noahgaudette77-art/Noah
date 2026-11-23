@@ -39,6 +39,21 @@ const hallTopRect = (sky) => { const v0 = Math.max(0.3, sky[1] - 0.155); return 
 // the hall in metres: the first world's middle (z0) and the step between worlds, the pods' distance from the aisle's
 // middle, the walls, the end wall, the pod (glass radius, height), the most a boss may stand in one, how far each
 // boss turns from the aisle toward the door, and the distances at which a far cell is drawn with less (see the top)
+// The hall's deck (its floor's relief and roughness: makeNeonFloor's plates): a level plate until the CC0 picture
+// arrives (assets/ui/mat-deck.webp: x and y of its normal in red and green, its roughness in blue), then that picture,
+// tiled, its smaller copies made, as finely filtered as the chip allows (a floor is always seen at a slant).
+function hallPlates() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1;
+  const x = c.getContext("2d");
+  x.fillStyle = "rgb(128, 128, 128)"; x.fillRect(0, 0, 1, 1);
+  const t = new THREE.Texture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = true;
+  t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY;
+  t.needsUpdate = true;
+  return t;
+}
 const HALL = { z0: -6, step: 12, podX: 4.4, wallX: 7.8, endZ: -78, podR: 1.15, podH: 5.0, bossH: 3.0, bossW: 2.2, turn: 0.5, near: 22, far: 50 };
 
 // A boss built as rigid parts on a moving skeleton (process-rigged: a mesh a part, each hung on its bone) made one
@@ -188,8 +203,21 @@ class HallScene extends Scene3D {
   // each world, the end wall: three draws
   buildRoom() {
     const s = this.scene, box = new THREE.BoxGeometry(1, 1, 1), W = HALL.wallX, Z1 = 9, Z2 = HALL.endZ, len = Z1 - Z2, zc = (Z1 + Z2) / 2, H = 8.8;
-    this.floor = makeNeonFloor({ size: 240, cell: 3, line: 0x35efff, lineK: 0.5, base: 0x040110, glow: 0.3, gridAlpha: 0.5, pulse: this.calm ? 0 : 0.35, ripple: 0, streak: 0 });
+    // (the master overhaul, Phase 2, 2026-11-23: the floor is a polished steel deck that gives the hall back, its cells'
+    // light and its lamps, on every tier: the hall drawn once into a cube from its middle and looked up where each
+    // reflected ray meets its walls (roomProbe); the deck's plates and wear from a CC0 material (Poly Haven's
+    // metal_plate_02: its relief and roughness; the colour is the hall's own dark violet). The black floor with a thin
+    // grid was the hall's weakest picture: a void filling the bottom of every frame)
+    this.probe = roomProbe(new THREE.Vector3(0, 2.2, (Z1 + Z2) / 2), { size: Assets.phone ? 128 : 256 });
+    this.plates = hallPlates();
+    this.floor = makeNeonFloor({
+      size: 240, cell: 3, line: 0x35efff, lineK: 0.5, base: 0x030010, glow: 0.3, gridAlpha: 0.42, pulse: this.calm ? 0 : 0.35, ripple: 0, streak: 0,
+      probe: { map: this.probe.map, min: new THREE.Vector3(-W, 0, Z2 - 2), max: new THREE.Vector3(W, H, Z1), at: this.probe.at, k: 1.05, rough: 0.24 },
+      plates: { map: this.plates, size: 3.0, k: 0.85 },
+    });
     this.floor.name = "floor";
+    this.probe.hide = [this.floor];
+    this.probe.capture(); // (the room as it stands: again once every piece is in)
     s.add(this.floor);
     const metal = new RacerBatch(), glow = new RacerBatch();
     for (const sd of [-1, 1]) {
@@ -273,10 +301,14 @@ class HallScene extends Scene3D {
     gGeo.setAttribute("aState", this.gState);
     gGeo.setAttribute("aFront", this.gFront);
     this.crackTex = crackTexture();
-    this.glassU = Object.assign(fogUniforms(), { uK: { value: 1 }, uT: { value: 0 }, tCrack: { value: this.crackTex }, uCalm: { value: this.calm ? 1 : 0 } });
+    // (the master overhaul, Phase 2, 2026-11-23: the glass gives back the hall, its lamps, windows and the cells across
+    // the aisle, strongest where it turns from the lens, from the floor's own cube: it read as tinted plastic before)
+    const fp = this.floor.material.uniforms;
+    this.glassU = Object.assign(fogUniforms(), { uK: { value: 1 }, uT: { value: 0 }, tCrack: { value: this.crackTex }, uCalm: { value: this.calm ? 1 : 0 },
+      tProbe: fp.tProbe, uBoxMin: fp.uBoxMin, uBoxMax: fp.uBoxMax, uProbeAt: fp.uProbeAt, uGlassRefl: { value: 0.7 } });
     this.glass = new THREE.InstancedMesh(gGeo, new THREE.ShaderMaterial({
-      uniforms: this.glassU, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute vec3 aCol; attribute float aFlick; attribute vec4 aState; attribute float aFront; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
+      uniforms: this.glassU, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, extensions: { shaderTextureLOD: true },
+      vertexShader: `attribute vec3 aCol; attribute float aFlick; attribute vec4 aState; attribute float aFront; varying vec3 vN; varying vec3 vV; varying vec3 vW; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
         void main(){
           #ifdef USE_INSTANCING
           mat4 m = modelMatrix * instanceMatrix;
@@ -284,14 +316,14 @@ class HallScene extends Scene3D {
           mat4 m = modelMatrix;
           #endif
           vec4 w = m * vec4(position, 1.0);
-          vN = normalize(mat3(m) * normal); vV = cameraPosition - w.xyz; vY = position.y + 0.5; vCol = aCol; vFlick = aFlick; vState = aState; vFront = aFront; vXZ = position.xz;
+          vN = normalize(mat3(m) * normal); vV = cameraPosition - w.xyz; vW = w.xyz; vY = position.y + 0.5; vCol = aCol; vFlick = aFlick; vState = aState; vFront = aFront; vXZ = position.xz;
           vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv;
         }`,
       // (clear glass: a rim of its boss's light where it turns from the lens, a column of light rising from its base, a
       // slow band climbing it, wisps of energy drifting up it, all breathing with the cell's pulse; a flicker when its
       // boss stirs; in an alarm its light pulses red; a beaten boss's glass is a quieter green; a cracked pane's crack, toward the
       // aisle, catches the light; fading into the hall's haze far off)
-      fragmentShader: `${GLSL_FOG_PARS} uniform float uK; uniform float uT; uniform float uCalm; uniform sampler2D tCrack; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
+      fragmentShader: `${GLSL_FOG_PARS} uniform float uK; uniform float uT; uniform float uCalm; uniform sampler2D tCrack; uniform samplerCube tProbe; uniform vec3 uBoxMin; uniform vec3 uBoxMax; uniform vec3 uProbeAt; uniform float uGlassRefl; varying vec3 vW; varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vCol; varying float vFlick; varying float vDepth; varying vec4 vState; varying float vFront; varying vec2 vXZ;
         void main(){
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
           float ang = atan(vXZ.y, vXZ.x), ph = vState.w * 6.2832, t = uT * (1.0 - 0.7 * uCalm);
@@ -309,10 +341,20 @@ class HallScene extends Scene3D {
             crack = step(0.0, cu.x) * step(cu.x, 1.0) * step(0.0, cu.y) * step(cu.y, 1.0) * texture2D(tCrack, cu).r;
           }
           float haze = 1.0 - 0.8 * smoothstep(uFogNear, uFogFar * 1.25, vDepth);
-          gl_FragColor = vec4((c * (rim + col + band + wisp) * pulse * (1.0 + vFlick) + mix(vec3(0.9, 0.97, 1.0), c, 0.35) * crack * 0.85) * uK * haze, 1.0);
+          // the hall in the glass: the ray off its outer face (front faces only: the far side's inside is seen through
+          // it), met with the hall's walls and looked up in the floor's cube, sharp (a polished pane), by Fresnel
+          vec3 refl = vec3(0.0);
+          if (gl_FrontFacing) {
+            vec3 Vd = normalize(-vV), Nn = normalize(vN), R = reflect(Vd, Nn);
+            vec3 t1 = (uBoxMax - vW) / R, t2 = (uBoxMin - vW) / R, tf = max(t1, t2);
+            float fr = 0.04 + 0.96 * pow(1.0 - clamp(dot(-Vd, Nn), 0.0, 1.0), 5.0);
+            refl = textureCubeLodEXT(tProbe, vW + R * min(min(tf.x, tf.y), tf.z) - uProbeAt, 1.0).rgb * fr * uGlassRefl;
+          }
+          gl_FragColor = vec4((c * (rim + col + band + wisp) * pulse * (1.0 + vFlick) + mix(vec3(0.9, 0.97, 1.0), c, 0.35) * crack * 0.85 + refl) * uK * haze, 1.0);
         }`,
     }), n);
     this.glass.frustumCulled = false; // (an instanced mesh is culled by its first copy's bounds: the twelve span the hall)
+    if (this.probe) this.probe.swap.push(this.glassU.tProbe); // (drawn into the cube with a blank in place of it: a picture cannot be read and written at once, and the glass's light is the cells' colour in the floor)
     this.glass.renderOrder = 4;
     this.glass.name = "cells-glass";
     // a pool of each boss's light on the floor round its cell (one draw)
@@ -516,6 +558,27 @@ class HallScene extends Scene3D {
     m.scene.traverse((o) => { if (o.isMesh) for (const mt of Array.isArray(o.material) ? o.material : [o.material]) for (const k of DISPOSE_MAPS) { const t = mt && mt[k]; if (t && !seen.has(t)) { seen.add(t); maps.push(t); } } });
     for (const t of maps) { try { r.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ } yield; }
   }
+  // the floor's reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps,
+  // so a face a frame would never be drawn there; the game itself draws every frame)
+  probeNow() {
+    if (!this.probe) return;
+    this.probe.capture();
+    while (this.probe.left) this.probe.step(this.scene, this.camera.layers.mask);
+    this.probeTaken();
+  }
+  // a capture whole: the cells' steel takes it too, filtered for its roughness (its own cube, made once a capture)
+  probeTaken() {
+    const P = this.probe;
+    if (!P || P.left || P.done === P.made) return;
+    P.done = P.made;
+    if (this.kit && this.kit.steelMat && GFX.ok) {
+      try {
+        const pm = GFX.pmrem().fromCubemap(P.map);
+        if (this.steelEnv) this.steelEnv.dispose();
+        this.steelEnv = pm; this.kit.steelMat.envMap = pm.texture;
+      } catch (e) { /* the steel keeps the hall's dark */ }
+    }
+  }
   // a new piece's shaders asked for before it is hung in the hall, and the frames waited until the graphics driver has
   // built them (GFX.prepare): the glide never stalls on a boss or a prop arriving (the master overhaul, 2026-11-23)
   *ready(objs) {
@@ -679,6 +742,20 @@ class HallScene extends Scene3D {
     super.update(dt);
     if (!this.has3D) return;
     this.shown = true;
+    // the floor's reflection: a face of the hall's cube a frame, drawn again once every boss and the end are in
+    if (this.probe) {
+      if (!this.probeFull && this.vault && this.cabs && this.stand && this.cells.every((c) => c.boss && c.ready)) { this.probeFull = true; this.probe.capture(); }
+      // (and when a capture is whole, the cells' steel takes it too, filtered for its roughness: steel that gives back
+      // the neon reads as steel; with the hall's black surroundings it read as grey boxes. Its own cube, made once a
+      // capture: what reads it is never drawn into what it reads)
+      this.probe.step(this.scene, this.camera.layers.mask);
+      this.probeTaken();
+    }
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
+    if (this.kit && this.kit.steelMat && !this.steelIn) { // (the cells' tread plate and brushed steel: see cellSteelMaterial)
+      const U = this.kit.steelMat.userData, a = Assets.ui("mat-tread"), b = Assets.ui("mat-steel");
+      if (a && b) { U.tTread.value.image = a; U.tTread.value.needsUpdate = true; U.tBrush.value.image = b; U.tBrush.value.needsUpdate = true; this.steelIn = true; }
+    }
     // the generated pieces: one step of the one coming in, each frame; a look for the next every fifth of a second
     if (!this.leaving) {
       if (this.job) { try { if (this.job.next().done) this.job = null; } catch (e) { this.job = null; } }
@@ -813,6 +890,10 @@ class HallScene extends Scene3D {
   }
   dispose() {
     if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+    if (this.probe) { this.probe.dispose(); this.probe = null; }
+    if (this.steelEnv) { this.steelEnv.dispose(); this.steelEnv = null; }
+    if (this.plates) { this.plates.dispose(); this.plates = null; }
+    if (this.kit && this.kit.steelMat) { const U = this.kit.steelMat.userData; if (U.tTread) U.tTread.value.dispose(); if (U.tBrush) U.tBrush.value.dispose(); }
     // (the cells' pictures let go of, and the materials kept a while for their shaders no longer holding them)
     if (this.kit) { this.kit.atlas.dispose(); this.kit.screens.material.uniforms.tAtlas.value = null; }
     if (this.crackTex) { this.crackTex.dispose(); this.glassU.tCrack.value = null; }
