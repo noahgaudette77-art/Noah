@@ -181,6 +181,11 @@ wizard's casts, wand and cape tight to the sound.
 ### Phase 5: environments and detail
 The title hall's cells as a real prison, each arena, the vault, Memory Bank and the rest: instancing, baked glow, sprite
 fog, cheap animated details; the Mac denser, the phone lean.
+- Carried here from Phase 2's audit list: Risk Blaster's asteroids (the near ones are the generated rocks, lit dark; the
+  far ones built-in low-poly lumps on the hull material: flat grey against the painted nebula; #25), the C drone's box
+  side-pods and the ringed planet behind the B drone (#25); the hub's cabinets' black lower bodies (they read as a void
+  under the lit tops; the hub is otherwise a keep); the title's end: the left edge's dark arch panorama and the fact
+  card's empty lower third (#10's notes).
 - **Gate:** every screen consistent; budgets kept.
 
 ### Phase 6: audio
