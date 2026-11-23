@@ -516,6 +516,12 @@ class HallScene extends Scene3D {
     m.scene.traverse((o) => { if (o.isMesh) for (const mt of Array.isArray(o.material) ? o.material : [o.material]) for (const k of DISPOSE_MAPS) { const t = mt && mt[k]; if (t && !seen.has(t)) { seen.add(t); maps.push(t); } } });
     for (const t of maps) { try { r.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ } yield; }
   }
+  // a new piece's shaders asked for before it is hung in the hall, and the frames waited until the graphics driver has
+  // built them (GFX.prepare): the glide never stalls on a boss or a prop arriving (the master overhaul, 2026-11-23)
+  *ready(objs) {
+    const done = GFX.prepare(this.scene, this.camera, objs);
+    while (!done()) yield;
+  }
   // a new piece drawn once off-screen and alone (its shaders made, anything left of it sent), under the hall's own
   // lights, so that the lens meeting it costs nothing
   warmNew(objs) {
@@ -567,6 +573,7 @@ class HallScene extends Scene3D {
     o.scale.setScalar(h);
     o.position.set(x, y, z);
     yield* this.upload(m);
+    yield* this.ready([o]);
     this.endGroup.add(o);
     this.warmNew([this.endGroup]);
     this[key] = o;
@@ -576,6 +583,7 @@ class HallScene extends Scene3D {
     if (!objs) return;
     yield;
     yield* this.upload(m);
+    yield* this.ready(objs);
     for (const o of objs) this.endGroup.add(o);
     this.warmNew([this.endGroup]);
     this.cabs = objs[0];
@@ -648,6 +656,7 @@ class HallScene extends Scene3D {
       c.mixer.update(0);
     }
     c.phase = Math.random() * 10;
+    yield* this.ready([root]);
     c.turner.add(root);
     c.boss = root;
     this.warmNew([c.anchor]);

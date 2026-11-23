@@ -635,6 +635,43 @@ const GFX = {
   },
   // the current screen's light budget made again at the governor's cap (see lightsFor)
   lightsReset() { const sc = typeof Scenes !== "undefined" && Scenes.cur && Scenes.cur.scene; if (sc && sc.userData.lightPool) { sc.userData.lightPool.dispose(); sc.userData.lightPool = null; } },
+  // Shaders asked for ahead of a piece's first draw (the master overhaul, 2026-11-23: nothing arriving in view may stall
+  // a frame). The programs the new pieces need are made now, unseen, in a scene of their own lit by as many lights of
+  // each kind as the screen draws (a program depends on how many, not where), into a target like the screen's own;
+  // the returned function says when they are ready to be shown: when the graphics driver says they are built
+  // (KHR_parallel_shader_compile: Safari builds them on threads of its own, and Chrome on a graphics chip), at most a
+  // second and a half on; without that word, two frames on. Pieces not yet hung anywhere.
+  prepare(scene, camera, objs) {
+    if (!this.ok || !objs || !objs.length) return () => true;
+    const r = this.renderer, gl = r.getContext();
+    if (this._par === undefined) { try { this._par = gl.getExtension("KHR_parallel_shader_compile") || null; } catch (e) { this._par = null; } }
+    const K = this._par, P = this._prep || (this._prep = { scene: new THREE.Scene(), lights: {} });
+    const kinds = { DirectionalLight: 0, PointLight: 0, SpotLight: 0, HemisphereLight: 0 };
+    scene.traverseVisible((o) => { if (o.isLight && o.layers.test(camera.layers) && kinds[o.type] !== undefined) kinds[o.type]++; });
+    for (const k in kinds) {
+      const have = P.lights[k] || (P.lights[k] = []);
+      while (have.length < kinds[k]) { const l = new THREE[k](0xffffff, 0); have.push(l); P.scene.add(l); }
+      have.forEach((l, i) => { l.visible = i < kinds[k]; });
+    }
+    P.scene.fog = scene.fog; P.scene.environment = scene.environment;
+    const before = new Set(r.info.programs || []), was = r.getRenderTarget();
+    try {
+      for (const o of objs) P.scene.add(o);
+      r.setRenderTarget(this._warmRT || null); // (a program differs by the kind of target it draws into: the screen's is like this one)
+      r.compile(P.scene, camera);
+    } catch (e) { /* best effort: they are made at their first draw instead */ }
+    r.setRenderTarget(was);
+    for (const o of objs) P.scene.remove(o);
+    const made = (r.info.programs || []).filter((p) => !before.has(p));
+    let n = 0;
+    return () => {
+      n++;
+      if (!made.length) return true;
+      if (!K) return n > 2;
+      if (n > 90) return true;
+      try { return made.every((p) => gl.getProgramParameter(p.program, K.COMPLETION_STATUS_KHR)); } catch (e) { return true; }
+    };
+  },
   warm(s) {
     if (!this.ok || !s.scene || !s.camera) return;
     const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
