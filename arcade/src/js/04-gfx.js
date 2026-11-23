@@ -842,10 +842,9 @@ const Pointer = {
     window.addEventListener("pointerup", (e) => { if (e.pointerType === "touch") { this.tx = 0; this.ty = 0; } }, { passive: true });
     if (Store.settings.tilt) this.initTilt(false);
   },
-  update(dt) {
-    const k = Math.min(1, dt * 3);
-    this.x += (clamp(this.tx + this.tiltX, -1, 1) - this.x) * k;
-    this.y += (clamp(this.ty + this.tiltY, -1, 1) - this.y) * k;
+  update(dt) { // (eased exactly: the same glide at any frame rate)
+    this.x = Motion.damp(this.x, clamp(this.tx + this.tiltX, -1, 1), 3, dt);
+    this.y = Motion.damp(this.y, clamp(this.ty + this.tiltY, -1, 1), 3, dt);
   },
 };
 
