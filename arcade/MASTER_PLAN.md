@@ -12,13 +12,17 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 ## Now
 
-- **Phase:** 2, image quality (Phase 1 passed its gate 2026-11-23: `docs/master/phase1/`).
-- **Doing:** the deterministic re-takes (the baseline's stills from its own build, `arcade/index.baseline.html`, put
-  back from `89cfb56` and never committed; script time with the drawing left out for both builds:
-  `docs/master/baseline/script-*.json`); then Phase 2's order (below), one small commit each.
-- **Next steps:** when the re-takes end: copy them into `docs/master/baseline/` (stills, script) and
-  `docs/master/phase1/` (the current build's stills: Phase 2's "before"); `git stash pop` (the no-FXAA change,
-  stashed as "phase2-no-fxaa"), build, test, commit; then the interface's faults, the materials, the colours.
+- **Phase:** 2, image quality.
+- **Done so far:** the art bible and its reference sheet (`21c7dbc`); no FXAA on any tier (`0138cc2`); interface faults
+  (`f4ce144`: the answers stand back behind an explanation, TAP TO ENTER backed, the menus' backdrop darker, larger
+  stars); the title hall's reflective deck floor, glass and steel (`eeedda6`: a room probe, CC0 deck, tread and brushed
+  steel); stills nearer deterministic (`922a37f`: Boss Rush, Memory Bank, the exam, the guide and the menus the same
+  run after run; Risk Blaster and Nest Egg Run still vary in their questions).
+- **Doing:** two agents in worktrees (Boss Rush's arena; Memory Bank's vault room), to be reviewed and merged; the
+  baseline's and Phase 1's stills captured again with the latest capture (`run2.sh` in the scratchpad: into
+  `docs/master/baseline/stills` and `docs/master/phase1/stills` when done).
+- **Next steps:** the exam's Proctor (key light, readable) and its columns; the racer's facades; the title's skylight
+  that shows no sky and the side windows' glare; then the Phase 2 gate (harness, an independent review, the report).
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -192,6 +196,14 @@ pushed; the served link checked.
   glides (the opening is not held back for them); each piece's programs are now asked for before it is hung and it
   is shown once Safari's driver says they are built (`GFX.prepare`; `KHR_parallel_shader_compile`, present in WebKit
   here, absent in this machine's Chromium, present in Chrome on a graphics chip).
+
+- **Reflections from a room probe, not a second drawing (Phase 2, 2026-11-23).** A floor that gives the room back is
+  the art bible's first rule for "lit" (the hub's mirror was the one screen called lit). A planar mirror draws the
+  whole scene again every frame (the phone tiers left it off for that). Instead each room is drawn once into a small
+  cube (128 px a face on a phone, 256 on a Mac, a face a frame, again when the room is complete), and the floor looks
+  it up where its reflected ray meets the room's box (box projection: the cells' colours lie under the cells), blurred
+  by the plates' roughness; glass and steel use the same capture. One texture look-up a pixel, no extra draws:
+  measured on the title, draws and triangles unchanged, textures +11 MB on the phone.
 
 ## Tried and reverted
 
