@@ -329,7 +329,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 .trophy b { font: 11px/1.3 var(--font-display); color: var(--yellow); font-weight: 400; }
 .trophy i { font-style: normal; font-size: 19px; line-height: 1; color: var(--ink); }
 @keyframes trophyin { 0% { transform: translate(-50%, -280%); } 8%, 88% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -280%); } }
-.trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 6px; margin-bottom: 12px; }
+.trophies { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 6px; margin-bottom: 12px; } /* (three across on a Mac's 860 px column, not four: at 210 px a trophy's line wrapped to three or four lines beside its lock, the audit's #24; a phone keeps one across) */
 .trophies .tr { display: flex; gap: 9px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); opacity: 0.6; }
 .trophies .tr.on { opacity: 1; border-color: var(--yellow); }
 .trophies .tr svg { width: 18px; height: 18px; display: block; }
@@ -798,6 +798,12 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .face .ftop { font-size: 9px; color: #cfc6f8; }
 .face .fhint { color: #cfc6f8; white-space: nowrap; font-size: clamp(7px, 2.05vw, 9px); } /* (one line on a phone) */
 .stage:not(.wide) .meta { white-space: nowrap; } /* (the two wide tiles at the top of a stage list carry a sentence, which wraps) */
+/* (a tile's words may not widen it: its text column shrinks with the tile, and a boss's name that will not fit beside
+   its stars takes a line of its own, at the right. On a Mac's three columns of tiles the names ran to the tile's edge
+   and its bar with them: the audit's #24) */
+.stage:not(.wide) { grid-template-columns: auto minmax(0, 1fr); }
+.stage:not(.wide) .meta { flex-wrap: wrap; row-gap: 3px; }
+.stage:not(.wide) .meta > span:last-child { margin-left: auto; }
 /* Guide: while there are search results the archive folds down to a strip; a chapter has one filled button. */
 .lib-window { transition: height 0.3s var(--ease-out); }
 .guide-lib.searching .lib-window { height: 64px; }
@@ -924,8 +930,10 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .scr-results .scroll .actions { grid-template-columns: 1fr; padding-top: 12px; }
 @media (prefers-reduced-motion: reduce) { .res-hero::before, .ans.good .k::after, .ans.bad .k::after { animation: none !important; } }
 /* Title: the logo sits inside the frame with air either side (it ran edge to edge), and takes the light of a
-   lightning strike with the rest of the street. */
-.logo-main { font-size: clamp(40px, 13vw, 128px); }
+   lightning strike with the rest of the street. On a wide window it is held to a quarter of the window's height
+   (Phase 2: on a MacBook's 1470 x 830 it was 128 px a line, its lower line over the vault door the glide ends on,
+   only a slice of the door in sight); a phone held upright is held by its width, as it was. */
+.logo-main { font-size: clamp(40px, min(13vw, 12vh), 128px); }
 @media (max-height: 560px) and (orientation: landscape) { .logo-main { font-size: clamp(30px, 9vh, 60px); } }
 .logo-face { filter: brightness(calc(1 + var(--bolt, 0) * 0.55)); }
 /* Stats opens on the player's rank: a medal with the level on it, the rank's name, and the way to the next. */
@@ -1366,6 +1374,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-notes .gsec { position: relative; background-image: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0) 0 27px, rgba(255, 255, 255, 0.035) 27px 28px); }
 .scr-notes .gsec::after { content: ""; position: absolute; right: 0; top: 0; width: 18px; height: 18px; pointer-events: none;
   background: linear-gradient(225deg, #0b0527 0 50%, color-mix(in srgb, var(--c, var(--cyan)) 55%, #2a1c6a) 50% 100%); box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.45); }
+.scr-notes .gsec h3 { padding-right: 28px; } /* (the page's count clear of its turned corner: "PAGE 1•3" ran under it) */
 .boot-bar { border: 0; padding: 0; height: 12px; background: rgba(150, 130, 255, 0.24); box-shadow: none; } /* (segments of a dim track, a bright sweep running through them) */
 /* Hub dots: an outline in each cabinet's true colour (mixed into the card's violet, yellow and orange went olive and brown); the one in front is filled. */
 .hub-meta .dots i { background: transparent; box-shadow: inset 0 0 0 2px var(--d, var(--line)); opacity: 0.8; }
@@ -1735,6 +1744,13 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 /* ---- Risk Blaster, closing fixes after its third independent review ---- */
 /* the band fades under the question as it does over the answers (a hard panel edge cut the demon's horns and its ring) */
 .scr-blaster .band::before { content: ""; position: absolute; z-index: 1; left: -16px; right: -16px; top: -2px; height: 22px; pointer-events: none; background: linear-gradient(180deg, rgba(7, 2, 26, 0.86), rgba(7, 2, 26, 0)); }
+/* (on a wide window the question and the answers stop at 1040 px, the band spans the window: the two fades stay under
+   the panels they belong to and die away at their ends, instead of ruling a dark line across the open sky either side:
+   the audit's #15, its "hard scrim seams" on the Mac. Narrower, the panels span the window and so do the fades) */
+@media (min-width: 1100px) {
+  .scr-blaster .band::before, .scr-blaster .band::after { left: 50%; right: auto; width: min(1120px, 100%); transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
+}
 
 /* ---- Title, pass 8 ---- */
 /* the wordmark keeps its edge against the sky: a dark keyline round every letter, and ARCADE starts pale cyan (its periwinkle top melted into the violet) */
@@ -15016,22 +15032,44 @@ function cellAtlas(states) {
   return tex;
 }
 
-// A crack in glass: lines from a strike, branching, drawn once (white on black: added to the glass's light)
+// A crack in glass: a strike's star of cracks with a spider's web between them, drawn once, white on black (added to
+// the glass's light). Drawn in metres on the pane (the glass shows it over 1.27 m of its round and 2.04 m of its height:
+// a picture twice as tall as it is wide, so nothing is stretched), the lines a pixel or so wide with no glow, each
+// stretch catching the light more or less (Phase 2: soft 2 px lines with a halo and two drawn circles, stretched to
+// 1.6 times their height, read as chalk scribbled over the boss)
 function crackTexture() {
-  const S = 256, cv = document.createElement("canvas"), x = cv.getContext("2d");
-  cv.width = cv.height = S;
-  x.fillStyle = "#000"; x.fillRect(0, 0, S, S);
-  x.strokeStyle = "#fff"; x.lineCap = "round";
+  const W = 256, H = 512, MW = 1.265, MH = 2.04, cv = document.createElement("canvas"), x = cv.getContext("2d");
+  cv.width = W; cv.height = H;
+  x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+  x.lineCap = "round"; x.lineJoin = "round";
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const branch = (px, py, a, len, w, depth) => {
-    x.lineWidth = w; x.beginPath(); x.moveTo(px, py);
-    for (let i = 0; i < 6; i++) { a += (rnd() - 0.5) * 0.7; px += Math.cos(a) * len / 6; py += Math.sin(a) * len / 6; x.lineTo(px, py); if (depth > 0 && rnd() < 0.3) branch(px, py, a + (rnd() < 0.5 ? -1 : 1) * (0.5 + rnd() * 0.6), len * 0.5, w * 0.6, depth - 1); }
-    x.stroke();
+  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW / 2, MH / 2];
+  const seg = (a, b, w, lit) => { x.strokeStyle = `rgba(255,255,255,${lit.toFixed(2)})`; x.lineWidth = w; x.beginPath(); x.moveTo(px(a[0]), py(a[1])); x.lineTo(px(b[0]), py(b[1])); x.stroke(); };
+  // a crack from p along angle a for len metres: short straight stretches, each its own glint; now and then a branch
+  const crack = (p, a, len, w, depth, pts) => {
+    const n = Math.max(3, Math.round(len / 0.05));
+    for (let i = 0; i < n; i++) {
+      a += (rnd() - 0.5) * 0.45;
+      const q = [p[0] + Math.cos(a) * len / n, p[1] + Math.sin(a) * len / n];
+      seg(p, q, w * (1 - 0.5 * i / n), 0.35 + 0.65 * rnd());
+      if (pts) pts.push(q);
+      if (depth > 0 && i > 1 && rnd() < 0.22) crack(q, a + (rnd() < 0.5 ? -1 : 1) * (0.45 + rnd() * 0.5), len * (0.25 + 0.3 * rnd()) * (1 - i / n), w * 0.7, depth - 1, null);
+      p = q;
+    }
   };
-  x.shadowColor = "#fff"; x.shadowBlur = 3;
-  for (let k = 0; k < 9; k++) branch(S / 2, S / 2, (k / 9) * Math.PI * 2 + rnd() * 0.4, 70 + rnd() * 60, 2.2, 2);
-  x.lineWidth = 1.5; x.beginPath(); x.arc(S / 2, S / 2, 14, 0, 7); x.stroke(); x.beginPath(); x.arc(S / 2, S / 2, 34 + rnd() * 8, 0.4, 2.6); x.stroke();
+  // the star: radials from the strike, their points kept for the web
+  const R = 8, rays = [];
+  for (let k = 0; k < R; k++) { const pts = [C.slice()]; crack(C.slice(), (k / R) * Math.PI * 2 + (rnd() - 0.5) * 0.5, 0.32 + rnd() * 0.5, 1.5, 2, pts); rays.push(pts); }
+  // the web: between each radial and the next, straight pieces across at three distances out, some missing
+  const at = (pts, r) => { for (const q of pts) if (Math.hypot(q[0] - C[0], q[1] - C[1]) >= r) return q; return null; };
+  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R; k++) {
+    if (rnd() < 0.3) continue;
+    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[(k + 1) % R], r * (0.85 + 0.3 * rnd()));
+    if (a && b) seg(a, b, 1.0, 0.3 + 0.6 * rnd());
+  }
+  // the strike itself: the glass crushed white in a small knot
+  for (let k = 0; k < 14; k++) { const a = rnd() * Math.PI * 2, r = 0.008 + rnd() * 0.022; seg(C, [C[0] + Math.cos(a) * r, C[1] + Math.sin(a) * r], 1.2, 0.6 + 0.4 * rnd()); }
   const t = new THREE.CanvasTexture(cv);
   t.minFilter = THREE.LinearMipmapLinearFilter;
   return t;
@@ -38803,7 +38841,10 @@ function showGuideChapter(n) {
 // A great ledger lies open on the desk in the middle; holo-books stand over the lecterns;
 // loose pages and dust drift in the light. It is calm on purpose: everything drifts,
 // nothing darts, and while a chapter is being read it all but stops. Look only.
-const LIB_GLSL = "float libH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }";
+const LIB_GLSL = "float libH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }" +
+  // (four numbers at once with no sine: Dave Hoskins' hash. For the shelves' runs and bays, which the book hash above
+  // would cost four sines a pixel to draw)
+  " vec4 libH4(vec2 p){ vec4 p4 = fract(p.xyxy * vec4(0.1031, 0.103, 0.0973, 0.1099)); p4 += dot(p4, p4.wzxy + 33.33); return fract((p4.xxyz + p4.yzzw) * p4.zywx); }";
 const LIB_EYE = 7.0; // the height the archive is seen from
 // The rose window's glass at q (the unit disc is the glass; outside it the answer is black): pieces of glass set
 // in dark leads. A gold eye; eight lancets, magenta and electric blue by turns, broad at the foot and drawn to a point;
@@ -38851,42 +38892,86 @@ const LIB_ROSE = `
 // A wall of books, drawn in the shader: bays and shelves, spines of every width, height
 // and leather, gilt title bands, and here and there a holo-book glowing on the shelf. A warm
 // pool of light lies on it by each hanging lamp; between the lamps it stands in the violet of
-// the window. Far down the nave, where one spine is thinner than a pixel, the books run
-// together into the tone of a shelf (no shimmer).
+// the window. The books stand in runs of six: a run is a set bound alike (one leather or cloth,
+// one height, its gilt bands in a line, a second band low down for the volume's number) or six
+// strays. Where one spine is thinner than a pixel the shelf shows each run's own average (a set
+// as a block of its colour at its height, strays as their mix leaning to one binding), so the
+// middle distance still reads as books (Phase 2: it was one flat pale tone, an empty back panel);
+// further still, where a run is thinner than a pixel, the average of all the books at that
+// height, each shelf of each bay a little its own (no shimmer either way). The averages were
+// measured from these books (tools of the overhaul: 2026-11-23), not guessed.
+const LIB_BOOK = `
+  // book si on shelf row, in a run drawn as (set, hs, hc): its binding (before the light across its spine), its top,
+  // whether it is on the shelf, its own draw h2 and whether it is bound in cloth
+  vec3 libBook(float si, float row, float set, float hs, float hc, out float top, out float there, out float h2, out float cloth){
+    h2 = libH(vec2(si + 17.0, row + 3.0));
+    float h1 = mix(libH(vec2(si, row)), hs, set);
+    top = 0.12 + 0.86 * (0.55 + 0.42 * h1);
+    there = step(mix(0.08, 0.04, set), h2);
+    cloth = mix(step(0.82, h2), step(0.72, hc), set); // (a stray in bright cloth about one time in six, a set more often)
+    vec3 leather = h1 < 0.25 ? vec3(0.46, 0.12, 0.16) : (h1 < 0.5 ? vec3(0.12, 0.2, 0.5) : (h1 < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
+    vec3 cl = h1 < 0.34 ? vec3(0.1, 0.62, 0.78) : (h1 < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
+    return mix(leather * mix(0.55 + 0.45 * h2, 0.8 + 0.2 * h2, set), cl, cloth);
+  }`;
 function libraryShelfMaterial(len, tall, lampY) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uSize: { value: new THREE.Vector2(len, tall) } }),
     extensions: { derivatives: true },
     vertexShader: "varying vec2 vUv; varying float vDepth; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
-    fragmentShader: `${GLSL_FOG_PARS} ${LIB_GLSL}
+    fragmentShader: `${GLSL_FOG_PARS} ${LIB_GLSL} ${LIB_BOOK}
       uniform float uTime; uniform vec2 uSize; varying vec2 vUv; varying float vDepth; varying vec3 vW;
       void main(){
         vec2 p = vUv * uSize;
         float bx = fract(p.x / 4.0), row = floor(p.y / 1.25), ry = fract(p.y / 1.25);
         float sx = p.x / 0.115, si = floor(sx), sf = fract(sx);
-        float aa = fwidth(sx), detail = 1.0 - smoothstep(0.45, 1.5, aa);
-        float h1 = libH(vec2(si, row)), h2 = libH(vec2(si + 17.0, row + 3.0));
-        float top = 0.12 + 0.86 * (0.55 + 0.42 * h1);
+        float aa = fwidth(sx), ay = fwidth(ry) * 0.5 + 1e-4;
+        float detail = 1.0 - smoothstep(0.45, 1.5, aa), far = smoothstep(2.4, 7.2, aa); // (a spine, then a run of six, thinner than a pixel)
+        // the run this spine stands in (the runs start at another place on every shelf)
+        float off = floor(libH4(vec2(row, 5.0)).x * 6.0), ri = floor((si + off) / 6.0);
+        vec4 rh = libH4(vec2(ri + 0.5, row + 11.5)); // (the run's draws: whether a set, its binding and height, cloth or leather, the strays' lean)
+        float set = step(rh.x, 0.4), hs = rh.y, hc = rh.z;
+        const vec3 GAP = vec3(0.012, 0.01, 0.022), GILT = vec3(0.9, 0.62, 0.22);
+        float top, there, h2, cloth;
+        vec3 bind = libBook(si, row, set, hs, hc, top, there, h2, cloth);
         float sides = smoothstep(0.04, 0.04 + aa, sf) * (1.0 - smoothstep(0.96 - aa, 0.96, sf));
-        float book = step(0.12, ry) * step(ry, top) * sides * step(0.08, h2);
-        vec3 leather = h1 < 0.25 ? vec3(0.46, 0.12, 0.16) : (h1 < 0.5 ? vec3(0.12, 0.2, 0.5) : (h1 < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
-        vec3 one = mix(vec3(0.012, 0.01, 0.022), leather * (0.5 + 0.5 * sin(sf * 3.1416)) * (0.55 + 0.45 * h2), book);
-        // one book in six or so is bound in a bright cloth: cyan, magenta or amber runs along every shelf
-        float gay = step(0.82, h2) * book;
-        vec3 cloth = h1 < 0.34 ? vec3(0.1, 0.62, 0.78) : (h1 < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
-        one = mix(one, cloth * (0.55 + 0.45 * sin(sf * 3.1416)), gay);
-        float gilt = book * step(abs(ry - (0.12 + (top - 0.12) * 0.72)), 0.035);
-        one += vec3(0.9, 0.62, 0.22) * gilt * 0.7;
-        vec3 many = vec3(0.2, 0.165, 0.19) * step(0.12, ry) * (1.0 - smoothstep(0.59, 0.95, ry)); // the same shelf, its books run together
-        vec3 col = mix(many, one, detail);
+        float book = step(0.12, ry) * step(ry, top) * sides * there;
+        float arch = sin(sf * 3.1416);
+        vec3 one = mix(GAP, bind * mix(0.5 + 0.5 * arch, 0.55 + 0.45 * arch, cloth), book);
+        float gilt = step(abs(ry - (0.12 + (top - 0.12) * 0.72)), 0.035) + set * step(abs(ry - (0.12 + (top - 0.12) * 0.2)), 0.02);
+        one += GILT * book * gilt * 0.7;
+        vec3 col = one;
+        if (detail < 1.0) {
+          // the run's own average at this height. A set is its binding edge to edge at its one height, its gilt in a
+          // line (exact: only a book's wear and a volume out differ along it); six strays are the mix of every binding
+          // (measured, below), leaning a little to one of them and lighter or darker run by run
+          float lo = smoothstep(0.12 - ay, 0.12 + ay, ry), fall = 1.0 - smoothstep(0.6, 1.0, ry), bump = smoothstep(0.43, 0.52, ry) * (1.0 - smoothstep(0.6, 0.77, ry));
+          vec3 sLeather = hs < 0.25 ? vec3(0.46, 0.12, 0.16) : (hs < 0.5 ? vec3(0.12, 0.2, 0.5) : (hs < 0.75 ? vec3(0.13, 0.34, 0.26) : vec3(0.46, 0.3, 0.12)));
+          vec3 sCloth = hs < 0.34 ? vec3(0.1, 0.62, 0.78) : (hs < 0.67 ? vec3(0.78, 0.16, 0.6) : vec3(0.86, 0.56, 0.12));
+          float sTop = 0.12 + 0.86 * (0.55 + 0.42 * hs);
+          float sOn = lo * (1.0 - smoothstep(sTop - ay, sTop + ay, ry));
+          float sGilt = 1.0 - smoothstep(0.035 - ay, 0.035 + ay, abs(ry - (0.12 + (sTop - 0.12) * 0.72)));
+          sGilt += 1.0 - smoothstep(0.02 - ay, 0.02 + ay, abs(ry - (0.12 + (sTop - 0.12) * 0.2)));
+          vec3 runSet = mix(GAP, (mix(sLeather * 0.736, sCloth * 0.836, step(0.72, hc)) + GILT * 0.7 * sGilt) * 0.883 + GAP * 0.117, sOn);
+          float hl = rh.w;
+          vec3 lean = hl < 0.25 ? vec3(1.56, 0.41, 0.54) : (hl < 0.5 ? vec3(0.41, 0.68, 1.7) : (hl < 0.75 ? vec3(0.44, 1.16, 0.88) : vec3(1.56, 1.02, 0.41)));
+          vec3 runStray = mix(GAP, vec3(0.204, 0.165, 0.182) * fall + vec3(0.145, 0.099, 0.035) * bump, lo) * mix(vec3(1.0), lean, 0.3) * (0.84 + 0.32 * fract(rh.x * 7.31 + rh.w * 3.17));
+          vec3 run = mix(runStray, runSet, set);
+          // all the books at this height (measured: sets and strays together), each shelf of each bay a little its own
+          vec3 every = mix(GAP, vec3(0.225, 0.181, 0.201) * fall + vec3(0.147, 0.1, 0.036) * bump, lo);
+          vec4 bh = libH4(vec2(floor(p.x / 4.0) + 0.5, row + 0.5));
+          vec3 tint = bh.x < 0.34 ? vec3(1.14, 0.96, 0.86) : (bh.x < 0.67 ? vec3(0.86, 0.96, 1.18) : vec3(0.92, 1.1, 0.96));
+          every *= mix(vec3(1.0), tint * (0.82 + 0.36 * bh.y), 1.0 - smoothstep(12.0, 30.0, aa));
+          col = mix(mix(run, every, far), one, detail);
+        }
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
         float lampK = exp(-dz * dz * 0.075) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.085, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
         vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
         col *= light;
-        float holo = book * step(0.972, h2) * detail;
-        vec3 hc = h1 < 0.33 ? vec3(0.2, 0.95, 1.0) : (h1 < 0.66 ? vec3(1.0, 0.25, 0.85) : vec3(1.0, 0.85, 0.3));
-        col += hc * holo * (1.0 + 0.45 * sin(uTime * 0.8 + si * 1.7)) * (0.55 + 0.45 * step(0.5, fract(ry * 9.0)));
+        float holo = book * step(0.972, h2) * (1.0 - set) * detail;
+        float hh = fract(h2 * 31.7);
+        vec3 holoCol = hh < 0.33 ? vec3(0.2, 0.95, 1.0) : (hh < 0.66 ? vec3(1.0, 0.25, 0.85) : vec3(1.0, 0.85, 0.3));
+        col += holoCol * holo * (1.0 + 0.45 * sin(uTime * 0.8 + si * 1.7)) * (0.55 + 0.45 * step(0.5, fract(ry * 9.0)));
         // the case itself: uprights between bays, a board under every shelf, a brass lip
         float wood = max(step(bx, 0.028) + step(0.972, bx), step(ry, 0.09));
         col = mix(col, (vec3(0.07, 0.05, 0.09) + vec3(0.4, 0.28, 0.12) * step(0.07, ry) * step(ry, 0.09)) * light, clamp(wood, 0.0, 1.0));

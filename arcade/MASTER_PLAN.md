@@ -21,12 +21,22 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 - **Also done:** Memory Bank's vault room (an agent's work, reviewed and merged: `a2c64b8`, `d699efc`, rebuilt
   `56acac2`: a reflective deck, brushed-steel box wall, bevelled gold, violet-black; the Mac's layout uses the window);
   the title's skylights for its interior worlds and dimmer side windows (`21d6556`); the hub's lasers (`4353a9f`).
-- **Doing:** two agents in worktrees: Boss Rush's arena, the Final Exam (hall, columns, the Proctor's light); to be
-  reviewed (their before/after sheets in `docs/master/phase2/`), merged by cherry-pick, the page and the asset list
-  rebuilt after (`node arcade/tools/manifest.js`, then the build), WebKit checked.
+- **Also done (this stretch):** the title's end on a wide window shows the vault door (`5184d81`: the logo held to a
+  quarter of the window's height); a cracked cell's glass reads as cracked glass, not chalk (`a9964e1`); the Strategy
+  Guide's far shelves read as books (runs of six, sets bound alike; far off, each run's average, then all the books'
+  average, measured: see the commit).
+- **Doing:** three agents in worktrees: Boss Rush's arena, the Final Exam (hall, columns, the Proctor's light), Nest
+  Egg Run's street (facades, shoulders, the far end's clutter); to be reviewed (their before/after sheets in
+  `docs/master/phase2/`), merged by cherry-pick, the page and the asset list rebuilt after (`node
+  arcade/tools/manifest.js`, then the build), WebKit checked.
 - **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
-  `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); the racer's far-end
-  clutter (optional); then the Phase 2 gate: the harness, an independent review of all of Phase 2, the report.
+  `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
+  the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
+  games' characters, the feet in wide shots, the crowd, the Proctor; capture strips with `tools/scenarios/motion.js`
+  and the like).
+- **Timing on this machine is unreliable while agents capture** (four cores shared): a software frame of the guide
+  measured 1144, 1252, 1709 and 2119 ms in four runs of two builds. Compare costs only on a quiet machine, the builds
+  alternated.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -138,11 +148,34 @@ Rodin and the better kept; only what is clearly below the bar). The order, from 
 Follow-up of the animation pass (2026-11-23): what it left (feet in wide shots, the other games' characters), rigs and
 skinning re-audited, clip sets, state machine, the twelve principles, procedural life, boss personalities.
 - **Gate:** no snapping, no T-pose, no sliding; budgets kept; capture sequences for each main character and two bosses.
+- **The plan (written while Phase 2's agents worked):**
+  1. *Strips first, before any change*, on the capture tool's virtual clock (every frame 1/60 s), the same moments in
+     any build: Boss Rush (`tools/scenarios/motion.js`, two bosses and the wizard: idle, strike, cast, fall, defeat;
+     wide shots for the feet: an entrance and a fall), Risk Blaster (`blaster-combat.js`: the ship's and the demon's
+     entrances, firing, a hit, the demon's strikes from telegraph to landing, its death), Nest Egg Run (`racer-run.js`:
+     a lane change, a gate, a crash, a boost: the rig's lean, pitch, suspension, wheels), the Final Exam (a strip
+     scenario to write: the Proctor waking, a right and a wrong answer, its fall), the title hall (`title-hall.js`: the
+     caged bosses' idles, a cell's alarm), the hub, the crowd (after the arena agent's work).
+  2. *Read every strip for* snapping (a pose or a position jumping between frames: `tools/motion-hz.js --pops`
+     finds the largest one-frame moves against their neighbours), T-poses or bind poses showing (a clip not yet
+     loaded), sliding feet (a foot moving while planted, in the wide shots), stiffness (parts that never move against
+     each other), robot timing (constant speeds, no anticipation or follow-through), and characters that never look at
+     what they react to.
+  3. *Fix the worst first*, by the owner's order (smoothness first: nothing that costs a phone's frame): the motion
+     core (`07b-motion.js`: damp, Spring, Follow, noise, ease) for everything procedural; crossfades for clip changes;
+     layers (`overlay`) for reactions; feet planted in the wide shots (lock a planted foot's world position over its
+     clip's contact frames; the fights frame the feet out otherwise).
+  4. *The gate's evidence*: before/after strips for each main character and two bosses in `docs/master/phase3/`,
+     `motion-hz.js` before and after (60, 90 and 120 Hz alike), each screen's cost (script ms with drawing left out, the
+     builds alternated on a quiet machine), the logic diff clean.
 
 ### Phase 4: game feel
 Input at once with a small buffer; hit-stop; capped, reducible shake; recoil; impacts; telegraphs; answer feedback;
 finishers; camera damping and look-ahead; trails and speed cues by tier; Risk Blaster, Nest Egg Run, Boss Rush; the
 wizard's casts, wand and cape tight to the sound.
+- Carried here from Phase 2: Risk Blaster on a Mac, while an explanation is up, lifts the picture so the fighter shows
+  over the sheet and the demon's head goes under the question panel (the audit's #15, its camera half): on a wide
+  window the lens could stand back a little instead of the whole picture riding up.
 - **Gate:** each game reviewed with a capture sequence; budgets kept; the logic diff clean.
 
 ### Phase 5: environments and detail
