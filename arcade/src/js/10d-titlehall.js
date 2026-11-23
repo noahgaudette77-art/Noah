@@ -641,7 +641,9 @@ class HallScene extends Scene3D {
       c.idle = c.acts.idle || c.mixer.clipAction(clips[0]);
       c.idle.play();
       c.idle.time = Math.random() * c.idle.getClip().duration;
-      c.idle.timeScale = (this.calm ? 0.55 : 0.85) + Math.random() * 0.2;
+      const mv = (typeof BOSS_MOVE !== "undefined" && BOSS_MOVE[c.name.replace(/^boss-|-t$/g, "")]) || {}; // (each boss at its own pace, as it moves in its fight: 22d; a floater hovers in its cell)
+      c.idle.timeScale = ((this.calm ? 0.55 : 0.85) + Math.random() * 0.2) * (mv.tempo || 1);
+      c.float = mv.float || null;
       c.headAnim = !!c.head && clips.some((cl) => cl.tracks.some((t) => t.name === c.head.name + ".quaternion"));
       c.mixer.update(0);
     }
@@ -738,6 +740,7 @@ class HallScene extends Scene3D {
       c.turner.rotation.y = Math.sin(this.t * 0.15 + c.rimPh) * (this.calm ? 0.04 : 0.13);
       c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 38) * 0.05;
       c.turner.position.x = c.twitch * Math.sin(c.twitch * 51) * 0.04;
+      if (c.float) c.turner.position.y = c.float[0] * HALL.bossH * (0.65 + 0.35 * Math.sin(this.t * Math.PI * 2 * c.float[1] * (this.calm ? 0.5 : 1) + c.rimPh)); // (it hovers, bobbing)
       if (!near && !extras) continue; // (at LOW a far boss holds its pose)
       c.accum += dt;
       if (!near && c.accum < 0.1) continue;
@@ -752,7 +755,7 @@ class HallScene extends Scene3D {
           c.boss.getWorldPosition(v);
           let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
           want = Math.atan2(Math.sin(want), Math.cos(want));
-          c.yaw += (clamp(want, -0.6, 0.6) * (c.headK || 1) - c.yaw) * Math.min(1, step * 2.2);
+          c.yaw = Motion.damp(c.yaw, clamp(want, -0.6, 0.6) * (c.headK || 1), 2.2, step);
           c.head.parent.getWorldQuaternion(q).invert();
           axis.set(0, 1, 0).applyQuaternion(q).normalize();
           c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
