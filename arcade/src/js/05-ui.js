@@ -311,13 +311,22 @@ class RunStats {
   }
 }
 
+// each game's keys, shown in its pause menu on a computer (a mouse and a keyboard: .keys, style.css; a phone has none)
+const GAME_KEYS = {
+  blaster: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
+  boss: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
+  racer: "\u2190 \u2192 LANE · ENTER, SPACE OR \u2191 BOOST · 1-4 OR A-D ANSWER · P OR ESC PAUSE",
+  memory: "SPACE OR F FLIP · 1 AGAIN · 2 GOOD · 3 EASY · P OR ESC PAUSE",
+  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · ESC PAUSE",
+};
 function pauseMenu(game) {
+  const keys = GAME_KEYS[game.gameId];
   const el = UI.el(`<div class="modal"><div class="dialog" style="--c:${COLORS.cyan}" role="dialog" aria-modal="true" aria-label="Paused">
     <h2>PAUSED</h2>
     <button class="btn" data-act="resume" style="--c:${COLORS.lime}">${icon("play")} RESUME</button>
     <button class="btn ghost" data-act="restart">RESTART</button>
     <button class="btn ghost" data-act="mute">${icon(Store.settings.sfx || Store.settings.music ? "note" : "mute")} <span>${Store.settings.sfx || Store.settings.music ? "SOUND ON" : "SOUND OFF"}</span></button>
-    <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button></div></div>`);
+    <button class="btn ghost" data-act="quit">QUIT TO ARCADE</button>${keys ? `<p class="keys">KEYS · ${keys}</p>` : ""}</div></div>`);
   UI.openModal({
     el,
     on: (a, t) => {

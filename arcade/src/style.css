@@ -100,7 +100,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   background: var(--panel); border: 2px solid var(--line); font: 9px/1 var(--font-display); color: var(--ink);
   box-shadow: 0 3px 0 #000;
 }
-.iconbtn:hover { border-color: var(--cyan); color: var(--cyan); }
+@media (hover: hover) { .iconbtn:hover { border-color: var(--cyan); color: var(--cyan); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 .iconbtn svg { width: 16px; height: 16px; }
 
@@ -110,7 +110,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   background: var(--c, var(--yellow)); border: 0; box-shadow: 0 5px 0 rgba(0, 0, 0, 0.75), inset 0 -4px 0 rgba(0, 0, 0, 0.25), inset 0 3px 0 rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
 }
-.btn:hover { filter: brightness(1.12); }
+@media (hover: hover) { .btn:hover { filter: brightness(1.12); } }
 .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.75), inset 0 -2px 0 rgba(0, 0, 0, 0.25); }
 .btn.ghost { background: var(--panel); color: var(--c, var(--ink)); box-shadow: 0 4px 0 #000, inset 0 0 0 2px var(--c, var(--line)); }
 .btn.small { padding: 10px 12px; font-size: 10px; }
@@ -175,7 +175,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .mission .label { color: var(--dim); font-size: 8px; }
 .mission svg { width: 12px; height: 12px; flex: none; }
-.mission:hover { background: var(--panel-2); }
+@media (hover: hover) { .mission:hover { background: var(--panel-2); } }
 .hub-card {
   width: 100%; max-width: 560px; margin: 0 auto; background: var(--panel); border: 2px solid var(--c, var(--cyan));
   box-shadow: 0 0 0 2px #000, 0 0 24px -4px var(--c, var(--cyan)); padding: 12px 14px 14px; display: grid; gap: 10px;
@@ -202,7 +202,8 @@ h1, h2, h3, p, ol, ul { margin: 0; }
   display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; text-align: left; padding: 10px;
   background: var(--panel); border: 2px solid var(--line); box-shadow: 0 3px 0 #000; min-width: 0;
 }
-.stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); }
+.stage:focus-visible { border-color: var(--c, var(--cyan)); }
+@media (hover: hover) { .stage:hover { border-color: var(--c, var(--cyan)); } }
 .stage .n { grid-row: span 3; width: 40px; height: 40px; display: grid; place-items: center; background: var(--c, var(--cyan)); color: #12052e; font: 13px/1 var(--font-display); }
 .stage .t { font-size: 20px; line-height: 1; min-width: 0; }
 .stage .meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; font: 8px/1.4 var(--font-display); color: var(--dim); }
@@ -268,7 +269,7 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 }
 .ans .k { flex: none; width: 30px; height: 30px; display: grid; place-items: center; background: var(--c); color: #12052e; font: 11px/1 var(--font-display); }
 .ans .tx { min-width: 0; }
-.ans:hover { background: var(--panel-2); }
+@media (hover: hover) { .ans:hover { background: var(--panel-2); } }
 .ans:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 .ans.sel { background: var(--panel-2); box-shadow: 0 0 0 2px var(--c), 0 0 18px -2px var(--c); }
 .ans.good { border-color: var(--lime); background: rgba(24, 150, 104, 0.42); }
@@ -520,7 +521,7 @@ mark { background: var(--yellow); color: #12052e; }
   background: linear-gradient(180deg, rgba(32, 15, 82, 0.95), rgba(10, 4, 34, 0.96));
   box-shadow: 0 3px 0 #000, 0 0 16px -7px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.11);
 }
-.ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+@media (hover: hover) { .ans:hover { box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, 0.16); } }
 .ans .k {
   width: 32px; height: 32px; border-radius: 50%;
   background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85) 0, rgba(255, 255, 255, 0) 42%), var(--c);
@@ -588,11 +589,11 @@ mark { background: var(--yellow); color: #12052e; }
 }
 .qpanel { background: linear-gradient(180deg, rgba(44, 20, 108, 0.82), rgba(12, 5, 38, 0.9)); box-shadow: 0 0 0 2px #000, 0 0 26px -6px var(--violet), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -16px 28px -14px rgba(166, 95, 255, 0.34); }
 .ans { background: linear-gradient(180deg, rgba(34, 16, 88, 0.84), rgba(10, 4, 34, 0.92)); box-shadow: 0 3px 0 #000, 0 0 18px -6px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 22px -12px var(--c); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease, opacity 0.25s ease; }
-.ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); }
+@media (hover: hover) { .ans:hover { box-shadow: 0 3px 0 #000, 0 0 24px -4px var(--c), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 0 26px -10px var(--c); } }
 .hub-card { background-color: rgba(13, 6, 40, 0.78); box-shadow: 0 0 0 2px #000, 0 0 30px -4px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 0 34px -14px var(--c, var(--cyan)); }
 .sheet { background: linear-gradient(180deg, rgba(42, 19, 104, 0.93), rgba(16, 7, 48, 0.96)); box-shadow: 0 0 0 2px #000, 0 0 32px -6px var(--c, var(--lime)), 0 -10px 30px -14px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 34px -16px var(--c, var(--lime)); }
 .chip, .iconbtn { background: linear-gradient(180deg, rgba(36, 17, 90, 0.8), rgba(10, 5, 34, 0.86)); box-shadow: 0 3px 0 #000, inset 0 1px 0 rgba(255, 255, 255, 0.14); transition: transform 0.12s var(--ease-out), border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
-.iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+@media (hover: hover) { .iconbtn:hover { box-shadow: 0 3px 0 #000, 0 0 16px -4px var(--cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2); } }
 .mission { background: linear-gradient(180deg, rgba(66, 48, 12, 0.5), rgba(13, 6, 40, 0.88)); box-shadow: 0 3px 0 #000, 0 0 20px -4px var(--yellow), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: transform 0.12s var(--ease-out), box-shadow 0.18s ease; }
 .mission:active { transform: translateY(2px); }
 .dlg { box-shadow: 0 0 0 3px #000, 0 0 34px -6px var(--c, var(--cyan)), var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 30px -14px var(--c, var(--cyan)); }
@@ -625,7 +626,8 @@ mark { background: var(--yellow); color: #12052e; }
 /* 5. tiles, panels and rows: depth and a lit top edge; rows lift when touched */
 .tile, .panel, .stage, .review li, .client-card { box-shadow: 0 3px 0 #000, var(--drop), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
 .stage { transition: transform 0.14s var(--ease-out), border-color 0.18s ease, box-shadow 0.18s ease; }
-.stage:hover, .stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+.stage:focus-visible { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
+@media (hover: hover) { .stage:hover { transform: translateY(-2px); box-shadow: 0 5px 0 #000, 0 0 22px -6px var(--c, var(--cyan)), inset 0 1px 0 rgba(255, 255, 255, 0.14); } }
 .stage:active { transform: translateY(1px); }
 .tile .v { text-shadow: 0 0 10px var(--c, var(--cyan)); }
 .section-h::after { content: ""; display: block; height: 2px; margin-top: 6px; background: linear-gradient(90deg, var(--yellow), transparent 72%); opacity: 0.6; }
@@ -713,7 +715,8 @@ body:not(.crt-off) .sheet { background: repeating-linear-gradient(0deg, rgba(255
 .setting { padding: 12px; margin-bottom: 8px; }
 .setting .sl { flex: 1 1 9.4em; } /* (inside a panel there is less room: the label gives way first, so a two-way switch stays on its right) */
 .mrow { padding: 9px 11px; }
-.stage:hover, .stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
+.stage:focus-visible { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); }
+@media (hover: hover) { .stage:hover { border-color: var(--c, var(--cyan)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 0 20px -4px var(--c, var(--cyan)), 0 6px 0 rgba(0, 0, 0, 0.55); } }
 
 /* 2. Colour by role. A stat's value is white unless its colour means something (green: a good rate or
       mastery; yellow: a reward; red: a poor rate). Dialogs share one frame; only their title takes the
@@ -1390,7 +1393,8 @@ mark { padding: 0 3px; margin: 0 -1px; }
     radial-gradient(75% 150% at var(--sx) 50%, var(--spill), rgba(0, 0, 0, 0) 72%) padding-box,
     linear-gradient(var(--pf), var(--pf)) padding-box;
 }
-.stage:hover, .stage:focus-visible { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); }
+.stage:focus-visible { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); }
+@media (hover: hover) { .stage:hover { border-color: transparent; box-shadow: none; --pb: var(--c, var(--cyan)); } }
 .stage.focal { border-color: transparent; background: none; box-shadow: none; --pb: var(--c, var(--cyan));
   --pf: color-mix(in srgb, var(--c, var(--cyan)) 19%, rgba(22, 13, 66, 0.94)); --spill: color-mix(in srgb, var(--c, var(--cyan)) 34%, transparent); --sx: 0%;
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--c, var(--cyan)) 78%, transparent)); }
@@ -1461,7 +1465,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .btn.ghost:active { transform: translateY(3px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f, inset 0 0 0 2px #5a48b4; }
 .btn.ghost[data-act="reset"], .btn.ghost[data-act="quit"] { color: #ff9ab0; box-shadow: 0 0 0 2px #05020f, 0 4px 0 0 #3a122c, 0 4px 0 2px #05020f, inset 0 0 0 2px #96406a, inset 0 4px 0 rgba(255, 255, 255, 0.08); }
 .iconbtn { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, inset 0 2px 0 rgba(255, 255, 255, 0.14); }
-.iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); }
+@media (hover: hover) { .iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
 /* the way forward lights the bar it stands on */
 .actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
@@ -1943,3 +1947,15 @@ html.calm .insert-coin { animation: none; }
   .insert-coin::before, .insert-coin::after { display: none; } }
 html.calm .insert-coin { animation: none; position: static; isolation: auto; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
 html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
+
+/* The Mac (the owner, 2026-11-23: mouse hover feedback, keyboard shortcuts). Where a mouse can hover, whatever can be
+   clicked answers it: a switch's choices light their edge, a card or a chip brightens; the pause menu lists the game's
+   keys. (Every :hover above is kept to devices that hover: a phone's tap left it lit.) */
+.dialog .keys { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .seg button:not([aria-pressed="true"]):hover { color: var(--ink); box-shadow: inset 0 0 0 2px var(--c, var(--cyan)); }
+  .hub-card[data-act]:hover, .chip[data-act]:hover, .tile[data-act]:hover, .trophies .tr[data-act]:hover, .mrow[data-act]:hover { filter: brightness(1.18); }
+  [data-act] { cursor: pointer; }
+  .dialog .keys { display: block; margin-top: 4px; font: 8px/1.7 var(--font-display); letter-spacing: 0.06em; color: var(--dim); text-align: center; }
+}
+
