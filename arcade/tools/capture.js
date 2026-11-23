@@ -62,6 +62,10 @@ function inPage() {
   window.clearTimeout = (id) => { timers.delete(id); };
   window.setInterval = (fn, ms, ...a) => { const id = tid++; timers.set(id, { t: now + (+ms || 0), fn, a, every: Math.max(1, +ms || 0) }); return id; };
   window.clearInterval = window.clearTimeout;
+  // (idle callbacks too, on the virtual clock: a game's preloads run in them, and drew from the randomness whenever the
+  // real machine was idle)
+  window.requestIdleCallback = (fn) => window.setTimeout(() => fn({ didTimeout: false, timeRemaining: () => 50 }), 1);
+  window.cancelIdleCallback = (id) => window.clearTimeout(id);
   window.__realRAF = window.requestAnimationFrame.bind(window); // (kept: a picture waits for a real frame, see shot)
   window.requestAnimationFrame = (fn) => { const id = rid++; rafs.push({ id, fn }); return id; };
   window.cancelAnimationFrame = (id) => { rafs = rafs.filter((r) => r.id !== id); };
@@ -115,6 +119,20 @@ function inPage() {
     if (await page.evaluate(() => !!(window.__arcade && window.__arcade.Scenes.cur))) break;
     await page.waitForTimeout(20);
   }
+  // the sound's randomness a stream of its own (its takes and pitches are drawn only once its files have decoded, in
+  // real time: drawn from the game's stream they shifted every question and scene after them, run to run)
+  await page.evaluate(() => {
+    const S = window.__arcade && window.__arcade.Sound;
+    if (!S || S.__ownRandom) return;
+    S.__ownRandom = true;
+    let sd = 777;
+    const own = () => { sd |= 0; sd = (sd + 0x6d2b79f5) | 0; let t = Math.imul(sd ^ (sd >>> 15), 1 | sd); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    for (const k of Object.keys(S)) {
+      const f = S[k];
+      if (typeof f !== "function") continue;
+      S[k] = function () { const r = Math.random; Math.random = own; try { return f.apply(this, arguments); } finally { Math.random = r; } };
+    }
+  }).catch(() => {});
   // The two frames drawn for a picture (the one kept and the one before it). WebKit shows a canvas's frame only once
   // the next one has been handed over (its pictures showed the frame before): there the kept frame is drawn in a real
   // frame of its own and one more after it, so the picture shows the kept frame. Chromium draws both at once, as always.
@@ -130,7 +148,9 @@ function inPage() {
       await page.evaluate(() => { window.__cap.skipDialogs = true; });
       // the game's asset files first (real time: the virtual clock does not move a download), then the game
       await page.evaluate(async ([g, s]) => { const A = window.__arcade; A.Sound.init(); const sel = A.makeSelection(s); const p = A.Assets.need(g, window.__arcade.gameAssets ? window.__arcade.gameAssets(g, sel) : []); if (p) await p; }, [game, stage]);
-      const before = await page.evaluate(([g, s]) => { const was = window.__arcade.Scenes.cur; window.__was = was; window.__arcade.go(g, s); return !!was; }, [game, stage]);
+      // (the randomness started afresh right as the game opens, after its files have come in: a model decoded draws from
+      // it too, in whatever order the files arrived; so every capture of a game sees the same questions and scenery)
+      const before = await page.evaluate(([g, s]) => { const was = window.__arcade.Scenes.cur; window.__was = was; if (window.__reseed) window.__reseed([...(g + ":" + s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 17)); window.__arcade.go(g, s); return !!was; }, [game, stage]);
       // (the game is built a few frames on, behind the briefing and the cover. Those frames are drawn for real: what a
       // scene renders to a texture while it is built, its reflection maps above all, would otherwise come out empty
       // in every capture.)

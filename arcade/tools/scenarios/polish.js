@@ -150,7 +150,7 @@ module.exports = async (cap) => {
   if (part("blaster")) {
     await reseed("blaster");
     await cap.go("blaster", "3");
-    await cap.next(); await cap.ask(1500); await cap.fast(90);
+    await cap.next(); await reseed("blaster-ask"); await cap.ask(1500); await cap.fast(90);
     await still("07-blaster");
     await cap.answer("W"); await cap.fast(150);
     await still("08-blaster-explanation");
@@ -158,13 +158,13 @@ module.exports = async (cap) => {
   if (part("racer")) {
     await reseed("racer");
     await cap.go("racer", "2");
-    await cap.next(); await cap.ask(1500); await cap.fast(90);
+    await cap.next(); await reseed("racer-ask"); await cap.ask(1500); await cap.fast(90);
     await still("09-racer");
   }
   if (part("boss")) {
     await reseed("boss");
     await cap.go("boss", "1");
-    await cap.next(); await cap.ask(1500); await cap.fast(90);
+    await cap.next(); await reseed("boss-ask"); await cap.ask(1500); await cap.fast(90);
     await still("10-boss");
   }
   // ---- Memory Bank: a card, its question side and its answer
