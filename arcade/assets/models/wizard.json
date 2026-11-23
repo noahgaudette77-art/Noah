@@ -1,7 +1,7 @@
 {
  "name": "wizard",
  "triangles": 32000,
- "bytes": 1384844,
+ "bytes": 1330828,
  "tex": 1024,
  "clips": {
   "cast": 5.4,

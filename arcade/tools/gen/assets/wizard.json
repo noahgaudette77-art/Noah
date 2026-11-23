@@ -54,5 +54,8 @@
  "surface": {
   "metalLo": 0.55,
   "metalHi": 0.72
- }
+ },
+ "doubleSided": false,
+ "normalMap": false,
+ "perf": "2026-11-23: one-sided (the mesh is closed: the same picture) and no normal map (no difference seen at the game's size): its own drawing cost halved in both engines (tools/scenarios: an interleaved benchmark, shown against hidden)"
 }
