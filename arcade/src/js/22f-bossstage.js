@@ -379,6 +379,7 @@ class BossStage {
     g.cheer = 1;
     a.kickV += big ? 5.5 : 3.2; // (a shallow recoil: it never drops behind the heads of the front row)
     if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32, k: big ? 0.5 : 0.62 });
+    if (a.hit) a.hit(from, p, big); // (its spine gives to the blow, away from where it came from: 22d)
     this.wideTo = 0; this.punch = big ? 1 : 0.6;
     if (!(wiz && !big && Sound.bank.wiz_impact)) Sound.sfx(big ? "impact_big" : "impact_good", 0, { vol: 0.9 }); // (the wizard's lance strikes with its own sound: one strike, never two)
     Sound.sfx(big ? "boss_stagger" : "boss_hurt", 0, { vol: 0.8, delay: 0.05 });
@@ -455,6 +456,8 @@ class BossStage {
     if (g.unmounted || g.hp <= 0) return;
     this.rageOn = true;
     a.react("rage", { rate: 1.5, in: 0.12, out: 0.4 });
+    if (a.enrage) a.enrage(); // (it rears up and swells as it roars: 22d)
+    VFX.slowMo(0.45, 0.4, 0.12); // (a beat of slow motion as it turns: what is seen, never when a rule fires; none with reduced effects)
     Sound.sfx(this.row.roar || "roar_" + this.row.key, 0, { vol: 1, rate: 0.9 });
     this.kit.wave(h, null, 0xff2a40, { dur: 0.6, s0: 0.6, s1: 7, w: 0.04 });
     this.kit.sparks(h, 0xff3a5a, { n: quiet ? 8 : 24, speed: 7, life: 0.9, gravity: 1.5 });
@@ -869,11 +872,15 @@ class BossStage {
     if (this.dying && g.state !== "over" && (this.dying.t -= d) <= 0) { this.dying.t = rand(0.6, 0.85); this.chain(this.dying.n++ % 5, false); }
     this.flick = this.dying ? 0.45 + 0.55 * Math.abs(Math.sin(VFX.t * 9) * Math.sin(VFX.t * 2.3)) : 1;
     // ---- the boss itself (raging, it shakes)
-    const shk = rage && !quiet && this.phase === "fight" ? 0.055 * (g.rageK || 0) : 0;
-    a.root.position.set(rand(-1, 1) * shk, rand(-1, 1) * shk * 0.4, 0);
-    this.windEase = (this.windEase || 0) + ((g.state === "ask" ? this.windK : this.strike && !this.strike.landed ? 1 : 0) - (this.windEase || 0)) * Math.min(1, d * 8);
+    // (a shudder, smooth at any frame rate: never a new random place each frame)
+    const shk = rage && !quiet && this.phase === "fight" ? 0.055 * (g.rageK || 0) : 0, vt = VFX.t * 13;
+    a.root.position.set(Motion.noise(vt, 61) * shk, Motion.noise(vt, 62) * shk * 0.4, 0);
+    const weTo = g.state === "ask" ? this.windK : this.strike && !this.strike.landed ? 1 : 0;
+    this.windEase = Motion.dampTo(this.windEase || 0, this.weTo === undefined ? weTo : this.weTo, weTo, 8, d); this.weTo = weTo;
     a.lean = this.dying ? 1.6 : this.windEase * 0.8;
-    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick, charge: this.windEase });
+    // (its gaze: on the wizard's head, where there is one; else on the lens)
+    const look = this.wiz && this.wiz.root.visible ? this.wizCall((w) => (w.headAt ? w.headAt(this._look || (this._look = new THREE.Vector3())) : null)) : null;
+    a.update(d, { rage, glow: this.windEase * 0.7 + (rage ? 0.25 : 0), flick: this.flick, charge: this.windEase, look });
     // what it gathers glows where the attack will leave it
     const ok = this.windEase > 0.03 && a.root.visible && !this.blown;
     this.orb.visible = ok;
@@ -883,7 +890,7 @@ class BossStage {
     if (L && this.rim0) { L.rimA.intensity = this.rim0[0] * (0.25 + 0.75 * a.power); L.rimB.intensity = this.rim0[1] * (0.25 + 0.75 * a.power); }
     this.kicker.intensity = 1.5 * (0.4 + 0.6 * a.power);
     // raging, its rims burn red and steam leaks from its back and shoulders
-    this.rageGlow = (this.rageGlow || 0) + ((rage ? 1 : 0) - (this.rageGlow || 0)) * Math.min(1, d * 2.5);
+    this.rageGlow = Motion.damp(this.rageGlow || 0, rage ? 1 : 0, 2.5, d);
     if (this.rageGlow > 0.002 || this.rageWas) {
       const R = BOSS_ATK.RAGE, rg = this.rageGlow;
       if (L && this.rimBase[0]) { L.rimA.color.copy(this.rimBase[0]).lerp(R, rg * 0.85); L.rimB.color.copy(this.rimBase[1]).lerp(R, rg * 0.85); }
@@ -947,10 +954,10 @@ class BossStage {
     const g = this.g, S = this.S, row = this.row, t = Math.tan(THREE.MathUtils.degToRad(g.camera.fov / 2)), bh = (g.band ? g.band.h : GFX.h) / GFX.h, quiet = REDUCED_MOTION || GFX.calm;
     if (g.state === "ask" && !this.strike) this.wideTo = this.phase === "enter" ? 1 : 0.9 * smoothstep(0.5, 0.82, f);
     else if (g.state === "intro") this.wideTo = this.phase === "fight" ? 0.3 : 1;
-    this.wide += (this.wideTo - this.wide) * Math.min(1, d * (this.wideTo > this.wide ? 3.4 : 2.4));
+    this.wide = Motion.damp(this.wide, this.wideTo, this.wideTo > this.wide ? 3.4 : 2.4, d);
     this.punch = Math.max(0, this.punch - d * 4.5);
     const k = this.wide * this.wide * (3 - 2 * this.wide), wd = row.wide || this.a.size[0] + 0.14;
-    this.overK = (this.overK || 0) + ((g.state === "over" ? 1 : 0) - (this.overK || 0)) * Math.min(1, d * 3);
+    this.overK = Motion.damp(this.overK || 0, g.state === "over" ? 1 : 0, 3, d);
     // close: as near as holds `show` of its height in the band, and its width across it. (When the fight is over the
     // question and the answers have gone and the whole screen is the picture: the band counts for more.)
     const near = Math.max((S * row.show) / 0.94 / (2 * t * bh * (1 + 0.75 * this.overK)), (S * wd) / 0.94 / (2 * t * (GFX.w / GFX.h)));
@@ -966,21 +973,21 @@ class BossStage {
       wideY = clamp(wideY, top - h, bot + h);
     }
     const to = lerp(near, wideD, k) * (1 - 0.035 * Math.sin(Math.min(1, this.punch) * Math.PI));
-    this.dist += (to - this.dist) * Math.min(1, d * 5);
+    this.dist = Motion.damp(this.dist, to, 5, d);
     const Hb = 2 * this.dist * t * bh;
     // (close: its head under the top of the band; while it talks, under its words: as much higher as they reach down the
     // band, less the sky there already is over its head)
     const lookBase = Math.max(S * 1.05 - Hb / 2, Hb * 0.36), over = lookBase + Hb / 2 - S * 1.01;
     this.bubbleRoom((lookBase + Hb / 2 - this.a.at("head", this._u).y) / Hb);
     this.roomT = Math.max(0, (this.roomT || 0) - d);
-    this.room = (this.room || 0) + ((this.roomT > 0 ? 1 : 0) - (this.room || 0)) * Math.min(1, d * 6);
+    this.room = Motion.damp(this.room || 0, this.roomT > 0 ? 1 : 0, 6, d);
     const lookNear = lookBase + this.room * Math.max(0, (this.roomK || 0.15) * Hb - over) * (1 - this.overK), look = lerp(lookNear, wideY, k), cy = lerp(1.35 + 0.7 * Math.min(0, low), 3.4 + 0.8 * Math.max(0, low), k);
     const sway = quiet ? 0.2 : 1;
     g.camZ = this.dist;
     g.camBase.set((Math.sin(g.t * 0.23) * 0.6 + Pointer.x * 0.6) * sway, cy + (Math.sin(g.t * 0.37) * 0.1 - Pointer.y * 0.2) * sway, this.dist);
     // (the fight is over: the boss stands lower in the screen, its head under its last words, the storm above it and the floor below)
     const lk = lerp(look, S * (1.03 - 0.1 * Math.max(0, low)) - (Hb / 2 - (75 / GFX.h) * 2 * this.dist * t), this.overK);
-    this.lookY = (this.lookY === undefined ? lk : this.lookY + (lk - this.lookY) * Math.min(1, d * 5));
+    this.lookY = this.lookY === undefined ? lk : Motion.damp(this.lookY, lk, 5, d);
     g.lookAt.set(0, this.lookY, 0);
     const post = g.scene.userData.post;
     if (post && post.dof) post.dof.focus = this.dist;
