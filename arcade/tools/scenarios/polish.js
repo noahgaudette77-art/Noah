@@ -11,7 +11,35 @@ const fs = require("fs"), path = require("path"), { execFileSync } = require("ch
 module.exports = async (cap) => {
   const part = (n) => !process.env.PART || process.env.PART.split(",").includes(n);
   const jpg = (name, q = 86) => { const p = path.join(cap.out, name + ".png"), j = path.join(cap.out, name + ".jpg"); execFileSync("convert", [p, "-quality", String(q), j]); fs.unlinkSync(p); return j; };
-  const still = async (name, o) => { await cap.shot(name, o); const f = jpg(name); console.log("  " + path.basename(f)); return f; };
+  // (the master overhaul, 2026-11-23: after each still, any two pieces of the page's visible text whose boxes overlap by
+  // more than a third of the smaller, written to overlaps.json beside the stills: tools/harness.js reads it)
+  const overlaps = {};
+  const textOverlaps = () => cap.eval(() => {
+    const shown = (el) => { for (let p = el; p && p !== document.documentElement; p = p.parentElement) { const c = getComputedStyle(p); if (c.display === "none" || c.visibility === "hidden" || +c.opacity < 0.05) return false; } return true; };
+    const items = [], W = innerWidth, H = innerHeight, walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    // (text under something else, a sheet or a bar drawn over it, is not seen: what is on top at a line's middle is
+    // asked of the page with every element counted, pointer-events or not)
+    const all = document.createElement("style");
+    all.textContent = "* { pointer-events: auto !important; }";
+    document.head.appendChild(all);
+    const seen = (el, r) => { const top = document.elementFromPoint(Math.min(W - 1, Math.max(0, r.left + r.width / 2)), Math.min(H - 1, Math.max(0, r.top + r.height / 2))); return !top || top === el || el.contains(top) || top.contains(el); };
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const t = n.textContent.trim(), el = n.parentElement;
+      if (!t || !el || !shown(el)) continue;
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      for (const r of rg.getClientRects()) if (r.width > 2 && r.height > 2 && r.right > 0 && r.bottom > 0 && r.left < W && r.top < H && seen(el, r)) items.push({ el, r, t: t.slice(0, 28) });
+    }
+    all.remove();
+    const out = [];
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+      const a = items[i], b = items[j];
+      if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el) || a.t === b.t) continue; // (the same words over themselves: a glow drawn as a copy)
+      const x = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left), y = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+      if (x > 0 && y > 0 && x * y > Math.min(a.r.width * a.r.height, b.r.width * b.r.height) / 3) out.push(a.t + " / " + b.t);
+    }
+    return [...new Set(out)].slice(0, 24);
+  });
+  const still = async (name, o) => { await cap.shot(name, o); const f = jpg(name); overlaps[name] = await textOverlaps().catch(() => ["(the check failed)"]); console.log("  " + path.basename(f) + (overlaps[name].length ? "  text overlaps: " + overlaps[name].length : "")); fs.writeFileSync(path.join(cap.out, "overlaps.json"), JSON.stringify(overlaps, null, 1)); return f; };
   const waitReal = async (js, ms = 60000) => { for (let i = 0; i < ms / 100; i++) { if (await cap.eval(js)) return true; await cap.page.waitForTimeout(100); } return false; };
   // the page's own animations (CSS and scripted) stepped with the frames, as the menus' scenario steps them: they run
   // on the real clock and a capture steps a virtual one
