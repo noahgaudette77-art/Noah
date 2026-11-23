@@ -1,0 +1,424 @@
+// Boss Rush's wizard (the owner, 2026-11-23): the player's duellist, an original spellcaster in an indigo coat and a
+// violet cape (assets/models/wizard.glb, soft-skinned, its eight clips from Tripo's motion presets) with its own wand
+// (wand.glb) in its right hand. It stands in the foreground, low on the left of the picture, its back three-quarters
+// to the lens and facing the boss, and duels it: everything it does is shown for what the rules have already decided
+// (22-boss.js), on the stage's show clock (22f-bossstage.js tells it what happened). Nothing here is read by a rule.
+//
+//   the entrance   it drops in, in a burst of cyan light, as the boss does, and rises from the landing
+//   a question     it stands ready; the wand's tip gathers light while the question is read
+//   an answer      it casts: ARC BOLTS, cyan, leave the wand's tip (a wrong answer's sputter and die on the armour)
+//   a right one    NOVA LANCE, magenta, from the wand to the boss on the rule's frame; a heavy blow (a big hit, an
+//                  enraging or a finishing one) is a big cast, with a rune circle at the wand
+//   a blow lands   AEGIS WARD, a wall of green hexagons across the foot of the picture, flares where it strikes,
+//                  ripples out from the blow and breaks up (the heart still goes: the rule took it); it reels
+//   the boss falls STARFALL: a golden sigil turns over the boss and a column of light comes down through it; at
+//                  the last blast it raises its wand
+//   out of hearts  it sinks, its wand's light dying and its neon dimming
+// The cape and the coat's skirts move in the vertex shader (a flutter mask baked into the model: tools/gen/process-
+// skinned.mjs), more as it casts or is struck. A cold rim of light holds its edge against every arena's dark. No light
+// of its own (the stage's light budget is spent): its glow is drawn, and the kit's one blast light serves its blows.
+// Reduced effects (or reduced motion): no flutter, no floating runes, fewer sparks, no turning sigils.
+const WIZ = {
+  BOLT: 0x35efff, NOVA: 0xff3ad4, WARD: 0x4dffa6, STAR: 0xffe14f, MISS: 0x7a5aa8, // the spells' colours, from the arcade's palette (a sputter: a dull violet)
+  // where it stands in the picture: x across (-1 left, 1 right); cut: how high up it (metres from its feet) the answers'
+  // top edge crosses it while a question is up (it is seen from the hips up: the answers hide the rest; before the first
+  // question and after the last, when the whole screen is the picture, it stands on the arena's floor, a little further
+  // off: whole, so it is seen nearly head to foot); metres from the lens; and how far it is turned from facing the boss
+  // (negative: its right side, the wand's, toward the lens)
+  SPOT: { x: -0.6, cut: 0.95, dist: 4.8, distWhole: 6.5, turn: -0.45 },
+  RIM: [0.62, 0.72, 1.0], RIM_K: 1.15, // its rim's colour (a cold lilac-blue: it reads against a red arena and a blue one) and strength
+  GLOW: 1.9, // its neon's strength (out of hearts, it dims)
+};
+// a sound of the wizard's set; where that set has not loaded, `alt` (one of the game's own) or nothing
+function wizSfx(name, alt, pan, o) { const n = Sound.bank && Sound.bank[name] ? name : alt; if (n) Sound.sfx(n, pan, o); }
+// v eased toward `to` (k: how fast); at once the first time, or with no time step
+const wizEase = (v, to, d, k) => (v === undefined || !d ? to : v + (to - v) * Math.min(1, d * k));
+function wizTex(name) {
+  const img = Assets.ui(name);
+  if (!img) return null;
+  const t = new THREE.Texture(img);
+  t.needsUpdate = true;
+  return t;
+}
+// a camera-facing picture of one of the spell textures, drawn additively in a colour (a soft glow where there is none)
+function wizSprite(tex, color, size) {
+  const s = tex ? new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })) : glowSprite(color, 1, 1);
+  s.scale.setScalar(size); s.visible = false; s.renderOrder = 9;
+  return s;
+}
+// a flat picture lying in a plane (the finisher's sigil over the boss), additive, in a colour
+function wizDisc(tex, color) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+    uniforms: { uTex: { value: tex }, uColor: { value: new THREE.Color(color) }, uK: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform sampler2D uTex; uniform vec3 uColor; uniform float uK; varying vec2 vUv;
+      void main(){ float a = ${tex ? "texture2D(uTex, vUv).r" : "pow(max(0.0, 1.0 - length(vUv - 0.5) * 2.0), 2.0)"}; gl_FragColor = vec4(uColor * a * uK, 1.0); }`,
+  }));
+  m.visible = false; m.renderOrder = 8; m.frustumCulled = false;
+  return m;
+}
+// the ward: a round wall of hexagons facing the lens that flares, ripples out from where the blow struck (uHit) and
+// breaks up a cell at a time, nearest the blow first
+function wizWard(tex) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+    uniforms: { uTex: { value: tex }, uColor: { value: new THREE.Color(WIZ.WARD).multiplyScalar(1.5) }, uK: { value: 0 }, uRip: { value: 0 }, uBreak: { value: 0 }, uHit: { value: new THREE.Vector2(0.5, 0.5) } },
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: `uniform sampler2D uTex; uniform vec3 uColor; uniform float uK; uniform float uRip; uniform float uBreak; uniform vec2 uHit; varying vec2 vUv;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5); }
+      void main(){
+        vec2 d = vUv - uHit; float r = length(d), front = uRip * 1.1;
+        vec2 uv = vUv + d / max(r, 1e-3) * sin(r * 46.0 - uRip * 30.0) * 0.012 * (1.0 - uRip); // (the wall shivers out from the blow)
+        float a = ${tex ? "texture2D(uTex, uv).r" : "smoothstep(0.5, 0.45, length(vUv - 0.5)) * (0.3 + 0.7 * step(0.9, fract(r * 14.0)))"};
+        float ring = smoothstep(0.04, 0.0, abs(r - front)) * (1.0 - uRip) * step(length(vUv - 0.5), 0.5); // its wave
+        float spot = smoothstep(0.14, 0.0, r) * (1.0 - uRip); // the blow itself
+        float cells = step(uBreak * 1.5 - r * 0.9, h(floor(vUv * 11.0) + 0.5)); // (breaks up a cell at a time, nearest the blow first)
+        gl_FragColor = vec4(uColor * (a * (0.5 + 0.8 * ring) * cells + ring * 0.55 + spot * 1.2) * uK, 1.0);
+      }`,
+  }));
+  m.visible = false; m.renderOrder = 10; m.frustumCulled = false;
+  return m;
+}
+class Wizard {
+  constructor(stage, model, wand) {
+    const g = (this.g = stage.g), s = g.scene;
+    this.st = stage; this.kit = stage.kit;
+    this.model = model;
+    this.root = new THREE.Group(); this.root.name = "wizard";
+    this.root.add(model.scene);
+    s.add(this.root);
+    this.root.visible = false;
+    this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._m = new THREE.Matrix4();
+    // ---- its look: the arena's reflections, its neon lit, a cold rim round its edge, the cape's flutter
+    this.mats = tuneModel(model, { env: 1.35, glow: WIZ.GLOW });
+    this.flut = { t: { value: 0 }, k: { value: 0.3 }, back: { value: new THREE.Vector3(0, 0, -1) }, side: { value: new THREE.Vector3(1, 0, 0) }, up: { value: new THREE.Vector3(0, 1, 0) }, amp: { value: 0.05 } };
+    this.rim = { col: { value: new THREE.Color().fromArray(WIZ.RIM) }, k: { value: WIZ.RIM_K } };
+    model.scene.updateMatrixWorld(true);
+    model.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false; // (a skinned mesh's bounds are its rest pose's)
+      if (!o.isSkinnedMesh) return;
+      const geo = o.geometry, fa = geo.getAttribute("_flutter");
+      if (fa) { geo.setAttribute("aFlutter", fa); geo.deleteAttribute("_flutter"); }
+      // its own axes as the wizard's: the mesh hangs under the model's frame node (turned, scaled)
+      const inv = this._m.copy(o.matrixWorld).invert(), sc = o.getWorldScale(this._v).x;
+      this.flut.back.value.set(0, 0, -1).transformDirection(inv); this.flut.side.value.set(1, 0, 0).transformDirection(inv); this.flut.up.value.set(0, 1, 0).transformDirection(inv);
+      this.flut.amp.value = 1 / Math.max(1e-4, sc); // (the mesh's own units in a metre)
+      this.mesh = o;
+    });
+    const F = this.flut, R = this.rim, has = !!(this.mesh && this.mesh.geometry.getAttribute("aFlutter"));
+    for (const m of this.mats) {
+      if (!m.isMeshStandardMaterial) continue;
+      m.onBeforeCompile = (sh) => {
+        sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
+        sh.uniforms.uRimCol = R.col; sh.uniforms.uRimK = R.k;
+        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute float aFlutter; uniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp;")
+          .replace("#include <skinning_vertex>", `#include <skinning_vertex>
+            { // the cape and the skirts move in the wind of the spells: a wave running down them, stronger at the hem
+              float w = aFlutter * uFlutK, hgt = dot(position, uFlutUp) / uFlutAmp; // (metres)
+              float a = sin(uFlutT * 3.1 - hgt * 4.2 + dot(position, uFlutSide) / uFlutAmp * 2.0), b = sin(uFlutT * 2.3 - hgt * 3.1 + 1.3);
+              transformed += (uFlutBack * (0.055 + 0.045 * a) + uFlutSide * 0.035 * b + uFlutUp * 0.012 * a) * (w * uFlutAmp); // (metres, in the mesh's units)
+            }`);
+        sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK;")
+          .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
+              float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
+              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(fr, 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
+            }
+            #include <tonemapping_fragment>`);
+      };
+      m.customProgramCacheKey = () => "wizard-1" + (has ? "f" : "");
+      m.needsUpdate = true;
+    }
+    // ---- its clips, blended by hand: idle always under; one clip at a time played through over it. (The entrance is a
+    // jump down from a ledge: as made, it lands a metre under where the idle stands. Its hips' path is moved so that it
+    // lands where it stands, and so drops in from above.)
+    const hipPath = (name) => { const c = model.animations.find((x) => x.name === name); return c && c.tracks.find((t) => t.name === ((model.info.joints || {}).hips || "Hip") + ".position"); };
+    const te = hipPath("enter"), ti = hipPath("idle");
+    if (te && ti) { const v = te.values, n = v.length; for (let k = 0; k < 3; k++) { const dv = ti.values[k] - v[n - 3 + k]; for (let i = k; i < n; i += 3) v[i] += dv; } }
+    this.mixer = new THREE.AnimationMixer(model.scene);
+    this.act = {};
+    for (const c of model.animations) {
+      const a = this.mixer.clipAction(c);
+      if (c.name !== "idle") { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } // (played through once, and held)
+      a.play(); a.setEffectiveWeight(0); this.act[c.name] = a;
+    }
+    if (this.act.idle) { this.act.idle.setEffectiveWeight(1); this.act.idle.time = rand(0, 4); }
+    this.one = null; // the clip over the idle: { a, to, w, in, outDur, hold, out, name }
+    this.going = []; // clips cut short, fading out under it: { a, w, dur }
+    // ---- the wand in its right hand, along the hand's line, its grip in the palm
+    const P = model.parts, hand = P[(model.info.joints || {}).handR || "R_Hand"], fore = P.R_Forearm;
+    this.hand = hand || model.scene;
+    this.tipNode = null;
+    if (wand && hand) {
+      const hp = hand.getWorldPosition(new THREE.Vector3()), fp = (fore || hand.parent).getWorldPosition(new THREE.Vector3());
+      const inv = new THREE.Matrix4().copy(hand.matrixWorld).invert(), dir = hp.sub(fp).normalize().transformDirection(inv), hs = hand.getWorldScale(new THREE.Vector3()).x;
+      const holder = new THREE.Group();
+      holder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+      holder.position.copy(dir).multiplyScalar(0.075 / hs); // (into the palm)
+      holder.scale.setScalar(1 / hs); // (the wand's own metres)
+      const A = (wand.info && wand.info.anchors) || {}, grip = A.grip || [0, 0, -0.14];
+      wand.scene.position.set(-grip[0], -grip[1], -grip[2]); // (its grip at the holder)
+      wand.scene.rotation.z = 0.3;
+      holder.add(wand.scene);
+      hand.add(holder);
+      this.wandMats = tuneModel(wand, { env: 1.6, glow: 2.2 });
+      wand.scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+      this.tipNode = new THREE.Object3D(); this.tipNode.position.fromArray(A.tip || [0, 0, 0.21]); wand.scene.add(this.tipNode);
+    }
+    // ---- its light, drawn: the tip's glow and star, runes round the hand, the rune circle of a cast, the ward, the sigil
+    const tex = (this.tex = { runes: wizTex("fx-runes"), ward: wizTex("fx-ward"), star: wizTex("fx-star") });
+    this.glow = glowSprite(neon(WIZ.BOLT, 2.2), 0.3, 1); this.glow.renderOrder = 9; this.glow.visible = false;
+    this.star = wizSprite(tex.star, neon(WIZ.BOLT, 1.6), 0.5);
+    this.circles = [0, 1].map(() => wizSprite(tex.runes, neon(WIZ.BOLT, 1.4), 0.6));
+    this.runes = [0, 1, 2].map((i) => ({ sp: wizSprite(tex.runes, neon(WIZ.BOLT, 0.9), 0.14), ph: (i / 3) * Math.PI * 2 }));
+    this.ward = wizWard(tex.ward);
+    this.sigil = wizDisc(tex.runes, neon(WIZ.STAR, 1.6));
+    this.flare = wizSprite(tex.star, neon(WIZ.STAR, 1.6), 3);
+    for (const o of [this.glow, this.star, ...this.circles, ...this.runes.map((r) => r.sp), this.ward, this.sigil, this.flare]) s.add(o);
+    this.root.traverse((o) => o.layers.set(1)); // (drawn once, in the picture: never in the floor's mirror, where it would be off the picture and cost a second skinned draw)
+    for (const o of [this.glow, this.star, ...this.circles, ...this.runes.map((r) => r.sp), this.ward, this.flare]) o.layers.set(1);
+    this.fx = []; // what is fading: { o, t, dur, fn(o, k) }
+    this.charge = 0; this.flare0 = 0; this.whip = 0; this.sink = 0; this.lost = false; this.won = false;
+    this.spot = Object.assign({}, WIZ.SPOT); // (its own copy: a test can move it)
+    this.place();
+  }
+  get quiet() { return REDUCED_MOTION || GFX.calm; }
+  // where its wand's tip is, in the world
+  tip(out) { const o = out || new THREE.Vector3(); if (this.tipNode) this.tipNode.getWorldPosition(o); else this.hand.getWorldPosition(o); return o; }
+  // a clip played through over the idle: from `from` to `to` (seconds into it), at `rate`; `hold` keeps its end
+  play(name, o = {}) {
+    const a = this.act[name];
+    if (!a) return;
+    const old = this.one, clip = a.getClip();
+    if (old && old.a !== a && old.w > 0) { this.going = this.going.filter((g) => g.a !== old.a); this.going.push({ a: old.a, w: old.w, dur: 0.18 }); }
+    this.going = this.going.filter((g) => { if (g.a === a) { a.setEffectiveWeight(0); return false; } return true; });
+    a.enabled = true; a.paused = false; a.time = clamp(o.from || 0, 0, clip.duration); a.setEffectiveTimeScale(o.rate || 1);
+    this.one = { a, to: Math.min(o.to || clip.duration, clip.duration), w: old && old.a === a ? old.w : 0, in: o.in || 0.12, outDur: o.out || 0.3, hold: !!o.hold, out: 0, name };
+  }
+  // ---- what happens (the stage calls these) ----------------------------------------------------------------------
+  // the fight starts: it steps out of a column of cyan light as the boss drops in
+  enter() {
+    const g = this.g;
+    g.show.wait(0.12, () => {
+      if (g.unmounted) return;
+      this.root.visible = true;
+      this.play("enter", { from: 1.55, rate: 1.25, out: 0.45 });
+      this.whip = 1; this.flare0 = 1;
+      const p = this.root.position, kit = this.kit, quiet = this.quiet;
+      for (let i = 0; i < (quiet ? 2 : 5); i++) {
+        const q = this._v.set(p.x + rand(-0.3, 0.3), p.y + 0.6 + i * 0.32, p.z + rand(-0.2, 0.2));
+        kit.sparks(q, WIZ.BOLT, { n: quiet ? 3 : 7, speed: 2.2, dir: this._w.set(0, 1, 0), spread: 1.4, life: 0.5, len: 0.18, w: 0.03, k: 1.7 });
+      }
+      kit.flash(this._v.set(p.x, p.y + 1.4, p.z), WIZ.BOLT, 0.3, 1.6, 0.25, 0.8, 1.6);
+      this.ring(this._v.set(p.x, p.y + 1.25, p.z), WIZ.BOLT, 2.6, 0.55);
+      wizSfx("wiz_appear", "whoosh", -0.5, { vol: 0.9 });
+    });
+  }
+  // a question is up: the wand's tip gathers light while it is read (update), with a low hum as it starts
+  ready() {
+    this.charge = 0;
+    if (this.root.visible && !this.lost) wizSfx("wiz_charge", null, -0.4, { vol: 0.32, delay: 0.25 });
+  }
+  // the player answers: right or wrong, it casts (the bolts are the stage's volley, from this wand: bolt)
+  cast(right) {
+    const k = this.key("cast");
+    this.play("cast", { from: k.release - 0.1, to: k.release + 0.55, rate: 1.6, in: 0.06, out: 0.35 }); // (its arm is out as the first bolt leaves: the stage holds the volley back 0.06 s)
+    this.whip = Math.max(this.whip, 0.7); this.charge = 0;
+    wizSfx("wiz_whoosh", null, -0.4, { vol: 0.75 });
+    const p = this.tip(this._u);
+    if (right) { this.flare0 = 1; this.ring(p, WIZ.BOLT, 0.55, 0.28); }
+    else { // a sputter: the spell will not take
+      this.flare0 = 0.35;
+      this.kit.sparks(p, WIZ.MISS, { n: this.quiet ? 3 : 7, speed: 2.4, life: 0.35, len: 0.12, w: 0.022, gravity: 6, k: 1.3, stretch: 0.02 });
+      this.kit.smoke(p, { size: 0.32, life: 0.6, rise: 0.4, a: 0.4, dark: 0.1, cold: true });
+      wizSfx("wiz_fizzle", null, -0.4, { vol: 0.8, delay: 0.06 });
+    }
+  }
+  // an ARC BOLT, the stage's volley (one of three for a right answer; a wrong one's single bolt, dim, will fizzle)
+  bolt(from, to, sh, n, onHit) {
+    const kit = this.kit, right = sh.right, dir = this._w.subVectors(to, from).normalize();
+    kit.muzzle(from, dir, sh.col, right ? 0.22 : 0.13);
+    kit.bolt(from, to, sh.col, { dur: right ? 0.08 : 0.1, width: right ? 0.17 : 0.12, len: 3.4, k: right ? 2.8 : 1.5, onHit }); // (the last of three has landed before the lance)
+    this.flare0 = Math.max(this.flare0, right ? 0.8 : 0.25);
+    wizSfx("wiz_bolt", "laser_fire", -0.4, { vol: right ? 0.8 : 0.55, rate: (right ? 1 : 0.85) + n * 0.06 });
+  }
+  // the blow lands (the rule's frame): the NOVA LANCE leaves the wand (the stage draws it); a heavy blow is a big cast
+  nova(big, at) {
+    const p = this.tip(this._u), kit = this.kit, name = big ? "bigcast" : "cast", k = this.key(name);
+    this.play(name, { from: k.release - (big ? 0.12 : 0.08), to: k.release + (big ? 0.75 : 0.5), rate: big ? 1.3 : 1.5, out: 0.4 });
+    this.whip = 1; this.flare0 = 1;
+    this.ring(p, WIZ.NOVA, big ? 1.5 : 0.9, big ? 0.5 : 0.32);
+    kit.flash(p, WIZ.NOVA, 0.12, big ? 0.9 : 0.6, 0.12, 0.9, 1.8); // (drawn only: the kit's one blast light is the boss's, where the lance lands)
+    wizSfx("wiz_nova", null, -0.3, { vol: big ? 0.95 : 0.75 });
+    wizSfx("wiz_impact", null, 0, { vol: big ? 0.8 : 0.6, delay: 0.05 });
+    if (big && at && !this.quiet) for (let i = 1; i < 3; i++) this.g.show.wait(0.05 * i, () => { if (!this.g.unmounted) kit.sparks(at, i % 2 ? 0xffffff : WIZ.NOVA, { n: 8, speed: 9, life: 0.4, len: 0.6, w: 0.05, gravity: 4 }); });
+  }
+  // the boss's blow lands (the heart the rule took is seen to go): AEGIS WARD, a wall of hexagons across the foot of
+  // the picture where it strikes, rippling out from the blow and breaking up; it reels
+  shield(hard, left, at) {
+    const g = this.g, st = this.st, w = this.ward, u = w.material.uniforms, quiet = this.quiet, D = 4.2, tb = st.tb(), t = tb / ((g.band ? g.band.h : GFX.h) / GFX.h);
+    const halfW = D * t * (GFX.w / GFX.h), halfB = D * tb, R = Math.min(1.15 * halfW, 1.5 * halfB), cy = -0.45, hitY = -0.9;
+    st.lens(0, cy, D, w.position);
+    w.quaternion.copy(g.camera.quaternion); w.scale.setScalar(2 * R);
+    u.uHit.value.set(0.5, 0.5 + ((hitY - cy) * halfB) / (2 * R));
+    w.visible = true;
+    this.fade(w, 0.6, (o, k) => { u.uK.value = (k < 0.1 ? k / 0.1 : 1 - smoothstep(0.1, 1, k)) * (quiet ? 0.6 : 0.85); u.uRip.value = k; u.uBreak.value = smoothstep(0.25, 1, k) * (left <= 1 ? 1.15 : 1); });
+    const hp = st.lens(0, hitY, D, this._v);
+    this.kit.sparks(hp, WIZ.WARD, { n: quiet ? 5 : 14, speed: 3.2, dir: this._w.set(0, 1, 0.3).normalize(), spread: 1.4, life: 0.4, len: 0.16, w: 0.022, gravity: 3, k: 1.6, stretch: 0.02 });
+    this.play(left <= 1 ? "stagger" : "hurt", { from: 0.12, rate: 1.4, out: 0.35 });
+    this.whip = 1; this.flare0 = Math.max(this.flare0, 0.5);
+    wizSfx("wiz_ward", null, -0.2, { vol: 0.8 });
+    void hard; void at;
+  }
+  // the boss is finished: STARFALL, a golden sigil over it and a column of light down through it as it falls
+  finisher() {
+    const g = this.g, st = this.st, a = st.a, S = st.S, kit = this.kit, quiet = this.quiet;
+    const k = this.key("cast");
+    this.play("cast", { from: k.release - 0.3, to: k.release + 0.02, rate: 0.9, in: 0.15, hold: true }); // (its wand held out at the boss as the light comes down; at the last blast it raises it: win)
+    this.whip = 1; this.flare0 = 1;
+    wizSfx("wiz_charge", null, -0.4, { vol: 0.6 });
+    wizSfx("wiz_finisher", null, 0, { vol: 1, delay: 0.2 });
+    const hips = a.at("hips", new THREE.Vector3()), top = new THREE.Vector3(hips.x, S * 1.55, hips.z + 0.3 * S);
+    const sg = this.sigil;
+    sg.position.copy(top); sg.rotation.set(-Math.PI / 2, 0, 0); sg.scale.setScalar(S * 0.7); sg.visible = true;
+    this.fade(sg, 1.3, (o, q) => { o.material.uniforms.uK.value = q < 0.25 ? q / 0.25 : 1 - (q - 0.25) / 0.75; if (!quiet) o.rotation.z = q * 2.2; o.scale.setScalar(S * (0.7 + 0.3 * Math.min(1, q * 3))); });
+    g.show.wait(0.28, () => {
+      if (g.unmounted) return;
+      kit.beam(top, hips, WIZ.STAR, { dur: 0.42, width: 0.9, grow: 0.06, k: 1.7 }); // the column of light
+      kit.wave(hips, null, WIZ.STAR, { dur: 0.55, s0: 0.8, s1: 9, w: 0.05, k: 0.9 });
+      kit.sparks(hips, 0xffffff, { n: quiet ? 8 : 20, speed: 14, life: 0.5, len: 1.2, w: 0.05, gravity: 5 });
+      const f = this.flare;
+      f.position.copy(hips); f.visible = true;
+      this.fade(f, 0.5, (o, q) => { o.material.opacity = 1 - q; o.scale.setScalar(S * (0.5 + 0.6 * q)); o.material.rotation = q * 0.8; });
+      GFX.pulse(1.6, 0); // (a lift of light, capped: the death's own blasts follow)
+      g.shake(0.12);
+    });
+  }
+  // the boss is down (its last blast): it raises its wand
+  win() {
+    if (this.won || this.lost) return;
+    this.won = true;
+    this.play("win", { from: 0.3, rate: 1.1, hold: true });
+    this.flare0 = 1;
+    this.ring(this.tip(this._u), WIZ.STAR, 1.1, 0.7);
+  }
+  // out of hearts: it sinks, its wand's light dying
+  lose() {
+    this.lost = true;
+    this.play("defeat", { from: 0.4, rate: 1.2, hold: true });
+    wizSfx("wiz_defeat", null, -0.4, { vol: 0.85, delay: 0.2 });
+  }
+  // ---- helpers ---------------------------------------------------------------------------------------------------
+  // a rune circle at a point, in a colour, turning as it grows and fades
+  ring(p, color, size, dur) {
+    const c = this.circles[(this.ci = ((this.ci || 0) + 1) % this.circles.length)], quiet = this.quiet;
+    c.position.copy(p); c.material.color.copy(neon(color, 1.5)); c.visible = true;
+    this.fade(c, dur, (o, k) => { o.material.opacity = (1 - k) * (k < 0.15 ? k / 0.15 : 1); o.scale.setScalar(size * (0.45 + 0.75 * Math.sqrt(k))); if (!quiet) o.material.rotation = k * 1.6; });
+  }
+  fade(o, dur, fn) {
+    const old = this.fx.find((f) => f.o === o);
+    if (old) { old.t = 0; old.dur = dur; old.fn = fn; return; }
+    this.fx.push({ o, t: 0, dur, fn });
+  }
+  // a clip's key moment (sampled once): the instant the casting arm is furthest out toward where it faces
+  key(name) {
+    const K = (this.keys = this.keys || {});
+    if (K[name]) return K[name];
+    const a = this.act[name], out = { release: 0.5 };
+    if (!a || !this.hand) return (K[name] = out);
+    const clip = a.getClip(), w0 = {};
+    for (const n in this.act) { w0[n] = this.act[n].getEffectiveWeight(); this.act[n].setEffectiveWeight(n === name ? 1 : 0); }
+    const t0 = a.time, inv = new THREE.Matrix4(), p = new THREE.Vector3();
+    let best = -1e9;
+    for (let t = 0; t <= clip.duration; t += clip.duration / 48) {
+      a.time = t; this.mixer.update(0);
+      this.model.scene.updateMatrixWorld(true);
+      inv.copy(this.root.matrixWorld).invert();
+      this.hand.getWorldPosition(p).applyMatrix4(inv);
+      const reach = p.z + 0.35 * p.y; // (forward, and up: a cast is thrust out and a little high)
+      if (reach > best) { best = reach; out.release = t; }
+    }
+    a.time = t0;
+    for (const n in this.act) this.act[n].setEffectiveWeight(w0[n]);
+    this.mixer.update(0);
+    return (K[name] = out);
+  }
+  // its place in the picture: from the steady lens (where it looks from and at, before its shake), low on the left,
+  // facing the boss and turned a little toward the lens. It holds its place in the picture as the lens moves.
+  place(d) {
+    const g = this.g, cam = g.camera, sp = this.spot, t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)), b = g.band;
+    // while the answers are up, its hips at their top edge (the band's foot, at its distance from the lens: the lens's
+    // axis meets the screen at the band's middle); when the whole screen is the picture, on the floor. It moves between
+    // the two over half a second.
+    const whole = !b || g.state === "intro" || g.state === "over" ? 1 : 0;
+    this.ground = wizEase(this.ground, whole, d, 3);
+    const D = lerp(sp.dist, sp.distWhole, this.ground), foot = b ? -(b.h * D * t) / GFX.h : -D * t;
+    this.foot = wizEase(this.foot, foot, d, 4);
+    this._m.lookAt(g.camBase, g.lookAt, cam.up);
+    this._q.setFromRotationMatrix(this._m);
+    const p = this._v.set(sp.x * D * t * (GFX.w / GFX.h), this.foot - sp.cut, -D).applyQuaternion(this._q).add(g.camBase);
+    p.y = lerp(p.y, 0, this.ground) - this.sink;
+    this.root.position.copy(p);
+    this.root.rotation.y = Math.atan2(-p.x, -p.z) + sp.turn;
+  }
+  // ---- every frame (after the stage has framed its lens) ----------------------------------------------------------
+  update(d, f) {
+    const g = this.g, quiet = this.quiet;
+    this.place(d);
+    // the clips: idle under; a clip played through over it, faded in and out
+    const o = this.one;
+    if (o) {
+      if (!o.out && o.a.time >= o.to - 1e-3) { if (o.hold) { o.a.time = o.to; o.a.paused = true; } else o.out = 0.001; }
+      if (o.out) { o.out += d; o.w = Math.max(0, 1 - o.out / o.outDur); if (o.w <= 0) { o.a.setEffectiveWeight(0); this.one = null; } }
+      else o.w = Math.min(1, o.w + d / o.in);
+      if (this.one) o.a.setEffectiveWeight(o.w);
+    }
+    let over = this.one ? this.one.w : 0;
+    for (let i = this.going.length - 1; i >= 0; i--) { const q = this.going[i]; q.w -= d / q.dur; if (q.w <= 0) { q.a.setEffectiveWeight(0); this.going.splice(i, 1); } else { q.a.setEffectiveWeight(q.w); over += q.w; } }
+    if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - over));
+    this.mixer.update(d);
+    // the cape: a breeze, more as it casts or is struck (none with reduced effects)
+    this.whip = Math.max(0, this.whip - d * 1.4);
+    this.flut.t.value += d * (1 + this.whip * 1.5);
+    this.flut.k.value = quiet ? 0 : 0.28 + 0.72 * this.whip;
+    // the wand's tip: gathers light while the question is read, flares as it casts; dies when it has lost
+    this.charge += ((g.state === "ask" ? 0.25 + 0.75 * f : 0.2) - this.charge) * Math.min(1, d * 3);
+    this.flare0 = Math.max(0, this.flare0 - d * 3.2);
+    this.sink = this.lost ? Math.min(0.12, this.sink + d * 0.25) : 0;
+    if (this.lost && (this.dim || 0) < 1) { this.dim = Math.min(1, (this.dim || 0) + d * 0.6); for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = WIZ.GLOW * (1 - 0.75 * this.dim); this.rim.k.value = WIZ.RIM_K * (1 - 0.5 * this.dim); }
+    const lit = this.root.visible ? (this.lost ? Math.max(0, 1 - this.sink / 0.08) : 1) : 0, tp = this.tip(this._u);
+    const gk = (0.55 + 0.45 * this.charge + 1.3 * this.flare0) * lit, pulse = 1 + (quiet ? 0 : 0.08 * Math.sin(VFX.t * (4 + 8 * this.charge)));
+    this.glow.visible = lit > 0.01;
+    this.glow.position.copy(tp); this.glow.scale.setScalar(0.32 * gk * pulse);
+    this.glow.material.opacity = Math.min(1, 0.7 * gk);
+    this.star.visible = lit > 0.01 && (this.flare0 > 0.02 || this.charge > 0.55);
+    if (this.star.visible) { this.star.position.copy(tp); this.star.scale.setScalar((0.22 + 0.5 * this.flare0 + 0.25 * Math.max(0, this.charge - 0.55)) * pulse); this.star.material.opacity = Math.min(1, 0.4 + this.flare0); if (!quiet) this.star.material.rotation += d * (0.6 + 3 * this.flare0); }
+    // floating runes round its wand hand (not with reduced effects, nor below the tiers that keep extras)
+    const runes = lit > 0.01 && !quiet && GFX.extras !== false;
+    for (const r of this.runes) {
+      r.sp.visible = runes;
+      if (!runes) continue;
+      const a = r.ph + VFX.t * 0.7, h = this.hand.getWorldPosition(this._w);
+      r.sp.position.set(h.x + Math.cos(a) * 0.32, h.y + 0.12 + Math.sin(VFX.t * 1.3 + r.ph) * 0.1, h.z + Math.sin(a) * 0.32);
+      r.sp.material.opacity = 0.35 + 0.25 * this.charge + 0.4 * this.flare0;
+      r.sp.material.rotation += d * 0.8;
+    }
+    // what is fading
+    for (let i = this.fx.length - 1; i >= 0; i--) {
+      const e = this.fx[i];
+      e.t += d;
+      const k = Math.min(1, e.t / e.dur);
+      e.fn(e.o, k);
+      if (k >= 1) { e.o.visible = false; this.fx.splice(i, 1); }
+    }
+    if (this.ward.visible) this.ward.quaternion.copy(g.camera.quaternion);
+  }
+  dispose() {
+    for (const o of [this.glow, this.star, ...this.circles, ...this.runes.map((r) => r.sp), this.flare]) o.material.dispose();
+    for (const o of [this.ward, this.sigil]) { o.geometry.dispose(); o.material.dispose(); }
+    for (const t of Object.values(this.tex)) if (t) t.dispose();
+    this.mixer.stopAllAction(); this.mixer.uncacheRoot(this.model.scene);
+    if (this.mesh && this.mesh.skeleton && this.mesh.skeleton.dispose) this.mesh.skeleton.dispose(); // (its bones' texture on the graphics chip)
+  }
+}

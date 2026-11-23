@@ -12,7 +12,9 @@ const ARCADE = path.join(__dirname, ".."), A = path.join(ARCADE, "assets");
 const SETS = {
   blaster: ["model:starfighter", "model:demon", "model:prop-ship-a", "model:prop-ship-b", "model:prop-ship-c", "model:prop-rock", "model:prop-rock2", "sky:blaster-deep-1", "sky:blaster-deep-4", "sky:blaster-deep-5", "sfx:core", "sfx:combat", "sfx:voice", "music:blaster", "model:ally-a", "model:ally-c", "model:ally-a2", "model:ally-b2", "model:ally-c2", "model:brood-a", "model:brood-a1", "model:brood-a2", "model:brood-a3", "model:brood-b", "model:brood-d", "model:brood-d2", "model:brood-f", "model:brood-f2", "model:prop-shield", "model:prop-bolt", "model:prop-star", "music:blaster-b"],
   racer: ["model:warrig", "model:prop-car", "model:prop-van", "model:prop-bus", "sky:racer-dawn", "sky:racer-day", "sky:racer-sunset", "sky:racer-sunset-b", "sky:racer-night", "sfx:core", "sfx:racer", "sfx:voice", "music:racer", "model:rival-rig", "model:rival-rig2", "model:chaser", "model:prop-shield", "model:prop-heart", "model:prop-bolt", "model:prop-star", "music:racer-b"],
-  boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss", "model:prop-heart", "model:prop-star", "model:prop-coin", "model:prop-bolt", "music:boss-b", "music:finalboss-b"],
+  // Boss Rush (and the boss it fights: 19-quizgame's gameAssets). The wizard, its wand, its spells' sounds and pictures.
+  boss: ["sky:boss-storm", "sky:boss-storm-b", "sky:boss-void", "sfx:core", "sfx:combat", "sfx:bosses", "sfx:voice", "music:boss", "music:finalboss", "model:prop-heart", "model:prop-star", "model:prop-coin", "model:prop-bolt", "music:boss-b", "music:finalboss-b",
+    "model:wizard", "model:wand", "sfx:wizard", "ui:fx-runes", "ui:fx-ward", "ui:fx-star"],
   // The arcade hall: one cabinet model for all six games, their toppers, the trophy case's cup, medal and coins, one
   // hall panorama for its reflections and light (never shown), the boss portraits for its posters. (Its sound comes
   // with it but is not waited for: see showHub.)

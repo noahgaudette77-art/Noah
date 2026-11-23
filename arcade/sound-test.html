@@ -43,8 +43,12 @@
 <script>
 (() => {
   // The sets as the game names them, in plain words, and what each sound is for (the cue names are the game's own)
-  const SETS = { core: "General", combat: "Combat", racer: "Nest Egg Run", bosses: "Boss Rush", hub: "Arcade hall", voice: "Announcer" };
+  const SETS = { core: "General", combat: "Combat", racer: "Nest Egg Run", bosses: "Boss Rush", hub: "Arcade hall", voice: "Announcer", wizard: "Boss Rush: the wizard" };
   const ABOUT = {
+    wiz_appear: "the wizard steps out of the light as a fight starts", wiz_whoosh: "its wand swept to cast", wiz_charge: "its wand gathering light (a question is up; before Starfall)",
+    wiz_bolt: "an Arc Bolt leaving the wand (an answer)", wiz_nova: "the Nova Lance (a right answer lands)", wiz_impact: "the lance striking the boss",
+    wiz_ward: "the Aegis Ward taking the boss's blow", wiz_fizzle: "a spell that will not take (a wrong answer)", wiz_finisher: "Starfall, the finishing spell",
+    wiz_victory: "its victory sting (the boss is down)", wiz_defeat: "its last light going out (out of hearts)",
     engine_ship: "the fighter's engine (a loop)", engine_car: "the war rig's engine (a loop)", alarm: "the low-health alarm (a loop)",
     charge_hum: "a charging hum (a loop)", boost_flame: "the boost flames (a loop)", hub_hum: "the arcade hall's ambience (a loop)",
     laser_fire: "the fighter's cannons", laser_heavy: "the heavy lance", plasma_fire: "plasma bolts", shell: "spent energy cells",
