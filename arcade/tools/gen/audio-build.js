@@ -19,6 +19,10 @@ const ARCADE = path.join(__dirname, "..", ".."), OUT = process.env.GEN_OUT || pa
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
 const VOICE = opt("voice", "harry"), SR = 44100;
+// --only <set>: build that one set of effects and merge it into audio.json, every other sprite, the announcer and the
+// music left exactly as they are (2026-11-23: the raw takes behind the older sprites are not all on this machine, and a
+// full rebuild would drop what it cannot find)
+const ONLY = opt("only", null);
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "audio-"));
 const ff = (a) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", ...a], { stdio: ["ignore", "pipe", "pipe"] });
 // raw 32-bit float mono samples of a file, after a filter chain
@@ -38,10 +42,12 @@ const SETS = {
   // Boss Rush: each boss's own roar, and what a giant machine sounds like landing, moving and powering up
   bosses: { roar_1: 0.95, roar_2: 0.95, roar_3: 0.95, roar_4: 0.95, roar_5: 0.95, roar_6: 0.95, roar_7: 0.95, roar_8: 0.95, roar_9: 0.95, roar_10: 0.95, roar_11: 0.95, roar_all: 1, boss_land: 1, boss_servo: 0.45, boss_power: 0.7 },
 };
+// Boss Rush's wizard (2026-11-23): its spells, loaded with Boss Rush (assets/audio/sfx-wizard.mp3)
+SETS.wizard = { wiz_appear: 0.8, wiz_whoosh: 0.55, wiz_charge: 0.5, wiz_bolt: 0.7, wiz_nova: 0.85, wiz_impact: 0.85, wiz_ward: 0.8, wiz_fizzle: 0.6, wiz_finisher: 1, wiz_victory: 0.8, wiz_defeat: 0.7 };
 const LOOP_SET = { alarm: "core", charge_hum: "core", engine_ship: "combat", engine_car: "racer", boost_flame: "racer", hub_hum: "hub" };
 const LOOP_VOL = { alarm: 0.4, charge_hum: 0.4, engine_ship: 0.35, engine_car: 0.4, boost_flame: 0.6, hub_hum: 0.5 };
 // big sounds duck the music; the game's old names are heard as the new recordings
-const DUCK = { explosion_huge: 0.45, explosion_big: 0.6, boss_death: 0.5, boss_roar: 0.6, impact_big: 0.7 };
+const DUCK = { explosion_huge: 0.45, explosion_big: 0.6, boss_death: 0.5, boss_roar: 0.6, impact_big: 0.7, wiz_finisher: 0.55, wiz_victory: 0.6 };
 const ALSO = { boom: "explosion_small", bigboom: "explosion_big", laser: "laser_fire", shot: "plasma_fire", hit: "player_hit", correct: "sting_correct", wrong: "sting_wrong", coin: "coin_insert", blip: "ui_click", select: "ui_select", back: "ui_back", shield: "impact_shield", win: "fanfare", gameover: "gameover", demonroar: "boss_roar", demonhit: "boss_hurt", demonboom: "explosion_big", demonfinale: "explosion_huge", demonshed: "boss_break", demonbreak: "boss_break", demoncharge: "charge_up", bossroar: "boss_roar", bossblast: "explosion_huge", bosssmash: "slam", bosscharge: "charge_long", shatter: "heart_lost", powerup: "powerup", warp: "warp", clunk: "impact_metal" };
 const MAX_TAKES = 99; // (every usable take: the game plays them in turn; an earlier cap of four left paid-for takes unheard)
 // takes that came back as something other than what was asked, left out: the title's soft coin #1 and #2 are a
@@ -73,6 +79,7 @@ function writeSprite(name, parts, cues, stereo, kbps) {
 // ---- effects and loops, set by set
 const allSets = [...new Set([...Object.keys(SETS), ...Object.values(LOOP_SET)])];
 for (const set of allSets) {
+  if (ONLY && set !== ONLY) continue;
   const parts = [], cues = {};
   let at = LEAD * 2; // samples
   const put = (cue, a, vol, duck, pre = 0) => { parts.push(a); (cues[cue] = cues[cue] || []).push([+((at + pre) / SR).toFixed(4), +((a.length - pre * 2) / SR).toFixed(4), vol, duck || 0]); at += a.length + GAP; };
@@ -114,6 +121,16 @@ for (const set of allSets) {
   result.sprites[set] = { file: "audio/sfx-" + set + ".mp3", cues };
 }
 
+// (one set only: merged into what is there, and nothing else touched)
+if (ONLY) {
+  const file = path.join(outDir, "audio.json"), prev = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!result.sprites[ONLY]) { console.error("nothing built for " + ONLY); process.exit(1); }
+  prev.sprites[ONLY] = result.sprites[ONLY];
+  prev.built = Object.assign(prev.built || {}, result.built);
+  fs.writeFileSync(file, JSON.stringify(prev, null, 1));
+  for (const [k, v] of Object.entries(result.built)) console.log(`${k}: ${(v.bytes / 1024).toFixed(0)} KB, ${v.seconds}s; cues: ${Object.keys(result.sprites[ONLY].cues).join(", ")}`);
+  process.exit(0);
+}
 // ---- the announcer: a little slap of echo and a firm compressor, like a voice over a hall's speakers
 {
   const parts = [], cues = {};

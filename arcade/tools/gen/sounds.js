@@ -79,6 +79,18 @@ const SFX = {
   near_miss: [0.7, 4, "A fast vehicle whooshing past very close: a doppler whoosh with a brief engine roar."],
   boost: [1.5, 4, "A turbo boost kicking in: an explosive ignition whoomp, then a roaring jet-like surge of acceleration. Exciting."],
   gate_pass: [0.8, 4, "Passing through an energy gate at speed: a bright shimmering whoosh with a rising chime."],
+  // (2026-11-23) Boss Rush's wizard: its spells, original, bright and arcane over the arcade's synths (wiz_*)
+  wiz_appear: [1.4, 3, "A wizard teleports into an arena: a rising shimmering whoosh of magical energy, crystalline sparkles, and a soft deep arrival thump. Bright, airy, arcane synth."],
+  wiz_whoosh: [0.6, 4, "A magic wand swished fast through the air: a short airy whoosh with a faint crystalline shimmer trailing it. Quick, clean, light."],
+  wiz_charge: [1.0, 3, "A magic wand charging up: a soft rising electric hum that brightens and swells into a crystalline shimmer, stopping just before release. Smooth and building, no click."],
+  wiz_bolt: [0.6, 5, "A quick magic bolt fired from a wand: a bright crisp zap with a sparkling crystalline tail, light and fast. Arcane synth, not a gun."],
+  wiz_nova: [1.2, 4, "A heavy charged magic blast released from a wand: a deep resonant energy thrum that bursts into a bright shimmering surge, powerful but clean, with a short reverberant tail."],
+  wiz_impact: [0.9, 4, "A magic spell striking a giant armoured robot: a bright crackling energy burst, a glassy shatter of sparks and a solid punchy thump. Rewarding."],
+  wiz_ward: [1.0, 4, "A magic shield of light snapping up and taking a heavy blow: a resonant glassy hum, a bright ringing ripple, then a crackle as it strains."],
+  wiz_fizzle: [0.6, 3, "A magic spell sputtering out: a weak crackle and a falling dull fizz, like a dying spark. Short, dry, disappointing."],
+  wiz_finisher: [2.2, 3, "A wizard's ultimate finishing spell: a rising choir-like synth swell gathering power, then a towering bright blast of magical light crashing down with a deep boom and a long shimmering tail. Epic and clean."],
+  wiz_victory: [2.0, 3, "A short magical victory sting: a bright ascending arpeggio of chimes and glittering synth bells resolving to a warm major chord, with sparkling shimmer. Triumphant and joyful."],
+  wiz_defeat: [1.6, 2, "A wizard falls: the glow of a magic wand dying, a soft descending synth tone and a faint fading crackle. Sad and quiet."],
   // rewards and the interface
   reward: [1.2, 4, "A shower of coins and sparkles: bright jackpot chimes and coin clinks. Joyful and short."],
   sting_correct: [0.8, 4, "A bright triumphant correct-answer jingle: a quick rising synth arpeggio with sparkle."],

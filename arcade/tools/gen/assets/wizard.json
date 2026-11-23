@@ -1,0 +1,14 @@
+{
+ "name": "wizard",
+ "about": "Boss Rush: the player's wizard duellist (2026-11-23): an original spellcaster in a knee-length indigo robe-coat with neon cyan and magenta circuit trim, a violet cape lined in magenta, a bent-tipped indigo hat with a cyan band, the face behind a high collar with two calm cyan eyes, gauntlets, a belt of glowing vials, armoured boots. Tripo H3.1 from concept wizard-a-nb-0 (Nano Banana Pro; a Rodin Gen-2.5 candidate from the same concept was not used: a pale face and hands, a smeared cape); rigged by Tripo (rig v3.0, biped); eight clips retargeted from Tripo's presets (two requests). Its soft skin is kept (a coat and a cape should bend: process-skinned.mjs), with a flutter mask for the cape and the coat's skirts.",
+ "src": "post/wizard-animA.glb",
+ "more": ["post/wizard-animB.glb"],
+ "size": { "axis": "y", "value": 2.05 },
+ "tris": 32000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": { "idle": "idle", "cast_a_spell": "cast", "slash": "bigcast", "hit_to_body_01": "hurt", "hit_to_head": "stagger", "jump_down": "enter", "victory_celebration": "win", "defeat_02": "defeat" },
+ "emissive": { "hues": [[168, 205], [290, 335]], "sat": [0.5, 0.75], "val": [0.6, 0.88] },
+ "flutter": { "back": 0.03, "top": 0.76, "skirt": 0.47, "legR": 0.06, "feather": 0.05 },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles (here 32K: a figure seen from behind, half of it under the answers)"
+}
