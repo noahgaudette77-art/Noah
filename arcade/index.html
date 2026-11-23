@@ -32485,6 +32485,10 @@ class BossTollgate {
     this.rageT = 0; this.deathT = -1; this.deathRate = 1; this.dead = false;
     this.rollT = -1; this.landed = false; this.justLanded = false; this.dustT = 0; this.play = null;
     this.snapT = 2; this.snap = 0; this.look = 0;
+    // (the animation pass: a machine's way of moving: its arms on servos that overshoot and settle, its booth's sway on
+    // its suspension sprung, its eye turned to the wizard, a blow's push from where it came; smooth at any frame rate)
+    this.S = { kick: new Motion.Spring(1.9, 0.5), yaw: new Motion.Spring(2.2, 0.35), roll: new Motion.Spring(2.6, 0.3), lift: new Motion.Spring(2.6, 0.55), rear: new Motion.Spring(3, 0.5), look: new Motion.Spring(1.6, 0.75) };
+    this.nHit = 0; this.seed = 1010; this.invQ = new THREE.Quaternion(); this._w = new THREE.Vector3(); this._d = new THREE.Vector3();
     this.scraps = []; this.torn = {};
     this.t = rand(0, 5);
     this._v = new THREE.Vector3(); this._x = new THREE.Vector3(1, 0, 0);
@@ -32551,6 +32555,13 @@ class BossTollgate {
   }
   recover() { this.rec = true; this.swinging = false; }
   cancel() { this.rec = true; this.swinging = false; }
+  // a blow it takes (the stage, as a right answer lands): rocked back on its suspension and turned away from where it came
+  hit(from, at, big) {
+    if (this.dead || !from || !at) return;
+    const n = ++this.nHit, dir = this._d.subVectors(at, from).normalize().applyQuaternion(this.invQ), k = (big ? 1.5 : 1) * Motion.vary(this.seed, n, 0.75, 1.25);
+    this.S.yaw.hit(0.1 * k * (dir.x + Motion.vary(this.seed, n + 3, -0.3, 0.3))); this.S.roll.hit(-0.04 * k * dir.x);
+  }
+  enrage() { if (!this.dead) { this.S.roll.hit(0.05); this.S.kick.hit(-0.08); } }
   get windT() { return 0; }
   // ---- reactions (the stage asks for them by the rigged bosses' clip names)
   react(name, o = {}) {
@@ -32611,10 +32622,14 @@ class BossTollgate {
     }
     // ---- the barrier and the booth
     if (this.rec) { this.liftTo = 0; this.rearTo = 0; this.slam = Math.max(0, this.slam - d * 2.2); this.lurch = Math.max(0, this.lurch - d * 3); if (this.slam <= 0 && this.lift < 0.02 && this.rear < 0.02) { this.rec = false; this.atkClip = null; } }
-    if (!this.swinging) { this.lift += (this.liftTo - this.lift) * Math.min(1, d * (this.rec ? 2.6 : 8)); this.rear += (this.rearTo - this.rear) * Math.min(1, d * (this.rec ? 4 : 8)); }
-    // ---- a blow rocks it back on its tracks; a heavy one sets it wobbling
-    this.kickV += (-this.kick * 110 - this.kickV * 11) * d;
-    this.kick += this.kickV * d;
+    // (on servos: the barrier and the booth go where they are sent and overshoot a little, then settle; a swing is driven
+    // by the strike itself, and the servo follows on from where it left them)
+    if (!this.swinging) { this.lift = this.S.lift.step(d, this.liftTo); this.rear = this.S.rear.step(d, this.rearTo); } else { this.S.lift.set(this.lift); this.S.rear.set(this.rear); }
+    // ---- a blow rocks it back on its tracks; a heavy one sets it wobbling (the stage adds to kickV: a push, sized to the
+    // old recoil's depth)
+    this.model.scene.getWorldQuaternion(this.invQ).invert();
+    if (this.kickV) { this.S.kick.hit(this.kickV * 0.048); this.kickV = 0; }
+    this.kick = this.S.kick.step(d, 0);
     this.wobT += d; this.wob = Math.max(0, this.wob - d * 0.9);
     const wob = this.wob * Math.sin(this.wobT * 13) * 0.12;
     this.rageT = Math.max(0, this.rageT - d);
@@ -32626,12 +32641,13 @@ class BossTollgate {
       const C = BOSS_CLIP.death, q = clamp((this.deathT - C.fall * 0.7) / (C.down - C.fall * 0.7), 0, 1);
       tip = q * q * 1.5 + Math.sin(Math.min(1, this.deathT / (C.fall * 0.7)) * Math.PI * 3) * 0.07 * (1 - q);
     }
-    // the eye follows the player: the whole booth turns a little toward the lens
-    const lookTo = this.dead ? 0 : clamp(Pointer.x * 0.3 + Math.sin(t * 0.31) * 0.08 + (g.camBase ? g.camBase.x * 0.04 : 0), -0.4, 0.4);
-    this.look += (lookTo - this.look) * Math.min(1, d * 3);
+    // its eye follows the wizard (o.look; else the lens): the whole booth turns a little toward it, on its servo
+    let lookTo = 0;
+    if (!this.dead) { const e = this.joint.head.getWorldPosition(this._w), dir = this._d.subVectors(o.look || g.camera.position, e).applyQuaternion(this.invQ); lookTo = clamp(Math.atan2(dir.x, dir.z) * 0.6 + Math.sin(t * 0.31) * 0.06, -0.4, 0.4); }
+    this.look = this.S.look.step(d, lookTo);
     const pitch = -this.kick * 0.1 - this.rear * 0.16 + this.lurch * 0.2 + brake + this.slam * 0.12 + this.lean * 0.05 + Math.sin(t * 0.9) * 0.014 + wob - tip;
-    const B = this.body, zp = pitch >= 0 ? 0.185 : -0.3; // (it tips about the back of its tracks, and noses down about their front)
-    B.rotation.set(pitch, this.look + rand(-1, 1) * shake, Math.sin(t * 0.7) * 0.012 + wob * 0.5 + rand(-1, 1) * shake);
+    const B = this.body, zp = pitch >= 0 ? 0.185 : -0.3, vt = t * 15; // (it tips about the back of its tracks, and noses down about their front; its shudder smooth, never a new random place each frame)
+    B.rotation.set(pitch, this.look + this.S.yaw.step(d, 0) + Motion.noise(vt, 71) * shake, Math.sin(t * 0.7) * 0.012 + wob * 0.5 + this.S.roll.step(d, 0) + Motion.noise(vt, 72) * shake);
     this._v.set(0, 0, zp).applyAxisAngle(this._x, pitch);
     B.position.set(0, Math.sin(t * 1.7) * 0.005 + 0.012 * this.lift - this._v.y, roll / S + zp - this._v.z - this.kick * 0.12);
     // ---- its arms: the barrier rises with the charge and comes down; the claw reaches, and snaps
@@ -32659,8 +32675,8 @@ class BossTollgate {
       const sc = this.scraps[i], gp = sc.grp;
       sc.t += d;
       if (!sc.rest) {
+        gp.position.addScaledVector(sc.v, d); gp.position.y -= 10 * d * d; // (exact for its time step)
         sc.v.y -= 20 * d;
-        gp.position.addScaledVector(sc.v, d);
         gp.rotation.x += sc.w.x * d; gp.rotation.y += sc.w.y * d; gp.rotation.z += sc.w.z * d;
         if (gp.position.y < sc.r && sc.v.y < 0) { gp.position.y = sc.r; if (Math.abs(sc.v.y) < 2.2) sc.rest = true; else { sc.v.y *= -0.34; sc.v.x *= 0.6; sc.v.z *= 0.6; sc.w.multiplyScalar(0.5); } }
       }
