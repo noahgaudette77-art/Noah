@@ -32,3 +32,12 @@ the content and scripts untouched since `ee413e3`, every screen inside its tier'
   swung by half from run to run. Since `836b099` the harness measures it with the drawing left out over many frames,
   against a baseline measured the same way (`docs/master/baseline/script-*.json`).
 - Nest Egg Run's triangles (+13%): the traffic on the road at the moment measured, which is random.
+
+## Stills
+
+`stills/` (Phase 1's build, `3b1728e`) and `../baseline/stills/` (the baseline's build, `89cfb56`) were both taken again
+with the capture as it stands at `922a37f` (the randomness started afresh per screen, per game and before its first
+question; idle callbacks on the virtual clock; the sound's randomness its own), so the two sets compare picture for
+picture: the racer, Boss Rush, Memory Bank, the exam, the hub and the menus within 0.037 RMSE of each other; the title
+hall 0.04-0.10 (its bosses now arrive two frames later, their shaders built first); Risk Blaster 0.05-0.08 (its
+first question still varies run to run).

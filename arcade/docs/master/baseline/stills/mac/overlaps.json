@@ -1,10 +1,7 @@
 {
  "01-title-glide-early": [],
  "02-title-glide-middle": [],
- "03-title-end": [
-  "INR / INR",
-  "ARCADE / ARCADE"
- ],
+ "03-title-end": [],
  "04-title-cell-closeup": [],
  "04b-cell-defeated": [],
  "04c-cell-alarm": [],
@@ -12,11 +9,7 @@
  "05-hub": [],
  "06-chapter-select": [],
  "07-blaster": [],
- "08-blaster-explanation": [
-  "Salaries paid by the insurer / General agencies receive ove",
-  "B / General agencies receive ove",
-  "Override commissions from in / General agencies receive ove"
- ],
+ "08-blaster-explanation": [],
  "09-racer": [],
  "10-boss": [],
  "11-memory-front": [],
