@@ -42,8 +42,8 @@ const WIZ = {
 };
 // a sound of the wizard's set; where that set has not loaded, `alt` (one of the game's own) or nothing
 function wizSfx(name, alt, pan, o) { const n = Sound.bank && Sound.bank[name] ? name : alt; if (n) Sound.sfx(n, pan, o); }
-// v eased toward `to` (k: how fast); at once the first time, or with no time step
-const wizEase = (v, to, d, k) => (v === undefined || !d ? to : v + (to - v) * Math.min(1, d * k));
+// v eased toward `to` (k: how fast: exactly, the same curve at any frame rate); at once the first time
+const wizEase = (v, to, d, k) => (v === undefined ? to : Motion.damp(v, to, k, d));
 function wizTex(name) {
   const img = Assets.ui(name);
   if (!img) return null;
@@ -103,7 +103,7 @@ class Wizard {
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._m = new THREE.Matrix4();
     // ---- its look: the arena's reflections, its neon lit, a cold rim round its edge, the cape's flutter
     this.mats = tuneModel(model, { env: 1.35, glow: WIZ.GLOW });
-    this.flut = { t: { value: 0 }, k: { value: 0.3 }, back: { value: new THREE.Vector3(0, 0, -1) }, side: { value: new THREE.Vector3(1, 0, 0) }, up: { value: new THREE.Vector3(0, 1, 0) }, amp: { value: 0.05 } };
+    this.flut = { swing: { value: new THREE.Vector3() }, t: { value: 0 }, k: { value: 0.3 }, back: { value: new THREE.Vector3(0, 0, -1) }, side: { value: new THREE.Vector3(1, 0, 0) }, up: { value: new THREE.Vector3(0, 1, 0) }, amp: { value: 0.05 } };
     this.rim = { col: { value: new THREE.Color().fromArray(WIZ.RIM) }, k: { value: WIZ.RIM_K } };
     model.scene.updateMatrixWorld(true);
     model.scene.traverse((o) => {
@@ -124,7 +124,7 @@ class Wizard {
     for (const m of this.mats) {
       if (!m.isMeshStandardMaterial) continue;
       m.onBeforeCompile = (sh) => {
-        sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
+        sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutSwing = F.swing; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
         sh.uniforms.uRimCol = R.col; sh.uniforms.uRimK = R.k;
         sh.uniforms.uWizCoat = C.coat; sh.uniforms.uWizCape = C.cape; sh.uniforms.uWizLining = C.lining; sh.uniforms.uWizFill = C.fill; sh.uniforms.uWizHead = C.head;
         // (where its cape is: the flutter mask, the cape and the coat-tails; and its hat: what hangs from its head bone)
@@ -137,12 +137,13 @@ class Wizard {
               vWizCape = 0.0;
             #endif`);
         // (the wave's height and breadth are read from the skinned point, in the mesh's own units: the stored one is packed)
-        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp;")
+        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp; uniform vec3 uFlutSwing;")
           .replace("#include <skinning_vertex>", `#include <skinning_vertex>
             { // the cape and the skirts move in the wind of the spells: a wave running down them, stronger at the hem
               float w = aFlutter * uFlutK, hgt = dot(transformed, uFlutUp) / uFlutAmp, across = dot(transformed, uFlutSide) / uFlutAmp; // (metres)
               float a = sin(uFlutT * 3.1 - hgt * 4.2 + across * 2.0), b = sin(uFlutT * 2.3 - hgt * 3.1 + 1.3);
               transformed += (uFlutBack * (0.055 + 0.045 * a) + uFlutSide * 0.035 * b + uFlutUp * 0.012 * a) * (w * uFlutAmp); // (metres, in the mesh's units)
+              transformed += uFlutSwing * (aFlutter * aFlutter); // (it trails its moves: the hem's own lag, from the spring)
             }`);
         sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK; uniform vec3 uWizCoat; uniform vec3 uWizCape; uniform vec3 uWizLining; uniform float uWizFill; varying float vWizCape;")
           .replace("#include <map_fragment>", `#include <map_fragment>
@@ -165,7 +166,7 @@ class Wizard {
             }
             #include <tonemapping_fragment>`);
       };
-      m.customProgramCacheKey = () => "wizard-3" + (has ? "f" : "");
+      m.customProgramCacheKey = () => "wizard-4" + (has ? "f" : "");
       m.needsUpdate = true;
     }
     // ---- its clips, blended by hand: the idle always under; one clip at a time played through over it; while a
@@ -198,6 +199,7 @@ class Wizard {
     // ---- the wand in its right hand, along the hand's line, its grip in the palm
     const P = model.parts, hand = P[J.handR || "R_Hand"], fore = P.R_Forearm;
     this.hand = hand || model.scene;
+    this.headBone = P[J.head || "Head"] || null;
     this.tipNode = null;
     if (wand && hand) {
       const hp = hand.getWorldPosition(new THREE.Vector3()), fp = (fore || hand.parent).getWorldPosition(new THREE.Vector3());
@@ -211,6 +213,7 @@ class Wizard {
       wand.scene.rotation.z = 0.3;
       holder.add(wand.scene);
       hand.add(holder);
+      this.holder = holder;
       this.wandMats = tuneModel(wand, { env: 1.6, glow: 2.2 });
       wand.scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
       this.tipNode = new THREE.Object3D(); this.tipNode.position.fromArray(A.tip || [0, 0, 0.21]); wand.scene.add(this.tipNode);
@@ -236,9 +239,48 @@ class Wizard {
     this.lance = null; // the stage's lance while it is drawn: its root kept at the wand's tip
     this.charge = 0; this.flare0 = 0; this.whip = 0; this.sink = 0; this.lost = false; this.won = false;
     this.spot = Object.assign({}, WIZ.SPOT); // (its own copy: a test can move it)
+    this.life0(model);
     this.place();
   }
+  // ---- its own life over its clips (the animation pass, 2026-11-23: it held its poses like a statue): the bones it
+  // lives through, each turned about its own axes (Motion.Turns); its springs (a blow's give, a cast's lunge, its gaze,
+  // a hop); its flinch as a layer over whatever it is doing (a blow mid-cast does not stop the cast); its wand's tip and
+  // its cape's hem, each trailing on a spring
+  life0(model) {
+    const P = model.parts, B = (this.B = { waist: P.Waist, sp1: P.Spine01, sp2: P.Spine02, neck: P.NeckTwist01, head: this.headBone });
+    model.scene.updateMatrixWorld(true);
+    const T = (this.turns = new Motion.Turns(model.scene)), v = new THREE.Vector3(), v2 = new THREE.Vector3();
+    Object.values(B).forEach((b) => T.add(b));
+    this.clav = [];
+    for (const sd of ["L", "R"]) {
+      const c = P[sd + "_Clavicle"], up = P[sd + "_Upperarm"];
+      if (!c || !up) continue;
+      T.add(c);
+      const x = model.scene.worldToLocal(up.getWorldPosition(v)).x - model.scene.worldToLocal(c.getWorldPosition(v2)).x;
+      this.clav.push({ bone: c, side: x >= 0 ? 1 : -1 });
+    }
+    const Sp = Motion.Spring;
+    this.S = { pitch: new Sp(2.2, 0.4), yaw: new Sp(2.0, 0.42), roll: new Sp(2.5, 0.4), head: new Sp(3.2, 0.34), lunge: new Sp(1.7, 0.45), lookY: new Sp(1.2, 0.92), lookX: new Sp(1.2, 0.92), hop: new Sp(2.4, 0.32) };
+    // (its flinches: a blow to the body, to the gut, from the side; one of them each time, its own way)
+    this.flinches = ["hurt", "hurtG", "hurtS"].map((n) => (this.act[n] ? Motion.overlay(this.mixer, this.act[n].getClip(), B.waist, n + "+") : null)).filter(Boolean);
+    this.flinch = this.flinches[0] || null;
+    this.fl = null; // the flinch playing: { act, t, end, rate, w, k }
+    this.seed = 4243; this.nCast = 0; this.nHit = 0; this.exert = 0; this.brace = 0; this.lostT = 0; this.lt = 0;
+    this.invQ = new THREE.Quaternion(); this._t1 = new THREE.Vector3(); this._t2 = new THREE.Vector3(); this._t3 = new THREE.Vector3(); this._q2 = new THREE.Quaternion(); this._q3 = new THREE.Quaternion();
+    // the wand's tip as the hand holds it (in the hand's frame): it trails the hand on a spring and whips past it when the
+    // hand stops; the holder is turned to point at it (a flick of the wrist)
+    if (this.holder && this.tipNode) { this.hand.updateWorldMatrix(true, true); this.tipRest = this.hand.worldToLocal(this.tipNode.getWorldPosition(v)).clone(); this.holderQ = this.holder.quaternion.clone(); this.tipF = new Motion.Follow(4.2, 0.3); }
+    // the cape's hem as the chest carries it: a point below and behind the chest, in the chest's own frame; it trails on
+    // a spring, and the cape swings by how far it trails, more toward its hem (the vertex shader: uFlutSwing)
+    if (B.sp2 && this.mesh) {
+      const h = (model.info && model.info.height) || 2, c = B.sp2.getWorldPosition(v), back = v2.set(0, 0, -1).applyQuaternion(model.scene.getWorldQuaternion(this._q2));
+      this.hemRest = B.sp2.worldToLocal(c.clone().add(new THREE.Vector3(0, -0.42 * h, 0)).addScaledVector(back, 0.12 * h)).clone();
+      this.hemF = new Motion.Follow(1.6, 0.28);
+    }
+  }
   get quiet() { return REDUCED_MOTION || GFX.calm; }
+  // where its head is, in the world (the boss's gaze follows it)
+  headAt(out) { const h = this.headBone || this.hand; return h.getWorldPosition(out); }
   // where its wand's tip is, in the world
   tip(out) { const o = out || new THREE.Vector3(); if (this.tipNode) this.tipNode.getWorldPosition(o); else this.hand.getWorldPosition(o); return o; }
   // a clip played through over the idle: from `from` to `to` (seconds into it), at `rate`; `in` its fade in (0: at
@@ -278,8 +320,9 @@ class Wizard {
   }
   // the player answers: right or wrong, it casts (the bolts are the stage's volley, from this wand: bolt)
   cast(right) {
-    const k = this.keys.cast;
-    this.play("cast", { from: k.release - 0.1, to: k.release + 0.55, rate: 1.6, in: 0.06, out: 0.35 }); // (its arm is out as the first bolt leaves: the stage holds the volley back)
+    const k = this.keys.cast, n = ++this.nCast, sd = this.seed;
+    this.play("cast", { from: k.release - 0.1, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.06, out: 0.35 }); // (its arm is out as the first bolt leaves: the stage holds the volley back; each cast a little its own)
+    this.S.lunge.hit(0.035 * Motion.vary(sd, n + 5, 0.8, 1.2)); this.S.yaw.hit(Motion.vary(sd, n + 7, -0.04, 0.04)); // (it throws itself into it)
     this.whip = Math.max(this.whip, 0.7); this.charge = 0;
     this.flare0 = Math.max(this.flare0, right ? 0.6 : 0.2);
     wizSfx("wiz_whoosh", null, -0.4, { vol: 0.75 });
@@ -307,6 +350,7 @@ class Wizard {
     const p = this.tip(this._u), kit = this.kit, name = big ? "bigcast" : "cast", k = this.keys[name];
     this.play(name, { from: k.release - (big ? 0.12 : 0.08), to: k.release + (big ? 0.75 : 0.5), rate: big ? 1.3 : 1.5, out: 0.4 });
     this.whip = 1; this.flare0 = 1;
+    this.S.lunge.hit(big ? 0.075 : 0.045); this.exert = Math.max(this.exert, big ? 1 : 0.5); // (its weight behind the lance; then it breathes hard)
     this.ring(p, WIZ.NOVA, big ? 1.5 : 0.9, big ? 0.5 : 0.32);
     kit.flash(p, WIZ.NOVA, 0.12, big ? 0.9 : 0.6, 0.12, 0.9, 1.8); // (drawn only: the kit's one blast light is the boss's, where the lance lands)
     if (lance && at) this.lance = { h: lance, to: at.clone(), t: 0 }; // (for its own life only: 0.15 s; the kit's beams are pooled)
@@ -326,7 +370,16 @@ class Wizard {
     this.fade(w, 0.6, (o, k) => { u.uK.value = (k < 0.1 ? k / 0.1 : 1 - smoothstep(0.1, 1, k)) * (quiet ? 0.6 : 0.85); u.uRip.value = k; u.uBreak.value = smoothstep(0.25, 1, k) * (left <= 1 ? 1.15 : 1); });
     const hp = st.lens(0, hitY, D, this._v);
     this.kit.sparks(hp, WIZ.WARD, { n: quiet ? 5 : 14, speed: 3.2, dir: this._w.set(0, 1, 0.3).normalize(), spread: 1.4, life: 0.4, len: 0.16, w: 0.022, gravity: 3, k: 1.6, stretch: 0.02 });
-    this.play(left <= 1 ? "stagger" : "hurt", { from: 0.12, rate: 1.4, out: 0.35 });
+    // it flinches: a layer over whatever it is doing (a blow mid-cast does not stop the cast), its spine giving back,
+    // turned and tipped a little its own way each time, its head snapping back; on its last heart it staggers
+    const n = ++this.nHit, sd = this.seed, side = Motion.vary(sd, n + 3, 0, 1) < 0.5 ? -1 : 1, k = left <= 1 ? 1.3 : Motion.vary(sd, n, 0.8, 1.15);
+    if (left <= 1 || !this.flinch) this.play(left <= 1 ? "stagger" : "hurt", { from: 0.12, rate: 1.4, out: 0.35 });
+    else {
+      const act = this.flinches[Math.floor(Motion.vary(sd, n + 21, 0, this.flinches.length - 1e-6))] || this.flinch, was = this.fl;
+      if (was && was.act !== act) was.act.setEffectiveWeight(0);
+      this.fl = { act, t: 0.08, end: act.getClip().duration - 0.05, rate: 1.35 * Motion.vary(sd, n + 9, 0.9, 1.12), w: was && was.act === act ? was.w : 0, k: 0.95 };
+    }
+    this.S.pitch.hit(-0.09 * k); this.S.yaw.hit(0.08 * k * side); this.S.roll.hit(0.05 * k * side); this.S.head.hit(-0.13 * k);
     this.whip = 1; this.flare0 = Math.max(this.flare0, 0.5);
     wizSfx("wiz_ward", null, -0.2, { vol: 0.8 });
   }
@@ -360,6 +413,7 @@ class Wizard {
     this.won = true;
     this.play("win", { from: 0.3, rate: 1.1, hold: true });
     this.flare0 = 1;
+    this.S.hop.hit(0.07); // (a little jump of it)
     this.ring(this.tip(this._u), WIZ.STAR, 1.1, 0.7);
   }
   // out of hearts: it sinks, its wand's light dying
@@ -447,25 +501,85 @@ class Wizard {
       if (!o.out && o.a.time >= o.to - 1e-3) { if (o.hold) { o.a.time = o.to; o.a.paused = true; } else o.out = 0.001; }
       if (o.out) { o.out += d; o.w = Math.max(0, 1 - o.out / o.outDur); if (o.w <= 0) { o.a.setEffectiveWeight(0); this.one = null; } }
       else o.w = o.in > 0 ? Math.min(1, o.w + d / o.in) : 1;
-      if (this.one) o.a.setEffectiveWeight(o.w);
+      if (this.one) o.a.setEffectiveWeight(Motion.ease.smooth(o.w)); // (eased in and out: no clip cuts in or out)
     }
-    let over = this.one ? this.one.w : 0;
-    for (let i = this.going.length - 1; i >= 0; i--) { const q = this.going[i]; q.w -= d / q.dur; if (q.w <= 0) { q.a.setEffectiveWeight(0); this.going.splice(i, 1); } else { q.a.setEffectiveWeight(q.w); over += q.w; } }
+    let over = this.one ? Motion.ease.smooth(this.one.w) : 0;
+    for (let i = this.going.length - 1; i >= 0; i--) { const q = this.going[i]; q.w -= d / q.dur; if (q.w <= 0) { q.a.setEffectiveWeight(0); this.going.splice(i, 1); } else { const e = Motion.ease.smooth(q.w); q.a.setEffectiveWeight(e); over += e; } }
     // while a question is read, its wand held out at the boss, higher as the attack bar fills (none once it has won or lost)
     const Rd = WIZ.READY, want = this.readyAct && this.g.state === "ask" && !this.lost && !this.won ? Rd[0] + (Rd[1] - Rd[0]) * smoothstep(0.1, 0.9, f) : 0;
-    this.readyW = wizEase(this.readyW, want, d, want > this.readyW ? 3 : 6);
+    this.readyW = this.readyW === undefined ? want : Motion.dampTo(this.readyW, this.readyTo === undefined ? want : this.readyTo, want, want > this.readyW ? 3 : 6, d); this.readyTo = want; // (the bar fills every frame: followed alike at any rate)
     if (this.readyAct) { this.readyAct.setEffectiveWeight(this.readyW); over += this.readyW; }
     if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - over));
+    // its flinch, a layer over all of it
+    const F = this.fl;
+    if (F) {
+      F.t = Math.min(F.end, F.t + d * F.rate); F.w = Math.min(1, F.w + d / 0.06);
+      F.act.time = F.t;
+      F.act.setEffectiveWeight(F.k * Motion.ease.smooth(Math.min(F.w, clamp((F.end - F.t) / F.rate / 0.3, 0, 1))));
+      if (F.t >= F.end) { F.act.setEffectiveWeight(0); this.fl = null; }
+    }
     this.mixer.update(d);
+    this.live(d, f);
+  }
+  // ---- its life over its clips, every frame: its breath (quicker and deeper after a big spell, as the attack bar fills
+  // and when it has lost), a little sway, its gaze on the boss, a blow's give, a cast's lunge, its slump when it has lost
+  live(d, f) {
+    if (!this.turns) return;
+    const S = this.S, B = this.B, T = this.turns, sd = this.seed, lost = this.lost, a = this.st.a, busy = this.one ? Motion.ease.smooth(this.one.w) : 0;
+    const t = (this.lt += d);
+    this.model.scene.getWorldQuaternion(this.invQ).invert();
+    if (lost) this.lostT += d;
+    this.exert = Math.max(0, this.exert - d * 0.35);
+    const braceTo = this.g.state === "ask" && !lost && !this.won ? smoothstep(0.35, 1, f) : 0;
+    this.brace = Motion.dampTo(this.brace, this.braceTo === undefined ? braceTo : this.braceTo, braceTo, 3, d); this.braceTo = braceTo;
+    const depth = 0.022 * (1 + 0.8 * this.exert + 0.3 * this.brace) * (lost ? 1.6 : 1);
+    this.brPh = (this.brPh || 0) + d * Math.PI * 2 * 0.24 * (1 + 0.7 * this.exert + 0.5 * this.brace) * (lost ? 0.7 : 1); // (its own phase: a quicker breath goes on from where it is)
+    const b = Math.sin(this.brPh);
+    T.turn(B.sp2, -0.6 * depth * b, 0, 0); T.turn(B.sp1, -0.3 * depth * b, 0, 0);
+    for (const c of this.clav) T.turn(c.bone, 0, 0, c.side * (depth * 0.8 * (b + 1) + 0.05 * this.brace)); // (braced, its shoulders up)
+    const sa = 0.014 * (1 - 0.6 * busy) * (lost ? 0.3 : 1);
+    T.turn(B.waist, 0, sa * Motion.noise(t * 0.17, sd), 0.6 * sa * Motion.noise(t * 0.13, sd + 1));
+    // its gaze: on the boss's head (it looks up at it), less while a clip performs
+    let yawT = 0, pitT = 0;
+    if (B.head && a && a.root.visible && !lost) {
+      const hp = B.head.getWorldPosition(this._t1), dir = a.at("head", this._t2).sub(hp).applyQuaternion(this.invQ);
+      yawT = clamp(Math.atan2(dir.x, dir.z), -0.5, 0.5); pitT = clamp(Math.atan2(dir.y, Math.hypot(dir.x, dir.z)), -0.4, 0.6);
+    }
+    const amt = (this.won ? 0.3 : 0.5) * (1 - 0.5 * busy);
+    const ly = S.lookY.step(d, yawT * amt), lp = S.lookX.step(d, -pitT * amt * 0.6);
+    const sp = S.pitch.step(d, 0), sy = S.yaw.step(d, 0), sr = S.roll.step(d, 0), hd = S.head.step(d, 0), lu = S.lunge.step(d, 0);
+    const slump = lost ? smoothstep(0, 2.5, this.lostT) : 0, br = 0.015 * this.brace;
+    T.turn(B.waist, 0.3 * sp + 0.3 * lu, 0.3 * sy, 0.3 * sr);
+    T.turn(B.sp1, 0.3 * sp + 0.35 * lu + 0.06 * slump - br, 0.3 * sy + 0.2 * ly, 0.3 * sr);
+    T.turn(B.sp2, 0.4 * sp + 0.35 * lu + 0.06 * slump - br, 0.4 * sy + 0.2 * ly, 0.4 * sr);
+    T.turn(B.neck, 0.4 * lp + 0.4 * hd, 0.3 * ly, 0);
+    T.turn(B.head, 0.6 * lp + 0.6 * hd + 0.2 * slump, 0.3 * ly, 0);
+    T.apply();
   }
   // ---- every frame, after the stage has framed its lens: where it stands, its cape, its light ---------------------
   update(d, f) {
     const g = this.g, quiet = this.quiet;
     this.place(d);
-    // the cape: a breeze, more as it casts or is struck (none with reduced effects)
-    this.whip = Math.max(0, this.whip - d * 1.4);
-    this.flut.t.value += d * (1 + this.whip * 1.5);
-    this.flut.k.value = quiet ? 0 : 0.28 + 0.72 * this.whip;
+    if (this.S) this.root.position.y += this.S.hop.step(d, 0);
+    // the wand's tip trails the hand and whips past it when the hand stops; the holder turned to point at it. (Both
+    // springs are reckoned in its own frame: it is placed against the lens, and the lens's own moves must not swing them)
+    const R = this.root;
+    if ((this.tipF || this.hemF) && R.visible) R.updateWorldMatrix(true, false);
+    if (this.tipF && R.visible) {
+      const h = this.hand;
+      h.updateWorldMatrix(true, false);
+      const T = R.worldToLocal(h.localToWorld(this._t1.copy(this.tipRest))), lag = this.tipF.step(d, T, 0.09), grip = this.holder.position;
+      const rd = this._t2.copy(this.tipRest).sub(grip).normalize(), fd = h.worldToLocal(R.localToWorld(this._t3.copy(T).add(lag))).sub(grip).normalize();
+      this.holder.quaternion.setFromUnitVectors(rd, fd).multiply(this.holderQ);
+    }
+    // the cape's hem trails the chest: the cape swings by it (in the mesh's own units and axes)
+    if (this.hemF && R.visible) {
+      const c = this.B.sp2;
+      c.updateWorldMatrix(true, false);
+      const lag = this.hemF.step(d, R.worldToLocal(c.localToWorld(this._t1.copy(this.hemRest))), 0.35);
+      this.mesh.getWorldQuaternion(this._q2).invert().multiply(R.getWorldQuaternion(this._q3));
+      this.flut.swing.value.copy(lag).applyQuaternion(this._q2).multiplyScalar(this.flut.amp.value * (quiet ? 0.5 : 1));
+    }
     // the wand's tip: gathers light while the question is read, flares as it casts; dies when it has lost
     this.charge += ((g.state === "ask" ? 0.25 + 0.75 * f : 0.2) - this.charge) * Math.min(1, d * 3);
     this.flare0 = Math.max(0, this.flare0 - d * 3.2);
