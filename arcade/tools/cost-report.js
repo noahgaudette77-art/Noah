@@ -7,7 +7,8 @@
  *                                    [--poses 0.35,1] [--parts] [--json out.json] [--scale 0.875] [--paint] [--device phone|mac]
  *
  * --device mac (2026-11-23): a MacBook Air's window instead (1470 x 830 at 2x, a mouse: a desktop, so the desktop's
- * tiers); --tier auto leaves the page's own choice (AUTO's first step) as it is.
+ * tiers; loaded and played to the moment measured at 1x, then drawn at 2x for the measured frames); --tier auto leaves
+ * the page's own choice (AUTO's first step) as it is. Boss Rush is measured at its first question, the wizard in.
  *
  * For each screen (the page served, every asset loaded, 440 x 956 at 3x, touch: a phone, so the phone's tiers):
  *   the drawing size and pixel ratio; draw calls, triangles, lights (point/spot/directional) and shadow casters;
@@ -32,7 +33,8 @@ const SCREENS = [
   ["title", "go('title')"], ["hub", "go('hub')"], ["blaster", "go('blaster','3')"], ["racer", "go('racer','2')"],
   ["boss", "go('boss','1')"], ["memory", "go('memory','2')"], ["exam", "go('exam')"], ["guide", "go('guide')"],
 ].filter(([k]) => !ONLY || ONLY.split(",").includes(k));
-const READY = { title: () => { const s = window.__arcade.Scenes.cur; return !s || !s.cells || (s.cells.every((c) => c.boss) && !!s.vault && !!s.cabs && !!s.cup && !!s.podMesh && !!s.sky && s.scene.children.filter((o) => o.name === "windows+skylights").every((o) => !o.material.uniforms.tTop || o.material.uniforms.tTop.value)); } }; // (and, from 2026-11-23, the skylights' own pictures)
+// what a screen is measured at: the title with every piece in; Boss Rush at its first question, the wizard in
+const READY = { boss: () => { const s = window.__arcade.Scenes.cur; return !s || !s.stage || (s.state === "ask" && !!s.stage.wiz); }, title: () => { const s = window.__arcade.Scenes.cur; return !s || !s.cells || (s.cells.every((c) => c.boss) && !!s.vault && !!s.cabs && !!s.cup && !!s.podMesh && !!s.sky && s.scene.children.filter((o) => o.name === "windows+skylights").every((o) => !o.material.uniforms.tTop || o.material.uniforms.tTop.value)); } }; // (and, from 2026-11-23, the skylights' own pictures)
 
 // Runs in the page before anything else: the main thread's time in each frame, and what the page holds on the
 // graphics chip (every texture, renderbuffer and buffer as it is made, sized, and let go of).
@@ -93,7 +95,9 @@ function launch(engine) {
   const browser = await launch(ENGINE);
   const out = [];
   for (const [name, go] of SCREENS) {
-    const ctx = await browser.newContext(MAC ? { viewport: { width: 1470, height: 830 }, deviceScaleFactor: 2, isMobile: false, hasTouch: false } : { viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: ENGINE !== "firefox", hasTouch: true });
+    // (the Mac: the page loads and plays to the moment measured at 1x, four times fewer pixels a frame in software, then
+    // reads 2x and draws the measured frames at the Retina screen's own size)
+    const ctx = await browser.newContext(MAC ? { viewport: { width: 1470, height: 830 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false } : { viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: ENGINE !== "firefox", hasTouch: true });
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -107,6 +111,7 @@ function launch(engine) {
     if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 900000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
     if (name === "title") await page.evaluate(() => window.__arcade.Assets.need("hub")).catch(() => null);
     await page.waitForTimeout(2500);
+    if (MAC) { await page.evaluate(() => { Object.defineProperty(window, "devicePixelRatio", { get: () => 2, configurable: true }); window.__arcade.GFX.resize(); }); await page.waitForTimeout(1500); }
     const poses = name === "title" && (await page.evaluate(() => !!(window.__arcade.Scenes.cur && window.__arcade.Scenes.cur.cells))) ? POSES_ARG.split(",").map(Number) : [null];
     let cdp = null;
     if (ENGINE === "chromium") { cdp = await ctx.newCDPSession(page); await cdp.send("Performance.enable"); }

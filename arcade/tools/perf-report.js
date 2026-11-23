@@ -158,7 +158,7 @@ const SCREENS = [
   console.log("screen    tier     canvas      scene drawn  MSAA  Mpx/frame  passes  draws (world)  tris     lights (point/spot/dir)  textures  programs  cpu ms (worst)  uploads per frame  budget");
   for (const [n, r, errs, key] of rows) {
     if (r.error) { console.log(n.padEnd(9), "ERROR", r.error); continue; }
-    const B = BUDGET[key], k = r.tier === "HIGH" ? 2.2 : 1, over = B ? [["mpx", r.mpx, B.mpx * k], ["passes", r.passes, k > 1 ? 21 : B.passes], ["draws", r.draws, B.draws], ["tris", r.tris, B.tris], ["lights", r.lights, B.lights]].filter(([, v, b]) => v > b).map(([q, v, b]) => `${q} ${v} > ${b}`) : [];
+    const B = BUDGET[key], k = r.tier === "HIGH" || r.tier === "MAC" ? 2.2 : 1, over = B ? [["mpx", r.mpx, B.mpx * k], ["passes", r.passes, k > 1 ? 21 : B.passes], ["draws", r.draws, B.draws], ["tris", r.tris, B.tris], ["lights", r.lights, B.lights]].filter(([, v, b]) => v > b).map(([q, v, b]) => `${q} ${v} > ${b}`) : [];
     r.budget = !B ? "" : over.length ? "OVER: " + over.join(", ") : "within budget";
     console.log(`${n.padEnd(9)} ${String(r.tier).padEnd(8)} ${r.canvas.padEnd(11)} ${r.scene.padEnd(12)} ${String(r.samples).padEnd(5)} ${String(r.mpx).padEnd(10)} ${String(r.passes).padEnd(7)} ${(r.draws + " (" + r.sceneDraws + ")").padEnd(13)} ${String(r.tris).padEnd(8)} ${String(r.lights).padEnd(3)} (${r.point}/${r.spot}/${r.dir})               ${String(r.textures).padEnd(9)} ${String(r.programs).padEnd(9)} ${(r.cpu + " (" + r.cpuMax + ")").padEnd(15)} ${r.up}  ${r.budget}${errs.length ? "   errors: " + errs.join(" | ").slice(0, 120) : ""}`);
   }
