@@ -1355,9 +1355,9 @@ class HubScene extends Scene3D {
     this.lasers.forEach((b) => {
       const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
       u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
-      aimBeam(b, u.from, u.to, 0.035);
+      aimBeam(b, u.from, u.to, 0.075); // (the master overhaul, 2026-11-23: twice as wide and a little fainter, so a beam reads as a beam of light and not as a one-pixel scratch across the picture)
       const f = b.material.uniforms.uFade;
-      f.value += (lf * 0.55 - f.value) * Math.min(1, dt * 1.5);
+      f.value += (lf * 0.4 - f.value) * Math.min(1, dt * 1.5);
       b.material.uniforms.uTime.value = this.t;
     });
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
