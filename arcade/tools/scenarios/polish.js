@@ -10,6 +10,9 @@
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 module.exports = async (cap) => {
   const part = (n) => !process.env.PART || process.env.PART.split(",").includes(n);
+  // each screen's randomness started afresh before it opens (the master overhaul, 2026-11-23: the stills of two runs
+  // compared picture for picture; the files arrive in real time, so without this the questions and scenery shifted)
+  const reseed = (k) => cap.eval((n) => window.__reseed && window.__reseed(n), 1000 + [...k].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
   const jpg = (name, q = 86) => { const p = path.join(cap.out, name + ".png"), j = path.join(cap.out, name + ".jpg"); execFileSync("convert", [p, "-quality", String(q), j]); fs.unlinkSync(p); return j; };
   // (the master overhaul, 2026-11-23: after each still, any two pieces of the page's visible text whose boxes overlap by
   // more than a third of the smaller, written to overlaps.json beside the stills: tools/harness.js reads it)
@@ -70,6 +73,10 @@ module.exports = async (cap) => {
     for (let i = 0; i < 1500 && !ok; i++) { await cap.fast(4); ok = await cap.eval(hallReady); if (!ok) await cap.page.waitForTimeout(100); }
     console.log("hall ready:", ok);
   }
+  if (part("title") || part("cell")) { // (each boss's idle from a fixed moment, whenever its files arrived)
+    await reseed("hall");
+    await cap.eval(() => { const s = window.__arcade.Scenes.cur; (s.cells || []).forEach((c, i) => { if (c.idle) c.idle.time = (i * 0.37) % Math.max(0.01, c.idle.getClip().duration); c.phase = i * 1.3; if (c.mixer) c.mixer.update(0); }); });
+  }
   if (part("title")) {
     await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.state = "glide"; s.gt = 0; s.u = 0; s.mult = 1; s.hurrying = false; s.arrived = false; s.rattleIn = 1e9; const el = document.querySelector(".scr-title"); el.classList.add("gliding"); s.onArrive = () => el.classList.remove("gliding"); });
     await cap.fast(60 * 5);
@@ -101,6 +108,7 @@ module.exports = async (cap) => {
   // ---- the cells as the player's progress leaves them (PART=cells): back to the title (it opens at the hall's end), a
   // beaten boss's cell (the first: DEFEATED), a cell in alarm (the Inflation Titan's), the Proctor's (alarm, cracked)
   if (part("cells")) {
+    await reseed("cells");
     // (by way of another screen, as a player comes back to the title: the title still up would be kept as it is, its
     // cells as they were before this progress)
     await cap.eval(() => window.__arcade.go("guide"));
@@ -123,6 +131,7 @@ module.exports = async (cap) => {
   }
   // ---- the arcade floor: its first visit (the room powers on), then the first cabinet chosen
   if (part("hub")) {
+    await reseed("hub");
     await cap.eval(() => window.__arcade.go("hub"));
     await waitReal(() => !!document.querySelector(".hub-name"));
     await cap.fast(300);
@@ -131,12 +140,14 @@ module.exports = async (cap) => {
     await still("05-hub");
   }
   if (part("select")) {
+    await reseed("select");
     await cap.eval(() => window.__arcade.show.select("boss"));
     await cap.fast(120);
     await still("06-chapter-select");
   }
   // ---- the three games, each with a question up in the middle of its action; Risk Blaster's explanation sheet too
   if (part("blaster")) {
+    await reseed("blaster");
     await cap.go("blaster", "3");
     await cap.next(); await cap.ask(1500); await cap.fast(90);
     await still("07-blaster");
@@ -144,17 +155,20 @@ module.exports = async (cap) => {
     await still("08-blaster-explanation");
   }
   if (part("racer")) {
+    await reseed("racer");
     await cap.go("racer", "2");
     await cap.next(); await cap.ask(1500); await cap.fast(90);
     await still("09-racer");
   }
   if (part("boss")) {
+    await reseed("boss");
     await cap.go("boss", "1");
     await cap.next(); await cap.ask(1500); await cap.fast(90);
     await still("10-boss");
   }
   // ---- Memory Bank: a card, its question side and its answer
   if (part("memory")) {
+    await reseed("memory");
     await stepAnimations(); // (the card's turn is a CSS transition: stepped with the frames, it has turned when pictured)
     await cap.go("memory", "3");
     await cap.fast(220);
@@ -165,6 +179,7 @@ module.exports = async (cap) => {
   }
   // ---- Final Exam (twenty questions), its first question up
   if (part("exam")) {
+    await reseed("exam");
     await cap.eval(() => { window.__arcade.show.examSetup(); const b = document.querySelector("[data-act=len][data-v='20']"); if (b) b.click(); });
     await cap.go("exam", "all");
     await cap.fast(260);
@@ -172,6 +187,7 @@ module.exports = async (cap) => {
   }
   // ---- Strategy Guide: the library, then a chapter open
   if (part("guide")) {
+    await reseed("guide");
     await cap.eval(() => window.__arcade.go("guide"));
     await waitReal(() => !!document.querySelector(".guide-lib"));
     await cap.fast(150);
@@ -182,6 +198,7 @@ module.exports = async (cap) => {
   }
   // ---- a results screen after its reward moment, the stats screen, Setup
   if (part("results")) {
+    await reseed("results");
     await stepAnimations();
     await cap.eval(() => {
       const A = window.__arcade;
@@ -192,11 +209,13 @@ module.exports = async (cap) => {
     await still("16-results");
   }
   if (part("stats")) {
+    await reseed("stats");
     await cap.eval(() => window.__arcade.show.stats());
     await cap.fast(60);
     await still("17-stats");
   }
   if (part("setup")) {
+    await reseed("setup");
     await cap.eval(() => window.__arcade.show.setup());
     await cap.fast(40);
     await still("18-setup");

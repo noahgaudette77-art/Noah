@@ -18,6 +18,8 @@
  *   cap.shot(name, {band})       one still (band: only the strip the 3D view shows in)
  *   cap.seq(name, n, every, {band, cols, thumb})   n stills `every` frames apart, and a strip of them side by side
  *   cap.eval(fn, arg)            run something in the page
+ *   (in the page: window.__reseed(n) starts the seeded Math.random afresh, so a screen opened after files arrived in
+ *   real time still draws the same questions and scenery every run)
  * Served over HTTP by default, so the asset files load; --file opens it from disk, as the regression does. --reduced:
  * the browser asks for reduced motion (REDUCED_MOTION in the page; a scenario sets Setup > Reduced effects itself).
  * --engine webkit: in WebKit (Safari's engine) instead of Chromium, from WEBKIT_BROWSERS_PATH (see card-faces.js).
@@ -64,6 +66,7 @@ function inPage() {
   window.requestAnimationFrame = (fn) => { const id = rid++; rafs.push({ id, fn }); return id; };
   window.cancelAnimationFrame = (id) => { rafs = rafs.filter((r) => r.id !== id); };
   let seed = 12345;
+  window.__reseed = (n) => { seed = n | 0; }; // (a scenario starts a screen's randomness afresh: the same questions and scenery every run, however long the files took)
   Math.random = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const C = (window.__cap = { frame: 0, errors: [], draw: true, render: null });
   window.addEventListener("error", (e) => C.errors.push(String(e.message)));
