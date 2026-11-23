@@ -62,7 +62,7 @@ far; what to test on the iPhone and the Mac); keep going without waiting unless 
 | provider | balance at the start | cap (60%) | spent in the overhaul | left within the cap |
 |---|---|---|---|---|
 | Tripo | 3,210 credits | 1,926 credits | 0 | 1,926 |
-| fal.ai | $18.859 | $11.31 | $0 | $11.31 |
+| fal.ai | $18.859 | $11.31 | $0.30 (the art bible's sheet) | $11.01 |
 | ElevenLabs | 78,267 credits left (52,733 of 131,000 used) | 46,960 credits | 0 | 46,960 |
 | Blockade | plan credits (no balance in its API) | at most 6 skies | 0 | 6 skies |
 
@@ -101,12 +101,23 @@ of real lights, half-resolution post effects, visibility-based updates, Low Powe
 - **Gate:** every screen inside its budget on the phone and Mac tiers, with numbers.
 
 ### Phase 2: image quality
-Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first; MSAA or SMAA everywhere (no FXAA: the governor's last
-step still uses it); PBR materials and HDRIs from Poly Haven and ambientCG (CC0) where generated textures are smudgy;
-the pmndrs `postprocessing` library weighed against the current pipeline (merged effect pass, selective bloom, MSAA
-kept); texture and UV cleanup; one coherent synthwave look; skies and environments; weak assets brought up (key assets
-made with Tripo and Rodin and the better kept; only what is clearly below the bar).
-- **Gate:** no blur, no stretched textures, no overlapping text; budgets kept.
+Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first (`tools/gen/artbible.js run`, about $0.24); MSAA
+everywhere (no FXAA: the governor's last step gets 2x multisampling; prepared in a stash, built after Phase 1's gate);
+PBR materials from ambientCG and Poly Haven (CC0) where surfaces are flat or smudgy (candidates found: MetalPlates015A/
+017A sci-fi deck plates, DiamondPlate008 tread plate, Metal009-012 brushed steel, Marble012/016/021); texture and UV
+cleanup; one coherent synthwave look; skies and environments; weak assets brought up (key assets made with Tripo and
+Rodin and the better kept; only what is clearly below the bar). The order, from the audit:
+1. no FXAA on any tier (S); 2. the art bible and the reference sheet (S);
+3. the interface's faults: the results bar over its content, Risk Blaster's sheet over the answer cards (Mac), MASTERY
+   over the cells' name plates (Mac), TAP TO ENTER on hazard stripes, the menus' murky frosted backdrop, text touching
+   card edges (Mac), the tiny 10-16 px icons (S each);
+4. the title hall's floor (a deck that reflects), its cells' glass (Fresnel and reflection), caps, brackets and base
+   tops (steel, tread plate) (M);
+5. Memory Bank's wall and floor, Boss Rush's floor and pillars, the exam's columns, the racer's facades (M each);
+6. the colours: Memory Bank's green-black and the arena's royal blue brought to the shared violet-black; no boss on its
+   own colour; the skylight that shows no sky; the side windows' glare (S-M).
+- **Gate:** no blur, no stretched textures, no overlapping text; budgets kept; stills before and after at the same
+  moments (deterministic since `13f3007`).
 
 ### Phase 3: animation and characters
 Follow-up of the animation pass (2026-11-23): what it left (feet in wide shots, the other games' characters), rigs and

@@ -294,6 +294,12 @@ rigid parts needs a part segmentation of each (40), and each got eight clips (80
 credits; the owner topped it up by 5,000 on 2026-11-16 and asked that Tripo be used for the menu props and for
 remaking any boss or asset that looks weak in a review, rather than falling back to Rodin or procedural shapes.
 
+**The master overhaul (from 2026-11-23; its budget and caps in `MASTER_PLAN.md`):**
+
+| when | provider | what | cost |
+|---|---|---|---|
+| 2026-11-23 | fal.ai | the art bible's reference sheet (`tools/gen/artbible.js`, `docs/art/`): eight Seedream 5.5 pictures of the look (the hall, a cell, the floor, the arena, the vault, the exam hall, the street, the interface), then the vault's and the interface's again without existing games' characters on their cabinets' screens: 10 pictures at $0.03 | $0.30 |
+
 One mistake is in the fal.ai figure: on 2026-11-15 a syntax check of `concepts.js` ran the generator by accident and
 redrew six existing concept prompts before it was stopped ($0.84). The duplicates were not used. The check is now
 done with `node --check`, which does not run the script. A second, on 2026-11-23: loading `concepts.js` from another

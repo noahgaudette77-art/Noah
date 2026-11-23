@@ -1,0 +1,34 @@
+{
+ "hall": {
+  "caption": "the title hall",
+  "prompt": "A long containment hall seen from its middle: two rows of tall cylindrical glass stasis cells, each holding a chrome robotic figure lit from inside in its own colour (cyan, violet, orange, gold, lime, ice blue), steel caps and brackets of brushed and painted metal, a polished dark steel deck floor with fine plate seams reflecting every cell, hazard stripes at the cell bases, ring lamps overhead, a vault door glowing gold at the far end. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "cell": {
+  "caption": "a cell: glass, steel, tread plate",
+  "prompt": "Close-up of one cylindrical glass stasis cell: thin clear glass with a bright Fresnel edge and soft reflections of neon, a chrome robot standing inside lit cyan from below, a heavy steel cap with bolts and a tread-plate base with yellow-black hazard stripes, a small glowing status screen on the base. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "floor": {
+  "caption": "the floor every screen shares",
+  "prompt": "Low view across a polished dark metal deck floor with fine plate seams and rivets, mirror-like reflections of magenta and cyan neon tubes and a gold vault light, slight wet sheen, the floor fills most of the frame. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "arena": {
+  "caption": "Boss Rush's arena",
+  "prompt": "A circular combat arena at night under a dome of stands: a crowd of lit stylised spectator figures with cyan and magenta rim light in tiered stands, sculpted pillars of dark brushed metal with neon inlays, a polished floor with a glowing duel circle, a hulking chrome boss facing a small caped wizard with a glowing wand. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "vault": {
+  "caption": "Memory Bank's vault",
+  "prompt": "A bank vault room: a huge round gold vault door with a spinning dial, walls of brushed steel safe-deposit boxes with warm amber rim light, stacks of gold bars that read as clean ingots, a polished dark floor reflecting the gold glow. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces, no logos, no recognisable characters from existing video games (screens and cabinets show abstract neon shapes only)"
+ },
+ "exam": {
+  "caption": "the Final Exam",
+  "prompt": "A grand examination hall at night: polished marble columns with violet neon edges, a raised dais under a cold blue key light, a towering armoured robot examiner wearing a mortarboard, its face and chest lit clearly, rim light in violet, moon through tall arched windows. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "street": {
+  "caption": "Nest Egg Run's street",
+  "prompt": "A rain-wet city street at night seen from a low racing car: building facades with real detail (window frames, balconies, signs, shopfronts, air vents), neon shop signs in orange and magenta, street lamps throwing pools of light on wet asphalt, reflections of signs on the road. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces"
+ },
+ "ui": {
+  "caption": "the interface's panels and icons",
+  "prompt": "A game interface panel design sheet on a dark violet background: a glass panel with a thin glowing cyan border, four answer buttons outlined in cyan, magenta, yellow and orange, a gold coin icon, a silver star icon, a trophy icon, all crisp vector style, pixel-art accents. synthwave neon arcade at night, deep violet-black ambient, chrome and glass, lit by its own neon signs, polished reflective dark floor catching the neon, cinematic lighting with a key and a rim light, high detail, crisp, no text, no letters, no watermark, no people's faces, no logos, no recognisable characters from existing video games (screens and cabinets show abstract neon shapes only)"
+ }
+}
