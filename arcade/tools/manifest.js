@@ -29,7 +29,7 @@ const SETS = {
   titlesound: ["sfx:core", "sfx:voice", "music:title", "music:title-b"],
   titleroar: ["sfx:bosses"],
   memory: ["sky:vault-gold", "ui:mat-deck", "ui:mat-steel", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked; the floor's deck plate and the boxes' brushed steel, CC0)
-  exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam", "model:statue-1", "model:statue-2", "model:statue-3", "model:statue-4", "model:statue-5", "model:statue-6", "model:statue-7", "model:statue-8", "model:statue-9", "model:statue-10", "model:statue-11", "model:statue-all", "model:decor-podium", "music:exam-b"],
+  exam: ["sky:exam-moon", "ui:mat-marble", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam", "model:statue-1", "model:statue-2", "model:statue-3", "model:statue-4", "model:statue-5", "model:statue-6", "model:statue-7", "model:statue-8", "model:statue-9", "model:statue-10", "model:statue-11", "model:statue-all", "model:decor-podium", "music:exam-b"], // (the hall's columns and floor: ambientCG Marble012, CC0)
   guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm", "model:decor-tome", "music:calm-b"],
 };
 const files = {};
