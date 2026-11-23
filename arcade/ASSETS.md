@@ -198,6 +198,13 @@ shows a chosen place in its panorama (the nebula's two clouds, the dusk's low su
 lightning, the vault's gold, the archive's shelves and stained glass, the exam hall's arch and moon). No cost: made
 from the skies already paid for.
 
+`top-blaster.webp`, `top-racer.webp`, `top-boss.webp`, `top-memory.webp`, `top-guide.webp`, `top-exam.webp`
+(2026-11-23, the owner: the ceiling panels were soft): each world's skylight's own picture, the part of its panorama a
+skylight can show (its span, its parallax each way and a margin: 38% x 31% of it) cropped from the full 4096 x 2048
+panorama by `tools/skylights.py` and stored at 1024 x 512 (18 to 92 KB each, 342 KB in all): about three times the
+detail the window picture gave the skylight, 2.8 MB more on the graphics chip a world. The title loads them last. No
+cost: made from the skies already paid for.
+
 `fx-runes.webp`, `fx-ward.webp`, `fx-star.webp` (2026-11-23, Boss Rush's wizard): white light on black, drawn additively
 in the game and tinted there, so one picture serves every spell's colour. A magic circle of rings and geometric marks (no
 letters, no real or occult symbols: the casting circle at the wand, the floating runes, Starfall's sigil over the boss),
