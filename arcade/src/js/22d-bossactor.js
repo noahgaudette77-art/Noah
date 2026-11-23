@@ -405,7 +405,7 @@ class BossActor {
       r.t = Math.min(r.end, r.t + d * r.rate);
       r.w = Math.min(1, r.w + d / Math.max(1e-3, r.in));
       r.act.time = r.t;
-      r.act.setEffectiveWeight(this.dead ? 0 : r.k * Motion.ease.smooth(Math.min(r.w, clamp((r.end - r.t) / r.rate / Math.max(1e-3, r.out), 0, 1))));
+      r.act.setEffectiveWeight(r.k * Motion.ease.smooth(Math.min(r.w, clamp((r.end - r.t) / r.rate / Math.max(1e-3, r.out), 0, 1))) * (this.dead ? Math.max(0, 1 - (this.deadT || 0) / 0.15) : 1)); // (dead: let go of over 0.15 s as it falls, never cut)
       if (r.t >= r.end) { r.act.setEffectiveWeight(0); delete this.adds[name]; }
     }
     this.mixer.update(0);
