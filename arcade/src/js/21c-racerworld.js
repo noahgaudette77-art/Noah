@@ -989,6 +989,7 @@ class RacerWorld {
     for (const k in this.sets) this.sets[k].visible = k === name;
     const dt = name === "downtown";
     [g.walls, g.cityDetail, g.signs, g.steam, g.towers, g.orrery].forEach((o) => { if (o) o.visible = dt; });
+    g.groundMat.uniforms.uCityK.value = dt ? 1 : 0; // (downtown's shoulders: a pavement, the shops' light and its picture in the wet)
     if (g.city) g.city.visible = dt || name === "coast";
     const open = name !== "tunnel";
     [g.props, g.halos, g.cones, g.sun, g.ridgeFar, g.ridgeNear].forEach((o) => { if (o) o.visible = open; });

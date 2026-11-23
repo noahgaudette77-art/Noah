@@ -228,6 +228,7 @@ function racerGroundMaterial(mirror, shared) {
       uGateZ: { value: -999 }, uGateI: { value: 0 }, uGateN: { value: 4 }, uPad: { value: new THREE.Vector3(-8.3, 5.4, 0) },
       uSlot0: { value: neon(SLOT_COLORS[0], 1) }, uSlot1: { value: neon(SLOT_COLORS[1], 1) }, uSlot2: { value: neon(0xf6f43a, 1) }, uSlot3: { value: neon(0xff5a1c, 1) },
       uSunA: { value: new THREE.Color(1, 0.8, 0.3) }, uSunB: { value: new THREE.Color(1, 0.3, 0.5) }, uSunK: { value: 0 },
+      uCityK: { value: 0 }, uCityL: { value: 1 }, tStreet: { value: null }, uMirrorOn: { value: 0 }, // (downtown's shoulders: see below)
     }),
     extensions: { derivatives: true },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -241,6 +242,7 @@ function racerGroundMaterial(mirror, shared) {
       uniform float uGateZ; uniform float uGateI; uniform float uGateN; uniform vec3 uPad;
       uniform vec3 uSlot0; uniform vec3 uSlot1; uniform vec3 uSlot2; uniform vec3 uSlot3;
       uniform vec3 uSunA; uniform vec3 uSunB; uniform float uSunK;
+      uniform float uCityK; uniform float uCityL; uniform sampler2D tStreet; uniform float uMirrorOn;
       varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
       float rh(vec2 p){ p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }
       // value noise that tiles along the road, so the scroll can wrap without a seam
@@ -304,7 +306,36 @@ function racerGroundMaterial(mirror, shared) {
         float gh = exp(-min(gd.x, gd.y) * 0.45);
         float gf = 1.0 - smoothstep(0.18, 0.55, max(gw.x, gw.y));
         vec3 floorc = uBase + uGrid * (gl + gh * 0.08) * gf;
+        // downtown (Phase 2: the shoulders were a black void): from the kerb, 9 m out, to the walls a pavement of wet
+        // slabs, each a shade of its own; the lamps' light spread from their posts to the walls; each shop's light
+        // pooled at its feet; and the shops and their neon lying in the wet ground, read from the street's own record
+        // (tStreet, as the walls draw them), so they show on every tier, the mirror or none
+        float cityK = 0.0, wpud = 0.0; vec4 shopHere = vec4(0.0);
+        if (uCityK > 0.0 && ax > 3.6) {
+          cityK = uCityK * (1.0 - smoothstep(40.0, 95.0, vDepth)); // (far off the record would be read too coarsely: it fades)
+          float walk = smoothstep(9.0 - fx, 9.0 + fx, ax) * uCityK;
+          vec2 sl = vec2((ax - 9.0) / 1.1, s / 0.9);
+          vec2 sw = max(fwidth(sl), vec2(1e-4));
+          float joint = (1.0 - min(min((0.5 - abs(fract(sl.x) - 0.5)) / sw.x, (0.5 - abs(fract(sl.y) - 0.5)) / sw.y), 1.0)) * (1.0 - smoothstep(0.15, 0.5, max(sw.x, sw.y)));
+          wpud = smoothstep(0.55, 0.8, wet) * walk;
+          vec3 pave = uAsphalt * (1.2 + 0.6 * rh(floor(sl) + 3.0)) * (0.8 + 0.45 * wet) * (1.0 - 0.55 * joint) * (1.0 - 0.4 * wpud);
+          pave += vec3(0.035, 0.035, 0.045) * (1.0 - smoothstep(0.04, 0.04 + fx * 1.5, abs(ax - 9.03))); // (the kerb's edge)
+          floorc = mix(floorc, pave, walk);
+          shopHere = texture2D(tStreet, vec2(s / ${RACER_LEN}.0, x < 0.0 ? 0.25 : 0.75));
+        }
         vec3 col = mix(floorc, asphalt, road) + refl;
+        if (cityK > 0.001) {
+          // where the eye's ray, turned up off the water, meets the shopfronts (the walls stand 9.2 to 10.8 m out:
+          // 9.8 is taken), and what it finds there: a shop's window, the neon fascia over it, or the wall
+          float tw = ((x < 0.0 ? -9.8 : 9.8) - x) / (x - cameraPosition.x);
+          if (tw > 0.0 && ax < 9.8) {
+            float hw = tw * cameraPosition.y, zw = z + tw * (z - cameraPosition.z);
+            vec4 rs = texture2D(tStreet, vec2((zw - uScroll) / ${RACER_LEN}.0, x < 0.0 ? 0.25 : 0.75));
+            float band = smoothstep(0.6, 1.4, hw) * (1.0 - smoothstep(3.3, 4.0, hw)), fasc = exp(-pow((hw - 4.35) / 0.22, 2.0));
+            vec3 rc = rs.rgb * (rs.a * band * (0.3 + 0.6 * uCityL) + fasc * (0.35 + 0.75 * uCityL));
+            col += rc * mix(0.22, 0.6, max(puddle, wpud)) * cityK * (1.0 - 0.55 * uMirrorOn) * smoothstep(3.6, 4.8, ax);
+          }
+        }
         if (uRain > 0.0 && road > 0.5) {
           // rain on the road: rings spread from where each drop lands
           vec2 rc = vec2(x, s) * 1.3; vec2 rf = fract(rc) - 0.5; float rr = rh(floor(rc) + 17.0);
@@ -328,6 +359,13 @@ function racerGroundMaterial(mirror, shared) {
           float cl = pool(vec2(x + 4.75, dzl), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x + 4.75 - kl * dzl, dzl - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
           float cr = pool(vec2(x - 4.75, dzr), vec2(0.8, 1.1)) * 1.2 + pool(vec2(x - 4.75 - kr * dzr, dzr - 4.6), vec2(0.3, 3.9)) * 0.85 * road;
           lt += ((uLampL + 0.3) * cl + (uLampR + 0.3) * cr) * uLampI;
+        }
+        if (cityK > 0.001) {
+          // downtown: each lamp's light reaches from its post to the walls, each lit shop's lies at its feet, and the
+          // street's own glow keeps the darkest stretch a deep violet (never black)
+          lt += (uLampL * pool(vec2(x + 6.6, dzl), vec2(3.2, 5.2)) + uLampR * pool(vec2(x - 6.6, dzr), vec2(3.2, 5.2))) * uLampI * 0.5 * cityK;
+          lt += vec3(0.045, 0.03, 0.1) * smoothstep(5.0, 6.5, ax) * cityK;
+          lt += shopHere.rgb * shopHere.a * exp(-max(9.8 - ax, 0.0) * 0.55) * (0.5 + 0.7 * uCityL) * cityK;
         }
         float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
@@ -480,7 +518,7 @@ function racerCityMaterial(shared, P, maps) {
             vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
             if (q.y < 4.8) {
               float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
-              float openK = mix(0.55, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
+              float openK = mix(0.7, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
               float bay = rbox(vec2(f.x, q.y), vec2(0.14, 0.7), vec2(0.86, 3.9), vec2(aw.x / 1.9, aw.y)) * front;
               // the window: two mullions, a transom, brighter under its ceiling, the counter and the goods dark against the light
               float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
@@ -522,7 +560,7 @@ function racerStreetTexture(blocks) {
     for (let i = Math.ceil(z0 * 4 - 0.5); (i + 0.5) / 4 < b.z; i++) {
       const zc = (i + 0.5) / 4, bay = Math.floor(zc / 1.9), bc = (bay + 0.5) * 1.9;
       // (a bay is the block's if its middle is: the wall draws a bay's shop from there)
-      const lev = bc >= z0 && bc < b.z && racerHash(bay, b.sd * 3) > 0.45 ? (0.45 + 0.9 * racerHash(bay * 3.7, b.sd * 11)) / 1.35 : 0;
+      const lev = bc >= z0 && bc < b.z && racerHash(bay, b.sd * 3) > 0.3 ? (0.45 + 0.9 * racerHash(bay * 3.7, b.sd * 11)) / 1.35 : 0; // (three in ten shut)
       const o = (row * W + (((i % W) + W) % W)) * 4;
       d[o] = Math.round(c[0] * 255); d[o + 1] = Math.round(c[1] * 255); d[o + 2] = Math.round(c[2] * 255); d[o + 3] = Math.round(lev * 255);
     }
@@ -987,6 +1025,7 @@ class RacerGame extends QuizGame {
     s.add(this.ground);
     s.userData.mirrors = [this.mirror];
     this.buildProps();
+    this.groundMat.uniforms.tStreet.value = this.streetTex; // (the street's shops: the wet road reads them as the walls do)
     this.buildSpeedLines();
     this.car = this.makeCar();
     { // skid marks (see skid())
@@ -1800,6 +1839,7 @@ class RacerGame extends QuizGame {
     g.uGrid.value.copy(sky.grid).multiplyScalar(1.5);
     g.uBase.value.copy(sky.bg).multiplyScalar(0.18);
     g.uAsphalt.value.copy(sky.bg).multiplyScalar(0.28);
+    g.uCityL.value = sky.city; // (the shops in the wet ground, as bright as on the walls)
     g.uSunA.value.copy(sky.sunTop); g.uSunB.value.copy(sky.sunBot); g.uSunK.value = 0.6 * sky.sunI * (0.35 + 0.65 * Math.min(1, sky.wet || 0));
     this.shared.uLampI.value = sky.lamps;
     const pu = this.props.material.uniforms;
@@ -1964,6 +2004,7 @@ class RacerGame extends QuizGame {
     }
     g.uTail.value = 0.75 + 1.4 * smoothstep(0, 0.25, this.carKit.brake);
     g.uShade.value = GFX.opt.shadows ? 1 : 0;
+    g.uMirrorOn.value = this.mirror.blanked === false ? 1 : 0; // (where the mirror is drawn it gives back the shops itself: the road's own picture of them is turned down)
     g.uCarY.value = this.carKit.heave.x;
     g.uPad.value.z = this.laneTags && this.round && this.round.n === 2 ? this.tagK : 0;
     this.world.update(dt, sp, step, sky);
