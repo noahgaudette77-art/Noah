@@ -3480,3 +3480,186 @@ AUTO gave up drawing size to keep 60: send that screenshot.
 **Spend**: Tripo 195 credits (the wizard 60, the wand 30, the rig 25, eight clips 80); fal.ai $2.30 by the balance
 ($1.94 by the ledger: three Nano Banana Pro concepts, two Seedream wand concepts, one Rodin candidate $1.20, three
 textures, and $0.14 lost to a generator script run by mistake: see `ASSETS.md`); ElevenLabs 472 credits (38 takes).
+
+## Sharp and smooth: the iPhone and the MacBook (2026-11-23)
+
+The owner's order: the wizard could barely be seen (make him come out, change the colours, he need not match); then
+the game as crisp and detailed as it can be, no visible blur, and a steady 60 FPS on their iPhone 17 Pro Max (upright,
+touch) and their MacBook Air (Apple silicon, 13-inch, Safari and Chrome, landscape, mouse and keyboard, Retina), the Mac
+excellent through long sessions. Device tiers chosen automatically with Setup's override (a phone tier, a Mac tier, a
+safe one); an adaptive governor on all of them (resolution first, then effects, then lights; back up slowly; easing
+for heat; iOS Low Power Mode met with a lighter tier, not fought); MSAA, not FXAA; no TAA; text and HUD as crisp HTML;
+the renderer and the post-processing at matching sizes; anisotropy and mipmaps right; nothing stretched; the soft
+textures fixed (the ceiling panels); draw calls near 100 on the phone; assets compressed; few real lights; passes that
+earn their cost; only what is seen animated; paused when hidden; WebGL. The Mac: the wide screen used, keyboard
+shortcuts and hover, resizing without leaks or blur, Retina and external monitors. No change to study logic, content,
+scoring, rules, `content/` or `scripts/`; no feature removed (look and performance only); small commits, each with its
+frame time before and after; WebKit and Chromium.
+
+**What was soft, found first** (the final pass's shader, the tiers, the stills at each device's own pixels):
+- FXAA ran on every frame, even over a picture 4x or 2x multisampling had already smoothed: every edge softened twice.
+- The CRT glass bent the picture (its curve resampled every pixel), softest toward the edges, where the wizard stands.
+- The phone started at 1.75x with FXAA, stretched by the browser to its 3x screen.
+- The Mac drew depth of field (the crowd and the arena behind the boss softened on purpose) and the lens's resting
+  colour fringe toward the corners.
+- The title hall's ceiling skylights showed about 300 x 110 pixels of a 1024 x 512 picture over a 9 m pane.
+- On a computer, models' pictures were filtered 8x (roads and floors already 16x); the cells' plates drawn at 3/4.
+Already right, and kept: the text, menus and HUD are the page's own HTML over the picture; the renderer and every pass
+are sized from the same drawing size (the bloom, ambient shade and depth of field at half size by design: their
+output is blurred anyway); on the Mac the drawing size is the screen's own pixels (2x), nothing stretched; textures
+have mipmaps; draw calls are 33 to 83 a screen on the phone and lights 3 to 5 (each screen's budget, LightPool);
+the models were already simplified, deduplicated, pruned and meshopt-compressed with glTF-Transform, their pictures
+WebP; rAF stops when the page is hidden and the game pauses.
+
+**Done** (a commit each, in this order):
+1. `fda0cfe` **the wizard stands out**: its violet cloth repainted in the shader, folds kept, never brighter than the
+   colour itself: a gold coat, a vermilion cape, coat-tails and hat, a deeper red lining (the arenas' violet and blue's
+   opposites; tried and set aside: ivory, washed out under the arena's lights; crimson, lost in a red arena; emerald).
+   The whole cape takes its colour (a clean edge on the flutter mask, no fade across the back); a little light of its
+   own for the darkest arena. On a landscape screen it stands a metre nearer the lens, about a third larger.
+2. `20c1963` **no blur**: FXAA only where there is no multisampling; the glass's bend a Setup > Effects switch, SCREEN
+   CURVE, off to begin with (the glass's scanlines, bezel and glare stay); depth of field off to begin with (once, for
+   a save made before; still a switch).
+3. `d504ed8` **the tiers**: MAC (2x, 4x MSAA, every effect), PHONE (at most 2x, 2x MSAA, half-size bloom, no ambient
+   shade, depth of field, motion blur, lens streaks, mirror, god rays or contact shadows, fewer particles), SAFE (1.5x,
+   2x MSAA, the fewest passes), LIGHTEST (the governor's last step: 1.25x, FXAA). No tier draws the resting colour
+   fringe (a hit still parts the colours). Setup > Graphics: AUTO, MAC, PHONE, SAFE (saved under their old names).
+4. `0e53577`, with the review's fixes `1d51db5`, `707903b`, `9a2fb98`, `a73b982` **the governor**: a phone starts at
+   PHONE 2x, a computer at MAC 2x. Under ~55 fps for a couple of seconds: the drawing size first, in tenths (2x, 1.9x
+   ... 1.5x), then the effects, then the lights; still slow at the next look, two sizes at once, then three (within a
+   tier). Back up after 8 steady seconds (a step that fails again at once: 24 s, then 40 s, then never). Heat: one frame in fifty late
+   through ten seconds, not the main thread's doing, eases the size one step before it stutters, only within the tier;
+   each ease is judged from its own first full ten seconds and taken back if the late frames did not fall by three in
+   ten (not tried from there for 5, then 10, then 20 minutes); a step eased from is climbed back after 30 s (then 60 s,
+   never after a third) only with under one late frame in a hundred. Low Power Mode (held at 30): a phone goes to SAFE
+   at once and back to its step when the cap lifts; a computer at a steady 30 (a 30 Hz screen) keeps its step. The
+   window moved to a screen of another density, or zoomed: the ladder made again at once (the device pixel ratio is
+   read every frame: the media-query event does not reach every browser). `tools/governor-test.js`: 56 checks.
+5. `2564ab5` **the ceiling's skylights**: each world's skylight its own picture, cropped from the full 4096 x 2048
+   panorama by `tools/skylights.py` (about three times the detail; 2.8 MB more on the graphics chip a world; loaded
+   last); the window pictures filtered as finely as the tier allows.
+6. `37c01ef` models' pictures filtered 16x on a computer (4x on a phone); the cells' plates at full size there.
+7. `83a41a3` **the Mac**: every hover style kept to devices that hover (a phone's tap left it lit); with a mouse a
+   Setup switch's choices light their edge, cards, chips, tiles and trophy rows brighten, the pointer shows on all that
+   can be clicked; the pause menu lists the game's keys (answers 1-4 or A-D, Enter next, P or Esc pause; the racer's
+   lanes and boost; the flashcards' flip and grades; the exam's arrows). The landscape layout was already the wide
+   screen's (the question across the top, the answers two by two, the picture between); the wizard now fills it better.
+8. `e7ad950` the FPS counter's second line names the edge smoothing: MSAA 4X, MSAA 2X or FXAA.
+9. `6db0112` **a leak in Risk Blaster**, found by a long session on one page (every screen visited in turn, three
+   times over): each visit left a model's worth on the graphics chip (three 512 x 512 pictures, ~600 KB of geometry:
+   the escort ships' kits the scene's sweep never saw). Now let go of. Measured again over three full cycles: the
+   shaders (239) and the script's heap flat; what still grows is 2 small geometries and 1 picture a cycle.
+10. `022ccba`, `75236cc`, `8fb5cde` tools: `cost-report.js --device mac` (loaded at 1x, measured at 2x), Boss Rush
+    measured at its question; `perf-report.js` gives MAC its budget; `capture.js` waits longer for a Retina still.
+
+**Each change's frame time** (WebKit, Boss Rush with a question up, one loaded page, each change switched in place and
+the configurations timed in turn, three rounds; this machine draws in software: compare, do not read as a device's):
+
+| change | Mac (1470 x 830, 2x) | phone (440 x 956, 3x) |
+|---|---|---|
+| before | 877 ms (HIGH: FXAA over 4x MSAA, bend, depth of field, fringe, 8x) | 145 ms (MEDIUM 1.75x, FXAA, bend) |
+| 1 the wizard nearer (the Mac) | 872 (-0.6%) | |
+| 2 no FXAA over MSAA, no bend, no depth of field | 650 (-25.5%) | 141 (-2.8%: no bend) |
+| 3 MAC: no resting fringe / PHONE: 2x MSAA instead of FXAA | 634 (-2.5%) | 331 (+135%) |
+| 4 PHONE's start at 2x instead of 1.75x | | 410 (+24%) |
+| 6 models filtered 16x | 644 (+1.6%) | |
+| after | **644 ms (-27%)** | **410 ms (+183%)** |
+
+The skylights (5), on the title mid-glide: 326 → 329 ms (+0.9%). The governor, the hover and the readout draw nothing.
+The phone's frame is heavier in software, as the order asked: 2x MSAA where it had none, and 2x where it drew 1.75x
+(31% more pixels). Software multisamples the slow way; the iPhone's GPU, tile-based, resolves multisampling largely on
+the chip, so this machine cannot say what it costs there: the FPS counter on the phone is the measure (see below), and
+if 2x MSAA at 2x does not hold 60, AUTO takes the size down in tenths within seconds (the effects only after 1.5x).
+
+**Every screen** (`tools/cost-report.js`, Chromium; frames held still; the phone at AUTO's first step, the Mac at its
+tier). The phone, before (MEDIUM 1.75x, 770 x 1673, FXAA) → after (PHONE 2x, 880 x 1912, 2x MSAA):
+
+| screen | draws | triangles | lights | pictures, MB | render targets, MB |
+|---|---|---|---|---|---|
+| title, mid-glide | 33 | 146K | 4 | 262 → 285 | 0 → 38 |
+| title, the glide's end | 34 → 35 | 174K → 185K | 4 | 262 → 285 | 0 → 38 |
+| hub | 39 → 44 | 97K → 100K | 4 | 177 → 183 | 2 → 41 |
+| Risk Blaster | 49 | 154K | 5 | 300 → 306 | 18 → 56 |
+| Nest Egg Run | 58 → 57 | 100K → 102K | 5 | 239 → 245 | 14 → 52 |
+| Boss Rush | 61 (\*) | 108K (\*) | 5 | 203 → 209 | 2 → 41 |
+| Memory Bank | 53 | 98K | 4 | 67 → 74 | 2 → 41 |
+| Final Exam | 79 → 83 | 35K → 37K | 5 | 97 → 104 | 4 → 43 |
+| Strategy Guide | 49 | 32K | 3 | 58 → 65 | 0 → 38 |
+
+(\*) Boss Rush at its first question on the capture tool's clock, the same moment in both builds: 61 draws and 107,809
+triangles before and after, exactly. The cost report plays in real time and caught the fight's camera at different
+moments (57 draws and 91K before, 44 and 52K after). The hub, the title's end and the exam vary a little run to run the
+same way (their scenes are never quite the same twice).
+
+The Mac, before (HIGH) → after (MAC), both 2x (2940 x 1660) with 4x MSAA:
+
+| screen | draws | triangles | lights | pictures, MB | render targets, MB |
+|---|---|---|---|---|---|
+| title, mid-glide | 63 | 293K | 4 | 412 → 421 | 223 |
+| title, the glide's end | 48 | 185K | 4 | 412 → 424 | 223 |
+| hub | 89 → 87 | 313K | 4 | 358 → 340 | 232 |
+| Risk Blaster | 68 → 66 | 160K → 160K | 5 | 564 → 546 | 241 |
+| Nest Egg Run | 96 → 95 | 184K → 189K | 5 | 551 → 532 | 244 |
+| Boss Rush | 63 → 59 | 50K → 50K | 5 | 480 → 462 | 232 |
+| Memory Bank | 90 | 183K | 4 | 262 | 232 |
+| Final Exam | 89 → 87 | 32K | 5 | 298 → 279 | 228 |
+| Strategy Guide | 65 → 63 | 32K | 3 | 261 → 242 | 223 |
+
+(The title's pieces had not all come in within the report's 15 minutes in either build, here in software at the Mac's
+size: the same pieces both times. The Mac's render targets, 223 to 244 MB, are its 4x multisampled scene at 2940 x 1660
+and its passes, as before; depth of field's buffers are no longer made where it is off: 18 MB fewer pictures there.)
+
+Pictures (MB): what is held on the graphics chip as textures; render targets: the multisampled scene and its passes.
+The phone holds about 45 MB more a screen: the multisampled scene (about 38 MB) and the passes at 2x. Its largest
+screen (Risk Blaster) holds about 370 MB in all, well inside what an iPhone 17 Pro Max gives a page. Every screen's frame, before and after, the two builds' frames timed in turn in one WebKit (software: compare only):
+
+| screen | phone, MEDIUM 1.75x → PHONE 2x | Mac, HIGH → MAC (both 2x) |
+|---|---|---|
+| title | 531 → 979 ms (+84%) | 2098 → 1761 ms (-16%) |
+| hub | 276 → 585 ms (+112%) | 2204 → 1911 ms (-13%) |
+| Risk Blaster | 228 → 371 ms (+63%) | 1941 → 1006 ms (-48%) |
+| Nest Egg Run | 462 → 403 ms (-13%, its scene differs run to run) | 2604 → 1744 ms (-33%) |
+| Boss Rush | 213 → 297 ms (+39%) | 2715 → 2405 ms (-11%) |
+| Memory Bank | 276 → 666 ms (+141%) | 1862 → 1843 ms (-1%) |
+| Final Exam | 576 → 972 ms (+69%) | 3003 → 2254 ms (-25%) |
+| Strategy Guide | 178 → 343 ms (+93%) | 1882 → 1494 ms (-21%) |
+
+The Mac is faster on every screen (no FXAA pass over its multisampled picture, no depth of field, no bend). The
+phone's frame is heavier on every screen in software: the multisampling it asked for, which software does the slow way
+(+135% in the change-by-change table), and 2x where it drew 1.75x (+24%). (The Chromium reports' own frame times are
+left out: other jobs ran beside them.)
+
+**Not done, and why:**
+- KTX2/Basis textures (toktx): the pictures are WebP now, small to download. Basis would need its transcoder (WASM, a
+  worker) in the page and would trade either detail (ETC1S) or download size (UASTC, several times WebP) for graphics
+  memory, which is not short (above). The owner asked for crisp: not traded.
+- Blender (decimation, LODs, light bakes): the models were simplified when processed; the triangles are 30K to 185K a
+  screen; lights are 3 to 5 a screen and no screen casts real-time shadows on a phone. Nothing to gain that the eye
+  would not pay for.
+- Spector.js: the counts it gives (draws, triangles, textures, programs, memory) come from `cost-report.js`'s own
+  WebGL counters and `renderer.info`, headless, per screen.
+- The generative services: no asset needed making again (the skylights came from the panoramas already paid for).
+- WebGPU: stayed on WebGL, as asked.
+- The racer, the exam and the guide's look, the menus' layout: unchanged beyond what the tiers and the AA change.
+
+**Reviewed** (an independent reviewer, then two re-checks with a harness of its own): resizing had been put off to the
+next frame and blanked the canvas while a window was dragged (back to at once); heat easing could cycle between tiers
+or slide to the last step (now the size only, judged, bounded); a density change during a 30 fps hold landed on the
+wrong step (remapped); a computer at a steady 30 Hz fell to SAFE (keeps its step); the depth-of-field switch-off could
+be undone by a sync (its mark goes with the switches; no save at boot); a tool's old tier name. Re-checked on 8 seeds
+a case: every heat case settles, nothing newly wrong.
+
+**Tests on the final build:** the regression from disk IDENTICAL (153 answers in 8 games), served IDENTICAL too; the
+sequence ALL 13 STEPS OK; the card faces (WebKit, Chromium) one face at a time; the governor 56 checks in both
+engines; `git diff c94c926..HEAD -- arcade/content scripts` empty.
+
+**For the owner** (Setup > FPS counter ON; Low Power Mode off unless testing it):
+- The iPhone, Safari upright: the title hall's glide and a Boss Rush fight. Line one about 60 FPS, the bars green on
+  the white line; line two PHONE · 2.00X 880×1912 · MSAA 2X; line three AUTO · STEP 1/11. A higher step during a fight
+  means AUTO gave up drawing size to keep 60: send that screenshot. Then Low Power Mode on: within seconds HELD AT 30
+  FPS · LOW POWER MODE? SAFE TIER; off again, back to STEP 1.
+- The MacBook, Safari and Chrome (the window full size): line two MAC · 2.00X · MSAA 4X; 60 FPS; line three AUTO ·
+  STEP 1/12. A long session (half an hour): line three should stay at step 1 or 2; EASING: FRAMES CREEPING UP (HEAT?)
+  means the Air warmed and AUTO took a tenth off the size. Drag the window to another screen and back, resize it: the
+  picture stays sharp, line two's size follows. P or Esc in a game: the keys are listed. Hover the buttons and Setup.
+- Setup > Effects: SCREEN CURVE and DEPTH OF FIELD start off now; either can be switched back on.
