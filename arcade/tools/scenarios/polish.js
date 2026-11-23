@@ -173,6 +173,7 @@ module.exports = async (cap) => {
     await stepAnimations(); // (the card's turn is a CSS transition: stepped with the frames, it has turned when pictured)
     await cap.go("memory", "3");
     await cap.fast(220);
+    await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.probeNow) s.probeNow(); }); // (its floor's reflection drawn now: see MemoryGame.probeNow)
     await still("11-memory-front");
     await cap.eval(() => window.__arcade.Scenes.cur.flip());
     await cap.fast(60);

@@ -27,7 +27,7 @@ const SETS = {
     "model:boss-1-t", "model:boss-2-t", "model:boss-3-t", "model:boss-4-t", "model:boss-5-t", "model:boss-6-t", "model:boss-7-t", "model:boss-8-t", "model:boss-9-t", "model:boss-10-t", "model:boss-11-t", "model:boss-all-t", "ui:top-blaster", "ui:top-racer", "ui:top-boss", "ui:top-memory", "ui:top-guide", "ui:top-exam"],
   titlesound: ["sfx:core", "sfx:voice", "music:title", "music:title-b"],
   titleroar: ["sfx:bosses"],
-  memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked)
+  memory: ["sky:vault-gold", "ui:mat-deck", "ui:mat-steel", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked; the floor's deck plate and the boxes' brushed steel, CC0)
   exam: ["sky:exam-moon", "model:prop-podium", "sfx:core", "sfx:combat", "sfx:voice", "music:exam", "model:statue-1", "model:statue-2", "model:statue-3", "model:statue-4", "model:statue-5", "model:statue-6", "model:statue-7", "model:statue-8", "model:statue-9", "model:statue-10", "model:statue-11", "model:statue-all", "model:decor-podium", "music:exam-b"],
   guide: ["sky:guide-archive", "model:prop-tome", "sfx:core", "music:calm", "model:decor-tome", "music:calm-b"],
 };

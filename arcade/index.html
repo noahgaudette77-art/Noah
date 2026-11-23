@@ -950,13 +950,13 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .vault-window {
   flex: 1 1 0; min-height: 84px; max-height: 330px; position: relative; pointer-events: none;
   border: 2px solid rgba(255, 201, 61, 0.8);
-  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(2, 8, 5, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
+  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(5, 2, 18, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
 }
 .vault-window > span { position: absolute; left: 10px; top: 9px; font: 400 8px/1 var(--font-display); letter-spacing: 0.1em; color: #ffe9b0; text-shadow: 0 1px 0 #000, 0 0 6px #000; }
 .scr-game .card-stage.below { flex: 0 1 372px; min-height: 232px; }
 .scr-game .card-stage.below::before {
   content: ""; position: absolute; z-index: -1; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); top: -3px; bottom: -120px;
-  background: linear-gradient(180deg, rgba(3, 9, 7, 0.9), rgba(3, 9, 7, 0.8) 40%, rgba(3, 9, 7, 0.72));
+  background: linear-gradient(180deg, rgba(9, 3, 32, 0.9), rgba(9, 3, 32, 0.8) 40%, rgba(9, 3, 32, 0.72));
 }
 /* A card's faces never grow wider than the card: the one-line hint on the back was wider than a 360-pixel
    phone's card and pushed the answer's text out under the frame. The hint now scales with the screen and may
@@ -1118,8 +1118,8 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-game .card-stage.below { flex: 0 1 392px; min-height: 250px; padding: 16px 9px 13px; }
 /* (These grounds are a hair short of opaque on purpose. Two fully opaque rectangles meeting round the window made the
    browser's compositor count the 3D canvas behind them as covered and stop drawing it: the window went blank.) */
-.scr-game .card-stage.below::before { top: -6px; background: rgba(3, 9, 7, 0.996); }
-.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(3, 9, 7, 0.996); pointer-events: none; }
+.scr-game .card-stage.below::before { top: -6px; background: rgba(9, 3, 32, 0.996); }
+.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(9, 3, 32, 0.996); pointer-events: none; }
 .vault-window::before { right: calc(100% + 2px); }
 .vault-window::after { left: calc(100% + 2px); }
 .vault-window.bank { animation: vault-bank 0.6s ease-out; }
@@ -1148,7 +1148,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 /* Memory Bank, third independent review. The band behind the HUD is solid ground too (a miss's red light showed
    behind it and stopped dead at the gutters). The card turns with less perspective, so it stays in its lane. The
    dial's ring behind a term fades where the term's lines pass. A hint breaks before a separating dot, never after. */
-.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(3, 9, 7, 0.996); }
+.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(9, 3, 32, 0.996); }
 .scr-game .card-stage.below { perspective: 2200px; }
 .face.front::after {
   -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%), linear-gradient(180deg, #000 0, #000 30%, transparent 40%, transparent 60%, #000 70%, #000 100%);
@@ -7021,7 +7021,7 @@ function readTime(round, mult = 1) {
 /* ---- 03a-files.js ---- */
 // Written by tools/manifest.js: every file under arcade/assets the page may fetch (and its size), the cues inside each
 // sound sprite ([start, length, level, how far the music ducks]), the music and its loop points, and what each screen needs.
-const INR_FILES = {"files":{"audio/music-blaster-b.mp3":1224090,"audio/music-blaster.mp3":1224090,"audio/music-boss-b.mp3":1134490,"audio/music-boss.mp3":1258833,"audio/music-calm-b.mp3":1166307,"audio/music-calm.mp3":1166307,"audio/music-exam-b.mp3":1075610,"audio/music-exam.mp3":1252615,"audio/music-finalboss-b.mp3":1334170,"audio/music-finalboss.mp3":1214215,"audio/music-hub-b.mp3":1134490,"audio/music-hub.mp3":1134490,"audio/music-memory-b.mp3":1190444,"audio/music-memory.mp3":1190444,"audio/music-racer-b.mp3":1177644,"audio/music-racer.mp3":1177644,"audio/music-title-b.mp3":1093530,"audio/music-title.mp3":841553,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1393050,"audio/sfx-core.mp3":1997210,"audio/sfx-hub.mp3":356981,"audio/sfx-racer.mp3":708433,"audio/sfx-wizard.mp3":589210,"audio/voice.mp3":1436675,"models/ally-a.glb":262944,"models/ally-a2.glb":126532,"models/ally-b2.glb":133520,"models/ally-c.glb":265876,"models/ally-c2.glb":126524,"models/boss-1-t.glb":1040772,"models/boss-1.glb":1830032,"models/boss-10-t.glb":627320,"models/boss-10.glb":1742244,"models/boss-11-t.glb":999016,"models/boss-11.glb":1904412,"models/boss-2-t.glb":1046844,"models/boss-2.glb":1996204,"models/boss-3-t.glb":992164,"models/boss-3.glb":1941936,"models/boss-4-t.glb":941796,"models/boss-4.glb":1925112,"models/boss-5-t.glb":989920,"models/boss-5.glb":1863492,"models/boss-6-t.glb":1035040,"models/boss-6.glb":1988180,"models/boss-7-t.glb":1142852,"models/boss-7.glb":2223484,"models/boss-8-t.glb":915160,"models/boss-8.glb":1851376,"models/boss-9-t.glb":938820,"models/boss-9.glb":1820028,"models/boss-all-t.glb":881440,"models/boss-all.glb":1609368,"models/brood-a.glb":89508,"models/brood-a1.glb":85284,"models/brood-a2.glb":47868,"models/brood-a3.glb":48720,"models/brood-b.glb":63768,"models/brood-d.glb":84920,"models/brood-d2.glb":70532,"models/brood-f.glb":75524,"models/brood-f2.glb":45360,"models/chaser.glb":227372,"models/decor-deck.glb":277664,"models/decor-podium.glb":238264,"models/decor-tome.glb":237300,"models/demon.glb":1625192,"models/mini-proctor.glb":209468,"models/mini-starfighter.glb":299432,"models/mini-warrig.glb":342752,"models/prop-bolt.glb":185808,"models/prop-bus.glb":223360,"models/prop-cabinet.glb":355356,"models/prop-car.glb":265808,"models/prop-coin.glb":102176,"models/prop-deck.glb":284156,"models/prop-heart.glb":199368,"models/prop-medal.glb":239160,"models/prop-podium.glb":230936,"models/prop-rock.glb":271552,"models/prop-rock2.glb":239280,"models/prop-shield.glb":188212,"models/prop-ship-a.glb":282888,"models/prop-ship-b.glb":252920,"models/prop-ship-c.glb":258308,"models/prop-stand.glb":196180,"models/prop-star.glb":225828,"models/prop-tome.glb":218040,"models/prop-trophy.glb":202512,"models/prop-van.glb":200544,"models/prop-vault.glb":426808,"models/rival-rig.glb":302888,"models/rival-rig2.glb":155256,"models/starfighter.glb":1558940,"models/statue-1.glb":220628,"models/statue-10.glb":141536,"models/statue-11.glb":259096,"models/statue-2.glb":134536,"models/statue-3.glb":115344,"models/statue-4.glb":140600,"models/statue-5.glb":109764,"models/statue-6.glb":232936,"models/statue-7.glb":322552,"models/statue-8.glb":96500,"models/statue-9.glb":122060,"models/statue-all.glb":105880,"models/wand.glb":156852,"models/warrig.glb":1418640,"models/wizard.glb":1387632,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall-b.webp":84256,"sky/hub-hall.webp":82552,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-hall.webp":435050,"sky/vault-gold.webp":710390,"ui/bosses.webp":84156,"ui/fx-runes.webp":17370,"ui/fx-star.webp":1976,"ui/fx-ward.webp":34840,"ui/icons.webp":27040,"ui/mat-deck.webp":139382,"ui/mat-steel.webp":12816,"ui/mat-tread.webp":66848,"ui/top-blaster.webp":53036,"ui/top-boss.webp":48040,"ui/top-exam.webp":56200,"ui/top-guide.webp":21092,"ui/top-memory.webp":25844,"ui/top-racer.webp":19068,"ui/win-blaster.webp":57630,"ui/win-boss.webp":43424,"ui/win-exam.webp":44662,"ui/win-guide.webp":48262,"ui/win-memory.webp":64694,"ui/win-racer.webp":22058},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.113,0],[1.37,0.8,0.843,0],[2.2401,0.4288,0.9,0],[2.7389,0.8,0.813,0],[3.6089,0.5112,0.983,0],[4.1901,0.8,1.007,0]],"impact_big":[[5.0601,1.28,1.129,0.7],[6.4102,0.8623,1.212,0.7],[7.3425,1.28,0.991,0.7],[8.6925,1.28,1,0.7]],"impact_reject":[[10.0426,0.5025,0.712,0],[10.6151,0.5686,0.561,0],[11.2537,0.6,0.934,0],[11.9238,0.5451,1.112,0],[12.5389,0.4542,0.8,0]],"impact_hull":[[13.0631,0.88,0.934,0],[14.0132,0.88,0.746,0],[14.9632,0.88,0.798,0],[15.9133,0.88,0.96,0],[16.8633,0.88,0.9,0]],"impact_shield":[[17.8134,0.88,0.8,0],[18.7634,0.88,1.151,0],[19.7134,0.5621,0.769,0],[20.3455,0.88,0.841,0]],"impact_metal":[[21.2956,0.48,0.856,0],[21.8456,0.48,0.657,0],[22.3956,0.48,0.7,0],[22.9457,0.48,0.953,0]],"explosion_small":[[23.4957,1.2,1.318,0],[24.7658,1.2,0.85,0],[26.0358,1.2,1,0],[27.3059,1.2,0.81,0],[28.5759,1.2,0.829,0],[29.846,0.785,1.157,0]],"explosion_big":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"explosion_huge":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"debris":[[50.5358,0.7887,0.6,0],[51.3945,1.1321,0.698,0],[52.5966,1.48,0.591,0],[54.1466,1.48,0.96,0]],"charge_up":[[55.6967,0.5924,0.6,0],[56.3591,0.6803,0.743,0],[57.1094,0.6803,0.737,0],[57.8597,0.6803,0.576,0]],"charge_long":[[58.61,1.6,0.664,0],[60.28,1.6,0.566,0],[61.9501,1.6,0.65,0],[63.6201,1.6,0.738,0]],"warning":[[65.2902,0.6,0.576,0],[65.9602,0.6,0.877,0],[66.6303,0.6,0.6,0]],"lock_on":[[67.3003,0.48,0.567,0],[67.8504,0.48,0.497,0],[68.4004,0.48,0.5,0]],"slowmo_in":[[68.9505,1.08,0.7,0],[70.1005,1.08,0.889,0],[71.2505,1.08,0.652,0]],"player_hit":[[72.4006,0.88,1.002,0],[73.3506,0.88,0.9,0],[74.3007,0.88,1.039,0],[75.2507,0.88,0.655,0]],"heart_lost":[[76.2008,0.8,0.802,0],[77.0708,0.8,0.55,0],[77.9409,0.8,0.7,0]],"shield_down":[[78.8109,0.7352,1.022,0],[79.6161,1,0.54,0],[80.6861,0.9544,0.75,0]],"reward":[[81.7105,1.2,0.563,0],[82.9806,1.2,0.789,0],[84.2506,1.2,0.772,0],[85.5207,1.2,0.7,0]],"sting_correct":[[86.7907,0.8,0.6,0],[87.6608,0.8,0.467,0],[88.5308,0.8,0.758,0],[89.4009,0.8,0.65,0]],"sting_wrong":[[90.2709,0.6247,0.747,0],[90.9656,0.6803,0.444,0],[91.7159,0.4344,0.649,0],[92.2203,0.6803,0.6,0]],"ui_click":[[92.9706,0.48,0.64,0],[93.5206,0.121,0.413,0],[93.7117,0.48,0.283,0],[94.2617,0.2016,0.4,0]],"ui_select":[[94.5334,0.48,0.519,0],[95.0834,0.48,0.5,0],[95.6334,0.48,0.419,0]],"ui_back":[[96.1835,0.3879,0.382,0],[96.6414,0.48,0.619,0],[97.1915,0.48,0.45,0]],"coin_insert":[[97.7415,1,0.7,0],[98.8115,0.7125,0.904,0],[99.5941,1,0.656,0]],"coin_soft":[[100.6641,0.4086,0.6,0]],"powerup":[[101.1427,1,0.717,0],[102.2128,1,0.485,0],[103.2828,1,0.6,0]],"fanfare":[[104.3529,2,0.7,0],[106.4229,1.3249,0.888,0],[107.8179,2,0.58,0]],"gameover":[[109.8879,2.2,0.7,0],[112.158,2.2,0.654,0],[114.428,2.2,0.911,0]],"crowd_cheer":[[116.698,2,0.522,0],[118.7681,2,0.555,0],[120.8381,2,0.55,0],[122.9082,2,0.641,0]],"alarm":[[125.0982,2.25,0.4,0],[127.6582,2.25,0.4,0],[130.2182,2.25,0.4,0]],"charge_hum":[[132.7782,3,0.4,0],[136.0882,3,0.4,0],[139.3982,3,0.4,0]],"boom":[[23.4957,1.2,1.318,0],[24.7658,1.2,0.85,0],[26.0358,1.2,1,0],[27.3059,1.2,0.81,0],[28.5759,1.2,0.829,0],[29.846,0.785,1.157,0]],"bigboom":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"hit":[[72.4006,0.88,1.002,0],[73.3506,0.88,0.9,0],[74.3007,0.88,1.039,0],[75.2507,0.88,0.655,0]],"correct":[[86.7907,0.8,0.6,0],[87.6608,0.8,0.467,0],[88.5308,0.8,0.758,0],[89.4009,0.8,0.65,0]],"wrong":[[90.2709,0.6247,0.747,0],[90.9656,0.6803,0.444,0],[91.7159,0.4344,0.649,0],[92.2203,0.6803,0.6,0]],"coin":[[97.7415,1,0.7,0],[98.8115,0.7125,0.904,0],[99.5941,1,0.656,0]],"blip":[[92.9706,0.48,0.64,0],[93.5206,0.121,0.413,0],[93.7117,0.48,0.283,0],[94.2617,0.2016,0.4,0]],"select":[[94.5334,0.48,0.519,0],[95.0834,0.48,0.5,0],[95.6334,0.48,0.419,0]],"back":[[96.1835,0.3879,0.382,0],[96.6414,0.48,0.619,0],[97.1915,0.48,0.45,0]],"shield":[[17.8134,0.88,0.8,0],[18.7634,0.88,1.151,0],[19.7134,0.5621,0.769,0],[20.3455,0.88,0.841,0]],"win":[[104.3529,2,0.7,0],[106.4229,1.3249,0.888,0],[107.8179,2,0.58,0]],"demonboom":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"demonfinale":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"demoncharge":[[55.6967,0.5924,0.6,0],[56.3591,0.6803,0.743,0],[57.1094,0.6803,0.737,0],[57.8597,0.6803,0.576,0]],"bossblast":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"bosscharge":[[58.61,1.6,0.664,0],[60.28,1.6,0.566,0],[61.9501,1.6,0.65,0],[63.6201,1.6,0.738,0]],"shatter":[[76.2008,0.8,0.802,0],[77.0708,0.8,0.55,0],[77.9409,0.8,0.7,0]],"clunk":[[21.2956,0.48,0.856,0],[21.8456,0.48,0.657,0],[22.3956,0.48,0.7,0],[22.9457,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0],[3.5012,0.6803,0.642,0],[4.2515,0.6803,0.744,0]],"laser_heavy":[[5.0018,0.3983,1.235,0],[5.4701,1.2,0.85,0],[6.7402,1.2,1.134,0],[8.0102,1.2,0.587,0]],"plasma_fire":[[9.2802,0.3968,0.607,0],[9.7471,0.8,0.567,0],[10.6171,0.3136,0.87,0],[11.0007,0.8,0.75,0],[11.8707,0.8,0.796,0],[12.7408,0.8,0.808,0]],"shell":[[13.6108,0.3562,0.24,0],[14.0371,0.48,0.3,0],[14.5871,0.3549,0.32,0],[15.012,0.4354,0.314,0]],"beam_fire":[[15.5175,1.6,0.996,0],[17.1875,1.6,0.878,0],[18.8576,1.6,0.632,0],[20.5276,1.6,0.8,0]],"missile_fire":[[22.1976,1,0.89,0],[23.2677,1,0.702,0],[24.3377,1,0.496,0],[25.4078,1,0.7,0]],"missile_hit":[[26.4778,1,0.602,0],[27.5479,1,0.828,0],[28.6179,0.5664,0.8,0],[29.2544,1,0.931,0]],"volley_fire":[[30.3244,1,0.89,0],[31.3944,1,1.066,0],[32.4645,1,0.75,0],[33.5345,1,0.591,0]],"wave_fire":[[34.6046,1.48,0.977,0],[36.1546,1.48,0.744,0],[37.7047,1.2503,0.85,0],[39.025,1.091,1.05,0]],"slam":[[40.186,1.28,0.803,0],[41.5361,1.28,1,0],[42.8861,1.28,1.03,0],[44.2362,0.7954,1.281,0]],"boss_roar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"boss_hurt":[[58.7219,0.88,0.846,0],[59.6719,0.88,0.919,0],[60.622,0.88,0.693,0],[61.572,0.7878,0.8,0],[62.4298,0.7978,0.729,0]],"boss_stagger":[[63.2976,0.8735,0.548,0],[64.2411,1.3102,0.82,0],[65.6213,1.1637,0.8,0],[66.855,0.9167,0.888,0]],"boss_break":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"boss_death":[[72.0443,3.2,1.016,0.5],[75.3143,3.2,1,0.5],[78.5844,3.2,0.919,0.5]],"warp":[[81.8544,1.6395,0.695,0],[83.5639,1.5159,0.7,0],[85.1497,1.2935,0.857,0]],"engine_ship":[[86.6332,4,0.35,0],[90.9432,4,0.35,0],[95.2532,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0],[3.5012,0.6803,0.642,0],[4.2515,0.6803,0.744,0]],"shot":[[9.2802,0.3968,0.607,0],[9.7471,0.8,0.567,0],[10.6171,0.3136,0.87,0],[11.0007,0.8,0.75,0],[11.8707,0.8,0.796,0],[12.7408,0.8,0.808,0]],"demonroar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"demonhit":[[58.7219,0.88,0.846,0],[59.6719,0.88,0.919,0],[60.622,0.88,0.693,0],[61.572,0.7878,0.8,0],[62.4298,0.7978,0.729,0]],"demonshed":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"demonbreak":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"bossroar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"bosssmash":[[40.186,1.28,0.803,0],[41.5361,1.28,1,0],[42.8861,1.28,1.03,0],[44.2362,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.895,0],[1.77,1.2,1,0],[3.0401,1.2,0.922,0],[4.3101,1.2,1.037,0],[5.5802,1.2,1.031,0]],"crash_glass":[[6.8502,0.88,1.04,0],[7.8003,0.5965,0.944,0],[8.4668,0.88,0.702,0],[9.4168,0.88,0.8,0]],"skid":[[10.3669,1.2,0.74,0],[11.6369,1.2,0.698,0],[12.907,1.2,0.721,0],[14.177,1.2,0.7,0]],"near_miss":[[15.4471,0.6132,0.624,0],[16.1303,0.5831,0.6,0],[16.7834,0.6803,0.617,0],[17.5337,0.584,0.598,0]],"boost":[[18.1877,1.48,0.655,0],[19.7378,1.48,0.85,0],[21.2878,1.48,1.179,0],[22.8378,1.3965,1.349,0]],"gate_pass":[[24.3044,0.8,0.6,0],[25.1744,0.8,0.672,0],[26.0444,0.8,0.58,0],[26.9145,0.6858,0.817,0]],"engine_car":[[27.7903,4,0.4,0],[32.1003,4,0.4,0],[36.4103,4,0.4,0]],"boost_flame":[[40.7203,3,0.6,0],[44.0303,3,0.6,0],[47.3403,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0],[8.93,8,0.5,0],[17.24,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,1.6046,1,0],[18.2126,2.51,1,0],[20.7927,0.7761,1,0]],"vo:bull run":[[21.6387,0.9604,1,0]],"vo:chapter complete":[[22.6692,1.106,1,0]],"vo:compounding":[[23.8451,1.193,1,0]],"vo:critical":[[25.1081,1.117,1,0]],"vo:deck cleared":[[26.2952,1.39,1,0]],"vo:defeated":[[27.7552,1.1138,1,0]],"vo:enraged":[[28.939,1.4505,1,0]],"vo:exam passed":[[30.4595,1.3676,1,0]],"vo:final boss":[[31.8971,1.318,1,0]],"vo:final boss destroyed":[[33.285,2.75,1,0]],"vo:final exam":[[36.1051,1.8518,1,0]],"vo:final wave":[[38.0268,1.5771,1,0]],"vo:forced retirement":[[39.6739,1.4642,1,0]],"vo:game over":[[41.2081,1.4106,1,0]],"vo:go":[[42.6887,0.6599,1,0]],"vo:group golem":[[43.4186,1.791,1,0]],"vo:happy retirement":[[45.2796,1.6602,1,0]],"vo:inflation titan":[[47.0098,2.43,1,0]],"vo:insert coin":[[49.5099,1.128,1,0]],"vo:last shield":[[50.7079,1.5958,1,0]],"vo:lightning":[[52.3737,1.15,1,0]],"vo:longevity lich":[[53.5937,1.5484,1,0]],"vo:lord intestate":[[55.2121,1.7993,1,0]],"vo:memory bank":[[57.0814,1.1962,1,0]],"vo:millionaire":[[58.3476,1.6842,1,0]],"vo:nest egg run":[[60.1018,1.6205,1,0]],"vo:new high score":[[61.7923,1.7269,1,0]],"vo:not yet":[[63.5891,0.933,1,0]],"vo:passed":[[64.5922,0.8735,1,0]],"vo:patrimony phantom":[[65.5356,1.8513,1,0]],"vo:perfect":[[67.4569,0.9316,1,0]],"vo:perilmonger":[[68.4585,1.47,1,0]],"vo:probate tollgate":[[69.9985,1.6925,1,0]],"vo:product pusher":[[71.7611,1.6875,1,0]],"vo:quick draw":[[73.5185,1.2579,1,0]],"vo:rank up":[[74.8465,1.07,1,0]],"vo:ready":[[75.9865,0.567,1,0]],"vo:retired a millionaire":[[76.6235,2.1487,1,0]],"vo:risk blaster":[[78.8422,1.8748,1,0]],"vo:select your game":[[80.787,1.2985,1,0]],"vo:shield down":[[82.1555,1.2631,1,0]],"vo:solvency specter":[[83.4886,1.996,1,0]],"vo:stage clear":[[85.5546,1.3893,1,0]],"vo:strategy guide":[[87.0139,1.3867,1,0]],"vo:the fine print":[[88.4705,1.3475,1,0]],"vo:the proctor":[[89.888,1.1939,1,0]],"vo:trophy unlocked":[[91.1519,1.2972,1,0]],"vo:undue influencer":[[92.5191,2.3957,1,0]],"vo:warning":[[94.9848,0.65,1,0]],"vo:wave 1":[[95.7048,1.63,1,0]],"vo:wave 10":[[97.4048,1.1341,1,0]],"vo:wave 2":[[98.609,0.9793,1,0]],"vo:wave 3":[[99.6583,1.47,1,0]],"vo:wave 4":[[101.1983,1.2106,1,0]],"vo:wave 5":[[102.479,1.3478,1,0]],"vo:wave 6":[[103.8967,1.4679,1,0]],"vo:wave 7":[[105.4346,1.1244,1,0]],"vo:wave 8":[[106.629,1.55,1,0]],"vo:wave 9":[[108.2491,1.4247,1,0]],"vo:welcome":[[109.7438,1.87,1,0]],"vo@adam:boss incoming":[[111.6838,1.5448,1,0]],"vo@adam:game over":[[113.2986,1.5262,1,0]],"vo@brian:boss incoming":[[114.8948,1.3866,1,0]],"vo@brian:game over":[[116.3514,1.8607,1,0]],"vo@charlie:game over":[[118.2821,1.31,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}},"wizard":{"file":"audio/sfx-wizard.mp3","cues":{"wiz_appear":[[0.5,1.36,0.907,0],[1.93,1.36,0.752,0],[3.3601,1.36,0.8,0]],"wiz_whoosh":[[4.7901,0.3766,0.626,0],[5.2367,0.3596,0.657,0],[5.6663,0.4689,0.539,0],[6.2052,0.4326,0.55,0]],"wiz_charge":[[6.7079,1,0.437,0],[7.7779,1,0.5,0],[8.848,1,0.52,0]],"wiz_bolt":[[9.918,0.6,0.941,0],[10.588,0.6,0.7,0],[11.2581,0.6,0.594,0],[11.9281,0.6,1.12,0],[12.5982,0.6,0.595,0]],"wiz_nova":[[13.2682,1.2,0.882,0],[14.5383,1.2,0.85,0],[15.8083,1.2,0.937,0],[17.0784,1.2,0.781,0]],"wiz_impact":[[18.3484,0.88,1.131,0],[19.2985,0.88,0.85,0],[20.2485,0.7012,0.665,0],[21.0198,0.88,1.219,0]],"wiz_ward":[[21.9698,0.4459,1.112,0],[22.4857,1,1.185,0],[23.5558,1,0.606,0],[24.6258,1,0.8,0]],"wiz_fizzle":[[25.6959,0.4755,0.548,0],[26.2414,0.5558,0.6,0],[26.8672,0.6,0.755,0]],"wiz_finisher":[[27.5373,1.3383,1.295,0.55],[28.9456,1.8827,0.841,0.55],[30.8983,1.9959,1,0.55]],"wiz_victory":[[32.9642,2,0.8,0.6],[35.0343,1.4993,0.88,0.6],[36.6036,2,0.76,0.6]],"wiz_defeat":[[38.6736,1.6,0.706,0],[40.3437,1.6,0.7,0]]}}},"music":{"title":{"file":"audio/music-title.mp3","loop":[0.7,59.7678],"vol":1},"title-b":{"file":"audio/music-title-b.mp3","loop":[0.7,77.7589],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,87.1086],"vol":1},"blaster-b":{"file":"audio/music-blaster-b.mp3","loop":[0.7,87.1086],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,83.7689],"vol":1},"racer-b":{"file":"audio/music-racer-b.mp3","loop":[0.7,83.7689],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,89.5807],"vol":1},"boss-b":{"file":"audio/music-boss-b.mp3","loop":[0.7,80.6926],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,86.3837],"vol":1},"finalboss-b":{"file":"audio/music-finalboss-b.mp3","loop":[0.7,94.9521],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,80.7095],"vol":1},"hub-b":{"file":"audio/music-hub-b.mp3","loop":[0.7,80.7095],"vol":1},"exam":{"file":"audio/music-exam.mp3","loop":[0.7,89.121],"vol":1},"exam-b":{"file":"audio/music-exam-b.mp3","loop":[0.7,76.4895],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,84.7],"vol":1},"memory-b":{"file":"audio/music-memory-b.mp3","loop":[0.7,84.6895],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,82.974],"vol":1},"calm-b":{"file":"audio/music-calm-b.mp3","loop":[0.7,82.974],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","model:prop-ship-a","model:prop-ship-b","model:prop-ship-c","model:prop-rock","model:prop-rock2","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster","model:ally-a","model:ally-c","model:ally-a2","model:ally-b2","model:ally-c2","model:brood-a","model:brood-a1","model:brood-a2","model:brood-a3","model:brood-b","model:brood-d","model:brood-d2","model:brood-f","model:brood-f2","model:prop-shield","model:prop-bolt","model:prop-star","music:blaster-b"],"racer":["model:warrig","model:prop-car","model:prop-van","model:prop-bus","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer","model:rival-rig","model:rival-rig2","model:chaser","model:prop-shield","model:prop-heart","model:prop-bolt","model:prop-star","music:racer-b"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss","model:prop-heart","model:prop-star","model:prop-coin","model:prop-bolt","music:boss-b","music:finalboss-b","model:wizard","model:wand","sfx:wizard","ui:fx-runes","ui:fx-ward","ui:fx-star"],"hub":["model:prop-cabinet","model:mini-starfighter","model:mini-warrig","model:mini-proctor","model:prop-deck","model:prop-podium","model:prop-tome","model:prop-trophy","model:prop-medal","model:prop-coin","model:prop-stand","model:prop-vault","sky:hub-hall","sky:hub-hall-b","ui:bosses","ui:icons"],"hubsound":["sfx:core","sfx:hub","sfx:voice","music:hub","music:hub-b"],"title":["sky:title-hall","ui:mat-deck","ui:mat-tread","ui:mat-steel","ui:win-blaster","ui:win-racer","ui:win-boss","ui:win-memory","ui:win-exam","ui:win-guide","model:prop-vault","model:prop-cabinet","model:prop-stand","model:prop-trophy","model:boss-1-t","model:boss-2-t","model:boss-3-t","model:boss-4-t","model:boss-5-t","model:boss-6-t","model:boss-7-t","model:boss-8-t","model:boss-9-t","model:boss-10-t","model:boss-11-t","model:boss-all-t","ui:top-blaster","ui:top-racer","ui:top-boss","ui:top-memory","ui:top-guide","ui:top-exam"],"titlesound":["sfx:core","sfx:voice","music:title","music:title-b"],"titleroar":["sfx:bosses"],"memory":["sky:vault-gold","model:prop-deck","model:prop-coin","sfx:core","sfx:voice","music:memory","model:decor-deck","music:memory-b"],"exam":["sky:exam-moon","model:prop-podium","sfx:core","sfx:combat","sfx:voice","music:exam","model:statue-1","model:statue-2","model:statue-3","model:statue-4","model:statue-5","model:statue-6","model:statue-7","model:statue-8","model:statue-9","model:statue-10","model:statue-11","model:statue-all","model:decor-podium","music:exam-b"],"guide":["sky:guide-archive","model:prop-tome","sfx:core","music:calm","model:decor-tome","music:calm-b"]}};
+const INR_FILES = {"files":{"audio/music-blaster-b.mp3":1224090,"audio/music-blaster.mp3":1224090,"audio/music-boss-b.mp3":1134490,"audio/music-boss.mp3":1258833,"audio/music-calm-b.mp3":1166307,"audio/music-calm.mp3":1166307,"audio/music-exam-b.mp3":1075610,"audio/music-exam.mp3":1252615,"audio/music-finalboss-b.mp3":1334170,"audio/music-finalboss.mp3":1214215,"audio/music-hub-b.mp3":1134490,"audio/music-hub.mp3":1134490,"audio/music-memory-b.mp3":1190444,"audio/music-memory.mp3":1190444,"audio/music-racer-b.mp3":1177644,"audio/music-racer.mp3":1177644,"audio/music-title-b.mp3":1093530,"audio/music-title.mp3":841553,"audio/sfx-bosses.mp3":1370010,"audio/sfx-combat.mp3":1393050,"audio/sfx-core.mp3":1997210,"audio/sfx-hub.mp3":356981,"audio/sfx-racer.mp3":708433,"audio/sfx-wizard.mp3":589210,"audio/voice.mp3":1436675,"models/ally-a.glb":262944,"models/ally-a2.glb":126532,"models/ally-b2.glb":133520,"models/ally-c.glb":265876,"models/ally-c2.glb":126524,"models/boss-1-t.glb":1040772,"models/boss-1.glb":1830032,"models/boss-10-t.glb":627320,"models/boss-10.glb":1742244,"models/boss-11-t.glb":999016,"models/boss-11.glb":1904412,"models/boss-2-t.glb":1046844,"models/boss-2.glb":1996204,"models/boss-3-t.glb":992164,"models/boss-3.glb":1941936,"models/boss-4-t.glb":941796,"models/boss-4.glb":1925112,"models/boss-5-t.glb":989920,"models/boss-5.glb":1863492,"models/boss-6-t.glb":1035040,"models/boss-6.glb":1988180,"models/boss-7-t.glb":1142852,"models/boss-7.glb":2223484,"models/boss-8-t.glb":915160,"models/boss-8.glb":1851376,"models/boss-9-t.glb":938820,"models/boss-9.glb":1820028,"models/boss-all-t.glb":881440,"models/boss-all.glb":1609368,"models/brood-a.glb":89508,"models/brood-a1.glb":85284,"models/brood-a2.glb":47868,"models/brood-a3.glb":48720,"models/brood-b.glb":63768,"models/brood-d.glb":84920,"models/brood-d2.glb":70532,"models/brood-f.glb":75524,"models/brood-f2.glb":45360,"models/chaser.glb":227372,"models/decor-deck.glb":277664,"models/decor-podium.glb":238264,"models/decor-tome.glb":237300,"models/demon.glb":1625192,"models/mini-proctor.glb":209468,"models/mini-starfighter.glb":299432,"models/mini-warrig.glb":342752,"models/prop-bolt.glb":185808,"models/prop-bus.glb":223360,"models/prop-cabinet.glb":355356,"models/prop-car.glb":265808,"models/prop-coin.glb":102176,"models/prop-deck.glb":284156,"models/prop-heart.glb":199368,"models/prop-medal.glb":239160,"models/prop-podium.glb":230936,"models/prop-rock.glb":271552,"models/prop-rock2.glb":239280,"models/prop-shield.glb":188212,"models/prop-ship-a.glb":282888,"models/prop-ship-b.glb":252920,"models/prop-ship-c.glb":258308,"models/prop-stand.glb":196180,"models/prop-star.glb":225828,"models/prop-tome.glb":218040,"models/prop-trophy.glb":202512,"models/prop-van.glb":200544,"models/prop-vault.glb":426808,"models/rival-rig.glb":302888,"models/rival-rig2.glb":155256,"models/starfighter.glb":1558940,"models/statue-1.glb":220628,"models/statue-10.glb":141536,"models/statue-11.glb":259096,"models/statue-2.glb":134536,"models/statue-3.glb":115344,"models/statue-4.glb":140600,"models/statue-5.glb":109764,"models/statue-6.glb":232936,"models/statue-7.glb":322552,"models/statue-8.glb":96500,"models/statue-9.glb":122060,"models/statue-all.glb":105880,"models/wand.glb":156852,"models/warrig.glb":1418640,"models/wizard.glb":1387632,"sky/blaster-deep-1.webp":763694,"sky/blaster-deep-4.webp":1027402,"sky/blaster-deep-5.webp":758694,"sky/boss-storm-b.webp":192868,"sky/boss-storm.webp":941214,"sky/boss-void.webp":449726,"sky/exam-moon.webp":716746,"sky/guide-archive.webp":758564,"sky/hub-hall-b.webp":84256,"sky/hub-hall.webp":82552,"sky/racer-dawn.webp":150958,"sky/racer-day.webp":205800,"sky/racer-night.webp":412294,"sky/racer-sunset-b.webp":519706,"sky/racer-sunset.webp":284332,"sky/title-hall.webp":435050,"sky/vault-gold.webp":710390,"ui/bosses.webp":84156,"ui/fx-runes.webp":17370,"ui/fx-star.webp":1976,"ui/fx-ward.webp":34840,"ui/icons.webp":27040,"ui/mat-deck.webp":139382,"ui/mat-steel.webp":12816,"ui/mat-tread.webp":66848,"ui/top-blaster.webp":53036,"ui/top-boss.webp":48040,"ui/top-exam.webp":56200,"ui/top-guide.webp":94714,"ui/top-memory.webp":71234,"ui/top-racer.webp":19068,"ui/win-blaster.webp":57630,"ui/win-boss.webp":43424,"ui/win-exam.webp":44662,"ui/win-guide.webp":48262,"ui/win-memory.webp":64694,"ui/win-racer.webp":22058},"sprites":{"core":{"file":"audio/sfx-core.mp3","cues":{"impact_good":[[0.5,0.8,1.113,0],[1.37,0.8,0.843,0],[2.2401,0.4288,0.9,0],[2.7389,0.8,0.813,0],[3.6089,0.5112,0.983,0],[4.1901,0.8,1.007,0]],"impact_big":[[5.0601,1.28,1.129,0.7],[6.4102,0.8623,1.212,0.7],[7.3425,1.28,0.991,0.7],[8.6925,1.28,1,0.7]],"impact_reject":[[10.0426,0.5025,0.712,0],[10.6151,0.5686,0.561,0],[11.2537,0.6,0.934,0],[11.9238,0.5451,1.112,0],[12.5389,0.4542,0.8,0]],"impact_hull":[[13.0631,0.88,0.934,0],[14.0132,0.88,0.746,0],[14.9632,0.88,0.798,0],[15.9133,0.88,0.96,0],[16.8633,0.88,0.9,0]],"impact_shield":[[17.8134,0.88,0.8,0],[18.7634,0.88,1.151,0],[19.7134,0.5621,0.769,0],[20.3455,0.88,0.841,0]],"impact_metal":[[21.2956,0.48,0.856,0],[21.8456,0.48,0.657,0],[22.3956,0.48,0.7,0],[22.9457,0.48,0.953,0]],"explosion_small":[[23.4957,1.2,1.318,0],[24.7658,1.2,0.85,0],[26.0358,1.2,1,0],[27.3059,1.2,0.81,0],[28.5759,1.2,0.829,0],[29.846,0.785,1.157,0]],"explosion_big":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"explosion_huge":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"debris":[[50.5358,0.7887,0.6,0],[51.3945,1.1321,0.698,0],[52.5966,1.48,0.591,0],[54.1466,1.48,0.96,0]],"charge_up":[[55.6967,0.5924,0.6,0],[56.3591,0.6803,0.743,0],[57.1094,0.6803,0.737,0],[57.8597,0.6803,0.576,0]],"charge_long":[[58.61,1.6,0.664,0],[60.28,1.6,0.566,0],[61.9501,1.6,0.65,0],[63.6201,1.6,0.738,0]],"warning":[[65.2902,0.6,0.576,0],[65.9602,0.6,0.877,0],[66.6303,0.6,0.6,0]],"lock_on":[[67.3003,0.48,0.567,0],[67.8504,0.48,0.497,0],[68.4004,0.48,0.5,0]],"slowmo_in":[[68.9505,1.08,0.7,0],[70.1005,1.08,0.889,0],[71.2505,1.08,0.652,0]],"player_hit":[[72.4006,0.88,1.002,0],[73.3506,0.88,0.9,0],[74.3007,0.88,1.039,0],[75.2507,0.88,0.655,0]],"heart_lost":[[76.2008,0.8,0.802,0],[77.0708,0.8,0.55,0],[77.9409,0.8,0.7,0]],"shield_down":[[78.8109,0.7352,1.022,0],[79.6161,1,0.54,0],[80.6861,0.9544,0.75,0]],"reward":[[81.7105,1.2,0.563,0],[82.9806,1.2,0.789,0],[84.2506,1.2,0.772,0],[85.5207,1.2,0.7,0]],"sting_correct":[[86.7907,0.8,0.6,0],[87.6608,0.8,0.467,0],[88.5308,0.8,0.758,0],[89.4009,0.8,0.65,0]],"sting_wrong":[[90.2709,0.6247,0.747,0],[90.9656,0.6803,0.444,0],[91.7159,0.4344,0.649,0],[92.2203,0.6803,0.6,0]],"ui_click":[[92.9706,0.48,0.64,0],[93.5206,0.121,0.413,0],[93.7117,0.48,0.283,0],[94.2617,0.2016,0.4,0]],"ui_select":[[94.5334,0.48,0.519,0],[95.0834,0.48,0.5,0],[95.6334,0.48,0.419,0]],"ui_back":[[96.1835,0.3879,0.382,0],[96.6414,0.48,0.619,0],[97.1915,0.48,0.45,0]],"coin_insert":[[97.7415,1,0.7,0],[98.8115,0.7125,0.904,0],[99.5941,1,0.656,0]],"coin_soft":[[100.6641,0.4086,0.6,0]],"powerup":[[101.1427,1,0.717,0],[102.2128,1,0.485,0],[103.2828,1,0.6,0]],"fanfare":[[104.3529,2,0.7,0],[106.4229,1.3249,0.888,0],[107.8179,2,0.58,0]],"gameover":[[109.8879,2.2,0.7,0],[112.158,2.2,0.654,0],[114.428,2.2,0.911,0]],"crowd_cheer":[[116.698,2,0.522,0],[118.7681,2,0.555,0],[120.8381,2,0.55,0],[122.9082,2,0.641,0]],"alarm":[[125.0982,2.25,0.4,0],[127.6582,2.25,0.4,0],[130.2182,2.25,0.4,0]],"charge_hum":[[132.7782,3,0.4,0],[136.0882,3,0.4,0],[139.3982,3,0.4,0]],"boom":[[23.4957,1.2,1.318,0],[24.7658,1.2,0.85,0],[26.0358,1.2,1,0],[27.3059,1.2,0.81,0],[28.5759,1.2,0.829,0],[29.846,0.785,1.157,0]],"bigboom":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"hit":[[72.4006,0.88,1.002,0],[73.3506,0.88,0.9,0],[74.3007,0.88,1.039,0],[75.2507,0.88,0.655,0]],"correct":[[86.7907,0.8,0.6,0],[87.6608,0.8,0.467,0],[88.5308,0.8,0.758,0],[89.4009,0.8,0.65,0]],"wrong":[[90.2709,0.6247,0.747,0],[90.9656,0.6803,0.444,0],[91.7159,0.4344,0.649,0],[92.2203,0.6803,0.6,0]],"coin":[[97.7415,1,0.7,0],[98.8115,0.7125,0.904,0],[99.5941,1,0.656,0]],"blip":[[92.9706,0.48,0.64,0],[93.5206,0.121,0.413,0],[93.7117,0.48,0.283,0],[94.2617,0.2016,0.4,0]],"select":[[94.5334,0.48,0.519,0],[95.0834,0.48,0.5,0],[95.6334,0.48,0.419,0]],"back":[[96.1835,0.3879,0.382,0],[96.6414,0.48,0.619,0],[97.1915,0.48,0.45,0]],"shield":[[17.8134,0.88,0.8,0],[18.7634,0.88,1.151,0],[19.7134,0.5621,0.769,0],[20.3455,0.88,0.841,0]],"win":[[104.3529,2,0.7,0],[106.4229,1.3249,0.888,0],[107.8179,2,0.58,0]],"demonboom":[[30.701,2.2,1.351,0.6],[32.971,2.2,1.245,0.6],[35.241,2.0646,1,0.6],[37.3756,2.2,0.989,0.6]],"demonfinale":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"demoncharge":[[55.6967,0.5924,0.6,0],[56.3591,0.6803,0.743,0],[57.1094,0.6803,0.737,0],[57.8597,0.6803,0.576,0]],"bossblast":[[39.6457,3.56,0.908,0.45],[43.2757,3.56,1,0.45],[46.9058,3.56,1.081,0.45]],"bosscharge":[[58.61,1.6,0.664,0],[60.28,1.6,0.566,0],[61.9501,1.6,0.65,0],[63.6201,1.6,0.738,0]],"shatter":[[76.2008,0.8,0.802,0],[77.0708,0.8,0.55,0],[77.9409,0.8,0.7,0]],"clunk":[[21.2956,0.48,0.856,0],[21.8456,0.48,0.657,0],[22.3956,0.48,0.7,0],[22.9457,0.48,0.953,0]]}},"combat":{"file":"audio/sfx-combat.mp3","cues":{"laser_fire":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0],[3.5012,0.6803,0.642,0],[4.2515,0.6803,0.744,0]],"laser_heavy":[[5.0018,0.3983,1.235,0],[5.4701,1.2,0.85,0],[6.7402,1.2,1.134,0],[8.0102,1.2,0.587,0]],"plasma_fire":[[9.2802,0.3968,0.607,0],[9.7471,0.8,0.567,0],[10.6171,0.3136,0.87,0],[11.0007,0.8,0.75,0],[11.8707,0.8,0.796,0],[12.7408,0.8,0.808,0]],"shell":[[13.6108,0.3562,0.24,0],[14.0371,0.48,0.3,0],[14.5871,0.3549,0.32,0],[15.012,0.4354,0.314,0]],"beam_fire":[[15.5175,1.6,0.996,0],[17.1875,1.6,0.878,0],[18.8576,1.6,0.632,0],[20.5276,1.6,0.8,0]],"missile_fire":[[22.1976,1,0.89,0],[23.2677,1,0.702,0],[24.3377,1,0.496,0],[25.4078,1,0.7,0]],"missile_hit":[[26.4778,1,0.602,0],[27.5479,1,0.828,0],[28.6179,0.5664,0.8,0],[29.2544,1,0.931,0]],"volley_fire":[[30.3244,1,0.89,0],[31.3944,1,1.066,0],[32.4645,1,0.75,0],[33.5345,1,0.591,0]],"wave_fire":[[34.6046,1.48,0.977,0],[36.1546,1.48,0.744,0],[37.7047,1.2503,0.85,0],[39.025,1.091,1.05,0]],"slam":[[40.186,1.28,0.803,0],[41.5361,1.28,1,0],[42.8861,1.28,1.03,0],[44.2362,0.7954,1.281,0]],"boss_roar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"boss_hurt":[[58.7219,0.88,0.846,0],[59.6719,0.88,0.919,0],[60.622,0.88,0.693,0],[61.572,0.7878,0.8,0],[62.4298,0.7978,0.729,0]],"boss_stagger":[[63.2976,0.8735,0.548,0],[64.2411,1.3102,0.82,0],[65.6213,1.1637,0.8,0],[66.855,0.9167,0.888,0]],"boss_break":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"boss_death":[[72.0443,3.2,1.016,0.5],[75.3143,3.2,1,0.5],[78.5844,3.2,0.919,0.5]],"warp":[[81.8544,1.6395,0.695,0],[83.5639,1.5159,0.7,0],[85.1497,1.2935,0.857,0]],"engine_ship":[[86.6332,4,0.35,0],[90.9432,4,0.35,0],[95.2532,4,0.35,0]],"laser":[[0.5,0.6803,0.716,0],[1.2503,0.6803,0.816,0],[2.0006,0.6803,0.635,0],[2.7509,0.6803,0.7,0],[3.5012,0.6803,0.642,0],[4.2515,0.6803,0.744,0]],"shot":[[9.2802,0.3968,0.607,0],[9.7471,0.8,0.567,0],[10.6171,0.3136,0.87,0],[11.0007,0.8,0.75,0],[11.8707,0.8,0.796,0],[12.7408,0.8,0.808,0]],"demonroar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"demonhit":[[58.7219,0.88,0.846,0],[59.6719,0.88,0.919,0],[60.622,0.88,0.693,0],[61.572,0.7878,0.8,0],[62.4298,0.7978,0.729,0]],"demonshed":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"demonbreak":[[67.8417,1,0.74,0],[68.9118,0.5817,1.257,0],[69.5635,1,1.004,0],[70.6336,0.7122,0.8,0],[71.4158,0.5585,0.686,0]],"bossroar":[[45.1016,2.2,1.044,0.6],[47.3717,2.2,1.037,0.6],[49.6417,2.2,0.93,0.6],[51.9117,2.2,0.828,0.6],[54.1818,2.2,1.081,0.6],[56.4518,2.2,0.95,0.6]],"bosssmash":[[40.186,1.28,0.803,0],[41.5361,1.28,1,0],[42.8861,1.28,1.03,0],[44.2362,0.7954,1.281,0]]}},"racer":{"file":"audio/sfx-racer.mp3","cues":{"crash":[[0.5,1.2,0.895,0],[1.77,1.2,1,0],[3.0401,1.2,0.922,0],[4.3101,1.2,1.037,0],[5.5802,1.2,1.031,0]],"crash_glass":[[6.8502,0.88,1.04,0],[7.8003,0.5965,0.944,0],[8.4668,0.88,0.702,0],[9.4168,0.88,0.8,0]],"skid":[[10.3669,1.2,0.74,0],[11.6369,1.2,0.698,0],[12.907,1.2,0.721,0],[14.177,1.2,0.7,0]],"near_miss":[[15.4471,0.6132,0.624,0],[16.1303,0.5831,0.6,0],[16.7834,0.6803,0.617,0],[17.5337,0.584,0.598,0]],"boost":[[18.1877,1.48,0.655,0],[19.7378,1.48,0.85,0],[21.2878,1.48,1.179,0],[22.8378,1.3965,1.349,0]],"gate_pass":[[24.3044,0.8,0.6,0],[25.1744,0.8,0.672,0],[26.0444,0.8,0.58,0],[26.9145,0.6858,0.817,0]],"engine_car":[[27.7903,4,0.4,0],[32.1003,4,0.4,0],[36.4103,4,0.4,0]],"boost_flame":[[40.7203,3,0.6,0],[44.0303,3,0.6,0],[47.3403,3,0.6,0]]}},"bosses":{"file":"audio/sfx-bosses.mp3","cues":{"roar_1":[[0.5,1.4253,0.95,0],[1.9953,2.4,0.914,0],[4.4653,2.4,1.143,0]],"roar_2":[[6.9354,2.4,1.073,0],[9.4054,2.4,0.95,0],[11.8755,2.4,0.888,0]],"roar_3":[[14.3455,2.4,0.761,0],[16.8156,2.0441,0.95,0],[18.9296,2.0109,1.223,0]],"roar_4":[[21.0106,2.4,0.95,0],[23.4806,2.3451,0.986,0],[25.8957,2.3711,0.925,0]],"roar_5":[[28.3368,2.4,1.05,0],[30.8069,1.956,0.879,0],[32.8329,1.6467,0.95,0]],"roar_6":[[34.5496,2.2382,0.975,0],[36.8579,2.4,0.95,0],[39.3279,2.4,0.91,0]],"roar_7":[[41.798,2.4,0.95,0],[44.268,2.0929,0.815,0],[46.4309,2.3395,1.077,0]],"roar_8":[[48.8404,1.2115,1.117,0],[50.1219,2.4,0.597,0],[52.592,2.4,0.95,0]],"roar_9":[[55.062,2.4,0.944,0],[57.532,2.4,0.95,0],[60.0021,2.4,1.371,0]],"roar_10":[[62.4721,2.4,0.69,0],[64.9422,2.4,1.019,0],[67.4122,2.4,0.95,0]],"roar_11":[[69.8823,1.9586,0.798,0],[71.9109,2.2792,0.95,0],[74.26,2.4,1.221,0]],"roar_all":[[76.7301,2.76,1.043,0],[79.5601,2.76,1,0],[82.3902,2.76,0.88,0]],"boss_land":[[85.2202,1.48,1,0],[86.7703,1.48,1.363,0],[88.3203,0.5899,1.016,0],[88.9802,1.48,0.946,0]],"boss_servo":[[90.5303,0.5033,0.484,0],[91.1036,0.5468,0.517,0],[91.7203,0.6803,0.45,0],[92.4706,0.6803,0.431,0]],"boss_power":[[93.2209,1.3683,0.7,0],[94.6592,1.2959,0.684,0],[96.025,1.6993,1.12,0]]}},"hub":{"file":"audio/sfx-hub.mp3","cues":{"hub_hum":[[0.62,8,0.5,0],[8.93,8,0.5,0],[17.24,8,0.5,0]]}},"voice":{"file":"audio/voice.mp3","cues":{"vo:$1 500 000":[[0.5,1.7779,1,0]],"vo:$100 000":[[2.3479,2.7178,1,0]],"vo:$250 000":[[5.1356,1.7738,1,0]],"vo:$500 000":[[6.9795,1.2373,1,0]],"vo:age 25 go":[[8.2867,1.9616,1,0]],"vo:announcer on":[[10.3184,1.0095,1,0]],"vo:begin":[[11.3979,0.9295,1,0]],"vo:blue chip":[[12.3973,0.9892,1,0]],"vo:boss defeated":[[13.4565,1.2051,1,0]],"vo:boss incoming":[[14.7316,1.7363,1,0]],"vo:boss rush":[[16.538,1.6046,1,0],[18.2126,2.51,1,0],[20.7927,0.7761,1,0]],"vo:bull run":[[21.6387,0.9604,1,0]],"vo:chapter complete":[[22.6692,1.106,1,0]],"vo:compounding":[[23.8451,1.193,1,0]],"vo:critical":[[25.1081,1.117,1,0]],"vo:deck cleared":[[26.2952,1.39,1,0]],"vo:defeated":[[27.7552,1.1138,1,0]],"vo:enraged":[[28.939,1.4505,1,0]],"vo:exam passed":[[30.4595,1.3676,1,0]],"vo:final boss":[[31.8971,1.318,1,0]],"vo:final boss destroyed":[[33.285,2.75,1,0]],"vo:final exam":[[36.1051,1.8518,1,0]],"vo:final wave":[[38.0268,1.5771,1,0]],"vo:forced retirement":[[39.6739,1.4642,1,0]],"vo:game over":[[41.2081,1.4106,1,0]],"vo:go":[[42.6887,0.6599,1,0]],"vo:group golem":[[43.4186,1.791,1,0]],"vo:happy retirement":[[45.2796,1.6602,1,0]],"vo:inflation titan":[[47.0098,2.43,1,0]],"vo:insert coin":[[49.5099,1.128,1,0]],"vo:last shield":[[50.7079,1.5958,1,0]],"vo:lightning":[[52.3737,1.15,1,0]],"vo:longevity lich":[[53.5937,1.5484,1,0]],"vo:lord intestate":[[55.2121,1.7993,1,0]],"vo:memory bank":[[57.0814,1.1962,1,0]],"vo:millionaire":[[58.3476,1.6842,1,0]],"vo:nest egg run":[[60.1018,1.6205,1,0]],"vo:new high score":[[61.7923,1.7269,1,0]],"vo:not yet":[[63.5891,0.933,1,0]],"vo:passed":[[64.5922,0.8735,1,0]],"vo:patrimony phantom":[[65.5356,1.8513,1,0]],"vo:perfect":[[67.4569,0.9316,1,0]],"vo:perilmonger":[[68.4585,1.47,1,0]],"vo:probate tollgate":[[69.9985,1.6925,1,0]],"vo:product pusher":[[71.7611,1.6875,1,0]],"vo:quick draw":[[73.5185,1.2579,1,0]],"vo:rank up":[[74.8465,1.07,1,0]],"vo:ready":[[75.9865,0.567,1,0]],"vo:retired a millionaire":[[76.6235,2.1487,1,0]],"vo:risk blaster":[[78.8422,1.8748,1,0]],"vo:select your game":[[80.787,1.2985,1,0]],"vo:shield down":[[82.1555,1.2631,1,0]],"vo:solvency specter":[[83.4886,1.996,1,0]],"vo:stage clear":[[85.5546,1.3893,1,0]],"vo:strategy guide":[[87.0139,1.3867,1,0]],"vo:the fine print":[[88.4705,1.3475,1,0]],"vo:the proctor":[[89.888,1.1939,1,0]],"vo:trophy unlocked":[[91.1519,1.2972,1,0]],"vo:undue influencer":[[92.5191,2.3957,1,0]],"vo:warning":[[94.9848,0.65,1,0]],"vo:wave 1":[[95.7048,1.63,1,0]],"vo:wave 10":[[97.4048,1.1341,1,0]],"vo:wave 2":[[98.609,0.9793,1,0]],"vo:wave 3":[[99.6583,1.47,1,0]],"vo:wave 4":[[101.1983,1.2106,1,0]],"vo:wave 5":[[102.479,1.3478,1,0]],"vo:wave 6":[[103.8967,1.4679,1,0]],"vo:wave 7":[[105.4346,1.1244,1,0]],"vo:wave 8":[[106.629,1.55,1,0]],"vo:wave 9":[[108.2491,1.4247,1,0]],"vo:welcome":[[109.7438,1.87,1,0]],"vo@adam:boss incoming":[[111.6838,1.5448,1,0]],"vo@adam:game over":[[113.2986,1.5262,1,0]],"vo@brian:boss incoming":[[114.8948,1.3866,1,0]],"vo@brian:game over":[[116.3514,1.8607,1,0]],"vo@charlie:game over":[[118.2821,1.31,1,0]],"vo:stand by":[[14.7316,1.7363,1,0]]}},"wizard":{"file":"audio/sfx-wizard.mp3","cues":{"wiz_appear":[[0.5,1.36,0.907,0],[1.93,1.36,0.752,0],[3.3601,1.36,0.8,0]],"wiz_whoosh":[[4.7901,0.3766,0.626,0],[5.2367,0.3596,0.657,0],[5.6663,0.4689,0.539,0],[6.2052,0.4326,0.55,0]],"wiz_charge":[[6.7079,1,0.437,0],[7.7779,1,0.5,0],[8.848,1,0.52,0]],"wiz_bolt":[[9.918,0.6,0.941,0],[10.588,0.6,0.7,0],[11.2581,0.6,0.594,0],[11.9281,0.6,1.12,0],[12.5982,0.6,0.595,0]],"wiz_nova":[[13.2682,1.2,0.882,0],[14.5383,1.2,0.85,0],[15.8083,1.2,0.937,0],[17.0784,1.2,0.781,0]],"wiz_impact":[[18.3484,0.88,1.131,0],[19.2985,0.88,0.85,0],[20.2485,0.7012,0.665,0],[21.0198,0.88,1.219,0]],"wiz_ward":[[21.9698,0.4459,1.112,0],[22.4857,1,1.185,0],[23.5558,1,0.606,0],[24.6258,1,0.8,0]],"wiz_fizzle":[[25.6959,0.4755,0.548,0],[26.2414,0.5558,0.6,0],[26.8672,0.6,0.755,0]],"wiz_finisher":[[27.5373,1.3383,1.295,0.55],[28.9456,1.8827,0.841,0.55],[30.8983,1.9959,1,0.55]],"wiz_victory":[[32.9642,2,0.8,0.6],[35.0343,1.4993,0.88,0.6],[36.6036,2,0.76,0.6]],"wiz_defeat":[[38.6736,1.6,0.706,0],[40.3437,1.6,0.7,0]]}}},"music":{"title":{"file":"audio/music-title.mp3","loop":[0.7,59.7678],"vol":1},"title-b":{"file":"audio/music-title-b.mp3","loop":[0.7,77.7589],"vol":1},"blaster":{"file":"audio/music-blaster.mp3","loop":[0.7,87.1086],"vol":1},"blaster-b":{"file":"audio/music-blaster-b.mp3","loop":[0.7,87.1086],"vol":1},"racer":{"file":"audio/music-racer.mp3","loop":[0.7,83.7689],"vol":1},"racer-b":{"file":"audio/music-racer-b.mp3","loop":[0.7,83.7689],"vol":1},"boss":{"file":"audio/music-boss.mp3","loop":[0.7,89.5807],"vol":1},"boss-b":{"file":"audio/music-boss-b.mp3","loop":[0.7,80.6926],"vol":1},"finalboss":{"file":"audio/music-finalboss.mp3","loop":[0.7,86.3837],"vol":1},"finalboss-b":{"file":"audio/music-finalboss-b.mp3","loop":[0.7,94.9521],"vol":1},"hub":{"file":"audio/music-hub.mp3","loop":[0.7,80.7095],"vol":1},"hub-b":{"file":"audio/music-hub-b.mp3","loop":[0.7,80.7095],"vol":1},"exam":{"file":"audio/music-exam.mp3","loop":[0.7,89.121],"vol":1},"exam-b":{"file":"audio/music-exam-b.mp3","loop":[0.7,76.4895],"vol":1},"memory":{"file":"audio/music-memory.mp3","loop":[0.7,84.7],"vol":1},"memory-b":{"file":"audio/music-memory-b.mp3","loop":[0.7,84.6895],"vol":1},"calm":{"file":"audio/music-calm.mp3","loop":[0.7,82.974],"vol":1},"calm-b":{"file":"audio/music-calm-b.mp3","loop":[0.7,82.974],"vol":1}},"sets":{"blaster":["model:starfighter","model:demon","model:prop-ship-a","model:prop-ship-b","model:prop-ship-c","model:prop-rock","model:prop-rock2","sky:blaster-deep-1","sky:blaster-deep-4","sky:blaster-deep-5","sfx:core","sfx:combat","sfx:voice","music:blaster","model:ally-a","model:ally-c","model:ally-a2","model:ally-b2","model:ally-c2","model:brood-a","model:brood-a1","model:brood-a2","model:brood-a3","model:brood-b","model:brood-d","model:brood-d2","model:brood-f","model:brood-f2","model:prop-shield","model:prop-bolt","model:prop-star","music:blaster-b"],"racer":["model:warrig","model:prop-car","model:prop-van","model:prop-bus","sky:racer-dawn","sky:racer-day","sky:racer-sunset","sky:racer-sunset-b","sky:racer-night","sfx:core","sfx:racer","sfx:voice","music:racer","model:rival-rig","model:rival-rig2","model:chaser","model:prop-shield","model:prop-heart","model:prop-bolt","model:prop-star","music:racer-b"],"boss":["sky:boss-storm","sky:boss-storm-b","sky:boss-void","sfx:core","sfx:combat","sfx:bosses","sfx:voice","music:boss","music:finalboss","model:prop-heart","model:prop-star","model:prop-coin","model:prop-bolt","music:boss-b","music:finalboss-b","model:wizard","model:wand","sfx:wizard","ui:fx-runes","ui:fx-ward","ui:fx-star"],"hub":["model:prop-cabinet","model:mini-starfighter","model:mini-warrig","model:mini-proctor","model:prop-deck","model:prop-podium","model:prop-tome","model:prop-trophy","model:prop-medal","model:prop-coin","model:prop-stand","model:prop-vault","sky:hub-hall","sky:hub-hall-b","ui:bosses","ui:icons"],"hubsound":["sfx:core","sfx:hub","sfx:voice","music:hub","music:hub-b"],"title":["sky:title-hall","ui:mat-deck","ui:mat-tread","ui:mat-steel","ui:win-blaster","ui:win-racer","ui:win-boss","ui:win-memory","ui:win-exam","ui:win-guide","model:prop-vault","model:prop-cabinet","model:prop-stand","model:prop-trophy","model:boss-1-t","model:boss-2-t","model:boss-3-t","model:boss-4-t","model:boss-5-t","model:boss-6-t","model:boss-7-t","model:boss-8-t","model:boss-9-t","model:boss-10-t","model:boss-11-t","model:boss-all-t","ui:top-blaster","ui:top-racer","ui:top-boss","ui:top-memory","ui:top-guide","ui:top-exam"],"titlesound":["sfx:core","sfx:voice","music:title","music:title-b"],"titleroar":["sfx:bosses"],"memory":["sky:vault-gold","ui:mat-deck","ui:mat-steel","model:prop-deck","model:prop-coin","sfx:core","sfx:voice","music:memory","model:decor-deck","music:memory-b"],"exam":["sky:exam-moon","model:prop-podium","sfx:core","sfx:combat","sfx:voice","music:exam","model:statue-1","model:statue-2","model:statue-3","model:statue-4","model:statue-5","model:statue-6","model:statue-7","model:statue-8","model:statue-9","model:statue-10","model:statue-11","model:statue-all","model:decor-podium","music:exam-b"],"guide":["sky:guide-archive","model:prop-tome","sfx:core","music:calm","model:decor-tome","music:calm-b"]}};
 
 /* ---- 03b-assets.js ---- */
 // Asset files: the generated models, skies and sound live beside the page in arcade/assets/ and are fetched when
@@ -34862,51 +34862,96 @@ function memoryCoinTexture() {
   return new THREE.CanvasTexture(c);
 }
 
-// The wall around the vault: rows of safe-deposit boxes in dark steel, each with a
+// The wall around the vault: rows of safe-deposit boxes, each door brushed steel with a
 // brass plate and keyhole. Plates light up gold as the deck is banked (uLit), and the
 // glow from the vault's seam spills across the nearest doors.
-function memoryWallMaterial() {
+// (the master overhaul, Phase 2, 2026-11-23: the doors were a flat dark navy. Now each is a sheet of brushed steel
+// (ambientCG Metal009, CC0: assets/ui/mat-steel.webp, its normal's x and y in red and green, its roughness in blue;
+// a level sheet until it arrives) whose face turns to its edges in a bevel, lit as metal is: the vault's glow from
+// the door's rim (gold), the cove strip along the top of the wall (warm white, from above: every door's upper rim
+// catches it) and the floor's gold thrown back up (orange: the lower rims), each as a broad sheen and a sharp
+// highlight; what the steel mirrors is the room in front of it, dark violet, lighter toward the cove and the floor.
+// A kick plate with a strip of orange light runs along the foot of the wall. One draw, one look-up a pixel.)
+function memoryWallMaterial(brush) {
   return new THREE.ShaderMaterial({
     uniforms: Object.assign(fogUniforms(), {
       uTime: { value: 0 }, uLit: { value: 0 }, uGlow: { value: 0.3 },
       uDoor: { value: new THREE.Vector3(0, MEMORY_DOOR_Y, 12.1) },
-      uGold: { value: neon(0xffb444, 1.35) }, uLed: { value: neon(0x3dff8e, 1.8) },
+      uGold: { value: neon(0xffb444, 1.35) }, uLed: { value: neon(0xff8a2a, 2.2) },
+      uCove: { value: neon(0xffc93d, 2.5) }, uKick: { value: neon(0xff8a2a, 1.4) },
+      tBrush: { value: brush },
     }),
     extensions: { derivatives: true },
     vertexShader: `varying vec3 vWorld; varying float vDepth;
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `${GLSL_NOISE} ${GLSL_FOG_PARS}
       uniform float uTime; uniform float uLit; uniform float uGlow; uniform vec3 uDoor; uniform vec3 uGold; uniform vec3 uLed;
+      uniform vec3 uCove; uniform vec3 uKick; uniform sampler2D tBrush;
       varying vec3 vWorld; varying float vDepth;
+      // a light's two lobes on brushed steel: a broad sheen and a sharp highlight
+      float sheen(vec3 N, vec3 L, vec3 V, float rough){
+        float nh = max(dot(N, normalize(L + V)), 0.0), sh = 2.0 / max(rough * rough * rough * rough, 1e-3);
+        return 0.3 * pow(nh, 7.0) + pow(nh, sh) * (sh + 2.0) * 0.012;
+      }
       void main(){
+        const float KICK = 0.62, COVE = 24.02; // (the kick plate's top, and the cove between two rows of doors: 18 rows up)
         vec2 cs = vec2(2.1, 1.3);
-        vec2 q = vWorld.xy / cs;
+        vec2 q = (vWorld.xy - vec2(0.0, KICK)) / cs;
         vec2 id = floor(q); vec2 f = fract(q);
-        vec2 aa = fwidth(q) * cs;
-        float px = max(max(aa.x, aa.y), 1e-4);
+        float px = max(max(fwidth(vWorld.x), fwidth(vWorld.y)), 1e-4); // (world units a pixel)
         vec2 d = min(f, 1.0 - f) * cs;
-        float seam = smoothstep(0.03, 0.03 + px * 1.5, min(d.x, d.y));
-        float h = hash13(vec3(id, 3.0));
-        vec3 col = vec3(0.066, 0.074, 0.09) * (0.75 + 0.5 * h);
-        float top = 1.0 - smoothstep(0.0, 0.1 + px, (1.0 - f.y) * cs.y - 0.03);
-        float bot = 1.0 - smoothstep(0.0, 0.1 + px, f.y * cs.y - 0.03);
-        col += vec3(0.16, 0.14, 0.34) * top; // a violet light along the top edge of every box
-        col *= 1.0 - 0.55 * bot;
-        vec2 c = (f - vec2(0.5, 0.58)) * cs;
-        float plate = 1.0 - smoothstep(-px, px, max(abs(c.x) - 0.27, abs(c.y) - 0.1));
-        float key = 1.0 - smoothstep(-px, px, length((f - vec2(0.5, 0.3)) * cs) - 0.055);
-        col = mix(col, vec3(0.15, 0.105, 0.04), plate);
-        col *= 1.0 - 0.85 * key;
-        col *= seam * 0.85 + 0.15;
-        float r = length(vWorld.xy - uDoor.xy);
-        float spill = exp(-max(r - uDoor.z, 0.0) * 0.2);
-        col *= 0.62 + 2.2 * spill * uGlow + 0.3 * smoothstep(36.0, 12.0, vWorld.y);
-        col += vec3(0.1, 0.16, 0.42) * exp(-max(r - uDoor.z, 0.0) * 0.3) * 0.3; // a cool halo on the wall round the frame
+        float seam = smoothstep(0.03 - px * 0.5, 0.03 + px * 0.5, min(d.x, d.y)); // (the gap between two doors)
+        float h = hash13(vec3(id, 3.0)), hb = hash13(vec3(floor(id / vec2(6.0, 5.0)), 5.0));
+        float kick = 1.0 - smoothstep(KICK - px, KICK + px, vWorld.y);
+        // the sheet: streaks along x, each door cut from its own part of it (the sheet's relief and the spread of its
+        // roughness are a few hundredths: stretched here so the brushing shows); relief finer than a pixel is not drawn
+        vec3 bm = texture2D(tBrush, vWorld.xy * vec2(0.05, 0.22) + vec2(h * 3.7, h * 5.3)).rgb;
+        float fine = 1.0 - smoothstep(0.03, 0.1, px), streak = clamp(0.5 + (bm.b - 0.47) * 8.0, 0.0, 1.0);
+        // the bevel: the face turns toward each edge over its last few centimetres
+        vec2 rim = sign(f - 0.5) * (1.0 - smoothstep(0.03, 0.12 + px, d)) * (1.0 - kick);
+        vec3 N = normalize(vec3(rim * 0.95 + (bm.rg - 0.5) * 16.0 * fine, 1.0));
+        vec3 V = normalize(cameraPosition - vWorld);
+        float rough = clamp(mix(0.22, 0.48, streak) + 0.2 * (1.0 - fine), 0.12, 0.75);
+        vec3 F0 = vec3(0.6, 0.6, 0.62) * (0.8 + 0.3 * h) * (0.86 + 0.28 * hb) * mix(0.9, 1.07, streak * fine + 0.5 * (1.0 - fine));
+        // the number plate (brass) and the keyhole
+        vec2 c = (f - vec2(0.5, 0.6)) * cs;
+        float plate = (1.0 - smoothstep(-px, px, max(abs(c.x) - 0.27, abs(c.y) - 0.09))) * (1.0 - kick);
+        float key = (1.0 - smoothstep(-px, px, length((f - vec2(0.5, 0.3)) * cs) - 0.05)) * (1.0 - kick);
+        F0 = mix(F0, vec3(0.86, 0.6, 0.26), plate);
+        F0 = mix(F0, vec3(0.2, 0.19, 0.22), kick); // (the kick plate: darker, rubbed by boots)
+        rough = mix(rough, 0.34, plate);
+        float nv = max(dot(N, V), 0.0);
+        vec3 F = F0 + (1.0 - F0) * pow(1.0 - nv, 5.0) * 0.6;
+        // the vault's glow: from the door's rim, nearest this door
+        vec2 dv = vWorld.xy - uDoor.xy; float r = length(dv);
+        vec3 G = vec3(uDoor.xy + dv / max(r, 1e-3) * (uDoor.z - 1.0), 2.6) - vWorld;
+        float eg = uGlow * 3.4 * exp(-max(r - uDoor.z, 0.0) * 0.11);
+        vec3 Lg = normalize(G);
+        // the cove: a strip of warm light along the top of the wall, grazing down it (the doors' upper rims mirror it)
+        float ec = mix(0.1, 0.3 + 1.2 * exp(-max(COVE - vWorld.y, 0.0) * 0.2), step(vWorld.y, COVE)) * mix(0.75, 1.15, f.y); // (each door lighter toward its top)
+        vec3 Lc = normalize(vec3(0.0, 0.96, 0.28));
+        // the floor's gold thrown back up onto the lowest rows (their lower rims)
+        float eb = (0.08 + 0.8 * uGlow) * exp(-vWorld.y * 0.18) * (0.3 + 0.7 * exp(-max(r - uDoor.z, 0.0) * 0.05));
+        vec3 Lb = normalize(vec3(0.0, -0.94, 0.34));
+        vec3 col = F * (vec3(1.0, 0.64, 0.27) * eg * (sheen(N, Lg, V, rough) + 0.16 * max(dot(N, Lg), 0.0))
+                      + vec3(1.0, 0.88, 0.7) * ec * (sheen(N, Lc, V, rough) + 0.06 * max(dot(N, Lc), 0.0))
+                      + vec3(1.0, 0.48, 0.14) * eb * (sheen(N, Lb, V, rough) + 0.06 * max(dot(N, Lb), 0.0)));
+        // what the steel mirrors: the room in front of it (dark violet; a cooler grey up toward the ceiling, the floor's
+        // warmth down toward it), the brushing's streaks in it
+        vec3 R = reflect(-V, N);
+        float w = 0.25 + rough;
+        col += F * mix(0.86, 1.1, streak * fine + 0.5 * (1.0 - fine)) * (vec3(0.045, 0.038, 0.07) + vec3(0.19, 0.185, 0.21) * smoothstep(0.2 - w * 0.3, 0.8 + w * 0.2, R.y)
+          + vec3(0.3, 0.15, 0.06) * smoothstep(0.15 - w * 0.3, 0.7 + w * 0.2, -R.y) * (0.4 + uGlow));
+        col *= 1.0 - 0.88 * key;
+        col *= mix(0.12, 1.0, max(seam, kick));
         float lit = step(h, uLit);
         col += uGold * plate * seam * lit * (0.8 + 0.2 * sin(uTime * 1.7 + h * 40.0));
-        float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0));
+        float ledOn = step(0.94, hash13(vec3(id, 11.0))) * step(0.45, fract(uTime * 0.21 + h * 7.0)) * (1.0 - kick);
         float led = 1.0 - smoothstep(0.0, px * 1.5, length((f - vec2(0.88, 0.8)) * cs) - 0.035);
         col += uLed * led * ledOn;
+        // the strips themselves: the cove (gold) and the kick plate's top (orange)
+        col += uCove * (1.0 - smoothstep(0.06, 0.06 + px * 1.5, abs(vWorld.y - COVE)));
+        col += uKick * (1.0 - smoothstep(0.035, 0.035 + px * 1.5, abs(vWorld.y - KICK)));
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -34953,23 +34998,31 @@ function memoryWheelGeometry() {
   return memoryMerge(parts);
 }
 
-// A gold ingot: a box with its top drawn in, flat-shaded. endOn: for bars laid with an end toward the lens.
-function memoryIngotGeometry(endOn) {
-  const g = new THREE.BoxGeometry(1.95, 0.56, 0.96).toNonIndexed();
-  const p = g.attributes.position;
-  for (let i = 0; i < p.count; i++) {
-    if (p.getY(i) > 0) { p.setX(i, p.getX(i) * 0.84); p.setZ(i, p.getZ(i) * 0.7); }
+// A gold ingot as cast: a trapezoid, its top drawn in, every edge bevelled, so a highlight runs along each edge in
+// the light and each face takes its own part of the room's reflection (the master overhaul, Phase 2, 2026-11-23: a
+// box with its faces painted lighter and darker read as a lump of brown). Flat faces, 44 triangles; the bars' own
+// tones (instance colours) need a colour per corner, all white.
+function memoryIngotGeometry() {
+  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56, C = 0.055;
+  // an octagon: a rectangle (half-sizes w, d) at height y, its corners cut by k
+  const ring = (w, d, y, k) => [[w - k, d], [w, d - k], [w, -(d - k)], [w - k, -d], [-(w - k), -d], [-w, -(d - k)], [-w, d - k], [-(w - k), d]].map(([x, z]) => new THREE.Vector3(x, y, z));
+  const t = (H - C) / H, r0 = ring(W0, D0, 0, C * 1.4), r1 = ring(W0 + (W1 - W0) * t, D0 + (D1 - D0) * t, H - C, C * 1.4), r2 = ring(W1 - C, D1 - C, H, C);
+  const mid = new THREE.Vector3(0, H / 2, 0), pos = [], ab = new THREE.Vector3(), ac = new THREE.Vector3(), cen = new THREE.Vector3();
+  const tri = (a, b, c) => { // (wound so its face looks away from the bar's middle: the bar is convex)
+    ab.subVectors(b, a); ac.subVectors(c, a); cen.copy(a).add(b).add(c).multiplyScalar(1 / 3).sub(mid);
+    const out = ab.cross(ac).dot(cen) > 0;
+    for (const v of out ? [a, b, c] : [a, c, b]) pos.push(v.x, v.y, v.z);
+  };
+  for (let i = 0; i < 8; i++) {
+    const j = (i + 1) % 8;
+    tri(r0[i], r0[j], r1[j]); tri(r0[i], r1[j], r1[i]); // a side
+    tri(r1[i], r1[j], r2[j]); tri(r1[i], r2[j], r2[i]); // its bevel
   }
-  g.translate(0, 0.28, 0);
+  for (let i = 1; i < 7; i++) { tri(r0[0], r0[i], r0[i + 1]); tri(r2[0], r2[i], r2[i + 1]); } // the foot and the top
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(pos.length).fill(1), 3));
   g.computeVertexNormals();
-  // each face its own tone, as cast gold takes the light: bright on top, deeper on the long sides, darkest on the ends
-  const n = g.attributes.normal, c = new Float32Array(p.count * 3);
-  for (let i = 0; i < p.count; i++) {
-    const up = p.getY(i) / 0.56; // 0 at the foot, 1 at the top edge
-    const k = n.getY(i) > 0.5 ? 1 : n.getY(i) < -0.5 ? 0.3 : ((Math.abs(n.getX(i)) > 0.5) === !!endOn ? 0.6 : 0.33) * (0.72 + 0.56 * up); // (the faces turned to the lens are the lighter ones, and every side is brightest at its top edge)
-    c[i * 3] = k; c[i * 3 + 1] = k * (0.92 + 0.08 * k); c[i * 3 + 2] = k * (0.78 + 0.22 * k);
-  }
-  g.setAttribute("color", new THREE.BufferAttribute(c, 3));
   return g;
 }
 
@@ -35054,7 +35107,7 @@ class MemorySparks {
 
 class MemoryGame extends QuizGame {
   constructor(sel) {
-    super(sel, "memory", { fov: 60, fog: [0x020a07, 30, 95], bg: 0x020a07 });
+    super(sel, "memory", { fov: 60, fog: [0x0a0424, 30, 95], bg: 0x090320 }); // (the arcade's violet-black: it was the one green-black screen)
     const ids = selectionFids(sel);
     const now = nowMin();
     this.queue = ids
@@ -35088,13 +35141,15 @@ class MemoryGame extends QuizGame {
   build3D() {
     const s = this.scene;
     const Y = MEMORY_DOOR_Y;
+    // (the room's ground is the arcade's violet-black and its light the vault's pair, gold and orange: the master
+    // overhaul, Phase 2, 2026-11-23; it was green-black, with green strips either side)
     this.envRT = memoryEnvMap({
-      top: 0x030a07, horizon: 0x5a3a10, bottom: 0x010302, glow: 0.55,
+      top: 0x090320, horizon: 0x5a3a10, bottom: 0x05021a, glow: 0.55,
       panels: [
         { color: 0xfff0d0, k: 1.25, w: 44, h: 3.2, pos: [0, 6, 29] }, // a light strip behind the camera: a broad arc on the gold
         { color: 0xffc46a, k: 0.35, w: 30, h: 3, pos: [0, -6, 29] }, // warm bounce off the floor
-        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [-30, 6, 12] },
-        { color: 0x22d47c, k: 0.5, w: 5, h: 30, pos: [30, 6, 12] },
+        { color: 0xff8a2a, k: 0.5, w: 5, h: 30, pos: [-30, 6, 12] },
+        { color: 0xff8a2a, k: 0.5, w: 5, h: 30, pos: [30, 6, 12] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [-15, 24, 6] },
         { color: 0xfff6e2, k: 4, w: 4, h: 2.5, pos: [17, 21, 10] },
       ],
@@ -35103,8 +35158,9 @@ class MemoryGame extends QuizGame {
     const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
-    // the bars' gold is a little short of pure metal and warmer, so the lamps shade each face of a bar differently and a stack reads as solids, not as one yellow shape
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xffcc48, vertexColors: true, metalness: 0.5, roughness: 0.44, envMap: env, envMapIntensity: 0.75, emissive: 0x3a2204 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
+    // the bars' gold: cast gold, polished, a mirror of the vault round it; each bevelled face takes its own part of that
+    // and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast)
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.21, envMap: env, envMapIntensity: 1.65, emissive: 0x281603 }), { scale: 1.5, height: 0.0012, scratch: 1.1 });
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
     const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
@@ -35127,7 +35183,7 @@ class MemoryGame extends QuizGame {
     const steel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x3b4549, metalness: 1, roughness: 0.3, envMap: env, envMapIntensity: 1.15 }), { scale: 1.2, height: 0.002, scratch: 1.5, smudge: 0.5 });
     const chrome = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xdfe5ea, metalness: 1, roughness: 0.12, envMap: env, envMapIntensity: 1.6 }), { scale: 2, height: 0.0006, grain: 0.5, scratch: 1.6, smudge: 0.5 });
 
-    s.add(new THREE.AmbientLight(0x1d3a2c, 0.6));
+    s.add(new THREE.AmbientLight(0x2a1c4a, 0.6)); // (the room's shade a deep violet)
     const key = new THREE.DirectionalLight(0xfff0d8, 0.4);
     key.position.set(-10, 22, 9); // steep, so flat faces never flare straight back at the camera
     s.add(key);
@@ -35140,10 +35196,11 @@ class MemoryGame extends QuizGame {
     this.vaultLight.position.set(0, Y + 3, 7);
     s.add(this.vaultLight);
 
-    // the wall of deposit boxes and the vault's glow on it (layer 1: the floor only
-    // reflects the vault itself, which keeps the mirror pass cheap)
-    this.wall = new THREE.Mesh(new THREE.PlaneGeometry(110, 50), memoryWallMaterial());
-    this.wall.position.set(0, 25, -1.25);
+    // the wall of deposit boxes and the vault's glow on it (wide and tall enough to fill any window round the vault:
+    // on a Mac the room spans the window, and it ended in a black void either side)
+    this.brush = cellFlatTexture(); // (a level sheet until mat-steel arrives: see update)
+    this.wall = new THREE.Mesh(new THREE.PlaneGeometry(300, 64), memoryWallMaterial(this.brush));
+    this.wall.position.set(0, 32, -1.25);
     this.wall.layers.set(1);
     s.add(this.wall);
     this.halo = glowSprite(neon(0xffb84d, 1), 36, 0.2);
@@ -35243,9 +35300,22 @@ class MemoryGame extends QuizGame {
     this.shafts.layers.set(1);
     door.add(this.shafts);
 
-    // polished dark floor: a polar grid radiating from the vault, and its reflection
-    this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 260, mirror: this.mirror, polar: true, spokes: 40, cell: 2.6, line: 0x1fd17a, lineK: 0.6, base: 0x010504, reflect: 0.4, glow: 0.25, ripple: 0.001, streak: 0, fall: [1.5, 0.05] });
+    // polished dark floor: a steel deck that gives the vault back (the master overhaul, Phase 2, 2026-11-23: it was a
+    // green polar grid on black, a wireframe that shimmered, and on a phone it reflected nothing). The room is drawn
+    // once into a cube from in front of the door (roomProbe: a face a frame, a few frames in) and the deck gives it
+    // back where each reflected ray meets the room's box (the wall of boxes and the door lie on its back face, so the
+    // door's gold and its seam stand in the floor under it), blurred by the deck's roughness; its plates and wear from
+    // a CC0 deck plate (Poly Haven's metal_plate_02: assets/ui/mat-deck.webp, a level plate until it arrives). The
+    // same on every tier: one look-up a pixel, no second drawing of the scene (the Mac's floor mirror drew the vault
+    // again every frame).
+    this.probe = roomProbe(new THREE.Vector3(0, 4.2, 11), { size: Assets.phone ? 128 : 256 });
+    this.plates = cellFlatTexture();
+    this.floorProbeK = 1.35;
+    this.floor = makeNeonFloor({
+      size: 260, cell: 2.6, line: 0xffb444, lineK: 0.3, base: 0x060312, glow: 0, gridAlpha: 0, ripple: 0, streak: 0,
+      probe: { map: this.probe.map, min: new THREE.Vector3(-80, 0, -1.25), max: new THREE.Vector3(80, 46, 70), at: this.probe.at, k: this.floorProbeK, rough: 0.15 },
+      plates: { map: this.plates, size: 10, k: 0.25 },
+    });
     s.add(this.floor);
     // a threshold under the door, and the shade the door and its frame lay on the floor in front of it
     const sill = new THREE.Mesh(new THREE.BoxGeometry(18.8, 0.5, 2.0), steel);
@@ -35262,22 +35332,22 @@ class MemoryGame extends QuizGame {
     shade.renderOrder = 3;
     shade.layers.set(1);
     s.add(sill, sillLip, shade);
-    s.userData.mirrors = [this.mirror];
     const pool = makeLightPool({ color: 0xffb84d, radius: 11, intensity: 0.12 });
     pool.position.set(0, 0.02, 1.5);
     pool.layers.set(1);
     s.add(pool);
+    const lieOnFloor = [this.floor, shade, pool]; // (what lies on the floor is not in its reflection: see the probe)
 
     // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
     // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
-    const ingot = memoryIngotGeometry(), ingotEnd = memoryIngotGeometry(true), S = 1.3, SB = 1.6, tone = new THREE.Color();
-    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.84, 1.08) * k)); // no two bars poured quite alike
+    const ingot = memoryIngotGeometry(), S = 1.3, SB = 1.6, tone = new THREE.Color();
+    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.86, 1.06) * k)); // no two bars poured quite alike
     this.stacks = [-1, 1].map((sd) => {
       const st = new THREE.InstancedMesh(ingot, barGold, 6);
       let n = 0;
       for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
         st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
-        cast(st, n++, 0.5); // (the heaps in the corners are dressing: they sit darker than the bars you bank)
+        cast(st, n++, 0.86); // (the heaps in the corners are dressing: they sit a little darker than the bars you bank)
       }
       st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
@@ -35287,6 +35357,7 @@ class MemoryGame extends QuizGame {
       cone.layers.set(1);
       const glow = makeLightPool({ color: 0xffd27a, radius: 5.2, intensity: 0.035 });
       glow.layers.set(1);
+      lieOnFloor.push(glow);
       const g = new THREE.Group();
       g.add(st, cone, glow);
       s.add(g);
@@ -35298,11 +35369,12 @@ class MemoryGame extends QuizGame {
     plinth.position.set(0, 0.17, 6.3);
     const plinthLip = new THREE.Group();
     [[0, 8.26, 10.8, 0.14], [0, 4.34, 10.8, 0.14], [-5.33, 6.3, 0.14, 4.0], [5.33, 6.3, 0.14, 4.0]].forEach(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), gold); m.position.set(x, 0.35, z); plinthLip.add(m); });
-    // the plinth's front edge is a line of the bank's own light: where your gold goes is the lit place in the vault
-    const plinthGlow = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: neon(COLORS.lime, 1.5) }));
+    // the plinth's front edge is a line of the bank's own light: where your gold goes is the lit place in the vault (in
+    // the vault's second colour, orange: it was lime, a third neon in a gold room)
+    const plinthGlow = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: neon(0xff8a2a, 2.2) }));
     plinthGlow.position.set(0, 0.2, 8.34);
     s.add(plinth, plinthLip, plinthGlow);
-    this.bank = new THREE.InstancedMesh(ingotEnd, barGold, DECK_SIZE);
+    this.bank = new THREE.InstancedMesh(ingot, barGold, DECK_SIZE);
     this.bankRest = [];
     [6, 5, 4, 3, 2].forEach((w, L) => { for (let i = 0; i < w; i++) this.bankRest.push({ p: new THREE.Vector3((i - (w - 1) / 2) * 1.6, 0.34 + L * 0.9, 6.3), q: new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DefaultUp, Math.PI / 2 + rand(-0.04, 0.04)) }); });
     this.bankScale = new THREE.Vector3(SB, SB, SB);
@@ -35316,6 +35388,7 @@ class MemoryGame extends QuizGame {
     bankGlow.position.set(0, 0.37, 6.6);
     bankGlow.layers.set(1);
     s.add(bankGlow);
+    lieOnFloor.push(bankGlow);
 
     this.motes = makeMotes({ count: 80, box: [40, 18, 18], center: [0, 9, 6], color: 0xffe2a8, size: 0.13, k: 1.1 });
     this.motes.layers.set(1);
@@ -35323,6 +35396,10 @@ class MemoryGame extends QuizGame {
     this.sparks = new MemorySparks(260);
     s.add(this.sparks.points);
     this.glintT = 0.5;
+    // the floor's reflection leaves out the floor and what lies on it, and what moves through the air (it is drawn
+    // once: the dust and the sparks would hang in it)
+    this.probe.hide = lieOnFloor.concat([this.motes, this.sparks.points]);
+    this.probeIn = 3; // (drawn a few frames in, once the screen's lights are made: see update)
 
     this.coinTex = memoryCoinTexture();
     this.coinGeo = memoryCoinGeometry();
@@ -35332,8 +35409,13 @@ class MemoryGame extends QuizGame {
       this.coinTex = null; this.coinGeo = this.gen.coin.geo; this.coinMat = this.gen.coin.mat;
     }
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
+    // the coins lying in the piles by the bullion: the same gold, lifted (lying flat they mirror the middle of the
+    // vault's ceiling, its darkest part, and read as brown lumps: the master overhaul, Phase 2, 2026-11-23)
+    const pile = this.coinMat.clone();
+    pile.envMapIntensity = this.coinMat.envMapIntensity * 1.4;
+    pile.emissive = new THREE.Color(0x3c2405);
 
-    this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
+    this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel, pile }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
     this.flash = 0; // a deposit's flash, decaying
     this.slotFlash = 0;
@@ -35687,6 +35769,8 @@ class MemoryGame extends QuizGame {
     this.shafts.material.uniforms.uI.value = 0.05 + 0.1 * this.open + 0.22 * this.flash;
     this.wall.material.uniforms.uGlow.value = 0.22 + 0.12 * this.open + 0.2 * this.flash;
     this.wall.material.uniforms.uLit.value = this.open * 0.55;
+    // the floor's reflection is drawn once, so the vault's glow in it follows the vault's own (banked, a deposit's flash)
+    this.floor.material.uniforms.uProbe.value.x = this.floorProbeK * (0.9 + 0.22 * this.open + 0.5 * this.flash);
     const sf = this.slotFlash;
     this.slitMat.color.copy(this.slitBase).multiplyScalar(1.6 + 0.3 * Math.sin(t * 3) + 7 * Math.max(0, sf));
     if (sf < 0) this.slitMat.color.lerp(this.slitMiss, -sf);
@@ -35714,11 +35798,34 @@ class MemoryGame extends QuizGame {
     this.sparks.update(dt, this.camera);
     memoryGenUpdate(this, dt);
     FX.sync(this.scene, t);
+    this.takeSurfaces();
+  }
+  // The floor's reflection (a face of the room's cube a frame, a few frames in: the screen's lights are made at its
+  // first drawing) and the two CC0 pictures as they arrive (the deck's plates, the boxes' brushed steel). Once the
+  // steel has come, the room is drawn into the cube once more, so the floor gives back brushed doors.
+  takeSurfaces() {
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
+    if (this.brush && !this.brushIn) { const img = Assets.ui("mat-steel"); if (img) { this.brush.image = img; this.brush.needsUpdate = true; this.brushIn = true; if (this.probe && this.probe.made) this.probe.capture(); } }
+    if (!this.probe) return;
+    if (this.probeIn > 0 && --this.probeIn === 0) this.probe.capture();
+    this.probe.step(this.scene, this.camera.layers.mask);
+  }
+  // the floor's reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps,
+  // so a face a frame would never be drawn there; the game itself draws every frame. See HallScene.probeNow)
+  probeNow() {
+    if (!this.probe) return;
+    this.takeSurfaces();
+    this.probeIn = 0;
+    this.probe.capture();
+    while (this.probe.left) this.probe.step(this.scene, this.camera.layers.mask);
   }
   // Free what the scene graph walk misses: the env target, the textures that are not
   // a material's `map`, instance buffers, and the coin parts (shared, maybe not in the scene).
   dispose() {
     if (this.envRT) this.envRT.dispose();
+    if (this.probe) this.probe.dispose();
+    if (this.plates) this.plates.dispose(); // (not a material's map: the walk below misses them)
+    if (this.brush) this.brush.dispose();
     if (this.dialTex) this.dialTex.dispose();
     if (this.coinTex) this.coinTex.dispose();
     if (this.coinGeo) this.coinGeo.dispose();
@@ -35850,7 +35957,8 @@ class MemoryWorks {
     this.lamps.layers.set(1);
     s.add(this.lamps);
 
-    // lamp panels on the wall either side of the door (they show on wide screens)
+    // lamp panels on the wall either side of the door (they show on wide screens): gold and orange, the vault's pair
+    // (the master overhaul, Phase 2, 2026-11-23: half of them were green), on dark violet
     this.panelMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 }, uOpen: { value: 0 }, uMiss: { value: 0 } },
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
@@ -35860,7 +35968,7 @@ class MemoryWorks {
           float r = fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453);
           float lamp = smoothstep(0.34, 0.24, max(abs(f.x), abs(f.y) * 1.25));
           float on = step(r, 0.25 + 0.6 * uOpen) * (0.6 + 0.4 * sin(uTime * (0.4 + r * 1.2) + r * 40.0));
-          vec3 col = vec3(0.02, 0.03, 0.03) + lamp * (vec3(0.06, 0.1, 0.08) + mix(vec3(1.5, 1.1, 0.4), vec3(0.4, 1.6, 0.7), step(0.5, r)) * on);
+          vec3 col = vec3(0.025, 0.015, 0.05) + lamp * (vec3(0.09, 0.06, 0.1) + mix(vec3(1.5, 1.1, 0.4), vec3(1.9, 0.75, 0.2), step(0.5, r)) * on);
           col += lamp * vec3(2.2, 0.16, 0.12) * uMiss * step(0.6, r);
           float edge = max(abs(vUv.x - 0.5) * 2.0, abs(vUv.y - 0.5) * 2.0);
           col = mix(col, vec3(0.5, 0.36, 0.16), smoothstep(0.93, 0.97, edge));
@@ -35881,7 +35989,7 @@ class MemoryWorks {
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
-      const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
+      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count);
       // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
       // piles start two coins high and gain a coin for each card banked.
       let n = 0;
@@ -35932,7 +36040,7 @@ class MemoryWorks {
     pu.uMiss.value = red;
   }
   dispose() {
-    // (the coin stacks share the game's coin geometry and material: the game frees those)
+    // (the coin stacks share the game's coin geometry, and their material is in the scene: the game frees those)
     [this.planets, this.pins, ...this.coins].forEach((m) => m.dispose());
   }
 }

@@ -92,7 +92,8 @@ class MemoryWorks {
     this.lamps.layers.set(1);
     s.add(this.lamps);
 
-    // lamp panels on the wall either side of the door (they show on wide screens)
+    // lamp panels on the wall either side of the door (they show on wide screens): gold and orange, the vault's pair
+    // (the master overhaul, Phase 2, 2026-11-23: half of them were green), on dark violet
     this.panelMat = new THREE.ShaderMaterial({
       uniforms: { uTime: { value: 0 }, uOpen: { value: 0 }, uMiss: { value: 0 } },
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
@@ -102,7 +103,7 @@ class MemoryWorks {
           float r = fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453);
           float lamp = smoothstep(0.34, 0.24, max(abs(f.x), abs(f.y) * 1.25));
           float on = step(r, 0.25 + 0.6 * uOpen) * (0.6 + 0.4 * sin(uTime * (0.4 + r * 1.2) + r * 40.0));
-          vec3 col = vec3(0.02, 0.03, 0.03) + lamp * (vec3(0.06, 0.1, 0.08) + mix(vec3(1.5, 1.1, 0.4), vec3(0.4, 1.6, 0.7), step(0.5, r)) * on);
+          vec3 col = vec3(0.025, 0.015, 0.05) + lamp * (vec3(0.09, 0.06, 0.1) + mix(vec3(1.5, 1.1, 0.4), vec3(1.9, 0.75, 0.2), step(0.5, r)) * on);
           col += lamp * vec3(2.2, 0.16, 0.12) * uMiss * step(0.6, r);
           float edge = max(abs(vUv.x - 0.5) * 2.0, abs(vUv.y - 0.5) * 2.0);
           col = mix(col, vec3(0.5, 0.36, 0.16), smoothstep(0.93, 0.97, edge));
@@ -123,7 +124,7 @@ class MemoryWorks {
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
-      const m = new THREE.InstancedMesh(g.coinGeo, g.coinMat, count);
+      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count);
       // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
       // piles start two coins high and gain a coin for each card banked.
       let n = 0;
@@ -174,7 +175,7 @@ class MemoryWorks {
     pu.uMiss.value = red;
   }
   dispose() {
-    // (the coin stacks share the game's coin geometry and material: the game frees those)
+    // (the coin stacks share the game's coin geometry, and their material is in the scene: the game frees those)
     [this.planets, this.pins, ...this.coins].forEach((m) => m.dispose());
   }
 }

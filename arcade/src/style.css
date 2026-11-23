@@ -937,13 +937,13 @@ body:not(.crt-off) .ans.sel { background: linear-gradient(180deg, #f4f0ff, #d7cd
 .vault-window {
   flex: 1 1 0; min-height: 84px; max-height: 330px; position: relative; pointer-events: none;
   border: 2px solid rgba(255, 201, 61, 0.8);
-  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(2, 8, 5, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
+  box-shadow: inset 0 0 0 2px #000, inset 0 18px 30px -14px rgba(5, 2, 18, 0.9), inset 0 0 0 4px rgba(255, 201, 61, 0.14), 0 0 22px -8px var(--gold), 0 3px 0 #000;
 }
 .vault-window > span { position: absolute; left: 10px; top: 9px; font: 400 8px/1 var(--font-display); letter-spacing: 0.1em; color: #ffe9b0; text-shadow: 0 1px 0 #000, 0 0 6px #000; }
 .scr-game .card-stage.below { flex: 0 1 372px; min-height: 232px; }
 .scr-game .card-stage.below::before {
   content: ""; position: absolute; z-index: -1; left: calc(var(--gut-l) * -1); right: calc(var(--gut-r) * -1); top: -3px; bottom: -120px;
-  background: linear-gradient(180deg, rgba(3, 9, 7, 0.9), rgba(3, 9, 7, 0.8) 40%, rgba(3, 9, 7, 0.72));
+  background: linear-gradient(180deg, rgba(9, 3, 32, 0.9), rgba(9, 3, 32, 0.8) 40%, rgba(9, 3, 32, 0.72));
 }
 /* A card's faces never grow wider than the card: the one-line hint on the back was wider than a 360-pixel
    phone's card and pushed the answer's text out under the frame. The hint now scales with the screen and may
@@ -1105,8 +1105,8 @@ mark { padding: 0 3px; margin: 0 -1px; }
 .scr-game .card-stage.below { flex: 0 1 392px; min-height: 250px; padding: 16px 9px 13px; }
 /* (These grounds are a hair short of opaque on purpose. Two fully opaque rectangles meeting round the window made the
    browser's compositor count the 3D canvas behind them as covered and stop drawing it: the window went blank.) */
-.scr-game .card-stage.below::before { top: -6px; background: rgba(3, 9, 7, 0.996); }
-.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(3, 9, 7, 0.996); pointer-events: none; }
+.scr-game .card-stage.below::before { top: -6px; background: rgba(9, 3, 32, 0.996); }
+.vault-window::before, .vault-window::after { content: ""; position: absolute; top: -300px; bottom: -40px; width: calc(max(var(--gut-l), var(--gut-r)) + 8px); background: rgba(9, 3, 32, 0.996); pointer-events: none; }
 .vault-window::before { right: calc(100% + 2px); }
 .vault-window::after { left: calc(100% + 2px); }
 .vault-window.bank { animation: vault-bank 0.6s ease-out; }
@@ -1135,7 +1135,7 @@ mark { padding: 0 3px; margin: 0 -1px; }
 /* Memory Bank, third independent review. The band behind the HUD is solid ground too (a miss's red light showed
    behind it and stopped dead at the gutters). The card turns with less perspective, so it stays in its lane. The
    dial's ring behind a term fades where the term's lines pass. A hint breaks before a separating dot, never after. */
-.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(3, 9, 7, 0.996); }
+.scr-memory::before { height: calc(var(--gut-t) + 42px); background: rgba(9, 3, 32, 0.996); }
 .scr-game .card-stage.below { perspective: 2200px; }
 .face.front::after {
   -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 60.6% 62.2%, transparent 62.8% 84%, #000 85% 97%, transparent 98%), linear-gradient(180deg, #000 0, #000 30%, transparent 40%, transparent 60%, #000 70%, #000 100%);
