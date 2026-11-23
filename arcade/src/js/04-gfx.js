@@ -43,7 +43,8 @@ const GFX = {
   // multisampling, every effect. PHONE: at most 2x (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip
   // can), 2x multisampling, the bloom from half size, no ambient shade, depth of field, motion blur or lens streaks, and
   // fewer particles. SAFE, for a weak or a throttled device: 1.5x, 2x multisampling, the fewest passes. LIGHTEST is the
-  // governor's last step, never Setup's: 1.25x, and FXAA (one cheap pass) in place of multisampling.
+  // governor's last step, never Setup's: 1.25x, still with 2x multisampling (the master overhaul, 2026-11-23: no FXAA
+  // on any tier: it blurred every edge just when a phone was struggling; a phone's chip resolves 2x samples on chip).
   // No tier draws the lens's resting fringe (a pixel's colour split toward the corners: a soft edge for an effect the
   // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
   // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
@@ -51,7 +52,7 @@ const GFX = {
     { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 },
     { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
     { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
-    { name: "LIGHTEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
+    { name: "LIGHTEST", pr: 1.25, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
   ],
   // On a phone (Assets.phone) each tier is lighter still (the owner, 2026-11-17: the shared render cost first): no
   // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at MAC no

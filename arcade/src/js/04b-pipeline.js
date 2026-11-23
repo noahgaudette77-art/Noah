@@ -9,7 +9,7 @@
 //   bloom  -> soft-threshold bright pass, six-level downsample and tent upsample chain,
 //             god rays toward a light the scene names, anamorphic streaks, lens ghosts,
 //             and a dusty lens that catches the widest glow
-//   final  -> FXAA, sharpening, lens fringe, exposure, ACES filmic curve, split-toned
+//   final  -> sharpening, lens fringe, exposure, ACES filmic curve, split-toned
 //             neon grade, hit and streak overlays, and the CRT glass (curvature,
 //             scanlines, phosphor mask, vignette, grain, tube and bezel)
 //
@@ -352,7 +352,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() }, uDanger: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
-    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 }, uFxaa: { value: 1 },
+    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -363,27 +363,9 @@ function makePipeline(renderer, hdr, wantSamples) {
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever; uniform HP vec2 uDanger;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
-    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS; uniform float uFxaa;
+    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ return texture2D(tScene, uv).rgb; }
-    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
-    vec3 fxaa(HP vec2 uv){
-      HP vec2 px = 1.0 / uSceneRes;
-      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
-      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
-      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
-      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
-      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
-      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
-      HP vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
-      HP float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
-      HP float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
-      dir = clamp(dir * rcp, -8.0, 8.0) * px;
-      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
-      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
-      float lB = luma(b);
-      return (lB < lMin || lB > lMax) ? a : b;
-    }
     vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
       HP vec2 uv = vUv;
@@ -411,7 +393,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         HP float hm = exp(-dot(hd, hd)) * uHeat.w;
         suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
-      vec3 col = uFxaa > 0.5 ? fxaa(suv) : tex(suv); // (edges smoothed by multisampling are left as they are: FXAA only where there is none)
+      vec3 col = tex(suv); // (edges are smoothed by multisampling on every tier, the governor's last step too: no FXAA, which softened every edge: the owner, 2026-11-23)
       if (uSharp > 0.0) {
         // whatever a pixel has over its four neighbours is laid back on top of it
         HP vec2 sp = uSS / uSceneRes; // (a screen pixel, however much larger the scene was drawn)
@@ -722,7 +704,6 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uEdge.value = opt.ca && opt.fringe !== false ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
       u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uSS.value = ss;
-      u.uFxaa.value = samples > 0 ? 0 : 1; // (2026-11-23, the owner: no visible blur. FXAA softened every edge a second time over the multisampled picture)
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);

@@ -7240,7 +7240,8 @@ const GFX = {
   // multisampling, every effect. PHONE: at most 2x (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip
   // can), 2x multisampling, the bloom from half size, no ambient shade, depth of field, motion blur or lens streaks, and
   // fewer particles. SAFE, for a weak or a throttled device: 1.5x, 2x multisampling, the fewest passes. LIGHTEST is the
-  // governor's last step, never Setup's: 1.25x, and FXAA (one cheap pass) in place of multisampling.
+  // governor's last step, never Setup's: 1.25x, still with 2x multisampling (the master overhaul, 2026-11-23: no FXAA
+  // on any tier: it blurred every edge just when a phone was struggling; a phone's chip resolves 2x samples on chip).
   // No tier draws the lens's resting fringe (a pixel's colour split toward the corners: a soft edge for an effect the
   // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
   // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
@@ -7248,7 +7249,7 @@ const GFX = {
     { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 },
     { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
     { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
-    { name: "LIGHTEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
+    { name: "LIGHTEST", pr: 1.25, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
   ],
   // On a phone (Assets.phone) each tier is lighter still (the owner, 2026-11-17: the shared render cost first): no
   // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at MAC no
@@ -8542,7 +8543,7 @@ function carpetTexture() {
 //   bloom  -> soft-threshold bright pass, six-level downsample and tent upsample chain,
 //             god rays toward a light the scene names, anamorphic streaks, lens ghosts,
 //             and a dusty lens that catches the widest glow
-//   final  -> FXAA, sharpening, lens fringe, exposure, ACES filmic curve, split-toned
+//   final  -> sharpening, lens fringe, exposure, ACES filmic curve, split-toned
 //             neon grade, hit and streak overlays, and the CRT glass (curvature,
 //             scanlines, phosphor mask, vignette, grain, tube and bezel)
 //
@@ -8885,7 +8886,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uFeverCol: { value: new THREE.Vector3(1, 0.5, 0.1) }, uFever: { value: new THREE.Vector2() }, uDanger: { value: new THREE.Vector2() },
     uRip: { value: new THREE.Vector4(0.5, 0.5, 0, 0) }, uZoom: { value: new THREE.Vector2() },
     uHeat: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0) }, uT: { value: 0 }, uGlitch: { value: 0 }, uGrain: { value: 1 },
-    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 }, uFxaa: { value: 1 },
+    uKeep: { value: new THREE.Vector4(0.5, 0.5, 0.1, 0.1) }, uKeepA: { value: 0 }, uSS: { value: 1 },
   }, `
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
@@ -8896,27 +8897,9 @@ function makePipeline(renderer, hdr, wantSamples) {
     uniform vec3 uHitCol; uniform vec3 uHit;
     uniform vec3 uFeverCol; uniform HP vec2 uFever; uniform HP vec2 uDanger;
     uniform HP vec4 uRip; uniform HP vec2 uZoom; uniform HP vec4 uHeat; uniform HP float uT; uniform float uGlitch; uniform float uGrain;
-    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS; uniform float uFxaa;
+    uniform HP vec4 uKeep; uniform float uKeepA; uniform float uSS;
     varying HP vec2 vUv;
     vec3 tex(HP vec2 uv){ return texture2D(tScene, uv).rgb; }
-    float luma(vec3 c){ return dot(min(c, vec3(1.0)), vec3(0.299, 0.587, 0.114)); }
-    vec3 fxaa(HP vec2 uv){
-      HP vec2 px = 1.0 / uSceneRes;
-      vec3 nw = tex(uv + vec2(-1.0, -1.0) * px), ne = tex(uv + vec2(1.0, -1.0) * px);
-      vec3 sw = tex(uv + vec2(-1.0, 1.0) * px), se = tex(uv + vec2(1.0, 1.0) * px), m = tex(uv);
-      float lNW = luma(nw), lNE = luma(ne), lSW = luma(sw), lSE = luma(se), lM = luma(m);
-      float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
-      float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
-      if (lMax - lMin < max(0.04, lMax * 0.12)) return m;
-      HP vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
-      HP float reduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
-      HP float rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
-      dir = clamp(dir * rcp, -8.0, 8.0) * px;
-      vec3 a = 0.5 * (tex(uv + dir * (1.0 / 3.0 - 0.5)) + tex(uv + dir * (2.0 / 3.0 - 0.5)));
-      vec3 b = a * 0.5 + 0.25 * (tex(uv - dir * 0.5) + tex(uv + dir * 0.5));
-      float lB = luma(b);
-      return (lB < lMin || lB > lMax) ? a : b;
-    }
     vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
     void main(){
       HP vec2 uv = vUv;
@@ -8944,7 +8927,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         HP float hm = exp(-dot(hd, hd)) * uHeat.w;
         suv += hm * 0.0021 * vec2(sin(suv.y * 150.0 + uT * 12.0) + sin(suv.y * 67.0 - uT * 7.3), cos(suv.x * 110.0 + uT * 9.1));
       }
-      vec3 col = uFxaa > 0.5 ? fxaa(suv) : tex(suv); // (edges smoothed by multisampling are left as they are: FXAA only where there is none)
+      vec3 col = tex(suv); // (edges are smoothed by multisampling on every tier, the governor's last step too: no FXAA, which softened every edge: the owner, 2026-11-23)
       if (uSharp > 0.0) {
         // whatever a pixel has over its four neighbours is laid back on top of it
         HP vec2 sp = uSS / uSceneRes; // (a screen pixel, however much larger the scene was drawn)
@@ -9255,7 +9238,6 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uEdge.value = opt.ca && opt.fringe !== false ? (p.fringe !== undefined ? p.fringe : p.crisp ? 0.15 : 0.25) : 0; // (at rest the lens's fringe is a trace in the far corners; a hit is what parts the colours)
       u.uSharp.value = opt.sharpen === false ? 0 : p.sharpen !== undefined ? p.sharpen : 0.3;
       u.uSS.value = ss;
-      u.uFxaa.value = samples > 0 ? 0 : 1; // (2026-11-23, the owner: no visible blur. FXAA softened every edge a second time over the multisampled picture)
       u.uFlash.value = o.flash;
       u.uHitCol.value.set(o.hit.col[0], o.hit.col[1], o.hit.col[2]);
       u.uHit.value.set(o.hitAmt, o.hit.inner, o.hit.outer);
@@ -39188,7 +39170,7 @@ function boot() {
   //           60 fps, the dim one 30. Green bars met 60, amber missed it by a frame, red caught (over two frames);
   //           blue ones were a moment's work (a model arriving: shaders made, pictures sent), which AUTO leaves out
   //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), how its edges are smoothed (MSAA
-  //           and its samples, or FXAA where the device has none: 2026-11-23), the lights, draw calls, triangles
+  //           and its samples, or NO AA where the device cannot multisample: 2026-11-23), the lights, draw calls, triangles
   //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS when the device
   //           itself holds the page at 30: LOW POWER MODE?, or the main thread's time when that is what fills a frame
   //           (see GFX.perfTick)
@@ -39228,7 +39210,7 @@ function boot() {
         while (hitches.length && now - hitches[0] > 10000) hitches.shift();
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
         fpsL1.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${(fpsSum / fpsN).toFixed(1)} MS · WORST ${Math.round(fpsWorst)} MS · HITCHES ${hitches.length} /10 S · CPU ${(fpsCpu / fpsN).toFixed(1)} MS`;
-        fpsL2.textContent = GFX.ok ? `${GFX.TIERS[GFX.tier].name} · ${pr.toFixed(2)}X${GFX.scale < 1 ? " (" + Math.round(GFX.scale * 100) + "%)" : ""} ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)} · ${GFX.pipe && GFX.pipe.samples ? "MSAA " + GFX.pipe.samples + "X" : "FXAA"} · LIGHTS ${GFX.lightCount()} · ${GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS` : "NO WEBGL";
+        fpsL2.textContent = GFX.ok ? `${GFX.TIERS[GFX.tier].name} · ${pr.toFixed(2)}X${GFX.scale < 1 ? " (" + Math.round(GFX.scale * 100) + "%)" : ""} ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)} · ${GFX.pipe && GFX.pipe.samples ? "MSAA " + GFX.pipe.samples + "X" : "NO AA"} · LIGHTS ${GFX.lightCount()} · ${GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS` : "NO WEBGL";
         fpsL3.textContent = GFX.ok ? GFX.govLabel() + (GFX.auto && GFX.perf.why && !GFX.perf.capped ? " · " + GFX.perf.why.toUpperCase() : "") : "";
         drawGraph();
         fpsN = 0;
