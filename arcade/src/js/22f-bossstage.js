@@ -97,9 +97,15 @@ class BossStage {
     this._v = new THREE.Vector3(); this._w = new THREE.Vector3(); this._u = new THREE.Vector3(); this._n = new THREE.Vector3();
     // the player's duellist (22h): its model and its wand came with the boss's set; none (from disk), no wizard
     const wm = Assets.model("wizard");
-    this.wiz = wm ? new Wizard(this, wm, Assets.model("wand")) : null;
+    try { this.wiz = wm ? new Wizard(this, wm, Assets.model("wand")) : null; } catch (e) { console.warn("wizard: " + (e && e.message)); this.wiz = null; }
   }
   get owed() { return this.debts.length; }
+  // the wizard (22h) is look and sound only: every call to it goes through here, and should one fail, it goes and the
+  // fight goes on as it was before it (the rules' own steps after the call are never skipped)
+  wizCall(fn) {
+    if (!this.wiz) return undefined;
+    try { return fn(this.wiz); } catch (e) { console.warn("wizard: " + (e && e.message)); try { this.wiz.hide(); } catch (e2) { /* gone */ } this.wiz = null; return undefined; }
+  }
   // ---- places ---------------------------------------------------------------------------------------------------
   // a place in the picture: x, y from -1 to 1 across and up the band, `dist` from the lens
   lens(x, y, dist, out) {
@@ -228,7 +234,7 @@ class BossStage {
     a.root.visible = false; a.power = 0;
     this.wide = this.wideTo = 1;
     g.show.wait(0.3, () => { if (g.unmounted) return; a.root.visible = true; a.enter(); Sound.sfx("whoosh", 0, { vol: 0.6 }); });
-    if (this.wiz) this.wiz.enter();
+    this.wizCall((w) => w.enter());
   }
   landing() {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, p = new THREE.Vector3(0, 0.07, 0.4);
@@ -276,7 +282,7 @@ class BossStage {
     this.endTele();
     this.camLow = 0;
     this.tele = { kind, clip: (this.row.clip && this.row.clip[kind]) || BOSS_ATK.CLIP[kind], mark: [], servo: false, hum: false, acc: 0, line: null };
-    if (this.wiz) this.wiz.ready();
+    this.wizCall((w) => w.ready());
   }
   endTele() {
     const t = this.tele;
@@ -326,12 +332,12 @@ class BossStage {
     const wiz = this.wiz;
     this.shot = { slot, right, col: wiz ? (right ? WIZ.BOLT : WIZ.MISS) : SLOT_COLORS[slot] || COLORS.cyan, n: 0, time: 0 }; // (the wizard's bolts are its own colour)
     this.callouts();
-    if (wiz) wiz.cast(right);
+    this.wizCall((w) => w.cast(right));
   }
   volley(sh) {
-    const kit = this.kit, a = this.a, S = this.S, n = sh.n, wiz = this.wiz, from = wiz ? wiz.tip(new THREE.Vector3()) : this.muzzle(sh.slot, new THREE.Vector3());
+    const kit = this.kit, a = this.a, S = this.S, n = sh.n, from = (this.wiz && this.wizCall((w) => w.tip(new THREE.Vector3()))) || this.muzzle(sh.slot, new THREE.Vector3());
     const to = a.at(n === 1 ? "head" : n === 2 ? "hips" : "chest", new THREE.Vector3()).add(this._v.set(rand(-0.05, 0.05) * S, rand(-0.02, 0.05) * S, 0.11 * S)), dir = this._w.subVectors(to, from).normalize();
-    if (wiz) { wiz.bolt(from, to, sh, n, (p) => this.shotLands(sh, n, p)); return; } // (an Arc Bolt from its wand: 22h)
+    if (this.wizCall((w) => (w.bolt(from, to, sh, n, (p) => this.shotLands(sh, n, p)), true))) return; // (an Arc Bolt from its wand: 22h)
     kit.muzzle(from, dir, sh.col, 0.34);
     kit.bolt(from, to, sh.col, { dur: sh.right ? 0.1 : 0.085, width: 0.2, len: 4.2, onHit: (p) => this.shotLands(sh, n, p) });
     kit.shells(from, this._v.set(-0.6, 0.5, 0.4).normalize(), 0xbfe8ff);
@@ -354,14 +360,14 @@ class BossStage {
   bossHit(dmg, o) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, wiz = this.wiz, col = wiz ? WIZ.NOVA : o.col; // (the wizard's Nova Lance: its own colour)
     const tearing = this.tears.some((t) => !t.done && o.now <= t.at), big = dmg >= 20 || o.dead || o.enraged || tearing;
-    const p = a.at(big ? "head" : "chest", new THREE.Vector3()), from = wiz ? wiz.tip(new THREE.Vector3()) : this.muzzle(o.slot, new THREE.Vector3());
+    const p = a.at(big ? "head" : "chest", new THREE.Vector3()), from = (wiz && this.wizCall((w) => w.tip(new THREE.Vector3()))) || this.muzzle(o.slot, new THREE.Vector3());
     p.z += (big ? 0.07 : 0.12) * S; p.y -= big ? 0.02 * S : 0;
     const made = UI.root.querySelectorAll(".floater.big:not([data-lane])");
     this.figure(made[made.length - 1], this.screen(p), 0); // (the rule's figure, made this frame)
     this.foil();
     if (this.shot) this.shot.n = 9; // (its bolts are spent)
     // the lance: from the answer's side to where it lands, held for a few frames
-    kit.beam(from, p, col, { dur: 0.15, width: 0.2, grow: 0.03, k: 2.0 });
+    const lance = kit.beam(from, p, col, { dur: 0.15, width: 0.2, grow: 0.03, k: 2.0 });
     // a white heart, sparks in the answer's colour, a thin ring, the picture's glow swelling, a small shake, a hit-stop
     kit.impact(p, col, { size: big ? 1.0 : 0.78, ring: false, shake: false, dir: this._v.set(0, 0.25, 1).normalize() }); // (a small hot heart: the body is never hidden behind it)
     kit.wave(p, null, col, { dur: 0.42, s0: 0.5, s1: big ? 7.5 : 5.5, w: 0.06 });
@@ -374,12 +380,12 @@ class BossStage {
     a.kickV += big ? 5.5 : 3.2; // (a shallow recoil: it never drops behind the heads of the front row)
     if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32, k: big ? 0.5 : 0.62 });
     this.wideTo = 0; this.punch = big ? 1 : 0.6;
-    Sound.sfx(big ? "impact_big" : "impact_good", 0, { vol: 0.9 });
+    if (!(wiz && !big && Sound.bank.wiz_impact)) Sound.sfx(big ? "impact_big" : "impact_good", 0, { vol: 0.9 }); // (the wizard's lance strikes with its own sound: one strike, never two)
     Sound.sfx(big ? "boss_stagger" : "boss_hurt", 0, { vol: 0.8, delay: 0.05 });
     this.damage(o.now, o.dead);
     if (o.enraged) g.show.wait(0.45, () => this.enrage());
     if (o.dead) this.critical();
-    if (wiz) wiz.nova(big, p);
+    this.wizCall((w) => w.nova(big, p, lance));
   }
   // its wind-up is broken by the blow
   foil() {
@@ -672,7 +678,7 @@ class BossStage {
     // the heart itself comes up low on the player's side of the picture, cracks and shatters (heard as the heart_lost above)
     if (g.iconFX) g.iconFX.shatter("heart", this.lens(-0.52, -0.5, 3.0), { size: 0.42, face: g.camera, turn: 0.3, hold: 0.05, crack: 0.07, onBreak: (q) => kit.sparks(q, 0xff4fd8, { n: quiet ? 5 : 12, speed: 2.6, life: 0.4, len: 0.16, w: 0.02, gravity: 3, k: 1.6, stretch: 0.02 }) });
     this.setLow(left <= 0 ? 2 : left === 1 ? 1 : 0);
-    if (this.wiz) this.wiz.shield(hard, left, at);
+    this.wizCall((w) => w.shield(left));
   }
   // one heart left: a red frame that beats and the alarm; none: the frame holds
   setLow(on) {
@@ -725,7 +731,7 @@ class BossStage {
     this.wideTo = 0.5; this.camLow = 0.7;
     for (let i = 0; i < n; i++) g.show.wait(0.1 + (i * (T - 0.3)) / n, () => this.chain(i, true));
     g.show.wait(T, () => this.lastBlast(banner));
-    if (this.wiz) this.wiz.finisher();
+    this.wizCall((w) => w.finisher());
   }
   lastBlast(banner) {
     const g = this.g, kit = this.kit, a = this.a, big = g.bossKey === "all", quiet = REDUCED_MOTION || GFX.calm;
@@ -780,9 +786,8 @@ class BossStage {
       this.resultPre = "FINAL BOSS DESTROYED";
       const say = Sound.say; Sound.say = () => 0; try { banner(); } finally { Sound.say = say; }
     });
-    const wiz = this.wiz;
-    g.show.wait(0.5, () => { if (!g.unmounted) Sound.sfx(wiz && Sound.bank.wiz_victory ? "wiz_victory" : "win", 0, wiz ? { vol: 0.9 } : undefined); }); // (the wizard's own sting, where it has one)
-    if (wiz) g.show.wait(0.3, () => { if (!g.unmounted) wiz.win(); });
+    g.show.wait(0.5, () => { if (g.unmounted) return; if (this.wiz && Sound.bank.wiz_victory) Sound.sfx("wiz_victory", 0, { vol: 0.9 }); else Sound.sfx("win"); }); // (the wizard's own sting, where it has one)
+    g.show.wait(0.3, () => { if (!g.unmounted) this.wizCall((w) => w.win()); });
   }
   // ---- the player is out of hearts (the rule: defeat): the boss has the last word --------------------------------
   defeat() {
@@ -794,7 +799,7 @@ class BossStage {
     this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 7, w: 0.04 });
     if (g.arena) g.arena.strike(1);
     this.wideTo = 0.15; this.camLow = -0.6;
-    if (this.wiz) this.wiz.lose();
+    this.wizCall((w) => w.lose());
     // (its last word is its own: "game over" in the boss's recorded voice, in place of the announcer's)
     g.show.wait(0.4, () => { if (g.unmounted) return; Sound.sayAs(BOSS_LAST_WORD(g.bossKey), "GAME OVER"); this.showResult("GAME OVER", COLORS.red, "", { say: false }); });
   }
@@ -822,7 +827,8 @@ class BossStage {
     if (g.state === "ask" && this.tele && !this.strike) this.telegraph(f, d);
     this.runStrike(dt, d);
     const sh = this.shot;
-    if (sh) { sh.time += d; const lead = this.wiz ? 0.06 : 0; while (sh.n < (sh.right ? (quiet ? 1 : 3) : 1) && sh.time >= lead + sh.n * 0.075) { this.volley(sh); sh.n++; } if (sh.time > 0.6) this.shot = null; } // (the wizard's arm is up before its first bolt leaves)
+    this.wizCall((w) => w.animate(d, f)); // (the wizard's pose for this frame, before its bolts leave its wand)
+    if (sh) { sh.time += d; const lead = this.wiz ? 0.05 : 0, gap = this.wiz ? 0.065 : 0.075; while (sh.n < (sh.right ? (quiet ? 1 : 3) : 1) && sh.time >= lead + sh.n * gap) { this.volley(sh); sh.n++; } if (sh.time > 0.6) this.shot = null; } // (the wizard's arm is out before its first bolt leaves, and its last bolt lands a frame or more before the lance)
     // ---- seekers in flight
     for (const ms of this.seekers) {
       if (ms.t === -1) { if (ms.out > 0) { ms.out -= d; if (d > 0) ms.tail.push(ms.p); if (ms.out <= 0) ms.tail.mesh.visible = false; } continue; }
@@ -932,7 +938,7 @@ class BossStage {
     if (this.count && (this.count.t += d) >= 0) { const c = this.count, q = Math.min(1, c.t / c.dur); c.el.textContent = fmtScore(Math.round(lerp(c.a, c.b, q * (2 - q)))); if (q >= 1) this.count = null; }
     this.fl.update(d);
     this.frame(d, f);
-    if (this.wiz) this.wiz.update(d, f); // (where it stands follows the lens just framed)
+    this.wizCall((w) => w.update(d, f)); // (where it stands follows the lens just framed)
     kit.update(d);
   }
   // ---- the lens: close on the boss (head to knees) while the question is read; drawn back, and higher, as it winds
@@ -992,6 +998,6 @@ class BossStage {
     for (const n of ["result", "redFrame"]) if (this[n]) { this[n].remove(); this[n] = null; }
     this.embers.forEach((e) => e.sp.material.dispose());
     if (this.emberTex) this.emberTex.dispose();
-    if (this.wiz) this.wiz.dispose();
+    this.wizCall((w) => w.dispose());
   }
 }
