@@ -6,6 +6,7 @@
 //   the garbage the game makes a frame     (Chromium only: the heap sampled through the play, objects since swept
 //                                           included; JavaScript's collector stops the page to sweep it, Safari's too:
 //                                           the less a frame leaves behind, the rarer and shorter those stops)
+//   the page's elements changed a frame    (each change can make the browser work out styles and layout again)
 // What a frame draws does not depend on its size for any of these, so the page is drawn small (fast in software).
 //
 //   node arcade/tools/capture.js arcade/tools/scenarios/hitches.js --phone --size 220x478 --dpr 1 --out <dir>
@@ -58,6 +59,13 @@ module.exports = async (cap) => {
       }
     };
     H.check();
+    // the page's own elements changed a frame (each change may make the browser work out its styles and layout again)
+    H.dom = { on: false, n: 0, by: new Map() };
+    const label = (el) => !el ? "?" : (el.id ? "#" + el.id : el.tagName.toLowerCase() + (el.classList && el.classList.length ? "." + [...el.classList].slice(0, 2).join(".") : ""));
+    new MutationObserver((list) => {
+      if (!H.dom.on) return;
+      for (const m of list) { H.dom.n++; const el = m.target.nodeType === 1 ? m.target : m.target.parentElement, k = label(el) + (m.type === "attributes" ? " [" + m.attributeName + "]" : m.type === "childList" ? " [children]" : " [text]"); H.dom.by.set(k, (H.dom.by.get(k) || 0) + 1); }
+    }).observe(document.body, { subtree: true, attributes: true, childList: true, characterData: true });
   });
   // n frames, each drawn, the new programs looked for after each
   const play = (n) => page.evaluate((k) => { for (let i = 0; i < k; i++) { window.__tick(1, true); window.__hc.check(); } return window.__cap.frame; }, n);
@@ -95,6 +103,7 @@ module.exports = async (cap) => {
     // Before that, Chromium keeps every fractional number it works out in a box of its own, garbage that Safari never
     // makes: it stores such numbers in place)
     const warmUp = Math.round(FRAMES / 3);
+    await cap.eval(() => { const D = window.__hc.dom; D.on = true; D.n = 0; D.by = new Map(); });
     let sampling = false, fs0 = f1;
     let answered = 0, waitAsk = 0, waitSheet = 0, end = "";
     const t0 = Date.now();
@@ -119,6 +128,8 @@ module.exports = async (cap) => {
       if (Date.now() - t0 > 25 * 60000) { end = "out of time"; break; }
     }
     const c2 = await counts(), f2 = await frame();
+    const dom = await cap.eval(() => { const D = window.__hc.dom; D.on = false; return { n: D.n, top: [...D.by].sort((a, b) => b[1] - a[1]).slice(0, 8) }; });
+    row.dom = { perFrame: +(dom.n / Math.max(1, f2 - f1)).toFixed(2), top: dom.top.map(([k, v]) => `${(v / Math.max(1, f2 - f1)).toFixed(2)}/frame ${k}`) };
     row.play = { frames: f2 - f1, answered, end, programs: c2.programs - c1.programs, links: c2.links - c1.links, uploads: c2.uploads - c1.uploads };
     const ev = await page.evaluate(([a, b, c]) => ({ programs: window.__hc.programs.slice(a), uploads: window.__hc.uploads.slice(b).map((u) => u.f + " " + u.what), links: window.__hc.links.slice(c) }), [c1.programs, c1.uploads, c1.links]);
     row.playPrograms = ev.programs.map((p) => `frame ${p.f}: ${p.name} (${p.users.join("; ") || "not in the scene"})`);
@@ -140,6 +151,7 @@ module.exports = async (cap) => {
     for (const p of row.playPrograms.slice(0, 12)) console.log("    shader " + p);
     for (const u of row.playUploads.slice(0, 12)) console.log("    picture at frame " + u);
     if (row.garbage) for (const t of row.garbage.top.slice(0, 6)) console.log("    " + t);
+    console.log(`    page elements changed: ${row.dom.perFrame} a frame` + (row.dom.top.length ? " (" + row.dom.top.slice(0, 4).join(", ") + ")" : ""));
   }
   fs.writeFileSync(path.join(cap.out, "hitches.json"), JSON.stringify(results, null, 1));
 };

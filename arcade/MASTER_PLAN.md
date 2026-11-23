@@ -137,7 +137,25 @@ pushed; the served link checked.
 
 ## Decisions (with the evidence for each)
 
-(none yet)
+- **Fixed timestep with interpolated drawing: not adopted for the whole game (Phase 0, 2026-11-23).** The rules run on
+  each frame's own step (`99-main.js`: the step is the frame's time from the browser's frame clock, at most 50 ms), and
+  the regression plays them at 60 Hz and must come out IDENTICAL; both devices show 60 frames a second (iOS Safari
+  holds a page to 60, the MacBook Air's panel is 60 Hz), so a fixed 1/60 step would be the same step there. What a
+  fixed step buys, motion that does not depend on the frame rate, was bought where it shows in the animation pass:
+  measured against 240 Hz, the boss and the wizard move within 0.33 cm (mean) at 60 Hz and 0.09 cm at 90 and 120 Hz
+  (`tools/motion-hz.js`). Interpolated drawing would need the previous and the current place of every moving thing in
+  eight games kept and blended, a rewrite of every game's update with the rules inside it, for no change at 60 Hz.
+  Kept instead: the frame clock's own timestamps (no jitter from the script's own timing), the 50 ms cap (a stall
+  never throws a thing across the screen), the exact easing and springs of the motion core, and the governor, which
+  keeps frames on time.
+- **The post-processing stays the game's own pipeline (`04b-pipeline.js`); pmndrs `postprocessing` was weighed
+  (Phase 0).** Version 6.25 is the last that runs on this three.js (r128: `>= 0.107 < 0.139`). The game's pipeline is
+  already what that library would give: one scene pass into a multisampled HDR target (MSAA kept: 4x on the Mac, 2x
+  on the phone), bloom from a soft-threshold bright pass on that HDR picture (so only what is brighter than white
+  glows: the emissive signs, lamps and effects, not the lit surfaces) down a mip chain at half size and less, and
+  every per-pixel effect (exposure, ACES, the grade, the CRT glass) merged into one final pass; on the phone a frame
+  is 9 passes. Swapping it would bring nothing a frame does not already have and would lose the tiers' fine control.
+  What the library would add that is wanted: SMAA, for a device whose multisampling fails its check (see Phase 2).
 
 ## Tried and reverted
 
