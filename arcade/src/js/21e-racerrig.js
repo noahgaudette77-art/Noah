@@ -438,17 +438,17 @@ class RacerRig {
     // ---- the egg: it rocks, it grows gently with the nest egg, it swells for a moment as a deposit lands, and it glows
     this.eggPulse = Math.max(0, this.eggPulse - d * 1.5);
     const frac = clamp(Math.log(Math.max(g.egg, EGG_START) / EGG_START) / Math.log(EGG_GOAL / EGG_START), 0, 1), pulse = Math.sin(Math.PI * Math.pow(1 - this.eggPulse, 0.6)) * (this.eggPulse > 0 ? 1 : 0);
-    this.eggK += (frac - this.eggK) * Math.min(1, d * 1.5);
-    this.eggS += (1 + 0.11 * frac - this.eggS) * Math.min(1, d * 2);
+    this.eggK = Motion.damp(this.eggK, frac, 1.5, d);
+    this.eggS = Motion.damp(this.eggS, 1 + 0.11 * frac, 2, d);
     if (P.egg) { P.egg.rotation.set(-this.eggP.x, 0, -this.eggR.x); P.egg.scale.setScalar(Math.min(1.15, this.eggS * (1 + 0.035 * pulse))); }
     // ---- lamps
     this.brake = Math.max(0, this.brake - d * 1.1);
     this.heat = Math.max(boost || burn ? 1 : 0, this.heat - d * 0.35);
     this.hazard = Math.max(0, this.hazard - d);
     this.struck = Math.max(0, this.struck - d * 3);
-    this.flame += ((boost || burn ? 1 : 0) - this.flame) * Math.min(1, d * 8);
-    this.pow += ((this.inT > 0.05 || this.launched ? 1 : 0.35) - this.pow) * Math.min(1, d * 3);
-    this.hurt += ((g.crashes >= 2 && g.state !== "over" ? 1 : 0) - this.hurt) * Math.min(1, d * 3);
+    this.flame = Motion.damp(this.flame, boost || burn ? 1 : 0, 8.6, d);
+    this.pow = Motion.damp(this.pow, this.inT > 0.05 || this.launched ? 1 : 0.35, 3, d);
+    this.hurt = Motion.damp(this.hurt, g.crashes >= 2 && g.state !== "over" ? 1 : 0, 3, d);
     const lamps = sky ? sky.lamps : 1, dead = this.wreckT >= 0 ? clamp(1 - (this.wreckT - 0.5) / 0.9, 0.12, 1) : 1;
     const haz = this.hazard > 0 && !quiet ? 0.5 + 0.5 * Math.sin(t * 9.4) : this.hazard > 0 ? 0.6 : 0; // (1.5 Hz)
     U.uRgTime.value = t;
@@ -506,7 +506,7 @@ class RacerRig {
       tongues(this.burnF, (1.25 + (quiet ? 0 : 0.15 * Math.sin(t * 9.1))) * (0.5 + 0.5 * this.hurt), Math.min(1, this.hurt * 1.5), quiet ? 0.5 : 1.4);
     }
     // the wreck: fire stands on its hood (it leaps as the engine goes, then burns steadily)
-    this.fireK += ((this.ablaze ? 1 : 0) - this.fireK) * Math.min(1, d * 6);
+    this.fireK = Motion.damp(this.fireK, this.ablaze ? 1 : 0, 6.3, d);
     this.flare = Math.max(0, this.flare - d * 2.0);
     this.wreckF.hold.visible = this.fireK > 0.03;
     if (this.wreckF.hold.visible) {

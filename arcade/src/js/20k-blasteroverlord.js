@@ -278,8 +278,8 @@ class BlasterOverlord {
   // advance: how much of the question's time has gone (0 to 1), or null between questions
   update(dt, advance) {
     const g = this.g, d = VFX.dt, t = VFX.t, U = this.U, J = this.J, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
-    this.S += (this.fitS - this.S) * Math.min(1, d * 3);
-    this.yK += (this.fitY - this.yK) * Math.min(1, d * 3);
+    this.S = Motion.damp(this.S, this.fitS, 3, d);
+    this.yK = Motion.damp(this.yK, this.fitY, 3, d);
     const S = this.S, k6 = S / 6;
     // parts that have come away: they tumble off, fall behind, and burn up
     for (let i = this.scrap.length - 1; i >= 0; i--) {
@@ -319,7 +319,7 @@ class BlasterOverlord {
     if (rageNow && !this.rageOn) { this.rageT = 0; if (g.stage) g.stage.demonRage(this); else Sound.sfx("demonrage"); }
     this.rageOn = rageNow;
     this.rageT += d;
-    this.rage += ((rageNow ? 1 : 0) - this.rage) * Math.min(1, d * 1.5);
+    this.rage = Motion.damp(this.rage, rageNow ? 1 : 0, 1.5, d);
     const rage = this.rage, hurt = clamp((this.hits - 1) / 7, 0, 1), onset = smoothstep(0, 0.25, this.rageT) * (1 - smoothstep(0.55, 1.3, this.rageT));
     // the run is over: it has won, and roars over the wreck with its wings spread
     if (g.state === "over" && this.alive && this.gloatT < 0 && (this.overT = (this.overT || 0) + d) > (g.stage ? 0.75 : 0)) { this.gloatT = 0; if (g.stage) g.stage.demonGloat(this); else Sound.sfx("demonroarlong"); }
@@ -332,11 +332,11 @@ class BlasterOverlord {
     const tV = kind === 0 ? tele : 0, tS = kind === 1 ? tele : 0, tW = kind === 2 ? tele : 0, tB = kind === 3 ? tele : 0, tM = kind === 4 ? tele : 0;
     const sV = kind === 0 ? strike : 0, sS = kind === 1 ? strike : 0, sW = kind === 2 ? strike : 0, sB = kind === 3 ? strike : 0, sM = kind === 4 ? strike : 0;
     this.kickTo *= Math.pow(0.03, d);
-    this.kick += (this.kickTo - this.kick) * Math.min(1, d * 22);
+    this.kick = Motion.damp(this.kick, this.kickTo, 27.4, d);
     this.stagger = Math.max(0, this.stagger - d / 1.0);
     const stg = sin(Math.min(1, this.stagger * 1.25) * Math.PI) * 0.8; // staggered: it sags and reels, then gathers itself
     // dying: it sags and reels; in its last stand it rears back and roars first
-    this.critK += ((this.crit && this.alive ? 1 : 0) - this.critK) * Math.min(1, d * 2.5);
+    this.critK = Motion.damp(this.critK, this.crit && this.alive ? 1 : 0, 2.5, d);
     const crit = this.critK;
     const blowAt = this.blowAt, stag = dying ? smoothstep(0, 0.2, this.dieT) : 0, kick = this.kick, roar = dying && this.finale ? stag * (1 - smoothstep(blowAt * 0.45, blowAt * 0.75, this.dieT)) : 0, sag = Math.max(stag - roar, stg, 0.55 * crit);
     const over = dying && !this.blown ? smoothstep(0.1, blowAt, this.dieT) : 0; // its core running away, toward the blast
@@ -346,9 +346,9 @@ class BlasterOverlord {
     const ph = this.flap, beat = Math.pow(0.5 + 0.5 * sin(t * (5.4 + 3 * rage + 9 * over)), 6), beatN = Math.floor((ph - 1.5708) / 6.2832);
     if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying && g.state !== "over") Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6), { vol: 0.5 }); } // (not once the run is over: it is seen to gloat, and after its roar nothing more is heard)
     // ---- where it is: as far ahead as the time left says, further when a hit has thrown it back, flying up when it is new
-    if (dying) this.adv += (0.9 - this.adv) * Math.min(1, d * 2.6); // (dying, it falls in toward the fighter: its end is seen close)
-    else if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, d * 5);
-    else if (!A) this.adv += ((this.crit ? 0.45 : 0) - this.adv) * Math.min(1, d * 1.1);
+    if (dying) this.adv = Motion.damp(this.adv, 0.9, 2.6, d); // (dying, it falls in toward the fighter: its end is seen close)
+    else if (advance !== null) this.adv = Motion.damp(this.adv, advance, 5, d);
+    else if (!A) this.adv = Motion.damp(this.adv, this.crit ? 0.45 : 0, 1.1, d);
     const lunge = (sS * 3.2 + sW * 1.4 + sB * 0.9 + sV * 0.5 - tS * 2.4 - (tele - tS) * 0.5) * (REDUCED_MOTION ? 0.3 : 1);
     const z = -lerp(DEMON_FAR, DEMON_NEAR, this.adv) - kick * (REDUCED_MOTION ? 3 : 7) - inK * 130 + lunge - stag * 0.6 + gloat * 3;
     const bob = quiet ? 0 : -sin(ph + 0.4) * 0.014 * S * (1 + 0.5 * rage);
@@ -377,8 +377,8 @@ class BlasterOverlord {
     const tailNear = smoothstep(0.35, 0.9, this.adv);
     if (J.tail) J.tail.rotation.set(LORD.TAIL - 0.75 * tailNear + 0.1 * sin(t * 0.9 + 0.2) * sway - 0.2 * raise + 0.35 * strike * (1 - 0.6 * tailNear) + 0.45 * kick + 0.3 * sag, 0.12 * sin(t * 0.7) * sway, 0.16 * sin(t * 0.9 - 0.9) * sway + 0.3 * tailNear);
     // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
-    this.look += ((quiet ? 0 : 0.14 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.3) * (1 - strike) - this.look) * Math.min(1, d * 7);
-    this.nod += ((0.2 - clamp(Pointer.y, -1, 1) * 0.1) - 0.14 * tV - 0.1 * tS - 0.62 * tW + 0.14 * tB + 0.26 * tM + 0.36 * sS + 0.5 * sW + 0.1 * sB - 0.5 * kick - 0.4 * roar - 0.32 * gloat - 0.3 * onset - 0.4 * flare - this.nod) * Math.min(1, d * 9);
+    this.look = Motion.damp(this.look, (quiet ? 0 : 0.14 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.3) * (1 - strike), 7.4, d);
+    this.nod = Motion.damp(this.nod, (0.2 - clamp(Pointer.y, -1, 1) * 0.1) - 0.14 * tV - 0.1 * tS - 0.62 * tW + 0.14 * tB + 0.26 * tM + 0.36 * sS + 0.5 * sW + 0.1 * sB - 0.5 * kick - 0.4 * roar - 0.32 * gloat - 0.3 * onset - 0.4 * flare, 9.8, d);
     if (J.head) J.head.rotation.set(this.nod + (rage > 0.5 && !quiet ? 0.03 * sin(t * 7.3) * sin(t * 1.3) : 0) + 0.35 * sag * sin((dying ? this.dieT : t) * 3 + 1), this.look + 0.3 * sag * sin((dying ? this.dieT : t) * 4), 0.05 * sin(t * 0.8) * sway + this.twist * 0.22 * kick + 0.25 * sag);
     // arms: hanging, swaying, the hands flexing; each strike has its own carriage; thrown wide by a hit
     this.recoil[0] *= Math.pow(0.002, d); this.recoil[1] *= Math.pow(0.002, d);
@@ -394,17 +394,17 @@ class BlasterOverlord {
 
     // ---- its light
     const lit = this.inT > 0.55 && !dying;
-    this.pow += ((lit ? 1 : dying ? 0 : 0.6) - this.pow) * Math.min(1, d * (dying ? 6 : 2.5)); // (its core, its eyes and its rims burn from the first frame of its fly-in: it is never a dark shape on dark space)
+    this.pow = Motion.damp(this.pow, lit ? 1 : dying ? 0 : 0.6, dying ? 6 : 2.5, d); // (its core, its eyes and its rims burn from the first frame of its fly-in: it is never a dark shape on dark space)
     U.uLdSweep.value = this.inT < 1 ? -0.55 + smoothstep(0.55, 1, this.inT) * 1.2 : 9;
     if ((this.hits >= 6 || dying || this.crit) && !quiet) { if ((this.flickT -= d) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.45 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
-    this.dim += (this.flick - this.dim) * Math.min(1, d * 12);
+    this.dim = Motion.damp(this.dim, this.flick, 13.4, d);
     const rg = (U.uDmRage.value = Math.max(rage, 0.5 * tele + 0.7 * strike, gloat, roar)), pw = (this.pow * (0.85 + 0.25 * rage + 0.3 * tele + 0.25 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.7 + 0.5 * roar + 0.4 * over : 0)) * this.dim;
     U.uSkGlow.value.setRGB(lerp(1, 1.5, rg), lerp(1, 0.3, rg), lerp(1, 0.24, rg)).multiplyScalar(pw); // its neon: magenta, crimson in a rage
     U.uLdCoreK.value = 0.5 + 1.6 * beat + 0.9 * (this.wounds >= 4 ? 1 : 0) + 3.0 * tB + 2.0 * sB + 2.5 * over + 1.2 * crit;
     U.uLdEyeK.value = 0.8 + 1.4 * tele + 1.0 * strike + 0.8 * rage + onset + gloat;
     this.flash = Math.max(0, this.flash - d * 6.5);
     U.uSkHit.value.copy(this.flashCol).multiplyScalar(this.flash * 0.45); // (a rim of the answer's colour along its edges: it is seen taking the hit, not whited out)
-    U.uLdCrack.value += ((dying ? 0.9 : Math.max(hurt * 0.6, 0.8 * crit)) - U.uLdCrack.value) * Math.min(1, d * 3);
+    U.uLdCrack.value = Motion.damp(U.uLdCrack.value, dying ? 0.9 : Math.max(hurt * 0.6, 0.8 * crit), 3, d);
     U.uLdCrackCol.value.setRGB(2.6, 0.5, 0.7).multiplyScalar(0.5 + 0.5 * beat + 0.7 * over); // (thin bright veins: it is still seen as what it is, breaking)
     U.uLdWound.value.forEach((w) => { if (w.w > 0 && w.grow) w.w = Math.min(w.grow, w.w + d * w.grow * 5); }); // a wound opens in a fifth of a second
     const pano = g.pano, rimK = 0.95 + 0.25 * rage + 0.35 * tele + 0.3 * gloat + 0.3 * roar;

@@ -348,7 +348,7 @@ class BlasterStarfighter {
       if (b > 2.4) this.model.scene.visible = false;
       return;
     }
-    this.heat += (this.heatTo - this.heat) * Math.min(1, d * 3);
+    this.heat = Motion.damp(this.heat, this.heatTo, 3, d);
     const heat = this.heat;
     // the fly-in: from behind and below the camera to its place, rolling level as it arrives
     if (!this.launched && this.inT < 1 && (this.hold += d) > 1) this.launch();
@@ -372,8 +372,8 @@ class BlasterStarfighter {
     const jj = this.jolt * this.jolt, sh = Math.sin(Math.min(1, this.shoveK * 1.4) * Math.PI * 0.5) * this.shoveK; // (pushed back by the roar: out fast, back slowly)
     this.rollV += ((roll - rig.rotation.z) * 60 - this.rollV * 11) * h;
     rig.rotation.z += this.rollV * h;
-    rig.rotation.x += (STAR.TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.075 - sh * 0.1 - Math.min(1, inK * 2) * 0.3 + Math.sin(t * 1.9 + 0.9) * 0.016 * hov - lunge * 0.06 + jj * 0.09 - rig.rotation.x) * Math.min(1, d * 6);
-    rig.rotation.y += ((-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov + jj * this.joltX * 0.25 - rig.rotation.y) * Math.min(1, d * 2.5);
+    rig.rotation.x = Motion.damp(rig.rotation.x, STAR.TILT + (quiet ? 0 : Pointer.y * 0.1) + this.recoil * 0.075 - sh * 0.1 - Math.min(1, inK * 2) * 0.3 + Math.sin(t * 1.9 + 0.9) * 0.016 * hov - lunge * 0.06 + jj * 0.09, 6.3, d);
+    rig.rotation.y = Motion.damp(rig.rotation.y, (-Math.sin(rig.rotation.z) * 0.22 + Math.sin(t * 0.7 + 0.6) * 0.03) * hov + jj * this.joltX * 0.25, 2.5, d);
     this.recoil *= Math.pow(0.004, d);
     this.gun *= Math.pow(0.02, d);
     this.struck = Math.max(0, this.struck - d * 3.5);
@@ -393,7 +393,7 @@ class BlasterStarfighter {
     STAR.ENGINES.forEach((n, i) => { const e = P[n.replace("exhaust", "engine")]; if (e) e.rotation.set(clamp(rig.rotation.x - STAR.TILT, -0.2, 0.2) * -0.5, clamp(rate * 0.02, -0.08, 0.08), 0); });
     // ---- engines: they burn longer and whiter with the streak, the warp and a surge; the two under the mains answer a roll
     const turn = Math.min(0.5, Math.abs(this.rollV) * 0.3);
-    this.hurt += ((g.shields <= 1 && g.state !== "over" ? 1 : 0) - this.hurt) * Math.min(1, d * 3);
+    this.hurt = Motion.damp(this.hurt, g.shields <= 1 && g.state !== "over" ? 1 : 0, 3, d);
     FU.uTime.value = t;
     FU.uLen.value.set(0.75 + heat * 0.5 + burn * 1.2, 0.7 + heat * 0.35 + burn * 0.9 + turn);
     FU.uPow.value.set(0.5 + heat * 0.3 + burn * 0.45, 0.42 + heat * 0.25 + burn * 0.35 + turn * 0.6);
@@ -411,7 +411,7 @@ class BlasterStarfighter {
     // ---- the barrels cool; its neon comes on as it arrives, burns brighter with the streak and the thrust, dims on its last shield
     this.barrelHot = Math.max(0, this.barrelHot - d * 0.9);
     U.uStGun.value.copy(this.gunCol).multiplyScalar(this.gun * 2.2).add(this._c.setRGB(2.6, 0.75, 0.16).multiplyScalar(Math.min(1, this.barrelHot)));
-    this.pow += ((this.inT > 0.4 ? 1 : 0) - this.pow) * Math.min(1, d * 2.5);
+    this.pow = Motion.damp(this.pow, this.inT > 0.4 ? 1 : 0, 2.5, d);
     this.blink = g.el && g.el.dataset.blink ? Math.min(1, this.blink + d * 8) : Math.max(0, this.blink - d * 5);
     const bl = this.blink * (0.5 + 0.5 * Math.sin(t * 2.6 * Math.PI * 2)); // (after a hit it cannot be hit again for a moment: its edges pulse, under three times a second)
     U.uSkGlow.value.setRGB(1, 1, 1).multiplyScalar(this.pow * (0.85 + 0.35 * heat + 0.4 * lunge) * (1 - 0.3 * this.hurt * (0.5 + 0.5 * Math.sin(t * 5.0))));

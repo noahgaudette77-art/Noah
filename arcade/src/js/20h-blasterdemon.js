@@ -454,8 +454,8 @@ class BlasterDemon {
   // advance: how much of the question's time has gone (0 to 1), or null between questions
   update(dt, advance) {
     const g = this.g, t = g.t, U = this.U, J = this.J, quiet = REDUCED_MOTION || GFX.calm, ship = g.ship.position, sin = Math.sin, cos = Math.cos;
-    this.S += (this.fitS - this.S) * Math.min(1, dt * 3);
-    this.yK += (this.fitY - this.yK) * Math.min(1, dt * 3);
+    this.S = Motion.damp(this.S, this.fitS, 3, dt);
+    this.yK = Motion.damp(this.yK, this.fitY, 3, dt);
     const S = this.S, k6 = S / 6;
     this.puffs.update(dt, g.camera, t);
     NEON_T.value = t;
@@ -494,7 +494,7 @@ class BlasterDemon {
     }
     this.rageOn = rageNow;
     this.rageT += dt;
-    this.rage += ((rageNow ? 1 : 0) - this.rage) * Math.min(1, dt * 1.5);
+    this.rage = Motion.damp(this.rage, rageNow ? 1 : 0, 1.5, dt);
     const rage = this.rage, hurt = clamp((this.hits - 1) / 7, 0, 1), onset = smoothstep(0, 0.25, this.rageT) * (1 - smoothstep(0.55, 1.3, this.rageT));
     // the run is over: it has won, and roars over the wreck with its wings spread
     if (g.state === "over" && this.alive && this.gloatT < 0) { this.gloatT = 0; Sound.sfx("demonroarlong"); }
@@ -503,7 +503,7 @@ class BlasterDemon {
     const tele = A ? smoothstep(0, 0.4, A.time) * (1 - smoothstep(0.42, 0.56, A.time)) : 0; // rearing up: the warning
     const strike = A ? smoothstep(0.42, 0.56, A.time) * (1 - smoothstep(0.8, 1.35, A.time)) : 0;
     this.kickTo *= Math.pow(0.03, dt);
-    this.kick += (this.kickTo - this.kick) * Math.min(1, dt * 22);
+    this.kick = Motion.damp(this.kick, this.kickTo, 27.4, dt);
     // dying: it sags and staggers; in its last stand it rears back and roars instead
     const stag = dying ? smoothstep(0, 0.25, this.dieT) : 0, kick = this.kick, roar = dying && this.finale && !this.blown ? stag : 0, sag = stag - roar;
     const raise = Math.min(1.2, tele + 0.8 * roar + 0.7 * gloat + 0.5 * onset); // (arms up and out, claws open)
@@ -514,8 +514,8 @@ class BlasterDemon {
     const ph = this.flap, beat = Math.pow(0.5 + 0.5 * sin(t * (5.4 + 3 * rage)), 6), beatN = Math.floor((ph - 1.5708) / 6.2832);
     if (beatN !== this.beatN) { this.beatN = beatN; if (this.inT > 0.25 && !dying) Sound.sfx("demonflap", clamp(this.root.position.x * 0.1, -0.6, 0.6)); }
     // ---- where it is: as far ahead as the time left says, further when a hit has thrown it back, flying up when it is new
-    if (advance !== null) this.adv += (advance - this.adv) * Math.min(1, dt * 5);
-    else if (!A) this.adv += (0 - this.adv) * Math.min(1, dt * 1.1);
+    if (advance !== null) this.adv = Motion.damp(this.adv, advance, 5, dt);
+    else if (!A) this.adv = Motion.damp(this.adv, 0, 1.1, dt);
     const lunge = strike * (A && A.kind === 1 ? 5.5 : 2.2) * (REDUCED_MOTION ? 0.3 : 1);
     const z = -lerp(DEMON_FAR, DEMON_NEAR, this.adv) - kick * (REDUCED_MOTION ? 3 : 8) - inK * 120 + lunge - stag * 2.5 + gloat * 3;
     const bob = quiet ? 0 : -sin(ph + 0.4) * 0.016 * S * (1 + 0.5 * rage);
@@ -545,8 +545,8 @@ class BlasterDemon {
     J.waist.rotation.set(0.05 * sin(t * 0.9 + 1) * sway - 0.2 * raise + 0.25 * strike + 0.3 * kick, 0, 0.07 * sin(t * 0.9) * sway);
     J.tail.rotation.set(0.1 * sin(t * 0.9 + 0.2) * sway - 0.25 * raise + 0.35 * strike + 0.4 * kick + 0.3 * sag, 0, 0.14 * sin(t * 0.9 - 0.9) * sway);
     // head: it watches the player (the pointer turns it a little); thrown back by a hit and by its roars; it lolls as it dies
-    this.look += ((quiet ? 0 : 0.12 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.25) * (1 - strike) - this.look) * Math.min(1, dt * 7);
-    this.nod += ((0.16 - clamp(Pointer.y, -1, 1) * 0.1) - 0.3 * tele + 0.22 * strike - 0.45 * kick - 0.32 * roar - 0.28 * gloat - 0.22 * onset - this.nod) * Math.min(1, dt * 9);
+    this.look = Motion.damp(this.look, (quiet ? 0 : 0.12 * sin(t * 0.6) + clamp(Pointer.x, -1, 1) * 0.25) * (1 - strike), 7.4, dt);
+    this.nod = Motion.damp(this.nod, (0.16 - clamp(Pointer.y, -1, 1) * 0.1) - 0.3 * tele + 0.22 * strike - 0.45 * kick - 0.32 * roar - 0.28 * gloat - 0.22 * onset, 9.8, dt);
     J.head.rotation.set(this.nod + (rage > 0.5 && !quiet ? 0.03 * sin(t * 7.3) * sin(t * 1.3) : 0) + 0.35 * sag * sin(this.dieT * 3 + 1), this.look + 0.3 * sag * sin(this.dieT * 4), 0.05 * sin(t * 0.8) * sway + this.twist * 0.25 * kick + 0.3 * sag);
     J.jaw.rotation.set(open, 0, 0);
     // arms: hanging and swaying; raised and spread as it rears or roars; swept in and down as it strikes; thrown wide by a hit
@@ -562,10 +562,10 @@ class BlasterDemon {
 
     // ---- its light
     const lit = this.inT > 0.55 && !dying;
-    this.pow += ((lit ? 1 : 0) - this.pow) * Math.min(1, dt * (dying ? 6 : 2.5));
+    this.pow = Motion.damp(this.pow, lit ? 1 : 0, dying ? 6 : 2.5, dt);
     U.uDmSweep.value = this.inT < 1 ? -0.1 + smoothstep(0.55, 1, this.inT) * 1.0 : 9;
     if ((this.hits >= 6 || dying) && !quiet) { if ((this.flickT -= dt) <= 0) { this.flickT = 0.4; this.flick = this.lcg() < 0.5 ? 0.4 : 1; } } else this.flick = 1; // (a change at most 2.5 times a second)
-    U.uDmDim.value += (this.flick - U.uDmDim.value) * Math.min(1, dt * 12);
+    U.uDmDim.value = Motion.damp(U.uDmDim.value, this.flick, 13.4, dt);
     U.uDmPow.value = this.pow * (0.8 + 0.5 * rage + 0.28 * tele + 0.22 * strike + 0.5 * onset + 0.6 * gloat) + (dying && !this.blown ? 0.9 + 0.6 * roar : 0);
     U.uDmRage.value = Math.max(rage, 0.6 * tele + 0.8 * strike, gloat, roar);
     U.uDmBeat.value = beat;
@@ -574,8 +574,8 @@ class BlasterDemon {
     U.uDmRim.value.copy(g.waveCol).multiplyScalar(0.5);
     U.uDmHaze.value.copy(g.space ? g.space.cur.a : g.scene.fog.color).multiplyScalar(0.1);
     U.uDmHit.value = Math.max(0, U.uDmHit.value - dt * 5.5);
-    U.uDmCrack.value += ((dying ? 1 : hurt * 0.55) - U.uDmCrack.value) * Math.min(1, dt * 3);
-    U.uDmExpose.value += ((this.shed > 0.85 ? 1 : 0) - U.uDmExpose.value) * Math.min(1, dt * 2);
+    U.uDmCrack.value = Motion.damp(U.uDmCrack.value, dying ? 1 : hurt * 0.55, 3, dt);
+    U.uDmExpose.value = Motion.damp(U.uDmExpose.value, this.shed > 0.85 ? 1 : 0, 2, dt);
     U.uDmMouth.value = Math.min(1.6, open * 2.6) * this.pow;
     const charge = Math.max(tele, strike * 0.6, 0.35 * rage, 0.8 * roar, 0.7 * gloat);
     U.uDmClaw.value = charge * 1.6;

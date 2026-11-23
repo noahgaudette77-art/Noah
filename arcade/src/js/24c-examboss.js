@@ -849,9 +849,9 @@ class ExamBoss {
   update(dt, t) {
     const g = this.g, K = BOSS_K, u = this.blastMat.uniforms;
     // the exam itself: it wakes once, then looms. dread follows how much of the exam is answered.
-    this.dread += (this.dreadTo - this.dread) * Math.min(1, dt * 0.7);
+    this.dread = Motion.damp(this.dread, this.dreadTo, 0.7, dt);
     this.noticeK = Math.max(0, this.noticeK - dt * 1.6);
-    this.lightK += (this.lightTo - this.lightK) * Math.min(1, dt * 1.4);
+    this.lightK = Motion.damp(this.lightK, this.lightTo, 1.4, dt);
     if (this.mode === "wake" && this.waking) {
       const w = (this.wt += dt);
       if (w > 0.55 && !this.lit) { this.lit = true; this.eyeTo = 1.5; Sound.sfx("bosswake"); }
@@ -866,7 +866,7 @@ class ExamBoss {
       }
       if (w > 3.1) { this.mode = "idle"; Sound.dread(true); }
     }
-    this.eyeK += (this.eyeTo - this.eyeK) * Math.min(1, dt * 3);
+    this.eyeK = Motion.damp(this.eyeK, this.eyeTo, 3, dt);
     let eye = this.eyeK * (0.85 + 0.15 * Math.sin(t * 1.1)) * (1 + 0.35 * this.dread + 0.4 * this.menace + 0.5 * this.noticeK);
     if (this.cue && (this.cue.t += VFX.dt) >= 0.3) { const c = this.cue; this.cue = null; c.go(); }
     if (this.mode === "die" && !this.quick) this.dying(dt, t);
@@ -913,15 +913,15 @@ class ExamBoss {
       U.uBossRimK.value = 0.64 * this.lightK;
       U.uBossSeam.value.copy(this.seamCold).lerp(this.seamHot, clamp(this.dread * 0.9 + this.menace * 0.4, 0, 1)).lerp(this.seamRage, rage);
       const lit = this.mode !== "wake" || this.wt > 1.0;
-      U.uBossPower.value += ((lit ? 0.7 + 0.3 * this.dread + 0.3 * this.menace + 0.9 * rage : 0) - U.uBossPower.value) * Math.min(1, dt * 3);
+      U.uBossPower.value = Motion.damp(U.uBossPower.value, lit ? 0.7 + 0.3 * this.dread + 0.3 * this.menace + 0.9 * rage : 0, 3, dt);
       U.uBossSweep.value = this.mode === "wake" ? BOSS_DAIS + smoothstep(1.0, 2.6, this.wt) * (BOSS_S * 1.1 + 1.4) : 100;
       // destroyed: the lights stutter (a change at most 2.6 times a second, and never fully out) and the panel lines open
       if (dying && !this.soft) {
         if ((this.flickT -= dt) <= 0) { this.flickT = 0.38; this.flick = this.lcg() < 0.55 ? 0.35 : 1; }
       } else this.flick = 1;
-      U.uBossDim.value += (this.flick - U.uBossDim.value) * Math.min(1, dt * 14);
+      U.uBossDim.value = Motion.damp(U.uBossDim.value, this.flick, 15.9, dt);
       if (this.hous) { const on = clamp(U.uBossPower.value, 0, 1) * U.uBossDim.value; this.coreMat.color.copy(this.coreCol).multiplyScalar(0.08 + 0.92 * on); this.coreLamp.material.opacity = 0.75 * on; }
-      U.uBossCrack.value += ((dying ? clamp(this.popI / 5, 0, 1) * 0.45 + this.heat * 0.9 : 0) - U.uBossCrack.value) * Math.min(1, dt * 4);
+      U.uBossCrack.value = Motion.damp(U.uBossCrack.value, dying ? clamp(this.popI / 5, 0, 1) * 0.45 + this.heat * 0.9 : 0, 4, dt);
       // vapour vents off its back, more of it as the end comes nearer
       this.vapT -= dt;
       if (this.vapT < 0 && this.mode === "idle") {
@@ -1098,7 +1098,7 @@ class ExamBoss {
     const e = 1 - Math.exp(-dt * (b >= 0 && b < 0.5 ? 9 : this.mode === "rage" && ct > 1.4 ? 5 : 2.6));
     this.camP.lerp(this._v, e); this.camL.lerp(this._w, e);
     g.camBase.copy(this.camP); g.lookAt.copy(this.camL);
-    if (Math.abs(g.camera.fov - 66) > 0.05) { g.camera.fov += (66 - g.camera.fov) * Math.min(1, dt * 2.2); g.camera.updateProjectionMatrix(); } // a wider lens, eased in
+    if (Math.abs(g.camera.fov - 66) > 0.05) { g.camera.fov = Motion.damp(g.camera.fov, 66, 2.2, dt); g.camera.updateProjectionMatrix(); } // a wider lens, eased in
     const post = g.scene.userData.post;
     if (post && post.dof) { post.dof.focus = Math.max(2, this.camP.distanceTo(this.camL) - 0.6); post.dof.far = 64; post.dof.max = 0.0045; }
   }

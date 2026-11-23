@@ -207,7 +207,7 @@ class ExamMonument {
   }
   // k: the share of the exam answered so far (0..1)
   update(dt, t, k) {
-    this.fill += (k - this.fill) * Math.min(1, dt * 0.8);
+    this.fill = Motion.damp(this.fill, k, 0.8, dt);
     const f = this.fill;
     this.group.rotation.y += dt * 0.22;
     this.rings.forEach((r) => { r.spin.rotation.y += dt * r.w; });
