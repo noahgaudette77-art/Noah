@@ -1,0 +1,32 @@
+{
+ "name": "wizard",
+ "triangles": 32000,
+ "bytes": 1384844,
+ "tex": 1024,
+ "clips": {
+  "cast": 5.4,
+  "hurt": 1.3,
+  "idle": 15.367,
+  "enter": 3.733,
+  "bigcast": 6.6,
+  "defeat": 8.467,
+  "stagger": 1.867,
+  "win": 5.7
+ },
+ "size": [
+  1.352,
+  2.05,
+  0.6358
+ ],
+ "source": "post/wizard-animA.glb",
+ "joints": {
+  "head": "Head",
+  "chest": "Spine02",
+  "hips": "Hip",
+  "handL": "L_Hand",
+  "handR": "R_Hand",
+  "footL": "L_Foot",
+  "footR": "R_Foot"
+ },
+ "height": 2.05
+}

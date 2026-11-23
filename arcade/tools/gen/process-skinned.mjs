@@ -201,9 +201,12 @@ let emImg = sharp(em, { raw: base.info });
 if (E.median > 1) emImg = sharp(await emImg.median(E.median).raw().toBuffer(), { raw: base.info });
 sizes.emissive = await addTex("emissive", await emImg.resize(E.size, E.size).blur(0.5).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setEmissiveTexture(t).setEmissiveFactor([1, 1, 1]));
 if (mrTex) {
-  const M = Object.assign({ roughMin: 0.2, roughMax: 1, roughMul: 1, metalMul: 1 }, cfg.surface || {});
+  // (metalLo/metalHi: metal below lo is cloth and goes to 0, above hi is metal and goes to 1: a generator's guess
+  // leaves cloth half metal, and half-metal cloth is dark under coloured lamps)
+  const M = Object.assign({ roughMin: 0.2, roughMax: 1, roughMul: 1, metalMul: 1, metalLo: 0, metalHi: 0 }, cfg.surface || {});
+  const metal = (b) => { if (!(M.metalHi > M.metalLo)) return Math.min(255, b * M.metalMul); const x = Math.min(1, Math.max(0, (b / 255 - M.metalLo) / (M.metalHi - M.metalLo))); return 255 * x * x * (3 - 2 * x); };
   const mr = await (await img(mrTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  for (let i = 0; i < texSize * texSize; i++) { mr.data[i * 3] = 255; mr.data[i * 3 + 1] = Math.round(255 * Math.min(M.roughMax, Math.max(M.roughMin, (mr.data[i * 3 + 1] / 255) * M.roughMul))); mr.data[i * 3 + 2] = Math.round(Math.min(255, mr.data[i * 3 + 2] * M.metalMul)); }
+  for (let i = 0; i < texSize * texSize; i++) { mr.data[i * 3] = 255; mr.data[i * 3 + 1] = Math.round(255 * Math.min(M.roughMax, Math.max(M.roughMin, (mr.data[i * 3 + 1] / 255) * M.roughMul))); mr.data[i * 3 + 2] = Math.round(metal(mr.data[i * 3 + 2])); }
   sizes.mr = await addTex("metalRough", await sharp(mr.data, { raw: mr.info }).webp({ quality: 90, effort: 5 }).toBuffer(), (t) => mat.setMetallicRoughnessTexture(t));
 }
 if (nrmTex) sizes.normal = await addTex("normal", await (await img(nrmTex)).resize(texSize, texSize, { kernel: "lanczos3" }).removeAlpha().webp({ quality: 94, effort: 5 }).toBuffer(), (t) => mat.setNormalTexture(t).setNormalScale(cfg.normalScale || 1));
