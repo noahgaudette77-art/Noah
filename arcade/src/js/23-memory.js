@@ -657,8 +657,23 @@ class MemoryGame extends QuizGame {
     this.camBase.set(0, MEMORY_EYE_Y, this.dist);
     this.lookAt.set(0, MEMORY_EYE_Y, 0);
   }
+  // The vault is framed in its window: over the card on a phone; on a Mac (a wide window) the whole height beside the
+  // card's column, the room spanning the window (see style.css). The lens is centred on that window both ways: the
+  // band's middle across as well as down (the master overhaul, Phase 2, 2026-11-23: on a Mac the vault was a strip
+  // 305 px high across the top, the window under it empty). The window is measured again at every resize.
+  resize(w, h) {
+    const win = this.band && this.el && $(".vault-window", this.el);
+    if (win && win.isConnected) { const r = win.getBoundingClientRect(); if (r.height > 0) this.band = { top: r.top, bottom: r.bottom, h: r.height, left: r.left, right: r.right }; }
+    super.resize(w, h);
+    const b = this.band;
+    if (this.camera && b && b.left !== undefined && Math.abs((b.left + b.right) / 2 - w / 2) > 1) {
+      this.camera.setViewOffset(w, h, w / 2 - (b.left + b.right) / 2, h / 2 - (b.top + b.bottom) / 2, w, h);
+      this.camera.updateProjectionMatrix();
+    }
+  }
   // Dolly back until the whole door, the lamps over it and the gold at its foot stand in the window above the
-  // card (the door used to sit behind the card, where only slivers of it showed).
+  // card (the door used to sit behind the card, where only slivers of it showed). On a Mac it stands back a little
+  // further: the room round it is in the picture too (the wall of boxes either side, the floor giving the gold back).
   onResize(w, h) {
     if (!this.camera || !this.door) return;
     const card = this.el && $(".card3d", this.el), win = this.el && $(".vault-window", this.el);
@@ -666,13 +681,14 @@ class MemoryGame extends QuizGame {
     this.cardH = card ? card.offsetHeight : 360;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     const bh = Math.max(60, win ? win.offsetHeight : h * 0.34), bw = win ? win.offsetWidth : w - 32;
+    this.wide = !!win && w > h && bw < w * 0.8; // (the vault beside the card, not over it)
     // tall enough for the lamps' arc and the floor, wide enough for the door's frame
-    this.dist = clamp(Math.max((12.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
+    this.dist = this.wide ? clamp(Math.max((16.5 * h) / (tanH * bh), (15.5 * h) / (tanH * bw)), 26, 170) : clamp(Math.max((12.9 * h) / (tanH * bh), (12.6 * h) / (tanH * bw)), 26, 170);
     this.scene.fog.near = this.dist + 8;
     this.scene.fog.far = this.dist + 73;
     // the gold stands either side of the door's foot, as far out as the window shows
     const half = (this.dist * tanH * bw) / h;
-    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - 5.0, 7.4, 13.4), 0, 3.0); });
+    this.stacks.forEach((g) => { g.position.set(g.userData.side * clamp(half - (this.wide ? 6.5 : 5.0), 7.4, 13.4), 0, 3.0); }); // (on a Mac inside the vault's part of the window: its edge there is no window's edge)
   }
   placeBolts() {
     for (let k = 0; k < MEMORY_BOLTS; k++) {
@@ -868,6 +884,19 @@ class MemoryGame extends QuizGame {
     const at = (dx, dy, d) => { const k = (2 * d * tanH) / H; return new THREE.Vector3(dx * k, MEMORY_EYE_Y - dy * k, D - d); };
     const bh = this.band ? this.band.h : 300, out = Math.min(GFX.w * 0.3, 130);
     const slot = this.slotWorld;
+    // (on a Mac the card stands beside the vault: the coin leaves the card's side nearest it and swings out that way)
+    const b = this.band, card = this.wide && b && b.left !== undefined && this.el && $("[data-card]", this.el), cr = card && card.getBoundingClientRect();
+    if (cr && cr.width > 0) {
+      const xc = (b.left + b.right) / 2, yc = (b.top + b.bottom) / 2, sd = cr.right < xc ? -1 : 1;
+      const x0 = (sd < 0 ? cr.right - 24 : cr.left + 24) - xc;
+      return new THREE.CatmullRomCurve3([
+        at(x0, cr.top + cr.height * 0.4 - yc, D * 0.16),
+        at(x0 * 0.55, -bh * 0.1, D * 0.42),
+        at(sd * out * 0.7, -bh * 0.36, D * 0.76),
+        new THREE.Vector3(sd * 0.8, slot.y + 1.0, slot.z + 1.8),
+        slot.clone(),
+      ], false, "centripetal");
+    }
     return new THREE.CatmullRomCurve3([
       at(side * 14, bh / 2 + 34, D * 0.16), // from under the window's sill, close to the lens
       at(side * out, bh * 0.2, D * 0.42),
