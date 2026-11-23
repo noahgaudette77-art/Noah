@@ -242,6 +242,7 @@ class QuizPanel {
       </div>
       ${auto ? `<div class="autobar"><i></i></div>` : ""}</div>`);
     this.el.appendChild(el);
+    this.el.classList.add("sheet-up"); // (the answers stand back behind it: see style.css, .sheet-up)
     this.sheet = el;
     this._next = onNext;
     if (auto) {
@@ -265,6 +266,7 @@ class QuizPanel {
   }
   clearSheet() {
     clearTimeout(this._autoT);
+    if (this.el) this.el.classList.remove("sheet-up");
     if (this.sheet) this.sheet.remove();
     this.sheet = null;
     this._next = null;
