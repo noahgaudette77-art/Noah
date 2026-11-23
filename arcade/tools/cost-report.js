@@ -4,7 +4,10 @@
  * lags on their iPhone 17 Pro Max; every screen measured, its top five costs found, before and after each fix).
  *
  *   node arcade/tools/cost-report.js [--html index.html] [--only title,hub] [--tier 1] [--frames 6] [--engine chromium|webkit]
- *                                    [--poses 0.35,1] [--parts] [--json out.json] [--scale 0.875] [--paint]
+ *                                    [--poses 0.35,1] [--parts] [--json out.json] [--scale 0.875] [--paint] [--device phone|mac]
+ *
+ * --device mac (2026-11-23): a MacBook Air's window instead (1470 x 830 at 2x, a mouse: a desktop, so the desktop's
+ * tiers); --tier auto leaves the page's own choice (AUTO's first step) as it is.
  *
  * For each screen (the page served, every asset loaded, 440 x 956 at 3x, touch: a phone, so the phone's tiers):
  *   the drawing size and pixel ratio; draw calls, triangles, lights (point/spot/directional) and shadow casters;
@@ -22,13 +25,14 @@
 const fs = require("fs"), path = require("path"), http = require("http");
 const ARCADE = path.join(__dirname, "..");
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf("--" + k); return i < 0 ? d : args[i + 1]; };
-const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", "1"), FRAMES = +flag("frames", 6), ENGINE = flag("engine", "chromium"), PARTS = args.includes("--parts"), PAINT = args.includes("--paint") && ENGINE === "chromium", JSON_OUT = flag("json", ""), POSES_ARG = flag("poses", "0.35,1"), SCALE = +flag("scale", 0);
+const DEVICE = flag("device", "phone"), MAC = DEVICE === "mac";
+const HTML = flag("html", "index.html"), ONLY = flag("only", ""), TIER = flag("tier", MAC ? "0" : "1"), FRAMES = +flag("frames", 6), ENGINE = flag("engine", "chromium"), PARTS = args.includes("--parts"), PAINT = args.includes("--paint") && ENGINE === "chromium", JSON_OUT = flag("json", ""), POSES_ARG = flag("poses", "0.35,1"), SCALE = +flag("scale", 0);
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".glb": "model/gltf-binary", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".json": "application/json" };
 const SCREENS = [
   ["title", "go('title')"], ["hub", "go('hub')"], ["blaster", "go('blaster','3')"], ["racer", "go('racer','2')"],
   ["boss", "go('boss','1')"], ["memory", "go('memory','2')"], ["exam", "go('exam')"], ["guide", "go('guide')"],
 ].filter(([k]) => !ONLY || ONLY.split(",").includes(k));
-const READY = { title: () => { const s = window.__arcade.Scenes.cur; return !s || !s.cells || (s.cells.every((c) => c.boss) && !!s.vault && !!s.cabs && !!s.cup && !!s.podMesh && !!s.sky); } };
+const READY = { title: () => { const s = window.__arcade.Scenes.cur; return !s || !s.cells || (s.cells.every((c) => c.boss) && !!s.vault && !!s.cabs && !!s.cup && !!s.podMesh && !!s.sky && s.scene.children.filter((o) => o.name === "windows+skylights").every((o) => !o.material.uniforms.tTop || o.material.uniforms.tTop.value)); } }; // (and, from 2026-11-23, the skylights' own pictures)
 
 // Runs in the page before anything else: the main thread's time in each frame, and what the page holds on the
 // graphics chip (every texture, renderbuffer and buffer as it is made, sized, and let go of).
@@ -89,15 +93,15 @@ function launch(engine) {
   const browser = await launch(ENGINE);
   const out = [];
   for (const [name, go] of SCREENS) {
-    const ctx = await browser.newContext({ viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: ENGINE !== "firefox", hasTouch: true });
+    const ctx = await browser.newContext(MAC ? { viewport: { width: 1470, height: 830 }, deviceScaleFactor: 2, isMobile: false, hasTouch: false } : { viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: ENGINE !== "firefox", hasTouch: true });
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript(inPage);
-    await page.goto(base + "/" + HTML + "#debug,phone");
+    await page.goto(base + "/" + HTML + (MAC ? "#debug" : "#debug,phone"));
     await page.waitForFunction(() => window.__arcade && window.__arcade.GFX, null, { timeout: 60000 });
     // the tier fixed as Setup fixes it (its full drawing size); --scale: a share of it, as AUTO draws it (0.875: a phone's SMOOTH)
-    await page.evaluate(([t, sc]) => { const G = window.__arcade.GFX; if (G.setQuality) G.setQuality(["high", "medium", "low", "lowest"][+t]); else if (G.setTier) { G.auto = false; G.setTier(+t, "report"); } if (G.perf) G.perf.off = true; if (sc) { G.scale = sc; G.resize(); } }, [TIER, SCALE]);
+    await page.evaluate(([t, sc]) => { const G = window.__arcade.GFX; if (t === "auto") { /* AUTO's own first step, held */ } else if (G.setQuality) G.setQuality(["high", "medium", "low", "lowest"][+t]); else if (G.setTier) { G.auto = false; G.setTier(+t, "report"); } if (G.perf) G.perf.off = true; if (sc) { G.scale = sc; G.resize(); } }, [TIER, SCALE]);
     await page.evaluate(`window.__arcade.${go}`);
     await page.waitForFunction(() => { const A = window.__arcade; return A.Scenes && A.Scenes.cur && !document.getElementById("loading"); }, null, { timeout: 180000 }).catch(() => {});
     if (READY[name]) await page.waitForFunction(READY[name], null, { timeout: 900000, polling: 250 }).catch(() => errors.push("not all of its pieces arrived"));
