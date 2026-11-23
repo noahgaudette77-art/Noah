@@ -33330,11 +33330,18 @@ const WIZ = {
   // lens (dist), and when it stands on the floor (distWhole: before the first question and after the last, when the
   // whole screen is the picture; never more than half the way to the boss); how far it is turned from facing the boss
   // (negative: its right side, the wand's, toward the lens)
-  SPOT: { x: -0.6, cut: 0.95, dist: 4.8, distWhole: 6.5, turn: -0.45 },
+  SPOT: { x: -0.58, cut: 0.95, dist: 4.2, distWide: 3.2, distWhole: 6.0, turn: -0.45 }, // (distWide: a landscape screen, the Mac's: its picture is a short band, so it comes a metre nearer)
   ROW_SINK: 0.55, // while it is there, the crowd's front row (7.3-7.85 m out, its heads just over the foot of the picture) sinks this far, out of the picture
   READY: [0.6, 0.9], // how far its wand is held out at the boss while a question is read: as it comes up, and as the attack bar fills
-  RIM: [0.62, 0.72, 1.0], RIM_K: 1.15, // its rim's colour (a cold lilac-blue: it reads against a red arena and a blue one) and strength
+  RIM: [0.55, 0.9, 1.0], RIM_K: 1.15, // its rim's colour (a cold cyan-white: it reads against a red arena and a blue one) and strength
   GLOW: 1.9, // its neon's strength (out of hearts, it dims)
+  // its own colours (the owner, 2026-11-23: it could barely be seen against the arenas' violet, and need not match
+  // them): the model's violet cloth repainted, its folds kept: a gold coat, a vermilion cape, coat-tails and hat (the
+  // cape's lining a deeper red), the arenas' violet and blue's opposites; its cyan trim, its steel and its skin as made.
+  // A little light of its own (FILL) keeps its colours in the darkest arena. (Tried: ivory, washed out under the
+  // arena's lights; crimson, lost in a red arena; emerald.)
+  COAT: 0xe2a428, CAPE: 0xff4d1a, LINING: 0xb01c14, FILL: 0.08,
+  CAPE_EDGE: [0.02, 0.08], // (where the cape's colour starts on the flutter mask, 0 where the cloth hangs from and 1 at its hem: all of the cape, a clean edge)
 };
 // a sound of the wizard's set; where that set has not loaded, `alt` (one of the game's own) or nothing
 function wizSfx(name, alt, pan, o) { const n = Sound.bank && Sound.bank[name] ? name : alt; if (n) Sound.sfx(n, pan, o); }
@@ -33415,27 +33422,53 @@ class Wizard {
       this.mesh = o;
     });
     const F = this.flut, R = this.rim, has = !!(this.mesh && this.mesh.geometry.getAttribute("aFlutter"));
+    const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear(), headBone = this.mesh && this.mesh.skeleton ? Math.max(0, this.mesh.skeleton.bones.indexOf(model.parts[(model.info.joints || {}).head || "Head"])) : 0;
+    const C = (this.colors = { coat: { value: lin(WIZ.COAT) }, cape: { value: lin(WIZ.CAPE) }, lining: { value: lin(WIZ.LINING) }, fill: { value: WIZ.FILL }, head: { value: headBone }, edge: { value: new THREE.Vector2().fromArray(WIZ.CAPE_EDGE) } });
     for (const m of this.mats) {
       if (!m.isMeshStandardMaterial) continue;
       m.onBeforeCompile = (sh) => {
         sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
         sh.uniforms.uRimCol = R.col; sh.uniforms.uRimK = R.k;
+        sh.uniforms.uWizCoat = C.coat; sh.uniforms.uWizCape = C.cape; sh.uniforms.uWizLining = C.lining; sh.uniforms.uWizFill = C.fill; sh.uniforms.uWizHead = C.head;
+        // (where its cape is: the flutter mask, the cape and the coat-tails; and its hat: what hangs from its head bone)
+        sh.uniforms.uWizEdge = C.edge;
+        sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vWizCape; uniform float uWizHead; uniform vec2 uWizEdge;" + (has ? "\nattribute float aFlutter;" : ""))
+          .replace("#include <skinning_vertex>", `#include <skinning_vertex>
+            #ifdef USE_SKINNING
+              vWizCape = max(${has ? "smoothstep(uWizEdge.x, uWizEdge.y, aFlutter)" : "0.0"}, smoothstep(0.5, 0.8, dot(vec4(equal(skinIndex, vec4(uWizHead))), skinWeight)));
+            #else
+              vWizCape = 0.0;
+            #endif`);
         // (the wave's height and breadth are read from the skinned point, in the mesh's own units: the stored one is packed)
-        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute float aFlutter; uniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp;")
+        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp;")
           .replace("#include <skinning_vertex>", `#include <skinning_vertex>
             { // the cape and the skirts move in the wind of the spells: a wave running down them, stronger at the hem
               float w = aFlutter * uFlutK, hgt = dot(transformed, uFlutUp) / uFlutAmp, across = dot(transformed, uFlutSide) / uFlutAmp; // (metres)
               float a = sin(uFlutT * 3.1 - hgt * 4.2 + across * 2.0), b = sin(uFlutT * 2.3 - hgt * 3.1 + 1.3);
               transformed += (uFlutBack * (0.055 + 0.045 * a) + uFlutSide * 0.035 * b + uFlutUp * 0.012 * a) * (w * uFlutAmp); // (metres, in the mesh's units)
             }`);
-        sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK;")
+        sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK; uniform vec3 uWizCoat; uniform vec3 uWizCape; uniform vec3 uWizLining; uniform float uWizFill; varying float vWizCape;")
+          .replace("#include <map_fragment>", `#include <map_fragment>
+            { // its colours, its own: the model's violet cloth (violet, indigo, magenta; never its cyan trim, steel or skin)
+              // repainted, its folds kept: a light coat, a vivid cape, coat-tails and hat, the cape's lining deeper
+              vec3 c = diffuseColor.rgb;
+              float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), dd = mx - mn, sat = dd / max(mx, 1e-4);
+              float hue = mx == c.r ? mod((c.g - c.b) / max(dd, 1e-5), 6.0) : mx == c.g ? (c.b - c.r) / max(dd, 1e-5) + 2.0 : (c.r - c.g) / max(dd, 1e-5) + 4.0;
+              hue /= 6.0;
+              float cloth = smoothstep(0.16, 0.3, sat) * smoothstep(0.6, 0.65, hue) * (1.0 - smoothstep(0.95, 0.99, hue));
+              float shade = clamp(dot(c, vec3(0.2126, 0.7152, 0.0722)) / 0.075, 0.22, 1.0); // (its folds, as the cloth was painted: never brighter than the colour itself)
+              vec3 tgt = mix(uWizCoat, mix(uWizCape, uWizLining, smoothstep(0.84, 0.88, hue)), vWizCape);
+              diffuseColor.rgb = mix(c, tgt * shade, cloth);
+            }`)
+          .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+            totalEmissiveRadiance += diffuseColor.rgb * uWizFill; // (a little light of its own: its colours hold in the darkest arena)`)
           .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
               float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
               gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(fr, 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
             }
             #include <tonemapping_fragment>`);
       };
-      m.customProgramCacheKey = () => "wizard-2" + (has ? "f" : "");
+      m.customProgramCacheKey = () => "wizard-3" + (has ? "f" : "");
       m.needsUpdate = true;
     }
     // ---- its clips, blended by hand: the idle always under; one clip at a time played through over it; while a
@@ -33684,7 +33717,7 @@ class Wizard {
     const Z = Math.max(4, g.camZ || g.camBase.z), whole = !b || g.state === "intro" || g.state === "over" ? 1 : 0;
     this.ground = wizEase(this.ground, whole, d, 3);
     // (its hips at the foot of the picture: the answers' top edge, or the foot of the screen when it is all picture)
-    const D = lerp(sp.dist, Math.min(sp.distWhole, 0.5 * Z), this.ground), mid = b ? (b.top + b.bottom) / 2 : GFX.h / 2, footPx = lerp(b ? b.bottom : GFX.h, GFX.h, this.ground);
+    const D = lerp(GFX.w > GFX.h * 1.2 ? sp.distWide : sp.dist, Math.min(sp.distWhole, 0.5 * Z), this.ground), mid = b ? (b.top + b.bottom) / 2 : GFX.h / 2, footPx = lerp(b ? b.bottom : GFX.h, GFX.h, this.ground);
     this.foot = wizEase(this.foot, ((mid - footPx) * 2 * D * t) / GFX.h, d, 4);
     this._m.lookAt(g.camBase, g.lookAt, cam.up);
     this._q.setFromRotationMatrix(this._m);
