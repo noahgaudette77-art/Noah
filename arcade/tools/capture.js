@@ -141,7 +141,7 @@ function inPage() {
       await drawTwo();
       const f = path.join(OUT, name + ".png");
       const clip = o.band ? await cap.band(o.pad || 0) : o.clip;
-      await page.screenshot(clip ? { path: f, clip } : { path: f });
+      await page.screenshot(clip ? { path: f, clip, timeout: 180000 } : { path: f, timeout: 180000 }); // (a Retina-size still in software can take over half a minute)
       return f;
     },
     // the strip of screen the 3D view shows in (between the question and the answers), as a clip rectangle
