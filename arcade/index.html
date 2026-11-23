@@ -7217,26 +7217,30 @@ const GFX = {
     this.calm = !!s.calm;
     if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
   },
-  // ---- quality tiers. HIGH draws everything; each tier down drops the costliest layers first. The drawing size is
-  // never more than twice the page's own pixels (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip can),
-  // and drawing larger than the screen to smooth edges happens only on a low-density desktop screen, within a budget.
+  // ---- quality tiers (2026-11-23, the owner's: a MAC tier, a PHONE tier and a SAFE one, chosen by the device, with
+  // Setup's override). MAC draws everything: the screen's own Retina pixels (twice the page's), edges smoothed by 4x
+  // multisampling, every effect. PHONE: at most 2x (a 3x phone screen is drawn at 2x: the eye cannot tell, the chip
+  // can), 2x multisampling, the bloom from half size, no ambient shade, depth of field, motion blur or lens streaks, and
+  // fewer particles. SAFE, for a weak or a throttled device: 1.5x, 2x multisampling, the fewest passes. LIGHTEST is the
+  // governor's last step, never Setup's: 1.25x, and FXAA (one cheap pass) in place of multisampling.
+  // No tier draws the lens's resting fringe (a pixel's colour split toward the corners: a soft edge for an effect the
+  // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
+  // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
   TIERS: [
-    { name: "HIGH", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fx: 1 },
-    { name: "MEDIUM", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fx: 0.8 },
-    { name: "LOW", pr: 1.5, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fx: 0.6 },
-    { name: "LOWEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fx: 0.45 },
+    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 },
+    { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
+    { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
+    { name: "LIGHTEST", pr: 1.25, samples: 0, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
   ],
   // On a phone (Assets.phone) each tier is lighter still (the owner, 2026-11-17: the shared render cost first): no
-  // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at HIGH no
-  // lens streaks, six bloom levels), and at MEDIUM, where a phone starts, no multisampling at all (the final pass's
-  // edge smoothing, FXAA, is one cheap pass), no god rays, no contact shadows, four bloom levels.
-  // (2026-11-22, smoothness first: nor the lens's resting fringe, a pixel's split in the far corners of a 3x screen
-  // that the eye cannot find there, two more reads of the picture for nearly every pixel. A hit still parts the colours.)
+  // floor mirror at any tier (it drew the whole scene a second time), never more than 2x multisampling (and at MAC no
+  // lens streaks, six bloom levels), and at PHONE, where a phone starts, no god rays, no contact shadows, four bloom
+  // levels, and fewer particles still.
   PHONE: [
-    { samples: 2, mirror: 0, lens: false, levels: 6, fringe: false },
-    { samples: 0, mirror: 0, rays: false, shadows: false, levels: 4, fringe: false },
-    { mirror: 0, shadows: false, fringe: false },
-    { mirror: 0, shadows: false, fringe: false },
+    { samples: 2, mirror: 0, lens: false, levels: 6 },
+    { mirror: 0, rays: false, shadows: false, levels: 4, fx: 0.7 },
+    { mirror: 0, shadows: false },
+    { mirror: 0, shadows: false },
   ],
   tier: 0,
   auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
@@ -7260,12 +7264,13 @@ const GFX = {
     this._tierSet = true;
     const T = this.TIERS[n];
     this.tier = n; this.extras = T.extras; this.fxScale = T.fx;
-    document.body.classList.toggle("lite", n >= 1); // (no frosted glass over the live picture below HIGH: see style.css, body.lite)
+    document.body.classList.toggle("lite", n >= 1); // (no frosted glass over the live picture below MAC: see style.css, body.lite)
     if (this.ok && this.pipe) { this.pipe.setSamples(T.samples); this.pipe.setMirror(T.mirror); this.resize(); }
     this.perf.changedAt = performance.now(); this.perf.why = why || "";
     if (typeof Scenes !== "undefined" && Scenes.cur && Scenes.cur.onTier) { try { Scenes.cur.onTier(n); } catch (e) { /* a scene's own response to the tier */ } }
   },
   // Setup > Graphics: "auto" lets the frame rate choose; a fixed tier stays put
+  // (the saved values keep their old names: high is MAC, medium PHONE, low SAFE)
   setQuality(q) {
     const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
     this.auto = fixed === undefined;
@@ -7438,7 +7443,7 @@ const GFX = {
     this.hdr = r.capabilities.isWebGL2 ? ext("EXT_color_buffer_float") || ext("EXT_color_buffer_half_float") : ext("OES_texture_half_float") && ext("EXT_color_buffer_half_float");
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
     if (Assets.phone) this.TIERS = this.TIERS.map((T, i) => Object.assign({}, T, this.PHONE[i] || {})); // (a phone's lighter tiers: see PHONE)
-    // the first tier: Setup's choice, or (auto) HIGH on a desktop and MEDIUM on a phone, from where the frame rate leads
+    // the first tier: Setup's choice, or (auto) MAC on a desktop and PHONE on a phone or a tablet, from where the frame rate leads
     const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
     this.auto = fixed === undefined;
     this.perf.ladder = this.makeLadder();
@@ -7462,7 +7467,7 @@ const GFX = {
   scenePR() {
     const lim = this.ok ? this.renderer.capabilities.maxTextureSize / Math.max(this.w, this.h, 1) : 8, out = this.outPR();
     const post = Scenes.cur && Scenes.cur.scene && Scenes.cur.scene.userData.post, want = post && post.ssaa > 1 ? Math.min(2, post.ssaa) : 1;
-    // drawing larger than the screen smooths thin edges, but its cost multiplies: only at the HIGH tier, only on a
+    // drawing larger than the screen smooths thin edges, but its cost multiplies: only at the MAC tier, only on a
     // screen of less than 1.5 device pixels per page pixel (a high-density screen is smooth already), and never past
     // four million pixels
     if (want <= 1 || this.tier > 0 || out >= 1.5 || this.scale < 1) return out; // (nor while AUTO is drawing smaller)
@@ -38322,7 +38327,7 @@ function showSettings() {
         <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"], ["curve", "SCREEN CURVE"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("gauge", "Graphics", "AUTO puts a steady frame rate first: on a phone it draws a little softer (SMOOTH); when frames run late it draws smaller, then drops effects, then lights, and sharpens again when they hold steady", seg("quality", [["auto", "AUTO"], ["high", "HIGH"], ["medium", "MEDIUM"], ["low", "LOW"]]))}
+      ${row("gauge", "Graphics", "AUTO puts a steady frame rate first: on a phone it draws a little softer (SMOOTH); when frames run late it draws smaller, then drops effects, then lights, and sharpens again when they hold steady", seg("quality", [["auto", "AUTO"], ["high", "MAC"], ["medium", "PHONE"], ["low", "SAFE"]]))}
       ${row("gauge", "FPS counter", "Frame rate and frame times (a graph of the last two seconds), hitches, the size the picture is drawn at, the graphics tier, the lights, and what AUTO is doing", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
