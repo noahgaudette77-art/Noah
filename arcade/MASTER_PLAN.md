@@ -12,10 +12,13 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 ## Now
 
-- **Phase:** 0, baseline and audit.
-- **Doing:** the plan (this file), the harness (`tools/harness.js`), the baseline run, the ranked audit.
-- **Next steps:** finish the harness; run it to make the baseline (`docs/master/baseline/`); review every screen and
-  rank the weak spots below; commit, push, report; then Phase 1.
+- **Phase:** 1, performance foundation (Phase 0 passed its gate 2026-11-23: the baseline report is committed in
+  `docs/master/baseline/`, the harness works: no fault).
+- **Doing:** the census (stalls, garbage and page changes a frame in play: `hitches.js`; each screen's largest pictures:
+  `texmem.js`; memory round after round: `cycles.js`), then the fixes it points to, one small commit each.
+- **Next steps:** run the three census tools; fix the mid-play shader in Risk Blaster and any others found; cut the
+  clear per-frame garbage; shrink the largest pictures that are bigger than they are ever shown (Risk Blaster, the
+  title hall, Nest Egg Run first); find the Mac hub's 8.5 ms; the Final Exam's 83 draws; then the harness, the gate.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -81,14 +84,14 @@ music pieces.
 
 ## Phases (in order; each passes its gate before the next starts)
 
-### Phase 0: baseline and audit (in progress)
-- [ ] the plan and the budget (this file)
-- [ ] `tools/harness.js`: the rules' regression (from disk and served), the screen sequence, the content and scripts
+### Phase 0: baseline and audit (done 2026-11-23)
+- [x] the plan and the budget (this file)
+- [x] `tools/harness.js`: the rules' regression (from disk and served), the screen sequence, the content and scripts
       diff against `ee413e3`; stills of every screen on the phone and the Mac compared with the baseline; overlapping
       text; each screen's cost against its budget and against the baseline; a report (markdown and JSON); its exit code
-- [ ] the baseline run (`docs/master/baseline/`): every screen on both tiers
-- [ ] the ranked audit: the weakest visuals, animations, feel, audio and performance costs, every screen
-- **Gate:** baseline report committed, harness working.
+- [x] the baseline run (`docs/master/baseline/`): every screen on both tiers
+- [x] the ranked audit: the weakest visuals, animations, feel, audio and performance costs, every screen
+- **Gate:** baseline report committed, harness working. **Passed** (no fault; see Measurements).
 
 ### Phase 1: performance foundation
 Fixed timestep with interpolated rendering (to decide, with evidence: the rules run on each frame's own step today and
@@ -221,8 +224,49 @@ comes out at -1.8 dBFS).
 
 ## Measurements (current; the baseline first)
 
-(the baseline run fills this)
+**Baseline** (`docs/master/baseline/`, commit `89cfb56`, Chromium, every asset in; the rules IDENTICAL from disk and
+served, the screen sequence ALL 13 STEPS OK, content and scripts untouched; no fault). Memory = textures + render
+targets + geometry buffers held on the graphics chip. Script = the main thread's own time a frame, this machine
+(software drawing: compare builds, not devices). Every screen at its tier's full drawing size.
+
+Phone (PHONE tier, 880 x 1912, 2x multisampling, 9 passes, 6.2 Mpx shaded a frame on every screen):
+
+| screen | draws | triangles | lights | memory MB (textures) | script ms (worst) |
+|---|---|---|---|---|---|
+| title hall (glide / end) | 33 / 35 | 146K / 185K | 4 | 346 (284) | 2.0 / 1.7 |
+| hub | 44 | 100K | 4 | 229 (183) | 2.47 (3.7) |
+| Risk Blaster | 49 | 154K | 5 | 371 (306) | 4.05 (5.5) |
+| Nest Egg Run | 58 | 100K | 5 | 315 (245) | 2.55 (2.7) |
+| Boss Rush | 57 | 91K | 5 | 254 (209) | 3.75 (4.7) |
+| Memory Bank | 53 | 98K | 4 | 115 (74) | 4.4 (8.5) |
+| Final Exam | 83 | 37K | 5 | 150 (104) | 3.4 (4.1) |
+| Strategy Guide | 49 | 32K | 3 | 104 (65) | 3.42 (8.4) |
+
+Mac (MAC tier, 2940 x 1660, 4x multisampling, 22-24 passes, 37.6-39.6 Mpx shaded a frame):
+
+| screen | draws | triangles | lights | memory MB (textures) | script ms |
+|---|---|---|---|---|---|
+| title hall (glide / end) | 63 / 48 | 293K / 185K | 4 | 679 (432) | 2.0 / 2.5 |
+| hub | 87 | 313K | 4 | 577 (340) | 8.5 |
+| Risk Blaster | 66 | 160K | 5 | 795 (546) | 3.2 |
+| Nest Egg Run | 91 | 184K | 5 | 794 (532) | 3.5 |
+| Boss Rush | 61 | 50K | 5 | 698 (462) | 4.2 |
+| Memory Bank | 90 | 183K | 4 | 496 (262) | 4.4 |
+| Final Exam | 88 | 32K | 5 | 510 (279) | 2.9 |
+| Strategy Guide | 63 | 32K | 3 | 467 (242) | 1.8 |
+
+Inside every budget (phone: 100 draws, 350K triangles, 5 lights, 450 MB; Mac: 160, 500K, 6, 900 MB). The heaviest:
+Risk Blaster's memory on both (371 MB on the phone, 795 on the Mac), the Mac's render targets (223-244 MB: the 4x
+multisampled HDR scene at 2940 x 1660 and its passes), the Mac hub's script time (8.5 ms against 2.5 on the phone, and
+3-4 ms on the other Mac screens that also draw a floor mirror: the cause to be found in Phase 1), and the Final
+Exam's draws on the phone.
 
 ## Hand-over notes
 
-(one per phase, newest last)
+**Phase 0 (2026-11-23).** The plan, the harness (`tools/harness.js`: run it from the repository's root; about 55
+minutes in full, `--quick` about 15), the baseline (`docs/master/baseline/`, from commit `89cfb56`), the ranked audit
+(above) with the reviewer's notes (`docs/master/visual-audit.md`) and contact sheets (`docs/master/baseline-sheet-*.jpg`).
+Census tools for Phase 1 written and tried once (`hitches.js` on Risk Blaster: one shader made mid-fight, 78 KB of
+garbage a frame before the code was warm). The overlap check was made to skip text under a sheet or a bar and a glow's
+copy of its own words after the baseline was taken: the baseline's list holds those (a later run lists fewer, never a
+false new one). Nothing in the game changed. Spend: none.
