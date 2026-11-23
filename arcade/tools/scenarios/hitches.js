@@ -27,7 +27,12 @@ module.exports = async (cap) => {
   await cap.eval(() => {
     const A = window.__arcade, R = A.GFX.renderer, gl = R.getContext(), H = (window.__hc = { links: [], uploads: [], programs: [], seen: new Set() });
     const link = gl.linkProgram;
-    gl.linkProgram = function (p) { H.links.push(window.__cap.frame); return link.call(gl, p); };
+    // (each program linked: the frame, and the game's own calls that led to it, from the stack: the page's lines)
+    gl.linkProgram = function (p) {
+      const st = String(new Error().stack || "").split("\n").filter((l) => /index\.html/.test(l)).slice(0, 4).map((l) => { const m = /:(\d+):\d+\)?\s*$/.exec(l), fn = /at (?:new )?([^\s(]+)/.exec(l); return [fn ? fn[1] : "?", m ? +m[1] - 1 : -1]; });
+      H.links.push({ f: window.__cap.frame, st });
+      return link.call(gl, p);
+    };
     const name = (s) => {
       if (!s) return "?";
       if (ArrayBuffer.isView(s)) return "data " + Math.round(s.byteLength / 1024) + " KB";
@@ -53,8 +58,12 @@ module.exports = async (cap) => {
       for (const p of P) {
         if (H.seen.has(p)) continue;
         H.seen.add(p);
-        const users = [], sc = A.Scenes.cur && A.Scenes.cur.scene;
-        if (sc) sc.traverse((o) => { (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => { const pr = R.properties.get(m); if (pr && pr.program === p && users.length < 3) users.push((m.name || m.type) + " on " + (o.name || (o.parent && o.parent.name) || o.type)); }); });
+        // (the screen's scene, and any other scene it or its parts hold: an overlay's, an effect's own)
+        const users = [], cur = A.Scenes.cur, scenes = new Set();
+        if (cur && cur.scene) scenes.add(cur.scene);
+        const look = (v, depth) => { if (!v || typeof v !== "object" || depth > 2) return; if (v.isScene) { scenes.add(v); return; } if (v.isObject3D || ArrayBuffer.isView(v) || v.nodeType) return; for (const k of Object.keys(v).slice(0, 80)) { try { look(v[k], depth + 1); } catch (e) { /* a getter */ } } };
+        if (cur) look(cur, 0);
+        for (const sc of scenes) sc.traverse((o) => { (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => { const pr = R.properties.get(m); if (pr && pr.program === p && users.length < 3) users.push((m.name || m.type) + " on " + (o.name || (o.parent && o.parent.name) || o.type) + (sc === cur.scene ? "" : " (in another scene)")); }); });
         H.programs.push({ f: window.__cap.frame, name: p.name, users });
       }
     };
@@ -133,6 +142,7 @@ module.exports = async (cap) => {
     row.play = { frames: f2 - f1, answered, end, programs: c2.programs - c1.programs, links: c2.links - c1.links, uploads: c2.uploads - c1.uploads };
     const ev = await page.evaluate(([a, b, c]) => ({ programs: window.__hc.programs.slice(a), uploads: window.__hc.uploads.slice(b).map((u) => u.f + " " + u.what), links: window.__hc.links.slice(c) }), [c1.programs, c1.uploads, c1.links]);
     row.playPrograms = ev.programs.map((p) => `frame ${p.f}: ${p.name} (${p.users.join("; ") || "not in the scene"})`);
+    row.playLinks = ev.links.map((l) => `frame ${l.f}: ` + l.st.map(([fn, line]) => fn + " " + where(line)).join(" < "));
     row.playUploads = ev.uploads;
     if (cdp && sampling) {
       const { profile } = await cdp.send("HeapProfiler.stopSampling"), nf = Math.max(1, f2 - fs0);
@@ -149,6 +159,7 @@ module.exports = async (cap) => {
     results.push(row);
     console.log(`${game}: opened in ${row.opening.frames} frames (${row.opening.programs} shaders, ${row.opening.uploads} pictures); played ${row.play.frames} frames, ${answered} answers${end ? " (" + end + ")" : ""}: ${row.play.programs} shaders made, ${row.play.uploads} pictures sent${row.garbage ? ", " + row.garbage.kbPerFrame + " KB of garbage a frame" : ""}`);
     for (const p of row.playPrograms.slice(0, 12)) console.log("    shader " + p);
+    for (const l of row.playLinks.slice(0, 12)) console.log("    linked at " + l);
     for (const u of row.playUploads.slice(0, 12)) console.log("    picture at frame " + u);
     if (row.garbage) for (const t of row.garbage.top.slice(0, 6)) console.log("    " + t);
     console.log(`    page elements changed: ${row.dom.perFrame} a frame` + (row.dom.top.length ? " (" + row.dom.top.slice(0, 4).join(", ") + ")" : ""));
