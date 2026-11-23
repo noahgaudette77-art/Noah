@@ -18,11 +18,15 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   stars); the title hall's reflective deck floor, glass and steel (`eeedda6`: a room probe, CC0 deck, tread and brushed
   steel); stills nearer deterministic (`922a37f`: Boss Rush, Memory Bank, the exam, the guide and the menus the same
   run after run; Risk Blaster and Nest Egg Run still vary in their questions).
-- **Doing:** two agents in worktrees (Boss Rush's arena; Memory Bank's vault room), to be reviewed and merged; the
-  baseline's and Phase 1's stills captured again with the latest capture (`run2.sh` in the scratchpad: into
-  `docs/master/baseline/stills` and `docs/master/phase1/stills` when done).
-- **Next steps:** the exam's Proctor (key light, readable) and its columns; the racer's facades; the title's skylight
-  that shows no sky and the side windows' glare; then the Phase 2 gate (harness, an independent review, the report).
+- **Also done:** Memory Bank's vault room (an agent's work, reviewed and merged: `a2c64b8`, `d699efc`, rebuilt
+  `56acac2`: a reflective deck, brushed-steel box wall, bevelled gold, violet-black; the Mac's layout uses the window);
+  the title's skylights for its interior worlds and dimmer side windows (`21d6556`); the hub's lasers (`4353a9f`).
+- **Doing:** two agents in worktrees: Boss Rush's arena, the Final Exam (hall, columns, the Proctor's light); to be
+  reviewed (their before/after sheets in `docs/master/phase2/`), merged by cherry-pick, the page and the asset list
+  rebuilt after (`node arcade/tools/manifest.js`, then the build), WebKit checked.
+- **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
+  `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); the racer's far-end
+  clutter (optional); then the Phase 2 gate: the harness, an independent review of all of Phase 2, the report.
 
 ## The order, in short (the owner, 2026-11-23)
 
