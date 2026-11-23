@@ -7313,9 +7313,9 @@ const GFX = {
   // once, then three (the effects and the lights only ever go a step at a time). Heat: a long session's frames may creep
   // up (a fanless laptop slows its chip as it warms). One frame in fifty running late through ten seconds, late for a
   // reason the main thread did not cause, eases the drawing size one small step before it becomes a stutter: only the
-  // size, within the tier. Each ease is judged from its own first ten seconds: no help (the late frames did not fall by
-  // three in ten), and it steps back and never eases from there again this session (what a smaller picture does not
-  // help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
+  // size, within the tier. Each ease is judged from its own first full ten seconds: no help (the late frames did not
+  // fall by three in ten), and it steps back and does not ease from there for five minutes (what a smaller picture does
+  // not help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
   // minute steady with no more than one late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
   // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
   // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
@@ -7405,8 +7405,8 @@ const GFX = {
   // the last ten seconds' frames (from the last change, screen or return, at most): how many, and how many ran late
   // (over a frame and a half) while the main thread's own share of them was small (what the main thread does, a smaller
   // picture would not help)
-  late10(F, now) {
-    const P = this.perf, N = P.ring.length, from = Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500, now - 10000);
+  late10(F, now, ms = 10000) {
+    const P = this.perf, N = P.ring.length, from = Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500, now - ms);
     let n = 0, late = 0;
     for (let k = 1; k <= P.n; k++) { const j = (P.i - k + N) % N; if (P.at[j] <= from) break; if (P.busy[j]) continue; n++; if (P.ring[j] > F * 1.5 && P.cpu[j] < F * 0.6) late++; }
     return { n, late, rate: n ? late / n : 0, span: now - from };
@@ -7463,23 +7463,29 @@ const GFX = {
     P.slowSince = 0; P.downRun = 0;
     // heat: frames creeping up over ten seconds (one in fifty late), eased one small step before they become a stutter:
     // the drawing size only, within the tier (never its effects or its lights). Each ease is judged once, from its own
-    // first ten seconds: if the late frames did not fall by three in ten and a few frames at least (what a smaller
-    // picture does not help: the main thread's pauses, the browser's own), it steps back and never eases from there
-    // again this session; if they fell, it stays, and may ease again from the new step if they creep up again
+    // first full ten seconds (a new screen in between: looked at once ten seconds are in): if the late frames did not
+    // fall by three in ten against the rate before it (the last ten seconds', or the last five's if higher: late frames
+    // on the rise), and by a few frames at least (what a smaller picture does not help: the main thread's pauses, the
+    // browser's own), it steps back and does not ease from there for five minutes; if they fell, it stays, and may ease
+    // again from the new step if they creep up again
     const E = P.easing;
     if (E && now - E.at >= 12000) {
-      P.easing = null;
       const s10 = this.late10(F, now);
-      if (P.rung === E.to && s10.rate >= 0.01 && !(s10.rate <= E.rate * 0.7 && s10.late <= E.late - 3)) {
-        P.easeNo[E.from] = 1; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1);
-        this.setRung(E.from, "easing did not help: back");
-        return;
+      if (P.rung !== E.to || now - E.at > 40000) P.easing = null; // (another step since, or no full look in time: no verdict)
+      else if (s10.span >= 9000 && s10.n >= 300) {
+        P.easing = null;
+        if (s10.rate >= 0.01 && !(s10.rate <= E.rate * 0.7 && (E.rate - s10.rate) * s10.n >= 3)) {
+          P.easeNo[E.from] = now; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1);
+          this.setRung(E.from, "easing did not help: back");
+          return;
+        }
       }
     }
-    if (!P.capped && !P.easing && !P.easeNo[P.rung] && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
+    if (!P.capped && !P.easing && !(now - (P.easeNo[P.rung] || -1e9) < 300000) && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
       const s10 = this.late10(F, now);
       if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02)) {
-        P.easing = { from: P.rung, to: P.rung + 1, at: now, rate: s10.rate, late: s10.late };
+        const s5 = this.late10(F, now, 5000);
+        P.easing = { from: P.rung, to: P.rung + 1, at: now, rate: Math.max(s10.rate, s5.n >= 150 ? s5.rate : 0) };
         P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
         this.setRung(P.rung + 1, "easing: frames creeping up (heat?)");
         return;
