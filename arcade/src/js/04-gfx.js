@@ -31,8 +31,9 @@ const GFX = {
     s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: false, ao: true, curve: false }, s.fx || {});
     // (2026-11-23, the owner: as crisp as it can be, no visible blur. Depth of field, which softens what is behind the
     // subject on purpose, starts off, once, for a save made before; it and the glass's bend are Setup > Effects switches.
-    // The mark is kept with the switches, so switches synced from an older copy are brought along too; and saved.)
-    if (!(s.fx.v >= 2)) { s.fx.v = 2; s.fx.dof = false; if (typeof Store !== "undefined" && Store.save) Store.save(); }
+    // The mark is kept with the switches, so switches synced from an older copy are brought along too, and goes with the
+    // next save: saving here would make this device's settings look newer than a copy synced from another.)
+    if (!(s.fx.v >= 2)) { s.fx.v = 2; s.fx.dof = false; }
     this.opt = s.fx;
     this.calm = !!s.calm;
     if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
@@ -94,7 +95,7 @@ const GFX = {
   setQuality(q) {
     const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
     this.auto = fixed === undefined;
-    P.failed = {}; P.eased = {}; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
+    P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
     if (this.auto && P.ladder) { P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
     const lights = this.lightCap !== 99;
     this.scale = 1; this.lightCap = 99;
@@ -115,9 +116,10 @@ const GFX = {
   // once, then three (the effects and the lights only ever go a step at a time). Heat: a long session's frames may creep
   // up (a fanless laptop slows its chip as it warms). One frame in fifty running late through ten seconds, late for a
   // reason the main thread did not cause, eases the drawing size one small step before it becomes a stutter: only the
-  // size, within the tier, and a second step only if the first cut the late frames by a fifth (what a smaller picture
-  // does not help is left alone). A step eased from is climbed back after half a minute steady with no more than one
-  // late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
+  // size, within the tier. Each ease is judged from its own first ten seconds: no help (the late frames did not fall by
+  // three in ten), and it steps back and never eases from there again this session (what a smaller picture does not
+  // help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
+  // minute steady with no more than one late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
   // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
   // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
   // one after it, are left out, and so are the first seconds of a new screen, a new step, or the page come back into view.
@@ -133,7 +135,7 @@ const GFX = {
   lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
   perf: {
     ring: new Float32Array(720), at: new Float64Array(720), cpu: new Float32Array(720), busy: new Uint8Array(720), n: 0, i: 0, skip: 0, wp: -1, wt: -1,
-    changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, upAt: -1e9, easeAt: -1e9, easeLate: 0, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
+    changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, easeNo: {}, easing: null, upAt: -1e9, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
     lockFrom: -1, capped: false, capRung: 0, capTop: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
   },
   FINE: [1, 0.95, 0.9, 0.85, 0.8, 0.75], // (the first tier's sizes on a high-density screen: 2x, 1.9x, 1.8x, 1.7x, 1.6x, 1.5x)
@@ -224,7 +226,7 @@ const GFX = {
     if (ms > 0 && ms < 1000) { P.ring[P.i] = ms; P.at[P.i] = now; P.cpu[P.i] = cpu || 0; P.busy[P.i] = P.skip > 0 ? 1 : 0; P.i = (P.i + 1) % N; P.n = Math.min(N, P.n + 1); } // (every frame, whatever the setting: the readout reads them too)
     else if (ms >= 1000) this.perfAfresh();
     if (P.skip > 0) P.skip--;
-    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; P.easeLate = 0; } // (a new screen: its own frames decide, from its own start)
+    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; } // (a new screen: its own frames decide, from its own start)
     if (!this.auto || P.off || !P.ladder || navigator.webdriver || document.hidden) return;
     if (now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.shownAt < 2000 || now - P.evalAt < 500) return;
     P.evalAt = now;
@@ -262,14 +264,26 @@ const GFX = {
       return;
     }
     P.slowSince = 0; P.downRun = 0;
-    // heat: frames creeping up over ten seconds (one in fifty late), eased one small step before they become a stutter.
-    // Only the drawing size, within the tier (never its effects or its lights), ten seconds apart at least, and only
-    // while easing helps: a second step only if the last one cut the late frames by a fifth (what a smaller picture
-    // does not help, the main thread's pauses, the browser's own, is left alone)
-    if (!P.capped && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights && now - P.easeAt > 10000) {
+    // heat: frames creeping up over ten seconds (one in fifty late), eased one small step before they become a stutter:
+    // the drawing size only, within the tier (never its effects or its lights). Each ease is judged once, from its own
+    // first ten seconds: if the late frames did not fall by three in ten and a few frames at least (what a smaller
+    // picture does not help: the main thread's pauses, the browser's own), it steps back and never eases from there
+    // again this session; if they fell, it stays, and may ease again from the new step if they creep up again
+    const E = P.easing;
+    if (E && now - E.at >= 12000) {
+      P.easing = null;
       const s10 = this.late10(F, now);
-      if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02) && !(P.easeLate > 0 && s10.rate > P.easeLate * 0.8)) {
-        P.easeAt = now; P.easeLate = s10.rate; P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
+      if (P.rung === E.to && s10.rate >= 0.01 && !(s10.rate <= E.rate * 0.7 && s10.late <= E.late - 3)) {
+        P.easeNo[E.from] = 1; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1);
+        this.setRung(E.from, "easing did not help: back");
+        return;
+      }
+    }
+    if (!P.capped && !P.easing && !P.easeNo[P.rung] && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
+      const s10 = this.late10(F, now);
+      if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02)) {
+        P.easing = { from: P.rung, to: P.rung + 1, at: now, rate: s10.rate, late: s10.late };
+        P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
         this.setRung(P.rung + 1, "easing: frames creeping up (heat?)");
         return;
       }
@@ -279,7 +293,7 @@ const GFX = {
       // (a step eased from: climbed back after half a minute steady, a minute the second time, never after a third,
       // and only with no more than one late frame in a hundred through ten seconds)
       const up = P.rung - 1, f = P.failed[up] || 0, e = P.eased[up] || 0, wait = e ? 30000 * e : 8000 * (1 + 2 * f);
-      if (up >= 0 && f < 3 && e < 3 && !(P.capped && up < P.capTop) && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; P.easeLate = 0; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
+      if (up >= 0 && f < 3 && e < 3 && !P.easing && !(P.capped && up < P.capTop) && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
     } else P.okSince = 0;
   },
   // the governor's state, for the readout
@@ -299,7 +313,7 @@ const GFX = {
       // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
       const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
       const at = P.capped && P.testing ? P.capRung : P.rung; // (a test of the 30 fps hold under way: called off, the hold's own step kept)
-      P.failed = {}; P.eased = {}; P.lockFrom = -1; P.testing = false; P.easeLate = 0;
+      P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.lockFrom = -1; P.testing = false;
       if (P.preCap >= 0) P.preCap = near(P.preCap);
       if (P.capped) { P.capTop = this.capFloor(near(P.capTop)); P.capRung = Math.max(near(at), P.capTop); }
       if (this.auto) {

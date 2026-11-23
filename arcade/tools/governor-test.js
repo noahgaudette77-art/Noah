@@ -29,7 +29,8 @@
  *   catching   60 fps with one frame in eight at 50 ms: a step down (the frames catch)
  *   busy       the same hitches on frames that sent a new picture to the chip (a model arriving): no step
  *   creep      60 fps with one frame in thirty late (heat): after ten seconds one small step down, and climbed back
- *              only after half a minute steady; no second step when the first did not help; never past the tier's
+ *              only after half a minute steady; a step that did not help (judged from its own ten seconds) is taken
+ *              back and not tried from there again; one that helped may be followed by another; never past the tier's
  *              last size into its effects or lights; not climbed back while one frame in sixty is still late
  *   relapse    a step up that runs late within 8 s is tried again only after 24 steady seconds, not 8
  *   fixed      Setup's fixed tier: the governor does nothing, at the tier's full size; AUTO again: back to 2x
@@ -236,10 +237,16 @@ function inPage() {
   ok(p.length === 0, "creep: not climbed back after 25 steady seconds", p);
   p = await feed(16.67, 8, 0.3);
   ok(p.length === 1 && p[0].rung === 0, "creep: climbed back after half a minute steady", p);
-  // creep that a smaller picture does not help (the same late frames after the step): no second step
+  // creep that a smaller picture does not help (the same late frames after the step): judged from its own ten seconds,
+  // back up, and never eased from there again
   await reset();
-  p = await feed(16.67, 40, 0.3, 30, 34);
-  ok(p.length === 1 && p[0].rung === 1, "creep: one step, and no second while the late frames stay as they were (easing does not help)", p);
+  p = await feed(16.67, 60, 0.3, 30, 34);
+  s = await st();
+  ok(p.length === 2 && p[0].rung === 1 && p[1].rung === 0 && p[1].at - p[0].at >= 11.5 && p[1].at - p[0].at <= 13 && /did not help/.test(s.why), "creep: the same late frames after the step: judged after its ten seconds, back up, and not eased again in the next 38 s", { path: p, why: s.why });
+  // creep that a step helps, then creeping again at the new step (the chip warmer still): a second step
+  await reset();
+  p = (await feed(16.67, 13, 0.3, 30, 34)).concat(await feed(16.67, 15, 0.3), await feed(16.67, 13, 0.3, 30, 34));
+  ok(p.length === 2 && p[0].rung === 1 && p[1].rung === 2, "creep: a step that helped, then late frames again: a second small step (1.8x)", p);
   // creep at the tier's last size: never across into the effects or the lights
   await reset();
   await page.evaluate(() => window.__arcade.GFX.setRung(5, "test"));
