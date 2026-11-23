@@ -25,10 +25,16 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   quarter of the window's height); a cracked cell's glass reads as cracked glass, not chalk (`a9964e1`); the Strategy
   Guide's far shelves read as books (runs of six, sets bound alike; far off, each run's average, then all the books'
   average, measured: see the commit).
-- **Doing:** three agents in worktrees: Boss Rush's arena, the Final Exam (hall, columns, the Proctor's light), Nest
-  Egg Run's street (facades, shoulders, the far end's clutter); to be reviewed (their before/after sheets in
-  `docs/master/phase2/`), merged by cherry-pick, the page and the asset list rebuilt after (`node
-  arcade/tools/manifest.js`, then the build), WebKit checked.
+- **Also merged:** Boss Rush's arena (the arena agent's four commits, `e4c9ff6`..`4c3cee6`: a polished deck from a
+  capture of the arena, octagonal steel pillars with violet and cyan inlays and banners, painted stands, a lit crowd of
+  eight kinds of figure, every boss on the shared violet-black with the arena's own neon pair and not its own colour;
+  phone draws 69 to 65, triangles 108K to 111K, memory 254 to 265 MB; rules IDENTICAL, sequence ALL 13 STEPS OK, WebKit
+  clean; its sheet `docs/master/phase2/boss-arena-before-after.jpg`). `ASSETS.md` now lists the CC0 materials
+  (`e81801b`).
+- **Doing:** two agents in worktrees: the Final Exam (hall, columns, the Proctor's light), Nest Egg Run's street
+  (facades, shoulders, the far end's clutter); to be reviewed (their before/after sheets in `docs/master/phase2/`),
+  merged by cherry-pick (only the built files conflict: take ours, then `node arcade/tools/manifest.js` and the build),
+  WebKit checked.
 - **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
   `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
   the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
