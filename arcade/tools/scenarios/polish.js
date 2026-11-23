@@ -36,7 +36,7 @@ module.exports = async (cap) => {
 
   // ---- the title hall: every piece in (real time: the files come in while the virtual clock waits), then the glide
   // from the door: early (the owner's first picture), half way (their second), and the end with the logo up (their third)
-  const hallReady = () => { const s = window.__arcade.Scenes.cur; return !!(s && s.cells && s.sky && s.podMesh && s.vault && s.cabs && s.stand && s.cup && s.cells.every((c) => c.boss && c.ready) && s.cells.every((c) => c.world._win.uniforms.uOn.value > 0)); };
+  const hallReady = () => { const s = window.__arcade.Scenes.cur; return !!(s && s.cells && s.sky && s.podMesh && s.vault && s.cabs && s.stand && s.cup && s.cells.every((c) => c.boss && c.ready) && s.cells.every((c) => c.world._win.uniforms.uOn.value > 0 && (!c.world._win.uniforms.uTopOn || c.world._win.uniforms.uTopOn.value > 0))); }; // (and, from 2026-11-23, the skylights' own pictures)
   if (part("title") || part("cell")) {
     let ok = false;
     for (let i = 0; i < 1500 && !ok; i++) { await cap.fast(4); ok = await cap.eval(hallReady); if (!ok) await cap.page.waitForTimeout(100); }

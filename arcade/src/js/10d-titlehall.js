@@ -33,6 +33,9 @@ const HALL_WORLDS = [
   { id: "guide", win: "win-guide", sky: [0.5, 0.68], at: [[0.5, 0.47], [0.93, 0.5]], col: 0xffb86a, col2: 0x4dffa6, bosses: ["boss-9-t", "boss-10-t"], roar: ["roar_9", "roar_10"] },
   { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.45, 0.55], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
 ];
+// the part of a world's panorama its skylight can show [u0, v0, du, dv] (texture space, v up): its span and its
+// parallax each way, a margin, and a skylight's clamp; tools/skylights.py crops its picture to the same
+const hallTopRect = (sky) => { const v0 = Math.max(0.3, sky[1] - 0.155); return [sky[0] - 0.19, v0, 0.38, Math.min(0.84, sky[1] + 0.155) - v0]; };
 // the hall in metres: the first world's middle (z0) and the step between worlds, the pods' distance from the aisle's
 // middle, the walls, the end wall, the pod (glass radius, height), the most a boss may stand in one, how far each
 // boss turns from the aisle toward the door, and the distances at which a far cell is drawn with less (see the top)
@@ -410,16 +413,18 @@ class HallScene extends Scene3D {
     geo.setAttribute("aSpan", new THREE.Float32BufferAttribute(span, 3));
     geo.computeBoundingSphere();
     const mat = new THREE.ShaderMaterial({
-      uniforms: Object.assign(fogUniforms(), { tSky: { value: null }, uOn: { value: 0 }, uTint: { value: col }, uK: { value: 1 } }),
+      uniforms: Object.assign(fogUniforms(), { tSky: { value: null }, uOn: { value: 0 }, uTint: { value: col }, uK: { value: 1 }, tTop: { value: null }, uTop: { value: new THREE.Vector4().fromArray(hallTopRect(W.sky)) }, uTopOn: { value: 0 } }),
       side: THREE.DoubleSide,
       vertexShader: `attribute vec3 aN; attribute vec3 aS; attribute vec3 aT; attribute vec2 aAt; attribute vec3 aSpan; varying vec3 vW; varying vec3 vN; varying vec3 vS; varying vec3 vT; varying vec2 vUv; varying vec2 vAt; varying vec3 vSpan; varying float vDepth;
         void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = aN; vS = aS; vT = aT; vUv = uv; vAt = aAt; vSpan = aSpan; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
-      fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tSky; uniform float uOn; uniform vec3 uTint; uniform float uK; varying vec3 vW; varying vec3 vN; varying vec3 vS; varying vec3 vT; varying vec2 vUv; varying vec2 vAt; varying vec3 vSpan; varying float vDepth;
+      fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tSky; uniform float uOn; uniform vec3 uTint; uniform float uK; uniform sampler2D tTop; uniform vec4 uTop; uniform float uTopOn; varying vec3 vW; varying vec3 vN; varying vec3 vS; varying vec3 vT; varying vec2 vUv; varying vec2 vAt; varying vec3 vSpan; varying float vDepth;
         void main(){
           vec3 d = normalize(vW - cameraPosition);
           vec2 par = clamp(vec2(dot(d, vS), dot(d, vT)) / max(-dot(d, vN), 0.08), -2.5, 2.5) * vec2(0.035, 0.04) * mix(1.0, 0.35, vSpan.z); // (the depth: the far land shifts as the lens passes; a skylight, seen edge on, only a little)
           vec2 uv = vAt + (vUv - 0.5) * vSpan.xy + par;
-          vec3 c = texture2D(tSky, vec2(uv.x, clamp(uv.y, mix(0.02, 0.3, vSpan.z), mix(0.98, 0.84, vSpan.z)))).rgb;
+          vec2 su = vec2(uv.x, clamp(uv.y, mix(0.02, 0.3, vSpan.z), mix(0.98, 0.84, vSpan.z)));
+          vec3 c = texture2D(tSky, su).rgb;
+          if (uTopOn > 0.5) c = mix(c, texture2D(tTop, vec2(fract(su.x - uTop.x) / uTop.z, (su.y - uTop.y) / uTop.w)).rgb, step(0.5, vSpan.z)); // (a skylight: its own sharper picture, once it has come)
           c = c * c * (c * 0.305 + 0.695);
           vec3 col = mix(uTint * 0.03, c * mix(1.0, 1.45, vSpan.z) * uK, uOn); // (a window; a skylight a little brighter)
           float bars = (1.0 - vSpan.z) * max(smoothstep(0.004, 0.012, abs(fract(vUv.x * 3.0) - 0.5) - 0.484), 1.0 - smoothstep(0.003, 0.01, abs(vUv.y - 0.62) - 0.003)); // (a window's three panes across and its transom)
@@ -499,6 +504,7 @@ class HallScene extends Scene3D {
     if (!piece && !this.stand) { const m = this.take("prop-stand"); if (m) piece = this.propPiece("stand", m, 1.13, 0, 0, HALL.endZ + 7, { env: 1.6, glow: 1.4 }); }
     if (!piece && !this.cup && this.stand) { const m = this.take("prop-trophy"); if (m) piece = this.propPiece("cup", m, 0.95, 0, 1.06, HALL.endZ + 7 - 0.57, { env: 3.2, glow: 2.4 }); }
     if (!piece) for (const c of this.cells) if (!c.boss && !c.coming) { const m = this.take(c.name); if (m) { c.coming = true; piece = this.bossPiece(c, m); break; } }
+    if (!piece) for (const W of HALL_WORLDS) if (W._win.uniforms.tSky.value && !W._win.uniforms.tTop.value) { const img = Assets.ui("top-" + W.id); if (img) { piece = this.topPiece(W, img); break; } }
     this.job = piece;
   }
   // a model taken from the loaded files (let go of when the hall closes: see dispose)
@@ -536,11 +542,22 @@ class HallScene extends Scene3D {
   // a world's picture, for its windows, its skylight and a cabinet's screen
   *windowPiece(W, img) {
     const t = new THREE.Texture(img);
-    t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.wrapS = THREE.RepeatWrapping; t.needsUpdate = true; // (it wraps round: a view across the panorama's join shows no seam)
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; t.wrapS = THREE.RepeatWrapping; t.needsUpdate = true; // (it wraps round: a view across the panorama's join shows no seam. Filtered as finely as the device's tier allows: the windows are seen at a slant)
     (this.texs || (this.texs = [])).push(t);
     try { if (GFX.ok && GFX.renderer.initTexture) GFX.renderer.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ }
     yield;
     W._win.uniforms.tSky.value = t; W._win.uniforms.uOn.value = 1;
+  }
+  // a world's skylight's own picture (the owner, 2026-11-23: the ceiling panels were soft): the part of its panorama a
+  // skylight can show, cropped from the full panorama by tools/skylights.py (hallTopRect), about three times the
+  // window picture's detail; seen from below at a slant, filtered as finely as the tier allows
+  *topPiece(W, img) {
+    const t = new THREE.Texture(img);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; t.needsUpdate = true;
+    (this.texs || (this.texs = [])).push(t);
+    try { if (GFX.ok && GFX.renderer.initTexture) GFX.renderer.initTexture(t); } catch (e) { /* sent the first time it is drawn instead */ }
+    yield;
+    W._win.uniforms.tTop.value = t; W._win.uniforms.uTopOn.value = 1;
   }
   // a prop of the end of the hall: its height in metres, where it stands
   *propPiece(key, m, h, x, y, z, tune) {

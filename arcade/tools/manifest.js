@@ -24,7 +24,7 @@ const SETS = {
   // hall (vault door, cabinets, trophy stand), then the twelve captured bosses, nearest the door first. (Its sound is
   // titlesound, asked for after the first tap; the bosses' distant growls, titleroar, after that.)
   title: ["sky:title-hall", "ui:win-blaster", "ui:win-racer", "ui:win-boss", "ui:win-memory", "ui:win-exam", "ui:win-guide", "model:prop-vault", "model:prop-cabinet", "model:prop-stand", "model:prop-trophy",
-    "model:boss-1-t", "model:boss-2-t", "model:boss-3-t", "model:boss-4-t", "model:boss-5-t", "model:boss-6-t", "model:boss-7-t", "model:boss-8-t", "model:boss-9-t", "model:boss-10-t", "model:boss-11-t", "model:boss-all-t"],
+    "model:boss-1-t", "model:boss-2-t", "model:boss-3-t", "model:boss-4-t", "model:boss-5-t", "model:boss-6-t", "model:boss-7-t", "model:boss-8-t", "model:boss-9-t", "model:boss-10-t", "model:boss-11-t", "model:boss-all-t", "ui:top-blaster", "ui:top-racer", "ui:top-boss", "ui:top-memory", "ui:top-guide", "ui:top-exam"],
   titlesound: ["sfx:core", "sfx:voice", "music:title", "music:title-b"],
   titleroar: ["sfx:bosses"],
   memory: ["sky:vault-gold", "model:prop-deck", "model:prop-coin", "sfx:core", "sfx:voice", "music:memory", "model:decor-deck", "music:memory-b"], // (the vault's own door stays: it moves as the deck is banked)
