@@ -29,12 +29,16 @@
  *   catching   60 fps with one frame in eight at 50 ms: a step down (the frames catch)
  *   busy       the same hitches on frames that sent a new picture to the chip (a model arriving): no step
  *   creep      60 fps with one frame in thirty late (heat): after ten seconds one small step down, and climbed back
- *              only after half a minute steady
+ *              only after half a minute steady; no second step when the first did not help; never past the tier's
+ *              last size into its effects or lights; not climbed back while one frame in sixty is still late
  *   relapse    a step up that runs late within 8 s is tried again only after 24 steady seconds, not 8
  *   fixed      Setup's fixed tier: the governor does nothing, at the tier's full size; AUTO again: back to 2x
  *   desktop    a desktop's ladder starts at MAC, full size, 12 steps, and no step down draws more pixels; the window
  *              moved to a 1x screen and back (Chromium: a real change of density): the ladder made again, the canvas
- *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip
+ *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip;
+ *              held at a steady 30 (a 30 Hz screen): the sharp step kept, not SAFE
+ *   density    a phone held at 30 when its density changes: still held at SAFE on the new ladder, and back to the step
+ *              it had when the cap lifts
  * Exit code 1 on any failure.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
@@ -232,6 +236,20 @@ function inPage() {
   ok(p.length === 0, "creep: not climbed back after 25 steady seconds", p);
   p = await feed(16.67, 8, 0.3);
   ok(p.length === 1 && p[0].rung === 0, "creep: climbed back after half a minute steady", p);
+  // creep that a smaller picture does not help (the same late frames after the step): no second step
+  await reset();
+  p = await feed(16.67, 40, 0.3, 30, 34);
+  ok(p.length === 1 && p[0].rung === 1, "creep: one step, and no second while the late frames stay as they were (easing does not help)", p);
+  // creep at the tier's last size: never across into the effects or the lights
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.setRung(5, "test"));
+  p = await feed(16.67, 30, 0.3, 30, 34);
+  ok(p.every((x) => x.rung <= 5), "creep: from the tier's last size (1.5x), never a step into SAFE: easing is the drawing size only (it may climb when steady and ease back)", p);
+  // eased, then frames still late now and then (one in sixty): not climbed back
+  await reset();
+  p = await feed(16.67, 13, 0.3, 30, 34);
+  p = p.concat(await feed(16.67, 45, 0.3, 60, 34));
+  ok(p.length === 1 && p[0].rung === 1, "creep: eased, then one late frame in sixty: held there, not climbed back (it would run late again)", p);
   // relapse
   await reset();
   await page.evaluate(() => window.__arcade.GFX.setRung(2, "test"));
@@ -265,7 +283,7 @@ function inPage() {
   // the window moved to a 1x screen and back
   const dpr = async (k) => {
     if (ENGINE === "chromium") { const c = await ctx2.newCDPSession(page2); await c.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: k, mobile: false }); await page2.waitForTimeout(400); }
-    else await page2.evaluate((v) => { if (v === 2) delete window.devicePixelRatio; else Object.defineProperty(window, "devicePixelRatio", { get: () => v, configurable: true }); }, k); // (WebKit: the density as the page reads it)
+    else await page2.evaluate((v) => { Object.defineProperty(window, "devicePixelRatio", { get: () => v, configurable: true }); }, k); // (WebKit: the density as the page reads it; its own property, which a delete would take away altogether)
     await page2.evaluate(() => window.__feed(16.67, 0.05)); // (a frame or so: each looks at the density)
     return page2.evaluate(() => window.__state());
   };
@@ -280,6 +298,31 @@ function inPage() {
   for (let k = 0; k < 20; k++) { const [w, h] = sizes[k % sizes.length]; await page2.setViewportSize({ width: w, height: h }); await page2.evaluate(() => window.__arcade.GFX.resize()); await mem(); }
   const m1 = await mem();
   ok(m1.tex === m0.tex && m1.geo === m0.geo && m1.w === 2560, "resize: twenty sizes, drawn at each: the same textures and geometry held after (nothing leaked)", { before: m0, after: m1 });
+  // a computer held at a steady 30 (a 30 Hz screen, or its own power saving): the step that held it, not SAFE
+  await page2.evaluate(() => { const G = window.__arcade.GFX; G.setQuality("auto"); G.perf.n = 0; G.perf.i = 0; G.screenProbed(Array(13).fill(33.33)); });
+  p = await page2.evaluate(() => window.__feed(33.33, 10, 0.2));
+  e = await page2.evaluate(() => window.__state());
+  ok(e.capped && e.rung === 0 && e.tier === 0 && /30 HZ SCREEN/.test(e.label) && p.length === 0, "desktop at 30: held at MAC 2x, named LOW POWER MODE OR A 30 HZ SCREEN?", { capped: e.capped, rung: e.rung, label: e.label, path: p });
+  p = await page2.evaluate(() => window.__feed(16.67, 8, 0.3));
+  e = await page2.evaluate(() => window.__state());
+  ok(!e.capped && e.rung === 0, "desktop at 30: at 60 again, let go", { capped: e.capped, rung: e.rung, path: p });
+  // a phone held at 30 (SAFE), its screen's density changed (to 1x and back): the hold kept at SAFE on the new ladder,
+  // and when the cap lifts, back to the step it had
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
+  const pdpr = async (k) => {
+    if (ENGINE === "chromium") { const c = await ctx.newCDPSession(page); await c.send("Emulation.setDeviceMetricsOverride", { width: 440, height: 956, deviceScaleFactor: k, mobile: true }); await page.waitForTimeout(300); }
+    else await page.evaluate((v) => { Object.defineProperty(window, "devicePixelRatio", { get: () => v, configurable: true }); }, k);
+    await page.evaluate(() => window.__feed(33.33, 0.1));
+    return st();
+  };
+  s = await pdpr(1);
+  ok(s.capped && s.tier === 2 && s.ladder.length === 6 && s.rung === 1, "density in a hold: a 1x screen, a 6-step ladder, still held at SAFE", { capped: s.capped, tier: s.tier, rung: s.rung, steps: s.ladder.length });
+  p = await feed(16.67, 8, 0.3);
+  s = await st();
+  ok(!s.capped && s.rung === 0 && s.tier === 1, "density in a hold: the cap lifts, back to PHONE, the step it had", { capped: s.capped, tier: s.tier, rung: s.rung, path: p });
+  s = await pdpr(3);
+  ok(s.ladder.length === 11 && s.rung === 0 && s.canvasW === 880, "density: back to the phone's own 3x: 11 steps, 2x drawn", { steps: s.ladder.length, rung: s.rung, w: s.canvasW });
   ok(errors.length === 0, "no page errors", errors.slice(0, 3));
   await browser.close();
   srv.close();

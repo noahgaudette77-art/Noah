@@ -7227,8 +7227,9 @@ const GFX = {
     const s = Store.settings;
     s.fx = Object.assign({ bloom: true, scan: true, ca: true, vignette: true, blur: true, grain: true, beams: true, wet: true, shadows: true, shimmer: true, lens: true, dof: false, ao: true, curve: false }, s.fx || {});
     // (2026-11-23, the owner: as crisp as it can be, no visible blur. Depth of field, which softens what is behind the
-    // subject on purpose, starts off, once, for a save made before; it and the glass's bend are Setup > Effects switches.)
-    if (!s.sharp) { s.sharp = 1; s.fx.dof = false; }
+    // subject on purpose, starts off, once, for a save made before; it and the glass's bend are Setup > Effects switches.
+    // The mark is kept with the switches, so switches synced from an older copy are brought along too; and saved.)
+    if (!(s.fx.v >= 2)) { s.fx.v = 2; s.fx.dof = false; if (typeof Store !== "undefined" && Store.save) Store.save(); }
     this.opt = s.fx;
     this.calm = !!s.calm;
     if (typeof document !== "undefined") document.documentElement.classList.toggle("calm", this.calm); // (Setup's Reduced effects, for what the page's own styles move: see .insert-coin)
@@ -7307,27 +7308,29 @@ const GFX = {
   // again). A desktop's ladder starts at MAC, a phone's and a tablet's at PHONE, and AUTO never climbs above where it
   // starts (the rest is Setup's).
   // A step down when frames have run under 55 a second (or kept catching: a tenth of them over 25 ms) through a second
-  // of its looks, each look the last two seconds; frames still slow at the next look take two of a tier's sizes at once,
-  // then three (the effects and the lights only ever go a step at a time). Heat: a long session's frames may creep up (a fanless laptop slows
-  // its chip as it warms). A few frames in fifty running late through ten seconds, late for a reason the main thread did
-  // not cause, ease the picture one small step down before they become a stutter, and that step is climbed back only
-  // after half a minute steady (longer each time it has to ease again). Otherwise a step up after eight steady seconds
-  // (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is not held
-  // against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the one
-  // after it, are left out, and so are the first seconds of a new screen, a new step, or the page come back into view.
+  // of its looks, each look the last two seconds; frames still slow at the next look take two of a tier's sizes at
+  // once, then three (the effects and the lights only ever go a step at a time). Heat: a long session's frames may creep
+  // up (a fanless laptop slows its chip as it warms). One frame in fifty running late through ten seconds, late for a
+  // reason the main thread did not cause, eases the drawing size one small step before it becomes a stutter: only the
+  // size, within the tier, and a second step only if the first cut the late frames by a fifth (what a smaller picture
+  // does not help is left alone). A step eased from is climbed back after half a minute steady with no more than one
+  // late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
+  // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
+  // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
+  // one after it, are left out, and so are the first seconds of a new screen, a new step, or the page come back into view.
   // The device's own cap: iOS holds a page at 30 frames a second in Low Power Mode (and a phone grown hot may). Blank
   // frames timed at the start that come every 33 ms are that cap, and a rate held at exactly 30 through a real cut (a
-  // tier down and 60% of the pixels or fewer) is it too (a load just over a frame lifts off 30 with less). Held at 30,
-  // the picture goes to SAFE at once rather than fight it (the battery is what the mode is saving, and only 30 frames
-  // are shown), the readout names it, frames are judged against 30's own frame (a step down if they still catch), a
-  // step down is tried now and then in case the 30 was a load after all, and once frames run well under 30's (the mode
-  // switched off) the picture goes back to the step it had.
+  // tier down and 60% of the pixels or fewer) is it too (a load just over a frame lifts off 30 with less). Held at 30, a
+  // phone's picture goes to SAFE at once rather than fight it (the battery is what the mode is saving, and only 30
+  // frames are shown; a computer's holds the step that held 30: see capFloor), the readout names it, frames are judged
+  // against 30's own frame (a step down if they still catch), a step down is tried now and then in case the 30 was a
+  // load after all, and once frames run well under 30's (the mode switched off) the picture goes back to the step it had.
   // Setup's fixed tiers stay put; Reduced effects is its own switch. (Automated browsers keep where they start.)
   scale: 1, // the drawing size, a share of the tier's (see outPR)
   lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
   perf: {
     ring: new Float32Array(720), at: new Float64Array(720), cpu: new Float32Array(720), busy: new Uint8Array(720), n: 0, i: 0, skip: 0, wp: -1, wt: -1,
-    changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, upAt: -1e9, easeAt: -1e9, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
+    changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, upAt: -1e9, easeAt: -1e9, easeLate: 0, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
     lockFrom: -1, capped: false, capRung: 0, capTop: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
   },
   FINE: [1, 0.95, 0.9, 0.85, 0.8, 0.75], // (the first tier's sizes on a high-density screen: 2x, 1.9x, 1.8x, 1.7x, 1.6x, 1.5x)
@@ -7359,13 +7362,13 @@ const GFX = {
     if (lights) this.lightsReset();
     if (R.tier !== this.tier) this.setTier(R.tier, why); else { this.resize(); P.changedAt = performance.now(); P.why = why || ""; }
   },
-  // held at the device's 30 (rung: the sharpest step that held it): the picture to SAFE, or to that step if it is
-  // lighter, and the step it had kept for when the cap lifts
+  // held at the device's 30 (rung: the sharpest step that held it): the picture to the cap's floor (capFloor), and the
+  // step it had kept for when the cap lifts
   capHold(rung, why) {
     const P = this.perf;
     if (!P.capped) P.preCap = rung;
     P.capped = true; P.lockFrom = -1; P.testing = false; P.downRun = 0; P.testAt = performance.now(); P.testGap = 60000;
-    P.capTop = P.capRung = Math.max(rung, this.safeRung()); // (the sharpest step known to hold 30, if it is lighter than SAFE; never climbed above while held)
+    P.capTop = P.capRung = this.capFloor(rung); // (never climbed above while held)
     this.setRung(P.capRung, why);
   },
   // let go of the cap: back to the step it had (back), or left where it is (a step down showed the 30 was a load)
@@ -7379,7 +7382,7 @@ const GFX = {
   screenProbed(d) {
     if (d.length < 8 || !this.auto || !this.perf.ladder || navigator.webdriver) return;
     const m = d[d.length >> 1], lo = d[Math.floor(d.length * 0.15)], hi = d[Math.floor(d.length * 0.85)];
-    if (m > 31 && m < 36 && lo > 29 && hi < 38) this.capHold(this.perf.rung, "held at 30 fps from the start: the device's cap (low power mode?): the safe tier");
+    if (m > 31 && m < 36 && lo > 29 && hi < 38) this.capHold(this.perf.rung, "held at 30 fps from the start: the device's cap (low power mode?)");
   },
   // the page back in view (or a frame that took a second or more): its first seconds are not looked at, its timers
   // start afresh, and a held cap is tested soon (Low Power Mode may have been switched off meanwhile)
@@ -7397,15 +7400,19 @@ const GFX = {
     w.sort((a, b) => a - b); cpu.sort((a, b) => a - b);
     return { w, cpu, covered: t };
   },
-  // frames creeping up (heat): through the last ten seconds, one in fifty or more ran late (over a frame and a half)
-  // while the main thread's own share of it was small (what the main thread does, a smaller picture would not help)
-  creeping(F, now) {
-    const P = this.perf, N = P.ring.length, from = Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500, P.easeAt + 10000, now - 10000);
-    if (now - from < 9000) return false;
+  // the last ten seconds' frames (from the last change, screen or return, at most): how many, and how many ran late
+  // (over a frame and a half) while the main thread's own share of them was small (what the main thread does, a smaller
+  // picture would not help)
+  late10(F, now) {
+    const P = this.perf, N = P.ring.length, from = Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500, now - 10000);
     let n = 0, late = 0;
     for (let k = 1; k <= P.n; k++) { const j = (P.i - k + N) % N; if (P.at[j] <= from) break; if (P.busy[j]) continue; n++; if (P.ring[j] > F * 1.5 && P.cpu[j] < F * 0.6) late++; }
-    return n >= 300 && late >= Math.max(6, n * 0.02);
+    return { n, late, rate: n ? late / n : 0, span: now - from };
   },
+  // a step the device's 30 fps cap holds the picture at: on a phone or a tablet SAFE, or the sharpest step that held 30
+  // if it is lighter (iOS Low Power Mode: the battery is what it saves); on a computer the step that held 30 itself (a
+  // screen that runs at 30, or a laptop's own power saving, gains nothing from a lighter picture)
+  capFloor(i) { return Assets.phone || this.small ? Math.max(i, this.safeRung()) : i; },
   perfTick(ms, cpu) {
     const P = this.perf, now = performance.now(), N = P.ring.length, dpr = window.devicePixelRatio || 1;
     if (dpr !== this._dpr && this._dpr) { this._dpr = dpr; this.dprChanged(); } // (moved to another screen, or the page zoomed: a property read a frame, where a media query's event is not sent everywhere)
@@ -7414,7 +7421,7 @@ const GFX = {
     if (ms > 0 && ms < 1000) { P.ring[P.i] = ms; P.at[P.i] = now; P.cpu[P.i] = cpu || 0; P.busy[P.i] = P.skip > 0 ? 1 : 0; P.i = (P.i + 1) % N; P.n = Math.min(N, P.n + 1); } // (every frame, whatever the setting: the readout reads them too)
     else if (ms >= 1000) this.perfAfresh();
     if (P.skip > 0) P.skip--;
-    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; } // (a new screen: its own frames decide, from its own start)
+    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; P.easeLate = 0; } // (a new screen: its own frames decide, from its own start)
     if (!this.auto || P.off || !P.ladder || navigator.webdriver || document.hidden) return;
     if (now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.shownAt < 2000 || now - P.evalAt < 500) return;
     P.evalAt = now;
@@ -7432,7 +7439,7 @@ const GFX = {
       if (!(med > 31 && med < 36 && p10 > 29 && p90 < 38)) P.lockFrom = -1;
       else {
         if (P.lockFrom < 0) P.lockFrom = P.rung;
-        if (L[P.rung].tier > L[P.lockFrom].tier && this.rungPixels(P.rung) <= 0.6 * this.rungPixels(P.lockFrom)) { this.capHold(P.lockFrom, "held at 30 fps: the device's cap (low power mode?): the safe tier"); return; }
+        if (L[P.rung].tier > L[P.lockFrom].tier && this.rungPixels(P.rung) <= 0.6 * this.rungPixels(P.lockFrom)) { this.capHold(P.lockFrom, "held at 30 fps: the device's cap (low power mode?)"); return; }
       }
     }
     const slow = med > F * 1.09 || long > 0.1;
@@ -7452,23 +7459,31 @@ const GFX = {
       return;
     }
     P.slowSince = 0; P.downRun = 0;
-    // heat: frames creeping up over ten seconds, eased one small step before they become a stutter
-    if (!P.capped && P.rung < L.length - 1 && this.creeping(F, now)) {
-      P.easeAt = now; P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
-      this.setRung(P.rung + 1, "easing: frames creeping up (heat?)");
-      return;
+    // heat: frames creeping up over ten seconds (one in fifty late), eased one small step before they become a stutter.
+    // Only the drawing size, within the tier (never its effects or its lights), ten seconds apart at least, and only
+    // while easing helps: a second step only if the last one cut the late frames by a fifth (what a smaller picture
+    // does not help, the main thread's pauses, the browser's own, is left alone)
+    if (!P.capped && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights && now - P.easeAt > 10000) {
+      const s10 = this.late10(F, now);
+      if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02) && !(P.easeLate > 0 && s10.rate > P.easeLate * 0.8)) {
+        P.easeAt = now; P.easeLate = s10.rate; P.eased[P.rung] = (P.eased[P.rung] || 0) + 1;
+        this.setRung(P.rung + 1, "easing: frames creeping up (heat?)");
+        return;
+      }
     }
     if (p90 < F * 1.044 && w[w.length - 1] < F * 2.04) {
       if (!P.okSince) P.okSince = now;
-      const up = P.rung - 1, f = P.failed[up] || 0, e = P.eased[up] || 0, wait = e ? 30000 * Math.min(4, e) : 8000 * (1 + 2 * f);
-      if (up >= 0 && f < 3 && !(P.capped && up < P.capTop) && now - P.okSince > wait) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
+      // (a step eased from: climbed back after half a minute steady, a minute the second time, never after a third,
+      // and only with no more than one late frame in a hundred through ten seconds)
+      const up = P.rung - 1, f = P.failed[up] || 0, e = P.eased[up] || 0, wait = e ? 30000 * e : 8000 * (1 + 2 * f);
+      if (up >= 0 && f < 3 && e < 3 && !(P.capped && up < P.capTop) && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; P.easeLate = 0; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
     } else P.okSince = 0;
   },
   // the governor's state, for the readout
   govLabel() {
     const P = this.perf;
     if (!this.auto) return "FIXED (SETUP)";
-    if (P.capped) return "HELD AT 30 FPS · " + (P.cpuMed > 20 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : "LOW POWER MODE? SAFE TIER") + (P.testing ? " (TESTING)" : "");
+    if (P.capped) return "HELD AT 30 FPS · " + (P.cpuMed > 20 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE? SAFE TIER" : "LOW POWER MODE OR A 30 HZ SCREEN?") + (P.testing ? " (TESTING)" : "");
     return "AUTO" + (P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
   },
   // the window moved to a screen of another density (a Retina laptop's own and an external monitor's), or the page
@@ -7477,11 +7492,19 @@ const GFX = {
   dprChanged() {
     const P = this.perf;
     if (P.ladder) {
-      const R = P.ladder[P.rung] || P.ladder[0], L = (P.ladder = this.makeLadder());
-      let best = 0, d = Infinity;
-      L.forEach((S, i) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = i; } });
-      P.failed = {}; P.eased = {}; P.lockFrom = -1;
-      if (this.auto) { P.rung = best; this.scale = L[best].scale; if (P.capped) P.capTop = P.capRung = Math.max(best, this.safeRung()); }
+      const old = P.ladder, L = (P.ladder = this.makeLadder());
+      // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
+      const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
+      const at = P.capped && P.testing ? P.capRung : P.rung; // (a test of the 30 fps hold under way: called off, the hold's own step kept)
+      P.failed = {}; P.eased = {}; P.lockFrom = -1; P.testing = false; P.easeLate = 0;
+      if (P.preCap >= 0) P.preCap = near(P.preCap);
+      if (P.capped) { P.capTop = this.capFloor(near(P.capTop)); P.capRung = Math.max(near(at), P.capTop); }
+      if (this.auto) {
+        const r = P.capped ? P.capRung : near(at), R = L[r];
+        P.rung = r; this.scale = R.scale;
+        if (R.lights !== this.lightCap) { this.lightCap = R.lights; this.lightsReset(); }
+        if (R.tier !== this.tier) this.setTier(R.tier, "a screen of another density");
+      }
     }
     this.perfAfresh();
     this.resize();
@@ -7531,9 +7554,9 @@ const GFX = {
     this.pipe.setMirror(this.TIERS[t0].mirror);
     this._tierSet = true;
     this.resize();
-    // a window resized: the picture and its passes made again at the new size once a frame at most (a window dragged
-    // larger sends many), so the canvas is never shown stretched for longer than a frame
-    window.addEventListener("resize", () => { if (!this._rz) this._rz = requestAnimationFrame(() => { this._rz = 0; this.resize(); }); });
+    // a window resized: the picture and its passes made again at once (a browser sends one a frame at most, before the
+    // frame's drawing: the frame is drawn at the new size, never stretched; made again later, it would be shown blank)
+    window.addEventListener("resize", () => this.resize());
     this._dpr = window.devicePixelRatio || 1; // (the screen's density, looked at every frame: see perfTick and dprChanged)
   },
   look: "hd",
