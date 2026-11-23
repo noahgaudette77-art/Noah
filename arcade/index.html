@@ -32174,8 +32174,9 @@ class BossActor {
     this.gl = new THREE.Vector2(); this.invQ = new THREE.Quaternion(); this._lk = new THREE.Vector3(); this._lk2 = new THREE.Vector3();
     // its blows taken (hurt, stagger) as layers over whatever it is doing: the clip's own motion from its first moment,
     // the upper body only (its feet stay where they stand: no sliding), added to an attack, a wind-up, an idle
-    this.addAct = {}; this.adds = {};
-    for (const name of ["hurt", "stagger", "hurtS", "hurtG"]) { const a = this.act[name], add = a && Motion.overlay(this.mixer, a.getClip(), B.waist); if (add) this.addAct[name] = add; }
+    const rc = {};
+    for (const name of ["hurt", "stagger", "hurtS", "hurtG"]) if (this.act[name]) rc[name] = this.act[name].getClip();
+    this.layers = new Motion.Layers(this.mixer, rc, B.waist); // (two copies each: a second blow takes over from the first, nothing cut)
     // (a second idle of its own kind, where it has one: the judge's folded arms, the salesman's swagger; it moves
     // between the two now and then, over a couple of seconds)
     this.mix = this.act.idle2 ? 1 : 0; this.mixTo = this.mix; this.mixT = 9; this.nMix = 0; this.idle2T = rand(0, 4);
@@ -32257,14 +32258,12 @@ class BossActor {
   // ---- a clip played through over everything else. o: { from, to, rate, in, out, hold }
   // (a blow's reaction, hurt or stagger, is a layer over whatever it is doing instead: see moves)
   react(name, o = {}) {
-    if (name === "hurt") { const kinds = ["hurt", "hurtG", "hurtS"].filter((k) => this.addAct[k]), n = this.nHit + 1; name = kinds[Math.floor(Motion.vary(this.seed, n + 51, 0, kinds.length - 1e-6))] || name; } // (a blow to the body, the gut, the side: one of the three, its own each time)
-    const add = this.addAct[name];
-    if (add && !o.whole) {
-      const r0 = this.adds[name], t = o.from || 0, end = o.to === undefined ? this.dur[name] - 0.02 : o.to;
-      this.adds[name] = { act: add, t, end, rate: (o.rate || 1) * Motion.vary(this.seed, this.nHit + 41, 0.9, 1.12), w: r0 ? r0.w : 0, in: o.in === undefined ? 0.08 : o.in, out: o.out === undefined ? 0.3 : o.out, k: Math.min(1, (o.k === undefined ? 1 : o.k) * 1.35) * (0.75 + 0.25 * this.M.hitK) };
-      return (end - t) / this.adds[name].rate;
-    }
+    if (name === "hurt") { const kinds = ["hurt", "hurtG", "hurtS"].filter((k) => this.layers.has(k)), n = this.nHit + 1; name = kinds[Math.floor(Motion.vary(this.seed, n + 51, 0, kinds.length - 1e-6))] || name; } // (a blow to the body, the gut, the side: one of the three, its own each time)
+    if (this.layers.has(name) && !o.whole) return this.layers.play(name, { from: o.from, to: o.to, rate: (o.rate || 1) * Motion.vary(this.seed, this.nHit + 41, 0.9, 1.12), in: o.in, out: o.out, k: Math.min(1, (o.k === undefined ? 1 : o.k) * 1.35) * (0.75 + 0.25 * this.M.hitK) });
     if (!this.act[name]) return 0;
+    // (a clip played through cut short by another: it fades out under the new one over a fifth of a second)
+    const was = this.play;
+    if (was && was.name !== name && (this.pEff || 0) > 0.01) this.prevPlay = { name: was.name, t: was.t, rate: was.rate, end: was.end, w: this.pEff };
     const end = o.to === undefined ? this.dur[name] - 0.02 : o.to, t = o.from || 0;
     this.play = { name, t, end, rate: o.rate || 1, w: this.play && this.play.name === name ? this.play.w : 0, in: o.in === undefined ? 0.08 : o.in, out: o.out === undefined ? 0.3 : o.out, hold: !!o.hold, k: o.k === undefined ? 1 : o.k }; // (k: how much of it counts at most: a recoil blended with its stance)
     return (end - t) / this.play.rate;
@@ -32314,6 +32313,17 @@ class BossActor {
       }
       if (!pl.hold && pl.t >= pl.end) { this.play = null; this.entering = false; }
     }
+    this.pEff = p;
+    let q = 0;
+    const pp = this.prevPlay;
+    if (pp) {
+      pp.w = Math.max(0, pp.w - d / 0.2);
+      pp.t = Math.min(pp.end, pp.t + d * pp.rate);
+      q = Motion.ease.smooth(pp.w) * (1 - p);
+      act[pp.name].time = pp.t; w[pp.name] += q;
+      if (pp.w <= 0) this.prevPlay = null;
+    }
+    const rest = Math.max(0, 1 - p - q); // (what the clips played through leave to the attack and the idle)
     if (a.clip) {
       const C = BOSS_CLIP[a.clip];
       if (a.rec === "drop") { a.to = 0; if (a.w < 0.02) { a.clip = null; a.w = 0; } }
@@ -32321,37 +32331,33 @@ class BossActor {
         const hv = M.hold * (a.vary || 1);
         a.t = Math.min(C.end, a.t + d * (a.t < C.hold ? 2.4 / hv : 1.6 / Math.sqrt(hv)));
         a.to = a.t < C.hold ? 1 : 1 - smoothstep(C.hold, C.end, a.t);
-        if (a.t >= C.end) { a.clip = null; a.w = 0; }
+        if (a.t >= C.end && a.w < 0.02) { a.clip = null; a.w = 0; } // (held at its end until it has faded: never dropped while it still counts)
       }
       // the blow's moment: it gives under it, and dips on its feet
       if (a.clip && !a.hitFx && a.t >= C.hit - 0.01) { a.hitFx = true; this.S.sq.hit(M.squash * (a.vary || 1)); this.S.bounce.hit(-0.3 * M.squash); }
-      if (a.clip) { a.w = Motion.dampTo(a.w, a.toW === undefined ? a.to : a.toW, a.to, a.to > a.w ? 16 : 7, d); a.toW = a.to; act[a.clip].time = a.t; w[a.clip] += a.w * (1 - p); }
+      if (a.clip) { a.w = Motion.dampTo(a.w, a.toW === undefined ? a.to : a.toW, a.to, a.to > a.w ? 16 : 7, d); a.toW = a.to; act[a.clip].time = a.t; w[a.clip] += a.w * rest; }
     }
-    const idle = Math.max(0, 1 - p - (a.clip ? a.w * (1 - p) : 0));
+    const idle = Math.max(0, rest - (a.clip ? a.w * rest : 0));
     if (act.idle) {
       // its own pace: slow or quick as its kind moves, in a machine's pulses, quicker raging, drifting a little
-      const pace = M.tempo * lerp(1, M.rage, this.rageK) * (1 + 0.08 * Motion.noise(this.t * 0.13, this.seed + 5)) * (M.servo ? lerp(1, (this.t * 1.15 + this.seed * 0.1) % 1 < 0.45 ? 0.3 : 1.57, M.servo) : 1);
-      this.idleT = (this.idleT + d * this.idleRate * pace) % (this.dur.idle - 0.05);
+      // (a machine's stop-go pace integrated exactly over the step: where its pace changes is never at a frame's start)
+      const G = (t) => { const ph = t * 1.15 + this.seed * 0.1, i = Math.floor(ph), f = ph - i; return (i * 0.9985 + (f < 0.45 ? 0.3 * f : 0.135 + 1.57 * (f - 0.45))) / 1.15; };
+      const step = M.servo ? lerp(d, G(this.t) - G(this.t - d), M.servo) : d;
+      const pace = M.tempo * lerp(1, M.rage, this.rageK) * (1 + 0.08 * Motion.noise(this.t * 0.13, this.seed + 5));
+      this.idleT = (this.idleT + step * this.idleRate * pace) % (this.dur.idle - 0.05);
       act.idle.time = this.idleT;
       if (act.idle2) {
-        if ((this.mixT -= d) <= 0) { const n = ++this.nMix; this.mixTo = this.mixTo > 0.5 ? 0 : 1; this.mixT = (this.mixTo ? 11 : 5) * Motion.vary(this.seed, n + 200, 0.7, 1.4); }
+        if ((this.mixT -= d) <= 0) { const n = ++this.nMix; this.mixTo = this.mixTo > 0.5 ? 0 : 1; this.mixT += (this.mixTo ? 11 : 5) * Motion.vary(this.seed, n + 200, 0.7, 1.4); }
         this.mix = Motion.damp(this.mix, this.mixTo, 1.1, d);
-        this.idle2T = (this.idle2T + d * this.idleRate * pace) % (this.dur.idle2 - 0.05);
+        this.idle2T = (this.idle2T + step * this.idleRate * pace) % (this.dur.idle2 - 0.05);
         act.idle2.time = this.idle2T; w.idle2 = idle * this.mix;
       }
       w.idle = Math.max(idle * (1 - this.mix), 0.0001);
     }
     let ground = 0, sum = 0, cx = 0, cz = 0;
     for (const n in w) { act[n].setEffectiveWeight(w[n]); ground += w[n] * (this.ground[n] || 0); cx += w[n] * (this.cx[n] || 0); cz += w[n] * (this.cz[n] || 0); sum += w[n]; }
-    // the blows it takes: layers over all of it, eased in and out
-    for (const name in this.adds) {
-      const r = this.adds[name];
-      r.t = Math.min(r.end, r.t + d * r.rate);
-      r.w = Math.min(1, r.w + d / Math.max(1e-3, r.in));
-      r.act.time = r.t;
-      r.act.setEffectiveWeight(r.k * Motion.ease.smooth(Math.min(r.w, clamp((r.end - r.t) / r.rate / Math.max(1e-3, r.out), 0, 1))) * (this.dead ? Math.max(0, 1 - (this.deadT || 0) / 0.15) : 1)); // (dead: let go of over 0.15 s as it falls, never cut)
-      if (r.t >= r.end) { r.act.setEffectiveWeight(0); delete this.adds[name]; }
-    }
+    // the blows it takes: layers over all of it, eased in and out (dead: let go of over 0.15 s as it falls, never cut)
+    this.layers.update(d, this.dead ? Math.max(0, 1 - (this.deadT || 0) / 0.15) : 1);
     this.mixer.update(0);
     // ---- on top of the clips: its own life (breath, sway, gaze, tics, the blows' give), and an arm that hangs
     this.life(d, o, p);
@@ -32372,7 +32378,7 @@ class BossActor {
     // ---- the body: a blow knocks it back and it springs forward again, as heavily as it is built (the stage adds to
     // kickV, as it did to the old spring's speed: here it is a push, sized to the old recoil's depth); an attack leans it
     // in, its wind-up rears it back first, its strike throws it forward and it settles; it floats, sways and strains
-    if (this.kickV) { this.S.kick.hit(this.kickV * 0.0457 * M.hitK); this.kickV = 0; }
+    if (this.kickV) { this.S.kick.hit(this.kickV * 0.0457 * Math.min(1, M.hitK)); this.kickV = 0; } // (never deeper than the depth it was tuned to: it stays in front of the front row; a light boss gives more in its spine instead)
     const S = this.S, kick = (this.kick = S.kick.step(d, 0)), lean = S.lean.step(d, this.lean - 0.55 * this.coil), sq = S.sq.step(d, 0.02 * this.coil), bo = S.bounce.step(d, 0);
     this.body.position.set((sum > 0 ? -cx / sum : 0) + this.swX, (sum > 0 ? -ground / sum : 0) + this.drop * (this.row.dropH || 1.5) + this.flY + this.bobY + bo - 0.012 * this.coil, (sum > 0 ? -cz / sum : 0) - kick * 0.22 + lean * 0.1);
     this.body.rotation.set(-kick * 0.12 + lean * 0.06 + this.flT + this.trX, this.yaw + this.swY + this.trY + this.spin, this.swR + this.trZ);
@@ -32401,7 +32407,7 @@ class BossActor {
   // ---- its own life over the clips (BOSS_MOVE): every turn added up for each bone, then each bone turned once about its
   // own axes (on what the mixer wrote this frame: see base). Less of it while it performs (an attack, a reaction).
   life(d, o, p) {
-    const M = this.M, S = this.S, B = this.B, t = this.t, sd = this.seed, rk = this.rageK, dead = this.dead, a = this.atk;
+    const M = this.M, S = this.S, B = this.B, t = this.t, sd = this.seed, rk = this.rageK, dead = this.dead, a = this.atk, quiet = REDUCED_MOTION || GFX.calm;
     const busy = Math.max(p, a.clip ? a.w : 0), calm = 1 - 0.65 * busy, alive = dead ? 0 : 1;
     // its breath: the chest rises and falls, the shoulders with it (a machine's in strokes, as a piston's); deeper and
     // quicker raging
@@ -32429,15 +32435,15 @@ class BossActor {
     }
     if ((this.glanceT -= d) <= 0) {
       const n = ++this.nGl, off = Motion.vary(sd, n + 77, 0, 1) < 0.4;
-      this.glanceT = M.gaze[1] * Motion.vary(sd, n, 0.5, 1.5) * (off ? 0.4 : 1);
+      this.glanceT += M.gaze[1] * Motion.vary(sd, n, 0.5, 1.5) * (off ? 0.4 : 1); // (what it overshot carried: alike at any rate)
       this.gl.set(off ? Motion.vary(sd, n + 5, -0.4, 0.4) : 0, off ? Motion.vary(sd, n + 9, -0.15, 0.08) : 0);
     }
     const amt = M.look * (1 + 0.15 * rk) * (1 - 0.6 * busy) * alive;
     const ly = S.lookY.step(d, (yawT + this.gl.x) * amt), lp = S.lookX.step(d, (-pitT - this.gl.y) * amt);
     // its tics: the head cocks, a shoulder jerks
     if (M.twitch && !dead && (this.twT -= d) <= 0) {
-      const n = ++this.nTw, s = Motion.vary(sd, n + 3, 0, 1) < 0.5 ? -1 : 1, amp = M.twitch[1] * Motion.vary(sd, n + 4, 0.6, 1.25);
-      this.twT = M.twitch[0] * Motion.vary(sd, n, 0.45, 1.6);
+      const n = ++this.nTw, s = Motion.vary(sd, n + 3, 0, 1) < 0.5 ? -1 : 1, amp = M.twitch[1] * Motion.vary(sd, n + 4, 0.6, 1.25) * (quiet ? 0.35 : 1);
+      this.twT += M.twitch[0] * Motion.vary(sd, n, 0.45, 1.6);
       if (Motion.vary(sd, n + 6, 0, 1) < 0.65 || !this.clav.length) S.headR.hit(s * amp); else S.clav.hit(amp);
     }
     // the springs: the spine's give to a blow (back, turned, tipped: spread down its length), the head's snap and tics
@@ -32461,7 +32467,7 @@ class BossActor {
     // jitter); raging, it seethes
     const coilTo = M.coil * smoothstep(0.5, 1, this.windK) * alive;
     this.coil = Motion.dampTo(this.coil, this.coilTo === undefined ? coilTo : this.coilTo, coilTo, 10, d); this.coilTo = coilTo;
-    const tr = M.tremble, tk = tr[0] * (smoothstep(0.8, 1, this.windK) + 0.25 * rk) * alive;
+    const tr = M.tremble, tk = tr[0] * (smoothstep(0.8, 1, this.windK) + 0.25 * rk) * alive * (quiet ? 0 : 1); // (no shudder with reduced effects)
     this.trX = tk * Motion.noise(t * tr[1], sd + 7); this.trY = tk * Motion.noise(t * tr[1] * 1.1, sd + 8); this.trZ = 0.7 * tk * Motion.noise(t * tr[1] * 0.9, sd + 9);
     this.swell = Motion.damp(this.swell, 1 + 0.015 * rk * alive, 2.5, d);
     // its fall, its own way: folding forward, jerking, its power failing (its head drooping), or turning as it sinks
@@ -32469,8 +32475,8 @@ class BossActor {
     if (dead) {
       const k = smoothstep(0, 1.3, this.deadT || 0), e = 1 - k;
       if (M.death === "crumple") { this.addRot(B.sp1, 0.22 * k, 0, 0); this.addRot(B.sp2, 0.18 * k, 0, 0); this.addRot(B.head, 0.35 * k, 0, 0); }
-      else if (M.death === "spasm") { const j = 0.16 * e * k * 4; this.addRot(B.sp2, j * Motion.noise(t * 9, sd + 30), j * Motion.noise(t * 8, sd + 31), 0); this.addRot(B.head, j * Motion.noise(t * 11, sd + 32), 0, j * Motion.noise(t * 10, sd + 33)); }
-      else if (M.death === "power") { this.addRot(B.sp2, 0.25 * k, 0, 0); const j = 0.012 * e; this.trX += j * Motion.noise(t * 24, sd + 34); this.trZ += j * Motion.noise(t * 22, sd + 35); }
+      else if (M.death === "spasm" && !quiet) { const j = 0.16 * e * k * 4; this.addRot(B.sp2, j * Motion.noise(t * 9, sd + 30), j * Motion.noise(t * 8, sd + 31), 0); this.addRot(B.head, j * Motion.noise(t * 11, sd + 32), 0, j * Motion.noise(t * 10, sd + 33)); }
+      else if (M.death === "power") { this.addRot(B.sp2, 0.25 * k, 0, 0); const j = quiet ? 0 : 0.012 * e; this.trX += j * Motion.noise(t * 24, sd + 34); this.trZ += j * Motion.noise(t * 22, sd + 35); }
       else if (M.death === "sink") this.spin = 0.5 * Motion.ease.inOut(k);
     }
     // ---- the bones, each turned once: what the mixer wrote, then all of the above about the bone's own axes
@@ -32485,9 +32491,10 @@ class BossActor {
     const e = Math.min(pl.end, pl.e), u = clamp(e / C.down, 0, 1);
     let t = e;
     if (e < C.down) {
+      const quiet = REDUCED_MOTION || GFX.calm; // (with reduced effects: no stutter, no jerks)
       if (M.death === "sink") t = C.down * Math.pow(u, 1.5);
-      else if (M.death === "power") { const s = 0.15, f = e / s, i = Math.floor(f); t = Math.min(e, s * (i + smoothstep(0.5, 1, f - i))); }
-      else if (M.death === "spasm") t = Math.max(0, e + 0.06 * (1 - u) * Motion.noise(e * 11, this.seed + 21));
+      else if (M.death === "power" && !quiet) { const s = 0.15, f = e / s, i = Math.floor(f); t = Math.min(e, s * (i + smoothstep(0.5, 1, f - i))); }
+      else if (M.death === "spasm" && !quiet) t = Math.max(0, e + 0.06 * (1 - u) * Motion.noise(e * 11, this.seed + 21));
     }
     if (!pl.downFx && e >= C.down) { pl.downFx = true; this.S.bounce.hit(M.death === "sink" ? 0.008 : M.hitK < 0.8 ? 0.035 : 0.022); this.S.sq.hit(1.5 * M.squash); }
     pl.t = Math.min(pl.end, t);
