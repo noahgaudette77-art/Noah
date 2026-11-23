@@ -27,10 +27,16 @@ module.exports = async (cap) => {
   await cap.eval(() => {
     const A = window.__arcade, R = A.GFX.renderer, gl = R.getContext(), H = (window.__hc = { links: [], uploads: [], programs: [], seen: new Set() });
     const link = gl.linkProgram;
+    // (the object drawn last before a program is linked is the one that needed it: three calls onBeforeRender just
+    // before it draws, and makes the program then)
+    const obr = THREE.Object3D.prototype.onBeforeRender;
+    THREE.Object3D.prototype.onBeforeRender = function (rr, sc, cam, geo, mat) { H.last = this; H.lastMat = mat; return obr.apply(this, arguments); };
     // (each program linked: the frame, and the game's own calls that led to it, from the stack: the page's lines)
     gl.linkProgram = function (p) {
       const st = String(new Error().stack || "").split("\n").filter((l) => /index\.html/.test(l)).slice(0, 4).map((l) => { const m = /:(\d+):\d+\)?\s*$/.exec(l), fn = /at (?:new )?([^\s(]+)/.exec(l); return [fn ? fn[1] : "?", m ? +m[1] - 1 : -1]; });
-      H.links.push({ f: window.__cap.frame, st });
+      const o = H.last, M = H.lastMat, path = []; let top = o; for (let q = o; q; q = q.parent) { if (path.length < 4) path.push(q.name || q.type); top = q; }
+      const cur = window.__arcade.Scenes.cur, desc = !o ? "" : (M ? (M.name || M.type) + (M.color ? " #" + M.color.getHexString() : "") + (M.map ? " mapped" : "") + (M.transparent ? " transparent" : "") + (M.blending === THREE.AdditiveBlending ? " additive" : "") + " on " : "") + (o.geometry ? o.geometry.type + " " : "") + path.join(" < ") + (top === (cur && cur.scene) ? " (the screen's scene)" : " (another scene)") + (o.parent ? ", one of " + o.parent.children.length : "");
+      H.links.push({ f: window.__cap.frame, st, obj: desc });
       return link.call(gl, p);
     };
     const name = (s) => {
@@ -142,7 +148,7 @@ module.exports = async (cap) => {
     row.play = { frames: f2 - f1, answered, end, programs: c2.programs - c1.programs, links: c2.links - c1.links, uploads: c2.uploads - c1.uploads };
     const ev = await page.evaluate(([a, b, c]) => ({ programs: window.__hc.programs.slice(a), uploads: window.__hc.uploads.slice(b).map((u) => u.f + " " + u.what), links: window.__hc.links.slice(c) }), [c1.programs, c1.uploads, c1.links]);
     row.playPrograms = ev.programs.map((p) => `frame ${p.f}: ${p.name} (${p.users.join("; ") || "not in the scene"})`);
-    row.playLinks = ev.links.map((l) => `frame ${l.f}: ` + l.st.map(([fn, line]) => fn + " " + where(line)).join(" < "));
+    row.playLinks = ev.links.map((l) => `frame ${l.f}: ` + l.st.map(([fn, line]) => fn + " " + where(line)).join(" < ") + (l.obj ? " [drawing " + l.obj + "]" : ""));
     row.playUploads = ev.uploads;
     // (the pictures sent in play, grouped by what they were: how many times, how many MB in all)
     const groups = new Map();

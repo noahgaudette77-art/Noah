@@ -261,6 +261,27 @@ multisampled HDR scene at 2940 x 1660 and its passes), the Mac hub's script time
 3-4 ms on the other Mac screens that also draw a floor mirror: the cause to be found in Phase 1), and the Final
 Exam's draws on the phone.
 
+**Phase 1 census** (2026-11-23; `hitches.js`, `texmem.js`, `cycles.js`, `cost-report.js --textures --stub --cpu`):
+- *Memory round after round* (`cycles.js`, every screen three times): after the first round the chip holds 67-68
+  textures, 46-47 geometries and 274-275 programs at the end of every round, and the page 217 elements: nothing piles
+  up (the first round ends higher, 150 textures, with what it was still taking in).
+- *Where the phone's memory goes* (Risk Blaster, 371 MB): the textures its scenes draw, 185 MB (four 2048 pictures for
+  the demon and the fighter, 85 MB; two 2048 canvases, 43 MB); render-target textures about 53 MB (the
+  post-processing's, the reflections') and 56 MB of multisampled and depth buffers; textures readied for later in the
+  fight (its other skies) 27 MB; textures from before the fight that it does not draw, 32 MB (sky canvases made at the
+  start and in the hall). What earlier screens leave behind is small; the bulk is the screen's own hero pictures.
+- *The Mac hub's 8.5 ms* was the measurement: one software frame of several seconds, measured while the hall still
+  took in its files. With the drawing left out and the files in (`--stub --settle 15`), over 175 frames, the hub's own
+  update is 1.09 ms a frame on the phone and 1.27 ms on the Mac.
+- *The title hall* (1500 frames of its glide): 3 shaders made while it glides (each boss kind as it arrives, drawn
+  once off-screen by `warmNew`), its bosses' pictures sent one a frame as they arrive (56 in all, 128 MB) by design;
+  the other uploads each frame are the skinned bosses' bone tables (1 KB each, about 5 a frame); garbage 4-8 KB a
+  frame; no page changes.
+- *The hub* (1500 frames): no shader made; the cabinet's attract-mode screen (a 320 x 240 canvas) sent about every
+  other frame; garbage 5 KB a frame; no page changes.
+- *Garbage is not a cause of stutter here:* 5-12 KB a frame once the code is warm (title, hub); Chromium's young
+  generation takes megabytes, so a sweep comes every minute or so and costs about a millisecond.
+
 ## Hand-over notes
 
 **Phase 0 (2026-11-23).** The plan, the harness (`tools/harness.js`: run it from the repository's root; about 55
