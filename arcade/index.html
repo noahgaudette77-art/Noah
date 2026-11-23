@@ -7314,8 +7314,8 @@ const GFX = {
   // up (a fanless laptop slows its chip as it warms). One frame in fifty running late through ten seconds, late for a
   // reason the main thread did not cause, eases the drawing size one small step before it becomes a stutter: only the
   // size, within the tier. Each ease is judged from its own first full ten seconds: no help (the late frames did not
-  // fall by three in ten), and it steps back and does not ease from there for five minutes (what a smaller picture does
-  // not help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
+  // fall by three in ten), and it steps back and does not ease from there for five minutes, then ten, then twenty (what
+  // a smaller picture does not help is left alone); help, and it may ease again later from there. A step eased from is climbed back after half a
   // minute steady with no more than one late frame in a hundred, a minute the second time, never after a third. Otherwise a step up after eight steady
   // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
   // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
@@ -7466,8 +7466,8 @@ const GFX = {
     // first full ten seconds (a new screen in between: looked at once ten seconds are in): if the late frames did not
     // fall by three in ten against the rate before it (the last ten seconds', or the last five's if higher: late frames
     // on the rise), and by a few frames at least (what a smaller picture does not help: the main thread's pauses, the
-    // browser's own), it steps back and does not ease from there for five minutes; if they fell, it stays, and may ease
-    // again from the new step if they creep up again
+    // browser's own), it steps back and does not ease from there for five minutes (ten, then twenty, if it happens
+    // again); if they fell, it stays, and may ease again from the new step if they creep up again
     const E = P.easing;
     if (E && now - E.at >= 12000) {
       const s10 = this.late10(F, now);
@@ -7475,13 +7475,14 @@ const GFX = {
       else if (s10.span >= 9000 && s10.n >= 300) {
         P.easing = null;
         if (s10.rate >= 0.01 && !(s10.rate <= E.rate * 0.7 && (E.rate - s10.rate) * s10.n >= 3)) {
-          P.easeNo[E.from] = now; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1);
+          const no = P.easeNo[E.from]; P.easeNo[E.from] = { at: now, wait: no ? Math.min(1200000, no.wait * 2) : 300000 }; P.eased[E.from] = Math.max(0, (P.eased[E.from] || 1) - 1); // (five minutes, then ten, then twenty: each try and undo costs a moment)
           this.setRung(E.from, "easing did not help: back");
           return;
         }
       }
     }
-    if (!P.capped && !P.easing && !(now - (P.easeNo[P.rung] || -1e9) < 300000) && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
+    const no = P.easeNo[P.rung];
+    if (!P.capped && !P.easing && !(no && now - no.at < no.wait) && P.rung < L.length - 1 && L[P.rung + 1].tier === L[P.rung].tier && L[P.rung + 1].lights === L[P.rung].lights) {
       const s10 = this.late10(F, now);
       if (s10.span >= 9000 && s10.n >= 300 && s10.late >= Math.max(6, s10.n * 0.02)) {
         const s5 = this.late10(F, now, 5000);
