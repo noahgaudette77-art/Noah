@@ -32,6 +32,8 @@ function examGen(game) {
     s.add(podium.scene);
     G.podium = podium;
     G.sink = 0;
+    G.top = new THREE.Box3().setFromObject(podium.scene).max.y; // (how high its top stands; the exam sinks it at rest so that its top is at the band's foot: ExamGame.onResize)
+    G.rest = 0;
   }
   return G;
 }
@@ -45,7 +47,7 @@ function examGenUpdate(game, dt) {
     const B = game.boss, end = !!(B && (B.mode === "die" || B.mode === "rage"));
     G.sink = clamp(G.sink + (end ? dt / 0.8 : -dt / 0.8), 0, 1);
     const k = G.sink * G.sink * (3 - 2 * G.sink);
-    G.podium.scene.position.y = BOSS_DAIS - k * EXAM_GEN.PODIUM.s * 1.05;
+    G.podium.scene.position.y = BOSS_DAIS - G.rest - k * EXAM_GEN.PODIUM.s * 1.05;
     G.podium.scene.visible = k < 0.999;
   }
 }

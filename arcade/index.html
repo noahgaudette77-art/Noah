@@ -37096,19 +37096,45 @@ class ExamGame extends QuizGame {
       sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3, streak: 0.4, // (Phase 2: its steel lit, the lens's streaks off it ran across its chest)
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
+    this.lookY = EXAM_LOOK_Y;
     this.camBase.set(0, 4.6, this.dist);
-    this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
+    this.lookAt.set(0, this.lookY, 0.5);
   }
-  // Frame the boss from below and close: its skull and shoulders fill the band (the
-  // shoulders run a little past the screen's edges), and what the band has room for
-  // of its chest. It is meant to be too big for the frame.
+  // Frame the boss from below and close. Upright (a phone): its skull and shoulders across the band, the shoulders
+  // whole with a little room either side, and what the band has room for of its chest. Landscape (a Mac): the whole
+  // figure from its cap to its fists inside the band, above the answers, and the hall either side of it. (Phase 2,
+  // 2026-11-23: on a phone its shoulders ran past the screen's edges and it read as a dark mass; on a Mac its fists sat
+  // under the answers as dark blobs.)
   onResize(w, h) {
     if (!this.camera || !this.studs) return;
     const bandH = this.band ? this.band.h : h * 0.45;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    const tall = (BOSS_S * 0.48 * h) / (2 * tanH * Math.max(110, bandH * 0.9)); // head to mid-chest in the band's height
-    const wide = (BOSS_S * 0.87 * h) / (2 * tanH * 1.45 * w); // shoulders half as wide again as the screen
-    this.distT = clamp(Math.max(tall, wide), 7, 40);
+    const c = this._fit || (this._fit = new THREE.PerspectiveCamera()), v = new THREE.Vector3();
+    c.fov = this.camera.fov; c.aspect = w / h; c.near = 0.1; c.far = 100; c.updateProjectionMatrix();
+    const at = (d) => { c.position.set(0, this.lookY - d * 0.28, d); c.lookAt(0, this.lookY, 0.5); c.updateMatrixWorld(); };
+    if (w < h * 1.15 || !this.boss) {
+      const tall = (BOSS_S * 0.48 * h) / (2 * tanH * Math.max(110, bandH * 0.9)); // head to mid-chest in the band's height
+      const wide = (BOSS_S * 0.86 * h) / (2 * tanH * 0.92 * w); // the shoulders in nine tenths of the screen's width
+      this.lookY = EXAM_LOOK_Y;
+      this.distT = clamp(Math.max(tall, wide), 7, 40);
+    } else {
+      // the nearest the lens may stand with the cap's top and the fists' foot (where they stand in its idle pose) both
+      // inside the band, the fists clear of the shade the answers stand on, looking a little lower than its jaw
+      this.lookY = EXAM_LOOK_Y - 1.3;
+      const top = (0.94 * bandH) / h, foot = Math.max(0.2 * bandH, bandH - 64) / h;
+      let d = 7;
+      for (; d < 40; d += 0.25) { at(d); if (v.set(0, 9.95, 1.0).project(c).y <= top && v.set(4.4, 3.4, 3.6).project(c).y >= -foot) break; }
+      this.distT = d;
+    }
+    // the lectern's top at the band's foot, a little of it showing (once the lens stood back it stood whole in front of
+    // the examiner): at rest it stands sunk into the dais as far as that takes, as it sinks for the ending
+    const G = this.gen;
+    if (G && G.podium && G.top !== undefined) {
+      at(this.distT);
+      v.set(0, -(bandH * 0.86) / h, 0.5).unproject(c).sub(c.position);
+      const y = c.position.y + (v.y * (EXAM_GEN.PODIUM.z - c.position.z)) / v.z;
+      G.rest = clamp(G.top - y, 0, EXAM_GEN.PODIUM.s * 0.8);
+    }
     if (!this.placed) {
       this.dist = this.distT;
       this.placed = !!this.band;
@@ -37391,9 +37417,9 @@ class ExamGame extends QuizGame {
     }
     // from below, close, and closer still as the end nears or it leans in
     const d = this.dist * (1 - (B ? 0.08 * B.dread + 0.05 * B.menace : 0));
-    this.camBase.set(Pointer.x * 0.5, EXAM_LOOK_Y - d * 0.28 + Math.sin(t * 0.3) * 0.05 - Pointer.y * 0.2, d);
+    this.camBase.set(Pointer.x * 0.5, this.lookY - d * 0.28 + Math.sin(t * 0.3) * 0.05 - Pointer.y * 0.2, d);
     if (this.scene.userData.post.dof) this.scene.userData.post.dof.focus = Math.max(2, d - 0.4);
-    this.lookAt.set(0, EXAM_LOOK_Y, 0.5);
+    this.lookAt.set(0, this.lookY, 0.5);
     if (B && (B.mode === "die" || B.mode === "rage") && !B.quick) B.camera(dt); // the ending has its own camera
     this.placeCamera();
     this.motes.userData.drift(t);
@@ -38836,6 +38862,8 @@ function examGen(game) {
     s.add(podium.scene);
     G.podium = podium;
     G.sink = 0;
+    G.top = new THREE.Box3().setFromObject(podium.scene).max.y; // (how high its top stands; the exam sinks it at rest so that its top is at the band's foot: ExamGame.onResize)
+    G.rest = 0;
   }
   return G;
 }
@@ -38849,7 +38877,7 @@ function examGenUpdate(game, dt) {
     const B = game.boss, end = !!(B && (B.mode === "die" || B.mode === "rage"));
     G.sink = clamp(G.sink + (end ? dt / 0.8 : -dt / 0.8), 0, 1);
     const k = G.sink * G.sink * (3 - 2 * G.sink);
-    G.podium.scene.position.y = BOSS_DAIS - k * EXAM_GEN.PODIUM.s * 1.05;
+    G.podium.scene.position.y = BOSS_DAIS - G.rest - k * EXAM_GEN.PODIUM.s * 1.05;
     G.podium.scene.visible = k < 0.999;
   }
 }
