@@ -1,7 +1,7 @@
 // The Final Exam's boss. The model is the player's own (arcade/assets/boss, converted
 // from a .glb by scripts/convert-boss.js): 32 rigid parts, hung here on a skeleton of
-// 19 joints. It towers over the camera on its dais: dark, worn armour under a bone
-// skull, two violet-white lamps for eyes (its own colour: not the red eyes of every film robot), lit from above, from below and from behind.
+// 19 joints. It towers over the camera on its dais: worn steel armour under a pale enamel
+// skull, two violet-white lamps for eyes (its own colour: not the red eyes of every film robot), lit by a key on its face, from below and from behind.
 //
 // Look and sound only. While the exam is being taken it wakes, looms, breathes, watches
 // whoever is in front of it and now and then leans in or flexes a claw, all slowly and
@@ -121,60 +121,107 @@ function bossJointGeometry(parts, pivot) {
   g.computeBoundingSphere();
   return g;
 }
-// The boss's surface. Its own texture is rusty tan paint; here it only gives light and
-// shade to the arcade's look (08m-model.js): gunmetal plates cut by panel lines, worn
+// The boss's surface, in the arcade's look (08m-model.js): steel plates cut by panel lines, worn
 // bright on every hard edge, with seams and small lights that carry colour and a rim of
-// magenta and cyan. The skull (o.bone) stays pale and bare. U is one set of uniforms for
+// the hall's pair. The skull (o.bone) stays pale and bare. U is one set of uniforms for
 // all of it: how bright the seams are and what colour, how far up the body they are lit
 // (the reveal), the cracks and the stutter of its destruction, the red rim of its dread.
 // (served, Phase 6) What the examiner's metal mirrors of the hall, mostly stripped of its colour and cooled: the hall's
 // warm lamps painted its plates orange, and it read as clay. Its brightness stays: the plates still mirror the room.
 const EXAM_COOL = "{ vec3 xs = reflectedLight.indirectSpecular; reflectedLight.indirectSpecular = mix(xs, dot(xs, vec3(0.3, 0.59, 0.11)) * vec3(0.82, 0.9, 1.12), 0.65); }";
+// (the master overhaul, Phase 2, 2026-11-23: the examiner made readable. It was navy and black, its face near black:
+// the plates' colour came from its own texture, which is an atlas of hundreds of small charts each a different grey, so
+// its tone jumped from chart to chart, and from a copy of it filtered so far that neighbouring charts ran together (the
+// blocky static along its plates' edges); the tile was looked up with the pixels' own slopes, which jump where one side
+// of the tile gives way to the next (every plate's edge), and its relief was the difference between neighbouring
+// pixels, which come in blocks of two by two. Now its plates are steel in the tile's own light and shade, their relief
+// read from a filtered map of the tile's slopes (bossTileSlopes), the tile looked up with the slope of the position
+// itself; the skull a pale enamel; and the lights of the hall's pair fall on it (ExamGame.build3D).)
+const BOSS_SLOPE = 160; // (the tile's steepest slope, in height a tile, at the ends of the slopes map's range)
+// The armour tile's slopes: its height as neonHeight reads it (dents, scratches and pits, less the panel lines' grooves),
+// smoothed over three texels each way and differenced across, x in red and y in green (level at a half). One picture,
+// made once, mipmapped: far off its relief fades instead of sparkling.
+function bossTileSlopes() {
+  if (bossTileSlopes.tex) return bossTileSlopes.tex;
+  let tex = null;
+  try {
+    const src = neonArmourTile().image, N = src && src.width;
+    if (!N || !src.getContext) throw new Error("no tile picture");
+    const d = src.getContext("2d").getImageData(0, 0, N, N).data, H = new Float32Array(N * N), T = new Float32Array(N * N);
+    const at = (x, y) => ((y + N) % N) * N + ((x + N) % N);
+    for (let i = 0; i < N * N; i++) { const g = clamp((d[i * 4 + 1] / 255 - 0.2) / 0.25, 0, 1); H[i] = d[i * 4] / 255 - 0.9 * g * g * (3 - 2 * g); }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) T[y * N + x] = (H[at(x - 1, y)] + H[y * N + x] + H[at(x + 1, y)]) / 3;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) H[y * N + x] = (T[at(x, y - 1)] + T[y * N + x] + T[at(x, y + 1)]) / 3;
+    const c = document.createElement("canvas");
+    c.width = c.height = N;
+    const cx = c.getContext("2d"), img = cx.createImageData(N, N), o = img.data, k = N / 2 / BOSS_SLOPE;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const i = (y * N + x) * 4;
+      o[i] = Math.round(127.5 + 127.5 * clamp((H[at(x + 1, y)] - H[at(x - 1, y)]) * k, -1, 1));
+      o[i + 1] = Math.round(127.5 + 127.5 * clamp((H[at(x, y - 1)] - H[at(x, y + 1)]) * k, -1, 1)); // (a picture's rows run down, its v up)
+      o[i + 2] = 128; o[i + 3] = 255;
+    }
+    cx.putImageData(img, 0, 0);
+    tex = new THREE.CanvasTexture(c);
+  } catch (e) {
+    tex = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, THREE.RGBAFormat);
+    tex.needsUpdate = true;
+  }
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return (bossTileSlopes.tex = tex);
+}
 function bossSkin(env, side, o, U) {
   const bone = !!o.bone;
-  const m = new THREE.MeshStandardMaterial({ map: BossModel.texture(), metalness: 1, roughness: 1, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 });
-  m.extensions = { derivatives: true };
+  const m = new THREE.MeshStandardMaterial({ metalness: 1, roughness: 1, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 }); // (its own painting is left to the wreck: see above)
+  m.extensions = { derivatives: true, shaderTextureLOD: true };
   m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, neonUniforms(), U, { uBossEye: o.eye || { value: new THREE.Vector3() }, uBossEyeAt: { value: o.eyeAt || new THREE.Vector3() } });
+    Object.assign(sh.uniforms, neonUniforms(), U, { uBossEye: o.eye || { value: new THREE.Vector3() }, uBossEyeAt: { value: o.eyeAt || new THREE.Vector3() }, uBossSlope: { value: bossTileSlopes() } });
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossW = (modelMatrix * vec4(transformed, 1.0)).xyz; vBossY = vBossW.y;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;
-        uniform vec3 uBossCoreW; uniform float uBossAll;
+        uniform vec3 uBossCoreW; uniform float uBossAll; uniform sampler2D uBossSlope;
         uniform vec3 uBossRim; uniform vec3 uBossSeam; uniform float uBossPower; uniform float uBossSweep; uniform float uBossCrack; uniform float uBossDim; uniform float uBossRimK; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;
         ${NEON_GLSL}`)
       .replace("#include <map_fragment>", `#include <map_fragment>
-        vec3 bossT = neonTile(vBossP * 2.6, vBossN);
-        // (its light and shade come from a softer copy of the painting: the grain in it read as static, worst in the chest's hollow)
-        float bossL = clamp(dot(mapTexelToLinear(texture2D(map, vUv, 1.7)).rgb, vec3(0.3333)) * 1.25, 0.0, 1.0);
+        // the tile from whichever side the surface faces most (as neonTile), looked up with the slope of the position
+        // itself across the pixel, so where one side gives way to the next it is not filtered to a blur; its slopes too
+        vec3 bossPa = vBossP * 2.6, bossAn = abs(vBossN), bossDx = dFdx(bossPa), bossDy = dFdy(bossPa);
+        vec2 bossUv = bossPa.xy, bossUx = bossDx.xy, bossUy = bossDy.xy;
+        if (bossAn.x > bossAn.y && bossAn.x > bossAn.z) { bossUv = bossPa.zy; bossUx = bossDx.zy; bossUy = bossDy.zy; }
+        else if (bossAn.y > bossAn.z) { bossUv = bossPa.xz; bossUx = bossDx.xz; bossUy = bossDy.xz; }
+        #ifdef TEXTURE_LOD_EXT
+        vec3 bossT = texture2DGradEXT(uNeonTile, bossUv, bossUx, bossUy).rgb;
+        vec2 bossSl = texture2DGradEXT(uBossSlope, bossUv, bossUx, bossUy).rg * 2.0 - 1.0;
+        #else
+        vec3 bossT = texture2D(uNeonTile, bossUv).rgb;
+        vec2 bossSl = texture2D(uBossSlope, bossUv).rg * 2.0 - 1.0;
+        #endif
         float bossEdge = clamp(length(fwidth(normalize(vNormal))) * 4.5 - 0.1, 0.0, 1.0);
+        float bossGv = neonGroove(bossT), bossVent = smoothstep(0.12, 0.2, bossT.b) * (1.0 - smoothstep(0.3, 0.36, bossT.b));
         ${bone ? "if (abs(vBossP.x) > 0.044 && vBossP.y > 0.14) discard; // (the antennae end at the helmet's own line)" : ""}
         ${bone
-          ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = mix(vec3(0.03, 0.03, 0.04), vec3(0.5, 0.455, 0.4), bossL) * (0.74 + 0.5 * bossT.r) * (1.0 - 0.6 * exp(-dot(bossS, bossS) * 150.0));"
-          : "diffuseColor.rgb = mix(neonMetal(bossL, vec3(mix(0.5, bossT.r, 0.5), bossT.gb)) * 0.82, vec3(0.5, 0.53, 0.6), bossEdge * 0.6);"}
+          ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = vec3(0.6, 0.6, 0.63) * (0.86 + 0.28 * bossT.r) * (1.0 - 0.3 * bossGv) * (1.0 - 0.82 * exp(-dot(bossS, bossS) * 150.0)); // (a pale enamel, dark in the sockets)"
+          : "diffuseColor.rgb = mix(vec3(0.32, 0.335, 0.385) * (0.74 + 0.52 * bossT.r) * (1.0 - 0.72 * bossGv) * (1.0 - 0.75 * bossVent), vec3(0.58, 0.6, 0.66), bossEdge * 0.35); // (steel, worn bright on its edges)"}
         ${Assets.on ? `// (served: the hollow in its chest, round the reactor, and what shows of the frame behind it, is smooth dark gunmetal: the painting there is coarse and read as a smear)
         vec2 bossCq = (vBossW - uBossCoreW).xy * ${(1 / BOSS_S).toFixed(5)}; bossCq.y *= bossCq.y < 0.0 ? 0.5 : 1.0; // (Phase 5 fix: the hollow runs on down below the reactor: the mask reaches as far)
         float bossCoreM = (1.0 - smoothstep(0.066, 0.1, length(bossCq))) * step(-0.14, (vBossW.z - uBossCoreW.z) * ${(1 / BOSS_S).toFixed(5)}); // (measured across the chest, not into it: the hollow lies in front of the core)
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.065, 0.09), bossCoreM);` : ""}`)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1, 0.1, 0.13), bossCoreM);` : ""}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
-        roughnessFactor = ${bone ? "clamp(0.36 + (0.5 - bossT.r) * 0.5, 0.16, 0.8)" : "mix(clamp(0.52 - 0.24 * bossL + (0.5 - bossT.r) * 0.6, 0.16, 0.95), 0.2, bossEdge)"};
+        roughnessFactor = ${bone ? "clamp(0.34 + (0.5 - bossT.r) * 0.3, 0.2, 0.6)" : "mix(clamp(0.27 + (0.5 - bossT.r) * 0.45 + 0.25 * bossGv, 0.17, 0.8), 0.22, bossEdge)"};
         ${Assets.on ? "roughnessFactor = mix(roughnessFactor, 0.78, bossCoreM); /* (Phase 5 fix: matte, so its bumps mirror no mottle) */" : ""}`)
-      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.38" : "0.92"};`)
+      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>\nmetalnessFactor = ${bone ? "0.1" : "0.9"};`)
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
-        float bossH = ${bone ? "bossT.r" : "neonHeight(bossT)"};
-        normal = neonBump(-vViewPosition, normal, clamp(vec2(dFdx(bossH), dFdy(bossH)), -0.5, 0.5) * 0.008);`)
+        // relief: how far the tile's height changes across this pixel, from the map of its slopes (the skull is smooth)
+        normal = neonBump(-vViewPosition, normal, clamp(vec2(dot(bossSl, bossUx), dot(bossSl, bossUy)) * ${BOSS_SLOPE.toFixed(1)}, -0.5, 0.5) * ${bone ? "0.0015" : "0.008"});`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         vec3 bossV = normalize(vViewPosition);
-        // (its rim is violet from one side and gold from the other: not the arcade's magenta and cyan, which on this figure read as red and blue)
-        // (and it is one-sided: gold along the edges that face away from the key light, next to nothing on the lit side, so the
-        // outline is a lit plane on one hand and a bright edge on the other, not one pale fringe all the way round)
-        totalEmissiveRadiance += mix(${Assets.on ? "vec3(0.3, 0.62, 1.5) * 0.3, vec3(1.7, 0.22, 1.2) * 1.2" : "vec3(0.8, 0.42, 1.6) * 0.14, vec3(1.5, 1.0, 0.36) * 1.3"}, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
-        ${Assets.on ? `// (served, Phase 6: the arcade's light on it, not orange clay. A cool key from high on its left: a sheen on the
-        // plates that face it and a little light in their colour; the edges away from it take the magenta rim above.)
-        vec3 bossK = normalize((viewMatrix * vec4(-0.5, 0.68, 0.55, 0.0)).xyz);
-        totalEmissiveRadiance += vec3(0.5, 0.72, 1.2) * diffuseColor.rgb * (pow(max(dot(normal, normalize(bossK + bossV)), 0.0), 14.0) * ${bone ? "0.5" : "1.6"} + max(dot(normal, bossK), 0.0) * 0.28) * uBossRimK;` : ""}
+        // (its rim in the hall's pair, one-sided: ice blue along the edges that face away from the key (its right), a
+        // little violet on the lit side, so the outline is a lit plane on one hand and a bright edge on the other)
+        totalEmissiveRadiance += mix(vec3(0.62, 0.36, 1.0) * 0.22, vec3(0.5, 0.68, 1.0) * 0.9, smoothstep(-0.35, 0.35, normal.x)) * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 3.0) * uBossRimK * ${bone ? "0.5" : "1.0"};
         totalEmissiveRadiance += uBossRim * pow(1.0 - clamp(abs(dot(normal, bossV)), 0.0, 1.0), 4.0);
         ${Assets.on ? "totalEmissiveRadiance += vec3(0.42, 0.22, 0.95) * 0.22 * bossCoreM * uBossPower * uBossDim; // (the reactor idling in its hollow: a faint violet)" : ""}
         ${bone ? "" : `// its seams and small lights: on from the feet up as it wakes, stuttering as it dies
@@ -191,11 +238,12 @@ function bossSkin(env, side, o, U) {
         vec3 bossE = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz);
         totalEmissiveRadiance += uBossEye * diffuseColor.rgb * exp(-dot(bossE, bossE) * 420.0);`);
   };
-  if (Assets.on) { // (served, Phase 6: what it mirrors of the hall is cooled, so the warm lamps do not paint it orange)
+  { // (served, Phase 6: what it mirrors of the hall is cooled, so the warm lamps do not paint it orange. Phase 2: it
+    // mirrors its own rig's lamps now, served or not, and keeps a little more of their colour: the rims' violet and ice)
     const own = m.onBeforeCompile;
-    m.onBeforeCompile = (sh) => { own(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); };
+    m.onBeforeCompile = (sh) => { own(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL.replace("0.65); }", "0.4); }")); };
   }
-  m.customProgramCacheKey = () => "exam-boss-skin-8-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
+  m.customProgramCacheKey = () => "exam-boss-skin-9-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
   return m;
 }
 
@@ -347,20 +395,35 @@ class ExamBoss {
       return (this.J[name] = { name, parent, pivot, ids, grp, mesh, rot: new THREE.Vector3(), on: true });
     });
     this.hipRest = this.J.hips.grp.position.clone();
-    // The proctor's cap: a square board on a band, gold along its edges, a gold tassel hung from the button to one
-    // corner. It rides the head's own mesh, so it nods, turns and, at the end, flies off with it.
+    // The proctor's cap, a mortarboard (Phase 2: it read as a slab, a flat box edged with gold boxes): a square board of
+    // black cloth, its edge bevelled and its corners a little rounded, on a skull cap; a covered button at its middle,
+    // a cord from it across the board and over a corner, and the tassel on the cord, its threads loose at the foot.
+    // One draw for the cloth, one for the gold (it was nine). It rides the head's own mesh, so it nods, turns and, at
+    // the end, flies off with it.
     {
-      const cloth = new THREE.MeshStandardMaterial({ color: 0x1c1a2a, metalness: 0.05, roughness: 0.92, envMap: env, envMapIntensity: 0.5, emissive: 0x07050f, emissiveIntensity: 1 });
-      const gold = new THREE.MeshStandardMaterial({ color: 0xe0a83c, metalness: 1, roughness: 0.28, envMap: env, envMapIntensity: 1.1, emissive: 0x6a3c06, emissiveIntensity: 0.3 });
-      const cap = new THREE.Group(), W = 0.106, add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); cap.add(m); return m; };
-      add(new THREE.CylinderGeometry(0.05, 0.056, 0.03, 20), cloth, 0, -0.016, 0);
-      add(new THREE.BoxGeometry(W * 2, 0.009, W * 2), cloth, 0, 0.004, 0);
-      [[0, W, W * 2, 0.006], [0, -W, W * 2, 0.006], [W, 0, 0.006, W * 2], [-W, 0, 0.006, W * 2]].forEach(([x, z, sx, sz]) => add(new THREE.BoxGeometry(sx + 0.004, 0.012, sz + 0.004), gold, x, 0.004, z));
-      add(new THREE.SphereGeometry(0.009, 10, 8), gold, 0, 0.012, 0);
-      const cord = add(new THREE.CylinderGeometry(0.0022, 0.0022, W * 1.04, 6), gold, -W * 0.5, 0.011, W * 0.5);
-      cord.rotation.set(Math.PI / 2, 0, Math.PI / 4);
-      add(new THREE.CylinderGeometry(0.0022, 0.0022, 0.05, 6), gold, -W * 0.98, -0.016, W * 0.98);
-      add(new THREE.CylinderGeometry(0.004, 0.0085, 0.036, 8), gold, -W * 0.98, -0.058, W * 0.98);
+      const cloth = new THREE.MeshStandardMaterial({ color: 0x131119, metalness: 0, roughness: 0.74, envMap: env, envMapIntensity: 0.55, emissive: 0x07050f, emissiveIntensity: 1 }); // (the board's faces are its own: an extrusion's normals are its faces')
+      const gold = new THREE.MeshStandardMaterial({ color: 0xe6b04a, metalness: 1, roughness: 0.32, envMap: env, envMapIntensity: 1.2, emissive: 0x6a3c06, emissiveIntensity: 0.25 });
+      const W = 0.106, T = 0.012, B = 0.003, top = 0.003 + T / 2, cloths = [], golds = [];
+      // the board: a rounded square extruded, bevelled all round (its edge catches the key light: it reads as a board)
+      const sq = new THREE.Shape(), h = W - B, r = 0.01;
+      sq.moveTo(-h + r, -h); sq.lineTo(h - r, -h); sq.quadraticCurveTo(h, -h, h, -h + r); sq.lineTo(h, h - r); sq.quadraticCurveTo(h, h, h - r, h);
+      sq.lineTo(-h + r, h); sq.quadraticCurveTo(-h, h, -h, h - r); sq.lineTo(-h, -h + r); sq.quadraticCurveTo(-h, -h, -h + r, -h);
+      cloths.push(new THREE.ExtrudeGeometry(sq, { depth: T - 2 * B, bevelEnabled: true, bevelThickness: B, bevelSize: B, bevelSegments: 2, curveSegments: 3 }).rotateX(-Math.PI / 2).translate(0, top - T + B, 0));
+      cloths.push(new THREE.CylinderGeometry(0.05, 0.056, 0.03, 24).translate(0, -0.016, 0)); // the skull cap under it
+      golds.push(new THREE.SphereGeometry(0.0095, 12, 8).scale(1, 0.55, 1).translate(0, top + 0.002, 0)); // the button
+      // the cord: from the button across the board to its front left corner, over the edge, and down
+      const c = (x, y, z) => new THREE.Vector3(x, y, z), path = new THREE.CatmullRomCurve3([c(0, top + 0.002, 0), c(-W * 0.5, top + 0.0022, W * 0.5), c(-W * 0.93, top + 0.002, W * 0.93), c(-W * 1.01, top - 0.005, W * 1.01), c(-W * 1.02, -0.012, W * 1.02), c(-W * 1.02, -0.024, W * 1.02)]);
+      golds.push(new THREE.TubeGeometry(path, 28, 0.0022, 5, false));
+      const foot = path.getPoint(1);
+      golds.push(new THREE.SphereGeometry(0.0052, 10, 8).translate(foot.x, foot.y - 0.002, foot.z)); // the knot at the tassel's head
+      // the tassel: a flared bundle, its threads as flutes round it (every other edge drawn in), loose at the foot
+      const tas = new THREE.LatheGeometry([[0.0001, -0.046], [0.0068, -0.0455], [0.0074, -0.04], [0.0058, -0.012], [0.0042, -0.004], [0.0034, 0], [0.0001, 0.0004]].map(([x, y]) => new THREE.Vector2(x, y)), 18);
+      const tp = tas.attributes.position;
+      for (let i = 0; i < tp.count; i++) { const k = Math.round((Math.atan2(tp.getZ(i), tp.getX(i)) / (Math.PI * 2)) * 18) % 2 ? 0.8 : 1.06; tp.setXYZ(i, tp.getX(i) * k, tp.getY(i), tp.getZ(i) * k); }
+      tas.computeVertexNormals();
+      golds.push(tas.translate(foot.x, foot.y - 0.006, foot.z));
+      const cap = new THREE.Group();
+      cap.add(new THREE.Mesh(mergeIndexed(cloths), cloth), new THREE.Mesh(mergeIndexed(golds), gold));
       cap.position.set(-0.001, 0.173, 0.022);
       cap.rotation.set(0.1, 0.2, 0.05); // (a little askew; the tassel hangs clear of the eye, beside the temple)
       this.J.head.mesh.add(cap);
@@ -394,7 +457,7 @@ class ExamBoss {
     this.under.position.set(0, BOSS_DAIS + 0.38 * BOSS_S, 0.52 * BOSS_S);
     s.add(this.under);
     // the reactor: a glow on the chest and a light inside, dark until it fails
-    this.coreHot = neon(0xffb060, 1.6); this.coreEmber = new THREE.Color(1.5, 0.62, 0.1);
+    this.coreHot = neon(0xffb060, 1.6); this.coreEmber = new THREE.Color(0.85, 0.16, 1.15); // (Phase 2: from disk too, the core's own magenta: an orange glow as wide as its chest read, on its lit steel, as an orange plate)
     this.coreGlow = glowSprite(this.coreHot.clone(), 0.5, 0);
     this.coreGlow.position.set(BOSS_CORE[0] - this.J.chest.pivot[0], BOSS_CORE[1] - this.J.chest.pivot[1], 0.2);
     this.coreGlow.layers.set(1);
@@ -899,7 +962,7 @@ class ExamBoss {
       // an ember in its chest, beating with that light
       if (this.mode !== "die") {
         const k = live ? (0.3 + 0.12 * Math.sin(t * 3.1) + 0.06 * this.dread + 0.12 * this.menace) * this.lightK : 0;
-        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = Math.min(1, k * 1.5); this.coreGlow.scale.setScalar((0.34 + 0.3 * k) * (this.hous ? 0.42 : 1)); // (served: the housing's core, in its magenta and its size)
+        this.coreGlow.material.color.copy(this.coreEmber); this.coreGlow.material.opacity = Math.min(1, k * 1.5); this.coreGlow.scale.setScalar((0.34 + 0.3 * k) * (this.hous ? 0.42 : 0.6)); // (served: the housing's core, in its magenta and its size)
       }
       if (this.mode !== "die") {
         this.under.color.copy(this.underCold).lerp(this.underHot, this.mode === "rage" ? 1 : clamp(0.08 + 0.3 * this.dread + 0.22 * this.menace, 0, 0.6));

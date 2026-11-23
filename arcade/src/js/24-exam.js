@@ -298,40 +298,51 @@ class ExamGame extends QuizGame {
       ],
     });
     const env = this.envRT ? this.envRT.texture : null;
-    // what the boss's armour reflects: not the warm hall but the dark, a cold lamp, red and blue behind it
+    // What the examiner's armour reflects (the master overhaul, Phase 2, 2026-11-23: in the hall's pair, ice blue and
+    // violet, and lit as its key and rims are; served, it mirrored the moonlit sky, and its plates facing the lens
+    // mirrored the dark): the key's broad lamp high in front on its left, a long ice-blue lamp behind it on its right
+    // and a violet one on its left (its rims), the hall's violet behind, a faint band of the hall's far lights in front
+    // (what its chest has to mirror) and the floor under it.
     this.bossEnvRT = examEnvMap({
-      top: 0x05040c, horizon: 0x1a1440, bottom: 0x0b0a14, glow: 0.3,
+      top: 0x06051a, horizon: 0x1c1648, bottom: 0x0a0818, glow: 0.3,
       panels: [
-        { color: 0xdfe6ff, k: 2.4, w: 12, h: 5, pos: [3, 24, 16] },
-        { color: 0xff2fb0, k: 2.2, w: 5, h: 22, pos: [-28, 8, -12] },
-        { color: 0x2fd8ff, k: 1.8, w: 5, h: 22, pos: [28, 6, -10] },
-        { color: 0x8a5cff, k: 0.8, w: 30, h: 6, pos: [0, 4, -30] },
-        { color: 0x9fb0ff, k: 0.5, w: 20, h: 6, pos: [0, -14, 14] },
+        { color: 0xe8eeff, k: 2.6, w: 18, h: 9, pos: [-9, 17, 18] },
+        { color: 0x8fb4ff, k: 2.0, w: 6, h: 26, pos: [27, 9, -10] },
+        { color: 0xa65fff, k: 2.0, w: 6, h: 26, pos: [-27, 9, -12] },
+        { color: 0x6c58d8, k: 0.6, w: 40, h: 8, pos: [0, 4, -30] },
+        { color: 0xb8c8ff, k: 0.7, w: 44, h: 5, pos: [0, 7, 30] },
+        { color: 0x8f86c8, k: 0.35, w: 30, h: 8, pos: [0, -14, 14] },
       ],
     });
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 }), { scale: 1.4, height: 0.0012, scratch: 1.2 });
     const lacquer = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 }), { scale: 1.1, height: 0.0008, grain: 0.5, scratch: 1.4, smudge: 0.55 });
     const marble = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true }), { scale: 0.6, height: 0.003, smudge: 0.5 });
 
-    // Light it to be feared: little ambient, a hard lamp high in front (its brow shadows
-    // its eyes), red from behind on one side and cold blue on the other to cut its
-    // outline out of the dark. (The boss adds its own: the red under it, its eyes.)
-    s.add(new THREE.AmbientLight(0x1e1840, 0.56));
-    // two violet lamps back in the colonnade: the columns either side of the boss have a lit edge
-    [-1, 1].forEach((sd) => { const l = new THREE.PointLight(0x8f6cff, 1.5, 46, 1.3); l.position.set(sd * 15, 7.5, -4); s.add(l); });
-    const key = (this.keyLight = new THREE.DirectionalLight(0xe4e9ff, 0.9));
-    key.position.set(-10, 13, 10);
+    // Light it to be seen and feared (the master overhaul, Phase 2, 2026-11-23: the art bible's rule, a key and a rim,
+    // its face and chest never darker than what is behind them). The budget draws one directional light and four
+    // point lights; it drew the two colonnade lamps and the rims, and the lamp over the examiner and its fill never had
+    // a place: its face had only a key that grazed it. Now: the moon's cold light from high in front on its left (the
+    // hall's key); a lamp in front of its face, a little above it and to its left (its face and chest: it always keeps
+    // its place); violet from behind on its left and ice blue from behind on its right (its rims, the hall's pair);
+    // and a fill from low in front (its forearms and fists, and its chest from under the answers). The colonnade's
+    // own neon lights its columns now. (The boss adds its own: the light under it, which the fire takes over at the
+    // end and then outbids the fill; its eyes.)
+    s.add(new THREE.HemisphereLight(0x2a3266, 0x1a0c34, 0.62)); // (no light is darker than the hall's deep violet)
+    const key = (this.keyLight = new THREE.DirectionalLight(0xdfe7ff, 1.05));
+    key.position.set(-8, 14, 12);
+    key.userData.keep = true;
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xe6ecff, 1.5, 32, 1.5); // the lamp over the boss (low enough that its helmet keeps its surface)
-    this.spotLight.position.set(0.8, BOSS_DAIS + BOSS_S * 1.55, BOSS_S * 0.62);
+    this.spotLight = new THREE.PointLight(0xe8eeff, 2.5, 34, 1.4); // the key on its face and chest
+    this.spotLight.position.set(-BOSS_S * 0.38, BOSS_DAIS + BOSS_S * 1.13, BOSS_S * 1.05);
+    this.spotLight.userData.keep = true;
     s.add(this.spotLight);
-    this.rimA = new THREE.PointLight(0x9a66ff, 1.5, 36, 1.5); // the rig: a cold key above, magenta and cyan behind, a glow from under it
+    this.rimA = new THREE.PointLight(0xa65fff, 2.3, 36, 1.5); // violet, from behind on its left
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.fillLow = new THREE.PointLight(0x7c84c4, 0.85, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow = new THREE.PointLight(0x8a90d8, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
-    this.rimB = new THREE.PointLight(Assets.on ? 0xff5ccf : 0xffc474, 2.7, 34, 1.5); // (served, Phase 6: the examiner's rim is the arcade's magenta, not gold)
+    this.rimB = new THREE.PointLight(0x8fb4ff, 2.6, 34, 1.5); // ice blue, from behind on its right
     this.rimB.position.set(BOSS_S, BOSS_DAIS + BOSS_S, -BOSS_S * 0.45);
     s.add(this.rimB);
 
@@ -401,9 +412,9 @@ class ExamGame extends QuizGame {
     // served: the moonlit night through the windows, the examiner's lectern (24d-examgen.js)
     this.gen = examGen(this);
     this.hall = examHall(this); // (served: the fallen bosses' statues behind the dais and the examiner's first desk, seen in the ending: 24e-examhall.js)
-    const moon =this.gen && this.gen.sky && this.gen.sky.env; // (then the boss's armour mirrors the moonlit night)
-    // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered
-    try { this.boss = BossModel.ok() ? new ExamBoss(this, moon || (this.bossEnvRT ? this.bossEnvRT.texture : env)) : null; } catch (e) { this.boss = null; }
+    // the final boss (24c-examboss.js): it stands and idles through the exam, whatever is answered (its armour mirrors
+    // the lamps of its own rig, served or not: see bossEnvRT)
+    try { this.boss = BossModel.ok() ? new ExamBoss(this, this.bossEnvRT ? this.bossEnvRT.texture : env) : null; } catch (e) { this.boss = null; }
     if (!this.boss) {
       // no boss model in this build, or it would not decode: the hall's old centrepiece stands in (24b-examhero.js)
       this.monument = new ExamMonument(this, gold, env);
@@ -464,9 +475,9 @@ class ExamGame extends QuizGame {
     this.rippleT = 1;
 
     // a hard, dark picture: less bloom, more contrast, a heavy vignette, sharpened, no colour fringe
-    s.userData.lightBudget = { dir: 1, point: 4 }; // (the lights this screen draws: the cold key; the lamp over the examiner, its two rims and one fill. See LightPool in 04-gfx.js)
+    s.userData.lightBudget = { dir: 1, point: 4 }; // (the lights this screen draws: the moon's key; the lamp on the examiner's face, its two rims and one fill. See LightPool in 04-gfx.js)
     s.userData.post = { exposure: 0.97, bloom: 0.55, threshold: 1.2, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.25, split: 0.2, // (Phase 5: brought to the games' grade: the bronze in the neon world's light, violet in its shadows; a lighter frame of dark)
-      sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3,
+      sharpen: 0.6, crisp: true, ao: 1, shadow: 0.85, shadowLen: 0.12, sun: [0.1, 1, 0.45], mblur: 0.5, dirt: 0.3, streak: 0.4, // (Phase 2: its steel lit, the lens's streaks off it ran across its chest)
       dof: { focus: 16, near: 400, far: 26, max: 0.007, k: 0.8 } }; // (the lens holds the figure over the exam; the hall behind it falls away)
     this.dist = this.distT = 16;
     this.camBase.set(0, 4.6, this.dist);
@@ -690,11 +701,11 @@ class ExamGame extends QuizGame {
       this.monument.update(dt, t, this.answers.length ? done / this.answers.length : 0);
     }
     if (B) {
-      this.keyLight.intensity = 0.9 * B.lightK;
-      this.spotLight.intensity = 1.5 * B.lightK;
-      this.rimA.intensity = 1.5 * B.lightK;
-      this.rimB.intensity = 2.7 * B.lightK;
-      this.fillLow.intensity = 0.85 * B.lightK;
+      this.keyLight.intensity = 1.05 * B.lightK;
+      this.spotLight.intensity = 2.5 * B.lightK;
+      this.rimA.intensity = 2.3 * B.lightK;
+      this.rimB.intensity = 2.6 * B.lightK;
+      this.fillLow.intensity = 1.1 * B.lightK;
       // and the dark closes in round it
       if (this.state === "ask") this.scene.userData.post.vignette = 1.25 + 0.3 * B.dread + 0.2 * B.menace;
     }
