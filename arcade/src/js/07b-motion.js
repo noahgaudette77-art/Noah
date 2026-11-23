@@ -156,3 +156,45 @@ Motion.overlay = (mixer, clip, top, name) => {
   a.play(); a.paused = true; a.setEffectiveWeight(0);
   return a;
 };
+// Reactions played as layers (Motion.overlay) through to their end, eased in and out. Each clip has two copies: a
+// reaction that comes while one is still playing (the same or another) starts fresh on a free copy while every layer
+// already playing fades out over a sixth of a second, so a second blow takes over from the first and nothing is cut.
+//   const L = new Motion.Layers(mixer, { hurt: clip, ... }, topBone);  L.play("hurt", { from, to, rate, in, out, k })
+//   each frame, before the mixer: L.update(d, scale)   (scale: all of them at most this much, e.g. fading as one dies)
+Motion.Layers = class {
+  constructor(mixer, clips, top) {
+    this.k = {}; this.on = [];
+    for (const n in clips) {
+      const c = clips[n], a = c && Motion.overlay(mixer, c, top, n + "+a"), b = a && Motion.overlay(mixer, c, top, n + "+b");
+      if (a && b) this.k[n] = { acts: [a, b], i: 0, dur: c.duration };
+    }
+  }
+  has(n) { return !!this.k[n]; }
+  names() { return Object.keys(this.k); }
+  get busy() { return this.on.length > 0; }
+  play(n, o = {}) {
+    const e = this.k[n];
+    if (!e) return 0;
+    for (const L of this.on) if (L.fade === undefined) L.fade = Motion.Layers.HAND; // (the last ones give way)
+    e.i ^= 1;
+    const act = e.acts[e.i];
+    this.on = this.on.filter((L) => { if (L.act !== act) return true; act.setEffectiveWeight(0); return false; }); // (a third within a breath: its copy taken back)
+    const L = { n, act, t: o.from || 0, end: o.to === undefined ? e.dur - 0.02 : o.to, rate: o.rate || 1, w: 0, in: o.in === undefined ? 0.08 : o.in, out: o.out === undefined ? 0.3 : o.out, k: o.k === undefined ? 1 : o.k };
+    this.on.push(L);
+    return (L.end - L.t) / L.rate;
+  }
+  update(d, scale = 1) {
+    for (let i = this.on.length - 1; i >= 0; i--) {
+      const L = this.on[i];
+      L.t = Math.min(L.end, L.t + d * L.rate);
+      L.w = Math.min(1, L.w + d / Math.max(1e-3, L.in));
+      let k = L.k * Motion.ease.smooth(Math.min(L.w, clamp((L.end - L.t) / L.rate / Math.max(1e-3, L.out), 0, 1)));
+      if (L.fade !== undefined) { L.fade -= d; k *= Motion.ease.smooth(clamp(L.fade / Motion.Layers.HAND, 0, 1)); }
+      L.act.time = L.t;
+      L.act.setEffectiveWeight(k * scale);
+      if (L.t >= L.end || (L.fade !== undefined && L.fade <= 0)) { L.act.setEffectiveWeight(0); this.on.splice(i, 1); }
+    }
+  }
+  stop() { for (const L of this.on) L.act.setEffectiveWeight(0); this.on.length = 0; }
+};
+Motion.Layers.HAND = 1 / 6; // (how long a layer takes to give way to the next)
