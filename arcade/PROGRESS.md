@@ -3179,3 +3179,162 @@ than a phone's Safari (its pictures are for comparison, not for the look).
 **Spend**: nothing (no Tripo, fal.ai, ElevenLabs or Blockade call: everything was built in code or fixed in place).
 
 Captures: the before and after stills (both engines) were made with `tools/scenarios/polish.js`; the owner has them.
+
+## The performance pass (2026-11-22)
+
+The owner's order: on their iPhone 17 Pro Max the game was very laggy after the polish pass (the containment cells,
+more light and effects), and smoothness matters more than any single effect: a steady 60 FPS on the title hall and on
+every game screen. No change to study logic, content, scoring or rules; the look kept as close as it can be, cost cut
+where the eye won't notice first; a commit for each fix and its numbers; WebKit as well as Chromium; and, since this
+machine cannot measure their phone, a frame rate readout on the phone itself.
+
+**Measured first** (`tools/cost-report.js`, new: a phone's screen, 440 x 956 at 3x, every asset loaded, the game held
+still and each frame timed alone; the passes, pixels, draw calls, triangles, lights, shadow casters, memory held, the
+main thread; `--parts` hides each part of the scene and each post effect in turn). This machine draws in software, so
+its milliseconds compare builds and parts with each other: they are not a phone's. The polish pass, before (872a5d7)
+and after (6ebc399), at MEDIUM where the old AUTO put a phone:
+
+| screen | draws | triangles | lights | pictures, MB | frame ms, before → after the polish pass |
+|---|---|---|---|---|---|
+| title, mid-glide | 38 → 34 | 213K → 146K | 4 | 282 → 274 | 935 → 858 |
+| title, at the glide's end | 30 → 35 | 165K → 174K | 4 | 282 → 274 | 918 → 1070 |
+| hub | 45 | 100K | 4 | 188 | 704 → 682 |
+| Risk Blaster | 53 → 52 | 188K → 184K | 5 | 311 | 518 → 500 |
+| Nest Egg Run | 61 | 110K | 5 | 218 | 1390 → 1331 |
+| Boss Rush | 50 | 56K | 5 | 175 | 636 → 567 |
+| Memory Bank | 54 | 98K | 4 | 78 | 694 → 663 |
+| Final Exam | 83 → 84 | 36K → 37K | 5 | 108 | 1244 → 1470 |
+| Strategy Guide | 50 | 32K | 3 | 69 | 486 → 481 |
+
+The title, commit by commit (mid-glide / at the end): before 935 / 918; the logo and dock (`1f12dcb`) 942 / 967; the
+cells (`58f2adf`) 964 / 912; the end framed for a phone (`afa54fb`) 918 / **1038**; the pass's last build 858-953 /
+1070-1116. The step is `afa54fb`: there the vault, cabinets and stand went from 251 to 482 ms of the end's frame (the
+vault drawn larger and brighter). The cells cost what the pods did. (The Final Exam's code and models were not touched
+by the pass, its draws and triangles the same: its difference is this machine's, not the pass's.)
+
+Every screen's costliest part is its pixels: drawing three quarters as many across (a little over half the pixels)
+saves 25-45% of the frame everywhere; then the room's steel and the bosses on the title, the vault at the glide's end,
+the cabinets on the hub, the podium on the exam, the bloom (15-25%) and the colour fringe (5-8%) everywhere. No
+shadows anywhere on a phone; 3 to 5 lights a screen. The polish pass added no drawing cost but at the glide's end
+(the end framed for a phone: the vault drawn larger, +13-22% there), and one cost this report could not see at
+first: INSERT COIN's new breathing glow, a 40 px shadow painted again on the main thread every frame the title is up
+(with the game held still, 120 paints and 53 ms of style, paint and raster a second in Chromium; in Safari all of it
+on the main thread, which paints there).
+
+What a phone felt that this machine cannot measure: the owner's pictures show Low Power Mode on (the yellow battery),
+in which iOS holds every web page at 30 frames a second. The old AUTO read 30 as slow frames and stepped a phone down
+tier by tier to LOWEST, the softest and plainest picture, which ran at 30 all the same.
+
+**Done** (a commit each, in this order):
+1. `e1d6c3e` the cost report (the title hall's parts named for it).
+2. `9315e7e` **the governor** (with `f02b446`, `2578b2b`: see the review below). AUTO walks a ladder, sharpest first:
+   the drawing size (on a high-density screen 2x, 1.75x, 1.5x the page's pixels: the page's own text stays sharp), then
+   the effects (a tier down; no step down draws more pixels), then the lights (the screen's point lights cut to two,
+   then one). A phone starts at **SMOOTH** (MEDIUM drawn at 1.75x: 23% fewer pixels than 2x, which a 3x screen does not
+   show) and AUTO never climbs above it there (MEDIUM's 2x and HIGH are in Setup); a tablet starts at MEDIUM, a desktop
+   at HIGH. A step down when frames run under 55 a second (or a tenth of them catch) through a second of looks at the
+   last two seconds; a step up after five steady seconds, a step that fails again at once tried less often, then not
+   at all. A frame that made shaders or sent a new picture to the chip (a model arriving), and the one after it, are
+   not held against the picture, nor a new screen's, a new step's or the page's return's first seconds.
+   **Low Power Mode**: blank frames timed at the start every 33 ms hold the page at SMOOTH from the start (no step
+   taken to find it); a rate held at exactly 30 through a real cut (a tier down, 60% of the pixels or fewer) is the
+   cap too. Held at 30, frames are judged against 30's own frame (still catching: a step down; steady: back up), a
+   step down is tried after a minute (then two, four, eight) in case a load, not a cap, holds it, and frames well
+   under 30's let go of it. The readout says HELD AT 30 FPS · LOW POWER MODE? (or the main thread's time, when that
+   fills the frame). A 50 Hz screen is its own mark. `tools/governor-test.js` feeds it made-up frames: 34 checks
+   (slow, recovering, held at 30, Low Power Mode from the start, catching under the cap, the hold tested, a load a real
+   cut lifts, 10 fps, a new screen, busy frames, a relapse, Setup's fixed tiers, a desktop), all pass in both engines.
+3. `76bd780` **the readout** (Setup > FPS counter): frames a second, the average and slowest frame, hitches in the last
+   ten seconds, the main thread's time; a graph of the last two seconds (green met 60, amber missed by a frame, red
+   caught, blue a model arriving); the tier, drawing size, lights, draw calls, triangles; and what AUTO is doing.
+4. `a19b76f` **the page's endless animations by the compositor**: INSERT COIN's glow, the question under threat, the
+   threat label and the hearts at low life fade or scale a copy drawn once, nothing painted again. Measured at the
+   glide's end, the game held still: 120 paints a second → 0; style, paint and raster 53 ms a second → 11 (style).
+   Look: the threat's red ring pulses just inside the question's frame, not just outside it (the panel clips anything
+   outside); the low-life hearts beat in size over their steady glow, which no longer flares.
+5. `379bce0` the cells' glass: the crack read only on a cracked pane; the drifting wisps worked out within 32 m (fading
+   from 22 m), where a cell is large enough to show them.
+6. `bba96cd` no glow pass where it only copied the bloom (no beams, no lens: a phone's every tier): one pass fewer.
+7. `3a36f04` no resting lens fringe on a phone (less than a pixel even in the corners of a 3x screen; two more reads of
+   the picture for nearly every pixel). A hit's fringe is unchanged.
+8. `f02b446` the 30 fps cap, once found, held through a screen's loading.
+9. `910459b` `cost-report.js --paint` (the page's own animations, the game held still: a trace's paints a second).
+10. `2578b2b`, `1e4818c`, `71d983c`: the independent review's fixes (below).
+11. `b1a0c69` `tools/scenarios/perf-look.js` (the title hall's stills, before and after).
+
+**Independent review** (no crash, no logic change; nothing under `content/` or `scripts/` or outside `arcade/`; the
+exam boss's hit-stops untouched; the pipeline, fringe, glass and CSS sound). Its must-fix points were both in the
+governor: below about 11 frames a second it decided nothing (it wanted 24 frames in two seconds: now a second and a
+half of frames, four at least), and a screen held at 30 by its own load was taken for Low Power Mode, because two
+steps down on a phone hardly cut the pixels (now a real cut, and Low Power Mode caught from the start). Its smaller
+points, all fixed: held at 30 the governor moved neither down nor up; a new screen inherited the last one's timers;
+a desktop's step from HIGH at 1.5x went to MEDIUM at 2x; a step in the first eight seconds counted as a failed climb;
+Setup's choice read as the governor's; lightsReset looked for the screen where the build does not put it (harmless);
+on a screen without half-float targets a strong bloom went through brighter without the glow's copy (it keeps it
+there); INSERT COIN's glow painted over its keyline and lip, and held still the button laid its glow over the line
+below it (now beneath them, and still exactly as before).
+
+**After** (`3a36f04`: the same report, a phone at SMOOTH against the old start, MEDIUM at 2x; frame ms, software; the
+review's fixes after it change nothing a phone draws):
+
+| screen | passes | million pixels a frame | draws | Chromium, frame ms before → after | WebKit |
+|---|---|---|---|---|---|
+| title, mid-glide | 10 → 9 | 4.9 → 3.4 | 34 → 33 | 953 → 684 (−28%) | 182 → 139 (−24%) |
+| title, at the glide's end | 10 → 9 | 4.9 → 3.4 | 35 → 34 | 1116 → 857 (−23%) | 233 → 198 (−15%) |
+| hub | 10 → 9 | 4.9 → 3.4 | 45 → 44 | 673 → 597 (−11%) | 174 → 131 (−25%) |
+| Risk Blaster | 10 → 9 | 4.9 → 3.4 | 52 → 55 | 535 → 540 (its scene: 182K → 203K triangles) | 150 → 153 |
+| Nest Egg Run | 10 → 9 | 4.9 → 3.4 | 61 → 60 | 1244 → 1043 (−16%) | |
+| Boss Rush | 10 → 9 | 4.9 → 3.4 | 50 → 49 | 756 → 463 (−39%) | |
+| Memory Bank | 10 → 9 | 4.9 → 3.4 | 54 → 53 | 736 → 512 (−30%) | |
+| Final Exam | 10 → 9 | 4.9 → 3.4 | 84 → 83 | 1544 → 1173 (−24%) | |
+| Strategy Guide | 10 → 9 | 4.9 → 3.4 | 50 → 49 | 593 → 357 (−40%) | |
+
+The title's main thread at its end, the game held still (Chromium trace): 120 paints and 53 ms of style, paint and
+raster a second before; none and 11 ms (style) after. Lights and shadows (none) as they were; 11 MB less held (the
+smaller targets the scene is drawn into).
+
+Each fix in turn (Chromium, the title mid-glide / at its end / the hub / Risk Blaster; this machine's spread from run
+to run is about 7%, Risk Blaster's more, its scene never the same twice: 182-234K triangles in these runs):
+
+| build | title, mid-glide | title, at the end | hub | Risk Blaster |
+|---|---|---|---|---|
+| before (`6ebc399`, MEDIUM at 2x) | 953 | 1116 | 673 | 535 |
+| SMOOTH (`9315e7e`) | 747 | 917 | 601 | 458 |
+| the glass (`379bce0`) | 752 | 978 | 546 | 438 |
+| no copying glow pass (`bba96cd`) | 693 | 840 | 528 | 576 |
+| no resting fringe (`3a36f04`) | 684 | 857 | 597 | 540 |
+
+(`76bd780` and `a19b76f` change no drawing: the readout, and the page's animations by the compositor, whose gain is the
+main thread's: above.)
+
+The smaller cuts are inside that spread here; they take away work a phone's chip does every frame (a pass and its
+memory traffic, two reads a pixel, the glass's sines). Expected on the phone: the drawing that limits it is down by
+about a quarter on every screen (a frame that took 20 ms takes about 15: 50 frames a second become 60), the title's
+main thread no longer paints every frame, and Low Power Mode no longer drags the picture to LOWEST.
+
+**The look** (`tools/scenarios/perf-look.js`: the title hall before, MEDIUM at 2x, and after, SMOOTH, at the phone's
+own pixels, 1320 x 2868, in both engines, on the virtual clock): the same picture, 2-4% of its pixels apart, most of
+that the glide's own motion; in a 1:1 crop of a cell close up the boss's edges are a hair softer. INSERT COIN at rest,
+at the top of its breath and held still: the same button. What did change: the threat's red ring pulses just inside
+the question's frame, the low-life hearts' glow no longer flares on the beat, the far cells' glass has no drifting
+wisps.
+
+**Checked** (on the last build): the regression IDENTICAL from disk and served (153 answers in 8 games, no console
+errors); the sequence test ALL 13 STEPS OK; the card faces one at a time in WebKit and Chromium; `governor-test.js`
+34 checks in both engines; nothing under `content/` or `scripts/` changed, nothing outside `arcade/`; the exam boss's
+two hit-stops untouched, no `GFX.hitStop`.
+
+**For the owner, on the phone** (Setup > FPS counter ON; Low Power Mode off for the test, Settings > Battery): the
+title's glide and its end, then a game twenty seconds in. Line one should read about 60 FPS, 16.7 MS, few or no
+hitches; the graph's bars green on the white line (amber: a frame missed, a visible stutter; red: a catch; blue: a
+model arriving, only in a screen's first seconds); line two MEDIUM · 1.75X; line three AUTO · STEP 1/7 SMOOTH. A
+higher step means AUTO had to give up size, effects or lights to keep 60, and says why; HELD AT 30 FPS means the phone
+itself holds the page at 30.
+
+**Left alone, and why**: the pictures held (the blaster's 300 MB at most, the title's 263 MB): a phone with this much
+memory keeps them without strain, and a phone already gets nothing over 2048 px (the title's bosses come at 1024);
+halving them would soften the big models on screen for no frame. Draw calls (33-83) and triangles (32-234K) are well
+inside what a phone draws at 60. No shadow maps or mirror on a phone already. The bosses far down the hall already
+move ten times a second and stop being drawn past 50 m; their joint caps past 22 m.
+
+**Spend**: nothing.
