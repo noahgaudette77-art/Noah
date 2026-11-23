@@ -12,13 +12,13 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 ## Now
 
-- **Phase:** 1, performance foundation (Phase 0 passed its gate 2026-11-23: the baseline report is committed in
-  `docs/master/baseline/`, the harness works: no fault).
-- **Doing:** the census (stalls, garbage and page changes a frame in play: `hitches.js`; each screen's largest pictures:
-  `texmem.js`; memory round after round: `cycles.js`), then the fixes it points to, one small commit each.
-- **Next steps:** run the three census tools; fix the mid-play shader in Risk Blaster and any others found; cut the
-  clear per-frame garbage; shrink the largest pictures that are bigger than they are ever shown (Risk Blaster, the
-  title hall, Nest Egg Run first); find the Mac hub's 8.5 ms; the Final Exam's 83 draws; then the harness, the gate.
+- **Phase:** 2, image quality (Phase 1 passed its gate 2026-11-23: `docs/master/phase1/`).
+- **Doing:** the deterministic re-takes (the baseline's stills from its own build, `arcade/index.baseline.html`, put
+  back from `89cfb56` and never committed; script time with the drawing left out for both builds:
+  `docs/master/baseline/script-*.json`); then Phase 2's order (below), one small commit each.
+- **Next steps:** when the re-takes end: copy them into `docs/master/baseline/` (stills, script) and
+  `docs/master/phase1/` (the current build's stills: Phase 2's "before"); `git stash pop` (the no-FXAA change,
+  stashed as "phase2-no-fxaa"), build, test, commit; then the interface's faults, the materials, the colours.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -98,7 +98,14 @@ Fixed timestep with interpolated rendering (to decide, with evidence: the rules 
 the regression is played at 60 Hz; the look was made rate-independent in the animation pass), object pooling, shader
 pre-warming, asset preloading, draw-call reduction (merging, instancing), compression and LODs, baked lighting instead
 of real lights, half-resolution post effects, visibility-based updates, Low Power Mode.
-- **Gate:** every screen inside its budget on the phone and Mac tiers, with numbers.
+- **Gate:** every screen inside its budget on the phone and Mac tiers, with numbers. **Passed** 2026-11-23
+  (`docs/master/phase1/`: no fault; what changed, what was measured and left, and why).
+- Done: the census tools (`hitches.js`, `texmem.js`, `cycles.js`, `cost-report.js --cpu --textures --stub --settle`);
+  shaders built ahead in the title hall (`GFX.prepare`, `8f3859f`); Risk Blaster's crack readied (`a0ed99d`); stills the
+  same run after run (`13f3007`); script time measured over many frames (`836b099`). Already in place before the
+  overhaul and checked: pre-warming (`GFX.warm`), preloading (`Assets.prefetch`), light budgets (`LightPool`), the
+  tiers and the governor (thermal-aware, Low Power Mode), half-size post effects, rigid bosses merged to skinned meshes.
+  Decided against, with evidence: a fixed timestep for the whole game, KTX2 now, rewriting for garbage.
 
 ### Phase 2: image quality
 Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first (`tools/gen/artbible.js run`, about $0.24); MSAA
@@ -323,3 +330,11 @@ Census tools for Phase 1 written and tried once (`hitches.js` on Risk Blaster: o
 garbage a frame before the code was warm). The overlap check was made to skip text under a sheet or a bar and a glow's
 copy of its own words after the baseline was taken: the baseline's list holds those (a later run lists fewer, never a
 false new one). Nothing in the game changed. Spend: none.
+
+**Phase 1 (2026-11-23).** The census found two kinds of stall left and both are fixed (the title hall's arriving bosses'
+shaders, now built ahead on the driver's threads where Safari has them; Risk Blaster's crack, now readied); memory holds
+steady round after round; garbage and page changes are small; the Mac hub's 8.5 ms was the measurement. The gate run
+(`docs/master/phase1/gate-report.md`) has no fault. Two measuring faults found on the way and fixed in the tools: the
+stills shifted run to run (now seeded per screen) and the script time was two or three frames (now many, drawing left
+out). Spend: none in Phase 1 ($0.30 on the art bible's sheet, Phase 2's first step, taken while the gate ran). The
+stray empty folder `/master/census/title-webkit` in this machine's root (a shell slip) is not in the repository.
