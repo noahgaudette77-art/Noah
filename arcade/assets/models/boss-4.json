@@ -1,7 +1,7 @@
 {
  "name": "boss-4",
  "triangles": 50218,
- "bytes": 1758916,
+ "bytes": 1925112,
  "tex": 1024,
  "bones": {
   "R_Hand": {
@@ -69,7 +69,11 @@
   "attackA": 6.6,
   "rage": 3.533,
   "hurt": 1.3,
-  "stagger": 1.867
+  "stagger": 1.867,
+  "idle2": 15.583,
+  "win": 5.667,
+  "hurtS": 1.25,
+  "hurtG": 1.542
  },
  "size": [
   0.9234,

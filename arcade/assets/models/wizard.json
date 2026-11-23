@@ -1,7 +1,7 @@
 {
  "name": "wizard",
  "triangles": 32000,
- "bytes": 1330828,
+ "bytes": 1387632,
  "tex": 1024,
  "clips": {
   "cast": 5.4,
@@ -11,7 +11,9 @@
   "bigcast": 6.6,
   "defeat": 8.467,
   "stagger": 1.867,
-  "win": 5.7
+  "win": 5.7,
+  "hurtS": 1.25,
+  "hurtG": 1.542
  },
  "size": [
   1.352,
