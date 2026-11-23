@@ -830,6 +830,10 @@ class BlasterSpace {
     this.galaxyTex.dispose();
     if (this.traffic) this.traffic.dispose();
     if (this.genMats.length) blasterDropMaps(this.genMats); // (the generated ships' and rocks' maps; their colour maps go in the scene's sweep)
+    // (and every kit's own shape and colour map: the escort's ships take one kit after another, so the scene's sweep
+    // found only the two each ship last flew as; the others were left on the graphics chip, a model's worth a visit.
+    // 2026-11-23, a long session's memory measured. A kit the sweep already let go of is let go of once more: nothing.)
+    for (const k of Object.values(this.genKits || {})) if (k) { k.geo.dispose(); if (k.mat.map) k.mat.map.dispose(); k.mat.dispose(); }
   }
   // A generated model (SPACE_GEN_PROPS) made ready to be drawn many times over: turned to fly down -z (its nose is +z),
   // centred, one unit from nose to tail (a rock: two across, as the built-in rocks are), in its own material taught
