@@ -160,6 +160,21 @@ pushed; the served link checked.
   is 9 passes. Swapping it would bring nothing a frame does not already have and would lose the tiers' fine control.
   What the library would add that is wanted: SMAA, for a device whose multisampling fails its check (see Phase 2).
 
+- **KTX2/Basis textures: not now (Phase 1, 2026-11-23).** The phone's largest screen holds 371 MB in all, and what is
+  left from earlier screens is about 32 MB; round after round of every screen nothing piles up (`cycles.js`). The
+  bulk is each screen's own hero pictures (two 2048 maps a model). UASTC would keep the detail at a quarter of the
+  graphics memory but triple each picture's download (a slower first load on a phone's network); ETC1S would keep the
+  download and soften the detail the owner asked to keep. With memory inside the line, the trade is not taken; the
+  tools to see it again are `cost-report.js --textures` and `texmem.js`.
+- **Per-frame garbage: measured, not rewritten (Phase 1).** Once the code is warm: the title hall 4-8 KB a frame, the
+  hub 5, Risk Blaster and Nest Egg Run about 61 (effects, traffic and the drones' updates). At 61 KB a frame the
+  collector sweeps every few seconds for about a millisecond: not a stutter. (Chromium boxes fractional numbers that
+  Safari stores in place, so Safari makes less.) The page's own elements change 0-0.8 times a frame (a bar's style).
+- **Shaders built ahead in the hall, not a longer opening (Phase 1).** The title's bosses arrive while the lens
+  glides (the opening is not held back for them); each piece's programs are now asked for before it is hung and it
+  is shown once Safari's driver says they are built (`GFX.prepare`; `KHR_parallel_shader_compile`, present in WebKit
+  here, absent in this machine's Chromium, present in Chrome on a graphics chip).
+
 ## Tried and reverted
 
 (none yet)
