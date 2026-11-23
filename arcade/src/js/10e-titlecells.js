@@ -210,22 +210,44 @@ function cellAtlas(states) {
   return tex;
 }
 
-// A crack in glass: lines from a strike, branching, drawn once (white on black: added to the glass's light)
+// A crack in glass: a strike's star of cracks with a spider's web between them, drawn once, white on black (added to
+// the glass's light). Drawn in metres on the pane (the glass shows it over 1.27 m of its round and 2.04 m of its height:
+// a picture twice as tall as it is wide, so nothing is stretched), the lines a pixel or so wide with no glow, each
+// stretch catching the light more or less (Phase 2: soft 2 px lines with a halo and two drawn circles, stretched to
+// 1.6 times their height, read as chalk scribbled over the boss)
 function crackTexture() {
-  const S = 256, cv = document.createElement("canvas"), x = cv.getContext("2d");
-  cv.width = cv.height = S;
-  x.fillStyle = "#000"; x.fillRect(0, 0, S, S);
-  x.strokeStyle = "#fff"; x.lineCap = "round";
+  const W = 256, H = 512, MW = 1.265, MH = 2.04, cv = document.createElement("canvas"), x = cv.getContext("2d");
+  cv.width = W; cv.height = H;
+  x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+  x.lineCap = "round"; x.lineJoin = "round";
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const branch = (px, py, a, len, w, depth) => {
-    x.lineWidth = w; x.beginPath(); x.moveTo(px, py);
-    for (let i = 0; i < 6; i++) { a += (rnd() - 0.5) * 0.7; px += Math.cos(a) * len / 6; py += Math.sin(a) * len / 6; x.lineTo(px, py); if (depth > 0 && rnd() < 0.3) branch(px, py, a + (rnd() < 0.5 ? -1 : 1) * (0.5 + rnd() * 0.6), len * 0.5, w * 0.6, depth - 1); }
-    x.stroke();
+  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW / 2, MH / 2];
+  const seg = (a, b, w, lit) => { x.strokeStyle = `rgba(255,255,255,${lit.toFixed(2)})`; x.lineWidth = w; x.beginPath(); x.moveTo(px(a[0]), py(a[1])); x.lineTo(px(b[0]), py(b[1])); x.stroke(); };
+  // a crack from p along angle a for len metres: short straight stretches, each its own glint; now and then a branch
+  const crack = (p, a, len, w, depth, pts) => {
+    const n = Math.max(3, Math.round(len / 0.05));
+    for (let i = 0; i < n; i++) {
+      a += (rnd() - 0.5) * 0.45;
+      const q = [p[0] + Math.cos(a) * len / n, p[1] + Math.sin(a) * len / n];
+      seg(p, q, w * (1 - 0.5 * i / n), 0.35 + 0.65 * rnd());
+      if (pts) pts.push(q);
+      if (depth > 0 && i > 1 && rnd() < 0.22) crack(q, a + (rnd() < 0.5 ? -1 : 1) * (0.45 + rnd() * 0.5), len * (0.25 + 0.3 * rnd()) * (1 - i / n), w * 0.7, depth - 1, null);
+      p = q;
+    }
   };
-  x.shadowColor = "#fff"; x.shadowBlur = 3;
-  for (let k = 0; k < 9; k++) branch(S / 2, S / 2, (k / 9) * Math.PI * 2 + rnd() * 0.4, 70 + rnd() * 60, 2.2, 2);
-  x.lineWidth = 1.5; x.beginPath(); x.arc(S / 2, S / 2, 14, 0, 7); x.stroke(); x.beginPath(); x.arc(S / 2, S / 2, 34 + rnd() * 8, 0.4, 2.6); x.stroke();
+  // the star: radials from the strike, their points kept for the web
+  const R = 8, rays = [];
+  for (let k = 0; k < R; k++) { const pts = [C.slice()]; crack(C.slice(), (k / R) * Math.PI * 2 + (rnd() - 0.5) * 0.5, 0.32 + rnd() * 0.5, 1.5, 2, pts); rays.push(pts); }
+  // the web: between each radial and the next, straight pieces across at three distances out, some missing
+  const at = (pts, r) => { for (const q of pts) if (Math.hypot(q[0] - C[0], q[1] - C[1]) >= r) return q; return null; };
+  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R; k++) {
+    if (rnd() < 0.3) continue;
+    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[(k + 1) % R], r * (0.85 + 0.3 * rnd()));
+    if (a && b) seg(a, b, 1.0, 0.3 + 0.6 * rnd());
+  }
+  // the strike itself: the glass crushed white in a small knot
+  for (let k = 0; k < 14; k++) { const a = rnd() * Math.PI * 2, r = 0.008 + rnd() * 0.022; seg(C, [C[0] + Math.cos(a) * r, C[1] + Math.sin(a) * r], 1.2, 0.6 + 0.4 * rnd()); }
   const t = new THREE.CanvasTexture(cv);
   t.minFilter = THREE.LinearMipmapLinearFilter;
   return t;
