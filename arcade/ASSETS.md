@@ -234,6 +234,20 @@ a round honeycomb shield (the Aegis Ward) and a four-pointed star flare (the wan
 (prompts in `tools/gen/fx-textures.js`), then grey, levelled so the black is truly black, given a soft round edge and cut
 to 512, 512 and 256 px (WebP, 54 KB in all). $0.03 each.
 
+## Materials (CC0, `assets/ui/mat-*.webp`)
+
+The master overhaul's Phase 2 (2026-11-23): surface detail from public-domain (CC0) material libraries, no cost, no
+attribution required (credited here all the same). Each is one picture holding two maps: the OpenGL normal map's x and
+y in red and green, the roughness in blue (the shaders rebuild the normal's z), resized with Lanczos and saved as WebP
+(quality 90); the game's shaders lay it by world position where a surface has no UVs. Packed with a few lines of PIL:
+`Image.merge("RGB", (normal_R, normal_G, roughness))`.
+
+| file | from | licence | size | where it is used |
+|---|---|---|---|---|
+| `mat-deck.webp` | Poly Haven, "Metal Plate 02" (`metal_plate_02`, 1K: `nor_gl`, `rough`), https://polyhaven.com/a/metal_plate_02 | CC0 | 1024 x 1024, 139 KB | the title hall's deck floor, Memory Bank's floor, Boss Rush's deck (the plates' seams and wear under the room's reflection) |
+| `mat-tread.webp` | ambientCG, "Diamond Plate 008 C" (`DiamondPlate008C`, 1K-JPG: NormalGL, Roughness), https://ambientcg.com/view?id=DiamondPlate008C | CC0 | 512 x 512, 67 KB | the title cells' plinth tops |
+| `mat-steel.webp` | ambientCG, "Metal 009" (`Metal009`, 1K-JPG: NormalGL, Roughness), https://ambientcg.com/view?id=Metal009 | CC0 | 512 x 512, 13 KB | brushed steel: the title cells' caps and brackets, Memory Bank's wall of boxes, Boss Rush's pillars, stands and banners |
+
 ## Sound (`assets/audio/`)
 
 In play (2026-11-17, after the owner found the sound tiring): each layer has its own level in Setup, OFF, LOW, MID or
