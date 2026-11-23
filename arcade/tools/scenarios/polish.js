@@ -165,6 +165,7 @@ module.exports = async (cap) => {
     await reseed("boss");
     await cap.go("boss", "1");
     await cap.next(); await reseed("boss-ask"); await cap.ask(1500); await cap.fast(90);
+    await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.probeNow) s.probeNow(); }); // (its deck's reflection drawn now: see BossGame.probeNow)
     await still("10-boss");
   }
   // ---- Memory Bank: a card, its question side and its answer

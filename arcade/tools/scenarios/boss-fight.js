@@ -40,8 +40,11 @@ module.exports = async (cap) => {
   };
   const strip = async (name, n, every, o = {}) => sheet(name, await frames(name, n, every, o), Object.assign({ cols: 6, thumb: 300 }, o, process.env.THUMB ? { thumb: +process.env.THUMB } : {}));
   const page = (fn, arg) => cap.eval(fn, arg);
+  // the arena's deck reflection drawn whole now (the capture draws only the frames it keeps: a face a frame would never
+  // be drawn here; see BossGame.probeNow)
+  const probe = () => page(() => { const s = window.__arcade.Scenes.cur; if (s && s.probeNow) s.probeNow(); });
   // a question up, `wait` frames into it, the attack bar at `at` of its length
-  const ready = async (wait = 50, at = 0.05) => { await cap.next(); await cap.ask(2400); await page((k) => { const s = window.__arcade.Scenes.cur; s.charge = s.T * k; }, at); await cap.fast(wait); };
+  const ready = async (wait = 50, at = 0.05) => { await cap.next(); await cap.ask(2400); await page((k) => { const s = window.__arcade.Scenes.cur; s.charge = s.T * k; }, at); await cap.fast(wait); await probe(); };
   const charge = (k) => page((q) => { const s = window.__arcade.Scenes.cur; s.charge = q >= 0 ? s.T * q : s.T + q; }, k); // (a negative k: that many seconds before the bar is full)
   const set = (o) => page((v) => { const s = window.__arcade.Scenes.cur; if (v.hp !== undefined) s.hp = Math.round(s.maxHp * v.hp); if (v.hearts !== undefined) { s.hearts = v.hearts; if (s.stage) { s.stage.debts.length = 0; s.stage.setLow(v.hearts === 1 ? 1 : 0); } } s.hud(); }, o);
   // (The stars and coins that fly to the score, the HUD's own cracks and banners are page animations, scripted or in
@@ -78,6 +81,7 @@ module.exports = async (cap) => {
   let enter = null;
   if (has("enter") || has("fight")) {
     await cap.fast(34); // (after the screen's power-on, 0.55 s: the boss is high in the air, about to come down)
+    await probe();
     // (the short set keeps the part of the screen it lands in, the size of the fight's own picture)
     enter = await frames(tag + "-enter", full ? 12 : 4, full ? 7 : 14, full ? { band: false } : { band: false, clip: { x: 0, y: 300, width: 390, height: 325 } });
   }
