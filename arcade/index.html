@@ -1933,22 +1933,29 @@ html.calm .insert-coin { animation: none; }
 #fps .f3 { color: #ffe14f; }
 
 /* ---- The performance pass (the owner, 2026-11-22: smoothness first) ----
-   The page's endless animations are drawn by the compositor, not painted again every frame. A glow that pulsed by
-   changing its shadow (INSERT COIN), or an outline that pulsed by changing its colour (the question under threat), now
-   stands still while a copy of it, drawn once, fades in and out over it: the same pulse, nothing repainted. The hearts
-   at low life beat by their size alone over a steady glow; the hot threat label by its opacity. */
-.insert-coin { position: relative; animation: coin-breathe 1.8s ease-in-out infinite;
-  box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 22px -2px rgba(255, 225, 79, 0.62), 0 26px 30px -14px rgba(255, 225, 79, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
-.insert-coin::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42); opacity: 0; animation: coin-glow 1.8s ease-in-out infinite; will-change: opacity; }
+   The page's endless animations are drawn by the compositor, not painted again every frame. INSERT COIN's glow pulsed
+   by changing its shadow: now its bright glow, drawn once, fades in and out beneath its keyline and lip, and the
+   button breathes in size as before. The question under threat pulsed an outline's colour: now a ring drawn once fades
+   in and out, just inside its frame (the panel clips anything outside it). The hearts at low life beat by their size
+   alone over their steady glow; the hot threat label by its opacity. Nothing repainted. */
+.insert-coin { position: relative; isolation: isolate; animation: coin-breathe 1.8s ease-in-out infinite;
+  box-shadow: 0 0 22px -2px rgba(255, 225, 79, 0.62), 0 26px 30px -14px rgba(255, 225, 79, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+/* (its dark keyline and gold lip over both glows, as they were first in its one list of shadows; the bright glow beneath
+   them, under the words too) */
+.insert-coin::before { content: ""; position: absolute; inset: -2px; pointer-events: none; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f; }
+.insert-coin::after { content: ""; position: absolute; inset: -2px; z-index: -1; pointer-events: none; box-shadow: 0 0 40px 0 rgba(255, 225, 79, 0.95), 0 26px 34px -12px rgba(255, 225, 79, 0.42); opacity: 0; animation: coin-glow 1.8s ease-in-out infinite; will-change: opacity; }
 @keyframes coin-glow { 50% { opacity: 0.8; } }
 .scr-game.threat .qpanel { outline: none; animation: none; }
 .scr-game.threat .qpanel::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(255, 71, 105, 0.95); opacity: 0; animation: q-threat-o 0.7s ease-in-out infinite alternate; will-change: opacity; }
 @keyframes q-threat-o { to { opacity: 1; } }
 @keyframes threat-pulse { to { opacity: 0.55; } }
 @keyframes life-low { 0%, 100% { transform: scale(1); } 18% { transform: scale(1.28); } 36% { transform: scale(1.05); } 50% { transform: scale(1.2); } }
-@media (prefers-reduced-motion: reduce) { .insert-coin, .insert-coin::after, .scr-game.threat .qpanel::before { animation: none; } .insert-coin::after { opacity: 0.4; } .scr-game.threat .qpanel::before { opacity: 0.8; } }
-html.calm .insert-coin, html.calm .insert-coin::after { animation: none; }
-html.calm .insert-coin::after { opacity: 0.4; }
+/* held still (reduced motion, Reduced effects): INSERT COIN exactly as it stood still before, one list of shadows */
+@media (prefers-reduced-motion: reduce) { .scr-game.threat .qpanel::before { animation: none; opacity: 0.8; }
+  .insert-coin { animation: none; position: static; isolation: auto; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+  .insert-coin::before, .insert-coin::after { display: none; } }
+html.calm .insert-coin { animation: none; position: static; isolation: auto; box-shadow: 0 0 0 2px #05020f, 0 5px 0 0 #6f5a12, 0 5px 0 2px #05020f, 0 0 26px -4px rgba(255, 225, 79, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.14); }
+html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
 
 </style>
 </head>
