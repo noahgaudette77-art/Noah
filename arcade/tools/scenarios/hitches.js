@@ -48,7 +48,7 @@ module.exports = async (cap) => {
       gl[k] = function () {
         let src = null;
         for (let i = 0; i < arguments.length; i++) { const x = arguments[i]; if (x && typeof x === "object") { src = x; break; } }
-        if (src) H.uploads.push({ f: window.__cap.frame, k, what: name(src) });
+        if (src) H.uploads.push({ f: window.__cap.frame, k, what: name(src), bytes: ArrayBuffer.isView(src) ? src.byteLength : (src.naturalWidth || src.videoWidth || src.width || 0) * (src.naturalHeight || src.videoHeight || src.height || 0) * 4 });
         return f.apply(gl, arguments);
       };
     }
@@ -144,6 +144,10 @@ module.exports = async (cap) => {
     row.playPrograms = ev.programs.map((p) => `frame ${p.f}: ${p.name} (${p.users.join("; ") || "not in the scene"})`);
     row.playLinks = ev.links.map((l) => `frame ${l.f}: ` + l.st.map(([fn, line]) => fn + " " + where(line)).join(" < "));
     row.playUploads = ev.uploads;
+    // (the pictures sent in play, grouped by what they were: how many times, how many MB in all)
+    const groups = new Map();
+    for (const u of await page.evaluate((b) => window.__hc.uploads.slice(b).map((x) => [x.what, x.bytes || 0]), c1.uploads)) { const g = groups.get(u[0]) || [0, 0]; g[0]++; g[1] += u[1]; groups.set(u[0], g); }
+    row.uploadGroups = [...groups].sort((a, b) => b[1][1] - a[1][1]).slice(0, 10).map(([w, [n, b]]) => `${n}x ${w} (${(b / 1048576).toFixed(1)} MB)`);
     if (cdp && sampling) {
       const { profile } = await cdp.send("HeapProfiler.stopSampling"), nf = Math.max(1, f2 - fs0);
       const by = new Map();
@@ -157,10 +161,12 @@ module.exports = async (cap) => {
       row.garbage = { frames: nf, kbPerFrame: +(total / 1024 / nf).toFixed(1), top: [...by].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `${(v / 1024 / nf).toFixed(2)} KB/frame ${k}`) };
     }
     results.push(row);
+    fs.writeFileSync(path.join(cap.out, "hitches.json"), JSON.stringify(results, null, 1)); // (after each game: a long run can be read as it goes)
     console.log(`${game}: opened in ${row.opening.frames} frames (${row.opening.programs} shaders, ${row.opening.uploads} pictures); played ${row.play.frames} frames, ${answered} answers${end ? " (" + end + ")" : ""}: ${row.play.programs} shaders made, ${row.play.uploads} pictures sent${row.garbage ? ", " + row.garbage.kbPerFrame + " KB of garbage a frame" : ""}`);
     for (const p of row.playPrograms.slice(0, 12)) console.log("    shader " + p);
     for (const l of row.playLinks.slice(0, 12)) console.log("    linked at " + l);
-    for (const u of row.playUploads.slice(0, 12)) console.log("    picture at frame " + u);
+    for (const u of row.playUploads.slice(0, 6)) console.log("    picture at frame " + u);
+    if (row.uploadGroups.length) console.log("    pictures sent in play, by what: " + row.uploadGroups.join(" · "));
     if (row.garbage) for (const t of row.garbage.top.slice(0, 6)) console.log("    " + t);
     console.log(`    page elements changed: ${row.dom.perFrame} a frame` + (row.dom.top.length ? " (" + row.dom.top.slice(0, 4).join(", ") + ")" : ""));
   }
