@@ -9,17 +9,24 @@
  * The page is opened as a phone (#phone, 440 x 956 at 3x, touch), its game loop held still and its clock taken over,
  * so nothing but the frame times fed in moves the governor (an automated browser is otherwise left alone: see
  * perfTick). Each case starts from AUTO's first step and checks where the governor goes:
- *   start     a phone starts at SMOOTH (MEDIUM drawn at 1.75x, not 2x)
- *   slow      frames of 40 ms: a step every 3.5 s, the drawing size first, then the effects, then the lights, to the last
- *   recover   steady 60 fps from the last step: a step back up every 7.5 s, to SMOOTH and no higher
- *   lowpower  frames held at exactly 30 fps: two steps down change nothing, so it is the device's cap; back to SMOOTH,
- *             named in the readout, and held there, through a screen's loading too; at 60 again the cap lifts without a
- *             step down. Under a cap with a load too much even for 30: down until 30 holds, and held at that step
- *   catching  60 fps with one frame in eight at 50 ms: a step down (the frames catch)
- *   busy      the same hitches on frames that sent a new picture to the chip (a model arriving): no step
- *   relapse   a step up that runs late within 8 s is tried again only after 15 steady seconds, not 5
- *   fixed     Setup's fixed tier: the governor does nothing, at the tier's full size; AUTO again: back to SMOOTH
- *   desktop   a desktop's ladder starts at HIGH, full size
+ *   start      a phone starts at SMOOTH (MEDIUM drawn at 1.75x, not 2x)
+ *   slow       frames of 40 ms: a step every 3.5 s, the drawing size first, then the effects, then the lights, to the last
+ *   recover    steady 60 fps from the last step: a step back up every 7.5 s, to SMOOTH and no higher
+ *   lowpower   frames held at exactly 30: down until a real cut (a tier down, 51% of the pixels) still holds 30, so it
+ *              is the device's cap: back to SMOOTH, named in the readout, held through a new screen's first seconds;
+ *              at 60 again the cap lifts without a step down
+ *   boot       blank frames timed at the start every 33 ms: held at SMOOTH from the start, no step taken; at 60, no cap
+ *   under cap  frames still catching under the cap step down; steady at 30 again, back up
+ *   test       held at 30 with a load just over a frame: the step down tried after a minute runs at 60: no cap
+ *   heavy      under a cap, a load too much even for 30: down until 30 holds, then held at the sharpest step that held
+ *   heavy@30   a screen held at 30 by its own load, which a real cut lifts: no cap, held where it runs at 60
+ *   10 fps     a slow device still steps down
+ *   new screen the last screen's slow looks and a new screen's uneven first frames are not held against it
+ *   catching   60 fps with one frame in eight at 50 ms: a step down (the frames catch)
+ *   busy       the same hitches on frames that sent a new picture to the chip (a model arriving): no step
+ *   relapse    a step up that runs late within 8 s is tried again only after 15 steady seconds, not 5
+ *   fixed      Setup's fixed tier: the governor does nothing, at the tier's full size; AUTO again: back to SMOOTH
+ *   desktop    a desktop's ladder starts at HIGH, full size, and no step down draws more pixels
  * Exit code 1 on any failure.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
@@ -67,7 +74,8 @@ function inPage() {
     if (sc) G.lightsFor(sc); // (the screen's lights made for the current cap, as its next frame would)
     const pool = sc && sc.userData.lightPool;
     return { rung: P.rung, start: P.start, steps: P.ladder.length, tier: G.tier, scale: G.scale, lightCap: G.lightCap, pr: +G.outPR().toFixed(3), canvasW: G.renderer.domElement.width,
-      capped: P.capped, auto: G.auto, label: G.govLabel(), why: P.why, slots: pool ? pool.slots.point.length : null, ladder: P.ladder.map((r) => [r.tier, r.scale, r.lights]) };
+      capped: P.capped, auto: G.auto, label: G.govLabel(), why: P.why, slots: pool ? pool.slots.point.length : null, ladder: P.ladder.map((r) => [r.tier, r.scale, r.lights]),
+      px: P.ladder.map((r) => +(Math.min(window.devicePixelRatio || 1, G.TIERS[r.tier].pr) * r.scale).toFixed(4)) };
   };
 }
 
@@ -129,26 +137,66 @@ function inPage() {
   ok(s.lightCap === 99 && s.slots === 3 && s.scale === 0.875 && s.canvasW === 770, "recover: every light back, the canvas 770 px across", { cap: s.lightCap, slots: s.slots, scale: s.scale, w: s.canvasW });
   p = await feed(16.67, 20, 0.3);
   ok(p.length === 0, "recover: no higher by itself (MEDIUM's 2x is Setup's)", p);
-  // lowpower
+  // lowpower: frames held at exactly 30 from the start of a step: three steps down (a tier down, 51% of the pixels)
+  // do not lift them, so it is the device's cap: back to SMOOTH, and held
   await reset();
-  p = await feed(33.33, 14, 0.2);
+  p = await feed(33.33, 16, 0.2);
   s = await st();
-  ok(s.capped && s.rung === 0, "lowpower: two steps down, then back to SMOOTH and held", { capped: s.capped, rung: s.rung, path: p });
-  ok(p.length === 3 && p[0].rung === 1 && p[1].rung === 2 && p[2].rung === 0, "lowpower: down, down, back", p);
-  ok(/LOW POWER/.test(s.label), "lowpower: the readout names it", s.label);
+  ok(s.capped && s.rung === 0 && p.length === 4 && p[0].rung === 1 && p[1].rung === 2 && p[2].rung === 3 && p[3].rung === 0, "lowpower: down until a real cut (LOWEST, 51% of the pixels) still held 30, then back to SMOOTH and held", { capped: s.capped, rung: s.rung, path: p });
+  ok(/HELD AT 30 FPS · LOW POWER MODE\?/.test(s.label), "lowpower: the readout names it", s.label);
   p = await feed(33.33, 20, 0.2);
   ok(p.length === 0, "lowpower: held, no more steps while it lasts", p);
-  p = await feed(33.33, 8, 0.2, 6, 70);
+  await page.evaluate(() => { window.__arcade.GFX.sceneAt = performance.now(); }); // (a new screen)
+  p = (await feed(33.33, 1.5, 0.2, 6, 70)).concat(await feed(33.33, 6, 0.2));
   s = await st();
-  ok(s.capped && p.length === 0, "lowpower: held through a screen's loading (a frame in six at 70 ms)", { capped: s.capped, path: p });
+  ok(s.capped && p.length === 0, "lowpower: held through a new screen's uneven first seconds", { capped: s.capped, path: p });
   p = await feed(16.67, 12, 0.3);
   s = await st();
-  ok(!s.capped && s.rung === 0 && p.length === 0 && !/LOW POWER/.test(s.label), "lowpower: off again (60 fps): the cap lifts, no step down", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  ok(!s.capped && s.rung === 0 && p.length === 0 && !/HELD/.test(s.label), "lowpower: off again (60 fps): the cap lifts, no step down", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  // lowpower from the start: the blank frames timed at the start came every 33 ms
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(16.67)));
+  s = await st();
+  ok(!s.capped, "boot: blank frames at 60: no cap", s.capped);
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
+  p = await feed(33.33, 10, 0.2);
+  s = await st();
+  ok(s.capped && s.rung === 0 && p.length === 0, "boot: blank frames every 33 ms: held at SMOOTH from the start, no step taken to find it", { capped: s.capped, rung: s.rung, path: p });
+  // under the cap: frames still catching (a third of them at 67 ms) step down; steady again, back up
+  p = [];
+  for (let k = 0; k < 16 && !p.length; k++) p = await feed(33.33, 0.5, 0.2, 3, 66.7); // (until the step it causes)
+  s = await st();
+  ok(s.capped && p.length === 1 && p[0].rung === 1, "under the cap: frames still catching: a step down, still held", { capped: s.capped, path: p });
+  p = await feed(33.33, 12, 0.2);
+  s = await st();
+  ok(s.capped && s.rung === 0 && p.length === 1 && p[0].rung === 0, "under the cap: steady at 30 again: back up to SMOOTH", { capped: s.capped, rung: s.rung, path: p });
+  // the hold tested: a load just over a frame (30 at SMOOTH, 60 a step down) held at 30 from the start: the step down
+  // tried after a minute runs at 60, so the cap lets go
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
+  p = await page.evaluate(() => window.__feedBy([33.33], 16.67, 76, 0.3));
+  s = await st();
+  ok(!s.capped && p.length >= 1 && p[0].rung === 1 && s.rung >= 1, "test: held at 30, a step down tried after a minute runs at 60: no cap after all", { capped: s.capped, rung: s.rung, path: p });
   // lowpower, heavy: under the cap, the first two steps too much even for 30 (45 ms a frame), the rest holding 30
   await reset();
   p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 22, 0.3));
   s = await st();
-  ok(s.capped && s.rung === 2 && p.length === 5 && p[4].rung === 2, "lowpower, heavy: down until 30 holds, two more, then back to the sharpest step that held it", { rung: s.rung, capped: s.capped, path: p });
+  ok(s.capped && s.rung === 2 && p.length === 5 && p[4].rung === 2, "lowpower, heavy: down until 30 holds through a real cut, then back to the sharpest step that held it", { rung: s.rung, capped: s.capped, path: p });
+  // a heavy screen at 30 (each frame just over 17 ms): a real cut lifts it, so no cap
+  await reset();
+  p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33], 16.67, 14, 0.3));
+  s = await st();
+  ok(!s.capped && s.rung === 3, "heavy at 30: lifted at LOWEST (60 fps there): no cap, held there", { rung: s.rung, capped: s.capped, path: p });
+  // a slow device: frames of 100 ms (10 a second) still step it down
+  await reset();
+  p = await feed(100, 12, 3);
+  ok(p.length >= 2 && p[0].rung === 1, "slow device (10 fps): it steps down", p);
+  // a new screen's first seconds: slow looks under way, then a new screen whose first frames are uneven
+  await reset();
+  p = await feed(40, 3, 1);
+  await page.evaluate(() => { window.__arcade.GFX.sceneAt = performance.now(); });
+  p = p.concat(await feed(40, 0.8, 1), await feed(16.67, 6, 0.3));
+  ok(p.length === 0, "a new screen: the last one's slow looks and its own first frames are not held against it", p);
   // catching
   await reset();
   p = await feed(16.67, 6, 0.3, 8, 50);
@@ -172,7 +220,7 @@ function inPage() {
   await page.evaluate(() => window.__arcade.GFX.setQuality("low"));
   p = await feed(40, 10, 2);
   s = await st();
-  ok(!s.auto && p.length === 0 && s.tier === 2 && s.scale === 1 && s.label === "FIXED (SETUP)" && s.slots === 3, "fixed: Setup's LOW holds, at its full size, every light", { tier: s.tier, scale: s.scale, label: s.label, slots: s.slots, path: p });
+  ok(!s.auto && p.length === 0 && s.tier === 2 && s.scale === 1 && s.label === "FIXED (SETUP)" && s.why === "setup" && s.slots === 3, "fixed: Setup's LOW holds, at its full size, every light", { tier: s.tier, scale: s.scale, label: s.label, why: s.why, slots: s.slots, path: p });
   await reset();
   s = await st();
   ok(s.auto && s.rung === 0 && s.tier === 1 && s.scale === 0.875, "fixed: AUTO again starts from SMOOTH", { rung: s.rung, tier: s.tier, scale: s.scale });
@@ -183,7 +231,8 @@ function inPage() {
   await page2.goto(base + "/index.html#debug,noassets");
   await page2.waitForFunction(() => window.__arcade && window.__arcade.GFX && window.__arcade.GFX.perf.ladder && window.__arcade.Scenes.cur, null, { timeout: 60000, polling: 250 });
   const d = await page2.evaluate(() => window.__state());
-  ok(d.rung === 0 && d.tier === 0 && d.scale === 1 && d.ladder.length === 9 && d.ladder[1][1] === 0.875 && d.ladder[3][0] === 1, "desktop: HIGH at full size first; 9 steps", { rung: d.rung, tier: d.tier, ladder: d.ladder });
+  ok(d.rung === 0 && d.tier === 0 && d.scale === 1 && d.ladder.length === 9 && d.ladder[1][1] === 0.875 && d.ladder[3][0] === 1 && d.ladder[3][1] === 0.75, "desktop: HIGH at full size first; 9 steps; MEDIUM at 1.5x after HIGH's 1.5x", { rung: d.rung, tier: d.tier, ladder: d.ladder });
+  ok(d.px.every((x, i) => i === 0 || x <= d.px[i - 1] + 1e-9), "desktop: no step down draws more pixels", d.px);
   ok(errors.length === 0, "no page errors", errors.slice(0, 3));
   await browser.close();
   srv.close();

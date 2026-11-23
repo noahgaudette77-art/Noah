@@ -16,8 +16,9 @@ function boot() {
   //           60 fps, the dim one 30. Green bars met 60, amber missed it by a frame, red caught (over two frames);
   //           blue ones were a moment's work (a model arriving: shaders made, pictures sent), which AUTO leaves out
   //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), the lights, draw calls, triangles
-  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS: LOW POWER MODE?
-  //           when the device itself holds the page at 30 (see GFX.perfTick)
+  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS when the device
+  //           itself holds the page at 30: LOW POWER MODE?, or the main thread's time when that is what fills a frame
+  //           (see GFX.perfTick)
   const fpsEl = $("#fps");
   fpsEl.hidden = !(Store.settings.fps || /fps/.test(location.hash));
   fpsEl.innerHTML = `<div class="f1"></div><canvas class="fg" width="360" height="96"></canvas><div class="f2"></div><div class="f3"></div>`;
@@ -43,7 +44,7 @@ function boot() {
   let last = performance.now();
   const loop = (now) => {
     const real = Math.min(0.05, Math.max(0, (now - last) / 1000));
-    GFX.perfTick(now - last); // (the quality governor: see GFX.perfTick)
+    GFX.perfTick(now - last, cpuLast); // (the quality governor, told the frame's time and the main thread's share of it: see GFX.perfTick)
     if (!fpsEl.hidden) {
       fpsN++;
       fpsSum += now - last;
@@ -55,7 +56,7 @@ function boot() {
         const tris = GFX.ok && GFX.pipe ? GFX.pipe.lastTris : 0, pr = GFX.ok ? GFX.scenePR() : 1;
         fpsL1.textContent = `${Math.round((fpsN * 1000) / (now - fpsT))} FPS · ${(fpsSum / fpsN).toFixed(1)} MS · WORST ${Math.round(fpsWorst)} MS · HITCHES ${hitches.length} /10 S · CPU ${(fpsCpu / fpsN).toFixed(1)} MS`;
         fpsL2.textContent = GFX.ok ? `${GFX.TIERS[GFX.tier].name} · ${pr.toFixed(2)}X${GFX.scale < 1 ? " (" + Math.round(GFX.scale * 100) + "%)" : ""} ${Math.round(GFX.w * pr)}×${Math.round(GFX.h * pr)} · LIGHTS ${GFX.lightCount()} · ${GFX.pipe ? GFX.pipe.lastCalls : 0} CALLS · ${tris >= 1000 ? (tris / 1000).toFixed(1) + "K" : tris} TRIS` : "NO WEBGL";
-        fpsL3.textContent = GFX.ok ? GFX.govLabel() + (GFX.perf.why && !GFX.perf.capped ? " · " + GFX.perf.why.toUpperCase() : "") : "";
+        fpsL3.textContent = GFX.ok ? GFX.govLabel() + (GFX.auto && GFX.perf.why && !GFX.perf.capped ? " · " + GFX.perf.why.toUpperCase() : "") : "";
         drawGraph();
         fpsN = 0;
         fpsT = now;
