@@ -711,7 +711,6 @@ class ExamBoss {
     this.joints.forEach((j) => { j.mesh.material = j.name === "head" ? this.boneOpen : this.matOpen; });
     g.setBand(null);
     g.scene.userData.post.vignette = 1.3; // (the dark that closed in during the exam opens up for the ending)
-    g.scene.userData.mirrorOff = false; // (and the floor, out of sight until now, reflects again)
     this.camP.copy(g.camera.position); this.camL.copy(g.lookAt);
     if (g.el) {
       g.el.classList.add("cine");

@@ -10680,6 +10680,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
+  // (plates.tint, a Color: a stone's veins, where its blue is darkest, in that colour: the exam's dark marble, 2026-11-23)
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -10695,10 +10696,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
     uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
+    uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
   const defines = {};
   if (probe) defines.PROBE = "";
   if (probe && plates) defines.PLATES = "";
+  if (probe && plates && plates.tint) defines.PLATES_TINT = "";
   const mat = new THREE.ShaderMaterial({
     uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -10714,6 +10717,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES
       uniform sampler2D tPlates; uniform vec2 uPlates;
       #endif
+      #ifdef PLATES_TINT
+      uniform vec3 uPlatesTint;
+      #endif
       void main(){
         vec3 col = uBase;
         #ifdef PROBE
@@ -10724,6 +10730,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
+          #ifdef PLATES_TINT
+          col += uPlatesTint * smoothstep(0.5, 0.0, pm.b);
+          #endif
           #endif
           vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
           vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);
@@ -36585,6 +36594,116 @@ function examWindowLines(w, sill, spring) {
   return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true }));
 }
 
+// ---- the hall's stone (the master overhaul, Phase 2, 2026-11-23) ------------------------------------------------
+// The colonnade was twelve-sided flat violet posts and the wall one flat violet plane: the hall read as a violet haze
+// round a dark figure. Its stone now is marble (ambientCG Marble012, CC0: assets/ui/mat-marble.webp, the stone's
+// light and its veins as a grey picture, high where the stone is light; a level grey until it arrives), polished,
+// mirroring the hall (ExamGame.probeTaken), its columns fluted, steel at their feet and capitals, and lit by their own
+// violet neon: four tubes up each shaft and a ring at its foot and its neck. The wall is laid in courses, its windows
+// set in mouldings that the moon lights from outside, an upper storey of blind arches over a cornice with its own neon,
+// the columns' light washing up it from the floor, and the dark taking it above.
+const EXAM_COL_TOP = 14.6;
+// A column turned on a lathe, its texture's u round it (two repeats) and its v up it (a repeat every 1.9 units).
+function examColumnGeometry() {
+  const g = examLathe([[1.02, 0], [1.02, 0.42, true], [0.92, 0.5], [0.86, 0.64], [0.8, 0.72, true], [0.68, 0.78], [0.66, 0.9, true], [0.62, 1.0], [0.6, 7.0], [0.57, 13.38, true],
+    [0.63, 13.43], [0.63, 13.56, true], [0.58, 13.62, true], [0.72, 13.86], [0.9, 14.12, true], [1.02, 14.14, true], [1.02, EXAM_COL_TOP, true], [0, EXAM_COL_TOP]], 32);
+  const p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, uv.getX(i) * 2, p.getY(i) / 1.9);
+  return g;
+}
+function examColumnMaterial(marble, env) {
+  const m = new THREE.MeshStandardMaterial({ map: marble, metalness: 0, roughness: 0.2, envMap: env, envMapIntensity: 1 });
+  m.userData.neon = { value: neon(0x9a52ff, 1.7) };
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uColNeon = m.userData.neon;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vColP;")
+      .replace("#include <uv_vertex>", `#include <uv_vertex>
+        vColP = position;
+        #ifdef USE_INSTANCING
+        vUv += fract(instanceMatrix[3].xz * vec2(0.137, 0.311)) * vec2(2.0, 3.0); // (each column cut from its own part of the stone)
+        #endif`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vColP; uniform vec3 uColNeon;")
+      .replace("#include <map_fragment>", `#include <map_fragment>
+        float colV = texelColor.b, colY = vColP.y, colR = length(vColP.xz);
+        float colShaft = smoothstep(0.9, 1.0, colY) * (1.0 - smoothstep(13.36, 13.42, colY));
+        // marble on the shaft (a pale stone with dark veins), dark steel at its foot and its capital
+        diffuseColor.rgb = mix(vec3(0.17, 0.17, 0.2), mix(vec3(0.035, 0.032, 0.045), vec3(0.24, 0.235, 0.27), colV), colShaft);
+        // the neon: four tubes up the shaft (at 45 degrees either side of the front and back) and a ring at its foot and its neck
+        float colA = atan(vColP.z, vColP.x), colPx = length(fwidth(vColP)) + 1e-4;
+        float colD = abs(fract((colA - 0.7854) / 1.5708 + 0.5) - 0.5) * 1.5708 * colR;
+        float colTube = (1.0 - smoothstep(0.022, 0.022 + colPx * 1.5, colD)) * colShaft;
+        float colRing = (1.0 - smoothstep(0.03, 0.03 + colPx * 1.5, abs(colY - 0.95))) + (1.0 - smoothstep(0.03, 0.03 + colPx * 1.5, abs(colY - 13.5)));
+        float colGlow = exp(-colD * 9.0) * colShaft * 0.5 + exp(-abs(colY - 0.95) * 4.0) * 0.6 + exp(-abs(colY - 13.5) * 4.0) * 0.6;`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(0.32, 0.14 + 0.16 * (1.0 - colV), colShaft);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.85, 0.0, colShaft);")
+      // (the examiner's lamps are aimed at the examiner: on the colonnade they fall faint, and its own neon and the hall
+      // it mirrors light it, so it stands back behind the figure)
+      .replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\nreflectedLight.directDiffuse *= 0.4; reflectedLight.directSpecular *= 0.6;")
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        if (colShaft > 0.0) { // its flutes: twenty channels round the shaft, each tilting the light across it (none finer than a few pixels)
+          float flw = 20.0 * colPx / max(colR, 0.1); // (how far round a channel a pixel goes: from the position, smooth where the angle wraps)
+          vec3 tng = normalize((viewMatrix * vec4(-vColP.z, 0.0, vColP.x, 0.0)).xyz);
+          normal = normalize(normal + tng * sin(colA * 20.0) * 0.3 * colShaft * (1.0 - smoothstep(1.6, 3.2, flw)));
+        }`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        totalEmissiveRadiance += uColNeon * (max(colTube, colRing) + colGlow * diffuseColor.rgb * 0.6);`);
+  };
+  m.customProgramCacheKey = () => "exam-column-1";
+  return m;
+}
+// The back wall's stone, painted with its light (unlit: one look-up a pixel).
+function examWallMaterial(marble) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { tMarble: { value: marble }, uWash: { value: neon(0x7a52ff, 1) }, uMoon: { value: neon(0x8fb4ff, 1) }, uNeon: { value: neon(0xa65fff, 2.0) } }),
+    extensions: { derivatives: true, shaderTextureLOD: true },
+    vertexShader: "varying vec3 vWorld; varying float vDepth; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vec4 mv = viewMatrix * w; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
+    fragmentShader: `${GLSL_FOG_PARS}
+      uniform sampler2D tMarble; uniform vec3 uWash; uniform vec3 uMoon; uniform vec3 uNeon; varying vec3 vWorld; varying float vDepth;
+      // (each block of stone is its own part of the marble: looked up with the slope of the wall itself, so the jump
+      // from one block's part to the next is not filtered to a line of blur along every joint)
+      float stone(vec2 uv, vec2 s){
+        #ifdef TEXTURE_LOD_EXT
+        return texture2DGradEXT(tMarble, uv, dFdx(s), dFdy(s)).b;
+        #else
+        return texture2D(tMarble, uv).b;
+        #endif
+      }
+      // distance outside an arched opening: half-width w, from y0 to its springing y1, a half disc above (negative inside)
+      float arch(vec2 p, float w, float y0, float y1){ return p.y > y1 ? length(vec2(p.x, p.y - y1)) - w : max(abs(p.x) - w, y0 - p.y); }
+      void main(){
+        vec2 p = vWorld.xy;
+        float px = max(fwidth(p.x), fwidth(p.y)) + 1e-4, fine = 1.0 - smoothstep(0.03, 0.09, px);
+        // courses of stone, each block its own part of the marble, the joints a little darker
+        float row = floor(p.y / 1.15);
+        vec2 q = vec2(p.x / 2.3 + 0.5 * mod(row, 2.0), p.y / 1.15), f = fract(q), dd = min(f, 1.0 - f) * vec2(2.3, 1.15);
+        float joint = (1.0 - smoothstep(0.025 - px, 0.025 + px, min(dd.x, dd.y))) * fine;
+        float st = stone(p * 0.11 + floor(q) * vec2(0.37, 0.61), p * 0.11);
+        vec3 col = vec3(0.055, 0.036, 0.12) * (0.72 + 0.45 * st) * (1.0 - 0.5 * joint);
+        // the windows: each in a moulding (a band of lighter stone round its opening, its inner edge lit by the moon),
+        // the moon's light spilling on the wall round it; the upper storey's blind arches, recessed and dark
+        float wx = p.x - clamp(floor(p.x / 8.0 + 0.5), -4.0, 4.0) * 8.0;
+        float dw = arch(vec2(wx, p.y), 1.7, 2.2, 10.2);
+        float band = (1.0 - smoothstep(0.32, 0.32 + px, dw)) * smoothstep(0.0, px, dw);
+        col = mix(col, vec3(0.1, 0.075, 0.2) * (0.85 + 0.3 * st), band);
+        col += uMoon * (0.5 * (1.0 - smoothstep(0.0, 0.07 + px, dw)) * smoothstep(0.0, px, dw) + 0.05 * exp(-dw * 1.6));
+        float db = arch(vec2(wx, p.y), 2.0, 15.4, 22.0);
+        col *= 1.0 - 0.55 * (1.0 - smoothstep(-0.1, 0.0, db));
+        col += uMoon * 0.12 * (1.0 - smoothstep(0.0, 0.05 + px, abs(db))) * fine;
+        // the cornice: a ledge of lighter stone and a strip of the hall's neon along it
+        col = mix(col, vec3(0.11, 0.08, 0.21), smoothstep(12.5, 12.5 + px, p.y) * (1.0 - smoothstep(13.4, 13.4 + px, p.y)));
+        col += uNeon * (1.0 - smoothstep(0.035, 0.035 + px * 1.5, abs(p.y - 12.95))) + uNeon * 0.04 * exp(-abs(p.y - 12.95) * 2.0);
+        // the columns' light washing up the wall from the floor, between the windows
+        float cx = mod(p.x - 4.0, 8.0) - 4.0;
+        col += uWash * exp(-pow(cx / (0.9 + 0.09 * p.y), 2.0)) * exp(-p.y * 0.13) * 0.42;
+        // and the dark taking the wall above
+        col *= mix(1.0, 0.3, smoothstep(13.5, 34.0, p.y));
+        gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
+      }`,
+  });
+}
+
 // The night outside the windows: a violet horizon, twinkling stars and a soft moon,
 // placed so it shows through the window to the right of the cup (and in the floor).
 function examNightMaterial() {
@@ -36801,7 +36920,6 @@ class ExamGame extends QuizGame {
     });
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf7c052, metalness: 1, roughness: 0.16, envMap: env, envMapIntensity: 1.5 }), { scale: 1.4, height: 0.0012, scratch: 1.2 });
     const lacquer = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x0d0a1c, metalness: 0.35, roughness: 0.16, envMap: env, envMapIntensity: 0.9 }), { scale: 1.1, height: 0.0008, grain: 0.5, scratch: 1.4, smudge: 0.55 });
-    const marble = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x1a1233, metalness: 0.2, roughness: 0.4, envMap: env, envMapIntensity: 0.7, flatShading: true }), { scale: 0.6, height: 0.003, smudge: 0.5 });
 
     // Light it to be seen and feared (the master overhaul, Phase 2, 2026-11-23: the art bible's rule, a key and a rim,
     // its face and chest never darker than what is behind them). The budget draws one directional light and four
@@ -36835,18 +36953,20 @@ class ExamGame extends QuizGame {
     const night = (this.night = new THREE.Mesh(new THREE.PlaneGeometry(190, 64), examNightMaterial()));
     night.position.set(0, 26, EXAM_WALL_Z - 12);
     s.add(night);
-    // a big, dim surface: per-vertex lighting is plenty here and cheap on phones
-    const wall = new THREE.Mesh(examWallGeometry(3.4, 2.2, 10.2), new THREE.MeshLambertMaterial({ color: 0x140b2b }));
+    // the hall's marble (see examColumnMaterial): a level grey until the picture arrives (takeSurfaces)
+    this.marble = cellFlatTexture();
+    // a big, dim surface: its light painted on it (one look-up a pixel, no lights reckoned), cheap on phones
+    const wall = new THREE.Mesh(examWallGeometry(3.4, 2.2, 10.2), examWallMaterial(this.marble));
     wall.position.z = EXAM_WALL_Z;
     s.add(wall);
     const lines = examWindowLines(3.4, 2.2, 10.2);
     lines.position.z = EXAM_WALL_Z + 0.06;
     lines.layers.set(1);
     s.add(lines);
-    const colGeo = examLathe([[1.0, 0], [1.0, 0.45, true], [0.84, 0.6], [0.8, 0.72, true], [0.66, 0.86, true], [0.58, 13.6, true], [0.7, 13.8], [0.88, 14.15, true], [1.0, 14.15, true], [1.0, 14.6, true], [0, 14.6]], 12);
     const spots = EXAM_WINDOWS.slice(0, -1).map((x) => [x + 4, EXAM_WALL_Z + 0.35]);
     [-1, 1].forEach((sd) => [-14, -8, -2].forEach((z) => spots.push([sd * 11, z])));
-    const cols = new THREE.InstancedMesh(colGeo, marble, spots.length);
+    this.colMat = examColumnMaterial(this.marble, env);
+    const cols = new THREE.InstancedMesh(examColumnGeometry(), this.colMat, spots.length);
     const m = new THREE.Matrix4();
     spots.forEach(([x, z], i) => cols.setMatrixAt(i, m.makeTranslation(x, 0, z)));
     cols.frustumCulled = false;
@@ -36870,20 +36990,31 @@ class ExamGame extends QuizGame {
       s.add(b);
       this.moonBeams.push(b);
     });
-    // mist at hip height: wide, faint sheets of violet light lying over the floor, front to back
+    // mist at hip height: wide, faint sheets of light lying over the floor, front to back (violet near, the hall's ice
+    // blue far: the planes a step cooler as they go back, Phase 2)
     this.mist = [[-9, 1.0, -12, 30, 3.2, 0.07], [8, 0.9, -7, 26, 2.8, 0.06], [-5, 0.8, -2, 24, 2.4, 0.05], [10, 0.9, -15, 30, 3.4, 0.07], [0, 1.1, -18, 44, 4, 0.08]].map(([x, y, z, w, h, o], i) => {
-      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: neon(0x6a58d8, 1), transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending }));
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: neon(z > -10 ? 0x6a58d8 : 0x5f7ae6, 1), transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending }));
       m.position.set(x, y, z); m.scale.set(w, h, 1); m.layers.set(1); m.userData = { x, ph: i * 1.7 };
       s.add(m);
       return m;
     });
     this.ambience = new ExamAmbience(this, this.moonBeams); // lanterns past the windows, beams that sway
 
-    // polished floor: a polar grid around the plinth, and the reflection of it all
-    this.mirror = new Mirror(0);
-    this.floor = makeNeonFloor({ size: 300, mirror: this.mirror, polar: true, spokes: 32, cell: 2.6, line: 0x7a4dff, lineK: 0.42, base: 0x030110, reflect: 0.62, glow: 0.3, ripple: 0.0018, streak: 0.013 });
+    // A polished floor of dark marble that gives the hall back (the master overhaul, Phase 2, 2026-11-23: a polar grid
+    // on a black plane that reflected nothing on a phone and, on a Mac's ending, drew the whole hall a second time
+    // every frame). The hall is drawn once into a cube from in front of the dais (roomProbe: a face a frame, a few
+    // frames in; again only if the marble arrives after it: takeSurfaces) and the floor looks it up where each
+    // reflected ray meets the hall's box, blurred by the stone's polish; the marble's veins pale in it, its slabs set
+    // off by lines of the hall's violet. The examiner and its lectern are left out of the cube (it would mirror
+    // itself); the columns take the same capture, filtered for their polish (probeTaken).
+    this.probe = roomProbe(new THREE.Vector3(0, 4.5, 7), { size: Assets.phone ? 128 : 256 });
+    this.floor = makeNeonFloor({
+      size: 300, cell: 4.2, line: 0x9a6bff, lineK: 0.3, base: 0x040211, glow: 0.25, gridAlpha: 0.55, ripple: 0, streak: 0,
+      probe: { map: this.probe.map, min: new THREE.Vector3(-36, 0, EXAM_WALL_Z), max: new THREE.Vector3(36, 44, 34), at: this.probe.at, k: 0.95, rough: 0.12 },
+      plates: { map: this.marble, size: 4.2, k: 0, tint: new THREE.Color(0.05, 0.045, 0.075) },
+    });
     s.add(this.floor);
-    s.userData.mirrors = [this.mirror];
+    this.probeIn = 4;
 
     // the dais: black lacquer, gold bands, a violet ring of light at its foot
     s.add(new THREE.Mesh(examLathe([[BOSS_DAIS_R + 0.35, 0], [BOSS_DAIS_R + 0.35, 0.14, true], [BOSS_DAIS_R + 0.2, 0.22, true], [BOSS_DAIS_R, 0.22, true], [BOSS_DAIS_R, BOSS_DAIS, true], [0, BOSS_DAIS]], 72), lacquer));
@@ -36919,9 +37050,9 @@ class ExamGame extends QuizGame {
       if (this.gen && this.gen.dome) this.backShade.material.opacity = 0.42; // (served: the moon behind its head shows through)
       s.add(this.backShade);
     }
-    // while the questions are up the camera is under the boss's chin and the floor is out of
-    // sight: its reflection (the whole hall drawn a second time) waits for the ending
-    s.userData.mirrorOff = !!this.boss;
+    // what the hall's cube leaves out: the floor (it never mirrors itself), the examiner, its lectern and the shade
+    // behind it (each would mirror itself on the floor, laid on the hall's far walls)
+    this.probe.hide = [this.floor, this.boss && this.boss.root, this.boss && this.boss.puffs.mesh, this.backShade, this.gen && this.gen.podium && this.gen.podium.scene].filter(Boolean);
     // the spotlight from above, its pool on the floor, dust turning in it
     // (the shaft of light falls behind it, so it stands out against it instead of in its haze)
     const beam = examBeam({ color: 0xd8ccff, top: 0.7, bottom: 7, height: 22, intensity: 0.1 });
@@ -36991,12 +37122,51 @@ class ExamGame extends QuizGame {
     super.resume();
     if (this.boss && this.boss.mode === "idle") Sound.dread(true);
   }
-  // Free what the scene graph walk misses: the env target and instance buffers.
+  // The hall's cube (the floor's reflection): a face a frame, once, a few frames in (the screen's lights are made at its
+  // first drawing; what the cube sees, the neon, the painted wall and the windows, is its own light, so the examiner's
+  // lamps coming up as it wakes change little in it), and again only if the marble arrives after it; and the marble
+  // itself as it arrives.
+  takeSurfaces() {
+    if (this.marble && !this.marbleIn) { const img = Assets.ui("mat-marble"); if (img) { this.marble.image = img; this.marble.needsUpdate = true; this.marbleIn = true; if (this.probe && this.probe.made) this.probe.capture(); } }
+    if (!this.probe) return;
+    if (this.probeIn > 0 && --this.probeIn === 0) this.probe.capture();
+    this.probe.step(this.scene, this.camera.layers.mask);
+    this.probeTaken();
+  }
+  // a capture whole: the columns take it too, filtered for their polish (a cube of their own, made once a capture:
+  // what reads it is never drawn into what it reads)
+  probeTaken() {
+    const P = this.probe;
+    if (!P || P.left || P.done === P.made) return;
+    P.done = P.made;
+    if (this.colMat && GFX.ok) {
+      try {
+        const pm = GFX.pmrem().fromCubemap(P.map);
+        if (this.colEnv) this.colEnv.dispose();
+        this.colEnv = pm; this.colMat.envMap = pm.texture;
+      } catch (e) { /* the columns keep the hall's own env */ }
+    }
+  }
+  // the floor's reflection drawn whole at once (for a test's stills: the capture tool draws only the frames it keeps,
+  // so a face a frame would never be drawn there; the game itself draws every frame. See HallScene.probeNow)
+  probeNow() {
+    if (!this.probe) return;
+    this.takeSurfaces();
+    this.probeIn = 0;
+    this.probe.capture();
+    while (this.probe.left) this.probe.step(this.scene, this.camera.layers.mask);
+    this.probeTaken();
+  }
+  // Free what the scene graph walk misses: the env targets, the hall's cube and its filtered copy, the marble (not
+  // only a material's map) and instance buffers.
   dispose() {
     Sound.dread(false);
     Trophies.hold(false);
     if (this.envRT) this.envRT.dispose();
     if (this.bossEnvRT) this.bossEnvRT.dispose();
+    if (this.probe) this.probe.dispose();
+    if (this.colEnv) this.colEnv.dispose();
+    if (this.marble) this.marble.dispose();
     if (this.monument) this.monument.dispose();
     if (this.scene) this.scene.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
     super.dispose();
@@ -37229,6 +37399,7 @@ class ExamGame extends QuizGame {
     this.motes.userData.drift(t);
     this.moonMotes.userData.drift(t);
     FX.sync(this.scene, t);
+    this.takeSurfaces();
   }
 }
 
@@ -38172,7 +38343,6 @@ class ExamBoss {
     this.joints.forEach((j) => { j.mesh.material = j.name === "head" ? this.boneOpen : this.matOpen; });
     g.setBand(null);
     g.scene.userData.post.vignette = 1.3; // (the dark that closed in during the exam opens up for the ending)
-    g.scene.userData.mirrorOff = false; // (and the floor, out of sight until now, reflects again)
     this.camP.copy(g.camera.position); this.camL.copy(g.lookAt);
     if (g.el) {
       g.el.classList.add("cine");

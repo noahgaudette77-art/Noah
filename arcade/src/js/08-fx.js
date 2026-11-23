@@ -291,6 +291,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
+  // (plates.tint, a Color: a stone's veins, where its blue is darkest, in that colour: the exam's dark marble, 2026-11-23)
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -306,10 +307,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
     uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
+    uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
   const defines = {};
   if (probe) defines.PROBE = "";
   if (probe && plates) defines.PLATES = "";
+  if (probe && plates && plates.tint) defines.PLATES_TINT = "";
   const mat = new THREE.ShaderMaterial({
     uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -325,6 +328,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES
       uniform sampler2D tPlates; uniform vec2 uPlates;
       #endif
+      #ifdef PLATES_TINT
+      uniform vec3 uPlatesTint;
+      #endif
       void main(){
         vec3 col = uBase;
         #ifdef PROBE
@@ -335,6 +341,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
+          #ifdef PLATES_TINT
+          col += uPlatesTint * smoothstep(0.5, 0.0, pm.b);
+          #endif
           #endif
           vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
           vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);

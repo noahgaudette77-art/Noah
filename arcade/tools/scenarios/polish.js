@@ -186,6 +186,7 @@ module.exports = async (cap) => {
     await cap.eval(() => { window.__arcade.show.examSetup(); const b = document.querySelector("[data-act=len][data-v='20']"); if (b) b.click(); });
     await cap.go("exam", "all");
     await cap.fast(260);
+    await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.probeNow) s.probeNow(); }); // (its floor's and columns' reflection drawn now: see ExamGame.probeNow)
     await still("13-exam");
   }
   // ---- Strategy Guide: the library, then a chapter open
