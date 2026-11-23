@@ -104,7 +104,7 @@ class BossStage {
   // fight goes on as it was before it (the rules' own steps after the call are never skipped)
   wizCall(fn) {
     if (!this.wiz) return undefined;
-    try { return fn(this.wiz); } catch (e) { console.warn("wizard: " + (e && e.message)); try { this.wiz.hide(); } catch (e2) { /* gone */ } this.wiz = null; return undefined; }
+    try { return fn(this.wiz); } catch (e) { console.warn("wizard: " + (e && e.message)); try { this.wiz.hide(); this.wiz.dispose(); } catch (e2) { /* gone */ } this.wiz = null; return undefined; }
   }
   // ---- places ---------------------------------------------------------------------------------------------------
   // a place in the picture: x, y from -1 to 1 across and up the band, `dist` from the lens

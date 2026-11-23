@@ -32235,7 +32235,7 @@ class BossStage {
   // fight goes on as it was before it (the rules' own steps after the call are never skipped)
   wizCall(fn) {
     if (!this.wiz) return undefined;
-    try { return fn(this.wiz); } catch (e) { console.warn("wizard: " + (e && e.message)); try { this.wiz.hide(); } catch (e2) { /* gone */ } this.wiz = null; return undefined; }
+    try { return fn(this.wiz); } catch (e) { console.warn("wizard: " + (e && e.message)); try { this.wiz.hide(); this.wiz.dispose(); } catch (e2) { /* gone */ } this.wiz = null; return undefined; }
   }
   // ---- places ---------------------------------------------------------------------------------------------------
   // a place in the picture: x, y from -1 to 1 across and up the band, `dist` from the lens
@@ -33309,6 +33309,7 @@ class BossFlavor {
 //
 //   the entrance   it drops in, in a burst of cyan light, as the boss does, and rises from the landing
 //   a question     it holds its wand out at the boss, higher as the attack bar fills; the wand's tip gathers light
+//                  (while it is there, the crowd's front row, the arena's old foreground, sinks out of the picture)
 //   an answer      it casts: ARC BOLTS, cyan, leave the wand's tip (a wrong answer's sputter and die on the armour)
 //   a right one    NOVA LANCE, magenta, from the wand to the boss on the rule's frame; a heavy blow (a big hit, an
 //                  enraging or a finishing one) is a big cast, with a rune circle at the wand
@@ -33330,7 +33331,7 @@ const WIZ = {
   // whole screen is the picture; never more than half the way to the boss); how far it is turned from facing the boss
   // (negative: its right side, the wand's, toward the lens)
   SPOT: { x: -0.6, cut: 0.95, dist: 4.8, distWhole: 6.5, turn: -0.45 },
-  ROW: 8.0, ROW_SINK: 0.55, // where it stands nearer the boss than this, the crowd's front row (7.3-7.85 m out) sinks this far, out of the picture
+  ROW_SINK: 0.55, // while it is there, the crowd's front row (7.3-7.85 m out, its heads just over the foot of the picture) sinks this far, out of the picture
   READY: [0.6, 0.9], // how far its wand is held out at the boss while a question is read: as it comes up, and as the attack bar fills
   RIM: [0.62, 0.72, 1.0], RIM_K: 1.15, // its rim's colour (a cold lilac-blue: it reads against a red arena and a blue one) and strength
   GLOW: 1.9, // its neon's strength (out of hearts, it dims)
@@ -33578,7 +33579,7 @@ class Wizard {
     this.whip = 1; this.flare0 = 1;
     this.ring(p, WIZ.NOVA, big ? 1.5 : 0.9, big ? 0.5 : 0.32);
     kit.flash(p, WIZ.NOVA, 0.12, big ? 0.9 : 0.6, 0.12, 0.9, 1.8); // (drawn only: the kit's one blast light is the boss's, where the lance lands)
-    if (lance && at) this.lance = { h: lance, to: at.clone() };
+    if (lance && at) this.lance = { h: lance, to: at.clone(), t: 0 }; // (for its own life only: 0.15 s; the kit's beams are pooled)
     wizSfx("wiz_nova", null, -0.3, { vol: big ? 0.95 : 0.75 });
     if (!big) wizSfx("wiz_impact", null, 0, { vol: 0.9, delay: 0.04 });
     if (big && at && !this.quiet) for (let i = 1; i < 3; i++) this.g.show.wait(0.05 * i, () => { if (!this.g.unmounted) kit.sparks(at, i % 2 ? 0xffffff : WIZ.NOVA, { n: 8, speed: 9, life: 0.4, len: 0.6, w: 0.05, gravity: 4 }); });
@@ -33638,7 +33639,7 @@ class Wizard {
     wizSfx("wiz_defeat", null, -0.4, { vol: 0.85, delay: 0.2 });
   }
   // gone (something in it failed: the stage drops it and fights on without it)
-  hide() { this.root.visible = false; for (const o of this.sprites) o.visible = false; this.fx.length = 0; this.lance = null; }
+  hide() { this.root.visible = false; for (const o of this.sprites) o.visible = false; this.fx.length = 0; this.lance = null; if (this.rowTop !== undefined && this.g.frontRow) this.g.frontRow.userData.top = this.rowTop; }
   // ---- helpers ---------------------------------------------------------------------------------------------------
   // a rune circle at a point, in a colour, turning as it grows and fades
   ring(p, color, size, dur) {
@@ -33687,21 +33688,25 @@ class Wizard {
     this.foot = wizEase(this.foot, ((mid - footPx) * 2 * D * t) / GFX.h, d, 4);
     this._m.lookAt(g.camBase, g.lookAt, cam.up);
     this._q.setFromRotationMatrix(this._m);
-    const p = this._v.set(sp.x * D * t * (GFX.w / GFX.h), this.foot - sp.cut, -D).applyQuaternion(this._q).add(g.camBase);
+    // (across: never left of the answers' own left edge, a little in: on a very wide screen they stand in a column,
+    // and its legs would show beside them. Read twice a second.)
+    if (!(this.ansT > 0)) { this.ansT = 0.5; const el = g.el && g.el.querySelector(".answers"), r = el && el.getBoundingClientRect(); this.ansL = r && r.width > 0 ? (r.left / GFX.w) * 2 - 1 : -1; }
+    this.ansT -= d || 0;
+    this.x = wizEase(this.x, Math.max(sp.x, (this.ansL === undefined ? -1 : this.ansL) + 0.12), d, 3);
+    const p = this._v.set(this.x * D * t * (GFX.w / GFX.h), this.foot - sp.cut, -D).applyQuaternion(this._q).add(g.camBase);
     // standing on the floor when it is all picture, unless that would take its hips under the foot of the screen (a wide
     // screen, the lens high and looking up at the boss): there, no lower than that
     p.y = lerp(p.y, Math.max(0, p.y), this.ground) - this.sink;
     this.root.position.copy(p);
     this.root.rotation.y = Math.atan2(-p.x, -p.z) + sp.turn;
     // The crowd's front row (22-boss.js) stands 7.3 to 7.85 m in front of the boss, its heads just over the foot of the
-    // picture. On a screen held upright the lens is far enough back for the wizard to stand in front of it; where it
-    // would stand behind it (a wide screen brings the lens nearer), the row sinks out of the picture: the wizard is the
-    // foreground there. (Its top, which the arena keeps at the band's foot, is moved; the row is look only.)
+    // picture: the arena's foreground. The wizard is the foreground now, and it stands among them as the lens comes in
+    // (its wand hand a metre past it, as it holds the wand out): while it is there, the row sinks out of the picture. (Its
+    // top, which the arena keeps at the band's foot, is moved; the row is look only. hide and dispose put it back.)
     const fr = g.frontRow;
     if (fr && fr.userData && fr.userData.top !== undefined) {
       if (this.rowTop === undefined) this.rowTop = fr.userData.top;
-      this.rowOff = this.root.visible && (this.rowOff ? p.z < WIZ.ROW + 0.2 : p.z < WIZ.ROW - 0.2); // (with a margin each way: a lens that comes in a little on a blow does not bob it)
-      this.rowSink = wizEase(this.rowSink, this.rowOff ? WIZ.ROW_SINK : 0, d, 3);
+      this.rowSink = wizEase(this.rowSink, this.root.visible ? WIZ.ROW_SINK : 0, d, 3);
       fr.userData.top = this.rowTop + this.rowSink;
     }
   }
@@ -33754,7 +33759,7 @@ class Wizard {
       r.sp.material.rotation += d * 0.8;
     }
     // the lance's root stays at the wand's tip while it is drawn (the wand moves under it on a big cast)
-    if (this.lance) { if (this.lance.h.live()) this.lance.h.set(tp, this.lance.to); else this.lance = null; }
+    if (this.lance) { if ((this.lance.t += d) < 0.2 && this.lance.h.live()) this.lance.h.set(tp, this.lance.to); else this.lance = null; }
     // what is fading
     for (let i = this.fx.length - 1; i >= 0; i--) {
       const e = this.fx[i];
