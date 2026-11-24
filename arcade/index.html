@@ -14264,7 +14264,7 @@ function hallSteelShade(m) {
         metalnessFactor = mix(metalnessFactor, 0.4, hWall); roughnessFactor = mix(roughnessFactor, 0.58, hWall);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         {
-          float y = vHW.y, fy = fwidth(y), fz = max(fwidth(vHW.z), fwidth(vHW.x));
+          float y = vHW.y, fy = max(fwidth(y), 1e-4), fz = max(max(fwidth(vHW.z), fwidth(vHW.x)), 1e-4); // (never naught: a smoothstep's two edges are never one: the independent review)
           float hu = abs(vHN.z) > 0.5 ? vHW.x : vHW.z; // (along the wall)
           float dz = abs(fract(hu / 1.5 + 0.5) - 0.5) * 1.5, dy = min(abs(y - 1.2), abs(y - 5.9)), ds = abs(y - 3.3);
           float seam = max(1.0 - smoothstep(0.01, 0.01 + fz, dz), 1.0 - smoothstep(0.01, 0.01 + fy, dy));
@@ -14275,7 +14275,7 @@ function hallSteelShade(m) {
           totalEmissiveRadiance += vColor * 0.3 * (1.0 - hWall) + wall * hWall;
         }`);
   };
-  m.customProgramCacheKey = () => "hall-steel-1";
+  m.customProgramCacheKey = () => "hall-steel-2";
 }
 
 class HallScene extends Scene3D {
@@ -14987,6 +14987,7 @@ class HallScene extends Scene3D {
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
       c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
+      c.rimU.key.value = 2.0 / (1 + 1.2 * Math.min(1, c.flick)); // (the cap lamp's key steady through a rattle: only the rim flares, as before it came. The independent review: the boss's whole lit front flashed toward white)
       // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
@@ -15261,7 +15262,12 @@ function cellSteelMaterial() {
         vec3 sTilt = sTx * (sCov.x * sign(vEdge.x - 0.5) / sLx) + sTy * (sCov.y * sign(vEdge.y - 0.5) / sLy);
         // the brushing: the grain of its streaks (the map's roughness, across them) tilts the face a little; finer than
         // the pixel, the map's smaller copies flatten it
-        float sSl = clamp((texture2D(tBrush, vUvM * vec2(1.4, 0.35) + vec2(0.0, 0.002)).b - brush.b) * 175.0, -6.0, 6.0);
+        // (the independent review, 2026-11-24: at 175 times the map's step, to six, the tilt rippled the junction boxes
+        // like water and turned the bars to rust, and where a texel is about a pixel it would shimmer in the glide: a
+        // quarter of it, to two, and gone where a pixel covers more than one of the map's 512 texels)
+        vec2 sUvB = vUvM * vec2(1.4, 0.35);
+        float sFoot = max(fwidth(sUvB.x), fwidth(sUvB.y)) * 512.0;
+        float sSl = clamp((texture2D(tBrush, sUvB + vec2(0.0, 0.002)).b - brush.b) * 40.0, -2.0, 2.0) * (1.0 - smoothstep(0.5, 1.5, sFoot));
         vec3 sStreak = sTy * (-0.03 * sSl * sOn * (1.0 - up) / sLy); // (not on the tread plate: its diamonds are its own)
         // its tone mottled, a little warmer and cooler; grime toward an upright face's foot (its lowest edge)
         float sMot = smoothstep(0.38, 0.56, brush.b);
@@ -15269,7 +15275,10 @@ function cellSteelMaterial() {
         vec3 sUp = (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
         float sGx = dot(sTx, sUp) / sLx, sGy = dot(sTy, sUp) / sLy;
         float sLow = abs(sGy) >= abs(sGx) ? mix(1.0 - vEdge.y, vEdge.y, step(0.0, sGy)) * sLy * abs(sGy) : mix(1.0 - vEdge.x, vEdge.x, step(0.0, sGx)) * sLx * abs(sGx);
-        float sGrime = clamp((1.0 - smoothstep(0.0, 0.22, sLow)) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
+        // (the band in from its foot as deep as a third of the face is tall, at most 0.22 m, and none on a face under some
+        // 0.3 m: a hazard band, a ring, a lip, a bolt was grimed over its whole height: the independent review)
+        float sFaceH = abs(sGy) >= abs(sGx) ? sLy * abs(sGy) : sLx * abs(sGx);
+        float sGrime = clamp((1.0 - smoothstep(0.0, max(min(0.22, 0.35 * sFaceH), 0.01), sLow)) * smoothstep(0.2, 0.4, sFaceH) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
         diffuseColor.rgb *= 1.0 - 0.5 * sGrime;
         // a chamfer worn bright: bare steel through paint, polished
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 2.2 + 0.05, vec3(0.5, 0.51, 0.55), max(pHaz, pRec)), sBev);`)
@@ -15288,7 +15297,7 @@ function cellSteelMaterial() {
           normal = normalize(normal + sTilt + sStreak);
           normal = normalize(normal + sV * max(max(sNV, 0.02) - dot(normal, sV), 0.0)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-5";
+  m.customProgramCacheKey = () => "cell-steel-6";
   return m;
 }
 
@@ -33544,9 +33553,11 @@ function arenaSteelMaterial(env, tint, pair) {
 function arenaFaceFrames(g) {
   const P = g.attributes.position.array, N = g.attributes.normal.array, nt = P.length / 9, F = new Float32Array((P.length / 3) * 4);
   for (let i = 0; i < nt; ) {
-    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2];
+    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2], d0 = nx * P[o] + ny * P[o + 1] + nz * P[o + 2];
     let j = i + 1;
-    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3) j++;
+    // (and in one plane: two pieces side by side in the batch that face the same way are two faces. The independent
+    // review: none does today, but they would share one frame)
+    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3 && Math.abs(nx * P[j * 9] + ny * P[j * 9 + 1] + nz * P[j * 9 + 2] - d0) < 1e-3) j++;
     if (Math.abs(ny) < 0.6) {
       const l = Math.hypot(nx, nz) || 1, tx = -nz / l, tz = nx / l, ux = -tz * ny, uy = tz * nx - tx * nz, uz = tx * ny; // (across: level; up: across x normal)
       const A = (v) => P[v * 3] * tx + P[v * 3 + 2] * tz, B = (v) => P[v * 3] * ux + P[v * 3 + 1] * uy + P[v * 3 + 2] * uz;
@@ -41635,7 +41646,8 @@ class LibraryScene extends Scene3D {
     // (the strip behind a chapter's title: violet, its books' colours faint in it. The grade desaturates after the
     // tint, so at 0.12 the tint was lost and the strip read grey: Phase 2, 2026-11-24)
     post.saturation = 1.2 - 0.7 * rk;
-    post.tint = [1 - 0.26 * rk, 1 - 0.52 * rk, 1 + 0.7 * rk];
+    const tint = post.tint || (post.tint = [1, 1, 1]); // (written in place: no new array a frame)
+    tint[0] = 1 - 0.26 * rk; tint[1] = 1 - 0.52 * rk; tint[2] = 1 + 0.7 * rk;
     post.contrast = 1.15 + 0.23 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();

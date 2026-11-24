@@ -64,4 +64,14 @@ the phone's results bar unchanged, the portraits sized by CSS everywhere.
 (`cd141b1`) and the build with the review's fixes, two runs each, alternating: the frame's drawing time in this
 machine's software renderer, which runs every shader on the processor, so a costlier pixel shows; compare only.)
 
-PENDING
+| screen | before this pass (`cd141b1`) | after, with the review's fixes | |
+|---|---|---|---|
+| the title's glide | 1,110 and 1,054 ms | 1,120 and 1,012 ms | the same |
+| the title's end | 1,361 and 1,286 ms | 1,387 and 1,224 ms | the same |
+| Boss Rush | 837 and 833 ms | 1,027 and 921 ms | see below |
+
+The whole frame wanders with the moment caught (Boss Rush's fight is not the same frame in two runs), so Boss Rush was
+measured part by part as well (`--parts`: the frame drawn again without each piece): **the arena's steel 50.4 to
+58.7 ms, the crowd 14.9 to 19.4 ms**, some 13 ms of a frame of about 1,000 in this renderer, near 1%, and that pair's
+whole frames 1,067 and 953 ms. On the title the cells' new shading costs nothing measurable. **No phone cut needed.**
+The phone's own frame time is for the device check (`MASTER_PLAN.md`, Phase 8; the on-device overlay).
