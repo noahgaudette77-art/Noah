@@ -191,6 +191,33 @@ fog, cheap animated details; the Mac denser, the phone lean. With the owner's ne
 (key assets made with Tripo and Rodin, the better kept, only what is clearly below the bar; pre-rendered skies where
 they save the GPU). **First its rebuild list**: every environment and asset judged keep, improve in place, or rebuild;
 nothing on the rebuild list is polished before it is rebuilt.
+
+**The rebuild list (2026-11-24)**, from the stills of `phase2-final` (every screen on both devices, after Phase 2's
+first pass), the audit's 25 items (`docs/master/visual-audit.md`) and the review of Phase 2. Most environments were
+rebuilt by Phase 2's first pass already (the owner's order came after it), so most are a keep; what stays below the
+bar is one character told three ways, and details.
+
+| What | Verdict | Why (the evidence) | Phase 5's work |
+|---|---|---|---|
+| **The Proctor** (the final boss: Boss Rush's last fight `boss-all`, the title's cell 12 `boss-all-t`, the hub's Boss Rush topper `mini-proctor`, the exam hall's statue `statue-all`, its portrait in `bosses.webp`; the Final Exam's own boss `assets/boss`) | **rebuild** | the audit's #11: three designs of one named character (a black-chrome figure with a red visor and a pencil in Boss Rush and its cell, a silver-white horned figure in the portrait and the statue, a violet mech in the exam). The exam's is the model the owner supplied (2026-11-12, 32 parts): it becomes the one design | the owner's mech, with the exam's mortarboard, everywhere: rigged for Boss Rush's fight with its twelve clips (`idle`, `idle2`, `enter`, `attackA`, `attackB`, `rage`, `hurt`, `hurtS`, `hurtG`, `stagger`, `win`, `death`), first by retargeting the clips it has in code (free), Tripo's rig and retarget if that falls short (about 145 credits); the cell's, the topper's and the statue's copies and the portrait drawn from it; the old files kept in git, so it can be put back |
+| Risk Blaster's rocks | **rebuild** (the far ones) | the audit's #25: the far rocks are built-in low-poly lumps on the hull's material, flat grey against the painted nebula; the near ones are the two generated rocks, lit dark | the far rocks from the generated rocks (a light copy of each, instanced), every rock lit by its region's key and rim like the ship; no spend |
+| Risk Blaster's answer drones | improve in place | the C drone's box side-pods (#25); the rest a keep (colour-keyed hexes) | pods shaped like the other drones' parts |
+| Risk Blaster's sky (Mac) | improve in place | on a Mac's wide window the right half of the first region is bare black with stars; the ringed planet sits behind the B drone (#25) | the nebula and the planet placed for the Mac's wider view too (the phone's framing kept) |
+| The title hall | keep; improve in place | Phase 2 rebuilt its floor, glass, steel, skylights and windows; on a Mac the cells' close-ups show bare dark walls round the cell, and the end's left edge is a dark arch panorama (review) | the prison denser on the Mac: cell-block numbers, conduits, rails, vents, warning lamps, cheap animated details (steam, a patrolling light), instanced; the phone lean as it is |
+| The hub | keep (the audit's reference scene); improve in place | the cabinets' lower bodies are black voids under lit tops (#22); one club laser reads as a hairline from ceiling to floor (review) | kick plates, coin doors and side art lit on the cabinets; a soft halo on the lasers |
+| Boss Rush's arena | keep (Phase 2 rebuilt it); improve in place | the crowd is lit cards that never move; the deck's reflection keeps the calm neon when the boss rages (review) | the crowd's cards sway and cheer (one instanced draw, a vertex shader); the reflection tinted with the rage |
+| Memory Bank | keep (Phase 2); improve in place | the gold bars at the vault door are blocky (#13) | bevelled bars, the coins' trays |
+| Nest Egg Run's street | keep (Phase 2: facades, shoulders, far end) | | nothing |
+| The Final Exam's hall | keep (Phase 2: marble, columns, the Proctor lit) | | nothing (the Proctor above) |
+| The Strategy Guide's archive | keep (Phase 2: its shelves) | | nothing |
+| The menus (select, results, stats, setup) | keep | interface, not environment: the results bar and the small icons are Phase 7's | nothing |
+| The skies | keep | every world's sky is already a pre-rendered panorama (Blockade, `assets/sky/`); Risk Blaster's nebula is drawn once into a texture | nothing |
+| The wizard | keep the model (Phase 3 animates it; Phase 2 later its cloth) | made 2026-11-23 at Tripo's detailed settings, 32K triangles, eight clips; its "plastic toy" look (#17) is the matte cloth and no normal map, chosen for the phone's cost | nothing here |
+| The other characters and props (the eleven bosses, the demon, the ship, the car, the rivals, traffic, the vault door, the cabinets, the statues of bosses 1-11) | keep | the audit keeps them; Phase 3 looks at their motion | nothing |
+
+Budget for Phase 5: Tripo at most 145 credits (the Proctor's rig and clips, only if the free retarget falls short);
+fal.ai and Blockade nothing planned; within the caps either way.
+
 - Carried from Phase 2's gate review: the room captures are taken once (and again at a boss's power-up), so Boss Rush's
   rage (its neon turning red) and its moving searchlights and lightning are not in the deck's reflection: tint the
   reflection with the rage, or capture again at its thresholds; the hub's club lasers could take a soft halo (one
@@ -200,7 +227,8 @@ nothing on the rebuild list is polished before it is rebuilt.
   side-pods and the ringed planet behind the B drone (#25); the hub's cabinets' black lower bodies (they read as a void
   under the lit tops; the hub is otherwise a keep); the title's end: the left edge's dark arch panorama and the fact
   card's empty lower third (#10's notes).
-- **Gate:** every screen consistent; budgets kept.
+- **Gate:** every screen consistent; budgets kept; before/after stills of every change at the same moments; the
+  Proctor's strips in Boss Rush (`tools/scenarios/motion.js`) and the exam (`exam-motion.js`); the logic diff clean.
 
 ### Phase 6: audio
 Loudness matched across screens, no hiss or static, varied effects, tight sync, fitting music, the volume controls;
