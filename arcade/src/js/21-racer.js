@@ -55,7 +55,7 @@ const RACER_P = 32; // street-lamp spacing on one side; the other side is offset
 const RACER_LEN = 256; // the roadside props loop over this stretch of road...
 const RACER_ZMAX = 12; // ...which ends just behind the camera
 const RACER_WRAP = 8192; // scroll uniforms wrap here (every pattern period divides it)
-const RACER_LAMP = [0x35efff, 0xff3ad4]; // left side, right side
+const RACER_LAMP = [0xff8a2a, 0xff3ad4]; // left side, right side (Phase 2, 2026-11-24: the world's pair, orange and magenta; the first was cyan, and cyan led every frame of a run)
 const RACER_HEAD = 6.3; // lamp head height
 const RACER_GATE_LANES = { 2: [-2.5, 2.5], 4: [-3.75, -1.25, 1.25, 3.75] };
 const RACER_CAR_Z = -0.45; // the car model sits this far ahead of the car's origin
@@ -221,7 +221,7 @@ function racerGroundMaterial(mirror, shared) {
       uScroll: shared.uScroll, uLampI: shared.uLampI, uTime: { value: 0 },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 },
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
-      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
+      uEdge: { value: neon(0xffa040, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) }, // (the road's edges amber: they were cyan)
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uCarW: { value: 1.02 }, uCarZ: { value: 0 }, uCarRot: { value: new THREE.Vector2(1, 0) }, uTailC: { value: new THREE.Color(2.2, 0.06, 0.16) }, // (the war rig is wider, slides and turns, and its rear frames are magenta: see RacerRig)
@@ -514,7 +514,7 @@ function racerCityMaterial(shared, P, maps) {
             // a shopfront in each bay at street level, in the block's colour, lit as the street's record has it (the
             // road reads the same: tStreet); where it is shut its roller shutter is down
             float sk = fract(vSeed * 7.31);
-            vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
+            vec3 sc = sk < 0.34 ? vec3(1.0, 0.78, 0.3) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75)); // (a third of the shops were lit teal: now gold)
             if (q.y < 4.8) {
               float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
               float openK = mix(0.7, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
@@ -561,7 +561,7 @@ function racerCityMaterial(shared, P, maps) {
 // it and the road the light those shops throw on the pavement and lay in its water, so the two always agree.
 // blocks: [{ side, z (its near end), L, sd (its seed) }], in the coordinates the city is built in.
 const racerHash = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
-const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [0.15, 0.95, 0.82] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
+const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [1, 0.78, 0.3] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
 function racerStreetTexture(blocks) {
   const W = RACER_LEN * 4, d = new Uint8Array(W * 2 * 4);
   for (const b of blocks) {
@@ -1147,7 +1147,7 @@ class RacerGame extends QuizGame {
     const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
     // (with the panorama up the works are of the neon city: dark bodies with rims of light, set back against the walls,
     // so the middle of the street is open to the egg at its end and to the sky above it)
-    const NEO = !!this.pano, NEON = [0x35efff, 0xff3ad4, 0xffc93d];
+    const NEO = !!this.pano, NEON = [0xff8a2a, 0xff3ad4, 0xffc93d]; // (orange where cyan was: the world's pair)
     const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
