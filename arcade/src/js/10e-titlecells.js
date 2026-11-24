@@ -115,7 +115,7 @@ function cellSteelMaterial() {
         diffuseColor.rgb = mix(diffuseColor.rgb * seam, haz, pHaz);
         diffuseColor.rgb = mix(diffuseColor.rgb, gri, pGri);
         diffuseColor.rgb *= 1.0 - 0.78 * pRec;
-        float plain = (1.0 - pHaz) * (1.0 - pGri) * (1.0 - pRec), up = plain * smoothstep(0.8, 0.95, vWN.y);
+        float plain = (1.0 - pHaz) * (1.0 - pGri) * (1.0 - pRec), up = plain * smoothstep(0.6, 0.72, vWN.y); // (the base's top: its flat ring and the bevel round it, which is what the aisle sees)
         vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
         diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
