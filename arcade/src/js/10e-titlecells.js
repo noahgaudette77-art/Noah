@@ -103,7 +103,7 @@ function cellSteelMaterial() {
     sh.uniforms.tTread = m.userData.tTread; sh.uniforms.tBrush = m.userData.tBrush;
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN;")
       .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
+      .replace("#include <project_vertex>", "#include <project_vertex>\n#ifdef USE_INSTANCING\n  vWP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);\n#else\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);\n#endif"); // (an instance's own place counts: the cameras' bodies share this material)
     sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tTread; uniform sampler2D tBrush;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float pHaz = step(0.5, vPat) * step(vPat, 1.5), pGri = step(1.5, vPat) * step(vPat, 2.5), pRec = step(2.5, vPat);
@@ -119,9 +119,16 @@ function cellSteelMaterial() {
         vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
         diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);");
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);")
+      // the tread plate's relief: its diamonds tilt the surface, so they catch the lamps and the hall's reflection (only
+      // its colour and roughness were taken before, and the plinth tops stayed a flat pale plane: Phase 2's gate review).
+      // The tops face up, so the picture's frame is the world's (x along x, y along -z); elsewhere nothing changes
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        { vec2 tn = (tread.rg * 2.0 - 1.0) * up;
+          vec3 bent = vec3(tn.x, sqrt(max(1.0 - dot(tn, tn), 0.0)), -tn.y);
+          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-3";
+  m.customProgramCacheKey = () => "cell-steel-4";
   return m;
 }
 
@@ -284,7 +291,7 @@ function cellRimCompile(sh) {
     .replace("#include <tonemapping_fragment>", `{
       vec3 nV = normalize(geometry.normal), upV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
       float fr = 1.0 - clamp(dot(nV, geometry.viewDir), 0.0, 1.0), under = clamp(-dot(nV, upV) * 0.8 + 0.25, 0.0, 1.0);
-      gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(fr, 3.0));
+      gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(max(fr, 0.0), 3.0));
     }
     #include <tonemapping_fragment>`);
 }
@@ -298,7 +305,7 @@ function cellArc() {
   const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
     uniforms: { uK: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "attribute float aAcross; varying float vA; void main(){ vA = aAcross; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: "uniform float uK; varying float vA; void main(){ float a = 1.0 - abs(vA); gl_FragColor = vec4(vec3(0.55, 0.85, 1.0) * (pow(a, 3.0) * 3.0 + a * 0.6) * uK, 1.0); }",
+    fragmentShader: "uniform float uK; varying float vA; void main(){ float a = 1.0 - abs(vA); gl_FragColor = vec4(vec3(0.55, 0.85, 1.0) * (pow(max(a, 0.0), 3.0) * 3.0 + a * 0.6) * uK, 1.0); }",
   }));
   mesh.frustumCulled = false; mesh.visible = false; mesh.renderOrder = 6;
   const a = new THREE.Vector3(), b = new THREE.Vector3(), p = new THREE.Vector3(), q = new THREE.Vector3(), D = new THREE.Vector3(), u1 = new THREE.Vector3(), u2 = new THREE.Vector3(), X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
@@ -432,7 +439,7 @@ function buildCellKit(hall) {
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uK: { value: 1 }, uCalm: { value: calm ? 1 : 0 } }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "attribute float aAcross; attribute float aPh; varying float vA; varying float vPh; varying float vDepth; void main(){ vA = aAcross; vPh = aPh; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
       fragmentShader: `${GLSL_FOG_PARS} uniform float uTime; uniform float uK; uniform float uCalm; varying float vA; varying float vPh; varying float vDepth;
-        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(a, 4.0) * 1.8 + a * a * 0.28) * drop * mix(0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0), 1.0, uCalm);
+        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(abs(a), 4.0) * 1.8 + a * a * 0.28) * drop * mix(0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0), 1.0, uCalm);
           gl_FragColor = vec4(vec3(1.0, 0.09, 0.12) * k * uK * (1.0 - smoothstep(uFogNear, uFogFar * 1.1, vDepth)), 1.0); }`,
     }));
     kit.laser.frustumCulled = false; kit.laser.renderOrder = 5;

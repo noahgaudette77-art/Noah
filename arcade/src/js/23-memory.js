@@ -122,7 +122,7 @@ function memoryWallMaterial(brush) {
       // a light's two lobes on brushed steel: a broad sheen and a sharp highlight
       float sheen(vec3 N, vec3 L, vec3 V, float rough){
         float nh = max(dot(N, normalize(L + V)), 0.0), sh = 2.0 / max(rough * rough * rough * rough, 1e-3);
-        return 0.3 * pow(nh, 7.0) + pow(nh, sh) * (sh + 2.0) * 0.012;
+        return 0.3 * pow(max(nh, 0.0), 7.0) + pow(max(nh, 0.0), sh) * (sh + 2.0) * 0.012;
       }
       void main(){
         const float KICK = 0.62, COVE = 24.02; // (the kick plate's top, and the cove between two rows of doors: 18 rows up)
@@ -152,7 +152,7 @@ function memoryWallMaterial(brush) {
         F0 = mix(F0, vec3(0.2, 0.19, 0.22), kick); // (the kick plate: darker, rubbed by boots)
         rough = mix(rough, 0.34, plate);
         float nv = max(dot(N, V), 0.0);
-        vec3 F = F0 + (1.0 - F0) * pow(1.0 - nv, 5.0) * 0.6;
+        vec3 F = F0 + (1.0 - F0) * pow(max(1.0 - nv, 0.0), 5.0) * 0.6;
         // the vault's glow: from the door's rim, nearest this door
         vec2 dv = vWorld.xy - uDoor.xy; float r = length(dv);
         vec3 G = vec3(uDoor.xy + dv / max(r, 1e-3) * (uDoor.z - 1.0), 2.6) - vWorld;
@@ -201,7 +201,7 @@ function memoryShaftMaterial() {
         vP = position.xy;
         vec2 d = normalize(position.xy);
         float n = vnoise(vec3(d * 6.0, uTime * 0.1)) * 0.6 + vnoise(vec3(d * 17.0, uTime * 0.17 + 4.0)) * 0.4;
-        vRay = pow(n, 2.6) * 2.4;
+        vRay = pow(max(n, 0.0), 2.6) * 2.4;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uR; varying vec2 vP; varying float vRay;

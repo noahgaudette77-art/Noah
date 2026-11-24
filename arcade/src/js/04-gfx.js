@@ -1101,7 +1101,9 @@ function glowSprite(color, scale = 2, opacity = 1) {
 // its chunks), but no longer draw themselves (their material is not visible); the batch reads them as the scene is
 // about to be drawn (after its matrices are updated, before anything is sent: no frame behind) and draws them all as one
 // set of points, each the size a sprite of that scale would be at that distance, with the same picture and the same
-// additive light. For small glows only: a point may be drawn at most 511 pixels across on Apple's chips.
+// additive light. For small round glows only: a point is square, sized from its sprite's width (a sprite scaled taller
+// than wide stays a sprite), it may be drawn at most 511 pixels across on Apple's chips, and it goes whole when its
+// middle leaves the picture.
 class GlowBatch {
   constructor(scene, sprites, order = 5) {
     this.sprites = sprites.filter(Boolean);

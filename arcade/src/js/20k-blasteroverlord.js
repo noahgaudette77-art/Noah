@@ -110,7 +110,7 @@ class BlasterOverlord {
     this.maw = spr(A.mouth, new THREE.Color(2.6, 0.5, 1.2), 0.16);
     this.claws = [spr(A.clawL, new THREE.Color(1.3, 0.35, 2.6), 0.2), spr(A.clawR, new THREE.Color(1.3, 0.35, 2.6), 0.2)];
     this.tips = [spr(A.wingTipL, new THREE.Color(2.6, 1.3, 0.3), 0.16), spr(A.wingTipR, new THREE.Color(2.6, 1.3, 0.3), 0.16)];
-    this.glows = new GlowBatch(g.scene, [this.coreGlow, this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its nine small lights in one draw: GlowBatch, 04-gfx.js; the large light behind it stays a sprite)
+    this.glows = new GlowBatch(g.scene, [this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its eight small round lights in one draw: GlowBatch, 04-gfx.js; its core's glow, a rift taller than it is wide, and the large light behind it stay sprites)
     this.glow = glowSprite(new THREE.Color(0.35, 0.3, 0.9), 2.4, 0); // (cold light behind it: its dark wings and horns stand against it)
     this.glow.position.set(0, 0.05, -0.3);
     this.glow.renderOrder = 2;

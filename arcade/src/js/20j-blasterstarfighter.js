@@ -138,9 +138,9 @@ function starPlumeMaterial(U) {
     fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uTail; ${VARY}
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));
-        float body = pow(1.0 - vT, 1.3) * (0.3 + 0.7 * f);
+        float body = pow(max(1.0 - vT, 0.0), 1.3) * (0.3 + 0.7 * f);
         float diamonds = 0.74 + 0.5 * pow(0.5 + 0.5 * sin(vT * 16.0 - uTime * 10.0), 3.0); // shock diamonds, running down the flame
-        vec3 c = vCore > 0.5 ? mix(uCool, uHot, pow(1.0 - vT, 2.0)) : mix(uTail, uCool, pow(1.0 - vT, 1.6));
+        vec3 c = vCore > 0.5 ? mix(uCool, uHot, pow(abs(1.0 - vT), 2.0)) : mix(uTail, uCool, pow(max(1.0 - vT, 0.0), 1.6));
         gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.6 : 0.4)), 1.0);
       }`,
   });
@@ -156,7 +156,7 @@ function starShellMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uK; uniform float uHit; uniform vec3 uHitP; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 3.0);
         const vec2 s = vec2(1.0, 1.7320508);
         vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
         vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;

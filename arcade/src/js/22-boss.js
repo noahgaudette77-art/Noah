@@ -154,12 +154,13 @@ class BossGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xe6deff, 1.4);
     key.position.set(3, 8, 10);
     s.add(key);
-    // Two lamps behind it, either side, edge it against the dark stands: one in its own colour, one in the arena's
-    // second (the art bible: the rim in the world's second colour; it was the boss's colour too, or its complement,
-    // and lit the stands behind it in its own colour); a third at its feet in front lights it from below.
+    // Two lamps behind it, either side, edge it against the dark stands in the arena's two colours (the art bible: the
+    // rims in the world's pair; the left one was the boss's own colour at 4.6 and reached 46 m, so a cyan boss's
+    // stands went blue on one side: Phase 2's gate review); a third at its feet in front, in its own colour, lights it
+    // from below.
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
     // (the second is an edge, not a second key: at full strength it turned black armour pale)
-    const rims = [[-11, col.getHex(), 4.6 * big], [11, P.b.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
+    const rims = [[-11, P.a.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 3.4 * big], [11, P.b.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
     const under = new THREE.PointLight(col.getHex(), 0.85 * big, 24, 1.8);
     const edge = new THREE.DirectionalLight(0xffffff, 0.95); // a pale edge along its head and shoulders, whatever colour the arena is
     edge.position.set(0, 10, -9);
@@ -200,7 +201,7 @@ class BossGame extends QuizGame {
     this.plates = cellFlatTexture();
     this.floor = makeNeonFloor({
       size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
-      probe: { map: this.probe.map, min: new THREE.Vector3(-25, 0, -29), max: new THREE.Vector3(25, 16, 24), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
+      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
       plates: { map: this.plates, size: 2.4, k: 0.8 },
     });
     // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
@@ -467,7 +468,7 @@ class BossGame extends QuizGame {
       fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uTime; varying float vT; varying vec3 vN; varying vec3 vV;
         void main(){
           float face = pow(abs(dot(normalize(vN), normalize(vV))), 1.4);
-          float fall = pow(1.0 - vT, 1.5) * smoothstep(0.0, 0.04, vT);
+          float fall = pow(max(1.0 - vT, 0.0), 1.5) * smoothstep(0.0, 0.04, vT);
           float flick = 0.92 + 0.08 * sin(uTime * 9.0 + vT * 5.0);
           gl_FragColor = vec4(uColor * uI * face * fall * flick, 1.0);
         }`,

@@ -129,7 +129,7 @@ function libraryShelfMaterial(len, tall, lampY) {
         }
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
-        float lampK = exp(-dz * dz * 0.075) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.085, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
+        float lampK = exp(-dz * dz * 0.075) * exp(-pow(abs((vW.y - ${lampY.toFixed(1)}) * 0.085), 2.0)) * smoothstep(-52.0, -44.0, vW.z);
         vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
         col *= light;
         float holo = book * step(0.972, h2) * (1.0 - set) * detail;
@@ -374,7 +374,7 @@ class LibraryScene extends Scene3D {
           float dz = mod(vW.z, 8.0) - 4.0;
           float pool = exp(-(dz * dz * 0.16 + pow(abs(vW.x) - ${LAMP_X.toFixed(1)}, 2.0) * 0.2)) * smoothstep(-52.0, -44.0, vW.z);
           col += vec3(0.5, 0.34, 0.16) * pool * 0.5;
-          col += vec3(1.0, 0.25, 0.8) * 0.12 * exp(-pow((4.84 - abs(vW.x)) * 1.5, 2.0)); // the magenta line, on the stone beside it
+          col += vec3(1.0, 0.25, 0.8) * 0.12 * exp(-pow(abs((4.84 - abs(vW.x)) * 1.5), 2.0)); // the magenta line, on the stone beside it
           col += vec3(0.3, 0.2, 0.62) * exp(-vW.x * vW.x * 0.05) * smoothstep(-40.0, -74.0, vW.z) * 0.2; // the window's glow at its foot
           col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
           // the window on the stone: each flag is asked which pane its light came through

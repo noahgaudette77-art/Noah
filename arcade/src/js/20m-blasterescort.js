@@ -60,7 +60,7 @@ class BlasterEscort {
         uniforms: this.broodU, fog: false,
         vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
         // (a dark shape; a rim of the region's light round its edges, a little more from above)
-        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(f, 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
+        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(max(f, 0.0), 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
       });
       this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.renderOrder = -5; /* (the lens's own culling: one out of the picture is not drawn) */ s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
     } else this.brood = [];

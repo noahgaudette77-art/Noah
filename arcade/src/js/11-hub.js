@@ -904,7 +904,7 @@ class HubScene extends Scene3D {
       uniforms: { uColor: { value: new THREE.Color(0, 0, 0) } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(vUv.y, 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(max(vUv.y, 0.0), 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
     }));
     this.heroSpill.matrixAutoUpdate = false;
     this.heroSpill.frustumCulled = false;

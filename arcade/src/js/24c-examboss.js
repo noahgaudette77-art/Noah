@@ -287,20 +287,20 @@ class ExamPuffs {
           float shape = smoothstep(1.0, 0.2, r + (n - 0.5) * 0.9);
           vec3 rgb; float a;
           if (vQ.z < 0.5) {
-            float heat = shape * pow(1.0 - age, 1.6) * (0.55 + 0.75 * n);
+            float heat = shape * pow(max(1.0 - age, 0.0), 1.6) * (0.55 + 0.75 * n);
             vec3 fire = mix(vec3(1.6, 0.25, 0.03), vec3(3.2, 1.5, 0.35), smoothstep(0.15, 0.6, heat));
             fire = mix(fire, vec3(4.0, 3.4, 2.4), smoothstep(0.6, 1.0, heat));
             a = shape * smoothstep(0.25, 0.9, age) * (1.0 - smoothstep(0.75, 1.0, age)) * 0.6;
             rgb = fire * heat * 1.05 + vec3(0.05, 0.045, 0.055) * a;
           } else if (vQ.z < 1.5) {
-            a = shape * smoothstep(0.0, 0.12, age) * pow(1.0 - age, 1.3) * 0.55;
+            a = shape * smoothstep(0.0, 0.12, age) * pow(max(1.0 - age, 0.0), 1.3) * 0.55;
             rgb = (mix(vec3(0.02, 0.018, 0.028), vec3(0.085, 0.075, 0.1), n) + vec3(1.2, 0.45, 0.1) * uGlow * (1.0 - vUv.y) * 0.32) * a;
           } else if (vQ.z < 2.5) {
             a = 0.0;
-            rgb = min(vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(1.0 - age, 2.0), vec3(1.1, 0.92, 0.68)); // (a flash, capped: never a white screen)
+            rgb = min(vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(abs(1.0 - age), 2.0), vec3(1.1, 0.92, 0.68)); // (a flash, capped: never a white screen)
           } else {
             // vapour off its back: thin, and red where the light under it catches it
-            a = shape * smoothstep(0.0, 0.2, age) * pow(1.0 - age, 1.5) * 0.14;
+            a = shape * smoothstep(0.0, 0.2, age) * pow(max(1.0 - age, 0.0), 1.5) * 0.14;
             rgb = (mix(vec3(0.05, 0.04, 0.08), vec3(0.2, 0.17, 0.26), n) + vec3(0.3, 0.04, 0.05) * (1.0 - vUv.y)) * a;
           }
           gl_FragColor = vec4(rgb, a);

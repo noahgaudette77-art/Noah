@@ -231,7 +231,7 @@ function demonSkin(env, U) {
         // a cool key from the upper left: its front is no longer a black shape cut out by its rim
         totalEmissiveRadiance += (diffuseColor.rgb * 2.6 + vec3(0.012, 0.014, 0.024)) * vec3(0.55, 0.68, 1.0) * (pow(max(dot(normal, normalize(vec3(-0.55, 0.62, 0.56))), 0.0), 1.6) * 1.15 * dmShade);
         // rim lights: magenta and cyan from the sides, the wave's colour, and a cold one from above and behind
-        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(1.0 - dmNV, 4.0) + vec3(0.42, 0.5, 0.95) * (pow(1.0 - dmNV, 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
+        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(abs(1.0 - dmNV), 4.0) + vec3(0.42, 0.5, 0.95) * (pow(max(1.0 - dmNV, 0.0), 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
         // its own light spills on the armour near it: the core's on its chest, jaw and arms, the eyes' on its brow and cheeks
         vec3 dmLc = vec3(0.008, 0.256, 0.21) - vDmP, dmLe = vec3(sign(vDmP.x) * 0.04, 0.455, 0.21) - vDmP, dmL3 = vec3(0.003, 0.514, 0.24) - vDmP;
         float dmDc = dot(dmLc, dmLc), dmDe = dot(dmLe, dmLe), dmD3 = dot(dmL3, dmL3);
@@ -252,14 +252,14 @@ function demonSkin(env, U) {
           vec2 dmCd = vDmP.xy - vec2(0.008, 0.256);
           totalEmissiveRadiance += mix(vec3(2.4, 0.3, 1.0), vec3(3.0, 0.25, 0.35), uDmRage) * dmOn * (0.03 + 1.9 * exp(-dot(dmCd, dmCd) * 750.0)) * (0.35 + 0.9 * dmT.r) * (1.0 - 0.75 * neonGroove(dmT)) * (0.5 + 0.9 * uDmBeat + 0.8 * uDmExpose);
         }
-        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(dmTip, 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
-        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(dmTip, 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
+        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(abs(dmTip), 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
+        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(abs(dmTip), 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
         if (dmZone > 5.5 && dmZone < 6.5) totalEmissiveRadiance += vec3(2.4, 0.4, 1.3) * (1.0 - smoothstep(0.0, 0.1, dmCut)) * dmOn; // the burning edge of its tatters
         if (dmZone > 0.5 && dmZone < 1.5) { // the skull: lit from inside its eye sockets and its mouth
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(max(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -314,7 +314,7 @@ class BlasterDemon {
           float R = 0.6;
           float wd = mix(0.006, 0.016, smoothstep(-0.7, 0.6, p.y)); // (the line swells over its shoulders and thins under it)
           float gap = smoothstep(0.012, 0.034, abs(fract(a * 0.4775 + uTime * 0.012) - 0.5)); // three breaks in it, turning slowly
-          float limb = (exp(-pow((r - R) / wd, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0))) * (0.2 + 0.8 * gap);
+          float limb = (exp(-pow(abs((r - R) / wd), 2.0)) + 0.35 * exp(-pow(abs((r - R) / 0.03), 2.0))) * (0.2 + 0.8 * gap);
           float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
           float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
           float back = (1.0 - smoothstep(R - 0.06, R, r)) * (1.0 - 0.62 * smoothstep(0.0, R, r)); // a disc of light inside the ring: wings and horns are dark against it

@@ -38,7 +38,7 @@ function fxDartMaterial() {
     fragmentShader: `varying vec3 vC; varying vec2 vUv;
       void main(){
         float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;
-        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;
+        float w = t < 0.86 ? pow(max(t / 0.86, 0.0), 1.5) : 1.0 - (t - 0.86) / 0.14;
         float aa = fwidth(x) * 1.2 + 1e-4;
         float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.42 - aa, w * 0.42, x);
         if (body < 0.004) discard;
@@ -81,7 +81,7 @@ function fxPuffMaterial(fire) {
              col = mix(col, mix(vCol.rgb, vec3(1.0), 0.7) * 1.25, smoothstep(0.86, 1.0, heat)); // (only its very middle, while it is young, is white-hot: a lobe of fire keeps the blast's own colour)
              gl_FragColor = vec4(col * body * vCol.a * (1.0 - age * age), 1.0);`
           : `float a = body * vCol.a * (1.0 - smoothstep(0.45, 1.0, age)) * smoothstep(0.0, 0.08, age);
-             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
+             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(max(1.0 - age, 0.0), 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
              gl_FragColor = vec4(col, a);`}
       }`,
   });
@@ -94,7 +94,7 @@ function fxChunkMaterial() {
     fragmentShader: `varying vec3 vV; varying vec3 vC;
       void main(){
         vec3 n = normalize(cross(dFdx(vV), dFdy(vV)));
-        float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0), rim = pow(1.0 - abs(dot(n, normalize(-vV))), 2.0);
+        float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0), rim = pow(abs(1.0 - abs(dot(n, normalize(-vV)))), 2.0);
         gl_FragColor = vec4(vC * (0.25 + 0.95 * l + 0.7 * rim), 1.0);
       }`,
   });
@@ -111,7 +111,7 @@ function fxBeamMaterial() {
       void main(){
         float x = abs(vUv.x - 0.5) * 2.0, t = vUv.y;
         float flick = 0.86 + 0.14 * vnoise(vec3(t * uLen * 0.9 - uTime * 14.0, uTime * 3.0, 0.0));
-        float core = 1.0 - smoothstep(0.1, 0.24, x), sheath = pow(1.0 - x, 2.2);
+        float core = 1.0 - smoothstep(0.1, 0.24, x), sheath = pow(max(1.0 - x, 0.0), 2.2);
         float ends = smoothstep(0.0, 0.04, t) * smoothstep(0.0, 0.03, 1.0 - t);
         gl_FragColor = vec4((uColor * sheath * flick + vec3(1.6) * core) * uFade * ends, 1.0);
       }`,

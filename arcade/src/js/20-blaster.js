@@ -51,7 +51,7 @@ class BlasterShards {
         void main(){
           vec3 n = normalize(cross(dFdx(vV), dFdy(vV)));
           float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0);
-          float rim = pow(1.0 - abs(dot(n, normalize(-vV))), 2.0);
+          float rim = pow(abs(1.0 - abs(dot(n, normalize(-vV)))), 2.0);
           gl_FragColor = vec4(vC * (0.3 + 1.2 * l + 1.4 * rim), 1.0);
         }`,
     });

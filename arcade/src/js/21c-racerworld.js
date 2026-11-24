@@ -232,7 +232,7 @@ function racerTrafficMaterial(P, sky) {
         vec3 col = vCol;
         if (vLit < 0.5) {
           vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vW);
-          float fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          float fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
           col = vCol * (uAmb + uKey * max(dot(n, uKeyDir), 0.0)) + uSkyC * fr * 0.3 * (0.3 + 0.7 * max(n.y, 0.0));
           #ifdef SKY
           col += skyAt(reflect(-v, n)) * ((0.08 + 0.62 * fr) * vGloss);
@@ -311,7 +311,7 @@ function racerGenSkin(base, U, half, repaint) {
     cut: "float tfPaint = 0.0;",
     albedo: `{ float tfL = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)), tfS = max(max(diffuseColor.r, diffuseColor.g), diffuseColor.b) - min(min(diffuseColor.r, diffuseColor.g), diffuseColor.b);
         tfPaint = (1.0 - smoothstep(0.06, 0.22, tfL)) * (1.0 - smoothstep(0.03, 0.1, tfS));
-        diffuseColor.rgb = mix(diffuseColor.rgb, pow(vTfTint, vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }` // (a deep candy lacquer over the black: what it mirrors takes its colour)
+        diffuseColor.rgb = mix(diffuseColor.rgb, pow(max(vTfTint, 0.0), vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }` // (a deep candy lacquer over the black: what it mirrors takes its colour)
       + (repaint ? `
       { vec3 rvC = diffuseColor.rgb; float rvL = dot(rvC, vec3(0.3, 0.59, 0.11)), rvW = smoothstep(0.03, 0.12, rvC.r - rvC.b) * smoothstep(0.05, 0.16, rvL);
         vec3 rvV = vec3(0.3, 0.11, 0.68) * (0.22 + 1.4 * rvL), rvS = vec3(0.74, 0.77, 0.84) * (0.3 + 0.75 * rvL);
@@ -346,7 +346,7 @@ function racerShaft(color, r0, r1, len, sides = 12) {
     uniforms: { uI: { value: 1 }, uColor: { value: new THREE.Color(color) }, uLen: { value: len } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "uniform float uLen; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vT = clamp(position.y / uLen, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "uniform float uI; uniform vec3 uColor; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.5) * smoothstep(0.0, 0.04, vT) * rim * rim; gl_FragColor = vec4(uColor * (a * uI), 1.0); }",
+    fragmentShader: "uniform float uI; uniform vec3 uColor; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(1.0 - vT, 0.0), 1.5) * smoothstep(0.0, 0.04, vT) * rim * rim; gl_FragColor = vec4(uColor * (a * uI), 1.0); }",
   }));
   m.layers.set(1);
   m.frustumCulled = false;

@@ -231,9 +231,9 @@ class BlasterJet {
       fragmentShader: `uniform float uTime; uniform float uI; uniform vec3 uHot; uniform vec3 uCool; varying float vT; varying float vCore; varying vec3 vN; varying vec3 vV;
         void main(){
           float f = abs(dot(normalize(vN), normalize(vV)));
-          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float body = pow(max(1.0 - vT, 0.0), 1.4) * (0.35 + 0.65 * f);
           float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
-          vec3 c = mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6);
+          vec3 c = mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(max(1.0 - vT, 0.0), 3.0) * 0.6);
           gl_FragColor = vec4(c * (body * diamonds * uI * (vCore > 0.5 ? 1.3 : 0.75)), 1.0);
         }`,
     });
@@ -249,7 +249,7 @@ class BlasterJet {
       vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
       fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
         void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+          float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 2.4);
           const vec2 s = vec2(1.0, 1.7320508);
           vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
           vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -257,7 +257,7 @@ class BlasterJet {
           vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
           float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
           float dist = distance(vP, uHitP);
-          float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+          float ring = uHit * exp(-pow(abs((dist - (1.0 - uHit) * 2.4) * 3.0), 2.0));
           float flare = uHit * uHit * exp(-dist * 1.6);
           float base = uOn * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008);
           gl_FragColor = vec4(uColor * (base + line * (ring * 1.6 + flare * 1.2) + fres * (ring + flare) * 0.8), 1.0);

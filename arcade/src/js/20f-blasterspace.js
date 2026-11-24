@@ -135,7 +135,7 @@ function spaceHullMaterial(shared, o = {}) {
         vec2 pc = uv / vPanel, pf = fract(pc);
         float seam = max(step(0.95, pf.x), step(0.93, pf.y));
         vec3 alb = vC * uTint * (0.84 + 0.32 * h21(floor(pc) + vSeed * 3.0)) * (1.0 - 0.34 * seam);
-        float key = max(dot(n, uSunDir), 0.0), fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        float key = max(dot(n, uSunDir), 0.0), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
         vec3 col = alb * (uAmb + uSunCol * key) + uRimCol * fr * (0.25 + 0.6 * dot(alb, vec3(0.33)));
         vec3 fd = vW - uFlashPos;
         col += alb * uFlashCol * (1.0 / (1.0 + 0.0012 * dot(fd, fd)));
@@ -239,10 +239,10 @@ class BlasterSpace {
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
           float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
-          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
+          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(max(dens, 0.0), 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
           c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
-          c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
+          c += uSunCol * (pow(max(sd, 0.0), 6000.0) * 4.0 + pow(max(sd, 0.0), 700.0) * 0.4 + pow(max(sd, 0.0), 70.0) * 0.08);
           // darker and quieter round the way ahead, where the enemy and the answers are
           c *= mix(1.0 - uCalm, 1.0, smoothstep(0.02, 0.2, length(uv - vec2(0.0, 0.015))));
           c += uFlash * (0.06 + dens * 0.9); // a blast lights the dust
@@ -339,7 +339,7 @@ class BlasterSpace {
           alb = mix(alb, uC, (0.5 + 0.5 * sin((vP.y - turb * 1.6) * 43.0 + 1.3)) * 0.32);
           vec2 sv = (vec2(atan(vP.z, vP.x), vP.y) - vec2(2.2, -0.26)) * vec2(2.6, 8.0);
           alb = mix(alb, uGold, exp(-dot(sv, sv)) * 0.85); // the great storm
-          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(1.0 - max(dot(n, v), 0.0), 2.6);
+          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 2.6);
           gl_FragColor = vec4(alb * (0.015 + 0.78 * day) + uRim * fr * (0.1 + 0.55 * day), 1.0);
         }`,
     })));
@@ -598,7 +598,7 @@ class BlasterSpace {
           float r = length(vP), a = atan(vP.y, vP.x);
           float arms = smoothstep(0.1, 0.95, 0.5 + 0.5 * sin(a * 4.0 + log(r + 0.02) * 9.0 - uTime * 0.9)) * (0.6 + 0.4 * sin(a * 9.0 - log(r + 0.02) * 15.0 + uTime * 0.5));
           float disc = smoothstep(1.0, 0.6, r) * smoothstep(0.02, 0.2, r);
-          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow((r - 0.86) * 9.0, 2.0)) * 0.8;
+          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow(abs((r - 0.86) * 9.0), 2.0)) * 0.8;
           gl_FragColor = vec4(col * uK, 1.0);
         }`,
     });

@@ -195,7 +195,7 @@ function fighterBowMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 1.6);
         float a = atan(vP.y, vP.x);
         float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
         gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
@@ -210,7 +210,7 @@ function fighterShieldMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 2.4);
         const vec2 s = vec2(1.0, 1.7320508);
         vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
         vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -218,7 +218,7 @@ function fighterShieldMaterial() {
         vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
         float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
         float dist = distance(vP, uHitP);
-        float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+        float ring = uHit * exp(-pow(abs((dist - (1.0 - uHit) * 2.4) * 3.0), 2.0));
         float flare = uHit * uHit * exp(-dist * 3.0);
         float near = exp(-dist * 1.5); // (how close to the blow)
         float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
@@ -324,9 +324,9 @@ class BlasterFighter {
       fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uIon; ${FLAME_VARY}
         void main(){
           float f = abs(dot(normalize(vN), normalize(vV)));
-          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float body = pow(max(1.0 - vT, 0.0), 1.4) * (0.35 + 0.65 * f);
           float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
-          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
+          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(max(1.0 - vT, 0.0), 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
           gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.5 : 0.42)), 1.0);
         }`,
     });

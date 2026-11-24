@@ -150,7 +150,7 @@ class RacerRig {
         uniforms: { uI: { value: 0.5 }, uZ0: { value: head[0].z - 0.06 } },
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         vertexShader: "attribute vec3 aCol; uniform float uZ0; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vCol = aCol; vT = clamp((uZ0 - position.z) / 11.0, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-        fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
+        fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(1.0 - vT, 0.0), 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
       }));
       this.beams.layers.set(1);
       fx.add(this.beams); }

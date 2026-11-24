@@ -202,7 +202,7 @@ function examWallMaterial(marble) {
         col += uNeon * (1.0 - smoothstep(0.035, 0.035 + px * 1.5, abs(p.y - 12.95))) + uNeon * 0.04 * exp(-abs(p.y - 12.95) * 2.0);
         // the columns' light washing up the wall from the floor, between the windows
         float cx = mod(p.x - 4.0, 8.0) - 4.0;
-        col += uWash * exp(-pow(cx / (0.9 + 0.09 * p.y), 2.0)) * exp(-p.y * 0.13) * 0.42;
+        col += uWash * exp(-pow(abs(cx / (0.9 + 0.09 * p.y)), 2.0)) * exp(-p.y * 0.13) * 0.42;
         // and the dark taking the wall above
         col *= mix(1.0, 0.3, smoothstep(13.5, 34.0, p.y));
         gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);

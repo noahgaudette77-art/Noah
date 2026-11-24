@@ -136,7 +136,7 @@ function spaceGlowMaterial(trail) {
     defines: trail ? { SPACE_TRAIL: 1 } : {},
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "varying vec3 vC; varying vec2 vUv; void main(){ vUv = uv; vC = vec3(1.0);\n#ifdef USE_INSTANCING_COLOR\nvC = instanceColor;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }",
-    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(1.0 - vUv.y, 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(abs(1.0 - vUv.y), 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
   });
 }
 
@@ -196,7 +196,7 @@ function spaceRunningLightMat() {
         vUv = aCor.xy;
         gl_Position = c;
       }`,
-    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(1.0 - (d - 0.45) / 0.55, 2.0)), 1.0); }",
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(abs(1.0 - (d - 0.45) / 0.55), 2.0)), 1.0); }",
   });
 }
 
@@ -353,7 +353,7 @@ function spaceDartMaterial() {
     fragmentShader: `varying vec3 vC; varying vec2 vUv;
       void main(){
         float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;                        // along it (0 its tail, 1 its head); across it (0 on its axis, 1 at its edge)
-        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
+        float w = t < 0.86 ? pow(max(t / 0.86, 0.0), 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
         float aa = fwidth(x) * 1.2 + 1e-4;
         float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.34 - aa, w * 0.34, x);
         if (body < 0.004) discard;

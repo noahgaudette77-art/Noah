@@ -135,7 +135,7 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
         vec3 n = normalize(vN);
         float lit = max(dot(n, normalize(vec3(-0.62, 0.45, 0.64))), 0.0);
         float band = 0.5 + 0.5 * sin(vP.y * ${(11 / radius).toFixed(3)} + sin(vP.x * ${(5 / radius).toFixed(3)}) * 1.3);
-        float limb = pow(1.0 - max(n.z, 0.0), 2.6);
+        float limb = pow(max(1.0 - max(n.z, 0.0), 0.0), 2.6);
         gl_FragColor = vec4(mix(uA, uB, band) * (0.03 + 1.25 * lit) + uRim * limb * (0.12 + lit), 1.0);
       }`,
   }));
@@ -183,7 +183,7 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           vec3 en = vec3(q, sqrt(max(0.0, 1.0 - r * r)));
           float lit = clamp(dot(en, normalize(vec3(-0.45, 0.5, 0.74))), 0.0, 1.0);
           col *= 0.74 + 0.6 * lit;
-          col += uTop * uTint * uI * 0.55 * pow(lit, 14.0);
+          col += uTop * uTint * uI * 0.55 * pow(max(lit, 0.0), 14.0);
           col += uTop * uTint * uI * 0.34 * (1.0 - r * r); // lit from inside
           col += mix(uBottom, uTop, 0.5) * uTint * uI * 0.95 * smoothstep(0.84, 1.0, r); // a bright edge all round
           vec2 sq = floor(q * 22.0), sf = fract(q * 22.0) - 0.5;
@@ -304,7 +304,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     uRoad: { value: new THREE.Vector2(road, roadGrid) },
     uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
     uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
-    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
+    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && ROOM_PROBE_SIZE.get(probe.map) ? Math.log2(ROOM_PROBE_SIZE.get(probe.map)) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
     uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
@@ -342,12 +342,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
           #ifdef PLATES_TINT
-          col += uPlatesTint * smoothstep(0.5, 0.0, pm.b);
+          col += uPlatesTint * (1.0 - smoothstep(0.0, 0.5, pm.b));
           #endif
           #endif
           vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
-          vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);
-          vec3 dir = vWorld + R * min(min(tf.x, tf.y), tf.z) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn)
+          vec3 Rs = mix(vec3(-1.0), vec3(1.0), step(0.0, R)) * max(abs(R), vec3(1e-4)); // (no axis exactly naught: a ray along a wall meets it far off, not in a NaN)
+          vec3 t1 = (uBoxMax - vWorld) / Rs, t2 = (uBoxMin - vWorld) / Rs, tf = max(t1, t2);
+          vec3 dir = vWorld + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn; from outside the box, straight from there)
           float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
           col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
         }
@@ -436,11 +437,15 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
 // swap: uniforms that read this cube ({ value }), pointed at a blank cube while it is drawn, so what reads it can still
 // be drawn into it (the hall's glass: its own light is the cells' colour in the floor).
 let _blankCube = null;
+// each probe's size by its picture (a cube target's picture has no width of its own in three r128: makeNeonFloor reads
+// how many sizes of it there are, for how far a rough floor blurs what it gives back, from here)
+const ROOM_PROBE_SIZE = new WeakMap();
 function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = [] } = {}) {
   const rt = new THREE.WebGLCubeRenderTarget(size, {
     format: THREE.RGBAFormat, type: GFX.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType,
     generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
   });
+  ROOM_PROBE_SIZE.set(rt.texture, size);
   const cam = new THREE.CubeCamera(near, far, rt);
   cam.position.copy(at);
   cam.updateMatrixWorld(true);
@@ -452,6 +457,10 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
       if (!this.left || !GFX.ok) return null; // (nothing to draw: null, as against false, the frame the last face was drawn)
       const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
       this.hide.forEach((o) => { o.visible = false; });
+      // (and every set of points: a point's size is in the page's pixels, so in a face 128 or 256 across a light stick or
+      // a mote would be drawn ten to forty times too big and frozen into the floor: Phase 2's gate review)
+      const pts = [];
+      scene.traverse((o) => { if (o.isPoints && o.visible) { pts.push(o); o.visible = false; } });
       if (!_blankCube) _blankCube = new THREE.WebGLCubeRenderTarget(1).texture;
       this.swap.forEach((u) => { u.value = _blankCube; });
       face.layers.mask = layers;
@@ -459,6 +468,7 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
       r.setRenderTarget(was);
       this.swap.forEach((u) => { u.value = rt.texture; });
       this.hide.forEach((o, k) => { o.visible = vis[k]; });
+      for (const o of pts) o.visible = true;
       this.left--;
       if (!this.left) this.made++;
       return this.left > 0;
@@ -637,7 +647,7 @@ function fresnelShell(geometry, color, { power = 2.4, intensity = 2, scale = 1.0
     uniforms: { uColor: { value: neon(color, 1) }, uP: { value: power }, uI: { value: intensity } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
+    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
   }));
   m.scale.setScalar(scale);
   return m;
@@ -728,7 +738,7 @@ function beamMaterial(color, intensity = 3) {
       uniform vec3 uColor; uniform float uTime; uniform float uFade; varying vec3 vN; varying vec3 vV; varying vec2 vUv;
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));
-        float core = pow(f, 6.0) * 2.5 + pow(f, 1.5);
+        float core = pow(abs(f), 6.0) * 2.5 + pow(max(f, 0.0), 1.5);
         float crawl = 0.7 + 0.3 * vnoise(vec3(vUv.y * 30.0 - uTime * 25.0, vUv.x * 6.0, uTime));
         gl_FragColor = vec4((uColor + vec3(core * 0.6)) * core * crawl * uFade, 1.0);
       }`,
@@ -836,7 +846,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.3) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW), R = reflect(-V, n);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 3.0);
           // the glass mirrors the sky: cyan off the towers to the left, magenta off those to the right
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
           col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
@@ -903,7 +913,7 @@ function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xf
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.75) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 2.6);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 2.6);
           col = vC * (0.5 + uKey * max(dot(n, uKeyDir), 0.0) * 2.2 + uUnder * max(-n.y, 0.0) * 1.6) + uSky * fres * 0.5 + uKey * pow(max(dot(reflect(-V, n), uKeyDir), 0.0), 24.0) * 0.6;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.85);

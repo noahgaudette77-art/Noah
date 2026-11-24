@@ -327,8 +327,8 @@ class HallScene extends Scene3D {
         void main(){
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
           float ang = atan(vXZ.y, vXZ.x), ph = vState.w * 6.2832, t = uT * (1.0 - 0.7 * uCalm);
-          float rim = pow(f, 2.6) * 0.75;
-          float col = 0.025 + 0.16 * pow(1.0 - vY, 3.2) + 0.1 * pow(vY, 9.0);
+          float rim = pow(max(f, 0.0), 2.6) * 0.75;
+          float col = 0.025 + 0.16 * pow(max(1.0 - vY, 0.0), 3.2) + 0.1 * pow(max(vY, 0.0), 9.0);
           float band = (1.0 - smoothstep(0.0, 0.06, abs(fract(vY * 0.7 - uT * 0.045) - 0.5))) * 0.05;
           float wisp = 0.0;
           if (vDepth < 32.0) wisp = smoothstep(0.5, 1.0, sin(ang * 3.0 + vY * 9.0 - t * 1.1 + ph) * sin(ang * 5.0 - vY * 13.0 + t * 0.7)) * 0.11 * (1.0 - 0.6 * vY) * (1.0 - smoothstep(22.0, 32.0, vDepth)); // (near cells only: far off the haze hides them)
@@ -346,9 +346,10 @@ class HallScene extends Scene3D {
           vec3 refl = vec3(0.0);
           if (gl_FrontFacing) {
             vec3 Vd = normalize(-vV), Nn = normalize(vN), R = reflect(Vd, Nn);
-            vec3 t1 = (uBoxMax - vW) / R, t2 = (uBoxMin - vW) / R, tf = max(t1, t2);
+            vec3 Rs = mix(vec3(-1.0), vec3(1.0), step(0.0, R)) * max(abs(R), vec3(1e-4)); // (as the floor's: no NaN on an axis)
+            vec3 t1 = (uBoxMax - vW) / Rs, t2 = (uBoxMin - vW) / Rs, tf = max(t1, t2);
             float fr = 0.04 + 0.96 * pow(1.0 - clamp(dot(-Vd, Nn), 0.0, 1.0), 5.0);
-            refl = textureCubeLodEXT(tProbe, vW + R * min(min(tf.x, tf.y), tf.z) - uProbeAt, 1.0).rgb * fr * uGlassRefl;
+            refl = textureCubeLodEXT(tProbe, vW + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt, 1.0).rgb * fr * uGlassRefl;
           }
           gl_FragColor = vec4((c * (rim + col + band + wisp) * pulse * (1.0 + vFlick) + mix(vec3(0.9, 0.97, 1.0), c, 0.35) * crack * 0.85 + refl) * uK * haze, 1.0);
         }`,
@@ -408,6 +409,10 @@ class HallScene extends Scene3D {
     // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
     // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
     this.kit = buildCellKit(this);
+    // (the steel gives back the hall's capture filtered for its roughness: from the start a filtered copy of the capture
+    // not yet drawn (black, as the hall's dark), so the steel's shader is made now, with the hall's, and each capture
+    // that arrives changes a picture, not the shader; and the filter's own shader made now: neither mid-glide)
+    if (GFX.ok && this.kit.steelMat && this.probe) { try { const pm = GFX.pmrem(); pm.compileCubemapShader(); this.steelEnv = pm.fromCubemap(this.probe.map); this.kit.steelMat.envMap = this.steelEnv.texture; } catch (e) { /* made at the first capture instead */ } }
     this.podMesh = this.kit.steel; // (what the tools wait for: the cells are in)
     this.kit.states.forEach((st, i) => {
       const cl = this.cells[i], ry = cl.anchor.rotation.y;
@@ -496,7 +501,7 @@ class HallScene extends Scene3D {
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 1.15, 6.4, 32, 1, true), new THREE.ShaderMaterial({
       uniforms: this.shaftU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vY = position.y / 6.4 + 0.5; vN = normalize(mat3(modelMatrix) * normal); vV = cameraPosition - w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
-      fragmentShader: "uniform vec3 uCol; uniform float uK; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float f = abs(dot(normalize(vN), normalize(vV))); float a = pow(f, 1.6) * pow(1.0 - vY, 1.3) * smoothstep(0.0, 0.1, vY) * 0.2; gl_FragColor = vec4(uCol * a * uK, 1.0); }",
+      fragmentShader: "uniform vec3 uCol; uniform float uK; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float f = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(f, 0.0), 1.6) * pow(max(1.0 - vY, 0.0), 1.3) * smoothstep(0.0, 0.1, vY) * 0.2; gl_FragColor = vec4(uCol * a * uK, 1.0); }",
     }));
     shaft.position.set(0, 1.0 + 3.2, Z + 7 - 0.57);
     shaft.renderOrder = 5;
@@ -752,11 +757,12 @@ class HallScene extends Scene3D {
       this.probe.step(this.scene, this.camera.layers.mask);
       this.probeTaken();
     }
-    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
-    if (this.kit && this.kit.steelMat && !this.steelIn) { // (the cells' tread plate and brushed steel: see cellSteelMaterial)
-      const U = this.kit.steelMat.userData, a = Assets.ui("mat-tread"), b = Assets.ui("mat-steel");
-      if (a && b) { U.tTread.value.image = a; U.tTread.value.needsUpdate = true; U.tBrush.value.image = b; U.tBrush.value.needsUpdate = true; this.steelIn = true; }
-    }
+    // the deck's plates, then the cells' tread plate, then their brushed steel (cellSteelMaterial), each as its picture
+    // arrives: one picture sent to the graphics chip a frame at most, and one not yet come never holds up the others
+    let sent = false;
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = sent = true; } }
+    if (!sent && this.kit && this.kit.steelMat && !this.treadIn) { const a = Assets.ui("mat-tread"), U = this.kit.steelMat.userData; if (a) { U.tTread.value.image = a; U.tTread.value.needsUpdate = true; this.treadIn = sent = true; } }
+    if (!sent && this.kit && this.kit.steelMat && !this.brushIn) { const b = Assets.ui("mat-steel"), U = this.kit.steelMat.userData; if (b) { U.tBrush.value.image = b; U.tBrush.value.needsUpdate = true; this.brushIn = sent = true; } }
     // the generated pieces: one step of the one coming in, each frame; a look for the next every fifth of a second
     if (!this.leaving) {
       if (this.job) { try { if (this.job.next().done) this.job = null; } catch (e) { this.job = null; } }

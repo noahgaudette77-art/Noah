@@ -367,16 +367,16 @@ function racerGroundMaterial(mirror, shared) {
         }
         float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
-        float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
+        float beams = exp(-pow(abs((x - uCarX + 0.62) / hw), 2.0)) + exp(-pow(abs((x - uCarX - 0.62) / hw), 2.0));
         lt += vec3(1.0, 0.9, 0.78) * uHead * smoothstep(0.0, 1.5, ah) * exp(-ah * 0.07) * min(beams, 1.3);
         lt += uUnder * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
         lt += uTailC * uTail * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
         float gz = z - uGateZ;
         float gk = exp(-gz * gz * 0.16) * uGateI;
         if (gk > 0.003) {
-          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow((x + 3.75) * 1.1, 2.0)) + uSlot1 * exp(-pow((x + 1.25) * 1.1, 2.0))
-            + uSlot2 * exp(-pow((x - 1.25) * 1.1, 2.0)) + uSlot3 * exp(-pow((x - 3.75) * 1.1, 2.0)));
-          else lt += gk * (uSlot0 * exp(-pow((x + 2.5) * 0.55, 2.0)) + uSlot1 * exp(-pow((x - 2.5) * 0.55, 2.0)));
+          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow(abs((x + 3.75) * 1.1), 2.0)) + uSlot1 * exp(-pow(abs((x + 1.25) * 1.1), 2.0))
+            + uSlot2 * exp(-pow(abs((x - 1.25) * 1.1), 2.0)) + uSlot3 * exp(-pow(abs((x - 3.75) * 1.1), 2.0)));
+          else lt += gk * (uSlot0 * exp(-pow(abs((x + 2.5) * 0.55), 2.0)) + uSlot1 * exp(-pow(abs((x - 2.5) * 0.55), 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
         float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
@@ -506,7 +506,7 @@ function racerCityMaterial(shared, P, maps) {
             // it the more the wall is seen edge on), or a room lit in clusters, amber, cyan or magenta (in the picture),
             // brighter under its ceiling and shaded under the lintel
             vec3 V = normalize(cameraPosition - vW);
-            float fr = 0.04 + 0.96 * pow(1.0 - abs(dot(n, V)), 5.0);
+            float fr = 0.04 + 0.96 * pow(max(1.0 - abs(dot(n, V)), 0.0), 5.0);
             vec3 env = mix((vL.x < 0.0 ? uLampR : uLampL) * (0.12 * uLampI) + uFogColor * 0.2, uFogColor * 0.6 + vec3(0.01, 0.012, 0.03), smoothstep(5.0, 22.0, q.y));
             vec3 room = tw.rgb * (0.45 + 1.25 * uCity) * (0.8 + 0.35 * smoothstep(0.7, 1.8, lp.y)) * (1.0 - 0.45 * smoothstep(1.7, 1.92, lp.y) * fine);
             glass = vec3(0.004, 0.006, 0.012) + env * fr + room;
@@ -547,7 +547,7 @@ function racerCityMaterial(shared, P, maps) {
           // brass: warm metal with a highlight and a soft rim
           vec3 v = normalize(cameraPosition - vW);
           float spec = pow(max(dot(reflect(-uKeyDir, n), v), 0.0), 14.0);
-          float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          float rim = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
           col = vCol * (uAmb * 1.5 + uKey * (0.25 + 0.8 * lit)) + vec3(1.0, 0.8, 0.5) * spec * 0.8 + vCol * rim * 0.4;
         }
         float fg = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar);

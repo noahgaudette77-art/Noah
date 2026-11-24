@@ -162,7 +162,7 @@ class Wizard {
             totalEmissiveRadiance += diffuseColor.rgb * uWizFill; // (a little light of its own: its colours hold in the darkest arena)`)
           .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
               float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
-              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(fr, 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
+              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(max(fr, 0.0), 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
             }
             #include <tonemapping_fragment>`);
       };
