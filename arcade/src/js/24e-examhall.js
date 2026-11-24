@@ -1,8 +1,9 @@
 // The Final Exam's gallery of the fallen, served (opened from disk the hall is exactly as it was):
-//   the eleven chapter bosses and the Proctor as statues (statue-1 .. statue-11, statue-all: the other builds of each
-//   boss's own design), smaller than the examiner, on plinths in two tiers behind its dais. One cast bronze for all
-//   twelve, lit by the moon (the panorama's reflection) and the hall's own lamps; their own maps are not used (where a
-//   build was simplified they are patchy). The twelve and their plinths are one mesh: one draw.
+//   the eleven chapter bosses and the Proctor as statues (statue-1 .. statue-11: the other builds of each boss's own
+//   design; the Proctor's, from Phase 5, the examiner's own machine: proctorStatue), smaller than the examiner, on
+//   plinths in two tiers behind its dais. One cast bronze for all twelve, lit by the moon (the panorama's reflection)
+//   and the hall's own lamps; their own maps are not used (where a build was simplified they are patchy). The twelve
+//   and their plinths are one mesh: one draw.
 //   On the hall's centre line, at the foot of the gallery, the examiner's first desk (decor-podium, the darker
 //   lectern), lit by the same night.
 // While the questions are up the camera is under the examiner's chin, and none of this may stand behind the question,
@@ -28,7 +29,7 @@ const EXAM_HALL = {
 };
 function examHall(game) {
   if (!Assets.on || !game.has3D) return null;
-  const H = EXAM_HALL, got = H.STATUES.map((s) => Assets.model(s[0])), desk = Assets.model("decor-podium");
+  const H = EXAM_HALL, got = H.STATUES.map((s) => (s[0] === "statue-all" ? proctorStatue() : Assets.model(s[0]))), desk = Assets.model("decor-podium"); // (the Proctor's statue is the machine itself: 24f-proctor.js)
   if (GFX.extras === false) { got.concat([desk]).forEach((m) => m && disposeTree(m.scene)); return null; }
   const G = { k: 0, shown: -1, mesh: null, desk: null }, s = game.scene;
   const env = (game.gen && game.gen.sky && game.gen.sky.env) || (game.bossEnvRT && game.bossEnvRT.texture) || null;

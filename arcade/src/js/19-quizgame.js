@@ -99,9 +99,10 @@ class QuizGame extends Scene3D {
   }
 }
 
-// The asset files one play needs beyond its game's standing set: Boss Rush fights one boss, so it loads one.
+// The asset files one play needs beyond its game's standing set: Boss Rush fights one boss, so it loads one (the Proctor:
+// its skeleton and clips, boss-all-rig; its parts are in the page: 24f-proctor.js).
 function gameAssets(id, sel) {
-  if (id === "boss") return ["model:boss-" + (sel && sel.chapters && sel.chapters.length === 1 ? sel.chapters[0] : "all")];
+  if (id === "boss") return ["model:boss-" + (sel && sel.chapters && sel.chapters.length === 1 ? sel.chapters[0] : "all-rig")];
   return [];
 }
 function startGame(id, sel) {

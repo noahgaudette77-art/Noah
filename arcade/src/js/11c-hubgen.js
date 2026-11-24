@@ -51,7 +51,7 @@ function hubGenTake() {
   const cab = Assets.model("prop-cabinet");
   if (!cab) return null;
   const g = { cab, sky: Assets.sky("hub-hall"), skyB: Assets.sky("hub-hall-b"), tops: {}, cup: Assets.model("prop-trophy"), medal: Assets.model("prop-medal"), coin: Assets.model("prop-coin"), stand: Assets.model("prop-stand"), vault: Assets.model("prop-vault") };
-  for (const id in HUBGEN.TOPPERS) g.tops[id] = Assets.model(HUBGEN.TOPPERS[id].name);
+  for (const id in HUBGEN.TOPPERS) g.tops[id] = HUBGEN.TOPPERS[id].name === "mini-proctor" ? proctorTopper() : Assets.model(HUBGEN.TOPPERS[id].name);
   return g;
 }
 
@@ -105,7 +105,7 @@ class HubGen {
     this.t = 0;
     this.items = [];
     hubGenSkin(gen.cab, { env: 1.1, glow: 1.5 });
-    for (const id in gen.tops) if (gen.tops[id]) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 0.9 });
+    for (const id in gen.tops) if (gen.tops[id] && !gen.tops[id].proctor) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 0.9 }); // (the Proctor wears the exam's skin)
   }
   // a cabinet's frame in the hall (x across, y up, z toward the room's centre), in world units
   frame(i) {
@@ -160,7 +160,7 @@ class HubGen {
       this.hub.scene.add(pivot);
       const box = new THREE.Box3().setFromObject(obj);
       topH = (T.y || 0) + (box.max.y - box.min.y);
-      this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, base: pivot.rotation.y, swing: T.swing || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3 };
+      this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, base: pivot.rotation.y, swing: T.swing || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3, proctor: m.proctor || null };
     }
     this.cabTop[i] = ry + 0.112 + topH + 0.12;
     // where its screen goes, and the plane over its control panel (the screen's light falls there)
@@ -267,6 +267,7 @@ class HubGen {
       tp.lift += ((calm ? 0.08 : 0.24) * f - tp.lift) * Math.min(1, dt * 4);
       tp.pivot.rotation.y = tp.swing ? tp.base + Math.sin(tp.spin) * tp.swing : tp.spin;
       tp.pivot.position.y = tp.y0 + tp.lift + (calm ? 0 : tp.bob * Math.sin(t * 1.6 + tp.ph));
+      if (tp.proctor) tp.proctor.light(1 + 0.35 * f, 0); // (the Proctor's seams and eyes, brighter in front; its reactor's hollow measured as it turns)
     });
     this.items.forEach((it) => {
       if (!it.lit.visible) return;

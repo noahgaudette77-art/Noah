@@ -132,7 +132,7 @@ class BossActor {
     this.body = new THREE.Group(); // (lean, recoil and height above the floor, in the model's own units)
     this.root.add(this.body);
     this.body.add(model.scene);
-    this.mats = tuneModel(model, { env: row.env === undefined ? 2.2 : row.env, glow: 0 });
+    this.mats = model.proctor ? model.proctor.mats : tuneModel(model, { env: row.env === undefined ? 2.2 : row.env, glow: 0 }); // (the Proctor wears the exam's skin: 24f-proctor.js)
     this.glow = row.glow === undefined ? 2.3 : row.glow;
     this.power = 0; // its lights: 0 dark, 1 on
     this.joint = { head: P[J.head || "Head"], chest: P[J.chest || "Spine02"], hips: P[J.hips || "Hip"], handL: P[J.handL || "L_Hand"], handR: P[J.handR || "R_Hand"], footL: P[J.footL || "L_Foot"], footR: P[J.footR || "R_Foot"] };
@@ -443,6 +443,7 @@ class BossActor {
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
+    if (this.model.proctor) this.model.proctor.light(this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick), rage);
     if (this.dress) this.dress.update(d, o);
     // ---- what has been torn off: thrown, falling, turning, coming to rest on the floor, and gone (each flight exact for
     // its time step: the same arc at any frame rate)

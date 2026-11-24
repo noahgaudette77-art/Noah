@@ -171,20 +171,31 @@ function bossTileSlopes() {
   tex.anisotropy = 4;
   return (bossTileSlopes.tex = tex);
 }
+// (Phase 5, the Proctor as one design: Boss Rush, the title's cell and the hub's topper wear this same skin on the same
+// parts. o.local: the part's own position and normal come from attributes (aBossP, aBossN: a copy merged into one
+// skinned mesh, whose position is no longer its part's); o.frameU: a uniform matrix from the world to the reactor's own
+// frame, in model units (the hollow round the reactor is measured in it, whatever turns or scales the machine: the exam's
+// stands square to the lens at BOSS_S, and measures in the world). The exam passes neither: its shader is as it was.)
 function bossSkin(env, side, o, U) {
-  const bone = !!o.bone;
+  const bone = !!o.bone, UK = (1 / BOSS_S).toFixed(5);
   const m = new THREE.MeshStandardMaterial({ metalness: 1, roughness: 1, envMap: env, envMapIntensity: o.env, side, emissive: 0x000000 }); // (its own painting is left to the wreck: see above)
   m.extensions = { derivatives: true, shaderTextureLOD: true };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, neonUniforms(), U, { uBossEye: o.eye || { value: new THREE.Vector3() }, uBossEyeAt: { value: o.eyeAt || new THREE.Vector3() }, uBossSlope: { value: bossTileSlopes() } });
-    sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossW = (modelMatrix * vec4(transformed, 1.0)).xyz; vBossY = vBossW.y;");
+    if (o.frameU) sh.uniforms.uBossFrame = o.frameU;
+    sh.vertexShader = o.local
+      ? sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW; attribute vec3 aBossP; attribute vec3 aBossN;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = aBossP; vBossN = aBossN;")
+        .replace("#include <project_vertex>", "vBossW = (modelMatrix * vec4(transformed, 1.0)).xyz; vBossY = vBossW.y;\n#include <project_vertex>")
+      : sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBossP = position; vBossN = normal; vBossW = (modelMatrix * vec4(transformed, 1.0)).xyz; vBossY = vBossW.y;");
     sh.fragmentShader = sh.fragmentShader
       .replace("#include <common>", `#include <common>
         varying vec3 vBossP; varying vec3 vBossN; varying float vBossY; varying vec3 vBossW;
         uniform vec3 uBossCoreW; uniform float uBossAll; uniform sampler2D uBossSlope;
-        uniform vec3 uBossRim; uniform vec3 uBossSeam; uniform float uBossPower; uniform float uBossSweep; uniform float uBossCrack; uniform float uBossDim; uniform float uBossRimK; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;
+        uniform vec3 uBossRim; uniform vec3 uBossSeam; uniform float uBossPower; uniform float uBossSweep; uniform float uBossCrack; uniform float uBossDim; uniform float uBossRimK; uniform vec3 uBossEye; uniform vec3 uBossEyeAt;${o.frameU ? " uniform mat4 uBossFrame;" : ""}
         ${NEON_GLSL}`)
       .replace("#include <map_fragment>", `#include <map_fragment>
         // the tile from whichever side the surface faces most (as neonTile), looked up with the slope of the position
@@ -207,8 +218,8 @@ function bossSkin(env, side, o, U) {
           ? "vec3 bossS = vec3(abs(vBossP.x) - uBossEyeAt.x, vBossP.yz - uBossEyeAt.yz); diffuseColor.rgb = vec3(0.6, 0.6, 0.63) * (0.86 + 0.28 * bossT.r) * (1.0 - 0.3 * bossGv) * (1.0 - 0.82 * exp(-dot(bossS, bossS) * 150.0)); // (a pale enamel, dark in the sockets)"
           : "diffuseColor.rgb = mix(vec3(0.32, 0.335, 0.385) * (0.74 + 0.52 * bossT.r) * (1.0 - 0.72 * bossGv) * (1.0 - 0.75 * bossVent), vec3(0.58, 0.6, 0.66), bossEdge * 0.35); // (steel, worn bright on its edges)"}
         ${Assets.on ? `// (served: the hollow in its chest, round the reactor, and what shows of the frame behind it, is smooth dark gunmetal: the painting there is coarse and read as a smear)
-        vec2 bossCq = (vBossW - uBossCoreW).xy * ${(1 / BOSS_S).toFixed(5)}; bossCq.y *= bossCq.y < 0.0 ? 0.5 : 1.0; // (Phase 5 fix: the hollow runs on down below the reactor: the mask reaches as far)
-        float bossCoreM = (1.0 - smoothstep(0.066, 0.1, length(bossCq))) * step(-0.14, (vBossW.z - uBossCoreW.z) * ${(1 / BOSS_S).toFixed(5)}); // (measured across the chest, not into it: the hollow lies in front of the core)
+        ${o.frameU ? "vec3 bossCl = (uBossFrame * vec4(vBossW, 1.0)).xyz; vec2 bossCq = bossCl.xy;" : `vec2 bossCq = (vBossW - uBossCoreW).xy * ${UK};`} bossCq.y *= bossCq.y < 0.0 ? 0.5 : 1.0; // (Phase 5 fix: the hollow runs on down below the reactor: the mask reaches as far)
+        float bossCoreM = (1.0 - smoothstep(0.066, 0.1, length(bossCq))) * step(-0.14, ${o.frameU ? "bossCl.z" : `(vBossW.z - uBossCoreW.z) * ${UK}`}); // (measured across the chest, not into it: the hollow lies in front of the core)
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1, 0.1, 0.13), bossCoreM);` : ""}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
         roughnessFactor = ${bone ? "clamp(0.34 + (0.5 - bossT.r) * 0.3, 0.2, 0.6)" : "mix(clamp(0.27 + (0.5 - bossT.r) * 0.45 + 0.25 * bossGv, 0.17, 0.8), 0.22, bossEdge)"};
@@ -231,7 +242,7 @@ function bossSkin(env, side, o, U) {
         // (the burn starts at the reactor and spreads: near it the lines are wide and white-hot, further out thin and red,
         // and beyond its reach still dark. Thrown pieces burn all over, and cool.)
         float bossReach = uBossCrack * 1.5;
-        float bossBurn = max(uBossAll, smoothstep(bossReach, bossReach - 0.4, length(vBossW - uBossCoreW) * ${(1 / BOSS_S).toFixed(5)} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
+        float bossBurn = max(uBossAll, smoothstep(bossReach, bossReach - 0.4, length(vBossW - uBossCoreW) * ${UK} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
         float bossHot = bossBurn * min(uBossCrack, 1.0);
         totalEmissiveRadiance += mix(vec3(2.2, 0.42, 0.08), vec3(4.2, 2.0, 0.7), bossHot * bossHot) * (smoothstep(0.2 - 0.19 * bossHot, 0.45, bossT.g) + 0.22 * smoothstep(0.0, 0.3, bossT.g) * bossHot) * bossHot * (0.3 + 1.0 * bossT.r);`}
         // the eyes' own light on the bone round them (the skull only: elsewhere uBossEye is zero)
@@ -243,8 +254,80 @@ function bossSkin(env, side, o, U) {
     const own = m.onBeforeCompile;
     m.onBeforeCompile = (sh) => { own(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL.replace("0.65); }", "0.4); }")); };
   }
-  m.customProgramCacheKey = () => "exam-boss-skin-9-" + (bone ? 1 : 0) + (Assets.on ? "s" : "");
+  m.customProgramCacheKey = () => "exam-boss-skin-9-" + (bone ? 1 : 0) + (Assets.on ? "s" : "") + (o.local ? "l" : "") + (o.frameU ? "f" : "");
   return m;
+}
+
+// The Proctor's cap, a mortarboard (Phase 2: it read as a slab, a flat box edged with gold boxes): a square board of
+// black cloth, its edge bevelled and its corners a little rounded, on a skull cap; a covered button at its middle,
+// a cord from it across the board and over a corner, and the tassel on the cord, its threads loose at the foot.
+// One draw for the cloth, one for the gold (it was nine). Set on the head's own mesh (its geometry about the head's
+// pivot), so it nods, turns and, at the end, flies off with it. (Phase 5: one builder for the exam, Boss Rush, the
+// title's cell and the hub's topper.)
+function bossCap(env) {
+  const cloth = new THREE.MeshStandardMaterial({ color: 0x131119, metalness: 0, roughness: 0.74, envMap: env, envMapIntensity: 0.55, emissive: 0x07050f, emissiveIntensity: 1 }); // (the board's faces are its own: an extrusion's normals are its faces')
+  const gold = new THREE.MeshStandardMaterial({ color: 0xe6b04a, metalness: 1, roughness: 0.32, envMap: env, envMapIntensity: 1.2, emissive: 0x6a3c06, emissiveIntensity: 0.25 });
+  const W = 0.106, T = 0.012, B = 0.003, top = 0.003 + T / 2, cloths = [], golds = [];
+  // the board: a rounded square extruded, bevelled all round (its edge catches the key light: it reads as a board)
+  const sq = new THREE.Shape(), h = W - B, r = 0.01;
+  sq.moveTo(-h + r, -h); sq.lineTo(h - r, -h); sq.quadraticCurveTo(h, -h, h, -h + r); sq.lineTo(h, h - r); sq.quadraticCurveTo(h, h, h - r, h);
+  sq.lineTo(-h + r, h); sq.quadraticCurveTo(-h, h, -h, h - r); sq.lineTo(-h, -h + r); sq.quadraticCurveTo(-h, -h, -h + r, -h);
+  cloths.push(new THREE.ExtrudeGeometry(sq, { depth: T - 2 * B, bevelEnabled: true, bevelThickness: B, bevelSize: B, bevelSegments: 2, curveSegments: 3 }).rotateX(-Math.PI / 2).translate(0, top - T + B, 0));
+  cloths.push(new THREE.CylinderGeometry(0.05, 0.056, 0.03, 24).translate(0, -0.016, 0)); // the skull cap under it
+  golds.push(new THREE.SphereGeometry(0.0095, 12, 8).scale(1, 0.55, 1).translate(0, top + 0.002, 0)); // the button
+  // the cord: from the button across the board to its front left corner, over the edge, and down
+  const c = (x, y, z) => new THREE.Vector3(x, y, z), path = new THREE.CatmullRomCurve3([c(0, top + 0.002, 0), c(-W * 0.5, top + 0.0022, W * 0.5), c(-W * 0.93, top + 0.002, W * 0.93), c(-W * 1.01, top - 0.005, W * 1.01), c(-W * 1.02, -0.012, W * 1.02), c(-W * 1.02, -0.024, W * 1.02)]);
+  golds.push(new THREE.TubeGeometry(path, 28, 0.0022, 5, false));
+  const foot = path.getPoint(1);
+  golds.push(new THREE.SphereGeometry(0.0052, 10, 8).translate(foot.x, foot.y - 0.002, foot.z)); // the knot at the tassel's head
+  // the tassel: a flared bundle, its threads as flutes round it (every other edge drawn in), loose at the foot
+  const tas = new THREE.LatheGeometry([[0.0001, -0.046], [0.0068, -0.0455], [0.0074, -0.04], [0.0058, -0.012], [0.0042, -0.004], [0.0034, 0], [0.0001, 0.0004]].map(([x, y]) => new THREE.Vector2(x, y)), 18);
+  const tp = tas.attributes.position;
+  for (let i = 0; i < tp.count; i++) { const k = Math.round((Math.atan2(tp.getZ(i), tp.getX(i)) / (Math.PI * 2)) * 18) % 2 ? 0.8 : 1.06; tp.setXYZ(i, tp.getX(i) * k, tp.getY(i), tp.getZ(i) * k); }
+  tas.computeVertexNormals();
+  golds.push(tas.translate(foot.x, foot.y - 0.006, foot.z));
+  const cap = new THREE.Group();
+  cap.add(new THREE.Mesh(mergeIndexed(cloths), cloth), new THREE.Mesh(mergeIndexed(golds), gold));
+  cap.position.set(-0.001, 0.173, 0.022);
+  cap.rotation.set(0.1, 0.2, 0.05); // (a little askew; the tassel hangs clear of the eye, beside the temple)
+  return cap;
+}
+
+// (served, Phase 6) The reactor's housing, set into the hollow in its chest: a hard-edged octagon of polished
+// gunmetal with a bevelled lip, a slatted vent across its foot and the core glowing magenta at its heart, ringed. The
+// painting there is coarse and read as a black smear, and no change of material made it read as anything else.
+// It rides the chest (pv: the chest joint's pivot). Model units: the hollow is about 0.1 across round (0.006, 0.69),
+// its floor at z 0.16, the armour round it at 0.17 to 0.19. (Phase 5: one builder for every Proctor.)
+function bossHousing(env, pv) {
+  const h = {};
+  const R = 0.064, z0 = 0.15, zf = 0.187, zi = zf - 0.012, ri = R - 0.021;
+  const metal = new THREE.MeshStandardMaterial({ color: 0x33374a, metalness: 1, roughness: 0.34, envMap: env, envMapIntensity: 0.85, flatShading: true, side: THREE.DoubleSide });
+  metal.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }; // (cooled, as its armour is)
+  const dark = new THREE.MeshStandardMaterial({ color: 0x0e0c18, metalness: 0.6, roughness: 0.55, envMap: env, envMapIntensity: 0.45, flatShading: true });
+  const grp = new THREE.Group();
+  grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
+  grp.scale.set(1, 1.18, 1); // (a little taller than wide: the hollow runs on down below the reactor)
+  const lathe = (pts, mat) => { const geo = new THREE.LatheGeometry(pts.map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8); geo.rotateX(Math.PI / 2); const m = new THREE.Mesh(geo, mat); grp.add(m); return m; };
+  lathe([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]], metal); // the rim and its bevel
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(ri + 0.001, 8, Math.PI / 8), dark);
+  floor.position.z = zi - 0.001;
+  grp.add(floor);
+  for (let i = 0; i < 4; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.008, 0.0042, 0.006), metal); v.position.set(0, -0.019 - i * 0.0072, zi + 0.002); grp.add(v); } // the vent's slats
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0185, 0.003, 6, 8), metal); // the core's collar
+  ring.rotation.z = Math.PI / 8; ring.position.set(0, 0.008, zi + 0.004);
+  grp.add(ring);
+  h.coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 0.3, 2.1) });
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 16, 10), h.coreMat);
+  core.scale.z = 0.55; core.position.set(0, 0.008, zi + 0.003);
+  grp.add(core);
+  h.coreLamp = glowSprite(new THREE.Color(1.1, 0.25, 1.6), 0.07, 0);
+  h.coreLamp.position.set(0, 0.008, zi + 0.012);
+  h.coreLamp.layers.set(1);
+  grp.add(h.coreLamp);
+  h.coreCol = new THREE.Color(1.5, 0.3, 2.1);
+  h.coreEmber = new THREE.Color(0.85, 0.16, 1.15); // (the ember that beats in its chest is this core's light now, not an orange glow as wide as its chest)
+  h.grp = grp;
+  return h;
 }
 
 // Fire, smoke, vapour and flashes: camera-facing puffs, all in one draw call. A fire
@@ -395,37 +478,8 @@ class ExamBoss {
       return (this.J[name] = { name, parent, pivot, ids, grp, mesh, rot: new THREE.Vector3(), on: true });
     });
     this.hipRest = this.J.hips.grp.position.clone();
-    // The proctor's cap, a mortarboard (Phase 2: it read as a slab, a flat box edged with gold boxes): a square board of
-    // black cloth, its edge bevelled and its corners a little rounded, on a skull cap; a covered button at its middle,
-    // a cord from it across the board and over a corner, and the tassel on the cord, its threads loose at the foot.
-    // One draw for the cloth, one for the gold (it was nine). It rides the head's own mesh, so it nods, turns and, at
-    // the end, flies off with it.
-    {
-      const cloth = new THREE.MeshStandardMaterial({ color: 0x131119, metalness: 0, roughness: 0.74, envMap: env, envMapIntensity: 0.55, emissive: 0x07050f, emissiveIntensity: 1 }); // (the board's faces are its own: an extrusion's normals are its faces')
-      const gold = new THREE.MeshStandardMaterial({ color: 0xe6b04a, metalness: 1, roughness: 0.32, envMap: env, envMapIntensity: 1.2, emissive: 0x6a3c06, emissiveIntensity: 0.25 });
-      const W = 0.106, T = 0.012, B = 0.003, top = 0.003 + T / 2, cloths = [], golds = [];
-      // the board: a rounded square extruded, bevelled all round (its edge catches the key light: it reads as a board)
-      const sq = new THREE.Shape(), h = W - B, r = 0.01;
-      sq.moveTo(-h + r, -h); sq.lineTo(h - r, -h); sq.quadraticCurveTo(h, -h, h, -h + r); sq.lineTo(h, h - r); sq.quadraticCurveTo(h, h, h - r, h);
-      sq.lineTo(-h + r, h); sq.quadraticCurveTo(-h, h, -h, h - r); sq.lineTo(-h, -h + r); sq.quadraticCurveTo(-h, -h, -h + r, -h);
-      cloths.push(new THREE.ExtrudeGeometry(sq, { depth: T - 2 * B, bevelEnabled: true, bevelThickness: B, bevelSize: B, bevelSegments: 2, curveSegments: 3 }).rotateX(-Math.PI / 2).translate(0, top - T + B, 0));
-      cloths.push(new THREE.CylinderGeometry(0.05, 0.056, 0.03, 24).translate(0, -0.016, 0)); // the skull cap under it
-      golds.push(new THREE.SphereGeometry(0.0095, 12, 8).scale(1, 0.55, 1).translate(0, top + 0.002, 0)); // the button
-      // the cord: from the button across the board to its front left corner, over the edge, and down
-      const c = (x, y, z) => new THREE.Vector3(x, y, z), path = new THREE.CatmullRomCurve3([c(0, top + 0.002, 0), c(-W * 0.5, top + 0.0022, W * 0.5), c(-W * 0.93, top + 0.002, W * 0.93), c(-W * 1.01, top - 0.005, W * 1.01), c(-W * 1.02, -0.012, W * 1.02), c(-W * 1.02, -0.024, W * 1.02)]);
-      golds.push(new THREE.TubeGeometry(path, 28, 0.0022, 5, false));
-      const foot = path.getPoint(1);
-      golds.push(new THREE.SphereGeometry(0.0052, 10, 8).translate(foot.x, foot.y - 0.002, foot.z)); // the knot at the tassel's head
-      // the tassel: a flared bundle, its threads as flutes round it (every other edge drawn in), loose at the foot
-      const tas = new THREE.LatheGeometry([[0.0001, -0.046], [0.0068, -0.0455], [0.0074, -0.04], [0.0058, -0.012], [0.0042, -0.004], [0.0034, 0], [0.0001, 0.0004]].map(([x, y]) => new THREE.Vector2(x, y)), 18);
-      const tp = tas.attributes.position;
-      for (let i = 0; i < tp.count; i++) { const k = Math.round((Math.atan2(tp.getZ(i), tp.getX(i)) / (Math.PI * 2)) * 18) % 2 ? 0.8 : 1.06; tp.setXYZ(i, tp.getX(i) * k, tp.getY(i), tp.getZ(i) * k); }
-      tas.computeVertexNormals();
-      golds.push(tas.translate(foot.x, foot.y - 0.006, foot.z));
-      const cap = new THREE.Group();
-      cap.add(new THREE.Mesh(mergeIndexed(cloths), cloth), new THREE.Mesh(mergeIndexed(golds), gold));
-      cap.position.set(-0.001, 0.173, 0.022);
-      cap.rotation.set(0.1, 0.2, 0.05); // (a little askew; the tassel hangs clear of the eye, beside the temple)
+    { // the cap (bossCap): it rides the head's own mesh
+      const cap = bossCap(env);
       this.J.head.mesh.add(cap);
       this.cap = cap;
     }
@@ -584,40 +638,13 @@ class ExamBoss {
     this.lightK = still ? 1 : 0.1; this.lightTo = this.lightK;
     this.settle(0);
   }
-  // (served, Phase 6) The reactor's housing, set into the hollow in its chest: a hard-edged octagon of polished
-  // gunmetal with a bevelled lip, a slatted vent across its foot and the core glowing magenta at its heart, ringed. The
-  // painting there is coarse and read as a black smear, and no change of material made it read as anything else.
-  // It rides the chest (it moves with it, and goes with it when the chest is blown apart). Model units: the hollow is
-  // about 0.1 across round (0.006, 0.69), its floor at z 0.16, the armour round it at 0.17 to 0.19.
+  // (served, Phase 6) The reactor's housing (bossHousing), set into the hollow in its chest: it rides the chest (it moves
+  // with it, and goes with it when the chest is blown apart)
   housing(env) {
-    const pv = this.J.chest.pivot, R = 0.064, z0 = 0.15, zf = 0.187, zi = zf - 0.012, ri = R - 0.021;
-    const metal = new THREE.MeshStandardMaterial({ color: 0x33374a, metalness: 1, roughness: 0.34, envMap: env, envMapIntensity: 0.85, flatShading: true, side: THREE.DoubleSide });
-    metal.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }; // (cooled, as its armour is)
-    const dark = new THREE.MeshStandardMaterial({ color: 0x0e0c18, metalness: 0.6, roughness: 0.55, envMap: env, envMapIntensity: 0.45, flatShading: true });
-    const grp = new THREE.Group();
-    grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
-    grp.scale.set(1, 1.18, 1); // (a little taller than wide: the hollow runs on down below the reactor)
-    const lathe = (pts, mat) => { const geo = new THREE.LatheGeometry(pts.map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8); geo.rotateX(Math.PI / 2); const m = new THREE.Mesh(geo, mat); grp.add(m); return m; };
-    lathe([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]], metal); // the rim and its bevel
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(ri + 0.001, 8, Math.PI / 8), dark);
-    floor.position.z = zi - 0.001;
-    grp.add(floor);
-    for (let i = 0; i < 4; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.008, 0.0042, 0.006), metal); v.position.set(0, -0.019 - i * 0.0072, zi + 0.002); grp.add(v); } // the vent's slats
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0185, 0.003, 6, 8), metal); // the core's collar
-    ring.rotation.z = Math.PI / 8; ring.position.set(0, 0.008, zi + 0.004);
-    grp.add(ring);
-    this.coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 0.3, 2.1) });
-    const core = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 16, 10), this.coreMat);
-    core.scale.z = 0.55; core.position.set(0, 0.008, zi + 0.003);
-    grp.add(core);
-    this.coreLamp = glowSprite(new THREE.Color(1.1, 0.25, 1.6), 0.07, 0);
-    this.coreLamp.position.set(0, 0.008, zi + 0.012);
-    this.coreLamp.layers.set(1);
-    grp.add(this.coreLamp);
-    this.coreCol = new THREE.Color(1.5, 0.3, 2.1);
-    this.coreEmber = new THREE.Color(0.85, 0.16, 1.15); // (the ember that beats in its chest is this core's light now, not an orange glow as wide as its chest)
-    this.J.chest.grp.add(grp);
-    this.hous = grp;
+    const h = bossHousing(env, this.J.chest.pivot);
+    this.coreMat = h.coreMat; this.coreLamp = h.coreLamp; this.coreCol = h.coreCol; this.coreEmber = h.coreEmber;
+    this.J.chest.grp.add(h.grp);
+    this.hous = h.grp;
   }
   // world position of a point given in model units on a joint
   at(joint, x, y, z, out) {

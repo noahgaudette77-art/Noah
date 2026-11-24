@@ -95,7 +95,9 @@ class BossGame extends QuizGame {
     // What has loaded for this fight (nothing, when the page is opened from disk: then all of it is as it always was):
     // the arena's sky, and the boss's model. (Look only: the rules never ask which.)
     this.row = bossRow(this.bossKey);
-    this.gen = { sky: this.has3D ? Assets.sky(this.row.sky) : null, model: this.has3D ? Assets.model("boss-" + this.bossKey) : null };
+    this.gen = { sky: this.has3D ? Assets.sky(this.row.sky) : null, model: this.has3D ? Assets.model("boss-" + (this.bossKey === "all" ? "all-rig" : this.bossKey)) : null };
+    // (the Proctor: the machine the owner supplied, as in the Final Exam, on its skeleton: 24f-proctor.js)
+    if (this.bossKey === "all" && this.gen.model) this.gen.model = proctorOk() ? proctorDress(this.gen.model, null) : null;
     if (this.gen.sky && !this.gen.sky.map) this.gen.sky = null;
     this.pano = !!this.gen.sky;
     if (this.has3D) this.build3D();

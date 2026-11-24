@@ -44,7 +44,7 @@ const BOSS_ROW = {
   9: { sky: "boss-storm", atk: [4], src: "handR" }, // UNDUE INFLUENCER: strings of light that find the player
   10: { sky: "boss-storm-b", atk: [0, 1], srcs: { 0: "chest", 1: "weapon" }, env: 2.8, size: 6.8, tear: [[0.78, "wound"], [0.56, "forearmL"], [0.34, "shoulderL"]], last: ["forearmR", "forearmL", "shoulderR", "shoulderL"] }, // PROBATE TOLLGATE: a volley from the booth, then the barrier's slam
   11: { sky: "boss-void", atk: [3], clip: { 3: "attackB" } }, // PATRIMONY PHANTOM: a cleaving arc from its cleaver (thrust at the lens: in the overhead smash it bends over and its cloak hides it)
-  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" }, clip: { 3: "attackB" }, slam: "weapon" }, // THE PROCTOR: all five, in turn (its sweep thrust at the lens: in the overhead smash its cap and coat hide it; its slam lands under its pencil)
+  all: { sky: "boss-void", atk: [0, 1, 2, 3, 4], srcs: { 2: "chest", 4: "handR" }, clip: { 3: "attackB" }, slam: "weapon", size: 6.9 }, // THE PROCTOR: all five, in turn (its sweep thrust at the lens: in the overhead smash its arms and cap hide it; its slam lands under its right fist). Phase 5: the owner's machine, as in the exam, on the old Proctor's clips (24f-proctor.js); a little smaller than the rest: it stands at its full height, its cap clear of the picture's top
 };
 const bossRow = (key) => Object.assign({ key: String(key) }, BOSS_BASE, BOSS_ROW[key] || BOSS_ROW[1]);
 

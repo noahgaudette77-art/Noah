@@ -81,13 +81,16 @@ function* hallSkinSteps(model) {
     let nv = 0, ni = 0;
     for (const m of list) { const g = m.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
     const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+    // (a material that reads each part's own position and normal (the Proctor's skin: 24f-proctor.js) is given them as
+    // they were, beside the merged copy)
+    const local = !!mat.userData.bossLocal, lp = local ? new Float32Array(nv * 3) : null, ln = local ? new Float32Array(nv * 3) : null;
     let o = 0, oi = 0;
     for (const m of list) {
       const g = m.geometry, P = g.attributes.position, NO = g.attributes.normal, UV = g.attributes.uv, n = P.count, b = bi.get(boneOf(m));
       N.getNormalMatrix(m.matrixWorld);
       let k = unit(P);
-      for (let i = 0; i < n; i++) { v.set(P.getX(i) * k, P.getY(i) * k, P.getZ(i) * k).applyMatrix4(m.matrixWorld); const j = (o + i) * 3; pos[j] = v.x; pos[j + 1] = v.y; pos[j + 2] = v.z; si[(o + i) * 4] = b; sw[(o + i) * 4] = 1; }
-      if (NO) { k = unit(NO); for (let i = 0; i < n; i++) { v.set(NO.getX(i) * k, NO.getY(i) * k, NO.getZ(i) * k).applyMatrix3(N).normalize(); const j = (o + i) * 3; nor[j] = v.x; nor[j + 1] = v.y; nor[j + 2] = v.z; } }
+      for (let i = 0; i < n; i++) { v.set(P.getX(i) * k, P.getY(i) * k, P.getZ(i) * k); if (local) v.toArray(lp, (o + i) * 3); v.applyMatrix4(m.matrixWorld); const j = (o + i) * 3; pos[j] = v.x; pos[j + 1] = v.y; pos[j + 2] = v.z; si[(o + i) * 4] = b; sw[(o + i) * 4] = 1; }
+      if (NO) { k = unit(NO); for (let i = 0; i < n; i++) { v.set(NO.getX(i) * k, NO.getY(i) * k, NO.getZ(i) * k); if (local) v.toArray(ln, (o + i) * 3); v.applyMatrix3(N).normalize(); const j = (o + i) * 3; nor[j] = v.x; nor[j + 1] = v.y; nor[j + 2] = v.z; } }
       if (UV) { k = unit(UV); for (let i = 0; i < n; i++) { uv[(o + i) * 2] = UV.getX(i) * k; uv[(o + i) * 2 + 1] = UV.getY(i) * k; } }
       if (g.index) { const I = g.index; for (let i = 0; i < I.count; i++) idx[oi + i] = I.getX(i) + o; oi += I.count; } else { for (let i = 0; i < n; i++) idx[oi + i] = i + o; oi += n; }
       o += n;
@@ -98,6 +101,7 @@ function* hallSkinSteps(model) {
     geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
     geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(si, 4));
     geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(sw, 4));
+    if (local) { geo.setAttribute("aBossP", new THREE.BufferAttribute(lp, 3)); geo.setAttribute("aBossN", new THREE.BufferAttribute(ln, 3)); }
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
     geo.computeBoundingSphere();
     geo.boundingSphere.radius *= 1.6; // (an arm flung out in a rattle reaches past the rest pose)
@@ -556,7 +560,15 @@ class HallScene extends Scene3D {
     this.job = piece;
   }
   // a model taken from the loaded files (let go of when the hall closes: see dispose)
-  take(name) { const m = Assets.model(name); if (m) this.taken.push(m); return m; }
+  take(name) {
+    let m;
+    // (the twelfth cell holds the Proctor: the machine the owner supplied, as in the Final Exam, on its skeleton, made
+    // ready to be merged as the others are: 24f-proctor.js)
+    if (name === "boss-all-t") { m = Assets.model("boss-all-rig"); if (m) m = proctorOk() ? proctorDress(m, null, { local: true }) : null; }
+    else m = Assets.model(name);
+    if (m) this.taken.push(m);
+    return m;
+  }
   // each of a model's pictures sent to the graphics chip, one a frame
   *upload(m) {
     const r = GFX.ok && GFX.renderer, seen = new Set(), maps = [];
@@ -702,8 +714,11 @@ class HallScene extends Scene3D {
     if (m.animations && m.animations.length) { try { skin = yield* hallSkinSteps(m); } catch (e) { skin = null; } }
     else { rigModel(m, { tree: { forearmL: "shoulderL", forearmR: "shoulderR", shoulderL: "body", shoulderR: "body" } }); c.rig = m.parts; c.rest = {}; for (const n of ["body", "shoulderL", "shoulderR", "forearmL", "forearmR"]) if (m.parts[n]) c.rest[n] = m.parts[n].rotation.clone(); }
     yield;
-    c.mats = tuneModel(m, { env: 1.8, glow: 1.1 });
-    cellRim(c.mats, c.rimU); // (lit from inside its cell: its rim and its underside in its own colour)
+    if (m.proctor) { c.mats = m.proctor.mats; c.proctor = m.proctor; } // (the Proctor wears the exam's skin, its rim lit by its cell: see update)
+    else {
+      c.mats = tuneModel(m, { env: 1.8, glow: 1.1 });
+      cellRim(c.mats, c.rimU); // (lit from inside its cell: its rim and its underside in its own colour)
+    }
     root.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
     const k = Math.min(HALL.bossH / Math.max(1e-3, size.y), HALL.bossW / Math.max(1e-3, size.x, size.z));
@@ -827,6 +842,7 @@ class HallScene extends Scene3D {
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
       c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
+      if (c.proctor) { c.proctor.U.uBossRim.value.copy(c.rimU.col.value).multiplyScalar(0.7 * c.rimU.k.value); c.proctor.light(glow / 1.1, 0); } // (the Proctor: its skin's rim in its cell's light, its seams and eyes lit as the others' glow)
       // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
