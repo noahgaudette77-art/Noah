@@ -14,27 +14,21 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 2, image quality: its polishing resumes (the owner's order: 0, 1, 5, 3, then 2). Phases 0, 1, 5 and 3 are
-  done (Phase 3's gate passed 2026-11-24: `docs/master/phase3/`; live at `f10b3c2`); Phase 2's first pass is closed and
-  recorded (`docs/master/phase2/`).
-- **Done (Phase 2, resumed):** the smoothstep safety sweep (`89a65e8`..`275af41`, a file a commit; built `cd141b1`, live):
-  48 calls in 16 files; the 3D the same to the pixel on every game screen on both devices, no shader error anywhere
-  (every screen's stills, the effects kit, the wizard's casts and ward, the exam's wreck), the rules IDENTICAL.
-- **Done (Phase 2, resumed), the review's smaller findings, a commit each (source only; built at the gate):** the hub's
-  toppers lit by their cabinets' marquees (`3d64474`); the guide's chapter banner violet, not grey (`6989df8`); the
-  results bar's glow under its first button on a Mac (no teal band; `a3f3ac2`); an earned cup gold (`108cde4`); boss
-  portraits at their strip's 192 px (`3b9400b`); Memory Bank's right-hand deck and coins (`996ccd1`); Nest Egg Run in
-  orange and magenta (cyan 30-36% of the lit picture to 4-6%; `1c186eb`); the exam's Proctor lit ice blue from the front
-  (`35e28aa`). The menus' glass over the arcade floor was already deep violet: the grey the review saw came from the
-  library's grade behind those stills (fixed with the banner). `tools/hues.py` measures a still's colour
-  shares.
-- **In hand (Phase 2, resumed):** three packages in their own worktrees (the title hall: cells' steel and glass, floor,
-  Mac walls, the Proctor cell's crack; Boss Rush's arena: pillars and stands, the crowd, a cyan rim; Risk Blaster: the
-  Mac's sky, the far rocks and ships). Each to be read, cherry-picked, built, checked.
-- **Next steps (Phase 2, resumed):** merge the three packages; build; the gate: stills before and after at the same
-  moments (the racer's and the exam's questions vary between capture runs under load: compare their pictures, not their
-  frames), costs on both tiers, the rules IDENTICAL, a second independent review, a report. Carried to Phase 7: icons of
-  20 px or more, a 384 px portrait strip for 3x phones, the results bar.
+- **Phase:** 4, game feel, next (the owner's order: 0, 1, 5, 3, 2, then 4). Phases 0, 1, 5, 3 and 2 are done: Phase 2's
+  polish passed its gate 2026-11-24 (`docs/master/phase2/polish/`: the harness without fault, every budget kept, the rules
+  IDENTICAL, an independent review's findings fixed); its first pass is recorded in `docs/master/phase2/`.
+- **Done (Phase 2, resumed):** the smoothstep safety sweep (48 calls in 16 files, pixel-neutral); then an art review of
+  every screen and its findings, a small commit each: the title hall (the cells' steel worked, the bosses leading their
+  glass, the deck without speckle, violet walls, the crack off the Proctor's face), Boss Rush's arena (its steel worked,
+  the crowd lit as bodies with lettered signs, a cyan edge), Risk Blaster (a violet sky on a wide window, the far rocks
+  lit, the brood and far traffic clean), Nest Egg Run in orange and magenta, the exam's Proctor in ice blue, the hub's
+  toppers, the guide's banner, the results bar, a gold cup, sharper portraits, Memory Bank's deck and coins. Three
+  screens' packages were made in parallel worktrees and merged. `tools/hues.py` measures a still's colour shares.
+- **Next steps (Phase 4, game feel):** see Phase 4 below: input at once with a small buffer; shake capped and reducible
+  (it is white noise a frame today: `rand` in `Scene3D.placeCamera`, 04-gfx.js; a smooth noise on its own seeded
+  stream, so the game's own randomness is drawn as before); impacts, telegraphs, answer feedback, finishers; camera
+  damping and look-ahead; the carried items (the Mac's Risk Blaster explanation over the demon; the meant impacts the
+  snap scan flags; the title's 30 Hz twitch). Never add a `GFX.hitStop`.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -136,7 +130,7 @@ of real lights, half-resolution post effects, visibility-based updates, Low Powe
   tiers and the governor (thermal-aware, Low Power Mode), half-size post effects, rigid bosses merged to skinned meshes.
   Decided against, with evidence: a fixed timestep for the whole game, KTX2 now, rewriting for garbage.
 
-### Phase 2: image quality (first pass done 2026-11-23/24 ahead of the owner's new order; polishing resumes after Phase 3)
+### Phase 2: image quality (done 2026-11-24: a first pass 2026-11-23/24, its polish after Phase 3)
 - **First pass, closed by the new order (2026-11-24):** everything it shipped stays, all live: no FXAA on any tier; the
   art bible; the interface's faults; the title hall's floor, glass, steel, skylights and windows, its end on a Mac, the
   cracked glass; Memory Bank's room and its Mac layout; Boss Rush's arena; the Final Exam's hall and Proctor; Nest Egg
@@ -569,3 +563,19 @@ faults in the foot lock and the scan, all fixed; the scan, improved, found two m
 scan still flags are the impacts the game means (each into its hit-stop) and a few at its threshold: Phase 4 weighs the
 impacts as feel. Live at `f10b3c2`. Spend: none. Tools added: `pops.js`. Side files: `index.phase3.html` (work in
 progress), `index.phase5.html` (the Phase 5 build, for before/after scans), both gitignored.
+
+**Phase 2, resumed (2026-11-24).** The smoothstep safety sweep first (pixel-neutral), then an art review of every
+screen's stills on both devices (14 findings) and its findings fixed: the smaller ones directly, a commit each; the title
+hall, Boss Rush's arena and Risk Blaster each as a package in its own worktree (three agents in parallel), read and
+cherry-picked here (their built pages left out: the page is built once from everything merged). The gate
+(`docs/master/phase2/polish/gate-report.md`): the harness without fault (`docs/master/runs/phase2-polish`), every budget
+kept (Boss Rush's crowd picture +1.3 MB; no draw, light or texture added elsewhere), the rules IDENTICAL; an independent
+review of the code and the stills: nothing broke a screen; its eight code findings fixed or recorded (the cells'
+brushing that rippled, their grime on short faces, a key light that would flare with a rattle, two equal smoothstep
+edges, a fragile face grouping, an array a frame). Measuring notes: the racer's, the exam's and Boss Rush's stills vary
+between capture runs when the machine is loaded (compare pictures; the phone's and the title's repeat to the pixel when
+it is idle); the title's end on a Mac can be caught mid-fade (its logo fades on the page's real clock). Left for the
+owner (art calls): Risk Blaster's deep space to the upper right on a Mac; Nest Egg Run's gold shops reading tan; the
+title cells' glass tinted by its world's pair (a design change). Carried to Phase 7: icons of 20 px or more, a
+384 px portrait strip, the results bar. Spend: none. Tools added: `hues.py`, `scenarios/arena-look.js`,
+`scenarios/title-look.js`. Side file: `index.phase2b.html` (the page before this pass, `cd141b1`; gitignored).
