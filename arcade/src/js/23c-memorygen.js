@@ -40,7 +40,9 @@ function memoryGen(game) {
   if (pile && GFX.extras === false) disposeTree(pile.scene); // (the decor left out: the vault as it was)
   else if (pile) {
     const P = MEMORY_GEN.PILE;
-    G.pileMats = tuneModel(pile, { env: 2, glow: 1.6 }).map((m) => ({ m, e: m.emissiveIntensity }));
+    // (Phase 2, 2026-11-24: at the right end of the plinth, out of the deck lamp's reach, its black cards read as a dark
+    // blob, (28, 5, 12): their backs now mirror the vault and their magenta edges glow at rest, the more on a landing)
+    G.pileMats = tuneModel(pile, { env: 5, glow: 4.8 }).map((m) => ({ m, e: m.emissiveIntensity }));
     pile.scene.traverse((o) => { if (o.isMesh && G.env) o.material.envMap = G.env; });
     pile.scene.scale.setScalar(P.s);
     pile.scene.position.set(P.x, 0, P.z);

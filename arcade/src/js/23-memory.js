@@ -814,9 +814,12 @@ class MemoryGame extends QuizGame {
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
     // the coins lying in the piles by the bullion: the same gold, lifted (lying flat they mirror the middle of the
     // vault's ceiling, its darkest part, and read as brown lumps: the master overhaul, Phase 2, 2026-11-23)
+    // (Phase 2, 2026-11-24: the right-hand tray's still read brown, (71, 31, 10), out of the deck lamp's reach: lifted
+    // further, and the model's token a shade paler, they read as gold on both trays)
     const pile = this.coinMat.clone();
-    pile.envMapIntensity = this.coinMat.envMapIntensity * 1.4;
-    pile.emissive = new THREE.Color(0x3c2405);
+    pile.envMapIntensity = this.coinMat.envMapIntensity * 2;
+    pile.emissive = new THREE.Color(0x7a5410);
+    if (this.gen && this.gen.coin) pile.color.setHex(0xfff0c0);
 
     this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel, pile }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
