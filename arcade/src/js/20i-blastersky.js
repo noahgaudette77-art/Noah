@@ -86,6 +86,14 @@ class BlasterSky {
     const r = BLASTER_SKIES[id] || BLASTER_SKIES.nebula, sky = this.skies[r.sky] || this.main, D = Math.PI * 2;
     return { id, r, sky, yaw: (r.at[0] - 0.25) * D, pitch: (0.5 - r.at[1]) * Math.PI, roll: r.roll || 0, zoom: r.zoom || 2, gain: r.gain === undefined ? 1 : r.gain, lift: r.lift === undefined ? 1.4 : r.lift };
   }
+  // where a region's dome is turned in this window ([yaw, pitch], into one array kept for it): its point ahead (at), or
+  // in a wide window its own (atW), the window's shape blending one into the other (see BLASTER_SKIES)
+  aim(c) {
+    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, a = this._aim || (this._aim = [0, 0]);
+    a[0] = w ? (c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w - 0.25) * Math.PI * 2 : c.yaw;
+    a[1] = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
+    return a;
+  }
   // one dome showing a region, at k of its strength
   show(L, c, k, sway = 0, zoomK = 1) {
     const u = L.dome.material.uniforms;
@@ -95,23 +103,23 @@ class BlasterSky {
     u.uMix.value = 0;
     u.uGain.value = c.gain * k;
     u.uLift.value = c.lift;
-    // (a wide window takes its own point ahead, atW: see BLASTER_SKIES)
-    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, D = Math.PI * 2;
-    const yaw = w ? ((c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w) - 0.25) * D : c.yaw, pitch = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
+    const a = this.aim(c), yaw = a[0], pitch = a[1]; // (a wide window takes its own point ahead, atW)
     u.uRot.value = (yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
     // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
     L.dome.rotation.set(-pitch + Math.atan(this.aimY * c.zoom * zoomK) - Math.sin(sway * 0.037 + 1) * 0.02, 0, c.roll);
     L.stretch.scale.set(1, 1, c.zoom * zoomK);
   }
   // What chrome mirrors in a region: the panorama itself, turned as the band shows it and brighter (a mirror the
-  // size of a hull plate shows little of so dark a sky otherwise), and the lamps as cards of light.
+  // size of a hull plate shows little of so dark a sky otherwise), and the lamps as cards of light. (Turned as the band
+  // shows it in this window, a wide one's point ahead too: Phase 5's review. Made once a region, with the window's shape
+  // as it is when the run is built: a window reshaped mid-run keeps the reflections it had.)
   envFor(c) {
     if (this.envs[c.id] !== undefined) return this.envs[c.id];
     let tex = null;
     if (GFX.ok) {
       try {
-        const r = c.r, sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: c.yaw });
-        dome.rotation.set(-c.pitch, 0, c.roll);
+        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0] });
+        dome.rotation.set(-a[1], 0, c.roll);
         sc.add(dome);
         // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
         // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
