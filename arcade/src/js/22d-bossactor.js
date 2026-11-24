@@ -244,6 +244,16 @@ class BossActor {
     // (a second idle of its own kind, where it has one: the judge's folded arms, the salesman's swagger; it moves
     // between the two now and then, over a couple of seconds)
     this.mix = this.act.idle2 ? 1 : 0; this.mixTo = this.mix; this.mixT = 9; this.nMix = 0; this.idle2T = rand(0, 4);
+    // its feet (plant): each leg's thigh, calf and foot, in the bookkeeping of the bones turned after the clips (the foot
+    // is turned back to the clip's own turn in the world once the leg is bent: the sole stays as the clip lays it)
+    this.legs = [];
+    for (const sd of ["L", "R"]) {
+      const th = P[sd + "_Thigh"], ca = P[sd + "_Calf"], ft = this.joint["foot" + sd];
+      if (!th || !ca || !ft || ca.parent !== th || ft.parent !== ca) continue;
+      T.add(th); T.add(ca); if (ft.isBone || ft === P[sd + "_Foot"]) T.add(ft);
+      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, lock: new THREE.Vector3(), low: Infinity });
+    }
+    this._pv = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion());
   }
   has(name) { return !!this.act[name]; }
   // A bone that is turned after the clips have been applied. (The mixer writes a bone only when its value has
@@ -464,6 +474,7 @@ class BossActor {
     this.body.rotation.set(-kick * 0.12 + lean * 0.06 + this.flT + this.trX, this.yaw + this.swY + this.trY + this.spin, this.swR + this.trZ);
     const sc = this.swell + S.grow.step(d, 0);
     this.body.scale.set(sc * (1 + 0.5 * sq), sc * (1 - sq), sc * (1 + 0.5 * sq));
+    this.plant(d);
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
@@ -564,6 +575,55 @@ class BossActor {
     this.turns.apply();
   }
   addRot(bone, x, y, z) { this.turns.turn(bone, x, y, z); }
+  // ---- a foot on the floor stays where it stands (Phase 3: the clips, and the body moved over them, slid the bosses'
+  // planted feet 5 to 26% of their height a second, seen when a strike widens the lens). A foot that comes down within
+  // 5% of its leg's length of the lowest it stands is held where it came down, its leg bent to it (two bones: the thigh turned so the
+  // knee lies where the calf can reach the foot, in the leg's own plane, then the calf); it is let go as it lifts, over a
+  // fifth of a second, and one the clip has taken a quarter of its leg's length away is drawn after it (a quick shuffle).
+  // Not while it drops in, floats, or falls dead (all of it is let go over a fifth of a second).
+  plant(d) {
+    const legs = this.legs;
+    if (!legs || !legs.length) return;
+    const ok = this.landed && !this.entering && !this.dead && !this.M.float && this.drop < 0.01;
+    if (!ok && legs.every((l) => l.w < 0.002)) { for (const l of legs) l.on = false; return; }
+    this.root.updateMatrixWorld(true);
+    const [H, K, A, T, u, w] = this._pv, [q, qa, qb] = this._pq, floor = this.root.getWorldPosition(u).y, Tn = this.turns;
+    for (const l of legs) {
+      l.th.getWorldPosition(H); l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+      const l1 = H.distanceTo(K), l2 = K.distanceTo(A), Lg = l1 + l2, up = A.y - floor;
+      // (its ankle's height standing: the lowest it has been, let rise slowly; an ankle stands 5 to 26% of its leg's
+      // length above the floor, rig by rig)
+      l.low = l.low === Infinity ? up : Math.min(up, l.low + (up - l.low) * (1 - Math.exp(-0.05 * d)));
+      const down = ok && (l.on ? up < l.low + 0.08 * Lg : up < l.low + 0.05 * Lg);
+      if (down && !l.on) l.lock.copy(A);
+      l.on = down;
+      l.w = Motion.damp(l.w, down ? 1 : 0, down ? 14 : 9, d);
+      if (l.on) { const dx = A.x - l.lock.x, dz = A.z - l.lock.z, far = Math.hypot(dx, dz) - 0.25 * Lg; if (far > 0) { const k = (far / (far + 0.25 * Lg)) * (1 - Math.exp(-10 * d)); l.lock.x += dx * k; l.lock.z += dz * k; } }
+      if (l.w < 0.002 || Lg < 1e-6) continue;
+      T.set(A.x + (l.lock.x - A.x) * l.w, A.y, A.z + (l.lock.z - A.z) * l.w);
+      if (T.distanceToSquared(A) < 1e-10) continue;
+      // the knee: where the thigh (l1 from the hip) meets the calf (l2 from the foot), on the side the knee bends to now
+      const dist = clamp(H.distanceTo(T), Math.abs(l1 - l2) + 1e-4 * Lg, Lg - 1e-4 * Lg), dir = u.subVectors(T, H).normalize();
+      const along = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist), across = Math.sqrt(Math.max(0, l1 * l1 - along * along));
+      w.subVectors(K, H); w.addScaledVector(dir, -w.dot(dir));
+      if (w.lengthSq() < 1e-12) continue; // (a leg straight along its line: no plane to bend it in; left as the clip has it)
+      w.normalize();
+      const K2 = w.multiplyScalar(across).addScaledVector(dir, along).add(H);
+      // the foot's own turn in the world, kept
+      if (l.keep) l.ft.getWorldQuaternion(qb);
+      // the thigh: its knee from where it was to K2
+      this.turnTo(l.th, q.setFromUnitVectors(u.subVectors(K, H).normalize(), A.subVectors(K2, H).normalize()), qa);
+      // the calf: its foot from where the thigh's turn took it to T
+      l.th.updateWorldMatrix(false, true);
+      l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+      this.turnTo(l.ca, q.setFromUnitVectors(u.subVectors(A, K).normalize(), H.subVectors(T, K).normalize()), qa);
+      if (l.keep) { l.ca.updateWorldMatrix(false, true); l.ft.parent.getWorldQuaternion(qa).invert(); l.ft.quaternion.copy(qa.multiply(qb)); }
+      // (what was turned here is what the clips' bookkeeping last wrote: the next frame starts again from the clip)
+      for (const b of [l.th, l.ca, l.ft]) { const e = Tn.by.get(b); if (e) e.out.copy(b.quaternion); }
+    }
+  }
+  // a bone turned by q in the world (qa: a spare)
+  turnTo(b, q, qa) { const qw = this._pq[3]; b.parent.getWorldQuaternion(qa); b.getWorldQuaternion(qw); b.quaternion.copy(qa.invert().multiply(q).multiply(qw)); }
   // its fall: the death clip played to the moment it lies flat on time (the stage's last blast waits for that moment),
   // its own way there: floating down (slow, then all at once), in its power's stutters, jerking; flat, it lands hard
   fall(pl, d) {
