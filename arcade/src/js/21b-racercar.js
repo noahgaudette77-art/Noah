@@ -162,7 +162,7 @@ class RacerCar {
           {
             float dl = mod(uScroll + ${racerF(RACER_P / 2 - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0; // how far ahead (-) or behind (+) the nearest left lamp stands
             float dr = mod(uScroll + ${racerF(RACER_P - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0;
-            float bl = exp(-pow(abs((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(0.8, -0.45, vGlassP.x);
+            float bl = exp(-pow(abs((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3), 2.0)) * (1.0 - smoothstep(-0.45, 0.8, vGlassP.x));
             float br = exp(-pow(abs((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
             totalEmissiveRadiance += (uGlassL * bl + uGlassR * br) * (0.34 * uLampI);
             totalEmissiveRadiance += mix(uGlassSky2, uGlassSky, smoothstep(-0.9, 1.7, vGlassP.z)) * 0.36;
