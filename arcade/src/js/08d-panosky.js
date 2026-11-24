@@ -11,9 +11,13 @@
 // narrow strip of sky stands above its tiers): the picture's place (u, v; v up) that stands straight ahead (-Z) at
 // `at` degrees above the horizon, magnified `zoom` times; nothing below the picture's v = min is ever shown. A sky
 // made without it is drawn exactly as before.
+// pull: 0 to 1, how far the picture's magenta is drawn toward violet (uPull; Risk Blaster's nebula on a wide window:
+// magenta is the B answer's colour, and the band there was led by it). Each pixel keeps its brightest and its least
+// channel, so only its hue moves; blue, cyan, red and a white star are untouched. A sky made without it is drawn
+// exactly as before.
 function makePanoSky(sky, o = {}) {
   const noMip = (t) => { if (t.minFilter !== THREE.LinearFilter) { t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; } return t; };
-  const win = o.window || null;
+  const win = o.window || null, pull = o.pull !== undefined;
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
@@ -22,24 +26,34 @@ function makePanoSky(sky, o = {}) {
     },
     side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false, transparent: o.alpha !== undefined, // (alpha: a sky that fades in over the one it replaces)
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
-    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}${pull ? " uniform float uPull;" : ""}
       vec3 look(sampler2D t, vec3 d, float rot){
         ${win
           ? "vec2 uv = vec2(uWin.x + (fract(atan(d.z, d.x) * 0.15915494 + 0.75) - 0.5) * uWin.w, clamp(uWin.y + (asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 - uWin.z) * uWin.w, uWinMin, 0.998));"
           : "vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);"}
         vec3 c = texture2D(t, uv).rgb;
         return c * c * (c * 0.305 + 0.695); // sRGB to linear, near enough
-      }
+      }${pull ? `
+      vec3 pullViolet(vec3 c, float k){
+        float M = max(c.r, c.b), d = M - c.g;
+        if (c.g > min(c.r, c.b) || d < 1e-4) return c; // (only where green is the least: the hues from blue round through violet and magenta to red)
+        float x = (c.r - c.b) / d; // (the hue as one number: -1 blue, -0.7 violet, near 0.4 the nebula's magenta, 1 red)
+        // toward violet, never past it; reds and pale stars as they were. (The brightest toward a bluer violet: lifted
+        // past white, the tone curve draws red and blue together again, and a violet heart came out fuchsia.)
+        x = mix(x, -0.7 - 0.2 * smoothstep(0.3, 1.0, M), k * smoothstep(-0.7, -0.4, x) * (1.0 - smoothstep(0.6, 0.9, x)) * smoothstep(0.1, 0.35, d / M));
+        return x < 0.0 ? vec3(M + x * d, c.g, M) : vec3(M, c.g, M - x * d);
+      }` : ""}
       void main(){
         vec3 d = normalize(vDir);
         vec3 c = look(tA, d, uRot);
-        if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
+        if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);${pull ? "\n        if (uPull > 0.001) c = pullViolet(c, uPull);" : ""}
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
         gl_FragColor = linearToOutputTexel(vec4(c * uTint, uAlpha)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   if (win) { mat.uniforms.uWin = { value: new THREE.Vector4(win.u, win.v, 0.5 + (win.at || 0) / 180, win.zoom || 1) }; mat.uniforms.uWinMin = { value: win.min === undefined ? 0.5 : win.min }; }
+  if (pull) mat.uniforms.uPull = { value: +o.pull || 0 };
   const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
   dome.frustumCulled = false;
   dome.renderOrder = -20;

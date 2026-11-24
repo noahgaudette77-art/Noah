@@ -13,6 +13,11 @@
 // not forty, and from the phone's point the nebula ran out into black on one side; Phase 5. The belt keeps its own:
 // centred, its sun hid behind the demon and both sides went dark). The window's shape blends from one to the other; the
 // phone's picture is as it was.
+// pullW: how far a wide window's sky has its magenta drawn toward violet (makePanoSky's pull), blended by the window's
+// shape as atW is. (Phase 2, resumed: on a Mac the nebula's band was led by magenta, about half its lit sky, where the
+// phone's is led by violet, and the B drone stood on a magenta cloud; magenta is answer B's, and the world's pair is
+// cyan and violet. Its point ahead moved on, 0.21 to 0.26, so the B drone stands on dark sky with the nebula still
+// filling the rest, and what magenta is left drawn toward violet: the band's magenta 30% to 4%, violet 33% to 55%.)
 // lamps: the key (above and behind the lens, on the side the picture's own light comes from), two rims far ahead, one
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
@@ -21,7 +26,7 @@
 // where a wide window has it, in the clear between the demon and the drones (at the phone's place a Mac had it under
 // a drone: Phase 5's review).
 const BLASTER_SKIES = {
-  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.21, 0.45], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
+  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.26, 0.45], pullW: 0.8, roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xc8b4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xb09cff, 0.8], amb: [0x5a3aa8, 0.5], wall: 0x8a5cff,
     space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70], planetW: [24, 9, 1700, 70] } },
   belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
@@ -58,7 +63,7 @@ class BlasterSky {
     s.add(this.root);
     // two domes: the region the ship is in, and the one coming up over it (added on top as the first is turned down)
     this.layers = [0, 1].map((i) => {
-      const stretch = new THREE.Group(), dome = makePanoSky(this.main, { radius: 300 });
+      const stretch = new THREE.Group(), dome = makePanoSky(this.main, { radius: 300, pull: 0 }); // (pull: a region's pullW, on a wide window: see show)
       if (i) { dome.material.transparent = true; dome.material.blending = THREE.AdditiveBlending; dome.renderOrder = -19; dome.visible = false; }
       stretch.add(dome);
       this.root.add(stretch);
@@ -92,11 +97,13 @@ class BlasterSky {
   // where a region's dome is turned in this window ([yaw, pitch], into one array kept for it): its point ahead (at), or
   // in a wide window its own (atW), the window's shape blending one into the other (see BLASTER_SKIES)
   aim(c) {
-    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, a = this._aim || (this._aim = [0, 0]);
+    const w = c.r.atW ? this.wide() : 0, a = this._aim || (this._aim = [0, 0]);
     a[0] = w ? (c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w - 0.25) * Math.PI * 2 : c.yaw;
     a[1] = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
     return a;
   }
+  // how wide the window is, 0 (a phone held upright) to 1 (a Mac's): what a region's wide-window settings blend by
+  wide() { const cam = this.g.camera; return cam ? smoothstep(0.8, 1.5, cam.aspect) : 0; }
   // one dome showing a region, at k of its strength
   show(L, c, k, sway = 0, zoomK = 1) {
     const u = L.dome.material.uniforms;
@@ -106,6 +113,7 @@ class BlasterSky {
     u.uMix.value = 0;
     u.uGain.value = c.gain * k;
     u.uLift.value = c.lift;
+    u.uPull.value = (c.r.pullW || 0) * this.wide(); // (and, where the region asks, its magenta drawn toward violet: pullW)
     const a = this.aim(c), yaw = a[0], pitch = a[1]; // (a wide window takes its own point ahead, atW)
     u.uRot.value = (yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
     // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
@@ -121,7 +129,7 @@ class BlasterSky {
     let tex = null;
     if (GFX.ok) {
       try {
-        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0] });
+        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
         dome.rotation.set(-a[1], 0, c.roll);
         sc.add(dome);
         // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
