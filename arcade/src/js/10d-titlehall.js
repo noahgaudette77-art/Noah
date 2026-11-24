@@ -894,6 +894,7 @@ class HallScene extends Scene3D {
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
       c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
+      c.rimU.key.value = 2.0 / (1 + 1.2 * Math.min(1, c.flick)); // (the cap lamp's key steady through a rattle: only the rim flares, as before it came. The independent review: the boss's whole lit front flashed toward white)
       // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
