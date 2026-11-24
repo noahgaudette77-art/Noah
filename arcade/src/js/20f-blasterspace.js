@@ -238,7 +238,7 @@ class BlasterSpace {
           vec3 col = mix(uA, uB, smoothstep(0.3, 0.68, t.b));
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
-          float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
+          float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * (1.0 - smoothstep(0.2, 0.5, t.r));
           vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(max(dens, 0.0), 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
           c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
@@ -362,9 +362,9 @@ class BlasterSpace {
         void main(){
           float r = length(vP), t = (r - 1.32) / 0.98;
           float lanes = mix(0.6, 0.3 + 0.7 * (0.5 + 0.5 * sin(r * 96.0)) * (0.55 + 0.45 * sin(r * 23.0 + 1.0)), uLaneK);
-          lanes *= 1.0 - smoothstep(0.012, 0.0, abs(r - 1.86)) * 0.95; // the gap
+          lanes *= 1.0 - (1.0 - smoothstep(0.0, 0.012, abs(r - 1.86))) * 0.95; // the gap
           float along = dot(vQ, uSunDir), shade = along < 0.0 ? smoothstep(0.92, 1.06, length(vQ - along * uSunDir)) : 1.0; // the planet's shadow
-          gl_FragColor = vec4(uColor * (lanes * smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.88, t) * (0.06 + 0.94 * shade) * 0.62), 1.0);
+          gl_FragColor = vec4(uColor * (lanes * smoothstep(0.0, 0.07, t) * (1.0 - smoothstep(0.88, 1.0, t)) * (0.06 + 0.94 * shade) * 0.62), 1.0);
         }`,
     }));
     this.rings = rings;
@@ -391,7 +391,7 @@ class BlasterSpace {
           vUv = uv - 0.5; vMix = aData.y; vUn = uv * 0.55 + aData.yw * 3.7;
           vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
           float dz = -mv.z;
-          vA = aData.z * smoothstep(620.0, 430.0, dz) * smoothstep(40.0, 130.0, dz);
+          vA = aData.z * (1.0 - smoothstep(430.0, 620.0, dz)) * smoothstep(40.0, 130.0, dz);
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: `uniform sampler2D uNeb; uniform vec3 uCA; uniform vec3 uCB; uniform float uK; varying vec2 vUv; varying vec2 vUn; varying float vMix; varying float vA;
@@ -610,7 +610,7 @@ class BlasterSpace {
         void main(){
           float r = length(vP), a = atan(vP.y, vP.x);
           float arms = smoothstep(0.1, 0.95, 0.5 + 0.5 * sin(a * 4.0 + log(r + 0.02) * 9.0 - uTime * 0.9)) * (0.6 + 0.4 * sin(a * 9.0 - log(r + 0.02) * 15.0 + uTime * 0.5));
-          float disc = smoothstep(1.0, 0.6, r) * smoothstep(0.02, 0.2, r);
+          float disc = (1.0 - smoothstep(0.6, 1.0, r)) * smoothstep(0.02, 0.2, r);
           vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow(abs((r - 0.86) * 9.0), 2.0)) * 0.8;
           gl_FragColor = vec4(col * uK, 1.0);
         }`,
