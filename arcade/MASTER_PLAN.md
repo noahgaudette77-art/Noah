@@ -222,9 +222,12 @@ fal.ai and Blockade nothing planned; within the caps either way.
 - [x] The Proctor as one design (`bdb43c7`): the free retarget did not fall short (contact sheets of all twelve clips,
       strips in the arena), so no provider was called and the owner's model was not sent anywhere. Boss Rush's last
       fight, the title's twelfth cell, the hub's topper, the exam hall's statue and the portrait: all the owner's
-      machine, in the exam's own skin, cap, reactor and eyes (`src/js/24f-proctor.js`). The rules IDENTICAL.
-- [x] Risk Blaster (`aafdd1f`): the far rocks light copies of the generated ones; the C drone's nacelles; a wide
-      window's own sky centres (the Mac's nebula now fills the band side to side).
+      machine, in the exam's own skin, cap, reactor and eyes (`src/js/24f-proctor.js`). The rules IDENTICAL; the
+      exam's own four skin programs byte-identical before and after (`tools/scenarios/shader-dump.js`). The old files
+      (`boss-all`, `boss-all-t`, `mini-proctor`, `statue-all`) deleted when the page was built again (in git at `e388e21`).
+- [x] Risk Blaster (`aafdd1f`, `bb15556`, `eb0147c`): the far rocks light copies of the generated ones; the C drone's
+      nacelles; a wide window's own sky centres for the nebula and the orbit (the Mac's nebula now fills the band side
+      to side; the belt kept its own: centred, its sun hid behind the demon). Before and after: `docs/master/phase5/`.
 - [ ] In place, four at once (agents in worktrees, each to be merged after its own check): the title hall (the Mac's
       prison denser, the end's edges), the hub (cabinet bases, laser halos), the arena (the crowd's motion, the rage in
       the reflection), Memory Bank (the gold bars and trays).
