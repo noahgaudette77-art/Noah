@@ -130,7 +130,7 @@ function showTitle() {
   // title is the offline fallback, and it should say so): served over the web, with the hall and every generated
   // file; served but unable to draw the hall (no WebGL); or opened from disk, the built-in pictures and sound only
   const mode = Assets.on ? (hall ? ["served", "SERVED"] : ["served", "SERVED · SIMPLE TITLE (NO 3D)"]) : ["offline", "OFFLINE FALLBACK · OPENED AS A FILE"];
-  const el = UI.el(`<section class="screen scr-title${hall && !scene.arrived ? " gliding" : ""}">
+  const el = UI.el(`<section class="screen scr-title${hall ? " hall" : ""}${hall && !scene.arrived ? " gliding" : ""}">
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="title-mode ${mode[0]}" data-mode="${mode[0]}">${mode[1]}</div>
     <div class="logo">

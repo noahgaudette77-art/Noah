@@ -2005,3 +2005,17 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
 }
 @keyframes vault-bank-wide { 0%, 38% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0); } }
 @keyframes vault-miss-wide { 0%, 20% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0); } }
+
+/* The title's end on a wide window (the master overhaul, Phase 5, 2026-11-24, from the audit's notes on it). The tip's
+   plate keeps its height, so INSERT COIN never moves as the tips change, and its heading stays at the top; its words
+   stand in the middle of the room under the heading (a short tip left the plate's lower third empty). The dock's
+   shade is a column under the dock, feathered at its sides, not a band the window's width: the cells' plinths, their
+   screens and the floor's light show either side of it (the lower half of the picture was black beside the card; the
+   avenue opened from disk keeps its band). A phone keeps its dock as it was. */
+@media (min-width: 1000px) and (min-height: 600px) and (min-aspect-ratio: 13/10) {
+  .scr-title .attract { align-content: stretch; }
+  .scr-title .attract > span { grid-template-rows: auto 1fr; }
+  .scr-title .attract i { align-self: center; }
+  .scr-title.hall .title-dock::before { left: 50%; right: auto; width: min(100vw, 980px); transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+}
