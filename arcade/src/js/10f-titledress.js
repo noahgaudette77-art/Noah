@@ -132,6 +132,27 @@ function hallDress(hall, B) {
   const { steel, glow, at, states, C } = B, W = DRESS.W, worlds = HALL_WORLDS, calm = hall.calm;
   const box = new THREE.BoxGeometry(1, 1, 1), plane = new THREE.PlaneGeometry(1, 1), ball = new THREE.SphereGeometry(0.16, 12, 8), disc = new THREE.CylinderGeometry(1, 1, 1, 12), dome = new THREE.SphereGeometry(1, 10, 6);
   const pipes = new Map(), pipe = (r) => { if (!pipes.has(r)) pipes.set(r, new THREE.CylinderGeometry(r, r, 1, 8, 1, true)); return pipes.get(r); };
+  // a piece put into a batch as KitBatch.add puts it (its corners placed by m, its normals the face's or, smooth, its
+  // own turned; its uv in metres; its values), straight into the batch's arrays: no shape made for it (thirteen
+  // hundred pieces: made one by one they were most of the dressing's cost to build)
+  const flat = new Map(), N3 = new THREE.Matrix3(), A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3(), E1 = new THREE.Vector3(), E2 = new THREE.Vector3();
+  const put = (b, geo, m, v = {}, su = 1, sv = 1, smooth = false) => {
+    let f = flat.get(geo);
+    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; flat.set(geo, f); if (ng !== geo) ng.dispose(); }
+    const { P, N, U } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
+    for (let i = 0; i < n; i += 3) {
+      for (let k = 0; k < 3; k++) { const j = (i + k) * 3, x = P[j], y = P[j + 1], z = P[j + 2]; C3[k].set(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
+      if (!smooth) E1.subVectors(Cv, Bv).cross(E2.subVectors(A, Bv)).normalize();
+      for (let k = 0; k < 3; k++) {
+        const c = C3[k], j = i + k;
+        b.pos.push(c.x, c.y, c.z);
+        if (smooth) { const x = N[j * 3], y = N[j * 3 + 1], z = N[j * 3 + 2], nx = q[0] * x + q[3] * y + q[6] * z, ny = q[1] * x + q[4] * y + q[7] * z, nz = q[2] * x + q[5] * y + q[8] * z, l = Math.hypot(nx, ny, nz) || 1; b.nor.push(nx / l, ny / l, nz / l); }
+        else b.nor.push(E1.x, E1.y, E1.z);
+        b.uvm.push(U ? U[j * 2] * su : 0, U ? U[j * 2 + 1] * sv : 0);
+      }
+    }
+    for (const k in b.attrs) { const s = b.attrs[k], val = v[k] === undefined ? 0 : v[k], arr = b.x[k]; for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) arr.push(s > 1 ? val[c] : val); }
+  };
   const g = (pat, col) => ({ color: col || C.GUN, aPat: pat });
   const lit = (col, kind, alarm, ph) => ({ aCol: col, aState: [alarm ? 1 : 0, 0, 0, ph], aKind: kind });
   // (a point d metres off a wall, into the hall; a plane on a wall faces the aisle)
@@ -143,7 +164,7 @@ function hallDress(hall, B) {
   // a sign: a part of a row's picture (px across 0-1024, py down 0-128) on a plane placed by m
   const sign = (m, k, px0, px1, py0, py1, blink, ph) => {
     const n0 = signs.uvm.length;
-    signs.add(plane, m, { aRow: rowOf(k), aState: [blink ? 1 : 0, 0, 0, ph] });
+    put(signs, plane, m, { aRow: rowOf(k), aState: [blink ? 1 : 0, 0, 0, ph] });
     for (let i = n0; i < signs.uvm.length; i += 2) { const u = signs.uvm[i], v = signs.uvm[i + 1]; signs.uvm[i] = (px0 + u * (px1 - px0)) / 1024; signs.uvm[i + 1] = 1 - (py0 + (1 - v) * (py1 - py0)) / 128; }
   };
   const puffs = [];
@@ -153,17 +174,17 @@ function hallDress(hall, B) {
   const inPillar = (z, m) => pillarZ.some((p) => Math.abs(z - p) < 0.5 + m);
   const Z1 = 9, Z2 = HALL.endZ, len = Z1 - Z2, zc = (Z1 + Z2) / 2;
   for (const sd of [-1, 1]) {
-    steel.add(pipe(0.075), at(X(sd, 0.12), DRESS.pipeY[0], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.PIPE), 0.47, len, true);
-    steel.add(pipe(0.05), at(X(sd, 0.1), DRESS.pipeY[1], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.BAR), 0.31, len, true);
-    for (let z = Z1 - 0.7; z > Z2 + 0.4; z -= 1.5) if (!inPillar(z, 0.1)) steel.add(box, at(X(sd, 0.11), 6.68, z, 0.22, 0.42, 0.06), g(0, C.BAR), 0.22, 0.42);
+    put(steel, pipe(0.075), at(X(sd, 0.12), DRESS.pipeY[0], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.PIPE), 0.47, len, true);
+    put(steel, pipe(0.05), at(X(sd, 0.1), DRESS.pipeY[1], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.BAR), 0.31, len, true);
+    for (let z = Z1 - 0.7; z > Z2 + 0.4; z -= 1.5) if (!inPillar(z, 0.1)) put(steel, box, at(X(sd, 0.11), 6.68, z, 0.22, 0.42, 0.06), g(0, C.BAR), 0.22, 0.42);
     worlds.forEach((Wd, wi) => {
       const zm = HALL.z0 - wi * HALL.step, L = 5.0, x = X(sd, DRESS.railD);
-      steel.add(pipe(0.032), at(x, 1.05, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BRIGHT), 0.2, L, true);
-      steel.add(pipe(0.022), at(x, 0.6, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BAR), 0.14, L, true);
+      put(steel, pipe(0.032), at(x, 1.05, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BRIGHT), 0.2, L, true);
+      put(steel, pipe(0.022), at(x, 0.6, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BAR), 0.14, L, true);
       for (const dz of [-L / 2, 0, L / 2]) {
-        steel.add(pipe(0.03), at(x, 0.54, zm + dz, 1, 1.08, 1), g(0, C.BAR), 0.19, 1.08, true);
-        steel.add(pipe(0.034), at(x, 0.2, zm + dz, 1, 0.34, 1), g(1, C.WHITE), 0.21, 0.34, true); // (its foot in hazard paint)
-        steel.add(box, at(x, 0.012, zm + dz, 0.13, 0.024, 0.13), g(0, C.DARK));
+        put(steel, pipe(0.03), at(x, 0.54, zm + dz, 1, 1.08, 1), g(0, C.BAR), 0.19, 1.08, true);
+        put(steel, pipe(0.034), at(x, 0.2, zm + dz, 1, 0.34, 1), g(1, C.WHITE), 0.21, 0.34, true); // (its foot in hazard paint)
+        put(steel, box, at(x, 0.012, zm + dz, 0.13, 0.024, 0.13), g(0, C.DARK));
       }
     });
   }
@@ -176,39 +197,39 @@ function hallDress(hall, B) {
     if (door) {
       // a security door: its frame in hazard paint, the leaf with its panels and a barred window, its lock and keypad
       const zd = zs;
-      steel.add(box, at(X(sd, 0.07), 2.63, zd, 0.14, 0.16, 1.64), g(1, C.WHITE), 1.64, 0.16);
-      for (const s of [-1, 1]) steel.add(box, at(X(sd, 0.07), 1.27, zd + s * 0.74, 0.14, 2.54, 0.16), g(1, C.WHITE), 0.16, 2.54);
-      steel.add(box, at(X(sd, 0.035), 1.27, zd, 0.07, 2.54, 1.32), g(0, C.GUN), 1.32, 2.54);
-      for (const py of [0.62, 1.42]) steel.add(box, at(X(sd, 0.072), py, zd, 0.01, 0.62, 1.0), g(3, C.BAR), 1.0, 0.62);
-      glow.add(box, at(X(sd, 0.06), 2.08, zd, 0.02, 0.34, 0.46), lit(col.map((c) => c * 0.22), 0, red, ph));
-      for (const s of [-0.12, 0, 0.12]) steel.add(box, at(X(sd, 0.085), 2.08, zd + s, 0.03, 0.36, 0.025), g(0, C.BRIGHT));
-      steel.add(box, at(X(sd, 0.1), 1.18, zd - q * 0.46, 0.08, 0.06, 0.24), g(0, C.BRIGHT));
-      steel.add(box, at(X(sd, 0.05), 1.38, zd + q * 0.98, 0.1, 0.26, 0.16), g(0, C.BAR));
-      glow.add(box, at(X(sd, 0.105), 1.44, zd + q * 0.98, 0.012, 0.05, 0.05), lit([0, 0, 0], 3, false, ph));
-      glow.add(box, at(X(sd, 0.105), 1.32, zd + q * 0.98, 0.012, 0.1, 0.1), lit([0.12, 0.9, 0.45], 0, false, ph));
+      put(steel, box, at(X(sd, 0.07), 2.63, zd, 0.14, 0.16, 1.64), g(1, C.WHITE), 1.64, 0.16);
+      for (const s of [-1, 1]) put(steel, box, at(X(sd, 0.07), 1.27, zd + s * 0.74, 0.14, 2.54, 0.16), g(1, C.WHITE), 0.16, 2.54);
+      put(steel, box, at(X(sd, 0.035), 1.27, zd, 0.07, 2.54, 1.32), g(0, C.GUN), 1.32, 2.54);
+      for (const py of [0.62, 1.42]) put(steel, box, at(X(sd, 0.072), py, zd, 0.01, 0.62, 1.0), g(3, C.BAR), 1.0, 0.62);
+      put(glow, box, at(X(sd, 0.06), 2.08, zd, 0.02, 0.34, 0.46), lit(col.map((c) => c * 0.22), 0, red, ph));
+      for (const s of [-0.12, 0, 0.12]) put(steel, box, at(X(sd, 0.085), 2.08, zd + s, 0.03, 0.36, 0.025), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.1), 1.18, zd - q * 0.46, 0.08, 0.06, 0.24), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.05), 1.38, zd + q * 0.98, 0.1, 0.26, 0.16), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.105), 1.44, zd + q * 0.98, 0.012, 0.05, 0.05), lit([0, 0, 0], 3, false, ph));
+      put(glow, box, at(X(sd, 0.105), 1.32, zd + q * 0.98, 0.012, 0.1, 0.1), lit([0.12, 0.9, 0.45], 0, false, ph));
       // its warning lamp over it
-      steel.add(box, at(X(sd, 0.08), 3.48, zd, 0.16, 0.12, 0.3), g(0, C.BAR));
-      glow.add(box, at(X(sd, 0.17), 3.47, zd, 0.04, 0.09, 0.24), red ? lit([1, 0.12, 0.14], 0, true, ph) : lit([0, 0, 0], 1, false, ph));
+      put(steel, box, at(X(sd, 0.08), 3.48, zd, 0.16, 0.12, 0.3), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.17), 3.47, zd, 0.04, 0.09, 0.24), red ? lit([1, 0.12, 0.14], 0, true, ph) : lit([0, 0, 0], 1, false, ph));
     } else {
       // a vent grille low on the wall in its frame (one a block breathes steam, a side and then the other)
       const zv = zs - q * 0.35, wv = 1.3, hv = 0.95, yv = 1.55;
-      steel.add(box, at(X(sd, 0.05), yv, zv, 0.06, hv, wv), g(2, C.WHITE), wv, hv);
-      for (const s of [-1, 1]) { steel.add(box, at(X(sd, 0.08), yv + s * (hv / 2 + 0.035), zv, 0.1, 0.07, wv + 0.14), g(0, C.BAR), wv, 0.07); steel.add(box, at(X(sd, 0.08), yv, zv + s * (wv / 2 + 0.035), 0.1, hv, 0.07), g(0, C.BAR), 0.07, hv); }
+      put(steel, box, at(X(sd, 0.05), yv, zv, 0.06, hv, wv), g(2, C.WHITE), wv, hv);
+      for (const s of [-1, 1]) { put(steel, box, at(X(sd, 0.08), yv + s * (hv / 2 + 0.035), zv, 0.1, 0.07, wv + 0.14), g(0, C.BAR), wv, 0.07); put(steel, box, at(X(sd, 0.08), yv, zv + s * (wv / 2 + 0.035), 0.1, hv, 0.07), g(0, C.BAR), 0.07, hv); }
       if (steam) for (let p = 0; p < 4; p++) puffs.push([X(sd, 0.35 + 0.1 * p), yv + 0.3, zv + (p - 1.5) * 0.25, (p / 4 + h * 3.7) % 1]);
       // a caged warning lamp, high
       const zl = zs + q * 0.55;
-      steel.add(box, at(X(sd, 0.08), 5.55, zl, 0.16, 0.22, 0.22), g(0, C.BAR));
-      glow.add(box, at(X(sd, 0.18), 5.55, zl, 0.05, 0.15, 0.15), red ? lit([1, 0.12, 0.14], 0, true, ph) : h < 0.5 ? lit([0, 0, 0], 1, false, ph) : lit([1.0, 0.42, 0.06], 0, false, ph));
-      for (const s of [-0.055, 0.055]) steel.add(box, at(X(sd, 0.22), 5.55, zl + s, 0.02, 0.2, 0.015), g(0, C.BRIGHT));
-      steel.add(box, at(X(sd, 0.22), 5.55, zl, 0.02, 0.015, 0.18), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.08), 5.55, zl, 0.16, 0.22, 0.22), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.18), 5.55, zl, 0.05, 0.15, 0.15), red ? lit([1, 0.12, 0.14], 0, true, ph) : h < 0.5 ? lit([0, 0, 0], 1, false, ph) : lit([1.0, 0.42, 0.06], 0, false, ph));
+      for (const s of [-0.055, 0.055]) put(steel, box, at(X(sd, 0.22), 5.55, zl + s, 0.02, 0.2, 0.015), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.22), 5.55, zl, 0.02, 0.015, 0.18), g(0, C.BRIGHT));
     }
     // the junction box and the conduits down to it from the run above the windows
     const zj = zs + q * (door ? -0.95 : -0.6), yj = 4.35;
-    steel.add(box, at(X(sd, 0.11), yj, zj, 0.2, 0.8, 0.6), g(0, C.GUN), 0.6, 0.8);
-    steel.add(box, at(X(sd, 0.115), yj + 0.34, zj, 0.2, 0.09, 0.61), g(1, C.WHITE), 0.61, 0.09);
-    steel.add(box, at(X(sd, 0.212), yj - 0.04, zj, 0.01, 0.56, 0.012), g(3, C.BAR));
-    for (const [dz, r, d] of [[-0.14, 0.042, 0.1], [0.12, 0.03, 0.08]]) { const y0 = yj + 0.4, y1 = DRESS.pipeY[0]; steel.add(pipe(r), at(X(sd, d), (y0 + y1) / 2, zj + dz, 1, y1 - y0, 1), g(0, C.PIPE), 2 * Math.PI * r, y1 - y0, true); }
-    for (let k2 = 0; k2 < 3; k2++) glow.add(box, at(X(sd, 0.216), yj + 0.14, zj - 0.12 + k2 * 0.12, 0.012, 0.045, 0.045), k2 === 0 ? lit([0, 0, 0], 3, false, (ph + k2 * 0.37) % 1) : lit(k2 === 1 ? [0.12, 0.9, 0.45] : col, 0, red && k2 === 2, (ph + k2 * 0.37) % 1));
+    put(steel, box, at(X(sd, 0.11), yj, zj, 0.2, 0.8, 0.6), g(0, C.GUN), 0.6, 0.8);
+    put(steel, box, at(X(sd, 0.115), yj + 0.34, zj, 0.2, 0.09, 0.61), g(1, C.WHITE), 0.61, 0.09);
+    put(steel, box, at(X(sd, 0.212), yj - 0.04, zj, 0.01, 0.56, 0.012), g(3, C.BAR));
+    for (const [dz, r, d] of [[-0.14, 0.042, 0.1], [0.12, 0.03, 0.08]]) { const y0 = yj + 0.4, y1 = DRESS.pipeY[0]; put(steel, pipe(r), at(X(sd, d), (y0 + y1) / 2, zj + dz, 1, y1 - y0, 1), g(0, C.PIPE), 2 * Math.PI * r, y1 - y0, true); }
+    for (let k2 = 0; k2 < 3; k2++) put(glow, box, at(X(sd, 0.216), yj + 0.14, zj - 0.12 + k2 * 0.12, 0.012, 0.045, 0.045), k2 === 0 ? lit([0, 0, 0], 3, false, (ph + k2 * 0.37) % 1) : lit(k2 === 1 ? [0.12, 0.9, 0.45] : col, 0, red && k2 === 2, (ph + k2 * 0.37) % 1));
   };
   worlds.forEach((Wd, wi) => {
     const zw = HALL.z0 - wi * HALL.step;
@@ -225,14 +246,14 @@ function hallDress(hall, B) {
     sign(at(X(sd, 0.025), 2.7, HALL.endZ + 4.55, 1.7, 0.425, 1, face(sd)), worlds.length + 1, 0, 512, 0, 128, false, 0); // (VAULT ACCESS)
   }
   // ---- the pillars: hazard paint round their feet
-  for (const z of pillarZ) for (const sd of [-1, 1]) steel.add(box, at(X(sd, 0.5), 0.15, z, 1.06, 0.3, 1.06), g(1, C.WHITE), 1.06, 0.3);
+  for (const z of pillarZ) for (const sd of [-1, 1]) put(steel, box, at(X(sd, 0.5), 0.15, z, 1.06, 0.3, 1.06), g(1, C.WHITE), 1.06, 0.3);
   // ---- under each beam across the hall, the block ahead named (facing the door; not the last: the logo stands there)
   for (let i = 0; i < worlds.length; i++) {
     const z = pillarZ[i] + 0.41;
     for (const sd of [-1, 1]) {
       const x = sd * 4.6;
-      for (const s of [-0.7, 0.7]) steel.add(pipe(0.02), at(x + s, 7.86, z, 1, 0.28, 1), g(0, C.BAR), 0.13, 0.28, true);
-      steel.add(box, at(x, 7.5, z - 0.03, 1.86, 0.5, 0.05), g(0, C.DARK));
+      for (const s of [-0.7, 0.7]) put(steel, pipe(0.02), at(x + s, 7.86, z, 1, 0.28, 1), g(0, C.BAR), 0.13, 0.28, true);
+      put(steel, box, at(x, 7.5, z - 0.03, 1.86, 0.5, 0.05), g(0, C.DARK));
       sign(at(x, 7.5, z, 1.78, 0.445, 1), i, 0, 512, 0, 128, false, 0);
     }
   }
@@ -245,9 +266,9 @@ function hallDress(hall, B) {
   const WHITE = [0.72, 0.86, 1.0];
   [[1, -1], [3, 1], [5, -1]].forEach(([i, sd], j) => {
     const L = [sd * 5.75, 7.62, pillarZ[i] + 0.1];
-    steel.add(pipe(0.03), at(L[0], 7.86, L[2], 1, 0.3, 1), g(0, C.BAR), 0.19, 0.3, true);
-    steel.add(ball, at(L[0], L[1], L[2]), g(0, C.GUN), 1, 1, true);
-    steel.add(disc, at(L[0], 7.975, L[2], 0.2, 0.05, 0.2), g(0, C.BAR), 1, 0.05);
+    put(steel, pipe(0.03), at(L[0], 7.86, L[2], 1, 0.3, 1), g(0, C.BAR), 0.19, 0.3, true);
+    put(steel, ball, at(L[0], L[1], L[2]), g(0, C.GUN), 1, 1, true);
+    put(steel, disc, at(L[0], 7.975, L[2], 0.2, 0.05, 0.2), g(0, C.BAR), 1, 0.05);
     const spot = [...L, 1], path = [sd * -0.4, pillarZ[i] - 5.2, 2.1, 3.0], look = [0.33 + 0.05 * j, j * 2.1, 0.13, 0];
     cone(spot, path, look, WHITE); quad(spot, path, look, WHITE, 1); quad(spot, path, look, WHITE, 2);
   });
@@ -256,8 +277,8 @@ function hallDress(hall, B) {
     if (!alarmed[i - 1] && !alarmed[i]) return; // (the pillars either side of a block in alarm)
     for (const sd of [-1, 1]) {
       const L = [X(sd, 1.1), 7.36, z];
-      steel.add(box, at(X(sd, 1.07), 7.25, z, 0.26, 0.06, 0.22), g(0, C.BAR));
-      steel.add(disc, at(L[0], 7.3, z, 0.105, 0.07, 0.105), g(0, C.DARK), 1, 0.07);
+      put(steel, box, at(X(sd, 1.07), 7.25, z, 0.26, 0.06, 0.22), g(0, C.BAR));
+      put(steel, disc, at(L[0], 7.3, z, 0.105, 0.07, 0.105), g(0, C.DARK), 1, 0.07);
       const ph = (i * 1.9 + (sd > 0 ? 1.1 : 0)) % 6.283, RED = [1.0, 0.08, 0.1];
       for (const b of [0, Math.PI]) cone([...L, 1.3], [2.6, ph + b, 2.4, 0], [0, 0, 0.16, 1], RED);
       // its dome (a sphere's corners, all of one light)
