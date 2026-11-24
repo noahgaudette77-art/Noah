@@ -15,6 +15,8 @@
 //
 // A scene steers it with scene.userData.post:
 //   exposure, bloom, threshold, saturation, contrast, vignette, tint, split, sharpen, crisp
+//   vignetteCol: [r, g, b] (0..1, as shown): what the vignette darkens toward (black unless given; the title hall's
+//   deep violet, the art bible's void: Phase 2's polish, 2026-11-24)
 //   rays: { pos, strength, radius, flare }       god rays and flare toward a light
 //   ao: 0..1 (default 1), aoRadius (fraction of depth, default 0.055)
 //   sun: [x, y, z] world direction toward the key light, shadow: 0..1, shadowLen
@@ -344,7 +346,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     tScene: { value: null }, tGlow: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
     uAberr: { value: 0 }, uEdge: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 }, uSharp: { value: 0 },
-    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 },
+    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uVigCol: { value: new THREE.Vector3() }, uGlass: { value: 1 },
     uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 }, uPr: { value: 1 },
@@ -357,7 +359,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
     uniform float uAberr; uniform float uEdge; uniform float uFlash; uniform float uExposure; uniform float uFlicker; uniform float uSharp;
-    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uPr;
+    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform vec3 uVigCol; uniform float uGlass; uniform float uPr;
     uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
@@ -458,7 +460,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         col *= mix(vec3(1.0), mask, uScan * 1.1) * uFlicker;
       }
       HP vec2 v = uv * (1.0 - uv.yx);
-      col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
+      col = mix(uVigCol, col, mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette)); // (toward black unless a scene asks for its own dark)
       // film grain: finer than a CSS pixel, strongest in the mid tones
       HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
       float gy = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -720,6 +722,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
       u.uVignette.value = opt.vignette ? (p.vignette !== undefined ? p.vignette : 1) : 0;
+      if (p.vignetteCol) u.uVigCol.value.fromArray(p.vignetteCol); else u.uVigCol.value.set(0, 0, 0);
       if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
       u.uGlass.value = o.glass;
       u.uScan.value = opt.scan ? (p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)

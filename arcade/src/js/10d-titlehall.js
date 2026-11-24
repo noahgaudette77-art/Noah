@@ -152,6 +152,39 @@ function hallRelease(model) {
   });
 }
 
+// The hall's own steel (its walls, pillars, beams, frames and ceiling: one material, buildRoom) never black, and its
+// long walls lit (Phase 2's polish, 2026-11-24: an art review found the walls between the props flat pure blue or
+// black, the dressing on them dark on dark; the art bible's grounds are deep violets, a shadow never black). Each
+// piece glows a little in its own deep violet; the long walls' faces to the aisle are painted panels (less of a
+// mirror, so the painted vault's blue no longer floods them) in the hall's deep violet (#140a38), washed with their
+// strips' light (cyan up from the skirting, magenta down from the cornice), a seam between panels every 1.5 m and at
+// two heights, each panel its own a little, and an inset strip of the hall's violet along them at 3.3 m, under the
+// junction boxes and over the block plates; the end wall either side of the vault's frame the same (the vault's
+// recess stays dark). Shading only: no draw, no light.
+function hallSteelShade(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vHW; varying vec3 vHN;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\n  vHW = (modelMatrix * vec4(transformed, 1.0)).xyz; vHN = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vHW; varying vec3 vHN;")
+      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>
+        float hWall = max(step(7.75, abs(vHW.x)) * step(0.5, -sign(vHW.x) * vHN.x), step(4.3, abs(vHW.x)) * step(vHW.z, ${(HALL.endZ + 0.1).toFixed(2)}) * step(0.5, vHN.z)); // (a long wall's face to the aisle, or the end wall's either side of the vault's frame)
+        metalnessFactor = mix(metalnessFactor, 0.4, hWall); roughnessFactor = mix(roughnessFactor, 0.58, hWall);`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        {
+          float y = vHW.y, fy = fwidth(y), fz = max(fwidth(vHW.z), fwidth(vHW.x));
+          float hu = abs(vHN.z) > 0.5 ? vHW.x : vHW.z; // (along the wall)
+          float dz = abs(fract(hu / 1.5 + 0.5) - 0.5) * 1.5, dy = min(abs(y - 1.2), abs(y - 5.9)), ds = abs(y - 3.3);
+          float seam = max(1.0 - smoothstep(0.01, 0.01 + fz, dz), 1.0 - smoothstep(0.01, 0.01 + fy, dy));
+          float panel = fract(sin(floor(hu / 1.5 + 0.5) * 12.9898 + step(5.9, y) * 4.1 + step(1.2, y) * 7.3 + sign(vHW.x) * 3.7) * 43758.5453); // (each panel its own a little)
+          vec3 wall = vec3(0.05, 0.025, 0.085) * (0.86 + 0.28 * panel) * (1.0 - 0.7 * seam)
+            + vec3(0.21, 0.94, 1.0) * 0.045 * exp(-max(y - 0.1, 0.0) * 2.2) + vec3(1.0, 0.23, 0.83) * 0.025 * exp(-abs(y - 7.05) * 2.0)
+            + vec3(0.65, 0.37, 1.0) * (1.8 * (1.0 - smoothstep(0.012, 0.012 + fy, ds)) + 0.04 * exp(-ds * 7.0));
+          totalEmissiveRadiance += vColor * 0.3 * (1.0 - hWall) + wall * hWall;
+        }`);
+  };
+  m.customProgramCacheKey = () => "hall-steel-1";
+}
+
 class HallScene extends Scene3D {
   constructor() {
     super({ fov: 58, far: 300, fog: [0x07021c, 12, 66], bg: 0x05010f });
@@ -196,7 +229,8 @@ class HallScene extends Scene3D {
     }
     s.userData.lightBudget = { dir: 1, point: 3 }; // (see LightPool: the key, and the three strongest of the worlds' seven lamps)
     s.userData.post = { exposure: 1.16, bloom: 0.75, threshold: 1.05, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.12, split: 0.15,
-      ao: 0.75, shadow: 0, dirt: 0.25, mblur: 0.45, sharpen: 0.3, fringe: 0.15 };
+      ao: 0.75, shadow: 0, dirt: 0.25, mblur: 0.45, sharpen: 0.3, fringe: 0.15,
+      vignetteCol: [0.035, 0.012, 0.125] }; // (its corners darken toward the art bible's void, #090320, not to black: Phase 2's polish)
     this.key = new THREE.DirectionalLight(0xc6ccff, 0.5);
     this.key.position.set(-3, 14, 8);
     this.key.userData.keep = true;
@@ -295,6 +329,7 @@ class HallScene extends Scene3D {
     glow.add(box, racerM(0, 6.47, Z + 0.72, 7.6, 0.05, 0.05), 0xffc04a, 2.0);
     for (const sd of [-1, 1]) { metal.add(box, racerM(sd * 3.75, 3.35, Z + 0.35, 0.7, 6.7, 0.7), 0x161029); glow.add(box, racerM(sd * 3.38, 3.35, Z + 0.72, 0.05, 6.2, 0.05), 0xffc04a, 1.8); }
     this.metalMat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.75, roughness: 0.42 });
+    hallSteelShade(this.metalMat);
     this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     const metalMesh = new THREE.Mesh(metal.build("color"), this.metalMat), glowMesh = new THREE.Mesh(glow.build("color"), this.glowMat);
     metalMesh.name = "room-steel"; glowMesh.name = "room-lights"; // (named for tools/cost-report.js)
