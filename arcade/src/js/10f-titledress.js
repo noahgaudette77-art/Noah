@@ -133,8 +133,8 @@ function hallDress(hall, B) {
   const flat = new Map(), N3 = new THREE.Matrix3(), A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3(), E1 = new THREE.Vector3(), E2 = new THREE.Vector3();
   const put = (b, geo, m, v = {}, su = 1, sv = 1, smooth = false) => {
     let f = flat.get(geo);
-    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; flat.set(geo, f); if (ng !== geo) ng.dispose(); }
-    const { P, N, U } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
+    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; f.E = kitEdges(geo, f.U, f.P.length / 3); flat.set(geo, f); if (ng !== geo) ng.dispose(); } // (and each corner's place on its face, for the steel's chamfers)
+    const { P, N, U, E } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
     for (let i = 0; i < n; i += 3) {
       for (let k = 0; k < 3; k++) { const j = (i + k) * 3, x = P[j], y = P[j + 1], z = P[j + 2]; C3[k].set(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
       if (!smooth) E1.subVectors(Cv, Bv).cross(E2.subVectors(A, Bv)).normalize();
@@ -144,6 +144,7 @@ function hallDress(hall, B) {
         if (smooth) { const x = N[j * 3], y = N[j * 3 + 1], z = N[j * 3 + 2], nx = q[0] * x + q[3] * y + q[6] * z, ny = q[1] * x + q[4] * y + q[7] * z, nz = q[2] * x + q[5] * y + q[8] * z, l = Math.hypot(nx, ny, nz) || 1; b.nor.push(nx / l, ny / l, nz / l); }
         else b.nor.push(E1.x, E1.y, E1.z);
         b.uvm.push(U ? U[j * 2] * su : 0, U ? U[j * 2 + 1] * sv : 0);
+        if (b.edges) b.edge.push(smooth ? 0.5 : E[j * 2], smooth ? 0.5 : E[j * 2 + 1]);
       }
     }
     for (const k in b.attrs) { const s = b.attrs[k], val = v[k] === undefined ? 0 : v[k], arr = b.x[k]; for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) arr.push(s > 1 ? val[c] : val); }

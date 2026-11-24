@@ -21,10 +21,46 @@ const CELL = { floor: 0.07, baseTop: 0.92, capY: 4.32, capTop: 5.08, R: 1.15, ri
 // which cells are worse off (by their boss: Boss Rush's key), whatever the player has done; a beaten boss's cell calms
 const CELL_WORSE = { alert: ["6", "all"], crack: ["2", "8", "all"], steam: ["5", "10", "3"] };
 
+// Each corner's place on its own face of a piece, for the steel's chamfers (cellSteelMaterial): 0 to 1 across the
+// face, 0 or 1 at its edges. A box's faces as they are; a closed cylinder's sides each its own if it has a dozen or
+// fewer (a pipe or a band, open, or more sides, is round: no edge down its sides, 0.25 to 0.75 across them), its ends
+// by how far in from the rim (0 at the rim, 0.5 in the middle); anything else no edge at all (0.5 at every corner: the
+// shader leaves it be). geo: the piece as made; U: its uvs unindexed (three corners a triangle); n: its corners.
+// Nothing of three.js is made here.
+function kitEdges(geo, U, n) {
+  const E = new Float32Array(n * 2).fill(0.5);
+  if (!U) return E;
+  if (geo.type === "BoxGeometry") { E.set(U.subarray(0, n * 2)); return E; }
+  if (geo.type !== "CylinderGeometry") return E;
+  const p = geo.parameters || {}, segs = p.radialSegments || 8, faces = segs <= 12 && !p.openEnded;
+  const round = (j) => Math.atan2(U[j + 1] - 0.5, U[j] - 0.5) / (2 * Math.PI); // (a rim corner's way round)
+  for (let i = 0; i < n; i += 3) {
+    let cap = -1, cu = 0;
+    for (let k = 0; k < 3; k++) { const j = (i + k) * 2; if (U[j] === 0.5 && U[j + 1] === 0.5) cap = k; cu += U[j] / 3; } // (an end's triangles each have its middle, at uv 0.5, 0.5)
+    const f = Math.floor(cu * segs);
+    if (cap >= 0) {
+      // an end: in from the rim one way, round it the other (each corner its own way round, its middle the two rim
+      // corners' mean: the two ways never along one line, or the shader's frame would have no breadth)
+      const r = [0, 1, 2].filter((k) => k !== cap).map((k) => round((i + k) * 2));
+      if (r[1] - r[0] > 0.5) r[1] -= 1; else if (r[0] - r[1] > 0.5) r[0] -= 1;
+      let q = 0;
+      for (let k = 0; k < 3; k++) {
+        const j = (i + k) * 2;
+        if (k === cap) { E[j] = 0.5; E[j + 1] = 0.5; }
+        else { E[j] = 0; E[j + 1] = 0.5 + 2 * (r[q] - (r[0] + r[1]) / 2); q++; }
+      }
+    } else {
+      for (let k = 0; k < 3; k++) { const j = (i + k) * 2, a = U[j] * segs - f; E[j] = faces ? a : 0.25 + 0.5 * a; E[j + 1] = U[j + 1]; }
+    }
+  }
+  return E;
+}
+
 // A batch of pieces made one geometry: each piece's corners carry what is given for it (colour, pattern, its cell's
-// light and state...), and coordinates in metres along its faces (uvM), for the patterns drawn on them.
+// light and state...), and coordinates in metres along its faces (uvM), for the patterns drawn on them; with edges
+// (o.edges: the steel's), each corner's place on its own face too (aEdge: see kitEdges).
 class KitBatch {
-  constructor(attrs = {}) { this.attrs = attrs; this.pos = []; this.nor = []; this.uvm = []; this.x = {}; for (const k in attrs) this.x[k] = []; }
+  constructor(attrs = {}, o = {}) { this.attrs = attrs; this.edges = !!o.edges; this.pos = []; this.nor = []; this.uvm = []; this.edge = []; this.x = {}; for (const k in attrs) this.x[k] = []; }
   // geo placed by m; v: the piece's values; su, sv: its own uv in metres (a cylinder's: its girth and height);
   // smooth: keep its own normals (a torus, a dome), else flat (hard steel)
   add(geo, m, v = {}, su = 1, sv = 1, smooth = false) {
@@ -34,6 +70,7 @@ class KitBatch {
     const P = g.attributes.position.array, N = g.attributes.normal.array, U = g.attributes.uv ? g.attributes.uv.array : null, n = P.length / 3;
     for (let i = 0; i < P.length; i++) { this.pos.push(P[i]); this.nor.push(N[i]); }
     for (let i = 0; i < n; i++) this.uvm.push(U ? U[i * 2] * su : 0, U ? U[i * 2 + 1] * sv : 0);
+    if (this.edges) { const E = smooth ? null : kitEdges(geo, U, n); for (let i = 0; i < n * 2; i++) this.edge.push(E ? E[i] : 0.5); }
     for (const k in this.attrs) { const s = this.attrs[k], val = v[k] === undefined ? 0 : v[k]; const arr = this.x[k]; for (let i = 0; i < n; i++) for (let j = 0; j < s; j++) arr.push(s > 1 ? val[j] : val); }
     g.dispose();
     return this;
@@ -41,6 +78,7 @@ class KitBatch {
   // its pieces as typed arrays, by attribute (with each attribute's size)
   arrays() {
     const a = { position: [new Float32Array(this.pos), 3], normal: [new Float32Array(this.nor), 3], uvM: [new Float32Array(this.uvm), 2] };
+    if (this.edges) a.aEdge = [new Float32Array(this.edge), 2];
     for (const k in this.attrs) a[k] = [new Float32Array(this.x[k]), this.attrs[k]];
     return a;
   }
@@ -98,15 +136,23 @@ function cellFlatTexture() {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; t.needsUpdate = true;
   return t;
 }
+// (Phase 2's polish, 2026-11-24: an art review found the steel still one flat tone a face, the near cells' bars,
+// brackets and bands read as untextured boxes: the brushed map only made the roughness vary, and a flat face gives back
+// one blurred reflection. Now each face finds its own frame (from how its corners' place on the face, aEdge, changes
+// across the pixel: kitEdges) and with it: chamfers along its edges, worn to bright steel and turned 45 degrees out, so
+// they catch the lamps and give back another part of the hall (as wide as they cover of the pixel: far off they fade,
+// never a crawling line); the brushing's streaks tilting the face a little (the grain of the map's roughness across
+// them), so what it gives back breaks along them; grime toward each upright face's foot; and the steel's tone mottled
+// a little, warmer and cooler.)
 function cellSteelMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.8, roughness: 0.38, envMapIntensity: 1.3 });
   m.userData.tTread = { value: cellFlatTexture() }; m.userData.tBrush = { value: cellFlatTexture() };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tTread = m.userData.tTread; sh.uniforms.tBrush = m.userData.tBrush;
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN;")
-      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;")
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; attribute vec2 aEdge; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; varying vec2 vEdge;")
+      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat; vEdge = aEdge;")
       .replace("#include <project_vertex>", "#include <project_vertex>\n#ifdef USE_INSTANCING\n  vWP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);\n#else\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);\n#endif"); // (an instance's own place counts: the cameras' bodies share this material)
-    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tTread; uniform sampler2D tBrush;")
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; varying vec2 vEdge; uniform sampler2D tTread; uniform sampler2D tBrush;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float pHaz = step(0.5, vPat) * step(vPat, 1.5), pGri = step(1.5, vPat) * step(vPat, 2.5), pRec = step(2.5, vPat);
         float st = smoothstep(0.47, 0.53, abs(fract((vUvM.x + vUvM.y) * 2.6) - 0.5) * 2.0);
@@ -119,18 +165,52 @@ function cellSteelMaterial() {
         diffuseColor.rgb *= 1.0 - 0.78 * pRec;
         float plain = (1.0 - pHaz) * (1.0 - pGri) * (1.0 - pRec), up = plain * smoothstep(0.6, 0.72, vWN.y); // (the base's top: its flat ring and the bevel round it, which is what the aisle sees)
         vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
-        diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);")
+        diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);
+        // the face's own frame: its two directions (view space) and its size in metres, from how the place on it changes
+        // across the pixel (none for a piece without edges: sOn 0)
+        vec3 sP = -vViewPosition, sDx = dFdx(sP), sDy = dFdy(sP);
+        vec2 sEx = dFdx(vEdge), sEy = dFdy(vEdge);
+        float sDet = sEx.x * sEy.y - sEy.x * sEx.y, sOn = step(0.02 * length(sEx) * length(sEy) + 1e-12, abs(sDet)); // (its two ways along nearly one line: no frame)
+        sDet = mix(1.0, sDet, sOn);
+        vec3 sTx = (sDx * sEy.y - sDy * sEx.y) * (sOn / sDet), sTy = (sDy * sEx.x - sDx * sEy.x) * (sOn / sDet);
+        float sLx = max(length(sTx), 1e-4), sLy = max(length(sTy), 1e-4), sPx = max(length(sDx), length(sDy)) + 1e-5;
+        // its chamfers: a band in from each edge (1.6 cm, less on a small piece), as much of the pixel as it covers; each
+        // faces out across its edge
+        vec2 sIn = min(vEdge, 1.0 - vEdge) * vec2(sLx, sLy);
+        float sB = min(0.016, 0.18 * min(sLx, sLy));
+        vec2 sCov = clamp((min(vec2(sB), sIn + 0.5 * sPx) - max(vec2(0.0), sIn - 0.5 * sPx)) / sPx, 0.0, 1.0) * sOn;
+        float sBev = max(sCov.x, sCov.y);
+        vec3 sTilt = sTx * (sCov.x * sign(vEdge.x - 0.5) / sLx) + sTy * (sCov.y * sign(vEdge.y - 0.5) / sLy);
+        // the brushing: the grain of its streaks (the map's roughness, across them) tilts the face a little; finer than
+        // the pixel, the map's smaller copies flatten it
+        float sSl = clamp((texture2D(tBrush, vUvM * vec2(1.4, 0.35) + vec2(0.0, 0.002)).b - brush.b) * 175.0, -6.0, 6.0);
+        vec3 sStreak = sTy * (-0.03 * sSl * sOn * (1.0 - up) / sLy); // (not on the tread plate: its diamonds are its own)
+        // its tone mottled, a little warmer and cooler; grime toward an upright face's foot (its lowest edge)
+        float sMot = smoothstep(0.38, 0.56, brush.b);
+        diffuseColor.rgb *= mix((0.84 + 0.32 * sMot) * mix(vec3(1.03, 0.99, 0.95), vec3(0.96, 0.99, 1.04), sMot), vec3(1.0), up);
+        vec3 sUp = (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
+        float sGx = dot(sTx, sUp) / sLx, sGy = dot(sTy, sUp) / sLy;
+        float sLow = abs(sGy) >= abs(sGx) ? mix(1.0 - vEdge.y, vEdge.y, step(0.0, sGy)) * sLy * abs(sGy) : mix(1.0 - vEdge.x, vEdge.x, step(0.0, sGx)) * sLx * abs(sGx);
+        float sGrime = clamp((1.0 - smoothstep(0.0, 0.22, sLow)) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
+        diffuseColor.rgb *= 1.0 - 0.5 * sGrime;
+        // a chamfer worn bright: bare steel through paint, polished
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 2.2 + 0.05, vec3(0.5, 0.51, 0.55), max(pHaz, pRec)), sBev);`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);\n  roughnessFactor = mix(mix(roughnessFactor, 0.85, 0.5 * sGrime), 0.24, sBev);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(mix(metalnessFactor, 0.15, pHaz), 0.9, sBev);")
       // the tread plate's relief: its diamonds tilt the surface, so they catch the lamps and the hall's reflection (only
       // its colour and roughness were taken before, and the plinth tops stayed a flat pale plane: Phase 2's gate review).
       // The tops face up, so the picture's frame is the world's (x along x, y along -z); elsewhere nothing changes
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         { vec2 tn = (tread.rg * 2.0 - 1.0) * up;
           vec3 bent = vec3(tn.x, sqrt(max(1.0 - dot(tn, tn), 0.0)), -tn.y);
-          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }`);
+          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }
+        // the chamfers and the brushing, the face kept turned to the lens as much as it was (up to 0.25): a normal
+        // turned away from the lens sends three.js's specular to thousands, a white bloom (the first try)
+        { vec3 sV = normalize(vViewPosition); float sNV = min(dot(normal, sV), 0.25);
+          normal = normalize(normal + sTilt + sStreak);
+          normal = normalize(normal + sV * max(max(sNV, 0.02) - dot(normal, sV), 0.0)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-4";
+  m.customProgramCacheKey = () => "cell-steel-5";
   return m;
 }
 
@@ -345,8 +425,8 @@ function buildCellKit(hall) {
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
   const at = (x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) => M.compose(V.set(x, y, z), Q.setFromEuler(new THREE.Euler(rx, ry, rz, "YXZ")), new THREE.Vector3(sx, sy, sz)).clone(); // (laid by rx, then turned by ry)
   const oct = (r0, r1, h) => new THREE.CylinderGeometry(r1, r0, h, 8, 1, false, Math.PI / 8); // (a flat face toward the front)
-  const steel = new KitBatch({ color: 3, aPat: 1 }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }); // (the hall's own pieces)
-  const one = { steel: new KitBatch({ color: 3, aPat: 1 }), detail: new KitBatch({ color: 3, aPat: 1 }), glow: new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens: new KitBatch({ aRow: 1, aState: 4 }) }; // (one cell's)
+  const steel = new KitBatch({ color: 3, aPat: 1 }, { edges: true }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }); // (the hall's own pieces)
+  const one = { steel: new KitBatch({ color: 3, aPat: 1 }, { edges: true }), detail: new KitBatch({ color: 3, aPat: 1 }, { edges: true }), glow: new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens: new KitBatch({ aRow: 1, aState: 4 }) }; // (one cell's)
   const GUN = [0.105, 0.115, 0.135], DARK = [0.055, 0.06, 0.072], BAR = [0.16, 0.17, 0.2], BRIGHT = [0.33, 0.35, 0.4], PIPE = [0.18, 0.19, 0.22], WHITE = [1, 1, 1];
   const box = new THREE.BoxGeometry(1, 1, 1), plane = new THREE.PlaneGeometry(1, 1);
   const torus = new THREE.TorusGeometry(1.24, 0.032, 6, 40).rotateX(Math.PI / 2), dome = new THREE.SphereGeometry(0.1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -483,7 +563,7 @@ function buildCellKit(hall) {
     kit.camBody.instanceMatrix.needsUpdate = kit.camLamp.instanceMatrix.needsUpdate = true;
   };
   {
-    const body = new KitBatch({ color: 3, aPat: 1 }), lamp = new KitBatch({ aCol: 3, aState: 4, aKind: 1 });
+    const body = new KitBatch({ color: 3, aPat: 1 }, { edges: true }), lamp = new KitBatch({ aCol: 3, aState: 4, aKind: 1 });
     body.add(box, at(0, 0, 0.28, 0.08, 0.08, 0.56), { color: BAR, aPat: 0 });
     body.add(box, at(0, 0, 0.62, 0.22, 0.2, 0.38), { color: [0.45, 0.46, 0.49], aPat: 0 });
     body.add(box, at(0, 0.12, 0.66, 0.28, 0.04, 0.48), { color: DARK, aPat: 0 });
