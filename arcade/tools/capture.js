@@ -177,7 +177,7 @@ function inPage() {
         if (i > 0 && every > 2) await page.evaluate((k) => window.__tick(k, false), every - 2);
         if (i === 0 || every >= 2) await drawTwo(); else await page.evaluate((k) => window.__tick(k, true), 1);
         const f = path.join(OUT, `${name}-${String(i).padStart(2, "0")}.png`);
-        await page.screenshot(o.clip ? { path: f, clip: o.clip } : { path: f });
+        await page.screenshot(o.clip ? { path: f, clip: o.clip, timeout: 180000 } : { path: f, timeout: 180000 }); // (as cap.shot: Playwright's 30 s ran out on a loaded machine)
         files.push(f);
       }
       const strip = path.join(OUT, name + ".strip.jpg");
