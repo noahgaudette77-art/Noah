@@ -26,6 +26,9 @@ same moments; the rules IDENTICAL; an independent review. **Passed.**
 frame is within the machine's noise on every screen (0.16 to 1.2 ms phone, 0.3 to 1.07 ms Mac).
 
 - **Phone drawing cost of the new shading:** see "The phone's drawing cost" below.
+- **The final build** (`16ff715`, with the review's fixes; live, the served page the same to the byte): the logic again
+  (`docs/master/runs/phase2-polish-fixes`): content and scripts untouched, the rules IDENTICAL from disk and served, the
+  sequence ALL 13 STEPS OK, no fault; the title's stills on both devices with the fixes, no errors.
 
 ## The independent review
 
