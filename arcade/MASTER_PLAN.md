@@ -20,12 +20,21 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 - **Done (Phase 2, resumed):** the smoothstep safety sweep (`89a65e8`..`275af41`, a file a commit; built `cd141b1`, live):
   48 calls in 16 files; the 3D the same to the pixel on every game screen on both devices, no shader error anywhere
   (every screen's stills, the effects kit, the wizard's casts and ward, the exam's wreck), the rules IDENTICAL.
-- **Next steps (Phase 2, resumed):** 2) polish only, on what Phases 5 and 3 left final (a second independent review of
-  every screen's stills first, then its findings, worst first):
-  light, materials and colour on the rebuilt environments and new assets (the Proctor everywhere, the far rocks, the title's
-  dressing, the hub's cabinets, the arena's crowd and deck, Memory Bank's bullion); the results bar and the small icons
-  (also carried to Phase 7); 3) stills before and after at the same moments, costs on both tiers, a second independent
-  review, the gate as written, a report.
+- **Done (Phase 2, resumed), the review's smaller findings, a commit each (source only; built at the gate):** the hub's
+  toppers lit by their cabinets' marquees (`3d64474`); the guide's chapter banner violet, not grey (`6989df8`); the
+  results bar's glow under its first button on a Mac (no teal band; `a3f3ac2`); an earned cup gold (`108cde4`); boss
+  portraits at their strip's 192 px (`3b9400b`); Memory Bank's right-hand deck and coins (`996ccd1`); Nest Egg Run in
+  orange and magenta (cyan 30-36% of the lit picture to 4-6%; `1c186eb`); the exam's Proctor lit ice blue from the front
+  (`35e28aa`). The menus' glass over the arcade floor was already deep violet: the grey the review saw came from the
+  library's grade behind those stills (fixed with the banner). `scratchpad/phase2/hues.py` measures a still's colour
+  shares.
+- **In hand (Phase 2, resumed):** three packages in their own worktrees (the title hall: cells' steel and glass, floor,
+  Mac walls, the Proctor cell's crack; Boss Rush's arena: pillars and stands, the crowd, a cyan rim; Risk Blaster: the
+  Mac's sky, the far rocks and ships). Each to be read, cherry-picked, built, checked.
+- **Next steps (Phase 2, resumed):** merge the three packages; build; the gate: stills before and after at the same
+  moments (the racer's and the exam's questions vary between capture runs under load: compare their pictures, not their
+  frames), costs on both tiers, the rules IDENTICAL, a second independent review, a report. Carried to Phase 7: icons of
+  20 px or more, a 384 px portrait strip for 3x phones, the results bar.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
