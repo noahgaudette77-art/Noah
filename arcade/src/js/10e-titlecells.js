@@ -403,7 +403,7 @@ function buildCellKit(hall) {
   }
   // ---- on a computer, the hall's walls dressed as a prison block's (10f-titledress.js): made into the hall's own
   // batches below (its steel, its lights, its signs among the plates), so no draw is added for what stands still
-  const dress = Assets.phone ? null : hallDress(hall, { steel, glow, at, states, C: { GUN, DARK, BAR, BRIGHT, PIPE, WHITE } });
+  const dress = Assets.phone ? null : dressOwnRandom(() => hallDress(hall, { steel, glow, at, states, C: { GUN, DARK, BAR, BRIGHT, PIPE, WHITE } }));
   const rowsN = dress ? dress.rowsTotal : cells.length; // (the plates' picture: the cells' rows, then the signs')
   // ---- every cell: the one copied, moved and turned to its place, in its own light and state, its own row of pictures
   const mats = cells.map((c) => new THREE.Matrix4().compose(c.anchor.position, Q.setFromAxisAngle(up, c.anchor.rotation.y), S1));

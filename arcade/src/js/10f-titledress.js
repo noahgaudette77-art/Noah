@@ -10,11 +10,21 @@
 // screens: no draw added, no shader); the signs are rows added to the cells' picture. What moves (the searchlights'
 // beams and pools, the beacons' beams and domes) is one draw, moved by its own shader (nothing sent from the script a
 // frame), left out of the floor's reflection, and not drawn at the lower tiers (GFX.extras off). Nothing here draws
-// on Math.random: what varies varies by a hash of its place. A phone builds none of it (Assets.phone: the hall as it
+// on the game's Math.random: what varies varies by a hash of its place, and the ids three.js draws for what it makes
+// come from a stream of the dressing's own (dressOwnRandom). A phone builds none of it (Assets.phone: the hall as it
 // was, lean).
 
 const DRESS = { W: 7.8, H: 8.8, pipeY: [6.56, 6.8], railD: 0.42 };
 const dressHash = (n) => { const s = Math.sin(n * 91.3458 + 17.17) * 47453.5453; return s - Math.floor(s); };
+// fn run on a private stream of random numbers: three.js draws four for the id of every shape, material and object it
+// makes (some thirteen hundred here), and the game's own stream, which the capture tool and the regression seed, must
+// not move with the dressing (the tip on the title, and all that is drawn after the hall, would change)
+function dressOwnRandom(fn) {
+  const R = Math.random;
+  let s = 0x2f6b9e1d;
+  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = R; }
+}
 
 // The sign rows (each a painter for cellAtlas: one row of its picture, 1024 x 128): a block's plate on the left half
 // (its letter on a square of its colour, CELL BLOCK and its game), its warning screen on the right (amber, or red
