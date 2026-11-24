@@ -16,9 +16,10 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
 - **Phase:** 5, environments and new assets. Phases 0 and 1 are done; Phase 2's first pass is closed (its work stays,
   checked: `docs/master/phase2/`); its polishing resumes after Phase 3.
-- **Doing:** Phase 5's work (see its progress list): the Proctor and Risk Blaster done; four in-place jobs running as
-  agents in worktrees. Phase 2's first pass: the harness `phase2-final` clean (no fault; every screen inside its
-  budget on both tiers); its stall census and WebKit stills running; its record in `docs/master/phase2/`.
+- **Doing:** Phase 5's gate (all of its work merged and live at `42bbcd9`): the harness `phase5`, an independent review,
+  then the stall census and every screen in WebKit, the record in `docs/master/phase5/` and a report. Phase 2's first
+  pass: recorded in `docs/master/phase2/` (its census on Risk Blaster and the title clean; the rest of its census and
+  its WebKit stills are taken now on the Phase 5 build, which carries all of Phase 2).
 - **Next steps (Phase 5):** 1) the rebuild list: every screen's environment and its assets judged keep, improve in
   place, or rebuild (new geometry, new generated models, pre-rendered skies), with the evidence (the stills of
   `phase2-final`, the audits, the review); nothing on it polished before it is rebuilt; 2) the budget for new assets
@@ -232,10 +233,24 @@ fal.ai and Blockade nothing planned; within the caps either way.
       by this machine's memory limit, a browser killed while four agents captured: run again, clean); the served site
       checked (the page, the rig, the far rocks and the portrait served; the old Proctor's files gone). NB the served
       site's root is the arcade folder: https://noah-2ci.pages.dev/ is the game, its files under /assets/.
-- [ ] In place, four at once (agents in worktrees, each to be merged after its own check): the title hall (the Mac's
-      prison denser, the end's edges), the hub (cabinet bases, laser halos), the arena (the crowd's motion, the rage in
-      the reflection), Memory Bank (the gold bars and trays).
-- [ ] The gate.
+- [x] In place, four at once (agents in worktrees, each merged after its own check; built and live at `42bbcd9`, the
+      rules IDENTICAL and the sequence 13/13 on the quiet machine): the title hall on a Mac dressed as a prison block
+      (conduits, rails, block plates, junction boxes, vents with steam, security doors, warning signs that turn red with
+      a cell's alarm, three patrolling searchlights, red beacons: one draw added, the phone unchanged) and its end on a
+      wide window (the left edge, the tip's plate, the dock's shade); the hub's cabinet bases lit (front sheet, kick
+      plate, lit coin door, side art) and its lasers one mesh with a halo (phone draws 41 -> 35, Mac 97 -> 85); Boss
+      Rush's crowd swaying, cheering a blow and flinching at a strike (one instanced draw, as before) and its deck
+      giving back the rage (one mix a pixel); Memory Bank's gold cast as stamped bullion in pyramids, the coins on
+      velvet trays (+2 draws). Notes and before/after in `docs/master/phase5/{title,hub,arena,memory}/`.
+- [ ] The gate: the harness (`phase5`), the stall census and every screen in WebKit on `42bbcd9`; an independent review;
+      the record (`docs/master/phase5/`) and a report.
+- Learned (two agents found it): three.js r128 draws four Math.random numbers for the id of every object, geometry,
+  material and texture it makes; adding objects while a scene is built shifts the seeded stream a capture uses (its
+  questions and its deal change between builds; the rules are untouched, the regression IDENTICAL). New builders that
+  make many objects run on a stream of their own (`dressOwnRandom`, Memory Bank's); a capture's question can differ
+  between two builds for this reason alone.
+- For the performance re-check: Memory Bank's generated coins are 2,500 triangles each (20 at the start, about 130K
+  triangles at the end of a deck: inside the budget; a light copy, as the far rocks', would remove most of it).
 
 - Carried from Phase 2's gate review: the room captures are taken once (and again at a boss's power-up), so Boss Rush's
   rage (its neon turning red) and its moving searchlights and lightning are not in the deck's reflection: tint the
