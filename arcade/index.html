@@ -33558,6 +33558,14 @@ class BossActor {
     this._e = new THREE.Euler(); this._q = new THREE.Quaternion(); this._q2 = new THREE.Quaternion(); this._d = new THREE.Vector3(); this._y = new THREE.Vector3(0, 1, 0);
     this.ovr = new Map();
     this.arm = { L: 0, R: 0 }; this.armTo = { L: 0, R: 0 }; // how limp each arm hangs
+    // which way each arm's bones run, each in its own frame (its child's place in it): a captured rig's along their +Y,
+    // the Proctor's (the owner's machine, carried onto its own joints in Phase 5) along their own, nearly -Y. A hanging
+    // arm is swung along that line: swung along +Y, the Proctor's arms went up, not down, and flipped about frame to
+    // frame (its "down" lay nearly opposite +Y, where the shortest turn between them has no one axis)
+    const run = (b, c) => (b && c && c.parent === b && c.position.lengthSq() > 1e-12 ? c.position.clone().normalize() : new THREE.Vector3(0, 1, 0));
+    this.limb = {};
+    for (const sd of ["L", "R"]) { const up = this.P[sd + "_Upperarm"], fore = this.P[sd + "_Forearm"], hand = this.P[sd + "_Hand"]; this.limb[sd] = { up: run(up, fore), fore: run(fore, hand) }; this.limb[sd].plain = this.limb[sd].up.y > 0.999 && this.limb[sd].fore.y > 0.999; }
+    this._dw = new THREE.Vector3(); this._q3 = new THREE.Quaternion();
     this.kick = 0; this.kickV = 0; // a recoil along z, sprung
     this.lean = 0; this.drop = 0; this.yaw = 0;
     this.scraps = []; this.torn = {};
@@ -33607,6 +33615,16 @@ class BossActor {
     // (a second idle of its own kind, where it has one: the judge's folded arms, the salesman's swagger; it moves
     // between the two now and then, over a couple of seconds)
     this.mix = this.act.idle2 ? 1 : 0; this.mixTo = this.mix; this.mixT = 9; this.nMix = 0; this.idle2T = rand(0, 4);
+    // its feet (plant): each leg's thigh, calf and foot, in the bookkeeping of the bones turned after the clips (the foot
+    // is turned back to the clip's own turn in the world once the leg is bent: the sole stays as the clip lays it)
+    this.legs = [];
+    for (const sd of ["L", "R"]) {
+      const th = P[sd + "_Thigh"], ca = P[sd + "_Calf"], ft = this.joint["foot" + sd];
+      if (!th || !ca || !ft || ca.parent !== th || ft.parent !== ca) continue;
+      T.add(th); T.add(ca); if (ft.isBone || ft === P[sd + "_Foot"]) T.add(ft);
+      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, lock: new THREE.Vector3(), low: Infinity });
+    }
+    this._pv = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion());
   }
   has(name) { return !!this.act[name]; }
   // A bone that is turned after the clips have been applied. (The mixer writes a bone only when its value has
@@ -33656,8 +33674,13 @@ class BossActor {
   swing(clip, u, from) {
     const a = this.atk, C = BOSS_CLIP[clip];
     if (!this.act[clip] || this.dead) return;
-    if (!a.swung) { a.swung = true; a.hitFx = false; const n = ++this.nStrike; a.vary = Motion.vary(this.seed, n, 0.86, 1.16); this.S.lean.hit(0.55 * this.M.lunge * Motion.vary(this.seed, n + 31, 0.8, 1.2) * (0.6 + 0.4 * this.coil)); this.S.sq.hit(-0.4 * this.M.squash); } // (released: thrown forward, stretched)
-    a.clip = clip; a.rec = false; a.t = lerp(from === undefined ? C.top : from, C.hit, u * u * (3 - 2 * u) * 0.35 + u * 0.65); a.to = 1; if (u > 0.25) a.w = Math.max(a.w, Math.min(1, u * 2.2));
+    if (!a.swung) { a.swung = true; a.hitFx = false; a.w0 = a.w; const n = ++this.nStrike; a.vary = Motion.vary(this.seed, n, 0.86, 1.16); this.S.lean.hit(0.55 * this.M.lunge * Motion.vary(this.seed, n + 31, 0.8, 1.2) * (0.6 + 0.4 * this.coil)); this.S.sq.hit(-0.4 * this.M.squash); } // (released: thrown forward, stretched)
+    a.clip = clip; a.rec = false; a.t = lerp(from === undefined ? C.top : from, C.hit, u * u * (3 - 2 * u) * 0.35 + u * 0.65);
+    // the clip comes in across the whole blow, from what the wind-up had of it to all of it as the blow lands: a wrong
+    // answer early (its wind-up barely begun) is seen to come all the way in the rule's 0.12 s, not in a frame (it took
+    // 0.12 to 0.70 of the pose in one: the hand's 1.7 m in a frame, the new pops scan). Its weight is the blow's, not
+    // eased again behind it (update follows a.to: the same value)
+    a.w = a.to = a.toW = Math.max(a.w, lerp(a.w0 === undefined ? a.w : a.w0, 1, smoothstep(0, 0.85, u)));
     this.windK = 0;
   }
   recover() { this.atk.rec = true; this.atk.swung = false; this.windK = 0; }
@@ -33792,15 +33815,26 @@ class BossActor {
       this.arm[sd] = Motion.damp(this.arm[sd], this.armTo[sd], 5, d);
       const k = this.arm[sd], up = this.P[sd + "_Upperarm"], fore = this.P[sd + "_Forearm"];
       if (k < 0.01 || !up) continue;
-      // straight down from the shoulder, swinging a little: the bone's own +Y (its length) to that direction, in its parent's frame
+      // straight down from the shoulder, swinging a little: the bone's length (limb) to that direction, in its parent's frame
       up.parent.updateWorldMatrix(true, false);
       up.parent.getWorldQuaternion(this._q2).invert();
-      const sw = Math.sin(this.t * 2.1 + (sd === "L" ? 0 : 1.3)) * 0.07 + this.kick * 0.5;
-      this._d.set((sd === "L" ? 1 : -1) * 0.14, -1, 0.1 + sw).normalize().applyQuaternion(this._q2);
+      const sw = Math.sin(this.t * 2.1 + (sd === "L" ? 0 : 1.3)) * 0.07 + this.kick * 0.5, L = this.limb[sd];
+      this._dw.set((sd === "L" ? 1 : -1) * 0.14, -1, 0.1 + sw).normalize();
+      this._d.copy(this._dw).applyQuaternion(this._q2);
       const ou = this.base(up);
-      up.quaternion.slerp(this._q.setFromUnitVectors(this._y, this._d), k);
+      up.quaternion.slerp(this._q.setFromUnitVectors(L.plain ? this._y : L.up, this._d), k);
       ou.out.copy(up.quaternion);
-      if (fore) { const of = this.base(fore); fore.quaternion.slerp(this._q.setFromEuler(this._e.set(0.12 + sw * 0.6, 0, 0, "XYZ")), k); of.out.copy(fore.quaternion); }
+      if (fore) {
+        const of = this.base(fore);
+        if (L.plain) fore.quaternion.slerp(this._q.setFromEuler(this._e.set(0.12 + sw * 0.6, 0, 0, "XYZ")), k); // (a captured rig: bent a little forward at the elbow, about the bone's own across)
+        else { // (any other: the forearm on down from the elbow, a little forward of the upper arm, in the world)
+          up.updateWorldMatrix(false, false);
+          up.getWorldQuaternion(this._q3).invert();
+          this._dw.z += Math.tan(0.12 + sw * 0.6); this._dw.normalize();
+          fore.quaternion.slerp(this._q.setFromUnitVectors(L.fore, this._d.copy(this._dw).applyQuaternion(this._q3)), k);
+        }
+        of.out.copy(fore.quaternion);
+      }
     }
     // ---- the body: a blow knocks it back and it springs forward again, as heavily as it is built (the stage adds to
     // kickV, as it did to the old spring's speed: here it is a push, sized to the old recoil's depth); an attack leans it
@@ -33811,6 +33845,7 @@ class BossActor {
     this.body.rotation.set(-kick * 0.12 + lean * 0.06 + this.flT + this.trX, this.yaw + this.swY + this.trY + this.spin, this.swR + this.trZ);
     const sc = this.swell + S.grow.step(d, 0);
     this.body.scale.set(sc * (1 + 0.5 * sq), sc * (1 - sq), sc * (1 + 0.5 * sq));
+    this.plant(d);
     // ---- its lights: off until it powers up, breathing, hotter as it winds up, flickering as it dies
     const br = 0.86 + 0.14 * Math.sin(this.t * (rage ? 3.2 : 1.7)), gl = this.glow * this.power * (br + (o.glow || 0)) * (o.flick === undefined ? 1 : o.flick);
     for (const m of this.mats) if (m.emissiveMap) m.emissiveIntensity = gl;
@@ -33911,6 +33946,55 @@ class BossActor {
     this.turns.apply();
   }
   addRot(bone, x, y, z) { this.turns.turn(bone, x, y, z); }
+  // ---- a foot on the floor stays where it stands (Phase 3: the clips, and the body moved over them, slid the bosses'
+  // planted feet 5 to 26% of their height a second, seen when a strike widens the lens). A foot that comes down within
+  // 5% of its leg's length of the lowest it stands is held where it came down, its leg bent to it (two bones: the thigh turned so the
+  // knee lies where the calf can reach the foot, in the leg's own plane, then the calf); it is let go as it lifts, over a
+  // fifth of a second, and one the clip has taken a quarter of its leg's length away is drawn after it (a quick shuffle).
+  // Not while it drops in, floats, or falls dead (all of it is let go over a fifth of a second).
+  plant(d) {
+    const legs = this.legs;
+    if (!legs || !legs.length) return;
+    const ok = this.landed && !this.entering && !this.dead && !this.M.float && this.drop < 0.01;
+    if (!ok && legs.every((l) => l.w < 0.002)) { for (const l of legs) l.on = false; return; }
+    this.root.updateMatrixWorld(true);
+    const [H, K, A, T, u, w] = this._pv, [q, qa, qb] = this._pq, floor = this.root.getWorldPosition(u).y, Tn = this.turns;
+    for (const l of legs) {
+      l.th.getWorldPosition(H); l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+      const l1 = H.distanceTo(K), l2 = K.distanceTo(A), Lg = l1 + l2, up = A.y - floor;
+      // (its ankle's height standing: the lowest it has been, let rise slowly; an ankle stands 5 to 26% of its leg's
+      // length above the floor, rig by rig)
+      l.low = l.low === Infinity ? up : Math.min(up, l.low + (up - l.low) * (1 - Math.exp(-0.05 * d)));
+      const down = ok && (l.on ? up < l.low + 0.08 * Lg : up < l.low + 0.05 * Lg);
+      if (down && !l.on) l.lock.copy(A);
+      l.on = down;
+      l.w = Motion.damp(l.w, down ? 1 : 0, down ? 14 : 9, d);
+      if (l.on) { const dx = A.x - l.lock.x, dz = A.z - l.lock.z, far = Math.hypot(dx, dz) - 0.25 * Lg; if (far > 0) { const k = (far / (far + 0.25 * Lg)) * (1 - Math.exp(-10 * d)); l.lock.x += dx * k; l.lock.z += dz * k; } }
+      if (l.w < 0.002 || Lg < 1e-6) continue;
+      T.set(A.x + (l.lock.x - A.x) * l.w, A.y, A.z + (l.lock.z - A.z) * l.w);
+      if (T.distanceToSquared(A) < 1e-10) continue;
+      // the knee: where the thigh (l1 from the hip) meets the calf (l2 from the foot), on the side the knee bends to now
+      const dist = clamp(H.distanceTo(T), Math.abs(l1 - l2) + 1e-4 * Lg, Lg - 1e-4 * Lg), dir = u.subVectors(T, H).normalize();
+      const along = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist), across = Math.sqrt(Math.max(0, l1 * l1 - along * along));
+      w.subVectors(K, H); w.addScaledVector(dir, -w.dot(dir));
+      if (w.lengthSq() < 1e-12) continue; // (a leg straight along its line: no plane to bend it in; left as the clip has it)
+      w.normalize();
+      const K2 = w.multiplyScalar(across).addScaledVector(dir, along).add(H);
+      // the foot's own turn in the world, kept
+      if (l.keep) l.ft.getWorldQuaternion(qb);
+      // the thigh: its knee from where it was to K2
+      this.turnTo(l.th, q.setFromUnitVectors(u.subVectors(K, H).normalize(), A.subVectors(K2, H).normalize()), qa);
+      // the calf: its foot from where the thigh's turn took it to T
+      l.th.updateWorldMatrix(false, true);
+      l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+      this.turnTo(l.ca, q.setFromUnitVectors(u.subVectors(A, K).normalize(), H.subVectors(T, K).normalize()), qa);
+      if (l.keep) { l.ca.updateWorldMatrix(false, true); l.ft.parent.getWorldQuaternion(qa).invert(); l.ft.quaternion.copy(qa.multiply(qb)); }
+      // (what was turned here is what the clips' bookkeeping last wrote: the next frame starts again from the clip)
+      for (const b of [l.th, l.ca, l.ft]) { const e = Tn.by.get(b); if (e) e.out.copy(b.quaternion); }
+    }
+  }
+  // a bone turned by q in the world (qa: a spare)
+  turnTo(b, q, qa) { const qw = this._pq[3]; b.parent.getWorldQuaternion(qa); b.getWorldQuaternion(qw); b.quaternion.copy(qa.invert().multiply(q).multiply(qw)); }
   // its fall: the death clip played to the moment it lies flat on time (the stage's last blast waits for that moment),
   // its own way there: floating down (slow, then all at once), in its power's stutters, jerking; flat, it lands hard
   fall(pl, d) {
@@ -35691,7 +35775,7 @@ class Wizard {
   // the player answers: right or wrong, it casts (the bolts are the stage's volley, from this wand: bolt)
   cast(right) {
     const k = this.keys.cast, n = ++this.nCast, sd = this.seed;
-    this.play("cast", { from: k.release - 0.04, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.09, out: 0.35 }); // (its arm is out as the first bolt leaves, from about where the held cast has it: no snap back; each cast a little its own)
+    this.play("cast", { from: k.release - 0.04, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.15, out: 0.35 }); // (its arm thrust out from about where the held cast has it: no snap back; each cast a little its own. Over 0.15 s: a quick answer finds the wand still half raised, and over less the arm's 70 cm came in four frames, a snap; the first bolt leaves from the tip wherever it has reached)
     this.S.lunge.hit(0.035 * Motion.vary(sd, n + 5, 0.8, 1.2)); this.S.yaw.hit(Motion.vary(sd, n + 7, -0.04, 0.04)); // (it throws itself into it)
     this.whip = Math.max(this.whip, 0.7); this.charge = 0;
     this.flare0 = Math.max(this.flare0, right ? 0.6 : 0.2);
@@ -35875,8 +35959,12 @@ class Wizard {
     // while a question is read, its wand held out at the boss, higher as the attack bar fills (none once it has won or lost)
     const Rd = WIZ.READY, want = this.readyAct && this.g.state === "ask" && !this.lost && !this.won ? Rd[0] + (Rd[1] - Rd[0]) * smoothstep(0.1, 0.9, f) : 0;
     this.readyW = this.readyW === undefined ? want : Motion.dampTo(this.readyW, this.readyTo === undefined ? want : this.readyTo, want, want > this.readyW ? 3 : 6, d); this.readyTo = want; // (the bar fills every frame: followed alike at any rate)
-    if (this.readyAct) { this.readyAct.setEffectiveWeight(this.readyW); over += this.readyW; }
-    if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - over));
+    // its stance (the idle, and the wand held out while a question is read) gives way to the clips over it as a whole,
+    // each part keeping its own share: a clip easing in takes its weight from all of the stance, not from the idle first
+    // (a cast that came while the wand was held out took the idle's last tenth in two frames: the hand jumped 14 cm)
+    const stance = 1 - Math.min(1, over), ready = this.readyAct ? this.readyW : 0;
+    if (this.readyAct) this.readyAct.setEffectiveWeight(ready * stance);
+    if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - ready) * stance);
     // its flinch, a layer over all of it
     if (this.flinch) this.flinch.update(d);
     this.mixer.update(d);
