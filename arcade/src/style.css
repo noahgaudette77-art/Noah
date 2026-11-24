@@ -1814,6 +1814,10 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 .gico.gold { filter: brightness(1.3) saturate(1.6) drop-shadow(0 0 5px rgba(255, 208, 70, 0.6)) !important; }
 .res-hero > .gico { width: 64px; height: 64px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
 .world.wbar i .gico { width: 20px; height: 20px; }
+/* an earned cup is gilt (the model's is chrome: beside the gold coins it read as a grey cup), in each place it stands */
+.gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 0 5px rgba(255, 208, 70, 0.45)); }
+.tile .k .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.res-hero > .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
 /* the results' reward moment: what was earned arrives one by one under the headline */
 .res-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 10px; margin: 6px 12px 2px; min-height: 44px; }
 .res-rewards .rw.coin + .rw.coin { margin-left: -24px; } /* (the coins land in a little pile) */
@@ -1847,6 +1851,7 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 .res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
 .res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
 .res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
+.res-rewards .rw .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
 .res-rewards .rw.big .gico { width: 50px; height: 50px; }
 .res-rewards .rw.coin .gico { width: 32px; height: 32px; }
 @keyframes rw-in { 0% { opacity: 0; transform: translateY(-26px) scale(0.4); } 60% { opacity: 1; transform: translateY(3px) scale(1.12); } 100% { transform: none; } }

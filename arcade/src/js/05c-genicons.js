@@ -9,9 +9,11 @@ const GEN_BOSSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "al
 const GEN_ICON_OFF = ["#7868cc", "#8d82c8", "#3d2c80"];
 function genIconReady() { return Assets.on && !!Assets.ui("icons"); }
 // One icon from the strip: kind is one of GEN_ICONS; off draws it dark (a star not earned, a trophy still to win).
+// (An earned cup is gilt: the model's cup is chrome, which beside the gold coins read as a grey one. Phase 2, 2026-11-24)
 function genIcon(kind, off = false, cls = "") {
   const img = Assets.ui("icons"), i = GEN_ICONS.indexOf(kind);
   if (!img || i < 0) return "";
+  if (kind === "trophy" && !off) cls = cls ? cls + " cup" : "cup";
   return `<svg class="gico${off ? " off" : ""}${cls ? " " + cls : ""}" viewBox="${i * 160} 0 160 160" aria-hidden="true"><image href="${img.src}" width="1120" height="160"/></svg>`;
 }
 // The page's own icons that have a model: icon("star") and the rest come from the strip once it has loaded. An earned
