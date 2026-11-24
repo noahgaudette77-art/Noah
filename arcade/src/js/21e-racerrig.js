@@ -115,7 +115,7 @@ class RacerRig {
     this.UE = Object.assign({}, U, { uSkGlow: { value: new THREE.Color(1, 1, 1) }, uSkSpec: { value: 3.2 }, uSkAA: { value: 0.5 }, uSkFill: { value: new THREE.Color(0, 0, 0) }, uSkHit: { value: new THREE.Color(0, 0, 0) }, uRgEgg: { value: new THREE.Color(0, 0, 0) } });
     const PARS = "uniform vec4 uRgLamp; uniform vec3 uRgHeat; uniform float uRgTime; uniform vec3 uRgEgg;";
     const EM = `{
-          float rgTail = smoothstep(-0.38, -0.46, vRest.z), rgHead = smoothstep(0.34, 0.42, vRest.z);
+          float rgTail = (1.0 - smoothstep(-0.46, -0.38, vRest.z)), rgHead = smoothstep(0.34, 0.42, vRest.z);
           totalEmissiveRadiance *= 1.0 + uRgLamp.x * rgTail + uRgLamp.y * rgHead;
           totalEmissiveRadiance *= 1.0 + uRgLamp.z * sin(vRest.z * 44.0 + uRgTime * 5.0); // light runs along its strips, nose to tail
           vec3 rgS = vec3(abs(vRest.x) - 0.1458, (vRest.y - 0.385) * 0.55, vRest.z - 0.0315);
