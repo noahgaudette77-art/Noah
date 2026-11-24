@@ -534,7 +534,7 @@ class BossGame extends QuizGame {
           // and where it is round the ring. The same draws from the randomness for each, in the same order, as when each
           // was a card of its own; but three.js no longer draws an id for a card each, so in the capture tool's seeded
           // runs what is drawn after the crowd comes out otherwise. The rules are not touched: their regression holds)
-          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
+          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: BOSS_CROWD_PICK[Math.floor(Math.random() * BOSS_CROWD_PICK.length)], sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
@@ -576,7 +576,7 @@ class BossGame extends QuizGame {
       for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", `#include <common>
-          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim; varying float vSide;
           // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
           // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
           float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
@@ -596,17 +596,26 @@ class BossGame extends QuizGame {
             float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
             float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
             float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
-            vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
+            vUv = vec2((aFig.x + ${BOSS_CROWD_N}.0 * up + uv.x) / ${2 * BOSS_CROWD_N}.0, uv.y); // (its figure, standing or cheering)
             vRim = aRim;
+            // (Phase 2's polish) which side of it its lamps are on: the boss's two rims behind it, either side, the nearer;
+            // across the card, -1 its left, 1 its right, 0 straight before it
+            vec3 at = (modelMatrix * instanceMatrix * vec4(0.0, 0.6, 0.0, 1.0)).xyz, ax = mat3(modelMatrix) * mat3(instanceMatrix) * vec3(1.0, 0.0, 0.0);
+            vSide = clamp(dot(normalize(vec2(sign(at.x) * 11.0, -9.0) - at.xz), normalize(ax.xz)) * 1.8, -1.0, 1.0);
           }`);
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; uniform float uRage;")
-        .replace("#include <map_fragment>", "vec4 fig = texture2D(map, vUv); diffuseColor.rgb *= 0.22 + 0.78 * fig.r; diffuseColor.a *= fig.a;") // (red: lit from above; alpha: the figure)
+        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; varying float vSide; uniform float uRage;")
+        // (Phase 2's polish: each figure lit as a body, not a flat card: from above, its head and shoulders most, its
+        // legs least; and from the side its lamps are on, red saying which way each part of it faces, its middle a
+        // little fuller; alpha: the figure)
+        .replace("#include <map_fragment>", `vec4 fig = texture2D(map, vUv); float fnx = fig.r * 2.0 - 1.0;
+          diffuseColor.rgb *= mix(0.22, 1.1, smoothstep(0.04, 0.72, vUv.y)) * (1.0 + 0.6 * vSide * fnx + 0.25 * (1.0 - abs(fnx)));
+          diffuseColor.a *= fig.a;`)
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
-          totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
+          totalEmissiveRadiance += rimC * fig.g * (0.55 + 0.9 * clamp(0.5 + 0.8 * vSide * fnx, 0.0, 1.0)) + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim, brightest on the side its lamps are on; blue: what glows of its own)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-3";
+    pm.customProgramCacheKey = () => "boss-crowd-4";
     const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
     people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
     folk.name = "arena-crowd"; // (named for tools/cost-report.js)

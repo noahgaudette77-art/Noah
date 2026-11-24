@@ -254,61 +254,96 @@ function bossPillar(st, gl, at, A, B, hex) {
   gl.add(box, M(0, 6.72, 0.912, 0.24, 0.24, 0.01, 0).multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 4)), hex, 1.7, own);
   box.dispose(); pen.dispose();
 }
-// The crowd's figures (lit figures, where they were black cut-outs): eight people in a strip, one picture a card, made
-// once for the page (a DataTexture: each channel is read for itself). Red: how much of the arena's light a part of a
-// figure takes (lit from above: heads and shoulders most); green: its rim, along its top and upper sides, where the
-// light behind it catches its edge; blue: what glows of its own (a light stick, a phone held up, a sign's lit border);
-// alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light stick, a bun, a sign.
-// Each is there twice (Phase 5): as it stands (cells 0-7), and cheering (8-15: both fists up, hands clapped over its
-// head, its phone held up high, the pair's outer arms up, its light stick swung across, its sign waved), its head and
-// body where they were, so the crowd's shader can show either in its place (BossGame.makeCrowd). Side by side, not one
-// row over the other: a figure's smaller copies never take in the feet of the one above it.
+// The crowd's figures (lit figures, where they were black cut-outs): people in a strip, one picture a card, made once
+// for the page (a DataTexture: each channel is read for itself). Red: which way a part of a figure faces, across it (0
+// its left, 1 its right, a half straight out: its outline blurred and its slope taken, so a head, a body and an arm are
+// round; Phase 2's polish, where red was how much light it took, and the review found flat cards: the shader lights
+// each figure from the side its lamps are on and from above, BossGame.makeCrowd); green: its rim, along its top and
+// upper sides, where the light behind it catches its edge; blue: what glows of its own (a light stick, a phone, a badge,
+// a sign's lit face); alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light
+// stick, a bun; five signs, each board its own (lit letters and marks: GO!, a heart, a star, ZAP, 1UP); filming with a
+// phone, a scarf held up, a beanie, a band of lights round the head. Each is there twice (Phase 5): as it stands (cells 0
+// to N-1), and cheering (N on: fists up, hands clapped over its head, its phone held up high, the pair's outer arms up,
+// its light stick swung across, its sign waved, its scarf stretched higher), its head and body where they were, so the
+// crowd's shader can show either in its place. Side by side, not one row over the other: a figure's smaller copies
+// never take in the feet of the one above it.
 let _crowdTex = null;
-const BOSS_CROWD_N = 8;
+const BOSS_CROWD_N = 16;
+// which figure each of the crowd is, from one draw of the randomness as it always was: the people three times as often
+// as each sign (about one in eight holds a sign, as before)
+const BOSS_CROWD_PICK = [0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15].flatMap((k) => [k, k, k]).concat([7, 8, 9, 10, 11]);
 function bossCrowdTexture() {
   if (_crowdTex) return _crowdTex;
   const W = 128, N = BOSS_CROWD_N, WN = W * N * 2, cv = document.createElement("canvas"), ac = document.createElement("canvas"), dc = document.createElement("canvas");
   cv.width = ac.width = dc.width = WN; cv.height = ac.height = dc.height = W;
-  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, dark: only its border is lit)
+  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, flat: it faces straight out)
   x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = z.fillStyle = "#fff";
   const head = (c, hx, hy, r) => { c.beginPath(); c.arc(hx, hy, r, 0, Math.PI * 2); c.fill(); };
   const body = (c, bx, w, top) => { c.beginPath(); c.moveTo(bx - w, W); c.quadraticCurveTo(bx - w, top + 4, bx - w * 0.55, top); c.lineTo(bx + w * 0.55, top); c.quadraticCurveTo(bx + w, top + 4, bx + w, W); c.closePath(); c.fill(); };
   const limb = (c, ax, ay, bx, by, wd) => { c.lineWidth = wd; c.lineCap = "round"; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke(); };
-  const sign = (cx, cy, turn) => { // (its board, the lit border on it, and where it is dark, turned about its middle)
-    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, () => { y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); }], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
+  const speck = (px, py, w = 7, h = 7) => y.fillRect(px - w / 2, py - h / 2, w, h); // (a badge, a phone's light: glows of its own)
+  // the boards' faces: lit letters (a pixel font, three by five, each of its pixels four by four) and marks
+  const FONT = { G: "111100101101111", O: "111101101101111", "!": "010010010000010", Z: "111001010100111", A: "010101111101101", P: "110101110100100", U: "101101101101111", 1: "010110010010111" };
+  const word = (c, w) => { let gx = -(w.length * 16 - 4) / 2; for (const ch of w) { const b = FONT[ch]; for (let r = 0; r < 15; r++) if (b[r] === "1") c.fillRect(gx + (r % 3) * 4, -10 + Math.floor(r / 3) * 4, 4, 4); gx += 16; } };
+  const heart = (c) => { c.beginPath(); c.moveTo(0, 10); c.bezierCurveTo(-17, -1, -11, -15, 0, -6); c.bezierCurveTo(11, -15, 17, -1, 0, 10); c.fill(); };
+  const star = (c) => { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 5.5 : 12.5; c[i ? "lineTo" : "moveTo"](Math.cos(a) * r, Math.sin(a) * r + 1); } c.closePath(); c.fill(); };
+  const FACES = ["GO!", heart, star, "ZAP", "1UP"];
+  const sign = (cx, cy, turn, face) => { // (its board, its face lit a little, its border and its letters lit, and where it is: turned about its middle)
+    const lit = () => { y.globalAlpha = 0.07; y.fillRect(-40, -13, 80, 26); y.globalAlpha = 1; y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); if (typeof face === "string") word(y, face); else face(y); };
+    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, lit], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
   };
   for (let f = 0; f < 2; f++) for (let k = 0; k < N; k++) {
     const cx = (f * N + k) * W + W / 2, up = f === 1;
-    if (k === 3) { // a pair
-      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14);
+    if (k === 3) { // a pair (the one on the left with a badge)
+      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14); speck(cx - 27, 92, 6, 6);
       if (up) { limb(x, cx - 36, 80, cx - 48, 30, 9); limb(x, cx + 36, 84, cx + 47, 34, 9); } // (each throws its outer arm up)
       continue;
     }
     body(x, cx, k === 6 ? 30 : 34, 66); head(x, cx, 44, k === 6 ? 16 : 18); x.fillRect(cx - 7, 52, 14, 16);
-    if (k === 0 && up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } // (both fists up)
-    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } } // both arms up (clapping over its head, elbows out)
+    if (k === 0) { speck(cx - 13, 86); if (up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } } // a badge (both fists up)
+    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } speck(cx, 7, 8, 6); } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); speck(cx - 37, 24, 7, 5); speck(cx + 35, 20, 7, 5); } } // both arms up, bands lit at its wrists (clapping over its head, elbows out)
     if (k === 2) { // a cap; a phone lit at the chest (held up high to film it)
       x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5);
       if (up) { limb(x, cx - 26, 74, cx - 36, 24, 11); x.fillRect(cx - 43, 3, 14, 20); y.fillRect(cx - 41, 5, 10, 16); } else y.fillRect(cx - 12, 82, 11, 15);
     }
-    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood (fists up)
+    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); speck(cx + 12, 88); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood, a badge (fists up)
     if (k === 5) { // one arm up, a light stick in it (swung across, the other arm up too)
       if (up) { limb(x, cx + 26, 74, cx + 16, 26, 11); limb(x, cx + 14, 28, cx - 4, 5, 5); limb(y, cx + 10, 22, cx - 4, 5, 5); limb(x, cx - 26, 74, cx - 38, 30, 11); }
       else { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); }
     }
-    if (k === 6) { head(x, cx + 3, 23, 9); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun (both arms up)
-    if (k === 7) { // a sign held up, its border lit (waved: tipped, and over to one side)
-      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14); }
-      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0); }
+    if (k === 6) { head(x, cx + 3, 23, 9); y.fillRect(cx + 5, 84, 9, 13); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun, a phone lit at the chest (both arms up)
+    if (k >= 7 && k <= 11) { // a sign held up, its face lit (waved: tipped, and over to one side)
+      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14, FACES[k - 7]); }
+      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0, FACES[k - 7]); }
     }
+    if (k === 12) { // filming: a phone held up in both hands, its torch lit (held up high in one)
+      if (up) { limb(x, cx + 26, 74, cx + 33, 22, 11); x.fillRect(cx + 25, 2, 15, 22); speck(cx + 32, 8, 6, 6); }
+      else { limb(x, cx - 26, 74, cx - 9, 50, 11); limb(x, cx + 26, 74, cx + 9, 50, 11); x.fillRect(cx - 9, 30, 18, 24); speck(cx + 4, 35, 6, 6); }
+    }
+    if (k === 13) { // a scarf held up between its hands, its stripes lit (stretched higher)
+      const sy = up ? 12 : 26, sx = up ? 40 : 34;
+      limb(x, cx - 26, 74, cx - sx, sy + 6, 10); limb(x, cx + 26, 74, cx + sx, sy + 6, 10);
+      x.fillRect(cx - sx - 2, sy - 5, sx * 2 + 4, 11); for (let i = 0; i < 4; i++) y.fillRect(cx - sx + 4 + i * (sx / 2), sy - 3, sx / 4, 7);
+    }
+    if (k === 14) { // a beanie, a badge (one fist up)
+      x.beginPath(); x.arc(cx, 40, 19, Math.PI, 0); x.fill(); head(x, cx, 19, 6); speck(cx + 12, 86);
+      if (up) limb(x, cx + 26, 74, cx + 38, 20, 11);
+    }
+    if (k === 15) { y.fillRect(cx - 17, 35, 34, 5); if (up) { limb(x, cx - 26, 74, cx - 44, 30, 11); limb(x, cx + 26, 74, cx + 44, 30, 11); } } // a band of lights round its head (both arms up, wide)
   }
   const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, D = z.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
   const al = (i, j) => (i < 0 || j < 0 || i >= WN || j >= W ? 0 : M[(j * WN + i) * 4 + 3]);
+  // which way each part faces across it: the outline blurred along each row (nine wide), its slope taken
+  const R = 4, Bl = new Float32Array(WN * W);
+  for (let j = 0; j < W; j++) { let acc = 0; for (let i = -R; i < WN + R; i++) { acc += al(i + R, j) - al(i - R - 1, j); if (i >= 0 && i < WN) Bl[j * WN + i] = acc / (255 * (2 * R + 1)); } }
+  const bl = (i, j) => (i < 0 || i >= WN ? 0 : Bl[j * WN + i]);
   for (let j = 0; j < W; j++) for (let i = 0; i < WN; i++) {
-    const a = al(i, j);
+    const a = al(i, j), o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
+    out[o] = 128; // (straight out where it is not: so its smaller copies lean no way at its edge)
     if (!a) continue;
-    const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255, o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
-    out[o] = Math.round(255 * (D[(j * WN + i) * 4 + 3] > 127 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
+    const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255;
+    const nx = D[(j * WN + i) * 4 + 3] > 127 ? 0 : clamp((bl(i - 3, j) - bl(i + 3, j)) * 1.7, -1, 1); // (a sign's board is flat)
+    out[o] = Math.round(127.5 + 127.5 * nx);
     out[o + 1] = Math.round(255 * clamp(Math.max(top, side * 0.55) * (0.45 + 0.65 * up), 0, 1));
     out[o + 2] = G[(j * WN + i) * 4 + 3];
     out[o + 3] = a;
