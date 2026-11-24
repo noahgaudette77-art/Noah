@@ -123,7 +123,7 @@ function icon(name, color = "currentColor") {
   return `<svg viewBox="0 0 ${w} ${h}" fill="${color}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
 const starsHTML = (n, max = 3) =>
-  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#8d7fe0")).join("")}</span>`;
+  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#7868cc")).join("")}</span>`;
 
 // The emblem in front of a stat's label: a read-out says what it measures before its caption is read.
 const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BANKED": "t_cards50", ACCURACY: "t_boss6", ANSWERED: "t_exam60", "BEST STREAK": "t_streak5",
