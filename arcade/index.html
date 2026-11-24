@@ -2077,6 +2077,15 @@ const fmtScore = (n) => String(Math.round(n)).padStart(6, "0");
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 // Mastery as a percent; one decimal below 10% so early progress is visible.
 const mpct = (x) => { const v = x * 100; return v > 0 && v < 9.95 ? v.toFixed(1) : String(Math.round(v)); };
+// fn run on a private stream of random numbers from seed (a mulberry32): three.js draws four for the id of every
+// shape, material and object it makes, and the game's own stream, which the capture tool and the regression seed,
+// must not move with how much a builder makes (what is drawn after it, the questions too, would change in their runs)
+function ownRandom(seed, fn) {
+  const R = Math.random;
+  let s = seed | 0;
+  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = R; }
+}
 const REDUCED_MOTION = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const Ease = {
@@ -14184,7 +14193,7 @@ function hallRelease(model) {
       seen.add(m);
       for (const k of DISPOSE_MAPS) {
         const t = m[k];
-        if (!t || !t.isTexture) continue;
+        if (!t || !t.isTexture || t === _glowTex) continue; // (the shared glow is every screen's: kept, as disposeTree and GFX.rest keep it)
         t.dispose();
         if (t.image && typeof t.image.close === "function") { try { t.image.close(); } catch (e) { /* already closed */ } }
         m[k] = null;
@@ -14889,7 +14898,6 @@ class HallScene extends Scene3D {
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
       c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
-      if (c.proctor) { c.proctor.U.uBossRim.value.copy(c.rimU.col.value).multiplyScalar(0.7 * c.rimU.k.value); c.proctor.light(glow / 1.1, 0); } // (the Proctor: its skin's rim in its cell's light, its seams and eyes lit as the others' glow)
       // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
@@ -14897,26 +14905,29 @@ class HallScene extends Scene3D {
       c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 38) * 0.05;
       c.turner.position.x = c.twitch * Math.sin(c.twitch * 51) * 0.04;
       if (c.float) c.turner.position.y = c.float[0] * HALL.bossH * (0.65 + 0.35 * Math.sin(this.t * Math.PI * 2 * c.float[1] * (this.calm ? 0.5 : 1) + c.rimPh)); // (it hovers, bobbing)
-      if (!near && !extras) continue; // (at LOW a far boss holds its pose)
-      c.accum += dt;
-      if (!near && c.accum < 0.1) continue;
-      const step = c.accum;
-      c.accum = 0;
-      if (c.mixer) {
-        c.mixer.update(step);
-        // the head turns to follow the lens, a little (at most about 35 degrees each way), over what the idle does
-        if (c.head && near && !this.calm) {
-          if (!c.headAnim && c.headRest) c.head.quaternion.copy(c.headRest);
-          const v = this._v || (this._v = new THREE.Vector3()), q = this._q || (this._q = new THREE.Quaternion()), axis = this._ax || (this._ax = new THREE.Vector3());
-          c.boss.getWorldPosition(v);
-          let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
-          want = Math.atan2(Math.sin(want), Math.cos(want));
-          c.yaw = Motion.damp(c.yaw, clamp(want, -0.6, 0.6) * (c.headK || 1), 2.2, step);
-          c.head.parent.getWorldQuaternion(q).invert();
-          axis.set(0, 1, 0).applyQuaternion(q).normalize();
-          c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
-        }
-      } else if (c.rig) this.sway(c, this.t);
+      if (near || extras) c.accum += dt; // (at LOW a far boss holds its pose)
+      if (near || (extras && c.accum >= 0.1)) {
+        const step = c.accum;
+        c.accum = 0;
+        if (c.mixer) {
+          c.mixer.update(step);
+          // the head turns to follow the lens, a little (at most about 35 degrees each way), over what the idle does
+          if (c.head && near && !this.calm) {
+            if (!c.headAnim && c.headRest) c.head.quaternion.copy(c.headRest);
+            const v = this._v || (this._v = new THREE.Vector3()), q = this._q || (this._q = new THREE.Quaternion()), axis = this._ax || (this._ax = new THREE.Vector3());
+            c.boss.getWorldPosition(v);
+            let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
+            want = Math.atan2(Math.sin(want), Math.cos(want));
+            c.yaw = Motion.damp(c.yaw, clamp(want, -0.6, 0.6) * (c.headK || 1), 2.2, step);
+            c.head.parent.getWorldQuaternion(q).invert();
+            axis.set(0, 1, 0).applyQuaternion(q).normalize();
+            c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
+          }
+        } else if (c.rig) this.sway(c, this.t);
+      }
+      // the Proctor: its skin's rim in its cell's light, its seams and eyes lit as the others' glow (after its turn and its
+      // pose: its reactor's frame is read from where its chest is now, not where it was a frame ago: Phase 5's review)
+      if (c.proctor) { c.proctor.U.uBossRim.value.copy(c.rimU.col.value).multiplyScalar(0.7 * c.rimU.k.value); c.proctor.light(glow / 1.1, 0); }
     }
     if (flicked) this.gFlick.needsUpdate = true;
     // the end of the hall: drawn once the haze gives it up
@@ -15564,12 +15575,7 @@ const dressHash = (n) => { const s = Math.sin(n * 91.3458 + 17.17) * 47453.5453;
 // fn run on a private stream of random numbers: three.js draws four for the id of every shape, material and object it
 // makes (some thirteen hundred here), and the game's own stream, which the capture tool and the regression seed, must
 // not move with the dressing (the tip on the title, and all that is drawn after the hall, would change)
-function dressOwnRandom(fn) {
-  const R = Math.random;
-  let s = 0x2f6b9e1d;
-  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  try { return fn(); } finally { Math.random = R; }
-}
+function dressOwnRandom(fn) { return ownRandom(0x2f6b9e1d, fn); }
 
 // The sign rows (each a painter for cellAtlas: one row of its picture, 1024 x 128): a block's plate on the left half
 // (its letter on a square of its colour, CELL BLOCK and its game), its warning screen on the right (amber, or red
@@ -21360,7 +21366,9 @@ class BlasterSpace {
     // (Phase 5: the far ones are light copies of the same two rocks, about two hundred triangles each, in the near ones'
     // own material and picture: the built-in grey lumps beside the crystal and the ore were the audit's #25. The odd
     // ones the second rock. Until the copies are in hand, and from disk, the built-in rock as before.)
-    const loB = rockB && this.genLo("prop-rock2-lo", rockB, rockA ? 48 : 96), loA = rockA && this.genLo("prop-rock-lo", rockA, loB ? 48 : 96);
+    // (each copy room for all 96: which of the two arrive is not known until both are made, and a copy sized for half
+    // that is then drawn alone would be asked for twice its instances: Phase 5's review)
+    const loB = rockB && this.genLo("prop-rock2-lo", rockB, 96), loA = rockA && this.genLo("prop-rock-lo", rockA, 96);
     this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
     this.rockFar2 = loA && loB ? loB : null;
     if (this.rockFar2) s.add(this.rockFar2);
@@ -21417,12 +21425,16 @@ class BlasterSpace {
   // a region as numbers and colours that can be blended
   parse(r) {
     const C = (h) => new THREE.Color(h), D2R = Math.PI / 180;
-    return {
+    const o = {
       id: r.id, name: r.name, base: C(r.base), a: C(r.a), b: C(r.b), c: C(r.c), gold: C(r.gold), fog: C(r.fog), amb: C(r.amb), key: C(r.key), sunCol: C(r.sunCol), cloudA: C(r.cloudA), cloudB: C(r.cloudB), rockTint: C(r.rockTint), streak: C(r.streak),
       neb: r.neb, stars: r.stars, sunK: r.sunK, clouds: r.clouds, rocks: r.rocks, station: r.station || 0, wrecks: r.wrecks || 0, gate: r.gate || 0,
       sun: new THREE.Vector3(Math.tan(r.sun[0] * D2R), Math.tan(r.sun[1] * D2R), -1).normalize(), traffic: r.traffic,
       planet: new THREE.Vector4(r.planet[2] * Math.tan(r.planet[0] * D2R), r.planet[2] * Math.tan(r.planet[1] * D2R), -r.planet[2], r.planet[3]),
+      planetW: new THREE.Vector4(), // (where a wide window has it: planetW, else where the phone has it; see update)
     };
+    const W = r.planetW || r.planet;
+    o.planetW.set(W[2] * Math.tan(W[0] * D2R), W[2] * Math.tan(W[1] * D2R), -W[2], W[3]);
+    return o;
   }
   // Travel on to a region (by its number in the run), over dur seconds.
   setRegion(i, dur = 3) {
@@ -21447,6 +21459,7 @@ class BlasterSpace {
     ["neb", "stars", "sunK", "clouds", "rocks", "station", "wrecks", "gate"].forEach((n) => { c[n] = lerp(A[n], B[n], e); });
     c.sun.copy(A.sun).lerp(B.sun, e).normalize();
     c.planet.copy(A.planet).lerp(B.planet, e);
+    c.planetW.copy(A.planetW).lerp(B.planetW, e);
     c.traffic = B.traffic; c.id = B.id; c.name = B.name;
   }
 
@@ -21638,8 +21651,10 @@ class BlasterSpace {
     this.starU.uStarK.value = c.stars * (1 + w * 0.8);
     this.starU.uPx.value = GFX.ok ? (GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y * GFX.ss) / 800 : 1; // (in the scene's own pixels)
     this.galaxies.forEach((sp) => { sp.material.opacity = 0.5 * c.stars; });
-    // the giant: where this region has it in the sky; it turns slowly, its moon goes round
-    const pl = this.planet, P = c.planet;
+    // the giant: where this region has it in the sky (a wide window, a Mac's, sees some forty-five degrees each side
+    // where a phone sees fifteen, and has it where its band is clear: planetW; the window's shape blends one into the
+    // other); it turns slowly, its moon goes round
+    const pl = this.planet, P = (this._pw || (this._pw = new THREE.Vector4())).copy(c.planet).lerp(c.planetW, smoothstep(0.8, 1.5, g.camera.aspect));
     pl.position.set(P.x, P.y, P.z);
     pl.scale.setScalar(P.w);
     pl.children[0].rotation.y = t * 0.012;
@@ -23215,25 +23230,28 @@ else setTimeout(() => DemonModel.preload(), 3000);
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
 // space: what this region changes in the world round it (fog, rocks, clouds, the hulls' light: see SPACE_REGIONS).
+// Its giant (planet: degrees right, up, distance, radius) stands, in most regions, out past a phone's view; planetW is
+// where a wide window has it, in the clear between the demon and the drones (at the phone's place a Mac had it under
+// a drone: Phase 5's review).
 const BLASTER_SKIES = {
   nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.21, 0.45], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xc8b4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xb09cff, 0.8], amb: [0x5a3aa8, 0.5], wall: 0x8a5cff,
-    space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70] } },
+    space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70], planetW: [24, 9, 1700, 70] } },
   belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
     key: [0xff7a52, 1.15], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xff9070, 0.75], amb: [0x8a2a2a, 0.5], wall: 0xff4a3a,
-    space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80] } },
+    space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80], planetW: [-24, 9, 1700, 80] } },
   orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xb4d4ff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0x9cc4ff, 0.8], amb: [0x3a5ab8, 0.5], wall: 0x4a7aff,
     space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
   station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
     key: [0xffc0e6, 1.0], rimA: [0xff3ad4, 1.6], rimB: [0x5ad8ff, 1.4], top: [0xe8a8ff, 0.8], amb: [0x7a3aa0, 0.5], wall: 0xc050d0,
-    space: { fog: 0x08030f, amb: 0x7a64c0, key: 0xf0e8ff, cloudA: 0xa03ad8, cloudB: 0x35c8ff, clouds: 0.2, rockTint: 0x7a70a0, rocks: 0.05, stars: 0.5, planet: [-34, -8, 1800, 72] } },
+    space: { fog: 0x08030f, amb: 0x7a64c0, key: 0xf0e8ff, cloudA: 0xa03ad8, cloudB: 0x35c8ff, clouds: 0.2, rockTint: 0x7a70a0, rocks: 0.05, stars: 0.5, planet: [-34, -8, 1800, 72], planetW: [-24, -4, 1800, 72] } },
   graveyard: { sky: "blaster-deep-4", at: [0.27, 0.37], roll: 0.2, zoom: 2.4, gain: 1.15, lift: 1.5,
     key: [0xa8b8ee, 0.95], rimA: [0x7a6aff, 1.5], rimB: [0xff5a3a, 1.3], top: [0x98a8e0, 0.7], amb: [0x3a4680, 0.5], wall: 0x4a5aa8,
-    space: { fog: 0x04050c, amb: 0x5a6a90, key: 0xd0dcff, cloudA: 0x3a3a8a, cloudB: 0x8a9aff, clouds: 0.35, rockTint: 0x5a6078, rocks: 0.45, stars: 0.5, planet: [-34, 4, 1900, 60] } },
+    space: { fog: 0x04050c, amb: 0x5a6a90, key: 0xd0dcff, cloudA: 0x3a3a8a, cloudB: 0x8a9aff, clouds: 0.35, rockTint: 0x5a6078, rocks: 0.45, stars: 0.5, planet: [-34, 4, 1900, 60], planetW: [-24, 9, 1900, 60] } },
   gate: { sky: "blaster-deep-5", at: [0.709, 0.5625], roll: 0, zoom: 2.3, gain: 0.85, lift: 1.4,
     key: [0x6ab0ff, 1.15], rimA: [0xff3ad4, 1.5], rimB: [0x2ad8ff, 1.7], top: [0x80c8ff, 0.85], amb: [0x2a5ab0, 0.5], wall: 0x2a8aff,
-    space: { fog: 0x03060f, amb: 0x5a80c0, key: 0xe0f2ff, cloudA: 0x1a8ad0, cloudB: 0xff3ad4, clouds: 0.45, rockTint: 0x7090b0, rocks: 0.08, stars: 0.45, planet: [34, -7, 1700, 64] } },
+    space: { fog: 0x03060f, amb: 0x5a80c0, key: 0xe0f2ff, cloudA: 0x1a8ad0, cloudB: 0xff3ad4, clouds: 0.45, rockTint: 0x7090b0, rocks: 0.08, stars: 0.45, planet: [34, -7, 1700, 64], planetW: [24, -4, 1700, 64] } },
 };
 // Where the lamps stand (toward each, from anything they light). The fighter is seen from behind and above and the
 // demon from the front, so between them these put a highlight on both: the key on what faces the lens, the rims on
@@ -23284,6 +23302,14 @@ class BlasterSky {
     const r = BLASTER_SKIES[id] || BLASTER_SKIES.nebula, sky = this.skies[r.sky] || this.main, D = Math.PI * 2;
     return { id, r, sky, yaw: (r.at[0] - 0.25) * D, pitch: (0.5 - r.at[1]) * Math.PI, roll: r.roll || 0, zoom: r.zoom || 2, gain: r.gain === undefined ? 1 : r.gain, lift: r.lift === undefined ? 1.4 : r.lift };
   }
+  // where a region's dome is turned in this window ([yaw, pitch], into one array kept for it): its point ahead (at), or
+  // in a wide window its own (atW), the window's shape blending one into the other (see BLASTER_SKIES)
+  aim(c) {
+    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, a = this._aim || (this._aim = [0, 0]);
+    a[0] = w ? (c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w - 0.25) * Math.PI * 2 : c.yaw;
+    a[1] = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
+    return a;
+  }
   // one dome showing a region, at k of its strength
   show(L, c, k, sway = 0, zoomK = 1) {
     const u = L.dome.material.uniforms;
@@ -23293,23 +23319,23 @@ class BlasterSky {
     u.uMix.value = 0;
     u.uGain.value = c.gain * k;
     u.uLift.value = c.lift;
-    // (a wide window takes its own point ahead, atW: see BLASTER_SKIES)
-    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, D = Math.PI * 2;
-    const yaw = w ? ((c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w) - 0.25) * D : c.yaw, pitch = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
+    const a = this.aim(c), yaw = a[0], pitch = a[1]; // (a wide window takes its own point ahead, atW)
     u.uRot.value = (yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
     // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
     L.dome.rotation.set(-pitch + Math.atan(this.aimY * c.zoom * zoomK) - Math.sin(sway * 0.037 + 1) * 0.02, 0, c.roll);
     L.stretch.scale.set(1, 1, c.zoom * zoomK);
   }
   // What chrome mirrors in a region: the panorama itself, turned as the band shows it and brighter (a mirror the
-  // size of a hull plate shows little of so dark a sky otherwise), and the lamps as cards of light.
+  // size of a hull plate shows little of so dark a sky otherwise), and the lamps as cards of light. (Turned as the band
+  // shows it in this window, a wide one's point ahead too: Phase 5's review. Made once a region, with the window's shape
+  // as it is when the run is built: a window reshaped mid-run keeps the reflections it had.)
   envFor(c) {
     if (this.envs[c.id] !== undefined) return this.envs[c.id];
     let tex = null;
     if (GFX.ok) {
       try {
-        const r = c.r, sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: c.yaw });
-        dome.rotation.set(-c.pitch, 0, c.roll);
+        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0] });
+        dome.rotation.set(-a[1], 0, c.roll);
         sc.add(dome);
         // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
         // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
@@ -31195,8 +31221,9 @@ class BossGame extends QuizGame {
           // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
           const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
           // (Phase 5: each an instance of one card: where it stands, facing the floor, its size, which figure, its seed
-          // and where it is round the ring. The same draws from the randomness, in the same order, as when each was a
-          // card of its own: what is drawn after the crowd, the questions too, comes out as it did)
+          // and where it is round the ring. The same draws from the randomness for each, in the same order, as when each
+          // was a card of its own; but three.js no longer draws an id for a card each, so in the capture tool's seeded
+          // runs what is drawn after the crowd comes out otherwise. The rules are not touched: their regression holds)
           people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
@@ -31225,7 +31252,9 @@ class BossGame extends QuizGame {
     // and throws up its arms (its cheering figure: the picture holds each twice). The boss's strike ("stir"): a
     // flinch that runs through them, quicker: down, squashed, away to one side, some hands thrown up. Reduced effects:
     // a quarter of the sway, a third of a cheer, arms up and held, no pumping.
-    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
+    // (its clock is uCrowdT, not uTime: FX.sync sets every uTime in the scene to the scene's clock each frame, and the
+    // light sticks' material holds these very uniforms: Phase 5's review)
+    const U = this.crowdU = { uCrowdT: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
     this.cues = { cheer: [99, 0, 99, 0], stir: [99, 0, 99, 0] }; // (the last two of each: [since, how big] twice)
     this.crowdT = 0; // (its clock: the show's, so a hit-stop holds it and slow motion slows it)
     const card = bossCardGeometry(), NP = people.length, aFig = new Float32Array(NP * 4), aRim = new Float32Array(NP * 3);
@@ -31234,16 +31263,16 @@ class BossGame extends QuizGame {
     card.setAttribute("aRim", new THREE.InstancedBufferAttribute(aRim, 3));
     const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
     pm.onBeforeCompile = (sh) => {
-      for (const k of ["uTime", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
+      for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", `#include <common>
-          attribute vec4 aFig; attribute vec3 aRim; uniform float uTime; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
           // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
           // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
           float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
         .replace("#include <begin_vertex>", `#include <begin_vertex>
           {
-            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uTime;
+            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uCrowdT;
             float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
             float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
             float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
@@ -31254,8 +31283,8 @@ class BossGame extends QuizGame {
             transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
             transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
             transformed.y += bob + 0.32 * hop - 0.1 * se;
-            float pump = uMove.x > 0.5 ? step(-0.35, sin(uTime * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
-            float idle = step(0.82 - 0.16 * uMove.y, fract(uTime * 0.045 + hh * 7.13)) * step(0.0, sin(uTime * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
+            float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
+            float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
             float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
             vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
             vRim = aRim;
@@ -31267,7 +31296,7 @@ class BossGame extends QuizGame {
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
           totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-2";
+    pm.customProgramCacheKey = () => "boss-crowd-3";
     const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
     people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
     folk.name = "arena-crowd"; // (named for tools/cost-report.js)
@@ -31279,15 +31308,15 @@ class BossGame extends QuizGame {
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
     this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
       uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
+      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uCrowdT; uniform float uPx; uniform float uCheer; varying vec3 vCol;
         void main(){
           vec3 p = position;
-          p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
-          vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
+          p.y += sin(uCrowdT * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
+          vCol = aCol * (0.55 + 0.45 * sin(uCrowdT * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_PointSize = uPx * 150.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * smoothstep(1.0, 0.55, r), 1.0); }",
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * (1.0 - smoothstep(0.55, 1.0, r)), 1.0); }",
     }));
     this.crowd.frustumCulled = false;
     this.crowd.layers.set(1);
@@ -31910,8 +31939,8 @@ class BossGame extends QuizGame {
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const quiet = REDUCED_MOTION || GFX.calm, d = VFX.dt, u = this.crowdU, ch = this.cues.cheer, st = this.cues.stir, km = quiet ? 0.3 : 1;
       this.crowdT += d * (1 + 0.5 * (this.rageK || 0)); // (the cards and what they hold up, on the show's clock: see makeCrowd; restless, quicker, as the boss rages)
-      for (const q of [ch, st]) { q[0] = Math.min(60, q[0] + d); q[2] = Math.min(60, q[2] + d); }
-      u.uTime.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      ch[0] = Math.min(60, ch[0] + d); ch[2] = Math.min(60, ch[2] + d); st[0] = Math.min(60, st[0] + d); st[2] = Math.min(60, st[2] + d); // (no list made a frame)
+      u.uCrowdT.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
       u.uCheers.value.set(ch[0], ch[1] * km, ch[2], ch[3] * km); u.uStirs.value.set(st[0], st[1] * km, st[2], st[3] * km);
       u.uMove.value.set(quiet ? 0.25 : 1, this.rageK || 0);
       const drift = quiet ? 0.25 : 1;
@@ -38999,7 +39028,7 @@ function bossSkin(env, side, o, U) {
         // (the burn starts at the reactor and spreads: near it the lines are wide and white-hot, further out thin and red,
         // and beyond its reach still dark. Thrown pieces burn all over, and cool.)
         float bossReach = uBossCrack * 1.5;
-        float bossBurn = max(uBossAll, smoothstep(bossReach, bossReach - 0.4, length(vBossW - uBossCoreW) * ${UK} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
+        float bossBurn = max(uBossAll, 1.0 - smoothstep(bossReach - 0.4, bossReach, length(vBossW - uBossCoreW) * ${UK} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
         float bossHot = bossBurn * min(uBossCrack, 1.0);
         totalEmissiveRadiance += mix(vec3(2.2, 0.42, 0.08), vec3(4.2, 2.0, 0.7), bossHot * bossHot) * (smoothstep(0.2 - 0.19 * bossHot, 0.45, bossT.g) + 0.22 * smoothstep(0.0, 0.3, bossT.g) * bossHot) * bossHot * (0.3 + 1.0 * bossT.r);`}
         // the eyes' own light on the bone round them (the skull only: elsewhere uBossEye is zero)
@@ -40118,6 +40147,8 @@ const PROCTOR_JOINTS = { head: "Head", chest: "Spine02", hips: "Hip", handL: "L_
 const PROCTOR_SIZE = [0.868, 1, 0.446]; // (its box, in its own heights: as wide across the fists as 0.87 of its height)
 // its seams' colours as the exam has them (violet at rest, a hot magenta raging) and its eyes'
 const PROCTOR_SEAM = [0.62, 0.5, 1.35], PROCTOR_SEAM_RAGE = [1.35, 0.5, 2.3], PROCTOR_EYE = [2.3, 1.5, 5.2];
+// its builders draw on a stream of their own (ownRandom): the ids three.js draws for what they make leave the game's be
+const PROCTOR_SEED = 0x5a17c3e9;
 
 // Can it be built? (the machine is inlined in the page; three.js and the exam's code are there)
 function proctorOk() { return typeof BossModel !== "undefined" && BossModel.ok() && typeof bossSkin === "function"; }
@@ -40130,8 +40161,10 @@ function proctorOk() { return typeof BossModel !== "undefined" && BossModel.ok()
 //   o.local  the copy will be merged into one skinned mesh (the title hall's cells): its material reads each part's
 //            own position from attributes (see hallSkinSteps)
 //   o.env, o.boneEnv  how much the steel and the skull mirror (the exam's 0.9 and 0.6)
-//   o.housing false: no reactor housing (a small copy: the topper)
-function proctorDress(model, env, o = {}) {
+//   o.housing false: no reactor housing (nothing asks for it now: the topper, small as it is, keeps its reactor; and
+//            not with o.local: merged, the chest's holder would be left empty and let go, and light() reads it)
+function proctorDress(model, env, o = {}) { return ownRandom(PROCTOR_SEED, () => proctorDressOn(model, env, o)); }
+function proctorDressOn(model, env, o) {
   const P = BossModel.parts(), parts = model.parts, root = model.scene;
   const seam = new THREE.Color().fromArray(PROCTOR_SEAM), seamRage = new THREE.Color().fromArray(PROCTOR_SEAM_RAGE), eyeCol = new THREE.Color().fromArray(PROCTOR_EYE);
   root.updateMatrixWorld(true);
@@ -40195,12 +40228,14 @@ function proctorDress(model, env, o = {}) {
 function proctorTopper() {
   const m = Assets.model("boss-all-rig");
   if (!m || !proctorOk()) return null;
-  proctorDress(m, null, { local: true });
-  const it = hallSkinSteps(m);
-  while (!it.next().done);
-  m.animations = [];
-  m.proctor.light(1, 0);
-  return m;
+  return ownRandom(PROCTOR_SEED + 1, () => {
+    proctorDress(m, null, { local: true });
+    const it = hallSkinSteps(m);
+    while (!it.next().done);
+    m.animations = [];
+    m.proctor.light(1, 0);
+    return m;
+  });
 }
 
 // The exam hall's statue of the Proctor (its gallery of the fallen: 24e-examhall.js): the machine as modelled, its cap
@@ -40208,7 +40243,7 @@ function proctorTopper() {
 // was a statue of the old design (statue-all).
 function proctorStatue() {
   if (!proctorOk()) return null;
-  try { return proctorStatueBuild(); } catch (e) { return null; } // (the gallery goes on without it, as without a statue whose file did not come)
+  try { return ownRandom(PROCTOR_SEED + 2, proctorStatueBuild); } catch (e) { return null; } // (the gallery goes on without it, as without a statue whose file did not come)
 }
 function proctorStatueBuild() {
   const P = BossModel.parts(), geos = [];
