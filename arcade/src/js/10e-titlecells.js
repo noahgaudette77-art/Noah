@@ -198,7 +198,10 @@ function cellSteelMaterial() {
         vec3 sUp = (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
         float sGx = dot(sTx, sUp) / sLx, sGy = dot(sTy, sUp) / sLy;
         float sLow = abs(sGy) >= abs(sGx) ? mix(1.0 - vEdge.y, vEdge.y, step(0.0, sGy)) * sLy * abs(sGy) : mix(1.0 - vEdge.x, vEdge.x, step(0.0, sGx)) * sLx * abs(sGx);
-        float sGrime = clamp((1.0 - smoothstep(0.0, 0.22, sLow)) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
+        // (the band in from its foot as deep as a third of the face is tall, at most 0.22 m, and none on a face under some
+        // 0.3 m: a hazard band, a ring, a lip, a bolt was grimed over its whole height: the independent review)
+        float sFaceH = abs(sGy) >= abs(sGx) ? sLy * abs(sGy) : sLx * abs(sGx);
+        float sGrime = clamp((1.0 - smoothstep(0.0, max(min(0.22, 0.35 * sFaceH), 0.01), sLow)) * smoothstep(0.2, 0.4, sFaceH) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
         diffuseColor.rgb *= 1.0 - 0.5 * sGrime;
         // a chamfer worn bright: bare steel through paint, polished
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 2.2 + 0.05, vec3(0.5, 0.51, 0.55), max(pHaz, pRec)), sBev);`)
