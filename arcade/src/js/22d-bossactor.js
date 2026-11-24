@@ -187,6 +187,14 @@ class BossActor {
     this._e = new THREE.Euler(); this._q = new THREE.Quaternion(); this._q2 = new THREE.Quaternion(); this._d = new THREE.Vector3(); this._y = new THREE.Vector3(0, 1, 0);
     this.ovr = new Map();
     this.arm = { L: 0, R: 0 }; this.armTo = { L: 0, R: 0 }; // how limp each arm hangs
+    // which way each arm's bones run, each in its own frame (its child's place in it): a captured rig's along their +Y,
+    // the Proctor's (the owner's machine, carried onto its own joints in Phase 5) along their own, nearly -Y. A hanging
+    // arm is swung along that line: swung along +Y, the Proctor's arms went up, not down, and flipped about frame to
+    // frame (its "down" lay nearly opposite +Y, where the shortest turn between them has no one axis)
+    const run = (b, c) => (b && c && c.parent === b && c.position.lengthSq() > 1e-12 ? c.position.clone().normalize() : new THREE.Vector3(0, 1, 0));
+    this.limb = {};
+    for (const sd of ["L", "R"]) { const up = this.P[sd + "_Upperarm"], fore = this.P[sd + "_Forearm"], hand = this.P[sd + "_Hand"]; this.limb[sd] = { up: run(up, fore), fore: run(fore, hand) }; this.limb[sd].plain = this.limb[sd].up.y > 0.999 && this.limb[sd].fore.y > 0.999; }
+    this._dw = new THREE.Vector3(); this._q3 = new THREE.Quaternion();
     this.kick = 0; this.kickV = 0; // a recoil along z, sprung
     this.lean = 0; this.drop = 0; this.yaw = 0;
     this.scraps = []; this.torn = {};
@@ -421,15 +429,26 @@ class BossActor {
       this.arm[sd] = Motion.damp(this.arm[sd], this.armTo[sd], 5, d);
       const k = this.arm[sd], up = this.P[sd + "_Upperarm"], fore = this.P[sd + "_Forearm"];
       if (k < 0.01 || !up) continue;
-      // straight down from the shoulder, swinging a little: the bone's own +Y (its length) to that direction, in its parent's frame
+      // straight down from the shoulder, swinging a little: the bone's length (limb) to that direction, in its parent's frame
       up.parent.updateWorldMatrix(true, false);
       up.parent.getWorldQuaternion(this._q2).invert();
-      const sw = Math.sin(this.t * 2.1 + (sd === "L" ? 0 : 1.3)) * 0.07 + this.kick * 0.5;
-      this._d.set((sd === "L" ? 1 : -1) * 0.14, -1, 0.1 + sw).normalize().applyQuaternion(this._q2);
+      const sw = Math.sin(this.t * 2.1 + (sd === "L" ? 0 : 1.3)) * 0.07 + this.kick * 0.5, L = this.limb[sd];
+      this._dw.set((sd === "L" ? 1 : -1) * 0.14, -1, 0.1 + sw).normalize();
+      this._d.copy(this._dw).applyQuaternion(this._q2);
       const ou = this.base(up);
-      up.quaternion.slerp(this._q.setFromUnitVectors(this._y, this._d), k);
+      up.quaternion.slerp(this._q.setFromUnitVectors(L.plain ? this._y : L.up, this._d), k);
       ou.out.copy(up.quaternion);
-      if (fore) { const of = this.base(fore); fore.quaternion.slerp(this._q.setFromEuler(this._e.set(0.12 + sw * 0.6, 0, 0, "XYZ")), k); of.out.copy(fore.quaternion); }
+      if (fore) {
+        const of = this.base(fore);
+        if (L.plain) fore.quaternion.slerp(this._q.setFromEuler(this._e.set(0.12 + sw * 0.6, 0, 0, "XYZ")), k); // (a captured rig: bent a little forward at the elbow, about the bone's own across)
+        else { // (any other: the forearm on down from the elbow, a little forward of the upper arm, in the world)
+          up.updateWorldMatrix(false, false);
+          up.getWorldQuaternion(this._q3).invert();
+          this._dw.z += Math.tan(0.12 + sw * 0.6); this._dw.normalize();
+          fore.quaternion.slerp(this._q.setFromUnitVectors(L.fore, this._d.copy(this._dw).applyQuaternion(this._q3)), k);
+        }
+        of.out.copy(fore.quaternion);
+      }
     }
     // ---- the body: a blow knocks it back and it springs forward again, as heavily as it is built (the stage adds to
     // kickV, as it did to the old spring's speed: here it is a push, sized to the old recoil's depth); an attack leans it
