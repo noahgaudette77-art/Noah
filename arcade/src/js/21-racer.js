@@ -687,9 +687,11 @@ function racerGear(b, x, y, z, R, teeth, spin, aZ, seed, neo = 0) {
   hub.dispose();
   // the lit ring: a neon tube let into the face (it is round, so it need not turn with the wheel)
   const ring = new THREE.TorusGeometry(R * 0.75, Math.max(0.035, R * (neo ? 0.04 : 0.028)), 4, 32);
-  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), neo || 0xffb24a, neo ? 1.5 : 1.0, { aZ, aKind: 1, aSeed: seed });
+  b.add(ring, racerM(x, y, z + thick / 2 + 0.03), neo || 0xffb24a, 1.0, { aZ, aKind: 1, aSeed: seed });
   ring.dispose();
-  if (neo) { const rim = new THREE.TorusGeometry(R * 0.99, Math.max(0.04, R * 0.03), 4, 40); b.add(rim, racerM(x, y, z + thick / 2 + 0.03), neo, 1.1, { aZ, aKind: 1, aSeed: seed }); rim.dispose(); }
+  // (neo: the ring's light is 1.0, under the lens's glow (it was 1.5), and there is no second ring of light round the
+  // rim (Phase 2: two rings to a wheel, four to a pair, read as rings floating round the signs): a dark wheel with one
+  // ring set in its face, its teeth against the lit wall behind it)
 }
 function racerLamp(b, box, side, z, color) {
   const x = side * 6.4, hx = side * 4.75;
