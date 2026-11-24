@@ -316,7 +316,7 @@ function crackTexture() {
   x.lineCap = "round"; x.lineJoin = "round";
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW / 2, MH / 2];
+  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW * 0.17, MH * 0.84]; // (the strike in a lower corner: see the star)
   const seg = (a, b, w, lit) => { x.strokeStyle = `rgba(255,255,255,${lit.toFixed(2)})`; x.lineWidth = w; x.beginPath(); x.moveTo(px(a[0]), py(a[1])); x.lineTo(px(b[0]), py(b[1])); x.stroke(); };
   // a crack from p along angle a for len metres: short straight stretches, each its own glint; now and then a branch
   const crack = (p, a, len, w, depth, pts) => {
@@ -330,14 +330,23 @@ function crackTexture() {
       p = q;
     }
   };
-  // the star: radials from the strike, their points kept for the web
-  const R = 8, rays = [];
-  for (let k = 0; k < R; k++) { const pts = [C.slice()]; crack(C.slice(), (k / R) * Math.PI * 2 + (rnd() - 0.5) * 0.5, 0.32 + rnd() * 0.5, 1.5, 2, pts); rays.push(pts); }
-  // the web: between each radial and the next, straight pieces across at three distances out, some missing
+  // the star: radials from the strike, their points kept for the web. (Phase 2's polish, 2026-11-24: an art review
+  // found the cracks running across the Proctor's face and chest, the strike in the middle of the pane. It is now in
+  // a lower corner, as a blow from below would land, its cracks fanning from up the pane's side to along its foot,
+  // shorter across the middle: the boss's face and chest stay clear)
+  const R = 7, rays = [];
+  for (let k = 0; k < R; k++) {
+    const f = k / (R - 1), a = -Math.PI * 0.56 + f * Math.PI * 0.62 + (rnd() - 0.5) * 0.2; // (the picture's y runs down: from up its side to along its foot)
+    const pts = [C.slice()];
+    crack(C.slice(), a, (0.45 + rnd() * 0.45) * (0.55 + 0.45 * Math.abs(f - 0.45) / 0.55), 1.5, 2, pts);
+    rays.push(pts);
+  }
+  // the web: between each radial and the next (not round the back of the fan), straight pieces across at three
+  // distances out, some missing
   const at = (pts, r) => { for (const q of pts) if (Math.hypot(q[0] - C[0], q[1] - C[1]) >= r) return q; return null; };
-  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R; k++) {
+  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R - 1; k++) {
     if (rnd() < 0.3) continue;
-    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[(k + 1) % R], r * (0.85 + 0.3 * rnd()));
+    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[k + 1], r * (0.85 + 0.3 * rnd()));
     if (a && b) seg(a, b, 1.0, 0.3 + 0.6 * rnd());
   }
   // the strike itself: the glass crushed white in a small knot
