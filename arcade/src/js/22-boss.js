@@ -65,12 +65,14 @@ function bossRuneTexture() {
   return new THREE.CanvasTexture(c);
 }
 
-// One figure of the crowd: a card facing the floor, standing on the spot it is placed at (k: which of the figures in
-// the crowd's picture, bossCrowdTexture in 22c).
-function bossFigure(k, sc) {
-  const g = new THREE.PlaneGeometry(1.25 * sc, 1.25 * sc), uv = g.attributes.uv;
-  g.translate(0, 0.62 * sc, 0);
-  for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / BOSS_CROWD_N);
+// The crowd's card, one for all of them (Phase 5: drawn instanced, its figure, place and size each one's own: see
+// makeCrowd): a figure of the crowd's picture (bossCrowdTexture in 22c) facing the floor, its feet at its origin and
+// 1.25 m tall at its own size. It reaches on down past its feet, into the stand it stands on and out of sight, so a
+// hop never shows the cut under it (the picture's last row, the body, runs on down to its foot).
+function bossCardGeometry() {
+  const g = new THREE.PlaneGeometry(1.25, 1.8), p = g.attributes.position, uv = g.attributes.uv;
+  g.translate(0, 0.345, 0); // (from 0.555 under its feet to the old card's top, 1.245 over them)
+  for (let i = 0; i < uv.count; i++) uv.setY(i, (p.getY(i) + 0.005) / 1.25);
   return g;
 }
 
@@ -501,7 +503,7 @@ class BossGame extends QuizGame {
   // panels (the arena's steel: 22c) under a rail of the arena's lead colour and a line of its second, a crowd on each,
   // lit, and lights held up along it (they sway, and surge when a blow lands).
   makeCrowd(steel, glow) {
-    const s = this.scene, hex = this.cfg.color, P = this.pair, pos = [], col = [], seed = [], people = [], pSeed = [], rims = [];
+    const s = this.scene, hex = this.cfg.color, P = this.pair, pos = [], col = [], seed = [], people = [];
     const lilac = new THREE.Color(0xd9d0ff), tints = [P.a, P.b, lilac, new THREE.Color(hex)]; // (the arena's light, lilac, and the boss's own fans)
     // what the crowd wears: dark, each a little different, never black (lit by the arena's lamps, it reads as people;
     // the lamps are strong, the boss's own: what they fall on is dark)
@@ -521,11 +523,13 @@ class BossGame extends QuizGame {
         const per = Math.max(2, Math.floor(w / 1.15));
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
           const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
-          const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
           // (the master overhaul, Phase 2: lit figures, where they were black cut-outs: what they wear takes the arena's
           // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
           const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
-          people.push({ geo: bossFigure(Math.floor(Math.random() * BOSS_CROWD_N), sc), matrix: at(0, 0, 0), color: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) }); pSeed.push(sd, 6); rims.push(rim);
+          // (Phase 5: each an instance of one card: where it stands, facing the floor, its size, which figure, its seed
+          // and where it is round the ring. The same draws from the randomness, in the same order, as when each was a
+          // card of its own: what is drawn after the crowd, the questions too, comes out as it did)
+          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
@@ -545,19 +549,49 @@ class BossGame extends QuizGame {
       glow.add(foot, new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6), P.b, 1.1, arena);
     }
     foot.dispose();
-    // The crowd itself: lit by the arena's lamps (each corner's light reckoned once: a card is small), bobbing on the
-    // spot and jumping at a blow; its rims and what it holds up glow of their own (aRim), red as the boss rages.
-    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 } };
-    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count), pr = new Float32Array(pg.attributes.position.count * 3);
-    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); for (let q = v; q < v + pSeed[i + 1]; q++) rims[i / 2].toArray(pr, q * 3); v += pSeed[i + 1]; }
-    pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
-    pg.setAttribute("aRim", new THREE.BufferAttribute(pr, 3));
-    const pm = new THREE.MeshLambertMaterial({ vertexColors: true, map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide });
+    // The crowd itself: lit by the arena's lamps (each corner's light reckoned once: a card is small); its rims and what
+    // it holds up glow of their own (aRim), red as the boss rages. Phase 5 (it was cards that never moved): one card
+    // drawn for all of them at once, each moved in the shader on its own. Waiting, each sways from the hips and shifts
+    // its weight at its own pace, and now and then pumps its arms (restless as the boss rages). A blow on the boss
+    // (crowdCue "cheer") runs out from behind it along the stands: each hops at its own beat, stretched as it goes up,
+    // and throws up its arms (its cheering figure: the picture holds each twice). The boss's strike ("stir"): a
+    // flinch that runs through them, quicker: down, squashed, away to one side, some hands thrown up. Reduced effects:
+    // a quarter of the sway, a third of a cheer, arms up and held, no pumping.
+    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
+    this.cues = { cheer: [99, 0, 99, 0], stir: [99, 0, 99, 0] }; // (the last two of each: [since, how big] twice)
+    this.crowdT = 0; // (its clock: the show's, so a hit-stop holds it and slow motion slows it)
+    const card = bossCardGeometry(), NP = people.length, aFig = new Float32Array(NP * 4), aRim = new Float32Array(NP * 3);
+    people.forEach((p, i) => { aFig[i * 4] = p.fig; aFig[i * 4 + 1] = p.sd; aFig[i * 4 + 2] = p.a; aFig[i * 4 + 3] = cyHash(i); p.rim.toArray(aRim, i * 3); }); // (its own beat: a hash of its place in the crowd, not the randomness)
+    card.setAttribute("aFig", new THREE.InstancedBufferAttribute(aFig, 4));
+    card.setAttribute("aRim", new THREE.InstancedBufferAttribute(aRim, 3));
+    const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
     pm.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer; sh.uniforms.uRage = U.uRage;
+      for (const k of ["uTime", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
-        .replace("#include <common>", "#include <common>\nattribute float aSeed; attribute vec3 aRim; uniform float uTime; uniform float uCheer; varying vec3 vRim;")
-        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);\nvRim = aRim;");
+        .replace("#include <common>", `#include <common>
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uTime; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
+          // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
+          float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
+        .replace("#include <begin_vertex>", `#include <begin_vertex>
+          {
+            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uTime;
+            float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
+            float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
+            float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
+            float ea = crowdK(uCheers.x, uCheers.y, lc, 0.85, 8.0), eb = crowdK(uCheers.z, uCheers.w, lc, 0.85, 8.0);
+            float hop = max(abs(sin(max(uCheers.x - lc, 0.0) * beat)) * ea, abs(sin(max(uCheers.z - lc, 0.0) * beat)) * eb);
+            float ls = ring * 0.16 + hh * 0.06, se = max(crowdK(uStirs.x, uStirs.y, ls, 3.0, 14.0), crowdK(uStirs.z, uStirs.w, ls, 3.0, 14.0));
+            transformed.y *= 1.0 + 0.06 * hop - 0.1 * se;
+            transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
+            transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
+            transformed.y += bob + 0.32 * hop - 0.1 * se;
+            float pump = uMove.x > 0.5 ? step(-0.35, sin(uTime * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
+            float idle = step(0.82 - 0.16 * uMove.y, fract(uTime * 0.045 + hh * 7.13)) * step(0.0, sin(uTime * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
+            float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
+            vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
+            vRim = aRim;
+          }`);
       sh.fragmentShader = sh.fragmentShader
         .replace("#include <common>", "#include <common>\nvarying vec3 vRim; uniform float uRage;")
         .replace("#include <map_fragment>", "vec4 fig = texture2D(map, vUv); diffuseColor.rgb *= 0.22 + 0.78 * fig.r; diffuseColor.a *= fig.a;") // (red: lit from above; alpha: the figure)
@@ -565,8 +599,10 @@ class BossGame extends QuizGame {
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
           totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-lit";
-    const folk = new THREE.Mesh(pg, pm);
+    pm.customProgramCacheKey = () => "boss-crowd-2";
+    const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
+    people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
+    folk.name = "arena-crowd"; // (named for tools/cost-report.js)
     folk.layers.set(1);
     folk.frustumCulled = false;
     folk.userData.arena = true;
@@ -708,6 +744,7 @@ class BossGame extends QuizGame {
         GFX.pulse(8, 0.15);
         Haptics.buzz(80);
         Sound.sfx("hit");
+        this.crowdCue("stir", 0.8); // (the crowd flinches as it lands)
       }, Ease.outBack);
     }
     this.tw.wait(1.6, () => {
@@ -798,6 +835,7 @@ class BossGame extends QuizGame {
       } else if (this.has3D) {
         const b = this.boss;
         const at = b.position.clone().add(new THREE.Vector3(0, 0, 2 * this.bossScale));
+        this.crowdCue("cheer", this.hp <= 0 ? 1.5 : 1); // (the stands cheer the blow)
         // (sparks leave from round the point of the blow, not all from one spot: piled on one another they were a white ball)
         for (let q = 0; q < 6; q++) this.bursts.burst(this._v.copy(at).add(this._s.set(rand(-1, 1), rand(-1, 1), rand(-0.3, 0.3)).multiplyScalar(0.9 * this.bossScale)), q % 2 ? hitCol : this.cfg.color, { n: 7, speed: 7, size: 0.3, life: q % 2 ? 0.6 : 1 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
@@ -874,6 +912,7 @@ class BossGame extends QuizGame {
       const to = new THREE.Vector3(this.camBase.x, this.camY - 1.0, this.camZ - 1.5); // (at the lens, wherever its drift has taken it)
       const r = 0.25 * this.bossScale + 0.05;
       const col = COLORS.red; // (its blow is red whatever colour it is: red is "you were hurt" everywhere in the arcade)
+      this.crowdCue("stir"); // (the stands flinch at its blow)
       const { beam, glow, muzzle } = this.atk;
       const tok = ++this.atk.tok;
       // First a flash at its lens; then the wedge shoots from the lens to the bottom edge of the picture, holds, and
@@ -1199,11 +1238,25 @@ class BossGame extends QuizGame {
     }
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
-      const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
-      const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
+      const quiet = REDUCED_MOTION || GFX.calm, d = VFX.dt, u = this.crowdU, ch = this.cues.cheer, st = this.cues.stir, km = quiet ? 0.3 : 1;
+      this.crowdT += d * (1 + 0.5 * (this.rageK || 0)); // (the cards and what they hold up, on the show's clock: see makeCrowd; restless, quicker, as the boss rages)
+      for (const q of [ch, st]) { q[0] = Math.min(60, q[0] + d); q[2] = Math.min(60, q[2] + d); }
+      u.uTime.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      u.uCheers.value.set(ch[0], ch[1] * km, ch[2], ch[3] * km); u.uStirs.value.set(st[0], st[1] * km, st[2], st[3] * km);
+      u.uMove.value.set(quiet ? 0.25 : 1, this.rageK || 0);
+      const drift = quiet ? 0.25 : 1;
       this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; if (!m.userData.far) m.material.color.copy(this.arenaCol).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
+  }
+  // The crowd's moments (look only: the staged fight, and the built-in fight's own effects, call it): "cheer", a blow
+  // has landed on the boss (k: how big); "stir", the boss strikes. Each runs out through the stands from behind the
+  // boss (makeCrowd's shader); the last two of each kind are kept, so a new one never cuts one still running short.
+  crowdCue(kind, k = 1) {
+    const q = this.cues && this.cues[kind === "stir" ? "stir" : "cheer"];
+    if (!q) return;
+    const i = q[0] >= q[2] ? 0 : 2; // (in place of the older)
+    q[i] = 0; q[i + 1] = Math.min(1.5, k);
   }
   pause() { super.pause(); if (this.paused && this.stage) this.stage.pause(); } // (staged: nothing keeps sounding behind the menu)
   resume() { super.resume(); if (this.stage) this.stage.resume(); }
@@ -1213,6 +1266,7 @@ class BossGame extends QuizGame {
       if (this.arena) this.arena.dispose();
       this.shards.dispose();
       if (this.boss.userData.orbs && this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
+      if (this.folk) this.folk.dispose(); // (the crowd's places and colours: an instanced mesh's own buffers)
       // (the deck's capture, the steel's filtered copy of it, the deck's and the steel's pictures: no scene holds them)
       if (this.probe) this.probe.dispose();
       if (this.steelEnv) this.steelEnv.dispose();
