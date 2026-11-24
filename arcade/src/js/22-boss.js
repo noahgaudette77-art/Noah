@@ -344,6 +344,15 @@ class BossGame extends QuizGame {
     this.flashSize = 8;
     if (this.pano) this.arena = new BossArena(this, this.gen.sky, this.row); // (the storm sky, its light and its lightning: 22c)
     if (this.actor) this.stage = new BossStage(this, this.actor); // (the boss's model has loaded: the fight is staged, on the show clock: 22f)
+    // The cold edge from behind in the world's second colour, cyan (Boss Rush's pair's, and the player's), lower and
+    // stronger (Phase 2's polish, 2026-11-24: an art review found neither the boss nor the duellist had a rim of it, cyan
+    // 1-2% of the lit picture; the stage sets it a pale white). It is the one lamp that edges the boss and the duellist
+    // while it barely touches the arena (the stands, their crowd and the pillars face the lens, away from it), so a cyan
+    // boss's arena keeps its pair (bossArenaPair). As the boss rages it turns half red with the rims (update). No new light.
+    this.edgeCol = new THREE.Color(COLORS.cyan).lerp(new THREE.Color(0xffffff), 0.15);
+    this.lamps.edge.color.copy(this.edgeCol);
+    this.lamps.edge.position.set(0, 5, -10);
+    this.lamps.edge.intensity = this.stage ? 2.6 : 1.3;
     this.camBase.set(0, this.camY, this.camZ);
     this.lookAt.set(0, this.bossY, 0);
     // the deck's reflection: the arena as it stands (only what is marked arena: not the boss, the duellist, the floor,
@@ -1161,6 +1170,7 @@ class BossGame extends QuizGame {
       this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
       this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = this.steelMat.userData.uSpillRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them, and its light on the steel)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
+      this.lamps.edge.color.copy(this.edgeCol).lerp(this.rageCol, rk * 0.5); // (the cold edge half red with the rims)
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
       if (!st) this.boss.userData.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
