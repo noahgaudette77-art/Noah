@@ -548,7 +548,7 @@ class MemoryGame extends QuizGame {
     // part of that and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast); the
     // assay's marks struck into the top (Phase 5: memoryIngotGeometry, memoryStampTexture; not on a phone, where a bar
     // is a few dozen pixels long and its marks would be one or two)
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, scratch: 0.9 });
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, grain: 0.35, scratch: 0.9 }); // (a polished face: the grain's ripple a third of the scratches' depth)
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
     const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
