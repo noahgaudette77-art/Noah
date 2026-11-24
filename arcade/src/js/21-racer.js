@@ -520,11 +520,15 @@ function racerCityMaterial(shared, P, maps) {
               float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
               float openK = mix(0.7, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
               float bay = rbox(vec2(f.x, q.y), vec2(0.14, 0.7), vec2(0.86, 3.9), vec2(aw.x / 1.9, aw.y)) * front;
-              // the window: two mullions, a transom, brighter under its ceiling, the counter and the goods dark against the light
+              // the window: two mullions and a transom; inside, a room in the block's light warmed toward white, a strip
+              // light along its ceiling, and the counter, the goods and a rack or two dark against the light
               float sm = max(max(step(abs(f.x - 0.38), 0.016), step(abs(f.x - 0.62), 0.016)), step(abs(q.y - 3.15), 0.05)) * fine;
-              float iy = (q.y - 0.7) / 3.2;
-              float goods = (1.0 - smoothstep(0.0, 0.05, iy - 0.2 - 0.16 * h21(vec2(cell.x * 1.7, vSeed * 7.0)))) * fine;
-              emit += sc * levK * (0.24 + 0.5 * uCity) * (0.45 + 0.75 * smoothstep(0.1, 0.95, iy)) * (1.0 - 0.8 * sm) * (1.0 - 0.6 * goods) * bay * openK;
+              float iy = (q.y - 0.7) / 3.2, r1 = h21(vec2(cell.x * 2.3, vSeed * 13.0)), r2 = h21(vec2(cell.x * 4.1, vSeed * 9.0));
+              float goods = 1.0 - smoothstep(0.0, 0.05, iy - 0.2 - 0.16 * h21(vec2(cell.x * 1.7, vSeed * 7.0)));
+              float rack = (1.0 - smoothstep(0.0, 0.012 + aw.x / 1.9, abs(f.x - 0.24 - 0.52 * r1) - 0.05)) * (1.0 - smoothstep(0.0, 0.03, iy - 0.5 - 0.22 * r2));
+              float strip = 1.0 - smoothstep(0.0, 0.01 + aw.y / 3.2, abs(iy - 0.93) - 0.012);
+              vec3 roomL = mix(sc, vec3(1.0, 0.9, 0.78), 0.2) * levK * (0.24 + 0.5 * uCity);
+              emit += roomL * ((0.45 + 0.75 * smoothstep(0.1, 0.95, iy)) * (1.0 - 0.8 * sm) * (1.0 - 0.62 * max(goods, rack) * fine) + 1.2 * strip * fine) * bay * openK;
               emit += env * fr * 0.6 * bay * openK;
               base = mix(base, vec3(0.15, 0.155, 0.17) * mix(0.9, 0.78 + 0.22 * smoothstep(0.25, 0.75, abs(fract(q.y / 0.09) - 0.5) * 2.0), fine), bay * (1.0 - openK)); // (the shutter, ribbed)
               base *= 1.0 - 0.4 * front * (1.0 - step(0.7, q.y)) * step(0.14, f.x) * step(f.x, 0.86); // (the stall riser under it)
@@ -534,7 +538,13 @@ function racerCityMaterial(shared, P, maps) {
           }
           col = mix(base * light, glass, glassK) + emit;
         } else if (vKind < 1.5) col = vCol * uNeonI * (1.0 - smoothstep(48.0, 105.0, vDepth)); // (a gear's lit rings go out with distance: near wheels keep their light, the far ones are dark cogs, not a cluster of rings round the gantry at the end of the street)
-        else {
+        else if (vKind > 4.5) {
+          // a fixture on a wall (an air conditioner): painted sheet metal lit as the wall round it is, a grille of slats
+          // on the face to the street, its underside in the street's bounce
+          float sl = vL.y / 0.06, sw = fwidth(sl);
+          float grille = mix(0.86, 0.72 + 0.28 * smoothstep(0.2, 0.6, abs(fract(sl) - 0.5) * 2.0), (1.0 - smoothstep(0.3, 0.8, sw)) * step(0.5, abs(n.x)));
+          col = vCol * grille * (uAmb * 1.15 + uKey * (0.22 + 0.6 * lit) + vec3(0.07, 0.045, 0.13) * (1.0 - smoothstep(2.0, 18.0, vL.y)) + lampsOn(vW, n));
+        } else {
           // brass: warm metal with a highlight and a soft rim
           vec3 v = normalize(cameraPosition - vW);
           float spec = pow(max(dot(reflect(-uKeyDir, n), v), 0.0), 14.0);
@@ -1179,6 +1189,19 @@ class RacerGame extends QuizGame {
           detail.add(box, racerM((xl + xr) / 2, y0 + h + 0.2, sz, w + 0.4, 0.16, 0.16), COPPER, 1, bv);
         }
         if (n % 3 === 1) vents.push([side * rand(6.7, 8.2), z - rand(2, L - 2)]);
+        // (Phase 2) air conditioners in the lower part of about one window in six, on the first five floors above the
+        // shops: painted boxes standing out from the wall, a grille on the face to the street (kind 5). Where is the
+        // block's own (a hash, not the run's randomness: the rest of the city is laid out as it was).
+        const AC = [0xa7a59c, 0x8e9297, 0xb4ada0, 0x7c838a];
+        for (let b = Math.ceil((z - L) / 1.9); (b + 1) * 1.9 <= z; b++) {
+          const pierAt = (gx) => ((((gx / 3 + sd) % 1) + 1) % 1) < 0.1; // (as the wall's shader lays its piers)
+          if (pierAt(b + 0.3) || pierAt(b + 0.5) || pierAt(b + 0.7)) continue;
+          for (let st = 2; st < Math.min(7, Math.floor(H / 2.4)); st++) {
+            const h = racerHash(b * 7.1 + st * 13.7, sd * 5.3);
+            if (h > 0.17) continue;
+            detail.add(box, racerM(side * (front - 0.22), st * 2.4 + 0.88, (b + 0.5) * 1.9, 0.44, 0.52, 0.78), AC[Math.floor(h * 24) % 4], 1, { aZ, aKind: 5, aSeed: sd });
+          }
+        }
         z -= L + rand(1.5, 4);
         n++;
       }
