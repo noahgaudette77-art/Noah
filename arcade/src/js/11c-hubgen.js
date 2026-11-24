@@ -69,15 +69,17 @@ function hubGenSkin(model, o = {}) {
     if (o.envMap) m.envMap = o.envMap; // (the trophy stand mirrors the second hall)
     m.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, HUB_RIM);
+      if (o.rim) sh.uniforms.uTopRim = o.rim;
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nuniform vec3 uHubHero; uniform vec3 uHubRim;")
+        .replace("#include <common>", "#include <common>\nuniform vec3 uHubHero; uniform vec3 uHubRim;" + (o.rim ? " uniform vec3 uTopRim;" : ""))
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           { vec3 hubD = -vViewPosition - uHubHero;
             float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
             totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1); }
+          ${o.rim ? "totalEmissiveRadiance += uTopRim * pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0); // (its edges in its cabinet's colour: lit by the marquee under it)" : ""}
           ${o.key ? `totalEmissiveRadiance += diffuseColor.rgb * ${o.key.toFixed(2)} * max(dot(normal, normalize(vec3(-0.35, 0.7, 0.62))), 0.0); // (a key light of its own, high and to the left of the lens: it reads against the dark hall)` : ""}`);
     };
-    m.customProgramCacheKey = () => "hub-gen-" + (o.key || 0);
+    m.customProgramCacheKey = () => "hub-gen-" + (o.key || 0) + (o.rim ? "-rim" : "");
     m.needsUpdate = true;
   });
   return ms;
@@ -110,7 +112,11 @@ class HubGen {
     this.t = 0;
     this.items = [];
     hubGenSkin(gen.cab, { env: 1.1, glow: 1.5 });
-    for (const id in gen.tops) if (gen.tops[id] && !gen.tops[id].proctor) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 0.9 }); // (the Proctor wears the exam's skin)
+    // (each topper is lit by the marquee under it: a key of its own and a rim in its cabinet's colour, set as it is placed
+    // (cabinet). High against the dark ceiling, the hall's panorama gave them little: the ship and the Proctor read as dark
+    // lumps, Phase 2's second review)
+    this.topRim = {};
+    for (const id in gen.tops) if (gen.tops[id] && !gen.tops[id].proctor) { this.topRim[id] = { value: new THREE.Color(0, 0, 0) }; hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 1.5, rim: this.topRim[id] }); } // (the Proctor wears the exam's skin: its own rim, below)
   }
   // a cabinet's frame in the hall (x across, y up, z toward the room's centre), in world units
   frame(i) {
@@ -183,6 +189,8 @@ class HubGen {
       const box = new THREE.Box3().setFromObject(obj);
       topH = (T.y || 0) + (box.max.y - box.min.y);
       this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, base: pivot.rotation.y, swing: T.swing || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3, proctor: m.proctor || null };
+      if (this.topRim[cab.id]) this.topRim[cab.id].value.copy(col).multiplyScalar(0.9);
+      if (m.proctor) m.proctor.U.uBossRim.value.copy(col).multiplyScalar(1.6); // (the exam's skin has a rim of its own colour: its cabinet's, as the title's cell gives it the cell's)
     }
     this.cabTop[i] = ry + 0.112 + topH + 0.12;
     // where its screen goes, and the plane over its control panel (the screen's light falls there)
