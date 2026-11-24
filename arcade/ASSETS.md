@@ -248,6 +248,7 @@ y in red and green, the roughness in blue (the shaders rebuild the normal's z), 
 | `mat-tread.webp` | ambientCG, "Diamond Plate 008 C" (`DiamondPlate008C`, 1K-JPG: NormalGL, Roughness), https://ambientcg.com/view?id=DiamondPlate008C | CC0 | 512 x 512, 67 KB | the title cells' plinth tops |
 | `mat-steel.webp` | ambientCG, "Metal 009" (`Metal009`, 1K-JPG: NormalGL, Roughness), https://ambientcg.com/view?id=Metal009 | CC0 | 512 x 512, 13 KB | brushed steel: the title cells' caps and brackets, Memory Bank's wall of boxes, Boss Rush's pillars, stands and banners |
 | `mat-marble.webp` | ambientCG, "Marble 012" (`Marble012`, 1K-JPG: its colour map only), https://ambientcg.com/view?id=Marble012 | CC0 | 512 x 512, 104 KB | the Final Exam's hall: its columns (pale stone, dark veins), its wall's courses, its floor's veins (dark stone, pale veins). Not packed as the others: the colour map's luminance stretched from its 1st to its 99th percentile and stored grey (R = G = B; a lossy WebP keeps a grey picture's detail, where one channel alone lost a tenth of it); its relief (polished stone, nearly level) is not used |
+| `mat-facade.webp` | Poly Haven, Concrete Wall 006 (photography Charlotte Baglioni, processing Dario Barresi): https://polyhaven.com/a/concrete_wall_006, its 1k colour map https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_diff_1k.jpg; licence https://polyhaven.com/license (CC0) | CC0 | 45 KB | Nest Egg Run's city walls (stained concrete cast in panels; its grey only (stains, the rain's streaks, tie holes), the finest grain softened a little, brought to 0.5 on average (spread 0.14), 512 x 512 (laid 4.4 m square on the walls, about 1:1 with the nearest wall on a MacBook), WebP at quality 80) |
 
 ## Sound (`assets/audio/`)
 
@@ -324,9 +325,3 @@ wizard's and the wand's concepts (the ones used), but also the hall pod's concep
 concepts were lost in flight, charged and never returned ($0.1125, a manual line in the ledger). The generator scripts are now only ever run with a name filter, never
 loaded.
 
-**CC0 materials in the master overhaul** (free: no key, no charge; each picture made from its source as described,
-licence CC0 1.0, public domain):
-
-| file | from | what was done | size |
-|---|---|---|---|
-| `assets/ui/mat-facade.webp` (Nest Egg Run's city walls, set `racer`) | Poly Haven, Concrete Wall 006 (photography Charlotte Baglioni, processing Dario Barresi): https://polyhaven.com/a/concrete_wall_006, its 1k colour map https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_006/concrete_wall_006_diff_1k.jpg; licence https://polyhaven.com/license (CC0) | its grey only (stains, the rain's streaks, tie holes), the finest grain softened a little, brought to 0.5 on average (spread 0.14), 512 x 512 (laid 4.4 m square on the walls, about 1:1 with the nearest wall on a MacBook), WebP at quality 80 | 45 KB |
