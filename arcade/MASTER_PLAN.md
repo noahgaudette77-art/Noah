@@ -38,9 +38,15 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   dark marble floor from a room capture (the mirror gone: the ending no longer draws the hall twice); the framing on
   both devices; ambientCG Marble012 (CC0). Phone draws 85 to 79, triangles 37K to 57K, memory 150 to 156 MB; rules
   IDENTICAL, sequence ALL 13 STEPS OK, WebKit clean; its sheet `docs/master/phase2/exam-before-after.jpg`).
-- **Doing:** one agent in a worktree: Nest Egg Run's street (facades, shoulders, the far end's clutter), then merged by
-  cherry-pick (only the built files conflict: take ours, then `node arcade/tools/manifest.js` and the build), WebKit
-  checked.
+- **Also merged:** Nest Egg Run's street (the street agent's seven commits, `c0ee1c2`..`611fa47`, rebuilt `55b5a76`: the
+  far end clean behind the answers (the orrery gone with the panorama up, the wall gears' rings fading with distance
+  and one ring each); the near facades stained concrete (Poly Haven `concrete_wall_006`, CC0) cast in panels with
+  framed windows, sills, glass giving back the street, lit shops and shutters, air conditioners; the shoulders lit wet
+  pavement giving back the shops and their neon; every shader safe on every GPU (no derivative or look-up in a branch
+  that varies pixel to pixel, no pow() of a negative). The container restarted while the agent was in its last check:
+  its commits survived; its last change (the GPU-safety fix) was committed for it, and checked here.
+- **Doing:** the Phase 2 gate: the baseline's script time with the drawing left out, then the harness on this build
+  (the machine quiet: no agents), the stills against the baseline's, an independent review, the report.
 - **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
   `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
   the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
@@ -207,6 +213,8 @@ ElevenLabs within budget.
 
 ### Phase 7: desktop polish for the Mac
 Landscape layouts, keys, hover, Retina and display changes, resizing without leaks, Safari and Chrome, long sessions.
+- To check on a real Safari (seen in this machine's WebKit, which draws in software): Nest Egg Run's car draws pale, as
+  if lit by a white glare, in WebKit here, before the overhaul (2026-11-22) as after Phase 2; Chromium draws it gold.
 - **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth.
 
 ### Phase 8: final verification
