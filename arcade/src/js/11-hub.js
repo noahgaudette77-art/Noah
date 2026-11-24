@@ -731,6 +731,71 @@ function hubArtAtlas() {
     [X + 66, X + Wp - 66].forEach((ex) => { x.fillStyle = "rgba(6,4,12,0.72)"; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.fill(); x.strokeStyle = cab.color; x.lineWidth = 1.5; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.stroke(); hubEmblem(x, cab.id, ex, Y + Hp / 2, 17, "#ffffff"); });
     x.restore();
   });
+  // The generated cabinet's lower body (see HubGen.cabinet): its front sheet, 156 x 123 from (i * 160 + 2, 802), whose
+  // middle the model's coin door covers (from 0.23 to 0.77 across), and its side art, 136 x 124 from (134 + i * 148, 426),
+  // whose right edge is the cabinet's front edge (the stripes painted over it run up across its upper left); and the
+  // kick plate under the sheet, 246 x 24 from (770, 562): brushed steel, a rolled top edge, a screw at each end (one
+  // plate for all six, tinted by each cabinet's colour).
+  { const X = 770, Y = 562, W = 246, H = 24;
+    const g = x.createLinearGradient(0, Y, 0, Y + H);
+    g.addColorStop(0, "#f4f2ff"); g.addColorStop(0.1, "#c9c7da"); g.addColorStop(0.16, "#5c5a6e"); g.addColorStop(0.24, "#b4b2c6"); g.addColorStop(0.62, "#9a98ae"); g.addColorStop(1, "#6a687e");
+    x.fillStyle = g; x.fillRect(X, Y, W, H);
+    for (let k = 0; k < 34; k++) { // (brush marks along it: from a hash of the row, never the game's randomness)
+      const h = (Math.sin(k * 12.9898) * 43758.5453) % 1, yy = Y + 4.5 + ((k * 7) % 19);
+      x.fillStyle = h > 0 ? `rgba(255,255,255,${(0.05 + 0.08 * h).toFixed(3)})` : `rgba(20,18,32,${(0.05 - 0.08 * h).toFixed(3)})`;
+      x.fillRect(X + ((k * 37) % 60), yy, W - ((k * 53) % 90), 0.6);
+    }
+    x.fillStyle = "rgba(20,18,32,0.55)"; x.fillRect(X, Y + H - 1.2, W, 1.2);
+    [X + 7, X + W - 7].forEach((sx) => { x.fillStyle = "#3c3a4e"; x.beginPath(); x.arc(sx, Y + 13.5, 2.4, 0, 7); x.fill(); x.fillStyle = "#e8e6f6"; x.beginPath(); x.arc(sx - 0.6, Y + 12.9, 1, 0, 7); x.fill(); });
+  }
+  CABINETS.forEach((cab, i) => {
+    const col = cab.color, acc = HUB_ACCENT[cab.id] || COLORS.cyan;
+    const disc = (ex, ey, r, s) => {
+      x.fillStyle = "rgba(6,4,12,0.85)"; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.fill();
+      x.strokeStyle = col; x.lineWidth = 1.6; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.stroke();
+      x.strokeStyle = hubRGB(acc, 1, 0.7); x.lineWidth = 0.8; x.beginPath(); x.arc(ex, ey, r + 2.4, 0, 7); x.stroke();
+      hubEmblem(x, cab.id, ex, ey, s, "#ffffff");
+    };
+    { // the front sheet: either side of the door, bands of its two colours rising from the outer foot, its emblem above them
+      const X = i * 160 + 2, Y = 802, W = 156, H = 123;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      const bg = x.createLinearGradient(0, Y, 0, Y + H);
+      bg.addColorStop(0, "#1c1138"); bg.addColorStop(1, "#0a0614");
+      x.fillStyle = bg; x.fillRect(X, Y, W, H);
+      for (const sd of [0, 1]) for (let k = 0; k < 6; k++) {
+        x.fillStyle = hubRGB(k % 2 ? acc : col, 1 - k * 0.1, 0.95 - k * 0.12);
+        const x0 = sd ? X + W + 4 - k * 8 : X - 4 + k * 8, dx = sd ? -34 : 34, w = sd ? -4.5 : 4.5;
+        x.beginPath(); x.moveTo(x0, Y + H); x.lineTo(x0 + dx, Y + H * 0.42); x.lineTo(x0 + dx + w, Y + H * 0.42); x.lineTo(x0 + w, Y + H); x.fill();
+      }
+      [X + W * 0.116, X + W * 0.884].forEach((ex) => disc(ex, Y + H * 0.24, 12, 7.5));
+      x.strokeStyle = hubRGB(col, 1, 0.9); x.lineWidth = 1.5; x.strokeRect(X + 1.5, Y + 1.5, W - 3, H - 3);
+      x.restore();
+    }
+    { // the side art: a sweep of its colour up from the front foot, speed lines along it, its emblem large in the sweep;
+      // its top and back edges the side panel's own black, so it has no edge of its own there (the stripes cross it)
+      const X = 134 + i * 148, Y = 426, W = 136, H = 124;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      x.fillStyle = "#06040c"; x.fillRect(X, Y, W, H);
+      const glow = x.createRadialGradient(X + W, Y + H, 0, X + W, Y + H, W * 1.15);
+      glow.addColorStop(0, "#1e1240"); glow.addColorStop(1, "rgba(6,4,12,0)");
+      x.fillStyle = glow; x.fillRect(X, Y, W, H);
+      for (let k = 1; k < 8; k++) { // (a faint grid, fading out toward the panel's black)
+        x.strokeStyle = hubRGB(col, 0.8, 0.05 + 0.025 * k); x.lineWidth = 0.75;
+        x.beginPath(); x.moveTo(X + W * 0.06, Y + k * 9 + 40); x.lineTo(X + W * 0.62, Y + k * 9 + 40); x.stroke();
+        x.beginPath(); x.moveTo(X + k * 11 + 8, Y + H * 0.3); x.lineTo(X + k * 11 + 8, Y + H * 0.92); x.stroke();
+      }
+      const sw = x.createLinearGradient(X + W, Y + H, X + W * 0.45, Y + H * 0.25); // (from the front foot toward the stripes)
+      sw.addColorStop(0, hubRGB(col, 1, 0.95)); sw.addColorStop(0.55, hubRGB(col, 0.75, 0.6)); sw.addColorStop(1, hubRGB(col, 0.5, 0));
+      x.fillStyle = sw;
+      x.beginPath(); x.moveTo(X + W * 0.1, Y + H); x.quadraticCurveTo(X + W * 0.62, Y + H * 0.82, X + W, Y + H * 0.08); x.lineTo(X + W, Y + H); x.closePath(); x.fill();
+      [[0.0, acc, 1.6, 0.95], [0.07, "#ffffff", 0.8, 0.8], [0.13, acc, 1.1, 0.7]].forEach(([o, c, lw, a]) => {
+        x.strokeStyle = hubRGB(c, 1, a); x.lineWidth = lw;
+        x.beginPath(); x.moveTo(X + W * (0.02 + o), Y + H); x.quadraticCurveTo(X + W * (0.56 + o * 0.5), Y + H * (0.76 - o), X + W, Y + H * (0.0 - o * 0.4)); x.stroke();
+      });
+      disc(X + W * 0.72, Y + H * 0.66, 19, 12);
+      x.restore();
+    }
+  });
   if (hubFontsReady()) HUB_CACHE.art = c;
   return c;
 }
