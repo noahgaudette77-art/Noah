@@ -9,18 +9,21 @@
 //
 // A region: which panorama (sky), the point of it that stands dead ahead (at: across and down the picture, 0 to 1),
 // its roll, how wide a piece the band shows (zoom), its gain and how far its brightest parts are lifted past white.
+// atW: the point ahead in a wide window (a Mac's: the band there takes in some sixty degrees of the picture each side,
+// not forty, and from the phone's point the nebula and the belt's sun ran out into black on one side; Phase 5). The
+// window's shape blends from one to the other; the phone's picture is as it was.
 // lamps: the key (above and behind the lens, on the side the picture's own light comes from), two rims far ahead, one
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
 // space: what this region changes in the world round it (fog, rocks, clouds, the hulls' light: see SPACE_REGIONS).
 const BLASTER_SKIES = {
-  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
+  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.27, 0.45], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xc8b4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xb09cff, 0.8], amb: [0x5a3aa8, 0.5], wall: 0x8a5cff,
     space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70] } },
-  belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
+  belt: { sky: "blaster-deep-4", at: [0.07, 0.52], atW: [0.015, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
     key: [0xff7a52, 1.15], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xff9070, 0.75], amb: [0x8a2a2a, 0.5], wall: 0xff4a3a,
     space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80] } },
-  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
+  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xb4d4ff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0x9cc4ff, 0.8], amb: [0x3a5ab8, 0.5], wall: 0x4a7aff,
     space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
   station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
@@ -91,9 +94,12 @@ class BlasterSky {
     u.uMix.value = 0;
     u.uGain.value = c.gain * k;
     u.uLift.value = c.lift;
-    u.uRot.value = (c.yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
+    // (a wide window takes its own point ahead, atW: see BLASTER_SKIES)
+    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, D = Math.PI * 2;
+    const yaw = w ? ((c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w) - 0.25) * D : c.yaw, pitch = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
+    u.uRot.value = (yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
     // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
-    L.dome.rotation.set(-c.pitch + Math.atan(this.aimY * c.zoom * zoomK) - Math.sin(sway * 0.037 + 1) * 0.02, 0, c.roll);
+    L.dome.rotation.set(-pitch + Math.atan(this.aimY * c.zoom * zoomK) - Math.sin(sway * 0.037 + 1) * 0.02, 0, c.roll);
     L.stretch.scale.set(1, 1, c.zoom * zoomK);
   }
   // What chrome mirrors in a region: the panorama itself, turned as the band shows it and brighter (a mirror the

@@ -144,7 +144,7 @@ function spaceGlowMaterial(trail) {
 // the blade-shaped cruiser for the cruisers and, smaller, the fighters' wings of three, the round tug for the drones and
 // the shuttles. The tankers (three spheres on a truss), the hulks and the whale keep their built-in designs.
 const SPACE_GEN = { freighter: "prop-ship-a", cruiser: "prop-ship-b", fighter: "prop-ship-b", drone: "prop-ship-c", shuttle: "prop-ship-c" };
-const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2"];
+const SPACE_GEN_PROPS = ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "prop-rock2", "prop-rock-lo", "prop-rock2-lo"]; // (the -lo: the far rocks, light copies of the two: Phase 5)
 // Running lights for a generated ship (Phase 5 fix: the wings of fighters read as enemy fire): magenta to port, cyan to
 // starboard at its widest, white at its tail; they blink slowly (under once a second).
 // (Phase 6: at the distance they are seen at, the ships read as lumps. Each lamp is a point of light now, as big as it

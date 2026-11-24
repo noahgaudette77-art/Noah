@@ -42,11 +42,14 @@ function blasterDroneGeo(shape, hex) {
     });
     put(B, stand([[-0.3, 1.25], [0.3, 1.25], [0.1, 1.42], [-0.1, 1.42]], 0.14, 0, -0.1), null, BK.STEEL);
   } else if (shape === 2) {
-    // twin booms: armoured side pods with light bars, a mast, a dish
+    // twin booms: on each a nacelle (turned: tapered at both ends, a band of the slot's colour round it), its light bars
+    // down its front, a mast, a dish (Phase 5: the nacelles were bevelled boxes: the audit's #25)
+    const prof = [[0.001, -0.84], [0.11, -0.81], [0.21, -0.68], [0.27, -0.44], [0.29, -0.12], [0.29, 0.12], [0.27, 0.44], [0.21, 0.68], [0.11, 0.81], [0.001, 0.84]].map(([r, y]) => new THREE.Vector2(r, y));
     [-1, 1].forEach((sd) => {
-      B.add(box, racerM(sd * 1.68, 0, -0.1, 0.8, 0.18, 0.18), BK.STEEL);
-      put(B, racerPlate(0.5, 1.5, 0.56, 0.1, true), racerM(sd * 2.18, 0, -0.1), BK.PLATE);
-      B.add(box, racerM(sd * 2.18, 0.5, 0.19, 0.4, 0.14, 0.04), paint);
+      B.add(box, racerM(sd * 1.68, 0, -0.1, 0.8, 0.15, 0.15), BK.STEEL);
+      put(B, new THREE.LatheGeometry(prof, 12), racerM(sd * 2.18, 0, -0.1), BK.PLATE);
+      put(B, new THREE.CylinderGeometry(0.3, 0.3, 0.17, 12, 1, true), racerM(sd * 2.18, 0.5, -0.1), paint);
+      put(B, new THREE.CylinderGeometry(0.3, 0.3, 0.06, 12, 1, true), racerM(sd * 2.18, -0.62, -0.1), paint);
       [-0.4, -0.1, 0.2].forEach((y) => L.add(box, racerM(sd * 2.18, y, 0.2, 0.12, 0.13, 0.04), 0xffffff, 1));
     });
     B.add(box, racerM(0, 1.5, -0.1, 0.05, 0.38, 0.05), BK.STEEL);

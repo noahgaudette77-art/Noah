@@ -419,7 +419,13 @@ class BlasterSpace {
     this.rockNear = rockA || rockB ? near(rockA || rockB) : spaceInstanced(spaceRockGeo(2, 11), this.rockMat, 16);
     this.rockNear2 = rockA && rockB ? near(rockB) : null;
     if (this.rockNear2) s.add(this.rockNear2);
-    this.rockFar = spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
+    // (Phase 5: the far ones are light copies of the same two rocks, about two hundred triangles each, in the near ones'
+    // own material and picture: the built-in grey lumps beside the crystal and the ore were the audit's #25. The odd
+    // ones the second rock. Until the copies are in hand, and from disk, the built-in rock as before.)
+    const loB = rockB && this.genLo("prop-rock2-lo", rockB, rockA ? 48 : 96), loA = rockA && this.genLo("prop-rock-lo", rockA, loB ? 48 : 96);
+    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
+    this.rockFar2 = loA && loB ? loB : null;
+    if (this.rockFar2) s.add(this.rockFar2);
     this.rocks = [];
     for (let i = 0; i < 112; i++) {
       const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(near ? 0.05 : 0.1, near ? 0.9 : 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
@@ -728,9 +734,11 @@ class BlasterSpace {
     // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
     const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
     const two = this.rockNear2, nearA = two ? Math.ceil(nearN / 2) : nearN; // (two asteroids: the even rocks are the first, the odd ones the second)
-    this.rockNear.count = nearA; this.rockFar.count = farN;
-    this.rockNear.visible = nearA > 0; this.rockFar.visible = farN > 0;
+    const far2 = this.rockFar2, farA = far2 ? Math.ceil(farN / 2) : farN; // (and the far ones the same way)
+    this.rockNear.count = nearA; this.rockFar.count = farA;
+    this.rockNear.visible = nearA > 0; this.rockFar.visible = farA > 0;
     if (two) { two.count = nearN - nearA; two.visible = two.count > 0; }
+    if (far2) { far2.count = farN - farA; far2.visible = far2.count > 0; }
     if (nearN + farN > 0) {
       this.rocks.forEach((r) => {
         if (r.i >= (r.near ? nearN : farN)) return;
@@ -738,10 +746,12 @@ class BlasterSpace {
         r.ph += r.w * dt;
         if (r.p.z > 30) this.resetRock(r, -660);
         const grow = smoothstep(-660, -560, r.p.z) * (1 - smoothstep(-45, 12, r.p.z)); // they come out of the distance rather than popping in, and shrink away as they pass
-        (r.near ? (two && r.i & 1 ? two : this.rockNear) : this.rockFar).setMatrixAt(r.near && two ? r.i >> 1 : r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
+        const pair = r.near ? two : far2;
+        (r.near ? (two && r.i & 1 ? two : this.rockNear) : (far2 && r.i & 1 ? far2 : this.rockFar)).setMatrixAt(pair ? r.i >> 1 : r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
       });
       this.rockNear.instanceMatrix.needsUpdate = this.rockFar.instanceMatrix.needsUpdate = true;
       if (two) two.instanceMatrix.needsUpdate = true;
+      if (far2) far2.instanceMatrix.needsUpdate = true;
     }
     // the generated ships and rocks take the region's rims, a cold kicker along their upper edges and a fill of its colour
     if (this.genU && this.pano) {
@@ -850,7 +860,8 @@ class BlasterSpace {
       const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
       if (made) {
         const bb = made.box, size = bb.getSize(new THREE.Vector3()), s = rock ? 2 / Math.max(size.x, size.y, size.z) : 1 / Math.max(1e-3, size.z);
-        made.geo.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -(bb.min.z + bb.max.z) / 2);
+        const fit = { c: bb.getCenter(new THREE.Vector3()), s }; // (how it was fitted: its light copy is fitted the same way: genLo)
+        made.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
         made.geo.scale(s, s, s);
         made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
         const U = (this.genU = this.genU || blasterSkinUniforms());
@@ -869,9 +880,30 @@ class BlasterSpace {
         g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
-        kit = { geo: made.geo, mat };
+        kit = { geo: made.geo, mat, fit };
       }
     }
     return (kits[name] = kit);
+  }
+  // A rock's light copy (assets/models/prop-rock-lo, prop-rock2-lo: tools/gen/rock-lod.mjs), fitted as its rock was and
+  // drawn in its material and picture, n to a draw, each its own stone (aTone, as the near ones). Null if not in hand.
+  genLo(name, kit, n) {
+    const g = this.g, model = g.gen && g.gen.props && g.gen.props[name];
+    if (!model || !kit || !kit.fit) return null;
+    const made = modelGeometry(model, new THREE.Matrix4().makeRotationY(Math.PI));
+    model.scene.traverse((o) => { if (o.isMesh && o.geometry !== (made && made.geo)) o.geometry.dispose(); }); // (its packed form is not drawn)
+    if (!made) return null;
+    made.geo.translate(-kit.fit.c.x, -kit.fit.c.y, -kit.fit.c.z);
+    made.geo.scale(kit.fit.s, kit.fit.s, kit.fit.s);
+    made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
+    // (each its own stone, as the near ones, but from a hash and not Math.random: drawing from it here would change
+    // what the game draws after it, the questions in a capture among them)
+    const tone = new Float32Array(n * 3), T = [[1, 0.93, 0.86], [0.82, 0.9, 1.05], [0.62, 0.62, 0.68], [1.15, 1.1, 1.04], [0.95, 0.85, 0.95]];
+    const h = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233 + n) * 43758.5453; return x - Math.floor(x); };
+    for (let i = 0; i < n; i++) tone.set(T[Math.floor(h(i, 1) * T.length)].map((v) => v * (0.85 + 0.3 * h(i, 2))), i * 3);
+    made.geo.setAttribute("aTone", new THREE.InstancedBufferAttribute(tone, 3));
+    const m = new THREE.InstancedMesh(made.geo, kit.mat, n);
+    m.frustumCulled = false;
+    return m;
   }
 }
