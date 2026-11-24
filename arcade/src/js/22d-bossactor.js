@@ -293,8 +293,13 @@ class BossActor {
   swing(clip, u, from) {
     const a = this.atk, C = BOSS_CLIP[clip];
     if (!this.act[clip] || this.dead) return;
-    if (!a.swung) { a.swung = true; a.hitFx = false; const n = ++this.nStrike; a.vary = Motion.vary(this.seed, n, 0.86, 1.16); this.S.lean.hit(0.55 * this.M.lunge * Motion.vary(this.seed, n + 31, 0.8, 1.2) * (0.6 + 0.4 * this.coil)); this.S.sq.hit(-0.4 * this.M.squash); } // (released: thrown forward, stretched)
-    a.clip = clip; a.rec = false; a.t = lerp(from === undefined ? C.top : from, C.hit, u * u * (3 - 2 * u) * 0.35 + u * 0.65); a.to = 1; if (u > 0.25) a.w = Math.max(a.w, Math.min(1, u * 2.2));
+    if (!a.swung) { a.swung = true; a.hitFx = false; a.w0 = a.w; const n = ++this.nStrike; a.vary = Motion.vary(this.seed, n, 0.86, 1.16); this.S.lean.hit(0.55 * this.M.lunge * Motion.vary(this.seed, n + 31, 0.8, 1.2) * (0.6 + 0.4 * this.coil)); this.S.sq.hit(-0.4 * this.M.squash); } // (released: thrown forward, stretched)
+    a.clip = clip; a.rec = false; a.t = lerp(from === undefined ? C.top : from, C.hit, u * u * (3 - 2 * u) * 0.35 + u * 0.65);
+    // the clip comes in across the whole blow, from what the wind-up had of it to all of it as the blow lands: a wrong
+    // answer early (its wind-up barely begun) is seen to come all the way in the rule's 0.12 s, not in a frame (it took
+    // 0.12 to 0.70 of the pose in one: the hand's 1.7 m in a frame, the new pops scan). Its weight is the blow's, not
+    // eased again behind it (update follows a.to: the same value)
+    a.w = a.to = a.toW = Math.max(a.w, lerp(a.w0 === undefined ? a.w : a.w0, 1, smoothstep(0, 0.85, u)));
     this.windK = 0;
   }
   recover() { this.atk.rec = true; this.atk.swung = false; this.windK = 0; }
