@@ -16,9 +16,9 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
 - **Phase:** 5, environments and new assets. Phases 0 and 1 are done; Phase 2's first pass is closed (its work stays,
   checked: `docs/master/phase2/`); its polishing resumes after Phase 3.
-- **Doing:** the first pass's last checks (the harness `phase2-final`: logic and stills of every screen clean on both
-  devices; its costs, the stall census of every game and every screen in WebKit to come), then its record in
-  `docs/master/phase2/` and a short report to the owner.
+- **Doing:** Phase 5's work (see its progress list): the Proctor and Risk Blaster done; four in-place jobs running as
+  agents in worktrees. Phase 2's first pass: the harness `phase2-final` clean (no fault; every screen inside its
+  budget on both tiers); its stall census and WebKit stills running; its record in `docs/master/phase2/`.
 - **Next steps (Phase 5):** 1) the rebuild list: every screen's environment and its assets judged keep, improve in
   place, or rebuild (new geometry, new generated models, pre-rendered skies), with the evidence (the stills of
   `phase2-final`, the audits, the review); nothing on it polished before it is rebuilt; 2) the budget for new assets
@@ -217,6 +217,18 @@ bar is one character told three ways, and details.
 
 Budget for Phase 5: Tripo at most 145 credits (the Proctor's rig and clips, only if the free retarget falls short);
 fal.ai and Blockade nothing planned; within the caps either way.
+
+**Progress (2026-11-24):**
+- [x] The Proctor as one design (`bdb43c7`): the free retarget did not fall short (contact sheets of all twelve clips,
+      strips in the arena), so no provider was called and the owner's model was not sent anywhere. Boss Rush's last
+      fight, the title's twelfth cell, the hub's topper, the exam hall's statue and the portrait: all the owner's
+      machine, in the exam's own skin, cap, reactor and eyes (`src/js/24f-proctor.js`). The rules IDENTICAL.
+- [x] Risk Blaster (`aafdd1f`): the far rocks light copies of the generated ones; the C drone's nacelles; a wide
+      window's own sky centres (the Mac's nebula now fills the band side to side).
+- [ ] In place, four at once (agents in worktrees, each to be merged after its own check): the title hall (the Mac's
+      prison denser, the end's edges), the hub (cabinet bases, laser halos), the arena (the crowd's motion, the rage in
+      the reflection), Memory Bank (the gold bars and trays).
+- [ ] The gate.
 
 - Carried from Phase 2's gate review: the room captures are taken once (and again at a boss's power-up), so Boss Rush's
   rage (its neon turning red) and its moving searchlights and lightning are not in the deck's reflection: tint the
