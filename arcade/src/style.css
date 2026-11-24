@@ -1480,9 +1480,11 @@ mark { padding: 0 3px; margin: 0 -1px; }
 @media (hover: hover) { .iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
 /* the way forward lights the bar it stands on */
-.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
+/* (Phase 2, 2026-11-24: the glow stands under the first button wherever the row is: on a wide window the row is held to
+   860px in the middle and the glow, at a quarter of the window, lit the empty bar left of it as a teal band) */
+.actions.pinned { background: radial-gradient(min(46%, 400px) 130% at max(23%, calc(50% - 249px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
 .actions.pinned .wrap.one { grid-template-columns: 1fr; }
-.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+.actions.pinned:has(.wrap.one) { background: radial-gradient(min(70%, 640px) 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
 
 /* ---- a focus ring is the keyboard's (see UI.init): none until a key has been used ---- */
 html:not([data-input="keys"]) :focus-visible { outline: none !important; }
