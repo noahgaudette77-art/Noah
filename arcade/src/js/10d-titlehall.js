@@ -143,7 +143,7 @@ function hallRelease(model) {
       seen.add(m);
       for (const k of DISPOSE_MAPS) {
         const t = m[k];
-        if (!t || !t.isTexture) continue;
+        if (!t || !t.isTexture || t === _glowTex) continue; // (the shared glow is every screen's: kept, as disposeTree and GFX.rest keep it)
         t.dispose();
         if (t.image && typeof t.image.close === "function") { try { t.image.close(); } catch (e) { /* already closed */ } }
         m[k] = null;
