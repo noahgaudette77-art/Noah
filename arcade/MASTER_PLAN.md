@@ -14,17 +14,18 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 3, animation and characters. Phases 0, 1 and 5 are done (Phase 5's gate passed 2026-11-24:
-  `docs/master/phase5/`); Phase 2's first pass is closed (`docs/master/phase2/`) and its polishing resumes after Phase 3.
-- **Doing:** Phase 3's fixes, found by its new snap scan (`tools/scenarios/pops.js`: every character's joints, every
-  frame, each game played; see Phase 3 below). Four fixed in `src/` (`31ab448`, `ef097a1`, `19850a2`, `d4e5316`), not yet
-  built into `index.html`: the served page is still the Phase 5 gate's build (`6b73e45`). Work in progress is built to
-  `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a measurement reading `index.html` is
-  never disturbed.
-- **Next steps (Phase 3):** 1) the bosses' planted feet (they skate 5-26% of their height a second, seen in the strikes'
-  wide shots); 2) the rest of the plan's list (stiffness, robot timing, gaze); 3) the gate: after strips at the same
-  moments as `scratchpad/phase3/before`, motion-hz and the pops scan before and after, costs on both tiers, the logic
-  diff, an independent review, the record in `docs/master/phase3/`, a report.
+- **Phase:** 2, image quality: its polishing resumes (the owner's order: 0, 1, 5, 3, then 2). Phases 0, 1, 5 and 3 are
+  done (Phase 3's gate passed 2026-11-24: `docs/master/phase3/`; live at `f10b3c2`); Phase 2's first pass is closed and
+  recorded (`docs/master/phase2/`).
+- **Next steps (Phase 2, resumed):** 1) the smoothstep safety sweep (48 shader lines with a falling edge in 16 files, one
+  file a commit; `node arcade/tools/smoothstep-sweep.js` lists them); 2) polish only, on what Phases 5 and 3 left final:
+  light, materials and colour on the rebuilt environments and new assets (the Proctor everywhere, the far rocks, the title's
+  dressing, the hub's cabinets, the arena's crowd and deck, Memory Bank's bullion); the results bar and the small icons
+  (also carried to Phase 7); 3) stills before and after at the same moments, costs on both tiers, a second independent
+  review, the gate as written, a report.
+- Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
+  measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
+  before/after scans.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -138,7 +139,8 @@ of real lights, half-resolution post effects, visibility-based updates, Low Powe
   undefined; every GPU met so far computes the usual curve (the iPhone and the Mac show them right), so it is a
   safety sweep, not a visible fault: each written `1.0 - smoothstep(edge1, edge0, x)`, one file a commit, the shaders
   compiled on every screen after (the two Phase 5 touched were done in `286910a`; the page's own JavaScript
-  `smoothstep` takes either direction by design).
+  `smoothstep` takes either direction by design). Counted 2026-11-24: 48 lines in 16 files with literal edges (more may have computed
+  edges): `node arcade/tools/smoothstep-sweep.js` lists them.
 Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first (`tools/gen/artbible.js run`, about $0.24); MSAA
 everywhere (no FXAA: the governor's last step gets 2x multisampling; prepared in a stash, built after Phase 1's gate);
 PBR materials from ambientCG and Poly Haven (CC0) where surfaces are flat or smudgy (candidates found: MetalPlates015A/
@@ -157,7 +159,7 @@ Rodin and the better kept; only what is clearly below the bar). The order, from 
 - **Gate:** no blur, no stretched textures, no overlapping text; budgets kept; stills before and after at the same
   moments (deterministic since `13f3007`).
 
-### Phase 3: animation and characters
+### Phase 3: animation and characters (done 2026-11-24)
 Follow-up of the animation pass (2026-11-23): what it left (feet in wide shots, the other games' characters), rigs and
 skinning re-audited, clip sets, state machine, the twelve principles, procedural life, boss personalities.
 - **Gate:** no snapping, no T-pose, no sliding; budgets kept; capture sequences for each main character and two bosses.
@@ -201,8 +203,16 @@ skinning re-audited, clip sets, state machine, the twelve principles, procedural
         caged bosses' twitch (a jolt shaken at 30 Hz, the frame rate's limit: it may read as a strobe more than a
         shudder); the exam's Proctor's armour popping off at a pass. The title's far bosses on a Mac move ten times a
         second (an animation saving): the scan finds no snap in them on either tier.
-  - Next: the bosses' planted feet slide 5-26% of their height a second (golem, Proctor, Perilmonger), seen when a
-        strike widens the lens; the wizard's feet are carried with the lens it is placed against (not a slide on screen).
+  - [x] The bosses' planted feet (`7a4a420`, and the review's fixes `089df5f`, `094cc05`): a foot lock, two-bone leg IK
+        on the clips' bookkeeping. Planted-foot slide, % of the height a second: the golem 12.4/13.4 → 3.4/3.2, the
+        Proctor 7.4/11.7 → 2.1/1.8, the Perilmonger 14.1/13.9 → 4.2/3.4 (the wizard's feet are carried with the lens it is
+        placed against: not a slide on screen).
+  - [x] The gate (passed: `docs/master/phase3/gate-report.md`): the harness `phase3` on `ea8e7ca` without fault (rules
+        IDENTICAL, 13/13, no overlaps, every budget kept); an independent review (seven findings, each fixed: the foot
+        lock's re-plant, knee side, standing height and costs; the scan's coverage of a boss's knees and elbows, its floor,
+        its lens); two more faults the better scan found (the release's first frame, a knee swinging round in a rage),
+        fixed; the final build `f10b3c2` (rules IDENTICAL, 13/13; live). What the scan still flags: the impacts the game
+        means (into its hit-stops) and a few at its threshold.
 
 ### Phase 4: game feel
 Input at once with a small buffer; hit-stop; capped, reducible shake; recoil; impacts; telegraphs; answer feedback;
@@ -536,3 +546,14 @@ the hub's cabinets and lasers, Boss Rush's crowd and deck, Memory Bank's bullion
 census and WebKit clean, every budget kept, the rules IDENTICAL. One fault it missed was found after it by Phase 3's
 snap scan and fixed there: the Proctor's hanging arm. Spend: none (Tripo 0 credits, fal.ai $0). Live at `6b73e45`.
 Tools added: none for the game; the gate's runs are in `docs/master/runs/phase5*` (not in the repository).
+
+**Phase 3 (2026-11-24).** Strips of every main character before any change (`scratchpad/phase3/before/`, the same
+moments in any build), then a scan written to see what strips cannot, what happens between two frames
+(`tools/scenarios/pops.js`: every joint of every character, every frame, each game played; snaps, and planted feet
+sliding). It found the wizard's cast snapping in two ways, a boss's strike snapping after an early wrong answer, the
+Proctor's hanging arm swinging up (a Phase 5 slip: its bones run along their own axes), and every boss's planted feet
+sliding: all fixed, a commit each, with a foot lock (two-bone leg IK) for the feet. An independent review found seven
+faults in the foot lock and the scan, all fixed; the scan, improved, found two more in the foot lock, fixed. What the
+scan still flags are the impacts the game means (each into its hit-stop) and a few at its threshold: Phase 4 weighs the
+impacts as feel. Live at `f10b3c2`. Spend: none. Tools added: `pops.js`. Side files: `index.phase3.html` (work in
+progress), `index.phase5.html` (the Phase 5 build, for before/after scans), both gitignored.
