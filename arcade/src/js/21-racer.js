@@ -310,9 +310,9 @@ function racerGroundMaterial(mirror, shared) {
         // slabs, each a shade of its own; the lamps' light spread from their posts to the walls; each shop's light
         // pooled at its feet; and the shops and their neon lying in the wet ground, read from the street's own record
         // (tStreet, as the walls draw them), so they show on every tier, the mirror or none
-        float cityK = 0.0, wpud = 0.0; vec4 shopHere = vec4(0.0);
-        if (uCityK > 0.0 && ax > 3.6) {
-          cityK = uCityK * (1.0 - smoothstep(40.0, 95.0, vDepth)); // (far off the record would be read too coarsely: it fades)
+        float cityK = 0.0, wpud = 0.0; vec4 shopHere = vec4(0.0); vec3 shopRefl = vec3(0.0);
+        if (uCityK > 0.0) { // (a branch on the uniform alone: what in it reads the record or takes a derivative does so for every pixel of the ground alike)
+          cityK = uCityK * step(3.6, ax) * (1.0 - smoothstep(40.0, 95.0, vDepth)); // (far off the record would be read too coarsely: it fades)
           float walk = smoothstep(9.0 - fx, 9.0 + fx, ax) * uCityK;
           vec2 sl = vec2((ax - 9.0) / 1.1, s / 0.9);
           vec2 sw = max(fwidth(sl), vec2(1e-4));
@@ -321,21 +321,19 @@ function racerGroundMaterial(mirror, shared) {
           vec3 pave = uAsphalt * (1.2 + 0.6 * rh(floor(sl) + 3.0)) * (0.8 + 0.45 * wet) * (1.0 - 0.55 * joint) * (1.0 - 0.4 * wpud);
           pave += vec3(0.035, 0.035, 0.045) * (1.0 - smoothstep(0.04, 0.04 + fx * 1.5, abs(ax - 9.03))); // (the kerb's edge)
           floorc = mix(floorc, pave, walk);
-          shopHere = texture2D(tStreet, vec2(s / ${RACER_LEN}.0, x < 0.0 ? 0.25 : 0.75));
-        }
-        vec3 col = mix(floorc, asphalt, road) + refl;
-        if (cityK > 0.001) {
+          float sv = x < 0.0 ? 0.25 : 0.75;
+          shopHere = texture2D(tStreet, vec2(s / ${RACER_LEN}.0, sv));
           // where the eye's ray, turned up off the water, meets the shopfronts (the walls stand 9.2 to 10.8 m out:
           // 9.8 is taken), and what it finds there: a shop's window, the neon fascia over it, or the wall
-          float tw = ((x < 0.0 ? -9.8 : 9.8) - x) / (x - cameraPosition.x);
-          if (tw > 0.0 && ax < 9.8) {
-            float hw = tw * cameraPosition.y, zw = z + tw * (z - cameraPosition.z);
-            vec4 rs = texture2D(tStreet, vec2((zw - uScroll) / ${RACER_LEN}.0, x < 0.0 ? 0.25 : 0.75));
-            float band = smoothstep(0.6, 1.4, hw) * (1.0 - smoothstep(3.3, 4.0, hw)), fasc = exp(-pow((hw - 4.35) / 0.22, 2.0));
-            vec3 rc = rs.rgb * (rs.a * band * (0.3 + 0.6 * uCityL) + fasc * (0.35 + 0.75 * uCityL));
-            col += rc * mix(0.22, 0.6, max(puddle, wpud)) * cityK * (1.0 - 0.55 * uMirrorOn) * smoothstep(3.6, 4.8, ax);
-          }
+          float dxc = x - cameraPosition.x;
+          float tw = clamp(((x < 0.0 ? -9.8 : 9.8) - x) / (abs(dxc) < 1e-3 ? 1e-3 : dxc), -60.0, 60.0);
+          float hw = tw * cameraPosition.y, zw = z + tw * (z - cameraPosition.z);
+          vec4 rs = texture2D(tStreet, vec2((zw - uScroll) / ${RACER_LEN}.0, sv));
+          float fd = (hw - 4.35) / 0.22, band = smoothstep(0.6, 1.4, hw) * (1.0 - smoothstep(3.3, 4.0, hw)), fasc = exp(-fd * fd);
+          shopRefl = rs.rgb * (rs.a * band * (0.3 + 0.6 * uCityL) + fasc * (0.35 + 0.75 * uCityL)) * step(0.0, tw) * step(ax, 9.8) * smoothstep(3.6, 4.8, ax);
         }
+        vec3 col = mix(floorc, asphalt, road) + refl;
+        col += shopRefl * mix(0.22, 0.6, max(puddle, wpud)) * cityK * (1.0 - 0.55 * uMirrorOn);
         if (uRain > 0.0 && road > 0.5) {
           // rain on the road: rings spread from where each drop lands
           vec2 rc = vec2(x, s) * 1.3; vec2 rf = fract(rc) - 0.5; float rr = rh(floor(rc) + 17.0);
@@ -500,7 +498,8 @@ function racerCityMaterial(shared, P, maps) {
             float frame = (rbox(lp, vec2(0.31, 0.53), vec2(1.59, 1.99), aw) - pane) * win * fine;
             float sill = rbox(lp, vec2(0.25, 0.46), vec2(1.65, 0.53), aw) * win * fine;
             float under = rbox(lp, vec2(0.25, 0.41), vec2(1.65, 0.46), aw) * win * fine;
-            float run = (exp(-pow((lp.x - 0.29) / 0.08, 2.0)) + exp(-pow((lp.x - 1.61) / 0.08, 2.0))) * smoothstep(1.99, 2.4, lp.y) * win * fine;
+            vec2 rd = (lp.xx - vec2(0.29, 1.61)) / 0.08;
+            float run = (exp(-rd.x * rd.x) + exp(-rd.y * rd.y)) * smoothstep(1.99, 2.4, lp.y) * win * fine;
             base = mix(base, vec3(0.045, 0.047, 0.056), frame);
             base *= (1.0 + 0.9 * sill) * (1.0 - 0.45 * under) * (1.0 - 0.3 * run);
             // the pane: dark glass that gives back the far side of the street low down and the sky higher up (more of
