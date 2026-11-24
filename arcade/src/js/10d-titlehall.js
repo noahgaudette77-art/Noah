@@ -17,7 +17,9 @@
 // base and cap are left out of their draw; the end of the hall is not drawn until the haze gives it up (62 m). At LOW
 // (GFX.extras off) bosses past 34 m are not drawn, only those within 22 m move, and none rattles. Reduced effects: no
 // glide (a still view of the end of the hall, the logo up at once), no rattles or flicker, the heads still, the idles
-// slowed.
+// slowed. On a computer (not Assets.phone) the walls between the windows are dressed as a maximum-security block's:
+// conduits, guard rails, block plates and signs, junction boxes, vents, doors, warning lamps, patrolling searchlights
+// (10f-titledress.js: in the cells' own draws, the moving light one more).
 const HALL_WORLDS = [
   // win: the world's sky (assets/ui, a small copy of its panorama); at: the place in it [u, v] that each window shows,
   // the left wall's and the right's (the nebula's two clouds; the dusk's low sun and its high clouds; the storm's
@@ -413,6 +415,7 @@ class HallScene extends Scene3D {
     // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
     // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
     this.kit = buildCellKit(this);
+    if (this.probe && this.kit.patrol) this.probe.hide.push(this.kit.patrol); // (a computer's moving searchlights: not frozen into the floor's reflection)
     // (the steel gives back the hall's capture filtered for its roughness: from the start a filtered copy of the capture
     // not yet drawn (black, as the hall's dark), so the steel's shader is made now, with the hall's, and each capture
     // that arrives changes a picture, not the shader; and the filter's own shader made now: neither mid-glide)
