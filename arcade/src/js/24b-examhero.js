@@ -129,7 +129,7 @@ class ExamMonument {
           float id = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
           vec2 guv = (vec2(mod(floor(id * 16.0), 4.0), floor(id * 4.0)) + clamp((f - 0.5) * 1.5 + 0.5, 0.0, 1.0)) / 4.0;
           float inCell = step(0.17, f.x) * step(f.x, 0.83) * step(0.17, f.y) * step(f.y, 0.83);
-          float rune = texture2D(tRunes, guv).r * inCell * smoothstep(0.02, 0.1, vUv.y) * smoothstep(0.98, 0.86, vUv.y);
+          float rune = texture2D(tRunes, guv).r * inCell * smoothstep(0.02, 0.1, vUv.y) * (1.0 - smoothstep(0.86, 0.98, vUv.y));
           float lit = smoothstep(uFill + 0.03, uFill - 0.03, vUv.y); // 1 below the level of the light
           float breath = 0.82 + 0.18 * sin(uTime * 1.0 + cell.y * 0.7);
           vec3 cold = vec3(0.3, 0.26, 0.75), warm = vec3(1.25, 0.95, 0.5);
