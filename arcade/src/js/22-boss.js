@@ -198,14 +198,18 @@ class BossGame extends QuizGame {
     // assets/ui/mat-deck.webp, a level plate until it arrives), its colour the shared violet-black; its lines are the
     // arena's second colour. One look-up a pixel on every tier and no second drawing of the scene; where the tier draws
     // the floor's mirror (the Mac), the capture gives back less (arenaFrame).
+    // (Phase 5: the capture is the arena calm; as the boss rages, what the deck and the steel give back of it turns red
+    // with the arena's own neon, each pixel's brightness kept (probeTint: as the neon's own rage, arenaGlowMaterial), and
+    // a stroke of lightning lifts it for that moment: see update. No second capture: a frame's stall each time.)
     this.mirror = new Mirror(0);
     this.lineBase = neon(P.b, 1.05);
     this.probe = roomProbe(new THREE.Vector3(0, 3, 0), { size: Assets.phone ? 128 : 256 });
     if (GFX.ok) { try { GFX.pmrem().compileCubemapShader(); } catch (e) { /* made at the first capture instead */ } } // (the steel's filtered copy of it: its shader made now, behind the cover, not as the boss drops in)
     this.plates = cellFlatTexture();
+    this.probeTint = new THREE.Vector4(1, 0.14, 0.24, 0); // (the neon's rage red; how far: the rage)
     this.floor = makeNeonFloor({
       size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
-      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
+      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12, tint: this.probeTint }, // (dark looking down, a mirror at a slant)
       plates: { map: this.plates, size: 2.4, k: 0.8 },
     });
     // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
@@ -236,7 +240,7 @@ class BossGame extends QuizGame {
     const steel = new RacerBatch(["aMetal", "aRough", "aKind"]), glow = new RacerBatch(["aRole"]);
     this.makeArena(steel, glow);
     this.makeCrowd(steel, glow);
-    this.steelMat = arenaSteelMaterial(this.env); // (its reflection: the arena itself once it has been drawn: probeTaken)
+    this.steelMat = arenaSteelMaterial(this.env, this.probeTint); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's)
     this.glowMat = arenaGlowMaterial();
     const sm = new THREE.Mesh(steel.build("color"), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat);
     sm.name = "arena-steel"; gm.name = "arena-neon"; // (named for tools/cost-report.js)
@@ -1143,7 +1147,7 @@ class BossGame extends QuizGame {
       this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
       this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
       this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
-      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it)
+      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
@@ -1153,7 +1157,9 @@ class BossGame extends QuizGame {
     this.floor.material.uniforms.uReflect.value = 0.55;
     // (the deck's capture of the arena gives back less where the tier draws the floor's mirror, the Mac's: the mirror
     // has the arena exactly, the boss with it; the capture adds the crowd, which the mirror leaves out)
-    this.floor.material.uniforms.uProbe.value.x = this.probeK * (GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.45 : 1);
+    // (and a stroke of lightning lifts what it gives back for that moment, as it lights the arena: the capture holds the
+    // storm as it was)
+    this.floor.material.uniforms.uProbe.value.x = this.probeK * (GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.45 : 1) * (1 + 0.45 * (this.arena ? this.arena.flash : 0));
     { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
       const fl = this.floor.material.uniforms.uLine.value;
       let ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;

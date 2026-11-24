@@ -70,19 +70,30 @@ function bossArenaPair(hex) {
 // and the roughness they leave come from a CC0 material (ambientCG Metal009: assets/ui/mat-steel.webp, the normal's x
 // and y in red and green, roughness in blue; a level plate until it arrives), laid along each face by where it is
 // (no UVs): up a pillar, across a panel; a panel has a seam every 1.2 m up it and 1.9 m along it. What it reflects is
-// the arena itself, drawn once (BossGame.probeTaken; until then, env).
-function arenaSteelMaterial(env) {
+// the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
+// turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
+// the steel gives back red neon, as the deck does: BossGame.probeTint).
+function arenaSteelMaterial(env, tint) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env || null, envMapIntensity: 1 });
   m.extensions = { derivatives: true };
   m.userData.tBrush = { value: cellFlatTexture() };
+  m.userData.uEnvTint = { value: tint || new THREE.Vector4(1, 1, 1, 0) };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tBrush = m.userData.tBrush;
+    sh.uniforms.uEnvTint = m.userData.uEnvTint;
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind);")
       .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush; uniform vec4 uEnvTint;")
+      .replace("#include <lights_fragment_maps>", `#include <lights_fragment_maps>
+        #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
+          radiance = mix(radiance, uEnvTint.xyz * max(max(radiance.r, radiance.g), radiance.b), uEnvTint.w);
+          #if defined( RE_IndirectDiffuse ) && defined( STANDARD ) && defined( ENVMAP_TYPE_CUBE_UV )
+            iblIrradiance = mix(iblIrradiance, uEnvTint.xyz * max(max(iblIrradiance.r, iblIrradiance.g), iblIrradiance.b), uEnvTint.w);
+          #endif
+        #endif`)
       .replace("#include <color_fragment>", `#include <color_fragment>
         vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0));
         float sAlong = dot(vWP, sT), sFlat = step(0.6, abs(sN.y));
@@ -96,7 +107,7 @@ function arenaSteelMaterial(env) {
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) + 0.35 * seam, 0.04, 1.0);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam);");
   };
-  m.customProgramCacheKey = () => "arena-steel-1";
+  m.customProgramCacheKey = () => "arena-steel-2";
   return m;
 }
 // The arena's neon, unlit and in one draw: its pillars' inlays and lamps, the rails along its stands, the lights at
@@ -243,6 +254,7 @@ class BossArena {
     this.storm.position.set(-5, 11, -14);
     s.add(this.storm);
     this.boltK = 0; this.boltT = rand(1.5, 3); this.gain = K.gain;
+    this.flash = 0; // (a stroke now, as strong as it is seen: the deck's reflection takes it too, BossGame.update)
   }
   // a stroke of lightning now (the boss lands, rages, dies)
   strike(k = 1) { this.boltK = Math.max(this.boltK, k); this.boltT = rand(3.5, 7.5); this.storm.position.x = rand(-9, 9); }
@@ -251,7 +263,7 @@ class BossArena {
     this.dome.userData.follow(g.camera);
     if ((this.boltT -= d) <= 0) this.strike(rand(0.55, 1));
     this.boltK *= Math.pow(0.012, d); // (gone in half a second)
-    const b = this.boltK * (quiet ? 0.25 : 1);
+    const b = (this.flash = this.boltK * (quiet ? 0.25 : 1));
     this.tint.copy(this.tint0).lerp(this.tintRage, rk * 0.55);
     this.dome.userData.set({ gain: this.gain * (1 + 0.85 * b + 0.12 * rk), tint: this.tint });
     this.storm.intensity = 1.6 * b;
