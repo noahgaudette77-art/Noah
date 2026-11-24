@@ -515,7 +515,8 @@ class LibraryScene extends Scene3D {
     // (the strip behind a chapter's title: violet, its books' colours faint in it. The grade desaturates after the
     // tint, so at 0.12 the tint was lost and the strip read grey: Phase 2, 2026-11-24)
     post.saturation = 1.2 - 0.7 * rk;
-    post.tint = [1 - 0.26 * rk, 1 - 0.52 * rk, 1 + 0.7 * rk];
+    const tint = post.tint || (post.tint = [1, 1, 1]); // (written in place: no new array a frame)
+    tint[0] = 1 - 0.26 * rk; tint[1] = 1 - 0.52 * rk; tint[2] = 1 + 0.7 * rk;
     post.contrast = 1.15 + 0.23 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
