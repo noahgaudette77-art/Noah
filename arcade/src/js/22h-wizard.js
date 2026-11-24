@@ -81,9 +81,9 @@ function wizWard(tex) {
       void main(){
         vec2 d = vUv - uHit; float r = length(d), front = uRip * 1.1;
         vec2 uv = vUv + d / max(r, 1e-3) * sin(r * 46.0 - uRip * 30.0) * 0.012 * (1.0 - uRip); // (the wall shivers out from the blow)
-        float a = ${tex ? "texture2D(uTex, uv).r" : "smoothstep(0.5, 0.45, length(vUv - 0.5)) * (0.3 + 0.7 * step(0.9, fract(r * 14.0)))"};
-        float ring = smoothstep(0.04, 0.0, abs(r - front)) * (1.0 - uRip) * step(length(vUv - 0.5), 0.5); // its wave
-        float spot = smoothstep(0.14, 0.0, r) * (1.0 - uRip); // the blow itself
+        float a = ${tex ? "texture2D(uTex, uv).r" : "(1.0 - smoothstep(0.45, 0.5, length(vUv - 0.5))) * (0.3 + 0.7 * step(0.9, fract(r * 14.0)))"};
+        float ring = (1.0 - smoothstep(0.0, 0.04, abs(r - front))) * (1.0 - uRip) * step(length(vUv - 0.5), 0.5); // its wave
+        float spot = (1.0 - smoothstep(0.0, 0.14, r)) * (1.0 - uRip); // the blow itself
         float cells = step(uBreak * 1.5 - r * 0.9, h(floor(vUv * 11.0) + 0.5)); // (breaks up a cell at a time, nearest the blow first)
         gl_FragColor = vec4(uColor * (a * (0.5 + 0.8 * ring) * cells + ring * 0.55 + spot * 1.2) * uK, 1.0);
       }`,
