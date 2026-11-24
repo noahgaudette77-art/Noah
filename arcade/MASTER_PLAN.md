@@ -26,7 +26,7 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   portraits at their strip's 192 px (`3b9400b`); Memory Bank's right-hand deck and coins (`996ccd1`); Nest Egg Run in
   orange and magenta (cyan 30-36% of the lit picture to 4-6%; `1c186eb`); the exam's Proctor lit ice blue from the front
   (`35e28aa`). The menus' glass over the arcade floor was already deep violet: the grey the review saw came from the
-  library's grade behind those stills (fixed with the banner). `scratchpad/phase2/hues.py` measures a still's colour
+  library's grade behind those stills (fixed with the banner). `tools/hues.py` measures a still's colour
   shares.
 - **In hand (Phase 2, resumed):** three packages in their own worktrees (the title hall: cells' steel and glass, floor,
   Mac walls, the Proctor cell's crack; Boss Rush's arena: pillars and stands, the crowd, a cyan rim; Risk Blaster: the
