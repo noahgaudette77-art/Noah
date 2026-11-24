@@ -284,6 +284,56 @@ function hubDustMaterial(levels) {
       void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(uColor * vB * (1.0 - smoothstep(0.05, 0.5, d)), 1.0); }`,
   });
 }
+// The club lasers, all eight in one mesh (one draw where there were eight, and no work a frame but its fade): each a
+// flat ribbon turned to face the lens, swept in its shader just as the beams were swept before, from its point in the
+// ring above the cabinets to a point on the floor that swings to and fro. Across the ribbon, the beam's hot core as
+// it was (never under three pixels across: thinner, a far beam crawled like a scratch on the picture), and round it a
+// soft halo, the haze it lights (the master overhaul, Phase 5: one beam read as a hairline from the ceiling to the floor).
+const HUB_LASER = { r: 10.5, half: 0.6, core: 0.075, halo: 0.62 };
+function hubLasers(cols) {
+  const n = cols.length, beam = new Float32Array(n * 16), col = new Float32Array(n * 12), idx = [];
+  cols.forEach((c, i) => {
+    const cc = neon(c, 1.25), az = (i / n) * Math.PI * 2 + 0.2, ph = i * 1.7;
+    for (let k = 0; k < 4; k++) { beam.set([az, ph, k >> 1, k & 1 ? 1 : -1], (i * 4 + k) * 4); col.set([cc.r, cc.g, cc.b], (i * 4 + k) * 3); }
+    idx.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 2, i * 4 + 1, i * 4 + 3);
+  });
+  const geo = new THREE.BufferGeometry(), L = HUB_LASER, f = (v, d = 3) => v.toFixed(d);
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 12), 3)); // (each corner is placed in the shader)
+  geo.setAttribute("aBeam", new THREE.BufferAttribute(beam, 4)); // its beam's turn round the room and phase, which end, which side
+  geo.setAttribute("aCol", new THREE.BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uFade: { value: 0 }, uHalo: { value: L.halo } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
+    vertexShader: `attribute vec4 aBeam; attribute vec3 aCol; uniform float uTime; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float az = aBeam.x, ph = aBeam.y, sw = az + sin(uTime * 0.31 + ph) * 0.55, reach = 15.5 + sin(uTime * 0.23 + ph * 2.0) * 2.0;
+        vec3 a = vec3(sin(az) * ${f(L.r, 2)}, ${f(HUB_CEIL - 0.3, 2)}, -cos(az) * ${f(L.r, 2)}), b = vec3(sin(sw) * reach, 0.05, -cos(sw) * reach);
+        vec4 mv = modelViewMatrix * vec4(mix(a, b, aBeam.z), 1.0);
+        vec3 side = cross((modelViewMatrix * vec4(b - a, 0.0)).xyz, mv.xyz);
+        float l = length(side);
+        mv.xyz += (l > 1e-6 ? side / l : vec3(1.0, 0.0, 0.0)) * aBeam.w * ${f(L.half)};
+        vCol = aCol; vB = aBeam.wz;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_NOISE}
+      uniform float uTime; uniform float uFade; uniform float uHalo; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float s = abs(vB.x), cw = ${f(L.core / L.half, 4)}, w = max(cw, fwidth(vB.x) * 1.5);
+        float q = s / w, e = sqrt(max(0.0, 1.0 - q * q));
+        float core = (pow(e, 6.0) * 2.5 + pow(e, 1.5)) * cw / w; // (a cylinder of light seen side on, as the beams were drawn)
+        float crawl = 0.7 + 0.3 * vnoise(vec3(vB.y * 30.0 - uTime * 25.0, vB.x * 3.0, uTime));
+        vec3 c = (vCol + vec3(core * 0.6)) * core * crawl;
+        float halo = 0.68 * exp(-s * s * 16.0) + 0.32 * exp(-s * s * 3.5) * (1.0 - s);
+        c += vCol * uHalo * halo * (0.85 + 0.15 * crawl) * smoothstep(0.0, 0.03, vB.y) * (1.0 - smoothstep(0.9, 1.0, vB.y)); // (it thins out at the floor, where the ribbon meets it)
+        gl_FragColor = vec4(c * uFade, 1.0);
+      }`,
+  }));
+  m.frustumCulled = false;
+  m.renderOrder = 6;
+  m.visible = false;
+  return m;
+}
 // A cabinet's CRT behind its bezel: curved glass, scanlines, a warm-up line
 // when it powers on, and coloured light spilling onto the bezel art.
 function hubScreenMaterial(tex, color) {
@@ -962,14 +1012,8 @@ class HubScene extends Scene3D {
     s.add(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
-    this.lasers = [0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff].map((col, i) => {
-      const beam = makeBeam(col, 1.25);
-      const az = (i / 8) * Math.PI * 2 + 0.2;
-      beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
-      beam.material.uniforms.uFade.value = 0;
-      s.add(beam);
-      return beam;
-    });
+    this.lasers = hubLasers([0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff]);
+    s.add(this.lasers);
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -1350,16 +1394,11 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
-    // the lasers come on once the room has power, then sweep slowly
-    const lf = this.introRunning ? 0 : 1;
-    this.lasers.forEach((b) => {
-      const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
-      u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
-      aimBeam(b, u.from, u.to, 0.075); // (the master overhaul, 2026-11-23: twice as wide and a little fainter, so a beam reads as a beam of light and not as a one-pixel scratch across the picture)
-      const f = b.material.uniforms.uFade;
-      f.value += (lf * 0.4 - f.value) * Math.min(1, dt * 1.5);
-      b.material.uniforms.uTime.value = this.t;
-    });
+    // the lasers come on once the room has power, then sweep slowly (their sweep is in their shader: see hubLasers; its
+    // clock, uTime, is the scene's, set with every shader's by FX.sync below)
+    const lf = this.introRunning ? 0 : 1, lu = this.lasers.material.uniforms;
+    lu.uFade.value += (lf * 0.4 - lu.uFade.value) * Math.min(1, dt * 1.5);
+    this.lasers.visible = lu.uFade.value > 0.002;
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
