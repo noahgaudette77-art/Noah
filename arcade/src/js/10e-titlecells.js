@@ -185,7 +185,12 @@ function cellSteelMaterial() {
         vec3 sTilt = sTx * (sCov.x * sign(vEdge.x - 0.5) / sLx) + sTy * (sCov.y * sign(vEdge.y - 0.5) / sLy);
         // the brushing: the grain of its streaks (the map's roughness, across them) tilts the face a little; finer than
         // the pixel, the map's smaller copies flatten it
-        float sSl = clamp((texture2D(tBrush, vUvM * vec2(1.4, 0.35) + vec2(0.0, 0.002)).b - brush.b) * 175.0, -6.0, 6.0);
+        // (the independent review, 2026-11-24: at 175 times the map's step, to six, the tilt rippled the junction boxes
+        // like water and turned the bars to rust, and where a texel is about a pixel it would shimmer in the glide: a
+        // quarter of it, to two, and gone where a pixel covers more than one of the map's 512 texels)
+        vec2 sUvB = vUvM * vec2(1.4, 0.35);
+        float sFoot = max(fwidth(sUvB.x), fwidth(sUvB.y)) * 512.0;
+        float sSl = clamp((texture2D(tBrush, sUvB + vec2(0.0, 0.002)).b - brush.b) * 40.0, -2.0, 2.0) * (1.0 - smoothstep(0.5, 1.5, sFoot));
         vec3 sStreak = sTy * (-0.03 * sSl * sOn * (1.0 - up) / sLy); // (not on the tread plate: its diamonds are its own)
         // its tone mottled, a little warmer and cooler; grime toward an upright face's foot (its lowest edge)
         float sMot = smoothstep(0.38, 0.56, brush.b);
@@ -212,7 +217,7 @@ function cellSteelMaterial() {
           normal = normalize(normal + sTilt + sStreak);
           normal = normalize(normal + sV * max(max(sNV, 0.02) - dot(normal, sV), 0.0)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-5";
+  m.customProgramCacheKey = () => "cell-steel-6";
   return m;
 }
 
