@@ -24,6 +24,15 @@ const fmtScore = (n) => String(Math.round(n)).padStart(6, "0");
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 // Mastery as a percent; one decimal below 10% so early progress is visible.
 const mpct = (x) => { const v = x * 100; return v > 0 && v < 9.95 ? v.toFixed(1) : String(Math.round(v)); };
+// fn run on a private stream of random numbers from seed (a mulberry32): three.js draws four for the id of every
+// shape, material and object it makes, and the game's own stream, which the capture tool and the regression seed,
+// must not move with how much a builder makes (what is drawn after it, the questions too, would change in their runs)
+function ownRandom(seed, fn) {
+  const R = Math.random;
+  let s = seed | 0;
+  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = R; }
+}
 const REDUCED_MOTION = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const Ease = {

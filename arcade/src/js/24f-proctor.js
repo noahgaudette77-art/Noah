@@ -14,6 +14,8 @@ const PROCTOR_JOINTS = { head: "Head", chest: "Spine02", hips: "Hip", handL: "L_
 const PROCTOR_SIZE = [0.868, 1, 0.446]; // (its box, in its own heights: as wide across the fists as 0.87 of its height)
 // its seams' colours as the exam has them (violet at rest, a hot magenta raging) and its eyes'
 const PROCTOR_SEAM = [0.62, 0.5, 1.35], PROCTOR_SEAM_RAGE = [1.35, 0.5, 2.3], PROCTOR_EYE = [2.3, 1.5, 5.2];
+// its builders draw on a stream of their own (ownRandom): the ids three.js draws for what they make leave the game's be
+const PROCTOR_SEED = 0x5a17c3e9;
 
 // Can it be built? (the machine is inlined in the page; three.js and the exam's code are there)
 function proctorOk() { return typeof BossModel !== "undefined" && BossModel.ok() && typeof bossSkin === "function"; }
@@ -26,8 +28,9 @@ function proctorOk() { return typeof BossModel !== "undefined" && BossModel.ok()
 //   o.local  the copy will be merged into one skinned mesh (the title hall's cells): its material reads each part's
 //            own position from attributes (see hallSkinSteps)
 //   o.env, o.boneEnv  how much the steel and the skull mirror (the exam's 0.9 and 0.6)
-//   o.housing false: no reactor housing (a small copy: the topper)
-function proctorDress(model, env, o = {}) {
+//   o.housing false: no reactor housing (nothing asks for it now: the topper, small as it is, keeps its reactor)
+function proctorDress(model, env, o = {}) { return ownRandom(PROCTOR_SEED, () => proctorDressOn(model, env, o)); }
+function proctorDressOn(model, env, o) {
   const P = BossModel.parts(), parts = model.parts, root = model.scene;
   const seam = new THREE.Color().fromArray(PROCTOR_SEAM), seamRage = new THREE.Color().fromArray(PROCTOR_SEAM_RAGE), eyeCol = new THREE.Color().fromArray(PROCTOR_EYE);
   root.updateMatrixWorld(true);
@@ -91,12 +94,14 @@ function proctorDress(model, env, o = {}) {
 function proctorTopper() {
   const m = Assets.model("boss-all-rig");
   if (!m || !proctorOk()) return null;
-  proctorDress(m, null, { local: true });
-  const it = hallSkinSteps(m);
-  while (!it.next().done);
-  m.animations = [];
-  m.proctor.light(1, 0);
-  return m;
+  return ownRandom(PROCTOR_SEED + 1, () => {
+    proctorDress(m, null, { local: true });
+    const it = hallSkinSteps(m);
+    while (!it.next().done);
+    m.animations = [];
+    m.proctor.light(1, 0);
+    return m;
+  });
 }
 
 // The exam hall's statue of the Proctor (its gallery of the fallen: 24e-examhall.js): the machine as modelled, its cap
@@ -104,7 +109,7 @@ function proctorTopper() {
 // was a statue of the old design (statue-all).
 function proctorStatue() {
   if (!proctorOk()) return null;
-  try { return proctorStatueBuild(); } catch (e) { return null; } // (the gallery goes on without it, as without a statue whose file did not come)
+  try { return ownRandom(PROCTOR_SEED + 2, proctorStatueBuild); } catch (e) { return null; } // (the gallery goes on without it, as without a statue whose file did not come)
 }
 function proctorStatueBuild() {
   const P = BossModel.parts(), geos = [];

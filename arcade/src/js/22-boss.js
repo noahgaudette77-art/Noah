@@ -531,8 +531,9 @@ class BossGame extends QuizGame {
           // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
           const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
           // (Phase 5: each an instance of one card: where it stands, facing the floor, its size, which figure, its seed
-          // and where it is round the ring. The same draws from the randomness, in the same order, as when each was a
-          // card of its own: what is drawn after the crowd, the questions too, comes out as it did)
+          // and where it is round the ring. The same draws from the randomness for each, in the same order, as when each
+          // was a card of its own; but three.js no longer draws an id for a card each, so in the capture tool's seeded
+          // runs what is drawn after the crowd comes out otherwise. The rules are not touched: their regression holds)
           people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
