@@ -118,24 +118,30 @@ class MemoryWorks {
       return p;
     });
 
-    // coin piles in front of each heap of bars (half as large again as a coin in flight ends, so a pile reads as coins)
-    const piles = [[-1.5, 2.3, 4], [-0.2, 3.2, 3], [1.3, 2.6, 8], [2.8, 2.1, 6], [3.9, 2.9, 5]], K = 1.5; // (x counted outward from the door)
+    // coin stacks on a tray before each heap of bars (a coin here is about the size of one at the end of its flight).
+    // (Phase 5, 2026-11-24: they were five piles spilt on the floor, half as large again, beside bars they dwarfed; now
+    // they stand neatly on the velvet of the tray, MEMORY_TRAY, whose children they are: they stand where it stands,
+    // turned as it is turned.)
+    const T = MEMORY_TRAY, piles = T.piles, K = T.K; // (x counted outward from the door)
     const count = piles.reduce((n, p) => n + p[2], 0);
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
+    if (!g.coinGeo.boundingBox) g.coinGeo.computeBoundingBox();
+    const half = Math.max(0.03, g.coinGeo.boundingBox.max.z) * K; // (a coin lies on its face: its half-thickness, the built-in coin's or the model's)
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
-      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count);
-      // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
-      // piles start two coins high and gain a coin for each card banked.
+      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count), sd = grp.userData.side;
+      // Laid level by level across the stacks, so drawing the first n coins raises every stack together: the
+      // stacks start two coins high and gain a coin for each card banked. (Three draws from Math.random a coin, as
+      // ever: what is drawn after the vault is built is drawn as it was)
       let n = 0;
       for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
         if (i >= h) return;
         tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-        m.setMatrixAt(n++, this._m.compose(this._p.set(x * grp.userData.side + rand(-0.04, 0.04), (0.06 + i * 0.122) * K, z + rand(-0.04, 0.04)), tw, big));
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x * sd + rand(-0.04, 0.04) * 0.5, T.bed + half + i * 0.122 * K, z + rand(-0.04, 0.04) * 0.5), tw, big));
       });
       m.count = Math.min(count, 10);
       m.frustumCulled = false;
-      grp.add(m);
+      (grp.userData.tray || grp).add(m);
       return m;
     });
     this.missT = 0;

@@ -229,32 +229,187 @@ function memoryWheelGeometry() {
   return memoryMerge(parts);
 }
 
-// A gold ingot as cast: a trapezoid, its top drawn in, every edge bevelled, so a highlight runs along each edge in
-// the light and each face takes its own part of the room's reflection (the master overhaul, Phase 2, 2026-11-23: a
-// box with its faces painted lighter and darker read as a lump of brown). Flat faces, 44 triangles; the bars' own
-// tones (instance colours) need a colour per corner, all white.
+// A gold ingot as cast and stamped (the master overhaul, Phase 5, 2026-11-24; the audit's #13: the bars still read as
+// blocky lumps). A trapezoid, its top drawn in on every side as an open mould casts it, and every edge rounded: the
+// top's edges on a wide radius, the foot's on a small one, the upright corners between, so a highlight runs along each
+// edge whatever the light (the normals turn through it); each broad face very slightly full (its normals lean out toward
+// its edges), so a face carries a sweep of the room's reflection and not one flat colour; and in the top a panel sunk
+// with a bevelled edge, the assay's marks struck into it (memoryStampTexture: the top's uv is the panel seen from above).
+// Phase 2's bar was flat facets with a sliver of bevel (44 triangles): at the door it read as blocks of one orange.
+// 400 triangles, indexed; its size is the old bar's, so every stack's spacing holds. The bars' own tones (instance
+// colours) need a colour per vertex, all white.
 function memoryIngotGeometry() {
-  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56, C = 0.055;
-  // an octagon: a rectangle (half-sizes w, d) at height y, its corners cut by k
-  const ring = (w, d, y, k) => [[w - k, d], [w, d - k], [w, -(d - k)], [w - k, -d], [-(w - k), -d], [-w, -(d - k)], [-w, d - k], [-(w - k), d]].map(([x, z]) => new THREE.Vector3(x, y, z));
-  const t = (H - C) / H, r0 = ring(W0, D0, 0, C * 1.4), r1 = ring(W0 + (W1 - W0) * t, D0 + (D1 - D0) * t, H - C, C * 1.4), r2 = ring(W1 - C, D1 - C, H, C);
-  const mid = new THREE.Vector3(0, H / 2, 0), pos = [], ab = new THREE.Vector3(), ac = new THREE.Vector3(), cen = new THREE.Vector3();
-  const tri = (a, b, c) => { // (wound so its face looks away from the bar's middle: the bar is convex)
-    ab.subVectors(b, a); ac.subVectors(c, a); cen.copy(a).add(b).add(c).multiplyScalar(1 / 3).sub(mid);
-    const out = ab.cross(ac).dot(cen) > 0;
-    for (const v of out ? [a, b, c] : [a, c, b]) pos.push(v.x, v.y, v.z);
+  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56; // half-length and half-depth at the foot and the top, height
+  const RT = 0.075, RB = 0.026, RV = 0.075, NC = 4; // radii: the top's edges, the foot's, the upright corners (in plan); steps a corner
+  const PANEL = 0.07, SINK = 0.024, PR = 0.035; // the stamped panel: its margin inside the top, how deep it is sunk, its corners
+  const FULL = { end: 0.07, long: 0.11, rise: 0.06, dome: 0.05 }; // how full the faces are: the lean of their normals at their edges (radians)
+  const sx = (W0 - W1) / H, sz = (D0 - D1) / H, ax = Math.atan(sx), az = Math.atan(sz), lean = (ax + az) / 2;
+  // a ring of the outer skin where the foot's (top = false) or the top's rounding turns its normal to angle f off the level
+  const arc = (top, f) => {
+    const R = top ? RT : RB, yc = top ? H - R : R;
+    return { hx: W0 - sx * yc - R / Math.cos(ax) + R * Math.cos(f), hz: D0 - sz * yc - R / Math.cos(az) + R * Math.cos(f), y: yc + R * Math.sin(f) };
   };
-  for (let i = 0; i < 8; i++) {
-    const j = (i + 1) % 8;
-    tri(r0[i], r0[j], r1[j]); tri(r0[i], r1[j], r1[i]); // a side
-    tri(r1[i], r1[j], r2[j]); tri(r1[i], r2[j], r2[i]); // its bevel
+  const rings = [], add = (r, el, o = {}) => rings.push(Object.assign({ hx: r.hx, hz: r.hz, y: r.y, el, rc: Math.max(0.008, RV - (D0 - sz * r.y - r.hz)), full: 1 }, o));
+  add(arc(false, -Math.PI / 2), -Math.PI / 2); // the foot's edge
+  add(arc(false, -0.45), -0.45);
+  add(arc(false, lean), lean - FULL.rise); // the wall, from its foot...
+  for (let k = 0; k <= 4; k++) { const f = lean + ((Math.PI / 2 - lean) * k) / 4; add(arc(true, f), k ? (k === 4 ? Math.PI / 2 - FULL.dome : f) : lean + FULL.rise, { full: 1 - k / 4 }); } // ...to its top, and round onto the top
+  const t = rings[rings.length - 1], P = { hx: t.hx - PANEL, hz: t.hz - PANEL, y: H };
+  add(P, Math.PI / 2, { rc: PR, full: 0 }); // the panel's edge, on the level top
+  add(P, Math.PI / 4, { rc: PR, full: 0, inward: true, crease: true }); // its sunk edge, bevelled (a crease: the same ring, turned)
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 4, { rc: PR - SINK * 0.6, full: 0, inward: true });
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 2, { rc: PR - SINK * 0.6, full: 0, crease: true }); // the struck field
+  const pos = [], nor = [], uv = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz) => { pos.push(x, y, z); nor.push(nx, ny, nz); uv.push(0.5 + x / (2 * P.hx), 0.5 - z / (2 * P.hz)); return pos.length / 3 - 1; };
+  rings.forEach((r) => {
+    r.at = pos.length / 3;
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (r.hx - r.rc), cz = (k < 2 ? 1 : -1) * (r.hz - r.rc);
+      const da = (k % 2 ? FULL.long : FULL.end) * r.full, db = (k % 2 ? FULL.end : FULL.long) * r.full; // (the face this corner leaves, the face it turns onto)
+      for (let j = 0; j <= NC; j++) {
+        const a = k * PI2 + (j / NC) * PI2, b = k * PI2 + da + (j / NC) * (PI2 - da - db), c = Math.cos(r.el) * (r.inward ? -1 : 1);
+        vert(cx + r.rc * Math.cos(a), r.y, cz + r.rc * Math.sin(a), Math.cos(b) * c, Math.sin(r.el), Math.sin(b) * c);
+      }
+    }
+  });
+  // wound to face the way its corners' normals do
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => {
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) {
+    if (rings[i + 1].crease) continue; // (a crease's two rings stand on the same line)
+    const p = rings[i].at, q = rings[i + 1].at;
+    for (let j = 0; j < M; j++) { const n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
   }
-  for (let i = 1; i < 7; i++) { tri(r0[0], r0[i], r0[i + 1]); tri(r2[0], r2[i], r2[i + 1]); } // the foot and the top
+  const fan = (r, y, ny) => { const c = vert(0, y, 0, 0, ny, 0); for (let j = 0; j < M; j++) tri(c, r.at + j, r.at + ((j + 1) % M)); };
+  fan(rings[0], 0, -1);
+  fan(rings[rings.length - 1], H - SINK, 1);
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   g.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(pos.length).fill(1), 3));
-  g.computeVertexNormals();
+  g.setIndex(idx);
   return g;
+}
+
+// The assay's marks struck into a bar's sunk panel, as relief (a bump map: dark is struck deep): a fine border, the
+// fineness large, FINE GOLD over it and a bar number under it, the arcade's egg in an oval at each end. Drawn once per
+// screen; the panel maps the whole picture, so its edge (and everything outside the panel) is left level.
+function memoryStampTexture() {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 128;
+  const x = c.getContext("2d");
+  x.fillStyle = "#808080";
+  x.fillRect(0, 0, 512, 128);
+  x.strokeStyle = x.fillStyle = "#2a2a2a";
+  x.lineWidth = 4;
+  x.strokeRect(24, 18, 464, 92);
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.font = 'bold 50px Georgia, "Times New Roman", serif';
+  x.fillText("999.9", 256, 66);
+  x.font = 'bold 19px Georgia, "Times New Roman", serif';
+  x.fillText("FINE  GOLD", 256, 32);
+  x.fillText("Nº 0731", 256, 98);
+  for (const ex of [74, 438]) {
+    x.lineWidth = 3;
+    x.beginPath(); x.ellipse(ex, 64, 30, 34, 0, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.ellipse(ex, 68, 14, 19, 0, 0, Math.PI * 2); x.fill(); // the egg
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = GFX.ok ? Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()) : 1; // (the tops are seen at a slant)
+  return t;
+}
+
+// A number in [0, 1) from an integer: a scene's small differences (a bar's tone, its set) without drawing from
+// Math.random while it is built (a draw there moves everything drawn after it: the capture tool seeds it).
+function memoryHash(n) {
+  let h = Math.imul((n | 0) ^ 0x2c1b3c6d, 0x297a2d39);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+// Made on a stream of its own: a three.js object draws four numbers from Math.random for its uuid as it is made, so a
+// new piece in the vault would move every draw after it (the sparks, the coins' flights, a capture's stills). The
+// pieces Phase 5 added (the stamp, the trays) are made inside this: their uuids' numbers come from memoryHash, and the
+// vault draws from Math.random exactly as often as it did.
+let memoryQuietN = 0;
+function memoryQuiet(make) {
+  const was = Math.random;
+  Math.random = () => memoryHash(0x40000 + memoryQuietN++);
+  try { return make(); } finally { Math.random = was; }
+}
+
+// The gold at each lower corner (Phase 5): where the heap stands in its group and its turn (x is counted outward from
+// the door, mirrored on the right), and the coins' tray before it: where it stands, its turn, its inside (half-sizes,
+// corner radius), its rim's height and its velvet's; the coin's scale and the stacks on it ([x outward, z toward the
+// lens, coins at most], 26 coins in all: drawn level by level, so every stack rises together, a coin for each card
+// banked: MemoryWorks). (The heap stands a little out from its group's place: the deck at the plinth's end hid its foot.)
+const MEMORY_TRAY = {
+  heapX: 0.6, heapZ: -0.3, heapYaw: 0.35, x: 0, z: 4.3, yaw: 0.2, hx: 1.8, hz: 1.25, rc: 0.28, height: 0.3, bed: 0.09, K: 0.95,
+  piles: [[-1.12, -0.56, 5], [0, -0.56, 8], [1.12, -0.56, 6], [-0.56, 0.58, 3], [0.56, 0.58, 4]],
+};
+
+// The coins' tray: a brass rim rolled over at its lip round a bed of violet velvet (gold's complement: the coins stand
+// out on it, where on the floor they read as a brown spill), its corners rounded, the velvet shaded along the rim. One
+// mesh for both (aMat carries each vertex's metalness, roughness and sheen: memoryPropMaterial): one draw a tray. 240
+// triangles.
+function memoryTrayGeometry() {
+  const T = MEMORY_TRAY, NC = 3, RL = 0.06, H = T.height, FL = 0.05, tf = Math.atan(FL / (H - RL));
+  const brass = [new THREE.Color(0xd9a646), 1, 0.3, 0], velvet = [new THREE.Color(0x1c0828), 0, 0.92, 0.55], shaded = [new THREE.Color(0x0a0310), 0, 0.95, 0.3];
+  // each ring: [out from the inside's edge, height, its normal's angle off the level, faces in?, material, a crease?]
+  const rings = [
+    [2 * RL - FL, 0, -tf, false, brass], [2 * RL, H - RL, -tf, false, brass], // the outer wall, wider at the lip
+    [RL + RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, false, brass], [RL, H, Math.PI / 2, false, brass], // the rolled lip
+    [RL - RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, true, brass], [0, H - RL, 0, true, brass], [0, T.bed, 0, true, brass], // the inner wall
+    [0, T.bed, Math.PI / 2, false, shaded, true], [-0.22, T.bed, Math.PI / 2, false, velvet], // the velvet (a crease: the same ring, turned up), in the rim's shade at its edge
+  ];
+  const pos = [], nor = [], col = [], mat = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz, m) => { pos.push(x, y, z); nor.push(nx, ny, nz); col.push(m[0].r, m[0].g, m[0].b); mat.push(m[1], m[2], m[3]); return pos.length / 3 - 1; };
+  const at = rings.map(([o, y, el, inward, m]) => {
+    const first = pos.length / 3, hx = T.hx + o, hz = T.hz + o, rc = T.rc + o, c = Math.cos(el) * (inward ? -1 : 1);
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (hx - rc), cz = (k < 2 ? 1 : -1) * (hz - rc);
+      for (let j = 0; j <= NC; j++) { const a = k * PI2 + (j / NC) * PI2; vert(cx + rc * Math.cos(a), y, cz + rc * Math.sin(a), Math.cos(a) * c, Math.sin(el), Math.sin(a) * c, m); }
+    }
+    return first;
+  });
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => { // (wound to face the way its corners' normals do)
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) if (!rings[i + 1][5]) for (let j = 0; j < M; j++) { const p = at[i], q = at[i + 1], n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
+  const mid = vert(0, T.bed, 0, 0, 1, 0, velvet), last = at[at.length - 1];
+  for (let j = 0; j < M; j++) tri(mid, last + j, last + ((j + 1) % M));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute("aMat", new THREE.Float32BufferAttribute(mat, 3));
+  g.setIndex(idx);
+  return g;
+}
+
+// A material for a small prop of several finishes in one draw (the coins' trays): its colour from the vertices, and
+// each vertex's metalness, roughness and sheen from aMat (sheen: cloth's light at a grazing angle, its own colour).
+// Mirrors the vault as the other metals do.
+function memoryPropMaterial(env) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 0.5, envMap: env, envMapIntensity: 1.3 });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aMat; varying vec3 vMat;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvMat = aMat;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vMat;")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = vMat.x; roughnessFactor = vMat.y;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vMat.z * pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.0);");
+  };
+  m.customProgramCacheKey = () => "memory-prop";
+  return m;
 }
 
 // Pooled sparkles: four-point stars that fly, fall and fade (coin trails, the burst at
@@ -389,9 +544,11 @@ class MemoryGame extends QuizGame {
     const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
-    // the bars' gold: cast gold, polished, a mirror of the vault round it; each bevelled face takes its own part of that
-    // and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast)
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.21, envMap: env, envMapIntensity: 1.65, emissive: 0x281603 }), { scale: 1.5, height: 0.0012, scratch: 1.1 });
+    // the bars' gold: cast gold, polished, a mirror of the vault round it; each rounded edge and full face takes its own
+    // part of that and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast); the
+    // assay's marks struck into the top (Phase 5: memoryIngotGeometry, memoryStampTexture; not on a phone, where a bar
+    // is a few dozen pixels long and its marks would be one or two)
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, grain: 0.35, scratch: 0.9 }); // (a polished face: the grain's ripple a third of the scratches' depth)
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
     const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
@@ -569,20 +726,34 @@ class MemoryGame extends QuizGame {
     s.add(pool);
     const lieOnFloor = [this.floor, shade, pool]; // (what lies on the floor is not in its reflection: see the probe)
 
-    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
-    // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
+    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), a tray of coins before
+    // it, and in the middle, on a plinth at the door's foot, the bars this session has banked: one for every card,
+    // laid end-on in a pyramid.
+    // (Phase 5, 2026-11-24: a heap was six bars laid end to end in a wall of three, two and one, its long faces square
+    // to the lens: one block of orange. Now ten, laid side by side and nested a course on a course, four, three, two,
+    // one, as bullion is stacked, and turned so the lens sees the long faces and the ends both; the coins stand in neat
+    // stacks on a velvet tray, MEMORY_TRAY.)
     const ingot = memoryIngotGeometry(), S = 1.3, SB = 1.6, tone = new THREE.Color();
-    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.86, 1.06) * k)); // no two bars poured quite alike
+    const cast = (m, i, k = 1, r = rand(0.86, 1.06)) => m.setColorAt(i, tone.setScalar(r * k)); // no two bars poured quite alike
+    const trayGeo = memoryQuiet(memoryTrayGeometry), trayMat = memoryQuiet(() => memoryPropMaterial(env)); // (memoryQuiet: no new draw from Math.random)
     this.stacks = [-1, 1].map((sd) => {
-      const st = new THREE.InstancedMesh(ingot, barGold, 6);
-      let n = 0;
-      for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
-        st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
-        cast(st, n++, 0.86); // (the heaps in the corners are dressing: they sit a little darker than the bars you bank)
+      const st = new THREE.InstancedMesh(ingot, barGold, 10);
+      // (twelve draws from Math.random a heap, as the heap of six drew: whatever is drawn after the vault is built, its
+      // sparks and the stills', is drawn as it was. The first six bars take their tone and set from them, the four more
+      // from a hash of their place: no new draw)
+      const pour = Array.from({ length: 12 }, () => rand()), pitch = 2 * 0.48 * S + 0.06;
+      for (let L = 0, n = 0; L < 4; L++) for (let i = 0; i < 4 - L; i++, n++) {
+        const a = n < 6 ? pour[2 * n] : memoryHash(n * 2 + sd * 50), b = n < 6 ? pour[2 * n + 1] : memoryHash(n * 2 + 1 + sd * 50);
+        st.setMatrixAt(n, this._m.compose(this._p.set((a - 0.5) * 0.1, L * 0.56 * S, (i - (3 - L) / 2) * pitch), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, (b - 0.5) * 0.05), this._v.set(S, S, S)));
+        cast(st, n, 1, 0.88 + 0.16 * a);
       }
       st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
-      st.rotation.y = -sd * 0.3;
+      st.position.set(sd * MEMORY_TRAY.heapX, 0, MEMORY_TRAY.heapZ);
+      st.rotation.y = sd * MEMORY_TRAY.heapYaw;
+      const T = MEMORY_TRAY, tray = memoryQuiet(() => new THREE.Mesh(trayGeo, trayMat));
+      tray.position.set(sd * T.x, 0, T.z);
+      tray.rotation.y = sd * T.yaw;
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
@@ -590,10 +761,11 @@ class MemoryGame extends QuizGame {
       glow.layers.set(1);
       lieOnFloor.push(glow);
       const g = new THREE.Group();
-      g.add(st, cone, glow);
+      g.add(st, tray, cone, glow);
       s.add(g);
       g.userData.side = sd;
       g.userData.bars = st;
+      g.userData.tray = tray; // (the coins stand on it: MemoryWorks)
       return g;
     });
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.34, 4.0), steel);
@@ -1046,7 +1218,10 @@ class MemoryGame extends QuizGame {
       } else {
         const st = pick(this.stacks);
         if (this.bank.count && Math.random() < 0.5) this.sparks.emit(rand(-4.2, 4.2) * Math.min(1, this.bank.count / 6), rand(0.7, 1.4), 8.1, 0, 0, 0, 0.45, rand(0.5, 0.9), hot);
-        else this.sparks.emit(st.position.x + rand(-3, 3), rand(0.5, 2.0), st.position.z + rand(0.2, 0.9), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        else { // on the heap's face to the lens, which steps back a course as it rises (Phase 5: the heap a nested pyramid)
+          const T = MEMORY_TRAY, sd = st.userData.side, a = sd * T.heapYaw, u = rand(-3, 3) * 0.4, y = rand(0.5, 2.0) * 1.3, out = 2.65 - 0.89 * y + rand(0.2, 0.9) * 0.3;
+          this.sparks.emit(st.position.x + sd * T.heapX + Math.cos(a) * u + Math.sin(a) * out, y, st.position.z + T.heapZ - Math.sin(a) * u + Math.cos(a) * out, 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        }
       }
     }
     { const k = this.dist / 22;
