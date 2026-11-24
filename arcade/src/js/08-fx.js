@@ -287,7 +287,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // the room drawn once from inside it into a cube (map, mipmapped; see roomProbe), the room's box (min, max: Vector3)
   // and where it was drawn from (at); the floor gives the room back where the reflected ray meets the box's walls (so a
   // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel:
-  // f0 of it looking straight down, 0.3 unless given).
+  // f0 of it looking straight down, 0.3 unless given). probe.tint (a Vector4, Phase 5): the room as it is now where it
+  // was drawn as it was: what it gives back turned toward the colour in xyz (each pixel's brightness kept), by w. Boss
+  // Rush's rage: its neon turns red after the capture was taken.
   // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
@@ -309,8 +311,10 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
+  if (probe && probe.tint) uniforms.uProbeTint = { value: probe.tint };
   const defines = {};
   if (probe) defines.PROBE = "";
+  if (probe && probe.tint) defines.PROBE_TINT = "";
   if (probe && plates) defines.PLATES = "";
   if (probe && plates && plates.tint) defines.PLATES_TINT = "";
   const mat = new THREE.ShaderMaterial({
@@ -331,6 +335,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES_TINT
       uniform vec3 uPlatesTint;
       #endif
+      #ifdef PROBE_TINT
+      uniform vec4 uProbeTint;
+      #endif
       void main(){
         vec3 col = uBase;
         #ifdef PROBE
@@ -350,7 +357,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           vec3 t1 = (uBoxMax - vWorld) / Rs, t2 = (uBoxMin - vWorld) / Rs, tf = max(t1, t2);
           vec3 dir = vWorld + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn; from outside the box, straight from there)
           float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
+          #ifdef PROBE_TINT
+          vec3 pr = textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb;
+          col += mix(pr, uProbeTint.xyz * max(max(pr.r, pr.g), pr.b), uProbeTint.w) * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #else
           col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #endif
         }
         #endif
         float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;

@@ -70,19 +70,30 @@ function bossArenaPair(hex) {
 // and the roughness they leave come from a CC0 material (ambientCG Metal009: assets/ui/mat-steel.webp, the normal's x
 // and y in red and green, roughness in blue; a level plate until it arrives), laid along each face by where it is
 // (no UVs): up a pillar, across a panel; a panel has a seam every 1.2 m up it and 1.9 m along it. What it reflects is
-// the arena itself, drawn once (BossGame.probeTaken; until then, env).
-function arenaSteelMaterial(env) {
+// the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
+// turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
+// the steel gives back red neon, as the deck does: BossGame.probeTint).
+function arenaSteelMaterial(env, tint) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env || null, envMapIntensity: 1 });
   m.extensions = { derivatives: true };
   m.userData.tBrush = { value: cellFlatTexture() };
+  m.userData.uEnvTint = { value: tint || new THREE.Vector4(1, 1, 1, 0) };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tBrush = m.userData.tBrush;
+    sh.uniforms.uEnvTint = m.userData.uEnvTint;
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind);")
       .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush; uniform vec4 uEnvTint;")
+      .replace("#include <lights_fragment_maps>", `#include <lights_fragment_maps>
+        #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
+          radiance = mix(radiance, uEnvTint.xyz * max(max(radiance.r, radiance.g), radiance.b), uEnvTint.w);
+          #if defined( RE_IndirectDiffuse ) && defined( STANDARD ) && defined( ENVMAP_TYPE_CUBE_UV )
+            iblIrradiance = mix(iblIrradiance, uEnvTint.xyz * max(max(iblIrradiance.r, iblIrradiance.g), iblIrradiance.b), uEnvTint.w);
+          #endif
+        #endif`)
       .replace("#include <color_fragment>", `#include <color_fragment>
         vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0));
         float sAlong = dot(vWP, sT), sFlat = step(0.6, abs(sN.y));
@@ -96,7 +107,7 @@ function arenaSteelMaterial(env) {
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) + 0.35 * seam, 0.04, 1.0);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam);");
   };
-  m.customProgramCacheKey = () => "arena-steel-1";
+  m.customProgramCacheKey = () => "arena-steel-2";
   return m;
 }
 // The arena's neon, unlit and in one draw: its pillars' inlays and lamps, the rails along its stands, the lights at
@@ -151,35 +162,56 @@ function bossPillar(st, gl, at, A, B, hex) {
 // figure takes (lit from above: heads and shoulders most); green: its rim, along its top and upper sides, where the
 // light behind it catches its edge; blue: what glows of its own (a light stick, a phone held up, a sign's lit border);
 // alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light stick, a bun, a sign.
+// Each is there twice (Phase 5): as it stands (cells 0-7), and cheering (8-15: both fists up, hands clapped over its
+// head, its phone held up high, the pair's outer arms up, its light stick swung across, its sign waved), its head and
+// body where they were, so the crowd's shader can show either in its place (BossGame.makeCrowd). Side by side, not one
+// row over the other: a figure's smaller copies never take in the feet of the one above it.
 let _crowdTex = null;
 const BOSS_CROWD_N = 8;
 function bossCrowdTexture() {
   if (_crowdTex) return _crowdTex;
-  const W = 128, N = BOSS_CROWD_N, WN = W * N, cv = document.createElement("canvas"), ac = document.createElement("canvas");
-  cv.width = ac.width = WN; cv.height = ac.height = W;
-  const x = cv.getContext("2d"), y = ac.getContext("2d");
-  x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = "#fff";
+  const W = 128, N = BOSS_CROWD_N, WN = W * N * 2, cv = document.createElement("canvas"), ac = document.createElement("canvas"), dc = document.createElement("canvas");
+  cv.width = ac.width = dc.width = WN; cv.height = ac.height = dc.height = W;
+  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, dark: only its border is lit)
+  x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = z.fillStyle = "#fff";
   const head = (c, hx, hy, r) => { c.beginPath(); c.arc(hx, hy, r, 0, Math.PI * 2); c.fill(); };
   const body = (c, bx, w, top) => { c.beginPath(); c.moveTo(bx - w, W); c.quadraticCurveTo(bx - w, top + 4, bx - w * 0.55, top); c.lineTo(bx + w * 0.55, top); c.quadraticCurveTo(bx + w, top + 4, bx + w, W); c.closePath(); c.fill(); };
   const limb = (c, ax, ay, bx, by, wd) => { c.lineWidth = wd; c.lineCap = "round"; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke(); };
-  for (let k = 0; k < N; k++) {
-    const cx = k * W + W / 2;
-    if (k === 3) { body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14); continue; } // a pair
+  const sign = (cx, cy, turn) => { // (its board, the lit border on it, and where it is dark, turned about its middle)
+    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, () => { y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); }], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
+  };
+  for (let f = 0; f < 2; f++) for (let k = 0; k < N; k++) {
+    const cx = (f * N + k) * W + W / 2, up = f === 1;
+    if (k === 3) { // a pair
+      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14);
+      if (up) { limb(x, cx - 36, 80, cx - 48, 30, 9); limb(x, cx + 36, 84, cx + 47, 34, 9); } // (each throws its outer arm up)
+      continue;
+    }
     body(x, cx, k === 6 ? 30 : 34, 66); head(x, cx, 44, k === 6 ? 16 : 18); x.fillRect(cx - 7, 52, 14, 16);
-    if (k === 1) { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } // both arms up
-    if (k === 2) { x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5); y.fillRect(cx - 12, 82, 11, 15); } // a cap; a phone lit at the chest
-    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); } // a hood
-    if (k === 5) { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); } // one arm up, a light stick in it
-    if (k === 6) head(x, cx + 3, 23, 9); // a bun
-    if (k === 7) { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); x.fillRect(cx - 42, 6, 84, 30); y.lineWidth = 4; y.strokeRect(cx - 40, 8, 80, 26); } // a sign held up, its border lit
+    if (k === 0 && up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } // (both fists up)
+    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } } // both arms up (clapping over its head, elbows out)
+    if (k === 2) { // a cap; a phone lit at the chest (held up high to film it)
+      x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5);
+      if (up) { limb(x, cx - 26, 74, cx - 36, 24, 11); x.fillRect(cx - 43, 3, 14, 20); y.fillRect(cx - 41, 5, 10, 16); } else y.fillRect(cx - 12, 82, 11, 15);
+    }
+    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood (fists up)
+    if (k === 5) { // one arm up, a light stick in it (swung across, the other arm up too)
+      if (up) { limb(x, cx + 26, 74, cx + 16, 26, 11); limb(x, cx + 14, 28, cx - 4, 5, 5); limb(y, cx + 10, 22, cx - 4, 5, 5); limb(x, cx - 26, 74, cx - 38, 30, 11); }
+      else { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); }
+    }
+    if (k === 6) { head(x, cx + 3, 23, 9); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun (both arms up)
+    if (k === 7) { // a sign held up, its border lit (waved: tipped, and over to one side)
+      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14); }
+      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0); }
+    }
   }
-  const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
+  const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, D = z.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
   const al = (i, j) => (i < 0 || j < 0 || i >= WN || j >= W ? 0 : M[(j * WN + i) * 4 + 3]);
   for (let j = 0; j < W; j++) for (let i = 0; i < WN; i++) {
     const a = al(i, j);
     if (!a) continue;
     const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255, o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
-    out[o] = Math.round(255 * (j < 38 && (i % W) > 20 && (i % W) < 108 && Math.floor(i / W) === 7 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
+    out[o] = Math.round(255 * (D[(j * WN + i) * 4 + 3] > 127 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
     out[o + 1] = Math.round(255 * clamp(Math.max(top, side * 0.55) * (0.45 + 0.65 * up), 0, 1));
     out[o + 2] = G[(j * WN + i) * 4 + 3];
     out[o + 3] = a;
@@ -222,6 +254,7 @@ class BossArena {
     this.storm.position.set(-5, 11, -14);
     s.add(this.storm);
     this.boltK = 0; this.boltT = rand(1.5, 3); this.gain = K.gain;
+    this.flash = 0; // (a stroke now, as strong as it is seen: the deck's reflection takes it too, BossGame.update)
   }
   // a stroke of lightning now (the boss lands, rages, dies)
   strike(k = 1) { this.boltK = Math.max(this.boltK, k); this.boltT = rand(3.5, 7.5); this.storm.position.x = rand(-9, 9); }
@@ -230,7 +263,7 @@ class BossArena {
     this.dome.userData.follow(g.camera);
     if ((this.boltT -= d) <= 0) this.strike(rand(0.55, 1));
     this.boltK *= Math.pow(0.012, d); // (gone in half a second)
-    const b = this.boltK * (quiet ? 0.25 : 1);
+    const b = (this.flash = this.boltK * (quiet ? 0.25 : 1));
     this.tint.copy(this.tint0).lerp(this.tintRage, rk * 0.55);
     this.dome.userData.set({ gain: this.gain * (1 + 0.85 * b + 0.12 * rk), tint: this.tint });
     this.storm.intensity = 1.6 * b;
