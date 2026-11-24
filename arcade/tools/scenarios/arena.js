@@ -8,7 +8,8 @@
 //   rage    the fight once the boss rages, the deck's reflection taken as the game takes it (once, calm, when the boss
 //           has powered up): 10-boss-rage (the question up, the arena red), 10-boss-rage-wide (the lens drawn back as
 //           its strike winds up: the deck in view), 10-boss-rage-deck (the same, the question and the answers hidden:
-//           the deck under them)
+//           the deck under them); where the deck takes the rage, 10-boss-rage-deck-untinted (that moment again with
+//           its tint held at naught: the deck as it was before)
 //   crowd   the stands behind the boss seen close, the lens held on them: crowd-idle (waiting: 1.2 s), crowd-cheer (a
 //           right answer: its blow lands 0.3 s on; 1.3 s), crowd-stir (a wrong one: the boss strikes; 0.8 s); each a
 //           strip, its frames kept
@@ -46,6 +47,9 @@ module.exports = async (cap) => {
     // the same moment with the question and the answers hidden (test only), so the deck under them shows
     await cap.eval(() => { for (const el of document.querySelectorAll(".scr-game .qpanel, .scr-game .answers")) el.style.visibility = "hidden"; });
     await still("10-boss-rage-deck");
+    // (where the deck takes the rage, Phase 5: the same moment again with that tint held at naught, as it was before:
+    // what the deck and the steel give back of the calm capture, unturned. Test only)
+    if (await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (!s.probeTint) return false; const t = s.probeTint; s.probeTint = t.clone(); t.w = 0; return true; })) await still("10-boss-rage-deck-untinted");
   }
   if (has("crowd")) {
     await open();
