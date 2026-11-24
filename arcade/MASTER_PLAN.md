@@ -12,64 +12,19 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 ## Now
 
-- **Phase:** 2, image quality.
-- **Done so far:** the art bible and its reference sheet (`21c7dbc`); no FXAA on any tier (`0138cc2`); interface faults
-  (`f4ce144`: the answers stand back behind an explanation, TAP TO ENTER backed, the menus' backdrop darker, larger
-  stars); the title hall's reflective deck floor, glass and steel (`eeedda6`: a room probe, CC0 deck, tread and brushed
-  steel); stills nearer deterministic (`922a37f`: Boss Rush, Memory Bank, the exam, the guide and the menus the same
-  run after run; Risk Blaster and Nest Egg Run still vary in their questions).
-- **Also done:** Memory Bank's vault room (an agent's work, reviewed and merged: `a2c64b8`, `d699efc`, rebuilt
-  `56acac2`: a reflective deck, brushed-steel box wall, bevelled gold, violet-black; the Mac's layout uses the window);
-  the title's skylights for its interior worlds and dimmer side windows (`21d6556`); the hub's lasers (`4353a9f`).
-- **Also done (this stretch):** the title's end on a wide window shows the vault door (`5184d81`: the logo held to a
-  quarter of the window's height); a cracked cell's glass reads as cracked glass, not chalk (`a9964e1`); the Strategy
-  Guide's far shelves read as books (runs of six, sets bound alike; far off, each run's average, then all the books'
-  average, measured: see the commit).
-- **Also merged:** Boss Rush's arena (the arena agent's four commits, `e4c9ff6`..`4c3cee6`: a polished deck from a
-  capture of the arena, octagonal steel pillars with violet and cyan inlays and banners, painted stands, a lit crowd of
-  eight kinds of figure, every boss on the shared violet-black with the arena's own neon pair and not its own colour;
-  phone draws 69 to 65, triangles 108K to 111K, memory 254 to 265 MB; rules IDENTICAL, sequence ALL 13 STEPS OK, WebKit
-  clean; its sheet `docs/master/phase2/boss-arena-before-after.jpg`). `ASSETS.md` now lists the CC0 materials
-  (`e81801b`).
-- **Also merged:** the Final Exam (the exam agent's five commits, `c0e84e5`..`53e5f42`: the Proctor lit and readable,
-  a key on its face and chest that always keeps its light, rims in the hall's pair, its armour's blocky static gone
-  (three causes: a blurred atlas of greys, a tile looked up with jumping slopes, relief from 2x2 pixel blocks), a real
-  mortarboard in 2 draws (it was 9); fluted marble columns with violet neon, a painted wall with depth, a reflective
-  dark marble floor from a room capture (the mirror gone: the ending no longer draws the hall twice); the framing on
-  both devices; ambientCG Marble012 (CC0). Phone draws 85 to 79, triangles 37K to 57K, memory 150 to 156 MB; rules
-  IDENTICAL, sequence ALL 13 STEPS OK, WebKit clean; its sheet `docs/master/phase2/exam-before-after.jpg`).
-- **Also merged:** Nest Egg Run's street (the street agent's seven commits, `c0ee1c2`..`611fa47`, rebuilt `55b5a76`: the
-  far end clean behind the answers (the orrery gone with the panorama up, the wall gears' rings fading with distance
-  and one ring each); the near facades stained concrete (Poly Haven `concrete_wall_006`, CC0) cast in panels with
-  framed windows, sills, glass giving back the street, lit shops and shutters, air conditioners; the shoulders lit wet
-  pavement giving back the shops and their neon; every shader safe on every GPU (no derivative or look-up in a branch
-  that varies pixel to pixel, two Gaussians made safe; the gate's review found the road's beams and gate lights still taking pow() of a negative: fixed with all the rest, `ff37119`). The container restarted while the agent was in its last check:
-  its commits survived; its last change (the GPU-safety fix) was committed for it, and checked here.
-- **The gate so far:** the baseline's script time measured the same way as now (`e456caa`); the harness on `f616d68`
-  (one fault: Risk Blaster drew 102 on the phone, its budget 100, and so did the baseline's own build measured the same
-  way: fixed by `GlowBatch`, `aa4b86f`, 88 now); the stall census found the last shield's red frame made mid-fight
-  (fixed, `ca21db2`); the sheets of every screen (`deca4a3`). **The independent review** found two live faults from
-  `f4ce144`, fixed and pushed at once (`ca21db2`): after the first explanation the answers stayed hidden and could not
-  be pressed in Risk Blaster, Nest Egg Run and Boss Rush (the class that makes them stand back was never taken off when
-  NEXT dismissed a sheet: the tests answer and dismiss through the game's functions, so they never saw it; a probe that
-  clicks as a player does now covers it), and every star showed as earned when served (the unearned colour changed
-  from the key the icons know it by). Then its rendering findings (`ff37119`): 85 pow() of a possibly negative base
-  made safe in 25 files, a reversed smoothstep, the box projection's NaN, points hidden from the room captures, the
-  captures' sizes read right, Boss Rush's box to the deck's edge, the title's steel filtered copy and filter shader made
-  ahead (no mid-glide shader), its pictures one a frame, the tread plate's relief on the plinth tops, the cameras'
-  steel by instance, Boss Rush's left rim in the arena's colour, the Overlord's tall core glow out of the batch; and
-  the cell close-up's still taken after the title's interface has gone (`1a0d853`).
-- **Doing:** the final verification of the fixed build: the harness again (`phase2-final`), the stall census of every
-  game, every screen in WebKit; then the gate's report (`docs/master/phase2/README.md`, `gate-report.md`), the
-  hand-over note below, the push, the report to the owner.
-- **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
-  `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
-  the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
-  games' characters, the feet in wide shots, the crowd, the Proctor; capture strips with `tools/scenarios/motion.js`
-  and the like).
-- **Timing on this machine is unreliable while agents capture** (four cores shared): a software frame of the guide
-  measured 1144, 1252, 1709 and 2119 ms in four runs of two builds. Compare costs only on a quiet machine, the builds
-  alternated.
+- **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
+  nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
+- **Phase:** 5, environments and new assets. Phases 0 and 1 are done; Phase 2's first pass is closed (its work stays,
+  checked: `docs/master/phase2/`); its polishing resumes after Phase 3.
+- **Doing:** the first pass's last checks (the harness `phase2-final`: logic and stills of every screen clean on both
+  devices; its costs, the stall census of every game and every screen in WebKit to come), then its record in
+  `docs/master/phase2/` and a short report to the owner.
+- **Next steps (Phase 5):** 1) the rebuild list: every screen's environment and its assets judged keep, improve in
+  place, or rebuild (new geometry, new generated models, pre-rendered skies), with the evidence (the stills of
+  `phase2-final`, the audits, the review); nothing on it polished before it is rebuilt; 2) the budget for new assets
+  (Tripo 1,926 credits and fal.ai $10.95 within the caps; cheaper settings first; only what is clearly below the bar);
+  3) the work, screen by screen, each with its before/after and its costs on both tiers; 4) the gate (every screen
+  consistent; budgets kept), a report.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -90,6 +45,16 @@ clearly below the bar; every spend in `ASSETS.md`; no top-ups.
 
 **Reporting:** after each phase a short message (what improved, with numbers and pictures; what was reverted; spend so
 far; what to test on the iPhone and the Mac); keep going without waiting unless a decision cannot be undone.
+
+**The order of the phases, changed by the owner (2026-11-24), verbatim:** "PHASE ORDER OVERRIDE: run the phases in this
+order: 0 (baseline, audit, art bible), 1 (performance foundation: budgets, pipeline, tiers only), 5 (environments and new
+assets), 3 (animation and characters), 2 (image quality polish), 4 (game feel), 6 (audio), 7 (Mac polish), then a final
+performance re-check, then 8 (final verification). Do not polish anything in an environment or asset that is scheduled
+to be rebuilt later."
+
+So: **0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8.** Phase 2 had gone first (before the override) and is closed as
+a first pass (below): what it did stays; its polishing resumes after Phase 3, on environments and assets that are then
+final. Phase 5 begins with its rebuild list: what will be rebuilt is not polished meanwhile.
 
 ## What this machine can and cannot measure
 
@@ -133,7 +98,7 @@ music pieces.
 - **Evidence:** stills of every screen at the same moments before and after, and each screen's draw calls,
   triangles, memory and frame cost on each tier (`docs/master/`).
 
-## Phases (in order; each passes its gate before the next starts)
+## Phases (each passes its gate before the next starts; run in the owner's order of 2026-11-24: 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8)
 
 ### Phase 0: baseline and audit (done 2026-11-23)
 - [x] the plan and the budget (this file)
@@ -158,7 +123,16 @@ of real lights, half-resolution post effects, visibility-based updates, Low Powe
   tiers and the governor (thermal-aware, Low Power Mode), half-size post effects, rigid bosses merged to skinned meshes.
   Decided against, with evidence: a fixed timestep for the whole game, KTX2 now, rewriting for garbage.
 
-### Phase 2: image quality
+### Phase 2: image quality (first pass done 2026-11-23/24 ahead of the owner's new order; polishing resumes after Phase 3)
+- **First pass, closed by the new order (2026-11-24):** everything it shipped stays, all live: no FXAA on any tier; the
+  art bible; the interface's faults; the title hall's floor, glass, steel, skylights and windows, its end on a Mac, the
+  cracked glass; Memory Bank's room and its Mac layout; Boss Rush's arena; the Final Exam's hall and Proctor; Nest Egg
+  Run's street; the guide's shelves; the Mac's text collisions and Risk Blaster's band seams; the hub's lasers. Checked
+  by the harness (`phase2`, `phase2-final`), an independent review (two live faults it found fixed at once: `ca21db2`;
+  its rendering findings: `ff37119`, `1a0d853`, `1cc89d2`), the stall census and WebKit: `docs/master/phase2/`.
+- **When it resumes (after Phase 3):** polish only, on what Phases 5 and 3 leave final: light, materials and colour on
+  the rebuilt environments and new assets; the results bar and the small icons (from the review); a second independent
+  review; its gate as written below.
 Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first (`tools/gen/artbible.js run`, about $0.24); MSAA
 everywhere (no FXAA: the governor's last step gets 2x multisampling; prepared in a stash, built after Phase 1's gate);
 PBR materials from ambientCG and Poly Haven (CC0) where surfaces are flat or smudgy (candidates found: MetalPlates015A/
@@ -211,9 +185,12 @@ wizard's casts, wand and cape tight to the sound.
   window the lens could stand back a little instead of the whole picture riding up.
 - **Gate:** each game reviewed with a capture sequence; budgets kept; the logic diff clean.
 
-### Phase 5: environments and detail
+### Phase 5: environments and new assets (NOW, from 2026-11-24, by the owner's new order)
 The title hall's cells as a real prison, each arena, the vault, Memory Bank and the rest: instancing, baked glow, sprite
-fog, cheap animated details; the Mac denser, the phone lean.
+fog, cheap animated details; the Mac denser, the phone lean. With the owner's new order it also carries the new assets
+(key assets made with Tripo and Rodin, the better kept, only what is clearly below the bar; pre-rendered skies where
+they save the GPU). **First its rebuild list**: every environment and asset judged keep, improve in place, or rebuild;
+nothing on the rebuild list is polished before it is rebuilt.
 - Carried from Phase 2's gate review: the room captures are taken once (and again at a boss's power-up), so Boss Rush's
   rage (its neon turning red) and its moving searchlights and lightning are not in the deck's reflection: tint the
   reflection with the rage, or capture again at its thresholds; the hub's club lasers could take a soft halo (one
@@ -239,6 +216,10 @@ Landscape layouts, keys, hover, Retina and display changes, resizing without lea
 - To check on a real Safari (seen in this machine's WebKit, which draws in software): Nest Egg Run's car draws pale, as
   if lit by a white glare, in WebKit here, before the overhaul (2026-11-22) as after Phase 2; Chromium draws it gold.
 - **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth.
+
+### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
+Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
+changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
 
 ### Phase 8: final verification
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
