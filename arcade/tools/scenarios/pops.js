@@ -44,7 +44,9 @@ module.exports = async (cap) => {
       const inBoss = (o) => { const r = s.stage && s.stage.a && s.stage.a.root; for (let q = o; q; q = q.parent) if (q === r) return true; return false; };
       sc.traverse((o) => { if (o.isSkinnedMesh && o.skeleton && !seen.has(o.skeleton) && !inBoss(o)) { seen.add(o.skeleton); group("skin " + seen.size + " " + named(o), o, o.skeleton.bones.map((b, i) => [b.name || "bone" + i, b])); } });
       const st = s.stage, a = st && st.a;
-      if (a && a.joint) { const bones = []; a.root.traverse((o) => { if (o.isBone) bones.push([o.name || "bone", o]); }); group("boss", a.root, bones.length ? bones : Object.keys(a.joint).map((n) => [n, a.joint[n]])); }
+      // (a boss's model is rigid parts on an armature, not a skin: its armature's joints are followed, every one, its
+      // knees and elbows with them; the parts themselves and the meshes left out)
+      if (a && a.joint) { const nodes = []; a.model.scene.traverse((o) => { if (o.isBone || (o !== a.model.scene && !o.isMesh && !o.isSprite && o.name && !/^part_/.test(o.name) && o.children.length)) nodes.push([o.name || "bone", o]); }); for (const sd of ["L", "R"]) if (a.joint["foot" + sd] && !nodes.some((x) => x[1] === a.joint["foot" + sd])) nodes.push(["foot" + sd, a.joint["foot" + sd]]); group("boss", a.root, nodes.length ? nodes : Object.keys(a.joint).map((n) => [n, a.joint[n]])); }
       if (s.enemy && s.enemy.J) group("demon", s.enemy.root || s.enemy.J.body, Object.keys(s.enemy.J).map((n) => [n, s.enemy.J[n]]));
       if (s.jet) group("fighter", s.jet.ship, [["ship", s.jet.ship], ["rig", s.jet.rig]].concat(s.jet.P ? Object.keys(s.jet.P).slice(0, 24).map((n) => [n, s.jet.P[n]]) : []));
       if (s.carKit) { const k = s.carKit, w = k.wheels || k.wheel || []; group("car", k.car, [["car", k.car], ["rig", k.rig]].concat((Array.isArray(w) ? w : []).map((x, i) => ["wheel" + i, x && (x.isObject3D ? x : x.h || x.o || x.mesh || x.grp)]))); }
@@ -54,7 +56,8 @@ module.exports = async (cap) => {
       const rec = () => {
         if (!P.on || window.__arcade.Scenes.cur !== s) return;
         sc.updateMatrixWorld(true);
-        const a = new Float32Array(list.length * 3), c = new Float32Array(list.length * 3), inv = s.camera.matrixWorldInverse.copy(s.camera.matrixWorld).invert();
+        s.camera.updateMatrixWorld(); // (not drawn: the lens's own matrix is brought up to this frame's turn as well)
+        const a = new Float32Array(list.length * 3), c = new Float32Array(list.length * 3), inv = (P.inv || (P.inv = new THREE.Matrix4())).copy(s.camera.matrixWorld).invert();
         for (let i = 0; i < list.length; i++) { list[i].o.getWorldPosition(v); a[i * 3] = v.x; a[i * 3 + 1] = v.y; a[i * 3 + 2] = v.z; v.applyMatrix4(inv); c[i * 3] = v.x; c[i * 3 + 1] = v.y; c[i * 3 + 2] = v.z; }
         P.pos.push(a); P.cpos.push(c);
         const wz = s.stage && s.stage.wiz, ba = s.stage && s.stage.a;
@@ -123,17 +126,18 @@ module.exports = async (cap) => {
           const c0 = P.cam[e.f - 1], c1 = P.cam[e.f], dp = Math.hypot(c1[0] - c0[0], c1[1] - c0[1], c1[2] - c0[2]), da = Math.acos(Math.max(-1, Math.min(1, c0[3] * c1[3] + c0[4] * c1[4] + c0[5] * c1[5]))) * 57.3;
           return { frame: e.f, t: +(e.f / 60).toFixed(2), state: P.names[P.st[e.f]], note: (P.note[e.f - 1] || "") + " -> " + (P.note[e.f] || ""), joint: e.joint, joints: e.joints, ratio: +e.ratio.toFixed(1), movePct: +(e.rel * 100).toFixed(1), neighboursPct: +(e.med * 100).toFixed(2), lens: dp.toFixed(2) + " / " + da.toFixed(1) + "°" };
         });
-        // its feet: how far a planted foot slides (a foot within 2% of its size of the lowest it goes, in two frames
-        // running, moving across the floor): the whole run's slide, and its fastest frame, in % of its size
+        // its feet: how far a planted foot slides (a foot within 2% of its size of the lowest it goes within half a second
+        // either side, in two frames running, moving across the floor): the whole run's slide, and its fastest frame, in %
+        // of its size
         const feet = [];
         for (let j = 0; j < g.n; j++) {
           if (!/foot|toe/i.test(P.list[g.i0 + j].label)) continue;
-          const k = (g.i0 + j) * 3;
-          let lo = 1e9; for (let i = 0; i < N; i++) if (P.vis[i][gi]) lo = Math.min(lo, P.pos[i][k + 1]);
+          const k = (g.i0 + j) * 3, low = new Float32Array(N);
+          for (let i = 0; i < N; i++) { let m = 1e9; for (let t = Math.max(0, i - 30); t <= Math.min(N - 1, i + 30); t++) if (P.vis[t][gi]) m = Math.min(m, P.pos[t][k + 1]); low[i] = m; }
           let planted = 0, slide = 0, fast = 0, fastAt = 0;
           for (let i = 1; i < N; i++) {
             if (!P.vis[i][gi] || !P.vis[i - 1][gi]) continue;
-            if (P.pos[i][k + 1] > lo + 0.02 * size || P.pos[i - 1][k + 1] > lo + 0.02 * size) continue;
+            if (P.pos[i][k + 1] > low[i] + 0.02 * size || P.pos[i - 1][k + 1] > low[i - 1] + 0.02 * size) continue;
             planted++;
             const m = Math.hypot(P.pos[i][k] - P.pos[i - 1][k], P.pos[i][k + 2] - P.pos[i - 1][k + 2]);
             slide += m; if (m > fast) { fast = m; fastAt = i; }
