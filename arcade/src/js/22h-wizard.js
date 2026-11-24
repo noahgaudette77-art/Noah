@@ -512,8 +512,12 @@ class Wizard {
     // while a question is read, its wand held out at the boss, higher as the attack bar fills (none once it has won or lost)
     const Rd = WIZ.READY, want = this.readyAct && this.g.state === "ask" && !this.lost && !this.won ? Rd[0] + (Rd[1] - Rd[0]) * smoothstep(0.1, 0.9, f) : 0;
     this.readyW = this.readyW === undefined ? want : Motion.dampTo(this.readyW, this.readyTo === undefined ? want : this.readyTo, want, want > this.readyW ? 3 : 6, d); this.readyTo = want; // (the bar fills every frame: followed alike at any rate)
-    if (this.readyAct) { this.readyAct.setEffectiveWeight(this.readyW); over += this.readyW; }
-    if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - over));
+    // its stance (the idle, and the wand held out while a question is read) gives way to the clips over it as a whole,
+    // each part keeping its own share: a clip easing in takes its weight from all of the stance, not from the idle first
+    // (a cast that came while the wand was held out took the idle's last tenth in two frames: the hand jumped 14 cm)
+    const stance = 1 - Math.min(1, over), ready = this.readyAct ? this.readyW : 0;
+    if (this.readyAct) this.readyAct.setEffectiveWeight(ready * stance);
+    if (this.act.idle) this.act.idle.setEffectiveWeight(Math.max(0, 1 - ready) * stance);
     // its flinch, a layer over all of it
     if (this.flinch) this.flinch.update(d);
     this.mixer.update(d);
