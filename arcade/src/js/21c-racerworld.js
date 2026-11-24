@@ -319,7 +319,7 @@ function racerGenSkin(base, U, half, repaint) {
     emissive: `{
         float tfE = max(max(totalEmissiveRadiance.r, totalEmissiveRadiance.g), totalEmissiveRadiance.b);
         vec3 tfN = vTfL.w < 0.34 ? vec3(0.21, 0.94, 1.0) : (vTfL.w < 0.67 ? vec3(1.0, 0.23, 0.83) : vec3(1.0, 0.72, 0.2));
-        float tfZ = vRest.z / ${half.toFixed(3)}, tfHead = smoothstep(-0.74, -0.88, tfZ), tfTail = smoothstep(0.74, 0.88, tfZ);
+        float tfZ = vRest.z / ${half.toFixed(3)}, tfHead = (1.0 - smoothstep(-0.88, -0.74, tfZ)), tfTail = smoothstep(0.74, 0.88, tfZ);
         vec3 tfC = tfN * tfE;
         tfC = mix(tfC, vec3(1.0, 0.84, 0.62) * tfE * (0.45 + 0.8 * vTfL.x), tfHead);
         tfC = mix(tfC, vec3(1.0, 0.06, 0.12) * tfE * (0.4 + 0.8 * vTfL.y), tfTail);
