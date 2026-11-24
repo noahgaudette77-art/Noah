@@ -33617,14 +33617,20 @@ class BossActor {
     this.mix = this.act.idle2 ? 1 : 0; this.mixTo = this.mix; this.mixT = 9; this.nMix = 0; this.idle2T = rand(0, 4);
     // its feet (plant): each leg's thigh, calf and foot, in the bookkeeping of the bones turned after the clips (the foot
     // is turned back to the clip's own turn in the world once the leg is bent: the sole stays as the clip lays it)
+    // (and which way each knee bends, as it stands in its idle: its knee's side of the line from hip to ankle, in the
+    // model's own frame; forward where the leg stands straight)
     this.legs = [];
+    const ms = model.scene, inv = new THREE.Matrix4().copy(ms.matrixWorld).invert(), lp = (o) => o.getWorldPosition(new THREE.Vector3()).applyMatrix4(inv);
     for (const sd of ["L", "R"]) {
       const th = P[sd + "_Thigh"], ca = P[sd + "_Calf"], ft = this.joint["foot" + sd];
       if (!th || !ca || !ft || ca.parent !== th || ft.parent !== ca) continue;
       T.add(th); T.add(ca); if (ft.isBone || ft === P[sd + "_Foot"]) T.add(ft);
-      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, lock: new THREE.Vector3(), low: Infinity });
+      const h = lp(th), k = lp(ca), a = lp(ft), line = a.clone().sub(h).normalize(), off = k.clone().sub(h), pole = off.addScaledVector(line, -off.dot(line));
+      if (pole.length() < 0.02 * h.distanceTo(k)) pole.set(0, 0, 1); else pole.normalize();
+      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, lock: new THREE.Vector3(), low: Infinity, pole, pA: new THREE.Vector3(), pUp: null });
     }
-    this._pv = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion());
+    this._pv = [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion()); this._ps = new THREE.Vector3();
+    this.groundY = 0;
   }
   has(name) { return !!this.act[name]; }
   // A bone that is turned after the clips have been applied. (The mixer writes a bone only when its value has
@@ -33841,6 +33847,7 @@ class BossActor {
     // in, its wind-up rears it back first, its strike throws it forward and it settles; it floats, sways and strains
     if (this.kickV) { this.S.kick.hit(this.kickV * 0.0457 * Math.min(1, M.hitK)); this.kickV = 0; } // (never deeper than the depth it was tuned to: it stays in front of the front row; a light boss gives more in its spine instead)
     const S = this.S, kick = (this.kick = S.kick.step(d, 0)), lean = S.lean.step(d, this.lean - 0.55 * this.coil), sq = S.sq.step(d, 0.02 * this.coil), bo = S.bounce.step(d, 0);
+    this.groundY = sum > 0 ? -ground / sum : 0;
     this.body.position.set((sum > 0 ? -cx / sum : 0) + this.swX, (sum > 0 ? -ground / sum : 0) + this.drop * (this.row.dropH || 1.5) + this.flY + this.bobY + bo - 0.012 * this.coil, (sum > 0 ? -cz / sum : 0) - kick * 0.22 + lean * 0.1);
     this.body.rotation.set(-kick * 0.12 + lean * 0.06 + this.flT + this.trX, this.yaw + this.swY + this.trY + this.spin, this.swR + this.trZ);
     const sc = this.swell + S.grow.step(d, 0);
@@ -33948,53 +33955,68 @@ class BossActor {
   addRot(bone, x, y, z) { this.turns.turn(bone, x, y, z); }
   // ---- a foot on the floor stays where it stands (Phase 3: the clips, and the body moved over them, slid the bosses'
   // planted feet 5 to 26% of their height a second, seen when a strike widens the lens). A foot that comes down within
-  // 5% of its leg's length of the lowest it stands is held where it came down, its leg bent to it (two bones: the thigh turned so the
-  // knee lies where the calf can reach the foot, in the leg's own plane, then the calf); it is let go as it lifts, over a
-  // fifth of a second, and one the clip has taken a quarter of its leg's length away is drawn after it (a quick shuffle).
-  // Not while it drops in, floats, or falls dead (all of it is let go over a fifth of a second).
+  // 5% of its leg's length of the lowest it stands (its height as the clips put it: the body's own dips, bounce and
+  // crouch, left out) is held where it touched (between this frame and the last, where it crossed), its leg bent to it
+  // (two bones: the thigh turned so the knee lies where the calf can reach the foot, on the side the knee bends to, then
+  // the calf); it is let go as it lifts, over a fifth of a second, and one that comes down again while still being let
+  // go is held where it is drawn (never a jump); one the clip takes a quarter of its leg's length away is drawn after it
+  // (a shuffle). Not while it drops in, floats, or falls dead (all of it let go over a fifth of a second).
   plant(d) {
     const legs = this.legs;
     if (!legs || !legs.length) return;
     const ok = this.landed && !this.entering && !this.dead && !this.M.float && this.drop < 0.01;
-    if (!ok && legs.every((l) => l.w < 0.002)) { for (const l of legs) l.on = false; return; }
+    if (!ok) { let any = false; for (let i = 0; i < legs.length; i++) if (legs[i].w >= 0.002) any = true; if (!any) { for (let i = 0; i < legs.length; i++) { legs[i].on = false; legs[i].pUp = null; } return; } }
     this.root.updateMatrixWorld(true);
-    const [H, K, A, T, u, w] = this._pv, [q, qa, qb] = this._pq, floor = this.root.getWorldPosition(u).y, Tn = this.turns;
-    for (const l of legs) {
-      l.th.getWorldPosition(H); l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+    const [H, K, A, T, u, w, F] = this._pv, [q, qa, qb] = this._pq, Tn = this.turns, sc = this.model.scene;
+    const floor = this.root.matrixWorld.elements[13] + (this.body.position.y - this.groundY) * this.root.scale.y; // (the floor, and what the body's own dips add)
+    for (let li = 0; li < legs.length; li++) {
+      const l = legs[li];
+      H.setFromMatrixPosition(l.th.matrixWorld); K.setFromMatrixPosition(l.ca.matrixWorld); A.setFromMatrixPosition(l.ft.matrixWorld);
       const l1 = H.distanceTo(K), l2 = K.distanceTo(A), Lg = l1 + l2, up = A.y - floor;
       // (its ankle's height standing: the lowest it has been, let rise slowly; an ankle stands 5 to 26% of its leg's
       // length above the floor, rig by rig)
       l.low = l.low === Infinity ? up : Math.min(up, l.low + (up - l.low) * (1 - Math.exp(-0.05 * d)));
-      const down = ok && (l.on ? up < l.low + 0.08 * Lg : up < l.low + 0.05 * Lg);
-      if (down && !l.on) l.lock.copy(A);
+      const thr = l.low + 0.05 * Lg, rel = l.low + 0.08 * Lg, down = ok && (l.on ? up < rel : up < thr);
+      if (down && !l.on) {
+        if (l.w > 0.01) { l.lock.x = A.x + (l.lock.x - A.x) * l.w; l.lock.z = A.z + (l.lock.z - A.z) * l.w; } // (still being let go: held where it is drawn)
+        else if (l.pUp !== null && l.pUp > thr) { const f = clamp((l.pUp - thr) / Math.max(1e-9, l.pUp - up), 0, 1); l.lock.lerpVectors(l.pA, A, f); } // (where it crossed)
+        else l.lock.copy(A);
+        l.w = 1;
+      }
+      // (let go from where it crossed, between the last frame and this one: the same at any frame rate)
+      if (!down && l.w > 0) l.w *= Math.exp(-9 * d * (l.on && ok && l.pUp !== null && up > l.pUp ? clamp((up - rel) / (up - l.pUp), 0, 1) : 1));
       l.on = down;
-      l.w = Motion.damp(l.w, down ? 1 : 0, down ? 14 : 9, d);
+      l.pA.copy(A); l.pUp = up;
       if (l.on) { const dx = A.x - l.lock.x, dz = A.z - l.lock.z, far = Math.hypot(dx, dz) - 0.25 * Lg; if (far > 0) { const k = (far / (far + 0.25 * Lg)) * (1 - Math.exp(-10 * d)); l.lock.x += dx * k; l.lock.z += dz * k; } }
       if (l.w < 0.002 || Lg < 1e-6) continue;
       T.set(A.x + (l.lock.x - A.x) * l.w, A.y, A.z + (l.lock.z - A.z) * l.w);
-      if (T.distanceToSquared(A) < 1e-10) continue;
-      // the knee: where the thigh (l1 from the hip) meets the calf (l2 from the foot), on the side the knee bends to now
+      if (T.distanceToSquared(A) < 1e-10 * Lg * Lg) continue;
+      // the knee: where the thigh (l1 from the hip) meets the calf (l2 from the foot), on the side the knee bends to:
+      // the clip's, and where the leg stands nearly straight its rest side (a small lean to it decides; never a flip)
       const dist = clamp(H.distanceTo(T), Math.abs(l1 - l2) + 1e-4 * Lg, Lg - 1e-4 * Lg), dir = u.subVectors(T, H).normalize();
       const along = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist), across = Math.sqrt(Math.max(0, l1 * l1 - along * along));
-      w.subVectors(K, H); w.addScaledVector(dir, -w.dot(dir));
-      if (w.lengthSq() < 1e-12) continue; // (a leg straight along its line: no plane to bend it in; left as the clip has it)
+      F.copy(l.pole).transformDirection(sc.matrixWorld); F.addScaledVector(dir, -F.dot(dir));
+      w.subVectors(K, H); w.addScaledVector(dir, -w.dot(dir)).addScaledVector(F, 0.02 * l1);
+      if (w.lengthSq() < 1e-8 * l1 * l1) continue; // (no side at all: left as the clip has it)
       w.normalize();
       const K2 = w.multiplyScalar(across).addScaledVector(dir, along).add(H);
       // the foot's own turn in the world, kept
-      if (l.keep) l.ft.getWorldQuaternion(qb);
+      if (l.keep) l.ft.matrixWorld.decompose(F, qb, this._ps);
       // the thigh: its knee from where it was to K2
       this.turnTo(l.th, q.setFromUnitVectors(u.subVectors(K, H).normalize(), A.subVectors(K2, H).normalize()), qa);
       // the calf: its foot from where the thigh's turn took it to T
       l.th.updateWorldMatrix(false, true);
-      l.ca.getWorldPosition(K); l.ft.getWorldPosition(A);
+      K.setFromMatrixPosition(l.ca.matrixWorld); A.setFromMatrixPosition(l.ft.matrixWorld);
       this.turnTo(l.ca, q.setFromUnitVectors(u.subVectors(A, K).normalize(), H.subVectors(T, K).normalize()), qa);
-      if (l.keep) { l.ca.updateWorldMatrix(false, true); l.ft.parent.getWorldQuaternion(qa).invert(); l.ft.quaternion.copy(qa.multiply(qb)); }
+      if (l.keep) { l.ca.updateWorldMatrix(false, true); l.ca.matrixWorld.decompose(F, qa, this._ps); l.ft.quaternion.copy(qa.invert().multiply(qb)); }
       // (what was turned here is what the clips' bookkeeping last wrote: the next frame starts again from the clip)
-      for (const b of [l.th, l.ca, l.ft]) { const e = Tn.by.get(b); if (e) e.out.copy(b.quaternion); }
+      let e = Tn.by.get(l.th); if (e) e.out.copy(l.th.quaternion);
+      e = Tn.by.get(l.ca); if (e) e.out.copy(l.ca.quaternion);
+      e = Tn.by.get(l.ft); if (e) e.out.copy(l.ft.quaternion);
     }
   }
-  // a bone turned by q in the world (qa: a spare)
-  turnTo(b, q, qa) { const qw = this._pq[3]; b.parent.getWorldQuaternion(qa); b.getWorldQuaternion(qw); b.quaternion.copy(qa.invert().multiply(q).multiply(qw)); }
+  // a bone turned by q in the world (qa: a spare), its parent's and its own place read as they stand (plant has them current)
+  turnTo(b, q, qa) { const qw = this._pq[3], v = this._pv[7]; b.parent.matrixWorld.decompose(v, qa, this._ps); b.matrixWorld.decompose(v, qw, this._ps); b.quaternion.copy(qa.invert().multiply(q).multiply(qw)); }
   // its fall: the death clip played to the moment it lies flat on time (the stage's last blast waits for that moment),
   // its own way there: floating down (slow, then all at once), in its power's stutters, jerking; flat, it lands hard
   fall(pl, d) {
