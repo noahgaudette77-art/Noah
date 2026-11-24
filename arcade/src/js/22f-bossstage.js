@@ -255,6 +255,7 @@ class BossStage {
     Haptics.buzz(80);
     if (g.arena) g.arena.strike(1);
     g.cheer = 1;
+    g.crowdCue("stir"); // (the stands flinch as it lands)
     g.show.wait(0.38, () => this.powerUp());
   }
   powerUp() {
@@ -270,6 +271,7 @@ class BossStage {
       this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 5, w: 0.04, delay: 0.14 });
       g.shake(0.12);
       if (g.arena) g.arena.strike(0.8);
+      g.crowdCue("cheer", 0.8); // (and roar back as it roars and its name is called)
       this.phase = "fight";
       if (g.bossKey === "all") Sound.say("FINAL BOSS"); // (the important line first: the name waits its turn)
       g.show.wait(0.45, () => { if (!g.unmounted && g.state !== "over") Sound.say(g.cfg.name); });
@@ -378,6 +380,7 @@ class BossStage {
     VFX.hitStop(big ? 3 : 2);
     g.hitLine = (g.hitLine || new THREE.Color()).copy(neon(col, 1.5)); g.hitTint = 1; // (the floor's lines run in the answer's colour for a moment)
     g.cheer = 1;
+    g.crowdCue("cheer", big ? 1.3 : 1); // (the stands cheer it, from behind the boss outward)
     a.kickV += big ? 5.5 : 3.2; // (a shallow recoil: it never drops behind the heads of the front row)
     if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32, k: big ? 0.5 : 0.62 });
     if (a.hit) a.hit(from, p, big); // (its spine gives to the blow, away from where it came from: 22d)
@@ -464,6 +467,7 @@ class BossStage {
     this.kit.sparks(h, 0xff3a5a, { n: quiet ? 8 : 24, speed: 7, life: 0.9, gravity: 1.5 });
     if (!quiet) g.shake(0.12);
     if (g.arena) g.arena.strike(1);
+    g.crowdCue("stir", 1.2); // (the stands recoil from it)
   }
 
   // ---- the boss strikes (the rule: bossAttack, then its hit 0.12 s on) -------------------------------------------
@@ -507,6 +511,7 @@ class BossStage {
   release(s) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, src = this.src(new THREE.Vector3());
     s.released = true;
+    g.crowdCue("stir"); // (the stands flinch at its blow)
     if (this.tele) this.tele.mark.forEach((m) => { m.t = Math.min(m.t, 0.1); });
     VFX.slowMo(0.45, 0.12, 0.03);
     kit.flash(src, this.hex, 0.25 * k, 0.9 * k, 0.09, 0.8, 1.4);
@@ -763,6 +768,7 @@ class BossStage {
     g.shake(0.24);
     if (g.arena) g.arena.strike(1);
     g.cheer = 1;
+    g.crowdCue("cheer", 1.5); g.show.wait(1.1, () => { if (!g.unmounted) g.crowdCue("cheer", 1.2); }); // (the stands go wild, and keep at it)
     Sound.sfx("explosion_huge", 0, { vol: 1 });
     Sound.sfx("debris", 0, { delay: 0.3, vol: 0.8 });
     // the reward: stars and coins fly from the blast, round the question, to just beside the score, which counts up as they land
@@ -802,6 +808,7 @@ class BossStage {
     Sound.sfx(this.row.roar || "roar_" + this.row.key, 0, { vol: 1, rate: 0.85 });
     this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 7, w: 0.04 });
     if (g.arena) g.arena.strike(1);
+    g.crowdCue("stir", 1.2); // (the stands recoil as it has the last word)
     this.wideTo = 0.15; this.camLow = -0.6;
     this.wizCall((w) => w.lose());
     // (its last word is its own: "game over" in the boss's recorded voice, in place of the announcer's)
