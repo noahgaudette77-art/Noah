@@ -374,12 +374,12 @@ function hubScreenMaterial(tex, color) {
         crt *= 1.0 - 0.5 * smoothstep(-0.11, 0.0, sd); // the tube sits back in its bezel: its edge is in shadow
         crt += vec3(0.08, 0.07, 0.13) * (1.0 - smoothstep(0.0, 0.8, length(q - vec2(-0.55, 0.62)))) * 0.8;
         // the glass: the room's neon caught in it as a tall bar down one side and a band across the top
-        crt += (uTint * 0.4 + 0.6) * (smoothstep(0.09, 0.0, abs(q.x - 0.55 + q.y * 0.12)) * 0.11 + smoothstep(0.28, 0.0, abs(q.y - 0.8)) * 0.07);
+        crt += (uTint * 0.4 + 0.6) * ((1.0 - smoothstep(0.0, 0.09, abs(q.x - 0.55 + q.y * 0.12))) * 0.11 + (1.0 - smoothstep(0.0, 0.28, abs(q.y - 0.8))) * 0.07);
         { // and one curved highlight across its upper corner (the glass is a bulge, not a flat pane): a thin bright arc, a soft one inside it
           vec2 ha = q - vec2(0.42, -0.62);
           float hr = length(ha), hp = atan(ha.y, ha.x);
           float span = smoothstep(1.84, 2.04, hp) * (1.0 - smoothstep(2.5, 2.72, hp));
-          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * (smoothstep(0.03, 0.0, abs(hr - 1.25)) * 0.72 + smoothstep(0.2, 0.0, abs(hr - 1.15)) * 0.17);
+          crt += (uTint * 0.2 + vec3(0.72, 0.8, 0.98)) * span * ((1.0 - smoothstep(0.0, 0.03, abs(hr - 1.25))) * 0.72 + (1.0 - smoothstep(0.0, 0.2, abs(hr - 1.15))) * 0.17);
         }
         vec3 col = mix(bez, crt, tube);
         col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.6);
@@ -490,7 +490,7 @@ function hubFloorMaterial(mirror, carpet, pano = null, panoB = null, angB = 0) {
           #ifdef HUB_PANO
           { vec3 d = vec3(-V.x, V.y, -V.z); // (the reflected ray, looked up in the panorama as a sky is: blurred, faint, on the tiles)
             vec2 pu = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
-            vec3 pc = mix(texture2D(tPano, pu, 3.5).rgb, texture2D(tPanoB, pu, 3.5).rgb, smoothstep(0.62, 0.22, abs(atan(p.x, -p.y) - uPanoB)));
+            vec3 pc = mix(texture2D(tPano, pu, 3.5).rgb, texture2D(tPanoB, pu, 3.5).rgb, (1.0 - smoothstep(0.22, 0.62, abs(atan(p.x, -p.y) - uPanoB))));
             col += pc * pc * mix(0.025, 0.15 * grout, tiles) * fres * uReflect; }
           #endif
         }
@@ -521,7 +521,7 @@ function hubWallMaterial() {
         vec2 d = vec2((ang - fa) * ${HUB_WALL.toFixed(1)}, y - 5.2);
         float r = length(d);
         float th = atan(d.y, d.x) + uTime * sp;
-        return smoothstep(0.5, 0.95, abs(sin(th * 2.0))) * smoothstep(3.4, 1.0, r) * smoothstep(0.1, 0.7, r);
+        return smoothstep(0.5, 0.95, abs(sin(th * 2.0))) * (1.0 - smoothstep(1.0, 3.4, r)) * smoothstep(0.1, 0.7, r);
       }
       void main(){
         float ang = atan(vWorld.x, -vWorld.z);
