@@ -270,10 +270,10 @@ class BlasterFighter {
         void main(){
           vec2 p = (vUv - 0.5) * vec2(2.0, 1.0);
           float r = length(p);
-          float ring = smoothstep(0.03, 0.0, abs(r - 0.3)) + smoothstep(0.02, 0.0, abs(r - 0.12)) * 0.7;
-          float cross = (smoothstep(0.02, 0.0, abs(p.x)) + smoothstep(0.02, 0.0, abs(p.y))) * step(0.16, r) * step(r, 0.42);
-          float ladder = smoothstep(0.012, 0.0, abs(fract(vUv.y * 7.0 + uTime * 0.15) - 0.5) - 0.44) * step(0.62, abs(p.x)) * step(abs(p.x), 0.86);
-          float edge = smoothstep(0.5, 0.42, abs(vUv.x - 0.5)) * smoothstep(0.5, 0.4, abs(vUv.y - 0.5));
+          float ring = (1.0 - smoothstep(0.0, 0.03, abs(r - 0.3))) + (1.0 - smoothstep(0.0, 0.02, abs(r - 0.12))) * 0.7;
+          float cross = ((1.0 - smoothstep(0.0, 0.02, abs(p.x))) + (1.0 - smoothstep(0.0, 0.02, abs(p.y)))) * step(0.16, r) * step(r, 0.42);
+          float ladder = (1.0 - smoothstep(0.0, 0.012, abs(fract(vUv.y * 7.0 + uTime * 0.15) - 0.5) - 0.44)) * step(0.62, abs(p.x)) * step(abs(p.x), 0.86);
+          float edge = (1.0 - smoothstep(0.42, 0.5, abs(vUv.x - 0.5))) * (1.0 - smoothstep(0.4, 0.5, abs(vUv.y - 0.5)));
           gl_FragColor = vec4(vec3(0.35, 1.5, 1.25) * (ring + cross * 0.8 + ladder * 0.7 + 0.05) * edge * uK * (0.9 + 0.1 * sin(uTime * 5.0)), 1.0);
         }`,
     });
