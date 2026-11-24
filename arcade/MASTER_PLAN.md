@@ -43,10 +43,25 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   and one ring each); the near facades stained concrete (Poly Haven `concrete_wall_006`, CC0) cast in panels with
   framed windows, sills, glass giving back the street, lit shops and shutters, air conditioners; the shoulders lit wet
   pavement giving back the shops and their neon; every shader safe on every GPU (no derivative or look-up in a branch
-  that varies pixel to pixel, no pow() of a negative). The container restarted while the agent was in its last check:
+  that varies pixel to pixel, two Gaussians made safe; the gate's review found the road's beams and gate lights still taking pow() of a negative: fixed with all the rest, `ff37119`). The container restarted while the agent was in its last check:
   its commits survived; its last change (the GPU-safety fix) was committed for it, and checked here.
-- **Doing:** the Phase 2 gate: the baseline's script time with the drawing left out, then the harness on this build
-  (the machine quiet: no agents), the stills against the baseline's, an independent review, the report.
+- **The gate so far:** the baseline's script time measured the same way as now (`e456caa`); the harness on `f616d68`
+  (one fault: Risk Blaster drew 102 on the phone, its budget 100, and so did the baseline's own build measured the same
+  way: fixed by `GlowBatch`, `aa4b86f`, 88 now); the stall census found the last shield's red frame made mid-fight
+  (fixed, `ca21db2`); the sheets of every screen (`deca4a3`). **The independent review** found two live faults from
+  `f4ce144`, fixed and pushed at once (`ca21db2`): after the first explanation the answers stayed hidden and could not
+  be pressed in Risk Blaster, Nest Egg Run and Boss Rush (the class that makes them stand back was never taken off when
+  NEXT dismissed a sheet: the tests answer and dismiss through the game's functions, so they never saw it; a probe that
+  clicks as a player does now covers it), and every star showed as earned when served (the unearned colour changed
+  from the key the icons know it by). Then its rendering findings (`ff37119`): 85 pow() of a possibly negative base
+  made safe in 25 files, a reversed smoothstep, the box projection's NaN, points hidden from the room captures, the
+  captures' sizes read right, Boss Rush's box to the deck's edge, the title's steel filtered copy and filter shader made
+  ahead (no mid-glide shader), its pictures one a frame, the tread plate's relief on the plinth tops, the cameras'
+  steel by instance, Boss Rush's left rim in the arena's colour, the Overlord's tall core glow out of the batch; and
+  the cell close-up's still taken after the title's interface has gone (`1a0d853`).
+- **Doing:** the final verification of the fixed build: the harness again (`phase2-final`), the stall census of every
+  game, every screen in WebKit; then the gate's report (`docs/master/phase2/README.md`, `gate-report.md`), the
+  hand-over note below, the push, the report to the owner.
 - **Next steps:** the baseline's script time with the drawing left out (`docs/master/baseline/script-*.json`, with
   `cost-report.js --html index.baseline.html --stub --settle 8`, when the machine is quiet); then the Phase 2 gate:
   the harness, an independent review of all of Phase 2, the report. Phase 3 after it (characters in motion: the other
@@ -199,6 +214,10 @@ wizard's casts, wand and cape tight to the sound.
 ### Phase 5: environments and detail
 The title hall's cells as a real prison, each arena, the vault, Memory Bank and the rest: instancing, baked glow, sprite
 fog, cheap animated details; the Mac denser, the phone lean.
+- Carried from Phase 2's gate review: the room captures are taken once (and again at a boss's power-up), so Boss Rush's
+  rage (its neon turning red) and its moving searchlights and lightning are not in the deck's reflection: tint the
+  reflection with the rage, or capture again at its thresholds; the hub's club lasers could take a soft halo (one
+  reads as a bright line from the ceiling to the floor).
 - Carried here from Phase 2's audit list: Risk Blaster's asteroids (the near ones are the generated rocks, lit dark; the
   far ones built-in low-poly lumps on the hull material: flat grey against the painted nebula; #25), the C drone's box
   side-pods and the ringed planet behind the B drone (#25); the hub's cabinets' black lower bodies (they read as a void
@@ -213,6 +232,10 @@ ElevenLabs within budget.
 
 ### Phase 7: desktop polish for the Mac
 Landscape layouts, keys, hover, Retina and display changes, resizing without leaks, Safari and Chrome, long sessions.
+- Carried from Phase 2's gate review: the results screen's button bar still covers the end of its content when the page
+  is scrolled to the top (the phone's FLAWLESS line, the Mac's mastery panel), and the menus' small icons are still
+  under the art bible's 20 px (stars 15-16 px, the stat emblems about 16): both to the Mac's and the phone's layout
+  work here.
 - To check on a real Safari (seen in this machine's WebKit, which draws in software): Nest Egg Run's car draws pale, as
   if lit by a white glare, in WebKit here, before the overhaul (2026-11-22) as after Phase 2; Chromium draws it gold.
 - **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth.
