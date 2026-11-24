@@ -848,7 +848,6 @@ class HallScene extends Scene3D {
       const glow = 1.1 + 1.6 * Math.min(1, c.flick);
       if (c.mats && Math.abs(glow - c.glowK) > 0.02) { c.glowK = glow; for (const m of c.mats) if (m.emissiveMap) m.emissiveIntensity = glow; }
       c.rimU.k.value = (0.62 + 0.38 * this.power) * (0.82 + 0.18 * Math.sin(this.t * 1.3 * (this.calm ? 0.3 : 1) + c.rimPh)) * (c.state.beaten ? 0.65 : 1) * (1 + 1.2 * Math.min(1, c.flick));
-      if (c.proctor) { c.proctor.U.uBossRim.value.copy(c.rimU.col.value).multiplyScalar(0.7 * c.rimU.k.value); c.proctor.light(glow / 1.1, 0); } // (the Proctor: its skin's rim in its cell's light, its seams and eyes lit as the others' glow)
       // a slow turn on its feet, and now and then (near the lens) a twitch: a jolt, its cell's light flickering
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
@@ -856,26 +855,29 @@ class HallScene extends Scene3D {
       c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 38) * 0.05;
       c.turner.position.x = c.twitch * Math.sin(c.twitch * 51) * 0.04;
       if (c.float) c.turner.position.y = c.float[0] * HALL.bossH * (0.65 + 0.35 * Math.sin(this.t * Math.PI * 2 * c.float[1] * (this.calm ? 0.5 : 1) + c.rimPh)); // (it hovers, bobbing)
-      if (!near && !extras) continue; // (at LOW a far boss holds its pose)
-      c.accum += dt;
-      if (!near && c.accum < 0.1) continue;
-      const step = c.accum;
-      c.accum = 0;
-      if (c.mixer) {
-        c.mixer.update(step);
-        // the head turns to follow the lens, a little (at most about 35 degrees each way), over what the idle does
-        if (c.head && near && !this.calm) {
-          if (!c.headAnim && c.headRest) c.head.quaternion.copy(c.headRest);
-          const v = this._v || (this._v = new THREE.Vector3()), q = this._q || (this._q = new THREE.Quaternion()), axis = this._ax || (this._ax = new THREE.Vector3());
-          c.boss.getWorldPosition(v);
-          let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
-          want = Math.atan2(Math.sin(want), Math.cos(want));
-          c.yaw = Motion.damp(c.yaw, clamp(want, -0.6, 0.6) * (c.headK || 1), 2.2, step);
-          c.head.parent.getWorldQuaternion(q).invert();
-          axis.set(0, 1, 0).applyQuaternion(q).normalize();
-          c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
-        }
-      } else if (c.rig) this.sway(c, this.t);
+      if (near || extras) c.accum += dt; // (at LOW a far boss holds its pose)
+      if (near || (extras && c.accum >= 0.1)) {
+        const step = c.accum;
+        c.accum = 0;
+        if (c.mixer) {
+          c.mixer.update(step);
+          // the head turns to follow the lens, a little (at most about 35 degrees each way), over what the idle does
+          if (c.head && near && !this.calm) {
+            if (!c.headAnim && c.headRest) c.head.quaternion.copy(c.headRest);
+            const v = this._v || (this._v = new THREE.Vector3()), q = this._q || (this._q = new THREE.Quaternion()), axis = this._ax || (this._ax = new THREE.Vector3());
+            c.boss.getWorldPosition(v);
+            let want = Math.atan2(cam.x - v.x, cam.z - v.z) - c.anchor.rotation.y - c.turner.rotation.y;
+            want = Math.atan2(Math.sin(want), Math.cos(want));
+            c.yaw = Motion.damp(c.yaw, clamp(want, -0.6, 0.6) * (c.headK || 1), 2.2, step);
+            c.head.parent.getWorldQuaternion(q).invert();
+            axis.set(0, 1, 0).applyQuaternion(q).normalize();
+            c.head.quaternion.premultiply(q.setFromAxisAngle(axis, c.yaw));
+          }
+        } else if (c.rig) this.sway(c, this.t);
+      }
+      // the Proctor: its skin's rim in its cell's light, its seams and eyes lit as the others' glow (after its turn and its
+      // pose: its reactor's frame is read from where its chest is now, not where it was a frame ago: Phase 5's review)
+      if (c.proctor) { c.proctor.U.uBossRim.value.copy(c.rimU.col.value).multiplyScalar(0.7 * c.rimU.k.value); c.proctor.light(glow / 1.1, 0); }
     }
     if (flicked) this.gFlick.needsUpdate = true;
     // the end of the hall: drawn once the haze gives it up
