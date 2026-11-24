@@ -21,6 +21,11 @@ const HUBGEN = {
   PANEL: { y: 0.505, z: 0.19, tilt: -0.5, w: 0.34, d: 0.085 },
   EDGE: [[0.02, 0.16], [0.35, 0.162], [0.4, 0.222], [0.47, 0.231], [0.5, 0.22], [0.53, 0.115], [0.56, 0.088], [0.8, 0.006], [0.83, 0.03], [0.86, 0.085], [0.89, 0.084], [0.97, 0.066]], // the side panel's front edge, [y, z]
   HALF: 0.199, // half the model's width
+  // the lower body (measured from the model, as above): its front sheet between the side panels' chrome edges, the coin
+  // door standing proud of it (two coin entries, two returns), and the flat of each side panel below the control panel
+  LOW: { x0: -0.163, x1: 0.1625, z: 0.143, kick: [0.014, 0.052], top: 0.36 },
+  COIN: { slotX: 0.028, slotY: 0.295, slotZ: 0.162, retX: 0.027, retY: 0.227, plateZ: 0.154 },
+  SIDE: { x: 0.1966, z0: -0.205, z1: 0.145, y0: 0.05, y1: 0.37 },
   // what turns on each roof: the model, its size, how high it rides over the turntable, a pitch, a turn to start from
   TOPPERS: {
     blaster: { name: "mini-starfighter", s: 1.9, y: 0.42, rx: -0.14, ry: 0.6, bob: 0.07 },
@@ -139,6 +144,23 @@ class HubGen {
     });
     // a line of light at its foot
     K.box(B.glow, H.HALF * SXS * 1.9, 0.028, 0.028, at(0, 0.045, 0.165 * S + 0.03), col, { k: 1.7, g });
+    // The lower body (the master overhaul's audit, #22: it read as a black void under the lit top; the model is gloss
+    // black metal there, which mirrors the dark hall and takes no light). A printed front sheet in the game's colours
+    // (the model's coin door stands proud of it, so one sheet runs behind the door), a brushed kick plate, the coin
+    // entries and returns lit as a coin door's are, and side art on the flat of each lower side panel: printed, lit by the
+    // hall's own lights like the stripes above them. All in the hall's batches: no draw of their own.
+    const L = H.LOW, CD = H.COIN, SA = H.SIDE, fx = (L.x0 + L.x1) / 2 * SXS, fw = (L.x1 - L.x0) * SXS;
+    K.quad(B.art, fw, (L.top - L.kick[1]) * S, at(fx, (L.top + L.kick[1]) / 2 * S, L.z * S + 0.006), 0xffffff, { aux: [0.1, 0.34], uv: hubUV(i * 160 + 2, 802, 156, 123) });
+    K.quad(B.art, fw, (L.kick[1] - L.kick[0]) * S, at(fx, (L.kick[0] + L.kick[1]) / 2 * S, L.z * S + 0.03), new THREE.Color(0xffffff).lerp(col, 0.22), { aux: [0.35, 0.36], uv: hubUV(770, 562, 246, 24) }); // (brushed steel with a rolled top edge: in the art, so the hall's light shows it; as bare chrome it mirrored the black floor)
+    [-1, 1].forEach((s) => {
+      K.box(B.glow, 0.1, 0.13, 0.01, at(s * CD.slotX * SXS, CD.slotY * S, CD.slotZ * S + 0.006), 0xff4a1e, { k: 2.3, g }); // a coin entry's lit insert
+      K.box(B.lit, 0.02, 0.09, 0.01, at(s * CD.slotX * SXS, CD.slotY * S, CD.slotZ * S + 0.013), 0x07050c, { aux: [0.6, 0.5] }); // and its slot
+      K.box(B.glow, 0.13, 0.075, 0.01, at(s * CD.retX * SXS, CD.retY * S, CD.plateZ * S + 0.006), 0xffa030, { k: 0.85, g }); // the coin return under it
+    });
+    // the side art: the same picture on both sides, its right edge the cabinet's front (so it runs toward the front on each)
+    const su = hubUV(134 + i * 148, 426, 136, 124);
+    [-1, 1].forEach((sx) => K.quad(B.art, (SA.z1 - SA.z0) * S, (SA.y1 - SA.y0) * S, at(sx * SA.x * SXS, (SA.y0 + SA.y1) / 2 * S, (SA.z0 + SA.z1) / 2 * S, 0, sx * Math.PI / 2), 0xffffff,
+      { aux: [0.1, 0.34], uv: sx > 0 ? [su[2], su[1], su[0], su[3]] : su }));
     // the marquee: the game's name, lit, in the model's dark lightbox
     const M = H.MARQ, mz = M.z * S + 0.02;
     K.quad(B.marq, M.w * SXS, M.h * S, at(0, M.y * S, mz, -M.tilt), 0xffffff, { k: 1.05, g, uv: hubUV(4, i * 170 + 8, 504, 154) });
