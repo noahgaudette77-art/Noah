@@ -343,6 +343,11 @@ class HallScene extends Scene3D {
           if (vDepth < 32.0) wisp = smoothstep(0.5, 1.0, sin(ang * 3.0 + vY * 9.0 - t * 1.1 + ph) * sin(ang * 5.0 - vY * 13.0 + t * 0.7)) * 0.11 * (1.0 - 0.6 * vY) * (1.0 - smoothstep(22.0, 32.0, vDepth)); // (near cells only: far off the haze hides them)
           float pulse = 0.86 + 0.14 * sin(t * 1.3 + ph);
           vec3 c = mix(mix(vCol, vec3(1.0, 0.1, 0.14), vState.x * (1.0 - uCalm) * (0.45 + 0.45 * sin(t * 6.5 + ph))), vec3(0.3, 1.0, 0.55), vState.z * 0.85) * mix(1.0, 0.72, vState.z);
+          // (Phase 2's polish, 2026-11-24: an art review found the gold and green cells hiding their bosses, a dark shape
+          // in a milky tube: the glass is added over what is behind it, and where its far side shows round the boss its
+          // light came twice. The far side's light now at 0.4 of the near side's, and a bright tint (gold, orange,
+          // yellow, lime, cyan) brought most of the way down to the others' strength: the boss leads its cell)
+          c *= min(1.0, mix(1.0, 0.5 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 0.05), 0.7)) * (gl_FrontFacing ? 1.0 : 0.4);
           float crack = 0.0;
           if (vState.y > 0.5) { // (only a cracked pane reads its crack)
             float da = atan(sin(ang - vFront), cos(ang - vFront));
@@ -431,7 +436,7 @@ class HallScene extends Scene3D {
       c.copy(lit).multiplyScalar(0.85).toArray(this.pCol.array, i * 3);
       this.gState.array.set([st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], i * 4);
       this.gFront.array[i] = Math.atan2(Math.cos(ry), Math.sin(ry));
-      cl.rimU = { col: { value: lit.clone() }, k: { value: 0 } }; // (its boss's rim and under-light: see cellRim)
+      cl.rimU = { col: { value: lit.clone() }, k: { value: 0 }, key: { value: 2.0 } }; // (its boss's rim and under-light, and the key from its cap's lamp: see cellRim)
       cl.rimPh = st.phase * Math.PI * 2;
       cl.state = st;
     });

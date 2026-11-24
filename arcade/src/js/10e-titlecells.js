@@ -358,7 +358,15 @@ function cellStates(cells) {
 
 // The rim and under-light of a boss in its cell, added to its own materials' shading (no light is added to the
 // scene): its edges caught in its cell's colour, and the colour from the plinth's glow on what faces down. u: the
-// cell's { col, k } (k breathes with the cell's pulse; a rattle flares it).
+// cell's { col, k } (k breathes with the cell's pulse; a rattle flares it), and for a caged boss key: { value } (its
+// cap's lamp: see below; none for the end of the hall's props).
+// (Phase 2's polish, 2026-11-24: an art review found the gold and green cells hiding their bosses, the Group Golem a
+// dark shape in its glass, its chest darker than the empty glass beside it (the art bible: a boss's face and chest never
+// darker than what is behind them). Each caged boss is now lit from its cap's lamp too: a key from above it and toward
+// the lens, nearly white with a little of its cell's colour, on its own surface with a floor under its darkest paint (a
+// near-black plate still shows its shape), half as much on bare metal (chrome stays chrome), and a broad sheen where
+// it turns to the lamp.)
+const CELL_NO_KEY = { value: 0 };
 function cellRim(mats, u) {
   for (const m of mats) {
     if (!m || !m.isMeshStandardMaterial || m.userData.cellRim) continue;
@@ -368,15 +376,18 @@ function cellRim(mats, u) {
     m.needsUpdate = true;
   }
 }
-function cellRimKey() { return "cell-rim-1"; }
+function cellRimKey() { return "cell-rim-2"; }
 function cellRimCompile(sh) {
   const u = this.userData.cellRim;
-  sh.uniforms.uCellCol = u.col; sh.uniforms.uCellK = u.k;
-  sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uCellCol; uniform float uCellK;")
+  sh.uniforms.uCellCol = u.col; sh.uniforms.uCellK = u.k; sh.uniforms.uCellKey = u.key || CELL_NO_KEY;
+  sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uCellCol; uniform float uCellK; uniform float uCellKey;")
     .replace("#include <tonemapping_fragment>", `{
       vec3 nV = normalize(geometry.normal), upV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
       float fr = 1.0 - clamp(dot(nV, geometry.viewDir), 0.0, 1.0), under = clamp(-dot(nV, upV) * 0.8 + 0.25, 0.0, 1.0);
       gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(max(fr, 0.0), 3.0));
+      vec3 kL = normalize(upV * 0.8 + geometry.viewDir * 0.6);
+      float kd = max(dot(nV, kL), 0.0), ks = pow(max(dot(reflect(-geometry.viewDir, nV), kL), 0.0), 16.0);
+      gl_FragColor.rgb += mix(vec3(1.0), uCellCol, 0.4) * (uCellK * uCellKey) * ((diffuseColor.rgb + 0.035) * (0.25 + 0.75 * kd) * (1.0 - 0.5 * metalnessFactor) + 0.3 * ks * kd);
     }
     #include <tonemapping_fragment>`);
 }
