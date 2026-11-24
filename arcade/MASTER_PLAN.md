@@ -228,6 +228,10 @@ fal.ai and Blockade nothing planned; within the caps either way.
 - [x] Risk Blaster (`aafdd1f`, `bb15556`, `eb0147c`): the far rocks light copies of the generated ones; the C drone's
       nacelles; a wide window's own sky centres for the nebula and the orbit (the Mac's nebula now fills the band side
       to side; the belt kept its own: centred, its sun hid behind the demon). Before and after: `docs/master/phase5/`.
+- [x] Built and live (`345c580`): the rules IDENTICAL; the screen sequence ALL 13 STEPS OK (a first run was cut short
+      by this machine's memory limit, a browser killed while four agents captured: run again, clean); the served site
+      checked (the page, the rig, the far rocks and the portrait served; the old Proctor's files gone). NB the served
+      site's root is the arcade folder: https://noah-2ci.pages.dev/ is the game, its files under /assets/.
 - [ ] In place, four at once (agents in worktrees, each to be merged after its own check): the title hall (the Mac's
       prison denser, the end's edges), the hub (cabinet bases, laser halos), the arena (the crowd's motion, the rage in
       the reflection), Memory Bank (the gold bars and trays).
