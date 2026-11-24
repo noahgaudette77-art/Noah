@@ -171,7 +171,7 @@ function hallSteelShade(m) {
         metalnessFactor = mix(metalnessFactor, 0.4, hWall); roughnessFactor = mix(roughnessFactor, 0.58, hWall);`)
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         {
-          float y = vHW.y, fy = fwidth(y), fz = max(fwidth(vHW.z), fwidth(vHW.x));
+          float y = vHW.y, fy = max(fwidth(y), 1e-4), fz = max(max(fwidth(vHW.z), fwidth(vHW.x)), 1e-4); // (never naught: a smoothstep's two edges are never one: the independent review)
           float hu = abs(vHN.z) > 0.5 ? vHW.x : vHW.z; // (along the wall)
           float dz = abs(fract(hu / 1.5 + 0.5) - 0.5) * 1.5, dy = min(abs(y - 1.2), abs(y - 5.9)), ds = abs(y - 3.3);
           float seam = max(1.0 - smoothstep(0.01, 0.01 + fz, dz), 1.0 - smoothstep(0.01, 0.01 + fy, dy));
@@ -182,7 +182,7 @@ function hallSteelShade(m) {
           totalEmissiveRadiance += vColor * 0.3 * (1.0 - hWall) + wall * hWall;
         }`);
   };
-  m.customProgramCacheKey = () => "hall-steel-1";
+  m.customProgramCacheKey = () => "hall-steel-2";
 }
 
 class HallScene extends Scene3D {
