@@ -17,7 +17,9 @@
 // base and cap are left out of their draw; the end of the hall is not drawn until the haze gives it up (62 m). At LOW
 // (GFX.extras off) bosses past 34 m are not drawn, only those within 22 m move, and none rattles. Reduced effects: no
 // glide (a still view of the end of the hall, the logo up at once), no rattles or flicker, the heads still, the idles
-// slowed.
+// slowed. On a computer (not Assets.phone) the walls between the windows are dressed as a maximum-security block's:
+// conduits, guard rails, block plates and signs, junction boxes, vents, doors, warning lamps, patrolling searchlights
+// (10f-titledress.js: in the cells' own draws, the moving light one more).
 const HALL_WORLDS = [
   // win: the world's sky (assets/ui, a small copy of its panorama); at: the place in it [u, v] that each window shows,
   // the left wall's and the right's (the nebula's two clouds; the dusk's low sun and its high clouds; the storm's
@@ -31,8 +33,11 @@ const HALL_WORLDS = [
   { id: "boss", win: "win-boss", sky: [0.66, 0.66], at: [[0.66, 0.6], [0.37, 0.55]], col: 0xa66bff, col2: 0x35efff, bosses: ["boss-5-t", "boss-6-t"], roar: ["roar_5", "roar_6"] },
   { id: "memory", win: "win-memory", sky: [0.6, 0.68], at: [[0.83, 0.47], [0.6, 0.5]], col: 0xffc04a, col2: 0xff8a3d, bosses: ["boss-7-t", "boss-8-t"], roar: ["roar_7", "roar_8"] },
   { id: "guide", win: "win-guide", sky: [0.5, 0.68], at: [[0.5, 0.47], [0.93, 0.5]], col: 0xffb86a, col2: 0x4dffa6, bosses: ["boss-9-t", "boss-10-t"], roar: ["roar_9", "roar_10"] },
-  { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.45, 0.55], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
+  { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.36, 0.58], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
 ];
+// (the master overhaul, Phase 5, 2026-11-24: the exam's left window looks through its arch, at the clouds and the gilt
+// underside, not at its right column: at the end of the glide on a wide window that window is the picture's left edge,
+// and its stone read as a dark muddy panorama)
 // the part of a world's panorama its skylight can show [u0, v0, du, dv] (texture space, v up): its span and its
 // parallax each way, a margin, and a skylight's clamp; tools/skylights.py crops its picture to the same
 const hallTopRect = (sky) => { const v0 = Math.max(0.3, sky[1] - 0.155); return [sky[0] - 0.19, v0, 0.38, Math.min(0.84, sky[1] + 0.155) - v0]; };
@@ -413,6 +418,7 @@ class HallScene extends Scene3D {
     // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
     // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
     this.kit = buildCellKit(this);
+    if (this.probe && this.kit.patrol) this.probe.hide.push(this.kit.patrol); // (a computer's moving searchlights: not frozen into the floor's reflection)
     // (the steel gives back the hall's capture filtered for its roughness: from the start a filtered copy of the capture
     // not yet drawn (black, as the hall's dark), so the steel's shader is made now, with the hall's, and each capture
     // that arrives changes a picture, not the shader; and the filter's own shader made now: neither mid-glide)

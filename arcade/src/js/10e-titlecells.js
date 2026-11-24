@@ -14,6 +14,8 @@
 // the small parts (bolts, clamps, lamp housings) are drawn only for the cells near the lens (instanced, one draw); the
 // lasers, the cameras, the steam and an arc a draw each. No light is added: each boss's light is in its own shading.
 // LOW (GFX.extras off): no steam, no arcs, no twitches. Reduced effects: no arcs, no steam, no twitches, no blinking.
+// On a computer the hall's walls are dressed as a prison block's too (10f-titledress.js), in these same draws (its
+// searchlights and beacons one more); a phone's hall is as it was.
 
 const CELL = { floor: 0.07, baseTop: 0.92, capY: 4.32, capTop: 5.08, R: 1.15, ring: 1.52 };
 // which cells are worse off (by their boss: Boss Rush's key), whatever the player has done; a beaten boss's cell calms
@@ -174,15 +176,17 @@ function cellGlowMaterial(calm) {
 
 // Each cell's two pictures, in one: its prisoner's plate (its number, its name) and its status screen (CONTAINED,
 // a red BREACH ALERT, or DEFEATED for a beaten boss), a row each. Drawn again when the page's fonts have come.
-function cellAtlas(states) {
+// extra: more rows under the cells' (a computer's hall: its blocks' signs, 10f-titledress.js), each a painter of its row.
+function cellAtlas(states, extra) {
   const W = 1024, RH = 128, K = Assets.phone ? 0.75 : 1, cv = document.createElement("canvas"), x = cv.getContext("2d"); // (drawn at three quarters on a phone: plenty for a plate a metre across; at full size on a computer's larger Retina picture)
-  cv.width = W * K; cv.height = RH * states.length * K;
+  const more = extra || [];
+  cv.width = W * K; cv.height = RH * (states.length + more.length) * K;
   const tex = new THREE.CanvasTexture(cv);
   tex.encoding = THREE.sRGBEncoding; tex.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; tex.minFilter = THREE.LinearMipmapLinearFilter; // (the plates are read at a slant down the aisle: filtered as finely as the tier allows)
   const css = (n) => "#" + new THREE.Color(n).getHexString();
   const draw = () => {
     x.setTransform(K, 0, 0, K, 0, 0);
-    x.clearRect(0, 0, W, RH * states.length);
+    x.clearRect(0, 0, W, RH * (states.length + more.length));
     states.forEach((s, i) => {
       const y = i * RH, col = css(s.col), num = String(s.no).padStart(2, "0");
       // the plate: brushed dark steel, a rule of the boss's colour, its number small and its name large
@@ -209,6 +213,7 @@ function cellAtlas(states) {
       for (let k = 0; k < 14; k++) { const h = 8 + ((k * 37 + i * 11) % 17); x.globalAlpha = red && k > 9 ? 1 : 0.7; x.fillRect(536 + k * 32, y + RH - 18 - h, 20, h); }
       x.globalAlpha = 1;
     });
+    more.forEach((paint, j) => paint(x, (states.length + j) * RH, W, RH));
     tex.needsUpdate = true;
   };
   draw();
@@ -396,9 +401,13 @@ function buildCellKit(hall) {
     // the caution ring on the floor round it
     put(steel, new THREE.RingGeometry(1.8, 2.04, 40, 1), at(0, 0.012, 0, 1, 1, 1, 0, -Math.PI / 2), g(1, WHITE), 4.08, 4.08); // (its uv is planar: in metres, the stripes run straight across it)
   }
+  // ---- on a computer, the hall's walls dressed as a prison block's (10f-titledress.js): made into the hall's own
+  // batches below (its steel, its lights, its signs among the plates), so no draw is added for what stands still
+  const dress = Assets.phone ? null : dressOwnRandom(() => hallDress(hall, { steel, glow, at, states, C: { GUN, DARK, BAR, BRIGHT, PIPE, WHITE } }));
+  const rowsN = dress ? dress.rowsTotal : cells.length; // (the plates' picture: the cells' rows, then the signs')
   // ---- every cell: the one copied, moved and turned to its place, in its own light and state, its own row of pictures
   const mats = cells.map((c) => new THREE.Matrix4().compose(c.anchor.position, Q.setFromAxisAngle(up, c.anchor.rotation.y), S1));
-  const per = (i) => { const st = states[i]; return { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], aRow: cells.length - 1 - i }; };
+  const per = (i) => { const st = states[i]; return { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], aRow: rowsN - 1 - i }; };
   const copies = { steel: kitCopies(one.steel, mats), detail: kitCopies(one.detail, mats), glow: kitCopies(one.glow, mats, per), screens: kitCopies(one.screens, mats, per) };
   // ---- the hall, watched: hazard strips and floor lights along the aisle, tripwires across it between the worlds
   // (their emitters), rails overhead (their hangers), cameras on the pillars
@@ -448,9 +457,9 @@ function buildCellKit(hall) {
   // plates and screens (one, one picture), the lasers (one)
   kit.steel = new THREE.Mesh(kitGeometry([copies.steel, steel.arrays()]), kit.steelMat);
   kit.glow = new THREE.Mesh(kitGeometry([copies.glow, glow.arrays()]), kit.glowMat);
-  kit.atlas = cellAtlas(states);
-  kit.screens = new THREE.Mesh(kitGeometry([copies.screens]), new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { tAtlas: { value: kit.atlas }, uTime: { value: 0 }, uK: { value: 1 }, uRows: { value: cells.length }, uCalm: { value: calm ? 1 : 0 } }),
+  kit.atlas = cellAtlas(states, dress && dress.rows);
+  kit.screens = new THREE.Mesh(kitGeometry(dress ? [copies.screens, dress.signs.arrays()] : [copies.screens]), new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { tAtlas: { value: kit.atlas }, uTime: { value: 0 }, uK: { value: 1 }, uRows: { value: rowsN }, uCalm: { value: calm ? 1 : 0 } }),
     vertexShader: "attribute vec2 uvM; attribute float aRow; attribute vec4 aState; uniform float uRows; varying vec2 vUv; varying vec4 vState; varying float vDepth; void main(){ vUv = vec2(uvM.x, (aRow + uvM.y) / uRows); vState = aState; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tAtlas; uniform float uTime; uniform float uK; uniform float uCalm; varying vec2 vUv; varying vec4 vState; varying float vDepth;
       void main(){ vec3 c = texture2D(tAtlas, vUv).rgb; c = c * c * (c * 0.305 + 0.695); float screen = step(0.5, vUv.x); float blink = 1.0 - screen * vState.x * (1.0 - vState.z) * (1.0 - uCalm) * 0.55 * step(0.5, fract(uTime * 1.6 + vState.w));
@@ -497,10 +506,11 @@ function buildCellKit(hall) {
   }
   // ---- steam from the worse cells' lids: soft puffs rising and spreading (instanced quads facing the lens)
   {
-    const steamy = cells.filter((c, i) => states[i].steam), per = 7, n = steamy.length * per;
+    const steamy = cells.filter((c, i) => states[i].steam), per = 7, puffs = dress ? dress.puffs : [], n = steamy.length * per + puffs.length; // (and a computer's wall vents that breathe)
     if (n) {
       const off = new Float32Array(n * 4);
       steamy.forEach((c, j) => { for (let k = 0; k < per; k++) { const a = c.anchor.rotation.y + Math.PI + (k - 3) * 0.22; off.set([c.x + Math.sin(a) * 0.7, CELL.capTop + 0.05, c.z + Math.cos(a) * 0.7, (k / per + j * 0.31) % 1], (j * per + k) * 4); } });
+      puffs.forEach((p, k) => off.set(p, (steamy.length * per + k) * 4));
       const qg = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(1, 1));
       qg.setAttribute("aOff", new THREE.InstancedBufferAttribute(off, 4));
       qg.instanceCount = n;
@@ -517,6 +527,9 @@ function buildCellKit(hall) {
   // ---- an electric arc now and then on a near cell
   kit.arc = cellArc(); kit.arc.name = "arc"; s.add(kit.arc); kit.meshes.push(kit.arc);
   kit.arcT = 0;
+  // ---- a computer's searchlights and beacons (one draw, moved by its shader; left out of the floor's reflection)
+  kit.patrol = dress && dress.patrol;
+  if (kit.patrol) { kit.patrol.visible = GFX.extras !== false; s.add(kit.patrol); kit.meshes.push(kit.patrol); }
   box.dispose(); plane.dispose(); torus.dispose(); dome.dispose(); bolt.dispose();
   // ---- each frame: the lights follow the hall's power (and INSERT COIN's surge); the near cells' small parts drawn
   // (the cells stand in order down the hall: the near ones are a run of them, one range of the one geometry); the
@@ -526,6 +539,7 @@ function buildCellKit(hall) {
     const k = (0.45 + 0.55 * hall.power) * (1 + (hall.endLamp.boost || 0) * 0.8);
     for (const m of [kit.glowMat, kit.screens.material, kit.laser.material, kit.camLamp.material]) m.uniforms.uK.value = k;
     if (kit.steam) { kit.steam.material.uniforms.uK.value = k; kit.steam.visible = !calm && GFX.extras !== false; } // (AUTO may take the tier down while the title is up)
+    if (kit.patrol) { kit.patrol.material.uniforms.uK.value = k; kit.patrol.visible = GFX.extras !== false; }
     let a = -1, b = -1;
     for (const c of cells) if (Math.hypot(c.x - cam.x, c.z - cam.z) < 24 && c.z < cam.z + 2.5) { if (a < 0) a = c.i; b = c.i; }
     kit.detail.geometry.setDrawRange(a < 0 ? 0 : a * kit.detailPer, a < 0 ? 0 : (b - a + 1) * kit.detailPer);
