@@ -367,7 +367,7 @@ class ExamPuffs {
           vec2 q = p * 1.7 + vQ.y * 31.0 + vec2(0.0, -uTime * 0.5 - age * 0.8);
           float n = pN(q) * 0.62 + pN(q * 2.1 + 7.3) * 0.38;
           n = n * 0.82 + pN(q * 4.6 + 1.7) * 0.18;
-          float shape = smoothstep(1.0, 0.2, r + (n - 0.5) * 0.9);
+          float shape = (1.0 - smoothstep(0.2, 1.0, r + (n - 0.5) * 0.9));
           vec3 rgb; float a;
           if (vQ.z < 0.5) {
             float heat = shape * pow(max(1.0 - age, 0.0), 1.6) * (0.55 + 0.75 * n);
@@ -590,8 +590,8 @@ class ExamBoss {
         void main(){
           vec2 p = vUv * 2.0 - 1.0; float r = length(p), a = atan(p.y, p.x);
           float ray = sH(vec2(floor(a * 9.0), 1.0)) * 0.35 + sH(vec2(floor(a * 23.0), 2.0)) * 0.2;
-          float burn = smoothstep(0.95, 0.15, r + ray * 0.5) * 0.82 * uK;
-          float crack = smoothstep(0.06, 0.0, abs(fract(a * 3.5 + sH(vec2(floor(r * 6.0), 3.0))) - 0.5) - 0.44) * smoothstep(0.75, 0.1, r);
+          float burn = (1.0 - smoothstep(0.15, 0.95, r + ray * 0.5)) * 0.82 * uK;
+          float crack = (1.0 - smoothstep(0.0, 0.06, abs(fract(a * 3.5 + sH(vec2(floor(r * 6.0), 3.0))) - 0.5) - 0.44)) * (1.0 - smoothstep(0.1, 0.75, r));
           gl_FragColor = vec4(vec3(2.6, 0.8, 0.15) * crack * uHot, burn);
         }`,
     }));
