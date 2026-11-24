@@ -106,14 +106,16 @@ function kitCopies(tpl, mats, per) {
   });
   return out;
 }
-// arrays (from kitCopies or KitBatch.arrays) made one geometry, in order
+// arrays (from kitCopies or KitBatch.arrays) made one geometry, in order. (The corners' places on their faces, aEdge,
+// 0 to 1, kept in a byte each: exact at the edges, 0 and 1, and a quarter of the memory: 0.45 MB on a phone)
 function kitGeometry(list) {
   const g = new THREE.BufferGeometry();
   for (const k in list[0]) {
     const sz = list[0][k][1], all = new Float32Array(list.reduce((t, a) => t + a[k][0].length, 0));
     let o = 0;
     for (const a of list) { all.set(a[k][0], o); o += a[k][0].length; }
-    g.setAttribute(k, new THREE.BufferAttribute(all, sz));
+    if (k === "aEdge") { const b = new Uint8Array(all.length); for (let i = 0; i < all.length; i++) b[i] = Math.round(all[i] * 255); g.setAttribute(k, new THREE.BufferAttribute(b, sz, true)); }
+    else g.setAttribute(k, new THREE.BufferAttribute(all, sz));
   }
   g.computeBoundingSphere();
   return g;
