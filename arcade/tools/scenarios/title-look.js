@@ -19,7 +19,8 @@ module.exports = async (cap) => {
   console.log("hall ready:", ok);
   await cap.eval(() => window.__reseed && window.__reseed(4242));
   await cap.eval(() => { const s = window.__arcade.Scenes.cur; if (s.probeNow) s.probeNow(); });
-  await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.rattleIn = 1e9; (s.cells || []).forEach((c, i) => { c.twitchIn = 1e9; if (c.idle) c.idle.time = (i * 0.37) % Math.max(0.01, c.idle.getClip().duration); c.phase = i * 1.3; if (c.mixer) c.mixer.update(0); }); document.querySelector(".scr-title").classList.add("gliding"); });
+  // (the scene's clock set too: the cells' pulses and alarms run on it, and the hall took its own time to arrive)
+  await cap.eval(() => { const s = window.__arcade.Scenes.cur; s.t = 100; s.rattleIn = 1e9; (s.cells || []).forEach((c, i) => { c.twitchIn = 1e9; c.flick = 0; if (c.idle) c.idle.time = (i * 0.37) % Math.max(0.01, c.idle.getClip().duration); c.phase = i * 1.3; if (c.mixer) c.mixer.update(0); }); document.querySelector(".scr-title").classList.add("gliding"); });
   if (process.env.TWEAK) await cap.eval((code) => new Function("s", code)(window.__arcade.Scenes.cur), process.env.TWEAK);
   // the logo, the dock and the tip are gone with a CSS transition on the page's real clock
   await cap.page.waitForTimeout(1500);
