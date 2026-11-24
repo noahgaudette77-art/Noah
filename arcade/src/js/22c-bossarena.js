@@ -192,9 +192,11 @@ function arenaSteelMaterial(env, tint, pair) {
 function arenaFaceFrames(g) {
   const P = g.attributes.position.array, N = g.attributes.normal.array, nt = P.length / 9, F = new Float32Array((P.length / 3) * 4);
   for (let i = 0; i < nt; ) {
-    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2];
+    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2], d0 = nx * P[o] + ny * P[o + 1] + nz * P[o + 2];
     let j = i + 1;
-    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3) j++;
+    // (and in one plane: two pieces side by side in the batch that face the same way are two faces. The independent
+    // review: none does today, but they would share one frame)
+    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3 && Math.abs(nx * P[j * 9] + ny * P[j * 9 + 1] + nz * P[j * 9 + 2] - d0) < 1e-3) j++;
     if (Math.abs(ny) < 0.6) {
       const l = Math.hypot(nx, nz) || 1, tx = -nz / l, tz = nx / l, ux = -tz * ny, uy = tz * nx - tx * nz, uz = tx * ny; // (across: level; up: across x normal)
       const A = (v) => P[v * 3] * tx + P[v * 3 + 2] * tz, B = (v) => P[v * 3] * ux + P[v * 3 + 1] * uy + P[v * 3 + 2] * uz;
