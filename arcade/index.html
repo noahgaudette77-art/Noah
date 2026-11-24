@@ -1493,9 +1493,11 @@ mark { padding: 0 3px; margin: 0 -1px; }
 @media (hover: hover) { .iconbtn:hover { box-shadow: 0 0 0 2px #05020f, 0 3px 0 0 #1d1259, 0 3px 0 2px #05020f, 0 0 16px -4px var(--cyan), inset 0 2px 0 rgba(255, 255, 255, 0.2); } }
 .iconbtn:active { transform: translateY(2px); box-shadow: 0 0 0 2px #05020f, 0 1px 0 0 #1d1259, 0 1px 0 2px #05020f; }
 /* the way forward lights the bar it stands on */
-.actions.pinned { background: radial-gradient(46% 130% at 23% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
+/* (Phase 2, 2026-11-24: the glow stands under the first button wherever the row is: on a wide window the row is held to
+   860px in the middle and the glow, at a quarter of the window, lit the empty bar left of it as a teal band) */
+.actions.pinned { background: radial-gradient(min(46%, 400px) 130% at max(23%, calc(50% - 249px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); padding-bottom: 8px; }
 .actions.pinned .wrap.one { grid-template-columns: 1fr; }
-.actions.pinned:has(.wrap.one) { background: radial-gradient(70% 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+.actions.pinned:has(.wrap.one) { background: radial-gradient(min(70%, 640px) 130% at 50% 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
 
 /* ---- a focus ring is the keyboard's (see UI.init): none until a key has been used ---- */
 html:not([data-input="keys"]) :focus-visible { outline: none !important; }
@@ -1825,6 +1827,10 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 .gico.gold { filter: brightness(1.3) saturate(1.6) drop-shadow(0 0 5px rgba(255, 208, 70, 0.6)) !important; }
 .res-hero > .gico { width: 64px; height: 64px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
 .world.wbar i .gico { width: 20px; height: 20px; }
+/* an earned cup is gilt (the model's is chrome: beside the gold coins it read as a grey cup), in each place it stands */
+.gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 0 5px rgba(255, 208, 70, 0.45)); }
+.tile .k .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.res-hero > .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.75)) drop-shadow(0 0 12px color-mix(in srgb, var(--c, #ffe14f) 60%, transparent)); }
 /* the results' reward moment: what was earned arrives one by one under the headline */
 .res-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 10px; margin: 6px 12px 2px; min-height: 44px; }
 .res-rewards .rw.coin + .rw.coin { margin-left: -24px; } /* (the coins land in a little pile) */
@@ -1858,6 +1864,7 @@ canvas.gen { image-rendering: auto !important; filter: none !important; }
 .res-rewards .rw { display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; }
 .res-rewards .rw.in { opacity: 1; animation: rw-in 0.55s var(--ease-spring, ease-out) backwards; }
 .res-rewards .rw .gico { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
+.res-rewards .rw .gico.cup { filter: sepia(1) saturate(2.2) hue-rotate(-8deg) brightness(1.25) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 10px color-mix(in srgb, var(--c, #ffe14f) 55%, transparent)); }
 .res-rewards .rw.big .gico { width: 50px; height: 50px; }
 .res-rewards .rw.coin .gico { width: 32px; height: 32px; }
 @keyframes rw-in { 0% { opacity: 0; transform: translateY(-26px) scale(0.4); } 60% { opacity: 1; transform: translateY(3px) scale(1.12); } 100% { transform: none; } }
@@ -8691,6 +8698,8 @@ function carpetTexture() {
 //
 // A scene steers it with scene.userData.post:
 //   exposure, bloom, threshold, saturation, contrast, vignette, tint, split, sharpen, crisp
+//   vignetteCol: [r, g, b] (0..1, as shown): what the vignette darkens toward (black unless given; the title hall's
+//   deep violet, the art bible's void: Phase 2's polish, 2026-11-24)
 //   rays: { pos, strength, radius, flare }       god rays and flare toward a light
 //   ao: 0..1 (default 1), aoRadius (fraction of depth, default 0.055)
 //   sun: [x, y, z] world direction toward the key light, shadow: 0..1, shadowLen
@@ -9020,7 +9029,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     tScene: { value: null }, tGlow: { value: null },
     uRes: { value: new THREE.Vector2(1, 1) }, uSceneRes: { value: new THREE.Vector2(1, 1) }, uNoise: { value: new THREE.Vector2() },
     uAberr: { value: 0 }, uEdge: { value: 0 }, uFlash: { value: 0 }, uExposure: { value: 1 }, uFlicker: { value: 1 }, uSharp: { value: 0 },
-    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uGlass: { value: 1 },
+    uSat: { value: 1.1 }, uContrast: { value: 1.05 }, uVignette: { value: 1 }, uVigCol: { value: new THREE.Vector3() }, uGlass: { value: 1 },
     uScan: { value: 0.1 }, uCurve: { value: 0.06 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
     uShadow: { value: new THREE.Vector3(0.55, 0.4, 1.0) }, uHigh: { value: new THREE.Vector3(1.0, 0.75, 0.6) }, uSplit: { value: 0.12 },
     uBezel: { value: new THREE.Vector2(16, 1) }, uGlowK: { value: 1 }, uPr: { value: 1 },
@@ -9033,7 +9042,7 @@ function makePipeline(renderer, hdr, wantSamples) {
     uniform sampler2D tScene; uniform sampler2D tGlow;
     uniform HP vec2 uRes; uniform HP vec2 uSceneRes; uniform HP vec2 uNoise; uniform HP vec2 uBezel;
     uniform float uAberr; uniform float uEdge; uniform float uFlash; uniform float uExposure; uniform float uFlicker; uniform float uSharp;
-    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform float uGlass; uniform float uPr;
+    uniform float uSat; uniform float uContrast; uniform float uVignette; uniform vec3 uVigCol; uniform float uGlass; uniform float uPr;
     uniform float uScan; uniform float uCurve; uniform vec3 uTint;
     uniform vec3 uShadow; uniform vec3 uHigh; uniform float uSplit; uniform float uGlowK;
     uniform vec3 uHitCol; uniform vec3 uHit;
@@ -9134,7 +9143,7 @@ function makePipeline(renderer, hdr, wantSamples) {
         col *= mix(vec3(1.0), mask, uScan * 1.1) * uFlicker;
       }
       HP vec2 v = uv * (1.0 - uv.yx);
-      col *= mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette);
+      col = mix(uVigCol, col, mix(1.0, clamp(sqrt(sqrt(v.x * v.y * 18.0)), 0.0, 1.0), uVignette)); // (toward black unless a scene asks for its own dark)
       // film grain: finer than a CSS pixel, strongest in the mid tones
       HP float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy + uNoise, vec2(0.06711056, 0.00583715))));
       float gy = dot(col, vec3(0.2126, 0.7152, 0.0722));
@@ -9396,6 +9405,7 @@ function makePipeline(renderer, hdr, wantSamples) {
       u.uSat.value = p.saturation !== undefined ? p.saturation : 1.12;
       u.uContrast.value = p.contrast !== undefined ? p.contrast : 1.06;
       u.uVignette.value = opt.vignette ? (p.vignette !== undefined ? p.vignette : 1) : 0;
+      if (p.vignetteCol) u.uVigCol.value.fromArray(p.vignetteCol); else u.uVigCol.value.set(0, 0, 0);
       if (p.tint) u.uTint.value.set(p.tint[0], p.tint[1], p.tint[2]); else u.uTint.value.set(1, 1, 1);
       u.uGlass.value = o.glass;
       u.uScan.value = opt.scan ? (p.crisp ? 0.05 : 0.09) : 0; // (a crisp scene: fainter scan lines)
@@ -9889,9 +9899,11 @@ const GEN_BOSSES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "al
 const GEN_ICON_OFF = ["#7868cc", "#8d82c8", "#3d2c80"];
 function genIconReady() { return Assets.on && !!Assets.ui("icons"); }
 // One icon from the strip: kind is one of GEN_ICONS; off draws it dark (a star not earned, a trophy still to win).
+// (An earned cup is gilt: the model's cup is chrome, which beside the gold coins read as a grey one. Phase 2, 2026-11-24)
 function genIcon(kind, off = false, cls = "") {
   const img = Assets.ui("icons"), i = GEN_ICONS.indexOf(kind);
   if (!img || i < 0) return "";
+  if (kind === "trophy" && !off) cls = cls ? cls + " cup" : "cup";
   return `<svg class="gico${off ? " off" : ""}${cls ? " " + cls : ""}" viewBox="${i * 160} 0 160 160" aria-hidden="true"><image href="${img.src}" width="1120" height="160"/></svg>`;
 }
 // The page's own icons that have a model: icon("star") and the rest come from the strip once it has loaded. An earned
@@ -9918,7 +9930,7 @@ Assets.onImage = (name) => {
 function genBossPortrait(canvas, color, key) {
   const img = Assets.on && Assets.ui("bosses"), i = GEN_BOSSES.indexOf(String(key));
   if (!img || i < 0) return false;
-  const S = 128;
+  const S = 192; // (the strip's own cell: at 128 a medal 82 points across was drawn up twice over on a phone, and read soft)
   canvas.width = canvas.height = S;
   const x = canvas.getContext("2d");
   const g = x.createRadialGradient(S / 2, S * 0.42, S * 0.05, S / 2, S * 0.5, S * 0.72);
@@ -9934,7 +9946,7 @@ function genBossPortrait(canvas, color, key) {
   x.globalAlpha = 1;
   x.imageSmoothingEnabled = true;
   x.imageSmoothingQuality = "high";
-  x.drawImage(img, i * 192, 0, 192, 192, -4, 0, S + 8, S + 8);
+  x.drawImage(img, i * 192, 0, 192, 192, -S / 32, 0, S + S / 16, S + S / 16);
   canvas.classList.add("gen");
   return true;
 }
@@ -10782,6 +10794,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
   // (plates.tint, a Color: a stone's veins, where its blue is darkest, in that colour: the exam's dark marble, 2026-11-23)
+  // (plates.fade, [the map's texels across, a bias, from, how much]: the relief read at the size of the pixel's longer
+  // way on the deck (at a slant, its length down the floor), not its shorter: what is finer than the pixel each way is
+  // gone, what is coarser (a plate's seams) stays; and where a pixel covers more of the map's texels than from (to four
+  // times that), the rest fades toward level and the mean roughness, by as much as asked: the title hall's deck, Phase
+  // 2's polish, 2026-11-24. Read finer than the pixel, the relief broke what the floor gives back into speckle that
+  // crawled as the lens moved)
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -10799,12 +10817,14 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
+  if (plates && plates.fade) uniforms.uPlatesFade = { value: new THREE.Vector4().fromArray(plates.fade) };
   if (probe && probe.tint) uniforms.uProbeTint = { value: probe.tint };
   const defines = {};
   if (probe) defines.PROBE = "";
   if (probe && probe.tint) defines.PROBE_TINT = "";
   if (probe && plates) defines.PLATES = "";
   if (probe && plates && plates.tint) defines.PLATES_TINT = "";
+  if (probe && plates && plates.fade) defines.PLATES_FADE = "";
   const mat = new THREE.ShaderMaterial({
     uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -10823,6 +10843,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES_TINT
       uniform vec3 uPlatesTint;
       #endif
+      #ifdef PLATES_FADE
+      uniform vec4 uPlatesFade;
+      #endif
       #ifdef PROBE_TINT
       uniform vec4 uProbeTint;
       #endif
@@ -10832,7 +10855,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         {
           vec3 nrm = vec3(0.0, 1.0, 0.0); float rough = uProbe.y;
           #ifdef PLATES
+          #ifdef PLATES_FADE
+          vec2 pf = fwidth(vWorld.xz / uPlates.x) * uPlatesFade.x; // (the map's texels a pixel covers, each way)
+          float pl = max(max(pf.x, pf.y), 1.0);
+          vec3 pm = mix(texture2DLodEXT(tPlates, vWorld.xz / uPlates.x, log2(pl) + uPlatesFade.y).rgb, vec3(0.5, 0.5, 0.72), uPlatesFade.w * smoothstep(uPlatesFade.z, uPlatesFade.z * 4.0, pl));
+          #else
           vec3 pm = texture2D(tPlates, vWorld.xz / uPlates.x).rgb;
+          #endif
           vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
@@ -12309,9 +12338,13 @@ class BandEdge {
 // narrow strip of sky stands above its tiers): the picture's place (u, v; v up) that stands straight ahead (-Z) at
 // `at` degrees above the horizon, magnified `zoom` times; nothing below the picture's v = min is ever shown. A sky
 // made without it is drawn exactly as before.
+// pull: 0 to 1, how far the picture's magenta is drawn toward violet (uPull; Risk Blaster's nebula on a wide window:
+// magenta is the B answer's colour, and the band there was led by it). Each pixel keeps its brightest and its least
+// channel, so only its hue moves; blue, cyan, red and a white star are untouched. A sky made without it is drawn
+// exactly as before.
 function makePanoSky(sky, o = {}) {
   const noMip = (t) => { if (t.minFilter !== THREE.LinearFilter) { t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; } return t; };
-  const win = o.window || null;
+  const win = o.window || null, pull = o.pull !== undefined;
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       tA: { value: noMip(sky.map) }, tB: { value: noMip(sky.map) }, uMix: { value: 0 },
@@ -12320,24 +12353,34 @@ function makePanoSky(sky, o = {}) {
     },
     side: THREE.BackSide, depthWrite: false, depthTest: true, fog: false, transparent: o.alpha !== undefined, // (alpha: a sky that fades in over the one it replaces)
     vertexShader: "varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }",
-    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}
+    fragmentShader: `uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform float uGain; uniform float uLift; uniform vec3 uTint; uniform float uRot; uniform float uRotB; uniform vec4 uDim; uniform float uAlpha; varying vec3 vDir;${win ? " uniform vec4 uWin; uniform float uWinMin;" : ""}${pull ? " uniform float uPull;" : ""}
       vec3 look(sampler2D t, vec3 d, float rot){
         ${win
           ? "vec2 uv = vec2(uWin.x + (fract(atan(d.z, d.x) * 0.15915494 + 0.75) - 0.5) * uWin.w, clamp(uWin.y + (asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 - uWin.z) * uWin.w, uWinMin, 0.998));"
           : "vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);"}
         vec3 c = texture2D(t, uv).rgb;
         return c * c * (c * 0.305 + 0.695); // sRGB to linear, near enough
-      }
+      }${pull ? `
+      vec3 pullViolet(vec3 c, float k){
+        float M = max(c.r, c.b), d = M - c.g;
+        if (c.g > min(c.r, c.b) || d < 1e-4) return c; // (only where green is the least: the hues from blue round through violet and magenta to red)
+        float x = (c.r - c.b) / d; // (the hue as one number: -1 blue, -0.7 violet, near 0.4 the nebula's magenta, 1 red)
+        // toward violet, never past it; reds and pale stars as they were. (The brightest toward a bluer violet: lifted
+        // past white, the tone curve draws red and blue together again, and a violet heart came out fuchsia.)
+        x = mix(x, -0.7 - 0.2 * smoothstep(0.3, 1.0, M), k * smoothstep(-0.7, -0.4, x) * (1.0 - smoothstep(0.6, 0.9, x)) * smoothstep(0.1, 0.35, d / M));
+        return x < 0.0 ? vec3(M + x * d, c.g, M) : vec3(M, c.g, M - x * d);
+      }` : ""}
       void main(){
         vec3 d = normalize(vDir);
         vec3 c = look(tA, d, uRot);
-        if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);
+        if (uMix > 0.001) c = mix(c, look(tB, d, uRotB), uMix);${pull ? "\n        if (uPull > 0.001) c = pullViolet(c, uPull);" : ""}
         float m = max(max(c.r, c.g), c.b);
         c *= uGain * (1.0 + uLift * smoothstep(0.42, 0.95, m));
         gl_FragColor = linearToOutputTexel(vec4(c * uTint, uAlpha)); // (as it is, in a scene; packed for the target when a reflection map is made from it: see makeEnvMap)
       }`,
   });
   if (win) { mat.uniforms.uWin = { value: new THREE.Vector4(win.u, win.v, 0.5 + (win.at || 0) / 180, win.zoom || 1) }; mat.uniforms.uWinMin = { value: win.min === undefined ? 0.5 : win.min }; }
+  if (pull) mat.uniforms.uPull = { value: +o.pull || 0 };
   const dome = new THREE.Mesh(new THREE.SphereGeometry(o.radius || 400, 48, 24), mat);
   dome.frustumCulled = false;
   dome.renderOrder = -20;
@@ -14202,6 +14245,39 @@ function hallRelease(model) {
   });
 }
 
+// The hall's own steel (its walls, pillars, beams, frames and ceiling: one material, buildRoom) never black, and its
+// long walls lit (Phase 2's polish, 2026-11-24: an art review found the walls between the props flat pure blue or
+// black, the dressing on them dark on dark; the art bible's grounds are deep violets, a shadow never black). Each
+// piece glows a little in its own deep violet; the long walls' faces to the aisle are painted panels (less of a
+// mirror, so the painted vault's blue no longer floods them) in the hall's deep violet (#140a38), washed with their
+// strips' light (cyan up from the skirting, magenta down from the cornice), a seam between panels every 1.5 m and at
+// two heights, each panel its own a little, and an inset strip of the hall's violet along them at 3.3 m, under the
+// junction boxes and over the block plates; the end wall either side of the vault's frame the same (the vault's
+// recess stays dark). Shading only: no draw, no light.
+function hallSteelShade(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vHW; varying vec3 vHN;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\n  vHW = (modelMatrix * vec4(transformed, 1.0)).xyz; vHN = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vHW; varying vec3 vHN;")
+      .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>
+        float hWall = max(step(7.75, abs(vHW.x)) * step(0.5, -sign(vHW.x) * vHN.x), step(4.3, abs(vHW.x)) * step(vHW.z, ${(HALL.endZ + 0.1).toFixed(2)}) * step(0.5, vHN.z)); // (a long wall's face to the aisle, or the end wall's either side of the vault's frame)
+        metalnessFactor = mix(metalnessFactor, 0.4, hWall); roughnessFactor = mix(roughnessFactor, 0.58, hWall);`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        {
+          float y = vHW.y, fy = fwidth(y), fz = max(fwidth(vHW.z), fwidth(vHW.x));
+          float hu = abs(vHN.z) > 0.5 ? vHW.x : vHW.z; // (along the wall)
+          float dz = abs(fract(hu / 1.5 + 0.5) - 0.5) * 1.5, dy = min(abs(y - 1.2), abs(y - 5.9)), ds = abs(y - 3.3);
+          float seam = max(1.0 - smoothstep(0.01, 0.01 + fz, dz), 1.0 - smoothstep(0.01, 0.01 + fy, dy));
+          float panel = fract(sin(floor(hu / 1.5 + 0.5) * 12.9898 + step(5.9, y) * 4.1 + step(1.2, y) * 7.3 + sign(vHW.x) * 3.7) * 43758.5453); // (each panel its own a little)
+          vec3 wall = vec3(0.05, 0.025, 0.085) * (0.86 + 0.28 * panel) * (1.0 - 0.7 * seam)
+            + vec3(0.21, 0.94, 1.0) * 0.045 * exp(-max(y - 0.1, 0.0) * 2.2) + vec3(1.0, 0.23, 0.83) * 0.025 * exp(-abs(y - 7.05) * 2.0)
+            + vec3(0.65, 0.37, 1.0) * (1.8 * (1.0 - smoothstep(0.012, 0.012 + fy, ds)) + 0.04 * exp(-ds * 7.0));
+          totalEmissiveRadiance += vColor * 0.3 * (1.0 - hWall) + wall * hWall;
+        }`);
+  };
+  m.customProgramCacheKey = () => "hall-steel-1";
+}
+
 class HallScene extends Scene3D {
   constructor() {
     super({ fov: 58, far: 300, fog: [0x07021c, 12, 66], bg: 0x05010f });
@@ -14246,7 +14322,8 @@ class HallScene extends Scene3D {
     }
     s.userData.lightBudget = { dir: 1, point: 3 }; // (see LightPool: the key, and the three strongest of the worlds' seven lamps)
     s.userData.post = { exposure: 1.16, bloom: 0.75, threshold: 1.05, saturation: GRADE.saturation, contrast: GRADE.contrast, vignette: 1.12, split: 0.15,
-      ao: 0.75, shadow: 0, dirt: 0.25, mblur: 0.45, sharpen: 0.3, fringe: 0.15 };
+      ao: 0.75, shadow: 0, dirt: 0.25, mblur: 0.45, sharpen: 0.3, fringe: 0.15,
+      vignetteCol: [0.035, 0.012, 0.125] }; // (its corners darken toward the art bible's void, #090320, not to black: Phase 2's polish)
     this.key = new THREE.DirectionalLight(0xc6ccff, 0.5);
     this.key.position.set(-3, 14, 8);
     this.key.userData.keep = true;
@@ -14267,12 +14344,18 @@ class HallScene extends Scene3D {
     // reflected ray meets its walls (roomProbe); the deck's plates and wear from a CC0 material (Poly Haven's
     // metal_plate_02: its relief and roughness; the colour is the hall's own dark violet). The black floor with a thin
     // grid was the hall's weakest picture: a void filling the bottom of every frame)
+    // (Phase 2's polish, 2026-11-24: an art review found its reflection broken into orange and violet speckle far off,
+    // read as crumbling brick and crawling as the lens glides: the deck's relief, finer than the pixel there, threw each
+    // pixel's reflected ray onto a skylight or the dark between. The relief is now read at the size of the pixel's
+    // longer way on the deck (what is finer than the pixel is gone, a plate's seams stay), and where a pixel covers more
+    // than six of the deck's texels the rest fades most of the way to level (plates.fade: makeNeonFloor); on a phone
+    // the relief is a little shallower)
     this.probe = roomProbe(new THREE.Vector3(0, 2.2, (Z1 + Z2) / 2), { size: Assets.phone ? 128 : 256 });
     this.plates = hallPlates();
     this.floor = makeNeonFloor({
       size: 240, cell: 3, line: 0x35efff, lineK: 0.5, base: 0x030010, glow: 0.3, gridAlpha: 0.42, pulse: this.calm ? 0 : 0.35, ripple: 0, streak: 0,
       probe: { map: this.probe.map, min: new THREE.Vector3(-W, 0, Z2 - 2), max: new THREE.Vector3(W, H, Z1), at: this.probe.at, k: 1.05, rough: 0.24 },
-      plates: { map: this.plates, size: 3.0, k: 0.85 },
+      plates: { map: this.plates, size: 3.0, k: Assets.phone ? 0.65 : 0.85, fade: [1024, 0, 6, 0.6] },
     });
     this.floor.name = "floor";
     this.probe.hide = [this.floor];
@@ -14339,6 +14422,7 @@ class HallScene extends Scene3D {
     glow.add(box, racerM(0, 6.47, Z + 0.72, 7.6, 0.05, 0.05), 0xffc04a, 2.0);
     for (const sd of [-1, 1]) { metal.add(box, racerM(sd * 3.75, 3.35, Z + 0.35, 0.7, 6.7, 0.7), 0x161029); glow.add(box, racerM(sd * 3.38, 3.35, Z + 0.72, 0.05, 6.2, 0.05), 0xffc04a, 1.8); }
     this.metalMat = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.75, roughness: 0.42 });
+    hallSteelShade(this.metalMat);
     this.glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     const metalMesh = new THREE.Mesh(metal.build("color"), this.metalMat), glowMesh = new THREE.Mesh(glow.build("color"), this.glowMat);
     metalMesh.name = "room-steel"; glowMesh.name = "room-lights"; // (named for tools/cost-report.js)
@@ -14393,6 +14477,11 @@ class HallScene extends Scene3D {
           if (vDepth < 32.0) wisp = smoothstep(0.5, 1.0, sin(ang * 3.0 + vY * 9.0 - t * 1.1 + ph) * sin(ang * 5.0 - vY * 13.0 + t * 0.7)) * 0.11 * (1.0 - 0.6 * vY) * (1.0 - smoothstep(22.0, 32.0, vDepth)); // (near cells only: far off the haze hides them)
           float pulse = 0.86 + 0.14 * sin(t * 1.3 + ph);
           vec3 c = mix(mix(vCol, vec3(1.0, 0.1, 0.14), vState.x * (1.0 - uCalm) * (0.45 + 0.45 * sin(t * 6.5 + ph))), vec3(0.3, 1.0, 0.55), vState.z * 0.85) * mix(1.0, 0.72, vState.z);
+          // (Phase 2's polish, 2026-11-24: an art review found the gold and green cells hiding their bosses, a dark shape
+          // in a milky tube: the glass is added over what is behind it, and where its far side shows round the boss its
+          // light came twice. The far side's light now at 0.4 of the near side's, and a bright tint (gold, orange,
+          // yellow, lime, cyan) brought most of the way down to the others' strength: the boss leads its cell)
+          c *= min(1.0, mix(1.0, 0.5 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 0.05), 0.7)) * (gl_FrontFacing ? 1.0 : 0.4);
           float crack = 0.0;
           if (vState.y > 0.5) { // (only a cracked pane reads its crack)
             float da = atan(sin(ang - vFront), cos(ang - vFront));
@@ -14481,7 +14570,7 @@ class HallScene extends Scene3D {
       c.copy(lit).multiplyScalar(0.85).toArray(this.pCol.array, i * 3);
       this.gState.array.set([st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], i * 4);
       this.gFront.array[i] = Math.atan2(Math.cos(ry), Math.sin(ry));
-      cl.rimU = { col: { value: lit.clone() }, k: { value: 0 } }; // (its boss's rim and under-light: see cellRim)
+      cl.rimU = { col: { value: lit.clone() }, k: { value: 0 }, key: { value: 2.0 } }; // (its boss's rim and under-light, and the key from its cap's lamp: see cellRim)
       cl.rimPh = st.phase * Math.PI * 2;
       cl.state = st;
     });
@@ -15008,10 +15097,46 @@ const CELL = { floor: 0.07, baseTop: 0.92, capY: 4.32, capTop: 5.08, R: 1.15, ri
 // which cells are worse off (by their boss: Boss Rush's key), whatever the player has done; a beaten boss's cell calms
 const CELL_WORSE = { alert: ["6", "all"], crack: ["2", "8", "all"], steam: ["5", "10", "3"] };
 
+// Each corner's place on its own face of a piece, for the steel's chamfers (cellSteelMaterial): 0 to 1 across the
+// face, 0 or 1 at its edges. A box's faces as they are; a closed cylinder's sides each its own if it has a dozen or
+// fewer (a pipe or a band, open, or more sides, is round: no edge down its sides, 0.25 to 0.75 across them), its ends
+// by how far in from the rim (0 at the rim, 0.5 in the middle); anything else no edge at all (0.5 at every corner: the
+// shader leaves it be). geo: the piece as made; U: its uvs unindexed (three corners a triangle); n: its corners.
+// Nothing of three.js is made here.
+function kitEdges(geo, U, n) {
+  const E = new Float32Array(n * 2).fill(0.5);
+  if (!U) return E;
+  if (geo.type === "BoxGeometry") { E.set(U.subarray(0, n * 2)); return E; }
+  if (geo.type !== "CylinderGeometry") return E;
+  const p = geo.parameters || {}, segs = p.radialSegments || 8, faces = segs <= 12 && !p.openEnded;
+  const round = (j) => Math.atan2(U[j + 1] - 0.5, U[j] - 0.5) / (2 * Math.PI); // (a rim corner's way round)
+  for (let i = 0; i < n; i += 3) {
+    let cap = -1, cu = 0;
+    for (let k = 0; k < 3; k++) { const j = (i + k) * 2; if (U[j] === 0.5 && U[j + 1] === 0.5) cap = k; cu += U[j] / 3; } // (an end's triangles each have its middle, at uv 0.5, 0.5)
+    const f = Math.floor(cu * segs);
+    if (cap >= 0) {
+      // an end: in from the rim one way, round it the other (each corner its own way round, its middle the two rim
+      // corners' mean: the two ways never along one line, or the shader's frame would have no breadth)
+      const r = [0, 1, 2].filter((k) => k !== cap).map((k) => round((i + k) * 2));
+      if (r[1] - r[0] > 0.5) r[1] -= 1; else if (r[0] - r[1] > 0.5) r[0] -= 1;
+      let q = 0;
+      for (let k = 0; k < 3; k++) {
+        const j = (i + k) * 2;
+        if (k === cap) { E[j] = 0.5; E[j + 1] = 0.5; }
+        else { E[j] = 0; E[j + 1] = 0.5 + 2 * (r[q] - (r[0] + r[1]) / 2); q++; }
+      }
+    } else {
+      for (let k = 0; k < 3; k++) { const j = (i + k) * 2, a = U[j] * segs - f; E[j] = faces ? a : 0.25 + 0.5 * a; E[j + 1] = U[j + 1]; }
+    }
+  }
+  return E;
+}
+
 // A batch of pieces made one geometry: each piece's corners carry what is given for it (colour, pattern, its cell's
-// light and state...), and coordinates in metres along its faces (uvM), for the patterns drawn on them.
+// light and state...), and coordinates in metres along its faces (uvM), for the patterns drawn on them; with edges
+// (o.edges: the steel's), each corner's place on its own face too (aEdge: see kitEdges).
 class KitBatch {
-  constructor(attrs = {}) { this.attrs = attrs; this.pos = []; this.nor = []; this.uvm = []; this.x = {}; for (const k in attrs) this.x[k] = []; }
+  constructor(attrs = {}, o = {}) { this.attrs = attrs; this.edges = !!o.edges; this.pos = []; this.nor = []; this.uvm = []; this.edge = []; this.x = {}; for (const k in attrs) this.x[k] = []; }
   // geo placed by m; v: the piece's values; su, sv: its own uv in metres (a cylinder's: its girth and height);
   // smooth: keep its own normals (a torus, a dome), else flat (hard steel)
   add(geo, m, v = {}, su = 1, sv = 1, smooth = false) {
@@ -15021,6 +15146,7 @@ class KitBatch {
     const P = g.attributes.position.array, N = g.attributes.normal.array, U = g.attributes.uv ? g.attributes.uv.array : null, n = P.length / 3;
     for (let i = 0; i < P.length; i++) { this.pos.push(P[i]); this.nor.push(N[i]); }
     for (let i = 0; i < n; i++) this.uvm.push(U ? U[i * 2] * su : 0, U ? U[i * 2 + 1] * sv : 0);
+    if (this.edges) { const E = smooth ? null : kitEdges(geo, U, n); for (let i = 0; i < n * 2; i++) this.edge.push(E ? E[i] : 0.5); }
     for (const k in this.attrs) { const s = this.attrs[k], val = v[k] === undefined ? 0 : v[k]; const arr = this.x[k]; for (let i = 0; i < n; i++) for (let j = 0; j < s; j++) arr.push(s > 1 ? val[j] : val); }
     g.dispose();
     return this;
@@ -15028,6 +15154,7 @@ class KitBatch {
   // its pieces as typed arrays, by attribute (with each attribute's size)
   arrays() {
     const a = { position: [new Float32Array(this.pos), 3], normal: [new Float32Array(this.nor), 3], uvM: [new Float32Array(this.uvm), 2] };
+    if (this.edges) a.aEdge = [new Float32Array(this.edge), 2];
     for (const k in this.attrs) a[k] = [new Float32Array(this.x[k]), this.attrs[k]];
     return a;
   }
@@ -15055,14 +15182,16 @@ function kitCopies(tpl, mats, per) {
   });
   return out;
 }
-// arrays (from kitCopies or KitBatch.arrays) made one geometry, in order
+// arrays (from kitCopies or KitBatch.arrays) made one geometry, in order. (The corners' places on their faces, aEdge,
+// 0 to 1, kept in a byte each: exact at the edges, 0 and 1, and a quarter of the memory: 0.45 MB on a phone)
 function kitGeometry(list) {
   const g = new THREE.BufferGeometry();
   for (const k in list[0]) {
     const sz = list[0][k][1], all = new Float32Array(list.reduce((t, a) => t + a[k][0].length, 0));
     let o = 0;
     for (const a of list) { all.set(a[k][0], o); o += a[k][0].length; }
-    g.setAttribute(k, new THREE.BufferAttribute(all, sz));
+    if (k === "aEdge") { const b = new Uint8Array(all.length); for (let i = 0; i < all.length; i++) b[i] = Math.round(all[i] * 255); g.setAttribute(k, new THREE.BufferAttribute(b, sz, true)); }
+    else g.setAttribute(k, new THREE.BufferAttribute(all, sz));
   }
   g.computeBoundingSphere();
   return g;
@@ -15085,15 +15214,23 @@ function cellFlatTexture() {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; t.needsUpdate = true;
   return t;
 }
+// (Phase 2's polish, 2026-11-24: an art review found the steel still one flat tone a face, the near cells' bars,
+// brackets and bands read as untextured boxes: the brushed map only made the roughness vary, and a flat face gives back
+// one blurred reflection. Now each face finds its own frame (from how its corners' place on the face, aEdge, changes
+// across the pixel: kitEdges) and with it: chamfers along its edges, worn to bright steel and turned 45 degrees out, so
+// they catch the lamps and give back another part of the hall (as wide as they cover of the pixel: far off they fade,
+// never a crawling line); the brushing's streaks tilting the face a little (the grain of the map's roughness across
+// them), so what it gives back breaks along them; grime toward each upright face's foot; and the steel's tone mottled
+// a little, warmer and cooler.)
 function cellSteelMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.8, roughness: 0.38, envMapIntensity: 1.3 });
   m.userData.tTread = { value: cellFlatTexture() }; m.userData.tBrush = { value: cellFlatTexture() };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tTread = m.userData.tTread; sh.uniforms.tBrush = m.userData.tBrush;
-    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN;")
-      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;")
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; attribute vec2 aEdge; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; varying vec2 vEdge;")
+      .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat; vEdge = aEdge;")
       .replace("#include <project_vertex>", "#include <project_vertex>\n#ifdef USE_INSTANCING\n  vWP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);\n#else\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);\n#endif"); // (an instance's own place counts: the cameras' bodies share this material)
-    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tTread; uniform sampler2D tBrush;")
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; varying vec2 vEdge; uniform sampler2D tTread; uniform sampler2D tBrush;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float pHaz = step(0.5, vPat) * step(vPat, 1.5), pGri = step(1.5, vPat) * step(vPat, 2.5), pRec = step(2.5, vPat);
         float st = smoothstep(0.47, 0.53, abs(fract((vUvM.x + vUvM.y) * 2.6) - 0.5) * 2.0);
@@ -15106,18 +15243,52 @@ function cellSteelMaterial() {
         diffuseColor.rgb *= 1.0 - 0.78 * pRec;
         float plain = (1.0 - pHaz) * (1.0 - pGri) * (1.0 - pRec), up = plain * smoothstep(0.6, 0.72, vWN.y); // (the base's top: its flat ring and the bevel round it, which is what the aisle sees)
         vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
-        diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);")
+        diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);
+        // the face's own frame: its two directions (view space) and its size in metres, from how the place on it changes
+        // across the pixel (none for a piece without edges: sOn 0)
+        vec3 sP = -vViewPosition, sDx = dFdx(sP), sDy = dFdy(sP);
+        vec2 sEx = dFdx(vEdge), sEy = dFdy(vEdge);
+        float sDet = sEx.x * sEy.y - sEy.x * sEx.y, sOn = step(0.02 * length(sEx) * length(sEy) + 1e-12, abs(sDet)); // (its two ways along nearly one line: no frame)
+        sDet = mix(1.0, sDet, sOn);
+        vec3 sTx = (sDx * sEy.y - sDy * sEx.y) * (sOn / sDet), sTy = (sDy * sEx.x - sDx * sEy.x) * (sOn / sDet);
+        float sLx = max(length(sTx), 1e-4), sLy = max(length(sTy), 1e-4), sPx = max(length(sDx), length(sDy)) + 1e-5;
+        // its chamfers: a band in from each edge (1.6 cm, less on a small piece), as much of the pixel as it covers; each
+        // faces out across its edge
+        vec2 sIn = min(vEdge, 1.0 - vEdge) * vec2(sLx, sLy);
+        float sB = min(0.016, 0.18 * min(sLx, sLy));
+        vec2 sCov = clamp((min(vec2(sB), sIn + 0.5 * sPx) - max(vec2(0.0), sIn - 0.5 * sPx)) / sPx, 0.0, 1.0) * sOn;
+        float sBev = max(sCov.x, sCov.y);
+        vec3 sTilt = sTx * (sCov.x * sign(vEdge.x - 0.5) / sLx) + sTy * (sCov.y * sign(vEdge.y - 0.5) / sLy);
+        // the brushing: the grain of its streaks (the map's roughness, across them) tilts the face a little; finer than
+        // the pixel, the map's smaller copies flatten it
+        float sSl = clamp((texture2D(tBrush, vUvM * vec2(1.4, 0.35) + vec2(0.0, 0.002)).b - brush.b) * 175.0, -6.0, 6.0);
+        vec3 sStreak = sTy * (-0.03 * sSl * sOn * (1.0 - up) / sLy); // (not on the tread plate: its diamonds are its own)
+        // its tone mottled, a little warmer and cooler; grime toward an upright face's foot (its lowest edge)
+        float sMot = smoothstep(0.38, 0.56, brush.b);
+        diffuseColor.rgb *= mix((0.84 + 0.32 * sMot) * mix(vec3(1.03, 0.99, 0.95), vec3(0.96, 0.99, 1.04), sMot), vec3(1.0), up);
+        vec3 sUp = (viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
+        float sGx = dot(sTx, sUp) / sLx, sGy = dot(sTy, sUp) / sLy;
+        float sLow = abs(sGy) >= abs(sGx) ? mix(1.0 - vEdge.y, vEdge.y, step(0.0, sGy)) * sLy * abs(sGy) : mix(1.0 - vEdge.x, vEdge.x, step(0.0, sGx)) * sLx * abs(sGx);
+        float sGrime = clamp((1.0 - smoothstep(0.0, 0.22, sLow)) * smoothstep(0.55, 0.85, max(abs(sGx), abs(sGy))) * (0.55 + 0.9 * (1.0 - sMot)), 0.0, 1.0) * sOn;
+        diffuseColor.rgb *= 1.0 - 0.5 * sGrime;
+        // a chamfer worn bright: bare steel through paint, polished
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 2.2 + 0.05, vec3(0.5, 0.51, 0.55), max(pHaz, pRec)), sBev);`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);\n  roughnessFactor = mix(mix(roughnessFactor, 0.85, 0.5 * sGrime), 0.24, sBev);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(mix(metalnessFactor, 0.15, pHaz), 0.9, sBev);")
       // the tread plate's relief: its diamonds tilt the surface, so they catch the lamps and the hall's reflection (only
       // its colour and roughness were taken before, and the plinth tops stayed a flat pale plane: Phase 2's gate review).
       // The tops face up, so the picture's frame is the world's (x along x, y along -z); elsewhere nothing changes
       .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
         { vec2 tn = (tread.rg * 2.0 - 1.0) * up;
           vec3 bent = vec3(tn.x, sqrt(max(1.0 - dot(tn, tn), 0.0)), -tn.y);
-          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }`);
+          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }
+        // the chamfers and the brushing, the face kept turned to the lens as much as it was (up to 0.25): a normal
+        // turned away from the lens sends three.js's specular to thousands, a white bloom (the first try)
+        { vec3 sV = normalize(vViewPosition); float sNV = min(dot(normal, sV), 0.25);
+          normal = normalize(normal + sTilt + sStreak);
+          normal = normalize(normal + sV * max(max(sNV, 0.02) - dot(normal, sV), 0.0)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-4";
+  m.customProgramCacheKey = () => "cell-steel-5";
   return m;
 }
 
@@ -15221,7 +15392,7 @@ function crackTexture() {
   x.lineCap = "round"; x.lineJoin = "round";
   let seed = 7;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW / 2, MH / 2];
+  const px = (m) => (m / MW) * W, py = (m) => (m / MH) * H, C = [MW * 0.17, MH * 0.84]; // (the strike in a lower corner: see the star)
   const seg = (a, b, w, lit) => { x.strokeStyle = `rgba(255,255,255,${lit.toFixed(2)})`; x.lineWidth = w; x.beginPath(); x.moveTo(px(a[0]), py(a[1])); x.lineTo(px(b[0]), py(b[1])); x.stroke(); };
   // a crack from p along angle a for len metres: short straight stretches, each its own glint; now and then a branch
   const crack = (p, a, len, w, depth, pts) => {
@@ -15235,14 +15406,23 @@ function crackTexture() {
       p = q;
     }
   };
-  // the star: radials from the strike, their points kept for the web
-  const R = 8, rays = [];
-  for (let k = 0; k < R; k++) { const pts = [C.slice()]; crack(C.slice(), (k / R) * Math.PI * 2 + (rnd() - 0.5) * 0.5, 0.32 + rnd() * 0.5, 1.5, 2, pts); rays.push(pts); }
-  // the web: between each radial and the next, straight pieces across at three distances out, some missing
+  // the star: radials from the strike, their points kept for the web. (Phase 2's polish, 2026-11-24: an art review
+  // found the cracks running across the Proctor's face and chest, the strike in the middle of the pane. It is now in
+  // a lower corner, as a blow from below would land, its cracks fanning from up the pane's side to along its foot,
+  // shorter across the middle: the boss's face and chest stay clear)
+  const R = 7, rays = [];
+  for (let k = 0; k < R; k++) {
+    const f = k / (R - 1), a = -Math.PI * 0.56 + f * Math.PI * 0.62 + (rnd() - 0.5) * 0.2; // (the picture's y runs down: from up its side to along its foot)
+    const pts = [C.slice()];
+    crack(C.slice(), a, (0.45 + rnd() * 0.45) * (0.55 + 0.45 * Math.abs(f - 0.45) / 0.55), 1.5, 2, pts);
+    rays.push(pts);
+  }
+  // the web: between each radial and the next (not round the back of the fan), straight pieces across at three
+  // distances out, some missing
   const at = (pts, r) => { for (const q of pts) if (Math.hypot(q[0] - C[0], q[1] - C[1]) >= r) return q; return null; };
-  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R; k++) {
+  for (const r of [0.05, 0.12, 0.22]) for (let k = 0; k < R - 1; k++) {
     if (rnd() < 0.3) continue;
-    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[(k + 1) % R], r * (0.85 + 0.3 * rnd()));
+    const a = at(rays[k], r * (0.85 + 0.3 * rnd())), b = at(rays[k + 1], r * (0.85 + 0.3 * rnd()));
     if (a && b) seg(a, b, 1.0, 0.3 + 0.6 * rnd());
   }
   // the strike itself: the glass crushed white in a small knot
@@ -15265,7 +15445,15 @@ function cellStates(cells) {
 
 // The rim and under-light of a boss in its cell, added to its own materials' shading (no light is added to the
 // scene): its edges caught in its cell's colour, and the colour from the plinth's glow on what faces down. u: the
-// cell's { col, k } (k breathes with the cell's pulse; a rattle flares it).
+// cell's { col, k } (k breathes with the cell's pulse; a rattle flares it), and for a caged boss key: { value } (its
+// cap's lamp: see below; none for the end of the hall's props).
+// (Phase 2's polish, 2026-11-24: an art review found the gold and green cells hiding their bosses, the Group Golem a
+// dark shape in its glass, its chest darker than the empty glass beside it (the art bible: a boss's face and chest never
+// darker than what is behind them). Each caged boss is now lit from its cap's lamp too: a key from above it and toward
+// the lens, nearly white with a little of its cell's colour, on its own surface with a floor under its darkest paint (a
+// near-black plate still shows its shape), half as much on bare metal (chrome stays chrome), and a broad sheen where
+// it turns to the lamp.)
+const CELL_NO_KEY = { value: 0 };
 function cellRim(mats, u) {
   for (const m of mats) {
     if (!m || !m.isMeshStandardMaterial || m.userData.cellRim) continue;
@@ -15275,15 +15463,18 @@ function cellRim(mats, u) {
     m.needsUpdate = true;
   }
 }
-function cellRimKey() { return "cell-rim-1"; }
+function cellRimKey() { return "cell-rim-2"; }
 function cellRimCompile(sh) {
   const u = this.userData.cellRim;
-  sh.uniforms.uCellCol = u.col; sh.uniforms.uCellK = u.k;
-  sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uCellCol; uniform float uCellK;")
+  sh.uniforms.uCellCol = u.col; sh.uniforms.uCellK = u.k; sh.uniforms.uCellKey = u.key || CELL_NO_KEY;
+  sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uCellCol; uniform float uCellK; uniform float uCellKey;")
     .replace("#include <tonemapping_fragment>", `{
       vec3 nV = normalize(geometry.normal), upV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
       float fr = 1.0 - clamp(dot(nV, geometry.viewDir), 0.0, 1.0), under = clamp(-dot(nV, upV) * 0.8 + 0.25, 0.0, 1.0);
       gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(max(fr, 0.0), 3.0));
+      vec3 kL = normalize(upV * 0.8 + geometry.viewDir * 0.6);
+      float kd = max(dot(nV, kL), 0.0), ks = pow(max(dot(reflect(-geometry.viewDir, nV), kL), 0.0), 16.0);
+      gl_FragColor.rgb += mix(vec3(1.0), uCellCol, 0.4) * (uCellK * uCellKey) * ((diffuseColor.rgb + 0.035) * (0.25 + 0.75 * kd) * (1.0 - 0.5 * metalnessFactor) + 0.3 * ks * kd);
     }
     #include <tonemapping_fragment>`);
 }
@@ -15332,8 +15523,8 @@ function buildCellKit(hall) {
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
   const at = (x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) => M.compose(V.set(x, y, z), Q.setFromEuler(new THREE.Euler(rx, ry, rz, "YXZ")), new THREE.Vector3(sx, sy, sz)).clone(); // (laid by rx, then turned by ry)
   const oct = (r0, r1, h) => new THREE.CylinderGeometry(r1, r0, h, 8, 1, false, Math.PI / 8); // (a flat face toward the front)
-  const steel = new KitBatch({ color: 3, aPat: 1 }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }); // (the hall's own pieces)
-  const one = { steel: new KitBatch({ color: 3, aPat: 1 }), detail: new KitBatch({ color: 3, aPat: 1 }), glow: new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens: new KitBatch({ aRow: 1, aState: 4 }) }; // (one cell's)
+  const steel = new KitBatch({ color: 3, aPat: 1 }, { edges: true }), glow = new KitBatch({ aCol: 3, aState: 4, aKind: 1 }); // (the hall's own pieces)
+  const one = { steel: new KitBatch({ color: 3, aPat: 1 }, { edges: true }), detail: new KitBatch({ color: 3, aPat: 1 }, { edges: true }), glow: new KitBatch({ aCol: 3, aState: 4, aKind: 1 }), screens: new KitBatch({ aRow: 1, aState: 4 }) }; // (one cell's)
   const GUN = [0.105, 0.115, 0.135], DARK = [0.055, 0.06, 0.072], BAR = [0.16, 0.17, 0.2], BRIGHT = [0.33, 0.35, 0.4], PIPE = [0.18, 0.19, 0.22], WHITE = [1, 1, 1];
   const box = new THREE.BoxGeometry(1, 1, 1), plane = new THREE.PlaneGeometry(1, 1);
   const torus = new THREE.TorusGeometry(1.24, 0.032, 6, 40).rotateX(Math.PI / 2), dome = new THREE.SphereGeometry(0.1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -15470,7 +15661,7 @@ function buildCellKit(hall) {
     kit.camBody.instanceMatrix.needsUpdate = kit.camLamp.instanceMatrix.needsUpdate = true;
   };
   {
-    const body = new KitBatch({ color: 3, aPat: 1 }), lamp = new KitBatch({ aCol: 3, aState: 4, aKind: 1 });
+    const body = new KitBatch({ color: 3, aPat: 1 }, { edges: true }), lamp = new KitBatch({ aCol: 3, aState: 4, aKind: 1 });
     body.add(box, at(0, 0, 0.28, 0.08, 0.08, 0.56), { color: BAR, aPat: 0 });
     body.add(box, at(0, 0, 0.62, 0.22, 0.2, 0.38), { color: [0.45, 0.46, 0.49], aPat: 0 });
     body.add(box, at(0, 0.12, 0.66, 0.28, 0.04, 0.48), { color: DARK, aPat: 0 });
@@ -15689,8 +15880,8 @@ function hallDress(hall, B) {
   const flat = new Map(), N3 = new THREE.Matrix3(), A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3(), E1 = new THREE.Vector3(), E2 = new THREE.Vector3();
   const put = (b, geo, m, v = {}, su = 1, sv = 1, smooth = false) => {
     let f = flat.get(geo);
-    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; flat.set(geo, f); if (ng !== geo) ng.dispose(); }
-    const { P, N, U } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
+    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; f.E = kitEdges(geo, f.U, f.P.length / 3); flat.set(geo, f); if (ng !== geo) ng.dispose(); } // (and each corner's place on its face, for the steel's chamfers)
+    const { P, N, U, E } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
     for (let i = 0; i < n; i += 3) {
       for (let k = 0; k < 3; k++) { const j = (i + k) * 3, x = P[j], y = P[j + 1], z = P[j + 2]; C3[k].set(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
       if (!smooth) E1.subVectors(Cv, Bv).cross(E2.subVectors(A, Bv)).normalize();
@@ -15700,6 +15891,7 @@ function hallDress(hall, B) {
         if (smooth) { const x = N[j * 3], y = N[j * 3 + 1], z = N[j * 3 + 2], nx = q[0] * x + q[3] * y + q[6] * z, ny = q[1] * x + q[4] * y + q[7] * z, nz = q[2] * x + q[5] * y + q[8] * z, l = Math.hypot(nx, ny, nz) || 1; b.nor.push(nx / l, ny / l, nz / l); }
         else b.nor.push(E1.x, E1.y, E1.z);
         b.uvm.push(U ? U[j * 2] * su : 0, U ? U[j * 2 + 1] * sv : 0);
+        if (b.edges) b.edge.push(smooth ? 0.5 : E[j * 2], smooth ? 0.5 : E[j * 2 + 1]);
       }
     }
     for (const k in b.attrs) { const s = b.attrs[k], val = v[k] === undefined ? 0 : v[k], arr = b.x[k]; for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) arr.push(s > 1 ? val[c] : val); }
@@ -18299,15 +18491,17 @@ function hubGenSkin(model, o = {}) {
     if (o.envMap) m.envMap = o.envMap; // (the trophy stand mirrors the second hall)
     m.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, HUB_RIM);
+      if (o.rim) sh.uniforms.uTopRim = o.rim;
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nuniform vec3 uHubHero; uniform vec3 uHubRim;")
+        .replace("#include <common>", "#include <common>\nuniform vec3 uHubHero; uniform vec3 uHubRim;" + (o.rim ? " uniform vec3 uTopRim;" : ""))
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           { vec3 hubD = -vViewPosition - uHubHero;
             float hubF = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 3.0) * smoothstep(-0.1, 0.65, dot(normal, normalize(vec3(-0.8, 0.42, -0.42))));
             totalEmissiveRadiance += uHubRim * hubF * exp(-dot(hubD, hubD) * 0.1); }
+          ${o.rim ? "totalEmissiveRadiance += uTopRim * pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0); // (its edges in its cabinet's colour: lit by the marquee under it)" : ""}
           ${o.key ? `totalEmissiveRadiance += diffuseColor.rgb * ${o.key.toFixed(2)} * max(dot(normal, normalize(vec3(-0.35, 0.7, 0.62))), 0.0); // (a key light of its own, high and to the left of the lens: it reads against the dark hall)` : ""}`);
     };
-    m.customProgramCacheKey = () => "hub-gen-" + (o.key || 0);
+    m.customProgramCacheKey = () => "hub-gen-" + (o.key || 0) + (o.rim ? "-rim" : "");
     m.needsUpdate = true;
   });
   return ms;
@@ -18340,7 +18534,11 @@ class HubGen {
     this.t = 0;
     this.items = [];
     hubGenSkin(gen.cab, { env: 1.1, glow: 1.5 });
-    for (const id in gen.tops) if (gen.tops[id] && !gen.tops[id].proctor) hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 0.9 }); // (the Proctor wears the exam's skin)
+    // (each topper is lit by the marquee under it: a key of its own and a rim in its cabinet's colour, set as it is placed
+    // (cabinet). High against the dark ceiling, the hall's panorama gave them little: the ship and the Proctor read as dark
+    // lumps, Phase 2's second review)
+    this.topRim = {};
+    for (const id in gen.tops) if (gen.tops[id] && !gen.tops[id].proctor) { this.topRim[id] = { value: new THREE.Color(0, 0, 0) }; hubGenSkin(gen.tops[id], { env: 1.5, glow: 2, key: 1.5, rim: this.topRim[id] }); } // (the Proctor wears the exam's skin: its own rim, below)
   }
   // a cabinet's frame in the hall (x across, y up, z toward the room's centre), in world units
   frame(i) {
@@ -18413,6 +18611,8 @@ class HubGen {
       const box = new THREE.Box3().setFromObject(obj);
       topH = (T.y || 0) + (box.max.y - box.min.y);
       this.tops[i] = { pivot, y0: pivot.position.y, spin: T.ry || 0, base: pivot.rotation.y, swing: T.swing || 0, lift: 0, bob: T.bob || 0, ph: i * 1.3, proctor: m.proctor || null };
+      if (this.topRim[cab.id]) this.topRim[cab.id].value.copy(col).multiplyScalar(0.9);
+      if (m.proctor) m.proctor.U.uBossRim.value.copy(col).multiplyScalar(1.6); // (the exam's skin has a rim of its own colour: its cabinet's, as the title's cell gives it the cell's)
     }
     this.cabTop[i] = ry + 0.112 + topH + 0.12;
     // where its screen goes, and the plane over its control panel (the screen's light falls there)
@@ -21712,7 +21912,13 @@ class BlasterSpace {
       U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.85); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.85);
       U.uSkKick.value.setRGB(0.55, 0.88, 1.2).multiplyScalar(0.8); // (a cool rim from above and behind: every upper edge drawn in light)
       U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).lerp(this._coolFill || (this._coolFill = new THREE.Color(0.5, 0.56, 0.72)), 0.5).multiplyScalar(0.4); // (the region's light, eased toward a cool grey)
-      if (this.genUR) { const R = this.genUR; R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1); }
+      if (this.genUR) {
+        const R = this.genUR;
+        R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1);
+        // a rock far off is lit again by the region's key, from the side the picture's own light comes from (see genKit)
+        if (P.key) R.uSkFarKey.value.copy(P.key.color).multiplyScalar(P.key.intensity * 8); else R.uSkFarKey.value.setRGB(6.3, 5.7, 8);
+        R.uSkFarDir.value.fromArray(BLASTER_LAMPS.key).normalize().transformDirection(g.camera.matrixWorldInverse);
+      }
     }
     // the station, off to port: it is there in its region, far ahead before, left behind after
     const place = (obj, k, home, near) => {
@@ -21823,13 +22029,31 @@ class BlasterSpace {
         // their own neon carries them; at full albedo they stood as pale shapes beside the fight)
         // (Phase 5 fix: lit as objects in the region's light, not silhouettes: open space was near black. A rock takes a
         // stone of its own, aTone, over the region's colour.)
-        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 } })) : U;
-        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 }, uSkFarKey: { value: new THREE.Color(0, 0, 0) }, uSkFarDir: { value: new THREE.Vector3(0, 0, 1) } })) : U;
+        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone; uniform vec3 uSkFarKey; uniform vec3 uSkFarDir;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
         if (!rock) { // (Phase 6: a ship's hull takes the region's light but little of its colour: in a red region it read as a pink lump. Its lamps and ports are its colour)
+          // (Phase 2, resumed: and far off it fades to its running lights. Past some 100 units its hull's light, rims and
+          // neon go down, to a quarter past 320, where only haulers, drones and cruisers fly: its lamps and ports, drawn
+          // apart and never under a pixel or two, carry it, and the rims that sparkled on a hull a few pixels long go.
+          // The escort, the wings that overtake close by, and every ship near the fight are as they were.)
           const skin = mat.onBeforeCompile;
-          mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65); }"); };
+          mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65);\n float shK = 1.0 - 0.75 * smoothstep(100.0, 320.0, length(vViewPosition)); reflectedLight.directDiffuse *= shK; reflectedLight.indirectDiffuse *= shK; reflectedLight.directSpecular *= shK; reflectedLight.indirectSpecular *= shK; totalEmissiveRadiance *= shK; }"); };
         }
-        if (rock) { const skin = mat.onBeforeCompile; mat.onBeforeCompile = (sh) => { skin(sh); sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;"); }; }
+        // (Phase 2, resumed: far off, a rock read as a dark hole in a pale rim with the sky's colour mirrored in it, the
+        // art review's hollow far rocks. Past some 55 units, and wholly past 140, where every light copy flies, it is lit
+        // again from the side the picture's own light comes from (the region's key, uSkFarKey, from uSkFarDir), its far
+        // side kept a little off black, and it mirrors less of the sky: a lit stone with its rim.)
+        if (rock) {
+          const skin = mat.onBeforeCompile;
+          mat.onBeforeCompile = (sh) => {
+            skin(sh);
+            sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;");
+            sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", `#include <lights_fragment_end>
+              { float skFar = smoothstep(55.0, 140.0, length(vViewPosition)), skW = dot(geometryNormal, uSkFarDir) * 0.5 + 0.5;
+                reflectedLight.directDiffuse += skFar * max(material.diffuseColor, vec3(0.04)) * uSkFarKey * (skW * skW + 0.12); // (the darkest stone taken as a dark grey: at that size a darker one read as nothing at all)
+                reflectedLight.indirectSpecular *= 1.0 - 0.6 * skFar; }`);
+          };
+        }
         g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
@@ -23226,6 +23450,12 @@ else setTimeout(() => DemonModel.preload(), 3000);
 // not forty, and from the phone's point the nebula ran out into black on one side; Phase 5. The belt keeps its own:
 // centred, its sun hid behind the demon and both sides went dark). The window's shape blends from one to the other; the
 // phone's picture is as it was.
+// pullW: how far a wide window's sky has its magenta drawn toward violet (makePanoSky's pull), blended by the window's
+// shape as atW is. (Phase 2, resumed: on a Mac the nebula's band was led by magenta, about half its lit sky, where the
+// phone's is led by violet, and the B drone stood on a magenta cloud; magenta is answer B's, and the world's pair is
+// cyan and violet. Its point ahead moved on, 0.21 to 0.26, so the B drone stands on dark sky with the nebula still
+// filling the rest, and what magenta is left drawn toward violet: the band's magenta 30% to 4%, violet 33% to 55%. The
+// orbit, the same picture seen further round, had the same split, 25% magenta on a Mac to 3% on the phone: pulled too.)
 // lamps: the key (above and behind the lens, on the side the picture's own light comes from), two rims far ahead, one
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
@@ -23234,13 +23464,13 @@ else setTimeout(() => DemonModel.preload(), 3000);
 // where a wide window has it, in the clear between the demon and the drones (at the phone's place a Mac had it under
 // a drone: Phase 5's review).
 const BLASTER_SKIES = {
-  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.21, 0.45], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
+  nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.26, 0.45], pullW: 0.8, roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xc8b4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xb09cff, 0.8], amb: [0x5a3aa8, 0.5], wall: 0x8a5cff,
     space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70], planetW: [24, 9, 1700, 70] } },
   belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
     key: [0xff7a52, 1.15], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xff9070, 0.75], amb: [0x8a2a2a, 0.5], wall: 0xff4a3a,
     space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80], planetW: [-24, 9, 1700, 80] } },
-  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
+  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], pullW: 0.8, roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xb4d4ff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0x9cc4ff, 0.8], amb: [0x3a5ab8, 0.5], wall: 0x4a7aff,
     space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
   station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
@@ -23271,7 +23501,7 @@ class BlasterSky {
     s.add(this.root);
     // two domes: the region the ship is in, and the one coming up over it (added on top as the first is turned down)
     this.layers = [0, 1].map((i) => {
-      const stretch = new THREE.Group(), dome = makePanoSky(this.main, { radius: 300 });
+      const stretch = new THREE.Group(), dome = makePanoSky(this.main, { radius: 300, pull: 0 }); // (pull: a region's pullW, on a wide window: see show)
       if (i) { dome.material.transparent = true; dome.material.blending = THREE.AdditiveBlending; dome.renderOrder = -19; dome.visible = false; }
       stretch.add(dome);
       this.root.add(stretch);
@@ -23305,11 +23535,13 @@ class BlasterSky {
   // where a region's dome is turned in this window ([yaw, pitch], into one array kept for it): its point ahead (at), or
   // in a wide window its own (atW), the window's shape blending one into the other (see BLASTER_SKIES)
   aim(c) {
-    const cam = this.g.camera, w = c.r.atW && cam ? smoothstep(0.8, 1.5, cam.aspect) : 0, a = this._aim || (this._aim = [0, 0]);
+    const w = c.r.atW ? this.wide() : 0, a = this._aim || (this._aim = [0, 0]);
     a[0] = w ? (c.r.at[0] + (c.r.atW[0] - c.r.at[0]) * w - 0.25) * Math.PI * 2 : c.yaw;
     a[1] = w ? (0.5 - (c.r.at[1] + (c.r.atW[1] - c.r.at[1]) * w)) * Math.PI : c.pitch;
     return a;
   }
+  // how wide the window is, 0 (a phone held upright) to 1 (a Mac's): what a region's wide-window settings blend by
+  wide() { const cam = this.g.camera; return cam ? smoothstep(0.8, 1.5, cam.aspect) : 0; }
   // one dome showing a region, at k of its strength
   show(L, c, k, sway = 0, zoomK = 1) {
     const u = L.dome.material.uniforms;
@@ -23319,6 +23551,7 @@ class BlasterSky {
     u.uMix.value = 0;
     u.uGain.value = c.gain * k;
     u.uLift.value = c.lift;
+    u.uPull.value = (c.r.pullW || 0) * this.wide(); // (and, where the region asks, its magenta drawn toward violet: pullW)
     const a = this.aim(c), yaw = a[0], pitch = a[1]; // (a wide window takes its own point ahead, atW)
     u.uRot.value = (yaw + Math.sin(sway * 0.05) * 0.03) / (Math.PI * 2);
     // (the point named in `at` stands behind the demon, which rides above the middle of the band: see BlasterDemon.fit)
@@ -23334,7 +23567,7 @@ class BlasterSky {
     let tex = null;
     if (GFX.ok) {
       try {
-        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0] });
+        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
         dome.rotation.set(-a[1], 0, c.roll);
         sc.add(dome);
         // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
@@ -25224,9 +25457,12 @@ class BlasterEscort {
       this.broodU = { uRim: { value: new THREE.Color(0.6, 0.3, 1) }, uBody: { value: new THREE.Color(0.012, 0.006, 0.03) }, uK: { value: 1 } };
       const mat = new THREE.ShaderMaterial({
         uniforms: this.broodU, fog: false,
-        vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-        // (a dark shape; a rim of the region's light round its edges, a little more from above)
-        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(max(f, 0.0), 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
+        // (it faces the lens, its wings across x: vR is how far out a point is from its heart, 1 at its wing tips)
+        vertexShader: "varying float vR; varying float vY; void main(){ vR = length(position.xy) * 2.0; vY = position.y * 2.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        // (a dark shape; the region's light round its edges, a little more from above. Phase 2, resumed: the rim was taken
+        // off its facets, and at forty pixels a demon's thousands of facets turned it into a scatter of dots, the art
+        // review's speckle at the band's edges; a soft light that grows toward its wing tips and edges holds the shape)
+        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying float vR; varying float vY; void main(){ float e = 0.15 + 1.05 * smoothstep(0.45, 1.0, vR) * (0.75 + 0.25 * smoothstep(-0.5, 0.5, vY)); gl_FragColor = vec4(uBody + uRim * e * uK, 1.0); }",
       });
       this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.renderOrder = -5; /* (the lens's own culling: one out of the picture is not drawn) */ s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
     } else this.brood = [];
@@ -25437,7 +25673,7 @@ const RACER_P = 32; // street-lamp spacing on one side; the other side is offset
 const RACER_LEN = 256; // the roadside props loop over this stretch of road...
 const RACER_ZMAX = 12; // ...which ends just behind the camera
 const RACER_WRAP = 8192; // scroll uniforms wrap here (every pattern period divides it)
-const RACER_LAMP = [0x35efff, 0xff3ad4]; // left side, right side
+const RACER_LAMP = [0xff8a2a, 0xff3ad4]; // left side, right side (Phase 2, 2026-11-24: the world's pair, orange and magenta; the first was cyan, and cyan led every frame of a run)
 const RACER_HEAD = 6.3; // lamp head height
 const RACER_GATE_LANES = { 2: [-2.5, 2.5], 4: [-3.75, -1.25, 1.25, 3.75] };
 const RACER_CAR_Z = -0.45; // the car model sits this far ahead of the car's origin
@@ -25603,7 +25839,7 @@ function racerGroundMaterial(mirror, shared) {
       uScroll: shared.uScroll, uLampI: shared.uLampI, uTime: { value: 0 },
       tReflect: { value: mirror.texture }, uMirror: { value: mirror.matrix }, uReflect: { value: 1 },
       uAsphalt: { value: new THREE.Color(0x0d0826) }, uBase: { value: new THREE.Color(0x05021a) }, uGrid: { value: neon(0xff3ad4, 1.5) },
-      uEdge: { value: neon(0x35efff, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) },
+      uEdge: { value: neon(0xffa040, 2.6) }, uDash: { value: neon(0xcdbfff, 1.1) }, // (the road's edges amber: they were cyan)
       uLampL: { value: neon(RACER_LAMP[0], 0.9) }, uLampR: { value: neon(RACER_LAMP[1], 0.9) },
       uCarX: { value: 0 }, uUnder: { value: neon(0x5dffb0, 0.6) }, uHead: { value: 0.5 }, uTail: { value: 1 }, uShade: { value: 1 }, uCarY: { value: 0 }, uRain: { value: 0 },
       uCarW: { value: 1.02 }, uCarZ: { value: 0 }, uCarRot: { value: new THREE.Vector2(1, 0) }, uTailC: { value: new THREE.Color(2.2, 0.06, 0.16) }, // (the war rig is wider, slides and turns, and its rear frames are magenta: see RacerRig)
@@ -25896,7 +26132,7 @@ function racerCityMaterial(shared, P, maps) {
             // a shopfront in each bay at street level, in the block's colour, lit as the street's record has it (the
             // road reads the same: tStreet); where it is shut its roller shutter is down
             float sk = fract(vSeed * 7.31);
-            vec3 sc = sk < 0.34 ? vec3(0.15, 0.95, 0.82) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75));
+            vec3 sc = sk < 0.34 ? vec3(1.0, 0.78, 0.3) : (sk < 0.67 ? vec3(1.0, 0.55, 0.18) : vec3(1.0, 0.22, 0.75)); // (a third of the shops were lit teal: now gold)
             if (q.y < 4.8) {
               float lev = front * texture2D(tStreet, vec2((cell.x + 0.5) * 1.9 / ${RACER_LEN}.0, sideV)).a * 1.35;
               float openK = mix(0.7, step(0.01, lev), fine), levK = mix(0.9, lev, fine); // (far off: the street's average)
@@ -25943,7 +26179,7 @@ function racerCityMaterial(shared, P, maps) {
 // it and the road the light those shops throw on the pavement and lay in its water, so the two always agree.
 // blocks: [{ side, z (its near end), L, sd (its seed) }], in the coordinates the city is built in.
 const racerHash = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
-const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [0.15, 0.95, 0.82] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
+const racerShopColor = (sd) => { const sk = (sd * 7.31) % 1; return sk < 0.34 ? [1, 0.78, 0.3] : sk < 0.67 ? [1, 0.55, 0.18] : [1, 0.22, 0.75]; }; // (as the wall's shader picks it from the block's seed)
 function racerStreetTexture(blocks) {
   const W = RACER_LEN * 4, d = new Uint8Array(W * 2 * 4);
   for (const b of blocks) {
@@ -26529,7 +26765,7 @@ class RacerGame extends QuizGame {
     const WALLS = [0x1c242c, 0x2a2420, 0x18202a, 0x24282e, 0x302a26];
     // (with the panorama up the works are of the neon city: dark bodies with rims of light, set back against the walls,
     // so the middle of the street is open to the egg at its end and to the sky above it)
-    const NEO = !!this.pano, NEON = [0x35efff, 0xff3ad4, 0xffc93d];
+    const NEO = !!this.pano, NEON = [0xff8a2a, 0xff3ad4, 0xffc93d]; // (orange where cyan was: the world's pair)
     const BRASS = NEO ? 0x1d1b27 : 0xb8823c, COPPER = NEO ? 0x15141d : 0x8a5a34;
     const signs = { pos: [], uv: [], z: [] };
     const vents = [];
@@ -30930,9 +31166,9 @@ class BossGame extends QuizGame {
     const steel = new RacerBatch(["aMetal", "aRough", "aKind"]), glow = new RacerBatch(["aRole"]);
     this.makeArena(steel, glow);
     this.makeCrowd(steel, glow);
-    this.steelMat = arenaSteelMaterial(this.env, this.probeTint); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's)
+    this.steelMat = arenaSteelMaterial(this.env, this.probeTint, P); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's; the neon's light on it, the arena's pair)
     this.glowMat = arenaGlowMaterial();
-    const sm = new THREE.Mesh(steel.build("color"), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat);
+    const sm = new THREE.Mesh(arenaFaceFrames(steel.build("color")), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat); // (each face of the steel in its own frame: 22c)
     sm.name = "arena-steel"; gm.name = "arena-neon"; // (named for tools/cost-report.js)
     sm.userData.arena = gm.userData.arena = true;
     s.add(sm, gm);
@@ -31034,6 +31270,15 @@ class BossGame extends QuizGame {
     this.flashSize = 8;
     if (this.pano) this.arena = new BossArena(this, this.gen.sky, this.row); // (the storm sky, its light and its lightning: 22c)
     if (this.actor) this.stage = new BossStage(this, this.actor); // (the boss's model has loaded: the fight is staged, on the show clock: 22f)
+    // The cold edge from behind in the world's second colour, cyan (Boss Rush's pair's, and the player's), lower and
+    // stronger (Phase 2's polish, 2026-11-24: an art review found neither the boss nor the duellist had a rim of it, cyan
+    // 1-2% of the lit picture; the stage sets it a pale white). It is the one lamp that edges the boss and the duellist
+    // while it barely touches the arena (the stands, their crowd and the pillars face the lens, away from it), so a cyan
+    // boss's arena keeps its pair (bossArenaPair). As the boss rages it turns half red with the rims (update). No new light.
+    this.edgeCol = new THREE.Color(COLORS.cyan).lerp(new THREE.Color(0xffffff), 0.15);
+    this.lamps.edge.color.copy(this.edgeCol);
+    this.lamps.edge.position.set(0, 5, -10);
+    this.lamps.edge.intensity = this.stage ? 2.6 : 1.3;
     this.camBase.set(0, this.camY, this.camZ);
     this.lookAt.set(0, this.bossY, 0);
     // the deck's reflection: the arena as it stands (only what is marked arena: not the boss, the duellist, the floor,
@@ -31224,7 +31469,7 @@ class BossGame extends QuizGame {
           // and where it is round the ring. The same draws from the randomness for each, in the same order, as when each
           // was a card of its own; but three.js no longer draws an id for a card each, so in the capture tool's seeded
           // runs what is drawn after the crowd comes out otherwise. The rules are not touched: their regression holds)
-          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
+          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: BOSS_CROWD_PICK[Math.floor(Math.random() * BOSS_CROWD_PICK.length)], sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
@@ -31266,7 +31511,7 @@ class BossGame extends QuizGame {
       for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", `#include <common>
-          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim; varying float vSide;
           // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
           // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
           float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
@@ -31286,17 +31531,26 @@ class BossGame extends QuizGame {
             float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
             float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
             float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
-            vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
+            vUv = vec2((aFig.x + ${BOSS_CROWD_N}.0 * up + uv.x) / ${2 * BOSS_CROWD_N}.0, uv.y); // (its figure, standing or cheering)
             vRim = aRim;
+            // (Phase 2's polish) which side of it its lamps are on: the boss's two rims behind it, either side, the nearer;
+            // across the card, -1 its left, 1 its right, 0 straight before it
+            vec3 at = (modelMatrix * instanceMatrix * vec4(0.0, 0.6, 0.0, 1.0)).xyz, ax = mat3(modelMatrix) * mat3(instanceMatrix) * vec3(1.0, 0.0, 0.0);
+            vSide = clamp(dot(normalize(vec2(sign(at.x) * 11.0, -9.0) - at.xz), normalize(ax.xz)) * 1.8, -1.0, 1.0);
           }`);
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; uniform float uRage;")
-        .replace("#include <map_fragment>", "vec4 fig = texture2D(map, vUv); diffuseColor.rgb *= 0.22 + 0.78 * fig.r; diffuseColor.a *= fig.a;") // (red: lit from above; alpha: the figure)
+        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; varying float vSide; uniform float uRage;")
+        // (Phase 2's polish: each figure lit as a body, not a flat card: from above, its head and shoulders most, its
+        // legs least; and from the side its lamps are on, red saying which way each part of it faces, its middle a
+        // little fuller; alpha: the figure)
+        .replace("#include <map_fragment>", `vec4 fig = texture2D(map, vUv); float fnx = fig.r * 2.0 - 1.0;
+          diffuseColor.rgb *= mix(0.22, 1.1, smoothstep(0.04, 0.72, vUv.y)) * (1.0 + 0.6 * vSide * fnx + 0.25 * (1.0 - abs(fnx)));
+          diffuseColor.a *= fig.a;`)
         .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
-          totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
+          totalEmissiveRadiance += rimC * fig.g * (0.55 + 0.9 * clamp(0.5 + 0.8 * vSide * fnx, 0.0, 1.0)) + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim, brightest on the side its lamps are on; blue: what glows of its own)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-3";
+    pm.customProgramCacheKey = () => "boss-crowd-4";
     const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
     people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
     folk.name = "arena-crowd"; // (named for tools/cost-report.js)
@@ -31840,8 +32094,9 @@ class BossGame extends QuizGame {
       this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
       this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
       this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
-      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them)
+      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = this.steelMat.userData.uSpillRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them, and its light on the steel)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
+      this.lamps.edge.color.copy(this.edgeCol).lerp(this.rageCol, rk * 0.5); // (the cold edge half red with the rims)
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
       if (!st) this.boss.userData.eye.material.color.setRGB(1.15 + 0.4 * rk, 1.15 - 0.35 * rk, 1.15 - 0.35 * rk);
@@ -33166,24 +33421,39 @@ function bossArenaPair(hex) {
 // corner says what it is (aMetal, aRough; aKind 0 brushed steel, 1 a painted panel, 2 cloth). The brushing's streaks
 // and the roughness they leave come from a CC0 material (ambientCG Metal009: assets/ui/mat-steel.webp, the normal's x
 // and y in red and green, roughness in blue; a level plate until it arrives), laid along each face by where it is
-// (no UVs): up a pillar, across a panel; a panel has a seam every 1.2 m up it and 1.9 m along it. What it reflects is
+// (no UVs): up a pillar, across a panel; its plates and tiles in each face's own frame (below). What it reflects is
 // the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
 // turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
 // the steel gives back red neon, as the deck does: BossGame.probeTint).
-function arenaSteelMaterial(env, tint) {
+// (Phase 2's polish, 2026-11-24: an art review found the pillars and the stands' faces still read as untextured boxes,
+// each face one flat violet tone with neon strips on it. Each face now has a frame of its own (aFace: arenaFaceFrames)
+// and the steel is worked in it: a pillar's sides in plates up it, their seams grooves whose lips catch the light, the
+// octagon's corners and each piece's top and bottom bevelled and worn bright; a stand's face in tiles, two across a bay
+// and three up, the same; each plate its own shade, the paint mottled, grime gathered at the foot of each and streaked
+// down its face; and the neon's light on the steel beside it (pair: the arena's two colours, red as the boss rages:
+// userData.uSpillRage), from a pillar's strips and the rings under its collars, a tier's rail and the line under it, and
+// the footlights along the foot of the stands. No new draw, no texture: what is worked out a pixel, in the one draw.)
+function arenaSteelMaterial(env, tint, pair) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env || null, envMapIntensity: 1 });
   m.extensions = { derivatives: true };
   m.userData.tBrush = { value: cellFlatTexture() };
   m.userData.uEnvTint = { value: tint || new THREE.Vector4(1, 1, 1, 0) };
+  m.userData.uSpillA = { value: new THREE.Color(pair ? pair.a : 0) };
+  m.userData.uSpillB = { value: new THREE.Color(pair ? pair.b : 0) };
+  m.userData.uSpillRage = { value: 0 };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tBrush = m.userData.tBrush;
     sh.uniforms.uEnvTint = m.userData.uEnvTint;
+    sh.uniforms.uSpillA = m.userData.uSpillA; sh.uniforms.uSpillB = m.userData.uSpillB; sh.uniforms.uSpillRage = m.userData.uSpillRage;
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind);")
+      .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; attribute vec4 aFace; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; varying vec4 vFace;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind); vFace = aFace;")
       .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush; uniform vec4 uEnvTint;")
+      .replace("#include <common>", `#include <common>
+        varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; varying vec4 vFace; uniform sampler2D tBrush; uniform vec4 uEnvTint; uniform vec3 uSpillA; uniform vec3 uSpillB; uniform float uSpillRage;
+        float aHash(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+        float aNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(aHash(i), aHash(i + vec2(1.0, 0.0)), f.x), mix(aHash(i + vec2(0.0, 1.0)), aHash(i + vec2(1.0, 1.0)), f.x), f.y); }`)
       .replace("#include <lights_fragment_maps>", `#include <lights_fragment_maps>
         #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
           radiance = mix(radiance, uEnvTint.xyz * max(max(radiance.r, radiance.g), radiance.b), uEnvTint.w);
@@ -33192,20 +33462,102 @@ function arenaSteelMaterial(env, tint) {
           #endif
         #endif`)
       .replace("#include <color_fragment>", `#include <color_fragment>
-        vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0));
+        vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0)), sU = cross(sT, sN);
         float sAlong = dot(vWP, sT), sFlat = step(0.6, abs(sN.y));
-        float kPanel = step(0.5, vSurf.z) * (1.0 - step(1.5, vSurf.z)), kCloth = step(1.5, vSurf.z);
+        float kPanel = step(0.5, vSurf.z) * (1.0 - step(1.5, vSurf.z)), kCloth = step(1.5, vSurf.z), kSteel = 1.0 - kPanel - kCloth;
         vec2 sUv = mix(mix(vec2(vWP.y, sAlong), vec2(sAlong, vWP.y), kPanel), vWP.xz, sFlat); // (the streaks run along the texture's x)
         vec3 brush = texture2D(tBrush, sUv * vec2(0.35, 1.4)).rgb;
-        vec2 sq = vec2(vWP.y / 1.2, sAlong / 1.9), sw = fwidth(sq) * 1.5 + 1e-4, sd = abs(fract(sq + 0.5) - 0.5);
-        float seam = kPanel * (1.0 - sFlat) * max(1.0 - smoothstep(0.018, 0.018 + sw.x, sd.x), 1.0 - smoothstep(0.01, 0.01 + sw.y, sd.y));
+        float runs = texture2D(tBrush, vec2(vWP.y * 0.07, sAlong * 0.9)).b; // (the same streaks stood on end: what runs down a face)
+        // its face's frame: fT across it and fS up it from its middle, fW and fH half its width and height (none on a
+        // face that looks up or down, nor on cloth)
+        float fT = vFace.x, fS = vFace.z, fW = max(vFace.y, 1e-3), fH = max(vFace.w, 1e-3), onF = step(0.01, vFace.y) * (1.0 - kCloth);
+        // its plates: a pillar's sides in bands 1.5 m tall up it (their seams meet its collars), a stand's face in tiles,
+        // two across a bay and three up. dE: how far the plate's nearest side and its nearest top or bottom are; px: a
+        // pixel, in metres (the derivatives taken here, before any branch)
+        float cols = max(1.0, floor(fW / 0.62 + 0.5));
+        vec2 q = vec2((fT / fW + 1.0) * 0.5 * cols, mix((vWP.y - 0.62) / 1.5, (fS / fH + 1.0) * 1.5, kPanel));
+        vec2 qi = floor(q), qf = q - qi, tile = vec2(2.0 * fW / cols, mix(1.5, fH * 2.0 / 3.0, kPanel));
+        vec2 dE = min(qf, 1.0 - qf) * tile, px = fwidth(q) * tile + 1e-4;
+        float sw = fwidth(q.y * 6.0) + 1e-4;
+        vec3 aBend = vec3(0.0), aGlow = vec3(0.0), tintF = vec3(1.0);
+        float seam = 0.0, wear = 0.0, grime = 0.0, streak = 0.0, slot = 0.0, shade = 1.0;
+        if (onF > 0.5) { // (only a face worked: each kind of surface in a run of its own pixels, so each pays for its own)
+          vec3 fC = vWP - sT * fT - sU * fS; // (its middle: the same over all of it)
+          float tall = max(kPanel, kSteel * step(2.0, fH)); // (grooved: the stands' tiles, and a pillar's shaft between its plates)
+          float gY = tall * (1.0 - smoothstep(0.012, 0.012 + px.y, dE.y)), gX = kPanel * (1.0 - smoothstep(0.012, 0.012 + px.x, dE.x));
+          seam = max(gX, gY);
+          float lipY = tall * (1.0 - smoothstep(0.012, 0.055 + px.y, dE.y)) * (1.0 - gY), lipX = kPanel * (1.0 - smoothstep(0.012, 0.055 + px.x, dE.x)) * (1.0 - gX);
+          // a pillar's corners and each of its pieces' tops and bottoms bevelled (a shaft's are under its collars)
+          float bvX = kSteel * (1.0 - smoothstep(0.0, 0.035 + px.x, fW - abs(fT))), bvY = kSteel * (1.0 - tall) * (1.0 - smoothstep(0.0, 0.03 + px.y, fH - abs(fS)));
+          // (the surface turns over its edges and into its seams: the light catches the lips; and each plate is pressed a
+          // little full, so what it reflects sweeps across it instead of one flat tone)
+          vec2 bow = (qf - 0.5) * 2.0 * mix(vec2(0.24, 0.12), vec2(0.2, 0.2), kPanel);
+          aBend = (sT * (sign(fT) * bvX + sign(qf.x - 0.5) * lipX) + sU * (sign(fS) * bvY + sign(qf.y - 0.5) * lipY)) * 0.7 + sT * bow.x + sU * bow.y;
+          wear = max(bvX, bvY) + 0.6 * max(lipX, lipY);
+          // each plate its own shade, the paint and the metal mottled, grime gathered at the foot of each (a pillar's from
+          // the deck up, a tier's along its foot) and streaked down its face
+          float mot = aNoise(vec2(sAlong, vWP.y) * 1.25 + 3.7), plate = aHash(fC.xz * 1.37 + fC.y * 0.73 + qi * vec2(3.1, 5.7));
+          grime = 1.0 - smoothstep(0.05, mix(1.6, 1.0, kPanel), mix(vWP.y, fS + fH, kPanel) + 0.5 * (mot - 0.5));
+          streak = smoothstep(0.5, 0.78, runs) * 0.8;
+          tintF = mix(vec3(1.07, 0.95, 0.98), vec3(0.93, 1.0, 1.08), mot);
+          vec3 cA = mix(uSpillA, vec3(1.0, 0.14, 0.24) * max(max(uSpillA.r, uSpillA.g), uSpillA.b), uSpillRage);
+          vec3 cB = mix(uSpillB, vec3(1.0, 0.14, 0.24) * max(max(uSpillB.r, uSpillB.g), uSpillB.b), uSpillRage);
+          float yy = vWP.y;
+          if (kPanel > 0.5) {
+            // a stand's tiles: one in five a vent (its slats dark, their lips lit), one in seven a small light let into it
+            float pick = aHash(fC.xz * 0.71 + qi * vec2(7.3, 1.9) + 4.1);
+            vec2 inset = dE - vec2(0.14, 0.12);
+            float slats = fract(qf.y * 6.0);
+            float vent = step(0.0, min(inset.x, inset.y)) * step(0.8, pick) * (1.0 - smoothstep(0.35, 0.6, sw)); // (gone where its slats are finer than a pixel)
+            slot = vent * (1.0 - smoothstep(0.45, 0.45 + sw, slats));
+            aBend += sU * vent * (smoothstep(0.45, 0.6, slats) - 0.5) * 0.8;
+            float lamp = step(pick, 0.14) * step(0.3, dE.x) * (1.0 - smoothstep(0.0, 0.025 + px.y, abs(qf.y * tile.y - 0.2)));
+            // the light on it: its tier's rail along its top (the lead colour) and the line under it (the second); the
+            // footlights along the foot of the stands
+            float top = fH - fS, fl = step(25.5, length(vWP.xz)) * exp(-max(yy, 0.0) * 2.4);
+            aGlow = cA * 0.16 * exp(-top * 2.6) + cB * (0.13 * exp(-abs(top - 0.38) * 10.0) + 0.12 * fl) + mix(cA, cB, step(0.07, pick)) * lamp * 0.7;
+          } else if (fH > 3.0 && fW < 0.3) {
+            // a pillar's shaft: the light of its lines up its face toward the ring (the lead colour) and up each face
+            // beside it (the second), of the rings under its collars and round its foot
+            float toward = dot(sN.xz, -normalize(fC.xz + vec2(1e-4)));
+            float sec = smoothstep(0.95, 1.1, yy) * (1.0 - smoothstep(3.32, 3.47, yy)) + smoothstep(3.79, 3.94, yy) * (1.0 - smoothstep(6.32, 6.47, yy)) + smoothstep(6.79, 6.94, yy) * (1.0 - smoothstep(9.2, 9.35, yy));
+            float pA = sec * step(0.92, toward) * exp(-abs(abs(fT) - 0.17) * 26.0), pB = sec * step(0.55, toward) * (1.0 - step(0.92, toward)) * exp(-abs(fT) * 26.0);
+            aGlow = cA * (0.3 * pA + 0.22 * exp(-abs(yy - 0.86) * 7.0)) + cB * (0.26 * pB + 0.22 * (exp(-abs(yy - 3.45) * 7.0) + exp(-abs(yy - 6.45) * 7.0)));
+          }
+          shade = mix(0.76, 1.24, plate) * mix(0.8, 1.2, mot) * (1.0 - 0.55 * grime) * (1.0 - 0.45 * streak) * (1.0 + 1.1 * wear) * (1.0 - 0.8 * slot);
+        }
         float fold = 0.82 + 0.18 * sin(sAlong * 21.0 + vWP.y * 1.3);
-        diffuseColor.rgb *= mix(0.9 + 0.2 * brush.b, fold, kCloth) * (1.0 - 0.7 * seam);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) + 0.35 * seam, 0.04, 1.0);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam);");
+        diffuseColor.rgb *= mix(0.9 + 0.2 * brush.b, fold, kCloth) * shade * (1.0 - 0.75 * seam) * tintF;`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) * (1.0 - 0.45 * wear) + 0.35 * max(seam, slot) + 0.3 * grime + 0.2 * streak, 0.04, 1.0);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam) * (1.0 - 0.35 * grime);")
+      .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\n  normal = normalize(normal + mat3(viewMatrix) * aBend);")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n  totalEmissiveRadiance += aGlow;");
   };
-  m.customProgramCacheKey = () => "arena-steel-2";
+  m.customProgramCacheKey = () => "arena-steel-3";
   return m;
+}
+// Each face of the arena's steel in a frame of its own (arenaSteelMaterial reads it, attribute aFace): where each
+// corner is across its face and up it from the face's middle, and half the face's width and height (t, w, s, h; all
+// naught on a face that looks up or down). A face is a run of triangles one after another that look the same way (a
+// box's side is two, a shaft's side two, a banner three); across is level, up is up the face. Made once, with the
+// arena: its geometry as RacerBatch built it (one triangle after another, each corner its triangle's normal).
+function arenaFaceFrames(g) {
+  const P = g.attributes.position.array, N = g.attributes.normal.array, nt = P.length / 9, F = new Float32Array((P.length / 3) * 4);
+  for (let i = 0; i < nt; ) {
+    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2];
+    let j = i + 1;
+    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3) j++;
+    if (Math.abs(ny) < 0.6) {
+      const l = Math.hypot(nx, nz) || 1, tx = -nz / l, tz = nx / l, ux = -tz * ny, uy = tz * nx - tx * nz, uz = tx * ny; // (across: level; up: across x normal)
+      const A = (v) => P[v * 3] * tx + P[v * 3 + 2] * tz, B = (v) => P[v * 3] * ux + P[v * 3 + 1] * uy + P[v * 3 + 2] * uz;
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (let v = i * 3; v < j * 3; v++) { const a = A(v), b = B(v); a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
+      for (let v = i * 3; v < j * 3; v++) { F[v * 4] = A(v) - (a0 + a1) / 2; F[v * 4 + 1] = (a1 - a0) / 2; F[v * 4 + 2] = B(v) - (b0 + b1) / 2; F[v * 4 + 3] = (b1 - b0) / 2; }
+    }
+    i = j;
+  }
+  g.setAttribute("aFace", new THREE.Float32BufferAttribute(F, 4));
+  return g;
 }
 // The arena's neon, unlit and in one draw: its pillars' inlays and lamps, the rails along its stands, the lights at
 // their feet, its banners' marks. Each strip's colour is in its corners (aCol, over 1 where it blooms). Raging, the
@@ -33254,61 +33606,96 @@ function bossPillar(st, gl, at, A, B, hex) {
   gl.add(box, M(0, 6.72, 0.912, 0.24, 0.24, 0.01, 0).multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 4)), hex, 1.7, own);
   box.dispose(); pen.dispose();
 }
-// The crowd's figures (lit figures, where they were black cut-outs): eight people in a strip, one picture a card, made
-// once for the page (a DataTexture: each channel is read for itself). Red: how much of the arena's light a part of a
-// figure takes (lit from above: heads and shoulders most); green: its rim, along its top and upper sides, where the
-// light behind it catches its edge; blue: what glows of its own (a light stick, a phone held up, a sign's lit border);
-// alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light stick, a bun, a sign.
-// Each is there twice (Phase 5): as it stands (cells 0-7), and cheering (8-15: both fists up, hands clapped over its
-// head, its phone held up high, the pair's outer arms up, its light stick swung across, its sign waved), its head and
-// body where they were, so the crowd's shader can show either in its place (BossGame.makeCrowd). Side by side, not one
-// row over the other: a figure's smaller copies never take in the feet of the one above it.
+// The crowd's figures (lit figures, where they were black cut-outs): people in a strip, one picture a card, made once
+// for the page (a DataTexture: each channel is read for itself). Red: which way a part of a figure faces, across it (0
+// its left, 1 its right, a half straight out: its outline blurred and its slope taken, so a head, a body and an arm are
+// round; Phase 2's polish, where red was how much light it took, and the review found flat cards: the shader lights
+// each figure from the side its lamps are on and from above, BossGame.makeCrowd); green: its rim, along its top and
+// upper sides, where the light behind it catches its edge; blue: what glows of its own (a light stick, a phone, a badge,
+// a sign's lit face); alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light
+// stick, a bun; five signs, each board its own (lit letters and marks: GO!, a heart, a star, ZAP, 1UP); filming with a
+// phone, a scarf held up, a beanie, a band of lights round the head. Each is there twice (Phase 5): as it stands (cells 0
+// to N-1), and cheering (N on: fists up, hands clapped over its head, its phone held up high, the pair's outer arms up,
+// its light stick swung across, its sign waved, its scarf stretched higher), its head and body where they were, so the
+// crowd's shader can show either in its place. Side by side, not one row over the other: a figure's smaller copies
+// never take in the feet of the one above it.
 let _crowdTex = null;
-const BOSS_CROWD_N = 8;
+const BOSS_CROWD_N = 16;
+// which figure each of the crowd is, from one draw of the randomness as it always was: the people three times as often
+// as each sign (about one in eight holds a sign, as before)
+const BOSS_CROWD_PICK = [0, 1, 2, 3, 4, 5, 6, 12, 13, 14, 15].flatMap((k) => [k, k, k]).concat([7, 8, 9, 10, 11]);
 function bossCrowdTexture() {
   if (_crowdTex) return _crowdTex;
   const W = 128, N = BOSS_CROWD_N, WN = W * N * 2, cv = document.createElement("canvas"), ac = document.createElement("canvas"), dc = document.createElement("canvas");
   cv.width = ac.width = dc.width = WN; cv.height = ac.height = dc.height = W;
-  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, dark: only its border is lit)
+  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, flat: it faces straight out)
   x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = z.fillStyle = "#fff";
   const head = (c, hx, hy, r) => { c.beginPath(); c.arc(hx, hy, r, 0, Math.PI * 2); c.fill(); };
   const body = (c, bx, w, top) => { c.beginPath(); c.moveTo(bx - w, W); c.quadraticCurveTo(bx - w, top + 4, bx - w * 0.55, top); c.lineTo(bx + w * 0.55, top); c.quadraticCurveTo(bx + w, top + 4, bx + w, W); c.closePath(); c.fill(); };
   const limb = (c, ax, ay, bx, by, wd) => { c.lineWidth = wd; c.lineCap = "round"; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke(); };
-  const sign = (cx, cy, turn) => { // (its board, the lit border on it, and where it is dark, turned about its middle)
-    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, () => { y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); }], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
+  const speck = (px, py, w = 7, h = 7) => y.fillRect(px - w / 2, py - h / 2, w, h); // (a badge, a phone's light: glows of its own)
+  // the boards' faces: lit letters (a pixel font, three by five, each of its pixels four by four) and marks
+  const FONT = { G: "111100101101111", O: "111101101101111", "!": "010010010000010", Z: "111001010100111", A: "010101111101101", P: "110101110100100", U: "101101101101111", 1: "010110010010111" };
+  const word = (c, w) => { let gx = -(w.length * 16 - 4) / 2; for (const ch of w) { const b = FONT[ch]; for (let r = 0; r < 15; r++) if (b[r] === "1") c.fillRect(gx + (r % 3) * 4, -10 + Math.floor(r / 3) * 4, 4, 4); gx += 16; } };
+  const heart = (c) => { c.beginPath(); c.moveTo(0, 10); c.bezierCurveTo(-17, -1, -11, -15, 0, -6); c.bezierCurveTo(11, -15, 17, -1, 0, 10); c.fill(); };
+  const star = (c) => { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 5.5 : 12.5; c[i ? "lineTo" : "moveTo"](Math.cos(a) * r, Math.sin(a) * r + 1); } c.closePath(); c.fill(); };
+  const FACES = ["GO!", heart, star, "ZAP", "1UP"];
+  const sign = (cx, cy, turn, face) => { // (its board, its face lit a little, its border and its letters lit, and where it is: turned about its middle)
+    const lit = () => { y.globalAlpha = 0.07; y.fillRect(-40, -13, 80, 26); y.globalAlpha = 1; y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); if (typeof face === "string") word(y, face); else face(y); };
+    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, lit], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
   };
   for (let f = 0; f < 2; f++) for (let k = 0; k < N; k++) {
     const cx = (f * N + k) * W + W / 2, up = f === 1;
-    if (k === 3) { // a pair
-      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14);
+    if (k === 3) { // a pair (the one on the left with a badge)
+      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14); speck(cx - 27, 92, 6, 6);
       if (up) { limb(x, cx - 36, 80, cx - 48, 30, 9); limb(x, cx + 36, 84, cx + 47, 34, 9); } // (each throws its outer arm up)
       continue;
     }
     body(x, cx, k === 6 ? 30 : 34, 66); head(x, cx, 44, k === 6 ? 16 : 18); x.fillRect(cx - 7, 52, 14, 16);
-    if (k === 0 && up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } // (both fists up)
-    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } } // both arms up (clapping over its head, elbows out)
+    if (k === 0) { speck(cx - 13, 86); if (up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } } // a badge (both fists up)
+    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } speck(cx, 7, 8, 6); } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); speck(cx - 37, 24, 7, 5); speck(cx + 35, 20, 7, 5); } } // both arms up, bands lit at its wrists (clapping over its head, elbows out)
     if (k === 2) { // a cap; a phone lit at the chest (held up high to film it)
       x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5);
       if (up) { limb(x, cx - 26, 74, cx - 36, 24, 11); x.fillRect(cx - 43, 3, 14, 20); y.fillRect(cx - 41, 5, 10, 16); } else y.fillRect(cx - 12, 82, 11, 15);
     }
-    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood (fists up)
+    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); speck(cx + 12, 88); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood, a badge (fists up)
     if (k === 5) { // one arm up, a light stick in it (swung across, the other arm up too)
       if (up) { limb(x, cx + 26, 74, cx + 16, 26, 11); limb(x, cx + 14, 28, cx - 4, 5, 5); limb(y, cx + 10, 22, cx - 4, 5, 5); limb(x, cx - 26, 74, cx - 38, 30, 11); }
       else { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); }
     }
-    if (k === 6) { head(x, cx + 3, 23, 9); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun (both arms up)
-    if (k === 7) { // a sign held up, its border lit (waved: tipped, and over to one side)
-      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14); }
-      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0); }
+    if (k === 6) { head(x, cx + 3, 23, 9); y.fillRect(cx + 5, 84, 9, 13); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun, a phone lit at the chest (both arms up)
+    if (k >= 7 && k <= 11) { // a sign held up, its face lit (waved: tipped, and over to one side)
+      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14, FACES[k - 7]); }
+      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0, FACES[k - 7]); }
     }
+    if (k === 12) { // filming: a phone held up in both hands, its torch lit (held up high in one)
+      if (up) { limb(x, cx + 26, 74, cx + 33, 22, 11); x.fillRect(cx + 25, 2, 15, 22); speck(cx + 32, 8, 6, 6); }
+      else { limb(x, cx - 26, 74, cx - 9, 50, 11); limb(x, cx + 26, 74, cx + 9, 50, 11); x.fillRect(cx - 9, 30, 18, 24); speck(cx + 4, 35, 6, 6); }
+    }
+    if (k === 13) { // a scarf held up between its hands, its stripes lit (stretched higher)
+      const sy = up ? 12 : 26, sx = up ? 40 : 34;
+      limb(x, cx - 26, 74, cx - sx, sy + 6, 10); limb(x, cx + 26, 74, cx + sx, sy + 6, 10);
+      x.fillRect(cx - sx - 2, sy - 5, sx * 2 + 4, 11); for (let i = 0; i < 4; i++) y.fillRect(cx - sx + 4 + i * (sx / 2), sy - 3, sx / 4, 7);
+    }
+    if (k === 14) { // a beanie, a badge (one fist up)
+      x.beginPath(); x.arc(cx, 40, 19, Math.PI, 0); x.fill(); head(x, cx, 19, 6); speck(cx + 12, 86);
+      if (up) limb(x, cx + 26, 74, cx + 38, 20, 11);
+    }
+    if (k === 15) { y.fillRect(cx - 17, 35, 34, 5); if (up) { limb(x, cx - 26, 74, cx - 44, 30, 11); limb(x, cx + 26, 74, cx + 44, 30, 11); } } // a band of lights round its head (both arms up, wide)
   }
   const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, D = z.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
   const al = (i, j) => (i < 0 || j < 0 || i >= WN || j >= W ? 0 : M[(j * WN + i) * 4 + 3]);
+  // which way each part faces across it: the outline blurred along each row (nine wide), its slope taken
+  const R = 4, Bl = new Float32Array(WN * W);
+  for (let j = 0; j < W; j++) { let acc = 0; for (let i = -R; i < WN + R; i++) { acc += al(i + R, j) - al(i - R - 1, j); if (i >= 0 && i < WN) Bl[j * WN + i] = acc / (255 * (2 * R + 1)); } }
+  const bl = (i, j) => (i < 0 || i >= WN ? 0 : Bl[j * WN + i]);
   for (let j = 0; j < W; j++) for (let i = 0; i < WN; i++) {
-    const a = al(i, j);
+    const a = al(i, j), o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
+    out[o] = 128; // (straight out where it is not: so its smaller copies lean no way at its edge)
     if (!a) continue;
-    const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255, o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
-    out[o] = Math.round(255 * (D[(j * WN + i) * 4 + 3] > 127 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
+    const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255;
+    const nx = D[(j * WN + i) * 4 + 3] > 127 ? 0 : clamp((bl(i - 3, j) - bl(i + 3, j)) * 1.7, -1, 1); // (a sign's board is flat)
+    out[o] = Math.round(127.5 + 127.5 * nx);
     out[o + 1] = Math.round(255 * clamp(Math.max(top, side * 0.55) * (0.45 + 0.65 * up), 0, 1));
     out[o + 2] = G[(j * WN + i) * 4 + 3];
     out[o + 3] = a;
@@ -36930,9 +37317,12 @@ class MemoryGame extends QuizGame {
     this.warmExtra = [new THREE.Mesh(this.coinGeo, this.coinMat)]; // drawn once off-screen at start (GFX.warm)
     // the coins lying in the piles by the bullion: the same gold, lifted (lying flat they mirror the middle of the
     // vault's ceiling, its darkest part, and read as brown lumps: the master overhaul, Phase 2, 2026-11-23)
+    // (Phase 2, 2026-11-24: the right-hand tray's still read brown, (71, 31, 10), out of the deck lamp's reach: lifted
+    // further, and the model's token a shade paler, they read as gold on both trays)
     const pile = this.coinMat.clone();
-    pile.envMapIntensity = this.coinMat.envMapIntensity * 1.4;
-    pile.emissive = new THREE.Color(0x3c2405);
+    pile.envMapIntensity = this.coinMat.envMapIntensity * 2;
+    pile.emissive = new THREE.Color(0x7a5410);
+    if (this.gen && this.gen.coin) pile.color.setHex(0xfff0c0);
 
     this.works = new MemoryWorks(this, { gold, steel, chrome, brass, nickel, pile }); // the lock's movement, deck lamps, coin piles (23b-memoryworks.js)
     this.open = 0; // eased share of the deck banked: drives bolts, glow and lit boxes
@@ -37645,7 +38035,9 @@ function memoryGen(game) {
   if (pile && GFX.extras === false) disposeTree(pile.scene); // (the decor left out: the vault as it was)
   else if (pile) {
     const P = MEMORY_GEN.PILE;
-    G.pileMats = tuneModel(pile, { env: 2, glow: 1.6 }).map((m) => ({ m, e: m.emissiveIntensity }));
+    // (Phase 2, 2026-11-24: at the right end of the plinth, out of the deck lamp's reach, its black cards read as a dark
+    // blob, (28, 5, 12): their backs now mirror the vault and their magenta edges glow at rest, the more on a landing)
+    G.pileMats = tuneModel(pile, { env: 5, glow: 4.8 }).map((m) => ({ m, e: m.emissiveIntensity }));
     pile.scene.traverse((o) => { if (o.isMesh && G.env) o.material.envMap = G.env; });
     pile.scene.scale.setScalar(P.s);
     pile.scene.position.set(P.x, 0, P.z);
@@ -38183,18 +38575,20 @@ class ExamGame extends QuizGame {
     // own neon lights its columns now. (The boss adds its own: the light under it, which the fire takes over at the
     // end and then outbids the fill; its eyes.)
     s.add(new THREE.HemisphereLight(0x2a3266, 0x1a0c34, 0.62)); // (no light is darker than the hall's deep violet)
-    const key = (this.keyLight = new THREE.DirectionalLight(0xdfe7ff, 1.05));
+    // (Phase 2, 2026-11-24: the key, the light on its face and the low fill lean to the world's ice blue, #8fb4ff: the
+    // Proctor read violet on violet, the ice blue only in the windows)
+    const key = (this.keyLight = new THREE.DirectionalLight(0xc8d8ff, 1.05));
     key.position.set(-8, 14, 12);
     key.userData.keep = true;
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xe8eeff, 2.5, 34, 1.4); // the key on its face and chest
+    this.spotLight = new THREE.PointLight(0x9fb2ff, 2.5, 34, 1.4); // the key on its face and chest
     this.spotLight.position.set(-BOSS_S * 0.38, BOSS_DAIS + BOSS_S * 1.13, BOSS_S * 1.05);
     this.spotLight.userData.keep = true;
     s.add(this.spotLight);
     this.rimA = new THREE.PointLight(0xa65fff, 2.3, 36, 1.5); // violet, from behind on its left
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.fillLow = new THREE.PointLight(0x8a90d8, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow = new THREE.PointLight(0x8fb4ff, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
     this.rimB = new THREE.PointLight(0x8fb4ff, 2.6, 34, 1.5); // ice blue, from behind on its right
@@ -41238,8 +41632,10 @@ class LibraryScene extends Scene3D {
     this.lookAt.set(Math.sin(lt * 0.04) * 0.4 - 8.6 * rk, LIB_EYE - 1.3 + 4.3 * rk, -30);
     if (Math.abs(this.camera.fov - (58 + 30 * rk)) > 0.01) { this.camera.fov = 58 + 30 * rk; this.camera.updateProjectionMatrix(); }
     const post = this.scene.userData.post;
-    post.saturation = 1.2 - 1.08 * rk;
-    post.tint = [1 - 0.22 * rk, 1 - 0.46 * rk, 1 + 0.6 * rk];
+    // (the strip behind a chapter's title: violet, its books' colours faint in it. The grade desaturates after the
+    // tint, so at 0.12 the tint was lost and the strip read grey: Phase 2, 2026-11-24)
+    post.saturation = 1.2 - 0.7 * rk;
+    post.tint = [1 - 0.26 * rk, 1 - 0.52 * rk, 1 + 0.7 * rk];
     post.contrast = 1.15 + 0.23 * rk;
     post.exposure = 1.18 + 0.2 * rk;
     this.placeCamera();
