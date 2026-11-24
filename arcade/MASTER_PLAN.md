@@ -17,8 +17,11 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 - **Phase:** 2, image quality: its polishing resumes (the owner's order: 0, 1, 5, 3, then 2). Phases 0, 1, 5 and 3 are
   done (Phase 3's gate passed 2026-11-24: `docs/master/phase3/`; live at `f10b3c2`); Phase 2's first pass is closed and
   recorded (`docs/master/phase2/`).
-- **Next steps (Phase 2, resumed):** 1) the smoothstep safety sweep (48 shader lines with a falling edge in 16 files, one
-  file a commit; `node arcade/tools/smoothstep-sweep.js` lists them); 2) polish only, on what Phases 5 and 3 left final:
+- **Done (Phase 2, resumed):** the smoothstep safety sweep (`89a65e8`..`275af41`, a file a commit; built `cd141b1`, live):
+  48 calls in 16 files; the 3D the same to the pixel on every game screen on both devices, no shader error anywhere
+  (every screen's stills, the effects kit, the wizard's casts and ward, the exam's wreck), the rules IDENTICAL.
+- **Next steps (Phase 2, resumed):** 2) polish only, on what Phases 5 and 3 left final (a second independent review of
+  every screen's stills first, then its findings, worst first):
   light, materials and colour on the rebuilt environments and new assets (the Proctor everywhere, the far rocks, the title's
   dressing, the hub's cabinets, the arena's crowd and deck, Memory Bank's bullion); the results bar and the small icons
   (also carried to Phase 7); 3) stills before and after at the same moments, costs on both tiers, a second independent
