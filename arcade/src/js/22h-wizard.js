@@ -328,7 +328,7 @@ class Wizard {
   // the player answers: right or wrong, it casts (the bolts are the stage's volley, from this wand: bolt)
   cast(right) {
     const k = this.keys.cast, n = ++this.nCast, sd = this.seed;
-    this.play("cast", { from: k.release - 0.04, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.09, out: 0.35 }); // (its arm is out as the first bolt leaves, from about where the held cast has it: no snap back; each cast a little its own)
+    this.play("cast", { from: k.release - 0.04, to: k.release + 0.55, rate: 1.6 * Motion.vary(sd, n, 0.94, 1.1), in: 0.15, out: 0.35 }); // (its arm thrust out from about where the held cast has it: no snap back; each cast a little its own. Over 0.15 s: a quick answer finds the wand still half raised, and over less the arm's 70 cm came in four frames, a snap; the first bolt leaves from the tip wherever it has reached)
     this.S.lunge.hit(0.035 * Motion.vary(sd, n + 5, 0.8, 1.2)); this.S.yaw.hit(Motion.vary(sd, n + 7, -0.04, 0.04)); // (it throws itself into it)
     this.whip = Math.max(this.whip, 0.7); this.charge = 0;
     this.flare0 = Math.max(this.flare0, right ? 0.6 : 0.2);
