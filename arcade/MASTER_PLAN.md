@@ -134,6 +134,12 @@ of real lights, half-resolution post effects, visibility-based updates, Low Powe
 - **When it resumes (after Phase 3):** polish only, on what Phases 5 and 3 leave final: light, materials and colour on
   the rebuilt environments and new assets; the results bar and the small icons (from the review); a second independent
   review; its gate as written below.
+- **Also when it resumes** (found in Phase 5's review): some fifty shader lines in about twenty files ask GLSL's
+  smoothstep for a falling edge (edge0 above edge1: `smoothstep(0.3, 0.0, x)`), which the specification leaves
+  undefined; every GPU met so far computes the usual curve (the iPhone and the Mac show them right), so it is a
+  safety sweep, not a visible fault: each written `1.0 - smoothstep(edge1, edge0, x)`, one file a commit, the shaders
+  compiled on every screen after (the two Phase 5 touched were done in `286910a`; the page's own JavaScript
+  `smoothstep` takes either direction by design).
 Art bible (`ART_BIBLE.md`) and its fal.ai reference sheet first (`tools/gen/artbible.js run`, about $0.24); MSAA
 everywhere (no FXAA: the governor's last step gets 2x multisampling; prepared in a stash, built after Phase 1's gate);
 PBR materials from ambientCG and Poly Haven (CC0) where surfaces are flat or smudgy (candidates found: MetalPlates015A/
@@ -282,6 +288,8 @@ Landscape layouts, keys, hover, Retina and display changes, resizing without lea
 ### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
 Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
+- Nest Egg Run's phone draws vary with the seeded traffic between runs (85, 90, 91 in the last three: the cars and the
+  props in view at the measured moment): inside the 100, but the closest screen to it; measure it at several moments.
 
 ### Phase 8: final verification
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
