@@ -69,7 +69,7 @@ function bossArenaPair(hex) {
 // corner says what it is (aMetal, aRough; aKind 0 brushed steel, 1 a painted panel, 2 cloth). The brushing's streaks
 // and the roughness they leave come from a CC0 material (ambientCG Metal009: assets/ui/mat-steel.webp, the normal's x
 // and y in red and green, roughness in blue; a level plate until it arrives), laid along each face by where it is
-// (no UVs): up a pillar, across a panel; a panel has a seam every 1.2 m up it and 1.9 m along it. What it reflects is
+// (no UVs): up a pillar, across a panel; its plates and tiles in each face's own frame (below). What it reflects is
 // the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
 // turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
 // the steel gives back red neon, as the deck does: BossGame.probeTint).
