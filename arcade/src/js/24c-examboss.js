@@ -242,7 +242,7 @@ function bossSkin(env, side, o, U) {
         // (the burn starts at the reactor and spreads: near it the lines are wide and white-hot, further out thin and red,
         // and beyond its reach still dark. Thrown pieces burn all over, and cool.)
         float bossReach = uBossCrack * 1.5;
-        float bossBurn = max(uBossAll, smoothstep(bossReach, bossReach - 0.4, length(vBossW - uBossCoreW) * ${UK} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
+        float bossBurn = max(uBossAll, 1.0 - smoothstep(bossReach - 0.4, bossReach, length(vBossW - uBossCoreW) * ${UK} + (neonTile(vBossP * 0.8, vBossN).r - 0.5) * 0.5));
         float bossHot = bossBurn * min(uBossCrack, 1.0);
         totalEmissiveRadiance += mix(vec3(2.2, 0.42, 0.08), vec3(4.2, 2.0, 0.7), bossHot * bossHot) * (smoothstep(0.2 - 0.19 * bossHot, 0.45, bossT.g) + 0.22 * smoothstep(0.0, 0.3, bossT.g) * bossHot) * bossHot * (0.3 + 1.0 * bossT.r);`}
         // the eyes' own light on the bone round them (the skull only: elsewhere uBossEye is zero)

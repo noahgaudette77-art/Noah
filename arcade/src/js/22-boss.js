@@ -625,7 +625,7 @@ class BossGame extends QuizGame {
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_PointSize = uPx * 150.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * smoothstep(1.0, 0.55, r), 1.0); }",
+      fragmentShader: "varying vec3 vCol; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0; gl_FragColor = vec4(vCol * (exp(-r * 9.0) + 0.16 * exp(-r * 2.6)) * (1.0 - smoothstep(0.55, 1.0, r)), 1.0); }",
     }));
     this.crowd.frustumCulled = false;
     this.crowd.layers.set(1);
