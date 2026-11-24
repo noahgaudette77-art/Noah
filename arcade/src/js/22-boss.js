@@ -1248,7 +1248,7 @@ class BossGame extends QuizGame {
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
       const quiet = REDUCED_MOTION || GFX.calm, d = VFX.dt, u = this.crowdU, ch = this.cues.cheer, st = this.cues.stir, km = quiet ? 0.3 : 1;
       this.crowdT += d * (1 + 0.5 * (this.rageK || 0)); // (the cards and what they hold up, on the show's clock: see makeCrowd; restless, quicker, as the boss rages)
-      for (const q of [ch, st]) { q[0] = Math.min(60, q[0] + d); q[2] = Math.min(60, q[2] + d); }
+      ch[0] = Math.min(60, ch[0] + d); ch[2] = Math.min(60, ch[2] + d); st[0] = Math.min(60, st[0] + d); st[2] = Math.min(60, st[2] + d); // (no list made a frame)
       u.uCrowdT.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
       u.uCheers.value.set(ch[0], ch[1] * km, ch[2], ch[3] * km); u.uStirs.value.set(st[0], st[1] * km, st[2], st[3] * km);
       u.uMove.value.set(quiet ? 0.25 : 1, this.rageK || 0);
