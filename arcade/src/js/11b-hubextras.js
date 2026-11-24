@@ -324,7 +324,7 @@ class HubExtras {
             for (int T = 0; T < 3; T++) {                      // lanes of traffic in the air
               float ft = float(T), dir = mod(ft, 2.0) * 2.0 - 1.0, ly = 0.5 + ft * 0.15;
               float lx = fract(a * 4.0 + dir * uTime * (0.05 + ft * 0.02) + ft * 0.37) * 5.0, c = fract(lx);
-              float d = smoothstep(0.1, 0.0, abs(c - 0.5)) * smoothstep(0.035, 0.0, abs(y - ly)) * step(0.3, h1(floor(lx) + ft * 9.0));
+              float d = (1.0 - smoothstep(0.0, 0.1, abs(c - 0.5))) * (1.0 - smoothstep(0.0, 0.035, abs(y - ly))) * step(0.3, h1(floor(lx) + ft * 9.0));
               col += mix(vec3(1.6, 0.15, 0.25), vec3(1.6, 1.5, 1.2), step(0.5, dir * (c - 0.5) + 0.5)) * d;
             }
             float m = step(0.955, fract(a * 3.2)) + step(y, 0.05) + step(0.95, y);    // mullions and rails
