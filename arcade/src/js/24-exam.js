@@ -228,7 +228,7 @@ function examNightMaterial() {
         col += mix(vec3(0.07, 0.42, 0.36), vec3(0.34, 0.16, 0.62), smoothstep(7.0, 14.0, vWorld.y)) * curtain * (0.3 + 0.12 * sin(vWorld.x * 0.9 + uTime * 0.2));
         vec2 p = vWorld.xy * 1.35; vec2 c = floor(p); float r = hash13(vec3(c, 7.0));
         if (r > 0.93) {
-          float s = smoothstep(0.32, 0.0, length(fract(p) - 0.5));
+          float s = (1.0 - smoothstep(0.0, 0.32, length(fract(p) - 0.5)));
           float tw = 0.65 + 0.35 * sin(uTime * (0.5 + r * 1.5) + r * 60.0);
           col += vec3(0.9, 0.86, 1.0) * s * tw * (r > 0.992 ? 2.6 : 0.9);
         }
