@@ -240,9 +240,9 @@ class BossGame extends QuizGame {
     const steel = new RacerBatch(["aMetal", "aRough", "aKind"]), glow = new RacerBatch(["aRole"]);
     this.makeArena(steel, glow);
     this.makeCrowd(steel, glow);
-    this.steelMat = arenaSteelMaterial(this.env, this.probeTint); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's)
+    this.steelMat = arenaSteelMaterial(this.env, this.probeTint, P); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's; the neon's light on it, the arena's pair)
     this.glowMat = arenaGlowMaterial();
-    const sm = new THREE.Mesh(steel.build("color"), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat);
+    const sm = new THREE.Mesh(arenaFaceFrames(steel.build("color")), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat); // (each face of the steel in its own frame: 22c)
     sm.name = "arena-steel"; gm.name = "arena-neon"; // (named for tools/cost-report.js)
     sm.userData.arena = gm.userData.arena = true;
     s.add(sm, gm);
@@ -1150,7 +1150,7 @@ class BossGame extends QuizGame {
       this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
       this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
       this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
-      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them)
+      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = this.steelMat.userData.uSpillRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them, and its light on the steel)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;

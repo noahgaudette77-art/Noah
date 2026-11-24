@@ -73,20 +73,35 @@ function bossArenaPair(hex) {
 // the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
 // turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
 // the steel gives back red neon, as the deck does: BossGame.probeTint).
-function arenaSteelMaterial(env, tint) {
+// (Phase 2's polish, 2026-11-24: an art review found the pillars and the stands' faces still read as untextured boxes,
+// each face one flat violet tone with neon strips on it. Each face now has a frame of its own (aFace: arenaFaceFrames)
+// and the steel is worked in it: a pillar's sides in plates up it, their seams grooves whose lips catch the light, the
+// octagon's corners and each piece's top and bottom bevelled and worn bright; a stand's face in tiles, two across a bay
+// and three up, the same; each plate its own shade, the paint mottled, grime gathered at the foot of each and streaked
+// down its face; and the neon's light on the steel beside it (pair: the arena's two colours, red as the boss rages:
+// userData.uSpillRage), from a pillar's strips and the rings under its collars, a tier's rail and the line under it, and
+// the footlights along the foot of the stands. No new draw, no texture: what is worked out a pixel, in the one draw.)
+function arenaSteelMaterial(env, tint, pair) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env || null, envMapIntensity: 1 });
   m.extensions = { derivatives: true };
   m.userData.tBrush = { value: cellFlatTexture() };
   m.userData.uEnvTint = { value: tint || new THREE.Vector4(1, 1, 1, 0) };
+  m.userData.uSpillA = { value: new THREE.Color(pair ? pair.a : 0) };
+  m.userData.uSpillB = { value: new THREE.Color(pair ? pair.b : 0) };
+  m.userData.uSpillRage = { value: 0 };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tBrush = m.userData.tBrush;
     sh.uniforms.uEnvTint = m.userData.uEnvTint;
+    sh.uniforms.uSpillA = m.userData.uSpillA; sh.uniforms.uSpillB = m.userData.uSpillB; sh.uniforms.uSpillRage = m.userData.uSpillRage;
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind);")
+      .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; attribute vec4 aFace; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; varying vec4 vFace;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind); vFace = aFace;")
       .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush; uniform vec4 uEnvTint;")
+      .replace("#include <common>", `#include <common>
+        varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; varying vec4 vFace; uniform sampler2D tBrush; uniform vec4 uEnvTint; uniform vec3 uSpillA; uniform vec3 uSpillB; uniform float uSpillRage;
+        float aHash(vec2 p){ vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+        float aNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(aHash(i), aHash(i + vec2(1.0, 0.0)), f.x), mix(aHash(i + vec2(0.0, 1.0)), aHash(i + vec2(1.0, 1.0)), f.x), f.y); }`)
       .replace("#include <lights_fragment_maps>", `#include <lights_fragment_maps>
         #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
           radiance = mix(radiance, uEnvTint.xyz * max(max(radiance.r, radiance.g), radiance.b), uEnvTint.w);
@@ -95,20 +110,102 @@ function arenaSteelMaterial(env, tint) {
           #endif
         #endif`)
       .replace("#include <color_fragment>", `#include <color_fragment>
-        vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0));
+        vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0)), sU = cross(sT, sN);
         float sAlong = dot(vWP, sT), sFlat = step(0.6, abs(sN.y));
-        float kPanel = step(0.5, vSurf.z) * (1.0 - step(1.5, vSurf.z)), kCloth = step(1.5, vSurf.z);
+        float kPanel = step(0.5, vSurf.z) * (1.0 - step(1.5, vSurf.z)), kCloth = step(1.5, vSurf.z), kSteel = 1.0 - kPanel - kCloth;
         vec2 sUv = mix(mix(vec2(vWP.y, sAlong), vec2(sAlong, vWP.y), kPanel), vWP.xz, sFlat); // (the streaks run along the texture's x)
         vec3 brush = texture2D(tBrush, sUv * vec2(0.35, 1.4)).rgb;
-        vec2 sq = vec2(vWP.y / 1.2, sAlong / 1.9), sw = fwidth(sq) * 1.5 + 1e-4, sd = abs(fract(sq + 0.5) - 0.5);
-        float seam = kPanel * (1.0 - sFlat) * max(1.0 - smoothstep(0.018, 0.018 + sw.x, sd.x), 1.0 - smoothstep(0.01, 0.01 + sw.y, sd.y));
+        float runs = texture2D(tBrush, vec2(vWP.y * 0.07, sAlong * 0.9)).b; // (the same streaks stood on end: what runs down a face)
+        // its face's frame: fT across it and fS up it from its middle, fW and fH half its width and height (none on a
+        // face that looks up or down, nor on cloth)
+        float fT = vFace.x, fS = vFace.z, fW = max(vFace.y, 1e-3), fH = max(vFace.w, 1e-3), onF = step(0.01, vFace.y) * (1.0 - kCloth);
+        // its plates: a pillar's sides in bands 1.5 m tall up it (their seams meet its collars), a stand's face in tiles,
+        // two across a bay and three up. dE: how far the plate's nearest side and its nearest top or bottom are; px: a
+        // pixel, in metres (the derivatives taken here, before any branch)
+        float cols = max(1.0, floor(fW / 0.62 + 0.5));
+        vec2 q = vec2((fT / fW + 1.0) * 0.5 * cols, mix((vWP.y - 0.62) / 1.5, (fS / fH + 1.0) * 1.5, kPanel));
+        vec2 qi = floor(q), qf = q - qi, tile = vec2(2.0 * fW / cols, mix(1.5, fH * 2.0 / 3.0, kPanel));
+        vec2 dE = min(qf, 1.0 - qf) * tile, px = fwidth(q) * tile + 1e-4;
+        float sw = fwidth(q.y * 6.0) + 1e-4;
+        vec3 aBend = vec3(0.0), aGlow = vec3(0.0), tintF = vec3(1.0);
+        float seam = 0.0, wear = 0.0, grime = 0.0, streak = 0.0, slot = 0.0, shade = 1.0;
+        if (onF > 0.5) { // (only a face worked: each kind of surface in a run of its own pixels, so each pays for its own)
+          vec3 fC = vWP - sT * fT - sU * fS; // (its middle: the same over all of it)
+          float tall = max(kPanel, kSteel * step(2.0, fH)); // (grooved: the stands' tiles, and a pillar's shaft between its plates)
+          float gY = tall * (1.0 - smoothstep(0.012, 0.012 + px.y, dE.y)), gX = kPanel * (1.0 - smoothstep(0.012, 0.012 + px.x, dE.x));
+          seam = max(gX, gY);
+          float lipY = tall * (1.0 - smoothstep(0.012, 0.055 + px.y, dE.y)) * (1.0 - gY), lipX = kPanel * (1.0 - smoothstep(0.012, 0.055 + px.x, dE.x)) * (1.0 - gX);
+          // a pillar's corners and each of its pieces' tops and bottoms bevelled (a shaft's are under its collars)
+          float bvX = kSteel * (1.0 - smoothstep(0.0, 0.035 + px.x, fW - abs(fT))), bvY = kSteel * (1.0 - tall) * (1.0 - smoothstep(0.0, 0.03 + px.y, fH - abs(fS)));
+          // (the surface turns over its edges and into its seams: the light catches the lips; and each plate is pressed a
+          // little full, so what it reflects sweeps across it instead of one flat tone)
+          vec2 bow = (qf - 0.5) * 2.0 * mix(vec2(0.24, 0.12), vec2(0.2, 0.2), kPanel);
+          aBend = (sT * (sign(fT) * bvX + sign(qf.x - 0.5) * lipX) + sU * (sign(fS) * bvY + sign(qf.y - 0.5) * lipY)) * 0.7 + sT * bow.x + sU * bow.y;
+          wear = max(bvX, bvY) + 0.6 * max(lipX, lipY);
+          // each plate its own shade, the paint and the metal mottled, grime gathered at the foot of each (a pillar's from
+          // the deck up, a tier's along its foot) and streaked down its face
+          float mot = aNoise(vec2(sAlong, vWP.y) * 1.25 + 3.7), plate = aHash(fC.xz * 1.37 + fC.y * 0.73 + qi * vec2(3.1, 5.7));
+          grime = 1.0 - smoothstep(0.05, mix(1.6, 1.0, kPanel), mix(vWP.y, fS + fH, kPanel) + 0.5 * (mot - 0.5));
+          streak = smoothstep(0.5, 0.78, runs) * 0.8;
+          tintF = mix(vec3(1.07, 0.95, 0.98), vec3(0.93, 1.0, 1.08), mot);
+          vec3 cA = mix(uSpillA, vec3(1.0, 0.14, 0.24) * max(max(uSpillA.r, uSpillA.g), uSpillA.b), uSpillRage);
+          vec3 cB = mix(uSpillB, vec3(1.0, 0.14, 0.24) * max(max(uSpillB.r, uSpillB.g), uSpillB.b), uSpillRage);
+          float yy = vWP.y;
+          if (kPanel > 0.5) {
+            // a stand's tiles: one in five a vent (its slats dark, their lips lit), one in seven a small light let into it
+            float pick = aHash(fC.xz * 0.71 + qi * vec2(7.3, 1.9) + 4.1);
+            vec2 inset = dE - vec2(0.14, 0.12);
+            float slats = fract(qf.y * 6.0);
+            float vent = step(0.0, min(inset.x, inset.y)) * step(0.8, pick) * (1.0 - smoothstep(0.35, 0.6, sw)); // (gone where its slats are finer than a pixel)
+            slot = vent * (1.0 - smoothstep(0.45, 0.45 + sw, slats));
+            aBend += sU * vent * (smoothstep(0.45, 0.6, slats) - 0.5) * 0.8;
+            float lamp = step(pick, 0.14) * step(0.3, dE.x) * (1.0 - smoothstep(0.0, 0.025 + px.y, abs(qf.y * tile.y - 0.2)));
+            // the light on it: its tier's rail along its top (the lead colour) and the line under it (the second); the
+            // footlights along the foot of the stands
+            float top = fH - fS, fl = step(25.5, length(vWP.xz)) * exp(-max(yy, 0.0) * 2.4);
+            aGlow = cA * 0.16 * exp(-top * 2.6) + cB * (0.13 * exp(-abs(top - 0.38) * 10.0) + 0.12 * fl) + mix(cA, cB, step(0.07, pick)) * lamp * 0.7;
+          } else if (fH > 3.0 && fW < 0.3) {
+            // a pillar's shaft: the light of its lines up its face toward the ring (the lead colour) and up each face
+            // beside it (the second), of the rings under its collars and round its foot
+            float toward = dot(sN.xz, -normalize(fC.xz + vec2(1e-4)));
+            float sec = smoothstep(0.95, 1.1, yy) * (1.0 - smoothstep(3.32, 3.47, yy)) + smoothstep(3.79, 3.94, yy) * (1.0 - smoothstep(6.32, 6.47, yy)) + smoothstep(6.79, 6.94, yy) * (1.0 - smoothstep(9.2, 9.35, yy));
+            float pA = sec * step(0.92, toward) * exp(-abs(abs(fT) - 0.17) * 26.0), pB = sec * step(0.55, toward) * (1.0 - step(0.92, toward)) * exp(-abs(fT) * 26.0);
+            aGlow = cA * (0.3 * pA + 0.22 * exp(-abs(yy - 0.86) * 7.0)) + cB * (0.26 * pB + 0.22 * (exp(-abs(yy - 3.45) * 7.0) + exp(-abs(yy - 6.45) * 7.0)));
+          }
+          shade = mix(0.76, 1.24, plate) * mix(0.8, 1.2, mot) * (1.0 - 0.55 * grime) * (1.0 - 0.45 * streak) * (1.0 + 1.1 * wear) * (1.0 - 0.8 * slot);
+        }
         float fold = 0.82 + 0.18 * sin(sAlong * 21.0 + vWP.y * 1.3);
-        diffuseColor.rgb *= mix(0.9 + 0.2 * brush.b, fold, kCloth) * (1.0 - 0.7 * seam);`)
-      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) + 0.35 * seam, 0.04, 1.0);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam);");
+        diffuseColor.rgb *= mix(0.9 + 0.2 * brush.b, fold, kCloth) * shade * (1.0 - 0.75 * seam) * tintF;`)
+      .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) * (1.0 - 0.45 * wear) + 0.35 * max(seam, slot) + 0.3 * grime + 0.2 * streak, 0.04, 1.0);")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam) * (1.0 - 0.35 * grime);")
+      .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\n  normal = normalize(normal + mat3(viewMatrix) * aBend);")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n  totalEmissiveRadiance += aGlow;");
   };
-  m.customProgramCacheKey = () => "arena-steel-2";
+  m.customProgramCacheKey = () => "arena-steel-3";
   return m;
+}
+// Each face of the arena's steel in a frame of its own (arenaSteelMaterial reads it, attribute aFace): where each
+// corner is across its face and up it from the face's middle, and half the face's width and height (t, w, s, h; all
+// naught on a face that looks up or down). A face is a run of triangles one after another that look the same way (a
+// box's side is two, a shaft's side two, a banner three); across is level, up is up the face. Made once, with the
+// arena: its geometry as RacerBatch built it (one triangle after another, each corner its triangle's normal).
+function arenaFaceFrames(g) {
+  const P = g.attributes.position.array, N = g.attributes.normal.array, nt = P.length / 9, F = new Float32Array((P.length / 3) * 4);
+  for (let i = 0; i < nt; ) {
+    const o = i * 9, nx = N[o], ny = N[o + 1], nz = N[o + 2];
+    let j = i + 1;
+    while (j < nt && Math.abs(N[j * 9] - nx) + Math.abs(N[j * 9 + 1] - ny) + Math.abs(N[j * 9 + 2] - nz) < 1e-3) j++;
+    if (Math.abs(ny) < 0.6) {
+      const l = Math.hypot(nx, nz) || 1, tx = -nz / l, tz = nx / l, ux = -tz * ny, uy = tz * nx - tx * nz, uz = tx * ny; // (across: level; up: across x normal)
+      const A = (v) => P[v * 3] * tx + P[v * 3 + 2] * tz, B = (v) => P[v * 3] * ux + P[v * 3 + 1] * uy + P[v * 3 + 2] * uz;
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (let v = i * 3; v < j * 3; v++) { const a = A(v), b = B(v); a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b); }
+      for (let v = i * 3; v < j * 3; v++) { F[v * 4] = A(v) - (a0 + a1) / 2; F[v * 4 + 1] = (a1 - a0) / 2; F[v * 4 + 2] = B(v) - (b0 + b1) / 2; F[v * 4 + 3] = (b1 - b0) / 2; }
+    }
+    i = j;
+  }
+  g.setAttribute("aFace", new THREE.Float32BufferAttribute(F, 4));
+  return g;
 }
 // The arena's neon, unlit and in one draw: its pillars' inlays and lamps, the rails along its stands, the lights at
 // their feet, its banners' marks. Each strip's colour is in its corners (aCol, over 1 where it blooms). Raging, the
