@@ -130,7 +130,7 @@ function libraryShelfMaterial(len, tall, lampY) {
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
         float lampK = exp(-dz * dz * 0.075) * exp(-pow(abs((vW.y - ${lampY.toFixed(1)}) * 0.085), 2.0)) * smoothstep(-52.0, -44.0, vW.z);
-        vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
+        vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * (1.0 - smoothstep(-74.0, -44.0, vW.z));
         col *= light;
         float holo = book * step(0.972, h2) * (1.0 - set) * detail;
         float hh = fract(h2 * 31.7);
@@ -375,7 +375,7 @@ class LibraryScene extends Scene3D {
           float pool = exp(-(dz * dz * 0.16 + pow(abs(vW.x) - ${LAMP_X.toFixed(1)}, 2.0) * 0.2)) * smoothstep(-52.0, -44.0, vW.z);
           col += vec3(0.5, 0.34, 0.16) * pool * 0.5;
           col += vec3(1.0, 0.25, 0.8) * 0.12 * exp(-pow(abs((4.84 - abs(vW.x)) * 1.5), 2.0)); // the magenta line, on the stone beside it
-          col += vec3(0.3, 0.2, 0.62) * exp(-vW.x * vW.x * 0.05) * smoothstep(-40.0, -74.0, vW.z) * 0.2; // the window's glow at its foot
+          col += vec3(0.3, 0.2, 0.62) * exp(-vW.x * vW.x * 0.05) * (1.0 - smoothstep(-74.0, -40.0, vW.z)) * 0.2; // the window's glow at its foot
           col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
           // the window on the stone: each flag is asked which pane its light came through
           vec2 q = vec2(vW.x, (vW.z - (${(Z0 - L).toFixed(1)})) * ${SLOPE} - ${ROSE_Y.toFixed(1)}) / 5.2;
@@ -445,7 +445,7 @@ class LibraryScene extends Scene3D {
           float len = 0.35 + 0.6 * libH(vec2(row, vSeed));
           float line = step(0.3, fy) * step(fy, 0.62) * step(0.08, vUv.x) * step(vUv.x, 0.08 + 0.84 * len);
           float words = step(0.2, fract(vUv.x * 9.0 + libH(vec2(row, 3.0 + vSeed)) * 5.0));
-          float edge = smoothstep(0.5, 0.42, abs(vUv.x - 0.5)) * smoothstep(0.5, 0.44, abs(vUv.y - 0.5));
+          float edge = (1.0 - smoothstep(0.42, 0.5, abs(vUv.x - 0.5))) * (1.0 - smoothstep(0.44, 0.5, abs(vUv.y - 0.5)));
           float frame = 1.0 - smoothstep(0.0, 0.03, min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y)));
           gl_FragColor = vec4(vTint * ((0.1 + line * words * 0.95) * edge + frame * 0.7), 1.0);
         }`,
