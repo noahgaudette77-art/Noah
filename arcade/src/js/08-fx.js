@@ -90,7 +90,7 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
         if (uStars > 0.0 && h > 0.02) {
           vec3 p = d * 240.0; vec3 c = floor(p); float r = hash13(c);
           if (r > 0.972) {
-            float s = smoothstep(0.3, 0.0, length(fract(p) - 0.5));
+            float s = (1.0 - smoothstep(0.0, 0.3, length(fract(p) - 0.5)));
             float tw = 0.5 + 0.5 * sin(uTime * (1.2 + r * 5.0) + r * 77.0);
             col += vec3(1.0, 0.9, 1.0) * s * (0.4 + 0.6 * tw) * uStars * smoothstep(0.02, 0.22, h) * (r > 0.996 ? 3.5 : 1.3);
           }
@@ -108,7 +108,7 @@ function makeSky({ top = 0x05010f, mid = 0x1d0640, horizon = 0xff3ad4, bottom = 
             vec2 head = m0 + mv * k * 0.5;
             float along = clamp(dot(sp - head, -mv), 0.0, 0.16);
             float dist = length(sp - head + mv * along);
-            col += vec3(1.0, 0.92, 0.85) * smoothstep(0.006, 0.0, dist) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
+            col += vec3(1.0, 0.92, 0.85) * (1.0 - smoothstep(0.0, 0.006, dist)) * (1.0 - along / 0.16) * sin(k * 3.14159) * 3.0 * uStars;
           }
         }
         // Encode like built-in materials do: identity in the scene, RGBE when the
@@ -147,7 +147,7 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
       void main(){
         float r = (length(vP) - ${(radius * 1.35).toFixed(2)}) / ${(radius * 0.8).toFixed(2)};
         float lanes = 0.35 + 0.65 * abs(sin(r * 21.0)) * step(0.08, fract(r * 3.1));
-        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * smoothstep(1.0, 0.85, r) * 0.55, 1.0);
+        gl_FragColor = vec4(uColor * lanes * smoothstep(0.0, 0.08, r) * (1.0 - smoothstep(0.85, 1.0, r)) * 0.55, 1.0);
       }`,
   }));
   rings.rotation.x = Math.PI / 2 - 0.42;
@@ -881,7 +881,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
             vec3 bc = b3 < 0.44 ? uWin : (b3 < 0.72 ? uCool : uHot);
             // structure: a pier every sixth bay, a spandrel under every window, two sashes to a bay
             float pier = step(0.5, mod(id.x, 6.0));
-            float pane = smoothstep(0.1, 0.16, f.x) * smoothstep(0.9, 0.84, f.x) * smoothstep(0.22, 0.28, f.y) * smoothstep(0.9, 0.84, f.y) * pier;
+            float pane = smoothstep(0.1, 0.16, f.x) * (1.0 - smoothstep(0.84, 0.9, f.x)) * smoothstep(0.22, 0.28, f.y) * (1.0 - smoothstep(0.84, 0.9, f.y)) * pier;
             pane *= 0.3 + 0.7 * smoothstep(0.0, 0.04, abs(f.x - 0.5));
             vec3 wc = h2 < 0.76 ? bc : (h2 < 0.86 ? uWin : (h2 < 0.93 ? uCool : uHot)); // (a few rooms keep their own colour)
             float level = 0.42 + 0.58 * h3 * h3; // most rooms dim, a few bright (none so dim its amber goes khaki)
@@ -895,7 +895,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
             col += (uSunCol * pow(max(dot(R, uSunDir), 0.0), 9.0) * 0.5 + vec3(0.6, 0.72, 1.0) * uFlash * 0.5) * gl * (0.15 + 0.85 * fres);
             col += skyc * 0.06 * smoothstep(0.55, 1.0, vnoise(vec3(along * 1.1, vW.y * 0.06, 2.0))) * fine; // rain running down the glass
           }
-          col += uStreet * smoothstep(26.0, 0.0, vW.y) * (0.2 + 0.6 * fres);
+          col += uStreet * (1.0 - smoothstep(0.0, 26.0, vW.y)) * (0.2 + 0.6 * fres);
           col += vec3(0.6, 0.72, 1.0) * uFlash * 0.05;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
