@@ -422,7 +422,9 @@ class BlasterSpace {
     // (Phase 5: the far ones are light copies of the same two rocks, about two hundred triangles each, in the near ones'
     // own material and picture: the built-in grey lumps beside the crystal and the ore were the audit's #25. The odd
     // ones the second rock. Until the copies are in hand, and from disk, the built-in rock as before.)
-    const loB = rockB && this.genLo("prop-rock2-lo", rockB, rockA ? 48 : 96), loA = rockA && this.genLo("prop-rock-lo", rockA, loB ? 48 : 96);
+    // (each copy room for all 96: which of the two arrive is not known until both are made, and a copy sized for half
+    // that is then drawn alone would be asked for twice its instances: Phase 5's review)
+    const loB = rockB && this.genLo("prop-rock2-lo", rockB, 96), loA = rockA && this.genLo("prop-rock-lo", rockA, 96);
     this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
     this.rockFar2 = loA && loB ? loB : null;
     if (this.rockFar2) s.add(this.rockFar2);
