@@ -40,7 +40,7 @@ Assets.onImage = (name) => {
 function genBossPortrait(canvas, color, key) {
   const img = Assets.on && Assets.ui("bosses"), i = GEN_BOSSES.indexOf(String(key));
   if (!img || i < 0) return false;
-  const S = 128;
+  const S = 192; // (the strip's own cell: at 128 a medal 82 points across was drawn up twice over on a phone, and read soft)
   canvas.width = canvas.height = S;
   const x = canvas.getContext("2d");
   const g = x.createRadialGradient(S / 2, S * 0.42, S * 0.05, S / 2, S * 0.5, S * 0.72);
@@ -56,7 +56,7 @@ function genBossPortrait(canvas, color, key) {
   x.globalAlpha = 1;
   x.imageSmoothingEnabled = true;
   x.imageSmoothingQuality = "high";
-  x.drawImage(img, i * 192, 0, 192, 192, -4, 0, S + 8, S + 8);
+  x.drawImage(img, i * 192, 0, 192, 192, -S / 32, 0, S + S / 16, S + S / 16);
   canvas.classList.add("gen");
   return true;
 }
