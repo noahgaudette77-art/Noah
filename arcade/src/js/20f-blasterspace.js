@@ -481,12 +481,16 @@ class BlasterSpace {
   // a region as numbers and colours that can be blended
   parse(r) {
     const C = (h) => new THREE.Color(h), D2R = Math.PI / 180;
-    return {
+    const o = {
       id: r.id, name: r.name, base: C(r.base), a: C(r.a), b: C(r.b), c: C(r.c), gold: C(r.gold), fog: C(r.fog), amb: C(r.amb), key: C(r.key), sunCol: C(r.sunCol), cloudA: C(r.cloudA), cloudB: C(r.cloudB), rockTint: C(r.rockTint), streak: C(r.streak),
       neb: r.neb, stars: r.stars, sunK: r.sunK, clouds: r.clouds, rocks: r.rocks, station: r.station || 0, wrecks: r.wrecks || 0, gate: r.gate || 0,
       sun: new THREE.Vector3(Math.tan(r.sun[0] * D2R), Math.tan(r.sun[1] * D2R), -1).normalize(), traffic: r.traffic,
       planet: new THREE.Vector4(r.planet[2] * Math.tan(r.planet[0] * D2R), r.planet[2] * Math.tan(r.planet[1] * D2R), -r.planet[2], r.planet[3]),
+      planetW: new THREE.Vector4(), // (where a wide window has it: planetW, else where the phone has it; see update)
     };
+    const W = r.planetW || r.planet;
+    o.planetW.set(W[2] * Math.tan(W[0] * D2R), W[2] * Math.tan(W[1] * D2R), -W[2], W[3]);
+    return o;
   }
   // Travel on to a region (by its number in the run), over dur seconds.
   setRegion(i, dur = 3) {
@@ -511,6 +515,7 @@ class BlasterSpace {
     ["neb", "stars", "sunK", "clouds", "rocks", "station", "wrecks", "gate"].forEach((n) => { c[n] = lerp(A[n], B[n], e); });
     c.sun.copy(A.sun).lerp(B.sun, e).normalize();
     c.planet.copy(A.planet).lerp(B.planet, e);
+    c.planetW.copy(A.planetW).lerp(B.planetW, e);
     c.traffic = B.traffic; c.id = B.id; c.name = B.name;
   }
 
@@ -702,8 +707,10 @@ class BlasterSpace {
     this.starU.uStarK.value = c.stars * (1 + w * 0.8);
     this.starU.uPx.value = GFX.ok ? (GFX.renderer.getDrawingBufferSize(this._gv || (this._gv = new THREE.Vector2())).y * GFX.ss) / 800 : 1; // (in the scene's own pixels)
     this.galaxies.forEach((sp) => { sp.material.opacity = 0.5 * c.stars; });
-    // the giant: where this region has it in the sky; it turns slowly, its moon goes round
-    const pl = this.planet, P = c.planet;
+    // the giant: where this region has it in the sky (a wide window, a Mac's, sees some forty-five degrees each side
+    // where a phone sees fifteen, and has it where its band is clear: planetW; the window's shape blends one into the
+    // other); it turns slowly, its moon goes round
+    const pl = this.planet, P = (this._pw || (this._pw = new THREE.Vector4())).copy(c.planet).lerp(c.planetW, smoothstep(0.8, 1.5, g.camera.aspect));
     pl.position.set(P.x, P.y, P.z);
     pl.scale.setScalar(P.w);
     pl.children[0].rotation.y = t * 0.012;

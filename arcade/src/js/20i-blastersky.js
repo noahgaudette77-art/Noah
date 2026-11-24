@@ -17,25 +17,28 @@
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
 // space: what this region changes in the world round it (fog, rocks, clouds, the hulls' light: see SPACE_REGIONS).
+// Its giant (planet: degrees right, up, distance, radius) stands, in most regions, out past a phone's view; planetW is
+// where a wide window has it, in the clear between the demon and the drones (at the phone's place a Mac had it under
+// a drone: Phase 5's review).
 const BLASTER_SKIES = {
   nebula: { sky: "blaster-deep-1", at: [0.36, 0.42], atW: [0.21, 0.45], roll: 0, zoom: 2.3, gain: 0.92, lift: 1.5,
     key: [0xc8b4ff, 1.0], rimA: [0xff3ad4, 1.5], rimB: [0x35efff, 1.5], top: [0xb09cff, 0.8], amb: [0x5a3aa8, 0.5], wall: 0x8a5cff,
-    space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70] } },
+    space: { fog: 0x05020f, amb: 0x6a5ac0, key: 0xe2e6ff, cloudA: 0x8a2ad0, cloudB: 0x35c8ff, clouds: 0.5, rockTint: 0x6a5a9a, rocks: 0.14, stars: 0.55, planet: [34, 6, 1700, 70], planetW: [24, 9, 1700, 70] } },
   belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
     key: [0xff7a52, 1.15], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xff9070, 0.75], amb: [0x8a2a2a, 0.5], wall: 0xff4a3a,
-    space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80] } },
+    space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80], planetW: [-24, 9, 1700, 80] } },
   orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xb4d4ff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0x9cc4ff, 0.8], amb: [0x3a5ab8, 0.5], wall: 0x4a7aff,
     space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
   station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
     key: [0xffc0e6, 1.0], rimA: [0xff3ad4, 1.6], rimB: [0x5ad8ff, 1.4], top: [0xe8a8ff, 0.8], amb: [0x7a3aa0, 0.5], wall: 0xc050d0,
-    space: { fog: 0x08030f, amb: 0x7a64c0, key: 0xf0e8ff, cloudA: 0xa03ad8, cloudB: 0x35c8ff, clouds: 0.2, rockTint: 0x7a70a0, rocks: 0.05, stars: 0.5, planet: [-34, -8, 1800, 72] } },
+    space: { fog: 0x08030f, amb: 0x7a64c0, key: 0xf0e8ff, cloudA: 0xa03ad8, cloudB: 0x35c8ff, clouds: 0.2, rockTint: 0x7a70a0, rocks: 0.05, stars: 0.5, planet: [-34, -8, 1800, 72], planetW: [-24, -4, 1800, 72] } },
   graveyard: { sky: "blaster-deep-4", at: [0.27, 0.37], roll: 0.2, zoom: 2.4, gain: 1.15, lift: 1.5,
     key: [0xa8b8ee, 0.95], rimA: [0x7a6aff, 1.5], rimB: [0xff5a3a, 1.3], top: [0x98a8e0, 0.7], amb: [0x3a4680, 0.5], wall: 0x4a5aa8,
-    space: { fog: 0x04050c, amb: 0x5a6a90, key: 0xd0dcff, cloudA: 0x3a3a8a, cloudB: 0x8a9aff, clouds: 0.35, rockTint: 0x5a6078, rocks: 0.45, stars: 0.5, planet: [-34, 4, 1900, 60] } },
+    space: { fog: 0x04050c, amb: 0x5a6a90, key: 0xd0dcff, cloudA: 0x3a3a8a, cloudB: 0x8a9aff, clouds: 0.35, rockTint: 0x5a6078, rocks: 0.45, stars: 0.5, planet: [-34, 4, 1900, 60], planetW: [-24, 9, 1900, 60] } },
   gate: { sky: "blaster-deep-5", at: [0.709, 0.5625], roll: 0, zoom: 2.3, gain: 0.85, lift: 1.4,
     key: [0x6ab0ff, 1.15], rimA: [0xff3ad4, 1.5], rimB: [0x2ad8ff, 1.7], top: [0x80c8ff, 0.85], amb: [0x2a5ab0, 0.5], wall: 0x2a8aff,
-    space: { fog: 0x03060f, amb: 0x5a80c0, key: 0xe0f2ff, cloudA: 0x1a8ad0, cloudB: 0xff3ad4, clouds: 0.45, rockTint: 0x7090b0, rocks: 0.08, stars: 0.45, planet: [34, -7, 1700, 64] } },
+    space: { fog: 0x03060f, amb: 0x5a80c0, key: 0xe0f2ff, cloudA: 0x1a8ad0, cloudB: 0xff3ad4, clouds: 0.45, rockTint: 0x7090b0, rocks: 0.08, stars: 0.45, planet: [34, -7, 1700, 64], planetW: [24, -4, 1700, 64] } },
 };
 // Where the lamps stand (toward each, from anything they light). The fighter is seen from behind and above and the
 // demon from the front, so between them these put a highlight on both: the key on what faces the lens, the rims on
