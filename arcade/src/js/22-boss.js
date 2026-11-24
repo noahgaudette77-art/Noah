@@ -561,7 +561,9 @@ class BossGame extends QuizGame {
     // and throws up its arms (its cheering figure: the picture holds each twice). The boss's strike ("stir"): a
     // flinch that runs through them, quicker: down, squashed, away to one side, some hands thrown up. Reduced effects:
     // a quarter of the sway, a third of a cheer, arms up and held, no pumping.
-    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
+    // (its clock is uCrowdT, not uTime: FX.sync sets every uTime in the scene to the scene's clock each frame, and the
+    // light sticks' material holds these very uniforms: Phase 5's review)
+    const U = this.crowdU = { uCrowdT: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
     this.cues = { cheer: [99, 0, 99, 0], stir: [99, 0, 99, 0] }; // (the last two of each: [since, how big] twice)
     this.crowdT = 0; // (its clock: the show's, so a hit-stop holds it and slow motion slows it)
     const card = bossCardGeometry(), NP = people.length, aFig = new Float32Array(NP * 4), aRim = new Float32Array(NP * 3);
@@ -570,16 +572,16 @@ class BossGame extends QuizGame {
     card.setAttribute("aRim", new THREE.InstancedBufferAttribute(aRim, 3));
     const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
     pm.onBeforeCompile = (sh) => {
-      for (const k of ["uTime", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
+      for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", `#include <common>
-          attribute vec4 aFig; attribute vec3 aRim; uniform float uTime; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
           // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
           // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
           float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
         .replace("#include <begin_vertex>", `#include <begin_vertex>
           {
-            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uTime;
+            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uCrowdT;
             float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
             float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
             float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
@@ -590,8 +592,8 @@ class BossGame extends QuizGame {
             transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
             transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
             transformed.y += bob + 0.32 * hop - 0.1 * se;
-            float pump = uMove.x > 0.5 ? step(-0.35, sin(uTime * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
-            float idle = step(0.82 - 0.16 * uMove.y, fract(uTime * 0.045 + hh * 7.13)) * step(0.0, sin(uTime * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
+            float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
+            float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
             float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
             vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
             vRim = aRim;
@@ -603,7 +605,7 @@ class BossGame extends QuizGame {
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
           totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-2";
+    pm.customProgramCacheKey = () => "boss-crowd-3";
     const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
     people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
     folk.name = "arena-crowd"; // (named for tools/cost-report.js)
@@ -615,11 +617,11 @@ class BossGame extends QuizGame {
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3)); g.setAttribute("aSeed", new THREE.Float32BufferAttribute(seed, 1));
     this.crowd = new THREE.Points(g, new THREE.ShaderMaterial({
       uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uCheer; varying vec3 vCol;
+      vertexShader: `attribute vec3 aCol; attribute float aSeed; uniform float uCrowdT; uniform float uPx; uniform float uCheer; varying vec3 vCol;
         void main(){
           vec3 p = position;
-          p.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
-          vCol = aCol * (0.55 + 0.45 * sin(uTime * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
+          p.y += sin(uCrowdT * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.12 + 0.5 * uCheer) + uCheer * 0.5 * aSeed; // they sway, and jump when a blow lands
+          vCol = aCol * (0.55 + 0.45 * sin(uCrowdT * (0.6 + aSeed) + aSeed * 17.0)) * (1.0 + uCheer);
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_PointSize = uPx * 150.0 / -mv.z; gl_Position = projectionMatrix * mv;
         }`,
@@ -1247,7 +1249,7 @@ class BossGame extends QuizGame {
       const quiet = REDUCED_MOTION || GFX.calm, d = VFX.dt, u = this.crowdU, ch = this.cues.cheer, st = this.cues.stir, km = quiet ? 0.3 : 1;
       this.crowdT += d * (1 + 0.5 * (this.rageK || 0)); // (the cards and what they hold up, on the show's clock: see makeCrowd; restless, quicker, as the boss rages)
       for (const q of [ch, st]) { q[0] = Math.min(60, q[0] + d); q[2] = Math.min(60, q[2] + d); }
-      u.uTime.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      u.uCrowdT.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
       u.uCheers.value.set(ch[0], ch[1] * km, ch[2], ch[3] * km); u.uStirs.value.set(st[0], st[1] * km, st[2], st[3] * km);
       u.uMove.value.set(quiet ? 0.25 : 1, this.rageK || 0);
       const drift = quiet ? 0.25 : 1;
