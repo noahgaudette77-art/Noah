@@ -28,7 +28,8 @@ function proctorOk() { return typeof BossModel !== "undefined" && BossModel.ok()
 //   o.local  the copy will be merged into one skinned mesh (the title hall's cells): its material reads each part's
 //            own position from attributes (see hallSkinSteps)
 //   o.env, o.boneEnv  how much the steel and the skull mirror (the exam's 0.9 and 0.6)
-//   o.housing false: no reactor housing (nothing asks for it now: the topper, small as it is, keeps its reactor)
+//   o.housing false: no reactor housing (nothing asks for it now: the topper, small as it is, keeps its reactor; and
+//            not with o.local: merged, the chest's holder would be left empty and let go, and light() reads it)
 function proctorDress(model, env, o = {}) { return ownRandom(PROCTOR_SEED, () => proctorDressOn(model, env, o)); }
 function proctorDressOn(model, env, o) {
   const P = BossModel.parts(), parts = model.parts, root = model.scene;
