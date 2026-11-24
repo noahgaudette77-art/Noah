@@ -1094,6 +1094,77 @@ function glowSprite(color, scale = 2, opacity = 1) {
   return s;
 }
 
+// One draw for many glow sprites (the master overhaul, Phase 2's gate, 2026-11-24): three.js draws every Sprite on its
+// own, and Risk Blaster's fighter and demon carried fifteen small glows between them, which put the screen over the
+// phone's draw budget once its ships had all arrived (102 of 100). The sprites stay where their owners put them and go on
+// being driven as before (scale, colour, opacity, their parents' motion: a demon coming apart carries its glows with
+// its chunks), but no longer draw themselves (their material is not visible); the batch reads them as the scene is
+// about to be drawn (after its matrices are updated, before anything is sent: no frame behind) and draws them all as one
+// set of points, each the size a sprite of that scale would be at that distance, with the same picture and the same
+// additive light. For small glows only: a point may be drawn at most 511 pixels across on Apple's chips.
+class GlowBatch {
+  constructor(scene, sprites, order = 5) {
+    this.sprites = sprites.filter(Boolean);
+    this.scene = scene;
+    const n = this.sprites.length, g = new THREE.BufferGeometry(), attr = (a, k) => new THREE.BufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage);
+    this.pos = new Float32Array(n * 3); this.col = new Float32Array(n * 3); this.size = new Float32Array(n);
+    g.setAttribute("position", attr(this.pos, 3));
+    g.setAttribute("aCol", attr(this.col, 3));
+    g.setAttribute("aSize", attr(this.size, 1));
+    this.U = { tMap: { value: glowTexture() }, uPx: { value: 500 } };
+    this.points = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: this.U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aCol; attribute float aSize; uniform float uPx; varying vec3 vCol;
+        void main(){
+          vCol = aCol;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = aSize > 0.0 ? aSize * uPx * projectionMatrix[1][1] / max(-mv.z, 1e-3) : 0.0; // (a sprite's size, seen from where it is)
+        }`,
+      fragmentShader: "uniform sampler2D tMap; varying vec3 vCol; void main(){ vec4 t = texture2D(tMap, gl_PointCoord); gl_FragColor = vec4(vCol * t.rgb, t.a); }",
+    }));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = order;
+    this.points.name = "glow-batch";
+    for (const s of this.sprites) s.material.visible = false;
+    scene.add(this.points);
+    // (one hook a scene, for every batch it holds)
+    const list = scene.userData.glowBatches || (scene.userData.glowBatches = []);
+    list.push(this);
+    if (!scene.userData.glowHook) {
+      scene.userData.glowHook = true;
+      const prev = scene.onBeforeRender;
+      scene.onBeforeRender = function (r, sc, cam, rt) { prev.call(this, r, sc, cam, rt); for (const b of list) b.update(r, rt); };
+    }
+  }
+  // each sprite's place, size and light as it would be drawn now; nothing for one not seen (it, or anything it hangs
+  // from, hidden, or no longer in the scene)
+  update(r, rt) {
+    const t = rt || r.getRenderTarget();
+    this.U.uPx.value = (t ? t.height : r.domElement.height) * 0.5;
+    const P = this.pos, C = this.col, S = this.size;
+    this.sprites.forEach((s, i) => {
+      let seen = s.visible, top = s;
+      for (let p = s.parent; seen && p; p = p.parent) { seen = p.visible; top = p; }
+      seen = seen && top === this.scene; // (taken out of the scene: not seen either)
+      const m = s.matrixWorld.elements, mat = s.material, a = seen ? mat.opacity : 0;
+      P[i * 3] = m[12]; P[i * 3 + 1] = m[13]; P[i * 3 + 2] = m[14];
+      S[i] = a > 0.001 ? Math.hypot(m[0], m[1], m[2]) : 0;
+      C[i * 3] = mat.color.r * a; C[i * 3 + 1] = mat.color.g * a; C[i * 3 + 2] = mat.color.b * a;
+    });
+    const at = this.points.geometry.attributes;
+    at.position.needsUpdate = at.aCol.needsUpdate = at.aSize.needsUpdate = true;
+  }
+  dispose() {
+    const list = this.scene.userData.glowBatches;
+    if (list) { const i = list.indexOf(this); if (i >= 0) list.splice(i, 1); }
+    if (this.points.parent) this.points.parent.remove(this.points);
+    this.points.geometry.dispose();
+    this.points.material.dispose();
+    for (const s of this.sprites) s.material.visible = true;
+  }
+}
+
 function makeStars(n = 500, r = 300, { color = 0xffffff, size = 1.6, lowest = -0.05 } = {}) {
   const pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {

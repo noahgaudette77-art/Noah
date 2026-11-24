@@ -297,6 +297,7 @@ class BlasterDemon {
     this.core = spr("body", DEMON.core, new THREE.Color(2.4, 0.25, 0.9), 0.3);
     this.maw = spr("head", DEMON.mouth, new THREE.Color(2.6, 0.5, 1.0), 0.16);
     this.claws = [spr("clawL", DEMON.hands[0], new THREE.Color(1.3, 0.35, 2.6), 0.2), spr("clawR", DEMON.hands[1], new THREE.Color(1.3, 0.35, 2.6), 0.2)];
+    this.glows = new GlowBatch(g.scene, [...this.eyes, this.third, this.core, this.maw, ...this.claws], 0); // (its seven small lights in one draw: GlowBatch, 04-gfx.js; the large glow behind it stays a sprite)
     this.glow = glowSprite(new THREE.Color(0.5, 0.1, 0.75), 1.9, 0); // (a breath of violet light round it)
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
@@ -686,6 +687,7 @@ class BlasterDemon {
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
+    this.glows.dispose();
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
     [this.mat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));

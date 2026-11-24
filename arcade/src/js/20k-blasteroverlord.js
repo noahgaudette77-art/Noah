@@ -110,6 +110,7 @@ class BlasterOverlord {
     this.maw = spr(A.mouth, new THREE.Color(2.6, 0.5, 1.2), 0.16);
     this.claws = [spr(A.clawL, new THREE.Color(1.3, 0.35, 2.6), 0.2), spr(A.clawR, new THREE.Color(1.3, 0.35, 2.6), 0.2)];
     this.tips = [spr(A.wingTipL, new THREE.Color(2.6, 1.3, 0.3), 0.16), spr(A.wingTipR, new THREE.Color(2.6, 1.3, 0.3), 0.16)];
+    this.glows = new GlowBatch(g.scene, [this.coreGlow, this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its nine small lights in one draw: GlowBatch, 04-gfx.js; the large light behind it stays a sprite)
     this.glow = glowSprite(new THREE.Color(0.35, 0.3, 0.9), 2.4, 0); // (cold light behind it: its dark wings and horns stand against it)
     this.glow.position.set(0, 0.05, -0.3);
     this.glow.renderOrder = 2;
@@ -505,6 +506,7 @@ class BlasterOverlord {
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
+    this.glows.dispose();
     const mats = [this.mat].concat(this.scrapMat);
     blasterDropMaps(mats);
     mats.concat([this.aura.material, this.coreGlow.material, this.eyeGlow.material, this.maw.material, this.glow.material], this.claws.map((s) => s.material), this.eyeDots.map((s) => s.material), this.tips.map((s) => s.material)).forEach((m) => m.dispose());

@@ -227,6 +227,8 @@ class BlasterStarfighter {
     this.beacon = glowSprite(neon(0xff3a2a, 3.2), 0.15, 0); // (a lamp: a point of light, not a patch of red on the canopy)
     at([0, 0.125, -0.2], this.beacon.position);
     rig.add(this.beacon);
+    // (its eight glows in one draw: GlowBatch, 04-gfx.js)
+    this.glows = new GlowBatch(g.scene, [...this.engineGlow, ...this.navLights, this.beacon], 5);
     // ---- at warp: a bow wave of light off the nose
     this.bowMat = fighterBowMaterial();
     const dome = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -453,6 +455,7 @@ class BlasterStarfighter {
     }
   }
   dispose() {
+    this.glows.dispose();
     blasterDropMaps(this.mats);
     this.mats.concat([this.flames.material, this.bowMat, this.shieldMat, this.beacon.material], this.engineGlow.map((s) => s.material), this.navLights.map((s) => s.material)).forEach((m) => m.dispose());
     this.contrails.forEach((t) => { this.g.scene.remove(t.mesh); t.mesh.geometry.dispose(); t.mesh.material.dispose(); });
