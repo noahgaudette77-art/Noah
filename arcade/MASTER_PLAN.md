@@ -14,18 +14,17 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 5, environments and new assets. Phases 0 and 1 are done; Phase 2's first pass is closed (its work stays,
-  checked: `docs/master/phase2/`); its polishing resumes after Phase 3.
-- **Doing:** Phase 5's gate (all of its work merged and live at `42bbcd9`): the harness `phase5`, an independent review,
-  then the stall census and every screen in WebKit, the record in `docs/master/phase5/` and a report. Phase 2's first
-  pass: recorded in `docs/master/phase2/` (its census on Risk Blaster and the title clean; the rest of its census and
-  its WebKit stills are taken now on the Phase 5 build, which carries all of Phase 2).
-- **Next steps (Phase 5):** 1) the rebuild list: every screen's environment and its assets judged keep, improve in
-  place, or rebuild (new geometry, new generated models, pre-rendered skies), with the evidence (the stills of
-  `phase2-final`, the audits, the review); nothing on it polished before it is rebuilt; 2) the budget for new assets
-  (Tripo 1,926 credits and fal.ai $10.95 within the caps; cheaper settings first; only what is clearly below the bar);
-  3) the work, screen by screen, each with its before/after and its costs on both tiers; 4) the gate (every screen
-  consistent; budgets kept), a report.
+- **Phase:** 3, animation and characters. Phases 0, 1 and 5 are done (Phase 5's gate passed 2026-11-24:
+  `docs/master/phase5/`); Phase 2's first pass is closed (`docs/master/phase2/`) and its polishing resumes after Phase 3.
+- **Doing:** Phase 3's fixes, found by its new snap scan (`tools/scenarios/pops.js`: every character's joints, every
+  frame, each game played; see Phase 3 below). Four fixed in `src/` (`31ab448`, `ef097a1`, `19850a2`, `d4e5316`), not yet
+  built into `index.html`: the served page is still the Phase 5 gate's build (`6b73e45`). Work in progress is built to
+  `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a measurement reading `index.html` is
+  never disturbed.
+- **Next steps (Phase 3):** 1) the bosses' planted feet (they skate 5-26% of their height a second, seen in the strikes'
+  wide shots); 2) the rest of the plan's list (stiffness, robot timing, gaze); 3) the gate: after strips at the same
+  moments as `scratchpad/phase3/before`, motion-hz and the pops scan before and after, costs on both tiers, the logic
+  diff, an independent review, the record in `docs/master/phase3/`, a report.
 
 ## The order, in short (the owner, 2026-11-23)
 
@@ -182,6 +181,28 @@ skinning re-audited, clip sets, state machine, the twelve principles, procedural
   4. *The gate's evidence*: before/after strips for each main character and two bosses in `docs/master/phase3/`,
      `motion-hz.js` before and after (60, 90 and 120 Hz alike), each screen's cost (script ms with drawing left out, the
      builds alternated on a quiet machine), the logic diff clean.
+- **Progress (2026-11-24):**
+  - [x] The before strips on the Phase 5 build (`scratchpad/phase3/before/`: the golem and the Proctor in Boss Rush, the
+        exam's Proctor, Risk Blaster, Nest Egg Run, the crowd, the title) and `motion-hz --pops`.
+  - [x] A snap scan for every game (`tools/scenarios/pops.js`): each game played with right and wrong answers, every
+        frame on the capture clock (not drawn), the world place of every joint of every character (skinned bones, the
+        demon's and the exam Proctor's joints, the fighter, the car's rig and wheels); a snap is a move over 2% of the
+        character's size in one frame and at least 4 times the frames round it, both in the world and as the lens sees it
+        (a character carried by the lens, or a lens that shakes, is not one); and how far a planted foot slides.
+  - [x] Fixed (each found by the scan, each a commit): the wizard's cast took the idle's share of its stance in two
+        frames (`31ab448`: the clips over a stance take their weight from all of it) and its arm's 70 cm came in four
+        (`ef097a1`: 0.15 s); a boss's strike after an early wrong answer forced its clip from 0.12 to 0.70 of the pose in
+        one frame (`d4e5316`: a ramp across the blow); the Proctor's hanging arm (`19850a2`, above). Boss Rush with the
+        golem: the wizard's snaps 8 → 0, the boss's 2 → 1 (a 2% one in its rage); with the Proctor: 8 → 1 and 6 → 0;
+        `motion-hz --pops`: the wizard's hand's worst move 13.9 cm at 27.9 times its neighbours → 7.6 cm at 1.3.
+  - Kept, as meant (the scan flags them; for Phase 4 to weigh as feel): Risk Blaster's demon knocked back 2.4 units in
+        the hit's frame and held by the hit-stop; the fighter's recoil; Nest Egg Run's surge at a right gate (its curve,
+        `sin(pi * sqrt(x))`, starts at full speed: 39% of the lunge in its first frame, then the hit-stop); the title's
+        caged bosses' twitch (a jolt shaken at 30 Hz, the frame rate's limit: it may read as a strobe more than a
+        shudder); the exam's Proctor's armour popping off at a pass. The title's far bosses on a Mac move ten times a
+        second (an animation saving): the scan finds no snap in them on either tier.
+  - Next: the bosses' planted feet slide 5-26% of their height a second (golem, Proctor, Perilmonger), seen when a
+        strike widens the lens; the wizard's feet are carried with the lens it is placed against (not a slide on screen).
 
 ### Phase 4: game feel
 Input at once with a small buffer; hit-stop; capped, reducible shake; recoil; impacts; telegraphs; answer feedback;
@@ -190,6 +211,9 @@ wizard's casts, wand and cape tight to the sound.
 - Carried here from Phase 2: Risk Blaster on a Mac, while an explanation is up, lifts the picture so the fighter shows
   over the sheet and the demon's head goes under the question panel (the audit's #15, its camera half): on a wide
   window the lens could stand back a little instead of the whole picture riding up.
+- Carried from Phase 3's snap scan (impacts it flags that are meant; weigh them as feel): the demon's knockback in the
+  hit's frame, the fighter's recoil, Nest Egg Run's surge (39% of its lunge in its first frame), the title's caged
+  bosses' 30 Hz twitch (a shudder of 10-15 Hz may read better than a strobe).
 - **Gate:** each game reviewed with a capture sequence; budgets kept; the logic diff clean.
 
 ### Phase 5: environments and new assets (NOW, from 2026-11-24, by the owner's new order)
@@ -248,8 +272,15 @@ fal.ai and Blockade nothing planned; within the caps either way.
       Rush's crowd swaying, cheering a blow and flinching at a strike (one instanced draw, as before) and its deck
       giving back the rage (one mix a pixel); Memory Bank's gold cast as stamped bullion in pyramids, the coins on
       velvet trays (+2 draws). Notes and before/after in `docs/master/phase5/{title,hub,arena,memory}/`.
-- [ ] The gate: the harness (`phase5`), the stall census and every screen in WebKit on `42bbcd9`; an independent review;
-      the record (`docs/master/phase5/`) and a report.
+- [x] The gate (passed 2026-11-24, `docs/master/phase5/gate-report.md`): the harness `phase5` on `42bbcd9` (no fault);
+      an independent review, its eight findings fixed a commit each and built (`6b73e45`, live); the rules IDENTICAL from
+      disk and served, the sequence 13/13; the stall census of every game on `6b73e45` (no shader made in play anywhere;
+      uploads, garbage and page changes as in Phase 1 or less but the title's garbage, 10 KB a frame); every screen in
+      WebKit (no overlaps, the same pictures as Chromium's); the two noisy timings measured again on the quiet machine
+      (Boss Rush's phone 0.73 ms; the exam's 0.87, of which its own work is 0.05: files still read when it was measured).
+- Found after the gate by Phase 3's snap scan, and fixed in Phase 3 (`19850a2`): the Proctor's hanging arm (its hand
+  torn, and both in its last stand) swung up instead of down, its bones running along their own axes (Phase 5 put the
+  owner's machine on its own joints); the eleven other bosses unchanged.
 - Learned (two agents found it): three.js r128 draws four Math.random numbers for the id of every object, geometry,
   material and texture it makes; adding objects while a scene is built shifts the seeded stream a capture uses (its
   questions and its deal change between builds; the rules are untouched, the regression IDENTICAL). New builders that
@@ -290,6 +321,11 @@ Every screen measured again on both tiers against Phase 1's budgets and the base
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
 - Nest Egg Run's phone draws vary with the seeded traffic between runs (85, 90, 91 in the last three: the cars and the
   props in view at the measured moment): inside the 100, but the closest screen to it; measure it at several moments.
+- From Phase 5's gate: the Proctor in the title's cell and on the hub's topper is 9 draws and 7 programs (its cap's and
+  its reactor's materials could share one: about 4 draws); Memory Bank's generated coins (2,500 triangles each, about
+  130K at a deck's end: a light copy, as Risk Blaster's far rocks', would remove most of it); the title's garbage, 10 KB
+  a frame (its update 5.8 KB; the cells' lamps make a list a frame); the census's play of Memory Bank turns no card (as
+  in Phase 1's): to be made to turn and grade them, so the deck's own moments are counted.
 
 ### Phase 8: final verification
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
@@ -486,3 +522,17 @@ steady round after round; garbage and page changes are small; the Mac hub's 8.5 
 stills shifted run to run (now seeded per screen) and the script time was two or three frames (now many, drawing left
 out). Spend: none in Phase 1 ($0.30 on the art bible's sheet, Phase 2's first step, taken while the gate ran). The
 stray empty folder `/master/census/title-webkit` in this machine's root (a shell slip) is not in the repository.
+
+**Phase 2, first pass (2026-11-23/24).** Closed by the owner's new order (0, 1, 5, 3, 2, ...): everything it shipped
+stays and is live (`docs/master/phase2/`); its gate's census and WebKit check were completed on Phase 5's build, which
+carries all of it (clean). Its polishing resumes after Phase 3, on what Phases 5 and 3 leave final, with the smoothstep
+safety sweep found in Phase 5's review. Spend: $0.36 on fal.ai (the art bible's sheet, two skylights).
+
+**Phase 5 (2026-11-24).** The rebuild list first (most environments a keep: Phase 2 had rebuilt them), then the work:
+the Proctor as one design everywhere (the owner's machine, its clips carried onto its joints in code: no provider called,
+the model sent nowhere), Risk Blaster's far rocks, drones and Mac sky, the title hall dressed as a prison block on a Mac,
+the hub's cabinets and lasers, Boss Rush's crowd and deck, Memory Bank's bullion. The gate passed
+(`docs/master/phase5/gate-report.md`): the harness without fault, an independent review's eight findings fixed, the
+census and WebKit clean, every budget kept, the rules IDENTICAL. One fault it missed was found after it by Phase 3's
+snap scan and fixed there: the Proctor's hanging arm. Spend: none (Tripo 0 credits, fal.ai $0). Live at `6b73e45`.
+Tools added: none for the game; the gate's runs are in `docs/master/runs/phase5*` (not in the repository).

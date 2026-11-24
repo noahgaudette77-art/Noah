@@ -35,8 +35,13 @@ untouched since `ee413e3`; the rules IDENTICAL from disk and served (153 answers
 STEPS OK; 21 stills on each device, no text newly overlapping; every screen's costs inside its budget on both tiers
 (below). The report: `docs/master/runs/phase2-final/report.md` (not kept in the repository: `runs/` is a working folder).
 
-**Still running when this was written:** the stall census of every game (`hitches.js`) and every screen drawn in WebKit;
-their results are added here when they finish.
+**Closed on Phase 5's build (2026-11-24),** which carries all of this phase (the owner's new order put Phase 5 next;
+its gate ran both on `6b73e45`, see `docs/master/phase5/gate-report.md`):
+- **The stall census** of every game (`hitches.js`): no shader made in play in any game, the shield's frame included;
+  pictures sent in play only where they were in Phase 1 (the title's bosses as they arrive, the hub's attract screen,
+  the skinned characters' bone tables); garbage a frame and page changes as in Phase 1's census or less.
+- **Every screen drawn in WebKit** (`harness.js --only stills --engine webkit`): all 21 screens on the phone and the
+  Mac, no text overlapping, no fault; the same pictures as Chromium's, the type a little wider.
 
 ## Costs at the end of the first pass
 

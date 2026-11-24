@@ -82,12 +82,57 @@ the rules. Each fixed in a commit of its own:
   cards the same size and in the same place; nothing cut, nothing overlapping). This also closes Phase 2's WebKit check: the build
   carries all of Phase 2.
 
-**Still running when this was written:** the stall census of every game (`hitches.js`); its results are added here
-when it finishes, and the Final Exam's script time is measured again on the quiet machine.
+## The stall census (`hitches.js`, every game played on `6b73e45`; Phase 1's census in brackets)
+
+Each screen opened and played 1,340-1,500 frames with every frame drawn (the title's glide and the hub idling; the
+games with right and wrong answers): what still stalls a frame on a device.
+
+| screen | shaders made in play | pictures sent in play | garbage a frame | page changes a frame |
+|---|---|---|---|---|
+| title | 10, all through `GFX.prepare` [3] | its bosses' pictures as each arrives (58 pictures, 130 MB [56, 128 MB]) and their bone tables | 10.1 KB [4-8] | 0 [0] |
+| hub | 0 [0] | the attract screen, a 320x240 canvas about every other frame [the same] | 4.7 KB [5] | 0 [0] |
+| Risk Blaster | 0 [1, fixed in Phase 1] | 0 | 59.9 KB [61] | 0.62 |
+| Nest Egg Run | 0 [0] | 0 | 65.9 KB [61] | 0.83 |
+| Boss Rush | 0 [0] | the wizard's bone table, 16 KB a frame [the same] | 38.7 KB [49] | 1.06 [0-1.4] |
+| Memory Bank | 0 [0] | 0 | 4.6 KB [4] | 0.02 |
+| Final Exam | 0 [0] | 0 | 7.7 KB [10] | 0.97 |
+
+- **No shader is made in play in any game.** The title's 10 come as its pieces arrive, each through `GFX.prepare`
+  (drawn once off-screen in a scene of its own before it is shown; on Safari, and on Chrome with a graphics chip, built
+  on the driver's own threads): 3 at the start of the hall, as in Phase 1, and 7 at once as the Proctor's cell is seated
+  (its sprite, its skin, cap, reactor and eyes: a program each). For the performance re-check: the Proctor's pieces
+  could share fewer programs (with its 9 draws, below).
+- **Garbage:** as in Phase 1 or less but for the title, 10 KB a frame from 4-8: its update (5.8 KB) and the cells'
+  lamps (0.9 KB: a list made a frame). At that rate the collector sweeps every few seconds for about a millisecond; noted
+  for the performance re-check.
+- **Memory Bank:** as in Phase 1's census, its play turned no card (the census's play of that game deals and waits; its
+  deck's turn and grade are not in it). Noted for the performance re-check.
+
+## The two noisy timings, measured again on the quiet machine (`harness.js --only costs --screens exam,boss --name phase5-recheck`)
+
+The page measured is the gate's build (`6b73e45`); the main thread's own time a frame with the drawing left out, over
+about 180 frames:
+
+| screen | phone (Phase 2 → the gate's run → quiet) | Mac (the same) |
+|---|---|---|
+| Boss Rush | 0.98 → 1.25 → **0.73 ms** | 1.32 → 0.79 → 1.12 ms |
+| Final Exam | 0.55 → 0.97 (26 frames) → **0.87 ms** (178 frames) | 0.66 → 0.59 → 0.47 ms |
+
+Boss Rush's 1.25 was the busy machine (and its Mac's 0.79 against 1.12 shows how far two runs of the same page drift
+here: compare only). The exam's 0.87 is not its own work: sampled by function (`cost-report.js
+--cpu`), its update and the Proctor's settle are 0.05 ms a frame; the rest is a model still being read and pictures
+decoded when the measure ran (`fetch`, `Blob`, `createObjectURL`, the glTF reader) and the collector after them, a
+one-off of the exam's first seconds, not every frame. Draws, triangles and lights the same as the gate's run; every
+budget kept.
 
 ## Carried forward
 
 - **The performance re-check:** the Proctor's 9 draws in the title cell and on the hub's topper (its cap's and its
   reactor's materials could share one: about 4); Memory Bank's generated coins (2,500 triangles each, about 130K at a
-  deck's end: a light copy, as the far rocks', would remove most of it); Nest Egg Run's draws at several moments.
+  deck's end: a light copy, as the far rocks', would remove most of it); Nest Egg Run's draws at several moments; the
+  title's garbage (10 KB a frame) and the Proctor's 7 programs; the census's play of Memory Bank, to turn and grade cards.
 - **Phase 2's resumption:** the smoothstep safety sweep (some fifty shader lines; `MASTER_PLAN.md`).
+- **Found after this gate** (Phase 3's snap scan, which plays every game and follows every character's joints frame by
+  frame): the Proctor's hanging arm, when its hand is torn and in its last stand, swung up instead of down (its bones run
+  along their own axes, not +Y as the captured rigs' do). Fixed in Phase 3 (`19850a2`); the other eleven bosses
+  unchanged. It ships with Phase 3's build.
