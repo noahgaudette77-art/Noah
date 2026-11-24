@@ -74,9 +74,16 @@ the rules. Each fixed in a commit of its own:
   clear of the drones in the nebula, the belt, the station and the gate; the graveyard's lies past the haze in both;
   the orbit's great planet as it was.
 
-**Still running when this was written:** the stall census of every game (`hitches.js`) and every screen in WebKit;
-their results are added here when they finish, and the Final Exam's script time is measured again on the quiet
-machine.
+- **Every screen in WebKit** (Safari's engine, this machine's software path; `harness.js --only stills --engine
+  webkit --name phase5-webkit`): all 21 screens on the phone and the Mac drawn, **no text overlapping**, no fault;
+  side by side with Chromium's (`webkit-phone.jpg`, `webkit-mac.jpg`: each pair Chromium left, WebKit right) the
+  same picture on every screen: the hall, its cells and the new Proctor, the hub, the games, the menus. The only
+  difference is the type's measure: WebKit's letters run a little wider, so a long answer wraps a word sooner (the
+  cards the same size and in the same place; nothing cut, nothing overlapping). This also closes Phase 2's WebKit check: the build
+  carries all of Phase 2.
+
+**Still running when this was written:** the stall census of every game (`hitches.js`); its results are added here
+when it finishes, and the Final Exam's script time is measured again on the quiet machine.
 
 ## Carried forward
 
