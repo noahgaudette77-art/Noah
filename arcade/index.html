@@ -1632,7 +1632,7 @@ body:not(.crt-off) .tile, body:not(.crt-off) .board, body:not(.crt-off) .chip {
 .btn { isolation: isolate; }
 .btn:not(.ghost):not(.small)::after { z-index: -1; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.34) 50%, transparent 60%); }
 /* a star not yet earned is hollow (a solid violet one read as earned) */
-.stars svg[fill="#7868cc"] { fill: #170c40; filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0); }
+.stars svg[fill="#7868cc"] { fill: #170c40; filter: drop-shadow(1px 0 0 #8d7fe0) drop-shadow(-1px 0 0 #8d7fe0) drop-shadow(0 1px 0 #8d7fe0) drop-shadow(0 -1px 0 #8d7fe0); }
 .res-stars .stars svg[fill="#7868cc"] { filter: drop-shadow(1px 0 0 #7565d0) drop-shadow(-1px 0 0 #7565d0) drop-shadow(0 1px 0 #7565d0) drop-shadow(0 -1px 0 #7565d0) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.7)); }
 /* trophies: the emblem sits in a socket edged with the hue of what it is for; one not yet won shows that hue dimly */
 .trophies .tr .ic { flex: none; width: 38px; height: 38px; display: grid; place-items: center; background: #05020f; border: 2px solid #3d2f92; border-left: 4px solid color-mix(in srgb, var(--t, #8d82c8) 62%, #1a1050);
@@ -1818,6 +1818,7 @@ body:has(.scr-game.cine) .trophy { top: calc(8vh + 56px); }
 canvas.gen { image-rendering: auto !important; filter: none !important; }
 .gico { overflow: hidden; }
 .gico.off { filter: grayscale(1) brightness(0.5) !important; opacity: 0.75; }
+.stars .gico.off { filter: grayscale(1) brightness(0.62) !important; opacity: 0.85; } /* (a star not yet earned reads a little better beside the gold ones; #7868cc stays the colour that marks it unearned: GEN_ICON_OFF and the hollow star below key on it) */
 .trophies .tr .ic .gico, .trophy .ic .gico { width: 32px; height: 32px; }
 .tile .k .gico { width: 24px; height: 24px; margin: -7px 0 -5px -2px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
 .tile .k .tk0 { display: none; }
@@ -2161,7 +2162,7 @@ function icon(name, color = "currentColor") {
   return `<svg viewBox="0 0 ${w} ${h}" fill="${color}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
 const starsHTML = (n, max = 3) =>
-  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#8d7fe0")).join("")}</span>`;
+  `<span class="stars" aria-label="${n} of ${max} stars">${Array.from({ length: max }, (_, i) => icon("star", i < n ? "#ffe14f" : "#7868cc")).join("")}</span>`;
 
 // The emblem in front of a stat's label: a read-out says what it measures before its caption is read.
 const TILE_ICONS = { MASTERY: "shield", "QUESTIONS MASTERED": "check", "CARDS BANKED": "t_cards50", ACCURACY: "t_boss6", ANSWERED: "t_exam60", "BEST STREAK": "t_streak5",
@@ -8336,6 +8337,77 @@ function glowSprite(color, scale = 2, opacity = 1) {
   return s;
 }
 
+// One draw for many glow sprites (the master overhaul, Phase 2's gate, 2026-11-24): three.js draws every Sprite on its
+// own, and Risk Blaster's fighter and demon carried fifteen small glows between them, which put the screen over the
+// phone's draw budget once its ships had all arrived (102 of 100). The sprites stay where their owners put them and go on
+// being driven as before (scale, colour, opacity, their parents' motion: a demon coming apart carries its glows with
+// its chunks), but no longer draw themselves (their material is not visible); the batch reads them as the scene is
+// about to be drawn (after its matrices are updated, before anything is sent: no frame behind) and draws them all as one
+// set of points, each the size a sprite of that scale would be at that distance, with the same picture and the same
+// additive light. For small glows only: a point may be drawn at most 511 pixels across on Apple's chips.
+class GlowBatch {
+  constructor(scene, sprites, order = 5) {
+    this.sprites = sprites.filter(Boolean);
+    this.scene = scene;
+    const n = this.sprites.length, g = new THREE.BufferGeometry(), attr = (a, k) => new THREE.BufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage);
+    this.pos = new Float32Array(n * 3); this.col = new Float32Array(n * 3); this.size = new Float32Array(n);
+    g.setAttribute("position", attr(this.pos, 3));
+    g.setAttribute("aCol", attr(this.col, 3));
+    g.setAttribute("aSize", attr(this.size, 1));
+    this.U = { tMap: { value: glowTexture() }, uPx: { value: 500 } };
+    this.points = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: this.U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute vec3 aCol; attribute float aSize; uniform float uPx; varying vec3 vCol;
+        void main(){
+          vCol = aCol;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = aSize > 0.0 ? aSize * uPx * projectionMatrix[1][1] / max(-mv.z, 1e-3) : 0.0; // (a sprite's size, seen from where it is)
+        }`,
+      fragmentShader: "uniform sampler2D tMap; varying vec3 vCol; void main(){ vec4 t = texture2D(tMap, gl_PointCoord); gl_FragColor = vec4(vCol * t.rgb, t.a); }",
+    }));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = order;
+    this.points.name = "glow-batch";
+    for (const s of this.sprites) s.material.visible = false;
+    scene.add(this.points);
+    // (one hook a scene, for every batch it holds)
+    const list = scene.userData.glowBatches || (scene.userData.glowBatches = []);
+    list.push(this);
+    if (!scene.userData.glowHook) {
+      scene.userData.glowHook = true;
+      const prev = scene.onBeforeRender;
+      scene.onBeforeRender = function (r, sc, cam, rt) { prev.call(this, r, sc, cam, rt); for (const b of list) b.update(r, rt); };
+    }
+  }
+  // each sprite's place, size and light as it would be drawn now; nothing for one not seen (it, or anything it hangs
+  // from, hidden, or no longer in the scene)
+  update(r, rt) {
+    const t = rt || r.getRenderTarget();
+    this.U.uPx.value = (t ? t.height : r.domElement.height) * 0.5;
+    const P = this.pos, C = this.col, S = this.size;
+    this.sprites.forEach((s, i) => {
+      let seen = s.visible, top = s;
+      for (let p = s.parent; seen && p; p = p.parent) { seen = p.visible; top = p; }
+      seen = seen && top === this.scene; // (taken out of the scene: not seen either)
+      const m = s.matrixWorld.elements, mat = s.material, a = seen ? mat.opacity : 0;
+      P[i * 3] = m[12]; P[i * 3 + 1] = m[13]; P[i * 3 + 2] = m[14];
+      S[i] = a > 0.001 ? Math.hypot(m[0], m[1], m[2]) : 0;
+      C[i * 3] = mat.color.r * a; C[i * 3 + 1] = mat.color.g * a; C[i * 3 + 2] = mat.color.b * a;
+    });
+    const at = this.points.geometry.attributes;
+    at.position.needsUpdate = at.aCol.needsUpdate = at.aSize.needsUpdate = true;
+  }
+  dispose() {
+    const list = this.scene.userData.glowBatches;
+    if (list) { const i = list.indexOf(this); if (i >= 0) list.splice(i, 1); }
+    if (this.points.parent) this.points.parent.remove(this.points);
+    this.points.geometry.dispose();
+    this.points.material.dispose();
+    for (const s of this.sprites) s.material.visible = true;
+  }
+}
+
 function makeStars(n = 500, r = 300, { color = 0xffffff, size = 1.6, lowest = -0.05 } = {}) {
   const pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
@@ -9500,6 +9572,7 @@ class QuizPanel {
   }
   show(round, meta) {
     this.round = round;
+    if (this.el && !this.sheet) this.el.classList.remove("sheet-up"); // (a new question's answers are never left standing back)
     const q = round.q;
     const diff = ["", "EASY", "MEDIUM", "HARD"][q.difficulty] || "";
     this.qEl.classList.toggle("long", q.q.length > 190);
@@ -9577,6 +9650,7 @@ class QuizPanel {
     const f = this._next;
     this._next = null;
     if (this.sheet) { this.sheet.remove(); this.sheet = null; }
+    if (this.el) this.el.classList.remove("sheet-up"); // (the answers come back with the sheet gone: they stood back only while it was up)
     if (f) f();
   }
   clearSheet() {
@@ -12153,6 +12227,10 @@ class BandEdge {
     this.k = 0; this.beat = 0;
     this._v = new THREE.Vector2();
   }
+  // a stand-in for GFX.warm (the screen's warmExtra): the same material on a mesh of its own, so the frame's shader is
+  // made behind the screen's cover with the rest, not in the frame a shield or a life first runs low (this frame draws
+  // in a scene of its own, which the warming never sees: Phase 2's gate found it made mid-fight in Risk Blaster)
+  warmPiece() { const m = new THREE.Mesh(this.mesh.geometry, this.mat); m.frustumCulled = false; return m; }
   // k: how much of it shows (0: none); beat: 0..1, where the alarm's swell is
   set(k, beat) { this.k = k; this.beat = beat; }
   draw(r, band) {
@@ -18487,6 +18565,7 @@ class BlasterGame extends QuizGame {
     // of show-only timers (this.show). With the built-in demon there is none, and everything is shown as it always was.
     this.stage = this.enemy && this.enemy.model ? new BlasterStage(this) : null;
     if (this.stage && this.stage.crackGeo) { const c = new THREE.Mesh(this.stage.crackGeo, this.stage.crackMat); c.renderOrder = 9; c.position.z = -40; this.warmExtra.push(c); } // (the crack a bolt leaves across a drone, readied with the rest: its shader was made at the first hit, a stall mid-fight: the master overhaul's census, 2026-11-23)
+    if (this.stage && this.stage.edge) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last shield: BandEdge.warmPiece)
     if (this.jet.model || this.stage) s.userData.post.ssaa = 2; // (with the models: the scene is drawn at twice the screen's size and brought down, so chrome edges, rims and seams of light are smooth lines)
     if (this.stage) { // (staged) the answers' letters are drawn last, over the finished picture: no flash, colour split, tint or shake touches them
       this.over = { scene: new THREE.Scene(), cam: this.camera.clone() };
@@ -22163,6 +22242,7 @@ class BlasterDemon {
     this.core = spr("body", DEMON.core, new THREE.Color(2.4, 0.25, 0.9), 0.3);
     this.maw = spr("head", DEMON.mouth, new THREE.Color(2.6, 0.5, 1.0), 0.16);
     this.claws = [spr("clawL", DEMON.hands[0], new THREE.Color(1.3, 0.35, 2.6), 0.2), spr("clawR", DEMON.hands[1], new THREE.Color(1.3, 0.35, 2.6), 0.2)];
+    this.glows = new GlowBatch(g.scene, [...this.eyes, this.third, this.core, this.maw, ...this.claws], 0); // (its seven small lights in one draw: GlowBatch, 04-gfx.js; the large glow behind it stays a sprite)
     this.glow = glowSprite(new THREE.Color(0.5, 0.1, 0.75), 1.9, 0); // (a breath of violet light round it)
     this.glow.position.set(0, 0, -0.25);
     this.glow.renderOrder = 2;
@@ -22552,6 +22632,7 @@ class BlasterDemon {
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
+    this.glows.dispose();
     const sprites = [this.core, this.third, this.maw, this.glow].concat(this.eyes, this.claws, this.bolts.map((b) => b.mesh));
     [this.mat, this.aura.material, this.aura.geometry, this.limb.material, this.limb.geometry].concat(sprites.map((s) => s.material)).forEach((m) => m.dispose());
     this.bolts.forEach((b) => this.g.scene.remove(b.mesh));
@@ -22995,6 +23076,8 @@ class BlasterStarfighter {
     this.beacon = glowSprite(neon(0xff3a2a, 3.2), 0.15, 0); // (a lamp: a point of light, not a patch of red on the canopy)
     at([0, 0.125, -0.2], this.beacon.position);
     rig.add(this.beacon);
+    // (its eight glows in one draw: GlowBatch, 04-gfx.js)
+    this.glows = new GlowBatch(g.scene, [...this.engineGlow, ...this.navLights, this.beacon], 5);
     // ---- at warp: a bow wave of light off the nose
     this.bowMat = fighterBowMaterial();
     const dome = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -23221,6 +23304,7 @@ class BlasterStarfighter {
     }
   }
   dispose() {
+    this.glows.dispose();
     blasterDropMaps(this.mats);
     this.mats.concat([this.flames.material, this.bowMat, this.shieldMat, this.beacon.material], this.engineGlow.map((s) => s.material), this.navLights.map((s) => s.material)).forEach((m) => m.dispose());
     this.contrails.forEach((t) => { this.g.scene.remove(t.mesh); t.mesh.geometry.dispose(); t.mesh.material.dispose(); });
@@ -23340,6 +23424,7 @@ class BlasterOverlord {
     this.maw = spr(A.mouth, new THREE.Color(2.6, 0.5, 1.2), 0.16);
     this.claws = [spr(A.clawL, new THREE.Color(1.3, 0.35, 2.6), 0.2), spr(A.clawR, new THREE.Color(1.3, 0.35, 2.6), 0.2)];
     this.tips = [spr(A.wingTipL, new THREE.Color(2.6, 1.3, 0.3), 0.16), spr(A.wingTipR, new THREE.Color(2.6, 1.3, 0.3), 0.16)];
+    this.glows = new GlowBatch(g.scene, [this.coreGlow, this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its nine small lights in one draw: GlowBatch, 04-gfx.js; the large light behind it stays a sprite)
     this.glow = glowSprite(new THREE.Color(0.35, 0.3, 0.9), 2.4, 0); // (cold light behind it: its dark wings and horns stand against it)
     this.glow.position.set(0, 0.05, -0.3);
     this.glow.renderOrder = 2;
@@ -23735,6 +23820,7 @@ class BlasterOverlord {
   // (after the fighter has had its say) the air shimmers round it when it rears, strikes, rages or burns
   late() { if (this.root.visible && this.heat > 0.3) GFX.heatAt(this.g.camera, this.aimPoint(this._a), 0.5 * this.S, this.heat); }
   dispose() {
+    this.glows.dispose();
     const mats = [this.mat].concat(this.scrapMat);
     blasterDropMaps(mats);
     mats.concat([this.aura.material, this.coreGlow.material, this.eyeGlow.material, this.maw.material, this.glow.material], this.claws.map((s) => s.material), this.eyeDots.map((s) => s.material), this.tips.map((s) => s.material)).forEach((m) => m.dispose());
@@ -25791,6 +25877,7 @@ class RacerGame extends QuizGame {
     // show-only timers (this.show). With the built-in car there is none, and everything is shown as it always was.
     this.stage = null;
     if (this.rigKit) { try { this.stage = new RacerStage(this); } catch (e) { this.stage = null; console.warn("the run could not be staged: " + e.message); } }
+    if (this.stage && this.stage.edge && this.warmExtra) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last life: BandEdge.warmPiece)
     if (this.stage) { // the lane badges (and, while a blow is on the screen, the gantry's letters) are drawn last, over the finished picture, from the unshaken lens: no flash, colour split, tear, tint or shake touches them
       this.over = { cam: this.camera.clone() };
       this.over.cam.layers.set(2);

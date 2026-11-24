@@ -1080,6 +1080,7 @@ class RacerGame extends QuizGame {
     // show-only timers (this.show). With the built-in car there is none, and everything is shown as it always was.
     this.stage = null;
     if (this.rigKit) { try { this.stage = new RacerStage(this); } catch (e) { this.stage = null; console.warn("the run could not be staged: " + e.message); } }
+    if (this.stage && this.stage.edge && this.warmExtra) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last life: BandEdge.warmPiece)
     if (this.stage) { // the lane badges (and, while a blow is on the screen, the gantry's letters) are drawn last, over the finished picture, from the unshaken lens: no flash, colour split, tear, tint or shake touches them
       this.over = { cam: this.camera.clone() };
       this.over.cam.layers.set(2);

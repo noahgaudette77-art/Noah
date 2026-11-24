@@ -704,6 +704,10 @@ class BandEdge {
     this.k = 0; this.beat = 0;
     this._v = new THREE.Vector2();
   }
+  // a stand-in for GFX.warm (the screen's warmExtra): the same material on a mesh of its own, so the frame's shader is
+  // made behind the screen's cover with the rest, not in the frame a shield or a life first runs low (this frame draws
+  // in a scene of its own, which the warming never sees: Phase 2's gate found it made mid-fight in Risk Blaster)
+  warmPiece() { const m = new THREE.Mesh(this.mesh.geometry, this.mat); m.frustumCulled = false; return m; }
   // k: how much of it shows (0: none); beat: 0..1, where the alarm's swell is
   set(k, beat) { this.k = k; this.beat = beat; }
   draw(r, band) {

@@ -266,6 +266,7 @@ class BlasterGame extends QuizGame {
     // of show-only timers (this.show). With the built-in demon there is none, and everything is shown as it always was.
     this.stage = this.enemy && this.enemy.model ? new BlasterStage(this) : null;
     if (this.stage && this.stage.crackGeo) { const c = new THREE.Mesh(this.stage.crackGeo, this.stage.crackMat); c.renderOrder = 9; c.position.z = -40; this.warmExtra.push(c); } // (the crack a bolt leaves across a drone, readied with the rest: its shader was made at the first hit, a stall mid-fight: the master overhaul's census, 2026-11-23)
+    if (this.stage && this.stage.edge) this.warmExtra.push(this.stage.edge.warmPiece()); // (the red frame of the last shield: BandEdge.warmPiece)
     if (this.jet.model || this.stage) s.userData.post.ssaa = 2; // (with the models: the scene is drawn at twice the screen's size and brought down, so chrome edges, rims and seams of light are smooth lines)
     if (this.stage) { // (staged) the answers' letters are drawn last, over the finished picture: no flash, colour split, tint or shake touches them
       this.over = { scene: new THREE.Scene(), cam: this.camera.clone() };
