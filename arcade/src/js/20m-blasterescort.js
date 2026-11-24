@@ -58,9 +58,12 @@ class BlasterEscort {
       this.broodU = { uRim: { value: new THREE.Color(0.6, 0.3, 1) }, uBody: { value: new THREE.Color(0.012, 0.006, 0.03) }, uK: { value: 1 } };
       const mat = new THREE.ShaderMaterial({
         uniforms: this.broodU, fog: false,
-        vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-        // (a dark shape; a rim of the region's light round its edges, a little more from above)
-        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(max(f, 0.0), 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
+        // (it faces the lens, its wings across x: vR is how far out a point is from its heart, 1 at its wing tips)
+        vertexShader: "varying float vR; varying float vY; void main(){ vR = length(position.xy) * 2.0; vY = position.y * 2.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        // (a dark shape; the region's light round its edges, a little more from above. Phase 2, resumed: the rim was taken
+        // off its facets, and at forty pixels a demon's thousands of facets turned it into a scatter of dots, the art
+        // review's speckle at the band's edges; a soft light that grows toward its wing tips and edges holds the shape)
+        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying float vR; varying float vY; void main(){ float e = 0.15 + 1.05 * smoothstep(0.45, 1.0, vR) * (0.75 + 0.25 * smoothstep(-0.5, 0.5, vY)); gl_FragColor = vec4(uBody + uRim * e * uK, 1.0); }",
       });
       this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.renderOrder = -5; /* (the lens's own culling: one out of the picture is not drawn) */ s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
     } else this.brood = [];
