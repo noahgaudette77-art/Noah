@@ -768,7 +768,13 @@ class BlasterSpace {
       U.uSkRimA.value.copy(P.rimA.color).multiplyScalar(0.85); U.uSkRimB.value.copy(P.rimB.color).multiplyScalar(0.85);
       U.uSkKick.value.setRGB(0.55, 0.88, 1.2).multiplyScalar(0.8); // (a cool rim from above and behind: every upper edge drawn in light)
       U.uSkFill.value.copy(P.amb ? P.amb.color : this._c.setRGB(0.35, 0.4, 0.6)).lerp(this._coolFill || (this._coolFill = new THREE.Color(0.5, 0.56, 0.72)), 0.5).multiplyScalar(0.4); // (the region's light, eased toward a cool grey)
-      if (this.genUR) { const R = this.genUR; R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1); }
+      if (this.genUR) {
+        const R = this.genUR;
+        R.uSkRimA.value.copy(U.uSkRimA.value); R.uSkRimB.value.copy(U.uSkRimB.value); R.uSkKick.value.copy(U.uSkKick.value); R.uSkFill.value.copy(U.uSkFill.value).multiplyScalar(1.1);
+        // a rock far off is lit again by the region's key, from the side the picture's own light comes from (see genKit)
+        if (P.key) R.uSkFarKey.value.copy(P.key.color).multiplyScalar(P.key.intensity * 8); else R.uSkFarKey.value.setRGB(6.3, 5.7, 8);
+        R.uSkFarDir.value.fromArray(BLASTER_LAMPS.key).normalize().transformDirection(g.camera.matrixWorldInverse);
+      }
     }
     // the station, off to port: it is there in its region, far ahead before, left behind after
     const place = (obj, k, home, near) => {
@@ -879,13 +885,27 @@ class BlasterSpace {
         // their own neon carries them; at full albedo they stood as pale shapes beside the fight)
         // (Phase 5 fix: lit as objects in the region's light, not silhouettes: open space was near black. A rock takes a
         // stone of its own, aTone, over the region's colour.)
-        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 } })) : U;
-        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
+        const UR = rock ? (this.genUR = this.genUR || Object.assign(blasterSkinUniforms(), { uSkAA: { value: 1.2 }, uSkSpec: { value: 0.4 }, uSkFarKey: { value: new THREE.Color(0, 0, 0) }, uSkFarDir: { value: new THREE.Vector3(0, 0, 1) } })) : U;
+        const mat = blasterSkin(made.mat, UR, { key: rock ? "space-rock" : "space-ship", pars: rock ? "varying vec3 vTone; uniform vec3 uSkFarKey; uniform vec3 uSkFarDir;" : "", albedo: rock ? "diffuseColor.rgb *= 0.85 * vTone;" : "diffuseColor.rgb *= 0.8;" });
         if (!rock) { // (Phase 6: a ship's hull takes the region's light but little of its colour: in a red region it read as a pink lump. Its lamps and ports are its colour)
           const skin = mat.onBeforeCompile;
           mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65); }"); };
         }
-        if (rock) { const skin = mat.onBeforeCompile; mat.onBeforeCompile = (sh) => { skin(sh); sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;"); }; }
+        // (Phase 2, resumed: far off, a rock read as a dark hole in a pale rim with the sky's colour mirrored in it, the
+        // art review's hollow far rocks. Past some 55 units, and wholly past 140, where every light copy flies, it is lit
+        // again from the side the picture's own light comes from (the region's key, uSkFarKey, from uSkFarDir), its far
+        // side kept a little off black, and it mirrors less of the sky: a lit stone with its rim.)
+        if (rock) {
+          const skin = mat.onBeforeCompile;
+          mat.onBeforeCompile = (sh) => {
+            skin(sh);
+            sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;");
+            sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", `#include <lights_fragment_end>
+              { float skFar = smoothstep(55.0, 140.0, length(vViewPosition)), skW = dot(geometryNormal, uSkFarDir) * 0.5 + 0.5;
+                reflectedLight.directDiffuse += skFar * max(material.diffuseColor, vec3(0.04)) * uSkFarKey * (skW * skW + 0.12); // (the darkest stone taken as a dark grey: at that size a darker one read as nothing at all)
+                reflectedLight.indirectSpecular *= 1.0 - 0.6 * skFar; }`);
+          };
+        }
         g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
