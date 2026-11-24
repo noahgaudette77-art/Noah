@@ -437,18 +437,20 @@ class ExamGame extends QuizGame {
     // own neon lights its columns now. (The boss adds its own: the light under it, which the fire takes over at the
     // end and then outbids the fill; its eyes.)
     s.add(new THREE.HemisphereLight(0x2a3266, 0x1a0c34, 0.62)); // (no light is darker than the hall's deep violet)
-    const key = (this.keyLight = new THREE.DirectionalLight(0xdfe7ff, 1.05));
+    // (Phase 2, 2026-11-24: the key, the light on its face and the low fill lean to the world's ice blue, #8fb4ff: the
+    // Proctor read violet on violet, the ice blue only in the windows)
+    const key = (this.keyLight = new THREE.DirectionalLight(0xc8d8ff, 1.05));
     key.position.set(-8, 14, 12);
     key.userData.keep = true;
     s.add(key);
-    this.spotLight = new THREE.PointLight(0xe8eeff, 2.5, 34, 1.4); // the key on its face and chest
+    this.spotLight = new THREE.PointLight(0x9fb2ff, 2.5, 34, 1.4); // the key on its face and chest
     this.spotLight.position.set(-BOSS_S * 0.38, BOSS_DAIS + BOSS_S * 1.13, BOSS_S * 1.05);
     this.spotLight.userData.keep = true;
     s.add(this.spotLight);
     this.rimA = new THREE.PointLight(0xa65fff, 2.3, 36, 1.5); // violet, from behind on its left
     this.rimA.position.set(-BOSS_S * 0.95, BOSS_DAIS + BOSS_S * 1.12, -BOSS_S * 0.5);
     s.add(this.rimA);
-    this.fillLow = new THREE.PointLight(0x8a90d8, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
+    this.fillLow = new THREE.PointLight(0x8fb4ff, 1.1, 30, 1.6); // from low in front: its chest and arms keep their shape under the answers
     this.fillLow.position.set(0, BOSS_DAIS + BOSS_S * 0.28, BOSS_S * 1.05);
     s.add(this.fillLow);
     this.rimB = new THREE.PointLight(0x8fb4ff, 2.6, 34, 1.5); // ice blue, from behind on its right
