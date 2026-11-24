@@ -44,7 +44,8 @@ The same count as `tools/cost-report.js` (one frame through `GFX.render`, every 
 triangles; the tier fixed as Setup fixes it), taken by a capture scenario on the virtual clock with every piece of the
 hall in, the same way for both builds: `cost-report.js` itself timed out loading the page on this machine while other
 agents captured (its one finished run, the phone before the change, read 33 draws and 146K triangles at the glide and
-34 and 157K at the end, some pieces not yet in; the Mac's before below matches the baseline's 63 and 293K).
+34 and 157K at the end, some pieces not yet in; its run on the Mac before the change, finished later, read 63 draws
+and 292,968 triangles at the glide and 55 and 171,006 at the end: the same as the count below).
 
 | tier | pose | draws before → after | triangles before → after | lights |
 |---|---|---|---|---|
