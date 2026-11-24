@@ -185,6 +185,7 @@ class QuizPanel {
   }
   show(round, meta) {
     this.round = round;
+    if (this.el && !this.sheet) this.el.classList.remove("sheet-up"); // (a new question's answers are never left standing back)
     const q = round.q;
     const diff = ["", "EASY", "MEDIUM", "HARD"][q.difficulty] || "";
     this.qEl.classList.toggle("long", q.q.length > 190);
@@ -262,6 +263,7 @@ class QuizPanel {
     const f = this._next;
     this._next = null;
     if (this.sheet) { this.sheet.remove(); this.sheet = null; }
+    if (this.el) this.el.classList.remove("sheet-up"); // (the answers come back with the sheet gone: they stood back only while it was up)
     if (f) f();
   }
   clearSheet() {
