@@ -379,7 +379,7 @@ function racerGroundMaterial(mirror, shared) {
           else lt += gk * (uSlot0 * exp(-pow(abs((x + 2.5) * 0.55), 2.0)) + uSlot1 * exp(-pow(abs((x - 2.5) * 0.55), 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
-        float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
+        float sk = uSunK * (1.0 - smoothstep(-100.0, -34.0, z)) * road;
         if (sk > 0.002) {
           // the egg sun lies down the far road: rippled bars of its own light (in the distance only: the lanes by the
           // car stay clean for the answers' colours)
