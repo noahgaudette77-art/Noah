@@ -17,7 +17,8 @@
 // shape as atW is. (Phase 2, resumed: on a Mac the nebula's band was led by magenta, about half its lit sky, where the
 // phone's is led by violet, and the B drone stood on a magenta cloud; magenta is answer B's, and the world's pair is
 // cyan and violet. Its point ahead moved on, 0.21 to 0.26, so the B drone stands on dark sky with the nebula still
-// filling the rest, and what magenta is left drawn toward violet: the band's magenta 30% to 4%, violet 33% to 55%.)
+// filling the rest, and what magenta is left drawn toward violet: the band's magenta 30% to 4%, violet 33% to 55%. The
+// orbit, the same picture seen further round, had the same split, 25% magenta on a Mac to 3% on the phone: pulled too.)
 // lamps: the key (above and behind the lens, on the side the picture's own light comes from), two rims far ahead, one
 // to each side, in the sky's own two colours, and a soft top light. Each is a real light and a card of light in what
 // chrome mirrors (see envFor), so the same lamp is seen in a hull's reflection and felt on its plates.
@@ -32,7 +33,7 @@ const BLASTER_SKIES = {
   belt: { sky: "blaster-deep-4", at: [0.07, 0.52], roll: -0.12, zoom: 2.4, gain: 0.9, lift: 1.35, envGain: 0.9, // (Phase 5 fix: gain 0.72 -> 0.9, lift 1.2 -> 1.35: the belt was near black between its rocks)
     key: [0xff7a52, 1.15], rimA: [0xff4a2a, 1.5], rimB: [0x35d8ff, 1.3], top: [0xff9070, 0.75], amb: [0x8a2a2a, 0.5], wall: 0xff4a3a,
     space: { fog: 0x0c0306, amb: 0x9a6a5c, key: 0xffe2c8, cloudA: 0x8a2a1e, cloudB: 0xff7a3a, clouds: 0.4, rockTint: 0x8a6a5a, rocks: 1, stars: 0.5, planet: [-34, 5, 1700, 80], planetW: [-24, 9, 1700, 80] } },
-  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
+  orbit: { sky: "blaster-deep-1", at: [0.66, 0.30], atW: [0.72, 0.31], pullW: 0.8, roll: 0.1, zoom: 2.6, gain: 0.95, lift: 1.6,
     key: [0xb4d4ff, 1.0], rimA: [0xa65fff, 1.4], rimB: [0x35efff, 1.6], top: [0x9cc4ff, 0.8], amb: [0x3a5ab8, 0.5], wall: 0x4a7aff,
     space: { fog: 0x03040f, amb: 0x5a70c0, key: 0xdcecff, cloudA: 0x3a4ad0, cloudB: 0x35efff, clouds: 0.12, rockTint: 0x8aa0c0, rocks: 0.3, stars: 0.6, planet: [15.5, 12.5, 760, 190] } },
   station: { sky: "blaster-deep-1", at: [0.80, 0.40], roll: -0.08, zoom: 2.6, gain: 0.8, lift: 1.3,
