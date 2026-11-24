@@ -101,7 +101,7 @@ class MemoryWorks {
         void main(){
           vec2 q = vUv * vec2(4.0, 14.0), c = floor(q), f = fract(q) - 0.5;
           float r = fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453);
-          float lamp = smoothstep(0.34, 0.24, max(abs(f.x), abs(f.y) * 1.25));
+          float lamp = (1.0 - smoothstep(0.24, 0.34, max(abs(f.x), abs(f.y) * 1.25)));
           float on = step(r, 0.25 + 0.6 * uOpen) * (0.6 + 0.4 * sin(uTime * (0.4 + r * 1.2) + r * 40.0));
           vec3 col = vec3(0.025, 0.015, 0.05) + lamp * (vec3(0.09, 0.06, 0.1) + mix(vec3(1.5, 1.1, 0.4), vec3(1.9, 0.75, 0.2), step(0.5, r)) * on);
           col += lamp * vec3(2.2, 0.16, 0.12) * uMiss * step(0.6, r);
