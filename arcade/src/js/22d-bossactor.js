@@ -256,9 +256,9 @@ class BossActor {
       T.add(th); T.add(ca); if (ft.isBone || ft === P[sd + "_Foot"]) T.add(ft);
       const h = lp(th), k = lp(ca), a = lp(ft), line = a.clone().sub(h).normalize(), off = k.clone().sub(h), pole = off.addScaledVector(line, -off.dot(line));
       if (pole.length() < 0.02 * h.distanceTo(k)) pole.set(0, 0, 1); else pole.normalize();
-      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, lock: new THREE.Vector3(), low: Infinity, pole, pA: new THREE.Vector3(), pUp: null });
+      this.legs.push({ th, ca, ft, keep: T.has(ft), on: false, w: 0, w0: 0, rt: 1, lock: new THREE.Vector3(), low: Infinity, pole, pA: new THREE.Vector3(), pUp: null });
     }
-    this._pv = [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion()); this._ps = new THREE.Vector3();
+    this._pv = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(() => new THREE.Vector3()); this._pq = [0, 1, 2, 3].map(() => new THREE.Quaternion()); this._ps = new THREE.Vector3();
     this.groundY = 0;
   }
   has(name) { return !!this.act[name]; }
@@ -587,9 +587,9 @@ class BossActor {
   // 5% of its leg's length of the lowest it stands (its height as the clips put it: the body's own dips, bounce and
   // crouch, left out) is held where it touched (between this frame and the last, where it crossed), its leg bent to it
   // (two bones: the thigh turned so the knee lies where the calf can reach the foot, on the side the knee bends to, then
-  // the calf); it is let go as it lifts, over a fifth of a second, and one that comes down again while still being let
+  // the calf); it is let go as it lifts, eased over 0.3 s, and one that comes down again while still being let
   // go is held where it is drawn (never a jump); one the clip takes a quarter of its leg's length away is drawn after it
-  // (a shuffle). Not while it drops in, floats, or falls dead (all of it let go over a fifth of a second).
+  // (a shuffle). Not while it drops in, floats, or falls dead (all of it let go the same way).
   plant(d) {
     const legs = this.legs;
     if (!legs || !legs.length) return;
@@ -612,20 +612,34 @@ class BossActor {
         else l.lock.copy(A);
         l.w = 1;
       }
-      // (let go from where it crossed, between the last frame and this one: the same at any frame rate)
-      if (!down && l.w > 0) l.w *= Math.exp(-9 * d * (l.on && ok && l.pUp !== null && up > l.pUp ? clamp((up - rel) / (up - l.pUp), 0, 1) : 1));
+      // (let go over 0.3 s, eased in and out (an easing that starts at its fastest moved a knee a hand's breadth in its first
+      // frame), from where it crossed, between the last frame and this one: the same at any frame rate)
+      if (!down) {
+        if (l.on) { l.w0 = l.w; l.rt = 0; l.rt += (d * (ok && l.pUp !== null && up > l.pUp ? clamp((up - rel) / (up - l.pUp), 0, 1) : 1)) / 0.3; }
+        else l.rt += d / 0.3;
+        l.rt = Math.min(1, l.rt);
+        l.w = l.w0 * (1 - Motion.ease.smooth(l.rt));
+      }
       l.on = down;
       l.pA.copy(A); l.pUp = up;
       if (l.on) { const dx = A.x - l.lock.x, dz = A.z - l.lock.z, far = Math.hypot(dx, dz) - 0.25 * Lg; if (far > 0) { const k = (far / (far + 0.25 * Lg)) * (1 - Math.exp(-10 * d)); l.lock.x += dx * k; l.lock.z += dz * k; } }
       if (l.w < 0.002 || Lg < 1e-6) continue;
       T.set(A.x + (l.lock.x - A.x) * l.w, A.y, A.z + (l.lock.z - A.z) * l.w);
       if (T.distanceToSquared(A) < 1e-10 * Lg * Lg) continue;
+      // (a soft reach: as the hip draws away from where the foot stands the leg straightens toward its length but never
+      // quite to it, the foot giving a little ground; at its full length a knee straightens in a frame, the rearing
+      // Perilmonger's 32 cm in each of two)
+      { const soft = 0.06 * Lg, dT = H.distanceTo(T), lim = Lg - soft; if (dT > lim) T.sub(H).multiplyScalar((lim + soft * (1 - Math.exp(-(dT - lim) / soft))) / dT).add(H); }
       // the knee: where the thigh (l1 from the hip) meets the calf (l2 from the foot), on the side the knee bends to:
-      // the clip's, and where the leg stands nearly straight its rest side (a small lean to it decides; never a flip)
+      // the clip's, from its own line from hip to foot (from the line to where the foot is held, a hip moving over the
+      // foot put the clip's knee on its far side: the rearing Perilmonger's knee swung round in two frames), and where the
+      // leg stands nearly straight its rest side (a small lean to it decides; never a flip)
+      const dA = this._pv[8].subVectors(A, H).normalize();
+      F.copy(l.pole).transformDirection(sc.matrixWorld); F.addScaledVector(dA, -F.dot(dA));
+      w.subVectors(K, H); w.addScaledVector(dA, -w.dot(dA)).addScaledVector(F, 0.02 * l1);
       const dist = clamp(H.distanceTo(T), Math.abs(l1 - l2) + 1e-4 * Lg, Lg - 1e-4 * Lg), dir = u.subVectors(T, H).normalize();
       const along = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist), across = Math.sqrt(Math.max(0, l1 * l1 - along * along));
-      F.copy(l.pole).transformDirection(sc.matrixWorld); F.addScaledVector(dir, -F.dot(dir));
-      w.subVectors(K, H); w.addScaledVector(dir, -w.dot(dir)).addScaledVector(F, 0.02 * l1);
+      w.addScaledVector(dir, -w.dot(dir)); // (that side, carried across to the line to where the foot is held)
       if (w.lengthSq() < 1e-8 * l1 * l1) continue; // (no side at all: left as the clip has it)
       w.normalize();
       const K2 = w.multiplyScalar(across).addScaledVector(dir, along).add(H);
