@@ -8344,7 +8344,9 @@ function glowSprite(color, scale = 2, opacity = 1) {
 // its chunks), but no longer draw themselves (their material is not visible); the batch reads them as the scene is
 // about to be drawn (after its matrices are updated, before anything is sent: no frame behind) and draws them all as one
 // set of points, each the size a sprite of that scale would be at that distance, with the same picture and the same
-// additive light. For small glows only: a point may be drawn at most 511 pixels across on Apple's chips.
+// additive light. For small round glows only: a point is square, sized from its sprite's width (a sprite scaled taller
+// than wide stays a sprite), it may be drawn at most 511 pixels across on Apple's chips, and it goes whole when its
+// middle leaves the picture.
 class GlowBatch {
   constructor(scene, sprites, order = 5) {
     this.sprites = sprites.filter(Boolean);
@@ -10598,7 +10600,7 @@ function makePlanet({ radius = 20, a = 0x3b1d8f, b = 0xff5fb4, rim = 0x7ad0ff, r
         vec3 n = normalize(vN);
         float lit = max(dot(n, normalize(vec3(-0.62, 0.45, 0.64))), 0.0);
         float band = 0.5 + 0.5 * sin(vP.y * ${(11 / radius).toFixed(3)} + sin(vP.x * ${(5 / radius).toFixed(3)}) * 1.3);
-        float limb = pow(1.0 - max(n.z, 0.0), 2.6);
+        float limb = pow(max(1.0 - max(n.z, 0.0), 0.0), 2.6);
         gl_FragColor = vec4(mix(uA, uB, band) * (0.03 + 1.25 * lit) + uRim * limb * (0.12 + lit), 1.0);
       }`,
   }));
@@ -10646,7 +10648,7 @@ function makeNeonSun({ radius = 40, top = 0xffe14f, bottom = 0xff2a8a, intensity
           vec3 en = vec3(q, sqrt(max(0.0, 1.0 - r * r)));
           float lit = clamp(dot(en, normalize(vec3(-0.45, 0.5, 0.74))), 0.0, 1.0);
           col *= 0.74 + 0.6 * lit;
-          col += uTop * uTint * uI * 0.55 * pow(lit, 14.0);
+          col += uTop * uTint * uI * 0.55 * pow(max(lit, 0.0), 14.0);
           col += uTop * uTint * uI * 0.34 * (1.0 - r * r); // lit from inside
           col += mix(uBottom, uTop, 0.5) * uTint * uI * 0.95 * smoothstep(0.84, 1.0, r); // a bright edge all round
           vec2 sq = floor(q * 22.0), sf = fract(q * 22.0) - 0.5;
@@ -10767,7 +10769,7 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     uRoad: { value: new THREE.Vector2(road, roadGrid) },
     uSunCol: { value: sun ? new THREE.Vector4(sun.spread || 0.1, sun.k || 0.6, sun.z || -300, sun.bars || 5) : new THREE.Vector4(0, 0, 0, 0) },
     uSunA: { value: sun ? neon(sun.top, 1) : new THREE.Color(0) }, uSunB: { value: sun ? neon(sun.bottom, 1) : new THREE.Color(0) },
-    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && probe.map.image && probe.map.image.width ? Math.log2(probe.map.image.width) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
+    tProbe: { value: probe ? probe.map : null }, uProbe: { value: new THREE.Vector4(probe ? probe.k : 0, probe ? probe.rough : 0.3, probe && probe.map && ROOM_PROBE_SIZE.get(probe.map) ? Math.log2(ROOM_PROBE_SIZE.get(probe.map)) : 7, probe && probe.f0 !== undefined ? probe.f0 : 0.3) },
     uBoxMin: { value: probe ? probe.min : new THREE.Vector3() }, uBoxMax: { value: probe ? probe.max : new THREE.Vector3() }, uProbeAt: { value: probe ? probe.at : new THREE.Vector3() },
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
@@ -10805,12 +10807,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
           #ifdef PLATES_TINT
-          col += uPlatesTint * smoothstep(0.5, 0.0, pm.b);
+          col += uPlatesTint * (1.0 - smoothstep(0.0, 0.5, pm.b));
           #endif
           #endif
           vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, nrm);
-          vec3 t1 = (uBoxMax - vWorld) / R, t2 = (uBoxMin - vWorld) / R, tf = max(t1, t2);
-          vec3 dir = vWorld + R * min(min(tf.x, tf.y), tf.z) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn)
+          vec3 Rs = mix(vec3(-1.0), vec3(1.0), step(0.0, R)) * max(abs(R), vec3(1e-4)); // (no axis exactly naught: a ray along a wall meets it far off, not in a NaN)
+          vec3 t1 = (uBoxMax - vWorld) / Rs, t2 = (uBoxMin - vWorld) / Rs, tf = max(t1, t2);
+          vec3 dir = vWorld + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn; from outside the box, straight from there)
           float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
           col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
         }
@@ -10899,11 +10902,15 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
 // swap: uniforms that read this cube ({ value }), pointed at a blank cube while it is drawn, so what reads it can still
 // be drawn into it (the hall's glass: its own light is the cells' colour in the floor).
 let _blankCube = null;
+// each probe's size by its picture (a cube target's picture has no width of its own in three r128: makeNeonFloor reads
+// how many sizes of it there are, for how far a rough floor blurs what it gives back, from here)
+const ROOM_PROBE_SIZE = new WeakMap();
 function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = [] } = {}) {
   const rt = new THREE.WebGLCubeRenderTarget(size, {
     format: THREE.RGBAFormat, type: GFX.hdr ? THREE.HalfFloatType : THREE.UnsignedByteType,
     generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
   });
+  ROOM_PROBE_SIZE.set(rt.texture, size);
   const cam = new THREE.CubeCamera(near, far, rt);
   cam.position.copy(at);
   cam.updateMatrixWorld(true);
@@ -10915,6 +10922,10 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
       if (!this.left || !GFX.ok) return null; // (nothing to draw: null, as against false, the frame the last face was drawn)
       const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
       this.hide.forEach((o) => { o.visible = false; });
+      // (and every set of points: a point's size is in the page's pixels, so in a face 128 or 256 across a light stick or
+      // a mote would be drawn ten to forty times too big and frozen into the floor: Phase 2's gate review)
+      const pts = [];
+      scene.traverse((o) => { if (o.isPoints && o.visible) { pts.push(o); o.visible = false; } });
       if (!_blankCube) _blankCube = new THREE.WebGLCubeRenderTarget(1).texture;
       this.swap.forEach((u) => { u.value = _blankCube; });
       face.layers.mask = layers;
@@ -10922,6 +10933,7 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
       r.setRenderTarget(was);
       this.swap.forEach((u) => { u.value = rt.texture; });
       this.hide.forEach((o, k) => { o.visible = vis[k]; });
+      for (const o of pts) o.visible = true;
       this.left--;
       if (!this.left) this.made++;
       return this.left > 0;
@@ -11100,7 +11112,7 @@ function fresnelShell(geometry, color, { power = 2.4, intensity = 2, scale = 1.0
     uniforms: { uColor: { value: neon(color, 1) }, uP: { value: power }, uI: { value: intensity } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
+    fragmentShader: "uniform vec3 uColor; uniform float uP; uniform float uI; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), uP); gl_FragColor = vec4(uColor * uI * f, 1.0); }",
   }));
   m.scale.setScalar(scale);
   return m;
@@ -11191,7 +11203,7 @@ function beamMaterial(color, intensity = 3) {
       uniform vec3 uColor; uniform float uTime; uniform float uFade; varying vec3 vN; varying vec3 vV; varying vec2 vUv;
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));
-        float core = pow(f, 6.0) * 2.5 + pow(f, 1.5);
+        float core = pow(abs(f), 6.0) * 2.5 + pow(max(f, 0.0), 1.5);
         float crawl = 0.7 + 0.3 * vnoise(vec3(vUv.y * 30.0 - uTime * 25.0, vUv.x * 6.0, uTime));
         gl_FragColor = vec4((uColor + vec3(core * 0.6)) * core * crawl * uFade, 1.0);
       }`,
@@ -11299,7 +11311,7 @@ function cityFacadeMaterial({ win = 0xffb648, cool = 0x58e6ff, hot = 0xff58c6, s
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.3) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW), R = reflect(-V, n);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 3.0);
           // the glass mirrors the sky: cyan off the towers to the left, magenta off those to the right
           vec3 skyc = mix(mix(uSkyB, uSky, smoothstep(-34.0, 34.0, vW.x)), uZen, smoothstep(-0.15, 0.5, R.y));
           col = vC * (0.55 + 0.7 * max(n.y, 0.0)) + skyc * (0.02 + 0.2 * fres);
@@ -11366,7 +11378,7 @@ function skyHullMaterial({ key = 0xffb6e6, keyDir = [0.1, 0.35, -1], under = 0xf
         vec3 col = vC;
         if (max(vC.r, max(vC.g, vC.b)) < 0.75) {
           vec3 n = normalize(vN), V = normalize(cameraPosition - vW);
-          float fres = pow(1.0 - max(dot(n, V), 0.0), 2.6);
+          float fres = pow(max(1.0 - max(dot(n, V), 0.0), 0.0), 2.6);
           col = vC * (0.5 + uKey * max(dot(n, uKeyDir), 0.0) * 2.2 + uUnder * max(-n.y, 0.0) * 1.6) + uSky * fres * 0.5 + uKey * pow(max(dot(reflect(-V, n), uKeyDir), 0.0), 24.0) * 0.6;
         }
         col = mix(col * uK, uFogColor, smoothstep(uFogNear, uFogFar, vDepth) * 0.85);
@@ -11561,7 +11573,7 @@ function fxDartMaterial() {
     fragmentShader: `varying vec3 vC; varying vec2 vUv;
       void main(){
         float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;
-        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;
+        float w = t < 0.86 ? pow(max(t / 0.86, 0.0), 1.5) : 1.0 - (t - 0.86) / 0.14;
         float aa = fwidth(x) * 1.2 + 1e-4;
         float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.42 - aa, w * 0.42, x);
         if (body < 0.004) discard;
@@ -11604,7 +11616,7 @@ function fxPuffMaterial(fire) {
              col = mix(col, mix(vCol.rgb, vec3(1.0), 0.7) * 1.25, smoothstep(0.86, 1.0, heat)); // (only its very middle, while it is young, is white-hot: a lobe of fire keeps the blast's own colour)
              gl_FragColor = vec4(col * body * vCol.a * (1.0 - age * age), 1.0);`
           : `float a = body * vCol.a * (1.0 - smoothstep(0.45, 1.0, age)) * smoothstep(0.0, 0.08, age);
-             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(1.0 - age, 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
+             vec3 col = vCol.rgb * (0.5 + 0.7 * n) + vec3(1.0, 0.45, 0.12) * pow(max(1.0 - age, 0.0), 5.0) * body * 0.9 * step(seed, 1.5); // (young smoke glows from the fire under it, unless it is cold: seed above 1.5)
              gl_FragColor = vec4(col, a);`}
       }`,
   });
@@ -11617,7 +11629,7 @@ function fxChunkMaterial() {
     fragmentShader: `varying vec3 vV; varying vec3 vC;
       void main(){
         vec3 n = normalize(cross(dFdx(vV), dFdy(vV)));
-        float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0), rim = pow(1.0 - abs(dot(n, normalize(-vV))), 2.0);
+        float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0), rim = pow(abs(1.0 - abs(dot(n, normalize(-vV)))), 2.0);
         gl_FragColor = vec4(vC * (0.25 + 0.95 * l + 0.7 * rim), 1.0);
       }`,
   });
@@ -11634,7 +11646,7 @@ function fxBeamMaterial() {
       void main(){
         float x = abs(vUv.x - 0.5) * 2.0, t = vUv.y;
         float flick = 0.86 + 0.14 * vnoise(vec3(t * uLen * 0.9 - uTime * 14.0, uTime * 3.0, 0.0));
-        float core = 1.0 - smoothstep(0.1, 0.24, x), sheath = pow(1.0 - x, 2.2);
+        float core = 1.0 - smoothstep(0.1, 0.24, x), sheath = pow(max(1.0 - x, 0.0), 2.2);
         float ends = smoothstep(0.0, 0.04, t) * smoothstep(0.0, 0.03, 1.0 - t);
         gl_FragColor = vec4((uColor * sheath * flick + vec3(1.6) * core) * uFade * ends, 1.0);
       }`,
@@ -14330,8 +14342,8 @@ class HallScene extends Scene3D {
         void main(){
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
           float ang = atan(vXZ.y, vXZ.x), ph = vState.w * 6.2832, t = uT * (1.0 - 0.7 * uCalm);
-          float rim = pow(f, 2.6) * 0.75;
-          float col = 0.025 + 0.16 * pow(1.0 - vY, 3.2) + 0.1 * pow(vY, 9.0);
+          float rim = pow(max(f, 0.0), 2.6) * 0.75;
+          float col = 0.025 + 0.16 * pow(max(1.0 - vY, 0.0), 3.2) + 0.1 * pow(max(vY, 0.0), 9.0);
           float band = (1.0 - smoothstep(0.0, 0.06, abs(fract(vY * 0.7 - uT * 0.045) - 0.5))) * 0.05;
           float wisp = 0.0;
           if (vDepth < 32.0) wisp = smoothstep(0.5, 1.0, sin(ang * 3.0 + vY * 9.0 - t * 1.1 + ph) * sin(ang * 5.0 - vY * 13.0 + t * 0.7)) * 0.11 * (1.0 - 0.6 * vY) * (1.0 - smoothstep(22.0, 32.0, vDepth)); // (near cells only: far off the haze hides them)
@@ -14349,9 +14361,10 @@ class HallScene extends Scene3D {
           vec3 refl = vec3(0.0);
           if (gl_FrontFacing) {
             vec3 Vd = normalize(-vV), Nn = normalize(vN), R = reflect(Vd, Nn);
-            vec3 t1 = (uBoxMax - vW) / R, t2 = (uBoxMin - vW) / R, tf = max(t1, t2);
+            vec3 Rs = mix(vec3(-1.0), vec3(1.0), step(0.0, R)) * max(abs(R), vec3(1e-4)); // (as the floor's: no NaN on an axis)
+            vec3 t1 = (uBoxMax - vW) / Rs, t2 = (uBoxMin - vW) / Rs, tf = max(t1, t2);
             float fr = 0.04 + 0.96 * pow(1.0 - clamp(dot(-Vd, Nn), 0.0, 1.0), 5.0);
-            refl = textureCubeLodEXT(tProbe, vW + R * min(min(tf.x, tf.y), tf.z) - uProbeAt, 1.0).rgb * fr * uGlassRefl;
+            refl = textureCubeLodEXT(tProbe, vW + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt, 1.0).rgb * fr * uGlassRefl;
           }
           gl_FragColor = vec4((c * (rim + col + band + wisp) * pulse * (1.0 + vFlick) + mix(vec3(0.9, 0.97, 1.0), c, 0.35) * crack * 0.85 + refl) * uK * haze, 1.0);
         }`,
@@ -14411,6 +14424,10 @@ class HallScene extends Scene3D {
     // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
     // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
     this.kit = buildCellKit(this);
+    // (the steel gives back the hall's capture filtered for its roughness: from the start a filtered copy of the capture
+    // not yet drawn (black, as the hall's dark), so the steel's shader is made now, with the hall's, and each capture
+    // that arrives changes a picture, not the shader; and the filter's own shader made now: neither mid-glide)
+    if (GFX.ok && this.kit.steelMat && this.probe) { try { const pm = GFX.pmrem(); pm.compileCubemapShader(); this.steelEnv = pm.fromCubemap(this.probe.map); this.kit.steelMat.envMap = this.steelEnv.texture; } catch (e) { /* made at the first capture instead */ } }
     this.podMesh = this.kit.steel; // (what the tools wait for: the cells are in)
     this.kit.states.forEach((st, i) => {
       const cl = this.cells[i], ry = cl.anchor.rotation.y;
@@ -14499,7 +14516,7 @@ class HallScene extends Scene3D {
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 1.15, 6.4, 32, 1, true), new THREE.ShaderMaterial({
       uniforms: this.shaftU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vY = position.y / 6.4 + 0.5; vN = normalize(mat3(modelMatrix) * normal); vV = cameraPosition - w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
-      fragmentShader: "uniform vec3 uCol; uniform float uK; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float f = abs(dot(normalize(vN), normalize(vV))); float a = pow(f, 1.6) * pow(1.0 - vY, 1.3) * smoothstep(0.0, 0.1, vY) * 0.2; gl_FragColor = vec4(uCol * a * uK, 1.0); }",
+      fragmentShader: "uniform vec3 uCol; uniform float uK; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float f = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(f, 0.0), 1.6) * pow(max(1.0 - vY, 0.0), 1.3) * smoothstep(0.0, 0.1, vY) * 0.2; gl_FragColor = vec4(uCol * a * uK, 1.0); }",
     }));
     shaft.position.set(0, 1.0 + 3.2, Z + 7 - 0.57);
     shaft.renderOrder = 5;
@@ -14755,11 +14772,12 @@ class HallScene extends Scene3D {
       this.probe.step(this.scene, this.camera.layers.mask);
       this.probeTaken();
     }
-    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = true; } }
-    if (this.kit && this.kit.steelMat && !this.steelIn) { // (the cells' tread plate and brushed steel: see cellSteelMaterial)
-      const U = this.kit.steelMat.userData, a = Assets.ui("mat-tread"), b = Assets.ui("mat-steel");
-      if (a && b) { U.tTread.value.image = a; U.tTread.value.needsUpdate = true; U.tBrush.value.image = b; U.tBrush.value.needsUpdate = true; this.steelIn = true; }
-    }
+    // the deck's plates, then the cells' tread plate, then their brushed steel (cellSteelMaterial), each as its picture
+    // arrives: one picture sent to the graphics chip a frame at most, and one not yet come never holds up the others
+    let sent = false;
+    if (this.plates && !this.platesIn) { const img = Assets.ui("mat-deck"); if (img) { this.plates.image = img; this.plates.needsUpdate = true; this.platesIn = sent = true; } }
+    if (!sent && this.kit && this.kit.steelMat && !this.treadIn) { const a = Assets.ui("mat-tread"), U = this.kit.steelMat.userData; if (a) { U.tTread.value.image = a; U.tTread.value.needsUpdate = true; this.treadIn = sent = true; } }
+    if (!sent && this.kit && this.kit.steelMat && !this.brushIn) { const b = Assets.ui("mat-steel"), U = this.kit.steelMat.userData; if (b) { U.tBrush.value.image = b; U.tBrush.value.needsUpdate = true; this.brushIn = sent = true; } }
     // the generated pieces: one step of the one coming in, each frame; a look for the next every fifth of a second
     if (!this.leaving) {
       if (this.job) { try { if (this.job.next().done) this.job = null; } catch (e) { this.job = null; } }
@@ -15013,7 +15031,7 @@ function cellSteelMaterial() {
     sh.uniforms.tTread = m.userData.tTread; sh.uniforms.tBrush = m.userData.tBrush;
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec2 uvM; attribute float aPat; varying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN;")
       .replace("#include <uv_vertex>", "#include <uv_vertex>\n  vUvM = uvM; vPat = aPat;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
+      .replace("#include <project_vertex>", "#include <project_vertex>\n#ifdef USE_INSTANCING\n  vWP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);\n#else\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);\n#endif"); // (an instance's own place counts: the cameras' bodies share this material)
     sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec2 vUvM; varying float vPat; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tTread; uniform sampler2D tBrush;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float pHaz = step(0.5, vPat) * step(vPat, 1.5), pGri = step(1.5, vPat) * step(vPat, 2.5), pRec = step(2.5, vPat);
@@ -15029,9 +15047,16 @@ function cellSteelMaterial() {
         vec3 tread = texture2D(tTread, vWP.xz * 2.2).rgb, brush = texture2D(tBrush, vUvM * vec2(1.4, 0.35)).rgb;
         diffuseColor.rgb *= mix(1.0, 0.86 + 0.5 * (tread.g - 0.5) + 0.12, up);`)
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.6, pHaz);\n  roughnessFactor *= mix(mix(1.0, mix(0.78, 1.3, brush.b), plain), mix(0.6, 1.35, tread.b), up);")
-      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);");
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, 0.15, pHaz);")
+      // the tread plate's relief: its diamonds tilt the surface, so they catch the lamps and the hall's reflection (only
+      // its colour and roughness were taken before, and the plinth tops stayed a flat pale plane: Phase 2's gate review).
+      // The tops face up, so the picture's frame is the world's (x along x, y along -z); elsewhere nothing changes
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        { vec2 tn = (tread.rg * 2.0 - 1.0) * up;
+          vec3 bent = vec3(tn.x, sqrt(max(1.0 - dot(tn, tn), 0.0)), -tn.y);
+          normal = normalize(normal + mat3(viewMatrix) * ((bent - vec3(0.0, 1.0, 0.0)) * up)); }`);
   };
-  m.customProgramCacheKey = () => "cell-steel-3";
+  m.customProgramCacheKey = () => "cell-steel-4";
   return m;
 }
 
@@ -15194,7 +15219,7 @@ function cellRimCompile(sh) {
     .replace("#include <tonemapping_fragment>", `{
       vec3 nV = normalize(geometry.normal), upV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
       float fr = 1.0 - clamp(dot(nV, geometry.viewDir), 0.0, 1.0), under = clamp(-dot(nV, upV) * 0.8 + 0.25, 0.0, 1.0);
-      gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(fr, 3.0));
+      gl_FragColor.rgb += uCellCol * uCellK * (diffuseColor.rgb * (0.55 * under + 1.1 * fr * fr) + 0.55 * pow(max(fr, 0.0), 3.0));
     }
     #include <tonemapping_fragment>`);
 }
@@ -15208,7 +15233,7 @@ function cellArc() {
   const mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({
     uniforms: { uK: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "attribute float aAcross; varying float vA; void main(){ vA = aAcross; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: "uniform float uK; varying float vA; void main(){ float a = 1.0 - abs(vA); gl_FragColor = vec4(vec3(0.55, 0.85, 1.0) * (pow(a, 3.0) * 3.0 + a * 0.6) * uK, 1.0); }",
+    fragmentShader: "uniform float uK; varying float vA; void main(){ float a = 1.0 - abs(vA); gl_FragColor = vec4(vec3(0.55, 0.85, 1.0) * (pow(max(a, 0.0), 3.0) * 3.0 + a * 0.6) * uK, 1.0); }",
   }));
   mesh.frustumCulled = false; mesh.visible = false; mesh.renderOrder = 6;
   const a = new THREE.Vector3(), b = new THREE.Vector3(), p = new THREE.Vector3(), q = new THREE.Vector3(), D = new THREE.Vector3(), u1 = new THREE.Vector3(), u2 = new THREE.Vector3(), X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0);
@@ -15342,7 +15367,7 @@ function buildCellKit(hall) {
       uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uK: { value: 1 }, uCalm: { value: calm ? 1 : 0 } }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "attribute float aAcross; attribute float aPh; varying float vA; varying float vPh; varying float vDepth; void main(){ vA = aAcross; vPh = aPh; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
       fragmentShader: `${GLSL_FOG_PARS} uniform float uTime; uniform float uK; uniform float uCalm; varying float vA; varying float vPh; varying float vDepth;
-        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(a, 4.0) * 1.8 + a * a * 0.28) * drop * mix(0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0), 1.0, uCalm);
+        void main(){ float a = 1.0 - abs(vA); float drop = mix(step(0.06, fract(uTime * 0.23 + vPh * 1.7)), 1.0, uCalm); float k = (pow(abs(a), 4.0) * 1.8 + a * a * 0.28) * drop * mix(0.85 + 0.15 * sin(uTime * 31.0 + vPh * 40.0), 1.0, uCalm);
           gl_FragColor = vec4(vec3(1.0, 0.09, 0.12) * k * uK * (1.0 - smoothstep(uFogNear, uFogFar * 1.1, vDepth)), 1.0); }`,
     }));
     kit.laser.frustumCulled = false; kit.laser.renderOrder = 5;
@@ -16362,7 +16387,7 @@ class HubScene extends Scene3D {
       uniforms: { uColor: { value: new THREE.Color(0, 0, 0) } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(vUv.y, 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
+      fragmentShader: "uniform vec3 uColor; varying vec2 vUv; void main(){ float x = abs(vUv.x - 0.5) * 2.0; gl_FragColor = vec4(uColor * pow(max(vUv.y, 0.0), 1.4) * (1.0 - 0.72 * x * x), 1.0); }",
     }));
     this.heroSpill.matrixAutoUpdate = false;
     this.heroSpill.frustumCulled = false;
@@ -18350,7 +18375,7 @@ class BlasterShards {
         void main(){
           vec3 n = normalize(cross(dFdx(vV), dFdy(vV)));
           float l = max(dot(n, normalize(vec3(0.3, 0.8, 0.6))), 0.0);
-          float rim = pow(1.0 - abs(dot(n, normalize(-vV))), 2.0);
+          float rim = pow(abs(1.0 - abs(dot(n, normalize(-vV)))), 2.0);
           gl_FragColor = vec4(vC * (0.3 + 1.2 * l + 1.4 * rim), 1.0);
         }`,
     });
@@ -19517,9 +19542,9 @@ class BlasterJet {
       fragmentShader: `uniform float uTime; uniform float uI; uniform vec3 uHot; uniform vec3 uCool; varying float vT; varying float vCore; varying vec3 vN; varying vec3 vV;
         void main(){
           float f = abs(dot(normalize(vN), normalize(vV)));
-          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float body = pow(max(1.0 - vT, 0.0), 1.4) * (0.35 + 0.65 * f);
           float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
-          vec3 c = mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6);
+          vec3 c = mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(max(1.0 - vT, 0.0), 3.0) * 0.6);
           gl_FragColor = vec4(c * (body * diamonds * uI * (vCore > 0.5 ? 1.3 : 0.75)), 1.0);
         }`,
     });
@@ -19535,7 +19560,7 @@ class BlasterJet {
       vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
       fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
         void main(){
-          float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+          float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 2.4);
           const vec2 s = vec2(1.0, 1.7320508);
           vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
           vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -19543,7 +19568,7 @@ class BlasterJet {
           vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
           float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
           float dist = distance(vP, uHitP);
-          float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+          float ring = uHit * exp(-pow(abs((dist - (1.0 - uHit) * 2.4) * 3.0), 2.0));
           float flare = uHit * uHit * exp(-dist * 1.6);
           float base = uOn * (fres * (0.06 + 0.4 * uGlow) + line * fres * (0.12 + 0.6 * uGlow) + line * 0.008);
           gl_FragColor = vec4(uColor * (base + line * (ring * 1.6 + flare * 1.2) + fres * (ring + flare) * 0.8), 1.0);
@@ -20024,7 +20049,7 @@ function fighterBowMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform float uW; uniform vec3 uColor; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 1.6);
         float a = atan(vP.y, vP.x);
         float streak = pow(0.5 + 0.5 * sin(a * 22.0 + sin(a * 5.0) * 2.0), 6.0) * (0.35 + 0.65 * fract(vP.z * 1.3 + uTime * 2.6 + sin(a * 9.0)));
         gl_FragColor = vec4(uColor * (uW * (fres * 0.45 + streak * 0.55) * smoothstep(0.0, 0.35, -vP.z)), 1.0);
@@ -20039,7 +20064,7 @@ function fighterShieldMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOn; uniform float uHit; uniform vec3 uHitP; uniform float uGlow; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.4);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 2.4);
         const vec2 s = vec2(1.0, 1.7320508);
         vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
         vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -20047,7 +20072,7 @@ function fighterShieldMaterial() {
         vec2 a = abs(dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw);
         float line = 1.0 - smoothstep(0.0, 0.07, 0.5 - max(dot(a, s * 0.5), a.x));
         float dist = distance(vP, uHitP);
-        float ring = uHit * exp(-pow((dist - (1.0 - uHit) * 2.4) * 3.0, 2.0));
+        float ring = uHit * exp(-pow(abs((dist - (1.0 - uHit) * 2.4) * 3.0), 2.0));
         float flare = uHit * uHit * exp(-dist * 3.0);
         float near = exp(-dist * 1.5); // (how close to the blow)
         float base = max(uOn, 0.34) * (fres * (0.06 + 0.4 * uGlow) * (1.0 + 7.0 * uHit) + (line * fres * (0.12 + 0.6 * uGlow) + line * 0.008) * (1.0 + 9.0 * uHit * (0.16 + 0.84 * near)));
@@ -20153,9 +20178,9 @@ class BlasterFighter {
       fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uIon; ${FLAME_VARY}
         void main(){
           float f = abs(dot(normalize(vN), normalize(vV)));
-          float body = pow(1.0 - vT, 1.4) * (0.35 + 0.65 * f);
+          float body = pow(max(1.0 - vT, 0.0), 1.4) * (0.35 + 0.65 * f);
           float diamonds = 0.7 + 0.5 * pow(0.5 + 0.5 * sin(vT * 15.0 - uTime * 9.0), 3.0);
-          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(1.0 - vT, 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
+          vec3 c = vKind < 0.5 ? mix(uCool, uHot, vCore > 0.5 ? 1.0 : pow(max(1.0 - vT, 0.0), 3.0) * 0.6) : uIon * (vCore > 0.5 ? 1.5 : 0.8);
           gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.5 : 0.42)), 1.0);
         }`,
     });
@@ -20553,7 +20578,7 @@ function spaceHullMaterial(shared, o = {}) {
         vec2 pc = uv / vPanel, pf = fract(pc);
         float seam = max(step(0.95, pf.x), step(0.93, pf.y));
         vec3 alb = vC * uTint * (0.84 + 0.32 * h21(floor(pc) + vSeed * 3.0)) * (1.0 - 0.34 * seam);
-        float key = max(dot(n, uSunDir), 0.0), fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        float key = max(dot(n, uSunDir), 0.0), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
         vec3 col = alb * (uAmb + uSunCol * key) + uRimCol * fr * (0.25 + 0.6 * dot(alb, vec3(0.33)));
         vec3 fd = vW - uFlashPos;
         col += alb * uFlashCol * (1.0 / (1.0 + 0.0012 * dot(fd, fd)));
@@ -20657,10 +20682,10 @@ class BlasterSpace {
           col = mix(col, uC, smoothstep(0.62, 0.96, t.g) * 0.4);
           col = mix(col, uGold, smoothstep(0.5, 1.05, dens) * 0.45);
           float lane = 1.0 - 0.7 * smoothstep(0.55, 0.76, t.b) * smoothstep(0.5, 0.2, t.r);
-          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(dens, 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
+          vec3 c = uBase * (0.6 + 0.36 * d.y) + col * ((1.0 - exp(-pow(max(dens, 0.0), 1.4) * 3.2)) * 0.44 * uNebK * lane) + mix(uA, uB, t.b) * (0.02 * uNebK * (t.r + t.g)); // (space is dark: darker than the panels the answers stand on)
           c += vec3(0.85, 0.9, 1.0) * texture2D(uNeb, uv * 6.5 + vec2(0.13, 0.71)).a * 2.2 * uStarK * (1.0 - min(1.0, dens * 2.5));
           float sd = max(dot(d, uSunDir), 0.0);
-          c += uSunCol * (pow(sd, 6000.0) * 4.0 + pow(sd, 700.0) * 0.4 + pow(sd, 70.0) * 0.08);
+          c += uSunCol * (pow(max(sd, 0.0), 6000.0) * 4.0 + pow(max(sd, 0.0), 700.0) * 0.4 + pow(max(sd, 0.0), 70.0) * 0.08);
           // darker and quieter round the way ahead, where the enemy and the answers are
           c *= mix(1.0 - uCalm, 1.0, smoothstep(0.02, 0.2, length(uv - vec2(0.0, 0.015))));
           c += uFlash * (0.06 + dens * 0.9); // a blast lights the dust
@@ -20757,7 +20782,7 @@ class BlasterSpace {
           alb = mix(alb, uC, (0.5 + 0.5 * sin((vP.y - turb * 1.6) * 43.0 + 1.3)) * 0.32);
           vec2 sv = (vec2(atan(vP.z, vP.x), vP.y) - vec2(2.2, -0.26)) * vec2(2.6, 8.0);
           alb = mix(alb, uGold, exp(-dot(sv, sv)) * 0.85); // the great storm
-          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(1.0 - max(dot(n, v), 0.0), 2.6);
+          float day = smoothstep(-0.12, 0.38, dot(n, uSunDir)), fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 2.6);
           gl_FragColor = vec4(alb * (0.015 + 0.78 * day) + uRim * fr * (0.1 + 0.55 * day), 1.0);
         }`,
     })));
@@ -21016,7 +21041,7 @@ class BlasterSpace {
           float r = length(vP), a = atan(vP.y, vP.x);
           float arms = smoothstep(0.1, 0.95, 0.5 + 0.5 * sin(a * 4.0 + log(r + 0.02) * 9.0 - uTime * 0.9)) * (0.6 + 0.4 * sin(a * 9.0 - log(r + 0.02) * 15.0 + uTime * 0.5));
           float disc = smoothstep(1.0, 0.6, r) * smoothstep(0.02, 0.2, r);
-          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow((r - 0.86) * 9.0, 2.0)) * 0.8;
+          vec3 col = mix(uColA, uColB, arms) * (arms * 0.9 + 0.1) * disc + vec3(1.0, 0.95, 0.9) * exp(-r * r * 26.0) * 2.4 + uColB * exp(-pow(abs((r - 0.86) * 9.0), 2.0)) * 0.8;
           gl_FragColor = vec4(col * uK, 1.0);
         }`,
     });
@@ -21433,7 +21458,7 @@ function spaceGlowMaterial(trail) {
     defines: trail ? { SPACE_TRAIL: 1 } : {},
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "varying vec3 vC; varying vec2 vUv; void main(){ vUv = uv; vC = vec3(1.0);\n#ifdef USE_INSTANCING_COLOR\nvC = instanceColor;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }",
-    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(1.0 - vUv.y, 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float a = 1.0;\n#ifdef SPACE_TRAIL\na = pow(abs(1.0 - vUv.y), 2.0) * pow(max(0.0, 1.0 - abs(vUv.x - 0.5) * 2.0), 1.5);\n#endif\ngl_FragColor = vec4(vC * a, 1.0); }",
   });
 }
 
@@ -21493,7 +21518,7 @@ function spaceRunningLightMat() {
         vUv = aCor.xy;
         gl_Position = c;
       }`,
-    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(1.0 - (d - 0.45) / 0.55, 2.0)), 1.0); }",
+    fragmentShader: "varying vec3 vC; varying vec2 vUv; void main(){ float d = length(vUv); if (d > 1.0) discard; gl_FragColor = vec4(vC * (d < 0.45 ? 1.0 : pow(abs(1.0 - (d - 0.45) / 0.55), 2.0)), 1.0); }",
   });
 }
 
@@ -21650,7 +21675,7 @@ function spaceDartMaterial() {
     fragmentShader: `varying vec3 vC; varying vec2 vUv;
       void main(){
         float t = vUv.y, x = abs(vUv.x - 0.5) * 2.0;                        // along it (0 its tail, 1 its head); across it (0 on its axis, 1 at its edge)
-        float w = t < 0.86 ? pow(t / 0.86, 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
+        float w = t < 0.86 ? pow(max(t / 0.86, 0.0), 1.5) : 1.0 - (t - 0.86) / 0.14;  // a long tail swelling to a short pointed head
         float aa = fwidth(x) * 1.2 + 1e-4;
         float body = 1.0 - smoothstep(w - aa, w, x), core = 1.0 - smoothstep(w * 0.34 - aa, w * 0.34, x);
         if (body < 0.004) discard;
@@ -22176,7 +22201,7 @@ function demonSkin(env, U) {
         // a cool key from the upper left: its front is no longer a black shape cut out by its rim
         totalEmissiveRadiance += (diffuseColor.rgb * 2.6 + vec3(0.012, 0.014, 0.024)) * vec3(0.55, 0.68, 1.0) * (pow(max(dot(normal, normalize(vec3(-0.55, 0.62, 0.56))), 0.0), 1.6) * 1.15 * dmShade);
         // rim lights: magenta and cyan from the sides, the wave's colour, and a cold one from above and behind
-        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(1.0 - dmNV, 4.0) + vec3(0.42, 0.5, 0.95) * (pow(1.0 - dmNV, 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
+        totalEmissiveRadiance += neonRim(normal, dmV, 3.0) * uDmRimK + uDmRim * pow(abs(1.0 - dmNV), 4.0) + vec3(0.42, 0.5, 0.95) * (pow(max(1.0 - dmNV, 0.0), 3.5) * smoothstep(-0.1, 0.9, normal.y) * uDmKick);
         // its own light spills on the armour near it: the core's on its chest, jaw and arms, the eyes' on its brow and cheeks
         vec3 dmLc = vec3(0.008, 0.256, 0.21) - vDmP, dmLe = vec3(sign(vDmP.x) * 0.04, 0.455, 0.21) - vDmP, dmL3 = vec3(0.003, 0.514, 0.24) - vDmP;
         float dmDc = dot(dmLc, dmLc), dmDe = dot(dmLe, dmLe), dmD3 = dot(dmL3, dmL3);
@@ -22197,14 +22222,14 @@ function demonSkin(env, U) {
           vec2 dmCd = vDmP.xy - vec2(0.008, 0.256);
           totalEmissiveRadiance += mix(vec3(2.4, 0.3, 1.0), vec3(3.0, 0.25, 0.35), uDmRage) * dmOn * (0.03 + 1.9 * exp(-dot(dmCd, dmCd) * 750.0)) * (0.35 + 0.9 * dmT.r) * (1.0 - 0.75 * neonGroove(dmT)) * (0.5 + 0.9 * uDmBeat + 0.8 * uDmExpose);
         }
-        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(dmTip, 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
-        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(dmTip, 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
+        if (dmZone > 1.5 && dmZone < 2.5) totalEmissiveRadiance += mix(vec3(1.9, 0.2, 1.3), vec3(2.4, 0.15, 0.3), uDmRage) * pow(abs(dmTip), 4.0) * 0.8 * dmOn * (0.6 + 0.8 * uDmBeat); // horns and wing spikes, toward their tips
+        if (dmZone > 6.5 && dmZone < 7.5) totalEmissiveRadiance += vec3(1.3, 0.3, 2.4) * pow(abs(dmTip), 2.0) * dmOn * (0.15 + uDmClaw); // claws: energy
         if (dmZone > 5.5 && dmZone < 6.5) totalEmissiveRadiance += vec3(2.4, 0.4, 1.3) * (1.0 - smoothstep(0.0, 0.1, dmCut)) * dmOn; // the burning edge of its tatters
         if (dmZone > 0.5 && dmZone < 1.5) { // the skull: lit from inside its eye sockets and its mouth
           vec3 dmE = vec3(abs(vDmP.x) - 0.04, vDmP.y - 0.455, vDmP.z - 0.165), dmM = vDmP - vec3(0.0, 0.395, 0.155);
           totalEmissiveRadiance += uDmEye * exp(-dot(dmE, dmE) * 4200.0) + vec3(2.6, 0.45, 0.9) * uDmMouth * exp(-dot(dmM, dmM) * 1100.0);
         }
-        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
+        totalEmissiveRadiance += uDmHitCol * uDmHit * (0.03 + 1.15 * pow(max(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 0.0), 2.6)) + vec3(6.0, 1.6, 2.4) * dmBurn + vec3(1.0, 0.22, 0.34) * uDmBoomHot * (0.3 + 0.7 * dmL);`)
       // (what it reflects is dimmed by that shading, its own light is not; and what is furthest back sinks into the haze of the place)
       .replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;",
         "vec3 outgoingLight = (reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular) * dmShade + totalEmissiveRadiance;\noutgoingLight = mix(outgoingLight, uDmHaze, 0.1 + smoothstep(0.08, -0.22, vDmP.z) * 0.5);");
@@ -22259,7 +22284,7 @@ class BlasterDemon {
           float R = 0.6;
           float wd = mix(0.006, 0.016, smoothstep(-0.7, 0.6, p.y)); // (the line swells over its shoulders and thins under it)
           float gap = smoothstep(0.012, 0.034, abs(fract(a * 0.4775 + uTime * 0.012) - 0.5)); // three breaks in it, turning slowly
-          float limb = (exp(-pow((r - R) / wd, 2.0)) + 0.35 * exp(-pow((r - R) / 0.03, 2.0))) * (0.2 + 0.8 * gap);
+          float limb = (exp(-pow(abs((r - R) / wd), 2.0)) + 0.35 * exp(-pow(abs((r - R) / 0.03), 2.0))) * (0.2 + 0.8 * gap);
           float rays = 0.55 + 0.45 * sin(a * 7.0 + uTime * 0.21) * sin(a * 3.0 - uTime * 0.13);
           float corona = smoothstep(R - 0.02, R + 0.004, r) * exp(-(r - R) * 5.0) * rays;
           float back = (1.0 - smoothstep(R - 0.06, R, r)) * (1.0 - 0.62 * smoothstep(0.0, R, r)); // a disc of light inside the ring: wings and horns are dark against it
@@ -22987,9 +23012,9 @@ function starPlumeMaterial(U) {
     fragmentShader: `uniform float uTime; uniform vec3 uHot; uniform vec3 uCool; uniform vec3 uTail; ${VARY}
       void main(){
         float f = abs(dot(normalize(vN), normalize(vV)));
-        float body = pow(1.0 - vT, 1.3) * (0.3 + 0.7 * f);
+        float body = pow(max(1.0 - vT, 0.0), 1.3) * (0.3 + 0.7 * f);
         float diamonds = 0.74 + 0.5 * pow(0.5 + 0.5 * sin(vT * 16.0 - uTime * 10.0), 3.0); // shock diamonds, running down the flame
-        vec3 c = vCore > 0.5 ? mix(uCool, uHot, pow(1.0 - vT, 2.0)) : mix(uTail, uCool, pow(1.0 - vT, 1.6));
+        vec3 c = vCore > 0.5 ? mix(uCool, uHot, pow(abs(1.0 - vT), 2.0)) : mix(uTail, uCool, pow(max(1.0 - vT, 0.0), 1.6));
         gl_FragColor = vec4(c * (body * diamonds * vPow * (vCore > 0.5 ? 0.6 : 0.4)), 1.0);
       }`,
   });
@@ -23005,7 +23030,7 @@ function starShellMaterial() {
     vertexShader: "varying vec3 vP; varying vec3 vN; varying vec3 vV; void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uK; uniform float uHit; uniform vec3 uHitP; varying vec3 vP; varying vec3 vN; varying vec3 vV;
       void main(){
-        float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0);
+        float fres = pow(max(1.0 - abs(dot(normalize(vN), normalize(vV))), 0.0), 3.0);
         const vec2 s = vec2(1.0, 1.7320508);
         vec2 q = vP.xz * 5.0 + vec2(0.0, uTime * 0.15);
         vec4 hc = floor(vec4(q, q - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
@@ -23424,7 +23449,7 @@ class BlasterOverlord {
     this.maw = spr(A.mouth, new THREE.Color(2.6, 0.5, 1.2), 0.16);
     this.claws = [spr(A.clawL, new THREE.Color(1.3, 0.35, 2.6), 0.2), spr(A.clawR, new THREE.Color(1.3, 0.35, 2.6), 0.2)];
     this.tips = [spr(A.wingTipL, new THREE.Color(2.6, 1.3, 0.3), 0.16), spr(A.wingTipR, new THREE.Color(2.6, 1.3, 0.3), 0.16)];
-    this.glows = new GlowBatch(g.scene, [this.coreGlow, this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its nine small lights in one draw: GlowBatch, 04-gfx.js; the large light behind it stays a sprite)
+    this.glows = new GlowBatch(g.scene, [this.eyeGlow, ...this.eyeDots, this.maw, ...this.claws, ...this.tips], 3); // (its eight small round lights in one draw: GlowBatch, 04-gfx.js; its core's glow, a rift taller than it is wide, and the large light behind it stay sprites)
     this.glow = glowSprite(new THREE.Color(0.35, 0.3, 0.9), 2.4, 0); // (cold light behind it: its dark wings and horns stand against it)
     this.glow.position.set(0, 0.05, -0.3);
     this.glow.renderOrder = 2;
@@ -24641,7 +24666,7 @@ class BlasterEscort {
         uniforms: this.broodU, fog: false,
         vertexShader: "varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
         // (a dark shape; a rim of the region's light round its edges, a little more from above)
-        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(f, 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
+        fragmentShader: "uniform vec3 uRim; uniform vec3 uBody; uniform float uK; varying vec3 vN; varying vec3 vV; void main(){ vec3 n = normalize(vN); float f = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0); gl_FragColor = vec4(uBody + uRim * (pow(max(f, 0.0), 3.0) * 1.7 + 0.25 * max(0.0, n.y) * f) * uK, 1.0); }",
       });
       this.brood = [0, 1, 2].map(() => { const m = new THREE.Mesh(this.broodGeo[0], mat); m.visible = false; m.renderOrder = -5; /* (the lens's own culling: one out of the picture is not drawn) */ s.add(m); return { m, on: false, t: 0, delay: 0, slot: 0, home: new THREE.Vector3(), v: new THREE.Vector3(), out: 0, ph: Math.random() * 6.28, size: 1 }; });
     } else this.brood = [];
@@ -25164,16 +25189,16 @@ function racerGroundMaterial(mirror, shared) {
         }
         float ah = ${racerF(RACER_CAR_Z - 2.2)} - zc; // distance ahead of the front bumper
         float hw = 0.32 + ah * 0.1;
-        float beams = exp(-pow((x - uCarX + 0.62) / hw, 2.0)) + exp(-pow((x - uCarX - 0.62) / hw, 2.0));
+        float beams = exp(-pow(abs((x - uCarX + 0.62) / hw), 2.0)) + exp(-pow(abs((x - uCarX - 0.62) / hw), 2.0));
         lt += vec3(1.0, 0.9, 0.78) * uHead * smoothstep(0.0, 1.5, ah) * exp(-ah * 0.07) * min(beams, 1.3);
         lt += uUnder * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 0.2)}), vec2(1.75, 2.9));
         lt += uTailC * uTail * pool(vec2(x - uCarX, zc - ${racerF(RACER_CAR_Z + 2.5)}), vec2(1.15, 0.8));
         float gz = z - uGateZ;
         float gk = exp(-gz * gz * 0.16) * uGateI;
         if (gk > 0.003) {
-          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow((x + 3.75) * 1.1, 2.0)) + uSlot1 * exp(-pow((x + 1.25) * 1.1, 2.0))
-            + uSlot2 * exp(-pow((x - 1.25) * 1.1, 2.0)) + uSlot3 * exp(-pow((x - 3.75) * 1.1, 2.0)));
-          else lt += gk * (uSlot0 * exp(-pow((x + 2.5) * 0.55, 2.0)) + uSlot1 * exp(-pow((x - 2.5) * 0.55, 2.0)));
+          if (uGateN > 2.5) lt += gk * (uSlot0 * exp(-pow(abs((x + 3.75) * 1.1), 2.0)) + uSlot1 * exp(-pow(abs((x + 1.25) * 1.1), 2.0))
+            + uSlot2 * exp(-pow(abs((x - 1.25) * 1.1), 2.0)) + uSlot3 * exp(-pow(abs((x - 3.75) * 1.1), 2.0)));
+          else lt += gk * (uSlot0 * exp(-pow(abs((x + 2.5) * 0.55), 2.0)) + uSlot1 * exp(-pow(abs((x - 2.5) * 0.55), 2.0)));
         }
         col += lt * mix(0.4, 0.75 - 0.3 * puddle, road);
         float sk = uSunK * smoothstep(-34.0, -100.0, z) * road;
@@ -25303,7 +25328,7 @@ function racerCityMaterial(shared, P, maps) {
             // it the more the wall is seen edge on), or a room lit in clusters, amber, cyan or magenta (in the picture),
             // brighter under its ceiling and shaded under the lintel
             vec3 V = normalize(cameraPosition - vW);
-            float fr = 0.04 + 0.96 * pow(1.0 - abs(dot(n, V)), 5.0);
+            float fr = 0.04 + 0.96 * pow(max(1.0 - abs(dot(n, V)), 0.0), 5.0);
             vec3 env = mix((vL.x < 0.0 ? uLampR : uLampL) * (0.12 * uLampI) + uFogColor * 0.2, uFogColor * 0.6 + vec3(0.01, 0.012, 0.03), smoothstep(5.0, 22.0, q.y));
             vec3 room = tw.rgb * (0.45 + 1.25 * uCity) * (0.8 + 0.35 * smoothstep(0.7, 1.8, lp.y)) * (1.0 - 0.45 * smoothstep(1.7, 1.92, lp.y) * fine);
             glass = vec3(0.004, 0.006, 0.012) + env * fr + room;
@@ -25344,7 +25369,7 @@ function racerCityMaterial(shared, P, maps) {
           // brass: warm metal with a highlight and a soft rim
           vec3 v = normalize(cameraPosition - vW);
           float spec = pow(max(dot(reflect(-uKeyDir, n), v), 0.0), 14.0);
-          float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          float rim = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
           col = vCol * (uAmb * 1.5 + uKey * (0.25 + 0.8 * lit)) + vec3(1.0, 0.8, 0.5) * spec * 0.8 + vCol * rim * 0.4;
         }
         float fg = max(smoothstep(uFogNear, uFogFar, vDepth), 1.0 - vFar);
@@ -27019,7 +27044,7 @@ function racerCarPaint(env, hull) {
       .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
         totalEmissiveRadiance += vColor * (smoothstep(0.62, 0.8, dot(vColor, vec3(0.3333))) * 0.2); // pale rims stay pale at night
         // the sky's light catches every edge turned away from the camera: the car keeps its outline on a dark road
-        totalEmissiveRadiance += uCarRim * (pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 3.0) * carMetal * (1.0 - 0.75 * carUp));`)
+        totalEmissiveRadiance += uCarRim * (pow(max(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 0.0), 3.0) * carMetal * (1.0 - 0.75 * carUp));`)
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor *= carMetal; metalnessFactor = mix(metalnessFactor, 0.45, smoothstep(0.18, 0.34, vColor.r - vColor.b));");
   };
   m.customProgramCacheKey = () => "racer-car-paint4-" + (hull ? 1 : 0);
@@ -27057,8 +27082,8 @@ class RacerCar {
           {
             float dl = mod(uScroll + ${racerF(RACER_P / 2 - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0; // how far ahead (-) or behind (+) the nearest left lamp stands
             float dr = mod(uScroll + ${racerF(RACER_P - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0;
-            float bl = exp(-pow((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3, 2.0)) * smoothstep(0.8, -0.45, vGlassP.x);
-            float br = exp(-pow((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3, 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
+            float bl = exp(-pow(abs((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(0.8, -0.45, vGlassP.x);
+            float br = exp(-pow(abs((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
             totalEmissiveRadiance += (uGlassL * bl + uGlassR * br) * (0.34 * uLampI);
             totalEmissiveRadiance += mix(uGlassSky2, uGlassSky, smoothstep(-0.9, 1.7, vGlassP.z)) * 0.36;
           }`);
@@ -27266,7 +27291,7 @@ class RacerCar {
       uniforms: { uI: { value: 0.5 } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       vertexShader: "attribute vec3 aCol; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vCol = aCol; vT = clamp((-2.26 - position.z) / 11.0, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-      fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
+      fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(1.0 - vT, 0.0), 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
     }));
     this.beams.layers.set(1);
     chassis.add(this.beams);
@@ -27696,7 +27721,7 @@ function racerTrafficMaterial(P, sky) {
         vec3 col = vCol;
         if (vLit < 0.5) {
           vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vW);
-          float fr = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+          float fr = pow(max(1.0 - max(dot(n, v), 0.0), 0.0), 3.0);
           col = vCol * (uAmb + uKey * max(dot(n, uKeyDir), 0.0)) + uSkyC * fr * 0.3 * (0.3 + 0.7 * max(n.y, 0.0));
           #ifdef SKY
           col += skyAt(reflect(-v, n)) * ((0.08 + 0.62 * fr) * vGloss);
@@ -27775,7 +27800,7 @@ function racerGenSkin(base, U, half, repaint) {
     cut: "float tfPaint = 0.0;",
     albedo: `{ float tfL = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)), tfS = max(max(diffuseColor.r, diffuseColor.g), diffuseColor.b) - min(min(diffuseColor.r, diffuseColor.g), diffuseColor.b);
         tfPaint = (1.0 - smoothstep(0.06, 0.22, tfL)) * (1.0 - smoothstep(0.03, 0.1, tfS));
-        diffuseColor.rgb = mix(diffuseColor.rgb, pow(vTfTint, vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }` // (a deep candy lacquer over the black: what it mirrors takes its colour)
+        diffuseColor.rgb = mix(diffuseColor.rgb, pow(max(vTfTint, 0.0), vec3(2.2)) * (0.5 + tfL * 3.0) + 0.012, tfPaint); }` // (a deep candy lacquer over the black: what it mirrors takes its colour)
       + (repaint ? `
       { vec3 rvC = diffuseColor.rgb; float rvL = dot(rvC, vec3(0.3, 0.59, 0.11)), rvW = smoothstep(0.03, 0.12, rvC.r - rvC.b) * smoothstep(0.05, 0.16, rvL);
         vec3 rvV = vec3(0.3, 0.11, 0.68) * (0.22 + 1.4 * rvL), rvS = vec3(0.74, 0.77, 0.84) * (0.3 + 0.75 * rvL);
@@ -27810,7 +27835,7 @@ function racerShaft(color, r0, r1, len, sides = 12) {
     uniforms: { uI: { value: 1 }, uColor: { value: new THREE.Color(color) }, uLen: { value: len } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexShader: "uniform float uLen; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vT = clamp(position.y / uLen, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-    fragmentShader: "uniform float uI; uniform vec3 uColor; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.5) * smoothstep(0.0, 0.04, vT) * rim * rim; gl_FragColor = vec4(uColor * (a * uI), 1.0); }",
+    fragmentShader: "uniform float uI; uniform vec3 uColor; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(1.0 - vT, 0.0), 1.5) * smoothstep(0.0, 0.04, vT) * rim * rim; gl_FragColor = vec4(uColor * (a * uI), 1.0); }",
   }));
   m.layers.set(1);
   m.frustumCulled = false;
@@ -29060,7 +29085,7 @@ class RacerRig {
         uniforms: { uI: { value: 0.5 }, uZ0: { value: head[0].z - 0.06 } },
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         vertexShader: "attribute vec3 aCol; uniform float uZ0; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ vCol = aCol; vT = clamp((uZ0 - position.z) / 11.0, 0.0, 1.0); vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }",
-        fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(1.0 - vT, 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
+        fragmentShader: "uniform float uI; varying vec3 vCol; varying float vT; varying vec3 vN; varying vec3 vV; void main(){ float rim = abs(dot(normalize(vN), normalize(vV))); float a = pow(max(1.0 - vT, 0.0), 1.7) * smoothstep(0.0, 0.06, vT) * rim * rim; gl_FragColor = vec4(vCol * a * uI, 1.0); }",
       }));
       this.beams.layers.set(1);
       fx.add(this.beams); }
@@ -30259,12 +30284,13 @@ class BossGame extends QuizGame {
     const key = new THREE.DirectionalLight(0xe6deff, 1.4);
     key.position.set(3, 8, 10);
     s.add(key);
-    // Two lamps behind it, either side, edge it against the dark stands: one in its own colour, one in the arena's
-    // second (the art bible: the rim in the world's second colour; it was the boss's colour too, or its complement,
-    // and lit the stands behind it in its own colour); a third at its feet in front lights it from below.
+    // Two lamps behind it, either side, edge it against the dark stands in the arena's two colours (the art bible: the
+    // rims in the world's pair; the left one was the boss's own colour at 4.6 and reached 46 m, so a cyan boss's
+    // stands went blue on one side: Phase 2's gate review); a third at its feet in front, in its own colour, lights it
+    // from below.
     const big = this.bossKey === "all" ? 1.3 : 1; // (the final boss is the brightest thing in the building)
     // (the second is an edge, not a second key: at full strength it turned black armour pale)
-    const rims = [[-11, col.getHex(), 4.6 * big], [11, P.b.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
+    const rims = [[-11, P.a.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 3.4 * big], [11, P.b.clone().lerp(new THREE.Color(0xffffff), 0.15).getHex(), 1.9]].map(([x, c, k]) => { const l = new THREE.PointLight(c, k, 46, 1.6); l.position.set(x, 8, -9); s.add(l); return l; });
     const under = new THREE.PointLight(col.getHex(), 0.85 * big, 24, 1.8);
     const edge = new THREE.DirectionalLight(0xffffff, 0.95); // a pale edge along its head and shoulders, whatever colour the arena is
     edge.position.set(0, 10, -9);
@@ -30305,7 +30331,7 @@ class BossGame extends QuizGame {
     this.plates = cellFlatTexture();
     this.floor = makeNeonFloor({
       size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
-      probe: { map: this.probe.map, min: new THREE.Vector3(-25, 0, -29), max: new THREE.Vector3(25, 16, 24), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
+      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
       plates: { map: this.plates, size: 2.4, k: 0.8 },
     });
     // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
@@ -30572,7 +30598,7 @@ class BossGame extends QuizGame {
       fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uTime; varying float vT; varying vec3 vN; varying vec3 vV;
         void main(){
           float face = pow(abs(dot(normalize(vN), normalize(vV))), 1.4);
-          float fall = pow(1.0 - vT, 1.5) * smoothstep(0.0, 0.04, vT);
+          float fall = pow(max(1.0 - vT, 0.0), 1.5) * smoothstep(0.0, 0.04, vT);
           float flick = 0.92 + 0.08 * sin(uTime * 9.0 + vT * 5.0);
           gl_FragColor = vec4(uColor * uI * face * fall * flick, 1.0);
         }`,
@@ -31375,9 +31401,9 @@ function cyborgArmor(env, hex) {
         else {
           vec3 cyV = normalize(vViewPosition);
           float cyNV = max(dot(geometryNormal, cyV), 0.0);
-          totalEmissiveRadiance += emissive * 21.0 * pow(1.0 - cyNV, 3.0); // a rim of its own colour along every edge that turns away
+          totalEmissiveRadiance += emissive * 21.0 * pow(max(1.0 - cyNV, 0.0), 3.0); // a rim of its own colour along every edge that turns away
           // a cool rim from above and behind on the plate: black armour keeps an edge against a dark crowd
-          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(1.0 - cyNV, 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
+          totalEmissiveRadiance += vec3(0.2, 0.42, 0.9) * pow(max(1.0 - cyNV, 0.0), 2.6) * smoothstep(-0.25, 0.6, geometryNormal.y) * 0.32 * (1.0 - cyBone);
           // one hard, stepped highlight from the key lamp: lacquer on the plate, brighter on steel (a flat face catches it whole, as a toy's does). Paper takes none.
           float cyS = dot(reflect(-cyV, geometryNormal), normalize(vec3(-0.32, 0.62, 0.72)));
           float cyHi = smoothstep(0.93, 0.945, cyS) * 0.55 + smoothstep(0.985, 0.992, cyS) * 0.45;
@@ -34833,7 +34859,7 @@ class Wizard {
             totalEmissiveRadiance += diffuseColor.rgb * uWizFill; // (a little light of its own: its colours hold in the darkest arena)`)
           .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
               float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
-              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(fr, 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
+              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(max(fr, 0.0), 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
             }
             #include <tonemapping_fragment>`);
       };
@@ -35422,7 +35448,7 @@ function memoryWallMaterial(brush) {
       // a light's two lobes on brushed steel: a broad sheen and a sharp highlight
       float sheen(vec3 N, vec3 L, vec3 V, float rough){
         float nh = max(dot(N, normalize(L + V)), 0.0), sh = 2.0 / max(rough * rough * rough * rough, 1e-3);
-        return 0.3 * pow(nh, 7.0) + pow(nh, sh) * (sh + 2.0) * 0.012;
+        return 0.3 * pow(max(nh, 0.0), 7.0) + pow(max(nh, 0.0), sh) * (sh + 2.0) * 0.012;
       }
       void main(){
         const float KICK = 0.62, COVE = 24.02; // (the kick plate's top, and the cove between two rows of doors: 18 rows up)
@@ -35452,7 +35478,7 @@ function memoryWallMaterial(brush) {
         F0 = mix(F0, vec3(0.2, 0.19, 0.22), kick); // (the kick plate: darker, rubbed by boots)
         rough = mix(rough, 0.34, plate);
         float nv = max(dot(N, V), 0.0);
-        vec3 F = F0 + (1.0 - F0) * pow(1.0 - nv, 5.0) * 0.6;
+        vec3 F = F0 + (1.0 - F0) * pow(max(1.0 - nv, 0.0), 5.0) * 0.6;
         // the vault's glow: from the door's rim, nearest this door
         vec2 dv = vWorld.xy - uDoor.xy; float r = length(dv);
         vec3 G = vec3(uDoor.xy + dv / max(r, 1e-3) * (uDoor.z - 1.0), 2.6) - vWorld;
@@ -35501,7 +35527,7 @@ function memoryShaftMaterial() {
         vP = position.xy;
         vec2 d = normalize(position.xy);
         float n = vnoise(vec3(d * 6.0, uTime * 0.1)) * 0.6 + vnoise(vec3(d * 17.0, uTime * 0.17 + 4.0)) * 0.4;
-        vRay = pow(n, 2.6) * 2.4;
+        vRay = pow(max(n, 0.0), 2.6) * 2.4;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }`,
     fragmentShader: `uniform vec3 uColor; uniform float uI; uniform float uR; varying vec2 vP; varying float vRay;
@@ -36951,7 +36977,7 @@ function examWallMaterial(marble) {
         col += uNeon * (1.0 - smoothstep(0.035, 0.035 + px * 1.5, abs(p.y - 12.95))) + uNeon * 0.04 * exp(-abs(p.y - 12.95) * 2.0);
         // the columns' light washing up the wall from the floor, between the windows
         float cx = mod(p.x - 4.0, 8.0) - 4.0;
-        col += uWash * exp(-pow(cx / (0.9 + 0.09 * p.y), 2.0)) * exp(-p.y * 0.13) * 0.42;
+        col += uWash * exp(-pow(abs(cx / (0.9 + 0.09 * p.y)), 2.0)) * exp(-p.y * 0.13) * 0.42;
         // and the dark taking the wall above
         col *= mix(1.0, 0.3, smoothstep(13.5, 34.0, p.y));
         gl_FragColor = vec4(mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
@@ -38200,20 +38226,20 @@ class ExamPuffs {
           float shape = smoothstep(1.0, 0.2, r + (n - 0.5) * 0.9);
           vec3 rgb; float a;
           if (vQ.z < 0.5) {
-            float heat = shape * pow(1.0 - age, 1.6) * (0.55 + 0.75 * n);
+            float heat = shape * pow(max(1.0 - age, 0.0), 1.6) * (0.55 + 0.75 * n);
             vec3 fire = mix(vec3(1.6, 0.25, 0.03), vec3(3.2, 1.5, 0.35), smoothstep(0.15, 0.6, heat));
             fire = mix(fire, vec3(4.0, 3.4, 2.4), smoothstep(0.6, 1.0, heat));
             a = shape * smoothstep(0.25, 0.9, age) * (1.0 - smoothstep(0.75, 1.0, age)) * 0.6;
             rgb = fire * heat * 1.05 + vec3(0.05, 0.045, 0.055) * a;
           } else if (vQ.z < 1.5) {
-            a = shape * smoothstep(0.0, 0.12, age) * pow(1.0 - age, 1.3) * 0.55;
+            a = shape * smoothstep(0.0, 0.12, age) * pow(max(1.0 - age, 0.0), 1.3) * 0.55;
             rgb = (mix(vec3(0.02, 0.018, 0.028), vec3(0.085, 0.075, 0.1), n) + vec3(1.2, 0.45, 0.1) * uGlow * (1.0 - vUv.y) * 0.32) * a;
           } else if (vQ.z < 2.5) {
             a = 0.0;
-            rgb = min(vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(1.0 - age, 2.0), vec3(1.1, 0.92, 0.68)); // (a flash, capped: never a white screen)
+            rgb = min(vec3(3.6, 3.0, 2.2) * pow(max(1.0 - r, 0.0), 2.0) * pow(abs(1.0 - age), 2.0), vec3(1.1, 0.92, 0.68)); // (a flash, capped: never a white screen)
           } else {
             // vapour off its back: thin, and red where the light under it catches it
-            a = shape * smoothstep(0.0, 0.2, age) * pow(1.0 - age, 1.5) * 0.14;
+            a = shape * smoothstep(0.0, 0.2, age) * pow(max(1.0 - age, 0.0), 1.5) * 0.14;
             rgb = (mix(vec3(0.05, 0.04, 0.08), vec3(0.2, 0.17, 0.26), n) + vec3(0.3, 0.04, 0.05) * (1.0 - vUv.y)) * a;
           }
           gl_FragColor = vec4(rgb, a);
@@ -39698,7 +39724,7 @@ function libraryShelfMaterial(len, tall, lampY) {
         }
         // light: a warm pool by each hanging lamp, the violet of the window between them and over the far end
         float dz = mod(vW.z, 8.0) - 4.0;
-        float lampK = exp(-dz * dz * 0.075) * exp(-pow((vW.y - ${lampY.toFixed(1)}) * 0.085, 2.0)) * smoothstep(-52.0, -44.0, vW.z);
+        float lampK = exp(-dz * dz * 0.075) * exp(-pow(abs((vW.y - ${lampY.toFixed(1)}) * 0.085), 2.0)) * smoothstep(-52.0, -44.0, vW.z);
         vec3 light = vec3(0.46, 0.4, 0.98) * 1.7 + vec3(1.3, 0.94, 0.6) * lampK * 3.1 + vec3(0.6, 0.36, 1.0) * 0.7 * smoothstep(-44.0, -74.0, vW.z);
         col *= light;
         float holo = book * step(0.972, h2) * (1.0 - set) * detail;
@@ -39943,7 +39969,7 @@ class LibraryScene extends Scene3D {
           float dz = mod(vW.z, 8.0) - 4.0;
           float pool = exp(-(dz * dz * 0.16 + pow(abs(vW.x) - ${LAMP_X.toFixed(1)}, 2.0) * 0.2)) * smoothstep(-52.0, -44.0, vW.z);
           col += vec3(0.5, 0.34, 0.16) * pool * 0.5;
-          col += vec3(1.0, 0.25, 0.8) * 0.12 * exp(-pow((4.84 - abs(vW.x)) * 1.5, 2.0)); // the magenta line, on the stone beside it
+          col += vec3(1.0, 0.25, 0.8) * 0.12 * exp(-pow(abs((4.84 - abs(vW.x)) * 1.5), 2.0)); // the magenta line, on the stone beside it
           col += vec3(0.3, 0.2, 0.62) * exp(-vW.x * vW.x * 0.05) * smoothstep(-40.0, -74.0, vW.z) * 0.2; // the window's glow at its foot
           col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
           // the window on the stone: each flag is asked which pane its light came through

@@ -95,6 +95,9 @@ module.exports = async (cap) => {
       s.place = function () { this.camBase.set(c.x * 0.28, 2.3, c.z + 4.6); this.lookAt.set(c.x, 2.35, c.z - 0.2); this.placeCamera(); };
       document.querySelector(".scr-title").classList.add("gliding");
     });
+    // (the logo, the dock and the tip go with a CSS transition, which runs on the page's real clock, not the capture's:
+    // wait for them to be gone, or the close-up has the title's end laid over it: Phase 2's gate review)
+    await waitReal(() => { const l = document.querySelector(".scr-title .logo"), d = document.querySelector(".scr-title .title-dock"); return (!l || +getComputedStyle(l).opacity < 0.01) && (!d || +getComputedStyle(d).opacity < 0.01); }, 3000);
     await cap.fast(90);
     await still("04-title-cell-closeup");
   }
