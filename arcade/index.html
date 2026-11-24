@@ -2019,6 +2019,20 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
 @keyframes vault-bank-wide { 0%, 38% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(120, 255, 150, 0); } }
 @keyframes vault-miss-wide { 0%, 20% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0.9); } 100% { box-shadow: inset 0 0 70px -24px rgba(255, 77, 109, 0); } }
 
+/* The title's end on a wide window (the master overhaul, Phase 5, 2026-11-24, from the audit's notes on it). The tip's
+   plate keeps its height, so INSERT COIN never moves as the tips change, and its heading stays at the top; its words
+   stand in the middle of the room under the heading (a short tip left the plate's lower third empty). The dock's
+   shade is a column under the dock, feathered at its sides, not a band the window's width: the cells' plinths, their
+   screens and the floor's light show either side of it (the lower half of the picture was black beside the card; the
+   avenue opened from disk keeps its band). A phone keeps its dock as it was. */
+@media (min-width: 1000px) and (min-height: 600px) and (min-aspect-ratio: 13/10) {
+  .scr-title .attract { align-content: stretch; }
+  .scr-title .attract > span { grid-template-rows: auto 1fr; }
+  .scr-title .attract i { align-self: center; }
+  .scr-title.hall .title-dock::before { left: 50%; right: auto; width: min(100vw, 980px); transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+}
+
 </style>
 </head>
 <body>
@@ -10752,7 +10766,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // the room drawn once from inside it into a cube (map, mipmapped; see roomProbe), the room's box (min, max: Vector3)
   // and where it was drawn from (at); the floor gives the room back where the reflected ray meets the box's walls (so a
   // long hall's cells sit where they should in it), blurred by its roughness, stronger at a grazing look (Fresnel:
-  // f0 of it looking straight down, 0.3 unless given).
+  // f0 of it looking straight down, 0.3 unless given). probe.tint (a Vector4, Phase 5): the room as it is now where it
+  // was drawn as it was: what it gives back turned toward the colour in xyz (each pixel's brightness kept), by w. Boss
+  // Rush's rage: its neon turns red after the capture was taken.
   // One look-up a pixel and no second drawing of the scene: the phone's floors reflect as the Mac's mirror does.
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
@@ -10774,8 +10790,10 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
+  if (probe && probe.tint) uniforms.uProbeTint = { value: probe.tint };
   const defines = {};
   if (probe) defines.PROBE = "";
+  if (probe && probe.tint) defines.PROBE_TINT = "";
   if (probe && plates) defines.PLATES = "";
   if (probe && plates && plates.tint) defines.PLATES_TINT = "";
   const mat = new THREE.ShaderMaterial({
@@ -10796,6 +10814,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES_TINT
       uniform vec3 uPlatesTint;
       #endif
+      #ifdef PROBE_TINT
+      uniform vec4 uProbeTint;
+      #endif
       void main(){
         vec3 col = uBase;
         #ifdef PROBE
@@ -10815,7 +10836,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
           vec3 t1 = (uBoxMax - vWorld) / Rs, t2 = (uBoxMin - vWorld) / Rs, tf = max(t1, t2);
           vec3 dir = vWorld + R * max(min(min(tf.x, tf.y), tf.z), 0.0) - uProbeAt; // (the ray met the room's walls: looked up from where it was drawn; from outside the box, straight from there)
           float fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(-V, nrm), 0.0, 1.0), 5.0);
+          #ifdef PROBE_TINT
+          vec3 pr = textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb;
+          col += mix(pr, uProbeTint.xyz * max(max(pr.r, pr.g), pr.b), uProbeTint.w) * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #else
           col += textureCubeLodEXT(tProbe, dir, rough * uProbe.z).rgb * uProbe.x * mix(uProbe.w, 1.0, fres);
+          #endif
         }
         #endif
         float onRoad = uRoad.x > 0.0 ? 1.0 - smoothstep(uRoad.x - 0.12, uRoad.x + 0.12, abs(vWorld.x)) : 0.0;
@@ -13312,7 +13338,7 @@ function showTitle() {
   // title is the offline fallback, and it should say so): served over the web, with the hall and every generated
   // file; served but unable to draw the hall (no WebGL); or opened from disk, the built-in pictures and sound only
   const mode = Assets.on ? (hall ? ["served", "SERVED"] : ["served", "SERVED · SIMPLE TITLE (NO 3D)"]) : ["offline", "OFFLINE FALLBACK · OPENED AS A FILE"];
-  const el = UI.el(`<section class="screen scr-title${hall && !scene.arrived ? " gliding" : ""}">
+  const el = UI.el(`<section class="screen scr-title${hall ? " hall" : ""}${hall && !scene.arrived ? " gliding" : ""}">
     <div class="title-top"><span>CREDIT <b data-credit>00</b></span><span>MASTERY <b>${m}%</b></span><span>HI <b>${fmtScore(best)}</b></span></div>
     <div class="title-mode ${mode[0]}" data-mode="${mode[0]}">${mode[1]}</div>
     <div class="logo">
@@ -14032,7 +14058,9 @@ class TitleLife {
 // base and cap are left out of their draw; the end of the hall is not drawn until the haze gives it up (62 m). At LOW
 // (GFX.extras off) bosses past 34 m are not drawn, only those within 22 m move, and none rattles. Reduced effects: no
 // glide (a still view of the end of the hall, the logo up at once), no rattles or flicker, the heads still, the idles
-// slowed.
+// slowed. On a computer (not Assets.phone) the walls between the windows are dressed as a maximum-security block's:
+// conduits, guard rails, block plates and signs, junction boxes, vents, doors, warning lamps, patrolling searchlights
+// (10f-titledress.js: in the cells' own draws, the moving light one more).
 const HALL_WORLDS = [
   // win: the world's sky (assets/ui, a small copy of its panorama); at: the place in it [u, v] that each window shows,
   // the left wall's and the right's (the nebula's two clouds; the dusk's low sun and its high clouds; the storm's
@@ -14046,8 +14074,11 @@ const HALL_WORLDS = [
   { id: "boss", win: "win-boss", sky: [0.66, 0.66], at: [[0.66, 0.6], [0.37, 0.55]], col: 0xa66bff, col2: 0x35efff, bosses: ["boss-5-t", "boss-6-t"], roar: ["roar_5", "roar_6"] },
   { id: "memory", win: "win-memory", sky: [0.6, 0.68], at: [[0.83, 0.47], [0.6, 0.5]], col: 0xffc04a, col2: 0xff8a3d, bosses: ["boss-7-t", "boss-8-t"], roar: ["roar_7", "roar_8"] },
   { id: "guide", win: "win-guide", sky: [0.5, 0.68], at: [[0.5, 0.47], [0.93, 0.5]], col: 0xffb86a, col2: 0x4dffa6, bosses: ["boss-9-t", "boss-10-t"], roar: ["roar_9", "roar_10"] },
-  { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.45, 0.55], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
+  { id: "exam", win: "win-exam", sky: [0.72, 0.64], at: [[0.36, 0.58], [0.72, 0.58]], col: 0x8fb4ff, col2: 0xa66bff, bosses: ["boss-11-t", "boss-all-t"], roar: ["roar_11", "roar_all"] },
 ];
+// (the master overhaul, Phase 5, 2026-11-24: the exam's left window looks through its arch, at the clouds and the gilt
+// underside, not at its right column: at the end of the glide on a wide window that window is the picture's left edge,
+// and its stone read as a dark muddy panorama)
 // the part of a world's panorama its skylight can show [u0, v0, du, dv] (texture space, v up): its span and its
 // parallax each way, a margin, and a skylight's clamp; tools/skylights.py crops its picture to the same
 const hallTopRect = (sky) => { const v0 = Math.max(0.3, sky[1] - 0.155); return [sky[0] - 0.19, v0, 0.38, Math.min(0.84, sky[1] + 0.155) - v0]; };
@@ -14428,6 +14459,7 @@ class HallScene extends Scene3D {
     // the cells themselves (10e-titlecells.js): built here at once, in a few draws (the generated pod is not used: its
     // top was jagged); each cell's glass and its pool in its own boss's light, the worse cells' states on its glass
     this.kit = buildCellKit(this);
+    if (this.probe && this.kit.patrol) this.probe.hide.push(this.kit.patrol); // (a computer's moving searchlights: not frozen into the floor's reflection)
     // (the steel gives back the hall's capture filtered for its roughness: from the start a filtered copy of the capture
     // not yet drawn (black, as the hall's dark), so the steel's shader is made now, with the hall's, and each capture
     // that arrives changes a picture, not the shader; and the filter's own shader made now: neither mid-glide)
@@ -14958,6 +14990,8 @@ class HallScene extends Scene3D {
 // the small parts (bolts, clamps, lamp housings) are drawn only for the cells near the lens (instanced, one draw); the
 // lasers, the cameras, the steam and an arc a draw each. No light is added: each boss's light is in its own shading.
 // LOW (GFX.extras off): no steam, no arcs, no twitches. Reduced effects: no arcs, no steam, no twitches, no blinking.
+// On a computer the hall's walls are dressed as a prison block's too (10f-titledress.js), in these same draws (its
+// searchlights and beacons one more); a phone's hall is as it was.
 
 const CELL = { floor: 0.07, baseTop: 0.92, capY: 4.32, capTop: 5.08, R: 1.15, ring: 1.52 };
 // which cells are worse off (by their boss: Boss Rush's key), whatever the player has done; a beaten boss's cell calms
@@ -15118,15 +15152,17 @@ function cellGlowMaterial(calm) {
 
 // Each cell's two pictures, in one: its prisoner's plate (its number, its name) and its status screen (CONTAINED,
 // a red BREACH ALERT, or DEFEATED for a beaten boss), a row each. Drawn again when the page's fonts have come.
-function cellAtlas(states) {
+// extra: more rows under the cells' (a computer's hall: its blocks' signs, 10f-titledress.js), each a painter of its row.
+function cellAtlas(states, extra) {
   const W = 1024, RH = 128, K = Assets.phone ? 0.75 : 1, cv = document.createElement("canvas"), x = cv.getContext("2d"); // (drawn at three quarters on a phone: plenty for a plate a metre across; at full size on a computer's larger Retina picture)
-  cv.width = W * K; cv.height = RH * states.length * K;
+  const more = extra || [];
+  cv.width = W * K; cv.height = RH * (states.length + more.length) * K;
   const tex = new THREE.CanvasTexture(cv);
   tex.encoding = THREE.sRGBEncoding; tex.anisotropy = THREE.Texture.DEFAULT_ANISOTROPY; tex.minFilter = THREE.LinearMipmapLinearFilter; // (the plates are read at a slant down the aisle: filtered as finely as the tier allows)
   const css = (n) => "#" + new THREE.Color(n).getHexString();
   const draw = () => {
     x.setTransform(K, 0, 0, K, 0, 0);
-    x.clearRect(0, 0, W, RH * states.length);
+    x.clearRect(0, 0, W, RH * (states.length + more.length));
     states.forEach((s, i) => {
       const y = i * RH, col = css(s.col), num = String(s.no).padStart(2, "0");
       // the plate: brushed dark steel, a rule of the boss's colour, its number small and its name large
@@ -15153,6 +15189,7 @@ function cellAtlas(states) {
       for (let k = 0; k < 14; k++) { const h = 8 + ((k * 37 + i * 11) % 17); x.globalAlpha = red && k > 9 ? 1 : 0.7; x.fillRect(536 + k * 32, y + RH - 18 - h, 20, h); }
       x.globalAlpha = 1;
     });
+    more.forEach((paint, j) => paint(x, (states.length + j) * RH, W, RH));
     tex.needsUpdate = true;
   };
   draw();
@@ -15340,9 +15377,13 @@ function buildCellKit(hall) {
     // the caution ring on the floor round it
     put(steel, new THREE.RingGeometry(1.8, 2.04, 40, 1), at(0, 0.012, 0, 1, 1, 1, 0, -Math.PI / 2), g(1, WHITE), 4.08, 4.08); // (its uv is planar: in metres, the stripes run straight across it)
   }
+  // ---- on a computer, the hall's walls dressed as a prison block's (10f-titledress.js): made into the hall's own
+  // batches below (its steel, its lights, its signs among the plates), so no draw is added for what stands still
+  const dress = Assets.phone ? null : dressOwnRandom(() => hallDress(hall, { steel, glow, at, states, C: { GUN, DARK, BAR, BRIGHT, PIPE, WHITE } }));
+  const rowsN = dress ? dress.rowsTotal : cells.length; // (the plates' picture: the cells' rows, then the signs')
   // ---- every cell: the one copied, moved and turned to its place, in its own light and state, its own row of pictures
   const mats = cells.map((c) => new THREE.Matrix4().compose(c.anchor.position, Q.setFromAxisAngle(up, c.anchor.rotation.y), S1));
-  const per = (i) => { const st = states[i]; return { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], aRow: cells.length - 1 - i }; };
+  const per = (i) => { const st = states[i]; return { aCol: st.col.toArray(), aState: [st.alarm ? 1 : 0, st.crack ? 1 : 0, st.beaten ? 1 : 0, st.phase], aRow: rowsN - 1 - i }; };
   const copies = { steel: kitCopies(one.steel, mats), detail: kitCopies(one.detail, mats), glow: kitCopies(one.glow, mats, per), screens: kitCopies(one.screens, mats, per) };
   // ---- the hall, watched: hazard strips and floor lights along the aisle, tripwires across it between the worlds
   // (their emitters), rails overhead (their hangers), cameras on the pillars
@@ -15392,9 +15433,9 @@ function buildCellKit(hall) {
   // plates and screens (one, one picture), the lasers (one)
   kit.steel = new THREE.Mesh(kitGeometry([copies.steel, steel.arrays()]), kit.steelMat);
   kit.glow = new THREE.Mesh(kitGeometry([copies.glow, glow.arrays()]), kit.glowMat);
-  kit.atlas = cellAtlas(states);
-  kit.screens = new THREE.Mesh(kitGeometry([copies.screens]), new THREE.ShaderMaterial({
-    uniforms: Object.assign(fogUniforms(), { tAtlas: { value: kit.atlas }, uTime: { value: 0 }, uK: { value: 1 }, uRows: { value: cells.length }, uCalm: { value: calm ? 1 : 0 } }),
+  kit.atlas = cellAtlas(states, dress && dress.rows);
+  kit.screens = new THREE.Mesh(kitGeometry(dress ? [copies.screens, dress.signs.arrays()] : [copies.screens]), new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { tAtlas: { value: kit.atlas }, uTime: { value: 0 }, uK: { value: 1 }, uRows: { value: rowsN }, uCalm: { value: calm ? 1 : 0 } }),
     vertexShader: "attribute vec2 uvM; attribute float aRow; attribute vec4 aState; uniform float uRows; varying vec2 vUv; varying vec4 vState; varying float vDepth; void main(){ vUv = vec2(uvM.x, (aRow + uvM.y) / uRows); vState = aState; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }",
     fragmentShader: `${GLSL_FOG_PARS} uniform sampler2D tAtlas; uniform float uTime; uniform float uK; uniform float uCalm; varying vec2 vUv; varying vec4 vState; varying float vDepth;
       void main(){ vec3 c = texture2D(tAtlas, vUv).rgb; c = c * c * (c * 0.305 + 0.695); float screen = step(0.5, vUv.x); float blink = 1.0 - screen * vState.x * (1.0 - vState.z) * (1.0 - uCalm) * 0.55 * step(0.5, fract(uTime * 1.6 + vState.w));
@@ -15441,10 +15482,11 @@ function buildCellKit(hall) {
   }
   // ---- steam from the worse cells' lids: soft puffs rising and spreading (instanced quads facing the lens)
   {
-    const steamy = cells.filter((c, i) => states[i].steam), per = 7, n = steamy.length * per;
+    const steamy = cells.filter((c, i) => states[i].steam), per = 7, puffs = dress ? dress.puffs : [], n = steamy.length * per + puffs.length; // (and a computer's wall vents that breathe)
     if (n) {
       const off = new Float32Array(n * 4);
       steamy.forEach((c, j) => { for (let k = 0; k < per; k++) { const a = c.anchor.rotation.y + Math.PI + (k - 3) * 0.22; off.set([c.x + Math.sin(a) * 0.7, CELL.capTop + 0.05, c.z + Math.cos(a) * 0.7, (k / per + j * 0.31) % 1], (j * per + k) * 4); } });
+      puffs.forEach((p, k) => off.set(p, (steamy.length * per + k) * 4));
       const qg = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(1, 1));
       qg.setAttribute("aOff", new THREE.InstancedBufferAttribute(off, 4));
       qg.instanceCount = n;
@@ -15461,6 +15503,9 @@ function buildCellKit(hall) {
   // ---- an electric arc now and then on a near cell
   kit.arc = cellArc(); kit.arc.name = "arc"; s.add(kit.arc); kit.meshes.push(kit.arc);
   kit.arcT = 0;
+  // ---- a computer's searchlights and beacons (one draw, moved by its shader; left out of the floor's reflection)
+  kit.patrol = dress && dress.patrol;
+  if (kit.patrol) { kit.patrol.visible = GFX.extras !== false; s.add(kit.patrol); kit.meshes.push(kit.patrol); }
   box.dispose(); plane.dispose(); torus.dispose(); dome.dispose(); bolt.dispose();
   // ---- each frame: the lights follow the hall's power (and INSERT COIN's surge); the near cells' small parts drawn
   // (the cells stand in order down the hall: the near ones are a run of them, one range of the one geometry); the
@@ -15470,6 +15515,7 @@ function buildCellKit(hall) {
     const k = (0.45 + 0.55 * hall.power) * (1 + (hall.endLamp.boost || 0) * 0.8);
     for (const m of [kit.glowMat, kit.screens.material, kit.laser.material, kit.camLamp.material]) m.uniforms.uK.value = k;
     if (kit.steam) { kit.steam.material.uniforms.uK.value = k; kit.steam.visible = !calm && GFX.extras !== false; } // (AUTO may take the tier down while the title is up)
+    if (kit.patrol) { kit.patrol.material.uniforms.uK.value = k; kit.patrol.visible = GFX.extras !== false; }
     let a = -1, b = -1;
     for (const c of cells) if (Math.hypot(c.x - cam.x, c.z - cam.z) < 24 && c.z < cam.z + 2.5) { if (a < 0) a = c.i; b = c.i; }
     kit.detail.geometry.setDrawRange(a < 0 ? 0 : a * kit.detailPer, a < 0 ? 0 : (b - a + 1) * kit.detailPer);
@@ -15494,6 +15540,308 @@ function buildCellKit(hall) {
     }
   };
   return kit;
+}
+
+/* ---- 10f-titledress.js ---- */
+// The containment hall as a maximum-security block, on a computer (the master overhaul, Phase 5, 2026-11-24: on a
+// Mac the cells' close-ups showed bare dark walls round each cell). The walls between the windows and the pillars,
+// and the stretches at the door and at the vault, are dressed as a prison block's: conduits along both walls on their
+// brackets, a guard rail along the glass, in every bay a block plate (its letter and its game), a junction box with
+// its lamps, a vent grille (some breathing steam) or a security door with its keypad and its warning screen, a caged
+// warning lamp; hazard paint round the pillars' feet; under the beams the block's sign and, over three of them, a
+// searchlight patrolling the floor; red beacons turning by the cells in alarm.
+//
+// Cheap: everything still is drawn with what the cells already draw (their steel, their lights, their plates and
+// screens: no draw added, no shader); the signs are rows added to the cells' picture. What moves (the searchlights'
+// beams and pools, the beacons' beams and domes) is one draw, moved by its own shader (nothing sent from the script a
+// frame), left out of the floor's reflection, and not drawn at the lower tiers (GFX.extras off). Nothing here draws
+// on the game's Math.random: what varies varies by a hash of its place, and the ids three.js draws for what it makes
+// come from a stream of the dressing's own (dressOwnRandom). A phone builds none of it (Assets.phone: the hall as it
+// was, lean).
+
+const DRESS = { W: 7.8, H: 8.8, pipeY: [6.56, 6.8], railD: 0.42 };
+const dressHash = (n) => { const s = Math.sin(n * 91.3458 + 17.17) * 47453.5453; return s - Math.floor(s); };
+// fn run on a private stream of random numbers: three.js draws four for the id of every shape, material and object it
+// makes (some thirteen hundred here), and the game's own stream, which the capture tool and the regression seed, must
+// not move with the dressing (the tip on the title, and all that is drawn after the hall, would change)
+function dressOwnRandom(fn) {
+  const R = Math.random;
+  let s = 0x2f6b9e1d;
+  Math.random = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = R; }
+}
+
+// The sign rows (each a painter for cellAtlas: one row of its picture, 1024 x 128): a block's plate on the left half
+// (its letter on a square of its colour, CELL BLOCK and its game), its warning screen on the right (amber, or red
+// and blinking while one of its cells is in alarm); then the door's and the vault's
+function dressRows(blocks) {
+  const F = (px) => `${px}px "Press Start 2P", "Courier New", monospace`, css = (n) => "#" + new THREE.Color(n).getHexString();
+  const plate = (x, y, RH, col, letter, small, name) => {
+    const g = x.createLinearGradient(0, y, 0, y + RH);
+    g.addColorStop(0, "#272b35"); g.addColorStop(1, "#121419");
+    x.fillStyle = g; x.fillRect(0, y, 512, RH);
+    x.strokeStyle = "#4a505e"; x.lineWidth = 4; x.strokeRect(4, y + 4, 504, RH - 8);
+    x.fillStyle = col; x.fillRect(16, y + 16, 96, 96);
+    x.fillStyle = "#0b0616"; x.font = F(letter.length > 1 ? 34 : 60); x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(letter, 64 + 2, y + 66);
+    x.textAlign = "left"; x.textBaseline = "top";
+    x.fillStyle = "#9aa3b8"; x.font = F(16); x.fillText(small, 130, y + 24);
+    let fs = 24; x.font = F(fs);
+    while (x.measureText(name).width > 360 && fs > 12) { fs -= 2; x.font = F(fs); }
+    x.fillStyle = "#f4f1ff"; x.fillText(name, 130, y + 62 + (24 - fs) / 2);
+    for (const bx of [10, 496]) for (const by of [10, 112]) { x.fillStyle = "#6b7282"; x.beginPath(); x.arc(bx + 3, y + by + 3, 4, 0, 7); x.fill(); }
+  };
+  const screen = (x, y, RH, red, l1, l2) => {
+    const ink = red ? "#ff3a4c" : "#ffb13a";
+    x.fillStyle = red ? "#1a0306" : "#140a02"; x.fillRect(512, y, 512, RH);
+    x.strokeStyle = ink; x.globalAlpha = 0.45; x.lineWidth = 3; x.strokeRect(520, y + 8, 496, RH - 16); x.globalAlpha = 1;
+    // hazard chevrons at both ends, then the words between them
+    x.fillStyle = ink;
+    for (const cx of [540, 1004]) for (let k = 0; k < 3; k++) { const yy = y + 30 + k * 26; x.beginPath(); x.moveTo(cx - 10, yy); x.lineTo(cx, yy + 10); x.lineTo(cx + 10, yy); x.lineTo(cx + 10, yy + 8); x.lineTo(cx, yy + 18); x.lineTo(cx - 10, yy + 8); x.closePath(); x.fill(); }
+    x.textAlign = "center"; x.textBaseline = "top";
+    let fs = 26; x.font = F(fs);
+    while (x.measureText(l1).width > 420 && fs > 12) { fs -= 2; x.font = F(fs); }
+    x.fillText(l1, 768, y + 30 + (26 - fs) / 2);
+    x.font = F(13); x.globalAlpha = 0.85; x.fillText(l2, 768, y + 80); x.globalAlpha = 1;
+    x.textAlign = "left";
+  };
+  const rows = blocks.map((b) => (x, y, W, RH) => {
+    x.save();
+    plate(x, y, RH, css(b.col), b.letter, "CELL BLOCK " + b.letter, b.name);
+    screen(x, y, RH, b.alarm, b.alarm ? "CONTAINMENT BREACH" : "MAXIMUM SECURITY", b.alarm ? "BLOCK " + b.letter + " · STASIS FAILING" : "AUTHORIZED PERSONNEL ONLY");
+    x.restore();
+  });
+  // the door's (the hall's own plate; its count of inmates) and the vault's
+  rows.push((x, y, W, RH) => { x.save(); plate(x, y, RH, "#a65fff", "IN", "CONTAINMENT HALL", "INTAKE"); screen(x, y, RH, false, "12 HELD · 0 ESCAPED", "ALL INMATES ACCOUNTED FOR"); x.restore(); });
+  rows.push((x, y, W, RH) => { x.save(); plate(x, y, RH, "#ffc93d", "V", "RESTRICTED", "VAULT ACCESS"); screen(x, y, RH, false, "SECURITY CHECKPOINT", "BADGE REQUIRED BEYOND THIS POINT"); x.restore(); });
+  return rows;
+}
+
+// The moving light: searchlights (a beam from a ball turret under a beam across the hall to a pool of light wandering
+// over the floor of the next block), and beacons (two beams turning round a dome). Each vertex carries its light's
+// place and path; the shader finds where the light points this moment from the time alone.
+function dressPatrolMaterial(calm) {
+  return new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogUniforms(), { uTime: { value: 0 }, uK: { value: 1 }, uCalm: { value: calm ? 1 : 0 } }),
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    // aSpot: the lamp (xyz) and how bright (w); aPath: a searchlight's patch (middle x, z; reach across, along), or a
+    // beacon's turn (speed, phase, beam length); aLook: a searchlight's pace and phase, its spread (tan), and which
+    // (0 a searchlight, 1 a beacon); aKind: 0 a beam, 1 its pool on the floor, 2 its lens, 3 a beacon's dome
+    vertexShader: `attribute vec4 aSpot; attribute vec4 aPath; attribute vec4 aLook; attribute vec3 aCol; attribute float aKind;
+      uniform float uTime; uniform float uCalm;
+      varying vec3 vCol; varying float vKind; varying float vD; varying vec3 vN; varying vec3 vV; varying vec2 vQ; varying float vDepth; varying float vFlash;
+      void main(){
+        vec3 L = aSpot.xyz, T;
+        float beacon = step(0.5, aLook.w), t = uTime * mix(1.0, 0.25, uCalm);
+        if (beacon < 0.5) T = vec3(aPath.x + aPath.z * sin(t * aLook.x + aLook.y), 0.03, aPath.y + aPath.w * sin(t * aLook.x * 0.61 + aLook.y * 1.7));
+        else { float a = uTime * aPath.x * (1.0 - uCalm) + aPath.y; T = L + vec3(cos(a), -0.12, sin(a)) * aPath.z; }
+        vec3 D = T - L; float len = max(length(D), 0.01); D /= len;
+        vec3 U = normalize(cross(D, abs(D.y) > 0.95 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0))), V = cross(U, D);
+        vec3 w = L; vD = 0.0; vN = vec3(0.0, 1.0, 0.0); vQ = vec2(0.0); vFlash = 0.0;
+        if (aKind < 0.5) { // the beam: from the lens out, widening (a beacon's held still with reduced effects)
+          float d = position.y, r = 0.1 + d * len * aLook.z;
+          vN = U * position.x + V * position.z;
+          w = L + D * (0.12 + d * (len - 0.12)) + vN * r * (1.0 - uCalm * beacon);
+          vD = d;
+        } else if (aKind < 1.5) { // its pool on the floor, drawn out along the beam where it falls at a slant
+          vec3 Hd = normalize(vec3(D.x, 0.0, D.z) + vec3(1e-4, 0.0, 0.0)), Hp = vec3(-Hd.z, 0.0, Hd.x);
+          float R = 0.15 + len * aLook.z;
+          w = T + Hd * position.x * R / max(-D.y, 0.4) + Hp * position.z * R;
+          vQ = position.xz;
+        } else if (aKind < 2.5) { // its lens, facing where it points (just outside its turret)
+          w = L + D * 0.17 + (U * position.x + V * position.z) * 0.1;
+          vQ = position.xz;
+        } else { // a beacon's dome: bright as a beam turns toward the lens
+          w = L + position * 0.085;
+          vec2 c = normalize((cameraPosition - L).xz + vec2(1e-4, 0.0));
+          vFlash = pow(abs(dot(normalize(D.xz + vec2(1e-4, 0.0)), c)), 10.0) * (1.0 - uCalm);
+        }
+        vCol = aCol * aSpot.w; vKind = aKind; vV = cameraPosition - w;
+        vec4 mv = viewMatrix * vec4(w, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_FOG_PARS} uniform float uK; varying vec3 vCol; varying float vKind; varying float vD; varying vec3 vN; varying vec3 vV; varying vec2 vQ; varying float vDepth; varying float vFlash;
+      void main(){
+        float a;
+        if (vKind < 0.5) { float f = abs(dot(normalize(vN), normalize(vV))); a = f * f * (0.25 + 0.75 * pow(max(1.0 - vD, 0.0), 1.6)) * smoothstep(0.0, 0.06, vD) * 0.12; } // (in the haze all the way down, brightest at the lens)
+        else if (vKind < 1.5) { float r = length(vQ); a = (1.0 - smoothstep(0.5, 1.0, r)) * 0.42 + pow(max(1.0 - r * 1.7, 0.0), 2.0) * 0.45; } // (a disc of light with a soft rim and a hot middle)
+        else if (vKind < 2.5) { a = (1.0 - smoothstep(0.65, 1.0, length(vQ))) * 2.6; }
+        else a = 0.55 + 3.2 * vFlash;
+        gl_FragColor = vec4(vCol * a * uK * (1.0 - smoothstep(uFogNear, uFogFar, vDepth)), 1.0);
+      }`,
+  });
+}
+
+// Everything the computer's hall adds, made into the cells' batches (B: steel, glow, at, the cells' states, the
+// colours). Returns the sign rows (for the cells' picture), the signs themselves (a batch for the plates' draw, in
+// rows counted from the cells'), the steam's extra puffs (where a vent breathes) and the moving light (a mesh).
+function hallDress(hall, B) {
+  const { steel, glow, at, states, C } = B, W = DRESS.W, worlds = HALL_WORLDS, calm = hall.calm;
+  const box = new THREE.BoxGeometry(1, 1, 1), plane = new THREE.PlaneGeometry(1, 1), ball = new THREE.SphereGeometry(0.16, 12, 8), disc = new THREE.CylinderGeometry(1, 1, 1, 12), dome = new THREE.SphereGeometry(1, 10, 6);
+  const pipes = new Map(), pipe = (r) => { if (!pipes.has(r)) pipes.set(r, new THREE.CylinderGeometry(r, r, 1, 8, 1, true)); return pipes.get(r); };
+  // a piece put into a batch as KitBatch.add puts it (its corners placed by m, its normals the face's or, smooth, its
+  // own turned; its uv in metres; its values), straight into the batch's arrays: no shape made for it (thirteen
+  // hundred pieces: made one by one they were most of the dressing's cost to build)
+  const flat = new Map(), N3 = new THREE.Matrix3(), A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3(), E1 = new THREE.Vector3(), E2 = new THREE.Vector3();
+  const put = (b, geo, m, v = {}, su = 1, sv = 1, smooth = false) => {
+    let f = flat.get(geo);
+    if (!f) { const ng = geo.index ? geo.toNonIndexed() : geo; f = { P: ng.attributes.position.array, N: ng.attributes.normal.array, U: ng.attributes.uv ? ng.attributes.uv.array : null }; flat.set(geo, f); if (ng !== geo) ng.dispose(); }
+    const { P, N, U } = f, n = P.length / 3, e = m.elements, q = N3.getNormalMatrix(m).elements, C3 = [A, Bv, Cv];
+    for (let i = 0; i < n; i += 3) {
+      for (let k = 0; k < 3; k++) { const j = (i + k) * 3, x = P[j], y = P[j + 1], z = P[j + 2]; C3[k].set(e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]); }
+      if (!smooth) E1.subVectors(Cv, Bv).cross(E2.subVectors(A, Bv)).normalize();
+      for (let k = 0; k < 3; k++) {
+        const c = C3[k], j = i + k;
+        b.pos.push(c.x, c.y, c.z);
+        if (smooth) { const x = N[j * 3], y = N[j * 3 + 1], z = N[j * 3 + 2], nx = q[0] * x + q[3] * y + q[6] * z, ny = q[1] * x + q[4] * y + q[7] * z, nz = q[2] * x + q[5] * y + q[8] * z, l = Math.hypot(nx, ny, nz) || 1; b.nor.push(nx / l, ny / l, nz / l); }
+        else b.nor.push(E1.x, E1.y, E1.z);
+        b.uvm.push(U ? U[j * 2] * su : 0, U ? U[j * 2 + 1] * sv : 0);
+      }
+    }
+    for (const k in b.attrs) { const s = b.attrs[k], val = v[k] === undefined ? 0 : v[k], arr = b.x[k]; for (let i = 0; i < n; i++) for (let c = 0; c < s; c++) arr.push(s > 1 ? val[c] : val); }
+  };
+  const g = (pat, col) => ({ color: col || C.GUN, aPat: pat });
+  const lit = (col, kind, alarm, ph) => ({ aCol: col, aState: [alarm ? 1 : 0, 0, 0, ph], aKind: kind });
+  // (a point d metres off a wall, into the hall; a plane on a wall faces the aisle)
+  const X = (sd, d) => sd * (W - d), face = (sd) => -sd * Math.PI / 2;
+  // the blocks: each world's letter, its game, its colour, and whether a cell of it is in alarm
+  const blocks = worlds.map((Wd, wi) => ({ letter: "ABCDEF"[wi], name: { blaster: "RISK BLASTER", racer: "NEST EGG RUN", boss: "BOSS RUSH", memory: "MEMORY BANK", guide: "STRATEGY GUIDE", exam: "FINAL EXAM" }[Wd.id] || Wd.id.toUpperCase(), col: Wd.col, alarm: states.some((s, i) => hall.cells[i].wi === wi && s.alarm) }));
+  const rows = dressRows(blocks), R0 = states.length, ROWS = R0 + rows.length, rowOf = (k) => ROWS - 1 - (R0 + k); // (the cells' rows first; a row counted from the picture's foot, as the plates' shader reads it)
+  const signs = new KitBatch({ aRow: 1, aState: 4 });
+  // a sign: a part of a row's picture (px across 0-1024, py down 0-128) on a plane placed by m
+  const sign = (m, k, px0, px1, py0, py1, blink, ph) => {
+    const n0 = signs.uvm.length;
+    put(signs, plane, m, { aRow: rowOf(k), aState: [blink ? 1 : 0, 0, 0, ph] });
+    for (let i = n0; i < signs.uvm.length; i += 2) { const u = signs.uvm[i], v = signs.uvm[i + 1]; signs.uvm[i] = (px0 + u * (px1 - px0)) / 1024; signs.uvm[i + 1] = 1 - (py0 + (1 - v) * (py1 - py0)) / 128; }
+  };
+  const puffs = [];
+  // ---- along both walls: two conduits above the windows on their brackets; a guard rail along each window's glass
+  const pillarZ = [];
+  for (let i = 0; i <= worlds.length; i++) pillarZ.push(HALL.z0 + HALL.step / 2 - i * HALL.step);
+  const inPillar = (z, m) => pillarZ.some((p) => Math.abs(z - p) < 0.5 + m);
+  const Z1 = 9, Z2 = HALL.endZ, len = Z1 - Z2, zc = (Z1 + Z2) / 2;
+  for (const sd of [-1, 1]) {
+    put(steel, pipe(0.075), at(X(sd, 0.12), DRESS.pipeY[0], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.PIPE), 0.47, len, true);
+    put(steel, pipe(0.05), at(X(sd, 0.1), DRESS.pipeY[1], zc, 1, len, 1, 0, Math.PI / 2), g(0, C.BAR), 0.31, len, true);
+    for (let z = Z1 - 0.7; z > Z2 + 0.4; z -= 1.5) if (!inPillar(z, 0.1)) put(steel, box, at(X(sd, 0.11), 6.68, z, 0.22, 0.42, 0.06), g(0, C.BAR), 0.22, 0.42);
+    worlds.forEach((Wd, wi) => {
+      const zm = HALL.z0 - wi * HALL.step, L = 5.0, x = X(sd, DRESS.railD);
+      put(steel, pipe(0.032), at(x, 1.05, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BRIGHT), 0.2, L, true);
+      put(steel, pipe(0.022), at(x, 0.6, zm, 1, L, 1, 0, Math.PI / 2), g(0, C.BAR), 0.14, L, true);
+      for (const dz of [-L / 2, 0, L / 2]) {
+        put(steel, pipe(0.03), at(x, 0.54, zm + dz, 1, 1.08, 1), g(0, C.BAR), 0.19, 1.08, true);
+        put(steel, pipe(0.034), at(x, 0.2, zm + dz, 1, 0.34, 1), g(1, C.WHITE), 0.21, 0.34, true); // (its foot in hazard paint)
+        put(steel, box, at(x, 0.012, zm + dz, 0.13, 0.024, 0.13), g(0, C.DARK));
+      }
+    });
+  }
+  // ---- each bay of wall between a window and a pillar: a block plate, a junction box with its lamps, its conduits
+  // down to it, a vent (or in one bay a block, a security door), a caged warning lamp
+  const bay = (sd, zs, q, k, wi, door, n, steam) => {
+    const h = dressHash(n), red = blocks[wi] ? blocks[wi].alarm : false, col = new THREE.Color(blocks[wi] ? blocks[wi].col : 0xa65fff).toArray(), ph = h;
+    // the block's plate, at a glance's height
+    sign(at(X(sd, 0.025), door ? 3.02 : 2.7, zs + (door ? 0 : q * 0.15), 1.7, 0.425, 1, face(sd)), k, door ? 512 : 0, door ? 1024 : 512, 0, 128, door && red, ph);
+    if (door) {
+      // a security door: its frame in hazard paint, the leaf with its panels and a barred window, its lock and keypad
+      const zd = zs;
+      put(steel, box, at(X(sd, 0.07), 2.63, zd, 0.14, 0.16, 1.64), g(1, C.WHITE), 1.64, 0.16);
+      for (const s of [-1, 1]) put(steel, box, at(X(sd, 0.07), 1.27, zd + s * 0.74, 0.14, 2.54, 0.16), g(1, C.WHITE), 0.16, 2.54);
+      put(steel, box, at(X(sd, 0.035), 1.27, zd, 0.07, 2.54, 1.32), g(0, C.GUN), 1.32, 2.54);
+      for (const py of [0.62, 1.42]) put(steel, box, at(X(sd, 0.072), py, zd, 0.01, 0.62, 1.0), g(3, C.BAR), 1.0, 0.62);
+      put(glow, box, at(X(sd, 0.06), 2.08, zd, 0.02, 0.34, 0.46), lit(col.map((c) => c * 0.22), 0, red, ph));
+      for (const s of [-0.12, 0, 0.12]) put(steel, box, at(X(sd, 0.085), 2.08, zd + s, 0.03, 0.36, 0.025), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.1), 1.18, zd - q * 0.46, 0.08, 0.06, 0.24), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.05), 1.38, zd + q * 0.98, 0.1, 0.26, 0.16), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.105), 1.44, zd + q * 0.98, 0.012, 0.05, 0.05), lit([0, 0, 0], 3, false, ph));
+      put(glow, box, at(X(sd, 0.105), 1.32, zd + q * 0.98, 0.012, 0.1, 0.1), lit([0.12, 0.9, 0.45], 0, false, ph));
+      // its warning lamp over it
+      put(steel, box, at(X(sd, 0.08), 3.48, zd, 0.16, 0.12, 0.3), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.17), 3.47, zd, 0.04, 0.09, 0.24), red ? lit([1, 0.12, 0.14], 0, true, ph) : lit([0, 0, 0], 1, false, ph));
+    } else {
+      // a vent grille low on the wall in its frame (one a block breathes steam, a side and then the other)
+      const zv = zs - q * 0.35, wv = 1.3, hv = 0.95, yv = 1.55;
+      put(steel, box, at(X(sd, 0.05), yv, zv, 0.06, hv, wv), g(2, C.WHITE), wv, hv);
+      for (const s of [-1, 1]) { put(steel, box, at(X(sd, 0.08), yv + s * (hv / 2 + 0.035), zv, 0.1, 0.07, wv + 0.14), g(0, C.BAR), wv, 0.07); put(steel, box, at(X(sd, 0.08), yv, zv + s * (wv / 2 + 0.035), 0.1, hv, 0.07), g(0, C.BAR), 0.07, hv); }
+      if (steam) for (let p = 0; p < 4; p++) puffs.push([X(sd, 0.35 + 0.1 * p), yv + 0.3, zv + (p - 1.5) * 0.25, (p / 4 + h * 3.7) % 1]);
+      // a caged warning lamp, high
+      const zl = zs + q * 0.55;
+      put(steel, box, at(X(sd, 0.08), 5.55, zl, 0.16, 0.22, 0.22), g(0, C.BAR));
+      put(glow, box, at(X(sd, 0.18), 5.55, zl, 0.05, 0.15, 0.15), red ? lit([1, 0.12, 0.14], 0, true, ph) : h < 0.5 ? lit([0, 0, 0], 1, false, ph) : lit([1.0, 0.42, 0.06], 0, false, ph));
+      for (const s of [-0.055, 0.055]) put(steel, box, at(X(sd, 0.22), 5.55, zl + s, 0.02, 0.2, 0.015), g(0, C.BRIGHT));
+      put(steel, box, at(X(sd, 0.22), 5.55, zl, 0.02, 0.015, 0.18), g(0, C.BRIGHT));
+    }
+    // the junction box and the conduits down to it from the run above the windows
+    const zj = zs + q * (door ? -0.95 : -0.6), yj = 4.35;
+    put(steel, box, at(X(sd, 0.11), yj, zj, 0.2, 0.8, 0.6), g(0, C.GUN), 0.6, 0.8);
+    put(steel, box, at(X(sd, 0.115), yj + 0.34, zj, 0.2, 0.09, 0.61), g(1, C.WHITE), 0.61, 0.09);
+    put(steel, box, at(X(sd, 0.212), yj - 0.04, zj, 0.01, 0.56, 0.012), g(3, C.BAR));
+    for (const [dz, r, d] of [[-0.14, 0.042, 0.1], [0.12, 0.03, 0.08]]) { const y0 = yj + 0.4, y1 = DRESS.pipeY[0]; put(steel, pipe(r), at(X(sd, d), (y0 + y1) / 2, zj + dz, 1, y1 - y0, 1), g(0, C.PIPE), 2 * Math.PI * r, y1 - y0, true); }
+    for (let k2 = 0; k2 < 3; k2++) put(glow, box, at(X(sd, 0.216), yj + 0.14, zj - 0.12 + k2 * 0.12, 0.012, 0.045, 0.045), k2 === 0 ? lit([0, 0, 0], 3, false, (ph + k2 * 0.37) % 1) : lit(k2 === 1 ? [0.12, 0.9, 0.45] : col, 0, red && k2 === 2, (ph + k2 * 0.37) % 1));
+  };
+  worlds.forEach((Wd, wi) => {
+    const zw = HALL.z0 - wi * HALL.step;
+    for (const sd of [-1, 1]) for (const q of [1, -1]) {
+      const n = wi * 4 + (sd > 0 ? 2 : 0) + (q > 0 ? 0 : 1);
+      const door = sd === (wi % 2 ? 1 : -1) && q === ((wi >> 1) % 2 ? -1 : 1);
+      bay(sd, zw + q * 3.97, q, wi, wi, door, n, !door && sd === (wi % 2 ? -1 : 1) && q === -1);
+    }
+  });
+  // the door's stretch and the vault's: a door each side, their own plates
+  for (const sd of [-1, 1]) {
+    bay(sd, 4.75, 1, worlds.length, -1, true, 90 + sd); bay(sd, HALL.endZ + 2.75, -1, worlds.length + 1, -1, true, 95 + sd);
+    sign(at(X(sd, 0.025), 2.7, 2.35, 1.7, 0.425, 1, face(sd)), worlds.length, 0, 512, 0, 128, false, 0); // (INTAKE)
+    sign(at(X(sd, 0.025), 2.7, HALL.endZ + 4.55, 1.7, 0.425, 1, face(sd)), worlds.length + 1, 0, 512, 0, 128, false, 0); // (VAULT ACCESS)
+  }
+  // ---- the pillars: hazard paint round their feet
+  for (const z of pillarZ) for (const sd of [-1, 1]) put(steel, box, at(X(sd, 0.5), 0.15, z, 1.06, 0.3, 1.06), g(1, C.WHITE), 1.06, 0.3);
+  // ---- under each beam across the hall, the block ahead named (facing the door; not the last: the logo stands there)
+  for (let i = 0; i < worlds.length; i++) {
+    const z = pillarZ[i] + 0.41;
+    for (const sd of [-1, 1]) {
+      const x = sd * 4.6;
+      for (const s of [-0.7, 0.7]) put(steel, pipe(0.02), at(x + s, 7.86, z, 1, 0.28, 1), g(0, C.BAR), 0.13, 0.28, true);
+      put(steel, box, at(x, 7.5, z - 0.03, 1.86, 0.5, 0.05), g(0, C.DARK));
+      sign(at(x, 7.5, z, 1.78, 0.445, 1), i, 0, 512, 0, 128, false, 0);
+    }
+  }
+  // ---- the moving light: three searchlights hung under the beams (one side, then the other), each patrolling the floor
+  // of the block ahead; and red beacons turning on the pillars either side of a block in alarm
+  const P = { pos: [], aSpot: [], aPath: [], aLook: [], aCol: [], aKind: [] };
+  const vtx = (p, spot, path, look, col, kind) => { P.pos.push(...p); P.aSpot.push(...spot); P.aPath.push(...path); P.aLook.push(...look); P.aCol.push(...col); P.aKind.push(kind); };
+  const cone = (spot, path, look, col) => { const N = 14; for (let i = 0; i < N; i++) { const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2, c0 = [Math.cos(a0), 0, Math.sin(a0)], c1 = [Math.cos(a1), 0, Math.sin(a1)]; for (const [c, d] of [[c0, 0], [c1, 0], [c1, 1], [c0, 0], [c1, 1], [c0, 1]]) vtx([c[0], d, c[2]], spot, path, look, col, 0); } };
+  const quad = (spot, path, look, col, kind) => { for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) vtx([u, 0, v], spot, path, look, col, kind); };
+  const WHITE = [0.72, 0.86, 1.0];
+  [[1, -1], [3, 1], [5, -1]].forEach(([i, sd], j) => {
+    const L = [sd * 5.75, 7.62, pillarZ[i] + 0.1];
+    put(steel, pipe(0.03), at(L[0], 7.86, L[2], 1, 0.3, 1), g(0, C.BAR), 0.19, 0.3, true);
+    put(steel, ball, at(L[0], L[1], L[2]), g(0, C.GUN), 1, 1, true);
+    put(steel, disc, at(L[0], 7.975, L[2], 0.2, 0.05, 0.2), g(0, C.BAR), 1, 0.05);
+    const spot = [...L, 1], path = [sd * -0.4, pillarZ[i] - 5.2, 2.1, 3.0], look = [0.33 + 0.05 * j, j * 2.1, 0.13, 0];
+    cone(spot, path, look, WHITE); quad(spot, path, look, WHITE, 1); quad(spot, path, look, WHITE, 2);
+  });
+  const alarmed = blocks.map((b) => b.alarm);
+  pillarZ.forEach((z, i) => {
+    if (!alarmed[i - 1] && !alarmed[i]) return; // (the pillars either side of a block in alarm)
+    for (const sd of [-1, 1]) {
+      const L = [X(sd, 1.1), 7.36, z];
+      put(steel, box, at(X(sd, 1.07), 7.25, z, 0.26, 0.06, 0.22), g(0, C.BAR));
+      put(steel, disc, at(L[0], 7.3, z, 0.105, 0.07, 0.105), g(0, C.DARK), 1, 0.07);
+      const ph = (i * 1.9 + (sd > 0 ? 1.1 : 0)) % 6.283, RED = [1.0, 0.08, 0.1];
+      for (const b of [0, Math.PI]) cone([...L, 1.3], [2.6, ph + b, 2.4, 0], [0, 0, 0.16, 1], RED);
+      // its dome (a sphere's corners, all of one light)
+      const sg = dome.toNonIndexed(), sp = sg.attributes.position.array;
+      for (let k = 0; k < sp.length; k += 3) vtx([sp[k], Math.max(sp[k + 1], -0.2), sp[k + 2]], [...L, 1], [2.6, ph, 2.4, 0], [0, 0, 0.16, 1], RED, 3);
+      sg.dispose();
+    }
+  });
+  let patrol = null;
+  if (P.aKind.length) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(P.pos, 3));
+    for (const [k, n] of [["aSpot", 4], ["aPath", 4], ["aLook", 4], ["aCol", 3], ["aKind", 1]]) geo.setAttribute(k, new THREE.Float32BufferAttribute(P[k], n));
+    patrol = new THREE.Mesh(geo, dressPatrolMaterial(calm));
+    patrol.frustumCulled = false; patrol.renderOrder = 5; patrol.name = "patrol-lights";
+  }
+  box.dispose(); plane.dispose(); ball.dispose(); disc.dispose(); dome.dispose(); for (const p of pipes.values()) p.dispose();
+  return { rows, signs, puffs, patrol, rowsTotal: ROWS };
 }
 
 /* ---- 11-hub.js ---- */
@@ -15782,6 +16130,56 @@ function hubDustMaterial(levels) {
     fragmentShader: `uniform vec3 uColor; varying float vB;
       void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(uColor * vB * (1.0 - smoothstep(0.05, 0.5, d)), 1.0); }`,
   });
+}
+// The club lasers, all eight in one mesh (one draw where there were eight, and no work a frame but its fade): each a
+// flat ribbon turned to face the lens, swept in its shader just as the beams were swept before, from its point in the
+// ring above the cabinets to a point on the floor that swings to and fro. Across the ribbon, the beam's hot core as
+// it was (never under three pixels across: thinner, a far beam crawled like a scratch on the picture), and round it a
+// soft halo, the haze it lights (the master overhaul, Phase 5: one beam read as a hairline from the ceiling to the floor).
+const HUB_LASER = { r: 10.5, half: 0.6, core: 0.075, halo: 0.62 };
+function hubLasers(cols) {
+  const n = cols.length, beam = new Float32Array(n * 16), col = new Float32Array(n * 12), idx = [];
+  cols.forEach((c, i) => {
+    const cc = neon(c, 1.25), az = (i / n) * Math.PI * 2 + 0.2, ph = i * 1.7;
+    for (let k = 0; k < 4; k++) { beam.set([az, ph, k >> 1, k & 1 ? 1 : -1], (i * 4 + k) * 4); col.set([cc.r, cc.g, cc.b], (i * 4 + k) * 3); }
+    idx.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 2, i * 4 + 1, i * 4 + 3);
+  });
+  const geo = new THREE.BufferGeometry(), L = HUB_LASER, f = (v, d = 3) => v.toFixed(d);
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 12), 3)); // (each corner is placed in the shader)
+  geo.setAttribute("aBeam", new THREE.BufferAttribute(beam, 4)); // its beam's turn round the room and phase, which end, which side
+  geo.setAttribute("aCol", new THREE.BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uFade: { value: 0 }, uHalo: { value: L.halo } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, extensions: { derivatives: true },
+    vertexShader: `attribute vec4 aBeam; attribute vec3 aCol; uniform float uTime; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float az = aBeam.x, ph = aBeam.y, sw = az + sin(uTime * 0.31 + ph) * 0.55, reach = 15.5 + sin(uTime * 0.23 + ph * 2.0) * 2.0;
+        vec3 a = vec3(sin(az) * ${f(L.r, 2)}, ${f(HUB_CEIL - 0.3, 2)}, -cos(az) * ${f(L.r, 2)}), b = vec3(sin(sw) * reach, 0.05, -cos(sw) * reach);
+        vec4 mv = modelViewMatrix * vec4(mix(a, b, aBeam.z), 1.0);
+        vec3 side = cross((modelViewMatrix * vec4(b - a, 0.0)).xyz, mv.xyz);
+        float l = length(side);
+        mv.xyz += (l > 1e-6 ? side / l : vec3(1.0, 0.0, 0.0)) * aBeam.w * ${f(L.half)};
+        vCol = aCol; vB = aBeam.wz;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `${GLSL_NOISE}
+      uniform float uTime; uniform float uFade; uniform float uHalo; varying vec3 vCol; varying vec2 vB;
+      void main(){
+        float s = abs(vB.x), cw = ${f(L.core / L.half, 4)}, w = max(cw, fwidth(vB.x) * 1.5);
+        float q = s / w, e = sqrt(max(0.0, 1.0 - q * q));
+        float core = (pow(e, 6.0) * 2.5 + pow(e, 1.5)) * cw / w; // (a cylinder of light seen side on, as the beams were drawn)
+        float crawl = 0.7 + 0.3 * vnoise(vec3(vB.y * 30.0 - uTime * 25.0, vB.x * 3.0, uTime));
+        vec3 c = (vCol + vec3(core * 0.6)) * core * crawl;
+        float halo = 0.68 * exp(-s * s * 16.0) + 0.32 * exp(-s * s * 3.5) * (1.0 - s);
+        c += vCol * uHalo * halo * (0.85 + 0.15 * crawl) * smoothstep(0.0, 0.03, vB.y) * (1.0 - smoothstep(0.9, 1.0, vB.y)); // (it thins out at the floor, where the ribbon meets it)
+        gl_FragColor = vec4(c * uFade, 1.0);
+      }`,
+  }));
+  m.frustumCulled = false;
+  m.renderOrder = 6;
+  m.visible = false;
+  return m;
 }
 // A cabinet's CRT behind its bezel: curved glass, scanlines, a warm-up line
 // when it powers on, and coloured light spilling onto the bezel art.
@@ -16180,6 +16578,71 @@ function hubArtAtlas() {
     [X + 66, X + Wp - 66].forEach((ex) => { x.fillStyle = "rgba(6,4,12,0.72)"; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.fill(); x.strokeStyle = cab.color; x.lineWidth = 1.5; x.beginPath(); x.arc(ex, Y + Hp / 2, 25, 0, 7); x.stroke(); hubEmblem(x, cab.id, ex, Y + Hp / 2, 17, "#ffffff"); });
     x.restore();
   });
+  // The generated cabinet's lower body (see HubGen.cabinet): its front sheet, 156 x 123 from (i * 160 + 2, 802), whose
+  // middle the model's coin door covers (from 0.23 to 0.77 across), and its side art, 136 x 124 from (134 + i * 148, 426),
+  // whose right edge is the cabinet's front edge (the stripes painted over it run up across its upper left); and the
+  // kick plate under the sheet, 246 x 24 from (770, 562): brushed steel, a rolled top edge, a screw at each end (one
+  // plate for all six, tinted by each cabinet's colour).
+  { const X = 770, Y = 562, W = 246, H = 24;
+    const g = x.createLinearGradient(0, Y, 0, Y + H);
+    g.addColorStop(0, "#f4f2ff"); g.addColorStop(0.1, "#c9c7da"); g.addColorStop(0.16, "#5c5a6e"); g.addColorStop(0.24, "#b4b2c6"); g.addColorStop(0.62, "#9a98ae"); g.addColorStop(1, "#6a687e");
+    x.fillStyle = g; x.fillRect(X, Y, W, H);
+    for (let k = 0; k < 34; k++) { // (brush marks along it: from a hash of the row, never the game's randomness)
+      const h = (Math.sin(k * 12.9898) * 43758.5453) % 1, yy = Y + 4.5 + ((k * 7) % 19);
+      x.fillStyle = h > 0 ? `rgba(255,255,255,${(0.05 + 0.08 * h).toFixed(3)})` : `rgba(20,18,32,${(0.05 - 0.08 * h).toFixed(3)})`;
+      x.fillRect(X + ((k * 37) % 60), yy, W - ((k * 53) % 90), 0.6);
+    }
+    x.fillStyle = "rgba(20,18,32,0.55)"; x.fillRect(X, Y + H - 1.2, W, 1.2);
+    [X + 7, X + W - 7].forEach((sx) => { x.fillStyle = "#3c3a4e"; x.beginPath(); x.arc(sx, Y + 13.5, 2.4, 0, 7); x.fill(); x.fillStyle = "#e8e6f6"; x.beginPath(); x.arc(sx - 0.6, Y + 12.9, 1, 0, 7); x.fill(); });
+  }
+  CABINETS.forEach((cab, i) => {
+    const col = cab.color, acc = HUB_ACCENT[cab.id] || COLORS.cyan;
+    const disc = (ex, ey, r, s) => {
+      x.fillStyle = "rgba(6,4,12,0.85)"; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.fill();
+      x.strokeStyle = col; x.lineWidth = 1.6; x.beginPath(); x.arc(ex, ey, r, 0, 7); x.stroke();
+      x.strokeStyle = hubRGB(acc, 1, 0.7); x.lineWidth = 0.8; x.beginPath(); x.arc(ex, ey, r + 2.4, 0, 7); x.stroke();
+      hubEmblem(x, cab.id, ex, ey, s, "#ffffff");
+    };
+    { // the front sheet: either side of the door, bands of its two colours rising from the outer foot, its emblem above them
+      const X = i * 160 + 2, Y = 802, W = 156, H = 123;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      const bg = x.createLinearGradient(0, Y, 0, Y + H);
+      bg.addColorStop(0, "#1c1138"); bg.addColorStop(1, "#0a0614");
+      x.fillStyle = bg; x.fillRect(X, Y, W, H);
+      for (const sd of [0, 1]) for (let k = 0; k < 6; k++) {
+        x.fillStyle = hubRGB(k % 2 ? acc : col, 1 - k * 0.1, 0.95 - k * 0.12);
+        const x0 = sd ? X + W + 4 - k * 8 : X - 4 + k * 8, dx = sd ? -34 : 34, w = sd ? -4.5 : 4.5;
+        x.beginPath(); x.moveTo(x0, Y + H); x.lineTo(x0 + dx, Y + H * 0.42); x.lineTo(x0 + dx + w, Y + H * 0.42); x.lineTo(x0 + w, Y + H); x.fill();
+      }
+      [X + W * 0.116, X + W * 0.884].forEach((ex) => disc(ex, Y + H * 0.24, 12, 7.5));
+      x.strokeStyle = hubRGB(col, 1, 0.9); x.lineWidth = 1.5; x.strokeRect(X + 1.5, Y + 1.5, W - 3, H - 3);
+      x.restore();
+    }
+    { // the side art: a sweep of its colour up from the front foot, speed lines along it, its emblem large in the sweep;
+      // its top and back edges the side panel's own black, so it has no edge of its own there (the stripes cross it)
+      const X = 134 + i * 148, Y = 426, W = 136, H = 124;
+      x.save(); x.beginPath(); x.rect(X, Y, W, H); x.clip();
+      x.fillStyle = "#06040c"; x.fillRect(X, Y, W, H);
+      const glow = x.createRadialGradient(X + W, Y + H, 0, X + W, Y + H, W * 1.15);
+      glow.addColorStop(0, "#1e1240"); glow.addColorStop(1, "rgba(6,4,12,0)");
+      x.fillStyle = glow; x.fillRect(X, Y, W, H);
+      for (let k = 1; k < 8; k++) { // (a faint grid, fading out toward the panel's black)
+        x.strokeStyle = hubRGB(col, 0.8, 0.05 + 0.025 * k); x.lineWidth = 0.75;
+        x.beginPath(); x.moveTo(X + W * 0.06, Y + k * 9 + 40); x.lineTo(X + W * 0.62, Y + k * 9 + 40); x.stroke();
+        x.beginPath(); x.moveTo(X + k * 11 + 8, Y + H * 0.3); x.lineTo(X + k * 11 + 8, Y + H * 0.92); x.stroke();
+      }
+      const sw = x.createLinearGradient(X + W, Y + H, X + W * 0.45, Y + H * 0.25); // (from the front foot toward the stripes)
+      sw.addColorStop(0, hubRGB(col, 1, 0.95)); sw.addColorStop(0.55, hubRGB(col, 0.75, 0.6)); sw.addColorStop(1, hubRGB(col, 0.5, 0));
+      x.fillStyle = sw;
+      x.beginPath(); x.moveTo(X + W * 0.1, Y + H); x.quadraticCurveTo(X + W * 0.62, Y + H * 0.82, X + W, Y + H * 0.08); x.lineTo(X + W, Y + H); x.closePath(); x.fill();
+      [[0.0, acc, 1.6, 0.95], [0.07, "#ffffff", 0.8, 0.8], [0.13, acc, 1.1, 0.7]].forEach(([o, c, lw, a]) => {
+        x.strokeStyle = hubRGB(c, 1, a); x.lineWidth = lw;
+        x.beginPath(); x.moveTo(X + W * (0.02 + o), Y + H); x.quadraticCurveTo(X + W * (0.56 + o * 0.5), Y + H * (0.76 - o), X + W, Y + H * (0.0 - o * 0.4)); x.stroke();
+      });
+      disc(X + W * 0.72, Y + H * 0.66, 19, 12);
+      x.restore();
+    }
+  });
   if (hubFontsReady()) HUB_CACHE.art = c;
   return c;
 }
@@ -16461,14 +16924,8 @@ class HubScene extends Scene3D {
     s.add(this.dust);
     // Club lasers: thin beams fan out from the ceiling and sweep across the floor.
     // They hang behind the ring of cabinets, so they cross the back of the room.
-    this.lasers = [0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff].map((col, i) => {
-      const beam = makeBeam(col, 1.25);
-      const az = (i / 8) * Math.PI * 2 + 0.2;
-      beam.userData = { az, from: new THREE.Vector3(Math.sin(az) * 10.5, HUB_CEIL - 0.3, -Math.cos(az) * 10.5), to: new THREE.Vector3(), ph: i * 1.7 };
-      beam.material.uniforms.uFade.value = 0;
-      s.add(beam);
-      return beam;
-    });
+    this.lasers = hubLasers([0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff, 0x35efff, 0xff3ad4, 0x4dffa6, 0xa65fff]);
+    s.add(this.lasers);
     // Everything that lights up, so the room can power on piece by piece.
     const grp = (g) => ({ on: () => { this.on[g] = 1; }, off: () => { this.on[g] = 0; } });
     this.lights = [
@@ -16849,16 +17306,11 @@ class HubScene extends Scene3D {
       this.flickT = rand(4, 11);
     }
     this.updateLights(dt, a);
-    // the lasers come on once the room has power, then sweep slowly
-    const lf = this.introRunning ? 0 : 1;
-    this.lasers.forEach((b) => {
-      const u = b.userData, sw = u.az + Math.sin(this.t * 0.31 + u.ph) * 0.55, reach = 15.5 + Math.sin(this.t * 0.23 + u.ph * 2) * 2;
-      u.to.set(Math.sin(sw) * reach, 0.05, -Math.cos(sw) * reach);
-      aimBeam(b, u.from, u.to, 0.075); // (the master overhaul, 2026-11-23: twice as wide and a little fainter, so a beam reads as a beam of light and not as a one-pixel scratch across the picture)
-      const f = b.material.uniforms.uFade;
-      f.value += (lf * 0.4 - f.value) * Math.min(1, dt * 1.5);
-      b.material.uniforms.uTime.value = this.t;
-    });
+    // the lasers come on once the room has power, then sweep slowly (their sweep is in their shader: see hubLasers; its
+    // clock, uTime, is the scene's, set with every shader's by FX.sync below)
+    const lf = this.introRunning ? 0 : 1, lu = this.lasers.material.uniforms;
+    lu.uFade.value += (lf * 0.4 - lu.uFade.value) * Math.min(1, dt * 1.5);
+    this.lasers.visible = lu.uFade.value > 0.002;
     // CRTs warm up when switched on. The demos are canvas drawings re-uploaded as
     // textures, so they run at a fixed retro rate whatever the screen's refresh
     // rate: 30 fps on the selected cabinet, 8 fps (staggered) on the others.
@@ -17793,6 +18245,11 @@ const HUBGEN = {
   PANEL: { y: 0.505, z: 0.19, tilt: -0.5, w: 0.34, d: 0.085 },
   EDGE: [[0.02, 0.16], [0.35, 0.162], [0.4, 0.222], [0.47, 0.231], [0.5, 0.22], [0.53, 0.115], [0.56, 0.088], [0.8, 0.006], [0.83, 0.03], [0.86, 0.085], [0.89, 0.084], [0.97, 0.066]], // the side panel's front edge, [y, z]
   HALF: 0.199, // half the model's width
+  // the lower body (measured from the model, as above): its front sheet between the side panels' chrome edges, the coin
+  // door standing proud of it (two coin entries, two returns), and the flat of each side panel below the control panel
+  LOW: { x0: -0.163, x1: 0.1625, z: 0.143, kick: [0.014, 0.052], top: 0.36 },
+  COIN: { slotX: 0.028, slotY: 0.295, slotZ: 0.162, retX: 0.027, retY: 0.227, plateZ: 0.154 },
+  SIDE: { x: 0.1966, z0: -0.205, z1: 0.145, y0: 0.05, y1: 0.37 },
   // what turns on each roof: the model, its size, how high it rides over the turntable, a pitch, a turn to start from
   TOPPERS: {
     blaster: { name: "mini-starfighter", s: 1.9, y: 0.42, rx: -0.14, ry: 0.6, bob: 0.07 },
@@ -17911,6 +18368,23 @@ class HubGen {
     });
     // a line of light at its foot
     K.box(B.glow, H.HALF * SXS * 1.9, 0.028, 0.028, at(0, 0.045, 0.165 * S + 0.03), col, { k: 1.7, g });
+    // The lower body (the master overhaul's audit, #22: it read as a black void under the lit top; the model is gloss
+    // black metal there, which mirrors the dark hall and takes no light). A printed front sheet in the game's colours
+    // (the model's coin door stands proud of it, so one sheet runs behind the door), a brushed kick plate, the coin
+    // entries and returns lit as a coin door's are, and side art on the flat of each lower side panel: printed, lit by the
+    // hall's own lights like the stripes above them. All in the hall's batches: no draw of their own.
+    const L = H.LOW, CD = H.COIN, SA = H.SIDE, fx = (L.x0 + L.x1) / 2 * SXS, fw = (L.x1 - L.x0) * SXS;
+    K.quad(B.art, fw, (L.top - L.kick[1]) * S, at(fx, (L.top + L.kick[1]) / 2 * S, L.z * S + 0.006), 0xffffff, { aux: [0.1, 0.34], uv: hubUV(i * 160 + 2, 802, 156, 123) });
+    K.quad(B.art, fw, (L.kick[1] - L.kick[0]) * S, at(fx, (L.kick[0] + L.kick[1]) / 2 * S, L.z * S + 0.03), new THREE.Color(0xffffff).lerp(col, 0.22), { aux: [0.35, 0.36], uv: hubUV(770, 562, 246, 24) }); // (brushed steel with a rolled top edge: in the art, so the hall's light shows it; as bare chrome it mirrored the black floor)
+    [-1, 1].forEach((s) => {
+      K.box(B.glow, 0.1, 0.13, 0.01, at(s * CD.slotX * SXS, CD.slotY * S, CD.slotZ * S + 0.006), 0xff4a1e, { k: 2.3, g }); // a coin entry's lit insert
+      K.box(B.lit, 0.02, 0.09, 0.01, at(s * CD.slotX * SXS, CD.slotY * S, CD.slotZ * S + 0.013), 0x07050c, { aux: [0.6, 0.5] }); // and its slot
+      K.box(B.glow, 0.13, 0.075, 0.01, at(s * CD.retX * SXS, CD.retY * S, CD.plateZ * S + 0.006), 0xffa030, { k: 0.85, g }); // the coin return under it
+    });
+    // the side art: the same picture on both sides, its right edge the cabinet's front (so it runs toward the front on each)
+    const su = hubUV(134 + i * 148, 426, 136, 124);
+    [-1, 1].forEach((sx) => K.quad(B.art, (SA.z1 - SA.z0) * S, (SA.y1 - SA.y0) * S, at(sx * SA.x * SXS, (SA.y0 + SA.y1) / 2 * S, (SA.z0 + SA.z1) / 2 * S, 0, sx * Math.PI / 2), 0xffffff,
+      { aux: [0.1, 0.34], uv: sx > 0 ? [su[2], su[1], su[0], su[3]] : su }));
     // the marquee: the game's name, lit, in the model's dark lightbox
     const M = H.MARQ, mz = M.z * S + 0.02;
     K.quad(B.marq, M.w * SXS, M.h * S, at(0, M.y * S, mz, -M.tilt), 0xffffff, { k: 1.05, g, uv: hubUV(4, i * 170 + 8, 504, 154) });
@@ -30255,12 +30729,14 @@ function bossRuneTexture() {
   return new THREE.CanvasTexture(c);
 }
 
-// One figure of the crowd: a card facing the floor, standing on the spot it is placed at (k: which of the figures in
-// the crowd's picture, bossCrowdTexture in 22c).
-function bossFigure(k, sc) {
-  const g = new THREE.PlaneGeometry(1.25 * sc, 1.25 * sc), uv = g.attributes.uv;
-  g.translate(0, 0.62 * sc, 0);
-  for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / BOSS_CROWD_N);
+// The crowd's card, one for all of them (Phase 5: drawn instanced, its figure, place and size each one's own: see
+// makeCrowd): a figure of the crowd's picture (bossCrowdTexture in 22c) facing the floor, its feet at its origin and
+// 1.25 m tall at its own size. It reaches on down past its feet, into the stand it stands on and out of sight, so a
+// hop never shows the cut under it (the picture's last row, the body, runs on down to its foot).
+function bossCardGeometry() {
+  const g = new THREE.PlaneGeometry(1.25, 1.8), p = g.attributes.position, uv = g.attributes.uv;
+  g.translate(0, 0.345, 0); // (from 0.555 under its feet to the old card's top, 1.245 over them)
+  for (let i = 0; i < uv.count; i++) uv.setY(i, (p.getY(i) + 0.005) / 1.25);
   return g;
 }
 
@@ -30386,14 +30862,18 @@ class BossGame extends QuizGame {
     // assets/ui/mat-deck.webp, a level plate until it arrives), its colour the shared violet-black; its lines are the
     // arena's second colour. One look-up a pixel on every tier and no second drawing of the scene; where the tier draws
     // the floor's mirror (the Mac), the capture gives back less (arenaFrame).
+    // (Phase 5: the capture is the arena calm; as the boss rages, what the deck and the steel give back of it turns red
+    // with the arena's own neon, each pixel's brightness kept (probeTint: as the neon's own rage, arenaGlowMaterial), and
+    // a stroke of lightning lifts it for that moment: see update. No second capture: a frame's stall each time.)
     this.mirror = new Mirror(0);
     this.lineBase = neon(P.b, 1.05);
     this.probe = roomProbe(new THREE.Vector3(0, 3, 0), { size: Assets.phone ? 128 : 256 });
     if (GFX.ok) { try { GFX.pmrem().compileCubemapShader(); } catch (e) { /* made at the first capture instead */ } } // (the steel's filtered copy of it: its shader made now, behind the cover, not as the boss drops in)
     this.plates = cellFlatTexture();
+    this.probeTint = new THREE.Vector4(1, 0.14, 0.24, 0); // (the neon's rage red; how far: the rage)
     this.floor = makeNeonFloor({
       size: 600, cell: 3, line: P.b, lineK: 1.05, base: 0x07031a, mirror: this.mirror, reflect: 0.55, polar: true, spokes: 24, glow: 0.08, ripple: 0.0018, streak: 0.01,
-      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12 }, // (dark looking down, a mirror at a slant)
+      probe: { map: this.probe.map, min: new THREE.Vector3(-28, 0, -29), max: new THREE.Vector3(28, 16, 28), at: this.probe.at, k: (this.probeK = 0.9), rough: 0.16, f0: 0.12, tint: this.probeTint }, // (dark looking down, a mirror at a slant)
       plates: { map: this.plates, size: 2.4, k: 0.8 },
     });
     // (the deck is in its own capture, its reflection blanked while it is drawn: what the steel gives back below the
@@ -30424,7 +30904,7 @@ class BossGame extends QuizGame {
     const steel = new RacerBatch(["aMetal", "aRough", "aKind"]), glow = new RacerBatch(["aRole"]);
     this.makeArena(steel, glow);
     this.makeCrowd(steel, glow);
-    this.steelMat = arenaSteelMaterial(this.env); // (its reflection: the arena itself once it has been drawn: probeTaken)
+    this.steelMat = arenaSteelMaterial(this.env, this.probeTint); // (its reflection: the arena itself once it has been drawn: probeTaken; red with the rage as the deck's)
     this.glowMat = arenaGlowMaterial();
     const sm = new THREE.Mesh(steel.build("color"), this.steelMat), gm = new THREE.Mesh(glow.build("aCol"), this.glowMat);
     sm.name = "arena-steel"; gm.name = "arena-neon"; // (named for tools/cost-report.js)
@@ -30691,7 +31171,7 @@ class BossGame extends QuizGame {
   // panels (the arena's steel: 22c) under a rail of the arena's lead colour and a line of its second, a crowd on each,
   // lit, and lights held up along it (they sway, and surge when a blow lands).
   makeCrowd(steel, glow) {
-    const s = this.scene, hex = this.cfg.color, P = this.pair, pos = [], col = [], seed = [], people = [], pSeed = [], rims = [];
+    const s = this.scene, hex = this.cfg.color, P = this.pair, pos = [], col = [], seed = [], people = [];
     const lilac = new THREE.Color(0xd9d0ff), tints = [P.a, P.b, lilac, new THREE.Color(hex)]; // (the arena's light, lilac, and the boss's own fans)
     // what the crowd wears: dark, each a little different, never black (lit by the arena's lamps, it reads as people;
     // the lamps are strong, the boss's own: what they fall on is dark)
@@ -30711,11 +31191,13 @@ class BossGame extends QuizGame {
         const per = Math.max(2, Math.floor(w / 1.15));
         for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
           const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
-          const at = (dx, dy, dz, rz = 0) => new THREE.Matrix4().makeRotationY(-a).multiply(new THREE.Matrix4().makeRotationZ(rz)).setPosition(Math.sin(a) * r + Math.cos(a) * dx - Math.sin(a) * dz, fy + dy * sc, -Math.cos(a) * r + Math.sin(a) * dx + Math.cos(a) * dz);
           // (the master overhaul, Phase 2: lit figures, where they were black cut-outs: what they wear takes the arena's
           // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
           const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
-          people.push({ geo: bossFigure(Math.floor(Math.random() * BOSS_CROWD_N), sc), matrix: at(0, 0, 0), color: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) }); pSeed.push(sd, 6); rims.push(rim);
+          // (Phase 5: each an instance of one card: where it stands, facing the floor, its size, which figure, its seed
+          // and where it is round the ring. The same draws from the randomness, in the same order, as when each was a
+          // card of its own: what is drawn after the crowd, the questions too, comes out as it did)
+          people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: Math.floor(Math.random() * BOSS_CROWD_N), sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
         }
         // what they hold up: glow sticks in the house colours, a few phone lights
@@ -30735,19 +31217,49 @@ class BossGame extends QuizGame {
       glow.add(foot, new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * 24.6, 0.12, -Math.cos(a) * 24.6), P.b, 1.1, arena);
     }
     foot.dispose();
-    // The crowd itself: lit by the arena's lamps (each corner's light reckoned once: a card is small), bobbing on the
-    // spot and jumping at a blow; its rims and what it holds up glow of their own (aRim), red as the boss rages.
-    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 } };
-    const pg = blasterMerge(people), ps = new Float32Array(pg.attributes.position.count), pr = new Float32Array(pg.attributes.position.count * 3);
-    for (let i = 0, v = 0; i < pSeed.length; i += 2) { ps.fill(pSeed[i], v, v + pSeed[i + 1]); for (let q = v; q < v + pSeed[i + 1]; q++) rims[i / 2].toArray(pr, q * 3); v += pSeed[i + 1]; }
-    pg.setAttribute("aSeed", new THREE.BufferAttribute(ps, 1));
-    pg.setAttribute("aRim", new THREE.BufferAttribute(pr, 3));
-    const pm = new THREE.MeshLambertMaterial({ vertexColors: true, map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide });
+    // The crowd itself: lit by the arena's lamps (each corner's light reckoned once: a card is small); its rims and what
+    // it holds up glow of their own (aRim), red as the boss rages. Phase 5 (it was cards that never moved): one card
+    // drawn for all of them at once, each moved in the shader on its own. Waiting, each sways from the hips and shifts
+    // its weight at its own pace, and now and then pumps its arms (restless as the boss rages). A blow on the boss
+    // (crowdCue "cheer") runs out from behind it along the stands: each hops at its own beat, stretched as it goes up,
+    // and throws up its arms (its cheering figure: the picture holds each twice). The boss's strike ("stir"): a
+    // flinch that runs through them, quicker: down, squashed, away to one side, some hands thrown up. Reduced effects:
+    // a quarter of the sway, a third of a cheer, arms up and held, no pumping.
+    const U = this.crowdU = { uTime: { value: 0 }, uPx: { value: 1 }, uCheer: { value: 0 }, uRage: { value: 0 }, uCheers: { value: new THREE.Vector4(99, 0, 99, 0) }, uStirs: { value: new THREE.Vector4(99, 0, 99, 0) }, uMove: { value: new THREE.Vector2(1, 0) } };
+    this.cues = { cheer: [99, 0, 99, 0], stir: [99, 0, 99, 0] }; // (the last two of each: [since, how big] twice)
+    this.crowdT = 0; // (its clock: the show's, so a hit-stop holds it and slow motion slows it)
+    const card = bossCardGeometry(), NP = people.length, aFig = new Float32Array(NP * 4), aRim = new Float32Array(NP * 3);
+    people.forEach((p, i) => { aFig[i * 4] = p.fig; aFig[i * 4 + 1] = p.sd; aFig[i * 4 + 2] = p.a; aFig[i * 4 + 3] = cyHash(i); p.rim.toArray(aRim, i * 3); }); // (its own beat: a hash of its place in the crowd, not the randomness)
+    card.setAttribute("aFig", new THREE.InstancedBufferAttribute(aFig, 4));
+    card.setAttribute("aRim", new THREE.InstancedBufferAttribute(aRim, 3));
+    const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
     pm.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = U.uTime; sh.uniforms.uCheer = U.uCheer; sh.uniforms.uRage = U.uRage;
+      for (const k of ["uTime", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
       sh.vertexShader = sh.vertexShader
-        .replace("#include <common>", "#include <common>\nattribute float aSeed; attribute vec3 aRim; uniform float uTime; uniform float uCheer; varying vec3 vRim;")
-        .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.y += sin(uTime * (1.2 + aSeed * 1.4) + aSeed * 40.0) * (0.04 + 0.2 * uCheer) + uCheer * 0.38 * fract(aSeed * 7.3);\nvRim = aRim;");
+        .replace("#include <common>", `#include <common>
+          attribute vec4 aFig; attribute vec3 aRim; uniform float uTime; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim;
+          // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
+          // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
+          float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
+        .replace("#include <begin_vertex>", `#include <begin_vertex>
+          {
+            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uTime;
+            float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
+            float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
+            float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
+            float ea = crowdK(uCheers.x, uCheers.y, lc, 0.85, 8.0), eb = crowdK(uCheers.z, uCheers.w, lc, 0.85, 8.0);
+            float hop = max(abs(sin(max(uCheers.x - lc, 0.0) * beat)) * ea, abs(sin(max(uCheers.z - lc, 0.0) * beat)) * eb);
+            float ls = ring * 0.16 + hh * 0.06, se = max(crowdK(uStirs.x, uStirs.y, ls, 3.0, 14.0), crowdK(uStirs.z, uStirs.w, ls, 3.0, 14.0));
+            transformed.y *= 1.0 + 0.06 * hop - 0.1 * se;
+            transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
+            transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
+            transformed.y += bob + 0.32 * hop - 0.1 * se;
+            float pump = uMove.x > 0.5 ? step(-0.35, sin(uTime * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
+            float idle = step(0.82 - 0.16 * uMove.y, fract(uTime * 0.045 + hh * 7.13)) * step(0.0, sin(uTime * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
+            float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
+            vUv = vec2((aFig.x + 8.0 * up + uv.x) / 16.0, uv.y); // (its figure, standing or cheering)
+            vRim = aRim;
+          }`);
       sh.fragmentShader = sh.fragmentShader
         .replace("#include <common>", "#include <common>\nvarying vec3 vRim; uniform float uRage;")
         .replace("#include <map_fragment>", "vec4 fig = texture2D(map, vUv); diffuseColor.rgb *= 0.22 + 0.78 * fig.r; diffuseColor.a *= fig.a;") // (red: lit from above; alpha: the figure)
@@ -30755,8 +31267,10 @@ class BossGame extends QuizGame {
           vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
           totalEmissiveRadiance += rimC * fig.g + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim; blue: what it holds up, lit)
     };
-    pm.customProgramCacheKey = () => "boss-crowd-lit";
-    const folk = new THREE.Mesh(pg, pm);
+    pm.customProgramCacheKey = () => "boss-crowd-2";
+    const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
+    people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
+    folk.name = "arena-crowd"; // (named for tools/cost-report.js)
     folk.layers.set(1);
     folk.frustumCulled = false;
     folk.userData.arena = true;
@@ -30898,6 +31412,7 @@ class BossGame extends QuizGame {
         GFX.pulse(8, 0.15);
         Haptics.buzz(80);
         Sound.sfx("hit");
+        this.crowdCue("stir", 0.8); // (the crowd flinches as it lands)
       }, Ease.outBack);
     }
     this.tw.wait(1.6, () => {
@@ -30988,6 +31503,7 @@ class BossGame extends QuizGame {
       } else if (this.has3D) {
         const b = this.boss;
         const at = b.position.clone().add(new THREE.Vector3(0, 0, 2 * this.bossScale));
+        this.crowdCue("cheer", this.hp <= 0 ? 1.5 : 1); // (the stands cheer the blow)
         // (sparks leave from round the point of the blow, not all from one spot: piled on one another they were a white ball)
         for (let q = 0; q < 6; q++) this.bursts.burst(this._v.copy(at).add(this._s.set(rand(-1, 1), rand(-1, 1), rand(-0.3, 0.3)).multiplyScalar(0.9 * this.bossScale)), q % 2 ? hitCol : this.cfg.color, { n: 7, speed: 7, size: 0.3, life: q % 2 ? 0.6 : 1 });
         this.shards.burst(at, this.cfg.color, 12, this.bossScale * 1.1, 8, 6);
@@ -31064,6 +31580,7 @@ class BossGame extends QuizGame {
       const to = new THREE.Vector3(this.camBase.x, this.camY - 1.0, this.camZ - 1.5); // (at the lens, wherever its drift has taken it)
       const r = 0.25 * this.bossScale + 0.05;
       const col = COLORS.red; // (its blow is red whatever colour it is: red is "you were hurt" everywhere in the arcade)
+      this.crowdCue("stir"); // (the stands flinch at its blow)
       const { beam, glow, muzzle } = this.atk;
       const tok = ++this.atk.tok;
       // First a flash at its lens; then the wedge shoots from the lens to the bottom edge of the picture, holds, and
@@ -31294,7 +31811,7 @@ class BossGame extends QuizGame {
       this.scene.fog.color.copy(this.fogBase).lerp(this.rageFog, rk);
       this.floor.material.uniforms.uLine.value.copy(this.lineBase).lerp(this.rageLine, rk);
       this.beamMat.uniforms.uColor.value.copy(this.beamCol).lerp(this.rageCol, rk);
-      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it)
+      this.glowMat.uniforms.uRage.value = this.crowdU.uRage.value = this.probeTint.w = rk * 0.6; // (the arena's own neon and the crowd's rims bleed red with it, and what the deck and the steel give back of them)
       this.ambient.color.copy(this.ambientBase).lerp(this.rageAmb, rk);
       const tint = this.scene.userData.post.tint;
       tint[0] = 1 + 0.1 * rk; tint[1] = 1 - 0.08 * rk; tint[2] = 1 - 0.05 * rk;
@@ -31304,7 +31821,9 @@ class BossGame extends QuizGame {
     this.floor.material.uniforms.uReflect.value = 0.55;
     // (the deck's capture of the arena gives back less where the tier draws the floor's mirror, the Mac's: the mirror
     // has the arena exactly, the boss with it; the capture adds the crowd, which the mirror leaves out)
-    this.floor.material.uniforms.uProbe.value.x = this.probeK * (GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.45 : 1);
+    // (and a stroke of lightning lifts what it gives back for that moment, as it lights the arena: the capture holds the
+    // storm as it was)
+    this.floor.material.uniforms.uProbe.value.x = this.probeK * (GFX.ok && GFX.opt.wet && GFX.TIERS[GFX.tier].mirror > 0 && !this.scene.userData.mirrorOff ? 0.45 : 1) * (1 + 0.45 * (this.arena ? this.arena.flash : 0));
     { // the floor's lines: low while it waits, running hot as its attack charges; a blow that lands runs through them in the answer's colour
       const fl = this.floor.material.uniforms.uLine.value;
       let ch = this.state === "ask" ? clamp(this.charge / this.T, 0, 1) : 0;
@@ -31389,11 +31908,25 @@ class BossGame extends QuizGame {
     }
     if (this.crowd) { // the crowd: swaying, louder for a moment whenever the light of a hit goes up
       this.cheer = Math.max(this.cheer * Math.pow(0.12, dt), Math.min(1, this.hitLight.intensity * 0.25));
-      const u = this.crowd.material.uniforms; u.uTime.value = this.t; u.uCheer.value = REDUCED_MOTION || GFX.calm ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
-      const drift = REDUCED_MOTION || GFX.calm ? 0.25 : 1;
+      const quiet = REDUCED_MOTION || GFX.calm, d = VFX.dt, u = this.crowdU, ch = this.cues.cheer, st = this.cues.stir, km = quiet ? 0.3 : 1;
+      this.crowdT += d * (1 + 0.5 * (this.rageK || 0)); // (the cards and what they hold up, on the show's clock: see makeCrowd; restless, quicker, as the boss rages)
+      for (const q of [ch, st]) { q[0] = Math.min(60, q[0] + d); q[2] = Math.min(60, q[2] + d); }
+      u.uTime.value = this.crowdT; u.uCheer.value = quiet ? this.cheer * 0.3 : this.cheer; u.uPx.value = (GFX.h / 844) * GFX.scenePR();
+      u.uCheers.value.set(ch[0], ch[1] * km, ch[2], ch[3] * km); u.uStirs.value.set(st[0], st[1] * km, st[2], st[3] * km);
+      u.uMove.value.set(quiet ? 0.25 : 1, this.rageK || 0);
+      const drift = quiet ? 0.25 : 1;
       this.haze.forEach((m, i) => { m.material.map.offset.x = (i ? -1 : 1) * this.t * 0.006 * drift; if (!m.userData.far) m.material.color.copy(this.arenaCol).multiplyScalar(m.userData.k * 0.42 * (1 + 0.6 * this.cheer)); });
     }
     FX.sync(this.scene, this.t);
+  }
+  // The crowd's moments (look only: the staged fight, and the built-in fight's own effects, call it): "cheer", a blow
+  // has landed on the boss (k: how big); "stir", the boss strikes. Each runs out through the stands from behind the
+  // boss (makeCrowd's shader); the last two of each kind are kept, so a new one never cuts one still running short.
+  crowdCue(kind, k = 1) {
+    const q = this.cues && this.cues[kind === "stir" ? "stir" : "cheer"];
+    if (!q) return;
+    const i = q[0] >= q[2] ? 0 : 2; // (in place of the older)
+    q[i] = 0; q[i + 1] = Math.min(1.5, k);
   }
   pause() { super.pause(); if (this.paused && this.stage) this.stage.pause(); } // (staged: nothing keeps sounding behind the menu)
   resume() { super.resume(); if (this.stage) this.stage.resume(); }
@@ -31403,6 +31936,7 @@ class BossGame extends QuizGame {
       if (this.arena) this.arena.dispose();
       this.shards.dispose();
       if (this.boss.userData.orbs && this.boss.userData.orbs.dispose) this.boss.userData.orbs.dispose();
+      if (this.folk) this.folk.dispose(); // (the crowd's places and colours: an instanced mesh's own buffers)
       // (the deck's capture, the steel's filtered copy of it, the deck's and the steel's pictures: no scene holds them)
       if (this.probe) this.probe.dispose();
       if (this.steelEnv) this.steelEnv.dispose();
@@ -32604,19 +33138,30 @@ function bossArenaPair(hex) {
 // and the roughness they leave come from a CC0 material (ambientCG Metal009: assets/ui/mat-steel.webp, the normal's x
 // and y in red and green, roughness in blue; a level plate until it arrives), laid along each face by where it is
 // (no UVs): up a pillar, across a panel; a panel has a seam every 1.2 m up it and 1.9 m along it. What it reflects is
-// the arena itself, drawn once (BossGame.probeTaken; until then, env).
-function arenaSteelMaterial(env) {
+// the arena itself, drawn once (BossGame.probeTaken; until then, env). tint (a Vector4, Phase 5): what it reflects
+// turned toward the colour in xyz by w, each pixel's brightness kept (the capture is the arena calm: as the boss rages,
+// the steel gives back red neon, as the deck does: BossGame.probeTint).
+function arenaSteelMaterial(env, tint) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 1, envMap: env || null, envMapIntensity: 1 });
   m.extensions = { derivatives: true };
   m.userData.tBrush = { value: cellFlatTexture() };
+  m.userData.uEnvTint = { value: tint || new THREE.Vector4(1, 1, 1, 0) };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tBrush = m.userData.tBrush;
+    sh.uniforms.uEnvTint = m.userData.uEnvTint;
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\nattribute float aMetal; attribute float aRough; attribute float aKind; varying vec3 vSurf; varying vec3 vWP; varying vec3 vWN;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\n  vSurf = vec3(aMetal, aRough, aKind);")
       .replace("#include <project_vertex>", "#include <project_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);");
     sh.fragmentShader = sh.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush;")
+      .replace("#include <common>", "#include <common>\nvarying vec3 vSurf; varying vec3 vWP; varying vec3 vWN; uniform sampler2D tBrush; uniform vec4 uEnvTint;")
+      .replace("#include <lights_fragment_maps>", `#include <lights_fragment_maps>
+        #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular )
+          radiance = mix(radiance, uEnvTint.xyz * max(max(radiance.r, radiance.g), radiance.b), uEnvTint.w);
+          #if defined( RE_IndirectDiffuse ) && defined( STANDARD ) && defined( ENVMAP_TYPE_CUBE_UV )
+            iblIrradiance = mix(iblIrradiance, uEnvTint.xyz * max(max(iblIrradiance.r, iblIrradiance.g), iblIrradiance.b), uEnvTint.w);
+          #endif
+        #endif`)
       .replace("#include <color_fragment>", `#include <color_fragment>
         vec3 sN = normalize(vWN), sT = normalize(vec3(-sN.z, 0.0, sN.x) + vec3(1e-4, 0.0, 0.0));
         float sAlong = dot(vWP, sT), sFlat = step(0.6, abs(sN.y));
@@ -32630,7 +33175,7 @@ function arenaSteelMaterial(env) {
       .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n  roughnessFactor = clamp(vSurf.y * mix(mix(0.72, 1.32, brush.b), 1.0, kCloth) + 0.35 * seam, 0.04, 1.0);")
       .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\n  metalnessFactor = vSurf.x * (1.0 - 0.6 * seam);");
   };
-  m.customProgramCacheKey = () => "arena-steel-1";
+  m.customProgramCacheKey = () => "arena-steel-2";
   return m;
 }
 // The arena's neon, unlit and in one draw: its pillars' inlays and lamps, the rails along its stands, the lights at
@@ -32685,35 +33230,56 @@ function bossPillar(st, gl, at, A, B, hex) {
 // figure takes (lit from above: heads and shoulders most); green: its rim, along its top and upper sides, where the
 // light behind it catches its edge; blue: what glows of its own (a light stick, a phone held up, a sign's lit border);
 // alpha: the figure. Heads and shoulders, arms up, a cap, a pair close together, a hood, a light stick, a bun, a sign.
+// Each is there twice (Phase 5): as it stands (cells 0-7), and cheering (8-15: both fists up, hands clapped over its
+// head, its phone held up high, the pair's outer arms up, its light stick swung across, its sign waved), its head and
+// body where they were, so the crowd's shader can show either in its place (BossGame.makeCrowd). Side by side, not one
+// row over the other: a figure's smaller copies never take in the feet of the one above it.
 let _crowdTex = null;
 const BOSS_CROWD_N = 8;
 function bossCrowdTexture() {
   if (_crowdTex) return _crowdTex;
-  const W = 128, N = BOSS_CROWD_N, WN = W * N, cv = document.createElement("canvas"), ac = document.createElement("canvas");
-  cv.width = ac.width = WN; cv.height = ac.height = W;
-  const x = cv.getContext("2d"), y = ac.getContext("2d");
-  x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = "#fff";
+  const W = 128, N = BOSS_CROWD_N, WN = W * N * 2, cv = document.createElement("canvas"), ac = document.createElement("canvas"), dc = document.createElement("canvas");
+  cv.width = ac.width = dc.width = WN; cv.height = ac.height = dc.height = W;
+  const x = cv.getContext("2d"), y = ac.getContext("2d"), z = dc.getContext("2d"); // (z: a sign's board, dark: only its border is lit)
+  x.fillStyle = x.strokeStyle = y.fillStyle = y.strokeStyle = z.fillStyle = "#fff";
   const head = (c, hx, hy, r) => { c.beginPath(); c.arc(hx, hy, r, 0, Math.PI * 2); c.fill(); };
   const body = (c, bx, w, top) => { c.beginPath(); c.moveTo(bx - w, W); c.quadraticCurveTo(bx - w, top + 4, bx - w * 0.55, top); c.lineTo(bx + w * 0.55, top); c.quadraticCurveTo(bx + w, top + 4, bx + w, W); c.closePath(); c.fill(); };
   const limb = (c, ax, ay, bx, by, wd) => { c.lineWidth = wd; c.lineCap = "round"; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.stroke(); };
-  for (let k = 0; k < N; k++) {
-    const cx = k * W + W / 2;
-    if (k === 3) { body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14); continue; } // a pair
+  const sign = (cx, cy, turn) => { // (its board, the lit border on it, and where it is dark, turned about its middle)
+    for (const [c, f] of [[x, () => x.fillRect(-42, -15, 84, 30)], [y, () => { y.lineWidth = 4; y.strokeRect(-40, -13, 80, 26); }], [z, () => z.fillRect(-44, -17, 88, 34)]]) { c.save(); c.translate(cx, cy); c.rotate(turn); f(); c.restore(); }
+  };
+  for (let f = 0; f < 2; f++) for (let k = 0; k < N; k++) {
+    const cx = (f * N + k) * W + W / 2, up = f === 1;
+    if (k === 3) { // a pair
+      body(x, cx - 21, 22, 70); head(x, cx - 21, 50, 15); body(x, cx + 22, 20, 74); head(x, cx + 22, 55, 14);
+      if (up) { limb(x, cx - 36, 80, cx - 48, 30, 9); limb(x, cx + 36, 84, cx + 47, 34, 9); } // (each throws its outer arm up)
+      continue;
+    }
     body(x, cx, k === 6 ? 30 : 34, 66); head(x, cx, 44, k === 6 ? 16 : 18); x.fillRect(cx - 7, 52, 14, 16);
-    if (k === 1) { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } // both arms up
-    if (k === 2) { x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5); y.fillRect(cx - 12, 82, 11, 15); } // a cap; a phone lit at the chest
-    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); } // a hood
-    if (k === 5) { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); } // one arm up, a light stick in it
-    if (k === 6) head(x, cx + 3, 23, 9); // a bun
-    if (k === 7) { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); x.fillRect(cx - 42, 6, 84, 30); y.lineWidth = 4; y.strokeRect(cx - 40, 8, 80, 26); } // a sign held up, its border lit
+    if (k === 0 && up) { limb(x, cx - 26, 74, cx - 40, 24, 11); limb(x, cx + 26, 74, cx + 40, 24, 11); } // (both fists up)
+    if (k === 1) { if (up) { for (const s of [-1, 1]) { limb(x, cx + s * 26, 74, cx + s * 36, 38, 10); limb(x, cx + s * 36, 38, cx + s * 6, 6, 9); } } else { limb(x, cx - 26, 74, cx - 38, 22, 11); limb(x, cx + 26, 74, cx + 36, 18, 11); } } // both arms up (clapping over its head, elbows out)
+    if (k === 2) { // a cap; a phone lit at the chest (held up high to film it)
+      x.beginPath(); x.ellipse(cx, 32, 22, 9, 0, Math.PI, 0); x.fill(); x.fillRect(cx - 4, 30, 32, 5);
+      if (up) { limb(x, cx - 26, 74, cx - 36, 24, 11); x.fillRect(cx - 43, 3, 14, 20); y.fillRect(cx - 41, 5, 10, 16); } else y.fillRect(cx - 12, 82, 11, 15);
+    }
+    if (k === 4) { x.beginPath(); x.moveTo(cx - 23, 54); x.quadraticCurveTo(cx - 22, 20, cx + 3, 13); x.quadraticCurveTo(cx + 23, 22, cx + 23, 54); x.closePath(); x.fill(); if (up) { limb(x, cx - 24, 74, cx - 35, 27, 11); limb(x, cx + 24, 74, cx + 35, 27, 11); } } // a hood (fists up)
+    if (k === 5) { // one arm up, a light stick in it (swung across, the other arm up too)
+      if (up) { limb(x, cx + 26, 74, cx + 16, 26, 11); limb(x, cx + 14, 28, cx - 4, 5, 5); limb(y, cx + 10, 22, cx - 4, 5, 5); limb(x, cx - 26, 74, cx - 38, 30, 11); }
+      else { limb(x, cx + 26, 74, cx + 34, 28, 11); limb(x, cx + 34, 30, cx + 41, 3, 5); limb(y, cx + 35, 24, cx + 41, 3, 5); }
+    }
+    if (k === 6) { head(x, cx + 3, 23, 9); if (up) { limb(x, cx - 23, 76, cx - 35, 28, 10); limb(x, cx + 23, 76, cx + 35, 28, 10); } } // a bun (both arms up)
+    if (k === 7) { // a sign held up, its border lit (waved: tipped, and over to one side)
+      if (up) { limb(x, cx - 26, 74, cx - 28, 32, 10); limb(x, cx + 26, 74, cx + 32, 40, 10); sign(cx + 4, 21, 0.14); }
+      else { limb(x, cx - 26, 74, cx - 31, 34, 10); limb(x, cx + 26, 74, cx + 31, 34, 10); sign(cx, 21, 0); }
+    }
   }
-  const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
+  const M = x.getImageData(0, 0, WN, W).data, G = y.getImageData(0, 0, WN, W).data, D = z.getImageData(0, 0, WN, W).data, out = new Uint8Array(WN * W * 4);
   const al = (i, j) => (i < 0 || j < 0 || i >= WN || j >= W ? 0 : M[(j * WN + i) * 4 + 3]);
   for (let j = 0; j < W; j++) for (let i = 0; i < WN; i++) {
     const a = al(i, j);
     if (!a) continue;
     const up = 1 - j / W, top = Math.max(0, a - al(i, j - 3)) / 255, side = Math.max(0, a - Math.min(al(i - 2, j), al(i + 2, j))) / 255, o = ((W - 1 - j) * WN + i) * 4; // (rows from the bottom: a DataTexture is not turned over)
-    out[o] = Math.round(255 * (j < 38 && (i % W) > 20 && (i % W) < 108 && Math.floor(i / W) === 7 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
+    out[o] = Math.round(255 * (D[(j * WN + i) * 4 + 3] > 127 ? 0.12 : clamp(0.3 + 0.75 * up, 0, 1))); // (a sign's board is dark: only its border is lit)
     out[o + 1] = Math.round(255 * clamp(Math.max(top, side * 0.55) * (0.45 + 0.65 * up), 0, 1));
     out[o + 2] = G[(j * WN + i) * 4 + 3];
     out[o + 3] = a;
@@ -32756,6 +33322,7 @@ class BossArena {
     this.storm.position.set(-5, 11, -14);
     s.add(this.storm);
     this.boltK = 0; this.boltT = rand(1.5, 3); this.gain = K.gain;
+    this.flash = 0; // (a stroke now, as strong as it is seen: the deck's reflection takes it too, BossGame.update)
   }
   // a stroke of lightning now (the boss lands, rages, dies)
   strike(k = 1) { this.boltK = Math.max(this.boltK, k); this.boltT = rand(3.5, 7.5); this.storm.position.x = rand(-9, 9); }
@@ -32764,7 +33331,7 @@ class BossArena {
     this.dome.userData.follow(g.camera);
     if ((this.boltT -= d) <= 0) this.strike(rand(0.55, 1));
     this.boltK *= Math.pow(0.012, d); // (gone in half a second)
-    const b = this.boltK * (quiet ? 0.25 : 1);
+    const b = (this.flash = this.boltK * (quiet ? 0.25 : 1));
     this.tint.copy(this.tint0).lerp(this.tintRage, rk * 0.55);
     this.dome.userData.set({ gain: this.gain * (1 + 0.85 * b + 0.12 * rk), tint: this.tint });
     this.storm.intensity = 1.6 * b;
@@ -33835,6 +34402,7 @@ class BossStage {
     Haptics.buzz(80);
     if (g.arena) g.arena.strike(1);
     g.cheer = 1;
+    g.crowdCue("stir"); // (the stands flinch as it lands)
     g.show.wait(0.38, () => this.powerUp());
   }
   powerUp() {
@@ -33850,6 +34418,7 @@ class BossStage {
       this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 5, w: 0.04, delay: 0.14 });
       g.shake(0.12);
       if (g.arena) g.arena.strike(0.8);
+      g.crowdCue("cheer", 0.8); // (and roar back as it roars and its name is called)
       this.phase = "fight";
       if (g.bossKey === "all") Sound.say("FINAL BOSS"); // (the important line first: the name waits its turn)
       g.show.wait(0.45, () => { if (!g.unmounted && g.state !== "over") Sound.say(g.cfg.name); });
@@ -33958,6 +34527,7 @@ class BossStage {
     VFX.hitStop(big ? 3 : 2);
     g.hitLine = (g.hitLine || new THREE.Color()).copy(neon(col, 1.5)); g.hitTint = 1; // (the floor's lines run in the answer's colour for a moment)
     g.cheer = 1;
+    g.crowdCue("cheer", big ? 1.3 : 1); // (the stands cheer it, from behind the boss outward)
     a.kickV += big ? 5.5 : 3.2; // (a shallow recoil: it never drops behind the heads of the front row)
     if (!o.dead) a.react(big ? "stagger" : "hurt", { rate: big ? 1.3 : 1.55, in: 0.05, out: 0.32, k: big ? 0.5 : 0.62 });
     if (a.hit) a.hit(from, p, big); // (its spine gives to the blow, away from where it came from: 22d)
@@ -34044,6 +34614,7 @@ class BossStage {
     this.kit.sparks(h, 0xff3a5a, { n: quiet ? 8 : 24, speed: 7, life: 0.9, gravity: 1.5 });
     if (!quiet) g.shake(0.12);
     if (g.arena) g.arena.strike(1);
+    g.crowdCue("stir", 1.2); // (the stands recoil from it)
   }
 
   // ---- the boss strikes (the rule: bossAttack, then its hit 0.12 s on) -------------------------------------------
@@ -34087,6 +34658,7 @@ class BossStage {
   release(s) {
     const g = this.g, kit = this.kit, a = this.a, S = this.S, k = S / 7.4, quiet = REDUCED_MOTION || GFX.calm, src = this.src(new THREE.Vector3());
     s.released = true;
+    g.crowdCue("stir"); // (the stands flinch at its blow)
     if (this.tele) this.tele.mark.forEach((m) => { m.t = Math.min(m.t, 0.1); });
     VFX.slowMo(0.45, 0.12, 0.03);
     kit.flash(src, this.hex, 0.25 * k, 0.9 * k, 0.09, 0.8, 1.4);
@@ -34343,6 +34915,7 @@ class BossStage {
     g.shake(0.24);
     if (g.arena) g.arena.strike(1);
     g.cheer = 1;
+    g.crowdCue("cheer", 1.5); g.show.wait(1.1, () => { if (!g.unmounted) g.crowdCue("cheer", 1.2); }); // (the stands go wild, and keep at it)
     Sound.sfx("explosion_huge", 0, { vol: 1 });
     Sound.sfx("debris", 0, { delay: 0.3, vol: 0.8 });
     // the reward: stars and coins fly from the blast, round the question, to just beside the score, which counts up as they land
@@ -34382,6 +34955,7 @@ class BossStage {
     Sound.sfx(this.row.roar || "roar_" + this.row.key, 0, { vol: 1, rate: 0.85 });
     this.kit.wave(h, null, this.hex, { dur: 0.7, s0: 0.5, s1: 7, w: 0.04 });
     if (g.arena) g.arena.strike(1);
+    g.crowdCue("stir", 1.2); // (the stands recoil as it has the last word)
     this.wideTo = 0.15; this.camLow = -0.6;
     this.wizCall((w) => w.lose());
     // (its last word is its own: "game over" in the boss's recorded voice, in place of the announcer's)
@@ -35618,32 +36192,187 @@ function memoryWheelGeometry() {
   return memoryMerge(parts);
 }
 
-// A gold ingot as cast: a trapezoid, its top drawn in, every edge bevelled, so a highlight runs along each edge in
-// the light and each face takes its own part of the room's reflection (the master overhaul, Phase 2, 2026-11-23: a
-// box with its faces painted lighter and darker read as a lump of brown). Flat faces, 44 triangles; the bars' own
-// tones (instance colours) need a colour per corner, all white.
+// A gold ingot as cast and stamped (the master overhaul, Phase 5, 2026-11-24; the audit's #13: the bars still read as
+// blocky lumps). A trapezoid, its top drawn in on every side as an open mould casts it, and every edge rounded: the
+// top's edges on a wide radius, the foot's on a small one, the upright corners between, so a highlight runs along each
+// edge whatever the light (the normals turn through it); each broad face very slightly full (its normals lean out toward
+// its edges), so a face carries a sweep of the room's reflection and not one flat colour; and in the top a panel sunk
+// with a bevelled edge, the assay's marks struck into it (memoryStampTexture: the top's uv is the panel seen from above).
+// Phase 2's bar was flat facets with a sliver of bevel (44 triangles): at the door it read as blocks of one orange.
+// 400 triangles, indexed; its size is the old bar's, so every stack's spacing holds. The bars' own tones (instance
+// colours) need a colour per vertex, all white.
 function memoryIngotGeometry() {
-  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56, C = 0.055;
-  // an octagon: a rectangle (half-sizes w, d) at height y, its corners cut by k
-  const ring = (w, d, y, k) => [[w - k, d], [w, d - k], [w, -(d - k)], [w - k, -d], [-(w - k), -d], [-w, -(d - k)], [-w, d - k], [-(w - k), d]].map(([x, z]) => new THREE.Vector3(x, y, z));
-  const t = (H - C) / H, r0 = ring(W0, D0, 0, C * 1.4), r1 = ring(W0 + (W1 - W0) * t, D0 + (D1 - D0) * t, H - C, C * 1.4), r2 = ring(W1 - C, D1 - C, H, C);
-  const mid = new THREE.Vector3(0, H / 2, 0), pos = [], ab = new THREE.Vector3(), ac = new THREE.Vector3(), cen = new THREE.Vector3();
-  const tri = (a, b, c) => { // (wound so its face looks away from the bar's middle: the bar is convex)
-    ab.subVectors(b, a); ac.subVectors(c, a); cen.copy(a).add(b).add(c).multiplyScalar(1 / 3).sub(mid);
-    const out = ab.cross(ac).dot(cen) > 0;
-    for (const v of out ? [a, b, c] : [a, c, b]) pos.push(v.x, v.y, v.z);
+  const W0 = 0.975, D0 = 0.48, W1 = 0.82, D1 = 0.336, H = 0.56; // half-length and half-depth at the foot and the top, height
+  const RT = 0.075, RB = 0.026, RV = 0.075, NC = 4; // radii: the top's edges, the foot's, the upright corners (in plan); steps a corner
+  const PANEL = 0.07, SINK = 0.024, PR = 0.035; // the stamped panel: its margin inside the top, how deep it is sunk, its corners
+  const FULL = { end: 0.07, long: 0.11, rise: 0.06, dome: 0.05 }; // how full the faces are: the lean of their normals at their edges (radians)
+  const sx = (W0 - W1) / H, sz = (D0 - D1) / H, ax = Math.atan(sx), az = Math.atan(sz), lean = (ax + az) / 2;
+  // a ring of the outer skin where the foot's (top = false) or the top's rounding turns its normal to angle f off the level
+  const arc = (top, f) => {
+    const R = top ? RT : RB, yc = top ? H - R : R;
+    return { hx: W0 - sx * yc - R / Math.cos(ax) + R * Math.cos(f), hz: D0 - sz * yc - R / Math.cos(az) + R * Math.cos(f), y: yc + R * Math.sin(f) };
   };
-  for (let i = 0; i < 8; i++) {
-    const j = (i + 1) % 8;
-    tri(r0[i], r0[j], r1[j]); tri(r0[i], r1[j], r1[i]); // a side
-    tri(r1[i], r1[j], r2[j]); tri(r1[i], r2[j], r2[i]); // its bevel
+  const rings = [], add = (r, el, o = {}) => rings.push(Object.assign({ hx: r.hx, hz: r.hz, y: r.y, el, rc: Math.max(0.008, RV - (D0 - sz * r.y - r.hz)), full: 1 }, o));
+  add(arc(false, -Math.PI / 2), -Math.PI / 2); // the foot's edge
+  add(arc(false, -0.45), -0.45);
+  add(arc(false, lean), lean - FULL.rise); // the wall, from its foot...
+  for (let k = 0; k <= 4; k++) { const f = lean + ((Math.PI / 2 - lean) * k) / 4; add(arc(true, f), k ? (k === 4 ? Math.PI / 2 - FULL.dome : f) : lean + FULL.rise, { full: 1 - k / 4 }); } // ...to its top, and round onto the top
+  const t = rings[rings.length - 1], P = { hx: t.hx - PANEL, hz: t.hz - PANEL, y: H };
+  add(P, Math.PI / 2, { rc: PR, full: 0 }); // the panel's edge, on the level top
+  add(P, Math.PI / 4, { rc: PR, full: 0, inward: true, crease: true }); // its sunk edge, bevelled (a crease: the same ring, turned)
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 4, { rc: PR - SINK * 0.6, full: 0, inward: true });
+  add({ hx: P.hx - SINK, hz: P.hz - SINK, y: H - SINK }, Math.PI / 2, { rc: PR - SINK * 0.6, full: 0, crease: true }); // the struck field
+  const pos = [], nor = [], uv = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz) => { pos.push(x, y, z); nor.push(nx, ny, nz); uv.push(0.5 + x / (2 * P.hx), 0.5 - z / (2 * P.hz)); return pos.length / 3 - 1; };
+  rings.forEach((r) => {
+    r.at = pos.length / 3;
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (r.hx - r.rc), cz = (k < 2 ? 1 : -1) * (r.hz - r.rc);
+      const da = (k % 2 ? FULL.long : FULL.end) * r.full, db = (k % 2 ? FULL.end : FULL.long) * r.full; // (the face this corner leaves, the face it turns onto)
+      for (let j = 0; j <= NC; j++) {
+        const a = k * PI2 + (j / NC) * PI2, b = k * PI2 + da + (j / NC) * (PI2 - da - db), c = Math.cos(r.el) * (r.inward ? -1 : 1);
+        vert(cx + r.rc * Math.cos(a), r.y, cz + r.rc * Math.sin(a), Math.cos(b) * c, Math.sin(r.el), Math.sin(b) * c);
+      }
+    }
+  });
+  // wound to face the way its corners' normals do
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => {
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) {
+    if (rings[i + 1].crease) continue; // (a crease's two rings stand on the same line)
+    const p = rings[i].at, q = rings[i + 1].at;
+    for (let j = 0; j < M; j++) { const n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
   }
-  for (let i = 1; i < 7; i++) { tri(r0[0], r0[i], r0[i + 1]); tri(r2[0], r2[i], r2[i + 1]); } // the foot and the top
+  const fan = (r, y, ny) => { const c = vert(0, y, 0, 0, ny, 0); for (let j = 0; j < M; j++) tri(c, r.at + j, r.at + ((j + 1) % M)); };
+  fan(rings[0], 0, -1);
+  fan(rings[rings.length - 1], H - SINK, 1);
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   g.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(pos.length).fill(1), 3));
-  g.computeVertexNormals();
+  g.setIndex(idx);
   return g;
+}
+
+// The assay's marks struck into a bar's sunk panel, as relief (a bump map: dark is struck deep): a fine border, the
+// fineness large, FINE GOLD over it and a bar number under it, the arcade's egg in an oval at each end. Drawn once per
+// screen; the panel maps the whole picture, so its edge (and everything outside the panel) is left level.
+function memoryStampTexture() {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 128;
+  const x = c.getContext("2d");
+  x.fillStyle = "#808080";
+  x.fillRect(0, 0, 512, 128);
+  x.strokeStyle = x.fillStyle = "#2a2a2a";
+  x.lineWidth = 4;
+  x.strokeRect(24, 18, 464, 92);
+  x.textAlign = "center";
+  x.textBaseline = "middle";
+  x.font = 'bold 50px Georgia, "Times New Roman", serif';
+  x.fillText("999.9", 256, 66);
+  x.font = 'bold 19px Georgia, "Times New Roman", serif';
+  x.fillText("FINE  GOLD", 256, 32);
+  x.fillText("Nº 0731", 256, 98);
+  for (const ex of [74, 438]) {
+    x.lineWidth = 3;
+    x.beginPath(); x.ellipse(ex, 64, 30, 34, 0, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.ellipse(ex, 68, 14, 19, 0, 0, Math.PI * 2); x.fill(); // the egg
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = GFX.ok ? Math.min(8, GFX.renderer.capabilities.getMaxAnisotropy()) : 1; // (the tops are seen at a slant)
+  return t;
+}
+
+// A number in [0, 1) from an integer: a scene's small differences (a bar's tone, its set) without drawing from
+// Math.random while it is built (a draw there moves everything drawn after it: the capture tool seeds it).
+function memoryHash(n) {
+  let h = Math.imul((n | 0) ^ 0x2c1b3c6d, 0x297a2d39);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h ^= h >>> 13;
+  return (h >>> 0) / 4294967296;
+}
+// Made on a stream of its own: a three.js object draws four numbers from Math.random for its uuid as it is made, so a
+// new piece in the vault would move every draw after it (the sparks, the coins' flights, a capture's stills). The
+// pieces Phase 5 added (the stamp, the trays) are made inside this: their uuids' numbers come from memoryHash, and the
+// vault draws from Math.random exactly as often as it did.
+let memoryQuietN = 0;
+function memoryQuiet(make) {
+  const was = Math.random;
+  Math.random = () => memoryHash(0x40000 + memoryQuietN++);
+  try { return make(); } finally { Math.random = was; }
+}
+
+// The gold at each lower corner (Phase 5): where the heap stands in its group and its turn (x is counted outward from
+// the door, mirrored on the right), and the coins' tray before it: where it stands, its turn, its inside (half-sizes,
+// corner radius), its rim's height and its velvet's; the coin's scale and the stacks on it ([x outward, z toward the
+// lens, coins at most], 26 coins in all: drawn level by level, so every stack rises together, a coin for each card
+// banked: MemoryWorks). (The heap stands a little out from its group's place: the deck at the plinth's end hid its foot.)
+const MEMORY_TRAY = {
+  heapX: 0.6, heapZ: -0.3, heapYaw: 0.35, x: 0, z: 4.3, yaw: 0.2, hx: 1.8, hz: 1.25, rc: 0.28, height: 0.3, bed: 0.09, K: 0.95,
+  piles: [[-1.12, -0.56, 5], [0, -0.56, 8], [1.12, -0.56, 6], [-0.56, 0.58, 3], [0.56, 0.58, 4]],
+};
+
+// The coins' tray: a brass rim rolled over at its lip round a bed of violet velvet (gold's complement: the coins stand
+// out on it, where on the floor they read as a brown spill), its corners rounded, the velvet shaded along the rim. One
+// mesh for both (aMat carries each vertex's metalness, roughness and sheen: memoryPropMaterial): one draw a tray. 240
+// triangles.
+function memoryTrayGeometry() {
+  const T = MEMORY_TRAY, NC = 3, RL = 0.06, H = T.height, FL = 0.05, tf = Math.atan(FL / (H - RL));
+  const brass = [new THREE.Color(0xd9a646), 1, 0.3, 0], velvet = [new THREE.Color(0x1c0828), 0, 0.92, 0.55], shaded = [new THREE.Color(0x0a0310), 0, 0.95, 0.3];
+  // each ring: [out from the inside's edge, height, its normal's angle off the level, faces in?, material, a crease?]
+  const rings = [
+    [2 * RL - FL, 0, -tf, false, brass], [2 * RL, H - RL, -tf, false, brass], // the outer wall, wider at the lip
+    [RL + RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, false, brass], [RL, H, Math.PI / 2, false, brass], // the rolled lip
+    [RL - RL * Math.SQRT1_2, H - RL + RL * Math.SQRT1_2, Math.PI / 4, true, brass], [0, H - RL, 0, true, brass], [0, T.bed, 0, true, brass], // the inner wall
+    [0, T.bed, Math.PI / 2, false, shaded, true], [-0.22, T.bed, Math.PI / 2, false, velvet], // the velvet (a crease: the same ring, turned up), in the rim's shade at its edge
+  ];
+  const pos = [], nor = [], col = [], mat = [], idx = [], M = 4 * (NC + 1), PI2 = Math.PI / 2;
+  const vert = (x, y, z, nx, ny, nz, m) => { pos.push(x, y, z); nor.push(nx, ny, nz); col.push(m[0].r, m[0].g, m[0].b); mat.push(m[1], m[2], m[3]); return pos.length / 3 - 1; };
+  const at = rings.map(([o, y, el, inward, m]) => {
+    const first = pos.length / 3, hx = T.hx + o, hz = T.hz + o, rc = T.rc + o, c = Math.cos(el) * (inward ? -1 : 1);
+    for (let k = 0; k < 4; k++) {
+      const cx = (k === 0 || k === 3 ? 1 : -1) * (hx - rc), cz = (k < 2 ? 1 : -1) * (hz - rc);
+      for (let j = 0; j <= NC; j++) { const a = k * PI2 + (j / NC) * PI2; vert(cx + rc * Math.cos(a), y, cz + rc * Math.sin(a), Math.cos(a) * c, Math.sin(el), Math.sin(a) * c, m); }
+    }
+    return first;
+  });
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), N = new THREE.Vector3();
+  const tri = (a, b, c) => { // (wound to face the way its corners' normals do)
+    A.fromArray(pos, a * 3); B.fromArray(pos, b * 3).sub(A); C.fromArray(pos, c * 3).sub(A);
+    N.set(nor[a * 3] + nor[b * 3] + nor[c * 3], nor[a * 3 + 1] + nor[b * 3 + 1] + nor[c * 3 + 1], nor[a * 3 + 2] + nor[b * 3 + 2] + nor[c * 3 + 2]);
+    if (B.cross(C).dot(N) >= 0) idx.push(a, b, c); else idx.push(a, c, b);
+  };
+  for (let i = 0; i + 1 < rings.length; i++) if (!rings[i + 1][5]) for (let j = 0; j < M; j++) { const p = at[i], q = at[i + 1], n = (j + 1) % M; tri(p + j, p + n, q + n); tri(p + j, q + n, q + j); }
+  const mid = vert(0, T.bed, 0, 0, 1, 0, velvet), last = at[at.length - 1];
+  for (let j = 0; j < M; j++) tri(mid, last + j, last + ((j + 1) % M));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute("aMat", new THREE.Float32BufferAttribute(mat, 3));
+  g.setIndex(idx);
+  return g;
+}
+
+// A material for a small prop of several finishes in one draw (the coins' trays): its colour from the vertices, and
+// each vertex's metalness, roughness and sheen from aMat (sheen: cloth's light at a grazing angle, its own colour).
+// Mirrors the vault as the other metals do.
+function memoryPropMaterial(env) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 1, roughness: 0.5, envMap: env, envMapIntensity: 1.3 });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aMat; varying vec3 vMat;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvMat = aMat;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vMat;")
+      .replace("#include <metalnessmap_fragment>", "#include <metalnessmap_fragment>\nmetalnessFactor = vMat.x; roughnessFactor = vMat.y;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vMat.z * pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.0);");
+  };
+  m.customProgramCacheKey = () => "memory-prop";
+  return m;
 }
 
 // Pooled sparkles: four-point stars that fly, fall and fade (coin trails, the burst at
@@ -35778,9 +36507,11 @@ class MemoryGame extends QuizGame {
     const env = (this.gen && this.gen.env) || (this.envRT ? this.envRT.texture : null);
     // (every metal in the vault has a grain, hair scratches and smudges: reflections break up over them)
     const gold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.22, envMap: env, envMapIntensity: 1.3 }), { scale: 1.5, height: 0.0014, scratch: 1.3 });
-    // the bars' gold: cast gold, polished, a mirror of the vault round it; each bevelled face takes its own part of that
-    // and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast)
-    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.21, envMap: env, envMapIntensity: 1.65, emissive: 0x281603 }), { scale: 1.5, height: 0.0012, scratch: 1.1 });
+    // the bars' gold: cast gold, polished, a mirror of the vault round it; each rounded edge and full face takes its own
+    // part of that and of the lamps, so a stack reads as solids (vertex colours: each bar's own tone, see cast); the
+    // assay's marks struck into the top (Phase 5: memoryIngotGeometry, memoryStampTexture; not on a phone, where a bar
+    // is a few dozen pixels long and its marks would be one or two)
+    const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, grain: 0.35, scratch: 0.9 }); // (a polished face: the grain's ripple a third of the scratches' depth)
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
     const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
@@ -35958,20 +36689,34 @@ class MemoryGame extends QuizGame {
     s.add(pool);
     const lieOnFloor = [this.floor, shade, pool]; // (what lies on the floor is not in its reflection: see the probe)
 
-    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), and in the middle, on
-    // a plinth at the door's foot, the bars this session has banked: one for every card, laid end-on in a pyramid
+    // gold: a heap of bars in each lower corner of the window (as it stood when you came in), a tray of coins before
+    // it, and in the middle, on a plinth at the door's foot, the bars this session has banked: one for every card,
+    // laid end-on in a pyramid.
+    // (Phase 5, 2026-11-24: a heap was six bars laid end to end in a wall of three, two and one, its long faces square
+    // to the lens: one block of orange. Now ten, laid side by side and nested a course on a course, four, three, two,
+    // one, as bullion is stacked, and turned so the lens sees the long faces and the ends both; the coins stand in neat
+    // stacks on a velvet tray, MEMORY_TRAY.)
     const ingot = memoryIngotGeometry(), S = 1.3, SB = 1.6, tone = new THREE.Color();
-    const cast = (m, i, k = 1) => m.setColorAt(i, tone.setScalar(rand(0.86, 1.06) * k)); // no two bars poured quite alike
+    const cast = (m, i, k = 1, r = rand(0.86, 1.06)) => m.setColorAt(i, tone.setScalar(r * k)); // no two bars poured quite alike
+    const trayGeo = memoryQuiet(memoryTrayGeometry), trayMat = memoryQuiet(() => memoryPropMaterial(env)); // (memoryQuiet: no new draw from Math.random)
     this.stacks = [-1, 1].map((sd) => {
-      const st = new THREE.InstancedMesh(ingot, barGold, 6);
-      let n = 0;
-      for (let L = 0; L < 3; L++) for (let i = 0; i < 3 - L; i++) {
-        st.setMatrixAt(n, this._m.compose(this._p.set((i - (2 - L) / 2) * 2.04 * S, L * 0.57 * S, 0), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(-0.05, 0.05)), this._v.set(S, S, S)));
-        cast(st, n++, 0.86); // (the heaps in the corners are dressing: they sit a little darker than the bars you bank)
+      const st = new THREE.InstancedMesh(ingot, barGold, 10);
+      // (twelve draws from Math.random a heap, as the heap of six drew: whatever is drawn after the vault is built, its
+      // sparks and the stills', is drawn as it was. The first six bars take their tone and set from them, the four more
+      // from a hash of their place: no new draw)
+      const pour = Array.from({ length: 12 }, () => rand()), pitch = 2 * 0.48 * S + 0.06;
+      for (let L = 0, n = 0; L < 4; L++) for (let i = 0; i < 4 - L; i++, n++) {
+        const a = n < 6 ? pour[2 * n] : memoryHash(n * 2 + sd * 50), b = n < 6 ? pour[2 * n + 1] : memoryHash(n * 2 + 1 + sd * 50);
+        st.setMatrixAt(n, this._m.compose(this._p.set((a - 0.5) * 0.1, L * 0.56 * S, (i - (3 - L) / 2) * pitch), this._q.setFromAxisAngle(THREE.Object3D.DefaultUp, (b - 0.5) * 0.05), this._v.set(S, S, S)));
+        cast(st, n, 1, 0.88 + 0.16 * a);
       }
       st.instanceColor.needsUpdate = true;
       st.frustumCulled = false;
-      st.rotation.y = -sd * 0.3;
+      st.position.set(sd * MEMORY_TRAY.heapX, 0, MEMORY_TRAY.heapZ);
+      st.rotation.y = sd * MEMORY_TRAY.heapYaw;
+      const T = MEMORY_TRAY, tray = memoryQuiet(() => new THREE.Mesh(trayGeo, trayMat));
+      tray.position.set(sd * T.x, 0, T.z);
+      tray.rotation.y = sd * T.yaw;
       const cone = makeLightCone({ color: 0xffe2a8, top: 0.25, bottom: 2.8, height: 20, intensity: 0.04 }); // (a shaft you can see, not a haze over the gold)
       cone.position.set(0, 20, 0);
       cone.layers.set(1);
@@ -35979,10 +36724,11 @@ class MemoryGame extends QuizGame {
       glow.layers.set(1);
       lieOnFloor.push(glow);
       const g = new THREE.Group();
-      g.add(st, cone, glow);
+      g.add(st, tray, cone, glow);
       s.add(g);
       g.userData.side = sd;
       g.userData.bars = st;
+      g.userData.tray = tray; // (the coins stand on it: MemoryWorks)
       return g;
     });
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.34, 4.0), steel);
@@ -36435,7 +37181,10 @@ class MemoryGame extends QuizGame {
       } else {
         const st = pick(this.stacks);
         if (this.bank.count && Math.random() < 0.5) this.sparks.emit(rand(-4.2, 4.2) * Math.min(1, this.bank.count / 6), rand(0.7, 1.4), 8.1, 0, 0, 0, 0.45, rand(0.5, 0.9), hot);
-        else this.sparks.emit(st.position.x + rand(-3, 3), rand(0.5, 2.0), st.position.z + rand(0.2, 0.9), 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        else { // on the heap's face to the lens, which steps back a course as it rises (Phase 5: the heap a nested pyramid)
+          const T = MEMORY_TRAY, sd = st.userData.side, a = sd * T.heapYaw, u = rand(-3, 3) * 0.4, y = rand(0.5, 2.0) * 1.3, out = 2.65 - 0.89 * y + rand(0.2, 0.9) * 0.3;
+          this.sparks.emit(st.position.x + sd * T.heapX + Math.cos(a) * u + Math.sin(a) * out, y, st.position.z + T.heapZ - Math.sin(a) * u + Math.cos(a) * out, 0, 0, 0, 0.45, rand(0.45, 0.8), hot);
+        }
       }
     }
     { const k = this.dist / 22;
@@ -36632,24 +37381,30 @@ class MemoryWorks {
       return p;
     });
 
-    // coin piles in front of each heap of bars (half as large again as a coin in flight ends, so a pile reads as coins)
-    const piles = [[-1.5, 2.3, 4], [-0.2, 3.2, 3], [1.3, 2.6, 8], [2.8, 2.1, 6], [3.9, 2.9, 5]], K = 1.5; // (x counted outward from the door)
+    // coin stacks on a tray before each heap of bars (a coin here is about the size of one at the end of its flight).
+    // (Phase 5, 2026-11-24: they were five piles spilt on the floor, half as large again, beside bars they dwarfed; now
+    // they stand neatly on the velvet of the tray, MEMORY_TRAY, whose children they are: they stand where it stands,
+    // turned as it is turned.)
+    const T = MEMORY_TRAY, piles = T.piles, K = T.K; // (x counted outward from the door)
     const count = piles.reduce((n, p) => n + p[2], 0);
     const flat = this._q.clone().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2), tw = new THREE.Quaternion(), big = new THREE.Vector3(K, K, K);
+    if (!g.coinGeo.boundingBox) g.coinGeo.computeBoundingBox();
+    const half = Math.max(0.03, g.coinGeo.boundingBox.max.z) * K; // (a coin lies on its face: its half-thickness, the built-in coin's or the model's)
     this.coinTotal = count;
     this.coins = g.stacks.map((grp) => {
-      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count);
-      // Laid level by level across the piles, so drawing the first n coins raises every pile together: the
-      // piles start two coins high and gain a coin for each card banked.
+      const m = new THREE.InstancedMesh(g.coinGeo, mats.pile || g.coinMat, count), sd = grp.userData.side;
+      // Laid level by level across the stacks, so drawing the first n coins raises every stack together: the
+      // stacks start two coins high and gain a coin for each card banked. (Three draws from Math.random a coin, as
+      // ever: what is drawn after the vault is built is drawn as it was)
       let n = 0;
       for (let i = 0; i < 9; i++) piles.forEach(([x, z, h]) => {
         if (i >= h) return;
         tw.setFromAxisAngle(THREE.Object3D.DefaultUp, rand(6.28)).multiply(flat);
-        m.setMatrixAt(n++, this._m.compose(this._p.set(x * grp.userData.side + rand(-0.04, 0.04), (0.06 + i * 0.122) * K, z + rand(-0.04, 0.04)), tw, big));
+        m.setMatrixAt(n++, this._m.compose(this._p.set(x * sd + rand(-0.04, 0.04) * 0.5, T.bed + half + i * 0.122 * K, z + rand(-0.04, 0.04) * 0.5), tw, big));
       });
       m.count = Math.min(count, 10);
       m.frustumCulled = false;
-      grp.add(m);
+      (grp.userData.tray || grp).add(m);
       return m;
     });
     this.missT = 0;
