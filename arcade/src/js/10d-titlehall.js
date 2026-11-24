@@ -217,12 +217,18 @@ class HallScene extends Scene3D {
     // reflected ray meets its walls (roomProbe); the deck's plates and wear from a CC0 material (Poly Haven's
     // metal_plate_02: its relief and roughness; the colour is the hall's own dark violet). The black floor with a thin
     // grid was the hall's weakest picture: a void filling the bottom of every frame)
+    // (Phase 2's polish, 2026-11-24: an art review found its reflection broken into orange and violet speckle far off,
+    // read as crumbling brick and crawling as the lens glides: the deck's relief, finer than the pixel there, threw each
+    // pixel's reflected ray onto a skylight or the dark between. The relief is now read at the size of the pixel's
+    // longer way on the deck (what is finer than the pixel is gone, a plate's seams stay), and where a pixel covers more
+    // than six of the deck's texels the rest fades most of the way to level (plates.fade: makeNeonFloor); on a phone
+    // the relief is a little shallower)
     this.probe = roomProbe(new THREE.Vector3(0, 2.2, (Z1 + Z2) / 2), { size: Assets.phone ? 128 : 256 });
     this.plates = hallPlates();
     this.floor = makeNeonFloor({
       size: 240, cell: 3, line: 0x35efff, lineK: 0.5, base: 0x030010, glow: 0.3, gridAlpha: 0.42, pulse: this.calm ? 0 : 0.35, ripple: 0, streak: 0,
       probe: { map: this.probe.map, min: new THREE.Vector3(-W, 0, Z2 - 2), max: new THREE.Vector3(W, H, Z1), at: this.probe.at, k: 1.05, rough: 0.24 },
-      plates: { map: this.plates, size: 3.0, k: 0.85 },
+      plates: { map: this.plates, size: 3.0, k: Assets.phone ? 0.65 : 0.85, fade: [1024, 0, 6, 0.6] },
     });
     this.floor.name = "floor";
     this.probe.hide = [this.floor];

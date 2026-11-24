@@ -294,6 +294,12 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
   // plates: { map, size, k }: a deck's relief (CC0: its normal's x and y in red and green, its roughness in blue), a
   // tile every size metres, k how deep it reads: the plates' seams and wear break up what the floor reflects.
   // (plates.tint, a Color: a stone's veins, where its blue is darkest, in that colour: the exam's dark marble, 2026-11-23)
+  // (plates.fade, [the map's texels across, a bias, from, how much]: the relief read at the size of the pixel's longer
+  // way on the deck (at a slant, its length down the floor), not its shorter: what is finer than the pixel each way is
+  // gone, what is coarser (a plate's seams) stays; and where a pixel covers more of the map's texels than from (to four
+  // times that), the rest fades toward level and the mean roughness, by as much as asked: the title hall's deck, Phase
+  // 2's polish, 2026-11-24. Read finer than the pixel, the relief broke what the floor gives back into speckle that
+  // crawled as the lens moved)
   // road: half the width of a carriageway down the middle (x = 0), where the grid steps back to roadGrid of itself and
   // lights lie in the wet as long vertical streaks. sun: { top, bottom, spread, k, z, bars }: the striped sun's
   // reflection, a column of rippled bars from under the sun (world z) to the camera's feet.
@@ -311,12 +317,14 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
     tPlates: { value: plates ? plates.map : null }, uPlates: { value: new THREE.Vector2(plates ? plates.size : 1, plates ? plates.k : 0) },
     uPlatesTint: { value: plates && plates.tint ? plates.tint : new THREE.Color(0) },
   });
+  if (plates && plates.fade) uniforms.uPlatesFade = { value: new THREE.Vector4().fromArray(plates.fade) };
   if (probe && probe.tint) uniforms.uProbeTint = { value: probe.tint };
   const defines = {};
   if (probe) defines.PROBE = "";
   if (probe && probe.tint) defines.PROBE_TINT = "";
   if (probe && plates) defines.PLATES = "";
   if (probe && plates && plates.tint) defines.PLATES_TINT = "";
+  if (probe && plates && plates.fade) defines.PLATES_FADE = "";
   const mat = new THREE.ShaderMaterial({
     uniforms, defines, extensions: { derivatives: true, shaderTextureLOD: !!probe },
     vertexShader: `uniform mat4 uMirror; varying vec3 vWorld; varying vec4 vRefl; varying float vDepth;
@@ -335,6 +343,9 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
       #ifdef PLATES_TINT
       uniform vec3 uPlatesTint;
       #endif
+      #ifdef PLATES_FADE
+      uniform vec4 uPlatesFade;
+      #endif
       #ifdef PROBE_TINT
       uniform vec4 uProbeTint;
       #endif
@@ -344,7 +355,13 @@ function makeNeonFloor({ size = 900, cell = 6, line = 0xff3ad4, lineK = 2.2, bas
         {
           vec3 nrm = vec3(0.0, 1.0, 0.0); float rough = uProbe.y;
           #ifdef PLATES
+          #ifdef PLATES_FADE
+          vec2 pf = fwidth(vWorld.xz / uPlates.x) * uPlatesFade.x; // (the map's texels a pixel covers, each way)
+          float pl = max(max(pf.x, pf.y), 1.0);
+          vec3 pm = mix(texture2DLodEXT(tPlates, vWorld.xz / uPlates.x, log2(pl) + uPlatesFade.y).rgb, vec3(0.5, 0.5, 0.72), uPlatesFade.w * smoothstep(uPlatesFade.z, uPlatesFade.z * 4.0, pl));
+          #else
           vec3 pm = texture2D(tPlates, vWorld.xz / uPlates.x).rgb;
+          #endif
           vec2 nxy = (pm.rg * 2.0 - 1.0) * uPlates.y;
           nrm = normalize(vec3(nxy.x, sqrt(max(1.0 - dot(nxy, nxy), 0.0)), nxy.y)); // (the plate's tangent frame: its x along the world's x, its up along +z)
           rough = clamp(rough * mix(0.55, 1.7, pm.b), 0.02, 1.0);
