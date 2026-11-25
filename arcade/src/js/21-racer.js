@@ -1877,7 +1877,7 @@ class RacerGame extends QuizGame {
     // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
     // end of the road (out in the open it is the size of the sky)
     const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
-    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * 0.03);
+    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * (1 - Math.pow(0.97, dt * 60))); // (by the time passed: Phase 4's review)
     this.sun.scale.setScalar(this.sunK * this.sunSlot);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
     this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
