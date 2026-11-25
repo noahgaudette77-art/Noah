@@ -264,7 +264,7 @@ class BossGame extends QuizGame {
     { // sparks: hard square pixels (the soft round ones went to discs of bokeh, the only round soft things in a world of blocks)
       const c = document.createElement("canvas"); c.width = c.height = 4;
       const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 4, 4);
-      const tx = new THREE.CanvasTexture(c); tx.magFilter = tx.minFilter = THREE.NearestFilter;
+      const tx = (this.sparkTex = new THREE.CanvasTexture(c)); tx.magFilter = tx.minFilter = THREE.NearestFilter;
       this.bursts.pts.material.uniforms.tMap.value = tx;
       const burst = this.bursts.burst.bind(this.bursts);
       this.bursts.burst = (pos, color, o = {}) => burst(pos, color, Object.assign({}, o, { size: (o.size || 0.3) * 0.5 }));
@@ -1300,6 +1300,7 @@ class BossGame extends QuizGame {
       if (this.steelEnv) this.steelEnv.dispose();
       if (this.plates) this.plates.dispose();
       if (this.steelMat) this.steelMat.userData.tBrush.value.dispose();
+      if (this.sparkTex) this.sparkTex.dispose(); // (the sparks' square: on a shader's own uniform, which the scene's teardown does not reach; it stayed a visit at a time. Phase 7's soak)
     }
     super.dispose();
   }
