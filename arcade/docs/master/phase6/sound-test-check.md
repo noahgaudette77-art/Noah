@@ -4,9 +4,9 @@
 
 | button | loop s | spike at its joins | |
 |---|---:|---:|---|
-| General · alarm · take 1 | 2.24 | 0.50 | ok |
-| General · alarm · take 2 | 2.24 | 0.19 | ok |
-| General · alarm · take 3 | 2.24 | 0.38 | ok |
+| General · alarm · take 1 | 2.25 | 0.35 | ok |
+| General · alarm · take 2 | 2.25 | 0.02 | ok |
+| General · alarm · take 3 | 2.25 | 0.01 | ok |
 | General · charge_hum · take 1 | 2.45 | 0.21 | ok |
 | General · charge_hum · take 2 | 2.45 | 0.36 | ok |
 | General · charge_hum · take 3 | 2.45 | 0.51 | ok |
@@ -48,7 +48,7 @@
 
 ## Takes, once: 369 played, 0 failed
 
-The largest spike at a start 0.18; the loudest end -17.7 dB under its take's loudest.
+The largest spike at a start 0.18; the loudest end of a take not ending on its height -17.7 dB under its take's loudest. Ending on their height (kept, let go just after it): heart_lost take 3, beam_fire take 1, roar_4 take 1.
 
 ## Every button tapped in real time: 408 buttons
 

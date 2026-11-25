@@ -1,7 +1,7 @@
 # Phase 6: the gate (2026-11-25)
 
 The gate as written: the sound test page passes; no clicks or cuts. Plus, as every phase: the harness and an
-independent review.
+independent review. **Passed** (one cost fault, not this phase's, carried: below).
 
 ## No clicks or cuts (`tools/audio-check.js`)
 
@@ -49,8 +49,9 @@ against 0.3 for a hiss). The silence between the effects in every file is digita
 ## The harness
 
 - **Logic** (on `ea51c89`'s build, `docs/master/runs/phase6`): content and scripts untouched since `ee413e3`; the rules
-  IDENTICAL from disk and served (no console errors); the sequence ALL 13 STEPS OK; no fault. On the final build
-  (with the review's fixes): below.
+  IDENTICAL from disk and served (no console errors); the sequence ALL 13 STEPS OK; no fault. **On the final build**
+  (`a4d5ff8`, with the review's fixes; live, the served pages the same to the byte; `docs/master/runs/phase6-final`):
+  the same, no fault.
 - **Costs** (`docs/master/runs/phase6-costs`, on `42fcd7f`'s build; this phase changed no drawing): every screen inside
   its budget on both tiers but one: **phone Risk Blaster, 101 draws against 100.** Measured again as the harness
   measures it (8 s of play first), alternating with Phase 4's build (the same drawing code): this build 100, 97 and 97
@@ -87,6 +88,9 @@ words, 50 to 79 dB under the line; Starfall on the show's clock; Setup's effects
 
 The review's fixes, measured on the build with them (`index.html` from `ef48d14`): `tools/audio-check.js` passes
 (the alarm's joins 0.35, 0.02, 0.01; 369 takes: no spike at a start, none cut off, 3 ending on their height, 21 let
-go; every music seam 0.02 to 0.44 through two seams).
+go; every music seam 0.02 to 0.44 through two seams), and `tools/sound-test-check.js` passes (18 loops, 18 tracks,
+369 takes, every one of the 408 buttons tapped without an error).
+
+**The gate: passed.**
 
 **Spend: nothing.**
