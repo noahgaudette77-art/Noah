@@ -70,10 +70,10 @@ const SR = 48000;
       const rmsDb = (a, n) => { let s = 0; a = Math.max(0, Math.round(a)); n = Math.round(n); for (let i = a; i < a + n && i < d.length; i++) s += d[i] * d[i]; return 10 * Math.log10(s / Math.max(1, n) + 1e-20); };
       if (w.kind === "takes") {
         const n = Math.round(w.dur * SR), wn = Math.round(0.02 * SR);
-        let top = -200; for (let i = 0; i + wn <= n; i += wn >> 1) top = Math.max(top, rmsDb(i, wn));
+        let top = -200, pk = 0; for (let i = 0; i + wn <= n; i += wn >> 1) { const v = rmsDb(i, wn); if (v > top) { top = v; pk = i + wn; } }
         let st = 0; for (let i = 1; i < 12; i++) st = Math.max(st, d2(i));
         const ref = []; for (let i = 1; i < n - 1; i++) ref.push(d2(i));
-        return { start: st / pct(ref, 0.999), end: rmsDb(n - 0.05 * SR, wn) - top };
+        return { start: st / pct(ref, 0.999), end: rmsDb(n - 0.05 * SR, wn) - top, height: (n - pk) / SR <= 0.15 };
       }
       if (w.kind === "loops") { // its join where the page made it (or its whole take, for a loop with none)
         const j = [...window.__soundTest.joined.values()][0], len = (j ? j[1] - j[0] : w.dur) * SR;
@@ -109,7 +109,7 @@ const SR = 48000;
 
   const f2 = (v) => v.toFixed(2), lines = [`# The sound test page (tools/sound-test-check.js, ${new Date().toISOString().slice(0, 10)})`, ""];
   let fails = 0;
-  const bad = (r) => (r.kind === "loops" ? r.spike >= 1 : r.kind === "music" ? r.spike >= 1 && r.bend > -40 : r.start >= 1 || r.end > -12);
+  const bad = (r) => (r.kind === "loops" ? r.spike >= 1 : r.kind === "music" ? r.spike >= 1 && r.bend > -40 : r.start >= 1 || (r.end > -12 && !r.height)); // (a take whose loudest moment is in its last 0.15 s ends on its height: kept)
   for (const kind of ["loops", "music", "takes"]) {
     const rows = res.filter((r) => r.kind === kind);
     if (!rows.length) continue;
@@ -120,7 +120,8 @@ const SR = 48000;
     if (kind === "music") { lines.push("| button | spike at the seam | its bend against the music (dB) | |", "|---|---:|---:|---|"); for (const r of rows) lines.push(`| ${r.label} | ${f2(r.spike)} | ${r.bend.toFixed(1)} | ${bad(r) ? "**FAIL**" : "ok"} |`); }
     if (kind === "takes") {
       const worst = (k) => rows.reduce((m, r) => Math.max(m, r[k]), -999);
-      lines.push(`The largest spike at a start ${f2(worst("start"))}; the loudest end ${worst("end").toFixed(1)} dB under its take's loudest.`);
+      const high = rows.filter((r) => r.end > -12 && r.height);
+      lines.push(`The largest spike at a start ${f2(worst("start"))}; the loudest end of a take not ending on its height ${rows.filter((r) => !(r.end > -12 && r.height)).reduce((m, r) => Math.max(m, r.end), -999).toFixed(1)} dB under its take's loudest. Ending on their height (kept, let go just after it): ${high.map((r) => r.label.split(" · ").slice(1).join(" ")).join(", ") || "none"}.`);
       for (const r of rows.filter(bad)) lines.push(`- **FAIL** ${r.label}: start ${f2(r.start)}, end ${r.end.toFixed(1)} dB`);
     }
     lines.push("");

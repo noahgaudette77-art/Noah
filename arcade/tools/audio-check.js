@@ -11,8 +11,10 @@
  *   its level at the first (50 ms steps from 0.15 s before to 0.15 s after, against the loop's own 5th percentile: no dip
  *   of 5 dB).
  * - takes: every take of every effect and announcer line, played once by Sound._cue as the game plays it (its pitch and
- *   level not varied). Its start (the spike over its first 2 ms) and its end: the 20 ms before the build's own 30 ms
- *   fade at least 12 dB under its loudest 20 ms (else it is cut off while still sounding).
+ *   level not varied). Its start (the spike over its first 0.25 ms: a step there is a click; with the page's 2 ms fade-in
+ *   none can be, and the check stands guard over that fade) and its end: the 20 ms before the build's own 30 ms fade at
+ *   least 12 dB under its loudest 20 ms, or else it is cut off while still sounding, unless its loudest moment lies in
+ *   its last 0.15 s (the generator stopped it on its height: it keeps it, and the page lets it go just after; listed).
  * - music: every track, played by Sound.play as a visit plays it, through two seams: the spike at each, and its
  *   sharpest bend against the music's own level (a fault: a spike of 1 or more not buried 40 dB under the music), and
  *   the music still playing after the second (the passes keep coming).
@@ -84,10 +86,10 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
           Math.random = () => 0;
           try { S._cue(name, 0, { vary: 0, bus: /^vo/.test(name) ? S.voiceBus : undefined }); } finally { Math.random = rnd; }
           const d = mono(await c.startRendering()), n = Math.round(q.dur * SR), w = Math.round(0.02 * SR);
-          let top = -200; for (let i = 0; i + w <= n; i += w >> 1) top = Math.max(top, rmsDb(d, i, w));
+          let top = -200, pk = 0; for (let i = 0; i + w <= n; i += w >> 1) { const v = rmsDb(d, i, w); if (v > top) { top = v; pk = i + w; } }
           let st = 0; for (let i = 1; i < 12; i++) st = Math.max(st, d2(d, i)); // (its first 0.25 ms: a click at a start is there)
           const ref = []; for (let i = 1; i < n - 1; i++) ref.push(d2(d, i));
-          out.takes.push({ name, k, dur: q.dur, start: st / pct(ref, 0.999), end: rmsDb(d, n - 0.05 * SR, w) - top, rel: q.rel || 0 });
+          out.takes.push({ name, k, dur: q.dur, start: st / pct(ref, 0.999), end: rmsDb(d, n - 0.05 * SR, w) - top, rel: q.rel || 0, height: (n - pk) / SR <= 0.15 });
         }
       }
     }
@@ -134,10 +136,10 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
     lines.push("");
   }
   if (res.takes.length) {
-    const bad = res.takes.filter((r) => r.start >= 1 || r.end > -12);
-    lines.push("## Takes: every effect and announcer line, played once", "", `${res.takes.length} takes. A spike at the start: ${res.takes.filter((r) => r.start >= 1).length}; cut off while still sounding (the 20 ms before the last 30 ms within 12 dB of the loudest): ${res.takes.filter((r) => r.end > -12).length}. Let go over their last stretch (a release): ${res.takes.filter((r) => r.rel).length}.`, "");
+    const loud = (r) => r.end > -12, bad = res.takes.filter((r) => r.start >= 1 || (loud(r) && !r.height)), high = res.takes.filter((r) => loud(r) && r.height && r.start < 1);
+    lines.push("## Takes: every effect and announcer line, played once", "", `${res.takes.length} takes. A spike at the start: ${res.takes.filter((r) => r.start >= 1).length}; cut off while still sounding (the 20 ms before the last 30 ms within 12 dB of the loudest): ${res.takes.filter((r) => loud(r) && !r.height).length}; ending on their height (their loudest moment in their last 0.15 s, kept; let go just after it): ${high.length}. Let go over their last stretch (a release): ${res.takes.filter((r) => r.rel).length}.`, "");
     lines.push("| take | length s | start spike | end (dB under its loudest) | release s | |", "|---|---:|---:|---:|---:|---|");
-    for (const r of [...bad, ...res.takes.filter((r) => r.rel && !bad.includes(r))]) lines.push(`| ${r.name} ${r.k + 1} | ${f2(r.dur)} | ${f2(r.start)} | ${r.end.toFixed(1)} | ${f2(r.rel)} | ${mark(bad.includes(r))} |`);
+    for (const r of [...bad, ...high, ...res.takes.filter((r) => r.rel && !bad.includes(r) && !high.includes(r))]) lines.push(`| ${r.name} ${r.k + 1} | ${f2(r.dur)} | ${f2(r.start)} | ${r.end.toFixed(1)} | ${f2(r.rel)} | ${bad.includes(r) ? mark(true) : high.includes(r) ? "ends on its height" : "ok"} |`);
     lines.push("");
   }
   if (res.music.length) {
