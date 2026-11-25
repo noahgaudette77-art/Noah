@@ -127,14 +127,39 @@ const Assets = {
       map.minFilter = THREE.LinearMipmapLinearFilter;
       map.generateMipmaps = true;
       map.needsUpdate = true;
-      const sky = { name, map, env: null, w: img.width, h: img.height };
+      const sky = { name, map, env: null, w: img.width, h: img.height, hd: path === "sky/" + name + "-hd.webp" };
       if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
+      // (a sharper copy: its reflection is made, and the picture leaves the graphics chip until a screen draws it, which
+      // sends it again behind the curtain (GFX.warm), with its smaller copies or without them as that screen draws it:
+      // 171 MB there with them (Risk Blaster's and Nest Egg Run's narrow windows), 128 MB without (makePanoSky).
+      // Held, each would keep the copies its reflection was made from. See restSkies.)
+      if (sky.hd && GFX.ok) map.dispose();
       this.kept["sky:" + name] = sky;
       this.release(path);
       return sky;
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // (the Mac's richer tier) The pictures a screen draws its skies from, or keeps in waiting to draw (Risk Blaster's
+  // regions and Nest Egg Run's stretches of road: a game's gen.skies; Boss Rush's one: gen.sky).
+  skiesFor(s) {
+    const used = new Set(), g = s && s.gen;
+    if (s && s.scene) s.scene.traverse((o) => { (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => { if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) used.add(v); } }); });
+    if (g && g.skies) for (const k in g.skies) if (g.skies[k] && g.skies[k].map) used.add(g.skies[k].map);
+    if (g && g.sky && g.sky.map) used.add(g.sky.map);
+    return used;
+  },
+  // A sharper sky is on the graphics chip only while a screen draws it or keeps it in waiting (each 128 to 171 MB there;
+  // a round of the games kept all thirteen, some 2 GB): at a change of screen, every one the new screen neither draws
+  // nor keeps lets go of the chip. Its picture stays in memory: a screen that draws it again sends it again, behind the
+  // curtain (GFX.warm). A game's skies it does not draw are not sent (Boss Rush fights under one of its three). Skies
+  // at the game's own size are kept as they always were.
+  restSkies(s) {
+    if (!this.hdSkies()) return;
+    const used = this.skiesFor(s);
+    for (const k in this.kept) { const sky = this.kept[k]; if (k.startsWith("sky:") && sky && sky.hd && sky.map && !used.has(sky.map)) sky.map.dispose(); }
+  },
+  hdSkies() { for (const k in this.kept) if (this.kept[k] && this.kept[k].hd) return true; return false; },
   // ---- pictures for the page itself (assets/ui: icon and portrait strips drawn from the models). ui(name) is the
   // decoded image, or null: the page then draws what it always drew.
   loadImage(name) {

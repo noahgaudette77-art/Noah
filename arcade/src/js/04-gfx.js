@@ -707,7 +707,8 @@ const GFX = {
     extra.forEach((o) => scene.remove(o));
     s.warmExtra = null;
     if (r.initTexture) {
-      for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
+      const used = Assets.hdSkies() ? Assets.skiesFor(s) : null; // (a sharper sky only if the screen draws it or keeps it in waiting: Assets.restSkies)
+      for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map && (!k.hd || used.has(k.map))) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
       for (const t of s.warmTextures || []) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
     }
     s.warmTextures = null;
@@ -835,7 +836,7 @@ const Scenes = {
     else if (old && old !== s && GFX.ok) GFX.rest(old); // (and lets its pictures and shapes go from the graphics chip while you are away)
     if (old !== s) { GFX.sceneChanged(old, s); GFX.refit(); GFX.sceneAt = performance.now(); } // (the frame-rate watch skips a new screen's first moments: building it is not drawing it)
     if (s) s.resize(GFX.w, GFX.h);
-    if (s && old !== s) { GFX.warm(s); GFX.unpark(s); }
+    if (s && old !== s) { if (GFX.ok) Assets.restSkies(s); GFX.warm(s); GFX.unpark(s); }
     return s;
   },
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
