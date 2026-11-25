@@ -1987,6 +1987,14 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .hub-card[data-act]:hover, .chip[data-act]:hover, .tile[data-act]:hover, .trophies .tr[data-act]:hover, .mrow[data-act]:hover { filter: brightness(1.18); }
   [data-act] { cursor: pointer; }
   .dialog .keys { display: block; margin-top: 4px; font: 8px/1.7 var(--font-display); letter-spacing: 0.06em; color: var(--dim); text-align: center; }
+  /* (Phase 7, tools/scenarios/keys.js's hover pass: Memory Bank's grades and FLIP CARD kept their own filter over the
+     buttons' hover, the exam's question grid had none; and the card, unturned, lifts its glow as the mouse comes over
+     it. Its faces, not the card: a filter on the card would flatten its turn) */
+  .grade .btn:hover { filter: saturate(0.9) brightness(1.14); }
+  .palette button:hover { border-color: var(--cyan); color: #fff; }
+  .seg button[data-act="fx"][aria-pressed="true"]:hover { filter: brightness(1.15); } /* (an effect that is on: a click turns it off. A switch's chosen setting, which a click leaves as it is, stays still) */
+  .card3d.flipped[data-act] { cursor: default; } /* (turned, a click on it does nothing: its grades are under it) */
+  .card3d[data-act]:not(.flipped):hover .face.front { box-shadow: 0 0 0 2px #1a0f02, 0 0 0 6px #c8963a, 0 0 0 7px #5a3d0c, 0 0 0 9px #000, 0 0 56px -6px var(--c, var(--lime)), 0 30px 46px -12px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 48px -14px var(--c, var(--lime)); }
 }
 
 
