@@ -3403,7 +3403,7 @@
    "file": "audio/music-title.mp3",
    "loop": [
     0.7,
-    59.7678
+    59.767823
    ],
    "vol": 1,
    "take": 0
@@ -3412,7 +3412,7 @@
    "file": "audio/music-title-b.mp3",
    "loop": [
     0.7,
-    77.7589
+    77.758889
    ],
    "vol": 1,
    "take": 1
@@ -3421,7 +3421,7 @@
    "file": "audio/music-blaster.mp3",
    "loop": [
     0.7,
-    87.1086
+    87.108617
    ],
    "vol": 1,
    "take": 0
@@ -3430,7 +3430,7 @@
    "file": "audio/music-blaster-b.mp3",
    "loop": [
     0.7,
-    87.1086
+    87.108617
    ],
    "vol": 1,
    "take": 1
@@ -3439,7 +3439,7 @@
    "file": "audio/music-racer.mp3",
    "loop": [
     0.7,
-    83.7689
+    83.768912
    ],
    "vol": 1,
    "take": 0
@@ -3448,7 +3448,7 @@
    "file": "audio/music-racer-b.mp3",
    "loop": [
     0.7,
-    83.7689
+    83.768912
    ],
    "vol": 1,
    "take": 1
@@ -3457,7 +3457,7 @@
    "file": "audio/music-boss.mp3",
    "loop": [
     0.7,
-    89.5807
+    89.580635
    ],
    "vol": 1,
    "take": 0
@@ -3466,7 +3466,7 @@
    "file": "audio/music-boss-b.mp3",
    "loop": [
     0.7,
-    80.6926
+    80.692562
    ],
    "vol": 1,
    "take": 1
@@ -3475,7 +3475,7 @@
    "file": "audio/music-finalboss.mp3",
    "loop": [
     0.7,
-    86.3837
+    86.383651
    ],
    "vol": 1,
    "take": 0
@@ -3484,7 +3484,7 @@
    "file": "audio/music-finalboss-b.mp3",
    "loop": [
     0.7,
-    94.9521
+    94.952041
    ],
    "vol": 1,
    "take": 1
@@ -3493,7 +3493,7 @@
    "file": "audio/music-hub.mp3",
    "loop": [
     0.7,
-    80.7095
+    80.709501
    ],
    "vol": 1,
    "take": 0
@@ -3502,7 +3502,7 @@
    "file": "audio/music-hub-b.mp3",
    "loop": [
     0.7,
-    80.7095
+    80.709501
    ],
    "vol": 1,
    "take": 1
@@ -3511,7 +3511,7 @@
    "file": "audio/music-exam.mp3",
    "loop": [
     0.7,
-    89.121
+    89.12102
    ],
    "vol": 1,
    "take": 0
@@ -3520,7 +3520,7 @@
    "file": "audio/music-exam-b.mp3",
    "loop": [
     0.7,
-    76.4895
+    76.489456
    ],
    "vol": 1,
    "take": 1
@@ -3529,7 +3529,7 @@
    "file": "audio/music-memory.mp3",
    "loop": [
     0.7,
-    84.7
+    84.699977
    ],
    "vol": 1,
    "take": 0
@@ -3538,7 +3538,7 @@
    "file": "audio/music-memory-b.mp3",
    "loop": [
     0.7,
-    84.6895
+    84.689478
    ],
    "vol": 1,
    "take": 1
@@ -3547,7 +3547,7 @@
    "file": "audio/music-calm.mp3",
    "loop": [
     0.7,
-    82.974
+    82.973946
    ],
    "vol": 1,
    "take": 0
@@ -3556,7 +3556,7 @@
    "file": "audio/music-calm-b.mp3",
    "loop": [
     0.7,
-    82.974
+    82.973946
    ],
    "vol": 1,
    "take": 1

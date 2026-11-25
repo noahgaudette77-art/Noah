@@ -82,7 +82,7 @@ for (const set of allSets) {
   if (ONLY && set !== ONLY) continue;
   const parts = [], cues = {};
   let at = LEAD * 2; // samples
-  const put = (cue, a, vol, duck, pre = 0) => { parts.push(a); (cues[cue] = cues[cue] || []).push([+((at + pre) / SR).toFixed(4), +((a.length - pre * 2) / SR).toFixed(4), vol, duck || 0]); at += a.length + GAP; };
+  const put = (cue, a, vol, duck, pre = 0) => { parts.push(a); (cues[cue] = cues[cue] || []).push([+((at + pre) / SR).toFixed(6), +((a.length - pre * 2) / SR).toFixed(6), vol, duck || 0]); at += a.length + GAP; };
   for (const [cue, vol] of Object.entries(SETS[set] || {})) {
     const takes = Object.values(idx).filter((e) => e.kind === "sfx" && e.name === cue).sort((a, b) => a.take - b.take);
     const good = [];
@@ -141,7 +141,7 @@ if (ONLY) {
     if (a.length < 0.15 * SR) continue;
     level(fade(a, 0.003, 0.06), 0.9);
     parts.push(a);
-    (cues["vo:" + e.name] = cues["vo:" + e.name] || []).push([+(at / SR).toFixed(4), +(a.length / SR).toFixed(4), 1, 0]); // (a line with more than one take: each is heard in turn)
+    (cues["vo:" + e.name] = cues["vo:" + e.name] || []).push([+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]); // (a line with more than one take: each is heard in turn)
     at += a.length + GAP;
   }
   // the lines first recorded in other voices, to choose the announcer: kept as voices of their own ("vo@adam:game over"),
@@ -152,7 +152,7 @@ if (ONLY) {
     if (a.length < 0.15 * SR) continue;
     level(fade(a, 0.003, 0.06), 0.9);
     parts.push(a);
-    cues["vo@" + e.voice + ":" + e.name] = [[+(at / SR).toFixed(4), +(a.length / SR).toFixed(4), 1, 0]];
+    cues["vo@" + e.voice + ":" + e.name] = [[+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]];
     at += a.length + GAP;
   }
   if (cues["vo:boss incoming"] && !cues["vo:stand by"]) cues["vo:stand by"] = cues["vo:boss incoming"]; // (Boss Rush's STAND BY banner is called as "Boss incoming!")
@@ -211,7 +211,7 @@ for (const a of args.filter((x) => /^[a-z]+(-b)?=([a-z0-9]+:)?\d+$/.test(x))) {
   b.set(out.subarray((L - pre) * 2), 0); b.set(out, pre * 2); b.set(out.subarray(0, pre * 2), (pre + L) * 2);
   writeSprite("music-" + name, [b], {}, true, 112); // (112 kbps stereo: soft synth music loses nothing audible, and a phone downloads less)
   const at = (LEAD * 2 + pre) / SR;
-  result.music[name] = { file: "audio/music-" + name + ".mp3", loop: [+at.toFixed(4), +(at + L / SR).toFixed(4)], vol: 1, take: +take };
+  result.music[name] = { file: "audio/music-" + name + ".mp3", loop: [+at.toFixed(6), +(at + L / SR).toFixed(6)], vol: 1, take: +take };
 }
 // music built on an earlier run stays listed
 const prevFile = path.join(outDir, "audio.json");
