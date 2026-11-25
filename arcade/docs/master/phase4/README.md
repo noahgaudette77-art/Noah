@@ -12,11 +12,11 @@ impact already has its sound, flash, floater, haptic, sparks and hit-stop; the f
 
 | commit | change | measured |
 |---|---|---|
-| `3044dad`, `3a6fd48` | **The camera's shake a smooth noise in time** (value noise at 18 Hz, x and y their own, pushed toward its edges), not a fresh random offset every frame: a buzz, twice as fast at 120 Hz as at 60, drawn from the game's own random stream. The same at any frame rate, slowed in a hit-stop, on no random stream; its amounts, decay, caps and calm scale as they were | as far off on average (0.75 of the amount against 0.76), never further; its jump a frame a third of the old one's (Boss Rush, phone, a wrong answer: 0.018 against 0.061) |
-| `489a2aa` | **Risk Blaster's explanation on a Mac** stands the lens back (the picture drawn smaller about the band's top, to 72% at most) before it lifts: lifted whole, the demon's head went under the question panel (Phase 2's audit #15, the art review's #9) | the whole demon between the question and the sheet, the fighter above it; a phone as it was. `blaster-explanation-mac-before-after.jpg` |
+| `3044dad`, `3a6fd48`, `b9f15c8` | **The camera's shake a smooth noise in time** (value noise at 18 Hz, x and y their own and half a step apart, pushed gently toward its edges), not a fresh random offset every frame: a buzz, twice as fast at 120 Hz as at 60, drawn from the game's own random stream. The same at any frame rate, slowed in a hit-stop, on no random stream; its amounts, decay, caps and calm scale as they were | as far off on average (0.76 of the amount, as before), never further; its jump a frame a third of the old one's at 60 Hz (0.36 against 1.04) and half that at 120 Hz |
+| `489a2aa`, `9d40b33`, `e65a9b9`, `9447e5a` | **Risk Blaster's explanation on a Mac** stands the lens back (the picture drawn smaller about the band's top, to 72% at most) before it lifts: lifted whole, the demon's head went under the question panel (Phase 2's audit #15, the art review's #9). The review's fixes: applied again after a resize mid-explanation (the governor's step was one; an old fault the lift had too), not streaked by the motion blur unstaged, and the red aura and shield flash kept to the screen | the whole demon between the question and the sheet, the fighter above it; a phone as it was. `blaster-explanation-mac-before-after.jpg` |
 | `19b0902` | **The title's caged bosses' twitch** at 10 to 12 Hz, not 21 to 28 (the frame rate's limit: a strobe, not a shudder; Phase 3's snap scan) | |
 | `bc7a612` | **Nest Egg Run's surge** at a right gate out over its first fifth on an ease-out: 39% of its lunge came in its first frame (Phase 3's snap scan) | 22% in the first frame at 60 Hz, 40% by the second; its height at 0.21 s as before; back on a cosine that settles |
-| `3590644` | **Nest Egg Run's lean and its sun's easing by time**, not by frame (the lean was half as much at 120 Hz) | the same at 60 Hz |
+| `3590644`, `9d00d18`, `6fef816` | **Nest Egg Run's egg eased by time**, not by frame (its size and its narrowing downtown went twice as fast at 120 Hz). The lean the audit found by frame was dead (the car kits set it back to naught each frame: the lean seen is the kit's spring, by time already): both lines taken out | the same at 60 Hz |
 
 ## Weighed and kept
 
@@ -28,8 +28,7 @@ cameras (Phase 3 measured them); the wizard's bolts, whose sounds leave with the
 ## What to test on the devices
 
 - **iPhone (120 Hz) and Mac:** answer wrong in Boss Rush and Risk Blaster: the picture should sway with the blow, not
-  buzz; with Setup's calm on, a third as much. Nest Egg Run: a right gate's surge should punch forward without a jump;
-  the car's lean on a lane change the same on both.
+  buzz; with Setup's calm on, a third as much. Nest Egg Run: a right gate's surge should punch forward without a jump.
 - **Mac:** Risk Blaster, a wrong answer: the explanation comes up and the demon stays whole between the question and the
   sheet.
 - **Title:** a caged boss's twitch reads as a shudder.

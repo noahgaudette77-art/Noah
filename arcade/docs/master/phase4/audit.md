@@ -23,7 +23,7 @@ moves and lands after it; and the carried items (Phase 2's Mac explanation, Phas
 | 2 | **Risk Blaster on a Mac: the explanation lifts the whole picture** up to 40% of the band so the fighter clears the sheet, and the demon's head goes under the question panel (Phase 2's audit #15, the review's #9) | `BlasterGame.update` (20-blaster.js, the lift) | on a wide window the lens stands back instead (the picture drawn smaller about the band's top, to 72%), and only what still does not fit is lifted; a phone as it is |
 | 3 | **The title's caged bosses' twitch at 21 to 28 Hz**, at the frame rate's limit: it reads as a strobe, not a shudder (Phase 3's snap scan) | `HallScene.update` (10d-titlehall.js) | the same jolt at 9 to 12 Hz |
 | 4 | **Nest Egg Run's surge at a right gate: 39% of its lunge in its first frame** (`sin(pi sqrt x)` is infinitely steep at its start), then the hit-stop: a pop (Phase 3's snap scan) | `RacerRig.update` (21e-racerrig.js) | out fast over its first fifth (an ease-out: 22% in the first frame, 40% by the second), back slowly as before |
-| 5 | **Nest Egg Run's car leans by its move a frame**, so half as much at 120 Hz; the sun's brightness and the tilt's rest point ease a fixed share a frame | `RacerGame.update` (21-racer.js), 04-gfx.js | by the move a second; the easing by the time passed |
+| 5 | **Nest Egg Run's egg eases a fixed share a frame** (its size, its narrowing downtown), twice as fast at 120 Hz. (The car's lean by its move a frame, listed here first, turned out dead: the car kits set it to naught each frame; the independent review) | `RacerGame` (21-racer.js) | by the time passed |
 
 ## Weighed and kept
 
