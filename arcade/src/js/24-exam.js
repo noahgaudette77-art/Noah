@@ -801,7 +801,7 @@ class ExamGame extends QuizGame {
         if (a === "submit") { UI.closeModal(); this.askSubmit(); }
       },
       key: (e) => { if (e.key === "Escape") UI.closeModal(); },
-      mounted: () => { const h = $(".here", el); if (h) h.focus(); },
+      mounted: () => { const h = $(".palette .here", el); if (h) h.focus(); }, // (the question you are on: the legend's HERE swatch comes first in the dialog)
     });
   }
   askSubmit() {
