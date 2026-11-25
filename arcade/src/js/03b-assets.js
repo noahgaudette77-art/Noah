@@ -60,6 +60,7 @@ const Assets = {
       });
       const m = { name, scene: gltf.scene, animations: gltf.animations || [], parts, info: inr || (gltf.asset && gltf.asset.extras) || {} };
       this.fresh["model:" + name] = m;
+      this.dropOther(path, "models/" + name + ".glb", "models/" + name + "-hd.glb");
       return m;
     }).catch((e) => { console.warn("model " + name + " did not load: " + e.message); return null; }));
   },
@@ -113,13 +114,20 @@ const Assets = {
   loadSky(name) {
     const path = this.skyFile(name);
     if (!this.has(path) || !window.THREE) return Promise.resolve(null);
-    if (this.kept["sky:" + name]) return Promise.resolve(this.kept["sky:" + name]);
+    if (this.kept["sky:" + name] && !this.stale(name)) return Promise.resolve(this.kept["sky:" + name]);
     return this._once("sky:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
       const url = URL.createObjectURL(new Blob([buf], { type: /webp$/.test(path) ? "image/webp" : "image/jpeg" })), img = new Image();
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
       img.src = url;
     })).then((pic) => {
+      // (the Mac's richer tier's review) A sharper sky that arrives after its screen opened without it (a slow
+      // connection: Assets.need starts a screen after 40 s with what has come): that screen draws without it, and making
+      // it ready now, an 8K picture sent to the graphics chip and its reflection made, would stall the play. Its file is
+      // kept, and it is made ready the next time a screen asks for it, behind that screen's loading line.
+      if (path === "sky/" + name + "-hd.webp" && this.gaveUp && this.gaveUp.delete("sky:" + name)) return null;
+      const was = this.kept["sky:" + name];
+      if (was) { delete this.kept["sky:" + name]; (this.retiredSkies || (this.retiredSkies = [])).push(was); } // (the other size's, which the tier asked for before: see stale)
       const img = this.capImage(pic), map = new THREE.Texture(img); // (on a phone: no larger than 2048 across)
       map.encoding = THREE.sRGBEncoding;
       map.mapping = THREE.EquirectangularReflectionMapping;
@@ -136,12 +144,19 @@ const Assets = {
       if (sky.hd && GFX.ok) map.dispose();
       this.kept["sky:" + name] = sky;
       this.release(path);
+      this.dropOther(path, "sky/" + name + ".webp", "sky/" + name + "-hd.webp");
       return sky;
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // (the Mac's richer tier's review) A sky kept at the other size than the tier now asks for: the governor or Setup moved
+  // the tier since it was loaded (a Mac held a step lower draws the game's own skies, as before). The next screen that
+  // asks for it loads the right one; the old one leaves the graphics chip once that screen is up (restSkies).
+  stale(name) { const k = this.kept["sky:" + name]; return !!k && !!k.hd !== (this.skyFile(name) === "sky/" + name + "-hd.webp"); },
+  // the bytes of a file's other copy (the sharper or the game's own), fetched ahead while the tier was the other one
+  dropOther(path, a, b) { const o = path === a ? b : path === b ? a : null; if (o && this.bufs[o]) delete this.bufs[o]; },
   // (the Mac's richer tier) The pictures a screen draws its skies from, or keeps in waiting to draw (Risk Blaster's
-  // regions and Nest Egg Run's stretches of road: a game's gen.skies; Boss Rush's one: gen.sky).
+  // regions and Nest Egg Run's stretches of road: a game's gen.skies; a game's one: gen.sky).
   skiesFor(s) {
     const used = new Set(), g = s && s.gen;
     if (s && s.scene) s.scene.traverse((o) => { (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => { if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k] && m.uniforms[k].value; if (v && v.isTexture) used.add(v); } }); });
@@ -150,11 +165,12 @@ const Assets = {
     return used;
   },
   // A sharper sky is on the graphics chip only while a screen draws it or keeps it in waiting (each 128 to 171 MB there;
-  // a round of the games kept all thirteen, some 2 GB): at a change of screen, every one the new screen neither draws
-  // nor keeps lets go of the chip. Its picture stays in memory: a screen that draws it again sends it again, behind the
-  // curtain (GFX.warm). A game's skies it does not draw are not sent (Boss Rush fights under one of its three). Skies
-  // at the game's own size are kept as they always were.
+  // a round of the games kept all ten, some 1.5 GB): at a change of screen, every one the new screen neither draws nor
+  // keeps lets go of the chip. Its picture stays in memory: a screen that draws it again sends it again, behind the
+  // curtain (GFX.warm). A sharper sky a screen asked for and does not draw is not sent. Skies at the game's own size
+  // are kept as they always were. A sky replaced by its other size (stale) leaves here, its screen closed.
   restSkies(s) {
+    if (this.retiredSkies) { for (const k of this.retiredSkies) { if (k.map) k.map.dispose(); if (k.env) k.env.dispose(); } this.retiredSkies = null; }
     if (!this.hdSkies()) return;
     const used = this.skiesFor(s);
     for (const k in this.kept) { const sky = this.kept[k]; if (k.startsWith("sky:") && sky && sky.hd && sky.map && !used.has(sky.map)) sky.map.dispose(); }
@@ -198,7 +214,7 @@ const Assets = {
     for (const n of want) {
       const [kind, name] = n.split(":");
       if (kind === "model" && !this.fresh[n]) { if (this.has("models/" + name + ".glb")) jobs.push(() => this.loadModel(name)); }
-      else if (kind === "sky" && !this.kept[n]) { if (this.has("sky/" + name + ".webp") || this.has("sky/" + name + ".jpg")) jobs.push(() => this.loadSky(name)); }
+      else if (kind === "sky" && (!this.kept[n] || this.stale(name))) { if (this.has("sky/" + name + ".webp") || this.has("sky/" + name + ".jpg")) jobs.push(() => { if (this.gaveUp) this.gaveUp.delete(n); return this.loadSky(name); }); }
       else if (kind === "sfx" && !Sound.sprites[name]) { if (this.files.sprites[name]) jobs.push(() => Sound.loadSprite(name)); }
       else if (kind === "music" && !Sound.tracks[name]) { if (this.files.music[name]) Sound.loadTrack(name); } // (music is not waited for: it comes in when it has arrived)
       else if (kind === "ui" && !this.kept[n]) { if (this.has("ui/" + name + ".webp")) jobs.push(() => this.loadImage(name)); }
@@ -207,8 +223,12 @@ const Assets = {
     let done = 0;
     const tick = () => { done++; if (this.onProgress) this.onProgress(done, jobs.length); };
     const all = Promise.all(jobs.map((j) => Promise.resolve().then(j).catch(() => null).then(tick)));
-    // a slow connection must not hold a game back for ever: after 40 s it starts with whatever has arrived
-    return Promise.race([all, new Promise((r) => setTimeout(r, 40000))]).then(() => true);
+    // a slow connection must not hold a game back for ever: after 40 s it starts with whatever has arrived (and a sharper
+    // sky still on its way is not made ready when it comes: see loadSky)
+    return Promise.race([all.then(() => false), new Promise((r) => setTimeout(() => r(true), 40000))]).then((late) => {
+      if (late) for (const n of want) if (n.startsWith("sky:") && (!this.kept[n] || this.stale(n.slice(4)))) (this.gaveUp || (this.gaveUp = new Set())).add(n);
+      return true;
+    });
   },
   // Run fn once the set is in hand: at once when there is nothing to wait for, else behind the loading line.
   with(set, extra, fn) {

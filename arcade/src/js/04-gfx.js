@@ -70,8 +70,9 @@ const GFX = {
   fxScale: 1, // how many particles an effect throws (the tier's; effects may scale by it)
   // (the Mac's richer tier, 2026-11-25: the owner raised the Mac's graphics memory budget to about 2 GB) A computer
   // drawing at the MAC tier: what spends the larger budget on denser props and richer effects asks this (never a phone,
-  // nor a computer the governor or Setup holds lower). What it adds draws from a randomness of its own (richRandom), so
-  // the seeded captures' questions and scenery are those of any other build.
+  // nor a computer the governor or Setup holds lower), each game as it is built. What it adds draws from a randomness of
+  // its own (richRandom) and takes slots of its own (Risk Blaster's far rocks past the first 96, CombatFX's chunks past
+  // its own), so what the game draws from the seeded randomness, the captures' questions and scenery, is the same.
   get rich() { return this.tier === 0 && !(typeof Assets !== "undefined" && Assets.phone); },
   richN: 0,
   richRandom(fn) { return ownRandom(0x6b43a9b5 + this.richN++, fn); },
