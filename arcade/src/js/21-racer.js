@@ -1873,7 +1873,7 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
-    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (by the time passed, as it was at 60 Hz: Phase 4)
+    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (the egg's size, by the time passed, as it was at 60 Hz: Phase 4)
     // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
     // end of the road (out in the open it is the size of the sky)
     const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
@@ -1963,11 +1963,8 @@ class RacerGame extends QuizGame {
     }
     const n = this.round ? this.round.n : 4;
     const tx = this.lane === null ? 0 : laneX(this.lane, n);
-    const prev = this.carX;
     this.carX += (tx - this.carX) * Math.min(1, dt * 7);
-    this.car.position.x = this.carX;
-    this.car.position.y = Math.sin(this.t * 18) * 0.02;
-    if (dt > 0) this.car.rotation.z = clamp(((prev - this.carX) / dt) * (2.5 / 60), -0.25, 0.25); // (its lean by how fast it moves across, a second: by the move a frame it leaned half as much at 120 Hz. Phase 4)
+    this.car.position.x = this.carX; // (its bob and its lean are its kit's: its suspension, a spring on how fast it moves across, a second. Phase 4's review: the bob and bank set here were zeroed by the kit every frame)
     this.updateLook(dt, sp, step, scroll, sky);
     if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
       this.show.update(VFX.dt);
