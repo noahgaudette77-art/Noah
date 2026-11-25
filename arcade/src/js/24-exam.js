@@ -800,7 +800,7 @@ class ExamGame extends QuizGame {
         if (a === "close") UI.closeModal();
         if (a === "submit") { UI.closeModal(); this.askSubmit(); }
       },
-      key: (e) => { if (e.key === "Escape") UI.closeModal(); },
+      key: (e) => { if (e.key === "Escape") UI.closeModal(); else UI.arrowNav(e, el, ".palette button, .dialog > .btn", ".palette .here"); },
       mounted: () => { const h = $(".palette .here", el); if (h) h.focus(); }, // (the question you are on: the legend's HERE swatch comes first in the dialog)
     });
   }

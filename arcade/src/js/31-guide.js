@@ -74,7 +74,7 @@ function showGuide(chapterN) {
       if (a === "back") { Sound.sfx("back"); showHub(); }
       if (a === "ch") { Sound.sfx("page"); showGuideChapter(+t.dataset.n); }
     },
-    key: (e) => { if (e.key === "Escape") { if (input.value) { input.value = ""; search(""); } else showHub(); } },
+    key: (e) => { if (e.key === "Escape") { if (input.value) { input.value = ""; search(""); } else showHub(); } else UI.arrowNav(e, el, "[data-act=ch]"); },
   });
 }
 

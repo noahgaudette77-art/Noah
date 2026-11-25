@@ -64,6 +64,34 @@ const UI = {
     const f = ctrl.el.querySelector("[autofocus]");
     if (f) f.focus({ preventScroll: true });
   },
+  // The arrows over a screen's cards or buttons (stage select, the guide's chapters, Setup, a menu, the exam's grid of
+  // questions): the focus goes to the nearest in the arrow's direction, the first arrow (none of them focused) to the
+  // one the screen lights, or the first. Then Enter or Space is that one's (see init). Safari's Tab skips buttons
+  // unless its settings say otherwise (Option-Tab), so on a Mac the arrows are how a keyboard reaches a stage. (Phase
+  // 7.) across: only Left and Right (Up and Down still scroll the page: a results screen's list). Returns true when it
+  // took the key.
+  arrowNav(e, root, sel, first, across) {
+    const d = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
+    if (!d || (across && d[1]) || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
+    const items = [...root.querySelectorAll(sel)].filter((b) => !b.disabled && b.getClientRects().length);
+    if (!items.length) return false;
+    e.preventDefault();
+    const at = items.indexOf(document.activeElement);
+    let to = null;
+    if (at < 0) to = (first && items.find((b) => b.matches(first))) || items[0];
+    else {
+      const a = items[at].getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+      let best = Infinity;
+      for (const b of items) {
+        const r = b.getBoundingClientRect(), dx = r.left + r.width / 2 - ax, dy = r.top + r.height / 2 - ay;
+        const along = dx * d[0] + dy * d[1], across = Math.abs(dx * d[1] - dy * d[0]);
+        if (b === items[at] || along < 8) continue;
+        if (along + 3 * across < best) { best = along + 3 * across; to = b; } // (straight on before aside: a row's next card before the row below's)
+      }
+    }
+    if (to) { to.focus({ preventScroll: true }); to.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+    return true;
+  },
   el(html) {
     const t = document.createElement("template");
     t.innerHTML = html.trim();
@@ -153,6 +181,7 @@ const UI = {
       on: (a) => { this.closeModal(); if (a === "yes") onYes && onYes(); else onNo && onNo(); },
       key: (e) => {
         if (e.key === "Escape") { this.closeModal(); onNo && onNo(); }
+        else this.arrowNav(e, el, ".btn");
       },
       mounted: () => $("[data-act=no]", el).focus(),
     });
@@ -350,7 +379,7 @@ function pauseMenu(game) {
       if (a === "restart") game.restart();
       if (a === "quit") game.quit();
     },
-    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } },
+    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } else UI.arrowNav(e, el, ".btn"); },
     mounted: () => $("[data-act=resume]", el).focus(),
   });
 }
