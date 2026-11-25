@@ -42,7 +42,36 @@ module.exports = async (cap) => {
     }
     return [...new Set(out)].slice(0, 24);
   });
-  const still = async (name, o) => { await cap.shot(name, o); const f = jpg(name); overlaps[name] = await textOverlaps().catch(() => ["(the check failed)"]); console.log("  " + path.basename(f) + (overlaps[name].length ? "  text overlaps: " + overlaps[name].length : "")); fs.writeFileSync(path.join(cap.out, "overlaps.json"), JSON.stringify(overlaps, null, 1)); return f; };
+  // (LAYOUT=1, Phase 7: after each still, the screen's layout at this window's size, written to layout.json: the page
+  // scrolling sideways; a button or a line of text cut off at the window's sides or top; anything to click smaller than
+  // 24 px; an icon smaller than the art bible's 20 px)
+  const layout = {};
+  const layoutFaults = () => cap.eval(() => {
+    const W = innerWidth, H = innerHeight, out = [];
+    const shown = (el) => { for (let p = el; p && p !== document.documentElement; p = p.parentElement) { const c = getComputedStyle(p); if (c.display === "none" || c.visibility === "hidden" || +c.opacity < 0.05) return false; } return true; };
+    const name = (el) => (el.dataset && (el.dataset.act || el.dataset.label)) || (el.textContent || "").trim().slice(0, 24) || el.className || el.tagName;
+    if (document.documentElement.scrollWidth > W + 1) out.push("the page scrolls sideways: " + document.documentElement.scrollWidth + " px for " + W);
+    for (const el of document.querySelectorAll("button, [data-act], a[href], input, select")) {
+      if (!shown(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) continue;
+      if (r.left < -1 || r.right > W + 1) out.push("cut off at a side: " + name(el) + " (" + Math.round(r.left) + " to " + Math.round(r.right) + " of " + W + ")");
+      if (r.top < -1 && !el.closest("[data-scroll], .scroll, .sheet")) out.push("cut off at the top: " + name(el));
+      if (r.width < 24 || r.height < 24) out.push("smaller than 24 px to click: " + name(el) + " (" + Math.round(r.width) + " x " + Math.round(r.height) + ")");
+    }
+    for (const el of document.querySelectorAll("svg, img, canvas.icon, .icon, i.ic")) {
+      if (!shown(el) || el.closest("#hud, .floater")) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width >= 4 && r.height >= 4 && r.width < 19.5 && r.height < 19.5 && r.right > 0 && r.left < W && r.bottom > 0 && r.top < H) out.push("an icon under 20 px: " + (el.getAttribute("aria-label") || el.dataset.icon || el.className.baseVal || el.className || el.tagName) + " (" + Math.round(r.width) + " x " + Math.round(r.height) + ")");
+    }
+    for (const el of document.querySelectorAll("h1, h2, h3, p, .title, .label, .name")) {
+      if (!shown(el)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width > 2 && (r.left < -1 || r.right > W + 1)) out.push("text cut off at a side: " + (el.textContent || "").trim().slice(0, 24));
+    }
+    return [...new Set(out)].slice(0, 40);
+  });
+  const still = async (name, o) => { await cap.shot(name, o); const f = jpg(name); overlaps[name] = await textOverlaps().catch(() => ["(the check failed)"]); if (process.env.LAYOUT) { layout[name] = await layoutFaults().catch((e) => ["(the check failed: " + e.message + ")"]); fs.writeFileSync(path.join(cap.out, "layout.json"), JSON.stringify(layout, null, 1)); } console.log("  " + path.basename(f) + (overlaps[name].length ? "  text overlaps: " + overlaps[name].length : "")); fs.writeFileSync(path.join(cap.out, "overlaps.json"), JSON.stringify(overlaps, null, 1)); return f; };
   const waitReal = async (js, ms = 60000) => { for (let i = 0; i < ms / 100; i++) { if (await cap.eval(js)) return true; await cap.page.waitForTimeout(100); } return false; };
   // the page's own animations (CSS and scripted) stepped with the frames, as the menus' scenario steps them: they run
   // on the real clock and a capture steps a virtual one
