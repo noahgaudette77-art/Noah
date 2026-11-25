@@ -116,10 +116,24 @@ const Sound = {
     this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (!this._watching) { this._watching = true; document.addEventListener("visibilitychange", () => this._onVisible()); }
     this.resume();
   },
+  // (from "suspended", and from Safari's "interrupted": a call or another app took the sound, and the next tap brings it
+  // back; a tap calls init, which calls this)
   resume() {
-    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    const c = this.ctx;
+    if (c && c.state !== "running" && c.state !== "closed") c.resume().catch(() => {});
+  },
+  // A hidden page is silent (Phase 6): the game stands still behind it (its frames stop), so its music, an engine or
+  // the alarm would drone on alone, and the synth's music would garble as a hidden page's timers slow to one a second.
+  // The sound is suspended while the page is hidden (a line being spoken is stopped) and resumed when it is shown.
+  _onVisible() {
+    const c = this.ctx;
+    if (!c) return;
+    if (!document.hidden) { this.resume(); return; }
+    if (c.state === "running") c.suspend().catch(() => {});
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) { /* no speech here */ }
   },
 
   tone(freq, dur, o = {}) {
