@@ -94,6 +94,18 @@ module.exports = async (cap) => {
     else await cap.eval((w) => window.__arcade.show[w](), where);
     for (let t = 0; t < secs; t += 10) await step(600);
   };
+  // SNAP=1: a heap snapshot at each round's end (soak-r<n>.heapsnapshot; tools/heapdiff.js compares two)
+  const snap = async (round) => {
+    if (!process.env.SNAP || !cdp) return;
+    const file = path.join(cap.out, "soak-r" + round + ".heapsnapshot"), out = fs.createWriteStream(file);
+    const onChunk = (m) => out.write(m.chunk);
+    cdp.on("HeapProfiler.addHeapSnapshotChunk", onChunk);
+    await cdp.send("HeapProfiler.collectGarbage").catch(() => {});
+    await cdp.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false });
+    cdp.off("HeapProfiler.addHeapSnapshotChunk", onChunk);
+    await new Promise((r) => out.end(r));
+    console.log("   snapshot " + file);
+  };
   await cap.eval(() => { window.__cap.skipDialogs = true; });
   for (let round = 1; round <= ROUNDS; round++) {
     for (const [where, secs] of PLAN) {
@@ -102,6 +114,7 @@ module.exports = async (cap) => {
       else { await open(where, s); if (where === "title") await held(round, "title"); }
     }
     await held(round, "round end");
+    await snap(round);
   }
   // round by round, at the same moments: what grew, and what a frame costs
   const by = {}, md = [`# The soak (tools/scenarios/soak.js, ${new Date().toISOString().slice(0, 10)}): ${MIN} minutes of play, ${ROUNDS} rounds, the Mac tier`, ""];
