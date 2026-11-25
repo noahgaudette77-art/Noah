@@ -73,6 +73,7 @@ function inPage() {
   window.__reseed = (n) => { seed = n | 0; }; // (a scenario starts a screen's randomness afresh: the same questions and scenery every run, however long the files took)
   Math.random = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const C = (window.__cap = { frame: 0, errors: [], draw: true, render: null });
+  window.__timers = () => timers.size; // (the timers and intervals waiting: one left running grows this; see scenarios/soak.js)
   window.addEventListener("error", (e) => C.errors.push(String(e.message)));
   window.__tick = (n, draw) => {
     const A = window.__arcade, rr = A && A.GFX && A.GFX.renderer;
