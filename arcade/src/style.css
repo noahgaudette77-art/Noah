@@ -2090,4 +2090,10 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
      ran to nine lines in a column of 300 px) */
   .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .sl { flex-basis: calc(100% - 42px); }
   .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .seg { margin-left: auto; }
+
+  /* stage select and the guide's front page: the stage cards in more columns across the width (five on a Mac's 1470,
+     a world of five stages in one row; four from 1100), a search's results two to a row. The guide's chapter pages
+     keep their column */
+  .scr-select .scroll > .wrap, .guide-lib:not(.scr-notes) .scroll > .wrap { max-width: 1360px; }
+  .guide-lib:not(.scr-notes) .ch-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
