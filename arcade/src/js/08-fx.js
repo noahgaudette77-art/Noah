@@ -743,8 +743,13 @@ function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glo
   }
   const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
   disposeTree(sc);
-  // In three r128 a render target's texture is only freed through the target, so
-  // disposing the returned texture (as scenes do) frees the whole target.
+  return ownTarget(rt);
+}
+// A render target's texture handed out on its own. In three r128 a target's texture is only freed through the target,
+// so disposing the texture (as scenes do) frees the whole target. (Made out here: made where the scene drawn into the
+// target was built, the closure held that scene for as long as the texture lived, and a closing screen's materials,
+// and their reflections, are kept for their shaders: GFX.park. The performance re-check.)
+function ownTarget(rt) {
   rt.texture.dispose = () => rt.dispose();
   return rt.texture;
 }

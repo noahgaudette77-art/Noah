@@ -156,8 +156,7 @@ class BlasterSky {
         card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
         const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
         disposeTree(sc);
-        rt.texture.dispose = () => rt.dispose(); // (see makeEnvMap: the target owns the texture)
-        tex = rt.texture;
+        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
         c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
       } catch (e) { tex = null; }
     }

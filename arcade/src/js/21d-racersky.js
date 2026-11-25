@@ -143,8 +143,7 @@ class RacerSky {
         }
         const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
         disposeTree(sc);
-        rt.texture.dispose = () => rt.dispose(); // (the target owns the texture)
-        tex = rt.texture;
+        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
       } catch (e) { tex = null; }
     }
     return (this.envs[id] = tex);
