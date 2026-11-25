@@ -125,6 +125,7 @@ function showSettings() {
         el.querySelectorAll(`[data-act=vol][data-k=${k}]`).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
         Sound.applyVolumes();
         if (k === "music" && was !== (v !== "off")) Sound.refreshMusic();
+        if (k === "sfx" && v === "off") { Sound.ambience(false); Sound.stopLoops(); } // (the hall's hum or blips that were running go quiet, as with the mute button)
         if (k === "voice" && v !== "off") Sound.say("Announcer on");
         Sound.sfx("blip");
         return;
