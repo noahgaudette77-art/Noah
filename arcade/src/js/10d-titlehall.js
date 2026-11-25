@@ -899,8 +899,10 @@ class HallScene extends Scene3D {
       if (!this.calm && extras && near && (c.twitchIn -= dt) <= 0) { c.twitchIn = 4 + Math.random() * 8; c.twitch = 1; c.flick = Math.max(c.flick, 0.35); }
       c.twitch = Math.max(0, c.twitch - dt * 3.5);
       c.turner.rotation.y = Math.sin(this.t * 0.15 + c.rimPh) * (this.calm ? 0.04 : 0.13);
-      c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 38) * 0.05;
-      c.turner.position.x = c.twitch * Math.sin(c.twitch * 51) * 0.04;
+      // (its jolt shudders at some 10 and 12 Hz over its 0.29 s: at 21 and 28 Hz, near the frame rate's limit, it read
+      // as a strobe more than a shudder. Phase 4, from Phase 3's snap scan)
+      c.turner.rotation.z = c.twitch * Math.sin(c.twitch * 18) * 0.05;
+      c.turner.position.x = c.twitch * Math.sin(c.twitch * 21.5) * 0.04;
       if (c.float) c.turner.position.y = c.float[0] * HALL.bossH * (0.65 + 0.35 * Math.sin(this.t * Math.PI * 2 * c.float[1] * (this.calm ? 0.5 : 1) + c.rimPh)); // (it hovers, bobbing)
       if (near || extras) c.accum += dt; // (at LOW a far boss holds its pose)
       if (near || (extras && c.accum >= 0.1)) {
