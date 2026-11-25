@@ -35,9 +35,19 @@ const UI = {
       const owner = ownerOf(t);
       if (owner && owner.on) owner.on(t.dataset.act, t, e);
     });
+    // Enter or Space on a button the keyboard moved to (Tab, or an arrow over a grid of cards) is that button's: the
+    // browser clicks it, and the screen's own Enter (PLAY in the hall, PLAY AGAIN, the exam's next question, turning a
+    // card) is left out. With the focus where a click or the game itself put it, the screen's keys work as before.
+    // (Phase 7: Tab to STATS in the hall and Enter played the cabinet; to the exam's flag, and Enter went on instead.)
+    let navKey = false, keyFocus = null;
+    document.addEventListener("keydown", (e) => { navKey = e.key === "Tab" || e.key.startsWith("Arrow"); }, true);
+    document.addEventListener("keyup", () => { navKey = false; }, true);
+    document.addEventListener("focusin", (e) => { keyFocus = navKey ? e.target : null; });
+    document.addEventListener("pointerdown", () => { keyFocus = null; }, true);
     document.addEventListener("keydown", (e) => {
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
+      if ((e.key === "Enter" || e.key === " ") && keyFocus && keyFocus === document.activeElement && !keyFocus.disabled && keyFocus.matches("button, a[href]")) return;
       if (this.modal) { if (this.modal.key) this.modal.key(e); return; }
       if (this.cur && this.cur.key) this.cur.key(e);
     });
