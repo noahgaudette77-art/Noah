@@ -2082,8 +2082,10 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .wrap:has(> .pcard) > .actions { grid-template-columns: minmax(0, 440px); justify-content: center; }
 
   /* Setup: the rows in two columns of even height, read down the first and then the second, in their order, a row
-     never split between them: the sound rows head the first, tilt and graphics the second */
-  .scroll > .wrap:has(> .setting) { max-width: 1360px; columns: 2; column-gap: 24px; }
+     never split between them: the sound rows head the first, tilt and graphics the second. (The columns' box is a
+     stacking context of its own: without one, WebKit (Safari) laid the second column's rows out but never drew them,
+     each row being a layer of its own, the plates' rule) */
+  .scroll > .wrap:has(> .setting) { max-width: 1360px; columns: 2; column-gap: 24px; isolation: isolate; }
   .wrap:has(> .setting) > * { break-inside: avoid; }
   .wrap:has(> .setting) > .section-h { break-after: avoid; }
   /* (the graphics row's long description takes its row's width, its switch on the line under it: beside the switch it
