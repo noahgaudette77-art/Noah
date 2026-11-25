@@ -135,6 +135,9 @@ class BlasterEscort {
       b.v.x += (b.m.position.x - c.x > 0 ? 1 : -1) * 55; b.v.y += 22; // (... and out to the side, up)
     });
   }
+  // Every shape the brood was given, not only the three on show as the screen closes (a shape drawn and swapped out
+  // stayed on the graphics chip, a visit at a time: Phase 7's soak). The rest goes with the scene.
+  dispose() { this.broodGeo.forEach((geo) => geo.dispose()); }
   hideAll() { this.ships.forEach((sh) => { sh.mode = ""; sh.m.visible = false; }); if (this.lights) this.lights.visible = false; this.brood.forEach((b) => { b.on = false; b.m.visible = false; }); }
   // ---- every frame ---------------------------------------------------------------------------------------
   update(d) {

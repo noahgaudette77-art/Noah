@@ -743,5 +743,6 @@ class BlasterStage {
     this.orbTex.dispose();
     [this.frame, this.flame.mesh].forEach((m) => { m.material.dispose(); m.geometry.dispose(); });
     this.crackGeo.dispose(); this.crackMat.dispose();
+    this.escort.dispose();
   }
 }
