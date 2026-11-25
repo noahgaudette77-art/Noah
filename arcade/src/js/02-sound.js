@@ -45,13 +45,28 @@ const Sound = {
   // Each loop's join (Phase 6). The generator's loops do not run on from their end into their start (a click every time
   // round: the charge hum's 60 times the sound around it) and they swell in and fade out a little (a dip of 5 to 7 dB).
   // When the file is decoded, each take's soft head and tail are left out and its last stretch is faded out under its
-  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm is only
-  // crossfaded, over 10 ms, so its beat keeps its time; the hall's hum joins cleanly as it is.
-  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: [0, 0, 0.01] },
-  _join(q, [head, tail, x]) {
-    const b = q.buf, sr = b.sampleRate, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
+  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm keeps its
+  // length (its two beats a loop of 2.25 s are the red frame's pulse, counted on the sound's clock: a loop 10 ms short
+  // drifted a quarter of a second from it in a minute): its end fades out and its start in over 4 ms, a soft seam, never
+  // a step. The hall's hum joins cleanly as it is.
+  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: 0.004 },
+  _join(q, how) {
+    const b = q.buf, sr = b.sampleRate, done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
+    if (typeof how === "number") { // its length kept: its end faded out and its start in
+      const s0 = Math.round(q.at * sr), s1 = Math.round((q.at + q.dur) * sr), n = Math.round(how * sr);
+      if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+      if (!done[s0]) {
+        done[s0] = 1;
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          const d = b.getChannelData(c);
+          for (let i = 0; i < n; i++) { const k = Math.sin((i / n) * (Math.PI / 2)); d[s0 + i] *= k; d[s1 - 1 - i] *= k; }
+        }
+      }
+      q.at = s0 / sr; q.dur = (s1 - s0) / sr;
+      return;
+    }
+    const [head, tail, x] = how, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
     if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
-    const done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
     if (!done[s0]) {
       done[s0] = 1;
       for (let c = 0; c < b.numberOfChannels; c++) {
