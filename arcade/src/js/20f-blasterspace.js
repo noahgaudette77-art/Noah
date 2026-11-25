@@ -897,6 +897,18 @@ class BlasterSpace {
         made.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
         made.geo.scale(s, s, s);
         made.geo.computeBoundingBox(); made.geo.computeBoundingSphere();
+        // (the performance re-check: on a phone, the same shape at two fifths of its triangles, fitted as the full one
+        // is and drawn in its material and picture: tools/gen/phone-lod.mjs. There a ship or a near rock is a few dozen
+        // pixels across, and at its busiest a frame asked for some 450,000 triangles, most of them these.)
+        const md = Assets.phone && g.gen.props[name + "-md"], lite = md && modelGeometry(md, new THREE.Matrix4().makeRotationY(Math.PI));
+        if (md) md.scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose()); } });
+        if (lite) {
+          lite.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
+          lite.geo.scale(s, s, s);
+          lite.geo.computeBoundingBox(); lite.geo.computeBoundingSphere();
+          made.geo.dispose();
+          made.geo = lite.geo;
+        }
         const U = (this.genU = this.genU || blasterSkinUniforms());
         U.uSkAA.value = 1.2; U.uSkSpec.value = 0.4;
         // (background: a hull is dark gunmetal and a rock darker stone, so the region's hard lamps draw their edges and

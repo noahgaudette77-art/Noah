@@ -150,7 +150,8 @@ const Assets = {
   // ---- sets: what a screen needs. need(set) is null when there is nothing to wait for (assets off, or all of it
   // already in hand), otherwise a promise that settles when everything has loaded or failed. It never rejects.
   // (a set's entries, each once: of a track's two recordings, only the one its screen's visit plays: see Sound.take)
-  wants(set, extra) { return (this.files.sets[set] || []).concat(extra || []).map((n) => (n.startsWith("music:") ? "music:" + Sound.take(n.slice(6)) : n)).filter((n, i, a) => a.indexOf(n) === i); },
+  // (a model whose name ends in -md is a phone's lighter copy of another: only a phone fetches it)
+  wants(set, extra) { return (this.files.sets[set] || []).concat(extra || []).map((n) => (n.startsWith("music:") ? "music:" + Sound.take(n.slice(6)) : n)).filter((n, i, a) => a.indexOf(n) === i && (this.phone || !/^model:.+-md$/.test(n))); },
   need(set, extra) {
     if (!this.on) return null;
     const want = this.wants(set, extra);
