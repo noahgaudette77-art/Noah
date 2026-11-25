@@ -298,11 +298,16 @@ function bossCap(env) {
 // painting there is coarse and read as a black smear, and no change of material made it read as anything else.
 // It rides the chest (pv: the chest joint's pivot). Model units: the hollow is about 0.1 across round (0.006, 0.69),
 // its floor at z 0.16, the armour round it at 0.17 to 0.19. (Phase 5: one builder for every Proctor.)
+// (the reactor's metal cooled, as its armour is. Its hook is made out here, not in bossHousing: one made there shared
+// bossHousing's scope with the housing's group, and so held the group, the machine it rides and the scene they hung in;
+// the closing scene's materials are kept for their shaders (GFX.park), and the title hall's old scene, some 25 MB,
+// with them: Phase 7's soak)
+function bossHousingCool(sh) { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }
 function bossHousing(env, pv) {
   const h = {};
   const R = 0.064, z0 = 0.15, zf = 0.187, zi = zf - 0.012, ri = R - 0.021;
   const metal = new THREE.MeshStandardMaterial({ color: 0x33374a, metalness: 1, roughness: 0.34, envMap: env, envMapIntensity: 0.85, flatShading: true, side: THREE.DoubleSide });
-  metal.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }; // (cooled, as its armour is)
+  metal.onBeforeCompile = bossHousingCool;
   const dark = new THREE.MeshStandardMaterial({ color: 0x0e0c18, metalness: 0.6, roughness: 0.55, envMap: env, envMapIntensity: 0.45, flatShading: true });
   const grp = new THREE.Group();
   grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
