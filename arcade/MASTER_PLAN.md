@@ -14,15 +14,15 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** the performance re-check (below), IN PROGRESS from 2026-11-25. Phases 0, 1, 5, 3, 2, 4, 6 and 7 are done
-  (Phase 7 passed its gate 2026-11-25: `docs/master/phase7/gate-report.md`; its hand-over is at the bottom).
-- **Next steps (the re-check):** (a) what a closed screen's parked materials still hold: the hooks moved out of the
-  functions whose scope held a scene (Boss Rush's crowd and wizard, Risk Blaster's far ships and rocks, Memory Bank's
-  spun gold), checked with `soak.js SNAP=1` and `tools/heapparked.js`; (b) the phone's memory: the raw files let go
-  once decoded where nothing reads them again (a sprite of sounds, a sky, a page picture; a model's and music's stay);
-  (c) the draws at many moments (`tools/scenarios/draws.js`, new), Risk Blaster's and Nest Egg Run's phone draws first,
-  then the Proctor's draws, Memory Bank's coins and the title's garbage; (d) every screen measured again on both tiers,
-  the census, memory over cycles, the governor in both engines; the gate; then Phase 8.
+- **Phase:** the Mac's richer tier (the owner's order of 2026-11-25, below), IN PROGRESS. Phases 0, 1, 5, 3, 2, 4, 6,
+  7 and the performance re-check are done (the re-check's gate 2026-11-25: `docs/master/recheck/gate-report.md`).
+- **Done in the Mac's tier so far:** the budget (2,000 MB a screen on the Mac); the title hall's bosses, the wizard and
+  thirteen skies in sharper pictures fetched only at the MAC tier (`<name>-hd`, `Assets.file`, `Assets.skyFile`); more
+  sparks, embers and chunks in fights, twice Risk Blaster's far rocks, Boss Rush's stands fuller, the floor reflection at
+  0.8 (`GFX.rich`, `GFX.richRandom`: from a randomness of their own).
+- **Next steps:** every screen measured on the Mac with all of it; then the gate: the harness, the 30-minute soak with
+  other programs loading the machine (`tools/load.js`), WebKit on the Mac, the census on the final build (for the
+  re-check too), an independent review; the report; then Phase 8.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -343,7 +343,7 @@ The audit, the changes and the gate: `docs/master/phase7/` (`audit.md`, `README.
   round 2 to round 3 the graphics chip the same (textures +0, geometries +0), the page's elements and timers the same,
   a frame's cost the same; six rounds (48.6 minutes of play) held the heap within 28 to 30 MB with no trend.
 
-### The performance re-check (after Phase 7, before Phase 8: the owner's new order; NOW, from 2026-11-25)
+### The performance re-check (after Phase 7, before Phase 8: the owner's new order; done 2026-11-25)
 Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
 - **From Phase 7's soak: what a closed screen's parked materials still hold.** `GFX.park` keeps a closing scene's
@@ -368,7 +368,7 @@ changes), memory over cycles, the governor in both engines; whatever a later pha
   a frame (its update 5.8 KB; the cells' lamps make a list a frame); the census's play of Memory Bank turns no card (as
   in Phase 1's): to be made to turn and grade them, so the deck's own moments are counted.
 
-### The Mac's richer tier (the owner, 2026-11-25: after the re-check, before Phase 8)
+### The Mac's richer tier (the owner, 2026-11-25: after the re-check, before Phase 8; NOW)
 The owner's order, as given: "Raise the Mac tier's graphics memory budget from 900 MB to about 2 GB (up to 3 GB only if
 every test stays clean). The MacBook has 16 GB of unified memory, but it is shared with Safari, other apps and the OS, so
 keep headroom. Spend the extra on higher-resolution key textures, denser props and richer effects on the Mac tier only.
@@ -706,3 +706,14 @@ triangles, 371 MB; the Mac's: 142, 318K, 795). Spend: none. Tools: `scenarios/ke
 For the devices: the README's list (Safari with the keyboard alone, Tab and Enter in Chrome, the hover, a wide window,
 two displays, the streak to look for on Risk Blaster's demon, half an hour with the FPS counter, the iPhone's icons).
 Left for the re-check: what the parked materials still hold (about 9 MB), the raw files kept after decoding.
+
+**The performance re-check (2026-11-25).** The items the phases had left first: what a closed screen's parked materials
+held (9.4 MB of arrays, every shader hook made inside a function with a scene in its scope: each now a function of its
+own; 0.01 MB after), the raw files kept after decoding (17 MB on a phone let go; the skies kept decoded, so a game opens
+at once), the Proctor's reactor in one draw (five fewer), Risk Blaster's phone triangles (lighter copies of its ships and
+near rocks for a phone: its busiest frame 438K to 294K). Then the one-moment measure checked against many
+(`tools/scenarios/draws.js`): the medians inside the budgets; Risk Blaster's phone draws at its busiest 118-119 and Nest
+Egg Run's Mac draws 169 recorded to watch on the devices (each fix a character's rig). The governor passes in both
+engines; memory level over cycles; the harness without fault (`recheck-final`); an independent review found no
+regression, its notes answered (`deef476`). The census left for the final build. Spend: none. Live at `e041f16`. Tools:
+`scenarios/draws.js`, `scenarios/kept.js`, `tools/gen/phone-lod.mjs`, `shader-dump.js STAGE=`.

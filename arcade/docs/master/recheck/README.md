@@ -48,6 +48,7 @@ checked against many (c).
 | `bf8c237` | **The Proctor's reactor in one draw** (six meshes of one material) (c) | five draws fewer a pass wherever a Proctor stands; the stills the same |
 | `a74b4b7` | **A phone's lighter copies of Risk Blaster's passing ships and near rocks** (c) | a phone's busiest frame 438K triangles, then 294K (the budget 350K); a Mac unchanged |
 | `e041f16` | the page built | rules IDENTICAL from disk and served, content and scripts untouched |
+| `deef476` | the independent review's notes (`gate-report.md`): a phone's copies made in a randomness of their own, the reactor's change to the exam's seeded draws noted, the copy tool's normals | no regression found |
 
 ## (a) What a closed screen's parked materials still held
 
@@ -114,7 +115,8 @@ decoded (`Assets.release`; the hall's fetching ahead skips them). The rest was w
   (27 MB): what the game plays.
 - **The page pictures decoded** (37 MB): images, which a browser may let go of and decode again on its own.
 
-KEPT_AFTER
+After (`9d16d26`), the same round: raw files kept at the end 40.5 MB (models 28.2, music 12.3), no file fetched twice,
+every sky, sprite and track decoded as before.
 
 ## (c) The draws and triangles at many moments, not one
 
