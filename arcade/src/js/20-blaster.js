@@ -945,7 +945,9 @@ class BlasterGame extends QuizGame {
     // (staged) the picture sliding to a new place on the page is not the camera moving: for those frames it is not
     // streaked as if it were. Nor while a blow shakes it: a shaken picture stays sharp, so the answers' letters can
     // be read through it.
-    if (this.stage) { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask") ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
+    // (Phase 4's review: and unstaged too, the picture standing back or riding up is not the camera moving, so it is not
+    // streaked: before, the fallback streaked the change as a zoom at the screen's sides)
+    { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || (this.stage && (this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask"))) ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
     this.warpRoll = w > 0.001 && !REDUCED_MOTION ? Math.sin(this.warp * 2.4) * w * 0.14 : 0;
     if (this.warpRoll) this.camera.rotateZ(this.warpRoll);
     this.space.follow(this.camera);
