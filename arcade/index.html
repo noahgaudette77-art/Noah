@@ -2000,6 +2000,14 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .hub-card[data-act]:hover, .chip[data-act]:hover, .tile[data-act]:hover, .trophies .tr[data-act]:hover, .mrow[data-act]:hover { filter: brightness(1.18); }
   [data-act] { cursor: pointer; }
   .dialog .keys { display: block; margin-top: 4px; font: 8px/1.7 var(--font-display); letter-spacing: 0.06em; color: var(--dim); text-align: center; }
+  /* (Phase 7, tools/scenarios/keys.js's hover pass: Memory Bank's grades and FLIP CARD kept their own filter over the
+     buttons' hover, the exam's question grid had none; and the card, unturned, lifts its glow as the mouse comes over
+     it. Its faces, not the card: a filter on the card would flatten its turn) */
+  .grade .btn:hover { filter: saturate(0.9) brightness(1.14); }
+  .palette button:hover { border-color: var(--cyan); color: #fff; }
+  .seg button[data-act="fx"][aria-pressed="true"]:hover { filter: brightness(1.15); } /* (an effect that is on: a click turns it off. A switch's chosen setting, which a click leaves as it is, stays still) */
+  .card3d.flipped[data-act] { cursor: default; } /* (turned, a click on it does nothing: its grades are under it) */
+  .card3d[data-act]:not(.flipped):hover .face.front { box-shadow: 0 0 0 2px #1a0f02, 0 0 0 6px #c8963a, 0 0 0 7px #5a3d0c, 0 0 0 9px #000, 0 0 56px -6px var(--c, var(--lime)), 0 30px 46px -12px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 0 48px -14px var(--c, var(--lime)); }
 }
 
 
@@ -2039,6 +2047,91 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .scr-title.hall .title-dock::before { left: 50%; right: auto; width: min(100vw, 980px); transform: translateX(-50%);
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
 }
+
+/* The menu pages on a Mac (Phase 7, 2026-11-25). On a wide landscape window the five full-page menus (results, stats,
+   Setup, stage select, the guide's front page) were one 860 px column with empty sides, and the results' mastery and
+   review sat below the fold under the pinned bar (on a short window even its tiles did). The art bible (section 6):
+   on the Mac the interface sits in columns. From 1100 px wide (two columns of 500 px and more fit inside the gutters;
+   narrower, the 860 px column already fills the window) on a window wider than it is tall by a quarter or more (a
+   square or upright window keeps the one column), whatever its height (a short window is where one column hides the
+   most). A phone never reaches it. Only the layout changes: every word, button and their order are as they were. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  /* results: the hero (medal, headline, stars, rewards, score) in a column of its own beside the run's details (the
+     client's word, tiles, XP bar, mastery, review), the pair in the middle of the page's height. The hero spans its
+     column's rows: twelve for the details (more than they ever take), then one for the hero alone, so a hero taller
+     than the details never spreads them apart. While a long review list scrolls the hero stays in sight, in the middle
+     of what the scroll shows (the window less its gutters and the pinned bar: 96 px). */
+  .scr-results .scroll { display: flex; flex-direction: column; }
+  .scr-results .scroll > .wrap { width: 100%; max-width: 1360px; margin: auto; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: repeat(12, auto) 1fr; column-gap: 56px; }
+  .scr-results .scroll > .wrap > * { grid-column: 2; min-width: 0; }
+  .scr-results .scroll > .wrap > .res-head { grid-column: 1; grid-row: 1 / -1; align-self: start; align-content: center; position: sticky; top: 0;
+    min-height: min(100%, calc(100vh - 96px)); }
+  .scr-results .res-head h1 { font-size: clamp(20px, 2.8vw, 40px); } /* (a thirteen-letter headline, RETIRED AT 65, keeps to one line in its column) */
+  .scr-results .scroll > .wrap > :has(+ .section-h) { margin-bottom: 0; } /* (a heading's own margin, as when the margins collapsed) */
+  .scr-results .scroll > .wrap > .section-h.flawless { justify-self: start; }
+  /* the tiles three to a row: one left over takes the row, two left over share it */
+  .scr-results .tiles .tile:nth-child(n) { grid-column: span 2; }
+  .scr-results .tiles .tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
+  .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1), .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1) + .tile { grid-column: span 3; }
+  /* the misses two to a row, read across (a line of some fifty letters, not ninety); the shorter of a pair keeps its
+     lines together at its top; one left over takes the row */
+  .scr-results .review { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scr-results .review li { align-content: start; }
+  .scr-results .review li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* the pinned bar keeps to the same columns: PLAY AGAIN under the hero, the other two under the details; its light
+     stays under PLAY AGAIN */
+  .scr-results .actions.pinned .wrap { max-width: 1360px; grid-template-columns: calc((100% - 56px) * 5 / 12 + 48px) minmax(0, 1fr) minmax(0, 1fr); }
+  .scr-results .actions.pinned .wrap > :first-child { margin-right: 48px; }
+  .scr-results .actions.pinned { background: radial-gradient(400px 130% at max(20.8%, calc(50% - 408px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+  /* RANK UP! after a reward moment stands on its plate over the details' column, so it never crosses the score */
+  .banner.plated { --w: min(1360px, 100% - 32px); left: calc((100% - var(--w)) / 2 + (var(--w) - 56px) * 5 / 12 + 56px); right: calc((100% - var(--w)) / 2); }
+
+  /* stats: the rank, the tiles and their note beside the trophies (the trophies' heading level with the rank's card,
+     a last row that stretches for whichever column is taller); then the mastery by stage, two to a row, and the four
+     high-score boards in a row, across the width. The left column keeps 440 px, so QUESTIONS MASTERED stays on one line;
+     the trophies take three to a row where they have the room for it (a Mac's 1470), two where not */
+  .scroll > .wrap:has(> .pcard) { max-width: 1360px; display: grid; grid-template-columns: minmax(440px, 1fr) minmax(0, 2fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 32px; }
+  .wrap:has(> .pcard) > * { grid-column: 1 / -1; min-width: 0; }
+  .wrap:has(> .pcard) > .pcard { grid-column: 1; grid-row: 1 / 3; }
+  .wrap:has(> .pcard) > .tiles { grid-column: 1; grid-row: 3; }
+  .wrap:has(> .pcard) > .note { grid-column: 1; grid-row: 4 / 6; }
+  .wrap:has(> .pcard) > .section-h:has(+ .trophies) { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .wrap:has(> .pcard) > .trophies { grid-column: 2; grid-row: 2 / 6; }
+  .wrap:has(> .pcard) > .mastery-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .wrap:has(> .pcard) > .boards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wrap:has(> .pcard) > .actions { grid-template-columns: minmax(0, 440px); justify-content: center; }
+
+  /* Setup: the rows in two columns of even height, read down the first and then the second, in their order, a row
+     never split between them: the sound rows head the first, tilt and graphics the second. (The columns' box is a
+     stacking context of its own: without one, WebKit (Safari) laid the second column's rows out but never drew them,
+     each row being a layer of its own, the plates' rule) */
+  .scroll > .wrap:has(> .setting) { max-width: 1360px; columns: 2; column-gap: 24px; isolation: isolate; }
+  .wrap:has(> .setting) > * { break-inside: avoid; }
+  .wrap:has(> .setting) > .section-h { break-after: avoid; }
+  /* (the graphics row's long description takes its row's width, its switch on the line under it: beside the switch it
+     ran to nine lines in a column of 300 px) */
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .sl { flex-basis: calc(100% - 42px); }
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .seg { margin-left: auto; }
+
+  /* stage select and the guide's front page: the stage cards in more columns across the width (five on a Mac's 1470,
+     a world of five stages in one row; four from 1100), a search's results two to a row. The guide's chapter pages
+     keep their column */
+  .scr-select .scroll > .wrap, .guide-lib:not(.scr-notes) .scroll > .wrap { max-width: 1360px; }
+  .guide-lib:not(.scr-notes) .ch-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Icons at the art bible's 20 px (section 5; Phase 7, 2026-11-25: carried from Phase 2's gate). An icon that stands for
+   itself is at least 20 px: an icon-only button (pause, sound, full screen, the exam's grid and flag, the hall's arrows),
+   the HUD's lives, a stage's stars, a trophy's lock, Setup's row icons, a world's mark on stage select. A glyph inside a
+   labelled button (PLAY AGAIN, NEXT, the back arrow beside BACK) keeps its size: the label speaks, and a 20 px glyph
+   would stand twice the height of its 11 px words. (The racer's narrowest phones keep their own smaller lives.) */
+.iconbtn svg, .lives svg, .stars svg, .trophies .tr .lk svg, .setting .si svg, .world.wbar i svg, .btn[data-act="flag"] svg { width: 20px; height: 20px; }
+/* (Nest Egg Run's top row holds the egg, its rate, the shields, the hearts and pause: at 20 px they fit from 400 px wide
+   (the review: at 375 to 393 the pause button stood 4 to 16 px past the row with two shields up); narrower, its own
+   16 px hearts and 14 px shields) */
+@media (min-width: 400px) { .scr-racer .lives svg { width: 20px; height: 20px; } }
+.iconbtn[data-act="back"] svg { width: 16px; height: 16px; }
 
 </style>
 </head>
@@ -8400,8 +8493,12 @@ class Scene3D {
 // only, and they stayed on the graphics chip after it, some 60 MB a visit for a Boss Rush boss. A texture that is
 // shown again is sent to the chip again, from the picture it keeps. Reflection maps are shared and stay.)
 const DISPOSE_MAPS = ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "alphaMap", "bumpMap"];
+// (Phase 7's soak: a skinned model's bones go too. three.js keeps each skeleton's bones in a texture of its own, made
+// the first time it is drawn; the title's cells' rigged bosses left two on the graphics chip every visit. A skeleton
+// drawn again makes its texture again.)
 function disposeTree(root) {
   root.traverse((o) => {
+    if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) o.skeleton.dispose();
     if (o.geometry) o.geometry.dispose();
     if (o.material) {
       (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
@@ -9576,11 +9673,39 @@ const UI = {
       const owner = ownerOf(t);
       if (owner && owner.on) owner.on(t.dataset.act, t, e);
     });
+    // Enter or Space on a button the keyboard moved to (Tab, or an arrow over a grid of cards) is that button's: the
+    // browser clicks it, and the screen's own Enter (PLAY in the hall, PLAY AGAIN, the exam's next question, turning a
+    // card) is left out. With the focus where a click or the game itself put it, the screen's keys work as before.
+    // (Phase 7: Tab to STATS in the hall and Enter played the cabinet; to the exam's flag, and Enter went on instead.)
+    let navKey = false, keyFocus = null;
+    // (Option-Tab is how Safari tabs to buttons; an arrow with a modifier is a browser's shortcut, which may leave the
+    // page and never bring its keyup back: so the window's blur ends it too)
+    document.addEventListener("keydown", (e) => { navKey = e.key === "Tab" || (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey && !e.altKey); }, true);
+    document.addEventListener("keyup", () => { navKey = false; }, true);
+    window.addEventListener("blur", () => { navKey = false; });
+    document.addEventListener("focusin", (e) => { keyFocus = navKey ? e.target : null; });
+    document.addEventListener("pointerdown", () => { keyFocus = null; }, true);
+    // ... and only on what is on top and in play: not a button under a client's briefing or a menu (a briefing takes
+    // no focus, so the stage that opened it keeps it: Enter there is the briefing's), not a panel put out of reach (the
+    // exam's while its ending plays). (Phase 7's review: Enter under a first briefing started the stage again.)
+    const keyButton = () => {
+      const b = keyFocus, top = this.modal || this.cur;
+      if (!b || b !== document.activeElement || b.disabled || !b.matches("button, a[href]") || !top || !top.el.contains(b)) return null;
+      const cs = getComputedStyle(b);
+      return cs.pointerEvents === "none" || cs.visibility === "hidden" ? null : b;
+    };
     document.addEventListener("keydown", (e) => {
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
-      if (this.modal) { if (this.modal.key) this.modal.key(e); return; }
-      if (this.cur && this.cur.key) this.cur.key(e);
+      if ((e.key === "Enter" || e.key === " ") && keyButton()) return; // (the browser clicks it)
+      const was = document.activeElement;
+      this._nav = false;
+      if (this.modal) { if (this.modal.key) this.modal.key(e); }
+      else if (this.cur && this.cur.key) this.cur.key(e);
+      // An arrow the screen took as its own (the hall's cabinets, a lane, a grade, a question: it says so with
+      // preventDefault) lets go of the button the keyboard had moved to, so Enter is the screen's again: the ring
+      // would otherwise stay on STATS while the cabinets turn. (Not the arrows over a screen's cards: see arrowNav.)
+      if (e.key.startsWith("Arrow") && e.defaultPrevented && !this._nav && keyFocus && keyFocus === was && document.activeElement === was) { keyFocus = null; was.blur(); }
     });
   },
   show(ctrl) {
@@ -9594,6 +9719,46 @@ const UI = {
     if (ctrl.mounted) ctrl.mounted();
     const f = ctrl.el.querySelector("[autofocus]");
     if (f) f.focus({ preventScroll: true });
+  },
+  // The arrows over a screen's cards or buttons (stage select, the guide's chapters, Setup, a menu, the exam's grid of
+  // questions). Left and Right go to the one before or after in reading order (the order the cards and switches are
+  // read in, and Tab's); Up and Down to the nearest above or below, the nearest row first; with rows (Setup's
+  // .setting), to the row before or after, at the control in it nearest across. The first arrow, none of them focused,
+  // goes to the one the screen lights, or the first. Then Enter or Space is that one's (see init). Safari's Tab skips
+  // buttons unless its settings say otherwise (Option-Tab), so on a Mac the arrows are how a keyboard reaches a stage.
+  // (Phase 7.) across: only Left and Right (Up and Down still scroll the page: a results screen's list). Nothing that
+  // way: the key is left to the page (it scrolls past the last row to what is under it). Returns true when it took it.
+  arrowNav(e, root, sel, first, across, rows) {
+    const d = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
+    if (!d || (across && d[1]) || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
+    const items = [...root.querySelectorAll(sel)].filter((b) => !b.disabled && b.getClientRects().length);
+    if (!items.length) return false;
+    this._nav = true; // (the screen's arrows move its focus: see init)
+    const at = items.indexOf(document.activeElement), mid = (b) => { const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r]; };
+    let to = null;
+    if (at < 0) to = (first && items.find((b) => b.matches(first))) || items[0];
+    else if (d[0]) to = items[at + d[0]] || null;
+    else {
+      const [ax, ay, a] = mid(items[at]);
+      if (rows) { // the row before or after that has any of them, at the one in it nearest across
+        const own = items[at].closest(rows), list = [...root.querySelectorAll(rows)].filter((r) => r !== own && items.some((b) => r.contains(b)));
+        const all = [...root.querySelectorAll(rows)], k = all.indexOf(own);
+        const next = list.filter((r) => (all.indexOf(r) - k) * d[1] > 0).sort((p, q) => (all.indexOf(p) - all.indexOf(q)) * d[1])[0];
+        if (next) to = items.filter((b) => next.contains(b)).sort((p, q) => Math.abs(mid(p)[0] - ax) - Math.abs(mid(q)[0] - ax))[0];
+      } else {
+        let best = Infinity;
+        for (const b of items) {
+          const [bx, by, r] = mid(b), along = (by - ay) * d[1], gap = Math.max(0, Math.abs(bx - ax) - (a.width + r.width) / 2);
+          if (b === items[at] || along < 8) continue;
+          if (3 * along + gap < best) { best = 3 * along + gap; to = b; } // (the nearest row first, and in it the one straight on)
+        }
+      }
+    }
+    if (!to) return false;
+    e.preventDefault();
+    to.focus({ preventScroll: true });
+    to.scrollIntoView({ block: "nearest", inline: "nearest" });
+    return true;
   },
   el(html) {
     const t = document.createElement("template");
@@ -9684,6 +9849,7 @@ const UI = {
       on: (a) => { this.closeModal(); if (a === "yes") onYes && onYes(); else onNo && onNo(); },
       key: (e) => {
         if (e.key === "Escape") { this.closeModal(); onNo && onNo(); }
+        else this.arrowNav(e, el, ".btn");
       },
       mounted: () => $("[data-act=no]", el).focus(),
     });
@@ -9862,7 +10028,7 @@ const GAME_KEYS = {
   boss: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
   racer: "\u2190 \u2192 LANE · ENTER, SPACE OR \u2191 BOOST · 1-4 OR A-D ANSWER · P OR ESC PAUSE",
   memory: "SPACE OR F FLIP · 1 AGAIN · 2 GOOD · 3 EASY · P OR ESC PAUSE",
-  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · ESC PAUSE",
+  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · P OR ESC PAUSE",
 };
 function pauseMenu(game) {
   const keys = GAME_KEYS[game.gameId];
@@ -9881,7 +10047,7 @@ function pauseMenu(game) {
       if (a === "restart") game.restart();
       if (a === "quit") game.quit();
     },
-    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } },
+    key: (e) => { if (e.key === "Escape" || e.key === "p" || e.key === "P") { UI.closeModal(); game.resume(); } else UI.arrowNav(e, el, ".btn"); },
     mounted: () => $("[data-act=resume]", el).focus(),
   });
 }
@@ -18131,8 +18297,8 @@ function showHub() {
       }
     },
     key: (e) => {
-      if (e.key === "ArrowLeft") move(-1);
-      else if (e.key === "ArrowRight") move(1);
+      if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); } // (the arrows' own: a button the keyboard had moved to lets go, see UI.init)
+      else if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
       else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(); }
       else if (e.key === "Escape") showTitle();
     },
@@ -18962,7 +19128,13 @@ function showSelect(gameId) {
       if (a === "back") { Sound.sfx("back"); showHub(); }
       if (a === "pick") start(t.dataset.sel);
     },
-    key: (e) => { if (e.key === "Escape") { Sound.sfx("back"); showHub(); } },
+    // (the arrows over the stages, the first to the lit one; Enter plays the lit stage, as PLAY in the hall: on a
+    // stage the arrows or Tab moved to, Enter is that stage's, see UI.init)
+    key: (e) => {
+      if (e.key === "Escape") { Sound.sfx("back"); showHub(); }
+      else if (e.key === "Enter" && !e.repeat) { const f = $(".stage.focal:not([disabled])", el); if (f) { e.preventDefault(); start(f.dataset.sel); } }
+      else UI.arrowNav(e, el, ".stage", ".stage.focal");
+    },
   });
 }
 
@@ -19018,7 +19190,11 @@ function showExamSetup() {
       }
       if (a === "go") { Sound.sfx("select"); UI.flash("crt-on"); startGame("exam", makeSelection("all")); }
     },
-    key: (e) => { if (e.key === "Escape") showHub(); },
+    key: (e) => {
+      if (e.key === "Escape") showHub();
+      else if (e.key === "Enter" && !e.repeat) { e.preventDefault(); $("[data-act=go]", el).click(); } // (START EXAM)
+      else UI.arrowNav(e, el, "button[data-act]", "[data-act=go]");
+    },
   });
 }
 
@@ -20145,6 +20321,11 @@ class BlasterGame extends QuizGame {
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
+      // (the dark glass behind the drones round the demon: made on first use, and by the time the screen closes its
+      // drones, and with them every plate, are already gone from the scene: it stayed on the graphics chip a visit at a
+      // time. Phase 7's soak)
+      if (this.dronePlate) this.dronePlate.dispose();
+      if (this.dronePlateMat) this.dronePlateMat.dispose();
     }
     if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); } // (the space's dispose lets the passing ships' and rocks' maps go)
     if (this.pano) this.pano.dispose();
@@ -25542,6 +25723,7 @@ class BlasterStage {
     this.orbTex.dispose();
     [this.frame, this.flame.mesh].forEach((m) => { m.material.dispose(); m.geometry.dispose(); });
     this.crackGeo.dispose(); this.crackMat.dispose();
+    this.escort.dispose();
   }
 }
 
@@ -25683,6 +25865,9 @@ class BlasterEscort {
       b.v.x += (b.m.position.x - c.x > 0 ? 1 : -1) * 55; b.v.y += 22; // (... and out to the side, up)
     });
   }
+  // Every shape the brood was given, not only the three on show as the screen closes (a shape drawn and swapped out
+  // stayed on the graphics chip, a visit at a time: Phase 7's soak). The rest goes with the scene.
+  dispose() { this.broodGeo.forEach((geo) => geo.dispose()); }
   hideAll() { this.ships.forEach((sh) => { sh.mode = ""; sh.m.visible = false; }); if (this.lights) this.lights.visible = false; this.brood.forEach((b) => { b.on = false; b.m.visible = false; }); }
   // ---- every frame ---------------------------------------------------------------------------------------
   update(d) {
@@ -31340,7 +31525,7 @@ class BossGame extends QuizGame {
     { // sparks: hard square pixels (the soft round ones went to discs of bokeh, the only round soft things in a world of blocks)
       const c = document.createElement("canvas"); c.width = c.height = 4;
       const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 4, 4);
-      const tx = new THREE.CanvasTexture(c); tx.magFilter = tx.minFilter = THREE.NearestFilter;
+      const tx = (this.sparkTex = new THREE.CanvasTexture(c)); tx.magFilter = tx.minFilter = THREE.NearestFilter;
       this.bursts.pts.material.uniforms.tMap.value = tx;
       const burst = this.bursts.burst.bind(this.bursts);
       this.bursts.burst = (pos, color, o = {}) => burst(pos, color, Object.assign({}, o, { size: (o.size || 0.3) * 0.5 }));
@@ -32376,6 +32561,7 @@ class BossGame extends QuizGame {
       if (this.steelEnv) this.steelEnv.dispose();
       if (this.plates) this.plates.dispose();
       if (this.steelMat) this.steelMat.userData.tBrush.value.dispose();
+      if (this.sparkTex) this.sparkTex.dispose(); // (the sparks' square: on a shader's own uniform, which the scene's teardown does not reach; it stayed a visit at a time. Phase 7's soak)
     }
     super.dispose();
   }
@@ -37811,9 +37997,9 @@ class MemoryGame extends QuizGame {
     if (e.key === "Escape" || e.key === "p" || e.key === "P") { e.preventDefault(); return this.pause(); }
     if (this.state === "front" && (e.key === " " || e.key === "Enter" || e.key === "f" || e.key === "F")) { e.preventDefault(); return this.flip(); }
     if (this.state === "back") {
-      if (e.key === "1" || e.key === "ArrowLeft") return this.grade("again");
+      if (e.key === "1" || e.key === "ArrowLeft") { e.preventDefault(); return this.grade("again"); }
       if (e.key === "2" || e.key === " " || e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); return this.grade("good"); }
-      if (e.key === "3" || e.key === "ArrowRight") return this.grade("easy");
+      if (e.key === "3" || e.key === "ArrowRight") { e.preventDefault(); return this.grade("easy"); }
     }
   }
   pause() {
@@ -39066,8 +39252,8 @@ class ExamGame extends QuizGame {
       if (this.boss && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) { e.preventDefault(); this.boss.skip(); }
       return;
     }
-    if (e.key === "Escape") { e.preventDefault(); return this.pause(); }
-    if (e.key === "ArrowLeft") return this.go(-1);
+    if (e.key === "Escape" || e.key === "p" || e.key === "P") { e.preventDefault(); return this.pause(); } // (P as in the other games: in full screen the browser takes Escape to leave it)
+    if (e.key === "ArrowLeft") { e.preventDefault(); return this.go(-1); }
     if (e.key === "ArrowRight" || e.key === "Enter") {
       e.preventDefault();
       return this.i === this.rounds.length - 1 ? this.askSubmit() : this.go(1);
@@ -39090,8 +39276,10 @@ class ExamGame extends QuizGame {
         if (a === "close") UI.closeModal();
         if (a === "submit") { UI.closeModal(); this.askSubmit(); }
       },
-      key: (e) => { if (e.key === "Escape") UI.closeModal(); },
-      mounted: () => { const h = $(".here", el); if (h) h.focus(); },
+      key: (e) => { if (e.key === "Escape") UI.closeModal(); else UI.arrowNav(e, el, ".palette button, .dialog > .btn", ".palette .here"); },
+      // (the question you are on: the legend's HERE swatch comes first in the dialog. Scrolled to only for the keyboard: a
+      // phone's grid opens at its top, its title and counts in view, as it always did)
+      mounted: () => { const h = $(".palette .here", el); if (h) { h.focus({ preventScroll: true }); if (document.documentElement.dataset.input === "keys") h.scrollIntoView({ block: "nearest" }); } },
     });
   }
   askSubmit() {
@@ -39754,11 +39942,16 @@ function bossCap(env) {
 // painting there is coarse and read as a black smear, and no change of material made it read as anything else.
 // It rides the chest (pv: the chest joint's pivot). Model units: the hollow is about 0.1 across round (0.006, 0.69),
 // its floor at z 0.16, the armour round it at 0.17 to 0.19. (Phase 5: one builder for every Proctor.)
+// (the reactor's metal cooled, as its armour is. Its hook is made out here, not in bossHousing: one made there shared
+// bossHousing's scope with the housing's group, and so held the group, the machine it rides and the scene they hung in;
+// the closing scene's materials are kept for their shaders (GFX.park), and the title hall's old scene, some 25 MB,
+// with them: Phase 7's soak)
+function bossHousingCool(sh) { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }
 function bossHousing(env, pv) {
   const h = {};
   const R = 0.064, z0 = 0.15, zf = 0.187, zi = zf - 0.012, ri = R - 0.021;
   const metal = new THREE.MeshStandardMaterial({ color: 0x33374a, metalness: 1, roughness: 0.34, envMap: env, envMapIntensity: 0.85, flatShading: true, side: THREE.DoubleSide });
-  metal.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + EXAM_COOL); }; // (cooled, as its armour is)
+  metal.onBeforeCompile = bossHousingCool;
   const dark = new THREE.MeshStandardMaterial({ color: 0x0e0c18, metalness: 0.6, roughness: 0.55, envMap: env, envMapIntensity: 0.45, flatShading: true });
   const grp = new THREE.Group();
   grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
@@ -41079,8 +41272,9 @@ function renderResults(o, rank) {
       if (a === "hub") showHub();
     },
     key: (e) => {
-      if (e.key === "Enter") { e.preventDefault(); again(); }
-      if (e.key === "Escape") showHub();
+      if (e.key === "Enter") { e.preventDefault(); if (!e.repeat) again(); } // (not a key still held from the game's last answer)
+      else if (e.key === "Escape") showHub();
+      else UI.arrowNav(e, el, ".actions.pinned button[data-act]", "[data-act=again]", true); // (Left and Right along its bar, Enter then that one's; Up and Down scroll)
     },
     mounted: () => {
       $("[data-act=again]", el).focus({ preventScroll: true });
@@ -41189,7 +41383,7 @@ function showGuide(chapterN) {
       if (a === "back") { Sound.sfx("back"); showHub(); }
       if (a === "ch") { Sound.sfx("page"); showGuideChapter(+t.dataset.n); }
     },
-    key: (e) => { if (e.key === "Escape") { if (input.value) { input.value = ""; search(""); } else showHub(); } },
+    key: (e) => { if (e.key === "Escape") { if (input.value) { input.value = ""; search(""); } else showHub(); } else UI.arrowNav(e, el, "[data-act=ch]"); },
   });
 }
 
@@ -42016,7 +42210,7 @@ function showSettings() {
         Sound.sfx("blip");
       }
     },
-    key: (e) => { if (e.key === "Escape") showHub(); },
+    key: (e) => { if (e.key === "Escape") showHub(); else UI.arrowNav(e, el, "button", ".seg button[aria-pressed=true]", false, ".setting"); }, // (Up and Down from row to row in reading order, down one column and on down the next; Left and Right along a row's switches; the first arrow to the first switch's setting)
   });
 }
 
