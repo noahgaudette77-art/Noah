@@ -10,9 +10,8 @@
  *   node tools/gen/mac-hd.mjs
  *   writes arcade/assets/models/boss-<n>-t-hd.glb for n = 1..11
  *
- * And Boss Rush's wizard (wizard.glb: its colour 2048 px, from a 4096 px source, out/post/wizard-rig.glb, the same
- * picture laid out the same way): wizard-hd.glb wears the source's own 4096 px colour; its other pictures, its shape,
- * skeleton and clips as they are.
+ * (Boss Rush's wizard in its 4096 px source colour was made here too, and removed: where the arena draws it, 95% of its
+ * pixels take two texels or more of a 4096 map, drawn down through the map's smaller copies. docs/master/mactier/.)
  */
 import fs from "fs";
 import path from "path";
@@ -50,17 +49,3 @@ for (let n = 1; n <= 11; n++) {
   console.log(`boss-${n}-t-hd.glb`, (fs.statSync(out).size / 1048576).toFixed(2) + " MB", "(" + (fs.statSync(tFile).size / 1048576).toFixed(2) + " MB the hall's);", swapped.join(", "));
 }
 
-// the wizard: its colour from the 4096 px source
-{
-  const gFile = path.join(M, "wizard.glb"), sFile = path.join(HERE, "out", "post", "wizard-rig.glb");
-  if (fs.existsSync(gFile) && fs.existsSync(sFile)) {
-    const g = await io.read(gFile), src = await io.read(sFile);
-    const gm = g.getRoot().listMaterials().find((m) => m.getBaseColorTexture()), sm = src.getRoot().listMaterials().find((m) => m.getBaseColorTexture());
-    const a = gm.getBaseColorTexture(), b = sm.getBaseColorTexture();
-    a.setImage(b.getImage()).setMimeType(b.getMimeType());
-    g.createExtension(EXTMeshoptCompression).setRequired(true).setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
-    const out = path.join(M, "wizard-hd.glb");
-    await io.write(out, g);
-    console.log("wizard-hd.glb", (fs.statSync(out).size / 1048576).toFixed(2) + " MB (" + (fs.statSync(gFile).size / 1048576).toFixed(2) + " MB the game's); baseColor " + (b.getSize() || [0])[0]);
-  }
-}
