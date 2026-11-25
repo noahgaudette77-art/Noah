@@ -255,6 +255,7 @@
   }).catch((e) => status("The sound list could not be loaded (" + e.message + "). Open this page from the same place as the arcade, not from a file."));
   $("#start").onclick = () => { if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); } ctx.resume(); $("#start").textContent = "Sound is on"; status("Sound is on. Tap any number to play."); };
   $("#stopAll").onclick = stopAll;
+  if (/debug/.test(location.hash)) window.__soundTest = { JOIN, joined }; // (for tools/sound-test-check.js: where each loop's join was made)
   $("#find").oninput = (e) => { const q = e.target.value.trim().toLowerCase(); document.querySelectorAll(".row").forEach((r) => r.classList.toggle("hidden", !!q && !r.dataset.find.includes(q))); };
 })();
 </script>

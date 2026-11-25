@@ -13,8 +13,9 @@
  * - takes: every take of every effect and announcer line, played once by Sound._cue as the game plays it (its pitch and
  *   level not varied). Its start (the spike over its first 2 ms) and its end: the 20 ms before the build's own 30 ms
  *   fade at least 12 dB under its loudest 20 ms (else it is cut off while still sounding).
- * - music: every track, played by Sound.play as a visit plays it, through its first seam: the spike there, and its
- *   sharpest bend against the music's own level (a fault: a spike of 1 or more not buried 40 dB under the music).
+ * - music: every track, played by Sound.play as a visit plays it, through two seams: the spike at each, and its
+ *   sharpest bend against the music's own level (a fault: a spike of 1 or more not buried 40 dB under the music), and
+ *   the music still playing after the second (the passes keep coming).
  * Exits 1 when anything fails.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
@@ -97,15 +98,26 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
       if (!rec) { out.music.push({ name, missing: true }); continue; }
       // played by Sound.play as a visit plays it (this recording lined up for its screen), through its first seam, its
       // passes tapped dry (before the music's tone, duck and level)
-      const base = name.replace(/-b$/, ""), L = rec.loop[1] - rec.loop[0], c = fresh(L + 1.5);
+      // (through two seams: the render waits a moment after the first, as a running page would, for the pass that
+      // ended there to set the one after the next)
+      const base = name.replace(/-b$/, ""), L = rec.loop[1] - rec.loop[0], c = fresh(2 * L + 1.5);
       A.Store.settings.music = true;
       S.trackName = base; S.takes[base] = name; S._now = null;
       S.play(base, true);
       if (!S._now || !S._now.g) { out.music.push({ name, missing: true }); continue; }
       S._now.g.disconnect(); S._now.g.connect(c.destination);
-      const d = mono(await c.startRendering()), k = Math.round(L * SR);
-      let bend = 0; for (let i = k - 3; i <= k + 3; i++) bend = Math.max(bend, d2(d, i));
-      out.music.push({ name, end: rec.loop[1], spike: spike(d, k, 0.5 * SR), bend: 20 * Math.log10(bend + 1e-12) - rmsDb(d, k - 0.25 * SR, 0.5 * SR) }); // (bend: the seam's sharpest bend, dB against the music's own level over the half second around it)
+      const pause = Math.ceil(((L + 0.5) * SR) / 128) * 128 / SR; // (on a render quantum)
+      c.suspend(pause).then(() => new Promise((r) => setTimeout(r, 50))).then(() => c.resume());
+      const d = mono(await c.startRendering()), seams = [Math.round(L * SR), Math.round(2 * L * SR)];
+      let sp = 0, bend = -200;
+      for (const k of seams) {
+        let b = 0; for (let i = k - 3; i <= k + 3; i++) b = Math.max(b, d2(d, i));
+        const s1 = spike(d, k, 0.5 * SR), b1 = 20 * Math.log10(b + 1e-12) - rmsDb(d, k - 0.25 * SR, 0.5 * SR);
+        if (s1 > sp) { sp = s1; bend = b1; }
+      }
+      // (and the music still playing after the second seam: the third pass came in)
+      const after = rmsDb(d, seams[1] + 0.2 * SR, 0.5 * SR) - rmsDb(d, seams[1] - 0.7 * SR, 0.5 * SR);
+      out.music.push({ name, end: rec.loop[1], spike: sp, bend, after }); // (bend: the worse seam's sharpest bend, dB against the music's own level over the half second around it)
       S._now = null; S.trackName = null;
       delete S.tracks[name]; if (S._trackLoad) delete S._trackLoad[name];
     }
@@ -131,8 +143,8 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
   if (res.music.length) {
     // (a seam fails when it stands out from the music's own bends and is not buried 40 dB under the music: the two copies
     // of a loop's start in its file, coded apart, differ by the codec's own noise, some 30 dB under the music)
-    lines.push("## Music: every track's seam", "", "| track | loop end s | spike at the seam | its bend against the music (dB) | |", "|---|---:|---:|---:|---|");
-    for (const r of res.music) lines.push(r.missing ? `| ${r.name} | | | | **FAIL** (did not load) |` : `| ${r.name} | ${r.end.toFixed(6)} | ${f2(r.spike)} | ${r.bend.toFixed(1)} | ${mark(r.spike >= 1 && r.bend > -40)} |`);
+    lines.push("## Music: every track through two seams (the worse of the two)", "", "| track | loop end s | spike at the seam | its bend against the music (dB) | |", "|---|---:|---:|---:|---|");
+    for (const r of res.music) lines.push(r.missing ? `| ${r.name} | | | | **FAIL** (did not load) |` : `| ${r.name} | ${r.end.toFixed(6)} | ${f2(r.spike)} | ${r.bend.toFixed(1)} | ${mark((r.spike >= 1 && r.bend > -40) || r.after < -12)}${r.after < -12 ? " (silent after the second seam)" : ""} |`);
     lines.push("");
   }
   if (errors.length) { lines.push("Errors on the page: " + errors.join("; "), ""); fails++; }
