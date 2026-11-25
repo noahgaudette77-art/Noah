@@ -54,6 +54,19 @@ const MAX_TAKES = 99; // (every usable take: the game plays them in turn; an ear
 // sustained 8.9 kHz and 12.6 kHz tone (71 and 84 % of their energy above 8 kHz), piercing where the prompt asked for
 // soft and warm; #0 is the soft clink and chime (its energy centred near 2.3 kHz)
 const SKIP_TAKES = { coin_soft: [1, 2] };
+// where a take starts, past the head of what the generator gave (seconds, "<cue>#<take in the sprite>"; Phase 6, measured
+// from the files the game plays): each announcer line here began with a faint blip and its echoes, then silence, up to
+// 0.42 s before its words; Starfall's takes rose, fell silent and then crashed, and the page plays it with its column
+// of light, so each starts at its crash (its third at its height). audio.json's windows were moved by these amounts;
+// a rebuild makes the same cut, so the lines still land with their banners and the crash with its light.
+const STARTS = {
+  "vo:boss rush#0": 0.284308, "vo:deck cleared#0": 0.089751, "vo:exam passed#0": 0.109705, "vo:final boss destroyed#0": 0.414014,
+  "vo:inflation titan#0": 0.079773, "vo:lightning#0": 0.089751, "vo:perilmonger#0": 0.049841, "vo:rank up#0": 0.099728,
+  "vo:wave 1#0": 0.229433, "vo:wave 3#0": 0.419002, "vo:wave 8#0": 0.074785, "vo:welcome#0": 0.174558,
+  "vo@brian:game over#0": 0.089751, "vo@charlie:game over#0": 0.414014,
+  "wiz_finisher#0": 0.354082, "wiz_finisher#1": 0.992698, "wiz_finisher#2": 0.663447,
+};
+const startCut = (a, key) => { const n = Math.round((STARTS[key] || 0) * SR); return n > 0 && n < a.length ? a.slice(n) : a; };
 
 const idx = JSON.parse(fs.readFileSync(path.join(OUT, "audio", "index.json"), "utf8"));
 const outDir = path.join(ARCADE, "assets", "audio");
@@ -92,7 +105,7 @@ for (const set of allSets) {
       let a;
       try { a = pcm(path.join(OUT, t.file), TRIM); } catch (e) { continue; }
       if (a.length < 0.1 * SR || peak(a) < 0.05) continue; // a take that came back silent or cut short
-      good.push(level(fade(a)));
+      good.push(level(fade(startCut(a, cue + "#" + good.length))));
     }
     // the takes of one sound are heard in turn: each is played at the volume that makes it as loud as the middle one
     // (its loudest tenth of a second), so no take jumps out or drops away
@@ -139,6 +152,7 @@ if (ONLY) {
     let a;
     try { a = pcm(path.join(OUT, e.file), TRIM + ",acompressor=threshold=-18dB:ratio=4:attack=4:release=120:makeup=4,aecho=0.8:0.5:55|110:0.22|0.1,highpass=f=90"); } catch (err) { console.warn("voice line unusable: " + e.name); continue; }
     if (a.length < 0.15 * SR) continue;
+    a = startCut(a, "vo:" + e.name + "#" + (cues["vo:" + e.name] || []).length);
     level(fade(a, 0.003, 0.06), 0.9);
     parts.push(a);
     (cues["vo:" + e.name] = cues["vo:" + e.name] || []).push([+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]); // (a line with more than one take: each is heard in turn)
@@ -150,6 +164,7 @@ if (ONLY) {
     let a;
     try { a = pcm(path.join(OUT, e.file), TRIM + ",acompressor=threshold=-18dB:ratio=4:attack=4:release=120:makeup=4,aecho=0.8:0.5:55|110:0.22|0.1,highpass=f=90"); } catch (err) { console.warn("voice line unusable: " + e.voice + " " + e.name); continue; }
     if (a.length < 0.15 * SR) continue;
+    a = startCut(a, "vo@" + e.voice + ":" + e.name + "#0");
     level(fade(a, 0.003, 0.06), 0.9);
     parts.push(a);
     cues["vo@" + e.voice + ":" + e.name] = [[+(at / SR).toFixed(6), +(a.length / SR).toFixed(6), 1, 0]];
