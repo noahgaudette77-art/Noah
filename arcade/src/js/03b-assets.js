@@ -14,6 +14,12 @@ const Assets = {
   kept: {}, // "sky:name", "tex:path" -> things that can be shared between scenes
   bytes: 0, // downloaded so far (for the loading line)
   has(path) { return this.on && this.files.files[path] !== undefined; },
+  // (the performance re-check) A file's bytes, once what is made of them is kept for the session (a sprite of sounds
+  // decoded, a sky made a picture, a page picture decoded), are let go: a phone held both copies (17 MB of them by the
+  // end of a round of every screen). A model's stay (each scene parses its own copy from them), and music's (only the
+  // track playing is kept decoded: Sound.play decodes another's again from its file).
+  gone: {}, // path -> true: let go after use (prefetch does not fetch it again)
+  release(path) { if (this.bufs[path]) { delete this.bufs[path]; this.gone[path] = true; } },
   buffer(path) {
     if (!this.bufs[path]) {
       this.bufs[path] = fetch(this.base + path).then((r) => { if (!r.ok) throw new Error(path + ": HTTP " + r.status); return r.arrayBuffer(); }).then((b) => { this.bytes += b.byteLength; return b; });
@@ -110,6 +116,7 @@ const Assets = {
       const sky = { name, map, env: null, w: img.width, h: img.height };
       if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
       this.kept["sky:" + name] = sky;
+      this.release(path);
       return sky;
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
@@ -125,7 +132,7 @@ const Assets = {
       img.onload = () => res(img);
       img.onerror = () => rej(new Error("cannot decode " + path));
       img.src = URL.createObjectURL(new Blob([buf], { type: "image/webp" })); // (kept: CSS draws from this address too)
-    })).then((img) => { this.kept["ui:" + name] = img; if (this.onImage) this.onImage(name, img); return img; })
+    })).then((img) => { this.kept["ui:" + name] = img; this.release(path); if (this.onImage) this.onImage(name, img); return img; })
       .catch((e) => { console.warn("picture " + name + " did not load: " + e.message); return null; }));
   },
   ui(name) { return this.kept["ui:" + name] || null; },
@@ -137,7 +144,7 @@ const Assets = {
     for (const n of this.wants(set, extra)) {
       const [kind, name] = n.split(":");
       const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
-      if (path && this.has(path)) this.buffer(path).catch(() => null);
+      if (path && this.has(path) && !this.gone[path]) this.buffer(path).catch(() => null);
     }
   },
   // ---- sets: what a screen needs. need(set) is null when there is nothing to wait for (assets off, or all of it

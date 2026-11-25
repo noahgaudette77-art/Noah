@@ -382,6 +382,7 @@ const Sound = {
     if (!sp || !this.ctx) return Promise.resolve(null);
     return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
       this.sprites[name] = buf;
+      Assets.release(sp.file); // (kept decoded for the session: the file's bytes are not needed again)
       const off = this._clickAt(buf), mix = name === "voice" ? this.MIX.voice : this.MIX.sets[name] || 1; // (the set's level in the mix)
       for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: (vol === undefined ? 1 : vol) * mix, duck: duck || 0 }));
       for (const cue in this.LOOP_JOIN) if (sp.cues[cue]) this.bank[cue].forEach((q) => this._join(q, this.LOOP_JOIN[cue])); // (before anything can play from it)
