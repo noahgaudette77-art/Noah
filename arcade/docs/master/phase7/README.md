@@ -8,7 +8,9 @@ car's glare in WebKit). The gate: a 30-minute soak on the Mac tier with no slowd
 **The audit: `audit.md`.** The layouts held at seven window sizes and resizing leaked nothing; the faults were in
 how the menus used a wide window, the small icons, the keyboard (Enter on a button reached with Tab did the screen's
 Enter instead; on a Mac a keyboard could not reach a stage at all) and four kinds of button with no hover. **The gate:
-`gate-report.md`.** **Spend: nothing** (no provider called).
+`gate-report.md`, met:** half an hour of play on the Mac tier with no memory growth and no slowdown, once what the
+first soak found held after a visit was let go (six rounds, 48.6 minutes: the heap within 28 to 30 MB with no trend).
+**Spend: nothing** (no provider called).
 
 ## What changed in the game
 

@@ -14,19 +14,15 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 7, desktop polish for the Mac, IN PROGRESS (its gate next). Phases 0, 1, 5, 3, 2, 4 and 6 are done (Phase 6
-  passed its gate 2026-11-25: `docs/master/phase6/`).
-- **Done in Phase 7 so far (2026-11-25; `docs/master/phase7/audit.md`, `README.md`):** the menus on a wide window
-  (results, stats, Setup, stage select, the guide); icons at 20 px; Enter or Space on a button the keyboard moved to is
-  that button's; the arrows over a screen's cards (Safari's Tab skips buttons); the exam's grid focus; P pauses the exam;
-  every button answers a hover. Checked: layouts at seven window sizes, resizing and display changes (no leak; the
-  drawing follows), WebKit at the Mac's size, the keyboard (`tools/scenarios/keys.js`, 101 checks), the hover (59 kinds
-  of clickable thing). The car's glare in WebKit is gone; the 384 px portrait strip is left for Phase 8's look on the
-  device (only the briefing's 84 px face is drawn up 1.3 times on a 3x phone; the busts' settings are not recorded).
-- **Next steps (Phase 7's gate):** the independent review's findings; the 30-minute soak on the Mac tier
-  (`tools/scenarios/soak.js --size 1470x830 --dpr 2`, three rounds: the first loads what is kept, the second and third
-  compared); the page built; the harness (logic, stills, costs); `docs/master/phase7/gate-report.md`; the hand-over
-  below; push. Then the performance re-check (below), then Phase 8.
+- **Phase:** the performance re-check (below), IN PROGRESS from 2026-11-25. Phases 0, 1, 5, 3, 2, 4, 6 and 7 are done
+  (Phase 7 passed its gate 2026-11-25: `docs/master/phase7/gate-report.md`; its hand-over is at the bottom).
+- **Next steps (the re-check):** (a) what a closed screen's parked materials still hold: the hooks moved out of the
+  functions whose scope held a scene (Boss Rush's crowd and wizard, Risk Blaster's far ships and rocks, Memory Bank's
+  spun gold), checked with `soak.js SNAP=1` and `tools/heapparked.js`; (b) the phone's memory: the raw files let go
+  once decoded where nothing reads them again (a sprite of sounds, a sky, a page picture; a model's and music's stay);
+  (c) the draws at many moments (`tools/scenarios/draws.js`, new), Risk Blaster's and Nest Egg Run's phone draws first,
+  then the Proctor's draws, Memory Bank's coins and the title's garbage; (d) every screen measured again on both tiers,
+  the census, memory over cycles, the governor in both engines; the gate; then Phase 8.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -328,7 +324,7 @@ ElevenLabs within budget.
 - For the devices (Phase 8): the iPhone's return from another app or a call; the engines, flames, hum and alarm steady;
   the title's music coming round; the three takes that end on their height (the README's list), by ear.
 
-### Phase 7: desktop polish for the Mac (its gate running, 2026-11-25)
+### Phase 7: desktop polish for the Mac (done 2026-11-25)
 Landscape layouts, keys, hover, Retina and display changes, resizing without leaks, Safari and Chrome, long sessions.
 The audit, the changes and the gate: `docs/master/phase7/` (`audit.md`, `README.md`, `gate-report.md`).
 - Done: the menus spread over a wide window (results, stats, Setup, stage select, the guide); icons at 20 px (Nest Egg
@@ -342,9 +338,12 @@ The audit, the changes and the gate: `docs/master/phase7/` (`audit.md`, `README.
   briefing's 84 px face is drawn up 1.3 times; the busts' render settings are not recorded).
 - To check on a real Safari (seen once in this machine's WebKit, not again in three runs, never in Chromium): a short
   white streak across Risk Blaster's demon. This machine's WebKit draws no `backdrop-filter` (a real Safari does).
-- **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth.
+- **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth. **Met** (`gate-report.md`): the soak
+  found four things held after a visit and the title hall's old scene held by a shader hook, all let go; then from
+  round 2 to round 3 the graphics chip the same (textures +0, geometries +0), the page's elements and timers the same,
+  a frame's cost the same; six rounds (48.6 minutes of play) held the heap within 28 to 30 MB with no trend.
 
-### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
+### The performance re-check (after Phase 7, before Phase 8: the owner's new order; NOW, from 2026-11-25)
 Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
 - **From Phase 7's soak: what a closed screen's parked materials still hold.** `GFX.park` keeps a closing scene's
@@ -656,3 +655,21 @@ for an hour). An independent review found eight more (timers' sounds bunched beh
 resume race, the alarm's drift, releases eating four takes' peaks, the hand edits a rebuild would undo, the check's
 gaps, a Firefox copy): all fixed or answered (`docs/master/phase6/gate-report.md`). Spend: none. For the devices: the
 README's list (the iPhone's return from another app, the loops, the title's music coming round, three takes by ear).
+
+**Phase 7 (2026-11-25).** The audit first (`docs/master/phase7/audit.md`): the layouts held at seven window sizes and
+resizing or moving between displays leaked nothing; the faults were in how the menus used a wide window, the icons
+under 20 px, the keyboard (Enter on a button reached with Tab did the screen's Enter; on a Mac a keyboard could not reach
+a stage) and four kinds of button with no hover. Fixed, a commit each: the menus in columns on a wide window, icons at
+20 px, a focused button's Enter and Space, the arrows over a screen's cards and switches, the exam's grid opening on its
+question, P pausing the exam, a hover on every button. An independent review found five more (Enter under a client's
+briefing clicked the stage behind it, Nest Egg Run's top row at 375-393 px, the arrows holding the page past the last
+button, a key held through a browser's shortcut, the exam's grid scrolled on a phone): all fixed. The gate's soak found
+what a visit left behind (Risk Blaster's drones' glass and the brood's shapes, Boss Rush's sparks' texture, every skinned
+model's bones) and the title hall's old scene held by the reactor's shader hook (25 MB a visit): all let go; then no
+growth and no slowdown (`docs/master/phase7/gate-report.md`). The harness: no fault (`docs/master/runs/phase7-final`), every budget kept (the phone's most: 88 draws, 244K
+triangles, 371 MB; the Mac's: 142, 318K, 795). Spend: none. Tools: `scenarios/keys.js`,
+`scenarios/resize.js`, `scenarios/soak.js`, `scenarios/leaks.js`, `heapdiff.js`, `heapwho.js`, `heapowners.js`,
+`heapparked.js`, `LAYOUT=1` in `scenarios/polish.js`, `window.__timers` in `capture.js`. The page live since `687ef68`.
+For the devices: the README's list (Safari with the keyboard alone, Tab and Enter in Chrome, the hover, a wide window,
+two displays, the streak to look for on Risk Blaster's demon, half an hour with the FPS counter, the iPhone's icons).
+Left for the re-check: what the parked materials still hold (about 9 MB), the raw files kept after decoding.
