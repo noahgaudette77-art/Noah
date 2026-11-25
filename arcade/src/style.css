@@ -2026,3 +2026,43 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .scr-title.hall .title-dock::before { left: 50%; right: auto; width: min(100vw, 980px); transform: translateX(-50%);
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
 }
+
+/* The menu pages on a Mac (Phase 7, 2026-11-25). On a wide landscape window the five full-page menus (results, stats,
+   Setup, stage select, the guide's front page) were one 860 px column with empty sides, and the results' mastery and
+   review sat below the fold under the pinned bar (on a short window even its tiles did). The art bible (section 6):
+   on the Mac the interface sits in columns. From 1100 px wide (two columns of 500 px and more fit inside the gutters;
+   narrower, the 860 px column already fills the window) on a window wider than it is tall by a quarter or more (a
+   square or upright window keeps the one column), whatever its height (a short window is where one column hides the
+   most). A phone never reaches it. Only the layout changes: every word, button and their order are as they were. */
+@media (min-width: 1100px) and (min-aspect-ratio: 5/4) {
+  /* results: the hero (medal, headline, stars, rewards, score) in a column of its own beside the run's details (the
+     client's word, tiles, XP bar, mastery, review), the pair in the middle of the page's height. The hero spans its
+     column's rows: twelve for the details (more than they ever take), then one for the hero alone, so a hero taller
+     than the details never spreads them apart. While a long review list scrolls the hero stays in sight, in the middle
+     of what the scroll shows (the window less its gutters and the pinned bar: 96 px). */
+  .scr-results .scroll { display: flex; flex-direction: column; }
+  .scr-results .scroll > .wrap { width: 100%; max-width: 1360px; margin: auto; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: repeat(12, auto) 1fr; column-gap: 56px; }
+  .scr-results .scroll > .wrap > * { grid-column: 2; min-width: 0; }
+  .scr-results .scroll > .wrap > .res-head { grid-column: 1; grid-row: 1 / -1; align-self: start; align-content: center; position: sticky; top: 0;
+    min-height: min(100%, calc(100vh - 96px)); }
+  .scr-results .res-head h1 { font-size: clamp(20px, 2.8vw, 40px); } /* (a thirteen-letter headline, RETIRED AT 65, keeps to one line in its column) */
+  .scr-results .scroll > .wrap > :has(+ .section-h) { margin-bottom: 0; } /* (a heading's own margin, as when the margins collapsed) */
+  .scr-results .scroll > .wrap > .section-h.flawless { justify-self: start; }
+  /* the tiles three to a row: one left over takes the row, two left over share it */
+  .scr-results .tiles .tile:nth-child(n) { grid-column: span 2; }
+  .scr-results .tiles .tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
+  .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1), .scr-results .tiles .tile:nth-last-child(2):nth-child(3n + 1) + .tile { grid-column: span 3; }
+  /* the misses two to a row, read across (a line of some fifty letters, not ninety); the shorter of a pair keeps its
+     lines together at its top; one left over takes the row */
+  .scr-results .review { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scr-results .review li { align-content: start; }
+  .scr-results .review li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* the pinned bar keeps to the same columns: PLAY AGAIN under the hero, the other two under the details; its light
+     stays under PLAY AGAIN */
+  .scr-results .actions.pinned .wrap { max-width: 1360px; grid-template-columns: calc((100% - 56px) * 5 / 12 + 48px) minmax(0, 1fr) minmax(0, 1fr); }
+  .scr-results .actions.pinned .wrap > :first-child { margin-right: 48px; }
+  .scr-results .actions.pinned { background: radial-gradient(400px 130% at max(20.8%, calc(50% - 408px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
+  /* RANK UP! after a reward moment stands on its plate over the details' column, so it never crosses the score */
+  .banner.plated { --w: min(1360px, 100% - 32px); left: calc((100% - var(--w)) / 2 + (var(--w) - 56px) * 5 / 12 + 56px); right: calc((100% - var(--w)) / 2); }
+}
