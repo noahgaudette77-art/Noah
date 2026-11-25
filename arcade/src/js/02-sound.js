@@ -650,14 +650,14 @@ const Sound = {
     this.stopMusic();
     if (!this.ctx || !Store.settings.music) return;
     const take = this.takes[name] || name, rec = this.tracks[take];
-    if (rec) { // the recording: looped between its loop points, faded in
-      const c = this.ctx, src = c.createBufferSource(), g = c.createGain();
-      src.buffer = rec.buf; src.loop = true; src.loopStart = rec.loop[0]; src.loopEnd = rec.loop[1];
+    if (rec) { // the recording: its loop played pass after pass (_pass), faded in
+      const c = this.ctx, g = c.createGain(), now = { g, passes: [] }, t = c.currentTime;
       g.gain.value = 0.0001;
-      g.gain.setTargetAtTime(rec.vol, c.currentTime, 0.5);
-      src.connect(g).connect(this.trackBus);
-      src.start(c.currentTime, rec.loop[0]);
-      this._now = { src, g };
+      g.gain.setTargetAtTime(rec.vol, t, 0.5);
+      g.connect(this.trackBus);
+      this._now = now;
+      this._pass(rec, now, t, true);
+      this._pass(rec, now, t + (rec.loop[1] - rec.loop[0]), false);
       this.setIntensity(this.intensity);
       return;
     }
@@ -667,6 +667,25 @@ const Sound = {
     // from disk, or the file would not load.)
     if (coming) { this.loadTrack(take).then((buf) => { if (!buf && this.trackName === name && !this._now && !this.timer && Store.settings.music) this._synth(name); }); return; }
     this._synth(name);
+  },
+  // One pass of a recording's loop, from time t (Phase 6). Its file holds a copy of the loop's start right after the
+  // loop's end, so each pass runs on into that copy for MUSIC_X while the next comes in over it: the two copies, coded
+  // apart, differ only by the codec's own noise, and the seam is a blend, never a step (looped in place, the title's
+  // soft music had a faint tick each time round). When a pass ends, the one after the next is set to follow, so a pass
+  // is always waiting a whole loop ahead.
+  MUSIC_X: 0.03,
+  _pass(rec, now, t, first) {
+    if (this._now !== now || !this.ctx) return;
+    const c = this.ctx, L = rec.loop[1] - rec.loop[0], X = this.MUSIC_X, src = c.createBufferSource(), e = c.createGain();
+    src.buffer = rec.buf;
+    e.gain.setValueAtTime(first ? 1 : 0, t);
+    if (!first) e.gain.linearRampToValueAtTime(1, t + X);
+    e.gain.setValueAtTime(1, t + L);
+    e.gain.linearRampToValueAtTime(0, t + L + X);
+    src.connect(e).connect(now.g);
+    src.start(t, rec.loop[0], L + X);
+    now.passes.push(src);
+    src.onended = () => { now.passes = now.passes.filter((s) => s !== src); this._pass(rec, now, t + 2 * L, false); };
   },
   _synth(name) {
     if (!this.TRACKS[name]) return;
@@ -681,7 +700,8 @@ const Sound = {
     if (this._now) {
       const n = this._now;
       this._now = null;
-      try { n.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.18); n.src.stop(this.ctx.currentTime + 0.9); } catch (e) { /* stopped */ }
+      try { n.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.18); } catch (e) { /* no context */ }
+      n.passes.forEach((s) => { try { s.stop(this.ctx.currentTime + 0.9); } catch (e) { /* stopped */ } }); // (one waiting to start never starts)
     }
   },
   refreshMusic() {

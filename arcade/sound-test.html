@@ -118,7 +118,20 @@
     const x = { src, g, btn };
     live.add(x); btn.classList.add("playing");
     src.onended = () => { live.delete(x); btn.classList.remove("playing"); };
-    if (loop) { const [a, b] = join(file, buf, off + at[0], off + at[1], JOIN[loop]); src.loop = true; src.loopStart = a; src.loopEnd = b; src.start(t0, a); }
+    if (loop === true) { // music: pass after pass, each running 30 ms on into the file's copy of the loop's start while the next comes in (Sound._pass)
+      const a = off + at[0], L = at[1] - at[0], X = 0.03, passes = [];
+      const pass = (t, first) => {
+        if (!live.has(x)) return;
+        const s = first ? src : ctx.createBufferSource(), e = ctx.createGain();
+        s.buffer = buf;
+        e.gain.setValueAtTime(first ? 1 : 0, t); if (!first) e.gain.linearRampToValueAtTime(1, t + X);
+        e.gain.setValueAtTime(1, t + L); e.gain.linearRampToValueAtTime(0, t + L + X);
+        s.disconnect(); s.connect(e).connect(g); s.start(t, a, L + X); passes.push(s);
+        s.onended = () => { if (first && !live.has(x)) btn.classList.remove("playing"); pass(t + 2 * L, false); };
+      };
+      x.src = { stop: (t) => passes.forEach((s) => { try { s.stop(t); } catch (e) {} }) };
+      pass(t0, true); pass(t0 + L, false);
+    } else if (loop) { const [a, b] = join(file, buf, off + at[0], off + at[1], JOIN[loop]); src.loop = true; src.loopStart = a; src.loopEnd = b; src.start(t0, a); }
     else {
       const rel = release(buf, off + at, dur);
       if (rel) g.gain.setTargetAtTime(0, t0 + dur - rel, rel / 3);
