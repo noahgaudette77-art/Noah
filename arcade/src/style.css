@@ -2113,5 +2113,9 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
    the HUD's lives, a stage's stars, a trophy's lock, Setup's row icons, a world's mark on stage select. A glyph inside a
    labelled button (PLAY AGAIN, NEXT, the back arrow beside BACK) keeps its size: the label speaks, and a 20 px glyph
    would stand twice the height of its 11 px words. (The racer's narrowest phones keep their own smaller lives.) */
-.iconbtn svg, .lives svg, .scr-racer .lives svg, .stars svg, .trophies .tr .lk svg, .setting .si svg, .world.wbar i svg, .btn[data-act="flag"] svg { width: 20px; height: 20px; }
+.iconbtn svg, .lives svg, .stars svg, .trophies .tr .lk svg, .setting .si svg, .world.wbar i svg, .btn[data-act="flag"] svg { width: 20px; height: 20px; }
+/* (Nest Egg Run's top row holds the egg, its rate, the shields, the hearts and pause: at 20 px they fit from 400 px wide
+   (the review: at 375 to 393 the pause button stood 4 to 16 px past the row with two shields up); narrower, its own
+   16 px hearts and 14 px shields) */
+@media (min-width: 400px) { .scr-racer .lives svg { width: 20px; height: 20px; } }
 .iconbtn[data-act="back"] svg { width: 16px; height: 16px; }
