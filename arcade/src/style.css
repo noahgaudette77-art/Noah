@@ -2080,4 +2080,14 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .wrap:has(> .pcard) > .mastery-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
   .wrap:has(> .pcard) > .boards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .wrap:has(> .pcard) > .actions { grid-template-columns: minmax(0, 440px); justify-content: center; }
+
+  /* Setup: the rows in two columns of even height, read down the first and then the second, in their order, a row
+     never split between them: the sound rows head the first, tilt and graphics the second */
+  .scroll > .wrap:has(> .setting) { max-width: 1360px; columns: 2; column-gap: 24px; }
+  .wrap:has(> .setting) > * { break-inside: avoid; }
+  .wrap:has(> .setting) > .section-h { break-after: avoid; }
+  /* (the graphics row's long description takes its row's width, its switch on the line under it: beside the switch it
+     ran to nine lines in a column of 300 px) */
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .sl { flex-basis: calc(100% - 42px); }
+  .wrap:has(> .setting) > .setting:has([data-k="quality"]) > .seg { margin-left: auto; }
 }
