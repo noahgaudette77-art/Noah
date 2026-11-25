@@ -776,7 +776,7 @@ class ExamGame extends QuizGame {
       if (this.boss && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) { e.preventDefault(); this.boss.skip(); }
       return;
     }
-    if (e.key === "Escape") { e.preventDefault(); return this.pause(); }
+    if (e.key === "Escape" || e.key === "p" || e.key === "P") { e.preventDefault(); return this.pause(); } // (P as in the other games: in full screen the browser takes Escape to leave it)
     if (e.key === "ArrowLeft") return this.go(-1);
     if (e.key === "ArrowRight" || e.key === "Enter") {
       e.preventDefault();

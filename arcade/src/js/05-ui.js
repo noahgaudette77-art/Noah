@@ -360,7 +360,7 @@ const GAME_KEYS = {
   boss: "1-4 OR A-D ANSWER · ENTER NEXT · P OR ESC PAUSE",
   racer: "\u2190 \u2192 LANE · ENTER, SPACE OR \u2191 BOOST · 1-4 OR A-D ANSWER · P OR ESC PAUSE",
   memory: "SPACE OR F FLIP · 1 AGAIN · 2 GOOD · 3 EASY · P OR ESC PAUSE",
-  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · ESC PAUSE",
+  exam: "1-4 OR A-D ANSWER · \u2190 \u2192 QUESTION · ENTER NEXT · P OR ESC PAUSE",
 };
 function pauseMenu(game) {
   const keys = GAME_KEYS[game.gameId];
