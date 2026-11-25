@@ -347,6 +347,16 @@ The audit, the changes and the gate: `docs/master/phase7/` (`audit.md`, `README.
 ### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
 Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
+- **From Phase 7's soak: what a closed screen's parked materials still hold.** `GFX.park` keeps a closing scene's
+  materials for their shaders; a material's `onBeforeCompile` hook made inside a function holds that function's whole
+  scope, and with it whatever the scope holds. The reactor's hook held the title hall's old scene (25 MB: fixed,
+  `24c-examboss.js`, Phase 7). Left, one old scene per kind until it comes round again (bounded, about 9 MB in all:
+  `tools/heapparked.js` on a snapshot of `soak.js` with `SNAP=1`): Boss Rush's crowd hook (`makeCrowd`: holds
+  the scene `s`, 3.1 MB) and a hook in a BossGame method that holds `this` (2.8 MB); Risk Blaster's hook over `made`
+  (2.2 MB); Memory Bank's spun gold (`surfaceDetail`'s `prev`, the hook made in `build3D`, 1.1 MB). Each hook a function
+  of its own (or taking only what it needs), as `bossHousingCool`. And for the phone's memory: the raw files kept after
+  decoding (`Assets.bufs`, 64 MB on the Mac) and the decoded sound (`Sound.sprites`, 93 MB): whether the raw copies are
+  needed once decoded.
 - **First (from Phase 6's gate): Risk Blaster's phone draws stand at the budget's edge.** The harness measured 101
   against 100 (`docs/master/runs/phase6-costs`); measured again as it measures (8 s of play), 100, 97 and 97 on Phase 6's
   build and 100, 79 and 100 on Phase 4's (the same drawing code): the traffic in view at the moment measured. Bring the
