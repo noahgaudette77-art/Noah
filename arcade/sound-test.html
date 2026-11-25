@@ -92,12 +92,15 @@
   };
   const release = (buf, at, dur) => {
     const d = buf.getChannelData(0), sr = buf.sampleRate, a = Math.round(at * sr), n = Math.min(Math.round(dur * sr), d.length - a), w = Math.round(0.02 * sr);
-    if (n < 6 * w) return 0;
-    let top = 0, s = 0;
-    for (let i = a; i + w <= a + n; i += w >> 1) { s = 0; for (let j = i; j < i + w; j++) s += d[j] * d[j]; if (s > top) top = s; }
-    s = 0;
-    for (let j = a + n - 4 * w; j < a + n - 3 * w; j++) s += d[j] * d[j];
-    return s > top * 0.063 ? Math.min(0.15, dur / 4) : 0;
+    if (n < 8 * w) return 0;
+    let top = 0, end = 0;
+    for (let i = a; i + w <= a + n; i += w >> 1) {
+      let s = 0;
+      for (let j = i; j < i + w; j++) s += d[j] * d[j];
+      if (s > top) top = s;
+      if (i + w >= a + n - 2.5 * w && i + w <= a + n - 1.5 * w && s > end) end = s;
+    }
+    return end > top * 0.063 ? Math.min(0.15, dur / 4) : 0;
   };
   // loop: false for a take played once, true for music, or a loop's cue name (its join)
   const play = async (file, at, dur, vol, btn, loop, tone) => {
