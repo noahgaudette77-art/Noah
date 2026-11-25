@@ -41,14 +41,17 @@ module.exports = async (cap) => {
     else { await cap.eval((g) => window.__arcade.go(g), k); if (k === "guide") await waitReal(() => !!document.querySelector(".guide-lib")); await cap.fast(90); }
     await cap.eval(() => { window.__tick(2, true); });
     // one round through the sizes first (anything made once for a size is made), then the measure over two more
-    for (const [w, h, d] of SIZES) await setSize(w, h, d);
-    const before = await held(), checks = [];
-    for (let round = 0; round < 2; round++) for (const [w, h, d] of SIZES) { await setSize(w, h, d); checks.push(Object.assign({ want: w + "x" + h + "@" + d }, await follows())); }
+    // (CONTROL=1: the same frames with the window left as it is: what grows by itself, playing, not by the resizing)
+    const step = async (w, h, d) => { if (process.env.CONTROL) { await cap.page.waitForTimeout(150); await cap.fast(6); await cap.eval(() => { window.__tick(2, true); }); } else await setSize(w, h, d); };
+    for (const [w, h, d] of SIZES) await step(w, h, d);
+    if (process.env.SETTLE) { await cap.page.waitForTimeout(+process.env.SETTLE * 1000); await cap.fast(30); } // (SETTLE=s: real seconds for a screen's files to finish arriving before the measure)
+    const before = await held(), checks = [], rounds = [];
+    for (let round = 0; round < (+process.env.ROUNDS || 2); round++) { for (const [w, h, d] of SIZES) { await step(w, h, d); checks.push(Object.assign({ want: w + "x" + h + "@" + d }, await follows())); } rounds.push((await held()).heapMB); }
     const after = await held();
     const bad = checks.filter((c) => !c.aspectOK || !c.fills);
     const scales = [...new Set(checks.map((c) => c.scale))];
-    out.push({ screen: k, before, after, grew: Object.fromEntries(Object.keys(before).map((x) => [x, before[x] === null ? null : +(after[x] - before[x]).toFixed(1)])), drawing: bad.length ? bad.slice(0, 4) : "follows every change", scales });
-    console.log(k, JSON.stringify(out[out.length - 1].grew), bad.length ? bad.length + " sizes not followed" : "drawing follows", "scales", scales.join(" "));
+    out.push({ screen: k, rounds, before, after, grew: Object.fromEntries(Object.keys(before).map((x) => [x, before[x] === null ? null : +(after[x] - before[x]).toFixed(1)])), drawing: bad.length ? bad.slice(0, 4) : "follows every change", scales });
+    console.log(k, JSON.stringify(out[out.length - 1].grew), "heap a round", rounds.join(" "), bad.length ? bad.length + " sizes not followed" : "drawing follows", "scales", scales.join(" "));
     fs.writeFileSync(path.join(cap.out, "resize.json"), JSON.stringify(out, null, 1));
   }
 };
