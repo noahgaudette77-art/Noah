@@ -14,16 +14,18 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 6, audio, next (the owner's order: 0, 1, 5, 3, 2, 4, then 6). Phases 0, 1, 5, 3, 2 and 4 are done: Phase 4
-  passed its gate 2026-11-25 (`docs/master/phase4/`: the harness without fault, every budget kept, the rules IDENTICAL,
-  an independent review's findings fixed; live at `479fb52`).
-- **Done (Phase 4, game feel):** the shake a smooth noise in time (the same at any frame rate, on no random stream, a
-  third of the jump a frame), Risk Blaster's explanation on a Mac standing the lens back (the demon whole), the title's
-  twitch a shudder, Nest Egg Run's surge without its first-frame pop, the egg's easing by time. Every game already
-  answered a tap in its frame and lost none to a transition.
-- **Next steps (Phase 6, audio):** see Phase 6 below: an audit of every screen's sound first (levels, the mix, what plays
-  over what, the timing against the picture: the wizard's casts and bolts carried here from Phase 4), then the faults,
-  worst first, a commit each; the gate as written.
+- **Phase:** 7, desktop polish for the Mac, next (the owner's order: 0, 1, 5, 3, 2, 4, 6, then 7). Phases 0, 1, 5, 3, 2, 4
+  and 6 are done: Phase 6 passed its gate 2026-11-25 (`docs/master/phase6/`: every loop, take and track through the
+  page's own sound code without a click or a cut, the sound test page the same, the harness without fault, the rules
+  IDENTICAL, an independent review's findings fixed).
+- **Done (Phase 6, audio):** the looping effects joined (no click, no dip each time round), the music's seams blended
+  (exact loop points, each pass running 30 ms on into the next), every take's ends (in over 2 ms; let go where the
+  generator cut it off), fourteen announcer lines on their banners, Starfall's crash with its light, the sound back
+  after an iPhone's interruption, a hidden page silent, Setup's effects OFF quieting the hall. New tools:
+  `tools/audio-check.js`, `tools/sound-test-check.js`. The mix, the levels and the hiss were already right.
+- **Next steps (Phase 7, the Mac):** see Phase 7 below: landscape layouts, keys, hover, Retina and display changes,
+  resizing without leaks, Safari and Chrome, long sessions; the carried items (the results bar, the icons under 20 px,
+  the car's glare in WebKit); the gate: a 30-minute soak on the Mac tier with no slowdown or memory growth.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -312,10 +314,18 @@ fal.ai and Blockade nothing planned; within the caps either way.
 - **Gate:** every screen consistent; budgets kept; before/after stills of every change at the same moments; the
   Proctor's strips in Boss Rush (`tools/scenarios/motion.js`) and the exam (`exam-motion.js`); the logic diff clean.
 
-### Phase 6: audio
+### Phase 6: audio (done 2026-11-25)
 Loudness matched across screens, no hiss or static, varied effects, tight sync, fitting music, the volume controls;
 ElevenLabs within budget.
 - **Gate:** the sound test page passes; no clicks or cuts.
+- Done (`docs/master/phase6/`): the audit found the mix, the levels, the hiss and the variety right and the faults at
+  the sounds' edges; fixed a commit each, in how the page plays the recordings (no file re-encoded, nothing spent):
+  the loops' joins made when a sprite is decoded (`Sound.LOOP_JOIN`; the alarm keeps its length for the red frame's
+  pulse), the music played pass after pass (`Sound._pass`), every take's envelope (`Sound._release`), the windows of
+  fourteen announcer lines and Starfall's takes (`audio.json`; the builder makes the same cuts: `STARTS`), the music's
+  exact loop points, the sound faded out behind a hidden page, resumed from Safari's "interrupted".
+- For the devices (Phase 8): the iPhone's return from another app or a call; the engines, flames, hum and alarm steady;
+  the title's music coming round; the three takes that end on their height (the README's list), by ear.
 
 ### Phase 7: desktop polish for the Mac
 Landscape layouts, keys, hover, Retina and display changes, resizing without leaks, Safari and Chrome, long sessions.
@@ -388,9 +398,20 @@ pushed; the served link checked.
   by the plates' roughness; glass and steel use the same capture. One texture look-up a pixel, no extra draws:
   measured on the title, draws and triangles unchanged, textures +11 MB on the phone.
 
+- **Sound: fixed in how the page plays the recordings, not in the files (Phase 6, 2026-11-25).** The loops' joins are
+  made in the decoded recording, the music's seams by passes that overlap 30 ms, the takes' ends by an envelope: every
+  file stays as it was. Rebuilding the sprites with the joins made in them was weighed: the core set cannot be rebuilt
+  on this machine (the title's soft coin's raw takes are not here) and every re-encode loses a generation; and the
+  sound test page shares the page's rules (its own copy of them, checked by `tools/sound-test-check.js`). The windows
+  moved in `audio.json` (the announcer, Starfall) are cut the same way by the builder.
+
 ## Tried and reverted
 
-(none yet)
+- **The sound suspended behind a hidden page (Phase 6, 2026-11-25; replaced the same day).** It stopped the drone, but
+  the timers behind the page went on playing at its frozen clock (the hall's blips, typed letters: all at once when it
+  came back) and a hide and a show close together raced the suspend and the resume. The master is faded instead.
+- **The alarm's join by a 10 ms crossfade (Phase 6; replaced the same day).** Its loop came out 2.24 s and its beat
+  drifted from the red frame's 1.125 s pulse. Its seam is faded out and in over 4 ms instead, its length kept.
 
 ## The audit (Phase 0, 2026-11-23): the weakest first, by the owner's order of goals
 
@@ -585,3 +606,18 @@ lean, the shake's noise at its zero crossings and lattice points, a zoom blur, a
 all fixed. The gate (`docs/master/phase4/gate-report.md`): no fault, every budget kept, the rules IDENTICAL. A machine
 restart lost one harness run's costs: measured again on the final build. Spend: none. Tools: `scratchpad/phase4/
 shake-trace.js` (the camera's place a frame through a shake; scratch). Live at `479fb52`.
+
+**Phase 6 (2026-11-25).** The audit first (`docs/master/phase6/audit.md`), measured from the files as the page plays
+them: the mix, the levels, the hiss and the variety were right; the faults were at the sounds' edges. Fixed, a commit
+each, all in how the page plays the recordings (no file re-encoded): the looping effects' joins (made in the decoded
+recording; the alarm keeps its length for the red frame's pulse), the music's seams (exact loop points, then pass after
+pass with a 30 ms overlap), every take's envelope (in over 2 ms; let go where the generator cut it off, never before its
+loudest moment), fourteen announcer lines started at their words and Starfall's takes at their crash (`audio.json`; the
+builder makes the same cuts), Starfall played with its column of light, the sound back after an iPhone's interruption,
+a hidden page faded out, Setup's effects OFF quieting the hall. New tools: `tools/audio-check.js` (every loop, take and
+track through the page's own sound code in an offline context at 48 kHz: 34 failures on the build before, none after)
+and `tools/sound-test-check.js` (the sound test page, button by button; it caught this phase breaking the page's music
+for an hour). An independent review found eight more (timers' sounds bunched behind a suspended page, a suspend and
+resume race, the alarm's drift, releases eating four takes' peaks, the hand edits a rebuild would undo, the check's
+gaps, a Firefox copy): all fixed or answered (`docs/master/phase6/gate-report.md`). Spend: none. For the devices: the
+README's list (the iPhone's return from another app, the loops, the title's music coming round, three takes by ear).

@@ -10,9 +10,9 @@
 | engine_car | 1 | 3.35 | 0.13 | -3.0 | ok |
 | engine_car | 2 | 3.35 | 0.04 | -1.5 | ok |
 | engine_car | 3 | 3.35 | 0.11 | -4.3 | ok |
-| alarm | 1 | 2.24 | 0.50 | 0.0 | ok |
-| alarm | 2 | 2.24 | 0.19 | -0.6 | ok |
-| alarm | 3 | 2.24 | 0.38 | 0.0 | ok |
+| alarm | 1 | 2.25 | 0.35 | 0.0 | ok |
+| alarm | 2 | 2.25 | 0.02 | 0.0 | ok |
+| alarm | 3 | 2.25 | 0.01 | 0.0 | ok |
 | hub_hum | 1 | 8.00 | 0.17 | -2.4 | ok |
 | hub_hum | 2 | 8.00 | 0.13 | -1.5 | ok |
 | hub_hum | 3 | 8.00 | 0.22 | -1.3 | ok |
@@ -25,27 +25,27 @@
 
 ## Takes: every effect and announcer line, played once
 
-369 takes. A spike at the start: 0; cut off while still sounding (the 20 ms before the last 30 ms within 12 dB of the loudest): 0. Let go over their last stretch (a release): 21.
+369 takes. A spike at the start: 0; cut off while still sounding (the 20 ms before the last 30 ms within 12 dB of the loudest): 0; ending on their height (their loudest moment in their last 0.15 s, kept; let go just after it): 3. Let go over their last stretch (a release): 21.
 
 | take | length s | start spike | end (dB under its loudest) | release s | |
 |---|---:|---:|---:|---:|---|
+| heart_lost 3 | 0.80 | 0.07 | 0.0 | 0.03 | ends on its height |
+| beam_fire 1 | 1.60 | 0.01 | -0.5 | 0.04 | ends on its height |
+| roar_4 1 | 2.40 | 0.00 | -1.3 | 0.04 | ends on its height |
 | impact_reject 2 | 0.57 | 0.00 | -32.7 | 0.14 | ok |
-| charge_up 1 | 0.59 | 0.00 | -40.6 | 0.15 | ok |
+| charge_up 1 | 0.59 | 0.00 | -38.4 | 0.11 | ok |
 | charge_up 3 | 0.68 | 0.00 | -28.4 | 0.15 | ok |
 | charge_up 4 | 0.68 | 0.00 | -20.8 | 0.15 | ok |
 | charge_long 1 | 1.60 | 0.00 | -44.6 | 0.15 | ok |
 | warning 2 | 0.60 | 0.01 | -30.7 | 0.15 | ok |
 | lock_on 2 | 0.48 | 0.00 | -48.3 | 0.12 | ok |
 | lock_on 3 | 0.48 | 0.00 | -27.6 | 0.12 | ok |
-| heart_lost 3 | 0.80 | 0.07 | -18.3 | 0.15 | ok |
 | sting_correct 3 | 0.80 | 0.00 | -25.0 | 0.15 | ok |
 | sting_wrong 2 | 0.68 | 0.00 | -20.2 | 0.15 | ok |
 | powerup 2 | 1.00 | 0.00 | -31.4 | 0.15 | ok |
 | shell 1 | 0.36 | 0.00 | -19.5 | 0.09 | ok |
-| shell 3 | 0.35 | 0.00 | -24.2 | 0.09 | ok |
+| shell 3 | 0.35 | 0.00 | -22.6 | 0.07 | ok |
 | shell 4 | 0.44 | 0.00 | -18.0 | 0.11 | ok |
-| beam_fire 1 | 1.60 | 0.01 | -18.4 | 0.15 | ok |
-| roar_4 1 | 2.40 | 0.00 | -18.7 | 0.15 | ok |
 | roar_4 2 | 2.35 | 0.00 | -33.0 | 0.15 | ok |
 | roar_4 3 | 2.37 | 0.00 | -22.4 | 0.15 | ok |
 | roar_10 1 | 2.40 | 0.00 | -19.4 | 0.15 | ok |

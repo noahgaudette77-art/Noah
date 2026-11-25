@@ -6325,13 +6325,28 @@ const Sound = {
   // Each loop's join (Phase 6). The generator's loops do not run on from their end into their start (a click every time
   // round: the charge hum's 60 times the sound around it) and they swell in and fade out a little (a dip of 5 to 7 dB).
   // When the file is decoded, each take's soft head and tail are left out and its last stretch is faded out under its
-  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm is only
-  // crossfaded, over 10 ms, so its beat keeps its time; the hall's hum joins cleanly as it is.
-  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: [0, 0, 0.01] },
-  _join(q, [head, tail, x]) {
-    const b = q.buf, sr = b.sampleRate, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
+  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm keeps its
+  // length (its two beats a loop of 2.25 s are the red frame's pulse, counted on the sound's clock: a loop 10 ms short
+  // drifted a quarter of a second from it in a minute): its end fades out and its start in over 4 ms, a soft seam, never
+  // a step. The hall's hum joins cleanly as it is.
+  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: 0.004 },
+  _join(q, how) {
+    const b = q.buf, sr = b.sampleRate, done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
+    if (typeof how === "number") { // its length kept: its end faded out and its start in
+      const s0 = Math.round(q.at * sr), s1 = Math.round((q.at + q.dur) * sr), n = Math.round(how * sr);
+      if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+      if (!done[s0]) {
+        done[s0] = 1;
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          const d = b.getChannelData(c);
+          for (let i = 0; i < n; i++) { const k = Math.sin((i / n) * (Math.PI / 2)); d[s0 + i] *= k; d[s1 - 1 - i] *= k; }
+        }
+      }
+      q.at = s0 / sr; q.dur = (s1 - s0) / sr;
+      return;
+    }
+    const [head, tail, x] = how, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
     if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
-    const done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
     if (!done[s0]) {
       done[s0] = 1;
       for (let c = 0; c < b.numberOfChannels; c++) {
@@ -6351,7 +6366,7 @@ const Sound = {
     } catch (e) { return; }
     const c = this.ctx;
     this.master = c.createGain();
-    this.master.gain.value = 0.7;
+    this.master.gain.value = this.MASTER;
     // a limiter on the way out: a blast, the music and the announcer at once must not clip
     try {
       const lim = c.createDynamicsCompressor();
@@ -6406,13 +6421,18 @@ const Sound = {
     if (c && c.state !== "running" && c.state !== "closed") c.resume().catch(() => {});
   },
   // A hidden page is silent (Phase 6): the game stands still behind it (its frames stop), so its music, an engine or
-  // the alarm would drone on alone, and the synth's music would garble as a hidden page's timers slow to one a second.
-  // The sound is suspended while the page is hidden (a line being spoken is stopped) and resumed when it is shown.
+  // the alarm would drone on alone. The sound is faded out while the page is hidden and back in when it is shown, and
+  // runs on, unheard: a blip or a typed letter that a timer plays behind the hidden page plays in its time, silent,
+  // rather than all at once when the page comes back (as it did with the sound suspended), and nothing waits on a
+  // suspend or a resume to finish. A line being spoken is stopped, and none is begun while the page is hidden (say).
+  MASTER: 0.7,
   _onVisible() {
     const c = this.ctx;
-    if (!c) return;
+    if (!c || !this.master) return;
+    const t = c.currentTime, g = this.master.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(document.hidden ? 0 : this.MASTER, t, 0.02);
     if (!document.hidden) { this.resume(); return; }
-    if (c.state === "running") c.suspend().catch(() => {});
     try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) { /* no speech here */ }
   },
 
@@ -6470,6 +6490,7 @@ const Sound = {
   sayAt: 0, sayGen: 0,
   say(text) {
     if (!Store.settings.sfx || !Store.settings.voice) return 0;
+    if (document.hidden) return -1; // (a hidden page says nothing: _onVisible)
     const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
     if (wait > 2.5) return -1;
     // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
@@ -6554,18 +6575,24 @@ const Sound = {
   },
   // How long a take is let go over at its end, measured the first time it is played: none for one that ends in its own
   // decay; for one still sounding when the build's fade ends it (anywhere in the 40 ms before its last 30 ms within
-  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s.
+  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s, and never from
+  // before its loudest moment (a take the generator stopped on its height keeps it, and is let go just after it). It
+  // reads a copy of the take alone (copyFromChannel into a scratch kept for it), never the whole sprite's channel,
+  // which a browser may have to copy whole once the sprite has played.
   _release(q) {
-    const d = q.buf.getChannelData(0), sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), d.length - a), w = Math.round(0.02 * sr);
+    const sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), q.buf.length - a), w = Math.round(0.02 * sr);
     if (n < 8 * w) return 0;
-    let top = 0, end = 0;
-    for (let i = a; i + w <= a + n; i += w >> 1) {
+    if (!this._scratch || this._scratch.length < n) this._scratch = new Float32Array(Math.max(n, 2 * sr));
+    const d = this._scratch.subarray(0, n);
+    q.buf.copyFromChannel(d, 0, a);
+    let top = 0, peak = 0, end = 0;
+    for (let i = 0; i + w <= n; i += w >> 1) {
       let s = 0;
       for (let j = i; j < i + w; j++) s += d[j] * d[j];
-      if (s > top) top = s;
-      if (i + w >= a + n - 2.5 * w && i + w <= a + n - 1.5 * w && s > end) end = s;
+      if (s > top) { top = s; peak = i + w; }
+      if (i + w >= n - 2.5 * w && i + w <= n - 1.5 * w && s > end) end = s;
     }
-    return end > top * 0.063 ? Math.min(0.15, q.dur / 4) : 0;
+    return end > top * 0.063 ? Math.max(0, Math.min(0.15, q.dur / 4, (n - peak) / sr)) : 0;
   },
   // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
   // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
