@@ -24,13 +24,15 @@ module.exports = async (cap) => {
   const procMem = async () => {
     const info = bcdp && (await bcdp.send("SystemInfo.getProcessInfo").catch(() => null));
     if (!info) return { procMB: null, gpuProcMB: null };
-    let all = 0, gpu = 0;
+    let all = 0, gpu = 0, page = 0, pageShm = 0;
     for (const p of info.processInfo) {
-      let kb = 0;
-      try { const m = /^Pss:\s+(\d+)/m.exec(fs.readFileSync("/proc/" + p.id + "/smaps_rollup", "utf8")); kb = m ? +m[1] : 0; } catch (e) { /* not on Linux, or gone */ }
-      all += kb; if (p.type === "GPU") gpu += kb;
+      let kb = 0, shm = 0;
+      try { const t = fs.readFileSync("/proc/" + p.id + "/smaps_rollup", "utf8"), m = /^Pss:\s+(\d+)/m.exec(t), sh = /^Pss_Shmem:\s+(\d+)/m.exec(t); kb = m ? +m[1] : 0; shm = sh ? +sh[1] : 0; } catch (e) { /* not on Linux, or gone */ }
+      all += kb; if (p.type === "GPU") gpu += kb; if (p.type === "renderer") { page += kb; pageShm += shm; }
     }
-    return all ? { procMB: Math.round(all / 1024), gpuProcMB: Math.round(gpu / 1024) } : { procMB: null, gpuProcMB: null };
+    // (the page's own process apart, and of it what is shared memory: Chromium's discardable caches, decoded pictures
+    // among them, live there and are given back when the machine runs short)
+    return all ? { procMB: Math.round(all / 1024), gpuProcMB: Math.round(gpu / 1024), pageProcMB: Math.round(page / 1024), pageShmMB: Math.round(pageShm / 1024) } : { procMB: null, gpuProcMB: null };
   };
   const waitReal = async (js, ms = 120000) => { for (let i = 0; i < ms / 100; i++) { if (await cap.eval(js)) return true; await cap.page.waitForTimeout(100); } return false; };
   // each round's share of game time, by screen (seconds; scaled so the rounds add up to MINUTES)
@@ -69,7 +71,7 @@ module.exports = async (cap) => {
     });
     const row = Object.assign({ round, at, min: +(clock / 60).toFixed(1), heapMB: u ? +(u.usedSize / 1048576).toFixed(2) : null }, g, { updMs: +upd.toFixed(2), drawMs: Math.round(drw) }, work, gm, await procMem());
     rows.push(row);
-    console.log(`r${round} ${at.padEnd(10)} ${row.min} min: heap ${row.heapMB} MB, ${row.textures} tex, ${row.geometries} geo, ${row.programs} prog, ${row.nodes} nodes, timers ${row.timers}; frame ${row.updMs} ms updated, ${row.drawMs} ms drawn (${row.calls} draws, ${row.tris} tris); scale ${row.scale}${row.glMB !== null ? "; graphics " + row.glMB + " MB" : ""}${row.procMB !== null ? "; browser " + row.procMB + " MB (graphics process " + row.gpuProcMB + ")" : ""}`);
+    console.log(`r${round} ${at.padEnd(10)} ${row.min} min: heap ${row.heapMB} MB, ${row.textures} tex, ${row.geometries} geo, ${row.programs} prog, ${row.nodes} nodes, timers ${row.timers}; frame ${row.updMs} ms updated, ${row.drawMs} ms drawn (${row.calls} draws, ${row.tris} tris); scale ${row.scale}${row.glMB !== null ? "; graphics " + row.glMB + " MB" : ""}${row.procMB !== null ? "; browser " + row.procMB + " MB (graphics process " + row.gpuProcMB + ", the page's " + row.pageProcMB + " of it shared " + row.pageShmMB + ")" : ""}`);
     fs.writeFileSync(path.join(cap.out, "soak.json"), JSON.stringify(rows, null, 1));
   };
   const state = () => cap.eval(() => {
@@ -110,7 +112,7 @@ module.exports = async (cap) => {
       if (s.sheet) { await cap.next(); await step(30); continue; }
       await step(30);
     }
-    await held(round, "in " + game); // (what the game holds while played: compared apart, see below)
+    await held(round, "in " + game); // (what the game holds at the end of its play: compared apart, see below)
   };
   const open = async (where, secs) => {
     if (where === "title" || where === "hub") { await cap.eval((w) => window.__arcade.go(w), where); if (where === "hub") await waitReal(() => !!document.querySelector(".scr-hub [data-act=play]")); }
@@ -150,7 +152,7 @@ module.exports = async (cap) => {
   // it: the second round against the last, moment by moment)
   const hall = (r) => !r.at.startsWith("in "); // (the same moments every round; a game's own end varies)
   const from = ROUNDS >= 3 ? 2 : 1, a0 = rows.filter((r) => r.round === from && hall(r)), a1 = rows.filter((r) => r.round === ROUNDS && hall(r));
-  const grew = (key) => Math.max(...a1.map((r, i) => (a0[i] ? r[key] - a0[i][key] : 0)));
+  const grew = (key) => Math.max(...a1.map((r, i) => (a0[i] && r[key] !== null && a0[i][key] !== null && r[key] !== undefined && a0[i][key] !== undefined ? r[key] - a0[i][key] : 0))); // (a moment not measured is no growth)
   const slow = (key) => { const x = a0.map((r) => r[key]).sort((p, q) => p - q), y = a1.map((r) => r[key]).sort((p, q) => p - q); return [x[x.length >> 1], y[y.length >> 1]]; };
   const [u0, u1] = slow("updMs"), [d0, d1] = slow("drawMs");
   md.push("", `From round ${from} to round ${ROUNDS}, at the same moments, the most any grew: heap ${grew("heapMB").toFixed(2)} MB, textures ${grew("textures")}, geometries ${grew("geometries")}, programs ${grew("programs")}, page elements ${grew("nodes")}, timers waiting ${grew("timers")}. A frame (the median of the moments): ${u0} then ${u1} ms updated, ${d0} then ${d1} ms drawn here. ${answers} answers given.`);
@@ -160,7 +162,7 @@ module.exports = async (cap) => {
     const mbs = [has("glMB") ? `graphics ${grew("glMB")} MB` : null, has("procMB") ? `the browser ${grew("procMB")} MB (its graphics process ${grew("gpuProcMB")})` : null].filter(Boolean).join(", ");
     md.push("", `In megabytes, from round ${from} to round ${ROUNDS}, at the same moments, the most either grew: ${mbs}.`);
     const ins = rows.filter((r) => !hall(r)), top = (key) => Math.max(...ins.map((r) => r[key] || 0)), at = (key) => { const r = ins.find((x) => x[key] === top(key)); return r ? r.at + ", round " + r.round : "-"; };
-    if (ins.length) md.push(`The most held while a game was played: ${has("glMB") ? `graphics ${top("glMB")} MB (${at("glMB")})` : ""}${has("glMB") && has("procMB") ? ", " : ""}${has("procMB") ? `the browser ${top("procMB")} MB (${at("procMB")})` : ""}.`);
+    if (ins.length) md.push(`The most held at the end of a game's play (one moment a game a round: a game holds more at its start, Nest Egg Run its five skies, and lets them go as its road runs on): ${has("glMB") ? `graphics ${top("glMB")} MB (${at("glMB")})` : ""}${has("glMB") && has("procMB") ? ", " : ""}${has("procMB") ? `the browser ${top("procMB")} MB (${at("procMB")})` : ""}.`);
   }
   fs.writeFileSync(path.join(cap.out, "soak.md"), md.join("\n") + "\n");
   console.log(md.join("\n"));
