@@ -491,6 +491,27 @@ class MemorySparks {
   }
 }
 
+// The vault door's spun gold (build3D). Made out here, not in build3D: a hook made there shared build3D's scope,
+// and with it the game and its vault; a closing scene's materials are kept for their shaders (GFX.park), and with
+// them all of that, until Memory Bank came round again (Phase 7's soak; the performance re-check).
+function memorySpunGold(env) {
+  const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
+  spun.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvSpunP = position; vSpunN = normal;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;")
+      .replace("#include <color_fragment>", `#include <color_fragment>
+        float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
+        float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
+        diffuseColor.rgb *= mix(0.62, 1.1, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
+          float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
+          totalEmissiveRadiance += vec3(1.0, 0.76, 0.34) * wedge * spunFace * 0.55 * smoothstep(2.4, 5.6, spunR); }`);
+  };
+  spun.customProgramCacheKey = () => "memory-spun-gold";
+  return spun;
+}
+
 class MemoryGame extends QuizGame {
   constructor(sel) {
     super(sel, "memory", { fov: 60, fog: [0x0a0424, 30, 95], bg: 0x090320 }); // (the arcade's violet-black: it was the one green-black screen)
@@ -551,20 +572,7 @@ class MemoryGame extends QuizGame {
     const barGold = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xf4b847, vertexColors: true, metalness: 1, roughness: 0.15, envMap: env, envMapIntensity: 1.65, emissive: 0x281603, bumpMap: Assets.phone ? null : memoryQuiet(memoryStampTexture), bumpScale: 0.035 }), { scale: 1.5, height: 0.0005, grain: 0.35, scratch: 0.9 }); // (a polished face: the grain's ripple a third of the scratches' depth)
     // the door's own gold is spun: fine rings turned into it, which throw the lamp back in a bright wedge toward it
     // and a fainter one opposite, and it stands in shade toward its foot (a flat disc of mirror gold was one flat colour)
-    const spun = new THREE.MeshStandardMaterial({ color: 0xeaab3e, metalness: 1, roughness: 0.24, envMap: env, envMapIntensity: 1.25 });
-    spun.onBeforeCompile = (sh) => {
-      sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvSpunP = position; vSpunN = normal;");
-      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vSpunP; varying vec3 vSpunN;")
-        .replace("#include <color_fragment>", `#include <color_fragment>
-          float spunR = length(vSpunP.xy), spunFace = smoothstep(0.8, 0.98, abs(vSpunN.z));
-          float spunFine = 1.0 - smoothstep(0.25, 0.8, fwidth(spunR * 3.4));
-          diffuseColor.rgb *= mix(0.62, 1.1, smoothstep(-8.5, 8.5, vSpunP.y)) * (1.0 + 0.07 * sin(spunR * 21.4) * spunFine * spunFace);`)
-        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-          { vec2 spunD = vSpunP.xy / max(spunR, 1e-3); float spunW = dot(spunD, vec2(-0.5, 0.866));
-            float wedge = pow(max(spunW, 0.0), 20.0) + 0.3 * pow(max(-spunW, 0.0), 20.0);
-            totalEmissiveRadiance += vec3(1.0, 0.76, 0.34) * wedge * spunFace * 0.55 * smoothstep(2.4, 5.6, spunR); }`);
-    };
-    spun.customProgramCacheKey = () => "memory-spun-gold";
+    const spun = memorySpunGold(env);
     const doorGold = surfaceDetail(spun, { scale: 1.5, height: 0.0014, scratch: 1.3 });
     const brass = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0xd9a944, metalness: 1, roughness: 0.4, envMap: env, envMapIntensity: 0.95, emissive: 0x241603 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });
     const nickel = surfaceDetail(new THREE.MeshStandardMaterial({ color: 0x9fb2cf, metalness: 0.75, roughness: 0.42, envMap: env, envMapIntensity: 0.6, emissive: 0x0b1220 }), { scale: 1.6, height: 0.0014, scratch: 1.2 });

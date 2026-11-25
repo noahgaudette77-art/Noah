@@ -131,6 +131,28 @@ function racerCarPaint(env, hull) {
   return surfaceDetail(m, { scale: 2.4, height: 0.0009, grain: 0.7, scratch: 1.2, smudge: 0.35 }); // (orange peel in the lacquer, hair scratches, road film)
 }
 
+// The car's glass: what it shows of the street (RacerCar). Made out here, not in the car's constructor: a hook made
+// there held the constructor's scope, and with it the car and its game, while a closing scene's materials are kept
+// for their shaders (GFX.park: the performance re-check).
+function racerGlassLook(m, U) {
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vGlassP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlassP = position;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vGlassP; uniform float uScroll; uniform float uLampI; uniform vec3 uGlassL; uniform vec3 uGlassR; uniform vec3 uGlassSky; uniform vec3 uGlassSky2;")
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+      {
+        float dl = mod(uScroll + ${racerF(RACER_P / 2 - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0; // how far ahead (-) or behind (+) the nearest left lamp stands
+        float dr = mod(uScroll + ${racerF(RACER_P - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0;
+        float bl = exp(-pow(abs((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3), 2.0)) * (1.0 - smoothstep(-0.45, 0.8, vGlassP.x));
+        float br = exp(-pow(abs((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
+        totalEmissiveRadiance += (uGlassL * bl + uGlassR * br) * (0.34 * uLampI);
+        totalEmissiveRadiance += mix(uGlassSky2, uGlassSky, smoothstep(-0.9, 1.7, vGlassP.z)) * 0.36;
+      }`);
+  };
+  m.customProgramCacheKey = () => "racer-glass-2";
+}
+
 class RacerCar {
   constructor(game) {
     this.g = game;
@@ -153,22 +175,7 @@ class RacerCar {
       const sh0 = game.shared || {};
       const U = (this.glassU = { uScroll: sh0.uScroll || { value: 0 }, uLampI: sh0.uLampI || { value: 1 }, uGlassL: { value: neon(RACER_LAMP[0], 1) }, uGlassR: { value: neon(RACER_LAMP[1], 1) },
         uGlassSky: { value: new THREE.Color(0x3a1c40) }, uGlassSky2: { value: new THREE.Color(0x160c38) } });
-      this.glass.onBeforeCompile = (sh) => {
-        Object.assign(sh.uniforms, U);
-        sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vGlassP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvGlassP = position;");
-        sh.fragmentShader = sh.fragmentShader
-          .replace("#include <common>", "#include <common>\nvarying vec3 vGlassP; uniform float uScroll; uniform float uLampI; uniform vec3 uGlassL; uniform vec3 uGlassR; uniform vec3 uGlassSky; uniform vec3 uGlassSky2;")
-          .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-          {
-            float dl = mod(uScroll + ${racerF(RACER_P / 2 - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0; // how far ahead (-) or behind (+) the nearest left lamp stands
-            float dr = mod(uScroll + ${racerF(RACER_P - RACER_CAR_Z)}, ${RACER_P}.0) - ${RACER_P / 2}.0;
-            float bl = exp(-pow(abs((vGlassP.z - 0.25 - dl * 0.2 - vGlassP.x * 0.55) * 2.3), 2.0)) * (1.0 - smoothstep(-0.45, 0.8, vGlassP.x));
-            float br = exp(-pow(abs((vGlassP.z - 0.25 - dr * 0.2 + vGlassP.x * 0.55) * 2.3), 2.0)) * smoothstep(-0.8, 0.45, vGlassP.x);
-            totalEmissiveRadiance += (uGlassL * bl + uGlassR * br) * (0.34 * uLampI);
-            totalEmissiveRadiance += mix(uGlassSky2, uGlassSky, smoothstep(-0.9, 1.7, vGlassP.z)) * 0.36;
-          }`);
-      };
-      this.glass.customProgramCacheKey = () => "racer-glass-2";
+      racerGlassLook(this.glass, U);
     }
     const box = new THREE.BoxGeometry(1, 1, 1);
     const cyl = new THREE.CylinderGeometry(1, 1, 1, 8);

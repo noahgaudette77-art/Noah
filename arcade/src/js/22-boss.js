@@ -76,6 +76,58 @@ function bossCardGeometry() {
   return g;
 }
 
+// The crowd's material (makeCrowd), made out here and not in makeCrowd: a hook made there shared that call's scope,
+// and with it the arena's scene; a closing scene's materials are kept for their shaders (GFX.park), and with them
+// the arena of the visit before, until Boss Rush came round again (Phase 7's soak; the performance re-check).
+function bossCrowdMaterial(U) {
+  const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
+  pm.onBeforeCompile = (sh) => {
+    for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", `#include <common>
+        attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim; varying float vSide;
+        // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
+        // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
+        float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
+      .replace("#include <begin_vertex>", `#include <begin_vertex>
+        {
+          float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uCrowdT;
+          float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
+          float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
+          float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
+          float ea = crowdK(uCheers.x, uCheers.y, lc, 0.85, 8.0), eb = crowdK(uCheers.z, uCheers.w, lc, 0.85, 8.0);
+          float hop = max(abs(sin(max(uCheers.x - lc, 0.0) * beat)) * ea, abs(sin(max(uCheers.z - lc, 0.0) * beat)) * eb);
+          float ls = ring * 0.16 + hh * 0.06, se = max(crowdK(uStirs.x, uStirs.y, ls, 3.0, 14.0), crowdK(uStirs.z, uStirs.w, ls, 3.0, 14.0));
+          transformed.y *= 1.0 + 0.06 * hop - 0.1 * se;
+          transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
+          transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
+          transformed.y += bob + 0.32 * hop - 0.1 * se;
+          float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
+          float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
+          float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
+          vUv = vec2((aFig.x + ${BOSS_CROWD_N}.0 * up + uv.x) / ${2 * BOSS_CROWD_N}.0, uv.y); // (its figure, standing or cheering)
+          vRim = aRim;
+          // (Phase 2's polish) which side of it its lamps are on: the boss's two rims behind it, either side, the nearer;
+          // across the card, -1 its left, 1 its right, 0 straight before it
+          vec3 at = (modelMatrix * instanceMatrix * vec4(0.0, 0.6, 0.0, 1.0)).xyz, ax = mat3(modelMatrix) * mat3(instanceMatrix) * vec3(1.0, 0.0, 0.0);
+          vSide = clamp(dot(normalize(vec2(sign(at.x) * 11.0, -9.0) - at.xz), normalize(ax.xz)) * 1.8, -1.0, 1.0);
+        }`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vRim; varying float vSide; uniform float uRage;")
+      // (Phase 2's polish: each figure lit as a body, not a flat card: from above, its head and shoulders most, its
+      // legs least; and from the side its lamps are on, red saying which way each part of it faces, its middle a
+      // little fuller; alpha: the figure)
+      .replace("#include <map_fragment>", `vec4 fig = texture2D(map, vUv); float fnx = fig.r * 2.0 - 1.0;
+        diffuseColor.rgb *= mix(0.22, 1.1, smoothstep(0.04, 0.72, vUv.y)) * (1.0 + 0.6 * vSide * fnx + 0.25 * (1.0 - abs(fnx)));
+        diffuseColor.a *= fig.a;`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
+        totalEmissiveRadiance += rimC * fig.g * (0.55 + 0.9 * clamp(0.5 + 0.8 * vSide * fnx, 0.0, 1.0)) + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim, brightest on the side its lamps are on; blue: what glows of its own)
+  };
+  pm.customProgramCacheKey = () => "boss-crowd-4";
+  return pm;
+}
+
 class BossGame extends QuizGame {
   constructor(sel) {
     super(sel, "boss", { fov: 60, fog: [0x0a0322, 24, 86], bg: 0x0a0322 }); // (the stands fall back into haze; the boss, 16 away, stays clear)
@@ -580,51 +632,7 @@ class BossGame extends QuizGame {
     people.forEach((p, i) => { aFig[i * 4] = p.fig; aFig[i * 4 + 1] = p.sd; aFig[i * 4 + 2] = p.a; aFig[i * 4 + 3] = cyHash(i); p.rim.toArray(aRim, i * 3); }); // (its own beat: a hash of its place in the crowd, not the randomness)
     card.setAttribute("aFig", new THREE.InstancedBufferAttribute(aFig, 4));
     card.setAttribute("aRim", new THREE.InstancedBufferAttribute(aRim, 3));
-    const pm = new THREE.MeshLambertMaterial({ map: bossCrowdTexture(), alphaTest: 0.5, side: THREE.DoubleSide }); // (what each wears: its instance's colour)
-    pm.onBeforeCompile = (sh) => {
-      for (const k of ["uCrowdT", "uRage", "uCheers", "uStirs", "uMove"]) sh.uniforms[k] = U[k];
-      sh.vertexShader = sh.vertexShader
-        .replace("#include <common>", `#include <common>
-          attribute vec4 aFig; attribute vec3 aRim; uniform float uCrowdT; uniform vec4 uCheers; uniform vec4 uStirs; uniform vec2 uMove; varying vec3 vRim; varying float vSide;
-          // how hard one of the crowd is in a moment that runs out through the stands: t since it began behind the boss,
-          // k how big, lag when it reaches this one, fall how fast it passes, rise how fast it takes hold
-          float crowdK(float t, float k, float lag, float fall, float rise){ float u = t - lag; return u > 0.0 ? k * exp(-u * fall) * min(1.0, u * rise) : 0.0; }`)
-        .replace("#include <begin_vertex>", `#include <begin_vertex>
-          {
-            float sd = aFig.y, hh = aFig.w, ring = abs(aFig.z), lift = max(uv.y, 0.0), tt = uCrowdT;
-            float sway = (sin(tt * (0.75 + 0.6 * hh) + sd * 40.0) * 0.1 + sin(tt * (2.1 + 1.3 * sd) + hh * 23.0) * 0.028) * uMove.x;
-            float bob = sin(tt * (1.2 + 1.1 * sd) + sd * 31.0) * 0.045 * uMove.x;
-            float lc = ring * 0.5 + hh * 0.2, beat = 6.0 + 2.6 * hh;
-            float ea = crowdK(uCheers.x, uCheers.y, lc, 0.85, 8.0), eb = crowdK(uCheers.z, uCheers.w, lc, 0.85, 8.0);
-            float hop = max(abs(sin(max(uCheers.x - lc, 0.0) * beat)) * ea, abs(sin(max(uCheers.z - lc, 0.0) * beat)) * eb);
-            float ls = ring * 0.16 + hh * 0.06, se = max(crowdK(uStirs.x, uStirs.y, ls, 3.0, 14.0), crowdK(uStirs.z, uStirs.w, ls, 3.0, 14.0));
-            transformed.y *= 1.0 + 0.06 * hop - 0.1 * se;
-            transformed.x *= 1.0 - 0.03 * hop + 0.04 * se;
-            transformed.x += (sway + 0.12 * se * (hh < 0.5 ? -1.0 : 1.0)) * lift;
-            transformed.y += bob + 0.32 * hop - 0.1 * se;
-            float pump = uMove.x > 0.5 ? step(-0.35, sin(tt * (4.2 + 2.4 * hh) + hh * 40.0)) : 1.0;
-            float idle = step(0.82 - 0.16 * uMove.y, fract(tt * 0.045 + hh * 7.13)) * step(0.0, sin(tt * (3.4 + 2.0 * sd) + sd * 50.0)) * step(0.5, uMove.x);
-            float up = max(max(step(0.22, max(ea, eb)) * pump, idle), step(0.3, se) * step(0.62, hh));
-            vUv = vec2((aFig.x + ${BOSS_CROWD_N}.0 * up + uv.x) / ${2 * BOSS_CROWD_N}.0, uv.y); // (its figure, standing or cheering)
-            vRim = aRim;
-            // (Phase 2's polish) which side of it its lamps are on: the boss's two rims behind it, either side, the nearer;
-            // across the card, -1 its left, 1 its right, 0 straight before it
-            vec3 at = (modelMatrix * instanceMatrix * vec4(0.0, 0.6, 0.0, 1.0)).xyz, ax = mat3(modelMatrix) * mat3(instanceMatrix) * vec3(1.0, 0.0, 0.0);
-            vSide = clamp(dot(normalize(vec2(sign(at.x) * 11.0, -9.0) - at.xz), normalize(ax.xz)) * 1.8, -1.0, 1.0);
-          }`);
-      sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vRim; varying float vSide; uniform float uRage;")
-        // (Phase 2's polish: each figure lit as a body, not a flat card: from above, its head and shoulders most, its
-        // legs least; and from the side its lamps are on, red saying which way each part of it faces, its middle a
-        // little fuller; alpha: the figure)
-        .replace("#include <map_fragment>", `vec4 fig = texture2D(map, vUv); float fnx = fig.r * 2.0 - 1.0;
-          diffuseColor.rgb *= mix(0.22, 1.1, smoothstep(0.04, 0.72, vUv.y)) * (1.0 + 0.6 * vSide * fnx + 0.25 * (1.0 - abs(fnx)));
-          diffuseColor.a *= fig.a;`)
-        .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-          vec3 rimC = mix(vRim, vec3(1.0, 0.14, 0.24) * max(max(vRim.r, vRim.g), vRim.b), uRage);
-          totalEmissiveRadiance += rimC * fig.g * (0.55 + 0.9 * clamp(0.5 + 0.8 * vSide * fnx, 0.0, 1.0)) + (rimC * 1.5 + 0.08) * fig.b;`); // (green: its rim, brightest on the side its lamps are on; blue: what glows of its own)
-    };
-    pm.customProgramCacheKey = () => "boss-crowd-4";
+    const pm = bossCrowdMaterial(U);
     const folk = (this.folk = new THREE.InstancedMesh(card, pm, NP));
     people.forEach((p, i) => { folk.setMatrixAt(i, p.m); folk.setColorAt(i, p.wear); });
     folk.name = "arena-crowd"; // (named for tools/cost-report.js)

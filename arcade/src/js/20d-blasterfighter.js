@@ -227,6 +227,16 @@ function fighterShieldMaterial() {
   });
 }
 
+// The cockpit glass's look: clear looking straight through it, a mirror at its edges. (Made out here, not in the
+// fighter's constructor: a hook made there held the constructor's scope, and with it the fighter and its game, while a
+// closing scene's materials are kept for their shaders, GFX.park: the performance re-check.)
+function fighterGlassLook(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\ndiffuseColor.a = mix(0.36, 0.95, pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0));");
+  };
+  m.customProgramCacheKey = () => "blaster-fighter-glass";
+}
+
 class BlasterFighter {
   constructor(game) {
     const g = (this.g = game), env = g.shipEnv || g.env, S = FTR_S, geo = FighterModel.geometry();
@@ -282,10 +292,7 @@ class BlasterFighter {
     this.hud.renderOrder = 3;
     // the glass: clear looking straight through it, a mirror at its edges
     this.glassMat = new THREE.MeshStandardMaterial({ color: 0x0c1c2c, metalness: 0.85, roughness: 0.05, envMap: env, envMapIntensity: 2.4, transparent: true, opacity: 0.5, depthWrite: false, emissive: 0x08304a, emissiveIntensity: 0.25 });
-    this.glassMat.onBeforeCompile = (sh) => {
-      sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\ndiffuseColor.a = mix(0.36, 0.95, pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.0));");
-    };
-    this.glassMat.customProgramCacheKey = () => "blaster-fighter-glass";
+    fighterGlassLook(this.glassMat);
     this.glass = new THREE.Mesh(geo.glass || new THREE.BufferGeometry(), this.glassMat);
     this.glass.renderOrder = 4;
     rig.add(this.pilot, this.hud, this.glass);

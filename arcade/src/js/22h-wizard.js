@@ -91,6 +91,58 @@ function wizWard(tex) {
   m.visible = false; m.renderOrder = 10; m.frustumCulled = false;
   return m;
 }
+// Its look, taught to each of its materials (the flutter, the colours, the rim). Made out here, not in the
+// constructor: a hook made there shared the constructor's scope, and with it the wizard, its fight and the arena;
+// a closing scene's materials are kept for their shaders (GFX.park), and with them all of that, until Boss Rush
+// came round again (Phase 7's soak; the performance re-check).
+function wizardLook(m, F, R, C, has) {
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutSwing = F.swing; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
+    sh.uniforms.uRimCol = R.col; sh.uniforms.uRimK = R.k;
+    sh.uniforms.uWizCoat = C.coat; sh.uniforms.uWizCape = C.cape; sh.uniforms.uWizLining = C.lining; sh.uniforms.uWizFill = C.fill; sh.uniforms.uWizHead = C.head;
+    // (where its cape is: the flutter mask, the cape and the coat-tails; and its hat: what hangs from its head bone)
+    sh.uniforms.uWizEdge = C.edge;
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vWizCape; uniform float uWizHead; uniform vec2 uWizEdge;" + (has ? "\nattribute float aFlutter;" : ""))
+      .replace("#include <skinning_vertex>", `#include <skinning_vertex>
+        #ifdef USE_SKINNING
+          vWizCape = max(${has ? "smoothstep(uWizEdge.x, uWizEdge.y, aFlutter)" : "0.0"}, smoothstep(0.5, 0.8, dot(vec4(equal(skinIndex, vec4(uWizHead))), skinWeight)));
+        #else
+          vWizCape = 0.0;
+        #endif`);
+    // (the wave's height and breadth are read from the skinned point, in the mesh's own units: the stored one is packed)
+    if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp; uniform vec3 uFlutSwing;")
+      .replace("#include <skinning_vertex>", `#include <skinning_vertex>
+        { // the cape and the skirts move in the wind of the spells: a wave running down them, stronger at the hem
+          float w = aFlutter * uFlutK, hgt = dot(transformed, uFlutUp) / uFlutAmp, across = dot(transformed, uFlutSide) / uFlutAmp; // (metres)
+          float a = sin(uFlutT * 3.1 - hgt * 4.2 + across * 2.0), b = sin(uFlutT * 2.3 - hgt * 3.1 + 1.3);
+          transformed += (uFlutBack * (0.055 + 0.045 * a) + uFlutSide * 0.035 * b + uFlutUp * 0.012 * a) * (w * uFlutAmp); // (metres, in the mesh's units)
+          transformed += uFlutSwing * (aFlutter * aFlutter); // (it trails its moves: the hem's own lag, from the spring)
+        }`);
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK; uniform vec3 uWizCoat; uniform vec3 uWizCape; uniform vec3 uWizLining; uniform float uWizFill; varying float vWizCape;")
+      .replace("#include <map_fragment>", `#include <map_fragment>
+        { // its colours, its own: the model's violet cloth (violet, indigo, magenta; never its cyan trim, steel or skin)
+          // repainted, its folds kept: a light coat, a vivid cape, coat-tails and hat, the cape's lining deeper
+          vec3 c = diffuseColor.rgb;
+          float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), dd = mx - mn, sat = dd / max(mx, 1e-4);
+          float hue = mx == c.r ? mod((c.g - c.b) / max(dd, 1e-5), 6.0) : mx == c.g ? (c.b - c.r) / max(dd, 1e-5) + 2.0 : (c.r - c.g) / max(dd, 1e-5) + 4.0;
+          hue /= 6.0;
+          float cloth = smoothstep(0.16, 0.3, sat) * smoothstep(0.6, 0.65, hue) * (1.0 - smoothstep(0.95, 0.99, hue));
+          float shade = clamp(dot(c, vec3(0.2126, 0.7152, 0.0722)) / 0.075, 0.22, 1.0); // (its folds, as the cloth was painted: never brighter than the colour itself)
+          vec3 tgt = mix(uWizCoat, mix(uWizCape, uWizLining, smoothstep(0.84, 0.88, hue)), vWizCape);
+          diffuseColor.rgb = mix(c, tgt * shade, cloth);
+        }`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+        totalEmissiveRadiance += diffuseColor.rgb * uWizFill; // (a little light of its own: its colours hold in the darkest arena)`)
+      .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
+          float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
+          gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(max(fr, 0.0), 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
+        }
+        #include <tonemapping_fragment>`);
+  };
+  m.customProgramCacheKey = () => "wizard-4" + (has ? "f" : "");
+  m.needsUpdate = true;
+}
+
 class Wizard {
   constructor(stage, model, wand) {
     const g = (this.g = stage.g), s = g.scene;
@@ -121,54 +173,7 @@ class Wizard {
     const F = this.flut, R = this.rim, has = !!(this.mesh && this.mesh.geometry.getAttribute("aFlutter"));
     const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear(), headBone = this.mesh && this.mesh.skeleton ? Math.max(0, this.mesh.skeleton.bones.indexOf(model.parts[(model.info.joints || {}).head || "Head"])) : 0;
     const C = (this.colors = { coat: { value: lin(WIZ.COAT) }, cape: { value: lin(WIZ.CAPE) }, lining: { value: lin(WIZ.LINING) }, fill: { value: WIZ.FILL }, head: { value: headBone }, edge: { value: new THREE.Vector2().fromArray(WIZ.CAPE_EDGE) } });
-    for (const m of this.mats) {
-      if (!m.isMeshStandardMaterial) continue;
-      m.onBeforeCompile = (sh) => {
-        sh.uniforms.uFlutT = F.t; sh.uniforms.uFlutK = F.k; sh.uniforms.uFlutSwing = F.swing; sh.uniforms.uFlutBack = F.back; sh.uniforms.uFlutSide = F.side; sh.uniforms.uFlutUp = F.up; sh.uniforms.uFlutAmp = F.amp;
-        sh.uniforms.uRimCol = R.col; sh.uniforms.uRimK = R.k;
-        sh.uniforms.uWizCoat = C.coat; sh.uniforms.uWizCape = C.cape; sh.uniforms.uWizLining = C.lining; sh.uniforms.uWizFill = C.fill; sh.uniforms.uWizHead = C.head;
-        // (where its cape is: the flutter mask, the cape and the coat-tails; and its hat: what hangs from its head bone)
-        sh.uniforms.uWizEdge = C.edge;
-        sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vWizCape; uniform float uWizHead; uniform vec2 uWizEdge;" + (has ? "\nattribute float aFlutter;" : ""))
-          .replace("#include <skinning_vertex>", `#include <skinning_vertex>
-            #ifdef USE_SKINNING
-              vWizCape = max(${has ? "smoothstep(uWizEdge.x, uWizEdge.y, aFlutter)" : "0.0"}, smoothstep(0.5, 0.8, dot(vec4(equal(skinIndex, vec4(uWizHead))), skinWeight)));
-            #else
-              vWizCape = 0.0;
-            #endif`);
-        // (the wave's height and breadth are read from the skinned point, in the mesh's own units: the stored one is packed)
-        if (has) sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uFlutT; uniform float uFlutK; uniform vec3 uFlutBack; uniform vec3 uFlutSide; uniform vec3 uFlutUp; uniform float uFlutAmp; uniform vec3 uFlutSwing;")
-          .replace("#include <skinning_vertex>", `#include <skinning_vertex>
-            { // the cape and the skirts move in the wind of the spells: a wave running down them, stronger at the hem
-              float w = aFlutter * uFlutK, hgt = dot(transformed, uFlutUp) / uFlutAmp, across = dot(transformed, uFlutSide) / uFlutAmp; // (metres)
-              float a = sin(uFlutT * 3.1 - hgt * 4.2 + across * 2.0), b = sin(uFlutT * 2.3 - hgt * 3.1 + 1.3);
-              transformed += (uFlutBack * (0.055 + 0.045 * a) + uFlutSide * 0.035 * b + uFlutUp * 0.012 * a) * (w * uFlutAmp); // (metres, in the mesh's units)
-              transformed += uFlutSwing * (aFlutter * aFlutter); // (it trails its moves: the hem's own lag, from the spring)
-            }`);
-        sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform vec3 uRimCol; uniform float uRimK; uniform vec3 uWizCoat; uniform vec3 uWizCape; uniform vec3 uWizLining; uniform float uWizFill; varying float vWizCape;")
-          .replace("#include <map_fragment>", `#include <map_fragment>
-            { // its colours, its own: the model's violet cloth (violet, indigo, magenta; never its cyan trim, steel or skin)
-              // repainted, its folds kept: a light coat, a vivid cape, coat-tails and hat, the cape's lining deeper
-              vec3 c = diffuseColor.rgb;
-              float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), dd = mx - mn, sat = dd / max(mx, 1e-4);
-              float hue = mx == c.r ? mod((c.g - c.b) / max(dd, 1e-5), 6.0) : mx == c.g ? (c.b - c.r) / max(dd, 1e-5) + 2.0 : (c.r - c.g) / max(dd, 1e-5) + 4.0;
-              hue /= 6.0;
-              float cloth = smoothstep(0.16, 0.3, sat) * smoothstep(0.6, 0.65, hue) * (1.0 - smoothstep(0.95, 0.99, hue));
-              float shade = clamp(dot(c, vec3(0.2126, 0.7152, 0.0722)) / 0.075, 0.22, 1.0); // (its folds, as the cloth was painted: never brighter than the colour itself)
-              vec3 tgt = mix(uWizCoat, mix(uWizCape, uWizLining, smoothstep(0.84, 0.88, hue)), vWizCape);
-              diffuseColor.rgb = mix(c, tgt * shade, cloth);
-            }`)
-          .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-            totalEmissiveRadiance += diffuseColor.rgb * uWizFill; // (a little light of its own: its colours hold in the darkest arena)`)
-          .replace("#include <tonemapping_fragment>", `{ // a cold rim of light round its edge
-              float fr = 1.0 - clamp(dot(normalize(geometry.normal), geometry.viewDir), 0.0, 1.0);
-              gl_FragColor.rgb += uRimCol * uRimK * (0.6 * pow(max(fr, 0.0), 3.0) + 0.35 * fr * fr * diffuseColor.rgb);
-            }
-            #include <tonemapping_fragment>`);
-      };
-      m.customProgramCacheKey = () => "wizard-4" + (has ? "f" : "");
-      m.needsUpdate = true;
-    }
+    for (const m of this.mats) if (m.isMeshStandardMaterial) wizardLook(m, F, R, C, has);
     // ---- its clips, blended by hand: the idle always under; one clip at a time played through over it; while a
     // question is read, a second copy of the cast held at its release (its wand held out), more as the bar fills.
     // Each clip as made holds its hips somewhere of its own, and the big cast its root a little turned: each is moved to

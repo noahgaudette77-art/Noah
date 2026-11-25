@@ -190,6 +190,24 @@ function spaceInstanced(geo, mat, n) {
   return m;
 }
 
+// The far ships' and rocks' light (genKit), each wrapped round blasterSkin's hook. Made out here, not in genKit:
+// a hook made there shared genKit's scope, and with it the model's geometry as made (made); a closing scene's
+// materials are kept for their shaders (GFX.park), and with them that, until Risk Blaster came round again
+// (Phase 7's soak; the performance re-check).
+function spaceShipFar(skin) {
+  return (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65);\n float shK = 1.0 - 0.75 * smoothstep(100.0, 320.0, length(vViewPosition)); reflectedLight.directDiffuse *= shK; reflectedLight.indirectDiffuse *= shK; reflectedLight.directSpecular *= shK; reflectedLight.indirectSpecular *= shK; totalEmissiveRadiance *= shK; }"); };
+}
+function spaceRockFar(skin) {
+  return (sh) => {
+    skin(sh);
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", `#include <lights_fragment_end>
+      { float skFar = smoothstep(55.0, 140.0, length(vViewPosition)), skW = dot(geometryNormal, uSkFarDir) * 0.5 + 0.5;
+        reflectedLight.directDiffuse += skFar * max(material.diffuseColor, vec3(0.04)) * uSkFarKey * (skW * skW + 0.12); // (the darkest stone taken as a dark grey: at that size a darker one read as nothing at all)
+        reflectedLight.indirectSpecular *= 1.0 - 0.6 * skFar; }`);
+  };
+}
+
 class BlasterSpace {
   constructor(game) {
     const g = (this.g = game), s = g.scene;
@@ -892,24 +910,13 @@ class BlasterSpace {
           // neon go down, to a quarter past 320, where only haulers, drones and cruisers fly: its lamps and ports, drawn
           // apart and never under a pixel or two, carry it, and the rims that sparkled on a hull a few pixels long go.
           // The escort, the wings that overtake close by, and every ship near the fight are as they were.)
-          const skin = mat.onBeforeCompile;
-          mat.onBeforeCompile = (sh) => { skin(sh); sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n{ const vec3 Y = vec3(0.3, 0.59, 0.11); reflectedLight.directDiffuse = mix(reflectedLight.directDiffuse, vec3(dot(reflectedLight.directDiffuse, Y)), 0.65); reflectedLight.directSpecular = mix(reflectedLight.directSpecular, vec3(dot(reflectedLight.directSpecular, Y)), 0.65); reflectedLight.indirectSpecular = mix(reflectedLight.indirectSpecular, vec3(dot(reflectedLight.indirectSpecular, Y)), 0.65); reflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, Y)), 0.65);\n float shK = 1.0 - 0.75 * smoothstep(100.0, 320.0, length(vViewPosition)); reflectedLight.directDiffuse *= shK; reflectedLight.indirectDiffuse *= shK; reflectedLight.directSpecular *= shK; reflectedLight.indirectSpecular *= shK; totalEmissiveRadiance *= shK; }"); };
+          mat.onBeforeCompile = spaceShipFar(mat.onBeforeCompile);
         }
         // (Phase 2, resumed: far off, a rock read as a dark hole in a pale rim with the sky's colour mirrored in it, the
         // art review's hollow far rocks. Past some 55 units, and wholly past 140, where every light copy flies, it is lit
         // again from the side the picture's own light comes from (the region's key, uSkFarKey, from uSkFarDir), its far
         // side kept a little off black, and it mirrors less of the sky: a lit stone with its rim.)
-        if (rock) {
-          const skin = mat.onBeforeCompile;
-          mat.onBeforeCompile = (sh) => {
-            skin(sh);
-            sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute vec3 aTone; varying vec3 vTone;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvTone = aTone;");
-            sh.fragmentShader = sh.fragmentShader.replace("#include <lights_fragment_end>", `#include <lights_fragment_end>
-              { float skFar = smoothstep(55.0, 140.0, length(vViewPosition)), skW = dot(geometryNormal, uSkFarDir) * 0.5 + 0.5;
-                reflectedLight.directDiffuse += skFar * max(material.diffuseColor, vec3(0.04)) * uSkFarKey * (skW * skW + 0.12); // (the darkest stone taken as a dark grey: at that size a darker one read as nothing at all)
-                reflectedLight.indirectSpecular *= 1.0 - 0.6 * skFar; }`);
-          };
-        }
+        if (rock) mat.onBeforeCompile = spaceRockFar(mat.onBeforeCompile);
         g.pano.mirror(mat, rock ? 0.55 : 0.35); // (Phase 6: a ship mirrors less of the region: its hull took the nebula's colour and read as a pink or clay lump)
         this.genMats.push(mat);
         model.scene.traverse((o) => { if (o.isMesh && o.geometry !== made.geo) o.geometry.dispose(); }); // (its packed form is not drawn)
