@@ -14,18 +14,19 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 7, desktop polish for the Mac, next (the owner's order: 0, 1, 5, 3, 2, 4, 6, then 7). Phases 0, 1, 5, 3, 2, 4
-  and 6 are done: Phase 6 passed its gate 2026-11-25 (`docs/master/phase6/`: every loop, take and track through the
-  page's own sound code without a click or a cut, the sound test page the same, the harness without fault, the rules
-  IDENTICAL, an independent review's findings fixed).
-- **Done (Phase 6, audio):** the looping effects joined (no click, no dip each time round), the music's seams blended
-  (exact loop points, each pass running 30 ms on into the next), every take's ends (in over 2 ms; let go where the
-  generator cut it off), fourteen announcer lines on their banners, Starfall's crash with its light, the sound back
-  after an iPhone's interruption, a hidden page silent, Setup's effects OFF quieting the hall. New tools:
-  `tools/audio-check.js`, `tools/sound-test-check.js`. The mix, the levels and the hiss were already right.
-- **Next steps (Phase 7, the Mac):** see Phase 7 below: landscape layouts, keys, hover, Retina and display changes,
-  resizing without leaks, Safari and Chrome, long sessions; the carried items (the results bar, the icons under 20 px,
-  the car's glare in WebKit); the gate: a 30-minute soak on the Mac tier with no slowdown or memory growth.
+- **Phase:** 7, desktop polish for the Mac, IN PROGRESS (its gate next). Phases 0, 1, 5, 3, 2, 4 and 6 are done (Phase 6
+  passed its gate 2026-11-25: `docs/master/phase6/`).
+- **Done in Phase 7 so far (2026-11-25; `docs/master/phase7/audit.md`, `README.md`):** the menus on a wide window
+  (results, stats, Setup, stage select, the guide); icons at 20 px; Enter or Space on a button the keyboard moved to is
+  that button's; the arrows over a screen's cards (Safari's Tab skips buttons); the exam's grid focus; P pauses the exam;
+  every button answers a hover. Checked: layouts at seven window sizes, resizing and display changes (no leak; the
+  drawing follows), WebKit at the Mac's size, the keyboard (`tools/scenarios/keys.js`, 101 checks), the hover (59 kinds
+  of clickable thing). The car's glare in WebKit is gone; the 384 px portrait strip is left for Phase 8's look on the
+  device (only the briefing's 84 px face is drawn up 1.3 times on a 3x phone; the busts' settings are not recorded).
+- **Next steps (Phase 7's gate):** the independent review's findings; the 30-minute soak on the Mac tier
+  (`tools/scenarios/soak.js --size 1470x830 --dpr 2`, three rounds: the first loads what is kept, the second and third
+  compared); the page built; the harness (logic, stills, costs); `docs/master/phase7/gate-report.md`; the hand-over
+  below; push. Then the performance re-check (below), then Phase 8.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -408,6 +409,16 @@ pushed; the served link checked.
   on this machine (the title's soft coin's raw takes are not here) and every re-encode loses a generation; and the
   sound test page shares the page's rules (its own copy of them, checked by `tools/sound-test-check.js`). The windows
   moved in `audio.json` (the announcer, Starfall) are cut the same way by the builder.
+
+- **Keys on a Mac: a button the keyboard moved to takes Enter and Space; the arrows move over a screen's cards (Phase
+  7, 2026-11-25).** A screen's own Enter (PLAY in the hall, PLAY AGAIN, the exam's next question, turning a card) ran
+  even with the focus on another button (`tools/scenarios/keys.js`: Tab to STATS and Enter played the cabinet). The
+  browser now clicks a button the focus was moved to by Tab or an arrow (`UI.init`: `keyFocus`); with the focus where a
+  click or the game put it (the explanation's NEXT, PLAY AGAIN on results), the screen's keys are as they were, so a
+  player who answers with the mouse and goes on with Enter loses nothing. Safari's Tab skips buttons unless its settings
+  say otherwise, so the arrows are how a keyboard reaches a stage on a Mac (`UI.arrowNav`: the nearest card in the
+  arrow's direction, the first arrow to what the screen lights). Where the arrows already mean something in a game
+  (lanes, grades, questions) they keep it; on results Up and Down still scroll.
 
 ## Tried and reverted
 
