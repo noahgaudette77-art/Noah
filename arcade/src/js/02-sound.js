@@ -71,7 +71,7 @@ const Sound = {
     } catch (e) { return; }
     const c = this.ctx;
     this.master = c.createGain();
-    this.master.gain.value = 0.7;
+    this.master.gain.value = this.MASTER;
     // a limiter on the way out: a blast, the music and the announcer at once must not clip
     try {
       const lim = c.createDynamicsCompressor();
@@ -126,13 +126,18 @@ const Sound = {
     if (c && c.state !== "running" && c.state !== "closed") c.resume().catch(() => {});
   },
   // A hidden page is silent (Phase 6): the game stands still behind it (its frames stop), so its music, an engine or
-  // the alarm would drone on alone, and the synth's music would garble as a hidden page's timers slow to one a second.
-  // The sound is suspended while the page is hidden (a line being spoken is stopped) and resumed when it is shown.
+  // the alarm would drone on alone. The sound is faded out while the page is hidden and back in when it is shown, and
+  // runs on, unheard: a blip or a typed letter that a timer plays behind the hidden page plays in its time, silent,
+  // rather than all at once when the page comes back (as it did with the sound suspended), and nothing waits on a
+  // suspend or a resume to finish. A line being spoken is stopped, and none is begun while the page is hidden (say).
+  MASTER: 0.7,
   _onVisible() {
     const c = this.ctx;
-    if (!c) return;
+    if (!c || !this.master) return;
+    const t = c.currentTime, g = this.master.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(document.hidden ? 0 : this.MASTER, t, 0.02);
     if (!document.hidden) { this.resume(); return; }
-    if (c.state === "running") c.suspend().catch(() => {});
     try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) { /* no speech here */ }
   },
 
@@ -190,6 +195,7 @@ const Sound = {
   sayAt: 0, sayGen: 0,
   say(text) {
     if (!Store.settings.sfx || !Store.settings.voice) return 0;
+    if (document.hidden) return -1; // (a hidden page says nothing: _onVisible)
     const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
     if (wait > 2.5) return -1;
     // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
