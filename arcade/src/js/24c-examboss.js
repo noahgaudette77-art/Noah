@@ -312,15 +312,15 @@ function bossHousing(env, pv) {
   const grp = new THREE.Group();
   grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
   grp.scale.set(1, 1.18, 1); // (a little taller than wide: the hollow runs on down below the reactor)
-  const lathe = (pts, mat) => { const geo = new THREE.LatheGeometry(pts.map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8); geo.rotateX(Math.PI / 2); const m = new THREE.Mesh(geo, mat); grp.add(m); return m; };
-  lathe([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]], metal); // the rim and its bevel
+  // (its metal, one draw: the rim, the vent's slats and the core's collar were six, each placed by its own mesh; the
+  // performance re-check put each where it stood and drew them as one)
+  const steel = [new THREE.LatheGeometry([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]].map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8).rotateX(Math.PI / 2)]; // the rim and its bevel
   const floor = new THREE.Mesh(new THREE.CircleGeometry(ri + 0.001, 8, Math.PI / 8), dark);
   floor.position.z = zi - 0.001;
   grp.add(floor);
-  for (let i = 0; i < 4; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.008, 0.0042, 0.006), metal); v.position.set(0, -0.019 - i * 0.0072, zi + 0.002); grp.add(v); } // the vent's slats
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.0185, 0.003, 6, 8), metal); // the core's collar
-  ring.rotation.z = Math.PI / 8; ring.position.set(0, 0.008, zi + 0.004);
-  grp.add(ring);
+  for (let i = 0; i < 4; i++) steel.push(new THREE.BoxGeometry(0.05 - i * 0.008, 0.0042, 0.006).translate(0, -0.019 - i * 0.0072, zi + 0.002)); // the vent's slats
+  steel.push(new THREE.TorusGeometry(0.0185, 0.003, 6, 8).rotateZ(Math.PI / 8).translate(0, 0.008, zi + 0.004)); // the core's collar
+  grp.add(new THREE.Mesh(mergeIndexed(steel), metal));
   h.coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 0.3, 2.1) });
   const core = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 16, 10), h.coreMat);
   core.scale.z = 0.55; core.position.set(0, 0.008, zi + 0.003);
