@@ -8,13 +8,14 @@
 //   node arcade/tools/capture.js arcade/tools/scenarios/draws.js --size 440x956 --dpr 3 --phone --out <dir>
 //
 // GAMES=blaster,racer,boss,memory,exam  SECONDS=150 (game time each)  EVERY=45 (frames between counts)  TOP=14
+// PASSES=1: each piece's row split by the target it was drawn into (its size), to see what a frame draws twice.
 // Writes draws.json and draws.md.
 const fs = require("fs"), path = require("path");
 module.exports = async (cap) => {
   const GAMES = (process.env.GAMES || "blaster,racer,boss,memory,exam").split(","), SECONDS = +(process.env.SECONDS || 150), EVERY = +(process.env.EVERY || 45), TOP = +(process.env.TOP || 14);
   const out = {}, md = [`# Draws at many moments (tools/scenarios/draws.js, ${new Date().toISOString().slice(0, 10)})`, "", `Each game ${SECONDS} s of play, a whole frame counted about every ${EVERY} frames (every pass).`, ""];
   // one whole frame counted (one drawn first, as the soak does), and what drew it
-  const count = () => cap.eval(() => {
+  const count = () => cap.eval((PASSES) => {
     const A = window.__arcade, r = A.GFX.renderer, cur = A.Scenes.cur, main = cur && cur.scene, by = {};
     window.__tick(1, true);
     const orig = r.renderBufferDirect;
@@ -24,7 +25,7 @@ module.exports = async (cap) => {
       let k;
       const mk = material.customProgramCacheKey !== base ? material.customProgramCacheKey() : material.name || material.type.replace(/Material$/, "");
       if (!scene) k = "shadow maps";
-      else if (scene === main) { let o = object; while (o.parent && o.parent !== scene) o = o.parent; k = (o === object ? "" : what(o) + " > ") + what(object) + " [" + String(mk).slice(0, 40) + "]"; }
+      else if (scene === main) { let o = object; while (o.parent && o.parent !== scene) o = o.parent; const t = r.getRenderTarget(); k = (o === object ? "" : what(o) + " > ") + what(object) + " [" + String(mk).slice(0, 40).replace(/[\n|]/g, " ") + "]" + (PASSES ? " @" + (t ? t.width + "x" + t.height : "screen") : ""); }
       else k = "pass: " + (material.name || (material.uniforms ? Object.keys(material.uniforms).slice(0, 2).join("+") : material.type));
       const e = by[k] || (by[k] = { n: 0, tris: 0 });
       e.n++;
@@ -37,7 +38,7 @@ module.exports = async (cap) => {
     const o = { draws: r.info.render.calls, tris: r.info.render.triangles, by, tier: A.GFX.tier };
     r.info.autoReset = true;
     return o;
-  });
+  }, !!process.env.PASSES);
   const state = () => cap.eval(() => {
     const A = window.__arcade, s = A.Scenes.cur, m = A.UI.modal, scr = document.querySelector("#ui > .screen");
     return { st: (s && s.state) || null, ask: !!(s && s.state === "ask" && s.round && !(s.quiz && s.quiz.sheet)), sheet: !!(s && s.quiz && s.quiz.sheet), results: !!(scr && scr.classList.contains("scr-results")), modal: m ? (m.el.querySelector("h2") || {}).textContent || "modal" : null, game: !!(scr && scr.classList.contains("scr-game")) };
@@ -85,9 +86,12 @@ module.exports = async (cap) => {
     const ds = rows.map((r) => r.draws).sort((a, b) => a - b), ts = rows.map((r) => r.tris).sort((a, b) => a - b), mid = (a) => a[a.length >> 1];
     const most = rows.reduce((a, r) => (r.draws > a.draws ? r : a), rows[0]);
     const top = Object.entries(most.by).sort((a, b) => b[1].n - a[1].n).slice(0, TOP);
+    // what the busiest frame draws that a middling one does not: the pieces whose draws grow the most
+    const medRow = rows.slice().sort((a, b) => a.draws - b.draws)[rows.length >> 1];
+    const more = Object.keys(most.by).map((k) => [k, most.by[k].n - ((medRow.by[k] || {}).n || 0)]).filter(([, d]) => d > 0).sort((a, b) => b[1] - a[1]).slice(0, TOP);
     const heavy = rows.reduce((a, r) => (r.tris > a.tris ? r : a), rows[0]), topT = Object.entries(heavy.by).sort((a, b) => b[1].tris - a[1].tris).slice(0, 8);
     out[game] = { n: rows.length, tier: most.tier, draws: { least: ds[0], median: mid(ds), most: ds[ds.length - 1] }, tris: { least: ts[0], median: mid(ts), most: ts[ts.length - 1] }, atMost: top, atMostTris: topT, all: rows.map((r) => [r.draws, r.tris]) };
-    md.push(`## ${game} (${rows.length} frames counted, tier ${most.tier})`, "", `draws: least ${ds[0]}, median ${mid(ds)}, most ${ds[ds.length - 1]}; triangles: least ${ts[0]}, median ${mid(ts)}, most ${ts[ts.length - 1]}`, "", "At the most draws:", "", "| piece [its material] | draws | triangles |", "|---|---|---|", ...top.map(([k, v]) => `| ${k} | ${v.n} | ${v.tris} |`), "", "At the most triangles:", "", "| piece [its material] | draws | triangles |", "|---|---|---|", ...topT.map(([k, v]) => `| ${k} | ${v.n} | ${v.tris} |`), "");
+    md.push(`## ${game} (${rows.length} frames counted, tier ${most.tier})`, "", `draws: least ${ds[0]}, median ${mid(ds)}, most ${ds[ds.length - 1]}; triangles: least ${ts[0]}, median ${mid(ts)}, most ${ts[ts.length - 1]}`, "", "At the most draws:", "", "| piece [its material] | draws | triangles |", "|---|---|---|", ...top.map(([k, v]) => `| ${k} | ${v.n} | ${v.tris} |`), "", `More at the most (${most.draws}) than at the median frame (${medRow.draws}):`, "", "| piece [its material] | draws more |", "|---|---|", ...more.map(([k, d]) => `| ${k} | +${d} |`), "", "At the most triangles:", "", "| piece [its material] | draws | triangles |", "|---|---|---|", ...topT.map(([k, v]) => `| ${k} | ${v.n} | ${v.tris} |`), "");
     console.log(`${game}: ${rows.length} frames; draws ${ds[0]} / ${mid(ds)} / ${ds[ds.length - 1]} (least / median / most), tris ${ts[0]} / ${mid(ts)} / ${ts[ts.length - 1]}`);
     fs.writeFileSync(path.join(cap.out, "draws.json"), JSON.stringify(out, null, 1));
     fs.writeFileSync(path.join(cap.out, "draws.md"), md.join("\n"));
