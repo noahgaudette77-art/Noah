@@ -428,6 +428,10 @@ pushed; the served link checked.
 
 ## Tried and reverted
 
+- **The arrows aimed by geometry alone (Phase 7, 2026-11-25; replaced the same hour).** First by distance with what lay
+  aside weighed three times (it skipped the sound test's single button going down Setup), then by the nearest row
+  first (it jumped between Setup's two columns, whose rows stand at different heights). Now Left and Right go in reading
+  order, Up and Down to the nearest row (Setup: row by row in reading order).
 - **The sound suspended behind a hidden page (Phase 6, 2026-11-25; replaced the same day).** It stopped the drone, but
   the timers behind the page went on playing at its frozen clock (the hall's blips, typed letters: all at once when it
   came back) and a hide and a show close together raced the suspend and the resume. The master is faded instead.
