@@ -171,7 +171,10 @@ class RacerSky {
     const old = this.cur;
     this.cur = this.next; this.next = null; this.k = 0;
     if (!this.swapped) this.swap();
-    if (old.map && old.map !== this.cur.map) old.map.dispose(); // (its picture leaves the graphics chip: one sky is held there at a time)
+    // (its picture leaves the graphics chip, a frame later: the traffic was handed this frame's sky before the change
+    // finished (feed, in the world's update), and a picture drawn after it was let go is sent to the chip again: an 8K
+    // one in the middle of a run on a Mac at the MAC tier. The Mac's richer tier's review)
+    if (old.map && old.map !== this.cur.map) (this.retired || (this.retired = [])).push(old.map);
   }
   // the change is made at once (through a tunnel's mouth: the sky is whole on the first frame of the open road)
   snap() { if (this.next) { this.mips(this.next.map); this.finish(); } this.settle(this.cur.r, 1); this.show(); }
@@ -211,6 +214,8 @@ class RacerSky {
   // light of what is lit, the far haze, the wet road's share of it, and the lens.
   update(dt) {
     const g = this.g, w = g.world;
+    // (a picture the last change of landscape left: the traffic has been handed the new one since (finish))
+    if (this.retired) { for (const m of this.retired) if (m !== this.cur.map && !(this.next && this.next.map === m)) m.dispose(); this.retired = null; }
     this.flash = w ? Math.min(1, w.skyFlash || 0) : 0; // (lightning lights the whole sky)
     if (this.next) {
       this.mips(this.next.map);
