@@ -40,16 +40,34 @@ const UI = {
     // card) is left out. With the focus where a click or the game itself put it, the screen's keys work as before.
     // (Phase 7: Tab to STATS in the hall and Enter played the cabinet; to the exam's flag, and Enter went on instead.)
     let navKey = false, keyFocus = null;
-    document.addEventListener("keydown", (e) => { navKey = e.key === "Tab" || e.key.startsWith("Arrow"); }, true);
+    // (Option-Tab is how Safari tabs to buttons; an arrow with a modifier is a browser's shortcut, which may leave the
+    // page and never bring its keyup back: so the window's blur ends it too)
+    document.addEventListener("keydown", (e) => { navKey = e.key === "Tab" || (e.key.startsWith("Arrow") && !e.metaKey && !e.ctrlKey && !e.altKey); }, true);
     document.addEventListener("keyup", () => { navKey = false; }, true);
+    window.addEventListener("blur", () => { navKey = false; });
     document.addEventListener("focusin", (e) => { keyFocus = navKey ? e.target : null; });
     document.addEventListener("pointerdown", () => { keyFocus = null; }, true);
+    // ... and only on what is on top and in play: not a button under a client's briefing or a menu (a briefing takes
+    // no focus, so the stage that opened it keeps it: Enter there is the briefing's), not a panel put out of reach (the
+    // exam's while its ending plays). (Phase 7's review: Enter under a first briefing started the stage again.)
+    const keyButton = () => {
+      const b = keyFocus, top = this.modal || this.cur;
+      if (!b || b !== document.activeElement || b.disabled || !b.matches("button, a[href]") || !top || !top.el.contains(b)) return null;
+      const cs = getComputedStyle(b);
+      return cs.pointerEvents === "none" || cs.visibility === "hidden" ? null : b;
+    };
     document.addEventListener("keydown", (e) => {
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
-      if ((e.key === "Enter" || e.key === " ") && keyFocus && keyFocus === document.activeElement && !keyFocus.disabled && keyFocus.matches("button, a[href]")) return;
-      if (this.modal) { if (this.modal.key) this.modal.key(e); return; }
-      if (this.cur && this.cur.key) this.cur.key(e);
+      if ((e.key === "Enter" || e.key === " ") && keyButton()) return; // (the browser clicks it)
+      const was = document.activeElement;
+      this._nav = false;
+      if (this.modal) { if (this.modal.key) this.modal.key(e); }
+      else if (this.cur && this.cur.key) this.cur.key(e);
+      // An arrow the screen took as its own (the hall's cabinets, a lane, a grade, a question: it says so with
+      // preventDefault) lets go of the button the keyboard had moved to, so Enter is the screen's again: the ring
+      // would otherwise stay on STATS while the cabinets turn. (Not the arrows over a screen's cards: see arrowNav.)
+      if (e.key.startsWith("Arrow") && e.defaultPrevented && !this._nav && keyFocus && keyFocus === was && document.activeElement === was) { keyFocus = null; was.blur(); }
     });
   },
   show(ctrl) {

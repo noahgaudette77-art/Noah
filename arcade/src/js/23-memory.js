@@ -1156,9 +1156,9 @@ class MemoryGame extends QuizGame {
     if (e.key === "Escape" || e.key === "p" || e.key === "P") { e.preventDefault(); return this.pause(); }
     if (this.state === "front" && (e.key === " " || e.key === "Enter" || e.key === "f" || e.key === "F")) { e.preventDefault(); return this.flip(); }
     if (this.state === "back") {
-      if (e.key === "1" || e.key === "ArrowLeft") return this.grade("again");
+      if (e.key === "1" || e.key === "ArrowLeft") { e.preventDefault(); return this.grade("again"); }
       if (e.key === "2" || e.key === " " || e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); return this.grade("good"); }
-      if (e.key === "3" || e.key === "ArrowRight") return this.grade("easy");
+      if (e.key === "3" || e.key === "ArrowRight") { e.preventDefault(); return this.grade("easy"); }
     }
   }
   pause() {

@@ -1956,8 +1956,8 @@ function showHub() {
       }
     },
     key: (e) => {
-      if (e.key === "ArrowLeft") move(-1);
-      else if (e.key === "ArrowRight") move(1);
+      if (e.key === "ArrowLeft") { e.preventDefault(); move(-1); } // (the arrows' own: a button the keyboard had moved to lets go, see UI.init)
+      else if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
       else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(); }
       else if (e.key === "Escape") showTitle();
     },
