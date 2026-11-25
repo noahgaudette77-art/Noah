@@ -706,7 +706,8 @@ class BlasterStage {
       this.frame.visible = true;
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
-      this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
+      const k = g.liftScSet || 1; // (Phase 4's review: it keeps to the band's edges while an explanation stands the lens back)
+      this.frame.scale.set((b.w * 1.5) / k, (b.h * 1.5) / k, 1);
       this.frameU.uK.value = fk;
       this.edge.set(this.lowK, beat);
     } else { this.frame.visible = false; this.edge.set(0, 0); }

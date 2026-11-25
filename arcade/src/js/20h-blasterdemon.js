@@ -606,7 +606,8 @@ class BlasterDemon {
       this.aura.visible = true;
       this.aura.position.copy(cam.position).add(this._a.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.aura.quaternion.copy(cam.quaternion);
-      this.aura.scale.set(b.w * 1.3, b.h * 1.3, 1); // (its brightest part lies just outside the band)
+      const k = g.liftScSet || 1; // (Phase 4's review: on a Mac, while an explanation stands the lens back, its edge stays outside the screen)
+      this.aura.scale.set((b.w * 1.3) / k, (b.h * 1.3) / k, 1); // (its brightest part lies just outside the band)
       this.auraU.uK.value = au;
     }
 
