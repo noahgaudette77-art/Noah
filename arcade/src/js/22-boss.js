@@ -586,8 +586,8 @@ class BossGame extends QuizGame {
         glow.add(box, on(Rk - 0.47, y + 1.42).multiply(new THREE.Matrix4().makeScale(w, 0.045, 0.04)), P.b, 0.8 - 0.15 * k, arena); // and a line of the second colour under it
         // the people: two rows on every tier, shoulder to shoulder, some with their arms up
         const per = Math.max(2, Math.floor(w / 1.15));
-        for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) {
-          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
+        const person = (row, j, off) => {
+          const a = a0 + (a1 - a0) * ((j + 0.5 + (Math.random() - 0.5) * 0.5 + row * 0.5 + off) / per), r = Rk - 0.05 + row * 0.42, fy = y + 1.8 + row * 0.5, sc = 1.25 + Math.random() * 0.4, sd = Math.random();
           // (the master overhaul, Phase 2: lit figures, where they were black cut-outs: what they wear takes the arena's
           // lamps; a rim of the arena's light along their tops and upper sides; a light stick, a phone, a sign of their own)
           const rim = new THREE.Color().copy(tints[Math.floor(Math.random() * tints.length)]).multiplyScalar((0.75 + Math.random() * 0.5) * tk * 2.4);
@@ -597,7 +597,11 @@ class BossGame extends QuizGame {
           // runs what is drawn after the crowd comes out otherwise. The rules are not touched: their regression holds)
           people.push({ m: new THREE.Matrix4().makeRotationY(-a).setPosition(Math.sin(a) * r, fy, -Math.cos(a) * r).scale(new THREE.Vector3(sc, sc, sc)), fig: BOSS_CROWD_PICK[Math.floor(Math.random() * BOSS_CROWD_PICK.length)], sd, a, rim, wear: wear[(n * 5 + (n >> 3)) % wear.length].clone().multiplyScalar(1 - 0.2 * k) });
           n++;
-        }
+        };
+        for (let row = 0; row < 2; row++) for (let j = 0; j < per; j++) person(row, j, 0);
+        // (the Mac's richer tier, GFX.rich: two fifths more in every row, between the others, from a randomness of
+        // their own: each a card of the one instanced crowd, so no draw more and a few triangles)
+        if (GFX.rich) GFX.richRandom(() => { const more = Math.round(per * 0.4); for (let row = 0; row < 2; row++) for (let j = 0; j < more; j++) person(row, Math.floor(((j + 0.5) * per) / more), 0.5); });
         // what they hold up: glow sticks in the house colours, a few phone lights
         for (let j = 0; j < 2; j++) {
           const a = a0 + (a1 - a0) * Math.random(), r = Rk - 0.1 + Math.random() * 0.55, t = tints[Math.floor(Math.random() * tints.length)], b = (0.3 + Math.random() * 0.5) * (1 - 0.14 * k);
