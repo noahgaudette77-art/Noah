@@ -49,7 +49,7 @@ const GFX = {
   // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
   // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
   TIERS: [
-    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.8, extras: true, sharpen: true, fringe: false, fx: 1 }, // (mirror 0.8: the Mac's richer tier, 2026-11-25; it was 0.6)
+    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 }, // (mirror: the Mac's richer tier tried 0.8, 2026-11-25: 5 to 7% more of a frame in the hall and Boss Rush, 11% in Nest Egg Run with its sharper skies, drawn in software here; with no MacBook to measure on, smoothness first: 0.6 as before)
     { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
     { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
     { name: "LIGHTEST", pr: 1.25, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
