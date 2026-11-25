@@ -21,7 +21,12 @@ phase: the harness and an independent review.
 - **On the build with the pass (`f0b0596`, `docs/master/runs/phase4`):** content and scripts untouched since `ee413e3`;
   the rules IDENTICAL from disk and served; the sequence ALL 13 STEPS OK; stills on both devices with **no text
   overlaps**. (Its costs were lost when the machine restarted; measured again below.)
-- **On the final build, with the review's fixes** (`docs/master/runs/phase4-final`): PENDING
+- **On the final build, with the review's fixes** (`479fb52`, live; `docs/master/runs/phase4-final`): **no fault**: content
+  and scripts untouched, the rules IDENTICAL from disk and served, the sequence ALL 13 STEPS OK; every screen inside its
+  budget on both tiers. Against Phase 2's gate (`phase2-polish`): the same draws, triangles, textures and buffers on
+  every screen, but Risk Blaster's and Nest Egg Run's, which follow the traffic at the moment measured (phone 91 to 96 and
+  88 draws; Mac 99 to 116 and 131 to 147: nothing in this pass draws there), and the hub's laser's moment (85 to 84);
+  script time a frame the same or lower everywhere (phone 0.2 to 0.63 ms, Mac 0.2 to 0.76 ms).
 
 ## The independent review
 

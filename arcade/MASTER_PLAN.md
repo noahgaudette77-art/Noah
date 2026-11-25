@@ -14,21 +14,16 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** 4, game feel, next (the owner's order: 0, 1, 5, 3, 2, then 4). Phases 0, 1, 5, 3 and 2 are done: Phase 2's
-  polish passed its gate 2026-11-24 (`docs/master/phase2/polish/`: the harness without fault, every budget kept, the rules
-  IDENTICAL, an independent review's findings fixed); its first pass is recorded in `docs/master/phase2/`.
-- **Done (Phase 2, resumed):** the smoothstep safety sweep (48 calls in 16 files, pixel-neutral); then an art review of
-  every screen and its findings, a small commit each: the title hall (the cells' steel worked, the bosses leading their
-  glass, the deck without speckle, violet walls, the crack off the Proctor's face), Boss Rush's arena (its steel worked,
-  the crowd lit as bodies with lettered signs, a cyan edge), Risk Blaster (a violet sky on a wide window, the far rocks
-  lit, the brood and far traffic clean), Nest Egg Run in orange and magenta, the exam's Proctor in ice blue, the hub's
-  toppers, the guide's banner, the results bar, a gold cup, sharper portraits, Memory Bank's deck and coins. Three
-  screens' packages were made in parallel worktrees and merged. `tools/hues.py` measures a still's colour shares.
-- **Next steps (Phase 4, game feel):** see Phase 4 below: input at once with a small buffer; shake capped and reducible
-  (it is white noise a frame today: `rand` in `Scene3D.placeCamera`, 04-gfx.js; a smooth noise on its own seeded
-  stream, so the game's own randomness is drawn as before); impacts, telegraphs, answer feedback, finishers; camera
-  damping and look-ahead; the carried items (the Mac's Risk Blaster explanation over the demon; the meant impacts the
-  snap scan flags; the title's 30 Hz twitch). Never add a `GFX.hitStop`.
+- **Phase:** 6, audio, next (the owner's order: 0, 1, 5, 3, 2, 4, then 6). Phases 0, 1, 5, 3, 2 and 4 are done: Phase 4
+  passed its gate 2026-11-25 (`docs/master/phase4/`: the harness without fault, every budget kept, the rules IDENTICAL,
+  an independent review's findings fixed; live at `479fb52`).
+- **Done (Phase 4, game feel):** the shake a smooth noise in time (the same at any frame rate, on no random stream, a
+  third of the jump a frame), Risk Blaster's explanation on a Mac standing the lens back (the demon whole), the title's
+  twitch a shudder, Nest Egg Run's surge without its first-frame pop, the egg's easing by time. Every game already
+  answered a tap in its frame and lost none to a transition.
+- **Next steps (Phase 6, audio):** see Phase 6 below: an audit of every screen's sound first (levels, the mix, what plays
+  over what, the timing against the picture: the wizard's casts and bolts carried here from Phase 4), then the faults,
+  worst first, a commit each; the gate as written.
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -220,7 +215,7 @@ skinning re-audited, clip sets, state machine, the twelve principles, procedural
         fixed; the final build `f10b3c2` (rules IDENTICAL, 13/13; live). What the scan still flags: the impacts the game
         means (into its hit-stops) and a few at its threshold.
 
-### Phase 4: game feel
+### Phase 4: game feel (done 2026-11-25)
 Input at once with a small buffer; hit-stop; capped, reducible shake; recoil; impacts; telegraphs; answer feedback;
 finishers; camera damping and look-ahead; trails and speed cues by tier; Risk Blaster, Nest Egg Run, Boss Rush; the
 wizard's casts, wand and cape tight to the sound.
@@ -579,3 +574,14 @@ owner (art calls): Risk Blaster's deep space to the upper right on a Mac; Nest E
 title cells' glass tinted by its world's pair (a design change). Carried to Phase 7: icons of 20 px or more, a
 384 px portrait strip, the results bar. Spend: none. Tools added: `hues.py`, `scenarios/arena-look.js`,
 `scenarios/title-look.js`. Side file: `index.phase2b.html` (the page before this pass, `cd141b1`; gitignored).
+
+**Phase 4 (2026-11-25).** The audit first (`docs/master/phase4/audit.md`): every game answers a tap in the frame it
+lands and loses none to a transition; the faults were in how things move. Fixed, a commit each: the camera's shake
+(white noise a frame, a buzz twice as fast at 120 Hz, drawn from the game's random stream) a smooth value noise in
+time; Risk Blaster's explanation on a Mac standing the lens back instead of lifting the demon under the question panel;
+the title's twitch from 21-28 Hz to 10-12 Hz; Nest Egg Run's surge without its first-frame pop; the egg's easing by
+time. An independent review found seven more (a resize mid-explanation, the red aura's edge inside the screen, a dead
+lean, the shake's noise at its zero crossings and lattice points, a zoom blur, an easing by frame, a shadowed name):
+all fixed. The gate (`docs/master/phase4/gate-report.md`): no fault, every budget kept, the rules IDENTICAL. A machine
+restart lost one harness run's costs: measured again on the final build. Spend: none. Tools: `scratchpad/phase4/
+shake-trace.js` (the camera's place a frame through a shake; scratch). Live at `479fb52`.
