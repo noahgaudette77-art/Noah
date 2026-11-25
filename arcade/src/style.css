@@ -2099,3 +2099,11 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .scr-select .scroll > .wrap, .guide-lib:not(.scr-notes) .scroll > .wrap { max-width: 1360px; }
   .guide-lib:not(.scr-notes) .ch-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Icons at the art bible's 20 px (section 5; Phase 7, 2026-11-25: carried from Phase 2's gate). An icon that stands for
+   itself is at least 20 px: an icon-only button (pause, sound, full screen, the exam's grid and flag, the hall's arrows),
+   the HUD's lives, a stage's stars, a trophy's lock, Setup's row icons, a world's mark on stage select. A glyph inside a
+   labelled button (PLAY AGAIN, NEXT, the back arrow beside BACK) keeps its size: the label speaks, and a 20 px glyph
+   would stand twice the height of its 11 px words. (The racer's narrowest phones keep their own smaller lives.) */
+.iconbtn svg, .lives svg, .scr-racer .lives svg, .stars svg, .trophies .tr .lk svg, .setting .si svg, .world.wbar i svg, .btn[data-act="flag"] svg { width: 20px; height: 20px; }
+.iconbtn[data-act="back"] svg { width: 16px; height: 16px; }
