@@ -335,7 +335,11 @@ class RacerRig {
     }
     if (this.surgeT > 0) {
       this.surgeT = Math.max(0, this.surgeT - d / 1.05);
-      const lunge = Math.sin(Math.PI * Math.pow(1 - this.surgeT, 0.5)); // out fast, back slowly
+      // out fast, back slowly. (Phase 4, 2026-11-25: sin(pi sqrt x) is steep without end at its start, and 39% of the
+      // lunge came in its first frame before the hit-stop held it: a pop. Out over the first fifth on an ease-out,
+      // 22% in the first frame and 40% by the second, its height at 0.21 s as near as it was; back on a cosine that
+      // settles, where it stopped with a jolt)
+      const sp = 1 - this.surgeT, lunge = sp < 0.2 ? 1 - Math.pow(1 - sp / 0.2, 3) : 0.5 + 0.5 * Math.cos((Math.PI * (sp - 0.2)) / 0.8);
       oz -= 1.15 * lunge;
       if (this.surgeT > 0.45) burn = 1;
     }
