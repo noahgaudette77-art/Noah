@@ -1025,8 +1025,12 @@ class Scene3D {
 // only, and they stayed on the graphics chip after it, some 60 MB a visit for a Boss Rush boss. A texture that is
 // shown again is sent to the chip again, from the picture it keeps. Reflection maps are shared and stay.)
 const DISPOSE_MAPS = ["map", "emissiveMap", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "alphaMap", "bumpMap"];
+// (Phase 7's soak: a skinned model's bones go too. three.js keeps each skeleton's bones in a texture of its own, made
+// the first time it is drawn; the title's cells' rigged bosses left two on the graphics chip every visit. A skeleton
+// drawn again makes its texture again.)
 function disposeTree(root) {
   root.traverse((o) => {
+    if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) o.skeleton.dispose();
     if (o.geometry) o.geometry.dispose();
     if (o.material) {
       (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
