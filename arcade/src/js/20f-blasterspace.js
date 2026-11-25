@@ -181,9 +181,12 @@ function spaceRockGeo(detail, seed) {
   return g;
 }
 // An instanced mesh of the hull material: each copy has its own seed (panel shades, window pattern, when its lights blink).
-function spaceInstanced(geo, mat, n) {
+// (seeded: how many of the n take their seed from Math.random; the rest, the Mac's richer tier's extra ones, from a
+// randomness of their own (GFX.richRandom), so what the game draws after them is what it always drew)
+function spaceInstanced(geo, mat, n, seeded = n) {
   const seed = new Float32Array(n);
-  for (let i = 0; i < n; i++) seed[i] = Math.random();
+  for (let i = 0; i < Math.min(n, seeded); i++) seed[i] = Math.random();
+  if (n > seeded) GFX.richRandom(() => { for (let i = seeded; i < n; i++) seed[i] = Math.random(); });
   geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seed, 1));
   const m = new THREE.InstancedMesh(geo, mat, n);
   m.frustumCulled = false;
@@ -443,10 +446,11 @@ class BlasterSpace {
     // (each copy room for all 96: which of the two arrive is not known until both are made, and a copy sized for half
     // that is then drawn alone would be asked for twice its instances: Phase 5's review)
     // (the Mac's richer tier, GFX.rich: twice as many far ones, a denser field at every distance; the light copies are a
-    // couple of hundred triangles each, and drawn together: no draw more)
+    // couple of hundred triangles each, and drawn together: no draw more. The first 96 are the far ones any computer
+    // draws, made, placed and moved as they always were; the others take slots of their own past them: see update)
     const FAR = (this.farCap = GFX.rich ? 192 : 96);
     const loB = rockB && this.genLo("prop-rock2-lo", rockB, FAR), loA = rockA && this.genLo("prop-rock-lo", rockA, FAR);
-    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, FAR);
+    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, FAR, 96);
     this.rockFar2 = loA && loB ? loB : null;
     if (this.rockFar2) s.add(this.rockFar2);
     this.rocks = [];
@@ -765,16 +769,25 @@ class BlasterSpace {
     }
     // rocks: as many as the region has, tumbling past
     // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
-    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round((this.farCap || 96) * rk);
+    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
+    // (the Mac's richer tier: as many again, the extra ones in their own slots from 96 on (two rocks: from 48 on in each
+    // mesh), so the first 96 are shown, moved and reset exactly as on any computer, from the seeded randomness; those of
+    // the first 96 a region does not show are drawn at nothing, the meshes' counts reaching past them to the extras)
+    const xtra = (this.farCap || 96) > 96 ? farN : 0;
     const two = this.rockNear2, nearA = two ? Math.ceil(nearN / 2) : nearN; // (two asteroids: the even rocks are the first, the odd ones the second)
-    const far2 = this.rockFar2, farA = far2 ? Math.ceil(farN / 2) : farN; // (and the far ones the same way)
+    const far2 = this.rockFar2, farA = far2 ? (xtra ? 48 + Math.ceil(xtra / 2) : Math.ceil(farN / 2)) : xtra ? 96 + xtra : farN; // (and the far ones the same way)
     this.rockNear.count = nearA; this.rockFar.count = farA;
     this.rockNear.visible = nearA > 0; this.rockFar.visible = farA > 0;
     if (two) { two.count = nearN - nearA; two.visible = two.count > 0; }
-    if (far2) { far2.count = farN - farA; far2.visible = far2.count > 0; }
+    if (far2) { far2.count = xtra ? 48 + Math.floor(xtra / 2) : farN - farA; far2.visible = far2.count > 0; }
     if (nearN + farN > 0) {
+      const none = this._none || (this._none = new THREE.Matrix4().makeScale(0, 0, 0));
       this.rocks.forEach((r) => {
-        if (r.i >= (r.near ? nearN : farN)) return;
+        if (r.i >= (r.near ? nearN : r.i < 96 ? farN : 96 + xtra)) {
+          if (xtra && !r.near && r.i < 96 && !r.hid) { r.hid = true; (far2 && r.i & 1 ? far2 : this.rockFar).setMatrixAt(far2 ? r.i >> 1 : r.i, none); } // (drawn at nothing: see xtra)
+          return;
+        }
+        r.hid = false;
         r.p.z += sp * r.f * dt;
         r.ph += r.w * dt;
         if (r.p.z > 30) { if (r.i >= 96 && !r.near) GFX.richRandom(() => this.resetRock(r, -660)); else this.resetRock(r, -660); } // (the Mac's extra ones from their own randomness)
@@ -959,7 +972,7 @@ class BlasterSpace {
     // (each its own stone, as the near ones, but from a hash and not Math.random: drawing from it here would change
     // what the game draws after it, the questions in a capture among them)
     const tone = new Float32Array(n * 3), T = [[1, 0.93, 0.86], [0.82, 0.9, 1.05], [0.62, 0.62, 0.68], [1.15, 1.1, 1.04], [0.95, 0.85, 0.95]];
-    const h = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233 + n) * 43758.5453; return x - Math.floor(x); };
+    const h = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233 + Math.min(n, 96)) * 43758.5453; return x - Math.floor(x); }; // (the first 96 their tones as on any computer)
     for (let i = 0; i < n; i++) tone.set(T[Math.floor(h(i, 1) * T.length)].map((v) => v * (0.85 + 0.3 * h(i, 2))), i * 3);
     made.geo.setAttribute("aTone", new THREE.InstancedBufferAttribute(tone, 3));
     const m = new THREE.InstancedMesh(made.geo, kit.mat, n);
