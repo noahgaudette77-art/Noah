@@ -11,16 +11,20 @@
 const fs = require("fs"), path = require("path");
 module.exports = async (cap) => {
   const SCREENS = (process.env.SCREENS || "title,hub,blaster,racer,boss,memory,exam,guide").split(",");
-  const SIZES = [[1280, 720, 2], [1920, 1080, 1], [1024, 640, 2], [2560, 1440, 1], [900, 1000, 2], [1470, 560, 2], [1680, 1050, 1], [1100, 760, 2], [1920, 1200, 1], [800, 600, 2], [1440, 900, 1], [1470, 830, 2]];
+  const SIZES = [[1280, 720, 2], [1920, 1080, 1], [1024, 640, 2], [2560, 1440, 1], [900, 1000, 2], [1470, 560, 2], [1680, 1050, 1], [1100, 760, 2], [1920, 1200, 1], [800, 600, 2], [1440, 900, 1], [1470, 830, 2], [1470, 830, 1], [1470, 830, 2]]; // (the last two: the pixel ratio alone, as a window dragged to another display of the same size)
   const waitReal = async (js, ms = 60000) => { for (let i = 0; i < ms / 100; i++) { if (await cap.eval(js)) return true; await cap.page.waitForTimeout(100); } return false; };
   const cdp = await cap.page.context().newCDPSession(cap.page);
+  await cap.eval(() => { if (!window.__rzOn) { window.__rzOn = true; window.addEventListener("resize", () => { window.__rz = (window.__rz || 0) + 1; }); } });
   let lastWait = 0;
   const setSize = async (w, h, dpr) => {
     await cdp.send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: dpr, mobile: false });
     // (the resize reaches the page when the browser next renders: wait for the window to report it, up to 2 s, then
     // draw; how long the canvas took to follow is kept: a real miss never catches up)
-    const t0 = Date.now();
-    for (let i = 0; i < 40; i++) { if (await cap.eval(([w, h]) => innerWidth === w && innerHeight === h, [w, h])) break; await cap.page.waitForTimeout(50); }
+    // (the window's size changes at once; its resize event, which the game draws to, comes with the browser's next
+    // render: when the size changed, wait for the event itself, up to 30 s on this machine's software drawing. A change
+    // of pixel ratio alone fires none: the game looks at the ratio every frame, and the frames below show it)
+    const t0 = Date.now(), n0 = was[2], sized = was[0] !== w || was[1] !== h;
+    for (let i = 0; i < 600; i++) { if (await cap.eval(([w, h, n0, sized]) => innerWidth === w && innerHeight === h && (!sized || (window.__rz || 0) > n0), [w, h, n0, sized])) break; await cap.page.waitForTimeout(50); }
     await cap.fast(6);
     await cap.eval(() => { window.__tick(2, true); });
     lastWait = Date.now() - t0;
