@@ -42,6 +42,25 @@ const Sound = {
   LOOP_SOFT: { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 },
   // (and some through a low-pass, in Hz: the hall's hum keeps its tone and loses any air or hiss above it)
   LOOP_TONE: { hub_hum: 1400 },
+  // Each loop's join (Phase 6). The generator's loops do not run on from their end into their start (a click every time
+  // round: the charge hum's 60 times the sound around it) and they swell in and fade out a little (a dip of 5 to 7 dB).
+  // When the file is decoded, each take's soft head and tail are left out and its last stretch is faded out under its
+  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm is only
+  // crossfaded, over 10 ms, so its beat keeps its time; the hall's hum joins cleanly as it is.
+  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: [0, 0, 0.01] },
+  _join(q, [head, tail, x]) {
+    const b = q.buf, sr = b.sampleRate, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
+    if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+    const done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
+    if (!done[s0]) {
+      done[s0] = 1;
+      for (let c = 0; c < b.numberOfChannels; c++) {
+        const d = b.getChannelData(c);
+        for (let i = 0; i < n; i++) { const u = (i / n) * (Math.PI / 2); d[s0 + i] = d[s0 + i] * Math.sin(u) + d[s1 - n + i] * Math.cos(u); }
+      }
+    }
+    q.at = s0 / sr; q.dur = (s1 - n - s0) / sr;
+  },
 
   init() {
     if (this.ctx) return this.resume();
@@ -321,6 +340,7 @@ const Sound = {
       this.sprites[name] = buf;
       const off = this._clickAt(buf), mix = name === "voice" ? this.MIX.voice : this.MIX.sets[name] || 1; // (the set's level in the mix)
       for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: (vol === undefined ? 1 : vol) * mix, duck: duck || 0 }));
+      for (const cue in this.LOOP_JOIN) if (sp.cues[cue]) this.bank[cue].forEach((q) => this._join(q, this.LOOP_JOIN[cue])); // (before anything can play from it)
       return buf;
     }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
   },

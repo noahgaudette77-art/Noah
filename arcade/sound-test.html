@@ -68,22 +68,59 @@
   const status = (t) => { $("#status").textContent = t; };
   const clickAt = (buf) => { const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7)); for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25; return 0; };
   const load = (file) => bufs[file] || (bufs[file] = fetch("assets/" + file.replace(/^assets\//, "")).then((r) => { if (!r.ok) throw new Error(file + ": " + r.status); return r.arrayBuffer(); }).then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej))).then((buf) => ({ buf, off: clickAt(buf) })));
-  const stopAll = () => { live.forEach((x) => { try { x.stop ? x.stop() : x.src.stop(); } catch (e) {} x.btn && x.btn.classList.remove("playing"); }); live.clear(); };
+  // (a sound stopped here fades out over a few milliseconds: a stop is never a click)
+  const halt = (x) => { try { if (x.stop) x.stop(); else { const t = ctx.currentTime; x.g.gain.cancelScheduledValues(t); x.g.gain.setTargetAtTime(0, t, 0.012); x.src.stop(t + 0.08); } } catch (e) {} };
+  const stopAll = () => { live.forEach((x) => { halt(x); x.btn && x.btn.classList.remove("playing"); }); live.clear(); };
+  // ---- the loops' joins and the ends of the takes, made as the game makes them (Sound.LOOP_JOIN, _join, _release and
+  // _cue in 02-sound.js: Phase 6). A loop's recording does not run on from its end into its start, so its join is made
+  // in the decoded file: its soft head and tail ([head, tail] seconds) left out and its last stretch (crossfade) faded
+  // out under its first fading in. A take the generator stopped mid-sound is let go over its last stretch.
+  const JOIN = { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: [0, 0, 0.01] };
+  const joined = new Map(); // file + its window -> the joined window, in seconds of the decoded file
+  const join = (file, buf, from, to, how) => {
+    const key = file + "@" + from;
+    if (!how) return [from, to];
+    if (joined.has(key)) return joined.get(key);
+    const sr = buf.sampleRate, s0 = Math.round(from * sr) + Math.round(how[0] * sr), s1 = Math.round(to * sr) - Math.round(how[1] * sr), n = Math.round(how[2] * sr);
+    let w = [from, to];
+    if (n > 0 && s1 - s0 >= 4 * n) {
+      for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < n; i++) { const u = (i / n) * Math.PI / 2; d[s0 + i] = d[s0 + i] * Math.sin(u) + d[s1 - n + i] * Math.cos(u); } }
+      w = [s0 / sr, (s1 - n) / sr];
+    }
+    joined.set(key, w);
+    return w;
+  };
+  const release = (buf, at, dur) => {
+    const d = buf.getChannelData(0), sr = buf.sampleRate, a = Math.round(at * sr), n = Math.min(Math.round(dur * sr), d.length - a), w = Math.round(0.02 * sr);
+    if (n < 6 * w) return 0;
+    let top = 0, s = 0;
+    for (let i = a; i + w <= a + n; i += w >> 1) { s = 0; for (let j = i; j < i + w; j++) s += d[j] * d[j]; if (s > top) top = s; }
+    s = 0;
+    for (let j = a + n - 4 * w; j < a + n - 3 * w; j++) s += d[j] * d[j];
+    return s > top * 0.063 ? Math.min(0.15, dur / 4) : 0;
+  };
+  // loop: false for a take played once, true for music, or a loop's cue name (its join)
   const play = async (file, at, dur, vol, btn, loop, tone) => {
     if (!ctx) { status("Tap “Tap to start sound” first."); return; }
     if (ctx.state === "suspended") await ctx.resume();
-    if (loop) { for (const x of live) if (x.btn === btn) { try { x.src.stop(); } catch (e) {} btn.classList.remove("playing"); live.delete(x); return; } }
+    if (loop) { for (const x of live) if (x.btn === btn) { halt(x); btn.classList.remove("playing"); live.delete(x); return; } }
     status("Loading " + file + "…");
     const { buf, off } = await load(file);
-    const src = ctx.createBufferSource(), g = ctx.createGain();
-    src.buffer = buf; g.gain.value = vol;
+    const src = ctx.createBufferSource(), g = ctx.createGain(), t0 = ctx.currentTime;
+    src.buffer = buf;
+    // (in over 2 ms, as the game plays a take; a loop or the music over 20 ms, where the game fades them in)
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + (loop ? 0.02 : 0.002));
     if (tone) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = tone; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
     g.connect(ctx.destination);
-    const x = { src, btn };
+    const x = { src, g, btn };
     live.add(x); btn.classList.add("playing");
     src.onended = () => { live.delete(x); btn.classList.remove("playing"); };
-    if (loop) { src.loop = true; src.loopStart = off + at[0]; src.loopEnd = off + at[1]; src.start(0, off + at[0]); }
-    else src.start(0, off + at, dur);
+    if (loop) { const [a, b] = join(file, buf, off + at[0], off + at[1], JOIN[loop]); src.loop = true; src.loopStart = a; src.loopEnd = b; src.start(t0, a); }
+    else {
+      const rel = release(buf, off + at, dur);
+      if (rel) g.gain.setTargetAtTime(0, t0 + dur - rel, rel / 3);
+      src.start(t0, off + at, dur);
+    }
     status("Playing " + btn.dataset.label);
   };
   const el = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
@@ -178,7 +215,7 @@
         takes.forEach((t, i) => {
           const lbl = `${SETS[set] || set} · ${name} · take ${i + 1}`;
           const b = el(`<button data-label="${esc(lbl)}" aria-label="${esc(lbl)}">${takes.length > 1 ? i + 1 : "▶ play"}</button>`);
-          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, true, tone) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
+          b.onclick = () => (isLoop ? play(sp.file, [t[0], t[0] + t[1]], 0, (t[2] || 1) * soft, b, names.find((n) => JOIN[n]) || true, tone) : play(sp.file, t[0], t[1], t[2] || 1, b, false));
           row.querySelector(".takes").appendChild(b);
         });
         list.appendChild(row);
