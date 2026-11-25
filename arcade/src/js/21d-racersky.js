@@ -68,12 +68,16 @@ class RacerSky {
     this._c = new THREE.Color(); this._c2 = new THREE.Color();
     this.envs = {}; this.users = []; this.envK = 1; this.flash = 0;
     // what lacquer mirrors under each sky, made now, behind the screen's cover (a map made in the middle of a run
-    // would drop a frame or two). Only the sky on show keeps its picture on the graphics chip afterwards.
+    // would drop a frame or two).
     this.cur = this.conf(racerSkyId(racerBiomeAt(g.year), g.year), this.main);
-    // (each panorama leaves the chip again as soon as its map is made: five of them are never held there at once)
+    // (each panorama leaves the chip again as soon as its map is made; the screen's warm-up sends every one back, as it
+    // sends every sky a screen may come to (GFX.warm), and each leaves again as the road leaves its landscape: finish)
     for (const id in RACER_SKIES) { this.envFor(id); const sk = RACER_SKIES[id].sky && skies[RACER_SKIES[id].sky]; if (sk && sk.map && sk.map !== this.cur.map) sk.map.dispose(); }
     for (const n in skies) if (skies[n] && skies[n].map && skies[n].map !== this.cur.map) skies[n].map.dispose();
-    this.mips(this.cur.map);
+    // (every one filtered through its smaller copies from the start, so the warm-up sends it whole: one filtered so for
+    // the first time as the road ran into its landscape was sent to the chip again then, its copies made, a stall in
+    // the middle of a run, 8K a picture on a Mac: the Mac's richer tier, 2026-11-25)
+    for (const n in skies) if (skies[n]) this.mips(skies[n].map);
     this.next = null; this.k = 0; this.dur = 0.6; this.swapped = false;
     this.env = this.envs[this.cur.id] || null;
     if (this.env) s.environment = this.env;
