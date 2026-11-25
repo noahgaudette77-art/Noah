@@ -110,6 +110,7 @@ function inPage() {
   page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 300)); });
   await page.route("https://cdnjs.cloudflare.com/**", (r) => r.fulfill({ path: path.join(ARCADE, "vendor/three.min.js"), contentType: "application/javascript" }));
   await page.addInitScript(inPage);
+  if (process.env.GLMEM) await page.addInitScript(require("./glmem")); // (GLMEM=1: what the page holds on the graphics chip, window.__mem: see glmem.js)
   if (INSETS) { // (the phone's safe areas: the page's gutters set to them, as the page itself would from env())
     const [t, b] = INSETS.split(",").map(Number);
     await page.addInitScript(([t, b]) => { document.addEventListener("DOMContentLoaded", () => { const s = document.createElement("style"); s.textContent = `:root { --gut-t: ${Math.max(10, t)}px !important; --gut-b: ${Math.max(14, b)}px !important; }`; document.head.appendChild(s); }); }, [t || 0, b || 0]);
