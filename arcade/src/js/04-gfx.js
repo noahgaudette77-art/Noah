@@ -910,15 +910,16 @@ function shockTexture() {
 }
 
 // The camera's shake: value noise from -1 to 1 on its own hashed lattice (no random stream is drawn from), smoothed
-// between its points, and pushed out toward its edges (to the power 0.75) so that it stands as far off on average as
-// the random offsets did (0.75 of the amount against 0.76), never further (its most is 1: the staged games' caps hold);
-// ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up).
+// between its points, and pushed out toward its edges (v (1.3 - 0.3 v^2): as far off on average as the random offsets
+// were, 0.76 of the amount, and never further, its most 1, so the staged games' caps hold; no steep slope where it
+// crosses naught, as a power had); ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up, read half a
+// step later, so the two never rest on their lattice points in the same instant).
 const SHAKE_HZ = 18;
+const shakeHash = (n, ch) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
 function shakeNoise(u, ch) {
-  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f);
-  const h = (n) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
-  const a = h(i), v = a + (h(i + 1) - a) * s;
-  return Math.sign(v) * Math.pow(Math.abs(v), 0.75);
+  if (ch) u += 0.5;
+  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f), a = shakeHash(i, ch), v = a + (shakeHash(i + 1, ch) - a) * s;
+  return v * (1.3 - 0.3 * v * v);
 }
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
