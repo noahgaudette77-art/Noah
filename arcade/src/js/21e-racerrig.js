@@ -339,7 +339,7 @@ class RacerRig {
       // lunge came in its first frame before the hit-stop held it: a pop. Out over the first fifth on an ease-out,
       // 22% in the first frame and 40% by the second, its height at 0.21 s as near as it was; back on a cosine that
       // settles, where it stopped with a jolt)
-      const sp = 1 - this.surgeT, lunge = sp < 0.2 ? 1 - Math.pow(1 - sp / 0.2, 3) : 0.5 + 0.5 * Math.cos((Math.PI * (sp - 0.2)) / 0.8);
+      const sg = 1 - this.surgeT, lunge = sg < 0.2 ? 1 - Math.pow(1 - sg / 0.2, 3) : 0.5 + 0.5 * Math.cos((Math.PI * (sg - 0.2)) / 0.8);
       oz -= 1.15 * lunge;
       if (this.surgeT > 0.45) burn = 1;
     }
