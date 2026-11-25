@@ -83,31 +83,43 @@ const UI = {
     if (f) f.focus({ preventScroll: true });
   },
   // The arrows over a screen's cards or buttons (stage select, the guide's chapters, Setup, a menu, the exam's grid of
-  // questions): the focus goes to the nearest in the arrow's direction, the first arrow (none of them focused) to the
-  // one the screen lights, or the first. Then Enter or Space is that one's (see init). Safari's Tab skips buttons
-  // unless its settings say otherwise (Option-Tab), so on a Mac the arrows are how a keyboard reaches a stage. (Phase
-  // 7.) across: only Left and Right (Up and Down still scroll the page: a results screen's list). Returns true when it
-  // took the key.
-  arrowNav(e, root, sel, first, across) {
+  // questions). Left and Right go to the one before or after in reading order (the order the cards and switches are
+  // read in, and Tab's); Up and Down to the nearest above or below, the nearest row first; with rows (Setup's
+  // .setting), to the row before or after, at the control in it nearest across. The first arrow, none of them focused,
+  // goes to the one the screen lights, or the first. Then Enter or Space is that one's (see init). Safari's Tab skips
+  // buttons unless its settings say otherwise (Option-Tab), so on a Mac the arrows are how a keyboard reaches a stage.
+  // (Phase 7.) across: only Left and Right (Up and Down still scroll the page: a results screen's list). Nothing that
+  // way: the key is left to the page (it scrolls past the last row to what is under it). Returns true when it took it.
+  arrowNav(e, root, sel, first, across, rows) {
     const d = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
     if (!d || (across && d[1]) || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return false;
     const items = [...root.querySelectorAll(sel)].filter((b) => !b.disabled && b.getClientRects().length);
     if (!items.length) return false;
-    e.preventDefault();
-    const at = items.indexOf(document.activeElement);
+    this._nav = true; // (the screen's arrows move its focus: see init)
+    const at = items.indexOf(document.activeElement), mid = (b) => { const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r]; };
     let to = null;
     if (at < 0) to = (first && items.find((b) => b.matches(first))) || items[0];
+    else if (d[0]) to = items[at + d[0]] || null;
     else {
-      const a = items[at].getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
-      let best = Infinity;
-      for (const b of items) {
-        const r = b.getBoundingClientRect(), dx = r.left + r.width / 2 - ax, dy = r.top + r.height / 2 - ay;
-        const along = dx * d[0] + dy * d[1], across = Math.abs(dx * d[1] - dy * d[0]);
-        if (b === items[at] || along < 8) continue;
-        if (along + 3 * across < best) { best = along + 3 * across; to = b; } // (straight on before aside: a row's next card before the row below's)
+      const [ax, ay, a] = mid(items[at]);
+      if (rows) { // the row before or after that has any of them, at the one in it nearest across
+        const own = items[at].closest(rows), list = [...root.querySelectorAll(rows)].filter((r) => r !== own && items.some((b) => r.contains(b)));
+        const all = [...root.querySelectorAll(rows)], k = all.indexOf(own);
+        const next = list.filter((r) => (all.indexOf(r) - k) * d[1] > 0).sort((p, q) => (all.indexOf(p) - all.indexOf(q)) * d[1])[0];
+        if (next) to = items.filter((b) => next.contains(b)).sort((p, q) => Math.abs(mid(p)[0] - ax) - Math.abs(mid(q)[0] - ax))[0];
+      } else {
+        let best = Infinity;
+        for (const b of items) {
+          const [bx, by, r] = mid(b), along = (by - ay) * d[1], gap = Math.max(0, Math.abs(bx - ax) - (a.width + r.width) / 2);
+          if (b === items[at] || along < 8) continue;
+          if (3 * along + gap < best) { best = 3 * along + gap; to = b; } // (the nearest row first, and in it the one straight on)
+        }
       }
     }
-    if (to) { to.focus({ preventScroll: true }); to.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+    if (!to) return false;
+    e.preventDefault();
+    to.focus({ preventScroll: true });
+    to.scrollIntoView({ block: "nearest", inline: "nearest" });
     return true;
   },
   el(html) {

@@ -148,6 +148,6 @@ function showSettings() {
         Sound.sfx("blip");
       }
     },
-    key: (e) => { if (e.key === "Escape") showHub(); else UI.arrowNav(e, el, "button", ".seg button[aria-pressed=true]"); }, // (the arrows over its rows and their switches, the first to the first switch's setting)
+    key: (e) => { if (e.key === "Escape") showHub(); else UI.arrowNav(e, el, "button", ".seg button[aria-pressed=true]", false, ".setting"); }, // (Up and Down from row to row in reading order, down one column and on down the next; Left and Right along a row's switches; the first arrow to the first switch's setting)
   });
 }

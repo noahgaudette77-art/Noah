@@ -146,7 +146,7 @@ function renderResults(o, rank) {
     key: (e) => {
       if (e.key === "Enter") { e.preventDefault(); if (!e.repeat) again(); } // (not a key still held from the game's last answer)
       else if (e.key === "Escape") showHub();
-      else UI.arrowNav(e, el, "button[data-act]", "[data-act=again]", true); // (Left and Right along its buttons, Enter then that one's; Up and Down scroll)
+      else UI.arrowNav(e, el, ".actions.pinned button[data-act]", "[data-act=again]", true); // (Left and Right along its bar, Enter then that one's; Up and Down scroll)
     },
     mounted: () => {
       $("[data-act=again]", el).focus({ preventScroll: true });
