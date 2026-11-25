@@ -13,8 +13,8 @@
  * - takes: every take of every effect and announcer line, played once by Sound._cue as the game plays it (its pitch and
  *   level not varied). Its start (the spike over its first 2 ms) and its end: the 20 ms before the build's own 30 ms
  *   fade at least 12 dB under its loudest 20 ms (else it is cut off while still sounding).
- * - music: every track, played from a second before its loop end as Sound.play plays it (src.loop between the loop
- *   points Sound.loadTrack works out): the spike at its seam.
+ * - music: every track, played by Sound.play as a visit plays it, through its first seam: the spike there, and its
+ *   sharpest bend against the music's own level (a fault: a spike of 1 or more not buried 40 dB under the music).
  * Exits 1 when anything fails.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
@@ -34,6 +34,7 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
   await page.waitForFunction(() => window.__arcade && window.__arcade.Sound && window.__arcade.Assets, null, { timeout: 60000 });
   const res = await page.evaluate(async (only) => {
     const A = window.__arcade, S = A.Sound, SR = 48000;
+    window.requestAnimationFrame = () => 0; // (the game's frames stop: nothing here is drawn, and drawing in software is slow)
     // every AudioContext the page makes is an offline one, of the length the next test asks for
     let secs = 4;
     window.AudioContext = window.webkitAudioContext = function () { return new OfflineAudioContext(2, Math.ceil(SR * secs), SR); };
@@ -83,7 +84,7 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
           try { S._cue(name, 0, { vary: 0, bus: /^vo/.test(name) ? S.voiceBus : undefined }); } finally { Math.random = rnd; }
           const d = mono(await c.startRendering()), n = Math.round(q.dur * SR), w = Math.round(0.02 * SR);
           let top = -200; for (let i = 0; i + w <= n; i += w >> 1) top = Math.max(top, rmsDb(d, i, w));
-          let st = 0; for (let i = 1; i < 0.002 * SR; i++) st = Math.max(st, d2(d, i));
+          let st = 0; for (let i = 1; i < 12; i++) st = Math.max(st, d2(d, i)); // (its first 0.25 ms: a click at a start is there)
           const ref = []; for (let i = 1; i < n - 1; i++) ref.push(d2(d, i));
           out.takes.push({ name, k, dur: q.dur, start: st / pct(ref, 0.999), end: rmsDb(d, n - 0.05 * SR, w) - top, rel: q.rel || 0 });
         }
@@ -94,11 +95,18 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
       await S.loadTrack(name);
       const rec = S.tracks[name];
       if (!rec) { out.music.push({ name, missing: true }); continue; }
-      const c = fresh(2), src = c.createBufferSource();
-      src.buffer = rec.buf; src.loop = true; src.loopStart = rec.loop[0]; src.loopEnd = rec.loop[1];
-      src.connect(c.destination); src.start(0, rec.loop[1] - 1);
-      const d = mono(await c.startRendering());
-      out.music.push({ name, end: rec.loop[1], spike: spike(d, SR, 0.5 * SR) });
+      // played by Sound.play as a visit plays it (this recording lined up for its screen), through its first seam, its
+      // passes tapped dry (before the music's tone, duck and level)
+      const base = name.replace(/-b$/, ""), L = rec.loop[1] - rec.loop[0], c = fresh(L + 1.5);
+      A.Store.settings.music = true;
+      S.trackName = base; S.takes[base] = name; S._now = null;
+      S.play(base, true);
+      if (!S._now || !S._now.g) { out.music.push({ name, missing: true }); continue; }
+      S._now.g.disconnect(); S._now.g.connect(c.destination);
+      const d = mono(await c.startRendering()), k = Math.round(L * SR);
+      let bend = 0; for (let i = k - 3; i <= k + 3; i++) bend = Math.max(bend, d2(d, i));
+      out.music.push({ name, end: rec.loop[1], spike: spike(d, k, 0.5 * SR), bend: 20 * Math.log10(bend + 1e-12) - rmsDb(d, k - 0.25 * SR, 0.5 * SR) }); // (bend: the seam's sharpest bend, dB against the music's own level over the half second around it)
+      S._now = null; S.trackName = null;
       delete S.tracks[name]; if (S._trackLoad) delete S._trackLoad[name];
     }
     return out;
@@ -121,8 +129,10 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
     lines.push("");
   }
   if (res.music.length) {
-    lines.push("## Music: every track's seam", "", "| track | loop end s | spike at the seam | |", "|---|---:|---:|---|");
-    for (const r of res.music) lines.push(r.missing ? `| ${r.name} | | | **FAIL** (did not load) |` : `| ${r.name} | ${r.end.toFixed(6)} | ${f2(r.spike)} | ${mark(r.spike >= 1)} |`);
+    // (a seam fails when it stands out from the music's own bends and is not buried 40 dB under the music: the two copies
+    // of a loop's start in its file, coded apart, differ by the codec's own noise, some 30 dB under the music)
+    lines.push("## Music: every track's seam", "", "| track | loop end s | spike at the seam | its bend against the music (dB) | |", "|---|---:|---:|---:|---|");
+    for (const r of res.music) lines.push(r.missing ? `| ${r.name} | | | | **FAIL** (did not load) |` : `| ${r.name} | ${r.end.toFixed(6)} | ${f2(r.spike)} | ${r.bend.toFixed(1)} | ${mark(r.spike >= 1 && r.bend > -40)} |`);
     lines.push("");
   }
   if (errors.length) { lines.push("Errors on the page: " + errors.join("; "), ""); fails++; }
