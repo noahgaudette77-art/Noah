@@ -21,12 +21,12 @@ module.exports = async (cap) => {
     if (has) { const c = getComputedStyle(ae); ring = (c.outlineStyle !== "none" && parseFloat(c.outlineWidth) > 0) || c.boxShadow !== "none"; }
     return {
       scr: s ? [...s.classList].filter((c) => c !== "screen").join(".") : null,
-      modal: m ? ((m.querySelector("h2, .dlg-name") || m).textContent || "").trim().slice(0, 24) || "modal" : null, line: m && m.querySelector(".dlg-text") ? m.querySelector(".dlg-text").textContent.slice(0, 30) : null,
+      modal: m ? ((m.querySelector("h2, .dlg-name") || m).textContent || "").trim().slice(0, 24) || "modal" : null, line: m && m.querySelector(".dlg-text") ? m.querySelector(".dlg-text").textContent.slice(0, 30) : null, typed: !!(m && m.querySelector(".dlg-foot .next") && m.querySelector(".dlg-foot .next").style.visibility === "visible"),
       cab: (document.querySelector(".hub-name") || {}).textContent || null,
       state: g && g.state || null, paused: !!(g && g.paused), sheet: !!(g && g.quiz && g.quiz.sheet), lane: g && g.lane !== undefined ? g.lane : null,
       qi: g && g.i !== undefined ? g.i : null, answered: g && g.answers ? g.answers.filter((a) => a >= 0).length : null, flags: g && g.flags ? g.flags.filter(Boolean).length : null,
       title: ((s && s.querySelector(".topbar h1")) || {}).textContent || null,
-      focus: has ? (ae.dataset.act ? ae.dataset.act + (ae.dataset.sel ? ":" + ae.dataset.sel : ae.dataset.v ? ":" + ae.dataset.v : ae.dataset.i ? ":" + ae.dataset.i : ae.dataset.k ? ":" + ae.dataset.k : "") : ae.tagName.toLowerCase() + (ae.className ? "." + String(ae.className).split(" ")[0] : "")) : null,
+      focus: has ? (ae.dataset.act ? [ae.dataset.act, ae.dataset.sel, ae.dataset.k, ae.dataset.v, ae.dataset.i].filter((x) => x !== undefined && x !== "").join(":") : ae.tagName.toLowerCase() + (ae.className ? "." + String(ae.className).split(" ")[0] : "")) : null,
       fx: has ? Math.round(ae.getBoundingClientRect().left) : null, fy: has ? Math.round(ae.getBoundingClientRect().top) : null,
       lit: (document.querySelector(".stage.focal") || { dataset: {} }).dataset.sel || null,
       ring, input: document.documentElement.dataset.input || null, loading: !!document.getElementById("loading"),
@@ -73,6 +73,9 @@ module.exports = async (cap) => {
     await press("hall: Enter on STATS opens the stats", "Enter", (a) => /STATS/.test(a.title || ""), 600, true);
     await press("stats: Escape back to the hall", "Escape", (a) => a.scr === "scr-hub", 600);
     await cap.fast(30);
+    t = await tabTo("stats");
+    await press("hall: an arrow turns the cabinets and lets go of STATS", "ArrowRight", (a, b) => a.cab !== b.cab && a.focus === null, 10);
+    await press("hall: ArrowLeft, back to the first", "ArrowLeft", (a, b) => a.cab !== b.cab, 10);
     await press("hall: Enter plays the cabinet", "Enter", (a) => a.scr === "scr-select" || !!a.modal, 600, true);
     await clearModals();
     await cap.fast(60);
@@ -95,8 +98,10 @@ module.exports = async (cap) => {
     w = await where();
     if (w.modal && w.modal !== "PAUSED") {
       await cap.fast(10);
-      await press("briefing: Enter finishes the line", "Enter", (a) => !!a.modal, 10);
-      await press("briefing: Enter again, the next line", "Enter", (a, b) => !!a.modal && a.line !== b.line, 30);
+      // (the stage the arrows moved to keeps the focus under the briefing: Enter is the briefing's, never that stage's
+      // again: the review found it started the stage a second time, the briefing cut short and never shown again)
+      await press("briefing: Enter finishes the line (the stage under it not started again)", "Enter", (a) => !!a.modal && a.typed && !a.loading && a.scr === "scr-select", 10);
+      await press("briefing: Enter again, the next line", "Enter", (a, b) => !!a.modal && !a.loading && a.scr === "scr-select" && a.line !== b.line, 30);
       await press("briefing: Escape skips to the game", "Escape", (a) => !a.modal && /scr-game/.test(a.scr || ""), 3600, true);
       await clearModals();
     }
@@ -248,6 +253,17 @@ module.exports = async (cap) => {
     const lv2 = await cap.eval(() => document.activeElement.getAttribute("aria-pressed"));
     checks.push({ what: "setup: Enter on a choice the arrows moved to chooses it", ok: lv2 === "true", before: lv, after: lv2 });
     console.log((lv2 === "true" ? "ok   " : "FAIL ") + "setup: chosen " + lv + " -> " + lv2);
+    // past the last switch, the arrow scrolls the page to what is under it (HOW IT WORKS)
+    // (Up and Down go row by row in reading order, down one column and on down the next; a scroll the browser animates
+    // is waited for in real time)
+    const path = [];
+    for (let i = 0; i < 30; i++) { const b4 = await where(); await page.keyboard.press("ArrowDown"); await cap.fast(2); await page.waitForTimeout(120); const af = await where(); path.push(af.focus); if (af.focus === b4.focus) break; }
+    console.log("     setup's rows going down: " + path.join(" > "));
+    const st0 = await cap.eval(() => { const s = document.querySelector("#ui > .screen .scroll"); return s ? s.scrollTop : 0; });
+    await page.keyboard.press("ArrowDown"); await cap.fast(4); await page.waitForTimeout(600); await cap.fast(4);
+    const st1 = await cap.eval(() => { const s = document.querySelector("#ui > .screen .scroll"); return s ? [s.scrollTop, s.scrollHeight - s.clientHeight] : [0, 0]; });
+    checks.push({ what: "setup: past the last switch the arrow scrolls the page", ok: st1[0] > st0 || st1[0] >= st1[1] - 1, scrollTop: [st0, st1] });
+    console.log((st1[0] > st0 || st1[0] >= st1[1] - 1 ? "ok   " : "FAIL ") + "setup: scroll " + st0 + " -> " + st1[0] + " of " + st1[1]);
     await press("setup: Tab shows the ring", "Tab", ringOK);
     await press("setup: Escape goes to the hall", "Escape", (a) => a.scr === "scr-hub", 600);
     // the exam's setup: Enter starts it
