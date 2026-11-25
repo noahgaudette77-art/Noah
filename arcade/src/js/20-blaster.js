@@ -434,6 +434,9 @@ class BlasterGame extends QuizGame {
     p.y += 1.25 * this.shipScale;
     return { p, size: 0.8 * this.shipScale };
   }
+  // (Phase 4's review: a resize, the governor's step among them, sets the view back to the band as it stands; the lift and
+  // the standing back are applied again from there, in that frame. Before, an explanation lost them until it closed)
+  onResize() { this.liftSet = 0; this.liftScSet = 1; this.cutT = 2; }
   onLayout() {
     if (!this.has3D) return;
     this.liftSet = 0; this.liftScSet = 1; // (the band was just laid out afresh: any lift, or standing back, is applied again from there)
