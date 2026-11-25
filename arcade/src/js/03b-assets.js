@@ -35,8 +35,15 @@ const Assets = {
     }
     return this._gltf;
   },
+  // (the Mac's richer tier, 2026-11-25: the owner raised the Mac's graphics memory budget from 900 MB to about 2 GB) A
+  // model's sharper copy, <name>-hd (the same shape with larger pictures: tools/gen/mac-hd.mjs), is fetched in its place
+  // on a computer drawing at the MAC tier; a phone, and a computer the governor or Setup holds lower, keep the model.
+  file(name) {
+    const hd = name + "-hd";
+    return !this.phone && typeof GFX !== "undefined" && GFX.tier === 0 && this.files.files["models/" + hd + ".glb"] !== undefined ? hd : name;
+  },
   loadModel(name) {
-    const path = "models/" + name + ".glb";
+    const path = "models/" + this.file(name) + ".glb";
     if (!this.has(path) || !window.THREE || !THREE.GLTFLoader) return Promise.resolve(null);
     if (this.fresh["model:" + name]) return Promise.resolve(this.fresh["model:" + name]);
     return this._once("model:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => this._loader().parse(buf.slice(0), "", res, rej))).then((gltf) => {
@@ -96,8 +103,15 @@ const Assets = {
     return m;
   },
   // ---- skies (equirectangular panoramas): the picture itself and its reflection in every glossy surface
+  // (the Mac's richer tier) a sky's sharper copy, <name>-hd.webp (Blockade's own 8192 x 4096 panorama, the one the game's
+  // 4096 was drawn down from: tools/gen/sky-hd.js), on a computer drawing at the MAC tier; never on a phone
+  skyFile(name) {
+    const hd = "sky/" + name + "-hd.webp";
+    if (!this.phone && typeof GFX !== "undefined" && GFX.tier === 0 && this.files.files[hd] !== undefined) return hd;
+    return this.files.files["sky/" + name + ".webp"] !== undefined ? "sky/" + name + ".webp" : "sky/" + name + ".jpg";
+  },
   loadSky(name) {
-    const path = this.files.files["sky/" + name + ".webp"] !== undefined ? "sky/" + name + ".webp" : "sky/" + name + ".jpg";
+    const path = this.skyFile(name);
     if (!this.has(path) || !window.THREE) return Promise.resolve(null);
     if (this.kept["sky:" + name]) return Promise.resolve(this.kept["sky:" + name]);
     return this._once("sky:" + name, () => this.buffer(path).then((buf) => new Promise((res, rej) => {
@@ -143,7 +157,7 @@ const Assets = {
     if (!this.on) return;
     for (const n of this.wants(set, extra)) {
       const [kind, name] = n.split(":");
-      const path = kind === "model" ? "models/" + name + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? (this.has("sky/" + name + ".webp") ? "sky/" + name + ".webp" : "sky/" + name + ".jpg") : null;
+      const path = kind === "model" ? "models/" + this.file(name) + ".glb" : kind === "ui" ? "ui/" + name + ".webp" : kind === "sfx" ? (this.files.sprites[name] || {}).file : kind === "music" ? (this.files.music[name] || {}).file : kind === "sky" ? this.skyFile(name) : null;
       if (path && this.has(path) && !this.gone[path]) this.buffer(path).catch(() => null);
     }
   },

@@ -47,6 +47,8 @@ for (const [k, list] of Object.entries(SETS)) sets[k] = list.filter(has);
 const wanted = new Set();
 for (const list of Object.values(sets)) for (const e of list) { const [kind, name] = e.split(":"); if (kind === "model") wanted.add("models/" + name + ".glb"); if (kind === "sky") wanted.add(files["sky/" + name + ".webp"] !== undefined ? "sky/" + name + ".webp" : "sky/" + name + ".jpg"); if (kind === "sfx") wanted.add(sprites[name].file); if (kind === "music") wanted.add(music[name].file); if (kind === "ui") wanted.add("ui/" + name + ".webp"); }
 for (const f of Object.keys(files)) if (/^models\/boss-/.test(f)) wanted.add(f);
+// (a model's or a sky's sharper copy for a computer at the MAC tier, <name>-hd: Assets.file and Assets.skyFile fetch it in its place)
+for (const f of [...wanted]) { const hd = f.replace(/\.(glb|webp)$/, "-hd.$1"); if (/^(models|sky)\//.test(f) && hd !== f && files[hd] !== undefined) wanted.add(hd); }
 const listed = {};
 for (const f of [...wanted].sort()) listed[f] = files[f];
 const out = "// Written by tools/manifest.js: every file under arcade/assets the page may fetch (and its size), the cues inside each\n// sound sprite ([start, length, level, how far the music ducks]), the music and its loop points, and what each screen needs.\nconst INR_FILES = " + JSON.stringify({ files: listed, sprites, music, sets }) + ";\n";
