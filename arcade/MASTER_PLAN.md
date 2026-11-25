@@ -340,6 +340,10 @@ Landscape layouts, keys, hover, Retina and display changes, resizing without lea
 ### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
 Every screen measured again on both tiers against Phase 1's budgets and the baseline, the census (stalls, garbage, page
 changes), memory over cycles, the governor in both engines; whatever a later phase cost put right before Phase 8.
+- **First (from Phase 6's gate): Risk Blaster's phone draws stand at the budget's edge.** The harness measured 101
+  against 100 (`docs/master/runs/phase6-costs`); measured again as it measures (8 s of play), 100, 97 and 97 on Phase 6's
+  build and 100, 79 and 100 on Phase 4's (the same drawing code): the traffic in view at the moment measured. Bring the
+  far traffic's draws down on a phone (its ships instanced, or fewer far ones at once), then measure at several moments.
 - Nest Egg Run's phone draws vary with the seeded traffic between runs (85, 90, 91 in the last three: the cars and the
   props in view at the measured moment): inside the 100, but the closest screen to it; measure it at several moments.
 - From Phase 5's gate: the Proctor in the title's cell and on the hub's topper is 9 draws and 7 programs (its cap's and

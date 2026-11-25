@@ -48,7 +48,16 @@ against 0.3 for a hiss). The silence between the effects in every file is digita
 
 ## The harness
 
-(to come)
+- **Logic** (on `ea51c89`'s build, `docs/master/runs/phase6`): content and scripts untouched since `ee413e3`; the rules
+  IDENTICAL from disk and served (no console errors); the sequence ALL 13 STEPS OK; no fault. On the final build
+  (with the review's fixes): below.
+- **Costs** (`docs/master/runs/phase6-costs`, on `42fcd7f`'s build; this phase changed no drawing): every screen inside
+  its budget on both tiers but one: **phone Risk Blaster, 101 draws against 100.** Measured again as the harness
+  measures it (8 s of play first), alternating with Phase 4's build (the same drawing code): this build 100, 97 and 97
+  draws; Phase 4's 100, 79 and 100; at an earlier moment the two builds gave the same counts to the draw (44, 46, 46).
+  Its draws follow the traffic in view at the moment measured (Phase 2's gate saw 95 to 100 over seven runs; Phase 4's
+  91 to 96): it stands at its budget's edge, and one moment in this run went one over. Not this phase's: carried as the
+  performance re-check's first item (`MASTER_PLAN.md`), where the far traffic's draws on a phone are to come down.
 
 ## The independent review
 
