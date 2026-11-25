@@ -2065,4 +2065,19 @@ html.calm .insert-coin::before, html.calm .insert-coin::after { display: none; }
   .scr-results .actions.pinned { background: radial-gradient(400px 130% at max(20.8%, calc(50% - 408px)) 100%, rgba(77, 255, 166, 0.17), rgba(77, 255, 166, 0) 70%), linear-gradient(180deg, rgba(6, 2, 22, 0), rgba(6, 2, 22, 0.92) 30%); }
   /* RANK UP! after a reward moment stands on its plate over the details' column, so it never crosses the score */
   .banner.plated { --w: min(1360px, 100% - 32px); left: calc((100% - var(--w)) / 2 + (var(--w) - 56px) * 5 / 12 + 56px); right: calc((100% - var(--w)) / 2); }
+
+  /* stats: the rank, the tiles and their note beside the trophies (the trophies' heading level with the rank's card,
+     a last row that stretches for whichever column is taller); then the mastery by stage, two to a row, and the four
+     high-score boards in a row, across the width. The left column keeps 440 px, so QUESTIONS MASTERED stays on one line;
+     the trophies take three to a row where they have the room for it (a Mac's 1470), two where not */
+  .scroll > .wrap:has(> .pcard) { max-width: 1360px; display: grid; grid-template-columns: minmax(440px, 1fr) minmax(0, 2fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 32px; }
+  .wrap:has(> .pcard) > * { grid-column: 1 / -1; min-width: 0; }
+  .wrap:has(> .pcard) > .pcard { grid-column: 1; grid-row: 1 / 3; }
+  .wrap:has(> .pcard) > .tiles { grid-column: 1; grid-row: 3; }
+  .wrap:has(> .pcard) > .note { grid-column: 1; grid-row: 4 / 6; }
+  .wrap:has(> .pcard) > .section-h:has(+ .trophies) { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .wrap:has(> .pcard) > .trophies { grid-column: 2; grid-row: 2 / 6; }
+  .wrap:has(> .pcard) > .mastery-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .wrap:has(> .pcard) > .boards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wrap:has(> .pcard) > .actions { grid-template-columns: minmax(0, 440px); justify-content: center; }
 }
