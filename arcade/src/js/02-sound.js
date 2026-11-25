@@ -223,8 +223,14 @@ const Sound = {
     let out = o.bus || this.sfxBus;
     if (pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(out); out = p; }
     if (o.lp) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; f.Q.value = 0.5; f.connect(out); out = f; }
-    src.connect(g).connect(out);
-    const t0 = c.currentTime + (o.delay || 0);
+    // Its envelope (Phase 6), on a gain of its own (hush fades g): in over 2 ms, so a take that starts inside a sound (an
+    // announcer's line started at its words, Starfall at its crash) cannot click; and a take the generator stopped while
+    // it was still sounding is let go over its last stretch (_release) rather than cut by the build's 30 ms fade.
+    const t0 = c.currentTime + (o.delay || 0), env = c.createGain(), len = q.dur / src.playbackRate.value, rel = q.rel === undefined ? (q.rel = this._release(q)) : q.rel;
+    env.gain.setValueAtTime(0, t0);
+    env.gain.linearRampToValueAtTime(1, t0 + 0.002);
+    if (rel) env.gain.setTargetAtTime(0, t0 + len - rel, rel / 3);
+    src.connect(env).connect(g).connect(out);
     src.start(t0, q.at, q.dur);
     if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
     const live = this.live || (this.live = new Set()), e = { src, g, born: c.currentTime, end: t0 + q.dur / src.playbackRate.value + 0.2 }; // (kept until it ends, so hush can cut it short)
@@ -232,6 +238,18 @@ const Sound = {
     live.add(e);
     src.onended = () => live.delete(e);
     return src;
+  },
+  // How long a take is let go over at its end, measured the first time it is played: none for one that ends in its own
+  // decay; for one still sounding where the build's fade ends it (the 20 ms before its last 60 ms within 12 dB of its
+  // loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s.
+  _release(q) {
+    const d = q.buf.getChannelData(0), sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), d.length - a), w = Math.round(0.02 * sr);
+    if (n < 6 * w) return 0;
+    let top = 0, s = 0;
+    for (let i = a; i + w <= a + n; i += w >> 1) { s = 0; for (let j = i; j < i + w; j++) s += d[j] * d[j]; if (s > top) top = s; }
+    s = 0;
+    for (let j = a + n - 4 * w; j < a + n - 3 * w; j++) s += d[j] * d[j];
+    return s > top * 0.063 ? Math.min(0.15, q.dur / 4) : 0;
   },
   // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
   // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
