@@ -8183,15 +8183,16 @@ function shockTexture() {
 }
 
 // The camera's shake: value noise from -1 to 1 on its own hashed lattice (no random stream is drawn from), smoothed
-// between its points, and pushed out toward its edges (to the power 0.75) so that it stands as far off on average as
-// the random offsets did (0.75 of the amount against 0.76), never further (its most is 1: the staged games' caps hold);
-// ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up).
+// between its points, and pushed out toward its edges (v (1.3 - 0.3 v^2): as far off on average as the random offsets
+// were, 0.76 of the amount, and never further, its most 1, so the staged games' caps hold; no steep slope where it
+// crosses naught, as a power had); ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up, read half a
+// step later, so the two never rest on their lattice points in the same instant).
 const SHAKE_HZ = 18;
+const shakeHash = (n, ch) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
 function shakeNoise(u, ch) {
-  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f);
-  const h = (n) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
-  const a = h(i), v = a + (h(i + 1) - a) * s;
-  return Math.sign(v) * Math.pow(Math.abs(v), 0.75);
+  if (ch) u += 0.5;
+  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f), a = shakeHash(i, ch), v = a + (shakeHash(i + 1, ch) - a) * s;
+  return v * (1.3 - 0.3 * v * v);
 }
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
@@ -19483,6 +19484,9 @@ class BlasterGame extends QuizGame {
     p.y += 1.25 * this.shipScale;
     return { p, size: 0.8 * this.shipScale };
   }
+  // (Phase 4's review: a resize, the governor's step among them, sets the view back to the band as it stands; the lift and
+  // the standing back are applied again from there, in that frame. Before, an explanation lost them until it closed)
+  onResize() { this.liftSet = 0; this.liftScSet = 1; this.cutT = 2; }
   onLayout() {
     if (!this.has3D) return;
     this.liftSet = 0; this.liftScSet = 1; // (the band was just laid out afresh: any lift, or standing back, is applied again from there)
@@ -19991,7 +19995,9 @@ class BlasterGame extends QuizGame {
     // (staged) the picture sliding to a new place on the page is not the camera moving: for those frames it is not
     // streaked as if it were. Nor while a blow shakes it: a shaken picture stays sharp, so the answers' letters can
     // be read through it.
-    if (this.stage) { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask") ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
+    // (Phase 4's review: and unstaged too, the picture standing back or riding up is not the camera moving, so it is not
+    // streaked: before, the fallback streaked the change as a zoom at the screen's sides)
+    { const post = this.scene.userData.post; if (this.mblur0 === undefined) this.mblur0 = post.mblur; post.mblur = this.cutT > 0 || (this.stage && (this.shakeAmt > 0.012 || (w > 0.02 && this.state === "ask"))) ? 0 : this.mblur0; if (this.cutT > 0) this.cutT--; }
     this.warpRoll = w > 0.001 && !REDUCED_MOTION ? Math.sin(this.warp * 2.4) * w * 0.14 : 0;
     if (this.warpRoll) this.camera.rotateZ(this.warpRoll);
     this.space.follow(this.camera);
@@ -23380,7 +23386,8 @@ class BlasterDemon {
       this.aura.visible = true;
       this.aura.position.copy(cam.position).add(this._a.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.aura.quaternion.copy(cam.quaternion);
-      this.aura.scale.set(b.w * 1.3, b.h * 1.3, 1); // (its brightest part lies just outside the band)
+      const k = g.liftScSet || 1; // (Phase 4's review: on a Mac, while an explanation stands the lens back, its edge stays outside the screen)
+      this.aura.scale.set((b.w * 1.3) / k, (b.h * 1.3) / k, 1); // (its brightest part lies just outside the band)
       this.auraU.uK.value = au;
     }
 
@@ -24619,7 +24626,8 @@ class BlasterOverlord {
       this.aura.visible = true;
       this.aura.position.copy(cam.position).add(this._a.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.aura.quaternion.copy(cam.quaternion);
-      this.aura.scale.set(b.w * 1.3, b.h * 1.3, 1); // (its brightest part lies just outside the band)
+      const k = g.liftScSet || 1; // (Phase 4's review: on a Mac, while an explanation stands the lens back, its edge stays outside the screen)
+      this.aura.scale.set((b.w * 1.3) / k, (b.h * 1.3) / k, 1); // (its brightest part lies just outside the band)
       this.auraU.uK.value = au;
     }
     this.root.updateMatrixWorld(true);
@@ -25395,7 +25403,8 @@ class BlasterStage {
       this.frame.visible = true;
       this.frame.position.copy(cam.position).add(this._v.set(0, 0, -6).applyQuaternion(cam.quaternion));
       this.frame.quaternion.copy(cam.quaternion);
-      this.frame.scale.set(b.w * 1.5, b.h * 1.5, 1);
+      const k = g.liftScSet || 1; // (Phase 4's review: it keeps to the band's edges while an explanation stands the lens back)
+      this.frame.scale.set((b.w * 1.5) / k, (b.h * 1.5) / k, 1);
       this.frameU.uK.value = fk;
       this.edge.set(this.lowK, beat);
     } else { this.frame.visible = false; this.edge.set(0, 0); }
@@ -27529,11 +27538,11 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
-    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (by the time passed, as it was at 60 Hz: Phase 4)
+    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (the egg's size, by the time passed, as it was at 60 Hz: Phase 4)
     // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
     // end of the road (out in the open it is the size of the sky)
     const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
-    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * 0.03);
+    this.sunSlot = (this.sunSlot === undefined ? slot : this.sunSlot + (slot - this.sunSlot) * (1 - Math.pow(0.97, dt * 60))); // (by the time passed: Phase 4's review)
     this.sun.scale.setScalar(this.sunK * this.sunSlot);
     this.sunLight.color.copy(sky.sunTop).lerp(sky.sunBot, 0.45);
     this.sunLight.intensity = 0.55 * sky.sunI * (this.world && this.world.biome === "tunnel" ? 0.1 : 1);
@@ -27619,11 +27628,8 @@ class RacerGame extends QuizGame {
     }
     const n = this.round ? this.round.n : 4;
     const tx = this.lane === null ? 0 : laneX(this.lane, n);
-    const prev = this.carX;
     this.carX += (tx - this.carX) * Math.min(1, dt * 7);
-    this.car.position.x = this.carX;
-    this.car.position.y = Math.sin(this.t * 18) * 0.02;
-    if (dt > 0) this.car.rotation.z = clamp(((prev - this.carX) / dt) * (2.5 / 60), -0.25, 0.25); // (its lean by how fast it moves across, a second: by the move a frame it leaned half as much at 120 Hz. Phase 4)
+    this.car.position.x = this.carX; // (its bob and its lean are its kit's: its suspension, a spring on how fast it moves across, a second. Phase 4's review: the bob and bank set here were zeroed by the kit every frame)
     this.updateLook(dt, sp, step, scroll, sky);
     if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
       this.show.update(VFX.dt);
@@ -30108,7 +30114,7 @@ class RacerRig {
       // lunge came in its first frame before the hit-stop held it: a pop. Out over the first fifth on an ease-out,
       // 22% in the first frame and 40% by the second, its height at 0.21 s as near as it was; back on a cosine that
       // settles, where it stopped with a jolt)
-      const sp = 1 - this.surgeT, lunge = sp < 0.2 ? 1 - Math.pow(1 - sp / 0.2, 3) : 0.5 + 0.5 * Math.cos((Math.PI * (sp - 0.2)) / 0.8);
+      const sg = 1 - this.surgeT, lunge = sg < 0.2 ? 1 - Math.pow(1 - sg / 0.2, 3) : 0.5 + 0.5 * Math.cos((Math.PI * (sg - 0.2)) / 0.8);
       oz -= 1.15 * lunge;
       if (this.surgeT > 0.45) burn = 1;
     }
