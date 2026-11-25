@@ -14,3 +14,5 @@ docs/master/runs/*
 # the overhaul's baseline build, put back for a measurement against it (never committed)
 index.baseline.html
 index.phase*.html
+# frozen copies of a side build, for a measurement that must not see the next build (never committed)
+index.mac*.html

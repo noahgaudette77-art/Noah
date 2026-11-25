@@ -29,7 +29,7 @@ const DEVICES = QUICK ? ["phone"] : ["phone", "mac"];
 // each tier's budget, a screen at a time (the shared standards: a phone near 100 draw calls or fewer, memory in check)
 const BUDGET = {
   phone: { draws: 100, tris: 350000, lights: 5, memMB: 450 },
-  mac: { draws: 160, tris: 500000, lights: 6, memMB: 900 },
+  mac: { draws: 160, tris: 500000, lights: 6, memMB: 2000 }, // (the owner, 2026-11-25: about 2 GB, from 900; up to 3 GB only if every test stays clean)
 };
 fs.mkdirSync(OUT, { recursive: true });
 const log = (...a) => console.log(...a);

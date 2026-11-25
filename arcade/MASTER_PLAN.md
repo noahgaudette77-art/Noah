@@ -368,6 +368,20 @@ changes), memory over cycles, the governor in both engines; whatever a later pha
   a frame (its update 5.8 KB; the cells' lamps make a list a frame); the census's play of Memory Bank turns no card (as
   in Phase 1's): to be made to turn and grade them, so the deck's own moments are counted.
 
+### The Mac's richer tier (the owner, 2026-11-25: after the re-check, before Phase 8)
+The owner's order, as given: "Raise the Mac tier's graphics memory budget from 900 MB to about 2 GB (up to 3 GB only if
+every test stays clean). The MacBook has 16 GB of unified memory, but it is shared with Safari, other apps and the OS, so
+keep headroom. Spend the extra on higher-resolution key textures, denser props and richer effects on the Mac tier only.
+Keep the phone tier at its current budget. Keep a steady 60 FPS, re-run the 30-minute soak test with other apps open, and
+confirm no memory growth or slowdown. Study logic and content stay untouched."
+- The budget: the Mac's graphics memory 2,000 MB a screen (`tools/harness.js`), its draws and triangles as they were
+  (160, 500K: smoothness first); the phone's all as they were.
+- What spends it: where the Mac's picture is held back by memory today, ranked by what it shows per MB and what it costs
+  a frame (`docs/master/mactier/`). Only at the MAC tier (a computer the governor or Setup holds lower keeps today's).
+- **Gate:** the harness inside the new budgets; the 30-minute soak with other programs loading the machine (here they
+  are stand-ins: memory and processor hogs and a second browser; on the MacBook, the owner's own apps), no memory growth
+  and no slowdown; WebKit's stills and costs on the Mac; an independent review.
+
 ### Phase 8: final verification
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
 gallery, a short film of the title hall and one fight, a performance table, the final spend and a token estimate;
