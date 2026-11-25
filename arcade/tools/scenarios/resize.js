@@ -14,11 +14,16 @@ module.exports = async (cap) => {
   const SIZES = [[1280, 720, 2], [1920, 1080, 1], [1024, 640, 2], [2560, 1440, 1], [900, 1000, 2], [1470, 560, 2], [1680, 1050, 1], [1100, 760, 2], [1920, 1200, 1], [800, 600, 2], [1440, 900, 1], [1470, 830, 2]];
   const waitReal = async (js, ms = 60000) => { for (let i = 0; i < ms / 100; i++) { if (await cap.eval(js)) return true; await cap.page.waitForTimeout(100); } return false; };
   const cdp = await cap.page.context().newCDPSession(cap.page);
+  let lastWait = 0;
   const setSize = async (w, h, dpr) => {
     await cdp.send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: dpr, mobile: false });
-    await cap.page.waitForTimeout(150); // (the resize and the pixel ratio's media query reach the page)
+    // (the resize reaches the page when the browser next renders: wait for the window to report it, up to 2 s, then
+    // draw; how long the canvas took to follow is kept: a real miss never catches up)
+    const t0 = Date.now();
+    for (let i = 0; i < 40; i++) { if (await cap.eval(([w, h]) => innerWidth === w && innerHeight === h, [w, h])) break; await cap.page.waitForTimeout(50); }
     await cap.fast(6);
     await cap.eval(() => { window.__tick(2, true); });
+    lastWait = Date.now() - t0;
   };
   const held = async () => {
     await cdp.send("HeapProfiler.collectGarbage").catch(() => {});
@@ -26,8 +31,8 @@ module.exports = async (cap) => {
       const A = window.__arcade, r = A.GFX.renderer, m = r.info.memory, P = A.GFX.pipe || A.GFX.pipeline || null;
       let rts = null;
       try { rts = P && P.targets ? Object.keys(P.targets).length : null; } catch (e) { /* none */ }
-      return { textures: m.textures, geometries: m.geometries, programs: (r.info.programs || []).length, rts, heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) : null, nodes: document.getElementsByTagName("*").length };
-    });
+      return { textures: m.textures, geometries: m.geometries, programs: (r.info.programs || []).length, rts, nodes: document.getElementsByTagName("*").length };
+    }).then(async (o) => { const u = await cdp.send("Runtime.getHeapUsage").catch(() => null); o.heapMB = u ? +(u.usedSize / 1048576).toFixed(1) : null; return o; }); // (the heap's exact size: performance.memory is rounded and seldom updated)
   };
   const follows = () => cap.eval(() => {
     const c = window.__arcade.GFX.renderer.domElement, dpr = window.devicePixelRatio, w = innerWidth * dpr, h = innerHeight * dpr;
@@ -46,11 +51,11 @@ module.exports = async (cap) => {
     for (const [w, h, d] of SIZES) await step(w, h, d);
     if (process.env.SETTLE) { await cap.page.waitForTimeout(+process.env.SETTLE * 1000); await cap.fast(30); } // (SETTLE=s: real seconds for a screen's files to finish arriving before the measure)
     const before = await held(), checks = [], rounds = [];
-    for (let round = 0; round < (+process.env.ROUNDS || 2); round++) { for (const [w, h, d] of SIZES) { await step(w, h, d); checks.push(Object.assign({ want: w + "x" + h + "@" + d }, await follows())); } rounds.push((await held()).heapMB); }
+    for (let round = 0; round < (+process.env.ROUNDS || 2); round++) { for (const [w, h, d] of SIZES) { await step(w, h, d); checks.push(Object.assign({ want: w + "x" + h + "@" + d, waitMs: lastWait }, await follows())); } rounds.push((await held()).heapMB); }
     const after = await held();
     const bad = checks.filter((c) => !c.aspectOK || !c.fills);
     const scales = [...new Set(checks.map((c) => c.scale))];
-    out.push({ screen: k, rounds, before, after, grew: Object.fromEntries(Object.keys(before).map((x) => [x, before[x] === null ? null : +(after[x] - before[x]).toFixed(1)])), drawing: bad.length ? bad.slice(0, 4) : "follows every change", scales });
+    out.push({ screen: k, rounds, slowestMs: Math.max(...checks.map((c) => c.waitMs)), before, after, grew: Object.fromEntries(Object.keys(before).map((x) => [x, before[x] === null ? null : +(after[x] - before[x]).toFixed(1)])), drawing: bad.length ? bad.slice(0, 4) : "follows every change", scales });
     console.log(k, JSON.stringify(out[out.length - 1].grew), "heap a round", rounds.join(" "), bad.length ? bad.length + " sizes not followed" : "drawing follows", "scales", scales.join(" "));
     fs.writeFileSync(path.join(cap.out, "resize.json"), JSON.stringify(out, null, 1));
   }
