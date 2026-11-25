@@ -192,12 +192,14 @@ class CombatFX {
       return m;
     };
     // sparks and bolts
-    const DN = (this.DN = o.sparks || 260);
+    // (the Mac's richer tier: half as many sparks, embers and chunks again, room made for them: GFX.rich)
+    this.rich = GFX.rich ? 0.5 : 0;
+    const DN = (this.DN = Math.round((o.sparks || 260) * (1 + this.rich)));
     this.darts = inst(fxDartGeo(), fxDartMaterial(), DN, 8);
     this.dl = Array.from({ length: DN }, (_, i) => ({ i, life: 0, t: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), len: 1, w: 1, col: [1, 1, 1], g: 0, drag: 1, stretch: 0, fade: 2.5 }));
     this.dHead = 0;
     // debris
-    const CN = (this.CN = o.chunks || 56), cg = new THREE.TetrahedronGeometry(0.3, 0);
+    const CN = (this.CN = Math.round((o.chunks || 56) * (1 + this.rich))), cg = new THREE.TetrahedronGeometry(0.3, 0);
     cg.scale(0.7, 1.5, 0.4);
     this.chunks = inst(cg, fxChunkMaterial(), CN, 2);
     this.cl = Array.from({ length: CN }, (_, i) => ({ i, age: 1, life: 0, s: 1, p: new THREE.Vector3(), v: new THREE.Vector3(), r: new THREE.Euler(), w: new THREE.Vector3(), g: 0, col: [1, 1, 1], hot: [0, 0, 0] }));
@@ -249,8 +251,11 @@ class CombatFX {
 
   // ---- particles ---------------------------------------------------------------------------
   _dart() { const d = this.dl[this.dHead]; this.dHead = (this.dHead + 1) % this.DN; return d; }
-  sparks(pos, color, o = {}) {
-    const n = o.n || 16, sp = (o.speed === undefined ? 9 : o.speed) * this.unit, col = fxRGB(color, o.k === undefined ? 2.4 : o.k), spread = o.spread === undefined ? 1 : o.spread;
+  // (the Mac's richer tier: each burst again with half as many more, drawn from a randomness of their own)
+  _more(n, fn) { const m = Math.round(n * this.rich); if (m > 0 && GFX.rich) GFX.richRandom(() => fn(m)); }
+  sparks(pos, color, o = {}) { this._sparks(pos, color, o, o.n || 16); this._more(o.n || 16, (m) => this._sparks(pos, color, o, m)); }
+  _sparks(pos, color, o, n) {
+    const sp = (o.speed === undefined ? 9 : o.speed) * this.unit, col = fxRGB(color, o.k === undefined ? 2.4 : o.k), spread = o.spread === undefined ? 1 : o.spread;
     for (let k = 0; k < n; k++) {
       const d = this._dart();
       d.p.copy(pos);
@@ -265,8 +270,9 @@ class CombatFX {
       d.col = col;
     }
   }
-  embers(pos, color, o = {}) {
-    const n = o.n || 10, col = fxRGB(color, 2.0), R = (o.radius || 0.6) * this.unit;
+  embers(pos, color, o = {}) { this._embers(pos, color, o, o.n || 10); this._more(o.n || 10, (m) => this._embers(pos, color, o, m)); }
+  _embers(pos, color, o, n) {
+    const col = fxRGB(color, 2.0), R = (o.radius || 0.6) * this.unit;
     for (let k = 0; k < n; k++) {
       const d = this._dart();
       d.p.set(pos.x + rand(-R, R), pos.y + rand(-R, R), pos.z + rand(-R, R));
@@ -289,8 +295,9 @@ class CombatFX {
   }
   fire(pos, o = {}) { const s = o.size || 1; this._puff(this.fireP, pos, { life: o.life || 0.5, s0: s * 0.45, s1: s * 1.25, vel: o.vel, rise: o.rise === undefined ? 0.8 : o.rise, col: fxRGB(o.color === undefined ? 0xff6a14 : o.color, o.k || 1.5), a: o.a, spin: o.spin, drag: o.drag }); }
   smoke(pos, o = {}) { const s = o.size || 1, d = o.dark === undefined ? 0.12 : o.dark; this._puff(this.smokeP, pos, { life: o.life || 1.4, s0: s * 0.5, s1: s * 1.9, vel: o.vel, rise: o.rise === undefined ? 0.6 : o.rise, col: o.color !== undefined ? fxRGB(o.color) : [d * 1.05, d * 0.9, d * 1.25], a: o.a === undefined ? 0.7 : o.a, spin: 0.5, drag: o.drag, cold: o.cold }); }
-  debris(pos, o = {}) {
-    const n = o.n || 8, col = fxRGB(o.color === undefined ? 0x23232e : o.color, o.k || 1), hot = o.hot === false ? [0, 0, 0] : fxRGB(o.hot === undefined || o.hot === true ? 0xf0c8ff : o.hot, 1.1), u = this.unit;
+  debris(pos, o = {}) { this._debris(pos, o, o.n || 8); this._more(o.n || 8, (m) => this._debris(pos, o, m)); }
+  _debris(pos, o, n) {
+    const col = fxRGB(o.color === undefined ? 0x23232e : o.color, o.k || 1), hot = o.hot === false ? [0, 0, 0] : fxRGB(o.hot === undefined || o.hot === true ? 0xf0c8ff : o.hot, 1.1), u = this.unit;
     let k = 0;
     for (const c of this.cl) {
       if (k >= n) break;

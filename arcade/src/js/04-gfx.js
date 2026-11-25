@@ -49,7 +49,7 @@ const GFX = {
   // eye cannot find; a hit still parts the colours), and none draws larger than the screen's own pixels: the page's
   // text, menus and HUD are its own, drawn by the browser over the picture at the screen's full sharpness.
   TIERS: [
-    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.6, extras: true, sharpen: true, fringe: false, fx: 1 },
+    { name: "MAC", pr: 2, samples: 4, ao: true, dof: true, mblur: true, lens: true, rays: true, levels: 7, mirror: 0.8, extras: true, sharpen: true, fringe: false, fx: 1 }, // (mirror 0.8: the Mac's richer tier, 2026-11-25; it was 0.6)
     { name: "PHONE", pr: 2, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: true, levels: 6, mirror: 0.45, extras: true, sharpen: true, fringe: false, fx: 0.8 },
     { name: "SAFE", pr: 1.5, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 5, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.6 },
     { name: "LIGHTEST", pr: 1.25, samples: 2, ao: false, dof: false, mblur: false, lens: false, rays: false, levels: 4, mirror: 0, extras: false, sharpen: false, fringe: false, fx: 0.45 },
@@ -68,6 +68,13 @@ const GFX = {
   auto: true, // the tier follows the frame rate (Setup > Graphics: AUTO)
   extras: true, // background figures and decorative extras (the tier's; scenes check it)
   fxScale: 1, // how many particles an effect throws (the tier's; effects may scale by it)
+  // (the Mac's richer tier, 2026-11-25: the owner raised the Mac's graphics memory budget to about 2 GB) A computer
+  // drawing at the MAC tier: what spends the larger budget on denser props and richer effects asks this (never a phone,
+  // nor a computer the governor or Setup holds lower). What it adds draws from a randomness of its own (richRandom), so
+  // the seeded captures' questions and scenery are those of any other build.
+  get rich() { return this.tier === 0 && !(typeof Assets !== "undefined" && Assets.phone); },
+  richN: 0,
+  richRandom(fn) { return ownRandom(0x6b43a9b5 + this.richN++, fn); },
   // the effects as drawn: the player's own switches, less what the tier leaves out
   eopt() {
     const T = this.TIERS[this.tier], o = this.opt;

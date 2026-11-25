@@ -442,16 +442,22 @@ class BlasterSpace {
     // ones the second rock. Until the copies are in hand, and from disk, the built-in rock as before.)
     // (each copy room for all 96: which of the two arrive is not known until both are made, and a copy sized for half
     // that is then drawn alone would be asked for twice its instances: Phase 5's review)
-    const loB = rockB && this.genLo("prop-rock2-lo", rockB, 96), loA = rockA && this.genLo("prop-rock-lo", rockA, 96);
-    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, 96);
+    // (the Mac's richer tier, GFX.rich: twice as many far ones, a denser field at every distance; the light copies are a
+    // couple of hundred triangles each, and drawn together: no draw more)
+    const FAR = (this.farCap = GFX.rich ? 192 : 96);
+    const loB = rockB && this.genLo("prop-rock2-lo", rockB, FAR), loA = rockA && this.genLo("prop-rock-lo", rockA, FAR);
+    this.rockFar = loA || loB || spaceInstanced(spaceRockGeo(1, 23), this.rockMat, FAR);
     this.rockFar2 = loA && loB ? loB : null;
     if (this.rockFar2) s.add(this.rockFar2);
     this.rocks = [];
-    for (let i = 0; i < 112; i++) {
+    const rock = (i) => {
       const near = i < 16, r = { near, i: near ? i : i - 16, p: new THREE.Vector3(), ax: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), ph: rand(6.28), w: rand(near ? 0.05 : 0.1, near ? 0.9 : 0.6) * (Math.random() < 0.5 ? -1 : 1), f: rand(0.75, 1.1), sc: new THREE.Vector3() };
       this.resetRock(r, rand(-640, 0));
       this.rocks.push(r);
-    }
+    };
+    for (let i = 0; i < 112; i++) rock(i);
+    // (the Mac's extra far ones from a randomness of their own: the rest of the build draws what it always drew)
+    if (FAR > 96) GFX.richRandom(() => { for (let i = 112; i < 16 + FAR; i++) rock(i); });
     s.add(this.rockNear, this.rockFar);
 
     this.buildStation();
@@ -759,7 +765,7 @@ class BlasterSpace {
     }
     // rocks: as many as the region has, tumbling past
     // (never fewer than a few: rocks tumbling past at every distance are what gives the sky its depth)
-    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round(96 * rk);
+    const rk = Math.max(c.rocks, 0.24), nearN = Math.round(16 * Math.min(1, rk * 1.4)), farN = Math.round((this.farCap || 96) * rk);
     const two = this.rockNear2, nearA = two ? Math.ceil(nearN / 2) : nearN; // (two asteroids: the even rocks are the first, the odd ones the second)
     const far2 = this.rockFar2, farA = far2 ? Math.ceil(farN / 2) : farN; // (and the far ones the same way)
     this.rockNear.count = nearA; this.rockFar.count = farA;
@@ -771,7 +777,7 @@ class BlasterSpace {
         if (r.i >= (r.near ? nearN : farN)) return;
         r.p.z += sp * r.f * dt;
         r.ph += r.w * dt;
-        if (r.p.z > 30) this.resetRock(r, -660);
+        if (r.p.z > 30) { if (r.i >= 96 && !r.near) GFX.richRandom(() => this.resetRock(r, -660)); else this.resetRock(r, -660); } // (the Mac's extra ones from their own randomness)
         const grow = smoothstep(-660, -560, r.p.z) * (1 - smoothstep(-45, 12, r.p.z)); // they come out of the distance rather than popping in, and shrink away as they pass
         const pair = r.near ? two : far2;
         (r.near ? (two && r.i & 1 ? two : this.rockNear) : (far2 && r.i & 1 ? far2 : this.rockFar)).setMatrixAt(pair ? r.i >> 1 : r.i, m.compose(r.p, q.setFromAxisAngle(r.ax, r.ph), sc.copy(r.sc).multiplyScalar(grow)));
