@@ -393,14 +393,14 @@ class Wizard {
     const k = this.keys.cast;
     this.play("cast", { from: k.release - 0.3, to: k.release + 0.02, rate: 0.9, in: 0.15, hold: true }); // (its wand held out at the boss as the light comes down; at the last blast it raises it: win)
     this.whip = 1; this.flare0 = 1;
-    wizSfx("wiz_charge", null, -0.4, { vol: 0.6 });
-    wizSfx("wiz_finisher", null, 0, { vol: 1, delay: 0.2 });
+    wizSfx("wiz_charge", null, -0.4, { vol: 0.6 }); // (the build: Starfall's own sound strikes with its light, below)
     const hips = a.at("hips", new THREE.Vector3()), top = new THREE.Vector3(hips.x, S * 1.55, hips.z + 0.3 * S);
     const sg = this.sigil;
     sg.position.copy(top); sg.rotation.set(-Math.PI / 2, 0, 0); sg.scale.setScalar(S * 0.7); sg.visible = true;
     this.fade(sg, 1.3, (o, q) => { o.material.uniforms.uK.value = q < 0.25 ? q / 0.25 : 1 - (q - 0.25) / 0.75; if (!quiet) o.rotation.z = q * 2.2; o.scale.setScalar(S * (0.7 + 0.3 * Math.min(1, q * 3))); });
     g.show.wait(0.28, () => {
       if (g.unmounted) return;
+      wizSfx("wiz_finisher", null, 0, { vol: 1 }); // (on the show's clock with its light, whatever the slow motion: each take starts at its crash)
       kit.beam(top, hips, WIZ.STAR, { dur: 0.42, width: 0.9, grow: 0.06, k: 1.7 }); // the column of light
       kit.wave(hips, null, WIZ.STAR, { dur: 0.55, s0: 0.8, s1: 9, w: 0.05, k: 0.9 });
       kit.sparks(hips, 0xffffff, { n: quiet ? 8 : 20, speed: 14, life: 0.5, len: 1.2, w: 0.05, gravity: 5 });
