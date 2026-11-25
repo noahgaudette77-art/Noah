@@ -801,7 +801,9 @@ class ExamGame extends QuizGame {
         if (a === "submit") { UI.closeModal(); this.askSubmit(); }
       },
       key: (e) => { if (e.key === "Escape") UI.closeModal(); else UI.arrowNav(e, el, ".palette button, .dialog > .btn", ".palette .here"); },
-      mounted: () => { const h = $(".palette .here", el); if (h) h.focus(); }, // (the question you are on: the legend's HERE swatch comes first in the dialog)
+      // (the question you are on: the legend's HERE swatch comes first in the dialog. Scrolled to only for the keyboard: a
+      // phone's grid opens at its top, its title and counts in view, as it always did)
+      mounted: () => { const h = $(".palette .here", el); if (h) { h.focus({ preventScroll: true }); if (document.documentElement.dataset.input === "keys") h.scrollIntoView({ block: "nearest" }); } },
     });
   }
   askSubmit() {
