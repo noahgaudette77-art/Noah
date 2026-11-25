@@ -436,7 +436,7 @@ class BlasterGame extends QuizGame {
   }
   onLayout() {
     if (!this.has3D) return;
-    this.liftSet = 0; // (the band was just laid out afresh: any lift is applied again from there)
+    this.liftSet = 0; this.liftScSet = 1; // (the band was just laid out afresh: any lift, or standing back, is applied again from there)
     this.cutT = 2; // (staged: the picture has jumped to its new place, which is not a move of the camera. See update.)
     const far = this.bandSize(12);
     this.fx = Math.min(3.4, far.w * 0.27);
@@ -849,7 +849,8 @@ class BlasterGame extends QuizGame {
         t.position.set(u.sx * b.w * 0.37 + Math.sin(this.t * 1.3 + i * 1.7) * 0.1 * u.s, u.sy * b.h + Math.cos(this.t * 1.1 + i) * 0.08 * u.s, dz);
         // (staged) while an explanation is up the picture rides higher: the drones keep inside the band, the upper row
         // against its top edge and the lower row under it
-        if (this.stage && this.liftSet > 0.5 && this.band) { const ppu = this.band.h / b.h, rad = u.s * 1.9 * ppu, yPx = (0.5 - u.sy) * this.band.h - this.liftSet, min = u.sy > 0 ? rad + 4 : 3 * rad + 10; if (yPx < min) t.position.y -= (min - yPx) / ppu; }
+        // (and the picture drawn smaller on a wide window, k: Phase 4)
+        if (this.stage && this.liftSet > 0.5 && this.band) { const k = this.liftScSet || 1, ppu = (this.band.h / b.h) * k, rad = u.s * 1.9 * ppu, yPx = (0.5 - u.sy) * this.band.h * k - this.liftSet, min = u.sy > 0 ? rad + 4 : 3 * rad + 10; if (yPx < min) t.position.y -= (min - yPx) / ppu; }
         // the letter, the glass and the halo sit on the line of sight through the station's middle (out in the corners
         // of the view, a letter set straight in front of its drone stood off-centre in it)
         const ld = this._ld || (this._ld = new THREE.Vector3());
@@ -919,12 +920,22 @@ class BlasterGame extends QuizGame {
     this.camBase.set(Pointer.x * 0.5, -Pointer.y * 0.3, 0);
     this.lookAt.set(Pointer.x * 1.6, -Pointer.y * 1.0, -20);
     this.placeCamera();
-    { // while an explanation is up the picture rides higher, so the fighter and its shield stay in view above it
-      const b = this.band, up = b && this.quiz && this.quiz.sheet && this.sheetTop != null && this.state === "explain" ? clamp(b.bottom - this.sheetTop + 10, 0, b.h * 0.4) : 0;
-      this.lift = (this.lift || 0) + (up - (this.lift || 0)) * Math.min(1, dt * 6);
-      if (b && Math.abs(this.lift - (this.liftSet || 0)) > 0.2) {
+    { // while an explanation is up the picture rides higher, so the fighter and its shield stay in view above it.
+      // (Phase 4, 2026-11-25: on a wide window, a Mac's, the lens stands back first: the picture is drawn smaller about
+      // the band's top, to 72% at most, so the fighter clears the sheet while the demon stays below the question; only
+      // what still does not fit is lifted. Lifted whole, the demon's head went under the question panel: Phase 2's audit
+      // #15. A phone held upright is as it was.)
+      const b = this.band, over = b && this.quiz && this.quiz.sheet && this.sheetTop != null && this.state === "explain" ? clamp(b.bottom - this.sheetTop + 10, 0, b.h * 0.4) : 0;
+      let sc = 1, up = over;
+      if (b && over > 0 && GFX.w / GFX.h > 1.2) { sc = clamp((b.h - over) / b.h, 0.72, 1); up = Math.max(0, b.h * sc - (b.h - over)); }
+      const ease = Math.min(1, dt * 6);
+      this.lift = (this.lift || 0) + (up - (this.lift || 0)) * ease;
+      this.liftSc = (this.liftSc || 1) + (sc - (this.liftSc || 1)) * ease;
+      if (b && (Math.abs(this.lift - (this.liftSet || 0)) > 0.2 || Math.abs(this.liftSc - (this.liftScSet || 1)) > 0.002)) {
         this.liftSet = this.lift < 0.25 ? 0 : this.lift;
-        this.camera.setViewOffset(GFX.w, GFX.h, 0, GFX.h / 2 - ((b.top + b.bottom) / 2 - this.liftSet), GFX.w, GFX.h);
+        this.liftScSet = this.liftSc > 0.998 ? 1 : this.liftSc;
+        const k = this.liftScSet; // (the frame drawn k times as large: what the lens sees, from the band's top, k times as tall)
+        this.camera.setViewOffset(GFX.w * k, GFX.h * k, (GFX.w * (k - 1)) / 2, (GFX.h * k) / 2 - (b.top + (k * b.h) / 2 - this.liftSet), GFX.w, GFX.h);
         this.cutT = 2;
       }
     }
