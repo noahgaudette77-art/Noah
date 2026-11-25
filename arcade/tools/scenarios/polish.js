@@ -62,7 +62,9 @@ module.exports = async (cap) => {
     for (const el of document.querySelectorAll("svg, img, canvas.icon, .icon, i.ic")) {
       if (!shown(el) || el.closest("#hud, .floater")) continue;
       const r = el.getBoundingClientRect();
-      if (r.width >= 4 && r.height >= 4 && r.width < 19.5 && r.height < 19.5 && r.right > 0 && r.left < W && r.bottom > 0 && r.top < H) out.push("an icon under 20 px: " + (el.getAttribute("aria-label") || el.dataset.icon || el.className.baseVal || el.className || el.tagName) + " (" + Math.round(r.width) + " x " + Math.round(r.height) + ")");
+      const cls = (e) => (e && (typeof e.className === "string" ? e.className : e.className && e.className.baseVal)) || "";
+      const where = (el.closest("[data-act]") && "button " + el.closest("[data-act]").dataset.act) || (el.parentElement && (el.parentElement.tagName.toLowerCase() + "." + cls(el.parentElement).split(" ").join("."))) || "";
+      if (r.width >= 4 && r.height >= 4 && r.width < 19.5 && r.height < 19.5 && r.right > 0 && r.left < W && r.bottom > 0 && r.top < H) out.push("an icon under 20 px: " + (el.getAttribute("aria-label") || el.dataset.icon || cls(el) || el.tagName.toLowerCase()) + " in " + where + " (" + Math.round(r.width) + " x " + Math.round(r.height) + ")");
     }
     for (const el of document.querySelectorAll("h1, h2, h3, p, .title, .label, .name")) {
       if (!shown(el)) continue;
