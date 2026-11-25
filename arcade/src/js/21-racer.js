@@ -1832,7 +1832,7 @@ class RacerGame extends QuizGame {
     });
   }
   // Paint the whole world in the colours of this point in the career.
-  applySky(sky) {
+  applySky(sky, dt = 1 / 60) {
     const u = this.sky.material.uniforms;
     u.uTop.value.copy(sky.top);
     u.uMid.value.copy(sky.mid);
@@ -1873,7 +1873,7 @@ class RacerGame extends QuizGame {
     pu.uNeonI.value = 0.55 + 0.45 * sky.lamps;
     this.amb.color.copy(sky.amb);
     this.keyLight.color.copy(sky.light);
-    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * 0.03;
+    this.sunK += (0.8 + 0.45 * clamp(this.egg / 1e6, 0, 1) - this.sunK) * (1 - Math.pow(0.97, dt * 60)); // (by the time passed, as it was at 60 Hz: Phase 4)
     // downtown the street is a slot between towers: the egg is drawn small enough to stand whole in the gap at the
     // end of the road (out in the open it is the size of the sky)
     const slot = this.world && (this.world.biome === "downtown" || this.world.biome === "tunnel") ? 0.46 : 1;
@@ -1910,7 +1910,7 @@ class RacerGame extends QuizGame {
     const target = this.year / CAREER_YEARS;
     this.skyP += (target - this.skyP) * Math.min(1, dt * 0.8);
     const sky = skyAt(this.skyP);
-    this.applySky(sky);
+    this.applySky(sky, dt);
     if (this.envSet) {
       const near = this.envSet.reduce((a, b) => (Math.abs(b.p - this.skyP) < Math.abs(a.p - this.skyP) ? b : a));
       if (near.tex !== this.env) {
@@ -1967,7 +1967,7 @@ class RacerGame extends QuizGame {
     this.carX += (tx - this.carX) * Math.min(1, dt * 7);
     this.car.position.x = this.carX;
     this.car.position.y = Math.sin(this.t * 18) * 0.02;
-    this.car.rotation.z = clamp((prev - this.carX) * 2.5, -0.25, 0.25);
+    if (dt > 0) this.car.rotation.z = clamp(((prev - this.carX) / dt) * (2.5 / 60), -0.25, 0.25); // (its lean by how fast it moves across, a second: by the move a frame it leaned half as much at 120 Hz. Phase 4)
     this.updateLook(dt, sp, step, scroll, sky);
     if (this.stage) { // the staged run, on the show clock: its timers, what it has in flight, and the effects kit
       this.show.update(VFX.dt);
