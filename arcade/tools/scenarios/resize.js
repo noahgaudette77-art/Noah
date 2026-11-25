@@ -17,12 +17,12 @@ module.exports = async (cap) => {
   await cap.eval(() => { if (!window.__rzOn) { window.__rzOn = true; window.addEventListener("resize", () => { window.__rz = (window.__rz || 0) + 1; }); } });
   let lastWait = 0;
   const setSize = async (w, h, dpr) => {
+    const was = await cap.eval(() => [innerWidth, innerHeight, window.__rz || 0]);
     await cdp.send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: dpr, mobile: false });
-    // (the resize reaches the page when the browser next renders: wait for the window to report it, up to 2 s, then
-    // draw; how long the canvas took to follow is kept: a real miss never catches up)
     // (the window's size changes at once; its resize event, which the game draws to, comes with the browser's next
     // render: when the size changed, wait for the event itself, up to 30 s on this machine's software drawing. A change
-    // of pixel ratio alone fires none: the game looks at the ratio every frame, and the frames below show it)
+    // of pixel ratio alone fires none: the game looks at the ratio every frame, and the frames below show it. How long
+    // the wait took is kept: a real miss would never catch up)
     const t0 = Date.now(), n0 = was[2], sized = was[0] !== w || was[1] !== h;
     for (let i = 0; i < 600; i++) { if (await cap.eval(([w, h, n0, sized]) => innerWidth === w && innerHeight === h && (!sized || (window.__rz || 0) > n0), [w, h, n0, sized])) break; await cap.page.waitForTimeout(50); }
     await cap.fast(6);
