@@ -328,14 +328,20 @@ ElevenLabs within budget.
 - For the devices (Phase 8): the iPhone's return from another app or a call; the engines, flames, hum and alarm steady;
   the title's music coming round; the three takes that end on their height (the README's list), by ear.
 
-### Phase 7: desktop polish for the Mac
+### Phase 7: desktop polish for the Mac (its gate running, 2026-11-25)
 Landscape layouts, keys, hover, Retina and display changes, resizing without leaks, Safari and Chrome, long sessions.
-- Carried from Phase 2's gate review: the results screen's button bar still covers the end of its content when the page
-  is scrolled to the top (the phone's FLAWLESS line, the Mac's mastery panel), and the menus' small icons are still
-  under the art bible's 20 px (stars 15-16 px, the stat emblems about 16): both to the Mac's and the phone's layout
-  work here.
-- To check on a real Safari (seen in this machine's WebKit, which draws in software): Nest Egg Run's car draws pale, as
-  if lit by a white glare, in WebKit here, before the overhaul (2026-11-22) as after Phase 2; Chromium draws it gold.
+The audit, the changes and the gate: `docs/master/phase7/` (`audit.md`, `README.md`, `gate-report.md`).
+- Done: the menus spread over a wide window (results, stats, Setup, stage select, the guide); icons at 20 px (Nest Egg
+  Run's lives from 400 px wide); a button the keyboard moved to takes Enter and Space, on what is on top and in play;
+  the arrows over a screen's cards and switches (Safari's Tab skips buttons); P pauses the exam; the exam's grid opens
+  on its question; every button answers a hover. Tools: `scenarios/keys.js`, `scenarios/resize.js`,
+  `scenarios/soak.js`, `LAYOUT=1` in `scenarios/polish.js`.
+- The carried items: the results bar (the Mac: the two columns put the run in view; the phone: its list ends in the
+  designed fade above the bar, kept); the icons (done); the car's glare in WebKit (gone: Phase 5's car is gold in both
+  engines, at both sizes); the 384 px portrait strip for 3x phones (left for Phase 8's look on the device: only the
+  briefing's 84 px face is drawn up 1.3 times; the busts' render settings are not recorded).
+- To check on a real Safari (seen once in this machine's WebKit, not again in three runs, never in Chromium): a short
+  white streak across Risk Blaster's demon. This machine's WebKit draws no `backdrop-filter` (a real Safari does).
 - **Gate:** a 30-minute soak on the Mac tier with no slowdown or memory growth.
 
 ### The performance re-check (after Phase 7, before Phase 8: the owner's new order)
