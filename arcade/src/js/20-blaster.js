@@ -993,6 +993,11 @@ class BlasterGame extends QuizGame {
       this.drones.forEach((d) => { d.body.dispose(); d.lamps.dispose(); });
       this.dronePaint.dispose();
       this.badges.forEach((m) => { m.map.dispose(); m.dispose(); });
+      // (the dark glass behind the drones round the demon: made on first use, and by the time the screen closes its
+      // drones, and with them every plate, are already gone from the scene: it stayed on the graphics chip a visit at a
+      // time. Phase 7's soak)
+      if (this.dronePlate) this.dronePlate.dispose();
+      if (this.dronePlateMat) this.dronePlateMat.dispose();
     }
     if (this.has3D) { this.shards.dispose(); this.blastPuffs.dispose(); this.space.dispose(); } // (the space's dispose lets the passing ships' and rocks' maps go)
     if (this.pano) this.pano.dispose();
