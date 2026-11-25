@@ -295,18 +295,24 @@ const Sound = {
   },
   // How long a take is let go over at its end, measured the first time it is played: none for one that ends in its own
   // decay; for one still sounding when the build's fade ends it (anywhere in the 40 ms before its last 30 ms within
-  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s.
+  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s, and never from
+  // before its loudest moment (a take the generator stopped on its height keeps it, and is let go just after it). It
+  // reads a copy of the take alone (copyFromChannel into a scratch kept for it), never the whole sprite's channel,
+  // which a browser may have to copy whole once the sprite has played.
   _release(q) {
-    const d = q.buf.getChannelData(0), sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), d.length - a), w = Math.round(0.02 * sr);
+    const sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), q.buf.length - a), w = Math.round(0.02 * sr);
     if (n < 8 * w) return 0;
-    let top = 0, end = 0;
-    for (let i = a; i + w <= a + n; i += w >> 1) {
+    if (!this._scratch || this._scratch.length < n) this._scratch = new Float32Array(Math.max(n, 2 * sr));
+    const d = this._scratch.subarray(0, n);
+    q.buf.copyFromChannel(d, 0, a);
+    let top = 0, peak = 0, end = 0;
+    for (let i = 0; i + w <= n; i += w >> 1) {
       let s = 0;
       for (let j = i; j < i + w; j++) s += d[j] * d[j];
-      if (s > top) top = s;
-      if (i + w >= a + n - 2.5 * w && i + w <= a + n - 1.5 * w && s > end) end = s;
+      if (s > top) { top = s; peak = i + w; }
+      if (i + w >= n - 2.5 * w && i + w <= n - 1.5 * w && s > end) end = s;
     }
-    return end > top * 0.063 ? Math.min(0.15, q.dur / 4) : 0;
+    return end > top * 0.063 ? Math.max(0, Math.min(0.15, q.dur / 4, (n - peak) / sr)) : 0;
   },
   // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
   // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
