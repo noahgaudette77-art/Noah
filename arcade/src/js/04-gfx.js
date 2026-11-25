@@ -909,6 +909,15 @@ function shockTexture() {
   return _shockTex;
 }
 
+// The camera's shake: value noise from -1 to 1 on its own hashed lattice (no random stream is drawn from), smoothed
+// between its points; ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up).
+const SHAKE_HZ = 18;
+function shakeNoise(u, ch) {
+  const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f);
+  const h = (n) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+  const a = h(i);
+  return a + (h(i + 1) - a) * s;
+}
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
     this.tw = new TweenSet();
@@ -982,12 +991,17 @@ class Scene3D {
       ring.material.opacity = 1 - k;
     }, () => { if (ring.userData.tok === tok) ring.visible = false; });
   }
+  // (Phase 4, 2026-11-25: the shake is a smooth noise in time, x and y each their own, about 18 turns a second: it was a
+  // fresh random offset every frame, a buzz more than a shake, and twice as fast at 120 Hz as at 60. The same now at
+  // any frame rate, slowed with the scene's clock in a hit-stop, and drawn from no random stream. Its size, its decay
+  // and every cap and calm scale on it are as they were.)
   placeCamera() {
     if (!this.camera) return;
     this.camera.position.copy(this.camBase);
     if (this.shakeAmt > 0.001) {
-      this.camera.position.x += rand(-1, 1) * this.shakeAmt;
-      this.camera.position.y += rand(-1, 1) * this.shakeAmt;
+      const u = this.t * SHAKE_HZ;
+      this.camera.position.x += shakeNoise(u, 0) * this.shakeAmt;
+      this.camera.position.y += shakeNoise(u, 1) * this.shakeAmt;
     }
     this.camera.lookAt(this.lookAt);
   }
