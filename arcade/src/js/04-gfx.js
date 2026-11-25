@@ -910,13 +910,15 @@ function shockTexture() {
 }
 
 // The camera's shake: value noise from -1 to 1 on its own hashed lattice (no random stream is drawn from), smoothed
-// between its points; ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up).
+// between its points, and pushed out toward its edges (to the power 0.75) so that it stands as far off on average as
+// the random offsets did (0.75 of the amount against 0.76), never further (its most is 1: the staged games' caps hold);
+// ch picks an independent channel (Scene3D.placeCamera: 0 across, 1 up).
 const SHAKE_HZ = 18;
 function shakeNoise(u, ch) {
   const i = Math.floor(u), f = u - i, s = f * f * (3 - 2 * f);
   const h = (n) => { const x = Math.sin(n * 127.1 + ch * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
-  const a = h(i);
-  return a + (h(i + 1) - a) * s;
+  const a = h(i), v = a + (h(i + 1) - a) * s;
+  return Math.sign(v) * Math.pow(Math.abs(v), 0.75);
 }
 class Scene3D {
   constructor({ fov = 60, near = 0.1, far = 500, bg = 0x090320, fog = null } = {}) {
@@ -993,8 +995,8 @@ class Scene3D {
   }
   // (Phase 4, 2026-11-25: the shake is a smooth noise in time, x and y each their own, about 18 turns a second: it was a
   // fresh random offset every frame, a buzz more than a shake, and twice as fast at 120 Hz as at 60. The same now at
-  // any frame rate, slowed with the scene's clock in a hit-stop, and drawn from no random stream. Its size, its decay
-  // and every cap and calm scale on it are as they were.)
+  // any frame rate, slowed with the scene's clock in a hit-stop, and drawn from no random stream; as far off on average,
+  // a third of the jump a frame. Its size, its decay and every cap and calm scale on it are as they were.)
   placeCamera() {
     if (!this.camera) return;
     this.camera.position.copy(this.camBase);
