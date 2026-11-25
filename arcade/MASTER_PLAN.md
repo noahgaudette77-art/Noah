@@ -571,6 +571,25 @@ Exam's draws on the phone.
 - *Garbage is not a cause of stutter here:* at 4-61 KB a frame the collector sweeps every few seconds for about a
   millisecond; Chromium boxes fractional numbers Safari stores in place, so Safari makes less.
 
+**The performance re-check** (2026-11-25; `docs/master/recheck/README.md`): the draws and triangles counted at many
+moments of play (`tools/scenarios/draws.js`), not one, on the page with the re-check's changes. Least / median / most:
+
+| | draws | triangles |
+|---|---|---|
+| phone, Risk Blaster | 46 / 95 / 118 | 166K / 247K / 294K (with the phone's lighter ships and rocks; 438K at most before) |
+| phone, Nest Egg Run | 59 / 92 / 105 | 103K / 180K / 216K |
+| phone, Boss Rush | 45 / 70 / 79 | 64K / 112K / 140K |
+| phone, Memory Bank | 55 / 57 / 57 | 106K / 146K / 195K |
+| phone, the exam | 50 / 72 / 75 | 57K / 57K / 154K |
+| Mac, Nest Egg Run | 102 / 148 / 169 | 204K / 374K / 502K |
+| Mac, Risk Blaster | 63 / 111 / 131 | 180K / 354K / 476K |
+| Mac, Boss Rush | 54 / 124 / 133 | 61K / 181K / 244K |
+| Mac, the exam | 70 / 92 / 94 | 57K / 57K / 154K |
+
+What a phone keeps outside the graphics chip by the end of a round of every screen (`tools/scenarios/kept.js`): 17 skies
+decoded (124 MB, kept so a game opens at once), 7 sprites of sounds decoded (97 MB), the playing track (27 MB), the
+models' and music's raw files (40.5 MB; 57.1 before the re-check let the others go).
+
 ## Hand-over notes
 
 **Phase 0 (2026-11-23).** The plan, the harness (`tools/harness.js`: run it from the repository's root; about 55
