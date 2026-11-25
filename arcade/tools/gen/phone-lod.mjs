@@ -32,11 +32,15 @@ for (const name of ["prop-ship-a", "prop-ship-b", "prop-ship-c", "prop-rock", "p
   const node = src.getRoot().listNodes().find((n) => n.getMesh()), prim = node.getMesh().listPrimitives()[0], wm = node.getWorldMatrix();
   const P = prim.getAttribute("POSITION").getArray(), N = prim.getAttribute("NORMAL").getArray(), T = prim.getAttribute("TEXCOORD_0").getArray(), I = prim.getIndices().getArray();
   const n = P.length / 3, pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
+  // the normal matrix (row by row): the cofactors of the node's 3x3 over its determinant, the inverse transpose
+  const [A, B, C, D, E, F, G, H, K] = [wm[0], wm[4], wm[8], wm[1], wm[5], wm[9], wm[2], wm[6], wm[10]], det = A * (E * K - F * H) - B * (D * K - F * G) + C * (D * H - E * G);
+  const NM = [E * K - F * H, -(D * K - F * G), D * H - E * G, -(B * K - C * H), A * K - C * G, -(A * H - B * G), B * F - C * E, -(A * F - C * D), A * E - B * D].map((v) => v / det);
   for (let i = 0; i < n; i++) {
     const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
     pos[i * 3] = wm[0] * x + wm[4] * y + wm[8] * z + wm[12]; pos[i * 3 + 1] = wm[1] * x + wm[5] * y + wm[9] * z + wm[13]; pos[i * 3 + 2] = wm[2] * x + wm[6] * y + wm[10] * z + wm[14];
-    // (the node's matrix has no shear: its rotation and scale; the normal turned with it and set to unit length)
-    const a = N[i * 3], b = N[i * 3 + 1], c = N[i * 3 + 2], nx = wm[0] * a + wm[4] * b + wm[8] * c, ny = wm[1] * a + wm[5] * b + wm[9] * c, nz = wm[2] * a + wm[6] * b + wm[10] * c, l = Math.hypot(nx, ny, nz) || 1;
+    // (the normal turned by the node's normal matrix, the inverse transpose of its rotation and scale, so a scale
+    // that is not the same on every axis still leaves it at right angles to the surface; then set to unit length)
+    const a = N[i * 3], b = N[i * 3 + 1], c = N[i * 3 + 2], nx = NM[0] * a + NM[1] * b + NM[2] * c, ny = NM[3] * a + NM[4] * b + NM[5] * c, nz = NM[6] * a + NM[7] * b + NM[8] * c, l = Math.hypot(nx, ny, nz) || 1;
     nor[i * 3] = nx / l; nor[i * 3 + 1] = ny / l; nor[i * 3 + 2] = nz / l;
   }
   // (the careful simplifier, on the index buffer as it is: a vertex split at a seam of the picture is two, and the

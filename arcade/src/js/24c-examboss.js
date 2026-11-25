@@ -313,7 +313,9 @@ function bossHousing(env, pv) {
   grp.position.set(BOSS_CORE[0] - pv[0], 0.686 - pv[1], -pv[2]);
   grp.scale.set(1, 1.18, 1); // (a little taller than wide: the hollow runs on down below the reactor)
   // (its metal, one draw: the rim, the vent's slats and the core's collar were six, each placed by its own mesh; the
-  // performance re-check put each where it stood and drew them as one)
+  // performance re-check put each where it stood and drew them as one. three.js draws an id for each mesh and shape it
+  // makes, from the randomness: four fewer here, so in the capture tool's seeded runs of the exam what is drawn after
+  // the Proctor is built comes out otherwise; its questions, drawn before, and the rules are not touched)
   const steel = [new THREE.LatheGeometry([[R, z0], [R, zf - 0.011], [R - 0.009, zf], [R - 0.016, zf], [ri, zi]].map(([r, z]) => new THREE.Vector2(r, z)), 8, Math.PI / 8).rotateX(Math.PI / 2)]; // the rim and its bevel
   const floor = new THREE.Mesh(new THREE.CircleGeometry(ri + 0.001, 8, Math.PI / 8), dark);
   floor.position.z = zi - 0.001;

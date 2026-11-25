@@ -900,7 +900,9 @@ class BlasterSpace {
         // (the performance re-check: on a phone, the same shape at two fifths of its triangles, fitted as the full one
         // is and drawn in its material and picture: tools/gen/phone-lod.mjs. There a ship or a near rock is a few dozen
         // pixels across, and at its busiest a frame asked for some 450,000 triangles, most of them these.)
-        const md = Assets.phone && g.gen.props[name + "-md"], lite = md && modelGeometry(md, new THREE.Matrix4().makeRotationY(Math.PI));
+        // (made in a randomness of its own: three.js draws an id for each shape it makes, and a phone's extra shapes would
+        // otherwise move what is drawn after them, the questions among them, in the capture tool's seeded runs)
+        const md = Assets.phone && g.gen.props[name + "-md"], lite = md && ownRandom(0x3a7e5d11, () => modelGeometry(md, new THREE.Matrix4().makeRotationY(Math.PI)));
         if (md) md.scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose()); } });
         if (lite) {
           lite.geo.translate(-fit.c.x, -fit.c.y, -fit.c.z);
