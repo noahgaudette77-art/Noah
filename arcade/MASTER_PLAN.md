@@ -14,8 +14,9 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** Phase 8, the final verification (below), NEXT. Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check
-  and the Mac's richer tier are done (the Mac tier's gate 2026-11-25: `docs/master/mactier/gate-report.md`).
+- **Phase:** Phase 8, the final verification (below), NEXT. Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
+  the Mac's richer tier and the context-loss handler are done (the Mac tier's gate 2026-11-25:
+  `docs/master/mactier/gate-report.md`; the context-loss handler 2026-11-26: `docs/master/contextloss/README.md`).
 - **Phase 8 starts from:** the whole harness on both tiers in Chromium and WebKit, every screen and game, the content
   diff, the gallery, the films (`tools/scenarios/film.js`), the performance table, the final spend and a token estimate,
   the served link checked. Carried to it: the device checks listed in the Mac tier's hand-over (below, at the end).
@@ -106,7 +107,7 @@ music pieces.
 - [x] the ranked audit: the weakest visuals, animations, feel, audio and performance costs, every screen
 - **Gate:** baseline report committed, harness working. **Passed** (no fault; see Measurements).
 
-### Phase 1: performance foundation
+### Phase 1: performance foundation (done 2026-11-23)
 Fixed timestep with interpolated rendering (to decide, with evidence: the rules run on each frame's own step today and
 the regression is played at 60 Hz; the look was made rate-independent in the animation pass), object pooling, shader
 pre-warming, asset preloading, draw-call reduction (merging, instancing), compression and LODs, baked lighting instead
@@ -222,7 +223,7 @@ wizard's casts, wand and cape tight to the sound.
   bosses' 30 Hz twitch (a shudder of 10-15 Hz may read better than a strobe).
 - **Gate:** each game reviewed with a capture sequence; budgets kept; the logic diff clean.
 
-### Phase 5: environments and new assets (NOW, from 2026-11-24, by the owner's new order)
+### Phase 5: environments and new assets (done 2026-11-24, run after Phase 1 by the owner's new order)
 The title hall's cells as a real prison, each arena, the vault, Memory Bank and the rest: instancing, baked glow, sprite
 fog, cheap animated details; the Mac denser, the phone lean. With the owner's new order it also carries the new assets
 (key assets made with Tripo and Rodin, the better kept, only what is clearly below the bar; pre-rendered skies where
@@ -377,6 +378,18 @@ confirm no memory growth or slowdown. Study logic and content stay untouched."
 - **Gate:** the harness inside the new budgets; the 30-minute soak with other programs loading the machine (here they
   are stand-ins: memory and processor hogs and a second browser; on the MacBook, the owner's own apps), no memory growth
   and no slowdown; WebKit's stills and costs on the Mac; an independent review.
+
+### The context-loss handler (the owner, 2026-11-26: before Phase 8; done 2026-11-26)
+The owner's order, as given: "Add a graphics-context-loss handler: on loss, pause the game cleanly, and on restore,
+rebuild everything the library doesn't restore on its own (including runtime-built reflections and environment maps),
+then resume without losing game state. Test it by forcing a context loss in Playwright (WebKit and Chromium) and confirm
+the title hall, a boss fight, and the Memory Bank all recover with no black reflections. Study logic stays untouched."
+- What three.js r128 gives back by itself and what it cannot, how the page holds still and makes again what it drew at
+  run time, and the test: `docs/master/contextloss/README.md`.
+- **Gate:** `tools/scenarios/context-loss.js` in Chromium and WebKit, each run against a control (the same moments, the
+  context kept): every kept reflection, the rooms' probes and the steel as they were (none black), the still after as the
+  control's, the game's state as it was, the game going on; the rules IDENTICAL from disk and served; an independent review.
+  **Passed** 2026-11-26: 93 checks in each engine, no WebGL complaint, no page error; the review's findings answered.
 
 ### Phase 8: final verification
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
@@ -739,3 +752,23 @@ glide (the hall's sharper bosses arrive during it, one picture a frame, four tim
 and Boss Rush; Activity Monitor over half an hour of play with the usual apps open (Safari's memory should level off);
 Setup's MEDIUM and back to HIGH (the skies follow). Carried to Phase 8: a phone's exam sent one 512 px canvas late in play
 in the census (1 MB; none in Phase 5's), Boss Rush's garbage on a phone's page 54.5 KB a frame (38.7 in Phase 5's census).
+
+**The context-loss handler (2026-11-26).** The owner's order: on a lost graphics context, pause cleanly; on its return,
+make again what three.js cannot (every reflection and environment map drawn at run time), and resume without losing the
+game's state; tested by forcing the loss in Playwright in both engines on the title hall, a fight and the Memory Bank.
+Done (`docs/master/contextloss/README.md`): while lost nothing is drawn and nothing moves (a game in play paused by its
+own pause too; a notice over everything, RELOAD offered after ten seconds); on return every reflection target kept
+(`GFX.keepEnv`: drawn again and copied texel for texel into the target everything holds), Risk Blaster's nebula and Nest
+Egg Run's skies' smaller copies made again, the screen readied as it was the first time, a frame drawn, each room's probe
+drawn again whole three times over (Boss Rush's without lightning), the game resumed; three.js's leftovers' deletes
+skipped (`GFX.guardDeletes`: 520 complaints in Chromium and 263 in WebKit before it). The test
+(`tools/scenarios/context-loss.js`) also loses the context in Risk Blaster and Nest Egg Run, in a game's opening moments,
+twice in a row, while a screen is about to open, and for longer than ten seconds: 93 checks in each engine, all passed,
+each set against a control run. It found Boss Rush's probe a fifth darker after a restore (its arena shows the deck's
+mirror, drawn only in a frame: a frame is drawn first now). An independent review found a closed Risk Blaster or Nest Egg
+Run kept alive by its parked materials through the new keeping (fixed: `tools/scenarios/closed-games.js` counts 0 live
+games after each closes; it counted 1, then 2), a retired sky kept for the visit, a game in its opening moments running
+on in the dark, RELOAD shown at once, smaller restore gaps and a test that proved less than it said; all answered. The
+rules IDENTICAL from disk and served; content and scripts untouched. Spend: none. For the devices: on the iPhone, leave a
+fight for another app for some minutes and come back (at most a moment of the notice, then the fight paused as it was,
+its reflections lit); on the Mac, the console line in the README forces a loss and its return. Next: Phase 8.
