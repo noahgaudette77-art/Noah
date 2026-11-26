@@ -14,15 +14,11 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** the Mac's richer tier (the owner's order of 2026-11-25, below), IN PROGRESS. Phases 0, 1, 5, 3, 2, 4, 6,
-  7 and the performance re-check are done (the re-check's gate 2026-11-25: `docs/master/recheck/gate-report.md`).
-- **Done in the Mac's tier so far:** the budget (2,000 MB a screen on the Mac); the title hall's bosses, the wizard and
-  thirteen skies in sharper pictures fetched only at the MAC tier (`<name>-hd`, `Assets.file`, `Assets.skyFile`); more
-  sparks, embers and chunks in fights, twice Risk Blaster's far rocks, Boss Rush's stands fuller, the floor reflection at
-  0.8 (`GFX.rich`, `GFX.richRandom`: from a randomness of their own).
-- **Next steps:** every screen measured on the Mac with all of it; then the gate: the harness, the 30-minute soak with
-  other programs loading the machine (`tools/load.js`), WebKit on the Mac, the census on the final build (for the
-  re-check too), an independent review; the report; then Phase 8.
+- **Phase:** Phase 8, the final verification (below), NEXT. Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check
+  and the Mac's richer tier are done (the Mac tier's gate 2026-11-25: `docs/master/mactier/gate-report.md`).
+- **Phase 8 starts from:** the whole harness on both tiers in Chromium and WebKit, every screen and game, the content
+  diff, the gallery, the films (`tools/scenarios/film.js`), the performance table, the final spend and a token estimate,
+  the served link checked. Carried to it: the device checks listed in the Mac tier's hand-over (below, at the end).
 - Work in progress is built to `index.phase3.html` (gitignored; `scratchpad/master/tools/sidebuild3.sh`) so a
   measurement reading `index.html` is never disturbed; `index.phase5.html` (gitignored) is the Phase 5 build, kept for
   before/after scans.
@@ -368,7 +364,7 @@ changes), memory over cycles, the governor in both engines; whatever a later pha
   a frame (its update 5.8 KB; the cells' lamps make a list a frame); the census's play of Memory Bank turns no card (as
   in Phase 1's): to be made to turn and grade them, so the deck's own moments are counted.
 
-### The Mac's richer tier (the owner, 2026-11-25: after the re-check, before Phase 8; NOW)
+### The Mac's richer tier (the owner, 2026-11-25: after the re-check, before Phase 8; done 2026-11-25)
 The owner's order, as given: "Raise the Mac tier's graphics memory budget from 900 MB to about 2 GB (up to 3 GB only if
 every test stays clean). The MacBook has 16 GB of unified memory, but it is shared with Safari, other apps and the OS, so
 keep headroom. Spend the extra on higher-resolution key textures, denser props and richer effects on the Mac tier only.
@@ -717,3 +713,29 @@ Egg Run's Mac draws 169 recorded to watch on the devices (each fix a character's
 engines; memory level over cycles; the harness without fault (`recheck-final`); an independent review found no
 regression, its notes answered (`deef476`). The census left for the final build. Spend: none. Live at `e041f16`. Tools:
 `scenarios/draws.js`, `scenarios/kept.js`, `tools/gen/phone-lod.mjs`, `shader-dump.js STAGE=`.
+
+**The Mac's richer tier (2026-11-25).** The owner's order: the Mac's graphics memory to about 2 GB, spent on sharper key
+textures, denser props and richer effects at the MAC tier only, the phone's budget kept, a steady 60 FPS, the 30-minute
+soak again with other apps open. Measured first where the Mac's picture was held back, on the screen's own pixels
+(`docs/master/mactier/README.md`): the exam's and the guide's skies drawn up 3.2 and 2.6 times, Risk Blaster's and Nest
+Egg Run's 1.5, the title hall's bosses 2 to 4 times mid-glide; so ten skies at Blockade's own 8192 x 4096 and the hall's
+bosses in Boss Rush's own pictures, fetched only at the MAC tier (`<name>-hd`; no spend). Boss Rush's three sharper skies
+and the wizard's 4096 px copy were made and removed: measured, they would be drawn down (nothing gained; Boss Rush's would
+shimmer). Then half as many sparks, embers and chunks again in fights, twice Risk Blaster's far rocks, Boss Rush's stands
+two fifths fuller, all from a randomness and in slots of their own (the seeded questions and scenery the same: a probe
+that failed before the review's fix passes after it). The floor's reflection at 0.8 was tried and put back: frame time,
+not memory. Found on the way: the sharper skies piled up on the graphics chip over a session (now there only while a
+screen draws them), and Nest Egg Run sent its next sky to the chip mid-run at each change of landscape, on every tier
+(now readied behind the cover; a phone holds 11 MB more there). An independent review found seven things, all answered
+(`docs/master/mactier/gate-report.md`). The gate: the rules IDENTICAL from disk and served, the content untouched; every
+screen inside the budgets (the most, Nest Egg Run's 1,476 MB at a run's start; a phone's screens as before but Nest Egg
+Run's 325 MB); frame cost the same within noise but Risk Blaster's (+14% at one moment, its far field twice as dense);
+the census: no shader made and no sharper picture sent in play; the 30-minute soak with 6 GB held, a busy core and a
+second browser beside it: no growth (graphics +1 MB, heap +2 MB, textures +0) and no slowdown; six rounds beside the
+page before this tier: the browser's own memory swings with the sharper pictures (its upload buffers and decoded copies)
+and does not climb. WebKit the same (no fault). Live at `b4a22c9`. Spend: none. Tools: `tools/glmem.js`, `tools/load.js`, the soak's memory
+columns, `tools/gen/mac-hd.mjs`, `tools/gen/sky-hd.js`. For the devices: the MacBook's FPS counter through the title's
+glide (the hall's sharper bosses arrive during it, one picture a frame, four times the bytes), Risk Blaster, Nest Egg Run
+and Boss Rush; Activity Monitor over half an hour of play with the usual apps open (Safari's memory should level off);
+Setup's MEDIUM and back to HIGH (the skies follow). Carried to Phase 8: a phone's exam sent one 512 px canvas late in play
+in the census (1 MB; none in Phase 5's), Boss Rush's garbage on a phone's page 54.5 KB a frame (38.7 in Phase 5's census).
