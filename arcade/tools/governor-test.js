@@ -17,9 +17,9 @@
  *              the last (frames held at one rate through it all would be a cap: see 24 fps)
  *   recover    steady 60 fps from the last step: a step back up every 11 s (2.5 s to show, then 8 steady), to PHONE
  *              at 2x and no higher
- *   lowpower   frames held at exactly 30: down until a real cut (a tier down, 56% of the pixels) still holds 30, so it
- *              is the device's cap: back to PHONE 2x, the sharpest step that held it, named in the readout, held
- *              through a new screen's first seconds; at 60 again the cap lifts, 2x as it was
+ *   lowpower   frames held at exactly 30: down until one step past a real cut (a tier down, 56% of the pixels: SAFE,
+ *              then LIGHTEST) still holds 30, so it is the device's cap: back to PHONE 2x, the sharpest step that held
+ *              it, named in the readout, held through a new screen's first seconds; at 60 again, let go, 2x as it was
  *   24 fps     the owner's iPhone in Low Power Mode (2026-11-26: 41.7 ms a frame, steadily; it went to the last step
  *              for nothing): the same at 24, held at PHONE 2x, HELD AT 24 FPS; lifted at 60
  *   boot       blank frames timed at the start every 33 ms, or every 41.7: held at 2x from the start, no step taken to
@@ -29,10 +29,20 @@
  *   setup      held at 24, Setup's PHONE chosen and AUTO again: the hold kept, no step to find it again
  *   load       held at 30 from the start by a load at 2x alone: held at 2x for a minute, then the step down tried runs
  *              at 60: no cap after all, held there
- *   test       held at 30 from the start by a load that SAFE still has: the step down tried runs no faster, back to 2x,
- *              tried again later (the probe's steady 33 ms is a cap's; a load that deep is left to the tests)
- *   heavy      under a cap, a load too much even for 30 at 2x and 1.9x: down until 30 holds through a real cut, then
- *              back to the sharpest step that held it (1.7x), and up to 1.8x as it holds there
+ *   test       held at 30 from the start by a load that SAFE still has: the one-step test runs no faster, back to 2x;
+ *              the page back in view, the test goes past the real cut, runs at 60 there: let go, held there
+ *   deep load  a load (not a cap) that holds 30 through SAFE and lifts at LIGHTEST (the independent review's case): no
+ *              cap, held where it runs at 60
+ *   low cap    a cap at 24 that starts with the picture already low (LIGHTEST): down to the last step, still 24, so
+ *              back to where it was held first, then up as frames hold (the review: it stayed at the last step)
+ *   eased      a fixed tier eased a size (heat) when a 30 cap starts: its sizes down to the last, still 30: back to the
+ *              eased size, held, then up to its full size
+ *   faster     held at 24, then frames at 30 a second at 2x that a cut past the real one lifts (the cap lifted, a load
+ *              in its place): tested that deep at once, let go there
+ *   band       held at 24, frames at 30 a second at times (the device's own rate moving): one deep test, the band
+ *              learned (HELD AT 24-30 FPS), no step after
+ *   heavy      under a cap, a load too much even for 30 at 2x and 1.9x: down until 30 holds one step past a real cut,
+ *              then back to the sharpest step that held it (1.7x), and up to 1.8x as it holds there
  *   heavy@30   a screen held at 30 by its own load, which a real cut lifts: no cap, held where it runs at 60
  *   10 fps     a slow device still steps down
  *   new screen the last screen's slow looks and a new screen's uneven first frames are not held against it
@@ -180,7 +190,7 @@ function inPage() {
   await reset();
   p = await feed(33.33, 22, 0.2);
   s = await st();
-  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]), "lowpower: down until a real cut (SAFE, 56% of the pixels) still held 30: back to PHONE 2x, held there", { capped: s.capped, rung: s.rung, path: p });
+  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 0]), "lowpower: down until one step past a real cut (SAFE, then LIGHTEST) still held 30: back to PHONE 2x, held there", { capped: s.capped, rung: s.rung, path: p });
   ok(s.label === "HELD AT 30 FPS · LOW POWER MODE?", "lowpower: the readout names it", s.label);
   p = await feed(33.33, 20, 0.2);
   ok(p.length === 0, "lowpower: held, no more steps while it lasts", p);
@@ -196,7 +206,7 @@ function inPage() {
   await reset();
   p = await feed(41.67, 24, 0.3);
   s = await st();
-  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]) && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "24 fps: down until a real cut still held 24: back to PHONE 2x, held, HELD AT 24 FPS", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 0]) && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "24 fps: down until one step past a real cut still held 24: back to PHONE 2x, held, HELD AT 24 FPS", { capped: s.capped, rung: s.rung, label: s.label, path: p });
   p = await feed(41.67, 40, 0.3);
   s = await st();
   ok(s.capped && p.length === 0, "24 fps: held at 2x while it lasts", { capped: s.capped, path: p });
@@ -240,7 +250,7 @@ function inPage() {
   // lower cap: held at 30, then the device holds the page at 24: found as the first was, held at 2x at 24
   p = await feed(41.67, 24, 0.3);
   s = await st();
-  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]) && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "lower cap: held at 30, then 24: down until a real cut still held 24, back to 2x, HELD AT 24 FPS", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 0]) && /^HELD AT 24(-30)? FPS · LOW POWER MODE\?$/.test(s.label), "lower cap: held at 30, then 24: down until one step past a real cut still held 24, back to 2x, held", { capped: s.capped, rung: s.rung, label: s.label, path: p });
   // a load just over a frame at 2x alone (30 there, 60 a step down), held at 30 from the start: held at 2x, and the
   // step down tried after a minute runs at 60: no cap after all, held there
   await reset();
@@ -258,13 +268,49 @@ function inPage() {
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33, 33.33, 33.33, 33.33, 33.33], 16.67, 72, 0.3));
   s = await st();
-  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 0]) && p[0].at >= 59 && p[0].at <= 62, "test: held at 30 by a load that SAFE still has: the step down tried after a minute runs no faster: back to 2x, held", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 0]) && p[0].at >= 59 && p[0].at <= 62, "test: held at 30 by a load that SAFE still has: the one-step test after a minute runs no faster: back to 2x, held", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  await page.evaluate(() => window.__arcade.GFX.perfAfresh()); // (the page back in view)
+  p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33, 33.33, 33.33, 33.33, 33.33], 16.67, 10, 0.3));
+  s = await st();
+  ok(!s.capped && s.rung === 7 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([7]) && /it was the load/.test(s.why), "test: the page back in view: the test goes past the real cut (LIGHTEST), runs at 60 there: let go, held there", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  // deep load (the independent review's case): a load, not a cap, that holds 30 down through SAFE and lifts at
+  // LIGHTEST: the step past the real cut runs at 60, so no cap: held there
+  await reset();
+  p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33, 33.33, 33.33, 33.33, 33.33], 16.67, 24, 0.3));
+  s = await st();
+  ok(!s.capped && s.rung === 7 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7]), "deep load: 30 through SAFE, 60 at LIGHTEST: no cap, held at LIGHTEST", { capped: s.capped, rung: s.rung, path: p });
+  // low cap: a 24 fps cap that starts with the picture already at LIGHTEST (no real cut below it): down to the last
+  // step, still 24: back to LIGHTEST, held, then up as frames hold
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.setRung(7, "test"));
+  p = await feed(41.67, 16, 0.3);
+  s = await st();
+  ok(s.capped && s.rung === 7 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([8, 9, 10, 7]), "low cap: from LIGHTEST, down to the last step, still 24: back to LIGHTEST, held", { capped: s.capped, rung: s.rung, path: p });
+  p = await feed(41.67, 80, 0.3);
+  s = await st();
+  ok(s.capped && s.rung <= 1 && p.length >= 5 && p.slice(0, 5).every((x, i) => x.rung === 6 - i), "low cap: steady under the hold: up a step at a time toward PHONE 2x (the hold's one-step test on the way)", { capped: s.capped, rung: s.rung, path: p.slice(0, 9) });
+  // faster: held at 24 from the start, then frames at 30 a second at 2x and through SAFE, 60 at LIGHTEST (the cap
+  // lifted, a load in its place): tested past the real cut at once, let go there
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(41.67)));
+  p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33, 33.33, 33.33, 33.33, 33.33], 16.67, 10, 0.3));
+  s = await st();
+  ok(!s.capped && s.rung === 7 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([7]) && p[0].at <= 6, "faster: held at 24, then 30 at 2x from a load: tested past the real cut within seconds, 60 there: let go", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  // band: held at 24 from the start, the device's own rate at 30 at times (3 s of 30, 5 s of 24, over and over): one
+  // deep test, the band learned, no step after
+  await reset();
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(41.67)));
+  p = [];
+  for (let k = 0; k < 8; k++) { p = p.concat(await feed(33.33, 3, 0.3), await feed(41.67, 5, 0.3)); }
+  s = await st();
+  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([7, 0]) && s.label === "HELD AT 24-30 FPS · LOW POWER MODE?", "band: 24 and 30 by turns: one deep test, the band learned (HELD AT 24-30 FPS), held at 2x, no step after", { capped: s.capped, rung: s.rung, label: s.label, path: p });
   // lowpower, heavy: under the cap, the first two steps too much even for 30 (45 ms a frame), the rest holding 30:
-  // down until 30 holds through a real cut below where it was first held (1.7x), back there, then up to 1.8x as it holds
+  // down until 30 holds one step past a real cut below where it was first held (1.7x: LIGHTEST, then its smaller
+  // size), back there, then up to 1.8x as it holds
   await reset();
   p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 30, 0.3));
   s = await st();
-  ok(s.capped && s.rung === 3 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 3]), "lowpower, heavy: down until 30 holds through a real cut, then back to the sharpest step that held it (1.7x)", { rung: s.rung, capped: s.capped, path: p });
+  ok(s.capped && s.rung === 3 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 8, 3]), "lowpower, heavy: down until 30 holds one step past a real cut, then back to the sharpest step that held it (1.7x)", { rung: s.rung, capped: s.capped, path: p });
   p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 60, 0.3));
   s = await st();
   ok(s.capped && s.rung === 2 && p.length >= 1 && p[0].rung === 2 && p.every((x) => x.rung >= 1), "lowpower, heavy: steady there: up to 1.8x, the sharpest step that holds 30 (1.9x tried, back)", { rung: s.rung, capped: s.capped, path: p });
@@ -368,6 +414,13 @@ function inPage() {
   p = await feed(41.67, 10, 0.3);
   s = await st();
   ok(!s.auto && s.capped && s.rung === 0 && s.scale === 1 && p.length === 0 && /HELD AT 24 FPS/.test(s.label), "fixed@24: Setup's PHONE held at 24 from the start: its full size, no step", { rung: s.rung, scale: s.scale, label: s.label, path: p });
+  // eased: a fixed tier already a size down (heat) when a 30 cap starts (no real cut below 0.95 of it): its sizes down
+  // to the last, still 30: back to the eased size, held, then up to its full size
+  await reset();
+  await page.evaluate(() => { const G = window.__arcade.GFX; G.setQuality("medium"); G.setRung(1, "test"); });
+  p = await feed(33.33, 30, 0.3);
+  s = await st();
+  ok(!s.auto && s.capped && s.rung === 0 && s.scale === 1 && p.length >= 3 && p[p.length - 2].rung === 1 && p[p.length - 1].rung === 0, "eased: a fixed tier eased a size when 30 starts: down to its last size, still 30: back to the eased size, held, then up to its full size", { rung: s.rung, scale: s.scale, path: p });
   await reset();
   // once: a Graphics setting fixed before 2026-11-26 is AUTO again, once
   {
