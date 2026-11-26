@@ -14,7 +14,8 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** Phase 8, the final verification (below), NEXT. Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
+- **Phase:** Phase 8, the final verification (below), IN PROGRESS from 2026-11-26 (the owner's go): first the title
+  hall's stutter the owner saw on the iPhone (`docs/master/phase8/title-stutter.md`). Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
   the Mac's richer tier and the context-loss handler are done (the Mac tier's gate 2026-11-25:
   `docs/master/mactier/gate-report.md`; the context-loss handler 2026-11-26: `docs/master/contextloss/README.md`).
 - **Phase 8 starts from:** the whole harness on both tiers in Chromium and WebKit, every screen and game, the content
@@ -391,10 +392,17 @@ the title hall, a boss fight, and the Memory Bank all recover with no black refl
   control's, the game's state as it was, the game going on; the rules IDENTICAL from disk and served; an independent review.
   **Passed** 2026-11-26: 93 checks in each engine, no WebGL complaint, no page error; the review's findings answered.
 
-### Phase 8: final verification
+### Phase 8: final verification (IN PROGRESS, from 2026-11-26)
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
 gallery, a short film of the title hall and one fight, a performance table, the final spend and a token estimate;
 pushed; the served link checked.
+- **8a. The title hall's stutter on the owner's iPhone** (the owner, 2026-11-26: "lots of stutter in the first screen
+  ... from beginning to end"). Asked: Safari on the iPhone, every time, under 55 FPS and many hitches in the glide, and
+  the readout's FIXED (SETUP): Setup's Graphics held fixed on that phone, so the governor did nothing. Done: a fixed tier
+  keeps its effects and lights but eases its drawing size as AUTO's first tier does (2x to 1.5x on a phone); no frosted
+  glass on a phone or a tablet at any tier; a boss's skin merged in smaller steps as it arrives. The governor's test
+  anew in both engines; the rules IDENTICAL. For the owner: Graphics back to AUTO on the phone, then the `#fps` readout
+  again. Tool: `tools/glide-frames.js` (the first glide in real time, every frame and every picture sent timed).
 
 ## Decisions (with the evidence for each)
 
