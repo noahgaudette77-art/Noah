@@ -56,7 +56,19 @@ const UI = {
       const cs = getComputedStyle(b);
       return cs.pointerEvents === "none" || cs.visibility === "hidden" ? null : b;
     };
+    // (no key does anything while the graphics context is lost (GFX.contextLost) but the notice's RELOAD, once it is
+    // offered: Tab reaches it, and Enter or Space on it starts the page again; a focused button's Space clicks on its
+    // key's release)
+    const reload = (e) => { const b = $("#gl-lost [data-act=reload]"); return b && !b.hidden && e.target === b ? b : null; };
+    document.addEventListener("keyup", (e) => { if (typeof GFX !== "undefined" && GFX.lost && !reload(e)) { e.preventDefault(); e.stopPropagation(); } }, true);
     document.addEventListener("keydown", (e) => {
+      if (typeof GFX !== "undefined" && GFX.lost) {
+        if (reload(e) && (e.key === "Enter" || e.key === " ")) return;
+        e.preventDefault();
+        const b = $("#gl-lost [data-act=reload]");
+        if (e.key === "Tab" && b && !b.hidden) b.focus();
+        return;
+      }
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
       if ((e.key === "Enter" || e.key === " ") && keyButton()) return; // (the browser clicks it)
@@ -69,6 +81,19 @@ const UI = {
       // would otherwise stay on STATS while the cabinets turn. (Not the arrows over a screen's cards: see arrowNav.)
       if (e.key.startsWith("Arrow") && e.defaultPrevented && !this._nav && keyFocus && keyFocus === was && document.activeElement === was) { keyFocus = null; was.blur(); }
     });
+  },
+  // The graphics context lost (GFX.contextLost) and back: a notice over everything, which takes the pointer too. Lost
+  // for long (the browser may not give it back), it offers to start the page again (progress is kept: Store).
+  glLost(on) {
+    let el = $("#gl-lost");
+    clearTimeout(this._glLostT);
+    if (!on) { if (el) el.remove(); return; }
+    if (!el) {
+      el = this.el('<div id="gl-lost" role="alertdialog" aria-live="assertive" aria-label="Restoring graphics"><span>RESTORING GRAPHICS</span><button class="btn" data-act="reload" hidden>RELOAD</button></div>');
+      el.addEventListener("click", (e) => { if (e.target && e.target.dataset.act === "reload") location.reload(); });
+      document.body.appendChild(el);
+    }
+    this._glLostT = setTimeout(() => { const b = $("#gl-lost [data-act=reload]"); if (b) b.hidden = false; }, 10000);
   },
   show(ctrl) {
     if (this.cur) {

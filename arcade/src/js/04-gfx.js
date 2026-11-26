@@ -228,6 +228,7 @@ const GFX = {
   // screen that runs at 30, or a laptop's own power saving, gains nothing from a lighter picture)
   capFloor(i) { return Assets.phone || this.small ? Math.max(i, this.safeRung()) : i; },
   perfTick(ms, cpu) {
+    if (this.lost) return; // (a frame that draws nothing tells nothing: perfAfresh when the context is back)
     const P = this.perf, now = performance.now(), N = P.ring.length, dpr = window.devicePixelRatio || 1;
     if (dpr !== this._dpr && this._dpr) { this._dpr = dpr; this.dprChanged(); } // (moved to another screen, or the page zoomed: a property read a frame, where a media query's event is not sent everywhere)
     // a frame that made shaders or sent new pictures to the chip: its time is the moment's (and the next frame's too)
@@ -362,6 +363,10 @@ const GFX = {
       return;
     }
     const r = this.renderer;
+    // (a lost graphics context: see contextLost. three.js listens first, and makes its own state again before this)
+    r.domElement.addEventListener("webglcontextlost", () => this.contextLost(), false);
+    r.domElement.addEventListener("webglcontextrestored", () => this.contextRestored(), false);
+    this.guardDeletes(r.getContext());
     // every texture is filtered as finely as the graphics chip can, so signs, floors and walls stay sharp at a slant
     // (on a phone 4 times over, not 16: a floor or a road seen low cost up to four times the reads at 16, for a
     // difference a phone's screen does not show)
@@ -429,6 +434,7 @@ const GFX = {
   refit() { if (this.ok && Math.abs(this.scenePR() - (this._pr || 0)) > 1e-3) this.resize(); },
   setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
+    if (this.lost) return; // (nothing to draw into: see contextLost)
     if (scene.userData.lightBudget) this.lightsFor(scene); // (the strongest of the screen's lights into its budget: see LightPool)
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
@@ -588,6 +594,124 @@ const GFX = {
     if (!this._pmrem) this._pmrem = new THREE.PMREMGenerator(this.renderer);
     return this._pmrem;
   },
+  // ---- a lost graphics context (the master overhaul, 2026-11-26) --------------------------------------------------
+  // The browser may take the graphics context away (the graphics chip or its driver restarted, the system took its
+  // memory back from a page in the background, a second graphics chip switched in) and give it back later. three.js
+  // makes its own state again then, and sends every texture and shape again from what it keeps of them. What the page
+  // drew at run time into targets of its own it cannot: every reflection made from a sky or a small scene (keepEnv), a
+  // room's probe (each screen's probeNow or restoreGraphics), Risk Blaster's nebula (onRestore).
+  // Lost: nothing is drawn and nothing moves (Scenes.frame), a game in play is paused by its own pause too (its timers
+  // held, as when the page is hidden), the screen says so and takes no input, and what would make something on the
+  // graphics chip waits (whenGL). Back: three.js's own state first (its listener comes first), then all of that made
+  // again into the same targets (whatever holds them holds them still), the screen readied (its pictures and shaders,
+  // its skies in waiting), a frame drawn, its probe drawn again, and the game resumed if this paused it. Nothing of a
+  // game's state is touched: a paused game, then the same game. (docs/master/contextloss/README.md)
+  lost: false,
+  kept: new Set(),
+  _restore: new Set(),
+  _afterRestore: [],
+  gen: 0, // (the graphics context's generation: one more at each loss; see guardDeletes)
+  contextLost() {
+    if (this.lost) return;
+    this.lost = true;
+    this.gen++;
+    this.lostAt = performance.now();
+    const s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    this._lostPaused = null;
+    if (s && s.pause && !s.paused && s.state && s.state !== "over" && s.state !== "intro") { s.pause(); if (s.paused) this._lostPaused = s; }
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(true);
+  },
+  contextRestored() {
+    if (!this.lost) return;
+    this.lost = false;
+    this._par = undefined; // (an extension's object belongs to the lost context: asked for again)
+    const r = this.renderer, s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    r.setClearColor(0x090320, 1); // (three.js makes its background state again, black and clear: the page's own colour, as init set it)
+    if (this.pipe) this.pipe.compiled = false; // (every post-processing pass's shader made again with the screen's: GFX.warm)
+    // (all of it from a randomness of its own: what three.js makes draws ids from Math.random, and the game's own draws,
+    // seeded in a test, go on as they would have)
+    ownRandom(0x6c057e57, () => {
+      for (const fn of [...this._restore]) { try { fn(); } catch (e) { console.warn("graphics restore: " + (e && e.message)); } }
+      if (!s || !s.scene || !s.camera) return;
+      try {
+        this.warm(s, true); // (every picture it draws sent again, every shader made again, now and not in play)
+        // a frame drawn, as in play, before a probe is drawn from the screen: what the screen draws again every frame
+        // came back black, Boss Rush's mirror of its deck above all, which its arena shows (its probe a fifth darker
+        // without it: tools/scenarios/context-loss.js). Nothing moves (no time passes in it)
+        this.render(s.scene, s.camera, 0);
+        // a room's probe (the title hall's, the exam's): drawn again whole, three times over, as its reflections came to
+        // be: its steel (or its columns) mirrors the probe, and the probe the steel, which came back black
+        if (s.restoreGraphics) s.restoreGraphics(); else if (s.probeNow) for (let i = 0; i < 3; i++) s.probeNow();
+        const used = Assets.skiesFor(s);
+        // (its skies in waiting, Nest Egg Run's landscapes and Risk Blaster's regions: the skies' own pictures alone, as
+        // GFX.warm sends them; what else a screen's materials read, a probe's cube among them, is sent as it is drawn)
+        if (r.initTexture) for (const k in Assets.kept) { const sky = Assets.kept[k]; if (k.startsWith("sky:") && sky && sky.map && used.has(sky.map)) { try { r.initTexture(sky.map); } catch (e) { /* sent the first time it is drawn instead */ } } }
+        Assets.restSkies(s); // (a sharper sky made again for its reflection and not drawn here leaves the chip again)
+      } catch (e) { console.warn("graphics restore: " + (e && e.message)); } // (what is not made again now is made as it is drawn)
+    });
+    const later = this._afterRestore;
+    this._afterRestore = [];
+    for (const fn of later) { try { fn(); } catch (e) { console.error(e); } }
+    this.restoredAt = performance.now();
+    this.perfAfresh();
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(false);
+    const p = this._lostPaused;
+    this._lostPaused = null;
+    if (p && p === Scenes.cur && p.paused) { UI.closeModal(); p.resume(); } // (the game this paused, as it was)
+  },
+  // fn now, or once the graphics context is back (whatever would make something on the graphics chip, while it is lost)
+  whenGL(fn) { if (this.lost) this._afterRestore.push(fn); else fn(); },
+  // something drawn on the graphics chip at run time, drawn again after a restore; returns what forgets it
+  onRestore(fn) { this._restore.add(fn); return () => { this._restore.delete(fn); }; },
+  // A target drawn once at run time (a reflection from PMREM): make() returns a new target with it. The first is the one
+  // everything holds; after a restore make() is drawn again and copied into it. Forgotten when the target is let go.
+  // (make goes with the target: what make draws from, a closed game's sky among them, is not held by the target, which
+  // a closed screen's materials still hold, kept for their shaders: GFX.park)
+  keepEnv(make) {
+    const rt = make();
+    if (!rt) return rt;
+    let mk = make;
+    const forget = this.onRestore(() => { const fresh = mk && mk(); if (fresh) { this.copyTarget(fresh, rt); fresh.dispose(); } });
+    this.kept.add(rt); // (what is kept, for a test to read back: tools/scenarios/context-loss.js)
+    rt.dispose = () => { forget(); this.kept.delete(rt); mk = null; delete rt.dispose; rt.dispose(); };
+    return rt;
+  },
+  // A lost context's objects went with it. three.js r128 keeps the listeners of what it made before a restore on every
+  // texture, shape and target it had sent, so letting one go after a restore deletes its old object too, which the
+  // browser reports as an error each time ("object does not belong to this context"; WebKit stops reporting any after
+  // a few). Each object is marked with the context's generation, and a delete of one from an earlier one is skipped:
+  // there is nothing left of it to delete.
+  guardDeletes(gl) {
+    if (!gl) return;
+    const self = this;
+    for (const k of ["Texture", "Buffer", "Framebuffer", "Renderbuffer", "Program", "Shader", "VertexArray", "Query", "Sampler"]) {
+      const make = gl["create" + k], del = gl["delete" + k];
+      if (typeof make !== "function" || typeof del !== "function") continue;
+      gl["create" + k] = function () { const o = make.apply(gl, arguments); if (o) o.__gen = self.gen; return o; };
+      gl["delete" + k] = function (o) { if (o && (o.__gen || 0) !== self.gen) return; return del.call(gl, o); };
+    }
+  },
+  // one target's picture into another of its size, texel for texel (no filtering, no colour or tone change)
+  copyTarget(src, dst) {
+    const r = this.renderer;
+    if (!this._copy) {
+      const m = new THREE.ShaderMaterial({
+        uniforms: { tSrc: { value: null } }, depthTest: false, depthWrite: false, blending: THREE.NoBlending,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+        fragmentShader: "uniform sampler2D tSrc; varying vec2 vUv; void main(){ gl_FragColor = texture2D(tSrc, vUv); }",
+      });
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m), sc = new THREE.Scene();
+      q.frustumCulled = false;
+      sc.add(q);
+      this._copy = { m, sc, cam: new THREE.Camera() };
+    }
+    const C = this._copy, was = r.getRenderTarget();
+    C.m.uniforms.tSrc.value = src.texture;
+    r.setRenderTarget(dst);
+    r.render(C.sc, C.cam);
+    r.setRenderTarget(was);
+    C.m.uniforms.tSrc.value = null;
+  },
   // A closing scene's materials are parked here, still holding their GPU programs,
   // until the next scene of the same kind has been warmed: replaying a game (or
   // going back to one) then reuses every shader instead of compiling them again,
@@ -651,7 +775,7 @@ const GFX = {
   // (KHR_parallel_shader_compile: Safari builds them on threads of its own, and Chrome on a graphics chip), at most a
   // second and a half on; without that word, two frames on. Pieces not yet hung anywhere.
   prepare(scene, camera, objs) {
-    if (!this.ok || !objs || !objs.length) return () => true;
+    if (!this.ok || this.lost || !objs || !objs.length) return () => true; // (lost: the screen is readied whole when it is back)
     const r = this.renderer, gl = r.getContext();
     if (this._par === undefined) { try { this._par = gl.getExtension("KHR_parallel_shader_compile") || null; } catch (e) { this._par = null; } }
     const K = this._par, P = this._prep || (this._prep = { scene: new THREE.Scene(), lights: {} });
@@ -671,20 +795,24 @@ const GFX = {
     } catch (e) { /* best effort: they are made at their first draw instead */ }
     r.setRenderTarget(was);
     for (const o of objs) P.scene.remove(o);
-    const made = (r.info.programs || []).filter((p) => !before.has(p));
+    const made = (r.info.programs || []).filter((p) => !before.has(p)), gen = this.gen;
     let n = 0;
     return () => {
       n++;
-      if (!made.length) return true;
+      if (!made.length || this.gen !== gen) return true; // (asked for before a lost context: the screen was readied whole when it came back)
       if (!K) return n > 2;
       if (n > 90) return true;
       try { return made.every((p) => gl.getProgramParameter(p.program, K.COMPLETION_STATUS_KHR)); } catch (e) { return true; }
     };
   },
-  warm(s) {
-    if (!this.ok || !s.scene || !s.camera) return;
-    const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
-    Assets.cur = null;
+  // (again: after a lost graphics context, the screen readied once more from what it listed the first time: Assets.cur
+  // may by then be the list of a screen about to be built, whose own warm takes it)
+  warm(s, again) {
+    if (!this.ok || this.lost || !s.scene || !s.camera) return; // (lost: readied when it is back: contextRestored)
+    if (again && !s._warm) again = false; // (a screen built while the context was lost: readied now, the first time)
+    const r = this.renderer, scene = s.scene, W = again ? s._warm : null;
+    const want = W ? W.want : Assets.cur || [], extra = W ? W.extra.filter((o) => !o.parent) : (s.warmExtra || []).slice(), tex = W ? W.tex : s.warmTextures || [];
+    if (!W) { Assets.cur = null; s._warm = { want, extra: extra.slice(), tex }; }
     for (const n of want) { const m = n.startsWith("model:") && Assets.fresh[n]; if (m && m.scene && !m.scene.parent) extra.push(m.scene); }
     extra.forEach((o) => scene.add(o));
     const saved = [];
@@ -710,7 +838,7 @@ const GFX = {
     if (r.initTexture) {
       const used = Assets.hdSkies() ? Assets.skiesFor(s) : null; // (a sharper sky only if the screen draws it or keeps it in waiting: Assets.restSkies)
       for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map && (!k.hd || used.has(k.map))) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
-      for (const t of s.warmTextures || []) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
+      for (const t of tex) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
     }
     s.warmTextures = null;
   },
@@ -843,7 +971,7 @@ const Scenes = {
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
   frame(dt, realDt) {
     const s = this.cur;
-    if (!s) return;
+    if (!s || GFX.lost) return; // (a lost graphics context: the screen waits, its clocks with it, a game in its opening moments too, which no pause holds: GFX.contextLost)
     s.update(dt);
     if (GFX.ok && s.scene && s.camera) GFX.render(s.scene, s.camera, realDt);
   },
