@@ -38,6 +38,12 @@
  *              (SAFE on a 3x phone: 1.5x to three quarters of it), every step the same tier and every light; steady,
  *              it climbs back to its full size; the readout names the step; AUTO again: back to 2x
  *   phone      no frosted glass over the live picture on a phone at any tier, Setup's HIGH included (body.lite)
+ *   reach      (the owner, 2026-11-26: "max graphics possible, good FPS") frames with room to spare (10 ms) through
+ *              twelve seconds at a phone's first step: up to MAC at the same 2x; late there: straight back to PHONE;
+ *              back within 20 s counts (the next try after 36 s, then 60), and after three it stays at PHONE; a new
+ *              screen starts from PHONE; never at a fixed tier
+ *   once       a Graphics setting fixed before 2026-11-26 is AUTO again on the next visit, once; fixed again after,
+ *              it stays
  *   desktop    a desktop's ladder starts at MAC, full size, 12 steps, and no step down draws more pixels; the window
  *              moved to a 1x screen and back (Chromium: a real change of density): the ladder made again, the canvas
  *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip;
@@ -58,6 +64,10 @@ function inPage() {
   const raf = window.requestAnimationFrame.bind(window);
   window.requestAnimationFrame = (cb) => (window.__hold ? 0 : raf(cb));
   Object.defineProperty(Navigator.prototype, "webdriver", { get: () => false, configurable: true });
+  // (the screen's density, as WebKit's runs change it: window.__dpr set by the test. A getter in place from the start:
+  // defining one later, after many frames have read the density, is not always seen by WebKit's compiled code)
+  const dprOwn = Object.getOwnPropertyDescriptor(window, "devicePixelRatio") || Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), "devicePixelRatio");
+  Object.defineProperty(window, "devicePixelRatio", { get: () => window.__dpr || (dprOwn && dprOwn.get ? dprOwn.get.call(window) : dprOwn ? dprOwn.value : 1), configurable: true });
   const realNow = performance.now.bind(performance);
   window.__T = null;
   performance.now = () => (window.__T === null ? realNow() : window.__T);
@@ -294,6 +304,54 @@ function inPage() {
   await reset();
   s = await st();
   ok(s.auto && s.rung === 0 && s.tier === 1 && s.scale === 1, "fixed: AUTO again starts from PHONE at 2x", { rung: s.rung, tier: s.tier, scale: s.scale });
+  // reach: a phone's AUTO up to MAC while frames have room to spare
+  await reset();
+  p = await feed(10, 16, 0.5);
+  s = await st();
+  ok(s.auto && s.tier === 0 && s.rung === 0 && s.scale === 1 && Math.abs(s.pr - 2) < 1e-6 && s.label === "AUTO · MAC (ROOM TO SPARE)", "reach: frames of 10 ms through twelve seconds at the phone's first step: up to MAC at the same 2x, named in the readout", { tier: s.tier, rung: s.rung, scale: s.scale, pr: s.pr, label: s.label, path: p });
+  p = await feed(25, 3, 0.5);
+  s = await st();
+  ok(s.tier === 1 && s.rung === 0 && /^AUTO · STEP 1\//.test(s.label) && p.length === 0, "reach: late at MAC (25 ms): straight back to PHONE at 2x, no further", { tier: s.tier, rung: s.rung, label: s.label, path: p });
+  p = await feed(10, 30, 0.5);
+  s = await st();
+  ok(s.tier === 1, "reach: back within 20 s of the climb: not tried again in the next 30 s", { tier: s.tier });
+  p = await feed(10, 12, 0.5);
+  s = await st();
+  ok(s.tier === 0, "reach: tried again after 36 s of room", { tier: s.tier });
+  await feed(25, 3, 0.5);
+  p = await feed(10, 64, 0.5);
+  s = await st();
+  ok(s.tier === 0, "reach: a second time back: tried again after 60 s of room", { tier: s.tier });
+  await feed(25, 3, 0.5);
+  p = await feed(10, 150, 0.5);
+  s = await st();
+  ok(s.tier === 1 && s.rung === 0, "reach: back a third time: it stays at PHONE for the visit", { tier: s.tier, rung: s.rung, fails: await page.evaluate(() => window.__arcade.GFX.perf.reachFails) });
+  await reset();
+  await feed(10, 16, 0.5);
+  const atMac = (await st()).tier;
+  await page.evaluate(() => { window.__arcade.GFX.sceneAt = window.__T; }); // (a new screen opens)
+  await feed(16.67, 0.1, 0);
+  s = await st();
+  ok(atMac === 0 && s.tier === 1 && s.rung === 0, "reach: a new screen starts from the phone's own PHONE, its own frames to decide", { before: atMac, tier: s.tier, rung: s.rung });
+  await page.evaluate(() => window.__arcade.GFX.setQuality("medium"));
+  p = await feed(10, 30, 0.5);
+  s = await st();
+  ok(!s.auto && s.tier === 1 && s.label === "FIXED (SETUP)", "reach: never at a fixed tier (Setup's PHONE stays PHONE with room to spare)", { tier: s.tier, label: s.label });
+  await reset();
+  // once: a Graphics setting fixed before 2026-11-26 is AUTO again, once
+  {
+    const ctx3 = await browser.newContext({ viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }), page3 = await ctx3.newPage();
+    page3.on("pageerror", (e) => errors.push(e.message));
+    await page3.addInitScript(inPage);
+    await page3.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.setItem("inr-arcade-v1", JSON.stringify({ settings: { quality: "high" }, updated: 1 })); } });
+    const open = async (again) => { if (again) await page3.reload(); else await page3.goto(base + "/index.html#debug,phone,noassets"); await page3.waitForFunction(() => window.__arcade && window.__arcade.GFX && window.__arcade.GFX.perf.ladder, null, { timeout: 60000, polling: 250 }); return page3.evaluate(() => ({ auto: window.__arcade.GFX.auto, q: window.__arcade.Store.settings.quality, qv: window.__arcade.Store.settings.qv })); };
+    let o = await open();
+    ok(o.auto && o.q === "auto" && o.qv === 2, "once: a phone saved at a fixed HIGH before today opens at AUTO", o);
+    await page3.evaluate(() => { const S = window.__arcade.Store; S.settings.quality = "high"; S.save(); if (S.flush) S.flush(); });
+    o = await open(true);
+    ok(!o.auto && o.q === "high", "once: fixed at HIGH again after it: it stays (the reset is once)", o);
+    await ctx3.close();
+  }
   // a desktop screen (no #phone, 2x): its ladder starts at MAC, full size
   const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 }), page2 = await ctx2.newPage();
   page2.on("pageerror", (e) => errors.push(e.message));
@@ -308,7 +366,7 @@ function inPage() {
   // the window moved to a 1x screen and back
   const dpr = async (k) => {
     if (ENGINE === "chromium") { const c = await ctx2.newCDPSession(page2); await c.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: k, mobile: false }); await page2.waitForTimeout(400); }
-    else await page2.evaluate((v) => { Object.defineProperty(window, "devicePixelRatio", { get: () => v, configurable: true }); }, k); // (WebKit: the density as the page reads it; its own property, which a delete would take away altogether)
+    else await page2.evaluate((v) => { window.__dpr = v; }, k); // (WebKit: the density as the page reads it, through the getter set up at the start: see inPage)
     await page2.evaluate(() => window.__feed(16.67, 0.05)); // (a frame or so: each looks at the density)
     return page2.evaluate(() => window.__state());
   };
@@ -337,7 +395,7 @@ function inPage() {
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   const pdpr = async (k) => {
     if (ENGINE === "chromium") { const c = await ctx.newCDPSession(page); await c.send("Emulation.setDeviceMetricsOverride", { width: 440, height: 956, deviceScaleFactor: k, mobile: true }); await page.waitForTimeout(300); }
-    else await page.evaluate((v) => { Object.defineProperty(window, "devicePixelRatio", { get: () => v, configurable: true }); }, k);
+    else await page.evaluate((v) => { window.__dpr = v; }, k); // (WebKit: through the getter set up at the start: see inPage)
     await page.evaluate(() => window.__feed(33.33, 0.1));
     return st();
   };
