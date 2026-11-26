@@ -423,10 +423,14 @@ pushed; the served link checked.
   (nine findings, all answered: `docs/master/phase8/README.md`).
 - **8e. A device's cap at any rate** (the owner's iPhone in Low Power Mode, 2026-11-26: 24 FPS, 41.7 ms a frame, and the
   governor at its last step, LIGHTEST at 1.06x with two lights, for nothing: it knew a cap at 30 only). Now a steady
-  rate slower than the screen's is the device's cap when the start's blank frames show it or a real cut does not lift
-  it, at any rate; held, the picture goes back to the sharpest step that holds the rate (a phone no longer goes to
-  SAFE), fixed tiers too, a Setup choice keeping the hold; the readout `HELD AT 24 FPS · LOW POWER MODE?`. The
-  governor's test: 75 checks in both engines.
+  rate slower than the screen's is the device's cap when the start's blank frames show it, or when a cut one step past
+  the real one (or to the ladder's last step) does not lift it, at any rate; held, the picture goes back to the sharpest
+  step that holds the rate (a phone no longer goes to SAFE), fixed tiers too, a Setup choice keeping the hold; tested
+  past the real cut when frames run faster than the cap's or the page is shown again, a faster rate the device's own
+  learned as its band (`HELD AT 24-30 FPS`); the readout `HELD AT 24 FPS · LOW POWER MODE?`. An independent review of
+  the first version: a load taken for a cap could hold a phone at 30 for good, and a cap starting with the picture
+  already low was never found; both fixed, with three smaller points. The governor's test: 82 checks in both
+  engines.
 
 ## Decisions (with the evidence for each)
 
@@ -820,3 +824,16 @@ once), each game, leaving a fight for another app; the MacBook's FPS counter, Ac
 MEDIUM and back. Left for a later look: Boss Rush's phone garbage (about 31 KB a frame in CombatFX's update), a measure
 of the graphics chip's spare time (a fence, polled) before any climb above a device's own tier, Risk Blaster's phone
 draws at its busiest (118 to 119 in the re-check).
+
+**Phase 8e, a device's cap at any rate (2026-11-26).** The owner's iPhone in Low Power Mode, after the once-to-AUTO:
+24 FPS (41.7 ms a frame, steadily), the governor at its last step (LIGHTEST at 1.06x, two lights) for nothing, as it
+knew a cap at 30 only. Now any steady rate the start's blank frames show, or a cut one step past the real one does not
+lift, is the device's cap; the picture is held at the sharpest step that holds it (no longer SAFE on a phone), fixed
+tiers too, through a Setup choice; tested past the real cut only on a reason (frames faster than the cap's, the page
+shown again); a faster rate of the device's own learned as its band. The readout: `HELD AT 24 FPS · LOW POWER MODE?`.
+An independent review (opus) of the first version found a load taken for a cap could hold a phone at 30 for good and a
+cap starting low was never found: both fixed and tested. The governor's test: 82 checks in Chromium and WebKit; the
+rules IDENTICAL from disk and served, the sequence passing, content and scripts untouched; the Setup text's stills
+without text over text in both engines. Spend: none. For the owner: in Low Power Mode the readout's third line says
+HELD AT 24 FPS and the second PHONE · 2.00X (iOS holds Safari at 24 a second then; nothing in a page lifts it), with it
+off, 60 and AUTO.

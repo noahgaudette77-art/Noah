@@ -25,25 +25,45 @@ What was done (`04-gfx.js`: `screenProbed`, `perfTick`, `capHold`, `realCut`, `h
 
 | change | what it does |
 |---|---|
-| a cap at any rate | frames held at one rate (a tenth of them either side within a tenth of the middle one) slower than the mark are a cap or a load: blank frames at the start held at 45 a second or fewer (22 to 70 ms) are the device's cap from the start; in play, a rate held through a real cut (a tier down and 60% of the pixels or fewer; on a fixed tier 60% of the pixels) is the cap too, as it was for 30 alone. A lower cap found under a hold (30, then 24) is found the same way |
+| a cap at any rate | frames held at one rate (a tenth of them either side within a tenth of the middle one) slower than the mark are a cap or a load: blank frames at the start held at 45 a second or fewer (22 to 70 ms) are the device's cap from the start; in play, a rate held through a real cut and one step lighter still (`deepStep`: past a tier down and 60% of the pixels or fewer; with no such cut below, as on a fixed tier or a step already low, the ladder's last step) is the cap too. A lower cap found under a hold (30, then 24) is found the same way |
 | held at the sharpest step that holds it | until now a phone held at 30 went to SAFE; now the picture goes back to the step where the rate was first held (PHONE at 2x on the phone), climbs from a lower one as frames hold, and steps down only if frames run later than the cap's own frame |
 | the readout | `HELD AT 24 FPS · LOW POWER MODE?` (a computer: `... OR A 24 HZ SCREEN?`; the main thread's time when that fills the frame) |
-| let go | when frames run faster than the cap's (the mode switched off); a step down is still tried after a minute, then two, four and eight, in case it was a load after all |
+| let go | when frames run well under the cap's (three quarters of its frame: the mode switched off). A step down is still tried after a minute, then two, four and eight, in case it was a load after all: one step, or past the real cut when there is a reason (frames faster than the cap's at the hold's step, which a load in the cap's place would give, or the page back in view, Low Power Mode perhaps switched off meanwhile). Faster frames such a test does not lift are the device's own: the hold learns its band of rates (`HELD AT 24-30 FPS`) and tests no more for them |
 | Setup's fixed tiers | held the same way (until now: left at their size at exactly 30 only); a Setup choice keeps the hold, which is the device's |
 | the start's probe | blank frames timed for up to 0.9 s (0.6 before: fourteen frames at 24 a second take 0.58 s) |
 | Setup's text | "... and in Low Power Mode, where the device caps the frame rate, keeps the picture sharp" |
 
-**The governor's test: 75 checks (63 before), all passing in Chromium and WebKit.** New: the owner's case at 24 (down
+**The governor's test: 82 checks (63 before), all passing in Chromium and WebKit.** New: the owner's case at 24 (down
 until a real cut still holds 24, then back to PHONE 2x, `HELD AT 24 FPS · LOW POWER MODE?`, held while it lasts, let go
 at 60), 24 from the start, a 50 Hz screen's blank frames (no cap), a cap lowered from 30 to 24, a Setup choice in a hold,
 a fixed tier at 30 and at 24 from the start. The cases at 30 now expect the hold at 2x, not SAFE. "Slow" and "fixed" are
 fed uneven frames (32 to 48 ms): frames at one rate that no cut changes are a cap now.
 
-What it trades: a load that holds one frame rate through a real cut (a tier down and 44% fewer pixels) is taken for a
-cap, and the picture kept sharp at that rate where a deeper cut might run faster. A cut that deep leaves little of a
-graphics load in place, so what survives it is mostly the main thread's, which no smaller picture helps (the readout
-names it then); the test step finds a load just over a frame. Probed at the start, a steady rate of blank frames is a
-cap: the page draws nothing then.
+**The independent review** (opus, on the first version, `c596663`; it ran `perfTick` on modelled frame times for this
+commit and the one before):
+1. **A load taken for a cap could hold a phone at 30 for good**: a graphics load at 2x that still holds 30 at SAFE (a
+   tier down, 56% of the pixels) and lifts at LIGHTEST was held at 2x at 30, and the hold's test (one step) could never
+   find the way out; the same when a cap lifts with a load in its place. Before, a phone held at SAFE, and its test went
+   to LIGHTEST. Now the cap is settled one step past the real cut (LIGHTEST there), and the test goes that deep when
+   there is a reason (frames faster than the cap's, or the page back in view): the review's case runs at 60 at
+   LIGHTEST, no cap; a cap lifted with a load in its place is let go within seconds.
+2. **A cap that starts with the picture already low was never found** (no real cut below LIGHTEST, nor below a fixed
+   tier's eased size: down to the last step, the owner's screenshot again): a rate held unchanged to the ladder's last
+   step is a cap too; held where it was first seen, then up as frames hold.
+3. A fixed tier at exactly 30 in play steps its sizes down for some 12 s before it holds (a cap at the start is caught
+   with no step): left (the earlier review's point 6 asked for no step at all; a real cut is what tells a cap from a
+   load).
+4. A cap that moves (24 to 30 and back) let go and was found again each time, some 16 s of a softer picture: now a
+   faster rate is held through, tested past the real cut once, and learned as the device's band.
+5. An ease under way when a hold began could move the picture under it and stop its tests: the hold calls it off.
+6. A hold that is a load still reads LOW POWER MODE? on a phone: left (the question mark is meant).
+7. The tests proved less than they said: new cases for a load that holds 30 through SAFE, a cap starting low (AUTO and
+   a fixed tier already eased), faster frames under a hold, the band, and the page back in view.
+
+What it still trades: a load that holds one rate through a cut past the real one (two tiers down, 61% fewer pixels) is taken for a cap, kept sharp at that rate; a cut that deep leaves little of a graphics load, so
+what survives it is mostly the main thread's, which no smaller picture helps (the readout names it then). A load that
+matches the cap's own rate exactly after the cap lifts is found when the page is shown again or a lighter screen runs
+faster. Probed at the start, a steady rate of blank frames is a cap: the page draws nothing then.
 
 ## 8c: the final build checked
 
