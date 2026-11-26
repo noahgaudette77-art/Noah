@@ -72,6 +72,11 @@ h1, h2, h3, p, ol, ul { margin: 0; }
 #flash.white { animation: hitflash 0.5s ease-out; background: #fff; }
 @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
 #flash.cover { opacity: 1; background: #000; }
+#gl-lost { position: fixed; inset: 0; z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(9, 3, 32, 0.78); font: 10px "Press Start 2P", monospace; letter-spacing: 2px; color: #35efff; text-shadow: 0 0 10px rgba(53, 239, 255, 0.7); }
+#gl-lost span { animation: glLostBlink 1.2s steps(2, start) infinite; }
+#gl-lost .btn[hidden] { display: none; }
+@keyframes glLostBlink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { #gl-lost span { animation: none; } }
 #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 56; display: flex; flex-direction: column; align-items: center; gap: 12px; font: 10px "Press Start 2P", monospace; letter-spacing: 2px; color: #35efff; text-shadow: 0 0 10px rgba(53, 239, 255, 0.7); pointer-events: none; }
 #loading .lbar { width: 168px; height: 6px; border: 1px solid rgba(53, 239, 255, 0.55); background: rgba(10, 4, 40, 0.9); }
 #loading .lbar i { display: block; height: 100%; background: linear-gradient(90deg, #ff3ad4, #35efff); transform-origin: left center; transform: scaleX(0.03); transition: transform 0.2s linear; box-shadow: 0 0 10px rgba(255, 58, 212, 0.7); }
@@ -7412,7 +7417,8 @@ const Assets = {
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
       img.src = url;
-    })).then((pic) => {
+    })).then((pic) => new Promise((done) => GFX.whenGL(() => done(pic)))) // (its graphics part waits while the graphics context is lost: GFX.contextLost)
+      .then((pic) => {
       // (the Mac's richer tier's review) A sharper sky that arrives after its screen opened without it (a slow
       // connection: Assets.need starts a screen after 40 s with what has come): that screen draws without it, and making
       // it ready now, an 8K picture sent to the graphics chip and its reflection made, would stall the play. Its file is
@@ -7428,12 +7434,7 @@ const Assets = {
       map.generateMipmaps = true;
       map.needsUpdate = true;
       const sky = { name, map, env: null, w: img.width, h: img.height, hd: path === "sky/" + name + "-hd.webp" };
-      if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
-      // (a sharper copy: its reflection is made, and the picture leaves the graphics chip until a screen draws it, which
-      // sends it again behind the curtain (GFX.warm), with its smaller copies or without them as that screen draws it:
-      // 171 MB there with them (Risk Blaster's and Nest Egg Run's narrow windows), 128 MB without (makePanoSky).
-      // Held, each would keep the copies its reflection was made from. See restSkies.)
-      if (sky.hd && GFX.ok) map.dispose();
+      if (GFX.ok) { try { sky.env = ownTarget(GFX.keepEnv(() => this.skyEnv(sky))); } catch (e) { sky.env = null; } } // (kept: drawn again after a lost graphics context; the target owns the texture, so a retired sky's goes whole: ownTarget, restSkies)
       this.kept["sky:" + name] = sky;
       this.release(path);
       this.dropOther(path, "sky/" + name + ".webp", "sky/" + name + "-hd.webp");
@@ -7441,6 +7442,21 @@ const Assets = {
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // A sky's reflection: drawn from its picture with the picture's smaller copies (loadSky: as it comes; after a lost
+  // graphics context, again, the picture sent once more, and a dome may since draw it without them: makePanoSky, so
+  // they are asked for while it is drawn and its own way put back after).
+  // (a sharper copy: its reflection is made, and the picture leaves the graphics chip until a screen draws it, which
+  // sends it again behind the curtain (GFX.warm), with its smaller copies or without them as that screen draws it:
+  // 171 MB there with them (Risk Blaster's and Nest Egg Run's narrow windows), 128 MB without (makePanoSky).
+  // Held, each would keep the copies its reflection was made from. See restSkies.)
+  skyEnv(sky) {
+    const map = sky.map, f = map.minFilter, g = map.generateMipmaps, mip = f === THREE.LinearMipmapLinearFilter;
+    if (!mip) { map.minFilter = THREE.LinearMipmapLinearFilter; map.generateMipmaps = true; map.needsUpdate = true; }
+    const rt = GFX.pmrem().fromEquirectangular(map);
+    if (!mip) { map.minFilter = f; map.generateMipmaps = g; map.needsUpdate = true; }
+    if (sky.hd) map.dispose();
+    return rt;
+  },
   // (the Mac's richer tier's review) A sky kept at the other size than the tier now asks for: the governor or Setup moved
   // the tier since it was loaded (a Mac held a step lower draws the game's own skies, as before). The next screen that
   // asks for it loads the right one; the old one leaves the graphics chip once that screen is up (restSkies).
@@ -7526,10 +7542,10 @@ const Assets = {
   with(set, extra, fn) {
     this.cur = this.on ? this.wants(set, extra) : null; // (what the screen about to open brought: GFX.warm readies all of it)
     const p = this.need(set, extra);
-    if (!p) return fn();
+    if (!p) return GFX.ok ? GFX.whenGL(fn) : fn();
     UI.loading(true);
     this.onProgress = (d, n) => UI.loading(true, d / n);
-    p.then(() => { this.onProgress = null; UI.loading(false); fn(); });
+    p.then(() => { this.onProgress = null; UI.loading(false); GFX.ok ? GFX.whenGL(fn) : fn(); }); // (a screen is not built while the graphics context is lost: GFX.contextLost)
   },
 };
 
@@ -7764,6 +7780,7 @@ const GFX = {
   // screen that runs at 30, or a laptop's own power saving, gains nothing from a lighter picture)
   capFloor(i) { return Assets.phone || this.small ? Math.max(i, this.safeRung()) : i; },
   perfTick(ms, cpu) {
+    if (this.lost) return; // (a frame that draws nothing tells nothing: perfAfresh when the context is back)
     const P = this.perf, now = performance.now(), N = P.ring.length, dpr = window.devicePixelRatio || 1;
     if (dpr !== this._dpr && this._dpr) { this._dpr = dpr; this.dprChanged(); } // (moved to another screen, or the page zoomed: a property read a frame, where a media query's event is not sent everywhere)
     // a frame that made shaders or sent new pictures to the chip: its time is the moment's (and the next frame's too)
@@ -7898,6 +7915,10 @@ const GFX = {
       return;
     }
     const r = this.renderer;
+    // (a lost graphics context: see contextLost. three.js listens first, and makes its own state again before this)
+    r.domElement.addEventListener("webglcontextlost", () => this.contextLost(), false);
+    r.domElement.addEventListener("webglcontextrestored", () => this.contextRestored(), false);
+    this.guardDeletes(r.getContext());
     // every texture is filtered as finely as the graphics chip can, so signs, floors and walls stay sharp at a slant
     // (on a phone 4 times over, not 16: a floor or a road seen low cost up to four times the reads at 16, for a
     // difference a phone's screen does not show)
@@ -7965,6 +7986,7 @@ const GFX = {
   refit() { if (this.ok && Math.abs(this.scenePR() - (this._pr || 0)) > 1e-3) this.resize(); },
   setCRT() { /* the glass is a pipeline uniform now; kept for the settings screen */ },
   render(scene, camera, dt) {
+    if (this.lost) return; // (nothing to draw into: see contextLost)
     if (scene.userData.lightBudget) this.lightsFor(scene); // (the strongest of the screen's lights into its budget: see LightPool)
     this.t += dt;
     this.ab *= Math.pow(0.015, dt);
@@ -8124,6 +8146,124 @@ const GFX = {
     if (!this._pmrem) this._pmrem = new THREE.PMREMGenerator(this.renderer);
     return this._pmrem;
   },
+  // ---- a lost graphics context (the master overhaul, 2026-11-26) --------------------------------------------------
+  // The browser may take the graphics context away (the graphics chip or its driver restarted, the system took its
+  // memory back from a page in the background, a second graphics chip switched in) and give it back later. three.js
+  // makes its own state again then, and sends every texture and shape again from what it keeps of them. What the page
+  // drew at run time into targets of its own it cannot: every reflection made from a sky or a small scene (keepEnv), a
+  // room's probe (each screen's probeNow or restoreGraphics), Risk Blaster's nebula (onRestore).
+  // Lost: nothing is drawn and nothing moves (Scenes.frame), a game in play is paused by its own pause too (its timers
+  // held, as when the page is hidden), the screen says so and takes no input, and what would make something on the
+  // graphics chip waits (whenGL). Back: three.js's own state first (its listener comes first), then all of that made
+  // again into the same targets (whatever holds them holds them still), the screen readied (its pictures and shaders,
+  // its skies in waiting), a frame drawn, its probe drawn again, and the game resumed if this paused it. Nothing of a
+  // game's state is touched: a paused game, then the same game. (docs/master/contextloss/README.md)
+  lost: false,
+  kept: new Set(),
+  _restore: new Set(),
+  _afterRestore: [],
+  gen: 0, // (the graphics context's generation: one more at each loss; see guardDeletes)
+  contextLost() {
+    if (this.lost) return;
+    this.lost = true;
+    this.gen++;
+    this.lostAt = performance.now();
+    const s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    this._lostPaused = null;
+    if (s && s.pause && !s.paused && s.state && s.state !== "over" && s.state !== "intro") { s.pause(); if (s.paused) this._lostPaused = s; }
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(true);
+  },
+  contextRestored() {
+    if (!this.lost) return;
+    this.lost = false;
+    this._par = undefined; // (an extension's object belongs to the lost context: asked for again)
+    const r = this.renderer, s = typeof Scenes !== "undefined" ? Scenes.cur : null;
+    r.setClearColor(0x090320, 1); // (three.js makes its background state again, black and clear: the page's own colour, as init set it)
+    if (this.pipe) this.pipe.compiled = false; // (every post-processing pass's shader made again with the screen's: GFX.warm)
+    // (all of it from a randomness of its own: what three.js makes draws ids from Math.random, and the game's own draws,
+    // seeded in a test, go on as they would have)
+    ownRandom(0x6c057e57, () => {
+      for (const fn of [...this._restore]) { try { fn(); } catch (e) { console.warn("graphics restore: " + (e && e.message)); } }
+      if (!s || !s.scene || !s.camera) return;
+      try {
+        this.warm(s, true); // (every picture it draws sent again, every shader made again, now and not in play)
+        // a frame drawn, as in play, before a probe is drawn from the screen: what the screen draws again every frame
+        // came back black, Boss Rush's mirror of its deck above all, which its arena shows (its probe a fifth darker
+        // without it: tools/scenarios/context-loss.js). Nothing moves (no time passes in it)
+        this.render(s.scene, s.camera, 0);
+        // a room's probe (the title hall's, the exam's): drawn again whole, three times over, as its reflections came to
+        // be: its steel (or its columns) mirrors the probe, and the probe the steel, which came back black
+        if (s.restoreGraphics) s.restoreGraphics(); else if (s.probeNow) for (let i = 0; i < 3; i++) s.probeNow();
+        const used = Assets.skiesFor(s);
+        // (its skies in waiting, Nest Egg Run's landscapes and Risk Blaster's regions: the skies' own pictures alone, as
+        // GFX.warm sends them; what else a screen's materials read, a probe's cube among them, is sent as it is drawn)
+        if (r.initTexture) for (const k in Assets.kept) { const sky = Assets.kept[k]; if (k.startsWith("sky:") && sky && sky.map && used.has(sky.map)) { try { r.initTexture(sky.map); } catch (e) { /* sent the first time it is drawn instead */ } } }
+        Assets.restSkies(s); // (a sharper sky made again for its reflection and not drawn here leaves the chip again)
+      } catch (e) { console.warn("graphics restore: " + (e && e.message)); } // (what is not made again now is made as it is drawn)
+    });
+    const later = this._afterRestore;
+    this._afterRestore = [];
+    for (const fn of later) { try { fn(); } catch (e) { console.error(e); } }
+    this.restoredAt = performance.now();
+    this.perfAfresh();
+    if (typeof UI !== "undefined" && UI.glLost) UI.glLost(false);
+    const p = this._lostPaused;
+    this._lostPaused = null;
+    if (p && p === Scenes.cur && p.paused) { UI.closeModal(); p.resume(); } // (the game this paused, as it was)
+  },
+  // fn now, or once the graphics context is back (whatever would make something on the graphics chip, while it is lost)
+  whenGL(fn) { if (this.lost) this._afterRestore.push(fn); else fn(); },
+  // something drawn on the graphics chip at run time, drawn again after a restore; returns what forgets it
+  onRestore(fn) { this._restore.add(fn); return () => { this._restore.delete(fn); }; },
+  // A target drawn once at run time (a reflection from PMREM): make() returns a new target with it. The first is the one
+  // everything holds; after a restore make() is drawn again and copied into it. Forgotten when the target is let go.
+  // (make goes with the target: what make draws from, a closed game's sky among them, is not held by the target, which
+  // a closed screen's materials still hold, kept for their shaders: GFX.park)
+  keepEnv(make) {
+    const rt = make();
+    if (!rt) return rt;
+    let mk = make;
+    const forget = this.onRestore(() => { const fresh = mk && mk(); if (fresh) { this.copyTarget(fresh, rt); fresh.dispose(); } });
+    this.kept.add(rt); // (what is kept, for a test to read back: tools/scenarios/context-loss.js)
+    rt.dispose = () => { forget(); this.kept.delete(rt); mk = null; delete rt.dispose; rt.dispose(); };
+    return rt;
+  },
+  // A lost context's objects went with it. three.js r128 keeps the listeners of what it made before a restore on every
+  // texture, shape and target it had sent, so letting one go after a restore deletes its old object too, which the
+  // browser reports as an error each time ("object does not belong to this context"; WebKit stops reporting any after
+  // a few). Each object is marked with the context's generation, and a delete of one from an earlier one is skipped:
+  // there is nothing left of it to delete.
+  guardDeletes(gl) {
+    if (!gl) return;
+    const self = this;
+    for (const k of ["Texture", "Buffer", "Framebuffer", "Renderbuffer", "Program", "Shader", "VertexArray", "Query", "Sampler"]) {
+      const make = gl["create" + k], del = gl["delete" + k];
+      if (typeof make !== "function" || typeof del !== "function") continue;
+      gl["create" + k] = function () { const o = make.apply(gl, arguments); if (o) o.__gen = self.gen; return o; };
+      gl["delete" + k] = function (o) { if (o && (o.__gen || 0) !== self.gen) return; return del.call(gl, o); };
+    }
+  },
+  // one target's picture into another of its size, texel for texel (no filtering, no colour or tone change)
+  copyTarget(src, dst) {
+    const r = this.renderer;
+    if (!this._copy) {
+      const m = new THREE.ShaderMaterial({
+        uniforms: { tSrc: { value: null } }, depthTest: false, depthWrite: false, blending: THREE.NoBlending,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+        fragmentShader: "uniform sampler2D tSrc; varying vec2 vUv; void main(){ gl_FragColor = texture2D(tSrc, vUv); }",
+      });
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m), sc = new THREE.Scene();
+      q.frustumCulled = false;
+      sc.add(q);
+      this._copy = { m, sc, cam: new THREE.Camera() };
+    }
+    const C = this._copy, was = r.getRenderTarget();
+    C.m.uniforms.tSrc.value = src.texture;
+    r.setRenderTarget(dst);
+    r.render(C.sc, C.cam);
+    r.setRenderTarget(was);
+    C.m.uniforms.tSrc.value = null;
+  },
   // A closing scene's materials are parked here, still holding their GPU programs,
   // until the next scene of the same kind has been warmed: replaying a game (or
   // going back to one) then reuses every shader instead of compiling them again,
@@ -8187,7 +8327,7 @@ const GFX = {
   // (KHR_parallel_shader_compile: Safari builds them on threads of its own, and Chrome on a graphics chip), at most a
   // second and a half on; without that word, two frames on. Pieces not yet hung anywhere.
   prepare(scene, camera, objs) {
-    if (!this.ok || !objs || !objs.length) return () => true;
+    if (!this.ok || this.lost || !objs || !objs.length) return () => true; // (lost: the screen is readied whole when it is back)
     const r = this.renderer, gl = r.getContext();
     if (this._par === undefined) { try { this._par = gl.getExtension("KHR_parallel_shader_compile") || null; } catch (e) { this._par = null; } }
     const K = this._par, P = this._prep || (this._prep = { scene: new THREE.Scene(), lights: {} });
@@ -8207,20 +8347,24 @@ const GFX = {
     } catch (e) { /* best effort: they are made at their first draw instead */ }
     r.setRenderTarget(was);
     for (const o of objs) P.scene.remove(o);
-    const made = (r.info.programs || []).filter((p) => !before.has(p));
+    const made = (r.info.programs || []).filter((p) => !before.has(p)), gen = this.gen;
     let n = 0;
     return () => {
       n++;
-      if (!made.length) return true;
+      if (!made.length || this.gen !== gen) return true; // (asked for before a lost context: the screen was readied whole when it came back)
       if (!K) return n > 2;
       if (n > 90) return true;
       try { return made.every((p) => gl.getProgramParameter(p.program, K.COMPLETION_STATUS_KHR)); } catch (e) { return true; }
     };
   },
-  warm(s) {
-    if (!this.ok || !s.scene || !s.camera) return;
-    const r = this.renderer, scene = s.scene, extra = (s.warmExtra || []).slice(), want = Assets.cur || [];
-    Assets.cur = null;
+  // (again: after a lost graphics context, the screen readied once more from what it listed the first time: Assets.cur
+  // may by then be the list of a screen about to be built, whose own warm takes it)
+  warm(s, again) {
+    if (!this.ok || this.lost || !s.scene || !s.camera) return; // (lost: readied when it is back: contextRestored)
+    if (again && !s._warm) again = false; // (a screen built while the context was lost: readied now, the first time)
+    const r = this.renderer, scene = s.scene, W = again ? s._warm : null;
+    const want = W ? W.want : Assets.cur || [], extra = W ? W.extra.filter((o) => !o.parent) : (s.warmExtra || []).slice(), tex = W ? W.tex : s.warmTextures || [];
+    if (!W) { Assets.cur = null; s._warm = { want, extra: extra.slice(), tex }; }
     for (const n of want) { const m = n.startsWith("model:") && Assets.fresh[n]; if (m && m.scene && !m.scene.parent) extra.push(m.scene); }
     extra.forEach((o) => scene.add(o));
     const saved = [];
@@ -8246,7 +8390,7 @@ const GFX = {
     if (r.initTexture) {
       const used = Assets.hdSkies() ? Assets.skiesFor(s) : null; // (a sharper sky only if the screen draws it or keeps it in waiting: Assets.restSkies)
       for (const n of want) { const k = n.startsWith("sky:") && Assets.kept[n]; if (k && k.map && (!k.hd || used.has(k.map))) try { r.initTexture(k.map); } catch (e) { /* best effort */ } }
-      for (const t of s.warmTextures || []) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
+      for (const t of tex) try { r.initTexture(t); } catch (e) { /* best effort */ } // (pictures a screen swaps in later: CombatFX's markers)
     }
     s.warmTextures = null;
   },
@@ -8379,7 +8523,7 @@ const Scenes = {
   resize() { if (this.cur) this.cur.resize(GFX.w, GFX.h); },
   frame(dt, realDt) {
     const s = this.cur;
-    if (!s) return;
+    if (!s || GFX.lost) return; // (a lost graphics context: the screen waits, its clocks with it, a game in its opening moments too, which no pause holds: GFX.contextLost)
     s.update(dt);
     if (GFX.ok && s.scene && s.camera) GFX.render(s.scene, s.camera, realDt);
   },
@@ -9771,7 +9915,19 @@ const UI = {
       const cs = getComputedStyle(b);
       return cs.pointerEvents === "none" || cs.visibility === "hidden" ? null : b;
     };
+    // (no key does anything while the graphics context is lost (GFX.contextLost) but the notice's RELOAD, once it is
+    // offered: Tab reaches it, and Enter or Space on it starts the page again; a focused button's Space clicks on its
+    // key's release)
+    const reload = (e) => { const b = $("#gl-lost [data-act=reload]"); return b && !b.hidden && e.target === b ? b : null; };
+    document.addEventListener("keyup", (e) => { if (typeof GFX !== "undefined" && GFX.lost && !reload(e)) { e.preventDefault(); e.stopPropagation(); } }, true);
     document.addEventListener("keydown", (e) => {
+      if (typeof GFX !== "undefined" && GFX.lost) {
+        if (reload(e) && (e.key === "Enter" || e.key === " ")) return;
+        e.preventDefault();
+        const b = $("#gl-lost [data-act=reload]");
+        if (e.key === "Tab" && b && !b.hidden) b.focus();
+        return;
+      }
       Sound.init();
       if (e.target && e.target.tagName === "INPUT" && e.key !== "Escape") return;
       if ((e.key === "Enter" || e.key === " ") && keyButton()) return; // (the browser clicks it)
@@ -9784,6 +9940,19 @@ const UI = {
       // would otherwise stay on STATS while the cabinets turn. (Not the arrows over a screen's cards: see arrowNav.)
       if (e.key.startsWith("Arrow") && e.defaultPrevented && !this._nav && keyFocus && keyFocus === was && document.activeElement === was) { keyFocus = null; was.blur(); }
     });
+  },
+  // The graphics context lost (GFX.contextLost) and back: a notice over everything, which takes the pointer too. Lost
+  // for long (the browser may not give it back), it offers to start the page again (progress is kept: Store).
+  glLost(on) {
+    let el = $("#gl-lost");
+    clearTimeout(this._glLostT);
+    if (!on) { if (el) el.remove(); return; }
+    if (!el) {
+      el = this.el('<div id="gl-lost" role="alertdialog" aria-live="assertive" aria-label="Restoring graphics"><span>RESTORING GRAPHICS</span><button class="btn" data-act="reload" hidden>RELOAD</button></div>');
+      el.addEventListener("click", (e) => { if (e.target && e.target.dataset.act === "reload") location.reload(); });
+      document.body.appendChild(el);
+    }
+    this._glLostT = setTimeout(() => { const b = $("#gl-lost [data-act=reload]"); if (b) b.hidden = false; }, 10000);
   },
   show(ctrl) {
     if (this.cur) {
@@ -11345,7 +11514,7 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
     made: 0, done: 0, // (captures finished, and the last one a user has taken up)
     capture() { this.left = 6; },
     step(scene, layers) {
-      if (!this.left || !GFX.ok) return null; // (nothing to draw: null, as against false, the frame the last face was drawn)
+      if (!this.left || !GFX.ok || GFX.lost) return null; // (nothing to draw: null, as against false, the frame the last face was drawn; lost: its faces wait)
       const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
       this.hide.forEach((o) => { o.visible = false; });
       // (and every set of points: a point's size is in the page's pixels, so in a face 128 or 256 across a light stick or
@@ -11593,8 +11762,12 @@ class Trail {
 
 // An environment map for glossy materials, made from a small neon scene:
 // a gradient sky plus a few bright panels that show up as reflections.
-function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
+// (kept: GFX.keepEnv draws it again after a lost graphics context, into the same target)
+function makeEnvMap(o = {}) {
   if (!GFX.ok) return null;
+  return ownTarget(GFX.keepEnv(() => envMapScene(o)));
+}
+function envMapScene({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
@@ -11605,7 +11778,7 @@ function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glo
   }
   const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
   disposeTree(sc);
-  return ownTarget(rt);
+  return rt;
 }
 // A render target's texture handed out on its own. In three r128 a target's texture is only freed through the target,
 // so disposing the texture (as scenes do) frees the whole target. (Made out here: made where the scene drawn into the
@@ -14606,6 +14779,15 @@ function* hallSkinSteps(model) {
 // materials left bare: the title hall's models are not drawn again (the title takes fresh copies when it comes back).
 // Decoded, the hall's pictures are some 150 MB; the closing scene's materials, kept a while for their shaders
 // (GFX.park), would otherwise hold them for the rest of the visit.
+// The hall's stand-in reflection: a black panorama in the painted one's encoding, filtered as Assets.loadSky's are
+// (HallScene: until the painted vault has come). Out here, so what keeps it for a lost context holds nothing else.
+function hallBlackEnv() {
+  const black = new THREE.DataTexture(new Uint8Array(8 * 4 * 4), 8, 4, THREE.RGBAFormat);
+  black.encoding = THREE.sRGBEncoding; black.mapping = THREE.EquirectangularReflectionMapping; black.needsUpdate = true;
+  const rt = GFX.pmrem().fromEquirectangular(black);
+  black.dispose();
+  return rt;
+}
 function hallRelease(model) {
   const seen = new Set();
   model.scene.traverse((o) => {
@@ -14692,10 +14874,7 @@ class HallScene extends Scene3D {
     // reflection made another way is kept in another encoding, and its shaders differ)
     if (GFX.ok) {
       try {
-        const black = new THREE.DataTexture(new Uint8Array(8 * 4 * 4), 8, 4, THREE.RGBAFormat);
-        black.encoding = THREE.sRGBEncoding; black.mapping = THREE.EquirectangularReflectionMapping; black.needsUpdate = true;
-        this.envRT = GFX.pmrem().fromEquirectangular(black);
-        black.dispose();
+        this.envRT = GFX.keepEnv(hallBlackEnv); // (kept: drawn again after a lost graphics context)
         s.environment = this.envRT.texture;
       } catch (e) { this.envRT = null; }
     }
@@ -21613,41 +21792,48 @@ function spaceBakeNebula(size) {
   if (!GFX.ok) return flat();
   try {
     const rt = new THREE.WebGLRenderTarget(size, size, { wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false, stencilBuffer: false });
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      depthTest: false, depthWrite: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
-      fragmentShader: `varying vec2 vUv;
-        float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
-        float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-          vec2 a = mod(i, per), b = mod(i + 1.0, per);
-          return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
-        float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
-        void main(){
-          vec2 p = vUv;
-          vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
-          vec2 q = p + w * 0.13;
-          float A = fbm(q, 5.0, 21.0);
-          float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
-          float C = fbm(p - w * 0.09, 4.0, 77.0);
-          vec2 g = p * 150.0, c = floor(g), f = fract(g);
-          float on = step(0.93, h2(c, 3.0));
-          vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
-          float sb = h2(c, 13.0);
-          float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
-          gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
-        }`,
-    }));
-    quad.frustumCulled = false;
-    const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
-    sc.add(quad);
-    r.setRenderTarget(rt);
-    r.render(sc, new THREE.Camera());
-    r.setRenderTarget(prev);
-    quad.geometry.dispose();
-    quad.material.dispose();
+    spaceNebulaDraw(rt);
+    // (drawn again after a lost graphics context: the picture lives only on the graphics chip)
+    const forget = GFX.onRestore(() => spaceNebulaDraw(rt)), let0 = rt.dispose.bind(rt);
+    rt.dispose = () => { forget(); let0(); };
     rt.texture.rt = rt; // (kept so it can be let go with the scene)
     return rt.texture;
   } catch (e) { return flat(); }
+}
+// The nebula drawn into its target (spaceBakeNebula; and again after a lost graphics context)
+function spaceNebulaDraw(rt) {
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    depthTest: false, depthWrite: false,
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: `varying vec2 vUv;
+      float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
+      float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        vec2 a = mod(i, per), b = mod(i + 1.0, per);
+        return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
+      float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
+      void main(){
+        vec2 p = vUv;
+        vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
+        vec2 q = p + w * 0.13;
+        float A = fbm(q, 5.0, 21.0);
+        float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
+        float C = fbm(p - w * 0.09, 4.0, 77.0);
+        vec2 g = p * 150.0, c = floor(g), f = fract(g);
+        float on = step(0.93, h2(c, 3.0));
+        vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
+        float sb = h2(c, 13.0);
+        float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
+        gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
+      }`,
+  }));
+  quad.frustumCulled = false;
+  const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
+  sc.add(quad);
+  r.setRenderTarget(rt);
+  r.render(sc, new THREE.Camera());
+  r.setRenderTarget(prev);
+  quad.geometry.dispose();
+  quad.material.dispose();
 }
 // A spiral galaxy seen from far away: a warm heart, two arms of blue and rose stars.
 function spaceGalaxyTexture() {
@@ -24035,38 +24221,40 @@ class BlasterSky {
     if (this.envs[c.id] !== undefined) return this.envs[c.id];
     let tex = null;
     if (GFX.ok) {
-      try {
-        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
-        dome.rotation.set(-a[1], 0, c.roll);
-        sc.add(dome);
-        // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
-        // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
-        // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
-        // lies over what.)
-        const card = (dir, col, k, w, h, order = 0) => {
-          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
-            const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
-            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
-            m.lookAt(0, 0, 0);
-            m.scale.set(w * s, h * s, 1);
-            m.renderOrder = order + i * 0.1;
-            sc.add(m);
-          });
-        };
-        card([0.3, 0.1, 1], r.wall || r.top[0], 0.8, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
-        card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
-        card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
-        card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
-        card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
-        card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
-        card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
-        const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
-        disposeTree(sc);
-        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
-        c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
-      } catch (e) { tex = null; }
+      try { tex = ownTarget(GFX.keepEnv(() => this.envScene(c))); } catch (e) { tex = null; } // (the target owns the texture: see ownTarget; kept: drawn again after a lost graphics context)
     }
     return (this.envs[c.id] = tex);
+  }
+  // the region's reflection drawn (envFor): a new target with it
+  envScene(c) {
+    const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
+    dome.rotation.set(-a[1], 0, c.roll);
+    sc.add(dome);
+    // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
+    // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
+    // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
+    // lies over what.)
+    const card = (dir, col, k, w, h, order = 0) => {
+      [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
+        const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
+        m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+        m.lookAt(0, 0, 0);
+        m.scale.set(w * s, h * s, 1);
+        m.renderOrder = order + i * 0.1;
+        sc.add(m);
+      });
+    };
+    card([0.3, 0.1, 1], r.wall || r.top[0], 0.8, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
+    card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
+    card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
+    card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
+    card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
+    card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
+    card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
+    const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
+    disposeTree(sc);
+    c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
+    return rt;
   }
   // A material that should mirror the region's sky and lamps: its map is kept up to date as regions change.
   // k: how strongly it mirrors (its envMapIntensity at full).
@@ -26920,6 +27108,11 @@ class RacerEnv {
     this.rt = null;
   }
   build(sky) {
+    const rt = GFX.keepEnv(() => this.draw(sky)); // (kept: drawn again after a lost graphics context, into the same target)
+    (this.rts || (this.rts = [])).push(rt);
+    return rt.texture;
+  }
+  draw(sky) {
     const u = this.sky.material.uniforms;
     u.uTop.value.copy(sky.top);
     u.uMid.value.copy(sky.mid);
@@ -26937,9 +27130,7 @@ class RacerEnv {
     this.strips[3].material.color.copy(sky.grid).multiplyScalar(2);
     this.strips[4].material.color.copy(sky.horizon).multiplyScalar(1.6);
     this.strips[5].material.color.copy(sky.mid).lerp(sky.horizon, 0.35).multiplyScalar(1.3);
-    const rt = this.pm.fromScene(this.scene, 0.02, 0.1, 100);
-    (this.rts || (this.rts = [])).push(rt);
-    return rt.texture;
+    return this.pm.fromScene(this.scene, 0.02, 0.1, 100);
   }
   dispose() {
     if (this.rts) this.rts.forEach((rt) => rt.dispose());
@@ -30023,6 +30214,9 @@ class RacerSky {
     // the first time as the road ran into its landscape was sent to the chip again then, its copies made, a stall in
     // the middle of a run, 8K a picture on a Mac: the Mac's richer tier, 2026-11-25)
     for (const n in skies) if (skies[n]) this.mips(skies[n].map);
+    // (after a lost graphics context the reflections above are drawn again (GFX.keepEnv), which takes each picture's
+    // smaller copies away again, as makePanoSky does: put back, so the screen's readying sends each whole, as above)
+    this.forgetRestore = GFX.onRestore(() => { for (const n in skies) if (skies[n]) this.mips(skies[n].map); });
     this.next = null; this.k = 0; this.dur = 0.6; this.swapped = false;
     this.env = this.envs[this.cur.id] || null;
     if (this.env) s.environment = this.env;
@@ -30049,53 +30243,55 @@ class RacerSky {
     if (this.envs[id] !== undefined) return this.envs[id];
     let tex = null;
     if (GFX.ok) {
-      try {
-        const r = RACER_SKIES[id], sky = r.sky && this.skies[r.sky], sc = new THREE.Scene();
-        const basic = (geo, col, order) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.renderOrder = order; sc.add(m); return m; };
-        if (sky) {
-          const st = new THREE.Group(), dome = makePanoSky(sky, { radius: 60, gain: r.envGain, lift: 0.3, rot: (r.at - 0.25) * Math.PI * 2 });
-          dome.rotation.x = -(r.pitch || 0);
-          st.scale.z = r.zoom;
-          st.add(dome); sc.add(st);
-          // under the horizon the road: wet, so at a shallow angle it holds the sky upside down (two bands of it, the
-          // lower one dimmer), and steeper than that it is dark. (Nothing can be blended into this map: its light is
-          // stored with an exponent. Each piece is drawn whole.)
-          [[0, 0.3, 0.5], [0.3, 0.75, 0.22]].forEach(([a0, a1, k]) => {
-            const wet = makePanoSky(sky, { radius: 59, gain: r.envGain * k, lift: 0, rot: (r.at - 0.25) * Math.PI * 2 }), ws = new THREE.Group();
-            wet.geometry.dispose();
-            wet.geometry = new THREE.SphereGeometry(59, 32, 6, 0, Math.PI * 2, Math.PI / 2 - a1, a1 - a0);
-            wet.renderOrder = -15;
-            ws.scale.set(1, -1, r.zoom);
-            ws.add(wet); sc.add(ws);
-          });
-        } else basic(new THREE.SphereGeometry(60, 24, 12), new THREE.Color(r.ground).multiplyScalar(1.6), -20);
-        // (the map is drawn without a depth buffer: `order` says what lies over what)
-        { const a = sky ? 0.75 : 0; basic(new THREE.SphereGeometry(58, 32, 8, 0, Math.PI * 2, Math.PI / 2 + a, Math.PI / 2 - a), r.ground, -10); } // the ground under it
-        const card = (dir, col, k, w, h, order = 0) => { // a soft box: brightest at its middle, nothing at its edge
-          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([q, b], i) => {
-            const m = basic(new THREE.CircleGeometry(0.5, 40), neon(col, k * b), order + i * 0.1);
-            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
-            m.lookAt(0, 0, 0);
-            m.scale.set(w * q, h * q, 1);
-          });
-        };
-        const strip = (x, y, z, w, h, col, k) => { const m = basic(new THREE.PlaneGeometry(w, h), neon(col, k), 2); m.position.set(x, y, z); m.lookAt(0, 0, 0); };
-        card([0, 0.3, 1], r.wall, 1.15, 150, 120, -5);
-        card([-0.42, 0.74, 0.52], r.key[0], 2.0 * r.key[1], 50, 34);
-        card([0, 0.085, -1], r.sun[0], 3.2 * r.sun[1], 15, 15); // the egg, low and dead ahead
-        if (id === "tunnel") { // the bore's two lines of lamps overhead, the cyan and magenta lines along its walls
-          for (const sd of [-1, 1]) { const m = basic(new THREE.PlaneGeometry(0.7, 110), neon(0xffd9a0, 3.2), 2); m.rotation.x = Math.PI / 2; m.position.set(sd * 6.2, 7.4, 0); }
-          strip(-9.5, 1.5, 0, 110, 0.22, 0x35efff, 2.2); strip(9.5, 1.5, 0, 110, 0.22, 0xff3ad4, 2.2);
-        } else if (r.lamps > 0) {
-          const k = 0.6 + 2.6 * r.lamps;
-          strip(-26, 5, -4, 40, 1.3, RACER_LAMP[0], k); strip(26, 5, -4, 40, 1.3, RACER_LAMP[1], k);
-        }
-        const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
-        disposeTree(sc);
-        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
-      } catch (e) { tex = null; }
+      try { tex = ownTarget(GFX.keepEnv(() => this.envScene(id))); } catch (e) { tex = null; } // (the target owns the texture: see ownTarget; kept: drawn again after a lost graphics context)
     }
     return (this.envs[id] = tex);
+  }
+  // a sky's reflection drawn (envFor): a new target with it
+  envScene(id) {
+    const r = RACER_SKIES[id], sky = r.sky && this.skies[r.sky], sc = new THREE.Scene();
+    const basic = (geo, col, order) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.renderOrder = order; sc.add(m); return m; };
+    if (sky) {
+      const st = new THREE.Group(), dome = makePanoSky(sky, { radius: 60, gain: r.envGain, lift: 0.3, rot: (r.at - 0.25) * Math.PI * 2 });
+      dome.rotation.x = -(r.pitch || 0);
+      st.scale.z = r.zoom;
+      st.add(dome); sc.add(st);
+      // under the horizon the road: wet, so at a shallow angle it holds the sky upside down (two bands of it, the
+      // lower one dimmer), and steeper than that it is dark. (Nothing can be blended into this map: its light is
+      // stored with an exponent. Each piece is drawn whole.)
+      [[0, 0.3, 0.5], [0.3, 0.75, 0.22]].forEach(([a0, a1, k]) => {
+        const wet = makePanoSky(sky, { radius: 59, gain: r.envGain * k, lift: 0, rot: (r.at - 0.25) * Math.PI * 2 }), ws = new THREE.Group();
+        wet.geometry.dispose();
+        wet.geometry = new THREE.SphereGeometry(59, 32, 6, 0, Math.PI * 2, Math.PI / 2 - a1, a1 - a0);
+        wet.renderOrder = -15;
+        ws.scale.set(1, -1, r.zoom);
+        ws.add(wet); sc.add(ws);
+      });
+    } else basic(new THREE.SphereGeometry(60, 24, 12), new THREE.Color(r.ground).multiplyScalar(1.6), -20);
+    // (the map is drawn without a depth buffer: `order` says what lies over what)
+    { const a = sky ? 0.75 : 0; basic(new THREE.SphereGeometry(58, 32, 8, 0, Math.PI * 2, Math.PI / 2 + a, Math.PI / 2 - a), r.ground, -10); } // the ground under it
+    const card = (dir, col, k, w, h, order = 0) => { // a soft box: brightest at its middle, nothing at its edge
+      [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([q, b], i) => {
+        const m = basic(new THREE.CircleGeometry(0.5, 40), neon(col, k * b), order + i * 0.1);
+        m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+        m.lookAt(0, 0, 0);
+        m.scale.set(w * q, h * q, 1);
+      });
+    };
+    const strip = (x, y, z, w, h, col, k) => { const m = basic(new THREE.PlaneGeometry(w, h), neon(col, k), 2); m.position.set(x, y, z); m.lookAt(0, 0, 0); };
+    card([0, 0.3, 1], r.wall, 1.15, 150, 120, -5);
+    card([-0.42, 0.74, 0.52], r.key[0], 2.0 * r.key[1], 50, 34);
+    card([0, 0.085, -1], r.sun[0], 3.2 * r.sun[1], 15, 15); // the egg, low and dead ahead
+    if (id === "tunnel") { // the bore's two lines of lamps overhead, the cyan and magenta lines along its walls
+      for (const sd of [-1, 1]) { const m = basic(new THREE.PlaneGeometry(0.7, 110), neon(0xffd9a0, 3.2), 2); m.rotation.x = Math.PI / 2; m.position.set(sd * 6.2, 7.4, 0); }
+      strip(-9.5, 1.5, 0, 110, 0.22, 0x35efff, 2.2); strip(9.5, 1.5, 0, 110, 0.22, 0xff3ad4, 2.2);
+    } else if (r.lamps > 0) {
+      const k = 0.6 + 2.6 * r.lamps;
+      strip(-26, 5, -4, 40, 1.3, RACER_LAMP[0], k); strip(26, 5, -4, 40, 1.3, RACER_LAMP[1], k);
+    }
+    const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
+    disposeTree(sc);
+    return rt;
   }
   // A material that should mirror the sky: its map is kept up to date as the skies change. k: how strongly.
   mirror(mat, k = 1) {
@@ -30205,6 +30401,7 @@ class RacerSky {
     u.uSkyTint.value.copy(this.L.tint);
   }
   dispose() {
+    if (this.forgetRestore) { this.forgetRestore(); this.forgetRestore = null; }
     for (const id in this.envs) if (this.envs[id]) this.envs[id].dispose();
     this.envs = {};
     this.users.length = 0;
@@ -31852,6 +32049,18 @@ class BossGame extends QuizGame {
     if (this.stage) this.probeFull = true;
     this.probe.capture();
     this.probeStep(true);
+  }
+  // after a lost graphics context (GFX.contextRestored): the deck's cube drawn again now, whole, and the steel's copy
+  // with it, three times over (the steel mirrors the cube and the cube the steel, which came back black: as they came
+  // to be); whether the arena's second capture is still to come (probeFull) is left as it was. Never with a stroke of
+  // lightning in it (the arena's own captures wait for one to pass: probeStep): the storm's light and the sky's flash
+  // held at nothing while it is drawn, and given back after.
+  restoreGraphics() {
+    if (!this.probe || !GFX.ok) return;
+    const A = this.arena, st = A && A.storm, si = st ? st.intensity : 0, gu = A && A.dome.material.uniforms.uGain, g0 = gu ? gu.value : 0;
+    if (st) st.intensity = 0;
+    if (gu && A.flash) gu.value = Math.max(0, g0 - A.gain * 0.85 * A.flash); // (the sky's gain less the stroke's share: BossArena.update)
+    try { for (let i = 0; i < 3; i++) { this.probe.capture(); this.probeStep(true); } } finally { if (st) st.intensity = si; if (gu) gu.value = g0; }
   }
   // a capture whole: the steel takes it too, filtered for its roughness (its own copy, made once a capture: what reads
   // it is never drawn into what it reads)
@@ -37028,8 +37237,11 @@ const MEMORY_SLOT_R = 7.2; // the coin slot, at twelve o'clock
 
 // makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
 // nothing in r128, so dispose() releases the whole target.
-function memoryEnvMap({ top, horizon, bottom, glow, panels }) {
+function memoryEnvMap(o) {
   if (!GFX.ok) return null;
+  return GFX.keepEnv(() => memoryEnvMapScene(o)); // (kept: drawn again after a lost graphics context, into the same target)
+}
+function memoryEnvMapScene({ top, horizon, bottom, glow, panels }) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
@@ -38681,8 +38893,11 @@ const EXAM_WINDOWS = [-32, -24, -16, -8, 0, 8, 16, 24, 32];
 
 // makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
 // nothing in r128, so dispose() releases the whole target.
-function examEnvMap({ top, horizon, bottom, glow, panels }) {
+function examEnvMap(o) {
   if (!GFX.ok) return null;
+  return GFX.keepEnv(() => examEnvMapScene(o)); // (kept: drawn again after a lost graphics context, into the same target)
+}
+function examEnvMapScene({ top, horizon, bottom, glow, panels }) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
