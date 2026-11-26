@@ -528,7 +528,7 @@ class CombatFX {
         t.acc -= 1;
         const p = t.at(d);
         if (!p) break;
-        const jit = new THREE.Vector3(rand(-0.15, 0.15), rand(-0.1, 0.15), rand(-0.15, 0.15)).multiplyScalar(t.size * this.unit).add(p);
+        const jit = (this._jit || (this._jit = new THREE.Vector3())).set(rand(-0.15, 0.15), rand(-0.1, 0.15), rand(-0.15, 0.15)).multiplyScalar(t.size * this.unit).add(p); // (one vector, as each puff and spark copies where it starts: Phase 8, the phone's garbage in a fight)
         if (t.smoke && Math.random() < t.smoke) this.smoke(jit, { size: 0.7 * t.size, life: t.life, vel: t.vel, a: t.a });
         if (t.fire && Math.random() < t.fire) this.fire(jit, { size: 0.6 * t.size, life: 0.35, vel: t.vel, color: t.color });
         if (t.sparks && Math.random() < t.sparks) this.sparks(jit, t.color === undefined ? 0xffb060 : t.color, { n: 1, speed: 4 * t.size, life: 0.4, len: 0.3 * t.size, w: 0.05 * t.size, gravity: this.ground === null ? 0 : 6 });
@@ -543,7 +543,7 @@ class CombatFX {
       const total = b.from.distanceTo(b.to), len = Math.min(b.len, total * k + 0.001);
       if (dart && dart.bolt === b) { // its tail trails behind its head; the whole of it shrinks into the target as it lands
         d.subVectors(b.to, b.from).normalize();
-        dart.p.copy(b.p).addScaledVector(d, -len * 0.5); dart.len = len; dart.w = b.w; dart.dirv = d.clone(); dart.life = Math.max(dart.life, 0.03);
+        dart.p.copy(b.p).addScaledVector(d, -len * 0.5); dart.len = len; dart.w = b.w; dart.dirv = (dart.dirv || new THREE.Vector3()).copy(d); dart.life = Math.max(dart.life, 0.03);
       }
       b.sp.position.copy(b.p); b.sp.scale.setScalar(b.w * 1.7); b.sp.material.opacity = 0.45; // (a glow that hugs its head: the bolt is its dart, not a ball of light)
       if (b.lit) this.lights.length && this.lights[0].t <= 0.02 && (this.lights[0].l.position.copy(b.p), this.lights[0].l.color.setRGB(Math.min(1, b.col[0]), Math.min(1, b.col[1]), Math.min(1, b.col[2])), (this.lights[0].i = 2.2), (this.lights[0].t = this.lights[0].dur = 0.05));

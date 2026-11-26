@@ -496,6 +496,9 @@ function makePipeline(renderer, hdr, wantSamples) {
       const keep = quad.material;
       for (const m of made) { quad.material = m; try { renderer.compile(quadScene, cam); } catch (e) { /* best effort */ } }
       quad.material = keep;
+      // (and the lens's dust: the glow pass draws it only when rays, the lens or a strong glow are on, and on a phone a
+      // hit's glow was the first, mid-play: a picture of a megabyte sent then. Phase 8's census, the exam)
+      try { if (renderer.initTexture) renderer.initTexture(dirt); } catch (e) { /* sent the first time it is drawn instead */ }
     },
     resize(w, h) {
       sw = w; sh = h;
