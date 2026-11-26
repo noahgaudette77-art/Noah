@@ -89,7 +89,7 @@ function* hallSkinSteps(model) {
     // (a material that reads each part's own position and normal (the Proctor's skin: 24f-proctor.js) is given them as
     // they were, beside the merged copy)
     const local = !!mat.userData.bossLocal, lp = local ? new Float32Array(nv * 3) : null, ln = local ? new Float32Array(nv * 3) : null;
-    let o = 0, oi = 0;
+    let o = 0, oi = 0, acc = 0;
     for (const m of list) {
       const g = m.geometry, P = g.attributes.position, NO = g.attributes.normal, UV = g.attributes.uv, n = P.count, b = bi.get(boneOf(m));
       N.getNormalMatrix(m.matrixWorld);
@@ -99,6 +99,9 @@ function* hallSkinSteps(model) {
       if (UV) { k = unit(UV); for (let i = 0; i < n; i++) { uv[(o + i) * 2] = UV.getX(i) * k; uv[(o + i) * 2 + 1] = UV.getY(i) * k; } }
       if (g.index) { const I = g.index; for (let i = 0; i < I.count; i++) idx[oi + i] = I.getX(i) + o; oi += I.count; } else { for (let i = 0; i < n; i++) idx[oi + i] = i + o; oi += n; }
       o += n;
+      // (a frame's share at most: a boss's whole body in one step was a stall of its own on a phone as it arrived, mid-
+      // glide; the owner's iPhone, 2026-11-26)
+      if ((acc += n) >= 6000) { acc = 0; yield; }
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
