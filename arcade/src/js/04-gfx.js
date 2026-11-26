@@ -105,7 +105,7 @@ const GFX = {
     const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
     this.auto = fixed === undefined;
     P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
-    P.reach = false; P.roomySince = 0; P.reachFails = 0; // (a phone's climb to MAC tried afresh: see reachUp)
+    P.changedAt = performance.now(); // (the frames before the choice are not the choice's: its own first seconds are left out, as a step's)
     if (this.auto && P.ladder) { P.ladder = this.makeLadder(); P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
     const lights = this.lightCap !== 99;
     this.scale = 1; this.lightCap = 99;
@@ -148,7 +148,6 @@ const GFX = {
     ring: new Float32Array(720), at: new Float64Array(720), cpu: new Float32Array(720), busy: new Uint8Array(720), n: 0, i: 0, skip: 0, wp: -1, wt: -1,
     changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, easeNo: {}, easing: null, upAt: -1e9, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
     lockFrom: -1, capped: false, capRung: 0, capTop: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
-    reach: false, roomySince: 0, reachFails: 0, reachAt: -1e9, // (a phone's AUTO above its start: see reachUp)
   },
   FINE: [1, 0.95, 0.9, 0.85, 0.8, 0.75], // (the first tier's sizes on a high-density screen: 2x, 1.9x, 1.8x, 1.7x, 1.6x, 1.5x)
   // the steps, sharpest first: { tier, scale, lights }. A step down never draws more pixels than the one above it: a
@@ -184,7 +183,7 @@ const GFX = {
     if (!L) return;
     i = Math.max(0, Math.min(L.length - 1, i));
     const R = L[i], lights = R.lights !== this.lightCap;
-    P.rung = i; this.scale = R.scale; this.lightCap = R.lights; P.slowSince = 0; P.okSince = 0; P.reach = false; P.roomySince = 0;
+    P.rung = i; this.scale = R.scale; this.lightCap = R.lights; P.slowSince = 0; P.okSince = 0;
     if (lights) this.lightsReset();
     if (R.tier !== this.tier) this.setTier(R.tier, why); else { this.resize(); P.changedAt = performance.now(); P.why = why || ""; }
   },
@@ -248,7 +247,7 @@ const GFX = {
     if (ms > 0 && ms < 1000) { P.ring[P.i] = ms; P.at[P.i] = now; P.cpu[P.i] = cpu || 0; P.busy[P.i] = P.skip > 0 ? 1 : 0; P.i = (P.i + 1) % N; P.n = Math.min(N, P.n + 1); } // (every frame, whatever the setting: the readout reads them too)
     else if (ms >= 1000) this.perfAfresh();
     if (P.skip > 0) P.skip--;
-    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; P.roomySince = 0; if (P.reach) this.setRung(P.rung, "a new screen: from the phone's own"); } // (a new screen: its own frames decide, from its own start; a phone's from its own tier: see reachUp)
+    if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; } // (a new screen: its own frames decide, from its own start)
     if (P.off || !P.ladder || (!this.auto && P.ladder.length < 2) || navigator.webdriver || document.hidden) return; // (a fixed tier: its sizes only, see fixedLadder)
     if (now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.shownAt < 2000 || now - P.evalAt < 500) return;
     P.evalAt = now;
@@ -270,11 +269,13 @@ const GFX = {
         if (L[P.rung].tier > L[P.lockFrom].tier && this.rungPixels(P.rung) <= 0.6 * this.rungPixels(P.lockFrom)) { this.capHold(P.lockFrom, "held at 30 fps: the device's cap (low power mode?)"); return; }
       }
     }
+    // (a fixed tier held at exactly 30: the device's own cap, Low Power Mode's, which no smaller picture lifts: left as
+    // it is. AUTO tells a cap from a load by a real cut, above; a fixed tier keeps its look)
+    if (!this.auto && med > 31 && med < 36 && p10 > 29 && p90 < 38) { P.slowSince = 0; P.okSince = 0; return; }
     const slow = med > F * 1.09 || long > 0.1;
     if (slow) {
-      P.okSince = 0; P.roomySince = 0;
+      P.okSince = 0;
       if (!P.slowSince) P.slowSince = now;
-      if (P.reach && now - P.slowSince >= 500) { if (now - P.reachAt < 20000) P.reachFails++; this.setRung(P.rung, "late at MAC: back to the phone's own"); return; } // (above where AUTO starts: back at the first look, half a second, not a second)
       if (now - P.slowSince < 1000 || P.rung >= L.length - 1) return; // (late through a second of looks, not one)
       if (now - P.upAt < 8000) P.failed[P.rung] = (P.failed[P.rung] || 0) + 1; // (a step just climbed to, dropped again)
       // how far: one step; still slow at the next look, two of the tier's sizes, then three (a big load is met in
@@ -319,7 +320,6 @@ const GFX = {
         return;
       }
     }
-    if (this.reachUp(P, now, F, p90, w[w.length - 1])) return;
     if (p90 < F * 1.044 && w[w.length - 1] < F * 2.04) {
       if (!P.okSince) P.okSince = now;
       // (a step eased from: climbed back after half a minute steady, a minute the second time, never after a third,
@@ -328,29 +328,12 @@ const GFX = {
       if (up >= 0 && f < 3 && e < 3 && !P.easing && !(P.capped && up < P.capTop) && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
     } else P.okSince = 0;
   },
-  // (the owner, 2026-11-26: "max graphics possible, best immersion, good FPS") A phone's or a tablet's AUTO starts at
-  // PHONE (its first step) and climbs to MAC, Setup's HIGH, at the same size (on a phone the two differ only in their
-  // effects: the ambient shade, motion blur, light rays, the glow's two widest levels, every particle) when frames have
-  // had room to spare through twelve seconds: the slowest tenth under four fifths of a frame and none over a frame and
-  // a half. Late there through half a second of looks, it goes straight back; back within twenty seconds of a climb
-  // counts against it (the next try waits three times as long, then five), and after three such it stays at PHONE
-  // for the visit. Never while held at 30, nor from any step but the first, nor at a fixed tier.
-  reachUp(P, now, F, p90, worst) {
-    const L = P.ladder;
-    if (!this.auto || P.reach || P.capped || P.easing || P.rung !== 0 || !L || !L.length || L[0].tier !== 1 || P.reachFails >= 3) return false;
-    if (!(p90 < F * 0.8 && worst < F * 1.5)) { P.roomySince = 0; return false; }
-    if (!P.roomySince) P.roomySince = now;
-    if (now - P.roomySince < 12000 * (1 + 2 * P.reachFails)) return false;
-    P.reach = true; P.reachAt = P.upAt = now; P.roomySince = 0; P.okSince = 0;
-    this.setTier(0, "room to spare: MAC");
-    return true;
-  },
   // the governor's state, for the readout
   govLabel() {
     const P = this.perf;
     if (!this.auto) return "FIXED (SETUP)" + (P.ladder && P.rung > 0 ? " · SIZE STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
     if (P.capped) return "HELD AT 30 FPS · " + (P.cpuMed > 20 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE? SAFE TIER" : "LOW POWER MODE OR A 30 HZ SCREEN?") + (P.testing ? " (TESTING)" : "");
-    return "AUTO" + (P.reach ? " · MAC (ROOM TO SPARE)" : P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
+    return "AUTO" + (P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
   },
   // the window moved to a screen of another density (a Retina laptop's own and an external monitor's), or the page
   // zoomed: the ladder made again for it, AUTO kept at the same tier and lights at the nearest size, and the picture
@@ -362,7 +345,7 @@ const GFX = {
       // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
       const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
       const at = P.capped && P.testing ? P.capRung : P.rung; // (a test of the 30 fps hold under way: called off, the hold's own step kept)
-      P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.lockFrom = -1; P.testing = false; P.reach = false; P.roomySince = 0;
+      P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.lockFrom = -1; P.testing = false;
       if (P.preCap >= 0) P.preCap = near(P.preCap);
       if (P.capped) { P.capTop = this.capFloor(near(P.capTop)); P.capRung = Math.max(near(at), P.capTop); }
       if (this.auto) {
@@ -412,9 +395,11 @@ const GFX = {
     this.small = Math.min(screen.width || 9999, screen.height || 9999) < 700 || matchMedia("(pointer: coarse)").matches;
     if (Assets.phone) this.TIERS = this.TIERS.map((T, i) => Object.assign({}, T, this.PHONE[i] || {})); // (a phone's lighter tiers: see PHONE)
     // the first tier: Setup's choice, or (auto) MAC on a desktop and PHONE on a phone or a tablet, from where the frame rate leads
-    // (the owner, 2026-11-26: the best picture each device holds at a good frame rate, which AUTO now reaches for: a
-    // Graphics setting fixed before then goes back to AUTO, once; Setup can fix one again. The mark is kept with the
-    // settings and goes with the next save, as GFX.applySettings's for the effect switches)
+    // (the owner, 2026-11-26: the iPhone held at a fixed Graphics setting stuttered through the title hall, and then "max
+    // graphics possible, good FPS": the best picture a device holds at a steady frame rate is AUTO's to find. A Graphics
+    // setting fixed before then goes back to AUTO, once; Setup can fix one again. The mark is kept with the settings and
+    // goes with the next save, as GFX.applySettings's for the effect switches; a copy synced from another device is
+    // brought along the same way: mergeStates)
     if (Store.settings && !(Store.settings.qv >= 2)) { Store.settings.qv = 2; Store.settings.quality = "auto"; }
     const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
     this.auto = fixed === undefined;

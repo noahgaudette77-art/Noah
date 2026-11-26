@@ -38,12 +38,9 @@
  *              (SAFE on a 3x phone: 1.5x to three quarters of it), every step the same tier and every light; steady,
  *              it climbs back to its full size; the readout names the step; AUTO again: back to 2x
  *   phone      no frosted glass over the live picture on a phone at any tier, Setup's HIGH included (body.lite)
- *   reach      (the owner, 2026-11-26: "max graphics possible, good FPS") frames with room to spare (10 ms) through
- *              twelve seconds at a phone's first step: up to MAC at the same 2x; late there: straight back to PHONE;
- *              back within 20 s counts (the next try after 36 s, then 60), and after three it stays at PHONE; a new
- *              screen starts from PHONE; never at a fixed tier
- *   once       a Graphics setting fixed before 2026-11-26 is AUTO again on the next visit, once; fixed again after,
- *              it stays
+ *   fixed@30   a fixed tier held at exactly 30 (Low Power Mode): no size step (a smaller picture would not lift it)
+ *   once       a Graphics setting fixed before 2026-11-26 is AUTO again on the next visit, once (a copy synced from
+ *              another device too: mergeStates); fixed again after, it stays
  *   desktop    a desktop's ladder starts at MAC, full size, 12 steps, and no step down draws more pixels; the window
  *              moved to a 1x screen and back (Chromium: a real change of density): the ladder made again, the canvas
  *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip;
@@ -304,39 +301,11 @@ function inPage() {
   await reset();
   s = await st();
   ok(s.auto && s.rung === 0 && s.tier === 1 && s.scale === 1, "fixed: AUTO again starts from PHONE at 2x", { rung: s.rung, tier: s.tier, scale: s.scale });
-  // reach: a phone's AUTO up to MAC while frames have room to spare
-  await reset();
-  p = await feed(10, 16, 0.5);
-  s = await st();
-  ok(s.auto && s.tier === 0 && s.rung === 0 && s.scale === 1 && Math.abs(s.pr - 2) < 1e-6 && s.label === "AUTO · MAC (ROOM TO SPARE)", "reach: frames of 10 ms through twelve seconds at the phone's first step: up to MAC at the same 2x, named in the readout", { tier: s.tier, rung: s.rung, scale: s.scale, pr: s.pr, label: s.label, path: p });
-  p = await feed(25, 3, 0.5);
-  s = await st();
-  ok(s.tier === 1 && s.rung === 0 && /^AUTO · STEP 1\//.test(s.label) && p.length === 0, "reach: late at MAC (25 ms): straight back to PHONE at 2x, no further", { tier: s.tier, rung: s.rung, label: s.label, path: p });
-  p = await feed(10, 30, 0.5);
-  s = await st();
-  ok(s.tier === 1, "reach: back within 20 s of the climb: not tried again in the next 30 s", { tier: s.tier });
-  p = await feed(10, 12, 0.5);
-  s = await st();
-  ok(s.tier === 0, "reach: tried again after 36 s of room", { tier: s.tier });
-  await feed(25, 3, 0.5);
-  p = await feed(10, 64, 0.5);
-  s = await st();
-  ok(s.tier === 0, "reach: a second time back: tried again after 60 s of room", { tier: s.tier });
-  await feed(25, 3, 0.5);
-  p = await feed(10, 150, 0.5);
-  s = await st();
-  ok(s.tier === 1 && s.rung === 0, "reach: back a third time: it stays at PHONE for the visit", { tier: s.tier, rung: s.rung, fails: await page.evaluate(() => window.__arcade.GFX.perf.reachFails) });
-  await reset();
-  await feed(10, 16, 0.5);
-  const atMac = (await st()).tier;
-  await page.evaluate(() => { window.__arcade.GFX.sceneAt = window.__T; }); // (a new screen opens)
-  await feed(16.67, 0.1, 0);
-  s = await st();
-  ok(atMac === 0 && s.tier === 1 && s.rung === 0, "reach: a new screen starts from the phone's own PHONE, its own frames to decide", { before: atMac, tier: s.tier, rung: s.rung });
+  // fixed@30: a fixed tier held at exactly 30 (Low Power Mode): its sharpness kept
   await page.evaluate(() => window.__arcade.GFX.setQuality("medium"));
-  p = await feed(10, 30, 0.5);
+  p = await feed(33.33, 15, 0.3);
   s = await st();
-  ok(!s.auto && s.tier === 1 && s.label === "FIXED (SETUP)", "reach: never at a fixed tier (Setup's PHONE stays PHONE with room to spare)", { tier: s.tier, label: s.label });
+  ok(!s.auto && s.tier === 1 && s.rung === 0 && s.scale === 1 && p.length === 0, "fixed@30: Setup's PHONE held at exactly 30 through 15 s: no size step, its sharpness kept", { tier: s.tier, rung: s.rung, scale: s.scale, path: p });
   await reset();
   // once: a Graphics setting fixed before 2026-11-26 is AUTO again, once
   {
@@ -350,6 +319,9 @@ function inPage() {
     await page3.evaluate(() => { const S = window.__arcade.Store; S.settings.quality = "high"; S.save(); if (S.flush) S.flush(); });
     o = await open(true);
     ok(!o.auto && o.q === "high", "once: fixed at HIGH again after it: it stays (the reset is once)", o);
+    // (a copy synced from another device that still has an old fixed setting, newer than this one: AUTO too)
+    const m = await page3.evaluate(() => { const mine = { settings: { quality: "high", qv: 2 }, updated: 5 }, theirs = { settings: { quality: "high" }, updated: 9 }, mine2 = { settings: { quality: "low", qv: 2 }, updated: 9 }; return { old: window.__arcade.mergeStates(mine, theirs).settings, kept: window.__arcade.mergeStates({ settings: {}, updated: 1 }, mine2).settings }; });
+    ok(m.old.quality === "auto" && m.old.qv === 2 && m.kept.quality === "low", "once: a newer synced copy with an old fixed setting comes in as AUTO; one fixed since is kept", { old: m.old.quality, qv: m.old.qv, kept: m.kept.quality });
     await ctx3.close();
   }
   // a desktop screen (no #phone, 2x): its ladder starts at MAC, full size

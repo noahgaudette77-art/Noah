@@ -111,7 +111,7 @@ function boot() {
 // Test hook: open the page with #debug to expose internals to automated checks.
 if (/debug/.test(location.hash)) {
   window.__arcade = {
-    Scenes, Store, UI, CHAPTERS, GFX, VFX, Sound, Assets, CombatFX, HudFX, gameAssets, Trophies, Hype, drawPortrait, client, proctorDress, // (proctorDress: tools/scenarios/proctor-portrait.js draws the Proctor's portrait with it)
+    Scenes, Store, UI, CHAPTERS, GFX, VFX, Sound, Assets, CombatFX, HudFX, gameAssets, Trophies, Hype, drawPortrait, client, proctorDress, mergeStates, // (mergeStates: tools/governor-test.js checks a synced copy's settings) // (proctorDress: tools/scenarios/proctor-portrait.js draws the Proctor's portrait with it)
     show: { select: showSelect, setup: showSettings, stats: showStats, results: renderResults, examSetup: showExamSetup, guide: showGuide }, makeSelection, selectionQids, Q_BY_ID, // (for capturing the plain screens)
     // go("blaster", "2"), go("hub"), go("title"), go("guide") …
     go(where, stage = "2") {
