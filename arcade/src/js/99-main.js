@@ -17,9 +17,9 @@ function boot() {
   //           blue ones were a moment's work (a model arriving: shaders made, pictures sent), which AUTO leaves out
   //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), how its edges are smoothed (MSAA
   //           and its samples, or NO AA where the device cannot multisample: 2026-11-23), the lights, draw calls, triangles
-  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS when the device
-  //           itself holds the page at 30: LOW POWER MODE?, or the main thread's time when that is what fills a frame
-  //           (see GFX.perfTick)
+  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 24 FPS (30, ...) when the
+  //           device itself holds the page at a lower rate: LOW POWER MODE?, or the main thread's time when that is
+  //           what fills a frame (see GFX.perfTick)
   const fpsEl = $("#fps");
   fpsEl.hidden = !(Store.settings.fps || /fps/.test(location.hash));
   fpsEl.innerHTML = `<div class="f1"></div><canvas class="fg" width="360" height="96"></canvas><div class="f2"></div><div class="f3"></div>`;

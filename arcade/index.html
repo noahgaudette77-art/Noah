@@ -7657,17 +7657,19 @@ const GFX = {
   // Setup > Graphics: "auto" lets the frame rate choose; a fixed tier stays put
   // (the saved values keep their old names: high is MAC, medium PHONE, low SAFE)
   setQuality(q) {
-    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
+    const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf, cap = P.capped ? P.capMs : 0; // (a device's cap held now is the device's, not the tier's: held again on the new choice, at its sharpest)
     this.auto = fixed === undefined;
     P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
     P.changedAt = performance.now(); // (the frames before the choice are not the choice's: its own first seconds are left out, as a step's)
-    if (this.auto && P.ladder) { P.ladder = this.makeLadder(); P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
+    const held = cap ? "setup: held at " + Math.round(1000 / cap) + " fps, the device's cap" : "";
+    if (this.auto && P.ladder) { P.ladder = this.makeLadder(); P.start = this.startRung(); this.setRung(P.start, "setup"); if (cap) this.capHold(P.start, cap, held); return; }
     const lights = this.lightCap !== 99;
     this.scale = 1; this.lightCap = 99;
     if (lights) this.lightsReset();
     if (P.ladder) { P.ladder = this.fixedLadder(fixed); P.rung = P.start = 0; }
     if (fixed === this.tier) this.resize();
     this.setTier(fixed, "setup");
+    if (cap) this.capHold(0, cap, held);
   },
   // ---- the frame rate, watched (Setup > Graphics: AUTO) by a governor (the owner, 2026-11-22 and 2026-11-23: a steady
   // 60 FPS comes before any one effect, on the phone and through a long session on the Mac). It moves the picture along
@@ -7689,20 +7691,24 @@ const GFX = {
   // seconds (a step that runs late again at once is tried less often, then not at all). What a moment's work costs is
   // not held against the picture: a frame that made shaders or sent new pictures to the chip (a model arriving), and the
   // one after it, are left out, and so are the first seconds of a new screen, a new step, or the page come back into view.
-  // The device's own cap: iOS holds a page at 30 frames a second in Low Power Mode (and a phone grown hot may). Blank
-  // frames timed at the start that come every 33 ms are that cap, and a rate held at exactly 30 through a real cut (a
-  // tier down and 60% of the pixels or fewer) is it too (a load just over a frame lifts off 30 with less). Held at 30, a
-  // phone's picture goes to SAFE at once rather than fight it (the battery is what the mode is saving, and only 30
-  // frames are shown; a computer's holds the step that held 30: see capFloor), the readout names it, frames are judged
-  // against 30's own frame (a step down if they still catch), a step down is tried now and then in case the 30 was a
-  // load after all, and once frames run well under 30's (the mode switched off) the picture goes back to the step it had.
-  // Setup's fixed tiers stay put; Reduced effects is its own switch. (Automated browsers keep where they start.)
+  // The device's own cap: iOS holds a page at a lower rate in Low Power Mode (30 frames a second, or 24: the owner's
+  // iPhone, 2026-11-26, 41.7 ms a frame), and a phone grown hot may. Frames held at one steady rate slower than the mark
+  // (heldRate: a tenth of them either side within a tenth of the middle one) are a cap or a load: blank frames timed at
+  // the start that come steadily at 45 a second or fewer are the cap; in play, a rate held through a real cut (realCut:
+  // a tier down and 60% of the pixels or fewer; on a fixed tier 60% of the pixels) is the cap too (a load lifts off it
+  // with less). Held, the picture goes back to the sharpest step that held the rate (a smaller one would not run
+  // faster: the owner, 2026-11-26, "max graphics possible ... Good FPS"; until then a phone went to SAFE, and a rate
+  // other than 30 was taken for a load, all the way to the last step), the readout names the rate, frames are judged
+  // against the cap's own frame (a step down if they still run late, back up as they hold), a step down is tried now
+  // and then in case it was a load after all, and once frames run faster than the cap's (the mode switched off) the
+  // hold lets go and the picture goes back to the step it had. A lower cap under a hold is found as the first was; a
+  // Setup choice keeps the hold. Reduced effects is its own switch. (Automated browsers keep where they start.)
   scale: 1, // the drawing size, a share of the tier's (see outPR)
   lightCap: 99, // the most point lights a screen's budget may draw (see lightsFor)
   perf: {
     ring: new Float32Array(720), at: new Float64Array(720), cpu: new Float32Array(720), busy: new Uint8Array(720), n: 0, i: 0, skip: 0, wp: -1, wt: -1,
     changedAt: 0, shownAt: -1e9, sceneSeen: -1, okSince: 0, slowSince: 0, downRun: 0, failed: {}, eased: {}, easeNo: {}, easing: null, upAt: -1e9, why: "", fps: 0, cpuMed: 0, rung: 0, start: 0, ladder: null, evalAt: 0,
-    lockFrom: -1, capped: false, capRung: 0, capTop: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
+    lockFrom: -1, lockMs: 0, capped: false, capMs: 33.33, capRung: 0, preCap: -1, testing: false, testAt: 0, testGap: 60000, off: false,
   },
   FINE: [1, 0.95, 0.9, 0.85, 0.8, 0.75], // (the first tier's sizes on a high-density screen: 2x, 1.9x, 1.8x, 1.7x, 1.6x, 1.5x)
   // the steps, sharpest first: { tier, scale, lights }. A step down never draws more pixels than the one above it: a
@@ -7729,10 +7735,13 @@ const GFX = {
   liteAlways() { return !!((typeof Assets !== "undefined" && Assets.phone) || this.small); },
   // the step AUTO starts from: the ladder's first (a desktop's MAC at the screen's own pixels, a phone's PHONE at 2x)
   startRung() { return 0; },
-  // the first step of the SAFE tier (where the device's 30 fps cap puts the picture)
-  safeRung() { const L = this.perf.ladder || [], i = L.findIndex((R) => R.tier >= 2); return i < 0 ? Math.max(0, L.length - 1) : i; },
   // a step's pixels, for the cap's test (the scene's own drawing size, squared)
   rungPixels(i) { const R = this.perf.ladder[i], px = Math.min(window.devicePixelRatio || 1, this.TIERS[R.tier].pr) * R.scale; return px * px; },
+  // a real cut from step a down to step b: 60% of the pixels or fewer, and on AUTO's ladder a tier down too (a fixed
+  // tier has its sizes only). A load that held a rate before it lifts off it after; a device's cap does not
+  realCut(a, b) { const L = this.perf.ladder; return b > a && (!this.auto || L[b].tier > L[a].tier) && this.rungPixels(b) <= 0.6 * this.rungPixels(a); },
+  // frames held at one rate (m the middle one; lo, hi a tenth of them in from either end): within a tenth of it
+  heldRate(m, lo, hi) { return lo > m * 0.9 && hi < m * 1.1; },
   setRung(i, why) {
     const P = this.perf, L = P.ladder;
     if (!L) return;
@@ -7742,14 +7751,16 @@ const GFX = {
     if (lights) this.lightsReset();
     if (R.tier !== this.tier) this.setTier(R.tier, why); else { this.resize(); P.changedAt = performance.now(); P.why = why || ""; }
   },
-  // held at the device's 30 (rung: the sharpest step that held it): the picture to the cap's floor (capFloor), and the
-  // step it had kept for when the cap lifts
-  capHold(rung, why) {
+  // held at the device's cap (ms: its frame; rung: the sharpest step that held it): the picture back to that step, and
+  // the step it had kept for when the cap lifts. Steady under the cap, it may climb higher still (to the ladder's first
+  // step): the sharpest step that holds the cap's rate is the one to keep. A fixed tier of one size has nothing to hold
+  capHold(rung, ms, why) {
     const P = this.perf;
+    if (!P.ladder || (!this.auto && P.ladder.length < 2)) return;
     if (!P.capped) P.preCap = rung;
-    P.capped = true; P.lockFrom = -1; P.testing = false; P.downRun = 0; P.testAt = performance.now(); P.testGap = 60000;
-    P.capTop = P.capRung = this.capFloor(rung); // (never climbed above while held)
-    this.setRung(P.capRung, why);
+    P.capped = true; P.capMs = ms; P.lockFrom = -1; P.testing = false; P.downRun = 0; P.testAt = performance.now(); P.testGap = 60000;
+    P.capRung = rung;
+    this.setRung(rung, why);
   },
   // let go of the cap: back to the step it had (back), or left where it is (a step down showed the 30 was a load)
   capRelease(why, back) {
@@ -7758,11 +7769,13 @@ const GFX = {
     if (back && to >= 0 && to < P.rung) { P.upAt = performance.now(); this.setRung(to, why); return; }
     P.changedAt = performance.now(); P.why = why;
   },
-  // the blank frames timed at the start (measureScreen): every 33 ms, steadily, is the device's cap from the start
+  // the blank frames timed at the start (measureScreen): steadily at 45 a second or fewer (22 ms a frame or more: a
+  // 50 Hz screen's are under it, see screenMs) is the device's cap from the start, at its own rate (30, 24, ...): held
+  // at the step it starts at, AUTO's or a fixed tier's, with no step taken to find it
   screenProbed(d) {
-    if (d.length < 8 || !this.auto || !this.perf.ladder || navigator.webdriver) return;
+    if (d.length < 8 || !this.perf.ladder || navigator.webdriver) return;
     const m = d[d.length >> 1], lo = d[Math.floor(d.length * 0.15)], hi = d[Math.floor(d.length * 0.85)];
-    if (m > 31 && m < 36 && lo > 29 && hi < 38) this.capHold(this.perf.rung, "held at 30 fps from the start: the device's cap (low power mode?)");
+    if (m >= 22 && m < 70 && this.heldRate(m, lo, hi)) this.capHold(this.perf.rung, m, "held at " + Math.round(1000 / m) + " fps from the start: the device's cap (low power mode?)");
   },
   // the page back in view (or a frame that took a second or more): its first seconds are not looked at, its timers
   // start afresh, and a held cap is tested soon (Low Power Mode may have been switched off meanwhile)
@@ -7789,10 +7802,6 @@ const GFX = {
     for (let k = 1; k <= P.n; k++) { const j = (P.i - k + N) % N; if (P.at[j] <= from) break; if (P.busy[j]) continue; n++; if (P.ring[j] > F * 1.5 && P.cpu[j] < F * 0.6) late++; }
     return { n, late, rate: n ? late / n : 0, span: now - from };
   },
-  // a step the device's 30 fps cap holds the picture at: on a phone or a tablet SAFE, or the sharpest step that held 30
-  // if it is lighter (iOS Low Power Mode: the battery is what it saves); on a computer the step that held 30 itself (a
-  // screen that runs at 30, or a laptop's own power saving, gains nothing from a lighter picture)
-  capFloor(i) { return Assets.phone || this.small ? Math.max(i, this.safeRung()) : i; },
   perfTick(ms, cpu) {
     if (this.lost) return; // (a frame that draws nothing tells nothing: perfAfresh when the context is back)
     const P = this.perf, now = performance.now(), N = P.ring.length, dpr = window.devicePixelRatio || 1;
@@ -7808,25 +7817,24 @@ const GFX = {
     P.evalAt = now;
     const r = this.recent(2000, Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500)), w = r.w;
     if (r.covered < 1500 || w.length < 4) return; // (a second and a half of frames at least: at 10 a second, 15)
-    const L = P.ladder, F = P.capped ? 33.33 : this.screenMs || 16.67; // (a frame of the screen's: 60 Hz, or 50 if measured so; held at 30, 30's)
+    const L = P.ladder, F = P.capped ? P.capMs : this.screenMs || 16.67; // (a frame of the screen's: 60 Hz, or 50 if measured so; held at a cap, the cap's)
     const q = (f) => w[Math.min(w.length - 1, Math.floor(f * w.length))], med = q(0.5), p10 = q(0.1), p90 = q(0.9), long = w.filter((x) => x > F * 1.5).length / w.length;
     P.fps = 1000 / med; P.cpuMed = r.cpu.length ? r.cpu[r.cpu.length >> 1] : 0;
     if (P.capped) {
-      if (med < 25) { this.capRelease(P.testing ? "a step down lifted the 30 fps hold: it was the load" : "the 30 fps cap lifted", !P.testing); return; } // (frames well under 30's)
-      if (P.testing) { P.testing = false; P.testAt = now; P.testGap = Math.min(P.testGap * 2, 480000); this.setRung(P.capRung, "held at 30 fps: the device's cap (low power mode?)"); return; } // (a step down ran no faster: held as it was; tested again later)
-      if (P.rung === P.capRung && P.rung < L.length - 1 && now - P.testAt > P.testGap && med < F * 1.09) { P.testing = true; this.setRung(P.rung + 1, "testing the 30 fps hold"); return; } // (a load just over a frame would lift off 30 with it)
-    } else if (this.auto) {
-      // held at exactly 30: a cap, or a load just over a frame, which a real cut lifts (AUTO's: a fixed tier's sizes
-      // only ever answer late frames)
-      if (!(med > 31 && med < 36 && p10 > 29 && p90 < 38)) P.lockFrom = -1;
-      else {
-        if (P.lockFrom < 0) P.lockFrom = P.rung;
-        if (L[P.rung].tier > L[P.lockFrom].tier && this.rungPixels(P.rung) <= 0.6 * this.rungPixels(P.lockFrom)) { this.capHold(P.lockFrom, "held at 30 fps: the device's cap (low power mode?)"); return; }
-      }
+      const n = Math.round(1000 / P.capMs);
+      // (frames faster than the cap's: it lifted (the mode switched off), or moved up, or was a load that the step
+      // under test lifted. A rate held again after is found afresh, below)
+      if (med < P.capMs * 0.88) { this.capRelease(P.testing ? "a step down lifted the " + n + " fps hold: it was the load" : "the " + n + " fps cap lifted", !P.testing); return; }
+      if (P.testing) { P.testing = false; P.testAt = now; P.testGap = Math.min(P.testGap * 2, 480000); this.setRung(P.capRung, "held at " + n + " fps: the device's cap (low power mode?)"); return; } // (a step down ran no faster: held as it was; tested again later)
+      if (P.rung === P.capRung && P.rung < L.length - 1 && now - P.testAt > P.testGap && med < F * 1.09) { P.testing = true; this.setRung(P.rung + 1, "testing the " + n + " fps hold"); return; } // (a load just over a frame would lift off the rate with it)
     }
-    // (a fixed tier held at exactly 30: the device's own cap, Low Power Mode's, which no smaller picture lifts: left as
-    // it is. AUTO tells a cap from a load by a real cut, above; a fixed tier keeps its look)
-    if (!this.auto && med > 31 && med < 36 && p10 > 29 && p90 < 38) { P.slowSince = 0; P.okSince = 0; return; }
+    // held at one steady rate slower than the mark (the screen's frame, or a cap's under a hold: a lower cap): the
+    // device's cap, or a load, which a real cut lifts. The step where it was first seen is kept, the steps go down as
+    // ever, and once a real cut below it still holds the same rate, the picture goes back to that step, held there
+    if (med > F * 1.09 && med < 70 && this.heldRate(med, p10, p90)) {
+      if (P.lockFrom < 0 || Math.abs(med - P.lockMs) > P.lockMs * 0.08) { P.lockFrom = P.rung; P.lockMs = med; }
+      else if (this.realCut(P.lockFrom, P.rung)) { this.capHold(P.lockFrom, med, "held at " + Math.round(1000 / med) + " fps: the device's cap (low power mode?)"); return; }
+    } else P.lockFrom = -1;
     const slow = med > F * 1.09 || long > 0.1;
     if (slow) {
       P.okSince = 0;
@@ -7880,14 +7888,16 @@ const GFX = {
       // (a step eased from: climbed back after half a minute steady, a minute the second time, never after a third,
       // and only with no more than one late frame in a hundred through ten seconds)
       const up = P.rung - 1, f = P.failed[up] || 0, e = P.eased[up] || 0, wait = e ? 30000 * e : 8000 * (1 + 2 * f);
-      if (up >= 0 && f < 3 && e < 3 && !P.easing && !(P.capped && up < P.capTop) && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
+      if (up >= 0 && f < 3 && e < 3 && !P.easing && now - P.okSince > wait && (!e || this.late10(F, now).rate < 0.01)) { P.upAt = now; this.setRung(up, "steady frames"); if (P.capped) P.capRung = P.rung; }
     } else P.okSince = 0;
   },
   // the governor's state, for the readout
   govLabel() {
-    const P = this.perf;
-    if (!this.auto) return "FIXED (SETUP)" + (P.ladder && P.rung > 0 ? " · SIZE STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
-    if (P.capped) return "HELD AT 30 FPS · " + (P.cpuMed > 20 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE? SAFE TIER" : "LOW POWER MODE OR A 30 HZ SCREEN?") + (P.testing ? " (TESTING)" : "");
+    const P = this.perf, n = Math.round(1000 / P.capMs), step = P.ladder && P.rung > 0 ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "";
+    // (held at a cap: its rate, and what holds it: the main thread when that fills most of its frame, else the device)
+    const held = P.capped ? "HELD AT " + n + " FPS · " + (P.cpuMed > P.capMs * 0.6 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE?" : "LOW POWER MODE OR A " + n + " HZ SCREEN?") + (P.testing ? " (TESTING)" : "") : "";
+    if (!this.auto) return "FIXED (SETUP)" + (step ? " · SIZE" + step.slice(2) : "") + (held ? " · " + held : "");
+    if (P.capped) return held + step;
     return "AUTO" + (P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
   },
   // the window moved to a screen of another density (a Retina laptop's own and an external monitor's), or the page
@@ -7899,16 +7909,17 @@ const GFX = {
       const old = P.ladder, L = (P.ladder = this.auto ? this.makeLadder() : this.fixedLadder(this.tier));
       // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
       const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
-      const at = P.capped && P.testing ? P.capRung : P.rung; // (a test of the 30 fps hold under way: called off, the hold's own step kept)
+      const at = P.capped && P.testing ? P.capRung : P.rung, r = near(at); // (a test of the hold under way: called off, the hold's own step kept)
       P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.lockFrom = -1; P.testing = false;
       if (P.preCap >= 0) P.preCap = near(P.preCap);
-      if (P.capped) { P.capTop = this.capFloor(near(P.capTop)); P.capRung = Math.max(near(at), P.capTop); }
+      if (P.capped) P.capRung = r;
+      if (P.capped && !this.auto && L.length < 2) { P.capped = false; P.preCap = -1; } // (a fixed tier with one size now: nothing to hold)
       if (this.auto) {
-        const r = P.capped ? P.capRung : near(at), R = L[r];
+        const R = L[r];
         P.rung = r; this.scale = R.scale;
         if (R.lights !== this.lightCap) { this.lightCap = R.lights; this.lightsReset(); }
         if (R.tier !== this.tier) this.setTier(R.tier, "a screen of another density");
-      } else { P.rung = near(at); this.scale = L[P.rung].scale; } // (a fixed tier: the nearest of its sizes)
+      } else { P.rung = r; this.scale = L[r].scale; } // (a fixed tier: the nearest of its sizes)
     }
     this.perfAfresh();
     this.resize();
@@ -8146,7 +8157,7 @@ const GFX = {
         const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
         this.screenProbe = d; // for the FPS tools
         if (d.length >= 6 && d[d.length >> 1] > 18.5 && d[d.length >> 1] < 22) this.screenMs = d[d.length >> 1]; // (a 50 Hz screen: its own frame is the governor's mark, not 60's)
-        this.screenProbed(d); // (every 33 ms, steadily: the device holds the page at 30)
+        this.screenProbed(d); // (steadily slower than any screen: the device holds the page at a lower rate, 30 or 24 a second)
         if (d.length >= 6) {
           const hz = snapHz(d[d.length >> 1] / 1000); // the median interval
           if (hz > 60) this.vsync = Math.min(this.vsync, 1 / Math.min(hz, 120));
@@ -8161,7 +8172,7 @@ const GFX = {
         if (ts.length < 14) requestAnimationFrame(tick); else finish();
       };
       requestAnimationFrame(tick);
-      setTimeout(finish, 600); // a hidden tab gets no frames: don't hold up the title
+      setTimeout(finish, 900); // a hidden tab gets no frames: don't hold up the title (900 ms: fourteen frames of a page held at 24 a second, with a slow first one, are in by then)
     });
   },
   // One environment-map generator for the whole session. Making one per scene and
@@ -42576,7 +42587,7 @@ function showSettings() {
         <div class="seg wrap" role="group" style="--c:${COLORS.cyan}">${[["bloom", "BLOOM"], ["dof", "DEPTH OF FIELD"], ["ao", "AMBIENT SHADE"], ["scan", "SCANLINES"], ["ca", "COLOUR FRINGE"], ["vignette", "VIGNETTE"], ["blur", "MOTION BLUR"], ["grain", "FILM GRAIN"], ["beams", "LIGHT BEAMS"], ["wet", "REFLECTIONS"], ["shadows", "SHADOWS"], ["shimmer", "HEAT HAZE"], ["lens", "LENS STREAKS"], ["curve", "SCREEN CURVE"]]
           .map(([k, label]) => `<button data-act="fx" data-k="${k}" aria-pressed="${s.fx && s.fx[k] !== false}">${label}</button>`).join("")}</div></div>
       ${row("phone", "Tilt to look", "Tilt your phone to look around the 3D scenes", seg("tilt", [[true, "ON"], [false, "OFF"]]))}
-      ${row("gauge", "Graphics", "AUTO picks MAC on a computer and PHONE on a phone, and puts a steady 60 first: when frames run late it draws a little smaller, then drops effects, then lights; it eases down gently if a long session heats the chip, sharpens again slowly, and goes to SAFE in Low Power Mode (30 fps). MAC, PHONE, SAFE stay as chosen, though their drawing size still eases a little when frames run late. SAFE: for a weak or hot device", seg("quality", [["auto", "AUTO"], ["high", "MAC"], ["medium", "PHONE"], ["low", "SAFE"]]))}
+      ${row("gauge", "Graphics", "AUTO picks MAC on a computer and PHONE on a phone, and puts a steady 60 first: when frames run late it draws a little smaller, then drops effects, then lights; it eases down gently if a long session heats the chip, sharpens again slowly, and in Low Power Mode, where the device caps the frame rate, keeps the picture sharp. MAC, PHONE, SAFE stay as chosen, though their drawing size still eases a little when frames run late. SAFE: for a weak or hot device", seg("quality", [["auto", "AUTO"], ["high", "MAC"], ["medium", "PHONE"], ["low", "SAFE"]]))}
       ${row("gauge", "FPS counter", "Frame rate and frame times (a graph of the last two seconds), hitches, the size the picture is drawn at, the graphics tier, the lights, and what AUTO is doing", seg("fps", [[true, "ON"], [false, "OFF"]]))}
       ${row("clock", "Question timer", "Time you get to read and answer", seg("pace", [["relaxed", "RELAXED"], ["normal", "NORMAL"], ["turbo", "TURBO"]]))}
       ${row("check", "After a right answer", "Wrong answers always wait for you", seg("explain", [["smart", "AUTO-NEXT"], ["always", "WAIT"]]))}
@@ -42661,9 +42672,9 @@ function boot() {
   //           blue ones were a moment's work (a model arriving: shaders made, pictures sent), which AUTO leaves out
   //   line 2: the tier, the size the scene is drawn at (and its share of the tier's), how its edges are smoothed (MSAA
   //           and its samples, or NO AA where the device cannot multisample: 2026-11-23), the lights, draw calls, triangles
-  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 30 FPS when the device
-  //           itself holds the page at 30: LOW POWER MODE?, or the main thread's time when that is what fills a frame
-  //           (see GFX.perfTick)
+  //   line 3: what AUTO is doing (its step on the ladder and why it last moved), or HELD AT 24 FPS (30, ...) when the
+  //           device itself holds the page at a lower rate: LOW POWER MODE?, or the main thread's time when that is
+  //           what fills a frame (see GFX.perfTick)
   const fpsEl = $("#fps");
   fpsEl.hidden = !(Store.settings.fps || /fps/.test(location.hash));
   fpsEl.innerHTML = `<div class="f1"></div><canvas class="fg" width="360" height="96"></canvas><div class="f2"></div><div class="f3"></div>`;

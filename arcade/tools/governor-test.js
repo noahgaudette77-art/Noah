@@ -9,20 +9,30 @@
  * The page is opened as a phone (#phone, 440 x 956 at 3x, touch), its game loop held still and its clock taken over,
  * so nothing but the frame times fed in moves the governor (an automated browser is otherwise left alone: see
  * perfTick). Each case starts from AUTO's first step and checks where the governor goes (2026-11-23: the MAC, PHONE
- * and SAFE tiers, the drawing size in tenths, the heat's easing, Low Power Mode to SAFE):
+ * and SAFE tiers, the drawing size in tenths, the heat's easing; 2026-11-26: a device's cap at any rate, 30 or 24 a
+ * second, held at the sharpest step that holds it):
  *   start      a phone starts at PHONE drawn at 2x (no softer start); 11 steps
- *   slow       frames of 40 ms: a step every 3.5 s, one size, then two, then three at once while they stay slow
- *              (2x, 1.9x, 1.7x, 1.5x), then the effects and the lights a step at a time, to the last
+ *   slow       frames of 40 ms, uneven (a load: 32 to 48 ms): a step every 3.5 s, one size, then two, then three at
+ *              once while they stay slow (2x, 1.9x, 1.7x, 1.5x), then the effects and the lights a step at a time, to
+ *              the last (frames held at one rate through it all would be a cap: see 24 fps)
  *   recover    steady 60 fps from the last step: a step back up every 11 s (2.5 s to show, then 8 steady), to PHONE
  *              at 2x and no higher
  *   lowpower   frames held at exactly 30: down until a real cut (a tier down, 56% of the pixels) still holds 30, so it
- *              is the device's cap: held at SAFE, named in the readout, held through a new screen's first seconds;
- *              at 60 again the cap lifts and the picture goes straight back to 2x
- *   boot       blank frames timed at the start every 33 ms: SAFE from the start, no step taken to find it; at 60, no cap
- *   under cap  frames still catching under the cap step down; steady at 30 again, back up
- *   load       held at 30 from the start by a load at 2x alone: SAFE runs at 60, so back to 2x; 30 there: a step down
- *   test       held at 30 by a load that SAFE still has: the step down tried after a minute runs at 60: no cap
- *   heavy      under a cap, a load too much even for 30: down until 30 holds, then held at SAFE
+ *              is the device's cap: back to PHONE 2x, the sharpest step that held it, named in the readout, held
+ *              through a new screen's first seconds; at 60 again the cap lifts, 2x as it was
+ *   24 fps     the owner's iPhone in Low Power Mode (2026-11-26: 41.7 ms a frame, steadily; it went to the last step
+ *              for nothing): the same at 24, held at PHONE 2x, HELD AT 24 FPS; lifted at 60
+ *   boot       blank frames timed at the start every 33 ms, or every 41.7: held at 2x from the start, no step taken to
+ *              find it; at 60 or 50 (a 50 Hz screen), no cap
+ *   under cap  frames still catching under the cap step down; steady at 30 again, back up to 2x
+ *   lower cap  held at 30, then 24 (the device's cap lower still): found as the first was, held at 2x at 24
+ *   setup      held at 24, Setup's PHONE chosen and AUTO again: the hold kept, no step to find it again
+ *   load       held at 30 from the start by a load at 2x alone: held at 2x for a minute, then the step down tried runs
+ *              at 60: no cap after all, held there
+ *   test       held at 30 from the start by a load that SAFE still has: the step down tried runs no faster, back to 2x,
+ *              tried again later (the probe's steady 33 ms is a cap's; a load that deep is left to the tests)
+ *   heavy      under a cap, a load too much even for 30 at 2x and 1.9x: down until 30 holds through a real cut, then
+ *              back to the sharpest step that held it (1.7x), and up to 1.8x as it holds there
  *   heavy@30   a screen held at 30 by its own load, which a real cut lifts: no cap, held where it runs at 60
  *   10 fps     a slow device still steps down
  *   new screen the last screen's slow looks and a new screen's uneven first frames are not held against it
@@ -38,15 +48,16 @@
  *              (SAFE on a 3x phone: 1.5x to three quarters of it), every step the same tier and every light; steady,
  *              it climbs back to its full size; the readout names the step; AUTO again: back to 2x
  *   phone      no frosted glass over the live picture on a phone at any tier, Setup's HIGH included (body.lite)
- *   fixed@30   a fixed tier held at exactly 30 (Low Power Mode): no size step (a smaller picture would not lift it)
+ *   fixed@30   a fixed tier held at exactly 30 (Low Power Mode): its sizes step down until three quarters of it still
+ *              hold 30, then back to its full size, held; held at 24 from the start: its full size, no step
  *   once       a Graphics setting fixed before 2026-11-26 is AUTO again on the next visit, once (a copy synced from
  *              another device too: mergeStates); fixed again after, it stays
  *   desktop    a desktop's ladder starts at MAC, full size, 12 steps, and no step down draws more pixels; the window
  *              moved to a 1x screen and back (Chromium: a real change of density): the ladder made again, the canvas
  *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip;
- *              held at a steady 30 (a 30 Hz screen): the sharp step kept, not SAFE
- *   density    a phone held at 30 when its density changes: still held at SAFE on the new ladder, and back to the step
- *              it had when the cap lifts
+ *              held at a steady 30 (a 30 Hz screen): the sharp step kept
+ *   density    a phone held at 30 when its density changes: still held, at the nearest step of the new ladder, and
+ *              let go when the cap lifts
  * Exit code 1 on any failure.
  */
 const fs = require("fs"), path = require("path"), http = require("http");
@@ -131,8 +142,9 @@ function inPage() {
   const ok = (cond, what, got) => { console.log((cond ? "  ok   " : "  FAIL ") + what + (got !== undefined ? "  (" + JSON.stringify(got) + ")" : "")); if (!cond) fails++; };
   const st = () => page.evaluate(() => window.__state());
   const feed = (ms, secs, j, every, spike, busy) => page.evaluate(([a, b, c, d, e, f]) => window.__feed(a, b, c, d, e, f), [ms, secs, j || 0, every || 0, spike || 0, !!busy]);
-  // each case from AUTO's start, its frames' history cleared (the step just set is given its 2.5 s to show, as ever)
-  const reset = () => page.evaluate(() => { const G = window.__arcade.GFX; G.setQuality("auto"); G.perf.n = 0; G.perf.i = 0; });
+  // each case from AUTO's start, its frames' history cleared (the step just set is given its 2.5 s to show, as ever),
+  // with no hold (a device's cap held is kept through a Setup choice: see setup)
+  const reset = () => page.evaluate(() => { const G = window.__arcade.GFX; G.perf.capped = false; G.setQuality("auto"); G.perf.n = 0; G.perf.i = 0; });
   await page.evaluate(() => { window.__T = performance.now() + 10000; });
 
   console.log(ENGINE + ": the governor on made-up frames (a phone, 440 x 956 at 3x)");
@@ -147,9 +159,9 @@ function inPage() {
   ok(s.label === "AUTO · STEP 1/11" && s.slots === 3, "start: the readout says AUTO, step 1 of 11; three point lights", { label: s.label, slots: s.slots });
   ok(JSON.stringify(s.px) === JSON.stringify([2, 1.9, 1.8, 1.7, 1.6, 1.5, 1.5, 1.25, 1.0625, 1.0625, 1.0625]) && s.ladder[6][0] === 2 && s.ladder[7][0] === 3, "start: 2x to 1.5x in tenths, then SAFE at 1.5x, then LIGHTEST", s.px);
   // slow
-  let p = await feed(40, 34, 2);
+  let p = await feed(40, 34, 8);
   s = await st();
-  ok(s.rung === s.steps - 1, "slow: down to the last step", { rung: s.rung, path: p });
+  ok(s.rung === s.steps - 1 && !s.capped, "slow: down to the last step", { rung: s.rung, capped: s.capped, path: p });
   const gaps = p.map((x, i) => x.at - (i ? p[i - 1].at : 0));
   ok(gaps.slice(1).every((g) => g >= 3.4 && g <= 4.1), "slow: a step every 3.5 s (2.5 s to show, then late through a second)", gaps);
   ok(JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 8, 9, 10]), "slow: one size, then two, then three (to the tier's last), then the effects and the lights one at a time", p.map((x) => x.rung));
@@ -164,12 +176,12 @@ function inPage() {
   p = await feed(16.67, 20, 0.3);
   ok(p.length === 0, "recover: no higher by itself (MAC is Setup's)", p);
   // lowpower: frames held at exactly 30 from the start of a step: down until a real cut (SAFE, 56% of the pixels)
-  // does not lift them, so it is the device's cap: held at SAFE
+  // does not lift them, so it is the device's cap: back to the sharpest step that held it (PHONE 2x), held there
   await reset();
   p = await feed(33.33, 22, 0.2);
   s = await st();
-  ok(s.capped && s.rung === 6 && s.tier === 2 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6]), "lowpower: down until a real cut (SAFE, 56% of the pixels) still held 30: held there, at SAFE", { capped: s.capped, rung: s.rung, path: p });
-  ok(/HELD AT 30 FPS · LOW POWER MODE\? SAFE TIER/.test(s.label), "lowpower: the readout names it", s.label);
+  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]), "lowpower: down until a real cut (SAFE, 56% of the pixels) still held 30: back to PHONE 2x, held there", { capped: s.capped, rung: s.rung, path: p });
+  ok(s.label === "HELD AT 30 FPS · LOW POWER MODE?", "lowpower: the readout names it", s.label);
   p = await feed(33.33, 20, 0.2);
   ok(p.length === 0, "lowpower: held, no more steps while it lasts", p);
   await page.evaluate(() => { window.__arcade.GFX.sceneAt = performance.now(); }); // (a new screen)
@@ -178,43 +190,84 @@ function inPage() {
   ok(s.capped && p.length === 0, "lowpower: held through a new screen's uneven first seconds", { capped: s.capped, path: p });
   p = await feed(16.67, 12, 0.3);
   s = await st();
-  ok(!s.capped && s.rung === 0 && p.length === 1 && p[0].rung === 0 && !/HELD/.test(s.label), "lowpower: off again (60 fps): the cap lifts, straight back to 2x", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  ok(!s.capped && s.rung === 0 && p.length === 0 && s.label === "AUTO · STEP 1/11", "lowpower: off again (60 fps): the cap lifts, 2x as it was", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  // 24 fps: the owner's iPhone in Low Power Mode (2026-11-26: 41.7 ms a frame, steadily, and the last step taken for
+  // nothing): the same, at 24
+  await reset();
+  p = await feed(41.67, 24, 0.3);
+  s = await st();
+  ok(s.capped && s.rung === 0 && s.tier === 1 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]) && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "24 fps: down until a real cut still held 24: back to PHONE 2x, held, HELD AT 24 FPS", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  p = await feed(41.67, 40, 0.3);
+  s = await st();
+  ok(s.capped && p.length === 0, "24 fps: held at 2x while it lasts", { capped: s.capped, path: p });
+  p = await feed(16.67, 8, 0.3);
+  s = await st();
+  ok(!s.capped && s.rung === 0 && p.length === 0, "24 fps: off again (60 fps): let go, 2x as it was", { capped: s.capped, rung: s.rung, path: p });
   // lowpower from the start: the blank frames timed at the start came every 33 ms
   await reset();
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(16.67)));
   s = await st();
   ok(!s.capped && s.rung === 0, "boot: blank frames at 60: no cap", s.capped);
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(20)));
+  s = await st();
+  ok(!s.capped && s.rung === 0, "boot: blank frames at 50 (a 50 Hz screen): no cap", s.capped);
+  await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(41.67)));
+  p = await feed(41.67, 10, 0.3);
+  s = await st();
+  ok(s.capped && s.rung === 0 && p.length === 0 && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "boot: blank frames every 41.7 ms: held at 24 at PHONE 2x from the start, no step taken to find it", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  // setup: held at 24, Setup's PHONE chosen, then AUTO again: the hold is the device's, kept (no step to find it again)
+  await page.evaluate(() => window.__arcade.GFX.setQuality("medium"));
+  p = await feed(41.67, 8, 0.3);
+  s = await st();
+  ok(!s.auto && s.capped && s.rung === 0 && s.scale === 1 && p.length === 0 && s.label === "FIXED (SETUP) · HELD AT 24 FPS · LOW POWER MODE?", "setup: held at 24, Setup's PHONE chosen: held at its full size, no step", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  await page.evaluate(() => window.__arcade.GFX.setQuality("auto"));
+  p = await feed(41.67, 8, 0.3);
+  s = await st();
+  ok(s.auto && s.capped && s.rung === 0 && s.tier === 1 && p.length === 0, "setup: AUTO again: still held, at PHONE 2x", { capped: s.capped, rung: s.rung, path: p });
+  await reset();
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   p = await feed(33.33, 10, 0.2);
   s = await st();
-  ok(s.capped && s.rung === 6 && p.length === 0, "boot: blank frames every 33 ms: SAFE from the start, no step taken to find it", { capped: s.capped, rung: s.rung, path: p });
+  ok(s.capped && s.rung === 0 && p.length === 0 && s.label === "HELD AT 30 FPS · LOW POWER MODE?", "boot: blank frames every 33 ms: held at 30 at PHONE 2x from the start, no step taken to find it", { capped: s.capped, rung: s.rung, path: p });
   // under the cap: frames still catching (a third of them at 67 ms) step down; steady again, back up
   p = [];
   for (let k = 0; k < 16 && !p.length; k++) p = await feed(33.33, 0.5, 0.2, 3, 66.7); // (until the step it causes)
   s = await st();
-  ok(s.capped && p.length === 1 && p[0].rung === 7, "under the cap: frames still catching: a step down, still held", { capped: s.capped, path: p });
+  ok(s.capped && p.length === 1 && p[0].rung === 1, "under the cap: frames still catching: a step down, still held", { capped: s.capped, path: p });
   p = await feed(33.33, 15, 0.2);
   s = await st();
-  ok(s.capped && s.rung === 6 && p.length === 1 && p[0].rung === 6, "under the cap: steady at 30 again: back up to SAFE", { capped: s.capped, rung: s.rung, path: p });
-  // a load just over a frame at 2x alone (30 there, 60 a step down), held at 30 from the start: SAFE runs at 60, so
-  // the hold lets go and goes back to 2x; held at 30 there by its load, a step down lifts it: no cap
+  ok(s.capped && s.rung === 0 && p.length === 1 && p[0].rung === 0, "under the cap: steady at 30 again: back up to 2x", { capped: s.capped, rung: s.rung, path: p });
+  // lower cap: held at 30, then the device holds the page at 24: found as the first was, held at 2x at 24
+  p = await feed(41.67, 24, 0.3);
+  s = await st();
+  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 0]) && s.label === "HELD AT 24 FPS · LOW POWER MODE?", "lower cap: held at 30, then 24: down until a real cut still held 24, back to 2x, HELD AT 24 FPS", { capped: s.capped, rung: s.rung, label: s.label, path: p });
+  // a load just over a frame at 2x alone (30 there, 60 a step down), held at 30 from the start: held at 2x, and the
+  // step down tried after a minute runs at 60: no cap after all, held there
   await reset();
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   p = await page.evaluate(() => window.__feedBy([33.33], 16.67, 15, 0.3));
   s = await st();
-  ok(!s.capped && p.length >= 2 && p[0].rung === 0 && p[1].rung === 1 && s.rung >= 1, "load: SAFE at 60, back to 2x; held at 30 there by the load, a step down: no cap", { capped: s.capped, rung: s.rung, path: p });
-  // the hold tested: a load just over a frame down to SAFE (30 at every step to SAFE, 60 below), held at 30 from the
-  // start: the step down tried after a minute runs at 60, so the cap lets go, where it is
+  ok(s.capped && s.rung === 0 && p.length === 0, "load: held at 30 from the start: 2x kept through the first minute", { capped: s.capped, rung: s.rung, path: p });
+  p = await page.evaluate(() => window.__feedBy([33.33], 16.67, 50, 0.3));
+  s = await st();
+  ok(!s.capped && s.rung === 1 && p.length === 1 && p[0].rung === 1 && p[0].at >= 43 && p[0].at <= 47 && /it was the load/.test(s.why), "load: the step down tried after a minute runs at 60: no cap after all, held there", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  // the hold tested: a load down to SAFE (30 at every step to SAFE, 60 below), held at 30 from the start: the step
+  // down tried after a minute runs no faster, so back to 2x, held, and tried again later (the probe's steady 33 ms is
+  // a device's cap: a load that deep, read as one, is left to the tests)
   await reset();
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33, 33.33, 33.33, 33.33, 33.33], 16.67, 72, 0.3));
   s = await st();
-  ok(!s.capped && p.length === 1 && p[0].rung === 7 && s.rung === 7, "test: held at 30 at SAFE, a step down tried after a minute runs at 60: no cap after all", { capped: s.capped, rung: s.rung, why: s.why, path: p });
-  // lowpower, heavy: under the cap, the first two steps too much even for 30 (45 ms a frame), the rest holding 30
+  ok(s.capped && s.rung === 0 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 0]) && p[0].at >= 59 && p[0].at <= 62, "test: held at 30 by a load that SAFE still has: the step down tried after a minute runs no faster: back to 2x, held", { capped: s.capped, rung: s.rung, why: s.why, path: p });
+  // lowpower, heavy: under the cap, the first two steps too much even for 30 (45 ms a frame), the rest holding 30:
+  // down until 30 holds through a real cut below where it was first held (1.7x), back there, then up to 1.8x as it holds
   await reset();
   p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 30, 0.3));
   s = await st();
-  ok(s.capped && s.rung === 6 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 6]), "lowpower, heavy: down until 30 holds through a real cut, then held at SAFE", { rung: s.rung, capped: s.capped, path: p });
+  ok(s.capped && s.rung === 3 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 6, 7, 3]), "lowpower, heavy: down until 30 holds through a real cut, then back to the sharpest step that held it (1.7x)", { rung: s.rung, capped: s.capped, path: p });
+  p = await page.evaluate(() => window.__feedBy([45, 45], 33.33, 60, 0.3));
+  s = await st();
+  ok(s.capped && s.rung === 2 && p.length >= 1 && p[0].rung === 2 && p.every((x) => x.rung >= 1), "lowpower, heavy: steady there: up to 1.8x, the sharpest step that holds 30 (1.9x tried, back)", { rung: s.rung, capped: s.capped, path: p });
   // a heavy screen at 30 (each frame just over 17 ms) down to 1.8x: a real cut lifts it, so no cap
   await reset();
   p = await page.evaluate(() => window.__feedBy([33.33, 33.33, 33.33], 16.67, 14, 0.3));
@@ -287,7 +340,7 @@ function inPage() {
   await page.evaluate(() => window.__arcade.GFX.setQuality("low"));
   s = await st();
   ok(!s.auto && s.tier === 2 && s.scale === 1 && s.label === "FIXED (SETUP)" && s.steps === 6 && s.ladder.every(([t, , l]) => t === 2 && l === 99), "fixed: Setup's SAFE at its full size, its six sizes all SAFE with every light", { tier: s.tier, scale: s.scale, label: s.label, steps: s.steps, ladder: s.ladder });
-  p = await feed(40, 12, 2);
+  p = await feed(40, 12, 8);
   s = await st();
   ok(!s.auto && p.length >= 2 && s.tier === 2 && s.scale < 1 && s.slots === 3 && /^FIXED \(SETUP\) · SIZE STEP \d\/6$/.test(s.label), "fixed: frames of 40 ms: its drawing size steps down, SAFE kept, every light kept, the readout names the step", { path: p, tier: s.tier, scale: s.scale, slots: s.slots, label: s.label });
   p = await feed(16.67, 90, 0.3);
@@ -301,11 +354,20 @@ function inPage() {
   await reset();
   s = await st();
   ok(s.auto && s.rung === 0 && s.tier === 1 && s.scale === 1, "fixed: AUTO again starts from PHONE at 2x", { rung: s.rung, tier: s.tier, scale: s.scale });
-  // fixed@30: a fixed tier held at exactly 30 (Low Power Mode): its sharpness kept
+  // fixed@30: a fixed tier held at exactly 30 (Low Power Mode): its sizes down until three quarters of it (56% of the
+  // pixels) still hold 30, then back to its full size, held
   await page.evaluate(() => window.__arcade.GFX.setQuality("medium"));
   p = await feed(33.33, 15, 0.3);
   s = await st();
-  ok(!s.auto && s.tier === 1 && s.rung === 0 && s.scale === 1 && p.length === 0, "fixed@30: Setup's PHONE held at exactly 30 through 15 s: no size step, its sharpness kept", { tier: s.tier, rung: s.rung, scale: s.scale, path: p });
+  ok(!s.auto && s.capped && s.tier === 1 && s.rung === 0 && s.scale === 1 && JSON.stringify(p.map((x) => x.rung)) === JSON.stringify([1, 3, 5, 0]) && s.label === "FIXED (SETUP) · HELD AT 30 FPS · LOW POWER MODE?", "fixed@30: Setup's PHONE held at exactly 30: down to three quarters of its size, still 30: back to its full size, held", { tier: s.tier, rung: s.rung, scale: s.scale, label: s.label, path: p });
+  p = await feed(33.33, 20, 0.3);
+  ok(p.length === 0, "fixed@30: held at its full size while it lasts", p);
+  // a fixed tier held at 24 from the start (the blank frames at the start every 41.7 ms): its full size, no step
+  await reset();
+  await page.evaluate(() => { const G = window.__arcade.GFX; G.setQuality("medium"); G.screenProbed(Array(13).fill(41.67)); });
+  p = await feed(41.67, 10, 0.3);
+  s = await st();
+  ok(!s.auto && s.capped && s.rung === 0 && s.scale === 1 && p.length === 0 && /HELD AT 24 FPS/.test(s.label), "fixed@24: Setup's PHONE held at 24 from the start: its full size, no step", { rung: s.rung, scale: s.scale, label: s.label, path: p });
   await reset();
   // once: a Graphics setting fixed before 2026-11-26 is AUTO again, once
   {
@@ -357,12 +419,12 @@ function inPage() {
   await page2.evaluate(() => { const G = window.__arcade.GFX; G.setQuality("auto"); G.perf.n = 0; G.perf.i = 0; G.screenProbed(Array(13).fill(33.33)); });
   p = await page2.evaluate(() => window.__feed(33.33, 10, 0.2));
   e = await page2.evaluate(() => window.__state());
-  ok(e.capped && e.rung === 0 && e.tier === 0 && /30 HZ SCREEN/.test(e.label) && p.length === 0, "desktop at 30: held at MAC 2x, named LOW POWER MODE OR A 30 HZ SCREEN?", { capped: e.capped, rung: e.rung, label: e.label, path: p });
+  ok(e.capped && e.rung === 0 && e.tier === 0 && e.label === "HELD AT 30 FPS · LOW POWER MODE OR A 30 HZ SCREEN?" && p.length === 0, "desktop at 30: held at MAC 2x, named LOW POWER MODE OR A 30 HZ SCREEN?", { capped: e.capped, rung: e.rung, label: e.label, path: p });
   p = await page2.evaluate(() => window.__feed(16.67, 8, 0.3));
   e = await page2.evaluate(() => window.__state());
   ok(!e.capped && e.rung === 0, "desktop at 30: at 60 again, let go", { capped: e.capped, rung: e.rung, path: p });
-  // a phone held at 30 (SAFE), its screen's density changed (to 1x and back): the hold kept at SAFE on the new ladder,
-  // and when the cap lifts, back to the step it had
+  // a phone held at 30 (PHONE 2x), its screen's density changed (to 1x and back): the hold kept, at the nearest step
+  // of the new ladder, and let go when the cap lifts
   await reset();
   await page.evaluate(() => window.__arcade.GFX.screenProbed(Array(13).fill(33.33)));
   const pdpr = async (k) => {
@@ -372,10 +434,10 @@ function inPage() {
     return st();
   };
   s = await pdpr(1);
-  ok(s.capped && s.tier === 2 && s.ladder.length === 6 && s.rung === 1, "density in a hold: a 1x screen, a 6-step ladder, still held at SAFE", { capped: s.capped, tier: s.tier, rung: s.rung, steps: s.ladder.length });
+  ok(s.capped && s.tier === 1 && s.ladder.length === 6 && s.rung === 0, "density in a hold: a 1x screen, a 6-step ladder, still held, at PHONE", { capped: s.capped, tier: s.tier, rung: s.rung, steps: s.ladder.length });
   p = await feed(16.67, 8, 0.3);
   s = await st();
-  ok(!s.capped && s.rung === 0 && s.tier === 1, "density in a hold: the cap lifts, back to PHONE, the step it had", { capped: s.capped, tier: s.tier, rung: s.rung, path: p });
+  ok(!s.capped && s.rung === 0 && s.tier === 1, "density in a hold: the cap lifts: let go, at PHONE", { capped: s.capped, tier: s.tier, rung: s.rung, path: p });
   s = await pdpr(3);
   ok(s.ladder.length === 11 && s.rung === 0 && s.canvasW === 880, "density: back to the phone's own 3x: 11 steps, 2x drawn", { steps: s.ladder.length, rung: s.rung, w: s.canvasW });
   ok(errors.length === 0, "no page errors", errors.slice(0, 3));
