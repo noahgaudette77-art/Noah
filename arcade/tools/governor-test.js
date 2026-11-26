@@ -33,7 +33,11 @@
  *              back and not tried from there for five minutes (then ten); one that helped may be followed by another; never past the tier's
  *              last size into its effects or lights; not climbed back while one frame in sixty is still late
  *   relapse    a step up that runs late within 8 s is tried again only after 24 steady seconds, not 8
- *   fixed      Setup's fixed tier: the governor does nothing, at the tier's full size; AUTO again: back to 2x
+ *   fixed      Setup's fixed tier (2026-11-26: an iPhone at a fixed tier drew the title hall under 55 FPS and nothing
+ *              eased it): its effects and its lights stay, and only its drawing size steps down while frames run late
+ *              (SAFE on a 3x phone: 1.5x to three quarters of it), every step the same tier and every light; steady,
+ *              it climbs back to its full size; the readout names the step; AUTO again: back to 2x
+ *   phone      no frosted glass over the live picture on a phone at any tier, Setup's HIGH included (body.lite)
  *   desktop    a desktop's ladder starts at MAC, full size, 12 steps, and no step down draws more pixels; the window
  *              moved to a 1x screen and back (Chromium: a real change of density): the ladder made again, the canvas
  *              at the new screen's pixels; resized twenty times, drawn each time: nothing left on the graphics chip;
@@ -274,9 +278,19 @@ function inPage() {
   ok(p.length === 1 && p[0].rung === 1, "relapse: tried again after 26.5 s (24 steady)", p);
   // fixed
   await page.evaluate(() => window.__arcade.GFX.setQuality("low"));
-  p = await feed(40, 10, 2);
   s = await st();
-  ok(!s.auto && p.length === 0 && s.tier === 2 && s.scale === 1 && s.label === "FIXED (SETUP)" && s.why === "setup" && s.slots === 3, "fixed: Setup's SAFE holds, at its full size, every light", { tier: s.tier, scale: s.scale, label: s.label, why: s.why, slots: s.slots, path: p });
+  ok(!s.auto && s.tier === 2 && s.scale === 1 && s.label === "FIXED (SETUP)" && s.steps === 6 && s.ladder.every(([t, , l]) => t === 2 && l === 99), "fixed: Setup's SAFE at its full size, its six sizes all SAFE with every light", { tier: s.tier, scale: s.scale, label: s.label, steps: s.steps, ladder: s.ladder });
+  p = await feed(40, 12, 2);
+  s = await st();
+  ok(!s.auto && p.length >= 2 && s.tier === 2 && s.scale < 1 && s.slots === 3 && /^FIXED \(SETUP\) · SIZE STEP \d\/6$/.test(s.label), "fixed: frames of 40 ms: its drawing size steps down, SAFE kept, every light kept, the readout names the step", { path: p, tier: s.tier, scale: s.scale, slots: s.slots, label: s.label });
+  p = await feed(16.67, 90, 0.3);
+  s = await st();
+  ok(!s.auto && p.length >= 1 && s.rung === 0 && s.scale === 1 && s.tier === 2 && s.label === "FIXED (SETUP)", "fixed: steady again: back to its full size, SAFE as chosen", { path: p, rung: s.rung, scale: s.scale, tier: s.tier, label: s.label });
+  // (the phone's page: no frosted glass at Setup's HIGH either)
+  await page.evaluate(() => window.__arcade.GFX.setQuality("high"));
+  s = await st();
+  const lite = await page.evaluate(() => document.body.classList.contains("lite"));
+  ok(s.tier === 0 && lite, "phone: Setup's HIGH (MAC) and still no frosted glass over the live picture (body.lite)", { tier: s.tier, lite });
   await reset();
   s = await st();
   ok(s.auto && s.rung === 0 && s.tier === 1 && s.scale === 1, "fixed: AUTO again starts from PHONE at 2x", { rung: s.rung, tier: s.tier, scale: s.scale });

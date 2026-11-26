@@ -94,7 +94,7 @@ const GFX = {
     this._tierSet = true;
     const T = this.TIERS[n];
     this.tier = n; this.extras = T.extras; this.fxScale = T.fx;
-    document.body.classList.toggle("lite", n >= 1); // (no frosted glass over the live picture below MAC: see style.css, body.lite)
+    document.body.classList.toggle("lite", n >= 1 || this.liteAlways()); // (no frosted glass over the live picture below MAC, nor on a phone or a tablet at any tier: see style.css, body.lite)
     if (this.ok && this.pipe) { this.pipe.setSamples(T.samples); this.pipe.setMirror(T.mirror); this.resize(); }
     this.perf.changedAt = performance.now(); this.perf.why = why || "";
     if (typeof Scenes !== "undefined" && Scenes.cur && Scenes.cur.onTier) { try { Scenes.cur.onTier(n); } catch (e) { /* a scene's own response to the tier */ } }
@@ -105,10 +105,11 @@ const GFX = {
     const fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q], P = this.perf;
     this.auto = fixed === undefined;
     P.failed = {}; P.eased = {}; P.easeNo = {}; P.easing = null; P.capped = false; P.preCap = -1; P.lockFrom = -1; P.testing = false; P.okSince = 0; P.slowSince = 0; P.downRun = 0; P.why = "setup";
-    if (this.auto && P.ladder) { P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
+    if (this.auto && P.ladder) { P.ladder = this.makeLadder(); P.start = this.startRung(); this.setRung(P.start, "setup"); return; }
     const lights = this.lightCap !== 99;
     this.scale = 1; this.lightCap = 99;
     if (lights) this.lightsReset();
+    if (P.ladder) { P.ladder = this.fixedLadder(fixed); P.rung = P.start = 0; }
     if (fixed === this.tier) this.resize();
     this.setTier(fixed, "setup");
   },
@@ -161,6 +162,15 @@ const GFX = {
     L.push({ tier: last, scale: end, lights: 2 }, { tier: last, scale: end, lights: 1 });
     return L;
   },
+  // Setup's fixed tier (the owner, 2026-11-26: an iPhone held at a fixed tier drew the title hall under 55 FPS, with
+  // many hitches, and nothing eased it: the governor did nothing at a fixed tier). Its effects and its lights stay as
+  // chosen; only its drawing size steps down while frames run late and back as they hold, on a high-density screen
+  // from the tier's own size to three quarters of it (2x to 1.5x on a phone at PHONE or MAC), as AUTO's first tier does.
+  // A screen of one device pixel a page pixel has the one size: there it does nothing, as before.
+  fixedLadder(t) { return ((window.devicePixelRatio || 1) >= 1.5 ? this.FINE : [1]).map((sc) => ({ tier: t, scale: sc, lights: 99 })); },
+  // a phone or a tablet: no frosted glass over the live picture at any tier (Setup's HIGH included). Each such panel
+  // makes the browser blur what is behind it again every frame the picture changes, every frame of a game
+  liteAlways() { return !!((typeof Assets !== "undefined" && Assets.phone) || this.small); },
   // the step AUTO starts from: the ladder's first (a desktop's MAC at the screen's own pixels, a phone's PHONE at 2x)
   startRung() { return 0; },
   // the first step of the SAFE tier (where the device's 30 fps cap puts the picture)
@@ -237,7 +247,7 @@ const GFX = {
     else if (ms >= 1000) this.perfAfresh();
     if (P.skip > 0) P.skip--;
     if ((this.sceneAt || 0) !== P.sceneSeen) { P.sceneSeen = this.sceneAt || 0; P.slowSince = 0; P.okSince = 0; } // (a new screen: its own frames decide, from its own start)
-    if (!this.auto || P.off || !P.ladder || navigator.webdriver || document.hidden) return;
+    if (P.off || !P.ladder || (!this.auto && P.ladder.length < 2) || navigator.webdriver || document.hidden) return; // (a fixed tier: its sizes only, see fixedLadder)
     if (now - P.changedAt < 2500 || now - (this.sceneAt || 0) < 2000 || now - P.shownAt < 2000 || now - P.evalAt < 500) return;
     P.evalAt = now;
     const r = this.recent(2000, Math.max(P.changedAt + 500, (this.sceneAt || 0) + 1500, P.shownAt + 1500)), w = r.w;
@@ -249,8 +259,9 @@ const GFX = {
       if (med < 25) { this.capRelease(P.testing ? "a step down lifted the 30 fps hold: it was the load" : "the 30 fps cap lifted", !P.testing); return; } // (frames well under 30's)
       if (P.testing) { P.testing = false; P.testAt = now; P.testGap = Math.min(P.testGap * 2, 480000); this.setRung(P.capRung, "held at 30 fps: the device's cap (low power mode?)"); return; } // (a step down ran no faster: held as it was; tested again later)
       if (P.rung === P.capRung && P.rung < L.length - 1 && now - P.testAt > P.testGap && med < F * 1.09) { P.testing = true; this.setRung(P.rung + 1, "testing the 30 fps hold"); return; } // (a load just over a frame would lift off 30 with it)
-    } else {
-      // held at exactly 30: a cap, or a load just over a frame, which a real cut lifts
+    } else if (this.auto) {
+      // held at exactly 30: a cap, or a load just over a frame, which a real cut lifts (AUTO's: a fixed tier's sizes
+      // only ever answer late frames)
       if (!(med > 31 && med < 36 && p10 > 29 && p90 < 38)) P.lockFrom = -1;
       else {
         if (P.lockFrom < 0) P.lockFrom = P.rung;
@@ -316,7 +327,7 @@ const GFX = {
   // the governor's state, for the readout
   govLabel() {
     const P = this.perf;
-    if (!this.auto) return "FIXED (SETUP)";
+    if (!this.auto) return "FIXED (SETUP)" + (P.ladder && P.rung > 0 ? " · SIZE STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
     if (P.capped) return "HELD AT 30 FPS · " + (P.cpuMed > 20 ? "MAIN THREAD " + Math.round(P.cpuMed) + " MS A FRAME" : Assets.phone || this.small ? "LOW POWER MODE? SAFE TIER" : "LOW POWER MODE OR A 30 HZ SCREEN?") + (P.testing ? " (TESTING)" : "");
     return "AUTO" + (P.ladder ? " · STEP " + (P.rung + 1) + "/" + P.ladder.length : "");
   },
@@ -326,7 +337,7 @@ const GFX = {
   dprChanged() {
     const P = this.perf;
     if (P.ladder) {
-      const old = P.ladder, L = (P.ladder = this.makeLadder());
+      const old = P.ladder, L = (P.ladder = this.auto ? this.makeLadder() : this.fixedLadder(this.tier));
       // (a step of the old ladder: the new one's of the same tier and lights, at the nearest size)
       const near = (i) => { const R = old[Math.max(0, Math.min(old.length - 1, i))]; let best = 0, d = Infinity; L.forEach((S, k) => { const e = Math.abs(S.tier - R.tier) * 100 + Math.abs(S.lights - R.lights) + Math.abs(S.scale - R.scale); if (e < d) { d = e; best = k; } }); return best; };
       const at = P.capped && P.testing ? P.capRung : P.rung; // (a test of the 30 fps hold under way: called off, the hold's own step kept)
@@ -338,7 +349,7 @@ const GFX = {
         P.rung = r; this.scale = R.scale;
         if (R.lights !== this.lightCap) { this.lightCap = R.lights; this.lightsReset(); }
         if (R.tier !== this.tier) this.setTier(R.tier, "a screen of another density");
-      }
+      } else { P.rung = near(at); this.scale = L[P.rung].scale; } // (a fixed tier: the nearest of its sizes)
     }
     this.perfAfresh();
     this.resize();
@@ -382,12 +393,12 @@ const GFX = {
     // the first tier: Setup's choice, or (auto) MAC on a desktop and PHONE on a phone or a tablet, from where the frame rate leads
     const q = (Store.settings && Store.settings.quality) || "auto", fixed = { high: 0, medium: 1, low: 2, lowest: 3 }[q];
     this.auto = fixed === undefined;
-    this.perf.ladder = this.makeLadder();
+    this.perf.ladder = fixed === undefined ? this.makeLadder() : this.fixedLadder(fixed);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) this.perfAfresh(); }); // (back in view: see perfAfresh)
     let t0 = fixed !== undefined ? fixed : navigator.webdriver ? 0 : this.small ? 1 : 0;
     if (this.auto && !navigator.webdriver) { const P = this.perf, R = P.ladder[(P.rung = P.start = this.startRung())]; t0 = R.tier; this.scale = R.scale; this.lightCap = R.lights; } // (AUTO: from its first step)
     this.tier = t0; this.extras = this.TIERS[t0].extras; this.fxScale = this.TIERS[t0].fx;
-    document.body.classList.toggle("lite", t0 >= 1);
+    document.body.classList.toggle("lite", t0 >= 1 || this.liteAlways());
     this.pipe = makePipeline(r, this.hdr, this.TIERS[t0].samples);
     this.pipe.setMirror(this.TIERS[t0].mirror);
     this._tierSet = true;
