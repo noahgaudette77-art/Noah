@@ -53,9 +53,9 @@ files, and left too loosely. It was taken out before it was shipped. A real meas
 What stands: **AUTO** finds the best picture a device holds at a steady frame rate (a phone starts at PHONE, a computer
 at MAC, each stepping down only as far as it must, and back up when it can); **a Graphics setting fixed before today goes
 back to AUTO once** (`qv`: the owner's iPhone with it; a copy synced from another device is brought along the same way,
-`mergeStates`); **a fixed tier eases its drawing size** when frames run late (8a), but not while the device holds it at
-exactly 30 (Low Power Mode: a smaller picture would not lift it); choosing a tier in Setup starts the governor's clock
-afresh. For the most the phone can draw, Setup's MAC is there, its size easing to keep frames smooth.
+`mergeStates`); **a fixed tier eases its drawing size** when frames run late (8a), but not while the device itself
+holds the frame rate (Low Power Mode: at first 30 only; since 8e any rate, 24 on the owner's iPhone, held at the
+sharpest step that holds it: the Phase 8 README); choosing a tier in Setup starts the governor's clock afresh. For the most the phone can draw, Setup's MAC is there, its size easing to keep frames smooth.
 
 ## For the owner
 

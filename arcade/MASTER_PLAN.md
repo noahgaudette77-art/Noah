@@ -16,7 +16,8 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
 - **Phase:** **the master overhaul is done** (2026-11-26). Phase 8, the final verification, closed it:
   `docs/master/phase8/README.md` (the final build checked in both engines, the census, the performance table, the
-  gallery and the films, the spend) and `docs/master/phase8/title-stutter.md` (the iPhone's stutter in the title hall).
+  gallery and the films, the spend; 8e, a device's cap at any rate) and `docs/master/phase8/title-stutter.md` (the
+  iPhone's stutter in the title hall).
   What is left is the owner's own checks on the devices (the list at the end of the Phase 8 README). Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
   the Mac's richer tier and the context-loss handler are done (the Mac tier's gate 2026-11-25:
   `docs/master/mactier/gate-report.md`; the context-loss handler 2026-11-26: `docs/master/contextloss/README.md`).
@@ -420,6 +421,12 @@ pushed; the served link checked.
 - **8d. The record**: the performance table, the gallery (`sheet-*.jpg`, `before-after-*.jpg`), the films
   (`docs/master/phase8/films/`), the spend ($0.36 for the whole overhaul), an independent review of Phase 8's changes
   (nine findings, all answered: `docs/master/phase8/README.md`).
+- **8e. A device's cap at any rate** (the owner's iPhone in Low Power Mode, 2026-11-26: 24 FPS, 41.7 ms a frame, and the
+  governor at its last step, LIGHTEST at 1.06x with two lights, for nothing: it knew a cap at 30 only). Now a steady
+  rate slower than the screen's is the device's cap when the start's blank frames show it or a real cut does not lift
+  it, at any rate; held, the picture goes back to the sharpest step that holds the rate (a phone no longer goes to
+  SAFE), fixed tiers too, a Setup choice keeping the hold; the readout `HELD AT 24 FPS · LOW POWER MODE?`. The
+  governor's test: 75 checks in both engines.
 
 ## Decisions (with the evidence for each)
 

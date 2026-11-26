@@ -13,6 +13,38 @@ smaller steps; a Graphics setting fixed before today goes back to AUTO once (a s
 to MAC was built and taken out on the independent review's word (it could never climb on a 60 Hz screen, and was loose
 where it could).
 
+## 8e: a device's own cap at any rate (the owner's iPhone at 24 FPS in Low Power Mode)
+
+The owner's next screenshot, the arcade floor with `#fps` after the once-to-AUTO: **24 FPS, 41.7 ms a frame, the worst
+42 ms**, the main thread 6.9 ms a frame; **LIGHTEST at 1.06x, two lights, step 11 of 11**, "SLOW FRAMES (24 FPS)"; the
+battery icon yellow (Low Power Mode). iOS held the page at a steady 24 frames a second. The governor knew a device's cap
+only at 30 (31 to 36 ms a frame), so it took 24 for a load and went down to its last step: the softest picture, at
+the same 24 frames a second.
+
+What was done (`04-gfx.js`: `screenProbed`, `perfTick`, `capHold`, `realCut`, `heldRate`, `govLabel`):
+
+| change | what it does |
+|---|---|
+| a cap at any rate | frames held at one rate (a tenth of them either side within a tenth of the middle one) slower than the mark are a cap or a load: blank frames at the start held at 45 a second or fewer (22 to 70 ms) are the device's cap from the start; in play, a rate held through a real cut (a tier down and 60% of the pixels or fewer; on a fixed tier 60% of the pixels) is the cap too, as it was for 30 alone. A lower cap found under a hold (30, then 24) is found the same way |
+| held at the sharpest step that holds it | until now a phone held at 30 went to SAFE; now the picture goes back to the step where the rate was first held (PHONE at 2x on the phone), climbs from a lower one as frames hold, and steps down only if frames run later than the cap's own frame |
+| the readout | `HELD AT 24 FPS · LOW POWER MODE?` (a computer: `... OR A 24 HZ SCREEN?`; the main thread's time when that fills the frame) |
+| let go | when frames run faster than the cap's (the mode switched off); a step down is still tried after a minute, then two, four and eight, in case it was a load after all |
+| Setup's fixed tiers | held the same way (until now: left at their size at exactly 30 only); a Setup choice keeps the hold, which is the device's |
+| the start's probe | blank frames timed for up to 0.9 s (0.6 before: fourteen frames at 24 a second take 0.58 s) |
+| Setup's text | "... and in Low Power Mode, where the device caps the frame rate, keeps the picture sharp" |
+
+**The governor's test: 75 checks (63 before), all passing in Chromium and WebKit.** New: the owner's case at 24 (down
+until a real cut still holds 24, then back to PHONE 2x, `HELD AT 24 FPS · LOW POWER MODE?`, held while it lasts, let go
+at 60), 24 from the start, a 50 Hz screen's blank frames (no cap), a cap lowered from 30 to 24, a Setup choice in a hold,
+a fixed tier at 30 and at 24 from the start. The cases at 30 now expect the hold at 2x, not SAFE. "Slow" and "fixed" are
+fed uneven frames (32 to 48 ms): frames at one rate that no cut changes are a cap now.
+
+What it trades: a load that holds one frame rate through a real cut (a tier down and 44% fewer pixels) is taken for a
+cap, and the picture kept sharp at that rate where a deeper cut might run faster. A cut that deep leaves little of a
+graphics load in place, so what survives it is mostly the main thread's, which no smaller picture helps (the readout
+names it then); the test step finds a load just over a frame. Probed at the start, a steady rate of blank frames is a
+cap: the page draws nothing then.
+
 ## 8c: the final build checked
 
 | check | Chromium | WebKit |
@@ -102,7 +134,8 @@ the once on the device itself.
 ## For the owner's devices
 
 - **iPhone (Safari)**: Graphics is AUTO again on the first visit (once). The title hall's glide with `#fps`: the first
-  line's FPS and HITCHES. Each game for a minute. Leave a fight for another app and come back.
+  line's FPS and HITCHES. Each game for a minute. Leave a fight for another app and come back. In Low Power Mode (8e):
+  the third line `HELD AT 24 FPS · LOW POWER MODE?` and the second `PHONE · 2.00X`; with it off, 60 FPS and `AUTO`.
 - **MacBook (Safari and Chrome)**: the FPS counter in the title hall and each game; Activity Monitor through half an hour
   of play; Setup's MEDIUM and back.
 - For the most the phone can draw: Setup's MAC (its drawing size eases to keep frames smooth); AUTO is the smoother
