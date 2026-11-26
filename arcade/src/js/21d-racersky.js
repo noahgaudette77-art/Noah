@@ -78,6 +78,9 @@ class RacerSky {
     // the first time as the road ran into its landscape was sent to the chip again then, its copies made, a stall in
     // the middle of a run, 8K a picture on a Mac: the Mac's richer tier, 2026-11-25)
     for (const n in skies) if (skies[n]) this.mips(skies[n].map);
+    // (after a lost graphics context the reflections above are drawn again (GFX.keepEnv), which takes each picture's
+    // smaller copies away again, as makePanoSky does: put back, so the screen's readying sends each whole, as above)
+    this.forgetRestore = GFX.onRestore(() => { for (const n in skies) if (skies[n]) this.mips(skies[n].map); });
     this.next = null; this.k = 0; this.dur = 0.6; this.swapped = false;
     this.env = this.envs[this.cur.id] || null;
     if (this.env) s.environment = this.env;
@@ -104,53 +107,55 @@ class RacerSky {
     if (this.envs[id] !== undefined) return this.envs[id];
     let tex = null;
     if (GFX.ok) {
-      try {
-        const r = RACER_SKIES[id], sky = r.sky && this.skies[r.sky], sc = new THREE.Scene();
-        const basic = (geo, col, order) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.renderOrder = order; sc.add(m); return m; };
-        if (sky) {
-          const st = new THREE.Group(), dome = makePanoSky(sky, { radius: 60, gain: r.envGain, lift: 0.3, rot: (r.at - 0.25) * Math.PI * 2 });
-          dome.rotation.x = -(r.pitch || 0);
-          st.scale.z = r.zoom;
-          st.add(dome); sc.add(st);
-          // under the horizon the road: wet, so at a shallow angle it holds the sky upside down (two bands of it, the
-          // lower one dimmer), and steeper than that it is dark. (Nothing can be blended into this map: its light is
-          // stored with an exponent. Each piece is drawn whole.)
-          [[0, 0.3, 0.5], [0.3, 0.75, 0.22]].forEach(([a0, a1, k]) => {
-            const wet = makePanoSky(sky, { radius: 59, gain: r.envGain * k, lift: 0, rot: (r.at - 0.25) * Math.PI * 2 }), ws = new THREE.Group();
-            wet.geometry.dispose();
-            wet.geometry = new THREE.SphereGeometry(59, 32, 6, 0, Math.PI * 2, Math.PI / 2 - a1, a1 - a0);
-            wet.renderOrder = -15;
-            ws.scale.set(1, -1, r.zoom);
-            ws.add(wet); sc.add(ws);
-          });
-        } else basic(new THREE.SphereGeometry(60, 24, 12), new THREE.Color(r.ground).multiplyScalar(1.6), -20);
-        // (the map is drawn without a depth buffer: `order` says what lies over what)
-        { const a = sky ? 0.75 : 0; basic(new THREE.SphereGeometry(58, 32, 8, 0, Math.PI * 2, Math.PI / 2 + a, Math.PI / 2 - a), r.ground, -10); } // the ground under it
-        const card = (dir, col, k, w, h, order = 0) => { // a soft box: brightest at its middle, nothing at its edge
-          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([q, b], i) => {
-            const m = basic(new THREE.CircleGeometry(0.5, 40), neon(col, k * b), order + i * 0.1);
-            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
-            m.lookAt(0, 0, 0);
-            m.scale.set(w * q, h * q, 1);
-          });
-        };
-        const strip = (x, y, z, w, h, col, k) => { const m = basic(new THREE.PlaneGeometry(w, h), neon(col, k), 2); m.position.set(x, y, z); m.lookAt(0, 0, 0); };
-        card([0, 0.3, 1], r.wall, 1.15, 150, 120, -5);
-        card([-0.42, 0.74, 0.52], r.key[0], 2.0 * r.key[1], 50, 34);
-        card([0, 0.085, -1], r.sun[0], 3.2 * r.sun[1], 15, 15); // the egg, low and dead ahead
-        if (id === "tunnel") { // the bore's two lines of lamps overhead, the cyan and magenta lines along its walls
-          for (const sd of [-1, 1]) { const m = basic(new THREE.PlaneGeometry(0.7, 110), neon(0xffd9a0, 3.2), 2); m.rotation.x = Math.PI / 2; m.position.set(sd * 6.2, 7.4, 0); }
-          strip(-9.5, 1.5, 0, 110, 0.22, 0x35efff, 2.2); strip(9.5, 1.5, 0, 110, 0.22, 0xff3ad4, 2.2);
-        } else if (r.lamps > 0) {
-          const k = 0.6 + 2.6 * r.lamps;
-          strip(-26, 5, -4, 40, 1.3, RACER_LAMP[0], k); strip(26, 5, -4, 40, 1.3, RACER_LAMP[1], k);
-        }
-        const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
-        disposeTree(sc);
-        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
-      } catch (e) { tex = null; }
+      try { tex = ownTarget(GFX.keepEnv(() => this.envScene(id))); } catch (e) { tex = null; } // (the target owns the texture: see ownTarget; kept: drawn again after a lost graphics context)
     }
     return (this.envs[id] = tex);
+  }
+  // a sky's reflection drawn (envFor): a new target with it
+  envScene(id) {
+    const r = RACER_SKIES[id], sky = r.sky && this.skies[r.sky], sc = new THREE.Scene();
+    const basic = (geo, col, order) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.renderOrder = order; sc.add(m); return m; };
+    if (sky) {
+      const st = new THREE.Group(), dome = makePanoSky(sky, { radius: 60, gain: r.envGain, lift: 0.3, rot: (r.at - 0.25) * Math.PI * 2 });
+      dome.rotation.x = -(r.pitch || 0);
+      st.scale.z = r.zoom;
+      st.add(dome); sc.add(st);
+      // under the horizon the road: wet, so at a shallow angle it holds the sky upside down (two bands of it, the
+      // lower one dimmer), and steeper than that it is dark. (Nothing can be blended into this map: its light is
+      // stored with an exponent. Each piece is drawn whole.)
+      [[0, 0.3, 0.5], [0.3, 0.75, 0.22]].forEach(([a0, a1, k]) => {
+        const wet = makePanoSky(sky, { radius: 59, gain: r.envGain * k, lift: 0, rot: (r.at - 0.25) * Math.PI * 2 }), ws = new THREE.Group();
+        wet.geometry.dispose();
+        wet.geometry = new THREE.SphereGeometry(59, 32, 6, 0, Math.PI * 2, Math.PI / 2 - a1, a1 - a0);
+        wet.renderOrder = -15;
+        ws.scale.set(1, -1, r.zoom);
+        ws.add(wet); sc.add(ws);
+      });
+    } else basic(new THREE.SphereGeometry(60, 24, 12), new THREE.Color(r.ground).multiplyScalar(1.6), -20);
+    // (the map is drawn without a depth buffer: `order` says what lies over what)
+    { const a = sky ? 0.75 : 0; basic(new THREE.SphereGeometry(58, 32, 8, 0, Math.PI * 2, Math.PI / 2 + a, Math.PI / 2 - a), r.ground, -10); } // the ground under it
+    const card = (dir, col, k, w, h, order = 0) => { // a soft box: brightest at its middle, nothing at its edge
+      [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([q, b], i) => {
+        const m = basic(new THREE.CircleGeometry(0.5, 40), neon(col, k * b), order + i * 0.1);
+        m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+        m.lookAt(0, 0, 0);
+        m.scale.set(w * q, h * q, 1);
+      });
+    };
+    const strip = (x, y, z, w, h, col, k) => { const m = basic(new THREE.PlaneGeometry(w, h), neon(col, k), 2); m.position.set(x, y, z); m.lookAt(0, 0, 0); };
+    card([0, 0.3, 1], r.wall, 1.15, 150, 120, -5);
+    card([-0.42, 0.74, 0.52], r.key[0], 2.0 * r.key[1], 50, 34);
+    card([0, 0.085, -1], r.sun[0], 3.2 * r.sun[1], 15, 15); // the egg, low and dead ahead
+    if (id === "tunnel") { // the bore's two lines of lamps overhead, the cyan and magenta lines along its walls
+      for (const sd of [-1, 1]) { const m = basic(new THREE.PlaneGeometry(0.7, 110), neon(0xffd9a0, 3.2), 2); m.rotation.x = Math.PI / 2; m.position.set(sd * 6.2, 7.4, 0); }
+      strip(-9.5, 1.5, 0, 110, 0.22, 0x35efff, 2.2); strip(9.5, 1.5, 0, 110, 0.22, 0xff3ad4, 2.2);
+    } else if (r.lamps > 0) {
+      const k = 0.6 + 2.6 * r.lamps;
+      strip(-26, 5, -4, 40, 1.3, RACER_LAMP[0], k); strip(26, 5, -4, 40, 1.3, RACER_LAMP[1], k);
+    }
+    const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
+    disposeTree(sc);
+    return rt;
   }
   // A material that should mirror the sky: its map is kept up to date as the skies change. k: how strongly.
   mirror(mat, k = 1) {
@@ -260,6 +265,7 @@ class RacerSky {
     u.uSkyTint.value.copy(this.L.tint);
   }
   dispose() {
+    if (this.forgetRestore) { this.forgetRestore(); this.forgetRestore = null; }
     for (const id in this.envs) if (this.envs[id]) this.envs[id].dispose();
     this.envs = {};
     this.users.length = 0;

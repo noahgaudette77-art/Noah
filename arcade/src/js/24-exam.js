@@ -25,8 +25,11 @@ const EXAM_WINDOWS = [-32, -24, -16, -8, 0, 8, 16, 24, 32];
 
 // makeEnvMap, but keeping the PMREM render target: disposing only its texture frees
 // nothing in r128, so dispose() releases the whole target.
-function examEnvMap({ top, horizon, bottom, glow, panels }) {
+function examEnvMap(o) {
   if (!GFX.ok) return null;
+  return GFX.keepEnv(() => examEnvMapScene(o)); // (kept: drawn again after a lost graphics context, into the same target)
+}
+function examEnvMapScene({ top, horizon, bottom, glow, panels }) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {

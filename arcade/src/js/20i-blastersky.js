@@ -129,38 +129,40 @@ class BlasterSky {
     if (this.envs[c.id] !== undefined) return this.envs[c.id];
     let tex = null;
     if (GFX.ok) {
-      try {
-        const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
-        dome.rotation.set(-a[1], 0, c.roll);
-        sc.add(dome);
-        // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
-        // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
-        // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
-        // lies over what.)
-        const card = (dir, col, k, w, h, order = 0) => {
-          [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
-            const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
-            m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
-            m.lookAt(0, 0, 0);
-            m.scale.set(w * s, h * s, 1);
-            m.renderOrder = order + i * 0.1;
-            sc.add(m);
-          });
-        };
-        card([0.3, 0.1, 1], r.wall || r.top[0], 0.8, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
-        card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
-        card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
-        card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
-        card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
-        card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
-        card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
-        const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
-        disposeTree(sc);
-        tex = ownTarget(rt); // (the target owns the texture: see ownTarget)
-        c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
-      } catch (e) { tex = null; }
+      try { tex = ownTarget(GFX.keepEnv(() => this.envScene(c))); } catch (e) { tex = null; } // (the target owns the texture: see ownTarget; kept: drawn again after a lost graphics context)
     }
     return (this.envs[c.id] = tex);
+  }
+  // the region's reflection drawn (envFor): a new target with it
+  envScene(c) {
+    const r = c.r, a = this.aim(c), sc = new THREE.Scene(), dome = makePanoSky(c.sky, { radius: 60, gain: r.envGain === undefined ? 2.1 : r.envGain * 1.4, lift: 0.7, rot: a[0], pull: (r.pullW || 0) * this.wide() }); // (pulled as the band is: one shader for every dome here)
+    dome.rotation.set(-a[1], 0, c.roll);
+    sc.add(dome);
+    // A lamp is a soft box: brightest at its middle, falling away to nothing at its edge, so a flat plate that
+    // turns to face one takes a sheen that slides across it and never a slab of white. (The map is drawn without
+    // a depth buffer or blending: each lamp is a nest of discs, dimmest and widest first, and `order` says what
+    // lies over what.)
+    const card = (dir, col, k, w, h, order = 0) => {
+      [[1.0, 0.07], [0.82, 0.2], [0.64, 0.42], [0.46, 0.7], [0.28, 1.0]].forEach(([s, b], i) => {
+        const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 40), new THREE.MeshBasicMaterial({ color: neon(col, k * b), side: THREE.DoubleSide }));
+        m.position.fromArray(dir).normalize().multiplyScalar(40 - i * 0.05);
+        m.lookAt(0, 0, 0);
+        m.scale.set(w * s, h * s, 1);
+        m.renderOrder = order + i * 0.1;
+        sc.add(m);
+      });
+    };
+    card([0.3, 0.1, 1], r.wall || r.top[0], 0.8, 150, 120, -5); // a wide, dim wall of light behind the lens: what faces the lens (the demon's chest, its face, the fighter's tail) mirrors that and not a void
+    card([0, -1, 0.15], r.amb[0], 0.5, 100, 100, -5); // a floor of dim light, so a belly is never a hole
+    card(BLASTER_LAMPS.key, r.key[0], 2.5 * r.key[1], 52, 36);
+    card(BLASTER_LAMPS.rimA, r.rimA[0], 3.0 * r.rimA[1], 16, 64);
+    card(BLASTER_LAMPS.rimB, r.rimB[0], 3.0 * r.rimB[1], 16, 64);
+    card(BLASTER_LAMPS.top, r.top[0], 1.35 * r.top[1], 80, 46);
+    card(BLASTER_LAMPS.kick, (r.kick || BLASTER_KICK)[0], 2.4 * (r.kick || BLASTER_KICK)[1], 150, 44); // the backlight: a wide band behind the fight
+    const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
+    disposeTree(sc);
+    c.sky.map.minFilter = THREE.LinearMipmapLinearFilter; c.sky.map.generateMipmaps = true; c.sky.map.needsUpdate = true; // (makePanoSky took its smaller copies away again)
+    return rt;
   }
   // A material that should mirror the region's sky and lamps: its map is kept up to date as regions change.
   // k: how strongly it mirrors (its envMapIntensity at full).

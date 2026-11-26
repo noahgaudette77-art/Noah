@@ -41,41 +41,48 @@ function spaceBakeNebula(size) {
   if (!GFX.ok) return flat();
   try {
     const rt = new THREE.WebGLRenderTarget(size, size, { wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: true, depthBuffer: false, stencilBuffer: false });
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      depthTest: false, depthWrite: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
-      fragmentShader: `varying vec2 vUv;
-        float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
-        float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-          vec2 a = mod(i, per), b = mod(i + 1.0, per);
-          return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
-        float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
-        void main(){
-          vec2 p = vUv;
-          vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
-          vec2 q = p + w * 0.13;
-          float A = fbm(q, 5.0, 21.0);
-          float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
-          float C = fbm(p - w * 0.09, 4.0, 77.0);
-          vec2 g = p * 150.0, c = floor(g), f = fract(g);
-          float on = step(0.93, h2(c, 3.0));
-          vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
-          float sb = h2(c, 13.0);
-          float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
-          gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
-        }`,
-    }));
-    quad.frustumCulled = false;
-    const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
-    sc.add(quad);
-    r.setRenderTarget(rt);
-    r.render(sc, new THREE.Camera());
-    r.setRenderTarget(prev);
-    quad.geometry.dispose();
-    quad.material.dispose();
+    spaceNebulaDraw(rt);
+    // (drawn again after a lost graphics context: the picture lives only on the graphics chip)
+    const forget = GFX.onRestore(() => spaceNebulaDraw(rt)), let0 = rt.dispose.bind(rt);
+    rt.dispose = () => { forget(); let0(); };
     rt.texture.rt = rt; // (kept so it can be let go with the scene)
     return rt.texture;
   } catch (e) { return flat(); }
+}
+// The nebula drawn into its target (spaceBakeNebula; and again after a lost graphics context)
+function spaceNebulaDraw(rt) {
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    depthTest: false, depthWrite: false,
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: `varying vec2 vUv;
+      float h2(vec2 p, float s){ return fract(sin(dot(p + s, vec2(127.1, 311.7))) * 43758.5453); }
+      float pn(vec2 p, float per, float s){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        vec2 a = mod(i, per), b = mod(i + 1.0, per);
+        return mix(mix(h2(a, s), h2(vec2(b.x, a.y), s), f.x), mix(h2(vec2(a.x, b.y), s), h2(b, s), f.x), f.y); }
+      float fbm(vec2 p, float per, float s){ float a = 0.5, v = 0.0; for (int o = 0; o < 7; o++){ v += a * pn(p * per, per, s); per *= 2.0; a *= 0.5; s += 7.3; } return v; }
+      void main(){
+        vec2 p = vUv;
+        vec2 w = vec2(fbm(p, 5.0, 1.0), fbm(p, 5.0, 9.0)) - 0.5;
+        vec2 q = p + w * 0.13;
+        float A = fbm(q, 5.0, 21.0);
+        float B = 1.0 - abs(2.0 * fbm(q + w * 0.07, 6.0, 47.0) - 1.0);
+        float C = fbm(p - w * 0.09, 4.0, 77.0);
+        vec2 g = p * 150.0, c = floor(g), f = fract(g);
+        float on = step(0.93, h2(c, 3.0));
+        vec2 sp = vec2(h2(c, 5.0), h2(c, 8.0)) * 0.7 + 0.15;
+        float sb = h2(c, 13.0);
+        float st = on * smoothstep(0.1 + 0.16 * sb, 0.0, length(f - sp)) * (0.15 + 0.85 * sb * sb);
+        gl_FragColor = vec4(smoothstep(0.26, 0.8, A), smoothstep(0.34, 0.96, B), C, st);
+      }`,
+  }));
+  quad.frustumCulled = false;
+  const sc = new THREE.Scene(), r = GFX.renderer, prev = r.getRenderTarget();
+  sc.add(quad);
+  r.setRenderTarget(rt);
+  r.render(sc, new THREE.Camera());
+  r.setRenderTarget(prev);
+  quad.geometry.dispose();
+  quad.material.dispose();
 }
 // A spiral galaxy seen from far away: a warm heart, two arms of blue and rose stars.
 function spaceGalaxyTexture() {

@@ -134,6 +134,15 @@ function* hallSkinSteps(model) {
 // materials left bare: the title hall's models are not drawn again (the title takes fresh copies when it comes back).
 // Decoded, the hall's pictures are some 150 MB; the closing scene's materials, kept a while for their shaders
 // (GFX.park), would otherwise hold them for the rest of the visit.
+// The hall's stand-in reflection: a black panorama in the painted one's encoding, filtered as Assets.loadSky's are
+// (HallScene: until the painted vault has come). Out here, so what keeps it for a lost context holds nothing else.
+function hallBlackEnv() {
+  const black = new THREE.DataTexture(new Uint8Array(8 * 4 * 4), 8, 4, THREE.RGBAFormat);
+  black.encoding = THREE.sRGBEncoding; black.mapping = THREE.EquirectangularReflectionMapping; black.needsUpdate = true;
+  const rt = GFX.pmrem().fromEquirectangular(black);
+  black.dispose();
+  return rt;
+}
 function hallRelease(model) {
   const seen = new Set();
   model.scene.traverse((o) => {
@@ -220,10 +229,7 @@ class HallScene extends Scene3D {
     // reflection made another way is kept in another encoding, and its shaders differ)
     if (GFX.ok) {
       try {
-        const black = new THREE.DataTexture(new Uint8Array(8 * 4 * 4), 8, 4, THREE.RGBAFormat);
-        black.encoding = THREE.sRGBEncoding; black.mapping = THREE.EquirectangularReflectionMapping; black.needsUpdate = true;
-        this.envRT = GFX.pmrem().fromEquirectangular(black);
-        black.dispose();
+        this.envRT = GFX.keepEnv(hallBlackEnv); // (kept: drawn again after a lost graphics context)
         s.environment = this.envRT.texture;
       } catch (e) { this.envRT = null; }
     }

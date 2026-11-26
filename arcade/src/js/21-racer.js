@@ -828,6 +828,11 @@ class RacerEnv {
     this.rt = null;
   }
   build(sky) {
+    const rt = GFX.keepEnv(() => this.draw(sky)); // (kept: drawn again after a lost graphics context, into the same target)
+    (this.rts || (this.rts = [])).push(rt);
+    return rt.texture;
+  }
+  draw(sky) {
     const u = this.sky.material.uniforms;
     u.uTop.value.copy(sky.top);
     u.uMid.value.copy(sky.mid);
@@ -845,9 +850,7 @@ class RacerEnv {
     this.strips[3].material.color.copy(sky.grid).multiplyScalar(2);
     this.strips[4].material.color.copy(sky.horizon).multiplyScalar(1.6);
     this.strips[5].material.color.copy(sky.mid).lerp(sky.horizon, 0.35).multiplyScalar(1.3);
-    const rt = this.pm.fromScene(this.scene, 0.02, 0.1, 100);
-    (this.rts || (this.rts = [])).push(rt);
-    return rt.texture;
+    return this.pm.fromScene(this.scene, 0.02, 0.1, 100);
   }
   dispose() {
     if (this.rts) this.rts.forEach((rt) => rt.dispose());

@@ -120,7 +120,8 @@ const Assets = {
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("cannot decode " + path)); };
       img.src = url;
-    })).then((pic) => {
+    })).then((pic) => new Promise((done) => GFX.whenGL(() => done(pic)))) // (its graphics part waits while the graphics context is lost: GFX.contextLost)
+      .then((pic) => {
       // (the Mac's richer tier's review) A sharper sky that arrives after its screen opened without it (a slow
       // connection: Assets.need starts a screen after 40 s with what has come): that screen draws without it, and making
       // it ready now, an 8K picture sent to the graphics chip and its reflection made, would stall the play. Its file is
@@ -136,12 +137,7 @@ const Assets = {
       map.generateMipmaps = true;
       map.needsUpdate = true;
       const sky = { name, map, env: null, w: img.width, h: img.height, hd: path === "sky/" + name + "-hd.webp" };
-      if (GFX.ok) { try { sky.env = GFX.pmrem().fromEquirectangular(map).texture; } catch (e) { sky.env = null; } }
-      // (a sharper copy: its reflection is made, and the picture leaves the graphics chip until a screen draws it, which
-      // sends it again behind the curtain (GFX.warm), with its smaller copies or without them as that screen draws it:
-      // 171 MB there with them (Risk Blaster's and Nest Egg Run's narrow windows), 128 MB without (makePanoSky).
-      // Held, each would keep the copies its reflection was made from. See restSkies.)
-      if (sky.hd && GFX.ok) map.dispose();
+      if (GFX.ok) { try { sky.env = ownTarget(GFX.keepEnv(() => this.skyEnv(sky))); } catch (e) { sky.env = null; } } // (kept: drawn again after a lost graphics context; the target owns the texture, so a retired sky's goes whole: ownTarget, restSkies)
       this.kept["sky:" + name] = sky;
       this.release(path);
       this.dropOther(path, "sky/" + name + ".webp", "sky/" + name + "-hd.webp");
@@ -149,6 +145,21 @@ const Assets = {
     }).catch((e) => { console.warn("sky " + name + " did not load: " + e.message); return null; }));
   },
   sky(name) { return this.kept["sky:" + name] || null; },
+  // A sky's reflection: drawn from its picture with the picture's smaller copies (loadSky: as it comes; after a lost
+  // graphics context, again, the picture sent once more, and a dome may since draw it without them: makePanoSky, so
+  // they are asked for while it is drawn and its own way put back after).
+  // (a sharper copy: its reflection is made, and the picture leaves the graphics chip until a screen draws it, which
+  // sends it again behind the curtain (GFX.warm), with its smaller copies or without them as that screen draws it:
+  // 171 MB there with them (Risk Blaster's and Nest Egg Run's narrow windows), 128 MB without (makePanoSky).
+  // Held, each would keep the copies its reflection was made from. See restSkies.)
+  skyEnv(sky) {
+    const map = sky.map, f = map.minFilter, g = map.generateMipmaps, mip = f === THREE.LinearMipmapLinearFilter;
+    if (!mip) { map.minFilter = THREE.LinearMipmapLinearFilter; map.generateMipmaps = true; map.needsUpdate = true; }
+    const rt = GFX.pmrem().fromEquirectangular(map);
+    if (!mip) { map.minFilter = f; map.generateMipmaps = g; map.needsUpdate = true; }
+    if (sky.hd) map.dispose();
+    return rt;
+  },
   // (the Mac's richer tier's review) A sky kept at the other size than the tier now asks for: the governor or Setup moved
   // the tier since it was loaded (a Mac held a step lower draws the game's own skies, as before). The next screen that
   // asks for it loads the right one; the old one leaves the graphics chip once that screen is up (restSkies).
@@ -234,9 +245,9 @@ const Assets = {
   with(set, extra, fn) {
     this.cur = this.on ? this.wants(set, extra) : null; // (what the screen about to open brought: GFX.warm readies all of it)
     const p = this.need(set, extra);
-    if (!p) return fn();
+    if (!p) return GFX.ok ? GFX.whenGL(fn) : fn();
     UI.loading(true);
     this.onProgress = (d, n) => UI.loading(true, d / n);
-    p.then(() => { this.onProgress = null; UI.loading(false); fn(); });
+    p.then(() => { this.onProgress = null; UI.loading(false); GFX.ok ? GFX.whenGL(fn) : fn(); }); // (a screen is not built while the graphics context is lost: GFX.contextLost)
   },
 };

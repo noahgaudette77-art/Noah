@@ -483,7 +483,7 @@ function roomProbe(at, { size = 128, near = 0.1, far = 300, hide = [], swap = []
     made: 0, done: 0, // (captures finished, and the last one a user has taken up)
     capture() { this.left = 6; },
     step(scene, layers) {
-      if (!this.left || !GFX.ok) return null; // (nothing to draw: null, as against false, the frame the last face was drawn)
+      if (!this.left || !GFX.ok || GFX.lost) return null; // (nothing to draw: null, as against false, the frame the last face was drawn; lost: its faces wait)
       const r = GFX.renderer, i = 6 - this.left, face = cam.children[i], was = r.getRenderTarget(), vis = this.hide.map((o) => o.visible);
       this.hide.forEach((o) => { o.visible = false; });
       // (and every set of points: a point's size is in the page's pixels, so in a face 128 or 256 across a light stick or
@@ -731,8 +731,12 @@ class Trail {
 
 // An environment map for glossy materials, made from a small neon scene:
 // a gradient sky plus a few bright panels that show up as reflections.
-function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
+// (kept: GFX.keepEnv draws it again after a lost graphics context, into the same target)
+function makeEnvMap(o = {}) {
   if (!GFX.ok) return null;
+  return ownTarget(GFX.keepEnv(() => envMapScene(o)));
+}
+function envMapScene({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glow = 1.4, panels = [] } = {}) {
   const sc = new THREE.Scene();
   sc.add(makeSky({ top, mid: top, horizon, bottom, stars: 0, glow, radius: 60 }));
   for (const p of panels) {
@@ -743,7 +747,7 @@ function makeEnvMap({ top = 0x14052e, horizon = 0xff3ad4, bottom = 0x05010f, glo
   }
   const rt = GFX.pmrem().fromScene(sc, 0.02, 0.1, 100);
   disposeTree(sc);
-  return ownTarget(rt);
+  return rt;
 }
 // A render target's texture handed out on its own. In three r128 a target's texture is only freed through the target,
 // so disposing the texture (as scenes do) frees the whole target. (Made out here: made where the scene drawn into the

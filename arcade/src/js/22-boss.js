@@ -437,6 +437,18 @@ class BossGame extends QuizGame {
     this.probe.capture();
     this.probeStep(true);
   }
+  // after a lost graphics context (GFX.contextRestored): the deck's cube drawn again now, whole, and the steel's copy
+  // with it, three times over (the steel mirrors the cube and the cube the steel, which came back black: as they came
+  // to be); whether the arena's second capture is still to come (probeFull) is left as it was. Never with a stroke of
+  // lightning in it (the arena's own captures wait for one to pass: probeStep): the storm's light and the sky's flash
+  // held at nothing while it is drawn, and given back after.
+  restoreGraphics() {
+    if (!this.probe || !GFX.ok) return;
+    const A = this.arena, st = A && A.storm, si = st ? st.intensity : 0, gu = A && A.dome.material.uniforms.uGain, g0 = gu ? gu.value : 0;
+    if (st) st.intensity = 0;
+    if (gu && A.flash) gu.value = Math.max(0, g0 - A.gain * 0.85 * A.flash); // (the sky's gain less the stroke's share: BossArena.update)
+    try { for (let i = 0; i < 3; i++) { this.probe.capture(); this.probeStep(true); } } finally { if (st) st.intensity = si; if (gu) gu.value = g0; }
+  }
   // a capture whole: the steel takes it too, filtered for its roughness (its own copy, made once a capture: what reads
   // it is never drawn into what it reads)
   probeTaken() {
