@@ -54,7 +54,12 @@ module.exports = async (cap) => {
       gl[k] = function () {
         let src = null;
         for (let i = 0; i < arguments.length; i++) { const x = arguments[i]; if (x && typeof x === "object") { src = x; break; } }
-        if (src) H.uploads.push({ f: window.__cap.frame, k, what: name(src), bytes: ArrayBuffer.isView(src) ? src.byteLength : (src.naturalWidth || src.videoWidth || src.width || 0) * (src.naturalHeight || src.videoHeight || src.height || 0) * 4 });
+        const bytes = src ? (ArrayBuffer.isView(src) ? src.byteLength : (src.naturalWidth || src.videoWidth || src.width || 0) * (src.naturalHeight || src.videoHeight || src.height || 0) * 4) : 0;
+        // (a picture of a quarter of a megabyte or more: the page's own calls that sent it, as for a program: Phase 8)
+        const lim = Error.stackTraceLimit; if (bytes >= 262144) Error.stackTraceLimit = 80; // (past three.js's own calls to the page's)
+        const st = bytes >= 262144 ? String(new Error().stack || "").split("\n").filter((l) => /index\.html/.test(l)).slice(0, 6).map((l) => { const m = /:(\d+):\d+\)?\s*$/.exec(l), fn = /at (?:new )?([^\s(]+)/.exec(l); return [fn ? fn[1] : "?", m ? +m[1] - 1 : -1]; }) : null;
+        Error.stackTraceLimit = lim;
+        if (src) H.uploads.push({ f: window.__cap.frame, k, what: name(src), bytes, st });
         return f.apply(gl, arguments);
       };
     }
@@ -146,10 +151,10 @@ module.exports = async (cap) => {
     const dom = await cap.eval(() => { const D = window.__hc.dom; D.on = false; return { n: D.n, top: [...D.by].sort((a, b) => b[1] - a[1]).slice(0, 8) }; });
     row.dom = { perFrame: +(dom.n / Math.max(1, f2 - f1)).toFixed(2), top: dom.top.map(([k, v]) => `${(v / Math.max(1, f2 - f1)).toFixed(2)}/frame ${k}`) };
     row.play = { frames: f2 - f1, answered, end, programs: c2.programs - c1.programs, links: c2.links - c1.links, uploads: c2.uploads - c1.uploads };
-    const ev = await page.evaluate(([a, b, c]) => ({ programs: window.__hc.programs.slice(a), uploads: window.__hc.uploads.slice(b).map((u) => u.f + " " + u.what), links: window.__hc.links.slice(c) }), [c1.programs, c1.uploads, c1.links]);
+    const ev = await page.evaluate(([a, b, c]) => ({ programs: window.__hc.programs.slice(a), uploads: window.__hc.uploads.slice(b).map((u) => [u.f + " " + u.what, u.st]), links: window.__hc.links.slice(c) }), [c1.programs, c1.uploads, c1.links]);
     row.playPrograms = ev.programs.map((p) => `frame ${p.f}: ${p.name} (${p.users.join("; ") || "not in the scene"})`);
     row.playLinks = ev.links.map((l) => `frame ${l.f}: ` + l.st.map(([fn, line]) => fn + " " + where(line)).join(" < ") + (l.obj ? " [drawing " + l.obj + "]" : ""));
-    row.playUploads = ev.uploads;
+    row.playUploads = ev.uploads.map(([u, st]) => u + (st && st.length ? " (" + st.map(([fn, line]) => fn + " " + (line >= 0 ? where(line) : "")).join(" < ") + ")" : "")); // (a large picture: where it was sent from)
     // (the pictures sent in play, grouped by what they were: how many times, how many MB in all)
     const groups = new Map();
     for (const u of await page.evaluate((b) => window.__hc.uploads.slice(b).map((x) => [x.what, x.bytes || 0]), c1.uploads)) { const g = groups.get(u[0]) || [0, 0]; g[0]++; g[1] += u[1]; groups.set(u[0], g); }

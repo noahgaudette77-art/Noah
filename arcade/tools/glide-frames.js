@@ -44,7 +44,7 @@ function serve(root) {
 
 // in the page, before anything else
 function inPage(quality) {
-  if (quality) { try { const k = "inr-arcade-v1", s = JSON.parse(localStorage.getItem(k) || "{}"); s.settings = Object.assign({}, s.settings, { quality }); localStorage.setItem(k, JSON.stringify(s)); } catch (e) { /* */ } }
+  if (quality) { try { const k = "inr-arcade-v1", s = JSON.parse(localStorage.getItem(k) || "{}"); s.settings = Object.assign({}, s.settings, { quality, qv: 2 }); s.updated = s.updated || 1; localStorage.setItem(k, JSON.stringify(s)); } catch (e) { /* */ } }
   const E = (window.__gf = { frames: [], st: [], ev: [], lt: [], tiers: [] }), now = () => performance.now();
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) E.lt.push([+e.startTime.toFixed(1), +e.duration.toFixed(1)]); }).observe({ type: "longtask", buffered: true }); } catch (e) { /* WebKit has none */ }
   let hooked = false;
