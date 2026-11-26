@@ -1,0 +1,41 @@
+{
+ "name": "chaser",
+ "triangles": 9988,
+ "bytes": 227372,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.175,
+    0.0001
+   ],
+   "min": [
+    -0.2916,
+    0,
+    -0.4998
+   ],
+   "max": [
+    0.2916,
+    0.3501,
+    0.5
+   ],
+   "tris": 9988
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.5831557512283325,
+  0.35145440697669983,
+  1
+ ],
+ "source": "cand/warrig/warrig-a-nb-0.tripo.glb",
+ "symmetry": {
+  "delivered": 0.62,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.62,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

@@ -1,0 +1,602 @@
+{
+ "name": "baseline",
+ "when": "2026-11-23T16:47:31.804Z",
+ "commit": "89cfb56",
+ "quick": false,
+ "engine": "chromium",
+ "faults": [],
+ "looks": [],
+ "logic": {
+  "contentDiff": "",
+  "disk": {
+   "pass": true,
+   "secs": 36,
+   "tail": [
+    "no console errors",
+    "IDENTICAL to baseline arcade/backup/index.before-visual-upgrade.html (reading \"THE EXAMINATOR\" as \"THE PROCTOR\", \"PERIL PRIME\" as \"PERILMONGER\", \"PROBATRON\" as "
+   ]
+  },
+  "served": {
+   "pass": true,
+   "secs": 80,
+   "tail": [
+    "no console errors",
+    "IDENTICAL to baseline arcade/backup/index.before-visual-upgrade.html (reading \"THE EXAMINATOR\" as \"THE PROCTOR\", \"PERIL PRIME\" as \"PERILMONGER\", \"PROBATRON\" as "
+   ]
+  },
+  "sequence": {
+   "pass": true,
+   "secs": 186,
+   "tail": [
+    "memory: playing",
+    "ALL 13 STEPS OK, no errors"
+   ]
+  }
+ },
+ "stills": {
+  "phone": {
+   "secs": 434,
+   "rows": [
+    {
+     "name": "01-title-glide-early",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "02-title-glide-middle",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "03-title-end",
+     "rmse": null,
+     "overlaps": 2,
+     "newOverlaps": [
+      "INR / INR",
+      "ARCADE / ARCADE"
+     ]
+    },
+    {
+     "name": "04-title-cell-closeup",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04b-cell-defeated",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04c-cell-alarm",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04d-cell-proctor",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "05-hub",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "06-chapter-select",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "07-blaster",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "08-blaster-explanation",
+     "rmse": null,
+     "overlaps": 7,
+     "newOverlaps": [
+      "Assuris, the Facility Associ / Consumer knowledge, fairness",
+      "Assuris, the Facility Associ / Consumer protection comes fr",
+      "B / Consumer protection comes fr",
+      "Consumer knowledge, fairness / Consumer protection comes fr",
+      "C / Consumer protection comes fr",
+      "Solvency testing, rate freez / Consumer protection comes fr",
+      "Governments, the courts and  / NEXT"
+     ]
+    },
+    {
+     "name": "09-racer",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "10-boss",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "11-memory-front",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "12-memory-back",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "13-exam",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "14-guide",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "15-guide-chapter",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "16-results",
+     "rmse": null,
+     "overlaps": 1,
+     "newOverlaps": [
+      "READ STAGE 4 NOTES / CHANGE STAGE"
+     ]
+    },
+    {
+     "name": "17-stats",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "18-setup",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    }
+   ]
+  },
+  "mac": {
+   "secs": 434,
+   "rows": [
+    {
+     "name": "01-title-glide-early",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "02-title-glide-middle",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "03-title-end",
+     "rmse": null,
+     "overlaps": 2,
+     "newOverlaps": [
+      "INR / INR",
+      "ARCADE / ARCADE"
+     ]
+    },
+    {
+     "name": "04-title-cell-closeup",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04b-cell-defeated",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04c-cell-alarm",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "04d-cell-proctor",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "05-hub",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "06-chapter-select",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "07-blaster",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "08-blaster-explanation",
+     "rmse": null,
+     "overlaps": 3,
+     "newOverlaps": [
+      "Salaries paid by the insurer / General agencies receive ove",
+      "B / General agencies receive ove",
+      "Override commissions from in / General agencies receive ove"
+     ]
+    },
+    {
+     "name": "09-racer",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "10-boss",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "11-memory-front",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "12-memory-back",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "13-exam",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "14-guide",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "15-guide-chapter",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "16-results",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "17-stats",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    },
+    {
+     "name": "18-setup",
+     "rmse": null,
+     "overlaps": 0,
+     "newOverlaps": []
+    }
+   ]
+  }
+ },
+ "costs": {
+  "phone": {
+   "secs": 864,
+   "rows": [
+    {
+     "name": "title@0.35",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 33,
+     "tris": 146093,
+     "lights": 4,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 284,
+     "rtMB": 38.5,
+     "cpu": 2,
+     "ms": 1423.8,
+     "base": null
+    },
+    {
+     "name": "title@1",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 35,
+     "tris": 184698,
+     "lights": 4,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 284,
+     "rtMB": 38.5,
+     "cpu": 1.7,
+     "ms": 1751.1,
+     "base": null
+    },
+    {
+     "name": "hub",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 44,
+     "tris": 100054,
+     "lights": 4,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 183.2,
+     "rtMB": 40.8,
+     "cpu": 2.47,
+     "ms": 1124.7,
+     "base": null
+    },
+    {
+     "name": "blaster",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 49,
+     "tris": 154022,
+     "lights": 5,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 306.5,
+     "rtMB": 56.5,
+     "cpu": 4.05,
+     "ms": 883.6,
+     "base": null
+    },
+    {
+     "name": "racer",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 58,
+     "tris": 99742,
+     "lights": 5,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 245.3,
+     "rtMB": 52,
+     "cpu": 2.55,
+     "ms": 1817.9,
+     "base": null
+    },
+    {
+     "name": "boss",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 57,
+     "tris": 91124,
+     "lights": 5,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 209.1,
+     "rtMB": 40.8,
+     "cpu": 3.75,
+     "ms": 1295.7,
+     "base": null
+    },
+    {
+     "name": "memory",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 53,
+     "tris": 97720,
+     "lights": 4,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 73.5,
+     "rtMB": 40.8,
+     "cpu": 4.4,
+     "ms": 1050.6,
+     "base": null
+    },
+    {
+     "name": "exam",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 83,
+     "tris": 36632,
+     "lights": 5,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 103.8,
+     "rtMB": 43,
+     "cpu": 3.4,
+     "ms": 1924.6,
+     "base": null
+    },
+    {
+     "name": "guide",
+     "tier": "PHONE",
+     "size": "880x1912",
+     "draws": 49,
+     "tris": 31718,
+     "lights": 3,
+     "mpx": 6.16,
+     "passes": 9,
+     "texMB": 64.6,
+     "rtMB": 38.5,
+     "cpu": 3.42,
+     "ms": 760.9,
+     "base": null
+    }
+   ]
+  },
+  "mac": {
+   "secs": 1349,
+   "rows": [
+    {
+     "name": "title@0.35",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 63,
+     "tris": 292968,
+     "lights": 4,
+     "mpx": 37.57,
+     "passes": 22,
+     "texMB": 431.8,
+     "rtMB": 223.4,
+     "cpu": 2,
+     "ms": 4921.1,
+     "base": null
+    },
+    {
+     "name": "title@1",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 48,
+     "tris": 184698,
+     "lights": 4,
+     "mpx": 37.57,
+     "passes": 22,
+     "texMB": 431.8,
+     "rtMB": 223.4,
+     "cpu": 2.5,
+     "ms": 6343.3,
+     "base": null
+    },
+    {
+     "name": "hub",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 87,
+     "tris": 312986,
+     "lights": 4,
+     "mpx": 39.32,
+     "passes": 23,
+     "texMB": 339.9,
+     "rtMB": 232.4,
+     "cpu": 8.5,
+     "ms": 4455.6,
+     "base": null
+    },
+    {
+     "name": "blaster",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 66,
+     "tris": 159838,
+     "lights": 5,
+     "mpx": 37.57,
+     "passes": 22,
+     "texMB": 545.8,
+     "rtMB": 241.4,
+     "cpu": 3.2,
+     "ms": 2587.4,
+     "base": null
+    },
+    {
+     "name": "racer",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 91,
+     "tris": 184328,
+     "lights": 5,
+     "mpx": 39.63,
+     "passes": 24,
+     "texMB": 532.3,
+     "rtMB": 243.6,
+     "cpu": 3.5,
+     "ms": 3620.6,
+     "base": null
+    },
+    {
+     "name": "boss",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 61,
+     "tris": 50184,
+     "lights": 5,
+     "mpx": 39.32,
+     "passes": 23,
+     "texMB": 461.8,
+     "rtMB": 232.4,
+     "cpu": 4.2,
+     "ms": 2884.7,
+     "base": null
+    },
+    {
+     "name": "memory",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 90,
+     "tris": 183104,
+     "lights": 4,
+     "mpx": 39.32,
+     "passes": 23,
+     "texMB": 262.2,
+     "rtMB": 232.4,
+     "cpu": 4.4,
+     "ms": 3027.9,
+     "base": null
+    },
+    {
+     "name": "exam",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 88,
+     "tris": 32123,
+     "lights": 5,
+     "mpx": 37.57,
+     "passes": 22,
+     "texMB": 279,
+     "rtMB": 227.9,
+     "cpu": 2.9,
+     "ms": 3843.5,
+     "base": null
+    },
+    {
+     "name": "guide",
+     "tier": "MAC",
+     "size": "2940x1660",
+     "draws": 63,
+     "tris": 31718,
+     "lights": 3,
+     "mpx": 37.87,
+     "passes": 23,
+     "texMB": 242.2,
+     "rtMB": 223.4,
+     "cpu": 1.8,
+     "ms": 2633.6,
+     "base": null
+    }
+   ]
+  }
+ }
+}

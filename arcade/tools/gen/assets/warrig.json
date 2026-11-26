@@ -1,0 +1,239 @@
+{
+ "name": "warrig",
+ "about": "Nest Egg Run's vehicle, second version: an original armoured hauler that carries the player's nest egg (a champagne-gold and gunmetal truck, a solid wedge nose with neon strips, two exhaust stacks, a cradle of claws holding a golden egg). The owner's rules: one straight centreline, a symmetrical body, four wheels at the corners, no real car's grille or lights. Tripo H3.1 multi-view from four elevations of the concept (warrig-b-sd-1: front, left, back, right); parts from Tripo segmentation v2; the model's plane of symmetry is found and one half is reflected, so it is exactly symmetrical. The first version (warrig-v1.json) was a six-wheeler with a real car's face. L is the vehicle's own left (+X), the left of the screen in the chase view.",
+ "src": "cand/warrig/warrig-b-sd-1.tripo-mv.glb",
+ "seg": "post/warrig2-seg-bal.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "z",
+  "value": 1
+ },
+ "origin": "ground",
+ "mirror": {
+  "keep": "+x",
+  "align": true
+ },
+ "tris": 55000,
+ "tex": 1024,
+ "texBase": 2048,
+ "groups": {
+  "egg": [
+   0
+  ],
+  "wheelRL": [
+   1
+  ],
+  "wheelFL": [
+   3
+  ],
+  "exhaustL": [
+   14
+  ]
+ },
+ "pivots": {
+  "egg": [
+   "c",
+   "min",
+   "c"
+  ],
+  "exhaustL": [
+   "c",
+   "min",
+   "c"
+  ],
+  "exhaustR": [
+   "c",
+   "min",
+   "c"
+  ]
+ },
+ "keep": {
+  "egg": 1.3,
+  "wheelFL": 0.8,
+  "wheelFR": 0.8,
+  "wheelRL": 0.8,
+  "wheelRR": 0.8
+ },
+ "anchors": {
+  "exhaustL": {
+   "of": "exhaustL",
+   "at": [
+    "c",
+    "max",
+    "c"
+   ]
+  },
+  "exhaustR": {
+   "of": "exhaustR",
+   "at": [
+    "c",
+    "max",
+    "c"
+   ]
+  },
+  "tailL": [
+   0.165,
+   0.145,
+   -0.495
+  ],
+  "tailR": [
+   -0.165,
+   0.145,
+   -0.495
+  ],
+  "headL": [
+   0.115,
+   0.105,
+   0.45
+  ],
+  "headR": [
+   -0.115,
+   0.105,
+   0.45
+  ],
+  "roof": [
+   0,
+   0.37,
+   0.08
+  ],
+  "hood": [
+   0,
+   0.21,
+   0.33
+  ],
+  "egg": {
+   "of": "egg",
+   "at": [
+    "c",
+    "c",
+    "c"
+   ]
+  }
+ },
+ "emissive": {
+  "gain": 0
+ },
+ "paint": [
+  {
+   "groups": [
+    "body",
+    "wheelFL",
+    "wheelFR",
+    "wheelRL",
+    "wheelRR",
+    "exhaustL",
+    "exhaustR"
+   ],
+   "where": {
+    "h": [
+     165,
+     205
+    ],
+    "s": [
+     0.45,
+     1
+    ],
+    "v": [
+     0.5,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "groups": [
+    "body",
+    "wheelFL",
+    "wheelFR",
+    "wheelRL",
+    "wheelRR",
+    "exhaustL",
+    "exhaustR"
+   ],
+   "where": {
+    "h": [
+     285,
+     350
+    ],
+    "s": [
+     0.45,
+     1
+    ],
+    "v": [
+     0.45,
+     1
+    ]
+   },
+   "glow": 1
+  },
+  {
+   "groups": [
+    "body"
+   ],
+   "where": {
+    "h": [
+     28,
+     58
+    ],
+    "s": [
+     0.18,
+     0.75
+    ],
+    "v": [
+     0.42,
+     1
+    ]
+   },
+   "rough": 0.22,
+   "metal": 0.85
+  },
+  {
+   "groups": [
+    "body",
+    "exhaustL",
+    "exhaustR"
+   ],
+   "where": {
+    "s": [
+     0,
+     0.14
+    ],
+    "v": [
+     0.12,
+     0.55
+    ]
+   },
+   "rough": 0.42,
+   "metal": 1
+  },
+  {
+   "groups": [
+    "wheelFL",
+    "wheelFR",
+    "wheelRL",
+    "wheelRR"
+   ],
+   "where": {
+    "v": [
+     0,
+     0.24
+    ]
+   },
+   "rough": 0.88,
+   "metal": 0
+  },
+  {
+   "groups": [
+    "egg"
+   ],
+   "rough": 0.15,
+   "metal": 1,
+   "glow": 0.16,
+   "sat": 1.15
+  }
+ ],
+ "surface": {
+  "roughMin": 0.12
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

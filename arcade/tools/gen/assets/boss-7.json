@@ -1,0 +1,46 @@
+{
+ "name": "boss-7",
+ "about": "Boss Rush: Longevity Lich, second version (2026-11-16): an ancient clockwork lich: a cracked white porcelain mask with mint eye slits, a crown of clock hands, a glass case in its chest holding a glowing hourglass, a high-collared teal and gold brocade robe open over thin brass legs, brass clockwork fingers. The first version (boss-7-v1.json), a crowned chrome skeleton, read as the stock skeleton king and too like the Patrimony Phantom. Tripo H3.1 from concept boss07b-lich-sd-1; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, bound to the bones that own them; the robe in bands.",
+ "src": "post/boss07b-animA.glb",
+ "more": [
+  "post/boss07b-animB.glb"
+ ],
+ "seg": "post/boss07b-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    130,
+    175
+   ]
+  ],
+  "sat": [
+   0.35,
+   0.6
+  ],
+  "val": [
+   0.45,
+   0.75
+  ]
+ },
+ "limbRadius": 0.06,
+ "armRadius": 0.06,
+ "handReach": 1.1,
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

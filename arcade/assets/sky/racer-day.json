@@ -1,0 +1,15 @@
+{
+ "name": "racer-day",
+ "source": "racer-day",
+ "blockade": {
+  "id": 15931394,
+  "style": "M3 Sky Dome",
+  "seed": 1737796862,
+  "prompt": "Bright synthwave day sky, no sun disc: a clean gradient from hot pink haze along a flat far horizon through turquoise to deep azure blue at the zenith, a few tall white cumulus clouds with pink and violet undersides, thin high cirrus streaks, low dark mountain silhouettes far away, flat plain below. 1980s retro outrun aesthetic, vivid, crisp, clean gradients."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 205800,
+ "lightAt": 209,
+ "mean": 0.482
+}

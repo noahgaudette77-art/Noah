@@ -1,0 +1,48 @@
+{
+ "name": "boss-11-t",
+ "about": "The title's containment hall: a lighter build of boss-11 (the same source, rig and clips), for a boss seen at the middle distance in its stasis pod. Boss Rush: Patrimony Phantom, second version (2026-11-16): a deep hood over its whole head with two violet eye slits, its body split down the middle (the left half a bone-white skeleton, the right hal",
+ "src": "post/boss11b-animA.glb",
+ "more": [
+  "post/boss11b-animB.glb"
+ ],
+ "seg": "post/boss11b-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 16000,
+ "tex": 512,
+ "texBase": 1024,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    250,
+    305
+   ]
+  ],
+  "sat": [
+   0.4,
+   0.65
+  ],
+  "val": [
+   0.4,
+   0.7
+  ]
+ },
+ "cape": [
+  0
+ ],
+ "turn": -90,
+ "bar": "the game's one quality bar (2026-11-17): a figure seen at middle distance (the title's pods): 1024 px colour, 512 px other maps, about 20K triangles",
+ "error": 0.06
+}

@@ -1,0 +1,33 @@
+{
+ "name": "prop-stand",
+ "triangles": 10000,
+ "bytes": 196180,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -1.1485,
+    0,
+    -1.0096
+   ],
+   "max": [
+    1.1485,
+    1,
+    1.0096
+   ],
+   "tris": 10000
+  }
+ },
+ "anchors": {},
+ "size": [
+  2.2970941066741943,
+  1,
+  2.019273281097412
+ ],
+ "source": "cand/props/prop-stand-sd-0.tripo.glb"
+}

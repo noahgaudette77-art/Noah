@@ -1,0 +1,33 @@
+{
+ "name": "ally-c2",
+ "triangles": 8660,
+ "bytes": 126524,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.4744,
+    -0.2135,
+    -0.5
+   ],
+   "max": [
+    0.4744,
+    0.2135,
+    0.5
+   ],
+   "tris": 8660
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.9487760663032532,
+  0.4269997775554657,
+  1
+ ],
+ "source": "cand/starfighter/starfighter-c-sd-1.rodin.glb"
+}

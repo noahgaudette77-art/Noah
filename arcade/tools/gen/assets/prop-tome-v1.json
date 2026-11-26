@@ -1,0 +1,33 @@
+{
+ "name": "prop-tome",
+ "about": "A great book with chrome corners and glowing page edges: Strategy Guide. Tripo v3.1 at its standard (low-credit) settings from concept prop-tome-sd-0, one attempt.",
+ "src": "cand/props/prop-tome-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "origin": "ground",
+ "tris": 12000,
+ "tex": 1024,
+ "texBase": 1024,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ }
+}

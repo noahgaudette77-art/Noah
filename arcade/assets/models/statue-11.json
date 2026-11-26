@@ -1,0 +1,33 @@
+{
+ "name": "statue-11",
+ "triangles": 8416,
+ "bytes": 259096,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.3957,
+    0,
+    -0.2758
+   ],
+   "max": [
+    0.3957,
+    1,
+    0.2758
+   ],
+   "tris": 8416
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.7914127707481384,
+  1,
+  0.5515462160110474
+ ],
+ "source": "cand/boss11b/boss11b-phantom-sd-0.tripo.glb"
+}

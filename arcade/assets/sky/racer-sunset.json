@@ -1,0 +1,15 @@
+{
+ "name": "racer-sunset",
+ "source": "racer-sunset",
+ "blockade": {
+  "id": 15930867,
+  "style": "M3 Sky Dome",
+  "seed": 1679472337,
+  "prompt": "Synthwave sunset sky just after the sun has gone below the horizon, no sun disc: a band of molten gold and hot orange along a flat far horizon, rising through magenta to deep violet at the zenith, long thin clouds lit pink and gold from below, the first stars overhead, low dark mountain silhouettes far away, dark wet flat plain below. 1980s retro outrun aesthetic, vivid, clean gradients."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 284332,
+ "lightAt": 8,
+ "mean": 0.314
+}

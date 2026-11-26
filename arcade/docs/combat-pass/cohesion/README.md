@@ -1,0 +1,98 @@
+# Phase 5, the cohesion pass: captures and measurements
+
+"Lighting, grade, bloom and sound levels as one game; full regression; load time and file size", and the last
+generated models put to use. What was done, step by step, and every number behind it: `STATUS.md` in this folder.
+All captures are of the page served over HTTP (every asset loaded), on a 390 x 844 screen at twice its pixels.
+
+## The captures
+
+| file | what it shows |
+|---|---|
+| `01-look-before.jpg` | every screen before the look was matched (B): Risk Blaster, Nest Egg Run and Boss Rush with a question up, the title, the hall; chapter select, results, Memory Bank, Final Exam, Strategy Guide |
+| `02-look-after.jpg` | the same ten screens after (made again after the review's fix round: the Guide's rows with the bosses' busts, the examiner's chest, Boss Rush's crowd) |
+| `03-look-changed.jpg` | the four screens whose grade changed, before and after, side by side (the hall, Memory Bank, Final Exam, Strategy Guide) |
+| `04-traffic-day.jpg` | Nest Egg Run by day: the generated car, van and bus in the traffic, lit by the sky and mirrored in the road |
+| `05-traffic-night.jpg` | the same at night: tail bars, nose lamps, sill lines, the copies' own paint and neon |
+| `06-traffic-near-miss.jpg` | a near miss: a generated car passing the rig; 12 frames, 3 frames apart (1/20 s) |
+| `07-ships-open-space.jpg` | Risk Blaster as a run begins, before the demon has come: the freighter, the tug, a wing of fighters, the cruiser far off, the asteroid belt |
+| `08-ships-open-space-strip.jpg` | the same; 6 frames, 7 frames apart (0.12 s) |
+| `09-ships-mid-fight.jpg` | mid-fight: the ships and rocks behind the demon, the answers and the fighter |
+| `10-hub-after-D.jpg` | the hall after its set was cut to 3.55 MB: the row of cabinets, a topper close, the trophy stand |
+| `11-calm-blaster.jpg`, `12-calm-racer.jpg`, `13-calm-boss.jpg`, `14-calm-hub.jpg` | the calm path (Setup > Reduced effects on, the browser asking for reduced motion): each game with a question up, and the hall |
+| `15-tail-close.jpg`, `16-tail-closest.jpg` | F: the demon come close and at its closest over the fighter, its tail carried back and aside, clear of the canopy |
+| `17-tunnel-way-out.jpg` | F: out of the tunnel: through its mouth the sky beyond and the road, its rails and lamp posts under it; the glare grows over 0.7 s, lies over the mouth too and clears after it (frame means 43 to 120 of 255, no step over 24); 12 frames, 9 frames apart (0.15 s) |
+| `18-boss-crowd.jpg` | fix round: Boss Rush with a question up, its crowd as lit cut-out figures at the foot of the band |
+
+The review's fix round made 02, 04 to 09, 13, 17 and 18 again. All other files are stills or sheets of stills. The frames of a strip run left to right, then row by row.
+
+## What each screen downloads (MB, from `src/js/03a-files.js`)
+
+Sound is fetched once a session and shared: the title brings the core effects, the announcer and its music; the hall
+its own. "New" is what a screen still has to fetch when it is reached from the hall.
+
+| screen | whole set | of it, models, skies and pictures | new, reached from the hall |
+|---|---|---|---|
+| title | 4.50 | 0.65 (it waits for none of it) | 4.50 (and the hall's 4.68 more, fetched while it is up) |
+| hall | 3.55 (sound 4.05 more, never waited for) | 3.55 | 0 (fetched during the title) |
+| Memory Bank | 5.11 | 1.09 | 1.79 |
+| Final Exam | 5.91 | 0.93 | 2.75 |
+| Strategy Guide | 3.56 | 0.95 | 1.66 |
+| Risk Blaster | 15.04 | 10.02 | 12.13 |
+| Nest Egg Run | 9.18 | 5.01 | 6.26 |
+| Boss Rush | 9.00, and its boss 2.48 to 4.03 | 1.51, and the boss | 6.09, and the boss |
+
+The page itself: 6.28 MB, 3.06 MB with gzip. The menus (chapter select, results, stats, setup) are drawn by the page
+and download nothing.
+
+## The sound, measured (nobody can listen here)
+
+EBU R128 loudness as the game plays each recording: through the cue's volume, the mix table (`Sound.MIX` in
+`src/js/02-sound.js`) and its bus, before the master gain and the limiter; music on the calm bus (+2.3 dB at a full
+streak). Made with `python3 arcade/tools/audio-levels.py --mix`.
+
+| layer | before | after |
+|---|---|---|
+| music: each track's integrated loudness over its loop | -20.7 (Risk Blaster) to -25.8 LUFS (Memory Bank): 5.1 dB apart | -21.4 to -21.5 LUFS, all nine tracks |
+| effects: each set's main events (75th percentile of its cues' loudest 400 ms) | core -14.7, combat -15.5, Nest Egg Run -12.8, Boss Rush's roars -12.7: +6.0 to +8.8 dB over the music | -14.7, -15.5, -14.5, -14.7: +6.0 to +7.0 dB over the music |
+| announcer: its lines' loudest 400 ms | median -9.6; "Boss Rush!" -20.4 (its file cut off at 0.21 s) | median -9.5 (-12.6 to -7.3); "Boss Rush!" retaken, -8.8: about 12 dB over the music, 5 over the effects |
+| the worst moment on any screen: its loudest blast, the loudest line and its music ducked under the line, all peaks in phase | +1.1 dBFS into the limiter, -1.5 dBFS out | +1.0 to +1.6 dBFS into the limiter, -1.5 to -1.6 dBFS out: nothing clips |
+
+The gains: music Memory Bank x1.64, Risk Blaster x0.91, Final Exam x0.93, the rest within x0.97 to x1.06; effects
+Nest Egg Run x0.82, Boss Rush's roars x0.80, core and combat x1; announcer x1. No file was re-encoded; the one bad file
+(the cut-off "Boss Rush!") was retaken.
+
+## Still weak, plainly
+
+- Open space is still mostly black between the stars: lit, the ships and rocks read as objects, but the frame's mean
+  brightness rose only from 11.6 to 16.2 of 255 (mid-fight 42.7 -> 53.5). The far rocks are still the built-in ones,
+  now small (96 as models would be too heavy).
+- Risk Blaster remains the heaviest: 15.0 MB to download and, on a desktop, about 435 MB of textures on the graphics
+  chip (235 MB on a phone with the cap).
+- The page itself is 6.3 MB (3.1 MB gzipped), half of it the built-in fallback models and pictures for a page opened
+  from disk; the build script that inlines them is outside this pass.
+- Nobody has listened: the mix is measured, not heard.
+- Out of the tunnel the glare washes the lens for about a second and a half (at most 0.62 of the haze), growing and
+  clearing gradually. The mouth shows the road, its rails and lamp posts beyond, not the bridge's towers: those come
+  out of the haze just after.
+
+## Graphics memory (textures held on the chip, `tools/scenarios/gpu-mem.js`)
+
+| | desktop | phone (`--phone`: no picture over 2048 px) |
+|---|---|---|
+| the hall, on screen | 182 MB | 182 MB |
+| the hall, kept while a game runs | 7.7 MB (was 182) | 7.7 MB |
+| Risk Blaster | 435 MB | 235 MB |
+| Boss Rush | 204 MB | 116 MB |
+| Memory Bank | 14 MB | 14 MB |
+
+## How they are made
+
+```bash
+node arcade/tools/capture.js arcade/tools/scenarios/cohesion-look.js --out <dir> --dpr 2       # the look sheets
+python3 arcade/tools/look-stats.py <dir>                                                         # the look, measured
+node arcade/tools/capture.js arcade/tools/scenarios/cohesion-traffic.js --out <dir> --dpr 2    # traffic, ships, rocks
+node arcade/tools/capture.js arcade/tools/scenarios/cohesion-calm.js --out <dir> --dpr 2 --reduced   # the calm path, flashes counted
+python3 arcade/tools/audio-levels.py --mix                                                       # the mix
+node arcade/tools/capture.js arcade/tools/scenarios/loads.js --out <dir> --dpr 1               # what a session downloads
+node arcade/tools/capture.js arcade/tools/scenarios/gpu-mem.js --out <dir> --dpr 1             # what the graphics chip holds
+```

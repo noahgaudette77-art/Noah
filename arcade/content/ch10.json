@@ -1,0 +1,1404 @@
+{
+  "chapter": 10,
+  "title": "Probate and Forms of Property Ownership/Transfer",
+  "objectives": [
+    "Explain to clients the purpose and process of probating a will and the significance of probate in the estate planning process.",
+    "Discuss the probate fee schedules of the various jurisdictions in Canada.",
+    "Advise clients regarding various techniques available to reduce probate fees and of any disadvantages associated with each technique.",
+    "Describe the forms of property ownership, their advantages and disadvantages, and their impact on probate fees."
+  ],
+  "guide": [
+    {
+      "heading": "Probate and Letters Probate",
+      "page": "10•3",
+      "points": [
+        "Probate (from the old legal word for 'proof') is the court process that confirms (or not) that a will is the deceased's valid last will; it also validates the executor's authority.",
+        "A properly signed and witnessed will by a competent testator, not revoked by a later will, is valid without probate. Institutions still want probate because they cannot know it is the LAST will.",
+        "Letters Probate (also called a Certificate of Appointment of Estate Trustee) are a court order naming the executor and confirming that the attached will is the effective one.",
+        "The executor applies (personally or through a lawyer) once the estate's fair market value is known. The sworn Application assures the court that a diligent search found no later will or codicil, which is slow where holograph wills are allowed.",
+        "Supporting documents: the will; an Affidavit of Value of the Estate (or Inventory of Estate Assets); an Affidavit of Execution of Will sworn by one witness.",
+        "Drawback: filings are public record, so anyone can read the will and the inventory of assets passing through the estate. Assets passing by named beneficiary or joint tenancy are not included."
+      ]
+    },
+    {
+      "heading": "When and why probate is required",
+      "page": "10•4",
+      "points": [
+        "There is usually no legal obligation to probate, but it is often a practical one: issuers insist on it for real estate, deposits at banks and trust companies, and public-company shares or bonds.",
+        "Issuers want proof they are dealing with the deceased's legally valid representative: a bank that pays out under a will later found invalid could be liable to the true beneficiaries.",
+        "If even one asset needs probate, ALL assets passing through the estate go into the inventory and fees are charged on the total. If fees exceed that asset's value (Miguel: $2,500 fee vs $2,000 of shares), forgoing it may be wiser.",
+        "Estates of cash, personal effects or family-company shares may not need probate at all; shares of a closely held private company can always be transferred without it.",
+        "For small amounts (e.g., under $30,000) an institution may accept a letter of indemnity (the executor's own promise, unwise if not a beneficiary) or a probate bond (a bonding company's promise).",
+        "Banks generally pay funeral expenses without probate because they are a first charge on the estate under any will.",
+        "An executor who pays out under an unprobated will that proves invalid may be personally liable. Letters granted in error are recalled and replaced, and anyone who relied on them is protected by the court order."
+      ]
+    },
+    {
+      "heading": "Probate in Quebec: which wills and why",
+      "page": "10•16",
+      "points": [
+        "In Quebec, holograph wills and wills made in the presence of witnesses must be probated after death. Notarial wills are not probated: the notary issues certified copies just after death.",
+        "Lawyer-drafted wills listed with the Quebec Bar's register count as wills made in the presence of witnesses, so they must be probated. A holograph or witnessed codicil must also be probated, since codicils follow the same formalities as wills.",
+        "Purposes: confirm the will appears to be the last one and is valid in form; let the liquidator carry out his or her office; obtain certified true copies. Probate does NOT shield the will's content from court challenges.",
+        "Terminology: the Civil Code uses 'homologation' for recognizing a mandator's incapacity and validating the protection mandate, not for wills, though in everyday speech 'homologation' is used for both.",
+        "Cost (course table): about $500 to $1,000 for a non-notarial will, nil for a notarial will. There are no probate taxes, so probate-fee planning is not done in Quebec."
+      ]
+    },
+    {
+      "heading": "Probate in Quebec: the procedure",
+      "page": "10•17",
+      "points": [
+        "A will can be probated by the court or by a notary; the will is examined by a clerk or by the notary.",
+        "Court route: any interested person files an Application for the Probate of a Will before a judge or clerk of the Superior Court of the deceased's judicial district of domicile (if domiciled outside Quebec: where the testator died or left property).",
+        "Unless the court grants a dispensation, all known heirs or successors must be notified so they can intervene.",
+        "Documents: original will; certified death certificate (Directeur de l'état civil); will searches (Notaries Chamber, Quebec Bar); sworn statements of the applicant (court route) and of a witness; proof that notice was sent to successors.",
+        "A holograph will also needs a sworn statement from a legally competent person attesting to the handwriting and signature, and that person cannot be an heir.",
+        "After court probate the clerk keeps the original and gives the applicant a certified copy; the liquidator can then manage the succession. A notary keeps the original and minutes and files a certified copy with the Superior Court. Proceedings are public."
+      ]
+    },
+    {
+      "heading": "Probate fees in common-law provinces",
+      "page": "10•6",
+      "points": [
+        "In theory a court tariff covering the cost of probating a will; paid out of the estate's assets and charged by the deceased's province of domicile on the assets passing through the will.",
+        "Based on fair market value at the date of death, gross: only mortgages on real estate are deducted. Marguerite: $200,000 house - $50,000 mortgage + $20,000 bonds = $170,000 (her $10,000 of credit debt is ignored).",
+        "Because other debts are not deductible, even insolvent estates can appear liable for large fees, though executors who are beneficiaries are unlikely to probate them.",
+        "Fees often far exceed the real administrative cost and rise with estate size for similar work, so they are seen as a 'hidden' death tax (Ontario tripled its fees in 1992 and recognizes them as a tax).",
+        "Fees vary widely by province, which seems inequitable: on $1,000,000 the course shows $14,500 in Ontario ($5 per $1,000 on the first $50,000, then $15 per $1,000) vs a $525 maximum in Alberta.",
+        "Other caps in the course table: Northwest Territories and Nunavut $400 maximum; Yukon $140 on estates over $25,000. Students are not expected to memorize the schedules."
+      ]
+    },
+    {
+      "heading": "Avoiding probate fees: the big picture",
+      "page": "10•10",
+      "points": [
+        "Every technique is a variation on keeping the testator's assets outside the estate, since fees are based on the value of what passes under the will.",
+        "Methods: inter vivos gifts, trusts, named beneficiaries, joint ownership, provincial variations, multiple wills, and converting personal debt into secured or corporate debt.",
+        "Fee avoidance must stay a SECONDARY objective: fees are trivial next to income and capital gains taxes, and saving them must never jeopardize the plan's primary goals. Point this out to clients.",
+        "Quebec: there is no planning to avoid probate 'taxes', but these concepts can still serve other purposes, such as income tax planning."
+      ]
+    },
+    {
+      "heading": "Inter vivos gifts and gifts mortis causa",
+      "page": "10•11",
+      "points": [
+        "The simplest way to avoid fees on an asset is not to own it at death. The donor gives up its use, but gets to see the beneficiary enjoy the gift.",
+        "Except for gifts to a spouse or common-law partner, the donor is deemed to dispose at fair market value, so capital gains or recapture are taxed that year; a gifted life policy may trigger a taxable policy gain.",
+        "If the donor instead waits until death, income tax and probate fees are both due then, and life insurance on the donor's life can cover them.",
+        "Common-law donatio mortis causa: a deathbed gift, valid if the donor is seriously ill and dies of that condition; if the donor survives, there is no gift. It is outside the estate, but costly to document and items can be hard to recover.",
+        "Quebec gift mortis causa: made by spouses in a marriage or civil union contract, tied to the contingency of death rather than its immediacy. Peter's gift at age 25 still gave Diana his whole estate at his death at 75."
+      ]
+    },
+    {
+      "heading": "Trusts",
+      "page": "10•11",
+      "points": [
+        "An inter vivos trust takes assets out of the estate (no fees at the settlor's death) without giving up control completely, but the transfer is a disposition that can trigger capital gains or recapture.",
+        "Alter ego (single beneficiary) and joint partner (spouses or same-sex couples) trusts, created in 2001, receive capital property without a disposition; per the course, all participants must be over age 65.",
+        "Spousal trust (inter vivos or testamentary): no fees at the second spouse's death, because the trust assets never form part of that spouse's estate.",
+        "Successive life tenants: passing the beneficial interest is not 'property' subject to probate, so fees are paid once, at the testator's death (Manuel), not again at each child's death as with outright gifts.",
+        "If a trust is used only to avoid fees, weigh: loss of control and flexibility (e.g., no longer able to sell and keep the proceeds), tax on retained earnings and capital gains, and trustee administration and filing costs.",
+        "Clients may still want such trusts for property of great sentiment, a desire for control known as 'strings from the grave'."
+      ]
+    },
+    {
+      "heading": "Naming beneficiaries",
+      "page": "10•13",
+      "points": [
+        "Life insurance and registered plans with a named beneficiary usually pass outside the estate, free of probate fees, unless the estate itself is the beneficiary.",
+        "Insurance proceeds go to the beneficiary named in the policy or the will, later designations overriding earlier ones. They fall into the estate if all named and contingent beneficiaries die before the life insured.",
+        "Insurance trust: a separate trust deed, unfunded during life and not owning the policy, named as beneficiary. The CRA taxes it as a testamentary trust; it avoids fees and allocates a confidential lump sum.",
+        "Drawback: proceeds outside the will cannot be used by the executor to balance benefits among family members or to pay funeral costs, living expenses and taxes, so other assets may have to be sold at poor prices.",
+        "RRSPs and RRIFs: insurer-issued plans bypass the estate if a non-estate beneficiary is named; bank or trust plans may pay without probate (usually under $30,000). Either way, no probate fees. Conflicting beneficiary records cause delay.",
+        "Pension survivor benefits paid to a named beneficiary (e.g., the spouse) also bypass the estate. Poorly drafted designations in wills can create probatable legacies instead."
+      ]
+    },
+    {
+      "heading": "Joint ownership, provincial variations, multiple wills and debt",
+      "page": "10•14",
+      "points": [
+        "Common law: JTWROS assets pass to the surviving joint tenant(s) by 'operation of law', outside the estate, so no probate fees apply (see the drawbacks of joint tenancy).",
+        "Provincial variations: have assets probated in lower-fee provinces, e.g., hold real estate or vacation property there (appropriate but impractical). Moving to a low-fee province is the most drastic, highly inappropriate option.",
+        "Multiple wills: one will for assets needing probate, a second, unprobated will for those that don't (e.g., private-company shares). Validated by the courts only in Ontario, because of its statute's wording.",
+        "Debt conversion: personal debt is not deductible but real estate mortgages are. Converting Pia's $50,000 of personal debt into a mortgage on her house cut her probate value from $280,000 to $230,000.",
+        "Shifting personal debt into a wholly owned company lowers the shares' value: moving Sebastian's $200,000 loan into his company cut his probate value from $2,000,000 to $1,800,000.",
+        "For every strategy, the costs (legal and registration fees, interest) should not outweigh the probate fees avoided."
+      ]
+    },
+    {
+      "heading": "Forms of ownership and sole ownership",
+      "page": "10•17",
+      "points": [
+        "Two fundamental forms: sole ownership (one person holds the rights and title) and joint ownership, or co-ownership (rights and title shared by two or more people).",
+        "'Property' covers real property plus securities and virtually anything whose ownership can be registered.",
+        "The form of registration affects the owners' rights, how property passes at death and, in common-law provinces, whether it is in the estate for probate.",
+        "A sole owner may sell, give away or bequeath the property at any time, though modern family law may restrict this for the matrimonial home.",
+        "At death, solely owned property falls into the estate and its fair market value net of mortgages attracts probate fees: the 'price' of sole ownership's flexibility."
+      ]
+    },
+    {
+      "heading": "Common-law co-ownership: tenancy in common vs JTWROS",
+      "page": "10•18",
+      "points": [
+        "In both forms each owner has an equitable and beneficial interest in the whole and may dispose of it during life, but none can bar the others from any part. The key difference is what happens at death.",
+        "'Joint' does not mean survivorship: joint accounts or signers only give access; insurers' 'joint owners' of annuities are successive owners; co-owned life policies need contingent co-owners.",
+        "Tenancy in common: shares may be unequal (Todd 75%, Buzz 25%) yet all use the whole; each can sell independently; at death the interest goes into the estate, attracts fees and passes by will.",
+        "JTWROS: shares must be equal; at death the interest passes automatically and equally to the survivors (Peter's third splits into two sixths). It falls into an estate only for the last surviving joint owner.",
+        "Registration must say 'jointly, with rights of survivorship'. Unclear wording is likely read as a tenancy in common: Ted's half of the cottage went through his estate to his sons, not to his daughter.",
+        "JTWROS with the eventual beneficiary is the most popular probate-avoidance technique and virtually standard between spouses, though creditor protection and capital gains planning can argue against it."
+      ]
+    },
+    {
+      "heading": "Quebec co-ownership: undivided and divided",
+      "page": "10•21",
+      "points": [
+        "Quebec has no automatic survivorship rights. Co-ownership means two or more persons own the same property jointly and concurrently, each holding a share of the right of ownership.",
+        "Undivided co-ownership arises when people buy together (all names on the deed, e.g., spouses buying a home). No one owns a physical part; all have identical rights to the whole and manage it together.",
+        "An undivision agreement can give each owner exclusive use of a portion (Marie upstairs, Sylvie downstairs), but costs such as replacing one floor's windows are still borne by both.",
+        "An undivided co-owner can hypothecate only her own share; the others are not liable, and on default the creditor may, under certain conditions, seize and sell that share.",
+        "A co-owner may sell her share, but the others can free the buyer by refunding the purchase costs within one year of the purchase; an undivision agreement may add a right of first refusal.",
+        "Divided co-ownership (condominium): exclusive ownership of a unit plus undivided ownership of common parts, created by a declaration of co-ownership published in the property registry and run by a syndicate of co-owners."
+      ]
+    },
+    {
+      "heading": "Drawbacks of joint tenancy",
+      "page": "10•22",
+      "points": [
+        "Loss of control: the transferor cannot sell the whole property alone; per the course, jointly owned real estate needs every tenant's permission even to sell one's own interest. Any joint owner of a bank account can withdraw all the funds.",
+        "Creditors: the new owner's creditors (bankruptcy, marriage breakdown) may reach the joint interest; the deceased's unpaid creditors may also claim against the joint property.",
+        "Tax: except for transfers to a spouse, the transferred share is deemed sold at fair market value (Morris: half of an $800,000 account with a $400,000 ACB gives a $200,000 gain; two-thirds if made joint with two sons).",
+        "Joint registration does not beat the attribution rules (all the interest on Todd's joint GIC is taxed to Todd) and can cost the principal residence exemption on a new owner's share. Legal fees and land transfer tax are paid now.",
+        "Family law: a new joint tenant's spouse may claim a share of a matrimonial home, and a transferor's surviving spouse's matrimonial claim voids the automatic survivorship.",
+        "Courts have voided joint registrations (a bank account with a son) where no lifetime rights were intended, putting the asset back in the estate. Tenants in common are taxed in proportion to their interests.",
+        "Maureen: registering assets jointly with her minor sons would cost her control, the boys could not deal with the assets, attribution would apply and gains would be triggered. A trust in her will is better."
+      ]
+    }
+  ],
+  "tips": [
+    "EXAM TIP: A properly signed and witnessed will is valid without probate. Probate just proves to third parties that it is the LAST will.",
+    "EXAM TIP: Quebec notarial wills need no probate. Holograph wills, witnessed wills and lawyer-drafted wills must be probated.",
+    "EXAM TIP: Common-law probate fees use gross value at death. Only real estate mortgages are deducted, never credit cards or personal loans.",
+    "EXAM TIP: If even one asset needs probate, every asset passing through the estate counts toward the probate fee.",
+    "DID YOU KNOW? Ontario tripled its probate fees in 1992 and now recognizes them as a tax: $14,500 on a $1,000,000 estate in the course's schedule.",
+    "EXAM TIP: Joint tenants always hold equal shares. Unequal shares signal a tenancy in common, which falls into the estate at death.",
+    "EXAM TIP: Survivorship cannot defeat creditors or a spouse's matrimonial claim, and joint registration does not escape income attribution.",
+    "DID YOU KNOW? A donatio mortis causa fails if the donor recovers. In Quebec, a gift mortis causa is made in a marriage or civil union contract.",
+    "EXAM TIP: Probate-fee savings are always a secondary goal. They are trivial next to income and capital gains taxes.",
+    "DID YOU KNOW? Quebec has no automatic survivorship: co-owners hold undivided shares, or a divided unit in a condominium.",
+    "EXAM TIP: Property left in trust for successive life tenants pays probate fees once, at the testator's death, not at each life tenant's death.",
+    "DID YOU KNOW? The person attesting to the handwriting on a Quebec holograph will cannot be one of the heirs."
+  ],
+  "flashcards": [
+    {
+      "id": "c10-f001",
+      "topic": "Probate basics",
+      "page": "10•3",
+      "front": "Probate (definition)",
+      "back": "The legal process by which the courts confirm (or not) that a will is the deceased's valid last will and testament. It also validates the executor's authority. 'Probate' is an old legal word meaning 'proof'."
+    },
+    {
+      "id": "c10-f002",
+      "topic": "Probate basics",
+      "page": "10•3",
+      "front": "Letters Probate",
+      "back": "A court order declaring who the executor is and that the attached will is the effective one, giving the executor authority over the estate (also called a Certificate of Appointment of Estate Trustee). If granted in error, the court recalls them; those who relied on them are protected."
+    },
+    {
+      "id": "c10-f003",
+      "topic": "Probate basics",
+      "page": "10•4",
+      "front": "Documents filed with a common-law Application for Probate",
+      "back": "1) The last will and testament; 2) an Affidavit of Value of the Estate (or, in some jurisdictions, an Inventory of Estate Assets); 3) an Affidavit of Execution of Will by one witness. The sworn Application also confirms a diligent search for any later will or codicil."
+    },
+    {
+      "id": "c10-f004",
+      "topic": "When probate is required",
+      "page": "10•4",
+      "front": "Assets that typically require probate before transfer",
+      "back": "1) Real estate; 2) funds on deposit at a bank, trust company or other financial institution; 3) securities such as shares or bonds of public corporations. Issuers want proof they are dealing with the deceased's legally valid representative."
+    },
+    {
+      "id": "c10-f005",
+      "topic": "When probate is required",
+      "page": "10•4",
+      "front": "Is probate legally required in most common-law jurisdictions?",
+      "back": "Usually not, but it is often a practical requirement because issuers insist on it. Estates of cash, personal effects or family-company shares may not need it. Banks generally pay funeral expenses (a first charge on the estate under any will) without probate."
+    },
+    {
+      "id": "c10-f006",
+      "topic": "When probate is required",
+      "page": "10•5",
+      "front": "One estate asset needs probate: what is counted for fees?",
+      "back": "All assets passing through the estate, not just the one needing probate. If the fees on the total would exceed that asset's value, it may be wiser to forgo the asset (if the will lets the executor abandon assets not worth collecting)."
+    },
+    {
+      "id": "c10-f007",
+      "topic": "When probate is required",
+      "page": "10•5",
+      "front": "Letter of indemnity vs probate bond",
+      "back": "Either may replace Letters Probate for small amounts (e.g., under $30,000). Letter of indemnity: the executor's enforceable promise to reimburse the institution if the will proves invalid (unwise for an executor who isn't a beneficiary). Probate bond: the same promise by a bonding company."
+    },
+    {
+      "id": "c10-f008",
+      "topic": "When probate is required",
+      "page": "10•6",
+      "front": "Executor's risk when paying out under an unprobated will",
+      "back": "If the will proves invalid or is superseded by a later will, the payments were made 'in error' and the executor may be personally liable. Probate protects the executor, and institutions acting under Letters Probate are protected by the court order."
+    },
+    {
+      "id": "c10-f009",
+      "topic": "Probate in Quebec",
+      "page": "10•6",
+      "front": "Quebec: which wills must be probated?",
+      "back": "Holograph wills and wills made in the presence of witnesses, including lawyer-drafted wills (treated as witnessed wills) and holograph or witnessed codicils. Notarial wills need no probate: the notary can issue certified copies just after death."
+    },
+    {
+      "id": "c10-f010",
+      "topic": "Probate fees",
+      "page": "10•6",
+      "front": "Basis of probate fees in common-law provinces",
+      "back": "The fair market value at death of the assets passing through the estate, charged by the deceased's province of domicile and paid from the estate. Only mortgages on real estate are deducted; other debts, such as credit cards or personal loans, are not."
+    },
+    {
+      "id": "c10-f011",
+      "topic": "Probate fees",
+      "page": "10•7",
+      "front": "Why probate fees are called a 'hidden' death tax",
+      "back": "They often far exceed the courts' actual administrative cost, and large estates pay far more for similar work. Ontario tripled its fees in 1992 and recognizes them as a tax. Wide differences between provinces also make them seem inequitable."
+    },
+    {
+      "id": "c10-f012",
+      "topic": "Key numbers",
+      "page": "10•8",
+      "front": "Capped or flat probate fees in the course's table",
+      "back": "Alberta: $525 maximum (estates over $250,000). Northwest Territories and Nunavut: $400 maximum. Yukon: $140 on estates over $25,000. Most other provinces charge a rate per $1,000 with no cap. (The schedules need not be memorized.)"
+    },
+    {
+      "id": "c10-f013",
+      "topic": "Key numbers",
+      "page": "10•9",
+      "front": "Ontario probate fee schedule (course figures)",
+      "back": "No fee on estates of $1,000 or less; $5 per $1,000 on the first $50,000; $15 per $1,000 above $50,000. A $1,000,000 estate pays $250 + $14,250 = $14,500."
+    },
+    {
+      "id": "c10-f014",
+      "topic": "Key numbers",
+      "page": "10•9",
+      "front": "Quebec probate cost (course table)",
+      "back": "Non-notarial will (holograph or witnessed): about $500 to $1,000 to probate ('homologate'). Notarial will: nil, since no probate is needed. Quebec levies no value-based probate tax."
+    },
+    {
+      "id": "c10-f015",
+      "topic": "Avoiding probate fees",
+      "page": "10•25",
+      "front": "Methods of reducing probate fees (chapter summary)",
+      "back": "1) Inter vivos gifts; 2) trusts; 3) named beneficiaries; 4) joint ownership of assets; 5) multiple wills; 6) converting personal debt into secured or corporate debt. All keep assets out of the estate, and all should stay secondary to the plan's main goals."
+    },
+    {
+      "id": "c10-f016",
+      "topic": "Inter vivos gifts",
+      "page": "10•11",
+      "front": "Inter vivos gift: pros and cons",
+      "back": "Pros: no probate fees (not owned at death); the donor sees the beneficiary enjoy it. Cons: the donor loses its use; deemed disposition at fair market value (except to a spouse), so capital gains or recapture are taxed now; a gifted life policy may trigger a policy gain."
+    },
+    {
+      "id": "c10-f017",
+      "topic": "Gifts mortis causa",
+      "page": "10•11",
+      "front": "Donatio mortis causa (common law)",
+      "back": "A 'deathbed' gift made in contemplation of death. Valid if the donor is seriously ill when giving it and later dies of that condition; if the donor survives, the gift does not take place. The property is outside the estate, so no probate fees apply."
+    },
+    {
+      "id": "c10-f018",
+      "topic": "Gifts mortis causa",
+      "page": "10•11",
+      "front": "Gift mortis causa (Quebec)",
+      "back": "A gift made by spouses in their marriage or civil union contract, tied to the contingency of death rather than its immediacy. It stays valid: a gift of the whole estate made at age 25 still passes it to the spouse at death at 75, even with no will."
+    },
+    {
+      "id": "c10-f019",
+      "topic": "Key numbers",
+      "page": "10•11",
+      "front": "Alter ego and joint partner trusts",
+      "back": "Created in 2001. Alter ego trust: a single beneficiary; joint partner trust: spouses or same-sex couples. Transfers of capital property to them don't trigger a disposition, but per the course all participants must be over age 65."
+    },
+    {
+      "id": "c10-f020",
+      "topic": "Trusts",
+      "page": "10•12",
+      "front": "Why trusts avoid probate fees at a life tenant's death",
+      "back": "Trust assets never form part of the beneficiary's estate, and passing the beneficial interest to the next life tenant is not 'property' subject to probate. So a spousal trust avoids fees at the second spouse's death, and successive life interests avoid fees at each death."
+    },
+    {
+      "id": "c10-f021",
+      "topic": "Trusts",
+      "page": "10•12",
+      "front": "Costs of a trust used only to avoid probate fees",
+      "back": "1) Loss of control and flexibility for the settlor or beneficiaries (e.g., can't sell and keep the proceeds); 2) tax on retained earnings and capital gains (inter vivos trusts); 3) trustee administration and tax-filing costs. Often not worth it for probate savings alone."
+    },
+    {
+      "id": "c10-f022",
+      "topic": "Trusts",
+      "page": "10•13",
+      "front": "'Strings from the grave'",
+      "back": "A client's desire to keep control of property after death, often property of great sentiment, e.g., leaving a cottage in trust for the children and then the grandchildren so that the children can never sell it."
+    },
+    {
+      "id": "c10-f023",
+      "topic": "Naming beneficiaries",
+      "page": "10•13",
+      "front": "Insurance trust",
+      "back": "A separate trust deed (apart from the will) named as beneficiary of a life policy it does not own. Created but unfunded during life, it is taxed as a testamentary trust (CRA ruling), avoids probate fees and lets a confidential lump sum be allocated as the testator wishes."
+    },
+    {
+      "id": "c10-f024",
+      "topic": "Naming beneficiaries",
+      "page": "10•13",
+      "front": "Drawbacks of insurance proceeds passing outside the will",
+      "back": "The executor can't use them to: 1) allocate benefits among family members by need, tax position or business opportunity; 2) provide cash for funeral costs, family living expenses and taxes, which may force other assets to be sold at poor prices."
+    },
+    {
+      "id": "c10-f025",
+      "topic": "Naming beneficiaries",
+      "page": "10•14",
+      "front": "RRSPs, RRIFs and pension survivor benefits at death",
+      "back": "Insurer-issued RRSPs and RRIFs bypass the estate if a non-estate beneficiary is named; bank or trust plans may pay without probate (usually under $30,000). Pension survivor benefits paid to a named beneficiary also bypass the estate. None is subject to probate fees."
+    },
+    {
+      "id": "c10-f026",
+      "topic": "Other probate strategies",
+      "page": "10•14",
+      "front": "Provincial variations as a probate strategy",
+      "back": "Assets may be probated in a lower-fee province, e.g., by holding real estate or vacation property in a low-fee province where it would be probated (appropriate but impractical). Relocating is the simplest but most drastic, highly inappropriate and unlikely approach."
+    },
+    {
+      "id": "c10-f027",
+      "topic": "Other probate strategies",
+      "page": "10•15",
+      "front": "Multiple wills strategy",
+      "back": "One will covers assets needing probate (e.g., real estate); a second, unprobated will covers assets that don't (e.g., private-company shares), so fees apply only to the first. Validated by the courts only in Ontario, owing to the wording of its probate statute."
+    },
+    {
+      "id": "c10-f028",
+      "topic": "Other probate strategies",
+      "page": "10•15",
+      "front": "Converting personal debt to cut probate fees",
+      "back": "Personal debts aren't deductible but real estate mortgages are. Converting personal debt into a mortgage on a debt-free home, or shifting it into a wholly owned company (reducing the shares' value), lowers the probate value. Costs must not outweigh the fees saved."
+    },
+    {
+      "id": "c10-f029",
+      "topic": "Probate in Quebec",
+      "page": "10•16",
+      "front": "Quebec: main purposes of probate",
+      "back": "1) Determine that the will appears to be the last one and that its form is valid; 2) allow the liquidator to carry out his or her office; 3) obtain certified true copies of the original will. Probate does not prevent court challenges to the will's content."
+    },
+    {
+      "id": "c10-f030",
+      "topic": "Probate in Quebec",
+      "page": "10•16",
+      "front": "Quebec: who applies for probate, and where?",
+      "back": "By the court: any interested person files an Application for the Probate of a Will before a judge or clerk of the Superior Court of the deceased's judicial district of domicile (if domiciled outside Quebec: where the testator died or left property). A notary can also probate."
+    },
+    {
+      "id": "c10-f031",
+      "topic": "Probate in Quebec",
+      "page": "10•17",
+      "front": "Quebec: documents for an application to probate",
+      "back": "Original will; certified death certificate (Directeur de l'état civil); will searches (Notaries Chamber, Quebec Bar); applicant's sworn statement (court); a witness's sworn statement; for a holograph will, a non-heir's statement on the handwriting; proof of notice to successors."
+    },
+    {
+      "id": "c10-f032",
+      "topic": "Probate in Quebec",
+      "page": "10•17",
+      "front": "Quebec: what happens after probate",
+      "back": "Court: the clerk keeps the original and gives the applicant a certified copy; the liquidator can then manage the succession. Notary: the original and minutes stay in the notary's records; a certified copy is filed with the Superior Court. Proceedings are public."
+    },
+    {
+      "id": "c10-f033",
+      "topic": "Sole ownership",
+      "page": "10•18",
+      "front": "Sole ownership",
+      "back": "One registered owner with full, unfettered rights to sell, give away or bequeath the property (family law may limit this for the matrimonial home). At death it falls into the estate, and in common-law provinces its value net of mortgages attracts probate fees."
+    },
+    {
+      "id": "c10-f034",
+      "topic": "Common-law co-ownership",
+      "page": "10•18",
+      "front": "Co-ownership in common-law provinces: the two forms",
+      "back": "Tenancy in common and joint tenancy with right of survivorship. In both, each owner has an equitable and beneficial interest in the whole and none can bar the others from any part of it. The prime difference is what happens to an owner's interest at death."
+    },
+    {
+      "id": "c10-f035",
+      "topic": "Common-law co-ownership",
+      "page": "10•19",
+      "front": "'Joint' in banking and insurance terminology",
+      "back": "Joint accounts or signers only give access, not survivorship. 'Joint owners' of annuities usually means successive owners. Co-owned life policies aren't JTWROS: contingent co-owners are needed. 'Joint-first' or 'joint-last-to-die' policies pay on the first or second death."
+    },
+    {
+      "id": "c10-f036",
+      "topic": "Tenancy in common",
+      "page": "10•19",
+      "front": "Tenancy in common: three features",
+      "back": "1) Interests may differ in size (e.g., 75%/25%), yet each owner may use the whole property; 2) each interest may be dealt with independently, even against the others' wishes; 3) the interest is part of a deceased tenant's estate and subject to probate fees."
+    },
+    {
+      "id": "c10-f037",
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•20",
+      "front": "Joint tenancy with right of survivorship (JTWROS)",
+      "back": "Joint tenants hold equal shares. At a death, the interest passes automatically and equally to the survivors, outside the estate and free of probate fees. Registration must clearly say 'jointly, with rights of survivorship'; otherwise courts tend to find a tenancy in common."
+    },
+    {
+      "id": "c10-f038",
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•21",
+      "front": "Joint tenancy between spouses",
+      "back": "Virtually the standard form of ownership between spouses, and changing to JTWROS is the most popular probate-avoidance technique. Legitimate reasons not to use it include protecting the asset from a spouse's potential creditors and capital gains tax planning."
+    },
+    {
+      "id": "c10-f039",
+      "topic": "Quebec co-ownership",
+      "page": "10•21",
+      "front": "Quebec: undivided co-ownership",
+      "back": "Arises when two or more people buy property together (all names on the deed). Each holds a share of the ownership right but no exclusive physical part, and all manage it together. An undivision agreement can give each exclusive use of a portion. No automatic survivorship."
+    },
+    {
+      "id": "c10-f040",
+      "topic": "Quebec co-ownership",
+      "page": "10•22",
+      "front": "Quebec: divided co-ownership (condominium)",
+      "back": "Each owner has exclusive ownership of a unit plus undivided ownership of common parts (parking, garden, pool). Created by publishing a declaration of co-ownership in the property registry; a syndicate of co-owners manages common property. Units may be sold subject to the declaration."
+    },
+    {
+      "id": "c10-f041",
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•22",
+      "front": "Drawbacks of joint tenancy with a non-spouse",
+      "back": "Loss of control; joint access; new owner's creditors and spouse; deemed disposition now; legal fees and land transfer tax now; deceased's creditors can still claim; attribution still applies; matrimonial claims; possible loss of the principal residence exemption."
+    },
+    {
+      "id": "c10-f042",
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•23",
+      "front": "Tax on moving property into joint tenancy",
+      "back": "Except for a transfer to a spouse or common-law partner, the transferor is deemed to dispose of the transferred share at fair market value and reports any capital gain or recapture that year: half with one new joint owner, two-thirds with two."
+    },
+    {
+      "id": "c10-f043",
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•24",
+      "front": "Joint tenancy and matrimonial property claims",
+      "back": "A married person can't sidestep matrimonial property rules by registering property jointly with a non-spouse: a surviving spouse's claim voids the automatic survivorship. A new joint tenant's own spouse may also claim a share of a matrimonial home."
+    }
+  ],
+  "questions": [
+    {
+      "id": "c10-q001",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Probate basics",
+      "page": "10•3",
+      "q": "What is probate, as described in the course?",
+      "options": [
+        "The court process that confirms the deceased had valid title to each estate asset",
+        "The court process that resolves disputes between beneficiaries over the residue",
+        "The provincial process that values estate assets for the final income tax return",
+        "The court process that confirms (or not) a will as the valid last will"
+      ],
+      "answer": 3,
+      "explain": "Probate is the legal process by which the courts confirm (or not) that a will is the valid last will and testament, which also validates the executor's authority. It does not deal with title to the assets or with tax valuations."
+    },
+    {
+      "id": "c10-q002",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Probate basics",
+      "page": "10•3",
+      "q": "A will that was properly signed and witnessed by a mentally competent testator has no legal effect until Letters Probate are granted.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. A proper will that has not been revoked by a later will is valid without Letters Probate. Probate is sought mainly because financial institutions and other third parties cannot otherwise know that the document is really the last will."
+    },
+    {
+      "id": "c10-q003",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate basics",
+      "page": "10•4",
+      "q": "In a common-law province, the Application for Probate is supported by an Affidavit of Execution of Will. Who swears it, and what does it confirm?",
+      "options": [
+        "The executor's lawyer, confirming that no later will or codicil could be found",
+        "One witness, confirming that the formalities of signing the will were observed",
+        "Each beneficiary, confirming that he or she has read and accepts the will's terms",
+        "The executor, confirming the fair market value of all of the estate's assets"
+      ],
+      "answer": 1,
+      "explain": "The Affidavit of Execution is sworn by one witness and confirms the signing formalities. The estate's value goes in a separate Affidavit of Value (or Inventory), and the sworn Application itself assures the court that a diligent search for a later will or codicil was made."
+    },
+    {
+      "id": "c10-q004",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Probate basics",
+      "page": "10•4",
+      "q": "Once a will has been probated in a common-law province, anyone can see its terms and an inventory of the assets passing through the estate.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Court filings are normally public record, which is one disadvantage of probate. Assets passing outside the estate (by designated beneficiary or joint tenancy) are not included in the estate's value, so they are not disclosed in these proceedings."
+    },
+    {
+      "id": "c10-q005",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "When probate is required",
+      "page": "10•4",
+      "q": "When he died, an Ontario client held the assets listed below. Which one is most likely to force his executor to apply for probate?",
+      "options": [
+        "A rental condo registered in his sole name",
+        "Shares of his family's private holding company",
+        "His furniture, jewellery and other personal effects",
+        "An insurer-issued RRSP naming his daughter as beneficiary"
+      ],
+      "answer": 0,
+      "explain": "Real estate, deposits at financial institutions and public-company securities normally need probate before the issuer or transfer agent will act. Private-company shares and personal effects can usually be dealt with without it, and an RRSP with a named beneficiary passes outside the estate."
+    },
+    {
+      "id": "c10-q006",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "When probate is required",
+      "page": "10•6",
+      "q": "Lena's executor obtains Letters Probate, and her bank transfers her accounts as he directs. Months later, a valid later will turns up. What happens?",
+      "options": [
+        "The court and the bank share liability equally for the assets that were transferred in error",
+        "The bank must repay the later will's beneficiaries, as it relied on a will that proved invalid",
+        "The Letters are called back and new ones granted; the bank is protected by the court order",
+        "The first Letters stand because that will was probated first, so the later will is ignored"
+      ],
+      "answer": 2,
+      "explain": "Letters Probate granted in error are called back and new Letters issued. Institutions that dealt with the erroneous Letters are protected because they acted under a court order. Without probate, the bank (and an executor who made payments) could have been liable."
+    },
+    {
+      "id": "c10-q007",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "When probate is required",
+      "page": "10•5",
+      "q": "Odette dies domiciled in Ontario. Her $250,000 estate is mostly personal effects and private-company shares, plus $3,000 of public shares, the only asset needing probate. Her will lets the executor abandon assets not worth collecting. Using the course's Ontario fee schedule ($5 per $1,000 on the first $50,000, then $15 per $1,000), what should the executor do?",
+      "options": [
+        "Probate the will: fees on the whole estate ($2,500) would be less than the shares' value",
+        "Forgo the shares: fees on the whole estate ($3,750) would exceed their $3,000 value",
+        "Forgo the shares: fees on the whole estate ($3,250) would exceed their $3,000 value",
+        "Probate the will: fees apply only to the public shares, so they would be just $15"
+      ],
+      "answer": 2,
+      "explain": "Once probate is needed for even one asset, every asset passing through the estate goes into the inventory. Fee = $250 on the first $50,000 + $15 x 200 = $3,000, or $3,250 in total, which exceeds the $3,000 of shares, so abandoning them saves money."
+    },
+    {
+      "id": "c10-q008",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "When probate is required",
+      "page": "10•5",
+      "q": "A bank agrees to release a small account without Letters Probate. What distinguishes a letter of indemnity from a probate bond?",
+      "options": [
+        "An indemnity is used for deposits under $30,000; a bond is used only for real estate",
+        "An indemnity is the executor's own promise to reimburse; a bond is a bonding company's promise",
+        "An indemnity is issued by the court; a bond is signed by all of the beneficiaries",
+        "An indemnity is a bonding company's promise to reimburse; a bond is the executor's own promise"
+      ],
+      "answer": 1,
+      "explain": "Both promise to reimburse the institution for costs and claims if the will proves invalid, and may be accepted for small amounts (e.g., under $30,000). The letter of indemnity is the executor's own promise, unwise for an executor who is not also a beneficiary; a probate bond is the same promise by a bonding company."
+    },
+    {
+      "id": "c10-q009",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Probate in Quebec",
+      "page": "10•6",
+      "q": "In Quebec, which form of will can be acted on without probate, the notary issuing certified copies just after death?",
+      "options": [
+        "A will made in the presence of witnesses",
+        "A will drafted by a lawyer and listed with the Bar",
+        "A holograph will",
+        "A notarial will"
+      ],
+      "answer": 3,
+      "explain": "Notarial wills are not subject to probate; the notary can give certified copies right after death. Holograph wills, wills made in the presence of witnesses and lawyer-drafted wills (treated as witnessed wills) must be probated."
+    },
+    {
+      "id": "c10-q010",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate in Quebec",
+      "page": "10•6",
+      "q": "Jacques, a Quebec resident, had his will drafted by a lawyer and listed in the Quebec Bar's register. How is the will treated after his death?",
+      "options": [
+        "As a will made in the presence of witnesses, so it must be probated",
+        "As a codicil, which needs probate only if one of the heirs contests it",
+        "As a holograph will, needing only a sworn statement from the liquidator",
+        "As a notarial will, so certified copies are available without probate"
+      ],
+      "answer": 0,
+      "explain": "A lawyer-drafted will listed with the Quebec Bar's register is considered at law a will made in the presence of witnesses, so it must be probated. Only notarial wills escape probate."
+    },
+    {
+      "id": "c10-q011",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Probate in Quebec",
+      "page": "10•6",
+      "q": "In Quebec, if a notarial will is later amended by a codicil written in the testator's own hand, that codicil must be probated.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. A codicil must respect the same formalities as a will, so a holograph codicil (or one made in the presence of witnesses) must be probated, even though the original notarial will itself needs no probate."
+    },
+    {
+      "id": "c10-q012",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Probate fees",
+      "page": "10•6",
+      "q": "In the common-law provinces, probate fees are calculated on:",
+      "options": [
+        "The estate's value after deducting all of the deceased's debts",
+        "The adjusted cost base of the estate's assets at the date of death",
+        "Estate assets plus any assets that pass to named beneficiaries",
+        "The fair market value of the estate's assets at the date of death"
+      ],
+      "answer": 3,
+      "explain": "Fees are based on the fair market value at death of the assets passing through the estate. Debts are not deducted, except mortgages on real estate, and assets passing to named beneficiaries or by survivorship are outside the estate."
+    },
+    {
+      "id": "c10-q013",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate fees",
+      "page": "10•6",
+      "q": "Bruno dies in a common-law province owning a $300,000 home with an $80,000 mortgage and $40,000 of bonds. He also owes $15,000 on credit cards. What is his estate's value for probate fee purposes?",
+      "options": [
+        "$245,000",
+        "$260,000",
+        "$325,000",
+        "$340,000"
+      ],
+      "answer": 1,
+      "explain": "Only mortgages on real estate are deducted: $300,000 + $40,000 - $80,000 = $260,000. Other personal debts, such as the $15,000 owed on credit cards, are not deductible ($245,000 wrongly deducts them)."
+    },
+    {
+      "id": "c10-q014",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate fees",
+      "page": "10•7",
+      "q": "Using the course's provincial fee schedules, how would probate fees on a $1,000,000 estate compare between Ontario and Alberta?",
+      "options": [
+        "About $7,000 in each, as provinces share one schedule",
+        "About $14,500 in Ontario; a $525 maximum in Alberta",
+        "About $5,000 in Ontario; a $525 maximum in Alberta",
+        "About $14,500 in Ontario; about $7,000 in Alberta"
+      ],
+      "answer": 1,
+      "explain": "Ontario charges $5 per $1,000 on the first $50,000 and $15 per $1,000 above that, or $14,500 on $1,000,000; Alberta caps its fee at $525. Gaps like this are why probate fees are seen as inequitable as well as excessive."
+    },
+    {
+      "id": "c10-q015",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Avoiding probate fees",
+      "page": "10•10",
+      "q": "A client wants every part of her estate plan built around eliminating probate fees. What does the course say about this goal?",
+      "options": [
+        "It should be secondary and never jeopardize the plan's primary objectives",
+        "It is appropriate only for estates worth more than $1,000,000 in Ontario",
+        "It should come first, as probate fees usually exceed income taxes at death",
+        "It should be pursued first, with income tax planning following from it"
+      ],
+      "answer": 0,
+      "explain": "Probate-fee avoidance, like tax avoidance, should always be a secondary objective. Probate fees are trivial compared with income and capital gains taxes, and steps to avoid them must never jeopardize the plan's primary objectives."
+    },
+    {
+      "id": "c10-q016",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Avoiding probate fees",
+      "page": "10•10",
+      "q": "Quebec residents commonly use joint ownership and multiple wills to reduce the value-based probate taxes payable on their successions.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. There is no planning in Quebec to avoid probate 'taxes': notarial wills need no probate and non-notarial wills cost a modest amount (about $500 to $1,000 per the course's table). The techniques may still help with other goals such as income tax planning."
+    },
+    {
+      "id": "c10-q017",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Inter vivos gifts",
+      "page": "10•11",
+      "q": "Yves gives his adult son a cottage that has risen in value since he bought it. What is the immediate tax result for Yves?",
+      "options": [
+        "None for Yves; his son reports the capital gain in the year of the gift",
+        "None until Yves dies, when the gain on the cottage is finally reported",
+        "He is deemed to have sold it at fair market value and reports any capital gain",
+        "None, since gifts to family members transfer at the cottage's adjusted cost base"
+      ],
+      "answer": 2,
+      "explain": "Except for gifts to a spouse or common-law partner, the donor is deemed to dispose of the gift at fair market value when it is made and must report any capital gain or recapture that year. A gift of a life insurance policy can likewise trigger a taxable policy gain."
+    },
+    {
+      "id": "c10-q018",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Gifts mortis causa",
+      "page": "10•11",
+      "q": "Under common law, when is a donatio mortis causa (deathbed gift) valid?",
+      "options": [
+        "When it is made in a marriage contract and the donor dies before the spouse",
+        "When it is registered with the court before the donor's death",
+        "When the donor is seriously ill and later dies of that same condition",
+        "When the recipient survives the donor by at least 30 days"
+      ],
+      "answer": 2,
+      "explain": "A donatio mortis causa is a gift made in contemplation of death; it is valid if the donor is seriously ill when making it and then dies of that condition. The property is outside the estate, so no probate fees apply. The marriage-contract version is Quebec's gift mortis causa."
+    },
+    {
+      "id": "c10-q019",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Gifts mortis causa",
+      "page": "10•11",
+      "q": "Hospitalized with what seemed a terminal illness, Arthur hands his vintage watch to his nephew as a gift in contemplation of death. Against the odds, Arthur fully recovers. What is the result under common law?",
+      "options": [
+        "The gift becomes a legacy payable under Arthur's will at death",
+        "The gift is complete on delivery, so the nephew keeps the watch",
+        "The nephew keeps the watch, but Arthur owes tax on its value",
+        "The gift does not take place, so the watch remains Arthur's"
+      ],
+      "answer": 3,
+      "explain": "A donatio mortis causa depends on the donor dying of the condition that prompted it; if the donor survives, the gift does not take place. The course notes that forcing a recipient to return the item may still be a practical problem."
+    },
+    {
+      "id": "c10-q020",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Gifts mortis causa",
+      "page": "10•11",
+      "q": "At 30, Luc made a gift mortis causa of his entire estate to his wife Hélène in their Quebec marriage contract. He never made a will and died suddenly at 82. What happens?",
+      "options": [
+        "The gift is void unless it was later confirmed by a notarial will",
+        "Hélène inherits his estate under the gift in the marriage contract",
+        "The gift lapsed because Luc was not seriously ill when he made it",
+        "His estate passes to his heirs as if he had left no instructions at all"
+      ],
+      "answer": 1,
+      "explain": "In Quebec, a gift mortis causa is a gift made by spouses in a marriage or civil union contract, tied to the contingency of death rather than its immediacy. It remains valid decades later, so Hélène inherits; the 'seriously ill' test belongs to the common-law donatio mortis causa."
+    },
+    {
+      "id": "c10-q021",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Trusts",
+      "page": "10•11",
+      "q": "Why might a client choose an inter vivos trust rather than an outright gift to keep an asset out of her estate for probate purposes?",
+      "options": [
+        "She avoids probate without wholly giving up control and management of the asset",
+        "A trust needs no trustee, no administration and no separate tax filings",
+        "Trust assets are taxed at lower rates than assets she holds in her own name",
+        "Transfers into any inter vivos trust are free of capital gains tax and recapture"
+      ],
+      "answer": 0,
+      "explain": "Assets transferred to an inter vivos trust leave the transferor's estate, yet she need not relinquish control and management completely. The transfer is generally a disposition that may trigger capital gains or recapture, and trusts carry administration and tax-filing costs."
+    },
+    {
+      "id": "c10-q022",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Trusts",
+      "page": "10•11",
+      "q": "Alter ego and joint partner trusts, introduced in 2001, let capital property be transferred without triggering a disposition. What condition does the course note?",
+      "options": [
+        "All participants must be over age 71",
+        "All participants must be over age 65",
+        "The trust must be created under a will",
+        "The trust must hold a principal residence"
+      ],
+      "answer": 1,
+      "explain": "Transfers to an alter ego trust (single beneficiary) or a joint partner trust (spouses or same-sex couples) do not trigger a disposition, but per the course all participants must be over age 65. Both are inter vivos trusts, not trusts created by will."
+    },
+    {
+      "id": "c10-q023",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Trusts",
+      "page": "10•12",
+      "q": "In her will, Rosa, a Manitoba widow, leaves her estate in trust for her two children for life, then to her grandchildren in equal shares. On how many occasions are probate fees charged on that property before it reaches the grandchildren?",
+      "options": [
+        "Once, at Rosa's death",
+        "Once, at the death of the last surviving child",
+        "Never, since property left in trust escapes probate entirely",
+        "Twice: at Rosa's death and again in the children's estates"
+      ],
+      "answer": 0,
+      "explain": "The property passes through Rosa's will, so fees apply at her death. It is then held in trust and never forms part of the children's estates, and passing the life interest on is not 'property' subject to probate. Leaving it outright would have attracted fees again in the children's estates."
+    },
+    {
+      "id": "c10-q024",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Trusts",
+      "page": "10•12",
+      "q": "Nadia transfers her cottage into an inter vivos trust for her children purely to avoid probate fees at her death. What is a key cost she must weigh against the fees saved?",
+      "options": [
+        "Her children can force her to sell the cottage at any time while she lives",
+        "Probate fees will be charged twice: at her death and when the trust ends",
+        "The cottage will still be counted in her estate when probate is calculated",
+        "She can no longer sell the cottage herself and keep the sale proceeds"
+      ],
+      "answer": 3,
+      "explain": "A trust used only to avoid probate costs the settlor control and flexibility (she gives up the right to sell and pocket the proceeds), may trigger tax on the transfer and on retained earnings or gains, and adds trustee administration and tax-filing costs."
+    },
+    {
+      "id": "c10-q025",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Naming beneficiaries",
+      "page": "10•13",
+      "q": "In which situation would life insurance proceeds form part of the insured's estate and become subject to probate fees?",
+      "options": [
+        "The policy's death benefit exceeds the $30,000 limit set by most banks",
+        "The named beneficiary is the insured's spouse or common-law partner",
+        "The named beneficiary and all contingent beneficiaries die before the insured",
+        "A contingent beneficiary is named in the policy alongside the primary beneficiary"
+      ],
+      "answer": 2,
+      "explain": "Proceeds go directly to the named beneficiary, outside the estate, unless the estate is the beneficiary or the named and contingent beneficiaries all die before the life insured; the proceeds then revert to the policyowner or the policyowner's estate."
+    },
+    {
+      "id": "c10-q026",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Naming beneficiaries",
+      "page": "10•13",
+      "q": "Marc signs a trust deed, separate from his will, and names that trust as beneficiary of his life insurance policy. The trust is not funded during his life and does not own the policy. What does the course say about this arrangement?",
+      "options": [
+        "The proceeds attract probate fees because the trust exists outside the will",
+        "The CRA treats it as a testamentary trust, and the proceeds avoid probate fees",
+        "It is taxed as an inter vivos trust because the deed was signed during his life",
+        "It works only if the trust also owns the policy before Marc's death"
+      ],
+      "answer": 1,
+      "explain": "The CRA has ruled that a trust created but not funded during the testator's life, meant to be funded mostly by insurance proceeds (the policy is not owned by the trust), is taxed as a testamentary trust. It avoids probate fees and keeps a confidential lump sum to allocate as the testator wishes."
+    },
+    {
+      "id": "c10-q027",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Naming beneficiaries",
+      "page": "10•13",
+      "q": "What is a drawback of having life insurance paid directly to a named beneficiary rather than to the estate?",
+      "options": [
+        "The proceeds become subject to probate fees in the beneficiary's province",
+        "The beneficiary must wait until the will is probated to receive any payment",
+        "The executor cannot use it for funeral costs, family living expenses or taxes",
+        "The proceeds are taxable to the beneficiary as investment income when received"
+      ],
+      "answer": 2,
+      "explain": "Proceeds outside the will cannot be used by the executor to allocate benefits among family members (by need, tax position or business opportunities) or to provide cash for death-related expenses, which may force other assets to be sold at unfavourable prices."
+    },
+    {
+      "id": "c10-q028",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Naming beneficiaries",
+      "page": "10•14",
+      "q": "A beneficiary designation contained in a will can, if poorly drafted, create a legacy that is subject to probate instead of a direct, non-probatable designation.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The course warns that designations made in wills may be poorly done, turning what should be a direct designation (passing outside the estate) into a probatable legacy."
+    },
+    {
+      "id": "c10-q029",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Other probate strategies",
+      "page": "10•15",
+      "q": "How can multiple wills reduce probate fees, according to the course?",
+      "options": [
+        "Each will is probated separately, so each one falls into a lower fee bracket",
+        "A later will automatically cancels the probate fees charged on the earlier will",
+        "The second will names beneficiaries, so all of the testator's assets pass outside the estate",
+        "Probate assets go in one will; others, like private shares, go in a will never probated"
+      ],
+      "answer": 3,
+      "explain": "Only the will dealing with assets that need probate (such as real estate) is probated, so fees apply only to those assets. The strategy has been validated by the courts only in Ontario, where it worked because of the statute's wording; other provinces' wording differs."
+    },
+    {
+      "id": "c10-q030",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Other probate strategies",
+      "page": "10•15",
+      "q": "Hugo, of Ontario, owns a mortgage-free $300,000 home and $100,000 of securities, and owes $60,000 on a personal line of credit. What value is subject to probate fees now, and after he converts the line of credit into a mortgage on the home?",
+      "options": [
+        "$400,000 now; $340,000 after the conversion",
+        "$300,000 now; $240,000 after the conversion",
+        "$400,000 now; $400,000 after the conversion",
+        "$340,000 now; $340,000 after the conversion"
+      ],
+      "answer": 0,
+      "explain": "Probate fees ignore personal debts but deduct mortgages on real estate. Now: $300,000 + $100,000 = $400,000. Once the $60,000 is a mortgage, only the home's net value counts: $240,000 + $100,000 = $340,000. The cost of converting should not outweigh the fees saved."
+    },
+    {
+      "id": "c10-q031",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Other probate strategies",
+      "page": "10•15",
+      "q": "Ines, of British Columbia, holds $500,000 of personal investments, owes $150,000 on a personal loan, and owns all the shares of a holding company worth $700,000. If she shifts the loan into her company, what value of her estate is subject to probate fees?",
+      "options": [
+        "$900,000",
+        "$1,050,000",
+        "$1,200,000",
+        "$1,350,000"
+      ],
+      "answer": 1,
+      "explain": "Before the shift, the gross $1,200,000 ($500,000 + $700,000) is subject to fees, since a personal loan is not deductible. Once the company owes the $150,000, its shares are worth $550,000 net, so $500,000 + $550,000 = $1,050,000."
+    },
+    {
+      "id": "c10-q032",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate in Quebec",
+      "page": "10•16",
+      "q": "Which statement about probate in Quebec is accurate?",
+      "options": [
+        "Probate fees are a percentage of the value of the succession's assets",
+        "Once a will is probated, its content can no longer be contested in court",
+        "Probating a will does not prevent later court challenges to its content",
+        "Only the liquidator named in the will may apply to have the will probated"
+      ],
+      "answer": 2,
+      "explain": "Probate in Quebec checks that the will appears to be the last one and is valid in form, lets the liquidator act and yields certified copies, but it does not prevent judicial contestation of its content. Any interested person may apply, and there is no value-based probate tax."
+    },
+    {
+      "id": "c10-q033",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Probate in Quebec",
+      "page": "10•16",
+      "q": "Under the Civil Code of Quebec's terminology, what does 'homologation' strictly refer to?",
+      "options": [
+        "Confirming that a holograph will is the deceased's valid last will",
+        "Recognizing a mandator's incapacity and validating the protection mandate",
+        "A notary's issuing of certified copies of a notarial will right after death",
+        "Registering a declaration of co-ownership in the property registry"
+      ],
+      "answer": 1,
+      "explain": "The Civil Code distinguishes probate (of wills) from homologation, the proceedings that recognize a mandator's incapacity and validate the protection mandate. In everyday language, though, 'homologation' is often used for wills as well."
+    },
+    {
+      "id": "c10-q034",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Probate in Quebec",
+      "page": "10•17",
+      "q": "Gisèle died in Laval leaving a holograph will that names her two nephews and her neighbour Paul as heirs; one nephew is also the liquidator. Who could swear the statement attesting to her handwriting and signature for probate?",
+      "options": [
+        "Her elder nephew, who has kept many of the letters she wrote to him",
+        "Paul, the neighbour, who often watched her sign documents",
+        "Her younger nephew, acting in his role as liquidator",
+        "Her former employer, who knows her writing and receives nothing"
+      ],
+      "answer": 3,
+      "explain": "For a holograph will, a legally competent person must attest to the authenticity of the handwriting and signature, and that person cannot be an heir. Both nephews and Paul inherit under the will, so only the employer qualifies."
+    },
+    {
+      "id": "c10-q035",
+      "type": "mcq",
+      "difficulty": 1,
+      "topic": "Sole ownership",
+      "page": "10•18",
+      "q": "In the common-law provinces, what is often the 'price' paid for the freedom and flexibility of sole ownership?",
+      "options": [
+        "Probate fees on the property's value, net of mortgages, at death",
+        "Immediate capital gains tax on each increase in its value",
+        "Losing the right to leave the property by will to anyone the owner chooses",
+        "Having to share use of the property with the owner's family"
+      ],
+      "answer": 0,
+      "explain": "A sole owner can sell, give away or bequeath the property at will, but it falls into the estate at death and its fair market value net of mortgages is subject to probate fees. Family law may also restrict a sole owner's rights over the matrimonial home."
+    },
+    {
+      "id": "c10-q036",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Common-law co-ownership",
+      "page": "10•18",
+      "q": "Which feature is shared by tenants in common and joint tenants in the common-law provinces?",
+      "options": [
+        "Every owner's interest must be exactly equal in size to the others'",
+        "Each owner's interest passes automatically to the surviving owners at his or her death",
+        "Each owner's interest is included in his or her estate for probate",
+        "No owner can deprive the others of use and possession of the whole property"
+      ],
+      "answer": 3,
+      "explain": "In both forms each owner has an equitable and beneficial interest in the whole property and cannot bar the others from any part of it. Automatic survivorship and equal shares are features of joint tenancy only; inclusion in the estate applies to tenancy in common."
+    },
+    {
+      "id": "c10-q037",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Common-law co-ownership",
+      "page": "10•18",
+      "q": "Because a bank account is held 'jointly' with two authorized signers, the surviving signer automatically owns the funds by right of survivorship.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. 'Joint' accounts or joint signers only mean that several people have access to the account; it does not automatically follow that there is survivorship of ownership. The course warns that the word 'joint' leads to this mistaken assumption."
+    },
+    {
+      "id": "c10-q038",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Tenancy in common",
+      "page": "10•19",
+      "q": "Kofi put up $90,000 and Lise $30,000 to buy a lakefront lot as tenants in common. Which statement is correct?",
+      "options": [
+        "Each holds 50%, because tenants in common must hold equal shares",
+        "Lise needs Kofi's consent before she can sell her interest to anyone else",
+        "Kofi holds 75% and Lise 25%, but both may use and enjoy the whole lot",
+        "Kofi may use 75% of the land and Lise only the remaining 25% of it"
+      ],
+      "answer": 2,
+      "explain": "Tenants in common may hold unequal interests (here 75% and 25%), yet each is entitled to use and enjoy the whole property, and each may sell his or her interest independently, even against the other's wishes."
+    },
+    {
+      "id": "c10-q039",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Tenancy in common",
+      "page": "10•19",
+      "q": "Kofi (75%) and Lise (25%) own a lakefront lot in Ontario as tenants in common. Kofi dies when the lot is worth $200,000, leaving his interest to his daughter by will. What happens to his interest?",
+      "options": [
+        "$150,000 is included in his estate for probate and passes to his daughter",
+        "It goes to his daughter outside the estate, so no probate fees apply to it",
+        "$100,000, half the lot's value, is included in his estate for probate fees",
+        "Lise automatically becomes sole owner of the whole lot by right of survivorship"
+      ],
+      "answer": 0,
+      "explain": "A tenant in common's interest forms part of his estate and passes under his will, so its value (75% of $200,000 = $150,000) is included for probate fees. Survivorship applies only to joint tenants, and tenants in common's shares need not be equal."
+    },
+    {
+      "id": "c10-q040",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•19",
+      "q": "Four siblings own a ski chalet as joint tenants with right of survivorship. One of them dies. What do the three survivors now hold?",
+      "options": [
+        "One-third each, but only once the will has been probated",
+        "One-third each, received directly and automatically",
+        "One-quarter each; the fourth quarter is held in trust for heirs",
+        "One-quarter each; the fourth quarter passes under the will"
+      ],
+      "answer": 1,
+      "explain": "On a joint tenant's death, his or her interest passes automatically, in equal shares, directly to the surviving joint tenants, outside the estate. The deceased's quarter splits three ways (1/12 each), so each survivor goes from 1/4 to 1/3."
+    },
+    {
+      "id": "c10-q041",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•20",
+      "q": "Two joint tenants with right of survivorship may hold unequal interests in the property, such as 70% and 30%.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. By definition, joint tenants must all hold equal shares (two hold one-half each, five hold one-fifth each). Unequal interests point to a tenancy in common."
+    },
+    {
+      "id": "c10-q042",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•20",
+      "q": "Raj, an Ontario widower, registers his cottage as 'Raj Patel and Anika Patel' with his daughter, expecting it to pass to her by survivorship. His will leaves the residue equally to his three sons. If a court finds the registration unclear, what is the likely result?",
+      "options": [
+        "Raj's half falls into his estate, attracts probate fees and passes to his sons",
+        "Anika takes the whole cottage, since 'joint' registration implies survivorship",
+        "Anika takes the whole cottage, but probate fees are charged on Raj's half",
+        "The cottage passes outside the estate to all four of his children in equal shares"
+      ],
+      "answer": 0,
+      "explain": "Unless the registration clearly states joint tenancy with rights of survivorship, courts are likely to find a tenancy in common. Raj's half then falls into his estate, attracts probate fees and goes to the residuary heirs, leaving Anika with half the cottage as a tenant in common with her brothers."
+    },
+    {
+      "id": "c10-q043",
+      "type": "tf",
+      "difficulty": 2,
+      "topic": "Joint tenancy (JTWROS)",
+      "page": "10•20",
+      "q": "Property held in joint tenancy with right of survivorship forms part of a deceased joint owner's estate only if he or she was the last surviving joint owner.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. Joint property passes outside the estate to the surviving joint tenants. Only for the last remaining joint owner, who is in effect a sole owner, does the property fall into the estate and attract probate fees."
+    },
+    {
+      "id": "c10-q044",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Quebec co-ownership",
+      "page": "10•21",
+      "q": "In Quebec, co-owners of property enjoy automatic survivorship rights like those of common-law joint tenants.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 1,
+      "explain": "False. There are no automatic survivorship rights for joint tenants in Quebec. Quebec instead recognizes undivided and divided co-ownership."
+    },
+    {
+      "id": "c10-q045",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec co-ownership",
+      "page": "10•21",
+      "q": "Which statement best describes undivided co-ownership in Quebec?",
+      "options": [
+        "Each co-owner owns a specific unit and shares ownership of the common areas",
+        "Each co-owner holds a share of the ownership right but no exclusive physical part",
+        "Each co-owner's share passes automatically to the other co-owners when he or she dies",
+        "Each co-owner owns a defined physical portion that can be fenced off from others"
+      ],
+      "answer": 1,
+      "explain": "Undivided co-owners (e.g., spouses who buy a home together, all names on the deed) each hold a fraction of the right of ownership, have identical rights to the whole and manage it together. Exclusive ownership of a unit plus shared common areas describes divided co-ownership (condominium)."
+    },
+    {
+      "id": "c10-q046",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec co-ownership",
+      "page": "10•22",
+      "q": "Sonia sells her undivided share of a Quebec triplex to an outsider. What right do the other undivided co-owners have, per the course?",
+      "options": [
+        "To cancel the sale at any time by paying Sonia the share's current fair market value",
+        "To block the sale, since all co-owners must consent to any sale of a share",
+        "To free the buyer from co-ownership by refunding his purchase costs within a year",
+        "To claim a part of the sale price from Sonia within one year of the sale"
+      ],
+      "answer": 2,
+      "explain": "A co-owner may sell her undivided rights, but the other co-owners can free the buyer from the undivided ownership by refunding his purchase costs, a right limited to within one year from the date of purchase. An undivision agreement may also give them a right of first refusal."
+    },
+    {
+      "id": "c10-q047",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Quebec co-ownership",
+      "page": "10•22",
+      "q": "An undivided co-owner in Quebec hypothecates (mortgages) her share of a building and then defaults on the loan. What is the position of the other co-owners?",
+      "options": [
+        "The lender may seize the entire building, including the other co-owners' shares",
+        "They must repay the loan, since a hypothec always covers the whole property",
+        "They are liable for the interest on the loan but not for the principal",
+        "They are not liable; the lender may, under conditions, seize and sell her share"
+      ],
+      "answer": 3,
+      "explain": "An undivided co-owner can hypothecate only her own share, and the other co-owners are in no way responsible for her obligations. If she defaults, the hypothec holder may, under certain conditions, seize and sell the mortgaged share."
+    },
+    {
+      "id": "c10-q048",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Quebec co-ownership",
+      "page": "10•31",
+      "q": "Two friends buy a unit together in a Montreal condominium building, and both names appear on the deed. Relative to each other and to the other unit owners, how is their ownership best described?",
+      "options": [
+        "Undivided co-owners of their unit; divided co-owners in relation to the other units",
+        "Divided co-owners of their unit, each owning a specific, separate half of the dwelling",
+        "Joint tenants of their unit, with survivorship rights between the two friends",
+        "Tenants in common of their unit, and divided co-owners of the common parts"
+      ],
+      "answer": 0,
+      "explain": "Common-law tenancy in common and joint tenancy don't apply in Quebec. Since both own the unit, the friends are undivided co-owners of it; with respect to the other unit owners they are divided co-owners, while the common parts are held in undivided co-ownership."
+    },
+    {
+      "id": "c10-q049",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•22",
+      "q": "Ana, of Ontario, re-registers her rental property, held in her sole name, in joint tenancy with her nephew to avoid probate fees. Later she wants to sell it and use the cash. What is the problem?",
+      "options": [
+        "She must wait until the property has been jointly held for one year",
+        "She must first obtain Letters Probate to prove her nephew's interest",
+        "She can't sell the whole property without her nephew's co-operation",
+        "She can sell, but the proceeds are then taxed entirely to her nephew"
+      ],
+      "answer": 2,
+      "explain": "The transferor loses sole control: selling the whole property now requires the joint tenant's co-operation. Per the course, with jointly owned real estate the permission of all tenants is needed even for one joint tenant to sell just his or her own interest."
+    },
+    {
+      "id": "c10-q050",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•23",
+      "q": "Paul registers his house jointly with his adult son, who later goes bankrupt. What risk does this create for Paul?",
+      "options": [
+        "The house automatically reverts to Paul's sole ownership by law",
+        "The son's creditors may reach his interest, and the house could be sold",
+        "None, as joint property is shielded from a joint owner's creditors",
+        "Paul becomes personally liable for paying all of his son's outstanding debts"
+      ],
+      "answer": 1,
+      "explain": "Once property is joint, part of the equity belongs to the new owner. If that person goes bankrupt or through a marriage breakdown, his creditors may be able to reach the joint interest, drawing the property into litigation and potentially forcing a sale."
+    },
+    {
+      "id": "c10-q051",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•23",
+      "q": "Greta re-registers her mutual fund account, worth $600,000 with an adjusted cost base of $360,000, jointly with right of survivorship with her two daughters. What capital gain must she report for the year of the change?",
+      "options": [
+        "$80,000",
+        "$120,000",
+        "$160,000",
+        "$240,000"
+      ],
+      "answer": 2,
+      "explain": "With three equal joint tenants, Greta is deemed to dispose of two-thirds of her interest at fair market value: proceeds of $400,000 minus ACB of $240,000 = $160,000. $120,000 wrongly assumes only half was transferred, as with a single new joint owner."
+    },
+    {
+      "id": "c10-q052",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•23",
+      "q": "Leo, of Alberta, dies owing more than his estate can pay. His cottage was held jointly with right of survivorship with his niece. What can his unpaid creditors do?",
+      "options": [
+        "Claim only against the niece's own personal assets and income",
+        "Claim the cottage only if it was made joint within the last year",
+        "Nothing, since survivorship puts the cottage beyond their reach",
+        "They may be able to claim against the jointly held cottage"
+      ],
+      "answer": 3,
+      "explain": "Automatic survivorship cannot be used to defeat creditors at death. If the deceased's creditors cannot settle their claims from the estate's assets, they may be able to claim against the joint property as well."
+    },
+    {
+      "id": "c10-q053",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•23",
+      "q": "Omar registers his $300,000 GIC jointly with his wife. It earns $9,000 of interest a year, and the T5 slip is issued in both their names. How is the interest taxed?",
+      "options": [
+        "All $9,000 is taxed in Omar's hands under the attribution rules",
+        "All $9,000 is taxed in his wife's hands as the new joint owner",
+        "Split in proportion to each spouse's income for that taxation year",
+        "$4,500 each, as shown on the T5 issued in both of their names"
+      ],
+      "answer": 0,
+      "explain": "Putting property into joint ownership to shift half the income to a spouse does not get around the income attribution rules. Despite the joint T5, all of the interest is taxed to Omar, the transferor."
+    },
+    {
+      "id": "c10-q054",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•24",
+      "q": "Victor, of Nova Scotia, is married. He registers his investment portfolio jointly with right of survivorship with his son from a first marriage. At Victor's death, his wife has a valid claim under provincial matrimonial property law. What happens?",
+      "options": [
+        "The portfolio is automatically split equally between wife and son",
+        "The son takes the portfolio, since survivorship defeats her claim",
+        "Her claim must be satisfied; survivorship does not override it",
+        "Her claim is limited to assets that pass to her under Victor's will"
+      ],
+      "answer": 2,
+      "explain": "A married person cannot sidestep matrimonial property rules by registering property jointly with someone who is not a spouse. If the surviving spouse has a claim, the usual automatic transfer to the surviving joint tenant is voided, and her rights must be satisfied first."
+    },
+    {
+      "id": "c10-q055",
+      "type": "mcq",
+      "difficulty": 2,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•24",
+      "q": "Why can adding an adult child who already owns a home as joint owner of a parent's principal residence prove costly?",
+      "options": [
+        "The home becomes subject to probate fees at the child's death, not the parent's",
+        "Future growth on the child's share will be taxable to the child as a capital gain",
+        "Land transfer tax becomes payable each year that the home is jointly owned",
+        "The parent immediately loses the exemption on the whole home, past growth included"
+      ],
+      "answer": 1,
+      "explain": "If the property qualifies as a principal residence, transferring an interest to someone who already has one means any future growth on that interest is taxable to the new co-owner as capital gains."
+    },
+    {
+      "id": "c10-q056",
+      "type": "tf",
+      "difficulty": 1,
+      "topic": "Drawbacks of joint tenancy",
+      "page": "10•24",
+      "q": "Courts have voided a parent's joint registration of a bank account with a son, putting the account back into the estate, where the parent never intended the son to have rights to the funds during the parent's lifetime.",
+      "options": [
+        "True",
+        "False"
+      ],
+      "answer": 0,
+      "explain": "True. The course notes that recent court cases have cast a shadow over 'joint' registration to save probate fees: where no lifetime rights were intended for the son, the joint registration was voided and the account was included in the deceased parent's estate."
+    },
+    {
+      "id": "c10-q057",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Tenancy in common",
+      "page": "10•24",
+      "q": "Sophie is a 25% tenant in common of a cottage with a fair market value of $240,000 and an adjusted cost base of $80,000. If she sells her interest on her own, what is her capital gain?",
+      "options": [
+        "$40,000",
+        "$60,000",
+        "$80,000",
+        "$160,000"
+      ],
+      "answer": 0,
+      "explain": "Tax results for tenants in common follow each one's proportionate interest. Sophie's 25% is worth $60,000 with an ACB of $20,000, so her gain is $40,000, the same as her 25% share of the $160,000 gain if all the owners sold the whole cottage together."
+    },
+    {
+      "id": "c10-q058",
+      "type": "mcq",
+      "difficulty": 3,
+      "topic": "Chapter scenario",
+      "page": "10•26",
+      "q": "Maureen, a recently divorced Ontario resident with a $1,000,000 estate, is thinking of registering her property jointly with her minor sons to avoid probate fees. Which advice reflects the course?",
+      "options": [
+        "Proceed; joint ownership with minors avoids both probate fees and attribution",
+        "Avoid it; joint ownership with minors doubles the probate fees at her death",
+        "Proceed, but register the property as tenants in common to keep fees low",
+        "Avoid it; a trust created in her will can better protect her and her sons"
+      ],
+      "answer": 3,
+      "explain": "She would lose sole control, the minors could not deal with the assets, attribution of income would still apply, and she would trigger immediate capital gains (or losses) on half her property. A trust via her will better protects everyone; probate fees are a secondary concern."
+    }
+  ]
+}

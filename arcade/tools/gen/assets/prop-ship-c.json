@@ -1,0 +1,33 @@
+{
+ "name": "prop-ship-c",
+ "about": "A small tug drone with a cyan lens eye for Risk Blaster's background traffic. Tripo v3.1 at its standard (low-credit) settings from concept prop-ship-c-sd-0, one attempt.",
+ "src": "cand/props/prop-ship-c-sd-0.tripo.glb",
+ "forward": "+x",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 8000,
+ "tex": 512,
+ "texBase": 512,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.14
+ }
+}

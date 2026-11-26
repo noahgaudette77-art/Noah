@@ -1,0 +1,43 @@
+{
+ "name": "boss-4",
+ "about": "Boss Rush: The Fine Print (a scribe with quill-pen arms and a chest of clauses). Tripo H3.1 from concept boss04-fineprint-sd-1; rigged by Tripo (rig v1.0, biped); eight clips retargeted from Tripo's presets (two requests); parts from Tripo segmentation, each bound whole to the bone that owns it, so the armour stays rigid on a motion-captured skeleton.",
+ "src": "post/boss04-animA.glb",
+ "more": [
+  "post/boss04-animB.glb"
+ ],
+ "seg": "post/boss04-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 50000,
+ "tex": 1024,
+ "texBase": 2048,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    44,
+    66
+   ]
+  ],
+  "sat": [
+   0.62,
+   0.85
+  ],
+  "val": [
+   0.62,
+   0.9
+  ]
+ },
+ "bar": "the game's one quality bar for a hero model (2026-11-17): 2048 px colour, 1024 px other maps, about 55K triangles"
+}

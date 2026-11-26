@@ -1,0 +1,41 @@
+{
+ "name": "prop-car",
+ "triangles": 9148,
+ "bytes": 265808,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.2453,
+    0
+   ],
+   "min": [
+    -0.3353,
+    0,
+    -0.5
+   ],
+   "max": [
+    0.3353,
+    0.4907,
+    0.5
+   ],
+   "tris": 9148
+  }
+ },
+ "anchors": {},
+ "size": [
+  0.6706410646438599,
+  0.5320111513137817,
+  1
+ ],
+ "source": "cand/props/traffic-car-c-sd-1.tripo.glb",
+ "symmetry": {
+  "delivered": 0.331,
+  "turned_deg": 0,
+  "shifted": 0,
+  "aligned": 0.331,
+  "mirrored": true,
+  "kept": "+x"
+ }
+}

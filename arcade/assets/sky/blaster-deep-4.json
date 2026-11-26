@@ -1,0 +1,15 @@
+{
+ "name": "blaster-deep-4",
+ "source": "blaster-deep-4",
+ "blockade": {
+  "id": 15930906,
+  "style": "M3 Advanced (photo/render)",
+  "seed": 345774466,
+  "prompt": "Equirectangular 360 panorama of open outer space: only stars and glowing gas in every direction, above and below, no surface anywhere. Dark crimson and amber nebula wisps on violet-black space, a small distant red giant star, scattered sharp stars, faint dust. Ominous, mostly deep black, high contrast, astrophotography detail."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 1027402,
+ "lightAt": 356,
+ "mean": 0.144
+}

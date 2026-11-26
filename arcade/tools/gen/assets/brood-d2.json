@@ -1,0 +1,35 @@
+{
+ "name": "brood-d2",
+ "about": "Risk Blaster: one of the overlord's brood, seen far off; the overlord's own design (Rodin's build); an unpicked candidate from the selection rounds, put to use (the owner: nothing generated is left unused).",
+ "src": "cand/demon2/demon-d-nb-0.rodin.glb",
+ "forward": "+z",
+ "size": {
+  "axis": "max",
+  "value": 1
+ },
+ "origin": "center",
+ "tris": 2500,
+ "tex": 256,
+ "texBase": 256,
+ "emissive": {
+  "hues": [
+   [
+    150,
+    350
+   ]
+  ],
+  "sat": [
+   0.5,
+   0.75
+  ],
+  "val": [
+   0.5,
+   0.8
+  ]
+ },
+ "surface": {
+  "roughMin": 0.12
+ },
+ "sloppy": true,
+ "bar": "the game's one quality bar (2026-11-17): a speck far off, drawn as a dark shape: about 2.5K triangles (a lower-detail version: it is never seen near), 256 px maps"
+}

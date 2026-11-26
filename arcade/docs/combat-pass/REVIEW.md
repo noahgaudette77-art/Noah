@@ -1,0 +1,50 @@
+# How a mode is reviewed
+
+Each phase of the work gets one independent review, at its end, by a reviewer who did not build it and is given only
+this page and a folder of captures. There is no score target and no second round: the review exists to catch what
+matters (anything broken, ugly, confusing, or too close to a famous character), and those are fixed before the phase
+is closed. Minor polish is noted and left. A phase is done when it works, looks good and consistent, its tests pass
+and no major defect is left. (Risk Blaster's first review, kept in `blaster/review-r1.md`, was written under an
+earlier rule that asked for 4.5 on every axis and repeated rounds.)
+
+## What the reviewer is given
+
+- A folder of captures made by `tools/capture.js` on the virtual clock (60 frames a second, repeatable).
+  - `*.png` / `*.jpg`: single stills at phone size (390 x 844 CSS pixels, 2x).
+  - `*.strip.jpg`: a frame sequence, read left to right, top to bottom. The file name or the list beside it says how
+    many frames apart the tiles are (for example "every 3" is 20 tiles a second). Stills hide motion problems, so the
+    strips are the main evidence for anything that moves.
+- This page. Nothing else: not the code, not the builder's notes, not earlier scores.
+
+## The look that was asked for
+
+Retro 1980s/90s synthwave arcade: neon magenta, cyan and violet, glossy wet reflections, chrome, bloom, scanlines.
+One coherent world across every mode. Every design is original: nothing may resemble a known character, robot, ship,
+vehicle, logo or brand. The game is a study game: a question and four answers are on screen during play, and they
+must stay readable through every effect.
+
+## The seven axes (1 to 5, half points allowed)
+
+| Axis | What it measures | 3 | 4 | 4.5 | 5 |
+|---|---|---|---|---|---|
+| Detail | model and texture resolution, silhouette interest, small parts, no blobs or smears | reads as a placeholder up close | good, a few soft or empty areas | holds up at full size everywhere that matters | could be a hero shot on a store page |
+| Lighting | key, fill and rim; the sky lighting the objects; glow that lights its surroundings; contrast | flat or blown out | clear but generic | objects sit in the scene's light, glows light their neighbours | cinematic in every frame |
+| Materials | metal, glass, paint, emissive panels; reflections of the sky; roughness variety | plastic or uniform | believable, some uniform areas | chrome reflects, glass glints, emissive reads as light | every surface is distinct and right |
+| Depth | layers from near to far, parallax, fog or haze, subject separated from background | flat collage | layered, subject sometimes merges | subject always separates, clear near/mid/far | deep, with atmosphere |
+| Motion | (from strips) anticipation, impact, follow-through, timing, weight; nothing pops, stutters or flickers faster than 3 times a second | things teleport or just blink | moves, but stiff or samey | every action has wind-up, hit and settle; hits feel heavy | you can feel it without sound |
+| Cohesion | one world: palette, line weight, level of detail, effects and HUD all match | parts from different games | mostly matched, one or two outsiders | everything belongs together | a single authored style |
+| Legibility | question, answers, HUD and what is happening are readable at every moment, including mid-effect; right and wrong can be told apart without reading | text or the action is lost for a moment in most effects | readable, one or two bad frames | always readable; effects never cover text | readable in a glance, always |
+
+## What the reviewer writes
+
+1. A table: the seven scores, one line of evidence each (file, tile number). The scores describe; they are not a gate.
+2. The requirement checklist for the mode (given with the request): each item `met`, `weak` or `missing`, with the
+   file that shows it.
+3. Major defects only, most damaging first, at most ten: something broken, ugly, confusing, unreadable, or too close
+   to a known character, robot, ship, vehicle or logo. Each one: where it shows (file, tile), what is wrong, what
+   would fix it. Concrete only: "the left wing tip clips through pod B in tile 4", not "improve polish".
+4. Minor notes, one line each, at most ten. These may be left unfixed.
+5. Originality: anything that resembles a known character, robot, ship, vehicle or logo.
+
+The reviewer does not soften a finding to be kind. To keep a review quick: look at every image once, then crop and
+enlarge at most thirty tiles where a closer look is needed.

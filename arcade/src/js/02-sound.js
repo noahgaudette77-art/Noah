@@ -1,0 +1,764 @@
+// Sound. Two layers: recorded sound (effects, announcer and music in arcade/assets/audio, loaded by Assets when
+// the page can fetch them) and, under it, the chiptune synth that makes every effect and the music with WebAudio
+// from nothing. A sound that has a recording plays it; one that has none, or whose file has not arrived, is
+// synthesised, so the game is never silent and never waits. Audio starts only after the first tap.
+const Sound = {
+  ctx: null,
+  master: null,
+  sfxBus: null,
+  musicBus: null,
+  noiseBuf: null,
+  track: null,
+  step: 0,
+  nextTime: 0,
+  timer: 0,
+  sprites: {}, // name -> AudioBuffer: one file holding many effects end to end
+  bank: {}, // cue name -> [{ buf, at, dur, vol }]: where each recorded effect lies (several takes of one sound are picked in turn)
+  tracks: {}, // name -> { buf, loop: [from, to], vol }: recorded music
+  // Each track has a second recording, "<name>-b". A visit to a screen plays one of the two and its next visit the
+  // other (which one comes first is drawn when the page opens; nothing of it is saved). Only the one a visit plays is
+  // loaded (Assets.need and prefetch ask take()), and the other is let go when the visit starts.
+  takes: {}, // name -> the recording this visit of its screen plays
+  nextTake: {}, // name -> the one its next visit will play
+  loops: {}, // id -> a looping effect that is playing (see loop)
+  // The mix (Phase 5, measured by `python3 arcade/tools/audio-levels.py --mix`, which reads this line): each recording's
+  // level in the game on top of the level it was built at (audio.json). Every music track at one loudness (-21.5 LUFS
+  // at the mix, calm); each set of effects with its main events about 7 dB over the music; the announcer clear over both.
+  MIX: {"music": {"exam": 1.21, "memory": 0.94, "title": 1.79, "hub": 1.41, "calm": 1.18, "boss": 1.21, "finalboss": 0.93, "racer": 1.32, "blaster": 1.03, "exam-b": 1.56, "memory-b": 1.24, "title-b": 1.15, "hub-b": 1.0, "calm-b": 1.05, "boss-b": 1.24, "finalboss-b": 0.98, "racer-b": 1.22, "blaster-b": 1.13}, "sets": {"core": 1, "combat": 1, "racer": 0.82, "bosses": 0.8, "hub": 1}, "voice": 1},
+
+  // The player's own levels (Setup): each layer OFF, LOW, MID or HIGH (OFF is the layer's on/off switch). The music
+  // and the effects start LOW, quiet under study (the owner, 2026-11-17); the announcer starts HIGH, clear over both.
+  LEVELS: { music: { low: 0.4, mid: 0.7, high: 1 }, sfx: { low: 0.45, mid: 0.72, high: 1 }, voice: { low: 0.5, mid: 0.75, high: 1 } },
+  level(kind) { const v = Store.settings[kind + "Vol"] || (kind === "voice" ? "high" : "low"); return this.LEVELS[kind][v] || 1; },
+  applyVolumes() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, set = (node, v) => { if (node) { node.gain.cancelScheduledValues(t); node.gain.setTargetAtTime(v, t, 0.05); } };
+    set(this.musicLevel, this.level("music"));
+    set(this.sfxBus, 0.55 * this.level("sfx"));
+    set(this.voiceBus, 0.95 * this.level("voice"));
+  },
+  // (the owner, 2026-11-17: the engines and the alarm much subtler, the hall's hum and the boost flames a little;
+  // a loop is played at this share of what its caller asks)
+  LOOP_SOFT: { engine_ship: 0.5, engine_car: 0.5, alarm: 0.45, hub_hum: 0.6, boost_flame: 0.7, charge_hum: 0.8 },
+  // (and some through a low-pass, in Hz: the hall's hum keeps its tone and loses any air or hiss above it)
+  LOOP_TONE: { hub_hum: 1400 },
+  // Each loop's join (Phase 6). The generator's loops do not run on from their end into their start (a click every time
+  // round: the charge hum's 60 times the sound around it) and they swell in and fade out a little (a dip of 5 to 7 dB).
+  // When the file is decoded, each take's soft head and tail are left out and its last stretch is faded out under its
+  // first fading in (equal power), the loop that much shorter: [head, tail, crossfade] in seconds. The alarm keeps its
+  // length (its two beats a loop of 2.25 s are the red frame's pulse, counted on the sound's clock: a loop 10 ms short
+  // drifted a quarter of a second from it in a minute): its end fades out and its start in over 4 ms, a soft seam, never
+  // a step. The hall's hum joins cleanly as it is.
+  LOOP_JOIN: { charge_hum: [0.2, 0.2, 0.15], engine_ship: [0.3, 0.2, 0.15], engine_car: [0.3, 0.2, 0.15], boost_flame: [0.25, 0.2, 0.15], alarm: 0.004 },
+  _join(q, how) {
+    const b = q.buf, sr = b.sampleRate, done = b.joined || (b.joined = {}); // (a take listed under two names is joined once)
+    if (typeof how === "number") { // its length kept: its end faded out and its start in
+      const s0 = Math.round(q.at * sr), s1 = Math.round((q.at + q.dur) * sr), n = Math.round(how * sr);
+      if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+      if (!done[s0]) {
+        done[s0] = 1;
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          const d = b.getChannelData(c);
+          for (let i = 0; i < n; i++) { const k = Math.sin((i / n) * (Math.PI / 2)); d[s0 + i] *= k; d[s1 - 1 - i] *= k; }
+        }
+      }
+      q.at = s0 / sr; q.dur = (s1 - s0) / sr;
+      return;
+    }
+    const [head, tail, x] = how, s0 = Math.round(q.at * sr) + Math.round(head * sr), s1 = Math.round((q.at + q.dur) * sr) - Math.round(tail * sr), n = Math.round(x * sr);
+    if (n < 1 || s1 - s0 < 4 * n || s1 > b.length) return;
+    if (!done[s0]) {
+      done[s0] = 1;
+      for (let c = 0; c < b.numberOfChannels; c++) {
+        const d = b.getChannelData(c);
+        for (let i = 0; i < n; i++) { const u = (i / n) * (Math.PI / 2); d[s0 + i] = d[s0 + i] * Math.sin(u) + d[s1 - n + i] * Math.cos(u); }
+      }
+    }
+    q.at = s0 / sr; q.dur = (s1 - n - s0) / sr;
+  },
+
+  init() {
+    if (this.ctx) return this.resume();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      this.ctx = new AC();
+    } catch (e) { return; }
+    const c = this.ctx;
+    this.master = c.createGain();
+    this.master.gain.value = this.MASTER;
+    // a limiter on the way out: a blast, the music and the announcer at once must not clip
+    try {
+      const lim = c.createDynamicsCompressor();
+      lim.threshold.value = -9; lim.knee.value = 10; lim.ratio.value = 8; lim.attack.value = 0.004; lim.release.value = 0.22;
+      this.master.connect(lim).connect(c.destination);
+    } catch (e) { this.master.connect(c.destination); }
+    this.sfxBus = c.createGain();
+    this.sfxBus.gain.value = 0.55 * this.level("sfx");
+    this.sfxBus.connect(this.master);
+    // the arcade hall: every effect also feeds a short reverb (the music stays dry)
+    try {
+      const n = Math.floor(c.sampleRate * 1.1), ir = c.createBuffer(2, n, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = ir.getChannelData(ch);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8);
+      }
+      const verb = c.createConvolver(), send = c.createGain();
+      verb.buffer = ir;
+      send.gain.value = 0.2;
+      this.sfxBus.connect(send).connect(verb).connect(this.master);
+    } catch (e) { /* no convolver: effects stay dry */ }
+    this.musicBus = c.createGain();
+    this.musicBus.gain.value = 0.22;
+    // the music ducks under the announcer and the biggest blasts (see duck), then the player's own music level
+    this.duckGain = c.createGain();
+    this.musicLevel = c.createGain();
+    this.musicLevel.gain.value = this.level("music");
+    this.musicBus.connect(this.duckGain).connect(this.musicLevel).connect(this.master);
+    // recorded music has its own way in: a filter that opens as the streak grows, then the same duck
+    this.trackBus = c.createGain();
+    this.trackBus.gain.value = 0.5;
+    this.trackTone = c.createBiquadFilter();
+    this.trackTone.type = "lowpass";
+    this.trackTone.frequency.value = 20000;
+    this.trackTone.Q.value = 0.5;
+    this.trackBus.connect(this.trackTone).connect(this.duckGain);
+    // the announcer: dry, over everything
+    this.voiceBus = c.createGain();
+    this.voiceBus.gain.value = 0.95 * this.level("voice");
+    this.voiceBus.connect(this.master);
+    const len = c.sampleRate * 1;
+    this.noiseBuf = c.createBuffer(1, len, c.sampleRate);
+    const d = this.noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (!this._watching) { this._watching = true; document.addEventListener("visibilitychange", () => this._onVisible()); }
+    this.resume();
+  },
+  // (from "suspended", and from Safari's "interrupted": a call or another app took the sound, and the next tap brings it
+  // back; a tap calls init, which calls this)
+  resume() {
+    const c = this.ctx;
+    if (c && c.state !== "running" && c.state !== "closed") c.resume().catch(() => {});
+  },
+  // A hidden page is silent (Phase 6): the game stands still behind it (its frames stop), so its music, an engine or
+  // the alarm would drone on alone. The sound is faded out while the page is hidden and back in when it is shown, and
+  // runs on, unheard: a blip or a typed letter that a timer plays behind the hidden page plays in its time, silent,
+  // rather than all at once when the page comes back (as it did with the sound suspended), and nothing waits on a
+  // suspend or a resume to finish. A line being spoken is stopped, and none is begun while the page is hidden (say).
+  MASTER: 0.7,
+  _onVisible() {
+    const c = this.ctx;
+    if (!c || !this.master) return;
+    const t = c.currentTime, g = this.master.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(document.hidden ? 0 : this.MASTER, t, 0.02);
+    if (!document.hidden) { this.resume(); return; }
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) { /* no speech here */ }
+  },
+
+  tone(freq, dur, o = {}) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    this._tone(this.sfxBus, freq, dur, o);
+  },
+  _tone(bus, freq, dur, { type = "square", vol = 0.25, slide = 0, delay = 0, attack = 0.004, at } = {}) {
+    const c = this.ctx;
+    const t0 = (at || c.currentTime) + delay;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(this.panned(bus));
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  },
+  noise(dur, { vol = 0.3, delay = 0, freq = 1200, q = 0.8, type = "lowpass", at, bus } = {}) {
+    if (!this.ctx) return;
+    if (!bus && !Store.settings.sfx) return;
+    const c = this.ctx;
+    const t0 = (at || c.currentTime) + delay;
+    const src = c.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = c.createBiquadFilter();
+    f.type = type;
+    f.frequency.value = freq;
+    f.Q.value = q;
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f).connect(g).connect(bus || this.panned(this.sfxBus));
+    src.start(t0, Math.random() * 0.5);
+    src.stop(t0 + dur + 0.02);
+  },
+
+  // Where the effect being played sits between the speakers (-1 left .. 1 right).
+  pan: 0,
+  panned(bus) {
+    if (!this.pan || bus !== this.sfxBus || !this.ctx.createStereoPanner) return bus;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = clamp(this.pan, -1, 1);
+    p.connect(bus);
+    return p;
+  },
+  // The announcer: the browser's own speech voice, pitched down, for the big moments.
+  // It speaks one line at a time. A line asked for while the one before it is still being spoken waits its turn
+  // (0.8 s or more after that one began, by its length); a line that would start more than 2.5 s late is not
+  // spoken at all (a stale call-out is worse than none). Returns how long the line waits, in seconds (-1: not spoken).
+  sayAt: 0, sayGen: 0,
+  say(text) {
+    if (!Store.settings.sfx || !Store.settings.voice) return 0;
+    if (document.hidden) return -1; // (a hidden page says nothing: _onVisible)
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    // a recorded line when there is one ("WAVE 3", "GAME OVER", "$250,000!" all have their own), else the browser's voice
+    const key = "vo:" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes ? takes[0].dur + 0.1 : 0.5 + String(text).length * 0.05));
+    if (takes) { this.duck(0.4, 1.1 + wait, 0.7); this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait }); return wait; }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return wait;
+    const speak = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(String(text).replace(/[!·]/g, " ").toLowerCase());
+        u.lang = "en-US";
+        u.rate = 1.05;
+        u.pitch = 0.5;
+        u.volume = 0.9;
+        if (speechSynthesis.speaking) speechSynthesis.cancel(); // the newest call-out wins
+        speechSynthesis.speak(u);
+      } catch (e) { /* speech isn't allowed here */ }
+    };
+    if (wait > 0.02) { const gen = this.sayGen; setTimeout(() => { if (gen === this.sayGen) speak(); }, wait * 1000); } else speak();
+    return wait;
+  },
+  // A line in someone's own recorded voice ("vo@adam:game over": a boss's last word), on the announcer's bus and in
+  // its queue (one line at a time). Without that recording, the announcer says it.
+  sayAs(who, text) {
+    const key = "vo@" + who + ":" + String(text).toLowerCase().replace(/[^a-z0-9$]+/g, " ").trim(), takes = this.ctx && this.bank[key];
+    if (!takes || !Store.settings.sfx || !Store.settings.voice) return this.say(text);
+    const now = performance.now() / 1000, wait = Math.max(0, this.sayAt - now);
+    if (wait > 2.5) return -1;
+    this.sayAt = now + wait + Math.max(0.8, Math.min(2.4, takes[0].dur + 0.1));
+    this.duck(0.4, 1.1 + wait, 0.7);
+    this._cue(key, 0, { bus: this.voiceBus, vary: 0, delay: wait });
+    return wait;
+  },
+  // Play an effect. o: { vol, rate, delay } scale a recorded take, lp (Hz) muffles it as a sound far off does (the
+  // title hall's distant growls); the synth ignores them.
+  sfx(name, pan = 0, o) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    if (this.bank[name]) { this._cue(name, pan, o); return; }
+    this.pan = pan;
+    try { this._sfx(this.ALIAS[name] || name); } finally { this.pan = 0; }
+  },
+  // What the synth plays for a sound that only exists as a recording (when the recordings are not loaded).
+  ALIAS: {
+    laser_fire: "laser", laser_heavy: "laser", plasma_fire: "shot", muzzle: "tick", shell: "tick",
+    impact_good: "boom", impact_big: "bigboom", impact_reject: "wrong", impact_hull: "hit", impact_shield: "shield", impact_metal: "clunk",
+    explosion_small: "boom", explosion_big: "bigboom", explosion_huge: "bossblast", debris: "shatter",
+    charge_up: "charge", charge_long: "bosscharge", warning: "buzz", lock_on: "tick", alarm: "buzz",
+    beam_fire: "laser", missile_fire: "swoosh", missile_hit: "boom", slam: "bosssmash", wave_fire: "whoosh",
+    boss_roar: "bossroar", boss_hurt: "hit", boss_stagger: "bossdown", boss_break: "bosspop", boss_death: "bossblast",
+    player_hit: "hit", heart_lost: "shatter", shield_down: "shield", low_health: "buzz",
+    crash: "hit", crash_glass: "shatter", skid: "swoosh", near_miss: "whoosh", boost: "warp", boost_flame: "whoosh",
+    reward: "coin", slowmo_in: "whoosh", ui_click: "blip", ui_select: "select", ui_back: "back",
+    volley_fire: "shot", sting_correct: "correct", sting_wrong: "wrong",
+  },
+  // A recorded effect. Takes of one sound are played in turn, each a touch different in pitch and level.
+  _cue(name, pan, o = {}) {
+    const takes = this.bank[name], c = this.ctx;
+    if (!takes || !c) return null;
+    const k = (takes.i = ((takes.i || 0) + 1 + (takes.length > 2 ? Math.floor(Math.random() * (takes.length - 1)) : 0)) % takes.length), q = takes[k];
+    const src = c.createBufferSource(), g = c.createGain(), vary = o.vary === undefined ? 1 : o.vary;
+    src.buffer = q.buf;
+    src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() - 0.5) * 0.06 * vary);
+    g.gain.value = (o.vol === undefined ? 1 : o.vol) * q.vol * (1 - Math.random() * 0.12 * vary);
+    let out = o.bus || this.sfxBus;
+    if (pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(out); out = p; }
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = o.lp; f.Q.value = 0.5; f.connect(out); out = f; }
+    // Its envelope (Phase 6), on a gain of its own (hush fades g): in over 2 ms, so a take that starts inside a sound (an
+    // announcer's line started at its words, Starfall at its crash) cannot click; and a take the generator stopped while
+    // it was still sounding is let go over its last stretch (_release) rather than cut by the build's 30 ms fade.
+    const t0 = c.currentTime + (o.delay || 0), env = c.createGain(), len = q.dur / src.playbackRate.value, rel = q.rel === undefined ? (q.rel = this._release(q)) : q.rel;
+    env.gain.setValueAtTime(0, t0);
+    env.gain.linearRampToValueAtTime(1, t0 + 0.002);
+    if (rel) env.gain.setTargetAtTime(0, t0 + len - rel, rel / 3);
+    src.connect(env).connect(g).connect(out);
+    src.start(t0, q.at, q.dur);
+    if (q.duck) this.duck(q.duck, q.dur * 0.6, 0.6);
+    const live = this.live || (this.live = new Set()), e = { src, g, born: c.currentTime, end: t0 + q.dur / src.playbackRate.value + 0.2 }; // (kept until it ends, so hush can cut it short)
+    if (live.size > 48) live.forEach((x) => { if (x.end < c.currentTime) live.delete(x); }); // (should an end go unreported)
+    live.add(e);
+    src.onended = () => live.delete(e);
+    return src;
+  },
+  // How long a take is let go over at its end, measured the first time it is played: none for one that ends in its own
+  // decay; for one still sounding when the build's fade ends it (anywhere in the 40 ms before its last 30 ms within
+  // 12 dB of its loudest 20 ms: the generator stopped it mid-sound), its last quarter, at most 0.15 s, and never from
+  // before its loudest moment (a take the generator stopped on its height keeps it, and is let go just after it). It
+  // reads a copy of the take alone (copyFromChannel into a scratch kept for it), never the whole sprite's channel,
+  // which a browser may have to copy whole once the sprite has played.
+  _release(q) {
+    const sr = q.buf.sampleRate, a = Math.round(q.at * sr), n = Math.min(Math.round(q.dur * sr), q.buf.length - a), w = Math.round(0.02 * sr);
+    if (n < 8 * w) return 0;
+    if (!this._scratch || this._scratch.length < n) this._scratch = new Float32Array(Math.max(n, 2 * sr));
+    const d = this._scratch.subarray(0, n);
+    q.buf.copyFromChannel(d, 0, a);
+    let top = 0, peak = 0, end = 0;
+    for (let i = 0; i + w <= n; i += w >> 1) {
+      let s = 0;
+      for (let j = i; j < i + w; j++) s += d[j] * d[j];
+      if (s > top) { top = s; peak = i + w; }
+      if (i + w >= n - 2.5 * w && i + w <= n - 1.5 * w && s > end) end = s;
+    }
+    return end > top * 0.063 ? Math.max(0, Math.min(0.15, q.dur / 4, (n - peak) / sr)) : 0;
+  },
+  // Every recorded effect and announcer line still sounding, or waiting for its moment, is faded out: a game calls
+  // this when it is paused, so nothing rings on behind the menu. (Loops have stopLoop; music has stopMusic.) What
+  // was started in this same moment is left alone: the menu's own blip.
+  hush(fade = 0.12) {
+    this.sayGen++; this.sayAt = 0; // (a line still waiting its turn is not spoken either)
+    try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (err) { /* no speech here */ }
+    if (!this.ctx || !this.live) return;
+    const t = this.ctx.currentTime;
+    this.live.forEach((e) => {
+      if (e.born >= t) return;
+      try { e.g.gain.cancelScheduledValues(t); e.g.gain.setTargetAtTime(0.0001, t, fade / 3); e.src.stop(t + fade + 0.05); } catch (err) { /* ended */ }
+      this.live.delete(e);
+    });
+  },
+  // A looping effect (an engine, an alarm, a charge) under an id of the caller's choosing. loop(id, name) starts it
+  // (or leaves it running); loopSet(id, { vol, rate }) follows the game; stopLoop(id) fades it out. Returns false
+  // when there is no recording by that name, so the caller can fall back on the synth.
+  loop(id, name, o = {}) {
+    if (!this.ctx || !Store.settings.sfx || !this.bank[name]) return false;
+    if (this.loops[id]) { if (this.loops[id].name === name) return true; this.stopLoop(id, 0.05); }
+    const takes = this.bank[name], c = this.ctx, q = takes[(takes.li = ((takes.li === undefined ? -1 : takes.li) + 1) % takes.length)], src = c.createBufferSource(), g = c.createGain(); // (a loop recorded more than once: each start takes the next take)
+    src.buffer = q.buf; src.loop = true; src.loopStart = q.at; src.loopEnd = q.at + q.dur;
+    src.playbackRate.value = o.rate || 1;
+    const lv = q.vol * (this.LOOP_SOFT[name] || 1), to = (o.vol === undefined ? 1 : o.vol) * lv;
+    g.gain.value = 0.0001;
+    g.gain.setTargetAtTime(to, c.currentTime, o.fade || 0.25);
+    if (name === "alarm") g.gain.setTargetAtTime(to * 0.35, c.currentTime + 3.4, 0.9); // (three beats to say it, then a faint beat under the play: the red frame keeps saying it)
+    if (this.LOOP_TONE[name]) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = this.LOOP_TONE[name]; lp.Q.value = 0.5; src.connect(lp).connect(g); } else src.connect(g);
+    g.connect(this.sfxBus);
+    src.start(c.currentTime, q.at);
+    this.loops[id] = { name, src, g, vol: lv };
+    return true;
+  },
+  loopSet(id, o) {
+    const l = this.loops[id];
+    if (!l) return;
+    const t = this.ctx.currentTime;
+    if (o.vol !== undefined) l.g.gain.setTargetAtTime(Math.max(0.0001, o.vol * l.vol), t, 0.08);
+    if (o.rate !== undefined) l.src.playbackRate.setTargetAtTime(o.rate, t, 0.08);
+  },
+  stopLoop(id, fade = 0.25) {
+    const l = this.loops[id];
+    if (!l) return;
+    delete this.loops[id];
+    try { l.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, fade / 3); l.src.stop(this.ctx.currentTime + fade + 0.1); } catch (e) { /* stopped */ }
+  },
+  stopLoops() { for (const id in this.loops) this.stopLoop(id, 0.15); },
+  // The music steps back for a moment (the announcer, a great blast) and comes back up.
+  duck(depth = 0.45, hold = 0.5, release = 0.8) {
+    if (!this.ctx || !this.duckGain) return;
+    const g = this.duckGain.gain, t = this.ctx.currentTime;
+    try { g.cancelScheduledValues(t); g.setTargetAtTime(depth, t, 0.03); g.setTargetAtTime(1, t + hold, release / 3); } catch (e) { /* not supported */ }
+  },
+  // ---- recorded sound, loaded by Assets --------------------------------------------------
+  _decode(buf) { return new Promise((res, rej) => { try { const p = this.ctx.decodeAudioData(buf.slice(0), res, rej); if (p && p.catch) p.catch(rej); } catch (e) { rej(e); } }); },
+  // Every sound file starts with a click exactly a quarter of a second in. Decoders differ in what they do with an
+  // encoder's padding, so where the click turns up says how far this one has shifted everything after it.
+  _clickAt(buf) {
+    const d = buf.getChannelData(0), n = Math.min(d.length, Math.round(buf.sampleRate * 0.7));
+    for (let i = 0; i < n; i++) if (d[i] > 0.3 || d[i] < -0.3) return i / buf.sampleRate - 0.25;
+    return 0;
+  },
+  // One file of effects and the list of where each lies: Assets.files.sprites[name] = { file, cues: { cue: [[at, dur, vol, duck]...] } }
+  loadSprite(name) {
+    const sp = Assets.files.sprites[name];
+    if (!sp || !this.ctx) return Promise.resolve(null);
+    return Assets.buffer(sp.file).then((b) => this._decode(b)).then((buf) => {
+      this.sprites[name] = buf;
+      Assets.release(sp.file); // (kept decoded for the session: the file's bytes are not needed again)
+      const off = this._clickAt(buf), mix = name === "voice" ? this.MIX.voice : this.MIX.sets[name] || 1; // (the set's level in the mix)
+      for (const cue in sp.cues) this.bank[cue] = sp.cues[cue].map(([at, dur, vol, duck]) => ({ buf, at: at + off, dur, vol: (vol === undefined ? 1 : vol) * mix, duck: duck || 0 }));
+      for (const cue in this.LOOP_JOIN) if (sp.cues[cue]) this.bank[cue].forEach((q) => this._join(q, this.LOOP_JOIN[cue])); // (before anything can play from it)
+      return buf;
+    }).catch((e) => { console.warn("sound " + name + " did not load: " + (e && e.message)); return null; });
+  },
+  // A piece of music: Assets.files.music[name] = { file, loop: [from, to], vol }. If it is the one that should be
+  // playing by the time it arrives, it takes over from the synth.
+  loadTrack(name) {
+    const m = Assets.files.music[name];
+    if (!m || !this.ctx) return Promise.resolve(null);
+    if (this._trackLoad && this._trackLoad[name]) return this._trackLoad[name];
+    const p = Assets.buffer(m.file).then((b) => this._decode(b)).then((buf) => {
+      const off = this._clickAt(buf);
+      this.tracks[name] = { buf, loop: m.loop ? [m.loop[0] + off, m.loop[1] + off] : [0, buf.duration], vol: (m.vol === undefined ? 1 : m.vol) * (this.MIX.music[name] || 1) }; // (the track's level in the mix)
+      if (this.trackName && (this.takes[this.trackName] || this.trackName) === name && Store.settings.music) this.play(this.trackName, true);
+      return buf;
+    }).catch((e) => { console.warn("music " + name + " did not load: " + (e && e.message)); return null; });
+    (this._trackLoad || (this._trackLoad = {}))[name] = p;
+    return p;
+  },
+  _sfx(name) {
+    const T = (f, d, o) => this.tone(f, d, o);
+    switch (name) {
+      case "coin": T(988, 0.07, { vol: 0.2 }); T(1319, 0.32, { delay: 0.07, vol: 0.2 }); break;
+      case "blip": T(660, 0.05, { vol: 0.12 }); break;
+      case "powerup": T(196, 0.42, { slide: 600, vol: 0.09, type: "sawtooth" }); [659, 880, 1319].forEach((f, i) => T(f, 0.09, { delay: 0.16 + i * 0.06, vol: 0.11 })); break; // a cabinet waking up
+      case "lock": this.noise(0.08, { vol: 0.35, freq: 1800 }); T(140, 0.16, { delay: 0.03, vol: 0.2, type: "square" }); T(96, 0.22, { delay: 0.1, vol: 0.22, type: "square" }); break; // a vault bolt going home
+      case "page": this.noise(0.12, { vol: 0.12, freq: 3200 }); break;
+      case "whoosh": this.noise(0.7, { vol: 0.1, freq: 900, type: "bandpass", q: 0.7 }); T(170, 0.6, { slide: -90, vol: 0.04, type: "sawtooth" }); break;
+      case "shield": T(520, 0.3, { slide: -380, vol: 0.12, type: "square" }); this.noise(0.25, { vol: 0.16, freq: 2600, type: "bandpass", q: 2 }); break;
+      case "combo": T(660, 0.07, { vol: 0.07 }); T(990, 0.09, { delay: 0.05, vol: 0.07 }); break;
+      // the Final Exam's boss: it starts to fail, a joint blows, it drops to its knees, the reactor runs away, the blast, a growl
+      case "bossdown": T(420, 0.9, { slide: -360, vol: 0.14, type: "sawtooth" }); this.noise(0.35, { vol: 0.3, freq: 700 }); break;
+      case "bosspop": this.noise(0.18, { vol: 0.4, freq: 900 }); T(120, 0.2, { slide: -70, vol: 0.2, type: "square" }); T(1800, 0.08, { slide: -1200, vol: 0.06, type: "sawtooth" }); break;
+      case "bossfall": T(70, 0.5, { delay: 0.38, slide: -40, vol: 0.3, type: "sine" }); this.noise(0.3, { delay: 0.38, vol: 0.32, freq: 300 }); break;
+      case "bosscharge": T(180, 1.1, { slide: 1500, vol: 0.1, type: "sawtooth" }); T(90, 1.1, { slide: 700, vol: 0.08, type: "square" }); this.noise(1.1, { vol: 0.12, freq: 2400, type: "bandpass", q: 1.5 }); break;
+      case "bossblast":
+        this.noise(1.7, { vol: 0.7, freq: 480 }); this.noise(0.45, { vol: 0.45, freq: 3200 });
+        T(90, 1.4, { slide: -70, vol: 0.4, type: "sine" }); T(45, 2.0, { delay: 0.05, slide: -20, vol: 0.35, type: "sine" });
+        for (let i = 0; i < 6; i++) this.noise(0.08, { delay: 0.35 + i * 0.17 + Math.random() * 0.06, vol: 0.18, freq: 1800 });
+        break;
+      case "bossgrowl": T(80, 1.1, { slide: -35, vol: 0.2, type: "sawtooth" }); T(40, 1.2, { slide: -10, vol: 0.2, type: "square" }); break;
+      // it wakes (a rising growl, servos, then its weight comes down), roars, and brings a fist down
+      case "bosswake":
+        T(52, 1.5, { slide: 70, vol: 0.28, type: "sawtooth" }); T(320, 0.8, { delay: 0.45, slide: 420, vol: 0.05, type: "square" });
+        this.noise(0.4, { delay: 1.78, vol: 0.4, freq: 320 }); T(64, 0.5, { delay: 1.78, slide: -34, vol: 0.32, type: "sine" });
+        break;
+      case "bossroar": T(130, 1.0, { slide: -70, vol: 0.3, type: "sawtooth" }); T(196, 1.0, { slide: -110, vol: 0.2, type: "square" }); this.noise(1.0, { vol: 0.35, freq: 900, type: "bandpass", q: 0.6 }); break;
+      case "bosssmash": T(70, 0.5, { slide: -40, vol: 0.45, type: "sine" }); this.noise(0.4, { vol: 0.5, freq: 350 }); this.noise(0.15, { vol: 0.3, freq: 2400 }); break; // a page turning
+      case "move": T(440, 0.04, { vol: 0.1, type: "triangle" }); break;
+      case "select": T(523, 0.06, { vol: 0.16 }); T(784, 0.1, { delay: 0.06, vol: 0.16 }); break;
+      case "back": T(392, 0.06, { vol: 0.14 }); T(262, 0.1, { delay: 0.06, vol: 0.14 }); break;
+      case "laser": T(1400, 0.18, { slide: -1150, vol: 0.18, type: "sawtooth" }); break;
+      case "shot": T(300, 0.25, { slide: 900, vol: 0.16, type: "square" }); break;
+      // Risk Blaster's demon: its roar (and the long one of its finale), a wing beat, its strike charging and let go, a hit on
+      // its armour, the sting as it turns to rage, plates coming away, its break-up, the blast that ends it (and the bigger one)
+      case "demonroar": T(82, 1.2, { slide: -38, vol: 0.2, type: "sawtooth", attack: 0.07 }); T(123, 1.1, { delay: 0.03, slide: -60, vol: 0.13, type: "sawtooth", attack: 0.07 }); T(55, 1.3, { slide: -20, vol: 0.22, type: "sine", attack: 0.05 }); T(164, 0.9, { delay: 0.05, slide: -100, vol: 0.07, type: "square" }); this.noise(1.2, { vol: 0.22, freq: 600, type: "bandpass", q: 0.5 }); this.noise(0.5, { delay: 0.1, vol: 0.09, freq: 2400, type: "bandpass", q: 1.2 }); break;
+      case "demonroarlong": T(78, 2.3, { slide: -40, vol: 0.2, type: "sawtooth", attack: 0.12 }); T(117, 2.2, { delay: 0.04, slide: -66, vol: 0.13, type: "sawtooth", attack: 0.12 }); T(52, 2.4, { slide: -18, vol: 0.24, type: "sine", attack: 0.08 }); T(156, 1.4, { delay: 0.5, slide: -90, vol: 0.08, type: "square" }); this.noise(2.3, { vol: 0.24, freq: 560, type: "bandpass", q: 0.5 }); this.noise(1.0, { delay: 0.7, vol: 0.12, freq: 2200, type: "bandpass", q: 1.1 }); break;
+      case "demonflap": this.noise(0.22, { vol: 0.1, freq: 420 }); T(70, 0.18, { slide: -25, vol: 0.06, type: "sine", attack: 0.03 }); break;
+      case "demoncharge": T(110, 0.45, { slide: 520, vol: 0.07, type: "sawtooth" }); T(55, 0.45, { slide: 180, vol: 0.08, type: "square" }); this.noise(0.45, { vol: 0.08, freq: 1800, type: "bandpass", q: 2 }); break;
+      case "demonrelease": T(300, 0.35, { slide: -240, vol: 0.14, type: "sawtooth" }); T(90, 0.4, { slide: -50, vol: 0.2, type: "sine" }); this.noise(0.3, { vol: 0.28, freq: 1200 }); break;
+      case "demonhit": this.noise(0.12, { vol: 0.32, freq: 1400 }); T(140, 0.22, { slide: -80, vol: 0.2, type: "square" }); T(620, 0.12, { slide: -300, vol: 0.06, type: "triangle" }); T(96, 0.5, { delay: 0.08, slide: -40, vol: 0.12, type: "sawtooth" }); break;
+      case "demonrage": T(98, 0.9, { slide: 60, vol: 0.14, type: "sawtooth" }); T(139, 0.9, { slide: 85, vol: 0.12, type: "sawtooth" }); T(49, 1.1, { vol: 0.18, type: "sine" }); this.noise(0.9, { vol: 0.16, freq: 700, type: "bandpass", q: 0.6 }); break;
+      case "demonshed": for (let i = 0; i < 3; i++) { this.noise(0.05, { delay: i * 0.07, vol: 0.14, freq: 3000 + i * 600, type: "bandpass", q: 3 }); T(900 - i * 160, 0.06, { delay: i * 0.07, slide: -300, vol: 0.04, type: "square" }); } break;
+      case "demonbreak": for (let i = 0; i < 6; i++) this.noise(0.09, { delay: i * 0.06, vol: 0.16, freq: 1800 - i * 220, type: "bandpass", q: 1.5 }); T(180, 0.5, { slide: -120, vol: 0.1, type: "sawtooth" }); break;
+      case "demonboom": this.noise(1.4, { vol: 0.55, freq: 520 }); this.noise(0.25, { vol: 0.25, freq: 3000, type: "bandpass", q: 0.8 }); T(70, 1.2, { slide: -45, vol: 0.36, type: "sine" }); T(140, 0.5, { slide: -90, vol: 0.18, type: "triangle" }); break;
+      case "demonfinale": this.noise(2.0, { vol: 0.6, freq: 420 }); T(60, 1.8, { slide: -38, vol: 0.4, type: "sine" }); this.noise(1.2, { delay: 0.46, vol: 0.5, freq: 700 }); T(90, 1.0, { delay: 0.46, slide: -60, vol: 0.3, type: "triangle" }); this.noise(0.3, { delay: 0.46, vol: 0.25, freq: 3200, type: "bandpass", q: 0.8 }); break;
+      case "boom": this.noise(0.45, { vol: 0.5, freq: 900 }); T(120, 0.4, { slide: -80, vol: 0.3, type: "triangle" }); break;
+      case "bigboom": this.noise(1.1, { vol: 0.6, freq: 700 }); T(90, 1.0, { slide: -60, vol: 0.35, type: "triangle" }); break;
+      case "correct": [523, 659, 784, 1047].forEach((f, i) => T(f, 0.1, { delay: i * 0.06, vol: 0.16 })); break;
+      case "wrong": T(220, 0.18, { vol: 0.2, type: "sawtooth" }); T(155, 0.3, { delay: 0.16, vol: 0.2, type: "sawtooth" }); break;
+      case "hit": this.noise(0.3, { vol: 0.45, freq: 400 }); T(110, 0.3, { slide: -60, vol: 0.3, type: "square" }); break;
+      case "charge": T(200, 0.6, { slide: 600, vol: 0.08, type: "sawtooth" }); break;
+      case "levelup": [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => T(f, 0.12, { delay: i * 0.08, vol: 0.16 })); break;
+      case "gameover": [392, 330, 262, 196].forEach((f, i) => T(f, 0.28, { delay: i * 0.22, vol: 0.2, type: "triangle" })); break;
+      case "win": [523, 523, 523, 659, 784, 659, 784, 1047].forEach((f, i) => T(f, 0.16, { delay: i * 0.11, vol: 0.18 })); break;
+      case "flip": this.noise(0.12, { vol: 0.25, freq: 3000, type: "bandpass", q: 1.2 }); break;
+      case "deposit": T(1568, 0.06, { vol: 0.12 }); T(2093, 0.18, { delay: 0.05, vol: 0.12 }); break;
+      case "tick": T(1800, 0.02, { vol: 0.06 }); break;
+      case "swoosh": this.noise(0.35, { vol: 0.3, freq: 1800, type: "bandpass", q: 0.6 }); break;
+      case "clunk": T(70, 0.22, { slide: -35, vol: 0.45, type: "sine" }); this.noise(0.06, { vol: 0.35, freq: 2500, type: "bandpass", q: 2 }); break;
+      case "buzz": T(118, 0.28, { vol: 0.07, type: "sawtooth" }); T(236, 0.2, { vol: 0.03, type: "square", delay: 0.02 }); break;
+      case "crton": T(1800, 0.25, { slide: 6000, vol: 0.05, type: "sine" }); T(60, 0.3, { slide: -20, vol: 0.3, type: "sine", delay: 0.05 }); break;
+      case "rankup": [392, 523, 659, 784, 1047, 1319].forEach((f, i) => T(f, 0.16, { delay: i * 0.09, vol: 0.17 })); T(1568, 0.6, { delay: 0.56, vol: 0.12, type: "triangle" }); break;
+      case "warp": T(200, 1.1, { slide: 2400, vol: 0.12, type: "sawtooth" }); this.noise(1.0, { vol: 0.2, freq: 1200, type: "bandpass", q: 0.5 }); break;
+      // FEVER: a riser into a fanfare, with the crowd behind it (bigger each level)
+      case "fever1": case "fever2": case "fever3": {
+        const n = +name.slice(5), root = [392, 440, 523][n - 1];
+        T(root / 2, 0.34, { slide: root * 1.5, vol: 0.1, type: "sawtooth" });
+        [1, 1.26, 1.5, 2, 2.52].slice(0, 2 + n).forEach((m, i) => T(root * m, 0.14, { delay: 0.3 + i * 0.07, vol: 0.17 }));
+        T(root * 2, 0.5, { delay: 0.3 + (2 + n) * 0.07, vol: 0.13, type: "triangle" });
+        this.cheer(0.5 + n * 0.25, 0.3);
+        break;
+      }
+      case "trophy": [659, 784, 988, 1319].forEach((f, i) => T(f, 0.12, { delay: i * 0.08, vol: 0.16 })); T(1976, 0.5, { delay: 0.34, vol: 0.1, type: "triangle" }); this.cheer(0.7, 0.25); break;
+      case "zip": T(900, 0.09, { slide: 1500, vol: 0.1, type: "triangle" }); T(1800, 0.08, { delay: 0.07, vol: 0.08 }); break;
+      case "shatter":
+        [0, 0.05, 0.11, 0.18].forEach((d, i) => this.noise(0.16, { vol: 0.3 - i * 0.05, freq: 5200 - i * 700, type: "highpass", delay: d }));
+        T(1400, 0.4, { slide: -1150, vol: 0.1, type: "triangle" });
+        break;
+    }
+  },
+
+  // A crowd's cheer: band-passed noise that swells and rises, like "aaah".
+  cheer(dur = 0.8, delay = 0) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    const c = this.ctx, t0 = c.currentTime + delay;
+    [[700, 0.2], [1150, 0.14], [2600, 0.07]].forEach(([freq, vol]) => {
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 1.6;
+      f.frequency.setValueAtTime(freq * 0.8, t0);
+      f.frequency.linearRampToValueAtTime(freq * 1.25, t0 + dur * 0.5);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + dur * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      src.connect(f).connect(g).connect(this.sfxBus);
+      src.start(t0, Math.random() * 0.4);
+      src.stop(t0 + dur + 0.05);
+    });
+  },
+
+  // Dialogue "voices": a short blip per letter, pitched per character.
+  voice(pitch = 440) {
+    if (!this.ctx || !Store.settings.sfx) return;
+    this._tone(this.sfxBus, pitch * (0.92 + Math.random() * 0.16), 0.045, { type: "square", vol: 0.06 });
+  },
+
+  // Arcade-floor ambience: a low crowd murmur plus distant cabinets beeping.
+  ambience(on) {
+    if (!this.ctx) return;
+    // (the hall's own recording when it has loaded: a loop under the music, in place of the synth's murmur)
+    clearTimeout(this._ambEnd);
+    if (on && this.bank.hub_hum && Store.settings.sfx) {
+      if (this._amb) this.ambience(false);
+      this.loop("ambience", "hub_hum", { vol: 0.4, fade: 1.2 });
+      this._ambEnd = setTimeout(() => this.stopLoop("ambience", 4), 14000); // (it sets the room as it comes on, then settles away: not a loop under every minute in the hall)
+      return;
+    }
+    if (!on) this.stopLoop("ambience", 0.6);
+    // Without the recording: the distant cabinets' soft blips, and nothing under them. (Until 2026-11-17 a loop of
+    // white noise through a wide band-pass lay under them as a "crowd murmur": on a phone, where the hall's recording
+    // is often still on its way 2.6 s after the room comes on, that started instead and never stopped, a steady
+    // hiss at about -57 dBFS that was the only sound above 2 kHz under the soft new music. It is gone.)
+    if (on && !this._amb && Store.settings.sfx) {
+      const c = this.ctx;
+      const blip = () => {
+        if (!this._amb) return;
+        const at = c.currentTime;
+        const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+        const o = c.createOscillator();
+        const og = c.createGain();
+        o.type = Math.random() < 0.5 ? "square" : "triangle";
+        const base = pick([330, 392, 440, 523, 587, 659, 784, 880]);
+        o.frequency.setValueAtTime(base, at);
+        if (Math.random() < 0.5) o.frequency.setValueAtTime(base * 1.5, at + 0.07);
+        og.gain.setValueAtTime(0.0001, at);
+        og.gain.exponentialRampToValueAtTime(0.018, at + 0.01);
+        og.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+        o.connect(og);
+        if (pan) { pan.pan.value = rand(-0.9, 0.9); og.connect(pan).connect(this.sfxBus); } else og.connect(this.sfxBus);
+        o.start(at);
+        o.stop(at + 0.2);
+        this._amb.t = setTimeout(blip, rand(500, 2200));
+      };
+      this._amb = { t: setTimeout(blip, 600) };
+    } else if (!on && this._amb) {
+      const a = this._amb;
+      this._amb = null;
+      clearTimeout(a.t);
+    }
+  },
+
+  // The Final Exam's boss, heard: a low drone that beats slowly against itself, and its breathing.
+  dread(on) {
+    if (!this.ctx) return;
+    if (on && !this._dread && Store.settings.sfx) {
+      const c = this.ctx, f = c.createBiquadFilter(), g = c.createGain(), o1 = c.createOscillator(), o2 = c.createOscillator();
+      f.type = "lowpass";
+      f.frequency.value = 380;
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(0.05, c.currentTime, 1.5);
+      o1.type = o2.type = "sawtooth";
+      o1.frequency.value = 55;
+      o2.frequency.value = 55.7;
+      o1.connect(f);
+      o2.connect(f);
+      f.connect(g).connect(this.sfxBus);
+      o1.start();
+      o2.start();
+      // its breath, in tone: the drone's filter opens and it swells a little (in), then settles slower (out). (It
+      // breathed in bursts of band-passed noise, a hiss every 4.8 s all through the exam.)
+      const breathe = () => {
+        if (!this._dread) return;
+        const t = c.currentTime;
+        f.frequency.cancelScheduledValues(t); f.frequency.setTargetAtTime(640, t, 0.45); f.frequency.setTargetAtTime(380, t + 1.4, 0.75);
+        g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.064, t, 0.45); g.gain.setTargetAtTime(0.05, t + 1.4, 0.75);
+        this._dread.t = setTimeout(breathe, 4800);
+      };
+      this._dread = { o1, o2, g, t: setTimeout(breathe, 1200) };
+    } else if (!on && this._dread) {
+      const d = this._dread;
+      this._dread = null;
+      clearTimeout(d.t);
+      try { d.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.3); d.o1.stop(this.ctx.currentTime + 1.2); d.o2.stop(this.ctx.currentTime + 1.2); } catch (e) { /* stopped */ }
+    }
+  },
+
+  // A synth engine for the racer; rev() follows the speed.
+  engine(on) {
+    if (!this.ctx) return;
+    if (on && !this._eng && Store.settings.sfx) {
+      const c = this.ctx;
+      const f = c.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.value = 420;
+      const g = c.createGain();
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(0.05, c.currentTime, 0.4);
+      const o1 = c.createOscillator(), o2 = c.createOscillator();
+      o1.type = "sawtooth";
+      o2.type = "square";
+      o1.frequency.value = 52;
+      o2.frequency.value = 104.6;
+      o1.connect(f);
+      o2.connect(f);
+      f.connect(g).connect(this.sfxBus);
+      o1.start();
+      o2.start();
+      this._eng = { o1, o2, g, f };
+    } else if (!on && this._eng) {
+      const e = this._eng;
+      this._eng = null;
+      try { e.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.15); e.o1.stop(this.ctx.currentTime + 0.6); e.o2.stop(this.ctx.currentTime + 0.6); } catch (err) { /* stopped */ }
+    }
+  },
+  rev(x) {
+    if (!this._eng) return;
+    const t = this.ctx.currentTime;
+    this._eng.o1.frequency.setTargetAtTime(44 + x * 46, t, 0.15);
+    this._eng.o2.frequency.setTargetAtTime(89 + x * 93, t, 0.15);
+    this._eng.f.frequency.setTargetAtTime(300 + x * 500, t, 0.2);
+  },
+
+  // Music builds with your streak: 0 calm, 1 hats, 2 lead, 3 everything.
+  intensity: 0,
+  setIntensity(n) {
+    this.intensity = clamp(n, 0, 3);
+    // recorded music opens up with the streak: a touch darker and lower while it is calm, everything at the top
+    if (this.ctx && this.trackTone) {
+      const t = this.ctx.currentTime, i = this.intensity;
+      this.trackTone.frequency.setTargetAtTime([5200, 8000, 12500, 20000][Math.round(i)], t, 0.4);
+      this.trackBus.gain.setTargetAtTime([0.4, 0.44, 0.48, 0.52][Math.round(i)], t, 0.4);
+    }
+  },
+  intensityFor(streak) { return streak >= 8 ? 3 : streak >= 5 ? 2 : streak >= 2 ? 1 : 0; },
+
+  // --- music: a tiny step sequencer ----------------------------------------
+  TRACKS: {
+    title: { bpm: 100, prog: [[45, 57, 60, 64], [41, 53, 57, 60], [48, 55, 60, 64], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 3], lead: [76, 0, 0, 74, 0, 72, 0, 0, 72, 0, 74, 0, 76, 0, 79, 0] },
+    hub: { bpm: 92, prog: [[38, 50, 53, 57], [43, 50, 55, 59], [36, 48, 52, 55], [41, 48, 53, 57]], arp: [0, 2, 1, 3, 2, 1, 3, 2], lead: null },
+    game: { bpm: 128, prog: [[45, 57, 60, 64], [45, 57, 60, 64], [41, 53, 57, 60], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 1, 2, 3, 2], lead: null },
+    boss: { bpm: 140, prog: [[40, 52, 55, 59], [40, 52, 55, 59], [41, 53, 56, 60], [38, 50, 53, 57]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: null },
+    get blaster() { return this.game; }, get racer() { return this.game; }, // (each mode has its own recording; the synth plays one tune for both)
+    get finalboss() { return this.boss; }, // (the last boss has its own recording; without it, the boss tune)
+    calm: { bpm: 80, prog: [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]], arp: [0, 1, 2, 3, 2, 1, 2, 1], lead: null },
+    get memory() { return this.calm; }, get exam() { return this.calm; }, // (Memory Bank and the Final Exam have their own recordings; without them, the calm tune as before)
+  },
+  // The recording to load or play for a track: during its screen's visit the one that visit plays, between visits the
+  // one the next visit will play (a track with one recording: itself).
+  take(name) {
+    const base = String(name).replace(/-b$/, ""), b = base + "-b", files = Assets.files.music;
+    if (!Assets.on || !files[base] || !files[b]) return name; // (from disk: one tune per track, as before)
+    if (this.trackName === base && this.takes[base]) return this.takes[base];
+    return this.nextTake[base] || (this.nextTake[base] = Math.random() < 0.5 ? base : b);
+  },
+  // again: the same visit, started over (its recording has arrived, the music was switched back on)
+  play(name, again) {
+    if (!again && this.trackName === name && (this.timer || this._now)) return;
+    if (this.trackName !== name && Assets.on && Assets.files.music[name + "-b"]) { // a new visit: the recording lined up for it, and the other one next time
+      const t = (this.takes[name] = this.take(name)), o = (this.nextTake[name] = t === name ? name + "-b" : name);
+      delete this.tracks[o];
+      if (this._trackLoad) delete this._trackLoad[o];
+    }
+    // A decoded track is about 30 MB (some 85 s of stereo): only the one this visit plays is kept. Another screen's is
+    // let go when its own visit ends; going back decodes it again from the file, which stays downloaded.
+    if (this.trackName !== name) { const keep = this.takes[name] || name; for (const k in this.tracks) if (k !== keep) { delete this.tracks[k]; if (this._trackLoad) delete this._trackLoad[k]; } }
+    this.trackName = name;
+    this.stopMusic();
+    if (!this.ctx || !Store.settings.music) return;
+    const take = this.takes[name] || name, rec = this.tracks[take];
+    if (rec) { // the recording: its loop played pass after pass (_pass), faded in
+      const c = this.ctx, g = c.createGain(), now = { g, passes: [] }, t = c.currentTime;
+      g.gain.value = 0.0001;
+      g.gain.setTargetAtTime(rec.vol, t, 0.5);
+      g.connect(this.trackBus);
+      this._now = now;
+      this._pass(rec, now, t, true);
+      this._pass(rec, now, t + (rec.loop[1] - rec.loop[0]), false);
+      this.setIntensity(this.intensity);
+      return;
+    }
+    const coming = Assets.on && !!Assets.files.music[take];
+    // (a recording on its way is waited for in silence and fades in when it arrives: the synth's chiptune, with its
+    // noise hi-hats, no longer stands in for a few seconds first. It plays only when there is no recording: opened
+    // from disk, or the file would not load.)
+    if (coming) { this.loadTrack(take).then((buf) => { if (!buf && this.trackName === name && !this._now && !this.timer && Store.settings.music) this._synth(name); }); return; }
+    this._synth(name);
+  },
+  // One pass of a recording's loop, from time t (Phase 6). Its file holds a copy of the loop's start right after the
+  // loop's end, so each pass runs on into that copy for MUSIC_X while the next comes in over it: the two copies, coded
+  // apart, differ only by the codec's own noise, and the seam is a blend, never a step (looped in place, the title's
+  // soft music had a faint tick each time round). When a pass ends, the one after the next is set to follow, so a pass
+  // is always waiting a whole loop ahead.
+  MUSIC_X: 0.03,
+  _pass(rec, now, t, first) {
+    if (this._now !== now || !this.ctx) return;
+    const c = this.ctx, L = rec.loop[1] - rec.loop[0], X = this.MUSIC_X, src = c.createBufferSource(), e = c.createGain();
+    src.buffer = rec.buf;
+    e.gain.setValueAtTime(first ? 1 : 0, t);
+    if (!first) e.gain.linearRampToValueAtTime(1, t + X);
+    e.gain.setValueAtTime(1, t + L);
+    e.gain.linearRampToValueAtTime(0, t + L + X);
+    src.connect(e).connect(now.g);
+    src.start(t, rec.loop[0], L + X);
+    now.passes.push(src);
+    src.onended = () => { now.passes = now.passes.filter((s) => s !== src); this._pass(rec, now, t + 2 * L, false); };
+  },
+  _synth(name) {
+    if (!this.TRACKS[name]) return;
+    this.track = this.TRACKS[name];
+    this.step = 0;
+    this.nextTime = this.ctx.currentTime + 0.08;
+    this.timer = setInterval(() => this._schedule(), 30);
+  },
+  stopMusic() {
+    clearInterval(this.timer);
+    this.timer = 0;
+    if (this._now) {
+      const n = this._now;
+      this._now = null;
+      try { n.g.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.18); } catch (e) { /* no context */ }
+      n.passes.forEach((s) => { try { s.stop(this.ctx.currentTime + 0.9); } catch (e) { /* stopped */ } }); // (one waiting to start never starts)
+    }
+  },
+  refreshMusic() {
+    const n = this.trackName;
+    if (Store.settings.music && n) this.play(n, true);
+    else { this.trackName = null; this.stopMusic(); }
+  },
+  _schedule() {
+    const c = this.ctx;
+    if (!c || !this.track) return;
+    const tr = this.track;
+    const stepDur = 60 / tr.bpm / 4;
+    while (this.nextTime < c.currentTime + 0.12) {
+      const s = this.step % 16;
+      const bar = Math.floor(this.step / 16) % tr.prog.length;
+      const chord = tr.prog[bar];
+      const at = this.nextTime;
+      const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+      if (s % 4 === 0) this._tone(this.musicBus, hz(chord[0] - 12), stepDur * 3.2, { type: "triangle", vol: 0.5, at });
+      if (s % 2 === 0) this._tone(this.musicBus, hz(chord[tr.arp[(s / 2) % tr.arp.length]] + 12), stepDur * 1.6, { type: "square", vol: 0.09, at });
+      if (tr.lead && tr.lead[s] && bar % 2 === 1) this._tone(this.musicBus, hz(tr.lead[s]), stepDur * 1.8, { type: "square", vol: 0.07, at });
+      const lvl = this.intensity;
+      if (s % 4 === 2 || (lvl >= 1 && s % 2 === 1)) this.noise(0.04, { vol: lvl >= 1 ? 0.15 : 0.12, freq: 7000, type: "highpass", at, bus: this.musicBus });
+      if (lvl >= 2 && s % 4 === 0) this._tone(this.musicBus, hz(chord[(s / 4 + bar) % 4] + 24), stepDur * 3.5, { type: "square", vol: 0.06, at });
+      if (lvl >= 3 && s % 2 === 1) this._tone(this.musicBus, hz(chord[tr.arp[((s - 1) / 2) % tr.arp.length]] + 24), stepDur * 0.9, { type: "triangle", vol: 0.08, at });
+      if (s % 8 === 0) this._tone(this.musicBus, 120, 0.14, { type: "sine", slide: -80, vol: 0.55, at });
+      if (s % 8 === 4 && tr !== this.TRACKS.calm) this.noise(0.12, { vol: 0.22, freq: 1800, type: "bandpass", at, bus: this.musicBus });
+      this.nextTime += stepDur;
+      this.step++;
+    }
+  },
+};

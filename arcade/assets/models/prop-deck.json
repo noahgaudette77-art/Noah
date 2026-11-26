@@ -1,0 +1,33 @@
+{
+ "name": "prop-deck",
+ "triangles": 9999,
+ "bytes": 284156,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0.5,
+    0
+   ],
+   "min": [
+    -0.7715,
+    0,
+    -0.6312
+   ],
+   "max": [
+    0.7715,
+    1,
+    0.6312
+   ],
+   "tris": 9999
+  }
+ },
+ "anchors": {},
+ "size": [
+  1.5429680347442627,
+  1,
+  1.2624132633209229
+ ],
+ "source": "cand/props/prop-deck-b-sd-0.tripo.glb"
+}

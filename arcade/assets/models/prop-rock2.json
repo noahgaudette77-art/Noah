@@ -1,0 +1,33 @@
+{
+ "name": "prop-rock2",
+ "triangles": 6998,
+ "bytes": 239280,
+ "tex": 512,
+ "parts": {
+  "body": {
+   "pivot": [
+    0,
+    0,
+    0
+   ],
+   "min": [
+    -0.5,
+    -0.445,
+    -0.4546
+   ],
+   "max": [
+    0.5,
+    0.445,
+    0.4546
+   ],
+   "tris": 6998
+  }
+ },
+ "anchors": {},
+ "size": [
+  1,
+  0.890043318271637,
+  0.9091086983680725
+ ],
+ "source": "cand/props/prop-rock2-sd-0.tripo.glb"
+}

@@ -1,0 +1,15 @@
+{
+ "name": "title-dusk-b",
+ "source": "title-dusk-b",
+ "blockade": {
+  "id": 15930882,
+  "style": "M3 Digital Painting",
+  "seed": 1406853052,
+  "prompt": "Synthwave dusk sky over a far flat horizon, no sun disc: glowing orange and magenta at the horizon, deep violet above, dramatic layered clouds lit pink from below, stars at the zenith, one great distant thundercloud glowing from within on one side, low dark mountain silhouettes, dark plain below. 1980s retro outrun aesthetic, vivid, cinematic."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 461748,
+ "lightAt": 225,
+ "mean": 0.228
+}

@@ -1,0 +1,15 @@
+{
+ "name": "boss-storm",
+ "source": "boss-storm",
+ "blockade": {
+  "id": 15930871,
+  "style": "M3 Advanced (artistic)",
+  "seed": 1007892728,
+  "prompt": "Ominous night sky seen from the floor of a colossal dark arena: an enormous slow storm vortex directly overhead, layers of black and deep violet cloud lit from within by magenta lightning, shafts of cold light breaking through, a thin ring of pale light at the far horizon, everything else dark. Dramatic, menacing, high contrast, painterly detail in the clouds, retro synthwave palette."
+ },
+ "width": 4096,
+ "height": 2048,
+ "bytes": 941214,
+ "lightAt": 127,
+ "mean": 0.23
+}

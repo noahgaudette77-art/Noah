@@ -1,0 +1,47 @@
+{
+ "name": "boss-7-t",
+ "about": "The title's containment hall: a lighter build of boss-7 (the same source, rig and clips), for a boss seen at the middle distance in its stasis pod. Boss Rush: Longevity Lich, second version (2026-11-16): an ancient clockwork lich: a cracked white porcelain mask with mint eye slits, a crown of clock hands, a glass case in its chest holding a glowi",
+ "src": "post/boss07b-animA.glb",
+ "more": [
+  "post/boss07b-animB.glb"
+ ],
+ "seg": "post/boss07b-seg.glb",
+ "size": {
+  "axis": "y",
+  "value": 1
+ },
+ "tris": 16000,
+ "tex": 512,
+ "texBase": 1024,
+ "clips": {
+  "idle": "idle",
+  "jump_down": "enter",
+  "slash": "attackA",
+  "cast_a_spell": "attackB",
+  "hit_to_body_01": "hurt",
+  "hit_to_head": "stagger",
+  "angry_01": "rage",
+  "fall": "death"
+ },
+ "emissive": {
+  "hues": [
+   [
+    130,
+    175
+   ]
+  ],
+  "sat": [
+   0.35,
+   0.6
+  ],
+  "val": [
+   0.45,
+   0.75
+  ]
+ },
+ "limbRadius": 0.06,
+ "armRadius": 0.06,
+ "handReach": 1.1,
+ "bar": "the game's one quality bar (2026-11-17): a figure seen at middle distance (the title's pods): 1024 px colour, 512 px other maps, about 20K triangles",
+ "error": 0.06
+}
