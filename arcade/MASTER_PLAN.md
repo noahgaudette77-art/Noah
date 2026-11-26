@@ -14,8 +14,10 @@ Started 2026-11-23 at commit `ee413e3` (the overhaul's base: every diff check is
 
 - **The owner changed the order of the phases (2026-11-24):** 0, 1, 5, 3, 2, 4, 6, 7, a performance re-check, 8; and
   nothing in an environment or asset that will be rebuilt is polished before it is (see The order, below).
-- **Phase:** Phase 8, the final verification (below), IN PROGRESS from 2026-11-26 (the owner's go): first the title
-  hall's stutter the owner saw on the iPhone (`docs/master/phase8/title-stutter.md`). Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
+- **Phase:** **the master overhaul is done** (2026-11-26). Phase 8, the final verification, closed it:
+  `docs/master/phase8/README.md` (the final build checked in both engines, the census, the performance table, the
+  gallery and the films, the spend) and `docs/master/phase8/title-stutter.md` (the iPhone's stutter in the title hall).
+  What is left is the owner's own checks on the devices (the list at the end of the Phase 8 README). Phases 0, 1, 5, 3, 2, 4, 6, 7, the performance re-check,
   the Mac's richer tier and the context-loss handler are done (the Mac tier's gate 2026-11-25:
   `docs/master/mactier/gate-report.md`; the context-loss handler 2026-11-26: `docs/master/contextloss/README.md`).
 - **Phase 8 starts from:** the whole harness on both tiers in Chromium and WebKit, every screen and game, the content
@@ -392,7 +394,7 @@ the title hall, a boss fight, and the Memory Bank all recover with no black refl
   control's, the game's state as it was, the game going on; the rules IDENTICAL from disk and served; an independent review.
   **Passed** 2026-11-26: 93 checks in each engine, no WebGL complaint, no page error; the review's findings answered.
 
-### Phase 8: final verification (IN PROGRESS, from 2026-11-26)
+### Phase 8: final verification (done 2026-11-26)
 The whole harness; every screen and game on both tiers in WebKit and Chromium; the content diff; fixes; the final
 gallery, a short film of the title hall and one fight, a performance table, the final spend and a token estimate;
 pushed; the served link checked.
@@ -403,6 +405,21 @@ pushed; the served link checked.
   glass on a phone or a tablet at any tier; a boss's skin merged in smaller steps as it arrives. The governor's test
   anew in both engines; the rules IDENTICAL. For the owner: Graphics back to AUTO on the phone, then the `#fps` readout
   again. Tool: `tools/glide-frames.js` (the first glide in real time, every frame and every picture sent timed).
+- **8b. The best picture each device holds** (the owner, 2026-11-26: "max graphics possible, best immersion, no more
+  questions. Good FPS"). A phone's AUTO climbing to MAC "with room to spare" was built and taken out on the independent
+  review's word: a frame's time is the gap between refreshes, so on a 60 Hz screen (the owner's iPhone) it could never
+  climb, and where it could (an iPad) it brought the computer's tier and left too loosely; a real measure of the chip's
+  spare time (a fence, polled) would be the way. What stands: a Graphics setting fixed before today goes back to AUTO
+  once (`qv`, a synced copy too: `mergeStates`); a fixed tier eases its size (8a) but not at a 30 fps cap; choosing a
+  tier restarts the governor's clock. The governor's test: every case in both engines (fixed, fixed@30, once).
+- **8c. The final build checked**: the harness in Chromium and WebKit (no fault: the rules IDENTICAL from disk and served,
+  the 13-step sequence, content and scripts untouched, 42 stills a run without text over text, every screen inside its
+  budget); the census (the exam sends no picture in play now: the lens's dust readied behind the curtain; Boss Rush's
+  phone garbage 51.5 KB a frame, most of it CombatFX's update, left for a later look); the governor's test (63 checks)
+  and the context loss's (93) in both engines.
+- **8d. The record**: the performance table, the gallery (`sheet-*.jpg`, `before-after-*.jpg`), the films
+  (`docs/master/phase8/films/`), the spend ($0.36 for the whole overhaul), an independent review of Phase 8's changes
+  (nine findings, all answered: `docs/master/phase8/README.md`).
 
 ## Decisions (with the evidence for each)
 
@@ -780,3 +797,19 @@ on in the dark, RELOAD shown at once, smaller restore gaps and a test that prove
 rules IDENTICAL from disk and served; content and scripts untouched. Spend: none. For the devices: on the iPhone, leave a
 fight for another app for some minutes and come back (at most a moment of the notice, then the fight paused as it was,
 its reflections lit); on the Mac, the console line in the README forces a loss and its return. Next: Phase 8.
+
+**Phase 8, the final verification (2026-11-26).** Started by the owner with a fault on the iPhone: the title hall
+stuttered from beginning to end; asked, the phone's readout showed under 55 FPS, many hitches and FIXED (SETUP), so the
+governor did nothing. A fixed tier now eases its drawing size (not at a 30 fps cap), no frosted glass is drawn over the
+live picture on a phone at any tier, a hall boss's skin is merged in smaller steps, and a Graphics setting fixed before
+today goes back to AUTO once (a synced copy too). The owner then asked for the most the device can draw at a good frame
+rate and no more questions: a climb to MAC on a phone with room to spare was built and taken out on the independent
+review's word (on a 60 Hz screen it could never climb: a frame's time is the gap between refreshes). The final build
+passes the harness in both engines (no fault), the governor's test (63) and the context loss's (93) in both, and the
+census (no shader made in play anywhere; the exam's last picture sent in play readied behind the curtain). Every screen
+inside its budget (the table in the Phase 8 README). Gallery and films made. The overhaul's spend from `ee413e3`: $0.36.
+Live at the page built after `c99e2bc`. Left for the owner's devices: the iPhone's FPS counter in the glide (AUTO again
+once), each game, leaving a fight for another app; the MacBook's FPS counter, Activity Monitor over half an hour, Setup's
+MEDIUM and back. Left for a later look: Boss Rush's phone garbage (about 31 KB a frame in CombatFX's update), a measure
+of the graphics chip's spare time (a fence, polled) before any climb above a device's own tier, Risk Blaster's phone
+draws at its busiest (118 to 119 in the re-check).

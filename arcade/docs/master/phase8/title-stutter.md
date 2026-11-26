@@ -40,9 +40,26 @@ than the PHONE tier's (most of it the ambient shade), and the drawing size at 1.
 largest parts are its walls' and the cells' steel, the end of the hall's props and the nearest bosses. Those shares are
 software's, not a phone's, so nothing of the hall's look was cut for them.
 
+## Then: the best picture each device holds (8b)
+
+The owner's next word: "It's okay just get it done please max graphics possible best immersion, no more questions. Good
+FPS". A first answer let a phone's AUTO climb from PHONE to MAC when frames had room to spare; the independent review
+showed it could never climb on a 60 Hz screen (the owner's iPhone in Safari): a frame's time here is the gap between the
+screen's refreshes, never under 16.7 ms at 60 Hz, so "room to spare" (the slowest tenth under 13.3 ms) cannot be seen;
+where it could (a faster screen, an iPad) it brought the computer's tier, its 4x smoothing, floor mirror and sharper
+files, and left too loosely. It was taken out before it was shipped. A real measure of spare time on the graphics chip
+(a fence after the frame's drawing, polled) would be the way to do it; not now.
+
+What stands: **AUTO** finds the best picture a device holds at a steady frame rate (a phone starts at PHONE, a computer
+at MAC, each stepping down only as far as it must, and back up when it can); **a Graphics setting fixed before today goes
+back to AUTO once** (`qv`: the owner's iPhone with it; a copy synced from another device is brought along the same way,
+`mergeStates`); **a fixed tier eases its drawing size** when frames run late (8a), but not while the device holds it at
+exactly 30 (Low Power Mode: a smaller picture would not lift it); choosing a tier in Setup starts the governor's clock
+afresh. For the most the phone can draw, Setup's MAC is there, its size easing to keep frames smooth.
+
 ## For the owner
 
-- **Setup's Graphics back to AUTO on the iPhone** (the default): a phone then starts at its own tier, and the governor
-  eases the picture as the phone needs, a step at a time. A fixed tier now eases its size too, but no further.
+- Nothing to set: Graphics is AUTO again on the next visit (once). For the Mac's effects on the phone, Setup's MAC
+  (its size eases to keep frames smooth).
 - Then `https://noah-2ci.pages.dev/#fps` again (the tab closed first, so the glide plays): the first line's FPS and
   HITCHES during the glide, and its second line (the tier and the size).
