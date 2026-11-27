@@ -12,7 +12,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "a11y": "node scripts/a11y.mjs",
     "poses": "vite-node scripts/eval-poses.ts",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "deploy:pages": "npm run build && rm -rf ../docs && cp -r dist ../docs && touch ../docs/.nojekyll"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

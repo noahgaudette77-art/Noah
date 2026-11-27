@@ -7,6 +7,19 @@ rendered live from a rigged skeleton, next to its sets.
 Vite + React + TypeScript + Tailwind + Framer Motion + Recharts. Static build, installable PWA,
 data in `localStorage` with JSON export/import.
 
+## Install on your phone
+
+The built app is committed in the repo's `/docs` folder and served by GitHub Pages:
+**https://noahgaudette77-art.github.io/Noah/**
+
+1. One-time: on GitHub, open the repo, then **Settings > Pages**. Under *Build and deployment*, set
+   Source to **Deploy from a branch**, pick the branch that holds `/docs`, choose folder **/docs** and Save.
+2. Open the address on your phone. iPhone (Safari): **Share > Add to Home Screen**. Android (Chrome):
+   **menu > Install app**.
+3. Open it once while online; after that it works offline.
+
+To publish a new version: `cd workout && npm run deploy:pages`, then commit and push `docs/`.
+
 ## Run
 
 ```bash
