@@ -3,14 +3,18 @@ import type { Tempo } from '../data/types';
 import type { DemoSpec, Ease, Effector, LegEffector, Phase, Pose, Side } from './types';
 import { type V3, lerp, lerpN, norm, slerpDir } from './vec';
 
-const ease = (e: Ease | undefined, t: number) => {
-  switch (e) {
+/** Lifts drive up and settle with a ~3.5% overshoot; lowering is near-linear (it is the controlled 3 s tempo). */
+export function ease(e: Ease | undefined, t: number, role?: string) {
+  const kind = e ?? (role === 'up' ? 'overshoot' : role === 'down' ? 'controlled' : 'sine');
+  switch (kind) {
     case 'linear': return t;
     case 'out': return 1 - (1 - t) * (1 - t);
     case 'in': return t * t;
+    case 'overshoot': { const u = t - 1; return 1 + 2 * u * u * u + u * u; }
+    case 'controlled': return 0.7 * t + 0.3 * (0.5 - 0.5 * Math.cos(Math.PI * t));
     default: return 0.5 - 0.5 * Math.cos(Math.PI * t);
   }
-};
+}
 
 const lerpOpt = (a: V3 | undefined, b: V3 | undefined, t: number) => (a && b ? norm(lerp(a, b, t)) : (t < 0.5 ? a : b));
 
@@ -26,12 +30,13 @@ function lerpLeg(a: LegEffector, b: LegEffector, t: number): LegEffector {
   return { ...lerpEff(a, b, t), foot: lerpN(a.foot ?? 0, b.foot ?? 0, t), toeOut: lerpN(a.toeOut ?? 0, b.toeOut ?? 0, t) };
 }
 
-export function lerpPose(a: Pose, b: Pose, t: number): Pose {
+/** `t` drives trunk and legs; `tArms` (default `t`) drives the arms and the dumbbell, which may overshoot and settle. */
+export function lerpPose(a: Pose, b: Pose, t: number, tArms = t): Pose {
   const sides: Side[] = ['r', 'l'];
   const arms = {} as Pose['arms'];
   const legs = {} as Pose['legs'];
   for (const s of sides) {
-    arms[s] = lerpEff(a.arms[s], b.arms[s], t);
+    arms[s] = lerpEff(a.arms[s], b.arms[s], tArms);
     legs[s] = lerpLeg(a.legs[s], b.legs[s], t);
   }
   const n = (x?: number, y?: number) => lerpN(x ?? 0, y ?? 0, t);
@@ -41,7 +46,7 @@ export function lerpPose(a: Pose, b: Pose, t: number): Pose {
     for (const s of sides) {
       const x = a.dbAxis?.[s] ?? [0, 0, 1];
       const y = b.dbAxis?.[s] ?? [0, 0, 1];
-      dbAxis[s] = slerpDir(x, y, t);
+      dbAxis[s] = slerpDir(x, y, tArms);
     }
   }
   let twoHand = a.twoHand;
@@ -112,7 +117,10 @@ export function poseAt(demo: DemoSpec, timeline: ReturnType<typeof buildTimeline
   const u = Math.min(1, Math.max(0, (tt - ph.start) / ph.seconds));
   const a = demo.poses[ph.from];
   const b = demo.poses[ph.to];
-  return { pose: a === b ? a : lerpPose(a, b, ease(ph.ease, u)), phase: ph, phaseProgress: u, label: ph.label };
+  const tArms = ease(ph.ease, u, ph.role);
+  // trunk and legs never overshoot: standing tall past full extension is not a thing
+  const tBody = ph.ease ? tArms : ph.role === 'up' ? 1 - Math.pow(1 - u, 3) : tArms;
+  return { pose: a === b ? a : lerpPose(a, b, tBody, tArms), phase: ph, phaseProgress: u, label: ph.label };
 }
 
 /** Times for the 3 contact-sheet frames: start pose, middle of the lowering, end of the lowering. */
@@ -125,4 +133,18 @@ export function sampleTimes(demo: DemoSpec, timeline: ReturnType<typeof buildTim
   const s = first.start;
   const e = last.start + last.seconds;
   return [s, (s + e) / 2, e - 0.001];
+}
+
+/**
+ * The "alive" layer used by the player: a small weight shift for standing and seated demos and a
+ * breathing value for the renderer. Keyframes and form checks are unaffected.
+ */
+export function liven(demo: DemoSpec, pose: Pose, time: number): { pose: Pose; breath: number } {
+  const breath = Math.sin((2 * Math.PI * time) / 4);
+  const upright = Math.abs(pose.pitch) < 35 && !demo.procedural;
+  if (!upright) return { pose, breath };
+  // sway side to side and dip slightly; never rise, because standing poses are already at full leg length
+  const sway = 0.5 * Math.sin((2 * Math.PI * time) / 3.3);
+  const bob = -0.45 * (0.5 + 0.5 * Math.sin((2 * Math.PI * time) / 4 + 0.6));
+  return { pose: { ...pose, pelvis: [pose.pelvis[0] + sway * 0.3, pose.pelvis[1] + bob, pose.pelvis[2] + sway] }, breath };
 }

@@ -32,11 +32,11 @@ await go('/');
 await page.waitForTimeout(500);
 await page.getByRole('button', { name: /Start Upper A/ }).click();
 bad += await audit('workout');
-await page.getByRole('button', { name: 'Complete set 1' }).click();
+await page.getByRole('button', { name: 'Log set 1 without the timer' }).click();
 bad += await audit('workout + rest timer');
 
 // keyboard: tab through the workout and check focus lands on visible, named controls
-await page.getByRole('button', { name: 'Skip rest' }).click();
+await page.getByRole('button', { name: 'Skip rest' }).first().click();
 await page.keyboard.press('Tab');
 const seen = [];
 for (let i = 0; i < 25; i++) {

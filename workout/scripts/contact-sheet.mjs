@@ -16,7 +16,7 @@ try {
   await page.evaluate(() => document.fonts.ready);
   const out = process.argv[3] ?? 'shots/contact-sheet.png';
   await page.locator('#sheet').screenshot({ path: out });
-  const fails = await page.locator('#sheet .text-warn').count();
+  const fails = await page.locator('#sheet .text-caution').count();
   console.log(`wrote ${out}; failing checks: ${fails}`);
 } finally {
   await browser.close();

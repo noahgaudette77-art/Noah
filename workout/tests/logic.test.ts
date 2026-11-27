@@ -131,3 +131,13 @@ describe('storage', () => {
     expect(m.body[0]).toMatchObject({ weight: 224, waist: 40 });
   });
 });
+
+describe('upgrade from the first release', () => {
+  it('keeps existing data and adds the new tempo-ticks setting switched off', () => {
+    const old = { version: 1, sessions: [{ id: 'a', date: '2026-11-30', dayKey: 'upperA', startedAt: 1, finishedAt: 2, exercises: [], cardioDone: [] }], active: null, body: [{ date: '2026-11-30', weight: 225 }], habits: {}, settings: { sound: true, haptics: false } };
+    const s = parseState(old);
+    expect(s.sessions).toHaveLength(1);
+    expect(s.body[0].weight).toBe(225);
+    expect(s.settings).toEqual({ sound: true, haptics: false, ticks: false });
+  });
+});

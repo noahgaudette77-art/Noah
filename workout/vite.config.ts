@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/*.svg', 'art/*.webp', 'sfx/*.mp3'],
+      includeAssets: ['icons/*.png', 'icons/*.svg', 'art/*.webp', 'sfx/*.mp3', 'media/*'],
       manifest: {
         name: 'Tempo — 12-Month Program',
         short_name: 'Tempo',
         description: 'Dumbbell fat-loss and muscle program with animated exercise demos.',
-        theme_color: '#0A0A0B',
-        background_color: '#0A0A0B',
+        theme_color: '#070708',
+        background_color: '#070708',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
@@ -26,7 +26,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,webp,mp3}'],
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,webp,mp3,webm,mp4}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: 'index.html',
       },
     }),

@@ -2,7 +2,12 @@
 
 A mobile-first, offline-capable workout app for a 12-month dumbbell fat-loss and muscle program
 (start Mon 2026-11-30). Every exercise has a looping animated demo of one original character,
-rendered live from a rigged skeleton, next to its sets.
+rendered live from a rigged skeleton, next to its sets. Visual direction and rationale: `DESIGN.md`.
+
+Highlights: immersive workout mode (swipe between exercises, 3-2-1 countdown, tempo ring that paces each
+rep, full-screen rest with the number to beat, PR moment, session summary card as PNG), streaks, weekly
+rings, Day X of 365, consistency score, a 24% to 12% milestone path, four target-physique builds and a
+Sunday review.
 
 Vite + React + TypeScript + Tailwind + Framer Motion + Recharts. Static build, installable PWA,
 data in `localStorage` with JSON export/import.
@@ -26,7 +31,7 @@ To publish a new version: `cd workout && npm run deploy:pages`, then commit and 
 cd workout
 npm install
 npm run dev          # http://localhost:5173
-npm test             # program logic + rig form checks (129 tests)
+npm test             # program logic, motivation and rig form checks (145 tests)
 npm run build        # type-check + production build into dist/
 npm run preview      # serve dist/ on :4318
 ```
@@ -42,13 +47,15 @@ Deploy `dist/` to any static host (Netlify, Vercel, GitHub Pages, S3). Paths are
 | `npm run screenshots` | every screen at 390x844 and 1440x900 into `shots/` (seeds 2 weeks of sample data) |
 | `npm run a11y` | axe-core WCAG 2.1 AA audit of each screen + keyboard walk |
 | `npm run poses` | prints joint angles for every keyframe in the terminal |
+| `OUT=shots/x npm run screenshots` | write a screenshot round to another folder (used for before/after) |
 
 ## Layout
 
 ```
 src/data/program.ts     THE PROGRAM: exercises, cues, schedule, cardio, habits, projection
 src/data/types.ts       types for the program and logged data
-src/logic/              schedule, progression engine, time estimates, body math, storage
+src/logic/              schedule, progression engine, time estimates, body math, storage,
+                        motivation (streak, rings, consistency, milestones, PRs, weekly review)
 src/rig/                the character rig
   skeleton.ts           body proportions (cm) and joint limits
   solve.ts              trunk FK, 2-bone IK/FK for limbs, joint-angle metrics
@@ -56,7 +63,8 @@ src/rig/                the character rig
   render.ts             orthographic camera, depth-sorted SVG primitives, character + equipment
   demos.ts              keyframe poses for every exercise (+ form checks)
   DemoPlayer.tsx        loop, phase label, play/pause, 0.5x, replay, reduced-motion fallback
-src/screens/            Today, Workout, ExerciseDetail, Week, History, Body, Settings
+src/workout/            countdown, tempo ring, rest screen, PR moment, cardio timers
+src/screens/            Today, Workout, Summary, ExerciseDetail, Week, History, Body (Progress), Settings
 ```
 
 ## How the demos work
@@ -110,6 +118,9 @@ plus `flareR`.
 
 ## Assets
 
-- `public/art/*.webp`: hero plates generated with fal.ai (FLUX dev), no people.
-- `public/sfx/*.mp3`: short UI sounds generated with the ElevenLabs sound-effects API.
-- Icons and the character are hand-built SVG.
+- `public/art/*.webp`: lighting plates generated with fal.ai (FLUX 1.1 Pro), no people.
+- `public/media/haze.*`: the Today hero loop, fal.ai Kling image-to-video from `art/stage.webp`,
+  encoded as a seamless 10 s ping-pong (webm + mp4) with a poster.
+- `public/sfx/*.mp3`: UI sounds (set logged, rest over, tempo ticks, 3-2-1, PR) from the ElevenLabs
+  sound-effects API. Tempo ticks and the countdown follow the "Tempo ticks" setting, off by default.
+- Icons: Phosphor (bold weight). The character, stage and equipment are hand-built SVG.

@@ -85,3 +85,20 @@ describe.each(Object.values(DEMOS).map((d) => [d.id, d] as const))('demo %s', (_
     expect(tl.phases.some((p) => p.label.includes('3s'))).toBe(true);
   });
 });
+
+import { liven } from '../src/rig/timeline';
+describe('alive layer', () => {
+  it('breathing and weight shift never break a pose', () => {
+    for (const demo of Object.values(DEMOS)) {
+      const tl = buildTimeline(demo);
+      const total = demo.procedural ? demo.procedural.period : tl.total;
+      for (let i = 0; i < 40; i++) {
+        const t = (i / 40) * total * 3.7;
+        const { pose } = liven(demo, poseAt(demo, tl, t).pose, t);
+        const m = metrics(solve(pose), pose);
+        expect(m.maxError, demo.id).toBeLessThan(0.6);
+        expect(m.minY, demo.id).toBeGreaterThan(-1.2);
+      }
+    }
+  });
+});

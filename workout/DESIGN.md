@@ -1,6 +1,8 @@
 # Tempo — Design Direction v2: "Night Session"
 
-Status: **proposal, awaiting approval.** No code has changed yet.
+Status: **implemented.** Molten orange accent and Phosphor icons approved.
+Results: `docs/design/before-after-mobile.jpg`, `docs/design/before-after-desktop.jpg`,
+`docs/design/after-moments.jpg`, `docs/design/summary-card.jpg`, `docs/contact-sheet.jpg`.
 
 Before screenshots (current build, 390×844 and 1280×800): `docs/design/before-mobile.jpg`,
 `docs/design/before-desktop.jpg`. The full set is in `shots/before/`.
@@ -194,3 +196,27 @@ After building: screenshot every screen at 390×844 and 1280×800, critique each
 director (hierarchy, depth, contrast, spacing, motion, "would I pay for this"), fix, re-shoot, and run
 at least two rounds. Re-render the contact sheet and re-verify every pose; tests, axe and the build must
 stay green.
+
+---
+
+## Implementation notes (what shipped)
+
+- Program data, progression rules and logged-data format are unchanged; existing installs upgrade in place
+  (a new `ticks` setting defaults to off). Covered by a test.
+- Character: per-limb lit gradients with a rim-light outline, one smooth hull per limb (no seams), deltoid
+  and quad/calf sheens, compression tank with ember side piping, shorts with waistband, trainers with
+  midsole and ember outsole, hair and ears so the head reads from every angle. Hex dumbbells use a
+  gunmetal gradient with a specular stripe and a chrome handle; bench pads are stitched leather.
+- Motion: arms drive up with a ~3.5% overshoot and settle; trunk and legs never overshoot (standing past
+  full extension is impossible, and the tests caught it); lowering is a near-linear controlled ease.
+  Breathing and a small weight shift run on standing and seated demos. All covered by rig tests.
+- Target physique: 4 builds tied to the 22 / 19 / 15.5% checkpoints, shown on Progress and used in every demo.
+- Today: generated haze loop (fal.ai Kling, 10 s ping-pong, 156 KB webm / 275 KB mp4, poster fallback under
+  reduced motion or Save-Data) behind the athlete; session name huge behind the figure.
+- Workout: full-screen, swipe or arrow keys between exercises, 120px-class numerals, 3-2-1 countdown, tempo
+  ring with optional ticks and vibration, full-screen rest with number to beat and reps-in-reserve, one PR
+  moment per exercise per session, session-complete screen with a 1080x1350 PNG card.
+- Motivation: streak, weekly rings, Day X of 365, consistency score, milestone path with dated checkpoints,
+  physique stage, Sunday review with one data-driven focus.
+- Performance: main bundle 190 KB gzip (charts load with Progress), 58-60 fps on every animated screen at
+  4x CPU throttle; covered demos pause.

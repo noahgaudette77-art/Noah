@@ -6,6 +6,8 @@ export const SCHEMA_VERSION = 1;
 export interface Settings {
   sound: boolean;
   haptics: boolean;
+  /** tempo ticks and countdown beeps (off by default) */
+  ticks: boolean;
 }
 
 export interface AppState {
@@ -23,7 +25,7 @@ export const emptyState = (): AppState => ({
   active: null,
   body: [],
   habits: {},
-  settings: { sound: true, haptics: true },
+  settings: { sound: true, haptics: true, ticks: false },
 });
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

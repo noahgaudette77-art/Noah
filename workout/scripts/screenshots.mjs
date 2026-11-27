@@ -37,14 +37,14 @@ function seed() {
   const habits = {};
   for (let i = 0; i < 14; i++) habits[day(start, i)] = { kcal: true, protein: i % 3 !== 0, steps: i % 4 !== 1, sleep: i % 2 === 0 };
   habits[TODAY] = { kcal: true, protein: true };
-  return { version: 1, sessions, active: null, body, habits, settings: { sound: false, haptics: false } };
+  return { version: 1, sessions, active: null, body, habits, settings: { sound: false, haptics: false, ticks: false } };
 }
 
 const srv = await preview(4320);
 const browser = await chromium.launch();
 const shots = [];
 async function run(name, vp, fn) {
-  const ctx = await browser.newContext({ viewport: vp.size, deviceScaleFactor: 2, reducedMotion: vp.reduced ? 'reduce' : 'no-preference', serviceWorkers: 'block' });
+  const ctx = await browser.newContext({ viewport: vp.size, deviceScaleFactor: 2, reducedMotion: vp.reduced ? 'reduce' : 'no-preference', serviceWorkers: 'block', acceptDownloads: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.error(`[${name}] pageerror`, e.message));
   await page.addInitScript(([data, fresh]) => {
@@ -76,33 +76,56 @@ const VPS = [
 for (const vp of VPS) {
   const t = vp.tag;
   await run(`today-${t}`, vp, async (p) => {
+    await p.waitForTimeout(800);
     await shot(p, `${t}-01-today`);
     if (t === 'mobile') await shot(p, `${t}-01b-today-full`, true);
     await nav(p, '/week'); await shot(p, `${t}-07-week`, t === 'mobile');
+    await p.getByRole('button', { name: 'Previous week' }).click(); await p.waitForTimeout(500);
+    await shot(p, `${t}-07b-week-review`, t === 'mobile');
     await nav(p, '/exercise/bulgarian'); await shot(p, `${t}-06-exercise-detail`, true);
     await nav(p, '/history'); await p.getByRole('button', { expanded: false }).first().click(); await shot(p, `${t}-08-history`, t === 'mobile');
-    await nav(p, '/body'); await p.waitForTimeout(800); await shot(p, `${t}-09-body`, true);
+    await nav(p, '/body'); await p.waitForTimeout(1200); await shot(p, `${t}-09-progress`, true);
     await nav(p, '/settings'); await shot(p, `${t}-10-settings`, t === 'mobile');
     await nav(p, '/day/2026-12-16'); await shot(p, `${t}-11-bike-day`, t === 'mobile');
     // workout flow
     await nav(p, '/');
     await p.getByRole('button', { name: /Start Upper A/ }).click();
-    await p.waitForTimeout(900);
+    await p.waitForTimeout(1000);
     await shot(p, `${t}-02-workout`);
-    await p.getByRole('button', { name: 'Complete set 1' }).click();
-    await p.waitForTimeout(400);
-    await shot(p, `${t}-03-workout-rest-timer`);
-    await p.getByRole('button', { name: 'Skip rest' }).click();
-    await p.getByRole('button', { name: /Superset A/ }).click();
-    await p.waitForTimeout(600);
-    await shot(p, `${t}-04-workout-superset`, t === 'mobile');
-    await p.getByRole('button', { name: /Incline Walk/ }).click();
-    await p.waitForTimeout(600);
-    await shot(p, `${t}-05-workout-cardio`);
+    if (t === 'mobile') await shot(p, `${t}-02b-workout-full`, true);
+    await p.getByRole('button', { name: 'Start set' }).click();
+    await p.waitForTimeout(350);
+    await shot(p, `${t}-03a-countdown`);
+    await p.waitForTimeout(3600);
+    await shot(p, `${t}-03b-tempo-ring`);
+    await p.getByRole('button', { name: /Done · log/ }).click();
+    await p.waitForTimeout(700);
+    await shot(p, `${t}-04a-pr-moment`);
+    await p.waitForTimeout(2600);
+    await shot(p, `${t}-04b-rest`);
+    if (t === 'mobile') await shot(p, `${t}-04c-rest-full`, true);
+    await p.getByRole('button', { name: "I'm ready" }).click();
+    await p.waitForTimeout(500);
+    await shot(p, `${t}-05a-set-logged`);
+    await p.getByRole('button', { name: /^5\. Superset A/ }).click();
+    await p.waitForTimeout(800);
+    await shot(p, `${t}-05b-superset`);
+    await p.getByRole('button', { name: /^6\. Incline Walk/ }).click();
+    await p.waitForTimeout(800);
+    await shot(p, `${t}-05c-cardio`);
     await p.getByRole('banner').getByRole('button', { name: 'Finish' }).click();
-    await shot(p, `${t}-12-finish-summary`);
+    await shot(p, `${t}-12a-finish-sheet`);
+    await p.getByRole('button', { name: 'Save session' }).click();
+    await p.waitForTimeout(1800);
+    await shot(p, `${t}-12b-summary`, t === 'mobile');
+    if (t === 'mobile') {
+      const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 15000 }), p.getByRole('button', { name: 'Save summary card' }).click()]);
+      await dl.saveAs(`${OUT}/summary-card.png`);
+      shots.push('summary-card');
+    }
   });
   await run(`prestart-${t}`, { ...vp, date: '2026-11-27', fresh: true }, async (p) => {
+    await p.waitForTimeout(600);
     await shot(p, `${t}-13-today-before-start`, t === 'mobile');
   });
   await run(`reduced-${t}`, { ...vp, reduced: true }, async (p) => {

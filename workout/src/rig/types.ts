@@ -51,7 +51,7 @@ export type Prop =
 
 export type Hold = 'pair' | 'right' | 'twoHand' | 'none';
 export type Role = 'down' | 'up' | 'top' | 'bottom' | 'fixed';
-export type Ease = 'sine' | 'linear' | 'out' | 'in';
+export type Ease = 'sine' | 'linear' | 'out' | 'in' | 'overshoot' | 'controlled';
 
 export interface Phase {
   to: string;
