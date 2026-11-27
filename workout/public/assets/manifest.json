@@ -376,6 +376,287 @@
         "assets/art/still-complete.avif"
       ],
       "size": "768x1376"
+    },
+    "loop-hero": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+      "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting in the light cone, slow push-in. The man claps chalk from his hands once and rubs them together, chalk dust swirling in the light. Subtle natural motion, steady camera, no cuts.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab4340f/2VeYnMjC9AtzJwzVXZdWO_GBRpTspt.mp4",
+      "cost": 0.35,
+      "files": [
+        "assets/art/loop-hero.mp4",
+        "assets/art/loop-hero.webm",
+        "assets/art/loop-hero.webp"
+      ],
+      "bytes": {
+        "mp4": 259974,
+        "webm": 138578
+      }
+    },
+    "loop-rest": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+      "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting, slow push-in. The man breathes slowly, shoulders rising and falling, otherwise still. Steady camera, no cuts.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab4341b/9Vm2CIz47UVhN39FGkiTS_3ksYrmkI.mp4",
+      "cost": 0.35,
+      "files": [
+        "assets/art/loop-rest.mp4",
+        "assets/art/loop-rest.webm",
+        "assets/art/loop-rest.webp"
+      ],
+      "bytes": {
+        "mp4": 157314,
+        "webm": 58201
+      }
+    },
+    "sfx-stamp": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "A rubber stamp pressed hard onto paper on a wooden desk, firm muffled thud, close up",
+      "seconds": 0.8,
+      "credits": 0,
+      "bytes": 10389,
+      "file": "assets/audio/sfx-stamp.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "sfx-plate-drop": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "A heavy cast-iron weight plate dropped flat onto a thick rubber gym floor in an empty brick basement, deep thud with a short metallic ring, short natural room reverb",
+      "seconds": 2,
+      "credits": 0,
+      "bytes": 24809,
+      "file": "assets/audio/sfx-plate-drop.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "sfx-stopwatch-tick": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "A single crisp tick of an old analog mechanical stopwatch, close up, dry",
+      "seconds": 0.5,
+      "credits": 0,
+      "bytes": 6627,
+      "file": "assets/audio/sfx-stopwatch-tick.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "sfx-flap": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "A single mechanical split-flap display flip, one plastic flap clacking over, close up, dry",
+      "seconds": 0.5,
+      "credits": 0,
+      "bytes": 6627,
+      "file": "assets/audio/sfx-flap.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "sfx-chalk-clap": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "Two hands clapping chalk off once, a soft dry powdery clap with a puff of dust, in a brick room",
+      "seconds": 1,
+      "credits": 0,
+      "bytes": 12897,
+      "file": "assets/audio/sfx-chalk-clap.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "athlete-apose": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/nano-banana-pro/edit",
+      "prompt": "The same man as the reference image (same face, hair, skin tone and build, about 20% body fat), photographed for real: full body from head to feet, standing straight and facing the camera, arms held slightly away from the body in an A-pose, plain dark training shorts, barefoot, plain light grey studio background, even soft lighting, sharp focus. No text, no logos.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab4341a/fkDoGhgFo-8Wg3Ui8oV9T_NRQb2p3Z.png",
+      "cost": 0.35,
+      "files": [
+        "assets/art/athlete-apose.webp",
+        "assets/art/athlete-apose.avif"
+      ],
+      "size": "848x1264",
+      "use": "input for the Tripo athlete only; not shipped"
+    },
+    "sfx-lamp-hum": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "An old tungsten lamp switching on with a click, then a low electrical hum and a faint intermittent buzz",
+      "seconds": 3,
+      "credits": 0,
+      "bytes": 36720,
+      "file": "assets/audio/sfx-lamp-hum.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "amb-room-tone": {
+      "takes": 1,
+      "tool": "ElevenLabs sound effects",
+      "prompt": "Room tone of an empty underground brick gym at night: a low ventilation hum, a distant pipe tick, faint lamp buzz, no voices, no music, seamless loop",
+      "seconds": 30,
+      "credits": 0,
+      "bytes": 240579,
+      "file": "assets/audio/amb-room-tone.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-three": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Three.",
+      "credits": 0,
+      "bytes": 5374,
+      "file": "assets/audio/vo-three.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "loop-complete": {
+      "takes": 1,
+      "tool": "fal.ai",
+      "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+      "prompt": "16mm film look, flickering warm tungsten lamp, dust motes drifting, slow push-in. The man lets go of the dumbbell on the rack and exhales, then looks up into the light. Steady camera, no cuts.",
+      "status": "done",
+      "updated": "2026-11-27",
+      "url": "https://v3b.fal.media/files/b/0ab43426/so9pUG6-FmDeri7lF-0nF_9cEQBQEK.mp4",
+      "cost": 0.85,
+      "files": [
+        "assets/art/loop-complete.mp4",
+        "assets/art/loop-complete.webm",
+        "assets/art/loop-complete.webp"
+      ],
+      "bytes": {
+        "mp4": 205322,
+        "webm": 99841
+      }
+    },
+    "vo-two": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Two.",
+      "credits": 0,
+      "bytes": 5687,
+      "file": "assets/audio/vo-two.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-one": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "One.",
+      "credits": 0,
+      "bytes": 4433,
+      "file": "assets/audio/vo-one.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "lifter-3d": {
+      "takes": 1,
+      "tool": "Tripo3D image_to_model + animate_rig + animate_retarget(idle)",
+      "status": "dropped",
+      "updated": "2026-11-27",
+      "credits": 65,
+      "bytes": 341216,
+      "animated": true,
+      "review": "docs/design/iron-room/athlete-3d-review.jpg",
+      "reason": "Looked waxy next to the 16mm film loop: plastic skin, glossy shorts, helmet hair, idle barely reads. One attempt used of two; the Today hero stays the fal.ai film loop."
+    },
+    "vo-lower": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Lower.",
+      "credits": 0,
+      "bytes": 5687,
+      "file": "assets/audio/vo-lower.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-hold": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Hold.",
+      "credits": 0,
+      "bytes": 5374,
+      "file": "assets/audio/vo-hold.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-press": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Press.",
+      "credits": 0,
+      "bytes": 6000,
+      "file": "assets/audio/vo-press.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-last-rep": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Last rep.",
+      "credits": 0,
+      "bytes": 8822,
+      "file": "assets/audio/vo-last-rep.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-rest": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Rest.",
+      "credits": 9,
+      "bytes": 6000,
+      "file": "assets/audio/vo-rest.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-set-complete": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Set complete.",
+      "credits": 0,
+      "bytes": 9762,
+      "file": "assets/audio/vo-set-complete.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
+    },
+    "vo-next-exercise": {
+      "takes": 1,
+      "tool": "ElevenLabs TTS",
+      "voice": "Joseph Ortman - Deep & Raspy",
+      "voiceId": "TTyZrDYo6LQowrH8mixJ",
+      "text": "Next exercise.",
+      "credits": 0,
+      "bytes": 11643,
+      "file": "assets/audio/vo-next-exercise.mp3",
+      "status": "done",
+      "updated": "2026-11-27"
     }
   },
   "note": "Written by tools/*.mjs. Paths are relative to public/."

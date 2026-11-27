@@ -15,6 +15,9 @@ import { buzz, play } from '../lib/sfx';
 import { today } from '../lib/today';
 import { cuesFor } from '../data/musclewiki';
 import { VideoPrint } from '../demo/VideoPrint';
+import { setRoom } from '../room/state';
+import { Stamp } from '../components/iron';
+import { say } from '../lib/audio';
 import { CardioPanel } from '../workout/CardioPanel';
 import { Countdown } from '../workout/Countdown';
 import { type StrengthBlock, beatLine, firstOpen, nextSet, tempoText } from '../workout/plan';
@@ -65,7 +68,7 @@ function EditSet({ log, idx, onClose }: { log: ExerciseLog; idx: number; onClose
         <div className="mt-2 grid grid-cols-4 gap-2" role="radiogroup" aria-label="Reps in reserve">
           {[0, 1, 2, 3].map((r) => (
             <button key={r} type="button" role="radio" aria-checked={s.rir === r} onClick={() => updateSet(log.exerciseId, idx, { rir: r })}
-              className={`h-12 rounded-2xl font-semibold ${s.rir === r ? 'bg-chalk text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>{r === 3 ? '3+' : r}</button>
+              className={`h-12 rounded-[6px] font-semibold ${s.rir === r ? 'bg-chalk text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>{r === 3 ? '3+' : r}</button>
           ))}
         </div>
       </div>
@@ -88,6 +91,7 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
   useEffect(() => { if (ns) setFocus(ns.i); }, [ns?.i, ns?.s]); // eslint-disable-line react-hooks/exhaustive-deps
   const [, setReplay] = useState(0);
   const [film, setFilm] = useState(false);
+  const [stamp, setStamp] = useState(0);
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'set'>('idle');
   const [edit, setEdit] = useState<{ log: ExerciseLog; idx: number } | null>(null);
   const slot = block.slots[focus];
@@ -105,7 +109,10 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
   const logSet = useCallback(() => {
     if (setIdx < 0 || !cur) return;
     updateSet(ex.id, setIdx, { done: true });
-    play('set-done'); buzz(30);
+    // the set-complete moment: a rubber stamp lands, a thud, a short pulse, the coach
+    play('set-done'); buzz([18, 30, 40]); say('set-complete');
+    setStamp(Date.now());
+    setTimeout(() => setStamp(0), 1100);
     setPhase('idle');
     const after = logsOf(block, getState().active!);
     const blockDone = !nextSet(block, after);
@@ -114,6 +121,9 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
     onLogged({ i: focus, s: setIdx, set: { ...cur, done: true }, blockDone, roundDone });
     if (!roundDone || (block.kind === 'single' && after[focus].sets[setIdx + 1]?.drop)) setReplay((r) => r + 1);
   }, [setIdx, cur, ex.id, block, focus, onLogged]);
+
+  // the room holds still while a set runs
+  useEffect(() => { setRoom({ still: phase !== 'idle' }); return () => setRoom({ still: false }); }, [phase]);
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
@@ -153,7 +163,7 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
         {rec.stage !== 'load' && <p className="mt-1 text-sm font-semibold text-chalk">{STAGE_LABEL[rec.stage]} this session</p>}
 
         {allDone ? (
-          <div className="mt-8 rounded-[28px] p-6 lit">
+          <div className="mt-8 rounded-[6px] p-6 lit">
             <span className="grid h-14 w-14 place-items-center rounded-full bg-chalk text-void"><Icon name="check" size={28} /></span>
             <p className="display mt-4 text-[40px]">{block.kind === 'superset' ? 'Superset done' : 'Exercise done'}</p>
             <div className="mt-3"><SetChips log={log} onEdit={(i) => setEdit({ log, idx: i })} /></div>
@@ -165,13 +175,20 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
               <p className="display text-[30px]">{cur.drop ? 'Drop set' : `Set ${setIdx + 1}`}<span className="text-smoke"> of {working}</span></p>
               <SetChips log={log} onEdit={(i) => setEdit({ log, idx: i })} />
             </div>
-            <div className={`mt-3 grid gap-3 ${bw ? 'grid-cols-1' : 'grid-cols-2'}`}>
+            <div className={`relative mt-3 grid gap-3 ${bw ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              <AnimatePresence>
+                {stamp > 0 && (
+                  <motion.div key={stamp} className="pointer-events-none absolute inset-0 z-10 grid place-items-center" initial={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }} aria-hidden="true">
+                    <Stamp land size={64} angle={-9} color="var(--amber)">Done</Stamp>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {!bw && (
-                <div className="rounded-[24px] px-2 py-3 lit">
+                <div className="rounded-[6px] px-2 py-3 lit">
                   <Stepper value={cur.weight} onChange={(v) => updateWeight(ex.id, setIdx, v)} step={5} max={50} unit={ex.load === 'pair' ? 'lb each' : 'lb'} label="Weight" size="xl" />
                 </div>
               )}
-              <div className="rounded-[24px] px-2 py-3 lit">
+              <div className="rounded-[6px] px-2 py-3 lit">
                 <Stepper value={cur.reps} onChange={(v) => updateSet(ex.id, setIdx, { reps: Math.round(v) })} step={1} max={50} unit={ex.perSide ? 'reps each side' : 'reps'} label="Reps" size="xl" />
               </div>
             </div>
@@ -182,13 +199,13 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
             {/* the one action: pinned to the bottom on phones so it is always in reach */}
             <div className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-[1fr_auto] gap-3 bg-gradient-to-t from-void via-void/95 to-void/0 px-4 pb-[calc(16px+var(--safe-b))] pt-8 lg:static lg:mt-6 lg:bg-none lg:p-0">
               <Button variant="primary" size="xl" icon="play" onClick={() => setPhase('countdown')}>Start set</Button>
-              <button type="button" onClick={logSet} className="grid h-[72px] w-[72px] place-items-center rounded-[24px] text-chalk lit-raised hover:brightness-110" aria-label={`Log set ${setIdx + 1} without the timer`}>
+              <button type="button" onClick={logSet} className="grid h-[72px] w-[72px] place-items-center rounded-[6px] text-chalk lit-raised hover:brightness-110" aria-label={`Log set ${setIdx + 1} without the timer`}>
                 <Icon name="check" size={28} />
               </button>
             </div>
           </>
         )}
-        <details className="group mt-6 rounded-[24px] lit">
+        <details className="group mt-6 rounded-[6px] lit">
           <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between px-5 font-semibold">
             How to do it<Icon name="chevD" size={18} className="transition-transform group-open:rotate-180" />
           </summary>
@@ -202,7 +219,7 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
       <AnimatePresence>{phase === 'countdown' && <Countdown onDone={() => setPhase('set')} onCancel={() => setPhase('idle')} />}</AnimatePresence>
       <AnimatePresence>
         {phase === 'set' && cur && (
-          <motion.div role="dialog" aria-modal="true" aria-label={`${ex.name}, set in progress`} className="fixed inset-0 z-[65] overflow-y-auto bg-void"
+          <motion.div role="dialog" aria-modal="true" aria-label={`${ex.name}, set in progress`} className="fixed inset-0 z-[65] overflow-y-auto bg-soot"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="gutter mx-auto flex min-h-full max-w-xl flex-col items-center pb-[calc(24px+var(--safe-b))] pt-[calc(20px+var(--safe-t))]">
               <div className="flex w-full items-center justify-between">
@@ -210,10 +227,10 @@ function StrengthPanel({ block, session, index, total, onLogged, onAdvance, cove
                 <button type="button" onClick={() => setPhase('idle')} className="h-11 rounded-full px-4 text-sm font-semibold text-ash hover:text-chalk">Cancel</button>
               </div>
               <p className="display mt-6 text-center text-[34px]">{ex.name}</p>
-              <div className="mt-4"><TempoRing tempo={tempo} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)} /></div>
+              <div className="mt-4"><TempoRing tempo={tempo} reps={cur.reps} lastSet={log.sets.slice(setIdx + 1).every((x) => x.done)} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)} /></div>
               <p className="mt-4 text-center text-ash">{bw ? '' : `${cur.weight} lb · `}target {cur.reps} reps{ex.perSide ? ' each side' : ''}. Stop 1 to 2 short of failure.</p>
               <div className="flex-1" />
-              <button type="button" onClick={logSet} className="ember-btn mt-6 h-[72px] w-full rounded-[24px] text-lg font-semibold">Done · log {cur.reps} reps</button>
+              <button type="button" onClick={logSet} className="ember-btn mt-6 h-[72px] w-full rounded-[6px] text-lg font-semibold">Done · log {cur.reps} reps</button>
             </div>
           </motion.div>
         )}
@@ -305,6 +322,8 @@ export default function Workout() {
 
   return (
     <div className="min-h-screen pb-[calc(140px+var(--safe-b))] lg:pb-[calc(40px+var(--safe-b))]">
+      {/* while resting, the page steps aside so the ceiling shows through the rest overlay */}
+      <div className={rest ? 'invisible' : undefined}>
       <header className="sticky top-0 z-40 bg-gradient-to-b from-void via-void/95 to-void/0 pb-3 pt-[var(--safe-t)]">
         <div className="gutter mx-auto flex h-16 max-w-6xl items-center gap-3">
           <button type="button" onClick={() => navigate('/')} className="-ml-2 grid h-11 w-11 place-items-center rounded-full text-ash hover:bg-white/5 hover:text-chalk" aria-label="Leave session (progress is kept)">
@@ -350,6 +369,7 @@ export default function Workout() {
         </motion.div>
       </AnimatePresence>
 
+      </div>
       <AnimatePresence>
         {rest && <RestScreen rest={rest} onChange={setRest} onEnd={() => setRest(null)} onRir={(v) => updateSet(rest.logged.exerciseId, rest.logged.idx, { rir: v })} />}
       </AnimatePresence>
@@ -358,8 +378,8 @@ export default function Workout() {
       <Sheet open={finishOpen} onClose={() => setFinishOpen(false)} title="Finish session">
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl p-4 lit-raised"><Label>Sets</Label><p className="display mt-1 text-[40px] leading-none">{done}<span className="text-smoke">/{total}</span></p></div>
-            <div className="rounded-2xl p-4 lit-raised"><Label>Time</Label><p className="display mt-1 text-[40px] leading-none">{Math.round((now - session.startedAt) / 60000)}<span className="text-xl text-smoke"> min</span></p></div>
+            <div className="rounded-[6px] p-4 lit-raised"><Label>Sets</Label><p className="display mt-1 text-[40px] leading-none">{done}<span className="text-smoke">/{total}</span></p></div>
+            <div className="rounded-[6px] p-4 lit-raised"><Label>Time</Label><p className="display mt-1 text-[40px] leading-none">{Math.round((now - session.startedAt) / 60000)}<span className="text-xl text-smoke"> min</span></p></div>
           </div>
           {done < total && <p className="text-ash">{total - done} sets not logged. They won't count toward progression.</p>}
           <Button variant="primary" size="lg" icon="check" className="w-full" onClick={finish}>Save session</Button>

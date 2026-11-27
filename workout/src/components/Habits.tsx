@@ -27,7 +27,7 @@ export function HabitsCard({ date }: { date: string }) {
           return (
             <li key={h.id} className="border-t border-white/[0.05] first:border-0">
               <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(h.id)} className="flex min-h-[68px] w-full items-center gap-4 py-2 text-left">
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors ${on ? 'bg-chalk text-void' : 'bg-white/[0.05] text-transparent shadow-lit'}`}>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[6px] transition-colors ${on ? 'bg-chalk text-void' : 'bg-white/[0.05] text-transparent shadow-lit'}`}>
                   <motion.span initial={false} animate={{ scale: on ? 1 : 0.4, opacity: on ? 1 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 28 }}><Icon name="check" size={20} /></motion.span>
                 </span>
                 <span className="min-w-0 flex-1">

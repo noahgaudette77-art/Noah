@@ -75,7 +75,7 @@ async function paintMask() {
     const i = y * S + x;
     const streak = Math.sin((x + n[i] * 60) * 0.21) * 0.5 + 0.5;
     const v = n2[i] * 0.7 + n[i] * 0.3;
-    const a = v < 0.3 ? 0 : v < 0.36 ? 110 : streak < 0.04 ? 90 : 255;
+    const a = v < 0.2 ? 0 : v < 0.25 ? 120 : streak < 0.025 ? 120 : 255;
     px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = 255; px[i * 4 + 3] = a;
   }
   await sharp(px, { raw: { width: S, height: S, channels: 4 } }).png().toFile(join(out, 'paint-mask.png'));

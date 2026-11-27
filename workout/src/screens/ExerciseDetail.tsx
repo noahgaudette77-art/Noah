@@ -44,7 +44,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
             </div>
           </Card>
           {priority.map((c) => (
-            <div key={c.text} className="flex gap-3 rounded-[24px] bg-[linear-gradient(180deg,rgba(127,168,255,0.12),rgba(127,168,255,0.04))] p-6 shadow-lit">
+            <div key={c.text} className="flex gap-3 rounded-[6px] bg-[linear-gradient(180deg,rgba(255,181,74,0.10),rgba(255,181,74,0.03))] p-6 shadow-lit">
               <Icon name="spine" className="mt-0.5 shrink-0 text-rim" />
               <p><span className="font-semibold">{c.text.split(':')[0]}.</span><span className="text-ash">{' ' + c.text.split(':').slice(1).join(':').trim().replace(/^./, (m) => m.toUpperCase())}</span></p>
             </div>
@@ -60,7 +60,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
               ))}
             </ol>
           </Card>
-          <div className="flex gap-3 rounded-[24px] bg-[linear-gradient(180deg,rgba(255,138,76,0.12),rgba(255,138,76,0.04))] p-6 shadow-lit">
+          <div className="flex gap-3 rounded-[6px] bg-[linear-gradient(180deg,rgba(255,138,76,0.12),rgba(255,138,76,0.04))] p-6 shadow-lit">
             <Icon name="alert" className="mt-0.5 shrink-0 text-ember-hi" />
             <div><p className="font-semibold">Common mistake</p><p className="mt-1 text-ash">{shown.mistake}</p></div>
           </div>
@@ -71,7 +71,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
                 <li key={d.key} className="flex justify-between text-sm"><span className="text-ash">{d.title}</span><span>{s.sets} × {s.reps[0] === s.reps[1] ? s.reps[0] : `${s.reps[0]}–${s.reps[1]}`}{ex.perSide ? ' each side' : ''} · rest {s.rest} s</span></li>
               ))}
             </ul>
-            <div className="mt-4 rounded-2xl bg-white/[0.04] p-4 text-sm">
+            <div className="mt-4 rounded-[6px] bg-white/[0.04] p-4 text-sm">
               <p className="font-semibold">{rec.stage !== 'load' ? STAGE_LABEL[rec.stage] : rec.headline}</p>
               <p className="mt-0.5 text-ash">{rec.detail}</p>
             </div>

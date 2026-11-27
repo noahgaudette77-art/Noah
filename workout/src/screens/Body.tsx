@@ -12,15 +12,17 @@ import { addDays, diffDays, fmtShort } from '../logic/dates';
 import { setState, useStore } from '../logic/store';
 import { today } from '../lib/today';
 import { PosterWall } from '../components/PosterWall';
+import { ScaleDial } from '../components/ScaleDial';
+import { MilestonePlates } from '../components/MilestonePlates';
 
 const RANGES = [{ k: '4W', days: 28 }, { k: '12W', days: 84 }, { k: 'Year', days: 364 }] as const;
-const C = { avg: '#FF5B1F', proj: '#8C877F', dot: '#B8B3AA', grid: 'rgba(255,255,255,0.05)', axis: '#8C877F' };
+const C = { avg: '#FFB54A', proj: '#A39C90', dot: '#C9C1B4', grid: 'rgba(255,255,255,0.06)', axis: '#A39C90' };
 
 function ChartTip({ active, payload }: { active?: boolean; payload?: { payload: { date: string; weight?: number; avg?: number; projected: number } }[] }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-2xl px-3.5 py-2.5 text-xs glass">
+    <div className="rounded-[6px] px-3.5 py-2.5 text-xs glass">
       <p className="mb-1 font-semibold text-chalk">{fmtShort(p.date)}</p>
       {p.weight != null && <p className="text-ash">Weigh-in <span className="text-chalk">{p.weight.toFixed(1)}</span></p>}
       {p.avg != null && <p className="text-ash"><span className="mr-1.5 inline-block h-0.5 w-3 bg-ember align-middle" />7-day average <span className="text-chalk">{p.avg.toFixed(1)}</span></p>}
@@ -68,6 +70,7 @@ export default function Body() {
       <div className="gutter mx-auto max-w-5xl space-y-5">
         <Journey date={t} />
         <PosterWall date={t} />
+        <MilestonePlates date={t} />
         <div className="grid items-start gap-5 lg:grid-cols-2">
           <NextMilestone date={t} compact />
           
@@ -95,7 +98,7 @@ export default function Body() {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -14 }}>
                   <defs>
-                    <linearGradient id="avgline" x1="0" x2="1"><stop offset="0" stopColor="#FF8A4C" /><stop offset="1" stopColor="#FF5B1F" /></linearGradient>
+                    <linearGradient id="avgline" x1="0" x2="1"><stop offset="0" stopColor="#FFD99A" /><stop offset="1" stopColor="#FFB54A" /></linearGradient>
                   </defs>
                   <CartesianGrid stroke={C.grid} vertical={false} />
                   <XAxis dataKey="day" type="number" domain={['dataMin', 'dataMax']} tickFormatter={(d: number) => fmtShort(addDays(META.startDate, d))} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
@@ -104,8 +107,8 @@ export default function Body() {
                   <Line dataKey="projected" stroke={C.proj} strokeWidth={2} strokeDasharray="5 6" dot={false} activeDot={false} isAnimationActive animationDuration={900} legendType="none" />
                   <Line dataKey="weight" stroke="none" isAnimationActive={false} activeDot={false} legendType="none"
                     dot={(p: { cx?: number; cy?: number; value?: number; index?: number }) => (p.value == null ? <g key={p.index} /> : <circle key={p.index} cx={p.cx} cy={p.cy} r={3.5} fill={C.dot} stroke="#131316" strokeWidth={2} />)} />
-                  <Line dataKey="avg" stroke="url(#avgline)" strokeWidth={3} dot={false} connectNulls activeDot={{ r: 6, fill: C.avg, stroke: '#131316', strokeWidth: 2 }} isAnimationActive animationDuration={1200}
-                    style={{ filter: 'drop-shadow(0 0 6px rgba(255,91,31,0.45))' }} />
+                  <Line dataKey="avg" stroke="url(#avgline)" strokeWidth={3} dot={false} connectNulls activeDot={{ r: 6, fill: C.avg, stroke: '#1A1714', strokeWidth: 2 }} isAnimationActive animationDuration={1200}
+                    style={{ filter: 'drop-shadow(0 0 6px rgba(255,181,74,0.45))' }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -131,9 +134,10 @@ export default function Body() {
           <div className="space-y-5">
             <Card className="p-6">
               <Label>Morning weigh-in</Label>
+              <div className="mt-4"><ScaleDial value={weight} avg={avgNow} /></div>
               <label className="mt-4 block">
                 <span className="label">Date</span>
-                <input type="date" value={date} max={t} onChange={(e) => setDate(e.target.value)} className="mt-2 h-12 w-full rounded-2xl bg-white/[0.05] px-4 text-chalk shadow-lit [color-scheme:dark]" />
+                <input type="date" value={date} max={t} onChange={(e) => setDate(e.target.value)} className="mt-2 h-12 w-full rounded-[6px] bg-white/[0.05] px-4 text-chalk shadow-lit [color-scheme:dark]" />
               </label>
               <div className="mt-5 space-y-5">
                 <div><span className="label">Weight</span><div className="mt-2"><Stepper value={weight} onChange={setWeight} step={0.2} min={120} max={350} unit="lb" label="Body weight" /></div></div>
@@ -144,7 +148,7 @@ export default function Body() {
             </Card>
             <Card className="p-6">
               <div className="flex items-start gap-3">
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${rule.state === 'adjust' ? 'bg-caution text-void' : rule.state === 'on-track' ? 'bg-good text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-[6px] ${rule.state === 'adjust' ? 'bg-caution text-void' : rule.state === 'on-track' ? 'bg-good text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>
                   <Icon name={rule.state === 'adjust' ? 'alert' : rule.state === 'on-track' ? 'check' : 'info'} />
                 </span>
                 <div>

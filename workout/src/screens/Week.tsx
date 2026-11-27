@@ -52,12 +52,12 @@ export default function Week() {
             return (
               <motion.li key={d} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.035, type: 'spring', stiffness: 380, damping: 34 }}>
                 <a href={`#/day/${d}`} onClick={(e) => { e.preventDefault(); navigate(`/day/${d}`); }}
-                  className={`group flex min-h-[92px] items-center gap-4 rounded-[24px] p-4 transition ${isToday ? 'lit-raised shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]' : 'lit hover:brightness-110'}`}>
+                  className={`group flex min-h-[92px] items-center gap-4 rounded-[6px] p-4 transition ${isToday ? 'lit-raised shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]' : 'lit hover:brightness-110'}`}>
                   <div className="w-12 text-center">
                     <p className="label">{fmtWeekday(d)}</p>
                     <p className="display text-[34px] leading-none">{Number(d.slice(8))}</p>
                   </div>
-                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${done ? 'bg-chalk text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>
+                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[6px] ${done ? 'bg-chalk text-void' : 'bg-white/[0.05] text-ash shadow-lit'}`}>
                     <Icon name={done ? 'check' : KIND_ICON[pd.plan.kind]} />
                   </span>
                   <div className="min-w-0 flex-1">

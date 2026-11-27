@@ -48,7 +48,7 @@ export async function drawSummaryCard(d: CardData): Promise<Blob> {
   g.fillText(d.dayLine.toUpperCase(), pad, 330);
   g.fillStyle = '#F3EFE8'; g.font = `850 230px ${DISPLAY}`;
   g.fillText(d.title.toUpperCase(), pad - 6, 540, W - pad * 2);
-  g.fillStyle = '#FF5B1F'; g.fillRect(pad, 580, 120, 8);
+  g.fillStyle = '#FFB54A'; g.fillRect(pad, 580, 120, 8);
 
   // stats grid
   const colW = (W - pad * 2) / 2;
@@ -68,7 +68,7 @@ export async function drawSummaryCard(d: CardData): Promise<Blob> {
   let y = 1150;
   g.font = `600 32px ${SANS}`;
   for (const p of d.prs.slice(0, 2)) {
-    g.fillStyle = '#FF5B1F'; g.beginPath(); g.arc(pad + 10, y - 11, 9, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#FFB54A'; g.beginPath(); g.arc(pad + 10, y - 11, 9, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#F3EFE8'; g.fillText(p, pad + 34, y);
     y += 52;
   }

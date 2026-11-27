@@ -127,7 +127,49 @@ html.clean { --lamp: 1 !important; }
   url('/assets/ph/red_brick_03_diffuse_1k.webp');
   background-size: 100% 100%, 100% 100%, 300px; }
 /* brick-red paint over a locked poster: worn so the figure's ghost shows through */
-.paintover { background: linear-gradient(180deg, rgba(122,59,42,0.93), rgba(96,44,31,0.95));
-  -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 340px; mask-image: var(--paint-mask); mask-size: 340px; }
+.paintover { background: linear-gradient(172deg, rgba(122,59,42,0.88), rgba(104,48,34,0.9) 45%, rgba(92,42,30,0.93));
+  -webkit-mask-image: var(--paint-mask); -webkit-mask-size: 900px; mask-image: var(--paint-mask); mask-size: 900px; }
 html.clean .brickwall { background: linear-gradient(180deg, #221a15, #1a1411); }
 html.clean .paintover { -webkit-mask-image: none; mask-image: none; }
+
+/* ---- split-flap digits ---- */
+.flap { perspective: 400px; }
+.flap-half { position: absolute; left: 0; right: 0; overflow: hidden; background: linear-gradient(180deg, #24201c, #191613); border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255,214,160,0.08), 0 6px 14px -6px rgba(0,0,0,0.9); backface-visibility: hidden; }
+.flap-half.top { top: 0; border-bottom-left-radius: 1px; border-bottom-right-radius: 1px; transform-origin: 50% 100%; }
+.flap-half.bottom { bottom: 0; border-top-left-radius: 1px; border-top-right-radius: 1px; transform-origin: 50% 0%;
+  background: linear-gradient(180deg, #1c1916, #14110e); }
+.flap-half span { position: absolute; left: 0; right: 0; text-align: center; color: var(--chalk);
+  font-family: 'Big Shoulders Display Variable', Impact, sans-serif; font-weight: 850; font-variant-numeric: tabular-nums; }
+.flap-axle { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: rgba(0,0,0,0.75); box-shadow: 0 1px 0 rgba(255,255,255,0.05); }
+.fold-top { animation: fold-top 0.22s cubic-bezier(.5,0,.9,.6) forwards; z-index: 2; }
+.fold-bottom { transform: rotateX(90deg); animation: fold-bottom 0.2s 0.2s cubic-bezier(.2,.6,.4,1.25) forwards; z-index: 2; }
+.settle { animation: settle-in 0.01s 0.4s forwards; opacity: 0; }
+@keyframes fold-top { to { transform: rotateX(-90deg); } }
+@keyframes fold-bottom { to { transform: rotateX(0deg); } }
+@keyframes settle-in { to { opacity: 1; } }
+
+/* ---- punch card, chalk slate ---- */
+.punch-hole { position: absolute; width: 18px; height: 22px; border-radius: 4px; background: var(--soot);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.9), 0 0 0 1px rgba(30,26,21,0.4); }
+.punch-chad { position: absolute; width: 18px; height: 22px; border-radius: 4px; background: var(--cream); box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+.slate { background: radial-gradient(120% 100% at 30% 0%, #2f2b27, #1b1916 70%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 40px rgba(0,0,0,0.6), theme('boxShadow.lit'); }
+.chalk-stroke { filter: url(#chalk-rough); }
+@keyframes chalk-draw { to { stroke-dashoffset: 0; } }
+html.clean .chalk-stroke { filter: none; }
+
+/* ---- ledger: ruled paper with a red margin rule ---- */
+.ledger { background-image: linear-gradient(90deg, transparent 38px, rgba(181,72,42,0.55) 38px, rgba(181,72,42,0.55) 40px, transparent 40px), var(--paper); background-size: 100% 100%, 512px; }
+.ledger-row { border-bottom: 1px solid rgba(60,90,140,0.28); }
+html.clean .ledger { background-image: linear-gradient(90deg, transparent 38px, rgba(181,72,42,0.55) 38px, rgba(181,72,42,0.55) 40px, transparent 40px); }
+
+/* ---- steel mesh wall (Poly Haven rusty_metal_grid) ---- */
+.meshwall { background: linear-gradient(180deg, rgba(13,11,9,0.35), rgba(13,11,9,0.7)), url('/assets/ph/rusty_metal_grid_diffuse_1k.webp'); background-size: 100% 100%, 220px; box-shadow: theme('boxShadow.lit'); }
+.hook { width: 3px; height: 14px; border-radius: 2px; background: linear-gradient(#8a7f74, #3a332d); margin-bottom: -6px; position: relative; z-index: 1; }
+html.clean .meshwall { background: linear-gradient(180deg, #24201c, #1a1714); }
+
+/* ---- tab bar: a strip of worn rubber floor; the active tab sits in a pool of lamp light ---- */
+.rubber { background: linear-gradient(180deg, rgba(20,18,16,0.94), rgba(14,12,10,0.97)), url('/assets/ph/rubber_tiles_diffuse_1k.webp'); background-size: 100% 100%, 180px;
+  box-shadow: inset 0 1px 0 rgba(255,214,160,0.07), 0 -10px 30px -10px rgba(0,0,0,0.9); }
+.lamp-pool { background: radial-gradient(80% 90% at 50% 0%, rgba(255,181,74,0.26), rgba(255,181,74,0.06) 60%, transparent 80%); box-shadow: inset 0 1px 0 rgba(255,217,154,0.35); }
+html.clean .rubber { background: #141210; }

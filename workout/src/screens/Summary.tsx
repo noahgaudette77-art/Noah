@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { CountUp } from '../components/CountUp';
 import { Icon } from '../components/Icon';
 import { WeekCard } from '../components/Motivation';
+import { HeroLoop } from '../components/HeroLoop';
+import { Stamp } from '../components/iron';
 import { Button, Card, Label } from '../components/ui';
 import { EXERCISES, dayByKey } from '../data/program';
 import { fmtLong } from '../logic/dates';
@@ -60,13 +62,13 @@ export default function Summary({ id }: { id: string }) {
         <Label>{dayNumber(s.date) ? `Day ${dayNumber(s.date)} of 365` : 'Practice session'} · {fmtLong(s.date)}</Label>
         <button type="button" onClick={() => navigate('/')} className="grid h-11 w-11 place-items-center rounded-full text-ash hover:bg-white/5" aria-label="Close"><Icon name="close" /></button>
       </div>
-      <motion.div className="mt-8 flex items-center gap-4" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <motion.span className="grid h-16 w-16 place-items-center rounded-full bg-chalk text-void" initial={reduce ? false : { scale: 0.5 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 18, delay: 0.1 }}>
-          <Icon name="check" size={32} />
-        </motion.span>
+      <HeroLoop name="loop-complete" className="mx-auto mt-5 aspect-[4/5] w-full max-w-[400px]" alt="">
+        <div className="pointer-events-none absolute right-3 top-3"><Stamp land size={46} angle={-8} color="var(--amber)">Complete</Stamp></div>
+      </HeroLoop>
+      <motion.div className="mt-6 flex items-center gap-4" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div>
           <p className="label">Session complete</p>
-          <h1 className="display mt-1 text-[64px] sm:text-[88px]">{plan.title}</h1>
+          <h1 className="display misprint mt-1 text-[64px] sm:text-[88px]">{plan.title}</h1>
         </div>
       </motion.div>
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
