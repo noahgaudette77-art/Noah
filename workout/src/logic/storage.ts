@@ -4,10 +4,33 @@ export const STORAGE_KEY = 'tempo.v1';
 export const SCHEMA_VERSION = 1;
 
 export interface Settings {
+  /** legacy master switch from v2; the Iron Room uses `audio` */
   sound: boolean;
   haptics: boolean;
-  /** tempo ticks and countdown beeps (off by default) */
+  /** stopwatch ticks that pace the lowering (needs audio) */
   ticks: boolean;
+  /** all sound, off by default */
+  audio: boolean;
+  /** 0..1 */
+  volume: number;
+  /** coach voice cues (needs audio) */
+  voice: boolean;
+  /** split-flap flip on every rest second (needs audio) */
+  flips: boolean;
+  /** room tone loop (needs audio) */
+  ambience: boolean;
+  /** Clean mode: no grain, distress, flicker, drift or video grade */
+  clean: boolean;
+  /** raw MuscleWiki footage without the light vintage grade */
+  rawVideo: boolean;
+  /** look around the room with the phone's motion sensors */
+  gyro: boolean;
+  /** still room, no drift or dust: auto = when the device looks power-limited */
+  battery: 'auto' | 'on' | 'off';
+  /** hero loops only on demand */
+  dataSaver: boolean;
+  /** last day the cold open played (once per day) */
+  coldOpen: string;
 }
 
 export interface AppState {
@@ -25,7 +48,7 @@ export const emptyState = (): AppState => ({
   active: null,
   body: [],
   habits: {},
-  settings: { sound: true, haptics: true, ticks: false },
+  settings: { sound: false, haptics: true, ticks: true, audio: false, volume: 0.7, voice: true, flips: true, ambience: true, clean: false, rawVideo: false, gyro: false, battery: 'auto', dataSaver: false, coldOpen: '' },
 });
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

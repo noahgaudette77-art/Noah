@@ -6,7 +6,6 @@ import { blocksFor, recommendationFor, startSession } from '../logic/session';
 import { useStore } from '../logic/store';
 import { navigate } from '../lib/router';
 import { play } from '../lib/sfx';
-import { usePhysique } from '../rig/DemoPlayer';
 import { Icon } from './Icon';
 import { Thumb } from './Thumb';
 import { Button, Card, Label } from './ui';
@@ -37,7 +36,7 @@ export function StartButton({ plan, date }: { plan: DayPlan; date: string }) {
   };
   const n = plan.slots.length;
   return (
-    <button type="button" onClick={begin} className="ember-btn group flex h-[76px] w-full items-center justify-between rounded-[24px] px-6 text-left">
+    <button type="button" onClick={begin} className="lamp-btn group flex h-[76px] w-full items-center justify-between rounded-full px-7 text-left">
       <span>
         <span className="block text-[19px] font-semibold">{active ? 'Back to your session' : `Start ${plan.title}`}</span>
         <span className="block text-[13px] font-medium opacity-75">{n ? `${n} exercises · ` : ''}about {est.totalMin} min</span>
@@ -48,8 +47,8 @@ export function StartButton({ plan, date }: { plan: DayPlan; date: string }) {
 }
 
 export function SessionList({ plan }: { plan: DayPlan }) {
-  const stage = usePhysique();
   const blocks = blocksFor(plan);
+  let station = 0;
   const est = estimateDay(plan);
   if (!plan.slots.length && !plan.cardio.length) return null;
   return (
@@ -64,8 +63,8 @@ export function SessionList({ plan }: { plan: DayPlan }) {
         {blocks.map((b, bi) => {
           if (b.kind === 'cardio') {
             return (
-              <li key={bi} className="flex items-center gap-4 rounded-2xl p-2.5">
-                <Thumb id={b.cardio.demo} stage={stage} />
+              <li key={bi} className="flex items-center gap-4 rounded-[6px] p-2.5">
+                <Thumb cardio={b.cardio.demo} />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{b.cardio.name}</p>
                   <p className="text-sm text-smoke">{b.cardio.range ? `${b.cardio.range[0]}–${b.cardio.range[1]}` : b.cardio.minutes} min · {b.cardio.details[0]}</p>
@@ -74,7 +73,7 @@ export function SessionList({ plan }: { plan: DayPlan }) {
             );
           }
           return (
-            <li key={bi} className={b.kind === 'superset' ? 'my-1 rounded-[20px] bg-white/[0.025] p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]' : ''}>
+            <li key={bi} className={b.kind === 'superset' ? 'my-1 rounded-[6px] bg-white/[0.025] p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]' : ''}>
               {b.kind === 'superset' && <p className="label px-3 pt-2">Superset {b.group} · back to back</p>}
               {b.slots.map((s, si) => {
                 const ex = EXERCISES[s.exerciseId];
@@ -82,8 +81,8 @@ export function SessionList({ plan }: { plan: DayPlan }) {
                 const t = tempoForStage(s.tempo, rec.stage);
                 return (
                   <a key={s.exerciseId} href={`#/exercise/${s.exerciseId}`} onClick={(e) => { e.preventDefault(); navigate(`/exercise/${s.exerciseId}`); }}
-                    className="group flex items-center gap-4 rounded-2xl p-2.5 transition-colors hover:bg-white/[0.03]">
-                    <Thumb id={s.exerciseId} stage={stage} />
+                    className="group flex items-center gap-4 rounded-[6px] p-2.5 transition-colors hover:bg-white/[0.03]">
+                    <Thumb n={++station} />
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{b.kind === 'superset' && <span className="mr-1.5 text-ash">{b.group}{si + 1}</span>}{ex.name}</p>
                       <p className="mt-0.5 text-sm text-smoke">
@@ -109,7 +108,7 @@ export function DayExtras({ plan }: { plan: DayPlan }) {
     <>
       {plan.sauna && (
         <Card className="flex items-center gap-4 p-5">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/[0.05] text-ash shadow-lit"><Icon name="heat" /></span>
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[6px] bg-white/[0.05] text-ash shadow-lit"><Icon name="heat" /></span>
           <div>
             <p className="font-semibold">Sauna · {plan.sauna} min</p>
             <p className="text-sm text-smoke">500 ml of water before and after. Step out if you feel light-headed.</p>

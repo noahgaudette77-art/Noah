@@ -37,11 +37,11 @@ function seed() {
   const habits = {};
   for (let i = 0; i < 14; i++) habits[day(start, i)] = { kcal: true, protein: i % 3 !== 0, steps: i % 4 !== 1, sleep: i % 2 === 0 };
   habits[TODAY] = { kcal: true, protein: true };
-  return { version: 1, sessions, active: null, body, habits, settings: { sound: false, haptics: false, ticks: false } };
+  return { version: 1, sessions, active: null, body, habits, settings: { sound: false, haptics: false, ticks: false, audio: false, clean: !!process.env.CLEAN, coldOpen: '2099-01-01' } };
 }
 
 const srv = await preview(4320);
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const shots = [];
 async function run(name, vp, fn) {
   const ctx = await browser.newContext({ viewport: vp.size, deviceScaleFactor: 2, reducedMotion: vp.reduced ? 'reduce' : 'no-preference', serviceWorkers: 'block', acceptDownloads: true });
@@ -55,12 +55,12 @@ async function run(name, vp, fn) {
   }, [seed(), !!vp.fresh]);
   await page.goto(`${srv.url}#/?date=${vp.date ?? TODAY}`);
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(3500); // the room canvas loads after first paint
   await fn(page);
   await ctx.close();
 }
 const shot = async (page, file, full = false) => {
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(1600);
   const css = full ? await page.addStyleTag({ content: 'nav.fixed{display:none!important}' }) : null;
   await page.screenshot({ path: `${OUT}/${file}.png`, fullPage: full });
   if (css) await css.evaluate((n) => n.remove());
@@ -73,7 +73,9 @@ const VPS = [
   { tag: 'desktop', size: { width: Number(process.env.DESKTOP_W ?? 1280), height: Number(process.env.DESKTOP_H ?? 800) } },
 ];
 
-for (const vp of VPS) {
+const RUN = process.env.MOBILE_ONLY ? VPS.slice(0, 1) : VPS;
+const CLEAN = !!process.env.CLEAN; // Clean-mode pass
+for (const vp of RUN) {
   const t = vp.tag;
   await run(`today-${t}`, vp, async (p) => {
     await p.waitForTimeout(800);

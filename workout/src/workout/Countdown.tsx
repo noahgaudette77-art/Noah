@@ -21,7 +21,7 @@ export function Countdown({ onDone, onCancel }: { onDone: () => void; onCancel: 
   return (
     <motion.div role="dialog" aria-modal="true" aria-label="Get ready" className="fixed inset-0 z-[70] grid place-items-center bg-void/92 backdrop-blur-md"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onCancel}>
-      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(40% 35% at 50% 50%, rgba(255,91,31,0.22), transparent 70%)' }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(40% 35% at 50% 50%, rgba(255,181,74,0.22), transparent 70%)' }} />
       <AnimatePresence mode="popLayout">
         <motion.span key={n} className={`display relative leading-none ${n ? 'text-[46vh] text-chalk' : 'text-[28vh] text-ember'}`}
           initial={{ scale: 1.35, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}

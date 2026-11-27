@@ -11,7 +11,7 @@ export function Button({ variant = 'secondary', icon, children, className = '', 
     ghost: 'bg-transparent text-ash hover:bg-white/[0.04] hover:text-chalk',
     danger: 'bg-[#2A140E] text-[#FFB59A] hover:bg-[#341a12] shadow-lit',
   }[variant];
-  const s = { md: 'h-12 px-5 text-[15px] rounded-2xl', lg: 'h-16 px-7 text-[17px] rounded-[20px]', xl: 'h-[72px] px-8 text-lg rounded-[24px]' }[size];
+  const s = { md: 'h-12 px-5 text-[15px] rounded-[6px]', lg: 'h-16 px-7 text-[17px] rounded-[6px]', xl: 'h-[72px] px-8 text-lg rounded-[6px]' }[size];
   return (
     <button type="button" className={`inline-flex select-none items-center justify-center gap-2.5 font-semibold tracking-[0.01em] transition duration-150 ease-snap disabled:opacity-40 ${s} ${v} ${className}`} {...rest}>
       {icon && <Icon name={icon} size={size === 'md' ? 20 : 24} />}
@@ -49,10 +49,10 @@ export function Ring({ value, size = 56, stroke = 5, children, label, tone = 'em
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value));
-  const stops = { ember: ['#FF8A4C', '#FF5B1F'], chalk: ['#FFFFFF', '#CFC9C0'], rim: ['#A9C6FF', '#6F98F2'] }[tone];
+  const stops = { ember: ['#FFD99A', '#FFB54A'], chalk: ['#FFFFFF', '#CFC9C0'], rim: ['#E8DFCF', '#A39C90'] }[tone];
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={glow && v > 0 ? { filter: `drop-shadow(0 0 ${stroke * 1.6}px ${tone === 'ember' ? 'rgba(255,91,31,0.45)' : 'rgba(255,255,255,0.18)'})` } : undefined}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={glow && v > 0 ? { filter: `drop-shadow(0 0 ${stroke * 1.6}px ${tone === 'ember' ? 'rgba(255,181,74,0.45)' : 'rgba(255,255,255,0.18)'})` } : undefined}>
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={stops[0]} /><stop offset="1" stopColor={stops[1]} /></linearGradient>
         </defs>
@@ -116,7 +116,7 @@ export function Toggle({ checked, onChange, label, detail, icon }: { checked: bo
   return (
     <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className="flex min-h-[64px] w-full items-center justify-between gap-4 py-2 text-left">
       <span className="flex items-center gap-3">
-        {icon && <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/[0.05] text-ash"><Icon name={icon} size={20} /></span>}
+        {icon && <span className="grid h-10 w-10 place-items-center rounded-[6px] bg-white/[0.05] text-ash"><Icon name={icon} size={20} /></span>}
         <span>
           <span className="block font-semibold">{label}</span>
           {detail && <span className="block text-sm text-smoke">{detail}</span>}
@@ -159,7 +159,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
             ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
             initial={reduce ? { opacity: 0 } : { y: 48, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={reduce ? { opacity: 0 } : { y: 48, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-            className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-gradient-to-b from-[#1E1E22] to-[#141417] p-6 pb-[calc(24px+var(--safe-b))] shadow-float outline-none sm:rounded-[32px]"
+            className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-gradient-to-b from-[#1E1E22] to-[#141417] p-6 pb-[calc(24px+var(--safe-b))] shadow-float outline-none sm:rounded-[6px]"
           >
             <div className="mx-auto -mt-2 mb-4 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
             <div className="mb-5 flex items-start justify-between gap-4">
@@ -186,13 +186,13 @@ export function Stat({ label, value, unit, className = '' }: { label: string; va
 }
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-2xl bg-white/[0.04] ${className}`} aria-hidden="true" />;
+  return <div className={`animate-pulse rounded-[6px] bg-white/[0.04] ${className}`} aria-hidden="true" />;
 }
 
 export function Empty({ icon, title, body, action }: { icon: IconName; title: string; body: string; action?: ReactNode }) {
   return (
     <Card className="grid place-items-center px-6 py-12 text-center">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white/[0.05] text-ash shadow-lit"><Icon name={icon} size={28} /></span>
+      <span className="grid h-16 w-16 place-items-center rounded-[6px] bg-white/[0.05] text-ash shadow-lit"><Icon name={icon} size={28} /></span>
       <p className="display mt-5 text-[36px]">{title}</p>
       <p className="mt-2 max-w-xs text-ash">{body}</p>
       {action && <div className="mt-6">{action}</div>}

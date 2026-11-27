@@ -2,8 +2,10 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { Suspense, lazy, useEffect } from 'react';
 import { Skeleton } from './components/ui';
 import { Shell } from './components/Shell';
+import { RoomCanvas } from './room/RoomCanvas';
+import { ColdOpen } from './components/ColdOpen';
+import { setRoom, zoneForPath } from './room/state';
 import { match, useRoute } from './lib/router';
-import { TOGGLE_EVENT } from './rig/DemoPlayer';
 import DayScreen from './screens/DayScreen';
 import ExerciseDetail from './screens/ExerciseDetail';
 import History from './screens/History';
@@ -37,15 +39,7 @@ const FULLSCREEN = (p: string) => p === '/workout' || p.startsWith('/summary');
 
 export default function App() {
   const path = useRoute();
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (t.closest('input, textarea, select, [contenteditable]')) return;
-      if (e.key.toLowerCase() === 'k' && !e.metaKey && !e.ctrlKey && !e.altKey) window.dispatchEvent(new Event(TOGGLE_EVENT));
-    };
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, []);
+  useEffect(() => { setRoom({ ...zoneForPath(path), override: null, still: false }); }, [path]);
   useEffect(() => {
     const titles: Record<string, string> = { '/': 'Today', '/week': 'Week', '/body': 'Progress', '/history': 'History', '/settings': 'Settings', '/workout': 'Session' };
     document.title = `${titles[path] ?? (path.startsWith('/summary') ? 'Session complete' : 'Tempo')} · Tempo`;
@@ -65,7 +59,13 @@ export default function App() {
   );
   return (
     <MotionConfig reducedMotion="user">
-      {FULLSCREEN(path) ? <div className="relative min-h-screen"><div className="ambient" aria-hidden="true" /><div className="relative z-10">{page}</div></div> : <Shell path={path}>{page}</Shell>}
+      <RoomCanvas />
+      <div className="grain" aria-hidden="true" />
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <filter id="chalk-rough"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" /><feDisplacementMap in="SourceGraphic" scale="2.4" /></filter>
+      </svg>
+      <ColdOpen />
+      {FULLSCREEN(path) ? <div className="relative z-10 min-h-screen">{page}</div> : <Shell path={path}>{page}</Shell>}
     </MotionConfig>
   );
 }

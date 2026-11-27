@@ -2,7 +2,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Wordmark } from '../components/Brand';
 import { DayExtras, SessionList, StartButton } from '../components/DayView';
 import { HabitsCard } from '../components/Habits';
-import { HeroAthlete, HeroMedia } from '../components/Hero';
+import { HeroLoop } from '../components/HeroLoop';
+import { WallText } from '../components/iron';
 import { Icon } from '../components/Icon';
 import { NextMilestone, ReviewCard, StreakChip, WeekCard } from '../components/Motivation';
 import { META } from '../data/program';
@@ -26,47 +27,42 @@ export default function Today() {
   const big = plan.title.length > 9;
   return (
     <div>
-      <HeroMedia className="h-[min(78vh,700px)] min-h-[560px] lg:h-[720px] lg:min-h-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-void" />
-        {/* the session name sits behind the athlete */}
-        <motion.h1
-          initial={reduce ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.2, 0.9, 0.25, 1] }}
-          className={`display absolute inset-x-0 top-[calc(108px+var(--safe-t))] text-center text-chalk/95 lg:top-[112px] ${big ? 'text-[min(17vw,140px)]' : 'text-[min(26vw,210px)]'}`}
-          style={{ textShadow: '0 20px 80px rgba(0,0,0,0.6)' }}
-        >
-          {plan.title}
-          <span className="mt-3 block font-sans text-lg font-normal normal-case tracking-normal text-ash">{plan.subtitle}</span>
-        </motion.h1>
-        <div className="absolute inset-x-0 bottom-[13%] mx-auto h-[44%] max-w-[360px] lg:bottom-[9%] lg:h-[43%]">
-          <HeroAthlete hold={plan.kind === 'strength'} className="h-full w-full" />
+      <header className="relative pt-[var(--safe-t)]">
+        <div className="gutter mx-auto flex max-w-5xl items-center justify-between pt-4">
+          <span className="lg:invisible"><Wordmark /></span>
+          <a href="#/settings" onClick={(e) => { e.preventDefault(); navigate('/settings'); }} className="grid h-11 w-11 place-items-center rounded-[6px] glass lg:hidden" aria-label="Settings">
+            <Icon name="settings" />
+          </a>
         </div>
-        <div className="absolute inset-x-0 top-0 pt-[var(--safe-t)]">
-          <div className="gutter mx-auto flex max-w-5xl items-center justify-between pt-4">
-            <span className="lg:invisible"><Wordmark /></span>
-            <a href="#/settings" onClick={(e) => { e.preventDefault(); navigate('/settings'); }} className="grid h-11 w-11 place-items-center rounded-full glass lg:hidden" aria-label="Settings">
-              <Icon name="settings" />
-            </a>
-          </div>
-          <p className="label gutter mx-auto mt-5 max-w-5xl text-ash">{eyebrow}</p>
+        <div className="gutter mx-auto max-w-5xl">
+          <p className="label mt-4 text-ash">{eyebrow}</p>
+          {/* the session name, stencilled on the wall of the entrance */}
+          <motion.div initial={reduce ? false : { opacity: 0, clipPath: 'inset(0 100% 0 0)' }} animate={{ opacity: 1, clipPath: 'inset(0 0% 0 0)' }} transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}>
+            <WallText className={`mt-2 ${big ? 'text-[min(19vw,128px)]' : 'text-[min(27vw,176px)]'}`}>{plan.title}</WallText>
+          </motion.div>
+          <h1 className="sr-only">{plan.title}: {plan.subtitle}</h1>
+          <p className="typed mt-2 text-[17px] text-ash">{plan.subtitle}</p>
         </div>
-        <div className="absolute inset-x-0 bottom-0">
-          <div className="gutter mx-auto max-w-5xl pb-6">
-            <div className="mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 whitespace-nowrap rounded-full px-5 py-2.5 text-[13px] font-semibold text-chalk glass">
-              {fd.started && <StreakChip date={date} />}
-              {plan.slots.length > 0 && <span>Lift {est.liftMin}′</span>}
-              {est.cardioMin > 0 && <span>{plan.slots.length ? 'Walk' : 'Cardio'} {est.cardioMin}′</span>}
-              {est.sets > 0 && <span>{est.sets} sets</span>}
-              {plan.sauna && <span>Sauna {plan.sauna}′</span>}
-              {plan.kind === 'rest' && <span>Rest day</span>}
+        <div className="gutter mx-auto mt-6 max-w-5xl">
+          <HeroLoop name="loop-hero" className="mx-auto h-[min(40vh,400px)] w-full max-w-[440px] lg:h-auto lg:aspect-[4/5]" frame alt="" >
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-10">
+              <div className="flex flex-wrap gap-1.5">
+                {fd.started && <span className="dymo amber"><StreakChip date={date} /></span>}
+                {plan.slots.length > 0 && <span className="dymo">Lift {est.liftMin} min</span>}
+                {est.cardioMin > 0 && <span className="dymo">{plan.slots.length ? 'Walk' : 'Cardio'} {est.cardioMin} min</span>}
+                {est.sets > 0 && <span className="dymo">{est.sets} sets</span>}
+                {plan.sauna && <span className="dymo">Sauna {plan.sauna} min</span>}
+                {plan.kind === 'rest' && <span className="dymo">Rest day</span>}
+              </div>
             </div>
-          </div>
+          </HeroLoop>
         </div>
-      </HeroMedia>
+      </header>
 
-      <div className="gutter relative mx-auto -mt-2 max-w-5xl space-y-5">
+      <div className="gutter relative mx-auto mt-6 max-w-5xl space-y-5">
         {!fd.started && <p className="text-center text-sm text-ash">Day one is {fmtShort(META.startDate)}. You can run it early to learn the movements.</p>}
         <StartButton plan={plan} date={sessionDate} />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <div className="space-y-5">
             {fd.started && weekday(date) === 0 && <ReviewCard date={date} />}
             <SessionList plan={plan} />

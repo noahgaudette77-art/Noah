@@ -1,7 +1,7 @@
 // Motivation mechanics, all derived from data the app already stores. Pure functions, tested.
 import { DAYS, EXERCISES, HABITS, META } from '../data/program';
 import type { BodyEntry, ExerciseLog, HabitDay, SessionLog, SetLog } from '../data/types';
-import { LEAN_MASS, avg7, weightAtBodyFat } from './body';
+import { avg7, leanAt, weightAtBodyFat } from './body';
 import { addDays, diffDays, fmtShort } from './dates';
 import { programDay, weekDates } from './schedule';
 import { volume } from './progression';
@@ -98,6 +98,7 @@ export function consistency(sessions: SessionLog[], habits: Record<string, Habit
 
 export interface Milestone {
   bf: number;
+  lean: number;
   month: number;
   date: string;
   weight: number;
@@ -112,22 +113,25 @@ export function currentWeight(body: BodyEntry[], today: string): number {
   return last?.weight ?? META.start.weightLb;
 }
 
-/** Body fat implied by a weight if lean mass is held (the program's assumption). */
-export const bodyFatAt = (weight: number) => Math.max(0, (1 - LEAN_MASS / weight) * 100);
+/** Body fat implied by a weight, given the modelled lean mass on that program day. */
+export const bodyFatAt = (weight: number, day = 0) => Math.max(0, (1 - leanAt(day) / weight) * 100);
 
 export function milestones(body: BodyEntry[], today: string) {
   const w = currentWeight(body, today);
-  const bf = bodyFatAt(w);
+  const day = Math.max(0, diffDays(today, META.startDate));
+  const bf = bodyFatAt(w, day);
   const list: Milestone[] = META.projection
     .filter((p) => p.month > 0 && p.month <= 9)
     .map((p) => {
-      const weight = weightAtBodyFat(p.bf);
-      return { bf: p.bf, month: p.month, date: addDays(META.startDate, Math.round(p.month * DAYS_PER_MONTH)), weight, reached: w <= weight + 0.05 };
+      const weight = weightAtBodyFat(p.bf, p.lean);
+      return { bf: p.bf, lean: p.lean, month: p.month, date: addDays(META.startDate, Math.round(p.month * DAYS_PER_MONTH)), weight, reached: w <= weight + 0.05 };
     });
   const next = list.find((m) => !m.reached) ?? null;
-  const fatNow = w - LEAN_MASS;
-  const fatToNext = next ? Math.max(0, fatNow - (next.weight - LEAN_MASS)) : 0;
-  const total = META.start.weightLb - weightAtBodyFat(12);
+  // fat to lose = fat now minus fat at the checkpoint (lean mass grows in between)
+  const fatNow = w - leanAt(day);
+  const fatToNext = next ? Math.max(0, fatNow - (next.weight - next.lean)) : 0;
+  const goal = META.projection.find((p) => p.month === 9)!;
+  const total = META.start.weightLb - weightAtBodyFat(goal.bf, goal.lean);
   const progress = Math.max(0, Math.min(1, (META.start.weightLb - w) / total));
   return { weight: w, bf, list, next, fatToNext, progress, start: { bf: META.start.bodyFat, weight: META.start.weightLb } };
 }

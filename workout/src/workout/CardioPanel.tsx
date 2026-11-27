@@ -3,7 +3,7 @@ import { Button, Label, Num, Ring } from '../components/ui';
 import type { CardioBlock, SessionLog } from '../data/types';
 import { toggleCardio } from '../logic/session';
 import { buzz, play } from '../lib/sfx';
-import { DemoPlayer } from '../rig/DemoPlayer';
+import { MiniTempo } from '../demo/MiniTempo';
 
 const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
 
@@ -38,7 +38,12 @@ export function CardioPanel({ c, session }: { c: CardioBlock; session: SessionLo
   const done = session.cardioDone.includes(c.id);
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-10">
-      <DemoPlayer id={c.demo} name={c.name} view={c.demo === 'bike' ? 'Upright bike' : 'Treadmill'} primary aspect={16 / 11} className="-mx-4 h-[42vh] min-h-[280px] sm:mx-0 sm:rounded-[28px] lg:h-[560px]" />
+      <div className="print tape px-5 pb-5 pt-6" role="group" aria-label={`${c.name}: machine card`}>
+        <p className="label">Machine card · {c.demo === 'bike' ? 'upright bike' : 'treadmill'}</p>
+        <p className="display mt-1.5 text-[34px] text-ink">{c.name}</p>
+        <ol className="typed mt-3 space-y-1.5 text-[15px] leading-snug text-ink">{c.details.map((d, i) => <li key={d} className="flex gap-2.5"><span className="w-4 shrink-0 text-ink-faded">{i + 1}.</span><span>{d}</span></li>)}</ol>
+        {c.intervals && <div className="mt-4 flex items-center gap-3"><MiniTempo tempo={{ down: c.intervals.hard, bottom: 0, up: c.intervals.easy, top: 0 }} size={76} /><p className="typed text-[13px] text-ink-faded">{c.intervals.rounds} rounds · {c.intervals.hard} s hard, {c.intervals.easy} s easy</p></div>}
+      </div>
       <div className="mt-6 lg:mt-0">
         <Label>{c.minutes} min</Label>
         <h2 className="display mt-2 text-[52px]">{c.name}</h2>

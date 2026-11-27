@@ -69,16 +69,18 @@ describe('milestones', () => {
     const m = milestones([], S);
     expect(bodyFatAt(225)).toBeCloseTo(24, 5);
     expect(m.next!.bf).toBe(22);
-    expect(m.fatToNext).toBeCloseTo(225 - 219.23, 1);
+    // fat now (225 - 171 lean) minus fat at 22% (220 - 171.6 lean)
+    expect(m.fatToNext).toBeCloseTo((225 - 171) - (171.6 / 0.78 - 171.6), 1);
+    expect(m.list.map((x) => Math.round(x.weight))).toEqual([220, 215, 208, 200]);
     expect(m.list.map((x) => x.bf)).toEqual([22, 19, 15.5, 12]);
     expect(physiqueStage([], S)).toBe(0);
   });
   it('advances the physique stage at each checkpoint', () => {
     const at = (w: number) => Array.from({ length: 7 }, (_, i) => ({ date: addDays(S, 60 + i), weight: w }));
-    expect(physiqueStage(at(219), addDays(S, 66))).toBe(1);
-    expect(physiqueStage(at(211), addDays(S, 66))).toBe(2);
-    expect(physiqueStage(at(200), addDays(S, 66))).toBe(3);
-    expect(milestones(at(211), addDays(S, 66)).next!.bf).toBe(15.5);
+    expect(physiqueStage(at(219.5), addDays(S, 66))).toBe(1);
+    expect(physiqueStage(at(214.5), addDays(S, 66))).toBe(2);
+    expect(physiqueStage(at(207.5), addDays(S, 66))).toBe(3);
+    expect(milestones(at(214.5), addDays(S, 66)).next!.bf).toBe(15.5);
   });
 });
 

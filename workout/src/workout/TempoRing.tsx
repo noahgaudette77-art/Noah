@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Tempo } from '../data/types';
-import { buzz, play } from '../lib/sfx';
+import { buzz } from '../lib/sfx';
+import { cue, say } from '../lib/audio';
 
 type Phase = { key: 'down' | 'bottom' | 'up' | 'top'; word: string; sec: number };
 
 export function phasesFor(t: Tempo): Phase[] {
   return ([
     { key: 'down', word: 'Lower', sec: t.down },
-    { key: 'bottom', word: 'Pause', sec: t.bottom },
-    { key: 'up', word: 'Drive', sec: t.up },
+    { key: 'bottom', word: 'Hold', sec: t.bottom },
+    { key: 'up', word: 'Press', sec: t.up },
     { key: 'top', word: 'Reset', sec: Math.max(t.top, 0.6) },
   ] as Phase[]).filter((p) => p.sec > 0);
 }
@@ -19,7 +20,7 @@ export function phasesFor(t: Tempo): Phase[] {
  * on phase changes. The ring sweep is written straight to the DOM each frame; React only re-renders
  * when the phase, the second or the rep changes.
  */
-export function TempoRing({ tempo, size = 300 }: { tempo: Tempo; size?: number }) {
+export function TempoRing({ tempo, size = 300, reps, lastSet }: { tempo: Tempo; size?: number; reps?: number; lastSet?: boolean }) {
   const phases = phasesFor(tempo);
   const cycle = phases.reduce((a, p) => a + p.sec, 0);
   const [state, setState] = useState({ rep: 1, idx: 0, sec: Math.ceil(phases[0].sec) });
@@ -41,9 +42,12 @@ export function TempoRing({ tempo, size = 300 }: { tempo: Tempo; size?: number }
       if (arc.current) arc.current.style.strokeDashoffset = String(c * (within / ph.sec));
       if (rep !== last.rep || idx !== last.idx || sec !== last.sec) {
         const phaseChanged = rep !== last.rep || idx !== last.idx;
-        if (phaseChanged && ph.key === 'down') { play('tick-low'); buzz(14); }
-        else if (phaseChanged && ph.key === 'up') { play('tick-high'); buzz([10, 40, 10]); }
-        else if (!phaseChanged && ph.key === 'down') play('tick-low');
+        // the coach calls each phase on the beat; stopwatch ticks pace the lowering
+        if (phaseChanged && rep !== last.rep && lastSet && reps && rep === reps) say('last-rep');
+        else if (phaseChanged && ph.key === 'down') { say('lower'); buzz(14); }
+        else if (phaseChanged && ph.key === 'up') { say('press'); buzz([10, 40, 10]); }
+        else if (phaseChanged && (ph.key === 'bottom' || (ph.key === 'top' && tempo.top > 0))) say('hold');
+        if (!phaseChanged && ph.key === 'down') cue('tick');
         last = { rep, idx, sec };
         setState(last);
       }
@@ -57,9 +61,9 @@ export function TempoRing({ tempo, size = 300 }: { tempo: Tempo; size?: number }
   const lowering = ph.key === 'down' || ph.key === 'bottom';
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }} role="timer" aria-label={`Rep ${state.rep}, ${ph.word}`}>
-      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={{ filter: lowering ? 'drop-shadow(0 0 22px rgba(255,91,31,0.35))' : undefined }}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true" style={{ filter: lowering ? 'drop-shadow(0 0 22px rgba(255,181,74,0.4))' : undefined }}>
         <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.07)" strokeWidth="14" fill="none" />
-        <circle ref={arc} cx={size / 2} cy={size / 2} r={r} stroke={lowering ? '#FF5B1F' : '#F3EFE8'} strokeWidth="14" fill="none" strokeLinecap="round" strokeDasharray={c} />
+        <circle ref={arc} cx={size / 2} cy={size / 2} r={r} stroke={lowering ? 'var(--amber)' : 'var(--chalk)'} strokeWidth="14" fill="none" strokeLinecap="round" strokeDasharray={c} />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
         <div>

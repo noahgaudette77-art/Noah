@@ -1,14 +1,12 @@
 import { memo } from 'react';
-import { DEMOS } from '../rig/demos';
-import { SceneSVG, demoViewBox, staticPrims } from '../rig/Scene';
+import { Icon } from './Icon';
 
-/** Static poster frame of a demo (end position) on its lit stage. */
-export const Thumb = memo(function Thumb({ id, size = 72, which = 1, stage = 0 }: { id: string; size?: number; which?: 0 | 1; stage?: number }) {
-  const demo = DEMOS[id];
-  if (!demo) return null;
+/** A stencilled station number on a small iron plate (replaces the old mannequin thumbnails). */
+export const Thumb = memo(function Thumb({ n, cardio, size = 56 }: { n?: number | string; cardio?: 'bike' | 'treadmill' | string; size?: number }) {
   return (
-    <div className="shrink-0 overflow-hidden rounded-2xl bg-void shadow-lit" style={{ width: size, height: size }}>
-      <SceneSVG prims={staticPrims(demo, which, undefined, { stage })} viewBox={demoViewBox(demo, 1, 0.8)} className="h-full w-full" />
+    <div aria-hidden="true" className="grid shrink-0 place-items-center rounded-[6px] lit-raised" style={{ width: size, height: size }}>
+      {cardio ? <Icon name={cardio === 'bike' ? 'bike' : 'walk'} size={size * 0.42} className="text-ash" />
+        : <span className="stencil text-amber" style={{ fontSize: size * 0.56 }}>{n}</span>}
     </div>
   );
 });

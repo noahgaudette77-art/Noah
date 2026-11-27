@@ -92,7 +92,8 @@ export interface ProgramMeta {
   increment: number;
   start: { weightLb: number; bodyFat: number; heightIn: number };
   /** body-fat projection: month -> percent */
-  projection: { month: number; bf: number }[];
+  /** lean mass (lb) is modelled rising with training: weight = lean / (1 - bf) */
+  projection: { month: number; bf: number; lean: number }[];
   incline: { gradePct: number; mph: number };
   sessionMinutes: number;
 }
