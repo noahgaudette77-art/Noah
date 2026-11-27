@@ -9,13 +9,15 @@ export const META: ProgramMeta = {
   maxDumbbell: 50,
   increment: 5,
   start: { weightLb: 225, bodyFat: 24, heightIn: 71 },
+  // Lean mass starts at 171 lb (225 lb at 24%) and rises to about 176 lb with training.
+  // weight = lean / (1 - bf): Dec 30 22% ~220, Mar 1 19% ~215, May 1 15.5% ~208, Aug 31 12% ~200.
   projection: [
-    { month: 0, bf: 24 },
-    { month: 1, bf: 22 },
-    { month: 3, bf: 19 },
-    { month: 5, bf: 15.5 },
-    { month: 9, bf: 12 },
-    { month: 12, bf: 12 },
+    { month: 0, bf: 24, lean: 171 },
+    { month: 1, bf: 22, lean: 171.6 },
+    { month: 3, bf: 19, lean: 174.2 },
+    { month: 5, bf: 15.5, lean: 175.8 },
+    { month: 9, bf: 12, lean: 176 },
+    { month: 12, bf: 12, lean: 176 },
   ],
   incline: { gradePct: 15, mph: 3 },
   sessionMinutes: 45,

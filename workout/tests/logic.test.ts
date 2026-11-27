@@ -99,7 +99,16 @@ describe('body', () => {
     expect(projectedBodyFat(30.44)).toBeCloseTo(22);
     expect(projectedBodyFat(30.44 * 9)).toBeCloseTo(12);
     expect(projectedWeight(0)).toBeCloseTo(225, 0);
-    expect(projectedWeight(30.44 * 9)).toBeCloseTo(194.3, 0);
+    expect(projectedWeight(30.44 * 9)).toBeCloseTo(200, 0);
+  });
+  it('models lean mass rising: the plan checkpoints', () => {
+    expect(projectedWeight(30.44)).toBeCloseTo(220, 0);
+    expect(projectedWeight(30.44 * 3)).toBeCloseTo(215, 0);
+    expect(projectedWeight(30.44 * 5)).toBeCloseTo(208, 0);
+  });
+  it('the 12-month plan weight never rises', () => {
+    let prev = Infinity;
+    for (let d = 0; d <= 365; d++) { const w = projectedWeight(d); expect(w).toBeLessThanOrEqual(prev + 1e-9); prev = w; }
   });
   it('computes a 7-day average', () => {
     const e = [0, 1, 2, 3, 4, 5, 6].map((i) => ({ date: addDays('2026-12-01', i), weight: 220 - i }));

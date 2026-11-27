@@ -25,7 +25,7 @@ export default function ExerciseDetail({ id }: { id: string }) {
   return (
     <div>
       <PageHeader back="/" eyebrow={`${slots.map(({ d }) => d.title).join(' · ')} · ${ex.view}`} title={ex.name} />
-      <div className="gutter mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <div className="gutter mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <div className="lg:sticky lg:top-8 lg:self-start">
           <DemoPlayer id={id} name={ex.name} tempo={tempo} view={ex.view} primary aspect={4 / 3.4} className="-mx-4 h-[52vh] min-h-[320px] sm:mx-0 sm:rounded-[28px] lg:h-[540px]" />
           <p className="mt-3 px-1 text-sm text-smoke">{tempoText(tempo)}. Press K to pause, 0.5x to slow it down.</p>

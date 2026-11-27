@@ -2,27 +2,33 @@ import { META } from '../data/program';
 import type { BodyEntry } from '../data/types';
 import { addDays, diffDays } from './dates';
 
-export const LEAN_MASS = META.start.weightLb * (1 - META.start.bodyFat / 100); // ~171 lb
 const DAYS_PER_MONTH = 30.44;
 
-/** Projected body-fat % at a given program day, linear between the plan's checkpoints. */
-export function projectedBodyFat(day: number): number {
+/** Piecewise-linear value of a projection field at a program day. */
+function along(day: number, key: 'bf' | 'lean'): number {
   const m = Math.max(0, day) / DAYS_PER_MONTH;
   const pts = META.projection;
-  if (m >= pts[pts.length - 1].month) return pts[pts.length - 1].bf;
+  if (m >= pts[pts.length - 1].month) return pts[pts.length - 1][key];
   for (let i = 1; i < pts.length; i++) {
     if (m <= pts[i].month) {
       const a = pts[i - 1];
       const b = pts[i];
-      return a.bf + ((m - a.month) / (b.month - a.month)) * (b.bf - a.bf);
+      return a[key] + ((m - a.month) / (b.month - a.month)) * (b[key] - a[key]);
     }
   }
-  return pts[0].bf;
+  return pts[0][key];
 }
 
-/** Scale weight at a body-fat % assuming lean mass is held (the program's goal). */
-export const weightAtBodyFat = (bf: number) => LEAN_MASS / (1 - bf / 100);
-export const projectedWeight = (day: number) => weightAtBodyFat(projectedBodyFat(day));
+/** Lean mass at the start: 225 lb at 24% body fat = 171 lb. */
+export const LEAN_MASS = META.start.weightLb * (1 - META.start.bodyFat / 100);
+/** Modelled lean mass at a program day: 171 lb rising to about 176 lb by month 9. */
+export const leanAt = (day: number) => along(day, 'lean');
+/** Projected body-fat % at a given program day, linear between the plan's checkpoints. */
+export const projectedBodyFat = (day: number) => along(day, 'bf');
+
+/** Scale weight at a body-fat % for a given lean mass: weight = lean / (1 - bf). */
+export const weightAtBodyFat = (bf: number, lean: number = LEAN_MASS) => lean / (1 - bf / 100);
+export const projectedWeight = (day: number) => weightAtBodyFat(projectedBodyFat(day), leanAt(day));
 
 /** 7-day trailing average of weight ending on `date` (needs at least 3 weigh-ins in the window). */
 export function avg7(entries: BodyEntry[], date: string): number | null {

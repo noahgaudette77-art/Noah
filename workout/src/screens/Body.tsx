@@ -6,7 +6,7 @@ import { PageHeader } from '../components/Shell';
 import { Button, Card, Label, Stepper } from '../components/ui';
 import { META } from '../data/program';
 import type { BodyEntry } from '../data/types';
-import { LEAN_MASS, avg7, chartSeries, projectedWeight, ruleCheck } from '../logic/body';
+import { avg7, chartSeries, leanAt, projectedWeight, ruleCheck } from '../logic/body';
 import { addDays, diffDays, fmtShort } from '../logic/dates';
 import { physiqueStage } from '../logic/motivation';
 import { setState, useStore } from '../logic/store';
@@ -80,7 +80,11 @@ export default function Body() {
   const avgNow = avg7(body, t);
   const rule = ruleCheck(body, t);
   const ys = data.flatMap((d) => [d.weight, d.avg, d.projected].filter((v): v is number => v != null));
-  const domain: [number, number] = [Math.floor(Math.min(...ys) - 2), Math.ceil(Math.max(...ys) + 2)];
+  // even y-ticks: a step of 2 or 5 lb, the domain snapped to whole steps
+  const lo = Math.min(...ys) - 1, hi = Math.max(...ys) + 1;
+  const step = hi - lo > 14 ? 5 : 2;
+  const domain: [number, number] = [Math.floor(lo / step) * step, Math.ceil(hi / step) * step];
+  const yTicks = Array.from({ length: Math.round((domain[1] - domain[0]) / step) + 1 }, (_, i) => domain[0] + i * step);
 
   return (
     <div>
@@ -91,7 +95,7 @@ export default function Body() {
           <NextMilestone date={t} compact />
           <Physique stage={stage} />
         </div>
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <Card className="p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -112,16 +116,15 @@ export default function Body() {
             </div>
             <div className="h-[260px] sm:h-[300px]" role="img" aria-label={`Weight chart: 7-day average ${avgNow ? avgNow.toFixed(1) + ' lb' : 'not enough data yet'}, plan ${projectedWeight(startDay).toFixed(1)} lb today. Table below.`}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={data} margin={{ top: 8, right: 40, bottom: 0, left: -14 }}>
+                <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -14 }}>
                   <defs>
                     <linearGradient id="avgline" x1="0" x2="1"><stop offset="0" stopColor="#FF8A4C" /><stop offset="1" stopColor="#FF5B1F" /></linearGradient>
                   </defs>
                   <CartesianGrid stroke={C.grid} vertical={false} />
                   <XAxis dataKey="day" type="number" domain={['dataMin', 'dataMax']} tickFormatter={(d: number) => fmtShort(addDays(META.startDate, d))} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={28} />
-                  <YAxis domain={domain} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} width={44} allowDecimals={false} />
+                  <YAxis domain={domain} ticks={yTicks} interval={0} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} width={44} allowDecimals={false} />
                   <Tooltip content={<ChartTip />} cursor={{ stroke: 'rgba(255,255,255,0.25)', strokeWidth: 1 }} />
-                  <Line dataKey="projected" stroke={C.proj} strokeWidth={2} strokeDasharray="5 6" dot={false} activeDot={false} isAnimationActive animationDuration={900}
-                    label={(p: { index?: number; x?: number | string; y?: number | string }) => (p.index === data.length - 1 ? <text key="pl" x={Number(p.x ?? 0) + 6} y={Number(p.y ?? 0) + 4} fill={C.axis} fontSize={11}>Plan</text> : <g key={p.index} />)} />
+                  <Line dataKey="projected" stroke={C.proj} strokeWidth={2} strokeDasharray="5 6" dot={false} activeDot={false} isAnimationActive animationDuration={900} legendType="none" />
                   <Line dataKey="weight" stroke="none" isAnimationActive={false} activeDot={false} legendType="none"
                     dot={(p: { cx?: number; cy?: number; value?: number; index?: number }) => (p.value == null ? <g key={p.index} /> : <circle key={p.index} cx={p.cx} cy={p.cy} r={3.5} fill={C.dot} stroke="#131316" strokeWidth={2} />)} />
                   <Line dataKey="avg" stroke="url(#avgline)" strokeWidth={3} dot={false} connectNulls activeDot={{ r: 6, fill: C.avg, stroke: '#131316', strokeWidth: 2 }} isAnimationActive animationDuration={1200}
@@ -179,7 +182,7 @@ export default function Body() {
                 </div>
               </div>
             </Card>
-            <p className="px-1 text-xs text-smoke">Weights assume lean mass is held at about {LEAN_MASS.toFixed(0)} lb. If you add muscle, scale weight sits higher at the same body fat.</p>
+            <p className="px-1 text-xs text-smoke">Plan weights model lean mass rising from 171 lb to about 176 lb with training (now about {leanAt(startDay).toFixed(0)} lb): weight = lean mass ÷ (1 − body fat).</p>
           </div>
         </div>
       </div>

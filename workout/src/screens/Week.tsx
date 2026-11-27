@@ -41,7 +41,7 @@ export default function Week() {
           ))}
         </div>
       </PageHeader>
-      <div className="gutter mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="gutter mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <ol className="space-y-2.5">
           {dates.map((d, i) => {
             const pd = programDay(d);

@@ -66,7 +66,7 @@ export default function Today() {
       <div className="gutter relative mx-auto -mt-2 max-w-5xl space-y-5">
         {!fd.started && <p className="text-center text-sm text-ash">Day one is {fmtShort(META.startDate)}. You can run it early to learn the movements.</p>}
         <StartButton plan={plan} date={sessionDate} />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <div className="space-y-5">
             {fd.started && weekday(date) === 0 && <ReviewCard date={date} />}
             <SessionList plan={plan} />

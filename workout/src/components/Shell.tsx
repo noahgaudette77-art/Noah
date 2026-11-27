@@ -22,6 +22,8 @@ export function tabFor(path: string) {
 export function Shell({ path, children }: { path: string; children: ReactNode }) {
   const active = tabFor(path);
   const live = useStore((s) => s.active);
+  // Today already shows the running session as its main card, so the bar would duplicate it there.
+  const showBar = !!live && active !== '/' && !path.startsWith('/workout');
   const go = (p: string) => (e: React.MouseEvent) => { e.preventDefault(); navigate(p); };
   return (
     <div className="relative min-h-screen lg:flex">
@@ -49,11 +51,11 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
         )}
       </nav>
       <div className="relative z-10 min-w-0 flex-1">
-        <main id="main" className="pb-[calc(104px+var(--safe-b))] lg:pb-16">{children}</main>
+        <main id="main" className={`${showBar ? 'pb-[calc(164px+var(--safe-b))]' : 'pb-[calc(104px+var(--safe-b))]'} lg:pb-16`}>{children}</main>
       </div>
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 pb-[var(--safe-b)] lg:hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void via-void/90 to-transparent" />
-        {live && (
+        {showBar && (
           <a href="#/workout" onClick={go('/workout')} className="ember-btn relative mx-4 mb-2 flex h-12 items-center justify-center gap-2 rounded-full text-[15px] font-semibold">
             <Icon name="play" size={16} weight="fill" /> Back to session
           </a>
